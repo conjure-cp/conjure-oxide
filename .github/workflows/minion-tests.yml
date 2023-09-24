@@ -1,0 +1,56 @@
+# https://doc.rust-lang.org/cargo/guide/continuous-integration.html
+name: 'minion-bindings'
+on:
+  push:
+    paths: 
+      - 'minion-bindings/**'
+  pull_request:
+    paths: 
+      - 'minion-bindings/**'
+  workflow_dispatch:
+
+jobs:
+  ubuntu:
+    name: 'minion-bindings: Ubuntu Build'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - working-directory: ./minion-bindings
+        run: rustup update stable && rustup default stable
+
+      - working-directory: ./minion-bindings
+        run: cargo build --verbose
+
+  mac:
+    name: 'minion-bindings: Mac Build'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - working-directory: ./minion-bindings
+        run: rustup update stable && rustup default stable
+
+      - working-directory: ./minion-bindings 
+        run: rustup target add aarch64-apple-darwin
+
+      - working-directory: ./minion-bindings
+        run: cargo build --verbose
+
+  tests:
+    name: 'minion-bindings: Tests'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - working-directory: ./minion-bindings
+        run: rustup update stable && rustup default stable
+
+      - working-directory: ./minion-bindings
+        run: cargo test
+
+
+
+      
+
+
