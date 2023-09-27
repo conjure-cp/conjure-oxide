@@ -1,52 +1,52 @@
 # https://doc.rust-lang.org/cargo/guide/continuous-integration.html
-name: 'minion-bindings'
+name: 'solvers/minion'
 on:
   push:
     paths: 
-      - 'minion-bindings/**'
+      - 'solvers/minion/**'
   pull_request:
     paths: 
-      - 'minion-bindings/**'
+      - 'solvers/minion/**'
   workflow_dispatch:
 
 jobs:
   ubuntu:
-    name: 'minion-bindings: Ubuntu Build'
+    name: 'solvers/minion: Ubuntu Build'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
-      - working-directory: ./minion-bindings
+      - working-directory: ./solvers/minion
         run: rustup update stable && rustup default stable
 
-      - working-directory: ./minion-bindings
+      - working-directory: ./solvers/minion
         run: cargo build --verbose
 
   mac:
-    name: 'minion-bindings: Mac Build'
+    name: 'solvers/minion: Mac Build'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
 
-      - working-directory: ./minion-bindings
+      - working-directory: ./solvers/minion
         run: rustup update stable && rustup default stable
 
-      - working-directory: ./minion-bindings 
+      - working-directory: ./solvers/minion 
         run: rustup target add aarch64-apple-darwin
 
-      - working-directory: ./minion-bindings
+      - working-directory: ./solvers/minion
         run: cargo build --verbose
 
   tests:
-    name: 'minion-bindings: Tests'
+    name: 'solvers/minion: Tests'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
-      - working-directory: ./minion-bindings
+      - working-directory: ./solvers/minion
         run: rustup update stable && rustup default stable
 
-      - working-directory: ./minion-bindings
+      - working-directory: ./solvers/minion
         run: cargo test
 
 
