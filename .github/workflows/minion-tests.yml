@@ -17,6 +17,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      # https://stackoverflow.com/questions/32327108/get-the-current-commit-id-of-specified-submodule
+      # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable
+      - name: Get minion hash for cache invalidation
+        id: minion-cache
+        run: |
+          echo "minion_sha=$(git rev-parse HEAD:solvers/minion/vendor)" >> "$GITHUB_OUTPUT"
+
       - name: Set up cache
         uses: actions/cache@v3
         with:
@@ -27,8 +34,9 @@ jobs:
             ~/.cargo/git/db/
             target/            
             solvers/minion/vendor
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
+          key: ${{ runner.os }}--minion-${{ steps.minion-cache.outputs.minion_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          # match minion exactly, cargo inexactly
+          restore-keys: ${{ runner.os }}-minion-${{ steps.minion-cache.outputs.minion_sha}}-cargo-
 
       - working-directory: ./solvers/minion
         run: rustup update stable && rustup default stable
@@ -42,6 +50,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Get minion hash for cache invalidation
+        id: minion-cache
+        run: |
+          echo "minion_sha=$(git rev-parse HEAD:solvers/minion/vendor)" >> "$GITHUB_OUTPUT"
+
       - name: Set up cache
         uses: actions/cache@v3
         with:
@@ -52,8 +65,9 @@ jobs:
             ~/.cargo/git/db/
             target/            
             solvers/minion/vendor
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
+          key: ${{ runner.os }}--minion-${{ steps.minion-cache.outputs.minion_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          # match minion exactly, cargo inexactly
+          restore-keys: ${{ runner.os }}-minion-${{ steps.minion-cache.outputs.minion_sha}}-cargo-
 
       - working-directory: ./solvers/minion
         run: rustup update stable && rustup default stable
@@ -69,6 +83,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
+      # https://stackoverflow.com/questions/32327108/get-the-current-commit-id-of-specified-submodule
+      # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable
+      - name: Get minion hash for cache invalidation
+        id: minion-cache
+        run: |
+          echo "minion_sha=$(git rev-parse HEAD:solvers/minion/vendor)" >> "$GITHUB_OUTPUT"
+
       - name: Set up cache
         uses: actions/cache@v3
         with:
@@ -79,8 +101,9 @@ jobs:
             ~/.cargo/git/db/
             target/            
             solvers/minion/vendor
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
+          key: ${{ runner.os }}--minion-${{ steps.minion-cache.outputs.minion_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          # match minion exactly, cargo inexactly
+          restore-keys: ${{ runner.os }}-minion-${{ steps.minion-cache.outputs.minion_sha}}-cargo-
 
       - working-directory: ./solvers/minion
         run: rustup update stable && rustup default stable
