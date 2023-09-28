@@ -1,4 +1,5 @@
 # https://doc.rust-lang.org/cargo/guide/continuous-integration.html
+# https://ectobit.com/blog/speed-up-github-actions-rust-pipelines/
 name: 'solvers/minion'
 on:
   push:
@@ -16,17 +17,43 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Set up cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/            
+            solvers/minion/vendor
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
       - working-directory: ./solvers/minion
         run: rustup update stable && rustup default stable
 
       - working-directory: ./solvers/minion
-        run: cargo build --verbose
+        run: cargo build -vv
 
   mac:
     name: 'solvers/minion: Mac Build'
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
+
+      - name: Set up cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/            
+            solvers/minion/vendor
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
 
       - working-directory: ./solvers/minion
         run: rustup update stable && rustup default stable
@@ -35,13 +62,25 @@ jobs:
         run: rustup target add aarch64-apple-darwin
 
       - working-directory: ./solvers/minion
-        run: cargo build --verbose
+        run: cargo build -vv
 
   tests:
     name: 'solvers/minion: Tests'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - name: Set up cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/            
+            solvers/minion/vendor
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
 
       - working-directory: ./solvers/minion
         run: rustup update stable && rustup default stable
