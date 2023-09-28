@@ -10,10 +10,25 @@ use std::process::Command;
 fn main() {
     println!("cargo:rustc-rerun-if-changed=vendor");
     println!("cargo:rerun-if-changed=build.rs");
+
+    // must be ./ to be recognised as relative path
+    // from project root
+    println!("cargo:rustc-link-search=all=./solvers/minion/vendor/build/");
+    println!("cargo:rustc-link-lib=static=minion");
+
+    // also need to (dynamically) link to c++ stdlib
+    // https://flames-of-code.netlify.app/blog/rust-and-cmake-cplusplus/
+    let target = env::var("TARGET").unwrap();
+    if target.contains("apple") {
+        println!("cargo:rustc-link-lib=dylib=c++");
+    } else if target.contains("linux") {
+        println!("cargo:rustc-link-lib=dylib=stdc++");
+    } else {
+        unimplemented!();
+    }
+
     build();
     bind();
-    println!("cargo:rustc-link-lib=libminion");
-    println!("cargo:rustc-link-search=vendor/build");
 }
 
 fn build() {
