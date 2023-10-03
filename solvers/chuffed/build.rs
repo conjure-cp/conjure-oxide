@@ -15,6 +15,7 @@ fn main() {
     // from project root
     println!("cargo:rustc-link-search=all=./solvers/chuffed/vendor/build/");
     println!("cargo:rustc-link-lib=static=chuffed");
+    println!("cargo:rustc-link-lib=static=chuffed_fzn");
 
     // also need to (dynamically) link to c++ stdlib
     // https://flames-of-code.netlify.app/blog/rust-and-cmake-cplusplus/
@@ -63,6 +64,7 @@ fn bind() {
         // Must manually give allow list to stop bindgen accidentally binding something complicated
         // in C++ stdlib that will make it crash.
         .allowlist_function("createVars")
+        .allowlist_function("createVar")
         .clang_arg("-Ivendor/build") // generated from configure.py
         .clang_arg("-Ivendor")
         .clang_arg(r"--std=gnu++11")
