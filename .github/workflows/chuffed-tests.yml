@@ -1,0 +1,113 @@
+# https://doc.rust-lang.org/cargo/guide/continuous-integration.html
+# https://ectobit.com/blog/speed-up-github-actions-rust-pipelines/
+name: "solvers/chuffed"
+on:
+  push:
+    paths:
+      - "solvers/chuffed/**"
+  pull_request:
+    paths:
+      - "solvers/chuffed/**"
+  workflow_dispatch:
+
+
+jobs:
+  ubuntu:
+    name: "solvers/chuffed: Ubuntu Build"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      # https://stackoverflow.com/questions/32327108/get-the-current-commit-id-of-specified-submodule
+      # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable
+      - name: Get chuffed hash for cache invalidation
+        id: chuffed-cache
+        run: |
+          echo "chuffed_sha=$(git rev-parse HEAD:solvers/chuffed/vendor)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/            
+            solvers/chuffed/vendor
+          key: ${{ runner.os }}-chuffed-${{ steps.chuffed-cache.outputs.chuffed_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          # match chuffed exactly, cargo inexactly
+          restore-keys: ${{ runner.os }}-chuffed-${{ steps.chuffed-cache.outputs.chuffed_sha}}-cargo-
+
+      - working-directory: ./solvers/chuffed
+        run: rustup update stable && rustup default stable
+
+      - working-directory: ./solvers/chuffed
+        run: cargo build -vv
+
+  mac:
+    name: "solvers/chuffed: Mac Build"
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Get chuffed hash for cache invalidation
+        id: chuffed-cache
+        run: |
+          echo "chuffed_sha=$(git rev-parse HEAD:solvers/chuffed/vendor)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/            
+            solvers/chuffed/vendor
+          key: ${{ runner.os }}-chuffed-${{ steps.chuffed-cache.outputs.chuffed_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          # match chuffed exactly, cargo inexactly
+          restore-keys: ${{ runner.os }}-chuffed-${{ steps.chuffed-cache.outputs.chuffed_sha}}-cargo-
+
+      - working-directory: ./solvers/chuffed
+        run: rustup update stable && rustup default stable
+
+      - working-directory: ./solvers/chuffed
+        run: rustup target add aarch64-apple-darwin
+
+      - working-directory: ./solvers/chuffed
+        run: cargo build -vv
+
+  tests:
+    name: "solvers/chuffed: Tests"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      # https://stackoverflow.com/questions/32327108/get-the-current-commit-id-of-specified-submodule
+      # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable
+      - name: Get chuffed hash for cache invalidation
+        id: chuffed-cache
+        run: |
+          echo "chuffed_sha=$(git rev-parse HEAD:solvers/chuffed/vendor)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/            
+            solvers/chuffed/vendor
+          key: ${{ runner.os }}-chuffed-${{ steps.chuffed-cache.outputs.chuffed_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          # match chuffed exactly, cargo inexactly
+          restore-keys: ${{ runner.os }}-chuffed-${{ steps.chuffed-cache.outputs.chuffed_sha}}-cargo-
+
+      - working-directory: ./solvers/chuffed
+        run: rustup update stable && rustup default stable
+
+      - working-directory: ./solvers/chuffed
+        run: cargo test
