@@ -1,7 +1,7 @@
 // adapted from
 // https://github.com/gokberkkocak/rust_glucose/blob/master/build.rs
 // and
-// 1https://rust-lang.github.io/rust-bindgen/non-system-libraries.html
+// https://rust-lang.github.io/rust-bindgen/non-system-libraries.html
 
 use std::process::Command;
 use std::env;

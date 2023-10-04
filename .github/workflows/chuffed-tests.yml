@@ -78,3 +78,36 @@ jobs:
 
       - working-directory: ./solvers/chuffed
         run: cargo build -vv
+
+  tests:
+    name: "solvers/chuffed: Tests"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      # https://stackoverflow.com/questions/32327108/get-the-current-commit-id-of-specified-submodule
+      # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable
+      - name: Get chuffed hash for cache invalidation
+        id: chuffed-cache
+        run: |
+          echo "chuffed_sha=$(git rev-parse HEAD:solvers/chuffed/vendor)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/            
+            solvers/chuffed/vendor
+          key: ${{ runner.os }}-chuffed-${{ steps.chuffed-cache.outputs.chuffed_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          # match chuffed exactly, cargo inexactly
+          restore-keys: ${{ runner.os }}-chuffed-${{ steps.chuffed-cache.outputs.chuffed_sha}}-cargo-
+
+      - working-directory: ./solvers/chuffed
+        run: rustup update stable && rustup default stable
+
+      - working-directory: ./solvers/chuffed
+        run: cargo test
