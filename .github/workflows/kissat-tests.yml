@@ -1,0 +1,87 @@
+# https://doc.rust-lang.org/cargo/guide/continuous-integration.html
+# https://ectobit.com/blog/speed-up-github-actions-rust-pipelines/
+name: 'solvers/kissat'
+on:
+  push:
+    paths: 
+      - 'solvers/kissat/**'
+  pull_request:
+    paths: 
+      - 'solvers/kissat/**'
+  workflow_dispatch:
+
+jobs:
+  ubuntu:
+    name: 'solvers/kissat: Ubuntu Build'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - working-directory: ./solvers/kissat
+        run: rustup update stable && rustup default stable
+
+      - working-directory: ./solvers/kissat
+        run: cargo build -vv
+
+  mac:
+    name: 'solvers/kissat: Mac Build'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - working-directory: ./solvers/kissat
+        run: rustup update stable && rustup default stable
+
+      - working-directory: ./solvers/kissat 
+        run: rustup target add aarch64-apple-darwin
+
+      - working-directory: ./solvers/kissat
+        run: cargo build -vv
+
+  tests:
+    name: 'solvers/kissat: Tests'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - working-directory: ./solvers/kissat
+        run: rustup update stable && rustup default stable
+
+      - working-directory: ./solvers/kissat
+        run: cargo test
