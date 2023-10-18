@@ -62,7 +62,8 @@ fn main() {
         ],
     };
 
-    assert!(m1 == m2)
+    println!("{:?}", m1);
+    assert!(m1 == m2);
 }
 
 // Builder Pattern
