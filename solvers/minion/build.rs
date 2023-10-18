@@ -57,13 +57,12 @@ fn bind() {
     let bindings = bindgen::Builder::default()
         // The input header we would like to generate
         // bindings for.
-        .header("vendor/minion/minion.h")
+        .header("vendor/minion/libwrapper.h")
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
         // Must manually give allow list to stop bindgen accidentally binding something complicated
         // in C++ stdlib that will make it crash.
-        .allowlist_var("MinionVersion")
         .allowlist_function("minion_main")
         .clang_arg("-Ivendor/build/src/") // generated from configure.py
         .clang_arg("-Ivendor/minion/")
