@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc, collections::HashMap};
 
 fn main() {
     let a = Name::UserName(String::from("a"));
@@ -49,6 +49,52 @@ fn main() {
     }
 
     println!("{:#?}", m);
+}
+
+struct ModelBuilder {
+    statements: Vec<Statement>,
+    variables: HashMap<String, Rc<RefCell<DecisionVariable>>>,
+}
+
+impl ModelBuilder {
+    fn new() -> Self {
+        ModelBuilder {
+            statements: Vec::new(),
+            variables: HashMap::new(),
+        }
+    }
+
+    fn add_statement(mut self, statement: Statement) -> Self {
+        self.statements.push(statement);
+        self
+    }
+
+    fn find(self, name: String, domain: Domain) -> Self {
+        let var = Rc::new(RefCell::new(DecisionVariable {
+            name: Name::UserName(name),
+            domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
+        }));
+        let statement: Statement = Statement::Declaration(var);
+        self.add_statement(statement)
+    }
+
+    fn such_that(self, expression: Expression) -> Self {
+        self.add_statement(Statement::Constraint(expression))
+    }
+
+    fn build(self) -> Model {
+        Model {
+            statements: self.statements,
+        }
+    }
+
+    // Return an expression that references the given variable, if previously defined via a `find` statement.
+    fn var_expr(self, name: String) -> Option<Expression> {
+        match self.variables.get(&name) {
+            Some(var) => Some(Expression::Reference(Rc::clone(var))),
+            None => None,
+        }
+    }
 }
 
 #[derive(Debug)]
