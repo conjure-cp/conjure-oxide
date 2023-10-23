@@ -1,95 +1,101 @@
-use std::{cell::RefCell, rc::Rc};
+use std::collections::HashMap;
 
 fn main() {
     let a = Name::UserName(String::from("a"));
     let b = Name::UserName(String::from("b"));
     let c = Name::UserName(String::from("c"));
 
-    let a_decision_variable = Rc::new(RefCell::new(DecisionVariable {
-        name: a,
-        domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
-    }));
-    let b_decision_variable = Rc::new(RefCell::new(DecisionVariable {
-        name: b,
-        domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
-    }));
-    let c_decision_variable = Rc::new(RefCell::new(DecisionVariable {
-        name: c,
-        domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
-    }));
+    let mut variables = HashMap::new();
+    variables.insert(
+        a.clone(),
+        DecisionVariable {
+            domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
+        },
+    );
+    variables.insert(
+        b.clone(),
+        DecisionVariable {
+            domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
+        },
+    );
+    variables.insert(
+        c.clone(),
+        DecisionVariable {
+            domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
+        },
+    );
 
     // find a,b,c : int(1..3)
     // such that a + b + c = 4
     // such that a >= b
-    let m = Model {
-        statements: vec![
-            Statement::Declaration(Rc::clone(&a_decision_variable)),
-            Statement::Declaration(Rc::clone(&b_decision_variable)),
-            Statement::Declaration(Rc::clone(&c_decision_variable)),
-            Statement::Constraint(Expression::Eq(
-                Box::from(Expression::Sum(vec![
-                    Expression::Reference(Rc::clone(&a_decision_variable)),
-                    Expression::Reference(Rc::clone(&b_decision_variable)),
-                    Expression::Reference(Rc::clone(&c_decision_variable)),
+    let mut m = Model {
+        variables,
+        constraints: vec![
+            Expression::Eq(
+                Box::new(Expression::Sum(vec![
+                    Expression::Reference(a.clone()),
+                    Expression::Reference(b.clone()),
+                    Expression::Reference(c.clone()),
                 ])),
-                Box::from(Expression::ConstantInt(4)),
-            )),
-            Statement::Constraint(Expression::Geq(
-                Box::from(Expression::Reference(Rc::clone(&a_decision_variable))),
-                Box::from(Expression::Reference(Rc::clone(&b_decision_variable))),
-            )),
+                Box::new(Expression::ConstantInt(4)),
+            ),
+            Expression::Geq(
+                Box::new(Expression::Reference(a.clone())),
+                Box::new(Expression::Reference(b.clone())),
+            ),
         ],
     };
 
     println!("{:#?}", m);
 
-    {
-        let mut decision_var_borrowed = a_decision_variable.borrow_mut();
-        decision_var_borrowed.domain = Domain::IntDomain(vec![Range::Bounded(1, 2)]);
-    }
+    // Updating the domain for variable 'a'
+    m.update_domain(&a, Domain::IntDomain(vec![Range::Bounded(1, 2)]));
 
     println!("{:#?}", m);
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 enum Name {
     UserName(String),
     MachineName(i32),
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 struct Model {
-    statements: Vec<Statement>,
+    variables: HashMap<Name, DecisionVariable>,
+    constraints: Vec<Expression>,
 }
 
-#[derive(Debug)]
+impl Model {
+    // Function to update a DecisionVariable based on its Name
+    fn update_domain(&mut self, name: &Name, new_domain: Domain) {
+        if let Some(decision_var) = self.variables.get_mut(name) {
+            decision_var.domain = new_domain;
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 struct DecisionVariable {
-    name: Name,
     domain: Domain,
 }
 
-#[derive(Debug)]
-enum Statement {
-    Declaration(Rc<RefCell<DecisionVariable>>),
-    Constraint(Expression),
-}
-
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 enum Domain {
     BoolDomain,
     IntDomain(Vec<Range<i32>>),
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 enum Range<A> {
     Single(A),
     Bounded(A, A),
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 enum Expression {
     ConstantInt(i32),
-    Reference(Rc<RefCell<DecisionVariable>>),
+    Reference(Name),
     Sum(Vec<Expression>),
     Eq(Box<Expression>, Box<Expression>),
     Geq(Box<Expression>, Box<Expression>),
