@@ -60,7 +60,7 @@ enum Name {
     MachineName(i32),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 struct Model {
     variables: HashMap<Name, DecisionVariable>,
     constraints: Vec<Expression>,
@@ -75,24 +75,24 @@ impl Model {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 struct DecisionVariable {
     domain: Domain,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 enum Domain {
     BoolDomain,
     IntDomain(Vec<Range<i32>>),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 enum Range<A> {
     Single(A),
     Bounded(A, A),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 enum Expression {
     ConstantInt(i32),
     Reference(Name),
