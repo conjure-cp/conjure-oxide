@@ -1,34 +1,42 @@
+use std::rc::Rc;
+
 fn main() {
     let a = Name::UserName(String::from("a"));
     let b = Name::UserName(String::from("b"));
     let c = Name::UserName(String::from("c"));
 
-    let a_decision_variable = DecisionVariable {
+    let a_decision_variable = Rc::new(DecisionVariable {
         name: a,
         domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
-    };
-    let a_reference = Expression::Reference(&a_decision_variable);
-
-    let b_decision_variable = DecisionVariable {
+    });
+    let b_decision_variable = Rc::new(DecisionVariable {
         name: b,
         domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
-    };
-    let b_reference = Expression::Reference(&b_decision_variable);
-
-    let c_decision_variable = DecisionVariable {
+    });
+    let c_decision_variable = Rc::new(DecisionVariable {
         name: c,
         domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
-    };
-    let c_reference = Expression::Reference(&c_decision_variable);
+    });
 
+    // find a,b,c : int(1..3)
+    // such that a + b + c = 4
+    // such that a >= b
     let m = Model {
         statements: vec![
-            Statement::Declaration(&a_decision_variable),
-            Statement::Declaration(&b_decision_variable),
-            Statement::Declaration(&c_decision_variable),
+            Statement::Declaration(Rc::clone(&a_decision_variable)),
+            Statement::Declaration(Rc::clone(&b_decision_variable)),
+            Statement::Declaration(Rc::clone(&c_decision_variable)),
             Statement::Constraint(Expression::Eq(
-                Box::from(Expression::Sum(vec![a_reference, b_reference, c_reference])),
+                Box::from(Expression::Sum(vec![
+                    Expression::Reference(Rc::clone(&a_decision_variable)),
+                    Expression::Reference(Rc::clone(&b_decision_variable)),
+                    Expression::Reference(Rc::clone(&c_decision_variable)),
+                ])),
                 Box::from(Expression::ConstantInt(4)),
+            )),
+            Statement::Constraint(Expression::Geq(
+                Box::from(Expression::Reference(Rc::clone(&a_decision_variable))),
+                Box::from(Expression::Reference(Rc::clone(&b_decision_variable))),
             )),
         ],
     };
@@ -43,8 +51,8 @@ enum Name {
 }
 
 #[derive(Debug)]
-struct Model<'a> {
-    statements: Vec<Statement<'a>>,
+struct Model {
+    statements: Vec<Statement>,
 }
 
 #[derive(Debug)]
@@ -54,9 +62,9 @@ struct DecisionVariable {
 }
 
 #[derive(Debug)]
-enum Statement<'a> {
-    Declaration(&'a DecisionVariable),
-    Constraint(Expression<'a>),
+enum Statement {
+    Declaration(Rc<DecisionVariable>),
+    Constraint(Expression),
 }
 
 #[derive(Debug)]
@@ -72,9 +80,10 @@ enum Range<A> {
 }
 
 #[derive(Debug)]
-enum Expression<'a> {
+enum Expression {
     ConstantInt(i32),
-    Reference(&'a DecisionVariable),
-    Sum(Vec<Expression<'a>>),
-    Eq(Box<Expression<'a>>, Box<Expression<'a>>),
+    Reference(Rc<DecisionVariable>),
+    Sum(Vec<Expression>),
+    Eq(Box<Expression>, Box<Expression>),
+    Geq(Box<Expression>, Box<Expression>),
 }
