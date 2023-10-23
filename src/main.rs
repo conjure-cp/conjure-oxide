@@ -1,22 +1,22 @@
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 fn main() {
     let a = Name::UserName(String::from("a"));
     let b = Name::UserName(String::from("b"));
     let c = Name::UserName(String::from("c"));
 
-    let a_decision_variable = Rc::new(DecisionVariable {
+    let a_decision_variable = Rc::new(RefCell::new(DecisionVariable {
         name: a,
         domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
-    });
-    let b_decision_variable = Rc::new(DecisionVariable {
+    }));
+    let b_decision_variable = Rc::new(RefCell::new(DecisionVariable {
         name: b,
         domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
-    });
-    let c_decision_variable = Rc::new(DecisionVariable {
+    }));
+    let c_decision_variable = Rc::new(RefCell::new(DecisionVariable {
         name: c,
         domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
-    });
+    }));
 
     // find a,b,c : int(1..3)
     // such that a + b + c = 4
@@ -42,6 +42,13 @@ fn main() {
     };
 
     println!("{:#?}", m);
+
+    {
+        let mut decision_var_borrowed = a_decision_variable.borrow_mut();
+        decision_var_borrowed.domain = Domain::IntDomain(vec![Range::Bounded(1, 2)]);
+    }
+
+    println!("{:#?}", m);
 }
 
 #[derive(Debug)]
@@ -63,7 +70,7 @@ struct DecisionVariable {
 
 #[derive(Debug)]
 enum Statement {
-    Declaration(Rc<DecisionVariable>),
+    Declaration(Rc<RefCell<DecisionVariable>>),
     Constraint(Expression),
 }
 
@@ -82,7 +89,7 @@ enum Range<A> {
 #[derive(Debug)]
 enum Expression {
     ConstantInt(i32),
-    Reference(Rc<DecisionVariable>),
+    Reference(Rc<RefCell<DecisionVariable>>),
     Sum(Vec<Expression>),
     Eq(Box<Expression>, Box<Expression>),
     Geq(Box<Expression>, Box<Expression>),
