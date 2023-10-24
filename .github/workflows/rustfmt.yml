@@ -1,8 +1,13 @@
-on: push
-
 # see: https://github.com/marketplace/actions/rust-rustfmt-check
 
 name: rustfmt
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  pull-requests: write
 
 jobs:
   format:
@@ -15,3 +20,4 @@ jobs:
       - uses: mbrobbel/rustfmt-check@master
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          mode: review
