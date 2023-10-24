@@ -1,9 +1,8 @@
-
 #[cfg(test)]
 fn test1() {
-    use kissat_rs::Solver;
     use kissat_rs::Assignment;
-    
+    use kissat_rs::Solver;
+
     // Define three literals used in both formulae.
     let x = 1;
     let y = 2;
@@ -25,7 +24,7 @@ fn test1() {
     let formula2 = vec![vec![x, y, -z], vec![-x], vec![x, y, z], vec![x, -y]];
     let unsat_result = Solver::solve_formula(formula2).unwrap();
 
-    // The second formula is unsatisfiable. 
+    // The second formula is unsatisfiable.
     // This can for example be proved by resolution.
     assert_eq!(unsat_result, None);
 }

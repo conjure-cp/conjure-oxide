@@ -6,7 +6,6 @@ use std::ffi::c_char;
 use std::ffi::CString;
 
 pub fn main() {
-
     // https://stackoverflow.com/questions/34379641/how-do-i-convert-rust-args-into-the-argc-and-argv-c-equivalents
     let args = std::env::args()
         .map(|arg| CString::new(arg).unwrap())
