@@ -3,9 +3,9 @@
 // and
 // https://rust-lang.github.io/rust-bindgen/non-system-libraries.html
 
-use std::process::Command;
 use std::env;
 use std::path::PathBuf;
+use std::process::Command;
 
 fn main() {
     println!("cargo:rustc-rerun-if-changed=vendor");
@@ -29,7 +29,6 @@ fn main() {
     }
     build();
     bind();
-    
 }
 fn build() {
     let output = Command::new("bash")
