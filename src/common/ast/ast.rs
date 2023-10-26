@@ -21,24 +21,24 @@ pub enum Name {
     MachineName(i32),
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct DecisionVariable {
     pub domain: Domain,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Domain {
     BoolDomain,
     IntDomain(Vec<Range<i32>>),
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Range<A> {
     Single(A),
     Bounded(A, A),
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Expression {
     ConstantInt(i32),
     Reference(Name),
