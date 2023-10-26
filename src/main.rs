@@ -1,5 +1,8 @@
 use std::collections::HashMap;
 
+mod common;
+use common::ast::*;
+
 // see all mainX functions, each one shows a different thing in action.
 
 // --------------------------------------------------------------------------------
@@ -57,56 +60,6 @@ fn main1() {
     m.update_domain(&a, Domain::IntDomain(vec![Range::Bounded(1, 2)]));
 
     println!("{:#?}", m);
-}
-
-// --------------------------------------------------------------------------------
-// the data structures
-
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
-enum Name {
-    UserName(String),
-    MachineName(i32),
-}
-
-#[derive(Debug)]
-struct Model {
-    variables: HashMap<Name, DecisionVariable>,
-    constraints: Vec<Expression>,
-}
-
-impl Model {
-    // Function to update a DecisionVariable based on its Name
-    fn update_domain(&mut self, name: &Name, new_domain: Domain) {
-        if let Some(decision_var) = self.variables.get_mut(name) {
-            decision_var.domain = new_domain;
-        }
-    }
-}
-
-#[derive(Debug)]
-struct DecisionVariable {
-    domain: Domain,
-}
-
-#[derive(Debug)]
-enum Domain {
-    BoolDomain,
-    IntDomain(Vec<Range<i32>>),
-}
-
-#[derive(Debug)]
-enum Range<A> {
-    Single(A),
-    Bounded(A, A),
-}
-
-#[derive(Clone, Debug)]
-enum Expression {
-    ConstantInt(i32),
-    Reference(Name),
-    Sum(Vec<Expression>),
-    Eq(Box<Expression>, Box<Expression>),
-    Geq(Box<Expression>, Box<Expression>),
 }
 
 // --------------------------------------------------------------------------------

@@ -1,17 +1,21 @@
-use std::{cell::RefCell, rc::Rc};
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct Model {
-    pub statements: Vec<Statement>,
+    pub variables: HashMap<Name, DecisionVariable>,
+    pub constraints: Vec<Expression>,
 }
 
-#[derive(Debug)]
-pub enum Statement {
-    Declaration(Rc<RefCell<DecisionVariable>>),
-    Constraint(Expression),
+impl Model {
+    // Function to update a DecisionVariable based on its Name
+    pub fn update_domain(&mut self, name: &Name, new_domain: Domain) {
+        if let Some(decision_var) = self.variables.get_mut(name) {
+            decision_var.domain = new_domain;
+        }
+    }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Name {
     UserName(String),
     MachineName(i32),
@@ -19,7 +23,6 @@ pub enum Name {
 
 #[derive(Debug)]
 pub struct DecisionVariable {
-    pub name: Name,
     pub domain: Domain,
 }
 
@@ -35,10 +38,10 @@ pub enum Range<A> {
     Bounded(A, A),
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum Expression {
     ConstantInt(i32),
-    Reference(Rc<RefCell<DecisionVariable>>),
+    Reference(Name),
     Sum(Vec<Expression>),
     Eq(Box<Expression>, Box<Expression>),
     Geq(Box<Expression>, Box<Expression>),
