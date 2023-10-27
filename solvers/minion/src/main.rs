@@ -17,6 +17,6 @@ pub fn main() {
         .collect::<Vec<*const c_char>>();
 
     unsafe {
-        minion_rs::bindings::minion_main(c_args.len() as i32, c_args.as_ptr() as *mut *mut i8);
+        minion_rs::raw_bindings::minion_main(c_args.len() as i32, c_args.as_ptr() as *mut *mut i8);
     }
 }

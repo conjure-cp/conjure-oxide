@@ -1,4 +1,4 @@
-use minion_rs::bindings;
+use minion_rs::raw_bindings;
 
 #[test]
 fn dummy() {
