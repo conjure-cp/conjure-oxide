@@ -47,9 +47,9 @@ fn abc_equality() {
     };
 
     let m2 = ModelBuilder::new()
-        .add_var_str("a", Domain::IntDomain(vec![Range::Bounded(1, 3)]))
-        .add_var_str("b", Domain::IntDomain(vec![Range::Bounded(1, 3)]))
-        .add_var_str("c", Domain::IntDomain(vec![Range::Bounded(1, 3)]))
+        .add_var(a.clone(), Domain::IntDomain(vec![Range::Bounded(1, 3)]))
+        .add_var(b.clone(), Domain::IntDomain(vec![Range::Bounded(1, 3)]))
+        .add_var(c.clone(), Domain::IntDomain(vec![Range::Bounded(1, 3)]))
         .add_constraint(Expression::Eq(
             Box::new(Expression::Sum(vec![
                 Expression::Reference(a.clone()),

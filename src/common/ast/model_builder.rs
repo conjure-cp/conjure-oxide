@@ -29,16 +29,6 @@ impl ModelBuilder {
         self
     }
 
-    pub fn add_var_str(mut self, name: &str, domain: Domain) -> Self {
-        self.variables.insert(
-            Name::UserName(String::from(name)),
-            DecisionVariable {
-                domain,
-            },
-        );
-        self
-    }
-
     pub fn build(self) -> Model {
         Model {
             variables: self.variables,
