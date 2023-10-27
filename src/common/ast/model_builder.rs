@@ -20,6 +20,7 @@ impl ModelBuilder {
     }
 
     pub fn add_var(mut self, name: Name, domain: Domain) -> Self {
+        assert!(self.variables.get(&name).is_none());
         self.variables.insert(
             name,
             DecisionVariable {

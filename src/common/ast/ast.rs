@@ -9,6 +9,7 @@ pub struct Model {
 impl Model {
     // Function to update a DecisionVariable based on its Name
     pub fn update_domain(&mut self, name: &Name, new_domain: Domain) {
+        assert!(self.variables.contains_key(name));
         if let Some(decision_var) = self.variables.get_mut(name) {
             decision_var.domain = new_domain;
         }
