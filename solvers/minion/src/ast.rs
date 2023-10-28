@@ -7,7 +7,7 @@ pub type VarName = String;
 pub struct Model {
     /// A lookup table of all named variables.
     pub named_variables : SymbolTable,
-    pub constraints: Vec<Constraints>
+    pub constraints: Vec<Constraint>
 }
 
 
@@ -20,7 +20,7 @@ impl Model {
     }
 }
 
-pub enum Constraints {
+pub enum Constraint {
     SumLeq(Vec<Var>,Var),
     SumGeq(Vec<Var>,Var),
     Ineq(Var,Var,Constant)
@@ -34,7 +34,7 @@ pub enum Constraints {
 /// constraint.
 pub enum Var{
     NameRef(VarName),
-    ConstantAsVar(Constant)
+    ConstantAsVar(i32)
 }
 
 pub enum Constant {
@@ -44,7 +44,8 @@ pub enum Constant {
 
 #[derive(Copy,Clone)]
 pub enum VarType {
-    Bounded(i32,i32)
+    Bounded(i32,i32),
+    Bool(bool)
 }
 
 pub struct SymbolTable {
@@ -82,8 +83,8 @@ impl SymbolTable {
         }
     }
 
-    pub fn get_variable_order(self) -> Vec<VarName> {
-        self.var_order
+    pub fn get_variable_order(&self) -> Vec<VarName> {
+        self.var_order.clone()
     }
 
     pub fn contains(&self, name: VarName) -> bool {
