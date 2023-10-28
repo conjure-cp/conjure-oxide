@@ -20,4 +20,4 @@ fi
 echo "------ BUILD STEP ------"
 cd "$SCRIPT_DIR"
 cd vendor/build
-nice make -j8
+make
