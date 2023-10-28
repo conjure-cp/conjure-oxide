@@ -1,7 +1,8 @@
 // adapted from
-// - https://github.com/gokberkkocak/rust_glucose/blob/master/build.rs
+// e https://github.com/gokberkkocak/rust_glucose/blob/master/build.rs
 // - https://rust-lang.github.io/rust-bindgen/non-system-libraries.html
 // - https://doc.rust-lang.org/cargo/reference/build-scripts.html#rerun-if-changed
+//
 
 use std::env;
 use std::path::PathBuf;
@@ -61,11 +62,35 @@ fn bind() {
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))
-        // Must manually give allow list to stop bindgen accidentally binding something complicated
-        // in C++ stdlib that will make it crash.
-        .allowlist_function("minion_main")
+        // Make all templates opaque as reccomended by bindgen
+        .opaque_type("std::.*")
+        // Manually allow C++ functions to stop bindgen getting confused.
+        .allowlist_function("resetMinion")
+        .allowlist_function("runMinion")
+        .allowlist_function("constantAsVar")
+        .allowlist_function("newSearchOptions")
+        .allowlist_function("newSearchMethod")
+        .allowlist_function("newInstance")
+        .allowlist_function("newConstraintBlob")
+        .allowlist_function("newSearchOrder")
+        .allowlist_function("getVarByName")
+        .allowlist_function("newVar_ffi")
+        .allowlist_function("instance-free")
+        .allowlist_function("instance_addSearchOrder")
+        .allowlist_function("instance_addConstraint")
+        .allowlist_function("printMatrix_addVar")
+        .allowlist_function("printMatrix_getValue")
+        .allowlist_function("constraint_addVarList")
+        .allowlist_function("constraint_addConstantList")
+        .allowlist_function("vec_var_new")
+        .allowlist_function("vec_var_push_back")
+        .allowlist_function("vec_var_free")
+        .allowlist_function("vec_int_new")
+        .allowlist_function("vec_int_push_back")
+        .allowlist_function("vec_int_free")
         .clang_arg("-Ivendor/build/src/") // generated from configure.py
         .clang_arg("-Ivendor/minion/")
+        .clang_arg("-DLIBMINION")
         .clang_arg(r"--std=gnu++11")
         .clang_arg(r"-xc++")
         // Finish the builder and generate the bindings.
