@@ -3,6 +3,7 @@ use std::{error::Error, ffi::CString};
 use crate::{
     ast::*,
     raw_bindings::{self, *},
+    scoped_ptr::Scoped,
 };
 
 // TODO: allow passing of options.
@@ -19,15 +20,16 @@ extern "C" fn hello_from_rust2() -> bool {
 //TODO memory
 pub fn run_minion(model: Model, callback: Callback) {
     unsafe {
-        let options = newSearchOptions();
-        let args = newSearchMethod();
-        let instance = convert_model_to_raw(&model);
-        let res = runMinion(options, args, instance, Some(hello_from_rust2));
+        let options = Scoped::new(newSearchOptions(), |x| searchOptions_free(x as _));
+        let args = Scoped::new(newSearchMethod(), |x| searchMethod_free(x as _));
+        let instance = Scoped::new(convert_model_to_raw(&model), |x| instance_free(x as _));
+        let res = runMinion(options.ptr, args.ptr, instance.ptr, Some(hello_from_rust2));
     }
 }
 
-// TODO: memory cleanup
+/// Callee owns the returned instance
 unsafe fn convert_model_to_raw(model: &Model) -> *mut ProbSpec_CSPInstance {
+    // This is managed in scope by the callee
     let instance = newInstance();
 
     /*******************************/
@@ -42,7 +44,7 @@ unsafe fn convert_model_to_raw(model: &Model) -> *mut ProbSpec_CSPInstance {
     //
     // These are all done in the order saved in the Symboltable
 
-    let search_vars = vec_var_new();
+    let search_vars = Scoped::new(vec_var_new(), |x| vec_var_free(x as _));
 
     for var_name in model.named_variables.get_variable_order() {
         //TODO: make this return Result
@@ -68,11 +70,17 @@ unsafe fn convert_model_to_raw(model: &Model) -> *mut ProbSpec_CSPInstance {
         let var = getVarByName(instance, c_str.as_ptr() as _);
 
         printMatrix_addVar(instance, var);
-        vec_var_push_back(search_vars, var);
+        vec_var_push_back(search_vars.ptr, var);
     }
 
-    let search_order = newSearchOrder(search_vars, VarOrderEnum_ORDER_STATIC, false);
-    instance_addSearchOrder(instance, search_order);
+    let search_order = Scoped::new(
+        newSearchOrder(search_vars.ptr, VarOrderEnum_ORDER_STATIC, false),
+        |x| searchOrder_free(x as _),
+    );
+
+    // this and other instance_ functions does not move so my use of ptrs are ok
+    // TODO (nd60): document this
+    instance_addSearchOrder(instance, search_order.ptr);
 
     /*********************************/
     /*        Add constraints        */
@@ -84,10 +92,12 @@ unsafe fn convert_model_to_raw(model: &Model) -> *mut ProbSpec_CSPInstance {
         // 3. add constraint to instance
 
         let constraint_type = get_constraint_type(constraint);
-        let raw_constraint = newConstraintBlob(constraint_type);
+        let raw_constraint = Scoped::new(newConstraintBlob(constraint_type), |x| {
+            constraint_free(x as _)
+        });
 
-        constraint_add_args(instance, raw_constraint, constraint);
-        instance_addConstraint(instance, raw_constraint);
+        constraint_add_args(instance, raw_constraint.ptr, constraint);
+        instance_addConstraint(instance, raw_constraint.ptr);
     }
 
     return instance;
@@ -134,7 +144,7 @@ unsafe fn read_vars(
     raw_constraint: *mut ProbSpec_ConstraintBlob,
     vars: &Vec<Var>,
 ) {
-    let raw_vars = vec_var_new();
+    let raw_vars = Scoped::new(vec_var_new(), |x| vec_var_free(x as _));
     for var in vars {
         // TODO: could easily break and segfault and die and so on
         let raw_var = match var {
@@ -145,11 +155,10 @@ unsafe fn read_vars(
             Var::ConstantAsVar(n) => constantAsVar(*n),
         };
 
-        vec_var_push_back(raw_vars, raw_var);
+        vec_var_push_back(raw_vars.ptr, raw_var);
     }
 
-    constraint_addVarList(raw_constraint, raw_vars);
-    vec_var_free(raw_vars);
+    constraint_addVarList(raw_constraint, raw_vars.ptr);
 }
 
 unsafe fn read_var(
@@ -157,7 +166,7 @@ unsafe fn read_var(
     raw_constraint: *mut ProbSpec_ConstraintBlob,
     var: &Var,
 ) {
-    let raw_vars = vec_var_new();
+    let raw_vars = Scoped::new(vec_var_new(), |x| vec_var_free(x as _));
     let raw_var = match var {
         Var::NameRef(name) => {
             let c_str = CString::new(name.clone()).expect("");
@@ -166,23 +175,20 @@ unsafe fn read_var(
         Var::ConstantAsVar(n) => constantAsVar(*n),
     };
 
-    vec_var_push_back(raw_vars, raw_var);
-
-    constraint_addVarList(raw_constraint, raw_vars);
-    vec_var_free(raw_vars);
+    vec_var_push_back(raw_vars.ptr, raw_var);
+    constraint_addVarList(raw_constraint, raw_vars.ptr);
 }
 
 unsafe fn read_const(raw_constraint: *mut ProbSpec_ConstraintBlob, constant: &Constant) {
-    let raw_consts = vec_int_new();
+    let raw_consts = Scoped::new(vec_int_new(), |x| vec_var_free(x as _));
 
     let val = match constant {
         Constant::Discrete(n) => n,
         _ => panic!("NOT IMPLEMENTED"),
     };
 
-    vec_int_push_back(raw_consts, *val);
-    constraint_addConstantList(raw_constraint, raw_consts);
-    vec_int_free(raw_consts);
+    vec_int_push_back(raw_consts.ptr, *val);
+    constraint_addConstantList(raw_constraint, raw_consts.ptr);
 }
 
 #[cfg(test)]
