@@ -1,2 +1,2 @@
 mod common;
-pub use common::ast;
+pub use common::*;
