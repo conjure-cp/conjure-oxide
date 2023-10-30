@@ -1,0 +1,21 @@
+<section>
+    {% set stats = data['essence_stats'] %}
+    {% set keywords = stats.get_essence_keywords(sort_mode='most-used')[:data.get('n_keywords', -1)] %}
+
+    {% if keywords|length == 0 %}
+    {% elif keywords|length == 1 %}
+        <h2>Most common keyword</h2>
+        <ol id="essence-keywords">
+            {% for keyword in keywords %}
+                <li>{{ keyword.name }} ({{ keyword.total_usages }} usages in {{ keyword.num_files_using_feature }} files)</li>
+            {% endfor %}
+        </ol>
+    {% else %}
+        <h2>{{ keywords|length }} most common keywords</h2>
+        <ol id="essence-keywords">
+            {% for keyword in keywords %}
+                <li>{{ keyword.name }} ({{ keyword.total_usages }} usages in {{ keyword.num_files_using_feature }} files)</li>
+            {% endfor %}
+        </ol>
+    {% endif %}
+</section>

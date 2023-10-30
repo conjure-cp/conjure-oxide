@@ -1,0 +1,22 @@
+[tool.ruff]
+# 1. Enable flake8-bugbear (`B`) rules, in addition to the defaults.
+select = ["E", "F", "B", "I", "N", "UP",
+    "A", "COM", "C4", "ISC001", "ISC002",
+    "ICN", "G", "INP", "PIE", "Q", "RSE",
+    "RET", "SIM", "ARG",
+    "FIX", "PL", "TRY", "FLY", "PERF",
+    "RUF", "ERA", "PTH", "SLF"]
+
+# 2. Avoid enforcing line-length violations (`E501`)
+ignore = ["E501"]
+
+# 3. Unfixable rules
+# ERA: Don't autoremove all commented code, I may actually need it
+unfixable = ["ERA"]
+
+exclude = ["EssenceCatalog"]
+
+# 4. Ignore `E402` (import violations) in all `__init__.py` files, and in `path/to/file.py`.
+[tool.ruff.per-file-ignores]
+"web/colour.py" = ["PLR2004"]
+#"**/{tests,docs,tools}/*" = ["E402"]
