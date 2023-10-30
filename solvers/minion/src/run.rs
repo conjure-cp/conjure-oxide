@@ -55,7 +55,7 @@ unsafe fn convert_model_to_raw(model: &Model) -> *mut ProbSpec_CSPInstance {
             .expect("");
 
         let (vartype_raw, domain_low, domain_high) = match vartype {
-            VarType::Bounded(a, b) => (VariableType_VAR_BOUND, a, b),
+            VarDomain::Bound(a, b) => (VariableType_VAR_BOUND, a, b),
             _ => panic!("NOT IMPLEMENTED"),
         };
 
@@ -183,7 +183,7 @@ unsafe fn read_const(raw_constraint: *mut ProbSpec_ConstraintBlob, constant: &Co
     let raw_consts = Scoped::new(vec_int_new(), |x| vec_var_free(x as _));
 
     let val = match constant {
-        Constant::Discrete(n) => n,
+        Constant::Integer(n) => n,
         _ => panic!("NOT IMPLEMENTED"),
     };
 
@@ -205,13 +205,13 @@ mod tests {
         let mut model = Model::new();
         model
             .named_variables
-            .add_var("x".to_owned(), VarType::Bounded(1, 3));
+            .add_var("x".to_owned(), VarDomain::Bound(1, 3));
         model
             .named_variables
-            .add_var("y".to_owned(), VarType::Bounded(2, 4));
+            .add_var("y".to_owned(), VarDomain::Bound(2, 4));
         model
             .named_variables
-            .add_var("z".to_owned(), VarType::Bounded(1, 5));
+            .add_var("z".to_owned(), VarDomain::Bound(1, 5));
 
         let leq = Constraint::SumLeq(
             vec![
@@ -234,7 +234,7 @@ mod tests {
         let ineq = Constraint::Ineq(
             Var::NameRef("x".to_owned()),
             Var::NameRef("y".to_owned()),
-            Constant::Discrete(-1),
+            Constant::Integer(-1),
         );
 
         model.constraints.push(leq);

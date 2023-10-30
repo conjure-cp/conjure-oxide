@@ -37,17 +37,19 @@ pub enum Var {
 
 pub enum Constant {
     Bool(bool),
-    Discrete(i32),
+    Integer(i32),
 }
 
 #[derive(Copy, Clone)]
-pub enum VarType {
-    Bounded(i32, i32),
+pub enum VarDomain {
+    Bound(i32, i32),
+    Discrete(i32, i32),
+    SparseBound(i32, i32),
     Bool(bool),
 }
 
 pub struct SymbolTable {
-    table: HashMap<VarName, VarType>,
+    table: HashMap<VarName, VarDomain>,
 
     // for now doubles both as Minion's SearchOrder and print order
     var_order: Vec<VarName>,
@@ -63,7 +65,7 @@ impl SymbolTable {
 
     /// Creates a new variable and adds it to the symbol table.
     /// If a variable already exists with the given name, an error is thrown.
-    pub fn add_var(&mut self, name: VarName, vartype: VarType) -> Option<()> {
+    pub fn add_var(&mut self, name: VarName, vartype: VarDomain) -> Option<()> {
         if self.table.contains_key(&name) {
             return None;
         }
@@ -74,7 +76,7 @@ impl SymbolTable {
         return Some(());
     }
 
-    pub fn get_vartype(&self, name: VarName) -> Option<VarType> {
+    pub fn get_vartype(&self, name: VarName) -> Option<VarDomain> {
         match self.table.get(&name) {
             Some(m) => Some(*m),
             None => None,
