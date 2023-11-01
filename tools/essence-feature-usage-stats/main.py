@@ -38,8 +38,8 @@ if __name__ == "__main__":
         data={
             "essence_stats": stats,
             "n_keywords": 5,
-            "css_path": "web/static/styles.css",
-            "script_path": "web/static/script.js",
+            "css_path": "styles.css",
+            "script_path": "script.js",
             "timestamp": timestamp,
         },
     )
