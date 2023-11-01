@@ -48,3 +48,4 @@ if __name__ == "__main__":
     with OUTPUT_PATH.open("w") as f:
         f.write(html)
         f.close()
+    print(f"Table created: {OUTPUT_PATH.resolve()}")
