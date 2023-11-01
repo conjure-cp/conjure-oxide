@@ -8,7 +8,8 @@
     CONJURE_DIR: "~/essence-feature-stats/conjure"
     ESSENCE_EXAMPLES_REPO: "https://github.com/conjure-cp/EssenceCatalog.git"
     CONJURE_REPO: "https://github.com/conjure-cp/conjure"
-    OUTPUT_PATH: "~/essence-feature-stats/table.html"
+    GITHUB_PAGE_DIR: "~/essence-feature-stats/page"
+    OUTPUT_PATH: "~/essence-feature-stats/page/table.html"
     KEYWORD_BLOCKLIST: "mInfo,finds,givens,enumGivens,enumLettings,lettings,
                         unnameds,strategyQ,Auto,Interactive,strategyA,trailCompact,
                         nameGenState,nbExtraGivens,representations,representationsTree,
@@ -41,3 +42,16 @@
         - name: Run main.py
           run: python main.py
           working-directory: ./tools/essence-feature-usage-stats
+
+        - name: Copy static files to the GitHub Page directory
+          run: cp ./web/static "${{ env.GITHUB_PAGE_DIR }}/"
+          working-directory: ./tools/essence-feature-usage-stats
+
+        - name: Compress the GitHub Page directory into a tar archive
+          run: tar -czvf archive.tar.gz -C ${{ env.GITHUB_PAGE_DIR }}
+
+        - name: Upload Tar Archive as a GitHub Pages artifact
+          uses: actions/upload-artifact@v2
+          with:
+            name: my-artifact
+            path: archive.tar.gz
