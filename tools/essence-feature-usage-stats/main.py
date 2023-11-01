@@ -44,6 +44,7 @@ if __name__ == "__main__":
         },
     )
 
+    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     with OUTPUT_PATH.open("w") as f:
         f.write(html)
         f.close()
