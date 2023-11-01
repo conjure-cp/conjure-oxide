@@ -44,6 +44,7 @@ class EssenceStats:
             essence_repo_url,
             essence_branch,
         )
+
         self._conjure_bin = download_conjure(
             conjure_dir,
             repository_url=conjure_repo_url,

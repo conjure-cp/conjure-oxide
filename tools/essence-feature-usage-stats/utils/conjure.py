@@ -31,6 +31,31 @@ def get_essence_file_ast(
     return json.loads(result.stdout)
 
 
+def get_version(conjure_bin_path: Path | PathLike[str] | str) -> tuple[str, str]:
+    """
+    Get version from conjure binary.
+
+    :param conjure_bin_path: path to conjure binary
+    :return: tuple of (version, commit) - conjure version and git repo version (as given by conjure --version)
+    """
+    result = subprocess.run(
+        [str(conjure_bin_path), "--version"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    version, commit = None, None
+    lines = result.stdout.split("\n")
+    for line in lines:
+        if "Release version" in line:
+            version = "v" + line.removeprefix("Release version ")
+        if "Repository version" in line:
+            commit, *ts_parts = line.removeprefix("Repository version ").split()
+
+    return version, commit
+
+
 def get_release_id_by_version(repository_url: str, version: str) -> str | None:
     """Get release id for a specific release version of a repo from the GitHub API."""
     user, repo = parse_repo_url(repository_url)
@@ -78,11 +103,15 @@ def download_conjure(
     :param version: Conjure release version ("latest" or "vX.Y.Z")
     :param repository_url: the GitHub repository URL
     """
+    output_dir = Path(output_dir)
+    if not output_dir.is_dir():
+        print(f"Creating directory: {output_dir.resolve()}")
+        output_dir.mkdir()
+
     print(
         f"Downloading Conjure release {version} from {repository_url} to {output_dir}",
     )
 
-    output_dir = Path(output_dir)
     api_url = get_release_url(repository_url, version)
     response = requests.get(api_url)
 
@@ -104,4 +133,5 @@ def download_conjure(
 
 
 if __name__ == "__main__":
-    download_conjure("../conjure")
+    path = download_conjure("../conjure")
+    print(get_version(path))
