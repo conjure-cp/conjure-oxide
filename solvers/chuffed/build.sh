@@ -13,5 +13,5 @@ cmake --build build
 cd ..
 
 # Build wrapper.cpp as static library
-g++ -c wrapper.cpp -Ivendor
+c++ -c wrapper.cpp -Ivendor --std=c++11
 ar rvs libwrapper.a wrapper.o
