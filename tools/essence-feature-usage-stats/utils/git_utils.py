@@ -58,6 +58,7 @@ def clone_or_pull(
     :param branch: branch of the remote repo to pull (master by default)
     """
     directory_path = Path(directory_path)
+    directory_path.mkdir(exist_ok=True, parents=True)
 
     if directory_path.is_dir() and is_git_repo(directory_path):
         repo = Repo(directory_path)

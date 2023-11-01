@@ -106,7 +106,7 @@ def download_conjure(
     output_dir = Path(output_dir)
     if not output_dir.is_dir():
         print(f"Creating directory: {output_dir.resolve()}")
-        output_dir.mkdir()
+        output_dir.mkdir(parents=True)
 
     print(
         f"Downloading Conjure release {version} from {repository_url} to {output_dir}",

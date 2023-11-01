@@ -1,15 +1,42 @@
   name: "tools/essence-feature-stats"
+
   on:
     push
 
-  jobs:
-    build:
-      name: "tools/essence-feature-stats: Build the tool and clone EssenceCatalog repo"
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v2
+  env:
+    ESSENCE_DIR: "/essence-feature-stats/EssenceCatalog"
+    CONJURE_DIR: "/essence-feature-stats/conjure"
+    ESSENCE_EXAMPLES_REPO: "https://github.com/conjure-cp/EssenceCatalog.git"
+    CONJURE_REPO: "https://github.com/conjure-cp/conjure"
+    OUTPUT_PATH: "/essence-feature-stats/table.html"
+    KEYWORD_BLOCKLIST: "mInfo,finds,givens,enumGivens,enumLettings,lettings,
+                        unnameds,strategyQ,Auto,Interactive,strategyA,trailCompact,
+                        nameGenState,nbExtraGivens,representations,representationsTree,
+                        originalDomains,trailGeneralised,trailVerbose,trailRewrites,
+                        mLanguage,language,version,mStatements,Name,Declaration"
 
-        - name: Set up cache
-          uses: actions/cache@v3
+  jobs:
+    generate:
+      name: "tools/essence-feature-stats: Build the tool and clone EssenceCatalog repo"
+
+      runs-on: ubuntu-latest
+
+      strategy:
+        matrix:
+          python-version: ["3.11"]
+
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
+
+        - name: Install Python ${{ matrix.python-version }}
+          uses: actions/setup-python@v4
           with:
-            path: |
+            python-version: ${{ matrix.python-version }}
+
+        - name: Install python dependencies
+          run: pip install -r requirements.txt
+
+        - name: Run main.py
+          run: python main.py
+          working-directory: ./
