@@ -1,18 +1,15 @@
 {% extends "base.html" %}
 
-{% block title %} Essence feature stats {% endblock title %}
-
 {% block nav %}
     <li><a href="/">Index</a> </li>
 {% endblock nav %}
 
 {% block content %}
     {% include "keyword_list.html" %}
-
     <section>
         <h2>Essence feature table</h2>
-        {% if 'table' in data.keys() %}
-            {{ data['table'] }}
+        {% if "table" in data.keys() %}
+            {{ data["table"] }}
         {% else %}
             {# Include the table.html template here #}
             {% include "table.html" %}
@@ -20,11 +17,15 @@
     </section>
 {% endblock content %}
 
+{% block footer %}
+    <br/>
+    Generated on: {{ data["timestamp"] }}
+{% endblock footer %}
+
 {% block stylesheets %}
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ data["css_path"] }}">
 {% endblock stylesheets %}
 
 {% block scripts %}
-    <h1>Hello World!</h1>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ data["script_path"] }}"></script>
 {% endblock scripts %}

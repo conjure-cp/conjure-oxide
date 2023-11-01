@@ -36,10 +36,10 @@ KNAPSACK_AST = {
                             ],
                             {"DomainEnum": [{"Name": "items"}, None, None]},
                             {"DomainInt": [{"TagInt": []}, []]},
-                        ]
+                        ],
                     },
-                ]
-            }
+                ],
+            },
         },
         {
             "Declaration": {
@@ -56,10 +56,10 @@ KNAPSACK_AST = {
                             ],
                             {"DomainEnum": [{"Name": "items"}, None, None]},
                             {"DomainInt": [{"TagInt": []}, []]},
-                        ]
+                        ],
                     },
-                ]
-            }
+                ],
+            },
         },
         {
             "Declaration": {
@@ -67,8 +67,8 @@ KNAPSACK_AST = {
                     "Given",
                     {"Name": "capacity"},
                     {"DomainInt": [{"TagInt": []}, []]},
-                ]
-            }
+                ],
+            },
         },
         {
             "Declaration": {
@@ -80,10 +80,10 @@ KNAPSACK_AST = {
                             [],
                             {"SizeAttr_None": []},
                             {"DomainEnum": [{"Name": "items"}, None, None]},
-                        ]
+                        ],
                     },
-                ]
-            }
+                ],
+            },
         },
         {
             "Objective": [
@@ -97,8 +97,8 @@ KNAPSACK_AST = {
                                         "MkOpImage": [
                                             {"Reference": [{"Name": "gain"}, None]},
                                             {"Reference": [{"Name": "i"}, None]},
-                                        ]
-                                    }
+                                        ],
+                                    },
                                 },
                                 [
                                     {
@@ -109,17 +109,17 @@ KNAPSACK_AST = {
                                                     "Reference": [
                                                         {"Name": "picked"},
                                                         None,
-                                                    ]
+                                                    ],
                                                 },
-                                            ]
-                                        }
-                                    }
+                                            ],
+                                        },
+                                    },
                                 ],
-                            ]
-                        }
-                    }
+                            ],
+                        },
+                    },
                 },
-            ]
+            ],
         },
         {
             "SuchThat": [
@@ -137,16 +137,16 @@ KNAPSACK_AST = {
                                                             "Reference": [
                                                                 {"Name": "weight"},
                                                                 None,
-                                                            ]
+                                                            ],
                                                         },
                                                         {
                                                             "Reference": [
                                                                 {"Name": "i"},
                                                                 None,
-                                                            ]
+                                                            ],
                                                         },
-                                                    ]
-                                                }
+                                                    ],
+                                                },
                                             },
                                             [
                                                 {
@@ -157,21 +157,21 @@ KNAPSACK_AST = {
                                                                 "Reference": [
                                                                     {"Name": "picked"},
                                                                     None,
-                                                                ]
+                                                                ],
                                                             },
-                                                        ]
-                                                    }
-                                                }
+                                                        ],
+                                                    },
+                                                },
                                             ],
-                                        ]
-                                    }
-                                }
+                                        ],
+                                    },
+                                },
                             },
                             {"Reference": [{"Name": "capacity"}, None]},
-                        ]
-                    }
-                }
-            ]
+                        ],
+                    },
+                },
+            ],
         },
     ],
 }

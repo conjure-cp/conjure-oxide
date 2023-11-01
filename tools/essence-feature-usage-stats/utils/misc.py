@@ -2,15 +2,16 @@ from typing import Any
 
 
 def flat_keys_count(
-    data: dict[Any, dict | list] | list, blocklist=None
+    data: dict[Any, dict | list] | list,
+    blocklist=None,
 ) -> dict[Any, int]:
     """
-    Recurse over a dict or list (potentially with nested dicts / lists) and count all dictionary keys
+    Recurse over a dict or list (potentially with nested dicts / lists) and count all dictionary keys.
+
     :param data: a dictionary or list containing dictionaries / lists
     :param blocklist: collection of keys to ignore
-    :return: dict in the format of <Key>:<№ of key's occurrences in data>
+    :return: dict in the format of <Key>:<№ of key's occurrences in data>.
     """
-
     ans = {}
 
     def add_key(key, count=1):

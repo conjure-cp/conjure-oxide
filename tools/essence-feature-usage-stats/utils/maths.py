@@ -1,6 +1,7 @@
 def map_range(x, in_min, in_max, out_min, out_max):
     """
-    Maps x between in_min, in_max to range between out_min and out_max
+    Map x between in_min, in_max to range between out_min and out_max.
+
     :param x: value to map
     :param in_min: min value of x
     :param in_max: max value of x
@@ -14,4 +15,11 @@ def map_range(x, in_min, in_max, out_min, out_max):
 
 
 def clamp(x, minn, maxn):
+    """
+    Clamp x between minn and maxn.
+
+    :param x: the value to clamp
+    :param minn: the minimum value
+    :param maxn: the maximum value
+    """
     return min(max(x, minn), maxn)
