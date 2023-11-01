@@ -4,7 +4,6 @@ on:
   pull_request:
   workflow_dispatch:
 
-
 jobs:
   minion:
     name: 'Minion'
@@ -12,6 +11,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Get minion hash for cache invalidation
+        id: minion-cache
+        run: |
+          echo "minion_sha=$(git rev-parse HEAD:solvers/minion/vendor)" >> "$GITHUB_OUTPUT"
+
       - name: Set up cache
         uses: actions/cache@v3
         with:
@@ -21,18 +25,15 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/            
-          key: doccoverage-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          # match minion exactly, cargo inexactly
-          restore-keys: doccoverage-${{ runner.os }}-cargo
-
-      - working-directory: ./solvers/minion
-        run: rustup update nightly && rustup default nightly
+            solvers/minion/vendor
+          key: nightly-${{ runner.os }}-minion-${{ steps.minion-cache.outputs.minion_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: nightly-${{ runner.os }}-minion-${{ steps.minion-cache.outputs.minion_sha}}-cargo-
 
       - name: Coverage Report
         working-directory: ./solvers/minion
         run: |
           echo -e "# Coverage Report \n\n" > $GITHUB_STEP_SUMMARY
-          RUSTDOCFLAGS='-Z unstable-options --show-coverage' cargo doc >> $GITHUB_STEP_SUMMARY
+          RUSTDOCFLAGS='-Z unstable-options --show-coverage' cargo doc | tee -a >($GITHUB_STEP_SUMMARY)
 
   chuffed:
     name: 'Chuffed'
@@ -40,6 +41,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Get chuffed hash for cache invalidation
+        id: chuffed-cache
+        run: |
+          echo "chuffed_sha=$(git rev-parse HEAD:solvers/chuffed/vendor)" >> "$GITHUB_OUTPUT"
+
       - name: Set up cache
         uses: actions/cache@v3
         with:
@@ -49,9 +55,10 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/            
-          key: doccoverage-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          # match minion exactly, cargo inexactly
-          restore-keys: doccoverage-${{ runner.os }}-cargo
+            solvers/chuffed/vendor
+          key: nightly-${{ runner.os }}-chuffed-${{ steps.chuffed-cache.outputs.chuffed_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          # match chuffed exactly, cargo inexactly
+          restore-keys: nightly-${{ runner.os }}-chuffed-${{ steps.chuffed-cache.outputs.chuffed_sha}}-cargo-
 
       - working-directory: ./solvers/chuffed
         run: rustup update nightly && rustup default nightly
@@ -60,7 +67,7 @@ jobs:
         working-directory: ./solvers/chuffed
         run: |
           echo '```' >> $GITHUB_STEP_SUMMARY
-          RUSTDOCFLAGS='-Z unstable-options --show-coverage' cargo doc >> $GITHUB_STEP_SUMMARY
+          RUSTDOCFLAGS='-Z unstable-options --show-coverage' cargo doc | tee -a >($GITHUB_STEP_SUMMARY)
           echo '```' >> $GITHUB_STEP_SUMMARY
 
   conjure-oxide:
@@ -77,15 +84,16 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
+            ~/solvers/minion/vendor
+            ~/solvers/chuffed/vendor
             target/            
-          key: doccoverage-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          # match minion exactly, cargo inexactly
-          restore-keys: doccoverage-${{ runner.os }}-cargo
+          key: nightly-conjureoxide-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: nightly-conjureoxide-${{ runner.os }}-cargo
 
       - run: rustup update nightly && rustup default nightly
 
       - name: Coverage Report
         run: |
           echo '```' >> $GITHUB_STEP_SUMMARY
-          RUSTDOCFLAGS='-Z unstable-options --show-coverage' cargo doc >> $GITHUB_STEP_SUMMARY
+          RUSTDOCFLAGS='-Z unstable-options --show-coverage' cargo doc | tee -a >($GITHUB_STEP_SUMMARY)
           echo '```' >> $GITHUB_STEP_SUMMARY
