@@ -4,11 +4,10 @@
     push
 
   env:
-    ESSENCE_DIR: "~/essence-feature-stats/EssenceCatalog"
-    CONJURE_DIR: "~/essence-feature-stats/conjure"
+    ESSENCE_DIR: "./EssenceCatalog"
+    CONJURE_DIR: "./conjure"
     ESSENCE_EXAMPLES_REPO: "https://github.com/conjure-cp/EssenceCatalog.git"
     CONJURE_REPO: "https://github.com/conjure-cp/conjure"
-    ARCHIVE_PATH: "~/essence-feature-stats/archive.tar.gz"
     OUTPUT_PATH: "./web/static/index.html"
     KEYWORD_BLOCKLIST: "mInfo,finds,givens,enumGivens,enumLettings,lettings,
                         unnameds,strategyQ,Auto,Interactive,strategyA,trailCompact,
@@ -44,11 +43,11 @@
           working-directory: ./tools/essence-feature-usage-stats
 
         - name: Compress the GitHub Page directory into a tar archive
-          run: tar -czvf ${{ env.ARCHIVE_PATH }} ./web/static/*
+          run: tar -czvf archive.tar.gz ./web/static/*
           working-directory: ./tools/essence-feature-usage-stats
 
         - name: Upload Tar Archive as a GitHub Pages artifact
           uses: actions/upload-artifact@v2
           with:
             name: page_files
-            path: ${{ env.ARCHIVE_PATH }}
+            path: archive.tar.gz
