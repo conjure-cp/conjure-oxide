@@ -47,11 +47,16 @@
           working-directory: ./tools/essence-feature-usage-stats
 
         - name: Copy static files to the GitHub Page directory
-          run: cp -r ./web/static "${{ env.GITHUB_PAGE_DIR }}/"
+          run: cp -r ./web/static ${{ env.GITHUB_PAGE_DIR }}/
+          working-directory: ./tools/essence-feature-usage-stats
+
+        - name: Verify that the correct files were copied
+          run: ls ./web/static && ls ${{ env.GITHUB_PAGE_DIR }}/
           working-directory: ./tools/essence-feature-usage-stats
 
         - name: Compress the GitHub Page directory into a tar archive
           run: tar -czvf archive.tar.gz -C ${{ env.GITHUB_PAGE_DIR }}
+          working-directory: ./tools/essence-feature-usage-stats
 
         - name: Upload Tar Archive as a GitHub Pages artifact
           uses: actions/upload-artifact@v2
