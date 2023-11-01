@@ -5,8 +5,11 @@ pub mod bindings {
     include!(concat!(env!("OUT_DIR"), "/chuffed_bindings.rs"));
 }
 
-pub mod wrappers{
-    use crate::bindings::{IntVar, createVar, createVars, vec, all_different, ConLevel, VarBranch, branch_IntVar, ValBranch};
+pub mod wrappers {
+    use crate::bindings::{
+        all_different, branch_IntVar, createVar, createVars, vec, ConLevel, IntVar, ValBranch,
+        VarBranch,
+    };
     use core::ptr;
 
     // The signature of createVar is below for reference.
@@ -16,18 +19,17 @@ pub mod wrappers{
 
         unsafe {
             createVar(&mut ptr, min, max, el);
-            ptr 
+            ptr
         }
     }
 
     // createVars void createVars(vec<IntVar*>& x, int n, int min, int max, bool el)
-    pub fn create_vars(n: i32, min:i32, max:i32, el:bool) -> *mut vec<*mut IntVar> {
-    
+    pub fn create_vars(n: i32, min: i32, max: i32, el: bool) -> *mut vec<*mut IntVar> {
         let ptr: *mut vec<*mut IntVar> = ptr::null_mut();
 
         unsafe {
             createVars(ptr, n, min, max, el);
-            ptr 
+            ptr
         }
     }
 
@@ -39,10 +41,13 @@ pub mod wrappers{
     }
 
     // void branch(vec<Branching*> x, VarBranch var_branch, ValBranch val_branch);
-    pub unsafe fn branch_wrapper(x: *mut vec<*mut IntVar>, var_branch: VarBranch, val_branch: ValBranch) {
+    pub unsafe fn branch_wrapper(
+        x: *mut vec<*mut IntVar>,
+        var_branch: VarBranch,
+        val_branch: ValBranch,
+    ) {
         unsafe {
             branch_IntVar(x, var_branch, val_branch);
         }
     }
 }
-

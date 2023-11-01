@@ -1,5 +1,8 @@
-use chuffed_rs::wrappers::{create_vars, all_different_wrapper, branch_wrapper};
-use chuffed_rs::bindings::{IntVar, ConLevel_CL_DEF, VarBranch_VAR_INORDER, VarBranch_VAR_MIN_MIN, vec, new_dummy_problem, get_idx, p_addVars, p_setcallback}; 
+use chuffed_rs::bindings::{
+    get_idx, new_dummy_problem, p_addVars, p_setcallback, vec, ConLevel_CL_DEF, IntVar,
+    VarBranch_VAR_INORDER, VarBranch_VAR_MIN_MIN,
+};
+use chuffed_rs::wrappers::{all_different_wrapper, branch_wrapper, create_vars};
 
 unsafe fn post_constraints(_n: i32) -> *mut vec<*mut IntVar> {
     // Create constant
@@ -11,7 +14,7 @@ unsafe fn post_constraints(_n: i32) -> *mut vec<*mut IntVar> {
     all_different_wrapper(x, ConLevel_CL_DEF);
 
     // Post some branchings
-    branch_wrapper(x as _, VarBranch_VAR_INORDER, VarBranch_VAR_MIN_MIN); 
+    branch_wrapper(x as _, VarBranch_VAR_INORDER, VarBranch_VAR_MIN_MIN);
 
     x
 }
@@ -19,7 +22,7 @@ unsafe fn post_constraints(_n: i32) -> *mut vec<*mut IntVar> {
 // Custom printing function for this problem
 #[no_mangle]
 pub unsafe extern "C" fn callback(x: *mut vec<*mut IntVar>) {
-   print!("First output is: {:?}", get_idx(x, 0));
+    print!("First output is: {:?}", get_idx(x, 0));
 }
 
 fn main() {
@@ -31,8 +34,8 @@ fn main() {
     }
 
     let n: i32 = args[1].parse().expect("Invalid input");
-    
-    unsafe{
+
+    unsafe {
         let x = post_constraints(n);
         // make new dummy problem
         let p = new_dummy_problem();
