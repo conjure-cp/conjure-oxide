@@ -11,6 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+
       - name: Get minion hash for cache invalidation
         id: minion-cache
         run: |
@@ -28,6 +29,9 @@ jobs:
             solvers/minion/vendor
           key: nightly-${{ runner.os }}-minion-${{ steps.minion-cache.outputs.minion_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: nightly-${{ runner.os }}-minion-${{ steps.minion-cache.outputs.minion_sha}}-cargo-
+
+      - name: Use nightly 
+        run: rustup update nightly && rustup default nightly
 
       - name: Coverage Report
         working-directory: ./solvers/minion
@@ -61,7 +65,7 @@ jobs:
           # match chuffed exactly, cargo inexactly
           restore-keys: nightly-${{ runner.os }}-chuffed-${{ steps.chuffed-cache.outputs.chuffed_sha}}-cargo-
 
-      - working-directory: ./solvers/chuffed
+      - name: Use nightly 
         run: rustup update nightly && rustup default nightly
 
       - name: Coverage Report
@@ -91,7 +95,8 @@ jobs:
           key: nightly-conjureoxide-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: nightly-conjureoxide-${{ runner.os }}-cargo
 
-      - run: rustup update nightly && rustup default nightly
+      - name: Use nightly 
+        run: rustup update nightly && rustup default nightly
 
       - name: Coverage Report
         run: |
