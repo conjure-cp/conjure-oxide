@@ -3,11 +3,7 @@ from pathlib import Path
 from typing import Tuple
 from urllib.parse import urlsplit
 
-from git import (
-    RemoteProgress,
-    Repo,
-    GitCommandError,
-)
+from git import InvalidGitRepositoryError, RemoteProgress, Repo, NoSuchPathError
 from tqdm import tqdm
 
 
@@ -41,7 +37,9 @@ def is_git_repo(path: Path | str) -> bool:
     """Check whether a given directory is a git repository."""
     try:
         _ = Repo(path).git_dir
-    except GitCommandError:
+    except InvalidGitRepositoryError:
+        return False
+    except NoSuchPathError:
         return False
     else:
         return True
