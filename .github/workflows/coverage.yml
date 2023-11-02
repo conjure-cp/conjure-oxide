@@ -51,37 +51,30 @@ jobs:
       - name: Move all html to correct folders for deployment
         run: |
           # put things both in the sha directory, and in latest/
-          mkdir -p deploy/${{ github.sha }}/conjure-oxide
-          mkdir -p deploy/${{ github.sha }}/minion
-          mkdir -p deploy/${{ github.sha }}/chuffed
+          mkdir -p deploy/conjure-oxide
+          mkdir -p deploy/minion
+          mkdir -p deploy/chuffed
 
-          cp -r coverage/html/* deploy/${{ github.sha }}/conjure-oxide
-          cp -r solvers/minion/coverage/html/* deploy/${{github.sha}}/minion
-          cp -r solvers/chuffed/coverage/html/* deploy/${{github.sha}}/chuffed
+          cp -r coverage/html/* deploy/conjure-oxide
+          cp -r solvers/minion/coverage/html/* deploy/minion
+          cp -r solvers/chuffed/coverage/html/* deploy/chuffed
 
-          cp -r deploy/${{ github.sha }} deploy/latest
-
-      - name: Deploy to Github Pages (fixed url)
+      - name: Deploy to Github Pages 
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: ./deploy
           target-folder: "coverage/${{ github.sha }}"
           branch: gh-pages
-          commit-message: >
-            Actions: Code Coverage for ${{ github.sha }}
+          commit-message: "Actions: Code Coverage for ${{ github.sha }}"
 
-            ${{ github.ref }}
-
-      - name: Deploy to Github Pages (latest url
+      - name: Update latest code coverage if on main.
+        if: github.ref == 'refs/heads/main'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: ./deploy
-          target-folder: "coverage"
+          target-folder: "coverage/latest"
           branch: gh-pages
-          commit-message: >
-            Actions: Code Coverage for ${{ github.sha }}
-
-            ${{ github.ref }}
+          commit-message: "Actions: Update latest code coverage for main (${{ github.sha }})"
 
       - name: Format summary
         run : |
