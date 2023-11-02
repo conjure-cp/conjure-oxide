@@ -6,10 +6,10 @@ echo_err () {
 }
 
 usage_and_fail () { 
-  echo_err 'gen_coverage.sh <project_dir>'
+  echo_err 'gen_coverage.sh'
   echo_err ''
-  echo_err 'Generate coverage reports for the given rust project.'
-  echo_err 'These will be output into <project_dir>/coverage'
+  echo_err 'Generate coverage reports for the current rust project.'
+  echo_err 'These will be output into <project_root>/coverage'
   exit 1
 }
 
