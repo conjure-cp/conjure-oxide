@@ -1,7 +1,9 @@
-  name: "tools/essence-feature-stats"
+  name: "tools/essence-feature-stats - Deploy to Github Pages"
 
   on:
-    push
+    push:
+      branches:
+        - main
 
   env:
     ESSENCE_DIR: "./EssenceCatalog"
@@ -9,11 +11,12 @@
     ESSENCE_EXAMPLES_REPO: "https://github.com/conjure-cp/EssenceCatalog.git"
     CONJURE_REPO: "https://github.com/conjure-cp/conjure"
     OUTPUT_PATH: "./web/static/index.html"
-    KEYWORD_BLOCKLIST: "mInfo,finds,givens,enumGivens,enumLettings,lettings,
-                        unnameds,strategyQ,Auto,Interactive,strategyA,trailCompact,
-                        nameGenState,nbExtraGivens,representations,representationsTree,
-                        originalDomains,trailGeneralised,trailVerbose,trailRewrites,
-                        mLanguage,language,version,mStatements,Name,Declaration"
+    KEYWORD_BLOCKLIST: >
+                    mInfo,finds,givens,enumGivens,enumLettings,lettings,
+                    unnameds,strategyQ,Auto,Interactive,strategyA,trailCompact,
+                    nameGenState,nbExtraGivens,representations,representationsTree,
+                    originalDomains,trailGeneralised,trailVerbose,trailRewrites,
+                    mLanguage,language,version,mStatements,Name,Declaration
 
   jobs:
     build:
@@ -24,6 +27,9 @@
       strategy:
         matrix:
           python-version: ["3.11"]
+
+      permissions:
+        contents: write
 
       steps:
         - name: Checkout code
@@ -43,35 +49,17 @@
           working-directory: ./tools/essence-feature-usage-stats
 
         - name: Fix file permissions
-          run: chmod -v -R +rwx ./web/static
+          run: chmod -v -R +rwx ./web/static/
           working-directory: ./tools/essence-feature-usage-stats
-
-        - name: Configure GitHub Pages
-          uses: actions/configure-pages@v3
-
-        - name: Upload Tar Archive as a GitHub Pages artifact
-          uses: actions/upload-pages-artifact@v2
-          with:
-            name: github-pages
-            path: ./tools/essence-feature-usage-stats/web/static
-
-    deploy:
-      name: "tools/essence-feature-stats: Deploy the generated page"
-      runs-on: ubuntu-latest
-      needs: build
-
-      permissions:
-        contents: read
-        pages: write
-        id-token: write
-
-      environment:
-        name: github-pages
-        url: ${{steps.deployment.outputs.page_url}}
-
-      steps:
+          
         - name: Deploy to GitHub Pages
-          id: deployment
-          uses: actions/deploy-pages@v2
+          uses: JamesIves/github-pages-deploy-action@v4.4.3
+          working-directory: ./tools/essence-feature-usage-stats
           with:
-            artifact_name: github-pages
+            branch: gh-pages
+            folder: ./web/static
+            ssh-key: ${{ secrets.DEPLOY_KEY }}
+            target-folder: tools/essence-feature-usage-stats
+            commit-message: Actions: Deploy the essence features usage table 🚀
+    
+ 
