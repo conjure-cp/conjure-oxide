@@ -78,10 +78,25 @@ jobs:
 
       - name: Format summary
         run : |
+          CONJURE_OXIDE_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ github.sha }}/conjure-oxide"
+          MINION_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ github.sha }}/minion"
+          CHUFFED_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ github.sha }}/chuffed"
+
+          CONJURE_OXIDE_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/latest/conjure-oxide"
+          MINION_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/latest/minion"
+          CHUFFED_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/latest/chuffed"
           echo '# Code Coverage' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Crate | | " >> $GITHUB_STEP_SUMMARY
-          echo "| ----- | ----- |" >> $GITHUB_STEP_SUMMARY
-          echo "| Conjure-Oxide | [here](https://conjure-cp.github.io/conjure-oxide/coverage/${{ github.sha }}/conjure-oxide) | " >> $GITHUB_STEP_SUMMARY
-          echo "| Minion  | [here](https://conjure-cp.github.io/conjure-oxide/coverage/${{ github.sha }}/minion)  |" >> $GITHUB_STEP_SUMMARY
-          echo "| Chuffed | [here](https://conjure-cp.github.io/conjure-oxide/coverage/${{ github.sha }}/chuffed) |" >> $GITHUB_STEP_SUMMARY
+          echo "## This commit" >> $GITHUB_STEP_SUMMARY
+          echo "| Crate | |  | " >> $GITHUB_STEP_SUMMARY
+          echo "| ----- | ----- | ----- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Conjure-Oxide | ![](${CONJURE_OXIDE_URL}/badges/flat.svg) | [Full Report](${CONJURE_OXIDE_URL}) | " >> $GITHUB_STEP_SUMMARY
+          echo "| Minion        | ![](${MINION_URL}/badges/flat.svg)        | [Full Report](${MINION_URL}) | " >> $GITHUB_STEP_SUMMARY
+          echo "| Chuffed       | ![](${CHUFFED_URL}/badges/flat.svg)       | [Full Report](${CHUFFED_URL}) | " >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GIT
+          echo "## Main" >> $GITHUB_STEP_SUMMARY
+          echo "| Crate | |  | " >> $GITHUB_STEP_SUMMARY
+          echo "| ----- | ----- | ----- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Conjure-Oxide | ![](${CONJURE_OXIDE_LATEST}/badges/flat.svg) | [Full Report](${CONJURE_OXIDE_LATEST}) | " >> $GITHUB_STEP_SUMMARY
+          echo "| Minion        | ![](${MINION_LATEST}/badges/flat.svg)        | [Full Report](${MINION_LATEST}) | " >> $GITHUB_STEP_SUMMARY
+          echo "| Chuffed       | ![](${CHUFFED_LATEST}/badges/flat.svg)       | [Full Report](${CHUFFED_LATEST}) | " >> $GITHUB_STEP_SUMMARY
