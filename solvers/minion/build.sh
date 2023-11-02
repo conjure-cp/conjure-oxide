@@ -14,10 +14,10 @@ if [ -d vendor/build ]; then
 else
   mkdir -p vendor/build
   cd vendor/build
-  python3 ../configure.py --library
+  python3 ../configure.py --lib 
 fi
 
 echo "------ BUILD STEP ------"
 cd "$SCRIPT_DIR"
 cd vendor/build
-make all
+make
