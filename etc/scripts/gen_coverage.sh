@@ -62,6 +62,6 @@ CARGO_INCREMENTAL=0 RUSTFLAGS='-Cinstrument-coverage' LLVM_PROFILE_FILE='coverag
 
 cd coverage
 echo_err "info: generating coverage reports:"
-grcov . -s .. --binary-path "$TARGET_DIR/debug/deps" -t html --branch --ignore-not-existing -o html
-grcov . -s .. --binary-path "$TARGET_DIR/debug/deps" -t lcov --branch --ignore-not-existing -o lcov.info
+grcov . -s ../src --binary-path "$TARGET_DIR/debug/deps" -t html --branch --ignore-not-existing -o html
+grcov . -s ../src --binary-path "$TARGET_DIR/debug/deps" -t lcov --branch --ignore-not-existing -o lcov.info
 
