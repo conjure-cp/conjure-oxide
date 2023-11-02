@@ -72,6 +72,8 @@ fn bind() {
         .allowlist_function("var_sym_break")
         .allowlist_function("new_dummy_problem")
         .allowlist_function("get_idx")
+        .allowlist_function("make_vec_intvar")
+        .allowlist_function("destroy_vec_intvar")
         .allowlist_function("p_addVars")
         .allowlist_function("p_setcallback")
         .allowlist_function("branch_IntVar")

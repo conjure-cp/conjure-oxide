@@ -7,8 +7,8 @@ pub mod bindings {
 
 pub mod wrappers {
     use crate::bindings::{
-        all_different, branch_IntVar, createVar, createVars, vec, ConLevel, IntVar, ValBranch,
-        VarBranch,
+        all_different, branch_IntVar, createVar, createVars, make_vec_intvar, vec, ConLevel,
+        IntVar, ValBranch, VarBranch,
     };
     use core::ptr;
 
@@ -25,7 +25,7 @@ pub mod wrappers {
 
     // createVars void createVars(vec<IntVar*>& x, int n, int min, int max, bool el)
     pub fn create_vars(n: i32, min: i32, max: i32, el: bool) -> *mut vec<*mut IntVar> {
-        let ptr: *mut vec<*mut IntVar> = ptr::null_mut();
+        let ptr: *mut vec<*mut IntVar> = unsafe { make_vec_intvar() };
 
         unsafe {
             createVars(ptr, n, min, max, el);

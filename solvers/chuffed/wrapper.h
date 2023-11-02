@@ -17,7 +17,10 @@ public:
 DummyProblem *new_dummy_problem();
 void p_addVars(DummyProblem *p, vec<IntVar *> *_searchVars);
 void p_setcallback(DummyProblem *p, void (*_callback)(vec<IntVar *> *));
-IntVar get_idx(vec<IntVar *> *x, int i);
+IntVar* get_idx(vec<IntVar *> *x, int i);
+
+vec<IntVar*>* make_vec_intvar();
+void destroy_vec_intvar(vec<IntVar*>* v);
 
 void branch_IntVar(vec<IntVar *> *x, VarBranch var_branch,
                    ValBranch val_branch);
