@@ -1,5 +1,5 @@
 name: 'Coverage Report'
-run-name: 'Coverage Report for ${{ github.ref }}'
+run-name: 'Coverage Reports for ${{ github.ref }}'
 on:
   push:
   pull_request:
@@ -10,7 +10,8 @@ permissions:
   contents: write
 
 jobs:
-  coverage-pr:
+  coverage:
+    name: "Coverage Report"
     # only do coverage for ready PRs
     if: ${{ github.event != 'pull_request' || ( github.event == 'pull_request' && (! github.event.pull_request.draft)) }}
     runs-on: ubuntu-latest
@@ -64,3 +65,13 @@ jobs:
             Actions: Code Coverage for ${{ github.sha }}
 
             ${{ github.ref }}
+
+      - name: Format summary
+        run : |
+          echo '# Code Coverage' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Crate | URL   | " >> $GITHUB_STEP_SUMMARY
+          echo "| ----- | ----- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Conjure-Oxide | [here](https://conjure-cp.github.io/conjure-oxide/coverage/${{ github.sha }}/conjure-oxide) | " >> $GITHUB_STEP_SUMMARY
+          echo "| Minion  | [here](https://conjure-cp.github.io/conjure-oxide/coverage/${{ github.sha }}/minion)  |" >> $GITHUB_STEP_SUMMARY
+          echo "| Chuffed | [here](https://conjure-cp.github.io/conjure-oxide/coverage/${{ github.sha }}/chuffed) |" >> $GITHUB_STEP_SUMMARY
