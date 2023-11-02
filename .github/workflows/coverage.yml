@@ -50,12 +50,18 @@ jobs:
 
       - name: Move all html to correct folders for deployment
         run: |
-          mkdir -p deploy/conjure-oxide deploy/minion deploy/chuffed
-          cp -r coverage/html/* deploy/conjure-oxide
-          cp -r solvers/minion/coverage/html/* deploy/minion
-          cp -r solvers/chuffed/coverage/html/* deploy/chuffed
+          # put things both in the sha directory, and in latest/
+          mkdir -p deploy/${{ github.sha }}/conjure-oxide
+          mkdir -p deploy/${{ github.sha }}/minion
+          mkdir -p deploy/${{ github.sha }}/chuffed
 
-      - name: Deploy to Github Pages
+          cp -r coverage/html/* deploy/${{ github.sha }}/conjure-oxide
+          cp -r solvers/minion/coverage/html/* deploy/${{github.sha}}/minion
+          cp -r solvers/chuffed/coverage/html/* deploy/${{github.sha}}/chuffed
+
+          cp -r deploy/${{ github.sha }} deploy/latest
+
+      - name: Deploy to Github Pages (fixed url)
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: ./deploy
@@ -66,11 +72,22 @@ jobs:
 
             ${{ github.ref }}
 
+      - name: Deploy to Github Pages (latest url
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: ./deploy
+          target-folder: "coverage"
+          branch: gh-pages
+          commit-message: >
+            Actions: Code Coverage for ${{ github.sha }}
+
+            ${{ github.ref }}
+
       - name: Format summary
         run : |
           echo '# Code Coverage' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Crate | URL   | " >> $GITHUB_STEP_SUMMARY
+          echo "| Crate | | " >> $GITHUB_STEP_SUMMARY
           echo "| ----- | ----- |" >> $GITHUB_STEP_SUMMARY
           echo "| Conjure-Oxide | [here](https://conjure-cp.github.io/conjure-oxide/coverage/${{ github.sha }}/conjure-oxide) | " >> $GITHUB_STEP_SUMMARY
           echo "| Minion  | [here](https://conjure-cp.github.io/conjure-oxide/coverage/${{ github.sha }}/minion)  |" >> $GITHUB_STEP_SUMMARY
