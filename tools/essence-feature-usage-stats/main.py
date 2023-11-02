@@ -37,7 +37,7 @@ if __name__ == "__main__":
     html = template.render(
         data={
             "essence_stats": stats,
-            "n_keywords": 5,
+            "n_keywords": 200,
             "css_path": "styles.css",
             "script_path": "script.js",
             "timestamp": timestamp,
