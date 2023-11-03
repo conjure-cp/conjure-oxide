@@ -1,16 +1,12 @@
-name: 'Code Coverage'
+name: code-coverage
 on:
   push:
   pull_request:
-  workflow_dispatch:
 
-# see https://github.com/JamesIves/github-pages-deploy-action/tree/dev
-permissions:
-  contents: write
 
 jobs:
   coverage:
-    name: "Info: Code Coverage Reports"
+    name: "Generate Code Coverage Reports"
     # only do coverage for ready PRs
     if: ${{ github.event != 'pull_request' || ( github.event == 'pull_request' && (! github.event.pull_request.draft)) }}
     runs-on: ubuntu-latest
@@ -46,7 +42,7 @@ jobs:
         working-directory: .
         run: |
           ./etc/scripts/gen_coverage_all.sh
-
+          
       - name: Move all html to correct folders for deployment
         run: |
           # put things both in the sha directory, and in latest/
@@ -58,76 +54,11 @@ jobs:
           cp -r solvers/minion/coverage/html/* deploy/minion
           cp -r solvers/chuffed/coverage/html/* deploy/chuffed
 
-      - name: Deploy to Github Pages 
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v3
         with:
-          folder: ./deploy
-          target-folder: "coverage/${{ github.sha }}"
-          branch: gh-pages
-          commit-message: "Actions: Code Coverage for ${{ github.sha }}"
-
-      - name: If on main branch, copy coverage report to /latest.
-        if: github.ref == 'refs/heads/main'
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: ./deploy
-          target-folder: "coverage/latest"
-          branch: gh-pages
-          commit-message: "Actions: Update latest code coverage for main (${{ github.sha }})"
-
-      - name: Format summary
-        run : |
-          CONJURE_OXIDE_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ github.sha }}/conjure-oxide"
-          MINION_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ github.sha }}/minion"
-          CHUFFED_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ github.sha }}/chuffed"
-
-          CONJURE_OXIDE_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/latest/conjure-oxide"
-          MINION_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/latest/minion"
-          CHUFFED_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/latest/chuffed"
-          echo '# Code Coverage' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## This commit" >> $GITHUB_STEP_SUMMARY
-          echo "| Crate | |  | " >> $GITHUB_STEP_SUMMARY
-          echo "| ----- | ----- | ----- |" >> $GITHUB_STEP_SUMMARY
-          echo "| Conjure-Oxide | ![](${CONJURE_OXIDE_URL}/badges/flat.svg) | [Full Report](${CONJURE_OXIDE_URL}) | " >> $GITHUB_STEP_SUMMARY
-          echo "| Minion        | ![](${MINION_URL}/badges/flat.svg)        | [Full Report](${MINION_URL}) | " >> $GITHUB_STEP_SUMMARY
-          echo "| Chuffed       | ![](${CHUFFED_URL}/badges/flat.svg)       | [Full Report](${CHUFFED_URL}) | " >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Main" >> $GITHUB_STEP_SUMMARY
-          echo "| Crate | |  | " >> $GITHUB_STEP_SUMMARY
-          echo "| ----- | ----- | ----- |" >> $GITHUB_STEP_SUMMARY
-          echo "| Conjure-Oxide | ![](${CONJURE_OXIDE_LATEST}/badges/flat.svg) | [Full Report](${CONJURE_OXIDE_LATEST}) | " >> $GITHUB_STEP_SUMMARY
-          echo "| Minion        | ![](${MINION_LATEST}/badges/flat.svg)        | [Full Report](${MINION_LATEST}) | " >> $GITHUB_STEP_SUMMARY
-          echo "| Chuffed       | ![](${CHUFFED_LATEST}/badges/flat.svg)       | [Full Report](${CHUFFED_LATEST}) | " >> $GITHUB_STEP_SUMMARY
-
-  indexes:
-    needs: coverage
-    name: "Regenerate indexes for coverage"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v2
-
-      - name: Checkout the pages repository
-        uses: actions/checkout@v2
-        with:
-          ref: "gh-pages"
-          path: "pages"
-
-      - name: "Generate indexes"
-        run: |
-          ./etc/ci/genindex.py pages/coverage/${{ github.sha }}
-          ./etc/ci/genindex.py pages/coverage/latest
-          ./etc/ci/genindex.py pages/coverage/
-
-      - uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: ./pages/coverage/
-          target-folder: ./coverage/
-          branch: gh-pages
-          commit-message: "Actions: Update coverage indexes"
-
-
+          name: code-coverage-${{ github.sha }}
+          path: deploy/**
 
 
 
