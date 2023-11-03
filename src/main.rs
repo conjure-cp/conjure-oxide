@@ -1,16 +1,14 @@
 use std::{collections::HashMap, fs::File, io::Read};
-use json::JsonValue;
 
 mod common;
-use common::{ast::*, parse::json::parse_json};
+use common::ast::*;
 
 fn main() {
+    let mut abc = File::open("examples/abc.json").unwrap();
     let mut abc_str = String::new();
-    let mut abc_json = File::open("examples/abc.json").unwrap();
-    abc_json.read_to_string(&mut abc_str).unwrap();
-    let json_value = json::parse(&abc_str).unwrap();
+    abc.read_to_string(&mut abc_str).unwrap();
 
-    let m = parse_json(&json_value).unwrap();
+    let m = Model::from_json(&abc_str);
 
     // find a,b,c : int(1..3)
     // such that a + b + c = 4

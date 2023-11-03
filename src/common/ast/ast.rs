@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use crate::common::parse::json::parse_json;
 
 #[derive(Debug)]
 pub struct Model {
@@ -12,6 +13,10 @@ impl Model {
             variables: HashMap::new(),
             constraints: Vec::new(),
         }
+    }
+
+    pub fn from_json(s: &String) -> Result<Model, String> {
+        parse_json(s)
     }
 
     // Function to update a DecisionVariable based on its Name
