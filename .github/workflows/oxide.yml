@@ -1,18 +1,18 @@
-name: "solvers/minion"
+name: "conjure-oxide"
 on:
   push:
     paths: 
-      - 'solvers/minion/**'
+      - 'src/**'
       - "Cargo.*"
   pull_request:
     paths: 
-      - 'solvers/minion/**'
+      - 'src/**'
       - "Cargo.*"
   workflow_dispatch:
 
 jobs:
   ubuntu:
-    name: "Minion: Ubuntu Build"
+    name: "Conjure Oxide: Ubuntu Build"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -33,18 +33,17 @@ jobs:
             ~/.cargo/git/db/
             target/            
             solvers/minion/vendor
+            solvers/chuffed/vendor
 
           key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: stable-${{ runner.os }}-gitmodules-
 
-      - working-directory: ./solvers/minion
-        run: rustup update stable && rustup default stable
+      - run: rustup update stable && rustup default stable
 
-      - working-directory: ./solvers/minion
-        run: cargo build -vv
+      - run: cargo build -vv
 
   mac:
-    name: "Minion: Mac Build"
+    name: "Conjure Oxide: Mac Build"
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
@@ -65,21 +64,19 @@ jobs:
             ~/.cargo/git/db/
             target/            
             solvers/minion/vendor
+            solvers/chuffed/vendor
             
           key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: stable-${{ runner.os }}-gitmodules-
 
-      - working-directory: ./solvers/minion
-        run: rustup update stable && rustup default stable
+      - run: rustup update stable && rustup default stable
 
-      - working-directory: ./solvers/minion 
-        run: rustup target add aarch64-apple-darwin
+      - run: rustup target add aarch64-apple-darwin
 
-      - working-directory: ./solvers/minion
-        run: cargo build -vv
+      - run: cargo build -vv
 
   tests:
-    name: "Minion: Tests"
+    name: "Conjure Oxide: Tests"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -100,14 +97,13 @@ jobs:
             ~/.cargo/git/db/
             target/            
             solvers/minion/vendor
+            solvers/chuffed/vendor
           key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: stable-${{ runner.os }}-gitmodules-
 
-      - working-directory: ./solvers/minion
-        run: rustup update stable && rustup default stable
+      - run: rustup update stable && rustup default stable
 
-      - working-directory: ./solvers/minion
-        run: cargo test
+      - run: cargo test
 
 
       
