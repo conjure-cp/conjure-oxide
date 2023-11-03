@@ -2,6 +2,7 @@
 # https://ectobit.com/blog/speed-up-github-actions-rust-pipelines/
 name: "solvers/chuffed"
 on:
+  workflow_dispatch:
   push:
     paths:
       - "solvers/chuffed/**"
@@ -10,22 +11,20 @@ on:
     paths:
       - "solvers/chuffed/**"
       - "Cargo.*"
-  workflow_dispatch:
 
 
 jobs:
   ubuntu:
-    name: "solvers/chuffed: Ubuntu Build"
+    name: "Chuffed: Ubuntu Build"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
-      # https://stackoverflow.com/questions/32327108/get-the-current-commit-id-of-specified-submodule
-      # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable
-      - name: Get chuffed hash for cache invalidation
-        id: chuffed-cache
+      - name: Generate caching variables
+        id: cache-vars
         run: |
-          echo "chuffed_sha=$(git rev-parse HEAD:solvers/chuffed/vendor)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
 
       - name: Set up cache
         uses: actions/cache@v3
@@ -37,9 +36,9 @@ jobs:
             ~/.cargo/git/db/
             target/            
             solvers/chuffed/vendor
-          key: ${{ runner.os }}-chuffed-${{ steps.chuffed-cache.outputs.chuffed_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          # match chuffed exactly, cargo inexactly
-          restore-keys: ${{ runner.os }}-chuffed-${{ steps.chuffed-cache.outputs.chuffed_sha}}-cargo-
+
+          key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: stable-${{ runner.os }}-gitmodules-
 
       - working-directory: ./solvers/chuffed
         run: rustup update stable && rustup default stable
@@ -48,15 +47,16 @@ jobs:
         run: cargo build -vv
 
   mac:
-    name: "solvers/chuffed: Mac Build"
+    name: "Chuffed: Mac Build"
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
 
-      - name: Get chuffed hash for cache invalidation
-        id: chuffed-cache
+      - name: Generate caching variables
+        id: cache-vars
         run: |
-          echo "chuffed_sha=$(git rev-parse HEAD:solvers/chuffed/vendor)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
 
       - name: Set up cache
         uses: actions/cache@v3
@@ -68,9 +68,9 @@ jobs:
             ~/.cargo/git/db/
             target/            
             solvers/chuffed/vendor
-          key: ${{ runner.os }}-chuffed-${{ steps.chuffed-cache.outputs.chuffed_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          # match chuffed exactly, cargo inexactly
-          restore-keys: ${{ runner.os }}-chuffed-${{ steps.chuffed-cache.outputs.chuffed_sha}}-cargo-
+
+          key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: stable-${{ runner.os }}-gitmodules-
 
       - working-directory: ./solvers/chuffed
         run: rustup update stable && rustup default stable
@@ -82,17 +82,19 @@ jobs:
         run: cargo build -vv
 
   tests:
-    name: "solvers/chuffed: Tests"
+    name: "Chuffed: Tests"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
-      # https://stackoverflow.com/questions/32327108/get-the-current-commit-id-of-specified-submodule
-      # https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-environment-variable
-      - name: Get chuffed hash for cache invalidation
-        id: chuffed-cache
+      - name: Generate caching variables
+        id: cache-vars
         run: |
-          echo "chuffed_sha=$(git rev-parse HEAD:solvers/chuffed/vendor)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
+
+          echo "cache_paths=$(./etc/ci/get_caching_paths.sh)" >> "$GITHUB_OUTPUT"
+          echo "cache_paths=$(./etc/ci/get_caching_paths.sh)"
 
       - name: Set up cache
         uses: actions/cache@v3
@@ -104,9 +106,9 @@ jobs:
             ~/.cargo/git/db/
             target/            
             solvers/chuffed/vendor
-          key: ${{ runner.os }}-chuffed-${{ steps.chuffed-cache.outputs.chuffed_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          # match chuffed exactly, cargo inexactly
-          restore-keys: ${{ runner.os }}-chuffed-${{ steps.chuffed-cache.outputs.chuffed_sha}}-cargo-
+
+          key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: stable-${{ runner.os }}-gitmodules-
 
       - working-directory: ./solvers/chuffed
         run: rustup update stable && rustup default stable

@@ -1,4 +1,4 @@
-name: 'Info: Code Coverage'
+name: 'Code Coverage'
 on:
   push:
   pull_request:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   coverage:
-    name: "Coverage Report"
+    name: "Info: Code Coverage Reports"
     # only do coverage for ready PRs
     if: ${{ github.event != 'pull_request' || ( github.event == 'pull_request' && (! github.event.pull_request.draft)) }}
     runs-on: ubuntu-latest
@@ -18,25 +18,25 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v2
 
-      - name: Get submodule hashes for cache invalidation
-        id: cache-hashes
+      - name: Generate caching variables
+        id: cache-vars
         run: |
-          echo "shas=$(git rev-parse HEAD:solvers/minion/vendor)-$(git rev-parse HEAD:solvers/chuffed/vendor)"
-          echo "shas=$(git rev-parse HEAD:solvers/minion/vendor)-$(git rev-parse HEAD:solvers/chuffed/vendor)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
 
       - name: Set up cache
         uses: actions/cache@v3
         with:
-          path: |
+          path: 
             ~/.cargo/bin/
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/            
             solvers/minion/vendor
-            solvers/chuffed/vendor
-          key: nightly-${{ runner.os }}-solvers-${{ steps.cache-hashes.outputs.shas }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: nightly-${{ runner.os }}-solvers-${{ steps.cache-hashes.outputs.shas }}-cargo-
+
+          key: nightly-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: nightly-${{ runner.os }}-gitmodules-
 
       - name: Install rust nightly
         working-directory: ./solvers/minion
@@ -66,7 +66,7 @@ jobs:
           branch: gh-pages
           commit-message: "Actions: Code Coverage for ${{ github.sha }}"
 
-      - name: Update latest code coverage if on main.
+      - name: If on main branch, copy coverage report to /latest.
         if: github.ref == 'refs/heads/main'
         uses: JamesIves/github-pages-deploy-action@v4
         with:

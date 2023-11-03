@@ -3,9 +3,6 @@
 name: 'solvers/kissat'
 on:
   push:
-    paths: 
-      - 'solvers/kissat/**'
-      - "Cargo.*"
   pull_request:
     paths: 
       - 'solvers/kissat/**'
@@ -14,10 +11,16 @@ on:
 
 jobs:
   ubuntu:
-    name: 'solvers/kissat: Ubuntu Build'
+    name: 'Kissat: Ubuntu Build'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
+      - name: Generate caching variables
+        id: cache-vars
+        run: |
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
 
       - name: Set up cache
         uses: actions/cache@v3
@@ -28,8 +31,9 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
+
+          key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: stable-${{ runner.os }}-gitmodules-
 
       - working-directory: ./solvers/kissat
         run: rustup update stable && rustup default stable
@@ -38,10 +42,16 @@ jobs:
         run: cargo build -vv
 
   mac:
-    name: 'solvers/kissat: Mac Build'
+    name: "Kissat: Mac Build"
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
+
+      - name: Generate caching variables
+        id: cache-vars
+        run: |
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
 
       - name: Set up cache
         uses: actions/cache@v3
@@ -52,8 +62,9 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
+
+          key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: stable-${{ runner.os }}-gitmodules-
 
       - working-directory: ./solvers/kissat
         run: rustup update stable && rustup default stable
@@ -65,10 +76,16 @@ jobs:
         run: cargo build -vv
 
   tests:
-    name: 'solvers/kissat: Tests'
+    name: "Kissat: Tests"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
+      - name: Generate caching variables
+        id: cache-vars
+        run: |
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
 
       - name: Set up cache
         uses: actions/cache@v3
@@ -79,8 +96,9 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
+
+          key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: stable-${{ runner.os }}-gitmodules-
 
       - working-directory: ./solvers/kissat
         run: rustup update stable && rustup default stable
