@@ -27,13 +27,13 @@ jobs:
       - name: Set up cache
         uses: actions/cache@v3
         with:
-          path: 
+          path: |
             ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
+            ~/.cargo/registry/index
+            ~/.cargo/git/
             target/            
             solvers/minion/vendor
+            solvers/chuffed/vendor
 
           key: nightly-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: nightly-${{ runner.os }}-gitmodules-
@@ -99,3 +99,35 @@ jobs:
           echo "| Conjure-Oxide | ![](${CONJURE_OXIDE_LATEST}/badges/flat.svg) | [Full Report](${CONJURE_OXIDE_LATEST}) | " >> $GITHUB_STEP_SUMMARY
           echo "| Minion        | ![](${MINION_LATEST}/badges/flat.svg)        | [Full Report](${MINION_LATEST}) | " >> $GITHUB_STEP_SUMMARY
           echo "| Chuffed       | ![](${CHUFFED_LATEST}/badges/flat.svg)       | [Full Report](${CHUFFED_LATEST}) | " >> $GITHUB_STEP_SUMMARY
+
+  indexes:
+    needs: coverage
+    name: "Regenerate indexes for coverage"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Checkout the pages repository
+        uses: actions/checkout@v2
+        with:
+          ref: "gh-pages"
+          path: "pages"
+
+      - name: "Generate indexes"
+        run: |
+          ./etc/ci/genindex.py pages/coverage/${{ github.sha }}
+          ./etc/ci/genindex.py pages/coverage/latest
+          ./etc/ci/genindex.py pages/coverage/
+
+      - uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: ./pages/coverage/
+          target-folder: ./coverage/
+          branch: gh-pages
+          commit-message: "Actions: Update coverage indexes"
+
+
+
+
+
