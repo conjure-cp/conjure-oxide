@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use crate::common::parse::json::parse_json;
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct Model {
