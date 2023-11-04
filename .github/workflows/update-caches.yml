@@ -4,6 +4,9 @@ on:
     branches:
       - main
 
+env:
+    GH_TOKEN: ${{ github.token }}
+
 jobs:
   caches:
     strategy:
@@ -15,6 +18,7 @@ jobs:
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v2
+
 
       - name: Generate caching variables
         id: cache-vars
@@ -43,9 +47,8 @@ jobs:
 
       - name: Delete cache if it already exists, so we can overwrite it
         run: | 
-          gh cache delete "${{ matrix.version }}-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}"
+          gh cache delete "${{ matrix.version }}-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}" || true
           # always succeed even if cache does not exist
-          true
 
       - name: Save cache
         uses: actions/cache/save@v3
