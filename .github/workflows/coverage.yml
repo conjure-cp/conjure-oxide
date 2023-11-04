@@ -1,0 +1,101 @@
+name: 'Info: Code Coverage'
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# see https://github.com/JamesIves/github-pages-deploy-action/tree/dev
+permissions:
+  contents: write
+
+jobs:
+  coverage:
+    name: "Coverage Report"
+    # only do coverage for ready PRs
+    if: ${{ github.event != 'pull_request' || ( github.event == 'pull_request' && (! github.event.pull_request.draft)) }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Get submodule hashes for cache invalidation
+        id: cache-hashes
+        run: |
+          echo "shas=$(git rev-parse HEAD:solvers/minion/vendor)-$(git rev-parse HEAD:solvers/chuffed/vendor)"
+          echo "shas=$(git rev-parse HEAD:solvers/minion/vendor)-$(git rev-parse HEAD:solvers/chuffed/vendor)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/            
+            solvers/minion/vendor
+            solvers/chuffed/vendor
+          key: nightly-${{ runner.os }}-solvers-${{ steps.cache-hashes.outputs.shas }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: nightly-${{ runner.os }}-solvers-${{ steps.cache-hashes.outputs.shas }}-cargo-
+
+      - name: Install rust nightly
+        working-directory: ./solvers/minion
+        run: rustup update nightly && rustup default nightly
+      
+      - name: Generate coverage reports
+        working-directory: .
+        run: |
+          ./etc/scripts/gen_coverage_all.sh
+
+      - name: Move all html to correct folders for deployment
+        run: |
+          # put things both in the sha directory, and in latest/
+          mkdir -p deploy/conjure-oxide
+          mkdir -p deploy/minion
+          mkdir -p deploy/chuffed
+
+          cp -r coverage/html/* deploy/conjure-oxide
+          cp -r solvers/minion/coverage/html/* deploy/minion
+          cp -r solvers/chuffed/coverage/html/* deploy/chuffed
+
+      - name: Deploy to Github Pages 
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: ./deploy
+          target-folder: "coverage/${{ github.sha }}"
+          branch: gh-pages
+          commit-message: "Actions: Code Coverage for ${{ github.sha }}"
+
+      - name: Update latest code coverage if on main.
+        if: github.ref == 'refs/heads/main'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: ./deploy
+          target-folder: "coverage/latest"
+          branch: gh-pages
+          commit-message: "Actions: Update latest code coverage for main (${{ github.sha }})"
+
+      - name: Format summary
+        run : |
+          CONJURE_OXIDE_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ github.sha }}/conjure-oxide"
+          MINION_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ github.sha }}/minion"
+          CHUFFED_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ github.sha }}/chuffed"
+
+          CONJURE_OXIDE_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/latest/conjure-oxide"
+          MINION_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/latest/minion"
+          CHUFFED_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/latest/chuffed"
+          echo '# Code Coverage' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## This commit" >> $GITHUB_STEP_SUMMARY
+          echo "| Crate | |  | " >> $GITHUB_STEP_SUMMARY
+          echo "| ----- | ----- | ----- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Conjure-Oxide | ![](${CONJURE_OXIDE_URL}/badges/flat.svg) | [Full Report](${CONJURE_OXIDE_URL}) | " >> $GITHUB_STEP_SUMMARY
+          echo "| Minion        | ![](${MINION_URL}/badges/flat.svg)        | [Full Report](${MINION_URL}) | " >> $GITHUB_STEP_SUMMARY
+          echo "| Chuffed       | ![](${CHUFFED_URL}/badges/flat.svg)       | [Full Report](${CHUFFED_URL}) | " >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Main" >> $GITHUB_STEP_SUMMARY
+          echo "| Crate | |  | " >> $GITHUB_STEP_SUMMARY
+          echo "| ----- | ----- | ----- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Conjure-Oxide | ![](${CONJURE_OXIDE_LATEST}/badges/flat.svg) | [Full Report](${CONJURE_OXIDE_LATEST}) | " >> $GITHUB_STEP_SUMMARY
+          echo "| Minion        | ![](${MINION_LATEST}/badges/flat.svg)        | [Full Report](${MINION_LATEST}) | " >> $GITHUB_STEP_SUMMARY
+          echo "| Chuffed       | ![](${CHUFFED_LATEST}/badges/flat.svg)       | [Full Report](${CHUFFED_LATEST}) | " >> $GITHUB_STEP_SUMMARY
