@@ -1,0 +1,115 @@
+name: "solvers/minion"
+on:
+  push:
+    paths: 
+      - 'solvers/minion/**'
+      - "Cargo.*"
+  pull_request:
+    paths: 
+      - 'solvers/minion/**'
+      - "Cargo.*"
+  workflow_dispatch:
+
+jobs:
+  ubuntu:
+    name: "Minion: Ubuntu Build"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Generate caching variables
+        id: cache-vars
+        run: |
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
+
+      - name: Set up cache
+        uses: actions/cache@v3
+        with:
+          path: 
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/            
+            solvers/minion/vendor
+
+          key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: stable-${{ runner.os }}-gitmodules-
+
+      - working-directory: ./solvers/minion
+        run: rustup update stable && rustup default stable
+
+      - working-directory: ./solvers/minion
+        run: cargo build -vv
+
+  mac:
+    name: "Minion: Mac Build"
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Generate caching variables
+        id: cache-vars
+        run: |
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
+
+      - name: Set up cache
+        uses: actions/cache@v3
+        with:
+          path: 
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/            
+            solvers/minion/vendor
+            
+          key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: stable-${{ runner.os }}-gitmodules-
+
+      - working-directory: ./solvers/minion
+        run: rustup update stable && rustup default stable
+
+      - working-directory: ./solvers/minion 
+        run: rustup target add aarch64-apple-darwin
+
+      - working-directory: ./solvers/minion
+        run: cargo build -vv
+
+  tests:
+    name: "Minion: Tests"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Generate caching variables
+        id: cache-vars
+        run: |
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
+
+      - name: Set up cache
+        uses: actions/cache@v3
+        with:
+          path: 
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/            
+            solvers/minion/vendor
+          key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: stable-${{ runner.os }}-gitmodules-
+
+      - working-directory: ./solvers/minion
+        run: rustup update stable && rustup default stable
+
+      - working-directory: ./solvers/minion
+        run: cargo test
+
+
+      
+
+

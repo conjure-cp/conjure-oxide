@@ -1,0 +1,64 @@
+name: "Code Coverage (Generate)"
+on:
+  push:
+  pull_request:
+
+
+jobs:
+  coverage:
+    name: "Generate Code Coverage Reports"
+    # only do coverage for ready PRs
+    if: ${{ github.event != 'pull_request' || ( github.event == 'pull_request' && (! github.event.pull_request.draft)) }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Generate caching variables
+        id: cache-vars
+        run: |
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
+
+      - name: Set up cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index
+            ~/.cargo/git/
+            target/            
+            solvers/minion/vendor
+            solvers/chuffed/vendor
+
+          key: nightly-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: nightly-${{ runner.os }}-gitmodules-
+
+      - name: Install rust nightly
+        working-directory: ./solvers/minion
+        run: rustup update nightly && rustup default nightly
+      
+      - name: Generate coverage reports
+        working-directory: .
+        run: |
+          ./etc/scripts/gen_coverage_all.sh
+          
+      - name: Move all html to correct folders for deployment
+        run: |
+          # put things both in the sha directory, and in latest/
+          mkdir -p deploy/conjure-oxide
+          mkdir -p deploy/minion
+          mkdir -p deploy/chuffed
+
+          cp -r coverage/html/* deploy/conjure-oxide
+          cp -r solvers/minion/coverage/html/* deploy/minion
+          cp -r solvers/chuffed/coverage/html/* deploy/chuffed
+
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v3
+        with:
+          name: code-coverage-${{ github.sha }}
+          path: deploy/**
+
+
+

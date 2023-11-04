@@ -1,4 +1,4 @@
-name: 'Info: Documentation Coverage'
+name: "Documentation Coverage"
 on:
   push:
   pull_request:
@@ -6,16 +6,16 @@ on:
 
 jobs:
   minion:
-    name: 'Minion'
+    name: 'Info: Minion Docs Coverage Report'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
-
-      - name: Get minion hash for cache invalidation
-        id: minion-cache
+      - name: Generate caching variables
+        id: cache-vars
         run: |
-          echo "minion_sha=$(git rev-parse HEAD:solvers/minion/vendor)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
 
       - name: Set up cache
         uses: actions/cache@v3
@@ -27,8 +27,9 @@ jobs:
             ~/.cargo/git/db/
             target/            
             solvers/minion/vendor
-          key: nightly-${{ runner.os }}-minion-${{ steps.minion-cache.outputs.minion_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: nightly-${{ runner.os }}-minion-${{ steps.minion-cache.outputs.minion_sha}}-cargo-
+
+          key: nightly-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: nightly-${{ runner.os }}-gitmodules-
 
       - name: Use nightly 
         run: rustup update nightly && rustup default nightly
@@ -41,15 +42,16 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
 
   chuffed:
-    name: 'Chuffed'
+    name: 'Info: Chuffed Docs Coverage Report'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
-      - name: Get chuffed hash for cache invalidation
-        id: chuffed-cache
+      - name: Generate caching variables
+        id: cache-vars
         run: |
-          echo "chuffed_sha=$(git rev-parse HEAD:solvers/chuffed/vendor)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
 
       - name: Set up cache
         uses: actions/cache@v3
@@ -61,9 +63,9 @@ jobs:
             ~/.cargo/git/db/
             target/            
             solvers/chuffed/vendor
-          key: nightly-${{ runner.os }}-chuffed-${{ steps.chuffed-cache.outputs.chuffed_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          # match chuffed exactly, cargo inexactly
-          restore-keys: nightly-${{ runner.os }}-chuffed-${{ steps.chuffed-cache.outputs.chuffed_sha}}-cargo-
+
+          key: nightly-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: nightly-${{ runner.os }}-gitmodules-
 
       - name: Use nightly 
         run: rustup update nightly && rustup default nightly
@@ -76,10 +78,16 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
 
   conjure-oxide:
-    name: 'Conjure Oxide'
+    name: 'Info: Conjure Oxide Docs Coverage Report'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
+      - name: Generate caching variables
+        id: cache-vars
+        run: |
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
 
       - name: Set up cache
         uses: actions/cache@v3
@@ -89,11 +97,12 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            ~/solvers/minion/vendor
-            ~/solvers/chuffed/vendor
             target/            
-          key: nightly-conjureoxide-${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: nightly-conjureoxide-${{ runner.os }}-cargo
+            solvers/chuffed/vendor
+            solvers/minion/vendor
+
+          key: nightly-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: nightly-${{ runner.os }}
 
       - name: Use nightly 
         run: rustup update nightly && rustup default nightly
