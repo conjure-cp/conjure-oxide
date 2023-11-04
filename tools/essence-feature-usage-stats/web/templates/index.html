@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+    {% include "keyword_list.html" %}
+    <section>
+        <h2>Essence feature table</h2>
+        {% if "table" in data.keys() %}
+            {{ data["table"] }}
+        {% else %}
+            {# Include the table.html template here #}
+            {% include "table.html" %}
+        {% endif %}
+    </section>
+{% endblock content %}
+
+{% block footer %}
+    <br/>
+    Generated on: {{ data["timestamp"] }}
+{% endblock footer %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" type="text/css" href="{{ data["css_path"] }}">
+{% endblock stylesheets %}
+
+{% block scripts %}
+    <script src="{{ data["script_path"] }}"></script>
+{% endblock scripts %}
