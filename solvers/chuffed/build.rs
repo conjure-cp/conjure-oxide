@@ -16,6 +16,8 @@ fn main() {
     println!("cargo:rustc-link-search=all=./solvers/chuffed/vendor/build/");
     println!("cargo:rustc-link-lib=static=chuffed");
     println!("cargo:rustc-link-lib=static=chuffed_fzn");
+    println!("cargo:rustc-link-search=all=./solvers/chuffed/");
+    println!("cargo:rustc-link-lib=static=wrapper");
 
     // also need to (dynamically) link to c++ stdlib
     // https://flames-of-code.netlify.app/blog/rust-and-cmake-cplusplus/
@@ -64,6 +66,17 @@ fn bind() {
         // in C++ stdlib that will make it crash.
         .allowlist_function("createVars")
         .allowlist_function("createVar")
+        .allowlist_function("all_different")
+        .allowlist_function("branch")
+        .allowlist_function("output_vars")
+        .allowlist_function("var_sym_break")
+        .allowlist_function("new_dummy_problem")
+        .allowlist_function("get_idx")
+        .allowlist_function("make_vec_intvar")
+        .allowlist_function("destroy_vec_intvar")
+        .allowlist_function("p_addVars")
+        .allowlist_function("p_setcallback")
+        .allowlist_function("branch_IntVar")
         .clang_arg("-Ivendor/build") // generated from configure.py
         .clang_arg("-Ivendor")
         .clang_arg(r"--std=gnu++11")
