@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Iterable, Tuple
 
 from git import Repo
 
@@ -25,10 +25,11 @@ class EssenceStats:
         conjure_dir: Path,
         conjure_repo_url: str,
         essence_dir: Path,
-        essence_repo_urls: [str],
-        essence_branch: str = "master",
+        essence_repo_urls: Iterable[Tuple[str, str]],
         conjure_version: str = "latest",
         blocklist: Optional[list[KeywordName]] = None,
+        exclude_regex: Optional[str] = None,
+        max_n_files=10000,
     ):
         """
         Create a new EssenceStats object.
@@ -44,15 +45,17 @@ class EssenceStats:
         if blocklist is None:
             blocklist = []
 
+        self._max_n_files = max_n_files
+        self._exclude_regex = exclude_regex
         self._essence_dir = essence_dir
         self._essence_repos = []
-        for url in essence_repo_urls:
+        for url, branch in essence_repo_urls:
             repo_user, repo_name = parse_repo_url(url)
             repo_path = self._essence_dir / repo_user / repo_name
             repo = clone_or_pull(
                 repo_path,
                 url,
-                essence_branch,
+                branch,
             )
             self._essence_repos.append(repo)
 
@@ -77,16 +80,26 @@ class EssenceStats:
         """Get a list of Repo objects - repositories with Essence files."""
         return self._essence_repos
 
+    def get_essence_repo_names(self, depth=2):
+        """Get Essence repos and paths to the repos, trimmed to a given depth."""
+        return [trim_path(x.working_dir, depth) for x in self._essence_repos]
+
     def _update_stats(self):
         for repo in self._essence_repos:
             repo_dir = repo.working_dir
 
-            for file in EssenceFile.get_essence_files_from_dir(
-                repo_dir,
-                self._conjure_bin,
-                repo=repo,
-                blocklist=self._blocklist,
-            ):
+            files = list(
+                EssenceFile.get_essence_files_from_dir(
+                    repo_dir,
+                    self._conjure_bin,
+                    repo=repo,
+                    blocklist=self._blocklist,
+                    exclude_regex=self._exclude_regex,
+                    max_n_files=self._max_n_files,
+                )
+            )
+
+            for file in files:
                 self._essence_files[file.get_str_path()] = file
 
                 for keyword in file.keywords:

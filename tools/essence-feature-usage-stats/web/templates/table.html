@@ -4,8 +4,8 @@
     {% set files = stats.get_essence_files(sort_mode='most-lines', reverse=False) %}
     <thead>
     <tr>
-        <th id="first-table-cell">Essence File</th>
-        <th id="repo-cell">Essence File Repo</th>
+        <th id="filename-header">Essence File</th>
+        <th id="reponame-header" data-column="reponame">Essence File Repo</th>
         {% for essence_keyword in keywords %}
             <th class="sort-none" data-column="{{ essence_keyword.name }}">{{ essence_keyword.name }}</th>
         {% endfor %}
@@ -13,9 +13,9 @@
     </thead>
     <tbody>
     {% for file in files %}
-        <tr hide_filters="0">
-            <td n_lines="{{ file.n_lines }}">{{ file.get_str_path(depth=2) }} <i>({{ file.n_lines }} LoC)</i></td>
-            <td repo="{{ file.repo.working_dir }}">{{ file.get_repo_name(depth=2) }}</td>
+        <tr repo="{{ file.get_repo_name(depth=2) }}">
+            <td n_lines="{{ file.n_lines }}" path="{{ file.get_str_path() }}">{{ file.get_str_path(depth=3) }} <i>({{ file.n_lines }} LoC)</i></td>
+            <td repo="{{ file.get_repo_name(depth=2) }}">{{ file.get_repo_name(depth=2) }}</td>
             {% for essence_keyword in keywords %}
                 {% set n_uses = file.get_uses(essence_keyword.name) %}
                 {% set colour = essence_keyword.get_colour(n_uses).as_hex() %}

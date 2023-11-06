@@ -1,8 +1,10 @@
 import os
+import re
 from pathlib import Path
 from typing import Optional
 
 from git import Repo
+from tqdm import tqdm
 
 from utils.conjure import get_essence_file_ast
 from utils.files import count_lines, trim_path
@@ -38,7 +40,7 @@ class EssenceInvalidDirectoryError(ValueError):
         super().__init__(f"The provided path '{dir_path}' is not a valid directory")
 
 
-def find_essence_files(dir_path: str | Path):
+def find_essence_files(dir_path: str | Path, exclude_regex: str | None = None):
     """
     Find all essence files in a given directory and return a list of full paths to them.
 
@@ -51,11 +53,19 @@ def find_essence_files(dir_path: str | Path):
     if not dir_path.is_dir():
         raise EssenceInvalidDirectoryError
 
+    if exclude_regex is None:
+        exclude_regex = r"^$"  # If not excluding anything, set exclude regex to just match an empty string
+    pattern = re.compile(exclude_regex)
+
     # Walk through the directory and its subdirectories
     for root, _, files in os.walk(dir_path):
         for file in files:
             fpath = Path(root) / file
-            if fpath.is_file() and fpath.suffix == ".essence":
+            if (
+                fpath.is_file()
+                and fpath.suffix == ".essence"
+                and not pattern.match(str(fpath))
+            ):
                 yield fpath
 
 
@@ -165,6 +175,9 @@ class EssenceFile:
         conjure_bin_path: str | Path,
         repo: Optional[Repo] = None,
         blocklist=None,
+        verbose=False,
+        exclude_regex=None,
+        max_n_files=None,
     ):
         """
         Get Essence files contained in a given directory.
@@ -172,13 +185,28 @@ class EssenceFile:
         :param dir_path: path to directory with essence files
         :param conjure_bin_path: a path to conjure binary
         :param blocklist: a list of Essence keywords to ignore
+        :param verbose: Whether to print error messages
+        :param exclude_regex: Exclude file paths that match this regular expression
         :param repo: a Git repo that this directory belongs to (optional)
         """
-        for fpath in find_essence_files(dir_path):
+        print(f"Processing Essence files in {dir_path}...")
+        counter = 0
+
+        for fpath in tqdm(find_essence_files(dir_path, exclude_regex=exclude_regex)):
             try:
+                if max_n_files is not None and counter >= max_n_files:
+                    print(
+                        f"Max number of files ({max_n_files}) reached, terminating..."
+                    )
+                    break
+
                 file = EssenceFile(
                     fpath, conjure_bin_path, blocklist=blocklist, repo=repo
                 )
+                counter += 1
                 yield file
             except Exception as e:  # noqa: PERF203
-                print(f'Could not process file "{fpath}", throws exception: {e}')
+                if verbose:
+                    print(f'Could not process file "{fpath}", throws exception: {e}')
+
+        print(f"{counter} Essence files processed!")

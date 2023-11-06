@@ -1,5 +1,6 @@
 let currentSortHeader = null;
 let keywordRules = {};
+let hiddenRepos = new Set();
 
 function IntValueComparator(header) {
     const index = header.cellIndex;
@@ -12,6 +13,22 @@ function IntValueComparator(header) {
 
         if (aInt > bInt) ans = 1;
         if (aInt < bInt) ans = -1;
+
+        return ans * mult;
+    }
+}
+
+function TextValueComparator(header) {
+    const index = header.cellIndex;
+    const mult = (header.dataset.order === "desc") ? -1 : 1;
+
+    return (a, b) => {
+        const aText = a.cells[index].textContent;
+        const bText = b.cells[index].textContent;
+        let ans = 0;
+
+        if (aText > bText) ans = 1;
+        if (aText < bText) ans = -1;
 
         return ans * mult;
     }
@@ -50,7 +67,7 @@ function toggleOrder(header) {
 }
 
 function sortRows(table, header, comparator=IntValueComparator) {
-    const rows = Array.from(table.querySelectorAll("tbody tr"));
+    const rows = Array.from(table.querySelectorAll("tbody tr")).filter(row => row.style.display !== "none");
     rows.sort(comparator(header));
     rows.forEach(row => table.querySelector("tbody").appendChild(row));
 }
@@ -78,8 +95,10 @@ function make_sortable_headers(table) {
     headers.forEach(header => {
         header.addEventListener("click", (e) => {
             toggleOrder(header);
-            if (header.id === "first-table-cell") {
+            if (header.id === "filename-header") {
                 sortRows(table, header, FileLengthComparator);
+            } else if (header.id === "reponame-header") {
+                sortRows(table, header, TextValueComparator);
             }
             else {
                 sortRows(table, header);
@@ -98,6 +117,23 @@ function findColumnIndex(columnHeaders, columnName) {
         }
     }
     return columnIndex;
+}
+
+function make_hideable_repos(table) {
+    const checkboxes = document.querySelectorAll(".repo-checkbox");
+
+    checkboxes.forEach((checkbox) => {
+        checkbox.addEventListener("change", function(e) {
+            const repo = e.target.getAttribute("repo");
+
+            if (e.target.checked)
+                hiddenRepos.delete(repo);
+            else
+                hiddenRepos.add(repo);
+
+            updateRowVisibility(table);
+        });
+    });
 }
 
 function make_hideable_columns(table) {
@@ -143,7 +179,8 @@ function updateRowVisibility(table) {
     const rows = table.querySelectorAll("tbody tr");
 
      rows.forEach((row) => {
-         row.hidden = false;
+         const repo = row.getAttribute("repo");
+         row.hidden = hiddenRepos.has(repo);
      });
 
     for (let columnName of Object.keys(keywordRules)) {
@@ -169,6 +206,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const table = document.getElementById("sortable-table");
     make_sortable_headers(table);
+    make_hideable_repos(table);
     make_hideable_columns(table);
     make_file_controls(table);
 });
