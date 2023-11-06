@@ -50,14 +50,14 @@ jobs:
           branch: gh-pages
           commit-message: "Actions: Code Coverage for ${{ steps.sha.outputs.result }}"
 
-      - name: If on main branch, copy coverage report to /latest.
+      - name: If on main branch, copy coverage report to /main.
         if: github.ref == 'refs/heads/main'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: ./deploy
-          target-folder: "coverage/latest"
+          target-folder: "coverage/main"
           branch: gh-pages
-          commit-message: "Actions: Update latest code coverage for main (${{steps.sha.outputs.result}})"
+          commit-message: "Actions: Update code coverage for main (${{steps.sha.outputs.result}})"
 
       - name: Format summary
         run : |
@@ -65,9 +65,9 @@ jobs:
           MINION_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ steps.sha.output.result }}/minion"
           CHUFFED_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ steps.sha.output.result }}/chuffed"
 
-          CONJURE_OXIDE_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/latest/conjure-oxide"
-          MINION_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/latest/minion"
-          CHUFFED_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/latest/chuffed"
+          CONJURE_OXIDE_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/main/conjure-oxide"
+          MINION_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/main/minion"
+          CHUFFED_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/main/chuffed"
           echo '# Code Coverage' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## This commit" >> $GITHUB_STEP_SUMMARY
