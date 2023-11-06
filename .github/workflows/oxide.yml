@@ -1,0 +1,114 @@
+name: "conjure-oxide"
+
+on:
+  push:
+    branches:
+      - main # run for pushes to the main branch
+    paths: 
+      - 'src/**'
+      - "Cargo.*"
+  pull_request:
+    paths: 
+      - 'src/**'
+      - "Cargo.*"
+  workflow_dispatch:
+
+jobs:
+  ubuntu:
+    name: "Conjure Oxide: Ubuntu Build"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Generate caching variables
+        id: cache-vars
+        run: |
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
+
+      - name: Set up cache
+        uses: actions/cache@v3
+        with:
+          path: 
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/            
+            solvers/minion/vendor
+            solvers/chuffed/vendor
+
+          key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: stable-${{ runner.os }}-gitmodules-
+
+      - run: rustup update stable && rustup default stable
+
+      - run: cargo build -vv
+
+  mac:
+    name: "Conjure Oxide: Mac Build"
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Generate caching variables
+        id: cache-vars
+        run: |
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
+
+      - name: Set up cache
+        uses: actions/cache@v3
+        with:
+          path: 
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/            
+            solvers/minion/vendor
+            solvers/chuffed/vendor
+            
+          key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: stable-${{ runner.os }}-gitmodules-
+
+      - run: rustup update stable && rustup default stable
+
+      - run: rustup target add aarch64-apple-darwin
+
+      - run: cargo build -vv
+
+  tests:
+    name: "Conjure Oxide: Tests"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Generate caching variables
+        id: cache-vars
+        run: |
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
+
+      - name: Set up cache
+        uses: actions/cache@v3
+        with:
+          path: 
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/            
+            solvers/minion/vendor
+            solvers/chuffed/vendor
+          key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: stable-${{ runner.os }}-gitmodules-
+
+      - run: rustup update stable && rustup default stable
+
+      - run: cargo test
+
+
+      
+
+

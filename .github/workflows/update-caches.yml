@@ -1,0 +1,65 @@
+name: Full Caches
+
+on:
+  push:
+    branches:
+      - main # run for pushes to the main branch
+  workflow_dispatch:
+
+env:
+    GH_TOKEN: ${{ github.token }}
+
+jobs:
+  caches:
+    strategy:
+      matrix:
+        version: [nightly,stable]
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    name: "Regenerate Caches (${{ matrix.version }}, ${{ matrix.os }})" 
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+
+      - name: Generate caching variables
+        id: cache-vars
+        run: |
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
+          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
+
+      - name: Set up cache
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/
+            ~/.cargo/git/
+            target/            
+            solvers/minion/vendor
+            solvers/chuffed/vendor
+
+          key: ${{ matrix.version }}-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ matrix.version }}-${{ runner.os }}
+
+      - name: Install rust ${{ matrix.version }}
+        run: rustup update ${{ matrix.version }} && rustup default ${{ matrix.version }}
+
+      - run: cargo build --workspace
+
+      - name: Delete cache if it already exists, so we can overwrite it
+        run: | 
+          gh cache delete "${{ matrix.version }}-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}" || true
+          # always succeed even if cache does not exist
+
+      - name: Save cache
+        uses: actions/cache/save@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/
+            ~/.cargo/git/
+            target/            
+            solvers/minion/vendor
+            solvers/chuffed/vendor
+          key: ${{ matrix.version }}-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
