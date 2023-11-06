@@ -34,7 +34,7 @@ if __name__ == "__main__":
         essence_dir=ESSENCE_DIR,
         essence_repo_urls=[ESSENCE_EXAMPLES_REPO],
         essence_branch="master",
-        conjure_version="v2.4.1",
+        conjure_version=CONJURE_VERSION,
         blocklist=KEYWORD_BLOCKLIST,
     )
 
