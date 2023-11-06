@@ -1,4 +1,4 @@
-use crate::common::parse::json::parse_json;
+use crate::parse::parse_json;
 use std::collections::HashMap;
 
 #[derive(Debug)]

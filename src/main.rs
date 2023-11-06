@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fs::File, io::Read};
 
-mod common;
-use common::ast::*;
+mod ast;
+use ast::*;
 
 fn main() {
     let mut abc = File::open("examples/abc.json").unwrap();
