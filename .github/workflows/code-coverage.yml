@@ -24,6 +24,18 @@ jobs:
           echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
           echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
 
+      - name: Get Sha
+        id: sha
+        run: |
+          if [[ ${{ github.event_name }} == 'pull_request' ]] 
+          then
+            echo -e "sha=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
+            echo -e "sha=${{ github.event.pull_request.head.sha }}"
+          else 
+            echo -e "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+            echo -e "sha=${{ github.sha }}"
+          fi
+
       - name: Set up cache
         uses: actions/cache@v3
         with:
@@ -61,14 +73,14 @@ jobs:
       - name: Archive code coverage results
         uses: actions/upload-artifact@v3
         with:
-          name: code-coverage-${{ github.sha }}
+          name: code-coverage-${{ steps.sha.outputs.sha }}
           path: deploy/**
 
       - name: Format summary
         run : |
-          CONJURE_OXIDE_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ github.sha }}/conjure-oxide"
-          MINION_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ github.sha }}/minion"
-          CHUFFED_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ github.sha }}/chuffed"
+          CONJURE_OXIDE_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ steps.sha.outputs.sha }}/conjure-oxide"
+          MINION_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ steps.sha.outputs.sha }}/minion"
+          CHUFFED_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ steps.sha.outputs.sha }}/chuffed"
 
           CONJURE_OXIDE_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/main/conjure-oxide"
           MINION_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/main/minion"
