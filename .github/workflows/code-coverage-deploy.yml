@@ -54,7 +54,7 @@ jobs:
           commit-message: "Actions: Code Coverage for ${{ steps.sha.outputs.result }}"
 
       - name: If on main branch, copy coverage report to /main.
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: ./deploy
