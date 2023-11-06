@@ -1,66 +1,67 @@
-  name: "tools/essence-feature-stats - Deploy to Github Pages"
+name: "tools/essence-feature-stats - Deploy to Github Pages"
 
-  on:
-    push:
-      branches:
-        - main
+on:
+  push:
+    branches:
+      - main # run for pushes to the main branch
+  workflow_dispatch:  
 
-  env:
-    ESSENCE_DIR: "./EssenceCatalog"
-    CONJURE_DIR: "./conjure"
-    ESSENCE_EXAMPLES_REPO: "https://github.com/conjure-cp/EssenceCatalog.git"
-    CONJURE_REPO: "https://github.com/conjure-cp/conjure"
-    OUTPUT_PATH: "./web/static/index.html"
-    KEYWORD_BLOCKLIST: >
-                    mInfo,finds,givens,enumGivens,enumLettings,lettings,
-                    unnameds,strategyQ,Auto,Interactive,strategyA,trailCompact,
-                    nameGenState,nbExtraGivens,representations,representationsTree,
-                    originalDomains,trailGeneralised,trailVerbose,trailRewrites,
-                    mLanguage,language,version,mStatements,Name,Declaration
+env:
+  ESSENCE_DIR: "./EssenceCatalog"
+  CONJURE_DIR: "./conjure"
+  ESSENCE_EXAMPLES_REPO: "https://github.com/conjure-cp/EssenceCatalog.git"
+  CONJURE_REPO: "https://github.com/conjure-cp/conjure"
+  OUTPUT_PATH: "./web/static/index.html"
+  KEYWORD_BLOCKLIST: >
+                  mInfo,finds,givens,enumGivens,enumLettings,lettings,
+                  unnameds,strategyQ,Auto,Interactive,strategyA,trailCompact,
+                  nameGenState,nbExtraGivens,representations,representationsTree,
+                  originalDomains,trailGeneralised,trailVerbose,trailRewrites,
+                  mLanguage,language,version,mStatements,Name,Declaration,Op
 
-  jobs:
-    build:
-      name: "tools/essence-feature-stats: Build the tool and clone EssenceCatalog repo"
+jobs:
+  build:
+    name: "tools/essence-feature-stats: Build the tool and clone EssenceCatalog repo"
 
-      runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
-      strategy:
-        matrix:
-          python-version: ["3.11"]
+    strategy:
+      matrix:
+        python-version: ["3.11"]
 
-      permissions:
-        contents: write
+    permissions:
+      contents: write
 
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-        - name: Install Python ${{ matrix.python-version }}
-          uses: actions/setup-python@v4
-          with:
-            python-version: ${{ matrix.python-version }}
+      - name: Install Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
 
-        - name: Install python dependencies
-          run: pip install -r requirements.txt
-          working-directory: ./tools/essence-feature-usage-stats
+      - name: Install python dependencies
+        run: pip install -r requirements.txt
+        working-directory: ./tools/essence-feature-usage-stats
 
-        - name: Run main.py to generate the table
-          run: python main.py
-          working-directory: ./tools/essence-feature-usage-stats
+      - name: Run main.py to generate the table
+        run: python main.py
+        working-directory: ./tools/essence-feature-usage-stats
 
-        - name: Fix file permissions
-          run: chmod -v -R +rwx ./web/static/
-          working-directory: ./tools/essence-feature-usage-stats
+      - name: Fix file permissions
+        run: chmod -v -R +rwx ./web/static/
+        working-directory: ./tools/essence-feature-usage-stats
 
-        - name: Add the .nojekyll file
-          run: touch ./web/static/.nojekyll
-          working-directory: ./tools/essence-feature-usage-stats
-          
-        - name: Deploy to GitHub Pages
-          uses: JamesIves/github-pages-deploy-action@v4.4.3
-          with:
-            branch: gh-pages
-            folder: ./tools/essence-feature-usage-stats/web/static
-            target-folder: tools/essence-feature-usage-stats
-            commit-message: "Actions: Deploy the essence features usage table 🚀"
- 
+      - name: Add the .nojekyll file
+        run: touch ./web/static/.nojekyll
+        working-directory: ./tools/essence-feature-usage-stats
+        
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4.4.3
+        with:
+          branch: gh-pages
+          folder: ./tools/essence-feature-usage-stats/web/static
+          target-folder: tools/essence-feature-usage-stats
+          commit-message: "Actions: Deploy the essence features usage table 🚀"
+
