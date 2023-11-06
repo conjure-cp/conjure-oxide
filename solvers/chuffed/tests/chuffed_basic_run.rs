@@ -6,6 +6,8 @@ use chuffed_rs::wrappers::{
     all_different_wrapper, branch_wrapper, create_vars, output_vars_wrapper, var_sym_break_wrapper,
 };
 
+/// Creates the variable for the test problem and posts some constraints and
+/// branchings on it.
 unsafe fn post_constraints(_n: i32) -> *mut vec<*mut IntVar> {
     // Create constant
     let n: i32 = _n;
@@ -28,14 +30,16 @@ unsafe fn post_constraints(_n: i32) -> *mut vec<*mut IntVar> {
     x
 }
 
-// Custom printing function for this problem
+/// Custom printing function for this test problem
 #[no_mangle]
 pub unsafe extern "C" fn callback(x: *mut vec<*mut IntVar>) {
     print!("First output is: {}", get_idx(x, 0));
 }
 
-// Entry point for running this problem
-fn main() {
+/// Basic test to make sure that running the ffi bindings and wrappers does not
+/// crash
+#[test]
+fn run_basic_problem() {
     let args: Vec<String> = std::env::args().collect();
 
     if args.len() != 2 {
@@ -56,5 +60,8 @@ fn main() {
         // Commented out currently as trying to print causes the assertion of
         // isFixed() in IntVar::getVal() to fail.
         // p_print(p);
+
+        // Pass test if no crash occurs
+        assert!(true);
     }
 }

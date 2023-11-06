@@ -7,15 +7,17 @@ void p_addVars(DummyProblem *p, vec<IntVar *> *_searchVars) {
 void p_setcallback(DummyProblem *p, void (*_callback)(vec<IntVar *> *)) {
   p->setcallback(_callback);
 }
-IntVar* get_idx(vec<IntVar *> *x, int i) { return *x[i]; }
+void p_print(DummyProblem *p) { p->print(); }
 
-vec<IntVar*>* make_vec_intvar() {
-  return new vec<IntVar*>();
+int get_idx(vec<IntVar *> *x, int i) {
+  IntVar *var = *x[i];
+  int t = var->getVal();
+  return t;
 }
 
-void destroy_vec_intvar(vec<IntVar*>* v) {
-  delete v;
-}
+vec<IntVar *> *make_vec_intvar() { return new vec<IntVar *>(); }
+
+void destroy_vec_intvar(vec<IntVar *> *v) { delete v; }
 
 void branch_IntVar(vec<IntVar *> *x, VarBranch var_branch,
                    ValBranch val_branch) {
