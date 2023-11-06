@@ -15,6 +15,11 @@ ESSENCE_DIR = Path(os.getenv("ESSENCE_DIR"))
 CONJURE_DIR = Path(os.getenv("CONJURE_DIR"))
 OUTPUT_PATH = Path(os.getenv("OUTPUT_PATH"))
 CONJURE_REPO = os.getenv("CONJURE_REPO")
+
+CONJURE_VERSION = os.getenv("CONJURE_VERSION")
+if CONJURE_VERSION is None:
+    CONJURE_VERSION = "latest"
+
 ESSENCE_EXAMPLES_REPO = os.getenv("ESSENCE_EXAMPLES_REPO")
 
 jinja_env = Environment(
@@ -24,12 +29,13 @@ jinja_env = Environment(
 
 if __name__ == "__main__":
     stats = EssenceStats(
-        CONJURE_DIR,
-        CONJURE_REPO,
-        ESSENCE_DIR,
-        ESSENCE_EXAMPLES_REPO,
-        "master",
-        KEYWORD_BLOCKLIST,
+        conjure_dir=CONJURE_DIR,
+        conjure_repo_url=CONJURE_REPO,
+        essence_dir=ESSENCE_DIR,
+        essence_repo_urls=[ESSENCE_EXAMPLES_REPO],
+        essence_branch="master",
+        conjure_version="v2.4.1",
+        blocklist=KEYWORD_BLOCKLIST,
     )
 
     timestamp = datetime.datetime.now().strftime("%d.%m.%Y - %H:%M")

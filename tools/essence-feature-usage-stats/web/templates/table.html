@@ -5,6 +5,7 @@
     <thead>
     <tr>
         <th id="first-table-cell">Essence File</th>
+        <th id="repo-cell">Essence File Repo</th>
         {% for essence_keyword in keywords %}
             <th class="sort-none" data-column="{{ essence_keyword.name }}">{{ essence_keyword.name }}</th>
         {% endfor %}
@@ -14,6 +15,7 @@
     {% for file in files %}
         <tr hide_filters="0">
             <td n_lines="{{ file.n_lines }}">{{ file.get_str_path(depth=2) }} <i>({{ file.n_lines }} LoC)</i></td>
+            <td repo="{{ file.repo.working_dir }}">{{ file.get_repo_name(depth=2) }}</td>
             {% for essence_keyword in keywords %}
                 {% set n_uses = file.get_uses(essence_keyword.name) %}
                 {% set colour = essence_keyword.get_colour(n_uses).as_hex() %}

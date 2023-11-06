@@ -1,5 +1,8 @@
 import os
 from pathlib import Path
+from typing import Optional
+
+from git import Repo
 
 from utils.conjure import get_essence_file_ast
 from utils.files import count_lines, trim_path
@@ -59,7 +62,7 @@ def find_essence_files(dir_path: str | Path):
 class EssenceFile:
     """EssenceFile stores keyword counts and number of lines for a given file "fpath"."""
 
-    def __init__(self, fpath: str | Path, conjure_bin_path, blocklist=None):
+    def __init__(self, fpath: str | Path, conjure_bin_path, repo=None, blocklist=None):
         """Construct an EssenceFile object from a given file path."""
         fpath = Path(fpath).resolve()
 
@@ -73,8 +76,20 @@ class EssenceFile:
             )
             self._keyword_counts = flat_keys_count(self._ast, blocklist)
             self._n_lines = count_lines(fpath)
+            self._repo = repo
         except Exception as e:
             raise EssenceFileNotParsableError(fpath, str(e)) from e
+
+    @property
+    def repo(self) -> Repo | None:
+        """Get the git repo that this file belongs to."""
+        return self._repo
+
+    def get_repo_name(self, depth=2) -> str | None:
+        """Get the repo name, trimmed to a given depth."""
+        if isinstance(self.repo, Repo):
+            return trim_path(self.repo.working_dir, depth)
+        return None
 
     @property
     def path(self) -> Path:
@@ -148,6 +163,7 @@ class EssenceFile:
     def get_essence_files_from_dir(
         dir_path: str | Path,
         conjure_bin_path: str | Path,
+        repo: Optional[Repo] = None,
         blocklist=None,
     ):
         """
@@ -156,10 +172,13 @@ class EssenceFile:
         :param dir_path: path to directory with essence files
         :param conjure_bin_path: a path to conjure binary
         :param blocklist: a list of Essence keywords to ignore
+        :param repo: a Git repo that this directory belongs to (optional)
         """
         for fpath in find_essence_files(dir_path):
             try:
-                file = EssenceFile(fpath, conjure_bin_path, blocklist=blocklist)
+                file = EssenceFile(
+                    fpath, conjure_bin_path, blocklist=blocklist, repo=repo
+                )
                 yield file
             except Exception as e:  # noqa: PERF203
                 print(f'Could not process file "{fpath}", throws exception: {e}')
