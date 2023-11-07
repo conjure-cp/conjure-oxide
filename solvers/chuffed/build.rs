@@ -76,6 +76,7 @@ fn bind() {
         .allowlist_function("destroy_vec_intvar")
         .allowlist_function("p_addVars")
         .allowlist_function("p_setcallback")
+        .allowlist_function("p_print")
         .allowlist_function("branch_IntVar")
         .clang_arg("-Ivendor/build") // generated from configure.py
         .clang_arg("-Ivendor")

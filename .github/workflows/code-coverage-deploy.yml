@@ -32,6 +32,9 @@ jobs:
             });
 
             console.log(callee_run);
+
+            // from manual inspection in jq, seems to hold head.sha for PR, not
+            // whatever GITHUB_SHA is. 
             return callee_run.head_sha;
 
         
@@ -51,7 +54,7 @@ jobs:
           commit-message: "Actions: Code Coverage for ${{ steps.sha.outputs.result }}"
 
       - name: If on main branch, copy coverage report to /main.
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: ./deploy
@@ -116,7 +119,7 @@ jobs:
       - name: "Generate indexes"
         run: |
           ./etc/ci/genindex.py pages/coverage/${{ steps.sha.outputs.result }}
-          ./etc/ci/genindex.py pages/coverage/latest
+          ./etc/ci/genindex.py pages/coverage/main
           ./etc/ci/genindex.py pages/coverage/
 
       - uses: JamesIves/github-pages-deploy-action@v4
