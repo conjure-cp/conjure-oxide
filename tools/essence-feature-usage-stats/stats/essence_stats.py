@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional, Iterable, Tuple
+from typing import Iterable, Optional, Tuple
 
 from git import Repo
 
@@ -29,7 +29,7 @@ class EssenceStats:
         conjure_version: str = "latest",
         blocklist: Optional[list[KeywordName]] = None,
         exclude_regex: Optional[str] = None,
-        max_n_files=10000,
+        max_n_files: Optional[int] = None,
     ):
         """
         Create a new EssenceStats object.
@@ -37,8 +37,7 @@ class EssenceStats:
         :param conjure_dir: Path to a directory containing conjure binary
         :param conjure_repo_url: GitHub URL to download conjure release from
         :param essence_dir: Local repo with Essence example files
-        :param essence_repo_urls: List of GitHub repos with Essence example files
-        :param essence_branch: Branch to download essence files from (master by default)
+        :param essence_repo_urls: List of tuples - git repo urls and branches
         :param conjure_version: Version of conjure to install (latest by default)
         :param blocklist: Essence keywords to ignore
         """
@@ -60,7 +59,9 @@ class EssenceStats:
             self._essence_repos.append(repo)
 
         self._conjure_bin = download_conjure(
-            conjure_dir, repository_url=conjure_repo_url, version=conjure_version
+            conjure_dir,
+            repository_url=conjure_repo_url,
+            version=conjure_version,
         )
 
         self._blocklist = blocklist
@@ -85,6 +86,7 @@ class EssenceStats:
         return [trim_path(x.working_dir, depth) for x in self._essence_repos]
 
     def _update_stats(self):
+        """Loop over all associated Essence files and update the essence files stats."""
         for repo in self._essence_repos:
             repo_dir = repo.working_dir
 
@@ -96,7 +98,7 @@ class EssenceStats:
                     blocklist=self._blocklist,
                     exclude_regex=self._exclude_regex,
                     max_n_files=self._max_n_files,
-                )
+                ),
             )
 
             for file in files:

@@ -1,7 +1,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Optional
+from typing import Iterable, Optional
 
 from git import Repo
 from tqdm import tqdm
@@ -46,6 +46,7 @@ def find_essence_files(dir_path: str | Path, exclude_regex: str | None = None):
 
     :param dir_path: path to directory
     :return: a generator of paths to essence files.
+    :param exclude_regex: regular expression to exclude certain paths.
     """
     dir_path = Path(dir_path)
 
@@ -170,14 +171,14 @@ class EssenceFile:
         }
 
     @staticmethod
-    def get_essence_files_from_dir(
+    def get_essence_files_from_dir(  # noqa: PLR0913
         dir_path: str | Path,
         conjure_bin_path: str | Path,
         repo: Optional[Repo] = None,
-        blocklist=None,
-        verbose=False,
-        exclude_regex=None,
-        max_n_files=None,
+        blocklist: Optional[Iterable[str]] = None,
+        verbose: bool = False,
+        exclude_regex: Optional[str] = None,
+        max_n_files: Optional[int] = None,
     ):
         """
         Get Essence files contained in a given directory.
@@ -187,26 +188,33 @@ class EssenceFile:
         :param blocklist: a list of Essence keywords to ignore
         :param verbose: Whether to print error messages
         :param exclude_regex: Exclude file paths that match this regular expression
+        :param max_n_files: Maximum number of files to process
         :param repo: a Git repo that this directory belongs to (optional)
         """
-        print(f"Processing Essence files in {dir_path}...")
+        if verbose:
+            print(f"Processing Essence files in {dir_path}...")
         counter = 0
 
         for fpath in tqdm(find_essence_files(dir_path, exclude_regex=exclude_regex)):
             try:
                 if max_n_files is not None and counter >= max_n_files:
-                    print(
-                        f"Max number of files ({max_n_files}) reached, terminating..."
-                    )
+                    if verbose:
+                        print(
+                            f"Max number of files ({max_n_files}) reached, terminating...",
+                        )
                     break
 
                 file = EssenceFile(
-                    fpath, conjure_bin_path, blocklist=blocklist, repo=repo
+                    fpath,
+                    conjure_bin_path,
+                    blocklist=blocklist,
+                    repo=repo,
                 )
                 counter += 1
                 yield file
-            except Exception as e:  # noqa: PERF203
+            except Exception as e:
                 if verbose:
                     print(f'Could not process file "{fpath}", throws exception: {e}')
 
-        print(f"{counter} Essence files processed!")
+        if verbose:
+            print(f"{counter} Essence files processed!")

@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Tuple
 from urllib.parse import urlsplit
 
-from git import InvalidGitRepositoryError, RemoteProgress, Repo, NoSuchPathError
+from git import InvalidGitRepositoryError, NoSuchPathError, RemoteProgress, Repo
 from tqdm import tqdm
 
 

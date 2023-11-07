@@ -71,7 +71,7 @@ def download_and_extract(download_url: str, dir_path: Path | str) -> Path | None
 
     with zipfile.ZipFile(zip_path, "r") as zip_ref:
         conjure_names = list(
-            filter(lambda x: x.startswith("conjure"), zip_ref.namelist())
+            filter(lambda x: x.startswith("conjure"), zip_ref.namelist()),
         )
 
         if not conjure_names:

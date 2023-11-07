@@ -5,7 +5,7 @@ from pathlib import Path
 
 import requests
 
-from utils.files import download_and_extract, make_executable_recursive, find_file
+from utils.files import download_and_extract, find_file, make_executable_recursive
 from utils.git_utils import parse_repo_url
 
 HTTP_OK = 200
@@ -83,8 +83,8 @@ def get_release_url(repository_url: str, version: str) -> str:
     return f"https://api.github.com/repos/{user}/{repo}/releases/{version}"
 
 
-def get_conjure_zip_file_url(assets, version):
-    """Get github relese asset for a release of conjure."""
+def get_conjure_zip_file_url(assets, version) -> str | None:
+    """Get GitHub release asset for a release of conjure."""
     for asset in assets:
         if asset["name"] == f"conjure-{version}-linux.zip":
             return asset["browser_download_url"]
@@ -95,7 +95,7 @@ def download_conjure(
     output_dir: Path | PathLike[str] | str,
     version="latest",
     repository_url="https://github.com/conjure-cp/conjure",
-):
+) -> Path | None:
     """
     Download conjure from GitHub and install the binary to a local directory.
 
