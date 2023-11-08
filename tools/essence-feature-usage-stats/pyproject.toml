@@ -1,0 +1,23 @@
+[tool.ruff]
+select = ["E", "F", "B", "I", "N", "UP",
+    "A", "COM", "C4", "ISC001", "ISC002",
+    "ICN", "G", "INP", "PIE", "Q", "RSE",
+    "RET", "SIM", "ARG", "D",
+    "FIX", "PL", "TRY", "FLY", "PERF",
+    "RUF", "ERA", "PTH", "SLF"]
+
+# 2. Avoid enforcing line-length violations (`E501`) and module docstrings (D100)
+# Use line breaks at the first line of doc string (D213), so ignore D212
+# Don't use blank lines before class docstring, so ignore D203
+ignore = ["E501", "D100", "D212", "D203"]
+
+# 3. Unfixable rules
+# ERA: Don't autoremove all commented code, I may actually need it
+unfixable = ["ERA"]
+
+exclude = ["EssenceCatalog"]
+
+# 4. Ignore `E402` (import violations) in all `__init__.py` files, and in `path/to/file.py`.
+[tool.ruff.per-file-ignores]
+"web/colour.py" = ["PLR2004"]
+"__init__.py" = ["D"]
