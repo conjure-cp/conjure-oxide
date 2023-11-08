@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
-mod common;
-use common::ast::*;
+use conjure_oxide::ast::*;
 
 fn main() {
     // find a,b,c : int(1..3)
@@ -49,4 +48,6 @@ fn main() {
             ),
         ],
     };
+
+    println!("{:?}\n", m);
 }
