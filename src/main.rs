@@ -1,7 +1,8 @@
 use std::{collections::HashMap, fs::File, io::Read};
 
 mod ast;
-use ast::*;
+mod parse;
+use {ast::Model, parse::*};
 
 fn main() {
     let mut abc = File::open("examples/abc.json").unwrap();
