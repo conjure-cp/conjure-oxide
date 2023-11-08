@@ -1,0 +1,31 @@
+<section>
+    <div id="collapsible-list">
+        {% set stats = data['essence_stats'] %}
+        {% set keywords = stats.get_essence_keywords(sort_mode='most-used')[:data.get('n_keywords', -1)] %}
+
+        <h2>Essence keywords:</h2>
+        <ol id="essence-keywords">
+            {% for keyword in keywords %}
+                <li>
+                    <form>
+                        <span class="keyword-text">
+                            {{ keyword.name }} ({{ keyword.total_usages }} usages in {{ keyword.num_files_using_keyword }} files)
+                        </span>
+                        <span class="keyword-show-control">
+                            Show: <input type="checkbox" class="column-checkbox" data-column="{{ keyword.name }}" checked>
+                        </span>
+                        <fieldset class="radio-controls" data-column="{{ keyword.name }}">
+                            <input type="radio" id="any" name="require" value="any" checked>
+                            <label for="any">Any</label><br>
+                            <input type="radio" id="require" name="require" value="require">
+                            <label for="require">Require</label><br>
+                            <input type="radio" id="exclude" name="require" value="exclude">
+                            <label for="exclude">Exclude</label><br>
+                        </fieldset>
+                    </form>
+                </li>
+            {% endfor %}
+        </ol>
+    </div>
+    <button id="show-more-button" onclick="toggleCollapsibleList()">Show All</button>
+</section>
