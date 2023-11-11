@@ -5,12 +5,10 @@ on:
     branches:
       - main # run for pushes to the main branch
     paths: 
-      - 'src/**'
-      - "Cargo.*"
+      - 'conjure_oxide/**'
   pull_request:
     paths: 
-      - 'src/**'
-      - "Cargo.*"
+      - 'conjure_oxide/**'
   workflow_dispatch:
 
 jobs:
@@ -41,9 +39,11 @@ jobs:
           key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: stable-${{ runner.os }}-gitmodules-
 
-      - run: rustup update stable && rustup default stable
+      - working-directory: ./conjure_oxide
+        run: rustup update stable && rustup default stable
 
-      - run: cargo build -vv
+      - working-directory: ./conjure_oxide
+        run: cargo build -vv
 
   mac:
     name: "Conjure Oxide: Mac Build"
@@ -72,11 +72,14 @@ jobs:
           key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: stable-${{ runner.os }}-gitmodules-
 
-      - run: rustup update stable && rustup default stable
+      - working-directory: ./conjure_oxide
+        run: rustup update stable && rustup default stable
 
-      - run: rustup target add aarch64-apple-darwin
+      - working-directory: ./conjure_oxide
+        run: rustup target add aarch64-apple-darwin
 
-      - run: cargo build -vv
+      - working-directory: ./conjure_oxide
+        run: cargo build -vv
 
   tests:
     name: "Conjure Oxide: Tests"
@@ -104,9 +107,11 @@ jobs:
           key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: stable-${{ runner.os }}-gitmodules-
 
-      - run: rustup update stable && rustup default stable
+      - working-directory: ./conjure_oxide
+        run: rustup update stable && rustup default stable
 
-      - run: cargo test
+      - working-directory: ./conjure_oxide
+        run: cargo test
 
 
       
