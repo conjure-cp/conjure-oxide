@@ -4,12 +4,20 @@ use crate::raw_bindings::*;
 use thiserror::Error;
 
 /// RuntimeErrors are thrown by Minion during execution.
+///
+/// These represent internal Minion C++ exceptions translated into Rust.
+///
+/// Invalid usage of this library should throw an error before Minion is even run. Therefore, these
+/// should be quite rare. Consider creating an issue on
+/// [Github](https://github.com/conjure-cp/conjure-oxide) if these occur regularly!
 #[derive(Debug, Error)]
 pub enum RuntimeError {
     // These closely follow the ReturnCodes found in Minion's libwrapper.cpp.
+    /// The model given to Minion is invalid.
     #[error("the given instance is invalid")]
     InvalidInstance,
 
+    /// An unknown error has occurred.
     #[error("an unknown error has occurred while running minion")]
     UnknownError,
 }

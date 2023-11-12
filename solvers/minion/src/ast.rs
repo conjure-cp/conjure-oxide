@@ -35,7 +35,7 @@ pub enum Var {
     ConstantAsVar(i32),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum Constant {
     Bool(bool),
     Integer(i32),

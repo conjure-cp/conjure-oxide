@@ -31,6 +31,9 @@
 //! use std::collections::HashMap;
 //!
 //! // Get solutions out of Minion.
+//! // In this example, we just check that the solutions are correct.
+//! // See the documentation for Callback for more examples on how to use this.
+//!
 //! fn callback(solutions: HashMap<VarName, Constant>) -> bool {
 //!     let x = match solutions.get("x").unwrap() {
 //!         Constant::Integer(n) => n,

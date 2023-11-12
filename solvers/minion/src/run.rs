@@ -10,7 +10,92 @@ use crate::{ast::*, error::*, raw_bindings::*, scoped_ptr::Scoped};
 
 /// Callback function used to capture results from minion as they are generated.
 /// Should return `true` if search is to continue, `false` otherwise.
-pub type Callback = fn(HashMap<VarName, Constant>) -> bool;
+///
+/// Consider using a global mutex (or other static variable) to use these results
+/// elsewhere.
+///
+/// For example:
+///
+/// ```
+///   use minion_rs::ast::*;
+///   use minion_rs::run_minion;
+///   use std::{
+///       collections::HashMap,
+///       sync::{Mutex, MutexGuard},
+///   };
+///
+///   // More elaborate data-structures are possible, but for sake of example store
+///   // a vector of solution sets.
+///   static ALL_SOLUTIONS: Mutex<Vec<HashMap<VarName,Constant>>>  = Mutex::new(vec![]);
+///   
+///   fn callback(solutions: HashMap<VarName,Constant>) -> bool {
+///       let mut guard = ALL_SOLUTIONS.lock().unwrap();
+///       guard.push(solutions);
+///       return true;
+///   }
+///    
+///   // Build and run the model.
+///   let mut model = Model::new();
+///
+///   // ... omitted for brevity ...
+/// #
+/// # model
+/// #     .named_variables
+/// #     .add_var("x".to_owned(), VarDomain::Bound(1, 3));
+/// # model
+/// #     .named_variables
+/// #     .add_var("y".to_owned(), VarDomain::Bound(2, 4));
+/// # model
+/// #     .named_variables
+/// #     .add_var("z".to_owned(), VarDomain::Bound(1, 5));
+/// #
+/// # let leq = Constraint::SumLeq(
+/// #     vec![
+/// #         Var::NameRef("x".to_owned()),
+/// #         Var::NameRef("y".to_owned()),
+/// #         Var::NameRef("z".to_owned()),
+/// #     ],
+/// #     Var::ConstantAsVar(4),
+/// # );
+/// #
+/// # let geq = Constraint::SumGeq(
+/// #     vec![
+/// #         Var::NameRef("x".to_owned()),
+/// #         Var::NameRef("y".to_owned()),
+/// #         Var::NameRef("z".to_owned()),
+/// #     ],
+/// #     Var::ConstantAsVar(4),
+/// # );
+/// #
+/// # let ineq = Constraint::Ineq(
+/// #     Var::NameRef("x".to_owned()),
+/// #     Var::NameRef("y".to_owned()),
+/// #     Constant::Integer(-1),
+/// # );
+/// #
+/// # model.constraints.push(leq);
+/// # model.constraints.push(geq);
+/// # model.constraints.push(ineq);
+///  
+///   let res = run_minion(model, callback);
+///   res.expect("Error occurred");
+///
+///   // Get solutions
+///   let guard = ALL_SOLUTIONS.lock().unwrap();
+///
+///   let solution_set_1 = &(*guard.get(0).unwrap());
+///
+///   let x1 = solution_set_1.get("x").unwrap();
+///   let y1 = solution_set_1.get("y").unwrap();
+///   let z1 = solution_set_1.get("z").unwrap();
+/// #
+/// # // FIXME: this test would be better with an example with >1 solution.
+/// # assert_eq!(guard.len(),1);
+/// # assert_eq!(*x1,Constant::Integer(1));
+/// # assert_eq!(*y1,Constant::Integer(2));
+/// # assert_eq!(*z1,Constant::Integer(1));
+/// ```
+pub type Callback = fn(solution_set: HashMap<VarName, Constant>) -> bool;
 
 // Use globals to pass things between run_minion and the callback function.
 // Minion is (currently) single threaded anyways so the Mutexs' don't matter.
@@ -59,6 +144,9 @@ unsafe extern "C" fn run_callback() -> bool {
     }
 }
 
+/// Run Minion on the given [Model].
+///
+/// The given [callback](Callback) is ran whenever a new solution set is found.
 pub fn run_minion(model: Model, callback: Callback) -> Result<(), RuntimeError> {
     *CALLBACK.lock().unwrap() = Some(callback);
 
