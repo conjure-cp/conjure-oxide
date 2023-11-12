@@ -1,0 +1,130 @@
+name: "Code Coverage (Deploy)"
+# see https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
+
+on:
+  workflow_run:
+    workflows: ["Code Coverage (Generate)"]
+    types:
+      - completed
+
+
+# see https://github.com/JamesIves/github-pages-deploy-action/tree/dev
+permissions:
+  contents: write
+
+jobs:
+  deploy-coverage: 
+    name: "Info: Code Coverage"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Set shas
+        id: sha
+        uses: actions/github-script@v6
+        with:
+          result-encoding: string
+          script: |
+            const {data: callee_run } = await github.rest.actions.getWorkflowRun({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: context.payload.workflow_run.id,
+            });
+
+            console.log(callee_run);
+
+            // from manual inspection in jq, seems to hold head.sha for PR, not
+            // whatever GITHUB_SHA is. 
+            return callee_run.head_sha;
+
+        
+      - name: Download artifact
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          name: code-coverage-${{ steps.sha.outputs.result }}
+          workflow: code-coverage.yml
+          path: ./deploy
+
+      - name: Deploy to Github Pages 
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: ./deploy
+          target-folder: "coverage/${{ steps.sha.outputs.result }}"
+          branch: gh-pages
+          commit-message: "Actions: Code Coverage for ${{ steps.sha.outputs.result }}"
+
+      - name: If on main branch, copy coverage report to /main.
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: ./deploy
+          target-folder: "coverage/main"
+          branch: gh-pages
+          commit-message: "Actions: Update code coverage for main (${{steps.sha.outputs.result}})"
+
+      - name: Format summary
+        run : |
+          CONJURE_OXIDE_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ steps.sha.output.result }}/conjure-oxide"
+          MINION_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ steps.sha.output.result }}/minion"
+          CHUFFED_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ steps.sha.output.result }}/chuffed"
+
+          CONJURE_OXIDE_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/main/conjure-oxide"
+          MINION_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/main/minion"
+          CHUFFED_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/main/chuffed"
+          echo '# Code Coverage' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## This commit" >> $GITHUB_STEP_SUMMARY
+          echo "| Crate | |  | " >> $GITHUB_STEP_SUMMARY
+          echo "| ----- | ----- | ----- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Conjure-Oxide | ![](${CONJURE_OXIDE_URL}/badges/flat.svg) | [Full Report](${CONJURE_OXIDE_URL}) | " >> $GITHUB_STEP_SUMMARY
+          echo "| Minion        | ![](${MINION_URL}/badges/flat.svg)        | [Full Report](${MINION_URL}) | " >> $GITHUB_STEP_SUMMARY
+          echo "| Chuffed       | ![](${CHUFFED_URL}/badges/flat.svg)       | [Full Report](${CHUFFED_URL}) | " >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Main" >> $GITHUB_STEP_SUMMARY
+          echo "| Crate | |  | " >> $GITHUB_STEP_SUMMARY
+          echo "| ----- | ----- | ----- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Conjure-Oxide | ![](${CONJURE_OXIDE_LATEST}/badges/flat.svg) | [Full Report](${CONJURE_OXIDE_LATEST}) | " >> $GITHUB_STEP_SUMMARY
+          echo "| Minion        | ![](${MINION_LATEST}/badges/flat.svg)        | [Full Report](${MINION_LATEST}) | " >> $GITHUB_STEP_SUMMARY
+          echo "| Chuffed       | ![](${CHUFFED_LATEST}/badges/flat.svg)       | [Full Report](${CHUFFED_LATEST}) | " >> $GITHUB_STEP_SUMMARY
+
+  indexes:
+    needs: deploy-coverage
+    name: "Regenerate indexes for coverage"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Checkout the pages repository
+        uses: actions/checkout@v2
+        with:
+          ref: "gh-pages"
+          path: "pages"
+
+      - name: Set shas
+        id: sha
+        uses: actions/github-script@v6
+        with:
+          result-encoding: string
+          script: |
+            const {data: callee_run } = await github.rest.actions.getWorkflowRun({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: context.payload.workflow_run.id,
+            });
+
+            console.log(callee_run);
+            return callee_run.head_sha;
+
+      - name: "Generate indexes"
+        run: |
+          ./etc/ci/genindex.py pages/coverage/${{ steps.sha.outputs.result }}
+          ./etc/ci/genindex.py pages/coverage/main
+          ./etc/ci/genindex.py pages/coverage/
+
+      - uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: ./pages/coverage/
+          target-folder: ./coverage/
+          branch: gh-pages
+          commit-message: "Actions: Update coverage indexes"
