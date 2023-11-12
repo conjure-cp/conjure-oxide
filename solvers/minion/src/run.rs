@@ -1,10 +1,6 @@
-use std::{error::Error, ffi::CString};
+use std::ffi::CString;
 
-use crate::{
-    ast::*,
-    raw_bindings::{self, *},
-    scoped_ptr::Scoped,
-};
+use crate::{raw_bindings::*, ast::*, scoped_ptr::Scoped};
 
 // TODO: allow passing of options.
 
