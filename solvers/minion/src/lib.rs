@@ -100,6 +100,12 @@
 //! let res = run_minion(model, callback);
 //! res.expect("Error occurred");
 //! ```
+//!
+//! ## `PRINT` and `VARORDER`
+//!
+//! These bindings have no replacement for Minion's `PRINT` and `VARORDER` statements - any
+//! variable given to the model that does not have a constant value is considered a search
+//! variable. Solutions are returned through the [callback function](Callback) as a `HashMap`.
 
 pub mod error;
 mod raw_bindings;
