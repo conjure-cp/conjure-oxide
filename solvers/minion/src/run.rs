@@ -1,11 +1,11 @@
 use std::ffi::CString;
 
-use crate::{raw_bindings::*, ast::*, scoped_ptr::Scoped};
+use crate::{ast::*, error::*, raw_bindings::*, scoped_ptr::Scoped};
 
 // TODO: allow passing of options.
 
 /// Callback function used to capture results from minion as they are generated.
-/// Should return true if search is to continue, false otherwise.
+/// Should return `true` if search is to continue, `false` otherwise.
 pub type Callback = fn(Vec<(VarName, Constant)>) -> bool;
 
 #[no_mangle]
@@ -13,13 +13,17 @@ extern "C" fn hello_from_rust2() -> bool {
     return true;
 }
 
-//TODO memory
-pub fn run_minion(model: Model, callback: Callback) {
+pub fn run_minion(model: Model, callback: Callback) -> Result<(), RuntimeError> {
     unsafe {
         let options = Scoped::new(newSearchOptions(), |x| searchOptions_free(x as _));
         let args = Scoped::new(newSearchMethod(), |x| searchMethod_free(x as _));
         let instance = Scoped::new(convert_model_to_raw(&model), |x| instance_free(x as _));
         let res = runMinion(options.ptr, args.ptr, instance.ptr, Some(hello_from_rust2));
+
+        match res {
+            0 => Ok(()),
+            x => Err(RuntimeError::from(x)),
+        }
     }
 }
 
@@ -31,14 +35,15 @@ unsafe fn convert_model_to_raw(model: &Model) -> *mut ProbSpec_CSPInstance {
     /*******************************/
     /*        Add variables        */
     /*******************************/
-    // Add variables to:
-    // 1. symbol table
-    // 2. print matrix
-    // 3. search vars
-    //
-    // For now, use searchorder static only
-    //
-    // These are all done in the order saved in the Symboltable
+
+    /*
+     * Add variables to:
+     * 1. symbol table
+     * 2. print matrix
+     * 3. search vars
+     *
+     * These are all done in the order saved in the SymbolTable.
+     */
 
     let search_vars = Scoped::new(vec_var_new(), |x| vec_var_free(x as _));
 
@@ -189,6 +194,8 @@ unsafe fn read_const(raw_constraint: *mut ProbSpec_ConstraintBlob, constant: &Co
 
 #[cfg(test)]
 mod tests {
+    use std::error::Error;
+
     use super::*;
 
     /// .
@@ -197,7 +204,7 @@ mod tests {
     }
 
     #[test]
-    fn basic_ast_test() {
+    fn basic_ast_test() -> Result<(), RuntimeError> {
         let mut model = Model::new();
         model
             .named_variables
@@ -237,6 +244,6 @@ mod tests {
         model.constraints.push(geq);
         model.constraints.push(ineq);
 
-        run_minion(model, callback);
+        run_minion(model, callback)
     }
 }

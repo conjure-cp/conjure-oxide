@@ -1,3 +1,4 @@
+pub mod error;
 mod raw_bindings;
 
 mod run;
