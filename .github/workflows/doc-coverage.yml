@@ -4,7 +4,17 @@ on:
   push:
     branches:
       - main # run for pushes to the main branch
+    paths:
+      - Cargo.*
+      - conjure-oxide/**
+      - solvers/**
+      - .github/actions/doc-coverage.yml
   pull_request:
+    paths:
+      - Cargo.*
+      - conjure-oxide/**
+      - solvers/**
+      - .github/actions/doc-coverage.yml
   workflow_dispatch:
 
 jobs:
@@ -111,6 +121,7 @@ jobs:
         run: rustup update nightly && rustup default nightly
 
       - name: Coverage Report
+        working-directory: ./conjure_oxide
         run: |
           echo '```' >> $GITHUB_STEP_SUMMARY
           RUSTDOCFLAGS='-Z unstable-options --show-coverage' cargo doc | tee -a /dev/fd/2 >> $GITHUB_STEP_SUMMARY
