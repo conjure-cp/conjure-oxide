@@ -121,6 +121,7 @@ jobs:
         run: rustup update nightly && rustup default nightly
 
       - name: Coverage Report
+        working-directory: ./conjure_oxide
         run: |
           echo '```' >> $GITHUB_STEP_SUMMARY
           RUSTDOCFLAGS='-Z unstable-options --show-coverage' cargo doc | tee -a /dev/fd/2 >> $GITHUB_STEP_SUMMARY
