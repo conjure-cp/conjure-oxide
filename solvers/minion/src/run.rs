@@ -89,7 +89,7 @@ use crate::{ast::*, error::*, raw_bindings::*, scoped_ptr::Scoped};
 ///   let y1 = solution_set_1.get("y").unwrap();
 ///   let z1 = solution_set_1.get("z").unwrap();
 /// #
-/// # // FIXME: this test would be better with an example with >1 solution.
+/// # // TODO: this test would be better with an example with >1 solution.
 /// # assert_eq!(guard.len(),1);
 /// # assert_eq!(*x1,Constant::Integer(1));
 /// # assert_eq!(*y1,Constant::Integer(2));
@@ -113,7 +113,6 @@ unsafe extern "C" fn run_callback() -> bool {
 
     let mut guard: MutexGuard<'_, Option<Vec<VarName>>> = PRINT_VARS.lock().unwrap();
 
-    println!("here 0");
     if guard.is_none() {
         return true;
     }
@@ -123,7 +122,6 @@ unsafe extern "C" fn run_callback() -> bool {
         None => unreachable!(),
     };
 
-    println!("here 1 printvars: {:?}", print_vars);
     if print_vars.len() == 0 {
         return true;
     }
@@ -137,7 +135,6 @@ unsafe extern "C" fn run_callback() -> bool {
         solutions.insert(var.to_string(), solution);
     }
 
-    println!("here {:?}", solutions);
     match *CALLBACK.lock().unwrap() {
         None => true,
         Some(func) => func(solutions),
