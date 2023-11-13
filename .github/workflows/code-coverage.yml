@@ -4,7 +4,17 @@ on:
   push:
     branches:
       - main # run for pushes to the main branch
+    paths:
+      - Cargo.*
+      - conjure-oxide/**
+      - solvers/**
+      - .github/actions/code-coverage.yml
   pull_request:
+    paths:
+      - Cargo.*
+      - conjure-oxide/**
+      - solvers/**
+      - .github/actions/code-coverage.yml
   workflow_dispatch:
 
 
@@ -66,7 +76,7 @@ jobs:
           mkdir -p deploy/minion
           mkdir -p deploy/chuffed
 
-          cp -r coverage/html/* deploy/conjure-oxide
+          cp -r conjure_oxide/coverage/html/* deploy/conjure-oxide
           cp -r solvers/minion/coverage/html/* deploy/minion
           cp -r solvers/chuffed/coverage/html/* deploy/chuffed
 
