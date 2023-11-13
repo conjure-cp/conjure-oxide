@@ -22,10 +22,10 @@ fi
 cargo locate-project --workspace &>/dev/null || { echo_err "Cannot find a rust workspace"; usage_and_fail; }
 WORKSPACE_ROOT=$(dirname $(cargo locate-project --workspace | jq -r .root 2> /dev/null))
 
-cd "$WORKSPACE_ROOT"
 
 # conjure-oxide coverage
 echo_err "GENERATING COVERAGE FOR CONJURE-OXIDE"
+cd "$WORKSPACE_ROOT/conjure_oxide"
 rm -rf coverage
 bash "$WORKSPACE_ROOT/$PATH_TO_GEN_COV"
 
