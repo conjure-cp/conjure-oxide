@@ -1,8 +1,7 @@
 // adapted from
-// e https://github.com/gokberkkocak/rust_glucose/blob/master/build.rs
+// - https://github.com/gokberkkocak/rust_glucose/blob/master/build.rs
 // - https://rust-lang.github.io/rust-bindgen/non-system-libraries.html
 // - https://doc.rust-lang.org/cargo/reference/build-scripts.html#rerun-if-changed
-//
 
 use std::env;
 use std::path::PathBuf;

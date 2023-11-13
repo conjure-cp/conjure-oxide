@@ -1,5 +1,9 @@
-This directory contains in progress bindings for the [Minion solver](https://github.com/minion/minion).
+# `minion_rs`
 
+![Coverage Badge](https://conjure-cp.github.io/conjure-oxide/coverage/main/minion/badges/flat.svg)
 
-Note that minion is single threaded only so tests must be ran with
-cargo test -- --test-threads=1
+This crate contains (in progress) bindings for the [Minion](https://github.com/minion/minion) constraint solver.
+
+## Licence
+
+This crate is licensed under the [Mozilla Public Licence 2.0](https://www.mozilla.org/en-US/MPL/2.0/).
