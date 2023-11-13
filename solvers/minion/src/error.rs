@@ -3,6 +3,16 @@
 use crate::raw_bindings::*;
 use thiserror::Error;
 
+/// A wrapper over all errors thrown by `minion_rs`.
+///
+/// `Error` allows functions involving Minion to return a single error type. All error types in
+/// `minion_rs` are able to be converted into this type using into / from.
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("runtime error: `{0}.to_string()`")]
+    RuntimeError(#[from] RuntimeError),
+}
+
 /// RuntimeErrors are thrown by Minion during execution.
 ///
 /// These represent internal Minion C++ exceptions translated into Rust.
