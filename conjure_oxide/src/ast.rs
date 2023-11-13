@@ -7,6 +7,12 @@ pub struct Model {
 }
 
 impl Model {
+    pub fn new() -> Model {
+        Model {
+            variables: HashMap::new(),
+            constraints: Vec::new(),
+        }
+    }
     // Function to update a DecisionVariable based on its Name
     pub fn update_domain(&mut self, name: &Name, new_domain: Domain) {
         if let Some(decision_var) = self.variables.get_mut(name) {
