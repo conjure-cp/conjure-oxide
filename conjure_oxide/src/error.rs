@@ -1,6 +1,5 @@
 use serde_json::Error as JsonError;
 use thiserror::Error;
-use std::{fmt::Display};
 
 #[derive(Debug, Error)]
 pub enum Error {
