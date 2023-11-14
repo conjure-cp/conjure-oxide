@@ -1,9 +1,14 @@
 use serde_json::Error as JsonError;
-use std::fmt::Display;
+use thiserror::Error;
+use std::{fmt::Display};
 
+#[derive(Debug, Error)]
 pub enum Error {
+    #[error("serde_json error: {0}")]
     Json(JsonError),
+    #[error("Parse error: {0}")]
     ParseError(String),
+    #[error("Error: {0}")]
     Generic(String),
 }
 
@@ -16,15 +21,5 @@ impl From<JsonError> for Error {
 impl From<&str> for Error {
     fn from(e: &str) -> Self {
         Error::Generic(e.to_owned())
-    }
-}
-
-impl Display for Error {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        match &self {
-            Error::Json(e) => write!(f, "serde_json error: {}", e),
-            Error::ParseError(e) => write!(f, "Parse error: {}", e),
-            Error::Generic(e) => write!(f, "Error: {}", e),
-        }
     }
 }
