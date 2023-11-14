@@ -59,4 +59,6 @@ fn main() {
     let m2 = Model::from_json(&abc_json).unwrap();
 
     println!("{:?}", m2);
+
+    assert_eq!(m1, m2);
 }

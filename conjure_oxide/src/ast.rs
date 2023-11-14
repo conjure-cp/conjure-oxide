@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Model {
     pub variables: HashMap<Name, DecisionVariable>,
     pub constraints: Vec<Expression>,
