@@ -97,12 +97,10 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
             _ => return Err(CError("DomainInt[1] contains an unknown object".to_owned())),
         }
     }
-    println!("IntDomain: {:?}", ranges);
     Ok(Domain::IntDomain(ranges))
 }
 
 fn parse_constraint(obj: &JsonValue) -> Result<()> {
-    println!("Constraint");
     Ok(())
 }
 
