@@ -7,6 +7,8 @@ fn main() {
     // such that a + b + c = 4
     // such that a >= b
 
+    println!("\nManual model:\n");
+
     let a = Name::UserName(String::from("a"));
     let b = Name::UserName(String::from("b"));
     let c = Name::UserName(String::from("c"));
@@ -49,16 +51,16 @@ fn main() {
         ],
     };
 
-    println!("\nManual model:\n\n{:?}\n", m1);
+    println!("\n{:?}\n", m1);
 
-
+    println!("\nParsed model:\n");
 
     let mut file = File::open("examples/abc.json").unwrap();
     let mut abc_json = String::new();
     file.read_to_string(&mut abc_json).unwrap();
     let m2 = Model::from_json(&abc_json).unwrap();
 
-    println!("\nParsed model:\n\n{:?}\n", m2);
+    println!("\n{:?}\n", m2);
 
     assert_eq!(m1, m2);
 }
