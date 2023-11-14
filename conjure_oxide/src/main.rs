@@ -49,7 +49,7 @@ fn main() {
         ],
     };
 
-    println!("{:?}\n", m1);
+    println!("\nManual model:\n\n{:?}\n", m1);
 
 
 
@@ -58,7 +58,7 @@ fn main() {
     file.read_to_string(&mut abc_json).unwrap();
     let m2 = Model::from_json(&abc_json).unwrap();
 
-    println!("{:?}", m2);
+    println!("\nParsed model:\n\n{:?}\n", m2);
 
     assert_eq!(m1, m2);
 }
