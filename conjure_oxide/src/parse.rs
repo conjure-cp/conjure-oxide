@@ -79,20 +79,18 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
                     .ok_or(CError("RangeBounded is not an array".to_owned()))?;
                 let mut nums = Vec::new();
                 for i in 0..2 {
-                    let num = &arr[i]["Constant"]["ConstantInt"][1];
-                    let num = num
+                    let num = &arr[i]["Constant"]["ConstantInt"][1]
                         .as_i64()
-                        .ok_or(CError("ConstantInt[1] is not a number".to_owned()))?;
-                    nums.push(num);
+                        .ok_or(CError("Could not parse int domain constant".to_owned()))?;
+                    nums.push(*num);
                 }
                 ranges.push(Range::Bounded(nums[0], nums[1]));
             }
             "RangeSingle" => {
-                let num = &range.1["Constant"]["ConstantInt"][1];
-                let num = num
+                let num = &range.1["Constant"]["ConstantInt"][1]
                     .as_i64()
-                    .ok_or(CError("ConstantInt[1] is not a number".to_owned()))?;
-                ranges.push(Range::Single(num));
+                    .ok_or(CError("Could not parse int domain constant".to_owned()))?;
+                ranges.push(Range::Single(*num));
             }
             _ => return Err(CError("DomainInt[1] contains an unknown object".to_owned())),
         }
