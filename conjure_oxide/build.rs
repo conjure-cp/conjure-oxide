@@ -1,4 +1,10 @@
-use std::{io::Write, fs::File, path::Path, fs::{read_dir, DirEntry}, env::var};
+use std::{
+    env::var,
+    fs::File,
+    fs::{read_dir, DirEntry},
+    io::Write,
+    path::Path,
+};
 
 fn main() {
     let out_dir = var("OUT_DIR").unwrap();
@@ -15,6 +21,7 @@ fn write_test(file: &mut File, dir: &DirEntry) {
         file,
         include_str!("./tests/gen_test_template"),
         name = dir.file_name().to_str().unwrap(),
-        path=dir.path().to_str().unwrap()
-    ).unwrap();
+        path = dir.path().to_str().unwrap()
+    )
+    .unwrap();
 }
