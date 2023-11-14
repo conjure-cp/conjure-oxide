@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fs::File, io::Read};
 
 use conjure_oxide::ast::*;
 
@@ -31,7 +31,7 @@ fn main() {
         },
     );
 
-    let mut m = Model {
+    let m1 = Model {
         variables,
         constraints: vec![
             Expression::Eq(
@@ -49,5 +49,14 @@ fn main() {
         ],
     };
 
-    println!("{:?}\n", m);
+    println!("{:?}\n", m1);
+
+
+
+    let mut file = File::open("examples/abc.json").unwrap();
+    let mut abc_json = String::new();
+    file.read_to_string(&mut abc_json).unwrap();
+    let m2 = Model::from_json(&abc_json).unwrap();
+
+    println!("{:?}", m2);
 }
