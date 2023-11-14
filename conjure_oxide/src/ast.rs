@@ -19,6 +19,10 @@ impl Model {
             decision_var.domain = new_domain;
         }
     }
+    // Function to add a new DecisionVariable to the Model
+    pub fn add_variable(&mut self, name: Name, decision_var: DecisionVariable) {
+        self.variables.insert(name, decision_var);
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
@@ -35,7 +39,7 @@ pub struct DecisionVariable {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Domain {
     BoolDomain,
-    IntDomain(Vec<Range<i32>>),
+    IntDomain(Vec<Range<i64>>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
