@@ -1,6 +1,8 @@
 #include "chuffed/branching/branching.h"
 #include "chuffed/core/engine.h"
 #include "chuffed/core/propagator.h"
+#include "chuffed/flatzinc/flatzinc.h"
+#include "chuffed/primitives/primitives.h"
 #include "chuffed/vars/modelling.h"
 
 class DummyProblem {
@@ -25,3 +27,6 @@ void destroy_vec_intvar(vec<IntVar *> *v);
 
 void branch_IntVar(vec<IntVar *> *x, VarBranch var_branch,
                    ValBranch val_branch);
+
+Problem *new_problem();
+void solve(Problem *p);

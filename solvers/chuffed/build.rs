@@ -78,6 +78,8 @@ fn bind() {
         .allowlist_function("p_setcallback")
         .allowlist_function("p_print")
         .allowlist_function("branch_IntVar")
+        .allowlist_function("new_problem")
+        .allowlist_function("solve")
         .clang_arg("-Ivendor/build") // generated from configure.py
         .clang_arg("-Ivendor")
         .clang_arg(r"--std=gnu++11")
