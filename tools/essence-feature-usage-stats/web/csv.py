@@ -41,5 +41,5 @@ def write_csv(
 
     with fpath.open("w") as file:
         file.writelines(
-            make_csv_lines(stats, delimiter=delimiter, path_depth=path_depth)
+            make_csv_lines(stats, delimiter=delimiter, path_depth=path_depth),
         )
