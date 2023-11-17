@@ -47,7 +47,7 @@ if __name__ == "__main__":
         exclude_regex=EXCLUDE_REGEX,
     )
 
-    # write_csv(stats, "data.csv")
+    write_csv(stats, "web/static/data.csv")
 
     timestamp = datetime.datetime.now().strftime("%d.%m.%Y - %H:%M")
     template = jinja_env.get_template("index.html")
