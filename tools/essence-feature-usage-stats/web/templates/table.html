@@ -20,8 +20,8 @@
             <td>{{ file.get_repo_name(depth=2) }}</td>
             {% for essence_keyword in keywords %}
                 {% set n_uses = file.get_uses(essence_keyword.name) %}
-                {% set colour = essence_keyword.get_colour(n_uses).as_hex() %}
-                <td bgcolor="{{ colour }}">{{ n_uses }}</td>
+                {% set colour = essence_keyword.get_colour(n_uses).get_rgb_css_string(0.5) %}
+                <td style="background-color: {{ colour }};">{{ n_uses }}</td>
             {% endfor %}
         </tr>
     {% endfor %}

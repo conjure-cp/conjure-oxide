@@ -91,6 +91,13 @@ class Colour:
         """Get the colour value as a hex string."""
         return Colour.rgb_to_hex(self.as_rgb())
 
+    def get_rgb_css_string(self, a=1.0) -> str:
+        """Get CSS colour string as RGB(A): e.g. rgba(255,255,255,0.5)."""
+        if a < 1.0:  # noqa: PLR2004
+            rgba = (*self.as_rgb(), a)
+            return "rgba" + str(rgba)
+        return "rgb" + str(self.as_rgb())
+
     def __str__(self) -> str:  # noqa: D105
         return self.as_hex()
 
