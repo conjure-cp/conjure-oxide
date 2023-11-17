@@ -91,4 +91,5 @@ def parse_repo_url(repo_url: str) -> Tuple[str, str]:
         return user, repo
 
     elements = repo_url.split("/")
+
     return tuple(elements[:2])

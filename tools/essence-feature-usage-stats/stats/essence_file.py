@@ -151,7 +151,7 @@ class EssenceFile:
 
     def __eq__(self, other):
         """EssenceFile objects are considered equal if their paths are the same."""
-        return self._fpath == other._fpath
+        return self.path == other.path
 
     def __str__(self):  # noqa: D105
         return f"EssenceFile({self._fpath}): {self.n_lines} lines"
