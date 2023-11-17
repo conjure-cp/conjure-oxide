@@ -7,6 +7,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from stats.essence_stats import EssenceStats
 from utils.misc import parse_essence_repos
+from web.csv import write_csv
 
 ENV_PATH = Path("./.env").resolve()
 load_dotenv(dotenv_path=ENV_PATH)
@@ -44,8 +45,9 @@ if __name__ == "__main__":
         conjure_version=CONJURE_VERSION,
         blocklist=KEYWORD_BLOCKLIST,
         exclude_regex=EXCLUDE_REGEX,
-        max_n_files=MAX_N_FILES,
     )
+
+    # write_csv(stats, "data.csv")
 
     timestamp = datetime.datetime.now().strftime("%d.%m.%Y - %H:%M")
     template = jinja_env.get_template("index.html")

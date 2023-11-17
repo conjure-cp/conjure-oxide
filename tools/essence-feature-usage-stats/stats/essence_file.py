@@ -96,7 +96,7 @@ class EssenceFile:
         """Get the git repo that this file belongs to."""
         return self._repo
 
-    def get_repo_name(self, depth=2) -> str | None:
+    def get_repo_name(self, depth=0) -> str | None:
         """Get the repo name, trimmed to a given depth."""
         if isinstance(self.repo, Repo):
             return trim_path(self.repo.working_dir, depth)
