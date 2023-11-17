@@ -20,7 +20,7 @@ ESSENCE_DIR = Path(os.getenv("ESSENCE_DIR"))
 CONJURE_DIR = Path(os.getenv("CONJURE_DIR"))
 OUTPUT_PATH = Path(os.getenv("OUTPUT_PATH"))
 CONJURE_REPO = os.getenv("CONJURE_REPO")
-MAX_N_FILES = int(os.getenv("MAX_N_FILES", "200"))
+MAX_N_FILES = int(os.getenv("MAX_N_FILES", "500"))
 MAX_N_KEYWORDS = int(os.getenv("MAX_N_KEYWORDS", "200"))
 CONJURE_VERSION = os.getenv("CONJURE_VERSION", "latest")
 
@@ -45,6 +45,7 @@ if __name__ == "__main__":
         conjure_version=CONJURE_VERSION,
         blocklist=KEYWORD_BLOCKLIST,
         exclude_regex=EXCLUDE_REGEX,
+        max_n_files=MAX_N_FILES,
     )
 
     write_csv(stats, "web/static/data.csv")
