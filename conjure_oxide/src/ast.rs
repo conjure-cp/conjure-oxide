@@ -50,4 +50,5 @@ pub enum Expression {
     // Flattened Constraints
     SumGeq(Vec<Expression>, Box<Expression>),
     SumLeq(Vec<Expression>, Box<Expression>),
+    Ineq(Box<Expression>, Box<Expression>, Box<Expression>),
 }

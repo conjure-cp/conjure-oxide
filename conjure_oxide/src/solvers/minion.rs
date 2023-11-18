@@ -5,8 +5,8 @@ use crate::ast::{
     Model as ConjureModel, Name as ConjureName, Range as ConjureRange,
 };
 use minion_rs::ast::{
-    Constraint as MinionConstraint, Model as MinionModel, Var as MinionVar,
-    VarDomain as MinionDomain,
+    Constant as MinionConstant, Constraint as MinionConstraint, Model as MinionModel,
+    Var as MinionVar, VarDomain as MinionDomain,
 };
 
 impl TryFrom<ConjureModel> for MinionModel {
@@ -88,6 +88,7 @@ fn parse_expr(expr: ConjureExpression, minion_model: &mut MinionModel) -> Result
     match expr {
         ConjureExpression::SumLeq(lhs, rhs) => parse_sumleq(lhs, *rhs, minion_model),
         ConjureExpression::SumGeq(lhs, rhs) => parse_sumgeq(lhs, *rhs, minion_model),
+        ConjureExpression::Ineq(a, b, c) => parse_ineq(*a, *b, *c, minion_model),
         x => Err(format!("Not supported: {:?}", x)),
     }
 }
@@ -120,6 +121,24 @@ fn parse_sumgeq(
     Ok(())
 }
 
+fn parse_ineq(
+    a: ConjureExpression,
+    b: ConjureExpression,
+    c: ConjureExpression,
+    minion_model: &mut MinionModel,
+) -> Result<(), String> {
+    let a_minion = must_be_var(a)?;
+    let b_minion = must_be_var(b)?;
+    let c_value = must_be_const(c)?;
+    minion_model.constraints.push(MinionConstraint::Ineq(
+        a_minion,
+        b_minion,
+        MinionConstant::Integer(c_value),
+    ));
+
+    Ok(())
+}
+
 fn must_be_vars(exprs: Vec<ConjureExpression>) -> Result<Vec<MinionVar>, String> {
     let mut minion_vars: Vec<MinionVar> = vec![];
     for expr in exprs {
@@ -146,7 +165,6 @@ fn must_be_ref(e: ConjureExpression) -> Result<String, String> {
         _ => Err(""),
     }?;
 
-    // always use names as strings in Minon.
     let str_name = name_to_string(name);
     Ok(str_name)
 }
@@ -162,5 +180,97 @@ fn name_to_string(name: ConjureName) -> String {
     match name {
         ConjureName::UserName(x) => x,
         ConjureName::MachineName(x) => x.to_string(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+
+    use minion_rs::ast::VarName;
+
+    use super::*;
+
+    #[test]
+    fn flat_xyz_model() -> Result<(), String> {
+        // TODO: convert to use public interfaces when these exist.
+        let mut model = ConjureModel {
+            variables: HashMap::new(),
+            constraints: Vec::new(),
+        };
+
+        add_int_with_range(&mut model, "x", 1, 3)?;
+        add_int_with_range(&mut model, "y", 2, 4)?;
+        add_int_with_range(&mut model, "z", 1, 5)?;
+
+        let x = ConjureExpression::Reference(ConjureName::UserName("x".to_owned()));
+        let y = ConjureExpression::Reference(ConjureName::UserName("y".to_owned()));
+        let z = ConjureExpression::Reference(ConjureName::UserName("z".to_owned()));
+        let four = ConjureExpression::ConstantInt(4);
+
+        let geq = ConjureExpression::SumGeq(
+            vec![x.to_owned(), y.to_owned(), z.to_owned()],
+            Box::from(four.to_owned()),
+        );
+        let leq = ConjureExpression::SumLeq(
+            vec![x.to_owned(), y.to_owned(), z.to_owned()],
+            Box::from(four.to_owned()),
+        );
+        let ineq = ConjureExpression::Ineq(Box::from(x), Box::from(y), Box::from(four));
+
+        model.constraints.push(geq);
+        model.constraints.push(leq);
+        model.constraints.push(ineq);
+
+        let minion_model = MinionModel::try_from(model)?;
+        minion_rs::run_minion(minion_model, xyz_callback).map_err(|x| x.to_string())
+    }
+
+    #[allow(clippy::unwrap_used)]
+    fn xyz_callback(solutions: HashMap<VarName, MinionConstant>) -> bool {
+        let x = match solutions.get("x").unwrap() {
+            MinionConstant::Integer(n) => n,
+            _ => panic!("x should be a integer"),
+        };
+
+        let y = match solutions.get("y").unwrap() {
+            MinionConstant::Integer(n) => n,
+            _ => panic!("y should be a integer"),
+        };
+
+        let z = match solutions.get("z").unwrap() {
+            MinionConstant::Integer(n) => n,
+            _ => panic!("z should be a integer"),
+        };
+
+        assert_eq!(*x, 1);
+        assert_eq!(*y, 2);
+        assert_eq!(*z, 1);
+
+        false
+    }
+
+    fn add_int_with_range(
+        model: &mut ConjureModel,
+        name: &str,
+        domain_low: i32,
+        domain_high: i32,
+    ) -> Result<(), String> {
+        // TODO: convert to use public interfaces when these exist.
+        let res = model.variables.insert(
+            ConjureName::UserName(name.to_owned()),
+            DecisionVariable {
+                domain: ConjureDomain::IntDomain(vec![ConjureRange::Bounded(
+                    domain_low,
+                    domain_high,
+                )]),
+            },
+        );
+
+        match res {
+            // variable was not already present
+            None => Ok(()),
+            Some(_) => Err(format!("Variable {:?} was already present", name)),
+        }
     }
 }
