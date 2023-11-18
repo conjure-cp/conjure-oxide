@@ -1,10 +1,16 @@
 //! Solver interface to minion_rs.
 
-use crate::ast::{Expression as ConjureExpression, Model as ConjureModel, Name as ConjureName};
-use minion_rs::ast::{Constraint as MinionConstraint, Model as MinionModel, Var as MinionVar};
+use crate::ast::{
+    DecisionVariable, Domain as ConjureDomain, Expression as ConjureExpression,
+    Model as ConjureModel, Name as ConjureName, Range as ConjureRange,
+};
+use minion_rs::ast::{
+    Constraint as MinionConstraint, Model as MinionModel, Var as MinionVar,
+    VarDomain as MinionDomain,
+};
 
 impl TryFrom<ConjureModel> for MinionModel {
-    // TODO: set this to equal ConjureError once it is merged.
+    // TODO (nd60): set this to equal ConjureError once it is merged.
     type Error = String;
 
     fn try_from(conjure_model: ConjureModel) -> Result<Self, Self::Error> {
@@ -19,9 +25,56 @@ impl TryFrom<ConjureModel> for MinionModel {
     }
 }
 
-#[allow(unused_variables)]
-fn parse_vars(conjure_model: &ConjureModel, minion_model: &MinionModel) -> Result<(), String> {
-    todo!();
+fn parse_vars(conjure_model: &ConjureModel, minion_model: &mut MinionModel) -> Result<(), String> {
+    // TODO (nd60): remove unused vars?
+    // TODO (nd60): ensure all vars references are used.
+
+    for (name, variable) in conjure_model.variables.iter() {
+        parse_var(name, variable, minion_model)?;
+    }
+    Ok(())
+}
+
+fn parse_var(
+    name: &ConjureName,
+    variable: &DecisionVariable,
+    minion_model: &mut MinionModel,
+) -> Result<(), String> {
+    let str_name = name_to_string(name.to_owned());
+
+    let ranges = match &variable.domain {
+        ConjureDomain::IntDomain(range) => Ok(range),
+        x => Err(format!("Not supported: {:?}", x)),
+    }?;
+
+    // TODO (nd60): Currently, Minion only supports the use of one range in the domain.
+    // If there are multiple ranges, SparseBound should be used here instead.
+    // See: https://github.com/conjure-cp/conjure-oxide/issues/84
+
+    if ranges.len() != 1 {
+        return Err(format!(
+            "Variable {:?} has {:?} ranges. Multiple ranges / SparseBound is not yet supported.",
+            str_name,
+            ranges.len()
+        ));
+    }
+
+    let range = ranges
+        .first()
+        .ok_or(format!("Variable {:?} has no range", str_name))?;
+
+    let (low, high) = match range {
+        ConjureRange::Bounded(x, y) => Ok((x.to_owned(), y.to_owned())),
+        ConjureRange::Single(x) => Ok((x.to_owned(), x.to_owned())),
+        a => Err(format!("Not implemented {:?}", a)),
+    }?;
+
+    minion_model
+        .named_variables
+        .add_var(str_name.to_owned(), MinionDomain::Bound(low, high))
+        .ok_or(format!("Variable {:?} is defined twice", str_name))?;
+
+    Ok(())
 }
 
 fn parse_exprs(conjure_model: &ConjureModel, minion_model: &mut MinionModel) -> Result<(), String> {
@@ -94,15 +147,20 @@ fn must_be_ref(e: ConjureExpression) -> Result<String, String> {
     }?;
 
     // always use names as strings in Minon.
-    match name {
-        ConjureName::UserName(x) => Ok(x),
-        ConjureName::MachineName(x) => Ok(x.to_string()),
-    }
+    let str_name = name_to_string(name);
+    Ok(str_name)
 }
 
 fn must_be_const(e: ConjureExpression) -> Result<i32, String> {
     match e {
         ConjureExpression::ConstantInt(n) => Ok(n),
         _ => Err("".to_owned()),
+    }
+}
+
+fn name_to_string(name: ConjureName) -> String {
+    match name {
+        ConjureName::UserName(x) => x,
+        ConjureName::MachineName(x) => x.to_string(),
     }
 }
