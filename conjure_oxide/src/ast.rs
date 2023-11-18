@@ -45,4 +45,6 @@ pub enum Expression {
     Sum(Vec<Expression>),
     Eq(Box<Expression>, Box<Expression>),
     Geq(Box<Expression>, Box<Expression>),
+    Not(Box<Expression>),
+    Or(Vec<Expression>),
 }
