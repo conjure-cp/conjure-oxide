@@ -111,3 +111,268 @@ impl TryFrom<Model> for CNF {
         return Ok(ans);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::ast::Domain::BoolDomain;
+    use crate::ast::Expression::{Not, Or, Reference};
+    use crate::ast::Name;
+    use crate::ast::{DecisionVariable, Model};
+    use crate::solvers::kissat::CNF;
+    use std::collections::{HashMap, HashSet};
+    use std::fmt::Debug;
+    use std::hash::Hash;
+    use std::ops::Deref;
+
+    fn to_set<T: Eq + Hash + Debug + Clone>(a: &Vec<T>) -> HashSet<T> {
+        let mut a_set: HashSet<T> = HashSet::new();
+        for el in a {
+            a_set.insert(el.clone());
+        }
+        return a_set;
+    }
+
+    fn assert_eq_any_order<T: Eq + Hash + Debug + Clone>(a: &Vec<Vec<T>>, b: &Vec<Vec<T>>) {
+        assert_eq!(a.len(), b.len());
+
+        let mut a_rows: Vec<HashSet<T>> = Vec::new();
+        for row in a {
+            let hash_row = to_set(row);
+            a_rows.push(hash_row);
+        }
+
+        let mut b_rows: Vec<HashSet<T>> = Vec::new();
+        for row in b {
+            let hash_row = to_set(row);
+            b_rows.push(hash_row);
+        }
+
+        for row in a_rows {
+            assert!(b_rows.contains(&row));
+        }
+    }
+
+    #[test]
+    fn test_single_var() {
+        let var = DecisionVariable { domain: BoolDomain };
+        let name = Name::MachineName(1);
+
+        let reference = Reference(name.clone());
+
+        let vars: HashMap<Name, DecisionVariable> = HashMap::from([(name.clone(), var)]);
+        let expressions = vec![reference];
+
+        let model = Model {
+            variables: vars,
+            constraints: expressions,
+        };
+
+        let converted = CNF::try_from(model);
+        if let Ok(ans) = converted {
+            assert_eq!(ans, vec![vec![1]]);
+        }
+    }
+
+    #[test]
+    fn test_single_not() {
+        let var = DecisionVariable { domain: BoolDomain };
+        let name = Name::MachineName(1);
+
+        let reference = Reference(name.clone());
+        let not = Not(Box::from(reference));
+
+        let vars: HashMap<Name, DecisionVariable> = HashMap::from([(name.clone(), var)]);
+        let expressions = vec![not];
+
+        let model = Model {
+            variables: vars,
+            constraints: expressions,
+        };
+
+        let converted = CNF::try_from(model);
+        if let Ok(ans) = converted {
+            assert_eq!(ans, vec![vec![-1]]);
+        }
+    }
+
+    #[test]
+    fn test_single_or() {
+        let var1 = DecisionVariable { domain: BoolDomain };
+        let name1 = Name::MachineName(1);
+        let var2 = DecisionVariable { domain: BoolDomain };
+        let name2 = Name::MachineName(2);
+
+        let ref1 = Reference(name1.clone());
+        let ref2 = Reference(name2.clone());
+        let or = Or(vec![ref1, ref2]);
+
+        let vars: HashMap<Name, DecisionVariable> =
+            HashMap::from([(name1.clone(), var1), (name2.clone(), var2)]);
+        let expressions = vec![or];
+
+        let model = Model {
+            variables: vars,
+            constraints: expressions,
+        };
+
+        let converted = CNF::try_from(model);
+        if let Ok(ans) = converted {
+            assert_eq!(ans, vec![vec![1, 2]]);
+        }
+    }
+
+    #[test]
+    fn test_multiple_vars() {
+        let var1 = DecisionVariable { domain: BoolDomain };
+        let name1 = Name::MachineName(1);
+        let var2 = DecisionVariable { domain: BoolDomain };
+        let name2 = Name::MachineName(2);
+
+        let ref1 = Reference(name1.clone());
+        let ref2 = Reference(name2.clone());
+
+        let vars: HashMap<Name, DecisionVariable> =
+            HashMap::from([(name1.clone(), var1), (name2.clone(), var2)]);
+        let expressions = vec![ref1, ref2];
+
+        let model = Model {
+            variables: vars,
+            constraints: expressions,
+        };
+
+        let converted = CNF::try_from(model);
+        if let Ok(ans) = converted {
+            let corr = vec![vec![1], vec![2]];
+            assert_eq_any_order(&ans, &corr);
+        }
+    }
+
+    #[test]
+    fn test_var_and_not() {
+        let var1 = DecisionVariable { domain: BoolDomain };
+        let name1 = Name::MachineName(1);
+        let var2 = DecisionVariable { domain: BoolDomain };
+        let name2 = Name::MachineName(2);
+
+        let ref1 = Reference(name1.clone());
+        let ref2 = Reference(name2.clone());
+        let not2 = Not(Box::from(ref2));
+
+        let vars: HashMap<Name, DecisionVariable> =
+            HashMap::from([(name1.clone(), var1), (name2.clone(), var2)]);
+        let expressions = vec![ref1, not2];
+
+        let model = Model {
+            variables: vars,
+            constraints: expressions,
+        };
+
+        let converted = CNF::try_from(model);
+        if let Ok(ans) = converted {
+            let corr = vec![vec![1], vec![-2]];
+            assert_eq_any_order(&ans, &corr);
+        }
+    }
+
+    #[test]
+    fn test_or_not() {
+        let var1 = DecisionVariable { domain: BoolDomain };
+        let name1 = Name::MachineName(1);
+        let var2 = DecisionVariable { domain: BoolDomain };
+        let name2 = Name::MachineName(2);
+
+        let ref1 = Reference(name1.clone());
+        let ref2 = Reference(name2.clone());
+        let not2 = Not(Box::from(ref2));
+        let or = Or(vec![ref1, not2]);
+
+        let vars: HashMap<Name, DecisionVariable> =
+            HashMap::from([(name1.clone(), var1), (name2.clone(), var2)]);
+        let expressions = vec![or];
+
+        let model = Model {
+            variables: vars,
+            constraints: expressions,
+        };
+
+        let converted = CNF::try_from(model);
+        if let Ok(ans) = converted {
+            let corr = vec![vec![1, -2]];
+            assert_eq_any_order(&ans, &corr);
+        }
+    }
+
+    #[test]
+    fn test_multiple_ors() {
+        let var1 = DecisionVariable { domain: BoolDomain };
+        let name1 = Name::MachineName(1);
+        let var2 = DecisionVariable { domain: BoolDomain };
+        let name2 = Name::MachineName(2);
+        let var3 = DecisionVariable { domain: BoolDomain };
+        let name3 = Name::MachineName(3);
+        let var4 = DecisionVariable { domain: BoolDomain };
+        let name4 = Name::MachineName(4);
+
+        let ref1 = Reference(name1.clone());
+        let ref2 = Reference(name2.clone());
+        let ref3 = Reference(name3.clone());
+        let ref4 = Reference(name4.clone());
+
+        let or1 = Or(vec![ref1, ref2]);
+        let or2 = Or(vec![ref3, ref4]);
+
+        let vars: HashMap<Name, DecisionVariable> =
+            HashMap::from([(name1.clone(), var1), (name2.clone(), var2)]);
+        let expressions = vec![or1, or2];
+
+        let model = Model {
+            variables: vars,
+            constraints: expressions,
+        };
+
+        let converted = CNF::try_from(model);
+        if let Ok(ans) = converted {
+            let corr = vec![vec![1, 2], vec![3, 4]];
+            assert_eq_any_order(&ans, &corr);
+        }
+    }
+
+    #[test]
+    fn test_nested_ors() {
+        let var1 = DecisionVariable { domain: BoolDomain };
+        let name1 = Name::MachineName(1);
+        let var2 = DecisionVariable { domain: BoolDomain };
+        let name2 = Name::MachineName(2);
+        let var3 = DecisionVariable { domain: BoolDomain };
+        let name3 = Name::MachineName(3);
+        let var4 = DecisionVariable { domain: BoolDomain };
+        let name4 = Name::MachineName(4);
+
+        let ref1 = Reference(name1.clone());
+        let ref2 = Reference(name2.clone());
+        let ref3 = Reference(name3.clone());
+        let ref4 = Reference(name4.clone());
+
+        let or1 = Or(vec![ref1, ref2]);
+        let or2 = Or(vec![ref3, ref4]);
+        let or = Or(vec![or1, or2]);
+
+        let vars: HashMap<Name, DecisionVariable> =
+            HashMap::from([(name1.clone(), var1), (name2.clone(), var2)]);
+        let expressions = vec![or];
+
+        let model = Model {
+            variables: vars,
+            constraints: expressions,
+        };
+
+        let converted = CNF::try_from(model);
+        if let Ok(ans) = converted {
+            let corr = vec![vec![1, 2, 3, 4]];
+            assert_eq_any_order(&ans, &corr);
+        }
+    }
+
+    #[test]
+    fn test_invalid() {}
+}
