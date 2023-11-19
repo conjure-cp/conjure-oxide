@@ -2,7 +2,8 @@
 // - https://github.com/gokberkkocak/rust_glucose/blob/master/build.rs
 // - https://rust-lang.github.io/rust-bindgen/non-system-libraries.html
 // - https://doc.rust-lang.org/cargo/reference/build-scripts.html#rerun-if-changed
-//
+#![allow(clippy::unwrap_used)]
+#![allow(clippy::expect_used)]
 use std::env;
 use std::path::PathBuf;
 use std::process::Command;
