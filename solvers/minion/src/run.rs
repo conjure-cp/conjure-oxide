@@ -5,6 +5,7 @@ use std::{
 };
 
 use crate::{ast::*, error::*, raw_bindings::*, scoped_ptr::Scoped};
+use anyhow::anyhow;
 
 // TODO: allow passing of options.
 
@@ -31,14 +32,13 @@ use crate::{ast::*, error::*, raw_bindings::*, scoped_ptr::Scoped};
 ///   fn callback(solutions: HashMap<VarName,Constant>) -> bool {
 ///       let mut guard = ALL_SOLUTIONS.lock().unwrap();
 ///       guard.push(solutions);
-///       return true;
+///       true
 ///   }
 ///    
 ///   // Build and run the model.
 ///   let mut model = Model::new();
 ///
 ///   // ... omitted for brevity ...
-/// #
 /// # model
 /// #     .named_variables
 /// #     .add_var("x".to_owned(), VarDomain::Bound(1, 3));
@@ -82,8 +82,7 @@ use crate::{ast::*, error::*, raw_bindings::*, scoped_ptr::Scoped};
 ///
 ///   // Get solutions
 ///   let guard = ALL_SOLUTIONS.lock().unwrap();
-///
-///   let solution_set_1 = &(*guard.get(0).unwrap());
+///   let solution_set_1 = &(guard.get(0).unwrap());
 ///
 ///   let x1 = solution_set_1.get("x").unwrap();
 ///   let y1 = solution_set_1.get("y").unwrap();
@@ -111,6 +110,8 @@ unsafe extern "C" fn run_callback() -> bool {
     // get printvars from static PRINT_VARS if they exist.
     // if not, return true and continue search.
 
+    // Mutex poisoning is probably panic worthy.
+    #[allow(clippy::unwrap_used)]
     let mut guard: MutexGuard<'_, Option<Vec<VarName>>> = PRINT_VARS.lock().unwrap();
 
     if guard.is_none() {
@@ -122,7 +123,7 @@ unsafe extern "C" fn run_callback() -> bool {
         None => unreachable!(),
     };
 
-    if print_vars.len() == 0 {
+    if print_vars.is_empty() {
         return true;
     }
 
@@ -130,11 +131,12 @@ unsafe extern "C" fn run_callback() -> bool {
     let mut solutions: HashMap<VarName, Constant> = HashMap::new();
 
     for (i, var) in print_vars.iter().enumerate() {
-        let solution_int: i32 = printMatrix_getValue(i as _).try_into().unwrap();
+        let solution_int: i32 = printMatrix_getValue(i as _);
         let solution: Constant = Constant::Integer(solution_int);
         solutions.insert(var.to_string(), solution);
     }
 
+    #[allow(clippy::unwrap_used)]
     match *CALLBACK.lock().unwrap() {
         None => true,
         Some(func) => func(solutions),
@@ -144,27 +146,32 @@ unsafe extern "C" fn run_callback() -> bool {
 /// Run Minion on the given [Model].
 ///
 /// The given [callback](Callback) is ran whenever a new solution set is found.
-pub fn run_minion(model: Model, callback: Callback) -> Result<(), RuntimeError> {
+
+// Turn it into a warning for this function, cant unwarn it directly above callback wierdness
+#[allow(clippy::unwrap_used)]
+pub fn run_minion(model: Model, callback: Callback) -> Result<(), MinionError> {
+    // Mutex poisoning is probably panic worthy.
     *CALLBACK.lock().unwrap() = Some(callback);
 
     unsafe {
         let options = Scoped::new(newSearchOptions(), |x| searchOptions_free(x as _));
         let args = Scoped::new(newSearchMethod(), |x| searchMethod_free(x as _));
-        let instance = Scoped::new(convert_model_to_raw(&model), |x| instance_free(x as _));
-        let res = runMinion(options.ptr, args.ptr, instance.ptr, Some(run_callback));
+        let instance = Scoped::new(newInstance(), |x| instance_free(x as _));
 
+        convert_model_to_raw(&instance, &model)?;
+
+        let res = runMinion(options.ptr, args.ptr, instance.ptr, Some(run_callback));
         match res {
             0 => Ok(()),
-            x => Err(RuntimeError::from(x)),
+            x => Err(MinionError::from(RuntimeError::from(x))),
         }
     }
 }
 
-/// Callee owns the returned instance
-unsafe fn convert_model_to_raw(model: &Model) -> *mut ProbSpec_CSPInstance {
-    // This is managed in scope by the callee
-    let instance = newInstance();
-
+unsafe fn convert_model_to_raw(
+    instance: &Scoped<ProbSpec_CSPInstance>,
+    model: &Model,
+) -> Result<(), MinionError> {
     /*******************************/
     /*        Add variables        */
     /*******************************/
@@ -181,37 +188,44 @@ unsafe fn convert_model_to_raw(model: &Model) -> *mut ProbSpec_CSPInstance {
     let search_vars = Scoped::new(vec_var_new(), |x| vec_var_free(x as _));
 
     // store variables and the order they will be returned inside rust for later use.
+    #[allow(clippy::unwrap_used)]
     let mut print_vars_guard = PRINT_VARS.lock().unwrap();
     *print_vars_guard = Some(vec![]);
 
     for var_name in model.named_variables.get_variable_order() {
-        //TODO: make this return Result
-        let c_str = CString::new(var_name.clone()).expect("");
+        let c_str = CString::new(var_name.clone()).map_err(|_| {
+            anyhow!(
+                "Variable name {:?} contains a null character.",
+                var_name.clone()
+            )
+        })?;
 
         let vartype = model
             .named_variables
             .get_vartype(var_name.clone())
-            .expect("");
+            .ok_or(anyhow!("Could not get var type for {:?}", var_name.clone()))?;
 
         let (vartype_raw, domain_low, domain_high) = match vartype {
-            VarDomain::Bound(a, b) => (VariableType_VAR_BOUND, a, b),
-            _ => panic!("NOT IMPLEMENTED"),
-        };
+            VarDomain::Bound(a, b) => Ok((VariableType_VAR_BOUND, a, b)),
+            x => Err(MinionError::NotImplemented(format!("{:?}", x))),
+        }?;
 
         newVar_ffi(
-            instance,
+            instance.ptr,
             c_str.as_ptr() as _,
             vartype_raw,
             domain_low,
             domain_high,
         );
 
-        let var = getVarByName(instance, c_str.as_ptr() as _);
+        let var = getVarByName(instance.ptr, c_str.as_ptr() as _);
 
-        printMatrix_addVar(instance, var);
+        printMatrix_addVar(instance.ptr, var);
 
         // add to the print vars stored in rust so to remember
         // the order for callback function.
+
+        #[allow(clippy::unwrap_used)]
         (*print_vars_guard).as_mut().unwrap().push(var_name.clone());
 
         vec_var_push_back(search_vars.ptr, var);
@@ -222,9 +236,7 @@ unsafe fn convert_model_to_raw(model: &Model) -> *mut ProbSpec_CSPInstance {
         |x| searchOrder_free(x as _),
     );
 
-    // this and other instance_ functions does not move so my use of ptrs are ok
-    // TODO (nd60): document this
-    instance_addSearchOrder(instance, search_order.ptr);
+    instance_addSearchOrder(instance.ptr, search_order.ptr);
 
     /*********************************/
     /*        Add constraints        */
@@ -235,25 +247,28 @@ unsafe fn convert_model_to_raw(model: &Model) -> *mut ProbSpec_CSPInstance {
         // 2. run through arguments and add them to the constraint
         // 3. add constraint to instance
 
-        let constraint_type = get_constraint_type(constraint);
+        let constraint_type = get_constraint_type(constraint)?;
         let raw_constraint = Scoped::new(newConstraintBlob(constraint_type), |x| {
             constraint_free(x as _)
         });
 
-        constraint_add_args(instance, raw_constraint.ptr, constraint);
-        instance_addConstraint(instance, raw_constraint.ptr);
+        constraint_add_args(instance.ptr, raw_constraint.ptr, constraint)?;
+        instance_addConstraint(instance.ptr, raw_constraint.ptr);
     }
 
-    return instance;
+    Ok(())
 }
 
-unsafe fn get_constraint_type(constraint: &Constraint) -> u32 {
+unsafe fn get_constraint_type(constraint: &Constraint) -> Result<u32, MinionError> {
     match constraint {
-        Constraint::SumGeq(_, _) => ConstraintType_CT_GEQSUM,
-        Constraint::SumLeq(_, _) => ConstraintType_CT_LEQSUM,
-        Constraint::Ineq(_, _, _) => ConstraintType_CT_INEQ,
+        Constraint::SumGeq(_, _) => Ok(ConstraintType_CT_GEQSUM),
+        Constraint::SumLeq(_, _) => Ok(ConstraintType_CT_LEQSUM),
+        Constraint::Ineq(_, _, _) => Ok(ConstraintType_CT_INEQ),
         #[allow(unreachable_patterns)]
-        _ => panic!("NOT IMPLEMENTED"),
+        x => Err(MinionError::NotImplemented(format!(
+            "Constraint not implemented {:?}",
+            x,
+        ))),
     }
 }
 
@@ -261,24 +276,27 @@ unsafe fn constraint_add_args(
     i: *mut ProbSpec_CSPInstance,
     r_constr: *mut ProbSpec_ConstraintBlob,
     constr: &Constraint,
-) {
+) -> Result<(), MinionError> {
     match constr {
         Constraint::SumGeq(lhs_vars, rhs_var) => {
-            read_vars(i, r_constr, &lhs_vars);
-            read_var(i, r_constr, rhs_var)
+            read_vars(i, r_constr, lhs_vars)?;
+            read_var(i, r_constr, rhs_var)?;
+            Ok(())
         }
         Constraint::SumLeq(lhs_vars, rhs_var) => {
-            read_vars(i, r_constr, &lhs_vars);
-            read_var(i, r_constr, rhs_var)
+            read_vars(i, r_constr, lhs_vars)?;
+            read_var(i, r_constr, rhs_var)?;
+            Ok(())
         }
         Constraint::Ineq(var1, var2, c) => {
-            read_var(i, r_constr, &var1);
-            read_var(i, r_constr, &var2);
-            read_const(r_constr, c)
+            read_var(i, r_constr, var1)?;
+            read_var(i, r_constr, var2)?;
+            read_const(r_constr, c)?;
+            Ok(())
         }
         #[allow(unreachable_patterns)]
-        _ => panic!("NOT IMPLEMENTED"),
-    };
+        x => Err(MinionError::NotImplemented(format!("{:?}", x))),
+    }
 }
 
 // DO NOT call manually - this assumes that all needed vars are already in the symbol table.
@@ -287,13 +305,17 @@ unsafe fn read_vars(
     instance: *mut ProbSpec_CSPInstance,
     raw_constraint: *mut ProbSpec_ConstraintBlob,
     vars: &Vec<Var>,
-) {
+) -> Result<(), MinionError> {
     let raw_vars = Scoped::new(vec_var_new(), |x| vec_var_free(x as _));
     for var in vars {
-        // TODO: could easily break and segfault and die and so on
         let raw_var = match var {
             Var::NameRef(name) => {
-                let c_str = CString::new(name.clone()).expect("");
+                let c_str = CString::new(name.clone()).map_err(|_| {
+                    anyhow!(
+                        "Variable name {:?} contains a null character.",
+                        name.clone()
+                    )
+                })?;
                 getVarByName(instance, c_str.as_ptr() as _)
             }
             Var::ConstantAsVar(n) => constantAsVar(*n),
@@ -303,17 +325,24 @@ unsafe fn read_vars(
     }
 
     constraint_addVarList(raw_constraint, raw_vars.ptr);
+
+    Ok(())
 }
 
 unsafe fn read_var(
     instance: *mut ProbSpec_CSPInstance,
     raw_constraint: *mut ProbSpec_ConstraintBlob,
     var: &Var,
-) {
+) -> Result<(), MinionError> {
     let raw_vars = Scoped::new(vec_var_new(), |x| vec_var_free(x as _));
     let raw_var = match var {
         Var::NameRef(name) => {
-            let c_str = CString::new(name.clone()).expect("");
+            let c_str = CString::new(name.clone()).map_err(|_| {
+                anyhow!(
+                    "Variable name {:?} contains a null character.",
+                    name.clone()
+                )
+            })?;
             getVarByName(instance, c_str.as_ptr() as _)
         }
         Var::ConstantAsVar(n) => constantAsVar(*n),
@@ -321,16 +350,23 @@ unsafe fn read_var(
 
     vec_var_push_back(raw_vars.ptr, raw_var);
     constraint_addVarList(raw_constraint, raw_vars.ptr);
+
+    Ok(())
 }
 
-unsafe fn read_const(raw_constraint: *mut ProbSpec_ConstraintBlob, constant: &Constant) {
+unsafe fn read_const(
+    raw_constraint: *mut ProbSpec_ConstraintBlob,
+    constant: &Constant,
+) -> Result<(), MinionError> {
     let raw_consts = Scoped::new(vec_int_new(), |x| vec_var_free(x as _));
 
     let val = match constant {
-        Constant::Integer(n) => n,
-        _ => panic!("NOT IMPLEMENTED"),
-    };
+        Constant::Integer(n) => Ok(n),
+        x => Err(MinionError::NotImplemented(format!("{:?}", x))),
+    }?;
 
     vec_int_push_back(raw_consts.ptr, *val);
     constraint_addConstantList(raw_constraint, raw_consts.ptr);
+
+    Ok(())
 }

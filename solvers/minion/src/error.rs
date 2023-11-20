@@ -8,9 +8,13 @@ use thiserror::Error;
 /// `Error` allows functions involving Minion to return a single error type. All error types in
 /// `minion_rs` are able to be converted into this type using into / from.
 #[derive(Debug, Error)]
-pub enum Error {
+pub enum MinionError {
     #[error("runtime error: `{0}.to_string()`")]
     RuntimeError(#[from] RuntimeError),
+    #[error("not implemented: {0}")]
+    NotImplemented(String),
+    #[error(transparent)]
+    Other(#[from] anyhow::Error), // source and Display delegate to anyhow::Error
 }
 
 /// RuntimeErrors are thrown by Minion during execution.
