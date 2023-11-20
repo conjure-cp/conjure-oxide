@@ -92,6 +92,11 @@
 <a href="#92" id="92">92</a>
 <a href="#93" id="93">93</a>
 <a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! The Model Syntax tree for the Minion bindings.
 
 </span><span class="kw">use </span>std::collections::HashMap;
@@ -113,7 +118,14 @@
     }
 }
 
-<span class="kw">pub enum </span>Constraint {
+<span class="kw">impl </span>Default <span class="kw">for </span>Model {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new()
+    }
+}
+
+<span class="attr">#[derive(Debug)]
+</span><span class="kw">pub enum </span>Constraint {
     SumLeq(Vec&lt;Var&gt;, Var),
     SumGeq(Vec&lt;Var&gt;, Var),
     Ineq(Var, Var, Constant),
@@ -124,6 +136,7 @@
 /// The latter is not stored in the symbol table, or counted in Minions internal list of all
 /// variables, but is used to allow the use of a constant in the place of a variable in a
 /// constraint.
+</span><span class="attr">#[derive(Debug)]
 </span><span class="kw">pub enum </span>Var {
     NameRef(VarName),
     ConstantAsVar(i32),
@@ -135,7 +148,7 @@
     Integer(i32),
 }
 
-<span class="attr">#[derive(Copy, Clone)]
+<span class="attr">#[derive(Debug, Copy, Clone)]
 </span><span class="kw">pub enum </span>VarDomain {
     Bound(i32, i32),
     Discrete(i32, i32),
@@ -168,14 +181,11 @@
         <span class="self">self</span>.table.insert(name.clone(), vartype);
         <span class="self">self</span>.var_order.push(name);
 
-        <span class="kw">return </span><span class="prelude-val">Some</span>(());
+        <span class="prelude-val">Some</span>(())
     }
 
     <span class="kw">pub fn </span>get_vartype(<span class="kw-2">&amp;</span><span class="self">self</span>, name: VarName) -&gt; <span class="prelude-ty">Option</span>&lt;VarDomain&gt; {
-        <span class="kw">match </span><span class="self">self</span>.table.get(<span class="kw-2">&amp;</span>name) {
-            <span class="prelude-val">Some</span>(m) =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>m),
-            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
-        }
+        <span class="self">self</span>.table.get(<span class="kw-2">&amp;</span>name).cloned()
     }
 
     <span class="kw">pub fn </span>get_variable_order(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;VarName&gt; {
