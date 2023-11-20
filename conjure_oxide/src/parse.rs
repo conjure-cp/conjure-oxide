@@ -82,7 +82,9 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
                     let num = &arr[i]["Constant"]["ConstantInt"][1]
                         .as_i64()
                         .ok_or(CError("Could not parse int domain constant".to_owned()))?;
-                    nums.push(*num);
+                    let num32 = i32::try_from(*num)
+                        .map_err(|_| CError("Could not parse int domain constant".to_owned()))?;
+                    nums.push(num32);
                 }
                 ranges.push(Range::Bounded(nums[0], nums[1]));
             }
@@ -90,7 +92,9 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
                 let num = &range.1["Constant"]["ConstantInt"][1]
                     .as_i64()
                     .ok_or(CError("Could not parse int domain constant".to_owned()))?;
-                ranges.push(Range::Single(*num));
+                let num32 = i32::try_from(*num)
+                    .map_err(|_| CError("Could not parse int domain constant".to_owned()))?;
+                ranges.push(Range::Single(num32));
             }
             _ => return Err(CError("DomainInt[1] contains an unknown object".to_owned())),
         }

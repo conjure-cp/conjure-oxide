@@ -73,7 +73,7 @@ impl Display for DecisionVariable {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Domain {
     BoolDomain,
-    IntDomain(Vec<Range<i64>>),
+    IntDomain(Vec<Range<i32>>),
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
