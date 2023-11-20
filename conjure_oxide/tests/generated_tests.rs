@@ -1,7 +1,7 @@
+use assert_json_diff::assert_json_eq;
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
-use assert_json_diff::assert_json_eq;
 
 use conjure_oxide::ast::Model;
 
