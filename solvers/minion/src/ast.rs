@@ -19,6 +19,13 @@ impl Model {
     }
 }
 
+impl Default for Model {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+#[derive(Debug)]
 pub enum Constraint {
     SumLeq(Vec<Var>, Var),
     SumGeq(Vec<Var>, Var),
@@ -30,6 +37,7 @@ pub enum Constraint {
 /// The latter is not stored in the symbol table, or counted in Minions internal list of all
 /// variables, but is used to allow the use of a constant in the place of a variable in a
 /// constraint.
+#[derive(Debug)]
 pub enum Var {
     NameRef(VarName),
     ConstantAsVar(i32),
@@ -41,7 +49,7 @@ pub enum Constant {
     Integer(i32),
 }
 
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum VarDomain {
     Bound(i32, i32),
     Discrete(i32, i32),
@@ -74,14 +82,11 @@ impl SymbolTable {
         self.table.insert(name.clone(), vartype);
         self.var_order.push(name);
 
-        return Some(());
+        Some(())
     }
 
     pub fn get_vartype(&self, name: VarName) -> Option<VarDomain> {
-        match self.table.get(&name) {
-            Some(m) => Some(*m),
-            None => None,
-        }
+        self.table.get(&name).cloned()
     }
 
     pub fn get_variable_order(&self) -> Vec<VarName> {

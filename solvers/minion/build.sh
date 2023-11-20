@@ -14,7 +14,7 @@ if [ -d vendor/build ]; then
 else
   mkdir -p vendor/build
   cd vendor/build
-  python3 ../configure.py --lib 
+  python3 ../configure.py --lib --quick
 fi
 
 echo "------ BUILD STEP ------"
