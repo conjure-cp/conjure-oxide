@@ -10,11 +10,15 @@ on:
       - tools/essence-feature-usage-stats/**
 
 env:
-  ESSENCE_DIR: "./EssenceCatalog"
+  ESSENCE_DIR: "./EssenceRepos"
   CONJURE_DIR: "./conjure"
-  ESSENCE_EXAMPLES_REPO: "https://github.com/conjure-cp/EssenceCatalog.git"
   CONJURE_REPO: "https://github.com/conjure-cp/conjure"
+  EXCLUDE_PATHS_REGEX: ".*autogen.*"
   OUTPUT_PATH: "./web/static/index.html"
+  MAX_N_FILES: 5000
+  ESSENCE_FILE_REPOS: >
+                  https://github.com/conjure-cp/EssenceCatalog::master,
+                  https://github.com/conjure-cp/conjure::main"
   KEYWORD_BLOCKLIST: >
                   mInfo,finds,givens,enumGivens,enumLettings,lettings,
                   unnameds,strategyQ,Auto,Interactive,strategyA,trailCompact,
@@ -61,6 +65,7 @@ jobs:
         working-directory: ./tools/essence-feature-usage-stats
         
       - name: Deploy to GitHub Pages
+        if: github.event_name == 'push' # Run this step only on push events
         uses: JamesIves/github-pages-deploy-action@v4.4.3
         with:
           branch: gh-pages

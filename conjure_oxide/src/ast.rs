@@ -83,10 +83,16 @@ pub enum Range<A> {
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[non_exhaustive]
 pub enum Expression {
     ConstantInt(i32),
     Reference(Name),
     Sum(Vec<Expression>),
     Eq(Box<Expression>, Box<Expression>),
     Geq(Box<Expression>, Box<Expression>),
+
+    // Flattened Constraints
+    SumGeq(Vec<Expression>, Box<Expression>),
+    SumLeq(Vec<Expression>, Box<Expression>),
+    Ineq(Box<Expression>, Box<Expression>, Box<Expression>),
 }

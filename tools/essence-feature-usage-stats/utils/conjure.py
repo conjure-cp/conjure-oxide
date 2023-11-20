@@ -5,7 +5,7 @@ from pathlib import Path
 
 import requests
 
-from utils.files import download_and_extract, make_executable_recursive
+from utils.files import download_and_extract, find_file, make_executable_recursive
 from utils.git_utils import parse_repo_url
 
 HTTP_OK = 200
@@ -68,7 +68,7 @@ def get_release_id_by_version(repository_url: str, version: str) -> str | None:
         release_data = response.json()
         for release in release_data:
             if version in (release["name"], release["tag_name"]):
-                return release[id]
+                return release["id"]
 
     return None
 
@@ -83,8 +83,8 @@ def get_release_url(repository_url: str, version: str) -> str:
     return f"https://api.github.com/repos/{user}/{repo}/releases/{version}"
 
 
-def get_conjure_zip_file_url(assets, version):
-    """Get github relese asset for a release of conjure."""
+def get_conjure_zip_file_url(assets, version) -> str | None:
+    """Get GitHub release asset for a release of conjure."""
     for asset in assets:
         if asset["name"] == f"conjure-{version}-linux.zip":
             return asset["browser_download_url"]
@@ -95,7 +95,7 @@ def download_conjure(
     output_dir: Path | PathLike[str] | str,
     version="latest",
     repository_url="https://github.com/conjure-cp/conjure",
-):
+) -> Path | None:
     """
     Download conjure from GitHub and install the binary to a local directory.
 
@@ -109,7 +109,7 @@ def download_conjure(
         output_dir.mkdir(parents=True)
 
     print(
-        f"Downloading Conjure release {version} from {repository_url} to {output_dir}",
+        f"Getting conjure binary for Linux, version {version}",
     )
 
     api_url = get_release_url(repository_url, version)
@@ -123,10 +123,20 @@ def download_conjure(
         assets = release_data["assets"]
         asset_file_url = get_conjure_zip_file_url(assets, version)
 
-        download_and_extract(asset_file_url, output_dir)
-        make_executable_recursive(output_dir)
+        output_dir = output_dir / version
 
-        conjure_path = output_dir / f"conjure-{version}-linux" / "conjure"
+        if not output_dir.exists():
+            print(
+                f"Downloading Conjure release {version} from {repository_url} to {output_dir}...",
+            )
+            output_dir.mkdir()
+            download_and_extract(asset_file_url, output_dir)
+            make_executable_recursive(output_dir)
+        else:
+            print(f"Conjure release {version} already exists at {output_dir}!")
+
+        conjure_path = find_file(output_dir, "conjure")
+
         print(f"Conjure binary installed to {conjure_path.resolve()}")
         return conjure_path
     return None

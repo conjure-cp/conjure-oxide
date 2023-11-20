@@ -33,7 +33,7 @@ fn main() {
         },
     );
 
-    let m1 = Model {
+    let m = Model {
         variables,
         constraints: vec![
             Expression::Eq(
@@ -51,5 +51,5 @@ fn main() {
         ],
     };
 
-    println!("\n{:?}\n", m1);
+    println!("\n{:?}\n", m);
 }
