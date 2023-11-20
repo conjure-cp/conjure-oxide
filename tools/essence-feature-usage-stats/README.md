@@ -30,24 +30,18 @@ It is deployed using GitHub Pages: see https://conjure-cp.github.io/conjure-oxid
 - Table row headers show paths to Essence example files and the size of the files (in lines of code)
 - Table cells show how often a given keyword is used in a given file
 - Cells are colour coded. Red means a keyword is NOT used in this file, orange means it's used less than average, green means it's used more
-- Columns are sortable. Click on table header cells to sort rows by how often this keyword is used in each file.
-- Sorting by the first column (the one with file names) will sort by file size
-- The section above the table is a list of Essence keywords, sorted by their total usage accross files
-- The "Show" checkboxes in this section show/hide table columns
-- The "Any", "Require", "Exclude" radio button allows you to filter the table by specific keywords:
-  - "Require" means that only files that have one or more usage of this keyword will be shown
-  - "Exclude" means that only files that don't use this keyword will be shown
-  - "Any" means that files will be shown regardless of whether they use this feature
-  - These can be combined to search for exactly the right files to test specific Essence features
+- Columns are sortable. Click on table header cells to sort rows by how often this keyword is used in each file.(See top of the HTML page for detailed use instructions)
 
 ## Configuration
 
-- ESSENCE_DIR - local directory to store essence files
-- CONJURE_DIR - local directory to store conjure binaries
-- ESSENCE_EXAMPLES_REPO - repo to download Essence examples from
-- CONJURE_REPO - repo to download the latest release of conjure from
-- OUTPUT_PATH - path to save the generated HTML page. Be careful with changing this (see above).
-- KEYWORD_BLOCKLIST - comma-separated list of Essence keywords to ignore
+- `ESSENCE_DIR` - Local directory to store essence files
+- `CONJURE_DIR` - Local directory to store conjure binaries
+- `CONJURE_REPO` - GitHub repo to download conjure releases from
+- `ESSENCE_FILE_REPOS` - Comma-separated list of repos to download Essence examples from. Format: `"<repo_url>::<repo_branch>,<repo2_url>::<repo2_branch>,..."`
+- `OUTPUT_PATH` - Path to save the generated HTML page. Be careful with changing this (see above).
+- `KEYWORD_BLOCKLIST` - Comma-separated list of Essence keywords to ignore
+- `EXCLUDE_PATHS_REGEX` - Regex to exclude Essence files, e.g. `"*autogen*"`
+- `MAX_N_FILES` - Max number of Essence files to process
 
 ---
 

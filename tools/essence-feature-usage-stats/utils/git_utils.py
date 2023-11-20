@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Tuple
 from urllib.parse import urlsplit
 
-from git import InvalidGitRepositoryError, RemoteProgress, Repo, NoSuchPathError
+from git import InvalidGitRepositoryError, NoSuchPathError, RemoteProgress, Repo
 from tqdm import tqdm
 
 
@@ -91,4 +91,5 @@ def parse_repo_url(repo_url: str) -> Tuple[str, str]:
         return user, repo
 
     elements = repo_url.split("/")
+
     return tuple(elements[:2])

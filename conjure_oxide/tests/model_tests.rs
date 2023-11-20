@@ -18,9 +18,9 @@ fn modify_domain() {
         constraints: Vec::new(),
     };
 
-    assert!((*m.variables.get(&a).unwrap()).domain == d1);
+    assert!(m.variables.get(&a).unwrap().domain == d1);
 
     m.update_domain(&a, d2.clone());
 
-    assert!((*m.variables.get(&a).unwrap()).domain == d2);
+    assert!(m.variables.get(&a).unwrap().domain == d2);
 }

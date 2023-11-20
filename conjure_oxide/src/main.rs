@@ -31,7 +31,7 @@ fn main() {
         },
     );
 
-    let mut m = Model {
+    let m = Model {
         variables,
         constraints: vec![
             Expression::Eq(

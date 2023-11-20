@@ -54,21 +54,52 @@ def download_file(download_url: str, file_path: Path | str):
                 file.write(chunk)
 
 
-def make_executable_recursive(directory_path):
+def make_executable_recursive(path: Path):
     """Recursively make files in a directory executable."""
-    for item in directory_path.iterdir():
-        if item.is_file():
-            item.chmod(item.stat().st_mode | 0o111)  # Add execute permission for files
-        elif item.is_dir():
+    if path.is_file():
+        path.chmod(path.stat().st_mode | 0o111)
+    else:
+        for item in path.iterdir():
             make_executable_recursive(item)  # Recursively process subdirectories
 
 
-def download_and_extract(download_url: str, dir_path: Path | str):
+def download_and_extract(download_url: str, dir_path: Path | str) -> Path | None:
     """Download and extract a file from a URL to a local directory."""
-    temp_path = dir_path / "temp.zip"
-    download_file(download_url, temp_path)
+    file_path = None
+    zip_path = dir_path / "temp.zip"
+    download_file(download_url, zip_path)
 
-    with zipfile.ZipFile(temp_path, "r") as zip_ref:
+    with zipfile.ZipFile(zip_path, "r") as zip_ref:
+        conjure_names = list(
+            filter(lambda x: x.startswith("conjure"), zip_ref.namelist()),
+        )
+
+        if not conjure_names:
+            raise ValueError("No conjure files found in release!")  # noqa: TRY003
+
+        conjure_root = conjure_names[0]
+        for name in conjure_names:
+            if all(x.startswith(name) for x in conjure_names):
+                conjure_root = name
+
+        file_path = Path(zip_ref.extract(conjure_root, dir_path))
         zip_ref.extractall(dir_path)
 
-    temp_path.unlink()
+    zip_path.unlink()
+    return file_path
+
+
+def find_file(directory_path: Path, target_file_name: str) -> Path | None:
+    """Recursively search directory for a given file."""
+    directory_path = Path(directory_path)
+
+    if directory_path.is_file() and directory_path.name == target_file_name:
+        return directory_path
+
+    if directory_path.is_dir():
+        for file in directory_path.iterdir():
+            result = find_file(file, target_file_name)
+            if result is not None:
+                return result
+
+    return None  # File not found in the directory or its subdirectories
