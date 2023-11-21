@@ -1,8 +1,3 @@
-#![allow(non_snake_case)]
-
-// we disable non_snake_case in this file becasue we want to use the constructor names of Conjure as variables.
-// just in this file, don't get wrong ideas!
-
 use std::collections::HashMap;
 
 use serde_json::Value;
@@ -33,14 +28,15 @@ pub fn parse_json(str: &String) -> Result<Model> {
                 m.add_variable(name, var);
             }
             "SuchThat" => {
-                m.constraints = entry
+                let constraints: Vec<Expression> = entry
                     .1
                     .as_array()
                     .unwrap()
                     .iter()
                     .flat_map(parse_expression)
                     .collect();
-                println!("Nb constraints {}", m.constraints.len());
+                m.constraints.extend(constraints);
+                // println!("Nb constraints {}", m.constraints.len());
             }
             _ => return Err(CError("mStatements contains an unknown object".to_owned())),
         }
@@ -121,8 +117,6 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
 }
 
 fn parse_expression(obj: &JsonValue) -> Option<Expression> {
-    println!("{}", " ----- ----- 1");
-
     // this needs an explicit type signature to force the closures to have the same type
     let binary_operators: HashMap<
         &str,
@@ -160,7 +154,6 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
 
     match obj {
         Value::Object(op) if op.contains_key("Op") => {
-            println!("{}", " ----- ----- 2");
             match &op["Op"] {
                 Value::Object(bin_op)
                     if binary_operator_names.any(|key| bin_op.contains_key(*key)) =>
@@ -171,32 +164,25 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
 
                     let constructor = binary_operators.get(key.as_str())?;
 
-                    println!("{}", " ----- ----- 3");
                     match &value {
-                        Value::Array(MkOpEq_args) if MkOpEq_args.len() == 2 => {
-                            println!("{}", " ----- ----- 4");
-                            let arg1 = parse_expression(&MkOpEq_args[0])?;
-                            let arg2 = parse_expression(&MkOpEq_args[1])?;
+                        Value::Array(bin_op_args) if bin_op_args.len() == 2 => {
+                            let arg1 = parse_expression(&bin_op_args[0])?;
+                            let arg2 = parse_expression(&bin_op_args[1])?;
                             Some(constructor(Box::new(arg1), Box::new(arg2)))
                         }
-                        otherwise => {
-                            println!("Unhandled 3 {}", otherwise);
-                            None
-                        }
+                        otherwise => panic!("Unhandled 3 {}", otherwise),
                     }
                 }
                 Value::Object(op_sum) if op_sum.contains_key("MkOpSum") => {
                     let args = &op_sum["MkOpSum"]["AbstractLiteral"]["AbsLitMatrix"][1];
-                    let args_parsed = args
+                    let args_parsed: Vec<Expression> = args
                         .as_array()?
                         .iter()
-                        .map(|x| parse_expression(x).unwrap());
-                    Some(Expression::Sum(args_parsed.collect()))
+                        .map(|x| parse_expression(x).unwrap())
+                        .collect();
+                    Some(Expression::Sum(args_parsed))
                 }
-                otherwise => {
-                    println!("Unhandled 2 {}", otherwise);
-                    None
-                }
+                otherwise => panic!("Unhandled 2 {}", otherwise),
             }
         }
         Value::Object(refe) if refe.contains_key("Reference") => {
@@ -213,19 +199,11 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
                             .unwrap(),
                     ))
                 }
-                otherwise => {
-                    println!("Unhandled 4 {}", otherwise);
-                    None
-                }
+                otherwise => panic!("Unhandled 4 {}", otherwise),
             }
         }
-        otherwise => {
-            println!("Unhandled 1 {}", otherwise);
-            None
-        }
+        otherwise => panic!("Unhandled 1 {}", otherwise),
     }
-    // println!("{}", obj);
-    // Ok(())
 }
 
 impl Model {
