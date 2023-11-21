@@ -185,6 +185,14 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
                         }
                     }
                 }
+                Value::Object(op_sum) if op_sum.contains_key("MkOpSum") => {
+                    let args = &op_sum["MkOpSum"]["AbstractLiteral"]["AbsLitMatrix"][1];
+                    let args_parsed = args
+                        .as_array()?
+                        .iter()
+                        .map(|x| parse_expression(x).unwrap());
+                    Some(Expression::Sum(args_parsed.collect()))
+                }
                 otherwise => {
                     println!("Unhandled {}", otherwise);
                     None
