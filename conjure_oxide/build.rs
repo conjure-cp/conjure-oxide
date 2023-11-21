@@ -7,7 +7,7 @@ use walkdir::WalkDir;
 fn main() -> io::Result<()> {
     let out_dir = var("OUT_DIR").map_err(|e| io::Error::new(io::ErrorKind::Other, e))?; // wrapping in a std::io::Error to match main's error type
     let dest = Path::new(&out_dir).join("gen_tests.rs");
-    let mut f = File::create(&dest)?;
+    let mut f = File::create(dest)?;
 
     let test_dir = "tests/integration";
 
@@ -45,7 +45,7 @@ fn write_test(file: &mut File, path: String, essence_files: Vec<String>) -> io::
             file,
             include_str!("./tests/gen_test_template"),
             // TODO: better sanitisation of paths to function names
-            test_name = path.replace("./", "").replace("/", "_").replace("-", "_"),
+            test_name = path.replace("./", "").replace(['/', '-'], "_"),
             test_dir = path,
             essence_file = essence_files[0]
         )

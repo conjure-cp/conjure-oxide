@@ -1,5 +1,6 @@
 //! Solver interface to minion_rs.
 
+#[allow(unused_imports)]
 use anyhow::anyhow;
 
 use crate::ast::{
@@ -78,6 +79,7 @@ fn parse_var(
     let (low, high) = match range {
         ConjureRange::Bounded(x, y) => Ok((x.to_owned(), y.to_owned())),
         ConjureRange::Single(x) => Ok((x.to_owned(), x.to_owned())),
+        #[allow(unreachable_patterns)]
         x => Err(SolverError::NotSupported(SOLVER, format!("{:?}", x))),
     }?;
 

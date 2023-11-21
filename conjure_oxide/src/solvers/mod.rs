@@ -1,5 +1,5 @@
 mod error;
 pub mod minion;
 pub use error::*;
-mod solvers;
-pub use solvers::*;
+mod solver_list;
+pub use solver_list::*;

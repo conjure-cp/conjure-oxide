@@ -124,7 +124,7 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
     Ok(Domain::IntDomain(ranges))
 }
 
-fn parse_constraint(obj: &JsonValue) -> Result<()> {
+fn parse_constraint(_obj: &JsonValue) -> Result<()> {
     Ok(())
 }
 
