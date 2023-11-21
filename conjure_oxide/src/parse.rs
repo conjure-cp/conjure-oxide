@@ -180,7 +180,7 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
                             Some(constructor(Box::new(arg1), Box::new(arg2)))
                         }
                         otherwise => {
-                            println!("Unhandled {}", otherwise);
+                            println!("Unhandled 3 {}", otherwise);
                             None
                         }
                     }
@@ -194,7 +194,7 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
                     Some(Expression::Sum(args_parsed.collect()))
                 }
                 otherwise => {
-                    println!("Unhandled {}", otherwise);
+                    println!("Unhandled 2 {}", otherwise);
                     None
                 }
             }
@@ -220,7 +220,7 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
             }
         }
         otherwise => {
-            println!("Unhandled {}", otherwise);
+            println!("Unhandled 1 {}", otherwise);
             None
         }
     }
