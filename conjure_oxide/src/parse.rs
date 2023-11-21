@@ -7,12 +7,12 @@ use Error::ModelConstructError as CError;
 pub fn parse_json(str: &String) -> Result<Model> {
     let mut m = Model::new();
     let v: JsonValue = serde_json::from_str(str)?;
-    let constraints = v["mStatements"]
+    let statements = v["mStatements"]
         .as_array()
         .ok_or(CError("mStatements is not an array".to_owned()))?;
 
-    for con in constraints {
-        let entry = con
+    for statement in statements {
+        let entry = statement
             .as_object()
             .ok_or(CError("mStatements contains a non-object".to_owned()))?
             .iter()
