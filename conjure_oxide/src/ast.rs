@@ -87,9 +87,15 @@ pub enum Range<A> {
 pub enum Expression {
     ConstantInt(i32),
     Reference(Name),
+
     Sum(Vec<Expression>),
+
     Eq(Box<Expression>, Box<Expression>),
+    Neq(Box<Expression>, Box<Expression>),
     Geq(Box<Expression>, Box<Expression>),
+    Leq(Box<Expression>, Box<Expression>),
+    Gt(Box<Expression>, Box<Expression>),
+    Lt(Box<Expression>, Box<Expression>),
 
     // Flattened Constraints
     SumGeq(Vec<Expression>, Box<Expression>),

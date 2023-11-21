@@ -30,7 +30,16 @@ pub fn parse_json(str: &String) -> Result<Model> {
                 let (name, var) = parse_variable(entry.1)?;
                 m.add_variable(name, var);
             }
-            "SuchThat" => parse_constraint(entry.1)?,
+            "SuchThat" => {
+                m.constraints = entry
+                    .1
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .flat_map(parse_expression)
+                    .collect();
+                println!("Nb constraints {}", m.constraints.len());
+            }
             _ => return Err(CError("mStatements contains an unknown object".to_owned())),
         }
     }
@@ -109,8 +118,55 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
     Ok(Domain::IntDomain(ranges))
 }
 
-fn parse_constraint(obj: &JsonValue) -> Result<()> {
-    Ok(())
+fn parse_expression(obj: &JsonValue) -> Option<Expression> {
+    println!("{}", " ----- ----- 1");
+    match obj {
+        Value::Object(op) if (op.contains_key("Op")) => {
+            println!("{}", " ----- ----- 2");
+            match &op["Op"] {
+                Value::Object(MkOpEq) if MkOpEq.contains_key("MkOpEq") => {
+                    println!("{}", " ----- ----- 3");
+                    match &MkOpEq["MkOpEq"] {
+                        Value::Array(MkOpEq_args) if MkOpEq_args.len() == 2 => {
+                            println!("{}", " ----- ----- 4");
+                            let arg1 = parse_expression(&MkOpEq_args[0])?;
+                            let arg2 = parse_expression(&MkOpEq_args[1])?;
+                            Some(Expression::Eq(Box::new(arg1), Box::new(arg2)))
+                        }
+                        otherwise => {
+                            println!("Unhandled {}", otherwise);
+                            None
+                        }
+                    }
+                }
+                Value::Object(MkOpNeq) if MkOpNeq.contains_key("MkOpNeq") => {
+                    println!("{}", " ----- ----- 3");
+                    match &MkOpNeq["MkOpNeq"] {
+                        Value::Array(MkOpNeq_args) if MkOpNeq_args.len() == 2 => {
+                            println!("{}", " ----- ----- 4");
+                            let arg1 = parse_expression(&MkOpNeq_args[0])?;
+                            let arg2 = parse_expression(&MkOpNeq_args[1])?;
+                            Some(Expression::Neq(Box::new(arg1), Box::new(arg2)))
+                        }
+                        otherwise => {
+                            println!("Unhandled {}", otherwise);
+                            None
+                        }
+                    }
+                }
+                otherwise => {
+                    println!("Unhandled {}", otherwise);
+                    None
+                }
+            }
+        }
+        otherwise => {
+            println!("Unhandled {}", otherwise);
+            None
+        }
+    }
+    // println!("{}", obj);
+    // Ok(())
 }
 
 impl Model {
