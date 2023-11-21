@@ -111,33 +111,59 @@
 <a href="#111" id="111">111</a>
 <a href="#112" id="112">112</a>
 <a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
+<a href="#124" id="124">124</a>
+<a href="#125" id="125">125</a>
+<a href="#126" id="126">126</a>
+<a href="#127" id="127">127</a>
+<a href="#128" id="128">128</a>
+<a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::ast::{DecisionVariable, Domain, Model, Name, Range};
 <span class="kw">use </span><span class="kw">crate</span>::error::{Error, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>serde_json::Value <span class="kw">as </span>JsonValue;
 
-<span class="kw">use </span>Error::ModelConstructError <span class="kw">as </span>CError;
-
-<span class="kw">pub fn </span>parse_json(str: <span class="kw-2">&amp;</span>String) -&gt; <span class="prelude-ty">Result</span>&lt;Model&gt; {
+<span class="kw">pub fn </span>parse_json(str: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Model&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>m = Model::new();
     <span class="kw">let </span>v: JsonValue = serde_json::from_str(str)<span class="question-mark">?</span>;
     <span class="kw">let </span>constraints = v[<span class="string">&quot;mStatements&quot;</span>]
         .as_array()
-        .ok_or(CError(<span class="string">&quot;mStatements is not an array&quot;</span>.to_owned()))<span class="question-mark">?</span>;
+        .ok_or(Error::Parse(<span class="string">&quot;mStatements is not an array&quot;</span>.to_owned()))<span class="question-mark">?</span>;
 
     <span class="kw">for </span>con <span class="kw">in </span>constraints {
         <span class="kw">let </span>entry = con
             .as_object()
-            .ok_or(CError(<span class="string">&quot;mStatements contains a non-object&quot;</span>.to_owned()))<span class="question-mark">?
+            .ok_or(Error::Parse(<span class="string">&quot;mStatements contains a non-object&quot;</span>.to_owned()))<span class="question-mark">?
             </span>.iter()
             .next()
-            .ok_or(CError(<span class="string">&quot;mStatements contains an empty object&quot;</span>.to_owned()))<span class="question-mark">?</span>;
+            .ok_or(Error::Parse(
+                <span class="string">&quot;mStatements contains an empty object&quot;</span>.to_owned(),
+            ))<span class="question-mark">?</span>;
         <span class="kw">match </span>entry.<span class="number">0</span>.as_str() {
             <span class="string">&quot;Declaration&quot; </span>=&gt; {
                 <span class="kw">let </span>(name, var) = parse_variable(entry.<span class="number">1</span>)<span class="question-mark">?</span>;
                 m.add_variable(name, var);
             }
             <span class="string">&quot;SuchThat&quot; </span>=&gt; parse_constraint(entry.<span class="number">1</span>)<span class="question-mark">?</span>,
-            <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(CError(<span class="string">&quot;mStatements contains an unknown object&quot;</span>.to_owned())),
+            <span class="kw">_ </span>=&gt; {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Parse(
+                    <span class="string">&quot;mStatements contains an unknown object&quot;</span>.to_owned(),
+                ))
+            }
         }
     }
 
@@ -147,25 +173,29 @@
 <span class="kw">fn </span>parse_variable(v: <span class="kw-2">&amp;</span>JsonValue) -&gt; <span class="prelude-ty">Result</span>&lt;(Name, DecisionVariable)&gt; {
     <span class="kw">let </span>arr = v
         .as_object()
-        .ok_or(CError(<span class="string">&quot;Declaration is not an object&quot;</span>.to_owned()))<span class="question-mark">?</span>[<span class="string">&quot;FindOrGiven&quot;</span>]
+        .ok_or(Error::Parse(<span class="string">&quot;Declaration is not an object&quot;</span>.to_owned()))<span class="question-mark">?</span>[<span class="string">&quot;FindOrGiven&quot;</span>]
         .as_array()
-        .ok_or(CError(<span class="string">&quot;FindOrGiven is not an array&quot;</span>.to_owned()))<span class="question-mark">?</span>;
+        .ok_or(Error::Parse(<span class="string">&quot;FindOrGiven is not an array&quot;</span>.to_owned()))<span class="question-mark">?</span>;
     <span class="kw">let </span>name = arr[<span class="number">1</span>]
         .as_object()
-        .ok_or(CError(<span class="string">&quot;FindOrGiven[1] is not an object&quot;</span>.to_owned()))<span class="question-mark">?</span>[<span class="string">&quot;Name&quot;</span>]
+        .ok_or(Error::Parse(<span class="string">&quot;FindOrGiven[1] is not an object&quot;</span>.to_owned()))<span class="question-mark">?</span>[<span class="string">&quot;Name&quot;</span>]
         .as_str()
-        .ok_or(CError(<span class="string">&quot;FindOrGiven[1].Name is not a string&quot;</span>.to_owned()))<span class="question-mark">?</span>;
+        .ok_or(Error::Parse(
+            <span class="string">&quot;FindOrGiven[1].Name is not a string&quot;</span>.to_owned(),
+        ))<span class="question-mark">?</span>;
     <span class="kw">let </span>name = Name::UserName(name.to_owned());
     <span class="kw">let </span>domain = arr[<span class="number">2</span>]
         .as_object()
-        .ok_or(CError(<span class="string">&quot;FindOrGiven[2] is not an object&quot;</span>.to_owned()))<span class="question-mark">?
+        .ok_or(Error::Parse(<span class="string">&quot;FindOrGiven[2] is not an object&quot;</span>.to_owned()))<span class="question-mark">?
         </span>.iter()
         .next()
-        .ok_or(CError(<span class="string">&quot;FindOrGiven[2] is an empty object&quot;</span>.to_owned()))<span class="question-mark">?</span>;
+        .ok_or(Error::Parse(<span class="string">&quot;FindOrGiven[2] is an empty object&quot;</span>.to_owned()))<span class="question-mark">?</span>;
     <span class="kw">let </span>domain = <span class="kw">match </span>domain.<span class="number">0</span>.as_str() {
         <span class="string">&quot;DomainInt&quot; </span>=&gt; <span class="prelude-val">Ok</span>(parse_int_domain(domain.<span class="number">1</span>)<span class="question-mark">?</span>),
         <span class="string">&quot;DomainBool&quot; </span>=&gt; <span class="prelude-val">Ok</span>(Domain::BoolDomain),
-        <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(CError(<span class="string">&quot;FindOrGiven[2] is an unknown object&quot;</span>.to_owned())),
+        <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::Parse(
+            <span class="string">&quot;FindOrGiven[2] is an unknown object&quot;</span>.to_owned(),
+        )),
     }<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>((name, DecisionVariable { domain }))
 }
@@ -174,29 +204,37 @@
     <span class="kw">let </span><span class="kw-2">mut </span>ranges = Vec::new();
     <span class="kw">let </span>arr = v
         .as_array()
-        .ok_or(CError(<span class="string">&quot;DomainInt is not an array&quot;</span>.to_owned()))<span class="question-mark">?</span>[<span class="number">1</span>]
+        .ok_or(Error::Parse(<span class="string">&quot;DomainInt is not an array&quot;</span>.to_owned()))<span class="question-mark">?</span>[<span class="number">1</span>]
         .as_array()
-        .ok_or(CError(<span class="string">&quot;DomainInt[1] is not an array&quot;</span>.to_owned()))<span class="question-mark">?</span>;
+        .ok_or(Error::Parse(<span class="string">&quot;DomainInt[1] is not an array&quot;</span>.to_owned()))<span class="question-mark">?</span>;
     <span class="kw">for </span>range <span class="kw">in </span>arr {
         <span class="kw">let </span>range = range
             .as_object()
-            .ok_or(CError(<span class="string">&quot;DomainInt[1] contains a non-object&quot;</span>.to_owned()))<span class="question-mark">?
+            .ok_or(Error::Parse(
+                <span class="string">&quot;DomainInt[1] contains a non-object&quot;</span>.to_owned(),
+            ))<span class="question-mark">?
             </span>.iter()
             .next()
-            .ok_or(CError(<span class="string">&quot;DomainInt[1] contains an empty object&quot;</span>.to_owned()))<span class="question-mark">?</span>;
+            .ok_or(Error::Parse(
+                <span class="string">&quot;DomainInt[1] contains an empty object&quot;</span>.to_owned(),
+            ))<span class="question-mark">?</span>;
         <span class="kw">match </span>range.<span class="number">0</span>.as_str() {
             <span class="string">&quot;RangeBounded&quot; </span>=&gt; {
                 <span class="kw">let </span>arr = range
                     .<span class="number">1
                     </span>.as_array()
-                    .ok_or(CError(<span class="string">&quot;RangeBounded is not an array&quot;</span>.to_owned()))<span class="question-mark">?</span>;
+                    .ok_or(Error::Parse(<span class="string">&quot;RangeBounded is not an array&quot;</span>.to_owned()))<span class="question-mark">?</span>;
                 <span class="kw">let </span><span class="kw-2">mut </span>nums = Vec::new();
                 <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">2 </span>{
-                    <span class="kw">let </span>num = <span class="kw-2">&amp;</span>arr[i][<span class="string">&quot;Constant&quot;</span>][<span class="string">&quot;ConstantInt&quot;</span>][<span class="number">1</span>]
-                        .as_i64()
-                        .ok_or(CError(<span class="string">&quot;Could not parse int domain constant&quot;</span>.to_owned()))<span class="question-mark">?</span>;
-                    <span class="kw">let </span>num32 = i32::try_from(<span class="kw-2">*</span>num)
-                        .map_err(|<span class="kw">_</span>| CError(<span class="string">&quot;Could not parse int domain constant&quot;</span>.to_owned()))<span class="question-mark">?</span>;
+                    <span class="kw">let </span>num =
+                        <span class="kw-2">&amp;</span>arr[i][<span class="string">&quot;Constant&quot;</span>][<span class="string">&quot;ConstantInt&quot;</span>][<span class="number">1</span>]
+                            .as_i64()
+                            .ok_or(Error::Parse(
+                                <span class="string">&quot;Could not parse int domain constant&quot;</span>.to_owned(),
+                            ))<span class="question-mark">?</span>;
+                    <span class="kw">let </span>num32 = i32::try_from(<span class="kw-2">*</span>num).map_err(|<span class="kw">_</span>| {
+                        Error::Parse(<span class="string">&quot;Could not parse int domain constant&quot;</span>.to_owned())
+                    })<span class="question-mark">?</span>;
                     nums.push(num32);
                 }
                 ranges.push(Range::Bounded(nums[<span class="number">0</span>], nums[<span class="number">1</span>]));
@@ -204,18 +242,24 @@
             <span class="string">&quot;RangeSingle&quot; </span>=&gt; {
                 <span class="kw">let </span>num = <span class="kw-2">&amp;</span>range.<span class="number">1</span>[<span class="string">&quot;Constant&quot;</span>][<span class="string">&quot;ConstantInt&quot;</span>][<span class="number">1</span>]
                     .as_i64()
-                    .ok_or(CError(<span class="string">&quot;Could not parse int domain constant&quot;</span>.to_owned()))<span class="question-mark">?</span>;
+                    .ok_or(Error::Parse(
+                        <span class="string">&quot;Could not parse int domain constant&quot;</span>.to_owned(),
+                    ))<span class="question-mark">?</span>;
                 <span class="kw">let </span>num32 = i32::try_from(<span class="kw-2">*</span>num)
-                    .map_err(|<span class="kw">_</span>| CError(<span class="string">&quot;Could not parse int domain constant&quot;</span>.to_owned()))<span class="question-mark">?</span>;
+                    .map_err(|<span class="kw">_</span>| Error::Parse(<span class="string">&quot;Could not parse int domain constant&quot;</span>.to_owned()))<span class="question-mark">?</span>;
                 ranges.push(Range::Single(num32));
             }
-            <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(CError(<span class="string">&quot;DomainInt[1] contains an unknown object&quot;</span>.to_owned())),
+            <span class="kw">_ </span>=&gt; {
+                <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Parse(
+                    <span class="string">&quot;DomainInt[1] contains an unknown object&quot;</span>.to_owned(),
+                ))
+            }
         }
     }
     <span class="prelude-val">Ok</span>(Domain::IntDomain(ranges))
 }
 
-<span class="kw">fn </span>parse_constraint(obj: <span class="kw-2">&amp;</span>JsonValue) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+<span class="kw">fn </span>parse_constraint(_obj: <span class="kw-2">&amp;</span>JsonValue) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="prelude-val">Ok</span>(())
 }
 

@@ -274,9 +274,40 @@
 <a href="#274" id="274">274</a>
 <a href="#275" id="275">275</a>
 <a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Solver interface to minion_rs.
 
-</span><span class="kw">use </span><span class="kw">crate</span>::ast::{
+</span><span class="attr">#[allow(unused_imports)]
+</span><span class="kw">use </span>anyhow::anyhow;
+
+<span class="kw">use </span><span class="kw">crate</span>::ast::{
     DecisionVariable, Domain <span class="kw">as </span>ConjureDomain, Expression <span class="kw">as </span>ConjureExpression,
     Model <span class="kw">as </span>ConjureModel, Name <span class="kw">as </span>ConjureName, Range <span class="kw">as </span>ConjureRange,
 };
@@ -285,9 +316,12 @@
     Var <span class="kw">as </span>MinionVar, VarDomain <span class="kw">as </span>MinionDomain,
 };
 
+<span class="kw">use super</span>::{Solver, SolverError};
+
+<span class="kw">const </span>SOLVER: Solver = Solver::Minion;
+
 <span class="kw">impl </span>TryFrom&lt;ConjureModel&gt; <span class="kw">for </span>MinionModel {
-    <span class="comment">// TODO (nd60): set this to equal ConjureError once it is merged.
-    </span><span class="kw">type </span>Error = String;
+    <span class="kw">type </span>Error = SolverError;
 
     <span class="kw">fn </span>try_from(conjure_model: ConjureModel) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>minion_model = MinionModel::new();
@@ -301,7 +335,10 @@
     }
 }
 
-<span class="kw">fn </span>parse_vars(conjure_model: <span class="kw-2">&amp;</span>ConjureModel, minion_model: <span class="kw-2">&amp;mut </span>MinionModel) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+<span class="kw">fn </span>parse_vars(
+    conjure_model: <span class="kw-2">&amp;</span>ConjureModel,
+    minion_model: <span class="kw-2">&amp;mut </span>MinionModel,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), SolverError&gt; {
     <span class="comment">// TODO (nd60): remove unused vars?
     // TODO (nd60): ensure all vars references are used.
 
@@ -315,12 +352,12 @@
     name: <span class="kw-2">&amp;</span>ConjureName,
     variable: <span class="kw-2">&amp;</span>DecisionVariable,
     minion_model: <span class="kw-2">&amp;mut </span>MinionModel,
-) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), SolverError&gt; {
     <span class="kw">let </span>str_name = name_to_string(name.to_owned());
 
     <span class="kw">let </span>ranges = <span class="kw">match </span><span class="kw-2">&amp;</span>variable.domain {
         ConjureDomain::IntDomain(range) =&gt; <span class="prelude-val">Ok</span>(range),
-        x =&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;Not supported: {:?}&quot;</span>, x)),
+        x =&gt; <span class="prelude-val">Err</span>(SolverError::NotSupported(SOLVER, <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, x))),
     }<span class="question-mark">?</span>;
 
     <span class="comment">// TODO (nd60): Currently, Minion only supports the use of one range in the domain.
@@ -328,44 +365,55 @@
     // See: https://github.com/conjure-cp/conjure-oxide/issues/84
 
     </span><span class="kw">if </span>ranges.len() != <span class="number">1 </span>{
-        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(
-            <span class="string">&quot;Variable {:?} has {:?} ranges. Multiple ranges / SparseBound is not yet supported.&quot;</span>,
+        <span class="kw">return </span><span class="prelude-val">Err</span>(SolverError::NotSupported(
+            SOLVER,
+            <span class="macro">format!</span>(
+            <span class="string">&quot;variable {:?} has {:?} ranges. Multiple ranges / SparseBound is not yet supported.&quot;</span>,
             str_name,
             ranges.len()
+        ),
         ));
     }
 
-    <span class="kw">let </span>range = ranges
-        .first()
-        .ok_or(<span class="macro">format!</span>(<span class="string">&quot;Variable {:?} has no range&quot;</span>, str_name))<span class="question-mark">?</span>;
+    <span class="kw">let </span>range = ranges.first().ok_or(SolverError::InvalidInstance(
+        SOLVER,
+        <span class="macro">format!</span>(<span class="string">&quot;variable {:?} has no range&quot;</span>, str_name),
+    ))<span class="question-mark">?</span>;
 
     <span class="kw">let </span>(low, high) = <span class="kw">match </span>range {
         ConjureRange::Bounded(x, y) =&gt; <span class="prelude-val">Ok</span>((x.to_owned(), y.to_owned())),
         ConjureRange::Single(x) =&gt; <span class="prelude-val">Ok</span>((x.to_owned(), x.to_owned())),
-        a =&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;Not implemented {:?}&quot;</span>, a)),
+        <span class="attr">#[allow(unreachable_patterns)]
+        </span>x =&gt; <span class="prelude-val">Err</span>(SolverError::NotSupported(SOLVER, <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, x))),
     }<span class="question-mark">?</span>;
 
     minion_model
         .named_variables
         .add_var(str_name.to_owned(), MinionDomain::Bound(low, high))
-        .ok_or(<span class="macro">format!</span>(<span class="string">&quot;Variable {:?} is defined twice&quot;</span>, str_name))<span class="question-mark">?</span>;
+        .ok_or(SolverError::InvalidInstance(
+            SOLVER,
+            <span class="macro">format!</span>(<span class="string">&quot;variable {:?} is defined twice&quot;</span>, str_name),
+        ))<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">fn </span>parse_exprs(conjure_model: <span class="kw-2">&amp;</span>ConjureModel, minion_model: <span class="kw-2">&amp;mut </span>MinionModel) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+<span class="kw">fn </span>parse_exprs(
+    conjure_model: <span class="kw-2">&amp;</span>ConjureModel,
+    minion_model: <span class="kw-2">&amp;mut </span>MinionModel,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), SolverError&gt; {
     <span class="kw">for </span>expr <span class="kw">in </span>conjure_model.constraints.iter() {
         parse_expr(expr.to_owned(), minion_model)<span class="question-mark">?</span>;
     }
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">fn </span>parse_expr(expr: ConjureExpression, minion_model: <span class="kw-2">&amp;mut </span>MinionModel) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+<span class="kw">fn </span>parse_expr(expr: ConjureExpression, minion_model: <span class="kw-2">&amp;mut </span>MinionModel) -&gt; <span class="prelude-ty">Result</span>&lt;(), SolverError&gt; {
     <span class="kw">match </span>expr {
         ConjureExpression::SumLeq(lhs, rhs) =&gt; parse_sumleq(lhs, <span class="kw-2">*</span>rhs, minion_model),
         ConjureExpression::SumGeq(lhs, rhs) =&gt; parse_sumgeq(lhs, <span class="kw-2">*</span>rhs, minion_model),
         ConjureExpression::Ineq(a, b, c) =&gt; parse_ineq(<span class="kw-2">*</span>a, <span class="kw-2">*</span>b, <span class="kw-2">*</span>c, minion_model),
-        x =&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;Not supported: {:?}&quot;</span>, x)),
+        x =&gt; <span class="prelude-val">Err</span>(SolverError::NotSupported(SOLVER, <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, x))),
     }
 }
 
@@ -373,7 +421,7 @@
     sum_vars: Vec&lt;ConjureExpression&gt;,
     rhs: ConjureExpression,
     minion_model: <span class="kw-2">&amp;mut </span>MinionModel,
-) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), SolverError&gt; {
     <span class="kw">let </span>minion_vars = must_be_vars(sum_vars)<span class="question-mark">?</span>;
     <span class="kw">let </span>minion_rhs = must_be_var(rhs)<span class="question-mark">?</span>;
     minion_model
@@ -387,7 +435,7 @@
     sum_vars: Vec&lt;ConjureExpression&gt;,
     rhs: ConjureExpression,
     minion_model: <span class="kw-2">&amp;mut </span>MinionModel,
-) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), SolverError&gt; {
     <span class="kw">let </span>minion_vars = must_be_vars(sum_vars)<span class="question-mark">?</span>;
     <span class="kw">let </span>minion_rhs = must_be_var(rhs)<span class="question-mark">?</span>;
     minion_model
@@ -402,7 +450,7 @@
     b: ConjureExpression,
     c: ConjureExpression,
     minion_model: <span class="kw-2">&amp;mut </span>MinionModel,
-) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), SolverError&gt; {
     <span class="kw">let </span>a_minion = must_be_var(a)<span class="question-mark">?</span>;
     <span class="kw">let </span>b_minion = must_be_var(b)<span class="question-mark">?</span>;
     <span class="kw">let </span>c_value = must_be_const(c)<span class="question-mark">?</span>;
@@ -415,7 +463,7 @@
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">fn </span>must_be_vars(exprs: Vec&lt;ConjureExpression&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;MinionVar&gt;, String&gt; {
+<span class="kw">fn </span>must_be_vars(exprs: Vec&lt;ConjureExpression&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;MinionVar&gt;, SolverError&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>minion_vars: Vec&lt;MinionVar&gt; = <span class="macro">vec!</span>[];
     <span class="kw">for </span>expr <span class="kw">in </span>exprs {
         <span class="kw">let </span>minion_var = must_be_var(expr)<span class="question-mark">?</span>;
@@ -424,7 +472,7 @@
     <span class="prelude-val">Ok</span>(minion_vars)
 }
 
-<span class="kw">fn </span>must_be_var(e: ConjureExpression) -&gt; <span class="prelude-ty">Result</span>&lt;MinionVar, String&gt; {
+<span class="kw">fn </span>must_be_var(e: ConjureExpression) -&gt; <span class="prelude-ty">Result</span>&lt;MinionVar, SolverError&gt; {
     <span class="comment">// a minion var is either a reference or a &quot;var as const&quot;
     </span><span class="kw">match </span>must_be_ref(e.clone()) {
         <span class="prelude-val">Ok</span>(name) =&gt; <span class="prelude-val">Ok</span>(MinionVar::NameRef(name)),
@@ -435,20 +483,26 @@
     }
 }
 
-<span class="kw">fn </span>must_be_ref(e: ConjureExpression) -&gt; <span class="prelude-ty">Result</span>&lt;String, String&gt; {
+<span class="kw">fn </span>must_be_ref(e: ConjureExpression) -&gt; <span class="prelude-ty">Result</span>&lt;String, SolverError&gt; {
     <span class="kw">let </span>name = <span class="kw">match </span>e {
         ConjureExpression::Reference(n) =&gt; <span class="prelude-val">Ok</span>(n),
-        <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="string">&quot;&quot;</span>),
+        x =&gt; <span class="prelude-val">Err</span>(SolverError::InvalidInstance(
+            SOLVER,
+            <span class="macro">format!</span>(<span class="string">&quot;expected a reference, but got `{0:?}`&quot;</span>, x),
+        )),
     }<span class="question-mark">?</span>;
 
     <span class="kw">let </span>str_name = name_to_string(name);
     <span class="prelude-val">Ok</span>(str_name)
 }
 
-<span class="kw">fn </span>must_be_const(e: ConjureExpression) -&gt; <span class="prelude-ty">Result</span>&lt;i32, String&gt; {
+<span class="kw">fn </span>must_be_const(e: ConjureExpression) -&gt; <span class="prelude-ty">Result</span>&lt;i32, SolverError&gt; {
     <span class="kw">match </span>e {
         ConjureExpression::ConstantInt(n) =&gt; <span class="prelude-val">Ok</span>(n),
-        <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="string">&quot;&quot;</span>.to_owned()),
+        x =&gt; <span class="prelude-val">Err</span>(SolverError::InvalidInstance(
+            SOLVER,
+            <span class="macro">format!</span>(<span class="string">&quot;expected a constant, but got `{0:?}`&quot;</span>, x),
+        )),
     }
 }
 
@@ -468,7 +522,7 @@
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>flat_xyz_model() -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+    </span><span class="kw">fn </span>flat_xyz_model() -&gt; <span class="prelude-ty">Result</span>&lt;(), anyhow::Error&gt; {
         <span class="comment">// TODO: convert to use public interfaces when these exist.
         </span><span class="kw">let </span><span class="kw-2">mut </span>model = ConjureModel {
             variables: HashMap::new(),
@@ -499,7 +553,7 @@
         model.constraints.push(ineq);
 
         <span class="kw">let </span>minion_model = MinionModel::try_from(model)<span class="question-mark">?</span>;
-        minion_rs::run_minion(minion_model, xyz_callback).map_err(|x| x.to_string())
+        <span class="prelude-val">Ok</span>(minion_rs::run_minion(minion_model, xyz_callback)<span class="question-mark">?</span>)
     }
 
     <span class="attr">#[allow(clippy::unwrap_used)]
@@ -531,7 +585,7 @@
         name: <span class="kw-2">&amp;</span>str,
         domain_low: i32,
         domain_high: i32,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;(), SolverError&gt; {
         <span class="comment">// TODO: convert to use public interfaces when these exist.
         </span><span class="kw">let </span>res = model.variables.insert(
             ConjureName::UserName(name.to_owned()),
@@ -542,12 +596,14 @@
                 )]),
             },
         );
-
-        <span class="kw">match </span>res {
-            <span class="comment">// variable was not already present
-            </span><span class="prelude-val">None </span>=&gt; <span class="prelude-val">Ok</span>(()),
-            <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;Variable {:?} was already present&quot;</span>, name)),
+        <span class="kw">if </span>res.is_some() {
+            <span class="kw">return </span><span class="prelude-val">Err</span>(SolverError::Other(<span class="macro">anyhow!</span>(
+                <span class="string">&quot;Tried to add variable {:?} to the symbol table, but it was already present&quot;</span>,
+                name
+            )));
         }
+
+        <span class="prelude-val">Ok</span>(())
     }
 }
 </code></pre></div></section></main></body></html>
