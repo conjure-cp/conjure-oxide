@@ -159,7 +159,7 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
     let mut binary_operator_names = binary_operators.iter().map(|x| x.0);
 
     match obj {
-        Value::Object(op) if (op.contains_key("Op")) => {
+        Value::Object(op) if op.contains_key("Op") => {
             println!("{}", " ----- ----- 2");
             match &op["Op"] {
                 Value::Object(bin_op)
@@ -190,6 +190,10 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
                     None
                 }
             }
+        }
+        Value::Object(refe) if refe.contains_key("Reference") => {
+            let name = refe["Reference"].as_array()?[0].as_object()?["Name"].as_str()?;
+            Some(Expression::Reference(Name::UserName(name.to_string())))
         }
         otherwise => {
             println!("Unhandled {}", otherwise);
