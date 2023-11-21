@@ -1,9 +1,9 @@
 use conjure_oxide::ast::Model;
-use serde_json::{Value};
-use std::env;
+use serde_json::Value;
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
+use std::{clone, env};
 
 use std::path::Path;
 
@@ -82,13 +82,42 @@ fn sort_json_object(value: &Value) -> Value {
         Value::Object(obj) => {
             let mut ordered: Vec<(String, Value)> = obj
                 .iter()
-                .map(|(k, v)| (k.clone(), sort_json_object(v)))
+                .map(|(k, v)| {
+                    if k == "variables" {
+                        (k.clone(), sort_json_variables(v))
+                    } else {
+                        (k.clone(), sort_json_object(v))
+                    }
+                })
+                // .map(|(k, v)| (k.clone(), sort_json_object(v)))
                 .collect();
             ordered.sort_by(|a, b| a.0.cmp(&b.0));
 
             Value::Object(ordered.into_iter().collect())
         }
         Value::Array(arr) => Value::Array(arr.iter().map(sort_json_object).collect()),
+        _ => value.clone(),
+    }
+}
+
+/// Sort the "variables" field by name.
+/// We have to do this separately becasue that field is not a JSON object, instead it's an array of tuples.
+fn sort_json_variables(value: &Value) -> Value {
+    match value {
+        Value::Array(vars) => {
+            let mut vars_sorted = vars.clone();
+            vars_sorted.sort_by(|a, b| {
+                let a_obj = &a.as_array().unwrap()[0];
+                let a_name : conjure_oxide::ast::Name = serde_json::from_value(a_obj.clone()).unwrap();
+
+                let b_obj = &b.as_array().unwrap()[0];
+                let b_name : conjure_oxide::ast::Name = serde_json::from_value(b_obj.clone()).unwrap();
+
+                a_name.cmp(&b_name)
+
+            });
+            Value::Array(vars_sorted)
+        }
         _ => value.clone(),
     }
 }
