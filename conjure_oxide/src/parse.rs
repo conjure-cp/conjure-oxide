@@ -122,30 +122,21 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
         &str,
         Box<dyn Fn(Box<Expression>, Box<Expression>) -> Expression>,
     > = [
-        (
-            "MkOpEq",
-            Box::new(|x, y| Expression::Eq(x, y)) as Box<dyn Fn(_, _) -> _>,
-        ),
+        ("MkOpEq", Box::new(Expression::Eq) as Box<dyn Fn(_, _) -> _>),
         (
             "MkOpNeq",
-            Box::new(|x, y| Expression::Neq(x, y)) as Box<dyn Fn(_, _) -> _>,
+            Box::new(Expression::Neq) as Box<dyn Fn(_, _) -> _>,
         ),
         (
             "MkOpGeq",
-            Box::new(|x, y| Expression::Geq(x, y)) as Box<dyn Fn(_, _) -> _>,
+            Box::new(Expression::Geq) as Box<dyn Fn(_, _) -> _>,
         ),
         (
             "MkOpLeq",
-            Box::new(|x, y| Expression::Leq(x, y)) as Box<dyn Fn(_, _) -> _>,
+            Box::new(Expression::Leq) as Box<dyn Fn(_, _) -> _>,
         ),
-        (
-            "MkOpGt",
-            Box::new(|x, y| Expression::Gt(x, y)) as Box<dyn Fn(_, _) -> _>,
-        ),
-        (
-            "MkOpLt",
-            Box::new(|x, y| Expression::Lt(x, y)) as Box<dyn Fn(_, _) -> _>,
-        ),
+        ("MkOpGt", Box::new(Expression::Gt) as Box<dyn Fn(_, _) -> _>),
+        ("MkOpLt", Box::new(Expression::Lt) as Box<dyn Fn(_, _) -> _>),
     ]
     .into_iter()
     .collect();

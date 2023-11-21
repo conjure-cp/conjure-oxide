@@ -1,9 +1,9 @@
 use conjure_oxide::ast::Model;
 use serde_json::Value;
+use std::env;
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
-use std::{clone, env};
 
 use std::path::Path;
 
@@ -108,13 +108,14 @@ fn sort_json_variables(value: &Value) -> Value {
             let mut vars_sorted = vars.clone();
             vars_sorted.sort_by(|a, b| {
                 let a_obj = &a.as_array().unwrap()[0];
-                let a_name : conjure_oxide::ast::Name = serde_json::from_value(a_obj.clone()).unwrap();
+                let a_name: conjure_oxide::ast::Name =
+                    serde_json::from_value(a_obj.clone()).unwrap();
 
                 let b_obj = &b.as_array().unwrap()[0];
-                let b_name : conjure_oxide::ast::Name = serde_json::from_value(b_obj.clone()).unwrap();
+                let b_name: conjure_oxide::ast::Name =
+                    serde_json::from_value(b_obj.clone()).unwrap();
 
                 a_name.cmp(&b_name)
-
             });
             Value::Array(vars_sorted)
         }
