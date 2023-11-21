@@ -38,7 +38,7 @@ pub fn parse_json(str: &str) -> Result<Model> {
                 m.constraints.extend(constraints);
                 // println!("Nb constraints {}", m.constraints.len());
             }
-            otherwise => panic!("Unhandled 0 {}", otherwise),
+            otherwise => panic!("Unhandled 0 {:#?}", otherwise),
         }
     }
 
@@ -176,7 +176,7 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
                             let arg2 = parse_expression(&bin_op_args[1])?;
                             Some(constructor(Box::new(arg1), Box::new(arg2)))
                         }
-                        otherwise => panic!("Unhandled 3 {}", otherwise),
+                        otherwise => panic!("Unhandled 3 {:#?}", otherwise),
                     }
                 }
                 Value::Object(op_sum) if op_sum.contains_key("MkOpSum") => {
@@ -188,7 +188,7 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
                         .collect();
                     Some(Expression::Sum(args_parsed))
                 }
-                otherwise => panic!("Unhandled 2 {}", otherwise),
+                otherwise => panic!("Unhandled 2 {:#?}", otherwise),
             }
         }
         Value::Object(refe) if refe.contains_key("Reference") => {
@@ -205,10 +205,10 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
                             .unwrap(),
                     ))
                 }
-                otherwise => panic!("Unhandled 4 {}", otherwise),
+                otherwise => panic!("Unhandled 4 {:#?}", otherwise),
             }
         }
-        otherwise => panic!("Unhandled 1 {}", otherwise),
+        otherwise => panic!("Unhandled 1 {:#?}", otherwise),
     }
 }
 
