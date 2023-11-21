@@ -38,7 +38,7 @@ pub fn parse_json(str: &str) -> Result<Model> {
                 m.constraints.extend(constraints);
                 // println!("Nb constraints {}", m.constraints.len());
             }
-            _ => return Err(CError("mStatements contains an unknown object".to_owned())),
+            otherwise => panic!("Unhandled 0 {}", otherwise),
         }
     }
 
@@ -100,14 +100,13 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
                     .as_array()
                     .ok_or(Error::Parse("RangeBounded is not an array".to_owned()))?;
                 let mut nums = Vec::new();
-                for i in 0..2 {
-                    let num =
-                        &arr[i]["Constant"]["ConstantInt"][1]
-                            .as_i64()
-                            .ok_or(Error::Parse(
-                                "Could not parse int domain constant".to_owned(),
-                            ))?;
-                    let num32 = i32::try_from(*num).map_err(|_| {
+                for item in arr.iter() {
+                    let num = item["Constant"]["ConstantInt"][1]
+                        .as_i64()
+                        .ok_or(Error::Parse(
+                            "Could not parse int domain constant".to_owned(),
+                        ))?;
+                    let num32 = i32::try_from(num).map_err(|_| {
                         Error::Parse("Could not parse int domain constant".to_owned())
                     })?;
                     nums.push(num32);
@@ -136,10 +135,8 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
 
 fn parse_expression(obj: &JsonValue) -> Option<Expression> {
     // this needs an explicit type signature to force the closures to have the same type
-    let binary_operators: HashMap<
-        &str,
-        Box<dyn Fn(Box<Expression>, Box<Expression>) -> Expression>,
-    > = [
+    type BinOp = Box<dyn Fn(Box<Expression>, Box<Expression>) -> Expression>;
+    let binary_operators: HashMap<&str, BinOp> = [
         ("MkOpEq", Box::new(Expression::Eq) as Box<dyn Fn(_, _) -> _>),
         (
             "MkOpNeq",
@@ -216,7 +213,7 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
 }
 
 impl Model {
-    pub fn from_json(str: &String) -> Result<Model> {
+    pub fn from_json(str: &str) -> Result<Model> {
         parse_json(str)
     }
 }
