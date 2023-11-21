@@ -203,6 +203,22 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
             let name = refe["Reference"].as_array()?[0].as_object()?["Name"].as_str()?;
             Some(Expression::Reference(Name::UserName(name.to_string())))
         }
+        Value::Object(constant) if constant.contains_key("Constant") => {
+            match &constant["Constant"] {
+                Value::Object(int) if int.contains_key("ConstantInt") => {
+                    Some(Expression::ConstantInt(
+                        int["ConstantInt"].as_array()?[1]
+                            .as_i64()?
+                            .try_into()
+                            .unwrap(),
+                    ))
+                }
+                otherwise => {
+                    println!("Unhandled 4 {}", otherwise);
+                    None
+                }
+            }
+        }
         otherwise => {
             println!("Unhandled {}", otherwise);
             None
