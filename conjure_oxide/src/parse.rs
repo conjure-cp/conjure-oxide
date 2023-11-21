@@ -4,7 +4,7 @@ use serde_json::Value as JsonValue;
 
 use Error::ModelConstructError as CError;
 
-pub fn parse_json(str: &String) -> Result<Model> {
+pub fn parse_json(str: &str) -> Result<Model> {
     let mut m = Model::new();
     let v: JsonValue = serde_json::from_str(str)?;
     let constraints = v["mStatements"]
