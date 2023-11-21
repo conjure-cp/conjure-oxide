@@ -1,5 +1,7 @@
 //! Solver interface to minion_rs.
 
+use anyhow::anyhow;
+
 use crate::ast::{
     DecisionVariable, Domain as ConjureDomain, Expression as ConjureExpression,
     Model as ConjureModel, Name as ConjureName, Range as ConjureRange,
@@ -9,9 +11,12 @@ use minion_rs::ast::{
     Var as MinionVar, VarDomain as MinionDomain,
 };
 
+use super::{Solver, SolverError};
+
+const SOLVER: Solver = Solver::Minion;
+
 impl TryFrom<ConjureModel> for MinionModel {
-    // TODO (nd60): set this to equal ConjureError once it is merged.
-    type Error = String;
+    type Error = SolverError;
 
     fn try_from(conjure_model: ConjureModel) -> Result<Self, Self::Error> {
         let mut minion_model = MinionModel::new();
@@ -25,7 +30,10 @@ impl TryFrom<ConjureModel> for MinionModel {
     }
 }
 
-fn parse_vars(conjure_model: &ConjureModel, minion_model: &mut MinionModel) -> Result<(), String> {
+fn parse_vars(
+    conjure_model: &ConjureModel,
+    minion_model: &mut MinionModel,
+) -> Result<(), SolverError> {
     // TODO (nd60): remove unused vars?
     // TODO (nd60): ensure all vars references are used.
 
@@ -39,12 +47,12 @@ fn parse_var(
     name: &ConjureName,
     variable: &DecisionVariable,
     minion_model: &mut MinionModel,
-) -> Result<(), String> {
+) -> Result<(), SolverError> {
     let str_name = name_to_string(name.to_owned());
 
     let ranges = match &variable.domain {
         ConjureDomain::IntDomain(range) => Ok(range),
-        x => Err(format!("Not supported: {:?}", x)),
+        x => Err(SolverError::NotSupported(SOLVER, format!("{:?}", x))),
     }?;
 
     // TODO (nd60): Currently, Minion only supports the use of one range in the domain.
@@ -52,44 +60,54 @@ fn parse_var(
     // See: https://github.com/conjure-cp/conjure-oxide/issues/84
 
     if ranges.len() != 1 {
-        return Err(format!(
-            "Variable {:?} has {:?} ranges. Multiple ranges / SparseBound is not yet supported.",
+        return Err(SolverError::NotSupported(
+            SOLVER,
+            format!(
+            "variable {:?} has {:?} ranges. Multiple ranges / SparseBound is not yet supported.",
             str_name,
             ranges.len()
+        ),
         ));
     }
 
-    let range = ranges
-        .first()
-        .ok_or(format!("Variable {:?} has no range", str_name))?;
+    let range = ranges.first().ok_or(SolverError::InvalidInstance(
+        SOLVER,
+        format!("variable {:?} has no range", str_name),
+    ))?;
 
     let (low, high) = match range {
         ConjureRange::Bounded(x, y) => Ok((x.to_owned(), y.to_owned())),
         ConjureRange::Single(x) => Ok((x.to_owned(), x.to_owned())),
-        a => Err(format!("Not implemented {:?}", a)),
+        x => Err(SolverError::NotSupported(SOLVER, format!("{:?}", x))),
     }?;
 
     minion_model
         .named_variables
         .add_var(str_name.to_owned(), MinionDomain::Bound(low, high))
-        .ok_or(format!("Variable {:?} is defined twice", str_name))?;
+        .ok_or(SolverError::InvalidInstance(
+            SOLVER,
+            format!("variable {:?} is defined twice", str_name),
+        ))?;
 
     Ok(())
 }
 
-fn parse_exprs(conjure_model: &ConjureModel, minion_model: &mut MinionModel) -> Result<(), String> {
+fn parse_exprs(
+    conjure_model: &ConjureModel,
+    minion_model: &mut MinionModel,
+) -> Result<(), SolverError> {
     for expr in conjure_model.constraints.iter() {
         parse_expr(expr.to_owned(), minion_model)?;
     }
     Ok(())
 }
 
-fn parse_expr(expr: ConjureExpression, minion_model: &mut MinionModel) -> Result<(), String> {
+fn parse_expr(expr: ConjureExpression, minion_model: &mut MinionModel) -> Result<(), SolverError> {
     match expr {
         ConjureExpression::SumLeq(lhs, rhs) => parse_sumleq(lhs, *rhs, minion_model),
         ConjureExpression::SumGeq(lhs, rhs) => parse_sumgeq(lhs, *rhs, minion_model),
         ConjureExpression::Ineq(a, b, c) => parse_ineq(*a, *b, *c, minion_model),
-        x => Err(format!("Not supported: {:?}", x)),
+        x => Err(SolverError::NotSupported(SOLVER, format!("{:?}", x))),
     }
 }
 
@@ -97,7 +115,7 @@ fn parse_sumleq(
     sum_vars: Vec<ConjureExpression>,
     rhs: ConjureExpression,
     minion_model: &mut MinionModel,
-) -> Result<(), String> {
+) -> Result<(), SolverError> {
     let minion_vars = must_be_vars(sum_vars)?;
     let minion_rhs = must_be_var(rhs)?;
     minion_model
@@ -111,7 +129,7 @@ fn parse_sumgeq(
     sum_vars: Vec<ConjureExpression>,
     rhs: ConjureExpression,
     minion_model: &mut MinionModel,
-) -> Result<(), String> {
+) -> Result<(), SolverError> {
     let minion_vars = must_be_vars(sum_vars)?;
     let minion_rhs = must_be_var(rhs)?;
     minion_model
@@ -126,7 +144,7 @@ fn parse_ineq(
     b: ConjureExpression,
     c: ConjureExpression,
     minion_model: &mut MinionModel,
-) -> Result<(), String> {
+) -> Result<(), SolverError> {
     let a_minion = must_be_var(a)?;
     let b_minion = must_be_var(b)?;
     let c_value = must_be_const(c)?;
@@ -139,7 +157,7 @@ fn parse_ineq(
     Ok(())
 }
 
-fn must_be_vars(exprs: Vec<ConjureExpression>) -> Result<Vec<MinionVar>, String> {
+fn must_be_vars(exprs: Vec<ConjureExpression>) -> Result<Vec<MinionVar>, SolverError> {
     let mut minion_vars: Vec<MinionVar> = vec![];
     for expr in exprs {
         let minion_var = must_be_var(expr)?;
@@ -148,7 +166,7 @@ fn must_be_vars(exprs: Vec<ConjureExpression>) -> Result<Vec<MinionVar>, String>
     Ok(minion_vars)
 }
 
-fn must_be_var(e: ConjureExpression) -> Result<MinionVar, String> {
+fn must_be_var(e: ConjureExpression) -> Result<MinionVar, SolverError> {
     // a minion var is either a reference or a "var as const"
     match must_be_ref(e.clone()) {
         Ok(name) => Ok(MinionVar::NameRef(name)),
@@ -159,20 +177,26 @@ fn must_be_var(e: ConjureExpression) -> Result<MinionVar, String> {
     }
 }
 
-fn must_be_ref(e: ConjureExpression) -> Result<String, String> {
+fn must_be_ref(e: ConjureExpression) -> Result<String, SolverError> {
     let name = match e {
         ConjureExpression::Reference(n) => Ok(n),
-        _ => Err(""),
+        x => Err(SolverError::InvalidInstance(
+            SOLVER,
+            format!("expected a reference, but got `{0:?}`", x),
+        )),
     }?;
 
     let str_name = name_to_string(name);
     Ok(str_name)
 }
 
-fn must_be_const(e: ConjureExpression) -> Result<i32, String> {
+fn must_be_const(e: ConjureExpression) -> Result<i32, SolverError> {
     match e {
         ConjureExpression::ConstantInt(n) => Ok(n),
-        _ => Err("".to_owned()),
+        x => Err(SolverError::InvalidInstance(
+            SOLVER,
+            format!("expected a constant, but got `{0:?}`", x),
+        )),
     }
 }
 
@@ -192,7 +216,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn flat_xyz_model() -> Result<(), String> {
+    fn flat_xyz_model() -> Result<(), anyhow::Error> {
         // TODO: convert to use public interfaces when these exist.
         let mut model = ConjureModel {
             variables: HashMap::new(),
@@ -223,7 +247,7 @@ mod tests {
         model.constraints.push(ineq);
 
         let minion_model = MinionModel::try_from(model)?;
-        minion_rs::run_minion(minion_model, xyz_callback).map_err(|x| x.to_string())
+        Ok(minion_rs::run_minion(minion_model, xyz_callback)?)
     }
 
     #[allow(clippy::unwrap_used)]
@@ -255,7 +279,7 @@ mod tests {
         name: &str,
         domain_low: i32,
         domain_high: i32,
-    ) -> Result<(), String> {
+    ) -> Result<(), SolverError> {
         // TODO: convert to use public interfaces when these exist.
         let res = model.variables.insert(
             ConjureName::UserName(name.to_owned()),
@@ -266,11 +290,13 @@ mod tests {
                 )]),
             },
         );
-
-        match res {
-            // variable was not already present
-            None => Ok(()),
-            Some(_) => Err(format!("Variable {:?} was already present", name)),
+        if res.is_some() {
+            return Err(SolverError::Other(anyhow!(
+                "Tried to add variable {:?} to the symbol table, but it was already present",
+                name
+            )));
         }
+
+        Ok(())
     }
 }
