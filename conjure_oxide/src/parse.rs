@@ -140,6 +140,18 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
             "MkOpGeq",
             Box::new(|x, y| Expression::Geq(x, y)) as Box<dyn Fn(_, _) -> _>,
         ),
+        (
+            "MkOpLeq",
+            Box::new(|x, y| Expression::Leq(x, y)) as Box<dyn Fn(_, _) -> _>,
+        ),
+        (
+            "MkOpGt",
+            Box::new(|x, y| Expression::Gt(x, y)) as Box<dyn Fn(_, _) -> _>,
+        ),
+        (
+            "MkOpLt",
+            Box::new(|x, y| Expression::Lt(x, y)) as Box<dyn Fn(_, _) -> _>,
+        ),
     ]
     .into_iter()
     .collect();
