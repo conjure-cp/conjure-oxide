@@ -136,6 +136,10 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
             "MkOpNeq",
             Box::new(|x, y| Expression::Neq(x, y)) as Box<dyn Fn(_, _) -> _>,
         ),
+        (
+            "MkOpGeq",
+            Box::new(|x, y| Expression::Geq(x, y)) as Box<dyn Fn(_, _) -> _>,
+        ),
     ]
     .into_iter()
     .collect();
