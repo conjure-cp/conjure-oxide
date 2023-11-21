@@ -113,6 +113,12 @@ jobs:
 
       - working-directory: ./conjure_oxide
         run: rustup update stable && rustup default stable
+      
+      - working-directory: ./conjure_oxide
+        run: |
+          wget https://github.com/conjure-cp/conjure/releases/download/v2.5.1/conjure-v2.5.1-linux-with-solvers.zip
+          unzip conjure-v2.5.1-linux-with-solvers.zip
+          echo "$(pwd)/conjure-v2.5.1-linux-with-solvers" >> ${GITHUB_PATH}
 
       - working-directory: ./conjure_oxide
         run: cargo test

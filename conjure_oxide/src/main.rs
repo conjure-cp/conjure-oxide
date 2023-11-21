@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, fs::File, io::Read};
 
 use conjure_oxide::ast::*;
 
@@ -6,6 +6,8 @@ fn main() {
     // find a,b,c : int(1..3)
     // such that a + b + c = 4
     // such that a >= b
+
+    println!("Manual model:");
 
     let a = Name::UserName(String::from("a"));
     let b = Name::UserName(String::from("b"));
@@ -49,5 +51,5 @@ fn main() {
         ],
     };
 
-    println!("{:?}\n", m);
+    println!("\n{:?}\n", m);
 }
