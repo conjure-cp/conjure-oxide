@@ -1,5 +1,5 @@
 use conjure_oxide::ast::Model;
-use serde_json::{Map, Value};
+use serde_json::{Value};
 use std::env;
 use std::error::Error;
 use std::fs::File;
