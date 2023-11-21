@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::fmt::Display;
 
 #[serde_as]
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Model {
     #[serde_as(as = "Vec<(_, _)>")]
     pub variables: HashMap<Name, DecisionVariable>,
@@ -42,7 +42,7 @@ pub enum Name {
     MachineName(i32),
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct DecisionVariable {
     pub domain: Domain,
 }

@@ -1,4 +1,11 @@
-use crate::ast::{DecisionVariable, Domain, Model, Name, Range};
+#![allow(non_snake_case)]
+
+// we disable non_snake_case in this file becasue we want to use the constructor names of Conjure as variables.
+// just in this file, don't get wrong ideas!
+
+use serde_json::Value;
+
+use crate::ast::{DecisionVariable, Domain, Expression, Model, Name, Range};
 use crate::error::{Error, Result};
 use serde_json::Value as JsonValue;
 
