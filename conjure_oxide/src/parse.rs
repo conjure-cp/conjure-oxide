@@ -3,6 +3,8 @@
 // we disable non_snake_case in this file becasue we want to use the constructor names of Conjure as variables.
 // just in this file, don't get wrong ideas!
 
+use std::collections::HashMap;
+
 use serde_json::Value;
 
 use crate::ast::{DecisionVariable, Domain, Expression, Model, Name, Range};
@@ -120,33 +122,46 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
 
 fn parse_expression(obj: &JsonValue) -> Option<Expression> {
     println!("{}", " ----- ----- 1");
+
+    // this needs an explicit type signature to force the closures to have the same type
+    let binary_operators: HashMap<
+        &str,
+        Box<dyn Fn(Box<Expression>, Box<Expression>) -> Expression>,
+    > = [
+        (
+            "MkOpEq",
+            Box::new(|x, y| Expression::Eq(x, y)) as Box<dyn Fn(_, _) -> _>,
+        ),
+        (
+            "MkOpNeq",
+            Box::new(|x, y| Expression::Neq(x, y)) as Box<dyn Fn(_, _) -> _>,
+        ),
+    ]
+    .into_iter()
+    .collect();
+
+    let mut binary_operator_names = binary_operators.iter().map(|x| x.0);
+
     match obj {
         Value::Object(op) if (op.contains_key("Op")) => {
             println!("{}", " ----- ----- 2");
             match &op["Op"] {
-                Value::Object(MkOpEq) if MkOpEq.contains_key("MkOpEq") => {
+                Value::Object(bin_op)
+                    if binary_operator_names.any(|key| bin_op.contains_key(*key)) =>
+                {
+                    // we know there is a single key value pair in this object
+                    // extract the value, ignore the key
+                    let (key, value) = bin_op.into_iter().next()?;
+
+                    let constructor = binary_operators.get(key.as_str())?;
+
                     println!("{}", " ----- ----- 3");
-                    match &MkOpEq["MkOpEq"] {
+                    match &value {
                         Value::Array(MkOpEq_args) if MkOpEq_args.len() == 2 => {
                             println!("{}", " ----- ----- 4");
                             let arg1 = parse_expression(&MkOpEq_args[0])?;
                             let arg2 = parse_expression(&MkOpEq_args[1])?;
-                            Some(Expression::Eq(Box::new(arg1), Box::new(arg2)))
-                        }
-                        otherwise => {
-                            println!("Unhandled {}", otherwise);
-                            None
-                        }
-                    }
-                }
-                Value::Object(MkOpNeq) if MkOpNeq.contains_key("MkOpNeq") => {
-                    println!("{}", " ----- ----- 3");
-                    match &MkOpNeq["MkOpNeq"] {
-                        Value::Array(MkOpNeq_args) if MkOpNeq_args.len() == 2 => {
-                            println!("{}", " ----- ----- 4");
-                            let arg1 = parse_expression(&MkOpNeq_args[0])?;
-                            let arg2 = parse_expression(&MkOpNeq_args[1])?;
-                            Some(Expression::Neq(Box::new(arg1), Box::new(arg2)))
+                            Some(constructor(Box::new(arg1), Box::new(arg2)))
                         }
                         otherwise => {
                             println!("Unhandled {}", otherwise);
