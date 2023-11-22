@@ -3,7 +3,7 @@ name: "conjure-oxide"
 on:
   push:
     branches:
-      - main # run for pushes to the main branch
+      - main # run for pushes to the main branch. other branches need to create a PR if they want testing.
     paths: 
       - conjure_oxide/**
       - Cargo.*
@@ -59,10 +59,6 @@ jobs:
         run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
 
       - working-directory: ./conjure_oxide
-        run: rustup target add aarch64-apple-darwin
-        if: runner.os == 'macOS'
-
-      - working-directory: ./conjure_oxide
         run: cargo build -vv
 
       - working-directory: ./conjure_oxide
@@ -70,8 +66,6 @@ jobs:
           wget https://github.com/conjure-cp/conjure/releases/download/${{ matrix.conjure_version }}/conjure-${{ matrix.conjure_version }}-${{ matrix.release_suffix }}-with-solvers.zip
           unzip conjure-${{ matrix.conjure_version }}-linux-with-solvers.zip
           echo "$(pwd)/conjure-${{ matrix.conjure_version }}-linux-with-solvers" >> ${GITHUB_PATH}
-        if: runner.os == 'Linux'
 
       - working-directory: ./conjure_oxide
         run: cargo test
-        if: runner.os == 'Linux'
