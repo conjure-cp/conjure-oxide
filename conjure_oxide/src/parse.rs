@@ -1,16 +1,20 @@
-use crate::ast::{DecisionVariable, Domain, Model, Name, Range};
+use std::collections::HashMap;
+
+use serde_json::Value;
+
+use crate::ast::{DecisionVariable, Domain, Expression, Model, Name, Range};
 use crate::error::{Error, Result};
 use serde_json::Value as JsonValue;
 
 pub fn parse_json(str: &str) -> Result<Model> {
     let mut m = Model::new();
     let v: JsonValue = serde_json::from_str(str)?;
-    let constraints = v["mStatements"]
+    let statements = v["mStatements"]
         .as_array()
         .ok_or(Error::Parse("mStatements is not an array".to_owned()))?;
 
-    for con in constraints {
-        let entry = con
+    for statement in statements {
+        let entry = statement
             .as_object()
             .ok_or(Error::Parse("mStatements contains a non-object".to_owned()))?
             .iter()
@@ -23,12 +27,18 @@ pub fn parse_json(str: &str) -> Result<Model> {
                 let (name, var) = parse_variable(entry.1)?;
                 m.add_variable(name, var);
             }
-            "SuchThat" => parse_constraint(entry.1)?,
-            _ => {
-                return Err(Error::Parse(
-                    "mStatements contains an unknown object".to_owned(),
-                ))
+            "SuchThat" => {
+                let constraints: Vec<Expression> = entry
+                    .1
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .flat_map(parse_expression)
+                    .collect();
+                m.constraints.extend(constraints);
+                // println!("Nb constraints {}", m.constraints.len());
             }
+            otherwise => panic!("Unhandled Statement {:#?}", otherwise),
         }
     }
 
@@ -90,14 +100,13 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
                     .as_array()
                     .ok_or(Error::Parse("RangeBounded is not an array".to_owned()))?;
                 let mut nums = Vec::new();
-                for i in 0..2 {
-                    let num =
-                        &arr[i]["Constant"]["ConstantInt"][1]
-                            .as_i64()
-                            .ok_or(Error::Parse(
-                                "Could not parse int domain constant".to_owned(),
-                            ))?;
-                    let num32 = i32::try_from(*num).map_err(|_| {
+                for item in arr.iter() {
+                    let num = item["Constant"]["ConstantInt"][1]
+                        .as_i64()
+                        .ok_or(Error::Parse(
+                            "Could not parse int domain constant".to_owned(),
+                        ))?;
+                    let num32 = i32::try_from(num).map_err(|_| {
                         Error::Parse("Could not parse int domain constant".to_owned())
                     })?;
                     nums.push(num32);
@@ -124,12 +133,93 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
     Ok(Domain::IntDomain(ranges))
 }
 
-fn parse_constraint(_obj: &JsonValue) -> Result<()> {
-    Ok(())
+// this needs an explicit type signature to force the closures to have the same type
+type BinOp = Box<dyn Fn(Box<Expression>, Box<Expression>) -> Expression>;
+
+fn parse_expression(obj: &JsonValue) -> Option<Expression> {
+    let binary_operators: HashMap<&str, BinOp> = [
+        ("MkOpEq", Box::new(Expression::Eq) as Box<dyn Fn(_, _) -> _>),
+        (
+            "MkOpNeq",
+            Box::new(Expression::Neq) as Box<dyn Fn(_, _) -> _>,
+        ),
+        (
+            "MkOpGeq",
+            Box::new(Expression::Geq) as Box<dyn Fn(_, _) -> _>,
+        ),
+        (
+            "MkOpLeq",
+            Box::new(Expression::Leq) as Box<dyn Fn(_, _) -> _>,
+        ),
+        ("MkOpGt", Box::new(Expression::Gt) as Box<dyn Fn(_, _) -> _>),
+        ("MkOpLt", Box::new(Expression::Lt) as Box<dyn Fn(_, _) -> _>),
+    ]
+    .into_iter()
+    .collect();
+
+    let mut binary_operator_names = binary_operators.iter().map(|x| x.0);
+
+    match obj {
+        Value::Object(op) if op.contains_key("Op") => match &op["Op"] {
+            Value::Object(bin_op) if binary_operator_names.any(|key| bin_op.contains_key(*key)) => {
+                parse_bin_op(bin_op, binary_operators)
+            }
+            Value::Object(op_sum) if op_sum.contains_key("MkOpSum") => parse_sum(op_sum),
+            otherwise => panic!("Unhandled Op {:#?}", otherwise),
+        },
+        Value::Object(refe) if refe.contains_key("Reference") => {
+            let name = refe["Reference"].as_array()?[0].as_object()?["Name"].as_str()?;
+            Some(Expression::Reference(Name::UserName(name.to_string())))
+        }
+        Value::Object(constant) if constant.contains_key("Constant") => parse_constant(constant),
+        otherwise => panic!("Unhandled Expression {:#?}", otherwise),
+    }
+}
+
+fn parse_sum(op_sum: &serde_json::Map<String, Value>) -> Option<Expression> {
+    let args = &op_sum["MkOpSum"]["AbstractLiteral"]["AbsLitMatrix"][1];
+    let args_parsed: Vec<Expression> = args
+        .as_array()?
+        .iter()
+        .map(|x| parse_expression(x).unwrap())
+        .collect();
+    Some(Expression::Sum(args_parsed))
+}
+
+fn parse_bin_op(
+    bin_op: &serde_json::Map<String, Value>,
+    binary_operators: HashMap<&str, BinOp>,
+) -> Option<Expression> {
+    // we know there is a single key value pair in this object
+    // extract the value, ignore the key
+    let (key, value) = bin_op.into_iter().next()?;
+
+    let constructor = binary_operators.get(key.as_str())?;
+
+    match &value {
+        Value::Array(bin_op_args) if bin_op_args.len() == 2 => {
+            let arg1 = parse_expression(&bin_op_args[0])?;
+            let arg2 = parse_expression(&bin_op_args[1])?;
+            Some(constructor(Box::new(arg1), Box::new(arg2)))
+        }
+        otherwise => panic!("Unhandled parse_bin_op {:#?}", otherwise),
+    }
+}
+
+fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expression> {
+    match &constant["Constant"] {
+        Value::Object(int) if int.contains_key("ConstantInt") => Some(Expression::ConstantInt(
+            int["ConstantInt"].as_array()?[1]
+                .as_i64()?
+                .try_into()
+                .unwrap(),
+        )),
+        otherwise => panic!("Unhandled parse_constant {:#?}", otherwise),
+    }
 }
 
 impl Model {
-    pub fn from_json(str: &String) -> Result<Model> {
+    pub fn from_json(str: &str) -> Result<Model> {
         parse_json(str)
     }
 }
