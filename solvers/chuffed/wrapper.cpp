@@ -48,21 +48,18 @@ public:
   vec<IntVar *> y;
   vec<IntVar *> z;
 
-  IntVar *sum;
-
   XYZProblem(int _n) : n(_n) {
     // Create vars
-    createVars(x, n, 0, n - 1);
-    createVars(y, n, 0, n - 1);
-    createVars(z, n, 0, n - 1);
+    createVars(x, n, 1, 3);
+    createVars(y, n, 1, 3);
+    createVars(z, n, 1, 3);
 
     // Post constraints
     // find x, y, z : int(1..3)
     // such that x + y = z
 
     for (int i = 0; i < n; i++) {
-      int_plus(x[i], y[i], sum);
-      int_linear(z, IRT_EQ, sum);
+      int_plus(x[i], y[i], z[i]);
     }
 
     // Branching
@@ -97,7 +94,7 @@ public:
 };
 
 // Create new problem
-Problem *new_problem() { return new XYZProblem(3); }
+void *new_problem() { return new XYZProblem(3); }
 
 // Solve problem
-void solve(Problem *p) { engine.solve((XYZProblem *)p); }
+void solve(void *p) { engine.solve((XYZProblem *)p); }
