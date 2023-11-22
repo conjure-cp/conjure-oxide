@@ -15,6 +15,9 @@ on:
       - .github/workflows/oxide.yml
   workflow_dispatch:
 
+env:
+  rust_release: stable
+
 jobs:
   ubuntu:
     name: "Conjure Oxide: Ubuntu Build"
@@ -34,11 +37,11 @@ jobs:
             solvers/minion/vendor
             solvers/chuffed/vendor
 
-          key: ${{ runner.os }}-stable-${{ github.event.repository.updated_at }}
-          restore-keys: ${{ runner.os }}-stable-
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}-
 
       - working-directory: ./conjure_oxide
-        run: rustup update stable && rustup default stable
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - working-directory: ./conjure_oxide
         run: cargo build -vv
@@ -61,11 +64,11 @@ jobs:
             solvers/minion/vendor
             solvers/chuffed/vendor
             
-          key: ${{ runner.os }}-stable-${{ github.event.repository.updated_at }}
-          restore-keys: ${{ runner.os }}-stable-
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}-
 
       - working-directory: ./conjure_oxide
-        run: rustup update stable && rustup default stable
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - working-directory: ./conjure_oxide
         run: rustup target add aarch64-apple-darwin
@@ -90,11 +93,11 @@ jobs:
             target/            
             solvers/minion/vendor
             solvers/chuffed/vendor
-          key: ${{ runner.os }}-stable-${{ github.event.repository.updated_at }}
-          restore-keys: ${{ runner.os }}-stable-
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}-
 
       - working-directory: ./conjure_oxide
-        run: rustup update stable && rustup default stable
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
       
       - working-directory: ./conjure_oxide
         run: |

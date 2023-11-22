@@ -6,6 +6,9 @@ on:
       - main # run for pushes to the main branch
   workflow_dispatch:
 
+env:
+  rust_release: stable
+
 jobs:
   coverage:
     name: "Generate Documentation"
@@ -37,11 +40,11 @@ jobs:
             solvers/minion/vendor
             solvers/chuffed/vendor
 
-          key: ${{ runner.os }}-stable-${{ github.event.repository.updated_at }}
-          restore-keys: ${{ runner.os }}-stable-
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}-
 
-      - name: Install rust stable
-        run: rustup update stable && rustup default stable
+      - name: Install rust ${{ env.rust_release }}
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
       
       - name: Generate documentation
         working-directory: .

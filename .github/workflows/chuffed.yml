@@ -17,6 +17,8 @@ on:
       - Cargo.*
       - .github/workflows/chuffed.yml
 
+env:
+  rust_release: stable
 
 jobs:
   ubuntu:
@@ -36,11 +38,11 @@ jobs:
             target/            
             solvers/chuffed/vendor
 
-          key: ${{ runner.os }}-stable-${{ github.event.repository.updated_at }}
-          restore-keys: ${{ runner.os }}-stable-
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}-
 
       - working-directory: ./solvers/chuffed
-        run: rustup update stable && rustup default stable
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - working-directory: ./solvers/chuffed
         run: cargo build -vv
@@ -62,11 +64,11 @@ jobs:
             target/            
             solvers/chuffed/vendor
 
-          key: ${{ runner.os }}-stable-${{ github.event.repository.updated_at }}
-          restore-keys: ${{ runner.os }}-stable-
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}-
 
       - working-directory: ./solvers/chuffed
-        run: rustup update stable && rustup default stable
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - working-directory: ./solvers/chuffed
         run: rustup target add aarch64-apple-darwin
@@ -91,11 +93,11 @@ jobs:
             target/            
             solvers/chuffed/vendor
 
-          key: ${{ runner.os }}-stable-${{ github.event.repository.updated_at }}
-          restore-keys: ${{ runner.os }}-stable-
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}-
 
       - working-directory: ./solvers/chuffed
-        run: rustup update stable && rustup default stable
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - working-directory: ./solvers/chuffed
         run: cargo test

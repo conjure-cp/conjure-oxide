@@ -17,6 +17,9 @@ on:
       - .github/actions/doc-coverage.yml
   workflow_dispatch:
 
+env:
+  rust_release: nightly
+
 jobs:
   minion:
     name: 'Info: Minion Docs Coverage Report'
@@ -35,11 +38,11 @@ jobs:
             target/            
             solvers/minion/vendor
 
-          key: ${{ runner.os }}-nightly-${{ github.event.repository.updated_at }}
-          restore-keys: ${{ runner.os }}-nightly
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}
 
-      - name: Use nightly 
-        run: rustup update nightly && rustup default nightly
+      - name: Use ${{ env.rust_release }} 
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - name: Coverage Report
         working-directory: ./solvers/minion
@@ -65,11 +68,11 @@ jobs:
             target/            
             solvers/chuffed/vendor
 
-          key: ${{ runner.os }}-nightly-${{ github.event.repository.updated_at }}
-          restore-keys: ${{ runner.os }}-nightly
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}
 
-      - name: Use nightly 
-        run: rustup update nightly && rustup default nightly
+      - name: Use ${{ env.rust_release }} 
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - name: Coverage Report
         working-directory: ./solvers/chuffed
@@ -96,11 +99,11 @@ jobs:
             solvers/chuffed/vendor
             solvers/minion/vendor
 
-          key: ${{ runner.os }}-nightly-${{ github.event.repository.updated_at }}
-          restore-keys: ${{ runner.os }}-nightly
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}
 
-      - name: Use nightly 
-        run: rustup update nightly && rustup default nightly
+      - name: Use ${{ env.rust_release }} 
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - name: Coverage Report
         working-directory: ./conjure_oxide

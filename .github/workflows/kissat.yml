@@ -17,6 +17,9 @@ on:
       - .github/workflows/kissat.yml
   workflow_dispatch:
 
+env:
+  rust_release: stable
+
 jobs:
   ubuntu:
     name: 'Kissat: Ubuntu Build'
@@ -34,11 +37,11 @@ jobs:
             ~/.cargo/git/db/
             target/
 
-          key: ${{ runner.os }}-stable-${{ github.event.repository.updated_at }}
-          restore-keys: ${{ runner.os }}-stable-
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}-
 
       - working-directory: ./solvers/kissat
-        run: rustup update stable && rustup default stable
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - working-directory: ./solvers/kissat
         run: cargo build -vv
@@ -59,11 +62,11 @@ jobs:
             ~/.cargo/git/db/
             target/
 
-          key: ${{ runner.os }}-stable-${{ github.event.repository.updated_at }}
-          restore-keys: ${{ runner.os }}-stable-
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}-
 
       - working-directory: ./solvers/kissat
-        run: rustup update stable && rustup default stable
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - working-directory: ./solvers/kissat 
         run: rustup target add aarch64-apple-darwin
@@ -87,11 +90,11 @@ jobs:
             ~/.cargo/git/db/
             target/
 
-          key: ${{ runner.os }}-stable-${{ github.event.repository.updated_at }}
-          restore-keys: ${{ runner.os }}-stable-
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}-
 
       - working-directory: ./solvers/kissat
-        run: rustup update stable && rustup default stable
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - working-directory: ./solvers/kissat
         run: cargo test
