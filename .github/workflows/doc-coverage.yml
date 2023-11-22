@@ -17,18 +17,15 @@ on:
       - .github/actions/doc-coverage.yml
   workflow_dispatch:
 
+env:
+  rust_release: nightly
+
 jobs:
   minion:
     name: 'Info: Minion Docs Coverage Report'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - name: Generate caching variables
-        id: cache-vars
-        run: |
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
 
       - name: Set up cache
         uses: actions/cache@v3
@@ -41,11 +38,11 @@ jobs:
             target/            
             solvers/minion/vendor
 
-          key: nightly-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: nightly-${{ runner.os }}-gitmodules-
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}
 
-      - name: Use nightly 
-        run: rustup update nightly && rustup default nightly
+      - name: Use ${{ env.rust_release }} 
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - name: Coverage Report
         working-directory: ./solvers/minion
@@ -60,12 +57,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Generate caching variables
-        id: cache-vars
-        run: |
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
-
       - name: Set up cache
         uses: actions/cache@v3
         with:
@@ -77,11 +68,11 @@ jobs:
             target/            
             solvers/chuffed/vendor
 
-          key: nightly-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: nightly-${{ runner.os }}-gitmodules-
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}
 
-      - name: Use nightly 
-        run: rustup update nightly && rustup default nightly
+      - name: Use ${{ env.rust_release }} 
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - name: Coverage Report
         working-directory: ./solvers/chuffed
@@ -96,12 +87,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Generate caching variables
-        id: cache-vars
-        run: |
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
-
       - name: Set up cache
         uses: actions/cache@v3
         with:
@@ -114,11 +99,11 @@ jobs:
             solvers/chuffed/vendor
             solvers/minion/vendor
 
-          key: nightly-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: nightly-${{ runner.os }}
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}
 
-      - name: Use nightly 
-        run: rustup update nightly && rustup default nightly
+      - name: Use ${{ env.rust_release }} 
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - name: Coverage Report
         working-directory: ./conjure_oxide

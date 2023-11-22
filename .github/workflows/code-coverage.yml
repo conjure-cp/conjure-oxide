@@ -17,6 +17,8 @@ on:
       - .github/actions/code-coverage.yml
   workflow_dispatch:
 
+env:
+  rust_release: nightly
 
 jobs:
   coverage:
@@ -27,12 +29,6 @@ jobs:
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v2
-
-      - name: Generate caching variables
-        id: cache-vars
-        run: |
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
 
       - name: Get Sha
         id: sha
@@ -57,12 +53,12 @@ jobs:
             solvers/minion/vendor
             solvers/chuffed/vendor
 
-          key: nightly-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: nightly-${{ runner.os }}-gitmodules-
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}
 
-      - name: Install rust nightly
+      - name: Install rust ${{ env.rust_release }}
         working-directory: ./solvers/minion
-        run: rustup update nightly && rustup default nightly
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
       
       - name: Generate coverage reports
         working-directory: .

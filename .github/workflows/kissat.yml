@@ -17,18 +17,15 @@ on:
       - .github/workflows/kissat.yml
   workflow_dispatch:
 
+env:
+  rust_release: stable
+
 jobs:
   ubuntu:
     name: 'Kissat: Ubuntu Build'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - name: Generate caching variables
-        id: cache-vars
-        run: |
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
 
       - name: Set up cache
         uses: actions/cache@v3
@@ -40,11 +37,11 @@ jobs:
             ~/.cargo/git/db/
             target/
 
-          key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: stable-${{ runner.os }}-gitmodules-
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}-
 
       - working-directory: ./solvers/kissat
-        run: rustup update stable && rustup default stable
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - working-directory: ./solvers/kissat
         run: cargo build -vv
@@ -55,12 +52,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Generate caching variables
-        id: cache-vars
-        run: |
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
-
       - name: Set up cache
         uses: actions/cache@v3
         with:
@@ -71,11 +62,11 @@ jobs:
             ~/.cargo/git/db/
             target/
 
-          key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: stable-${{ runner.os }}-gitmodules-
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}-
 
       - working-directory: ./solvers/kissat
-        run: rustup update stable && rustup default stable
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - working-directory: ./solvers/kissat 
         run: rustup target add aarch64-apple-darwin
@@ -89,12 +80,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Generate caching variables
-        id: cache-vars
-        run: |
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
-
       - name: Set up cache
         uses: actions/cache@v3
         with:
@@ -105,11 +90,11 @@ jobs:
             ~/.cargo/git/db/
             target/
 
-          key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: stable-${{ runner.os }}-gitmodules-
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}-
 
       - working-directory: ./solvers/kissat
-        run: rustup update stable && rustup default stable
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - working-directory: ./solvers/kissat
         run: cargo test
