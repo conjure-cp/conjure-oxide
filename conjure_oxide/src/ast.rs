@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::fmt::Display;
 
 #[serde_as]
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Model {
     #[serde_as(as = "Vec<(_, _)>")]
     pub variables: HashMap<Name, DecisionVariable>,
@@ -36,13 +36,13 @@ impl Default for Model {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Name {
     UserName(String),
     MachineName(i32),
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct DecisionVariable {
     pub domain: Domain,
 }
@@ -87,9 +87,15 @@ pub enum Range<A> {
 pub enum Expression {
     ConstantInt(i32),
     Reference(Name),
+
     Sum(Vec<Expression>),
+
     Eq(Box<Expression>, Box<Expression>),
+    Neq(Box<Expression>, Box<Expression>),
     Geq(Box<Expression>, Box<Expression>),
+    Leq(Box<Expression>, Box<Expression>),
+    Gt(Box<Expression>, Box<Expression>),
+    Lt(Box<Expression>, Box<Expression>),
 
     // Flattened Constraints
     SumGeq(Vec<Expression>, Box<Expression>),
