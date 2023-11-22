@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use anyhow::Result as AnyhowResult;
 use clap::{arg, command, Parser};
 use conjure_oxide::parse::parse_json;
-use conjure_oxide::conjure_executable;
+use conjure_oxide::find_conjure::conjure_executable;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
