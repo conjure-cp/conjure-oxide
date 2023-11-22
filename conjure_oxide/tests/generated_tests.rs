@@ -28,9 +28,11 @@ fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>
         .arg("--output-format=astjson")
         .arg(format!("{path}/{essence_base}.essence"))
         .output()?;
+    let stderr_string = String::from_utf8(output.stderr)?;
     assert!(
-        String::from_utf8(output.stderr)?.is_empty(),
-        "conjure's stderr is not empty"
+        stderr_string.is_empty(),
+        "conjure's stderr is not empty: {}",
+        stderr_string
     );
     let astjson = String::from_utf8(output.stdout)?;
 
