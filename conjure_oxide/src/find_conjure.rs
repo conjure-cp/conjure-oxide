@@ -34,7 +34,7 @@ pub fn conjure_executable() -> Result<String, String> {
     let version = second
         .strip_prefix("Release version ")
         .ok_or("Could not read conjure's stdout")?;
-    if Versioning::new(version) < Versioning::new("2.5.0") {
+    if Versioning::new(version) < Versioning::new("2.5.1") {
         return Err("Conjure version is too old".to_string());
     }
 
