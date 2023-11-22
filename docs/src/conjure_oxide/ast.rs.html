@@ -96,13 +96,19 @@
 <a href="#96" id="96">96</a>
 <a href="#97" id="97">97</a>
 <a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>serde_with::serde_as;
 <span class="kw">use </span>std::collections::HashMap;
 <span class="kw">use </span>std::fmt::Display;
 
 <span class="attr">#[serde_as]
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>Model {
     <span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">&quot;Vec&lt;(_, _)&gt;&quot;</span>)]
     </span><span class="kw">pub </span>variables: HashMap&lt;Name, DecisionVariable&gt;,
@@ -134,13 +140,13 @@
     }
 }
 
-<span class="attr">#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+<span class="attr">#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 </span><span class="kw">pub enum </span>Name {
     UserName(String),
     MachineName(i32),
 }
 
-<span class="attr">#[derive(Debug, PartialEq, Serialize, Deserialize)]
+<span class="attr">#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 </span><span class="kw">pub struct </span>DecisionVariable {
     <span class="kw">pub </span>domain: Domain,
 }
@@ -185,9 +191,15 @@
 </span><span class="kw">pub enum </span>Expression {
     ConstantInt(i32),
     Reference(Name),
+
     Sum(Vec&lt;Expression&gt;),
+
     Eq(Box&lt;Expression&gt;, Box&lt;Expression&gt;),
+    Neq(Box&lt;Expression&gt;, Box&lt;Expression&gt;),
     Geq(Box&lt;Expression&gt;, Box&lt;Expression&gt;),
+    Leq(Box&lt;Expression&gt;, Box&lt;Expression&gt;),
+    Gt(Box&lt;Expression&gt;, Box&lt;Expression&gt;),
+    Lt(Box&lt;Expression&gt;, Box&lt;Expression&gt;),
 
     <span class="comment">// Flattened Constraints
     </span>SumGeq(Vec&lt;Expression&gt;, Box&lt;Expression&gt;),

@@ -133,19 +133,113 @@
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::ast::{DecisionVariable, Domain, Model, Name, Range};
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
+<a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
+<a href="#153" id="153">153</a>
+<a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
+<a href="#194" id="194">194</a>
+<a href="#195" id="195">195</a>
+<a href="#196" id="196">196</a>
+<a href="#197" id="197">197</a>
+<a href="#198" id="198">198</a>
+<a href="#199" id="199">199</a>
+<a href="#200" id="200">200</a>
+<a href="#201" id="201">201</a>
+<a href="#202" id="202">202</a>
+<a href="#203" id="203">203</a>
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a>
+<a href="#206" id="206">206</a>
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a>
+<a href="#214" id="214">214</a>
+<a href="#215" id="215">215</a>
+<a href="#216" id="216">216</a>
+<a href="#217" id="217">217</a>
+<a href="#218" id="218">218</a>
+<a href="#219" id="219">219</a>
+<a href="#220" id="220">220</a>
+<a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
+
+<span class="kw">use </span>serde_json::Value;
+
+<span class="kw">use </span><span class="kw">crate</span>::ast::{DecisionVariable, Domain, Expression, Model, Name, Range};
 <span class="kw">use </span><span class="kw">crate</span>::error::{Error, <span class="prelude-ty">Result</span>};
 <span class="kw">use </span>serde_json::Value <span class="kw">as </span>JsonValue;
 
 <span class="kw">pub fn </span>parse_json(str: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Model&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>m = Model::new();
     <span class="kw">let </span>v: JsonValue = serde_json::from_str(str)<span class="question-mark">?</span>;
-    <span class="kw">let </span>constraints = v[<span class="string">&quot;mStatements&quot;</span>]
+    <span class="kw">let </span>statements = v[<span class="string">&quot;mStatements&quot;</span>]
         .as_array()
         .ok_or(Error::Parse(<span class="string">&quot;mStatements is not an array&quot;</span>.to_owned()))<span class="question-mark">?</span>;
 
-    <span class="kw">for </span>con <span class="kw">in </span>constraints {
-        <span class="kw">let </span>entry = con
+    <span class="kw">for </span>statement <span class="kw">in </span>statements {
+        <span class="kw">let </span>entry = statement
             .as_object()
             .ok_or(Error::Parse(<span class="string">&quot;mStatements contains a non-object&quot;</span>.to_owned()))<span class="question-mark">?
             </span>.iter()
@@ -158,12 +252,18 @@
                 <span class="kw">let </span>(name, var) = parse_variable(entry.<span class="number">1</span>)<span class="question-mark">?</span>;
                 m.add_variable(name, var);
             }
-            <span class="string">&quot;SuchThat&quot; </span>=&gt; parse_constraint(entry.<span class="number">1</span>)<span class="question-mark">?</span>,
-            <span class="kw">_ </span>=&gt; {
-                <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Parse(
-                    <span class="string">&quot;mStatements contains an unknown object&quot;</span>.to_owned(),
-                ))
-            }
+            <span class="string">&quot;SuchThat&quot; </span>=&gt; {
+                <span class="kw">let </span>constraints: Vec&lt;Expression&gt; = entry
+                    .<span class="number">1
+                    </span>.as_array()
+                    .unwrap()
+                    .iter()
+                    .flat_map(parse_expression)
+                    .collect();
+                m.constraints.extend(constraints);
+                <span class="comment">// println!(&quot;Nb constraints {}&quot;, m.constraints.len());
+            </span>}
+            otherwise =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Unhandled Statement {:#?}&quot;</span>, otherwise),
         }
     }
 
@@ -225,14 +325,13 @@
                     </span>.as_array()
                     .ok_or(Error::Parse(<span class="string">&quot;RangeBounded is not an array&quot;</span>.to_owned()))<span class="question-mark">?</span>;
                 <span class="kw">let </span><span class="kw-2">mut </span>nums = Vec::new();
-                <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="number">2 </span>{
-                    <span class="kw">let </span>num =
-                        <span class="kw-2">&amp;</span>arr[i][<span class="string">&quot;Constant&quot;</span>][<span class="string">&quot;ConstantInt&quot;</span>][<span class="number">1</span>]
-                            .as_i64()
-                            .ok_or(Error::Parse(
-                                <span class="string">&quot;Could not parse int domain constant&quot;</span>.to_owned(),
-                            ))<span class="question-mark">?</span>;
-                    <span class="kw">let </span>num32 = i32::try_from(<span class="kw-2">*</span>num).map_err(|<span class="kw">_</span>| {
+                <span class="kw">for </span>item <span class="kw">in </span>arr.iter() {
+                    <span class="kw">let </span>num = item[<span class="string">&quot;Constant&quot;</span>][<span class="string">&quot;ConstantInt&quot;</span>][<span class="number">1</span>]
+                        .as_i64()
+                        .ok_or(Error::Parse(
+                            <span class="string">&quot;Could not parse int domain constant&quot;</span>.to_owned(),
+                        ))<span class="question-mark">?</span>;
+                    <span class="kw">let </span>num32 = i32::try_from(num).map_err(|<span class="kw">_</span>| {
                         Error::Parse(<span class="string">&quot;Could not parse int domain constant&quot;</span>.to_owned())
                     })<span class="question-mark">?</span>;
                     nums.push(num32);
@@ -259,12 +358,93 @@
     <span class="prelude-val">Ok</span>(Domain::IntDomain(ranges))
 }
 
-<span class="kw">fn </span>parse_constraint(_obj: <span class="kw-2">&amp;</span>JsonValue) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="prelude-val">Ok</span>(())
+<span class="comment">// this needs an explicit type signature to force the closures to have the same type
+</span><span class="kw">type </span>BinOp = Box&lt;<span class="kw">dyn </span>Fn(Box&lt;Expression&gt;, Box&lt;Expression&gt;) -&gt; Expression&gt;;
+
+<span class="kw">fn </span>parse_expression(obj: <span class="kw-2">&amp;</span>JsonValue) -&gt; <span class="prelude-ty">Option</span>&lt;Expression&gt; {
+    <span class="kw">let </span>binary_operators: HashMap&lt;<span class="kw-2">&amp;</span>str, BinOp&gt; = [
+        (<span class="string">&quot;MkOpEq&quot;</span>, Box::new(Expression::Eq) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>, <span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;),
+        (
+            <span class="string">&quot;MkOpNeq&quot;</span>,
+            Box::new(Expression::Neq) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>, <span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;,
+        ),
+        (
+            <span class="string">&quot;MkOpGeq&quot;</span>,
+            Box::new(Expression::Geq) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>, <span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;,
+        ),
+        (
+            <span class="string">&quot;MkOpLeq&quot;</span>,
+            Box::new(Expression::Leq) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>, <span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;,
+        ),
+        (<span class="string">&quot;MkOpGt&quot;</span>, Box::new(Expression::Gt) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>, <span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;),
+        (<span class="string">&quot;MkOpLt&quot;</span>, Box::new(Expression::Lt) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>, <span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;),
+    ]
+    .into_iter()
+    .collect();
+
+    <span class="kw">let </span><span class="kw-2">mut </span>binary_operator_names = binary_operators.iter().map(|x| x.<span class="number">0</span>);
+
+    <span class="kw">match </span>obj {
+        Value::Object(op) <span class="kw">if </span>op.contains_key(<span class="string">&quot;Op&quot;</span>) =&gt; <span class="kw">match </span><span class="kw-2">&amp;</span>op[<span class="string">&quot;Op&quot;</span>] {
+            Value::Object(bin_op) <span class="kw">if </span>binary_operator_names.any(|key| bin_op.contains_key(<span class="kw-2">*</span>key)) =&gt; {
+                parse_bin_op(bin_op, binary_operators)
+            }
+            Value::Object(op_sum) <span class="kw">if </span>op_sum.contains_key(<span class="string">&quot;MkOpSum&quot;</span>) =&gt; parse_sum(op_sum),
+            otherwise =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Unhandled Op {:#?}&quot;</span>, otherwise),
+        },
+        Value::Object(refe) <span class="kw">if </span>refe.contains_key(<span class="string">&quot;Reference&quot;</span>) =&gt; {
+            <span class="kw">let </span>name = refe[<span class="string">&quot;Reference&quot;</span>].as_array()<span class="question-mark">?</span>[<span class="number">0</span>].as_object()<span class="question-mark">?</span>[<span class="string">&quot;Name&quot;</span>].as_str()<span class="question-mark">?</span>;
+            <span class="prelude-val">Some</span>(Expression::Reference(Name::UserName(name.to_string())))
+        }
+        Value::Object(constant) <span class="kw">if </span>constant.contains_key(<span class="string">&quot;Constant&quot;</span>) =&gt; parse_constant(constant),
+        otherwise =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Unhandled Expression {:#?}&quot;</span>, otherwise),
+    }
+}
+
+<span class="kw">fn </span>parse_sum(op_sum: <span class="kw-2">&amp;</span>serde_json::Map&lt;String, Value&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Expression&gt; {
+    <span class="kw">let </span>args = <span class="kw-2">&amp;</span>op_sum[<span class="string">&quot;MkOpSum&quot;</span>][<span class="string">&quot;AbstractLiteral&quot;</span>][<span class="string">&quot;AbsLitMatrix&quot;</span>][<span class="number">1</span>];
+    <span class="kw">let </span>args_parsed: Vec&lt;Expression&gt; = args
+        .as_array()<span class="question-mark">?
+        </span>.iter()
+        .map(|x| parse_expression(x).unwrap())
+        .collect();
+    <span class="prelude-val">Some</span>(Expression::Sum(args_parsed))
+}
+
+<span class="kw">fn </span>parse_bin_op(
+    bin_op: <span class="kw-2">&amp;</span>serde_json::Map&lt;String, Value&gt;,
+    binary_operators: HashMap&lt;<span class="kw-2">&amp;</span>str, BinOp&gt;,
+) -&gt; <span class="prelude-ty">Option</span>&lt;Expression&gt; {
+    <span class="comment">// we know there is a single key value pair in this object
+    // extract the value, ignore the key
+    </span><span class="kw">let </span>(key, value) = bin_op.into_iter().next()<span class="question-mark">?</span>;
+
+    <span class="kw">let </span>constructor = binary_operators.get(key.as_str())<span class="question-mark">?</span>;
+
+    <span class="kw">match </span><span class="kw-2">&amp;</span>value {
+        Value::Array(bin_op_args) <span class="kw">if </span>bin_op_args.len() == <span class="number">2 </span>=&gt; {
+            <span class="kw">let </span>arg1 = parse_expression(<span class="kw-2">&amp;</span>bin_op_args[<span class="number">0</span>])<span class="question-mark">?</span>;
+            <span class="kw">let </span>arg2 = parse_expression(<span class="kw-2">&amp;</span>bin_op_args[<span class="number">1</span>])<span class="question-mark">?</span>;
+            <span class="prelude-val">Some</span>(constructor(Box::new(arg1), Box::new(arg2)))
+        }
+        otherwise =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Unhandled parse_bin_op {:#?}&quot;</span>, otherwise),
+    }
+}
+
+<span class="kw">fn </span>parse_constant(constant: <span class="kw-2">&amp;</span>serde_json::Map&lt;String, Value&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Expression&gt; {
+    <span class="kw">match </span><span class="kw-2">&amp;</span>constant[<span class="string">&quot;Constant&quot;</span>] {
+        Value::Object(int) <span class="kw">if </span>int.contains_key(<span class="string">&quot;ConstantInt&quot;</span>) =&gt; <span class="prelude-val">Some</span>(Expression::ConstantInt(
+            int[<span class="string">&quot;ConstantInt&quot;</span>].as_array()<span class="question-mark">?</span>[<span class="number">1</span>]
+                .as_i64()<span class="question-mark">?
+                </span>.try_into()
+                .unwrap(),
+        )),
+        otherwise =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Unhandled parse_constant {:#?}&quot;</span>, otherwise),
+    }
 }
 
 <span class="kw">impl </span>Model {
-    <span class="kw">pub fn </span>from_json(str: <span class="kw-2">&amp;</span>String) -&gt; <span class="prelude-ty">Result</span>&lt;Model&gt; {
+    <span class="kw">pub fn </span>from_json(str: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Model&gt; {
         parse_json(str)
     }
 }
