@@ -22,12 +22,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Generate caching variables
-        id: cache-vars
-        run: |
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
-
       - name: Set up cache
         uses: actions/cache@v3
         with:
@@ -39,8 +33,8 @@ jobs:
             target/            
             solvers/minion/vendor
 
-          key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: stable-${{ runner.os }}-gitmodules-
+          key: ${{ runner.os }}-stable-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-stable-
 
       - working-directory: ./solvers/minion
         run: rustup update stable && rustup default stable
@@ -54,12 +48,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Generate caching variables
-        id: cache-vars
-        run: |
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
-
       - name: Set up cache
         uses: actions/cache@v3
         with:
@@ -71,8 +59,8 @@ jobs:
             target/            
             solvers/minion/vendor
             
-          key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: stable-${{ runner.os }}-gitmodules-
+          key: ${{ runner.os }}-stable-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-stable-
 
       - working-directory: ./solvers/minion
         run: rustup update stable && rustup default stable
@@ -89,12 +77,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Generate caching variables
-        id: cache-vars
-        run: |
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
-
       - name: Set up cache
         uses: actions/cache@v3
         with:
@@ -105,8 +87,8 @@ jobs:
             ~/.cargo/git/db/
             target/            
             solvers/minion/vendor
-          key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: stable-${{ runner.os }}-gitmodules-
+          key: ${{ runner.os }}-stable-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-stable-
 
       - working-directory: ./solvers/minion
         run: rustup update stable && rustup default stable

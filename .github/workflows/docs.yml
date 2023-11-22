@@ -14,12 +14,6 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v2
 
-      - name: Generate caching variables
-        id: cache-vars
-        run: |
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
-
       - name: Get Sha
         id: sha
         run: |
@@ -43,8 +37,8 @@ jobs:
             solvers/minion/vendor
             solvers/chuffed/vendor
 
-          key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: stable-${{ runner.os }}-gitmodules-
+          key: ${{ runner.os }}-stable-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-stable-
 
       - name: Install rust stable
         run: rustup update stable && rustup default stable
