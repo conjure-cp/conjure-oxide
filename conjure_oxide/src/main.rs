@@ -5,8 +5,8 @@ use std::path::PathBuf;
 
 use anyhow::Result as AnyhowResult;
 use clap::{arg, command, Parser};
-use conjure_oxide::parse::parse_json;
 use conjure_oxide::find_conjure::conjure_executable;
+use conjure_oxide::parse::parse_json;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -29,8 +29,8 @@ pub fn main() -> AnyhowResult<()> {
     /*        Parse essence to json using Conjure         */
     /******************************************************/
 
-    let conjure_exec = conjure_executable()
-        .map_err(|e| anyhow!("Could not find conjure executable: {}", e))?;
+    let conjure_exec =
+        conjure_executable().map_err(|e| anyhow!("Could not find conjure executable: {}", e))?;
     let mut cmd = std::process::Command::new(conjure_exec);
     let output = cmd
         .arg("pretty")
