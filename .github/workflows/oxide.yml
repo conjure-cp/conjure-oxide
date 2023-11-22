@@ -15,8 +15,6 @@ on:
       - .github/workflows/oxide.yml
   workflow_dispatch:
 
-env:
-  rust_release: stable
 
 jobs:
 
@@ -24,7 +22,19 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        rust_release:
+          - stable
+          - nightly
+        conjure_version:
+          - v2.5.1
+        os:
+          - ubuntu-latest
+          - macos-latest
+        include:
+          - os: ubuntu-latest
+            release_suffix: linux
+          - os: macos-latest
+            release_suffix: macos-intel
 
     runs-on: ${{ matrix.os }}
 
@@ -42,11 +52,11 @@ jobs:
             solvers/minion/vendor
             solvers/chuffed/vendor
 
-          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
-          restore-keys: ${{ runner.os }}-${{ env.rust_release }}
+          key: ${{ runner.os }}-${{ matrix.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ matrix.rust_release }}
 
       - working-directory: ./conjure_oxide
-        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
+        run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
 
       - working-directory: ./conjure_oxide
         run: rustup target add aarch64-apple-darwin
@@ -57,9 +67,11 @@ jobs:
 
       - working-directory: ./conjure_oxide
         run: |
-          wget https://github.com/conjure-cp/conjure/releases/download/v2.5.1/conjure-v2.5.1-linux-with-solvers.zip
-          unzip conjure-v2.5.1-linux-with-solvers.zip
-          echo "$(pwd)/conjure-v2.5.1-linux-with-solvers" >> ${GITHUB_PATH}
+          wget https://github.com/conjure-cp/conjure/releases/download/${{ matrix.conjure_version }}/conjure-${{ matrix.conjure_version }}-${{ matrix.release_suffix }}-with-solvers.zip
+          unzip conjure-${{ matrix.conjure_version }}-linux-with-solvers.zip
+          echo "$(pwd)/conjure-${{ matrix.conjure_version }}-linux-with-solvers" >> ${GITHUB_PATH}
+        if: runner.os == 'Linux'
 
       - working-directory: ./conjure_oxide
         run: cargo test
+        if: runner.os == 'Linux'
