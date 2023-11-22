@@ -123,7 +123,6 @@ fn sort_json_variables(value: &Value) -> Value {
     }
 }
 
-
 #[test]
 fn assert_conjure_present() {
     conjure_oxide::find_conjure::conjure_executable().unwrap();

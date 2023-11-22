@@ -4,6 +4,8 @@ use versions::Versioning;
 const CONJURE_MIN_VERSION: &str = "2.5.1";
 const CORRECT_FIRST_LINE: &str = "Conjure: The Automated Constraint Modelling Tool";
 
+/// Checks if the conjure executable is present in PATH and if it is the correct version.
+/// Returns () on success and an error on failure.
 pub fn conjure_executable() -> Result<()> {
     let mut cmd = std::process::Command::new("conjure");
     let output = cmd.arg("--version").output()?;
