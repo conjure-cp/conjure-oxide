@@ -29,9 +29,9 @@ pub fn main() -> AnyhowResult<()> {
     /*        Parse essence to json using Conjure         */
     /******************************************************/
 
-    let conjure_exec =
-        conjure_executable().map_err(|e| anyhow!("Could not find conjure executable: {}", e))?;
-    let mut cmd = std::process::Command::new(conjure_exec);
+    conjure_executable()
+        .map_err(|e| anyhow!("Could not find correct conjure executable: {}", e))?;
+    let mut cmd = std::process::Command::new("conjure");
     let output = cmd
         .arg("pretty")
         .arg("--output-format=astjson")
