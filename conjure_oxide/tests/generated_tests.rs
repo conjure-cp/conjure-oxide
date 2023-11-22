@@ -66,4 +66,9 @@ fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>
     Ok(())
 }
 
+#[test]
+fn assert_conjure_present() {
+    conjure_oxide::find_conjure::conjure_executable().unwrap();
+}
+
 include!(concat!(env!("OUT_DIR"), "/gen_tests.rs"));
