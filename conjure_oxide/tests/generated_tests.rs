@@ -75,8 +75,6 @@ fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>
 /// serde_json will output JSON objects in an arbitrary key order.
 /// this is normally fine, except in our use case we wouldn't want to update the expected output again and again.
 /// so a consistent (sorted) ordering of the keys is desirable.
-///
-/// sorting is done in-place.
 fn sort_json_object(value: &Value) -> Value {
     match value {
         Value::Object(obj) => {
