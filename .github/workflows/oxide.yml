@@ -19,86 +19,42 @@ env:
   rust_release: stable
 
 jobs:
-  ubuntu:
-    name: "Conjure Oxide: Ubuntu Build"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
 
-      - name: Set up cache
-        uses: actions/cache@v3
+  Job:
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/cache@v3
         with:
           path: 
             ~/.cargo/bin/
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            target/            
+            target
             solvers/minion/vendor
             solvers/chuffed/vendor
 
           key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
-          restore-keys: ${{ runner.os }}-${{ env.rust_release }}-
-
-      - working-directory: ./conjure_oxide
-        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
-
-      - working-directory: ./conjure_oxide
-        run: cargo build -vv
-
-  mac:
-    name: "Conjure Oxide: Mac Build"
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Set up cache
-        uses: actions/cache@v3
-        with:
-          path: 
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/            
-            solvers/minion/vendor
-            solvers/chuffed/vendor
-            
-          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
-          restore-keys: ${{ runner.os }}-${{ env.rust_release }}-
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}
 
       - working-directory: ./conjure_oxide
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - working-directory: ./conjure_oxide
         run: rustup target add aarch64-apple-darwin
+        if: runner.os == 'macOS'
 
       - working-directory: ./conjure_oxide
         run: cargo build -vv
 
-  tests:
-    name: "Conjure Oxide: Tests"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Set up cache
-        uses: actions/cache@v3
-        with:
-          path: 
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            target/            
-            solvers/minion/vendor
-            solvers/chuffed/vendor
-          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
-          restore-keys: ${{ runner.os }}-${{ env.rust_release }}-
-
-      - working-directory: ./conjure_oxide
-        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
-      
       - working-directory: ./conjure_oxide
         run: |
           wget https://github.com/conjure-cp/conjure/releases/download/v2.5.1/conjure-v2.5.1-linux-with-solvers.zip
@@ -107,8 +63,3 @@ jobs:
 
       - working-directory: ./conjure_oxide
         run: cargo test
-
-
-      
-
-
