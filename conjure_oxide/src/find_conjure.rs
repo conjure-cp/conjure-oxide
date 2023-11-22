@@ -11,15 +11,20 @@ pub fn conjure_executable() -> Result<String, String> {
         .to_str()
         .ok_or("Could not unwrap conjure executable path")?
         .to_string();
-    
+
     let mut cmd = std::process::Command::new(&conjure_exec);
     let output = cmd
         .arg("--version")
         .output()
         .map_err(|_| "Could not execute conjure")?;
-    let stdout = String::from_utf8(output.stderr)
+    let stdout = String::from_utf8(output.stdout)
         .map_err(|_| "Could not read conjure's stdout")?;
+    let stderr = String::from_utf8(output.stderr)
+        .map_err(|_| "Could not read conjure's stderr")?;
 
+    if !stderr.is_empty() {
+        return Err("Stderr is not empty: ".to_string() + &stderr);
+    }
     let first = stdout
         .lines()
         .next()
