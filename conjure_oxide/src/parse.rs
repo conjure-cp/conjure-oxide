@@ -38,7 +38,7 @@ pub fn parse_json(str: &str) -> Result<Model> {
                 m.constraints.extend(constraints);
                 // println!("Nb constraints {}", m.constraints.len());
             }
-            otherwise => panic!("Unhandled 0 {:#?}", otherwise),
+            otherwise => panic!("Unhandled Statement {:#?}", otherwise),
         }
     }
 
@@ -159,56 +159,61 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
     let mut binary_operator_names = binary_operators.iter().map(|x| x.0);
 
     match obj {
-        Value::Object(op) if op.contains_key("Op") => {
-            match &op["Op"] {
-                Value::Object(bin_op)
-                    if binary_operator_names.any(|key| bin_op.contains_key(*key)) =>
-                {
-                    // we know there is a single key value pair in this object
-                    // extract the value, ignore the key
-                    let (key, value) = bin_op.into_iter().next()?;
-
-                    let constructor = binary_operators.get(key.as_str())?;
-
-                    match &value {
-                        Value::Array(bin_op_args) if bin_op_args.len() == 2 => {
-                            let arg1 = parse_expression(&bin_op_args[0])?;
-                            let arg2 = parse_expression(&bin_op_args[1])?;
-                            Some(constructor(Box::new(arg1), Box::new(arg2)))
-                        }
-                        otherwise => panic!("Unhandled 3 {:#?}", otherwise),
-                    }
-                }
-                Value::Object(op_sum) if op_sum.contains_key("MkOpSum") => {
-                    let args = &op_sum["MkOpSum"]["AbstractLiteral"]["AbsLitMatrix"][1];
-                    let args_parsed: Vec<Expression> = args
-                        .as_array()?
-                        .iter()
-                        .map(|x| parse_expression(x).unwrap())
-                        .collect();
-                    Some(Expression::Sum(args_parsed))
-                }
-                otherwise => panic!("Unhandled 2 {:#?}", otherwise),
+        Value::Object(op) if op.contains_key("Op") => match &op["Op"] {
+            Value::Object(bin_op) if binary_operator_names.any(|key| bin_op.contains_key(*key)) => {
+                parse_bin_op(bin_op, binary_operators)
             }
-        }
+            Value::Object(op_sum) if op_sum.contains_key("MkOpSum") => parse_sum(op_sum),
+            otherwise => panic!("Unhandled Op {:#?}", otherwise),
+        },
         Value::Object(refe) if refe.contains_key("Reference") => {
             let name = refe["Reference"].as_array()?[0].as_object()?["Name"].as_str()?;
             Some(Expression::Reference(Name::UserName(name.to_string())))
         }
-        Value::Object(constant) if constant.contains_key("Constant") => {
-            match &constant["Constant"] {
-                Value::Object(int) if int.contains_key("ConstantInt") => {
-                    Some(Expression::ConstantInt(
-                        int["ConstantInt"].as_array()?[1]
-                            .as_i64()?
-                            .try_into()
-                            .unwrap(),
-                    ))
-                }
-                otherwise => panic!("Unhandled 4 {:#?}", otherwise),
-            }
+        Value::Object(constant) if constant.contains_key("Constant") => parse_constant(constant),
+        otherwise => panic!("Unhandled Expression {:#?}", otherwise),
+    }
+}
+
+fn parse_sum(op_sum: &serde_json::Map<String, Value>) -> Option<Expression> {
+    let args = &op_sum["MkOpSum"]["AbstractLiteral"]["AbsLitMatrix"][1];
+    let args_parsed: Vec<Expression> = args
+        .as_array()?
+        .iter()
+        .map(|x| parse_expression(x).unwrap())
+        .collect();
+    Some(Expression::Sum(args_parsed))
+}
+
+fn parse_bin_op(
+    bin_op: &serde_json::Map<String, Value>,
+    binary_operators: HashMap<&str, Box<dyn Fn(Box<Expression>, Box<Expression>) -> Expression>>,
+) -> Option<Expression> {
+    // we know there is a single key value pair in this object
+    // extract the value, ignore the key
+    let (key, value) = bin_op.into_iter().next()?;
+
+    let constructor = binary_operators.get(key.as_str())?;
+
+    match &value {
+        Value::Array(bin_op_args) if bin_op_args.len() == 2 => {
+            let arg1 = parse_expression(&bin_op_args[0])?;
+            let arg2 = parse_expression(&bin_op_args[1])?;
+            Some(constructor(Box::new(arg1), Box::new(arg2)))
         }
-        otherwise => panic!("Unhandled 1 {:#?}", otherwise),
+        otherwise => panic!("Unhandled parse_bin_op {:#?}", otherwise),
+    }
+}
+
+fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expression> {
+    match &constant["Constant"] {
+        Value::Object(int) if int.contains_key("ConstantInt") => Some(Expression::ConstantInt(
+            int["ConstantInt"].as_array()?[1]
+                .as_i64()?
+                .try_into()
+                .unwrap(),
+        )),
+        otherwise => panic!("Unhandled parse_constant {:#?}", otherwise),
     }
 }
 
