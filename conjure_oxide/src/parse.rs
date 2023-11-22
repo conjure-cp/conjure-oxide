@@ -133,9 +133,10 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
     Ok(Domain::IntDomain(ranges))
 }
 
+// this needs an explicit type signature to force the closures to have the same type
+type BinOp = Box<dyn Fn(Box<Expression>, Box<Expression>) -> Expression>;
+
 fn parse_expression(obj: &JsonValue) -> Option<Expression> {
-    // this needs an explicit type signature to force the closures to have the same type
-    type BinOp = Box<dyn Fn(Box<Expression>, Box<Expression>) -> Expression>;
     let binary_operators: HashMap<&str, BinOp> = [
         ("MkOpEq", Box::new(Expression::Eq) as Box<dyn Fn(_, _) -> _>),
         (
@@ -187,7 +188,7 @@ fn parse_sum(op_sum: &serde_json::Map<String, Value>) -> Option<Expression> {
 
 fn parse_bin_op(
     bin_op: &serde_json::Map<String, Value>,
-    binary_operators: HashMap<&str, Box<dyn Fn(Box<Expression>, Box<Expression>) -> Expression>>,
+    binary_operators: HashMap<&str, BinOp>,
 ) -> Option<Expression> {
     // we know there is a single key value pair in this object
     // extract the value, ignore the key
