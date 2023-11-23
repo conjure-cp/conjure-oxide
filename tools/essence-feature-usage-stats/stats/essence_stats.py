@@ -1,10 +1,13 @@
 from pathlib import Path
-from typing import Optional
+from typing import Iterable, Optional, Tuple
+
+from git import Repo
 
 from stats.essence_file import EssenceFile
 from stats.essence_keyword import EssenceKeyword
 from utils.conjure import download_conjure
-from utils.git_utils import clone_or_pull
+from utils.files import trim_path
+from utils.git_utils import clone_or_pull, parse_repo_url
 
 KeywordName: type = str
 FilePath: type = str
@@ -21,33 +24,44 @@ class EssenceStats:
         self,
         conjure_dir: Path,
         conjure_repo_url: str,
-        essence_repo_dir: Path,
-        essence_repo_url: str,
-        essence_branch="master",
+        essence_dir: Path,
+        essence_repo_urls: Iterable[Tuple[str, str]],
+        conjure_version: str = "latest",
         blocklist: Optional[list[KeywordName]] = None,
+        exclude_regex: Optional[str] = None,
+        max_n_files: Optional[int] = None,
     ):
         """
         Create a new EssenceStats object.
 
         :param conjure_dir: Path to a directory containing conjure binary
         :param conjure_repo_url: GitHub URL to download conjure release from
-        :param essence_repo_dir: Local repo with Essence example files
-        :param essence_repo_url: GitHub repo with Essence example files
-        :param essence_branch: Branch to download essence files from (master by default)
+        :param essence_dir: Local repo with Essence example files
+        :param essence_repo_urls: List of tuples - git repo urls and branches
+        :param conjure_version: Version of conjure to install (latest by default)
         :param blocklist: Essence keywords to ignore
         """
         if blocklist is None:
             blocklist = []
 
-        self._essence_repo = clone_or_pull(
-            essence_repo_dir,
-            essence_repo_url,
-            essence_branch,
-        )
+        self._max_n_files = max_n_files
+        self._exclude_regex = exclude_regex
+        self._essence_dir = essence_dir
+        self._essence_repos = []
+        for url, branch in essence_repo_urls:
+            repo_user, repo_name = parse_repo_url(url)
+            repo_path = self._essence_dir / repo_user / repo_name
+            repo = clone_or_pull(
+                repo_path,
+                url,
+                branch,
+            )
+            self._essence_repos.append(repo)
 
         self._conjure_bin = download_conjure(
             conjure_dir,
             repository_url=conjure_repo_url,
+            version=conjure_version,
         )
 
         self._blocklist = blocklist
@@ -60,20 +74,40 @@ class EssenceStats:
     @property
     def essence_dir(self) -> Path:
         """Get path to essence examples dir."""
-        return Path(self._essence_repo.working_dir)
+        return Path(self._essence_dir)
+
+    @property
+    def essence_repos(self) -> [Repo]:
+        """Get a list of Repo objects - repositories with Essence files."""
+        return self._essence_repos
+
+    def get_essence_repo_names(self, depth=2):
+        """Get Essence repos and paths to the repos, trimmed to a given depth."""
+        return [trim_path(x.working_dir, depth) for x in self._essence_repos]
 
     def _update_stats(self):
-        for file in EssenceFile.get_essence_files_from_dir(
-            self.essence_dir,
-            self._conjure_bin,
-            blocklist=self._blocklist,
-        ):
-            self._essence_files[file.get_str_path()] = file
+        """Loop over all associated Essence files and update the essence files stats."""
+        for repo in self._essence_repos:
+            repo_dir = repo.working_dir
 
-            for keyword in file.keywords:
-                if keyword not in self._essence_keywords:
-                    self._essence_keywords[keyword] = EssenceKeyword(keyword)
-                self._essence_keywords[keyword].add_file(file)
+            files = list(
+                EssenceFile.get_essence_files_from_dir(
+                    repo_dir,
+                    self._conjure_bin,
+                    repo=repo,
+                    blocklist=self._blocklist,
+                    exclude_regex=self._exclude_regex,
+                    max_n_files=self._max_n_files,
+                ),
+            )
+
+            for file in files:
+                self._essence_files[file.get_str_path()] = file
+
+                for keyword in file.keywords:
+                    if keyword not in self._essence_keywords:
+                        self._essence_keywords[keyword] = EssenceKeyword(keyword)
+                    self._essence_keywords[keyword].add_file(file)
 
     def get_essence_files(
         self,

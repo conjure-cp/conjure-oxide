@@ -41,3 +41,20 @@ def flat_keys_count(
             recurse_and_add_keys(entry)
 
     return ans
+
+
+def parse_essence_repos(repolist, default_branch="master"):
+    """Parse config file notation (<repo url>::<branch>) for essence repos."""
+    ans = []
+
+    repos = repolist.split(",")
+    for repo in repos:
+        repo_name = repo.strip().replace('"', "")
+        branch = default_branch
+
+        if "::" in repo_name:
+            repo_name, branch = repo_name.split("::")
+
+        ans.append((repo_name, branch))
+
+    return ans

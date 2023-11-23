@@ -1,33 +1,35 @@
-<table border="1" id="sortable-table">
+<table border="1" id="data-table">
     {% set stats = data['essence_stats'] %}
     {% set keywords = stats.get_essence_keywords(sort_mode='most-used') %}
     {% set files = stats.get_essence_files(sort_mode='most-lines', reverse=False) %}
     <thead>
     <tr>
-        <th id="first-table-cell">Essence File</th>
+        <th>Essence File</th>
+        <th>File Size (LOC)</th>
+        <th>Essence File Repo</th>
         {% for essence_keyword in keywords %}
-            <th class="sort-none" data-column="{{ essence_keyword.name }}">{{ essence_keyword.name }}</th>
+            <th>{{ essence_keyword.name }}</th>
         {% endfor %}
     </tr>
     </thead>
     <tbody>
     {% for file in files %}
-        <tr hide_filters="0">
-            <td n_lines="{{ file.n_lines }}">{{ file.get_str_path(depth=2) }} <i>({{ file.n_lines }} LoC)</i></td>
+        <tr>
+            <td>{{ file.get_str_path(depth=3) }}</td>
+            <td>{{ file.n_lines }}</td>
+            <td>{{ file.get_repo_name(depth=2) }}</td>
             {% for essence_keyword in keywords %}
                 {% set n_uses = file.get_uses(essence_keyword.name) %}
-                {% set colour = essence_keyword.get_colour(n_uses).as_hex() %}
-                <td bgcolor="{{ colour }}"
-                    min_uses="{{ essence_keyword.min_usages }}"
-                    max_uses="{{ essence_keyword.max_usages }}"
-                    avg_uses="{{ essence_keyword.avg_usages }}"
-                    num_files_using_feature="{{ essence_keyword.num_files_using_feature }}"
-                    total_uses="{{ essence_keyword.total_usages }}"
-                    file_path="{{ file.path }}"
-                >
-                    {{ n_uses }}</td>
+                {% set colour = essence_keyword.get_colour(n_uses).get_rgb_css_string(0.5) %}
+                <td style="background-color: {{ colour }};">{{ n_uses }}</td>
             {% endfor %}
         </tr>
     {% endfor %}
     </tbody>
 </table>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#data-table').DataTable();
+    });
+</script>

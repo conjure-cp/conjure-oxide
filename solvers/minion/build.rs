@@ -2,6 +2,9 @@
 // - https://github.com/gokberkkocak/rust_glucose/blob/master/build.rs
 // - https://rust-lang.github.io/rust-bindgen/non-system-libraries.html
 // - https://doc.rust-lang.org/cargo/reference/build-scripts.html#rerun-if-changed
+#![allow(clippy::unwrap_used)]
+#![allow(clippy::expect_used)]
+#![allow(clippy::panic)]
 
 use std::env;
 use std::path::PathBuf;
@@ -60,7 +63,7 @@ fn bind() {
         .header("vendor/minion/libwrapper.h")
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks))
+        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         // Make all templates opaque as reccomended by bindgen
         .opaque_type("std::.*")
         // Manually allow C++ functions to stop bindgen getting confused.

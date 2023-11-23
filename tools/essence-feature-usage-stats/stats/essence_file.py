@@ -1,5 +1,10 @@
 import os
+import re
 from pathlib import Path
+from typing import Iterable, Optional
+
+from git import Repo
+from tqdm import tqdm
 
 from utils.conjure import get_essence_file_ast
 from utils.files import count_lines, trim_path
@@ -35,12 +40,13 @@ class EssenceInvalidDirectoryError(ValueError):
         super().__init__(f"The provided path '{dir_path}' is not a valid directory")
 
 
-def find_essence_files(dir_path: str | Path):
+def find_essence_files(dir_path: str | Path, exclude_regex: str | None = None):
     """
     Find all essence files in a given directory and return a list of full paths to them.
 
     :param dir_path: path to directory
     :return: a generator of paths to essence files.
+    :param exclude_regex: regular expression to exclude certain paths.
     """
     dir_path = Path(dir_path)
 
@@ -48,18 +54,26 @@ def find_essence_files(dir_path: str | Path):
     if not dir_path.is_dir():
         raise EssenceInvalidDirectoryError
 
+    if exclude_regex is None:
+        exclude_regex = r"^$"  # If not excluding anything, set exclude regex to just match an empty string
+    pattern = re.compile(exclude_regex)
+
     # Walk through the directory and its subdirectories
     for root, _, files in os.walk(dir_path):
         for file in files:
             fpath = Path(root) / file
-            if fpath.is_file() and fpath.suffix == ".essence":
+            if (
+                fpath.is_file()
+                and fpath.suffix == ".essence"
+                and not pattern.match(str(fpath))
+            ):
                 yield fpath
 
 
 class EssenceFile:
     """EssenceFile stores keyword counts and number of lines for a given file "fpath"."""
 
-    def __init__(self, fpath: str | Path, conjure_bin_path, blocklist=None):
+    def __init__(self, fpath: str | Path, conjure_bin_path, repo=None, blocklist=None):
         """Construct an EssenceFile object from a given file path."""
         fpath = Path(fpath).resolve()
 
@@ -73,8 +87,20 @@ class EssenceFile:
             )
             self._keyword_counts = flat_keys_count(self._ast, blocklist)
             self._n_lines = count_lines(fpath)
+            self._repo = repo
         except Exception as e:
             raise EssenceFileNotParsableError(fpath, str(e)) from e
+
+    @property
+    def repo(self) -> Repo | None:
+        """Get the git repo that this file belongs to."""
+        return self._repo
+
+    def get_repo_name(self, depth=0) -> str | None:
+        """Get the repo name, trimmed to a given depth."""
+        if isinstance(self.repo, Repo):
+            return trim_path(self.repo.working_dir, depth)
+        return None
 
     @property
     def path(self) -> Path:
@@ -125,7 +151,7 @@ class EssenceFile:
 
     def __eq__(self, other):
         """EssenceFile objects are considered equal if their paths are the same."""
-        return self._fpath == other._fpath
+        return self.path == other.path
 
     def __str__(self):  # noqa: D105
         return f"EssenceFile({self._fpath}): {self.n_lines} lines"
@@ -145,10 +171,14 @@ class EssenceFile:
         }
 
     @staticmethod
-    def get_essence_files_from_dir(
+    def get_essence_files_from_dir(  # noqa: PLR0913
         dir_path: str | Path,
         conjure_bin_path: str | Path,
-        blocklist=None,
+        repo: Optional[Repo] = None,
+        blocklist: Optional[Iterable[str]] = None,
+        verbose: bool = False,
+        exclude_regex: Optional[str] = None,
+        max_n_files: Optional[int] = None,
     ):
         """
         Get Essence files contained in a given directory.
@@ -156,10 +186,35 @@ class EssenceFile:
         :param dir_path: path to directory with essence files
         :param conjure_bin_path: a path to conjure binary
         :param blocklist: a list of Essence keywords to ignore
+        :param verbose: Whether to print error messages
+        :param exclude_regex: Exclude file paths that match this regular expression
+        :param max_n_files: Maximum number of files to process
+        :param repo: a Git repo that this directory belongs to (optional)
         """
-        for fpath in find_essence_files(dir_path):
+        if verbose:
+            print(f"Processing Essence files in {dir_path}...")
+        counter = 0
+
+        for fpath in tqdm(find_essence_files(dir_path, exclude_regex=exclude_regex)):
             try:
-                file = EssenceFile(fpath, conjure_bin_path, blocklist=blocklist)
+                if max_n_files is not None and counter >= max_n_files:
+                    if verbose:
+                        print(
+                            f"Max number of files ({max_n_files}) reached, terminating...",
+                        )
+                    break
+
+                file = EssenceFile(
+                    fpath,
+                    conjure_bin_path,
+                    blocklist=blocklist,
+                    repo=repo,
+                )
+                counter += 1
                 yield file
-            except Exception as e:  # noqa: PERF203
-                print(f'Could not process file "{fpath}", throws exception: {e}')
+            except Exception as e:
+                if verbose:
+                    print(f'Could not process file "{fpath}", throws exception: {e}')
+
+        if verbose:
+            print(f"{counter} Essence files processed!")
