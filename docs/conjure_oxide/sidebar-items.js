@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["ast","error","parse"]};
+window.SIDEBAR_ITEMS = {"mod":["ast","error","find_conjure","parse"]};
