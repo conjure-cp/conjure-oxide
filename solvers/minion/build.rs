@@ -11,8 +11,9 @@ use std::path::PathBuf;
 use std::process::Command;
 
 fn main() {
-    println!("cargo:rustc-rerun-if-changed=vendor");
+    println!("cargo:rerun-if-changed=vendor");
     println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=build.sh");
 
     // must be ./ to be recognised as relative path
     // from project root
