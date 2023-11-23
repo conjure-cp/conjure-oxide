@@ -8,16 +8,23 @@ use std::path::PathBuf;
 use std::process::Command;
 
 fn main() {
+    let out_dir = env::var("OUT_DIR").unwrap();
+
     println!("cargo:rerun-if-changed=vendor");
+    println!("cargo:rerun-if-changed=wrapper.h");
+    println!("cargo:rerun-if-changed=wrapper.cpp");
+
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=build.sh");
 
     // must be ./ to be recognised as relative path
     // from project root
     println!("cargo:rustc-link-search=all=./solvers/chuffed/vendor/build/");
+    println!("cargo:rustc-link-search=all=./solvers/chuffed/");
+    println!("cargo:rustc-link-search=all={}/", out_dir);
+
     println!("cargo:rustc-link-lib=static=chuffed");
     println!("cargo:rustc-link-lib=static=chuffed_fzn");
-    println!("cargo:rustc-link-search=all=./solvers/chuffed/");
     println!("cargo:rustc-link-lib=static=wrapper");
 
     // also need to (dynamically) link to c++ stdlib
