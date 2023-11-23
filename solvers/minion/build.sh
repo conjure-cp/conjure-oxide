@@ -1,20 +1,23 @@
 #!/bin/bash
 
-SCRIPT_DIR=$(dirname "$0")
+SCRIPT_DIR="$(realpath "$(dirname "$0")")"
+cd "$SCRIPT_DIR"
 
 git submodule init -- vendor
 git submodule sync -- vendor 
 git submodule update --init --recursive -- vendor
 
-cd "$SCRIPT_DIR"
+if ! [[ -v OUT_DIR ]]; then
+  echo "OUT_DIR env variable does not exist - did you run this script through cargo build?"
+  exit 1
+fi
 
 echo "------ CONFIGURE STEP ------"
 
-mkdir -p vendor/build
-cd vendor/build
-python3 ../configure.py --lib --quick
+mkdir -p "$OUT_DIR/build"
+cd "$OUT_DIR/build"
+python3 "$SCRIPT_DIR/vendor/configure.py" --lib --quick
 
 echo "------ BUILD STEP ------"
-cd "$SCRIPT_DIR"
-cd vendor/build
+cd "$OUT_DIR/build"
 make

@@ -11,13 +11,13 @@ use std::path::PathBuf;
 use std::process::Command;
 
 fn main() {
+    let out_dir = env::var("OUT_DIR").unwrap();
+
     println!("cargo:rerun-if-changed=vendor");
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=build.sh");
 
-    // must be ./ to be recognised as relative path
-    // from project root
-    println!("cargo:rustc-link-search=all=./solvers/minion/vendor/build/");
+    println!("cargo:rustc-link-search=all={}/build", out_dir);
     println!("cargo:rustc-link-lib=static=minion");
 
     // also need to (dynamically) link to c++ stdlib
@@ -55,6 +55,7 @@ fn build() {
 }
 
 fn bind() {
+    let out_dir = env::var("OUT_DIR").unwrap();
     // The bindgen::Builder is the main entry point
     // to bindgen, and lets you build up options for
     // the resulting bindings.
@@ -95,7 +96,7 @@ fn bind() {
         .allowlist_function("vec_int_new")
         .allowlist_function("vec_int_push_back")
         .allowlist_function("vec_int_free")
-        .clang_arg("-Ivendor/build/src/") // generated from configure.py
+        .clang_arg(format!("-I{}/build/src/", out_dir)) // generated from configure.py
         .clang_arg("-Ivendor/minion/")
         .clang_arg("-DLIBMINION")
         .clang_arg(r"--std=gnu++11")
