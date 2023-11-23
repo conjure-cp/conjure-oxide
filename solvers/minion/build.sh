@@ -1,13 +1,13 @@
 #!/bin/bash
 
-SCRIPT_DIR="$(realpath "$(dirname "$0")")"
+SCRIPT_DIR="$(readlink -f "$(dirname "$0")")"
 cd "$SCRIPT_DIR"
 
 git submodule init -- vendor
 git submodule sync -- vendor 
 git submodule update --init --recursive -- vendor
 
-if ! [[ -v OUT_DIR ]]; then
+if [[ -z "$OUT_DIR" ]]; then
   echo "OUT_DIR env variable does not exist - did you run this script through cargo build?"
   exit 1
 fi
