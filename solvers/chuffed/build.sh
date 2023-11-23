@@ -2,8 +2,11 @@
 
 SCRIPT_DIR=$(realpath $(dirname "$0"))
 
-git submodule init
-git submodule update
+
+git submodule init -- vendor
+git submodule sync -- vendor
+git submodule update --init --recursive -- vendor
+
 cd "$SCRIPT_DIR" || exit 1
 
 if ! [[ -v OUT_DIR ]]; then
