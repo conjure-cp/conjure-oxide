@@ -8,15 +8,20 @@ use std::path::PathBuf;
 use std::process::Command;
 
 fn main() {
-    println!("cargo:rustc-rerun-if-changed=vendor");
-    println!("cargo:rerun-if-changed=build.rs");
+    let out_dir = env::var("OUT_DIR").unwrap();
 
-    // must be ./ to be recognised as relative path
-    // from project root
-    println!("cargo:rustc-link-search=all=./solvers/chuffed/vendor/build/");
+    println!("cargo:rerun-if-changed=vendor");
+    println!("cargo:rerun-if-changed=wrapper.h");
+    println!("cargo:rerun-if-changed=wrapper.cpp");
+
+    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=build.sh");
+
+    println!("cargo:rustc-link-search=all={}/", out_dir);
+    println!("cargo:rustc-link-search=all={}/build", out_dir);
+
     println!("cargo:rustc-link-lib=static=chuffed");
     println!("cargo:rustc-link-lib=static=chuffed_fzn");
-    println!("cargo:rustc-link-search=all=./solvers/chuffed/");
     println!("cargo:rustc-link-lib=static=wrapper");
 
     // also need to (dynamically) link to c++ stdlib
@@ -52,6 +57,7 @@ fn build() {
 }
 
 fn bind() {
+    let out_dir = env::var("OUT_DIR").unwrap();
     // The bindgen::Builder is the main entry point
     // to bindgen, and lets you build up options for
     // the resulting bindings.
@@ -78,7 +84,7 @@ fn bind() {
         .allowlist_function("p_setcallback")
         .allowlist_function("p_print")
         .allowlist_function("branch_IntVar")
-        .clang_arg("-Ivendor/build") // generated from configure.py
+        .clang_arg(format!("-I{}/build", out_dir))
         .clang_arg("-Ivendor")
         .clang_arg(r"--std=gnu++11")
         .clang_arg(r"-xc++")
