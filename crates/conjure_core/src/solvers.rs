@@ -5,5 +5,5 @@ use strum_macros::{EnumIter, EnumString};
 #[derive(Debug, EnumString, EnumIter, Display)]
 pub enum Solver {
     Minion,
-    KissSAT,
+    Kissat,
 }
