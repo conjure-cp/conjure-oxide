@@ -7,12 +7,12 @@ on:
     paths: 
       - conjure_oxide/**
       - Cargo.*
-      - .github/workflows/oxide.yml
+      - .github/workflows/test.yml
   pull_request:
     paths: 
       - conjure_oxide/**
       - Cargo.*
-      - .github/workflows/oxide.yml
+      - .github/workflows/test.yml
   workflow_dispatch:
 
 
@@ -55,11 +55,9 @@ jobs:
           key: ${{ runner.os }}-${{ matrix.rust_release }}-${{ github.event.repository.updated_at }}
           restore-keys: ${{ runner.os }}-${{ matrix.rust_release }}
 
-      - working-directory: ./conjure_oxide
-        run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
+      - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
 
-      - working-directory: ./conjure_oxide
-        run: cargo build -vv
+      - run: cargo build -vv
 
       - name: Add conjure to PATH
         run: echo "${HOME}/.cargo/bin/conjure-v${{ matrix.conjure_version }}-${{ matrix.release_suffix }}-with-solvers" >> ${GITHUB_PATH}
@@ -77,6 +75,7 @@ jobs:
             popd
           fi
           conjure --version
+  
+      - run: cargo test
 
-      - working-directory: ./conjure_oxide
-        run: cargo test
+      - run: cargo audit
