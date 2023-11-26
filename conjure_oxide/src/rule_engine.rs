@@ -13,8 +13,14 @@ enum RuleKind {
     SolverSpecific(Solver),
 }
 
+enum RuleApplicationError {
+    RuleNotApplicable,
+}
+
+type RuleApplicationResult = Result<Expression, RuleApplicationError>;
+
 // TODO: possibly a nice macro for this:
-// #[rule(kind=Horizontal)]
+// #[rule(kind=Horizontal, name=this_rule)]
 // fn this_rule(expr: Expression) -> Result<Expression> {...}
 //
 // rule.name=this_rule by default, but is overridable
@@ -22,15 +28,11 @@ enum RuleKind {
 pub struct Rule {
     name: String,
     kind: RuleKind,
-    //guard: fn(Expression) -> bool,
-    application: fn(Expression) -> Result<Expression>,
+    application: fn(Expression) -> RuleApplicationResult,
 }
 
 impl Rule {
     fn apply(self, expr: Expression) -> Result<Expression> {
-        // if !self.guard(expr) {
-        //     return Err(Error::RuleNotApplicable(self));
-        // }
         (self.application)(expr)
     }
 }
