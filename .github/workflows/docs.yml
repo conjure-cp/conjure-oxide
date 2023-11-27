@@ -6,6 +6,9 @@ on:
       - main # run for pushes to the main branch
   workflow_dispatch:
 
+env:
+  rust_release: stable
+
 jobs:
   coverage:
     name: "Generate Documentation"
@@ -13,12 +16,6 @@ jobs:
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v2
-
-      - name: Generate caching variables
-        id: cache-vars
-        run: |
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)" >> "$GITHUB_OUTPUT"
-          echo -e "submodule_sha=$(./etc/ci/get_submodules_hash.sh)"
 
       - name: Get Sha
         id: sha
@@ -32,27 +29,27 @@ jobs:
             echo -e "sha=${{ github.sha }}"
           fi
 
-      - name: Set up cache
-        uses: actions/cache@v3
+      - uses: actions/cache@v3
         with:
           path: |
-            ~/.cargo/bin/
+            ~/.cargo/bin
             ~/.cargo/registry/index
-            ~/.cargo/git/
-            target/            
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target
             solvers/minion/vendor
             solvers/chuffed/vendor
 
-          key: stable-${{ runner.os }}-gitmodules-${{ steps.cache-vars.outputs.submodule_sha }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: stable-${{ runner.os }}-gitmodules-
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}-
 
-      - name: Install rust stable
-        run: rustup update stable && rustup default stable
+      - name: Install rust ${{ env.rust_release }}
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
       
       - name: Generate documentation
         working-directory: .
         run: |
-          ./etc/scripts/gen_docs.sh
+          ./tools/gen_docs.sh
           
       - name: Move all html to correct folders for deployment
         run: |

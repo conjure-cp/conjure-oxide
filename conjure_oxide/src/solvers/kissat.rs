@@ -147,6 +147,7 @@ mod tests {
             b_rows.push(hash_row);
         }
 
+        println!("{:?},{:?}", a_rows, b_rows);
         for row in a_rows {
             assert!(b_rows.contains(&row));
         }
