@@ -14,15 +14,13 @@ pub struct Scoped<T> {
 // instead
 impl<T> Scoped<T> {
     pub unsafe fn new(ptr: *mut T, destructor: fn(*mut T)) -> Scoped<T> {
-        return Scoped { ptr, destructor };
+        Scoped { ptr, destructor }
     }
 }
 
 // https://doc.rust-lang.org/nomicon/destructors.html
 impl<T> Drop for Scoped<T> {
     fn drop(&mut self) {
-        unsafe {
-            (self.destructor)(self.ptr);
-        }
+        (self.destructor)(self.ptr);
     }
 }

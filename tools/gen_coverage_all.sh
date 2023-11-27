@@ -1,7 +1,7 @@
 # !/bin/bash
 # generate coverage for all crates in the workspace
 
-PATH_TO_GEN_COV="/etc/scripts/gen_coverage.sh"
+PATH_TO_GEN_COV="tools/gen_coverage.sh"
 echo_err () {
   echo "$@" 1>&2
 }

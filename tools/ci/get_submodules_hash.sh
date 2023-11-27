@@ -14,7 +14,7 @@ cd $(git rev-parse --show-toplevel)
 git submodule update --init --recursive 1>&2 2>/dev/null
 
 { 
-  for module in $(sh "$CI_SCRIPTS_DIR/get_submodule_paths.sh")
+  for module in $(sh "$CI_SCRIPTS_DIR/../scripts/get_submodule_paths.sh")
   do
     git rev-parse "HEAD:$module" >> $SHAS
   done;

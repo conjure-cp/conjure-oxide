@@ -1,53 +1,51 @@
-use std::collections::HashMap;
+// (niklasdewally): temporary, gut this if you want!
 
-use conjure_oxide::ast::*;
+use anyhow::{anyhow, bail};
+use std::path::PathBuf;
 
-fn main() {
-    // find a,b,c : int(1..3)
-    // such that a + b + c = 4
-    // such that a >= b
+use anyhow::Result as AnyhowResult;
+use clap::{arg, command, Parser};
+use conjure_oxide::find_conjure::conjure_executable;
+use conjure_oxide::parse::parse_json;
 
-    let a = Name::UserName(String::from("a"));
-    let b = Name::UserName(String::from("b"));
-    let c = Name::UserName(String::from("c"));
+#[derive(Parser)]
+#[command(author, version, about, long_about = None)]
+struct Cli {
+    #[arg(long, value_name = "SOLVER")]
+    solver: Option<String>,
 
-    let mut variables = HashMap::new();
-    variables.insert(
-        a.clone(),
-        DecisionVariable {
-            domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
-        },
-    );
-    variables.insert(
-        b.clone(),
-        DecisionVariable {
-            domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
-        },
-    );
-    variables.insert(
-        c.clone(),
-        DecisionVariable {
-            domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
-        },
-    );
+    #[arg(value_name = "INPUT_ESSENCE")]
+    input_file: PathBuf,
+}
 
-    let mut m = Model {
-        variables,
-        constraints: vec![
-            Expression::Eq(
-                Box::new(Expression::Sum(vec![
-                    Expression::Reference(a.clone()),
-                    Expression::Reference(b.clone()),
-                    Expression::Reference(c.clone()),
-                ])),
-                Box::new(Expression::ConstantInt(4)),
-            ),
-            Expression::Geq(
-                Box::new(Expression::Reference(a.clone())),
-                Box::new(Expression::Reference(b.clone())),
-            ),
-        ],
-    };
+pub fn main() -> AnyhowResult<()> {
+    let cli = Cli::parse();
+    println!("Input file: {}", cli.input_file.display());
+    let input_file: &str = cli.input_file.to_str().ok_or(anyhow!(
+        "Given input_file could not be converted to a string"
+    ))?;
 
-    println!("{:?}\n", m);
+    /******************************************************/
+    /*        Parse essence to json using Conjure         */
+    /******************************************************/
+
+    conjure_executable()
+        .map_err(|e| anyhow!("Could not find correct conjure executable: {}", e))?;
+    let mut cmd = std::process::Command::new("conjure");
+    let output = cmd
+        .arg("pretty")
+        .arg("--output-format=astjson")
+        .arg(input_file)
+        .output()?;
+
+    let conjure_stderr = String::from_utf8(output.stderr)?;
+    if !conjure_stderr.is_empty() {
+        bail!(conjure_stderr);
+    }
+
+    let astjson = String::from_utf8(output.stdout)?;
+
+    let model = parse_json(&astjson)?;
+    println!("{:?}", model);
+    Ok(())
 }
