@@ -5,11 +5,11 @@ use std::path::PathBuf;
 
 use anyhow::Result as AnyhowResult;
 use clap::{arg, command, Parser};
+use conjure_macros::rule;
 use conjure_oxide::ast::*;
 use conjure_oxide::find_conjure::conjure_executable;
 use conjure_oxide::parse::model_from_json;
 use conjure_oxide::rule::*;
-use conjure_macros::rule;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -22,8 +22,8 @@ struct Cli {
 }
 
 pub fn main() -> AnyhowResult<()> {
-    #[rule(RuleKind::Horizontal)]
-    fn example_rule(expr: Expression) -> RuleApplicationResult {
+    #[rule(Horizontal)]
+    fn example_rule(_expr: Expression) -> RuleApplicationResult {
         Err(RuleApplicationError::RuleNotApplicable)
     }
 
