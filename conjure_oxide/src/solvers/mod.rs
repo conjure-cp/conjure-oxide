@@ -1,5 +1,11 @@
 mod error;
 pub mod minion;
+pub use crate::ast::Model;
 pub use error::*;
-mod solver_list;
-pub use solver_list::*;
+
+pub trait FromConjureModel
+where
+    Self: Sized,
+{
+    fn from_conjure(model: Model) -> Result<Self, SolverError>;
+}
