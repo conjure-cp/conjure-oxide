@@ -28,5 +28,5 @@ void destroy_vec_intvar(vec<IntVar *> *v);
 void branch_IntVar(vec<IntVar *> *x, VarBranch var_branch,
                    ValBranch val_branch);
 
-Problem *new_problem();
-void solve(Problem *p);
+void *new_xyz_problem(int n);
+void solve_xyz(void *p);

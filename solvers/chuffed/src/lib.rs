@@ -6,7 +6,7 @@ pub mod bindings {
 pub mod wrappers {
     use crate::bindings::{
         all_different, branch_IntVar, createVar, createVars, make_vec_intvar, output_vars1,
-        var_sym_break, vec, ConLevel, IntVar, ValBranch, VarBranch,
+        var_sym_break, vec, ConLevel, IntVar, ValBranch, VarBranch, int_plus
     };
     use core::ptr;
 
@@ -59,6 +59,12 @@ pub mod wrappers {
     pub unsafe fn var_sym_break_wrapper(x: *mut vec<*mut IntVar>) {
         unsafe {
             var_sym_break(x);
+        }
+    }
+
+    pub unsafe fn int_plus_wrapper(x: *mut IntVar, y: *mut IntVar, z: *mut IntVar) {
+        unsafe {
+            int_plus(x, y, z);
         }
     }
 }

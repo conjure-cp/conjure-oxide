@@ -58,6 +58,8 @@ public:
     // find x, y, z : int(1..3)
     // such that x + y = z
 
+    all_different(x);
+
     for (int i = 0; i < n; i++) {
       int_plus(x[i], y[i], z[i]);
     }
@@ -93,8 +95,8 @@ public:
   }
 };
 
-// Create new problem
-void *new_problem() { return new XYZProblem(3); }
+// Create new xyz problem
+void *new_xyz_problem(int n) { return new XYZProblem(n); }
 
-// Solve problem
-void solve(void *p) { engine.solve((XYZProblem *)p); }
+// Solve xyz problem
+void solve_xyz(void *p) { engine.solve((XYZProblem *)p); }
