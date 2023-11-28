@@ -1,7 +1,3 @@
-use crate::ast::Expression;
-use crate::rule::{Rule, RuleApplicationError, RuleApplicationResult, RuleKind};
-use conjure_macros::*;
-use inventory;
 // pub fn rewrite_to_solver(model: Model, solver: Solver) -> Result<Model> {
 //     todo!();
 // }

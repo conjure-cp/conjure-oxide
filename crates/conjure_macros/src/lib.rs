@@ -1,20 +1,13 @@
-use conjure_core::rule::Rule;
-use conjure_core::rule::RuleKind;
-use inventory;
-use proc_macro2::TokenStream;
-use quote::format_ident;
 use quote::quote;
-use quote::ToTokens;
-use syn::parse::ParseStream;
-use syn::punctuated::Punctuated;
-use syn::MetaNameValue;
-use syn::{parse2, parse::Parse, parse_macro_input, ItemFn, Result, Token};
-use proc_macro;
+
+use syn::{parse2, ItemFn};
 
 // #[rule(Horizontal)]
 #[proc_macro_attribute]
-pub fn rule(args: proc_macro::TokenStream, item: proc_macro::TokenStream) -> proc_macro::TokenStream {
-
+pub fn rule(
+    args: proc_macro::TokenStream,
+    item: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
     let args2 = proc_macro2::TokenStream::from(args);
     let item2 = proc_macro2::TokenStream::from(item);
 
@@ -36,7 +29,7 @@ pub fn rule(args: proc_macro::TokenStream, item: proc_macro::TokenStream) -> pro
 
         println!("{:?}", Rule {
             name: String::from(stringify!(#name)),
-            kind: #args2,
+            kind: RuleKind::#args2,
             application: #name,
         });
     };
@@ -45,8 +38,11 @@ pub fn rule(args: proc_macro::TokenStream, item: proc_macro::TokenStream) -> pro
 }
 
 #[proc_macro_attribute]
-pub fn show_streams(attr: proc_macro::TokenStream, item: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    println!("attr: \"{}\"", attr.to_string());
-    println!("item: \"{}\"", item.to_string());
+pub fn show_streams(
+    attr: proc_macro::TokenStream,
+    item: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
+    println!("attr: \"{}\"", attr);
+    println!("item: \"{}\"", item);
     item
 }
