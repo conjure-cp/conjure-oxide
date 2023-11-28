@@ -62,6 +62,12 @@
 <a href="#62" id="62">62</a>
 <a href="#63" id="63">63</a>
 <a href="#64" id="64">64</a>
+<a href="#65" id="65">65</a>
+<a href="#66" id="66">66</a>
+<a href="#67" id="67">67</a>
+<a href="#68" id="68">68</a>
+<a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
 </pre></div><pre class="rust"><code><span class="kw">pub mod </span>bindings {
     <span class="attr">#![allow(warnings)]
     </span><span class="macro">include!</span>(<span class="macro">concat!</span>(<span class="macro">env!</span>(<span class="string">&quot;OUT_DIR&quot;</span>), <span class="string">&quot;/chuffed_bindings.rs&quot;</span>));
@@ -69,8 +75,8 @@
 
 <span class="kw">pub mod </span>wrappers {
     <span class="kw">use </span><span class="kw">crate</span>::bindings::{
-        all_different, branch_IntVar, createVar, createVars, make_vec_intvar, output_vars1,
-        var_sym_break, vec, ConLevel, IntVar, ValBranch, VarBranch,
+        all_different, branch_IntVar, createVar, createVars, int_plus, make_vec_intvar,
+        output_vars1, var_sym_break, vec, ConLevel, IntVar, ValBranch, VarBranch,
     };
     <span class="kw">use </span>core::ptr;
 
@@ -123,6 +129,12 @@
     <span class="kw">pub unsafe fn </span>var_sym_break_wrapper(x: <span class="kw-2">*mut </span>vec&lt;<span class="kw-2">*mut </span>IntVar&gt;) {
         <span class="kw">unsafe </span>{
             var_sym_break(x);
+        }
+    }
+
+    <span class="kw">pub unsafe fn </span>int_plus_wrapper(x: <span class="kw-2">*mut </span>IntVar, y: <span class="kw-2">*mut </span>IntVar, z: <span class="kw-2">*mut </span>IntVar) {
+        <span class="kw">unsafe </span>{
+            int_plus(x, y, z);
         }
     }
 }
