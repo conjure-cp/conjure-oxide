@@ -1,23 +1,10 @@
-use anyhow::{bail, Error};
-
 use crate::ast::Expression;
-use crate::error::{self, Error, Result};
-use crate::{solvers::Solver, Model};
-
-pub fn rewrite_to_solver(model: Model, solver: Solver) -> Result<Model> {
-    todo!();
-}
-enum RuleKind {
-    Horizontal,
-    Vertical,
-    SolverSpecific(Solver),
-}
-
-enum RuleApplicationError {
-    RuleNotApplicable,
-}
-
-type RuleApplicationResult = Result<Expression, RuleApplicationError>;
+use crate::rule::{Rule, RuleApplicationError, RuleApplicationResult, RuleKind};
+use conjure_macros::*;
+use inventory;
+// pub fn rewrite_to_solver(model: Model, solver: Solver) -> Result<Model> {
+//     todo!();
+// }
 
 // TODO: possibly a nice macro for this:
 // #[rule(kind=Horizontal, name=this_rule)]
@@ -25,14 +12,12 @@ type RuleApplicationResult = Result<Expression, RuleApplicationError>;
 //
 // rule.name=this_rule by default, but is overridable
 
-pub struct Rule {
-    name: String,
-    kind: RuleKind,
-    application: fn(Expression) -> RuleApplicationResult,
-}
+//inventory::collect!(Rule);
 
-impl Rule {
-    fn apply(self, expr: Expression) -> Result<Expression> {
-        (self.application)(expr)
-    }
-}
+//pub fn get_rules() -> Vec<Rule> {
+//    inventory::iter::<Rule>().collect()
+//}
+//
+//pub fn get_rules_by_kind(kind: RuleKind) -> Vec<Rule> {
+//    inventory::iter::<Rule>().filter(|r| r.kind == kind).collect()
+//}

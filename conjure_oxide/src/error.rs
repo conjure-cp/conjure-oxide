@@ -16,9 +16,6 @@ pub enum Error {
     #[error("{0} is not yet implemented.")]
     NotImplemented(String),
 
-    #[error("The preconditions for the given rule `{0}.name` were not satisfied.")]
-    RuleNotApplicable(Rule),
-
     #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
