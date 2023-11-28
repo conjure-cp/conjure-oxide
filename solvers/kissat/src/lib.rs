@@ -1,4 +1,5 @@
 #[cfg(test)]
+#[test]
 fn test1() {
     use kissat_rs::Assignment;
     use kissat_rs::Solver;
