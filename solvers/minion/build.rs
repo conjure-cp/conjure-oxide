@@ -13,12 +13,13 @@ use std::process::Command;
 fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
 
+    println!("cargo:rustc-link-search=all={}/build", out_dir);
+    println!("cargo:rustc-link-lib=static=minion");
     println!("cargo:rerun-if-changed=vendor");
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=build.sh");
 
-    println!("cargo:rustc-link-search=all={}/build", out_dir);
-    println!("cargo:rustc-link-lib=static=minion");
+    build();
 
     // also need to (dynamically) link to c++ stdlib
     // https://flames-of-code.netlify.app/blog/rust-and-cmake-cplusplus/
@@ -31,7 +32,6 @@ fn main() {
         unimplemented!();
     }
 
-    build();
     bind();
 }
 
@@ -63,9 +63,6 @@ fn bind() {
         // The input header we would like to generate
         // bindings for.
         .header("vendor/minion/libwrapper.h")
-        // Tell cargo to invalidate the built crate whenever any of the
-        // included header files changed.
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         // Make all templates opaque as reccomended by bindgen
         .opaque_type("std::.*")
         // Manually allow C++ functions to stop bindgen getting confused.
