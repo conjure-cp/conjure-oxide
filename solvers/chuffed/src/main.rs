@@ -1,6 +1,4 @@
-use chuffed_rs::bindings::{
-    new_xyz_problem, solve_xyz
-};
+use chuffed_rs::bindings::{new_xyz_problem, solve_xyz};
 
 // Entry point for running this problem
 fn main() {
@@ -16,6 +14,5 @@ fn main() {
     unsafe {
         let p = new_xyz_problem(n);
         solve_xyz(p);
-        
     }
 }

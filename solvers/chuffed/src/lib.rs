@@ -5,8 +5,8 @@ pub mod bindings {
 
 pub mod wrappers {
     use crate::bindings::{
-        all_different, branch_IntVar, createVar, createVars, make_vec_intvar, output_vars1,
-        var_sym_break, vec, ConLevel, IntVar, ValBranch, VarBranch, int_plus
+        all_different, branch_IntVar, createVar, createVars, int_plus, make_vec_intvar,
+        output_vars1, var_sym_break, vec, ConLevel, IntVar, ValBranch, VarBranch,
     };
     use core::ptr;
 
