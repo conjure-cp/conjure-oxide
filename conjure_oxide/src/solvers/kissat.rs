@@ -1,92 +1,204 @@
+use crate::ast::Domain::BoolDomain;
+use crate::ast::Expression::{And, Not, Or, Reference};
 use crate::ast::{DecisionVariable, Domain, Expression, Model, Name};
 use std::collections::HashMap;
 use String;
 
-type CNF = Vec<Vec<i32>>;
 type Error = String;
 
-/// Loop over variable names and assign indices to them for the CNF format. If a variable is not boolean, raise error.
-fn make_indices(vars: &HashMap<Name, DecisionVariable>) -> Result<HashMap<&Name, i32>, Error> {
-    let mut ans: HashMap<&Name, i32> = HashMap::new();
-    let mut next_index = 1;
+struct CNF {
+    pub clauses: Vec<Vec<i32>>,
+    variables: HashMap<Name, i32>,
+    next_ind: i32,
+}
 
-    for name in vars.keys() {
-        let variable: &DecisionVariable = vars.get(name).unwrap();
-        match variable.domain {
-            Domain::BoolDomain => {
-                ans.insert(name, next_index);
-                next_index += 1;
-            }
-            _ => {
-                return Err(String::from(
-                    "Could not convert (Model -> CNF):\
-                 all variables must belong to domain BoolDomain!",
-                ))
-            }
+impl CNF {
+    pub fn new() -> CNF {
+        CNF {
+            clauses: Vec::new(),
+            variables: HashMap::new(),
+            next_ind: 1,
         }
     }
 
-    return Ok(ans);
-}
+    pub fn get_variables(&self) -> Vec<&Name> {
+        let mut ans: Vec<&Name> = Vec::new();
 
-/// Convert a single expression into a row of the CNF format
-fn convert_expression(
-    expression: &Expression,
-    symbol_table: &HashMap<&Name, i32>,
-) -> Result<Vec<i32>, Error> {
-    let mut ans: Vec<i32> = vec![];
+        for key in self.variables.keys() {
+            ans.push(key);
+        }
 
-    match expression {
-        Expression::Reference(name) => match symbol_table.get(&name) {
-            // If it's a variable, just get its index
+        return ans;
+    }
+
+    pub fn get_index(&self, var: &Name) -> Option<i32> {
+        return match self.variables.get(var) {
+            None => None,
+            Some(idx) => Some(*idx),
+        };
+    }
+
+    pub fn get_name(&self, ind: i32) -> Option<&Name> {
+        for key in self.variables.keys() {
+            let idx = self.get_index(key)?;
+            if idx == ind {
+                return Some(key);
+            }
+        }
+        return None;
+    }
+
+    pub fn add_variable(&mut self, var: &Name) {
+        self.variables.insert(var.clone(), self.next_ind);
+        self.next_ind += 1;
+    }
+
+    pub fn has_variable<T: HasVariable>(&self, value: T) -> bool {
+        value.has_variable(self)
+    }
+
+    pub fn add_clause(&mut self, vec: &Vec<i32>) -> Result<(), Error> {
+        for idx in vec {
+            if !self.has_variable(idx.abs()) {
+                return Err(format!("Variable with index {idx} not found!"));
+            }
+        }
+        self.clauses.push(vec.clone());
+        return Ok(());
+    }
+
+    pub fn add_expression(&mut self, expr: &Expression) -> Result<(), Error> {
+        for row in self.handle_expression(expr)? {
+            self.add_clause(&row)?;
+        }
+        return Ok(());
+    }
+
+    pub fn as_expression(&self) -> Result<Expression, Error> {
+        let mut expr_clauses: Vec<Expression> = Vec::new();
+
+        for clause in &self.clauses {
+            expr_clauses.push(self.clause_to_expression(clause)?);
+        }
+
+        // ToDo (gs248) We should probably flatten the result first. x -> And( [ Or([x]) ] ) is a bit silly.
+        // Also, this functionality may not be needed altogether
+        return Ok(And(expr_clauses));
+    }
+
+    fn clause_to_expression(&self, clause: &Vec<i32>) -> Result<Expression, Error> {
+        let mut ans: Vec<Expression> = Vec::new();
+
+        for idx in clause {
+            match self.get_name(idx.abs()) {
+                None => return Err(format!("Could not find variable with index {idx}")),
+                Some(name) => {
+                    if *idx > 0 {
+                        ans.push(Reference(name.clone()))
+                    } else {
+                        ans.push(Not(Box::from(Reference(name.clone()))))
+                    }
+                }
+            }
+        }
+
+        return Ok(Or(ans));
+    }
+
+    fn get_reference_index(&self, name: &Name) -> Result<i32, Error> {
+        return match self.get_index(name) {
             None => {
                 let str_name = match name {
                     Name::UserName(s_name) => s_name.clone(),
                     Name::MachineName(i_name) => i_name.to_string(),
                 };
-                return Err(format!("Variable with name {str_name} not found!"));
+                Err(format!("Variable with name {str_name} not found!"))
             }
-            Some(ind) => {
-                ans.push(*ind);
-            }
-        },
-        Expression::Not(var_box) => {
-            let expr = var_box.as_ref();
-            match expr {
-                // Expression inside the Not()
-                Expression::Reference(_) => {
-                    // If it's a variable, get its index by calling
-                    // convert_expression again, and add a -
-                    let ret = convert_expression(expr, symbol_table)?;
-                    let ind = *ret.first().unwrap();
-                    ans.push(-ind);
-                }
-                _ => {
-                    return Err(String::from(
-                        "Expected Model to be in CNF form,\
-                 expression inside Not must always be a Reference!",
-                    ))
-                }
-            }
-        }
-        Expression::Or(expressions) => {
-            // If it's an Or, we just need to convert expressions inside it and flatten the result
-            for expr in expressions {
-                let ret = convert_expression(expr, symbol_table)?;
-                for ind in ret {
-                    ans.push(ind);
-                }
-            }
-        }
-        _ => {
-            return Err(String::from(
-                "Expected Model to be in CNF form,\
-        only Reference, Not(Reference) and Or(...) allowed!",
-            ))
-        }
+            Some(ind) => Ok(ind),
+        };
     }
 
-    return Ok(ans);
+    fn handle_reference(&self, name: &Name) -> Result<Vec<i32>, Error> {
+        return Ok(vec![self.get_reference_index(name)?]);
+    }
+
+    fn handle_not(&self, expr_box: &Box<Expression>) -> Result<Vec<i32>, Error> {
+        let expr = expr_box.as_ref();
+        return match expr {
+            // Expression inside the Not()
+            Reference(name) => Ok(vec![-self.get_reference_index(name)?]),
+            _ => Err(String::from(
+                "Expected Model to be in CNF form,\
+                 expression inside Not must always be a Reference!",
+            )),
+        };
+    }
+
+    fn handle_or(&self, expressions: &Vec<Expression>) -> Result<Vec<i32>, Error> {
+        let mut ans: Vec<i32> = Vec::new();
+
+        for expr in expressions {
+            let ret = self.handle_flat_expression(expr)?;
+            for ind in ret {
+                ans.push(ind);
+            }
+        }
+
+        return Ok(ans);
+    }
+
+    /// Convert a single Reference, Not or Or into a row of the CNF format
+    fn handle_flat_expression(&self, expression: &Expression) -> Result<Vec<i32>, Error> {
+        return match expression {
+            Reference(name) => self.handle_reference(name),
+            Not(var_box) => self.handle_not(var_box),
+            Or(expressions) => self.handle_or(expressions),
+            _ => Err(String::from(
+                "Expected Model to be in CNF form,\
+        only Reference, Not(Reference) and Or(...) allowed!",
+            )),
+        };
+    }
+
+    fn handle_and(&self, expressions: &Vec<Expression>) -> Result<Vec<Vec<i32>>, Error> {
+        let mut ans: Vec<Vec<i32>> = Vec::new();
+
+        for expression in expressions {
+            match expression {
+                And(expressions) => {
+                    return Err(String::from("Nested And expressions not allowed!"));
+                }
+                _ => {
+                    ans.push(self.handle_flat_expression(expression)?);
+                }
+            }
+        }
+
+        return Ok(ans);
+    }
+
+    fn handle_expression(&self, expression: &Expression) -> Result<Vec<Vec<i32>>, Error> {
+        return match expression {
+            And(expressions) => self.handle_and(expressions),
+            _ => Ok(vec![self.handle_flat_expression(expression)?]),
+        };
+    }
+}
+
+trait HasVariable {
+    fn has_variable(self, cnf: &CNF) -> bool;
+}
+
+impl HasVariable for i32 {
+    fn has_variable(self, cnf: &CNF) -> bool {
+        return cnf.get_name(self).is_some();
+    }
+}
+
+impl HasVariable for &Name {
+    fn has_variable(self, cnf: &CNF) -> bool {
+        return cnf.get_index(self).is_some();
+    }
 }
 
 /// Expects Model to be in the Conjunctive Normal Form:
@@ -94,18 +206,24 @@ fn convert_expression(
 /// - Expressions must be Reference, Not(Reference), or Or(Reference1, Not(Reference2), ...)
 impl TryFrom<Model> for CNF {
     type Error = Error;
-    fn try_from(conjure_model: Model) -> Result<Self, Self::Error> {
-        let mut ans: Vec<Vec<i32>> = vec![];
-        let constraints = conjure_model.constraints;
-        let variables = conjure_model.variables;
 
-        let names_to_indices: HashMap<&Name, i32> = make_indices(&variables)?;
+    fn try_from(model: Model) -> Result<CNF, Error> {
+        let mut ans: CNF = CNF::new();
 
-        for expression in constraints.iter() {
-            match convert_expression(expression, &names_to_indices) {
-                Ok(row) => ans.push(row),
-                Err(msg) => return Err(format!("Could not convert (Model -> CNF): {msg}")),
+        for var in model.variables.keys() {
+            // Check that domain has the correct type
+            let decision_var = model.variables.get(var).unwrap();
+            if decision_var.domain != BoolDomain {
+                return Err(format!(
+                    "Unexpected domain in variable {decision_var}! Only BoolDomain is allowed."
+                ));
             }
+
+            ans.add_variable(var);
+        }
+
+        for expr in model.constraints {
+            ans.add_expression(&expr)?;
         }
 
         return Ok(ans);
@@ -114,11 +232,11 @@ impl TryFrom<Model> for CNF {
 
 #[cfg(test)]
 mod tests {
-    use crate::ast::Domain::BoolDomain;
-    use crate::ast::Expression::{Not, Or, Reference};
-    use crate::ast::Name;
+    use crate::ast::Domain::{BoolDomain, IntDomain};
+    use crate::ast::Expression::{And, Not, Or, Reference};
     use crate::ast::{DecisionVariable, Model};
-    use crate::solvers::kissat::CNF;
+    use crate::ast::{Expression, Name};
+    use crate::solvers::kissat::{Error, CNF};
     use std::collections::{HashMap, HashSet};
     use std::fmt::Debug;
     use std::hash::Hash;
@@ -155,225 +273,254 @@ mod tests {
 
     #[test]
     fn test_single_var() {
-        let var = DecisionVariable { domain: BoolDomain };
-        let name = Name::MachineName(1);
+        // x -> [[1]]
 
-        let reference = Reference(name.clone());
+        let mut model: Model = Model::new();
 
-        let vars: HashMap<Name, DecisionVariable> = HashMap::from([(name.clone(), var)]);
-        let expressions = vec![reference];
+        let x: Name = Name::UserName(String::from('x'));
+        model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
+        model.add_constraint(Expression::Reference(x.clone()));
 
-        let model = Model {
-            variables: vars,
-            constraints: expressions,
-        };
+        let res: Result<CNF, Error> = CNF::try_from(model);
+        assert!(res.is_ok());
 
-        let converted = CNF::try_from(model);
-        if let Ok(ans) = converted {
-            assert_eq!(ans, vec![vec![1]]);
-        }
+        let cnf = res.unwrap();
+
+        assert_eq!(cnf.get_index(&x), Some(1));
+        assert!(cnf.get_name(1).is_some());
+        assert_eq!(cnf.get_name(1).unwrap(), &x);
+
+        assert_eq!(cnf.clauses, vec![vec![1]]);
+
+        assert_eq!(
+            cnf.as_expression(),
+            Ok(And(vec![Or(vec![Reference(x.clone())])]))
+        )
     }
 
     #[test]
     fn test_single_not() {
-        let var = DecisionVariable { domain: BoolDomain };
-        let name = Name::MachineName(1);
+        // Not(x) -> [[-1]]
 
-        let reference = Reference(name.clone());
-        let not = Not(Box::from(reference));
+        let mut model: Model = Model::new();
 
-        let vars: HashMap<Name, DecisionVariable> = HashMap::from([(name.clone(), var)]);
-        let expressions = vec![not];
+        let x: Name = Name::UserName(String::from('x'));
+        model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
+        model.add_constraint(Not(Box::from(Reference(x.clone()))));
 
-        let model = Model {
-            variables: vars,
-            constraints: expressions,
-        };
+        let cnf: CNF = CNF::try_from(model).unwrap();
+        assert_eq!(cnf.get_index(&x), Some(1));
+        assert_eq!(cnf.clauses, vec![vec![-1]]);
 
-        let converted = CNF::try_from(model);
-        if let Ok(ans) = converted {
-            assert_eq!(ans, vec![vec![-1]]);
-        }
+        assert_eq!(
+            cnf.as_expression(),
+            Ok(And(vec![Or(vec![Not(Box::from(Reference(x.clone())))])]))
+        )
     }
 
     #[test]
     fn test_single_or() {
-        let var1 = DecisionVariable { domain: BoolDomain };
-        let name1 = Name::MachineName(1);
-        let var2 = DecisionVariable { domain: BoolDomain };
-        let name2 = Name::MachineName(2);
+        // Or(x, y) -> [[1, 2]]
 
-        let ref1 = Reference(name1.clone());
-        let ref2 = Reference(name2.clone());
-        let or = Or(vec![ref1, ref2]);
+        let mut model: Model = Model::new();
 
-        let vars: HashMap<Name, DecisionVariable> =
-            HashMap::from([(name1.clone(), var1), (name2.clone(), var2)]);
-        let expressions = vec![or];
+        let x: Name = Name::UserName(String::from('x'));
+        let y: Name = Name::UserName(String::from('y'));
 
-        let model = Model {
-            variables: vars,
-            constraints: expressions,
-        };
+        model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
+        model.add_variable(y.clone(), DecisionVariable { domain: BoolDomain });
 
-        let converted = CNF::try_from(model);
-        if let Ok(ans) = converted {
-            assert_eq!(ans, vec![vec![1, 2]]);
-        }
-    }
+        model.add_constraint(Or(vec![Reference(x.clone()), Reference(y.clone())]));
 
-    #[test]
-    fn test_multiple_vars() {
-        let var1 = DecisionVariable { domain: BoolDomain };
-        let name1 = Name::MachineName(1);
-        let var2 = DecisionVariable { domain: BoolDomain };
-        let name2 = Name::MachineName(2);
+        let cnf: CNF = CNF::try_from(model).unwrap();
 
-        let ref1 = Reference(name1.clone());
-        let ref2 = Reference(name2.clone());
+        let xi = cnf.get_index(&x).unwrap();
+        let yi = cnf.get_index(&y).unwrap();
+        assert_eq_any_order(&cnf.clauses, &vec![vec![xi, yi]]);
 
-        let vars: HashMap<Name, DecisionVariable> =
-            HashMap::from([(name1.clone(), var1), (name2.clone(), var2)]);
-        let expressions = vec![ref1, ref2];
-
-        let model = Model {
-            variables: vars,
-            constraints: expressions,
-        };
-
-        let converted = CNF::try_from(model);
-        if let Ok(ans) = converted {
-            let corr = vec![vec![1], vec![2]];
-            assert_eq_any_order(&ans, &corr);
-        }
-    }
-
-    #[test]
-    fn test_var_and_not() {
-        let var1 = DecisionVariable { domain: BoolDomain };
-        let name1 = Name::MachineName(1);
-        let var2 = DecisionVariable { domain: BoolDomain };
-        let name2 = Name::MachineName(2);
-
-        let ref1 = Reference(name1.clone());
-        let ref2 = Reference(name2.clone());
-        let not2 = Not(Box::from(ref2));
-
-        let vars: HashMap<Name, DecisionVariable> =
-            HashMap::from([(name1.clone(), var1), (name2.clone(), var2)]);
-        let expressions = vec![ref1, not2];
-
-        let model = Model {
-            variables: vars,
-            constraints: expressions,
-        };
-
-        let converted = CNF::try_from(model);
-        if let Ok(ans) = converted {
-            let corr = vec![vec![1], vec![-2]];
-            assert_eq_any_order(&ans, &corr);
-        }
+        assert_eq!(
+            cnf.as_expression(),
+            Ok(And(vec![Or(vec![
+                Reference(x.clone()),
+                Reference(y.clone())
+            ])]))
+        )
     }
 
     #[test]
     fn test_or_not() {
-        let var1 = DecisionVariable { domain: BoolDomain };
-        let name1 = Name::MachineName(1);
-        let var2 = DecisionVariable { domain: BoolDomain };
-        let name2 = Name::MachineName(2);
+        // Or(x, Not(y)) -> [[1, -2]]
 
-        let ref1 = Reference(name1.clone());
-        let ref2 = Reference(name2.clone());
-        let not2 = Not(Box::from(ref2));
-        let or = Or(vec![ref1, not2]);
+        let mut model: Model = Model::new();
 
-        let vars: HashMap<Name, DecisionVariable> =
-            HashMap::from([(name1.clone(), var1), (name2.clone(), var2)]);
-        let expressions = vec![or];
+        let x: Name = Name::UserName(String::from('x'));
+        let y: Name = Name::UserName(String::from('y'));
 
-        let model = Model {
-            variables: vars,
-            constraints: expressions,
-        };
+        model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
+        model.add_variable(y.clone(), DecisionVariable { domain: BoolDomain });
 
-        let converted = CNF::try_from(model);
-        if let Ok(ans) = converted {
-            let corr = vec![vec![1, -2]];
-            assert_eq_any_order(&ans, &corr);
-        }
+        model.add_constraint(Or(vec![
+            Reference(x.clone()),
+            Not(Box::from(Reference(y.clone()))),
+        ]));
+
+        let cnf: CNF = CNF::try_from(model).unwrap();
+
+        let xi = cnf.get_index(&x).unwrap();
+        let yi = cnf.get_index(&y).unwrap();
+        assert_eq_any_order(&cnf.clauses, &vec![vec![xi, -yi]]);
+
+        assert_eq!(
+            cnf.as_expression(),
+            Ok(And(vec![Or(vec![
+                Reference(x.clone()),
+                Not(Box::from(Reference(y.clone())))
+            ])]))
+        )
     }
 
     #[test]
-    fn test_multiple_ors() {
-        let var1 = DecisionVariable { domain: BoolDomain };
-        let name1 = Name::MachineName(1);
-        let var2 = DecisionVariable { domain: BoolDomain };
-        let name2 = Name::MachineName(2);
-        let var3 = DecisionVariable { domain: BoolDomain };
-        let name3 = Name::MachineName(3);
-        let var4 = DecisionVariable { domain: BoolDomain };
-        let name4 = Name::MachineName(4);
+    fn test_multiple() {
+        // [x, y] - equivalent to And(x, y) -> [[1], [2]]
 
-        let ref1 = Reference(name1.clone());
-        let ref2 = Reference(name2.clone());
-        let ref3 = Reference(name3.clone());
-        let ref4 = Reference(name4.clone());
+        let mut model: Model = Model::new();
 
-        let or1 = Or(vec![ref1, ref2]);
-        let or2 = Or(vec![ref3, ref4]);
+        let x: Name = Name::UserName(String::from('x'));
+        let y: Name = Name::UserName(String::from('y'));
 
-        let vars: HashMap<Name, DecisionVariable> =
-            HashMap::from([(name1.clone(), var1), (name2.clone(), var2)]);
-        let expressions = vec![or1, or2];
+        model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
+        model.add_variable(y.clone(), DecisionVariable { domain: BoolDomain });
 
-        let model = Model {
-            variables: vars,
-            constraints: expressions,
-        };
+        model.add_constraint(Reference(x.clone()));
+        model.add_constraint(Reference(y.clone()));
 
-        let converted = CNF::try_from(model);
-        if let Ok(ans) = converted {
-            let corr = vec![vec![1, 2], vec![3, 4]];
-            assert_eq_any_order(&ans, &corr);
-        }
+        let cnf: CNF = CNF::try_from(model).unwrap();
+
+        let xi = cnf.get_index(&x).unwrap();
+        let yi = cnf.get_index(&y).unwrap();
+        assert_eq_any_order(&cnf.clauses, &vec![vec![xi], vec![yi]]);
+
+        assert_eq!(
+            cnf.as_expression(),
+            Ok(And(vec![
+                Or(vec![Reference(x.clone())]),
+                Or(vec![Reference(y.clone())])
+            ]))
+        )
+    }
+
+    #[test]
+    fn test_and() {
+        // And(x, y) -> [[1], [2]]
+
+        let mut model: Model = Model::new();
+
+        let x: Name = Name::UserName(String::from('x'));
+        let y: Name = Name::UserName(String::from('y'));
+
+        model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
+        model.add_variable(y.clone(), DecisionVariable { domain: BoolDomain });
+
+        model.add_constraint(And(vec![Reference(x.clone()), Reference(y.clone())]));
+
+        let cnf: CNF = CNF::try_from(model).unwrap();
+
+        let xi = cnf.get_index(&x).unwrap();
+        let yi = cnf.get_index(&y).unwrap();
+        assert_eq_any_order(&cnf.clauses, &vec![vec![xi], vec![yi]]);
+
+        assert_eq!(
+            cnf.as_expression(),
+            Ok(And(vec![
+                Or(vec![Reference(x.clone())]),
+                Or(vec![Reference(y.clone())])
+            ]))
+        )
     }
 
     #[test]
     fn test_nested_ors() {
-        let var1 = DecisionVariable { domain: BoolDomain };
-        let name1 = Name::MachineName(1);
-        let var2 = DecisionVariable { domain: BoolDomain };
-        let name2 = Name::MachineName(2);
-        let var3 = DecisionVariable { domain: BoolDomain };
-        let name3 = Name::MachineName(3);
-        let var4 = DecisionVariable { domain: BoolDomain };
-        let name4 = Name::MachineName(4);
+        // Or(x, Or(y, z)) -> [[1, 2, 3]]
 
-        let ref1 = Reference(name1.clone());
-        let ref2 = Reference(name2.clone());
-        let ref3 = Reference(name3.clone());
-        let ref4 = Reference(name4.clone());
+        let mut model: Model = Model::new();
 
-        let or1 = Or(vec![ref1, ref2]);
-        let or2 = Or(vec![ref3, ref4]);
-        let or = Or(vec![or1, or2]);
+        let x: Name = Name::UserName(String::from('x'));
+        let y: Name = Name::UserName(String::from('y'));
+        let z: Name = Name::UserName(String::from('z'));
 
-        let vars: HashMap<Name, DecisionVariable> =
-            HashMap::from([(name1.clone(), var1), (name2.clone(), var2)]);
-        let expressions = vec![or];
+        model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
+        model.add_variable(y.clone(), DecisionVariable { domain: BoolDomain });
+        model.add_variable(z.clone(), DecisionVariable { domain: BoolDomain });
 
-        let model = Model {
-            variables: vars,
-            constraints: expressions,
-        };
+        model.add_constraint(Or(vec![
+            Reference(x.clone()),
+            Or(vec![Reference(y.clone()), Reference(z.clone())]),
+        ]));
 
-        let converted = CNF::try_from(model);
-        if let Ok(ans) = converted {
-            let corr = vec![vec![1, 2, 3, 4]];
-            assert_eq_any_order(&ans, &corr);
-        }
+        let cnf: CNF = CNF::try_from(model).unwrap();
+
+        let xi = cnf.get_index(&x).unwrap();
+        let yi = cnf.get_index(&y).unwrap();
+        let zi = cnf.get_index(&z).unwrap();
+        assert_eq_any_order(&cnf.clauses, &vec![vec![xi, yi, zi]]);
+
+        assert_eq!(
+            cnf.as_expression(),
+            Ok(And(vec![Or(vec![
+                Reference(x.clone()),
+                Reference(y.clone()),
+                Reference(z.clone())
+            ])]))
+        )
     }
 
     #[test]
-    fn test_invalid() {}
+    fn test_int() {
+        // y is an IntDomain - only booleans should be allowed
+
+        let mut model: Model = Model::new();
+
+        let x: Name = Name::UserName(String::from('x'));
+        let y: Name = Name::UserName(String::from('y'));
+
+        model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
+        model.add_variable(
+            y.clone(),
+            DecisionVariable {
+                domain: IntDomain(vec![]),
+            },
+        );
+
+        model.add_constraint(Reference(x.clone()));
+        model.add_constraint(Reference(y.clone()));
+
+        let cnf: Result<CNF, Error> = CNF::try_from(model);
+        assert!(cnf.is_err());
+    }
+
+    #[test]
+    fn test_eq() {
+        // Eq(x, y) - this operation is not allowed
+
+        let mut model: Model = Model::new();
+
+        let x: Name = Name::UserName(String::from('x'));
+        let y: Name = Name::UserName(String::from('y'));
+
+        model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
+        model.add_variable(y.clone(), DecisionVariable { domain: BoolDomain });
+
+        model.add_constraint(Expression::Eq(
+            Box::from(Reference(x.clone())),
+            Box::from(Reference(y.clone())),
+        ));
+
+        let mut model: Model = Model::new();
+
+        let x: Name = Name::UserName(String::from('x'));
+        let y: Name = Name::UserName(String::from('y'));
+
+        model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
+        model.add_variable(y.clone(), DecisionVariable { domain: BoolDomain });
+    }
 }
