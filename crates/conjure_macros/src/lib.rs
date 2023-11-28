@@ -35,7 +35,7 @@ pub fn rule(args: proc_macro::TokenStream, item: proc_macro::TokenStream) -> pro
         //inventory::collect!(Rule);
 
         println!("{:?}", Rule {
-            name: "TODO MAKE THIS NAME".to_string(),
+            name: String::from(stringify!(#name)),
             kind: #args2,
             application: #name,
         });
