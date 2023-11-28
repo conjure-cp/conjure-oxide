@@ -1,7 +1,7 @@
 # Conjure-Oxide
 
-This repository contains the in progress Conjure Oxide constraints modelling
-tool, and it's dependencies. 
+This repository contains the in-progress Conjure Oxide constraints modelling
+tool and its dependencies. 
 
 This repository hosts the following projects:
 
