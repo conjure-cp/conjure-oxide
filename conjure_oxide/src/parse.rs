@@ -6,7 +6,7 @@ use crate::ast::{DecisionVariable, Domain, Expression, Model, Name, Range};
 use crate::error::{Error, Result};
 use serde_json::Value as JsonValue;
 
-pub fn parse_json(str: &str) -> Result<Model> {
+pub fn model_from_json(str: &str) -> Result<Model> {
     let mut m = Model::new();
     let v: JsonValue = serde_json::from_str(str)?;
     let statements = v["mStatements"]
@@ -215,11 +215,5 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
                 .unwrap(),
         )),
         otherwise => panic!("Unhandled parse_constant {:#?}", otherwise),
-    }
-}
-
-impl Model {
-    pub fn from_json(str: &str) -> Result<Model> {
-        parse_json(str)
     }
 }

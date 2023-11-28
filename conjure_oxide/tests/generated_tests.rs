@@ -1,4 +1,5 @@
 use conjure_oxide::ast::Model;
+use conjure_oxide::parse::model_from_json;
 use serde_json::Value;
 use std::env;
 use std::error::Error;
@@ -37,7 +38,7 @@ fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>
     let astjson = String::from_utf8(output.stdout)?;
 
     // "parsing" astjson as Model
-    let generated_mdl = Model::from_json(&astjson)?;
+    let generated_mdl = model_from_json(&astjson)?;
 
     // a consistent sorting of the keys of json objects
     // only required for the generated version
