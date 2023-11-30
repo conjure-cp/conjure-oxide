@@ -5,9 +5,9 @@ use std::path::PathBuf;
 
 use anyhow::Result as AnyhowResult;
 use clap::{arg, command, Parser};
-use conjure_macros::rule;
 use conjure_oxide::ast::*;
 use conjure_oxide::find_conjure::conjure_executable;
+use conjure_oxide::macros::rule;
 use conjure_oxide::parse::model_from_json;
 use conjure_oxide::rule::*;
 

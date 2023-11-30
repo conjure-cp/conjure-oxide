@@ -1,8 +1,8 @@
 use quote::quote;
-
 use syn::{parse2, ItemFn};
 
-// #[rule(Horizontal)]
+// Documentation in the lib.rs file of the public facing conjure_oxide crate.
+
 #[proc_macro_attribute]
 pub fn rule(
     args: proc_macro::TokenStream,
@@ -15,17 +15,10 @@ pub fn rule(
     let name = item_parsed.sig.ident;
 
     let expanded = quote! {
+        use conjure_core::rule::Rule;
+        use conjure_core::rule::RuleKind;
 
         #item2
-        //inventory::submit! {
-        //    Rule {
-        //        name: "#name",
-        //        kind: #args2,
-        //        application: #name,
-        //    }
-        //}
-
-        //inventory::collect!(Rule);
 
         println!("{:?}", Rule {
             name: String::from(stringify!(#name)),
