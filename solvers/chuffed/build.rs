@@ -65,9 +65,6 @@ fn bind() {
         // The input header we would like to generate
         // bindings for.
         .header("wrapper.h")
-        // Tell cargo to invalidate the built crate whenever any of the
-        // included header files changed.
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks))
         // Must manually give allow list to stop bindgen accidentally binding something complicated
         // in C++ stdlib that will make it crash.
         .allowlist_function("createVars")
@@ -84,6 +81,9 @@ fn bind() {
         .allowlist_function("p_setcallback")
         .allowlist_function("p_print")
         .allowlist_function("branch_IntVar")
+        .allowlist_function("new_xyz_problem")
+        .allowlist_function("solve_xyz")
+        .allowlist_function("int_plus")
         .clang_arg(format!("-I{}/build", out_dir))
         .clang_arg("-Ivendor")
         .clang_arg(r"--std=gnu++11")
