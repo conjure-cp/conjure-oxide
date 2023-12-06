@@ -5,8 +5,11 @@ use std::path::PathBuf;
 
 use anyhow::Result as AnyhowResult;
 use clap::{arg, command, Parser};
+use conjure_oxide::ast::*;
 use conjure_oxide::find_conjure::conjure_executable;
-use conjure_oxide::parse::parse_json;
+use conjure_oxide::macros::rule;
+use conjure_oxide::parse::model_from_json;
+use conjure_oxide::rule::*;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -19,6 +22,11 @@ struct Cli {
 }
 
 pub fn main() -> AnyhowResult<()> {
+    #[rule(Horizontal)]
+    fn example_rule(_expr: Expression) -> RuleApplicationResult {
+        Err(RuleApplicationError::RuleNotApplicable)
+    }
+
     let cli = Cli::parse();
     println!("Input file: {}", cli.input_file.display());
     let input_file: &str = cli.input_file.to_str().ok_or(anyhow!(
@@ -45,7 +53,12 @@ pub fn main() -> AnyhowResult<()> {
 
     let astjson = String::from_utf8(output.stdout)?;
 
-    let model = parse_json(&astjson)?;
+    let model = model_from_json(&astjson)?;
     println!("{:?}", model);
+
+    // for rule in get_rules_by_kind() {
+    //     println!("Applying rule {:?}", rule);
+    // }
+
     Ok(())
 }
