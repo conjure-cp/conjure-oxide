@@ -4,7 +4,8 @@ use std::{
     sync::{Mutex, MutexGuard},
 };
 
-use crate::{ast::*, error::*, raw_bindings::*, scoped_ptr::Scoped};
+use crate::ffi;
+use crate::{ast::*, error::*, scoped_ptr::Scoped};
 use anyhow::anyhow;
 
 // TODO: allow passing of options.
@@ -131,7 +132,7 @@ unsafe extern "C" fn run_callback() -> bool {
     let mut solutions: HashMap<VarName, Constant> = HashMap::new();
 
     for (i, var) in print_vars.iter().enumerate() {
-        let solution_int: i32 = printMatrix_getValue(i as _);
+        let solution_int: i32 = ffi::printMatrix_getValue(i as _);
         let solution: Constant = Constant::Integer(solution_int);
         solutions.insert(var.to_string(), solution);
     }
@@ -154,13 +155,13 @@ pub fn run_minion(model: Model, callback: Callback) -> Result<(), MinionError> {
     *CALLBACK.lock().unwrap() = Some(callback);
 
     unsafe {
-        let options = Scoped::new(newSearchOptions(), |x| searchOptions_free(x as _));
-        let args = Scoped::new(newSearchMethod(), |x| searchMethod_free(x as _));
-        let instance = Scoped::new(newInstance(), |x| instance_free(x as _));
+        let options = Scoped::new(ffi::newSearchOptions(), |x| ffi::searchOptions_free(x as _));
+        let args = Scoped::new(ffi::newSearchMethod(), |x| ffi::searchMethod_free(x as _));
+        let instance = Scoped::new(ffi::newInstance(), |x| ffi::instance_free(x as _));
 
         convert_model_to_raw(&instance, &model)?;
 
-        let res = runMinion(options.ptr, args.ptr, instance.ptr, Some(run_callback));
+        let res = ffi::runMinion(options.ptr, args.ptr, instance.ptr, Some(run_callback));
         match res {
             0 => Ok(()),
             x => Err(MinionError::from(RuntimeError::from(x))),
@@ -169,7 +170,7 @@ pub fn run_minion(model: Model, callback: Callback) -> Result<(), MinionError> {
 }
 
 unsafe fn convert_model_to_raw(
-    instance: &Scoped<ProbSpec_CSPInstance>,
+    instance: &Scoped<ffi::ProbSpec_CSPInstance>,
     model: &Model,
 ) -> Result<(), MinionError> {
     /*******************************/
@@ -185,7 +186,7 @@ unsafe fn convert_model_to_raw(
      * These are all done in the order saved in the SymbolTable.
      */
 
-    let search_vars = Scoped::new(vec_var_new(), |x| vec_var_free(x as _));
+    let search_vars = Scoped::new(ffi::vec_var_new(), |x| ffi::vec_var_free(x as _));
 
     // store variables and the order they will be returned inside rust for later use.
     #[allow(clippy::unwrap_used)]
@@ -206,11 +207,11 @@ unsafe fn convert_model_to_raw(
             .ok_or(anyhow!("Could not get var type for {:?}", var_name.clone()))?;
 
         let (vartype_raw, domain_low, domain_high) = match vartype {
-            VarDomain::Bound(a, b) => Ok((VariableType_VAR_BOUND, a, b)),
+            VarDomain::Bound(a, b) => Ok((ffi::VariableType_VAR_BOUND, a, b)),
             x => Err(MinionError::NotImplemented(format!("{:?}", x))),
         }?;
 
-        newVar_ffi(
+        ffi::newVar_ffi(
             instance.ptr,
             c_str.as_ptr() as _,
             vartype_raw,
@@ -218,9 +219,9 @@ unsafe fn convert_model_to_raw(
             domain_high,
         );
 
-        let var = getVarByName(instance.ptr, c_str.as_ptr() as _);
+        let var = ffi::getVarByName(instance.ptr, c_str.as_ptr() as _);
 
-        printMatrix_addVar(instance.ptr, var);
+        ffi::printMatrix_addVar(instance.ptr, var);
 
         // add to the print vars stored in rust so to remember
         // the order for callback function.
@@ -228,15 +229,15 @@ unsafe fn convert_model_to_raw(
         #[allow(clippy::unwrap_used)]
         (*print_vars_guard).as_mut().unwrap().push(var_name.clone());
 
-        vec_var_push_back(search_vars.ptr, var);
+        ffi::vec_var_push_back(search_vars.ptr, var);
     }
 
     let search_order = Scoped::new(
-        newSearchOrder(search_vars.ptr, VarOrderEnum_ORDER_STATIC, false),
-        |x| searchOrder_free(x as _),
+        ffi::newSearchOrder(search_vars.ptr, ffi::VarOrderEnum_ORDER_STATIC, false),
+        |x| ffi::searchOrder_free(x as _),
     );
 
-    instance_addSearchOrder(instance.ptr, search_order.ptr);
+    ffi::instance_addSearchOrder(instance.ptr, search_order.ptr);
 
     /*********************************/
     /*        Add constraints        */
@@ -248,12 +249,12 @@ unsafe fn convert_model_to_raw(
         // 3. add constraint to instance
 
         let constraint_type = get_constraint_type(constraint)?;
-        let raw_constraint = Scoped::new(newConstraintBlob(constraint_type), |x| {
-            constraint_free(x as _)
+        let raw_constraint = Scoped::new(ffi::newConstraintBlob(constraint_type), |x| {
+            ffi::constraint_free(x as _)
         });
 
         constraint_add_args(instance.ptr, raw_constraint.ptr, constraint)?;
-        instance_addConstraint(instance.ptr, raw_constraint.ptr);
+        ffi::instance_addConstraint(instance.ptr, raw_constraint.ptr);
     }
 
     Ok(())
@@ -261,9 +262,9 @@ unsafe fn convert_model_to_raw(
 
 unsafe fn get_constraint_type(constraint: &Constraint) -> Result<u32, MinionError> {
     match constraint {
-        Constraint::SumGeq(_, _) => Ok(ConstraintType_CT_GEQSUM),
-        Constraint::SumLeq(_, _) => Ok(ConstraintType_CT_LEQSUM),
-        Constraint::Ineq(_, _, _) => Ok(ConstraintType_CT_INEQ),
+        Constraint::SumGeq(_, _) => Ok(ffi::ConstraintType_CT_GEQSUM),
+        Constraint::SumLeq(_, _) => Ok(ffi::ConstraintType_CT_LEQSUM),
+        Constraint::Ineq(_, _, _) => Ok(ffi::ConstraintType_CT_INEQ),
         #[allow(unreachable_patterns)]
         x => Err(MinionError::NotImplemented(format!(
             "Constraint not implemented {:?}",
@@ -273,8 +274,8 @@ unsafe fn get_constraint_type(constraint: &Constraint) -> Result<u32, MinionErro
 }
 
 unsafe fn constraint_add_args(
-    i: *mut ProbSpec_CSPInstance,
-    r_constr: *mut ProbSpec_ConstraintBlob,
+    i: *mut ffi::ProbSpec_CSPInstance,
+    r_constr: *mut ffi::ProbSpec_ConstraintBlob,
     constr: &Constraint,
 ) -> Result<(), MinionError> {
     match constr {
@@ -302,11 +303,11 @@ unsafe fn constraint_add_args(
 // DO NOT call manually - this assumes that all needed vars are already in the symbol table.
 // TODO not happy with this just assuming the name is in the symbol table
 unsafe fn read_vars(
-    instance: *mut ProbSpec_CSPInstance,
-    raw_constraint: *mut ProbSpec_ConstraintBlob,
+    instance: *mut ffi::ProbSpec_CSPInstance,
+    raw_constraint: *mut ffi::ProbSpec_ConstraintBlob,
     vars: &Vec<Var>,
 ) -> Result<(), MinionError> {
-    let raw_vars = Scoped::new(vec_var_new(), |x| vec_var_free(x as _));
+    let raw_vars = Scoped::new(ffi::vec_var_new(), |x| ffi::vec_var_free(x as _));
     for var in vars {
         let raw_var = match var {
             Var::NameRef(name) => {
@@ -316,25 +317,25 @@ unsafe fn read_vars(
                         name.clone()
                     )
                 })?;
-                getVarByName(instance, c_str.as_ptr() as _)
+                ffi::getVarByName(instance, c_str.as_ptr() as _)
             }
-            Var::ConstantAsVar(n) => constantAsVar(*n),
+            Var::ConstantAsVar(n) => ffi::constantAsVar(*n),
         };
 
-        vec_var_push_back(raw_vars.ptr, raw_var);
+        ffi::vec_var_push_back(raw_vars.ptr, raw_var);
     }
 
-    constraint_addVarList(raw_constraint, raw_vars.ptr);
+    ffi::constraint_addVarList(raw_constraint, raw_vars.ptr);
 
     Ok(())
 }
 
 unsafe fn read_var(
-    instance: *mut ProbSpec_CSPInstance,
-    raw_constraint: *mut ProbSpec_ConstraintBlob,
+    instance: *mut ffi::ProbSpec_CSPInstance,
+    raw_constraint: *mut ffi::ProbSpec_ConstraintBlob,
     var: &Var,
 ) -> Result<(), MinionError> {
-    let raw_vars = Scoped::new(vec_var_new(), |x| vec_var_free(x as _));
+    let raw_vars = Scoped::new(ffi::vec_var_new(), |x| ffi::vec_var_free(x as _));
     let raw_var = match var {
         Var::NameRef(name) => {
             let c_str = CString::new(name.clone()).map_err(|_| {
@@ -343,30 +344,30 @@ unsafe fn read_var(
                     name.clone()
                 )
             })?;
-            getVarByName(instance, c_str.as_ptr() as _)
+            ffi::getVarByName(instance, c_str.as_ptr() as _)
         }
-        Var::ConstantAsVar(n) => constantAsVar(*n),
+        Var::ConstantAsVar(n) => ffi::constantAsVar(*n),
     };
 
-    vec_var_push_back(raw_vars.ptr, raw_var);
-    constraint_addVarList(raw_constraint, raw_vars.ptr);
+    ffi::vec_var_push_back(raw_vars.ptr, raw_var);
+    ffi::constraint_addVarList(raw_constraint, raw_vars.ptr);
 
     Ok(())
 }
 
 unsafe fn read_const(
-    raw_constraint: *mut ProbSpec_ConstraintBlob,
+    raw_constraint: *mut ffi::ProbSpec_ConstraintBlob,
     constant: &Constant,
 ) -> Result<(), MinionError> {
-    let raw_consts = Scoped::new(vec_int_new(), |x| vec_var_free(x as _));
+    let raw_consts = Scoped::new(ffi::vec_int_new(), |x| ffi::vec_var_free(x as _));
 
     let val = match constant {
         Constant::Integer(n) => Ok(n),
         x => Err(MinionError::NotImplemented(format!("{:?}", x))),
     }?;
 
-    vec_int_push_back(raw_consts.ptr, *val);
-    constraint_addConstantList(raw_constraint, raw_consts.ptr);
+    ffi::vec_int_push_back(raw_consts.ptr, *val);
+    ffi::constraint_addConstantList(raw_constraint, raw_consts.ptr);
 
     Ok(())
 }
