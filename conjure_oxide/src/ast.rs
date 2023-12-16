@@ -28,6 +28,12 @@ impl Model {
     pub fn add_variable(&mut self, name: Name, decision_var: DecisionVariable) {
         self.variables.insert(name, decision_var);
     }
+
+    pub fn add_constraint(&mut self, expression: Expression) {
+        // ToDo (gs248) - there is no checking whatsoever
+        // We need to properly validate the expression but this is just for testing
+        self.constraints.push(expression);
+    }
 }
 
 impl Default for Model {
@@ -89,6 +95,10 @@ pub enum Expression {
     Reference(Name),
 
     Sum(Vec<Expression>),
+
+    Not(Box<Expression>),
+    Or(Vec<Expression>),
+    And(Vec<Expression>),
 
     Eq(Box<Expression>, Box<Expression>),
     Neq(Box<Expression>, Box<Expression>),
