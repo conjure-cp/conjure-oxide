@@ -108,7 +108,7 @@
 //! variable. Solutions are returned through the [callback function](Callback) as a `HashMap`.
 
 pub mod error;
-mod raw_bindings;
+mod ffi;
 
 mod run;
 pub use run::*;
