@@ -1,6 +1,5 @@
+use crate::Solver;
 use thiserror::Error;
-
-use super::Solver;
 
 #[derive(Error, Debug)]
 pub enum SolverError {
