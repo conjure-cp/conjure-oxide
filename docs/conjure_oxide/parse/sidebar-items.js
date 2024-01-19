@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["parse_json"]};
+window.SIDEBAR_ITEMS = {"fn":["model_from_json"]};

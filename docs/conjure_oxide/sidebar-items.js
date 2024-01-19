@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["ast","error","find_conjure","parse"]};
+window.SIDEBAR_ITEMS = {"enum":["Solver"],"mod":["ast","error","find_conjure","parse"],"struct":["Model"]};

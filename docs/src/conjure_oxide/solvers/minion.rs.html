@@ -299,13 +299,10 @@
 <a href="#299" id="299">299</a>
 <a href="#300" id="300">300</a>
 <a href="#301" id="301">301</a>
-<a href="#302" id="302">302</a>
-<a href="#303" id="303">303</a>
-<a href="#304" id="304">304</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Solver interface to minion_rs.
 
-</span><span class="attr">#[allow(unused_imports)]
-</span><span class="kw">use </span>anyhow::anyhow;
+</span><span class="kw">use super</span>::{FromConjureModel, SolverError};
+<span class="kw">use </span><span class="kw">crate</span>::Solver;
 
 <span class="kw">use </span><span class="kw">crate</span>::ast::{
     DecisionVariable, Domain <span class="kw">as </span>ConjureDomain, Expression <span class="kw">as </span>ConjureExpression,
@@ -316,14 +313,10 @@
     Var <span class="kw">as </span>MinionVar, VarDomain <span class="kw">as </span>MinionDomain,
 };
 
-<span class="kw">use super</span>::{Solver, SolverError};
-
 <span class="kw">const </span>SOLVER: Solver = Solver::Minion;
 
-<span class="kw">impl </span>TryFrom&lt;ConjureModel&gt; <span class="kw">for </span>MinionModel {
-    <span class="kw">type </span>Error = SolverError;
-
-    <span class="kw">fn </span>try_from(conjure_model: ConjureModel) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Error&gt; {
+<span class="kw">impl </span>FromConjureModel <span class="kw">for </span>MinionModel {
+    <span class="kw">fn </span>from_conjure(conjure_model: ConjureModel) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, SolverError&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>minion_model = MinionModel::new();
 
         <span class="comment">// We assume (for now) that the conjure model is fully valid
@@ -515,6 +508,7 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
+    <span class="kw">use </span>anyhow::anyhow;
     <span class="kw">use </span>std::collections::HashMap;
 
     <span class="kw">use </span>minion_rs::ast::VarName;
@@ -552,7 +546,7 @@
         model.constraints.push(leq);
         model.constraints.push(ineq);
 
-        <span class="kw">let </span>minion_model = MinionModel::try_from(model)<span class="question-mark">?</span>;
+        <span class="kw">let </span>minion_model = MinionModel::from_conjure(model)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(minion_rs::run_minion(minion_model, xyz_callback)<span class="question-mark">?</span>)
     }
 
