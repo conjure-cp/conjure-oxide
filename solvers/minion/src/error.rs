@@ -1,6 +1,6 @@
 //! Error types for Minion bindings.
 
-use crate::raw_bindings::*;
+use crate::ffi;
 use thiserror::Error;
 
 /// A wrapper over all errors thrown by `minion_rs`.
@@ -42,7 +42,7 @@ impl From<u32> for RuntimeError {
     fn from(return_code: u32) -> Self {
         match return_code {
             #[allow(non_upper_case_globals)]
-            ReturnCodes_INVALID_INSTANCE => RuntimeError::InvalidInstance,
+            ffi::ReturnCodes_INVALID_INSTANCE => RuntimeError::InvalidInstance,
             _ => RuntimeError::UnknownError,
         }
     }
