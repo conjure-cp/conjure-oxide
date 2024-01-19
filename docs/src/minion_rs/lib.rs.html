@@ -113,9 +113,6 @@
 <a href="#113" id="113">113</a>
 <a href="#114" id="114">114</a>
 <a href="#115" id="115">115</a>
-<a href="#116" id="116">116</a>
-<a href="#117" id="117">117</a>
-<a href="#118" id="118">118</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! This crate provides low level Rust bindings to the [Minion](https://github.com/minion/minion)
 //! constraint solver.
 //!
@@ -149,30 +146,14 @@
 //! use std::collections::HashMap;
 //!
 //! // Get solutions out of Minion.
-//! // In this example, we just check that the solutions are correct.
-//! // See the documentation for Callback for more examples on how to use this.
+//! // See the documentation for Callback for details.
 //!
-//! fn callback(solutions: HashMap&lt;VarName, Constant&gt;) -&gt; bool {
-//!     let x = match solutions.get(&quot;x&quot;).unwrap() {
-//!         Constant::Integer(n) =&gt; n,
-//!         _ =&gt; panic!(&quot;x should be a integer&quot;),
-//!     };
+//! static ALL_SOLUTIONS: Mutex&lt;Vec&lt;HashMap&lt;VarName,Constant&gt;&gt;&gt;  = Mutex::new(vec![]);
 //!
-//!     let y = match solutions.get(&quot;y&quot;).unwrap() {
-//!         Constant::Integer(n) =&gt; n,
-//!         _ =&gt; panic!(&quot;y should be a integer&quot;),
-//!     };
-//!
-//!     let z = match solutions.get(&quot;z&quot;).unwrap() {
-//!         Constant::Integer(n) =&gt; n,
-//!         _ =&gt; panic!(&quot;z should be a integer&quot;),
-//!     };
-//!
-//!     assert_eq!(*x, 1);
-//!     assert_eq!(*y, 2);
-//!     assert_eq!(*z, 1);
-//!
-//!     return true;
+//! fn callback(solutions: HashMap&lt;VarName,Constant&gt;) -&gt; bool {
+//!     let mut guard = ALL_SOLUTIONS.lock().unwrap();
+//!     guard.push(solutions);
+//!     true
 //! }
 //!
 //! // Build and run the model.
@@ -217,6 +198,19 @@
 //!
 //! let res = run_minion(model, callback);
 //! res.expect(&quot;Error occurred&quot;);
+//!
+//! // Get solutions
+//! let guard = ALL_SOLUTIONS.lock().unwrap();
+//! let solution_set_1 = &amp;(guard.get(0).unwrap());
+//!
+//! let x1 = solution_set_1.get(&quot;x&quot;).unwrap();
+//! let y1 = solution_set_1.get(&quot;y&quot;).unwrap();
+//! let z1 = solution_set_1.get(&quot;z&quot;).unwrap();
+//!
+//! assert_eq!(guard.len(),1);
+//! assert_eq!(*x1,Constant::Integer(1));
+//! assert_eq!(*y1,Constant::Integer(2));
+//! assert_eq!(*z1,Constant::Integer(1));
 //! ```
 //!
 //! ## `PRINT` and `VARORDER`
