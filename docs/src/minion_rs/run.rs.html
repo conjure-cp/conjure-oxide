@@ -370,13 +370,15 @@
 <a href="#370" id="370">370</a>
 <a href="#371" id="371">371</a>
 <a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     collections::HashMap,
     ffi::CString,
     sync::{Mutex, MutexGuard},
 };
 
-<span class="kw">use crate</span>::{ast::<span class="kw-2">*</span>, error::<span class="kw-2">*</span>, raw_bindings::<span class="kw-2">*</span>, scoped_ptr::Scoped};
+<span class="kw">use </span><span class="kw">crate</span>::ffi;
+<span class="kw">use crate</span>::{ast::<span class="kw-2">*</span>, error::<span class="kw-2">*</span>, scoped_ptr::Scoped};
 <span class="kw">use </span>anyhow::anyhow;
 
 <span class="comment">// TODO: allow passing of options.
@@ -503,7 +505,7 @@
     </span><span class="kw">let </span><span class="kw-2">mut </span>solutions: HashMap&lt;VarName, Constant&gt; = HashMap::new();
 
     <span class="kw">for </span>(i, var) <span class="kw">in </span>print_vars.iter().enumerate() {
-        <span class="kw">let </span>solution_int: i32 = printMatrix_getValue(i <span class="kw">as _</span>);
+        <span class="kw">let </span>solution_int: i32 = ffi::printMatrix_getValue(i <span class="kw">as _</span>);
         <span class="kw">let </span>solution: Constant = Constant::Integer(solution_int);
         solutions.insert(var.to_string(), solution);
     }
@@ -526,13 +528,13 @@
     </span><span class="kw-2">*</span>CALLBACK.lock().unwrap() = <span class="prelude-val">Some</span>(callback);
 
     <span class="kw">unsafe </span>{
-        <span class="kw">let </span>options = Scoped::new(newSearchOptions(), |x| searchOptions_free(x <span class="kw">as _</span>));
-        <span class="kw">let </span>args = Scoped::new(newSearchMethod(), |x| searchMethod_free(x <span class="kw">as _</span>));
-        <span class="kw">let </span>instance = Scoped::new(newInstance(), |x| instance_free(x <span class="kw">as _</span>));
+        <span class="kw">let </span>options = Scoped::new(ffi::newSearchOptions(), |x| ffi::searchOptions_free(x <span class="kw">as _</span>));
+        <span class="kw">let </span>args = Scoped::new(ffi::newSearchMethod(), |x| ffi::searchMethod_free(x <span class="kw">as _</span>));
+        <span class="kw">let </span>instance = Scoped::new(ffi::newInstance(), |x| ffi::instance_free(x <span class="kw">as _</span>));
 
         convert_model_to_raw(<span class="kw-2">&amp;</span>instance, <span class="kw-2">&amp;</span>model)<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>res = runMinion(options.ptr, args.ptr, instance.ptr, <span class="prelude-val">Some</span>(run_callback));
+        <span class="kw">let </span>res = ffi::runMinion(options.ptr, args.ptr, instance.ptr, <span class="prelude-val">Some</span>(run_callback));
         <span class="kw">match </span>res {
             <span class="number">0 </span>=&gt; <span class="prelude-val">Ok</span>(()),
             x =&gt; <span class="prelude-val">Err</span>(MinionError::from(RuntimeError::from(x))),
@@ -541,7 +543,7 @@
 }
 
 <span class="kw">unsafe fn </span>convert_model_to_raw(
-    instance: <span class="kw-2">&amp;</span>Scoped&lt;ProbSpec_CSPInstance&gt;,
+    instance: <span class="kw-2">&amp;</span>Scoped&lt;ffi::ProbSpec_CSPInstance&gt;,
     model: <span class="kw-2">&amp;</span>Model,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MinionError&gt; {
     <span class="comment">/*******************************/
@@ -557,7 +559,7 @@
      * These are all done in the order saved in the SymbolTable.
      */
 
-    </span><span class="kw">let </span>search_vars = Scoped::new(vec_var_new(), |x| vec_var_free(x <span class="kw">as _</span>));
+    </span><span class="kw">let </span>search_vars = Scoped::new(ffi::vec_var_new(), |x| ffi::vec_var_free(x <span class="kw">as _</span>));
 
     <span class="comment">// store variables and the order they will be returned inside rust for later use.
     </span><span class="attr">#[allow(clippy::unwrap_used)]
@@ -578,11 +580,11 @@
             .ok_or(<span class="macro">anyhow!</span>(<span class="string">&quot;Could not get var type for {:?}&quot;</span>, var_name.clone()))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>(vartype_raw, domain_low, domain_high) = <span class="kw">match </span>vartype {
-            VarDomain::Bound(a, b) =&gt; <span class="prelude-val">Ok</span>((VariableType_VAR_BOUND, a, b)),
+            VarDomain::Bound(a, b) =&gt; <span class="prelude-val">Ok</span>((ffi::VariableType_VAR_BOUND, a, b)),
             x =&gt; <span class="prelude-val">Err</span>(MinionError::NotImplemented(<span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, x))),
         }<span class="question-mark">?</span>;
 
-        newVar_ffi(
+        ffi::newVar_ffi(
             instance.ptr,
             c_str.as_ptr() <span class="kw">as _</span>,
             vartype_raw,
@@ -590,9 +592,9 @@
             domain_high,
         );
 
-        <span class="kw">let </span>var = getVarByName(instance.ptr, c_str.as_ptr() <span class="kw">as _</span>);
+        <span class="kw">let </span>var = ffi::getVarByName(instance.ptr, c_str.as_ptr() <span class="kw">as _</span>);
 
-        printMatrix_addVar(instance.ptr, var);
+        ffi::printMatrix_addVar(instance.ptr, var);
 
         <span class="comment">// add to the print vars stored in rust so to remember
         // the order for callback function.
@@ -600,15 +602,15 @@
         </span><span class="attr">#[allow(clippy::unwrap_used)]
         </span>(<span class="kw-2">*</span>print_vars_guard).as_mut().unwrap().push(var_name.clone());
 
-        vec_var_push_back(search_vars.ptr, var);
+        ffi::vec_var_push_back(search_vars.ptr, var);
     }
 
     <span class="kw">let </span>search_order = Scoped::new(
-        newSearchOrder(search_vars.ptr, VarOrderEnum_ORDER_STATIC, <span class="bool-val">false</span>),
-        |x| searchOrder_free(x <span class="kw">as _</span>),
+        ffi::newSearchOrder(search_vars.ptr, ffi::VarOrderEnum_ORDER_STATIC, <span class="bool-val">false</span>),
+        |x| ffi::searchOrder_free(x <span class="kw">as _</span>),
     );
 
-    instance_addSearchOrder(instance.ptr, search_order.ptr);
+    ffi::instance_addSearchOrder(instance.ptr, search_order.ptr);
 
     <span class="comment">/*********************************/
     /*        Add constraints        */
@@ -620,12 +622,12 @@
         // 3. add constraint to instance
 
         </span><span class="kw">let </span>constraint_type = get_constraint_type(constraint)<span class="question-mark">?</span>;
-        <span class="kw">let </span>raw_constraint = Scoped::new(newConstraintBlob(constraint_type), |x| {
-            constraint_free(x <span class="kw">as _</span>)
+        <span class="kw">let </span>raw_constraint = Scoped::new(ffi::newConstraintBlob(constraint_type), |x| {
+            ffi::constraint_free(x <span class="kw">as _</span>)
         });
 
         constraint_add_args(instance.ptr, raw_constraint.ptr, constraint)<span class="question-mark">?</span>;
-        instance_addConstraint(instance.ptr, raw_constraint.ptr);
+        ffi::instance_addConstraint(instance.ptr, raw_constraint.ptr);
     }
 
     <span class="prelude-val">Ok</span>(())
@@ -633,9 +635,9 @@
 
 <span class="kw">unsafe fn </span>get_constraint_type(constraint: <span class="kw-2">&amp;</span>Constraint) -&gt; <span class="prelude-ty">Result</span>&lt;u32, MinionError&gt; {
     <span class="kw">match </span>constraint {
-        Constraint::SumGeq(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ConstraintType_CT_GEQSUM),
-        Constraint::SumLeq(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ConstraintType_CT_LEQSUM),
-        Constraint::Ineq(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ConstraintType_CT_INEQ),
+        Constraint::SumGeq(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ffi::ConstraintType_CT_GEQSUM),
+        Constraint::SumLeq(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ffi::ConstraintType_CT_LEQSUM),
+        Constraint::Ineq(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ffi::ConstraintType_CT_INEQ),
         <span class="attr">#[allow(unreachable_patterns)]
         </span>x =&gt; <span class="prelude-val">Err</span>(MinionError::NotImplemented(<span class="macro">format!</span>(
             <span class="string">&quot;Constraint not implemented {:?}&quot;</span>,
@@ -645,8 +647,8 @@
 }
 
 <span class="kw">unsafe fn </span>constraint_add_args(
-    i: <span class="kw-2">*mut </span>ProbSpec_CSPInstance,
-    r_constr: <span class="kw-2">*mut </span>ProbSpec_ConstraintBlob,
+    i: <span class="kw-2">*mut </span>ffi::ProbSpec_CSPInstance,
+    r_constr: <span class="kw-2">*mut </span>ffi::ProbSpec_ConstraintBlob,
     constr: <span class="kw-2">&amp;</span>Constraint,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MinionError&gt; {
     <span class="kw">match </span>constr {
@@ -674,11 +676,11 @@
 <span class="comment">// DO NOT call manually - this assumes that all needed vars are already in the symbol table.
 // TODO not happy with this just assuming the name is in the symbol table
 </span><span class="kw">unsafe fn </span>read_vars(
-    instance: <span class="kw-2">*mut </span>ProbSpec_CSPInstance,
-    raw_constraint: <span class="kw-2">*mut </span>ProbSpec_ConstraintBlob,
+    instance: <span class="kw-2">*mut </span>ffi::ProbSpec_CSPInstance,
+    raw_constraint: <span class="kw-2">*mut </span>ffi::ProbSpec_ConstraintBlob,
     vars: <span class="kw-2">&amp;</span>Vec&lt;Var&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MinionError&gt; {
-    <span class="kw">let </span>raw_vars = Scoped::new(vec_var_new(), |x| vec_var_free(x <span class="kw">as _</span>));
+    <span class="kw">let </span>raw_vars = Scoped::new(ffi::vec_var_new(), |x| ffi::vec_var_free(x <span class="kw">as _</span>));
     <span class="kw">for </span>var <span class="kw">in </span>vars {
         <span class="kw">let </span>raw_var = <span class="kw">match </span>var {
             Var::NameRef(name) =&gt; {
@@ -688,25 +690,25 @@
                         name.clone()
                     )
                 })<span class="question-mark">?</span>;
-                getVarByName(instance, c_str.as_ptr() <span class="kw">as _</span>)
+                ffi::getVarByName(instance, c_str.as_ptr() <span class="kw">as _</span>)
             }
-            Var::ConstantAsVar(n) =&gt; constantAsVar(<span class="kw-2">*</span>n),
+            Var::ConstantAsVar(n) =&gt; ffi::constantAsVar(<span class="kw-2">*</span>n),
         };
 
-        vec_var_push_back(raw_vars.ptr, raw_var);
+        ffi::vec_var_push_back(raw_vars.ptr, raw_var);
     }
 
-    constraint_addVarList(raw_constraint, raw_vars.ptr);
+    ffi::constraint_addVarList(raw_constraint, raw_vars.ptr);
 
     <span class="prelude-val">Ok</span>(())
 }
 
 <span class="kw">unsafe fn </span>read_var(
-    instance: <span class="kw-2">*mut </span>ProbSpec_CSPInstance,
-    raw_constraint: <span class="kw-2">*mut </span>ProbSpec_ConstraintBlob,
+    instance: <span class="kw-2">*mut </span>ffi::ProbSpec_CSPInstance,
+    raw_constraint: <span class="kw-2">*mut </span>ffi::ProbSpec_ConstraintBlob,
     var: <span class="kw-2">&amp;</span>Var,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MinionError&gt; {
-    <span class="kw">let </span>raw_vars = Scoped::new(vec_var_new(), |x| vec_var_free(x <span class="kw">as _</span>));
+    <span class="kw">let </span>raw_vars = Scoped::new(ffi::vec_var_new(), |x| ffi::vec_var_free(x <span class="kw">as _</span>));
     <span class="kw">let </span>raw_var = <span class="kw">match </span>var {
         Var::NameRef(name) =&gt; {
             <span class="kw">let </span>c_str = CString::new(name.clone()).map_err(|<span class="kw">_</span>| {
@@ -715,30 +717,30 @@
                     name.clone()
                 )
             })<span class="question-mark">?</span>;
-            getVarByName(instance, c_str.as_ptr() <span class="kw">as _</span>)
+            ffi::getVarByName(instance, c_str.as_ptr() <span class="kw">as _</span>)
         }
-        Var::ConstantAsVar(n) =&gt; constantAsVar(<span class="kw-2">*</span>n),
+        Var::ConstantAsVar(n) =&gt; ffi::constantAsVar(<span class="kw-2">*</span>n),
     };
 
-    vec_var_push_back(raw_vars.ptr, raw_var);
-    constraint_addVarList(raw_constraint, raw_vars.ptr);
+    ffi::vec_var_push_back(raw_vars.ptr, raw_var);
+    ffi::constraint_addVarList(raw_constraint, raw_vars.ptr);
 
     <span class="prelude-val">Ok</span>(())
 }
 
 <span class="kw">unsafe fn </span>read_const(
-    raw_constraint: <span class="kw-2">*mut </span>ProbSpec_ConstraintBlob,
+    raw_constraint: <span class="kw-2">*mut </span>ffi::ProbSpec_ConstraintBlob,
     constant: <span class="kw-2">&amp;</span>Constant,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), MinionError&gt; {
-    <span class="kw">let </span>raw_consts = Scoped::new(vec_int_new(), |x| vec_var_free(x <span class="kw">as _</span>));
+    <span class="kw">let </span>raw_consts = Scoped::new(ffi::vec_int_new(), |x| ffi::vec_var_free(x <span class="kw">as _</span>));
 
     <span class="kw">let </span>val = <span class="kw">match </span>constant {
         Constant::Integer(n) =&gt; <span class="prelude-val">Ok</span>(n),
         x =&gt; <span class="prelude-val">Err</span>(MinionError::NotImplemented(<span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, x))),
     }<span class="question-mark">?</span>;
 
-    vec_int_push_back(raw_consts.ptr, <span class="kw-2">*</span>val);
-    constraint_addConstantList(raw_constraint, raw_consts.ptr);
+    ffi::vec_int_push_back(raw_consts.ptr, <span class="kw-2">*</span>val);
+    ffi::constraint_addConstantList(raw_constraint, raw_consts.ptr);
 
     <span class="prelude-val">Ok</span>(())
 }
