@@ -31,30 +31,14 @@
 //! use std::collections::HashMap;
 //!
 //! // Get solutions out of Minion.
-//! // In this example, we just check that the solutions are correct.
-//! // See the documentation for Callback for more examples on how to use this.
+//! // See the documentation for Callback for details.
 //!
-//! fn callback(solutions: HashMap<VarName, Constant>) -> bool {
-//!     let x = match solutions.get("x").unwrap() {
-//!         Constant::Integer(n) => n,
-//!         _ => panic!("x should be a integer"),
-//!     };
+//! static ALL_SOLUTIONS: Mutex<Vec<HashMap<VarName,Constant>>>  = Mutex::new(vec![]);
 //!
-//!     let y = match solutions.get("y").unwrap() {
-//!         Constant::Integer(n) => n,
-//!         _ => panic!("y should be a integer"),
-//!     };
-//!
-//!     let z = match solutions.get("z").unwrap() {
-//!         Constant::Integer(n) => n,
-//!         _ => panic!("z should be a integer"),
-//!     };
-//!
-//!     assert_eq!(*x, 1);
-//!     assert_eq!(*y, 2);
-//!     assert_eq!(*z, 1);
-//!
-//!     return true;
+//! fn callback(solutions: HashMap<VarName,Constant>) -> bool {
+//!     let mut guard = ALL_SOLUTIONS.lock().unwrap();
+//!     guard.push(solutions);
+//!     true
 //! }
 //!
 //! // Build and run the model.
@@ -99,6 +83,19 @@
 //!
 //! let res = run_minion(model, callback);
 //! res.expect("Error occurred");
+//!
+//! // Get solutions
+//! let guard = ALL_SOLUTIONS.lock().unwrap();
+//! let solution_set_1 = &(guard.get(0).unwrap());
+//!
+//! let x1 = solution_set_1.get("x").unwrap();
+//! let y1 = solution_set_1.get("y").unwrap();
+//! let z1 = solution_set_1.get("z").unwrap();
+//!
+//! assert_eq!(guard.len(),1);
+//! assert_eq!(*x1,Constant::Integer(1));
+//! assert_eq!(*y1,Constant::Integer(2));
+//! assert_eq!(*z1,Constant::Integer(1));
 //! ```
 //!
 //! ## `PRINT` and `VARORDER`
