@@ -9,5 +9,3 @@ pub fn get_rules() -> Vec<Rule<'static>> {
 }
 
 mod rules;
-
-static _TEMP: &Rule = &rules::CONJURE_GEN_RULE_IDENTITY; // Temporary hack to force the static to be included in the binary
