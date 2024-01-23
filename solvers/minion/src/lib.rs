@@ -29,6 +29,7 @@
 //! use minion_rs::ast::*;
 //! use minion_rs::run_minion;
 //! use std::collections::HashMap;
+//! use std::sync::Mutex;
 //!
 //! // Get solutions out of Minion.
 //! // See the documentation for Callback for details.
