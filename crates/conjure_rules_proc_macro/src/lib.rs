@@ -2,6 +2,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, Ident, ItemFn};
 
+#[doc(hidden)]
 #[proc_macro_attribute]
 /// This procedural macro registers a decorated function with Conjure's rule engine.
 /// Functions must have the signature `fn(&Expr) -> Result<Expr, RuleApplicationError>`.
@@ -17,8 +18,8 @@ pub fn register_rule(_: TokenStream, item: TokenStream) -> TokenStream {
     let expanded = quote! {
         #func
 
-        #[::linkme::distributed_slice(_RULES_DISTRIBUTED_SLICE)]
-        pub static #static_ident: ::conjure_core::rule::Rule = ::conjure_core::rule::Rule {
+        #[::conjure_rules::_dependencies::distributed_slice(::conjure_rules::RULES_DISTRIBUTED_SLICE)]
+        pub static #static_ident: ::conjure_rules::_dependencies::Rule = ::conjure_rules::_dependencies::Rule {
             name: stringify!(#rule_ident),
             application: #rule_ident,
         };
