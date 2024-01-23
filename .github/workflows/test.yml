@@ -60,7 +60,7 @@ jobs:
 
       - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
 
-      - run: cargo build -vv
+      - run: cargo build -vv --workspace
 
       - name: Add conjure to PATH
         run: echo "${HOME}/.cargo/bin/conjure-v${{ matrix.conjure_version }}-${{ matrix.release_suffix }}-with-solvers" >> ${GITHUB_PATH}
@@ -79,6 +79,6 @@ jobs:
           fi
           conjure --version
   
-      - run: cargo test
+      - run: cargo test --workspace
 
-      - run: cargo audit
+      - run: cargo audit --workspace
