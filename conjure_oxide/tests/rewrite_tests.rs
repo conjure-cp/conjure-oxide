@@ -5,6 +5,12 @@ use core::panic;
 use conjure_oxide::ast::*;
 
 #[test]
+fn rules_present() {
+    let rules = conjure_rules::get_rules();
+    assert!(rules.len() > 0);
+}
+
+#[test]
 fn sum_of_constants() {
     let valid_sum_expression = Expression::Sum(vec![
         Expression::ConstantInt(1),

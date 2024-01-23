@@ -1,7 +1,6 @@
 pub mod error;
 pub mod find_conjure;
 pub mod parse;
-pub mod rules;
 mod solvers;
 
 pub use conjure_core::ast; // re-export core::ast as conjure_oxide::ast
