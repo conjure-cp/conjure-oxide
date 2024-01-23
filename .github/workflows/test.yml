@@ -20,7 +20,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  Job:
+  build-and-test:
+    name: "Build and Test"
     strategy:
       # run all combinations of the matrix even if one combination fails.
       fail-fast: false
@@ -81,4 +82,17 @@ jobs:
   
       - run: cargo test --workspace
 
-      - run: cargo audit --workspace
+  audit:
+    name: "Dependency Audit"
+    runs-on: ubuntu-latest
+    strategy:
+      # run all combinations of the matrix even if one combination fails.
+      fail-fast: false
+      matrix:
+        rust_release:
+          - stable
+          - nightly
+    steps:
+      - uses: actions/checkout@v3
+      - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
+      - run: cargo audit
