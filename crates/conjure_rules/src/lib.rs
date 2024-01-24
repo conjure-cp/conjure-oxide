@@ -1,5 +1,8 @@
-//! Rule registry for conjure_oxide.
-//! TODO: doc comment.
+//! ### A decentralised rule registry for Conjure Oxide
+//!
+//! This crate allows registering valid functions as expression-reduction rules.
+//! Functions can be decorated with the `register_rule` macro in any downstream crate and be used by Conjure Oxide's rule engine.
+//! To achieve compile-time linking, we make use of the [`linkme`](https://docs.rs/linkme/latest/linkme/) crate.
 //!
 
 // Why all the re-exports and wierdness?
@@ -32,9 +35,32 @@ pub mod _dependencies {
 #[distributed_slice]
 pub static RULES_DISTRIBUTED_SLICE: [Rule<'static>];
 
+/// Returns a copied `Vec` of all rules registered with the `register_rule` macro.
+///
+/// Rules defined in the same file will remain contiguous and in order, but order may not be maintained between files.
+///
+/// # Example
+/// ```rust
+/// use conjure_rules::register_rule;
+/// use conjure_oxide::rule::{Rule, RuleApplicationError};
+///
+/// #[register_rule]
+/// fn identity(expr: &Expression) -> Result<Expression, RuleApplicationError> {
+///   Ok(expr.clone())
+/// }
+///
+/// fn main() {
+///   println!("Rules: {:?}", conjure_rules::get_rules());
+/// }
+/// ```
+///
+/// This will print (if no other rules are registered):
+/// ```text
+///   Rules: [Rule { name: "identity", application: MEM }]
+/// ```
+/// Where `MEM` is the memory address of the `identity` function.
 pub fn get_rules() -> Vec<Rule<'static>> {
     RULES_DISTRIBUTED_SLICE.to_vec()
 }
 
-/// TODO: docs
 pub use conjure_rules_proc_macro::register_rule;
