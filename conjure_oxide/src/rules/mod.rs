@@ -53,3 +53,29 @@ fn flatten_sum_geq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
         _ => Err(RuleApplicationError::RuleNotApplicable),
     }
 }
+
+#[register_rule]
+fn sum_eq_to_sumleq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+    match expr {
+        Expr::Eq(a, b) => {
+            let exprs = match a.as_ref() {
+                Expr::Sum(exprs) => Ok(exprs),
+                _ => Err(RuleApplicationError::RuleNotApplicable),
+            }?;
+            Ok(Expr::SumLeq(exprs.clone(), b.clone()))
+        }
+        _ => Err(RuleApplicationError::RuleNotApplicable),
+    }
+}
+
+#[register_rule]
+fn lt_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+    match expr {
+        Expr::Lt(a, b) => Ok(Expr::Ineq(
+            a.clone(),
+            b.clone(),
+            Box::new(Expr::ConstantInt(-1)),
+        )),
+        _ => Err(RuleApplicationError::RuleNotApplicable),
+    }
+}
