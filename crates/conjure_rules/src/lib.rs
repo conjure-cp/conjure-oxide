@@ -37,13 +37,14 @@ pub static RULES_DISTRIBUTED_SLICE: [Rule<'static>];
 
 /// Returns a copied `Vec` of all rules registered with the `register_rule` macro.
 ///
-/// Rules defined in the same file will remain contiguous and in order, but order may not be maintained between files.
+/// Rules are not guaranteed to be in any particular order.
 ///
 /// # Example
 /// ```rust
-/// use conjure_rules::register_rule;
-/// use conjure_oxide::rule::{Rule, RuleApplicationError};
-///
+/// # use conjure_rules::register_rule;
+/// # use conjure_core::rule::{Rule, RuleApplicationError};
+/// # use conjure_core::ast::Expression;
+/// #
 /// #[register_rule]
 /// fn identity(expr: &Expression) -> Result<Expression, RuleApplicationError> {
 ///   Ok(expr.clone())
@@ -63,4 +64,38 @@ pub fn get_rules() -> Vec<Rule<'static>> {
     RULES_DISTRIBUTED_SLICE.to_vec()
 }
 
+/// This procedural macro registers a decorated function with `conjure_rules`' global registry.
+/// It may be used in any downstream crate. For more information on linker magic, see the [`linkme`](https://docs.rs/linkme/latest/linkme/) crate.
+///
+/// **IMPORTANT**: Since the resulting rule may not be explicitly referenced, it may be removed by the compiler's dead code elimination.
+/// To prevent this, you must ensure that either:
+/// 1. codegen-units is set to 1, i.e. in Cargo.toml:
+/// ```toml
+/// [profile.release]
+/// codegen-units = 1
+/// ```
+/// 2. The function is included somewhere else in the code
+///
+/// <hr>
+///
+/// Functions must have the signature `fn(&Expr) -> Result<Expr, RuleApplicationError>`.
+/// The created rule will have the same name as the function.
+///
+/// Intermediary static variables are created to allow for the decentralized registry, with the prefix `CONJURE_GEN_`.
+/// Please ensure that other variable names in the same scope do not conflict with these.
+///
+/// <hr>
+///
+/// For example:
+/// ```rust
+/// # use conjure_core::ast::Expression;
+/// # use conjure_core::rule::RuleApplicationError;
+/// # use conjure_rules::register_rule;
+/// #
+/// #[register_rule]
+/// fn identity(expr: &Expression) -> Result<Expression, RuleApplicationError> {
+///   Ok(expr.clone())
+/// }
+/// ```
+#[doc(inline)]
 pub use conjure_rules_proc_macro::register_rule;
