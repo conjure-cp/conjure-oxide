@@ -64,6 +64,10 @@ pub fn get_rules() -> Vec<Rule<'static>> {
     RULES_DISTRIBUTED_SLICE.to_vec()
 }
 
+pub fn get_rule_by_name(name: &str) -> Option<Rule<'static>> {
+    get_rules().iter().find(|rule| rule.name == name).cloned()
+}
+
 /// This procedural macro registers a decorated function with `conjure_rules`' global registry.
 /// It may be used in any downstream crate. For more information on linker magic, see the [`linkme`](https://docs.rs/linkme/latest/linkme/) crate.
 ///

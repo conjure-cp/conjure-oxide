@@ -3,10 +3,11 @@
 use core::panic;
 
 use conjure_oxide::ast::*;
+use conjure_rules::{get_rule_by_name, get_rules};
 
 #[test]
 fn rules_present() {
-    let rules = conjure_rules::get_rules();
+    let rules = get_rules();
     assert!(rules.len() > 0);
 }
 
@@ -96,4 +97,65 @@ fn simplify_expression(expr: Expression) -> Expression {
         ),
         _ => expr,
     }
+}
+
+#[test]
+fn rule_sum_constants() {
+    let sum_constants = get_rule_by_name("sum_constants").unwrap();
+    let unwrap_sum = get_rule_by_name("unwrap_sum").unwrap();
+
+    let mut expr = Expression::Sum(vec![
+        Expression::ConstantInt(1),
+        Expression::ConstantInt(2),
+        Expression::ConstantInt(3),
+    ]);
+
+    expr = sum_constants.apply(&expr).unwrap();
+    expr = unwrap_sum.apply(&expr).unwrap();
+
+    assert_eq!(expr, Expression::ConstantInt(6));
+}
+
+#[test]
+fn rule_sum_mixed() {
+    let sum_constants = get_rule_by_name("sum_constants").unwrap();
+
+    let mut expr = Expression::Sum(vec![
+        Expression::ConstantInt(1),
+        Expression::ConstantInt(2),
+        Expression::Reference(Name::UserName(String::from("a"))),
+    ]);
+
+    expr = sum_constants.apply(&expr).unwrap();
+
+    assert_eq!(
+        expr,
+        Expression::Sum(vec![
+            Expression::Reference(Name::UserName(String::from("a"))),
+            Expression::ConstantInt(3),
+        ])
+    );
+}
+
+#[test]
+fn rule_sum_geq() {
+    let flatten_sum_geq = get_rule_by_name("flatten_sum_geq").unwrap();
+
+    let mut expr = Expression::Geq(
+        Box::new(Expression::Sum(vec![
+            Expression::ConstantInt(1),
+            Expression::ConstantInt(2),
+        ])),
+        Box::new(Expression::ConstantInt(3)),
+    );
+
+    expr = flatten_sum_geq.apply(&expr).unwrap();
+
+    assert_eq!(
+        expr,
+        Expression::SumGeq(
+            vec![Expression::ConstantInt(1), Expression::ConstantInt(2),],
+            Box::new(Expression::ConstantInt(3))
+        )
+    );
 }
