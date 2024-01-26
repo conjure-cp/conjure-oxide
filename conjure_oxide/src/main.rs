@@ -19,6 +19,8 @@ struct Cli {
 }
 
 pub fn main() -> AnyhowResult<()> {
+    println!("Rules: {:?}", conjure_rules::get_rules());
+
     let cli = Cli::parse();
     println!("Input file: {}", cli.input_file.display());
     let input_file: &str = cli.input_file.to_str().ok_or(anyhow!(
@@ -47,10 +49,6 @@ pub fn main() -> AnyhowResult<()> {
 
     let model = model_from_json(&astjson)?;
     println!("{:?}", model);
-
-    // for rule in get_rules_by_kind() {
-    //     println!("Applying rule {:?}", rule);
-    // }
 
     Ok(())
 }
