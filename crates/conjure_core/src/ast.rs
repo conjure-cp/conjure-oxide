@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::collections::HashMap;
-use std::fmt::{Debug, Display, Formatter, write};
+use std::fmt::{Debug, Display, Formatter};
 
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -126,7 +126,7 @@ fn display_expressions(expressions: &Vec<Expression>) -> String {
     if expressions.len() <= 3 {
         format!("Sum({})", expressions.iter().map(|e| e.to_string()).collect::<Vec<String>>().join(", "))
     } else {
-        format!("Sum({}..{})", expressions[0].to_string(), expressions[expressions.len() - 1].to_string())
+        format!("Sum({}..{})", expressions[0], expressions[expressions.len() - 1])
     }
 }
 

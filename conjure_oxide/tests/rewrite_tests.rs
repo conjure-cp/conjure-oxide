@@ -7,7 +7,7 @@ use conjure_oxide::ast::*;
 #[test]
 fn rules_present() {
     let rules = conjure_rules::get_rules();
-    assert!(rules.len() > 0);
+    assert!(!rules.is_empty());
 }
 
 #[test]

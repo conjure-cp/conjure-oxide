@@ -100,7 +100,7 @@ impl CNF {
             expr_clauses.push(self.clause_to_expression(clause)?);
         }
 
-        return Ok(ConjureExpression::And(expr_clauses));
+        Ok(ConjureExpression::And(expr_clauses))
     }
 
     fn clause_to_expression(&self, clause: &Vec<i32>) -> Result<ConjureExpression, CNFError> {
@@ -120,29 +120,29 @@ impl CNF {
             }
         }
 
-        return Ok(ConjureExpression::Or(ans));
+        Ok(ConjureExpression::Or(ans))
     }
 
     fn get_reference_index(&self, name: &ConjureName) -> Result<i32, CNFError> {
-        return match self.get_index(name) {
+        match self.get_index(name) {
             None => {
                 Err(CNFError::VariableNameNotFound(name.clone()))
             }
             Some(ind) => Ok(ind),
-        };
+        }
     }
 
     fn handle_reference(&self, name: &ConjureName) -> Result<Vec<i32>, CNFError> {
-        return Ok(vec![self.get_reference_index(name)?]);
+        Ok(vec![self.get_reference_index(name)?])
     }
 
     fn handle_not(&self, expr_box: &Box<ConjureExpression>) -> Result<Vec<i32>, CNFError> {
         let expr = expr_box.as_ref();
-        return match expr {
+        match expr {
             // Expression inside the Not()
             ConjureExpression::Reference(name) => Ok(vec![-self.get_reference_index(name)?]),
             _ => Err(CNFError::UnexpectedExpressionInsideNot(expr.clone())),
-        };
+        }
     }
 
     fn handle_or(&self, expressions: &Vec<ConjureExpression>) -> Result<Vec<i32>, CNFError> {
@@ -155,17 +155,17 @@ impl CNF {
             }
         }
 
-        return Ok(ans);
+        Ok(ans)
     }
 
     /// Convert a single Reference, Not or Or into a row of the CNF format
     fn handle_flat_expression(&self, expression: &ConjureExpression) -> Result<Vec<i32>, CNFError> {
-        return match expression {
+        match expression {
             ConjureExpression::Reference(name) => self.handle_reference(name),
             ConjureExpression::Not(var_box) => self.handle_not(var_box),
             ConjureExpression::Or(expressions) => self.handle_or(expressions),
             _ => Err(CNFError::UnexpectedExpression(expression.clone())),
-        };
+        }
     }
 
     fn handle_and(&self, expressions: &Vec<ConjureExpression>) -> Result<Vec<Vec<i32>>, CNFError> {
@@ -173,7 +173,7 @@ impl CNF {
 
         for expression in expressions {
             match expression {
-                ConjureExpression::And(expressions) => {
+                ConjureExpression::And(_expressions) => {
                     return Err(CNFError::NestedAnd(expression.clone()));
                 }
                 _ => {
@@ -182,14 +182,14 @@ impl CNF {
             }
         }
 
-        return Ok(ans);
+        Ok(ans)
     }
 
     fn handle_expression(&self, expression: &ConjureExpression) -> Result<Vec<Vec<i32>>, CNFError> {
-        return match expression {
+        match expression {
             ConjureExpression::And(expressions) => self.handle_and(expressions),
             _ => Ok(vec![self.handle_flat_expression(expression)?]),
-        };
+        }
     }
 }
 
@@ -205,7 +205,7 @@ impl HasVariable for i32 {
 
 impl HasVariable for &ConjureName {
     fn has_variable(self, cnf: &CNF) -> bool {
-        return cnf.get_index(self).is_some();
+        cnf.get_index(self).is_some()
     }
 }
 
@@ -227,7 +227,7 @@ impl FromConjureModel for CNF {
         }
 
         for expr in conjure_model.constraints {
-            match (ans.add_expression(&expr)) {
+            match ans.add_expression(&expr) {
                 Ok(_) => {}
                 Err(error) => {
                     let message = format!("Error converting to CNF: {:?}", error);
@@ -238,18 +238,17 @@ impl FromConjureModel for CNF {
             }
         }
 
-        return Ok(ans);
+        Ok(ans)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::any::Any;
     use crate::ast::Domain::{BoolDomain, IntDomain};
     use crate::ast::Expression::{And, Not, Or, Reference};
     use crate::ast::{DecisionVariable, Model};
     use crate::ast::{Expression, Name};
-    use crate::solvers::kissat::{CNF, CNFError};
+    use crate::solvers::kissat::{CNF};
     use std::collections::HashSet;
     use std::fmt::Debug;
     use std::hash::Hash;
@@ -260,7 +259,7 @@ mod tests {
         for el in a {
             a_set.insert(el.clone());
         }
-        return a_set;
+        a_set
     }
 
     fn assert_eq_any_order<T: Eq + Hash + Debug + Clone>(a: &Vec<Vec<T>>, b: &Vec<Vec<T>>) {
@@ -286,7 +285,7 @@ mod tests {
 
     fn if_ok<T, E: Debug>(result: Result<T, E>) -> T {
         assert!(result.is_ok());
-        return result.unwrap();
+        result.unwrap()
     }
 
     #[test]
@@ -297,7 +296,7 @@ mod tests {
 
         let x: Name = Name::UserName(String::from('x'));
         model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
-        model.add_constraint(Expression::Reference(x.clone()));
+        model.add_constraint(Reference(x.clone()));
 
         let res: Result<CNF, SolverError> = CNF::from_conjure(model);
         assert!(res.is_ok());
