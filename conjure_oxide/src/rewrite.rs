@@ -9,17 +9,20 @@ struct RuleResult<'a> {
 
 pub fn rewrite(expression: &Expression) -> Expression {
     let rules = get_rules();
-    let mut new = expression.clone(); 
+    let mut new = expression.clone();
     while let Some(step) = rewrite_iteration(&new, &rules) {
         new = step;
     }
     new
 }
 
-fn apply_all_rules<'a>(expression: &'a Expression, rules: &'a Vec<Rule<'a>>) -> Vec<RuleResult<'a>> {
+fn apply_all_rules<'a>(
+    expression: &'a Expression,
+    rules: &'a Vec<Rule<'a>>,
+) -> Vec<RuleResult<'a>> {
     let mut results = Vec::new();
     for rule in rules {
-        match rule.apply(&expression) {
+        match rule.apply(expression) {
             Ok(new) => {
                 results.push(RuleResult {
                     rule: rule.clone(),
@@ -33,7 +36,7 @@ fn apply_all_rules<'a>(expression: &'a Expression, rules: &'a Vec<Rule<'a>>) -> 
 }
 
 fn choose_rewrite<'a>(results: &Vec<RuleResult<'a>>) -> Option<Expression> {
-    if results.len() == 0 {
+    if results.is_empty() {
         return None;
     }
     // Return the first result for now
@@ -43,7 +46,10 @@ fn choose_rewrite<'a>(results: &Vec<RuleResult<'a>>) -> Option<Expression> {
 /// # Returns
 /// - Some(<new_expression>) after applying the first applicable rule to `expr` or a sub-expression.
 /// - None if no rule is applicable to the expression or any sub-expression.
-fn rewrite_iteration<'a>(expression: &'a Expression, rules: &'a Vec<Rule<'a>>) -> Option<Expression> {
+fn rewrite_iteration<'a>(
+    expression: &'a Expression,
+    rules: &'a Vec<Rule<'a>>,
+) -> Option<Expression> {
     let rule_results = apply_all_rules(expression, rules);
     if let Some(new) = choose_rewrite(&rule_results) {
         return Some(new);

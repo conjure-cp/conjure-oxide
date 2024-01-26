@@ -136,30 +136,24 @@ impl Expression {
             Expression::ConstantInt(i) => Expression::ConstantInt(*i),
             Expression::Reference(name) => Expression::Reference(name.clone()),
             Expression::Sum(_) => Expression::Sum(sub.iter().cloned().cloned().collect()),
-            Expression::Eq(_, _) => Expression::Eq(
-                Box::new(sub[0].clone()),
-                Box::new(sub[1].clone()),
-            ),
-            Expression::Neq(_, _) => Expression::Neq(
-                Box::new(sub[0].clone()),
-                Box::new(sub[1].clone()),
-            ),
-            Expression::Geq(_, _) => Expression::Geq(
-                Box::new(sub[0].clone()),
-                Box::new(sub[1].clone()),
-            ),
-            Expression::Leq(_, _) => Expression::Leq(
-                Box::new(sub[0].clone()),
-                Box::new(sub[1].clone()),
-            ),
-            Expression::Gt(_, _) => Expression::Gt(
-                Box::new(sub[0].clone()),
-                Box::new(sub[1].clone()),
-            ),
-            Expression::Lt(_, _) => Expression::Lt(
-                Box::new(sub[0].clone()),
-                Box::new(sub[1].clone()),
-            ),
+            Expression::Eq(_, _) => {
+                Expression::Eq(Box::new(sub[0].clone()), Box::new(sub[1].clone()))
+            }
+            Expression::Neq(_, _) => {
+                Expression::Neq(Box::new(sub[0].clone()), Box::new(sub[1].clone()))
+            }
+            Expression::Geq(_, _) => {
+                Expression::Geq(Box::new(sub[0].clone()), Box::new(sub[1].clone()))
+            }
+            Expression::Leq(_, _) => {
+                Expression::Leq(Box::new(sub[0].clone()), Box::new(sub[1].clone()))
+            }
+            Expression::Gt(_, _) => {
+                Expression::Gt(Box::new(sub[0].clone()), Box::new(sub[1].clone()))
+            }
+            Expression::Lt(_, _) => {
+                Expression::Lt(Box::new(sub[0].clone()), Box::new(sub[1].clone()))
+            }
             Expression::SumGeq(_, _) => Expression::SumGeq(
                 sub.iter().cloned().cloned().collect(),
                 Box::new(sub[2].clone()),
