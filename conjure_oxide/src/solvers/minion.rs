@@ -7,9 +7,10 @@ use crate::ast::{
     DecisionVariable, Domain as ConjureDomain, Expression as ConjureExpression,
     Model as ConjureModel, Name as ConjureName, Range as ConjureRange,
 };
+pub use minion_rs::ast::Model as MinionModel;
 use minion_rs::ast::{
-    Constant as MinionConstant, Constraint as MinionConstraint, Model as MinionModel,
-    Var as MinionVar, VarDomain as MinionDomain,
+    Constant as MinionConstant, Constraint as MinionConstraint, Var as MinionVar,
+    VarDomain as MinionDomain,
 };
 
 const SOLVER: Solver = Solver::Minion;

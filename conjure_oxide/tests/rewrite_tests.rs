@@ -1,12 +1,18 @@
 // Tests for rewriting/simplifying parts of the AST
 
 use core::panic;
+use std::collections::HashMap;
 
-use conjure_oxide::ast::*;
+use conjure_oxide::{
+    ast::*,
+    solvers::{minion, FromConjureModel},
+};
+use conjure_rules::{get_rule_by_name, get_rules};
+use minion_rs::ast::{Constant, VarName};
 
 #[test]
 fn rules_present() {
-    let rules = conjure_rules::get_rules();
+    let rules = get_rules();
     assert!(rules.len() > 0);
 }
 
@@ -96,4 +102,161 @@ fn simplify_expression(expr: Expression) -> Expression {
         ),
         _ => expr,
     }
+}
+
+#[test]
+fn rule_sum_constants() {
+    let sum_constants = get_rule_by_name("sum_constants").unwrap();
+    let unwrap_sum = get_rule_by_name("unwrap_sum").unwrap();
+
+    let mut expr = Expression::Sum(vec![
+        Expression::ConstantInt(1),
+        Expression::ConstantInt(2),
+        Expression::ConstantInt(3),
+    ]);
+
+    expr = sum_constants.apply(&expr).unwrap();
+    expr = unwrap_sum.apply(&expr).unwrap();
+
+    assert_eq!(expr, Expression::ConstantInt(6));
+}
+
+#[test]
+fn rule_sum_mixed() {
+    let sum_constants = get_rule_by_name("sum_constants").unwrap();
+
+    let mut expr = Expression::Sum(vec![
+        Expression::ConstantInt(1),
+        Expression::ConstantInt(2),
+        Expression::Reference(Name::UserName(String::from("a"))),
+    ]);
+
+    expr = sum_constants.apply(&expr).unwrap();
+
+    assert_eq!(
+        expr,
+        Expression::Sum(vec![
+            Expression::Reference(Name::UserName(String::from("a"))),
+            Expression::ConstantInt(3),
+        ])
+    );
+}
+
+#[test]
+fn rule_sum_geq() {
+    let flatten_sum_geq = get_rule_by_name("flatten_sum_geq").unwrap();
+
+    let mut expr = Expression::Geq(
+        Box::new(Expression::Sum(vec![
+            Expression::ConstantInt(1),
+            Expression::ConstantInt(2),
+        ])),
+        Box::new(Expression::ConstantInt(3)),
+    );
+
+    expr = flatten_sum_geq.apply(&expr).unwrap();
+
+    assert_eq!(
+        expr,
+        Expression::SumGeq(
+            vec![Expression::ConstantInt(1), Expression::ConstantInt(2),],
+            Box::new(Expression::ConstantInt(3))
+        )
+    );
+}
+
+fn callback(solution: HashMap<VarName, Constant>) -> bool {
+    println!("Solution: {:?}", solution);
+    false
+}
+
+///
+/// Reduce and solve:
+/// ```text
+/// find a,b,c : int(1..3)
+/// such that a + b + c <= 2 + 3 - 1
+/// such that a < b
+/// ```
+#[test]
+fn reduce_solve_xyz() {
+    println!("Rules: {:?}", conjure_rules::get_rules());
+    let sum_constants = get_rule_by_name("sum_constants").unwrap();
+    let unwrap_sum = get_rule_by_name("unwrap_sum").unwrap();
+    let lt_to_ineq = get_rule_by_name("lt_to_ineq").unwrap();
+    let sum_leq_to_sumleq = get_rule_by_name("sum_leq_to_sumleq").unwrap();
+
+    // 2 + 3 - 1
+    let mut expr1 = Expression::Sum(vec![
+        Expression::ConstantInt(2),
+        Expression::ConstantInt(3),
+        Expression::ConstantInt(-1),
+    ]);
+
+    expr1 = sum_constants.apply(&expr1).unwrap();
+    expr1 = unwrap_sum.apply(&expr1).unwrap();
+    assert_eq!(expr1, Expression::ConstantInt(4));
+
+    // a + b + c = 4
+    expr1 = Expression::Leq(
+        Box::new(Expression::Sum(vec![
+            Expression::Reference(Name::UserName(String::from("a"))),
+            Expression::Reference(Name::UserName(String::from("b"))),
+            Expression::Reference(Name::UserName(String::from("c"))),
+        ])),
+        Box::new(expr1),
+    );
+    expr1 = sum_leq_to_sumleq.apply(&expr1).unwrap();
+    assert_eq!(
+        expr1,
+        Expression::SumLeq(
+            vec![
+                Expression::Reference(Name::UserName(String::from("a"))),
+                Expression::Reference(Name::UserName(String::from("b"))),
+                Expression::Reference(Name::UserName(String::from("c"))),
+            ],
+            Box::new(Expression::ConstantInt(4))
+        )
+    );
+
+    // a < b
+    let mut expr2 = Expression::Lt(
+        Box::new(Expression::Reference(Name::UserName(String::from("a")))),
+        Box::new(Expression::Reference(Name::UserName(String::from("b")))),
+    );
+    expr2 = lt_to_ineq.apply(&expr2).unwrap();
+    assert_eq!(
+        expr2,
+        Expression::Ineq(
+            Box::new(Expression::Reference(Name::UserName(String::from("a")))),
+            Box::new(Expression::Reference(Name::UserName(String::from("b")))),
+            Box::new(Expression::ConstantInt(-1))
+        )
+    );
+
+    let mut model = Model {
+        variables: HashMap::new(),
+        constraints: vec![expr1, expr2],
+    };
+    model.variables.insert(
+        Name::UserName(String::from("a")),
+        DecisionVariable {
+            domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
+        },
+    );
+    model.variables.insert(
+        Name::UserName(String::from("b")),
+        DecisionVariable {
+            domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
+        },
+    );
+    model.variables.insert(
+        Name::UserName(String::from("c")),
+        DecisionVariable {
+            domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
+        },
+    );
+
+    let minion_model = conjure_oxide::solvers::minion::MinionModel::from_conjure(model).unwrap();
+
+    minion_rs::run_minion(minion_model, callback).unwrap();
 }
