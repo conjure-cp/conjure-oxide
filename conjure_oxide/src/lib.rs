@@ -1,9 +1,9 @@
 pub mod error;
 pub mod find_conjure;
 pub mod parse;
+mod rewrite;
 pub mod rules;
 mod solvers;
-mod rewrite;
 
 pub use conjure_core::ast; // re-export core::ast as conjure_oxide::ast
 pub use conjure_core::ast::Model; // rexport core::ast::Model as conjure_oxide::Model
