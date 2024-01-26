@@ -6,21 +6,25 @@ on:
       - main # run for pushes to the main branch. other branches need to create a PR if they want testing.
     paths: 
       - conjure_oxide/**
+      - solvers/**
+      - crates/**
       - Cargo.*
       - .github/workflows/test.yml
   pull_request:
     paths: 
       - conjure_oxide/**
+      - solvers/**
+      - crates/**
       - Cargo.*
       - .github/workflows/test.yml
   workflow_dispatch:
 
-
 jobs:
-
-  Job:
-
+  build-and-test:
+    name: "Build and Test"
     strategy:
+      # run all combinations of the matrix even if one combination fails.
+      fail-fast: false
       matrix:
         rust_release:
           - stable
@@ -57,7 +61,7 @@ jobs:
 
       - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
 
-      - run: cargo build -vv
+      - run: cargo build -vv --workspace
 
       - name: Add conjure to PATH
         run: echo "${HOME}/.cargo/bin/conjure-v${{ matrix.conjure_version }}-${{ matrix.release_suffix }}-with-solvers" >> ${GITHUB_PATH}
@@ -76,6 +80,19 @@ jobs:
           fi
           conjure --version
   
-      - run: cargo test
+      - run: cargo test --workspace
 
+  audit:
+    name: "Dependency Audit"
+    runs-on: ubuntu-latest
+    strategy:
+      # run all combinations of the matrix even if one combination fails.
+      fail-fast: false
+      matrix:
+        rust_release:
+          - stable
+          - nightly
+    steps:
+      - uses: actions/checkout@v3
+      - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
       - run: cargo audit

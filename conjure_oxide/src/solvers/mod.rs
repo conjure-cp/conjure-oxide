@@ -1,5 +1,4 @@
 mod error;
-
 pub mod minion;
 pub mod kissat;
 
