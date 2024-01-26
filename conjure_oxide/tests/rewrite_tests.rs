@@ -5,16 +5,10 @@ use std::collections::HashMap;
 
 use conjure_oxide::{
     ast::*,
-    solvers::{minion, FromConjureModel},
+    solvers::{FromConjureModel},
 };
-use conjure_rules::{get_rule_by_name, get_rules};
+use conjure_rules::{get_rule_by_name};
 use minion_rs::ast::{Constant, VarName};
-
-#[test]
-fn rules_present() {
-    let rules = get_rules();
-    assert!(rules.len() > 0);
-}
 
 #[test]
 fn rules_present() {
@@ -36,7 +30,7 @@ fn sum_of_constants() {
     ]);
 
     match evaluate_sum_of_constants(&valid_sum_expression) {
-        Some(result) => assert!(result == 6),
+        Some(result) => assert_eq!(result, 6),
         None => panic!(),
     }
 
@@ -86,7 +80,7 @@ fn recursive_sum_of_constants() {
     );
 
     let simplified_expression = simplify_expression(complex_expression.clone());
-    assert!(simplified_expression == correct_simplified_expression);
+    assert_eq!(simplified_expression, correct_simplified_expression);
 }
 
 fn simplify_expression(expr: Expression) -> Expression {
