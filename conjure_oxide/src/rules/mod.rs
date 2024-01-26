@@ -55,9 +55,9 @@ fn flatten_sum_geq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 }
 
 #[register_rule]
-fn sum_eq_to_sumleq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn sum_leq_to_sumleq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
-        Expr::Eq(a, b) => {
+        Expr::Leq(a, b) => {
             let exprs = match a.as_ref() {
                 Expr::Sum(exprs) => Ok(exprs),
                 _ => Err(RuleApplicationError::RuleNotApplicable),

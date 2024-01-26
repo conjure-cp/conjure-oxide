@@ -174,7 +174,7 @@ fn callback(solution: HashMap<VarName, Constant>) -> bool {
 /// Reduce and solve:
 /// ```text
 /// find a,b,c : int(1..3)
-/// such that a + b + c = 2 + 3 - 1
+/// such that a + b + c <= 2 + 3 - 1
 /// such that a < b
 /// ```
 #[test]
@@ -183,7 +183,7 @@ fn reduce_solve_xyz() {
     let sum_constants = get_rule_by_name("sum_constants").unwrap();
     let unwrap_sum = get_rule_by_name("unwrap_sum").unwrap();
     let lt_to_ineq = get_rule_by_name("lt_to_ineq").unwrap();
-    let sum_eq_to_sumleq = get_rule_by_name("sum_eq_to_sumleq").unwrap();
+    let sum_leq_to_sumleq = get_rule_by_name("sum_leq_to_sumleq").unwrap();
 
     // 2 + 3 - 1
     let mut expr1 = Expression::Sum(vec![
@@ -197,7 +197,7 @@ fn reduce_solve_xyz() {
     assert_eq!(expr1, Expression::ConstantInt(4));
 
     // a + b + c = 4
-    expr1 = Expression::Eq(
+    expr1 = Expression::Leq(
         Box::new(Expression::Sum(vec![
             Expression::Reference(Name::UserName(String::from("a"))),
             Expression::Reference(Name::UserName(String::from("b"))),
@@ -205,7 +205,7 @@ fn reduce_solve_xyz() {
         ])),
         Box::new(expr1),
     );
-    expr1 = sum_eq_to_sumleq.apply(&expr1).unwrap();
+    expr1 = sum_leq_to_sumleq.apply(&expr1).unwrap();
     assert_eq!(
         expr1,
         Expression::SumLeq(
