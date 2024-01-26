@@ -235,10 +235,8 @@ impl FromConjureModel for CNF {
             match ans.add_expression(&expr) {
                 Ok(_) => {}
                 Err(error) => {
-                    let message = format!("Error converting to CNF: {:?}", error);
-                    // Nik has said that InvalidInstance should be thrown for cases where the model cannot be converted
-                    // So, we use the actual CNF error as the message and throw a SolverError from it
-                    return Err(SolverError::InvalidInstance(SOLVER, message));
+                    let message = format!("{:?}", error);
+                    return Err(SolverError::NotSupported(SOLVER, message));
                 }
             }
         }
