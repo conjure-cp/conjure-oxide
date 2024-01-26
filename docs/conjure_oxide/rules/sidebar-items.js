@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"static":["IDENTITY_RULE"]};
+window.SIDEBAR_ITEMS = {"static":["CONJURE_GEN_RULE_IDENTITY"]};

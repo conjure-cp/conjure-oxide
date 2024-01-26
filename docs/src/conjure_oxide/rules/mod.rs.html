@@ -5,19 +5,11 @@
 <a href="#5" id="5">5</a>
 <a href="#6" id="6">6</a>
 <a href="#7" id="7">7</a>
-<a href="#8" id="8">8</a>
-<a href="#9" id="9">9</a>
-<a href="#10" id="10">10</a>
-<a href="#11" id="11">11</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>conjure_core::ast::Expression;
-<span class="kw">use </span>conjure_core::rule::{Rule, RuleApplicationError};
+</pre></div><pre class="rust"><code><span class="kw">use </span>conjure_core::{ast::Expression, rule::RuleApplicationError};
+<span class="kw">use </span>conjure_rules::register_rule;
 
-<span class="kw">fn </span>identity(expr: <span class="kw-2">&amp;</span>Expression) -&gt; <span class="prelude-ty">Result</span>&lt;Expression, RuleApplicationError&gt; {
+<span class="attr">#[register_rule]
+</span><span class="kw">fn </span>identity(expr: <span class="kw-2">&amp;</span>Expression) -&gt; <span class="prelude-ty">Result</span>&lt;Expression, RuleApplicationError&gt; {
     <span class="prelude-val">Ok</span>(expr.clone())
 }
-
-<span class="kw">pub static </span>IDENTITY_RULE: Rule = Rule {
-    name: <span class="string">&quot;identity&quot;</span>,
-    application: identity,
-};
 </code></pre></div></section></main></body></html>
