@@ -1,7 +1,7 @@
 //! Solver interface to minion_rs.
 
-#[allow(unused_imports)]
-use anyhow::anyhow;
+use super::{FromConjureModel, SolverError};
+use crate::Solver;
 
 use crate::ast::{
     DecisionVariable, Domain as ConjureDomain, Expression as ConjureExpression,
@@ -12,14 +12,10 @@ use minion_rs::ast::{
     Var as MinionVar, VarDomain as MinionDomain,
 };
 
-use super::{Solver, SolverError};
-
 const SOLVER: Solver = Solver::Minion;
 
-impl TryFrom<ConjureModel> for MinionModel {
-    type Error = SolverError;
-
-    fn try_from(conjure_model: ConjureModel) -> Result<Self, Self::Error> {
+impl FromConjureModel for MinionModel {
+    fn from_conjure(conjure_model: ConjureModel) -> Result<Self, SolverError> {
         let mut minion_model = MinionModel::new();
 
         // We assume (for now) that the conjure model is fully valid
@@ -211,6 +207,7 @@ fn name_to_string(name: ConjureName) -> String {
 
 #[cfg(test)]
 mod tests {
+    use anyhow::anyhow;
     use std::collections::HashMap;
 
     use minion_rs::ast::VarName;
@@ -248,7 +245,7 @@ mod tests {
         model.constraints.push(leq);
         model.constraints.push(ineq);
 
-        let minion_model = MinionModel::try_from(model)?;
+        let minion_model = MinionModel::from_conjure(model)?;
         Ok(minion_rs::run_minion(minion_model, xyz_callback)?)
     }
 

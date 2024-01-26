@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use anyhow::Result as AnyhowResult;
 use clap::{arg, command, Parser};
 use conjure_oxide::find_conjure::conjure_executable;
-use conjure_oxide::parse::parse_json;
+use conjure_oxide::parse::model_from_json;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -19,6 +19,8 @@ struct Cli {
 }
 
 pub fn main() -> AnyhowResult<()> {
+    println!("Rules: {:?}", conjure_rules::get_rules());
+
     let cli = Cli::parse();
     println!("Input file: {}", cli.input_file.display());
     let input_file: &str = cli.input_file.to_str().ok_or(anyhow!(
@@ -45,7 +47,8 @@ pub fn main() -> AnyhowResult<()> {
 
     let astjson = String::from_utf8(output.stdout)?;
 
-    let model = parse_json(&astjson)?;
+    let model = model_from_json(&astjson)?;
     println!("{:?}", model);
+
     Ok(())
 }
