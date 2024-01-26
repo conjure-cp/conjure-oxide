@@ -1,6 +1,6 @@
 mod error;
-pub mod minion;
 pub mod kissat;
+pub mod minion;
 
 pub use crate::ast::Model;
 pub use error::*;

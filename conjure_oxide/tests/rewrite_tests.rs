@@ -3,11 +3,8 @@
 use core::panic;
 use std::collections::HashMap;
 
-use conjure_oxide::{
-    ast::*,
-    solvers::{FromConjureModel},
-};
-use conjure_rules::{get_rule_by_name};
+use conjure_oxide::{ast::*, solvers::FromConjureModel};
+use conjure_rules::get_rule_by_name;
 use minion_rs::ast::{Constant, VarName};
 
 #[test]

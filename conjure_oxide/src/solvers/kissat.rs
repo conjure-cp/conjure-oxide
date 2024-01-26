@@ -1,10 +1,11 @@
-use std::collections::HashMap;
-use thiserror::Error;
 use super::{FromConjureModel, SolverError};
 use crate::Solver;
+use std::collections::HashMap;
+use thiserror::Error;
 
-use crate::ast::{Domain as ConjureDomain, Expression as ConjureExpression,
-                 Model as ConjureModel, Name as ConjureName,
+use crate::ast::{
+    Domain as ConjureDomain, Expression as ConjureExpression, Model as ConjureModel,
+    Name as ConjureName,
 };
 
 const SOLVER: Solver = Solver::KissSAT;
@@ -26,11 +27,13 @@ pub enum CNFError {
     #[error("Unexpected Expression `{0}` inside Not(). Only Not(Reference) allowed!")]
     UnexpectedExpressionInsideNot(ConjureExpression),
 
-    #[error("Unexpected Expression `{0}` found. Only Reference, Not(Reference) and Or(...) allowed!")]
+    #[error(
+        "Unexpected Expression `{0}` found. Only Reference, Not(Reference) and Or(...) allowed!"
+    )]
     UnexpectedExpression(ConjureExpression),
 
     #[error("Unexpected nested And: {0}")]
-    NestedAnd(ConjureExpression)
+    NestedAnd(ConjureExpression),
 }
 
 impl CNF {
@@ -113,7 +116,8 @@ impl CNF {
                     if *idx > 0 {
                         ans.push(ConjureExpression::Reference(name.clone()))
                     } else {
-                        let expression: ConjureExpression = ConjureExpression::Reference(name.clone());
+                        let expression: ConjureExpression =
+                            ConjureExpression::Reference(name.clone());
                         ans.push(ConjureExpression::Not(Box::from(expression)))
                     }
                 }
@@ -125,9 +129,7 @@ impl CNF {
 
     fn get_reference_index(&self, name: &ConjureName) -> Result<i32, CNFError> {
         match self.get_index(name) {
-            None => {
-                Err(CNFError::VariableNameNotFound(name.clone()))
-            }
+            None => Err(CNFError::VariableNameNotFound(name.clone())),
             Some(ind) => Ok(ind),
         }
     }
@@ -220,7 +222,10 @@ impl FromConjureModel for CNF {
             // Check that domain has the correct type
             let decision_var = conjure_model.variables.get(var).unwrap();
             if decision_var.domain != ConjureDomain::BoolDomain {
-                return Err(SolverError::NotSupported(SOLVER, format!("variable {:?} is not BoolDomain", decision_var)))
+                return Err(SolverError::NotSupported(
+                    SOLVER,
+                    format!("variable {:?} is not BoolDomain", decision_var),
+                ));
             }
 
             ans.add_variable(var);
@@ -233,7 +238,7 @@ impl FromConjureModel for CNF {
                     let message = format!("Error converting to CNF: {:?}", error);
                     // Nik has said that InvalidInstance should be thrown for cases where the model cannot be converted
                     // So, we use the actual CNF error as the message and throw a SolverError from it
-                    return Err(SolverError::InvalidInstance(SOLVER, message))
+                    return Err(SolverError::InvalidInstance(SOLVER, message));
                 }
             }
         }
@@ -248,11 +253,11 @@ mod tests {
     use crate::ast::Expression::{And, Not, Or, Reference};
     use crate::ast::{DecisionVariable, Model};
     use crate::ast::{Expression, Name};
-    use crate::solvers::kissat::{CNF};
+    use crate::solvers::kissat::CNF;
+    use crate::solvers::{FromConjureModel, SolverError};
     use std::collections::HashSet;
     use std::fmt::Debug;
     use std::hash::Hash;
-    use crate::solvers::{FromConjureModel, SolverError};
 
     fn to_set<T: Eq + Hash + Debug + Clone>(a: &Vec<T>) -> HashSet<T> {
         let mut a_set: HashSet<T> = HashSet::new();
@@ -308,7 +313,6 @@ mod tests {
         assert_eq!(cnf.get_name(1).unwrap(), &x);
 
         assert_eq!(cnf.clauses, vec![vec![1]]);
-
     }
 
     #[test]
@@ -353,10 +357,7 @@ mod tests {
 
         assert_eq!(
             if_ok(cnf.as_expression()),
-            And(vec![Or(vec![
-                Reference(x.clone()),
-                Reference(y.clone())
-            ])])
+            And(vec![Or(vec![Reference(x.clone()), Reference(y.clone())])])
         )
     }
 

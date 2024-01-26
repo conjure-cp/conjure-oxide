@@ -124,9 +124,20 @@ pub enum Expression {
 
 fn display_expressions(expressions: &Vec<Expression>) -> String {
     if expressions.len() <= 3 {
-        format!("Sum({})", expressions.iter().map(|e| e.to_string()).collect::<Vec<String>>().join(", "))
+        format!(
+            "Sum({})",
+            expressions
+                .iter()
+                .map(|e| e.to_string())
+                .collect::<Vec<String>>()
+                .join(", ")
+        )
     } else {
-        format!("Sum({}..{})", expressions[0], expressions[expressions.len() - 1])
+        format!(
+            "Sum({}..{})",
+            expressions[0],
+            expressions[expressions.len() - 1]
+        )
     }
 }
 
@@ -145,9 +156,19 @@ impl Display for Expression {
             Expression::Leq(box1, box2) => write!(f, "Leq({}, {})", box1.clone(), box2.clone()),
             Expression::Gt(box1, box2) => write!(f, "Gt({}, {})", box1.clone(), box2.clone()),
             Expression::Lt(box1, box2) => write!(f, "Lt({}, {})", box1.clone(), box2.clone()),
-            Expression::SumGeq(box1, box2) => write!(f, "SumGeq({}, {})", display_expressions(box1), box2.clone()),
-            Expression::SumLeq(box1, box2) => write!(f, "SumLeq({}, {})", display_expressions(box1), box2.clone()),
-            Expression::Ineq(box1, box2, box3) => write!(f, "Ineq({}, {}, {})", box1.clone(), box2.clone(), box3.clone()),
+            Expression::SumGeq(box1, box2) => {
+                write!(f, "SumGeq({}, {})", display_expressions(box1), box2.clone())
+            }
+            Expression::SumLeq(box1, box2) => {
+                write!(f, "SumLeq({}, {})", display_expressions(box1), box2.clone())
+            }
+            Expression::Ineq(box1, box2, box3) => write!(
+                f,
+                "Ineq({}, {}, {})",
+                box1.clone(),
+                box2.clone(),
+                box3.clone()
+            ),
         }
     }
 }
