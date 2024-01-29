@@ -146,7 +146,7 @@ fn unwrap_nested_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 }
 
 /**
-* Distribute `not` over `or`:
+* Distribute `not` over `or` (De Morgan's Law):
 
 * ```text
 * not(or(a, b)) = and(not a, not b)
@@ -188,7 +188,7 @@ fn remove_double_negation(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 }
 
 /**
- * Distribute `not` over `and`:
+ * Distribute `not` over `and` (De Morgan's Law):
 
  * ```text
  * not(and(a, b)) = or(not a, not b)
