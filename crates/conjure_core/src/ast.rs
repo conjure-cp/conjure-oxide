@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::collections::HashMap;
-use std::fmt::Display;
+use std::fmt::{Debug, Display, Formatter};
 
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -28,6 +28,12 @@ impl Model {
     pub fn add_variable(&mut self, name: Name, decision_var: DecisionVariable) {
         self.variables.insert(name, decision_var);
     }
+
+    pub fn add_constraint(&mut self, expression: Expression) {
+        // ToDo (gs248) - there is no checking whatsoever
+        // We need to properly validate the expression but this is just for testing
+        self.constraints.push(expression);
+    }
 }
 
 impl Default for Model {
@@ -40,6 +46,15 @@ impl Default for Model {
 pub enum Name {
     UserName(String),
     MachineName(i32),
+}
+
+impl Display for Name {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Name::UserName(s) => write!(f, "UserName({})", s),
+            Name::MachineName(i) => write!(f, "MachineName({})", i),
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -90,6 +105,10 @@ pub enum Expression {
 
     Sum(Vec<Expression>),
 
+    Not(Box<Expression>),
+    Or(Vec<Expression>),
+    And(Vec<Expression>),
+
     Eq(Box<Expression>, Box<Expression>),
     Neq(Box<Expression>, Box<Expression>),
     Geq(Box<Expression>, Box<Expression>),
@@ -110,6 +129,9 @@ impl Expression {
             Expression::ConstantInt(_) => Vec::new(),
             Expression::Reference(_) => Vec::new(),
             Expression::Sum(exprs) => exprs.iter().collect(),
+            Expression::Not(expr_box) => vec![expr_box.as_ref()],
+            Expression::Or(exprs) => exprs.iter().collect(),
+            Expression::And(exprs) => exprs.iter().collect(),
             Expression::Eq(lhs, rhs) => vec![lhs.as_ref(), rhs.as_ref()],
             Expression::Neq(lhs, rhs) => vec![lhs.as_ref(), rhs.as_ref()],
             Expression::Geq(lhs, rhs) => vec![lhs.as_ref(), rhs.as_ref()],
@@ -136,6 +158,9 @@ impl Expression {
             Expression::ConstantInt(i) => Expression::ConstantInt(*i),
             Expression::Reference(name) => Expression::Reference(name.clone()),
             Expression::Sum(_) => Expression::Sum(sub.iter().cloned().cloned().collect()),
+            Expression::Not(_) => Expression::Not(Box::new(sub[0].clone())),
+            Expression::Or(_) => Expression::Or(sub.iter().cloned().cloned().collect()),
+            Expression::And(_) => Expression::And(sub.iter().cloned().cloned().collect()),
             Expression::Eq(_, _) => {
                 Expression::Eq(Box::new(sub[0].clone()), Box::new(sub[1].clone()))
             }
@@ -166,6 +191,57 @@ impl Expression {
                 Box::new(sub[0].clone()),
                 Box::new(sub[1].clone()),
                 Box::new(sub[2].clone()),
+            ),
+        }
+    }
+}
+
+fn display_expressions(expressions: &Vec<Expression>) -> String {
+    if expressions.len() <= 3 {
+        format!(
+            "Sum({})",
+            expressions
+                .iter()
+                .map(|e| e.to_string())
+                .collect::<Vec<String>>()
+                .join(", ")
+        )
+    } else {
+        format!(
+            "Sum({}..{})",
+            expressions[0],
+            expressions[expressions.len() - 1]
+        )
+    }
+}
+
+impl Display for Expression {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match &self {
+            Expression::ConstantInt(i) => write!(f, "ConstantInt({})", i),
+            Expression::Reference(name) => write!(f, "Reference({})", name),
+            Expression::Sum(expressions) => write!(f, "Sum({})", display_expressions(expressions)),
+            Expression::Not(expr_box) => write!(f, "Not({})", expr_box.clone()),
+            Expression::Or(expressions) => write!(f, "Not({})", display_expressions(expressions)),
+            Expression::And(expressions) => write!(f, "And({})", display_expressions(expressions)),
+            Expression::Eq(box1, box2) => write!(f, "Eq({}, {})", box1.clone(), box2.clone()),
+            Expression::Neq(box1, box2) => write!(f, "Neq({}, {})", box1.clone(), box2.clone()),
+            Expression::Geq(box1, box2) => write!(f, "Geq({}, {})", box1.clone(), box2.clone()),
+            Expression::Leq(box1, box2) => write!(f, "Leq({}, {})", box1.clone(), box2.clone()),
+            Expression::Gt(box1, box2) => write!(f, "Gt({}, {})", box1.clone(), box2.clone()),
+            Expression::Lt(box1, box2) => write!(f, "Lt({}, {})", box1.clone(), box2.clone()),
+            Expression::SumGeq(box1, box2) => {
+                write!(f, "SumGeq({}, {})", display_expressions(box1), box2.clone())
+            }
+            Expression::SumLeq(box1, box2) => {
+                write!(f, "SumLeq({}, {})", display_expressions(box1), box2.clone())
+            }
+            Expression::Ineq(box1, box2, box3) => write!(
+                f,
+                "Ineq({}, {}, {})",
+                box1.clone(),
+                box2.clone(),
+                box3.clone()
             ),
         }
     }

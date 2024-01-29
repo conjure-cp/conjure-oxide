@@ -19,13 +19,7 @@ struct Cli {
 }
 
 pub fn main() -> AnyhowResult<()> {
-    println!(
-        "Rules: {:?}",
-        conjure_rules::get_rules()
-            .iter()
-            .map(|r| r.name)
-            .collect::<Vec<_>>()
-    );
+    println!("Rules: {:?}", conjure_rules::get_rules());
 
     let cli = Cli::parse();
     println!("Input file: {}", cli.input_file.display());
