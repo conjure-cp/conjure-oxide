@@ -313,7 +313,7 @@ fn remove_constants_from_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
             for e in exprs {
                 match e {
                     Expr::ConstantBool(val) => {
-                        if (val) {
+                        if (*val) {
                             // If we find a true, the whole expression is true
                             return Ok(Expr::ConstantBool(true));
                         } else {
@@ -349,7 +349,7 @@ fn remove_constants_from_and(expr: &Expr) -> Result<Expr, RuleApplicationError> 
             for e in exprs {
                 match e {
                     Expr::ConstantBool(val) => {
-                        if (!val) {
+                        if (!*val) {
                             // If we find a false, the whole expression is false
                             return Ok(Expr::ConstantBool(false));
                         } else {
