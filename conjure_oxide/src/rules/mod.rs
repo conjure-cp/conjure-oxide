@@ -160,6 +160,7 @@ fn distribute_not_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 /**
  * Distribute `not` over `and`:
  * ```text
+
  * not (a and b) = (not a) or (not b)
  * ```
 */
