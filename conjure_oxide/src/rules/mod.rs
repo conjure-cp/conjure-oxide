@@ -103,7 +103,7 @@ fn unwrap_nested_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
                     _ => new_exprs.push(e.clone()),
                 }
             }
-            if (!changed) {
+            if !changed {
                 return Err(RuleApplicationError::RuleNotApplicable);
             }
             Ok(Expr::Or(new_exprs))
@@ -136,7 +136,7 @@ fn unwrap_nested_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
                     _ => new_exprs.push(e.clone()),
                 }
             }
-            if (!changed) {
+            if !changed {
                 return Err(RuleApplicationError::RuleNotApplicable);
             }
             Ok(Expr::And(new_exprs))
@@ -269,10 +269,10 @@ fn distribute_or_over_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 fn remove_trivial_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
         Expr::And(exprs) => {
-            if (exprs.len() == 1) {
+            if exprs.len() == 1 {
                 return Ok(exprs[0].clone());
             }
-            return Err(RuleApplicationError::RuleNotApplicable);
+            Err(RuleApplicationError::RuleNotApplicable)
         }
         _ => Err(RuleApplicationError::RuleNotApplicable),
     }
@@ -288,10 +288,10 @@ fn remove_trivial_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 fn remove_trivial_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
         Expr::Or(exprs) => {
-            if (exprs.len() == 1) {
+            if exprs.len() == 1 {
                 return Ok(exprs[0].clone());
             }
-            return Err(RuleApplicationError::RuleNotApplicable);
+            Err(RuleApplicationError::RuleNotApplicable)
         }
         _ => Err(RuleApplicationError::RuleNotApplicable),
     }
@@ -313,7 +313,7 @@ fn remove_constants_from_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
             for e in exprs {
                 match e {
                     Expr::ConstantBool(val) => {
-                        if (*val) {
+                        if *val {
                             // If we find a true, the whole expression is true
                             return Ok(Expr::ConstantBool(true));
                         } else {
@@ -324,7 +324,7 @@ fn remove_constants_from_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
                     _ => new_exprs.push(e.clone()),
                 }
             }
-            if (!changed) {
+            if !changed {
                 return Err(RuleApplicationError::RuleNotApplicable);
             }
             Ok(Expr::Or(new_exprs))
@@ -349,7 +349,7 @@ fn remove_constants_from_and(expr: &Expr) -> Result<Expr, RuleApplicationError> 
             for e in exprs {
                 match e {
                     Expr::ConstantBool(val) => {
-                        if (!*val) {
+                        if !*val {
                             // If we find a false, the whole expression is false
                             return Ok(Expr::ConstantBool(false));
                         } else {
@@ -360,7 +360,7 @@ fn remove_constants_from_and(expr: &Expr) -> Result<Expr, RuleApplicationError> 
                     _ => new_exprs.push(e.clone()),
                 }
             }
-            if (!changed) {
+            if !changed {
                 return Err(RuleApplicationError::RuleNotApplicable);
             }
             Ok(Expr::And(new_exprs))
