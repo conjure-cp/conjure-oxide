@@ -153,7 +153,7 @@ fn unwrap_nested_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 * ```
 */
 #[register_rule]
-fn distribute_not_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn distribute_not_over_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
         Expr::Not(contents) => match contents.as_ref() {
             Expr::Or(exprs) => {
@@ -195,7 +195,7 @@ fn remove_double_negation(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  * ```
 */
 #[register_rule]
-fn distribute_not_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn distribute_not_over_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
         Expr::Not(contents) => match contents.as_ref() {
             Expr::And(exprs) => {
@@ -220,6 +220,17 @@ fn distribute_not_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 */
 #[register_rule]
 fn distribute_or_over_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+    fn find_and(exprs: &Vec<Expr>) -> Option<usize> {
+        // ToDo: may be better to move this to some kind of utils module?
+        for (i, e) in exprs.iter().enumerate() {
+            match e {
+                Expr::And(_) => return Some(i),
+                _ => (),
+            }
+        }
+        None
+    }
+
     match expr {
         Expr::Or(exprs) => match find_and(exprs) {
             Some(idx) => {
@@ -248,13 +259,40 @@ fn distribute_or_over_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     }
 }
 
-fn find_and(exprs: &Vec<Expr>) -> Option<usize> {
-    // ToDo: may be better to move this to some kind of utils module?
-    for (i, e) in exprs.iter().enumerate() {
-        match e {
-            Expr::And(_) => return Some(i),
-            _ => (),
+/**
+* Remove trivial `and` (only one element):
+* ```text
+* and([a]) = a
+* ```
+*/
+#[register_rule]
+fn remove_trivial_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+    match expr {
+        Expr::And(exprs) => {
+            if (exprs.len() == 1) {
+                return Ok(exprs[0].clone());
+            }
+            return Err(RuleApplicationError::RuleNotApplicable);
         }
+        _ => Err(RuleApplicationError::RuleNotApplicable),
     }
-    None
+}
+
+/**
+* Remove trivial `or` (only one element):
+* ```text
+* or([a]) = a
+* ```
+*/
+#[register_rule]
+fn remove_trivial_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+    match expr {
+        Expr::Or(exprs) => {
+            if (exprs.len() == 1) {
+                return Ok(exprs[0].clone());
+            }
+            return Err(RuleApplicationError::RuleNotApplicable);
+        }
+        _ => Err(RuleApplicationError::RuleNotApplicable),
+    }
 }
