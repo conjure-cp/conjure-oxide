@@ -2,25 +2,32 @@ use std::collections::HashMap;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput};
+use syn::{parse_macro_input, parse_quote, visit_mut::VisitMut, Attribute, ItemEnum, Variant};
 
 // A nice S.O answer that helped write the syn code :)
 // https://stackoverflow.com/a/65182902
 
-#[proc_macro_derive(ASTWithDocCategories, attributes(solver))]
-pub fn astdoc_derive(input: TokenStream) -> TokenStream {
+struct RemoveSolverAttrs;
+impl VisitMut for RemoveSolverAttrs {
+    fn visit_variant_mut(&mut self, i: &mut Variant) {
+        i.attrs = i
+            .attrs
+            .iter()
+            .filter(|attr| !attr.path().is_ident("solver"))
+            .map(|attr| attr.clone())
+            .collect();
+        return;
+    }
+}
+
+#[proc_macro_attribute]
+pub fn doc_solver_support(_attr: TokenStream, input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
-    let input = parse_macro_input!(input as DeriveInput);
+    let mut input = parse_macro_input!(input as ItemEnum);
     let mut nodes_supported_by_solver: HashMap<String, Vec<syn::Ident>> = HashMap::new();
 
-    // Ensure that this is an enum.
-    let data: syn::DataEnum = match &input.data {
-        syn::Data::Enum(d) => d.clone(),
-        _ => panic!("ASTWithDocCategories only supports enums"),
-    };
-
     // process each item inside the enum.
-    for variant in data.variants.iter() {
+    for variant in input.variants.iter() {
         let variant_ident = variant.ident.clone();
         for attr in variant.attrs.iter() {
             if !attr.path().is_ident("solver") {
@@ -46,6 +53,10 @@ pub fn astdoc_derive(input: TokenStream) -> TokenStream {
         }
     }
 
+    // we must remove all references to #[solver] before we finish expanding the macro,
+    // as it does not exist outside of the context of this macro.
+    RemoveSolverAttrs.visit_item_enum_mut(&mut input);
+
     // Build the doc string.
 
     // Note that quote wants us to build the doc message first, as it cannot interpolate doc
@@ -67,7 +78,7 @@ pub fn astdoc_derive(input: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         #[doc = #doc_msg]
-        pub const SOLVERS: i32 = 1;
+        #input
     };
 
     TokenStream::from(expanded)
