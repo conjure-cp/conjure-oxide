@@ -1,6 +1,7 @@
 use conjure_core::{ast::Expression as Expr, rule::RuleApplicationError};
-use conjure_rules::register_rule; // #[register_rule]
+use conjure_rules::register_rule;
 
+// #[register_rule]
 // fn identity(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 //     Ok(expr.clone())
 // }
