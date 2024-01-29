@@ -3,6 +3,7 @@ pub mod find_conjure;
 pub mod parse;
 mod rules;
 pub mod solvers;
+mod utils;
 
 pub use conjure_core::ast; // re-export core::ast as conjure_oxide::ast
 pub use conjure_core::ast::Model; // rexport core::ast::Model as conjure_oxide::Model

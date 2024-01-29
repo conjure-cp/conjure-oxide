@@ -467,3 +467,58 @@ fn rule_distribute_not_over_or() {
         ])
     );
 }
+
+#[test]
+fn rule_distribute_not_over_and_not_changed() {
+    let distribute_not_over_and = get_rule_by_name("distribute_not_over_and").unwrap();
+
+    let expr = Expression::Not(Box::new(Expression::Reference(Name::UserName(
+        String::from("a"),
+    ))));
+
+    let result = distribute_not_over_and.apply(&expr);
+
+    assert!(result.is_err());
+}
+
+#[test]
+fn rule_distribute_not_over_or_not_changed() {
+    let distribute_not_over_or = get_rule_by_name("distribute_not_over_or").unwrap();
+
+    let expr = Expression::Not(Box::new(Expression::Reference(Name::UserName(
+        String::from("a"),
+    ))));
+
+    let result = distribute_not_over_or.apply(&expr);
+
+    assert!(result.is_err());
+}
+
+#[test]
+fn rule_distribute_or_over_and() {
+    let distribute_or_over_and = get_rule_by_name("distribute_or_over_and").unwrap();
+
+    let mut expr = Expression::Or(vec![
+        Expression::And(vec![
+            Expression::Reference(Name::MachineName(1)),
+            Expression::Reference(Name::MachineName(2)),
+        ]),
+        Expression::Reference(Name::MachineName(3)),
+    ]);
+
+    expr = distribute_or_over_and.apply(&expr).unwrap();
+
+    assert_eq!(
+        expr,
+        Expression::And(vec![
+            Expression::Or(vec![
+                Expression::Reference(Name::MachineName(3)),
+                Expression::Reference(Name::MachineName(1)),
+            ]),
+            Expression::Or(vec![
+                Expression::Reference(Name::MachineName(3)),
+                Expression::Reference(Name::MachineName(2)),
+            ]),
+        ]),
+    );
+}
