@@ -257,3 +257,213 @@ fn reduce_solve_xyz() {
 
     minion_rs::run_minion(minion_model, callback).unwrap();
 }
+
+#[test]
+fn rule_remove_double_negation() {
+    let remove_double_negation = get_rule_by_name("remove_double_negation").unwrap();
+
+    let mut expr = Expression::Not(Box::new(Expression::Not(Box::new(
+        Expression::ConstantBool(true),
+    ))));
+
+    expr = remove_double_negation.apply(&expr).unwrap();
+
+    assert_eq!(expr, Expression::ConstantBool(true));
+}
+
+#[test]
+fn rule_unwrap_nested_or() {
+    let unwrap_nested_or = get_rule_by_name("unwrap_nested_or").unwrap();
+
+    let mut expr = Expression::Or(vec![
+        Expression::Or(vec![
+            Expression::ConstantBool(true),
+            Expression::ConstantBool(false),
+        ]),
+        Expression::ConstantBool(true),
+    ]);
+
+    expr = unwrap_nested_or.apply(&expr).unwrap();
+
+    assert_eq!(
+        expr,
+        Expression::Or(vec![
+            Expression::ConstantBool(true),
+            Expression::ConstantBool(false),
+            Expression::ConstantBool(true),
+        ])
+    );
+}
+
+#[test]
+fn rule_unwrap_nested_and() {
+    let unwrap_nested_and = get_rule_by_name("unwrap_nested_and").unwrap();
+
+    let mut expr = Expression::And(vec![
+        Expression::And(vec![
+            Expression::ConstantBool(true),
+            Expression::ConstantBool(false),
+        ]),
+        Expression::ConstantBool(true),
+    ]);
+
+    expr = unwrap_nested_and.apply(&expr).unwrap();
+
+    assert_eq!(
+        expr,
+        Expression::And(vec![
+            Expression::ConstantBool(true),
+            Expression::ConstantBool(false),
+            Expression::ConstantBool(true),
+        ])
+    );
+}
+
+#[test]
+fn unwrap_nested_or_not_changed() {
+    let unwrap_nested_or = get_rule_by_name("unwrap_nested_or").unwrap();
+
+    let expr = Expression::Or(vec![
+        Expression::ConstantBool(true),
+        Expression::ConstantBool(false),
+    ]);
+
+    let result = unwrap_nested_or.apply(&expr);
+
+    assert!(result.is_err());
+}
+
+#[test]
+fn unwrap_nested_and_not_changed() {
+    let unwrap_nested_and = get_rule_by_name("unwrap_nested_and").unwrap();
+
+    let expr = Expression::And(vec![
+        Expression::ConstantBool(true),
+        Expression::ConstantBool(false),
+    ]);
+
+    let result = unwrap_nested_and.apply(&expr);
+
+    assert!(result.is_err());
+}
+
+#[test]
+fn remove_trivial_and_or() {
+    let remove_trivial_and = get_rule_by_name("remove_trivial_and").unwrap();
+    let remove_trivial_or = get_rule_by_name("remove_trivial_or").unwrap();
+
+    let mut expr_and = Expression::And(vec![Expression::ConstantBool(true)]);
+    let mut expr_or = Expression::Or(vec![Expression::ConstantBool(false)]);
+
+    expr_and = remove_trivial_and.apply(&expr_and).unwrap();
+    expr_or = remove_trivial_or.apply(&expr_or).unwrap();
+
+    assert_eq!(expr_and, Expression::ConstantBool(true));
+    assert_eq!(expr_or, Expression::ConstantBool(false));
+}
+
+#[test]
+fn rule_remove_constants_from_or() {
+    let remove_constants_from_or = get_rule_by_name("remove_constants_from_or").unwrap();
+
+    let mut expr = Expression::Or(vec![
+        Expression::ConstantBool(true),
+        Expression::ConstantBool(false),
+        Expression::Reference(Name::UserName(String::from("a"))),
+    ]);
+
+    expr = remove_constants_from_or.apply(&expr).unwrap();
+
+    assert_eq!(expr, Expression::ConstantBool(true));
+}
+
+#[test]
+fn rule_remove_constants_from_and() {
+    let remove_constants_from_and = get_rule_by_name("remove_constants_from_and").unwrap();
+
+    let mut expr = Expression::And(vec![
+        Expression::ConstantBool(true),
+        Expression::ConstantBool(false),
+        Expression::Reference(Name::UserName(String::from("a"))),
+    ]);
+
+    expr = remove_constants_from_and.apply(&expr).unwrap();
+
+    assert_eq!(expr, Expression::ConstantBool(false));
+}
+
+#[test]
+fn remove_constants_from_or_not_changed() {
+    let remove_constants_from_or = get_rule_by_name("remove_constants_from_or").unwrap();
+
+    let expr = Expression::Or(vec![
+        Expression::Reference(Name::UserName(String::from("a"))),
+        Expression::Reference(Name::UserName(String::from("b"))),
+    ]);
+
+    let result = remove_constants_from_or.apply(&expr);
+
+    assert!(result.is_err());
+}
+
+#[test]
+fn remove_constants_from_and_not_changed() {
+    let remove_constants_from_and = get_rule_by_name("remove_constants_from_and").unwrap();
+
+    let expr = Expression::And(vec![
+        Expression::Reference(Name::UserName(String::from("a"))),
+        Expression::Reference(Name::UserName(String::from("b"))),
+    ]);
+
+    let result = remove_constants_from_and.apply(&expr);
+
+    assert!(result.is_err());
+}
+
+#[test]
+fn rule_distribute_not_over_and() {
+    let distribute_not_over_and = get_rule_by_name("distribute_not_over_and").unwrap();
+
+    let mut expr = Expression::Not(Box::new(Expression::And(vec![
+        Expression::Reference(Name::UserName(String::from("a"))),
+        Expression::Reference(Name::UserName(String::from("b"))),
+    ])));
+
+    expr = distribute_not_over_and.apply(&expr).unwrap();
+
+    assert_eq!(
+        expr,
+        Expression::Or(vec![
+            Expression::Not(Box::new(Expression::Reference(Name::UserName(
+                String::from("a")
+            )))),
+            Expression::Not(Box::new(Expression::Reference(Name::UserName(
+                String::from("b")
+            )))),
+        ])
+    );
+}
+
+#[test]
+fn rule_distribute_not_over_or() {
+    let distribute_not_over_or = get_rule_by_name("distribute_not_over_or").unwrap();
+
+    let mut expr = Expression::Not(Box::new(Expression::Or(vec![
+        Expression::Reference(Name::UserName(String::from("a"))),
+        Expression::Reference(Name::UserName(String::from("b"))),
+    ])));
+
+    expr = distribute_not_over_or.apply(&expr).unwrap();
+
+    assert_eq!(
+        expr,
+        Expression::And(vec![
+            Expression::Not(Box::new(Expression::Reference(Name::UserName(
+                String::from("a")
+            )))),
+            Expression::Not(Box::new(Expression::Reference(Name::UserName(
+                String::from("b")
+            )))),
+        ])
+    );
+}
