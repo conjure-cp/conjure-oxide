@@ -101,6 +101,8 @@ pub enum Range<A> {
 #[non_exhaustive]
 pub enum Expression {
     ConstantInt(i32),
+    ConstantBool(bool),
+
     Reference(Name),
 
     Sum(Vec<Expression>),

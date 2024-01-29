@@ -296,3 +296,93 @@ fn remove_trivial_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
         _ => Err(RuleApplicationError::RuleNotApplicable),
     }
 }
+
+/**
+* Remove constant bools from or expressions
+* ```text
+* or([true, a]) = true
+* or([false, a]) = a
+* ```
+*/
+#[register_rule]
+fn remove_constants_from_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+    match expr {
+        Expr::Or(exprs) => {
+            let mut new_exprs = Vec::new();
+            let mut changed = false;
+            for e in exprs {
+                match e {
+                    Expr::ConstantBool(val) => {
+                        if (val) {
+                            // If we find a true, the whole expression is true
+                            return Ok(Expr::ConstantBool(true));
+                        } else {
+                            // If we find a false, we can ignore it
+                            changed = true;
+                        }
+                    }
+                    _ => new_exprs.push(e.clone()),
+                }
+            }
+            if (!changed) {
+                return Err(RuleApplicationError::RuleNotApplicable);
+            }
+            Ok(Expr::Or(new_exprs))
+        }
+        _ => Err(RuleApplicationError::RuleNotApplicable),
+    }
+}
+
+/**
+* Remove constant bools from and expressions
+* ```text
+* and([true, a]) = a
+* and([false, a]) = false
+* ```
+*/
+#[register_rule]
+fn remove_constants_from_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+    match expr {
+        Expr::And(exprs) => {
+            let mut new_exprs = Vec::new();
+            let mut changed = false;
+            for e in exprs {
+                match e {
+                    Expr::ConstantBool(val) => {
+                        if (!val) {
+                            // If we find a false, the whole expression is false
+                            return Ok(Expr::ConstantBool(false));
+                        } else {
+                            // If we find a true, we can ignore it
+                            changed = true;
+                        }
+                    }
+                    _ => new_exprs.push(e.clone()),
+                }
+            }
+            if (!changed) {
+                return Err(RuleApplicationError::RuleNotApplicable);
+            }
+            Ok(Expr::And(new_exprs))
+        }
+        _ => Err(RuleApplicationError::RuleNotApplicable),
+    }
+}
+
+/**
+* Remove constant bools from not expressions
+* ```text
+* not(true) = false
+* not(false) = true
+* ```
+*/
+#[register_rule]
+fn evaluate_constant_not(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+    match expr {
+        Expr::Not(contents) => match contents.as_ref() {
+            Expr::ConstantBool(val) => Ok(Expr::ConstantBool(!val)),
+            _ => Err(RuleApplicationError::RuleNotApplicable),
+        },
+        _ => Err(RuleApplicationError::RuleNotApplicable),
+    }
+}
