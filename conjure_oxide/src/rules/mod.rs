@@ -92,7 +92,7 @@ fn unwrap_nested_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
         Expr::Or(exprs) => {
             let mut new_exprs = Vec::new();
             for e in exprs {
-                match e.as_ref() {
+                match e {
                     Expr::Or(exprs) => {
                         for e in exprs {
                             new_exprs.push(e.clone());
@@ -119,7 +119,7 @@ fn unwrap_nested_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
         Expr::And(exprs) => {
             let mut new_exprs = Vec::new();
             for e in exprs {
-                match e.as_ref() {
+                match e {
                     Expr::And(exprs) => {
                         for e in exprs {
                             new_exprs.push(e.clone());
@@ -137,13 +137,13 @@ fn unwrap_nested_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 /**
  * Distribute `not` over `or`:
  * ```text
- * not (a or b) = (not a) and (not b)
+ * not(or(a, b)) = and(not a, not b)
  * ```
  */
 #[register_rule]
 fn distribute_not_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
-        Expr::Not(expression) => match expression.as_ref() {
+        Expr::Not(contents) => match contents.as_ref() {
             Expr::Or(exprs) => {
                 let mut new_exprs = Vec::new();
                 for e in exprs {
@@ -161,13 +161,13 @@ fn distribute_not_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  * Distribute `not` over `and`:
  * ```text
 
- * not (a and b) = (not a) or (not b)
+ * not(and(a, b)) = or(not a, not b)
  * ```
 */
 #[register_rule]
 fn distribute_not_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
-        Expr::Not(expression) => match expression.as_ref() {
+        Expr::Not(contents) => match contents.as_ref() {
             Expr::And(exprs) => {
                 let mut new_exprs = Vec::new();
                 for e in exprs {
