@@ -1,7 +1,6 @@
 use conjure_core::{ast::Expression as Expr, rule::RuleApplicationError};
-use conjure_rules::register_rule;
+use conjure_rules::register_rule; // #[register_rule]
 
-// #[register_rule]
 // fn identity(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 //     Ok(expr.clone())
 // }
@@ -82,6 +81,7 @@ fn lt_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 
 /**
  * Unwrap nested `or`
+
  * ```text
  * or(or(a, b), c) = or(a, b, c)
  * ```
@@ -91,15 +91,20 @@ fn unwrap_nested_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
         Expr::Or(exprs) => {
             let mut new_exprs = Vec::new();
+            let mut changed = false;
             for e in exprs {
                 match e {
                     Expr::Or(exprs) => {
+                        changed = true;
                         for e in exprs {
                             new_exprs.push(e.clone());
                         }
                     }
                     _ => new_exprs.push(e.clone()),
                 }
+            }
+            if (!changed) {
+                return Err(RuleApplicationError::RuleNotApplicable);
             }
             Ok(Expr::Or(new_exprs))
         }
@@ -109,6 +114,7 @@ fn unwrap_nested_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 
 /**
  * Unwrap nested `and`
+
  * ```text
  * and(and(a, b), c) = and(a, b, c)
  * ```
@@ -118,15 +124,20 @@ fn unwrap_nested_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
         Expr::And(exprs) => {
             let mut new_exprs = Vec::new();
+            let mut changed = false;
             for e in exprs {
                 match e {
                     Expr::And(exprs) => {
+                        changed = true;
                         for e in exprs {
                             new_exprs.push(e.clone());
                         }
                     }
                     _ => new_exprs.push(e.clone()),
                 }
+            }
+            if (!changed) {
+                return Err(RuleApplicationError::RuleNotApplicable);
             }
             Ok(Expr::And(new_exprs))
         }
@@ -135,11 +146,12 @@ fn unwrap_nested_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 }
 
 /**
- * Distribute `not` over `or`:
- * ```text
- * not(or(a, b)) = and(not a, not b)
- * ```
- */
+* Distribute `not` over `or`:
+
+* ```text
+* not(or(a, b)) = and(not a, not b)
+* ```
+*/
 #[register_rule]
 fn distribute_not_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
@@ -158,9 +170,27 @@ fn distribute_not_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 }
 
 /**
- * Distribute `not` over `and`:
- * ```text
+* Remove double negation:
 
+* ```text
+* not(not(a)) = a
+* ```
+*/
+#[register_rule]
+fn remove_double_negation(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+    match expr {
+        Expr::Not(contents) => match contents.as_ref() {
+            Expr::Not(expr_box) => Ok(*expr_box.clone()),
+            _ => Err(RuleApplicationError::RuleNotApplicable),
+        },
+        _ => Err(RuleApplicationError::RuleNotApplicable),
+    }
+}
+
+/**
+ * Distribute `not` over `and`:
+
+ * ```text
  * not(and(a, b)) = or(not a, not b)
  * ```
 */
@@ -179,4 +209,52 @@ fn distribute_not_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
         },
         _ => Err(RuleApplicationError::RuleNotApplicable),
     }
+}
+
+/**
+* Apply the Distributive Law to expressions like `Or([..., And(a, b)])`
+
+* ```text
+* or(and(a, b), c) = and(or(a, c), or(b, c))
+* ```
+*/
+#[register_rule]
+fn distribute_or_over_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+    match expr {
+        Expr::Or(exprs) => match find_and(exprs) {
+            Some(idx) => {
+                let mut rest = exprs.clone();
+                let and_expr = rest.remove(idx);
+
+                match and_expr {
+                    Expr::And(and_exprs) => {
+                        let mut new_and_contents = Vec::new();
+
+                        for e in and_exprs {
+                            // ToDo: Cloning everything may be a bit inefficient - discuss
+                            let mut new_or_contents = rest.clone();
+                            new_or_contents.push(e.clone());
+                            new_and_contents.push(Expr::Or(new_or_contents))
+                        }
+
+                        Ok(Expr::And(new_and_contents))
+                    }
+                    _ => Err(RuleApplicationError::RuleNotApplicable),
+                }
+            }
+            None => Err(RuleApplicationError::RuleNotApplicable),
+        },
+        _ => Err(RuleApplicationError::RuleNotApplicable),
+    }
+}
+
+fn find_and(exprs: &Vec<Expr>) -> Option<usize> {
+    // ToDo: may be better to move this to some kind of utils module?
+    for (i, e) in exprs.iter().enumerate() {
+        match e {
+            Expr::And(_) => return Some(i),
+            _ => (),
+        }
+    }
+    None
 }
