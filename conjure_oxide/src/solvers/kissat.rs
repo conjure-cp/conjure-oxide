@@ -317,8 +317,6 @@ mod tests {
     use crate::solvers::kissat::CNF;
     use crate::solvers::{FromConjureModel, SolverError};
     use crate::utils::{assert_eq_any_order, if_ok};
-    use std::fmt::Debug;
-    use std::hash::Hash;
 
     #[test]
     fn test_single_var() {
