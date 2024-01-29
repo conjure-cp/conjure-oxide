@@ -147,6 +147,7 @@ impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
             Expression::ConstantInt(i) => write!(f, "ConstantInt({})", i),
+            Expression::ConstantBool(b) => write!(f, "ConstantBool({})", b),
             Expression::Reference(name) => write!(f, "Reference({})", name),
             Expression::Sum(expressions) => write!(f, "Sum({})", display_expressions(expressions)),
             Expression::Not(expr_box) => write!(f, "Not({})", expr_box.clone()),
@@ -171,6 +172,7 @@ impl Display for Expression {
                 box2.clone(),
                 box3.clone()
             ),
+            _ => write!(f, "Expression::Unknown"),
         }
     }
 }
