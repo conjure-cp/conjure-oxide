@@ -1,3 +1,4 @@
+use conjure_ast_proc_macro::ASTWithDocCategories;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::collections::HashMap;
@@ -97,12 +98,15 @@ pub enum Range<A> {
     Bounded(A, A),
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, ASTWithDocCategories)]
 #[non_exhaustive]
 pub enum Expression {
+    #[solver(Minion)]
     ConstantInt(i32),
     Reference(Name),
 
+    #[solver(Minion)]
+    #[solver(Chuffed)]
     Sum(Vec<Expression>),
 
     Not(Box<Expression>),
