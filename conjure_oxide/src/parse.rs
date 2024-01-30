@@ -165,6 +165,9 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
                 parse_bin_op(bin_op, binary_operators)
             }
             Value::Object(op_sum) if op_sum.contains_key("MkOpSum") => parse_sum(op_sum),
+            Value::Object(op_and) if op_and.contains_key("MkOpAnd") => parse_and(op_and),
+            Value::Object(op_or) if op_or.contains_key("MkOpOr") => parse_or(op_or),
+            Value::Object(op_not) if op_not.contains_key("MkOpNot") => parse_not(op_not),
             otherwise => panic!("Unhandled Op {:#?}", otherwise),
         },
         Value::Object(refe) if refe.contains_key("Reference") => {
@@ -176,6 +179,7 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
     }
 }
 
+// TODO: generalize with generics?
 fn parse_sum(op_sum: &serde_json::Map<String, Value>) -> Option<Expression> {
     let args = &op_sum["MkOpSum"]["AbstractLiteral"]["AbsLitMatrix"][1];
     let args_parsed: Vec<Expression> = args
@@ -184,6 +188,32 @@ fn parse_sum(op_sum: &serde_json::Map<String, Value>) -> Option<Expression> {
         .map(|x| parse_expression(x).unwrap())
         .collect();
     Some(Expression::Sum(args_parsed))
+}
+
+fn parse_and(op_sum: &serde_json::Map<String, Value>) -> Option<Expression> {
+    let args = &op_sum["MkOpAnd"]["AbstractLiteral"]["AbsLitMatrix"][1];
+    let args_parsed: Vec<Expression> = args
+        .as_array()?
+        .iter()
+        .map(|x| parse_expression(x).unwrap())
+        .collect();
+    Some(Expression::And(args_parsed))
+}
+
+fn parse_or(op_sum: &serde_json::Map<String, Value>) -> Option<Expression> {
+    let args = &op_sum["MkOpOr"]["AbstractLiteral"]["AbsLitMatrix"][1];
+    let args_parsed: Vec<Expression> = args
+        .as_array()?
+        .iter()
+        .map(|x| parse_expression(x).unwrap())
+        .collect();
+    Some(Expression::Or(args_parsed))
+}
+
+fn parse_not(op_sum: &serde_json::Map<String, Value>) -> Option<Expression> {
+    let arg = &op_sum["MkOpNot"];
+    let arg_parsed: Expression = parse_expression(arg).unwrap();
+    Some(Expression::Not(Box::new(arg_parsed)))
 }
 
 fn parse_bin_op(
