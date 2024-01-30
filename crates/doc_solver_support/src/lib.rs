@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, parse_quote, visit_mut::VisitMut, Attribute, ItemEnum, Variant};
+use syn::{parse_macro_input, visit_mut::VisitMut, ItemEnum, Variant};
 
 // A nice S.O answer that helped write the syn code :)
 // https://stackoverflow.com/a/65182902
@@ -20,6 +20,44 @@ impl VisitMut for RemoveSolverAttrs {
     }
 }
 
+/// A macro to document the AST's variants by the solvers they support.
+///
+/// The Conjure-Oxide AST is used as the singular intermediate language between input and solvers.
+/// A consequence of this is that the AST contains all possible supported expressions for all
+/// solvers, as well as the high level Essence language we take as input. A given
+/// solver only "supports" a small subset of the AST, and will reject the rest.
+///
+/// The documentation this generates helps determine which AST nodes are used for which backends,
+/// to help rule writers.
+///
+/// # Example
+///
+/// ```rust
+/// use doc_solver_support::doc_solver_support;
+///
+/// #[doc_solver_support]
+/// pub enum Expression {
+///    #[solver(Minion)]
+///    ConstantInt(i32),
+///    // ...
+///    #[solver(Chuffed)]
+///    #[solver(Minion)]
+///    Sum(Vec<Expression>)
+///    }
+/// ```
+///
+/// The Expression type will have the following lists appended to its documentation:
+///
+///```text
+/// ## Supported by `minion`
+///    ConstantInt(i32)
+///    Sum(Vec<Expression>)
+///
+///
+/// ## Supported by `chuffed`
+///    ConstantInt(i32)
+///    Sum(Vec<Expression>)
+/// ```
 #[proc_macro_attribute]
 pub fn doc_solver_support(_attr: TokenStream, input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree

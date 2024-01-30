@@ -1,4 +1,4 @@
-use conjure_ast_proc_macro::doc_solver_support;
+use doc_solver_support::doc_solver_support;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::collections::HashMap;
