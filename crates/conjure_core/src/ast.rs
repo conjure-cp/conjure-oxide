@@ -1,3 +1,4 @@
+use doc_solver_support::doc_solver_support;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::collections::HashMap;
@@ -97,16 +98,22 @@ pub enum Range<A> {
     Bounded(A, A),
 }
 
+#[doc_solver_support]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub enum Expression {
+    #[solver(Minion, SAT)]
     ConstantInt(i32),
+    #[solver(Minion)]
     Reference(Name),
 
     Sum(Vec<Expression>),
 
+    #[solver(SAT)]
     Not(Box<Expression>),
+    #[solver(SAT)]
     Or(Vec<Expression>),
+    #[solver(SAT)]
     And(Vec<Expression>),
 
     Eq(Box<Expression>, Box<Expression>),
@@ -117,8 +124,11 @@ pub enum Expression {
     Lt(Box<Expression>, Box<Expression>),
 
     // Flattened Constraints
+    #[solver(Minion)]
     SumGeq(Vec<Expression>, Box<Expression>),
+    #[solver(Minion)]
     SumLeq(Vec<Expression>, Box<Expression>),
+    #[solver(Minion)]
     Ineq(Box<Expression>, Box<Expression>, Box<Expression>),
 }
 
