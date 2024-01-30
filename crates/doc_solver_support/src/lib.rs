@@ -1,8 +1,12 @@
 use std::collections::HashMap;
 
+use itertools::Itertools;
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, visit_mut::VisitMut, ItemEnum, Variant, punctuated::Punctuated, Token, Meta};
+use syn::{
+    parse_macro_input, parse_quote, punctuated::Punctuated, visit_mut::VisitMut, Attribute,
+    ItemEnum, Meta, Token, Variant,
+};
 
 // A nice S.O answer that helped write the syn code :)
 // https://stackoverflow.com/a/65182902
@@ -10,12 +14,40 @@ use syn::{parse_macro_input, visit_mut::VisitMut, ItemEnum, Variant, punctuated:
 struct RemoveSolverAttrs;
 impl VisitMut for RemoveSolverAttrs {
     fn visit_variant_mut(&mut self, i: &mut Variant) {
+        // 1. generate docstring for variant
+        // Supported by: minion, sat ...
+        //
+        // 2. delete #[solver] attributes
+
+        let mut solvers: Vec<String> = vec![];
+        for attr in i.attrs.iter() {
+            if !attr.path().is_ident("solver") {
+                continue;
+            }
+            let nested = attr
+                .parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
+                .unwrap();
+            for arg in nested {
+                let ident = arg.path().require_ident().unwrap();
+                let solver_name = ident.to_string();
+                solvers.push(solver_name);
+            }
+        }
+
+        if !solvers.is_empty() {
+            let solver_list: String = solvers.into_iter().intersperse(", ".into()).collect();
+            let doc_string: String = format!("**Supported by:** {}.\n", solver_list);
+            let doc_attr: Attribute = parse_quote!(#[doc = #doc_string]);
+            i.attrs.push(doc_attr);
+        }
+
         i.attrs = i
             .attrs
             .iter()
             .filter(|attr| !attr.path().is_ident("solver"))
             .map(|attr| attr.clone())
             .collect();
+
         return;
     }
 }
@@ -102,10 +134,12 @@ pub fn doc_solver_support(_attr: TokenStream, input: TokenStream) -> TokenStream
                 continue;
             }
 
-            let nested = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated).unwrap();
+            let nested = attr
+                .parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated)
+                .unwrap();
             for arg in nested {
                 let ident = arg.path().require_ident().unwrap();
-                let solver_name = ident.to_string().to_lowercase();
+                let solver_name = ident.to_string();
                 match nodes_supported_by_solver.get_mut(&solver_name) {
                     None => {
                         nodes_supported_by_solver.insert(solver_name, vec![variant_ident.clone()]);
@@ -116,7 +150,6 @@ pub fn doc_solver_support(_attr: TokenStream, input: TokenStream) -> TokenStream
                         ()
                     }
                 };
-                
             }
         }
     }
@@ -130,22 +163,28 @@ pub fn doc_solver_support(_attr: TokenStream, input: TokenStream) -> TokenStream
     // Note that quote wants us to build the doc message first, as it cannot interpolate doc
     // comments well.
     // https://docs.rs/quote/latest/quote/macro.quote.html#interpolating-text-inside-of-doc-comments
-    let mut doc_msg: String = "# Supported AST Nodes for Solvers\n".into();
+    let mut doc_msg: String = "# Solver Support\n".into();
     for solver in nodes_supported_by_solver.keys() {
         // a nice title
-        doc_msg.push_str(&format!("## `{}`\n```rust\n", solver));
+        doc_msg.push_str(&format!("## {}\n", solver));
 
         // list all the ast nodes for this solver
-        for node in nodes_supported_by_solver.get(solver).unwrap() {
-            doc_msg.push_str(&format!("{}\n", node.to_string()));
+        for node in nodes_supported_by_solver
+            .get(solver)
+            .unwrap()
+            .iter()
+            .map(|x| x.to_string())
+            .sorted()
+        {
+            doc_msg.push_str(&format!("* [`{}`]({}::{})\n", node, input.ident, node));
         }
 
-        // end the code block
-        doc_msg.push_str(&format!("```\n"));
+        // end list
+        doc_msg.push_str("\n");
     }
 
+    input.attrs.push(parse_quote!(#[doc = #doc_msg]));
     let expanded = quote! {
-        #[doc = #doc_msg]
         #input
     };
 
