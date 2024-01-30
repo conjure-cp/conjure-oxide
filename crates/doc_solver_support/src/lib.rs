@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, visit_mut::VisitMut, ItemEnum, Variant};
+use syn::{parse_macro_input, visit_mut::VisitMut, ItemEnum, Variant, punctuated::Punctuated, Token, Meta};
 
 // A nice S.O answer that helped write the syn code :)
 // https://stackoverflow.com/a/65182902
@@ -32,7 +32,7 @@ impl VisitMut for RemoveSolverAttrs {
 ///
 /// # Example
 ///
-/// ```rust
+/// ```
 /// use doc_solver_support::doc_solver_support;
 ///
 /// #[doc_solver_support]
@@ -58,6 +58,36 @@ impl VisitMut for RemoveSolverAttrs {
 ///    ConstantInt(i32)
 ///    Sum(Vec<Expression>)
 /// ```
+///
+/// Two equivalent syntaxes exist for specifying supported solvers:
+///
+/// ```
+///# use doc_solver_support::doc_solver_support;
+///#
+///# #[doc_solver_support]
+///# pub enum Expression {
+///#    #[solver(Minion)]
+///#    ConstantInt(i32),
+///#    // ...
+///     #[solver(Chuffed)]
+///     #[solver(Minion)]
+///     Sum(Vec<Expression>)
+///#    }
+/// ```
+///
+/// ```
+///# use doc_solver_support::doc_solver_support;
+///#
+///# #[doc_solver_support]
+///# pub enum Expression {
+///#    #[solver(Minion)]
+///#    ConstantInt(i32),
+///#    // ...
+///     #[solver(Minion,Chuffed)]
+///     Sum(Vec<Expression>)
+///#    }
+/// ```
+///
 #[proc_macro_attribute]
 pub fn doc_solver_support(_attr: TokenStream, input: TokenStream) -> TokenStream {
     // Parse the input tokens into a syntax tree
@@ -72,12 +102,13 @@ pub fn doc_solver_support(_attr: TokenStream, input: TokenStream) -> TokenStream
                 continue;
             }
 
-            attr.parse_nested_meta(|meta| {
-                let ident = meta.path.require_ident()?;
-                let solver_str: String = ident.to_string().to_lowercase();
-                match nodes_supported_by_solver.get_mut(&solver_str) {
+            let nested = attr.parse_args_with(Punctuated::<Meta, Token![,]>::parse_terminated).unwrap();
+            for arg in nested {
+                let ident = arg.path().require_ident().unwrap();
+                let solver_name = ident.to_string().to_lowercase();
+                match nodes_supported_by_solver.get_mut(&solver_name) {
                     None => {
-                        nodes_supported_by_solver.insert(solver_str, vec![variant_ident.clone()]);
+                        nodes_supported_by_solver.insert(solver_name, vec![variant_ident.clone()]);
                         ()
                     }
                     Some(a) => {
@@ -85,9 +116,8 @@ pub fn doc_solver_support(_attr: TokenStream, input: TokenStream) -> TokenStream
                         ()
                     }
                 };
-                return Ok(());
-            })
-            .unwrap();
+                
+            }
         }
     }
 

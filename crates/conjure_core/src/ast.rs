@@ -102,7 +102,7 @@ pub enum Range<A> {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub enum Expression {
-    #[solver(Minion)]
+    #[solver(Minion, SAT)]
     ConstantInt(i32),
     #[solver(Minion)]
     Reference(Name),
