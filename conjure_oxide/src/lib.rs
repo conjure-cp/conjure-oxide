@@ -1,6 +1,7 @@
 pub mod error;
 pub mod find_conjure;
 pub mod parse;
+mod rewrite;
 mod rules;
 pub mod solvers;
 mod utils;
