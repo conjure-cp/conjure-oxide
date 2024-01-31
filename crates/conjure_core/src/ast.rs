@@ -104,6 +104,8 @@ pub enum Range<A> {
 pub enum Expression {
     #[solver(Minion, SAT)]
     ConstantInt(i32),
+    ConstantBool(bool),
+
     #[solver(Minion)]
     Reference(Name),
 
@@ -137,6 +139,7 @@ impl Expression {
     pub fn sub_expressions(&self) -> Vec<&Expression> {
         match self {
             Expression::ConstantInt(_) => Vec::new(),
+            Expression::ConstantBool(_) => Vec::new(),
             Expression::Reference(_) => Vec::new(),
             Expression::Sum(exprs) => exprs.iter().collect(),
             Expression::Not(expr_box) => vec![expr_box.as_ref()],
@@ -166,6 +169,7 @@ impl Expression {
     pub fn with_sub_expressions(&self, sub: Vec<&Expression>) -> Expression {
         match self {
             Expression::ConstantInt(i) => Expression::ConstantInt(*i),
+            Expression::ConstantBool(b) => Expression::ConstantBool(*b),
             Expression::Reference(name) => Expression::Reference(name.clone()),
             Expression::Sum(_) => Expression::Sum(sub.iter().cloned().cloned().collect()),
             Expression::Not(_) => Expression::Not(Box::new(sub[0].clone())),
@@ -229,6 +233,7 @@ impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
             Expression::ConstantInt(i) => write!(f, "ConstantInt({})", i),
+            Expression::ConstantBool(b) => write!(f, "ConstantBool({})", b),
             Expression::Reference(name) => write!(f, "Reference({})", name),
             Expression::Sum(expressions) => write!(f, "Sum({})", display_expressions(expressions)),
             Expression::Not(expr_box) => write!(f, "Not({})", expr_box.clone()),
@@ -253,6 +258,7 @@ impl Display for Expression {
                 box2.clone(),
                 box3.clone()
             ),
+            _ => write!(f, "Expression::Unknown"),
         }
     }
 }
