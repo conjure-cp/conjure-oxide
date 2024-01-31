@@ -1,14 +1,34 @@
 // generate_custom.rs with get_example_model function
 
+use std::env;
 use std::error::Error;
-use stf::fs::{File, read_dir};
-use std::io::prelude::*;
-use std::path::Path;
-use std::process::Command;
+use std::fs;
+use walkdir::WalkDir;
 use conjure_oxide::parse::model_from_json;
 use serde_json::Value;
 
-fn main() {}
+fn main() -> Result<(), Box<dyn Error>> {
+    let args: Vec<String> = env::args().collect();
+
+    if args.len()!= 2 {
+        eprintln!("Usage: generate_custom <essence_file_name>");
+        return Err("Invalid number of arguments".into());
+    }
+
+    // name of essence file passed as argument
+    let filename = &args[1];
+
+    match get_example_model(filename) {
+        Ok(model) => {
+            println!("Generated Model: {:?}", model);
+            Ok(())
+        },
+        Err(e) => {
+            eprintln!("Error generating model: {}", e);
+            Err(e)
+        }
+    }
+}
 
 /// Loads corresponding `.essence` file, parses it through `conjure/json`, and returns a `Model`
 ///
@@ -16,48 +36,35 @@ fn main() {}
 ///
 /// * `filename` - a string slice that holds the name of the file to laod
 ///
-/// # Returns    
+/// # Returns
 ///
-/// Functions returns a `Result<Model, Box<dyn Error>>`
+/// Functions returns a `Result<Value, Box<dyn Error>>`
 fn get_example_model(filename: &str) -> Result<Value, Box<dyn Error>> {
-    let test_dir = Path::new("tests/integration");
-    let essence_path = test_dir.join(format!("{}.essence", filename));
+    let test_dir = "tests/integration";
 
-    if !essence_path.exists() {
-        return Err(Box::new(std::io::Error::new(std::io::ErrorKind::NotFound, "Essence file not found")));
+    for entry in WalkDir::new(test_dir)
+        .into_iter()
+        .filter_map(Result::ok)
+        .filter(|e| e.file_type().is_file())
+        .filter(|e| e.path().extension().map_or(false, |ext| ext == "essence"))
+        .filter(|e| e.path().file_name().unwrap() == filename)
+    {
+        // the path to the directory containing essence file
+        let dir_path = entry.path().parent().unwrap().to_str().unwrap();
+        // base name (stem) of the essence file without the extension
+        let essence_base = entry.path().file_stem().unwrap().to_str().unwrap();
+
+        println!("Found Essence file: {}", entry.path().display());
+
+        // recycle integration_test file
+        integration_test(dir_path, essence_base)?;
+
+        // read resulting JSON file that integration_test wrote
+        let json_str = fs::read_to_string(format!("{}/{}.generated.serialised.json", dir_path, essence_base))?;
+        let model: Value = serde_json::from_str(&json_str)?;
+
+        return Ok(model);
     }
 
-    // Execute conjure command to convert Essence to json
-    let output = Command::new("conjure")
-        .arg("pretty")
-        .arg("--output-format=astjson")
-        .arg(&essence_path)
-        .output()?;
-
-    if !output.status.success() {
-        let err_msg = format!("Conjure command failed: {}", String::from_utf8_lossy(&output.stderr));
-        return Err(Box::new(std::io::Error::new(std::io::ErrorKind::Other, err_msg)));
-    }
-
-    let astjson = String::from_utf8_lossy(output.stdout)?;
-
-    // parse astjson as Model
-    let model_value: Value = serde_json::from_str(&astjson)?;
-
-    Ok(model_value)
+    Err("Essence file not found".into())
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_get_example_model() {
-        //
-        match get_example_model("xyz") {
-            Ok(model) => println!("Model loaded successfully: {:?}", model),
-            Err(e) => panic!("Failed to laod and parse the essence file: {:?}", e),
-        }
-    }
-}
-
