@@ -12,6 +12,10 @@ This repository hosts the following projects:
 This project is being produced by staff and students of University of St
 Andrews, and is licenced under the [MPL 2.0](./LICENCE).
 
+## Documentation
+
+API documentation can be found [here](https://conjure-cp.github.io/conjure-oxide/docs/).
+
 ## Contributing
 
 See the [Contributors Guide](https://github.com/conjure-cp/conjure-oxide/wiki/Contributing).

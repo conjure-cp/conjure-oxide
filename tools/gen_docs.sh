@@ -24,19 +24,6 @@ PROJECT_ROOT=$(dirname $(cargo locate-project | jq -r .root 2> /dev/null))
 TARGET_DIR=$(cargo metadata 2> /dev/null | jq -r .target_directory 2>/dev/null)
 
 cd "$PROJECT_ROOT"
-rm -rf "$TARGET_DIR/docs"
+rm -rf "$TARGET_DIR/doc"
 
-echo_err "=== DOCS FOR CONJURE OXIDE ==="
-cd "conjure_oxide"
-cargo doc --no-deps
-cd -
-
-echo_err "=== DOCS FOR MINION ==="
-cd "solvers/minion"
-cargo doc --no-deps
-cd -
-
-echo_err "=== DOCS FOR CHUFFED ==="
-cd "solvers/chuffed"
-cargo doc --no-deps
-cd -
+RUSTDOCFLAGS="-Zunstable-options --markdown-no-toc --index-page ${PROJECT_ROOT}/doc/index.md" cargo +nightly doc --no-deps -p conjure_oxide -p conjure_core -p minion_rs -p chuffed_rs -p conjure_rules
