@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Domain","Expression","Name","Range"],"struct":["DecisionVariable","Model"]};

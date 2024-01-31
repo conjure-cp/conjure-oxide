@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"attr":["register_rule"],"fn":["get_rule_by_name","get_rules"]};

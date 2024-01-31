@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `conjure_oxide/src/parse.rs`."><title>parse.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="conjure_oxide" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `conjure_oxide/src/parse.rs`."><title>parse.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-5bc39a1768837dd0.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="conjure_oxide" data-themes="" data-resource-suffix="" data-rustdoc-version="1.77.0-nightly (cb4d9a190 2024-01-30)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-48f368f3872407c8.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+            <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../conjure_oxide/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -266,25 +268,25 @@
 <span class="kw">pub fn </span>model_from_json(str: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;Model&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>m = Model::new();
     <span class="kw">let </span>v: JsonValue = serde_json::from_str(str)<span class="question-mark">?</span>;
-    <span class="kw">let </span>statements = v[<span class="string">&quot;mStatements&quot;</span>]
+    <span class="kw">let </span>statements = v[<span class="string">"mStatements"</span>]
         .as_array()
-        .ok_or(Error::Parse(<span class="string">&quot;mStatements is not an array&quot;</span>.to_owned()))<span class="question-mark">?</span>;
+        .ok_or(Error::Parse(<span class="string">"mStatements is not an array"</span>.to_owned()))<span class="question-mark">?</span>;
 
     <span class="kw">for </span>statement <span class="kw">in </span>statements {
         <span class="kw">let </span>entry = statement
             .as_object()
-            .ok_or(Error::Parse(<span class="string">&quot;mStatements contains a non-object&quot;</span>.to_owned()))<span class="question-mark">?
+            .ok_or(Error::Parse(<span class="string">"mStatements contains a non-object"</span>.to_owned()))<span class="question-mark">?
             </span>.iter()
             .next()
             .ok_or(Error::Parse(
-                <span class="string">&quot;mStatements contains an empty object&quot;</span>.to_owned(),
+                <span class="string">"mStatements contains an empty object"</span>.to_owned(),
             ))<span class="question-mark">?</span>;
         <span class="kw">match </span>entry.<span class="number">0</span>.as_str() {
-            <span class="string">&quot;Declaration&quot; </span>=&gt; {
+            <span class="string">"Declaration" </span>=&gt; {
                 <span class="kw">let </span>(name, var) = parse_variable(entry.<span class="number">1</span>)<span class="question-mark">?</span>;
                 m.add_variable(name, var);
             }
-            <span class="string">&quot;SuchThat&quot; </span>=&gt; {
+            <span class="string">"SuchThat" </span>=&gt; {
                 <span class="kw">let </span>constraints: Vec&lt;Expression&gt; = entry
                     .<span class="number">1
                     </span>.as_array()
@@ -293,9 +295,9 @@
                     .flat_map(parse_expression)
                     .collect();
                 m.constraints.extend(constraints);
-                <span class="comment">// println!(&quot;Nb constraints {}&quot;, m.constraints.len());
+                <span class="comment">// println!("Nb constraints {}", m.constraints.len());
             </span>}
-            otherwise =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Unhandled Statement {:#?}&quot;</span>, otherwise),
+            otherwise =&gt; <span class="macro">panic!</span>(<span class="string">"Unhandled Statement {:#?}"</span>, otherwise),
         }
     }
 
@@ -305,28 +307,28 @@
 <span class="kw">fn </span>parse_variable(v: <span class="kw-2">&amp;</span>JsonValue) -&gt; <span class="prelude-ty">Result</span>&lt;(Name, DecisionVariable)&gt; {
     <span class="kw">let </span>arr = v
         .as_object()
-        .ok_or(Error::Parse(<span class="string">&quot;Declaration is not an object&quot;</span>.to_owned()))<span class="question-mark">?</span>[<span class="string">&quot;FindOrGiven&quot;</span>]
+        .ok_or(Error::Parse(<span class="string">"Declaration is not an object"</span>.to_owned()))<span class="question-mark">?</span>[<span class="string">"FindOrGiven"</span>]
         .as_array()
-        .ok_or(Error::Parse(<span class="string">&quot;FindOrGiven is not an array&quot;</span>.to_owned()))<span class="question-mark">?</span>;
+        .ok_or(Error::Parse(<span class="string">"FindOrGiven is not an array"</span>.to_owned()))<span class="question-mark">?</span>;
     <span class="kw">let </span>name = arr[<span class="number">1</span>]
         .as_object()
-        .ok_or(Error::Parse(<span class="string">&quot;FindOrGiven[1] is not an object&quot;</span>.to_owned()))<span class="question-mark">?</span>[<span class="string">&quot;Name&quot;</span>]
+        .ok_or(Error::Parse(<span class="string">"FindOrGiven[1] is not an object"</span>.to_owned()))<span class="question-mark">?</span>[<span class="string">"Name"</span>]
         .as_str()
         .ok_or(Error::Parse(
-            <span class="string">&quot;FindOrGiven[1].Name is not a string&quot;</span>.to_owned(),
+            <span class="string">"FindOrGiven[1].Name is not a string"</span>.to_owned(),
         ))<span class="question-mark">?</span>;
     <span class="kw">let </span>name = Name::UserName(name.to_owned());
     <span class="kw">let </span>domain = arr[<span class="number">2</span>]
         .as_object()
-        .ok_or(Error::Parse(<span class="string">&quot;FindOrGiven[2] is not an object&quot;</span>.to_owned()))<span class="question-mark">?
+        .ok_or(Error::Parse(<span class="string">"FindOrGiven[2] is not an object"</span>.to_owned()))<span class="question-mark">?
         </span>.iter()
         .next()
-        .ok_or(Error::Parse(<span class="string">&quot;FindOrGiven[2] is an empty object&quot;</span>.to_owned()))<span class="question-mark">?</span>;
+        .ok_or(Error::Parse(<span class="string">"FindOrGiven[2] is an empty object"</span>.to_owned()))<span class="question-mark">?</span>;
     <span class="kw">let </span>domain = <span class="kw">match </span>domain.<span class="number">0</span>.as_str() {
-        <span class="string">&quot;DomainInt&quot; </span>=&gt; <span class="prelude-val">Ok</span>(parse_int_domain(domain.<span class="number">1</span>)<span class="question-mark">?</span>),
-        <span class="string">&quot;DomainBool&quot; </span>=&gt; <span class="prelude-val">Ok</span>(Domain::BoolDomain),
+        <span class="string">"DomainInt" </span>=&gt; <span class="prelude-val">Ok</span>(parse_int_domain(domain.<span class="number">1</span>)<span class="question-mark">?</span>),
+        <span class="string">"DomainBool" </span>=&gt; <span class="prelude-val">Ok</span>(Domain::BoolDomain),
         <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(Error::Parse(
-            <span class="string">&quot;FindOrGiven[2] is an unknown object&quot;</span>.to_owned(),
+            <span class="string">"FindOrGiven[2] is an unknown object"</span>.to_owned(),
         )),
     }<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>((name, DecisionVariable { domain }))
@@ -336,53 +338,53 @@
     <span class="kw">let </span><span class="kw-2">mut </span>ranges = Vec::new();
     <span class="kw">let </span>arr = v
         .as_array()
-        .ok_or(Error::Parse(<span class="string">&quot;DomainInt is not an array&quot;</span>.to_owned()))<span class="question-mark">?</span>[<span class="number">1</span>]
+        .ok_or(Error::Parse(<span class="string">"DomainInt is not an array"</span>.to_owned()))<span class="question-mark">?</span>[<span class="number">1</span>]
         .as_array()
-        .ok_or(Error::Parse(<span class="string">&quot;DomainInt[1] is not an array&quot;</span>.to_owned()))<span class="question-mark">?</span>;
+        .ok_or(Error::Parse(<span class="string">"DomainInt[1] is not an array"</span>.to_owned()))<span class="question-mark">?</span>;
     <span class="kw">for </span>range <span class="kw">in </span>arr {
         <span class="kw">let </span>range = range
             .as_object()
             .ok_or(Error::Parse(
-                <span class="string">&quot;DomainInt[1] contains a non-object&quot;</span>.to_owned(),
+                <span class="string">"DomainInt[1] contains a non-object"</span>.to_owned(),
             ))<span class="question-mark">?
             </span>.iter()
             .next()
             .ok_or(Error::Parse(
-                <span class="string">&quot;DomainInt[1] contains an empty object&quot;</span>.to_owned(),
+                <span class="string">"DomainInt[1] contains an empty object"</span>.to_owned(),
             ))<span class="question-mark">?</span>;
         <span class="kw">match </span>range.<span class="number">0</span>.as_str() {
-            <span class="string">&quot;RangeBounded&quot; </span>=&gt; {
+            <span class="string">"RangeBounded" </span>=&gt; {
                 <span class="kw">let </span>arr = range
                     .<span class="number">1
                     </span>.as_array()
-                    .ok_or(Error::Parse(<span class="string">&quot;RangeBounded is not an array&quot;</span>.to_owned()))<span class="question-mark">?</span>;
+                    .ok_or(Error::Parse(<span class="string">"RangeBounded is not an array"</span>.to_owned()))<span class="question-mark">?</span>;
                 <span class="kw">let </span><span class="kw-2">mut </span>nums = Vec::new();
                 <span class="kw">for </span>item <span class="kw">in </span>arr.iter() {
-                    <span class="kw">let </span>num = item[<span class="string">&quot;Constant&quot;</span>][<span class="string">&quot;ConstantInt&quot;</span>][<span class="number">1</span>]
+                    <span class="kw">let </span>num = item[<span class="string">"Constant"</span>][<span class="string">"ConstantInt"</span>][<span class="number">1</span>]
                         .as_i64()
                         .ok_or(Error::Parse(
-                            <span class="string">&quot;Could not parse int domain constant&quot;</span>.to_owned(),
+                            <span class="string">"Could not parse int domain constant"</span>.to_owned(),
                         ))<span class="question-mark">?</span>;
                     <span class="kw">let </span>num32 = i32::try_from(num).map_err(|<span class="kw">_</span>| {
-                        Error::Parse(<span class="string">&quot;Could not parse int domain constant&quot;</span>.to_owned())
+                        Error::Parse(<span class="string">"Could not parse int domain constant"</span>.to_owned())
                     })<span class="question-mark">?</span>;
                     nums.push(num32);
                 }
                 ranges.push(Range::Bounded(nums[<span class="number">0</span>], nums[<span class="number">1</span>]));
             }
-            <span class="string">&quot;RangeSingle&quot; </span>=&gt; {
-                <span class="kw">let </span>num = <span class="kw-2">&amp;</span>range.<span class="number">1</span>[<span class="string">&quot;Constant&quot;</span>][<span class="string">&quot;ConstantInt&quot;</span>][<span class="number">1</span>]
+            <span class="string">"RangeSingle" </span>=&gt; {
+                <span class="kw">let </span>num = <span class="kw-2">&amp;</span>range.<span class="number">1</span>[<span class="string">"Constant"</span>][<span class="string">"ConstantInt"</span>][<span class="number">1</span>]
                     .as_i64()
                     .ok_or(Error::Parse(
-                        <span class="string">&quot;Could not parse int domain constant&quot;</span>.to_owned(),
+                        <span class="string">"Could not parse int domain constant"</span>.to_owned(),
                     ))<span class="question-mark">?</span>;
                 <span class="kw">let </span>num32 = i32::try_from(<span class="kw-2">*</span>num)
-                    .map_err(|<span class="kw">_</span>| Error::Parse(<span class="string">&quot;Could not parse int domain constant&quot;</span>.to_owned()))<span class="question-mark">?</span>;
+                    .map_err(|<span class="kw">_</span>| Error::Parse(<span class="string">"Could not parse int domain constant"</span>.to_owned()))<span class="question-mark">?</span>;
                 ranges.push(Range::Single(num32));
             }
             <span class="kw">_ </span>=&gt; {
                 <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Parse(
-                    <span class="string">&quot;DomainInt[1] contains an unknown object&quot;</span>.to_owned(),
+                    <span class="string">"DomainInt[1] contains an unknown object"</span>.to_owned(),
                 ))
             }
         }
@@ -397,34 +399,34 @@
 
 <span class="kw">fn </span>parse_expression(obj: <span class="kw-2">&amp;</span>JsonValue) -&gt; <span class="prelude-ty">Option</span>&lt;Expression&gt; {
     <span class="kw">let </span>binary_operators: HashMap&lt;<span class="kw-2">&amp;</span>str, BinOp&gt; = [
-        (<span class="string">&quot;MkOpEq&quot;</span>, Box::new(Expression::Eq) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>, <span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;),
+        (<span class="string">"MkOpEq"</span>, Box::new(Expression::Eq) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>, <span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;),
         (
-            <span class="string">&quot;MkOpNeq&quot;</span>,
+            <span class="string">"MkOpNeq"</span>,
             Box::new(Expression::Neq) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>, <span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;,
         ),
         (
-            <span class="string">&quot;MkOpGeq&quot;</span>,
+            <span class="string">"MkOpGeq"</span>,
             Box::new(Expression::Geq) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>, <span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;,
         ),
         (
-            <span class="string">&quot;MkOpLeq&quot;</span>,
+            <span class="string">"MkOpLeq"</span>,
             Box::new(Expression::Leq) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>, <span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;,
         ),
-        (<span class="string">&quot;MkOpGt&quot;</span>, Box::new(Expression::Gt) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>, <span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;),
-        (<span class="string">&quot;MkOpLt&quot;</span>, Box::new(Expression::Lt) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>, <span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;),
+        (<span class="string">"MkOpGt"</span>, Box::new(Expression::Gt) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>, <span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;),
+        (<span class="string">"MkOpLt"</span>, Box::new(Expression::Lt) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>, <span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;),
     ]
     .into_iter()
     .collect();
 
     <span class="kw">let </span>unary_operators: HashMap&lt;<span class="kw-2">&amp;</span>str, UnaryOp&gt; =
-        [(<span class="string">&quot;MkOpNot&quot;</span>, Box::new(Expression::Not) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;)]
+        [(<span class="string">"MkOpNot"</span>, Box::new(Expression::Not) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;)]
             .into_iter()
             .collect();
 
     <span class="kw">let </span>vec_operators: HashMap&lt;<span class="kw-2">&amp;</span>str, VecOp&gt; = [
-        (<span class="string">&quot;MkOpSum&quot;</span>, Box::new(Expression::Sum) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;),
-        (<span class="string">&quot;MkOpAnd&quot;</span>, Box::new(Expression::And) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;),
-        (<span class="string">&quot;MkOpOr&quot;</span>, Box::new(Expression::Or) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;),
+        (<span class="string">"MkOpSum"</span>, Box::new(Expression::Sum) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;),
+        (<span class="string">"MkOpAnd"</span>, Box::new(Expression::And) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;),
+        (<span class="string">"MkOpOr"</span>, Box::new(Expression::Or) <span class="kw">as </span>Box&lt;<span class="kw">dyn </span>Fn(<span class="kw">_</span>) -&gt; <span class="kw">_</span>&gt;),
     ]
     .into_iter()
     .collect();
@@ -434,7 +436,7 @@
     <span class="kw">let </span><span class="kw-2">mut </span>vec_operator_names = vec_operators.iter().map(|x| x.<span class="number">0</span>);
 
     <span class="kw">match </span>obj {
-        Value::Object(op) <span class="kw">if </span>op.contains_key(<span class="string">&quot;Op&quot;</span>) =&gt; <span class="kw">match </span><span class="kw-2">&amp;</span>op[<span class="string">&quot;Op&quot;</span>] {
+        Value::Object(op) <span class="kw">if </span>op.contains_key(<span class="string">"Op"</span>) =&gt; <span class="kw">match </span><span class="kw-2">&amp;</span>op[<span class="string">"Op"</span>] {
             Value::Object(bin_op) <span class="kw">if </span>binary_operator_names.any(|key| bin_op.contains_key(<span class="kw-2">*</span>key)) =&gt; {
                 parse_bin_op(bin_op, binary_operators)
             }
@@ -444,14 +446,14 @@
             Value::Object(vec_op) <span class="kw">if </span>vec_operator_names.any(|key| vec_op.contains_key(<span class="kw-2">*</span>key)) =&gt; {
                 parse_vec_op(vec_op, vec_operators)
             }
-            otherwise =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Unhandled Op {:#?}&quot;</span>, otherwise),
+            otherwise =&gt; <span class="macro">panic!</span>(<span class="string">"Unhandled Op {:#?}"</span>, otherwise),
         },
-        Value::Object(refe) <span class="kw">if </span>refe.contains_key(<span class="string">&quot;Reference&quot;</span>) =&gt; {
-            <span class="kw">let </span>name = refe[<span class="string">&quot;Reference&quot;</span>].as_array()<span class="question-mark">?</span>[<span class="number">0</span>].as_object()<span class="question-mark">?</span>[<span class="string">&quot;Name&quot;</span>].as_str()<span class="question-mark">?</span>;
+        Value::Object(refe) <span class="kw">if </span>refe.contains_key(<span class="string">"Reference"</span>) =&gt; {
+            <span class="kw">let </span>name = refe[<span class="string">"Reference"</span>].as_array()<span class="question-mark">?</span>[<span class="number">0</span>].as_object()<span class="question-mark">?</span>[<span class="string">"Name"</span>].as_str()<span class="question-mark">?</span>;
             <span class="prelude-val">Some</span>(Expression::Reference(Name::UserName(name.to_string())))
         }
-        Value::Object(constant) <span class="kw">if </span>constant.contains_key(<span class="string">&quot;Constant&quot;</span>) =&gt; parse_constant(constant),
-        otherwise =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Unhandled Expression {:#?}&quot;</span>, otherwise),
+        Value::Object(constant) <span class="kw">if </span>constant.contains_key(<span class="string">"Constant"</span>) =&gt; parse_constant(constant),
+        otherwise =&gt; <span class="macro">panic!</span>(<span class="string">"Unhandled Expression {:#?}"</span>, otherwise),
     }
 }
 
@@ -471,7 +473,7 @@
             <span class="kw">let </span>arg2 = parse_expression(<span class="kw-2">&amp;</span>bin_op_args[<span class="number">1</span>])<span class="question-mark">?</span>;
             <span class="prelude-val">Some</span>(constructor(Box::new(arg1), Box::new(arg2)))
         }
-        otherwise =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Unhandled parse_bin_op {:#?}&quot;</span>, otherwise),
+        otherwise =&gt; <span class="macro">panic!</span>(<span class="string">"Unhandled parse_bin_op {:#?}"</span>, otherwise),
     }
 }
 
@@ -493,7 +495,7 @@
     <span class="kw">let </span>(key, value) = vec_op.into_iter().next()<span class="question-mark">?</span>;
     <span class="kw">let </span>constructor = vec_operators.get(key.as_str())<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>args_parsed: Vec&lt;Expression&gt; = value[<span class="string">&quot;AbstractLiteral&quot;</span>][<span class="string">&quot;AbsLitMatrix&quot;</span>][<span class="number">1</span>]
+    <span class="kw">let </span>args_parsed: Vec&lt;Expression&gt; = value[<span class="string">"AbstractLiteral"</span>][<span class="string">"AbsLitMatrix"</span>][<span class="number">1</span>]
         .as_array()<span class="question-mark">?
         </span>.iter()
         .map(|x| parse_expression(x).unwrap())
@@ -502,14 +504,14 @@
 }
 
 <span class="kw">fn </span>parse_constant(constant: <span class="kw-2">&amp;</span>serde_json::Map&lt;String, Value&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Expression&gt; {
-    <span class="kw">match </span><span class="kw-2">&amp;</span>constant[<span class="string">&quot;Constant&quot;</span>] {
-        Value::Object(int) <span class="kw">if </span>int.contains_key(<span class="string">&quot;ConstantInt&quot;</span>) =&gt; <span class="prelude-val">Some</span>(Expression::ConstantInt(
-            int[<span class="string">&quot;ConstantInt&quot;</span>].as_array()<span class="question-mark">?</span>[<span class="number">1</span>]
+    <span class="kw">match </span><span class="kw-2">&amp;</span>constant[<span class="string">"Constant"</span>] {
+        Value::Object(int) <span class="kw">if </span>int.contains_key(<span class="string">"ConstantInt"</span>) =&gt; <span class="prelude-val">Some</span>(Expression::ConstantInt(
+            int[<span class="string">"ConstantInt"</span>].as_array()<span class="question-mark">?</span>[<span class="number">1</span>]
                 .as_i64()<span class="question-mark">?
                 </span>.try_into()
                 .unwrap(),
         )),
-        otherwise =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Unhandled parse_constant {:#?}&quot;</span>, otherwise),
+        otherwise =&gt; <span class="macro">panic!</span>(<span class="string">"Unhandled parse_constant {:#?}"</span>, otherwise),
     }
 }
 </code></pre></div></section></main></body></html>
