@@ -16,7 +16,7 @@ fn main() {}
 ///
 /// * `filename` - a string slice that holds the name of the file to laod
 ///
-/// # Returns 
+/// # Returns    
 ///
 /// Functions returns a `Result<Model, Box<dyn Error>>`
 fn get_example_model(filename: &str) -> Result<Value, Box<dyn Error>> {
