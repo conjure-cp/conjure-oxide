@@ -135,6 +135,8 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
 
 // this needs an explicit type signature to force the closures to have the same type
 type BinOp = Box<dyn Fn(Box<Expression>, Box<Expression>) -> Expression>;
+type UnaryOp = Box<dyn Fn(Box<Expression>) -> Expression>;
+type VecOp = Box<dyn Fn(Vec<Expression>) -> Expression>;
 
 fn parse_expression(obj: &JsonValue) -> Option<Expression> {
     let binary_operators: HashMap<&str, BinOp> = [
@@ -157,17 +159,34 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
     .into_iter()
     .collect();
 
+    let unary_operators: HashMap<&str, UnaryOp> =
+        [("MkOpNot", Box::new(Expression::Not) as Box<dyn Fn(_) -> _>)]
+            .into_iter()
+            .collect();
+
+    let vec_operators: HashMap<&str, VecOp> = [
+        ("MkOpSum", Box::new(Expression::Sum) as Box<dyn Fn(_) -> _>),
+        ("MkOpAnd", Box::new(Expression::And) as Box<dyn Fn(_) -> _>),
+        ("MkOpOr", Box::new(Expression::Or) as Box<dyn Fn(_) -> _>),
+    ]
+    .into_iter()
+    .collect();
+
     let mut binary_operator_names = binary_operators.iter().map(|x| x.0);
+    let mut unary_operator_names = unary_operators.iter().map(|x| x.0);
+    let mut vec_operator_names = vec_operators.iter().map(|x| x.0);
 
     match obj {
         Value::Object(op) if op.contains_key("Op") => match &op["Op"] {
             Value::Object(bin_op) if binary_operator_names.any(|key| bin_op.contains_key(*key)) => {
                 parse_bin_op(bin_op, binary_operators)
             }
-            Value::Object(op_sum) if op_sum.contains_key("MkOpSum") => parse_sum(op_sum),
-            Value::Object(op_and) if op_and.contains_key("MkOpAnd") => parse_and(op_and),
-            Value::Object(op_or) if op_or.contains_key("MkOpOr") => parse_or(op_or),
-            Value::Object(op_not) if op_not.contains_key("MkOpNot") => parse_not(op_not),
+            Value::Object(un_op) if unary_operator_names.any(|key| un_op.contains_key(*key)) => {
+                parse_unary_op(un_op, unary_operators)
+            }
+            Value::Object(vec_op) if vec_operator_names.any(|key| vec_op.contains_key(*key)) => {
+                parse_vec_op(vec_op, vec_operators)
+            }
             otherwise => panic!("Unhandled Op {:#?}", otherwise),
         },
         Value::Object(refe) if refe.contains_key("Reference") => {
@@ -177,43 +196,6 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
         Value::Object(constant) if constant.contains_key("Constant") => parse_constant(constant),
         otherwise => panic!("Unhandled Expression {:#?}", otherwise),
     }
-}
-
-// TODO: generalize with generics?
-fn parse_sum(op_sum: &serde_json::Map<String, Value>) -> Option<Expression> {
-    let args = &op_sum["MkOpSum"]["AbstractLiteral"]["AbsLitMatrix"][1];
-    let args_parsed: Vec<Expression> = args
-        .as_array()?
-        .iter()
-        .map(|x| parse_expression(x).unwrap())
-        .collect();
-    Some(Expression::Sum(args_parsed))
-}
-
-fn parse_and(op_sum: &serde_json::Map<String, Value>) -> Option<Expression> {
-    let args = &op_sum["MkOpAnd"]["AbstractLiteral"]["AbsLitMatrix"][1];
-    let args_parsed: Vec<Expression> = args
-        .as_array()?
-        .iter()
-        .map(|x| parse_expression(x).unwrap())
-        .collect();
-    Some(Expression::And(args_parsed))
-}
-
-fn parse_or(op_sum: &serde_json::Map<String, Value>) -> Option<Expression> {
-    let args = &op_sum["MkOpOr"]["AbstractLiteral"]["AbsLitMatrix"][1];
-    let args_parsed: Vec<Expression> = args
-        .as_array()?
-        .iter()
-        .map(|x| parse_expression(x).unwrap())
-        .collect();
-    Some(Expression::Or(args_parsed))
-}
-
-fn parse_not(op_sum: &serde_json::Map<String, Value>) -> Option<Expression> {
-    let arg = &op_sum["MkOpNot"];
-    let arg_parsed: Expression = parse_expression(arg).unwrap();
-    Some(Expression::Not(Box::new(arg_parsed)))
 }
 
 fn parse_bin_op(
@@ -234,6 +216,32 @@ fn parse_bin_op(
         }
         otherwise => panic!("Unhandled parse_bin_op {:#?}", otherwise),
     }
+}
+
+fn parse_unary_op(
+    un_op: &serde_json::Map<String, Value>,
+    unary_operators: HashMap<&str, UnaryOp>,
+) -> Option<Expression> {
+    let (key, value) = un_op.into_iter().next()?;
+    let constructor = unary_operators.get(key.as_str())?;
+
+    let arg = parse_expression(value)?;
+    Some(constructor(Box::new(arg)))
+}
+
+fn parse_vec_op(
+    vec_op: &serde_json::Map<String, Value>,
+    vec_operators: HashMap<&str, VecOp>,
+) -> Option<Expression> {
+    let (key, value) = vec_op.into_iter().next()?;
+    let constructor = vec_operators.get(key.as_str())?;
+
+    let args_parsed: Vec<Expression> = value["AbstractLiteral"]["AbsLitMatrix"][1]
+        .as_array()?
+        .iter()
+        .map(|x| parse_expression(x).unwrap())
+        .collect();
+    Some(constructor(args_parsed))
 }
 
 fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expression> {
