@@ -125,6 +125,15 @@ pub enum Expression {
     Gt(Box<Expression>, Box<Expression>),
     Lt(Box<Expression>, Box<Expression>),
 
+    /* Flattened SumEq.
+     *
+     * Note: this is an intermediary step that's used in the process of converting from conjure model to minion.
+     * This is NOT a valid expression in either Essence or minion.
+     *
+     * ToDo: This is a stop gap solution. Eventually it may be better to have multiple constraints instead? (gs248)
+     */
+    SumEq(Vec<Expression>, Box<Expression>),
+
     // Flattened Constraints
     #[solver(Minion)]
     SumGeq(Vec<Expression>, Box<Expression>),
@@ -137,6 +146,15 @@ pub enum Expression {
 impl Expression {
     /// Returns a vector of references to the sub-expressions of the expression.
     pub fn sub_expressions(&self) -> Vec<&Expression> {
+        fn unwrap_flat_expression<'a>(
+            lhs: &'a Vec<Expression>,
+            rhs: &'a Box<Expression>,
+        ) -> Vec<&'a Expression> {
+            let mut sub_exprs = lhs.iter().collect::<Vec<_>>();
+            sub_exprs.push(rhs.as_ref());
+            sub_exprs
+        }
+
         match self {
             Expression::ConstantInt(_) => Vec::new(),
             Expression::ConstantBool(_) => Vec::new(),
@@ -151,16 +169,9 @@ impl Expression {
             Expression::Leq(lhs, rhs) => vec![lhs.as_ref(), rhs.as_ref()],
             Expression::Gt(lhs, rhs) => vec![lhs.as_ref(), rhs.as_ref()],
             Expression::Lt(lhs, rhs) => vec![lhs.as_ref(), rhs.as_ref()],
-            Expression::SumGeq(lhs, rhs) => {
-                let mut sub_exprs = lhs.iter().collect::<Vec<_>>();
-                sub_exprs.push(rhs.as_ref());
-                sub_exprs
-            }
-            Expression::SumLeq(lhs, rhs) => {
-                let mut sub_exprs = lhs.iter().collect::<Vec<_>>();
-                sub_exprs.push(rhs.as_ref());
-                sub_exprs
-            }
+            Expression::SumGeq(lhs, rhs) => unwrap_flat_expression(lhs, rhs),
+            Expression::SumLeq(lhs, rhs) => unwrap_flat_expression(lhs, rhs),
+            Expression::SumEq(lhs, rhs) => unwrap_flat_expression(lhs, rhs),
             Expression::Ineq(lhs, rhs, _) => vec![lhs.as_ref(), rhs.as_ref()],
         }
     }
@@ -198,6 +209,10 @@ impl Expression {
                 Box::new(sub[2].clone()),
             ),
             Expression::SumLeq(_, _) => Expression::SumLeq(
+                sub.iter().cloned().cloned().collect(),
+                Box::new(sub[2].clone()),
+            ),
+            Expression::SumEq(_, _) => Expression::SumEq(
                 sub.iter().cloned().cloned().collect(),
                 Box::new(sub[2].clone()),
             ),

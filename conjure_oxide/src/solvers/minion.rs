@@ -2,6 +2,7 @@
 
 use super::{FromConjureModel, SolverError};
 use crate::Solver;
+use conjure_core::ast::Expression;
 
 use crate::ast::{
     DecisionVariable, Domain as ConjureDomain, Expression as ConjureExpression,
@@ -109,6 +110,13 @@ fn parse_expr(expr: ConjureExpression, minion_model: &mut MinionModel) -> Result
         x => Err(SolverError::NotSupported(SOLVER, format!("{:?}", x))),
     }
 }
+
+// fn parse_and(
+//     expressions: Vec<Expression>,
+//     minion_model: &mut MinionModel,
+// ) -> Result<(), SolverError> {
+//     // ToDo - Nik said that he will do this
+// }
 
 fn parse_sumleq(
     sum_vars: Vec<ConjureExpression>,

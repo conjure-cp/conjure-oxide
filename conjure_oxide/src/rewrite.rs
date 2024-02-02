@@ -1,4 +1,4 @@
-use conjure_core::ast::Expression;
+use conjure_core::ast::{Expression, Model};
 use conjure_core::rule::Rule;
 use conjure_rules::get_rules;
 
@@ -63,4 +63,15 @@ fn choose_rewrite(results: &Vec<RuleResult>) -> Option<Expression> {
     }
     // Return the first result for now
     Some(results[0].new_expression.clone())
+}
+
+pub fn rewrite_model(model: &Model) -> Model {
+    let mut new_model = model.clone();
+
+    new_model.constraints = vec![];
+    for constraint in model.constraints.iter() {
+        new_model.add_constraint(rewrite(constraint));
+    }
+
+    new_model
 }

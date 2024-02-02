@@ -10,6 +10,13 @@ use conjure_rules::register_rule;
 //     Ok(expr.clone())
 // }
 
+/**
+ * Evaluate sum of constants:
+ * ```text
+ * sum([1, 2, 3]) = 6
+ * ```
+ */
+
 #[register_rule]
 fn sum_constants(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
@@ -36,6 +43,12 @@ fn sum_constants(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     }
 }
 
+/**
+ * Unwrap trivial sums:
+ * ```text
+ * sum([a]) = a
+ * ```
+ */
 #[register_rule]
 fn unwrap_sum(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
@@ -44,42 +57,34 @@ fn unwrap_sum(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     }
 }
 
+/**
+ * Flatten nested sums:
+ * ```text
+ * sum(sum(a, b), c) = sum(a, b, c)
+ * ```
+ */
 #[register_rule]
-fn flatten_sum_geq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+pub fn flatten_nested_sum(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
-        Expr::Geq(a, b) => {
-            let exprs = match a.as_ref() {
-                Expr::Sum(exprs) => Ok(exprs),
-                _ => Err(RuleApplicationError::RuleNotApplicable),
-            }?;
-            Ok(Expr::SumGeq(exprs.clone(), b.clone()))
+        Expr::Sum(exprs) => {
+            let mut new_exprs = Vec::new();
+            let mut changed = false;
+            for e in exprs {
+                match e {
+                    Expr::Sum(sub_exprs) => {
+                        changed = true;
+                        for e in sub_exprs {
+                            new_exprs.push(e.clone());
+                        }
+                    }
+                    _ => new_exprs.push(e.clone()),
+                }
+            }
+            if !changed {
+                return Err(RuleApplicationError::RuleNotApplicable);
+            }
+            Ok(Expr::Sum(new_exprs))
         }
-        _ => Err(RuleApplicationError::RuleNotApplicable),
-    }
-}
-
-#[register_rule]
-fn sum_leq_to_sumleq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
-    match expr {
-        Expr::Leq(a, b) => {
-            let exprs = match a.as_ref() {
-                Expr::Sum(exprs) => Ok(exprs),
-                _ => Err(RuleApplicationError::RuleNotApplicable),
-            }?;
-            Ok(Expr::SumLeq(exprs.clone(), b.clone()))
-        }
-        _ => Err(RuleApplicationError::RuleNotApplicable),
-    }
-}
-
-#[register_rule]
-fn lt_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
-    match expr {
-        Expr::Lt(a, b) => Ok(Expr::Ineq(
-            a.clone(),
-            b.clone(),
-            Box::new(Expr::ConstantInt(-1)),
-        )),
         _ => Err(RuleApplicationError::RuleNotApplicable),
     }
 }

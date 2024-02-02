@@ -1,12 +1,19 @@
 // (niklasdewally): temporary, gut this if you want!
 
 use anyhow::{anyhow, bail};
+use std::collections::HashMap;
+use std::ops::Deref;
 use std::path::PathBuf;
+use std::sync::Mutex;
 
 use anyhow::Result as AnyhowResult;
 use clap::{arg, command, Parser};
 use conjure_oxide::find_conjure::conjure_executable;
 use conjure_oxide::parse::model_from_json;
+use conjure_oxide::rewrite::rewrite_model;
+use conjure_oxide::solvers::FromConjureModel;
+use minion_rs::ast::{Constant, Model as MinionModel, VarName};
+use minion_rs::run_minion;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -14,8 +21,19 @@ struct Cli {
     #[arg(long, value_name = "SOLVER")]
     solver: Option<String>,
 
-    #[arg(value_name = "INPUT_ESSENCE")]
+    #[arg(
+        value_name = "INPUT_ESSENCE",
+        default_value = "./conjure_oxide/tests/integration/xyz/input.essence"
+    )]
     input_file: PathBuf,
+}
+
+static ALL_SOLUTIONS: Mutex<Vec<HashMap<VarName, Constant>>> = Mutex::new(vec![]);
+
+fn callback(solutions: HashMap<VarName, Constant>) -> bool {
+    let mut guard = ALL_SOLUTIONS.lock().unwrap();
+    guard.push(solutions);
+    true
 }
 
 pub fn main() -> AnyhowResult<()> {
@@ -53,8 +71,32 @@ pub fn main() -> AnyhowResult<()> {
 
     let astjson = String::from_utf8(output.stdout)?;
 
-    let model = model_from_json(&astjson)?;
+    let mut model = model_from_json(&astjson)?;
+
+    println!("Initial model:");
     println!("{:?}", model);
+
+    println!("Rewriting model...");
+    model = rewrite_model(&model);
+
+    println!("\nRewritten model:");
+    println!("{:?}", model);
+
+    println!("Building Minion model...");
+    let minion_model = MinionModel::from_conjure(model)?;
+
+    println!("Running Minion...");
+    let res = run_minion(minion_model, callback);
+    res.expect("Error occurred");
+
+    // Get solutions
+    let guard = ALL_SOLUTIONS.lock().unwrap();
+    guard.deref().iter().for_each(|solution_set| {
+        println!("Solution set:");
+        solution_set.iter().for_each(|(var, val)| {
+            println!("{}: {:?}", var, val);
+        });
+    });
 
     Ok(())
 }
