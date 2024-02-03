@@ -1,23 +1,27 @@
-use crate::rules::base::flatten_nested_sum;
 use conjure_core::{ast::Expression as Expr, rule::RuleApplicationError};
 use conjure_rules::register_rule;
 
+fn is_nested_sum(exprs: &Vec<Expr>) -> bool {
+    for e in exprs {
+        match e {
+            Expr::Sum(_) => return true,
+            _ => (),
+        }
+    }
+    false
+}
+
+/**
+ * Helper function to get the vector of expressions from a sum (or error if it's a nested sum - we need to flatten it first)
+ */
 fn sum_to_vector(expr: &Expr) -> Result<Vec<Expr>, RuleApplicationError> {
     match expr {
-        // ToDo [HACK] - We don't have rule priority yet so no way to ensure that nested sums get flattened first
         Expr::Sum(exprs) => {
-            let mut ans: Vec<Expr> = vec![];
-            for e in exprs {
-                match sum_to_vector(e) {
-                    Ok(new_exprs) => {
-                        for e in new_exprs {
-                            ans.push(e);
-                        }
-                    }
-                    Err(_) => ans.push(e.clone()),
-                }
+            if is_nested_sum(exprs) {
+                Err(RuleApplicationError::RuleNotApplicable)
+            } else {
+                Ok(exprs.clone())
             }
-            Ok(ans)
         }
         _ => Err(RuleApplicationError::RuleNotApplicable),
     }
