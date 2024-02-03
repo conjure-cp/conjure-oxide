@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt::Debug;
 
 use conjure_core::ast::Model;
@@ -17,6 +18,9 @@ impl SolverState for ExecutionFailure {}
 
 type SolverError = String;
 
+// TODO: this will use constant when it exists
+type Callback = fn(bindings: HashMap<String,String>) -> bool;
+
 // TODO: seal trait?
 trait SolverAdaptor {
     type Model: Clone;
@@ -25,7 +29,8 @@ trait SolverAdaptor {
     type TranslationError: Debug;
 
     // TODO: this should be able to go to multiple states.
-    fn run_solver(&mut self, model: Self::Model) -> Result<ExecutionSuccess,ExecutionFailure>;
+    // Adaptor implementers must call the user provided callback whenever a solution is found.
+    fn run_solver(&mut self, model: Self::Model, callback: Callback) -> Result<ExecutionSuccess,ExecutionFailure>;
     fn load_model(&mut self, model: Model)  -> Result<Self::Model, Self::TranslationError>;
     fn init_solver(&mut self) {}
 }
@@ -50,18 +55,21 @@ impl<A: SolverAdaptor> Solver<A,Init> {
 
 impl <A:SolverAdaptor> Solver<A,HasModel> {
 
-    pub fn solve(mut self, callback: ()) -> Result<ExecutionSuccess,ExecutionFailure> {
-        // TODO: how do we actually handle callbacks?
-        self.adaptor.run_solver(self.model.unwrap())
+    pub fn solve(mut self, callback: Callback) -> Result<ExecutionSuccess,ExecutionFailure> {
+        #[allow(clippy::unwrap_used)]
+        self.adaptor.run_solver(self.model.unwrap(),callback)
     }
 }
 
 impl<T: SolverAdaptor> Solver<T> {
     pub fn new(solver_adaptor: T) -> Solver<T> {
-        Solver {
+        let mut solver = Solver {
             state: std::marker::PhantomData::<Init>,
             adaptor: solver_adaptor,
-            model: todo!(),
-        }
+            model: None,
+        };
+
+        solver.adaptor.init_solver();
+        solver
     }
 }
