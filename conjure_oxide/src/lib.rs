@@ -11,3 +11,9 @@ pub use conjure_core::ast::Model; // rexport core::ast::Model as conjure_oxide::
 pub use conjure_core::solvers::Solver;
 
 pub use error::Error;
+
+
+#[cfg(feature = "unstable-solver-interface")]
+mod unstable {
+    mod solver_interface;
+}
