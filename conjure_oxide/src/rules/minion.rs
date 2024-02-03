@@ -3,16 +3,23 @@ use conjure_core::{ast::Expression as Expr, rule::RuleApplicationError};
 use conjure_rules::register_rule;
 
 fn sum_to_vector(expr: &Expr) -> Result<Vec<Expr>, RuleApplicationError> {
-    match flatten_nested_sum(expr) {
-        // ToDo [HACK]: we do not have rule priority yet, so no way to ensure that nested sums get flattened before we reach here
-        Ok(new_expr) => match new_expr {
-            Expr::Sum(exprs) => Ok(exprs.clone()),
-            _ => Err(RuleApplicationError::RuleNotApplicable),
-        },
-        Err(_) => match expr {
-            Expr::Sum(exprs) => Ok(exprs.clone()),
-            _ => Err(RuleApplicationError::RuleNotApplicable),
-        },
+    match expr {
+        // ToDo [HACK] - We don't have rule priority yet so no way to ensure that nested sums get flattened first
+        Expr::Sum(exprs) => {
+            let mut ans: Vec<Expr> = vec![];
+            for e in exprs {
+                match sum_to_vector(e) {
+                    Ok(new_exprs) => {
+                        for e in new_exprs {
+                            ans.push(e);
+                        }
+                    }
+                    Err(_) => ans.push(e.clone()),
+                }
+            }
+            Ok(ans)
+        }
+        _ => Err(RuleApplicationError::RuleNotApplicable),
     }
 }
 
