@@ -39,9 +39,9 @@ impl Model {
     }
 
     pub fn set_constraints(&mut self, constraints: Vec<Expression>) {
-        if (constraints.is_empty()) {
+        if constraints.is_empty() {
             self.constraints = Expression::Nothing;
-        } else if (constraints.len() == 1) {
+        } else if constraints.len() == 1 {
             self.constraints = constraints[0].clone();
         } else {
             self.constraints = Expression::And(constraints);
