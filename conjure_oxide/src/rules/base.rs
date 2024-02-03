@@ -5,11 +5,6 @@ use conjure_rules::register_rule;
 /*        This file contains basic rules for simplifying expressions         */
 /*****************************************************************************/
 
-// #[register_rule]
-// fn identity(expr: &Expr) -> Result<Expr, RuleApplicationError> {
-//     Ok(expr.clone())
-// }
-
 #[register_rule]
 fn sum_constants(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
@@ -40,46 +35,6 @@ fn sum_constants(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 fn unwrap_sum(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
         Expr::Sum(exprs) if (exprs.len() == 1) => Ok(exprs[0].clone()),
-        _ => Err(RuleApplicationError::RuleNotApplicable),
-    }
-}
-
-#[register_rule]
-fn flatten_sum_geq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
-    match expr {
-        Expr::Geq(a, b) => {
-            let exprs = match a.as_ref() {
-                Expr::Sum(exprs) => Ok(exprs),
-                _ => Err(RuleApplicationError::RuleNotApplicable),
-            }?;
-            Ok(Expr::SumGeq(exprs.clone(), b.clone()))
-        }
-        _ => Err(RuleApplicationError::RuleNotApplicable),
-    }
-}
-
-#[register_rule]
-fn sum_leq_to_sumleq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
-    match expr {
-        Expr::Leq(a, b) => {
-            let exprs = match a.as_ref() {
-                Expr::Sum(exprs) => Ok(exprs),
-                _ => Err(RuleApplicationError::RuleNotApplicable),
-            }?;
-            Ok(Expr::SumLeq(exprs.clone(), b.clone()))
-        }
-        _ => Err(RuleApplicationError::RuleNotApplicable),
-    }
-}
-
-#[register_rule]
-fn lt_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
-    match expr {
-        Expr::Lt(a, b) => Ok(Expr::Ineq(
-            a.clone(),
-            b.clone(),
-            Box::new(Expr::Constant(Const::Int(-1))),
-        )),
         _ => Err(RuleApplicationError::RuleNotApplicable),
     }
 }
