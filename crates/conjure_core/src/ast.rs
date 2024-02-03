@@ -104,6 +104,27 @@ pub enum Constant {
     Bool(bool),
 }
 
+impl TryFrom<Constant> for i32 {
+    type Error = &'static str;
+
+    fn try_from(value: Constant) -> Result<Self, Self::Error> {
+        match value {
+            Constant::Int(i) => Ok(i),
+            _ => Err("Cannot convert non-i32 Constant to i32"),
+        }
+    }
+}
+impl TryFrom<Constant> for bool {
+    type Error = &'static str;
+
+    fn try_from(value: Constant) -> Result<Self, Self::Error> {
+        match value {
+            Constant::Bool(b) => Ok(b),
+            _ => Err("Cannot convert non-bool Constant to bool"),
+        }
+    }
+}
+
 #[doc_solver_support]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[non_exhaustive]
