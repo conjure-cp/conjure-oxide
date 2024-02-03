@@ -165,7 +165,13 @@ pub enum Expression {
 }
 
 impl Expression {
-    /// Returns a vector of references to the sub-expressions of the expression.
+    /**
+     * Returns a vector of references to the sub-expressions of the expression.
+     * If the expression is a primitive (variable, constant, etc.), returns None.
+     *
+     * Note: If the expression is NOT MEANT TO have sub-expressions, this function will return None.
+     * Otherwise, it will return Some(Vec), where the Vec can be empty.
+     */
     pub fn sub_expressions(&self) -> Option<Vec<&Expression>> {
         fn unwrap_flat_expression<'a>(
             lhs: &'a Vec<Expression>,
