@@ -41,37 +41,72 @@ fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>
     // "parsing" astjson as Model
     let parsed_model = model_from_json(&astjson)?;
 
-    let rewritten_model = rewrite_model(&parsed_model);
-
     // a consistent sorting of the keys of json objects
     // only required for the generated version
     // since the expected version will already be sorted
-    let generated_json = sort_json_object(&serde_json::to_value(rewritten_model.clone())?);
+    let generated_json = sort_json_object(&serde_json::to_value(parsed_model.clone())?);
 
     // serialise to file
     let generated_json_str = serde_json::to_string_pretty(&generated_json)?;
-    File::create(format!("{path}/{essence_base}.generated.serialised.json"))?
-        .write_all(generated_json_str.as_bytes())?;
+    File::create(format!(
+        "{path}/{essence_base}.generated-parse.serialised.json"
+    ))?
+    .write_all(generated_json_str.as_bytes())?;
 
     if std::env::var("ACCEPT").map_or(false, |v| v == "true") {
         std::fs::copy(
-            format!("{path}/{essence_base}.generated.serialised.json"),
-            format!("{path}/{essence_base}.expected.serialised.json"),
+            format!("{path}/{essence_base}.generated-parse.serialised.json"),
+            format!("{path}/{essence_base}.expected-parse.serialised.json"),
         )?;
     }
 
     // --------------------------------------------------------------------------------
     // -- reading the expected version from the filesystem
 
-    let expected_str =
-        std::fs::read_to_string(format!("{path}/{essence_base}.expected.serialised.json"))?;
+    let expected_parse_str = std::fs::read_to_string(format!(
+        "{path}/{essence_base}.expected-parse.serialised.json"
+    ))?;
 
-    let expected_mdl: Model = serde_json::from_str(&expected_str)?;
+    let expected_parse_mdl: Model = serde_json::from_str(&expected_parse_str)?;
 
     // --------------------------------------------------------------------------------
     // assert that they are the same model
 
-    assert_eq!(rewritten_model, expected_mdl);
+    assert_eq!(parsed_model, expected_parse_mdl);
+
+    // --------------------------------------------------------------------------------
+
+    // ToDo: There is A LOT of duplication here. We should refactor this to a function. In my defense, it was midnight when I wrote this.
+
+    let rewritten_model = rewrite_model(&parsed_model);
+
+    let rewritten_json = sort_json_object(&serde_json::to_value(rewritten_model.clone())?);
+    let rewritten_json_str = serde_json::to_string_pretty(&rewritten_json)?;
+    File::create(format!(
+        "{path}/{essence_base}.generated-rewrite.serialised.json"
+    ))?
+    .write_all(rewritten_json_str.as_bytes())?;
+
+    if std::env::var("ACCEPT").map_or(false, |v| v == "true") {
+        std::fs::copy(
+            format!("{path}/{essence_base}.generated-rewrite.serialised.json"),
+            format!("{path}/{essence_base}.expected-rewrite.serialised.json"),
+        )?;
+    }
+
+    // --------------------------------------------------------------------------------
+    // -- reading the expected version from the filesystem
+
+    let expected_rewrite_str = std::fs::read_to_string(format!(
+        "{path}/{essence_base}.expected-rewrite.serialised.json"
+    ))?;
+
+    let expected_rewrite_mdl: Model = serde_json::from_str(&expected_rewrite_str)?;
+
+    // --------------------------------------------------------------------------------
+    // assert that they are the same model
+
+    assert_eq!(rewritten_model, expected_rewrite_mdl);
 
     Ok(())
 }
