@@ -98,13 +98,18 @@ pub enum Range<A> {
     Bounded(A, A),
 }
 
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub enum Constant {
+    Int(i32),
+    Bool(bool),
+}
+
 #[doc_solver_support]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub enum Expression {
     #[solver(Minion, SAT)]
-    ConstantInt(i32),
-    ConstantBool(bool),
+    Constant(Constant),
 
     #[solver(Minion)]
     Reference(Name),
@@ -138,8 +143,7 @@ impl Expression {
     /// Returns a vector of references to the sub-expressions of the expression.
     pub fn sub_expressions(&self) -> Vec<&Expression> {
         match self {
-            Expression::ConstantInt(_) => Vec::new(),
-            Expression::ConstantBool(_) => Vec::new(),
+            Expression::Constant(_) => Vec::new(),
             Expression::Reference(_) => Vec::new(),
             Expression::Sum(exprs) => exprs.iter().collect(),
             Expression::Not(expr_box) => vec![expr_box.as_ref()],
@@ -168,8 +172,7 @@ impl Expression {
     /// Returns a clone of the same expression type with the given sub-expressions.
     pub fn with_sub_expressions(&self, sub: Vec<&Expression>) -> Expression {
         match self {
-            Expression::ConstantInt(i) => Expression::ConstantInt(*i),
-            Expression::ConstantBool(b) => Expression::ConstantBool(*b),
+            Expression::Constant(c) => Expression::Constant(c.clone()),
             Expression::Reference(name) => Expression::Reference(name.clone()),
             Expression::Sum(_) => Expression::Sum(sub.iter().cloned().cloned().collect()),
             Expression::Not(_) => Expression::Not(Box::new(sub[0].clone())),
@@ -229,11 +232,19 @@ fn display_expressions(expressions: &Vec<Expression>) -> String {
     }
 }
 
+impl Display for Constant {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match &self {
+            Constant::Int(i) => write!(f, "Int({})", i),
+            Constant::Bool(b) => write!(f, "Bool({})", b),
+        }
+    }
+}
+
 impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
-            Expression::ConstantInt(i) => write!(f, "ConstantInt({})", i),
-            Expression::ConstantBool(b) => write!(f, "ConstantBool({})", b),
+            Expression::Constant(c) => write!(f, "Constant::{}", c),
             Expression::Reference(name) => write!(f, "Reference({})", name),
             Expression::Sum(expressions) => write!(f, "Sum({})", display_expressions(expressions)),
             Expression::Not(expr_box) => write!(f, "Not({})", expr_box.clone()),
@@ -258,6 +269,7 @@ impl Display for Expression {
                 box2.clone(),
                 box3.clone()
             ),
+            #[allow(unreachable_patterns)]
             _ => write!(f, "Expression::Unknown"),
         }
     }
