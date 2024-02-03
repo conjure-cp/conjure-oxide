@@ -1,5 +1,3 @@
-use crate::rewrite::rewrite;
-use conjure_core::ast::Model;
 use std::collections::HashSet;
 use std::fmt::Debug;
 use std::hash::Hash;

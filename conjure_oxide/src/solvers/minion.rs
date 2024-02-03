@@ -2,7 +2,6 @@
 
 use super::{FromConjureModel, SolverError};
 use crate::Solver;
-use conjure_core::ast::Expression;
 
 use crate::ast::{
     DecisionVariable, Domain as ConjureDomain, Expression as ConjureExpression,
