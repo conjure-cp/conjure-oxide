@@ -6,6 +6,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 
+use conjure_oxide::rewrite::rewrite_model;
 use std::path::Path;
 
 fn main() {
@@ -38,12 +39,14 @@ fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>
     let astjson = String::from_utf8(output.stdout)?;
 
     // "parsing" astjson as Model
-    let generated_mdl = model_from_json(&astjson)?;
+    let parsed_model = model_from_json(&astjson)?;
+
+    let rewritten_model = rewrite_model(&parsed_model);
 
     // a consistent sorting of the keys of json objects
     // only required for the generated version
     // since the expected version will already be sorted
-    let generated_json = sort_json_object(&serde_json::to_value(generated_mdl.clone())?);
+    let generated_json = sort_json_object(&serde_json::to_value(rewritten_model.clone())?);
 
     // serialise to file
     let generated_json_str = serde_json::to_string_pretty(&generated_json)?;
@@ -68,7 +71,7 @@ fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>
     // --------------------------------------------------------------------------------
     // assert that they are the same model
 
-    assert_eq!(generated_mdl, expected_mdl);
+    assert_eq!(rewritten_model, expected_mdl);
 
     Ok(())
 }

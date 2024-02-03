@@ -1,3 +1,4 @@
+use conjure_core::ast::Expression;
 use conjure_core::{ast::Expression as Expr, rule::RuleApplicationError};
 use conjure_rules::register_rule;
 
@@ -11,12 +12,96 @@ use conjure_rules::register_rule;
 // }
 
 /**
+ * Remove nothings from expressions:
+ * ```text
+ * and([a, nothing, b]) = and([a, b])
+ * sum([a, nothing, b]) = sum([a, b])
+ * sum_leq([a, nothing, b], c) = sum_leq([a, b], c)
+ * ...
+ * ```
+*/
+#[register_rule]
+fn remove_nothings(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+    fn remove_nothings(exprs: Vec<&Expr>) -> Result<Vec<&Expr>, RuleApplicationError> {
+        let mut changed = false;
+        let mut new_exprs = Vec::new();
+
+        for e in exprs {
+            match e.clone() {
+                Expr::Nothing => {
+                    changed = true;
+                }
+                _ => new_exprs.push(e),
+            }
+        }
+
+        if changed {
+            Ok(new_exprs)
+        } else {
+            Err(RuleApplicationError::RuleNotApplicable)
+        }
+    }
+
+    match expr {
+        Expr::And(_) | Expr::Or(_) | Expression::Sum(_) => match expr.sub_expressions() {
+            None => Err(RuleApplicationError::RuleNotApplicable),
+            Some(sub) => {
+                let new_sub = remove_nothings(sub)?;
+                let new_expr = expr.with_sub_expressions(new_sub);
+                println!("Removed nothings: {:?} -> {:?}", expr, new_expr);
+                Ok(new_expr)
+            }
+        },
+        Expression::SumEq(_, _) | Expression::SumLeq(_, _) | Expression::SumGeq(_, _) => {
+            match expr.sub_expressions() {
+                None => Err(RuleApplicationError::RuleNotApplicable),
+                Some(sub) => {
+                    // Keep the last sub expression, which is the right hand side expression
+                    let new_rhs = sub[sub.len() - 1];
+
+                    // Remove all nothings from the left hand side expressions
+                    let mut new_sub_exprs = remove_nothings(sub[..sub.len() - 1].to_vec())?;
+
+                    // Add the right hand side expression back
+                    new_sub_exprs.push(new_rhs);
+
+                    let new_expr = expr.with_sub_expressions(new_sub_exprs);
+                    println!("Removed nothings: {:?} -> {:?}", expr, new_expr);
+                    Ok(new_expr)
+                }
+            }
+        }
+        _ => Err(RuleApplicationError::RuleNotApplicable),
+    }
+}
+
+/**
+ * Remove empty expressions:
+ * ```text
+ * [] = Nothing
+ * ```
+ */
+#[register_rule]
+fn empty_to_nothing(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+    match expr.sub_expressions() {
+        None => Err(RuleApplicationError::RuleNotApplicable),
+        Some(sub) => {
+            if sub.is_empty() {
+                println!("Empty expression: {:?} -> Nothing", expr);
+                Ok(Expr::Nothing)
+            } else {
+                Err(RuleApplicationError::RuleNotApplicable)
+            }
+        }
+    }
+}
+
+/**
  * Evaluate sum of constants:
  * ```text
  * sum([1, 2, 3]) = 6
  * ```
  */
-
 #[register_rule]
 fn sum_constants(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
