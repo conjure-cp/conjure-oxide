@@ -48,7 +48,6 @@ fn remove_nothings(expr: &Expr) -> Result<Expr, RuleApplicationError> {
             Some(sub) => {
                 let new_sub = remove_nothings(sub)?;
                 let new_expr = expr.with_sub_expressions(new_sub);
-                println!("Removed nothings: {:?} -> {:?}", expr, new_expr);
                 Ok(new_expr)
             }
         },
@@ -66,7 +65,6 @@ fn remove_nothings(expr: &Expr) -> Result<Expr, RuleApplicationError> {
                     new_sub_exprs.push(new_rhs);
 
                     let new_expr = expr.with_sub_expressions(new_sub_exprs);
-                    println!("Removed nothings: {:?} -> {:?}", expr, new_expr);
                     Ok(new_expr)
                 }
             }
@@ -87,7 +85,6 @@ fn empty_to_nothing(expr: &Expr) -> Result<Expr, RuleApplicationError> {
         None => Err(RuleApplicationError::RuleNotApplicable),
         Some(sub) => {
             if sub.is_empty() {
-                println!("Empty expression: {:?} -> Nothing", expr);
                 Ok(Expr::Nothing)
             } else {
                 Err(RuleApplicationError::RuleNotApplicable)
