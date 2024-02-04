@@ -11,26 +11,36 @@ use conjure_core::ast::{Domain, Expression, Model, Name};
 struct Init;
 struct HasModel;
 struct HasRun;
-struct ExecutionSuccess;
 
-enum ExecutionFailure {
+#[doc(hidden)]
+mod private {
+    /// Make some methods uncallable from outside of this module.
+    pub struct Internal;
+
+    // https://predr.ag/blog/definitive-guide-to-sealed-traits-in-rust/#the-trick-for-sealing-traits
+    /// Make some traits unimplementable from outside of this module.
+    pub trait Sealed {}
+}
+
+pub struct ExecutionSuccess;
+pub enum ExecutionFailure {
     NotImplemented,
     Timeout,
     // What type here??
     Error(String),
 }
 
-// TODO: seal trait.
 trait SolverState {}
+
 impl SolverState for Init {}
 impl SolverState for HasModel {}
 impl SolverState for ExecutionSuccess {}
 impl SolverState for ExecutionFailure {}
 
 // TODO: this will use constant when it exists
-type Callback = fn(bindings: HashMap<String, String>) -> bool;
+pub type Callback = fn(bindings: HashMap<String, String>) -> bool;
 
-enum ModificationFailure<E: Error> {
+pub enum ModificationFailure<E: Error> {
     OperationNotSupported,
     OperationNotImplementedYet,
     ArgsNotSupported(String),
@@ -46,7 +56,7 @@ enum ModificationFailure<E: Error> {
 /// through the rewriter, or only low-level solver constraints are supported.
 ///
 /// See also: [`SolverAdaptor::solve_mut`].
-trait ModelModifier {
+pub trait ModelModifier: private::Sealed {
     type Error: Error;
     fn add_constraint(constraint: Expression) -> Result<(), ModificationFailure<Self::Error>> {
         Err(ModificationFailure::OperationNotSupported)
@@ -59,17 +69,18 @@ trait ModelModifier {
 
 /// A [`ModelModifier`] for a solver that does not support incremental solving. Returns
 /// [`OperationNotSupported`](`ModificationFailure::OperationNotSupported`) for all operations.
-struct NotModifiable;
+pub struct NotModifiable;
 
+#[doc(hidden)]
 #[derive(thiserror::Error, Debug)]
-enum NotModifiableError {}
+pub enum NotModifiableError {}
 
+impl private::Sealed for NotModifiable {}
 impl ModelModifier for NotModifiable {
     type Error = NotModifiableError;
 }
 
-// TODO: seal trait?
-trait SolverAdaptor {
+pub trait SolverAdaptor: private::Sealed {
     type Model: Clone;
     type Solution;
     type ExecutionError: Error;
@@ -94,6 +105,7 @@ trait SolverAdaptor {
         &mut self,
         model: Self::Model,
         callback: Callback,
+        _: private::Internal,
     ) -> Result<ExecutionSuccess, ExecutionFailure>;
 
     /// Run the solver on the given model, allowing modification of the model through a
@@ -109,9 +121,14 @@ trait SolverAdaptor {
         &mut self,
         model: Self::Model,
         callback: fn(HashMap<String, String>, Self::Modifier) -> bool,
+        _: private::Internal,
     ) -> Result<ExecutionSuccess, ExecutionFailure>;
-    fn load_model(&mut self, model: Model) -> Result<Self::Model, Self::TranslationError<'_>>;
-    fn init_solver(&mut self) {}
+    fn load_model(
+        &mut self,
+        model: Model,
+        _: private::Internal,
+    ) -> Result<Self::Model, Self::TranslationError<'_>>;
+    fn init_solver(&mut self, _: private::Internal) {}
 }
 
 struct Solver<A: SolverAdaptor, State: SolverState = Init> {
@@ -123,7 +140,10 @@ struct Solver<A: SolverAdaptor, State: SolverState = Init> {
 impl<A: SolverAdaptor> Solver<A, Init> {
     // TODO: decent error handling
     pub fn load_model(mut self, model: Model) -> Result<Solver<A, HasModel>, ()> {
-        let solver_model = &mut self.adaptor.load_model(model).map_err(|_| ())?;
+        let solver_model = &mut self
+            .adaptor
+            .load_model(model, private::Internal)
+            .map_err(|_| ())?;
         Ok(Solver {
             state: std::marker::PhantomData::<HasModel>,
             adaptor: self.adaptor,
@@ -135,7 +155,8 @@ impl<A: SolverAdaptor> Solver<A, Init> {
 impl<A: SolverAdaptor> Solver<A, HasModel> {
     pub fn solve(mut self, callback: Callback) -> Result<ExecutionSuccess, ExecutionFailure> {
         #[allow(clippy::unwrap_used)]
-        self.adaptor.solve(self.model.unwrap(), callback)
+        self.adaptor
+            .solve(self.model.unwrap(), callback, private::Internal)
     }
 
     pub fn solve_mut(
@@ -143,7 +164,8 @@ impl<A: SolverAdaptor> Solver<A, HasModel> {
         callback: fn(HashMap<String, String>, A::Modifier) -> bool,
     ) -> Result<ExecutionSuccess, ExecutionFailure> {
         #[allow(clippy::unwrap_used)]
-        self.adaptor.solve_mut(self.model.unwrap(), callback)
+        self.adaptor
+            .solve_mut(self.model.unwrap(), callback, private::Internal)
     }
 }
 
@@ -155,7 +177,7 @@ impl<T: SolverAdaptor> Solver<T> {
             model: None,
         };
 
-        solver.adaptor.init_solver();
+        solver.adaptor.init_solver(private::Internal);
         solver
     }
 }
