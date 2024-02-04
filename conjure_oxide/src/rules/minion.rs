@@ -3,9 +3,8 @@ use conjure_rules::register_rule;
 
 fn is_nested_sum(exprs: &Vec<Expr>) -> bool {
     for e in exprs {
-        match e {
-            Expr::Sum(_) => return true,
-            _ => (),
+        if let Expr::Sum(_) = e {
+            return true;
         }
     }
     false
@@ -110,8 +109,6 @@ fn sumeq_to_minion(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 * ```text
 * a < b => a - b < -1
 * ```
-*
-* Note: minion does not support strict inequalities, so we simulate it with Ineq(a, b, -1)
 */
 #[register_rule]
 fn lt_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
@@ -120,6 +117,63 @@ fn lt_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
             a.clone(),
             b.clone(),
             Box::new(Expr::ConstantInt(-1)),
+        )),
+        _ => Err(RuleApplicationError::RuleNotApplicable),
+    }
+}
+
+/**
+* Convert a Gt to an Ineq:
+*
+* ```text
+* a > b => b - a < -1
+* ```
+*/
+#[register_rule]
+fn gt_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+    match expr {
+        Expr::Gt(a, b) => Ok(Expr::Ineq(
+            b.clone(),
+            a.clone(),
+            Box::new(Expr::ConstantInt(-1)),
+        )),
+        _ => Err(RuleApplicationError::RuleNotApplicable),
+    }
+}
+
+/**
+* Convert a Geq to an Ineq:
+*
+* ```text
+* a >= b => b - a < 0
+* ```
+*/
+#[register_rule]
+fn geq_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+    match expr {
+        Expr::Geq(a, b) => Ok(Expr::Ineq(
+            b.clone(),
+            a.clone(),
+            Box::new(Expr::ConstantInt(0)),
+        )),
+        _ => Err(RuleApplicationError::RuleNotApplicable),
+    }
+}
+
+/**
+* Convert a Leq to an Ineq:
+*
+* ```text
+* a <= b => a - b < 0
+* ```
+*/
+#[register_rule]
+fn leq_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+    match expr {
+        Expr::Leq(a, b) => Ok(Expr::Ineq(
+            a.clone(),
+            b.clone(),
+            Box::new(Expr::ConstantInt(0)),
         )),
         _ => Err(RuleApplicationError::RuleNotApplicable),
     }
