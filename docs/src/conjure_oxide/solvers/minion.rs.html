@@ -302,6 +302,12 @@
 <a href="#300" id="300">300</a>
 <a href="#301" id="301">301</a>
 <a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Solver interface to minion_rs.
 
 </span><span class="kw">use super</span>::{FromConjureModel, SolverError};
@@ -399,7 +405,7 @@
     conjure_model: <span class="kw-2">&amp;</span>ConjureModel,
     minion_model: <span class="kw-2">&amp;mut </span>MinionModel,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), SolverError&gt; {
-    <span class="kw">for </span>expr <span class="kw">in </span>conjure_model.constraints.iter() {
+    <span class="kw">for </span>expr <span class="kw">in </span>conjure_model.get_constraints_vec().iter() {
         parse_expr(expr.to_owned(), minion_model)<span class="question-mark">?</span>;
     }
     <span class="prelude-val">Ok</span>(())
@@ -414,7 +420,14 @@
     }
 }
 
-<span class="kw">fn </span>parse_sumleq(
+<span class="comment">// fn parse_and(
+//     expressions: Vec&lt;Expression&gt;,
+//     minion_model: &amp;mut MinionModel,
+// ) -&gt; Result&lt;(), SolverError&gt; {
+//     // ToDo - Nik said that he will do this
+// }
+
+</span><span class="kw">fn </span>parse_sumleq(
     sum_vars: Vec&lt;ConjureExpression&gt;,
     rhs: ConjureExpression,
     minion_model: <span class="kw-2">&amp;mut </span>MinionModel,
@@ -513,6 +526,7 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>anyhow::anyhow;
+    <span class="kw">use </span>conjure_core::ast::Expression;
     <span class="kw">use </span>std::collections::HashMap;
 
     <span class="kw">use </span>minion_rs::ast::VarName;
@@ -524,7 +538,7 @@
         <span class="comment">// TODO: convert to use public interfaces when these exist.
         </span><span class="kw">let </span><span class="kw-2">mut </span>model = ConjureModel {
             variables: HashMap::new(),
-            constraints: Vec::new(),
+            constraints: Expression::And(Vec::new()),
         };
 
         add_int_with_range(<span class="kw-2">&amp;mut </span>model, <span class="string">"x"</span>, <span class="number">1</span>, <span class="number">3</span>)<span class="question-mark">?</span>;
@@ -546,9 +560,7 @@
         );
         <span class="kw">let </span>ineq = ConjureExpression::Ineq(Box::from(x), Box::from(y), Box::from(four));
 
-        model.constraints.push(geq);
-        model.constraints.push(leq);
-        model.constraints.push(ineq);
+        model.add_constraints(<span class="macro">vec!</span>[geq, leq, ineq]);
 
         <span class="kw">let </span>minion_model = MinionModel::from_conjure(model)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(minion_rs::run_minion(minion_model, xyz_callback)<span class="question-mark">?</span>)

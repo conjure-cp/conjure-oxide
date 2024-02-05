@@ -264,6 +264,62 @@
 <a href="#262" id="262">262</a>
 <a href="#263" id="263">263</a>
 <a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>doc_solver_support::doc_solver_support;
 <span class="kw">use </span>serde::{Deserialize, Serialize};
 <span class="kw">use </span>serde_with::serde_as;
@@ -275,14 +331,14 @@
 </span><span class="kw">pub struct </span>Model {
     <span class="attr">#[serde_as(<span class="kw">as </span>= <span class="string">"Vec&lt;(_, _)&gt;"</span>)]
     </span><span class="kw">pub </span>variables: HashMap&lt;Name, DecisionVariable&gt;,
-    <span class="kw">pub </span>constraints: Vec&lt;Expression&gt;,
+    <span class="kw">pub </span>constraints: Expression,
 }
 
 <span class="kw">impl </span>Model {
     <span class="kw">pub fn </span>new() -&gt; Model {
         Model {
             variables: HashMap::new(),
-            constraints: Vec::new(),
+            constraints: Expression::Nothing,
         }
     }
     <span class="comment">// Function to update a DecisionVariable based on its Name
@@ -296,10 +352,36 @@
         <span class="self">self</span>.variables.insert(name, decision_var);
     }
 
+    <span class="kw">pub fn </span>get_constraints_vec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;Expression&gt; {
+        <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.constraints {
+            Expression::And(constraints) =&gt; constraints.clone(),
+            Expression::Nothing =&gt; <span class="macro">vec!</span>[],
+            <span class="kw">_ </span>=&gt; <span class="macro">vec!</span>[<span class="self">self</span>.constraints.clone()],
+        }
+    }
+
+    <span class="kw">pub fn </span>set_constraints(<span class="kw-2">&amp;mut </span><span class="self">self</span>, constraints: Vec&lt;Expression&gt;) {
+        <span class="kw">if </span>constraints.is_empty() {
+            <span class="self">self</span>.constraints = Expression::Nothing;
+        } <span class="kw">else if </span>constraints.len() == <span class="number">1 </span>{
+            <span class="self">self</span>.constraints = constraints[<span class="number">0</span>].clone();
+        } <span class="kw">else </span>{
+            <span class="self">self</span>.constraints = Expression::And(constraints);
+        }
+    }
+
     <span class="kw">pub fn </span>add_constraint(<span class="kw-2">&amp;mut </span><span class="self">self</span>, expression: Expression) {
         <span class="comment">// ToDo (gs248) - there is no checking whatsoever
         // We need to properly validate the expression but this is just for testing
-        </span><span class="self">self</span>.constraints.push(expression);
+        </span><span class="kw">let </span><span class="kw-2">mut </span>constraints = <span class="self">self</span>.get_constraints_vec();
+        constraints.push(expression);
+        <span class="self">self</span>.set_constraints(constraints);
+    }
+
+    <span class="kw">pub fn </span>add_constraints(<span class="kw-2">&amp;mut </span><span class="self">self</span>, expressions: Vec&lt;Expression&gt;) {
+        <span class="kw">let </span><span class="kw-2">mut </span>constraints = <span class="self">self</span>.get_constraints_vec();
+        constraints.extend(expressions);
+        <span class="self">self</span>.set_constraints(constraints);
     }
 }
 
@@ -368,6 +450,12 @@
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[non_exhaustive]
 </span><span class="kw">pub enum </span>Expression {
+    <span class="doccomment">/**
+     * Represents an empty expression
+     * NB: we only expect this at the top level of a model (if there is no constraints)
+     */
+    </span>Nothing,
+
     <span class="attr">#[solver(Minion, SAT)]
     </span>ConstantInt(i32),
     ConstantBool(bool),
@@ -391,6 +479,15 @@
     Gt(Box&lt;Expression&gt;, Box&lt;Expression&gt;),
     Lt(Box&lt;Expression&gt;, Box&lt;Expression&gt;),
 
+    <span class="comment">/* Flattened SumEq.
+     *
+     * Note: this is an intermediary step that's used in the process of converting from conjure model to minion.
+     * This is NOT a valid expression in either Essence or minion.
+     *
+     * ToDo: This is a stop gap solution. Eventually it may be better to have multiple constraints instead? (gs248)
+     */
+    </span>SumEq(Vec&lt;Expression&gt;, Box&lt;Expression&gt;),
+
     <span class="comment">// Flattened Constraints
     </span><span class="attr">#[solver(Minion)]
     </span>SumGeq(Vec&lt;Expression&gt;, Box&lt;Expression&gt;),
@@ -401,33 +498,42 @@
 }
 
 <span class="kw">impl </span>Expression {
-    <span class="doccomment">/// Returns a vector of references to the sub-expressions of the expression.
-    </span><span class="kw">pub fn </span>sub_expressions(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;<span class="kw-2">&amp;</span>Expression&gt; {
+    <span class="doccomment">/**
+     * Returns a vector of references to the sub-expressions of the expression.
+     * If the expression is a primitive (variable, constant, etc.), returns None.
+     *
+     * Note: If the expression is NOT MEANT TO have sub-expressions, this function will return None.
+     * Otherwise, it will return Some(Vec), where the Vec can be empty.
+     */
+    </span><span class="kw">pub fn </span>sub_expressions(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Vec&lt;<span class="kw-2">&amp;</span>Expression&gt;&gt; {
+        <span class="kw">fn </span>unwrap_flat_expression&lt;<span class="lifetime">'a</span>&gt;(
+            lhs: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Vec&lt;Expression&gt;,
+            rhs: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Box&lt;Expression&gt;,
+        ) -&gt; Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Expression&gt; {
+            <span class="kw">let </span><span class="kw-2">mut </span>sub_exprs = lhs.iter().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+            sub_exprs.push(rhs.as_ref());
+            sub_exprs
+        }
+
         <span class="kw">match </span><span class="self">self </span>{
-            Expression::ConstantInt(<span class="kw">_</span>) =&gt; Vec::new(),
-            Expression::ConstantBool(<span class="kw">_</span>) =&gt; Vec::new(),
-            Expression::Reference(<span class="kw">_</span>) =&gt; Vec::new(),
-            Expression::Sum(exprs) =&gt; exprs.iter().collect(),
-            Expression::Not(expr_box) =&gt; <span class="macro">vec!</span>[expr_box.as_ref()],
-            Expression::Or(exprs) =&gt; exprs.iter().collect(),
-            Expression::And(exprs) =&gt; exprs.iter().collect(),
-            Expression::Eq(lhs, rhs) =&gt; <span class="macro">vec!</span>[lhs.as_ref(), rhs.as_ref()],
-            Expression::Neq(lhs, rhs) =&gt; <span class="macro">vec!</span>[lhs.as_ref(), rhs.as_ref()],
-            Expression::Geq(lhs, rhs) =&gt; <span class="macro">vec!</span>[lhs.as_ref(), rhs.as_ref()],
-            Expression::Leq(lhs, rhs) =&gt; <span class="macro">vec!</span>[lhs.as_ref(), rhs.as_ref()],
-            Expression::Gt(lhs, rhs) =&gt; <span class="macro">vec!</span>[lhs.as_ref(), rhs.as_ref()],
-            Expression::Lt(lhs, rhs) =&gt; <span class="macro">vec!</span>[lhs.as_ref(), rhs.as_ref()],
-            Expression::SumGeq(lhs, rhs) =&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>sub_exprs = lhs.iter().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-                sub_exprs.push(rhs.as_ref());
-                sub_exprs
-            }
-            Expression::SumLeq(lhs, rhs) =&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>sub_exprs = lhs.iter().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-                sub_exprs.push(rhs.as_ref());
-                sub_exprs
-            }
-            Expression::Ineq(lhs, rhs, <span class="kw">_</span>) =&gt; <span class="macro">vec!</span>[lhs.as_ref(), rhs.as_ref()],
+            Expression::ConstantInt(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
+            Expression::ConstantBool(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
+            Expression::Reference(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
+            Expression::Nothing =&gt; <span class="prelude-val">None</span>,
+            Expression::Sum(exprs) =&gt; <span class="prelude-val">Some</span>(exprs.iter().collect()),
+            Expression::Not(expr_box) =&gt; <span class="prelude-val">Some</span>(<span class="macro">vec!</span>[expr_box.as_ref()]),
+            Expression::Or(exprs) =&gt; <span class="prelude-val">Some</span>(exprs.iter().collect()),
+            Expression::And(exprs) =&gt; <span class="prelude-val">Some</span>(exprs.iter().collect()),
+            Expression::Eq(lhs, rhs) =&gt; <span class="prelude-val">Some</span>(<span class="macro">vec!</span>[lhs.as_ref(), rhs.as_ref()]),
+            Expression::Neq(lhs, rhs) =&gt; <span class="prelude-val">Some</span>(<span class="macro">vec!</span>[lhs.as_ref(), rhs.as_ref()]),
+            Expression::Geq(lhs, rhs) =&gt; <span class="prelude-val">Some</span>(<span class="macro">vec!</span>[lhs.as_ref(), rhs.as_ref()]),
+            Expression::Leq(lhs, rhs) =&gt; <span class="prelude-val">Some</span>(<span class="macro">vec!</span>[lhs.as_ref(), rhs.as_ref()]),
+            Expression::Gt(lhs, rhs) =&gt; <span class="prelude-val">Some</span>(<span class="macro">vec!</span>[lhs.as_ref(), rhs.as_ref()]),
+            Expression::Lt(lhs, rhs) =&gt; <span class="prelude-val">Some</span>(<span class="macro">vec!</span>[lhs.as_ref(), rhs.as_ref()]),
+            Expression::SumGeq(lhs, rhs) =&gt; <span class="prelude-val">Some</span>(unwrap_flat_expression(lhs, rhs)),
+            Expression::SumLeq(lhs, rhs) =&gt; <span class="prelude-val">Some</span>(unwrap_flat_expression(lhs, rhs)),
+            Expression::SumEq(lhs, rhs) =&gt; <span class="prelude-val">Some</span>(unwrap_flat_expression(lhs, rhs)),
+            Expression::Ineq(lhs, rhs, <span class="kw">_</span>) =&gt; <span class="prelude-val">Some</span>(<span class="macro">vec!</span>[lhs.as_ref(), rhs.as_ref()]),
         }
     }
 
@@ -437,6 +543,7 @@
             Expression::ConstantInt(i) =&gt; Expression::ConstantInt(<span class="kw-2">*</span>i),
             Expression::ConstantBool(b) =&gt; Expression::ConstantBool(<span class="kw-2">*</span>b),
             Expression::Reference(name) =&gt; Expression::Reference(name.clone()),
+            Expression::Nothing =&gt; Expression::Nothing,
             Expression::Sum(<span class="kw">_</span>) =&gt; Expression::Sum(sub.iter().cloned().cloned().collect()),
             Expression::Not(<span class="kw">_</span>) =&gt; Expression::Not(Box::new(sub[<span class="number">0</span>].clone())),
             Expression::Or(<span class="kw">_</span>) =&gt; Expression::Or(sub.iter().cloned().cloned().collect()),
@@ -461,9 +568,13 @@
             }
             Expression::SumGeq(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; Expression::SumGeq(
                 sub.iter().cloned().cloned().collect(),
+                Box::new(sub[<span class="number">2</span>].clone()), <span class="comment">// ToDo (gs248) - Why are we using sub[2] here?
+            </span>),
+            Expression::SumLeq(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; Expression::SumLeq(
+                sub.iter().cloned().cloned().collect(),
                 Box::new(sub[<span class="number">2</span>].clone()),
             ),
-            Expression::SumLeq(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; Expression::SumLeq(
+            Expression::SumEq(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; Expression::SumEq(
                 sub.iter().cloned().cloned().collect(),
                 Box::new(sub[<span class="number">2</span>].clone()),
             ),
@@ -501,6 +612,7 @@
             Expression::ConstantInt(i) =&gt; <span class="macro">write!</span>(f, <span class="string">"ConstantInt({})"</span>, i),
             Expression::ConstantBool(b) =&gt; <span class="macro">write!</span>(f, <span class="string">"ConstantBool({})"</span>, b),
             Expression::Reference(name) =&gt; <span class="macro">write!</span>(f, <span class="string">"Reference({})"</span>, name),
+            Expression::Nothing =&gt; <span class="macro">write!</span>(f, <span class="string">"Nothing"</span>),
             Expression::Sum(expressions) =&gt; <span class="macro">write!</span>(f, <span class="string">"Sum({})"</span>, display_expressions(expressions)),
             Expression::Not(expr_box) =&gt; <span class="macro">write!</span>(f, <span class="string">"Not({})"</span>, expr_box.clone()),
             Expression::Or(expressions) =&gt; <span class="macro">write!</span>(f, <span class="string">"Not({})"</span>, display_expressions(expressions)),

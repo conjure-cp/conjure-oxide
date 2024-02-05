@@ -99,6 +99,8 @@
 <a href="#97" id="97">97</a>
 <a href="#98" id="98">98</a>
 <a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! The Model Syntax tree for the Minion bindings.
 
 </span><span class="kw">use </span>std::collections::HashMap;
@@ -130,7 +132,9 @@
 </span><span class="kw">pub enum </span>Constraint {
     SumLeq(Vec&lt;Var&gt;, Var),
     SumGeq(Vec&lt;Var&gt;, Var),
+    Eq(Var, Var),
     Ineq(Var, Var, Constant),
+    WatchedAnd(Vec&lt;Constraint&gt;),
 }
 
 <span class="doccomment">/// A variable can either be a named variable, or an anomynous "constant as a variable".

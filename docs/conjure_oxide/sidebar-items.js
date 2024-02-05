@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Solver"],"mod":["ast","error","find_conjure","parse","solvers"],"struct":["Model"]};
+window.SIDEBAR_ITEMS = {"enum":["Solver"],"mod":["ast","error","find_conjure","parse","rewrite","solvers"],"struct":["Model"]};

@@ -373,6 +373,12 @@
 <a href="#371" id="371">371</a>
 <a href="#372" id="372">372</a>
 <a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     collections::HashMap,
     ffi::CString,
@@ -640,6 +646,7 @@
         Constraint::SumGeq(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ffi::ConstraintType_CT_GEQSUM),
         Constraint::SumLeq(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ffi::ConstraintType_CT_LEQSUM),
         Constraint::Ineq(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ffi::ConstraintType_CT_INEQ),
+        Constraint::Eq(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(ffi::ConstraintType_CT_EQ),
         <span class="attr">#[allow(unreachable_patterns)]
         </span>x =&gt; <span class="prelude-val">Err</span>(MinionError::NotImplemented(<span class="macro">format!</span>(
             <span class="string">"Constraint not implemented {:?}"</span>,
@@ -668,6 +675,11 @@
             read_var(i, r_constr, var1)<span class="question-mark">?</span>;
             read_var(i, r_constr, var2)<span class="question-mark">?</span>;
             read_const(r_constr, c)<span class="question-mark">?</span>;
+            <span class="prelude-val">Ok</span>(())
+        }
+        Constraint::Eq(var1, var2) =&gt; {
+            read_var(i, r_constr, var1)<span class="question-mark">?</span>;
+            read_var(i, r_constr, var2)<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(())
         }
         <span class="attr">#[allow(unreachable_patterns)]
