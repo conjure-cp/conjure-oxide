@@ -558,10 +558,8 @@ fn rewrite_solve_xyz() {
         ),
     ]);
 
-    println!("Running rewrite on: {:?}", nested_expr);
     // Apply rewrite function to the nested expression
     let rewritten_expr = rewrite(&nested_expr);
-    println!("Rewritten expression: {:?}", rewritten_expr);
 
     // Create model with variables and constraints
     let mut model = Model {
