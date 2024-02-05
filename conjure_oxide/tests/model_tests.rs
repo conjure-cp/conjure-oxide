@@ -15,12 +15,12 @@ fn modify_domain() {
 
     let mut m = Model {
         variables,
-        constraints: Vec::new(),
+        constraints: Expression::And(Vec::new()),
     };
 
-    assert!(m.variables.get(&a).unwrap().domain == d1);
+    assert_eq!(m.variables.get(&a).unwrap().domain, d1);
 
     m.update_domain(&a, d2.clone());
 
-    assert!(m.variables.get(&a).unwrap().domain == d2);
+    assert_eq!(m.variables.get(&a).unwrap().domain, d2);
 }

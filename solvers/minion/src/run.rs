@@ -265,6 +265,7 @@ unsafe fn get_constraint_type(constraint: &Constraint) -> Result<u32, MinionErro
         Constraint::SumGeq(_, _) => Ok(ffi::ConstraintType_CT_GEQSUM),
         Constraint::SumLeq(_, _) => Ok(ffi::ConstraintType_CT_LEQSUM),
         Constraint::Ineq(_, _, _) => Ok(ffi::ConstraintType_CT_INEQ),
+        Constraint::Eq(_, _) => Ok(ffi::ConstraintType_CT_EQ),
         #[allow(unreachable_patterns)]
         x => Err(MinionError::NotImplemented(format!(
             "Constraint not implemented {:?}",
@@ -293,6 +294,11 @@ unsafe fn constraint_add_args(
             read_var(i, r_constr, var1)?;
             read_var(i, r_constr, var2)?;
             read_const(r_constr, c)?;
+            Ok(())
+        }
+        Constraint::Eq(var1, var2) => {
+            read_var(i, r_constr, var1)?;
+            read_var(i, r_constr, var2)?;
             Ok(())
         }
         #[allow(unreachable_patterns)]
