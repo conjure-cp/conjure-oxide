@@ -1,4 +1,4 @@
-use conjure_core::{ast::Expr, rule::RuleApplicationError};
+use conjure_core::{ast::Constant as Const, ast::Expression as Expr, rule::RuleApplicationError};
 use conjure_rules::register_rule;
 
 /*****************************************************************************/
