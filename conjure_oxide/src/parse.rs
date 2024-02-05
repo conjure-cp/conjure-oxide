@@ -35,7 +35,7 @@ pub fn model_from_json(str: &str) -> Result<Model> {
                     .iter()
                     .flat_map(parse_expression)
                     .collect();
-                m.constraints.extend(constraints);
+                m.add_constraints(constraints);
                 // println!("Nb constraints {}", m.constraints.len());
             }
             otherwise => panic!("Unhandled Statement {:#?}", otherwise),

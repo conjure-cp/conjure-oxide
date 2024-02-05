@@ -294,7 +294,7 @@ impl FromConjureModel for CNF {
             ans.add_variable(var);
         }
 
-        for expr in conjure_model.constraints {
+        for expr in conjure_model.get_constraints_vec() {
             match ans.add_expression(&expr) {
                 Ok(_) => {}
                 Err(error) => {

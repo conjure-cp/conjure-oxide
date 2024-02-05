@@ -9,14 +9,14 @@ use std::fmt::{Debug, Display, Formatter};
 pub struct Model {
     #[serde_as(as = "Vec<(_, _)>")]
     pub variables: HashMap<Name, DecisionVariable>,
-    pub constraints: Vec<Expression>,
+    pub constraints: Expression,
 }
 
 impl Model {
     pub fn new() -> Model {
         Model {
             variables: HashMap::new(),
-            constraints: Vec::new(),
+            constraints: Expression::Nothing,
         }
     }
     // Function to update a DecisionVariable based on its Name
@@ -30,10 +30,36 @@ impl Model {
         self.variables.insert(name, decision_var);
     }
 
+    pub fn get_constraints_vec(&self) -> Vec<Expression> {
+        match &self.constraints {
+            Expression::And(constraints) => constraints.clone(),
+            Expression::Nothing => vec![],
+            _ => vec![self.constraints.clone()],
+        }
+    }
+
+    pub fn set_constraints(&mut self, constraints: Vec<Expression>) {
+        if constraints.is_empty() {
+            self.constraints = Expression::Nothing;
+        } else if constraints.len() == 1 {
+            self.constraints = constraints[0].clone();
+        } else {
+            self.constraints = Expression::And(constraints);
+        }
+    }
+
     pub fn add_constraint(&mut self, expression: Expression) {
         // ToDo (gs248) - there is no checking whatsoever
         // We need to properly validate the expression but this is just for testing
-        self.constraints.push(expression);
+        let mut constraints = self.get_constraints_vec();
+        constraints.push(expression);
+        self.set_constraints(constraints);
+    }
+
+    pub fn add_constraints(&mut self, expressions: Vec<Expression>) {
+        let mut constraints = self.get_constraints_vec();
+        constraints.extend(expressions);
+        self.set_constraints(constraints);
     }
 }
 
@@ -129,6 +155,12 @@ impl TryFrom<Constant> for bool {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub enum Expression {
+    /**
+     * Represents an empty expression
+     * NB: we only expect this at the top level of a model (if there is no constraints)
+     */
+    Nothing,
+
     #[solver(Minion, SAT)]
     Constant(Constant),
 
@@ -151,6 +183,15 @@ pub enum Expression {
     Gt(Box<Expression>, Box<Expression>),
     Lt(Box<Expression>, Box<Expression>),
 
+    /* Flattened SumEq.
+     *
+     * Note: this is an intermediary step that's used in the process of converting from conjure model to minion.
+     * This is NOT a valid expression in either Essence or minion.
+     *
+     * ToDo: This is a stop gap solution. Eventually it may be better to have multiple constraints instead? (gs248)
+     */
+    SumEq(Vec<Expression>, Box<Expression>),
+
     // Flattened Constraints
     #[solver(Minion)]
     SumGeq(Vec<Expression>, Box<Expression>),
@@ -161,32 +202,41 @@ pub enum Expression {
 }
 
 impl Expression {
-    /// Returns a vector of references to the sub-expressions of the expression.
-    pub fn sub_expressions(&self) -> Vec<&Expression> {
+    /**
+     * Returns a vector of references to the sub-expressions of the expression.
+     * If the expression is a primitive (variable, constant, etc.), returns None.
+     *
+     * Note: If the expression is NOT MEANT TO have sub-expressions, this function will return None.
+     * Otherwise, it will return Some(Vec), where the Vec can be empty.
+     */
+    pub fn sub_expressions(&self) -> Option<Vec<&Expression>> {
+        fn unwrap_flat_expression<'a>(
+            lhs: &'a Vec<Expression>,
+            rhs: &'a Box<Expression>,
+        ) -> Vec<&'a Expression> {
+            let mut sub_exprs = lhs.iter().collect::<Vec<_>>();
+            sub_exprs.push(rhs.as_ref());
+            sub_exprs
+        }
+
         match self {
-            Expression::Constant(_) => Vec::new(),
-            Expression::Reference(_) => Vec::new(),
-            Expression::Sum(exprs) => exprs.iter().collect(),
-            Expression::Not(expr_box) => vec![expr_box.as_ref()],
-            Expression::Or(exprs) => exprs.iter().collect(),
-            Expression::And(exprs) => exprs.iter().collect(),
-            Expression::Eq(lhs, rhs) => vec![lhs.as_ref(), rhs.as_ref()],
-            Expression::Neq(lhs, rhs) => vec![lhs.as_ref(), rhs.as_ref()],
-            Expression::Geq(lhs, rhs) => vec![lhs.as_ref(), rhs.as_ref()],
-            Expression::Leq(lhs, rhs) => vec![lhs.as_ref(), rhs.as_ref()],
-            Expression::Gt(lhs, rhs) => vec![lhs.as_ref(), rhs.as_ref()],
-            Expression::Lt(lhs, rhs) => vec![lhs.as_ref(), rhs.as_ref()],
-            Expression::SumGeq(lhs, rhs) => {
-                let mut sub_exprs = lhs.iter().collect::<Vec<_>>();
-                sub_exprs.push(rhs.as_ref());
-                sub_exprs
-            }
-            Expression::SumLeq(lhs, rhs) => {
-                let mut sub_exprs = lhs.iter().collect::<Vec<_>>();
-                sub_exprs.push(rhs.as_ref());
-                sub_exprs
-            }
-            Expression::Ineq(lhs, rhs, _) => vec![lhs.as_ref(), rhs.as_ref()],
+            Expression::Constant(_) => None,
+            Expression::Reference(_) => None,
+            Expression::Nothing => None,
+            Expression::Sum(exprs) => Some(exprs.iter().collect()),
+            Expression::Not(expr_box) => Some(vec![expr_box.as_ref()]),
+            Expression::Or(exprs) => Some(exprs.iter().collect()),
+            Expression::And(exprs) => Some(exprs.iter().collect()),
+            Expression::Eq(lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            Expression::Neq(lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            Expression::Geq(lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            Expression::Leq(lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            Expression::Gt(lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            Expression::Lt(lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            Expression::SumGeq(lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
+            Expression::SumLeq(lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
+            Expression::SumEq(lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
+            Expression::Ineq(lhs, rhs, _) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
         }
     }
 
@@ -195,6 +245,7 @@ impl Expression {
         match self {
             Expression::Constant(c) => Expression::Constant(c.clone()),
             Expression::Reference(name) => Expression::Reference(name.clone()),
+            Expression::Nothing => Expression::Nothing,
             Expression::Sum(_) => Expression::Sum(sub.iter().cloned().cloned().collect()),
             Expression::Not(_) => Expression::Not(Box::new(sub[0].clone())),
             Expression::Or(_) => Expression::Or(sub.iter().cloned().cloned().collect()),
@@ -219,9 +270,13 @@ impl Expression {
             }
             Expression::SumGeq(_, _) => Expression::SumGeq(
                 sub.iter().cloned().cloned().collect(),
-                Box::new(sub[2].clone()),
+                Box::new(sub[2].clone()), // ToDo (gs248) - Why are we using sub[2] here?
             ),
             Expression::SumLeq(_, _) => Expression::SumLeq(
+                sub.iter().cloned().cloned().collect(),
+                Box::new(sub[2].clone()),
+            ),
+            Expression::SumEq(_, _) => Expression::SumEq(
                 sub.iter().cloned().cloned().collect(),
                 Box::new(sub[2].clone()),
             ),
@@ -267,6 +322,7 @@ impl Display for Expression {
         match &self {
             Expression::Constant(c) => write!(f, "Constant::{}", c),
             Expression::Reference(name) => write!(f, "Reference({})", name),
+            Expression::Nothing => write!(f, "Nothing"),
             Expression::Sum(expressions) => write!(f, "Sum({})", display_expressions(expressions)),
             Expression::Not(expr_box) => write!(f, "Not({})", expr_box.clone()),
             Expression::Or(expressions) => write!(f, "Not({})", display_expressions(expressions)),

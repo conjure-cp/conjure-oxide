@@ -1,10 +1,98 @@
-use conjure_core::{ast::Constant as Const, ast::Expression as Expr, rule::RuleApplicationError};
+use conjure_core::{ast::Expr, rule::RuleApplicationError};
 use conjure_rules::register_rule;
 
 /*****************************************************************************/
 /*        This file contains basic rules for simplifying expressions         */
 /*****************************************************************************/
 
+/**
+ * Remove nothings from expressions:
+ * ```text
+ * and([a, nothing, b]) = and([a, b])
+ * sum([a, nothing, b]) = sum([a, b])
+ * sum_leq([a, nothing, b], c) = sum_leq([a, b], c)
+ * ...
+ * ```
+*/
+#[register_rule]
+fn remove_nothings(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+    fn remove_nothings(exprs: Vec<&Expr>) -> Result<Vec<&Expr>, RuleApplicationError> {
+        let mut changed = false;
+        let mut new_exprs = Vec::new();
+
+        for e in exprs {
+            match e.clone() {
+                Expr::Nothing => {
+                    changed = true;
+                }
+                _ => new_exprs.push(e),
+            }
+        }
+
+        if changed {
+            Ok(new_exprs)
+        } else {
+            Err(RuleApplicationError::RuleNotApplicable)
+        }
+    }
+
+    match expr {
+        Expr::And(_) | Expr::Or(_) | Expr::Sum(_) => match expr.sub_expressions() {
+            None => Err(RuleApplicationError::RuleNotApplicable),
+            Some(sub) => {
+                let new_sub = remove_nothings(sub)?;
+                let new_expr = expr.with_sub_expressions(new_sub);
+                Ok(new_expr)
+            }
+        },
+        Expr::SumEq(_, _) | Expr::SumLeq(_, _) | Expr::SumGeq(_, _) => {
+            match expr.sub_expressions() {
+                None => Err(RuleApplicationError::RuleNotApplicable),
+                Some(sub) => {
+                    // Keep the last sub expression, which is the right hand side expression
+                    let new_rhs = sub[sub.len() - 1];
+
+                    // Remove all nothings from the left hand side expressions
+                    let mut new_sub_exprs = remove_nothings(sub[..sub.len() - 1].to_vec())?;
+
+                    // Add the right hand side expression back
+                    new_sub_exprs.push(new_rhs);
+
+                    let new_expr = expr.with_sub_expressions(new_sub_exprs);
+                    Ok(new_expr)
+                }
+            }
+        }
+        _ => Err(RuleApplicationError::RuleNotApplicable),
+    }
+}
+
+/**
+ * Remove empty expressions:
+ * ```text
+ * [] = Nothing
+ * ```
+ */
+#[register_rule]
+fn empty_to_nothing(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+    match expr.sub_expressions() {
+        None => Err(RuleApplicationError::RuleNotApplicable),
+        Some(sub) => {
+            if sub.is_empty() {
+                Ok(Expr::Nothing)
+            } else {
+                Err(RuleApplicationError::RuleNotApplicable)
+            }
+        }
+    }
+}
+
+/**
+ * Evaluate sum of constants:
+ * ```text
+ * sum([1, 2, 3]) = 6
+ * ```
+ */
 #[register_rule]
 fn sum_constants(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
@@ -31,10 +119,48 @@ fn sum_constants(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     }
 }
 
+/**
+ * Unwrap trivial sums:
+ * ```text
+ * sum([a]) = a
+ * ```
+ */
 #[register_rule]
 fn unwrap_sum(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
         Expr::Sum(exprs) if (exprs.len() == 1) => Ok(exprs[0].clone()),
+        _ => Err(RuleApplicationError::RuleNotApplicable),
+    }
+}
+
+/**
+ * Flatten nested sums:
+ * ```text
+ * sum(sum(a, b), c) = sum(a, b, c)
+ * ```
+ */
+#[register_rule]
+pub fn flatten_nested_sum(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+    match expr {
+        Expr::Sum(exprs) => {
+            let mut new_exprs = Vec::new();
+            let mut changed = false;
+            for e in exprs {
+                match e {
+                    Expr::Sum(sub_exprs) => {
+                        changed = true;
+                        for e in sub_exprs {
+                            new_exprs.push(e.clone());
+                        }
+                    }
+                    _ => new_exprs.push(e.clone()),
+                }
+            }
+            if !changed {
+                return Err(RuleApplicationError::RuleNotApplicable);
+            }
+            Ok(Expr::Sum(new_exprs))
+        }
         _ => Err(RuleApplicationError::RuleNotApplicable),
     }
 }

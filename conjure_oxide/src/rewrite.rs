@@ -1,4 +1,4 @@
-use conjure_core::ast::Expression;
+use conjure_core::ast::{Expression, Model};
 use conjure_core::rule::Rule;
 use conjure_rules::get_rules;
 
@@ -27,11 +27,15 @@ fn rewrite_iteration<'a>(
     if let Some(new) = choose_rewrite(&rule_results) {
         return Some(new);
     } else {
-        let mut sub = expression.sub_expressions();
-        for i in 0..sub.len() {
-            if let Some(new) = rewrite_iteration(sub[i], rules) {
-                sub[i] = &new;
-                return Some(expression.with_sub_expressions(sub));
+        match expression.sub_expressions() {
+            None => {}
+            Some(mut sub) => {
+                for i in 0..sub.len() {
+                    if let Some(new) = rewrite_iteration(sub[i], rules) {
+                        sub[i] = &new;
+                        return Some(expression.with_sub_expressions(sub));
+                    }
+                }
             }
         }
     }
@@ -62,5 +66,14 @@ fn choose_rewrite(results: &Vec<RuleResult>) -> Option<Expression> {
         return None;
     }
     // Return the first result for now
+    // println!("Applying rule: {:?}", results[0].rule);
     Some(results[0].new_expression.clone())
+}
+
+pub fn rewrite_model(model: &Model) -> Model {
+    let mut new_model = model.clone();
+
+    new_model.constraints = rewrite(&model.constraints);
+
+    new_model
 }
