@@ -3,7 +3,7 @@
 use core::panic;
 use std::collections::HashMap;
 
-use conjure_oxide::{ast::*, solvers::FromConjureModel};
+use conjure_oxide::{ast::*, solvers::FromConjureModel, rewrite::rewrite};
 use conjure_rules::get_rule_by_name;
 use minion_rs::ast::{Constant, VarName};
 
@@ -521,3 +521,63 @@ fn rule_distribute_or_over_and() {
         ]),
     );
 }
+
+///
+/// Reduce and solve:
+/// ```text
+/// find a,b,c : int(1..3)
+/// such that a + b + c = 4
+/// such that a < b
+/// ```
+///
+/// This test uses the rewrite function to simplify the expression instead
+/// of applying the rules manually.
+#[test]
+fn rewrite_solve_xyz() {
+    println!("Rules: {:?}", conjure_rules::get_rules());
+
+    // Create variables and domains
+    let variable_a = Name::UserName(String::from("a"));
+    let variable_b = Name::UserName(String::from("b"));
+    let variable_c = Name::UserName(String::from("c"));
+    let domain = Domain::IntDomain(vec![Range::Bounded(1, 3)]);
+
+    // Construct nested expression
+    let nested_expr = Expression::And(vec![
+        Expression::Eq(
+            Box::new(Expression::Sum(vec![
+                Expression::Reference(variable_a.clone()),
+                Expression::Reference(variable_b.clone()),
+                Expression::Reference(variable_c.clone()),
+            ])),
+            Box::new(Expression::ConstantInt(4)),
+        ),
+        Expression::Lt(
+            Box::new(Expression::Reference(variable_a.clone())),
+            Box::new(Expression::Reference(variable_b.clone())),
+        ),
+    ]);
+
+    println!("Running rewrite on: {:?}", nested_expr);
+    // Apply rewrite function to the nested expression
+    let rewritten_expr = rewrite(&nested_expr);
+    println!("Rewritten expression: {:?}", rewritten_expr);
+
+    // Create model with variables and constraints
+    let mut model = Model {
+        variables: HashMap::new(),
+        constraints: rewritten_expr,
+    };
+
+    // Insert variables and domains
+    model.variables.insert(variable_a.clone(), DecisionVariable { domain: domain.clone() });
+    model.variables.insert(variable_b.clone(), DecisionVariable { domain: domain.clone() });
+    model.variables.insert(variable_c.clone(), DecisionVariable { domain: domain.clone() });
+
+    // Convert the model to MinionModel
+    let minion_model = conjure_oxide::solvers::minion::MinionModel::from_conjure(model).unwrap();
+
+    // Run the solver with the rewritten model
+    minion_rs::run_minion(minion_model, callback).unwrap();
+}
+
