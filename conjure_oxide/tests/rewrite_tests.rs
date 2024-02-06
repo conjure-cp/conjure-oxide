@@ -31,9 +31,8 @@ fn sum_of_constants() {
         None => panic!(),
     }
 
-    match evaluate_sum_of_constants(&invalid_sum_expression) {
-        Some(_) => panic!(),
-        None => (),
+    if evaluate_sum_of_constants(&invalid_sum_expression).is_some() {
+        panic!()
     }
 }
 
@@ -232,7 +231,7 @@ fn reduce_solve_xyz() {
 
     let mut model = Model {
         variables: HashMap::new(),
-        constraints: vec![expr1, expr2],
+        constraints: Expression::And(vec![expr1, expr2]),
     };
     model.variables.insert(
         Name::UserName(String::from("a")),

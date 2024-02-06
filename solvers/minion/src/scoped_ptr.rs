@@ -1,7 +1,7 @@
 /// A light scoped wrapper over a raw *mut pointer.
 ///
 /// Implements destruction of the pointer when it goes out of scope, but provides no other
-/// guarentees.
+/// guarantees.
 pub struct Scoped<T> {
     pub ptr: *mut T,
     destructor: fn(*mut T),
