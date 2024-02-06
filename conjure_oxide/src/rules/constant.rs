@@ -17,7 +17,9 @@ pub fn eval_constant(expr: &Expr) -> Option<Const> {
         Expr::Constant(c) => Some(c.clone()),
         Expr::Reference(_) => None,
 
-        Expr::Eq(a, b) => bin_op::<i32, bool>(|a, b| a == b, a, b).map(Const::Bool),
+        Expr::Eq(a, b) => bin_op::<i32, bool>(|a, b| a == b, a, b)
+            .or_else(|| bin_op::<bool, bool>(|a, b| a == b, a, b))
+            .map(Const::Bool),
         Expr::Neq(a, b) => bin_op::<i32, bool>(|a, b| a != b, a, b).map(Const::Bool),
         Expr::Lt(a, b) => bin_op::<i32, bool>(|a, b| a < b, a, b).map(Const::Bool),
         Expr::Gt(a, b) => bin_op::<i32, bool>(|a, b| a > b, a, b).map(Const::Bool),
@@ -101,5 +103,6 @@ where
 }
 
 fn unwrap_expr<T: TryFrom<Const>>(expr: &Expr) -> Option<T> {
-    TryInto::<T>::try_into(eval_constant(expr)?).ok()
+    let c = eval_constant(expr)?;
+    TryInto::<T>::try_into(c).ok()
 }
