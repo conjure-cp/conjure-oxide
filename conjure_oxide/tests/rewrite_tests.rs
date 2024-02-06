@@ -3,6 +3,7 @@
 use core::panic;
 use std::collections::HashMap;
 
+use conjure_oxide::eval_constant;
 use conjure_oxide::{ast::*, solvers::FromConjureModel};
 use conjure_rules::get_rule_by_name;
 use minion_rs::ast::{Constant as MinionConstant, VarName};
@@ -526,4 +527,118 @@ fn rule_distribute_or_over_and() {
             ]),
         ]),
     );
+}
+
+#[test]
+fn eval_const_int() {
+    let expr = Expression::Constant(Constant::Int(1));
+    let result = eval_constant(&expr);
+    assert_eq!(result, Some(Constant::Int(1)));
+}
+
+#[test]
+fn eval_const_bool() {
+    let expr = Expression::Constant(Constant::Bool(true));
+    let result = eval_constant(&expr);
+    assert_eq!(result, Some(Constant::Bool(true)));
+}
+
+#[test]
+fn eval_const_and() {
+    let expr = Expression::And(vec![
+        Expression::Constant(Constant::Bool(true)),
+        Expression::Constant(Constant::Bool(false)),
+    ]);
+    let result = eval_constant(&expr);
+    assert_eq!(result, Some(Constant::Bool(false)));
+}
+
+#[test]
+fn eval_const_ref() {
+    let expr = Expression::Reference(Name::UserName(String::from("a")));
+    let result = eval_constant(&expr);
+    assert_eq!(result, None);
+}
+
+#[test]
+fn eval_const_nested_ref() {
+    let expr = Expression::Sum(vec![
+        Expression::Constant(Constant::Int(1)),
+        Expression::And(vec![
+            Expression::Constant(Constant::Bool(true)),
+            Expression::Reference(Name::UserName(String::from("a"))),
+        ]),
+    ]);
+    let result = eval_constant(&expr);
+    assert_eq!(result, None);
+}
+
+#[test]
+fn eval_const_eq_int() {
+    let expr = Expression::Eq(
+        Box::new(Expression::Constant(Constant::Int(1))),
+        Box::new(Expression::Constant(Constant::Int(1))),
+    );
+    let result = eval_constant(&expr);
+    assert_eq!(result, Some(Constant::Bool(true)));
+}
+
+#[test]
+fn eval_const_eq_bool() {
+    let expr = Expression::Eq(
+        Box::new(Expression::Constant(Constant::Bool(true))),
+        Box::new(Expression::Constant(Constant::Bool(true))),
+    );
+    let result = eval_constant(&expr);
+    assert_eq!(result, Some(Constant::Bool(true)));
+}
+
+#[test]
+fn eval_const_eq_mixed() {
+    let expr = Expression::Eq(
+        Box::new(Expression::Constant(Constant::Int(1))),
+        Box::new(Expression::Constant(Constant::Bool(true))),
+    );
+    let result = eval_constant(&expr);
+    assert_eq!(result, None);
+}
+
+#[test]
+fn eval_const_sum_mixed() {
+    let expr = Expression::Sum(vec![
+        Expression::Constant(Constant::Int(1)),
+        Expression::Constant(Constant::Bool(true)),
+    ]);
+    let result = eval_constant(&expr);
+    assert_eq!(result, None);
+}
+
+#[test]
+fn eval_const_sum_xyz() {
+    let expr = Expression::And(vec![
+        Expression::Eq(
+            Box::new(Expression::Sum(vec![
+                Expression::Reference(Name::UserName(String::from("x"))),
+                Expression::Reference(Name::UserName(String::from("y"))),
+                Expression::Reference(Name::UserName(String::from("z"))),
+            ])),
+            Box::new(Expression::Constant(Constant::Int(4))),
+        ),
+        Expression::Geq(
+            Box::new(Expression::Reference(Name::UserName(String::from("x")))),
+            Box::new(Expression::Reference(Name::UserName(String::from("y")))),
+        ),
+    ]);
+    let result = eval_constant(&expr);
+    assert_eq!(result, None);
+}
+
+#[test]
+fn eval_const_or() {
+    let expr = Expression::Or(vec![
+        Expression::Constant(Constant::Bool(false)),
+        Expression::Constant(Constant::Bool(false)),
+    ]);
+    let result = eval_constant(&expr);
+    assert_eq!(result, Some(Constant::Bool(false)));
 }
