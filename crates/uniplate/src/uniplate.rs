@@ -39,6 +39,14 @@ where
         context(children)
     }
 
+    /// Perform a fold-like computation on each value, technically a paramorphism
+    fn para<T>(self, op: fn(Self, Vec<T>) -> T) -> T {
+        op(
+            self.clone(),
+            self.children().into_iter().map(|c| c.para(op)).collect(),
+        )
+    }
+
     fn zipper(self) -> Zipper<Self> {
         todo!()
     }
