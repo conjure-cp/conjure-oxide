@@ -91,8 +91,8 @@
 //!
 //! # Acknowledgements / Related Work
 //!
-//! **This crate implements programming constructs from the following Haskell libraries and
-//! papers:**
+//! *This crate implements programming constructs from the following Haskell libraries and
+//! papers:*
 //!  
 //! * [Uniplate](https://hackage.haskell.org/package/uniplate).
 //!
