@@ -287,6 +287,13 @@ impl Expression {
             ),
         }
     }
+
+    pub fn is_constant(&self) -> bool {
+        match self {
+            Expression::Constant(_) => true,
+            _ => false,
+        }
+    }
 }
 
 fn display_expressions(expressions: &Vec<Expression>) -> String {

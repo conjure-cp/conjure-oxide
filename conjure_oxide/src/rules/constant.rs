@@ -1,11 +1,15 @@
 use conjure_core::{ast::Constant as Const, ast::Expression as Expr, rule::RuleApplicationError};
 use conjure_rules::register_rule;
 
-// #[register_rule]
+#[register_rule]
 fn apply_eval_constant(expr: &Expr) -> Result<Expr, RuleApplicationError> {
-    eval_constant(expr)
+    if expr.is_constant() {
+        return Err(RuleApplicationError::RuleNotApplicable);
+    }
+    let res = eval_constant(expr)
         .map(Expr::Constant)
-        .ok_or(RuleApplicationError::RuleNotApplicable)
+        .ok_or(RuleApplicationError::RuleNotApplicable);
+    res
 }
 
 /// Simplify an expression to a constant if possible
