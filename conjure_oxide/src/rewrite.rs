@@ -7,7 +7,6 @@ struct RuleResult<'a> {
     new_expression: Expression,
 }
 
-
 /// # Returns
 /// - A new expression after applying the rules to `expression` and its sub-expressions.
 /// - The same expression if no rules are applicable.

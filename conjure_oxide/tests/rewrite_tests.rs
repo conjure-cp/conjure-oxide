@@ -1,11 +1,11 @@
 // Tests for rewriting/simplifying parts of the AST
 
-use core::panic;
 use conjure_core::rule::Rule;
 use conjure_rules::get_rules;
+use core::panic;
 use std::collections::HashMap;
 
-use conjure_oxide::{ast::*, solvers::FromConjureModel, rewrite::rewrite};
+use conjure_oxide::{ast::*, rewrite::rewrite, solvers::FromConjureModel};
 use conjure_rules::get_rule_by_name;
 use minion_rs::ast::{Constant, VarName};
 
@@ -574,9 +574,24 @@ fn rewrite_solve_xyz() {
     };
 
     // Insert variables and domains
-    model.variables.insert(variable_a.clone(), DecisionVariable { domain: domain.clone() });
-    model.variables.insert(variable_b.clone(), DecisionVariable { domain: domain.clone() });
-    model.variables.insert(variable_c.clone(), DecisionVariable { domain: domain.clone() });
+    model.variables.insert(
+        variable_a.clone(),
+        DecisionVariable {
+            domain: domain.clone(),
+        },
+    );
+    model.variables.insert(
+        variable_b.clone(),
+        DecisionVariable {
+            domain: domain.clone(),
+        },
+    );
+    model.variables.insert(
+        variable_c.clone(),
+        DecisionVariable {
+            domain: domain.clone(),
+        },
+    );
 
     // Convert the model to MinionModel
     let minion_model = conjure_oxide::solvers::minion::MinionModel::from_conjure(model).unwrap();
@@ -601,7 +616,6 @@ pub fn is_simple(expression: &Expression) -> bool {
     }
     new == *expression
 }
-
 
 /// # Returns
 /// - Some(<new_expression>) after applying the first applicable rule to `expr` or a sub-expression.
