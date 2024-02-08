@@ -7,6 +7,9 @@ struct RuleResult<'a> {
     new_expression: Expression,
 }
 
+/// # Returns
+/// - A new expression after applying the rules to `expression` and its sub-expressions.
+/// - The same expression if no rules are applicable.
 pub fn rewrite(expression: &Expression) -> Expression {
     let rules = get_rules();
     let mut new = expression.clone();
@@ -42,6 +45,9 @@ fn rewrite_iteration<'a>(
     None // No rules applicable to this branch of the expression
 }
 
+/// # Returns
+/// - A list of RuleResults after applying all rules to `expression`.
+/// - An empty list if no rules are applicable.
 fn apply_all_rules<'a>(
     expression: &'a Expression,
     rules: &'a Vec<Rule<'a>>,
@@ -61,6 +67,9 @@ fn apply_all_rules<'a>(
     results
 }
 
+/// # Returns
+/// - Some(<new_expression>) after applying the first rule in `results`.
+/// - None if `results` is empty.
 fn choose_rewrite(results: &Vec<RuleResult>) -> Option<Expression> {
     if results.is_empty() {
         return None;
@@ -70,6 +79,10 @@ fn choose_rewrite(results: &Vec<RuleResult>) -> Option<Expression> {
     Some(results[0].new_expression.clone())
 }
 
+/// This rewrites the model by applying the rules to all constraints.
+/// # Returns
+/// - A new model with rewritten constraints.
+/// - The same model if no rules are applicable.
 pub fn rewrite_model(model: &Model) -> Model {
     let mut new_model = model.clone();
 
