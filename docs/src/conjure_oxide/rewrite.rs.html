@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `conjure_oxide/src/rewrite.rs`."><title>rewrite.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-5bc39a1768837dd0.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="conjure_oxide" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (b11fbfbf3 2024-02-03)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-48f368f3872407c8.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `conjure_oxide/src/rewrite.rs`."><title>rewrite.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-5bc39a1768837dd0.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="conjure_oxide" data-themes="" data-resource-suffix="" data-rustdoc-version="1.78.0-nightly (8ace7ea1f 2024-02-07)" data-channel="nightly" data-search-js="search-dd67cee4cfa65049.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-4c98445ec4002617.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-48f368f3872407c8.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-04d5337699b92874.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title">
             <h2>Files</h2></div></nav><div class="sidebar-resizer"></div>
     <main><nav class="sub"><form class="search-form"><span></span><div id="sidebar-button" tabindex="-1"><a href="../../conjure_oxide/all.html" title="show sidebar"></a></div><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
@@ -79,6 +79,19 @@
 <a href="#77" id="77">77</a>
 <a href="#78" id="78">78</a>
 <a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a>
+<a href="#82" id="82">82</a>
+<a href="#83" id="83">83</a>
+<a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>conjure_core::ast::{Expression, Model};
 <span class="kw">use </span>conjure_core::rule::Rule;
 <span class="kw">use </span>conjure_rules::get_rules;
@@ -88,7 +101,10 @@
     new_expression: Expression,
 }
 
-<span class="kw">pub fn </span>rewrite(expression: <span class="kw-2">&amp;</span>Expression) -&gt; Expression {
+<span class="doccomment">/// # Returns
+/// - A new expression after applying the rules to `expression` and its sub-expressions.
+/// - The same expression if no rules are applicable.
+</span><span class="kw">pub fn </span>rewrite(expression: <span class="kw-2">&amp;</span>Expression) -&gt; Expression {
     <span class="kw">let </span>rules = get_rules();
     <span class="kw">let </span><span class="kw-2">mut </span>new = expression.clone();
     <span class="kw">while let </span><span class="prelude-val">Some</span>(step) = rewrite_iteration(<span class="kw-2">&amp;</span>new, <span class="kw-2">&amp;</span>rules) {
@@ -123,7 +139,10 @@
     <span class="prelude-val">None </span><span class="comment">// No rules applicable to this branch of the expression
 </span>}
 
-<span class="kw">fn </span>apply_all_rules&lt;<span class="lifetime">'a</span>&gt;(
+<span class="doccomment">/// # Returns
+/// - A list of RuleResults after applying all rules to `expression`.
+/// - An empty list if no rules are applicable.
+</span><span class="kw">fn </span>apply_all_rules&lt;<span class="lifetime">'a</span>&gt;(
     expression: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Expression,
     rules: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Vec&lt;Rule&lt;<span class="lifetime">'a</span>&gt;&gt;,
 ) -&gt; Vec&lt;RuleResult&lt;<span class="lifetime">'a</span>&gt;&gt; {
@@ -142,7 +161,10 @@
     results
 }
 
-<span class="kw">fn </span>choose_rewrite(results: <span class="kw-2">&amp;</span>Vec&lt;RuleResult&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Expression&gt; {
+<span class="doccomment">/// # Returns
+/// - Some(&lt;new_expression&gt;) after applying the first rule in `results`.
+/// - None if `results` is empty.
+</span><span class="kw">fn </span>choose_rewrite(results: <span class="kw-2">&amp;</span>Vec&lt;RuleResult&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;Expression&gt; {
     <span class="kw">if </span>results.is_empty() {
         <span class="kw">return </span><span class="prelude-val">None</span>;
     }
@@ -151,7 +173,11 @@
     </span><span class="prelude-val">Some</span>(results[<span class="number">0</span>].new_expression.clone())
 }
 
-<span class="kw">pub fn </span>rewrite_model(model: <span class="kw-2">&amp;</span>Model) -&gt; Model {
+<span class="doccomment">/// This rewrites the model by applying the rules to all constraints.
+/// # Returns
+/// - A new model with rewritten constraints.
+/// - The same model if no rules are applicable.
+</span><span class="kw">pub fn </span>rewrite_model(model: <span class="kw-2">&amp;</span>Model) -&gt; Model {
     <span class="kw">let </span><span class="kw-2">mut </span>new_model = model.clone();
 
     new_model.constraints = rewrite(<span class="kw-2">&amp;</span>model.constraints);
