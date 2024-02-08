@@ -26,4 +26,4 @@ TARGET_DIR=$(cargo metadata 2> /dev/null | jq -r .target_directory 2>/dev/null)
 cd "$PROJECT_ROOT"
 rm -rf "$TARGET_DIR/doc"
 
-RUSTDOCFLAGS="-Zunstable-options --markdown-no-toc --index-page ${PROJECT_ROOT}/doc/index.md" cargo +nightly doc --no-deps -p conjure_oxide -p conjure_core -p minion_rs -p chuffed_rs -p conjure_rules
+RUSTDOCFLAGS="-Zunstable-options --markdown-no-toc --index-page ${PROJECT_ROOT}/doc/index.md" cargo +nightly doc --no-deps -p conjure_oxide -p conjure_core -p minion_rs -p chuffed_rs -p conjure_rules -p uniplate
