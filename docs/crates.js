@@ -1,1 +1,1 @@
-window.ALL_CRATES = ["chuffed_rs","conjure_core","conjure_oxide","conjure_rules","minion_rs"];
+window.ALL_CRATES = ["chuffed_rs","conjure_core","conjure_oxide","conjure_rules","minion_rs","uniplate"];
