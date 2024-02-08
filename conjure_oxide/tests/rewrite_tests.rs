@@ -1,6 +1,8 @@
 // Tests for rewriting/simplifying parts of the AST
 
 use core::panic;
+use conjure_core::rule::Rule;
+use conjure_rules::get_rules;
 use std::collections::HashMap;
 
 use conjure_oxide::{ast::*, solvers::FromConjureModel, rewrite::rewrite};
@@ -561,6 +563,10 @@ fn rewrite_solve_xyz() {
     // Apply rewrite function to the nested expression
     let rewritten_expr = rewrite(&nested_expr);
 
+    // Check if the expression is in its simplest form
+    let expr = rewritten_expr.clone();
+    assert!(is_simple(&expr));
+
     // Create model with variables and constraints
     let mut model = Model {
         variables: HashMap::new(),
@@ -579,3 +585,80 @@ fn rewrite_solve_xyz() {
     minion_rs::run_minion(minion_model, callback).unwrap();
 }
 
+struct RuleResult<'a> {
+    rule: Rule<'a>,
+    new_expression: Expression,
+}
+
+/// # Returns
+/// - True if `expression` is in its simplest form.
+/// - False otherwise.
+pub fn is_simple(expression: &Expression) -> bool {
+    let rules = get_rules();
+    let mut new = expression.clone();
+    while let Some(step) = is_simple_iteration(&new, &rules) {
+        new = step;
+    }
+    new == *expression
+}
+
+
+/// # Returns
+/// - Some(<new_expression>) after applying the first applicable rule to `expr` or a sub-expression.
+/// - None if no rule is applicable to the expression or any sub-expression.
+fn is_simple_iteration<'a>(
+    expression: &'a Expression,
+    rules: &'a Vec<Rule<'a>>,
+) -> Option<Expression> {
+    let rule_results = apply_all_rules(expression, rules);
+    if let Some(new) = choose_rewrite(&rule_results) {
+        return Some(new);
+    } else {
+        match expression.sub_expressions() {
+            None => {}
+            Some(mut sub) => {
+                for i in 0..sub.len() {
+                    if let Some(new) = is_simple_iteration(sub[i], rules) {
+                        sub[i] = &new;
+                        return Some(expression.with_sub_expressions(sub));
+                    }
+                }
+            }
+        }
+    }
+    None // No rules applicable to this branch of the expression
+}
+
+/// # Returns
+/// - A list of RuleResults after applying all rules to `expression`.
+/// - An empty list if no rules are applicable.
+fn apply_all_rules<'a>(
+    expression: &'a Expression,
+    rules: &'a Vec<Rule<'a>>,
+) -> Vec<RuleResult<'a>> {
+    let mut results = Vec::new();
+    for rule in rules {
+        match rule.apply(expression) {
+            Ok(new) => {
+                results.push(RuleResult {
+                    rule: rule.clone(),
+                    new_expression: new,
+                });
+            }
+            Err(_) => continue,
+        }
+    }
+    results
+}
+
+/// # Returns
+/// - Some(<new_expression>) after applying the first rule in `results`.
+/// - None if `results` is empty.
+fn choose_rewrite(results: &Vec<RuleResult>) -> Option<Expression> {
+    if results.is_empty() {
+        return None;
+    }
+    // Return the first result for now
+    // println!("Applying rule: {:?}", results[0].rule);
+    Some(results[0].new_expression.clone())
+}
