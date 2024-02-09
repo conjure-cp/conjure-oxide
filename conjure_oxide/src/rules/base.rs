@@ -1,15 +1,9 @@
-use conjure_core::ast::Expression;
-use conjure_core::{ast::Expression as Expr, rule::RuleApplicationError};
+use conjure_core::{ast::Constant as Const, ast::Expression as Expr, rule::RuleApplicationError};
 use conjure_rules::register_rule;
 
 /*****************************************************************************/
 /*        This file contains basic rules for simplifying expressions         */
 /*****************************************************************************/
-
-// #[register_rule]
-// fn identity(expr: &Expr) -> Result<Expr, RuleApplicationError> {
-//     Ok(expr.clone())
-// }
 
 /**
  * Remove nothings from expressions:
@@ -43,7 +37,7 @@ fn remove_nothings(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     }
 
     match expr {
-        Expr::And(_) | Expr::Or(_) | Expression::Sum(_) => match expr.sub_expressions() {
+        Expr::And(_) | Expr::Or(_) | Expr::Sum(_) => match expr.sub_expressions() {
             None => Err(RuleApplicationError::RuleNotApplicable),
             Some(sub) => {
                 let new_sub = remove_nothings(sub)?;
@@ -51,7 +45,7 @@ fn remove_nothings(expr: &Expr) -> Result<Expr, RuleApplicationError> {
                 Ok(new_expr)
             }
         },
-        Expression::SumEq(_, _) | Expression::SumLeq(_, _) | Expression::SumGeq(_, _) => {
+        Expr::SumEq(_, _) | Expr::SumLeq(_, _) | Expr::SumGeq(_, _) => {
             match expr.sub_expressions() {
                 None => Err(RuleApplicationError::RuleNotApplicable),
                 Some(sub) => {
@@ -108,7 +102,7 @@ fn sum_constants(expr: &Expr) -> Result<Expr, RuleApplicationError> {
             let mut changed = false;
             for e in exprs {
                 match e {
-                    Expr::ConstantInt(i) => {
+                    Expr::Constant(Const::Int(i)) => {
                         sum += i;
                         changed = true;
                     }
@@ -118,7 +112,7 @@ fn sum_constants(expr: &Expr) -> Result<Expr, RuleApplicationError> {
             if !changed {
                 return Err(RuleApplicationError::RuleNotApplicable);
             }
-            new_exprs.push(Expr::ConstantInt(sum));
+            new_exprs.push(Expr::Constant(Const::Int(sum)));
             Ok(Expr::Sum(new_exprs)) // Let other rules handle only one Expr being contained in the sum
         }
         _ => Err(RuleApplicationError::RuleNotApplicable),
@@ -308,10 +302,10 @@ fn remove_constants_from_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
             let mut changed = false;
             for e in exprs {
                 match e {
-                    Expr::ConstantBool(val) => {
+                    Expr::Constant(Const::Bool(val)) => {
                         if *val {
                             // If we find a true, the whole expression is true
-                            return Ok(Expr::ConstantBool(true));
+                            return Ok(Expr::Constant(Const::Bool(true)));
                         } else {
                             // If we find a false, we can ignore it
                             changed = true;
@@ -344,10 +338,10 @@ fn remove_constants_from_and(expr: &Expr) -> Result<Expr, RuleApplicationError> 
             let mut changed = false;
             for e in exprs {
                 match e {
-                    Expr::ConstantBool(val) => {
+                    Expr::Constant(Const::Bool(val)) => {
                         if !*val {
                             // If we find a false, the whole expression is false
-                            return Ok(Expr::ConstantBool(false));
+                            return Ok(Expr::Constant(Const::Bool(false)));
                         } else {
                             // If we find a true, we can ignore it
                             changed = true;
@@ -376,7 +370,7 @@ fn remove_constants_from_and(expr: &Expr) -> Result<Expr, RuleApplicationError> 
 fn evaluate_constant_not(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
         Expr::Not(contents) => match contents.as_ref() {
-            Expr::ConstantBool(val) => Ok(Expr::ConstantBool(!val)),
+            Expr::Constant(Const::Bool(val)) => Ok(Expr::Constant(Const::Bool(!val))),
             _ => Err(RuleApplicationError::RuleNotApplicable),
         },
         _ => Err(RuleApplicationError::RuleNotApplicable),

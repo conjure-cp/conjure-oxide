@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde_json::Value;
 
-use crate::ast::{DecisionVariable, Domain, Expression, Model, Name, Range};
+use crate::ast::{Constant, DecisionVariable, Domain, Expression, Model, Name, Range};
 use crate::error::{Error, Result};
 use serde_json::Value as JsonValue;
 
@@ -246,12 +246,14 @@ fn parse_vec_op(
 
 fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expression> {
     match &constant["Constant"] {
-        Value::Object(int) if int.contains_key("ConstantInt") => Some(Expression::ConstantInt(
-            int["ConstantInt"].as_array()?[1]
-                .as_i64()?
-                .try_into()
-                .unwrap(),
-        )),
+        Value::Object(int) if int.contains_key("ConstantInt") => {
+            Some(Expression::Constant(Constant::Int(
+                int["ConstantInt"].as_array()?[1]
+                    .as_i64()?
+                    .try_into()
+                    .unwrap(),
+            )))
+        }
         otherwise => panic!("Unhandled parse_constant {:#?}", otherwise),
     }
 }
