@@ -33,7 +33,6 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.rust_release }}
 
       - name: Install rust ${{ env.rust_release }}
-        working-directory: ./solvers/minion
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
       
       - uses: ./.github/actions/install-conjure
@@ -42,25 +41,18 @@ jobs:
           version: 2.5.1
 
       - name: Generate coverage reports
-        working-directory: .
         run: |
-          ./tools/gen_coverage_all.sh
+          ./tools/coverage.sh
           
-      - name: Move all html to correct folders for deployment
-        run: |
-          # put things both in the sha directory, and in main/
-          mkdir -p deploy/conjure-oxide
-          mkdir -p deploy/minion
-          mkdir -p deploy/chuffed
-
-          cp -r conjure_oxide/coverage/html/* deploy/conjure-oxide
-          cp -r solvers/minion/coverage/html/* deploy/minion
-          cp -r solvers/chuffed/coverage/html/* deploy/chuffed
-
+      - run: |
+          mkdir -p deploy/
+          cp -r target/debug/coverage/* deploy/     # html
+          cp target/debug/lcov.info deploy/         # used for code coverage comments
+          
       - name: Copy coverage report to /main.
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: ./deploy
           target-folder: "coverage/main"
           branch: gh-pages
-          commit-message: "Actions: Update code coverage for main (${{ steps.sha.outputs.result }})"
+          commit-message: "Actions: Update code coverage for main"
