@@ -557,7 +557,7 @@ fn rewrite_solve_xyz() {
                 Expression::Reference(variable_b.clone()),
                 Expression::Reference(variable_c.clone()),
             ])),
-            Box::new(Expression::ConstantInt(4)),
+            Box::new(Expression::Constant(Constant::Int(4))),
         ),
         Expression::Lt(
             Box::new(Expression::Reference(variable_a.clone())),
