@@ -53,6 +53,23 @@ jobs:
         working-directory: ./solvers/minion
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
       
+      - name: Add conjure to PATH
+        run: echo "${HOME}/.cargo/bin/conjure-v${{ matrix.conjure_version }}-${{ matrix.release_suffix }}-with-solvers" >> ${GITHUB_PATH}
+
+      - name: Install conjure
+        run: |
+          if [ "$(conjure --version | head -n2 | tail -n1)" == "Release version ${{ matrix.conjure_version }}" ]; then
+            echo "Found conjure, not fetching again."
+          else
+            echo "Did not find conjure, fetching."
+            pushd ~/.cargo/bin
+            rm -rf conjure-v${{ matrix.conjure_version }}-${{ matrix.release_suffix }}-with-solvers*
+            wget https://github.com/conjure-cp/conjure/releases/download/v${{ matrix.conjure_version }}/conjure-v${{ matrix.conjure_version }}-${{ matrix.release_suffix }}-with-solvers.zip
+            unzip conjure-v${{ matrix.conjure_version }}-${{ matrix.release_suffix }}-with-solvers.zip
+            popd
+          fi
+          conjure --version
+          
       - name: Generate coverage reports
         working-directory: .
         run: |
