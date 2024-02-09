@@ -25,15 +25,16 @@ runs:
             unzip conjure-v${{ inputs.version }}-${{ inputs.os_arch }}-with-solvers.zip
 
             echo "Adding conjure to path."
-            echo "${HOME}/conjure/conjure-v${{ env.conjure_version }}-${{ env.release_suffix }}-with-solvers" >> ${GITHUB_PATH}
-
-            # check if that worked
-            cd ${HOME}
-            conjure --version
-            if [ "$(conjure --version | head -n2 | tail -n1)" != "Release version ${{ inputs.version }}" ]; then
-              echo "Correct conjure not found!"
-              conjure --version
-              exit 1
-            fi
+            # this prepends to path (so imagemagick doesnt interfere!), and does not take effect until the next step runs.
+            echo "${HOME}/conjure/conjure-v${{ env.conjure_version }}-${{ env.release_suffix }}-with-solvers/" >> ${GITHUB_PATH}
           fi
       shell: bash
+
+    - name: Check that conjure is installed correctly
+      run: | 
+          if [ "$(conjure --version | head -n2 | tail -n1)" != "Release version ${{ inputs.version }}" ]; then
+            echo "Correct conjure not found in path."
+            conjure --version
+            exit 1
+          fi
+
