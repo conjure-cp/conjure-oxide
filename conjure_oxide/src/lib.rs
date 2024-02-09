@@ -1,3 +1,6 @@
+
+// #![feature(doc_auto_cfg)]
+
 pub mod error;
 pub mod find_conjure;
 pub mod parse;
@@ -12,3 +15,5 @@ pub use conjure_core::solvers::Solver;
 pub use rules::eval_constant;
 
 pub use error::Error;
+
+pub mod unstable;
