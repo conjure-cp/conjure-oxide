@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ExecutionFailure"],"struct":["ExecutionSuccess","Init","ModelLoaded"],"trait":["SolverState"]};
