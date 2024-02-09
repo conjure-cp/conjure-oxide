@@ -1,0 +1,61 @@
+name: "Code Coverage Main (Generate)"
+
+on:
+  push:
+    branches:
+      - main # run for pushes to the main branch
+  workflow_dispatch:
+
+env:
+  rust_release: nightly
+
+jobs:
+  coverage:
+    name: "Generate Code Coverage Reports"
+    # only do coverage for ready PRs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target
+            solvers/minion/vendor
+            solvers/chuffed/vendor
+
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}
+
+      - name: Install rust ${{ env.rust_release }}
+        working-directory: ./solvers/minion
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
+      
+      - name: Generate coverage reports
+        working-directory: .
+        run: |
+          ./tools/gen_coverage_all.sh
+          
+      - name: Move all html to correct folders for deployment
+        run: |
+          # put things both in the sha directory, and in main/
+          mkdir -p deploy/conjure-oxide
+          mkdir -p deploy/minion
+          mkdir -p deploy/chuffed
+
+          cp -r conjure_oxide/coverage/html/* deploy/conjure-oxide
+          cp -r solvers/minion/coverage/html/* deploy/minion
+          cp -r solvers/chuffed/coverage/html/* deploy/chuffed
+
+      - name: Copy coverage report to /main.
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: ./deploy
+          target-folder: "coverage/main"
+          branch: gh-pages
+          commit-message: "Actions: Update code coverage for main (${{ steps.sha.outputs.result }})"
