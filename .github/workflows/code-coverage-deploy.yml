@@ -1,4 +1,4 @@
-name: "Code Coverage (Deploy)"
+name: "Code and Documentation Coverage (Deploy)"
 # see https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
 
 on:
@@ -11,6 +11,9 @@ on:
 # see https://github.com/JamesIves/github-pages-deploy-action/tree/dev
 permissions:
   contents: write
+
+env:
+  rust_release: nightly
 
 jobs:
   deploy-coverage: 
@@ -52,7 +55,7 @@ jobs:
           target-folder: "coverage/${{ steps.sha.outputs.result }}"
           branch: gh-pages
           commit-message: "Actions: Code Coverage for ${{ steps.sha.outputs.result }}"
-
+    
   indexes:
     needs: deploy-coverage
     name: "Regenerate indexes for coverage"
@@ -92,3 +95,136 @@ jobs:
           target-folder: ./coverage/
           branch: gh-pages
           commit-message: "Actions: Update coverage indexes"
+
+  comment:
+    needs: deploy-coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target
+            solvers/minion/vendor
+            solvers/chuffed/vendor
+
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}
+
+      - name: Install rust ${{ env.rust_release }}
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
+
+      # from https://github.com/bewee/rustdoc-coverage-action-example/
+      - name: Fetch base
+        run: git fetch origin ${{ github.event.workflow_run.event.pull_request.base.sha }}
+
+      - name: Checkout base
+        run: git checkout ${{ github.event.workflow_run.event.pull_request.base.sha }}
+
+      - name: Calculate base doc coverage
+        uses: bewee/rustdoc-coverage-action@v1
+      - name: Fetch head
+        run: git fetch origin ${{ github.event.workflow_run.event.pull_request.head.sha }}
+      - name: Checkout head
+        run: git checkout ${{ github.event.workflow_run.event.pull_request.head.sha }}
+
+      - name: Calculate doc coverage
+        id: coverage
+        uses: bewee/rustdoc-coverage-action@v1
+      
+      - name: Download code coverage info for main
+        run: | 
+          wget https://conjure-cp.github.io/coverage/main/lcov.info
+
+        
+      - name: Find coverage comment
+        uses: peter-evans/find-comment@v1
+        id: fc
+        with:
+          issue-number: ${{ github.event.workflow_run.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: "## Documentation Coverage"
+
+      - name: Delete coverage comment if it exists
+        if: steps.fc.outputs.comment-id != ''
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.deleteComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: ${{ steps.fc.outputs.comment-id }}
+            })
+
+      - name: Set shas
+        id: sha
+        uses: actions/github-script@v6
+        with:
+          result-encoding: string
+          script: |
+            const {data: callee_run } = await github.rest.actions.getWorkflowRun({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: context.payload.workflow_run.id,
+            });
+
+            console.log(callee_run);
+
+            // from manual inspection in jq, seems to hold head.sha for PR, not
+            // whatever GITHUB_SHA is. 
+            return callee_run.head_sha;
+
+      - name: Install lcov
+        run: |
+          sudo apt-get install -y lcov
+
+      - name: Generate lcov summary for main
+        id: lcov-main
+        run: |
+          wget https://conjure-cp.github.io/coverage/main/lcov.info
+          echo "summary=$(lcov --summary lcov.info --exclude '.cargo/**/*.rs')" >> "$GITHUB_OUTPUT"
+
+      - name: Generate lcov summary for PR
+        id: lcov-pr
+        run: |
+          wget https://conjure-cp.github.io/coverage/${{steps.sha.outputs.result}}/lcov.info
+          echo "summary=$(lcov --summary lcov.info --exclude '.cargo/**/*.rs')" >> "$GITHUB_OUTPUT"
+
+
+      - name: Create coverage comment
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.workflow_run.event.pull_request.number }}
+          body: |
+            ## Documentation Coverage
+            **${{steps.coverage.outputs.documented}}** documented (**${{steps.coverage.outputs.diff-documented}}**).
+
+            **${{steps.coverage.outputs.examples}}** with examples (**${{steps.coverage.outputs.diff-examples}}**).
+
+            <details>
+            <summary>Documentation Coverage Report</summary>
+            ${{steps.coverage.outputs.table}}
+            </details>
+
+            ## Code Coverage
+
+            **Summary**
+
+            This PR:
+            ```
+            ${{ steps.lcov-pr.outputs.summary }}
+            ```
+
+            Main:
+            ```
+            ${{ steps.lcov-main.outputs.summary }}
+            ```
+
+            **Full Coverage Reports**
+
+            * [This PR](https://conjure-cp.github.io/conjure-oxide/coverage/${{ steps.sha.outputs.result }}).
+            * [Main](https://conjure-cp.github.io/conjure-oxide/coverage/main).
