@@ -74,6 +74,6 @@ echo_err "info: running tests"
 cargo +nightly test --workspace
 
 echo_err "info: generating coverage reports"
-grcov . -s . --binary-path ./target/debug -t html --branch --ignore-not-existing --ignore 'target/**/*.rs' --ignore '**/main.rs' --ignore '**/build.rs' -o ./target/debug/coverage
-grcov . -s . --binary-path ./target/debug -t lcov --branch --ignore-not-existing --ignore 'target/**/*.rs' --ignore '**/main.rs' --ignore '**/build.rs' -o ./target/debug/lcov.info
+grcov . -s . --binary-path ./target/debug -t html --ignore-not-existing --ignore "$HOME"'/.cargo/**/*.rs' --ignore 'target/**/*.rs' --ignore '**/main.rs' --ignore '**/build.rs' -o ./target/debug/coverage
+grcov . -s . --binary-path ./target/debug -t lcov --ignore-not-existing --ignore "$HOME"'/.cargo/**/*.rs' --ignore 'target/**/*.rs' --ignore '.cargo/**/*.rs' --ignore '**/main.rs' --ignore '**/build.rs' -o ./target/debug/lcov.info
 rm -rf **/*.profraw *.profraw

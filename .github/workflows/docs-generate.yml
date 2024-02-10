@@ -20,14 +20,8 @@ jobs:
       - name: Get Sha
         id: sha
         run: |
-          if [[ ${{ github.event_name }} == 'pull_request' ]] 
-          then
-            echo -e "sha=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
-            echo -e "sha=${{ github.event.pull_request.head.sha }}"
-          else 
-            echo -e "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
-            echo -e "sha=${{ github.sha }}"
-          fi
+          echo -e "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          echo -e "sha=${{ github.sha }}"
 
       - uses: actions/cache@v3
         with:
@@ -59,5 +53,5 @@ jobs:
       - name: Archive code coverage results
         uses: actions/upload-artifact@v3
         with:
-          name: docs-${{ steps.sha.outputs.sha }}
+          name: docs-${{github.sha}}
           path: deploy/**

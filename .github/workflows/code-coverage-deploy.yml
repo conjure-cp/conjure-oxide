@@ -97,6 +97,7 @@ jobs:
           commit-message: "Actions: Update coverage indexes"
 
   comment:
+    permissions: write-all
     needs: deploy-coverage
     runs-on: ubuntu-latest
     steps:
@@ -118,33 +119,89 @@ jobs:
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       # from https://github.com/bewee/rustdoc-coverage-action-example/
-      - name: Fetch base
-        run: git fetch origin ${{ github.event.workflow_run.event.pull_request.base.sha }}
 
-      - name: Checkout base
-        run: git checkout ${{ github.event.workflow_run.event.pull_request.base.sha }}
+      - name: Checkout main
+        uses: actions/checkout@v2
+        with: 
+          ref: main
 
-      - name: Calculate base doc coverage
-        uses: bewee/rustdoc-coverage-action@v1
-      - name: Fetch head
-        run: git fetch origin ${{ github.event.workflow_run.event.pull_request.head.sha }}
-      - name: Checkout head
-        run: git checkout ${{ github.event.workflow_run.event.pull_request.head.sha }}
+      - name: Calculate main doc coverage
+        id: maindoc
+        run: |
+           RUSTDOCFLAGS='-Z unstable-options --show-coverage' cargo +nightly doc --workspace --no-deps > coverage.md
+           echo 'coverage<<EOFABC' >> $GITHUB_OUTPUT
+           echo "$(cat coverage.md)" >> $GITHUB_OUTPUT
+           echo 'EOFABC' >> $GITHUB_OUTPUT
 
-      - name: Calculate doc coverage
-        id: coverage
-        uses: bewee/rustdoc-coverage-action@v1
-      
-      - name: Download code coverage info for main
-        run: | 
-          wget https://conjure-cp.github.io/coverage/main/lcov.info
+      - name: Get pr info
+        id: prinfo
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const {data: callee_run } = await github.rest.actions.getWorkflowRun({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: context.payload.workflow_run.id,
+            });
 
-        
+            console.log(callee_run.pull_requests[0]);
+
+            // from manual inspection in jq, seems to hold head.sha for PR, not
+            // whatever GITHUB_SHA is. 
+            return callee_run.pull_requests[0];
+
+      - name: Get pr repo
+        id: prrepo
+        uses: actions/github-script@v6
+        with:
+          result-encoding: string
+          script: |
+            const {data: callee_run } = await github.rest.actions.getWorkflowRun({
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               run_id: context.payload.workflow_run.id,
+            });
+            return callee_run.repository.full_name;
+
+      - name: Checkout this PR
+        uses: actions/checkout@v2
+        with:
+          ref: ${{fromJson(steps.prinfo.outputs.result).head.sha}}
+          repository: ${{steps.prrepo.outputs.result}}
+
+      - name: Calculate PR doc coverage
+        id: prddoc
+        run: |
+           RUSTDOCFLAGS='-Z unstable-options --show-coverage' cargo +nightly doc --workspace --no-deps > coverage.md
+           echo 'coverage<<EOFABC' >> $GITHUB_OUTPUT
+           echo "$(cat coverage.md)" >> $GITHUB_OUTPUT
+           echo 'EOFABC' >> $GITHUB_OUTPUT
+
+      - name: Generate lcov summary for main and pr
+        continue-on-error: true
+        id: lcov
+        run: |
+
+          sudo apt-get install -y lcov
+          wget https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/main/lcov.info
+          lcov --summary lcov.info > cov.txt
+          echo "main<<EOFABC" >> $GITHUB_OUTPUT
+          echo "$(cat cov.txt | tail -n +3)" >> $GITHUB_OUTPUT
+          echo 'EOFABC' >> $GITHUB_OUTPUT
+
+          rm lcov.info
+          wget https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/${{fromJson(steps.prinfo.outputs.result).head.sha}}/lcov.info
+          lcov --summary lcov.info > cov.txt
+          echo "pr<<EOFABC" >> $GITHUB_OUTPUT
+          echo "$(cat cov.txt | tail -n +3)" >> $GITHUB_OUTPUT
+          echo 'EOFABC' >> $GITHUB_OUTPUT
+
       - name: Find coverage comment
         uses: peter-evans/find-comment@v1
+        continue-on-error: true
         id: fc
         with:
-          issue-number: ${{ github.event.workflow_run.event.pull_request.number }}
+          issue-number: ${{fromJson(steps.prinfo.outputs.result).number}}
           comment-author: "github-actions[bot]"
           body-includes: "## Documentation Coverage"
 
@@ -159,72 +216,39 @@ jobs:
               comment_id: ${{ steps.fc.outputs.comment-id }}
             })
 
-      - name: Set shas
-        id: sha
-        uses: actions/github-script@v6
-        with:
-          result-encoding: string
-          script: |
-            const {data: callee_run } = await github.rest.actions.getWorkflowRun({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               run_id: context.payload.workflow_run.id,
-            });
-
-            console.log(callee_run);
-
-            // from manual inspection in jq, seems to hold head.sha for PR, not
-            // whatever GITHUB_SHA is. 
-            return callee_run.head_sha;
-
-      - name: Install lcov
-        run: |
-          sudo apt-get install -y lcov
-
-      - name: Generate lcov summary for main
-        id: lcov-main
-        run: |
-          wget https://conjure-cp.github.io/coverage/main/lcov.info
-          echo "summary=$(lcov --summary lcov.info --exclude '.cargo/**/*.rs')" >> "$GITHUB_OUTPUT"
-
-      - name: Generate lcov summary for PR
-        id: lcov-pr
-        run: |
-          wget https://conjure-cp.github.io/coverage/${{steps.sha.outputs.result}}/lcov.info
-          echo "summary=$(lcov --summary lcov.info --exclude '.cargo/**/*.rs')" >> "$GITHUB_OUTPUT"
-
-
       - name: Create coverage comment
         uses: peter-evans/create-or-update-comment@v1
         with:
-          comment-id: ${{ steps.fc.outputs.comment-id }}
-          issue-number: ${{ github.event.workflow_run.event.pull_request.number }}
+          issue-number: ${{fromJson(steps.prinfo.outputs.result).number}}
           body: |
             ## Documentation Coverage
-            **${{steps.coverage.outputs.documented}}** documented (**${{steps.coverage.outputs.diff-documented}}**).
-
-            **${{steps.coverage.outputs.examples}}** with examples (**${{steps.coverage.outputs.diff-examples}}**).
 
             <details>
-            <summary>Documentation Coverage Report</summary>
-            ${{steps.coverage.outputs.table}}
+            <summary>This PR</summary>
+
+            ```
+            ${{steps.prddoc.outputs.coverage}}
+            ```
+
+            </details>
+
+            <details>
+            <summary>Main</summary>
+            
+            ```
+            ${{steps.maindoc.outputs.coverage}}
+            ```
+
             </details>
 
             ## Code Coverage
 
-            **Summary**
-
-            This PR:
+            [This PR](https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/${{fromJson(steps.prinfo.outputs.result).head.sha}})
             ```
-            ${{ steps.lcov-pr.outputs.summary }}
+            ${{steps.lcov.outputs.pr}}
             ```
 
-            Main:
+            [Main](https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/main)
             ```
-            ${{ steps.lcov-main.outputs.summary }}
+            ${{steps.lcov.outputs.main}}
             ```
-
-            **Full Coverage Reports**
-
-            * [This PR](https://conjure-cp.github.io/conjure-oxide/coverage/${{ steps.sha.outputs.result }}).
-            * [Main](https://conjure-cp.github.io/conjure-oxide/coverage/main).
