@@ -118,18 +118,21 @@ jobs:
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       # from https://github.com/bewee/rustdoc-coverage-action-example/
-      - name: Fetch base
-        run: git fetch origin ${{ github.event.workflow_run.event.pull_request.base.sha }}
 
       - name: Checkout base
-        run: git checkout ${{ github.event.workflow_run.event.pull_request.base.sha }}
+        uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Calculate base doc coverage
         uses: bewee/rustdoc-coverage-action@v1
-      - name: Fetch head
-        run: git fetch origin ${{ github.event.workflow_run.event.pull_request.head.sha }}
-      - name: Checkout head
-        run: git checkout ${{ github.event.workflow_run.event.pull_request.head.sha }}
+
+
+      - name: Checkout the PR
+        uses: actions/checkout@v4
+        with:
+          ref: ${{github.event.workflow_run.pull_requests[0].head.sha}}
+          repo: ${{github.event.workflow_run.pull_requests[0].head.repository}}
 
       - name: Calculate doc coverage
         id: coverage
@@ -137,14 +140,14 @@ jobs:
       
       - name: Download code coverage info for main
         run: | 
-          wget https://conjure-cp.github.io/coverage/main/lcov.info
+          wget https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/main/lcov.info
 
         
       - name: Find coverage comment
         uses: peter-evans/find-comment@v1
         id: fc
         with:
-          issue-number: ${{ github.event.workflow_run.event.pull_request.number }}
+          issue-number: ${{ github.event.workflow_run.pull_requests[0].number }}
           comment-author: "github-actions[bot]"
           body-includes: "## Documentation Coverage"
 
@@ -184,13 +187,13 @@ jobs:
       - name: Generate lcov summary for main
         id: lcov-main
         run: |
-          wget https://conjure-cp.github.io/coverage/main/lcov.info
+          wget https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/main/lcov.info
           echo "summary=$(lcov --summary lcov.info --exclude '.cargo/**/*.rs')" >> "$GITHUB_OUTPUT"
 
       - name: Generate lcov summary for PR
         id: lcov-pr
         run: |
-          wget https://conjure-cp.github.io/coverage/${{steps.sha.outputs.result}}/lcov.info
+          wget https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/${{steps.sha.outputs.result}}/lcov.info
           echo "summary=$(lcov --summary lcov.info --exclude '.cargo/**/*.rs')" >> "$GITHUB_OUTPUT"
 
 
@@ -198,7 +201,7 @@ jobs:
         uses: peter-evans/create-or-update-comment@v1
         with:
           comment-id: ${{ steps.fc.outputs.comment-id }}
-          issue-number: ${{ github.event.workflow_run.event.pull_request.number }}
+          issue-number: ${{ github.event.workflow_run.pull_requests[0].number }}
           body: |
             ## Documentation Coverage
             **${{steps.coverage.outputs.documented}}** documented (**${{steps.coverage.outputs.diff-documented}}**).
@@ -226,5 +229,5 @@ jobs:
 
             **Full Coverage Reports**
 
-            * [This PR](https://conjure-cp.github.io/conjure-oxide/coverage/${{ steps.sha.outputs.result }}).
-            * [Main](https://conjure-cp.github.io/conjure-oxide/coverage/main).
+            * [This PR](https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/${{ steps.sha.outputs.result }}).
+            * [Main](https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/main).
