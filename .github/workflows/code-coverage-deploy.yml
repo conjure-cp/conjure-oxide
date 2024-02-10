@@ -122,7 +122,7 @@ jobs:
       - name: Checkout main
         uses: actions/checkout@v2
         with: 
-          ref: ${{ github.event.workflow_run.event.pull_request.base.sha }}
+          ref: main
 
       - name: Calculate main doc coverage
         uses: bewee/rustdoc-coverage-action@v1
@@ -148,7 +148,8 @@ jobs:
       - name: Checkout this PR
         uses: actions/checkout@v2
         with:
-            ref: ${{github.event.workflow_run.event.pull_request.head_sha}}
+            ref: ${{github.event.workflow_run.pull_requests[0].head.sha}}
+            repository: ${{github.event.workflow_run.pull_requests[0].head.repo}}
 
       - name: Calculate doc coverage
         id: coverage
@@ -159,7 +160,7 @@ jobs:
         uses: peter-evans/find-comment@v1
         id: fc
         with:
-          issue-number: ${{ github.event.workflow_run.event.pull_request.number }}
+          issue-number: ${{github.event.workflow_run.pull_requests[0].number}}
           comment-author: "github-actions[bot]"
           body-includes: "## Documentation Coverage"
 
@@ -223,5 +224,5 @@ jobs:
 
             **Full Coverage Reports**
 
-            * [This PR](https://${{github.repository_owner}}github.io/conjure-oxide/coverage/${{ steps.sha.outputs.result }}).
+            * [This PR](https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/${{ steps.sha.outputs.result }}).
             * [Main](https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/main).
