@@ -63,7 +63,7 @@ rustup run nightly cargo install grcov
 rm -rf target/debug/coverage
 
 export CARGO_INCREMENTAL=0 
-export RUSTFLAGS='-Z unstable-options -Cinstrument-coverage=except-unused-generics' 
+export RUSTFLAGS='-Z unstable-options -Cinstrument-coverage' 
 export RUSTDOCFLAGS="-C instrument-coverage -Z unstable-options --persist-doctests target/debug/doctestbins"
 export LLVM_PROFILE_FILE='conjure-oxide-%p-%m.profraw' 
 
