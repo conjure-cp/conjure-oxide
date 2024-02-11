@@ -29,7 +29,9 @@ impl Default for Model {
 pub enum Constraint {
     SumLeq(Vec<Var>, Var),
     SumGeq(Vec<Var>, Var),
+    Eq(Var, Var),
     Ineq(Var, Var, Constant),
+    WatchedAnd(Vec<Constraint>),
 }
 
 /// A variable can either be a named variable, or an anomynous "constant as a variable".

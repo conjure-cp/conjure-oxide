@@ -1,19 +1,9 @@
-name: "Code Coverage (Generate)"
+name: "Code and Documentation Coverage (PR)"
 
 on:
-  push:
-    branches:
-      - main # run for pushes to the main branch
-    paths:
-      - Cargo.*
-      - conjure-oxide/**
-      - solvers/**
-      - crates/**
-      - .github/actions/code-coverage.yml
   pull_request:
     paths:
-      - Cargo.*
-      - conjure-oxide/**
+      - conjure_oxide/**
       - solvers/**
       - crates/**
       - .github/actions/code-coverage.yml
@@ -25,8 +15,6 @@ env:
 jobs:
   coverage:
     name: "Generate Code Coverage Reports"
-    # only do coverage for ready PRs
-    if: ${{ github.event != 'pull_request' || ( github.event == 'pull_request' && (! github.event.pull_request.draft)) }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
@@ -59,53 +47,25 @@ jobs:
           restore-keys: ${{ runner.os }}-${{ env.rust_release }}
 
       - name: Install rust ${{ env.rust_release }}
-        working-directory: ./solvers/minion
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
       
-      - name: Generate coverage reports
-        working-directory: .
-        run: |
-          ./tools/gen_coverage_all.sh
+      - uses: ./.github/actions/install-conjure
+        with: 
+          os_arch: linux
+          version: 2.5.1
           
-      - name: Move all html to correct folders for deployment
+      - name: Generate coverage reports
         run: |
-          # put things both in the sha directory, and in main/
-          mkdir -p deploy/conjure-oxide
-          mkdir -p deploy/minion
-          mkdir -p deploy/chuffed
+          ./tools/coverage.sh
+          
+      - run: |
+          mkdir -p deploy/
+          cp -r target/debug/coverage/* deploy/     # html
+          cp target/debug/lcov.info deploy/         # used for comments
 
-          cp -r conjure_oxide/coverage/html/* deploy/conjure-oxide
-          cp -r solvers/minion/coverage/html/* deploy/minion
-          cp -r solvers/chuffed/coverage/html/* deploy/chuffed
-
-      - name: Archive code coverage results
+      - name: Archive code coverage results for deployment
         uses: actions/upload-artifact@v3
         with:
           name: code-coverage-${{ steps.sha.outputs.sha }}
           path: deploy/**
-
-      - name: Format summary
-        run : |
-          CONJURE_OXIDE_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ steps.sha.outputs.sha }}/conjure-oxide"
-          MINION_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ steps.sha.outputs.sha }}/minion"
-          CHUFFED_URL="https://conjure-cp.github.io/conjure-oxide/coverage/${{ steps.sha.outputs.sha }}/chuffed"
-
-          CONJURE_OXIDE_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/main/conjure-oxide"
-          MINION_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/main/minion"
-          CHUFFED_LATEST="https://conjure-cp.github.io/conjure-oxide/coverage/main/chuffed"
-          echo '# Code Coverage' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## This commit" >> $GITHUB_STEP_SUMMARY
-          echo "| Crate | |  | " >> $GITHUB_STEP_SUMMARY
-          echo "| ----- | ----- | ----- |" >> $GITHUB_STEP_SUMMARY
-          echo "| Conjure-Oxide | ![](${CONJURE_OXIDE_URL}/badges/flat.svg) | [Full Report](${CONJURE_OXIDE_URL}) | " >> $GITHUB_STEP_SUMMARY
-          echo "| Minion        | ![](${MINION_URL}/badges/flat.svg)        | [Full Report](${MINION_URL}) | " >> $GITHUB_STEP_SUMMARY
-          echo "| Chuffed       | ![](${CHUFFED_URL}/badges/flat.svg)       | [Full Report](${CHUFFED_URL}) | " >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Main" >> $GITHUB_STEP_SUMMARY
-          echo "| Crate | |  | " >> $GITHUB_STEP_SUMMARY
-          echo "| ----- | ----- | ----- |" >> $GITHUB_STEP_SUMMARY
-          echo "| Conjure-Oxide | ![](${CONJURE_OXIDE_LATEST}/badges/flat.svg) | [Full Report](${CONJURE_OXIDE_LATEST}) | " >> $GITHUB_STEP_SUMMARY
-          echo "| Minion        | ![](${MINION_LATEST}/badges/flat.svg)        | [Full Report](${MINION_LATEST}) | " >> $GITHUB_STEP_SUMMARY
-          echo "| Chuffed       | ![](${CHUFFED_LATEST}/badges/flat.svg)       | [Full Report](${CHUFFED_LATEST}) | " >> $GITHUB_STEP_SUMMARY
-
+      

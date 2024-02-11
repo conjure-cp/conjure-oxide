@@ -4,8 +4,9 @@ use super::{FromConjureModel, SolverError};
 use crate::Solver;
 
 use crate::ast::{
-    DecisionVariable, Domain as ConjureDomain, Expression as ConjureExpression,
-    Model as ConjureModel, Name as ConjureName, Range as ConjureRange,
+    Constant as ConjureConstant, DecisionVariable, Domain as ConjureDomain,
+    Expression as ConjureExpression, Model as ConjureModel, Name as ConjureName,
+    Range as ConjureRange,
 };
 pub use minion_rs::ast::Model as MinionModel;
 use minion_rs::ast::{
@@ -95,7 +96,7 @@ fn parse_exprs(
     conjure_model: &ConjureModel,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
-    for expr in conjure_model.constraints.iter() {
+    for expr in conjure_model.get_constraints_vec().iter() {
         parse_expr(expr.to_owned(), minion_model)?;
     }
     Ok(())
@@ -109,6 +110,13 @@ fn parse_expr(expr: ConjureExpression, minion_model: &mut MinionModel) -> Result
         x => Err(SolverError::NotSupported(SOLVER, format!("{:?}", x))),
     }
 }
+
+// fn parse_and(
+//     expressions: Vec<Expression>,
+//     minion_model: &mut MinionModel,
+// ) -> Result<(), SolverError> {
+//     // ToDo - Nik said that he will do this
+// }
 
 fn parse_sumleq(
     sum_vars: Vec<ConjureExpression>,
@@ -191,7 +199,7 @@ fn must_be_ref(e: ConjureExpression) -> Result<String, SolverError> {
 
 fn must_be_const(e: ConjureExpression) -> Result<i32, SolverError> {
     match e {
-        ConjureExpression::ConstantInt(n) => Ok(n),
+        ConjureExpression::Constant(ConjureConstant::Int(n)) => Ok(n),
         x => Err(SolverError::InvalidInstance(
             SOLVER,
             format!("expected a constant, but got `{0:?}`", x),
@@ -209,6 +217,7 @@ fn name_to_string(name: ConjureName) -> String {
 #[cfg(test)]
 mod tests {
     use anyhow::anyhow;
+    use conjure_core::ast::Expression;
     use std::collections::HashMap;
 
     use minion_rs::ast::VarName;
@@ -220,7 +229,7 @@ mod tests {
         // TODO: convert to use public interfaces when these exist.
         let mut model = ConjureModel {
             variables: HashMap::new(),
-            constraints: Vec::new(),
+            constraints: Expression::And(Vec::new()),
         };
 
         add_int_with_range(&mut model, "x", 1, 3)?;
@@ -230,7 +239,7 @@ mod tests {
         let x = ConjureExpression::Reference(ConjureName::UserName("x".to_owned()));
         let y = ConjureExpression::Reference(ConjureName::UserName("y".to_owned()));
         let z = ConjureExpression::Reference(ConjureName::UserName("z".to_owned()));
-        let four = ConjureExpression::ConstantInt(4);
+        let four = ConjureExpression::Constant(ConjureConstant::Int(4));
 
         let geq = ConjureExpression::SumGeq(
             vec![x.to_owned(), y.to_owned(), z.to_owned()],
@@ -242,9 +251,7 @@ mod tests {
         );
         let ineq = ConjureExpression::Ineq(Box::from(x), Box::from(y), Box::from(four));
 
-        model.constraints.push(geq);
-        model.constraints.push(leq);
-        model.constraints.push(ineq);
+        model.add_constraints(vec![geq, leq, ineq]);
 
         let minion_model = MinionModel::from_conjure(model)?;
         Ok(minion_rs::run_minion(minion_model, xyz_callback)?)

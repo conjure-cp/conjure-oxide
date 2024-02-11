@@ -1,4 +1,4 @@
-use conjure_core::ast::Expression;
+use conjure_core::ast::{Expression, Model};
 use conjure_core::rule::Rule;
 use conjure_rules::get_rules;
 
@@ -7,6 +7,9 @@ struct RuleResult<'a> {
     new_expression: Expression,
 }
 
+/// # Returns
+/// - A new expression after applying the rules to `expression` and its sub-expressions.
+/// - The same expression if no rules are applicable.
 pub fn rewrite(expression: &Expression) -> Expression {
     let rules = get_rules();
     let mut new = expression.clone();
@@ -27,17 +30,24 @@ fn rewrite_iteration<'a>(
     if let Some(new) = choose_rewrite(&rule_results) {
         return Some(new);
     } else {
-        let mut sub = expression.sub_expressions();
-        for i in 0..sub.len() {
-            if let Some(new) = rewrite_iteration(sub[i], rules) {
-                sub[i] = &new;
-                return Some(expression.with_sub_expressions(sub));
+        match expression.sub_expressions() {
+            None => {}
+            Some(mut sub) => {
+                for i in 0..sub.len() {
+                    if let Some(new) = rewrite_iteration(sub[i], rules) {
+                        sub[i] = &new;
+                        return Some(expression.with_sub_expressions(sub));
+                    }
+                }
             }
         }
     }
     None // No rules applicable to this branch of the expression
 }
 
+/// # Returns
+/// - A list of RuleResults after applying all rules to `expression`.
+/// - An empty list if no rules are applicable.
 fn apply_all_rules<'a>(
     expression: &'a Expression,
     rules: &'a Vec<Rule<'a>>,
@@ -57,10 +67,26 @@ fn apply_all_rules<'a>(
     results
 }
 
+/// # Returns
+/// - Some(<new_expression>) after applying the first rule in `results`.
+/// - None if `results` is empty.
 fn choose_rewrite(results: &Vec<RuleResult>) -> Option<Expression> {
     if results.is_empty() {
         return None;
     }
     // Return the first result for now
+    // println!("Applying rule: {:?}", results[0].rule);
     Some(results[0].new_expression.clone())
+}
+
+/// This rewrites the model by applying the rules to all constraints.
+/// # Returns
+/// - A new model with rewritten constraints.
+/// - The same model if no rules are applicable.
+pub fn rewrite_model(model: &Model) -> Model {
+    let mut new_model = model.clone();
+
+    new_model.constraints = rewrite(&model.constraints);
+
+    new_model
 }
