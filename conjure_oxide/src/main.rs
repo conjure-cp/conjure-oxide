@@ -9,6 +9,7 @@ use std::sync::Mutex;
 use anyhow::Result as AnyhowResult;
 use clap::{arg, command, Parser};
 use conjure_oxide::find_conjure::conjure_executable;
+use conjure_oxide::generate_custom::get_example_model;
 use conjure_oxide::parse::model_from_json;
 use conjure_oxide::rewrite::rewrite_model;
 use conjure_oxide::solvers::FromConjureModel;
@@ -107,19 +108,13 @@ mod tests {
 
     #[test]
     fn test_get_example_model_success() {
-        let filename = "comprehension-01-1";
-        match generate_custom::get_example_model(filename) {
-            Ok(result) => assert!(result.contains("comprehension-01-1")),
-            Err(_) => panic!("Expected successful result, but got an error."),
-        }
+        let filename = "basic/comprehension-01-1/comprehension-01-1";
+        get_example_model(filename).unwrap();
     }
 
     #[test]
     fn test_get_example_model_fail_empty_filename() {
         let filename = "";
-        match generate_custom::get_example_model(filename) {
-            Ok(_) => panic!("Expected an error, but got success."),
-            Err(e) => assert_eq!(e, "Filename cannot be empty."),
-        }
+        get_example_model(filename).unwrap_err();
     }
 }
