@@ -100,3 +100,26 @@ pub fn main() -> AnyhowResult<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_example_model_success() {
+        let filename = "comprehension-01-1";
+        match generate_custom::get_example_model(filename) {
+            Ok(result) => assert!(result.contains("comprehension-01-1")),
+            Err(_) => panic!("Expected successful result, but got an error."),
+        }
+    }
+
+    #[test]
+    fn test_get_example_model_fail_empty_filename() {
+        let filename = "";
+        match generate_custom::get_example_model(filename) {
+            Ok(_) => panic!("Expected an error, but got success."),
+            Err(e) => assert_eq!(e, "Filename cannot be empty."),
+        }
+    }
+}
