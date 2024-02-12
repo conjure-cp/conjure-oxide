@@ -210,6 +210,7 @@ unsafe fn convert_model_to_raw(
 
         let (vartype_raw, domain_low, domain_high) = match vartype {
             VarDomain::Bound(a, b) => Ok((ffi::VariableType_VAR_BOUND, a, b)),
+            VarDomain::Bool => Ok((ffi::VariableType_VAR_BOOL, 0, 1)), // TODO: will this work?
             x => Err(MinionError::NotImplemented(format!("{:?}", x))),
         }?;
 

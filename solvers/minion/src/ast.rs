@@ -131,7 +131,7 @@ pub enum VarDomain {
     Bound(i32, i32),
     Discrete(i32, i32),
     SparseBound(i32, i32),
-    Bool(bool),
+    Bool,
 }
 
 pub struct SymbolTable {
