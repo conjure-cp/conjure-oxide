@@ -29,7 +29,7 @@ mod tests {
         // Results can be manually inspected in the outputted minion logs.
         unsafe {
             // See https://rust-lang.github.io/rust-bindgen/cpp.html
-            let options = newSearchOptions();
+            let options = searchOptions_new();
             let args = newSearchMethod();
             let instance = newInstance();
 

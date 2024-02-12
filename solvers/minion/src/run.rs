@@ -155,9 +155,9 @@ pub fn run_minion(model: Model, callback: Callback) -> Result<(), MinionError> {
     *CALLBACK.lock().unwrap() = Some(callback);
 
     unsafe {
-        let options = Scoped::new(ffi::newSearchOptions(), |x| ffi::searchOptions_free(x as _));
-        let args = Scoped::new(ffi::newSearchMethod(), |x| ffi::searchMethod_free(x as _));
-        let instance = Scoped::new(ffi::newInstance(), |x| ffi::instance_free(x as _));
+        let options = Scoped::new(ffi::searchOptions_new(), |x| ffi::searchOptions_free(x as _));
+        let args = Scoped::new(ffi::searchMethod_new(), |x| ffi::searchMethod_free(x as _));
+        let instance = Scoped::new(ffi::instance_new(), |x| ffi::instance_free(x as _));
 
         convert_model_to_raw(&instance, &model)?;
 
@@ -233,7 +233,7 @@ unsafe fn convert_model_to_raw(
     }
 
     let search_order = Scoped::new(
-        ffi::newSearchOrder(search_vars.ptr, ffi::VarOrderEnum_ORDER_STATIC, false),
+        ffi::searchOrder_new(search_vars.ptr, ffi::VarOrderEnum_ORDER_STATIC, false),
         |x| ffi::searchOrder_free(x as _),
     );
 
@@ -249,7 +249,7 @@ unsafe fn convert_model_to_raw(
         // 3. add constraint to instance
 
         let constraint_type = get_constraint_type(constraint)?;
-        let raw_constraint = Scoped::new(ffi::newConstraintBlob(constraint_type), |x| {
+        let raw_constraint = Scoped::new(ffi::constraint_new(constraint_type), |x| {
             ffi::constraint_free(x as _)
         });
 
@@ -331,7 +331,7 @@ unsafe fn read_vars(
         ffi::vec_var_push_back(raw_vars.ptr, raw_var);
     }
 
-    ffi::constraint_addVarList(raw_constraint, raw_vars.ptr);
+    ffi::constraint_addList(raw_constraint, raw_vars.ptr);
 
     Ok(())
 }
@@ -356,7 +356,7 @@ unsafe fn read_var(
     };
 
     ffi::vec_var_push_back(raw_vars.ptr, raw_var);
-    ffi::constraint_addVarList(raw_constraint, raw_vars.ptr);
+    ffi::constraint_addList(raw_constraint, raw_vars.ptr);
 
     Ok(())
 }
