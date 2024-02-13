@@ -536,7 +536,11 @@ unsafe fn constraint_add_args(
         //Constraint::WNotLiteral(_, _) => todo!(),
         //Constraint::WInIntervalSet(_, _) => todo!(),
         //Constraint::WInRange(_, _) => todo!(),
-        //Constraint::WInset(_, _) => todo!(),
+        Constraint::WInset(a, b) => {
+            read_var(i, r_constr, a)?;
+            read_constant_list(r_constr, b)?;
+            Ok(())
+        }
         //Constraint::WNotInRange(_, _) => todo!(),
         //Constraint::WNotInset(_, _) => todo!(),
         //Constraint::Abs(_, _) => todo!(),
@@ -648,6 +652,8 @@ unsafe fn read_constant(
 ) -> Result<(), MinionError> {
     let mut val: i32 = match constant {
         Constant::Integer(n) => Ok(*n),
+        Constant::Bool(true) => Ok(1),
+        Constant::Bool(false) => Ok(0),
         x => Err(MinionError::NotImplemented(format!("{:?}", x))),
     }?;
 
@@ -665,6 +671,8 @@ unsafe fn read_constant_list(
     for constant in constants.iter() {
         let val = match constant {
             Constant::Integer(n) => Ok(*n),
+            Constant::Bool(true) => Ok(1),
+            Constant::Bool(false) => Ok(0),
             x => Err(MinionError::NotImplemented(format!("{:?}", x))),
         }?;
 

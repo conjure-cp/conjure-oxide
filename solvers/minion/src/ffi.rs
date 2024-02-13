@@ -30,8 +30,8 @@ mod tests {
         unsafe {
             // See https://rust-lang.github.io/rust-bindgen/cpp.html
             let options = searchOptions_new();
-            let args = newSearchMethod();
-            let instance = newInstance();
+            let args = searchMethod_new();
+            let instance = instance_new();
 
             let x_str = CString::new("x").expect("bad x");
             let y_str = CString::new("y").expect("bad y");
@@ -55,23 +55,23 @@ mod tests {
             vec_var_push_back(search_vars as _, x);
             vec_var_push_back(search_vars as _, y);
             vec_var_push_back(search_vars as _, z);
-            let search_order = newSearchOrder(search_vars as _, VarOrderEnum_ORDER_STATIC, false);
+            let search_order = searchOrder_new(search_vars as _, VarOrderEnum_ORDER_STATIC, false);
             instance_addSearchOrder(instance, search_order);
 
             // CONSTRAINTS
-            let leq = newConstraintBlob(ConstraintType_CT_LEQSUM);
-            let geq = newConstraintBlob(ConstraintType_CT_GEQSUM);
-            let ineq = newConstraintBlob(ConstraintType_CT_INEQ);
+            let leq = constraint_new(ConstraintType_CT_LEQSUM);
+            let geq = constraint_new(ConstraintType_CT_GEQSUM);
+            let ineq = constraint_new(ConstraintType_CT_INEQ);
 
             let rhs_vars = vec_var_new();
             vec_var_push_back(rhs_vars, constantAsVar(4));
 
             // leq / geq : [var] [var]
-            constraint_addVarList(leq, search_vars as _);
-            constraint_addVarList(leq, rhs_vars as _);
+            constraint_addList(leq, search_vars as _);
+            constraint_addList(leq, rhs_vars as _);
 
-            constraint_addVarList(geq, search_vars as _);
-            constraint_addVarList(geq, rhs_vars as _);
+            constraint_addList(geq, search_vars as _);
+            constraint_addList(geq, rhs_vars as _);
 
             // ineq: [var] [var] [const]
             let x_vec = vec_var_new();
@@ -83,8 +83,8 @@ mod tests {
             let const_vec = vec_int_new();
             vec_int_push_back(const_vec, -1);
 
-            constraint_addVarList(ineq, x_vec as _);
-            constraint_addVarList(ineq, y_vec as _);
+            constraint_addList(ineq, x_vec as _);
+            constraint_addList(ineq, y_vec as _);
             constraint_addConstantList(ineq, const_vec as _);
 
             instance_addConstraint(instance, leq);
