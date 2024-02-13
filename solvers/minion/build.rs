@@ -1,8 +1,7 @@
 // adapted from
 // - https://github.com/gokberkkocak/rust_glucose/blob/master/build.rs
 // - https://rust-lang.github.io/rust-bindgen/non-system-libraries.html
-// - https://doc.rust-lang.org/cargo/reference/build-scripts.html#rerun-if-changed
-#![allow(clippy::unwrap_used)]
+// - https://doc.rust-lang.org/cargo/reference/build-scripts.html#rerun-if-changed #![allow(clippy::unwrap_used)]
 #![allow(clippy::expect_used)]
 #![allow(clippy::panic)]
 
@@ -44,10 +43,8 @@ fn build() {
     /*
     do cargo build -vv to see
     */
-    println!("stdout");
+    println!("stdout/stderr");
     println!("{}", String::from_utf8_lossy(&output.stdout));
-    println!("stderr");
-    println!("{}", String::from_utf8_lossy(&output.stderr));
 
     if !output.status.success() {
         panic!("build.sh has non zero exit status")
