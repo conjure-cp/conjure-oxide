@@ -44,22 +44,20 @@ jobs:
         run: |
           ./tools/coverage.sh
           
-      - name: Print documentation coverage to job summary
+      - name: Generate documentation coverage
         run: |
-           echo '```' >> $GITHUB_STEP_SUMMARY
-           RUSTDOCFLAGS='-Z unstable-options --show-coverage' cargo +nightly doc --workspace --no-deps | tee -a /dev/fd/2 >> $GITHUB_STEP_SUMMARY
-           echo '```' >> $GITHUB_STEP_SUMMARY
+          RUSTDOCFLAGS='-Z unstable-options --show-coverage' cargo +nightly doc --workspace --no-deps > doc-coverage.txt
 
-      - name: Generate documentation coverage JSON for diffs in PRs
+      - name: Generate documentation coverage JSON
         run: |
-           RUSTDOCFLAGS='-Z unstable-options --output-format json --show-coverage' cargo +nightly doc --workspace --no-deps > rustdoc-coverage-report.json
+          RUSTDOCFLAGS='-Z unstable-options --output-format json --show-coverage' cargo +nightly doc --workspace --no-deps > doc-coverage.json
 
-          
       - run: |
           mkdir -p deploy/
           cp -r target/debug/coverage/* deploy/     # html
           cp target/debug/lcov.info deploy/         # used for diffing code coverage in PR comments
-          cp rustdoc-coverage-report.json deploy/   # used for diffing doc coverage in PR comments
+          cp doc-coverage.json deploy/
+          cp doc-coverage.txt deploy/
           
       - name: Copy coverage report to /main.
         uses: JamesIves/github-pages-deploy-action@v4
