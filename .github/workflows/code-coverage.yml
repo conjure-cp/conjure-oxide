@@ -58,10 +58,21 @@ jobs:
         run: |
           ./tools/coverage.sh
           
+      - name: Generate documentation coverage
+        run: |
+          RUSTDOCFLAGS='-Z unstable-options --show-coverage' cargo +nightly doc --workspace --no-deps > doc-coverage.txt
+
+      - name: Generate documentation coverage JSON
+        run: |
+          RUSTDOCFLAGS='-Z unstable-options --output-format json --show-coverage' cargo +nightly doc --workspace --no-deps > doc-coverage.json
+
       - run: |
           mkdir -p deploy/
           cp -r target/debug/coverage/* deploy/     # html
           cp target/debug/lcov.info deploy/         # used for comments
+          cp doc-coverage.json deploy/
+          cp doc-coverage.txt deploy/
+          echo "${{github.event.pull_request.number}}" > deploy/prnumber
 
       - name: Archive code coverage results for deployment
         uses: actions/upload-artifact@v3
