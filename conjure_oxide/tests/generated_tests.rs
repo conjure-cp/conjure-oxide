@@ -1,6 +1,9 @@
 use conjure_oxide::ast::Model;
 use conjure_oxide::parse::model_from_json;
+use conjure_oxide::solvers::minion::MinionModel;
+use conjure_oxide::solvers::FromConjureModel;
 use serde_json::Value;
+use std::collections::HashMap;
 use std::env;
 use std::error::Error;
 use std::fs::File;
@@ -24,6 +27,7 @@ fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>
     // -- parsing the essence file
 
     // calling conjure to convert Essence to astjson
+    eprintln!("RUN: model parse check");
     let mut cmd = std::process::Command::new("conjure");
     let output = cmd
         .arg("pretty")
@@ -75,6 +79,7 @@ fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>
     assert_eq!(parsed_model, expected_parse_mdl);
 
     // --------------------------------------------------------------------------------
+    eprintln!("RUN: model rewrite check");
 
     // ToDo: There is A LOT of duplication here. We should refactor this to a function. In my defense, it was midnight when I wrote this.
 
@@ -108,7 +113,15 @@ fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>
 
     assert_eq!(rewritten_model, expected_rewrite_mdl);
 
+    eprintln!("RUN: minion solve check");
+    let minion_model = MinionModel::from_conjure(rewritten_model)?;
+    minion_rs::run_minion(minion_model, dummy_callback)?;
+
     Ok(())
+}
+
+fn dummy_callback(_: HashMap<minion_rs::ast::VarName, minion_rs::ast::Constant>) -> bool {
+    true
 }
 
 /// Recursively sorts the keys of all JSON objects within the provided JSON value.
