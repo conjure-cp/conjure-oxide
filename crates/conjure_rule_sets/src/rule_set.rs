@@ -7,14 +7,16 @@ use std::sync::OnceLock;
 #[derive(Clone, Debug)]
 pub struct RuleSet<'a> {
     pub name: &'a str,
+    pub priority: u8,
     pub rules: OnceLock<HashMap<&'a Rule<'a>, u8>>,
     pub dependencies: &'a [&'a str],
 }
 
 impl<'a> RuleSet<'a> {
-    pub const fn new(name: &'a str, dependencies: &'a [&'a str]) -> Self {
+    pub const fn new(name: &'a str, priority: u8, dependencies: &'a [&'a str]) -> Self {
         Self {
             name,
+            priority,
             dependencies,
             rules: OnceLock::new(),
         }

@@ -77,19 +77,30 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
 #[derive(Debug)]
 struct RuleSetArgs {
     name: LitStr,
+    priority: LitInt,
     dependencies: Vec<LitStr>,
 }
 
 impl Parse for RuleSetArgs {
     fn parse(input: ParseStream) -> Result<Self> {
         let name = input.parse()?;
-        input.parse::<Token![,]>()?;
-
+        input.parse::<Comma>()?;
+        let priority = input.parse()?;
+        
+        if input.is_empty() {
+            return Ok(Self {
+                name,
+                priority,
+                dependencies: Vec::new(),
+            });
+        }
+        
+        input.parse::<Comma>()?;
+        
         let content;
         parenthesized!(content in input);
-
+        
         let mut dependencies = Vec::new();
-
         while !content.is_empty() {
             let dep = content.parse()?;
             dependencies.push(dep);
@@ -99,13 +110,13 @@ impl Parse for RuleSetArgs {
             content.parse::<Comma>()?;
         }
 
-        Ok(Self { name, dependencies })
+        Ok(Self { name, priority, dependencies })
     }
 }
 
 #[proc_macro]
 pub fn register_rule_set(args: TokenStream) -> TokenStream {
-    let RuleSetArgs { name, dependencies } = parse_macro_input!(args as RuleSetArgs);
+    let RuleSetArgs { name, priority, dependencies } = parse_macro_input!(args as RuleSetArgs);
 
     let dependencies = dependencies
         .into_iter()
@@ -114,7 +125,7 @@ pub fn register_rule_set(args: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         #[::conjure_rule_sets::_dependencies::distributed_slice(::conjure_rule_sets::RULE_SETS_DISTRIBUTED_SLICE)]
-        pub static RULE_SET: ::conjure_rule_sets::RuleSet<'static> = ::conjure_rule_sets::RuleSet::new(#name, &[#(#dependencies),*]);
+        pub static RULE_SET: ::conjure_rule_sets::RuleSet<'static> = ::conjure_rule_sets::RuleSet::new(#name, #priority, &[#(#dependencies),*]);
     };
 
     TokenStream::from(expanded)

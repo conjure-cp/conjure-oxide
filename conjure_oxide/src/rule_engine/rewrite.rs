@@ -1,6 +1,20 @@
+use crate::rule_engine::resolve_rules::{
+    get_rule_priorities, get_rules_vec, ResolveRulesError as ResolveError,
+};
 use conjure_core::ast::{Expression, Model};
 use conjure_core::rule::Rule;
+use conjure_rule_sets::RuleSet;
 use conjure_rules::get_rules;
+
+pub enum RewriteError {
+    ResolveRulesError(ResolveError),
+}
+
+impl From<ResolveError> for RewriteError {
+    fn from(error: ResolveError) -> Self {
+        RewriteError::ResolveRulesError(error)
+    }
+}
 
 struct RuleResult<'a> {
     rule: &'a Rule<'a>,
@@ -10,13 +24,19 @@ struct RuleResult<'a> {
 /// # Returns
 /// - A new expression after applying the rules to `expression` and its sub-expressions.
 /// - The same expression if no rules are applicable.
-pub fn rewrite(expression: &Expression) -> Expression {
-    let rules = get_rules();
+pub fn rewrite(
+    expression: &Expression,
+    rule_sets: Vec<&RuleSet>,
+) -> Result<Expression, RewriteError> {
+    let rule_priorities = get_rule_priorities(rule_sets)?;
+    let rules = get_rules_vec(&rule_priorities);
+
     let mut new = expression.clone();
     while let Some(step) = rewrite_iteration(&new, &rules) {
         new = step;
     }
-    new
+
+    Ok(new)
 }
 
 /// # Returns
@@ -83,10 +103,10 @@ fn choose_rewrite(results: &Vec<RuleResult>) -> Option<Expression> {
 /// # Returns
 /// - A new model with rewritten constraints.
 /// - The same model if no rules are applicable.
-pub fn rewrite_model(model: &Model) -> Model {
+pub fn rewrite_model(model: &Model, rule_sets: Vec<&RuleSet>) -> Result<Model, RewriteError> {
     let mut new_model = model.clone();
 
-    new_model.constraints = rewrite(&model.constraints);
+    new_model.constraints = rewrite(&model.constraints, rule_sets)?;
 
-    new_model
+    Ok(new_model)
 }
