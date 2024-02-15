@@ -15,14 +15,20 @@ pub enum RuleApplicationError {
 pub struct Rule<'a> {
     pub name: &'a str,
     pub application: fn(&Expression) -> Result<Expression, RuleApplicationError>,
+    pub rule_sets: &'a [(&'a str, u8)], // (name, priority). At runtime, we add the rule to rulesets
 }
 
 impl<'a> Rule<'a> {
     pub fn new(
         name: &'a str,
         application: fn(&Expression) -> Result<Expression, RuleApplicationError>,
+        rule_sets: &'a [(&'a str, u8)],
     ) -> Self {
-        Self { name, application }
+        Self {
+            name,
+            application,
+            rule_sets,
+        }
     }
 
     pub fn apply(&self, expr: &Expression) -> Result<Expression, RuleApplicationError> {
