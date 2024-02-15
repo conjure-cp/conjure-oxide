@@ -4,6 +4,7 @@ use anyhow::{anyhow, bail};
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::path::PathBuf;
+use std::process::exit;
 use std::sync::Mutex;
 
 use anyhow::Result as AnyhowResult;
@@ -37,6 +38,12 @@ fn callback(solutions: HashMap<VarName, Constant>) -> bool {
 }
 
 pub fn main() -> AnyhowResult<()> {
+    let rule_sets = conjure_rule_sets::get_rule_sets();
+    let rules = rule_sets.get(0).unwrap().get_rules();
+    println!("Rules: {:?}", rules);
+
+    exit(0);
+
     println!(
         "Rules: {:?}",
         conjure_rules::get_rules()

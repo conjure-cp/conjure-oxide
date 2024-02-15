@@ -22,7 +22,7 @@ impl<'a> Rule<'a> {
     pub const fn new(
         name: &'a str,
         application: fn(&Expression) -> Result<Expression, RuleApplicationError>,
-        rule_sets: &'a [(&'a str, u8)],
+        rule_sets: &'a [(&'static str, u8)],
     ) -> Self {
         Self {
             name,

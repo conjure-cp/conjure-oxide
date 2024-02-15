@@ -22,17 +22,16 @@
 // However, proc-macro crates can only export proc-macros. Therefore, we must use a "front end
 // crate" (i.e. this one) to re-export both the macro and all the things it may need.
 
-mod rule_set;
-
+// use crate::_dependencies::distributed_slice;
 use conjure_core::rule::Rule;
 
 #[doc(hidden)]
 pub mod _dependencies {
     pub use conjure_core::rule::Rule;
     pub use inventory;
-    pub use linkme::distributed_slice;
+    // pub use linkme::distributed_slice;
 }
-//
+
 // #[doc(hidden)]
 // #[distributed_slice]
 // pub static RULES_DISTRIBUTED_SLICE: [Rule<'static>];

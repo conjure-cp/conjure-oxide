@@ -1,74 +1,27 @@
-use conjure_core::rule::Rule;
-use conjure_rules::get_rules;
-use std::collections::HashMap;
-use std::hash::Hash;
-use std::sync::OnceLock;
+use crate::_dependencies::distributed_slice;
+pub use crate::rule_set::RuleSet;
 
-pub struct RuleSet<'a> {
-    pub name: &'a str,
-    pub rules: OnceLock<HashMap<&'a Rule<'a>, u8>>,
-    pub dependencies: &'a [&'a RuleSet<'a>],
+pub mod rule_set;
+
+#[doc(hidden)]
+pub mod _dependencies {
+    pub use conjure_core::rule::Rule;
+    pub use linkme::distributed_slice;
 }
 
-impl<'a> RuleSet<'a> {
-    pub fn new(name: &'a str, dependencies: &'a [&'a RuleSet<'a>]) -> Self {
-        Self {
-            name,
-            rules: OnceLock::new(),
-            dependencies,
-        }
-    }
+#[doc(hidden)]
+#[distributed_slice]
+pub static RULE_SETS_DISTRIBUTED_SLICE: [RuleSet<'static>];
 
-    pub fn get_rules(&self) -> &HashMap<&'a Rule<'a>, u8> {
-        match self.rules.get() {
-            None => {
-                let mut rules = HashMap::new();
-                for rule in get_rules() {
-                    let mut found = false;
-                    let mut priority: u8 = 0;
-
-                    for (name, p) in rule.rule_sets {
-                        if *name == self.name {
-                            found = true;
-                            priority = *p;
-                            break;
-                        }
-                    }
-
-                    if found {
-                        rules.insert(rule, priority);
-                    }
-                }
-                match self.rules.set(rules) {
-                    Ok(_) => {
-                        match self.rules.get() {
-                            None => {
-                                panic!("RuleSet::rules was set, but RuleSet::rules.get() returned None!");
-                                // This should never happen
-                            }
-                            Some(rules) => rules,
-                        }
-                    }
-                    Err(e) => {
-                        panic!("Could not set RuleSet::rules! Error: {:?}", e); // This should also never happen :)
-                    }
-                }
-            }
-            Some(rules) => rules,
-        }
-    }
+pub fn get_rule_sets() -> Vec<RuleSet<'static>> {
+    RULE_SETS_DISTRIBUTED_SLICE.to_vec()
 }
 
-impl<'a> PartialEq for RuleSet<'a> {
-    fn eq(&self, other: &Self) -> bool {
-        self.name == other.name
-    }
+pub fn get_rule_set_by_name(name: &str) -> Option<RuleSet<'static>> {
+    get_rule_sets()
+        .iter()
+        .find(|rule_set| rule_set.name == name)
+        .cloned()
 }
 
-impl<'a> Eq for RuleSet<'a> {}
-
-impl<'a> Hash for RuleSet<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.name.hash(state);
-    }
-}
+pub use conjure_rules_proc_macro::register_rule_set;
