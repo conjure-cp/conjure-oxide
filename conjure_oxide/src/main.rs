@@ -11,7 +11,7 @@ use anyhow::Result as AnyhowResult;
 use clap::{arg, command, Parser};
 use conjure_oxide::find_conjure::conjure_executable;
 use conjure_oxide::parse::model_from_json;
-use conjure_oxide::rewrite::rewrite_model;
+use conjure_oxide::rule_engine::rewrite::rewrite_model;
 use conjure_oxide::solvers::FromConjureModel;
 use minion_rs::ast::{Constant, Model as MinionModel, VarName};
 use minion_rs::run_minion;
@@ -39,7 +39,7 @@ fn callback(solutions: HashMap<VarName, Constant>) -> bool {
 
 pub fn main() -> AnyhowResult<()> {
     let rule_sets = conjure_rule_sets::get_rule_sets();
-    let rules = rule_sets.get(0).unwrap().get_rules();
+    let rules = rule_sets.first().unwrap().get_rules();
     println!("Rules: {:?}", rules);
 
     exit(0);

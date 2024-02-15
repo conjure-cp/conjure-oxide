@@ -3,7 +3,7 @@
 pub mod error;
 pub mod find_conjure;
 pub mod parse;
-pub mod rewrite;
+pub mod rule_engine;
 mod rules;
 pub mod solvers;
 mod utils;
