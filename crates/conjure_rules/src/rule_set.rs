@@ -1,17 +1,25 @@
 use crate::get_rules;
 use conjure_core::rule::Rule;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::hash::Hash;
 use std::sync::OnceLock;
 
 pub struct RuleSet<'a> {
     pub name: &'a str,
-    pub rules: OnceLock<HashMap<&'a Rule<'a>, u8>>,
+    pub rules: OnceLock<HashMap<Rule<'a>, u8>>,
     pub dependencies: &'a [&'a RuleSet<'a>],
 }
 
 impl<'a> RuleSet<'a> {
-    pub fn get_rules(&self) -> &HashMap<&'a Rule<'a>, u8> {
+    pub fn new(name: &'a str, dependencies: &'a [&'a RuleSet<'a>]) -> Self {
+        Self {
+            name,
+            rules: OnceLock::new(),
+            dependencies,
+        }
+    }
+
+    pub fn get_rules(&self) -> &HashMap<Rule<'a>, u8> {
         match self.rules.get() {
             None => {
                 let mut rules = HashMap::new();
@@ -20,7 +28,7 @@ impl<'a> RuleSet<'a> {
                     let mut priority: u8 = 0;
 
                     for (name, p) in rule.rule_sets {
-                        if name == self.name {
+                        if *name == self.name {
                             found = true;
                             priority = *p;
                             break;
@@ -28,7 +36,7 @@ impl<'a> RuleSet<'a> {
                     }
 
                     if found {
-                        rules.insert(&rule, priority);
+                        rules.insert(rule, priority);
                     }
                 }
                 match self.rules.set(rules) {

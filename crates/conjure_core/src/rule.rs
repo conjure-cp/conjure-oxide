@@ -55,3 +55,5 @@ impl<'a> Hash for Rule<'a> {
         self.name.hash(state);
     }
 }
+
+inventory::collect!(Rule<'static>);
