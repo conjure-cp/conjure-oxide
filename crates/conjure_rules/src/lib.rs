@@ -62,16 +62,16 @@ pub mod _dependencies {
 ///   Rules: [Rule { name: "identity", application: MEM }]
 /// ```
 /// Where `MEM` is the memory address of the `identity` function.
-pub fn get_rules() -> Vec<Rule<'static>> {
+pub fn get_rules() -> Vec<&'static Rule<'static>> {
     //RULES_DISTRIBUTED_SLICE.to_vec()
     let mut rules = Vec::new();
     for rule in inventory::iter::<Rule> {
-        rules.push(rule.clone());
+        rules.push(rule);
     }
     rules
 }
 
-pub fn get_rule_by_name(name: &str) -> Option<Rule<'static>> {
+pub fn get_rule_by_name(name: &str) -> Option<&'static Rule<'static>> {
     get_rules().iter().find(|rule| rule.name == name).cloned()
 }
 

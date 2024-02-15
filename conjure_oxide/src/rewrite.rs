@@ -3,7 +3,7 @@ use conjure_core::rule::Rule;
 use conjure_rules::get_rules;
 
 struct RuleResult<'a> {
-    rule: Rule<'a>,
+    rule: &'a Rule<'a>,
     new_expression: Expression,
 }
 
@@ -24,7 +24,7 @@ pub fn rewrite(expression: &Expression) -> Expression {
 /// - None if no rule is applicable to the expression or any sub-expression.
 fn rewrite_iteration<'a>(
     expression: &'a Expression,
-    rules: &'a Vec<Rule<'a>>,
+    rules: &'a Vec<&'a Rule<'a>>,
 ) -> Option<Expression> {
     let rule_results = apply_all_rules(expression, rules);
     if let Some(new) = choose_rewrite(&rule_results) {
@@ -50,15 +50,15 @@ fn rewrite_iteration<'a>(
 /// - An empty list if no rules are applicable.
 fn apply_all_rules<'a>(
     expression: &'a Expression,
-    rules: &'a Vec<Rule<'a>>,
+    rules: &'a Vec<&'a Rule<'a>>,
 ) -> Vec<RuleResult<'a>> {
     let mut results = Vec::new();
     for rule in rules {
         match rule.apply(expression) {
-            Ok(new) => {
+            Ok(new_expression) => {
                 results.push(RuleResult {
-                    rule: rule.clone(),
-                    new_expression: new,
+                    rule,
+                    new_expression,
                 });
             }
             Err(_) => continue,

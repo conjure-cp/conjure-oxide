@@ -6,7 +6,7 @@ use std::sync::OnceLock;
 
 pub struct RuleSet<'a> {
     pub name: &'a str,
-    pub rules: OnceLock<HashMap<Rule<'a>, u8>>,
+    pub rules: OnceLock<HashMap<&'a Rule<'a>, u8>>,
     pub dependencies: &'a [&'a RuleSet<'a>],
 }
 
@@ -19,7 +19,7 @@ impl<'a> RuleSet<'a> {
         }
     }
 
-    pub fn get_rules(&self) -> &HashMap<Rule<'a>, u8> {
+    pub fn get_rules(&self) -> &HashMap<&'a Rule<'a>, u8> {
         match self.rules.get() {
             None => {
                 let mut rules = HashMap::new();
