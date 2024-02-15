@@ -25,7 +25,6 @@
 mod rule_set;
 
 use conjure_core::rule::Rule;
-use linkme::distributed_slice;
 
 #[doc(hidden)]
 pub mod _dependencies {

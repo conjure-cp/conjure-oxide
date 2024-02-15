@@ -46,9 +46,7 @@ impl<'a> RuleSet<'a> {
                                 panic!("RuleSet::rules was set, but RuleSet::rules.get() returned None!");
                                 // This should never happen
                             }
-                            Some(rules) => {
-                                return rules;
-                            }
+                            Some(rules) => rules,
                         }
                     }
                     Err(e) => {
@@ -56,9 +54,7 @@ impl<'a> RuleSet<'a> {
                     }
                 }
             }
-            Some(rules) => {
-                return rules;
-            }
+            Some(rules) => rules,
         }
     }
 }
