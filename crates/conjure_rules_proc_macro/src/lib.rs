@@ -44,8 +44,8 @@ impl Parse for RegisterRuleArgs {
 pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream {
     let func = parse_macro_input!(item as ItemFn);
     let rule_ident = &func.sig.ident;
-    // let static_name = format!("CONJURE_GEN_RULE_{}", rule_ident).to_uppercase();
-    // let static_ident = Ident::new(&static_name, rule_ident.span());
+    let static_name = format!("CONJURE_GEN_RULE_{}", rule_ident).to_uppercase();
+    let static_ident = Ident::new(&static_name, rule_ident.span());
 
     let args = parse_macro_input!(arg_tokens as RegisterRuleArgs);
     let rule_sets = args
@@ -60,26 +60,15 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
         })
         .collect::<Vec<_>>();
 
-    // let expanded = quote! {
-    //     #func
-    //
-    //     #[::conjure_rules::_dependencies::distributed_slice(::conjure_rules::RULES_DISTRIBUTED_SLICE)]
-    //     pub static #static_ident: ::conjure_rules::_dependencies::Rule = ::conjure_rules::_dependencies::Rule {
-    //         name: stringify!(#rule_ident),
-    //         application: #rule_ident,
-    //     };
-    // };
-
     let expanded = quote! {
         #func
 
-        inventory::submit! {
-            ::conjure_rules::_dependencies::Rule::<'static>::new(
-                stringify!(#rule_ident),
-                #rule_ident,
-                &[#(#rule_sets),*],
-            )
-        }
+        #[::conjure_rules::_dependencies::distributed_slice(::conjure_rules::RULES_DISTRIBUTED_SLICE)]
+        pub static #static_ident: ::conjure_rules::_dependencies::Rule = ::conjure_rules::_dependencies::Rule {
+            name: stringify!(#rule_ident),
+            application: #rule_ident,
+            rule_sets: &[#(#rule_sets),*],
+        };
     };
 
     TokenStream::from(expanded)

@@ -22,19 +22,18 @@
 // However, proc-macro crates can only export proc-macros. Therefore, we must use a "front end
 // crate" (i.e. this one) to re-export both the macro and all the things it may need.
 
-// use crate::_dependencies::distributed_slice;
+use crate::_dependencies::distributed_slice;
 use conjure_core::rule::Rule;
 
 #[doc(hidden)]
 pub mod _dependencies {
     pub use conjure_core::rule::Rule;
-    pub use inventory;
-    // pub use linkme::distributed_slice;
+    pub use linkme::distributed_slice;
 }
 
-// #[doc(hidden)]
-// #[distributed_slice]
-// pub static RULES_DISTRIBUTED_SLICE: [Rule<'static>];
+#[doc(hidden)]
+#[distributed_slice]
+pub static RULES_DISTRIBUTED_SLICE: [Rule<'static>];
 
 /// Returns a copied `Vec` of all rules registered with the `register_rule` macro.
 ///
@@ -62,12 +61,7 @@ pub mod _dependencies {
 /// ```
 /// Where `MEM` is the memory address of the `identity` function.
 pub fn get_rules() -> Vec<&'static Rule<'static>> {
-    //RULES_DISTRIBUTED_SLICE.to_vec()
-    let mut rules = Vec::new();
-    for rule in inventory::iter::<Rule> {
-        rules.push(rule);
-    }
-    rules
+    RULES_DISTRIBUTED_SLICE.iter().collect()
 }
 
 pub fn get_rule_by_name(name: &str) -> Option<&'static Rule<'static>> {
