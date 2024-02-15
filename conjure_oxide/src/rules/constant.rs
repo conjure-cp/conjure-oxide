@@ -6,10 +6,10 @@ fn apply_eval_constant(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     if expr.is_constant() {
         return Err(RuleApplicationError::RuleNotApplicable);
     }
-    let res = eval_constant(expr)
+
+    eval_constant(expr)
         .map(Expr::Constant)
-        .ok_or(RuleApplicationError::RuleNotApplicable);
-    res
+        .ok_or(RuleApplicationError::RuleNotApplicable)
 }
 
 /// Simplify an expression to a constant if possible
@@ -85,11 +85,7 @@ fn vec_op<T, A>(f: fn(Vec<T>) -> A, a: &Vec<Expr>) -> Option<A>
 where
     T: TryFrom<Const>,
 {
-    let a = a
-        .iter()
-        .map(unwrap_expr)
-        .into_iter()
-        .collect::<Option<Vec<T>>>()?;
+    let a = a.iter().map(unwrap_expr).collect::<Option<Vec<T>>>()?;
     Some(f(a))
 }
 
@@ -97,11 +93,7 @@ fn flat_op<T, A>(f: fn(Vec<T>, T) -> A, a: &Vec<Expr>, b: &Expr) -> Option<A>
 where
     T: TryFrom<Const>,
 {
-    let a = a
-        .iter()
-        .map(unwrap_expr)
-        .into_iter()
-        .collect::<Option<Vec<T>>>()?;
+    let a = a.iter().map(unwrap_expr).collect::<Option<Vec<T>>>()?;
     let b = unwrap_expr::<T>(b)?;
     Some(f(a, b))
 }
