@@ -30,12 +30,13 @@ use linkme::distributed_slice;
 #[doc(hidden)]
 pub mod _dependencies {
     pub use conjure_core::rule::Rule;
+    pub use inventory;
     pub use linkme::distributed_slice;
 }
-
-#[doc(hidden)]
-#[distributed_slice]
-pub static RULES_DISTRIBUTED_SLICE: [Rule<'static>];
+//
+// #[doc(hidden)]
+// #[distributed_slice]
+// pub static RULES_DISTRIBUTED_SLICE: [Rule<'static>];
 
 /// Returns a copied `Vec` of all rules registered with the `register_rule` macro.
 ///
@@ -63,7 +64,12 @@ pub static RULES_DISTRIBUTED_SLICE: [Rule<'static>];
 /// ```
 /// Where `MEM` is the memory address of the `identity` function.
 pub fn get_rules() -> Vec<Rule<'static>> {
-    RULES_DISTRIBUTED_SLICE.to_vec()
+    //RULES_DISTRIBUTED_SLICE.to_vec()
+    let mut rules = Vec::new();
+    for rule in inventory::iter::<Rule> {
+        rules.push(rule.clone());
+    }
+    rules
 }
 
 pub fn get_rule_by_name(name: &str) -> Option<Rule<'static>> {

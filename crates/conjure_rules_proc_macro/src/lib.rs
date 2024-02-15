@@ -25,7 +25,7 @@ pub fn register_rule(_: TokenStream, item: TokenStream) -> TokenStream {
         #func
 
         inventory::submit! {
-            ::conjure_rules::_dependencies::Rule::new(
+            ::conjure_rules::_dependencies::Rule::<'static>::new(
                 stringify!(#rule_ident),
                 #rule_ident,
                 &[],

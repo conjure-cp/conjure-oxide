@@ -19,7 +19,7 @@ pub struct Rule<'a> {
 }
 
 impl<'a> Rule<'a> {
-    pub fn new(
+    pub const fn new(
         name: &'a str,
         application: fn(&Expression) -> Result<Expression, RuleApplicationError>,
         rule_sets: &'a [(&'a str, u8)],
