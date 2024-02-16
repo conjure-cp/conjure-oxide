@@ -13,10 +13,19 @@ pub mod _dependencies {
 #[distributed_slice]
 pub static RULE_SETS_DISTRIBUTED_SLICE: [RuleSet<'static>];
 
+/**
+ * Get all rule sets.
+ * @returns A list of all rule sets.
+ */
 pub fn get_rule_sets() -> Vec<&'static RuleSet<'static>> {
     RULE_SETS_DISTRIBUTED_SLICE.iter().collect()
 }
 
+/**
+ * Get a rule set by name.
+ * @param `name` The name of the rule set to get.
+ * @returns The rule set with the given name or None if it doesn't exist.
+ */
 pub fn get_rule_set_by_name(name: &str) -> Option<&'static RuleSet<'static>> {
     get_rule_sets()
         .iter()

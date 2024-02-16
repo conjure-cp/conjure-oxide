@@ -40,6 +40,19 @@ impl Parse for RegisterRuleArgs {
     }
 }
 
+/**
+* Register a rule with the given rule sets and priorities.
+*
+* # Example
+* ```rust
+* use conjure_rules_proc_macro::register_rule;
+* register_rule!(
+*     ("RuleSet1", 10),
+*     ("RuleSet2", 20),
+* );
+* fn my_rule_application() {}
+* ```
+*/
 #[proc_macro_attribute]
 pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream {
     let func = parse_macro_input!(item as ItemFn);
@@ -118,6 +131,15 @@ impl Parse for RuleSetArgs {
     }
 }
 
+/**
+* Register a rule set with the given name, priority, and dependencies.
+*
+* # Example
+* ```rust
+ * use conjure_rules_proc_macro::register_rule_set;
+ * register_rule_set!("MyRuleSet", 10, ["DependencyRuleSet", "AnotherRuleSet"]);
+* ```
+ */
 #[proc_macro]
 pub fn register_rule_set(args: TokenStream) -> TokenStream {
     let RuleSetArgs {

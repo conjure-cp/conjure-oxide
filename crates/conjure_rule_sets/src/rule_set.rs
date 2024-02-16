@@ -4,6 +4,15 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::sync::OnceLock;
 
+/**
+ * A set of rules with a name, priority, and dependencies.
+ *
+ * # Fields
+ * - `name` The name of the rule set.
+ * - `priority` The priority of the rule set.
+ * - `rules` A map of rules to their priorities. This is evaluated lazily at runtime.
+ * - `dependencies` A list of rule set names that this rule set depends on.
+ */
 #[derive(Clone, Debug)]
 pub struct RuleSet<'a> {
     pub name: &'a str,
@@ -22,6 +31,10 @@ impl<'a> RuleSet<'a> {
         }
     }
 
+    /**
+     * Get the rules of this rule set, evaluating them lazily if necessary.
+     * @returns A map of rules to their priorities.
+     */
     pub fn get_rules(&self) -> &HashMap<&'a Rule<'a>, u8> {
         match self.rules.get() {
             None => {

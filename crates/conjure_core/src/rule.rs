@@ -11,6 +11,14 @@ pub enum RuleApplicationError {
     RuleNotApplicable,
 }
 
+/**
+ * A rule with a name, application function, and rule sets.
+ *
+ * # Fields
+ * - `name` The name of the rule.
+ * - `application` The function to apply the rule.
+ * - `rule_sets` A list of rule set names and priorities that this rule is a part of. This is used to populate rulesets at runtime.
+ */
 #[derive(Clone, Debug)]
 pub struct Rule<'a> {
     pub name: &'a str,
