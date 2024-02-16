@@ -577,7 +577,7 @@ fn rewrite_solve_xyz() {
     };
 
     // Apply rewrite function to the nested expression
-    let rewritten_expr = rewrite(&nested_expr, rule_sets).unwrap();
+    let rewritten_expr = rewrite(&nested_expr, &rule_sets).unwrap();
 
     // Check if the expression is in its simplest form
     let expr = rewritten_expr.clone();

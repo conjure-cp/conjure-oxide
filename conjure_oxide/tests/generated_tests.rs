@@ -9,8 +9,10 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 
+use conjure_oxide::rule_engine::resolve_rules::resolve_rule_sets;
 use conjure_oxide::rule_engine::rewrite::rewrite_model;
 use std::path::Path;
+use std::process::exit;
 
 fn main() {
     let file_path = Path::new("/path/to/your/file.txt");
@@ -83,7 +85,15 @@ fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>
 
     // ToDo: There is A LOT of duplication here. We should refactor this to a function. In my defense, it was midnight when I wrote this.
 
-    let rewritten_model = match rewrite_model(&parsed_model, vec![]) {
+    let rule_sets = match resolve_rule_sets(vec!["Minion", "Constant"]) {
+        Ok(rs) => rs,
+        Err(e) => {
+            eprintln!("Error resolving rule sets: {}", e);
+            exit(1);
+        }
+    };
+
+    let rewritten_model = match rewrite_model(&parsed_model, &rule_sets) {
         Ok(model) => model,
         Err(e) => {
             eprintln!("Error rewriting model: {:?}", e);
