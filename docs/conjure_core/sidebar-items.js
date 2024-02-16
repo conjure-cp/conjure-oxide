@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["ast","rule","solvers"]};
+window.SIDEBAR_ITEMS = {"mod":["ast","metadata","rule","solvers"]};
