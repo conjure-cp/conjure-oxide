@@ -85,7 +85,7 @@ pub fn get_rule_priorities<'a>(
     for rs in rule_sets {
         for (rule, priority) in rs.get_rules() {
             if let Some((old_rs, _)) = rule_priorities.get(rule) {
-                if rs.priority >= old_rs.priority {
+                if rs.order >= old_rs.order {
                     rule_priorities.insert(rule, (&rs, *priority));
                 }
             } else {

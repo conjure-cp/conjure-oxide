@@ -9,14 +9,14 @@ use std::sync::OnceLock;
  *
  * # Fields
  * - `name` The name of the rule set.
- * - `priority` The priority of the rule set.
+ * - `order` The order of the rule set.
  * - `rules` A map of rules to their priorities. This is evaluated lazily at runtime.
  * - `dependencies` A list of rule set names that this rule set depends on.
  */
 #[derive(Clone, Debug)]
 pub struct RuleSet<'a> {
     pub name: &'a str,
-    pub priority: u8,
+    pub order: u8,
     pub rules: OnceLock<HashMap<&'a Rule<'a>, u8>>,
     pub dependencies: &'a [&'a str],
 }
@@ -25,7 +25,7 @@ impl<'a> RuleSet<'a> {
     pub const fn new(name: &'a str, priority: u8, dependencies: &'a [&'a str]) -> Self {
         Self {
             name,
-            priority,
+            order: priority,
             dependencies,
             rules: OnceLock::new(),
         }
