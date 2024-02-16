@@ -50,7 +50,12 @@ pub fn main() -> AnyhowResult<()> {
         }
     };
 
-    println!("Rule sets: {:?}", rule_sets);
+    println!("Rule sets:");
+    print!("{{ ");
+    rule_sets.iter().for_each(|rule_set| {
+        print!("{}, ", rule_set.name);
+    });
+    print!("}}\n\n");
 
     let rule_priorities = get_rule_priorities(&rule_sets)?;
     let rules_vec = get_rules_vec(&rule_priorities);
@@ -59,6 +64,7 @@ pub fn main() -> AnyhowResult<()> {
     rules_vec.iter().for_each(|rule| {
         println!("{}: {}", rule.name, rule_priorities.get(rule).unwrap_or(&0));
     });
+    println!();
 
     let cli = Cli::parse();
     println!("Input file: {}", cli.input_file.display());
@@ -107,7 +113,7 @@ pub fn main() -> AnyhowResult<()> {
     // Get solutions
     let guard = ALL_SOLUTIONS.lock().unwrap();
     guard.deref().iter().for_each(|solution_set| {
-        println!("Solution set:");
+        println!("\nSolution set:");
         solution_set.iter().for_each(|(var, val)| {
             println!("{}: {:?}", var, val);
         });
