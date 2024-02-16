@@ -1,8 +1,9 @@
 // Tests for rewriting/simplifying parts of the AST
-use conjure_oxide::{
-    ast::*, eval_constant, rule_engine::rewrite::rewrite, rule_engine::resolve_rules::resolve_rule_sets, solvers::FromConjureModel,
-};
 use conjure_core::{metadata::Metadata, rule::Rule};
+use conjure_oxide::{
+    ast::*, eval_constant, rule_engine::resolve_rules::resolve_rule_sets,
+    rule_engine::rewrite::rewrite, solvers::FromConjureModel,
+};
 use conjure_rules::{get_rule_by_name, get_rules};
 use core::panic;
 use minion_rs::ast::{Constant as MinionConstant, VarName};
