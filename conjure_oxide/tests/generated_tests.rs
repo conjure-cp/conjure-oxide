@@ -9,7 +9,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 
-use conjure_oxide::rewrite::rewrite_model;
+use conjure_oxide::rule_engine::rewrite::rewrite_model;
 use std::path::Path;
 
 fn main() {
@@ -83,7 +83,13 @@ fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>
 
     // ToDo: There is A LOT of duplication here. We should refactor this to a function. In my defense, it was midnight when I wrote this.
 
-    let rewritten_model = rewrite_model(&parsed_model);
+    let rewritten_model = match rewrite_model(&parsed_model, vec![]) {
+        Ok(model) => model,
+        Err(e) => {
+            eprintln!("Error rewriting model: {:?}", e);
+            return Err(e.into());
+        }
+    };
 
     let rewritten_json = sort_json_object(&serde_json::to_value(rewritten_model.clone())?);
     let rewritten_json_str = serde_json::to_string_pretty(&rewritten_json)?;

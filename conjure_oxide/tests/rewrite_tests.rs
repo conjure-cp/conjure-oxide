@@ -1,12 +1,15 @@
 // Tests for rewriting/simplifying parts of the AST
 
 use conjure_core::rule::Rule;
+use conjure_oxide::rule_engine::resolve_rules::resolve_rule_sets;
+use conjure_oxide::{
+    ast::*, eval_constant, rule_engine::rewrite::rewrite, solvers::FromConjureModel,
+};
 use conjure_rules::{get_rule_by_name, get_rules};
 use core::panic;
-use std::collections::HashMap;
-
-use conjure_oxide::{ast::*, eval_constant, rewrite::rewrite, solvers::FromConjureModel};
 use minion_rs::ast::{Constant as MinionConstant, VarName};
+use std::collections::HashMap;
+use std::process::exit;
 
 #[test]
 fn rules_present() {
@@ -565,8 +568,16 @@ fn rewrite_solve_xyz() {
         ),
     ]);
 
+    let rule_sets = match resolve_rule_sets(vec!["Minion", "Constant"]) {
+        Ok(rs) => rs,
+        Err(e) => {
+            eprintln!("Error resolving rule sets: {}", e);
+            exit(1);
+        }
+    };
+
     // Apply rewrite function to the nested expression
-    let rewritten_expr = rewrite(&nested_expr);
+    let rewritten_expr = rewrite(&nested_expr, rule_sets).unwrap();
 
     // Check if the expression is in its simplest form
     let expr = rewritten_expr.clone();
@@ -606,7 +617,7 @@ fn rewrite_solve_xyz() {
 }
 
 struct RuleResult<'a> {
-    rule: Rule<'a>,
+    rule: &'a Rule<'a>,
     new_expression: Expression,
 }
 
@@ -627,7 +638,7 @@ pub fn is_simple(expression: &Expression) -> bool {
 /// - None if no rule is applicable to the expression or any sub-expression.
 fn is_simple_iteration<'a>(
     expression: &'a Expression,
-    rules: &'a Vec<Rule<'a>>,
+    rules: &'a Vec<&'a Rule<'a>>,
 ) -> Option<Expression> {
     let rule_results = apply_all_rules(expression, rules);
     if let Some(new) = choose_rewrite(&rule_results) {
@@ -653,14 +664,14 @@ fn is_simple_iteration<'a>(
 /// - An empty list if no rules are applicable.
 fn apply_all_rules<'a>(
     expression: &'a Expression,
-    rules: &'a Vec<Rule<'a>>,
+    rules: &'a Vec<&'a Rule<'a>>,
 ) -> Vec<RuleResult<'a>> {
     let mut results = Vec::new();
     for rule in rules {
         match rule.apply(expression) {
             Ok(new) => {
                 results.push(RuleResult {
-                    rule: rule.clone(),
+                    rule,
                     new_expression: new,
                 });
             }

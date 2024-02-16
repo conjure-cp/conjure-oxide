@@ -1,7 +1,10 @@
 use conjure_core::{ast::Constant as Const, ast::Expression as Expr, rule::RuleApplicationError};
+use conjure_rule_sets::register_rule_set;
 use conjure_rules::register_rule;
 
-#[register_rule]
+register_rule_set!("Constant", 40, ());
+
+#[register_rule(("Constant", 40))]
 fn apply_eval_constant(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     if expr.is_constant() {
         return Err(RuleApplicationError::RuleNotApplicable);
