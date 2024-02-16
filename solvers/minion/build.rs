@@ -3,6 +3,7 @@
 // - https://rust-lang.github.io/rust-bindgen/non-system-libraries.html
 // - https://doc.rust-lang.org/cargo/reference/build-scripts.html#rerun-if-changed #![allow(clippy::unwrap_used)]
 #![allow(clippy::expect_used)]
+#![allow(clippy::unwrap_used)]
 #![allow(clippy::panic)]
 
 use std::env;
