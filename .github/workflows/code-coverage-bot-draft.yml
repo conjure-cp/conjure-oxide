@@ -1,0 +1,83 @@
+name: "Code Coverage (PR)"
+
+on:
+  pull_request:
+    paths:
+      - conjure_oxide/**
+      - solvers/**
+      - crates/**
+      - .github/actions/code-coverage.yml
+  workflow_dispatch:
+
+env:
+  rust_release: nightly
+
+jobs:
+  coverage:
+    name: "Generate Code Coverage Reports"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target
+            solvers/minion/vendor
+            solvers/chuffed/vendor
+          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
+          restore-keys: ${{ runner.os }}-${{ env.rust_release }}
+      - name: Install rust ${{ env.rust_release }}
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
+      - uses: ./.github/actions/install-conjure
+        with: 
+          os_arch: linux
+          version: 2.5.1
+      - name: Generate coverage reports
+        run: |
+          ./tools/coverage.sh
+      - name: "Find coverage comment"
+        uses: peter-evans/find-comment@v1
+        id: fc
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          comment-author: "github-actions[bot]"
+          body-includes: "## Code Coverage"
+      - name: "Delete coverage comment if it exists"
+        if: steps.fc.outputs.comment-id != ''
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.deleteComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: ${{ steps.fc.outputs.comment-id }}
+            })
+      - name: "Create coverage comment"
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          comment-id: ${{ steps.fc.outputs.comment-id }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## Code Coverage
+            **Summary**
+            - Coverage: ${{ steps.coverage.outputs.coverage }}%
+            - Lines covered: ${{ steps.coverage.outputs.lines_covered }}
+            - Lines uncovered: ${{ steps.coverage.outputs.lines_uncovered }}
+            - Functions covered: ${{ steps.coverage.outputs.functions_covered }}
+            - Functions uncovered: ${{ steps.coverage.outputs.functions_uncovered }}
+            - Modules covered: ${{ steps.coverage.outputs.modules_covered }}
+            - Modules uncovered: ${{ steps.coverage.outputs.modules_uncovered }}
+            - Files covered: ${{ steps.coverage.outputs.files_covered }}
+            - Files uncovered: ${{ steps.coverage.outputs.files_uncovered }}
+            - Branches covered: ${{ steps.coverage.outputs.branches_covered }}
+            - Branches uncovered: ${{ steps.coverage.outputs.branches_uncovered }}
+            - Statements covered: ${{ steps.coverage.outputs.statements_covered }}
+            - Statements uncovered: ${{ steps.coverage.outputs.statements_uncovered }}
+            - Conditionals covered: ${{ steps.coverage.outputs.conditionals_covered }}
+            - Conditionals uncovered: ${{ steps.coverage.outputs.conditionals_uncovered }}
+            - Loops covered: ${{ steps.coverage.outputs.loops_covered }}
+            - Loops uncovered: ${{ steps.coverage.outputs.loops_uncovered }}

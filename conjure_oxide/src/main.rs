@@ -108,7 +108,7 @@ mod tests {
 
     #[test]
     fn test_get_example_model_success() {
-        let filename = "basic/comprehension-01-1/comprehension-01-1";
+        let filename = "bool-01";
         get_example_model(filename).unwrap();
     }
 
