@@ -53,7 +53,12 @@ pub fn main() -> AnyhowResult<()> {
     println!("Rule sets: {:?}", rule_sets);
 
     let rule_priorities = get_rule_priorities(&rule_sets)?;
-    println!("Rules:\n {:?}", get_rules_vec(&rule_priorities),);
+    let rules_vec = get_rules_vec(&rule_priorities);
+
+    println!("Rules and priorities:");
+    rules_vec.iter().for_each(|rule| {
+        println!("{}: {}", rule.name, rule_priorities.get(rule).unwrap_or(&0));
+    });
 
     let cli = Cli::parse();
     println!("Input file: {}", cli.input_file.display());
