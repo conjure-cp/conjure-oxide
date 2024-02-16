@@ -247,18 +247,15 @@ fn parse_vec_op(
 
 fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expression> {
     match &constant["Constant"] {
-        Value::Object(int) if int.contains_key("ConstantInt") => {
-            Some(Expression::Constant(
-                Metadata::new(),
-                Constant::Int(
-                    //TODO (kf77): Get metadata from JSON?
-                    int["ConstantInt"].as_array()?[1]
-                        .as_i64()?
-                        .try_into()
-                        .unwrap(),
-                ),
-            ))
-        }
+        Value::Object(int) if int.contains_key("ConstantInt") => Some(Expression::Constant(
+            Metadata::new(),
+            Constant::Int(
+                int["ConstantInt"].as_array()?[1]
+                    .as_i64()?
+                    .try_into()
+                    .unwrap(),
+            ),
+        )),
         otherwise => panic!("Unhandled parse_constant {:#?}", otherwise),
     }
 }
