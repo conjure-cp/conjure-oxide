@@ -119,8 +119,7 @@ fn bind() {
             .clang_arg("-D_GLIBCXX_DEBUG")
             .clang_arg("-DMORE_SEARCH_INFO")
             .clang_arg("-DMINION_DEBUG")
-    }
-    else {
+    } else {
         bindings
     };
 

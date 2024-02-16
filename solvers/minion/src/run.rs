@@ -548,7 +548,12 @@ unsafe fn constraint_add_args(
         //Constraint::MinusEq(_, _) => todo!(),
         //Constraint::GacEq(_, _) => todo!(),
         //Constraint::WatchLess(_, _) => todo!(),
-        //Constraint::WatchNeq(_, _) => todo!(),
+        // TODO: ensure that this is a bool?
+        Constraint::WatchNeq(a, b) => {
+            read_var(i, r_constr, a)?;
+            read_var(i, r_constr, b)?;
+            Ok(())
+        }
         #[allow(unreachable_patterns)]
         x => Err(MinionError::NotImplemented(format!("{:?}", x))),
     }

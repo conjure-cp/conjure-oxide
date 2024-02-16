@@ -1,5 +1,7 @@
 //! Solver interface to minion_rs.
 
+#![allow(unreachable_patterns)]
+
 use super::{FromConjureModel, SolverError};
 use crate::Solver;
 
@@ -8,11 +10,11 @@ use crate::ast::{
     Expression as ConjureExpression, Model as ConjureModel, Name as ConjureName,
     Range as ConjureRange,
 };
-use conjure_core::metadata::Metadata;
+
 pub use minion_rs::ast::Model as MinionModel;
 use minion_rs::ast::{
     Constant as MinionConstant, Constraint as MinionConstraint, Var as MinionVar,
-    VarDomain as MinionDomain,
+    VarDomain as MinionDomain, VarName,
 };
 
 const SOLVER: Solver = Solver::Minion;
@@ -45,19 +47,22 @@ fn parse_vars(
 
 fn parse_var(
     name: &ConjureName,
-    variable: &DecisionVariable,
+    var: &DecisionVariable,
+    minion_model: &mut MinionModel,
+) -> Result<(), SolverError> {
+    match &var.domain {
+        ConjureDomain::IntDomain(ranges) => _parse_intdomain_var(name, ranges, minion_model),
+        ConjureDomain::BoolDomain => _parse_booldomain_var(name, minion_model),
+        x => Err(SolverError::NotSupported(SOLVER, format!("{:?}", x))),
+    }
+}
+
+fn _parse_intdomain_var(
+    name: &ConjureName,
+    ranges: &Vec<ConjureRange<i32>>,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     let str_name = _name_to_string(name.to_owned());
-
-    let ranges = match &variable.domain {
-        ConjureDomain::IntDomain(range) => Ok(range),
-        x => Err(SolverError::NotSupported(SOLVER, format!("{:?}", x))),
-    }?;
-
-    // TODO (nd60): Currently, Minion only supports the use of one range in the domain.
-    // If there are multiple ranges, SparseBound should be used here instead.
-    // See: https://github.com/conjure-cp/conjure-oxide/issues/84
 
     if ranges.len() != 1 {
         return Err(SolverError::NotSupported(
@@ -82,15 +87,33 @@ fn parse_var(
         x => Err(SolverError::NotSupported(SOLVER, format!("{:?}", x))),
     }?;
 
+    _try_add_var(
+        str_name.to_owned(),
+        MinionDomain::Bound(low, high),
+        minion_model,
+    )
+}
+
+fn _parse_booldomain_var(
+    name: &ConjureName,
+    minion_model: &mut MinionModel,
+) -> Result<(), SolverError> {
+    let str_name = _name_to_string(name.to_owned());
+    _try_add_var(str_name.to_owned(), MinionDomain::Bool, minion_model)
+}
+
+fn _try_add_var(
+    name: VarName,
+    domain: MinionDomain,
+    minion_model: &mut MinionModel,
+) -> Result<(), SolverError> {
     minion_model
         .named_variables
-        .add_var(str_name.to_owned(), MinionDomain::Bound(low, high))
+        .add_var(name.clone(), domain)
         .ok_or(SolverError::InvalidInstance(
             SOLVER,
-            format!("variable {:?} is defined twice", str_name),
-        ))?;
-
-    Ok(())
+            format!("variable {:?} is defined twice", name),
+        ))
 }
 
 fn parse_exprs(
@@ -125,7 +148,12 @@ fn parse_expr(expr: ConjureExpression, minion_model: &mut MinionModel) -> Result
             ));
             Ok(())
         }
-
+        ConjureExpression::Neq(a, b) => {
+            minion_model
+                .constraints
+                .push(MinionConstraint::WatchNeq(read_var(*a)?, read_var(*b)?));
+            Ok(())
+        }
         x => Err(SolverError::NotSupported(SOLVER, format!("{:?}", x))),
     }
 }
@@ -184,6 +212,7 @@ fn _name_to_string(name: ConjureName) -> String {
 mod tests {
     use anyhow::anyhow;
     use conjure_core::ast::Expression;
+    use conjure_core::metadata::Metadata;
     use std::collections::HashMap;
 
     use minion_rs::ast::VarName;
