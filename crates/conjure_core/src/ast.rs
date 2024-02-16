@@ -289,10 +289,7 @@ impl Expression {
     }
 
     pub fn is_constant(&self) -> bool {
-        match self {
-            Expression::Constant(_) => true,
-            _ => false,
-        }
+        matches!(self, Expression::Constant(_))
     }
 }
 

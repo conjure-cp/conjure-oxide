@@ -50,14 +50,6 @@ pub fn main() -> AnyhowResult<()> {
 
     println!("Rule sets: {:?}", rule_sets);
 
-    // println!(
-    //     "Rules: {:?}",
-    //     conjure_rules::get_rules()
-    //         .iter()
-    //         .map(|r| r.name)
-    //         .collect::<Vec<_>>()
-    // );
-
     let cli = Cli::parse();
     println!("Input file: {}", cli.input_file.display());
     let input_file: &str = cli.input_file.to_str().ok_or(anyhow!(

@@ -6,7 +6,7 @@ use syn::punctuated::Punctuated;
 use syn::token::Comma;
 use syn::{
     parenthesized, parse::Parse, parse::ParseStream, parse_macro_input, Ident, ItemFn, LitInt,
-    LitStr, Result, Token,
+    LitStr, Result,
 };
 
 #[derive(Debug)]
