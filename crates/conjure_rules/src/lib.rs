@@ -68,8 +68,11 @@ pub fn get_rule_by_name(name: &str) -> Option<&'static Rule<'static>> {
     get_rules().iter().find(|rule| rule.name == name).cloned()
 }
 
-/// This procedural macro registers a decorated function with `conjure_rules`' global registry.
-/// It may be used in any downstream crate. For more information on linker magic, see the [`linkme`](https://docs.rs/linkme/latest/linkme/) crate.
+/// This procedural macro registers a decorated function with `conjure_rules`' global registry, and
+/// adds the rule to one or more `RuleSet`'s.
+///
+/// It may be used in any downstream crate.
+/// For more information on linker magic, see the [`linkme`](https://docs.rs/linkme/latest/linkme/) crate.
 ///
 /// **IMPORTANT**: Since the resulting rule may not be explicitly referenced, it may be removed by the compiler's dead code elimination.
 /// To prevent this, you must ensure that either:
@@ -88,6 +91,10 @@ pub fn get_rule_by_name(name: &str) -> Option<&'static Rule<'static>> {
 /// Intermediary static variables are created to allow for the decentralized registry, with the prefix `CONJURE_GEN_`.
 /// Please ensure that other variable names in the same scope do not conflict with these.
 ///
+/// This macro must decorate a function with the given signature.
+/// As arguments, it excepts a tuple of 2-tuples in the format:
+/// `((<RuleSet name>, <Priority in RuleSet>), ...)`
+///
 /// <hr>
 ///
 /// For example:
@@ -96,7 +103,7 @@ pub fn get_rule_by_name(name: &str) -> Option<&'static Rule<'static>> {
 /// # use conjure_core::rule::RuleApplicationError;
 /// # use conjure_rules::register_rule;
 /// #
-/// #[register_rule]
+/// #[register_rule(("RuleSetName", 10))]
 /// fn identity(expr: &Expression) -> Result<Expression, RuleApplicationError> {
 ///   Ok(expr.clone())
 /// }

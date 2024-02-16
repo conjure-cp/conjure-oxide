@@ -1,6 +1,7 @@
 //! This is the backend procedural macro crate for `conjure_rules`. USE THAT INSTEAD!
 
 use proc_macro::TokenStream;
+use proc_macro2::Span;
 use quote::quote;
 use syn::punctuated::Punctuated;
 use syn::token::Comma;
@@ -42,16 +43,6 @@ impl Parse for RegisterRuleArgs {
 
 /**
 * Register a rule with the given rule sets and priorities.
-*
-* # Example
-* ```rust
-* use conjure_rules_proc_macro::register_rule;
-* #[register_rule(
-*     ("RuleSet1", 10),
-*     ("RuleSet2", 20),
-* )]
-* fn my_rule_application() {}
-* ```
 */
 #[proc_macro_attribute]
 pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream {
@@ -137,7 +128,7 @@ impl Parse for RuleSetArgs {
 * # Example
 * ```rust
  * use conjure_rules_proc_macro::register_rule_set;
- * register_rule_set!("MyRuleSet", 10, ["DependencyRuleSet", "AnotherRuleSet"]);
+ * register_rule_set!("MyRuleSet", 10, ("DependencyRuleSet", "AnotherRuleSet"));
 * ```
  */
 #[proc_macro]
@@ -148,6 +139,9 @@ pub fn register_rule_set(args: TokenStream) -> TokenStream {
         dependencies,
     } = parse_macro_input!(args as RuleSetArgs);
 
+    let static_name = format!("CONJURE_GEN_RULE_SET_{}", name.value()).to_uppercase();
+    let static_ident = Ident::new(&static_name, Span::call_site());
+
     let dependencies = dependencies
         .into_iter()
         .map(|dep| quote! { #dep })
@@ -155,7 +149,7 @@ pub fn register_rule_set(args: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         #[::conjure_rule_sets::_dependencies::distributed_slice(::conjure_rule_sets::RULE_SETS_DISTRIBUTED_SLICE)]
-        pub static RULE_SET: ::conjure_rule_sets::RuleSet<'static> = ::conjure_rule_sets::RuleSet::new(#name, #priority, &[#(#dependencies),*]);
+        pub static #static_ident: ::conjure_rule_sets::RuleSet<'static> = ::conjure_rule_sets::RuleSet::new(#name, #priority, &[#(#dependencies),*]);
     };
 
     TokenStream::from(expanded)
