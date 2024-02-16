@@ -5,6 +5,9 @@ use std::path::Path;
 use walkdir::WalkDir;
 
 fn main() -> io::Result<()> {
+    println!("cargo:rerun-if-changed=tests/integration");
+    println!("cargo:rerun-if-changed=tests/gen_test_template");
+    println!("cargo:rerun-if-changed=build.rs");
     let out_dir = var("OUT_DIR").map_err(|e| io::Error::new(io::ErrorKind::Other, e))?; // wrapping in a std::io::Error to match main's error type
     let dest = Path::new(&out_dir).join("gen_tests.rs");
     let mut f = File::create(dest)?;
