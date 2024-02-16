@@ -46,10 +46,10 @@ impl Parse for RegisterRuleArgs {
 * # Example
 * ```rust
 * use conjure_rules_proc_macro::register_rule;
-* register_rule!(
+* #[register_rule(
 *     ("RuleSet1", 10),
 *     ("RuleSet2", 20),
-* );
+* )]
 * fn my_rule_application() {}
 * ```
 */
