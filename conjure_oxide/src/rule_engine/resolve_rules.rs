@@ -123,10 +123,10 @@ pub fn rule_cmp<'a>(
     let b_priority = *rule_priorities.get(b).unwrap_or(&0);
 
     if a_priority == b_priority {
-        return a.name.cmp(b.name);
+        return b.name.cmp(a.name);
     }
 
-    a_priority.cmp(&b_priority)
+    b_priority.cmp(&a_priority)
 }
 
 /**

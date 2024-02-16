@@ -11,7 +11,9 @@ use anyhow::Result as AnyhowResult;
 use clap::{arg, command, Parser};
 use conjure_oxide::find_conjure::conjure_executable;
 use conjure_oxide::parse::model_from_json;
-use conjure_oxide::rule_engine::resolve_rules::{get_rule_priorities, resolve_rule_sets};
+use conjure_oxide::rule_engine::resolve_rules::{
+    get_rule_priorities, get_rules_vec, resolve_rule_sets,
+};
 use conjure_oxide::rule_engine::rewrite::rewrite_model;
 use conjure_oxide::solvers::FromConjureModel;
 
@@ -50,10 +52,8 @@ pub fn main() -> AnyhowResult<()> {
 
     println!("Rule sets: {:?}", rule_sets);
 
-    println!(
-        "Rules and priorities:\n {:?}",
-        get_rule_priorities(&rule_sets)?
-    );
+    let rule_priorities = get_rule_priorities(&rule_sets)?;
+    println!("Rules:\n {:?}", get_rules_vec(&rule_priorities),);
 
     let cli = Cli::parse();
     println!("Input file: {}", cli.input_file.display());
