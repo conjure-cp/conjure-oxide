@@ -1,4 +1,6 @@
-use conjure_core::{ast::Constant as Const, ast::Expression as Expr, rule::RuleApplicationError};
+use conjure_core::{
+    ast::Constant as Const, ast::Expression as Expr, metadata::Metadata, rule::RuleApplicationError,
+};
 use conjure_rules::register_rule;
 
 /************************************************************************/
@@ -120,7 +122,7 @@ fn lt_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
         Expr::Lt(a, b) => Ok(Expr::Ineq(
             a.clone(),
             b.clone(),
-            Box::new(Expr::Constant(Const::Int(-1))),
+            Box::new(Expr::Constant(Metadata::new(), Const::Int(-1))),
         )),
         _ => Err(RuleApplicationError::RuleNotApplicable),
     }
@@ -139,7 +141,7 @@ fn gt_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
         Expr::Gt(a, b) => Ok(Expr::Ineq(
             b.clone(),
             a.clone(),
-            Box::new(Expr::Constant(Const::Int(-1))),
+            Box::new(Expr::Constant(Metadata::new(), Const::Int(-1))),
         )),
         _ => Err(RuleApplicationError::RuleNotApplicable),
     }
@@ -158,7 +160,7 @@ fn geq_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
         Expr::Geq(a, b) => Ok(Expr::Ineq(
             b.clone(),
             a.clone(),
-            Box::new(Expr::Constant(Const::Int(0))),
+            Box::new(Expr::Constant(Metadata::new(), Const::Int(0))),
         )),
         _ => Err(RuleApplicationError::RuleNotApplicable),
     }
@@ -177,7 +179,7 @@ fn leq_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
         Expr::Leq(a, b) => Ok(Expr::Ineq(
             a.clone(),
             b.clone(),
-            Box::new(Expr::Constant(Const::Int(0))),
+            Box::new(Expr::Constant(Metadata::new(), Const::Int(0))),
         )),
         _ => Err(RuleApplicationError::RuleNotApplicable),
     }

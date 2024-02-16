@@ -8,6 +8,7 @@ use crate::ast::{
     Expression as ConjureExpression, Model as ConjureModel, Name as ConjureName,
     Range as ConjureRange,
 };
+use conjure_core::metadata::Metadata;
 pub use minion_rs::ast::Model as MinionModel;
 use minion_rs::ast::{
     Constant as MinionConstant, Constraint as MinionConstraint, Var as MinionVar,
@@ -199,7 +200,7 @@ fn must_be_ref(e: ConjureExpression) -> Result<String, SolverError> {
 
 fn must_be_const(e: ConjureExpression) -> Result<i32, SolverError> {
     match e {
-        ConjureExpression::Constant(ConjureConstant::Int(n)) => Ok(n),
+        ConjureExpression::Constant(_, ConjureConstant::Int(n)) => Ok(n),
         x => Err(SolverError::InvalidInstance(
             SOLVER,
             format!("expected a constant, but got `{0:?}`", x),
@@ -239,7 +240,7 @@ mod tests {
         let x = ConjureExpression::Reference(ConjureName::UserName("x".to_owned()));
         let y = ConjureExpression::Reference(ConjureName::UserName("y".to_owned()));
         let z = ConjureExpression::Reference(ConjureName::UserName("z".to_owned()));
-        let four = ConjureExpression::Constant(ConjureConstant::Int(4));
+        let four = ConjureExpression::Constant(Metadata::new(), ConjureConstant::Int(4));
 
         let geq = ConjureExpression::SumGeq(
             vec![x.to_owned(), y.to_owned(), z.to_owned()],
