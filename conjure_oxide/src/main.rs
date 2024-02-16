@@ -11,7 +11,7 @@ use anyhow::Result as AnyhowResult;
 use clap::{arg, command, Parser};
 use conjure_oxide::find_conjure::conjure_executable;
 use conjure_oxide::parse::model_from_json;
-use conjure_oxide::rule_engine::resolve_rules::resolve_rule_sets;
+use conjure_oxide::rule_engine::resolve_rules::{get_rule_priorities, resolve_rule_sets};
 use conjure_oxide::rule_engine::rewrite::rewrite_model;
 use conjure_oxide::solvers::FromConjureModel;
 
@@ -50,6 +50,11 @@ pub fn main() -> AnyhowResult<()> {
 
     println!("Rule sets: {:?}", rule_sets);
 
+    println!(
+        "Rules and priorities:\n {:?}",
+        get_rule_priorities(&rule_sets)?
+    );
+
     let cli = Cli::parse();
     println!("Input file: {}", cli.input_file.display());
     let input_file: &str = cli.input_file.to_str().ok_or(anyhow!(
@@ -82,7 +87,7 @@ pub fn main() -> AnyhowResult<()> {
     println!("{:?}", model);
 
     println!("Rewriting model...");
-    model = rewrite_model(&model, rule_sets)?;
+    model = rewrite_model(&model, &rule_sets)?;
 
     println!("\nRewritten model:");
     println!("{:?}", model);

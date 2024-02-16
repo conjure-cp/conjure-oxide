@@ -36,7 +36,7 @@ struct RuleResult<'a> {
 /// - The same expression if no rules are applicable.
 pub fn rewrite<'a>(
     expression: &Expression,
-    rule_sets: Vec<&'a RuleSet<'a>>,
+    rule_sets: &Vec<&'a RuleSet<'a>>,
 ) -> Result<Expression, RewriteError> {
     let rule_priorities = get_rule_priorities(rule_sets)?;
     let rules = get_rules_vec(&rule_priorities);
@@ -115,7 +115,7 @@ fn choose_rewrite(results: &Vec<RuleResult>) -> Option<Expression> {
 /// - The same model if no rules are applicable.
 pub fn rewrite_model<'a>(
     model: &Model,
-    rule_sets: Vec<&'a RuleSet<'a>>,
+    rule_sets: &Vec<&'a RuleSet<'a>>,
 ) -> Result<Model, RewriteError> {
     let mut new_model = model.clone();
 

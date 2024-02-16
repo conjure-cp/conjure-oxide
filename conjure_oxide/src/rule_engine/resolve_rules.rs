@@ -78,7 +78,7 @@ pub fn resolve_rule_sets<'a>(
 * @returns A map of rules to their priorities.
 */
 pub fn get_rule_priorities<'a>(
-    rule_sets: Vec<&'a RuleSet<'a>>,
+    rule_sets: &Vec<&'a RuleSet<'a>>,
 ) -> Result<HashMap<&'a Rule<'a>, u8>, ResolveRulesError> {
     let mut rule_priorities: HashMap<&'a Rule<'a>, (&'a RuleSet<'a>, u8)> = HashMap::new();
 
