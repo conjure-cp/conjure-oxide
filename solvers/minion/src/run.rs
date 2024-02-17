@@ -1,7 +1,11 @@
 use std::{
     collections::HashMap,
     ffi::CString,
-    sync::{Mutex, MutexGuard},
+    sync::atomic::Ordering,
+    sync::{
+        atomic::{self, AtomicBool},
+        Mutex, MutexGuard,
+    },
 };
 
 use crate::ffi::{self, ConstraintType_CT_WATCHED_LESS};
@@ -106,8 +110,7 @@ static CALLBACK: Mutex<Option<Callback>> = Mutex::new(None);
 // the variables we want to return, and their ordering in the print matrix
 static PRINT_VARS: Mutex<Option<Vec<VarName>>> = Mutex::new(None);
 
-#[no_mangle]
-unsafe extern "C" fn on_exit() {}
+static mut LOCKED: AtomicBool = AtomicBool::new(false);
 
 #[no_mangle]
 unsafe extern "C" fn run_callback() -> bool {
@@ -158,6 +161,11 @@ pub fn run_minion(model: Model, callback: Callback) -> Result<(), MinionError> {
     *CALLBACK.lock().unwrap() = Some(callback);
 
     unsafe {
+        // TODO: something better than a manual spinlock
+        while LOCKED.load(Ordering::SeqCst) {
+            std::hint::spin_loop();
+        }
+        LOCKED.store(true, Ordering::SeqCst);
         let search_opts = ffi::searchOptions_new();
         let search_method = ffi::searchMethod_new();
         let search_instance = ffi::instance_new();
@@ -174,6 +182,7 @@ pub fn run_minion(model: Model, callback: Callback) -> Result<(), MinionError> {
         ffi::searchMethod_free(search_method);
         ffi::searchOptions_free(search_opts);
         ffi::instance_free(search_instance);
+        LOCKED.store(false, Ordering::SeqCst);
 
         match res {
             0 => Ok(()),
