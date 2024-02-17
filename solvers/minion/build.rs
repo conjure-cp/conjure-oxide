@@ -111,8 +111,21 @@ fn bind() {
         .clang_arg("-Ivendor/minion/")
         .clang_arg("-DLIBMINION")
         .clang_arg(r"--std=gnu++11")
-        .clang_arg(r"-xc++")
-        // Finish the builder and generate the bindings.
+        .clang_arg(r"-xc++");
+
+    let bindings = if std::env::var("DEBUG_MINION").is_ok() {
+        bindings
+            .clang_arg("-g")
+            .clang_arg("-D_GLIBCXX_DEBUG")
+            .clang_arg("-DMORE_SEARCH_INFO")
+            .clang_arg("-DMINION_DEBUG")
+    }
+    else {
+        bindings
+    };
+
+    // Finish the builder and generate the bindings.
+    let bindings = bindings
         .generate()
         // Unwrap the Result and panic on failure.
         .expect("Unable to generate bindings");

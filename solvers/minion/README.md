@@ -11,3 +11,7 @@ Read the documentation [here](https://conjure-cp.github.io/conjure-oxide/docs/mi
 ## Licence
 
 This crate is licensed under the [Mozilla Public Licence 2.0](https://www.mozilla.org/en-US/MPL/2.0/).
+
+## Debugging
+
+Debug symbols for Minion can be enabled by setting the environment variable `DEBUG_MINION`.

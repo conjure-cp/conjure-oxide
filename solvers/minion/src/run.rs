@@ -657,7 +657,7 @@ unsafe fn read_constant(
         x => Err(MinionError::NotImplemented(format!("{:?}", x))),
     }?;
 
-    ffi::constraint_addConstant(raw_constraint, &mut val);
+    ffi::constraint_addConstant(raw_constraint, val);
 
     Ok(())
 }

@@ -22,7 +22,12 @@ set -x
 
   mkdir -p "$OUT_DIR/build"
   cd "$OUT_DIR/build"
-  python3 "$SCRIPT_DIR/vendor/configure.py" --lib --quick
+
+  if [[ -v DEBUG_MINION ]]; then
+    python3 "$SCRIPT_DIR/vendor/configure.py" --lib --quick --debug
+  else
+    python3 "$SCRIPT_DIR/vendor/configure.py" --lib --quick
+  fi
 
   echo "------ BUILD STEP ------"
   cd "$OUT_DIR/build"
