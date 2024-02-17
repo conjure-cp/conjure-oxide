@@ -107,6 +107,9 @@ static CALLBACK: Mutex<Option<Callback>> = Mutex::new(None);
 static PRINT_VARS: Mutex<Option<Vec<VarName>>> = Mutex::new(None);
 
 #[no_mangle]
+unsafe extern "C" fn on_exit() {}
+
+#[no_mangle]
 unsafe extern "C" fn run_callback() -> bool {
     // get printvars from static PRINT_VARS if they exist.
     // if not, return true and continue search.
@@ -155,15 +158,23 @@ pub fn run_minion(model: Model, callback: Callback) -> Result<(), MinionError> {
     *CALLBACK.lock().unwrap() = Some(callback);
 
     unsafe {
-        let options = Scoped::new(ffi::searchOptions_new(), |x| {
-            ffi::searchOptions_free(x as _)
-        });
-        let args = Scoped::new(ffi::searchMethod_new(), |x| ffi::searchMethod_free(x as _));
-        let instance = Scoped::new(ffi::instance_new(), |x| ffi::instance_free(x as _));
+        let search_opts = ffi::searchOptions_new();
+        let search_method = ffi::searchMethod_new();
+        let search_instance = ffi::instance_new();
 
-        convert_model_to_raw(&instance, &model)?;
+        convert_model_to_raw(search_instance, &model)?;
 
-        let res = ffi::runMinion(options.ptr, args.ptr, instance.ptr, Some(run_callback));
+        let res = ffi::runMinion(
+            search_opts,
+            search_method,
+            search_instance,
+            Some(run_callback),
+        );
+
+        ffi::searchMethod_free(search_method);
+        ffi::searchOptions_free(search_opts);
+        ffi::instance_free(search_instance);
+
         match res {
             0 => Ok(()),
             x => Err(MinionError::from(RuntimeError::from(x))),
@@ -172,7 +183,7 @@ pub fn run_minion(model: Model, callback: Callback) -> Result<(), MinionError> {
 }
 
 unsafe fn convert_model_to_raw(
-    instance: &Scoped<ffi::ProbSpec_CSPInstance>,
+    instance: *mut ffi::ProbSpec_CSPInstance,
     model: &Model,
 ) -> Result<(), MinionError> {
     /*******************************/
@@ -215,16 +226,16 @@ unsafe fn convert_model_to_raw(
         }?;
 
         ffi::newVar_ffi(
-            instance.ptr,
+            instance,
             c_str.as_ptr() as _,
             vartype_raw,
             domain_low,
             domain_high,
         );
 
-        let var = ffi::getVarByName(instance.ptr, c_str.as_ptr() as _);
+        let var = ffi::getVarByName(instance, c_str.as_ptr() as _);
 
-        ffi::printMatrix_addVar(instance.ptr, var);
+        ffi::printMatrix_addVar(instance, var);
 
         // add to the print vars stored in rust so to remember
         // the order for callback function.
@@ -240,7 +251,7 @@ unsafe fn convert_model_to_raw(
         |x| ffi::searchOrder_free(x as _),
     );
 
-    ffi::instance_addSearchOrder(instance.ptr, search_order.ptr);
+    ffi::instance_addSearchOrder(instance, search_order.ptr);
 
     /*********************************/
     /*        Add constraints        */
@@ -256,8 +267,8 @@ unsafe fn convert_model_to_raw(
             ffi::constraint_free(x as _)
         });
 
-        constraint_add_args(instance.ptr, raw_constraint.ptr, constraint)?;
-        ffi::instance_addConstraint(instance.ptr, raw_constraint.ptr);
+        constraint_add_args(instance, raw_constraint.ptr, constraint)?;
+        ffi::instance_addConstraint(instance, raw_constraint.ptr);
     }
 
     Ok(())
