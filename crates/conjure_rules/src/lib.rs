@@ -24,12 +24,13 @@
 
 use crate::_dependencies::distributed_slice;
 use crate::_dependencies::Rule;
-use crate::rule_set::RuleSet;
+pub use crate::rule_set::RuleSet;
 
 pub mod rule_set;
 
 #[doc(hidden)]
 pub mod _dependencies {
+
     pub use conjure_core::rule::Rule;
     pub use linkme::distributed_slice;
 }

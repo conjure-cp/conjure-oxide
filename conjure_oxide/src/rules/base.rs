@@ -1,8 +1,7 @@
 use conjure_core::{
     ast::Constant as Const, ast::Expression as Expr, metadata::Metadata, rule::RuleApplicationError,
 };
-use conjure_rule_sets::register_rule_set;
-use conjure_rules::register_rule;
+use conjure_rules::{register_rule, register_rule_set};
 
 /*****************************************************************************/
 /*        This file contains basic rules for simplifying expressions         */

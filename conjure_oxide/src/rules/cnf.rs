@@ -1,6 +1,5 @@
 use conjure_core::{ast::Expression as Expr, rule::RuleApplicationError};
-use conjure_rule_sets::register_rule_set;
-use conjure_rules::register_rule;
+use conjure_rules::{register_rule, register_rule_set};
 
 /***********************************************************************************/
 /*        This file contains rules for converting logic expressions to CNF         */

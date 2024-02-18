@@ -148,8 +148,8 @@ pub fn register_rule_set(args: TokenStream) -> TokenStream {
         .collect::<Vec<_>>();
 
     let expanded = quote! {
-        #[::conjure_rule_sets::_dependencies::distributed_slice(::conjure_rule_sets::RULE_SETS_DISTRIBUTED_SLICE)]
-        pub static #static_ident: ::conjure_rule_sets::RuleSet<'static> = ::conjure_rule_sets::RuleSet::new(#name, #priority, &[#(#dependencies),*]);
+        #[::conjure_rules::_dependencies::distributed_slice(::conjure_rules::RULE_SETS_DISTRIBUTED_SLICE)]
+        pub static #static_ident: ::conjure_rules::RuleSet<'static> = ::conjure_rules::RuleSet::new(#name, #priority, &[#(#dependencies),*]);
     };
 
     TokenStream::from(expanded)
