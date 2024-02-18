@@ -44,8 +44,10 @@ fn build() {
     /*
     do cargo build -vv to see
     */
-    println!("stdout/stderr");
+    println!("stdout");
     println!("{}", String::from_utf8_lossy(&output.stdout));
+    println!("stderr");
+    println!("{}", String::from_utf8_lossy(&output.stderr));
 
     if !output.status.success() {
         panic!("build.sh has non zero exit status")
