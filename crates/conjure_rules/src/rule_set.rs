@@ -1,5 +1,5 @@
+use crate::get_rules;
 use conjure_core::rule::Rule;
-use conjure_rules::get_rules;
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::sync::OnceLock;

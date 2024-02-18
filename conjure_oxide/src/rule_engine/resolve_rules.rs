@@ -1,5 +1,6 @@
 use conjure_core::rule::Rule;
-use conjure_rule_sets::RuleSet;
+use conjure_rules::get_rule_set_by_name;
+use conjure_rules::rule_set::RuleSet;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
 use thiserror::Error;
@@ -23,7 +24,7 @@ impl Display for ResolveRulesError {
 * @returns The rule set with the given name or RuleSetError::RuleSetNotFound if it doesn't exist.
 */
 fn get_rule_set(rule_set_name: &str) -> Result<&'static RuleSet<'static>, ResolveRulesError> {
-    match conjure_rule_sets::get_rule_set_by_name(rule_set_name) {
+    match get_rule_set_by_name(rule_set_name) {
         Some(rule_set) => Ok(rule_set),
         None => Err(ResolveRulesError::RuleSetNotFound),
     }

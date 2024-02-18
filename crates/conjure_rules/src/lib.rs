@@ -23,7 +23,10 @@
 // crate" (i.e. this one) to re-export both the macro and all the things it may need.
 
 use crate::_dependencies::distributed_slice;
-use conjure_core::rule::Rule;
+use crate::_dependencies::Rule;
+use crate::rule_set::RuleSet;
+
+pub mod rule_set;
 
 #[doc(hidden)]
 pub mod _dependencies {
@@ -34,6 +37,10 @@ pub mod _dependencies {
 #[doc(hidden)]
 #[distributed_slice]
 pub static RULES_DISTRIBUTED_SLICE: [Rule<'static>];
+
+#[doc(hidden)]
+#[distributed_slice]
+pub static RULE_SETS_DISTRIBUTED_SLICE: [RuleSet<'static>];
 
 /// Returns a copied `Vec` of all rules registered with the `register_rule` macro.
 ///
@@ -64,8 +71,82 @@ pub fn get_rules() -> Vec<&'static Rule<'static>> {
     RULES_DISTRIBUTED_SLICE.iter().collect()
 }
 
+/// Get a rule by name.
+/// Returns the rule with the given name or None if it doesn't exist.
+///
+/// # Example
+/// ```rust
+/// use conjure_rules::register_rule;
+/// use conjure_core::rule::{Rule, RuleApplicationError};
+/// use conjure_core::ast::Expression;
+///
+/// #[register_rule]
+/// fn identity(expr: &Expression) -> Result<Expression, RuleApplicationError> {
+///  Ok(expr.clone())
+/// }
+///
+/// fn main() {
+/// println!("Rule: {:?}", conjure_rules::get_rule_by_name("identity"));
+/// }
+/// ```
+///
+/// This will print:
+/// ```text
+/// Rule: Some(Rule { name: "identity", application: MEM })
+/// ```
 pub fn get_rule_by_name(name: &str) -> Option<&'static Rule<'static>> {
     get_rules().iter().find(|rule| rule.name == name).cloned()
+}
+
+/// Get all rule sets
+/// Returns a `Vec` of static references to all rule sets registered with the `register_rule_set` macro.
+/// Rule sets are not guaranteed to be in any particular order.
+///
+/// # Example
+/// ```rust
+/// # use conjure_rules::register_rule_set;
+/// register_rule_set!("MyRuleSet", 10, ("AnotherRuleSet"));
+/// register_rule_set!("AnotherRuleSet", 5, ());
+///
+/// fn main() {
+///  println!("Rule sets: {:?}", conjure_rules::get_rule_sets());
+/// }
+/// ```
+///
+/// This will print (if no other rule sets are registered):
+/// ```text
+/// Rule sets: [
+///   RuleSet { name: "MyRuleSet", order: 10, rules: OnceLock { state: Uninitialized }, dependencies: ["AnotherRuleSet"] },
+///   RuleSet { name: "AnotherRuleSet", order: 5, rules: OnceLock { state: Uninitialized }, dependencies: [] }
+/// ]
+/// ```
+///
+pub fn get_rule_sets() -> Vec<&'static RuleSet<'static>> {
+    RULE_SETS_DISTRIBUTED_SLICE.iter().collect()
+}
+
+/// Get a rule set by name.
+/// Returns the rule set with the given name or None if it doesn't exist.
+///
+/// # Example
+/// ```rust
+/// use conjure_rules::register_rule_set;
+/// register_rule_set!("MyRuleSet", 10, ("DependencyRuleSet", "AnotherRuleSet"));
+///
+/// fn main() {
+///  println!("Rule set: {:?}", conjure_rules::get_rule_set_by_name("MyRuleSet"));
+/// }
+/// ```
+///
+/// This will print:
+/// ```text
+/// Rule set: Some(RuleSet { name: "MyRuleSet", order: 10, rules: OnceLock { state: Uninitialized }, dependencies: ["DependencyRuleSet", "AnotherRuleSet"] })
+/// ```
+pub fn get_rule_set_by_name(name: &str) -> Option<&'static RuleSet<'static>> {
+    get_rule_sets()
+        .iter()
+        .find(|rule_set| rule_set.name == name)
+        .cloned()
 }
 
 /// This procedural macro registers a decorated function with `conjure_rules`' global registry, and
@@ -110,3 +191,23 @@ pub fn get_rule_by_name(name: &str) -> Option<&'static Rule<'static>> {
 /// ```
 #[doc(inline)]
 pub use conjure_rules_proc_macro::register_rule;
+
+/// This procedural macro registers a rule set with the global registry.
+/// It may be used in any downstream crate.
+///
+/// For more information on linker magic, see the [`linkme`](https://docs.rs/linkme/latest/linkme/) crate.
+///
+/// This macro uses the following syntax:
+///
+/// ```text
+/// register_rule_set!(<RuleSet name>, <RuleSet order>, (<DependencyRuleSet1>, <DependencyRuleSet2>, ...));
+/// ```
+///
+/// # Example
+///
+/// ```rust
+/// # use conjure_rules::register_rule_set;
+///
+/// register_rule_set!("MyRuleSet", 10, ("DependencyRuleSet", "AnotherRuleSet"));
+/// ```
+pub use conjure_rules_proc_macro::register_rule_set;

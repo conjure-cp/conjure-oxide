@@ -3,7 +3,7 @@ use crate::rule_engine::resolve_rules::{
 };
 use conjure_core::ast::{Expression, Model};
 use conjure_core::rule::Rule;
-use conjure_rule_sets::RuleSet;
+use conjure_rules::rule_set::RuleSet;
 use std::fmt::Display;
 use thiserror::Error;
 
