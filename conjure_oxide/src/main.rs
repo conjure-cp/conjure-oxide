@@ -1,13 +1,7 @@
 // (niklasdewally): temporary, gut this if you want!
 
-use anyhow::{anyhow, bail};
-use std::collections::HashMap;
-use std::ops::Deref;
-use std::path::PathBuf;
-use std::process::exit;
-use std::sync::Mutex;
-
 use anyhow::Result as AnyhowResult;
+use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
 use conjure_oxide::find_conjure::conjure_executable;
 use conjure_oxide::parse::model_from_json;
@@ -15,11 +9,9 @@ use conjure_oxide::rule_engine::resolve_rules::{
     get_rule_priorities, get_rules_vec, resolve_rule_sets,
 };
 use conjure_oxide::rule_engine::rewrite::rewrite_model;
-use conjure_oxide::solvers::FromConjureModel;
 use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
-
-use minion_rs::ast::{Constant, Model as MinionModel, VarName};
-use minion_rs::run_minion;
+use std::path::PathBuf;
+use std::process::exit;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]

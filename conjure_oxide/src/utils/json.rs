@@ -1,4 +1,3 @@
-use minion_rs::ast::Var;
 use serde_json::Value;
 
 /// Compare two JSON values.
