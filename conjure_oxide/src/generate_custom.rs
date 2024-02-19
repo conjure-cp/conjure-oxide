@@ -66,66 +66,48 @@ pub fn get_example_model(filename: &str) -> Result<Model, Box<dyn Error>> {
     let generated_mdl = model_from_json(&astjson)?;
 
     Ok(generated_mdl)
+}
 
-    // // search matching `.essence` files withing test_dir (similar logic to integration_test() and build.rs)
-    // for entry in WalkDir::new(&test_dir)
-    //     .follow_links(true)
-    //     .into_iter()
-    //     .filter_map(Result::ok)
-    // {
-    //     // check if current entry matches filename with `.essence` extension
-    //     let path = entry.path();
-    //     // sanity check to check for extension
-    //     if path.is_file()
-    //         && path.file_stem() == Some(filename.as_ref())
-    //         && path.extension().unwrap_or_default() == "essence"
-    //     {
-    //         // construct conjure command
-    //         let output = std::process::Command::new("conjure")
-    //             .arg("pretty")
-    //             .arg("--output-format=astjson")
-    //             .arg(path)
-    //             .output()?;
+/// Searches for an `.essence` file at the given filepath,
+/// then uses conjure to process it into astjson, and returns the parsed model.
+///
+/// # Arguments
+///
+/// * `filepath` - A string slice that holds the full file path
+///
+/// # Returns
+///
+/// Function returns a `Result<Value, Box<dyn Error>>`, where `Value` is the parsed model
+pub fn get_example_model_by_path(filepath: &str) -> Result<Model, Box<dyn Error>> {
+    let essence_path = PathBuf::from(filepath);
 
-    //         // convert Conjure's stdout from bytes to string
-    //         let astjson = String::from_utf8(output.stdout)?;
+    // Check if file exists and has the correct '.essence' extension
+    if !essence_path.is_file() || essence_path.extension().map_or(true, |e| e != "essence") {
+        return Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "ERROR: File not found or incorrect file type",
+        )));
+    }
 
-    //         // parse AST JSON from desired Model format
-    //         let generated_mdl = model_from_json(&astjson)?;
+    println!("PATH TO FILE: {}", essence_path.display());
 
-    //         // convert and sort model
-    //         let generated_json = sort_json_object(&serde_json::to_value(generated_mdl.clone())?);
+    // Command execution using 'conjure' CLI tool with provided path
+    let mut cmd = std::process::Command::new("conjure");
+    let output = cmd
+        .arg("pretty")
+        .arg("--output-format=astjson")
+        .arg(&essence_path)
+        .output()?;
 
-    //         // serialize sorted JSON to pretty string
-    //         let generated_json_str = serde_json::to_string_pretty(&generated_json)?;
+    // convert Conjure's stdout from bytes to string
+    let astjson = String::from_utf8(output.stdout)?;
 
-    //         // write serialized JSON to file
-    //         File::create(path.with_extension("generated.serialised.json"))?
-    //             .write_all(generated_json_str.as_bytes())?;
+    println!("ASTJSON: {}", astjson);
 
-    //         // if ACCEPT environment var is `true`
-    //         if env::var("ACCEPT").map_or(false, |v| v == "true") {
-    //             copy(
-    //                 path.with_extension("generated.serialised.json"),
-    //                 path.with_extension("expected.serialised.json"),
-    //             )?;
-    //         }
+    // parse AST JSON into the desired Model format
+    let generated_model = model_from_json(&astjson)?;
 
-    //         // read expected JSON model
-    //         let expected_str = read_to_string(path.with_extension("expected.serialised.json"))?;
-
-    //         // parse expected JSON string into Model format
-    //         let expected_mdl: Value = serde_json::from_str(&expected_str)?;
-
-    //         assert_eq!(generated_json, expected_mdl);
-
-    //         // return expected model as final result
-    //         return Ok(generated_mdl);
-    //     }
-    // }
-
-    // // if no matching `.essence` file was found, return error
-    // Err("ERROR: No matching `.essence` file was found".into())
+    Ok(generated_model)
 }
 
 /// Recursively sorts the keys of all JSON objects within the provided JSON value.

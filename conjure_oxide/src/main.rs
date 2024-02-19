@@ -9,7 +9,7 @@ use std::sync::Mutex;
 use anyhow::Result as AnyhowResult;
 use clap::{arg, command, Parser};
 use conjure_oxide::find_conjure::conjure_executable;
-use conjure_oxide::generate_custom::get_example_model;
+use conjure_oxide::generate_custom::{get_example_model, get_example_model_by_path};
 use conjure_oxide::parse::model_from_json;
 use conjure_oxide::rewrite::rewrite_model;
 use conjure_oxide::solvers::FromConjureModel;
@@ -110,6 +110,13 @@ mod tests {
     fn test_get_example_model_success() {
         let filename = "bool-01";
         get_example_model(filename).unwrap();
+    }
+
+    #[test]
+    fn test_get_example_model_by_filepath() {
+        let filepath = "tests/integration/basic/bool/01/bool-01.essence";
+        get_example_model_by_path(filepath).unwrap();
+    
     }
 
     #[test]
