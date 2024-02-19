@@ -6,11 +6,13 @@ use std::fmt::{Debug, Display, Formatter};
 
 use crate::metadata::Metadata;
 
+pub type SymbolTable = HashMap<Name, DecisionVariable>;
+
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Model {
     #[serde_as(as = "Vec<(_, _)>")]
-    pub variables: HashMap<Name, DecisionVariable>,
+    pub variables: SymbolTable,
     pub constraints: Expression,
 }
 
@@ -163,6 +165,12 @@ pub enum Expression {
      */
     Nothing,
 
+    /**
+     * Represents an expression to be "bubbled up" to the top level of the model.
+     * The left expression replaces the bubble, and the right expression is brought upwards.
+     */
+    Bubble(Box<Expression>, Box<Expression>),
+
     #[solver(Minion, SAT)]
     Constant(Metadata, Constant),
 
@@ -225,6 +233,7 @@ impl Expression {
             Expression::Constant(_, _) => None,
             Expression::Reference(_) => None,
             Expression::Nothing => None,
+            Expression::Bubble(_, _) => panic!("Bubble expressions should not be unwrapped!"), // TODO: this can be handled more gracefully
             Expression::Sum(exprs) => Some(exprs.iter().collect()),
             Expression::Not(expr_box) => Some(vec![expr_box.as_ref()]),
             Expression::Or(exprs) => Some(exprs.iter().collect()),
@@ -248,6 +257,9 @@ impl Expression {
             Expression::Constant(m, c) => Expression::Constant(m.clone(), c.clone()),
             Expression::Reference(name) => Expression::Reference(name.clone()),
             Expression::Nothing => Expression::Nothing,
+            Expression::Bubble(_, _) => {
+                panic!("Bubble expressions can only be created by reduction rules!")
+            }
             Expression::Sum(_) => Expression::Sum(sub.iter().cloned().cloned().collect()),
             Expression::Not(_) => Expression::Not(Box::new(sub[0].clone())),
             Expression::Or(_) => Expression::Or(sub.iter().cloned().cloned().collect()),

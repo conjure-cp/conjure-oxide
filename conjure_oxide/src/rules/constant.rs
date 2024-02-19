@@ -1,16 +1,17 @@
-use conjure_core::{
-    ast::Constant as Const, ast::Expression as Expr, metadata::Metadata, rule::RuleApplicationError,
-};
+use conjure_core::ast::{Constant as Const, Expression as Expr};
+use conjure_core::metadata::Metadata;
+use conjure_core::rule::{ApplicationError, ApplicationResult, Reduction};
+
 use conjure_rules::register_rule;
 
 #[register_rule]
-fn apply_eval_constant(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn apply_eval_constant(expr: &Expr) -> ApplicationResult {
     if expr.is_constant() {
-        return Err(RuleApplicationError::RuleNotApplicable);
+        return Err(ApplicationError::RuleNotApplicable);
     }
     let res = eval_constant(expr)
-        .map(|c| Expr::Constant(Metadata::new(), c))
-        .ok_or(RuleApplicationError::RuleNotApplicable);
+        .map(|c| Reduction::pure(Expr::Constant(Metadata::new(), c)))
+        .ok_or(ApplicationError::RuleNotApplicable);
     res
 }
 

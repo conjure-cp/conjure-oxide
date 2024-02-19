@@ -1,10 +1,10 @@
 use conjure_core::ast::{Expression, Model};
-use conjure_core::rule::Rule;
+use conjure_core::rule::{Reduction, Rule};
 use conjure_rules::get_rules;
 
 struct RuleResult<'a> {
     rule: Rule<'a>,
-    new_expression: Expression,
+    reduction: Reduction,
 }
 
 /// # Returns
@@ -55,10 +55,10 @@ fn apply_all_rules<'a>(
     let mut results = Vec::new();
     for rule in rules {
         match rule.apply(expression) {
-            Ok(new) => {
+            Ok(red) => {
                 results.push(RuleResult {
                     rule: rule.clone(),
-                    new_expression: new,
+                    reduction: red,
                 });
             }
             Err(_) => continue,
@@ -76,7 +76,7 @@ fn choose_rewrite(results: &Vec<RuleResult>) -> Option<Expression> {
     }
     // Return the first result for now
     // println!("Applying rule: {:?}", results[0].rule);
-    Some(results[0].new_expression.clone())
+    Some(results[0].reduction.new_expression.clone())
 }
 
 /// This rewrites the model by applying the rules to all constraints.

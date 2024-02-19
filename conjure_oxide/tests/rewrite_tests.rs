@@ -115,8 +115,8 @@ fn rule_sum_constants() {
         Expression::Constant(Metadata::new(), Constant::Int(3)),
     ]);
 
-    expr = sum_constants.apply(&expr).unwrap();
-    expr = unwrap_sum.apply(&expr).unwrap();
+    expr = sum_constants.apply(&expr).unwrap().new_expression;
+    expr = unwrap_sum.apply(&expr).unwrap().new_expression;
 
     assert_eq!(
         expr,
@@ -134,7 +134,7 @@ fn rule_sum_mixed() {
         Expression::Reference(Name::UserName(String::from("a"))),
     ]);
 
-    expr = sum_constants.apply(&expr).unwrap();
+    expr = sum_constants.apply(&expr).unwrap().new_expression;
 
     assert_eq!(
         expr,
@@ -157,7 +157,7 @@ fn rule_sum_geq() {
         Box::new(Expression::Constant(Metadata::new(), Constant::Int(3))),
     );
 
-    expr = flatten_sum_geq.apply(&expr).unwrap();
+    expr = flatten_sum_geq.apply(&expr).unwrap().new_expression;
 
     assert_eq!(
         expr,
@@ -198,8 +198,8 @@ fn reduce_solve_xyz() {
         Expression::Constant(Metadata::new(), Constant::Int(-1)),
     ]);
 
-    expr1 = sum_constants.apply(&expr1).unwrap();
-    expr1 = unwrap_sum.apply(&expr1).unwrap();
+    expr1 = sum_constants.apply(&expr1).unwrap().new_expression;
+    expr1 = unwrap_sum.apply(&expr1).unwrap().new_expression;
     assert_eq!(
         expr1,
         Expression::Constant(Metadata::new(), Constant::Int(4))
@@ -214,7 +214,7 @@ fn reduce_solve_xyz() {
         ])),
         Box::new(expr1),
     );
-    expr1 = sum_leq_to_sumleq.apply(&expr1).unwrap();
+    expr1 = sum_leq_to_sumleq.apply(&expr1).unwrap().new_expression;
     assert_eq!(
         expr1,
         Expression::SumLeq(
@@ -232,7 +232,7 @@ fn reduce_solve_xyz() {
         Box::new(Expression::Reference(Name::UserName(String::from("a")))),
         Box::new(Expression::Reference(Name::UserName(String::from("b")))),
     );
-    expr2 = lt_to_ineq.apply(&expr2).unwrap();
+    expr2 = lt_to_ineq.apply(&expr2).unwrap().new_expression;
     assert_eq!(
         expr2,
         Expression::Ineq(
@@ -279,7 +279,7 @@ fn rule_remove_double_negation() {
         Constant::Bool(true),
     )))));
 
-    expr = remove_double_negation.apply(&expr).unwrap();
+    expr = remove_double_negation.apply(&expr).unwrap().new_expression;
 
     assert_eq!(
         expr,
@@ -299,7 +299,7 @@ fn rule_unwrap_nested_or() {
         Expression::Constant(Metadata::new(), Constant::Bool(true)),
     ]);
 
-    expr = unwrap_nested_or.apply(&expr).unwrap();
+    expr = unwrap_nested_or.apply(&expr).unwrap().new_expression;
 
     assert_eq!(
         expr,
@@ -323,7 +323,7 @@ fn rule_unwrap_nested_and() {
         Expression::Constant(Metadata::new(), Constant::Bool(true)),
     ]);
 
-    expr = unwrap_nested_and.apply(&expr).unwrap();
+    expr = unwrap_nested_and.apply(&expr).unwrap().new_expression;
 
     assert_eq!(
         expr,
@@ -377,8 +377,8 @@ fn remove_trivial_and_or() {
         Constant::Bool(false),
     )]);
 
-    expr_and = remove_trivial_and.apply(&expr_and).unwrap();
-    expr_or = remove_trivial_or.apply(&expr_or).unwrap();
+    expr_and = remove_trivial_and.apply(&expr_and).unwrap().new_expression;
+    expr_or = remove_trivial_or.apply(&expr_or).unwrap().new_expression;
 
     assert_eq!(
         expr_and,
@@ -400,7 +400,10 @@ fn rule_remove_constants_from_or() {
         Expression::Reference(Name::UserName(String::from("a"))),
     ]);
 
-    expr = remove_constants_from_or.apply(&expr).unwrap();
+    expr = remove_constants_from_or
+        .apply(&expr)
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr,
@@ -418,7 +421,10 @@ fn rule_remove_constants_from_and() {
         Expression::Reference(Name::UserName(String::from("a"))),
     ]);
 
-    expr = remove_constants_from_and.apply(&expr).unwrap();
+    expr = remove_constants_from_and
+        .apply(&expr)
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr,
@@ -463,7 +469,7 @@ fn rule_distribute_not_over_and() {
         Expression::Reference(Name::UserName(String::from("b"))),
     ])));
 
-    expr = distribute_not_over_and.apply(&expr).unwrap();
+    expr = distribute_not_over_and.apply(&expr).unwrap().new_expression;
 
     assert_eq!(
         expr,
@@ -487,7 +493,7 @@ fn rule_distribute_not_over_or() {
         Expression::Reference(Name::UserName(String::from("b"))),
     ])));
 
-    expr = distribute_not_over_or.apply(&expr).unwrap();
+    expr = distribute_not_over_or.apply(&expr).unwrap().new_expression;
 
     assert_eq!(
         expr,
@@ -540,10 +546,10 @@ fn rule_distribute_or_over_and() {
         Expression::Reference(Name::MachineName(3)),
     ]);
 
-    expr = distribute_or_over_and.apply(&expr).unwrap();
+    let red = distribute_or_over_and.apply(&expr).unwrap();
 
     assert_eq!(
-        expr,
+        red.new_expression,
         Expression::And(vec![
             Expression::Or(vec![
                 Expression::Reference(Name::MachineName(3)),
@@ -686,10 +692,10 @@ fn apply_all_rules<'a>(
     let mut results = Vec::new();
     for rule in rules {
         match rule.apply(expression) {
-            Ok(new) => {
+            Ok(red) => {
                 results.push(RuleResult {
                     rule: rule.clone(),
-                    new_expression: new,
+                    new_expression: red.new_expression,
                 });
             }
             Err(_) => continue,

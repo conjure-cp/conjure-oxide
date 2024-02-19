@@ -1,5 +1,7 @@
 use conjure_core::{
-    ast::Constant as Const, ast::Expression as Expr, metadata::Metadata, rule::RuleApplicationError,
+    ast::{Constant as Const, Expression as Expr},
+    metadata::Metadata,
+    rule::{ApplicationError, ApplicationResult, Reduction},
 };
 use conjure_rules::register_rule;
 
@@ -19,16 +21,16 @@ fn is_nested_sum(exprs: &Vec<Expr>) -> bool {
 /**
  * Helper function to get the vector of expressions from a sum (or error if it's a nested sum - we need to flatten it first)
  */
-fn sum_to_vector(expr: &Expr) -> Result<Vec<Expr>, RuleApplicationError> {
+fn sum_to_vector(expr: &Expr) -> Result<Vec<Expr>, ApplicationError> {
     match expr {
         Expr::Sum(exprs) => {
             if is_nested_sum(exprs) {
-                Err(RuleApplicationError::RuleNotApplicable)
+                Err(ApplicationError::RuleNotApplicable)
             } else {
                 Ok(exprs.clone())
             }
         }
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
 
@@ -39,13 +41,13 @@ fn sum_to_vector(expr: &Expr) -> Result<Vec<Expr>, RuleApplicationError> {
  * ```
  */
 #[register_rule]
-fn flatten_sum_geq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn flatten_sum_geq(expr: &Expr) -> ApplicationResult {
     match expr {
         Expr::Geq(a, b) => {
             let exprs = sum_to_vector(a)?;
-            Ok(Expr::SumGeq(exprs, b.clone()))
+            Ok(Reduction::pure(Expr::SumGeq(exprs, b.clone())))
         }
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
 
@@ -56,13 +58,13 @@ fn flatten_sum_geq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  * ```
  */
 #[register_rule]
-fn sum_leq_to_sumleq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn sum_leq_to_sumleq(expr: &Expr) -> ApplicationResult {
     match expr {
         Expr::Leq(a, b) => {
             let exprs = sum_to_vector(a)?;
-            Ok(Expr::SumLeq(exprs, b.clone()))
+            Ok(Reduction::pure(Expr::SumLeq(exprs, b.clone())))
         }
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
 
@@ -73,13 +75,13 @@ fn sum_leq_to_sumleq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  * ```
 */
 #[register_rule]
-fn sum_eq_to_sumeq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn sum_eq_to_sumeq(expr: &Expr) -> ApplicationResult {
     match expr {
         Expr::Eq(a, b) => {
             let exprs = sum_to_vector(a)?;
-            Ok(Expr::SumEq(exprs, b.clone()))
+            Ok(Reduction::pure(Expr::SumEq(exprs, b.clone())))
         }
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
 
@@ -99,13 +101,13 @@ fn sum_eq_to_sumeq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  * ```
  */
 #[register_rule]
-fn sumeq_to_minion(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn sumeq_to_minion(expr: &Expr) -> ApplicationResult {
     match expr {
-        Expr::SumEq(exprs, eq_to) => Ok(Expr::And(vec![
+        Expr::SumEq(exprs, eq_to) => Ok(Reduction::pure(Expr::And(vec![
             Expr::SumGeq(exprs.clone(), Box::from(*eq_to.clone())),
             Expr::SumLeq(exprs.clone(), Box::from(*eq_to.clone())),
-        ])),
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        ]))),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
 
@@ -117,14 +119,14 @@ fn sumeq_to_minion(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 * ```
 */
 #[register_rule]
-fn lt_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn lt_to_ineq(expr: &Expr) -> ApplicationResult {
     match expr {
-        Expr::Lt(a, b) => Ok(Expr::Ineq(
+        Expr::Lt(a, b) => Ok(Reduction::pure(Expr::Ineq(
             a.clone(),
             b.clone(),
             Box::new(Expr::Constant(Metadata::new(), Const::Int(-1))),
-        )),
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        ))),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
 
@@ -136,14 +138,14 @@ fn lt_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 * ```
 */
 #[register_rule]
-fn gt_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn gt_to_ineq(expr: &Expr) -> ApplicationResult {
     match expr {
-        Expr::Gt(a, b) => Ok(Expr::Ineq(
+        Expr::Gt(a, b) => Ok(Reduction::pure(Expr::Ineq(
             b.clone(),
             a.clone(),
             Box::new(Expr::Constant(Metadata::new(), Const::Int(-1))),
-        )),
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        ))),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
 
@@ -155,14 +157,14 @@ fn gt_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 * ```
 */
 #[register_rule]
-fn geq_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn geq_to_ineq(expr: &Expr) -> ApplicationResult {
     match expr {
-        Expr::Geq(a, b) => Ok(Expr::Ineq(
+        Expr::Geq(a, b) => Ok(Reduction::pure(Expr::Ineq(
             b.clone(),
             a.clone(),
             Box::new(Expr::Constant(Metadata::new(), Const::Int(0))),
-        )),
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        ))),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
 
@@ -174,13 +176,13 @@ fn geq_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 * ```
 */
 #[register_rule]
-fn leq_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn leq_to_ineq(expr: &Expr) -> ApplicationResult {
     match expr {
-        Expr::Leq(a, b) => Ok(Expr::Ineq(
+        Expr::Leq(a, b) => Ok(Reduction::pure(Expr::Ineq(
             a.clone(),
             b.clone(),
             Box::new(Expr::Constant(Metadata::new(), Const::Int(0))),
-        )),
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        ))),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }

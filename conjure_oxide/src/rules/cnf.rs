@@ -1,4 +1,7 @@
-use conjure_core::{ast::Expression as Expr, rule::RuleApplicationError};
+use conjure_core::{
+    ast::Expression as Expr,
+    rule::{ApplicationError, ApplicationResult, Reduction},
+};
 use conjure_rules::register_rule;
 
 /***********************************************************************************/
@@ -13,7 +16,7 @@ use conjure_rules::register_rule;
 * ```
  */
 #[register_rule]
-fn distribute_not_over_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn distribute_not_over_and(expr: &Expr) -> ApplicationResult {
     match expr {
         Expr::Not(contents) => match contents.as_ref() {
             Expr::And(exprs) => {
@@ -21,11 +24,11 @@ fn distribute_not_over_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
                 for e in exprs {
                     new_exprs.push(Expr::Not(Box::new(e.clone())));
                 }
-                Ok(Expr::Or(new_exprs))
+                Ok(Reduction::pure(Expr::Or(new_exprs)))
             }
-            _ => Err(RuleApplicationError::RuleNotApplicable),
+            _ => Err(ApplicationError::RuleNotApplicable),
         },
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
 
@@ -37,7 +40,7 @@ fn distribute_not_over_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 * ```
  */
 #[register_rule]
-fn distribute_not_over_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn distribute_not_over_or(expr: &Expr) -> ApplicationResult {
     match expr {
         Expr::Not(contents) => match contents.as_ref() {
             Expr::Or(exprs) => {
@@ -45,11 +48,11 @@ fn distribute_not_over_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
                 for e in exprs {
                     new_exprs.push(Expr::Not(Box::new(e.clone())));
                 }
-                Ok(Expr::And(new_exprs))
+                Ok(Reduction::pure(Expr::And(new_exprs)))
             }
-            _ => Err(RuleApplicationError::RuleNotApplicable),
+            _ => Err(ApplicationError::RuleNotApplicable),
         },
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
 
@@ -61,7 +64,7 @@ fn distribute_not_over_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 * ```
  */
 #[register_rule]
-fn distribute_or_over_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn distribute_or_over_and(expr: &Expr) -> ApplicationResult {
     fn find_and(exprs: &Vec<Expr>) -> Option<usize> {
         // ToDo: may be better to move this to some kind of utils module?
         for (i, e) in exprs.iter().enumerate() {
@@ -90,13 +93,13 @@ fn distribute_or_over_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
                             new_and_contents.push(Expr::Or(new_or_contents))
                         }
 
-                        Ok(Expr::And(new_and_contents))
+                        Ok(Reduction::pure(Expr::And(new_and_contents)))
                     }
-                    _ => Err(RuleApplicationError::RuleNotApplicable),
+                    _ => Err(ApplicationError::RuleNotApplicable),
                 }
             }
-            None => Err(RuleApplicationError::RuleNotApplicable),
+            None => Err(ApplicationError::RuleNotApplicable),
         },
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }

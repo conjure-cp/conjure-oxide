@@ -42,12 +42,12 @@ pub static RULES_DISTRIBUTED_SLICE: [Rule<'static>];
 /// # Example
 /// ```rust
 /// # use conjure_rules::register_rule;
-/// # use conjure_core::rule::{Rule, RuleApplicationError};
+/// # use conjure_core::rule::{Reduction, ApplicationResult};
 /// # use conjure_core::ast::Expression;
 /// #
 /// #[register_rule]
-/// fn identity(expr: &Expression) -> Result<Expression, RuleApplicationError> {
-///   Ok(expr.clone())
+/// fn identity(expr: &Expression) -> ApplicationResult {
+///   Ok(Reduction::pure(expr.clone()))
 /// }
 ///
 /// fn main() {
@@ -82,7 +82,7 @@ pub fn get_rule_by_name(name: &str) -> Option<Rule<'static>> {
 ///
 /// <hr>
 ///
-/// Functions must have the signature `fn(&Expr) -> Result<Expr, RuleApplicationError>`.
+/// Functions must have the signature `fn(&Expr) -> ApplicationResult`.
 /// The created rule will have the same name as the function.
 ///
 /// Intermediary static variables are created to allow for the decentralized registry, with the prefix `CONJURE_GEN_`.
@@ -93,12 +93,12 @@ pub fn get_rule_by_name(name: &str) -> Option<Rule<'static>> {
 /// For example:
 /// ```rust
 /// # use conjure_core::ast::Expression;
-/// # use conjure_core::rule::RuleApplicationError;
+/// # use conjure_core::rule::{ApplicationError, ApplicationResult, Reduction};
 /// # use conjure_rules::register_rule;
 /// #
 /// #[register_rule]
-/// fn identity(expr: &Expression) -> Result<Expression, RuleApplicationError> {
-///   Ok(expr.clone())
+/// fn identity(expr: &Expression) -> ApplicationResult {
+///   Ok(Reduction::pure(expr.clone()))
 /// }
 /// ```
 #[doc(inline)]
