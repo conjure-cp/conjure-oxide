@@ -1,5 +1,5 @@
 use conjure_core::{
-    ast::{Constant as Const, Expression as Expr},
+    ast::{Constant as Const, Expression as Expr, Model},
     metadata::Metadata,
     rule::{ApplicationError, ApplicationResult, Reduction},
 };
@@ -41,7 +41,7 @@ fn sum_to_vector(expr: &Expr) -> Result<Vec<Expr>, ApplicationError> {
  * ```
  */
 #[register_rule]
-fn flatten_sum_geq(expr: &Expr) -> ApplicationResult {
+fn flatten_sum_geq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Geq(a, b) => {
             let exprs = sum_to_vector(a)?;
@@ -58,7 +58,7 @@ fn flatten_sum_geq(expr: &Expr) -> ApplicationResult {
  * ```
  */
 #[register_rule]
-fn sum_leq_to_sumleq(expr: &Expr) -> ApplicationResult {
+fn sum_leq_to_sumleq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Leq(a, b) => {
             let exprs = sum_to_vector(a)?;
@@ -75,7 +75,7 @@ fn sum_leq_to_sumleq(expr: &Expr) -> ApplicationResult {
  * ```
 */
 #[register_rule]
-fn sum_eq_to_sumeq(expr: &Expr) -> ApplicationResult {
+fn sum_eq_to_sumeq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Eq(a, b) => {
             let exprs = sum_to_vector(a)?;
@@ -101,7 +101,7 @@ fn sum_eq_to_sumeq(expr: &Expr) -> ApplicationResult {
  * ```
  */
 #[register_rule]
-fn sumeq_to_minion(expr: &Expr) -> ApplicationResult {
+fn sumeq_to_minion(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::SumEq(exprs, eq_to) => Ok(Reduction::pure(Expr::And(vec![
             Expr::SumGeq(exprs.clone(), Box::from(*eq_to.clone())),
@@ -119,7 +119,7 @@ fn sumeq_to_minion(expr: &Expr) -> ApplicationResult {
 * ```
 */
 #[register_rule]
-fn lt_to_ineq(expr: &Expr) -> ApplicationResult {
+fn lt_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Lt(a, b) => Ok(Reduction::pure(Expr::Ineq(
             a.clone(),
@@ -138,7 +138,7 @@ fn lt_to_ineq(expr: &Expr) -> ApplicationResult {
 * ```
 */
 #[register_rule]
-fn gt_to_ineq(expr: &Expr) -> ApplicationResult {
+fn gt_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Gt(a, b) => Ok(Reduction::pure(Expr::Ineq(
             b.clone(),
@@ -157,7 +157,7 @@ fn gt_to_ineq(expr: &Expr) -> ApplicationResult {
 * ```
 */
 #[register_rule]
-fn geq_to_ineq(expr: &Expr) -> ApplicationResult {
+fn geq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Geq(a, b) => Ok(Reduction::pure(Expr::Ineq(
             b.clone(),
@@ -176,7 +176,7 @@ fn geq_to_ineq(expr: &Expr) -> ApplicationResult {
 * ```
 */
 #[register_rule]
-fn leq_to_ineq(expr: &Expr) -> ApplicationResult {
+fn leq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Leq(a, b) => Ok(Reduction::pure(Expr::Ineq(
             a.clone(),

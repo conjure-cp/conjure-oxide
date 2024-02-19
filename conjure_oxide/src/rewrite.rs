@@ -10,10 +10,10 @@ struct RuleResult<'a> {
 /// # Returns
 /// - A new expression after applying the rules to `expression` and its sub-expressions.
 /// - The same expression if no rules are applicable.
-pub fn rewrite(expression: &Expression) -> Expression {
+pub fn rewrite(expression: &Expression, model: &Model) -> Expression {
     let rules = get_rules();
     let mut new = expression.clone();
-    while let Some(step) = rewrite_iteration(&new, &rules) {
+    while let Some(step) = rewrite_iteration(&new, model, &rules) {
         new = step;
     }
     new
@@ -24,9 +24,10 @@ pub fn rewrite(expression: &Expression) -> Expression {
 /// - None if no rule is applicable to the expression or any sub-expression.
 fn rewrite_iteration<'a>(
     expression: &'a Expression,
+    model: &'a Model,
     rules: &'a Vec<Rule<'a>>,
 ) -> Option<Expression> {
-    let rule_results = apply_all_rules(expression, rules);
+    let rule_results = apply_all_rules(expression, model, rules);
     if let Some(new) = choose_rewrite(&rule_results) {
         return Some(new);
     } else {
@@ -34,7 +35,7 @@ fn rewrite_iteration<'a>(
             None => {}
             Some(mut sub) => {
                 for i in 0..sub.len() {
-                    if let Some(new) = rewrite_iteration(sub[i], rules) {
+                    if let Some(new) = rewrite_iteration(sub[i], model, rules) {
                         sub[i] = &new;
                         return Some(expression.with_sub_expressions(sub));
                     }
@@ -50,11 +51,12 @@ fn rewrite_iteration<'a>(
 /// - An empty list if no rules are applicable.
 fn apply_all_rules<'a>(
     expression: &'a Expression,
+    model: &'a Model,
     rules: &'a Vec<Rule<'a>>,
 ) -> Vec<RuleResult<'a>> {
     let mut results = Vec::new();
     for rule in rules {
-        match rule.apply(expression) {
+        match rule.apply(expression, model) {
             Ok(red) => {
                 results.push(RuleResult {
                     rule: rule.clone(),
@@ -86,7 +88,7 @@ fn choose_rewrite(results: &Vec<RuleResult>) -> Option<Expression> {
 pub fn rewrite_model(model: &Model) -> Model {
     let mut new_model = model.clone();
 
-    new_model.constraints = rewrite(&model.constraints);
+    new_model.constraints = rewrite(&model.constraints, model);
 
     new_model
 }

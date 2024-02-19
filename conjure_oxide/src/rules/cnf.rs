@@ -1,5 +1,5 @@
 use conjure_core::{
-    ast::Expression as Expr,
+    ast::{Expression as Expr, Model},
     rule::{ApplicationError, ApplicationResult, Reduction},
 };
 use conjure_rules::register_rule;
@@ -16,7 +16,7 @@ use conjure_rules::register_rule;
 * ```
  */
 #[register_rule]
-fn distribute_not_over_and(expr: &Expr) -> ApplicationResult {
+fn distribute_not_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Not(contents) => match contents.as_ref() {
             Expr::And(exprs) => {
@@ -40,7 +40,7 @@ fn distribute_not_over_and(expr: &Expr) -> ApplicationResult {
 * ```
  */
 #[register_rule]
-fn distribute_not_over_or(expr: &Expr) -> ApplicationResult {
+fn distribute_not_over_or(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Not(contents) => match contents.as_ref() {
             Expr::Or(exprs) => {
@@ -64,7 +64,7 @@ fn distribute_not_over_or(expr: &Expr) -> ApplicationResult {
 * ```
  */
 #[register_rule]
-fn distribute_or_over_and(expr: &Expr) -> ApplicationResult {
+fn distribute_or_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
     fn find_and(exprs: &Vec<Expr>) -> Option<usize> {
         // ToDo: may be better to move this to some kind of utils module?
         for (i, e) in exprs.iter().enumerate() {

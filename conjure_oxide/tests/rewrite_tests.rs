@@ -115,8 +115,14 @@ fn rule_sum_constants() {
         Expression::Constant(Metadata::new(), Constant::Int(3)),
     ]);
 
-    expr = sum_constants.apply(&expr).unwrap().new_expression;
-    expr = unwrap_sum.apply(&expr).unwrap().new_expression;
+    expr = sum_constants
+        .apply(&expr, &Model::new())
+        .unwrap()
+        .new_expression;
+    expr = unwrap_sum
+        .apply(&expr, &Model::new())
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr,
@@ -134,7 +140,10 @@ fn rule_sum_mixed() {
         Expression::Reference(Name::UserName(String::from("a"))),
     ]);
 
-    expr = sum_constants.apply(&expr).unwrap().new_expression;
+    expr = sum_constants
+        .apply(&expr, &Model::new())
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr,
@@ -157,7 +166,10 @@ fn rule_sum_geq() {
         Box::new(Expression::Constant(Metadata::new(), Constant::Int(3))),
     );
 
-    expr = flatten_sum_geq.apply(&expr).unwrap().new_expression;
+    expr = flatten_sum_geq
+        .apply(&expr, &Model::new())
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr,
@@ -198,8 +210,14 @@ fn reduce_solve_xyz() {
         Expression::Constant(Metadata::new(), Constant::Int(-1)),
     ]);
 
-    expr1 = sum_constants.apply(&expr1).unwrap().new_expression;
-    expr1 = unwrap_sum.apply(&expr1).unwrap().new_expression;
+    expr1 = sum_constants
+        .apply(&expr1, &Model::new())
+        .unwrap()
+        .new_expression;
+    expr1 = unwrap_sum
+        .apply(&expr1, &Model::new())
+        .unwrap()
+        .new_expression;
     assert_eq!(
         expr1,
         Expression::Constant(Metadata::new(), Constant::Int(4))
@@ -214,7 +232,10 @@ fn reduce_solve_xyz() {
         ])),
         Box::new(expr1),
     );
-    expr1 = sum_leq_to_sumleq.apply(&expr1).unwrap().new_expression;
+    expr1 = sum_leq_to_sumleq
+        .apply(&expr1, &Model::new())
+        .unwrap()
+        .new_expression;
     assert_eq!(
         expr1,
         Expression::SumLeq(
@@ -232,7 +253,10 @@ fn reduce_solve_xyz() {
         Box::new(Expression::Reference(Name::UserName(String::from("a")))),
         Box::new(Expression::Reference(Name::UserName(String::from("b")))),
     );
-    expr2 = lt_to_ineq.apply(&expr2).unwrap().new_expression;
+    expr2 = lt_to_ineq
+        .apply(&expr2, &Model::new())
+        .unwrap()
+        .new_expression;
     assert_eq!(
         expr2,
         Expression::Ineq(
@@ -279,7 +303,10 @@ fn rule_remove_double_negation() {
         Constant::Bool(true),
     )))));
 
-    expr = remove_double_negation.apply(&expr).unwrap().new_expression;
+    expr = remove_double_negation
+        .apply(&expr, &Model::new())
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr,
@@ -299,7 +326,10 @@ fn rule_unwrap_nested_or() {
         Expression::Constant(Metadata::new(), Constant::Bool(true)),
     ]);
 
-    expr = unwrap_nested_or.apply(&expr).unwrap().new_expression;
+    expr = unwrap_nested_or
+        .apply(&expr, &Model::new())
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr,
@@ -323,7 +353,10 @@ fn rule_unwrap_nested_and() {
         Expression::Constant(Metadata::new(), Constant::Bool(true)),
     ]);
 
-    expr = unwrap_nested_and.apply(&expr).unwrap().new_expression;
+    expr = unwrap_nested_and
+        .apply(&expr, &Model::new())
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr,
@@ -344,7 +377,7 @@ fn unwrap_nested_or_not_changed() {
         Expression::Constant(Metadata::new(), Constant::Bool(false)),
     ]);
 
-    let result = unwrap_nested_or.apply(&expr);
+    let result = unwrap_nested_or.apply(&expr, &Model::new());
 
     assert!(result.is_err());
 }
@@ -358,7 +391,7 @@ fn unwrap_nested_and_not_changed() {
         Expression::Constant(Metadata::new(), Constant::Bool(false)),
     ]);
 
-    let result = unwrap_nested_and.apply(&expr);
+    let result = unwrap_nested_and.apply(&expr, &Model::new());
 
     assert!(result.is_err());
 }
@@ -377,8 +410,14 @@ fn remove_trivial_and_or() {
         Constant::Bool(false),
     )]);
 
-    expr_and = remove_trivial_and.apply(&expr_and).unwrap().new_expression;
-    expr_or = remove_trivial_or.apply(&expr_or).unwrap().new_expression;
+    expr_and = remove_trivial_and
+        .apply(&expr_and, &Model::new())
+        .unwrap()
+        .new_expression;
+    expr_or = remove_trivial_or
+        .apply(&expr_or, &Model::new())
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr_and,
@@ -401,7 +440,7 @@ fn rule_remove_constants_from_or() {
     ]);
 
     expr = remove_constants_from_or
-        .apply(&expr)
+        .apply(&expr, &Model::new())
         .unwrap()
         .new_expression;
 
@@ -422,7 +461,7 @@ fn rule_remove_constants_from_and() {
     ]);
 
     expr = remove_constants_from_and
-        .apply(&expr)
+        .apply(&expr, &Model::new())
         .unwrap()
         .new_expression;
 
@@ -441,7 +480,7 @@ fn remove_constants_from_or_not_changed() {
         Expression::Reference(Name::UserName(String::from("b"))),
     ]);
 
-    let result = remove_constants_from_or.apply(&expr);
+    let result = remove_constants_from_or.apply(&expr, &Model::new());
 
     assert!(result.is_err());
 }
@@ -455,7 +494,7 @@ fn remove_constants_from_and_not_changed() {
         Expression::Reference(Name::UserName(String::from("b"))),
     ]);
 
-    let result = remove_constants_from_and.apply(&expr);
+    let result = remove_constants_from_and.apply(&expr, &Model::new());
 
     assert!(result.is_err());
 }
@@ -469,7 +508,10 @@ fn rule_distribute_not_over_and() {
         Expression::Reference(Name::UserName(String::from("b"))),
     ])));
 
-    expr = distribute_not_over_and.apply(&expr).unwrap().new_expression;
+    expr = distribute_not_over_and
+        .apply(&expr, &Model::new())
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr,
@@ -493,7 +535,10 @@ fn rule_distribute_not_over_or() {
         Expression::Reference(Name::UserName(String::from("b"))),
     ])));
 
-    expr = distribute_not_over_or.apply(&expr).unwrap().new_expression;
+    expr = distribute_not_over_or
+        .apply(&expr, &Model::new())
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr,
@@ -516,7 +561,7 @@ fn rule_distribute_not_over_and_not_changed() {
         String::from("a"),
     ))));
 
-    let result = distribute_not_over_and.apply(&expr);
+    let result = distribute_not_over_and.apply(&expr, &Model::new());
 
     assert!(result.is_err());
 }
@@ -529,7 +574,7 @@ fn rule_distribute_not_over_or_not_changed() {
         String::from("a"),
     ))));
 
-    let result = distribute_not_over_or.apply(&expr);
+    let result = distribute_not_over_or.apply(&expr, &Model::new());
 
     assert!(result.is_err());
 }
@@ -538,7 +583,7 @@ fn rule_distribute_not_over_or_not_changed() {
 fn rule_distribute_or_over_and() {
     let distribute_or_over_and = get_rule_by_name("distribute_or_over_and").unwrap();
 
-    let mut expr = Expression::Or(vec![
+    let expr = Expression::Or(vec![
         Expression::And(vec![
             Expression::Reference(Name::MachineName(1)),
             Expression::Reference(Name::MachineName(2)),
@@ -546,7 +591,7 @@ fn rule_distribute_or_over_and() {
         Expression::Reference(Name::MachineName(3)),
     ]);
 
-    let red = distribute_or_over_and.apply(&expr).unwrap();
+    let red = distribute_or_over_and.apply(&expr, &Model::new()).unwrap();
 
     assert_eq!(
         red.new_expression,
@@ -600,7 +645,7 @@ fn rewrite_solve_xyz() {
     ]);
 
     // Apply rewrite function to the nested expression
-    let rewritten_expr = rewrite(&nested_expr);
+    let rewritten_expr = rewrite(&nested_expr, &Model::new());
 
     // Check if the expression is in its simplest form
     let expr = rewritten_expr.clone();
@@ -691,7 +736,7 @@ fn apply_all_rules<'a>(
 ) -> Vec<RuleResult<'a>> {
     let mut results = Vec::new();
     for rule in rules {
-        match rule.apply(expression) {
+        match rule.apply(expression, &Model::new()) {
             Ok(red) => {
                 results.push(RuleResult {
                     rule: rule.clone(),

@@ -2,7 +2,7 @@ use std::fmt::{self, Display, Formatter};
 
 use thiserror::Error;
 
-use crate::ast::{Expression, SymbolTable};
+use crate::ast::{Expression, Model, SymbolTable};
 
 #[derive(Debug, Error)]
 pub enum ApplicationError {
@@ -63,16 +63,16 @@ impl Reduction {
 #[derive(Clone, Debug)]
 pub struct Rule<'a> {
     pub name: &'a str,
-    pub application: fn(&Expression) -> ApplicationResult,
+    pub application: fn(&Expression, &Model) -> ApplicationResult,
 }
 
 impl<'a> Rule<'a> {
-    pub fn new(name: &'a str, application: fn(&Expression) -> ApplicationResult) -> Self {
+    pub fn new(name: &'a str, application: fn(&Expression, &Model) -> ApplicationResult) -> Self {
         Self { name, application }
     }
 
-    pub fn apply(&self, expr: &Expression) -> ApplicationResult {
-        (self.application)(expr)
+    pub fn apply(&self, expr: &Expression, mdl: &Model) -> ApplicationResult {
+        (self.application)(expr, mdl)
     }
 }
 
