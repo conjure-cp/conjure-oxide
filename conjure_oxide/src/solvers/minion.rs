@@ -219,6 +219,7 @@ fn name_to_string(name: ConjureName) -> String {
 mod tests {
     use anyhow::anyhow;
     use conjure_core::ast::Expression;
+    use conjure_core::metadata::Metadata;
     use std::collections::HashMap;
 
     use minion_rs::ast::VarName;
