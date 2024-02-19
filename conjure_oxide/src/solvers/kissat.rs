@@ -316,7 +316,8 @@ mod tests {
     use crate::ast::{Expression, Name};
     use crate::solvers::kissat::CNF;
     use crate::solvers::{FromConjureModel, SolverError};
-    use crate::utils::{assert_eq_any_order, if_ok};
+    use crate::utils::misc::if_ok;
+    use crate::utils::testing::assert_eq_any_order;
 
     #[test]
     fn test_single_var() {

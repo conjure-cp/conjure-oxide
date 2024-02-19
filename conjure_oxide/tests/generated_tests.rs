@@ -1,21 +1,14 @@
-use conjure_oxide::ast::Model;
-use conjure_oxide::parse::model_from_json;
-use conjure_oxide::solvers::minion::MinionModel;
-use conjure_oxide::solvers::FromConjureModel;
-use conjure_oxide::utils::{sort_json_object, sort_json_variables};
-use serde_json::Value;
 use std::collections::HashMap;
 use std::env;
 use std::error::Error;
-use std::fs::File;
-use std::io::prelude::*;
 
 use conjure_oxide::rule_engine::resolve_rules::resolve_rule_sets;
 use conjure_oxide::rule_engine::rewrite::rewrite_model;
 use conjure_oxide::utils::conjure::{get_minion_solutions, parse_essence_file};
-use conjure_oxide::utils::json::sort_json_object;
+use conjure_oxide::utils::testing::{
+    read_minion_solutions_json, read_model_json, save_minion_solutions_json, save_model_json,
+};
 use std::path::Path;
-use std::process::exit;
 
 fn main() {
     let file_path = Path::new("/path/to/your/file.txt");
@@ -28,18 +21,60 @@ fn main() {
 }
 
 fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>> {
-    let model = parse_essence_file(path, essence_base)?;
+    let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
+    let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
 
+    if verbose {
+        println!(
+            "Running integration test for {}/{}, ACCEPT={}",
+            path, essence_base, accept
+        );
+    }
+
+    // Stage 1: Read the essence file and check that the model is parsed correctly
+    let model = parse_essence_file(path, essence_base)?;
+    if verbose {
+        println!("Parsed model: {:#?}", model)
+    }
+
+    save_model_json(&model, path, essence_base, "parse", accept)?;
+    let expected_model = read_model_json(path, essence_base, "expected", "parse")?;
+    if verbose {
+        println!("Expected model: {:#?}", expected_model)
+    }
+
+    assert_eq!(model, expected_model);
+
+    // Stage 2: Rewrite the model using the rule engine and check that the result is as expected
     let rule_sets = resolve_rule_sets(vec!["Minion", "Constant"])?;
     let model = rewrite_model(&model, &rule_sets)?;
+    if verbose {
+        println!("Rewritten model: {:#?}", model)
+    }
 
+    save_model_json(&model, path, essence_base, "rewrite", accept)?;
+    let expected_model = read_model_json(path, essence_base, "expected", "rewrite")?;
+    if verbose {
+        println!("Expected model: {:#?}", expected_model)
+    }
+
+    assert_eq!(model, expected_model);
+
+    // Stage 3: Run the model through the Minion solver and check that the solutions are as expected
     let solutions = get_minion_solutions(model)?;
+    if verbose {
+        println!("Minion solutions: {:#?}", solutions)
+    }
+
+    save_minion_solutions_json(&solutions, path, essence_base, accept)?;
+    let expected_solutions = read_minion_solutions_json(path, essence_base, "expected")?;
+    if verbose {
+        println!("Expected solutions: {:#?}", expected_solutions)
+    }
+
+    assert_eq!(solutions, expected_solutions);
 
     Ok(())
-}
-
-fn dummy_callback(_: HashMap<minion_rs::ast::VarName, minion_rs::ast::Constant>) -> bool {
-    true
 }
 
 #[test]

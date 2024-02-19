@@ -97,7 +97,7 @@ pub fn main() -> AnyhowResult<()> {
     println!("{:#?}", model);
 
     let solutions = get_minion_solutions(model)?;
-    println!("Solutions: {:#}", minion_solutions_to_json(solutions));
+    println!("Solutions: {:#}", minion_solutions_to_json(&solutions));
 
     Ok(())
 }

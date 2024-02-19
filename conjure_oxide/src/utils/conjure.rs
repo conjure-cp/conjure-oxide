@@ -101,14 +101,14 @@ pub fn get_minion_solutions(
     Ok(guard.deref().clone())
 }
 
-pub fn minion_solutions_to_json(solutions: Vec<HashMap<VarName, Constant>>) -> JsonValue {
+pub fn minion_solutions_to_json(solutions: &Vec<HashMap<VarName, Constant>>) -> JsonValue {
     let mut json_solutions = Vec::new();
     for solution in solutions {
         let mut json_solution = Map::new();
         for (var_name, constant) in solution {
             let serialized_constant = match constant {
-                Constant::Integer(i) => JsonValue::Number(i.into()),
-                Constant::Bool(b) => JsonValue::Bool(b),
+                Constant::Integer(i) => JsonValue::Number((*i).into()),
+                Constant::Bool(b) => JsonValue::Bool(*b),
             };
             json_solution.insert(var_name.to_string(), serialized_constant);
         }

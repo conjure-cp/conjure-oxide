@@ -64,8 +64,8 @@ pub fn sort_json_object(value: &Value) -> Value {
             Value::Object(ordered.into_iter().collect())
         }
         Value::Array(arr) => {
-            let mut arr: Vec<Value> = arr.iter().map(sort_json_object).collect();
-            arr.sort_by(json_value_cmp);
+            let arr: Vec<Value> = arr.iter().map(sort_json_object).collect();
+            // arr.sort_by(json_value_cmp);  // In some cases, we may want to sort the array elements
             Value::Array(arr)
         }
         _ => value.clone(),
