@@ -1,4 +1,6 @@
-use conjure_core::{ast::Constant as Const, ast::Expression as Expr, rule::RuleApplicationError};
+use conjure_core::{
+    ast::Constant as Const, ast::Expression as Expr, metadata::Metadata, rule::RuleApplicationError,
+};
 use conjure_rules::register_rule;
 
 #[register_rule]
@@ -7,7 +9,7 @@ fn apply_eval_constant(expr: &Expr) -> Result<Expr, RuleApplicationError> {
         return Err(RuleApplicationError::RuleNotApplicable);
     }
     let res = eval_constant(expr)
-        .map(Expr::Constant)
+        .map(|c| Expr::Constant(Metadata::new(), c))
         .ok_or(RuleApplicationError::RuleNotApplicable);
     res
 }
@@ -18,7 +20,7 @@ fn apply_eval_constant(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 /// `Some(Const)` if the expression can be simplified to a constant
 pub fn eval_constant(expr: &Expr) -> Option<Const> {
     match expr {
-        Expr::Constant(c) => Some(c.clone()),
+        Expr::Constant(m, c) => Some(c.clone()),
         Expr::Reference(_) => None,
 
         Expr::Eq(a, b) => bin_op::<i32, bool>(|a, b| a == b, a, b)

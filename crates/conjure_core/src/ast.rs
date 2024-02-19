@@ -4,6 +4,8 @@ use serde_with::serde_as;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter};
 
+use crate::metadata::Metadata;
+
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Model {
@@ -162,7 +164,7 @@ pub enum Expression {
     Nothing,
 
     #[solver(Minion, SAT)]
-    Constant(Constant),
+    Constant(Metadata, Constant),
 
     #[solver(Minion)]
     Reference(Name),
@@ -220,7 +222,7 @@ impl Expression {
         }
 
         match self {
-            Expression::Constant(_) => None,
+            Expression::Constant(_, _) => None,
             Expression::Reference(_) => None,
             Expression::Nothing => None,
             Expression::Sum(exprs) => Some(exprs.iter().collect()),
@@ -243,7 +245,7 @@ impl Expression {
     /// Returns a clone of the same expression type with the given sub-expressions.
     pub fn with_sub_expressions(&self, sub: Vec<&Expression>) -> Expression {
         match self {
-            Expression::Constant(c) => Expression::Constant(c.clone()),
+            Expression::Constant(m, c) => Expression::Constant(m.clone(), c.clone()),
             Expression::Reference(name) => Expression::Reference(name.clone()),
             Expression::Nothing => Expression::Nothing,
             Expression::Sum(_) => Expression::Sum(sub.iter().cloned().cloned().collect()),
@@ -290,7 +292,7 @@ impl Expression {
 
     pub fn is_constant(&self) -> bool {
         match self {
-            Expression::Constant(_) => true,
+            Expression::Constant(_, _) => true,
             _ => false,
         }
     }
@@ -327,7 +329,7 @@ impl Display for Constant {
 impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
-            Expression::Constant(c) => write!(f, "Constant::{}", c),
+            Expression::Constant(m, c) => write!(f, "Constant({}, {})", m, c),
             Expression::Reference(name) => write!(f, "Reference({})", name),
             Expression::Nothing => write!(f, "Nothing"),
             Expression::Sum(expressions) => write!(f, "Sum({})", display_expressions(expressions)),

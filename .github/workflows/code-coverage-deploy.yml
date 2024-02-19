@@ -97,6 +97,7 @@ jobs:
           commit-message: "Actions: Update coverage indexes"
 
   comment:
+    permissions: write-all
     needs: deploy-coverage
     runs-on: ubuntu-latest
     steps:
@@ -113,51 +114,6 @@ jobs:
 
           key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
           restore-keys: ${{ runner.os }}-${{ env.rust_release }}
-
-      - name: Install rust ${{ env.rust_release }}
-        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
-
-      # from https://github.com/bewee/rustdoc-coverage-action-example/
-      - name: Fetch base
-        run: git fetch origin ${{ github.event.workflow_run.event.pull_request.base.sha }}
-
-      - name: Checkout base
-        run: git checkout ${{ github.event.workflow_run.event.pull_request.base.sha }}
-
-      - name: Calculate base doc coverage
-        uses: bewee/rustdoc-coverage-action@v1
-      - name: Fetch head
-        run: git fetch origin ${{ github.event.workflow_run.event.pull_request.head.sha }}
-      - name: Checkout head
-        run: git checkout ${{ github.event.workflow_run.event.pull_request.head.sha }}
-
-      - name: Calculate doc coverage
-        id: coverage
-        uses: bewee/rustdoc-coverage-action@v1
-      
-      - name: Download code coverage info for main
-        run: | 
-          wget https://conjure-cp.github.io/coverage/main/lcov.info
-
-        
-      - name: Find coverage comment
-        uses: peter-evans/find-comment@v1
-        id: fc
-        with:
-          issue-number: ${{ github.event.workflow_run.event.pull_request.number }}
-          comment-author: "github-actions[bot]"
-          body-includes: "## Documentation Coverage"
-
-      - name: Delete coverage comment if it exists
-        if: steps.fc.outputs.comment-id != ''
-        uses: actions/github-script@v6
-        with:
-          script: |
-            github.rest.issues.deleteComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: ${{ steps.fc.outputs.comment-id }}
-            })
 
       - name: Set shas
         id: sha
@@ -177,54 +133,103 @@ jobs:
             // whatever GITHUB_SHA is. 
             return callee_run.head_sha;
 
-      - name: Install lcov
+      - name: Download artifact
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          name: code-coverage-${{ steps.sha.outputs.result }}
+          workflow: code-coverage.yml
+          path: ./deploy
+      
+      - name: Get PR number
+        id: prnum
+        run: | 
+          echo "num=$(cat deploy/prnumber)" > $GITHUB_OUTPUT
+
+      - name: Install rust ${{ env.rust_release }}
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
+
+      - name: Generate lcov summary for main and pr
+        continue-on-error: true
+        id: lcov
         run: |
+
           sudo apt-get install -y lcov
+          wget https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/main/lcov.info
+          lcov --summary lcov.info > cov.txt
+          echo "main<<EOFABC" >> $GITHUB_OUTPUT
+          echo "$(cat cov.txt | tail -n +3)" >> $GITHUB_OUTPUT
+          echo 'EOFABC' >> $GITHUB_OUTPUT
 
-      - name: Generate lcov summary for main
-        id: lcov-main
+          lcov --summary ./deploy/lcov.info > cov.txt
+          echo "pr<<EOFABC" >> $GITHUB_OUTPUT
+          echo "$(cat cov.txt | tail -n +3)" >> $GITHUB_OUTPUT
+          echo 'EOFABC' >> $GITHUB_OUTPUT
+
+      - name: Get doc-coverage for main and pr
+        id: doccov 
         run: |
-          wget https://conjure-cp.github.io/coverage/main/lcov.info
-          echo "summary=$(lcov --summary lcov.info --exclude '.cargo/**/*.rs')" >> "$GITHUB_OUTPUT"
+          wget https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/main/doc-coverage.txt
+          echo "main<<EOFABC" >> $GITHUB_OUTPUT
+          echo "$(cat doc-coverage.txt)" >> $GITHUB_OUTPUT
+          echo 'EOFABC' >> $GITHUB_OUTPUT
+          echo "pr<<EOFABC" >> $GITHUB_OUTPUT
+          echo "$(cat ./deploy/doc-coverage.txt)" >> $GITHUB_OUTPUT
+          echo 'EOFABC' >> $GITHUB_OUTPUT
 
-      - name: Generate lcov summary for PR
-        id: lcov-pr
-        run: |
-          wget https://conjure-cp.github.io/coverage/${{steps.sha.outputs.result}}/lcov.info
-          echo "summary=$(lcov --summary lcov.info --exclude '.cargo/**/*.rs')" >> "$GITHUB_OUTPUT"
+      - name: Find coverage comment
+        uses: peter-evans/find-comment@v1
+        continue-on-error: true
+        id: fc
+        with:
+          issue-number: ${{steps.prnum.outputs.num}}
+          comment-author: "github-actions[bot]"
+          body-includes: "## Documentation Coverage"
 
+      - name: Delete coverage comment if it exists
+        if: steps.fc.outputs.comment-id != ''
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.deleteComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: ${{ steps.fc.outputs.comment-id }}
+            })
 
       - name: Create coverage comment
         uses: peter-evans/create-or-update-comment@v1
         with:
-          comment-id: ${{ steps.fc.outputs.comment-id }}
-          issue-number: ${{ github.event.workflow_run.event.pull_request.number }}
+          issue-number: ${{steps.prnum.outputs.num}}
           body: |
             ## Documentation Coverage
-            **${{steps.coverage.outputs.documented}}** documented (**${{steps.coverage.outputs.diff-documented}}**).
-
-            **${{steps.coverage.outputs.examples}}** with examples (**${{steps.coverage.outputs.diff-examples}}**).
 
             <details>
-            <summary>Documentation Coverage Report</summary>
-            ${{steps.coverage.outputs.table}}
+            <summary>This PR</summary>
+
+            ```
+            ${{steps.doccov.outputs.pr}}
+            ```
+
+            </details>
+
+            <details>
+            <summary>Main</summary>
+            
+            ```
+            ${{steps.doccov.outputs.main}}
+            ```
+
             </details>
 
             ## Code Coverage
 
-            **Summary**
+            [This PR](https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/${{steps.sha.outputs.result}})
 
-            This PR:
             ```
-            ${{ steps.lcov-pr.outputs.summary }}
-            ```
-
-            Main:
-            ```
-            ${{ steps.lcov-main.outputs.summary }}
+            ${{steps.lcov.outputs.pr}}
             ```
 
-            **Full Coverage Reports**
-
-            * [This PR](https://conjure-cp.github.io/conjure-oxide/coverage/${{ steps.sha.outputs.result }}).
-            * [Main](https://conjure-cp.github.io/conjure-oxide/coverage/main).
+            [Main](https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/main)
+            ```
+            ${{steps.lcov.outputs.main}}
+            ```
