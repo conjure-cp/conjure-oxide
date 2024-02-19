@@ -11,10 +11,10 @@ fn apply_eval_constant(expr: &Expr) -> Result<Expr, RuleApplicationError> {
         return Err(RuleApplicationError::RuleNotApplicable);
     }
 
-    let res = eval_constant(expr)
+    
+    eval_constant(expr)
         .map(|c| Expr::Constant(Metadata::new(), c))
-        .ok_or(RuleApplicationError::RuleNotApplicable);
-    res
+        .ok_or(RuleApplicationError::RuleNotApplicable)
 }
 
 /// Simplify an expression to a constant if possible
@@ -23,7 +23,7 @@ fn apply_eval_constant(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 /// `Some(Const)` if the expression can be simplified to a constant
 pub fn eval_constant(expr: &Expr) -> Option<Const> {
     match expr {
-        Expr::Constant(m, c) => Some(c.clone()),
+        Expr::Constant(_m, c) => Some(c.clone()),
         Expr::Reference(_) => None,
 
         Expr::Eq(a, b) => bin_op::<i32, bool>(|a, b| a == b, a, b)

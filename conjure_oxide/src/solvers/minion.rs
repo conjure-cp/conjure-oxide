@@ -8,7 +8,7 @@ use crate::ast::{
     Expression as ConjureExpression, Model as ConjureModel, Name as ConjureName,
     Range as ConjureRange,
 };
-use conjure_core::metadata::Metadata;
+
 pub use minion_rs::ast::Model as MinionModel;
 use minion_rs::ast::{
     Constant as MinionConstant, Constraint as MinionConstraint, Var as MinionVar,

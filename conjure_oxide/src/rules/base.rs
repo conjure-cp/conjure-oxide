@@ -106,7 +106,7 @@ fn sum_constants(expr: &Expr) -> Result<Expr, RuleApplicationError> {
             let mut changed = false;
             for e in exprs {
                 match e {
-                    Expr::Constant(metadata, Const::Int(i)) => {
+                    Expr::Constant(_metadata, Const::Int(i)) => {
                         sum += i;
                         changed = true;
                     }
