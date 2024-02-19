@@ -2,7 +2,7 @@ use crate::parse::model_from_json;
 use crate::solvers::minion::MinionModel;
 use crate::solvers::FromConjureModel;
 use crate::utils::json::sort_json_object;
-use crate::{Error as ParseErr, Error};
+use crate::Error as ParseErr;
 use conjure_core::ast::Model;
 use minion_rs::ast::{Constant, VarName};
 use minion_rs::run_minion;
