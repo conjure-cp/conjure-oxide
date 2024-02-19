@@ -42,11 +42,11 @@ pub static RULES_DISTRIBUTED_SLICE: [Rule<'static>];
 /// # Example
 /// ```rust
 /// # use conjure_rules::register_rule;
-/// # use conjure_core::rule::{Reduction, ApplicationResult};
-/// # use conjure_core::ast::Expression;
+/// # use conjure_core::rule::{ApplicationResult, Reduction};
+/// # use conjure_core::ast::{Expression, Model};
 /// #
 /// #[register_rule]
-/// fn identity(expr: &Expression) -> ApplicationResult {
+/// fn identity(expr: &Expression, mdl: &Model) -> ApplicationResult {
 ///   Ok(Reduction::pure(expr.clone()))
 /// }
 ///
@@ -92,12 +92,12 @@ pub fn get_rule_by_name(name: &str) -> Option<Rule<'static>> {
 ///
 /// For example:
 /// ```rust
-/// # use conjure_core::ast::Expression;
+/// # use conjure_core::ast::{Expression, Model};
 /// # use conjure_core::rule::{ApplicationError, ApplicationResult, Reduction};
 /// # use conjure_rules::register_rule;
 /// #
 /// #[register_rule]
-/// fn identity(expr: &Expression) -> ApplicationResult {
+/// fn identity(expr: &Expression, mdl: &Model) -> ApplicationResult {
 ///   Ok(Reduction::pure(expr.clone()))
 /// }
 /// ```
