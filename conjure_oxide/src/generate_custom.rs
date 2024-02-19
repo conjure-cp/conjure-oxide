@@ -81,11 +81,11 @@ pub fn get_example_model(filename: &str) -> Result<Model, Box<dyn Error>> {
 pub fn get_example_model_by_path(filepath: &str) -> Result<Model, Box<dyn Error>> {
     let essence_path = PathBuf::from(filepath);
 
-    // Check if file exists and has the correct '.essence' extension
-    if !essence_path.is_file() || essence_path.extension().map_or(true, |e| e != "essence") {
+    // return error if file not found
+    if essence_path.as_os_str().is_empty() {
         return Err(Box::new(std::io::Error::new(
             std::io::ErrorKind::NotFound,
-            "ERROR: File not found or incorrect file type",
+            "ERROR: File not found in any subdirectory",
         )));
     }
 

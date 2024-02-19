@@ -108,20 +108,25 @@ mod tests {
 
     #[test]
     fn test_get_example_model_success() {
-        let filename = "bool-01";
+        let filename = "input";
         get_example_model(filename).unwrap();
     }
 
     #[test]
     fn test_get_example_model_by_filepath() {
-        let filepath = "tests/integration/basic/bool/01/bool-01.essence";
+        let filepath = "tests/integration/xyz/input.essence";
         get_example_model_by_path(filepath).unwrap();
-    
     }
 
     #[test]
     fn test_get_example_model_fail_empty_filename() {
         let filename = "";
         get_example_model(filename).unwrap_err();
+    }
+
+    #[test]
+    fn test_get_example_model_fail_empty_filepath() {
+        let filepath = "";
+        get_example_model_by_path(filepath).unwrap_err();
     }
 }
