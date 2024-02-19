@@ -1,16 +1,14 @@
-use crate::rule_engine::resolve_rules::resolve_rule_sets;
-use crate::rule_engine::rewrite::rewrite_model;
 use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
+use crate::Error;
 use conjure_core::ast::Model;
-use conjure_rules::RuleSet;
-use serde_json::Error as JsonError;
-use std::collections::HashSet;
+use minion_rs::ast::{Constant, VarName};
+use serde_json::{Error as JsonError, Value as JsonValue};
+use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::fs::File;
 use std::hash::Hash;
 use std::io::Write;
-use std::process::exit;
 
 pub fn assert_eq_any_order<T: Eq + Hash + Debug + Clone>(a: &Vec<Vec<T>>, b: &Vec<Vec<T>>) {
     assert_eq!(a.len(), b.len());
@@ -72,10 +70,11 @@ pub fn save_model_json(
 pub fn read_model_json(
     path: &str,
     test_name: &str,
+    prefix: &str,
     test_stage: &str,
 ) -> Result<Model, std::io::Error> {
     let expected_json_str = std::fs::read_to_string(format!(
-        "{path}/{test_name}.expected-{test_stage}.serialised.json"
+        "{path}/{test_name}.{prefix}-{test_stage}.serialised.json"
     ))?;
 
     let expected_model: Model = serde_json::from_str(&expected_json_str)?;
@@ -83,20 +82,38 @@ pub fn read_model_json(
     Ok(expected_model)
 }
 
-pub fn resolve_rule_sets_or_panic(rs_names: Vec<&str>) -> Vec<&'static RuleSet<'static>> {
-    match resolve_rule_sets(rs_names) {
-        Ok(rs) => rs,
-        Err(e) => {
-            panic!("Error resolving rule sets: {}", e);
-        }
-    }
-}
+pub fn minion_solutions_from_json(
+    serialized: &str,
+) -> Result<Vec<HashMap<VarName, Constant>>, anyhow::Error> {
+    let json: JsonValue = serde_json::from_str(serialized)?;
+    let json_array = json
+        .as_array()
+        .ok_or(Error::Parse("Invalid JSON".to_owned()))?;
+    let mut solutions = Vec::new();
 
-pub fn rewrite_or_panic(model: &Model, rule_sets: &Vec<&'static RuleSet<'static>>) -> Model {
-    match rewrite_model(model, rule_sets) {
-        Ok(model) => model,
-        Err(e) => {
-            panic!("Error rewriting model: {:?}", e);
+    for solution in json_array {
+        let mut sol = HashMap::new();
+        let solution = solution
+            .as_object()
+            .ok_or(Error::Parse("Invalid JSON".to_owned()))?;
+
+        for (var_name, constant) in solution {
+            let constant = match constant {
+                JsonValue::Number(n) => {
+                    let n = n
+                        .as_i64()
+                        .ok_or(Error::Parse("Invalid integer".to_owned()))?;
+                    Constant::Integer(n as i32)
+                }
+                JsonValue::Bool(b) => Constant::Bool(*b),
+                _ => return Err(Error::Parse("Invalid constant".to_owned()).into()),
+            };
+
+            sol.insert(VarName::from(var_name), constant);
         }
+
+        solutions.push(sol);
     }
+
+    Ok(solutions)
 }

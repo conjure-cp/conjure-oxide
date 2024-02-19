@@ -16,6 +16,7 @@ use conjure_oxide::rule_engine::resolve_rules::{
 };
 use conjure_oxide::rule_engine::rewrite::rewrite_model;
 use conjure_oxide::solvers::FromConjureModel;
+use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
 
 use minion_rs::ast::{Constant, Model as MinionModel, VarName};
 use minion_rs::run_minion;
@@ -31,14 +32,6 @@ struct Cli {
         default_value = "./conjure_oxide/tests/integration/xyz/input.essence"
     )]
     input_file: PathBuf,
-}
-
-static ALL_SOLUTIONS: Mutex<Vec<HashMap<VarName, Constant>>> = Mutex::new(vec![]);
-
-fn callback(solutions: HashMap<VarName, Constant>) -> bool {
-    let mut guard = ALL_SOLUTIONS.lock().unwrap();
-    guard.push(solutions);
-    true
 }
 
 pub fn main() -> AnyhowResult<()> {
@@ -95,29 +88,16 @@ pub fn main() -> AnyhowResult<()> {
     let mut model = model_from_json(&astjson)?;
 
     println!("Initial model:");
-    println!("{:?}", model);
+    println!("{:#?}", model);
 
     println!("Rewriting model...");
     model = rewrite_model(&model, &rule_sets)?;
 
     println!("\nRewritten model:");
-    println!("{:?}", model);
+    println!("{:#?}", model);
 
-    println!("Building Minion model...");
-    let minion_model = MinionModel::from_conjure(model)?;
-
-    println!("Running Minion...");
-    let res = run_minion(minion_model, callback);
-    res.expect("Error occurred");
-
-    // Get solutions
-    let guard = ALL_SOLUTIONS.lock().unwrap();
-    guard.deref().iter().for_each(|solution_set| {
-        println!("\nSolution set:");
-        solution_set.iter().for_each(|(var, val)| {
-            println!("{}: {:?}", var, val);
-        });
-    });
+    let solutions = get_minion_solutions(model)?;
+    println!("Solutions: {:#}", minion_solutions_to_json(solutions));
 
     Ok(())
 }

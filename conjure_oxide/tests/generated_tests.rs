@@ -12,7 +12,7 @@ use std::io::prelude::*;
 
 use conjure_oxide::rule_engine::resolve_rules::resolve_rule_sets;
 use conjure_oxide::rule_engine::rewrite::rewrite_model;
-use conjure_oxide::utils::conjure::parse_essence_file;
+use conjure_oxide::utils::conjure::{get_minion_solutions, parse_essence_file};
 use conjure_oxide::utils::json::sort_json_object;
 use std::path::Path;
 use std::process::exit;
@@ -27,7 +27,16 @@ fn main() {
     }
 }
 
-fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>> {}
+fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>> {
+    let model = parse_essence_file(path, essence_base)?;
+
+    let rule_sets = resolve_rule_sets(vec!["Minion", "Constant"])?;
+    let model = rewrite_model(&model, &rule_sets)?;
+
+    let solutions = get_minion_solutions(model)?;
+
+    Ok(())
+}
 
 fn dummy_callback(_: HashMap<minion_rs::ast::VarName, minion_rs::ast::Constant>) -> bool {
     true

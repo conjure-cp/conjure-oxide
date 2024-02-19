@@ -1,3 +1,4 @@
+use minion_rs::ast::Var;
 use serde_json::Value;
 
 /// Compare two JSON values.
@@ -62,7 +63,11 @@ pub fn sort_json_object(value: &Value) -> Value {
             ordered.sort_by(|a, b| a.0.cmp(&b.0));
             Value::Object(ordered.into_iter().collect())
         }
-        Value::Array(arr) => Value::Array(arr.iter().map(sort_json_object).collect()),
+        Value::Array(arr) => {
+            let mut arr: Vec<Value> = arr.iter().map(sort_json_object).collect();
+            arr.sort_by(json_value_cmp);
+            Value::Array(arr)
+        }
         _ => value.clone(),
     }
 }
