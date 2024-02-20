@@ -36,7 +36,7 @@ pub fn serialise_model(model: &ConjureModel) -> Result<String, JsonError> {
     // A consistent sorting of the keys of json objects
     // only required for the generated version
     // since the expected version will already be sorted
-    let generated_json = sort_json_object(&serde_json::to_value(model.clone())?);
+    let generated_json = sort_json_object(&serde_json::to_value(model.clone())?, false);
 
     // serialise to string
     let generated_json_str = serde_json::to_string_pretty(&generated_json)?;
@@ -87,9 +87,11 @@ pub fn minion_solutions_from_json(
     serialized: &str,
 ) -> Result<Vec<HashMap<MinionVarName, MinionConstant>>, anyhow::Error> {
     let json: JsonValue = serde_json::from_str(serialized)?;
+
     let json_array = json
         .as_array()
         .ok_or(Error::Parse("Invalid JSON".to_owned()))?;
+
     let mut solutions = Vec::new();
 
     for solution in json_array {
@@ -124,7 +126,7 @@ pub fn save_minion_solutions_json(
     path: &str,
     test_name: &str,
     accept: bool,
-) -> Result<(), std::io::Error> {
+) -> Result<JsonValue, std::io::Error> {
     let json_solutions = minion_solutions_to_json(solutions);
 
     let generated_json_str = serde_json::to_string_pretty(&json_solutions)?;
@@ -141,18 +143,19 @@ pub fn save_minion_solutions_json(
         )?;
     }
 
-    Ok(())
+    Ok(json_solutions)
 }
 
 pub fn read_minion_solutions_json(
     path: &str,
     test_name: &str,
     prefix: &str,
-) -> Result<Vec<HashMap<MinionVarName, MinionConstant>>, anyhow::Error> {
+) -> Result<JsonValue, anyhow::Error> {
     let expected_json_str =
         std::fs::read_to_string(format!("{path}/{test_name}.{prefix}-minion.solutions.json"))?;
 
-    let expected_solutions = minion_solutions_from_json(&expected_json_str)?;
+    let expected_solutions: JsonValue =
+        sort_json_object(&serde_json::from_str(&expected_json_str)?, true);
 
     Ok(expected_solutions)
 }

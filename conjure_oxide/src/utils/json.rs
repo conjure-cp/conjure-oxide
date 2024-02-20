@@ -45,7 +45,7 @@ pub fn sort_json_variables(value: &Value) -> Value {
 /// serde_json will output JSON objects in an arbitrary key order.
 /// this is normally fine, except in our use case we wouldn't want to update the expected output again and again.
 /// so a consistent (sorted) ordering of the keys is desirable.
-pub fn sort_json_object(value: &Value) -> Value {
+pub fn sort_json_object(value: &Value, sort_arrays: bool) -> Value {
     match value {
         Value::Object(obj) => {
             let mut ordered: Vec<(String, Value)> = obj
@@ -54,7 +54,7 @@ pub fn sort_json_object(value: &Value) -> Value {
                     if k == "variables" {
                         (k.clone(), sort_json_variables(v))
                     } else {
-                        (k.clone(), sort_json_object(v))
+                        (k.clone(), sort_json_object(v, sort_arrays))
                     }
                 })
                 .collect();
@@ -63,8 +63,15 @@ pub fn sort_json_object(value: &Value) -> Value {
             Value::Object(ordered.into_iter().collect())
         }
         Value::Array(arr) => {
-            let arr: Vec<Value> = arr.iter().map(sort_json_object).collect();
-            // arr.sort_by(json_value_cmp);  // In some cases, we may want to sort the array elements
+            let mut arr: Vec<Value> = arr
+                .iter()
+                .map(|val| sort_json_object(val, sort_arrays))
+                .collect();
+
+            if sort_arrays {
+                arr.sort_by(json_value_cmp);
+            }
+
             Value::Array(arr)
         }
         _ => value.clone(),

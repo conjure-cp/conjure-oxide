@@ -9,8 +9,10 @@ use minion_rs::run_minion;
 use serde_json::{Map, Value as JsonValue};
 use std::collections::HashMap;
 use std::ops::Deref;
-use std::sync::Mutex;
+use std::sync::{Mutex, RwLock};
 use thiserror::Error as ThisError;
+
+static ALL_SOLUTIONS: Mutex<Vec<HashMap<VarName, Constant>>> = Mutex::new(vec![]);
 
 #[derive(Debug, ThisError)]
 pub enum EssenceParseError {
@@ -61,19 +63,17 @@ pub fn parse_essence_file(path: &str, filename: &str) -> Result<Model, EssencePa
 pub fn get_minion_solutions(
     model: Model,
 ) -> Result<Vec<HashMap<VarName, Constant>>, anyhow::Error> {
-    static ALL_SOLUTIONS: Mutex<Vec<HashMap<VarName, Constant>>> = Mutex::new(vec![]);
-
     fn callback(solutions: HashMap<VarName, Constant>) -> bool {
-        let mut guard = match ALL_SOLUTIONS.lock() {
-            Ok(guard) => guard,
+        match ALL_SOLUTIONS.lock() {
+            Ok(mut guard) => {
+                guard.push(solutions);
+                true
+            }
             Err(e) => {
                 eprintln!("Error getting lock on ALL_SOLUTIONS: {}", e);
-                return false;
+                false
             }
-        };
-
-        guard.push(solutions);
-        true
+        }
     }
 
     println!("Building Minion model...");
@@ -88,8 +88,12 @@ pub fn get_minion_solutions(
         }
     };
 
-    let guard = match ALL_SOLUTIONS.lock() {
-        Ok(guard) => guard,
+    let ans = match ALL_SOLUTIONS.lock() {
+        Ok(mut guard) => {
+            let ans = guard.deref().clone();
+            guard.clear(); // Clear the solutions for the next test
+            ans
+        }
         Err(e) => {
             eprintln!("Error getting lock on ALL_SOLUTIONS: {}", e);
             return Err(anyhow::anyhow!(
@@ -98,7 +102,8 @@ pub fn get_minion_solutions(
             ));
         }
     };
-    Ok(guard.deref().clone())
+
+    Ok(ans)
 }
 
 pub fn minion_solutions_to_json(solutions: &Vec<HashMap<VarName, Constant>>) -> JsonValue {
@@ -115,5 +120,5 @@ pub fn minion_solutions_to_json(solutions: &Vec<HashMap<VarName, Constant>>) -> 
         json_solutions.push(JsonValue::Object(json_solution));
     }
     let ans = JsonValue::Array(json_solutions);
-    sort_json_object(&ans)
+    sort_json_object(&ans, true)
 }

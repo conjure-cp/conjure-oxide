@@ -61,17 +61,17 @@ fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>
 
     // Stage 3: Run the model through the Minion solver and check that the solutions are as expected
     let solutions = get_minion_solutions(model)?;
+    let solutions_json = save_minion_solutions_json(&solutions, path, essence_base, accept)?;
     if verbose {
-        println!("Minion solutions: {:#?}", solutions)
+        println!("Minion solutions: {:#?}", solutions_json)
+    }
+    
+    let expected_solutions_json = read_minion_solutions_json(path, essence_base, "expected")?;
+    if verbose {
+        println!("Expected solutions: {:#?}", expected_solutions_json)
     }
 
-    save_minion_solutions_json(&solutions, path, essence_base, accept)?;
-    let expected_solutions = read_minion_solutions_json(path, essence_base, "expected")?;
-    if verbose {
-        println!("Expected solutions: {:#?}", expected_solutions)
-    }
-
-    assert_eq!(solutions, expected_solutions);
+    assert_eq!(solutions_json, expected_solutions_json);
 
     Ok(())
 }
