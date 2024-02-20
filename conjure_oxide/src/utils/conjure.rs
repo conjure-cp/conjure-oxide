@@ -9,10 +9,11 @@ use minion_rs::run_minion;
 use serde_json::{Map, Value as JsonValue};
 use std::collections::HashMap;
 use std::ops::Deref;
-use std::sync::{Mutex, RwLock};
+use std::sync::{Condvar, Mutex};
 use thiserror::Error as ThisError;
 
 static ALL_SOLUTIONS: Mutex<Vec<HashMap<VarName, Constant>>> = Mutex::new(vec![]);
+static LOCK: (Mutex<bool>, Condvar) = (Mutex::new(false), Condvar::new());
 
 #[derive(Debug, ThisError)]
 pub enum EssenceParseError {
@@ -79,6 +80,17 @@ pub fn get_minion_solutions(
     println!("Building Minion model...");
     let minion_model = MinionModel::from_conjure(model)?;
 
+    // @niklasdewally would be able to explain this better
+    // We use a condvar to keep a lock on the ALL_SOLUTIONS mutex until it goes out of scope
+    // So, no other threads can mutate ALL_SOLUTIONS while we're running Minion, only our callback can
+    let (lock, condvar) = &LOCK;
+    #[allow(clippy::unwrap_used)] // If the mutex is poisoned, we want to panic anyway
+    let mut _lock_guard = condvar
+        .wait_while(lock.lock().unwrap(), |locked| *locked)
+        .unwrap();
+
+    *_lock_guard = true;
+
     println!("Running Minion...");
     match run_minion(minion_model, callback) {
         Ok(res) => res,
@@ -102,6 +114,11 @@ pub fn get_minion_solutions(
             ));
         }
     };
+
+    // Release the lock and wake the next waiting thread
+    *_lock_guard = false;
+    std::mem::drop(_lock_guard);
+    condvar.notify_one();
 
     Ok(ans)
 }
