@@ -304,13 +304,9 @@
 <a href="#302" id="302">302</a>
 <a href="#303" id="303">303</a>
 <a href="#304" id="304">304</a>
-<a href="#305" id="305">305</a>
-<a href="#306" id="306">306</a>
-<a href="#307" id="307">307</a>
-<a href="#308" id="308">308</a>
-<a href="#309" id="309">309</a>
-<a href="#310" id="310">310</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Solver interface to minion_rs.
+
+</span><span class="attr">#![allow(unreachable_patterns)]
 
 </span><span class="kw">use super</span>::{FromConjureModel, SolverError};
 <span class="kw">use </span><span class="kw">crate</span>::Solver;
@@ -320,11 +316,11 @@
     Expression <span class="kw">as </span>ConjureExpression, Model <span class="kw">as </span>ConjureModel, Name <span class="kw">as </span>ConjureName,
     Range <span class="kw">as </span>ConjureRange,
 };
-<span class="kw">use </span>conjure_core::metadata::Metadata;
+
 <span class="kw">pub use </span>minion_rs::ast::Model <span class="kw">as </span>MinionModel;
 <span class="kw">use </span>minion_rs::ast::{
     Constant <span class="kw">as </span>MinionConstant, Constraint <span class="kw">as </span>MinionConstraint, Var <span class="kw">as </span>MinionVar,
-    VarDomain <span class="kw">as </span>MinionDomain,
+    VarDomain <span class="kw">as </span>MinionDomain, VarName,
 };
 
 <span class="kw">const </span>SOLVER: Solver = Solver::Minion;
@@ -357,21 +353,24 @@
 
 <span class="kw">fn </span>parse_var(
     name: <span class="kw-2">&amp;</span>ConjureName,
-    variable: <span class="kw-2">&amp;</span>DecisionVariable,
+    var: <span class="kw-2">&amp;</span>DecisionVariable,
     minion_model: <span class="kw-2">&amp;mut </span>MinionModel,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(), SolverError&gt; {
-    <span class="kw">let </span>str_name = name_to_string(name.to_owned());
-
-    <span class="kw">let </span>ranges = <span class="kw">match </span><span class="kw-2">&amp;</span>variable.domain {
-        ConjureDomain::IntDomain(range) =&gt; <span class="prelude-val">Ok</span>(range),
+    <span class="kw">match </span><span class="kw-2">&amp;</span>var.domain {
+        ConjureDomain::IntDomain(ranges) =&gt; _parse_intdomain_var(name, ranges, minion_model),
+        ConjureDomain::BoolDomain =&gt; _parse_booldomain_var(name, minion_model),
         x =&gt; <span class="prelude-val">Err</span>(SolverError::NotSupported(SOLVER, <span class="macro">format!</span>(<span class="string">"{:?}"</span>, x))),
-    }<span class="question-mark">?</span>;
+    }
+}
 
-    <span class="comment">// TODO (nd60): Currently, Minion only supports the use of one range in the domain.
-    // If there are multiple ranges, SparseBound should be used here instead.
-    // See: https://github.com/conjure-cp/conjure-oxide/issues/84
+<span class="kw">fn </span>_parse_intdomain_var(
+    name: <span class="kw-2">&amp;</span>ConjureName,
+    ranges: <span class="kw-2">&amp;</span>Vec&lt;ConjureRange&lt;i32&gt;&gt;,
+    minion_model: <span class="kw-2">&amp;mut </span>MinionModel,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), SolverError&gt; {
+    <span class="kw">let </span>str_name = _name_to_string(name.to_owned());
 
-    </span><span class="kw">if </span>ranges.len() != <span class="number">1 </span>{
+    <span class="kw">if </span>ranges.len() != <span class="number">1 </span>{
         <span class="kw">return </span><span class="prelude-val">Err</span>(SolverError::NotSupported(
             SOLVER,
             <span class="macro">format!</span>(
@@ -394,15 +393,33 @@
         </span>x =&gt; <span class="prelude-val">Err</span>(SolverError::NotSupported(SOLVER, <span class="macro">format!</span>(<span class="string">"{:?}"</span>, x))),
     }<span class="question-mark">?</span>;
 
+    _try_add_var(
+        str_name.to_owned(),
+        MinionDomain::Bound(low, high),
+        minion_model,
+    )
+}
+
+<span class="kw">fn </span>_parse_booldomain_var(
+    name: <span class="kw-2">&amp;</span>ConjureName,
+    minion_model: <span class="kw-2">&amp;mut </span>MinionModel,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), SolverError&gt; {
+    <span class="kw">let </span>str_name = _name_to_string(name.to_owned());
+    _try_add_var(str_name.to_owned(), MinionDomain::Bool, minion_model)
+}
+
+<span class="kw">fn </span>_try_add_var(
+    name: VarName,
+    domain: MinionDomain,
+    minion_model: <span class="kw-2">&amp;mut </span>MinionModel,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), SolverError&gt; {
     minion_model
         .named_variables
-        .add_var(str_name.to_owned(), MinionDomain::Bound(low, high))
+        .add_var(name.clone(), domain)
         .ok_or(SolverError::InvalidInstance(
             SOLVER,
-            <span class="macro">format!</span>(<span class="string">"variable {:?} is defined twice"</span>, str_name),
-        ))<span class="question-mark">?</span>;
-
-    <span class="prelude-val">Ok</span>(())
+            <span class="macro">format!</span>(<span class="string">"variable {:?} is defined twice"</span>, name),
+        ))
 }
 
 <span class="kw">fn </span>parse_exprs(
@@ -417,87 +434,57 @@
 
 <span class="kw">fn </span>parse_expr(expr: ConjureExpression, minion_model: <span class="kw-2">&amp;mut </span>MinionModel) -&gt; <span class="prelude-ty">Result</span>&lt;(), SolverError&gt; {
     <span class="kw">match </span>expr {
-        ConjureExpression::SumLeq(lhs, rhs) =&gt; parse_sumleq(lhs, <span class="kw-2">*</span>rhs, minion_model),
-        ConjureExpression::SumGeq(lhs, rhs) =&gt; parse_sumgeq(lhs, <span class="kw-2">*</span>rhs, minion_model),
-        ConjureExpression::Ineq(a, b, c) =&gt; parse_ineq(<span class="kw-2">*</span>a, <span class="kw-2">*</span>b, <span class="kw-2">*</span>c, minion_model),
+        ConjureExpression::SumLeq(lhs, rhs) =&gt; {
+            minion_model
+                .constraints
+                .push(MinionConstraint::SumLeq(read_vars(lhs)<span class="question-mark">?</span>, read_var(<span class="kw-2">*</span>rhs)<span class="question-mark">?</span>));
+            <span class="prelude-val">Ok</span>(())
+        }
+        ConjureExpression::SumGeq(lhs, rhs) =&gt; {
+            minion_model
+                .constraints
+                .push(MinionConstraint::SumGeq(read_vars(lhs)<span class="question-mark">?</span>, read_var(<span class="kw-2">*</span>rhs)<span class="question-mark">?</span>));
+            <span class="prelude-val">Ok</span>(())
+        }
+        ConjureExpression::Ineq(a, b, c) =&gt; {
+            minion_model.constraints.push(MinionConstraint::Ineq(
+                read_var(<span class="kw-2">*</span>a)<span class="question-mark">?</span>,
+                read_var(<span class="kw-2">*</span>b)<span class="question-mark">?</span>,
+                MinionConstant::Integer(read_const(<span class="kw-2">*</span>c)<span class="question-mark">?</span>),
+            ));
+            <span class="prelude-val">Ok</span>(())
+        }
+        ConjureExpression::Neq(a, b) =&gt; {
+            minion_model
+                .constraints
+                .push(MinionConstraint::WatchNeq(read_var(<span class="kw-2">*</span>a)<span class="question-mark">?</span>, read_var(<span class="kw-2">*</span>b)<span class="question-mark">?</span>));
+            <span class="prelude-val">Ok</span>(())
+        }
         x =&gt; <span class="prelude-val">Err</span>(SolverError::NotSupported(SOLVER, <span class="macro">format!</span>(<span class="string">"{:?}"</span>, x))),
     }
 }
 
-<span class="comment">// fn parse_and(
-//     expressions: Vec&lt;Expression&gt;,
-//     minion_model: &amp;mut MinionModel,
-// ) -&gt; Result&lt;(), SolverError&gt; {
-//     // ToDo - Nik said that he will do this
-// }
-
-</span><span class="kw">fn </span>parse_sumleq(
-    sum_vars: Vec&lt;ConjureExpression&gt;,
-    rhs: ConjureExpression,
-    minion_model: <span class="kw-2">&amp;mut </span>MinionModel,
-) -&gt; <span class="prelude-ty">Result</span>&lt;(), SolverError&gt; {
-    <span class="kw">let </span>minion_vars = must_be_vars(sum_vars)<span class="question-mark">?</span>;
-    <span class="kw">let </span>minion_rhs = must_be_var(rhs)<span class="question-mark">?</span>;
-    minion_model
-        .constraints
-        .push(MinionConstraint::SumLeq(minion_vars, minion_rhs));
-
-    <span class="prelude-val">Ok</span>(())
-}
-
-<span class="kw">fn </span>parse_sumgeq(
-    sum_vars: Vec&lt;ConjureExpression&gt;,
-    rhs: ConjureExpression,
-    minion_model: <span class="kw-2">&amp;mut </span>MinionModel,
-) -&gt; <span class="prelude-ty">Result</span>&lt;(), SolverError&gt; {
-    <span class="kw">let </span>minion_vars = must_be_vars(sum_vars)<span class="question-mark">?</span>;
-    <span class="kw">let </span>minion_rhs = must_be_var(rhs)<span class="question-mark">?</span>;
-    minion_model
-        .constraints
-        .push(MinionConstraint::SumGeq(minion_vars, minion_rhs));
-
-    <span class="prelude-val">Ok</span>(())
-}
-
-<span class="kw">fn </span>parse_ineq(
-    a: ConjureExpression,
-    b: ConjureExpression,
-    c: ConjureExpression,
-    minion_model: <span class="kw-2">&amp;mut </span>MinionModel,
-) -&gt; <span class="prelude-ty">Result</span>&lt;(), SolverError&gt; {
-    <span class="kw">let </span>a_minion = must_be_var(a)<span class="question-mark">?</span>;
-    <span class="kw">let </span>b_minion = must_be_var(b)<span class="question-mark">?</span>;
-    <span class="kw">let </span>c_value = must_be_const(c)<span class="question-mark">?</span>;
-    minion_model.constraints.push(MinionConstraint::Ineq(
-        a_minion,
-        b_minion,
-        MinionConstant::Integer(c_value),
-    ));
-
-    <span class="prelude-val">Ok</span>(())
-}
-
-<span class="kw">fn </span>must_be_vars(exprs: Vec&lt;ConjureExpression&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;MinionVar&gt;, SolverError&gt; {
+<span class="kw">fn </span>read_vars(exprs: Vec&lt;ConjureExpression&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;MinionVar&gt;, SolverError&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>minion_vars: Vec&lt;MinionVar&gt; = <span class="macro">vec!</span>[];
     <span class="kw">for </span>expr <span class="kw">in </span>exprs {
-        <span class="kw">let </span>minion_var = must_be_var(expr)<span class="question-mark">?</span>;
+        <span class="kw">let </span>minion_var = read_var(expr)<span class="question-mark">?</span>;
         minion_vars.push(minion_var);
     }
     <span class="prelude-val">Ok</span>(minion_vars)
 }
 
-<span class="kw">fn </span>must_be_var(e: ConjureExpression) -&gt; <span class="prelude-ty">Result</span>&lt;MinionVar, SolverError&gt; {
+<span class="kw">fn </span>read_var(e: ConjureExpression) -&gt; <span class="prelude-ty">Result</span>&lt;MinionVar, SolverError&gt; {
     <span class="comment">// a minion var is either a reference or a "var as const"
-    </span><span class="kw">match </span>must_be_ref(e.clone()) {
+    </span><span class="kw">match </span>_read_ref(e.clone()) {
         <span class="prelude-val">Ok</span>(name) =&gt; <span class="prelude-val">Ok</span>(MinionVar::NameRef(name)),
-        <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">match </span>must_be_const(e) {
+        <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; <span class="kw">match </span>read_const(e) {
             <span class="prelude-val">Ok</span>(n) =&gt; <span class="prelude-val">Ok</span>(MinionVar::ConstantAsVar(n)),
             <span class="prelude-val">Err</span>(x) =&gt; <span class="prelude-val">Err</span>(x),
         },
     }
 }
 
-<span class="kw">fn </span>must_be_ref(e: ConjureExpression) -&gt; <span class="prelude-ty">Result</span>&lt;String, SolverError&gt; {
+<span class="kw">fn </span>_read_ref(e: ConjureExpression) -&gt; <span class="prelude-ty">Result</span>&lt;String, SolverError&gt; {
     <span class="kw">let </span>name = <span class="kw">match </span>e {
         ConjureExpression::Reference(n) =&gt; <span class="prelude-val">Ok</span>(n),
         x =&gt; <span class="prelude-val">Err</span>(SolverError::InvalidInstance(
@@ -506,11 +493,11 @@
         )),
     }<span class="question-mark">?</span>;
 
-    <span class="kw">let </span>str_name = name_to_string(name);
+    <span class="kw">let </span>str_name = _name_to_string(name);
     <span class="prelude-val">Ok</span>(str_name)
 }
 
-<span class="kw">fn </span>must_be_const(e: ConjureExpression) -&gt; <span class="prelude-ty">Result</span>&lt;i32, SolverError&gt; {
+<span class="kw">fn </span>read_const(e: ConjureExpression) -&gt; <span class="prelude-ty">Result</span>&lt;i32, SolverError&gt; {
     <span class="kw">match </span>e {
         ConjureExpression::Constant(<span class="kw">_</span>, ConjureConstant::Int(n)) =&gt; <span class="prelude-val">Ok</span>(n),
         x =&gt; <span class="prelude-val">Err</span>(SolverError::InvalidInstance(
@@ -520,7 +507,7 @@
     }
 }
 
-<span class="kw">fn </span>name_to_string(name: ConjureName) -&gt; String {
+<span class="kw">fn </span>_name_to_string(name: ConjureName) -&gt; String {
     <span class="kw">match </span>name {
         ConjureName::UserName(x) =&gt; x,
         ConjureName::MachineName(x) =&gt; x.to_string(),
@@ -531,6 +518,7 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use </span>anyhow::anyhow;
     <span class="kw">use </span>conjure_core::ast::Expression;
+    <span class="kw">use </span>conjure_core::metadata::Metadata;
     <span class="kw">use </span>std::collections::HashMap;
 
     <span class="kw">use </span>minion_rs::ast::VarName;

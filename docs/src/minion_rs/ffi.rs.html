@@ -136,9 +136,9 @@
         // Results can be manually inspected in the outputted minion logs.
         </span><span class="kw">unsafe </span>{
             <span class="comment">// See https://rust-lang.github.io/rust-bindgen/cpp.html
-            </span><span class="kw">let </span>options = newSearchOptions();
-            <span class="kw">let </span>args = newSearchMethod();
-            <span class="kw">let </span>instance = newInstance();
+            </span><span class="kw">let </span>options = searchOptions_new();
+            <span class="kw">let </span>args = searchMethod_new();
+            <span class="kw">let </span>instance = instance_new();
 
             <span class="kw">let </span>x_str = CString::new(<span class="string">"x"</span>).expect(<span class="string">"bad x"</span>);
             <span class="kw">let </span>y_str = CString::new(<span class="string">"y"</span>).expect(<span class="string">"bad y"</span>);
@@ -162,23 +162,23 @@
             vec_var_push_back(search_vars <span class="kw">as _</span>, x);
             vec_var_push_back(search_vars <span class="kw">as _</span>, y);
             vec_var_push_back(search_vars <span class="kw">as _</span>, z);
-            <span class="kw">let </span>search_order = newSearchOrder(search_vars <span class="kw">as _</span>, VarOrderEnum_ORDER_STATIC, <span class="bool-val">false</span>);
+            <span class="kw">let </span>search_order = searchOrder_new(search_vars <span class="kw">as _</span>, VarOrderEnum_ORDER_STATIC, <span class="bool-val">false</span>);
             instance_addSearchOrder(instance, search_order);
 
             <span class="comment">// CONSTRAINTS
-            </span><span class="kw">let </span>leq = newConstraintBlob(ConstraintType_CT_LEQSUM);
-            <span class="kw">let </span>geq = newConstraintBlob(ConstraintType_CT_GEQSUM);
-            <span class="kw">let </span>ineq = newConstraintBlob(ConstraintType_CT_INEQ);
+            </span><span class="kw">let </span>leq = constraint_new(ConstraintType_CT_LEQSUM);
+            <span class="kw">let </span>geq = constraint_new(ConstraintType_CT_GEQSUM);
+            <span class="kw">let </span>ineq = constraint_new(ConstraintType_CT_INEQ);
 
             <span class="kw">let </span>rhs_vars = vec_var_new();
             vec_var_push_back(rhs_vars, constantAsVar(<span class="number">4</span>));
 
             <span class="comment">// leq / geq : [var] [var]
-            </span>constraint_addVarList(leq, search_vars <span class="kw">as _</span>);
-            constraint_addVarList(leq, rhs_vars <span class="kw">as _</span>);
+            </span>constraint_addList(leq, search_vars <span class="kw">as _</span>);
+            constraint_addList(leq, rhs_vars <span class="kw">as _</span>);
 
-            constraint_addVarList(geq, search_vars <span class="kw">as _</span>);
-            constraint_addVarList(geq, rhs_vars <span class="kw">as _</span>);
+            constraint_addList(geq, search_vars <span class="kw">as _</span>);
+            constraint_addList(geq, rhs_vars <span class="kw">as _</span>);
 
             <span class="comment">// ineq: [var] [var] [const]
             </span><span class="kw">let </span>x_vec = vec_var_new();
@@ -190,8 +190,8 @@
             <span class="kw">let </span>const_vec = vec_int_new();
             vec_int_push_back(const_vec, -<span class="number">1</span>);
 
-            constraint_addVarList(ineq, x_vec <span class="kw">as _</span>);
-            constraint_addVarList(ineq, y_vec <span class="kw">as _</span>);
+            constraint_addList(ineq, x_vec <span class="kw">as _</span>);
+            constraint_addList(ineq, y_vec <span class="kw">as _</span>);
             constraint_addConstantList(ineq, const_vec <span class="kw">as _</span>);
 
             instance_addConstraint(instance, leq);
