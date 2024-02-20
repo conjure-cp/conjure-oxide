@@ -2,23 +2,23 @@ use std::{
     collections::HashMap,
     ffi::CString,
     sync::atomic::Ordering,
-    sync::{
-        atomic::{self, AtomicBool},
-        Mutex, MutexGuard,
-    },
+    sync::{atomic::AtomicBool, Mutex, MutexGuard},
 };
 
-use crate::ffi::{self, ConstraintType_CT_WATCHED_LESS};
+use crate::ffi::{self};
 use crate::{ast::*, error::*, scoped_ptr::Scoped};
 use anyhow::anyhow;
 
-// TODO: allow passing of options.
-
-/// Callback function used to capture results from minion as they are generated.
-/// Should return `true` if search is to continue, `false` otherwise.
+/// The callback function used to capture results from Minion as they are generated.
 ///
-/// Consider using a global mutex (or other static variable) to use these results
-/// elsewhere.
+/// This function is called by Minion whenever a solution is found. The input to this function is
+/// a`HashMap` of all named variables along with their value.
+///
+/// Callbacks should return `true` if search is to continue, `false` otherwise.
+///
+/// # Examples
+///
+/// Consider using a global mutex (or other static variable) to use returned solutions elsewhere.
 ///
 /// For example:
 ///

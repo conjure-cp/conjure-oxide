@@ -1,4 +1,4 @@
-//! The Model Syntax tree for the Minion bindings.
+//! Types used for representing Minion models in Rust.
 
 use std::collections::HashMap;
 
@@ -6,15 +6,16 @@ pub type VarName = String;
 pub type Tuple = (Constant, Constant);
 pub type TwoVars = (Var, Var);
 
+/// A Minion model.
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Model {
-    /// A lookup table of all named variables.
     pub named_variables: SymbolTable,
     pub constraints: Vec<Constraint>,
 }
 
 impl Model {
+    /// Creates an empty Minion model.
     pub fn new() -> Model {
         Model {
             named_variables: SymbolTable::new(),
@@ -29,6 +30,7 @@ impl Default for Model {
     }
 }
 
+/// All supported Minion constraints.
 #[non_exhaustive]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Constraint {
@@ -111,6 +113,8 @@ pub enum Constraint {
     Ineq(Var, Var, Constant),
 }
 
+/// Representation of a Minion Variable.
+///
 /// A variable can either be a named variable, or an anomynous "constant as a variable".
 ///
 /// The latter is not stored in the symbol table, or counted in Minions internal list of all
@@ -123,6 +127,7 @@ pub enum Var {
     ConstantAsVar(i32),
 }
 
+/// Representation of a Minion constant.
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 #[non_exhaustive]
 pub enum Constant {
@@ -130,6 +135,7 @@ pub enum Constant {
     Integer(i32),
 }
 
+/// Representation of variable domains.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum VarDomain {
@@ -141,6 +147,10 @@ pub enum VarDomain {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 #[non_exhaustive]
+/// Stores all named variables in a Minion model alongside their domains.
+///
+/// Named variables referenced in [constraints](Constraint) must be in the symbol table for the
+/// model to be valid. In the future, this will raise some sort of type error.
 pub struct SymbolTable {
     table: HashMap<VarName, VarDomain>,
 
@@ -157,7 +167,10 @@ impl SymbolTable {
     }
 
     /// Creates a new variable and adds it to the symbol table.
-    /// If a variable already exists with the given name, an error is thrown.
+    ///
+    /// # Returns
+    ///
+    /// If a variable already exists with the given name, `None` is returned.
     pub fn add_var(&mut self, name: VarName, vartype: VarDomain) -> Option<()> {
         if self.table.contains_key(&name) {
             return None;
@@ -169,10 +182,16 @@ impl SymbolTable {
         Some(())
     }
 
+    /// Gets the domain of a named variable.
+    ///
+    /// # Returns
+    ///
+    /// `None` if no variable is known by that name.
     pub fn get_vartype(&self, name: VarName) -> Option<VarDomain> {
         self.table.get(&name).cloned()
     }
 
+    /// Gets the canonical ordering of variables.
     pub fn get_variable_order(&self) -> Vec<VarName> {
         self.var_order.clone()
     }

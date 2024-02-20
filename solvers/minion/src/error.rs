@@ -1,24 +1,26 @@
-//! Error types for Minion bindings.
+//! Error types.
 
 use crate::ffi;
 use thiserror::Error;
 
-/// A wrapper over all errors thrown by `minion_rs`.
-///
-/// `Error` allows functions involving Minion to return a single error type. All error types in
-/// `minion_rs` are able to be converted into this type using into / from.
+/// Wraps all error types returned by `minion_rs`.
 #[derive(Debug, Error)]
 #[non_exhaustive]
 pub enum MinionError {
+    /// An error has occurred during the execution of Minion.
     #[error("runtime error: `{0}.to_string()`")]
     RuntimeError(#[from] RuntimeError),
+
+    /// The input model uses Minion features that are not yet implemented in `minion_rs`.
     #[error("not implemented: {0}")]
     NotImplemented(String),
+
+    /// Catch-all error.
     #[error(transparent)]
     Other(#[from] anyhow::Error), // source and Display delegate to anyhow::Error
 }
 
-/// RuntimeErrors are thrown by Minion during execution.
+/// Errors thrown by Minion during execution.
 ///
 /// These represent internal Minion C++ exceptions translated into Rust.
 ///
