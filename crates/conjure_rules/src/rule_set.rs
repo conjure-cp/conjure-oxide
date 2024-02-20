@@ -4,20 +4,17 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::sync::OnceLock;
 
-/**
- * A set of rules with a name, priority, and dependencies.
- *
- * # Fields
- * - `name` The name of the rule set.
- * - `order` The order of the rule set.
- * - `rules` A map of rules to their priorities. This is evaluated lazily at runtime.
- * - `dependencies` A list of rule set names that this rule set depends on.
- */
+/// A set of rules with a name, priority, and dependencies.
 #[derive(Clone, Debug)]
 pub struct RuleSet<'a> {
+    /// The name of the rule set.
     pub name: &'a str,
+    /// Order of the RuleSet. Used to establish a consistent order of operations when resolving rules.
+    /// If two RuleSets overlap (contain the same rule but with different priorities), the RuleSet with the higher order will be used as the source of truth.
     pub order: u8,
+    /// A map of rules to their priorities. This will be lazily initialized at runtime.
     pub rules: OnceLock<HashMap<&'a Rule<'a>, u8>>,
+    /// The names of the rule sets that this rule set depends on.
     pub dependencies: &'a [&'a str],
 }
 
@@ -31,10 +28,8 @@ impl<'a> RuleSet<'a> {
         }
     }
 
-    /**
-     * Get the rules of this rule set, evaluating them lazily if necessary.
-     * @returns A map of rules to their priorities.
-     */
+    /// Get the rules of this rule set, evaluating them lazily if necessary
+    /// Returns a `&HashMap<&Rule, u8>` where the key is the rule and the value is the priority of the rule.
     pub fn get_rules(&self) -> &HashMap<&'a Rule<'a>, u8> {
         match self.rules.get() {
             None => {
@@ -49,6 +44,7 @@ impl<'a> RuleSet<'a> {
         }
     }
 
+    /// Resolve the rules of this rule set ("reverse the arrows")
     fn resolve_rules(&self) -> HashMap<&'a Rule<'a>, u8> {
         let mut rules = HashMap::new();
 
@@ -72,6 +68,7 @@ impl<'a> RuleSet<'a> {
         rules
     }
 
+    /// Get the rules of this rule set, panicking if they are not set.
     fn get_rules_or_panic(&self) -> &HashMap<&'a Rule<'a>, u8> {
         match self.rules.get() {
             None => {
