@@ -15,13 +15,13 @@ use conjure_rules::register_rule;
 #[register_rule]
 fn distribute_not_over_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
-        Expr::Not(contents) => match contents.as_ref() {
-            Expr::And(exprs) => {
+        Expr::Not(metadata, contents) => match contents.as_ref() {
+            Expr::And(metadata, exprs) => {
                 let mut new_exprs = Vec::new();
                 for e in exprs {
-                    new_exprs.push(Expr::Not(Box::new(e.clone())));
+                    new_exprs.push(Expr::Not(metadata.clone(), Box::new(e.clone())));
                 }
-                Ok(Expr::Or(new_exprs))
+                Ok(Expr::Or(metadata.clone(), new_exprs))
             }
             _ => Err(RuleApplicationError::RuleNotApplicable),
         },
@@ -39,13 +39,13 @@ fn distribute_not_over_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 #[register_rule]
 fn distribute_not_over_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
-        Expr::Not(contents) => match contents.as_ref() {
-            Expr::Or(exprs) => {
+        Expr::Not(metadata, contents) => match contents.as_ref() {
+            Expr::Or(metadata, exprs) => {
                 let mut new_exprs = Vec::new();
                 for e in exprs {
-                    new_exprs.push(Expr::Not(Box::new(e.clone())));
+                    new_exprs.push(Expr::Not(metadata.clone(), Box::new(e.clone())));
                 }
-                Ok(Expr::And(new_exprs))
+                Ok(Expr::And(metadata.clone(), new_exprs))
             }
             _ => Err(RuleApplicationError::RuleNotApplicable),
         },
@@ -66,7 +66,7 @@ fn distribute_or_over_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
         // ToDo: may be better to move this to some kind of utils module?
         for (i, e) in exprs.iter().enumerate() {
             match e {
-                Expr::And(_) => return Some(i),
+                Expr::And(_, _) => return Some(i),
                 _ => (),
             }
         }
@@ -74,23 +74,23 @@ fn distribute_or_over_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     }
 
     match expr {
-        Expr::Or(exprs) => match find_and(exprs) {
+        Expr::Or(metadata, exprs) => match find_and(exprs) {
             Some(idx) => {
                 let mut rest = exprs.clone();
                 let and_expr = rest.remove(idx);
 
                 match and_expr {
-                    Expr::And(and_exprs) => {
+                    Expr::And(metadata, and_exprs) => {
                         let mut new_and_contents = Vec::new();
 
                         for e in and_exprs {
                             // ToDo: Cloning everything may be a bit inefficient - discuss
                             let mut new_or_contents = rest.clone();
                             new_or_contents.push(e.clone());
-                            new_and_contents.push(Expr::Or(new_or_contents))
+                            new_and_contents.push(Expr::Or(metadata.clone(), new_or_contents))
                         }
 
-                        Ok(Expr::And(new_and_contents))
+                        Ok(Expr::And(metadata.clone(), new_and_contents))
                     }
                     _ => Err(RuleApplicationError::RuleNotApplicable),
                 }
