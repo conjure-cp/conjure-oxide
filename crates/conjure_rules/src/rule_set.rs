@@ -38,37 +38,44 @@ impl<'a> RuleSet<'a> {
     pub fn get_rules(&self) -> &HashMap<&'a Rule<'a>, u8> {
         match self.rules.get() {
             None => {
-                let mut rules = HashMap::new();
-                for rule in get_rules() {
-                    let mut found = false;
-                    let mut priority: u8 = 0;
+                let rules = self.resolve_rules();
+                let _ = self.rules.set(rules); // Try to set the rules, but ignore if it fails.
 
-                    for (name, p) in rule.rule_sets {
-                        if *name == self.name {
-                            found = true;
-                            priority = *p;
-                            break;
-                        }
-                    }
+                // At this point, the rules cell is guaranteed to be set, so we can unwrap safely.
+                // see: https://doc.rust-lang.org/stable/std/sync/struct.OnceLock.html#method.set
+                self.get_rules_or_panic()
+            }
+            Some(rules) => rules,
+        }
+    }
 
-                    if found {
-                        rules.insert(rule, priority);
-                    }
+    fn resolve_rules(&self) -> HashMap<&'a Rule<'a>, u8> {
+        let mut rules = HashMap::new();
+
+        for rule in get_rules() {
+            let mut found = false;
+            let mut priority: u8 = 0;
+
+            for (name, p) in rule.rule_sets {
+                if *name == self.name {
+                    found = true;
+                    priority = *p;
+                    break;
                 }
-                match self.rules.set(rules) {
-                    Ok(_) => {
-                        match self.rules.get() {
-                            None => {
-                                panic!("RuleSet::rules was set, but RuleSet::rules.get() returned None!");
-                                // This should never happen
-                            }
-                            Some(rules) => rules,
-                        }
-                    }
-                    Err(e) => {
-                        panic!("Could not set RuleSet::rules! Error: {:?}", e); // This should also never happen :)
-                    }
-                }
+            }
+
+            if found {
+                rules.insert(rule, priority);
+            }
+        }
+
+        rules
+    }
+
+    fn get_rules_or_panic(&self) -> &HashMap<&'a Rule<'a>, u8> {
+        match self.rules.get() {
+            None => {
+                panic!("RuleSet::rules was not set!");
             }
             Some(rules) => rules,
         }
