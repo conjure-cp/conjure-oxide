@@ -1,5 +1,7 @@
 //! Solver interface to minion_rs.
 
+#![allow(unreachable_patterns)]
+
 use super::{FromConjureModel, SolverError};
 use crate::Solver;
 
@@ -12,7 +14,7 @@ use crate::ast::{
 pub use minion_rs::ast::Model as MinionModel;
 use minion_rs::ast::{
     Constant as MinionConstant, Constraint as MinionConstraint, Var as MinionVar,
-    VarDomain as MinionDomain,
+    VarDomain as MinionDomain, VarName,
 };
 
 const SOLVER: Solver = Solver::Minion;
@@ -45,19 +47,22 @@ fn parse_vars(
 
 fn parse_var(
     name: &ConjureName,
-    variable: &DecisionVariable,
+    var: &DecisionVariable,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
-    let str_name = name_to_string(name.to_owned());
-
-    let ranges = match &variable.domain {
-        ConjureDomain::IntDomain(range) => Ok(range),
+    match &var.domain {
+        ConjureDomain::IntDomain(ranges) => _parse_intdomain_var(name, ranges, minion_model),
+        ConjureDomain::BoolDomain => _parse_booldomain_var(name, minion_model),
         x => Err(SolverError::NotSupported(SOLVER, format!("{:?}", x))),
-    }?;
+    }
+}
 
-    // TODO (nd60): Currently, Minion only supports the use of one range in the domain.
-    // If there are multiple ranges, SparseBound should be used here instead.
-    // See: https://github.com/conjure-cp/conjure-oxide/issues/84
+fn _parse_intdomain_var(
+    name: &ConjureName,
+    ranges: &Vec<ConjureRange<i32>>,
+    minion_model: &mut MinionModel,
+) -> Result<(), SolverError> {
+    let str_name = _name_to_string(name.to_owned());
 
     if ranges.len() != 1 {
         return Err(SolverError::NotSupported(
@@ -82,15 +87,33 @@ fn parse_var(
         x => Err(SolverError::NotSupported(SOLVER, format!("{:?}", x))),
     }?;
 
+    _try_add_var(
+        str_name.to_owned(),
+        MinionDomain::Bound(low, high),
+        minion_model,
+    )
+}
+
+fn _parse_booldomain_var(
+    name: &ConjureName,
+    minion_model: &mut MinionModel,
+) -> Result<(), SolverError> {
+    let str_name = _name_to_string(name.to_owned());
+    _try_add_var(str_name.to_owned(), MinionDomain::Bool, minion_model)
+}
+
+fn _try_add_var(
+    name: VarName,
+    domain: MinionDomain,
+    minion_model: &mut MinionModel,
+) -> Result<(), SolverError> {
     minion_model
         .named_variables
-        .add_var(str_name.to_owned(), MinionDomain::Bound(low, high))
+        .add_var(name.clone(), domain)
         .ok_or(SolverError::InvalidInstance(
             SOLVER,
-            format!("variable {:?} is defined twice", str_name),
-        ))?;
-
-    Ok(())
+            format!("variable {:?} is defined twice", name),
+        ))
 }
 
 fn parse_exprs(
@@ -105,87 +128,57 @@ fn parse_exprs(
 
 fn parse_expr(expr: ConjureExpression, minion_model: &mut MinionModel) -> Result<(), SolverError> {
     match expr {
-        ConjureExpression::SumLeq(lhs, rhs) => parse_sumleq(lhs, *rhs, minion_model),
-        ConjureExpression::SumGeq(lhs, rhs) => parse_sumgeq(lhs, *rhs, minion_model),
-        ConjureExpression::Ineq(a, b, c) => parse_ineq(*a, *b, *c, minion_model),
+        ConjureExpression::SumLeq(lhs, rhs) => {
+            minion_model
+                .constraints
+                .push(MinionConstraint::SumLeq(read_vars(lhs)?, read_var(*rhs)?));
+            Ok(())
+        }
+        ConjureExpression::SumGeq(lhs, rhs) => {
+            minion_model
+                .constraints
+                .push(MinionConstraint::SumGeq(read_vars(lhs)?, read_var(*rhs)?));
+            Ok(())
+        }
+        ConjureExpression::Ineq(a, b, c) => {
+            minion_model.constraints.push(MinionConstraint::Ineq(
+                read_var(*a)?,
+                read_var(*b)?,
+                MinionConstant::Integer(read_const(*c)?),
+            ));
+            Ok(())
+        }
+        ConjureExpression::Neq(a, b) => {
+            minion_model
+                .constraints
+                .push(MinionConstraint::WatchNeq(read_var(*a)?, read_var(*b)?));
+            Ok(())
+        }
         x => Err(SolverError::NotSupported(SOLVER, format!("{:?}", x))),
     }
 }
 
-// fn parse_and(
-//     expressions: Vec<Expression>,
-//     minion_model: &mut MinionModel,
-// ) -> Result<(), SolverError> {
-//     // ToDo - Nik said that he will do this
-// }
-
-fn parse_sumleq(
-    sum_vars: Vec<ConjureExpression>,
-    rhs: ConjureExpression,
-    minion_model: &mut MinionModel,
-) -> Result<(), SolverError> {
-    let minion_vars = must_be_vars(sum_vars)?;
-    let minion_rhs = must_be_var(rhs)?;
-    minion_model
-        .constraints
-        .push(MinionConstraint::SumLeq(minion_vars, minion_rhs));
-
-    Ok(())
-}
-
-fn parse_sumgeq(
-    sum_vars: Vec<ConjureExpression>,
-    rhs: ConjureExpression,
-    minion_model: &mut MinionModel,
-) -> Result<(), SolverError> {
-    let minion_vars = must_be_vars(sum_vars)?;
-    let minion_rhs = must_be_var(rhs)?;
-    minion_model
-        .constraints
-        .push(MinionConstraint::SumGeq(minion_vars, minion_rhs));
-
-    Ok(())
-}
-
-fn parse_ineq(
-    a: ConjureExpression,
-    b: ConjureExpression,
-    c: ConjureExpression,
-    minion_model: &mut MinionModel,
-) -> Result<(), SolverError> {
-    let a_minion = must_be_var(a)?;
-    let b_minion = must_be_var(b)?;
-    let c_value = must_be_const(c)?;
-    minion_model.constraints.push(MinionConstraint::Ineq(
-        a_minion,
-        b_minion,
-        MinionConstant::Integer(c_value),
-    ));
-
-    Ok(())
-}
-
-fn must_be_vars(exprs: Vec<ConjureExpression>) -> Result<Vec<MinionVar>, SolverError> {
+fn read_vars(exprs: Vec<ConjureExpression>) -> Result<Vec<MinionVar>, SolverError> {
     let mut minion_vars: Vec<MinionVar> = vec![];
     for expr in exprs {
-        let minion_var = must_be_var(expr)?;
+        let minion_var = read_var(expr)?;
         minion_vars.push(minion_var);
     }
     Ok(minion_vars)
 }
 
-fn must_be_var(e: ConjureExpression) -> Result<MinionVar, SolverError> {
+fn read_var(e: ConjureExpression) -> Result<MinionVar, SolverError> {
     // a minion var is either a reference or a "var as const"
-    match must_be_ref(e.clone()) {
+    match _read_ref(e.clone()) {
         Ok(name) => Ok(MinionVar::NameRef(name)),
-        Err(_) => match must_be_const(e) {
+        Err(_) => match read_const(e) {
             Ok(n) => Ok(MinionVar::ConstantAsVar(n)),
             Err(x) => Err(x),
         },
     }
 }
 
-fn must_be_ref(e: ConjureExpression) -> Result<String, SolverError> {
+fn _read_ref(e: ConjureExpression) -> Result<String, SolverError> {
     let name = match e {
         ConjureExpression::Reference(n) => Ok(n),
         x => Err(SolverError::InvalidInstance(
@@ -194,11 +187,11 @@ fn must_be_ref(e: ConjureExpression) -> Result<String, SolverError> {
         )),
     }?;
 
-    let str_name = name_to_string(name);
+    let str_name = _name_to_string(name);
     Ok(str_name)
 }
 
-fn must_be_const(e: ConjureExpression) -> Result<i32, SolverError> {
+fn read_const(e: ConjureExpression) -> Result<i32, SolverError> {
     match e {
         ConjureExpression::Constant(_, ConjureConstant::Int(n)) => Ok(n),
         x => Err(SolverError::InvalidInstance(
@@ -208,7 +201,7 @@ fn must_be_const(e: ConjureExpression) -> Result<i32, SolverError> {
     }
 }
 
-fn name_to_string(name: ConjureName) -> String {
+fn _name_to_string(name: ConjureName) -> String {
     match name {
         ConjureName::UserName(x) => x,
         ConjureName::MachineName(x) => x.to_string(),
