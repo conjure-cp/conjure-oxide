@@ -1,8 +1,8 @@
 use std::{
     collections::HashMap,
     ffi::CString,
-    sync::atomic::Ordering,
     sync::{atomic::AtomicBool, Mutex, MutexGuard},
+    sync::{atomic::Ordering, Condvar},
 };
 
 use crate::ffi::{self};
@@ -110,7 +110,7 @@ static CALLBACK: Mutex<Option<Callback>> = Mutex::new(None);
 // the variables we want to return, and their ordering in the print matrix
 static PRINT_VARS: Mutex<Option<Vec<VarName>>> = Mutex::new(None);
 
-static mut LOCKED: AtomicBool = AtomicBool::new(false);
+static LOCK: (Mutex<bool>, Condvar) = (Mutex::new(false), Condvar::new());
 
 #[no_mangle]
 unsafe extern "C" fn run_callback() -> bool {
@@ -160,12 +160,15 @@ pub fn run_minion(model: Model, callback: Callback) -> Result<(), MinionError> {
     // Mutex poisoning is probably panic worthy.
     *CALLBACK.lock().unwrap() = Some(callback);
 
+    let (lock, condvar) = &LOCK;
+    let mut _lock_guard = condvar
+        .wait_while(lock.lock().unwrap(), |locked| *locked)
+        .unwrap();
+
+    *_lock_guard = true;
+
     unsafe {
         // TODO: something better than a manual spinlock
-        while LOCKED.load(Ordering::SeqCst) {
-            std::hint::spin_loop();
-        }
-        LOCKED.store(true, Ordering::SeqCst);
         let search_opts = ffi::searchOptions_new();
         let search_method = ffi::searchMethod_new();
         let search_instance = ffi::instance_new();
@@ -182,7 +185,11 @@ pub fn run_minion(model: Model, callback: Callback) -> Result<(), MinionError> {
         ffi::searchMethod_free(search_method);
         ffi::searchOptions_free(search_opts);
         ffi::instance_free(search_instance);
-        LOCKED.store(false, Ordering::SeqCst);
+
+        *_lock_guard = false;
+        std::mem::drop(_lock_guard);
+
+        condvar.notify_one();
 
         match res {
             0 => Ok(()),
