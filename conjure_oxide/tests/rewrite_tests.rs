@@ -5,7 +5,7 @@ use conjure_rules::{get_rule_by_name, get_rules};
 use core::panic;
 use std::collections::HashMap;
 
-use conjure_oxide::{ast::*, eval_constant, rewrite::rewrite, solvers::FromConjureModel};
+use conjure_oxide::{ast::*, eval_constant, rewrite::rewrite_model, solvers::FromConjureModel};
 use minion_rs::ast::{Constant as MinionConstant, VarName};
 
 #[test]
@@ -645,7 +645,11 @@ fn rewrite_solve_xyz() {
     ]);
 
     // Apply rewrite function to the nested expression
-    let rewritten_expr = rewrite(&nested_expr, &Model::new());
+    let rewritten_expr = rewrite_model(&Model {
+        variables: HashMap::new(),
+        constraints: nested_expr,
+    })
+    .constraints;
 
     // Check if the expression is in its simplest form
     let expr = rewritten_expr.clone();

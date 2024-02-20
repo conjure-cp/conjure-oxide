@@ -14,6 +14,7 @@ pub enum ApplicationError {
 ///
 /// Contains an expression to replace the original, a top-level constraint to add to the top of the constraint AST, and an expansion to the model symbol table.
 #[non_exhaustive]
+#[derive(Clone, Debug)]
 pub struct Reduction {
     pub new_expression: Expression,
     pub new_top: Expression,

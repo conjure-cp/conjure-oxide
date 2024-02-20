@@ -7,16 +7,31 @@ struct RuleResult<'a> {
     reduction: Reduction,
 }
 
+/// Rewrites the model by applying the rules to all constraints.
+///
+/// Any side-effects such as symbol table updates and top-level constraints are applied to the returned model.
+///
 /// # Returns
-/// - A new expression after applying the rules to `expression` and its sub-expressions.
-/// - The same expression if no rules are applicable.
-pub fn rewrite(expression: &Expression, model: &Model) -> Expression {
+/// A copy of the model after all, if any, possible rules are applied to its constraints.
+pub fn rewrite_model(model: &Model) -> Model {
     let rules = get_rules();
-    let mut new = expression.clone();
-    while let Some(step) = rewrite_iteration(&new, model, &rules) {
-        new = step;
+    let mut new_model = model.clone();
+    while let Some(step) = rewrite_iteration(&new_model.constraints, model, &rules) {
+        new_model.variables.extend(step.symbols); // Add new assignments to the symbol table
+        if step.new_top.is_nothing() {
+            new_model.constraints = step.new_expression.clone();
+        } else {
+            new_model.constraints = match step.new_expression {
+                // Avoid creating a nested conjunction
+                Expression::And(mut and) => {
+                    and.push(step.new_top.clone());
+                    Expression::And(and)
+                }
+                _ => Expression::And(vec![step.new_expression.clone(), step.new_top]),
+            };
+        }
     }
-    new
+    new_model
 }
 
 /// # Returns
@@ -26,7 +41,7 @@ fn rewrite_iteration<'a>(
     expression: &'a Expression,
     model: &'a Model,
     rules: &'a Vec<Rule<'a>>,
-) -> Option<Expression> {
+) -> Option<Reduction> {
     let rule_results = apply_all_rules(expression, model, rules);
     if let Some(new) = choose_rewrite(&rule_results) {
         return Some(new);
@@ -35,9 +50,13 @@ fn rewrite_iteration<'a>(
             None => {}
             Some(mut sub) => {
                 for i in 0..sub.len() {
-                    if let Some(new) = rewrite_iteration(sub[i], model, rules) {
-                        sub[i] = &new;
-                        return Some(expression.with_sub_expressions(sub));
+                    if let Some(red) = rewrite_iteration(sub[i], model, rules) {
+                        sub[i] = &red.new_expression;
+                        return Some(Reduction::new(
+                            expression.clone().with_sub_expressions(sub),
+                            red.new_top,
+                            red.symbols,
+                        ));
                     }
                 }
             }
@@ -70,25 +89,13 @@ fn apply_all_rules<'a>(
 }
 
 /// # Returns
-/// - Some(<new_expression>) after applying the first rule in `results`.
+/// - Some(<reduction>) after applying the first rule in `results`.
 /// - None if `results` is empty.
-fn choose_rewrite(results: &Vec<RuleResult>) -> Option<Expression> {
+fn choose_rewrite(results: &Vec<RuleResult>) -> Option<Reduction> {
     if results.is_empty() {
         return None;
     }
     // Return the first result for now
     // println!("Applying rule: {:?}", results[0].rule);
-    Some(results[0].reduction.new_expression.clone())
-}
-
-/// This rewrites the model by applying the rules to all constraints.
-/// # Returns
-/// - A new model with rewritten constraints.
-/// - The same model if no rules are applicable.
-pub fn rewrite_model(model: &Model) -> Model {
-    let mut new_model = model.clone();
-
-    new_model.constraints = rewrite(&model.constraints, model);
-
-    new_model
+    Some(results[0].reduction.clone())
 }
