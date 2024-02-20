@@ -1,3 +1,4 @@
+use derive_is_enum_variant::is_enum_variant;
 use doc_solver_support::doc_solver_support;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
@@ -156,7 +157,7 @@ impl TryFrom<Constant> for bool {
 }
 
 #[doc_solver_support]
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, is_enum_variant, Serialize, Deserialize)]
 #[non_exhaustive]
 pub enum Expression {
     /**
@@ -164,12 +165,6 @@ pub enum Expression {
      * NB: we only expect this at the top level of a model (if there is no constraints)
      */
     Nothing,
-
-    /**
-     * Represents an expression to be "bubbled up" to the top level of the model.
-     * The left expression replaces the bubble, and the right expression is brought upwards.
-     */
-    Bubble(Box<Expression>, Box<Expression>),
 
     #[solver(Minion, SAT)]
     Constant(Metadata, Constant),
@@ -233,7 +228,6 @@ impl Expression {
             Expression::Constant(_, _) => None,
             Expression::Reference(_) => None,
             Expression::Nothing => None,
-            Expression::Bubble(_, _) => panic!("Bubble expressions should not be unwrapped!"), // TODO: this can be handled more gracefully
             Expression::Sum(exprs) => Some(exprs.iter().collect()),
             Expression::Not(expr_box) => Some(vec![expr_box.as_ref()]),
             Expression::Or(exprs) => Some(exprs.iter().collect()),
@@ -257,9 +251,6 @@ impl Expression {
             Expression::Constant(m, c) => Expression::Constant(m.clone(), c.clone()),
             Expression::Reference(name) => Expression::Reference(name.clone()),
             Expression::Nothing => Expression::Nothing,
-            Expression::Bubble(_, _) => {
-                panic!("Bubble expressions can only be created by reduction rules!")
-            }
             Expression::Sum(_) => Expression::Sum(sub.iter().cloned().cloned().collect()),
             Expression::Not(_) => Expression::Not(Box::new(sub[0].clone())),
             Expression::Or(_) => Expression::Or(sub.iter().cloned().cloned().collect()),
@@ -299,13 +290,6 @@ impl Expression {
                 Box::new(sub[1].clone()),
                 Box::new(sub[2].clone()),
             ),
-        }
-    }
-
-    pub fn is_constant(&self) -> bool {
-        match self {
-            Expression::Constant(_, _) => true,
-            _ => false,
         }
     }
 }
