@@ -8,6 +8,7 @@ use thiserror::Error;
 /// `Error` allows functions involving Minion to return a single error type. All error types in
 /// `minion_rs` are able to be converted into this type using into / from.
 #[derive(Debug, Error)]
+#[non_exhaustive]
 pub enum MinionError {
     #[error("runtime error: `{0}.to_string()`")]
     RuntimeError(#[from] RuntimeError),
@@ -24,7 +25,8 @@ pub enum MinionError {
 /// Invalid usage of this library should throw an error before Minion is even run. Therefore, these
 /// should be quite rare. Consider creating an issue on
 /// [Github](https://github.com/conjure-cp/conjure-oxide) if these occur regularly!
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Eq, PartialEq)]
+#[non_exhaustive]
 pub enum RuntimeError {
     // These closely follow the ReturnCodes found in Minion's libwrapper.cpp.
     /// The model given to Minion is invalid.

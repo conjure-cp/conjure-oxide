@@ -6,6 +6,8 @@ pub type VarName = String;
 pub type Tuple = (Constant, Constant);
 pub type TwoVars = (Var, Var);
 
+#[non_exhaustive]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Model {
     /// A lookup table of all named variables.
     pub named_variables: SymbolTable,
@@ -27,8 +29,8 @@ impl Default for Model {
     }
 }
 
-#[derive(Debug, Clone)]
 #[non_exhaustive]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Constraint {
     Difference(TwoVars, Var),
     Div(TwoVars, Var),
@@ -114,19 +116,22 @@ pub enum Constraint {
 /// The latter is not stored in the symbol table, or counted in Minions internal list of all
 /// variables, but is used to allow the use of a constant in the place of a variable in a
 /// constraint.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq)]
+#[non_exhaustive]
 pub enum Var {
     NameRef(VarName),
     ConstantAsVar(i32),
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
+#[non_exhaustive]
 pub enum Constant {
     Bool(bool),
     Integer(i32),
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[non_exhaustive]
 pub enum VarDomain {
     Bound(i32, i32),
     Discrete(i32, i32),
@@ -134,6 +139,8 @@ pub enum VarDomain {
     Bool,
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
+#[non_exhaustive]
 pub struct SymbolTable {
     table: HashMap<VarName, VarDomain>,
 
