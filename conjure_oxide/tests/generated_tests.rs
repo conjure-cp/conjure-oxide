@@ -65,7 +65,7 @@ fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>
     if verbose {
         println!("Minion solutions: {:#?}", solutions_json)
     }
-    
+
     let expected_solutions_json = read_minion_solutions_json(path, essence_base, "expected")?;
     if verbose {
         println!("Expected solutions: {:#?}", expected_solutions_json)
