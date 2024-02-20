@@ -1,9 +1,9 @@
 // adapted from
 // - https://github.com/gokberkkocak/rust_glucose/blob/master/build.rs
 // - https://rust-lang.github.io/rust-bindgen/non-system-libraries.html
-// - https://doc.rust-lang.org/cargo/reference/build-scripts.html#rerun-if-changed
-#![allow(clippy::unwrap_used)]
+// - https://doc.rust-lang.org/cargo/reference/build-scripts.html#rerun-if-changed #![allow(clippy::unwrap_used)]
 #![allow(clippy::expect_used)]
+#![allow(clippy::unwrap_used)]
 #![allow(clippy::panic)]
 
 use std::env;
@@ -69,36 +69,64 @@ fn bind() {
         .allowlist_function("resetMinion")
         .allowlist_function("runMinion")
         .allowlist_function("constantAsVar")
-        .allowlist_function("newSearchOptions")
-        .allowlist_function("newSearchMethod")
-        .allowlist_function("newInstance")
-        .allowlist_function("newConstraintBlob")
-        .allowlist_function("newSearchOrder")
+        .allowlist_function("tupleList_new")
+        .allowlist_function("tupleList_free")
         .allowlist_function("getVarByName")
-        .allowlist_function("searchOptions_free")
-        .allowlist_function("searchMethod_free")
-        .allowlist_function("instance_free")
-        .allowlist_function("constraint_free")
-        .allowlist_function("searchOrder_free")
         .allowlist_function("newVar_ffi")
+        .allowlist_function("instance_new")
+        .allowlist_function("instance_free")
         .allowlist_function("instance_addSearchOrder")
         .allowlist_function("instance_addConstraint")
+        .allowlist_function("instance_addTupleTableSymbol")
+        .allowlist_function("instance_getTupleTableSymbol")
         .allowlist_function("printMatrix_addVar")
         .allowlist_function("printMatrix_getValue")
-        .allowlist_function("constraint_addVarList")
+        .allowlist_function("constraint_addList")
+        .allowlist_function("constraint_new")
+        .allowlist_function("constraint_free")
+        .allowlist_function("constraint_addVar")
+        .allowlist_function("constraint_addTwoVars")
+        .allowlist_function("constraint_addConstant")
         .allowlist_function("constraint_addConstantList")
+        .allowlist_function("constraint_addConstraint")
+        .allowlist_function("constraint_addConstraintList")
+        .allowlist_function("constraint_setTuples")
+        .allowlist_function("searchOptions_new")
+        .allowlist_function("searchOptions_free")
+        .allowlist_function("searchMethod_new")
+        .allowlist_function("searchMethod_free")
+        .allowlist_function("searchOrder_new")
+        .allowlist_function("searchOrder_free")
         .allowlist_function("vec_var_new")
         .allowlist_function("vec_var_push_back")
         .allowlist_function("vec_var_free")
         .allowlist_function("vec_int_new")
         .allowlist_function("vec_int_push_back")
         .allowlist_function("vec_int_free")
+        .allowlist_function("vec_constraints_new")
+        .allowlist_function("vec_constraints_push_back")
+        .allowlist_function("vec_constraints_free")
+        .allowlist_function("vec_vec_int_new")
+        .allowlist_function("vec_vec_int_push_back")
+        .allowlist_function("vec_vec_int_free")
         .clang_arg(format!("-I{}/build/src/", out_dir)) // generated from configure.py
         .clang_arg("-Ivendor/minion/")
         .clang_arg("-DLIBMINION")
         .clang_arg(r"--std=gnu++11")
-        .clang_arg(r"-xc++")
-        // Finish the builder and generate the bindings.
+        .clang_arg(r"-xc++");
+
+    let bindings = if std::env::var("DEBUG_MINION").is_ok() {
+        bindings
+            .clang_arg("-g")
+            .clang_arg("-D_GLIBCXX_DEBUG")
+            .clang_arg("-DMORE_SEARCH_INFO")
+            .clang_arg("-DMINION_DEBUG")
+    } else {
+        bindings
+    };
+
+    // Finish the builder and generate the bindings.
+    let bindings = bindings
         .generate()
         // Unwrap the Result and panic on failure.
         .expect("Unable to generate bindings");
