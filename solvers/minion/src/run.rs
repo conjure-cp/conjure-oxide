@@ -682,7 +682,7 @@ unsafe fn read_constant(
     raw_constraint: *mut ffi::ProbSpec_ConstraintBlob,
     constant: &Constant,
 ) -> Result<(), MinionError> {
-    let mut val: i32 = match constant {
+    let val: i32 = match constant {
         Constant::Integer(n) => Ok(*n),
         Constant::Bool(true) => Ok(1),
         Constant::Bool(false) => Ok(0),
@@ -705,6 +705,7 @@ unsafe fn read_constant_list(
             Constant::Integer(n) => Ok(*n),
             Constant::Bool(true) => Ok(1),
             Constant::Bool(false) => Ok(0),
+            #[allow(unreachable_patterns)] // TODO: can there be other types?
             x => Err(MinionError::NotImplemented(format!("{:?}", x))),
         }?;
 

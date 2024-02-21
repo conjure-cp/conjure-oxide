@@ -1,19 +1,18 @@
 // (niklasdewally): temporary, gut this if you want!
 
-use anyhow::{anyhow, bail};
-use std::collections::HashMap;
-use std::ops::Deref;
-use std::path::PathBuf;
-use std::sync::Mutex;
-
 use anyhow::Result as AnyhowResult;
+use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
 use conjure_oxide::find_conjure::conjure_executable;
+
 use conjure_oxide::parse::model_from_json;
-use conjure_oxide::rewrite::rewrite_model;
-use conjure_oxide::solvers::FromConjureModel;
-use minion_rs::ast::{Constant, Model as MinionModel, VarName};
-use minion_rs::run_minion;
+use conjure_oxide::rule_engine::resolve_rules::{
+    get_rule_priorities, get_rules_vec, resolve_rule_sets,
+};
+use conjure_oxide::rule_engine::rewrite::rewrite_model;
+use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
+use std::path::PathBuf;
+use std::process::exit;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -28,22 +27,30 @@ struct Cli {
     input_file: PathBuf,
 }
 
-static ALL_SOLUTIONS: Mutex<Vec<HashMap<VarName, Constant>>> = Mutex::new(vec![]);
-
-fn callback(solutions: HashMap<VarName, Constant>) -> bool {
-    let mut guard = ALL_SOLUTIONS.lock().unwrap();
-    guard.push(solutions);
-    true
-}
-
 pub fn main() -> AnyhowResult<()> {
-    println!(
-        "Rules: {:?}",
-        conjure_rules::get_rules()
-            .iter()
-            .map(|r| r.name)
-            .collect::<Vec<_>>()
-    );
+    let rule_sets = match resolve_rule_sets(vec!["Minion", "Constant"]) {
+        Ok(rs) => rs,
+        Err(e) => {
+            eprintln!("Error resolving rule sets: {}", e);
+            exit(1);
+        }
+    };
+
+    println!("Rule sets:");
+    print!("{{ ");
+    rule_sets.iter().for_each(|rule_set| {
+        print!("{}, ", rule_set.name);
+    });
+    print!("}}\n\n");
+
+    let rule_priorities = get_rule_priorities(&rule_sets)?;
+    let rules_vec = get_rules_vec(&rule_priorities);
+
+    println!("Rules and priorities:");
+    rules_vec.iter().for_each(|rule| {
+        println!("{}: {}", rule.name, rule_priorities.get(rule).unwrap_or(&0));
+    });
+    println!();
 
     let cli = Cli::parse();
     println!("Input file: {}", cli.input_file.display());
@@ -74,29 +81,45 @@ pub fn main() -> AnyhowResult<()> {
     let mut model = model_from_json(&astjson)?;
 
     println!("Initial model:");
-    println!("{:?}", model);
+    println!("{:#?}", model);
 
     println!("Rewriting model...");
-    model = rewrite_model(&model);
+    model = rewrite_model(&model, &rule_sets)?;
 
     println!("\nRewritten model:");
-    println!("{:?}", model);
+    println!("{:#?}", model);
 
-    println!("Building Minion model...");
-    let minion_model = MinionModel::from_conjure(model)?;
-
-    println!("Running Minion...");
-    let res = run_minion(minion_model, callback);
-    res.expect("Error occurred");
-
-    // Get solutions
-    let guard = ALL_SOLUTIONS.lock().unwrap();
-    guard.deref().iter().for_each(|solution_set| {
-        println!("Solution set:");
-        solution_set.iter().for_each(|(var, val)| {
-            println!("{}: {:?}", var, val);
-        });
-    });
+    let solutions = get_minion_solutions(model)?;
+    println!("Solutions: {:#}", minion_solutions_to_json(&solutions));
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use conjure_oxide::generate_custom::{get_example_model, get_example_model_by_path};
+
+    #[test]
+    fn test_get_example_model_success() {
+        let filename = "input";
+        get_example_model(filename).unwrap();
+    }
+
+    #[test]
+    fn test_get_example_model_by_filepath() {
+        let filepath = "tests/integration/xyz/input.essence";
+        get_example_model_by_path(filepath).unwrap();
+    }
+
+    #[test]
+    fn test_get_example_model_fail_empty_filename() {
+        let filename = "";
+        get_example_model(filename).unwrap_err();
+    }
+
+    #[test]
+    fn test_get_example_model_fail_empty_filepath() {
+        let filepath = "";
+        get_example_model_by_path(filepath).unwrap_err();
+    }
 }

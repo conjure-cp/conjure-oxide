@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter};
+use std::hash::Hash;
 
 use crate::metadata::Metadata;
 

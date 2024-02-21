@@ -6,6 +6,12 @@ pub struct Metadata {
     pub dirtyclean: bool,
 }
 
+impl Default for Metadata {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Metadata {
     pub fn new() -> Metadata {
         Metadata { dirtyclean: false }

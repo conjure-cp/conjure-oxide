@@ -121,15 +121,14 @@ pub enum Constraint {
 /// variables, but is used to allow the use of a constant in the place of a variable in a
 /// constraint.
 #[derive(Debug, Clone, Eq, PartialEq)]
-#[non_exhaustive]
 pub enum Var {
     NameRef(VarName),
     ConstantAsVar(i32),
 }
 
 /// Representation of a Minion constant.
-#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 #[non_exhaustive]
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum Constant {
     Bool(bool),
     Integer(i32),
