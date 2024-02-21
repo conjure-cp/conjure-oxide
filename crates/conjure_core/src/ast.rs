@@ -174,6 +174,11 @@ pub enum Expression {
 
     Sum(Vec<Expression>),
 
+    /// Division after preventing division by zero, usually with a top-level constraint
+    SafeDiv(Box<Expression>, Box<Expression>),
+    /// Division with a possibly undefined value (division by 0)
+    Div(Box<Expression>, Box<Expression>),
+
     #[solver(SAT)]
     Not(Box<Expression>),
     #[solver(SAT)]
@@ -229,6 +234,8 @@ impl Expression {
             Expression::Reference(_) => None,
             Expression::Nothing => None,
             Expression::Sum(exprs) => Some(exprs.iter().collect()),
+            Expression::SafeDiv(lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            Expression::Div(lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
             Expression::Not(expr_box) => Some(vec![expr_box.as_ref()]),
             Expression::Or(exprs) => Some(exprs.iter().collect()),
             Expression::And(exprs) => Some(exprs.iter().collect()),
@@ -252,6 +259,12 @@ impl Expression {
             Expression::Reference(name) => Expression::Reference(name.clone()),
             Expression::Nothing => Expression::Nothing,
             Expression::Sum(_) => Expression::Sum(sub.iter().cloned().cloned().collect()),
+            Expression::SafeDiv(_, _) => {
+                Expression::SafeDiv(Box::new(sub[0].clone()), Box::new(sub[1].clone()))
+            }
+            Expression::Div(_, _) => {
+                Expression::Div(Box::new(sub[0].clone()), Box::new(sub[1].clone()))
+            }
             Expression::Not(_) => Expression::Not(Box::new(sub[0].clone())),
             Expression::Or(_) => Expression::Or(sub.iter().cloned().cloned().collect()),
             Expression::And(_) => Expression::And(sub.iter().cloned().cloned().collect()),

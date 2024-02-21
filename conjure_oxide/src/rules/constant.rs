@@ -50,6 +50,8 @@ pub fn eval_constant(expr: &Expr) -> Option<Const> {
         Expr::SumLeq(exprs, a) => {
             flat_op::<i32, bool>(|e, a| e.iter().sum::<i32>() <= a, exprs, a).map(Const::Bool)
         }
+        Expr::Div(a, b) => bin_op::<i32, i32>(|a, b| a / b, a, b).map(Const::Int),
+        Expr::SafeDiv(a, b) => bin_op::<i32, i32>(|a, b| a / b, a, b).map(Const::Int),
         _ => {
             println!("WARNING: Unimplemented constant eval: {:?}", expr);
             None

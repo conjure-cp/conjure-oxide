@@ -608,6 +608,33 @@ fn rule_distribute_or_over_and() {
     );
 }
 
+#[test]
+fn rule_ensure_div() {
+    let ensure_div = get_rule_by_name("ensure_div").unwrap();
+
+    let expr = Expression::Div(
+        Box::new(Expression::Reference(Name::UserName("a".to_string()))),
+        Box::new(Expression::Reference(Name::UserName("b".to_string()))),
+    );
+
+    let red = ensure_div.apply(&expr, &Model::new()).unwrap();
+
+    assert_eq!(
+        red.new_expression,
+        Expression::SafeDiv(
+            Box::new(Expression::Reference(Name::UserName("a".to_string()))),
+            Box::new(Expression::Reference(Name::UserName("b".to_string()))),
+        ),
+    );
+    assert_eq!(
+        red.new_top,
+        Expression::Neq(
+            Box::new(Expression::Reference(Name::UserName("b".to_string()))),
+            Box::new(Expression::Constant(Metadata::new(), Constant::Int(0)))
+        )
+    );
+}
+
 ///
 /// Reduce and solve:
 /// ```text
