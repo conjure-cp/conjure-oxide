@@ -9,8 +9,6 @@ use std::error::Error;
 use std::path::PathBuf;
 use walkdir::WalkDir;
 
-use serde_json::Value;
-
 /// Searches recursively in `../tests/integration` folder for an `.essence` file matching the given filename,
 /// then uses conjure to process it into astjson, and returns the parsed model.
 ///
@@ -107,53 +105,4 @@ pub fn get_example_model_by_path(filepath: &str) -> Result<Model, Box<dyn Error>
     let generated_model = model_from_json(&astjson)?;
 
     Ok(generated_model)
-}
-
-/// Recursively sorts the keys of all JSON objects within the provided JSON value.
-///
-/// serde_json will output JSON objects in an arbitrary key order.
-/// this is normally fine, except in our use case we wouldn't want to update the expected output again and again.
-/// so a consistent (sorted) ordering of the keys is desirable.
-fn sort_json_object(value: &Value) -> Value {
-    match value {
-        Value::Object(obj) => {
-            let mut ordered: Vec<(String, Value)> = obj
-                .iter()
-                .map(|(k, v)| {
-                    if k == "variables" {
-                        (k.clone(), sort_json_variables(v))
-                    } else {
-                        (k.clone(), sort_json_object(v))
-                    }
-                })
-                // .map(|(k, v)| (k.clone(), sort_json_object(v)))
-                .collect();
-            ordered.sort_by(|a, b| a.0.cmp(&b.0));
-
-            Value::Object(ordered.into_iter().collect())
-        }
-        Value::Array(arr) => Value::Array(arr.iter().map(sort_json_object).collect()),
-        _ => value.clone(),
-    }
-}
-
-/// Sort the "variables" field by name.
-/// We have to do this separately becasue that field is not a JSON object, instead it's an array of tuples.
-fn sort_json_variables(value: &Value) -> Value {
-    match value {
-        Value::Array(vars) => {
-            let mut vars_sorted = vars.clone();
-            vars_sorted.sort_by(|a, b| {
-                let a_obj = &a.as_array().unwrap()[0];
-                let a_name: crate::ast::Name = serde_json::from_value(a_obj.clone()).unwrap();
-
-                let b_obj = &b.as_array().unwrap()[0];
-                let b_name: crate::ast::Name = serde_json::from_value(b_obj.clone()).unwrap();
-
-                a_name.cmp(&b_name)
-            });
-            Value::Array(vars_sorted)
-        }
-        _ => value.clone(),
-    }
 }

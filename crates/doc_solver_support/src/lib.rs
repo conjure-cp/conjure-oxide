@@ -41,14 +41,7 @@ impl VisitMut for RemoveSolverAttrs {
             i.attrs.push(doc_attr);
         }
 
-        i.attrs = i
-            .attrs
-            .iter()
-            .filter(|attr| !attr.path().is_ident("solver"))
-            .map(|attr| attr.clone())
-            .collect();
-
-        return;
+        i.attrs.retain(|attr| !attr.path().is_ident("solver"));
     }
 }
 

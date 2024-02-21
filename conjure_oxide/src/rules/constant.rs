@@ -88,7 +88,7 @@ where
     Some(f(a, b, c))
 }
 
-fn vec_op<T, A>(f: fn(Vec<T>) -> A, a: &Vec<Expr>) -> Option<A>
+fn vec_op<T, A>(f: fn(Vec<T>) -> A, a: &[Expr]) -> Option<A>
 where
     T: TryFrom<Const>,
 {
@@ -96,7 +96,7 @@ where
     Some(f(a))
 }
 
-fn flat_op<T, A>(f: fn(Vec<T>, T) -> A, a: &Vec<Expr>, b: &Expr) -> Option<A>
+fn flat_op<T, A>(f: fn(Vec<T>, T) -> A, a: &[Expr], b: &Expr) -> Option<A>
 where
     T: TryFrom<Const>,
 {

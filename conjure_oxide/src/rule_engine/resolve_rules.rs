@@ -41,6 +41,7 @@ fn get_rule_set(rule_set_name: &str) -> Result<&'static RuleSet<'static>, Resolv
 fn resolve_dependencies(
     rule_set_name: &str,
 ) -> Result<HashSet<&'static RuleSet<'static>>, ResolveRulesError> {
+    #[allow(clippy::mutable_key_type)] // RuleSet is 'static so it's fine
     let mut ans: HashSet<&'static RuleSet<'static>> = HashSet::new();
     let rule_set = get_rule_set(rule_set_name)?;
 
@@ -51,6 +52,7 @@ fn resolve_dependencies(
     }
 
     for dep in rule_set.dependencies {
+        #[allow(clippy::mutable_key_type)] // RuleSet is 'static so it's fine
         let new_dependencies = resolve_dependencies(dep)?;
         ans.extend(new_dependencies);
     }
@@ -67,9 +69,11 @@ fn resolve_dependencies(
 pub fn resolve_rule_sets<'a>(
     rule_set_names: Vec<&str>,
 ) -> Result<Vec<&'a RuleSet<'static>>, ResolveRulesError> {
+    #[allow(clippy::mutable_key_type)] // RuleSet is 'static so it's fine
     let mut rs_set: HashSet<&'static RuleSet<'static>> = HashSet::new();
 
     for rule_set_name in rule_set_names {
+        #[allow(clippy::mutable_key_type)]
         let new_dependencies = resolve_dependencies(rule_set_name)?;
         rs_set.extend(new_dependencies);
     }

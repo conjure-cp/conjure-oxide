@@ -9,8 +9,3 @@ pub fn to_set<T: Eq + Hash + Debug + Clone>(a: &Vec<T>) -> HashSet<T> {
     }
     a_set
 }
-
-pub fn if_ok<T, E: Debug>(result: Result<T, E>) -> T {
-    assert!(result.is_ok());
-    result.unwrap()
-}

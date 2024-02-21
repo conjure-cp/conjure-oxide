@@ -11,7 +11,7 @@ use crate::ast::{
 
 const SOLVER: Solver = Solver::KissSAT;
 
-struct CNF {
+struct CNFModel {
     pub clauses: Vec<Vec<i32>>,
     variables: HashMap<ConjureName, i32>,
     next_ind: i32,
@@ -40,9 +40,9 @@ pub enum CNFError {
     NestedAnd(ConjureExpression),
 }
 
-impl CNF {
-    pub fn new() -> CNF {
-        CNF {
+impl CNFModel {
+    pub fn new() -> CNFModel {
+        CNFModel {
             clauses: Vec::new(),
             variables: HashMap::new(),
             next_ind: 1,
@@ -185,8 +185,7 @@ impl CNF {
     /**
      * Convert the contents of a single Not() to CNF
      */
-    fn handle_not(&self, expr_box: &Box<ConjureExpression>) -> Result<Vec<i32>, CNFError> {
-        let expr = expr_box.as_ref();
+    fn handle_not(&self, expr: &ConjureExpression) -> Result<Vec<i32>, CNFError> {
         match expr {
             // Expression inside the Not()
             ConjureExpression::Reference(_metadata, name) => {
@@ -259,17 +258,17 @@ impl CNF {
  * Helper trait for checking if a variable is present in the CNF polymorphically (i32 or ConjureName)
  */
 trait HasVariable {
-    fn has_variable(self, cnf: &CNF) -> bool;
+    fn has_variable(self, cnf: &CNFModel) -> bool;
 }
 
 impl HasVariable for i32 {
-    fn has_variable(self, cnf: &CNF) -> bool {
+    fn has_variable(self, cnf: &CNFModel) -> bool {
         return cnf.get_name(self).is_some();
     }
 }
 
 impl HasVariable for &ConjureName {
-    fn has_variable(self, cnf: &CNF) -> bool {
+    fn has_variable(self, cnf: &CNFModel) -> bool {
         cnf.get_index(self).is_some()
     }
 }
@@ -280,16 +279,25 @@ impl HasVariable for &ConjureName {
 * - Expressions must be Reference, Not(Reference), or Or(Reference1, Not(Reference2), ...)
 * - The top level And() may contain nested Or()s. Any other nested expressions are not allowed.
 */
-impl FromConjureModel for CNF {
+impl FromConjureModel for CNFModel {
     /**
      * Convert a Conjure model to a CNF
      */
     fn from_conjure(conjure_model: ConjureModel) -> Result<Self, SolverError> {
-        let mut ans: CNF = CNF::new();
+        let mut ans: CNFModel = CNFModel::new();
 
         for var in conjure_model.variables.keys() {
             // Check that domain has the correct type
-            let decision_var = conjure_model.variables.get(var).unwrap();
+            let decision_var = match conjure_model.variables.get(var) {
+                None => {
+                    return Err(SolverError::InvalidInstance(
+                        SOLVER,
+                        format!("variable {:?} not found", var),
+                    ));
+                }
+                Some(var) => var,
+            };
+
             if decision_var.domain != ConjureDomain::BoolDomain {
                 return Err(SolverError::NotSupported(
                     SOLVER,
@@ -322,9 +330,8 @@ mod tests {
     use crate::ast::Expression::{And, Not, Or, Reference};
     use crate::ast::{DecisionVariable, Model};
     use crate::ast::{Expression, Name};
-    use crate::solvers::kissat::CNF;
+    use crate::solvers::kissat::CNFModel;
     use crate::solvers::{FromConjureModel, SolverError};
-    use crate::utils::misc::if_ok;
     use crate::utils::testing::assert_eq_any_order;
 
     #[test]
@@ -337,7 +344,7 @@ mod tests {
         model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
         model.add_constraint(Reference(Metadata::new(), x.clone()));
 
-        let res: Result<CNF, SolverError> = CNF::from_conjure(model);
+        let res: Result<CNFModel, SolverError> = CNFModel::from_conjure(model);
         assert!(res.is_ok());
 
         let cnf = res.unwrap();
@@ -362,12 +369,12 @@ mod tests {
             Box::from(Reference(Metadata::new(), x.clone())),
         ));
 
-        let cnf: CNF = CNF::from_conjure(model).unwrap();
+        let cnf: CNFModel = CNFModel::from_conjure(model).unwrap();
         assert_eq!(cnf.get_index(&x), Some(1));
         assert_eq!(cnf.clauses, vec![vec![-1]]);
 
         assert_eq!(
-            if_ok(cnf.as_expression()),
+            cnf.as_expression().unwrap(),
             And(
                 Metadata::new(),
                 vec![Or(
@@ -401,14 +408,14 @@ mod tests {
             ],
         ));
 
-        let cnf: CNF = CNF::from_conjure(model).unwrap();
+        let cnf: CNFModel = CNFModel::from_conjure(model).unwrap();
 
         let xi = cnf.get_index(&x).unwrap();
         let yi = cnf.get_index(&y).unwrap();
         assert_eq_any_order(&cnf.clauses, &vec![vec![xi, yi]]);
 
         assert_eq!(
-            if_ok(cnf.as_expression()),
+            cnf.as_expression().unwrap(),
             And(
                 Metadata::new(),
                 vec![Or(
@@ -445,14 +452,14 @@ mod tests {
             ],
         ));
 
-        let cnf: CNF = CNF::from_conjure(model).unwrap();
+        let cnf: CNFModel = CNFModel::from_conjure(model).unwrap();
 
         let xi = cnf.get_index(&x).unwrap();
         let yi = cnf.get_index(&y).unwrap();
         assert_eq_any_order(&cnf.clauses, &vec![vec![xi, -yi]]);
 
         assert_eq!(
-            if_ok(cnf.as_expression()),
+            cnf.as_expression().unwrap(),
             And(
                 Metadata::new(),
                 vec![Or(
@@ -484,14 +491,14 @@ mod tests {
         model.add_constraint(Reference(Metadata::new(), x.clone()));
         model.add_constraint(Reference(Metadata::new(), y.clone()));
 
-        let cnf: CNF = CNF::from_conjure(model).unwrap();
+        let cnf: CNFModel = CNFModel::from_conjure(model).unwrap();
 
         let xi = cnf.get_index(&x).unwrap();
         let yi = cnf.get_index(&y).unwrap();
         assert_eq_any_order(&cnf.clauses, &vec![vec![xi], vec![yi]]);
 
         assert_eq!(
-            if_ok(cnf.as_expression()),
+            cnf.as_expression().unwrap(),
             And(
                 Metadata::new(),
                 vec![
@@ -522,14 +529,14 @@ mod tests {
             ],
         ));
 
-        let cnf: CNF = CNF::from_conjure(model).unwrap();
+        let cnf: CNFModel = CNFModel::from_conjure(model).unwrap();
 
         let xi = cnf.get_index(&x).unwrap();
         let yi = cnf.get_index(&y).unwrap();
         assert_eq_any_order(&cnf.clauses, &vec![vec![xi], vec![yi]]);
 
         assert_eq!(
-            if_ok(cnf.as_expression()),
+            cnf.as_expression().unwrap(),
             And(
                 Metadata::new(),
                 vec![
@@ -568,7 +575,7 @@ mod tests {
             ],
         ));
 
-        let cnf: CNF = CNF::from_conjure(model).unwrap();
+        let cnf: CNFModel = CNFModel::from_conjure(model).unwrap();
 
         let xi = cnf.get_index(&x).unwrap();
         let yi = cnf.get_index(&y).unwrap();
@@ -576,7 +583,7 @@ mod tests {
         assert_eq_any_order(&cnf.clauses, &vec![vec![xi, yi, zi]]);
 
         assert_eq!(
-            if_ok(cnf.as_expression()),
+            cnf.as_expression().unwrap(),
             And(
                 Metadata::new(),
                 vec![Or(
@@ -611,7 +618,7 @@ mod tests {
         model.add_constraint(Reference(Metadata::new(), x.clone()));
         model.add_constraint(Reference(Metadata::new(), y.clone()));
 
-        let cnf: Result<CNF, SolverError> = CNF::from_conjure(model);
+        let cnf: Result<CNFModel, SolverError> = CNFModel::from_conjure(model);
         assert!(cnf.is_err());
     }
 
@@ -633,7 +640,7 @@ mod tests {
             Box::from(Reference(Metadata::new(), y.clone())),
         ));
 
-        let cnf: Result<CNF, SolverError> = CNF::from_conjure(model);
+        let cnf: Result<CNFModel, SolverError> = CNFModel::from_conjure(model);
         assert!(cnf.is_err());
     }
 }

@@ -267,15 +267,20 @@ fn parse_vec_op(
 
 fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expression> {
     match &constant["Constant"] {
-        Value::Object(int) if int.contains_key("ConstantInt") => Some(Expression::Constant(
-            Metadata::new(),
-            Constant::Int(
-                int["ConstantInt"].as_array()?[1]
-                    .as_i64()?
-                    .try_into()
-                    .unwrap(),
-            ),
-        )),
+        Value::Object(int) if int.contains_key("ConstantInt") => {
+            let int_32: i32 = match int["ConstantInt"].as_array()?[1].as_i64()?.try_into() {
+                Ok(x) => x,
+                Err(_) => {
+                    println!(
+                        "Could not convert integer constant to i32: {:#?}",
+                        int["ConstantInt"]
+                    );
+                    return None;
+                }
+            };
+
+            Some(Expression::Constant(Metadata::new(), Constant::Int(int_32)))
+        }
         otherwise => panic!("Unhandled parse_constant {:#?}", otherwise),
     }
 }
