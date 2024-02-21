@@ -106,7 +106,7 @@ fn sum_constants(expr: &Expr, _: &Model) -> ApplicationResult {
             let mut changed = false;
             for e in exprs {
                 match e {
-                    Expr::Constant(_, Const::Int(i)) => {
+                    Expr::Constant(_metadata, Const::Int(i)) => {
                         sum += i;
                         changed = true;
                     }

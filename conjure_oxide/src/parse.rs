@@ -29,13 +29,15 @@ pub fn model_from_json(str: &str) -> Result<Model> {
                 m.add_variable(name, var);
             }
             "SuchThat" => {
-                let constraints: Vec<Expression> = entry
-                    .1
-                    .as_array()
-                    .unwrap()
-                    .iter()
-                    .flat_map(parse_expression)
-                    .collect();
+                let constraints_arr = match entry.1.as_array() {
+                    Some(x) => x,
+                    None => {
+                        return Err(Error::Parse("SuchThat is not a vector".to_owned()));
+                    }
+                };
+
+                let constraints: Vec<Expression> =
+                    constraints_arr.iter().flat_map(parse_expression).collect();
                 m.add_constraints(constraints);
                 // println!("Nb constraints {}", m.constraints.len());
             }
@@ -279,15 +281,20 @@ fn parse_vec_op(
 
 fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expression> {
     match &constant["Constant"] {
-        Value::Object(int) if int.contains_key("ConstantInt") => Some(Expression::Constant(
-            Metadata::new(),
-            Constant::Int(
-                int["ConstantInt"].as_array()?[1]
-                    .as_i64()?
-                    .try_into()
-                    .unwrap(),
-            ),
-        )),
+        Value::Object(int) if int.contains_key("ConstantInt") => {
+            let int_32: i32 = match int["ConstantInt"].as_array()?[1].as_i64()?.try_into() {
+                Ok(x) => x,
+                Err(_) => {
+                    println!(
+                        "Could not convert integer constant to i32: {:#?}",
+                        int["ConstantInt"]
+                    );
+                    return None;
+                }
+            };
+
+            Some(Expression::Constant(Metadata::new(), Constant::Int(int_32)))
+        }
         otherwise => panic!("Unhandled parse_constant {:#?}", otherwise),
     }
 }

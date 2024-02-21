@@ -114,13 +114,13 @@ pub enum Constraint {
 /// The latter is not stored in the symbol table, or counted in Minions internal list of all
 /// variables, but is used to allow the use of a constant in the place of a variable in a
 /// constraint.
-#[derive(Debug, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Var {
     NameRef(VarName),
     ConstantAsVar(i32),
 }
 
-#[derive(Debug, Eq, PartialEq, Clone)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum Constant {
     Bool(bool),
     Integer(i32),

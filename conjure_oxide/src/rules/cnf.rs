@@ -67,7 +67,7 @@ fn distribute_not_over_or(expr: &Expr, _: &Model) -> ApplicationResult {
  */
 #[register_rule(("CNF", 100))]
 fn distribute_or_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
-    fn find_and(exprs: &Vec<Expr>) -> Option<usize> {
+    fn find_and(exprs: &[Expr]) -> Option<usize> {
         // ToDo: may be better to move this to some kind of utils module?
         for (i, e) in exprs.iter().enumerate() {
             if let Expr::And(_, _) = e {

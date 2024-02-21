@@ -134,9 +134,7 @@ pub fn get_rule_sets() -> Vec<&'static RuleSet<'static>> {
 /// use conjure_rules::register_rule_set;
 /// register_rule_set!("MyRuleSet", 10, ("DependencyRuleSet", "AnotherRuleSet"));
 ///
-/// fn main() {
-///  println!("Rule set: {:?}", conjure_rules::get_rule_set_by_name("MyRuleSet"));
-/// }
+/// println!("Rule set: {:?}", conjure_rules::get_rule_set_by_name("MyRuleSet"));
 /// ```
 ///
 /// This will print:

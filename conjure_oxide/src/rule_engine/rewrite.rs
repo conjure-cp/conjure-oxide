@@ -11,6 +11,7 @@ use conjure_rules::get_rules;
 use conjure_rules::rule_set::RuleSet;
 
 struct RuleResult<'a> {
+    #[allow(dead_code)] // Not used yet, but will be useful to have
     rule: &'a Rule<'a>,
     reduction: Reduction,
 }

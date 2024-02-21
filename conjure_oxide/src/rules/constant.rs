@@ -24,7 +24,6 @@ pub fn eval_constant(expr: &Expr) -> Option<Const> {
     match expr {
         Expr::Constant(_, c) => Some(c.clone()),
         Expr::Reference(_, _) => None,
-
         Expr::Eq(_, a, b) => bin_op::<i32, bool>(|a, b| a == b, a, b)
             .or_else(|| bin_op::<bool, bool>(|a, b| a == b, a, b))
             .map(Const::Bool),
@@ -91,7 +90,7 @@ where
     Some(f(a, b, c))
 }
 
-fn vec_op<T, A>(f: fn(Vec<T>) -> A, a: &Vec<Expr>) -> Option<A>
+fn vec_op<T, A>(f: fn(Vec<T>) -> A, a: &[Expr]) -> Option<A>
 where
     T: TryFrom<Const>,
 {
@@ -99,7 +98,7 @@ where
     Some(f(a))
 }
 
-fn flat_op<T, A>(f: fn(Vec<T>, T) -> A, a: &Vec<Expr>, b: &Expr) -> Option<A>
+fn flat_op<T, A>(f: fn(Vec<T>, T) -> A, a: &[Expr], b: &Expr) -> Option<A>
 where
     T: TryFrom<Const>,
 {
