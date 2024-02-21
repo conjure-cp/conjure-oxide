@@ -23,7 +23,7 @@ fn is_nested_sum(exprs: &Vec<Expr>) -> bool {
  */
 fn sum_to_vector(expr: &Expr) -> Result<Vec<Expr>, RuleApplicationError> {
     match expr {
-        Expr::Sum(metadata, exprs) => {
+        Expr::Sum(_, exprs) => {
             if is_nested_sum(exprs) {
                 Err(RuleApplicationError::RuleNotApplicable)
             } else {

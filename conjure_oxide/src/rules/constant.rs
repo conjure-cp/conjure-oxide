@@ -23,37 +23,37 @@ fn apply_eval_constant(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 /// `Some(Const)` if the expression can be simplified to a constant
 pub fn eval_constant(expr: &Expr) -> Option<Const> {
     match expr {
-        Expr::Constant(metadata, c) => Some(c.clone()),
-        Expr::Reference(metadata, _) => None,
+        Expr::Constant(_, c) => Some(c.clone()),
+        Expr::Reference(_, _) => None,
 
-        Expr::Eq(metadata, a, b) => bin_op::<i32, bool>(|a, b| a == b, a, b)
+        Expr::Eq(_, a, b) => bin_op::<i32, bool>(|a, b| a == b, a, b)
             .or_else(|| bin_op::<bool, bool>(|a, b| a == b, a, b))
             .map(Const::Bool),
-        Expr::Neq(metadata, a, b) => bin_op::<i32, bool>(|a, b| a != b, a, b).map(Const::Bool),
-        Expr::Lt(metadata, a, b) => bin_op::<i32, bool>(|a, b| a < b, a, b).map(Const::Bool),
-        Expr::Gt(metadata, a, b) => bin_op::<i32, bool>(|a, b| a > b, a, b).map(Const::Bool),
-        Expr::Leq(metadata, a, b) => bin_op::<i32, bool>(|a, b| a <= b, a, b).map(Const::Bool),
-        Expr::Geq(metadata, a, b) => bin_op::<i32, bool>(|a, b| a >= b, a, b).map(Const::Bool),
+        Expr::Neq(_, a, b) => bin_op::<i32, bool>(|a, b| a != b, a, b).map(Const::Bool),
+        Expr::Lt(_, a, b) => bin_op::<i32, bool>(|a, b| a < b, a, b).map(Const::Bool),
+        Expr::Gt(_, a, b) => bin_op::<i32, bool>(|a, b| a > b, a, b).map(Const::Bool),
+        Expr::Leq(_, a, b) => bin_op::<i32, bool>(|a, b| a <= b, a, b).map(Const::Bool),
+        Expr::Geq(_, a, b) => bin_op::<i32, bool>(|a, b| a >= b, a, b).map(Const::Bool),
 
-        Expr::Not(metadata, expr) => un_op::<bool, bool>(|e| !e, expr).map(Const::Bool),
+        Expr::Not(_, expr) => un_op::<bool, bool>(|e| !e, expr).map(Const::Bool),
 
-        Expr::And(metadata, exprs) => {
+        Expr::And(_, exprs) => {
             vec_op::<bool, bool>(|e| e.iter().all(|&e| e), exprs).map(Const::Bool)
         }
-        Expr::Or(metadata, exprs) => {
+        Expr::Or(_, exprs) => {
             vec_op::<bool, bool>(|e| e.iter().any(|&e| e), exprs).map(Const::Bool)
         }
 
-        Expr::Sum(metadata, exprs) => vec_op::<i32, i32>(|e| e.iter().sum(), exprs).map(Const::Int),
+        Expr::Sum(_, exprs) => vec_op::<i32, i32>(|e| e.iter().sum(), exprs).map(Const::Int),
 
-        Expr::Ineq(metadata, a, b, c) => {
+        Expr::Ineq(_, a, b, c) => {
             tern_op::<i32, bool>(|a, b, c| a <= (b + c), a, b, c).map(Const::Bool)
         }
 
-        Expr::SumGeq(metadata, exprs, a) => {
+        Expr::SumGeq(_, exprs, a) => {
             flat_op::<i32, bool>(|e, a| e.iter().sum::<i32>() >= a, exprs, a).map(Const::Bool)
         }
-        Expr::SumLeq(metadata, exprs, a) => {
+        Expr::SumLeq(_, exprs, a) => {
             flat_op::<i32, bool>(|e, a| e.iter().sum::<i32>() <= a, exprs, a).map(Const::Bool)
         }
         _ => {

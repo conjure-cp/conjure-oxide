@@ -14,7 +14,7 @@ register_rule_set!("CNF", 100, ("Base"));
 * not(and(a, b)) = or(not a, not b)
 * ```
  */
-#[register_rule(("CNF", 100))] // ToDo: not sure about the priority - discuss
+#[register_rule(("CNF", 100))]
 fn distribute_not_over_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
         Expr::Not(_, contents) => match contents.as_ref() {
