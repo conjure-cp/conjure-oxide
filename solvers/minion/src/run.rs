@@ -2,10 +2,7 @@ use std::{
     collections::HashMap,
     ffi::CString,
     sync::atomic::Ordering,
-    sync::{
-        atomic::{AtomicBool},
-        Mutex, MutexGuard,
-    },
+    sync::{atomic::AtomicBool, Mutex, MutexGuard},
 };
 
 use crate::ffi::{self};

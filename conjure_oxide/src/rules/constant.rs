@@ -11,7 +11,6 @@ fn apply_eval_constant(expr: &Expr) -> Result<Expr, RuleApplicationError> {
         return Err(RuleApplicationError::RuleNotApplicable);
     }
 
-    
     eval_constant(expr)
         .map(|c| Expr::Constant(Metadata::new(), c))
         .ok_or(RuleApplicationError::RuleNotApplicable)
