@@ -34,7 +34,7 @@ impl Model {
 
     pub fn get_constraints_vec(&self) -> Vec<Expression> {
         match &self.constraints {
-            Expression::And(constraints) => constraints.clone(),
+            Expression::And(_, constraints) => constraints.clone(),
             Expression::Nothing => vec![],
             _ => vec![self.constraints.clone()],
         }
@@ -46,7 +46,7 @@ impl Model {
         } else if constraints.len() == 1 {
             self.constraints = constraints[0].clone();
         } else {
-            self.constraints = Expression::And(constraints);
+            self.constraints = Expression::And(Metadata::new(), constraints);
         }
     }
 
@@ -167,23 +167,23 @@ pub enum Expression {
     Constant(Metadata, Constant),
 
     #[solver(Minion)]
-    Reference(Name),
+    Reference(Metadata, Name),
 
-    Sum(Vec<Expression>),
+    Sum(Metadata, Vec<Expression>),
 
     #[solver(SAT)]
-    Not(Box<Expression>),
+    Not(Metadata, Box<Expression>),
     #[solver(SAT)]
-    Or(Vec<Expression>),
+    Or(Metadata, Vec<Expression>),
     #[solver(SAT)]
-    And(Vec<Expression>),
+    And(Metadata, Vec<Expression>),
 
-    Eq(Box<Expression>, Box<Expression>),
-    Neq(Box<Expression>, Box<Expression>),
-    Geq(Box<Expression>, Box<Expression>),
-    Leq(Box<Expression>, Box<Expression>),
-    Gt(Box<Expression>, Box<Expression>),
-    Lt(Box<Expression>, Box<Expression>),
+    Eq(Metadata, Box<Expression>, Box<Expression>),
+    Neq(Metadata, Box<Expression>, Box<Expression>),
+    Geq(Metadata, Box<Expression>, Box<Expression>),
+    Leq(Metadata, Box<Expression>, Box<Expression>),
+    Gt(Metadata, Box<Expression>, Box<Expression>),
+    Lt(Metadata, Box<Expression>, Box<Expression>),
 
     /* Flattened SumEq.
      *
@@ -192,15 +192,15 @@ pub enum Expression {
      *
      * ToDo: This is a stop gap solution. Eventually it may be better to have multiple constraints instead? (gs248)
      */
-    SumEq(Vec<Expression>, Box<Expression>),
+    SumEq(Metadata, Vec<Expression>, Box<Expression>),
 
     // Flattened Constraints
     #[solver(Minion)]
-    SumGeq(Vec<Expression>, Box<Expression>),
+    SumGeq(Metadata, Vec<Expression>, Box<Expression>),
     #[solver(Minion)]
-    SumLeq(Vec<Expression>, Box<Expression>),
+    SumLeq(Metadata, Vec<Expression>, Box<Expression>),
     #[solver(Minion)]
-    Ineq(Box<Expression>, Box<Expression>, Box<Expression>),
+    Ineq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
 }
 
 impl Expression {
@@ -213,7 +213,7 @@ impl Expression {
      */
     pub fn sub_expressions(&self) -> Option<Vec<&Expression>> {
         fn unwrap_flat_expression<'a>(
-            lhs: &'a Vec<Expression>,
+            lhs: &'a [Expression],
             rhs: &'a Box<Expression>,
         ) -> Vec<&'a Expression> {
             let mut sub_exprs = lhs.iter().collect::<Vec<_>>();
@@ -223,66 +223,92 @@ impl Expression {
 
         match self {
             Expression::Constant(_, _) => None,
-            Expression::Reference(_) => None,
+            Expression::Reference(_, _) => None,
             Expression::Nothing => None,
-            Expression::Sum(exprs) => Some(exprs.iter().collect()),
-            Expression::Not(expr_box) => Some(vec![expr_box.as_ref()]),
-            Expression::Or(exprs) => Some(exprs.iter().collect()),
-            Expression::And(exprs) => Some(exprs.iter().collect()),
-            Expression::Eq(lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
-            Expression::Neq(lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
-            Expression::Geq(lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
-            Expression::Leq(lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
-            Expression::Gt(lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
-            Expression::Lt(lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
-            Expression::SumGeq(lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
-            Expression::SumLeq(lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
-            Expression::SumEq(lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
-            Expression::Ineq(lhs, rhs, _) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            Expression::Sum(_, exprs) => Some(exprs.iter().collect()),
+            Expression::Not(_, expr_box) => Some(vec![expr_box.as_ref()]),
+            Expression::Or(_, exprs) => Some(exprs.iter().collect()),
+            Expression::And(_, exprs) => Some(exprs.iter().collect()),
+            Expression::Eq(_, lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            Expression::Neq(_, lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            Expression::Geq(_, lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            Expression::Leq(_, lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            Expression::Gt(_, lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            Expression::Lt(_, lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            Expression::SumGeq(_, lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
+            Expression::SumLeq(_, lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
+            Expression::SumEq(_, lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
+            Expression::Ineq(_, lhs, rhs, _) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
         }
     }
 
     /// Returns a clone of the same expression type with the given sub-expressions.
     pub fn with_sub_expressions(&self, sub: Vec<&Expression>) -> Expression {
         match self {
-            Expression::Constant(m, c) => Expression::Constant(m.clone(), c.clone()),
-            Expression::Reference(name) => Expression::Reference(name.clone()),
+            Expression::Constant(metadata, c) => Expression::Constant(metadata.clone(), c.clone()),
+            Expression::Reference(metadata, name) => {
+                Expression::Reference(metadata.clone(), name.clone())
+            }
             Expression::Nothing => Expression::Nothing,
-            Expression::Sum(_) => Expression::Sum(sub.iter().cloned().cloned().collect()),
-            Expression::Not(_) => Expression::Not(Box::new(sub[0].clone())),
-            Expression::Or(_) => Expression::Or(sub.iter().cloned().cloned().collect()),
-            Expression::And(_) => Expression::And(sub.iter().cloned().cloned().collect()),
-            Expression::Eq(_, _) => {
-                Expression::Eq(Box::new(sub[0].clone()), Box::new(sub[1].clone()))
+            Expression::Sum(metadata, _) => {
+                Expression::Sum(metadata.clone(), sub.iter().cloned().cloned().collect())
             }
-            Expression::Neq(_, _) => {
-                Expression::Neq(Box::new(sub[0].clone()), Box::new(sub[1].clone()))
+            Expression::Not(metadata, _) => {
+                Expression::Not(metadata.clone(), Box::new(sub[0].clone()))
             }
-            Expression::Geq(_, _) => {
-                Expression::Geq(Box::new(sub[0].clone()), Box::new(sub[1].clone()))
+            Expression::Or(metadata, _) => {
+                Expression::Or(metadata.clone(), sub.iter().cloned().cloned().collect())
             }
-            Expression::Leq(_, _) => {
-                Expression::Leq(Box::new(sub[0].clone()), Box::new(sub[1].clone()))
+            Expression::And(metadata, _) => {
+                Expression::And(metadata.clone(), sub.iter().cloned().cloned().collect())
             }
-            Expression::Gt(_, _) => {
-                Expression::Gt(Box::new(sub[0].clone()), Box::new(sub[1].clone()))
-            }
-            Expression::Lt(_, _) => {
-                Expression::Lt(Box::new(sub[0].clone()), Box::new(sub[1].clone()))
-            }
-            Expression::SumGeq(_, _) => Expression::SumGeq(
+            Expression::Eq(metadata, _, _) => Expression::Eq(
+                metadata.clone(),
+                Box::new(sub[0].clone()),
+                Box::new(sub[1].clone()),
+            ),
+            Expression::Neq(metadata, _, _) => Expression::Neq(
+                metadata.clone(),
+                Box::new(sub[0].clone()),
+                Box::new(sub[1].clone()),
+            ),
+            Expression::Geq(metadata, _, _) => Expression::Geq(
+                metadata.clone(),
+                Box::new(sub[0].clone()),
+                Box::new(sub[1].clone()),
+            ),
+            Expression::Leq(metadata, _, _) => Expression::Leq(
+                metadata.clone(),
+                Box::new(sub[0].clone()),
+                Box::new(sub[1].clone()),
+            ),
+            Expression::Gt(metadata, _, _) => Expression::Gt(
+                metadata.clone(),
+                Box::new(sub[0].clone()),
+                Box::new(sub[1].clone()),
+            ),
+            Expression::Lt(metadata, _, _) => Expression::Lt(
+                metadata.clone(),
+                Box::new(sub[0].clone()),
+                Box::new(sub[1].clone()),
+            ),
+            Expression::SumGeq(metadata, _, _) => Expression::SumGeq(
+                metadata.clone(),
                 sub.iter().cloned().cloned().collect(),
                 Box::new(sub[2].clone()), // ToDo (gs248) - Why are we using sub[2] here?
             ),
-            Expression::SumLeq(_, _) => Expression::SumLeq(
+            Expression::SumLeq(metadata, _, _) => Expression::SumLeq(
+                metadata.clone(),
                 sub.iter().cloned().cloned().collect(),
                 Box::new(sub[2].clone()),
             ),
-            Expression::SumEq(_, _) => Expression::SumEq(
+            Expression::SumEq(metadata, _, _) => Expression::SumEq(
+                metadata.clone(),
                 sub.iter().cloned().cloned().collect(),
                 Box::new(sub[2].clone()),
             ),
-            Expression::Ineq(_, _, _) => Expression::Ineq(
+            Expression::Ineq(metadata, _, _, _) => Expression::Ineq(
+                metadata.clone(),
                 Box::new(sub[0].clone()),
                 Box::new(sub[1].clone()),
                 Box::new(sub[2].clone()),
@@ -291,10 +317,7 @@ impl Expression {
     }
 
     pub fn is_constant(&self) -> bool {
-        match self {
-            Expression::Constant(_, _) => true,
-            _ => false,
-        }
+        matches!(self, Expression::Constant(_, _))
     }
 }
 
@@ -329,28 +352,61 @@ impl Display for Constant {
 impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
-            Expression::Constant(m, c) => write!(f, "Constant({}, {})", m, c),
-            Expression::Reference(name) => write!(f, "Reference({})", name),
+            Expression::Constant(metadata, c) => write!(f, "Constant({}, {})", metadata, c),
+            Expression::Reference(metadata, name) => write!(f, "Reference({}, {})", metadata, name),
             Expression::Nothing => write!(f, "Nothing"),
-            Expression::Sum(expressions) => write!(f, "Sum({})", display_expressions(expressions)),
-            Expression::Not(expr_box) => write!(f, "Not({})", expr_box.clone()),
-            Expression::Or(expressions) => write!(f, "Not({})", display_expressions(expressions)),
-            Expression::And(expressions) => write!(f, "And({})", display_expressions(expressions)),
-            Expression::Eq(box1, box2) => write!(f, "Eq({}, {})", box1.clone(), box2.clone()),
-            Expression::Neq(box1, box2) => write!(f, "Neq({}, {})", box1.clone(), box2.clone()),
-            Expression::Geq(box1, box2) => write!(f, "Geq({}, {})", box1.clone(), box2.clone()),
-            Expression::Leq(box1, box2) => write!(f, "Leq({}, {})", box1.clone(), box2.clone()),
-            Expression::Gt(box1, box2) => write!(f, "Gt({}, {})", box1.clone(), box2.clone()),
-            Expression::Lt(box1, box2) => write!(f, "Lt({}, {})", box1.clone(), box2.clone()),
-            Expression::SumGeq(box1, box2) => {
-                write!(f, "SumGeq({}, {})", display_expressions(box1), box2.clone())
+            Expression::Sum(metadata, expressions) => {
+                write!(f, "Sum({}, {})", metadata, display_expressions(expressions))
             }
-            Expression::SumLeq(box1, box2) => {
-                write!(f, "SumLeq({}, {})", display_expressions(box1), box2.clone())
+            Expression::Not(metadata, expr_box) => {
+                write!(f, "Not({}, {})", metadata, expr_box.clone())
             }
-            Expression::Ineq(box1, box2, box3) => write!(
+            Expression::Or(metadata, expressions) => {
+                write!(f, "Not({}, {})", metadata, display_expressions(expressions))
+            }
+            Expression::And(metadata, expressions) => {
+                write!(f, "And({}, {})", metadata, display_expressions(expressions))
+            }
+            Expression::Eq(metadata, box1, box2) => {
+                write!(f, "Eq({}, {}, {})", metadata, box1.clone(), box2.clone())
+            }
+            Expression::Neq(metadata, box1, box2) => {
+                write!(f, "Neq({}, {}, {})", metadata, box1.clone(), box2.clone())
+            }
+            Expression::Geq(metadata, box1, box2) => {
+                write!(f, "Geq({}, {}, {})", metadata, box1.clone(), box2.clone())
+            }
+            Expression::Leq(metadata, box1, box2) => {
+                write!(f, "Leq({}, {}, {})", metadata, box1.clone(), box2.clone())
+            }
+            Expression::Gt(metadata, box1, box2) => {
+                write!(f, "Gt({}, {}, {})", metadata, box1.clone(), box2.clone())
+            }
+            Expression::Lt(metadata, box1, box2) => {
+                write!(f, "Lt({}, {}, {})", metadata, box1.clone(), box2.clone())
+            }
+            Expression::SumGeq(metadata, box1, box2) => {
+                write!(
+                    f,
+                    "SumGeq({}, {}. {})",
+                    metadata,
+                    display_expressions(box1),
+                    box2.clone()
+                )
+            }
+            Expression::SumLeq(metadata, box1, box2) => {
+                write!(
+                    f,
+                    "SumLeq({}, {}, {})",
+                    metadata,
+                    display_expressions(box1),
+                    box2.clone()
+                )
+            }
+            Expression::Ineq(metadata, box1, box2, box3) => write!(
                 f,
-                "Ineq({}, {}, {})",
+                "Ineq({}, {}, {}, {})",
+                metadata,
                 box1.clone(),
                 box2.clone(),
                 box3.clone()
