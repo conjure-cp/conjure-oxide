@@ -8,6 +8,9 @@ on:
 
 env:
   rust_release: nightly
+  SCCACHE_GHA_ENABLED: "true"
+  RUSTC_WRAPPER: "sccache"
+
 
 jobs:
   coverage:
@@ -17,25 +20,15 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v2
 
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.3
+
       - name: Get Sha
         id: sha
         run: |
           echo -e "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
           echo -e "sha=${{ github.sha }}"
 
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin
-            ~/.cargo/registry/index
-            ~/.cargo/registry/cache
-            ~/.cargo/git/db
-            target
-            solvers/minion/vendor
-            solvers/chuffed/vendor
-
-          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
-          restore-keys: ${{ runner.os }}-${{ env.rust_release }}-
 
       - name: Install rust ${{ env.rust_release }}
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}

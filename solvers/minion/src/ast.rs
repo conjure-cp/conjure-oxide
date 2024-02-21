@@ -3,6 +3,8 @@
 use std::collections::HashMap;
 
 pub type VarName = String;
+pub type Tuple = (Constant, Constant);
+pub type TwoVars = (Var, Var);
 
 pub struct Model {
     /// A lookup table of all named variables.
@@ -25,13 +27,86 @@ impl Default for Model {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+#[non_exhaustive]
 pub enum Constraint {
+    Difference(TwoVars, Var),
+    Div(TwoVars, Var),
+    DivUndefZero(TwoVars, Var),
+    Modulo(TwoVars, Var),
+    ModuloUndefZero(TwoVars, Var),
+    Pow(TwoVars, Var),
+    Product(TwoVars, Var),
+    WeightedSumGeq(Vec<Constant>, Vec<Var>, Var),
+    WeightedSumLeq(Vec<Constant>, Vec<Var>, Var),
+    CheckAssign(Box<Constraint>),
+    CheckGsa(Box<Constraint>),
+    ForwardChecking(Box<Constraint>),
+    Reify(Box<Constraint>, Var),
+    ReifyImply(Box<Constraint>, Var),
+    ReifyImplyQuick(Box<Constraint>, Var),
+    WatchedAnd(Vec<Constraint>),
+    WatchedOr(Vec<Constraint>),
+    GacAllDiff(Vec<Var>),
+    AllDiff(Vec<Var>),
+    AllDiffMatrix(Vec<Var>, Constant),
+    WatchSumGeq(Vec<Var>, Constant),
+    WatchSumLeq(Vec<Var>, Constant),
+    OccurrenceGeq(Vec<Var>, Constant, Constant),
+    OccurrenceLeq(Vec<Var>, Constant, Constant),
+    Occurrence(Vec<Var>, Constant, Var),
+    LitSumGeq(Vec<Var>, Vec<Constant>, Constant),
+    Gcc(Vec<Var>, Vec<Constant>, Vec<Var>),
+    GccWeak(Vec<Var>, Vec<Constant>, Vec<Var>),
+    LexLeqRv(Vec<Var>, Vec<Var>),
+    LexLeq(Vec<Var>, Vec<Var>),
+    LexLess(Vec<Var>, Vec<Var>),
+    LexLeqQuick(Vec<Var>, Vec<Var>),
+    LexLessQuick(Vec<Var>, Vec<Var>),
+    WatchVecNeq(Vec<Var>, Vec<Var>),
+    WatchVecExistsLess(Vec<Var>, Vec<Var>),
+    Hamming(Vec<Var>, Vec<Var>, Constant),
+    NotHamming(Vec<Var>, Vec<Var>, Constant),
+    FrameUpdate(Vec<Var>, Vec<Var>, Vec<Var>, Vec<Var>, Constant),
+    //HaggisGac(Vec<Var>,Vec<
+    //HaggisGacStable
+    //ShortStr2
+    //ShortcTupleStr2
+    NegativeTable(Vec<Var>, Vec<Tuple>),
+    Table(Vec<Var>, Vec<Tuple>),
+    GacSchema(Vec<Var>, Vec<Tuple>),
+    LightTable(Vec<Var>, Vec<Tuple>),
+    Mddc(Vec<Var>, Vec<Tuple>),
+    NegativeMddc(Vec<Var>, Vec<Tuple>),
+    Str2Plus(Vec<Var>, Var),
+    Max(Vec<Var>, Var),
+    Min(Vec<Var>, Var),
+    NvalueGeq(Vec<Var>, Var),
+    NvalueLeq(Vec<Var>, Var),
     SumLeq(Vec<Var>, Var),
     SumGeq(Vec<Var>, Var),
+    Element(Vec<Var>, Var, Var),
+    ElementOne(Vec<Var>, Var, Var),
+    ElementUndefZero(Vec<Var>, Var, Var),
+    WatchElement(Vec<Var>, Var, Var),
+    WatchElementOne(Vec<Var>, Var, Var),
+    WatchElementOneUndefZero(Vec<Var>, Var, Var),
+    WatchElementUndefZero(Vec<Var>, Var, Var),
+    WLiteral(Var, Constant),
+    WNotLiteral(Var, Constant),
+    WInIntervalSet(Var, Vec<Constant>),
+    WInRange(Var, Vec<Constant>),
+    WInset(Var, Vec<Constant>),
+    WNotInRange(Var, Vec<Constant>),
+    WNotInset(Var, Vec<Constant>),
+    Abs(Var, Var),
+    DisEq(Var, Var),
     Eq(Var, Var),
+    MinusEq(Var, Var),
+    GacEq(Var, Var),
+    WatchLess(Var, Var),
+    WatchNeq(Var, Var),
     Ineq(Var, Var, Constant),
-    WatchedAnd(Vec<Constraint>),
 }
 
 /// A variable can either be a named variable, or an anomynous "constant as a variable".
@@ -39,13 +114,13 @@ pub enum Constraint {
 /// The latter is not stored in the symbol table, or counted in Minions internal list of all
 /// variables, but is used to allow the use of a constant in the place of a variable in a
 /// constraint.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Var {
     NameRef(VarName),
     ConstantAsVar(i32),
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 pub enum Constant {
     Bool(bool),
     Integer(i32),
@@ -56,7 +131,7 @@ pub enum VarDomain {
     Bound(i32, i32),
     Discrete(i32, i32),
     SparseBound(i32, i32),
-    Bool(bool),
+    Bool,
 }
 
 pub struct SymbolTable {

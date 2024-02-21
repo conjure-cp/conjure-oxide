@@ -19,6 +19,10 @@ on:
       - .github/workflows/test.yml
   workflow_dispatch:
 
+env:
+  SCCACHE_GHA_ENABLED: "true"
+  RUSTC_WRAPPER: "sccache"
+
 jobs:
   build-and-test:
     name: "Build and Test"
@@ -44,20 +48,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin
-            ~/.cargo/registry/index
-            ~/.cargo/registry/cache
-            ~/.cargo/git/db
-            target
-            solvers/minion/vendor
-            solvers/chuffed/vendor
-
-          key: ${{ runner.os }}-${{ matrix.rust_release }}-${{ github.event.repository.updated_at }}
-          restore-keys: ${{ runner.os }}-${{ matrix.rust_release }}
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.3
 
       - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
 
