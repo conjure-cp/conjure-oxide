@@ -2,13 +2,10 @@ use std::{
     collections::HashMap,
     ffi::CString,
     sync::atomic::Ordering,
-    sync::{
-        atomic::{self, AtomicBool},
-        Mutex, MutexGuard,
-    },
+    sync::{atomic::AtomicBool, Mutex, MutexGuard},
 };
 
-use crate::ffi::{self, ConstraintType_CT_WATCHED_LESS};
+use crate::ffi::{self};
 use crate::{ast::*, error::*, scoped_ptr::Scoped};
 use anyhow::anyhow;
 
@@ -675,7 +672,7 @@ unsafe fn read_constant(
     raw_constraint: *mut ffi::ProbSpec_ConstraintBlob,
     constant: &Constant,
 ) -> Result<(), MinionError> {
-    let mut val: i32 = match constant {
+    let val: i32 = match constant {
         Constant::Integer(n) => Ok(*n),
         Constant::Bool(true) => Ok(1),
         Constant::Bool(false) => Ok(0),

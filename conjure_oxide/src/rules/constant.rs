@@ -3,9 +3,9 @@ use conjure_core::{
 };
 use conjure_rules::{register_rule, register_rule_set};
 
-register_rule_set!("Constant", 40, ());
+register_rule_set!("Constant", 255, ());
 
-#[register_rule(("Constant", 40))]
+#[register_rule(("Constant", 255))]
 fn apply_eval_constant(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     if expr.is_constant() {
         return Err(RuleApplicationError::RuleNotApplicable);
@@ -22,33 +22,36 @@ fn apply_eval_constant(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 /// `Some(Const)` if the expression can be simplified to a constant
 pub fn eval_constant(expr: &Expr) -> Option<Const> {
     match expr {
-        Expr::Constant(_m, c) => Some(c.clone()),
-        Expr::Reference(_) => None,
-
-        Expr::Eq(a, b) => bin_op::<i32, bool>(|a, b| a == b, a, b)
+        Expr::Constant(_, c) => Some(c.clone()),
+        Expr::Reference(_, _) => None,
+        Expr::Eq(_, a, b) => bin_op::<i32, bool>(|a, b| a == b, a, b)
             .or_else(|| bin_op::<bool, bool>(|a, b| a == b, a, b))
             .map(Const::Bool),
-        Expr::Neq(a, b) => bin_op::<i32, bool>(|a, b| a != b, a, b).map(Const::Bool),
-        Expr::Lt(a, b) => bin_op::<i32, bool>(|a, b| a < b, a, b).map(Const::Bool),
-        Expr::Gt(a, b) => bin_op::<i32, bool>(|a, b| a > b, a, b).map(Const::Bool),
-        Expr::Leq(a, b) => bin_op::<i32, bool>(|a, b| a <= b, a, b).map(Const::Bool),
-        Expr::Geq(a, b) => bin_op::<i32, bool>(|a, b| a >= b, a, b).map(Const::Bool),
+        Expr::Neq(_, a, b) => bin_op::<i32, bool>(|a, b| a != b, a, b).map(Const::Bool),
+        Expr::Lt(_, a, b) => bin_op::<i32, bool>(|a, b| a < b, a, b).map(Const::Bool),
+        Expr::Gt(_, a, b) => bin_op::<i32, bool>(|a, b| a > b, a, b).map(Const::Bool),
+        Expr::Leq(_, a, b) => bin_op::<i32, bool>(|a, b| a <= b, a, b).map(Const::Bool),
+        Expr::Geq(_, a, b) => bin_op::<i32, bool>(|a, b| a >= b, a, b).map(Const::Bool),
 
-        Expr::Not(expr) => un_op::<bool, bool>(|e| !e, expr).map(Const::Bool),
+        Expr::Not(_, expr) => un_op::<bool, bool>(|e| !e, expr).map(Const::Bool),
 
-        Expr::And(exprs) => vec_op::<bool, bool>(|e| e.iter().all(|&e| e), exprs).map(Const::Bool),
-        Expr::Or(exprs) => vec_op::<bool, bool>(|e| e.iter().any(|&e| e), exprs).map(Const::Bool),
+        Expr::And(_, exprs) => {
+            vec_op::<bool, bool>(|e| e.iter().all(|&e| e), exprs).map(Const::Bool)
+        }
+        Expr::Or(_, exprs) => {
+            vec_op::<bool, bool>(|e| e.iter().any(|&e| e), exprs).map(Const::Bool)
+        }
 
-        Expr::Sum(exprs) => vec_op::<i32, i32>(|e| e.iter().sum(), exprs).map(Const::Int),
+        Expr::Sum(_, exprs) => vec_op::<i32, i32>(|e| e.iter().sum(), exprs).map(Const::Int),
 
-        Expr::Ineq(a, b, c) => {
+        Expr::Ineq(_, a, b, c) => {
             tern_op::<i32, bool>(|a, b, c| a <= (b + c), a, b, c).map(Const::Bool)
         }
 
-        Expr::SumGeq(exprs, a) => {
+        Expr::SumGeq(_, exprs, a) => {
             flat_op::<i32, bool>(|e, a| e.iter().sum::<i32>() >= a, exprs, a).map(Const::Bool)
         }
-        Expr::SumLeq(exprs, a) => {
+        Expr::SumLeq(_, exprs, a) => {
             flat_op::<i32, bool>(|e, a| e.iter().sum::<i32>() <= a, exprs, a).map(Const::Bool)
         }
         _ => {

@@ -18,11 +18,13 @@ impl Display for ResolveRulesError {
     }
 }
 
-/**
-* Helper function to get a rule set by name, or return an error if it doesn't exist.
-* @param `rule_set_name` The name of the rule set to get.
-* @returns The rule set with the given name or RuleSetError::RuleSetNotFound if it doesn't exist.
-*/
+/// Helper function to get a rule set by name, or return an error if it doesn't exist.
+///
+/// # Arguments
+/// - `rule_set_name` The name of the rule set to get.
+///
+/// # Returns
+/// - The rule set with the given name or `RuleSetError::RuleSetNotFound` if it doesn't exist.
 fn get_rule_set(rule_set_name: &str) -> Result<&'static RuleSet<'static>, ResolveRulesError> {
     match get_rule_set_by_name(rule_set_name) {
         Some(rule_set) => Ok(rule_set),
@@ -30,11 +32,12 @@ fn get_rule_set(rule_set_name: &str) -> Result<&'static RuleSet<'static>, Resolv
     }
 }
 
-/**
-* Helper function to resolve the dependencies of a rule set.
-* @param `rule_set_name` The name of the rule set to resolve.
-* @returns A set of the given rule set and all of its dependencies.
-*/
+/// Helper function to resolve the dependencies of a rule set.
+///
+/// # Arguments
+/// - `rule_set_name` The name of the rule set to resolve.
+/// # Returns
+/// - A set of the given rule set and all of its dependencies.
 fn resolve_dependencies(
     rule_set_name: &str,
 ) -> Result<HashSet<&'static RuleSet<'static>>, ResolveRulesError> {
@@ -55,11 +58,12 @@ fn resolve_dependencies(
     Ok(ans)
 }
 
-/**
-* Helper function to resolve a list of rule set names into a list of rule sets.
-* @param `rule_set_names` The names of the rule sets to resolve.
-* @returns A list of the given rule sets and all of their dependencies, or error
-*/
+/// Helper function to resolve a list of rule set names into a list of rule sets.
+///
+/// # Arguments
+/// - `rule_set_names` The names of the rule sets to resolve.
+/// # Returns
+/// - A list of the given rule sets and all of their dependencies, or error
 pub fn resolve_rule_sets<'a>(
     rule_set_names: Vec<&str>,
 ) -> Result<Vec<&'a RuleSet<'static>>, ResolveRulesError> {
@@ -73,11 +77,12 @@ pub fn resolve_rule_sets<'a>(
     Ok(rs_set.into_iter().collect())
 }
 
-/**
-* Convert a list of rule sets into a final map of rules to their priorities.
-* @param `rule_sets` The rule sets to get the rules from.
-* @returns A map of rules to their priorities.
-*/
+/// Convert a list of rule sets into a final map of rules to their priorities.
+///
+/// # Arguments
+/// - `rule_sets` The rule sets to get the rules from.
+/// # Returns
+/// - A map of rules to their priorities.
 pub fn get_rule_priorities<'a>(
     rule_sets: &Vec<&'a RuleSet<'a>>,
 ) -> Result<HashMap<&'a Rule<'a>, u8>, ResolveRulesError> {
@@ -103,18 +108,19 @@ pub fn get_rule_priorities<'a>(
     Ok(ans)
 }
 
-/**
-* Compare two rules by their priorities and names.
-*
-* Takes the rules and a map of rules to their priorities.
-* If rules are not in the map, they are assumed to have priority 0.
-* If the rules have the same priority, they are compared by their names.
-*
-* @param `a` first rule to compare.
-* @param `b` second rule to compare.
-* @param `rule_priorities` The priorities of the rules.
-* @returns The ordering of the two rules.
-*/
+/// Compare two rules by their priorities and names.
+///
+/// Takes the rules and a map of rules to their priorities.
+/// If rules are not in the map, they are assumed to have priority 0.
+/// If the rules have the same priority, they are compared by their names.
+///
+/// # Arguments
+/// - `a` first rule to compare.
+/// - `b` second rule to compare.
+/// - `rule_priorities` The priorities of the rules.
+///
+/// # Returns
+/// - The ordering of the two rules.
 pub fn rule_cmp<'a>(
     a: &Rule<'a>,
     b: &Rule<'a>,
@@ -130,11 +136,13 @@ pub fn rule_cmp<'a>(
     b_priority.cmp(&a_priority)
 }
 
-/**
-* Get a final ordering of rules based on their priorities and names.
-* @param `rule_priorities` The priorities of the rules.
-* @returns A list of rules sorted by their priorities and names.
-*/
+/// Get a final ordering of rules based on their priorities and names.
+///
+/// # Arguments
+/// - `rule_priorities` The priorities of the rules.
+///
+/// # Returns
+/// - A list of rules sorted by their priorities and names.
 pub fn get_rules_vec<'a>(rule_priorities: &HashMap<&'a Rule<'a>, u8>) -> Vec<&'a Rule<'a>> {
     let mut rules: Vec<&'a Rule<'a>> = rule_priorities.keys().copied().collect();
     rules.sort_by(|a, b| rule_cmp(a, b, rule_priorities));

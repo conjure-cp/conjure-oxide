@@ -1,5 +1,6 @@
 use super::{FromConjureModel, SolverError};
 use crate::Solver;
+use conjure_core::metadata::Metadata;
 use std::collections::HashMap;
 use thiserror::Error;
 
@@ -130,7 +131,7 @@ impl CNF {
             expr_clauses.push(self.clause_to_expression(clause)?);
         }
 
-        Ok(ConjureExpression::And(expr_clauses))
+        Ok(ConjureExpression::And(Metadata::new(), expr_clauses))
     }
 
     /**
@@ -144,17 +145,20 @@ impl CNF {
                 None => return Err(CNFError::ClauseIndexNotFound(*idx)),
                 Some(name) => {
                     if *idx > 0 {
-                        ans.push(ConjureExpression::Reference(name.clone()))
+                        ans.push(ConjureExpression::Reference(Metadata::new(), name.clone()));
                     } else {
                         let expression: ConjureExpression =
-                            ConjureExpression::Reference(name.clone());
-                        ans.push(ConjureExpression::Not(Box::from(expression)))
+                            ConjureExpression::Reference(Metadata::new(), name.clone());
+                        ans.push(ConjureExpression::Not(
+                            Metadata::new(),
+                            Box::from(expression),
+                        ))
                     }
                 }
             }
         }
 
-        Ok(ConjureExpression::Or(ans))
+        Ok(ConjureExpression::Or(Metadata::new(), ans))
     }
 
     /**
@@ -185,7 +189,9 @@ impl CNF {
         let expr = expr_box.as_ref();
         match expr {
             // Expression inside the Not()
-            ConjureExpression::Reference(name) => Ok(vec![-self.get_reference_index(name)?]),
+            ConjureExpression::Reference(_metadata, name) => {
+                Ok(vec![-self.get_reference_index(name)?])
+            }
             _ => Err(CNFError::UnexpectedExpressionInsideNot(expr.clone())),
         }
     }
@@ -211,9 +217,9 @@ impl CNF {
      */
     fn handle_flat_expression(&self, expression: &ConjureExpression) -> Result<Vec<i32>, CNFError> {
         match expression {
-            ConjureExpression::Reference(name) => self.handle_reference(name),
-            ConjureExpression::Not(var_box) => self.handle_not(var_box),
-            ConjureExpression::Or(expressions) => self.handle_or(expressions),
+            ConjureExpression::Reference(_metadata, name) => self.handle_reference(name),
+            ConjureExpression::Not(_metadata, var_box) => self.handle_not(var_box),
+            ConjureExpression::Or(_metadata, expressions) => self.handle_or(expressions),
             _ => Err(CNFError::UnexpectedExpression(expression.clone())),
         }
     }
@@ -226,7 +232,7 @@ impl CNF {
 
         for expression in expressions {
             match expression {
-                ConjureExpression::And(_expressions) => {
+                ConjureExpression::And(_metadata, _expressions) => {
                     return Err(CNFError::NestedAnd(expression.clone()));
                 }
                 _ => {
@@ -243,7 +249,7 @@ impl CNF {
      */
     fn handle_expression(&self, expression: &ConjureExpression) -> Result<Vec<Vec<i32>>, CNFError> {
         match expression {
-            ConjureExpression::And(expressions) => self.handle_and(expressions),
+            ConjureExpression::And(_metadata, expressions) => self.handle_and(expressions),
             _ => Ok(vec![self.handle_flat_expression(expression)?]),
         }
     }
@@ -310,6 +316,8 @@ impl FromConjureModel for CNF {
 
 #[cfg(test)]
 mod tests {
+    use conjure_core::metadata::Metadata;
+
     use crate::ast::Domain::{BoolDomain, IntDomain};
     use crate::ast::Expression::{And, Not, Or, Reference};
     use crate::ast::{DecisionVariable, Model};
@@ -327,7 +335,7 @@ mod tests {
 
         let x: Name = Name::UserName(String::from('x'));
         model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
-        model.add_constraint(Reference(x.clone()));
+        model.add_constraint(Reference(Metadata::new(), x.clone()));
 
         let res: Result<CNF, SolverError> = CNF::from_conjure(model);
         assert!(res.is_ok());
@@ -349,7 +357,10 @@ mod tests {
 
         let x: Name = Name::UserName(String::from('x'));
         model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
-        model.add_constraint(Not(Box::from(Reference(x.clone()))));
+        model.add_constraint(Not(
+            Metadata::new(),
+            Box::from(Reference(Metadata::new(), x.clone())),
+        ));
 
         let cnf: CNF = CNF::from_conjure(model).unwrap();
         assert_eq!(cnf.get_index(&x), Some(1));
@@ -357,7 +368,16 @@ mod tests {
 
         assert_eq!(
             if_ok(cnf.as_expression()),
-            And(vec![Or(vec![Not(Box::from(Reference(x.clone())))])])
+            And(
+                Metadata::new(),
+                vec![Or(
+                    Metadata::new(),
+                    vec![Not(
+                        Metadata::new(),
+                        Box::from(Reference(Metadata::new(), x.clone()))
+                    )]
+                )]
+            )
         )
     }
 
@@ -373,7 +393,13 @@ mod tests {
         model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
         model.add_variable(y.clone(), DecisionVariable { domain: BoolDomain });
 
-        model.add_constraint(Or(vec![Reference(x.clone()), Reference(y.clone())]));
+        model.add_constraint(Or(
+            Metadata::new(),
+            vec![
+                Reference(Metadata::new(), x.clone()),
+                Reference(Metadata::new(), y.clone()),
+            ],
+        ));
 
         let cnf: CNF = CNF::from_conjure(model).unwrap();
 
@@ -383,7 +409,16 @@ mod tests {
 
         assert_eq!(
             if_ok(cnf.as_expression()),
-            And(vec![Or(vec![Reference(x.clone()), Reference(y.clone())])])
+            And(
+                Metadata::new(),
+                vec![Or(
+                    Metadata::new(),
+                    vec![
+                        Reference(Metadata::new(), x.clone()),
+                        Reference(Metadata::new(), y.clone())
+                    ]
+                )]
+            )
         )
     }
 
@@ -399,10 +434,16 @@ mod tests {
         model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
         model.add_variable(y.clone(), DecisionVariable { domain: BoolDomain });
 
-        model.add_constraint(Or(vec![
-            Reference(x.clone()),
-            Not(Box::from(Reference(y.clone()))),
-        ]));
+        model.add_constraint(Or(
+            Metadata::new(),
+            vec![
+                Reference(Metadata::new(), x.clone()),
+                Not(
+                    Metadata::new(),
+                    Box::from(Reference(Metadata::new(), y.clone())),
+                ),
+            ],
+        ));
 
         let cnf: CNF = CNF::from_conjure(model).unwrap();
 
@@ -412,10 +453,19 @@ mod tests {
 
         assert_eq!(
             if_ok(cnf.as_expression()),
-            And(vec![Or(vec![
-                Reference(x.clone()),
-                Not(Box::from(Reference(y.clone())))
-            ])])
+            And(
+                Metadata::new(),
+                vec![Or(
+                    Metadata::new(),
+                    vec![
+                        Reference(Metadata::new(), x.clone()),
+                        Not(
+                            Metadata::new(),
+                            Box::from(Reference(Metadata::new(), y.clone()))
+                        )
+                    ]
+                )]
+            )
         )
     }
 
@@ -431,8 +481,8 @@ mod tests {
         model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
         model.add_variable(y.clone(), DecisionVariable { domain: BoolDomain });
 
-        model.add_constraint(Reference(x.clone()));
-        model.add_constraint(Reference(y.clone()));
+        model.add_constraint(Reference(Metadata::new(), x.clone()));
+        model.add_constraint(Reference(Metadata::new(), y.clone()));
 
         let cnf: CNF = CNF::from_conjure(model).unwrap();
 
@@ -442,10 +492,13 @@ mod tests {
 
         assert_eq!(
             if_ok(cnf.as_expression()),
-            And(vec![
-                Or(vec![Reference(x.clone())]),
-                Or(vec![Reference(y.clone())])
-            ])
+            And(
+                Metadata::new(),
+                vec![
+                    Or(Metadata::new(), vec![Reference(Metadata::new(), x.clone())]),
+                    Or(Metadata::new(), vec![Reference(Metadata::new(), y.clone())])
+                ]
+            )
         )
     }
 
@@ -461,7 +514,13 @@ mod tests {
         model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
         model.add_variable(y.clone(), DecisionVariable { domain: BoolDomain });
 
-        model.add_constraint(And(vec![Reference(x.clone()), Reference(y.clone())]));
+        model.add_constraint(And(
+            Metadata::new(),
+            vec![
+                Reference(Metadata::new(), x.clone()),
+                Reference(Metadata::new(), y.clone()),
+            ],
+        ));
 
         let cnf: CNF = CNF::from_conjure(model).unwrap();
 
@@ -471,10 +530,13 @@ mod tests {
 
         assert_eq!(
             if_ok(cnf.as_expression()),
-            And(vec![
-                Or(vec![Reference(x.clone())]),
-                Or(vec![Reference(y.clone())])
-            ])
+            And(
+                Metadata::new(),
+                vec![
+                    Or(Metadata::new(), vec![Reference(Metadata::new(), x.clone())]),
+                    Or(Metadata::new(), vec![Reference(Metadata::new(), y.clone())])
+                ]
+            )
         )
     }
 
@@ -492,10 +554,19 @@ mod tests {
         model.add_variable(y.clone(), DecisionVariable { domain: BoolDomain });
         model.add_variable(z.clone(), DecisionVariable { domain: BoolDomain });
 
-        model.add_constraint(Or(vec![
-            Reference(x.clone()),
-            Or(vec![Reference(y.clone()), Reference(z.clone())]),
-        ]));
+        model.add_constraint(Or(
+            Metadata::new(),
+            vec![
+                Reference(Metadata::new(), x.clone()),
+                Or(
+                    Metadata::new(),
+                    vec![
+                        Reference(Metadata::new(), y.clone()),
+                        Reference(Metadata::new(), z.clone()),
+                    ],
+                ),
+            ],
+        ));
 
         let cnf: CNF = CNF::from_conjure(model).unwrap();
 
@@ -506,11 +577,17 @@ mod tests {
 
         assert_eq!(
             if_ok(cnf.as_expression()),
-            And(vec![Or(vec![
-                Reference(x.clone()),
-                Reference(y.clone()),
-                Reference(z.clone())
-            ])])
+            And(
+                Metadata::new(),
+                vec![Or(
+                    Metadata::new(),
+                    vec![
+                        Reference(Metadata::new(), x.clone()),
+                        Reference(Metadata::new(), y.clone()),
+                        Reference(Metadata::new(), z.clone())
+                    ]
+                )]
+            )
         )
     }
 
@@ -531,8 +608,8 @@ mod tests {
             },
         );
 
-        model.add_constraint(Reference(x.clone()));
-        model.add_constraint(Reference(y.clone()));
+        model.add_constraint(Reference(Metadata::new(), x.clone()));
+        model.add_constraint(Reference(Metadata::new(), y.clone()));
 
         let cnf: Result<CNF, SolverError> = CNF::from_conjure(model);
         assert!(cnf.is_err());
@@ -551,8 +628,9 @@ mod tests {
         model.add_variable(y.clone(), DecisionVariable { domain: BoolDomain });
 
         model.add_constraint(Expression::Eq(
-            Box::from(Reference(x.clone())),
-            Box::from(Reference(y.clone())),
+            Metadata::new(),
+            Box::from(Reference(Metadata::new(), x.clone())),
+            Box::from(Reference(Metadata::new(), y.clone())),
         ));
 
         let cnf: Result<CNF, SolverError> = CNF::from_conjure(model);

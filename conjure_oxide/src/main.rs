@@ -4,6 +4,7 @@ use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
 use conjure_oxide::find_conjure::conjure_executable;
+use conjure_oxide::generate_custom::{get_example_model, get_example_model_by_path};
 use conjure_oxide::parse::model_from_json;
 use conjure_oxide::rule_engine::resolve_rules::{
     get_rule_priorities, get_rules_vec, resolve_rule_sets,
@@ -92,4 +93,33 @@ pub fn main() -> AnyhowResult<()> {
     println!("Solutions: {:#}", minion_solutions_to_json(&solutions));
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_example_model_success() {
+        let filename = "input";
+        get_example_model(filename).unwrap();
+    }
+
+    #[test]
+    fn test_get_example_model_by_filepath() {
+        let filepath = "tests/integration/xyz/input.essence";
+        get_example_model_by_path(filepath).unwrap();
+    }
+
+    #[test]
+    fn test_get_example_model_fail_empty_filename() {
+        let filename = "";
+        get_example_model(filename).unwrap_err();
+    }
+
+    #[test]
+    fn test_get_example_model_fail_empty_filepath() {
+        let filepath = "";
+        get_example_model_by_path(filepath).unwrap_err();
+    }
 }
