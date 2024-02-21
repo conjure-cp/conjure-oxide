@@ -4,7 +4,7 @@ use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
 use conjure_oxide::find_conjure::conjure_executable;
-use conjure_oxide::generate_custom::{get_example_model, get_example_model_by_path};
+
 use conjure_oxide::parse::model_from_json;
 use conjure_oxide::rule_engine::resolve_rules::{
     get_rule_priorities, get_rules_vec, resolve_rule_sets,
@@ -97,7 +97,7 @@ pub fn main() -> AnyhowResult<()> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use conjure_oxide::generate_custom::{get_example_model, get_example_model_by_path};
 
     #[test]
     fn test_get_example_model_success() {

@@ -3,10 +3,9 @@
 // dependencies
 use crate::parse::model_from_json;
 use conjure_core::ast::Model;
-use std::env;
+
 use std::error::Error;
-use std::fs::{copy, read_to_string, File};
-use std::io::Write;
+
 use std::path::PathBuf;
 use walkdir::WalkDir;
 
