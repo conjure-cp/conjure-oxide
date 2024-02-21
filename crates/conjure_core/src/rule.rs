@@ -1,4 +1,5 @@
 use std::fmt::{self, Display, Formatter};
+use std::hash::Hash;
 
 use thiserror::Error;
 
@@ -62,15 +63,32 @@ impl Reduction {
     }
 }
 
+/**
+ * A rule with a name, application function, and rule sets.
+ *
+ * # Fields
+ * - `name` The name of the rule.
+ * - `application` The function to apply the rule.
+ * - `rule_sets` A list of rule set names and priorities that this rule is a part of. This is used to populate rulesets at runtime.
+ */
 #[derive(Clone, Debug)]
 pub struct Rule<'a> {
     pub name: &'a str,
     pub application: fn(&Expression, &Model) -> ApplicationResult,
+    pub rule_sets: &'a [(&'a str, u8)], // (name, priority). At runtime, we add the rule to rulesets
 }
 
 impl<'a> Rule<'a> {
-    pub fn new(name: &'a str, application: fn(&Expression, &Model) -> ApplicationResult) -> Self {
-        Self { name, application }
+    pub const fn new(
+        name: &'a str,
+        application: fn(&Expression, &Model) -> ApplicationResult,
+        rule_sets: &'a [(&'static str, u8)],
+    ) -> Self {
+        Self {
+            name,
+            application,
+            rule_sets,
+        }
     }
 
     pub fn apply(&self, expr: &Expression, mdl: &Model) -> ApplicationResult {
@@ -81,5 +99,19 @@ impl<'a> Rule<'a> {
 impl<'a> Display for Rule<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.name)
+    }
+}
+
+impl<'a> PartialEq for Rule<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+    }
+}
+
+impl<'a> Eq for Rule<'a> {}
+
+impl<'a> Hash for Rule<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.name.hash(state);
     }
 }

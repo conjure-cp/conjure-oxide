@@ -2,11 +2,13 @@ use conjure_core::{
     ast::{Expression as Expr, Model},
     rule::{ApplicationError, ApplicationResult, Reduction},
 };
-use conjure_rules::register_rule;
+use conjure_rules::{register_rule, register_rule_set};
 
 /***********************************************************************************/
 /*        This file contains rules for converting logic expressions to CNF         */
 /***********************************************************************************/
+
+register_rule_set!("CNF", 100, ("Base"));
 
 /**
 * Distribute `not` over `and` (De Morgan's Law):
@@ -15,16 +17,16 @@ use conjure_rules::register_rule;
 * not(and(a, b)) = or(not a, not b)
 * ```
  */
-#[register_rule]
+#[register_rule(("CNF", 100))]
 fn distribute_not_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
-        Expr::Not(contents) => match contents.as_ref() {
-            Expr::And(exprs) => {
+        Expr::Not(_, contents) => match contents.as_ref() {
+            Expr::And(metadata, exprs) => {
                 let mut new_exprs = Vec::new();
                 for e in exprs {
-                    new_exprs.push(Expr::Not(Box::new(e.clone())));
+                    new_exprs.push(Expr::Not(metadata.clone(), Box::new(e.clone())));
                 }
-                Ok(Reduction::pure(Expr::Or(new_exprs)))
+                Ok(Reduction::pure(Expr::Or(metadata.clone(), new_exprs)))
             }
             _ => Err(ApplicationError::RuleNotApplicable),
         },
@@ -39,16 +41,16 @@ fn distribute_not_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
 * not(or(a, b)) = and(not a, not b)
 * ```
  */
-#[register_rule]
+#[register_rule(("CNF", 100))]
 fn distribute_not_over_or(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
-        Expr::Not(contents) => match contents.as_ref() {
-            Expr::Or(exprs) => {
+        Expr::Not(_, contents) => match contents.as_ref() {
+            Expr::Or(metadata, exprs) => {
                 let mut new_exprs = Vec::new();
                 for e in exprs {
-                    new_exprs.push(Expr::Not(Box::new(e.clone())));
+                    new_exprs.push(Expr::Not(metadata.clone(), Box::new(e.clone())));
                 }
-                Ok(Reduction::pure(Expr::And(new_exprs)))
+                Ok(Reduction::pure(Expr::And(metadata.clone(), new_exprs)))
             }
             _ => Err(ApplicationError::RuleNotApplicable),
         },
@@ -63,37 +65,39 @@ fn distribute_not_over_or(expr: &Expr, _: &Model) -> ApplicationResult {
 * or(and(a, b), c) = and(or(a, c), or(b, c))
 * ```
  */
-#[register_rule]
+#[register_rule(("CNF", 100))]
 fn distribute_or_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
     fn find_and(exprs: &Vec<Expr>) -> Option<usize> {
         // ToDo: may be better to move this to some kind of utils module?
         for (i, e) in exprs.iter().enumerate() {
-            match e {
-                Expr::And(_) => return Some(i),
-                _ => (),
+            if let Expr::And(_, _) = e {
+                return Some(i);
             }
         }
         None
     }
 
     match expr {
-        Expr::Or(exprs) => match find_and(exprs) {
+        Expr::Or(_, exprs) => match find_and(exprs) {
             Some(idx) => {
                 let mut rest = exprs.clone();
                 let and_expr = rest.remove(idx);
 
                 match and_expr {
-                    Expr::And(and_exprs) => {
+                    Expr::And(metadata, and_exprs) => {
                         let mut new_and_contents = Vec::new();
 
                         for e in and_exprs {
                             // ToDo: Cloning everything may be a bit inefficient - discuss
                             let mut new_or_contents = rest.clone();
                             new_or_contents.push(e.clone());
-                            new_and_contents.push(Expr::Or(new_or_contents))
+                            new_and_contents.push(Expr::Or(metadata.clone(), new_or_contents))
                         }
 
-                        Ok(Reduction::pure(Expr::And(new_and_contents)))
+                        Ok(Reduction::pure(Expr::And(
+                            metadata.clone(),
+                            new_and_contents,
+                        )))
                     }
                     _ => Err(ApplicationError::RuleNotApplicable),
                 }

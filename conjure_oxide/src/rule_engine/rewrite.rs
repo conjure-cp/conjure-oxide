@@ -1,10 +1,37 @@
+use std::fmt::Display;
+use thiserror::Error;
+
+use crate::rule_engine::resolve_rules::{
+    get_rule_priorities, get_rules_vec, ResolveRulesError as ResolveError,
+};
 use conjure_core::ast::{Expression, Model};
+use conjure_core::metadata::Metadata;
 use conjure_core::rule::{Reduction, Rule};
 use conjure_rules::get_rules;
+use conjure_rules::rule_set::RuleSet;
 
 struct RuleResult<'a> {
-    rule: Rule<'a>,
+    rule: &'a Rule<'a>,
     reduction: Reduction,
+}
+
+#[derive(Debug, Error)]
+pub enum RewriteError {
+    ResolveRulesError(ResolveError),
+}
+
+impl Display for RewriteError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RewriteError::ResolveRulesError(e) => write!(f, "Error resolving rules: {}", e),
+        }
+    }
+}
+
+impl From<ResolveError> for RewriteError {
+    fn from(error: ResolveError) -> Self {
+        RewriteError::ResolveRulesError(error)
+    }
 }
 
 /// Rewrites the model by applying the rules to all constraints.
@@ -13,9 +40,14 @@ struct RuleResult<'a> {
 ///
 /// # Returns
 /// A copy of the model after all, if any, possible rules are applied to its constraints.
-pub fn rewrite_model(model: &Model) -> Model {
-    let rules = get_rules();
+pub fn rewrite_model<'a>(
+    model: &Model,
+    rule_sets: &Vec<&'a RuleSet<'a>>,
+) -> Result<Model, RewriteError> {
+    let rule_priorities = get_rule_priorities(rule_sets)?;
+    let rules = get_rules_vec(&rule_priorities);
     let mut new_model = model.clone();
+
     while let Some(step) = rewrite_iteration(&new_model.constraints, model, &rules) {
         new_model.variables.extend(step.symbols); // Add new assignments to the symbol table
         if step.new_top.is_nothing() {
@@ -23,15 +55,18 @@ pub fn rewrite_model(model: &Model) -> Model {
         } else {
             new_model.constraints = match step.new_expression {
                 // Avoid creating a nested conjunction
-                Expression::And(mut and) => {
+                Expression::And(metadata, mut and) => {
                     and.push(step.new_top.clone());
-                    Expression::And(and)
+                    Expression::And(metadata.clone(), and)
                 }
-                _ => Expression::And(vec![step.new_expression.clone(), step.new_top]),
+                _ => Expression::And(
+                    Metadata::new(),
+                    vec![step.new_expression.clone(), step.new_top],
+                ),
             };
         }
     }
-    new_model
+    Ok(new_model)
 }
 
 /// # Returns
@@ -40,7 +75,7 @@ pub fn rewrite_model(model: &Model) -> Model {
 fn rewrite_iteration<'a>(
     expression: &'a Expression,
     model: &'a Model,
-    rules: &'a Vec<Rule<'a>>,
+    rules: &'a Vec<&'a Rule<'a>>,
 ) -> Option<Reduction> {
     let rule_results = apply_all_rules(expression, model, rules);
     if let Some(new) = choose_rewrite(&rule_results) {
@@ -71,14 +106,14 @@ fn rewrite_iteration<'a>(
 fn apply_all_rules<'a>(
     expression: &'a Expression,
     model: &'a Model,
-    rules: &'a Vec<Rule<'a>>,
+    rules: &'a Vec<&'a Rule<'a>>,
 ) -> Vec<RuleResult<'a>> {
     let mut results = Vec::new();
     for rule in rules {
         match rule.apply(expression, model) {
             Ok(red) => {
                 results.push(RuleResult {
-                    rule: rule.clone(),
+                    rule,
                     reduction: red,
                 });
             }

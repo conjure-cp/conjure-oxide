@@ -135,44 +135,69 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
 }
 
 // this needs an explicit type signature to force the closures to have the same type
-type BinOp = Box<dyn Fn(Box<Expression>, Box<Expression>) -> Expression>;
-type UnaryOp = Box<dyn Fn(Box<Expression>) -> Expression>;
-type VecOp = Box<dyn Fn(Vec<Expression>) -> Expression>;
+type BinOp = Box<dyn Fn(Metadata, Box<Expression>, Box<Expression>) -> Expression>;
+type UnaryOp = Box<dyn Fn(Metadata, Box<Expression>) -> Expression>;
+type VecOp = Box<dyn Fn(Metadata, Vec<Expression>) -> Expression>;
 
 fn parse_expression(obj: &JsonValue) -> Option<Expression> {
     let binary_operators: HashMap<&str, BinOp> = [
-        ("MkOpEq", Box::new(Expression::Eq) as Box<dyn Fn(_, _) -> _>),
+        (
+            "MkOpEq",
+            Box::new(Expression::Eq) as Box<dyn Fn(_, _, _) -> _>,
+        ),
         (
             "MkOpNeq",
-            Box::new(Expression::Neq) as Box<dyn Fn(_, _) -> _>,
+            Box::new(Expression::Neq) as Box<dyn Fn(_, _, _) -> _>,
         ),
         (
             "MkOpGeq",
-            Box::new(Expression::Geq) as Box<dyn Fn(_, _) -> _>,
+            Box::new(Expression::Geq) as Box<dyn Fn(_, _, _) -> _>,
         ),
         (
             "MkOpLeq",
-            Box::new(Expression::Leq) as Box<dyn Fn(_, _) -> _>,
+            Box::new(Expression::Leq) as Box<dyn Fn(_, _, _) -> _>,
         ),
-        ("MkOpGt", Box::new(Expression::Gt) as Box<dyn Fn(_, _) -> _>),
-        ("MkOpLt", Box::new(Expression::Lt) as Box<dyn Fn(_, _) -> _>),
+        (
+            "MkOpGt",
+            Box::new(Expression::Gt) as Box<dyn Fn(_, _, _) -> _>,
+        ),
+        (
+            "MkOpLt",
+            Box::new(Expression::Lt) as Box<dyn Fn(_, _, _) -> _>,
+        ),
+        (
+            "MkOpGt",
+            Box::new(Expression::Gt) as Box<dyn Fn(_, _, _) -> _>,
+        ),
+        (
+            "MkOpLt",
+            Box::new(Expression::Lt) as Box<dyn Fn(_, _, _) -> _>,
+        ),
         (
             "MkOpDiv",
-            Box::new(Expression::Div) as Box<dyn Fn(_, _) -> _>,
+            Box::new(Expression::Div) as Box<dyn Fn(_, _, _) -> _>,
         ),
     ]
     .into_iter()
     .collect();
 
-    let unary_operators: HashMap<&str, UnaryOp> =
-        [("MkOpNot", Box::new(Expression::Not) as Box<dyn Fn(_) -> _>)]
-            .into_iter()
-            .collect();
+    let unary_operators: HashMap<&str, UnaryOp> = [(
+        "MkOpNot",
+        Box::new(Expression::Not) as Box<dyn Fn(_, _) -> _>,
+    )]
+    .into_iter()
+    .collect();
 
     let vec_operators: HashMap<&str, VecOp> = [
-        ("MkOpSum", Box::new(Expression::Sum) as Box<dyn Fn(_) -> _>),
-        ("MkOpAnd", Box::new(Expression::And) as Box<dyn Fn(_) -> _>),
-        ("MkOpOr", Box::new(Expression::Or) as Box<dyn Fn(_) -> _>),
+        (
+            "MkOpSum",
+            Box::new(Expression::Sum) as Box<dyn Fn(_, _) -> _>,
+        ),
+        (
+            "MkOpAnd",
+            Box::new(Expression::And) as Box<dyn Fn(_, _) -> _>,
+        ),
+        ("MkOpOr", Box::new(Expression::Or) as Box<dyn Fn(_, _) -> _>),
     ]
     .into_iter()
     .collect();
@@ -196,7 +221,10 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
         },
         Value::Object(refe) if refe.contains_key("Reference") => {
             let name = refe["Reference"].as_array()?[0].as_object()?["Name"].as_str()?;
-            Some(Expression::Reference(Name::UserName(name.to_string())))
+            Some(Expression::Reference(
+                Metadata::new(),
+                Name::UserName(name.to_string()),
+            ))
         }
         Value::Object(constant) if constant.contains_key("Constant") => parse_constant(constant),
         otherwise => panic!("Unhandled Expression {:#?}", otherwise),
@@ -217,7 +245,7 @@ fn parse_bin_op(
         Value::Array(bin_op_args) if bin_op_args.len() == 2 => {
             let arg1 = parse_expression(&bin_op_args[0])?;
             let arg2 = parse_expression(&bin_op_args[1])?;
-            Some(constructor(Box::new(arg1), Box::new(arg2)))
+            Some(constructor(Metadata::new(), Box::new(arg1), Box::new(arg2)))
         }
         otherwise => panic!("Unhandled parse_bin_op {:#?}", otherwise),
     }
@@ -231,7 +259,7 @@ fn parse_unary_op(
     let constructor = unary_operators.get(key.as_str())?;
 
     let arg = parse_expression(value)?;
-    Some(constructor(Box::new(arg)))
+    Some(constructor(Metadata::new(), Box::new(arg)))
 }
 
 fn parse_vec_op(
@@ -246,7 +274,7 @@ fn parse_vec_op(
         .iter()
         .map(|x| parse_expression(x).unwrap())
         .collect();
-    Some(constructor(args_parsed))
+    Some(constructor(Metadata::new(), args_parsed))
 }
 
 fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expression> {

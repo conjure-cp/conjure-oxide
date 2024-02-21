@@ -2,17 +2,18 @@ use conjure_core::ast::{Constant as Const, Expression as Expr, Model};
 use conjure_core::metadata::Metadata;
 use conjure_core::rule::{ApplicationError, ApplicationResult, Reduction};
 
-use conjure_rules::register_rule;
+use conjure_rules::{register_rule, register_rule_set};
 
-#[register_rule]
+register_rule_set!("Constant", 255, ());
+
+#[register_rule(("Constant", 255))]
 fn apply_eval_constant(expr: &Expr, _: &Model) -> ApplicationResult {
     if expr.is_constant() {
         return Err(ApplicationError::RuleNotApplicable);
     }
-    let res = eval_constant(expr)
+    eval_constant(expr)
         .map(|c| Reduction::pure(Expr::Constant(Metadata::new(), c)))
-        .ok_or(ApplicationError::RuleNotApplicable);
-    res
+        .ok_or(ApplicationError::RuleNotApplicable)
 }
 
 /// Simplify an expression to a constant if possible
@@ -22,36 +23,40 @@ fn apply_eval_constant(expr: &Expr, _: &Model) -> ApplicationResult {
 pub fn eval_constant(expr: &Expr) -> Option<Const> {
     match expr {
         Expr::Constant(_, c) => Some(c.clone()),
-        Expr::Reference(_) => None,
+        Expr::Reference(_, _) => None,
 
-        Expr::Eq(a, b) => bin_op::<i32, bool>(|a, b| a == b, a, b)
+        Expr::Eq(_, a, b) => bin_op::<i32, bool>(|a, b| a == b, a, b)
             .or_else(|| bin_op::<bool, bool>(|a, b| a == b, a, b))
             .map(Const::Bool),
-        Expr::Neq(a, b) => bin_op::<i32, bool>(|a, b| a != b, a, b).map(Const::Bool),
-        Expr::Lt(a, b) => bin_op::<i32, bool>(|a, b| a < b, a, b).map(Const::Bool),
-        Expr::Gt(a, b) => bin_op::<i32, bool>(|a, b| a > b, a, b).map(Const::Bool),
-        Expr::Leq(a, b) => bin_op::<i32, bool>(|a, b| a <= b, a, b).map(Const::Bool),
-        Expr::Geq(a, b) => bin_op::<i32, bool>(|a, b| a >= b, a, b).map(Const::Bool),
+        Expr::Neq(_, a, b) => bin_op::<i32, bool>(|a, b| a != b, a, b).map(Const::Bool),
+        Expr::Lt(_, a, b) => bin_op::<i32, bool>(|a, b| a < b, a, b).map(Const::Bool),
+        Expr::Gt(_, a, b) => bin_op::<i32, bool>(|a, b| a > b, a, b).map(Const::Bool),
+        Expr::Leq(_, a, b) => bin_op::<i32, bool>(|a, b| a <= b, a, b).map(Const::Bool),
+        Expr::Geq(_, a, b) => bin_op::<i32, bool>(|a, b| a >= b, a, b).map(Const::Bool),
 
-        Expr::Not(expr) => un_op::<bool, bool>(|e| !e, expr).map(Const::Bool),
+        Expr::Not(_, expr) => un_op::<bool, bool>(|e| !e, expr).map(Const::Bool),
 
-        Expr::And(exprs) => vec_op::<bool, bool>(|e| e.iter().all(|&e| e), exprs).map(Const::Bool),
-        Expr::Or(exprs) => vec_op::<bool, bool>(|e| e.iter().any(|&e| e), exprs).map(Const::Bool),
+        Expr::And(_, exprs) => {
+            vec_op::<bool, bool>(|e| e.iter().all(|&e| e), exprs).map(Const::Bool)
+        }
+        Expr::Or(_, exprs) => {
+            vec_op::<bool, bool>(|e| e.iter().any(|&e| e), exprs).map(Const::Bool)
+        }
 
-        Expr::Sum(exprs) => vec_op::<i32, i32>(|e| e.iter().sum(), exprs).map(Const::Int),
+        Expr::Sum(_, exprs) => vec_op::<i32, i32>(|e| e.iter().sum(), exprs).map(Const::Int),
 
-        Expr::Ineq(a, b, c) => {
+        Expr::Ineq(_, a, b, c) => {
             tern_op::<i32, bool>(|a, b, c| a <= (b + c), a, b, c).map(Const::Bool)
         }
 
-        Expr::SumGeq(exprs, a) => {
+        Expr::SumGeq(_, exprs, a) => {
             flat_op::<i32, bool>(|e, a| e.iter().sum::<i32>() >= a, exprs, a).map(Const::Bool)
         }
-        Expr::SumLeq(exprs, a) => {
+        Expr::SumLeq(_, exprs, a) => {
             flat_op::<i32, bool>(|e, a| e.iter().sum::<i32>() <= a, exprs, a).map(Const::Bool)
         }
-        Expr::Div(a, b) => bin_op::<i32, i32>(|a, b| a / b, a, b).map(Const::Int),
-        Expr::SafeDiv(a, b) => bin_op::<i32, i32>(|a, b| a / b, a, b).map(Const::Int),
+        Expr::Div(_, a, b) => bin_op::<i32, i32>(|a, b| a / b, a, b).map(Const::Int),
+        Expr::SafeDiv(_, a, b) => bin_op::<i32, i32>(|a, b| a / b, a, b).map(Const::Int),
         _ => {
             println!("WARNING: Unimplemented constant eval: {:?}", expr);
             None
@@ -90,11 +95,7 @@ fn vec_op<T, A>(f: fn(Vec<T>) -> A, a: &Vec<Expr>) -> Option<A>
 where
     T: TryFrom<Const>,
 {
-    let a = a
-        .iter()
-        .map(unwrap_expr)
-        .into_iter()
-        .collect::<Option<Vec<T>>>()?;
+    let a = a.iter().map(unwrap_expr).collect::<Option<Vec<T>>>()?;
     Some(f(a))
 }
 
@@ -102,11 +103,7 @@ fn flat_op<T, A>(f: fn(Vec<T>, T) -> A, a: &Vec<Expr>, b: &Expr) -> Option<A>
 where
     T: TryFrom<Const>,
 {
-    let a = a
-        .iter()
-        .map(unwrap_expr)
-        .into_iter()
-        .collect::<Option<Vec<T>>>()?;
+    let a = a.iter().map(unwrap_expr).collect::<Option<Vec<T>>>()?;
     let b = unwrap_expr::<T>(b)?;
     Some(f(a, b))
 }
