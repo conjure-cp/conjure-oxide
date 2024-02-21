@@ -24,7 +24,7 @@ fn main() {
     }
 }
 
-fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>> {
+pub fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>> {
     // --------------------------------------------------------------------------------
     // -- parsing the essence file
 
