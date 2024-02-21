@@ -7,7 +7,7 @@ use conjure_rules::{register_rule, register_rule_set};
 /*        This file contains basic rules for simplifying expressions         */
 /*****************************************************************************/
 
-register_rule_set!("Base", 50, ());
+register_rule_set!("Base", 100, ());
 
 /**
  * Remove nothing's from expressions:
@@ -18,7 +18,7 @@ register_rule_set!("Base", 50, ());
  * ...
  * ```
 */
-#[register_rule(("Base", 50))] // ToDo: I am not sure what the priority should be - discuss
+#[register_rule(("Base", 100))]
 fn remove_nothings(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     fn remove_nothings(exprs: Vec<&Expr>) -> Result<Vec<&Expr>, RuleApplicationError> {
         let mut changed = false;
@@ -77,7 +77,7 @@ fn remove_nothings(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  * [] = Nothing
  * ```
  */
-#[register_rule(("Base", 50))]
+#[register_rule(("Base", 100))]
 fn empty_to_nothing(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr.sub_expressions() {
         None => Err(RuleApplicationError::RuleNotApplicable),
@@ -97,16 +97,16 @@ fn empty_to_nothing(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  * sum([1, 2, 3]) = 6
  * ```
  */
-#[register_rule(("Base", 40))]
+#[register_rule(("Base", 100))]
 fn sum_constants(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
-        Expr::Sum(metadata, exprs) => {
+        Expr::Sum(_, exprs) => {
             let mut sum = 0;
             let mut new_exprs = Vec::new();
             let mut changed = false;
             for e in exprs {
                 match e {
-                    Expr::Constant(metadata, Const::Int(i)) => {
+                    Expr::Constant(_, Const::Int(i)) => {
                         sum += i;
                         changed = true;
                     }
@@ -130,10 +130,10 @@ fn sum_constants(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  * sum([a]) = a
  * ```
  */
-#[register_rule(("Base", 40))]
+#[register_rule(("Base", 100))]
 fn unwrap_sum(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
-        Expr::Sum(metadata, exprs) if (exprs.len() == 1) => Ok(exprs[0].clone()),
+        Expr::Sum(_, exprs) if (exprs.len() == 1) => Ok(exprs[0].clone()),
         _ => Err(RuleApplicationError::RuleNotApplicable),
     }
 }
@@ -144,7 +144,7 @@ fn unwrap_sum(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  * sum(sum(a, b), c) = sum(a, b, c)
  * ```
  */
-#[register_rule(("Base", 30))]
+#[register_rule(("Base", 100))]
 pub fn flatten_nested_sum(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
         Expr::Sum(metadata, exprs) => {
@@ -152,7 +152,7 @@ pub fn flatten_nested_sum(expr: &Expr) -> Result<Expr, RuleApplicationError> {
             let mut changed = false;
             for e in exprs {
                 match e {
-                    Expr::Sum(metadata, sub_exprs) => {
+                    Expr::Sum(_, sub_exprs) => {
                         changed = true;
                         for e in sub_exprs {
                             new_exprs.push(e.clone());
@@ -177,7 +177,7 @@ pub fn flatten_nested_sum(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 * or(or(a, b), c) = or(a, b, c)
 * ```
  */
-#[register_rule(("Base", 30))]
+#[register_rule(("Base", 100))]
 fn unwrap_nested_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
         Expr::Or(metadata, exprs) => {
@@ -185,7 +185,7 @@ fn unwrap_nested_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
             let mut changed = false;
             for e in exprs {
                 match e {
-                    Expr::Or(metadata, exprs) => {
+                    Expr::Or(_, exprs) => {
                         changed = true;
                         for e in exprs {
                             new_exprs.push(e.clone());
@@ -210,7 +210,7 @@ fn unwrap_nested_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 * and(and(a, b), c) = and(a, b, c)
 * ```
  */
-#[register_rule(("Base", 30))]
+#[register_rule(("Base", 100))]
 fn unwrap_nested_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
         Expr::And(metadata, exprs) => {
@@ -218,7 +218,7 @@ fn unwrap_nested_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
             let mut changed = false;
             for e in exprs {
                 match e {
-                    Expr::And(metadata, exprs) => {
+                    Expr::And(_, exprs) => {
                         changed = true;
                         for e in exprs {
                             new_exprs.push(e.clone());
@@ -243,11 +243,11 @@ fn unwrap_nested_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 * not(not(a)) = a
 * ```
  */
-#[register_rule(("Base", 40))]
+#[register_rule(("Base", 100))]
 fn remove_double_negation(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
-        Expr::Not(metadata, contents) => match contents.as_ref() {
-            Expr::Not(metadata, expr_box) => Ok(*expr_box.clone()),
+        Expr::Not(_, contents) => match contents.as_ref() {
+            Expr::Not(_, expr_box) => Ok(*expr_box.clone()),
             _ => Err(RuleApplicationError::RuleNotApplicable),
         },
         _ => Err(RuleApplicationError::RuleNotApplicable),
@@ -260,10 +260,10 @@ fn remove_double_negation(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  * and([a]) = a
  * ```
  */
-#[register_rule(("Base", 40))]
+#[register_rule(("Base", 100))]
 fn remove_trivial_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
-        Expr::And(metadata, exprs) => {
+        Expr::And(_, exprs) => {
             if exprs.len() == 1 {
                 return Ok(exprs[0].clone());
             }
@@ -279,10 +279,10 @@ fn remove_trivial_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  * or([a]) = a
  * ```
  */
-#[register_rule(("Base", 40))]
+#[register_rule(("Base", 100))]
 fn remove_trivial_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
-        Expr::Or(metadata, exprs) => {
+        Expr::Or(_, exprs) => {
             if exprs.len() == 1 {
                 return Ok(exprs[0].clone());
             }
@@ -299,7 +299,7 @@ fn remove_trivial_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  * or([false, a]) = a
  * ```
  */
-#[register_rule(("Base", 40))]
+#[register_rule(("Base", 100))]
 fn remove_constants_from_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
         Expr::Or(metadata, exprs) => {
@@ -335,7 +335,7 @@ fn remove_constants_from_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  * and([false, a]) = false
  * ```
  */
-#[register_rule(("Base", 40))]
+#[register_rule(("Base", 100))]
 fn remove_constants_from_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
         Expr::And(metadata, exprs) => {
@@ -371,10 +371,10 @@ fn remove_constants_from_and(expr: &Expr) -> Result<Expr, RuleApplicationError> 
  * not(false) = true
  * ```
  */
-#[register_rule(("Base", 40))]
+#[register_rule(("Base", 100))]
 fn evaluate_constant_not(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
-        Expr::Not(metdata, contents) => match contents.as_ref() {
+        Expr::Not(_, contents) => match contents.as_ref() {
             Expr::Constant(metadata, Const::Bool(val)) => {
                 Ok(Expr::Constant(metadata.clone(), Const::Bool(!val)))
             }

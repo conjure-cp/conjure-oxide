@@ -5,7 +5,7 @@ use conjure_rules::{register_rule, register_rule_set};
 /*        This file contains rules for converting logic expressions to CNF         */
 /***********************************************************************************/
 
-register_rule_set!("CNF", 20, ("Base"));
+register_rule_set!("CNF", 100, ("Base"));
 
 /**
 * Distribute `not` over `and` (De Morgan's Law):
@@ -14,7 +14,7 @@ register_rule_set!("CNF", 20, ("Base"));
 * not(and(a, b)) = or(not a, not b)
 * ```
  */
-#[register_rule(("CNF", 20))] // ToDo: not sure about the priority - discuss
+#[register_rule(("CNF", 100))] // ToDo: not sure about the priority - discuss
 fn distribute_not_over_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
         Expr::Not(_, contents) => match contents.as_ref() {
@@ -38,7 +38,7 @@ fn distribute_not_over_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 * not(or(a, b)) = and(not a, not b)
 * ```
  */
-#[register_rule(("CNF", 20))]
+#[register_rule(("CNF", 100))]
 fn distribute_not_over_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
         Expr::Not(_, contents) => match contents.as_ref() {
@@ -62,7 +62,7 @@ fn distribute_not_over_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 * or(and(a, b), c) = and(or(a, c), or(b, c))
 * ```
  */
-#[register_rule(("CNF", 20))]
+#[register_rule(("CNF", 100))]
 fn distribute_or_over_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     fn find_and(exprs: &Vec<Expr>) -> Option<usize> {
         // ToDo: may be better to move this to some kind of utils module?

@@ -3,9 +3,9 @@ use conjure_core::{
 };
 use conjure_rules::{register_rule, register_rule_set};
 
-register_rule_set!("Constant", 40, ());
+register_rule_set!("Constant", 255, ());
 
-#[register_rule(("Constant", 40))]
+#[register_rule(("Constant", 255))]
 fn apply_eval_constant(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     if expr.is_constant() {
         return Err(RuleApplicationError::RuleNotApplicable);
