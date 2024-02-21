@@ -128,19 +128,19 @@ fn parse_exprs(
 
 fn parse_expr(expr: ConjureExpression, minion_model: &mut MinionModel) -> Result<(), SolverError> {
     match expr {
-        ConjureExpression::SumLeq(lhs, rhs) => {
+        ConjureExpression::SumLeq(metadata, lhs, rhs) => {
             minion_model
                 .constraints
                 .push(MinionConstraint::SumLeq(read_vars(lhs)?, read_var(*rhs)?));
             Ok(())
         }
-        ConjureExpression::SumGeq(lhs, rhs) => {
+        ConjureExpression::SumGeq(metadata, lhs, rhs) => {
             minion_model
                 .constraints
                 .push(MinionConstraint::SumGeq(read_vars(lhs)?, read_var(*rhs)?));
             Ok(())
         }
-        ConjureExpression::Ineq(a, b, c) => {
+        ConjureExpression::Ineq(metadata, a, b, c) => {
             minion_model.constraints.push(MinionConstraint::Ineq(
                 read_var(*a)?,
                 read_var(*b)?,
@@ -148,7 +148,7 @@ fn parse_expr(expr: ConjureExpression, minion_model: &mut MinionModel) -> Result
             ));
             Ok(())
         }
-        ConjureExpression::Neq(a, b) => {
+        ConjureExpression::Neq(metadata, a, b) => {
             minion_model
                 .constraints
                 .push(MinionConstraint::WatchNeq(read_var(*a)?, read_var(*b)?));
@@ -180,7 +180,7 @@ fn read_var(e: ConjureExpression) -> Result<MinionVar, SolverError> {
 
 fn _read_ref(e: ConjureExpression) -> Result<String, SolverError> {
     let name = match e {
-        ConjureExpression::Reference(n) => Ok(n),
+        ConjureExpression::Reference(metdata, n) => Ok(n),
         x => Err(SolverError::InvalidInstance(
             SOLVER,
             format!("expected a reference, but got `{0:?}`", x),
@@ -224,27 +224,33 @@ mod tests {
         // TODO: convert to use public interfaces when these exist.
         let mut model = ConjureModel {
             variables: HashMap::new(),
-            constraints: Expression::And(Vec::new()),
+            constraints: Expression::And(Metadata::new(), Vec::new()),
         };
 
         add_int_with_range(&mut model, "x", 1, 3)?;
         add_int_with_range(&mut model, "y", 2, 4)?;
         add_int_with_range(&mut model, "z", 1, 5)?;
 
-        let x = ConjureExpression::Reference(ConjureName::UserName("x".to_owned()));
-        let y = ConjureExpression::Reference(ConjureName::UserName("y".to_owned()));
-        let z = ConjureExpression::Reference(ConjureName::UserName("z".to_owned()));
+        let x =
+            ConjureExpression::Reference(Metadata::new(), ConjureName::UserName("x".to_owned()));
+        let y =
+            ConjureExpression::Reference(Metadata::new(), ConjureName::UserName("y".to_owned()));
+        let z =
+            ConjureExpression::Reference(Metadata::new(), ConjureName::UserName("z".to_owned()));
         let four = ConjureExpression::Constant(Metadata::new(), ConjureConstant::Int(4));
 
         let geq = ConjureExpression::SumGeq(
+            Metadata::new(),
             vec![x.to_owned(), y.to_owned(), z.to_owned()],
             Box::from(four.to_owned()),
         );
         let leq = ConjureExpression::SumLeq(
+            Metadata::new(),
             vec![x.to_owned(), y.to_owned(), z.to_owned()],
             Box::from(four.to_owned()),
         );
-        let ineq = ConjureExpression::Ineq(Box::from(x), Box::from(y), Box::from(four));
+        let ineq =
+            ConjureExpression::Ineq(Metadata::new(), Box::from(x), Box::from(y), Box::from(four));
 
         model.add_constraints(vec![geq, leq, ineq]);
 

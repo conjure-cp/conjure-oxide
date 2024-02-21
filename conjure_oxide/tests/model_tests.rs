@@ -1,5 +1,6 @@
 // Tests for various functionalities of the Model
 
+use conjure_core::metadata::Metadata;
 use conjure_oxide::ast::*;
 use std::collections::HashMap;
 
@@ -15,7 +16,7 @@ fn modify_domain() {
 
     let mut m = Model {
         variables,
-        constraints: Expression::And(Vec::new()),
+        constraints: Expression::And(Metadata::new(), Vec::new()),
     };
 
     assert_eq!(m.variables.get(&a).unwrap().domain, d1);
