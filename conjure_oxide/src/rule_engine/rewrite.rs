@@ -1,22 +1,52 @@
+use crate::rule_engine::resolve_rules::{
+    get_rule_priorities, get_rules_vec, ResolveRulesError as ResolveError,
+};
 use conjure_core::ast::{Expression, Model};
 use conjure_core::rule::Rule;
-use conjure_rules::get_rules;
+use conjure_rules::rule_set::RuleSet;
+use std::fmt::Display;
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum RewriteError {
+    ResolveRulesError(ResolveError),
+}
+
+impl Display for RewriteError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            RewriteError::ResolveRulesError(e) => write!(f, "Error resolving rules: {}", e),
+        }
+    }
+}
+
+impl From<ResolveError> for RewriteError {
+    fn from(error: ResolveError) -> Self {
+        RewriteError::ResolveRulesError(error)
+    }
+}
 
 struct RuleResult<'a> {
-    rule: Rule<'a>,
+    rule: &'a Rule<'a>,
     new_expression: Expression,
 }
 
 /// # Returns
 /// - A new expression after applying the rules to `expression` and its sub-expressions.
 /// - The same expression if no rules are applicable.
-pub fn rewrite(expression: &Expression) -> Expression {
-    let rules = get_rules();
+pub fn rewrite<'a>(
+    expression: &Expression,
+    rule_sets: &Vec<&'a RuleSet<'a>>,
+) -> Result<Expression, RewriteError> {
+    let rule_priorities = get_rule_priorities(rule_sets)?;
+    let rules = get_rules_vec(&rule_priorities);
+
     let mut new = expression.clone();
     while let Some(step) = rewrite_iteration(&new, &rules) {
         new = step;
     }
-    new
+
+    Ok(new)
 }
 
 /// # Returns
@@ -24,7 +54,7 @@ pub fn rewrite(expression: &Expression) -> Expression {
 /// - None if no rule is applicable to the expression or any sub-expression.
 fn rewrite_iteration<'a>(
     expression: &'a Expression,
-    rules: &'a Vec<Rule<'a>>,
+    rules: &'a Vec<&'a Rule<'a>>,
 ) -> Option<Expression> {
     let rule_results = apply_all_rules(expression, rules);
     if let Some(new) = choose_rewrite(&rule_results) {
@@ -50,15 +80,15 @@ fn rewrite_iteration<'a>(
 /// - An empty list if no rules are applicable.
 fn apply_all_rules<'a>(
     expression: &'a Expression,
-    rules: &'a Vec<Rule<'a>>,
+    rules: &'a Vec<&'a Rule<'a>>,
 ) -> Vec<RuleResult<'a>> {
     let mut results = Vec::new();
     for rule in rules {
         match rule.apply(expression) {
-            Ok(new) => {
+            Ok(new_expression) => {
                 results.push(RuleResult {
-                    rule: rule.clone(),
-                    new_expression: new,
+                    rule,
+                    new_expression,
                 });
             }
             Err(_) => continue,
@@ -83,10 +113,13 @@ fn choose_rewrite(results: &Vec<RuleResult>) -> Option<Expression> {
 /// # Returns
 /// - A new model with rewritten constraints.
 /// - The same model if no rules are applicable.
-pub fn rewrite_model(model: &Model) -> Model {
+pub fn rewrite_model<'a>(
+    model: &Model,
+    rule_sets: &Vec<&'a RuleSet<'a>>,
+) -> Result<Model, RewriteError> {
     let mut new_model = model.clone();
 
-    new_model.constraints = rewrite(&model.constraints);
+    new_model.constraints = rewrite(&model.constraints, rule_sets)?;
 
-    new_model
+    Ok(new_model)
 }

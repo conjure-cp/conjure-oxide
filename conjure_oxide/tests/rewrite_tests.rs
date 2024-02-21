@@ -1,12 +1,14 @@
 // Tests for rewriting/simplifying parts of the AST
-
 use conjure_core::{metadata::Metadata, rule::Rule};
+use conjure_oxide::{
+    ast::*, eval_constant, rule_engine::resolve_rules::resolve_rule_sets,
+    rule_engine::rewrite::rewrite, solvers::FromConjureModel,
+};
 use conjure_rules::{get_rule_by_name, get_rules};
 use core::panic;
-use std::collections::HashMap;
-
-use conjure_oxide::{ast::*, eval_constant, rewrite::rewrite, solvers::FromConjureModel};
 use minion_rs::ast::{Constant as MinionConstant, VarName};
+use std::collections::HashMap;
+use std::process::exit;
 
 #[test]
 fn rules_present() {
@@ -45,7 +47,7 @@ fn sum_of_constants() {
 
 fn evaluate_sum_of_constants(expr: &Expression) -> Option<i32> {
     match expr {
-        Expression::Sum(metadata, expressions) => {
+        Expression::Sum(_metadata, expressions) => {
             let mut sum = 0;
             for e in expressions {
                 match e {
@@ -102,7 +104,7 @@ fn recursive_sum_of_constants() {
 
 fn simplify_expression(expr: Expression) -> Expression {
     match expr {
-        Expression::Sum(metadata, expressions) => {
+        Expression::Sum(_metadata, expressions) => {
             if let Some(result) =
                 evaluate_sum_of_constants(&Expression::Sum(Metadata::new(), expressions.clone()))
             {
@@ -114,12 +116,12 @@ fn simplify_expression(expr: Expression) -> Expression {
                 )
             }
         }
-        Expression::Eq(metadata, left, right) => Expression::Eq(
+        Expression::Eq(_metadata, left, right) => Expression::Eq(
             Metadata::new(),
             Box::new(simplify_expression(*left)),
             Box::new(simplify_expression(*right)),
         ),
-        Expression::Geq(metadata, left, right) => Expression::Geq(
+        Expression::Geq(_metadata, left, right) => Expression::Geq(
             Metadata::new(),
             Box::new(simplify_expression(*left)),
             Box::new(simplify_expression(*right)),
@@ -757,8 +759,16 @@ fn rewrite_solve_xyz() {
         ],
     );
 
+    let rule_sets = match resolve_rule_sets(vec!["Minion", "Constant"]) {
+        Ok(rs) => rs,
+        Err(e) => {
+            eprintln!("Error resolving rule sets: {}", e);
+            exit(1);
+        }
+    };
+
     // Apply rewrite function to the nested expression
-    let rewritten_expr = rewrite(&nested_expr);
+    let rewritten_expr = rewrite(&nested_expr, &rule_sets).unwrap();
 
     // Check if the expression is in its simplest form
     let expr = rewritten_expr.clone();
@@ -798,7 +808,7 @@ fn rewrite_solve_xyz() {
 }
 
 struct RuleResult<'a> {
-    rule: Rule<'a>,
+    rule: &'a Rule<'a>,
     new_expression: Expression,
 }
 
@@ -819,7 +829,7 @@ pub fn is_simple(expression: &Expression) -> bool {
 /// - None if no rule is applicable to the expression or any sub-expression.
 fn is_simple_iteration<'a>(
     expression: &'a Expression,
-    rules: &'a Vec<Rule<'a>>,
+    rules: &'a Vec<&'a Rule<'a>>,
 ) -> Option<Expression> {
     let rule_results = apply_all_rules(expression, rules);
     if let Some(new) = choose_rewrite(&rule_results) {
@@ -845,14 +855,14 @@ fn is_simple_iteration<'a>(
 /// - An empty list if no rules are applicable.
 fn apply_all_rules<'a>(
     expression: &'a Expression,
-    rules: &'a Vec<Rule<'a>>,
+    rules: &'a Vec<&'a Rule<'a>>,
 ) -> Vec<RuleResult<'a>> {
     let mut results = Vec::new();
     for rule in rules {
         match rule.apply(expression) {
             Ok(new) => {
                 results.push(RuleResult {
-                    rule: rule.clone(),
+                    rule,
                     new_expression: new,
                 });
             }

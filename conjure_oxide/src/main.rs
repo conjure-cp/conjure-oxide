@@ -4,14 +4,19 @@ use anyhow::{anyhow, bail};
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::path::PathBuf;
+use std::process::exit;
 use std::sync::Mutex;
 
 use anyhow::Result as AnyhowResult;
 use clap::{arg, command, Parser};
 use conjure_oxide::find_conjure::conjure_executable;
 use conjure_oxide::parse::model_from_json;
-use conjure_oxide::rewrite::rewrite_model;
+use conjure_oxide::rule_engine::resolve_rules::{
+    get_rule_priorities, get_rules_vec, resolve_rule_sets,
+};
+use conjure_oxide::rule_engine::rewrite::rewrite_model;
 use conjure_oxide::solvers::FromConjureModel;
+
 use minion_rs::ast::{Constant, Model as MinionModel, VarName};
 use minion_rs::run_minion;
 
@@ -37,13 +42,29 @@ fn callback(solutions: HashMap<VarName, Constant>) -> bool {
 }
 
 pub fn main() -> AnyhowResult<()> {
-    println!(
-        "Rules: {:?}",
-        conjure_rules::get_rules()
-            .iter()
-            .map(|r| r.name)
-            .collect::<Vec<_>>()
-    );
+    let rule_sets = match resolve_rule_sets(vec!["Minion", "Constant"]) {
+        Ok(rs) => rs,
+        Err(e) => {
+            eprintln!("Error resolving rule sets: {}", e);
+            exit(1);
+        }
+    };
+
+    println!("Rule sets:");
+    print!("{{ ");
+    rule_sets.iter().for_each(|rule_set| {
+        print!("{}, ", rule_set.name);
+    });
+    print!("}}\n\n");
+
+    let rule_priorities = get_rule_priorities(&rule_sets)?;
+    let rules_vec = get_rules_vec(&rule_priorities);
+
+    println!("Rules and priorities:");
+    rules_vec.iter().for_each(|rule| {
+        println!("{}: {}", rule.name, rule_priorities.get(rule).unwrap_or(&0));
+    });
+    println!();
 
     let cli = Cli::parse();
     println!("Input file: {}", cli.input_file.display());
@@ -77,7 +98,7 @@ pub fn main() -> AnyhowResult<()> {
     println!("{:?}", model);
 
     println!("Rewriting model...");
-    model = rewrite_model(&model);
+    model = rewrite_model(&model, &rule_sets)?;
 
     println!("\nRewritten model:");
     println!("{:?}", model);
@@ -92,7 +113,7 @@ pub fn main() -> AnyhowResult<()> {
     // Get solutions
     let guard = ALL_SOLUTIONS.lock().unwrap();
     guard.deref().iter().for_each(|solution_set| {
-        println!("Solution set:");
+        println!("\nSolution set:");
         solution_set.iter().for_each(|(var, val)| {
             println!("{}: {:?}", var, val);
         });

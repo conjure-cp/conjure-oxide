@@ -128,19 +128,19 @@ fn parse_exprs(
 
 fn parse_expr(expr: ConjureExpression, minion_model: &mut MinionModel) -> Result<(), SolverError> {
     match expr {
-        ConjureExpression::SumLeq(metadata, lhs, rhs) => {
+        ConjureExpression::SumLeq(_metadata, lhs, rhs) => {
             minion_model
                 .constraints
                 .push(MinionConstraint::SumLeq(read_vars(lhs)?, read_var(*rhs)?));
             Ok(())
         }
-        ConjureExpression::SumGeq(metadata, lhs, rhs) => {
+        ConjureExpression::SumGeq(_metadata, lhs, rhs) => {
             minion_model
                 .constraints
                 .push(MinionConstraint::SumGeq(read_vars(lhs)?, read_var(*rhs)?));
             Ok(())
         }
-        ConjureExpression::Ineq(metadata, a, b, c) => {
+        ConjureExpression::Ineq(_metadata, a, b, c) => {
             minion_model.constraints.push(MinionConstraint::Ineq(
                 read_var(*a)?,
                 read_var(*b)?,
@@ -148,7 +148,7 @@ fn parse_expr(expr: ConjureExpression, minion_model: &mut MinionModel) -> Result
             ));
             Ok(())
         }
-        ConjureExpression::Neq(metadata, a, b) => {
+        ConjureExpression::Neq(_metadata, a, b) => {
             minion_model
                 .constraints
                 .push(MinionConstraint::WatchNeq(read_var(*a)?, read_var(*b)?));
@@ -180,7 +180,7 @@ fn read_var(e: ConjureExpression) -> Result<MinionVar, SolverError> {
 
 fn _read_ref(e: ConjureExpression) -> Result<String, SolverError> {
     let name = match e {
-        ConjureExpression::Reference(metdata, n) => Ok(n),
+        ConjureExpression::Reference(_metdata, n) => Ok(n),
         x => Err(SolverError::InvalidInstance(
             SOLVER,
             format!("expected a reference, but got `{0:?}`", x),
