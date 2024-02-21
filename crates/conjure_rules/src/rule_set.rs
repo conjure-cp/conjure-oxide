@@ -67,7 +67,7 @@ impl<'a> RuleSet<'a> {
 
         rules
     }
-    
+
     /// Get the rules of this rule set, panicking if they are not set.
     fn get_rules_or_panic(&self) -> &HashMap<&'a Rule<'a>, u8> {
         match self.rules.get() {
