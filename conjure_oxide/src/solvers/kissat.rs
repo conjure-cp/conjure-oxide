@@ -189,7 +189,7 @@ impl CNF {
         let expr = expr_box.as_ref();
         match expr {
             // Expression inside the Not()
-            ConjureExpression::Reference(metadata, name) => {
+            ConjureExpression::Reference(_metadata, name) => {
                 Ok(vec![-self.get_reference_index(name)?])
             }
             _ => Err(CNFError::UnexpectedExpressionInsideNot(expr.clone())),
@@ -217,9 +217,9 @@ impl CNF {
      */
     fn handle_flat_expression(&self, expression: &ConjureExpression) -> Result<Vec<i32>, CNFError> {
         match expression {
-            ConjureExpression::Reference(metadata, name) => self.handle_reference(name),
-            ConjureExpression::Not(metadata, var_box) => self.handle_not(var_box),
-            ConjureExpression::Or(metadata, expressions) => self.handle_or(expressions),
+            ConjureExpression::Reference(_metadata, name) => self.handle_reference(name),
+            ConjureExpression::Not(_metadata, var_box) => self.handle_not(var_box),
+            ConjureExpression::Or(_metadata, expressions) => self.handle_or(expressions),
             _ => Err(CNFError::UnexpectedExpression(expression.clone())),
         }
     }

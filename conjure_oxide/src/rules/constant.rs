@@ -11,10 +11,10 @@ fn apply_eval_constant(expr: &Expr) -> Result<Expr, RuleApplicationError> {
         return Err(RuleApplicationError::RuleNotApplicable);
     }
 
-    let res = eval_constant(expr)
+    
+    eval_constant(expr)
         .map(|c| Expr::Constant(Metadata::new(), c))
-        .ok_or(RuleApplicationError::RuleNotApplicable);
-    res
+        .ok_or(RuleApplicationError::RuleNotApplicable)
 }
 
 /// Simplify an expression to a constant if possible

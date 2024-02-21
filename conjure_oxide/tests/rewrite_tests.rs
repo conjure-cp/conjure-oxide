@@ -47,7 +47,7 @@ fn sum_of_constants() {
 
 fn evaluate_sum_of_constants(expr: &Expression) -> Option<i32> {
     match expr {
-        Expression::Sum(metadata, expressions) => {
+        Expression::Sum(_metadata, expressions) => {
             let mut sum = 0;
             for e in expressions {
                 match e {
@@ -104,7 +104,7 @@ fn recursive_sum_of_constants() {
 
 fn simplify_expression(expr: Expression) -> Expression {
     match expr {
-        Expression::Sum(metadata, expressions) => {
+        Expression::Sum(_metadata, expressions) => {
             if let Some(result) =
                 evaluate_sum_of_constants(&Expression::Sum(Metadata::new(), expressions.clone()))
             {
@@ -116,12 +116,12 @@ fn simplify_expression(expr: Expression) -> Expression {
                 )
             }
         }
-        Expression::Eq(metadata, left, right) => Expression::Eq(
+        Expression::Eq(_metadata, left, right) => Expression::Eq(
             Metadata::new(),
             Box::new(simplify_expression(*left)),
             Box::new(simplify_expression(*right)),
         ),
-        Expression::Geq(metadata, left, right) => Expression::Geq(
+        Expression::Geq(_metadata, left, right) => Expression::Geq(
             Metadata::new(),
             Box::new(simplify_expression(*left)),
             Box::new(simplify_expression(*right)),
