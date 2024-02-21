@@ -695,6 +695,7 @@ unsafe fn read_constant_list(
             Constant::Integer(n) => Ok(*n),
             Constant::Bool(true) => Ok(1),
             Constant::Bool(false) => Ok(0),
+            #[allow(unreachable_patterns)] // TODO: can there be other types?
             x => Err(MinionError::NotImplemented(format!("{:?}", x))),
         }?;
 

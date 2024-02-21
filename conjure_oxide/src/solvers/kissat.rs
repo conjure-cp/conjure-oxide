@@ -52,6 +52,7 @@ impl CNFModel {
     /**
      * Get all the Conjure variables in the CNF
      */
+    #[allow(dead_code)] // It will be used once we actually run kissat
     pub fn get_variables(&self) -> Vec<&ConjureName> {
         let mut ans: Vec<&ConjureName> = Vec::new();
 
@@ -124,6 +125,7 @@ impl CNFModel {
     /**
      * Convert the CNF to a Conjure expression
      */
+    #[allow(dead_code)] // It will be used once we actually run kissat
     pub fn as_expression(&self) -> Result<ConjureExpression, CNFError> {
         let mut expr_clauses: Vec<ConjureExpression> = Vec::new();
 
@@ -212,7 +214,7 @@ impl CNFModel {
     }
 
     /**
-     * Convert a single Reference, Not or Or into a clause of the CNF format
+     * Convert a single Reference, `Not` or `Or` into a clause of the CNF format
      */
     fn handle_flat_expression(&self, expression: &ConjureExpression) -> Result<Vec<i32>, CNFError> {
         match expression {
@@ -276,7 +278,7 @@ impl HasVariable for &ConjureName {
 /**
 * Expects Model to be in the Conjunctive Normal Form:
 * - All variables must be boolean
-* - Expressions must be Reference, Not(Reference), or Or(Reference1, Not(Reference2), ...)
+* - Expressions must be `Reference`, `Not(Reference)`, or `Or(Reference1, Not(Reference2), ...)`
 * - The top level And() may contain nested Or()s. Any other nested expressions are not allowed.
 */
 impl FromConjureModel for CNFModel {

@@ -29,13 +29,15 @@ pub fn model_from_json(str: &str) -> Result<Model> {
                 m.add_variable(name, var);
             }
             "SuchThat" => {
-                let constraints: Vec<Expression> = entry
-                    .1
-                    .as_array()
-                    .unwrap()
-                    .iter()
-                    .flat_map(parse_expression)
-                    .collect();
+                let constraints_arr = match entry.1.as_array() {
+                    Some(x) => x,
+                    None => {
+                        return Err(Error::Parse("SuchThat is not a vector".to_owned()));
+                    }
+                };
+
+                let constraints: Vec<Expression> =
+                    constraints_arr.iter().flat_map(parse_expression).collect();
                 m.add_constraints(constraints);
                 // println!("Nb constraints {}", m.constraints.len());
             }
