@@ -11,7 +11,7 @@ register_rule_set!("Minion", 20, ("Base"));
 
 fn is_nested_sum(exprs: &Vec<Expr>) -> bool {
     for e in exprs {
-        if let Expr::Sum(_) = e {
+        if let Expr::Sum(_, _) = e {
             return true;
         }
     }
@@ -23,7 +23,7 @@ fn is_nested_sum(exprs: &Vec<Expr>) -> bool {
  */
 fn sum_to_vector(expr: &Expr) -> Result<Vec<Expr>, RuleApplicationError> {
     match expr {
-        Expr::Sum(exprs) => {
+        Expr::Sum(metadata, exprs) => {
             if is_nested_sum(exprs) {
                 Err(RuleApplicationError::RuleNotApplicable)
             } else {
@@ -43,9 +43,9 @@ fn sum_to_vector(expr: &Expr) -> Result<Vec<Expr>, RuleApplicationError> {
 #[register_rule]
 fn flatten_sum_geq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
-        Expr::Geq(a, b) => {
+        Expr::Geq(metadata, a, b) => {
             let exprs = sum_to_vector(a)?;
-            Ok(Expr::SumGeq(exprs, b.clone()))
+            Ok(Expr::SumGeq(metadata.clone(), exprs, b.clone()))
         }
         _ => Err(RuleApplicationError::RuleNotApplicable),
     }
@@ -60,9 +60,9 @@ fn flatten_sum_geq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 #[register_rule(("Minion", 20))]
 fn sum_leq_to_sumleq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
-        Expr::Leq(a, b) => {
+        Expr::Leq(metadata, a, b) => {
             let exprs = sum_to_vector(a)?;
-            Ok(Expr::SumLeq(exprs, b.clone()))
+            Ok(Expr::SumLeq(metadata.clone(), exprs, b.clone()))
         }
         _ => Err(RuleApplicationError::RuleNotApplicable),
     }
@@ -77,9 +77,9 @@ fn sum_leq_to_sumleq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 #[register_rule(("Minion", 20))]
 fn sum_eq_to_sumeq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
-        Expr::Eq(a, b) => {
+        Expr::Eq(metadata, a, b) => {
             let exprs = sum_to_vector(a)?;
-            Ok(Expr::SumEq(exprs, b.clone()))
+            Ok(Expr::SumEq(metadata.clone(), exprs, b.clone()))
         }
         _ => Err(RuleApplicationError::RuleNotApplicable),
     }
@@ -103,10 +103,13 @@ fn sum_eq_to_sumeq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 #[register_rule(("Minion", 20))]
 fn sumeq_to_minion(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
-        Expr::SumEq(exprs, eq_to) => Ok(Expr::And(vec![
-            Expr::SumGeq(exprs.clone(), Box::from(*eq_to.clone())),
-            Expr::SumLeq(exprs.clone(), Box::from(*eq_to.clone())),
-        ])),
+        Expr::SumEq(metadata, exprs, eq_to) => Ok(Expr::And(
+            metadata.clone(),
+            vec![
+                Expr::SumGeq(metadata.clone(), exprs.clone(), Box::from(*eq_to.clone())),
+                Expr::SumLeq(metadata.clone(), exprs.clone(), Box::from(*eq_to.clone())),
+            ],
+        )),
         _ => Err(RuleApplicationError::RuleNotApplicable),
     }
 }
@@ -121,7 +124,8 @@ fn sumeq_to_minion(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 #[register_rule(("Minion", 20))]
 fn lt_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
-        Expr::Lt(a, b) => Ok(Expr::Ineq(
+        Expr::Lt(metadata, a, b) => Ok(Expr::Ineq(
+            metadata.clone(),
             a.clone(),
             b.clone(),
             Box::new(Expr::Constant(Metadata::new(), Const::Int(-1))),
@@ -140,7 +144,8 @@ fn lt_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 #[register_rule(("Minion", 20))]
 fn gt_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
-        Expr::Gt(a, b) => Ok(Expr::Ineq(
+        Expr::Gt(metadata, a, b) => Ok(Expr::Ineq(
+            metadata.clone(),
             b.clone(),
             a.clone(),
             Box::new(Expr::Constant(Metadata::new(), Const::Int(-1))),
@@ -159,7 +164,8 @@ fn gt_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 #[register_rule(("Minion", 20))]
 fn geq_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
-        Expr::Geq(a, b) => Ok(Expr::Ineq(
+        Expr::Geq(metadata, a, b) => Ok(Expr::Ineq(
+            metadata.clone(),
             b.clone(),
             a.clone(),
             Box::new(Expr::Constant(Metadata::new(), Const::Int(0))),
@@ -178,7 +184,8 @@ fn geq_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 #[register_rule(("Minion", 20))]
 fn leq_to_ineq(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
-        Expr::Leq(a, b) => Ok(Expr::Ineq(
+        Expr::Leq(metadata, a, b) => Ok(Expr::Ineq(
+            metadata.clone(),
             a.clone(),
             b.clone(),
             Box::new(Expr::Constant(Metadata::new(), Const::Int(0))),
