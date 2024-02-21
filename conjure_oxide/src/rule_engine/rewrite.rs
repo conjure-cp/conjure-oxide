@@ -27,6 +27,7 @@ impl From<ResolveError> for RewriteError {
 }
 
 struct RuleResult<'a> {
+    #[allow(dead_code)] // Not used yet, but will be useful to have
     rule: &'a Rule<'a>,
     new_expression: Expression,
 }
