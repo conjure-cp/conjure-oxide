@@ -1,4 +1,4 @@
-name: "Documentation (Generate)"
+name: "Documentation"
 
 on:
   push:
@@ -11,6 +11,8 @@ env:
   SCCACHE_GHA_ENABLED: "true"
   RUSTC_WRAPPER: "sccache"
 
+permissions:
+  contents: write
 
 jobs:
   coverage:
@@ -43,8 +45,10 @@ jobs:
           mkdir deploy
           cp -r target/doc/* deploy
 
-      - name: Archive code coverage results
-        uses: actions/upload-artifact@v3
+      - name: Deploy to Github Pages 
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          name: docs-${{github.sha}}
-          path: deploy/**
+          folder: ./deploy
+          target-folder: "docs"
+          branch: gh-pages
+          commit-message: "Actions: Documentation for ${{ steps.sha.outputs.result }}"
