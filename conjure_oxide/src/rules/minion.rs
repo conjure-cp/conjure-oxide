@@ -36,6 +36,26 @@ fn sum_to_vector(expr: &Expr) -> Result<Vec<Expr>, ApplicationError> {
     }
 }
 
+// /**
+//  * Convert an Eq to a conjunction of Geq and Leq:
+//  * ```text
+//  * a = b => a >= b && a <= b
+//  * ```
+//  */
+// #[register_rule(("Minion", 100))]
+// fn eq_to_minion(expr: &Expr, _: &Model) -> ApplicationResult {
+//     match expr {
+//         Expr::Eq(metadata, a, b) => Ok(Reduction::pure(Expr::And(
+//             metadata.clone(),
+//             vec![
+//                 Expr::Geq(metadata.clone(), a.clone(), b.clone()),
+//                 Expr::Leq(metadata.clone(), a.clone(), b.clone()),
+//             ],
+//         ))),
+//         _ => Err(ApplicationError::RuleNotApplicable),
+//     }
+// }
+
 /**
  * Convert a Geq to a SumGeq if the left hand side is a sum:
  * ```text
@@ -203,6 +223,49 @@ fn leq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
             a.clone(),
             b.clone(),
             Box::new(Expr::Constant(Metadata::new(), Const::Int(0))),
+        ))),
+        _ => Err(ApplicationError::RuleNotApplicable),
+    }
+}
+
+#[register_rule(("Minion", 100))]
+fn safediv_eq_to_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
+    match expr {
+        Expr::Eq(metadata, a, b) => {
+            if let Expr::SafeDiv(_, x, y) = a.as_ref() {
+                if !(b.is_reference() || b.is_constant()) {
+                    return Err(ApplicationError::RuleNotApplicable);
+                }
+                Ok(Reduction::pure(Expr::DivEq(
+                    metadata.clone(),
+                    x.clone(),
+                    y.clone(),
+                    b.clone(),
+                )))
+            } else if let Expr::SafeDiv(_, x, y) = b.as_ref() {
+                if !(a.is_reference() || a.is_constant()) {
+                    return Err(ApplicationError::RuleNotApplicable);
+                }
+                Ok(Reduction::pure(Expr::DivEq(
+                    metadata.clone(),
+                    x.clone(),
+                    y.clone(),
+                    a.clone(),
+                )))
+            } else {
+                Err(ApplicationError::RuleNotApplicable)
+            }
+        }
+        _ => Err(ApplicationError::RuleNotApplicable),
+    }
+}
+
+#[register_rule(("Minion", 100))]
+fn neq_to_alldiff(expr: &Expr, _: &Model) -> ApplicationResult {
+    match expr {
+        Expr::Neq(metadata, a, b) => Ok(Reduction::pure(Expr::AllDiff(
+            metadata.clone(),
+            vec![*a.clone(), *b.clone()],
         ))),
         _ => Err(ApplicationError::RuleNotApplicable),
     }

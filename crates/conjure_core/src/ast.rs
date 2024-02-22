@@ -228,6 +228,12 @@ pub enum Expression {
 
     #[compatible(Minion)]
     Ineq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
+
+    #[compatible(Minion)]
+    DivEq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
+
+    #[compatible(Minion)]
+    AllDiff(Metadata, Vec<Expression>),
 }
 
 impl Expression {
@@ -268,6 +274,8 @@ impl Expression {
             Expression::SumLeq(_, lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
             Expression::SumEq(_, lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
             Expression::Ineq(_, lhs, rhs, _) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            Expression::DivEq(_, lhs, rhs, _) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            Expression::AllDiff(_, exprs) => Some(exprs.iter().collect()),
         }
     }
 
@@ -352,6 +360,15 @@ impl Expression {
                 Box::new(sub[1].clone()),
                 Box::new(sub[2].clone()),
             ),
+            Expression::DivEq(metadata, _, _, _) => Expression::DivEq(
+                metadata.clone(),
+                Box::new(sub[0].clone()),
+                Box::new(sub[1].clone()),
+                Box::new(sub[2].clone()),
+            ),
+            Expression::AllDiff(metadata, _) => {
+                Expression::AllDiff(metadata.clone(), sub.iter().cloned().cloned().collect())
+            }
         }
     }
 }

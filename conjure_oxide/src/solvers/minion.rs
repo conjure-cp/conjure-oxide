@@ -151,7 +151,23 @@ fn parse_expr(expr: ConjureExpression, minion_model: &mut MinionModel) -> Result
         ConjureExpression::Neq(_metadata, a, b) => {
             minion_model
                 .constraints
-                .push(MinionConstraint::WatchNeq(read_var(*a)?, read_var(*b)?));
+                .push(MinionConstraint::AllDiff(vec![
+                    read_var(*a)?,
+                    read_var(*b)?,
+                ]));
+            Ok(())
+        }
+        ConjureExpression::DivEq(_metadata, a, b, c) => {
+            minion_model.constraints.push(MinionConstraint::Div(
+                (read_var(*a)?, read_var(*b)?),
+                read_var(*c)?,
+            ));
+            Ok(())
+        }
+        ConjureExpression::AllDiff(_metadata, vars) => {
+            minion_model
+                .constraints
+                .push(MinionConstraint::AllDiff(read_vars(vars)?));
             Ok(())
         }
         x => Err(SolverError::NotSupported(SOLVER, format!("{:?}", x))),

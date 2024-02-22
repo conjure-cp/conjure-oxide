@@ -78,12 +78,12 @@ pub fn get_rules() -> Vec<&'static Rule<'static>> {
 /// # Example
 /// ```rust
 /// use conjure_rules::register_rule;
-/// use conjure_core::rule::{Rule, RuleApplicationError};
-/// use conjure_core::ast::Expression;
+/// use conjure_core::rule::{Rule, ApplicationResult, Reduction};
+/// use conjure_core::ast::{Expression, Model};
 ///
 /// #[register_rule]
-/// fn identity(expr: &Expression) -> Result<Expression, RuleApplicationError> {
-///  Ok(expr.clone())
+/// fn identity(expr: &Expression, mdl: &Model) -> ApplicationResult {
+///  Ok(Reduction::pure(expr.clone()))
 /// }
 ///
 /// fn main() {
@@ -184,8 +184,8 @@ pub fn get_rule_set_by_name(name: &str) -> Option<&'static RuleSet<'static>> {
 /// # use conjure_rules::register_rule;
 /// #
 /// #[register_rule(("RuleSetName", 10))]
-/// fn identity(expr: &Expression) -> Result<Expression, ApplicationError> {
-///   Ok(expr.clone())
+/// fn identity(expr: &Expression, mdl: &Model) -> ApplicationResult {
+///   Ok(Reduction::pure(expr.clone()))
 /// }
 /// ```
 #[doc(inline)]

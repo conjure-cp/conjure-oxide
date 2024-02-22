@@ -392,7 +392,7 @@ fn evaluate_constant_not(expr: &Expr, _: &Model) -> ApplicationResult {
 }
 
 /** Turn a Div into a SafeDiv and post a global constraint to avoid undefined. */
-#[register_rule]
+#[register_rule(("Base", 100))]
 fn ensure_div(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Div(metadata, a, b) => Ok(Reduction::with_top(
