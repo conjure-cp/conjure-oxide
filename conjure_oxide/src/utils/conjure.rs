@@ -131,6 +131,7 @@ pub fn minion_solutions_to_json(solutions: &Vec<HashMap<VarName, Constant>>) -> 
             let serialized_constant = match constant {
                 Constant::Integer(i) => JsonValue::Number((*i).into()),
                 Constant::Bool(b) => JsonValue::Bool(*b),
+                x => unimplemented!("{:#?}", x),
             };
             json_solution.insert(var_name.to_string(), serialized_constant);
         }
