@@ -1,5 +1,5 @@
 use derive_is_enum_variant::is_enum_variant;
-use doc_solver_support::doc_solver_support;
+use enum_compatability_macro::document_compatibility;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use std::collections::HashMap;
@@ -157,7 +157,7 @@ impl TryFrom<Constant> for bool {
     }
 }
 
-#[doc_solver_support]
+#[document_compatibility]
 #[derive(Clone, Debug, PartialEq, is_enum_variant, Serialize, Deserialize)]
 #[non_exhaustive]
 pub enum Expression {
@@ -167,31 +167,47 @@ pub enum Expression {
      */
     Nothing,
 
-    #[solver(Minion, SAT)]
+    #[compatible(Minion, JsonInput)]
     Constant(Metadata, Constant),
 
-    #[solver(Minion)]
+    #[compatible(Minion, JsonInput, SAT)]
     Reference(Metadata, Name),
 
+    #[compatible(Minion, JsonInput)]
     Sum(Metadata, Vec<Expression>),
 
     /// Division after preventing division by zero, usually with a top-level constraint
+    #[compatible(Minion)]
     SafeDiv(Metadata, Box<Expression>, Box<Expression>),
     /// Division with a possibly undefined value (division by 0)
+    #[compatible(Minion, JsonInput)]
     Div(Metadata, Box<Expression>, Box<Expression>),
 
-    #[solver(SAT)]
+    #[compatible(JsonInput, SAT)]
     Not(Metadata, Box<Expression>),
-    #[solver(SAT)]
+
+    #[compatible(JsonInput, SAT)]
     Or(Metadata, Vec<Expression>),
-    #[solver(SAT)]
+
+    #[compatible(JsonInput, SAT)]
     And(Metadata, Vec<Expression>),
 
+    #[compatible(JsonInput)]
     Eq(Metadata, Box<Expression>, Box<Expression>),
+
+    #[compatible(JsonInput)]
     Neq(Metadata, Box<Expression>, Box<Expression>),
+
+    #[compatible(JsonInput)]
     Geq(Metadata, Box<Expression>, Box<Expression>),
+
+    #[compatible(JsonInput)]
     Leq(Metadata, Box<Expression>, Box<Expression>),
+
+    #[compatible(JsonInput)]
     Gt(Metadata, Box<Expression>, Box<Expression>),
+
+    #[compatible(JsonInput)]
     Lt(Metadata, Box<Expression>, Box<Expression>),
 
     /* Flattened SumEq.
@@ -204,11 +220,13 @@ pub enum Expression {
     SumEq(Metadata, Vec<Expression>, Box<Expression>),
 
     // Flattened Constraints
-    #[solver(Minion)]
+    #[compatible(Minion)]
     SumGeq(Metadata, Vec<Expression>, Box<Expression>),
-    #[solver(Minion)]
+
+    #[compatible(Minion)]
     SumLeq(Metadata, Vec<Expression>, Box<Expression>),
-    #[solver(Minion)]
+
+    #[compatible(Minion)]
     Ineq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
 }
 

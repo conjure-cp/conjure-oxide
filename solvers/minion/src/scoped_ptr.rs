@@ -2,6 +2,7 @@
 ///
 /// Implements destruction of the pointer when it goes out of scope, but provides no other
 /// guarantees.
+#[non_exhaustive]
 pub struct Scoped<T> {
     pub ptr: *mut T,
     destructor: fn(*mut T),
