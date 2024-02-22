@@ -15,3 +15,9 @@ This crate is licensed under the [Mozilla Public Licence 2.0](https://www.mozill
 ## Debugging
 
 Debug symbols for Minion can be enabled by setting the environment variable `DEBUG_MINION`.
+
+Eg.
+
+```shell
+DEBUG_MINION=true cargo test
+```
