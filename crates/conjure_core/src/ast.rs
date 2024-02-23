@@ -67,6 +67,18 @@ impl Model {
         constraints.extend(expressions);
         self.set_constraints(constraints);
     }
+
+    /// Returns an arbitrary variable name that is not in the model.
+    pub fn fresh_var(&self) -> Name {
+        let mut i = 0;
+        loop {
+            let name = Name::MachineName(i);
+            if !self.variables.contains_key(&name) {
+                return name;
+            }
+            i += 1;
+        }
+    }
 }
 
 impl Default for Model {
@@ -93,6 +105,12 @@ impl Display for Name {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct DecisionVariable {
     pub domain: Domain,
+}
+
+impl DecisionVariable {
+    pub fn new(domain: Domain) -> DecisionVariable {
+        DecisionVariable { domain }
+    }
 }
 
 impl Display for DecisionVariable {
@@ -231,9 +249,8 @@ pub enum Expression {
     #[compatible(Minion)]
     Ineq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
 
-    #[compatible(Minion)]
-    DivEq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
-
+    // #[compatible(Minion)]
+    // DivEq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
     #[compatible(Minion)]
     AllDiff(Metadata, Vec<Expression>),
 }
@@ -277,7 +294,7 @@ impl Expression {
             Expression::SumLeq(_, lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
             Expression::SumEq(_, lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
             Expression::Ineq(_, lhs, rhs, _) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
-            Expression::DivEq(_, lhs, rhs, _) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            // Expression::DivEq(_, lhs, rhs, _) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
             Expression::AllDiff(_, exprs) => Some(exprs.iter().collect()),
         }
     }
@@ -366,12 +383,12 @@ impl Expression {
                 Box::new(sub[1].clone()),
                 Box::new(sub[2].clone()),
             ),
-            Expression::DivEq(metadata, _, _, _) => Expression::DivEq(
-                metadata.clone(),
-                Box::new(sub[0].clone()),
-                Box::new(sub[1].clone()),
-                Box::new(sub[2].clone()),
-            ),
+            // Expression::DivEq(metadata, _, _, _) => Expression::DivEq(
+            //     metadata.clone(),
+            //     Box::new(sub[0].clone()),
+            //     Box::new(sub[1].clone()),
+            //     Box::new(sub[2].clone()),
+            // ),
             Expression::AllDiff(metadata, _) => {
                 Expression::AllDiff(metadata.clone(), sub.iter().cloned().cloned().collect())
             }

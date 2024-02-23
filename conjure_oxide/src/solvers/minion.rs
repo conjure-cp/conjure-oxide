@@ -157,13 +157,13 @@ fn parse_expr(expr: ConjureExpression, minion_model: &mut MinionModel) -> Result
                 ]));
             Ok(())
         }
-        ConjureExpression::DivEq(_metadata, a, b, c) => {
-            minion_model.constraints.push(MinionConstraint::Div(
-                (read_var(*a)?, read_var(*b)?),
-                read_var(*c)?,
-            ));
-            Ok(())
-        }
+        // ConjureExpression::DivEq(_metadata, a, b, c) => {
+        //     minion_model.constraints.push(MinionConstraint::Div(
+        //         (read_var(*a)?, read_var(*b)?),
+        //         read_var(*c)?,
+        //     ));
+        //     Ok(())
+        // }
         ConjureExpression::AllDiff(_metadata, vars) => {
             minion_model
                 .constraints

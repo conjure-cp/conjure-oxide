@@ -1,4 +1,6 @@
-use conjure_core::ast::{Constant as Const, Expression as Expr, Model};
+use conjure_core::ast::{
+    Constant as Const, DecisionVariable, Domain, Expression as Expr, Model, Range, SymbolTable,
+};
 use conjure_core::metadata::Metadata;
 use conjure_core::rule::{ApplicationError, ApplicationResult, Reduction};
 use conjure_rules::{register_rule, register_rule_set};
@@ -406,3 +408,35 @@ fn evaluate_constant_not(expr: &Expr, _: &Model) -> ApplicationResult {
 //         _ => Err(ApplicationError::RuleNotApplicable),
 //     }
 // }
+
+/**
+ * Turn a Min into a new variable and post a global constraint to ensure the new variable is the minimum.
+ * ```text
+ * min([a, b, c]) = d & d <= a & d <= b & d <= c
+ * ````
+ */
+#[register_rule(("Base", 100))] // TODO: should this be in CNF?
+fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
+    match expr {
+        Expr::Min(metadata, exprs) => {
+            let new_name = mdl.fresh_var();
+            let mut new_top = Vec::new();
+            for e in exprs {
+                new_top.push(Expr::Leq(
+                    Metadata::new(),
+                    Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
+                    Box::new(e.clone()),
+                ));
+            }
+            let new_domain = Domain::IntDomain(vec![Range::Bounded(i32::MIN, i32::MAX)]); // TODO: get domain from exprs
+            let mut new_vars = SymbolTable::new();
+            new_vars.insert(new_name.clone(), DecisionVariable::new(new_domain));
+            Ok(Reduction::new(
+                Expr::Reference(Metadata::new(), new_name),
+                Expr::And(metadata.clone(), new_top),
+                new_vars,
+            ))
+        }
+        _ => Err(ApplicationError::RuleNotApplicable),
+    }
+}

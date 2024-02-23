@@ -200,6 +200,10 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
             Box::new(Expression::And) as Box<dyn Fn(_, _) -> _>,
         ),
         ("MkOpOr", Box::new(Expression::Or) as Box<dyn Fn(_, _) -> _>),
+        (
+            "MkOpMin",
+            Box::new(Expression::Min) as Box<dyn Fn(_, _) -> _>,
+        ),
     ]
     .into_iter()
     .collect();

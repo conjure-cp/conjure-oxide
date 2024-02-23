@@ -270,3 +270,17 @@ fn neq_to_alldiff(expr: &Expr, _: &Model) -> ApplicationResult {
         _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
+
+#[register_rule(("Minion", 100))]
+fn eq_to_leq_geq(expr: &Expr, _: &Model) -> ApplicationResult {
+    match expr {
+        Expr::Eq(metadata, a, b) => Ok(Reduction::pure(Expr::And(
+            metadata.clone(),
+            vec![
+                Expr::Leq(metadata.clone(), a.clone(), b.clone()),
+                Expr::Geq(metadata.clone(), a.clone(), b.clone()),
+            ],
+        ))),
+        _ => Err(ApplicationError::RuleNotApplicable),
+    }
+}
