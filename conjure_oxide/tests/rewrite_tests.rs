@@ -768,50 +768,50 @@ fn rule_distribute_or_over_and() {
     );
 }
 
-#[test]
-fn rule_ensure_div() {
-    let ensure_div = get_rule_by_name("ensure_div").unwrap();
+// #[test]
+// fn rule_ensure_div() {
+//     let ensure_div = get_rule_by_name("ensure_div").unwrap();
 
-    let expr = Expression::Div(
-        Metadata::new(),
-        Box::new(Expression::Reference(
-            Metadata::new(),
-            Name::UserName("a".to_string()),
-        )),
-        Box::new(Expression::Reference(
-            Metadata::new(),
-            Name::UserName("b".to_string()),
-        )),
-    );
+//     let expr = Expression::Div(
+//         Metadata::new(),
+//         Box::new(Expression::Reference(
+//             Metadata::new(),
+//             Name::UserName("a".to_string()),
+//         )),
+//         Box::new(Expression::Reference(
+//             Metadata::new(),
+//             Name::UserName("b".to_string()),
+//         )),
+//     );
 
-    let red = ensure_div.apply(&expr, &Model::new()).unwrap();
+//     let red = ensure_div.apply(&expr, &Model::new()).unwrap();
 
-    assert_eq!(
-        red.new_expression,
-        Expression::SafeDiv(
-            Metadata::new(),
-            Box::new(Expression::Reference(
-                Metadata::new(),
-                Name::UserName("a".to_string())
-            )),
-            Box::new(Expression::Reference(
-                Metadata::new(),
-                Name::UserName("b".to_string())
-            )),
-        ),
-    );
-    assert_eq!(
-        red.new_top,
-        Expression::Neq(
-            Metadata::new(),
-            Box::new(Expression::Reference(
-                Metadata::new(),
-                Name::UserName("b".to_string())
-            )),
-            Box::new(Expression::Constant(Metadata::new(), Constant::Int(0)))
-        )
-    );
-}
+//     assert_eq!(
+//         red.new_expression,
+//         Expression::SafeDiv(
+//             Metadata::new(),
+//             Box::new(Expression::Reference(
+//                 Metadata::new(),
+//                 Name::UserName("a".to_string())
+//             )),
+//             Box::new(Expression::Reference(
+//                 Metadata::new(),
+//                 Name::UserName("b".to_string())
+//             )),
+//         ),
+//     );
+//     assert_eq!(
+//         red.new_top,
+//         Expression::Neq(
+//             Metadata::new(),
+//             Box::new(Expression::Reference(
+//                 Metadata::new(),
+//                 Name::UserName("b".to_string())
+//             )),
+//             Box::new(Expression::Constant(Metadata::new(), Constant::Int(0)))
+//         )
+//     );
+// }
 
 ///
 /// Reduce and solve:

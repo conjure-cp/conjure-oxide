@@ -228,37 +228,37 @@ fn leq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 }
 
-#[register_rule(("Minion", 100))]
-fn safediv_eq_to_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
-    match expr {
-        Expr::Eq(metadata, a, b) => {
-            if let Expr::SafeDiv(_, x, y) = a.as_ref() {
-                if !(b.is_reference() || b.is_constant()) {
-                    return Err(ApplicationError::RuleNotApplicable);
-                }
-                Ok(Reduction::pure(Expr::DivEq(
-                    metadata.clone(),
-                    x.clone(),
-                    y.clone(),
-                    b.clone(),
-                )))
-            } else if let Expr::SafeDiv(_, x, y) = b.as_ref() {
-                if !(a.is_reference() || a.is_constant()) {
-                    return Err(ApplicationError::RuleNotApplicable);
-                }
-                Ok(Reduction::pure(Expr::DivEq(
-                    metadata.clone(),
-                    x.clone(),
-                    y.clone(),
-                    a.clone(),
-                )))
-            } else {
-                Err(ApplicationError::RuleNotApplicable)
-            }
-        }
-        _ => Err(ApplicationError::RuleNotApplicable),
-    }
-}
+// #[register_rule(("Minion", 100))]
+// fn safediv_eq_to_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
+//     match expr {
+//         Expr::Eq(metadata, a, b) => {
+//             if let Expr::SafeDiv(_, x, y) = a.as_ref() {
+//                 if !(b.is_reference() || b.is_constant()) {
+//                     return Err(ApplicationError::RuleNotApplicable);
+//                 }
+//                 Ok(Reduction::pure(Expr::DivEq(
+//                     metadata.clone(),
+//                     x.clone(),
+//                     y.clone(),
+//                     b.clone(),
+//                 )))
+//             } else if let Expr::SafeDiv(_, x, y) = b.as_ref() {
+//                 if !(a.is_reference() || a.is_constant()) {
+//                     return Err(ApplicationError::RuleNotApplicable);
+//                 }
+//                 Ok(Reduction::pure(Expr::DivEq(
+//                     metadata.clone(),
+//                     x.clone(),
+//                     y.clone(),
+//                     a.clone(),
+//                 )))
+//             } else {
+//                 Err(ApplicationError::RuleNotApplicable)
+//             }
+//         }
+//         _ => Err(ApplicationError::RuleNotApplicable),
+//     }
+// }
 
 #[register_rule(("Minion", 100))]
 fn neq_to_alldiff(expr: &Expr, _: &Model) -> ApplicationResult {

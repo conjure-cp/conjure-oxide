@@ -176,12 +176,14 @@ pub enum Expression {
     #[compatible(Minion, JsonInput)]
     Sum(Metadata, Vec<Expression>),
 
-    /// Division after preventing division by zero, usually with a top-level constraint
-    #[compatible(Minion)]
-    SafeDiv(Metadata, Box<Expression>, Box<Expression>),
-    /// Division with a possibly undefined value (division by 0)
-    #[compatible(Minion, JsonInput)]
-    Div(Metadata, Box<Expression>, Box<Expression>),
+    // /// Division after preventing division by zero, usually with a top-level constraint
+    // #[compatible(Minion)]
+    // SafeDiv(Metadata, Box<Expression>, Box<Expression>),
+    // /// Division with a possibly undefined value (division by 0)
+    // #[compatible(Minion, JsonInput)]
+    // Div(Metadata, Box<Expression>, Box<Expression>),
+    #[compatible(JsonInput)]
+    Min(Metadata, Vec<Expression>),
 
     #[compatible(JsonInput, SAT)]
     Not(Metadata, Box<Expression>),
@@ -259,8 +261,9 @@ impl Expression {
             Expression::Reference(_, _) => None,
             Expression::Nothing => None,
             Expression::Sum(_, exprs) => Some(exprs.iter().collect()),
-            Expression::SafeDiv(_, lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
-            Expression::Div(_, lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            // Expression::SafeDiv(_, lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            // Expression::Div(_, lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            Expression::Min(_, exprs) => Some(exprs.iter().collect()),
             Expression::Not(_, expr_box) => Some(vec![expr_box.as_ref()]),
             Expression::Or(_, exprs) => Some(exprs.iter().collect()),
             Expression::And(_, exprs) => Some(exprs.iter().collect()),
@@ -290,16 +293,19 @@ impl Expression {
             Expression::Sum(metadata, _) => {
                 Expression::Sum(metadata.clone(), sub.iter().cloned().cloned().collect())
             }
-            Expression::Div(metadata, _, _) => Expression::Div(
-                metadata.clone(),
-                Box::new(sub[0].clone()),
-                Box::new(sub[1].clone()),
-            ),
-            Expression::SafeDiv(metadata, _, _) => Expression::SafeDiv(
-                metadata.clone(),
-                Box::new(sub[0].clone()),
-                Box::new(sub[1].clone()),
-            ),
+            // Expression::Div(metadata, _, _) => Expression::Div(
+            //     metadata.clone(),
+            //     Box::new(sub[0].clone()),
+            //     Box::new(sub[1].clone()),
+            // ),
+            // Expression::SafeDiv(metadata, _, _) => Expression::SafeDiv(
+            //     metadata.clone(),
+            //     Box::new(sub[0].clone()),
+            //     Box::new(sub[1].clone()),
+            // ),
+            Expression::Min(metadata, _) => {
+                Expression::Min(metadata.clone(), sub.iter().cloned().cloned().collect())
+            }
             Expression::Not(metadata, _) => {
                 Expression::Not(metadata.clone(), Box::new(sub[0].clone()))
             }

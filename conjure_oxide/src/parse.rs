@@ -175,10 +175,10 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
             "MkOpLt",
             Box::new(Expression::Lt) as Box<dyn Fn(_, _, _) -> _>,
         ),
-        (
-            "MkOpDiv",
-            Box::new(Expression::Div) as Box<dyn Fn(_, _, _) -> _>,
-        ),
+        // (
+        //     "MkOpDiv",
+        //     Box::new(Expression::Div) as Box<dyn Fn(_, _, _) -> _>,
+        // ),
     ]
     .into_iter()
     .collect();
