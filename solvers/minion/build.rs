@@ -18,6 +18,7 @@ fn main() {
     println!("cargo:rerun-if-changed=vendor");
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-changed=build.sh");
+    println!("cargo:rerun-if-env-changed=DEBUG_MINION");
 
     build();
 
