@@ -1,5 +1,3 @@
-#![cfg(feature = "unstable-solver-interface")]
-
 //! A new interface for interacting with solvers.
 //!
 //! # Example
