@@ -21,27 +21,24 @@
 #![allow(unused)]
 #![warn(clippy::exhaustive_enums)]
 
+pub mod model_modifier;
+pub mod stats;
+
 #[doc(hidden)]
-mod private {
-    // Used to limit calling trait functions outside this module.
-    #[doc(hidden)]
-    pub struct Internal;
+mod private;
+mod solver_states;
 
-    // https://predr.ag/blog/definitive-guide-to-sealed-traits-in-rust/#the-trick-for-sealing-traits
-    // Make traits unimplementable from outside of this module.
-    #[doc(hidden)]
-    pub trait Sealed {}
-}
-
-use self::incremental::*;
+use self::model_modifier::*;
 use self::solver_states::*;
+use self::stats::Stats;
 use anyhow::anyhow;
 use conjure_core::ast::{Domain, Expression, Model, Name};
+use itertools::Either;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::{Debug, Display};
 
-/// A [`SolverAdaptor`] provide an interface to an underlying solver. Used by [`Solver`].
+/// A [`SolverAdaptor`] provide an interface to an underlying solver, used by [Solver].
 pub trait SolverAdaptor: private::Sealed {
     /// The native model type of the underlying solver.
     type Model: Clone;
@@ -49,10 +46,10 @@ pub trait SolverAdaptor: private::Sealed {
     /// The native solution type of the underlying solver.
     type Solution: Clone;
 
-    /// The [`ModelModifier`](incremental::ModelModifier) used during incremental search.
+    /// The [`ModelModifier`](model_modifier::ModelModifier) used during incremental search.
     ///
-    /// If incremental solving is not supported, this SHOULD be set to [NotModifiable](`incremental::NotModifiable`) .
-    type Modifier: incremental::ModelModifier;
+    /// If incremental solving is not supported, this SHOULD be set to [NotModifiable](model_modifier::NotModifiable) .
+    type Modifier: model_modifier::ModelModifier;
 
     /// Run the solver on the given model.
     ///
@@ -89,11 +86,25 @@ pub trait SolverAdaptor: private::Sealed {
     fn init_solver(&mut self, _: private::Internal) {}
 }
 
-/// A Solver executes of a Conjure-Oxide model usign a specified solver.
+/// A Solver executes a Conjure-Oxide model using a given [SolverAdaptor].
+#[derive(Clone)]
 pub struct Solver<A: SolverAdaptor, State: SolverState = Init> {
-    state: std::marker::PhantomData<State>,
+    state: State,
     adaptor: A,
     model: Option<A::Model>,
+}
+
+impl<Adaptor: SolverAdaptor> Solver<Adaptor> {
+    pub fn new(solver_adaptor: Adaptor) -> Solver<Adaptor> {
+        let mut solver = Solver {
+            state: Init,
+            adaptor: solver_adaptor,
+            model: None,
+        };
+
+        solver.adaptor.init_solver(private::Internal);
+        solver
+    }
 }
 
 impl<A: SolverAdaptor> Solver<A, Init> {
@@ -104,7 +115,7 @@ impl<A: SolverAdaptor> Solver<A, Init> {
             .load_model(model, private::Internal)
             .map_err(|_| ())?;
         Ok(Solver {
-            state: std::marker::PhantomData::<ModelLoaded>,
+            state: ModelLoaded,
             adaptor: self.adaptor,
             model: Some(solver_model.clone()),
         })
@@ -115,127 +126,58 @@ impl<A: SolverAdaptor> Solver<A, ModelLoaded> {
     pub fn solve(
         mut self,
         callback: fn(HashMap<String, String>) -> bool,
-    ) -> Result<ExecutionSuccess, ExecutionFailure> {
+    ) -> Either<Solver<A, ExecutionSuccess>, Solver<A, ExecutionFailure>> {
         #[allow(clippy::unwrap_used)]
-        self.adaptor
-            .solve(self.model.unwrap(), callback, private::Internal)
+        let result = self
+            .adaptor
+            .solve(self.model.clone().unwrap(), callback, private::Internal);
+
+        match result {
+            Ok(x) => Either::Left(Solver {
+                adaptor: self.adaptor,
+                model: self.model,
+                state: x,
+            }),
+            Err(x) => Either::Right(Solver {
+                adaptor: self.adaptor,
+                model: self.model,
+                state: x,
+            }),
+        }
     }
 
     pub fn solve_mut(
         mut self,
         callback: fn(HashMap<String, String>, A::Modifier) -> bool,
-    ) -> Result<ExecutionSuccess, ExecutionFailure> {
+    ) -> Either<Solver<A, ExecutionSuccess>, Solver<A, ExecutionFailure>> {
         #[allow(clippy::unwrap_used)]
-        self.adaptor
-            .solve_mut(self.model.unwrap(), callback, private::Internal)
-    }
-}
+        let result =
+            self.adaptor
+                .solve_mut(self.model.clone().unwrap(), callback, private::Internal);
 
-impl<T: SolverAdaptor> Solver<T> {
-    pub fn new(solver_adaptor: T) -> Solver<T> {
-        let mut solver = Solver {
-            state: std::marker::PhantomData::<Init>,
-            adaptor: solver_adaptor,
-            model: None,
-        };
-
-        solver.adaptor.init_solver(private::Internal);
-        solver
-    }
-}
-
-pub mod solver_states {
-    //! States of a [`Solver`].
-
-    use super::private::Sealed;
-    use super::Solver;
-
-    pub trait SolverState: Sealed {}
-
-    impl Sealed for Init {}
-    impl Sealed for ModelLoaded {}
-    impl Sealed for ExecutionSuccess {}
-    impl Sealed for ExecutionFailure {}
-
-    impl SolverState for Init {}
-    impl SolverState for ModelLoaded {}
-    impl SolverState for ExecutionSuccess {}
-    impl SolverState for ExecutionFailure {}
-
-    pub struct Init;
-    pub struct ModelLoaded;
-
-    /// The state returned by [`Solver`] if solving has been successful.
-    pub struct ExecutionSuccess;
-
-    /// The state returned by [`Solver`] if solving has not been successful.
-    #[non_exhaustive]
-    pub enum ExecutionFailure {
-        /// The desired function or solver is not implemented yet.
-        OpNotImplemented,
-
-        /// The solver does not support this operation.
-        OpNotSupported,
-
-        /// Solving timed-out.
-        TimedOut,
-
-        /// An unspecified error has occurred.
-        Error(anyhow::Error),
-    }
-}
-
-pub mod incremental {
-    //! Incremental / mutable solving (changing the model during search).
-    //!
-    //! Incremental solving can be triggered for a solverthrough the
-    //! [`Solver::solve_mut`] method.
-    //!
-    //! This gives access to a [`ModelModifier`] in the solution retrieval callback.
-    use super::private;
-    use super::Solver;
-    use conjure_core::ast::{Domain, Expression, Model, Name};
-
-    /// A ModelModifier provides an interface to modify a model during solving.
-    ///
-    /// Modifications are defined in terms of Conjure AST nodes, so must be translated to a solver
-    /// specfic form before use.
-    ///
-    /// It is implementation defined whether these constraints can be given at high level and passed
-    /// through the rewriter, or only low-level solver constraints are supported.
-    ///
-    /// See also: [`Solver::solve_mut`].
-    pub trait ModelModifier: private::Sealed {
-        fn add_constraint(constraint: Expression) -> Result<(), ModificationFailure> {
-            Err(ModificationFailure::OpNotSupported)
-        }
-
-        fn add_variable(name: Name, domain: Domain) -> Result<(), ModificationFailure> {
-            Err(ModificationFailure::OpNotSupported)
+        match result {
+            Ok(x) => Either::Left(Solver {
+                adaptor: self.adaptor,
+                model: self.model,
+                state: x,
+            }),
+            Err(x) => Either::Right(Solver {
+                adaptor: self.adaptor,
+                model: self.model,
+                state: x,
+            }),
         }
     }
+}
 
-    /// A [`ModelModifier`] for a solver that does not support incremental solving. Returns
-    /// [`OperationNotSupported`](`ModificationFailure::OperationNotSupported`) for all operations.
-    pub struct NotModifiable;
+impl<A: SolverAdaptor> Solver<A, ExecutionSuccess> {
+    pub fn stats(self) -> Box<dyn Stats> {
+        self.state.stats
+    }
+}
 
-    impl private::Sealed for NotModifiable {}
-    impl ModelModifier for NotModifiable {}
-
-    /// The requested modification to the model has failed.
-    #[non_exhaustive]
-    pub enum ModificationFailure {
-        /// The desired operation is not supported for this solver adaptor.
-        OpNotSupported,
-
-        /// The desired operation is supported by this solver adaptor, but has not been
-        /// implemented yet.
-        OpNotImplemented,
-
-        // The arguments given to the operation are invalid.
-        ArgsInvalid(anyhow::Error),
-
-        /// An unspecified error has occurred.
-        Error(anyhow::Error),
+impl<A: SolverAdaptor> Solver<A, ExecutionFailure> {
+    pub fn why(self) -> ExecutionFailure {
+        self.state
     }
 }
