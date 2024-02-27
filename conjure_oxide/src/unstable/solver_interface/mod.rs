@@ -1,8 +1,39 @@
-//! A new interface for interacting with solvers.
+//! A high-level API for interacting with constraints solvers.
 //!
-//! # Example
+//! This module provides a consistent, solver-independent API for interacting with constraints
+//! solvers. It also provides incremental solving support, and the returning of run stats from
+//! solvers.
 //!
-//! TODO
+//! -----
+//!
+//! - [Solver<Adaptor>] provides the API for interacting with constraints solvers.
+//!
+//! - The [SolverAdaptor] trait controls how solving actually occurs and handles translation
+//! between the [Solver] type and a specific solver.
+//!
+//! - [adaptors] contains all implemented solver adaptors.
+//!
+//! - The [model_modifier] submodule defines types to help with incremental solving / changing a
+//!   model during search. The entrypoint for incremental solving is the [Solver<A,ModelLoaded>::solve_mut]
+//!   function.
+//!
+//! # Examples
+//!
+//! ## A Successful Minion Model
+//!
+//! ```
+//! # use conjure_oxide::generate_custom::get_example_model;
+//! # use conjure_oxide::rule_engine::rewrite::rewrite_model;
+//! # use conjure_oxide::rule_engine::resolve_rules::resolve_rule_sets;
+//!
+//! // Let's solve a simple model with Minion.
+//! let model = get_example_model("bool-03").unwrap();
+//! let rule_sets = resolve_rule_sets(vec!["Minion", "Constant"]).unwrap();
+//! let model = rewrite_model(&model,&rule_sets);
+//! todo!()
+//! ```
+//!
+//!
 
 // # Implementing Solver interfaces
 //
@@ -21,6 +52,7 @@
 #![allow(unused)]
 #![warn(clippy::exhaustive_enums)]
 
+pub mod adaptors;
 pub mod model_modifier;
 pub mod stats;
 
@@ -38,7 +70,7 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::{Debug, Display};
 
-/// A [`SolverAdaptor`] provide an interface to an underlying solver, used by [Solver].
+/// A common interface for calling underlying solver APIs inside a [Solver].
 pub trait SolverAdaptor: private::Sealed {
     /// The native model type of the underlying solver.
     type Model: Clone;
@@ -48,12 +80,12 @@ pub trait SolverAdaptor: private::Sealed {
 
     /// The [`ModelModifier`](model_modifier::ModelModifier) used during incremental search.
     ///
-    /// If incremental solving is not supported, this SHOULD be set to [NotModifiable](model_modifier::NotModifiable) .
+    /// If incremental solving is not supported, this **should** be set to [NotModifiable](model_modifier::NotModifiable) .
     type Modifier: model_modifier::ModelModifier;
 
-    /// Run the solver on the given model.
+    /// Runs the solver on the given model.
     ///
-    /// Implementations of this function MUST call the user provided callback whenever a solution
+    /// Implementations of this function *must** call the user provided callback whenever a solution
     /// is found. If the user callback returns `true`, search should continue, if the user callback
     /// returns `false`, search should terminate.
     fn solve(
@@ -63,14 +95,14 @@ pub trait SolverAdaptor: private::Sealed {
         _: private::Internal,
     ) -> Result<ExecutionSuccess, ExecutionFailure>;
 
-    /// Run the solver on the given model, allowing modification of the model through a
+    /// Runs the solver on the given model, allowing modification of the model through a
     /// [`ModelModifier`].
     ///
-    /// Implementations of this function MUST return [`OpNotSupported`](`ModificationFailure::OpNotSupported`)
+    /// Implementations of this function **must** return [`OpNotSupported`](`ModificationFailure::OpNotSupported`)
     /// if modifying the model mid-search is not supported. These implementations may also find the
     /// [`NotModifiable`] modifier useful.
     ///
-    /// As with [`solve`](SolverAdaptor::solve), this function MUST call the user provided callback
+    /// As with [`solve`](SolverAdaptor::solve), this function **must** call the user provided callback
     /// function whenever a solution is found.
     fn solve_mut(
         &mut self,
@@ -86,7 +118,18 @@ pub trait SolverAdaptor: private::Sealed {
     fn init_solver(&mut self, _: private::Internal) {}
 }
 
-/// A Solver executes a Conjure-Oxide model using a given [SolverAdaptor].
+/// An abstract representation of a constraints solver.
+///
+/// [Solver] provides a common interface for interacting with a constraint solver. It also
+/// abstracts over solver-specific datatypes, handling the translation to/from [conjure_core::ast]
+/// types for a model and its solutions.
+///
+/// Details of how a model is solved is specified by the [SolverAdaptor]. This includes: the
+/// underlying solver used, the translation of the model to a solver compatible form, how solutions
+/// are translated back to [conjure_core::ast] types, and how incremental solving is implemented.
+/// As such, there may be multiple [SolverAdaptor] implementations for a single underlying solver:
+/// eg. one adaptor may give solutions in a representation close to the solvers, while another may
+/// attempt to rewrite it back into Essence.
 #[derive(Clone)]
 pub struct Solver<A: SolverAdaptor, State: SolverState = Init> {
     state: State,
