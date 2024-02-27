@@ -23,13 +23,20 @@
 //!
 //! ```
 //! # use conjure_oxide::generate_custom::get_example_model;
-//! # use conjure_oxide::rule_engine::rewrite::rewrite_model;
-//! # use conjure_oxide::rule_engine::resolve_rules::resolve_rule_sets;
+//! use conjure_oxide::rule_engine::rewrite::rewrite_model;
+//! use conjure_oxide::rule_engine::resolve_rules::resolve_rule_sets;
+//! use conjure_oxide::unstable::solver_interface::{Solver,adaptors};
+//! use conjure_oxide::unstable::solver_interface::states::*;
 //!
-//! // Let's solve a simple model with Minion.
+//! // Define and rewrite a model for minion.
 //! let model = get_example_model("bool-03").unwrap();
 //! let rule_sets = resolve_rule_sets(vec!["Minion", "Constant"]).unwrap();
-//! let model = rewrite_model(&model,&rule_sets);
+//! let model = rewrite_model(&model,&rule_sets).unwrap();
+//!
+//!
+//! // Solve using Minion.
+//! let solver = Solver::using(adaptors::Minion);
+//! let solver: Solver<adaptors::Minion,ModelLoaded> = solver.load_model(model).unwrap();
 //! todo!()
 //! ```
 //!
@@ -58,10 +65,11 @@ pub mod stats;
 
 #[doc(hidden)]
 mod private;
-mod solver_states;
+
+pub mod states;
 
 use self::model_modifier::*;
-use self::solver_states::*;
+use self::states::*;
 use self::stats::Stats;
 use anyhow::anyhow;
 use conjure_core::ast::{Domain, Expression, Model, Name};
@@ -69,6 +77,7 @@ use itertools::Either;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::{Debug, Display};
+use thiserror::Error;
 
 /// A common interface for calling underlying solver APIs inside a [Solver].
 pub trait SolverAdaptor: private::Sealed {
@@ -93,7 +102,7 @@ pub trait SolverAdaptor: private::Sealed {
         model: Self::Model,
         callback: fn(HashMap<String, String>) -> bool,
         _: private::Internal,
-    ) -> Result<ExecutionSuccess, ExecutionFailure>;
+    ) -> Result<SolveSuccess, SolverError>;
 
     /// Runs the solver on the given model, allowing modification of the model through a
     /// [`ModelModifier`].
@@ -109,12 +118,12 @@ pub trait SolverAdaptor: private::Sealed {
         model: Self::Model,
         callback: fn(HashMap<String, String>, Self::Modifier) -> bool,
         _: private::Internal,
-    ) -> Result<ExecutionSuccess, ExecutionFailure>;
+    ) -> Result<SolveSuccess, SolverError>;
     fn load_model(
         &mut self,
         model: Model,
         _: private::Internal,
-    ) -> Result<Self::Model, anyhow::Error>;
+    ) -> Result<Self::Model, SolverError>;
     fn init_solver(&mut self, _: private::Internal) {}
 }
 
@@ -138,7 +147,7 @@ pub struct Solver<A: SolverAdaptor, State: SolverState = Init> {
 }
 
 impl<Adaptor: SolverAdaptor> Solver<Adaptor> {
-    pub fn new(solver_adaptor: Adaptor) -> Solver<Adaptor> {
+    pub fn using(solver_adaptor: Adaptor) -> Solver<Adaptor> {
         let mut solver = Solver {
             state: Init,
             adaptor: solver_adaptor,
@@ -151,12 +160,8 @@ impl<Adaptor: SolverAdaptor> Solver<Adaptor> {
 }
 
 impl<A: SolverAdaptor> Solver<A, Init> {
-    // TODO: decent error handling
-    pub fn load_model(mut self, model: Model) -> Result<Solver<A, ModelLoaded>, ()> {
-        let solver_model = &mut self
-            .adaptor
-            .load_model(model, private::Internal)
-            .map_err(|_| ())?;
+    pub fn load_model(mut self, model: Model) -> Result<Solver<A, ModelLoaded>, SolverError> {
+        let solver_model = &mut self.adaptor.load_model(model, private::Internal)?;
         Ok(Solver {
             state: ModelLoaded,
             adaptor: self.adaptor,
@@ -179,12 +184,18 @@ impl<A: SolverAdaptor> Solver<A, ModelLoaded> {
             Ok(x) => Either::Left(Solver {
                 adaptor: self.adaptor,
                 model: self.model,
-                state: x,
+                state: ExecutionSuccess {
+                    stats: x.stats,
+                    _sealed: private::Internal,
+                },
             }),
             Err(x) => Either::Right(Solver {
                 adaptor: self.adaptor,
                 model: self.model,
-                state: x,
+                state: ExecutionFailure {
+                    why: x,
+                    _sealed: private::Internal,
+                },
             }),
         }
     }
@@ -202,25 +213,60 @@ impl<A: SolverAdaptor> Solver<A, ModelLoaded> {
             Ok(x) => Either::Left(Solver {
                 adaptor: self.adaptor,
                 model: self.model,
-                state: x,
+                state: ExecutionSuccess {
+                    stats: x.stats,
+                    _sealed: private::Internal,
+                },
             }),
             Err(x) => Either::Right(Solver {
                 adaptor: self.adaptor,
                 model: self.model,
-                state: x,
+                state: ExecutionFailure {
+                    why: x,
+                    _sealed: private::Internal,
+                },
             }),
         }
     }
 }
 
 impl<A: SolverAdaptor> Solver<A, ExecutionSuccess> {
-    pub fn stats(self) -> Box<dyn Stats> {
+    pub fn stats(self) -> Option<Box<dyn Stats>> {
         self.state.stats
     }
 }
 
 impl<A: SolverAdaptor> Solver<A, ExecutionFailure> {
-    pub fn why(self) -> ExecutionFailure {
-        self.state
+    pub fn why(&self) -> SolverError {
+        self.state.why.clone()
     }
+}
+
+/// Errors returned by [Solver] on failure.
+#[non_exhaustive]
+#[derive(Debug, Error, Clone)]
+pub enum SolverError {
+    #[error("operation not implemented yet: {0}")]
+    OpNotImplemented(String),
+
+    #[error("operation not supported: {0}")]
+    OpNotSupported(String),
+
+    #[error("model feature not supported: {0}")]
+    ModelFeatureNotSupported(String),
+
+    #[error("model feature not implemented yet: {0}")]
+    ModelFeatureNotImplemented(String),
+
+    // use for semantics / type errors, use the above for syntax
+    #[error("model invalid: {0}")]
+    ModelInvalid(String),
+
+    #[error("time out")]
+    TimeOut,
+}
+
+/// Returned from [SolverAdaptor] when solving is successful.
+pub struct SolveSuccess {
+    stats: Option<Box<dyn Stats>>,
 }

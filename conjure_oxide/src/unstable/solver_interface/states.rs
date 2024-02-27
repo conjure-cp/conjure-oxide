@@ -7,6 +7,7 @@ use super::private::Internal;
 use super::private::Sealed;
 use super::stats::*;
 use super::Solver;
+use super::SolverError;
 
 pub trait SolverState: Sealed {}
 
@@ -26,26 +27,16 @@ pub struct ModelLoaded;
 /// The state returned by [`Solver`] if solving has been successful.
 pub struct ExecutionSuccess {
     /// Execution statistics.
-    pub stats: Box<dyn Stats>,
+    pub stats: Option<Box<dyn Stats>>,
 
-    // make this struct unconstructable outside of this module
-    #[doc(hidden)]
-    _private: Internal,
+    /// Cannot construct this from outside this module.
+    pub _sealed: Internal,
 }
 
 /// The state returned by [`Solver`] if solving has not been successful.
-#[non_exhaustive]
-#[derive(Debug, Error)]
-pub enum ExecutionFailure {
-    #[error("operation not implemented yet")]
-    OpNotImplemented,
+pub struct ExecutionFailure {
+    pub why: SolverError,
 
-    #[error("operation is not supported by this solver")]
-    OpNotSupported,
-
-    #[error("time out")]
-    TimedOut,
-
-    #[error(transparent)]
-    Other(#[from] anyhow::Error),
+    /// Cannot construct this from outside this module.
+    pub _sealed: Internal,
 }
