@@ -1,4 +1,5 @@
-use crate::unstable::solver_interface::states;
+use crate::unstable::solver_interface::SolverMutCallback;
+use crate::unstable::solver_interface::{states, SolverCallback};
 
 use super::super::model_modifier::NotModifiable;
 use super::super::private;
@@ -24,7 +25,7 @@ impl SolverAdaptor for Minion {
     fn solve(
         &mut self,
         model: Self::Model,
-        callback: fn(std::collections::HashMap<String, String>) -> bool,
+        callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
         Err(OpNotImplemented("solve".into()))
@@ -33,7 +34,7 @@ impl SolverAdaptor for Minion {
     fn solve_mut(
         &mut self,
         model: Self::Model,
-        callback: fn(std::collections::HashMap<String, String>, Self::Modifier) -> bool,
+        callback: SolverMutCallback<Self>,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
         Err(OpNotImplemented("solve_mut".into()))

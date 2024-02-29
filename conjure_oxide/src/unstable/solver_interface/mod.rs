@@ -72,12 +72,18 @@ use self::model_modifier::*;
 use self::states::*;
 use self::stats::Stats;
 use anyhow::anyhow;
+use conjure_core::ast::Constant;
+use conjure_core::ast::DecisionVariable;
 use conjure_core::ast::{Domain, Expression, Model, Name};
 use itertools::Either;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::{Debug, Display};
 use thiserror::Error;
+
+pub type SolverCallback = Box<dyn Fn(HashMap<Name, Constant>) -> bool + Send>;
+pub type SolverMutCallback<A> =
+    Box<dyn Fn(HashMap<Name, Constant>, <A as SolverAdaptor>::Modifier) -> bool + Send>;
 
 /// A common interface for calling underlying solver APIs inside a [Solver].
 pub trait SolverAdaptor: private::Sealed {
@@ -100,7 +106,7 @@ pub trait SolverAdaptor: private::Sealed {
     fn solve(
         &mut self,
         model: Self::Model,
-        callback: fn(HashMap<String, String>) -> bool,
+        callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError>;
 
@@ -116,7 +122,7 @@ pub trait SolverAdaptor: private::Sealed {
     fn solve_mut(
         &mut self,
         model: Self::Model,
-        callback: fn(HashMap<String, String>, Self::Modifier) -> bool,
+        callback: SolverMutCallback<Self>,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError>;
     fn load_model(
@@ -173,7 +179,7 @@ impl<A: SolverAdaptor> Solver<A, Init> {
 impl<A: SolverAdaptor> Solver<A, ModelLoaded> {
     pub fn solve(
         mut self,
-        callback: fn(HashMap<String, String>) -> bool,
+        callback: SolverCallback,
     ) -> Either<Solver<A, ExecutionSuccess>, Solver<A, ExecutionFailure>> {
         #[allow(clippy::unwrap_used)]
         let result = self
@@ -202,7 +208,7 @@ impl<A: SolverAdaptor> Solver<A, ModelLoaded> {
 
     pub fn solve_mut(
         mut self,
-        callback: fn(HashMap<String, String>, A::Modifier) -> bool,
+        callback: SolverMutCallback<A>,
     ) -> Either<Solver<A, ExecutionSuccess>, Solver<A, ExecutionFailure>> {
         #[allow(clippy::unwrap_used)]
         let result =
