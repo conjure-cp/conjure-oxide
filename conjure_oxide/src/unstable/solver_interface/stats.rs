@@ -3,6 +3,6 @@ use super::private::Sealed;
 
 pub trait Stats: Sealed {}
 
-struct NoStats;
+pub struct NoStats;
 impl Sealed for NoStats {}
 impl Stats for NoStats {}

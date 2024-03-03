@@ -1,12 +1,18 @@
+use std::collections::HashMap;
+use std::sync::{Condvar, Mutex, OnceLock};
+
 use crate::unstable::solver_interface::SolverMutCallback;
 use crate::unstable::solver_interface::{states, SolverCallback};
 
 use super::super::model_modifier::NotModifiable;
 use super::super::private;
+use super::super::stats::NoStats;
 use super::super::SolveSuccess;
 use super::super::SolverAdaptor;
 use super::super::SolverError;
 use super::super::SolverError::*;
+
+use minion_rs::run_minion;
 
 use crate::ast as conjureast;
 use minion_rs::ast as minionast;
@@ -16,19 +22,81 @@ use minion_rs::ast as minionast;
 /// This adaptor uses the `minion_rs` crate to talk to Minion over FFI.
 pub struct Minion;
 
+static MINION_LOCKED: Mutex<bool> = Mutex::new(false);
+static MINION_CONDVAR: Condvar = Condvar::new();
+static USER_CALLBACK: OnceLock<Mutex<SolverCallback>> = OnceLock::new();
+
+fn minion_rs_callback(solutions: HashMap<minionast::VarName, minionast::Constant>) -> bool {
+    #[allow(clippy::unwrap_used)]
+    let callback = USER_CALLBACK
+        .get_or_init(|| Mutex::new(Box::new(|x| true)))
+        .lock()
+        .unwrap();
+
+    let mut conjure_solutions: HashMap<conjureast::Name, conjureast::Constant> = HashMap::new();
+    for (minion_name, minion_const) in solutions.into_iter() {
+        let conjure_const = match minion_const {
+            minionast::Constant::Bool(x) => conjureast::Constant::Bool(x),
+            minionast::Constant::Integer(x) => conjureast::Constant::Int(x),
+            _ => todo!(),
+        };
+
+        //FIXME (niklasdewally): what about machine names?
+        let conjure_name = conjureast::Name::UserName(minion_name);
+        conjure_solutions.insert(conjure_name, conjure_const);
+    }
+
+    (**callback)(conjure_solutions)
+}
+
 impl private::Sealed for Minion {}
 impl SolverAdaptor for Minion {
     type Model = minionast::Model;
     type Solution = minionast::Constant;
     type Modifier = NotModifiable;
 
+    #[allow(clippy::unwrap_used)]
     fn solve(
         &mut self,
         model: Self::Model,
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
-        Err(OpNotImplemented("solve".into()))
+        // our minion callback is global state, so single threading the adaptor as a whole is
+        // probably a good move...
+        #[allow(clippy::unwrap_used)]
+        let mut locked = MINION_LOCKED.lock().unwrap();
+
+        #[allow(clippy::unwrap_used)]
+        while *locked {
+            locked = MINION_CONDVAR.wait(locked).unwrap();
+        }
+        *locked = true;
+
+        let mut user_callback = USER_CALLBACK
+            .get_or_init(|| Mutex::new(Box::new(|x| true)))
+            .lock()
+            .unwrap();
+        *user_callback = callback;
+        std::mem::drop(user_callback); // release mutex. REQUIRED so that run_minion can use the
+                                       // user callback and not deadlock.
+
+        minion_rs::run_minion(model, minion_rs_callback).map_err(|err| match err {
+            minion_rs::error::MinionError::RuntimeError(x) => {
+                SolverError::Runtime(format!("{:#?}", x))
+            }
+            minion_rs::error::MinionError::Other(x) => SolverError::Runtime(format!("{:#?}", x)),
+            minion_rs::error::MinionError::NotImplemented(x) => {
+                SolverError::RuntimeNotImplemented(x)
+            }
+            x => SolverError::Runtime(format!("unknown minion_rs error: {:#?}", x)),
+        })?;
+
+        *locked = false;
+        std::mem::drop(locked); // unlock mutex
+        MINION_CONDVAR.notify_one(); // wake up waiting threads
+
+        Ok(SolveSuccess { stats: None })
     }
 
     fn solve_mut(
@@ -56,8 +124,8 @@ fn parse_vars(
     conjure_model: &conjureast::Model,
     minion_model: &mut minionast::Model,
 ) -> Result<(), SolverError> {
-    // TODO (nd60): remove unused vars?
-    // TODO (nd60): ensure all vars references are used.
+    // TODO (niklasdewally): remove unused vars?
+    // TODO (niklasdewally): ensure all vars references are used.
 
     for (name, variable) in conjure_model.variables.iter() {
         parse_var(name, variable, minion_model)?;

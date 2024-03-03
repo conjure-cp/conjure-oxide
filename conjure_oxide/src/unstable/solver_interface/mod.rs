@@ -27,6 +27,7 @@
 //! use conjure_oxide::rule_engine::resolve_rules::resolve_rule_sets;
 //! use conjure_oxide::unstable::solver_interface::{Solver,adaptors};
 //! use conjure_oxide::unstable::solver_interface::states::*;
+//! use std::sync::{Arc,Mutex};
 //!
 //! // Define and rewrite a model for minion.
 //! let model = get_example_model("bool-03").unwrap();
@@ -37,7 +38,30 @@
 //! // Solve using Minion.
 //! let solver = Solver::using(adaptors::Minion);
 //! let solver: Solver<adaptors::Minion,ModelLoaded> = solver.load_model(model).unwrap();
-//! todo!()
+//!
+//! // In this example, we will count solutions.
+//! //
+//! // The solver interface is designed to allow adaptors to use multiple-threads / processes if
+//! // necessary. Therefore, the callback type requires all variables inside it to have a static
+//! // lifetime and to implement Send (i.e. the variable can be safely shared between theads).
+//! //
+//! // We use Arc<Mutex<T>> to create multiple references to a threadsafe mutable
+//! // variable of type T.
+//! //
+//! // Using the move |x| ... closure syntax, we move one of these references into the closure.
+//! // Note that a normal closure borrow variables from the parent so is not
+//! // thread-safe.
+//!
+//! let counter_ref = Arc::new(Mutex::new(0));
+//! let counter_ref_2 = counter_ref.clone();
+//! solver.solve(Box::new(move |_| {
+//!   let mut counter = (*counter_ref_2).lock().unwrap();
+//!   *counter += 1;
+//!   true
+//!   }));
+//!
+//! let mut counter = (*counter_ref).lock().unwrap();
+//! assert_eq!(*counter,2);
 //! ```
 //!
 //!
@@ -270,6 +294,12 @@ pub enum SolverError {
 
     #[error("time out")]
     TimeOut,
+
+    #[error("error during solver execution: not implemented: {0}")]
+    RuntimeNotImplemented(String),
+
+    #[error("error during solver execution: {0}")]
+    Runtime(String),
 }
 
 /// Returned from [SolverAdaptor] when solving is successful.
