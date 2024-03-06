@@ -413,12 +413,13 @@ fn evaluate_constant_not(expr: &Expr, _: &Model) -> ApplicationResult {
  * Turn a Min into a new variable and post a global constraint to ensure the new variable is the minimum.
  * ```text
  * min([a, b, c]) ~> d ; d <= a & d <= b & d <= c
- * ````
+ * ```
  */
-#[register_rule(("Base", 100))] // TODO: should this be in CNF?
+#[register_rule(("Base", 100))]
 fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
     match expr {
         Expr::Min(metadata, exprs) => {
+            println!("MIN TO VAR");
             let new_name = mdl.fresh_var();
             let mut new_top = Vec::new();
             for e in exprs {

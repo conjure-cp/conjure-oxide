@@ -49,8 +49,10 @@ pub fn rewrite_model<'a>(
     let rules = get_rules_vec(&rule_priorities);
     let mut new_model = model.clone();
 
-    while let Some(step) = rewrite_iteration(&new_model.constraints, model, &rules) {
+    while let Some(step) = rewrite_iteration(&new_model.constraints, &new_model, &rules) {
+        println!("{:?}\n", step);
         new_model.variables.extend(step.symbols); // Add new assignments to the symbol table
+        println!("After extension: {:?}\n", new_model.variables);
         if step.new_top.is_nothing() {
             new_model.constraints = step.new_expression.clone();
         } else {
@@ -67,6 +69,7 @@ pub fn rewrite_model<'a>(
             };
         }
     }
+    println!("Final model: {:?}\n", new_model);
     Ok(new_model)
 }
 

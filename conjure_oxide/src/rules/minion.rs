@@ -271,7 +271,7 @@ fn neq_to_alldiff(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 }
 
-#[register_rule(("Minion", 100))]
+// #[register_rule(("Minion", 100))]
 fn eq_to_leq_geq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Eq(metadata, a, b) => Ok(Reduction::pure(Expr::And(
