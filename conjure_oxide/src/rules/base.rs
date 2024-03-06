@@ -412,7 +412,7 @@ fn evaluate_constant_not(expr: &Expr, _: &Model) -> ApplicationResult {
 /**
  * Turn a Min into a new variable and post a global constraint to ensure the new variable is the minimum.
  * ```text
- * min([a, b, c]) = d & d <= a & d <= b & d <= c
+ * min([a, b, c]) ~> d ; d <= a & d <= b & d <= c
  * ````
  */
 #[register_rule(("Base", 100))] // TODO: should this be in CNF?

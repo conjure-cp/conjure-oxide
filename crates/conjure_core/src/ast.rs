@@ -70,7 +70,7 @@ impl Model {
 
     /// Returns an arbitrary variable name that is not in the model.
     pub fn fresh_var(&self) -> Name {
-        let mut i = 0;
+        let mut i = self.variables.len() as i32;
         loop {
             let name = Name::MachineName(i);
             if !self.variables.contains_key(&name) {
@@ -293,7 +293,9 @@ impl Expression {
             Expression::SumGeq(_, lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
             Expression::SumLeq(_, lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
             Expression::SumEq(_, lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
-            Expression::Ineq(_, lhs, rhs, _) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            Expression::Ineq(_, lhs, rhs, cmp) => {
+                Some(vec![lhs.as_ref(), rhs.as_ref(), cmp.as_ref()])
+            }
             // Expression::DivEq(_, lhs, rhs, _) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
             Expression::AllDiff(_, exprs) => Some(exprs.iter().collect()),
         }
