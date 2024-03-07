@@ -412,7 +412,7 @@ fn evaluate_constant_not(expr: &Expr, _: &Model) -> ApplicationResult {
 /**
  * Turn a Min into a new variable and post a global constraint to ensure the new variable is the minimum.
  * ```text
- * min([a, b, c]) ~> d ; d <= a & d <= b & d <= c
+ * min([a, b]) ~> c ; c <= a & c <= b & (c = a | c = b)
  * ```
  */
 #[register_rule(("Base", 100))]
@@ -420,14 +420,34 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
     match expr {
         Expr::Min(metadata, exprs) => {
             let new_name = mdl.fresh_var();
-            let mut new_top = Vec::new();
+
+            let mut new_top = Vec::new(); // the new variable must be less than or equal to all the other variables
+            let mut disjunction = Vec::new(); // the new variable must be equal to one of the variables
             for e in exprs {
                 new_top.push(Expr::Leq(
                     Metadata::new(),
                     Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
                     Box::new(e.clone()),
                 ));
+                disjunction.push(Expr::And(
+                    // TODO: change to an Eq once we figure out how to apply them later
+                    Metadata::new(),
+                    vec![
+                        Expr::Leq(
+                            Metadata::new(),
+                            Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
+                            Box::new(e.clone()),
+                        ),
+                        Expr::Geq(
+                            Metadata::new(),
+                            Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
+                            Box::new(e.clone()),
+                        ),
+                    ],
+                ));
             }
+            new_top.push(Expr::Or(Metadata::new(), disjunction));
+
             let mut new_vars = SymbolTable::new();
             let bound = expr
                 .bounds(&mdl.variables)
@@ -436,12 +456,63 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
                 new_name.clone(),
                 DecisionVariable::new(Domain::IntDomain(vec![Range::Bounded(bound.0, bound.1)])),
             );
+
             Ok(Reduction::new(
                 Expr::Reference(Metadata::new(), new_name),
                 Expr::And(metadata.clone(), new_top),
                 new_vars,
             ))
         }
+        _ => Err(ApplicationError::RuleNotApplicable),
+    }
+}
+
+/**
+* Apply the Distributive Law to expressions like `Or([..., And(a, b)])`
+
+* ```text
+* or(and(a, b), c) = and(or(a, c), or(b, c))
+* ```
+ */
+#[register_rule(("Base", 100))]
+fn distribute_or_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
+    fn find_and(exprs: &[Expr]) -> Option<usize> {
+        // ToDo: may be better to move this to some kind of utils module?
+        for (i, e) in exprs.iter().enumerate() {
+            if let Expr::And(_, _) = e {
+                return Some(i);
+            }
+        }
+        None
+    }
+
+    match expr {
+        Expr::Or(_, exprs) => match find_and(exprs) {
+            Some(idx) => {
+                let mut rest = exprs.clone();
+                let and_expr = rest.remove(idx);
+
+                match and_expr {
+                    Expr::And(metadata, and_exprs) => {
+                        let mut new_and_contents = Vec::new();
+
+                        for e in and_exprs {
+                            // ToDo: Cloning everything may be a bit inefficient - discuss
+                            let mut new_or_contents = rest.clone();
+                            new_or_contents.push(e.clone());
+                            new_and_contents.push(Expr::Or(metadata.clone(), new_or_contents))
+                        }
+
+                        Ok(Reduction::pure(Expr::And(
+                            metadata.clone(),
+                            new_and_contents,
+                        )))
+                    }
+                    _ => Err(ApplicationError::RuleNotApplicable),
+                }
+            }
+            None => Err(ApplicationError::RuleNotApplicable),
+        },
         _ => Err(ApplicationError::RuleNotApplicable),
     }
 }

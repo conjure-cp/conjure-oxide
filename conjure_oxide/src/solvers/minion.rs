@@ -11,6 +11,7 @@ use crate::ast::{
     Range as ConjureRange,
 };
 
+use anyhow::Result;
 pub use minion_rs::ast::Model as MinionModel;
 use minion_rs::ast::{
     Constant as MinionConstant, Constraint as MinionConstraint, Var as MinionVar,
@@ -127,36 +128,27 @@ fn parse_exprs(
 }
 
 fn parse_expr(expr: ConjureExpression, minion_model: &mut MinionModel) -> Result<(), SolverError> {
+    minion_model.constraints.push(read_expr(expr)?);
+    Ok(())
+}
+
+fn read_expr(expr: ConjureExpression) -> Result<MinionConstraint, SolverError> {
     match expr {
         ConjureExpression::SumLeq(_metadata, lhs, rhs) => {
-            minion_model
-                .constraints
-                .push(MinionConstraint::SumLeq(read_vars(lhs)?, read_var(*rhs)?));
-            Ok(())
+            Ok(MinionConstraint::SumLeq(read_vars(lhs)?, read_var(*rhs)?))
         }
         ConjureExpression::SumGeq(_metadata, lhs, rhs) => {
-            minion_model
-                .constraints
-                .push(MinionConstraint::SumGeq(read_vars(lhs)?, read_var(*rhs)?));
-            Ok(())
+            Ok(MinionConstraint::SumGeq(read_vars(lhs)?, read_var(*rhs)?))
         }
-        ConjureExpression::Ineq(_metadata, a, b, c) => {
-            minion_model.constraints.push(MinionConstraint::Ineq(
-                read_var(*a)?,
-                read_var(*b)?,
-                MinionConstant::Integer(read_const(*c)?),
-            ));
-            Ok(())
-        }
-        ConjureExpression::Neq(_metadata, a, b) => {
-            minion_model
-                .constraints
-                .push(MinionConstraint::AllDiff(vec![
-                    read_var(*a)?,
-                    read_var(*b)?,
-                ]));
-            Ok(())
-        }
+        ConjureExpression::Ineq(_metadata, a, b, c) => Ok(MinionConstraint::Ineq(
+            read_var(*a)?,
+            read_var(*b)?,
+            MinionConstant::Integer(read_const(*c)?),
+        )),
+        ConjureExpression::Neq(_metadata, a, b) => Ok(MinionConstraint::AllDiff(vec![
+            read_var(*a)?,
+            read_var(*b)?,
+        ])),
         // ConjureExpression::DivEq(_metadata, a, b, c) => {
         //     minion_model.constraints.push(MinionConstraint::Div(
         //         (read_var(*a)?, read_var(*b)?),
@@ -165,11 +157,14 @@ fn parse_expr(expr: ConjureExpression, minion_model: &mut MinionModel) -> Result
         //     Ok(())
         // }
         ConjureExpression::AllDiff(_metadata, vars) => {
-            minion_model
-                .constraints
-                .push(MinionConstraint::AllDiff(read_vars(vars)?));
-            Ok(())
+            Ok(MinionConstraint::AllDiff(read_vars(vars)?))
         }
+        ConjureExpression::Or(_metadata, exprs) => Ok(MinionConstraint::WatchedOr(
+            exprs
+                .iter()
+                .map(|x| read_expr(x.to_owned()))
+                .collect::<Result<Vec<MinionConstraint>, SolverError>>()?,
+        )),
         x => Err(SolverError::NotSupported(SOLVER, format!("{:?}", x))),
     }
 }
