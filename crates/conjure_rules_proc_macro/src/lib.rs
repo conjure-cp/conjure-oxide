@@ -68,7 +68,7 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
         #func
 
         #[::conjure_rules::_dependencies::distributed_slice(::conjure_rules::RULES_DISTRIBUTED_SLICE)]
-        pub static #static_ident: ::conjure_rules::_dependencies::Rule = ::conjure_rules::_dependencies::Rule {
+        pub static #static_ident: ::conjure_rules::_dependencies::Rule<'static> = ::conjure_rules::_dependencies::Rule {
             name: stringify!(#rule_ident),
             application: #rule_ident,
             rule_sets: &[#(#rule_sets),*],
