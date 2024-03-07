@@ -80,7 +80,7 @@ fn remove_nothings(expr: &Expr, _: &Model) -> ApplicationResult {
  * ```
  */
 #[register_rule(("Base", 100))]
-fn empty_to_nothing(expr: &Expr, mdl: &Model) -> ApplicationResult {
+fn empty_to_nothing(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr.sub_expressions() {
         None => Err(ApplicationError::RuleNotApplicable),
         Some(sub) => {
@@ -419,7 +419,6 @@ fn evaluate_constant_not(expr: &Expr, _: &Model) -> ApplicationResult {
 fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
     match expr {
         Expr::Min(metadata, exprs) => {
-            println!("MIN TO VAR");
             let new_name = mdl.fresh_var();
             let mut new_top = Vec::new();
             for e in exprs {
@@ -429,9 +428,14 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
                     Box::new(e.clone()),
                 ));
             }
-            let new_domain = Domain::IntDomain(vec![Range::Bounded(i32::MIN, i32::MAX)]); // TODO: get domain from exprs
             let mut new_vars = SymbolTable::new();
-            new_vars.insert(new_name.clone(), DecisionVariable::new(new_domain));
+            let bound = expr
+                .bounds(&mdl.variables)
+                .ok_or(ApplicationError::BoundError)?;
+            new_vars.insert(
+                new_name.clone(),
+                DecisionVariable::new(Domain::IntDomain(vec![Range::Bounded(bound.0, bound.1)])),
+            );
             Ok(Reduction::new(
                 Expr::Reference(Metadata::new(), new_name),
                 Expr::And(metadata.clone(), new_top),

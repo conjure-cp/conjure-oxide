@@ -7,7 +7,6 @@ use crate::rule_engine::resolve_rules::{
 use conjure_core::ast::{Expression, Model};
 use conjure_core::metadata::Metadata;
 use conjure_core::rule::{Reduction, Rule};
-use conjure_rules::get_rules;
 use conjure_rules::rule_set::RuleSet;
 
 struct RuleResult<'a> {
@@ -50,9 +49,9 @@ pub fn rewrite_model<'a>(
     let mut new_model = model.clone();
 
     while let Some(step) = rewrite_iteration(&new_model.constraints, &new_model, &rules) {
-        println!("{:?}\n", step);
+        // println!("{:?}\n", step);
         new_model.variables.extend(step.symbols); // Add new assignments to the symbol table
-        println!("After extension: {:?}\n", new_model.variables);
+                                                  // println!("After extension: {:?}\n", new_model.variables);
         if step.new_top.is_nothing() {
             new_model.constraints = step.new_expression.clone();
         } else {
@@ -69,7 +68,7 @@ pub fn rewrite_model<'a>(
             };
         }
     }
-    println!("Final model: {:?}\n", new_model);
+    // println!("Final model: {:?}\n", new_model);
     Ok(new_model)
 }
 

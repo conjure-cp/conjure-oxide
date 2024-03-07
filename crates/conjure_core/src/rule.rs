@@ -9,6 +9,9 @@ use crate::ast::{Expression, Model, SymbolTable};
 pub enum ApplicationError {
     #[error("Rule is not applicable")]
     RuleNotApplicable,
+
+    #[error("Could not find the min/max bounds for the expression")]
+    BoundError,
 }
 
 /// The result of applying a rule to an expression.

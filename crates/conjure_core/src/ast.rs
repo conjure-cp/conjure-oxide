@@ -31,6 +31,11 @@ impl Model {
             decision_var.domain = new_domain;
         }
     }
+
+    pub fn get_domain(&self, name: &Name) -> Option<&Domain> {
+        self.variables.get(name).map(|v| &v.domain)
+    }
+
     // Function to add a new DecisionVariable to the Model
     pub fn add_variable(&mut self, name: Name, decision_var: DecisionVariable) {
         self.variables.insert(name, decision_var);
@@ -140,6 +145,75 @@ impl Display for DecisionVariable {
 pub enum Domain {
     BoolDomain,
     IntDomain(Vec<Range<i32>>),
+}
+
+impl Domain {
+    /// Returns the minimum i32 value a variable of the domain can take, if it is an i32 domain.
+    pub fn min_i32(&self) -> Option<i32> {
+        match self {
+            Domain::BoolDomain => Some(0),
+            Domain::IntDomain(ranges) => {
+                if ranges.is_empty() {
+                    return None;
+                }
+                let mut min = i32::MAX;
+                for r in ranges {
+                    match r {
+                        Range::Single(i) => min = min.min(*i),
+                        Range::Bounded(i, _) => min = min.min(*i),
+                    }
+                }
+                Some(min)
+            }
+        }
+    }
+
+    /// Returns the maximum i32 value a variable of the domain can take, if it is an i32 domain.
+    pub fn max_i32(&self) -> Option<i32> {
+        match self {
+            Domain::BoolDomain => Some(1),
+            Domain::IntDomain(ranges) => {
+                if ranges.is_empty() {
+                    return None;
+                }
+                let mut max = i32::MIN;
+                for r in ranges {
+                    match r {
+                        Range::Single(i) => max = max.max(*i),
+                        Range::Bounded(_, i) => max = max.max(*i),
+                    }
+                }
+                Some(max)
+            }
+        }
+    }
+
+    /// Returns the minimum and maximum integer values a variable of the domain can take, if it is an integer domain.
+    pub fn min_max_i32(&self) -> Option<(i32, i32)> {
+        match self {
+            Domain::BoolDomain => Some((0, 1)),
+            Domain::IntDomain(ranges) => {
+                if ranges.is_empty() {
+                    return None;
+                }
+                let mut min = i32::MAX;
+                let mut max = i32::MIN;
+                for r in ranges {
+                    match r {
+                        Range::Single(i) => {
+                            min = min.min(*i);
+                            max = max.max(*i);
+                        }
+                        Range::Bounded(i, j) => {
+                            min = min.min(*i);
+                            max = max.max(*j);
+                        }
+                    }
+                }
+                Some((min, max))
+            }
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -394,6 +468,45 @@ impl Expression {
             Expression::AllDiff(metadata, _) => {
                 Expression::AllDiff(metadata.clone(), sub.iter().cloned().cloned().collect())
             }
+        }
+    }
+
+    pub fn bounds(&self, vars: &SymbolTable) -> Option<(i32, i32)> {
+        match self {
+            Expression::Reference(_, name) => vars.get(name).and_then(|v| {
+                let b = v.domain.min_max_i32();
+                b
+            }),
+            Expression::Constant(_, Constant::Int(i)) => Some((*i, *i)),
+            Expression::Sum(_, exprs) => {
+                if exprs.len() == 0 {
+                    return None;
+                }
+                let (mut min, mut max) = (0, 0);
+                for e in exprs {
+                    if let Some((e_min, e_max)) = e.bounds(vars) {
+                        min += e_min;
+                        max += e_max;
+                    } else {
+                        return None;
+                    }
+                }
+                Some((min, max))
+            }
+            Expression::Min(_, exprs) => {
+                if exprs.len() == 0 {
+                    return None;
+                }
+                let bounds = exprs
+                    .iter()
+                    .map(|e| e.bounds(vars))
+                    .collect::<Option<Vec<(i32, i32)>>>()?;
+                Some((
+                    bounds.iter().map(|(min, _)| *min).min().unwrap(),
+                    bounds.iter().map(|(_, max)| *max).min().unwrap(),
+                ))
+            }
+            _ => todo!(),
         }
     }
 }
