@@ -8,7 +8,7 @@ use crate::error::{Error, Result};
 use serde_json::Value as JsonValue;
 
 pub fn model_from_json(str: &str) -> Result<Model> {
-    let mut m = Model::new();
+    let mut m = Model::default();
     let v: JsonValue = serde_json::from_str(str)?;
     let statements = v["mStatements"]
         .as_array()

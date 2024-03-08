@@ -419,7 +419,7 @@ fn evaluate_constant_not(expr: &Expr, _: &Model) -> ApplicationResult {
 fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
     match expr {
         Expr::Min(metadata, exprs) => {
-            let new_name = mdl.fresh_var();
+            let new_name = mdl.gensym();
 
             let mut new_top = Vec::new(); // the new variable must be less than or equal to all the other variables
             let mut disjunction = Vec::new(); // the new variable must be equal to one of the variables

@@ -233,10 +233,8 @@ mod tests {
     #[test]
     fn flat_xyz_model() -> Result<(), anyhow::Error> {
         // TODO: convert to use public interfaces when these exist.
-        let mut model = ConjureModel {
-            variables: HashMap::new(),
-            constraints: Expression::And(Metadata::new(), Vec::new()),
-        };
+        let mut model =
+            ConjureModel::new(HashMap::new(), Expression::And(Metadata::new(), Vec::new()));
 
         add_int_with_range(&mut model, "x", 1, 3)?;
         add_int_with_range(&mut model, "y", 2, 4)?;

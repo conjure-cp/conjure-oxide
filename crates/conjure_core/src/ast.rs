@@ -2,6 +2,7 @@ use derive_is_enum_variant::is_enum_variant;
 use enum_compatability_macro::document_compatibility;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
@@ -16,13 +17,15 @@ pub struct Model {
     #[serde_as(as = "Vec<(_, _)>")]
     pub variables: SymbolTable,
     pub constraints: Expression,
+    next_var: RefCell<i32>,
 }
 
 impl Model {
-    pub fn new() -> Model {
+    pub fn new(variables: SymbolTable, constraints: Expression) -> Model {
         Model {
-            variables: HashMap::new(),
-            constraints: Expression::Nothing,
+            variables: variables,
+            constraints: constraints,
+            next_var: RefCell::new(0),
         }
     }
     // Function to update a DecisionVariable based on its Name
@@ -74,21 +77,16 @@ impl Model {
     }
 
     /// Returns an arbitrary variable name that is not in the model.
-    pub fn fresh_var(&self) -> Name {
-        let mut i = self.variables.len() as i32;
-        loop {
-            let name = Name::MachineName(i);
-            if !self.variables.contains_key(&name) {
-                return name;
-            }
-            i += 1;
-        }
+    pub fn gensym(&self) -> Name {
+        let num = self.next_var.borrow().clone();
+        *(self.next_var.borrow_mut()) += 1;
+        Name::MachineName(num) // incremented when inserted
     }
 }
 
 impl Default for Model {
     fn default() -> Self {
-        Self::new()
+        Self::new(SymbolTable::new(), Expression::Nothing)
     }
 }
 
