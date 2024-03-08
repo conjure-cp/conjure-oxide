@@ -6,6 +6,7 @@ use thiserror::Error;
 use super::private::Internal;
 use super::private::Sealed;
 use super::stats::*;
+use super::SearchStatus;
 use super::Solver;
 use super::SolverError;
 
@@ -28,6 +29,12 @@ pub struct ModelLoaded;
 pub struct ExecutionSuccess {
     /// Execution statistics.
     pub stats: Option<Box<dyn Stats>>,
+
+    /// The status of the search
+    pub status: SearchStatus,
+
+    // Wall time elapsed in seconds.
+    pub wall_time_s: f64,
 
     /// Cannot construct this from outside this module.
     pub _sealed: Internal,

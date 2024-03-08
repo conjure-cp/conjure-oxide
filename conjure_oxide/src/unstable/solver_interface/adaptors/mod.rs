@@ -1,4 +1,5 @@
 //! Solver adaptors.
 
-pub mod minion;
+mod minion;
+#[doc(inline)]
 pub use minion::Minion;

@@ -7,6 +7,9 @@ use crate::unstable::solver_interface::{states, SolverCallback};
 use super::super::model_modifier::NotModifiable;
 use super::super::private;
 use super::super::stats::NoStats;
+use super::super::SearchComplete::*;
+use super::super::SearchIncomplete::*;
+use super::super::SearchStatus::*;
 use super::super::SolveSuccess;
 use super::super::SolverAdaptor;
 use super::super::SolverError;
@@ -20,14 +23,18 @@ use minion_rs::ast as minionast;
 /// A [SolverAdaptor] for interacting with Minion.
 ///
 /// This adaptor uses the `minion_rs` crate to talk to Minion over FFI.
-pub struct Minion;
+pub struct Minion {
+    __non_constructable: private::Internal,
+}
 
-static MINION_LOCKED: Mutex<bool> = Mutex::new(false);
-static MINION_CONDVAR: Condvar = Condvar::new();
+static MINION_LOCK: Mutex<()> = Mutex::new(());
 static USER_CALLBACK: OnceLock<Mutex<SolverCallback>> = OnceLock::new();
+static ANY_SOLUTIONS: Mutex<bool> = Mutex::new(false);
+static USER_TERIMINATED: Mutex<bool> = Mutex::new(false);
 
+#[allow(clippy::unwrap_used)]
 fn minion_rs_callback(solutions: HashMap<minionast::VarName, minionast::Constant>) -> bool {
-    #[allow(clippy::unwrap_used)]
+    *(ANY_SOLUTIONS.lock().unwrap()) = true;
     let callback = USER_CALLBACK
         .get_or_init(|| Mutex::new(Box::new(|x| true)))
         .lock()
@@ -46,7 +53,12 @@ fn minion_rs_callback(solutions: HashMap<minionast::VarName, minionast::Constant
         conjure_solutions.insert(conjure_name, conjure_const);
     }
 
-    (**callback)(conjure_solutions)
+    let continue_search = (**callback)(conjure_solutions);
+    if !continue_search {
+        *(USER_TERIMINATED.lock().unwrap()) = true;
+    }
+
+    continue_search
 }
 
 impl private::Sealed for Minion {}
@@ -54,6 +66,12 @@ impl SolverAdaptor for Minion {
     type Model = minionast::Model;
     type Solution = minionast::Constant;
     type Modifier = NotModifiable;
+
+    fn new() -> Minion {
+        Minion {
+            __non_constructable: private::Internal,
+        }
+    }
 
     #[allow(clippy::unwrap_used)]
     fn solve(
@@ -65,14 +83,9 @@ impl SolverAdaptor for Minion {
         // our minion callback is global state, so single threading the adaptor as a whole is
         // probably a good move...
         #[allow(clippy::unwrap_used)]
-        let mut locked = MINION_LOCKED.lock().unwrap();
+        let mut minion_lock = MINION_LOCK.lock().unwrap();
 
         #[allow(clippy::unwrap_used)]
-        while *locked {
-            locked = MINION_CONDVAR.wait(locked).unwrap();
-        }
-        *locked = true;
-
         let mut user_callback = USER_CALLBACK
             .get_or_init(|| Mutex::new(Box::new(|x| true)))
             .lock()
@@ -92,11 +105,16 @@ impl SolverAdaptor for Minion {
             x => SolverError::Runtime(format!("unknown minion_rs error: {:#?}", x)),
         })?;
 
-        *locked = false;
-        std::mem::drop(locked); // unlock mutex
-        MINION_CONDVAR.notify_one(); // wake up waiting threads
-
-        Ok(SolveSuccess { stats: None })
+        let mut status = Complete(HasSolutions);
+        if *(USER_TERIMINATED.lock()).unwrap() {
+            status = Incomplete(UserTerminated);
+        } else if *(ANY_SOLUTIONS.lock()).unwrap() {
+            status = Complete(NoSolutions);
+        }
+        Ok(SolveSuccess {
+            stats: None,
+            status,
+        })
     }
 
     fn solve_mut(

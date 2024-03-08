@@ -9,7 +9,7 @@ use std::sync::{Arc, Mutex};
 use thiserror::Error as ThisError;
 
 use crate::unstable::solver_interface::adaptors::Minion;
-use crate::unstable::solver_interface::Solver;
+use crate::unstable::solver_interface::{Solver, SolverAdaptor};
 
 #[derive(Debug, ThisError)]
 pub enum EssenceParseError {
@@ -58,7 +58,7 @@ pub fn parse_essence_file(path: &str, filename: &str) -> Result<Model, EssencePa
 }
 
 pub fn get_minion_solutions(model: Model) -> Result<Vec<HashMap<Name, Constant>>, anyhow::Error> {
-    let solver = Solver::using(Minion);
+    let solver = Solver::new(Minion::new());
 
     println!("Building Minion model...");
     let solver = solver.load_model(model)?;
@@ -67,19 +67,16 @@ pub fn get_minion_solutions(model: Model) -> Result<Vec<HashMap<Name, Constant>>
 
     let all_solutions_ref = Arc::new(Mutex::<Vec<HashMap<Name, Constant>>>::new(vec![]));
     let all_solutions_ref_2 = all_solutions_ref.clone();
-    let solver_state = solver.solve(Box::new(move |sols| {
+    #[allow(clippy::unwrap_used)]
+    solver.solve(Box::new(move |sols| {
         let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
         (*all_solutions).push(sols);
         true
-    }));
+    }))?;
 
-    match solver_state {
-        Left(x) => {
-            let all_solutions = (*all_solutions_ref).lock().unwrap();
-            Ok(all_solutions.clone())
-        }
-        Right(x) => Err(anyhow::Error::from(x.why())),
-    }
+    #[allow(clippy::unwrap_used)]
+    let sols = (*all_solutions_ref).lock().unwrap();
+    Ok((*sols).clone())
 }
 
 pub fn minion_solutions_to_json(solutions: &Vec<HashMap<Name, Constant>>) -> JsonValue {
