@@ -1,19 +1,19 @@
-use conjure_core::{
-    ast::Constant as Const, ast::Expression as Expr, metadata::Metadata, rule::RuleApplicationError,
-};
+use conjure_core::ast::{Constant as Const, Expression as Expr, Model};
+use conjure_core::metadata::Metadata;
+use conjure_core::rule::{ApplicationError, ApplicationResult, Reduction};
+
 use conjure_rules::{register_rule, register_rule_set};
 
 register_rule_set!("Constant", 255, ());
 
 #[register_rule(("Constant", 255))]
-fn apply_eval_constant(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn apply_eval_constant(expr: &Expr, _: &Model) -> ApplicationResult {
     if expr.is_constant() {
-        return Err(RuleApplicationError::RuleNotApplicable);
+        return Err(ApplicationError::RuleNotApplicable);
     }
-
     eval_constant(expr)
-        .map(|c| Expr::Constant(Metadata::new(), c))
-        .ok_or(RuleApplicationError::RuleNotApplicable)
+        .map(|c| Reduction::pure(Expr::Constant(Metadata::new(), c)))
+        .ok_or(ApplicationError::RuleNotApplicable)
 }
 
 /// Simplify an expression to a constant if possible
@@ -53,6 +53,11 @@ pub fn eval_constant(expr: &Expr) -> Option<Const> {
         }
         Expr::SumLeq(_, exprs, a) => {
             flat_op::<i32, bool>(|e, a| e.iter().sum::<i32>() <= a, exprs, a).map(Const::Bool)
+        }
+        // Expr::Div(_, a, b) => bin_op::<i32, i32>(|a, b| a / b, a, b).map(Const::Int),
+        // Expr::SafeDiv(_, a, b) => bin_op::<i32, i32>(|a, b| a / b, a, b).map(Const::Int),
+        Expr::Min(_, exprs) => {
+            vec_op::<i32, i32>(|e| *e.iter().min().unwrap(), exprs).map(Const::Int)
         }
         _ => {
             println!("WARNING: Unimplemented constant eval: {:?}", expr);
