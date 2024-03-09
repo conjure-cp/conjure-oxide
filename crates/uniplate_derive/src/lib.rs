@@ -117,65 +117,85 @@ fn check_field_type(ft: &UniplateField, root_ident: &Ident) -> bool {
     }
 }
 
-fn field_type_to_ident(ft: &UniplateField, field_name: String, root_ident: &Ident) -> TokenStream2 {
+fn get_ident_and_clone(ft: &UniplateField, field_name: String, root_ident: &Ident) -> (TokenStream2, Vec<TokenStream2>) {
     let span = get_span(ft);
 
     match ft {
         UniplateField::Identifier(_) => {
             if check_field_type(ft, root_ident) {
-                return Ident::new(&format!("{}_idn", field_name), span).into_token_stream()
+                let ident = Ident::new(&format!("{}", field_name), span).into_token_stream();
+                let clone = quote! {
+                    #ident.clone()
+                };
+                return (ident, vec![clone])
             }
         }
         UniplateField::Vector(_, sft) => {
             if check_field_type(sft, root_ident) {
-                return Ident::new(&format!("{}_vec", field_name), span).into_token_stream()
+                let ident = Ident::new(&format!("{}_vec", field_name), span).into_token_stream();
+                let clone = quote! {
+                    *#ident.clone()
+                };
+                return (ident, vec![clone])
             }
         }
         UniplateField::Box(_, sft) => {
             if check_field_type(sft, root_ident) {
-                return Ident::new(&format!("{}_box", field_name), span).into_token_stream()
+                let ident = Ident::new(&format!("{}_box", field_name), span).into_token_stream();
+                let clone = quote! {
+                    *#ident.as_ref().clone()
+                };
+                return (ident, vec![clone])
             }
         }
         UniplateField::Tuple(_, subfields) => {
             let mut subfield_idents: Vec<TokenStream2> = Vec::new();
+            let mut subfield_clones: Vec<TokenStream2> = Vec::new();
 
             for (i, sft) in subfields.iter().enumerate() {
                 let sfname = format!("{}_tpl_{}", field_name, i);
-                subfield_idents.push(field_type_to_ident(sft, sfname, root_ident));
+                let (sfident, sfclones) = get_ident_and_clone(sft, sfname, root_ident);
+                subfield_idents.push(sfident);
+                subfield_clones.extend(sfclones);
             }
 
-            return quote! {
+            let ident = quote! {
                 (#(#subfield_idents,)*)
-            }
+            };
+
+            return (ident, subfield_clones)
         },
         UniplateField::Array(_, of_type, _) => {
             if check_field_type(of_type, root_ident) {
-                return Ident::new(&format!("{}_arr", field_name), span).into_token_stream()
+                let ident = Ident::new(&format!("{}_arr", field_name), span).into_token_stream();
+                let clone = quote! {
+                    #ident.clone()
+                };
+
+                return (ident, vec![clone])
             }
         }
         UniplateField::Unknown(_) => {}
     }
 
-    Underscore(span).into_token_stream()
+    (Underscore(span).into_token_stream(), vec![])
 }
 
-fn get_field_identifiers(fields: &Fields, root_ident: &Ident) -> Vec<TokenStream2> {
+fn field_idents_and_clones(fields: &Fields, root_ident: &Ident) -> Vec<(TokenStream2, TokenStream2)> {
     return fields.iter().enumerate().map(|(idx, field)| {
-        let span = field.span();
         let field_name = match &field.ident {
             None => format!("field{}", idx),
             Some(ident) => ident.to_string()
         };
         let field_type = parse_field_type(&field.ty);
 
-        field_type_to_ident(&field_type, field_name, root_ident)
+        let (ident, clones) = get_ident_and_clone(&field_type, field_name, root_ident);
+        let clone = quote! {
+                vec![#(#clones,)*]
+            };
+
+        (ident, clone)
     }).collect()
-}
-
-fn get_field_clones(fields: &Fields, root_ident: &Ident) -> Vec<TokenStream2> {
-    let mut ans: Vec<TokenStream2> = Vec::new();
-
-    ans
 }
 
 #[proc_macro_derive(Uniplate)]
@@ -189,8 +209,9 @@ pub fn derive(macro_input: TokenStream) -> TokenStream {
         Data::Union(_) => { unimplemented!("Unions currently not supported") }
         Data::Enum(DataEnum { variants, .. }) => {
             let match_arms: Vec<TokenStream2> = variants.iter().map(|variant| {
-                let field_idents = get_field_identifiers(&variant.fields, root_ident);
-                let field_clones = get_field_clones(&variant.fields, root_ident);
+                let idents_and_clones = field_idents_and_clones(&variant.fields, root_ident);
+                let field_idents: Vec<&TokenStream2> = idents_and_clones.iter().map(|tpl| &tpl.0).collect();
+                let field_clones: Vec<&TokenStream2> = idents_and_clones.iter().map(|tpl| &tpl.1).collect();
                 let variant_ident = &variant.ident;
 
                 let match_pattern = if field_idents.is_empty() {
@@ -205,7 +226,7 @@ pub fn derive(macro_input: TokenStream) -> TokenStream {
 
                 let mach_arm = quote! {
                      #match_pattern => {
-                        vec![#(#field_clones,)*]
+                        vec![#(#field_clones,)*].iter().flatten().collect()
                     }
                 };
 
