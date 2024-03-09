@@ -4,6 +4,7 @@ use std::hash::Hash;
 use thiserror::Error;
 
 use crate::ast::{Expression, Model, SymbolTable};
+use crate::metadata::Metadata;
 
 #[derive(Debug, Error)]
 pub enum ApplicationError {
@@ -62,6 +63,26 @@ impl Reduction {
             new_expression,
             new_top,
             symbols: SymbolTable::new(),
+        }
+    }
+
+    // Apply side-effects (e.g. symbol table updates
+    pub fn apply(self, model: &mut Model) {
+        model.variables.extend(self.symbols); // Add new assignments to the symbol table
+        if self.new_top.is_nothing() {
+            model.constraints = self.new_expression.clone();
+        } else {
+            model.constraints = match self.new_expression {
+                Expression::And(metadata, mut exprs) => {
+                    // Avoid creating a nested conjunction
+                    exprs.push(self.new_top.clone());
+                    Expression::And(metadata.clone(), exprs)
+                }
+                _ => Expression::And(
+                    Metadata::new(),
+                    vec![self.new_expression.clone(), self.new_top],
+                ),
+            };
         }
     }
 }

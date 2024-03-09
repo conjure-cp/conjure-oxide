@@ -26,7 +26,9 @@ fn is_nested_sum(exprs: &Vec<Expr>) -> bool {
 fn sum_to_vector(expr: &Expr) -> Result<Vec<Expr>, ApplicationError> {
     match expr {
         Expr::Sum(_, exprs) => {
+            println!("SUM");
             if is_nested_sum(exprs) {
+                println!("Nested sum not supported");
                 Err(ApplicationError::RuleNotApplicable)
             } else {
                 Ok(exprs.clone())
@@ -108,6 +110,7 @@ fn sum_leq_to_sumleq(expr: &Expr, _: &Model) -> ApplicationResult {
 fn sum_eq_to_sumeq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Eq(metadata, a, b) => {
+            println!("SUM EQ");
             let exprs = sum_to_vector(a)?;
             Ok(Reduction::pure(Expr::SumEq(
                 metadata.clone(),
@@ -271,16 +274,27 @@ fn neq_to_alldiff(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 }
 
-// #[register_rule(("Minion", 99))]
-// fn eq_to_leq_geq(expr: &Expr, _: &Model) -> ApplicationResult {
-//     match expr {
-//         Expr::Eq(metadata, a, b) => Ok(Reduction::pure(Expr::And(
-//             metadata.clone(),
-//             vec![
-//                 Expr::Leq(metadata.clone(), a.clone(), b.clone()),
-//                 Expr::Geq(metadata.clone(), a.clone(), b.clone()),
-//             ],
-//         ))),
-//         _ => Err(ApplicationError::RuleNotApplicable),
-//     }
-// }
+#[register_rule(("Minion", 99))]
+fn eq_to_leq_geq(expr: &Expr, _: &Model) -> ApplicationResult {
+    match expr {
+        Expr::Eq(metadata, a, b) => {
+            println!("EQ TO LEQ GEQ");
+            if let Ok(exprs) = sum_to_vector(a) {
+                Ok(Reduction::pure(Expr::SumEq(
+                    metadata.clone(),
+                    exprs,
+                    b.clone(),
+                )))
+            } else if let Ok(exprs) = sum_to_vector(b) {
+                Ok(Reduction::pure(Expr::SumEq(
+                    metadata.clone(),
+                    exprs,
+                    a.clone(),
+                )))
+            } else {
+                Err(ApplicationError::RuleNotApplicable)
+            }
+        }
+        _ => Err(ApplicationError::RuleNotApplicable),
+    }
+}

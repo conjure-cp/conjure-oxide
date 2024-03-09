@@ -9,6 +9,7 @@ use conjure_core::metadata::Metadata;
 use conjure_core::rule::{Reduction, Rule};
 use conjure_rules::rule_set::RuleSet;
 
+#[derive(Debug)]
 struct RuleResult<'a> {
     #[allow(dead_code)] // Not used yet, but will be useful to have
     rule: &'a Rule<'a>,
@@ -49,26 +50,8 @@ pub fn rewrite_model<'a>(
     let mut new_model = model.clone();
 
     while let Some(step) = rewrite_iteration(&new_model.constraints, &new_model, &rules) {
-        // println!("{:?}\n", step);
-        new_model.variables.extend(step.symbols); // Add new assignments to the symbol table
-                                                  // println!("After extension: {:?}\n", new_model.variables);
-        if step.new_top.is_nothing() {
-            new_model.constraints = step.new_expression.clone();
-        } else {
-            new_model.constraints = match step.new_expression {
-                // Avoid creating a nested conjunction
-                Expression::And(metadata, mut and) => {
-                    and.push(step.new_top.clone());
-                    Expression::And(metadata.clone(), and)
-                }
-                _ => Expression::And(
-                    Metadata::new(),
-                    vec![step.new_expression.clone(), step.new_top],
-                ),
-            };
-        }
+        step.apply(&mut new_model); // Apply side-effects (e.g. symbol table updates
     }
-    // println!("Final model: {:?}\n", new_model);
     Ok(new_model)
 }
 

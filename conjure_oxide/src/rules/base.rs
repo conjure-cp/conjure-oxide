@@ -9,7 +9,7 @@ use conjure_rules::{register_rule, register_rule_set};
 /*        This file contains basic rules for simplifying expressions         */
 /*****************************************************************************/
 
-register_rule_set!("Base", 100, ());
+register_rule_set!("Base", 150, ());
 
 /**
  * Remove nothing's from expressions:
