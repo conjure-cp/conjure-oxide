@@ -16,6 +16,7 @@ use super::super::SolverError;
 use super::super::SolverError::*;
 
 use minion_rs::run_minion;
+use regex::Regex;
 
 use crate::ast as conjureast;
 use minion_rs::ast as minionast;
@@ -48,8 +49,13 @@ fn minion_rs_callback(solutions: HashMap<minionast::VarName, minionast::Constant
             _ => todo!(),
         };
 
-        //FIXME (niklasdewally): what about machine names?
-        let conjure_name = conjureast::Name::UserName(minion_name);
+        let machine_name_re = Regex::new(r"__conjure_machine_name_([0-9]+)").unwrap();
+        let conjure_name = if let Some(caps) = machine_name_re.captures(&minion_name) {
+            conjureast::Name::MachineName(caps[1].parse::<i32>().unwrap())
+        } else {
+            conjureast::Name::UserName(minion_name)
+        };
+
         conjure_solutions.insert(conjure_name, conjure_const);
     }
 
@@ -237,42 +243,48 @@ fn parse_expr(
     expr: conjureast::Expression,
     minion_model: &mut minionast::Model,
 ) -> Result<(), SolverError> {
+    minion_model.constraints.push(read_expr(expr)?);
+    Ok(())
+}
+
+fn read_expr(expr: conjureast::Expression) -> Result<minionast::Constraint, SolverError> {
     match expr {
-        conjureast::Expression::SumLeq(_metadata, lhs, rhs) => {
-            minion_model.constraints.push(minionast::Constraint::SumLeq(
-                read_vars(lhs)?,
-                read_var(*rhs)?,
-            ));
-            Ok(())
+        conjureast::Expression::SumLeq(_metadata, lhs, rhs) => Ok(minionast::Constraint::SumLeq(
+            read_vars(lhs)?,
+            read_var(*rhs)?,
+        )),
+        conjureast::Expression::SumGeq(_metadata, lhs, rhs) => Ok(minionast::Constraint::SumGeq(
+            read_vars(lhs)?,
+            read_var(*rhs)?,
+        )),
+        conjureast::Expression::Ineq(_metadata, a, b, c) => Ok(minionast::Constraint::Ineq(
+            read_var(*a)?,
+            read_var(*b)?,
+            minionast::Constant::Integer(read_const(*c)?),
+        )),
+        conjureast::Expression::Neq(_metadata, a, b) => Ok(minionast::Constraint::AllDiff(vec![
+            read_var(*a)?,
+            read_var(*b)?,
+        ])),
+        // conjureast::Expression::DivEq(_metadata, a, b, c) => {
+        //     minion_model.constraints.push(minionast::Constraint::Div(
+        //         (read_var(*a)?, read_var(*b)?),
+        //         read_var(*c)?,
+        //     ));
+        //     Ok(())
+        // }
+        conjureast::Expression::AllDiff(_metadata, vars) => {
+            Ok(minionast::Constraint::AllDiff(read_vars(vars)?))
         }
-        conjureast::Expression::SumGeq(_metadata, lhs, rhs) => {
-            minion_model.constraints.push(minionast::Constraint::SumGeq(
-                read_vars(lhs)?,
-                read_var(*rhs)?,
-            ));
-            Ok(())
-        }
-        conjureast::Expression::Ineq(_metadata, a, b, c) => {
-            minion_model.constraints.push(minionast::Constraint::Ineq(
-                read_var(*a)?,
-                read_var(*b)?,
-                minionast::Constant::Integer(read_const(*c)?),
-            ));
-            Ok(())
-        }
-        conjureast::Expression::Neq(_metadata, a, b) => {
-            minion_model
-                .constraints
-                .push(minionast::Constraint::WatchNeq(
-                    read_var(*a)?,
-                    read_var(*b)?,
-                ));
-            Ok(())
-        }
+        conjureast::Expression::Or(_metadata, exprs) => Ok(minionast::Constraint::WatchedOr(
+            exprs
+                .iter()
+                .map(|x| read_expr(x.to_owned()))
+                .collect::<Result<Vec<minionast::Constraint>, SolverError>>()?,
+        )),
         x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
     }
 }
-
 fn read_vars(exprs: Vec<conjureast::Expression>) -> Result<Vec<minionast::Var>, SolverError> {
     let mut minion_vars: Vec<minionast::Var> = vec![];
     for expr in exprs {
@@ -319,6 +331,6 @@ fn read_const(e: conjureast::Expression) -> Result<i32, SolverError> {
 fn _name_to_string(name: conjureast::Name) -> String {
     match name {
         conjureast::Name::UserName(x) => x,
-        conjureast::Name::MachineName(x) => x.to_string(),
+        conjureast::Name::MachineName(x) => format!("__conjure_machine_name_{}", x),
     }
 }
