@@ -5,7 +5,6 @@ use crate::rule_engine::resolve_rules::{
     get_rule_priorities, get_rules_vec, ResolveRulesError as ResolveError,
 };
 use conjure_core::ast::{Expression, Model};
-use conjure_core::metadata::Metadata;
 use conjure_core::rule::{Reduction, Rule};
 use conjure_rules::rule_set::RuleSet;
 

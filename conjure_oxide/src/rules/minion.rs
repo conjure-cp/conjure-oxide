@@ -26,9 +26,7 @@ fn is_nested_sum(exprs: &Vec<Expr>) -> bool {
 fn sum_to_vector(expr: &Expr) -> Result<Vec<Expr>, ApplicationError> {
     match expr {
         Expr::Sum(_, exprs) => {
-            println!("SUM");
             if is_nested_sum(exprs) {
-                println!("Nested sum not supported");
                 Err(ApplicationError::RuleNotApplicable)
             } else {
                 Ok(exprs.clone())
@@ -110,7 +108,6 @@ fn sum_leq_to_sumleq(expr: &Expr, _: &Model) -> ApplicationResult {
 fn sum_eq_to_sumeq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Eq(metadata, a, b) => {
-            println!("SUM EQ");
             let exprs = sum_to_vector(a)?;
             Ok(Reduction::pure(Expr::SumEq(
                 metadata.clone(),
@@ -278,7 +275,6 @@ fn neq_to_alldiff(expr: &Expr, _: &Model) -> ApplicationResult {
 fn eq_to_leq_geq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Eq(metadata, a, b) => {
-            println!("EQ TO LEQ GEQ");
             if let Ok(exprs) = sum_to_vector(a) {
                 Ok(Reduction::pure(Expr::SumEq(
                     metadata.clone(),
