@@ -14,10 +14,7 @@ fn modify_domain() {
     let mut variables = HashMap::new();
     variables.insert(a.clone(), DecisionVariable { domain: d1.clone() });
 
-    let mut m = Model {
-        variables,
-        constraints: Expression::And(Metadata::new(), Vec::new()),
-    };
+    let mut m = Model::new(variables, Expression::And(Metadata::new(), Vec::new()));
 
     assert_eq!(m.variables.get(&a).unwrap().domain, d1);
 

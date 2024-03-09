@@ -1,25 +1,31 @@
+use derive_is_enum_variant::is_enum_variant;
 use enum_compatability_macro::document_compatibility;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
 
 use crate::metadata::Metadata;
 
+pub type SymbolTable = HashMap<Name, DecisionVariable>;
+
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Model {
     #[serde_as(as = "Vec<(_, _)>")]
-    pub variables: HashMap<Name, DecisionVariable>,
+    pub variables: SymbolTable,
     pub constraints: Expression,
+    next_var: RefCell<i32>,
 }
 
 impl Model {
-    pub fn new() -> Model {
+    pub fn new(variables: SymbolTable, constraints: Expression) -> Model {
         Model {
-            variables: HashMap::new(),
-            constraints: Expression::Nothing,
+            variables: variables,
+            constraints: constraints,
+            next_var: RefCell::new(0),
         }
     }
     // Function to update a DecisionVariable based on its Name
@@ -28,6 +34,11 @@ impl Model {
             decision_var.domain = new_domain;
         }
     }
+
+    pub fn get_domain(&self, name: &Name) -> Option<&Domain> {
+        self.variables.get(name).map(|v| &v.domain)
+    }
+
     // Function to add a new DecisionVariable to the Model
     pub fn add_variable(&mut self, name: Name, decision_var: DecisionVariable) {
         self.variables.insert(name, decision_var);
@@ -64,11 +75,18 @@ impl Model {
         constraints.extend(expressions);
         self.set_constraints(constraints);
     }
+
+    /// Returns an arbitrary variable name that is not in the model.
+    pub fn gensym(&self) -> Name {
+        let num = self.next_var.borrow().clone();
+        *(self.next_var.borrow_mut()) += 1;
+        Name::MachineName(num) // incremented when inserted
+    }
 }
 
 impl Default for Model {
     fn default() -> Self {
-        Self::new()
+        Self::new(SymbolTable::new(), Expression::Nothing)
     }
 }
 
@@ -90,6 +108,12 @@ impl Display for Name {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct DecisionVariable {
     pub domain: Domain,
+}
+
+impl DecisionVariable {
+    pub fn new(domain: Domain) -> DecisionVariable {
+        DecisionVariable { domain }
+    }
 }
 
 impl Display for DecisionVariable {
@@ -119,6 +143,75 @@ impl Display for DecisionVariable {
 pub enum Domain {
     BoolDomain,
     IntDomain(Vec<Range<i32>>),
+}
+
+impl Domain {
+    /// Returns the minimum i32 value a variable of the domain can take, if it is an i32 domain.
+    pub fn min_i32(&self) -> Option<i32> {
+        match self {
+            Domain::BoolDomain => Some(0),
+            Domain::IntDomain(ranges) => {
+                if ranges.is_empty() {
+                    return None;
+                }
+                let mut min = i32::MAX;
+                for r in ranges {
+                    match r {
+                        Range::Single(i) => min = min.min(*i),
+                        Range::Bounded(i, _) => min = min.min(*i),
+                    }
+                }
+                Some(min)
+            }
+        }
+    }
+
+    /// Returns the maximum i32 value a variable of the domain can take, if it is an i32 domain.
+    pub fn max_i32(&self) -> Option<i32> {
+        match self {
+            Domain::BoolDomain => Some(1),
+            Domain::IntDomain(ranges) => {
+                if ranges.is_empty() {
+                    return None;
+                }
+                let mut max = i32::MIN;
+                for r in ranges {
+                    match r {
+                        Range::Single(i) => max = max.max(*i),
+                        Range::Bounded(_, i) => max = max.max(*i),
+                    }
+                }
+                Some(max)
+            }
+        }
+    }
+
+    /// Returns the minimum and maximum integer values a variable of the domain can take, if it is an integer domain.
+    pub fn min_max_i32(&self) -> Option<(i32, i32)> {
+        match self {
+            Domain::BoolDomain => Some((0, 1)),
+            Domain::IntDomain(ranges) => {
+                if ranges.is_empty() {
+                    return None;
+                }
+                let mut min = i32::MAX;
+                let mut max = i32::MIN;
+                for r in ranges {
+                    match r {
+                        Range::Single(i) => {
+                            min = min.min(*i);
+                            max = max.max(*i);
+                        }
+                        Range::Bounded(i, j) => {
+                            min = min.min(*i);
+                            max = max.max(*j);
+                        }
+                    }
+                }
+                Some((min, max))
+            }
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -155,7 +248,7 @@ impl TryFrom<Constant> for bool {
 }
 
 #[document_compatibility]
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, is_enum_variant, Serialize, Deserialize)]
 #[non_exhaustive]
 pub enum Expression {
     /**
@@ -172,6 +265,15 @@ pub enum Expression {
 
     #[compatible(Minion, JsonInput)]
     Sum(Metadata, Vec<Expression>),
+
+    // /// Division after preventing division by zero, usually with a top-level constraint
+    // #[compatible(Minion)]
+    // SafeDiv(Metadata, Box<Expression>, Box<Expression>),
+    // /// Division with a possibly undefined value (division by 0)
+    // #[compatible(Minion, JsonInput)]
+    // Div(Metadata, Box<Expression>, Box<Expression>),
+    #[compatible(JsonInput)]
+    Min(Metadata, Vec<Expression>),
 
     #[compatible(JsonInput, SAT)]
     Not(Metadata, Box<Expression>),
@@ -218,6 +320,11 @@ pub enum Expression {
 
     #[compatible(Minion)]
     Ineq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
+
+    // #[compatible(Minion)]
+    // DivEq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
+    #[compatible(Minion)]
+    AllDiff(Metadata, Vec<Expression>),
 }
 
 impl Expression {
@@ -243,6 +350,9 @@ impl Expression {
             Expression::Reference(_, _) => None,
             Expression::Nothing => None,
             Expression::Sum(_, exprs) => Some(exprs.iter().collect()),
+            // Expression::SafeDiv(_, lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            // Expression::Div(_, lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            Expression::Min(_, exprs) => Some(exprs.iter().collect()),
             Expression::Not(_, expr_box) => Some(vec![expr_box.as_ref()]),
             Expression::Or(_, exprs) => Some(exprs.iter().collect()),
             Expression::And(_, exprs) => Some(exprs.iter().collect()),
@@ -255,7 +365,11 @@ impl Expression {
             Expression::SumGeq(_, lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
             Expression::SumLeq(_, lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
             Expression::SumEq(_, lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
-            Expression::Ineq(_, lhs, rhs, _) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            Expression::Ineq(_, lhs, rhs, cmp) => {
+                Some(vec![lhs.as_ref(), rhs.as_ref(), cmp.as_ref()])
+            }
+            // Expression::DivEq(_, lhs, rhs, _) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
+            Expression::AllDiff(_, exprs) => Some(exprs.iter().collect()),
         }
     }
 
@@ -269,6 +383,19 @@ impl Expression {
             Expression::Nothing => Expression::Nothing,
             Expression::Sum(metadata, _) => {
                 Expression::Sum(metadata.clone(), sub.iter().cloned().cloned().collect())
+            }
+            // Expression::Div(metadata, _, _) => Expression::Div(
+            //     metadata.clone(),
+            //     Box::new(sub[0].clone()),
+            //     Box::new(sub[1].clone()),
+            // ),
+            // Expression::SafeDiv(metadata, _, _) => Expression::SafeDiv(
+            //     metadata.clone(),
+            //     Box::new(sub[0].clone()),
+            //     Box::new(sub[1].clone()),
+            // ),
+            Expression::Min(metadata, _) => {
+                Expression::Min(metadata.clone(), sub.iter().cloned().cloned().collect())
             }
             Expression::Not(metadata, _) => {
                 Expression::Not(metadata.clone(), Box::new(sub[0].clone()))
@@ -330,11 +457,55 @@ impl Expression {
                 Box::new(sub[1].clone()),
                 Box::new(sub[2].clone()),
             ),
+            // Expression::DivEq(metadata, _, _, _) => Expression::DivEq(
+            //     metadata.clone(),
+            //     Box::new(sub[0].clone()),
+            //     Box::new(sub[1].clone()),
+            //     Box::new(sub[2].clone()),
+            // ),
+            Expression::AllDiff(metadata, _) => {
+                Expression::AllDiff(metadata.clone(), sub.iter().cloned().cloned().collect())
+            }
         }
     }
 
-    pub fn is_constant(&self) -> bool {
-        matches!(self, Expression::Constant(_, _))
+    pub fn bounds(&self, vars: &SymbolTable) -> Option<(i32, i32)> {
+        match self {
+            Expression::Reference(_, name) => vars.get(name).and_then(|v| {
+                let b = v.domain.min_max_i32();
+                b
+            }),
+            Expression::Constant(_, Constant::Int(i)) => Some((*i, *i)),
+            Expression::Sum(_, exprs) => {
+                if exprs.len() == 0 {
+                    return None;
+                }
+                let (mut min, mut max) = (0, 0);
+                for e in exprs {
+                    if let Some((e_min, e_max)) = e.bounds(vars) {
+                        min += e_min;
+                        max += e_max;
+                    } else {
+                        return None;
+                    }
+                }
+                Some((min, max))
+            }
+            Expression::Min(_, exprs) => {
+                if exprs.len() == 0 {
+                    return None;
+                }
+                let bounds = exprs
+                    .iter()
+                    .map(|e| e.bounds(vars))
+                    .collect::<Option<Vec<(i32, i32)>>>()?;
+                Some((
+                    bounds.iter().map(|(min, _)| *min).min().unwrap(),
+                    bounds.iter().map(|(_, max)| *max).min().unwrap(),
+                ))
+            }
+            _ => todo!(),
+        }
     }
 }
 
