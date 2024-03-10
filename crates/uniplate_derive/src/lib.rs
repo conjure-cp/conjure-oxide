@@ -1,10 +1,12 @@
+use crate::UniplateField::{Unknown};
 use proc_macro::{self, TokenStream};
-use proc_macro2::{Span, TokenStream as TokenStream2};
+use proc_macro2::{Literal, Span, TokenStream as TokenStream2};
 use quote::{quote, ToTokens};
-use syn::{parse_macro_input, DeriveInput, Data, DataEnum, Fields, Ident, Type, PathArguments, GenericArgument, Expr};
 use syn::spanned::Spanned;
-use syn::token::Underscore;
-use crate::UniplateField::Unknown;
+use syn::{
+    parse_macro_input, Data, DataEnum, DeriveInput, Expr, Fields, GenericArgument, Ident,
+    PathArguments, PathSegment, Type, Variant,
+};
 
 enum ParseTypeArgumentError {
     NoTypeArguments,
@@ -15,6 +17,7 @@ enum ParseTypeArgumentError {
     TypeArgumentEmptyPath,
 }
 
+#[derive(Debug)]
 enum UniplateField {
     Identifier(Ident),
     Box(Span, Box<UniplateField>),
@@ -31,11 +34,11 @@ fn get_span(field: &UniplateField) -> Span {
         UniplateField::Vector(spn, _) => *spn,
         UniplateField::Tuple(spn, _) => *spn,
         UniplateField::Array(spn, _, _) => *spn,
-        UniplateField::Unknown(spn) => *spn
+        UniplateField::Unknown(spn) => *spn,
     }
 }
 
-fn parse_type_argument(seg_args: &PathArguments) -> Result<&Ident, ParseTypeArgumentError> {
+fn parse_type_argument(seg_args: &PathArguments) -> Result<&PathSegment, ParseTypeArgumentError> {
     match seg_args {
         PathArguments::AngleBracketed(type_args) => {
             if type_args.args.len() > 1 {
@@ -44,58 +47,60 @@ fn parse_type_argument(seg_args: &PathArguments) -> Result<&Ident, ParseTypeArgu
 
             match type_args.args.last() {
                 None => Err(ParseTypeArgumentError::EmptyTypeArguments),
-                Some(arg) => {
-                    match arg {
-                        GenericArgument::Type(tp) => {
-                            match tp {
-                                Type::Path(pth) => {
-                                    match pth.path.segments.last() {
-                                        Some(seg) => Ok(&seg.ident),
-                                        None => Err(ParseTypeArgumentError::TypeArgumentEmptyPath)
-                                    }
-                                }
-                                _ => Err(ParseTypeArgumentError::TypeArgumentValueNotPath)
-                            }
-                        }
-                        _ => Err(ParseTypeArgumentError::TypeArgumentNotAType)
-                    }
-                }
+                Some(arg) => match arg {
+                    GenericArgument::Type(tp) => match tp {
+                        Type::Path(pth) => match pth.path.segments.last() {
+                            Some(seg) => Ok(seg),
+                            None => Err(ParseTypeArgumentError::TypeArgumentEmptyPath),
+                        },
+                        _ => Err(ParseTypeArgumentError::TypeArgumentValueNotPath),
+                    },
+                    _ => Err(ParseTypeArgumentError::TypeArgumentNotAType),
+                },
             }
         }
-        _ => Err(ParseTypeArgumentError::NoTypeArguments)
+        _ => Err(ParseTypeArgumentError::NoTypeArguments),
     }
 }
 
 fn parse_field_type(field_type: &Type) -> UniplateField {
+    fn parse_type(seg: &PathSegment) -> UniplateField {
+        let ident = &seg.ident;
+        let span = ident.span();
+        let args = &seg.arguments;
+
+        let box_ident = &Ident::new("Box", span);
+        let vec_ident = &Ident::new("Vec", span);
+
+        if ident.eq(box_ident) {
+            match parse_type_argument(args) {
+                Ok(inner_seg) => UniplateField::Box(seg.span(), Box::new(parse_type(inner_seg))),
+                Err(_) => Unknown(ident.span()),
+            }
+        } else if ident.eq(vec_ident) {
+            match parse_type_argument(args) {
+                Ok(inner_seg) => UniplateField::Vector(seg.span(), Box::new(parse_type(inner_seg))),
+                Err(_) => Unknown(ident.span()),
+            }
+        } else {
+            UniplateField::Identifier(ident.clone())
+        }
+    }
+
     match field_type {
         Type::Path(path) => match path.path.segments.last() {
             None => Unknown(path.span()),
-            Some(seg) => {
-                let ident = &seg.ident;
-                let span = ident.span();
-                let args = &seg.arguments;
-
-                let box_ident = &Ident::new("Box", span);
-                let vec_ident = &Ident::new("Vec", span);
-
-                if ident.eq(box_ident) {
-                    match parse_type_argument(args) {
-                        Ok(idnt) => UniplateField::Box(path.span(), Box::new(UniplateField::Identifier(idnt.clone()))),
-                        Err(_) => Unknown(ident.span())
-                    }
-                } else if ident.eq(vec_ident) {
-                    match parse_type_argument(args) {
-                        Ok(idnt) => UniplateField::Vector(path.span(), Box::new(UniplateField::Identifier(idnt.clone()))),
-                        Err(_) => Unknown(ident.span())
-                    }
-                } else {
-                    UniplateField::Identifier(ident.clone())
-                }
-            }
+            Some(seg) => parse_type(seg),
+        },
+        Type::Tuple(tpl) => {
+            UniplateField::Tuple(tpl.span(), tpl.elems.iter().map(parse_field_type).collect())
         }
-        Type::Tuple(tpl) => UniplateField::Tuple(tpl.span(), tpl.elems.iter().map(parse_field_type).collect()),
-        Type::Array(arr) => UniplateField::Array(arr.span(), Box::new(parse_field_type(arr.elem.as_ref())), arr.len.clone()),
-        _ => Unknown(field_type.span()) // ToDo discuss - Can we support any of: BareFn, Group, ImplTrait, Infer, Macro, Never, Paren, Ptr, Reference, TraitObject, Verbatim
+        Type::Array(arr) => UniplateField::Array(
+            arr.span(),
+            Box::new(parse_field_type(arr.elem.as_ref())),
+            arr.len.clone(),
+        ),
+        _ => Unknown(field_type.span()), // ToDo discuss - Can we support any of: BareFn, Group, ImplTrait, Infer, Macro, Never, Paren, Ptr, Reference, TraitObject, Verbatim
     }
 }
 
@@ -113,89 +118,130 @@ fn check_field_type(ft: &UniplateField, root_ident: &Ident) -> bool {
             false
         }
         UniplateField::Array(_, arr_type, _) => check_field_type(arr_type.as_ref(), root_ident),
-        UniplateField::Unknown(_) => false
+        UniplateField::Unknown(_) => false,
     }
 }
 
-fn get_ident_and_clone(ft: &UniplateField, field_name: String, root_ident: &Ident) -> (TokenStream2, Vec<TokenStream2>) {
-    let span = get_span(ft);
-
-    match ft {
-        UniplateField::Identifier(_) => {
-            if check_field_type(ft, root_ident) {
-                let ident = Ident::new(&format!("{}", field_name), span).into_token_stream();
-                let clone = quote! {
-                    #ident.clone()
+fn get_clone(
+    ft: &UniplateField,
+    field_ident: TokenStream2,
+    root_ident: &Ident,
+) -> Option<TokenStream2> {
+    if check_field_type(ft, root_ident) {
+        match ft {
+            UniplateField::Identifier(_) => {
+                return Some(quote! {
+                    vec![#field_ident.clone()]
+                });
+            }
+            UniplateField::Box(_, inner) => {
+                let sf = inner.as_ref();
+                let box_clone = quote! {
+                    #field_ident.as_ref().clone()
                 };
-                return (ident, vec![clone])
+                return get_clone(sf, box_clone, root_ident);
             }
-        }
-        UniplateField::Vector(_, sft) => {
-            if check_field_type(sft, root_ident) {
-                let ident = Ident::new(&format!("{}_vec", field_name), span).into_token_stream();
-                let clone = quote! {
-                    *#ident.clone()
-                };
-                return (ident, vec![clone])
-            }
-        }
-        UniplateField::Box(_, sft) => {
-            if check_field_type(sft, root_ident) {
-                let ident = Ident::new(&format!("{}_box", field_name), span).into_token_stream();
-                let clone = quote! {
-                    *#ident.as_ref().clone()
-                };
-                return (ident, vec![clone])
-            }
-        }
-        UniplateField::Tuple(_, subfields) => {
-            let mut subfield_idents: Vec<TokenStream2> = Vec::new();
-            let mut subfield_clones: Vec<TokenStream2> = Vec::new();
+            UniplateField::Vector(_, inner) => {
+                let sf = inner.as_ref();
 
-            for (i, sft) in subfields.iter().enumerate() {
-                let sfname = format!("{}_tpl_{}", field_name, i);
-                let (sfident, sfclones) = get_ident_and_clone(sft, sfname, root_ident);
-                subfield_idents.push(sfident);
-                subfield_clones.extend(sfclones);
+                let sf_ident = Ident::new("sf", get_span(sf)).into_token_stream();
+                let sf_clone = get_clone(sf, sf_ident, root_ident);
+
+                return Some(quote! {
+                    #field_ident.iter().flat_map(|sf| #sf_clone).collect::<Vec<_>>()
+                });
             }
+            UniplateField::Tuple(_, sfs) => {
+                let mut sf_clones: Vec<TokenStream2> = Vec::new();
 
-            let ident = quote! {
-                (#(#subfield_idents,)*)
-            };
+                for (i, sf) in sfs.iter().enumerate() {
+                    let i_literal = Literal::usize_unsuffixed(i);
+                    let sf_ident = quote! {
+                        #field_ident.#i_literal
+                    };
+                    let sf_clone = get_clone(sf, sf_ident, root_ident);
+                    match sf_clone {
+                        None => {}
+                        Some(sfc) => sf_clones.push(sfc),
+                    }
+                }
 
-            return (ident, subfield_clones)
-        },
-        UniplateField::Array(_, of_type, _) => {
-            if check_field_type(of_type, root_ident) {
-                let ident = Ident::new(&format!("{}_arr", field_name), span).into_token_stream();
-                let clone = quote! {
-                    #ident.clone()
-                };
-
-                return (ident, vec![clone])
+                return Some(quote! {
+                    vec![#(#sf_clones,)*].iter().flatten().cloned().collect::<Vec<_>>()
+                });
             }
+            UniplateField::Array(_, _, _) => {}
+            Unknown(_) => {}
         }
-        UniplateField::Unknown(_) => {}
     }
 
-    (Underscore(span).into_token_stream(), vec![])
+    None
 }
 
-fn field_idents_and_clones(fields: &Fields, root_ident: &Ident) -> Vec<(TokenStream2, TokenStream2)> {
-    return fields.iter().enumerate().map(|(idx, field)| {
-        let field_name = match &field.ident {
-            None => format!("field{}", idx),
-            Some(ident) => ident.to_string()
-        };
-        let field_type = parse_field_type(&field.ty);
+fn field_idents(fields: &Fields) -> Vec<TokenStream2> {
+    return fields
+        .iter()
+        .enumerate()
+        .map(|(idx, field)| {
+            let field_name = match &field.ident {
+                None => format!("field{}", idx),
+                Some(ident) => ident.to_string(),
+            };
+            Ident::new(&field_name, field.ident.span()).into_token_stream()
+        })
+        .collect();
+}
 
-        let (ident, clones) = get_ident_and_clone(&field_type, field_name, root_ident);
-        let clone = quote! {
-                vec![#(#clones,)*]
+fn field_clones(fields: &Fields, root_ident: &Ident) -> Vec<TokenStream2> {
+    return fields
+        .iter()
+        .enumerate()
+        .filter_map(|(idx, field)| {
+            let field_name = match &field.ident {
+                None => format!("field{}", idx),
+                Some(ident) => ident.to_string(),
             };
 
-        (ident, clone)
-    }).collect()
+            let field_type = parse_field_type(&field.ty);
+            let ident = Ident::new(&field_name, field.ident.span()).into_token_stream();
+
+            get_clone(&field_type, ident, root_ident)
+        })
+        .collect();
+}
+
+fn generate_variant_children_match_arm(variant: &Variant, root_ident: &Ident) -> TokenStream2 {
+    let field_idents = field_idents(&variant.fields);
+    let field_clones = field_clones(&variant.fields, root_ident);
+    let variant_ident = &variant.ident;
+
+    let match_pattern = if field_idents.is_empty() {
+        quote! {
+            #root_ident::#variant_ident
+        }
+    } else {
+        quote! {
+            #root_ident::#variant_ident(#(#field_idents,)*)
+        }
+    };
+
+    let clones = if field_clones.is_empty() {
+        quote! {
+            Vec::new()
+        }
+    } else {
+        quote! {
+            vec![#(#field_clones,)*].iter().flatten().cloned().collect::<Vec<_>>()
+        }
+    };
+
+    let mach_arm = quote! {
+         #match_pattern => {
+            #clones
+        }
+    };
+
+    mach_arm
 }
 
 #[proc_macro_derive(Uniplate)]
@@ -205,35 +251,13 @@ pub fn derive(macro_input: TokenStream) -> TokenStream {
     let data = &input.data;
 
     let children_impl: TokenStream2 = match data {
-        Data::Struct(_) => { unimplemented!("Structs currently not supported") }
-        Data::Union(_) => { unimplemented!("Unions currently not supported") }
+        Data::Struct(_) => unimplemented!("Structs currently not supported"),
+        Data::Union(_) => unimplemented!("Unions currently not supported"),
         Data::Enum(DataEnum { variants, .. }) => {
-            let match_arms: Vec<TokenStream2> = variants.iter().map(|variant| {
-                let idents_and_clones = field_idents_and_clones(&variant.fields, root_ident);
-                let field_idents: Vec<&TokenStream2> = idents_and_clones.iter().map(|tpl| &tpl.0).collect();
-                let field_clones: Vec<&TokenStream2> = idents_and_clones.iter().map(|tpl| &tpl.1).collect();
-                let variant_ident = &variant.ident;
-
-                let match_pattern = if field_idents.is_empty() {
-                    quote! {
-                        #root_ident::#variant_ident
-                    }
-                } else {
-                    quote! {
-                        #root_ident::#variant_ident(#(#field_idents,)*)
-                    }
-                };
-
-                let mach_arm = quote! {
-                     #match_pattern => {
-                        vec![#(#field_clones,)*].iter().flatten().collect()
-                    }
-                };
-
-                println!("Generated match arm: {}", mach_arm.to_string());
-
-                mach_arm
-            }).collect::<Vec<_>>();
+            let match_arms: Vec<TokenStream2> = variants
+                .iter()
+                .map(|vt| generate_variant_children_match_arm(vt, root_ident))
+                .collect::<Vec<_>>();
 
             let match_statement = quote! {
                 match self {
@@ -241,18 +265,37 @@ pub fn derive(macro_input: TokenStream) -> TokenStream {
                 }
             };
 
-            println!("Generated match statement for {}: \n{}", root_ident.to_string(), match_statement.to_string());
+            match_statement
+        }
+    };
+
+    let context_impl = match data {
+        Data::Struct(_) => unimplemented!("Structs currently not supported"),
+        Data::Union(_) => unimplemented!("Unions currently not supported"),
+        Data::Enum(DataEnum { variants, .. }) => {
+            let match_arms: Vec<TokenStream2> = vec![];
+
+            let match_statement = quote! {
+                match self {
+                    #(#match_arms)*
+                    _ => Box::new(|_| #root_ident::A(1))
+                }
+            };
 
             match_statement
         }
     };
 
+    // let context_impl = quote! {
+    //     match self {
+    //         _ => Box::new(|children| #root_ident::A(0))
+    //     }
+    // };
+
     let output = quote! {
         impl Uniplate for #root_ident {
             fn uniplate(&self) -> (Vec<#root_ident>, Box<dyn Fn(Vec<#root_ident>) -> #root_ident +'_>) {
-                let context: Box<dyn Fn(Vec<#root_ident>) -> #root_ident> = match self {
-                    _ => Box::new(|children| #root_ident::A(0))
-                };
+                let context: Box<dyn Fn(Vec<#root_ident>) -> #root_ident> = #context_impl;
 
                 let children: Vec<#root_ident> = #children_impl;
 
