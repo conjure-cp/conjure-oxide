@@ -29,6 +29,15 @@ fn derive_context_box() {
 }
 
 #[test]
+fn derive_context_vec() {
+    let a = TestEnum::A(1);
+    let b = TestEnum::B(Box::new(TestEnum::A(2)));
+    let c = TestEnum::C(vec![a.clone(), b.clone()]);
+    let context = c.uniplate().1;
+    assert_eq!(context(vec![a.clone(), b.clone()]), c);
+}
+
+#[test]
 fn derive_children_empty() {
     let a = TestEnum::A(42);
     let children = a.uniplate().0;
