@@ -1,10 +1,11 @@
-use crate::UniplateField::{Unknown};
+use crate::UniplateField::Unknown;
 use proc_macro::{self, TokenStream};
 use proc_macro2::{Literal, Span, TokenStream as TokenStream2};
 use quote::{quote, ToTokens};
+use std::ops::Add;
 use syn::spanned::Spanned;
 use syn::{
-    parse_macro_input, Data, DataEnum, DeriveInput, Expr, Fields, GenericArgument, Ident,
+    parse_macro_input, Data, DataEnum, DeriveInput, Expr, Field, Fields, GenericArgument, Ident,
     PathArguments, PathSegment, Type, Variant,
 };
 
@@ -122,6 +123,66 @@ fn check_field_type(ft: &UniplateField, root_ident: &Ident) -> bool {
     }
 }
 
+fn get_fill(
+    ft: &UniplateField,
+    exprs_ident: &Ident,
+    field_ident: &TokenStream2,
+    root_ident: &Ident,
+) -> TokenStream2 {
+    if check_field_type(ft, root_ident) {
+        match ft {
+            UniplateField::Identifier(_) => {
+                return quote! {
+                    #exprs_ident.remove(0)
+                }
+            }
+            UniplateField::Box(_, subfield) => {
+                let sf = subfield.as_ref();
+                let sf_fill = get_fill(sf, exprs_ident, field_ident, root_ident);
+                return quote! {
+                    Box::new(#sf_fill)
+                };
+            }
+            UniplateField::Vector(_, subfield) => {
+                let sf = subfield.as_ref();
+                let sf_fill = get_fill(sf, exprs_ident, field_ident, root_ident);
+                return quote! {
+                    {
+                        let mut elems: Vec<_> = Vec::new();
+                        for i in 0..#field_ident.len() {
+                            elems.push(#sf_fill)
+                        }
+                        elems
+                    }
+                };
+            }
+            UniplateField::Tuple(_, sfs) => {
+                let mut sf_fills: Vec<TokenStream2> = Vec::new();
+
+                for (i, sf) in sfs.iter().enumerate() {
+                    let i_literal = Literal::usize_unsuffixed(i);
+                    let sf_ident = quote! {
+                        #field_ident.#i_literal
+                    };
+                    sf_fills.push(get_fill(sf, exprs_ident, &sf_ident, root_ident));
+                }
+
+                return quote! {
+                    (#(#sf_fills,)*)
+                };
+            }
+            UniplateField::Array(_, arr_type, _) => {
+                unimplemented!("Arrays not currently supported")
+            }
+            UniplateField::Unknown(_) => {}
+        }
+    }
+
+    quote! {
+        #field_ident.clone()
+    }
+}
+
 fn get_clone(
     ft: &UniplateField,
     field_ident: TokenStream2,
@@ -170,7 +231,9 @@ fn get_clone(
                     vec![#(#sf_clones,)*].iter().flatten().cloned().collect::<Vec<_>>()
                 });
             }
-            UniplateField::Array(_, _, _) => {}
+            UniplateField::Array(_, _, _) => {
+                unimplemented!("Arrays not currently supported")
+            }
             Unknown(_) => {}
         }
     }
@@ -178,15 +241,19 @@ fn get_clone(
     None
 }
 
+fn make_field_name(field: &Field, idx: usize) -> String {
+    match &field.ident {
+        None => format!("field{}", idx),
+        Some(ident) => ident.to_string(),
+    }
+}
+
 fn field_idents(fields: &Fields) -> Vec<TokenStream2> {
     return fields
         .iter()
         .enumerate()
         .map(|(idx, field)| {
-            let field_name = match &field.ident {
-                None => format!("field{}", idx),
-                Some(ident) => ident.to_string(),
-            };
+            let field_name = make_field_name(field, idx);
             Ident::new(&field_name, field.ident.span()).into_token_stream()
         })
         .collect();
@@ -197,25 +264,34 @@ fn field_clones(fields: &Fields, root_ident: &Ident) -> Vec<TokenStream2> {
         .iter()
         .enumerate()
         .filter_map(|(idx, field)| {
-            let field_name = match &field.ident {
-                None => format!("field{}", idx),
-                Some(ident) => ident.to_string(),
-            };
-
+            let field_name = make_field_name(field, idx);
             let field_type = parse_field_type(&field.ty);
-            let ident = Ident::new(&field_name, field.ident.span()).into_token_stream();
+            let field_ident = Ident::new(&field_name, field.ident.span()).into_token_stream();
 
-            get_clone(&field_type, ident, root_ident)
+            get_clone(&field_type, field_ident, root_ident)
         })
         .collect();
 }
 
-fn generate_variant_children_match_arm(variant: &Variant, root_ident: &Ident) -> TokenStream2 {
+fn field_fills(fields: &Fields, root_ident: &Ident, exprs_ident: &Ident) -> Vec<TokenStream2> {
+    return fields
+        .iter()
+        .enumerate()
+        .map(|(idx, field)| {
+            let field_name = make_field_name(field, idx);
+            let field_type = parse_field_type(&field.ty);
+            let field_ident = Ident::new(&field_name, field.ident.span()).into_token_stream();
+
+            get_fill(&field_type, exprs_ident, &field_ident, root_ident)
+        })
+        .collect();
+}
+
+fn generate_match_pattern(variant: &Variant, root_ident: &Ident) -> TokenStream2 {
     let field_idents = field_idents(&variant.fields);
-    let field_clones = field_clones(&variant.fields, root_ident);
     let variant_ident = &variant.ident;
 
-    let match_pattern = if field_idents.is_empty() {
+    if field_idents.is_empty() {
         quote! {
             #root_ident::#variant_ident
         }
@@ -223,7 +299,13 @@ fn generate_variant_children_match_arm(variant: &Variant, root_ident: &Ident) ->
         quote! {
             #root_ident::#variant_ident(#(#field_idents,)*)
         }
-    };
+    }
+}
+
+fn generate_variant_children_match_arm(variant: &Variant, root_ident: &Ident) -> TokenStream2 {
+    let field_clones = field_clones(&variant.fields, root_ident);
+
+    let match_pattern = generate_match_pattern(variant, root_ident);
 
     let clones = if field_clones.is_empty() {
         quote! {
@@ -242,6 +324,31 @@ fn generate_variant_children_match_arm(variant: &Variant, root_ident: &Ident) ->
     };
 
     mach_arm
+}
+
+fn generate_variant_context_match_arm(variant: &Variant, root_ident: &Ident) -> TokenStream2 {
+    let variant_ident = &variant.ident;
+    let exprs_ident = Ident::new("exprs", variant_ident.span());
+    let field_fills = field_fills(&variant.fields, root_ident, &exprs_ident);
+
+    let match_pattern = generate_match_pattern(variant, root_ident);
+
+    if field_fills.is_empty() {
+        quote! {
+            #match_pattern => {
+                Box::new(|_| root_ident::#variant_ident())
+            }
+        }
+    } else {
+        quote! {
+            #match_pattern => {
+                Box::new(|exprs_orig| {
+                    let mut #exprs_ident = exprs_orig.clone();
+                    #root_ident::#variant_ident(#(#field_fills,)*)
+                })
+            }
+        }
+    }
 }
 
 #[proc_macro_derive(Uniplate)]
@@ -273,24 +380,20 @@ pub fn derive(macro_input: TokenStream) -> TokenStream {
         Data::Struct(_) => unimplemented!("Structs currently not supported"),
         Data::Union(_) => unimplemented!("Unions currently not supported"),
         Data::Enum(DataEnum { variants, .. }) => {
-            let match_arms: Vec<TokenStream2> = vec![];
+            let match_arms: Vec<TokenStream2> = variants
+                .iter()
+                .map(|vt| generate_variant_context_match_arm(vt, root_ident))
+                .collect::<Vec<_>>();
 
             let match_statement = quote! {
                 match self {
                     #(#match_arms)*
-                    _ => Box::new(|_| #root_ident::A(1))
                 }
             };
 
             match_statement
         }
     };
-
-    // let context_impl = quote! {
-    //     match self {
-    //         _ => Box::new(|children| #root_ident::A(0))
-    //     }
-    // };
 
     let output = quote! {
         impl Uniplate for #root_ident {
@@ -311,18 +414,18 @@ pub fn derive(macro_input: TokenStream) -> TokenStream {
 
 /*
 let context: Box<dyn Fn(Vec<AST>) -> AST> = match self {
-//!             AST::Int(i) =>    Box::new(|_| AST::Int(*i)),
-//!             AST::Add(_, _) => Box::new(|exprs: Vec<AST>| AST::Add(Box::new(exprs[0].clone()),Box::new(exprs[1].clone()))),
-//!             AST::Sub(_, _) => Box::new(|exprs: Vec<AST>| AST::Sub(Box::new(exprs[0].clone()),Box::new(exprs[1].clone()))),
-//!             AST::Div(_, _) => Box::new(|exprs: Vec<AST>| AST::Div(Box::new(exprs[0].clone()),Box::new(exprs[1].clone()))),
-//!             AST::Mul(_, _) => Box::new(|exprs: Vec<AST>| AST::Mul(Box::new(exprs[0].clone()),Box::new(exprs[1].clone())))
-//!         };
-//!
-//!         let children: Vec<AST> = match self {
-//!             AST::Add(a,b) => vec![*a.clone(),*b.clone()],
-//!             AST::Sub(a,b) => vec![*a.clone(),*b.clone()],
-//!             AST::Div(a,b) => vec![*a.clone(),*b.clone()],
-//!             AST::Mul(a,b) => vec![*a.clone(),*b.clone()],
-//!             _ => vec![]
-//!         };
+    AST::Int(i) =>    Box::new(|_| AST::Int(*i)),
+    AST::Add(_, _) => Box::new(|exprs: Vec<AST>| AST::Add(Box::new(exprs[0].clone()),Box::new(exprs[1].clone()))),
+    AST::Sub(_, _) => Box::new(|exprs: Vec<AST>| AST::Sub(Box::new(exprs[0].clone()),Box::new(exprs[1].clone()))),
+    AST::Div(_, _) => Box::new(|exprs: Vec<AST>| AST::Div(Box::new(exprs[0].clone()),Box::new(exprs[1].clone()))),
+    AST::Mul(_, _) => Box::new(|exprs: Vec<AST>| AST::Mul(Box::new(exprs[0].clone()),Box::new(exprs[1].clone())))
+};
+
+let children: Vec<AST> = match self {
+    AST::Add(a,b) => vec![*a.clone(),*b.clone()],
+    AST::Sub(a,b) => vec![*a.clone(),*b.clone()],
+    AST::Div(a,b) => vec![*a.clone(),*b.clone()],
+    AST::Mul(a,b) => vec![*a.clone(),*b.clone()],
+    _ => vec![]
+};
  */

@@ -14,6 +14,21 @@ enum TestEnum {
 }
 
 #[test]
+fn derive_context_empty() {
+    let a = TestEnum::A(42);
+    let context = a.uniplate().1;
+    assert_eq!(context(vec![]), a)
+}
+
+#[test]
+fn derive_context_box() {
+    let a = TestEnum::A(42);
+    let b = TestEnum::B(Box::new(a.clone()));
+    let context = b.uniplate().1;
+    assert_eq!(context(vec![a.clone()]), b);
+}
+
+#[test]
 fn derive_children_empty() {
     let a = TestEnum::A(42);
     let children = a.uniplate().0;
