@@ -196,40 +196,67 @@ jobs:
               comment_id: ${{ steps.fc.outputs.comment-id }}
             })
 
+      # this will be used for future visualizations in the coverage report (requiring external python libs)
+      - name: Install python dependencies
+        run: |
+          pip install -r tools/code-coverage-diff/requirements.txt
+
+      - name: Calculate coverage difference
+        id: coveragediff
+        run: |
+          # fetch main branch coverage data
+          wget https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/main/lcov.info
+
+          # compare main and PR lcov.info
+          python ./tools/code-coverage-diff/calculate_coverage_difference.py main_lcov.info ./deploy/lcov.info > ./tools/code-coverage-diff/lcov/coverage_diff.txt
+
+          echo "diff<<EOFABC" >> $GITHUB_ENV
+          cat ./tools/code-coverage-diff/lcov/coverage_diff.txt >> $GITHUB_ENV
+          echo 'EOFABC' >> $GITHUB_ENV
+
       - name: Create coverage comment
         uses: peter-evans/create-or-update-comment@v1
         with:
-          issue-number: ${{steps.prnum.outputs.num}}
+          issue-number: ${{ steps.prnum.outputs.num }}
           body: |
-            ## Documentation Coverage
+            ## Code and Documentation Coverage Report
+            
+            ### Documentation Coverage
 
             <details>
-            <summary>This PR</summary>
+            <summary>Click to view documentation coverage for this PR</summary>
 
             ```
-            ${{steps.doccov.outputs.pr}}
+            ${{ steps.doccov.outputs.pr }}
             ```
 
             </details>
 
             <details>
-            <summary>Main</summary>
+            <summary>Click to view documentation coverage for main</summary>
             
             ```
-            ${{steps.doccov.outputs.main}}
+            ${{ steps.doccov.outputs.main }}
             ```
 
             </details>
 
-            ## Code Coverage
+            ### Code Coverage Summary
 
-            [This PR](https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/${{steps.sha.outputs.result}})
+            **This PR**: [Detailed Report](https://${{ github.repository_owner }}.github.io/conjure-oxide/coverage/${{ steps.sha.outputs.result }}/index.html)
 
             ```
-            ${{steps.lcov.outputs.pr}}
+            ${{ steps.lcov.outputs.pr }}
             ```
 
-            [Main](https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/main)
+            **Main**: [Detailed Report](https://${{ github.repository_owner }}.github.io/conjure-oxide/coverage/main/index.html)
+
             ```
-            ${{steps.lcov.outputs.main}}
+            ${{ steps.lcov.outputs.main }}
+            ```
+
+            ### Coverage Changes
+
+            ```diff
+            ${{ env.diff }}
             ```
