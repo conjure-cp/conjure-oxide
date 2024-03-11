@@ -6,7 +6,7 @@ where
     fn uniplate(&self) -> (Vec<Self>, Box<dyn Fn(Vec<Self>) -> Self + '_>);
 
     /// Get all children of a node, including itself and all children.
-    fn universe(self) -> Vec<Self> {
+    fn universe(&self) -> Vec<Self> {
         let mut results = vec![self.clone()];
         for child in self.children() {
             results.append(&mut child.universe());
@@ -15,12 +15,12 @@ where
     }
 
     /// Get the DIRECT children of a node.
-    fn children(self) -> Vec<Self> {
+    fn children(&self) -> Vec<Self> {
         self.uniplate().0
     }
 
     /// Apply the given rule to all nodes bottom up.
-    fn transform(self, f: fn(Self) -> Self) -> Self {
+    fn transform(&self, f: fn(Self) -> Self) -> Self {
         let (children, context) = self.uniplate();
         f(context(
             children.into_iter().map(|a| a.transform(f)).collect(),
@@ -28,7 +28,7 @@ where
     }
 
     /// Rewrite by applying a rule everywhere you can.
-    fn rewrite(self, f: fn(Self) -> Option<Self>) -> Self {
+    fn rewrite(&self, f: fn(Self) -> Option<Self>) -> Self {
         let (children, context) = self.uniplate();
         let node: Self = context(children.into_iter().map(|a| a.rewrite(f)).collect());
 
@@ -37,7 +37,7 @@ where
 
     /// Perform a transformation on all the immediate children, then combine them back.
     /// This operation allows additional information to be passed downwards, and can be used to provide a top-down transformation.
-    fn descend(self, f: fn(Self) -> Self) -> Self {
+    fn descend(&self, f: fn(Self) -> Self) -> Self {
         let (children, context) = self.uniplate();
         let children: Vec<Self> = children.into_iter().map(f).collect();
 
@@ -57,7 +57,7 @@ where
     ///
     ///   f(element_to_fold, folded_children) -> folded_element
     ///
-    fn fold<T>(self, op: fn(Self, Vec<T>) -> T) -> T {
+    fn fold<T>(&self, op: fn(Self, Vec<T>) -> T) -> T {
         op(
             self.clone(),
             self.children().into_iter().map(|c| c.fold(op)).collect(),
