@@ -2,9 +2,10 @@ mod utils;
 use crate::utils::generate::{generate_field_clones, generate_field_fills, generate_field_idents};
 use proc_macro::{self, TokenStream};
 use proc_macro2::TokenStream as TokenStream2;
-use quote::quote;
+use quote::{format_ident, quote};
 use syn::{parse_macro_input, Data, DataEnum, DeriveInput, Ident, Variant};
 
+/// Generate the full match pattern for a variant
 fn generate_match_pattern(variant: &Variant, root_ident: &Ident) -> TokenStream2 {
     let field_idents = generate_field_idents(&variant.fields);
     let variant_ident = &variant.ident;
@@ -20,6 +21,7 @@ fn generate_match_pattern(variant: &Variant, root_ident: &Ident) -> TokenStream2
     }
 }
 
+/// Generate the code to get the children of a variant
 fn generate_variant_children_match_arm(variant: &Variant, root_ident: &Ident) -> TokenStream2 {
     let field_clones = generate_field_clones(&variant.fields, root_ident);
 
@@ -44,11 +46,12 @@ fn generate_variant_children_match_arm(variant: &Variant, root_ident: &Ident) ->
     mach_arm
 }
 
+/// Generate an implementation of `context` for a variant
 fn generate_variant_context_match_arm(variant: &Variant, root_ident: &Ident) -> TokenStream2 {
     let variant_ident = &variant.ident;
     let children_ident = Ident::new("children", variant_ident.span());
     let field_fills = generate_field_fills(&variant.fields, root_ident, &children_ident);
-
+    let error_ident = format_ident!("UniplateError{}", root_ident);
     let match_pattern = generate_match_pattern(variant, root_ident);
 
     if field_fills.is_empty() {
@@ -62,7 +65,7 @@ fn generate_variant_context_match_arm(variant: &Variant, root_ident: &Ident) -> 
             #match_pattern => {
                 Box::new(|children| {
                     if (children.len() < self.children().len()) {
-                        return Err(UniplateError::NotEnoughChildren);
+                        return Err(#error_ident::NotEnoughChildren);
                     }
 
                     let mut #children_ident = children.clone();
@@ -73,6 +76,50 @@ fn generate_variant_context_match_arm(variant: &Variant, root_ident: &Ident) -> 
     }
 }
 
+/// Derive the `Uniplate` trait for an arbitrary type
+/// 
+/// # WARNING
+/// 
+/// This is alpha code. It is not yet stable and some features are missing.
+/// 
+/// ## What works?
+/// 
+/// - Deriving `Uniplate` for enum types
+/// - `Box<T>` and `Vec<T>` fields, including nested vectors
+/// - Tuple fields, including nested tuples - e.g. `(Vec<T>, (Box<T>, i32))`
+/// 
+/// ## What does not work?
+/// 
+/// - Structs
+/// - Unions
+/// - Array fields
+/// - Multiple type arguments - e.g. `MyType<T, R>`
+/// - Any complex type arguments, e.g. `MyType<T: MyTrait1 + MyTrait2>`
+/// - Any collection type other than `Vec`
+/// - Any box type other than `Box`
+/// 
+/// # Usage
+/// 
+/// This macro is intended to replace a hand-coded implementation of the `Uniplate` trait.
+/// Example:
+/// 
+/// ```rust
+/// use uniplate_derive::Uniplate;
+/// use uniplate::uniplate::Uniplate;
+/// 
+/// #[derive(PartialEq, Eq, Debug, Uniplate)]
+/// enum MyEnum {
+///    A(Box<MyEnum>),
+///    B(Vec<MyEnum>),
+///    C(i32),
+/// }
+/// 
+/// let a = MyEnum::A(Box::new(MyEnum::C(42)));
+/// let (children, context) = a.uniplate();
+/// assert_eq!(children, vec![MyEnum::C(42)]);
+/// assert_eq!(context(vec![MyEnum::C(42)]).unwrap(), a);
+/// ```
+/// 
 #[proc_macro_derive(Uniplate)]
 pub fn derive(macro_input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(macro_input as DeriveInput);
@@ -116,13 +163,15 @@ pub fn derive(macro_input: TokenStream) -> TokenStream {
             match_statement
         }
     };
+    
+    let error_ident = format_ident!("UniplateError{}", root_ident);
 
     let output = quote! {
-        use uniplate::uniplate::UniplateError;
+        use uniplate::uniplate::UniplateError as #error_ident;
 
         impl Uniplate for #root_ident {
-            fn uniplate(&self) -> (Vec<#root_ident>, Box<dyn Fn(Vec<#root_ident>) -> Result<#root_ident, UniplateError> + '_>) {
-                let context: Box<dyn Fn(Vec<#root_ident>) -> Result<#root_ident, UniplateError>> = #context_impl;
+            fn uniplate(&self) -> (Vec<#root_ident>, Box<dyn Fn(Vec<#root_ident>) -> Result<#root_ident, #error_ident> + '_>) {
+                let context: Box<dyn Fn(Vec<#root_ident>) -> Result<#root_ident, #error_ident>> = #context_impl;
 
                 let children: Vec<#root_ident> = #children_impl;
 

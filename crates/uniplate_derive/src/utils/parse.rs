@@ -2,6 +2,7 @@ use proc_macro2::{Ident, Span};
 use syn::spanned::Spanned;
 use syn::{Expr, GenericArgument, PathArguments, PathSegment, Type};
 
+/// Represents an error produced during parsing a type argument (e.g. `::<T>`)
 pub enum ParseTypeArgumentError {
     NoTypeArguments,
     EmptyTypeArguments,
@@ -11,17 +12,25 @@ pub enum ParseTypeArgumentError {
     TypeArgumentEmptyPath,
 }
 
+/// Represents a field in a tree-like structure. Used for deriving the uniplate implementation.
 #[derive(Debug)]
 pub enum UniplateField {
+    /// Any other valid identifier
     Identifier(Ident),
+    /// A field consisting of a Box<T>
     Box(Span, Box<UniplateField>),
+    /// A field consisting of a Vec<T>
     Vector(Span, Box<UniplateField>),
+    /// A tuple of multiple fields (e.g. `(Box<T>, i32)`)
     Tuple(Span, Vec<UniplateField>),
+    /// An array field. ToDo: currently not supported.
     Array(Span, Box<UniplateField>, Expr),
+    /// A field that could not be parsed
     Unknown(Span),
 }
 
 impl UniplateField {
+    /// Get the span corresponding to this field
     pub fn span(&self) -> Span {
         match self {
             UniplateField::Identifier(idnt) => idnt.span(),
@@ -34,10 +43,11 @@ impl UniplateField {
     }
 }
 
+/// Parse a type argument from a path segment (e.g. `T` from `Box<T>`)
 fn parse_type_argument(seg_args: &PathArguments) -> Result<&PathSegment, ParseTypeArgumentError> {
     match seg_args {
         PathArguments::AngleBracketed(type_args) => {
-            if type_args.args.len() > 1 {
+            if type_args.args.len() > 1 { // ToDo: discuss - can and should we support multiple type arguments?
                 return Err(ParseTypeArgumentError::MultipleTypeArguments);
             }
 
@@ -59,14 +69,16 @@ fn parse_type_argument(seg_args: &PathArguments) -> Result<&PathSegment, ParseTy
     }
 }
 
+/// Parse a field type into a `UniplateField`
 pub fn parse_field_type(field_type: &Type) -> UniplateField {
+    /// Helper function to parse a path segment into a `UniplateField`
     fn parse_type(seg: &PathSegment) -> UniplateField {
         let ident = &seg.ident;
         let span = ident.span();
         let args = &seg.arguments;
 
         let box_ident = &Ident::new("Box", span);
-        let vec_ident = &Ident::new("Vec", span);
+        let vec_ident = &Ident::new("Vec", span); // ToDo: support other collection types
 
         if ident.eq(box_ident) {
             match parse_type_argument(args) {
@@ -100,6 +112,7 @@ pub fn parse_field_type(field_type: &Type) -> UniplateField {
     }
 }
 
+/// Check if a field type is equal to a given identifier. Used to check if a field is an instance of the root type.
 pub fn check_field_type(ft: &UniplateField, root_ident: &Ident) -> bool {
     match ft {
         UniplateField::Identifier(ident) => ident.eq(root_ident),
