@@ -1,7 +1,9 @@
 use conjure_core::{
     ast::Constant as Const, ast::Expression as Expr, metadata::Metadata, rule::RuleApplicationError,
 };
+use conjure_core::ast::Expression::{And, Nothing};
 use conjure_rules::{register_rule, register_rule_set};
+use uniplate::uniplate::Uniplate;
 
 /*****************************************************************************/
 /*        This file contains basic rules for simplifying expressions         */
@@ -20,13 +22,13 @@ register_rule_set!("Base", 100, ());
 */
 #[register_rule(("Base", 100))]
 fn remove_nothings(expr: &Expr) -> Result<Expr, RuleApplicationError> {
-    fn remove_nothings(exprs: Vec<&Expr>) -> Result<Vec<&Expr>, RuleApplicationError> {
+    fn remove_nothings(exprs: Vec<Expr>) -> Result<Vec<Expr>, RuleApplicationError> {
         let mut changed = false;
         let mut new_exprs = Vec::new();
 
         for e in exprs {
             match e.clone() {
-                Expr::Nothing => {
+                Nothing => {
                     changed = true;
                 }
                 _ => new_exprs.push(e),
@@ -39,33 +41,34 @@ fn remove_nothings(expr: &Expr) -> Result<Expr, RuleApplicationError> {
             Err(RuleApplicationError::RuleNotApplicable)
         }
     }
+    
+    fn get_lhs_rhs(sub: Vec<Expr>) -> (Vec<Expr>, Box<Expr>) {
+        if sub.is_empty() {
+            return (Vec::new(), Box::new(Nothing));
+        }
+        
+        let lhs = sub[..(sub.len() - 1)].to_vec();
+        let rhs = Box::new(sub[sub.len() - 1].clone());
+        (lhs, rhs)
+    }
+
+    let new_sub = remove_nothings(expr.children())?;
 
     match expr {
-        Expr::And(_, _) | Expr::Or(_, _) | Expr::Sum(_, _) => match expr.sub_expressions() {
-            None => Err(RuleApplicationError::RuleNotApplicable),
-            Some(sub) => {
-                let new_sub = remove_nothings(sub)?;
-                let new_expr = expr.with_sub_expressions(new_sub);
-                Ok(new_expr)
-            }
-        },
-        Expr::SumEq(_, _, _) | Expr::SumLeq(_, _, _) | Expr::SumGeq(_, _, _) => {
-            match expr.sub_expressions() {
-                None => Err(RuleApplicationError::RuleNotApplicable),
-                Some(sub) => {
-                    // Keep the last sub expression, which is the right hand side expression
-                    let new_rhs = sub[sub.len() - 1];
-
-                    // Remove all nothings from the left hand side expressions
-                    let mut new_sub_exprs = remove_nothings(sub[..sub.len() - 1].to_vec())?;
-
-                    // Add the right hand side expression back
-                    new_sub_exprs.push(new_rhs);
-
-                    let new_expr = expr.with_sub_expressions(new_sub_exprs);
-                    Ok(new_expr)
-                }
-            }
+        Expr::And(md, _) => Ok(Expr::And(md.clone(), new_sub)),
+        Expr::Or(md, _) => Ok(Expr::Or(md.clone(), new_sub)),
+        Expr::Sum(md, _) => Ok(Expr::Sum(md.clone(), new_sub)),
+        Expr::SumEq(md, _, _) => {
+            let (lhs, rhs) = get_lhs_rhs(new_sub);
+            Ok(Expr::SumEq(md.clone(), lhs, rhs))
+        }
+        Expr::SumLeq(md, lhs, rhs) => {
+            let (lhs, rhs) = get_lhs_rhs(new_sub);
+            Ok(Expr::SumLeq(md.clone(), lhs, rhs))
+        }
+        Expr::SumGeq(md, lhs, rhs) => {
+            let (lhs, rhs) = get_lhs_rhs(new_sub);
+            Ok(Expr::SumGeq(md.clone(), lhs, rhs))
         }
         _ => Err(RuleApplicationError::RuleNotApplicable),
     }
@@ -79,11 +82,11 @@ fn remove_nothings(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  */
 #[register_rule(("Base", 100))]
 fn empty_to_nothing(expr: &Expr) -> Result<Expr, RuleApplicationError> {
-    match expr.sub_expressions() {
-        None => Err(RuleApplicationError::RuleNotApplicable),
-        Some(sub) => {
-            if sub.is_empty() {
-                Ok(Expr::Nothing)
+    match expr {
+        Nothing | Expr::Reference(_, _) | Expr::Constant(_, _) => Err(RuleApplicationError::RuleNotApplicable),
+        _ => {
+            if expr.children().is_empty() {
+                Ok(Nothing)
             } else {
                 Err(RuleApplicationError::RuleNotApplicable)
             }

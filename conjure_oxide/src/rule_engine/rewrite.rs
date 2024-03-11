@@ -6,6 +6,7 @@ use conjure_core::rule::Rule;
 use conjure_rules::rule_set::RuleSet;
 use std::fmt::Display;
 use thiserror::Error;
+use uniplate::uniplate::{Uniplate, UniplateError};
 
 #[derive(Debug, Error)]
 pub enum RewriteError {
@@ -61,14 +62,13 @@ fn rewrite_iteration<'a>(
     if let Some(new) = choose_rewrite(&rule_results) {
         return Some(new);
     } else {
-        match expression.sub_expressions() {
-            None => {}
-            Some(mut sub) => {
-                for i in 0..sub.len() {
-                    if let Some(new) = rewrite_iteration(sub[i], rules) {
-                        sub[i] = &new;
-                        return Some(expression.with_sub_expressions(sub));
-                    }
+        let mut sub = expression.children();
+
+        for i in 0..sub.len() {
+            if let Some(new) = rewrite_iteration(&sub[i], rules) {
+                sub[i] = new;
+                if let Ok(res) = expression.with_children(sub.clone()) {
+                    return Some(res);
                 }
             }
         }

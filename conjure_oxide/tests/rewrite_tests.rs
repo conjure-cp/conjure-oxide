@@ -9,6 +9,7 @@ use core::panic;
 use minion_rs::ast::{Constant as MinionConstant, VarName};
 use std::collections::HashMap;
 use std::process::exit;
+use uniplate::uniplate::Uniplate;
 
 #[test]
 fn rules_present() {
@@ -835,14 +836,12 @@ fn is_simple_iteration<'a>(
     if let Some(new) = choose_rewrite(&rule_results) {
         return Some(new);
     } else {
-        match expression.sub_expressions() {
-            None => {}
-            Some(mut sub) => {
-                for i in 0..sub.len() {
-                    if let Some(new) = is_simple_iteration(sub[i], rules) {
-                        sub[i] = &new;
-                        return Some(expression.with_sub_expressions(sub));
-                    }
+        let mut sub = expression.children();
+        for i in 0..sub.len() {
+            if let Some(new) = is_simple_iteration(&sub[i], rules) {
+                sub[i] = new;
+                if let Ok(res) = expression.with_children(sub.clone()) {
+                    return Some(res);
                 }
             }
         }

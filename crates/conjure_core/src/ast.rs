@@ -223,122 +223,12 @@ pub enum Expression {
 }
 
 impl Expression {
-    /**
-     * Returns a vector of references to the sub-expressions of the expression.
-     * If the expression is a primitive (variable, constant, etc.), returns None.
-     *
-     * Note: If the expression is NOT MEANT TO have sub-expressions, this function will return None.
-     * Otherwise, it will return Some(Vec), where the Vec can be empty.
-     */
-    pub fn sub_expressions(&self) -> Option<Vec<&Expression>> {
-        fn unwrap_flat_expression<'a>(
-            lhs: &'a [Expression],
-            rhs: &'a Box<Expression>,
-        ) -> Vec<&'a Expression> {
-            let mut sub_exprs = lhs.iter().collect::<Vec<_>>();
-            sub_exprs.push(rhs.as_ref());
-            sub_exprs
-        }
-
-        match self {
-            Expression::Constant(_, _) | Expression::Reference(_, _) | Expression::Nothing => None,
-            Expression::Sum(_, exprs) => Some(exprs.iter().collect()),
-            Expression::Not(_, expr_box) => Some(vec![expr_box.as_ref()]),
-            Expression::Or(_, exprs) => Some(exprs.iter().collect()),
-            Expression::And(_, exprs) => Some(exprs.iter().collect()),
-            Expression::Eq(_, lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
-            Expression::Neq(_, lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
-            Expression::Geq(_, lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
-            Expression::Leq(_, lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
-            Expression::Gt(_, lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
-            Expression::Lt(_, lhs, rhs) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
-            Expression::SumGeq(_, lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
-            Expression::SumLeq(_, lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
-            Expression::SumEq(_, lhs, rhs) => Some(unwrap_flat_expression(lhs, rhs)),
-            Expression::Ineq(_, lhs, rhs, _) => Some(vec![lhs.as_ref(), rhs.as_ref()]),
-        }
-    }
-
-    /// Returns a clone of the same expression type with the given sub-expressions.
-    pub fn with_sub_expressions(&self, sub: Vec<&Expression>) -> Expression {
-        match self {
-            Expression::Constant(metadata, c) => Expression::Constant(metadata.clone(), c.clone()),
-            Expression::Reference(metadata, name) => {
-                Expression::Reference(metadata.clone(), name.clone())
-            }
-            Expression::Nothing => Expression::Nothing,
-            Expression::Sum(metadata, _) => {
-                Expression::Sum(metadata.clone(), sub.iter().cloned().cloned().collect())
-            }
-            Expression::Not(metadata, _) => {
-                Expression::Not(metadata.clone(), Box::new(sub[0].clone()))
-            }
-            Expression::Or(metadata, _) => {
-                Expression::Or(metadata.clone(), sub.iter().cloned().cloned().collect())
-            }
-            Expression::And(metadata, _) => {
-                Expression::And(metadata.clone(), sub.iter().cloned().cloned().collect())
-            }
-            Expression::Eq(metadata, _, _) => Expression::Eq(
-                metadata.clone(),
-                Box::new(sub[0].clone()),
-                Box::new(sub[1].clone()),
-            ),
-            Expression::Neq(metadata, _, _) => Expression::Neq(
-                metadata.clone(),
-                Box::new(sub[0].clone()),
-                Box::new(sub[1].clone()),
-            ),
-            Expression::Geq(metadata, _, _) => Expression::Geq(
-                metadata.clone(),
-                Box::new(sub[0].clone()),
-                Box::new(sub[1].clone()),
-            ),
-            Expression::Leq(metadata, _, _) => Expression::Leq(
-                metadata.clone(),
-                Box::new(sub[0].clone()),
-                Box::new(sub[1].clone()),
-            ),
-            Expression::Gt(metadata, _, _) => Expression::Gt(
-                metadata.clone(),
-                Box::new(sub[0].clone()),
-                Box::new(sub[1].clone()),
-            ),
-            Expression::Lt(metadata, _, _) => Expression::Lt(
-                metadata.clone(),
-                Box::new(sub[0].clone()),
-                Box::new(sub[1].clone()),
-            ),
-            Expression::SumGeq(metadata, _, _) => Expression::SumGeq(
-                metadata.clone(),
-                sub.iter().cloned().cloned().collect(),
-                Box::new(sub[2].clone()), // ToDo (gs248) - Why are we using sub[2] here?
-            ),
-            Expression::SumLeq(metadata, _, _) => Expression::SumLeq(
-                metadata.clone(),
-                sub.iter().cloned().cloned().collect(),
-                Box::new(sub[2].clone()),
-            ),
-            Expression::SumEq(metadata, _, _) => Expression::SumEq(
-                metadata.clone(),
-                sub.iter().cloned().cloned().collect(),
-                Box::new(sub[2].clone()),
-            ),
-            Expression::Ineq(metadata, _, _, _) => Expression::Ineq(
-                metadata.clone(),
-                Box::new(sub[0].clone()),
-                Box::new(sub[1].clone()),
-                Box::new(sub[2].clone()),
-            ),
-        }
-    }
-
     pub fn is_constant(&self) -> bool {
         matches!(self, Expression::Constant(_, _))
     }
 }
 
-fn display_expressions(expressions: &Vec<Expression>) -> String {
+fn display_expressions(expressions: &[Expression]) -> String {
     if expressions.len() <= 3 {
         format!(
             "Sum({})",
