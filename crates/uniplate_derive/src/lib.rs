@@ -2,7 +2,6 @@ use crate::UniplateField::Unknown;
 use proc_macro::{self, TokenStream};
 use proc_macro2::{Literal, Span, TokenStream as TokenStream2};
 use quote::{quote, ToTokens};
-use std::ops::Add;
 use syn::spanned::Spanned;
 use syn::{
     parse_macro_input, Data, DataEnum, DeriveInput, Expr, Field, Fields, GenericArgument, Ident,
@@ -328,8 +327,8 @@ fn generate_variant_children_match_arm(variant: &Variant, root_ident: &Ident) ->
 
 fn generate_variant_context_match_arm(variant: &Variant, root_ident: &Ident) -> TokenStream2 {
     let variant_ident = &variant.ident;
-    let exprs_ident = Ident::new("exprs", variant_ident.span());
-    let field_fills = field_fills(&variant.fields, root_ident, &exprs_ident);
+    let children_ident = Ident::new("children", variant_ident.span());
+    let field_fills = field_fills(&variant.fields, root_ident, &children_ident);
 
     let match_pattern = generate_match_pattern(variant, root_ident);
 
@@ -342,8 +341,8 @@ fn generate_variant_context_match_arm(variant: &Variant, root_ident: &Ident) -> 
     } else {
         quote! {
             #match_pattern => {
-                Box::new(|exprs_orig| {
-                    let mut #exprs_ident = exprs_orig.clone();
+                Box::new(|children| {
+                    let mut #children_ident = children.clone();
                     #root_ident::#variant_ident(#(#field_fills,)*)
                 })
             }
