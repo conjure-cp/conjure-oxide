@@ -10,6 +10,15 @@ pub trait Uniplate
 where
     Self: Sized + Clone + Eq,
 {
+    /// The `uniplate` function. Takes a node and produces a tuple of `(children, context)`, where:
+    /// - children is a list of the node's direct descendants of the same type
+    /// - context is a function to reconstruct the original node with a new list of children
+    ///
+    /// ## Warning
+    ///
+    /// The number of children passed to context must be the same as the number of children in
+    /// the original node.
+    /// If the number of children given is different, context returns `UniplateError::NotEnoughChildren`
     #[allow(clippy::type_complexity)]
     fn uniplate(
         &self,
@@ -33,6 +42,9 @@ where
     }
 
     /// Reconstruct this node with the given children
+    ///
+    /// ## Arguments
+    /// - children - a vector of the same type and same size as self.children()
     fn with_children(&self, children: Vec<Self>) -> Result<Self, UniplateError> {
         let context = self.uniplate().1;
         context(children)

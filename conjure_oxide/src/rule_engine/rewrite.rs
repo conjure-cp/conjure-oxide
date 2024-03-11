@@ -6,7 +6,7 @@ use conjure_core::rule::Rule;
 use conjure_rules::rule_set::RuleSet;
 use std::fmt::Display;
 use thiserror::Error;
-use uniplate::uniplate::{Uniplate};
+use uniplate::uniplate::Uniplate;
 
 #[derive(Debug, Error)]
 pub enum RewriteError {

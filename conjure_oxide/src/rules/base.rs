@@ -1,7 +1,7 @@
+use conjure_core::ast::Expression::Nothing;
 use conjure_core::{
     ast::Constant as Const, ast::Expression as Expr, metadata::Metadata, rule::RuleApplicationError,
 };
-use conjure_core::ast::Expression::{Nothing};
 use conjure_rules::{register_rule, register_rule_set};
 use uniplate::uniplate::Uniplate;
 
@@ -41,12 +41,12 @@ fn remove_nothings(expr: &Expr) -> Result<Expr, RuleApplicationError> {
             Err(RuleApplicationError::RuleNotApplicable)
         }
     }
-    
+
     fn get_lhs_rhs(sub: Vec<Expr>) -> (Vec<Expr>, Box<Expr>) {
         if sub.is_empty() {
             return (Vec::new(), Box::new(Nothing));
         }
-        
+
         let lhs = sub[..(sub.len() - 1)].to_vec();
         let rhs = Box::new(sub[sub.len() - 1].clone());
         (lhs, rhs)
@@ -83,7 +83,9 @@ fn remove_nothings(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 #[register_rule(("Base", 100))]
 fn empty_to_nothing(expr: &Expr) -> Result<Expr, RuleApplicationError> {
     match expr {
-        Nothing | Expr::Reference(_, _) | Expr::Constant(_, _) => Err(RuleApplicationError::RuleNotApplicable),
+        Nothing | Expr::Reference(_, _) | Expr::Constant(_, _) => {
+            Err(RuleApplicationError::RuleNotApplicable)
+        }
         _ => {
             if expr.children().is_empty() {
                 Ok(Nothing)

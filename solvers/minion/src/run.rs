@@ -1,8 +1,8 @@
 use std::{
     collections::HashMap,
     ffi::CString,
+    sync::Condvar,
     sync::{Mutex, MutexGuard},
-    sync::{Condvar},
 };
 
 use crate::ffi::{self};
