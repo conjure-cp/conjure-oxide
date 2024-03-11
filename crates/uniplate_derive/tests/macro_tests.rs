@@ -15,6 +15,23 @@ enum TestEnum {
 }
 
 #[test]
+fn increase_number_of_children() {
+    let c = TestEnum::C(vec![TestEnum::A(42)]);
+    let context = c.uniplate().1;
+    assert_eq!(
+        context(vec![TestEnum::A(42), TestEnum::A(42)]),
+        Err(uniplate::uniplate::UniplateError::WrongNumberOfChildren(1, 2))
+    );
+}
+
+#[test]
+fn decrease_number_of_children() {
+    let c = TestEnum::C(vec![TestEnum::A(42)]);
+    let context = c.uniplate().1;
+    assert_eq!(context(vec![]), Err(uniplate::uniplate::UniplateError::WrongNumberOfChildren(1, 0)));
+}
+
+#[test]
 fn derive_context_empty() {
     let a = TestEnum::A(42);
     let context = a.uniplate().1;

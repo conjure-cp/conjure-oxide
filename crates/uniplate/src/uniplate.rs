@@ -1,9 +1,9 @@
 use thiserror::Error;
 
-#[derive(Debug, Error)]
+#[derive(Debug, PartialEq, Eq, Error)]
 pub enum UniplateError {
-    #[error("Could not reconstruct node because some children were not given")]
-    NotEnoughChildren,
+    #[error("Could not reconstruct node because wrong number of children was provided. Expected {0} children, got {1}.")]
+    WrongNumberOfChildren(usize, usize),
 }
 
 pub trait Uniplate

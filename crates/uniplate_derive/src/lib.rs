@@ -64,8 +64,8 @@ fn generate_variant_context_match_arm(variant: &Variant, root_ident: &Ident) -> 
         quote! {
             #match_pattern => {
                 Box::new(|children| {
-                    if (children.len() < self.children().len()) {
-                        return Err(#error_ident::NotEnoughChildren);
+                    if (children.len() != self.children().len()) {
+                        return Err(#error_ident::WrongNumberOfChildren(self.children().len(), children.len()));
                     }
 
                     let mut #children_ident = children.clone();
