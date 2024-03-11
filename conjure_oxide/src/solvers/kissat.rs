@@ -340,7 +340,7 @@ mod tests {
     fn test_single_var() {
         // x -> [[1]]
 
-        let mut model: Model = Model::new();
+        let mut model: Model = Model::default();
 
         let x: Name = Name::UserName(String::from('x'));
         model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
@@ -362,7 +362,7 @@ mod tests {
     fn test_single_not() {
         // Not(x) -> [[-1]]
 
-        let mut model: Model = Model::new();
+        let mut model: Model = Model::default();
 
         let x: Name = Name::UserName(String::from('x'));
         model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
@@ -394,7 +394,7 @@ mod tests {
     fn test_single_or() {
         // Or(x, y) -> [[1, 2]]
 
-        let mut model: Model = Model::new();
+        let mut model: Model = Model::default();
 
         let x: Name = Name::UserName(String::from('x'));
         let y: Name = Name::UserName(String::from('y'));
@@ -435,7 +435,7 @@ mod tests {
     fn test_or_not() {
         // Or(x, Not(y)) -> [[1, -2]]
 
-        let mut model: Model = Model::new();
+        let mut model: Model = Model::default();
 
         let x: Name = Name::UserName(String::from('x'));
         let y: Name = Name::UserName(String::from('y'));
@@ -482,7 +482,7 @@ mod tests {
     fn test_multiple() {
         // [x, y] - equivalent to And(x, y) -> [[1], [2]]
 
-        let mut model: Model = Model::new();
+        let mut model: Model = Model::default();
 
         let x: Name = Name::UserName(String::from('x'));
         let y: Name = Name::UserName(String::from('y'));
@@ -515,7 +515,7 @@ mod tests {
     fn test_and() {
         // And(x, y) -> [[1], [2]]
 
-        let mut model: Model = Model::new();
+        let mut model: Model = Model::default();
 
         let x: Name = Name::UserName(String::from('x'));
         let y: Name = Name::UserName(String::from('y'));
@@ -553,7 +553,7 @@ mod tests {
     fn test_nested_ors() {
         // Or(x, Or(y, z)) -> [[1, 2, 3]]
 
-        let mut model: Model = Model::new();
+        let mut model: Model = Model::default();
 
         let x: Name = Name::UserName(String::from('x'));
         let y: Name = Name::UserName(String::from('y'));
@@ -604,7 +604,7 @@ mod tests {
     fn test_int() {
         // y is an IntDomain - only booleans should be allowed
 
-        let mut model: Model = Model::new();
+        let mut model: Model = Model::default();
 
         let x: Name = Name::UserName(String::from('x'));
         let y: Name = Name::UserName(String::from('y'));
@@ -628,7 +628,7 @@ mod tests {
     fn test_eq() {
         // Eq(x, y) - this operation is not allowed
 
-        let mut model: Model = Model::new();
+        let mut model: Model = Model::default();
 
         let x: Name = Name::UserName(String::from('x'));
         let y: Name = Name::UserName(String::from('y'));

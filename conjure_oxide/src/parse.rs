@@ -8,7 +8,7 @@ use crate::error::{Error, Result};
 use serde_json::Value as JsonValue;
 
 pub fn model_from_json(str: &str) -> Result<Model> {
-    let mut m = Model::new();
+    let mut m = Model::default();
     let v: JsonValue = serde_json::from_str(str)?;
     let statements = v["mStatements"]
         .as_array()
@@ -167,6 +167,18 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
             "MkOpLt",
             Box::new(Expression::Lt) as Box<dyn Fn(_, _, _) -> _>,
         ),
+        (
+            "MkOpGt",
+            Box::new(Expression::Gt) as Box<dyn Fn(_, _, _) -> _>,
+        ),
+        (
+            "MkOpLt",
+            Box::new(Expression::Lt) as Box<dyn Fn(_, _, _) -> _>,
+        ),
+        // (
+        //     "MkOpDiv",
+        //     Box::new(Expression::Div) as Box<dyn Fn(_, _, _) -> _>,
+        // ),
     ]
     .into_iter()
     .collect();
@@ -188,6 +200,10 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
             Box::new(Expression::And) as Box<dyn Fn(_, _) -> _>,
         ),
         ("MkOpOr", Box::new(Expression::Or) as Box<dyn Fn(_, _) -> _>),
+        (
+            "MkOpMin",
+            Box::new(Expression::Min) as Box<dyn Fn(_, _) -> _>,
+        ),
     ]
     .into_iter()
     .collect();

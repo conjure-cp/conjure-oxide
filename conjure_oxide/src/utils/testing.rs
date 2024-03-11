@@ -2,7 +2,8 @@ use crate::utils::conjure::minion_solutions_to_json;
 use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
 use crate::Error;
-use conjure_core::ast::Model as ConjureModel;
+use conjure_core::ast::Name::UserName;
+use conjure_core::ast::{Constant, Model as ConjureModel, Name};
 use minion_rs::ast::{Constant as MinionConstant, VarName as MinionVarName};
 use serde_json::{Error as JsonError, Value as JsonValue};
 use std::collections::{HashMap, HashSet};
@@ -85,7 +86,7 @@ pub fn read_model_json(
 
 pub fn minion_solutions_from_json(
     serialized: &str,
-) -> Result<Vec<HashMap<MinionVarName, MinionConstant>>, anyhow::Error> {
+) -> Result<Vec<HashMap<Name, Constant>>, anyhow::Error> {
     let json: JsonValue = serde_json::from_str(serialized)?;
 
     let json_array = json
@@ -106,13 +107,13 @@ pub fn minion_solutions_from_json(
                     let n = n
                         .as_i64()
                         .ok_or(Error::Parse("Invalid integer".to_owned()))?;
-                    MinionConstant::Integer(n as i32)
+                    Constant::Int(n as i32)
                 }
-                JsonValue::Bool(b) => MinionConstant::Bool(*b),
+                JsonValue::Bool(b) => Constant::Bool(*b),
                 _ => return Err(Error::Parse("Invalid constant".to_owned()).into()),
             };
 
-            sol.insert(MinionVarName::from(var_name), constant);
+            sol.insert(UserName(var_name.into()), constant);
         }
 
         solutions.push(sol);
@@ -122,7 +123,7 @@ pub fn minion_solutions_from_json(
 }
 
 pub fn save_minion_solutions_json(
-    solutions: &Vec<HashMap<MinionVarName, MinionConstant>>,
+    solutions: &Vec<HashMap<Name, Constant>>,
     path: &str,
     test_name: &str,
     accept: bool,

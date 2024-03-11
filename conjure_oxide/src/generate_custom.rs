@@ -4,13 +4,11 @@
 use crate::parse::model_from_json;
 use conjure_core::ast::Model;
 
-use std::error::Error;
-
 use std::path::PathBuf;
 use walkdir::WalkDir;
 
-/// Searches recursively in `../tests/integration` folder for an `.essence` file matching the given filename,
-/// then uses conjure to process it into astjson, and returns the parsed model.
+/// Searches recursively in `../tests/integration` folder for an `.essence` file matching the given
+/// filename, then uses conjure to process it into astjson, and returns the parsed model.
 ///
 /// # Arguments
 ///
@@ -18,8 +16,8 @@ use walkdir::WalkDir;
 ///
 /// # Returns
 ///
-/// Function returns a `Result<Value, Box<dyn Error>>`, where `Value` is the parsed model
-pub fn get_example_model(filename: &str) -> Result<Model, Box<dyn Error>> {
+/// Function returns a `Result<Value, anyhow::Error>`, where `Value` is the parsed model.
+pub fn get_example_model(filename: &str) -> Result<Model, anyhow::Error> {
     // define relative path -> integration tests dir
     let base_dir = "tests/integration";
     let mut essence_path = PathBuf::new();
@@ -36,11 +34,11 @@ pub fn get_example_model(filename: &str) -> Result<Model, Box<dyn Error>> {
         }
     }
 
-    println!("PATH TO FILE: {}", essence_path.display());
+    //println!("PATH TO FILE: {}", essence_path.display());
 
     // return error if file not found
     if essence_path.as_os_str().is_empty() {
-        return Err(Box::new(std::io::Error::new(
+        return Err(anyhow::Error::new(std::io::Error::new(
             std::io::ErrorKind::NotFound,
             "ERROR: File not found in any subdirectory",
         )));
@@ -57,7 +55,7 @@ pub fn get_example_model(filename: &str) -> Result<Model, Box<dyn Error>> {
     // convert Conjure's stdout from bytes to string
     let astjson = String::from_utf8(output.stdout)?;
 
-    println!("ASTJSON: {}", astjson);
+    //println!("ASTJSON: {}", astjson);
 
     // parse AST JSON from desired Model format
     let generated_mdl = model_from_json(&astjson)?;
@@ -74,19 +72,19 @@ pub fn get_example_model(filename: &str) -> Result<Model, Box<dyn Error>> {
 ///
 /// # Returns
 ///
-/// Function returns a `Result<Value, Box<dyn Error>>`, where `Value` is the parsed model
-pub fn get_example_model_by_path(filepath: &str) -> Result<Model, Box<dyn Error>> {
+/// Function returns a `Result<Value, anyhow::Error>`, where `Value` is the parsed model
+pub fn get_example_model_by_path(filepath: &str) -> Result<Model, anyhow::Error> {
     let essence_path = PathBuf::from(filepath);
 
     // return error if file not found
     if essence_path.as_os_str().is_empty() {
-        return Err(Box::new(std::io::Error::new(
+        return Err(anyhow::Error::new(std::io::Error::new(
             std::io::ErrorKind::NotFound,
             "ERROR: File not found in any subdirectory",
         )));
     }
 
-    println!("PATH TO FILE: {}", essence_path.display());
+    // println!("PATH TO FILE: {}", essence_path.display());
 
     // Command execution using 'conjure' CLI tool with provided path
     let mut cmd = std::process::Command::new("conjure");
@@ -99,7 +97,7 @@ pub fn get_example_model_by_path(filepath: &str) -> Result<Model, Box<dyn Error>
     // convert Conjure's stdout from bytes to string
     let astjson = String::from_utf8(output.stdout)?;
 
-    println!("ASTJSON: {}", astjson);
+    // println!("ASTJSON: {}", astjson);
 
     // parse AST JSON into the desired Model format
     let generated_model = model_from_json(&astjson)?;

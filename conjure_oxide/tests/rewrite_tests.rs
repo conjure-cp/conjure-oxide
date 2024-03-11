@@ -1,15 +1,17 @@
 // Tests for rewriting/simplifying parts of the AST
-use conjure_core::{metadata::Metadata, rule::Rule};
-use conjure_oxide::{
-    ast::*, eval_constant, rule_engine::resolve_rules::resolve_rule_sets,
-    rule_engine::rewrite::rewrite, solvers::FromConjureModel,
-};
-use conjure_rules::{get_rule_by_name, get_rules};
 use core::panic;
-use minion_rs::ast::{Constant as MinionConstant, VarName};
 use std::collections::HashMap;
 use std::process::exit;
 use uniplate::uniplate::Uniplate;
+
+use conjure_core::{metadata::Metadata, rule::Rule};
+use conjure_oxide::ast::*;
+use conjure_oxide::eval_constant;
+use conjure_oxide::rule_engine::{resolve_rules::resolve_rule_sets, rewrite::rewrite_model};
+use conjure_oxide::solvers::FromConjureModel;
+use conjure_rules::{get_rule_by_name, get_rules};
+
+use minion_rs::ast::{Constant as MinionConstant, VarName};
 
 #[test]
 fn rules_present() {
@@ -145,8 +147,14 @@ fn rule_sum_constants() {
         ],
     );
 
-    expr = sum_constants.apply(&expr).unwrap();
-    expr = unwrap_sum.apply(&expr).unwrap();
+    expr = sum_constants
+        .apply(&expr, &Model::default())
+        .unwrap()
+        .new_expression;
+    expr = unwrap_sum
+        .apply(&expr, &Model::default())
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr,
@@ -167,7 +175,10 @@ fn rule_sum_mixed() {
         ],
     );
 
-    expr = sum_constants.apply(&expr).unwrap();
+    expr = sum_constants
+        .apply(&expr, &Model::default())
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr,
@@ -197,7 +208,10 @@ fn rule_sum_geq() {
         Box::new(Expression::Constant(Metadata::new(), Constant::Int(3))),
     );
 
-    expr = flatten_sum_geq.apply(&expr).unwrap();
+    expr = flatten_sum_geq
+        .apply(&expr, &Model::default())
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr,
@@ -242,8 +256,14 @@ fn reduce_solve_xyz() {
         ],
     );
 
-    expr1 = sum_constants.apply(&expr1).unwrap();
-    expr1 = unwrap_sum.apply(&expr1).unwrap();
+    expr1 = sum_constants
+        .apply(&expr1, &Model::default())
+        .unwrap()
+        .new_expression;
+    expr1 = unwrap_sum
+        .apply(&expr1, &Model::default())
+        .unwrap()
+        .new_expression;
     assert_eq!(
         expr1,
         Expression::Constant(Metadata::new(), Constant::Int(4))
@@ -262,7 +282,10 @@ fn reduce_solve_xyz() {
         )),
         Box::new(expr1),
     );
-    expr1 = sum_leq_to_sumleq.apply(&expr1).unwrap();
+    expr1 = sum_leq_to_sumleq
+        .apply(&expr1, &Model::default())
+        .unwrap()
+        .new_expression;
     assert_eq!(
         expr1,
         Expression::SumLeq(
@@ -288,7 +311,10 @@ fn reduce_solve_xyz() {
             Name::UserName(String::from("b")),
         )),
     );
-    expr2 = lt_to_ineq.apply(&expr2).unwrap();
+    expr2 = lt_to_ineq
+        .apply(&expr2, &Model::default())
+        .unwrap()
+        .new_expression;
     assert_eq!(
         expr2,
         Expression::Ineq(
@@ -305,10 +331,10 @@ fn reduce_solve_xyz() {
         )
     );
 
-    let mut model = Model {
-        variables: HashMap::new(),
-        constraints: Expression::And(Metadata::new(), vec![expr1, expr2]),
-    };
+    let mut model = Model::new(
+        HashMap::new(),
+        Expression::And(Metadata::new(), vec![expr1, expr2]),
+    );
     model.variables.insert(
         Name::UserName(String::from("a")),
         DecisionVariable {
@@ -345,7 +371,10 @@ fn rule_remove_double_negation() {
         )),
     );
 
-    expr = remove_double_negation.apply(&expr).unwrap();
+    expr = remove_double_negation
+        .apply(&expr, &Model::default())
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr,
@@ -371,7 +400,10 @@ fn rule_unwrap_nested_or() {
         ],
     );
 
-    expr = unwrap_nested_or.apply(&expr).unwrap();
+    expr = unwrap_nested_or
+        .apply(&expr, &Model::default())
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr,
@@ -404,7 +436,10 @@ fn rule_unwrap_nested_and() {
         ],
     );
 
-    expr = unwrap_nested_and.apply(&expr).unwrap();
+    expr = unwrap_nested_and
+        .apply(&expr, &Model::default())
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr,
@@ -431,7 +466,7 @@ fn unwrap_nested_or_not_changed() {
         ],
     );
 
-    let result = unwrap_nested_or.apply(&expr);
+    let result = unwrap_nested_or.apply(&expr, &Model::default());
 
     assert!(result.is_err());
 }
@@ -448,7 +483,7 @@ fn unwrap_nested_and_not_changed() {
         ],
     );
 
-    let result = unwrap_nested_and.apply(&expr);
+    let result = unwrap_nested_and.apply(&expr, &Model::default());
 
     assert!(result.is_err());
 }
@@ -467,8 +502,14 @@ fn remove_trivial_and_or() {
         vec![Expression::Constant(Metadata::new(), Constant::Bool(false))],
     );
 
-    expr_and = remove_trivial_and.apply(&expr_and).unwrap();
-    expr_or = remove_trivial_or.apply(&expr_or).unwrap();
+    expr_and = remove_trivial_and
+        .apply(&expr_and, &Model::default())
+        .unwrap()
+        .new_expression;
+    expr_or = remove_trivial_or
+        .apply(&expr_or, &Model::default())
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr_and,
@@ -493,7 +534,10 @@ fn rule_remove_constants_from_or() {
         ],
     );
 
-    expr = remove_constants_from_or.apply(&expr).unwrap();
+    expr = remove_constants_from_or
+        .apply(&expr, &Model::default())
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr,
@@ -514,7 +558,10 @@ fn rule_remove_constants_from_and() {
         ],
     );
 
-    expr = remove_constants_from_and.apply(&expr).unwrap();
+    expr = remove_constants_from_and
+        .apply(&expr, &Model::default())
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr,
@@ -534,7 +581,7 @@ fn remove_constants_from_or_not_changed() {
         ],
     );
 
-    let result = remove_constants_from_or.apply(&expr);
+    let result = remove_constants_from_or.apply(&expr, &Model::default());
 
     assert!(result.is_err());
 }
@@ -551,7 +598,7 @@ fn remove_constants_from_and_not_changed() {
         ],
     );
 
-    let result = remove_constants_from_and.apply(&expr);
+    let result = remove_constants_from_and.apply(&expr, &Model::default());
 
     assert!(result.is_err());
 }
@@ -571,7 +618,10 @@ fn rule_distribute_not_over_and() {
         )),
     );
 
-    expr = distribute_not_over_and.apply(&expr).unwrap();
+    expr = distribute_not_over_and
+        .apply(&expr, &Model::default())
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr,
@@ -612,7 +662,10 @@ fn rule_distribute_not_over_or() {
         )),
     );
 
-    expr = distribute_not_over_or.apply(&expr).unwrap();
+    expr = distribute_not_over_or
+        .apply(&expr, &Model::default())
+        .unwrap()
+        .new_expression;
 
     assert_eq!(
         expr,
@@ -650,7 +703,7 @@ fn rule_distribute_not_over_and_not_changed() {
         )),
     );
 
-    let result = distribute_not_over_and.apply(&expr);
+    let result = distribute_not_over_and.apply(&expr, &Model::default());
 
     assert!(result.is_err());
 }
@@ -667,7 +720,7 @@ fn rule_distribute_not_over_or_not_changed() {
         )),
     );
 
-    let result = distribute_not_over_or.apply(&expr);
+    let result = distribute_not_over_or.apply(&expr, &Model::default());
 
     assert!(result.is_err());
 }
@@ -690,10 +743,12 @@ fn rule_distribute_or_over_and() {
         ],
     );
 
-    expr = distribute_or_over_and.apply(&expr).unwrap();
+    let red = distribute_or_over_and
+        .apply(&expr, &Model::default())
+        .unwrap();
 
     assert_eq!(
-        expr,
+        red.new_expression,
         Expression::And(
             Metadata::new(),
             vec![
@@ -716,6 +771,51 @@ fn rule_distribute_or_over_and() {
     );
 }
 
+// #[test]
+// fn rule_ensure_div() {
+//     let ensure_div = get_rule_by_name("ensure_div").unwrap();
+
+//     let expr = Expression::Div(
+//         Metadata::new(),
+//         Box::new(Expression::Reference(
+//             Metadata::new(),
+//             Name::UserName("a".to_string()),
+//         )),
+//         Box::new(Expression::Reference(
+//             Metadata::new(),
+//             Name::UserName("b".to_string()),
+//         )),
+//     );
+
+//     let red = ensure_div.apply(&expr, &Model::default()).unwrap();
+
+//     assert_eq!(
+//         red.new_expression,
+//         Expression::SafeDiv(
+//             Metadata::new(),
+//             Box::new(Expression::Reference(
+//                 Metadata::new(),
+//                 Name::UserName("a".to_string())
+//             )),
+//             Box::new(Expression::Reference(
+//                 Metadata::new(),
+//                 Name::UserName("b".to_string())
+//             )),
+//         ),
+//     );
+//     assert_eq!(
+//         red.new_top,
+//         Expression::Neq(
+//             Metadata::new(),
+//             Box::new(Expression::Reference(
+//                 Metadata::new(),
+//                 Name::UserName("b".to_string())
+//             )),
+//             Box::new(Expression::Constant(Metadata::new(), Constant::Int(0)))
+//         )
+//     );
+// }
+
 ///
 /// Reduce and solve:
 /// ```text
@@ -729,6 +829,15 @@ fn rule_distribute_or_over_and() {
 #[test]
 fn rewrite_solve_xyz() {
     println!("Rules: {:?}", conjure_rules::get_rules());
+
+    let rule_sets = match resolve_rule_sets(vec!["Minion", "Constant"]) {
+        Ok(rs) => rs,
+        Err(e) => {
+            eprintln!("Error resolving rule sets: {}", e);
+            exit(1);
+        }
+    };
+    println!("Rule sets: {:?}", rule_sets);
 
     // Create variables and domains
     let variable_a = Name::UserName(String::from("a"));
@@ -769,17 +878,16 @@ fn rewrite_solve_xyz() {
     };
 
     // Apply rewrite function to the nested expression
-    let rewritten_expr = rewrite(&nested_expr, &rule_sets).unwrap();
+    let rewritten_expr = rewrite_model(&Model::new(HashMap::new(), nested_expr), &rule_sets)
+        .unwrap()
+        .constraints;
 
     // Check if the expression is in its simplest form
     let expr = rewritten_expr.clone();
     assert!(is_simple(&expr));
 
     // Create model with variables and constraints
-    let mut model = Model {
-        variables: HashMap::new(),
-        constraints: rewritten_expr,
-    };
+    let mut model = Model::new(HashMap::new(), rewritten_expr);
 
     // Insert variables and domains
     model.variables.insert(
@@ -858,11 +966,11 @@ fn apply_all_rules<'a>(
 ) -> Vec<RuleResult<'a>> {
     let mut results = Vec::new();
     for rule in rules {
-        match rule.apply(expression) {
-            Ok(new) => {
+        match rule.apply(expression, &Model::default()) {
+            Ok(red) => {
                 results.push(RuleResult {
                     rule,
-                    new_expression: new,
+                    new_expression: red.new_expression,
                 });
             }
             Err(_) => continue,

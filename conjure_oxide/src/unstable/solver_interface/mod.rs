@@ -1,10 +1,70 @@
-#![cfg(feature = "unstable-solver-interface")]
-
-//! A new interface for interacting with solvers.
+//! A high-level API for interacting with constraints solvers.
 //!
-//! # Example
+//! This module provides a consistent, solver-independent API for interacting with constraints
+//! solvers. It also provides incremental solving support, and the returning of run stats from
+//! solvers.
 //!
-//! TODO
+//! -----
+//!
+//! - [Solver<Adaptor>] provides the API for interacting with constraints solvers.
+//!
+//! - The [SolverAdaptor] trait controls how solving actually occurs and handles translation
+//! between the [Solver] type and a specific solver.
+//!
+//! - [adaptors] contains all implemented solver adaptors.
+//!
+//! - The [model_modifier] submodule defines types to help with incremental solving / changing a
+//!   model during search. The entrypoint for incremental solving is the [Solver<A,ModelLoaded>::solve_mut]
+//!   function.
+//!
+//! # Examples
+//!
+//! ## A Successful Minion Model
+//!
+//! ```rust
+//! # use conjure_oxide::generate_custom::get_example_model;
+//! use conjure_oxide::rule_engine::rewrite::rewrite_model;
+//! use conjure_oxide::rule_engine::resolve_rules::resolve_rule_sets;
+//! use conjure_oxide::unstable::solver_interface::{Solver,adaptors,SolverAdaptor};
+//! use conjure_oxide::unstable::solver_interface::states::*;
+//! use std::sync::{Arc,Mutex};
+//!
+//! // Define and rewrite a model for minion.
+//! let model = get_example_model("bool-03").unwrap();
+//! let rule_sets = resolve_rule_sets(vec!["Minion", "Constant"]).unwrap();
+//! let model = rewrite_model(&model,&rule_sets).unwrap();
+//!
+//!
+//! // Solve using Minion.
+//! let solver = Solver::new(adaptors::Minion::new());
+//! let solver: Solver<adaptors::Minion,ModelLoaded> = solver.load_model(model).unwrap();
+//!
+//! // In this example, we will count solutions.
+//! //
+//! // The solver interface is designed to allow adaptors to use multiple-threads / processes if
+//! // necessary. Therefore, the callback type requires all variables inside it to have a static
+//! // lifetime and to implement Send (i.e. the variable can be safely shared between theads).
+//! //
+//! // We use Arc<Mutex<T>> to create multiple references to a threadsafe mutable
+//! // variable of type T.
+//! //
+//! // Using the move |x| ... closure syntax, we move one of these references into the closure.
+//! // Note that a normal closure borrow variables from the parent so is not
+//! // thread-safe.
+//!
+//! let counter_ref = Arc::new(Mutex::new(0));
+//! let counter_ref_2 = counter_ref.clone();
+//! solver.solve(Box::new(move |_| {
+//!   let mut counter = (*counter_ref_2).lock().unwrap();
+//!   *counter += 1;
+//!   true
+//!   }));
+//!
+//! let mut counter = (*counter_ref).lock().unwrap();
+//! assert_eq!(*counter,2);
+//! ```
+//!
+//!
 
 // # Implementing Solver interfaces
 //
@@ -23,27 +83,70 @@
 #![allow(unused)]
 #![warn(clippy::exhaustive_enums)]
 
+pub mod adaptors;
+pub mod model_modifier;
+pub mod stats;
+
 #[doc(hidden)]
-mod private {
-    // Used to limit calling trait functions outside this module.
-    #[doc(hidden)]
-    pub struct Internal;
+mod private;
 
-    // https://predr.ag/blog/definitive-guide-to-sealed-traits-in-rust/#the-trick-for-sealing-traits
-    // Make traits unimplementable from outside of this module.
-    #[doc(hidden)]
-    pub trait Sealed {}
-}
+pub mod states;
 
-use self::incremental::*;
-use self::solver_states::*;
+use self::model_modifier::*;
+use self::states::*;
+use self::stats::Stats;
 use anyhow::anyhow;
+use conjure_core::ast::Constant;
+use conjure_core::ast::DecisionVariable;
 use conjure_core::ast::{Domain, Expression, Model, Name};
+use itertools::Either;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::{Debug, Display};
+use std::time::Instant;
+use thiserror::Error;
 
-/// A [`SolverAdaptor`] provide an interface to an underlying solver. Used by [`Solver`].
+/// The type for user-defined callbacks for use with [Solver].
+///
+/// Note that this enforces threadsafetyb
+pub type SolverCallback = Box<dyn Fn(HashMap<Name, Constant>) -> bool + Send>;
+pub type SolverMutCallback<A> =
+    Box<dyn Fn(HashMap<Name, Constant>, <A as SolverAdaptor>::Modifier) -> bool + Send>;
+
+/// A common interface for calling underlying solver APIs inside a [`Solver`].
+///
+/// Implementations of this trait arn't directly callable and should be used through [`Solver`] .
+///
+/// The below documentation lists the formal requirements that all implementations of
+/// [`SolverAdaptor`] should follow - **see the top level module documentation and [`Solver`] for
+/// usage details.**
+///
+/// # Encapsulation
+///  
+///  The [`SolverAdaptor`] trait **must** only be implemented inside a submodule of this one,
+///  and **should** only be called through [`Solver`].
+///
+/// The `private::Sealed` trait and `private::Internal` type enforce these requirements by only
+/// allowing trait implementations and calling of methods of SolverAdaptor to occur inside this
+/// module.
+///
+/// # Thread Safety
+///
+/// Multiple instances of [`Solver`] can be run in parallel across multiple threads.
+///
+/// [`Solver`] provides no concurrency control or thread-safety; therefore, adaptors **must**
+/// ensure that multiple instances of themselves can be ran in parallel. This applies to all
+/// stages of solving including having two active `solve()` calls happening at a time, loading
+/// a model while another is mid-solve, loading two models at once, etc.
+///
+/// A [SolverAdaptor] **may** use whatever threading or process model it likes underneath the hood,
+/// as long as it obeys the above.
+///
+/// Method calls **should** block instead of erroring where possible.
+///
+/// Underlying solvers that only have one instance per process (such as Minion) **should** block
+/// (eg. using a [`Mutex<()>`](`std::sync::Mutex`)) to run calls to
+/// [`Solver<A,ModelLoaded>::solve()`] and [`Solver<A,ModelLoaded>::solve_mut()`] sequentially.
 pub trait SolverAdaptor: private::Sealed {
     /// The native model type of the underlying solver.
     type Model: Clone;
@@ -51,92 +154,83 @@ pub trait SolverAdaptor: private::Sealed {
     /// The native solution type of the underlying solver.
     type Solution: Clone;
 
-    /// The [`ModelModifier`](incremental::ModelModifier) used during incremental search.
+    /// The [`ModelModifier`](model_modifier::ModelModifier) used during incremental search.
     ///
-    /// If incremental solving is not supported, this SHOULD be set to [NotModifiable](`incremental::NotModifiable`) .
-    type Modifier: incremental::ModelModifier;
+    /// If incremental solving is not supported, this **should** be set to [NotModifiable](model_modifier::NotModifiable) .
+    type Modifier: model_modifier::ModelModifier;
 
-    /// Run the solver on the given model.
+    fn new() -> Self;
+
+    /// Runs the solver on the given model.
     ///
-    /// Implementations of this function MUST call the user provided callback whenever a solution
+    /// Implementations of this function **must** call the user provided callback whenever a solution
     /// is found. If the user callback returns `true`, search should continue, if the user callback
     /// returns `false`, search should terminate.
+    ///
+    /// # Returns
+    ///
+    /// If the solver terminates without crashing a [SolveSuccess] struct **must** returned. The
+    /// value of [SearchStatus] can be used to denote whether the underlying solver completed its
+    /// search or not. The latter case covers most non-crashing "failure" cases including user
+    /// termination, timeouts, etc.
+    ///
+    /// To help populate [SearchStatus], it may be helpful to implement counters that track if the
+    /// user callback has been called yet, and its return value. This information makes it is
+    /// possible to distinguish between the most common search statuses:
+    /// [SearchComplete::HasSolutions], [SearchComplete::NoSolutions], and
+    /// [SearchIncomplete::UserTerminated].
     fn solve(
         &mut self,
         model: Self::Model,
-        callback: fn(HashMap<String, String>) -> bool,
+        callback: SolverCallback,
         _: private::Internal,
-    ) -> Result<ExecutionSuccess, ExecutionFailure>;
+    ) -> Result<SolveSuccess, SolverError>;
 
-    /// Run the solver on the given model, allowing modification of the model through a
+    /// Runs the solver on the given model, allowing modification of the model through a
     /// [`ModelModifier`].
     ///
-    /// Implementations of this function MUST return [`OpNotSupported`](`ModificationFailure::OpNotSupported`)
-    /// if modifying the model mid-search is not supported. These implementations may also find the
-    /// [`NotModifiable`] modifier useful.
+    /// Implementations of this function **must** return [`OpNotSupported`](`ModificationFailure::OpNotSupported`)
+    /// if modifying the model mid-search is not supported.
     ///
-    /// As with [`solve`](SolverAdaptor::solve), this function MUST call the user provided callback
-    /// function whenever a solution is found.
+    /// Otherwise, this should work in the same way as [`solve`](SolverAdaptor::solve).
     fn solve_mut(
         &mut self,
         model: Self::Model,
-        callback: fn(HashMap<String, String>, Self::Modifier) -> bool,
+        callback: SolverMutCallback<Self>,
         _: private::Internal,
-    ) -> Result<ExecutionSuccess, ExecutionFailure>;
+    ) -> Result<SolveSuccess, SolverError>;
     fn load_model(
         &mut self,
         model: Model,
         _: private::Internal,
-    ) -> Result<Self::Model, anyhow::Error>;
+    ) -> Result<Self::Model, SolverError>;
     fn init_solver(&mut self, _: private::Internal) {}
 }
 
-/// A Solver executes of a Conjure-Oxide model usign a specified solver.
+/// An abstract representation of a constraints solver.
+///
+/// [Solver] provides a common interface for interacting with a constraint solver. It also
+/// abstracts over solver-specific datatypes, handling the translation to/from [conjure_core::ast]
+/// types for a model and its solutions.
+///
+/// Details of how a model is solved is specified by the [SolverAdaptor]. This includes: the
+/// underlying solver used, the translation of the model to a solver compatible form, how solutions
+/// are translated back to [conjure_core::ast] types, and how incremental solving is implemented.
+/// As such, there may be multiple [SolverAdaptor] implementations for a single underlying solver:
+/// eg. one adaptor may give solutions in a representation close to the solvers, while another may
+/// attempt to rewrite it back into Essence.
+///
+#[derive(Clone)]
 pub struct Solver<A: SolverAdaptor, State: SolverState = Init> {
-    state: std::marker::PhantomData<State>,
+    state: State,
     adaptor: A,
     model: Option<A::Model>,
 }
 
-impl<A: SolverAdaptor> Solver<A, Init> {
-    // TODO: decent error handling
-    pub fn load_model(mut self, model: Model) -> Result<Solver<A, ModelLoaded>, ()> {
-        let solver_model = &mut self
-            .adaptor
-            .load_model(model, private::Internal)
-            .map_err(|_| ())?;
-        Ok(Solver {
-            state: std::marker::PhantomData::<ModelLoaded>,
-            adaptor: self.adaptor,
-            model: Some(solver_model.clone()),
-        })
-    }
-}
-
-impl<A: SolverAdaptor> Solver<A, ModelLoaded> {
-    pub fn solve(
-        mut self,
-        callback: fn(HashMap<String, String>) -> bool,
-    ) -> Result<ExecutionSuccess, ExecutionFailure> {
-        #[allow(clippy::unwrap_used)]
-        self.adaptor
-            .solve(self.model.unwrap(), callback, private::Internal)
-    }
-
-    pub fn solve_mut(
-        mut self,
-        callback: fn(HashMap<String, String>, A::Modifier) -> bool,
-    ) -> Result<ExecutionSuccess, ExecutionFailure> {
-        #[allow(clippy::unwrap_used)]
-        self.adaptor
-            .solve_mut(self.model.unwrap(), callback, private::Internal)
-    }
-}
-
-impl<T: SolverAdaptor> Solver<T> {
-    pub fn new(solver_adaptor: T) -> Solver<T> {
+impl<Adaptor: SolverAdaptor> Solver<Adaptor> {
+    pub fn new(solver_adaptor: Adaptor) -> Solver<Adaptor> {
         let mut solver = Solver {
-            state: std::marker::PhantomData::<Init>,
+            state: Init,
             adaptor: solver_adaptor,
             model: None,
         };
@@ -146,98 +240,141 @@ impl<T: SolverAdaptor> Solver<T> {
     }
 }
 
-pub mod solver_states {
-    //! States of a [`Solver`].
-
-    use super::private::Sealed;
-    use super::Solver;
-
-    pub trait SolverState: Sealed {}
-
-    impl Sealed for Init {}
-    impl Sealed for ModelLoaded {}
-    impl Sealed for ExecutionSuccess {}
-    impl Sealed for ExecutionFailure {}
-
-    impl SolverState for Init {}
-    impl SolverState for ModelLoaded {}
-    impl SolverState for ExecutionSuccess {}
-    impl SolverState for ExecutionFailure {}
-
-    pub struct Init;
-    pub struct ModelLoaded;
-
-    /// The state returned by [`Solver`] if solving has been successful.
-    pub struct ExecutionSuccess;
-
-    /// The state returned by [`Solver`] if solving has not been successful.
-    #[non_exhaustive]
-    pub enum ExecutionFailure {
-        /// The desired function or solver is not implemented yet.
-        OpNotImplemented,
-
-        /// The solver does not support this operation.
-        OpNotSupported,
-
-        /// Solving timed-out.
-        TimedOut,
-
-        /// An unspecified error has occurred.
-        Error(anyhow::Error),
+impl<A: SolverAdaptor> Solver<A, Init> {
+    pub fn load_model(mut self, model: Model) -> Result<Solver<A, ModelLoaded>, SolverError> {
+        let solver_model = &mut self.adaptor.load_model(model, private::Internal)?;
+        Ok(Solver {
+            state: ModelLoaded,
+            adaptor: self.adaptor,
+            model: Some(solver_model.clone()),
+        })
     }
 }
 
-pub mod incremental {
-    //! Incremental / mutable solving (changing the model during search).
-    //!
-    //! Incremental solving can be triggered for a solverthrough the
-    //! [`Solver::solve_mut`] method.
-    //!
-    //! This gives access to a [`ModelModifier`] in the solution retrieval callback.
-    use super::private;
-    use super::Solver;
-    use conjure_core::ast::{Domain, Expression, Model, Name};
+impl<A: SolverAdaptor> Solver<A, ModelLoaded> {
+    pub fn solve(
+        mut self,
+        callback: SolverCallback,
+    ) -> Result<Solver<A, ExecutionSuccess>, SolverError> {
+        #[allow(clippy::unwrap_used)]
+        let start_time = Instant::now();
 
-    /// A ModelModifier provides an interface to modify a model during solving.
-    ///
-    /// Modifications are defined in terms of Conjure AST nodes, so must be translated to a solver
-    /// specfic form before use.
-    ///
-    /// It is implementation defined whether these constraints can be given at high level and passed
-    /// through the rewriter, or only low-level solver constraints are supported.
-    ///
-    /// See also: [`Solver::solve_mut`].
-    pub trait ModelModifier: private::Sealed {
-        fn add_constraint(constraint: Expression) -> Result<(), ModificationFailure> {
-            Err(ModificationFailure::OpNotSupported)
-        }
+        #[allow(clippy::unwrap_used)]
+        let result = self
+            .adaptor
+            .solve(self.model.clone().unwrap(), callback, private::Internal);
 
-        fn add_variable(name: Name, domain: Domain) -> Result<(), ModificationFailure> {
-            Err(ModificationFailure::OpNotSupported)
+        let duration = start_time.elapsed();
+
+        match result {
+            Ok(x) => Ok(Solver {
+                adaptor: self.adaptor,
+                model: self.model,
+                state: ExecutionSuccess {
+                    stats: x.stats,
+                    status: x.status,
+                    _sealed: private::Internal,
+                    wall_time_s: duration.as_secs_f64(),
+                },
+            }),
+            Err(x) => Err(x),
         }
     }
 
-    /// A [`ModelModifier`] for a solver that does not support incremental solving. Returns
-    /// [`OperationNotSupported`](`ModificationFailure::OperationNotSupported`) for all operations.
-    pub struct NotModifiable;
+    pub fn solve_mut(
+        mut self,
+        callback: SolverMutCallback<A>,
+    ) -> Result<Solver<A, ExecutionSuccess>, SolverError> {
+        #[allow(clippy::unwrap_used)]
+        let start_time = Instant::now();
 
-    impl private::Sealed for NotModifiable {}
-    impl ModelModifier for NotModifiable {}
+        #[allow(clippy::unwrap_used)]
+        let result =
+            self.adaptor
+                .solve_mut(self.model.clone().unwrap(), callback, private::Internal);
 
-    /// The requested modification to the model has failed.
-    #[non_exhaustive]
-    pub enum ModificationFailure {
-        /// The desired operation is not supported for this solver adaptor.
-        OpNotSupported,
+        let duration = start_time.elapsed();
 
-        /// The desired operation is supported by this solver adaptor, but has not been
-        /// implemented yet.
-        OpNotImplemented,
-
-        // The arguments given to the operation are invalid.
-        ArgsInvalid(anyhow::Error),
-
-        /// An unspecified error has occurred.
-        Error(anyhow::Error),
+        match result {
+            Ok(x) => Ok(Solver {
+                adaptor: self.adaptor,
+                model: self.model,
+                state: ExecutionSuccess {
+                    stats: x.stats,
+                    status: x.status,
+                    _sealed: private::Internal,
+                    wall_time_s: duration.as_secs_f64(),
+                },
+            }),
+            Err(x) => Err(x),
+        }
     }
+}
+
+impl<A: SolverAdaptor> Solver<A, ExecutionSuccess> {
+    pub fn stats(self) -> Option<Box<dyn Stats>> {
+        self.state.stats
+    }
+
+    pub fn wall_time_s(&self) -> f64 {
+        self.state.wall_time_s
+    }
+}
+
+/// Errors returned by [Solver] on failure.
+#[non_exhaustive]
+#[derive(Debug, Error, Clone)]
+pub enum SolverError {
+    #[error("operation not implemented yet: {0}")]
+    OpNotImplemented(String),
+
+    #[error("operation not supported: {0}")]
+    OpNotSupported(String),
+
+    #[error("model feature not supported: {0}")]
+    ModelFeatureNotSupported(String),
+
+    #[error("model feature not implemented yet: {0}")]
+    ModelFeatureNotImplemented(String),
+
+    // use for semantics / type errors, use the above for syntax
+    #[error("model invalid: {0}")]
+    ModelInvalid(String),
+
+    #[error("error during solver execution: not implemented: {0}")]
+    RuntimeNotImplemented(String),
+
+    #[error("error during solver execution: {0}")]
+    Runtime(String),
+}
+
+/// Returned from [SolverAdaptor] when solving is successful.
+pub struct SolveSuccess {
+    stats: Option<Box<dyn Stats>>,
+    status: SearchStatus,
+}
+
+pub enum SearchStatus {
+    /// The search was complete (i.e. the solver found all possible solutions)
+    Complete(SearchComplete),
+    /// The search was incomplete (i.e. it was terminated before all solutions were found)
+    Incomplete(SearchIncomplete),
+}
+
+#[non_exhaustive]
+pub enum SearchIncomplete {
+    Timeout,
+    UserTerminated,
+    #[doc(hidden)]
+    /// This variant should not be matched - it exists to simulate non-exhaustiveness of this enum.
+    __NonExhaustive,
+}
+
+#[non_exhaustive]
+pub enum SearchComplete {
+    HasSolutions,
+    NoSolutions,
+    #[doc(hidden)]
+    /// This variant should not be matched - it exists to simulate non-exhaustiveness of this enum.
+    __NonExhaustive,
 }

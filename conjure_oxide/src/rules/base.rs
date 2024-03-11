@@ -1,7 +1,8 @@
-use conjure_core::ast::Expression::Nothing;
-use conjure_core::{
-    ast::Constant as Const, ast::Expression as Expr, metadata::Metadata, rule::RuleApplicationError,
+use conjure_core::ast::{
+    Constant as Const, DecisionVariable, Domain, Expression as Expr, Model, Range, SymbolTable,
 };
+use conjure_core::metadata::Metadata;
+use conjure_core::rule::{ApplicationError, ApplicationResult, Reduction};
 use conjure_rules::{register_rule, register_rule_set};
 use uniplate::uniplate::Uniplate;
 
@@ -9,7 +10,7 @@ use uniplate::uniplate::Uniplate;
 /*        This file contains basic rules for simplifying expressions         */
 /*****************************************************************************/
 
-register_rule_set!("Base", 100, ());
+register_rule_set!("Base", 150, ());
 
 /**
  * Remove nothing's from expressions:
@@ -21,8 +22,8 @@ register_rule_set!("Base", 100, ());
  * ```
 */
 #[register_rule(("Base", 100))]
-fn remove_nothings(expr: &Expr) -> Result<Expr, RuleApplicationError> {
-    fn remove_nothings(exprs: Vec<Expr>) -> Result<Vec<Expr>, RuleApplicationError> {
+fn remove_nothings(expr: &Expr, _: &Model) -> ApplicationResult {
+    fn remove_nothings(exprs: Vec<&Expr>) -> Result<Vec<&Expr>, ApplicationError> {
         let mut changed = false;
         let mut new_exprs = Vec::new();
 
@@ -38,7 +39,7 @@ fn remove_nothings(expr: &Expr) -> Result<Expr, RuleApplicationError> {
         if changed {
             Ok(new_exprs)
         } else {
-            Err(RuleApplicationError::RuleNotApplicable)
+            Err(ApplicationError::RuleNotApplicable)
         }
     }
 
@@ -46,31 +47,29 @@ fn remove_nothings(expr: &Expr) -> Result<Expr, RuleApplicationError> {
         if sub.is_empty() {
             return (Vec::new(), Box::new(Nothing));
         }
-
+      
         let lhs = sub[..(sub.len() - 1)].to_vec();
         let rhs = Box::new(sub[sub.len() - 1].clone());
         (lhs, rhs)
     }
-
-    let new_sub = remove_nothings(expr.children())?;
-
+  
     match expr {
-        Expr::And(md, _) => Ok(Expr::And(md.clone(), new_sub)),
-        Expr::Or(md, _) => Ok(Expr::Or(md.clone(), new_sub)),
-        Expr::Sum(md, _) => Ok(Expr::Sum(md.clone(), new_sub)),
+        Expr::And(md, _) => Ok(Reduction::pure(Expr::And(md.clone(), new_sub))),
+        Expr::Or(md, _) => Ok(Reduction::pure(Expr::Or(md.clone(), new_sub))),
+        Expr::Sum(md, _) => Ok(Reduction::pure(Expr::Sum(md.clone(), new_sub))),
         Expr::SumEq(md, _, _) => {
             let (lhs, rhs) = get_lhs_rhs(new_sub);
-            Ok(Expr::SumEq(md.clone(), lhs, rhs))
+            Ok(Reduction::pure(Expr::SumEq(md.clone(), lhs, rhs)))
         }
         Expr::SumLeq(md, _lhs, _rhs) => {
             let (lhs, rhs) = get_lhs_rhs(new_sub);
-            Ok(Expr::SumLeq(md.clone(), lhs, rhs))
+            Ok(Reduction::pure(Expr::SumLeq(md.clone(), lhs, rhs)))
         }
         Expr::SumGeq(md, _lhs, _rhs) => {
             let (lhs, rhs) = get_lhs_rhs(new_sub);
-            Ok(Expr::SumGeq(md.clone(), lhs, rhs))
+            Ok(Reduction::pure(Expr::SumGeq(md.clone(), lhs, rhs)))
         }
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
 
@@ -81,16 +80,16 @@ fn remove_nothings(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  * ```
  */
 #[register_rule(("Base", 100))]
-fn empty_to_nothing(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn empty_to_nothing(expr: &Expr) -> ApplicationResult {
     match expr {
         Nothing | Expr::Reference(_, _) | Expr::Constant(_, _) => {
             Err(RuleApplicationError::RuleNotApplicable)
         }
         _ => {
             if expr.children().is_empty() {
-                Ok(Nothing)
+                Ok(Reduction::pure(Expr::Nothing))
             } else {
-                Err(RuleApplicationError::RuleNotApplicable)
+                Err(ApplicationError::RuleNotApplicable)
             }
         }
     }
@@ -103,7 +102,7 @@ fn empty_to_nothing(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  * ```
  */
 #[register_rule(("Base", 100))]
-fn sum_constants(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn sum_constants(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Sum(_, exprs) => {
             let mut sum = 0;
@@ -119,13 +118,13 @@ fn sum_constants(expr: &Expr) -> Result<Expr, RuleApplicationError> {
                 }
             }
             if !changed {
-                return Err(RuleApplicationError::RuleNotApplicable);
+                return Err(ApplicationError::RuleNotApplicable);
             }
             // TODO (kf77): Get existing metadata instead of creating a new one
             new_exprs.push(Expr::Constant(Metadata::new(), Const::Int(sum)));
-            Ok(Expr::Sum(Metadata::new(), new_exprs)) // Let other rules handle only one Expr being contained in the sum
+            Ok(Reduction::pure(Expr::Sum(Metadata::new(), new_exprs))) // Let other rules handle only one Expr being contained in the sum
         }
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
 
@@ -136,10 +135,10 @@ fn sum_constants(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  * ```
  */
 #[register_rule(("Base", 100))]
-fn unwrap_sum(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn unwrap_sum(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
-        Expr::Sum(_, exprs) if (exprs.len() == 1) => Ok(exprs[0].clone()),
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        Expr::Sum(_, exprs) if (exprs.len() == 1) => Ok(Reduction::pure(exprs[0].clone())),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
 
@@ -150,7 +149,7 @@ fn unwrap_sum(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  * ```
  */
 #[register_rule(("Base", 100))]
-pub fn flatten_nested_sum(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+pub fn flatten_nested_sum(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Sum(metadata, exprs) => {
             let mut new_exprs = Vec::new();
@@ -167,11 +166,11 @@ pub fn flatten_nested_sum(expr: &Expr) -> Result<Expr, RuleApplicationError> {
                 }
             }
             if !changed {
-                return Err(RuleApplicationError::RuleNotApplicable);
+                return Err(ApplicationError::RuleNotApplicable);
             }
-            Ok(Expr::Sum(metadata.clone(), new_exprs))
+            Ok(Reduction::pure(Expr::Sum(metadata.clone(), new_exprs)))
         }
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
 
@@ -183,7 +182,7 @@ pub fn flatten_nested_sum(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 * ```
  */
 #[register_rule(("Base", 100))]
-fn unwrap_nested_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn unwrap_nested_or(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Or(metadata, exprs) => {
             let mut new_exprs = Vec::new();
@@ -200,11 +199,11 @@ fn unwrap_nested_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
                 }
             }
             if !changed {
-                return Err(RuleApplicationError::RuleNotApplicable);
+                return Err(ApplicationError::RuleNotApplicable);
             }
-            Ok(Expr::Or(metadata.clone(), new_exprs))
+            Ok(Reduction::pure(Expr::Or(metadata.clone(), new_exprs)))
         }
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
 
@@ -216,7 +215,7 @@ fn unwrap_nested_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 * ```
  */
 #[register_rule(("Base", 100))]
-fn unwrap_nested_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn unwrap_nested_and(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::And(metadata, exprs) => {
             let mut new_exprs = Vec::new();
@@ -233,11 +232,11 @@ fn unwrap_nested_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
                 }
             }
             if !changed {
-                return Err(RuleApplicationError::RuleNotApplicable);
+                return Err(ApplicationError::RuleNotApplicable);
             }
-            Ok(Expr::And(metadata.clone(), new_exprs))
+            Ok(Reduction::pure(Expr::And(metadata.clone(), new_exprs)))
         }
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
 
@@ -249,13 +248,13 @@ fn unwrap_nested_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
 * ```
  */
 #[register_rule(("Base", 100))]
-fn remove_double_negation(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn remove_double_negation(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Not(_, contents) => match contents.as_ref() {
-            Expr::Not(_, expr_box) => Ok(*expr_box.clone()),
-            _ => Err(RuleApplicationError::RuleNotApplicable),
+            Expr::Not(_, expr_box) => Ok(Reduction::pure(*expr_box.clone())),
+            _ => Err(ApplicationError::RuleNotApplicable),
         },
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
 
@@ -266,15 +265,15 @@ fn remove_double_negation(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  * ```
  */
 #[register_rule(("Base", 100))]
-fn remove_trivial_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn remove_trivial_and(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::And(_, exprs) => {
             if exprs.len() == 1 {
-                return Ok(exprs[0].clone());
+                return Ok(Reduction::pure(exprs[0].clone()));
             }
-            Err(RuleApplicationError::RuleNotApplicable)
+            Err(ApplicationError::RuleNotApplicable)
         }
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
 
@@ -285,15 +284,15 @@ fn remove_trivial_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  * ```
  */
 #[register_rule(("Base", 100))]
-fn remove_trivial_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn remove_trivial_or(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Or(_, exprs) => {
             if exprs.len() == 1 {
-                return Ok(exprs[0].clone());
+                return Ok(Reduction::pure(exprs[0].clone()));
             }
-            Err(RuleApplicationError::RuleNotApplicable)
+            Err(ApplicationError::RuleNotApplicable)
         }
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
 
@@ -305,7 +304,7 @@ fn remove_trivial_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  * ```
  */
 #[register_rule(("Base", 100))]
-fn remove_constants_from_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn remove_constants_from_or(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Or(metadata, exprs) => {
             let mut new_exprs = Vec::new();
@@ -315,7 +314,10 @@ fn remove_constants_from_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
                     Expr::Constant(metadata, Const::Bool(val)) => {
                         if *val {
                             // If we find a true, the whole expression is true
-                            return Ok(Expr::Constant(metadata.clone(), Const::Bool(true)));
+                            return Ok(Reduction::pure(Expr::Constant(
+                                metadata.clone(),
+                                Const::Bool(true),
+                            )));
                         } else {
                             // If we find a false, we can ignore it
                             changed = true;
@@ -325,11 +327,11 @@ fn remove_constants_from_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
                 }
             }
             if !changed {
-                return Err(RuleApplicationError::RuleNotApplicable);
+                return Err(ApplicationError::RuleNotApplicable);
             }
-            Ok(Expr::Or(metadata.clone(), new_exprs))
+            Ok(Reduction::pure(Expr::Or(metadata.clone(), new_exprs)))
         }
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
 
@@ -341,7 +343,7 @@ fn remove_constants_from_or(expr: &Expr) -> Result<Expr, RuleApplicationError> {
  * ```
  */
 #[register_rule(("Base", 100))]
-fn remove_constants_from_and(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn remove_constants_from_and(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::And(metadata, exprs) => {
             let mut new_exprs = Vec::new();
@@ -351,7 +353,10 @@ fn remove_constants_from_and(expr: &Expr) -> Result<Expr, RuleApplicationError> 
                     Expr::Constant(metadata, Const::Bool(val)) => {
                         if !*val {
                             // If we find a false, the whole expression is false
-                            return Ok(Expr::Constant(metadata.clone(), Const::Bool(false)));
+                            return Ok(Reduction::pure(Expr::Constant(
+                                metadata.clone(),
+                                Const::Bool(false),
+                            )));
                         } else {
                             // If we find a true, we can ignore it
                             changed = true;
@@ -361,11 +366,11 @@ fn remove_constants_from_and(expr: &Expr) -> Result<Expr, RuleApplicationError> 
                 }
             }
             if !changed {
-                return Err(RuleApplicationError::RuleNotApplicable);
+                return Err(ApplicationError::RuleNotApplicable);
             }
-            Ok(Expr::And(metadata.clone(), new_exprs))
+            Ok(Reduction::pure(Expr::And(metadata.clone(), new_exprs)))
         }
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
 
@@ -377,14 +382,139 @@ fn remove_constants_from_and(expr: &Expr) -> Result<Expr, RuleApplicationError> 
  * ```
  */
 #[register_rule(("Base", 100))]
-fn evaluate_constant_not(expr: &Expr) -> Result<Expr, RuleApplicationError> {
+fn evaluate_constant_not(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Not(_, contents) => match contents.as_ref() {
-            Expr::Constant(metadata, Const::Bool(val)) => {
-                Ok(Expr::Constant(metadata.clone(), Const::Bool(!val)))
-            }
-            _ => Err(RuleApplicationError::RuleNotApplicable),
+            Expr::Constant(metadata, Const::Bool(val)) => Ok(Reduction::pure(Expr::Constant(
+                metadata.clone(),
+                Const::Bool(!val),
+            ))),
+            _ => Err(ApplicationError::RuleNotApplicable),
         },
-        _ => Err(RuleApplicationError::RuleNotApplicable),
+        _ => Err(ApplicationError::RuleNotApplicable),
+    }
+}
+
+// /** Turn a Div into a SafeDiv and post a global constraint to avoid undefined. */
+// #[register_rule(("Base", 100))]
+// fn ensure_div(expr: &Expr, _: &Model) -> ApplicationResult {
+//     match expr {
+//         Expr::Div(metadata, a, b) => Ok(Reduction::with_top(
+//             Expr::SafeDiv(metadata.clone(), a.clone(), b.clone()),
+//             Expr::Neq(
+//                 Metadata::new(),
+//                 b.clone(),
+//                 Box::new(Expr::Constant(Metadata::new(), Const::Int(0))),
+//             ),
+//         )),
+//         _ => Err(ApplicationError::RuleNotApplicable),
+//     }
+// }
+
+/**
+ * Turn a Min into a new variable and post a global constraint to ensure the new variable is the minimum.
+ * ```text
+ * min([a, b]) ~> c ; c <= a & c <= b & (c = a | c = b)
+ * ```
+ */
+#[register_rule(("Base", 100))]
+fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
+    match expr {
+        Expr::Min(metadata, exprs) => {
+            let new_name = mdl.gensym();
+
+            let mut new_top = Vec::new(); // the new variable must be less than or equal to all the other variables
+            let mut disjunction = Vec::new(); // the new variable must be equal to one of the variables
+            for e in exprs {
+                new_top.push(Expr::Leq(
+                    Metadata::new(),
+                    Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
+                    Box::new(e.clone()),
+                ));
+                disjunction.push(Expr::And(
+                    // TODO: change to an Eq once we figure out how to apply them later
+                    Metadata::new(),
+                    vec![
+                        Expr::Leq(
+                            Metadata::new(),
+                            Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
+                            Box::new(e.clone()),
+                        ),
+                        Expr::Geq(
+                            Metadata::new(),
+                            Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
+                            Box::new(e.clone()),
+                        ),
+                    ],
+                ));
+            }
+            new_top.push(Expr::Or(Metadata::new(), disjunction));
+
+            let mut new_vars = SymbolTable::new();
+            let bound = expr
+                .bounds(&mdl.variables)
+                .ok_or(ApplicationError::BoundError)?;
+            new_vars.insert(
+                new_name.clone(),
+                DecisionVariable::new(Domain::IntDomain(vec![Range::Bounded(bound.0, bound.1)])),
+            );
+
+            Ok(Reduction::new(
+                Expr::Reference(Metadata::new(), new_name),
+                Expr::And(metadata.clone(), new_top),
+                new_vars,
+            ))
+        }
+        _ => Err(ApplicationError::RuleNotApplicable),
+    }
+}
+
+/**
+* Apply the Distributive Law to expressions like `Or([..., And(a, b)])`
+
+* ```text
+* or(and(a, b), c) = and(or(a, c), or(b, c))
+* ```
+ */
+#[register_rule(("Base", 100))]
+fn distribute_or_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
+    fn find_and(exprs: &[Expr]) -> Option<usize> {
+        // ToDo: may be better to move this to some kind of utils module?
+        for (i, e) in exprs.iter().enumerate() {
+            if let Expr::And(_, _) = e {
+                return Some(i);
+            }
+        }
+        None
+    }
+
+    match expr {
+        Expr::Or(_, exprs) => match find_and(exprs) {
+            Some(idx) => {
+                let mut rest = exprs.clone();
+                let and_expr = rest.remove(idx);
+
+                match and_expr {
+                    Expr::And(metadata, and_exprs) => {
+                        let mut new_and_contents = Vec::new();
+
+                        for e in and_exprs {
+                            // ToDo: Cloning everything may be a bit inefficient - discuss
+                            let mut new_or_contents = rest.clone();
+                            new_or_contents.push(e.clone());
+                            new_and_contents.push(Expr::Or(metadata.clone(), new_or_contents))
+                        }
+
+                        Ok(Reduction::pure(Expr::And(
+                            metadata.clone(),
+                            new_and_contents,
+                        )))
+                    }
+                    _ => Err(ApplicationError::RuleNotApplicable),
+                }
+            }
+            None => Err(ApplicationError::RuleNotApplicable),
+        },
+        _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
