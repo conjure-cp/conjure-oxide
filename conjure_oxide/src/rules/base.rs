@@ -1,7 +1,7 @@
 use conjure_core::{
     ast::Constant as Const, ast::Expression as Expr, metadata::Metadata, rule::RuleApplicationError,
 };
-use conjure_core::ast::Expression::{And, Nothing};
+use conjure_core::ast::Expression::{Nothing};
 use conjure_rules::{register_rule, register_rule_set};
 use uniplate::uniplate::Uniplate;
 
@@ -62,11 +62,11 @@ fn remove_nothings(expr: &Expr) -> Result<Expr, RuleApplicationError> {
             let (lhs, rhs) = get_lhs_rhs(new_sub);
             Ok(Expr::SumEq(md.clone(), lhs, rhs))
         }
-        Expr::SumLeq(md, lhs, rhs) => {
+        Expr::SumLeq(md, _lhs, _rhs) => {
             let (lhs, rhs) = get_lhs_rhs(new_sub);
             Ok(Expr::SumLeq(md.clone(), lhs, rhs))
         }
-        Expr::SumGeq(md, lhs, rhs) => {
+        Expr::SumGeq(md, _lhs, _rhs) => {
             let (lhs, rhs) = get_lhs_rhs(new_sub);
             Ok(Expr::SumGeq(md.clone(), lhs, rhs))
         }
