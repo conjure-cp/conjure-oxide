@@ -335,15 +335,19 @@ fn generate_variant_context_match_arm(variant: &Variant, root_ident: &Ident) -> 
     if field_fills.is_empty() {
         quote! {
             #match_pattern => {
-                Box::new(|_| #root_ident::#variant_ident)
+                Box::new(|_| Ok(#root_ident::#variant_ident))
             }
         }
     } else {
         quote! {
             #match_pattern => {
                 Box::new(|children| {
+                    if (children.len() < self.children().len()) {
+                        return Err(UniplateError::NotEnoughChildren);
+                    }
+
                     let mut #children_ident = children.clone();
-                    #root_ident::#variant_ident(#(#field_fills,)*)
+                    Ok(#root_ident::#variant_ident(#(#field_fills,)*))
                 })
             }
         }
@@ -395,9 +399,11 @@ pub fn derive(macro_input: TokenStream) -> TokenStream {
     };
 
     let output = quote! {
+        use uniplate::uniplate::UniplateError;
+
         impl Uniplate for #root_ident {
-            fn uniplate(&self) -> (Vec<#root_ident>, Box<dyn Fn(Vec<#root_ident>) -> #root_ident +'_>) {
-                let context: Box<dyn Fn(Vec<#root_ident>) -> #root_ident> = #context_impl;
+            fn uniplate(&self) -> (Vec<#root_ident>, Box<dyn Fn(Vec<#root_ident>) -> Result<#root_ident, UniplateError> + '_>) {
+                let context: Box<dyn Fn(Vec<#root_ident>) -> Result<#root_ident, UniplateError>> = #context_impl;
 
                 let children: Vec<#root_ident> = #children_impl;
 

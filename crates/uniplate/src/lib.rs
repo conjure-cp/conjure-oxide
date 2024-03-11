@@ -28,7 +28,7 @@
 //! evaluate the encoded equation.
 //!
 //!```
-//! use uniplate::uniplate::Uniplate;
+//! use uniplate::uniplate::{Uniplate, UniplateError};
 //!
 //! #[derive(Clone,Eq,PartialEq,Debug)]
 //! pub enum AST {
@@ -41,13 +41,13 @@
 //!
 //! // In the future would be automatically derived.
 //! impl Uniplate for AST {
-//!     fn uniplate(&self) -> (Vec<AST>, Box<dyn Fn(Vec<AST>) -> AST +'_>) {
-//!         let context: Box<dyn Fn(Vec<AST>) -> AST> = match self {
-//!             AST::Int(i) =>    Box::new(|_| AST::Int(*i)),
-//!             AST::Add(_, _) => Box::new(|exprs: Vec<AST>| AST::Add(Box::new(exprs[0].clone()),Box::new(exprs[1].clone()))),
-//!             AST::Sub(_, _) => Box::new(|exprs: Vec<AST>| AST::Sub(Box::new(exprs[0].clone()),Box::new(exprs[1].clone()))),
-//!             AST::Div(_, _) => Box::new(|exprs: Vec<AST>| AST::Div(Box::new(exprs[0].clone()),Box::new(exprs[1].clone()))),
-//!             AST::Mul(_, _) => Box::new(|exprs: Vec<AST>| AST::Mul(Box::new(exprs[0].clone()),Box::new(exprs[1].clone())))
+//!     fn uniplate(&self) -> (Vec<AST>, Box<dyn Fn(Vec<AST>) -> Result<AST, UniplateError> +'_>) {
+//!         let context: Box<dyn Fn(Vec<AST>) -> Result<AST, UniplateError>> = match self {
+//!             AST::Int(i) =>    Box::new(|_| Ok(AST::Int(*i))),
+//!             AST::Add(_, _) => Box::new(|exprs: Vec<AST>| Ok(AST::Add(Box::new(exprs[0].clone()),Box::new(exprs[1].clone())))),
+//!             AST::Sub(_, _) => Box::new(|exprs: Vec<AST>| Ok(AST::Sub(Box::new(exprs[0].clone()),Box::new(exprs[1].clone())))),
+//!             AST::Div(_, _) => Box::new(|exprs: Vec<AST>| Ok(AST::Div(Box::new(exprs[0].clone()),Box::new(exprs[1].clone())))),
+//!             AST::Mul(_, _) => Box::new(|exprs: Vec<AST>| Ok(AST::Mul(Box::new(exprs[0].clone()),Box::new(exprs[1].clone()))))
 //!         };
 //!
 //!         let children: Vec<AST> = match self {
@@ -65,14 +65,14 @@
 //! pub fn my_rule(e: AST) -> AST{
 //!     match e {
 //!         AST::Int(a) => AST::Int(a),
-//!         AST::Add(a,b) => {match (&*a,&*b) { (AST::Int(a), AST::Int(b)) => AST::Int(a+b), _ => AST::Add(a,b) }},
-//!         AST::Sub(a,b) => {match (&*a,&*b) { (AST::Int(a), AST::Int(b)) => AST::Int(a-b), _ => AST::Sub(a,b) }},
-//!         AST::Mul(a,b) => {match (&*a,&*b) { (AST::Int(a), AST::Int(b)) => AST::Int(a*b), _ => AST::Mul(a,b) }},
+//!         AST::Add(a,b) => {match (&*a,&*b) { (AST::Int(a), AST::Int(b)) => AST::Int(a+b), _ => AST::Add(a,b) }}
+//!         AST::Sub(a,b) => {match (&*a,&*b) { (AST::Int(a), AST::Int(b)) => AST::Int(a-b), _ => AST::Sub(a,b) }}
+//!         AST::Mul(a,b) => {match (&*a,&*b) { (AST::Int(a), AST::Int(b)) => AST::Int(a*b), _ => AST::Mul(a,b) }}
 //!         AST::Div(a,b) => {match (&*a,&*b) { (AST::Int(a), AST::Int(b)) => AST::Int(a/b), _ => AST::Div(a,b) }}
 //!     }
 //! }
 //! pub fn main() {
-//!     let mut ast = AST::Add(
+//!     let ast = AST::Add(
 //!                 Box::new(AST::Int(1)),
 //!                 Box::new(AST::Mul(
 //!                     Box::new(AST::Int(2)),
@@ -81,9 +81,10 @@
 //!                         Box::new(AST::Int(3))
 //!                     )))));
 //!
-//!     ast = ast.transform(my_rule);
-//!     println!("{:?}",ast);
-//!     assert_eq!(ast,AST::Int(3));
+//!     let new_ast = ast.transform(my_rule);
+//!     assert!(new_ast.is_ok());
+//!     println!("{:?}",new_ast);
+//!     assert_eq!(new_ast.unwrap(), AST::Int(3));
 //! }
 //! ```
 //!

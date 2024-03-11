@@ -18,7 +18,7 @@ enum TestEnum {
 fn derive_context_empty() {
     let a = TestEnum::A(42);
     let context = a.uniplate().1;
-    assert_eq!(context(vec![]), a)
+    assert_eq!(context(vec![]).unwrap(), a)
 }
 
 #[test]
@@ -26,7 +26,7 @@ fn derive_context_box() {
     let a = TestEnum::A(42);
     let b = TestEnum::B(Box::new(a.clone()));
     let context = b.uniplate().1;
-    assert_eq!(context(vec![a.clone()]), b);
+    assert_eq!(context(vec![a.clone()]).unwrap(), b);
 }
 
 #[test]
@@ -35,21 +35,21 @@ fn derive_context_vec() {
     let b = TestEnum::B(Box::new(TestEnum::A(2)));
     let c = TestEnum::C(vec![a.clone(), b.clone()]);
     let context = c.uniplate().1;
-    assert_eq!(context(vec![a.clone(), b.clone()]), c);
+    assert_eq!(context(vec![a.clone(), b.clone()]).unwrap(), c);
 }
 
 #[test]
 fn derive_context_two() {
     let d = TestEnum::D(true, Box::new(TestEnum::A(42)));
     let context = d.uniplate().1;
-    assert_eq!(context(vec![TestEnum::A(42)]), d);
+    assert_eq!(context(vec![TestEnum::A(42)]).unwrap(), d);
 }
 
 #[test]
 fn derive_context_tuple() {
     let e = TestEnum::F((Box::new(TestEnum::A(1)), Box::new(TestEnum::A(2))));
     let context = e.uniplate().1;
-    assert_eq!(context(vec![TestEnum::A(1), TestEnum::A(2)]), e);
+    assert_eq!(context(vec![TestEnum::A(1), TestEnum::A(2)]).unwrap(), e);
 }
 
 #[test]
@@ -60,7 +60,7 @@ fn derive_context_different_variants() {
     );
     let context = f.uniplate().1;
     assert_eq!(
-        context(vec![TestEnum::A(1), TestEnum::B(Box::new(TestEnum::A(2)))]),
+        context(vec![TestEnum::A(1), TestEnum::B(Box::new(TestEnum::A(2)))]).unwrap(),
         f
     );
 }
@@ -69,7 +69,7 @@ fn derive_context_different_variants() {
 fn derive_context_nested_tuples() {
     let g = TestEnum::G((Box::new(TestEnum::A(1)), (Box::new(TestEnum::A(2)), 42)));
     let context = g.uniplate().1;
-    assert_eq!(context(vec![TestEnum::A(1), TestEnum::A(2)]), g);
+    assert_eq!(context(vec![TestEnum::A(1), TestEnum::A(2)]).unwrap(), g);
 }
 
 #[test]
@@ -85,7 +85,8 @@ fn derive_context_nested_vectors() {
             TestEnum::A(2),
             TestEnum::A(3),
             TestEnum::A(4)
-        ]),
+        ])
+        .unwrap(),
         h
     );
 }
@@ -104,7 +105,8 @@ fn derive_context_multiple_vecs() {
             TestEnum::A(2),
             TestEnum::A(3),
             TestEnum::A(4)
-        ]),
+        ])
+        .unwrap(),
         i
     );
 }
@@ -114,7 +116,7 @@ fn box_change_child() {
     let b = TestEnum::B(Box::new(TestEnum::A(1)));
     let context = b.uniplate().1;
     assert_eq!(
-        context(vec![TestEnum::C(vec![TestEnum::A(41), TestEnum::A(42)])]),
+        context(vec![TestEnum::C(vec![TestEnum::A(41), TestEnum::A(42)])]).unwrap(),
         TestEnum::B(Box::new(TestEnum::C(vec![
             TestEnum::A(41),
             TestEnum::A(42)

@@ -1,9 +1,22 @@
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum UniplateError {
+    #[error("Could not reconstruct node because some children were not given")]
+    NotEnoughChildren,
+}
+
 pub trait Uniplate
 where
     Self: Sized + Clone + Eq,
 {
     #[allow(clippy::type_complexity)]
-    fn uniplate(&self) -> (Vec<Self>, Box<dyn Fn(Vec<Self>) -> Self + '_>);
+    fn uniplate(
+        &self,
+    ) -> (
+        Vec<Self>,
+        Box<dyn Fn(Vec<Self>) -> Result<Self, UniplateError> + '_>,
+    );
 
     /// Get all children of a node, including itself and all children.
     fn universe(&self) -> Vec<Self> {
@@ -19,25 +32,43 @@ where
         self.uniplate().0
     }
 
+    /// Reconstruct this node with the given children
+    fn with_children(&self, children: Vec<Self>) -> Result<Self, UniplateError> {
+        let context = self.uniplate().1;
+        context(children)
+    }
+
     /// Apply the given rule to all nodes bottom up.
-    fn transform(&self, f: fn(Self) -> Self) -> Self {
+    fn transform(&self, f: fn(Self) -> Self) -> Result<Self, UniplateError> {
         let (children, context) = self.uniplate();
-        f(context(
-            children.into_iter().map(|a| a.transform(f)).collect(),
-        ))
+
+        let mut new_children: Vec<Self> = Vec::new();
+        for ch in children {
+            let new_ch = ch.transform(f)?;
+            new_children.push(new_ch);
+        }
+
+        let transformed = context(new_children)?;
+        Ok(f(transformed))
     }
 
     /// Rewrite by applying a rule everywhere you can.
-    fn rewrite(&self, f: fn(Self) -> Option<Self>) -> Self {
+    fn rewrite(&self, f: fn(Self) -> Option<Self>) -> Result<Self, UniplateError> {
         let (children, context) = self.uniplate();
-        let node: Self = context(children.into_iter().map(|a| a.rewrite(f)).collect());
 
-        f(node.clone()).unwrap_or(node)
+        let mut new_children: Vec<Self> = Vec::new();
+        for ch in children {
+            let new_ch = ch.rewrite(f)?;
+            new_children.push(new_ch);
+        }
+
+        let node: Self = context(new_children)?;
+        Ok(f(node.clone()).unwrap_or(node))
     }
 
     /// Perform a transformation on all the immediate children, then combine them back.
     /// This operation allows additional information to be passed downwards, and can be used to provide a top-down transformation.
-    fn descend(&self, f: fn(Self) -> Self) -> Self {
+    fn descend(&self, f: fn(Self) -> Self) -> Result<Self, UniplateError> {
         let (children, context) = self.uniplate();
         let children: Vec<Self> = children.into_iter().map(f).collect();
 
@@ -97,7 +128,9 @@ where
         Some(Box::new(move |x| {
             let mut children = children.clone();
             children[n] = x;
-            context(children)
+            #[allow(clippy::unwrap_used)]
+            // We are directly replacing a child so there can't be an error
+            context(children).unwrap()
         }))
     }
 }
