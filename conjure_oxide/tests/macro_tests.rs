@@ -110,6 +110,19 @@ fn derive_context_multiple_vecs() {
 }
 
 #[test]
+fn box_change_child() {
+    let b = TestEnum::B(Box::new(TestEnum::A(1)));
+    let context = b.uniplate().1;
+    assert_eq!(
+        context(vec![TestEnum::C(vec![TestEnum::A(41), TestEnum::A(42)])]),
+        TestEnum::B(Box::new(TestEnum::C(vec![
+            TestEnum::A(41),
+            TestEnum::A(42)
+        ])))
+    );
+}
+
+#[test]
 fn derive_children_empty() {
     let a = TestEnum::A(42);
     let children = a.uniplate().0;
