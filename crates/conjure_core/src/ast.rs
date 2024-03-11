@@ -241,9 +241,7 @@ impl Expression {
         }
 
         match self {
-            Expression::Constant(_, _) => None,
-            Expression::Reference(_, _) => None,
-            Expression::Nothing => None,
+            Expression::Constant(_, _) | Expression::Reference(_, _) | Expression::Nothing => None,
             Expression::Sum(_, exprs) => Some(exprs.iter().collect()),
             Expression::Not(_, expr_box) => Some(vec![expr_box.as_ref()]),
             Expression::Or(_, exprs) => Some(exprs.iter().collect()),
