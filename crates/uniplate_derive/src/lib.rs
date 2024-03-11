@@ -107,7 +107,7 @@ fn generate_variant_context_match_arm(variant: &Variant, root_ident: &Ident) -> 
 /// use uniplate_derive::Uniplate;
 /// use uniplate::uniplate::Uniplate;
 ///
-/// #[derive(PartialEq, Eq, Debug, Uniplate)]
+/// #[derive(PartialEq, Eq, Debug, Clone, Uniplate)]
 /// enum MyEnum {
 ///    A(Box<MyEnum>),
 ///    B(Vec<MyEnum>),
