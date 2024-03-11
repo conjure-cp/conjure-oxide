@@ -729,7 +729,7 @@ fn rule_distribute_not_over_or_not_changed() {
 fn rule_distribute_or_over_and() {
     let distribute_or_over_and = get_rule_by_name("distribute_or_over_and").unwrap();
 
-    let mut expr = Expression::Or(
+    let expr = Expression::Or(
         Metadata::new(),
         vec![
             Expression::And(

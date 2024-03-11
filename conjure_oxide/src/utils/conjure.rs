@@ -2,7 +2,6 @@ use crate::parse::model_from_json;
 use crate::utils::json::sort_json_object;
 use crate::Error as ParseErr;
 use conjure_core::ast::{Constant, Model, Name};
-use itertools::Either::{Left, Right};
 use serde_json::{Map, Value as JsonValue};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -87,7 +86,6 @@ pub fn minion_solutions_to_json(solutions: &Vec<HashMap<Name, Constant>>) -> Jso
             let serialized_constant = match constant {
                 Constant::Int(i) => JsonValue::Number((*i).into()),
                 Constant::Bool(b) => JsonValue::Bool(*b),
-                x => unimplemented!("{:#?}", x),
             };
             json_solution.insert(var_name.to_string(), serialized_constant);
         }

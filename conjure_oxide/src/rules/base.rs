@@ -23,13 +23,13 @@ register_rule_set!("Base", 150, ());
 */
 #[register_rule(("Base", 100))]
 fn remove_nothings(expr: &Expr, _: &Model) -> ApplicationResult {
-    fn remove_nothings(exprs: Vec<&Expr>) -> Result<Vec<&Expr>, ApplicationError> {
+    fn remove_nothings(exprs: Vec<Expr>) -> Result<Vec<Expr>, ApplicationError> {
         let mut changed = false;
         let mut new_exprs = Vec::new();
 
         for e in exprs {
             match e.clone() {
-                Nothing => {
+                Expr::Nothing => {
                     changed = true;
                 }
                 _ => new_exprs.push(e),
@@ -45,14 +45,16 @@ fn remove_nothings(expr: &Expr, _: &Model) -> ApplicationResult {
 
     fn get_lhs_rhs(sub: Vec<Expr>) -> (Vec<Expr>, Box<Expr>) {
         if sub.is_empty() {
-            return (Vec::new(), Box::new(Nothing));
+            return (Vec::new(), Box::new(Expr::Nothing));
         }
-      
+
         let lhs = sub[..(sub.len() - 1)].to_vec();
         let rhs = Box::new(sub[sub.len() - 1].clone());
         (lhs, rhs)
     }
-  
+
+    let new_sub = remove_nothings(expr.children())?;
+
     match expr {
         Expr::And(md, _) => Ok(Reduction::pure(Expr::And(md.clone(), new_sub))),
         Expr::Or(md, _) => Ok(Reduction::pure(Expr::Or(md.clone(), new_sub))),
@@ -80,10 +82,10 @@ fn remove_nothings(expr: &Expr, _: &Model) -> ApplicationResult {
  * ```
  */
 #[register_rule(("Base", 100))]
-fn empty_to_nothing(expr: &Expr) -> ApplicationResult {
+fn empty_to_nothing(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
-        Nothing | Expr::Reference(_, _) | Expr::Constant(_, _) => {
-            Err(RuleApplicationError::RuleNotApplicable)
+        Expr::Nothing | Expr::Reference(_, _) | Expr::Constant(_, _) => {
+            Err(ApplicationError::RuleNotApplicable)
         }
         _ => {
             if expr.children().is_empty() {

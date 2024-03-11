@@ -147,7 +147,6 @@ pub enum Domain {
     IntDomain(Vec<Range<i32>>),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 impl Domain {
     /// Returns the minimum i32 value a variable of the domain can take, if it is an i32 domain.
     pub fn min_i32(&self) -> Option<i32> {
@@ -331,10 +330,6 @@ pub enum Expression {
 }
 
 impl Expression {
-    pub fn is_constant(&self) -> bool {
-        matches!(self, Expression::Constant(_, _))
-    }
-
     pub fn bounds(&self, vars: &SymbolTable) -> Option<(i32, i32)> {
         match self {
             Expression::Reference(_, name) => vars.get(name).and_then(|v| {

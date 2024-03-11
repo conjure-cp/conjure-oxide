@@ -1,6 +1,3 @@
-use std::fmt::Display;
-use thiserror::Error;
-
 use crate::rule_engine::resolve_rules::{
     get_rule_priorities, get_rules_vec, ResolveRulesError as ResolveError,
 };
@@ -72,15 +69,10 @@ fn rewrite_iteration<'a>(
         let mut sub = expression.children();
 
         for i in 0..sub.len() {
-            if let Some(red) = rewrite_iteration(&sub[i], rules) {
+            if let Some(red) = rewrite_iteration(&sub[i], model, rules) {
                 sub[i] = red.new_expression;
                 if let Ok(res) = expression.with_children(sub.clone()) {
-                    return Some(Reduction::new(
-                            expression.clone().with_sub_expressions(sub),
-                            red.new_top,
-                            red.symbols,
-                        ));
-                    }
+                    return Some(Reduction::new(res, red.new_top, red.symbols));
                 }
             }
         }
