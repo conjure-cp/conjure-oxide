@@ -4,11 +4,13 @@ use serde_with::serde_as;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::Hash;
+use uniplate::uniplate::Uniplate;
+use uniplate_derive::Uniplate;
 
 use crate::metadata::Metadata;
 
 #[serde_as]
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Model {
     #[serde_as(as = "Vec<(_, _)>")]
     pub variables: HashMap<Name, DecisionVariable>,
@@ -87,7 +89,7 @@ impl Display for Name {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DecisionVariable {
     pub domain: Domain,
 }
@@ -115,19 +117,19 @@ impl Display for DecisionVariable {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Domain {
     BoolDomain,
     IntDomain(Vec<Range<i32>>),
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Range<A> {
     Single(A),
     Bounded(A, A),
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Constant {
     Int(i32),
     Bool(bool),
@@ -155,7 +157,7 @@ impl TryFrom<Constant> for bool {
 }
 
 #[document_compatibility]
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
 #[non_exhaustive]
 pub enum Expression {
     /**

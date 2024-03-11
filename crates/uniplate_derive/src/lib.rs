@@ -335,7 +335,7 @@ fn generate_variant_context_match_arm(variant: &Variant, root_ident: &Ident) -> 
     if field_fills.is_empty() {
         quote! {
             #match_pattern => {
-                Box::new(|_| root_ident::#variant_ident())
+                Box::new(|_| #root_ident::#variant_ident)
             }
         }
     } else {
@@ -406,25 +406,7 @@ pub fn derive(macro_input: TokenStream) -> TokenStream {
         }
     };
 
-    println!("Final macro output:\n{}", output.to_string());
+    // println!("Final macro output:\n{}", output.to_string());
 
     output.into()
 }
-
-/*
-let context: Box<dyn Fn(Vec<AST>) -> AST> = match self {
-    AST::Int(i) =>    Box::new(|_| AST::Int(*i)),
-    AST::Add(_, _) => Box::new(|exprs: Vec<AST>| AST::Add(Box::new(exprs[0].clone()),Box::new(exprs[1].clone()))),
-    AST::Sub(_, _) => Box::new(|exprs: Vec<AST>| AST::Sub(Box::new(exprs[0].clone()),Box::new(exprs[1].clone()))),
-    AST::Div(_, _) => Box::new(|exprs: Vec<AST>| AST::Div(Box::new(exprs[0].clone()),Box::new(exprs[1].clone()))),
-    AST::Mul(_, _) => Box::new(|exprs: Vec<AST>| AST::Mul(Box::new(exprs[0].clone()),Box::new(exprs[1].clone())))
-};
-
-let children: Vec<AST> = match self {
-    AST::Add(a,b) => vec![*a.clone(),*b.clone()],
-    AST::Sub(a,b) => vec![*a.clone(),*b.clone()],
-    AST::Div(a,b) => vec![*a.clone(),*b.clone()],
-    AST::Mul(a,b) => vec![*a.clone(),*b.clone()],
-    _ => vec![]
-};
- */
