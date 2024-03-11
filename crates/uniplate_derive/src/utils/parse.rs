@@ -47,7 +47,8 @@ impl UniplateField {
 fn parse_type_argument(seg_args: &PathArguments) -> Result<&PathSegment, ParseTypeArgumentError> {
     match seg_args {
         PathArguments::AngleBracketed(type_args) => {
-            if type_args.args.len() > 1 { // ToDo: discuss - can and should we support multiple type arguments?
+            if type_args.args.len() > 1 {
+                // ToDo: discuss - can and should we support multiple type arguments?
                 return Err(ParseTypeArgumentError::MultipleTypeArguments);
             }
 

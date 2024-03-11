@@ -77,19 +77,19 @@ fn generate_variant_context_match_arm(variant: &Variant, root_ident: &Ident) -> 
 }
 
 /// Derive the `Uniplate` trait for an arbitrary type
-/// 
+///
 /// # WARNING
-/// 
+///
 /// This is alpha code. It is not yet stable and some features are missing.
-/// 
+///
 /// ## What works?
-/// 
+///
 /// - Deriving `Uniplate` for enum types
 /// - `Box<T>` and `Vec<T>` fields, including nested vectors
 /// - Tuple fields, including nested tuples - e.g. `(Vec<T>, (Box<T>, i32))`
-/// 
+///
 /// ## What does not work?
-/// 
+///
 /// - Structs
 /// - Unions
 /// - Array fields
@@ -97,29 +97,29 @@ fn generate_variant_context_match_arm(variant: &Variant, root_ident: &Ident) -> 
 /// - Any complex type arguments, e.g. `MyType<T: MyTrait1 + MyTrait2>`
 /// - Any collection type other than `Vec`
 /// - Any box type other than `Box`
-/// 
+///
 /// # Usage
-/// 
+///
 /// This macro is intended to replace a hand-coded implementation of the `Uniplate` trait.
 /// Example:
-/// 
+///
 /// ```rust
 /// use uniplate_derive::Uniplate;
 /// use uniplate::uniplate::Uniplate;
-/// 
+///
 /// #[derive(PartialEq, Eq, Debug, Uniplate)]
 /// enum MyEnum {
 ///    A(Box<MyEnum>),
 ///    B(Vec<MyEnum>),
 ///    C(i32),
 /// }
-/// 
+///
 /// let a = MyEnum::A(Box::new(MyEnum::C(42)));
 /// let (children, context) = a.uniplate();
 /// assert_eq!(children, vec![MyEnum::C(42)]);
 /// assert_eq!(context(vec![MyEnum::C(42)]).unwrap(), a);
 /// ```
-/// 
+///
 #[proc_macro_derive(Uniplate)]
 pub fn derive(macro_input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(macro_input as DeriveInput);
@@ -128,7 +128,7 @@ pub fn derive(macro_input: TokenStream) -> TokenStream {
 
     let children_impl: TokenStream2 = match data {
         Data::Struct(_) => unimplemented!("Structs currently not supported"), // ToDo support structs
-        Data::Union(_) => unimplemented!("Unions currently not supported"), // ToDo support unions
+        Data::Union(_) => unimplemented!("Unions currently not supported"),   // ToDo support unions
         Data::Enum(DataEnum { variants, .. }) => {
             let match_arms: Vec<TokenStream2> = variants
                 .iter()
@@ -163,7 +163,7 @@ pub fn derive(macro_input: TokenStream) -> TokenStream {
             match_statement
         }
     };
-    
+
     let error_ident = format_ident!("UniplateError{}", root_ident);
 
     let output = quote! {

@@ -11,12 +11,13 @@ fn get_fill(
     field_ident: &TokenStream2,
     root_ident: &Ident,
 ) -> TokenStream2 {
-    if check_field_type(ft, root_ident) { // If the field or at least one of its children is a type we want to fill
+    if check_field_type(ft, root_ident) {
+        // If the field or at least one of its children is a type we want to fill
         match ft {
             UniplateField::Identifier(_) => {
                 return quote! {
                     #exprs_ident.remove(0) // If it is an identifier, take the next child from the list
-                }
+                };
             }
             UniplateField::Box(_, subfield) => {
                 let sf = subfield.as_ref();
@@ -41,7 +42,8 @@ fn get_fill(
             UniplateField::Tuple(_, sfs) => {
                 let mut sf_fills: Vec<TokenStream2> = Vec::new();
 
-                for (i, sf) in sfs.iter().enumerate() { // Recursively generate the fill for each field in the tuple
+                for (i, sf) in sfs.iter().enumerate() {
+                    // Recursively generate the fill for each field in the tuple
                     let i_literal = Literal::usize_unsuffixed(i);
                     let sf_ident = quote! {
                         #field_ident.#i_literal
@@ -71,7 +73,8 @@ fn get_clone(
     field_ident: TokenStream2,
     root_ident: &Ident,
 ) -> Option<TokenStream2> {
-    if check_field_type(ft, root_ident) { // If the field or at least one of its children is a type we want to clone
+    if check_field_type(ft, root_ident) {
+        // If the field or at least one of its children is a type we want to clone
         match ft {
             UniplateField::Identifier(_) => {
                 return Some(quote! {
@@ -98,7 +101,8 @@ fn get_clone(
             UniplateField::Tuple(_, sfs) => {
                 let mut sf_clones: Vec<TokenStream2> = Vec::new();
 
-                for (i, sf) in sfs.iter().enumerate() { // Recursively generate the clone for each field in the tuple
+                for (i, sf) in sfs.iter().enumerate() {
+                    // Recursively generate the clone for each field in the tuple
                     let i_literal = Literal::usize_unsuffixed(i);
                     let sf_ident = quote! {
                         #field_ident.#i_literal
@@ -114,7 +118,8 @@ fn get_clone(
                     vec![#(#sf_clones,)*].iter().flatten().cloned().collect::<Vec<_>>()
                 });
             }
-            UniplateField::Array(_, _, _) => { // ToDo support arrays
+            UniplateField::Array(_, _, _) => {
+                // ToDo support arrays
                 unimplemented!("Arrays not currently supported")
             }
             UniplateField::Unknown(_) => {} // Ignore unknown types
