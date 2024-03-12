@@ -8,8 +8,8 @@ use super::super::SolveSuccess;
 use super::super::SolverAdaptor;
 use super::super::SolverError;
 use super::super::SolverError::*;
-use crate::unstable::solver_interface::SolverMutCallback;
-use crate::unstable::solver_interface::{states, SolverCallback};
+use crate::solver::SolverMutCallback;
+use crate::solver::{states, SolverCallback};
 
 use crate::ast as conjureast;
 
