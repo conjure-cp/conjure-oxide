@@ -4,7 +4,6 @@ use crate::utils::misc::to_set;
 use crate::Error;
 use conjure_core::ast::Name::UserName;
 use conjure_core::ast::{Constant, Model as ConjureModel, Name};
-use minion_rs::ast::{Constant as MinionConstant, VarName as MinionVarName};
 use serde_json::{Error as JsonError, Value as JsonValue};
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;

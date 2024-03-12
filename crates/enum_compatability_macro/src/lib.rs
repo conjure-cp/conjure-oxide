@@ -147,11 +147,9 @@ pub fn document_compatibility(_attr: TokenStream, input: TokenStream) -> TokenSt
                 match nodes_supported_by_solver.get_mut(&solver_name) {
                     None => {
                         nodes_supported_by_solver.insert(solver_name, vec![variant_ident.clone()]);
-                        ()
                     }
                     Some(a) => {
                         a.push(variant_ident.clone());
-                        ()
                     }
                 };
             }
@@ -184,7 +182,7 @@ pub fn document_compatibility(_attr: TokenStream, input: TokenStream) -> TokenSt
         }
 
         // end list
-        doc_msg.push_str("\n");
+        doc_msg.push('\n');
     }
 
     input.attrs.push(parse_quote!(#[doc = #doc_msg]));

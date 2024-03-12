@@ -1,12 +1,12 @@
-use std::fmt::Display;
-use thiserror::Error;
-
 use crate::rule_engine::resolve_rules::{
     get_rule_priorities, get_rules_vec, ResolveRulesError as ResolveError,
 };
 use conjure_core::ast::{Expression, Model};
 use conjure_core::rule::{Reduction, Rule};
 use conjure_rules::rule_set::RuleSet;
+use std::fmt::Display;
+use thiserror::Error;
+use uniplate::uniplate::Uniplate;
 
 #[derive(Debug)]
 struct RuleResult<'a> {
@@ -66,18 +66,13 @@ fn rewrite_iteration<'a>(
     if let Some(new) = choose_rewrite(&rule_results) {
         return Some(new);
     } else {
-        match expression.sub_expressions() {
-            None => {}
-            Some(mut sub) => {
-                for i in 0..sub.len() {
-                    if let Some(red) = rewrite_iteration(sub[i], model, rules) {
-                        sub[i] = &red.new_expression;
-                        return Some(Reduction::new(
-                            expression.clone().with_sub_expressions(sub),
-                            red.new_top,
-                            red.symbols,
-                        ));
-                    }
+        let mut sub = expression.children();
+
+        for i in 0..sub.len() {
+            if let Some(red) = rewrite_iteration(&sub[i], model, rules) {
+                sub[i] = red.new_expression;
+                if let Ok(res) = expression.with_children(sub.clone()) {
+                    return Some(Reduction::new(res, red.new_top, red.symbols));
                 }
             }
         }

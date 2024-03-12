@@ -60,7 +60,7 @@ fn parse_var(
 
 fn _parse_intdomain_var(
     name: &ConjureName,
-    ranges: &Vec<ConjureRange<i32>>,
+    ranges: &[ConjureRange<i32>],
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     let str_name = _name_to_string(name.to_owned());

@@ -2,6 +2,7 @@
 use core::panic;
 use std::collections::HashMap;
 use std::process::exit;
+use uniplate::uniplate::Uniplate;
 
 use conjure_core::{metadata::Metadata, rule::Rule};
 use conjure_oxide::ast::*;
@@ -728,7 +729,7 @@ fn rule_distribute_not_over_or_not_changed() {
 fn rule_distribute_or_over_and() {
     let distribute_or_over_and = get_rule_by_name("distribute_or_over_and").unwrap();
 
-    let mut expr = Expression::Or(
+    let expr = Expression::Or(
         Metadata::new(),
         vec![
             Expression::And(
@@ -943,14 +944,12 @@ fn is_simple_iteration<'a>(
     if let Some(new) = choose_rewrite(&rule_results) {
         return Some(new);
     } else {
-        match expression.sub_expressions() {
-            None => {}
-            Some(mut sub) => {
-                for i in 0..sub.len() {
-                    if let Some(new) = is_simple_iteration(sub[i], rules) {
-                        sub[i] = &new;
-                        return Some(expression.with_sub_expressions(sub));
-                    }
+        let mut sub = expression.children();
+        for i in 0..sub.len() {
+            if let Some(new) = is_simple_iteration(&sub[i], rules) {
+                sub[i] = new;
+                if let Ok(res) = expression.with_children(sub.clone()) {
+                    return Some(res);
                 }
             }
         }

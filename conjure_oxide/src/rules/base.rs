@@ -4,6 +4,7 @@ use conjure_core::ast::{
 use conjure_core::metadata::Metadata;
 use conjure_core::rule::{ApplicationError, ApplicationResult, Reduction};
 use conjure_rules::{register_rule, register_rule_set};
+use uniplate::uniplate::Uniplate;
 
 /*****************************************************************************/
 /*        This file contains basic rules for simplifying expressions         */
@@ -22,7 +23,7 @@ register_rule_set!("Base", 150, ());
 */
 #[register_rule(("Base", 100))]
 fn remove_nothings(expr: &Expr, _: &Model) -> ApplicationResult {
-    fn remove_nothings(exprs: Vec<&Expr>) -> Result<Vec<&Expr>, ApplicationError> {
+    fn remove_nothings(exprs: Vec<Expr>) -> Result<Vec<Expr>, ApplicationError> {
         let mut changed = false;
         let mut new_exprs = Vec::new();
 
@@ -42,32 +43,33 @@ fn remove_nothings(expr: &Expr, _: &Model) -> ApplicationResult {
         }
     }
 
+    fn get_lhs_rhs(sub: Vec<Expr>) -> (Vec<Expr>, Box<Expr>) {
+        if sub.is_empty() {
+            return (Vec::new(), Box::new(Expr::Nothing));
+        }
+
+        let lhs = sub[..(sub.len() - 1)].to_vec();
+        let rhs = Box::new(sub[sub.len() - 1].clone());
+        (lhs, rhs)
+    }
+
+    let new_sub = remove_nothings(expr.children())?;
+
     match expr {
-        Expr::And(_, _) | Expr::Or(_, _) | Expr::Sum(_, _) => match expr.sub_expressions() {
-            None => Err(ApplicationError::RuleNotApplicable),
-            Some(sub) => {
-                let new_sub = remove_nothings(sub)?;
-                let new_expr = expr.with_sub_expressions(new_sub);
-                Ok(Reduction::pure(new_expr))
-            }
-        },
-        Expr::SumEq(_, _, _) | Expr::SumLeq(_, _, _) | Expr::SumGeq(_, _, _) => {
-            match expr.sub_expressions() {
-                None => Err(ApplicationError::RuleNotApplicable),
-                Some(sub) => {
-                    // Keep the last sub expression, which is the right hand side expression
-                    let new_rhs = sub[sub.len() - 1];
-
-                    // Remove all nothings from the left hand side expressions
-                    let mut new_sub_exprs = remove_nothings(sub[..sub.len() - 1].to_vec())?;
-
-                    // Add the right hand side expression back
-                    new_sub_exprs.push(new_rhs);
-
-                    let new_expr = expr.with_sub_expressions(new_sub_exprs);
-                    Ok(Reduction::pure(new_expr))
-                }
-            }
+        Expr::And(md, _) => Ok(Reduction::pure(Expr::And(md.clone(), new_sub))),
+        Expr::Or(md, _) => Ok(Reduction::pure(Expr::Or(md.clone(), new_sub))),
+        Expr::Sum(md, _) => Ok(Reduction::pure(Expr::Sum(md.clone(), new_sub))),
+        Expr::SumEq(md, _, _) => {
+            let (lhs, rhs) = get_lhs_rhs(new_sub);
+            Ok(Reduction::pure(Expr::SumEq(md.clone(), lhs, rhs)))
+        }
+        Expr::SumLeq(md, _lhs, _rhs) => {
+            let (lhs, rhs) = get_lhs_rhs(new_sub);
+            Ok(Reduction::pure(Expr::SumLeq(md.clone(), lhs, rhs)))
+        }
+        Expr::SumGeq(md, _lhs, _rhs) => {
+            let (lhs, rhs) = get_lhs_rhs(new_sub);
+            Ok(Reduction::pure(Expr::SumGeq(md.clone(), lhs, rhs)))
         }
         _ => Err(ApplicationError::RuleNotApplicable),
     }
@@ -81,10 +83,12 @@ fn remove_nothings(expr: &Expr, _: &Model) -> ApplicationResult {
  */
 #[register_rule(("Base", 100))]
 fn empty_to_nothing(expr: &Expr, _: &Model) -> ApplicationResult {
-    match expr.sub_expressions() {
-        None => Err(ApplicationError::RuleNotApplicable),
-        Some(sub) => {
-            if sub.is_empty() {
+    match expr {
+        Expr::Nothing | Expr::Reference(_, _) | Expr::Constant(_, _) => {
+            Err(ApplicationError::RuleNotApplicable)
+        }
+        _ => {
+            if expr.children().is_empty() {
                 Ok(Reduction::pure(Expr::Nothing))
             } else {
                 Err(ApplicationError::RuleNotApplicable)
