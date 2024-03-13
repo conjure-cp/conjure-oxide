@@ -170,6 +170,7 @@ pub fn derive(macro_input: TokenStream) -> TokenStream {
         use uniplate::uniplate::UniplateError as #error_ident;
 
         impl Uniplate for #root_ident {
+            #[allow(unused_variables)]
             fn uniplate(&self) -> (Vec<#root_ident>, Box<dyn Fn(Vec<#root_ident>) -> Result<#root_ident, #error_ident> + '_>) {
                 let context: Box<dyn Fn(Vec<#root_ident>) -> Result<#root_ident, #error_ident>> = #context_impl;
 
