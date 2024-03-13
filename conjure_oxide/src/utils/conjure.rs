@@ -7,8 +7,8 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use thiserror::Error as ThisError;
 
-use crate::unstable::solver_interface::adaptors::Minion;
-use crate::unstable::solver_interface::{Solver, SolverAdaptor};
+use crate::solver::adaptors::Minion;
+use crate::solver::{Solver, SolverAdaptor};
 
 #[derive(Debug, ThisError)]
 pub enum EssenceParseError {

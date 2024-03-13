@@ -25,8 +25,8 @@
 //! # use conjure_oxide::generate_custom::get_example_model;
 //! use conjure_oxide::rule_engine::rewrite::rewrite_model;
 //! use conjure_oxide::rule_engine::resolve_rules::resolve_rule_sets;
-//! use conjure_oxide::unstable::solver_interface::{Solver,adaptors,SolverAdaptor};
-//! use conjure_oxide::unstable::solver_interface::states::*;
+//! use conjure_oxide::solver::{Solver,adaptors,SolverAdaptor};
+//! use conjure_oxide::solver::states::*;
 //! use std::sync::{Arc,Mutex};
 //!
 //! // Define and rewrite a model for minion.

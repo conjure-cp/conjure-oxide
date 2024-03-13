@@ -1,4 +1,5 @@
 // Tests for rewriting/simplifying parts of the AST
+use conjure_oxide::solver::SolverAdaptor as _;
 use core::panic;
 use std::collections::HashMap;
 use std::process::exit;
@@ -8,7 +9,7 @@ use conjure_core::{metadata::Metadata, rule::Rule};
 use conjure_oxide::ast::*;
 use conjure_oxide::eval_constant;
 use conjure_oxide::rule_engine::{resolve_rules::resolve_rule_sets, rewrite::rewrite_model};
-use conjure_oxide::solvers::FromConjureModel;
+use conjure_oxide::solver::{adaptors, Solver};
 use conjure_rules::{get_rule_by_name, get_rules};
 
 use minion_rs::ast::{Constant as MinionConstant, VarName};
@@ -354,9 +355,9 @@ fn reduce_solve_xyz() {
         },
     );
 
-    let minion_model = conjure_oxide::solvers::minion::MinionModel::from_conjure(model).unwrap();
-
-    minion_rs::run_minion(minion_model, callback).unwrap();
+    let solver: Solver<adaptors::Minion> = Solver::new(adaptors::Minion::new());
+    let solver = solver.load_model(model).unwrap();
+    solver.solve(Box::new(|_| true)).unwrap();
 }
 
 #[test]
@@ -909,11 +910,9 @@ fn rewrite_solve_xyz() {
         },
     );
 
-    // Convert the model to MinionModel
-    let minion_model = conjure_oxide::solvers::minion::MinionModel::from_conjure(model).unwrap();
-
-    // Run the solver with the rewritten model
-    minion_rs::run_minion(minion_model, callback).unwrap();
+    let solver: Solver<adaptors::Minion> = Solver::new(adaptors::Minion::new());
+    let solver = solver.load_model(model).unwrap();
+    solver.solve(Box::new(|_| true)).unwrap();
 }
 
 struct RuleResult<'a> {

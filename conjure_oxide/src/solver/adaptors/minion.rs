@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::sync::{Condvar, Mutex, OnceLock};
 
-use crate::unstable::solver_interface::SolverMutCallback;
-use crate::unstable::solver_interface::{states, SolverCallback};
+use crate::solver::SolverMutCallback;
+use crate::solver::{states, SolverCallback};
 
 use super::super::model_modifier::NotModifiable;
 use super::super::private;

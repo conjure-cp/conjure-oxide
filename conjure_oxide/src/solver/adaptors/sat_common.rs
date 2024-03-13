@@ -1,45 +1,26 @@
-use super::{FromConjureModel, SolverError};
-use crate::Solver;
+//! Common code for SAT adaptors.
+//! Primarily, this is CNF related code.
+
+// (nd60, march 24) - i basically copied all this from @gskorokod's SAT implemention for the old
+// solver interface.
+use crate::{ast as conjure_ast, solver::SolverError, solver::SolverError::*};
 use conjure_core::metadata::Metadata;
 use std::collections::HashMap;
 use thiserror::Error;
 
-use crate::ast::{
-    Domain as ConjureDomain, Expression as ConjureExpression, Model as ConjureModel,
-    Name as ConjureName,
-};
-
-const SOLVER: Solver = Solver::KissSAT;
-
-struct CNFModel {
+/// A representation of a model in CNF.
+///
+/// Expects Model to be in the Conjunctive Normal Form:
+///
+/// - All variables must be boolean
+/// - Expressions must be `Reference`, `Not(Reference)`, or `Or(Reference1, Not(Reference2), ...)`
+/// - The top level And() may contain nested Or()s. Any other nested expressions are not allowed.
+#[derive(Debug, Clone)]
+pub struct CNFModel {
     pub clauses: Vec<Vec<i32>>,
-    variables: HashMap<ConjureName, i32>,
+    variables: HashMap<conjure_ast::Name, i32>,
     next_ind: i32,
 }
-
-/**
- * Error type for CNF adapter
- */
-#[derive(Error, Debug)]
-pub enum CNFError {
-    #[error("Variable with name `{0}` not found")]
-    VariableNameNotFound(ConjureName),
-
-    #[error("Clause with index `{0}` not found")]
-    ClauseIndexNotFound(i32),
-
-    #[error("Unexpected Expression `{0}` inside Not(). Only Not(Reference) allowed!")]
-    UnexpectedExpressionInsideNot(ConjureExpression),
-
-    #[error(
-        "Unexpected Expression `{0}` found. Only Reference, Not(Reference) and Or(...) allowed!"
-    )]
-    UnexpectedExpression(ConjureExpression),
-
-    #[error("Unexpected nested And: {0}")]
-    NestedAnd(ConjureExpression),
-}
-
 impl CNFModel {
     pub fn new() -> CNFModel {
         CNFModel {
@@ -49,12 +30,45 @@ impl CNFModel {
         }
     }
 
-    /**
-     * Get all the Conjure variables in the CNF
-     */
+    pub fn from_conjure(conjure_model: conjure_ast::Model) -> Result<CNFModel, SolverError> {
+        let mut ans: CNFModel = CNFModel::new();
+
+        for var in conjure_model.variables.keys() {
+            // Check that domain has the correct type
+            let decision_var = match conjure_model.variables.get(var) {
+                None => {
+                    return Err(ModelInvalid(format!("variable {:?} not found", var)));
+                }
+                Some(var) => var,
+            };
+
+            if decision_var.domain != conjure_ast::Domain::BoolDomain {
+                return Err(ModelFeatureNotSupported(format!(
+                    "variable {:?} is not BoolDomain",
+                    decision_var
+                )));
+            }
+
+            ans.add_variable(var);
+        }
+
+        for expr in conjure_model.get_constraints_vec() {
+            match ans.add_expression(&expr) {
+                Ok(_) => {}
+                Err(error) => {
+                    let message = format!("{:?}", error);
+                    return Err(ModelFeatureNotSupported(message));
+                }
+            }
+        }
+
+        Ok(ans)
+    }
+
+    /// Gets all the Conjure variables in the CNF.
     #[allow(dead_code)] // It will be used once we actually run kissat
-    pub fn get_variables(&self) -> Vec<&ConjureName> {
-        let mut ans: Vec<&ConjureName> = Vec::new();
+    pub fn get_variables(&self) -> Vec<&conjure_ast::Name> {
+        let mut ans: Vec<&conjure_ast::Name> = Vec::new();
 
         for key in self.variables.keys() {
             ans.push(key);
@@ -63,17 +77,13 @@ impl CNFModel {
         ans
     }
 
-    /**
-     * Get the index of a Conjure variable
-     */
-    pub fn get_index(&self, var: &ConjureName) -> Option<i32> {
+    /// Gets the index of a Conjure variable.
+    pub fn get_index(&self, var: &conjure_ast::Name) -> Option<i32> {
         return self.variables.get(var).copied();
     }
 
-    /**
-     * Get the Conjure variable from its index
-     */
-    pub fn get_name(&self, ind: i32) -> Option<&ConjureName> {
+    /// Gets a Conjure variable by index.
+    pub fn get_name(&self, ind: i32) -> Option<&conjure_ast::Name> {
         for key in self.variables.keys() {
             let idx = self.get_index(key)?;
             if idx == ind {
@@ -84,10 +94,8 @@ impl CNFModel {
         None
     }
 
-    /**
-     * Add a new Conjure variable to the CNF
-     */
-    pub fn add_variable(&mut self, var: &ConjureName) {
+    /// Adds a new Conjure variable to the CNF representation.
+    pub fn add_variable(&mut self, var: &conjure_ast::Name) {
         self.variables.insert(var.clone(), self.next_ind);
         self.next_ind += 1;
     }
@@ -115,7 +123,7 @@ impl CNFModel {
     /**
      * Add a new Conjure expression to the CNF. Must be a logical expression in CNF form
      */
-    pub fn add_expression(&mut self, expr: &ConjureExpression) -> Result<(), CNFError> {
+    pub fn add_expression(&mut self, expr: &conjure_ast::Expression) -> Result<(), CNFError> {
         for row in self.handle_expression(expr)? {
             self.add_clause(&row)?;
         }
@@ -126,32 +134,35 @@ impl CNFModel {
      * Convert the CNF to a Conjure expression
      */
     #[allow(dead_code)] // It will be used once we actually run kissat
-    pub fn as_expression(&self) -> Result<ConjureExpression, CNFError> {
-        let mut expr_clauses: Vec<ConjureExpression> = Vec::new();
+    pub fn as_expression(&self) -> Result<conjure_ast::Expression, CNFError> {
+        let mut expr_clauses: Vec<conjure_ast::Expression> = Vec::new();
 
         for clause in &self.clauses {
             expr_clauses.push(self.clause_to_expression(clause)?);
         }
 
-        Ok(ConjureExpression::And(Metadata::new(), expr_clauses))
+        Ok(conjure_ast::Expression::And(Metadata::new(), expr_clauses))
     }
 
     /**
      * Convert a single clause to a Conjure expression
      */
-    fn clause_to_expression(&self, clause: &Vec<i32>) -> Result<ConjureExpression, CNFError> {
-        let mut ans: Vec<ConjureExpression> = Vec::new();
+    fn clause_to_expression(&self, clause: &Vec<i32>) -> Result<conjure_ast::Expression, CNFError> {
+        let mut ans: Vec<conjure_ast::Expression> = Vec::new();
 
         for idx in clause {
             match self.get_name(idx.abs()) {
                 None => return Err(CNFError::ClauseIndexNotFound(*idx)),
                 Some(name) => {
                     if *idx > 0 {
-                        ans.push(ConjureExpression::Reference(Metadata::new(), name.clone()));
+                        ans.push(conjure_ast::Expression::Reference(
+                            Metadata::new(),
+                            name.clone(),
+                        ));
                     } else {
-                        let expression: ConjureExpression =
-                            ConjureExpression::Reference(Metadata::new(), name.clone());
-                        ans.push(ConjureExpression::Not(
+                        let expression: conjure_ast::Expression =
+                            conjure_ast::Expression::Reference(Metadata::new(), name.clone());
+                        ans.push(conjure_ast::Expression::Not(
                             Metadata::new(),
                             Box::from(expression),
                         ))
@@ -160,15 +171,15 @@ impl CNFModel {
             }
         }
 
-        Ok(ConjureExpression::Or(Metadata::new(), ans))
+        Ok(conjure_ast::Expression::Or(Metadata::new(), ans))
     }
 
     /**
      * Get the index for a Conjure Reference or return an error
      * @see get_index
-     * @see ConjureExpression::Reference
+     * @see conjure_ast::Expression::Reference
      */
-    fn get_reference_index(&self, name: &ConjureName) -> Result<i32, CNFError> {
+    fn get_reference_index(&self, name: &conjure_ast::Name) -> Result<i32, CNFError> {
         match self.get_index(name) {
             None => Err(CNFError::VariableNameNotFound(name.clone())),
             Some(ind) => Ok(ind),
@@ -178,19 +189,19 @@ impl CNFModel {
     /**
      * Convert the contents of a single Reference to a row of the CNF format
      * @see get_reference_index
-     * @see ConjureExpression::Reference
+     * @see conjure_ast::Expression::Reference
      */
-    fn handle_reference(&self, name: &ConjureName) -> Result<Vec<i32>, CNFError> {
+    fn handle_reference(&self, name: &conjure_ast::Name) -> Result<Vec<i32>, CNFError> {
         Ok(vec![self.get_reference_index(name)?])
     }
 
     /**
      * Convert the contents of a single Not() to CNF
      */
-    fn handle_not(&self, expr: &ConjureExpression) -> Result<Vec<i32>, CNFError> {
+    fn handle_not(&self, expr: &conjure_ast::Expression) -> Result<Vec<i32>, CNFError> {
         match expr {
             // Expression inside the Not()
-            ConjureExpression::Reference(_metadata, name) => {
+            conjure_ast::Expression::Reference(_metadata, name) => {
                 Ok(vec![-self.get_reference_index(name)?])
             }
             _ => Err(CNFError::UnexpectedExpressionInsideNot(expr.clone())),
@@ -200,7 +211,7 @@ impl CNFModel {
     /**
      * Convert the contents of a single Or() to a row of the CNF format
      */
-    fn handle_or(&self, expressions: &Vec<ConjureExpression>) -> Result<Vec<i32>, CNFError> {
+    fn handle_or(&self, expressions: &Vec<conjure_ast::Expression>) -> Result<Vec<i32>, CNFError> {
         let mut ans: Vec<i32> = Vec::new();
 
         for expr in expressions {
@@ -216,11 +227,14 @@ impl CNFModel {
     /**
      * Convert a single Reference, `Not` or `Or` into a clause of the CNF format
      */
-    fn handle_flat_expression(&self, expression: &ConjureExpression) -> Result<Vec<i32>, CNFError> {
+    fn handle_flat_expression(
+        &self,
+        expression: &conjure_ast::Expression,
+    ) -> Result<Vec<i32>, CNFError> {
         match expression {
-            ConjureExpression::Reference(_metadata, name) => self.handle_reference(name),
-            ConjureExpression::Not(_metadata, var_box) => self.handle_not(var_box),
-            ConjureExpression::Or(_metadata, expressions) => self.handle_or(expressions),
+            conjure_ast::Expression::Reference(_metadata, name) => self.handle_reference(name),
+            conjure_ast::Expression::Not(_metadata, var_box) => self.handle_not(var_box),
+            conjure_ast::Expression::Or(_metadata, expressions) => self.handle_or(expressions),
             _ => Err(CNFError::UnexpectedExpression(expression.clone())),
         }
     }
@@ -228,12 +242,15 @@ impl CNFModel {
     /**
      * Convert a single And() into a vector of clauses in the CNF format
      */
-    fn handle_and(&self, expressions: &Vec<ConjureExpression>) -> Result<Vec<Vec<i32>>, CNFError> {
+    fn handle_and(
+        &self,
+        expressions: &Vec<conjure_ast::Expression>,
+    ) -> Result<Vec<Vec<i32>>, CNFError> {
         let mut ans: Vec<Vec<i32>> = Vec::new();
 
         for expression in expressions {
             match expression {
-                ConjureExpression::And(_metadata, _expressions) => {
+                conjure_ast::Expression::And(_metadata, _expressions) => {
                     return Err(CNFError::NestedAnd(expression.clone()));
                 }
                 _ => {
@@ -248,17 +265,38 @@ impl CNFModel {
     /**
      * Convert a single Conjure expression into a vector of clauses of the CNF format
      */
-    fn handle_expression(&self, expression: &ConjureExpression) -> Result<Vec<Vec<i32>>, CNFError> {
+    fn handle_expression(
+        &self,
+        expression: &conjure_ast::Expression,
+    ) -> Result<Vec<Vec<i32>>, CNFError> {
         match expression {
-            ConjureExpression::And(_metadata, expressions) => self.handle_and(expressions),
+            conjure_ast::Expression::And(_metadata, expressions) => self.handle_and(expressions),
             _ => Ok(vec![self.handle_flat_expression(expression)?]),
         }
     }
 }
 
-/**
- * Helper trait for checking if a variable is present in the CNF polymorphically (i32 or ConjureName)
- */
+#[derive(Error, Debug)]
+pub enum CNFError {
+    #[error("Variable with name `{0}` not found")]
+    VariableNameNotFound(conjure_ast::Name),
+
+    #[error("Clause with index `{0}` not found")]
+    ClauseIndexNotFound(i32),
+
+    #[error("Unexpected Expression `{0}` inside Not(). Only Not(Reference) allowed!")]
+    UnexpectedExpressionInsideNot(conjure_ast::Expression),
+
+    #[error(
+        "Unexpected Expression `{0}` found. Only Reference, Not(Reference) and Or(...) allowed!"
+    )]
+    UnexpectedExpression(conjure_ast::Expression),
+
+    #[error("Unexpected nested And: {0}")]
+    NestedAnd(conjure_ast::Expression),
+}
+
+/// Helper trait for checking if a variable is present in the CNF polymorphically (i32 or conjure_ast::Name)
 trait HasVariable {
     fn has_variable(self, cnf: &CNFModel) -> bool;
 }
@@ -269,58 +307,9 @@ impl HasVariable for i32 {
     }
 }
 
-impl HasVariable for &ConjureName {
+impl HasVariable for &conjure_ast::Name {
     fn has_variable(self, cnf: &CNFModel) -> bool {
         cnf.get_index(self).is_some()
-    }
-}
-
-/**
-* Expects Model to be in the Conjunctive Normal Form:
-* - All variables must be boolean
-* - Expressions must be `Reference`, `Not(Reference)`, or `Or(Reference1, Not(Reference2), ...)`
-* - The top level And() may contain nested Or()s. Any other nested expressions are not allowed.
-*/
-impl FromConjureModel for CNFModel {
-    /**
-     * Convert a Conjure model to a CNF
-     */
-    fn from_conjure(conjure_model: ConjureModel) -> Result<Self, SolverError> {
-        let mut ans: CNFModel = CNFModel::new();
-
-        for var in conjure_model.variables.keys() {
-            // Check that domain has the correct type
-            let decision_var = match conjure_model.variables.get(var) {
-                None => {
-                    return Err(SolverError::InvalidInstance(
-                        SOLVER,
-                        format!("variable {:?} not found", var),
-                    ));
-                }
-                Some(var) => var,
-            };
-
-            if decision_var.domain != ConjureDomain::BoolDomain {
-                return Err(SolverError::NotSupported(
-                    SOLVER,
-                    format!("variable {:?} is not BoolDomain", decision_var),
-                ));
-            }
-
-            ans.add_variable(var);
-        }
-
-        for expr in conjure_model.get_constraints_vec() {
-            match ans.add_expression(&expr) {
-                Ok(_) => {}
-                Err(error) => {
-                    let message = format!("{:?}", error);
-                    return Err(SolverError::NotSupported(SOLVER, message));
-                }
-            }
-        }
-
-        Ok(ans)
     }
 }
 
@@ -328,12 +317,12 @@ impl FromConjureModel for CNFModel {
 mod tests {
     use conjure_core::metadata::Metadata;
 
+    use super::CNFModel;
     use crate::ast::Domain::{BoolDomain, IntDomain};
     use crate::ast::Expression::{And, Not, Or, Reference};
     use crate::ast::{DecisionVariable, Model};
     use crate::ast::{Expression, Name};
-    use crate::solvers::kissat::CNFModel;
-    use crate::solvers::{FromConjureModel, SolverError};
+    use crate::solver::SolverError;
     use crate::utils::testing::assert_eq_any_order;
 
     #[test]
