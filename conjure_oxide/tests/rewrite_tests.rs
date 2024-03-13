@@ -12,8 +12,6 @@ use conjure_oxide::rule_engine::{resolve_rules::resolve_rule_sets, rewrite::rewr
 use conjure_oxide::solver::{adaptors, Solver};
 use conjure_rules::{get_rule_by_name, get_rules};
 
-use minion_rs::ast::{Constant as MinionConstant, VarName};
-
 #[test]
 fn rules_present() {
     let rules = conjure_rules::get_rules();
@@ -225,11 +223,6 @@ fn rule_sum_geq() {
             Box::new(Expression::Constant(Metadata::new(), Constant::Int(3)))
         )
     );
-}
-
-fn callback(solution: HashMap<VarName, MinionConstant>) -> bool {
-    println!("Solution: {:?}", solution);
-    false
 }
 
 ///
@@ -916,6 +909,7 @@ fn rewrite_solve_xyz() {
 }
 
 struct RuleResult<'a> {
+    #[allow(dead_code)]
     rule: &'a Rule<'a>,
     new_expression: Expression,
 }

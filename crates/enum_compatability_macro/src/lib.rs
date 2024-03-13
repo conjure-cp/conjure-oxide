@@ -17,6 +17,9 @@
 //! The documentation this generates helps rewrite rule implementers determine which AST nodes are
 //! used for which backends by grouping AST nodes per solver.
 
+#![allow(clippy::unwrap_used)]
+#![allow(unstable_name_collisions)]
+
 use std::collections::HashMap;
 
 use itertools::Itertools;
