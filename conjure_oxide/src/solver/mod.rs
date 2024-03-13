@@ -81,7 +81,7 @@
 
 #![allow(dead_code)]
 #![allow(unused)]
-#![warn(clippy::exhaustive_enums)]
+#![allow(clippy::manual_non_exhaustive)]
 
 pub mod adaptors;
 pub mod model_modifier;

@@ -1,3 +1,5 @@
+#![allow(unreachable_patterns)]
+
 use std::{
     collections::HashMap,
     ffi::CString,

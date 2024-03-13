@@ -276,6 +276,12 @@ impl CNFModel {
     }
 }
 
+impl Default for CNFModel {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(Error, Debug)]
 pub enum CNFError {
     #[error("Variable with name `{0}` not found")]
@@ -297,7 +303,7 @@ pub enum CNFError {
 }
 
 /// Helper trait for checking if a variable is present in the CNF polymorphically (i32 or conjure_ast::Name)
-trait HasVariable {
+pub trait HasVariable {
     fn has_variable(self, cnf: &CNFModel) -> bool;
 }
 

@@ -25,8 +25,8 @@ pub struct Model {
 impl Model {
     pub fn new(variables: SymbolTable, constraints: Expression) -> Model {
         Model {
-            variables: variables,
-            constraints: constraints,
+            variables,
+            constraints,
             next_var: RefCell::new(0),
         }
     }
@@ -80,7 +80,7 @@ impl Model {
 
     /// Returns an arbitrary variable name that is not in the model.
     pub fn gensym(&self) -> Name {
-        let num = self.next_var.borrow().clone();
+        let num = *self.next_var.borrow();
         *(self.next_var.borrow_mut()) += 1;
         Name::MachineName(num) // incremented when inserted
     }
@@ -332,13 +332,10 @@ pub enum Expression {
 impl Expression {
     pub fn bounds(&self, vars: &SymbolTable) -> Option<(i32, i32)> {
         match self {
-            Expression::Reference(_, name) => vars.get(name).and_then(|v| {
-                let b = v.domain.min_max_i32();
-                b
-            }),
+            Expression::Reference(_, name) => vars.get(name).and_then(|v| v.domain.min_max_i32()),
             Expression::Constant(_, Constant::Int(i)) => Some((*i, *i)),
             Expression::Sum(_, exprs) => {
-                if exprs.len() == 0 {
+                if exprs.is_empty() {
                     return None;
                 }
                 let (mut min, mut max) = (0, 0);
@@ -353,7 +350,7 @@ impl Expression {
                 Some((min, max))
             }
             Expression::Min(_, exprs) => {
-                if exprs.len() == 0 {
+                if exprs.is_empty() {
                     return None;
                 }
                 let bounds = exprs
@@ -361,8 +358,8 @@ impl Expression {
                     .map(|e| e.bounds(vars))
                     .collect::<Option<Vec<(i32, i32)>>>()?;
                 Some((
-                    bounds.iter().map(|(min, _)| *min).min().unwrap(),
-                    bounds.iter().map(|(_, max)| *max).min().unwrap(),
+                    bounds.iter().map(|(min, _)| *min).min()?,
+                    bounds.iter().map(|(_, max)| *max).min()?,
                 ))
             }
             _ => todo!(),
