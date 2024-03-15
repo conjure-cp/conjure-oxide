@@ -1,6 +1,6 @@
-use std::fmt::Display;
-use serde::{Deserialize, Serialize};
 use crate::ast::domains::{Domain, Range};
+use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct DecisionVariable {

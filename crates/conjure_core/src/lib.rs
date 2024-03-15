@@ -1,7 +1,7 @@
 pub mod ast;
 pub mod metadata;
+pub mod model;
 pub mod rule;
 pub mod solvers;
-pub mod model;
 
 pub use solvers::Solver;

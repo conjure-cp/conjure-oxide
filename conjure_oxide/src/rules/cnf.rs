@@ -1,5 +1,5 @@
 use crate::{
-    ast::{Expression as Expr},
+    ast::Expression as Expr,
     rule::{ApplicationError, ApplicationResult, Reduction},
     Model,
 };

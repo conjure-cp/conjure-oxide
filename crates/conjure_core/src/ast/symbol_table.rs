@@ -1,7 +1,7 @@
+use crate::ast::variables::DecisionVariable;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::Display;
-use serde::{Deserialize, Serialize};
-use crate::ast::variables::DecisionVariable;
 
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Name {

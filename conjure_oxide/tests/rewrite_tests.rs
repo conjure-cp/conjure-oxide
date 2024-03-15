@@ -10,8 +10,8 @@ use conjure_oxide::ast::*;
 use conjure_oxide::eval_constant;
 use conjure_oxide::rule_engine::{resolve_rules::resolve_rule_sets, rewrite::rewrite_model};
 use conjure_oxide::solver::{adaptors, Solver};
-use conjure_rules::{get_rule_by_name, get_rules};
 use conjure_oxide::Model;
+use conjure_rules::{get_rule_by_name, get_rules};
 
 #[test]
 fn rules_present() {

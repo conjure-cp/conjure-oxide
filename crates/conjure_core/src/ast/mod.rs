@@ -1,9 +1,8 @@
-mod expressions;
-mod domains;
 mod constants;
-mod variables;
+mod domains;
+mod expressions;
 mod symbol_table;
-
+mod variables;
 
 pub use expressions::Expression;
 
@@ -18,4 +17,3 @@ pub use variables::DecisionVariable;
 pub use symbol_table::SymbolTable;
 
 pub use symbol_table::Name;
-

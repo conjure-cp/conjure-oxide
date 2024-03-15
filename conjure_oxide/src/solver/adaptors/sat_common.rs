@@ -3,7 +3,9 @@
 
 // (nd60, march 24) - i basically copied all this from @gskorokod's SAT implemention for the old
 // solver interface.
-use crate::{ast as conjure_ast, solver::SolverError, solver::SolverError::*, Model as ConjureModel};
+use crate::{
+    ast as conjure_ast, solver::SolverError, solver::SolverError::*, Model as ConjureModel,
+};
 use conjure_core::metadata::Metadata;
 use std::collections::HashMap;
 use thiserror::Error;
@@ -326,9 +328,11 @@ mod tests {
     use super::CNFModel;
     use crate::ast::Domain::{BoolDomain, IntDomain};
     use crate::ast::Expression::{And, Not, Or, Reference};
-    use crate::ast::{Expression, Name, DecisionVariable};
-    use crate::{ast as conjure_ast, solver::SolverError, solver::SolverError::*, Model as ConjureModel};
+    use crate::ast::{DecisionVariable, Expression, Name};
     use crate::utils::testing::assert_eq_any_order;
+    use crate::{
+        ast as conjure_ast, solver::SolverError, solver::SolverError::*, Model as ConjureModel,
+    };
 
     #[test]
     fn test_single_var() {

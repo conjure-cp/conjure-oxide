@@ -1,8 +1,8 @@
-use crate::rule_engine::resolve_rules::{
-    get_rule_priorities, get_rules_vec, ResolveRulesError as ResolveError
-};
-use crate::ast::{Expression};
+use crate::ast::Expression;
 use crate::rule::{Reduction, Rule};
+use crate::rule_engine::resolve_rules::{
+    get_rule_priorities, get_rules_vec, ResolveRulesError as ResolveError,
+};
 use crate::rule_set::RuleSet;
 use crate::Model;
 use std::fmt::Display;

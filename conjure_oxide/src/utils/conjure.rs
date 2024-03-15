@@ -1,7 +1,7 @@
+use crate::ast::{Constant, Name};
 use crate::parse::model_from_json;
 use crate::utils::json::sort_json_object;
 use crate::Error as ParseErr;
-use crate::ast::{Constant, Name};
 use crate::Model;
 use serde_json::{Map, Value as JsonValue};
 use std::collections::HashMap;

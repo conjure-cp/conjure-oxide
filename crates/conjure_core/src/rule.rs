@@ -1,9 +1,9 @@
-use std::fmt::{self, Display, Formatter};
-use std::hash::Hash;
-use thiserror::Error;
 use crate::ast::{Expression, SymbolTable};
 use crate::metadata::Metadata;
 use crate::model::Model;
+use std::fmt::{self, Display, Formatter};
+use std::hash::Hash;
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum ApplicationError {

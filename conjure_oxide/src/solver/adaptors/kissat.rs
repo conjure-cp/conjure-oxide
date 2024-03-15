@@ -8,9 +8,9 @@ use super::super::SolveSuccess;
 use super::super::SolverAdaptor;
 use super::super::SolverError;
 use super::super::SolverError::*;
+use super::sat_common::CNFModel;
 use crate::solver::SolverMutCallback;
 use crate::solver::{states, SolverCallback};
-use super::sat_common::CNFModel;
 use crate::Model as ConjureModel;
 
 /// A [SolverAdaptor] for interacting with the Kissat SAT solver.

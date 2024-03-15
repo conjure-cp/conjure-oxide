@@ -1,12 +1,12 @@
-use std::fmt::{Display, Formatter};
-use derive_is_enum_variant::is_enum_variant;
-use serde::{Deserialize, Serialize};
-use enum_compatability_macro::document_compatibility;
-use uniplate_derive::Uniplate;
-use uniplate::uniplate::Uniplate;
 use crate::ast::constants::Constant;
 use crate::ast::symbol_table::{Name, SymbolTable};
 use crate::metadata::Metadata;
+use derive_is_enum_variant::is_enum_variant;
+use enum_compatability_macro::document_compatibility;
+use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter};
+use uniplate::uniplate::Uniplate;
+use uniplate_derive::Uniplate;
 
 #[document_compatibility]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, is_enum_variant, Uniplate)]

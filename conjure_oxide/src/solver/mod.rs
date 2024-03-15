@@ -95,6 +95,8 @@ pub mod states;
 use self::model_modifier::*;
 use self::states::*;
 use self::stats::Stats;
+use crate::ast::{Constant, Name};
+use crate::Model;
 use anyhow::anyhow;
 use itertools::Either;
 use std::collections::HashMap;
@@ -102,8 +104,6 @@ use std::error::Error;
 use std::fmt::{Debug, Display};
 use std::time::Instant;
 use thiserror::Error;
-use crate::ast::{Name, Constant};
-use crate::Model;
 
 /// The type for user-defined callbacks for use with [Solver].
 ///

@@ -1,9 +1,9 @@
+use crate::ast::Name::UserName;
+use crate::ast::{Constant, Name};
 use crate::utils::conjure::minion_solutions_to_json;
 use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
 use crate::Error;
-use crate::ast::Name::UserName;
-use crate::ast::{Constant, Name};
 use crate::Model as ConjureModel;
 use serde_json::{Error as JsonError, Value as JsonValue};
 use std::collections::{HashMap, HashSet};

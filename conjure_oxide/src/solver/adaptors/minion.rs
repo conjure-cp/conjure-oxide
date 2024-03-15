@@ -101,16 +101,12 @@ impl SolverAdaptor for Minion {
             .unwrap();
         *user_callback = callback;
         drop(user_callback); // release mutex. REQUIRED so that run_minion can use the
-                                       // user callback and not deadlock.
+                             // user callback and not deadlock.
 
         run_minion(model, minion_rs_callback).map_err(|err| match err {
-            minion_rs::error::MinionError::RuntimeError(x) => {
-                Runtime(format!("{:#?}", x))
-            }
+            minion_rs::error::MinionError::RuntimeError(x) => Runtime(format!("{:#?}", x)),
             minion_rs::error::MinionError::Other(x) => Runtime(format!("{:#?}", x)),
-            minion_rs::error::MinionError::NotImplemented(x) => {
-                RuntimeNotImplemented(x)
-            }
+            minion_rs::error::MinionError::NotImplemented(x) => RuntimeNotImplemented(x),
             x => Runtime(format!("unknown minion_rs error: {:#?}", x)),
         })?;
 
