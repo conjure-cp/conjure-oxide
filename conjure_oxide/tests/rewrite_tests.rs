@@ -976,7 +976,7 @@ fn apply_all_rules<'a>(
 /// # Returns
 /// - Some(<new_expression>) after applying the first rule in `results`.
 /// - None if `results` is empty.
-fn choose_rewrite(results: &Vec<RuleResult>) -> Option<Expression> {
+fn choose_rewrite(results: &[RuleResult]) -> Option<Expression> {
     if results.is_empty() {
         return None;
     }

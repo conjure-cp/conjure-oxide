@@ -107,7 +107,7 @@ fn apply_all_rules<'a>(
 /// # Returns
 /// - Some(<reduction>) after applying the first rule in `results`.
 /// - None if `results` is empty.
-fn choose_rewrite(results: &Vec<RuleResult>) -> Option<Reduction> {
+fn choose_rewrite(results: &[RuleResult]) -> Option<Reduction> {
     if results.is_empty() {
         return None;
     }
