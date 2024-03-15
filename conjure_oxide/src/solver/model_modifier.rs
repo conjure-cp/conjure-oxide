@@ -7,7 +7,8 @@
 
 use super::private;
 use super::Solver;
-use conjure_core::ast::{Domain, Expression, Model, Name};
+use crate::ast::{Domain, Expression, Name};
+use crate::Model;
 
 /// A ModelModifier provides an interface to modify a model during solving.
 ///

@@ -1,7 +1,8 @@
-use conjure_core::{
-    ast::{Constant as Const, Expression as Expr, Model},
+use crate::{
+    ast::{Constant as Const, Expression as Expr},
     metadata::Metadata,
     rule::{ApplicationError, ApplicationResult, Reduction},
+    Model,
 };
 use conjure_rules::{register_rule, register_rule_set};
 

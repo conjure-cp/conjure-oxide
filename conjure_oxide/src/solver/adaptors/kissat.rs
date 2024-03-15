@@ -10,10 +10,8 @@ use super::super::SolverError;
 use super::super::SolverError::*;
 use crate::solver::SolverMutCallback;
 use crate::solver::{states, SolverCallback};
-
-use crate::ast as conjureast;
-
 use super::sat_common::CNFModel;
+use crate::Model as ConjureModel;
 
 /// A [SolverAdaptor] for interacting with the Kissat SAT solver.
 pub struct Kissat {
@@ -55,7 +53,7 @@ impl SolverAdaptor for Kissat {
 
     fn load_model(
         &mut self,
-        model: conjureast::Model,
+        model: ConjureModel,
         _: private::Internal,
     ) -> Result<Self::Model, SolverError> {
         CNFModel::from_conjure(model)

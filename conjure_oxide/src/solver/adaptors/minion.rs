@@ -18,8 +18,11 @@ use super::super::SolverError::*;
 use minion_rs::run_minion;
 use regex::Regex;
 
-use crate::ast as conjureast;
-use minion_rs::ast as minionast;
+use crate::ast as conjure_ast;
+use minion_rs::ast as minion_ast;
+
+use crate::Model as ConjureModel;
+use minion_ast::Model as MinionModel;
 
 /// A [SolverAdaptor] for interacting with Minion.
 ///
@@ -31,29 +34,29 @@ pub struct Minion {
 static MINION_LOCK: Mutex<()> = Mutex::new(());
 static USER_CALLBACK: OnceLock<Mutex<SolverCallback>> = OnceLock::new();
 static ANY_SOLUTIONS: Mutex<bool> = Mutex::new(false);
-static USER_TERIMINATED: Mutex<bool> = Mutex::new(false);
+static USER_TERMINATED: Mutex<bool> = Mutex::new(false);
 
 #[allow(clippy::unwrap_used)]
-fn minion_rs_callback(solutions: HashMap<minionast::VarName, minionast::Constant>) -> bool {
+fn minion_rs_callback(solutions: HashMap<minion_ast::VarName, minion_ast::Constant>) -> bool {
     *(ANY_SOLUTIONS.lock().unwrap()) = true;
     let callback = USER_CALLBACK
         .get_or_init(|| Mutex::new(Box::new(|x| true)))
         .lock()
         .unwrap();
 
-    let mut conjure_solutions: HashMap<conjureast::Name, conjureast::Constant> = HashMap::new();
+    let mut conjure_solutions: HashMap<conjure_ast::Name, conjure_ast::Constant> = HashMap::new();
     for (minion_name, minion_const) in solutions.into_iter() {
         let conjure_const = match minion_const {
-            minionast::Constant::Bool(x) => conjureast::Constant::Bool(x),
-            minionast::Constant::Integer(x) => conjureast::Constant::Int(x),
+            minion_ast::Constant::Bool(x) => conjure_ast::Constant::Bool(x),
+            minion_ast::Constant::Integer(x) => conjure_ast::Constant::Int(x),
             _ => todo!(),
         };
 
         let machine_name_re = Regex::new(r"__conjure_machine_name_([0-9]+)").unwrap();
         let conjure_name = if let Some(caps) = machine_name_re.captures(&minion_name) {
-            conjureast::Name::MachineName(caps[1].parse::<i32>().unwrap())
+            conjure_ast::Name::MachineName(caps[1].parse::<i32>().unwrap())
         } else {
-            conjureast::Name::UserName(minion_name)
+            conjure_ast::Name::UserName(minion_name)
         };
 
         conjure_solutions.insert(conjure_name, conjure_const);
@@ -61,7 +64,7 @@ fn minion_rs_callback(solutions: HashMap<minionast::VarName, minionast::Constant
 
     let continue_search = (**callback)(conjure_solutions);
     if !continue_search {
-        *(USER_TERIMINATED.lock().unwrap()) = true;
+        *(USER_TERMINATED.lock().unwrap()) = true;
     }
 
     continue_search
@@ -69,8 +72,8 @@ fn minion_rs_callback(solutions: HashMap<minionast::VarName, minionast::Constant
 
 impl private::Sealed for Minion {}
 impl SolverAdaptor for Minion {
-    type Model = minionast::Model;
-    type Solution = minionast::Constant;
+    type Model = MinionModel;
+    type Solution = minion_ast::Constant;
     type Modifier = NotModifiable;
 
     fn new() -> Minion {
@@ -82,7 +85,7 @@ impl SolverAdaptor for Minion {
     #[allow(clippy::unwrap_used)]
     fn solve(
         &mut self,
-        model: Self::Model,
+        model: MinionModel,
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
@@ -97,22 +100,22 @@ impl SolverAdaptor for Minion {
             .lock()
             .unwrap();
         *user_callback = callback;
-        std::mem::drop(user_callback); // release mutex. REQUIRED so that run_minion can use the
+        drop(user_callback); // release mutex. REQUIRED so that run_minion can use the
                                        // user callback and not deadlock.
 
-        minion_rs::run_minion(model, minion_rs_callback).map_err(|err| match err {
+        run_minion(model, minion_rs_callback).map_err(|err| match err {
             minion_rs::error::MinionError::RuntimeError(x) => {
-                SolverError::Runtime(format!("{:#?}", x))
+                Runtime(format!("{:#?}", x))
             }
-            minion_rs::error::MinionError::Other(x) => SolverError::Runtime(format!("{:#?}", x)),
+            minion_rs::error::MinionError::Other(x) => Runtime(format!("{:#?}", x)),
             minion_rs::error::MinionError::NotImplemented(x) => {
-                SolverError::RuntimeNotImplemented(x)
+                RuntimeNotImplemented(x)
             }
-            x => SolverError::Runtime(format!("unknown minion_rs error: {:#?}", x)),
+            x => Runtime(format!("unknown minion_rs error: {:#?}", x)),
         })?;
 
         let mut status = Complete(HasSolutions);
-        if *(USER_TERIMINATED.lock()).unwrap() {
+        if *(USER_TERMINATED.lock()).unwrap() {
             status = Incomplete(UserTerminated);
         } else if *(ANY_SOLUTIONS.lock()).unwrap() {
             status = Complete(NoSolutions);
@@ -125,7 +128,7 @@ impl SolverAdaptor for Minion {
 
     fn solve_mut(
         &mut self,
-        model: Self::Model,
+        model: MinionModel,
         callback: SolverMutCallback<Self>,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
@@ -134,10 +137,10 @@ impl SolverAdaptor for Minion {
 
     fn load_model(
         &mut self,
-        model: conjure_core::ast::Model,
+        model: ConjureModel,
         _: private::Internal,
     ) -> Result<Self::Model, SolverError> {
-        let mut minion_model = minionast::Model::new();
+        let mut minion_model = MinionModel::new();
         parse_vars(&model, &mut minion_model)?;
         parse_exprs(&model, &mut minion_model)?;
         Ok(minion_model)
@@ -145,8 +148,8 @@ impl SolverAdaptor for Minion {
 }
 
 fn parse_vars(
-    conjure_model: &conjureast::Model,
-    minion_model: &mut minionast::Model,
+    conjure_model: &ConjureModel,
+    minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     // TODO (niklasdewally): remove unused vars?
     // TODO (niklasdewally): ensure all vars references are used.
@@ -158,21 +161,21 @@ fn parse_vars(
 }
 
 fn parse_var(
-    name: &conjureast::Name,
-    var: &conjureast::DecisionVariable,
-    minion_model: &mut minionast::Model,
+    name: &conjure_ast::Name,
+    var: &conjure_ast::DecisionVariable,
+    minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     match &var.domain {
-        conjureast::Domain::IntDomain(ranges) => _parse_intdomain_var(name, ranges, minion_model),
-        conjureast::Domain::BoolDomain => _parse_booldomain_var(name, minion_model),
+        conjure_ast::Domain::IntDomain(ranges) => _parse_intdomain_var(name, ranges, minion_model),
+        conjure_ast::Domain::BoolDomain => _parse_booldomain_var(name, minion_model),
         x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
     }
 }
 
 fn _parse_intdomain_var(
-    name: &conjureast::Name,
-    ranges: &Vec<conjureast::Range<i32>>,
-    minion_model: &mut minionast::Model,
+    name: &conjure_ast::Name,
+    ranges: &Vec<conjure_ast::Range<i32>>,
+    minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     let str_name = _name_to_string(name.to_owned());
 
@@ -190,35 +193,35 @@ fn _parse_intdomain_var(
     )))?;
 
     let (low, high) = match range {
-        conjureast::Range::Bounded(x, y) => Ok((x.to_owned(), y.to_owned())),
-        conjureast::Range::Single(x) => Ok((x.to_owned(), x.to_owned())),
+        conjure_ast::Range::Bounded(x, y) => Ok((x.to_owned(), y.to_owned())),
+        conjure_ast::Range::Single(x) => Ok((x.to_owned(), x.to_owned())),
         #[allow(unreachable_patterns)]
         x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
     }?;
 
     _try_add_var(
         str_name.to_owned(),
-        minionast::VarDomain::Bound(low, high),
+        minion_ast::VarDomain::Bound(low, high),
         minion_model,
     )
 }
 
 fn _parse_booldomain_var(
-    name: &conjureast::Name,
-    minion_model: &mut minionast::Model,
+    name: &conjure_ast::Name,
+    minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     let str_name = _name_to_string(name.to_owned());
     _try_add_var(
         str_name.to_owned(),
-        minionast::VarDomain::Bool,
+        minion_ast::VarDomain::Bool,
         minion_model,
     )
 }
 
 fn _try_add_var(
-    name: minionast::VarName,
-    domain: minionast::VarDomain,
-    minion_model: &mut minionast::Model,
+    name: minion_ast::VarName,
+    domain: minion_ast::VarDomain,
+    minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     minion_model
         .named_variables
@@ -230,8 +233,8 @@ fn _try_add_var(
 }
 
 fn parse_exprs(
-    conjure_model: &conjureast::Model,
-    minion_model: &mut minionast::Model,
+    conjure_model: &ConjureModel,
+    minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     for expr in conjure_model.get_constraints_vec().iter() {
         parse_expr(expr.to_owned(), minion_model)?;
@@ -240,53 +243,53 @@ fn parse_exprs(
 }
 
 fn parse_expr(
-    expr: conjureast::Expression,
-    minion_model: &mut minionast::Model,
+    expr: conjure_ast::Expression,
+    minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     minion_model.constraints.push(read_expr(expr)?);
     Ok(())
 }
 
-fn read_expr(expr: conjureast::Expression) -> Result<minionast::Constraint, SolverError> {
+fn read_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, SolverError> {
     match expr {
-        conjureast::Expression::SumLeq(_metadata, lhs, rhs) => Ok(minionast::Constraint::SumLeq(
+        conjure_ast::Expression::SumLeq(_metadata, lhs, rhs) => Ok(minion_ast::Constraint::SumLeq(
             read_vars(lhs)?,
             read_var(*rhs)?,
         )),
-        conjureast::Expression::SumGeq(_metadata, lhs, rhs) => Ok(minionast::Constraint::SumGeq(
+        conjure_ast::Expression::SumGeq(_metadata, lhs, rhs) => Ok(minion_ast::Constraint::SumGeq(
             read_vars(lhs)?,
             read_var(*rhs)?,
         )),
-        conjureast::Expression::Ineq(_metadata, a, b, c) => Ok(minionast::Constraint::Ineq(
+        conjure_ast::Expression::Ineq(_metadata, a, b, c) => Ok(minion_ast::Constraint::Ineq(
             read_var(*a)?,
             read_var(*b)?,
-            minionast::Constant::Integer(read_const(*c)?),
+            minion_ast::Constant::Integer(read_const(*c)?),
         )),
-        conjureast::Expression::Neq(_metadata, a, b) => Ok(minionast::Constraint::AllDiff(vec![
+        conjure_ast::Expression::Neq(_metadata, a, b) => Ok(minion_ast::Constraint::AllDiff(vec![
             read_var(*a)?,
             read_var(*b)?,
         ])),
-        // conjureast::Expression::DivEq(_metadata, a, b, c) => {
-        //     minion_model.constraints.push(minionast::Constraint::Div(
+        // conjure_ast::Expression::DivEq(_metadata, a, b, c) => {
+        //     minion_model.constraints.push(minion_ast::Constraint::Div(
         //         (read_var(*a)?, read_var(*b)?),
         //         read_var(*c)?,
         //     ));
         //     Ok(())
         // }
-        conjureast::Expression::AllDiff(_metadata, vars) => {
-            Ok(minionast::Constraint::AllDiff(read_vars(vars)?))
+        conjure_ast::Expression::AllDiff(_metadata, vars) => {
+            Ok(minion_ast::Constraint::AllDiff(read_vars(vars)?))
         }
-        conjureast::Expression::Or(_metadata, exprs) => Ok(minionast::Constraint::WatchedOr(
+        conjure_ast::Expression::Or(_metadata, exprs) => Ok(minion_ast::Constraint::WatchedOr(
             exprs
                 .iter()
                 .map(|x| read_expr(x.to_owned()))
-                .collect::<Result<Vec<minionast::Constraint>, SolverError>>()?,
+                .collect::<Result<Vec<minion_ast::Constraint>, SolverError>>()?,
         )),
         x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
     }
 }
-fn read_vars(exprs: Vec<conjureast::Expression>) -> Result<Vec<minionast::Var>, SolverError> {
-    let mut minion_vars: Vec<minionast::Var> = vec![];
+fn read_vars(exprs: Vec<conjure_ast::Expression>) -> Result<Vec<minion_ast::Var>, SolverError> {
+    let mut minion_vars: Vec<minion_ast::Var> = vec![];
     for expr in exprs {
         let minion_var = read_var(expr)?;
         minion_vars.push(minion_var);
@@ -294,20 +297,20 @@ fn read_vars(exprs: Vec<conjureast::Expression>) -> Result<Vec<minionast::Var>, 
     Ok(minion_vars)
 }
 
-fn read_var(e: conjureast::Expression) -> Result<minionast::Var, SolverError> {
+fn read_var(e: conjure_ast::Expression) -> Result<minion_ast::Var, SolverError> {
     // a minion var is either a reference or a "var as const"
     match _read_ref(e.clone()) {
-        Ok(name) => Ok(minionast::Var::NameRef(name)),
+        Ok(name) => Ok(minion_ast::Var::NameRef(name)),
         Err(_) => match read_const(e) {
-            Ok(n) => Ok(minionast::Var::ConstantAsVar(n)),
+            Ok(n) => Ok(minion_ast::Var::ConstantAsVar(n)),
             Err(x) => Err(x),
         },
     }
 }
 
-fn _read_ref(e: conjureast::Expression) -> Result<String, SolverError> {
+fn _read_ref(e: conjure_ast::Expression) -> Result<String, SolverError> {
     let name = match e {
-        conjureast::Expression::Reference(_metdata, n) => Ok(n),
+        conjure_ast::Expression::Reference(_metadata, n) => Ok(n),
         x => Err(ModelInvalid(format!(
             "expected a reference, but got `{0:?}`",
             x
@@ -318,9 +321,9 @@ fn _read_ref(e: conjureast::Expression) -> Result<String, SolverError> {
     Ok(str_name)
 }
 
-fn read_const(e: conjureast::Expression) -> Result<i32, SolverError> {
+fn read_const(e: conjure_ast::Expression) -> Result<i32, SolverError> {
     match e {
-        conjureast::Expression::Constant(_, conjureast::Constant::Int(n)) => Ok(n),
+        conjure_ast::Expression::Constant(_, conjure_ast::Constant::Int(n)) => Ok(n),
         x => Err(ModelInvalid(format!(
             "expected a constant, but got `{0:?}`",
             x
@@ -328,9 +331,9 @@ fn read_const(e: conjureast::Expression) -> Result<i32, SolverError> {
     }
 }
 
-fn _name_to_string(name: conjureast::Name) -> String {
+fn _name_to_string(name: conjure_ast::Name) -> String {
     match name {
-        conjureast::Name::UserName(x) => x,
-        conjureast::Name::MachineName(x) => format!("__conjure_machine_name_{}", x),
+        conjure_ast::Name::UserName(x) => x,
+        conjure_ast::Name::MachineName(x) => format!("__conjure_machine_name_{}", x),
     }
 }

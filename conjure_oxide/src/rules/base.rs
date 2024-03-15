@@ -1,8 +1,9 @@
-use conjure_core::ast::{
-    Constant as Const, DecisionVariable, Domain, Expression as Expr, Model, Range, SymbolTable,
+use crate::ast::{
+    Constant as Const, DecisionVariable, Domain, Expression as Expr, Range, SymbolTable
 };
-use conjure_core::metadata::Metadata;
-use conjure_core::rule::{ApplicationError, ApplicationResult, Reduction};
+use crate::Model;
+use crate::metadata::Metadata;
+use crate::rule::{ApplicationError, ApplicationResult, Reduction};
 use conjure_rules::{register_rule, register_rule_set};
 use uniplate::uniplate::Uniplate;
 

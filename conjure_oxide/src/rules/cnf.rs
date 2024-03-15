@@ -1,6 +1,7 @@
-use conjure_core::{
-    ast::{Expression as Expr, Model},
+use crate::{
+    ast::{Expression as Expr},
     rule::{ApplicationError, ApplicationResult, Reduction},
+    Model,
 };
 use conjure_rules::{register_rule, register_rule_set};
 

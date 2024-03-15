@@ -96,15 +96,14 @@ use self::model_modifier::*;
 use self::states::*;
 use self::stats::Stats;
 use anyhow::anyhow;
-use conjure_core::ast::Constant;
-use conjure_core::ast::DecisionVariable;
-use conjure_core::ast::{Domain, Expression, Model, Name};
 use itertools::Either;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::{Debug, Display};
 use std::time::Instant;
 use thiserror::Error;
+use crate::ast::{Name, Constant};
+use crate::Model;
 
 /// The type for user-defined callbacks for use with [Solver].
 ///

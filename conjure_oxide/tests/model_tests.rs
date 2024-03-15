@@ -3,6 +3,7 @@
 use conjure_core::metadata::Metadata;
 use conjure_oxide::ast::*;
 use std::collections::HashMap;
+use conjure_core::model::Model;
 
 #[test]
 fn modify_domain() {

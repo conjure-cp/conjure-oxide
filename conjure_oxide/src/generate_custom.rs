@@ -2,7 +2,7 @@
 
 // dependencies
 use crate::parse::model_from_json;
-use conjure_core::ast::Model;
+use crate::Model;
 
 use std::path::PathBuf;
 use walkdir::WalkDir;

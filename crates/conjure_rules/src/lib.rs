@@ -51,7 +51,8 @@ pub static RULE_SETS_DISTRIBUTED_SLICE: [RuleSet<'static>];
 /// ```rust
 /// # use conjure_rules::register_rule;
 /// # use conjure_core::rule::{ApplicationResult, Reduction};
-/// # use conjure_core::ast::{Expression, Model};
+/// # use conjure_core::ast::Expression;
+/// # use conjure_core::model::Model;
 /// #
 /// #[register_rule]
 /// fn identity(expr: &Expression, mdl: &Model) -> ApplicationResult {
@@ -79,7 +80,8 @@ pub fn get_rules() -> Vec<&'static Rule<'static>> {
 /// ```rust
 /// use conjure_rules::register_rule;
 /// use conjure_core::rule::{Rule, ApplicationResult, Reduction};
-/// use conjure_core::ast::{Expression, Model};
+/// use conjure_core::ast::Expression;
+/// use conjure_core::model::Model;
 ///
 /// #[register_rule]
 /// fn identity(expr: &Expression, mdl: &Model) -> ApplicationResult {
@@ -179,7 +181,8 @@ pub fn get_rule_set_by_name(name: &str) -> Option<&'static RuleSet<'static>> {
 ///
 /// For example:
 /// ```rust
-/// # use conjure_core::ast::{Expression, Model};
+/// # use conjure_core::ast::Expression;
+/// # use conjure_core::model::Model;
 /// # use conjure_core::rule::{ApplicationError, ApplicationResult, Reduction};
 /// # use conjure_rules::register_rule;
 /// #
