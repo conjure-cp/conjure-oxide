@@ -94,7 +94,7 @@ pub mod states;
 
 use self::model_modifier::*;
 use self::states::*;
-use self::stats::Stats;
+use self::stats::SolverStats;
 use crate::ast::{Constant, Name};
 use crate::Model;
 use anyhow::anyhow;
@@ -311,7 +311,7 @@ impl<A: SolverAdaptor> Solver<A, ModelLoaded> {
 }
 
 impl<A: SolverAdaptor> Solver<A, ExecutionSuccess> {
-    pub fn stats(self) -> Option<Box<dyn Stats>> {
+    pub fn stats(self) -> Option<Box<dyn SolverStats>> {
         self.state.stats
     }
 
@@ -349,7 +349,7 @@ pub enum SolverError {
 
 /// Returned from [SolverAdaptor] when solving is successful.
 pub struct SolveSuccess {
-    stats: Option<Box<dyn Stats>>,
+    stats: Option<Box<dyn SolverStats>>,
     status: SearchStatus,
 }
 

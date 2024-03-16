@@ -32,12 +32,19 @@ pub fn conjure_executable() -> Result<()> {
             bail!("The correct Conjure executable is not present in PATH.")
         }
     }
-    let version = stdout
+    let version_line = stdout
         .lines()
         .nth(1)
-        .ok_or(anyhow!("Could not read Conjure's stdout"))?
-        .strip_prefix("Release version ")
-        .ok_or(anyhow!("Could not read Conjure version"))?;
+        .ok_or(anyhow!("Could not read Conjure's stdout"))?;
+    
+    let version = match version_line.strip_prefix("Release version ") {
+        Some(v) => Ok(v),
+        None => match version_line.strip_prefix("Conjure v") { // New format: Conjure v2.5.1 (Repository version ...)
+            Some(v) => v.split_whitespace().next().ok_or(anyhow!("Could not read Conjure's version from: {}", version_line)),
+            None => Err(anyhow!("Could not read Conjure's version from: {}", version_line))
+        },
+    }?;
+    
     if Versioning::new(version) < Versioning::new(CONJURE_MIN_VERSION) {
         bail!(
             "Conjure version is too old (< {}): {}",

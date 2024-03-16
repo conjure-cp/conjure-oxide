@@ -1,8 +1,4 @@
-//! Statistics about a solver run.
-use super::private::Sealed;
-
-pub trait Stats: Sealed {}
+pub trait SolverStats: {}
 
 pub struct NoStats;
-impl Sealed for NoStats {}
-impl Stats for NoStats {}
+impl SolverStats for NoStats {}

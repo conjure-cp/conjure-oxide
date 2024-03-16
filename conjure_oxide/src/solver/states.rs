@@ -28,7 +28,7 @@ pub struct ModelLoaded;
 /// The state returned by [`Solver`] if solving has been successful.
 pub struct ExecutionSuccess {
     /// Execution statistics.
-    pub stats: Option<Box<dyn Stats>>,
+    pub stats: Option<Box<dyn SolverStats>>,
 
     /// The status of the search
     pub status: SearchStatus,
