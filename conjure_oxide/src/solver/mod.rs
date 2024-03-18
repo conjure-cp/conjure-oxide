@@ -27,11 +27,12 @@
 //! use conjure_oxide::rule_engine::resolve_rules::resolve_rule_sets;
 //! use conjure_oxide::solver::{Solver,adaptors,SolverAdaptor};
 //! use conjure_oxide::solver::states::*;
+//! use conjure_oxide::SolverName;
 //! use std::sync::{Arc,Mutex};
 //!
 //! // Define and rewrite a model for minion.
 //! let model = get_example_model("bool-03").unwrap();
-//! let rule_sets = resolve_rule_sets(vec!["Minion", "Constant"]).unwrap();
+//! let rule_sets = resolve_rule_sets(SolverName::Minion, vec!["Constant"]).unwrap();
 //! let model = rewrite_model(&model,&rule_sets).unwrap();
 //!
 //!

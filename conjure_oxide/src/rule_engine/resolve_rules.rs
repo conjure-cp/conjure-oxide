@@ -1,9 +1,10 @@
 use conjure_core::rule::Rule;
-use conjure_rules::get_rule_set_by_name;
+use conjure_rules::{get_rule_set_by_name, get_rule_sets_for_solver};
 use conjure_rules::rule_set::RuleSet;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
 use thiserror::Error;
+use conjure_core::SolverName;
 
 #[derive(Debug, Error)]
 pub enum ResolveRulesError {
@@ -32,53 +33,52 @@ fn get_rule_set(rule_set_name: &str) -> Result<&'static RuleSet<'static>, Resolv
     }
 }
 
-/// Helper function to resolve the dependencies of a rule set.
-///
-/// # Arguments
-/// - `rule_set_name` The name of the rule set to resolve.
-/// # Returns
-/// - A set of the given rule set and all of its dependencies.
-fn resolve_dependencies(
-    rule_set_name: &str,
-) -> Result<HashSet<&'static RuleSet<'static>>, ResolveRulesError> {
-    #[allow(clippy::mutable_key_type)] // RuleSet is 'static so it's fine
-    let mut ans: HashSet<&'static RuleSet<'static>> = HashSet::new();
-    let rule_set = get_rule_set(rule_set_name)?;
-
-    ans.insert(rule_set);
-
-    if rule_set.dependencies.is_empty() {
-        return Ok(ans);
-    }
-
-    for dep in rule_set.dependencies {
-        #[allow(clippy::mutable_key_type)] // RuleSet is 'static so it's fine
-        let new_dependencies = resolve_dependencies(dep)?;
-        ans.extend(new_dependencies);
-    }
-
-    Ok(ans)
-}
-
-/// Helper function to resolve a list of rule set names into a list of rule sets.
+/// Resolve a list of rule sets (and dependencies) by their names
 ///
 /// # Arguments
 /// - `rule_set_names` The names of the rule sets to resolve.
+/// 
 /// # Returns
 /// - A list of the given rule sets and all of their dependencies, or error
-pub fn resolve_rule_sets<'a>(
+/// 
+#[allow(clippy::mutable_key_type)] // RuleSet is 'static so it's fine
+pub fn rule_sets_by_names<'a>(
     rule_set_names: Vec<&str>,
-) -> Result<Vec<&'a RuleSet<'static>>, ResolveRulesError> {
-    #[allow(clippy::mutable_key_type)] // RuleSet is 'static so it's fine
+) -> Result<HashSet<&'a RuleSet<'static>>, ResolveRulesError> {
     let mut rs_set: HashSet<&'static RuleSet<'static>> = HashSet::new();
 
     for rule_set_name in rule_set_names {
-        #[allow(clippy::mutable_key_type)]
-        let new_dependencies = resolve_dependencies(rule_set_name)?;
+        let rule_set = get_rule_set(rule_set_name)?;
+        let new_dependencies = rule_set.get_dependencies();
+        rs_set.insert(rule_set);
         rs_set.extend(new_dependencies);
     }
 
-    Ok(rs_set.into_iter().collect())
+    Ok(rs_set)
+}
+
+/// Resolves the final set of rule sets to apply based on target solver and extra rule set names.
+/// 
+/// # Arguments
+/// - `target_solver` The solver to resolve the rule sets for.
+/// - `extra_rs_names` The names of the extra rule sets to use
+/// 
+/// # Returns
+/// - A vector of rule sets to apply.
+/// 
+#[allow(clippy::mutable_key_type)] // RuleSet is 'static so it's fine
+pub fn resolve_rule_sets<'a>(
+    target_solver: SolverName,
+    extra_rs_names: Vec<&str>,
+) -> Result<Vec<&'a RuleSet<'static>>, ResolveRulesError> {
+    let mut ans = HashSet::new();
+    
+    for rs in get_rule_sets_for_solver(target_solver) {
+        ans.extend(rs.with_dependencies());
+    }
+    
+    ans.extend(rule_sets_by_names(extra_rs_names)?);
+    Ok(ans.iter().cloned().collect())
 }
 
 /// Convert a list of rule sets into a final map of rules to their priorities.

@@ -6,13 +6,11 @@ use clap::{arg, command, Parser};
 use conjure_oxide::find_conjure::conjure_executable;
 
 use conjure_oxide::parse::model_from_json;
-use conjure_oxide::rule_engine::resolve_rules::{
-    get_rule_priorities, get_rules_vec, resolve_rule_sets,
-};
+use conjure_oxide::rule_engine::resolve_rules::{get_rule_priorities, get_rules_vec, resolve_rule_sets};
 use conjure_oxide::rule_engine::rewrite::rewrite_model;
 use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
 use std::path::PathBuf;
-use std::process::exit;
+use conjure_core::SolverName;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -28,18 +26,15 @@ struct Cli {
 }
 
 pub fn main() -> AnyhowResult<()> {
-    let rule_sets = match resolve_rule_sets(vec!["Minion", "Constant"]) {
-        Ok(rs) => rs,
-        Err(e) => {
-            eprintln!("Error resolving rule sets: {}", e);
-            exit(1);
-        }
-    };
+    let rule_sets = resolve_rule_sets(SolverName::Minion, vec!["Constant"])?;
 
-    println!("Rule sets:");
-    println!("{{");
+    print!("Rule sets: {{");
     rule_sets.iter().for_each(|rule_set| {
-        println!("{:?}", rule_set);
+        print!("{}", rule_set.name);
+        #[allow(clippy::unwrap_used)]
+        if rule_set != rule_sets.last().unwrap() {
+            print!(", ");
+        }
     });
     println!("}}\n");
 

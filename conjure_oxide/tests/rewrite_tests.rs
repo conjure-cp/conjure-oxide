@@ -8,9 +8,10 @@ use uniplate::uniplate::Uniplate;
 use conjure_core::{metadata::Metadata, rule::Rule};
 use conjure_oxide::ast::*;
 use conjure_oxide::eval_constant;
-use conjure_oxide::rule_engine::{resolve_rules::resolve_rule_sets, rewrite::rewrite_model};
+use conjure_oxide::rule_engine::{rewrite::rewrite_model};
 use conjure_oxide::solver::{adaptors, Solver};
 use conjure_oxide::Model;
+use conjure_oxide::rule_engine::resolve_rules::resolve_rule_sets;
 use conjure_rules::{get_rule_by_name, get_rules};
 
 #[test]
@@ -825,7 +826,7 @@ fn rule_distribute_or_over_and() {
 fn rewrite_solve_xyz() {
     println!("Rules: {:?}", conjure_rules::get_rules());
 
-    let rule_sets = match resolve_rule_sets(vec!["Minion", "Constant"]) {
+    let rule_sets = match resolve_rule_sets(conjure_core::SolverName::Minion, vec!["Constant"]) {
         Ok(rs) => rs,
         Err(e) => {
             eprintln!("Error resolving rule sets: {}", e);
@@ -864,7 +865,7 @@ fn rewrite_solve_xyz() {
         ],
     );
 
-    let rule_sets = match resolve_rule_sets(vec!["Minion", "Constant"]) {
+    let rule_sets = match resolve_rule_sets(conjure_core::SolverName::Minion, vec!["Constant"]) {
         Ok(rs) => rs,
         Err(e) => {
             eprintln!("Error resolving rule sets: {}", e);

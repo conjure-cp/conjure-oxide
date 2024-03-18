@@ -5,4 +5,4 @@ pub mod rule;
 pub mod solvers;
 mod context;
 
-pub use solvers::Solver;
+pub use solvers::SolverName;

@@ -22,6 +22,8 @@
 // However, proc-macro crates can only export proc-macros. Therefore, we must use a "front end
 // crate" (i.e. this one) to re-export both the macro and all the things it may need.
 
+use conjure_core::SolverName;
+use conjure_core::solvers::SolverFamily;
 use crate::_dependencies::distributed_slice;
 use crate::_dependencies::Rule;
 pub use crate::rule_set::RuleSet;
@@ -148,6 +150,60 @@ pub fn get_rule_set_by_name(name: &str) -> Option<&'static RuleSet<'static>> {
         .iter()
         .find(|rule_set| rule_set.name == name)
         .cloned()
+}
+
+/// Get all rule sets for a given solver.
+/// Returns a `Vec` of static references to all rule sets that are applicable to the given solver.
+/// 
+/// # Example
+/// ```rust
+/// use conjure_core::solvers::SolverName;
+/// use conjure_core::solvers::SolverFamily;
+/// use conjure_rules::register_rule_set;
+///
+/// register_rule_set!("RS1", 10, ("DependencyRuleSet"));
+/// register_rule_set!("RS2", 5, ("AnotherRuleSet"), (), (SolverName::Minion));
+/// register_rule_set!("RS3", 5, ("AnotherRuleSet"), (SolverFamily::Minion));
+///
+/// let rule_sets = conjure_rules::get_rule_sets_for_solver(SolverName::Minion);
+/// assert_eq!(rule_sets.len(), 2); // RS2 and RS3
+/// ```
+pub fn get_rule_sets_for_solver(solver: SolverName) -> Vec<&'static RuleSet<'static>> {
+    get_rule_sets()
+        .iter()
+        .filter(|rule_set| {
+            let mut solvers = rule_set.solvers.to_vec();
+            solvers.extend(rule_set.solver_families.iter().flat_map(|family| family.solvers()));
+            solvers.contains(&solver)
+        })
+        .cloned()
+        .collect()
+}
+
+/// Get all rule sets for a given solver family.
+/// Returns a `Vec` of static references to all rule sets that are applicable to the given solver family.
+/// 
+/// # Example
+/// 
+/// ```rust
+/// use conjure_core::solvers::SolverFamily;
+/// use conjure_rules::register_rule_set;
+/// 
+/// register_rule_set!("RS1", 10, ("DependencyRuleSet"));
+/// register_rule_set!("RS2", 5, ("AnotherRuleSet"), (SolverFamily::SAT));
+/// 
+/// let rule_sets = conjure_rules::get_rule_sets_for_solver_family(SolverFamily::SAT);
+/// assert_eq!(rule_sets.len(), 1);
+/// assert_eq!(rule_sets[0].name, "RS2");
+/// ```
+pub fn get_rule_sets_for_solver_family(solver_family: SolverFamily) -> Vec<&'static RuleSet<'static>> {
+    get_rule_sets()
+        .iter()
+        .filter(|rule_set| {
+            rule_set.solver_families.iter().any(|family| family.eq(&solver_family))
+        })
+        .cloned()
+        .collect()
 }
 
 /// This procedural macro registers a decorated function with `conjure_rules`' global registry, and
