@@ -131,7 +131,6 @@ impl Parse for RuleSetArgs {
         input.parse::<Comma>()?;
         let solver_families = parse_parenthesized::<Path>(input)?;
 
-
         Ok(Self {
             name,
             priority,

@@ -1,6 +1,6 @@
-use std::sync::{Arc, RwLock};
 use crate::rules::{Rule, RuleSet};
 use crate::solvers::SolverFamily;
+use std::sync::{Arc, RwLock};
 
 #[non_exhaustive]
 pub struct Context<'a> {

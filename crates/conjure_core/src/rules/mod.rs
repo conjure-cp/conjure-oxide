@@ -67,7 +67,7 @@ pub use conjure_rules_proc_macro::register_rule_set;
 pub use rule::{ApplicationError, ApplicationResult, Reduction, Rule};
 pub use rule_set::RuleSet;
 
-use crate::solvers::{SolverFamily};
+use crate::solvers::SolverFamily;
 
 pub mod rule;
 pub mod rule_set;

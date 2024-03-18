@@ -1,7 +1,7 @@
+use conjure_core::solvers::SolverFamily;
 use core::panic;
 use std::collections::HashMap;
 use std::process::exit;
-use conjure_core::solvers::SolverFamily;
 
 use conjure_oxide::{
     ast::*,

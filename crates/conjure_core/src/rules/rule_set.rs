@@ -22,7 +22,7 @@ pub struct RuleSet<'a> {
     dependency_rs_names: &'a [&'a str],
     dependencies: OnceLock<HashSet<&'a RuleSet<'a>>>,
     /// The solver families that this rule set applies to.
-    pub solver_families: &'a [SolverFamily]
+    pub solver_families: &'a [SolverFamily],
 }
 
 impl<'a> RuleSet<'a> {
