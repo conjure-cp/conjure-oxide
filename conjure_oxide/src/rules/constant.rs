@@ -1,9 +1,13 @@
-use crate::ast::{Constant as Const, Expression as Expr};
-use crate::metadata::Metadata;
-use crate::rule::{ApplicationError, ApplicationResult, Reduction};
-use crate::Model;
-
-use conjure_rules::{register_rule, register_rule_set};
+use crate::{
+    ApplicationError,
+    ApplicationResult,
+    ast::{Constant as Const, Expression as Expr},
+    Metadata,
+    Model,
+    Reduction,
+    register_rule,
+    register_rule_set
+};
 
 register_rule_set!("Constant", 255, ());
 

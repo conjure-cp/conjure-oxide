@@ -1,11 +1,9 @@
+use uniplate::uniplate::Uniplate;
+
+use crate::{ApplicationError, ApplicationResult, Metadata, Model, Reduction, register_rule, register_rule_set};
 use crate::ast::{
     Constant as Const, DecisionVariable, Domain, Expression as Expr, Range, SymbolTable,
 };
-use crate::metadata::Metadata;
-use crate::rule::{ApplicationError, ApplicationResult, Reduction};
-use crate::Model;
-use conjure_rules::{register_rule, register_rule_set};
-use uniplate::uniplate::Uniplate;
 
 /*****************************************************************************/
 /*        This file contains basic rules for simplifying expressions         */

@@ -1,5 +1,26 @@
 // #![feature(doc_auto_cfg)]
 
+pub use conjure_core::ast;
+pub use conjure_core::metadata::Metadata;
+pub use conjure_core::model::Model;
+pub use conjure_core::rules::{ApplicationError,
+                              ApplicationResult,
+                              get_rule_by_name,
+                              get_rule_set_by_name,
+                              get_rule_sets,
+                              get_rule_sets_for_solver,
+                              get_rule_sets_for_solver_family,
+                              get_rules,
+                              Reduction,
+                              register_rule,
+                              register_rule_set,
+                              Rule,
+                              RuleSet};
+pub use conjure_core::solvers::SolverFamily;
+pub use conjure_core::solvers::SolverName;
+pub use error::Error;
+pub use rules::eval_constant;
+
 pub mod error;
 pub mod find_conjure;
 pub mod generate_custom;
@@ -7,17 +28,6 @@ pub mod parse;
 pub mod rule_engine;
 pub mod rules;
 pub mod utils;
-
-pub use conjure_core::ast; // re-export core::ast as conjure_oxide::ast
-pub use conjure_core::metadata;
-pub use conjure_core::model::Model; // rexport core::ast::Model as conjure_oxide::Model
-pub use conjure_core::rule;
-pub use conjure_core::solvers::SolverFamily;
-pub use conjure_core::solvers::SolverName;
-pub use conjure_rules::rule_set;
-pub use rules::eval_constant;
-
-pub use error::Error;
 
 pub mod solver;
 

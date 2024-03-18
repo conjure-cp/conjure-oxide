@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 
-use conjure_core::metadata::Metadata;
 use serde_json::Value;
+use serde_json::Value as JsonValue;
+
+use conjure_core::metadata::Metadata;
 
 use crate::ast::{Constant, DecisionVariable, Domain, Expression, Name, Range};
 use crate::error::{Error, Result};
 use crate::Model;
-use serde_json::Value as JsonValue;
 
 pub fn model_from_json(str: &str) -> Result<Model> {
     let mut m = Model::default();

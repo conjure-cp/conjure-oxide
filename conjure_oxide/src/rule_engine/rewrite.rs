@@ -1,13 +1,17 @@
-use crate::ast::Expression;
-use crate::rule::{Reduction, Rule};
-use crate::rule_engine::resolve_rules::{
-    get_rule_priorities, get_rules_vec, ResolveRulesError as ResolveError,
-};
-use crate::rule_set::RuleSet;
-use crate::Model;
 use std::fmt::Display;
+
 use thiserror::Error;
+
 use uniplate::uniplate::Uniplate;
+
+use crate::{
+    ast::Expression,
+    Model,
+    Reduction,
+    Rule,
+    rule_engine::resolve_rules::{get_rule_priorities, get_rules_vec, ResolveRulesError as ResolveError},
+    RuleSet
+};
 
 #[derive(Debug)]
 struct RuleResult<'a> {

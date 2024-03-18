@@ -1,28 +1,26 @@
 use std::collections::HashMap;
-use std::sync::{Condvar, Mutex, OnceLock};
+use std::sync::{Mutex, OnceLock};
 
+use regex::Regex;
+
+use minion_ast::Model as MinionModel;
+use minion_rs::ast as minion_ast;
+use minion_rs::run_minion;
+
+use crate::ast as conjure_ast;
+use crate::Model as ConjureModel;
+use crate::solver::SolverCallback;
 use crate::solver::SolverMutCallback;
-use crate::solver::{states, SolverCallback};
 
 use super::super::model_modifier::NotModifiable;
 use super::super::private;
-use super::super::stats::NoStats;
 use super::super::SearchComplete::*;
 use super::super::SearchIncomplete::*;
 use super::super::SearchStatus::*;
-use super::super::SolveSuccess;
 use super::super::SolverAdaptor;
 use super::super::SolverError;
 use super::super::SolverError::*;
-
-use minion_rs::run_minion;
-use regex::Regex;
-
-use crate::ast as conjure_ast;
-use minion_rs::ast as minion_ast;
-
-use crate::Model as ConjureModel;
-use minion_ast::Model as MinionModel;
+use super::super::SolveSuccess;
 
 /// A [SolverAdaptor] for interacting with Minion.
 ///

@@ -1,14 +1,17 @@
 //! Common code for SAT adaptors.
 //! Primarily, this is CNF related code.
 
+use std::collections::HashMap;
+
+use thiserror::Error;
+
+use conjure_core::metadata::Metadata;
+
 // (nd60, march 24) - i basically copied all this from @gskorokod's SAT implemention for the old
 // solver interface.
 use crate::{
-    ast as conjure_ast, solver::SolverError, solver::SolverError::*, Model as ConjureModel,
+    ast as conjure_ast, Model as ConjureModel, solver::SolverError, solver::SolverError::*,
 };
-use conjure_core::metadata::Metadata;
-use std::collections::HashMap;
-use thiserror::Error;
 
 /// A representation of a model in CNF.
 ///
@@ -325,14 +328,15 @@ impl HasVariable for &conjure_ast::Name {
 mod tests {
     use conjure_core::metadata::Metadata;
 
-    use super::CNFModel;
+    use crate::{
+        Model as ConjureModel, solver::SolverError, solver::SolverError::*,
+    };
+    use crate::ast::{DecisionVariable, Expression, Name};
     use crate::ast::Domain::{BoolDomain, IntDomain};
     use crate::ast::Expression::{And, Not, Or, Reference};
-    use crate::ast::{DecisionVariable, Expression, Name};
     use crate::utils::testing::assert_eq_any_order;
-    use crate::{
-        ast as conjure_ast, solver::SolverError, solver::SolverError::*, Model as ConjureModel,
-    };
+
+    use super::CNFModel;
 
     #[test]
     fn test_single_var() {

@@ -1,9 +1,10 @@
 // Tests for various functionalities of the Model
 
+use std::collections::HashMap;
+
 use conjure_core::metadata::Metadata;
 use conjure_core::model::Model;
 use conjure_oxide::ast::*;
-use std::collections::HashMap;
 
 #[test]
 fn modify_domain() {

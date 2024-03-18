@@ -4,11 +4,12 @@ pub mod bindings {
 }
 
 pub mod wrappers {
-    use crate::bindings::{
-        all_different, branch_IntVar, createVar, createVars, int_plus, make_vec_intvar,
-        output_vars1, var_sym_break, vec, ConLevel, IntVar, ValBranch, VarBranch,
-    };
     use core::ptr;
+
+    use crate::bindings::{
+        all_different, branch_IntVar, ConLevel, createVar, createVars, int_plus,
+        IntVar, make_vec_intvar, output_vars1, ValBranch, var_sym_break, VarBranch, vec,
+    };
 
     // The signature of createVar is below for reference.
     // createVar(x: *mut *mut IntVar, min: ::std::os::raw::c_int, max: ::std::os::raw::c_int, el: bool)

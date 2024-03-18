@@ -1,9 +1,11 @@
-use crate::ast::{DecisionVariable, Domain, Expression, Name, SymbolTable};
-use crate::metadata::Metadata;
-use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
 use std::cell::RefCell;
 use std::fmt::Debug;
+
+use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
+
+use crate::ast::{DecisionVariable, Domain, Expression, Name, SymbolTable};
+use crate::metadata::Metadata;
 
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

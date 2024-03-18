@@ -1,7 +1,8 @@
 use std::env::var;
-use std::fs::{read_dir, File};
+use std::fs::{File, read_dir};
 use std::io::{self, Write};
 use std::path::Path;
+
 use walkdir::WalkDir;
 
 fn main() -> io::Result<()> {

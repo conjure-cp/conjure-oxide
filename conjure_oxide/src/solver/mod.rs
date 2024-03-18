@@ -84,6 +84,20 @@
 #![allow(unused)]
 #![allow(clippy::manual_non_exhaustive)]
 
+use std::collections::HashMap;
+use std::error::Error;
+use std::fmt::{Debug, Display};
+use std::time::Instant;
+
+use thiserror::Error;
+
+use crate::ast::{Constant, Name};
+use crate::Model;
+
+use self::model_modifier::*;
+use self::states::*;
+use self::stats::SolverStats;
+
 pub mod adaptors;
 pub mod model_modifier;
 pub mod stats;
@@ -92,19 +106,6 @@ pub mod stats;
 mod private;
 
 pub mod states;
-
-use self::model_modifier::*;
-use self::states::*;
-use self::stats::SolverStats;
-use crate::ast::{Constant, Name};
-use crate::Model;
-use anyhow::anyhow;
-use itertools::Either;
-use std::collections::HashMap;
-use std::error::Error;
-use std::fmt::{Debug, Display};
-use std::time::Instant;
-use thiserror::Error;
 
 /// The type for user-defined callbacks for use with [Solver].
 ///

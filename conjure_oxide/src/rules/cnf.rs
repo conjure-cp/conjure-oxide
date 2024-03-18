@@ -1,15 +1,19 @@
 use crate::{
+    ApplicationError,
+    ApplicationResult,
     ast::Expression as Expr,
-    rule::{ApplicationError, ApplicationResult, Reduction},
     Model,
+    Reduction,
+    register_rule,
+    register_rule_set,
+    SolverFamily
 };
-use conjure_rules::{register_rule, register_rule_set};
 
 /***********************************************************************************/
 /*        This file contains rules for converting logic expressions to CNF         */
 /***********************************************************************************/
 
-register_rule_set!("CNF", 100, ("Base"));
+register_rule_set!("CNF", 100, ("Base"), (SolverFamily::SAT));
 
 /**
 * Distribute `not` over `and` (De Morgan's Law):

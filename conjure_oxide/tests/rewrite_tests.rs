@@ -1,22 +1,27 @@
-// Tests for rewriting/simplifying parts of the AST
-use conjure_oxide::solver::SolverAdaptor as _;
 use core::panic;
 use std::collections::HashMap;
 use std::process::exit;
-use uniplate::uniplate::Uniplate;
 
-use conjure_core::{metadata::Metadata, rule::Rule};
-use conjure_oxide::ast::*;
-use conjure_oxide::eval_constant;
-use conjure_oxide::rule_engine::resolve_rules::resolve_rule_sets;
-use conjure_oxide::rule_engine::rewrite::rewrite_model;
-use conjure_oxide::solver::{adaptors, Solver};
-use conjure_oxide::Model;
-use conjure_rules::{get_rule_by_name, get_rules};
+use conjure_oxide::{
+    ast::*,
+    eval_constant,
+    get_rule_by_name,
+    get_rules,
+    Metadata,
+    Model,
+    Rule,
+    rule_engine::{
+        resolve_rules::resolve_rule_sets,
+        rewrite::rewrite_model,
+    },
+    solver::{adaptors, Solver, SolverAdaptor as _},
+    SolverName
+};
+use uniplate::uniplate::Uniplate;
 
 #[test]
 fn rules_present() {
-    let rules = conjure_rules::get_rules();
+    let rules = get_rules();
     assert!(!rules.is_empty());
 }
 
@@ -236,7 +241,7 @@ fn rule_sum_geq() {
 /// ```
 #[test]
 fn reduce_solve_xyz() {
-    println!("Rules: {:?}", conjure_rules::get_rules());
+    println!("Rules: {:?}", get_rules());
     let sum_constants = get_rule_by_name("sum_constants").unwrap();
     let unwrap_sum = get_rule_by_name("unwrap_sum").unwrap();
     let lt_to_ineq = get_rule_by_name("lt_to_ineq").unwrap();
@@ -824,9 +829,9 @@ fn rule_distribute_or_over_and() {
 /// of applying the rules manually.
 #[test]
 fn rewrite_solve_xyz() {
-    println!("Rules: {:?}", conjure_rules::get_rules());
+    println!("Rules: {:?}", get_rules());
 
-    let rule_sets = match resolve_rule_sets(conjure_core::SolverName::Minion, vec!["Constant"]) {
+    let rule_sets = match resolve_rule_sets(SolverName::Minion, vec!["Constant"]) {
         Ok(rs) => rs,
         Err(e) => {
             eprintln!("Error resolving rule sets: {}", e);
@@ -865,7 +870,7 @@ fn rewrite_solve_xyz() {
         ],
     );
 
-    let rule_sets = match resolve_rule_sets(conjure_core::SolverName::Minion, vec!["Constant"]) {
+    let rule_sets = match resolve_rule_sets(SolverName::Minion, vec!["Constant"]) {
         Ok(rs) => rs,
         Err(e) => {
             eprintln!("Error resolving rule sets: {}", e);

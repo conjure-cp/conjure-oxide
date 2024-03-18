@@ -1,11 +1,12 @@
 // generate_custom.rs with get_example_model function
 
+use std::path::PathBuf;
+
+use walkdir::WalkDir;
+
+use crate::Model;
 // dependencies
 use crate::parse::model_from_json;
-use crate::Model;
-
-use std::path::PathBuf;
-use walkdir::WalkDir;
 
 /// Searches recursively in `../tests/integration` folder for an `.essence` file matching the given
 /// filename, then uses conjure to process it into astjson, and returns the parsed model.

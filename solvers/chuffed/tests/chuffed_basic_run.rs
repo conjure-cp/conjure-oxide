@@ -1,6 +1,6 @@
 use chuffed_rs::bindings::{
-    get_idx, new_dummy_problem, p_addVars, p_print, p_setcallback, vec, ConLevel_CL_DEF, IntVar,
-    VarBranch_VAR_INORDER, VarBranch_VAR_MIN_MIN,
+    ConLevel_CL_DEF, get_idx, IntVar, new_dummy_problem, p_addVars, p_setcallback, VarBranch_VAR_INORDER,
+    VarBranch_VAR_MIN_MIN, vec,
 };
 use chuffed_rs::wrappers::{
     all_different_wrapper, branch_wrapper, create_vars, output_vars_wrapper, var_sym_break_wrapper,

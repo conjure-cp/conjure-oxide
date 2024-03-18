@@ -1,10 +1,14 @@
 use crate::{
+    ApplicationError,
+    ApplicationResult,
     ast::{Constant as Const, Expression as Expr},
-    metadata::Metadata,
-    rule::{ApplicationError, ApplicationResult, Reduction},
-    Model, SolverFamily,
+    Metadata,
+    Model,
+    Reduction,
+    register_rule,
+    register_rule_set,
+    SolverFamily
 };
-use conjure_rules::{register_rule, register_rule_set};
 
 /************************************************************************/
 /*        Rules for translating to Minion-supported constraints         */

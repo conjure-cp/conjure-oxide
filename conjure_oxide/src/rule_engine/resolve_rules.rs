@@ -1,10 +1,15 @@
-use conjure_core::rule::Rule;
-use conjure_core::SolverName;
-use conjure_rules::rule_set::RuleSet;
-use conjure_rules::{get_rule_set_by_name, get_rule_sets_for_solver};
 use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
+
 use thiserror::Error;
+
+use crate::{
+    get_rule_set_by_name,
+    get_rule_sets_for_solver,
+    Rule,
+    RuleSet,
+    SolverName,
+};
 
 #[derive(Debug, Error)]
 pub enum ResolveRulesError {

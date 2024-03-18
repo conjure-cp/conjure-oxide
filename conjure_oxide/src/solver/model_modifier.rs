@@ -5,10 +5,10 @@
 //!
 //! This gives access to a [`ModelModifier`] in the solution retrieval callback.
 
+use crate::ast::{Domain, Expression, Name};
+
 use super::private;
 use super::Solver;
-use crate::ast::{Domain, Expression, Name};
-use crate::Model;
 
 /// A ModelModifier provides an interface to modify a model during solving.
 ///

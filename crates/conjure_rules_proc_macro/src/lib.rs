@@ -1,14 +1,13 @@
-//! This is the backend procedural macro crate for `conjure_rules`. USE THAT INSTEAD!
-
 use proc_macro::TokenStream;
+
 use proc_macro2::Span;
 use quote::quote;
+use syn::{
+    Ident, ItemFn, LitInt, LitStr, parenthesized, parse::Parse, parse::ParseStream,
+    parse_macro_input, Path, Result,
+};
 use syn::punctuated::Punctuated;
 use syn::token::Comma;
-use syn::{
-    parenthesized, parse::Parse, parse::ParseStream, parse_macro_input, Ident, ItemFn, LitInt,
-    LitStr, Path, Result,
-};
 
 #[derive(Debug)]
 struct RuleSetAndPriority {
@@ -67,8 +66,8 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
     let expanded = quote! {
         #func
 
-        #[::conjure_rules::_dependencies::distributed_slice(::conjure_rules::RULES_DISTRIBUTED_SLICE)]
-        pub static #static_ident: ::conjure_rules::_dependencies::Rule<'static> = ::conjure_rules::_dependencies::Rule {
+        #[::conjure_core::rules::distributed_slice(::conjure_core::rules::RULES_DISTRIBUTED_SLICE)]
+        pub static #static_ident: ::conjure_core::rules::Rule<'static> = ::conjure_core::rules::Rule {
             name: stringify!(#rule_ident),
             application: #rule_ident,
             rule_sets: &[#(#rule_sets),*],
@@ -95,7 +94,6 @@ fn parse_parenthesized<T: Parse>(input: ParseStream) -> Result<Vec<T>> {
     Ok(paths)
 }
 
-#[derive(Debug)]
 struct RuleSetArgs {
     name: LitStr,
     priority: LitInt,
@@ -194,8 +192,8 @@ pub fn register_rule_set(args: TokenStream) -> TokenStream {
     };
 
     let expanded = quote! {
-        #[::conjure_rules::_dependencies::distributed_slice(::conjure_rules::RULE_SETS_DISTRIBUTED_SLICE)]
-        pub static #static_ident: ::conjure_rules::RuleSet<'static> = ::conjure_rules::RuleSet::new(#name, #priority, &[#dependencies], &[#solver_families], &[#solvers]);
+        #[::conjure_core::rules::distributed_slice(::conjure_core::rules::RULE_SETS_DISTRIBUTED_SLICE)]
+        pub static #static_ident: ::conjure_core::rules::RuleSet<'static> = ::conjure_core::rules::RuleSet::new(#name, #priority, &[#dependencies], &[#solver_families], &[#solvers]);
     };
 
     TokenStream::from(expanded)

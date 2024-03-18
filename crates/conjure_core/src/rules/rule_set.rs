@@ -1,12 +1,12 @@
-use crate::{get_rule_set_by_name, get_rules};
-use conjure_core::rule::Rule;
-use conjure_core::solvers::SolverFamily;
-use conjure_core::SolverName;
-use log::warn;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
 use std::sync::OnceLock;
+
+use log::warn;
+
+use crate::rules::{get_rule_set_by_name, get_rules, Rule};
+use crate::solvers::{SolverFamily, SolverName};
 
 /// A set of rules with a name, priority, and dependencies.
 #[derive(Clone, Debug)]
