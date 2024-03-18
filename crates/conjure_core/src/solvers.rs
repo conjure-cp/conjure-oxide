@@ -3,14 +3,18 @@ use strum_macros::{EnumIter, EnumString};
 
 /// All supported solvers.
 #[derive(Debug, EnumString, EnumIter, Display, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Default)]
 pub enum SolverName {
+    #[default]
     Minion,
     KissSAT,
 }
 
 #[derive(Debug, EnumString, EnumIter, Display, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Default)]
 pub enum SolverFamily {
     SAT,
+    #[default]
     Minion,
 }
 
@@ -23,6 +27,8 @@ impl SolverName {
     }
 }
 
+
+
 impl SolverFamily {
     pub fn solvers(&self) -> &[SolverName] {
         match self {
@@ -31,3 +37,4 @@ impl SolverFamily {
         }
     }
 }
+
