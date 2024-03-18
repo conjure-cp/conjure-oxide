@@ -13,6 +13,7 @@ pub use conjure_core::metadata;
 pub use conjure_core::model::Model; // rexport core::ast::Model as conjure_oxide::Model
 pub use conjure_core::rule;
 pub use conjure_core::solvers::Solver;
+pub use conjure_core::solvers::SolverFamily;
 pub use conjure_rules::rule_set;
 pub use rules::eval_constant;
 

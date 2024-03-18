@@ -3,6 +3,7 @@ use crate::{
     metadata::Metadata,
     rule::{ApplicationError, ApplicationResult, Reduction},
     Model,
+    SolverFamily
 };
 use conjure_rules::{register_rule, register_rule_set};
 
@@ -10,7 +11,7 @@ use conjure_rules::{register_rule, register_rule_set};
 /*        Rules for translating to Minion-supported constraints         */
 /************************************************************************/
 
-register_rule_set!("Minion", 100, ("Base"));
+register_rule_set!("Minion", 100, ("Base"), (SolverFamily::Minion));
 
 fn is_nested_sum(exprs: &Vec<Expr>) -> bool {
     for e in exprs {

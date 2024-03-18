@@ -3,6 +3,8 @@ use conjure_core::rule::Rule;
 use std::collections::HashMap;
 use std::hash::Hash;
 use std::sync::OnceLock;
+use conjure_core::Solver;
+use conjure_core::solvers::SolverFamily;
 
 /// A set of rules with a name, priority, and dependencies.
 #[derive(Clone, Debug)]
@@ -16,14 +18,20 @@ pub struct RuleSet<'a> {
     pub rules: OnceLock<HashMap<&'a Rule<'a>, u8>>,
     /// The names of the rule sets that this rule set depends on.
     pub dependencies: &'a [&'a str],
+    /// The solver families that this rule set applies to.
+    pub solver_families: &'a [SolverFamily],
+    /// The solvers that this rule set applies to.
+    pub solvers: &'a [Solver],
 }
 
 impl<'a> RuleSet<'a> {
-    pub const fn new(name: &'a str, priority: u8, dependencies: &'a [&'a str]) -> Self {
+    pub const fn new(name: &'a str, order: u8, dependencies: &'a [&'a str], solver_families: &'a [SolverFamily], solvers: &'a [Solver]) -> Self {
         Self {
             name,
-            order: priority,
+            order,
             dependencies,
+            solvers,
+            solver_families,
             rules: OnceLock::new(),
         }
     }

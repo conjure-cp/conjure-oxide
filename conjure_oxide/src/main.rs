@@ -37,11 +37,11 @@ pub fn main() -> AnyhowResult<()> {
     };
 
     println!("Rule sets:");
-    print!("{{ ");
+    println!("{{");
     rule_sets.iter().for_each(|rule_set| {
-        print!("{}, ", rule_set.name);
+        println!("{:?}", rule_set);
     });
-    print!("}}\n\n");
+    println!("}}\n");
 
     let rule_priorities = get_rule_priorities(&rule_sets)?;
     let rules_vec = get_rules_vec(&rule_priorities);

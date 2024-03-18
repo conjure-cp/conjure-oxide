@@ -5,10 +5,7 @@ use proc_macro2::Span;
 use quote::quote;
 use syn::punctuated::Punctuated;
 use syn::token::Comma;
-use syn::{
-    parenthesized, parse::Parse, parse::ParseStream, parse_macro_input, Ident, ItemFn, LitInt,
-    LitStr, Result,
-};
+use syn::{parenthesized, parse::Parse, parse::ParseStream, parse_macro_input, Ident, ItemFn, LitInt, LitStr, Result, Path};
 
 #[derive(Debug)]
 struct RuleSetAndPriority {
@@ -78,11 +75,30 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
     TokenStream::from(expanded)
 }
 
+fn parse_parenthesized<T: Parse>(input: ParseStream) -> Result<Vec<T>> {
+    let content;
+    parenthesized!(content in input);
+    
+    let mut paths = Vec::new();
+    while !content.is_empty() {
+        let path = content.parse()?;
+        paths.push(path);
+        if content.is_empty() {
+            break;
+        }
+        content.parse::<Comma>()?;
+    }
+    
+    Ok(paths)
+}
+
 #[derive(Debug)]
 struct RuleSetArgs {
     name: LitStr,
     priority: LitInt,
     dependencies: Vec<LitStr>,
+    solver_families: Vec<Path>,
+    solvers: Vec<Path>,
 }
 
 impl Parse for RuleSetArgs {
@@ -96,28 +112,46 @@ impl Parse for RuleSetArgs {
                 name,
                 priority,
                 dependencies: Vec::new(),
+                solvers: Vec::new(),
+                solver_families: Vec::new(),
             });
         }
 
         input.parse::<Comma>()?;
+        let dependencies = parse_parenthesized::<LitStr>(input)?;
 
-        let content;
-        parenthesized!(content in input);
-
-        let mut dependencies = Vec::new();
-        while !content.is_empty() {
-            let dep = content.parse()?;
-            dependencies.push(dep);
-            if content.is_empty() {
-                break;
-            }
-            content.parse::<Comma>()?;
+        if input.is_empty() {
+            return Ok(Self {
+                name,
+                priority,
+                dependencies,
+                solvers: Vec::new(),
+                solver_families: Vec::new(),
+            });
         }
+
+        input.parse::<Comma>()?;
+        let solver_families = parse_parenthesized::<Path>(input)?;
+
+        if input.is_empty() {
+            return Ok(Self {
+                name,
+                priority,
+                dependencies,
+                solver_families,
+                solvers: Vec::new(),
+            });
+        }
+
+        input.parse::<Comma>()?;
+        let solvers = parse_parenthesized::<Path>(input)?;
 
         Ok(Self {
             name,
             priority,
             dependencies,
+            solver_families,
+            solvers,
         })
     }
 }
@@ -137,19 +171,28 @@ pub fn register_rule_set(args: TokenStream) -> TokenStream {
         name,
         priority,
         dependencies,
+        solver_families,
+        solvers
     } = parse_macro_input!(args as RuleSetArgs);
 
     let static_name = format!("CONJURE_GEN_RULE_SET_{}", name.value()).to_uppercase();
     let static_ident = Ident::new(&static_name, Span::call_site());
 
-    let dependencies = dependencies
-        .into_iter()
-        .map(|dep| quote! { #dep })
-        .collect::<Vec<_>>();
+    let dependencies = quote! {
+        #(#dependencies),*
+    };
+    
+    let solver_families = quote! {
+        #(#solver_families),*
+    };
+    
+    let solvers = quote! {
+        #(#solvers),*
+    };
 
     let expanded = quote! {
         #[::conjure_rules::_dependencies::distributed_slice(::conjure_rules::RULE_SETS_DISTRIBUTED_SLICE)]
-        pub static #static_ident: ::conjure_rules::RuleSet<'static> = ::conjure_rules::RuleSet::new(#name, #priority, &[#(#dependencies),*]);
+        pub static #static_ident: ::conjure_rules::RuleSet<'static> = ::conjure_rules::RuleSet::new(#name, #priority, &[#dependencies], &[#solver_families], &[#solvers]);
     };
 
     TokenStream::from(expanded)
