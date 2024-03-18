@@ -148,9 +148,7 @@ pub fn get_rule_by_name(name: &str) -> Option<&'static Rule<'static>> {
 /// register_rule_set!("MyRuleSet", 10, ("AnotherRuleSet"));
 /// register_rule_set!("AnotherRuleSet", 5, ());
 ///
-/// fn main() {
-///     println!("Rule sets: {:?}", get_rule_sets());
-/// }
+/// println!("Rule sets: {:?}", get_rule_sets());
 /// ```
 ///
 /// This will print (if no other rule sets are registered):
