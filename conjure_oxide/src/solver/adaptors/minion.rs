@@ -8,19 +8,19 @@ use minion_rs::ast as minion_ast;
 use minion_rs::run_minion;
 
 use crate::ast as conjure_ast;
-use crate::Model as ConjureModel;
 use crate::solver::SolverCallback;
 use crate::solver::SolverMutCallback;
+use crate::Model as ConjureModel;
 
 use super::super::model_modifier::NotModifiable;
 use super::super::private;
 use super::super::SearchComplete::*;
 use super::super::SearchIncomplete::*;
 use super::super::SearchStatus::*;
+use super::super::SolveSuccess;
 use super::super::SolverAdaptor;
 use super::super::SolverError;
 use super::super::SolverError::*;
-use super::super::SolveSuccess;
 
 /// A [SolverAdaptor] for interacting with Minion.
 ///

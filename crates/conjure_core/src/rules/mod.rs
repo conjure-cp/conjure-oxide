@@ -35,7 +35,7 @@ pub use linkme::distributed_slice;
 /// use conjure_core::model::Model;
 /// use conjure_core::rules::{ApplicationError, ApplicationResult, Reduction};
 /// use conjure_core::rules::register_rule;
-/// 
+///
 /// #[register_rule(("RuleSetName", 10))]
 /// fn identity(expr: &Expression, mdl: &Model) -> ApplicationResult {
 ///   Ok(Reduction::pure(expr.clone()))
@@ -58,7 +58,7 @@ pub use conjure_rules_proc_macro::register_rule;
 ///
 /// ```rust
 /// use conjure_core::rules::register_rule_set;
-/// 
+///
 /// register_rule_set!("MyRuleSet", 10, ("DependencyRuleSet", "AnotherRuleSet"));
 /// ```
 pub use conjure_rules_proc_macro::register_rule_set;
@@ -144,7 +144,7 @@ pub fn get_rule_by_name(name: &str) -> Option<&'static Rule<'static>> {
 /// ```rust
 /// use conjure_core::rules::register_rule_set;
 /// use conjure_core::rules::get_rule_sets;
-/// 
+///
 /// register_rule_set!("MyRuleSet", 10, ("AnotherRuleSet"));
 /// register_rule_set!("AnotherRuleSet", 5, ());
 ///
@@ -172,7 +172,7 @@ pub fn get_rule_sets() -> Vec<&'static RuleSet<'static>> {
 /// ```rust
 /// use conjure_core::rules::register_rule_set;
 /// use conjure_core::rules::get_rule_set_by_name;
-/// 
+///
 /// register_rule_set!("MyRuleSet", 10, ("DependencyRuleSet", "AnotherRuleSet"));
 ///
 /// println!("Rule set: {:?}", get_rule_set_by_name("MyRuleSet"));
@@ -254,4 +254,3 @@ pub fn get_rule_sets_for_solver_family(
         .cloned()
         .collect()
 }
-

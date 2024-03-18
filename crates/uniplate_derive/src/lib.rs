@@ -2,7 +2,7 @@ use proc_macro::{self, TokenStream};
 
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
-use syn::{Data, DataEnum, DeriveInput, Ident, parse_macro_input, Variant};
+use syn::{parse_macro_input, Data, DataEnum, DeriveInput, Ident, Variant};
 
 use crate::utils::generate::{generate_field_clones, generate_field_fills, generate_field_idents};
 

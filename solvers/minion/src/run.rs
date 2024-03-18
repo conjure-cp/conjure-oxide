@@ -3,14 +3,14 @@
 use std::{
     collections::HashMap,
     ffi::CString,
-    sync::{Mutex, MutexGuard},
     sync::Condvar,
+    sync::{Mutex, MutexGuard},
 };
 
 use anyhow::anyhow;
 
-use crate::{ast::*, error::*, scoped_ptr::Scoped};
 use crate::ffi::{self};
+use crate::{ast::*, error::*, scoped_ptr::Scoped};
 
 /// The callback function used to capture results from Minion as they are generated.
 ///

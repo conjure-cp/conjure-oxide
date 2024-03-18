@@ -26,8 +26,8 @@ use std::collections::HashMap;
 use itertools::Itertools;
 use quote::quote;
 use syn::{
-    Attribute, ItemEnum, Meta, parse_macro_input, parse_quote,
-    punctuated::Punctuated, Token, Variant, visit_mut::VisitMut,
+    parse_macro_input, parse_quote, punctuated::Punctuated, visit_mut::VisitMut, Attribute,
+    ItemEnum, Meta, Token, Variant,
 };
 
 // A nice S.O answer that helped write the syn code :)

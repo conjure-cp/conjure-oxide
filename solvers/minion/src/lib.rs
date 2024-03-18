@@ -110,7 +110,7 @@ pub use run::*;
 pub mod error;
 mod ffi;
 
-mod run;
 pub mod ast;
+mod run;
 
 mod scoped_ptr;

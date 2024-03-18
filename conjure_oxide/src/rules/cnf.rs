@@ -1,12 +1,6 @@
 use crate::{
-    ApplicationError,
-    ApplicationResult,
-    ast::Expression as Expr,
-    Model,
-    Reduction,
-    register_rule,
-    register_rule_set,
-    SolverFamily
+    ast::Expression as Expr, register_rule, register_rule_set, ApplicationError, ApplicationResult,
+    Model, Reduction, SolverFamily,
 };
 
 /***********************************************************************************/

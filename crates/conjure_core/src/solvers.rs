@@ -1,5 +1,5 @@
-use strum_macros::{EnumIter, EnumString};
 use strum_macros::Display;
+use strum_macros::{EnumIter, EnumString};
 
 /// All supported solvers.
 #[derive(Debug, EnumString, EnumIter, Display, PartialEq, Eq, Hash, Clone, Copy)]

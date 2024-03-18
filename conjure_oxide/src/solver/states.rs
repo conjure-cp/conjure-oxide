@@ -3,10 +3,10 @@ use std::fmt::Display;
 
 use super::private::Internal;
 use super::private::Sealed;
+use super::stats::*;
 use super::SearchStatus;
 use super::Solver;
 use super::SolverError;
-use super::stats::*;
 
 pub trait SolverState: Sealed {}
 

@@ -1,8 +1,11 @@
 use uniplate::uniplate::Uniplate;
 
-use crate::{ApplicationError, ApplicationResult, Metadata, Model, Reduction, register_rule, register_rule_set};
 use crate::ast::{
     Constant as Const, DecisionVariable, Domain, Expression as Expr, Range, SymbolTable,
+};
+use crate::{
+    register_rule, register_rule_set, ApplicationError, ApplicationResult, Metadata, Model,
+    Reduction,
 };
 
 /*****************************************************************************/

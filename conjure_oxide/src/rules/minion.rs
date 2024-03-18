@@ -1,13 +1,7 @@
 use crate::{
-    ApplicationError,
-    ApplicationResult,
     ast::{Constant as Const, Expression as Expr},
-    Metadata,
-    Model,
-    Reduction,
-    register_rule,
-    register_rule_set,
-    SolverFamily
+    register_rule, register_rule_set, ApplicationError, ApplicationResult, Metadata, Model,
+    Reduction, SolverFamily,
 };
 
 /************************************************************************/

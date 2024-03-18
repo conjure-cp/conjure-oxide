@@ -6,13 +6,13 @@ use std::io::Write;
 
 use serde_json::{Error as JsonError, Value as JsonValue};
 
-use crate::ast::{Constant, Name};
 use crate::ast::Name::UserName;
-use crate::Error;
-use crate::Model as ConjureModel;
+use crate::ast::{Constant, Name};
 use crate::utils::conjure::minion_solutions_to_json;
 use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
+use crate::Error;
+use crate::Model as ConjureModel;
 
 pub fn assert_eq_any_order<T: Eq + Hash + Debug + Clone>(a: &Vec<Vec<T>>, b: &Vec<Vec<T>>) {
     assert_eq!(a.len(), b.len());

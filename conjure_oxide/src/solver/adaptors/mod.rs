@@ -7,5 +7,5 @@ pub use minion::Minion;
 
 mod sat_common;
 
-mod minion;
 mod kissat;
+mod minion;

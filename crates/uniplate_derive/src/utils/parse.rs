@@ -1,6 +1,6 @@
 use proc_macro2::{Ident, Span};
-use syn::{Expr, GenericArgument, PathArguments, PathSegment, Type};
 use syn::spanned::Spanned;
+use syn::{Expr, GenericArgument, PathArguments, PathSegment, Type};
 
 /// Represents an error produced during parsing a type argument (e.g. `::<T>`)
 pub enum ParseTypeArgumentError {

@@ -2,12 +2,12 @@ use proc_macro::TokenStream;
 
 use proc_macro2::Span;
 use quote::quote;
-use syn::{
-    Ident, ItemFn, LitInt, LitStr, parenthesized, parse::Parse, parse::ParseStream,
-    parse_macro_input, Path, Result,
-};
 use syn::punctuated::Punctuated;
 use syn::token::Comma;
+use syn::{
+    parenthesized, parse::Parse, parse::ParseStream, parse_macro_input, Ident, ItemFn, LitInt,
+    LitStr, Path, Result,
+};
 
 #[derive(Debug)]
 struct RuleSetAndPriority {

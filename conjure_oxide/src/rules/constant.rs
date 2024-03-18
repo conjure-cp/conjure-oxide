@@ -1,12 +1,7 @@
 use crate::{
-    ApplicationError,
-    ApplicationResult,
     ast::{Constant as Const, Expression as Expr},
-    Metadata,
-    Model,
+    register_rule, register_rule_set, ApplicationError, ApplicationResult, Metadata, Model,
     Reduction,
-    register_rule,
-    register_rule_set
 };
 
 register_rule_set!("Constant", 255, ());

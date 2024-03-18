@@ -4,18 +4,10 @@ use std::process::exit;
 
 use conjure_oxide::{
     ast::*,
-    eval_constant,
-    get_rule_by_name,
-    get_rules,
-    Metadata,
-    Model,
-    Rule,
-    rule_engine::{
-        resolve_rules::resolve_rule_sets,
-        rewrite::rewrite_model,
-    },
+    eval_constant, get_rule_by_name, get_rules,
+    rule_engine::{resolve_rules::resolve_rule_sets, rewrite::rewrite_model},
     solver::{adaptors, Solver, SolverAdaptor as _},
-    SolverName
+    Metadata, Model, Rule, SolverName,
 };
 use uniplate::uniplate::Uniplate;
 

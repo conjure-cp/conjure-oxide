@@ -2,8 +2,8 @@
 
 use std::path::PathBuf;
 
-use anyhow::{anyhow, bail};
 use anyhow::Result as AnyhowResult;
+use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
 
 use conjure_core::solvers::SolverName;
