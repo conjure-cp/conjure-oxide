@@ -41,8 +41,8 @@ impl Parse for RegisterRuleArgs {
 }
 
 /**
-* Register a rule with the given rule sets and priorities.
-*/
+ * Register a rule with the given rule sets and priorities.
+ */
 #[proc_macro_attribute]
 pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream {
     let func = parse_macro_input!(item as ItemFn);
@@ -99,7 +99,6 @@ struct RuleSetArgs {
     priority: LitInt,
     dependencies: Vec<LitStr>,
     solver_families: Vec<Path>,
-    solvers: Vec<Path>,
 }
 
 impl Parse for RuleSetArgs {
@@ -113,7 +112,6 @@ impl Parse for RuleSetArgs {
                 name,
                 priority,
                 dependencies: Vec::new(),
-                solvers: Vec::new(),
                 solver_families: Vec::new(),
             });
         }
@@ -126,7 +124,6 @@ impl Parse for RuleSetArgs {
                 name,
                 priority,
                 dependencies,
-                solvers: Vec::new(),
                 solver_families: Vec::new(),
             });
         }
@@ -134,25 +131,12 @@ impl Parse for RuleSetArgs {
         input.parse::<Comma>()?;
         let solver_families = parse_parenthesized::<Path>(input)?;
 
-        if input.is_empty() {
-            return Ok(Self {
-                name,
-                priority,
-                dependencies,
-                solver_families,
-                solvers: Vec::new(),
-            });
-        }
-
-        input.parse::<Comma>()?;
-        let solvers = parse_parenthesized::<Path>(input)?;
 
         Ok(Self {
             name,
             priority,
             dependencies,
             solver_families,
-            solvers,
         })
     }
 }
@@ -173,7 +157,6 @@ pub fn register_rule_set(args: TokenStream) -> TokenStream {
         priority,
         dependencies,
         solver_families,
-        solvers,
     } = parse_macro_input!(args as RuleSetArgs);
 
     let static_name = format!("CONJURE_GEN_RULE_SET_{}", name.value()).to_uppercase();
@@ -187,13 +170,9 @@ pub fn register_rule_set(args: TokenStream) -> TokenStream {
         #(#solver_families),*
     };
 
-    let solvers = quote! {
-        #(#solvers),*
-    };
-
     let expanded = quote! {
         #[::conjure_core::rules::distributed_slice(::conjure_core::rules::RULE_SETS_DISTRIBUTED_SLICE)]
-        pub static #static_ident: ::conjure_core::rules::RuleSet<'static> = ::conjure_core::rules::RuleSet::new(#name, #priority, &[#dependencies], &[#solver_families], &[#solvers]);
+        pub static #static_ident: ::conjure_core::rules::RuleSet<'static> = ::conjure_core::rules::RuleSet::new(#name, #priority, &[#dependencies], &[#solver_families]);
     };
 
     TokenStream::from(expanded)

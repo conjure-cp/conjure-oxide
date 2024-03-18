@@ -6,7 +6,7 @@ use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
 
-use conjure_core::solvers::SolverName;
+use conjure_oxide::SolverFamily;
 use conjure_oxide::find_conjure::conjure_executable;
 use conjure_oxide::parse::model_from_json;
 use conjure_oxide::rule_engine::resolve_rules::{
@@ -29,7 +29,7 @@ struct Cli {
 }
 
 pub fn main() -> AnyhowResult<()> {
-    let rule_sets = resolve_rule_sets(SolverName::Minion, vec!["Constant"])?;
+    let rule_sets = resolve_rule_sets(SolverFamily::Minion, vec!["Constant"])?;
 
     print!("Rule sets: {{");
     rule_sets.iter().for_each(|rule_set| {

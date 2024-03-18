@@ -1,14 +1,13 @@
 use std::env;
 use std::error::Error;
 use std::path::Path;
-
+use conjure_oxide::SolverFamily;
 use conjure_oxide::rule_engine::resolve_rules::resolve_rule_sets;
 use conjure_oxide::rule_engine::rewrite::rewrite_model;
 use conjure_oxide::utils::conjure::{get_minion_solutions, parse_essence_file};
 use conjure_oxide::utils::testing::{
     read_minion_solutions_json, read_model_json, save_minion_solutions_json, save_model_json,
 };
-use conjure_oxide::SolverName;
 
 fn main() {
     let file_path = Path::new("/path/to/your/file.txt");
@@ -46,7 +45,7 @@ fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>
     assert_eq!(model, expected_model);
 
     // Stage 2: Rewrite the model using the rule engine and check that the result is as expected
-    let rule_sets = resolve_rule_sets(SolverName::Minion, vec!["Constant"])?;
+    let rule_sets = resolve_rule_sets(SolverFamily::Minion, vec!["Constant"])?;
     let model = rewrite_model(&model, &rule_sets)?;
     if verbose {
         println!("Rewritten model: {:#?}", model)

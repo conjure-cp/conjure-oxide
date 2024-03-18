@@ -1,13 +1,14 @@
 use core::panic;
 use std::collections::HashMap;
 use std::process::exit;
+use conjure_core::solvers::SolverFamily;
 
 use conjure_oxide::{
     ast::*,
     eval_constant, get_rule_by_name, get_rules,
     rule_engine::{resolve_rules::resolve_rule_sets, rewrite::rewrite_model},
     solver::{adaptors, Solver, SolverAdaptor as _},
-    Metadata, Model, Rule, SolverName,
+    Metadata, Model, Rule,
 };
 use uniplate::uniplate::Uniplate;
 
@@ -823,7 +824,7 @@ fn rule_distribute_or_over_and() {
 fn rewrite_solve_xyz() {
     println!("Rules: {:?}", get_rules());
 
-    let rule_sets = match resolve_rule_sets(SolverName::Minion, vec!["Constant"]) {
+    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, vec!["Constant"]) {
         Ok(rs) => rs,
         Err(e) => {
             eprintln!("Error resolving rule sets: {}", e);
@@ -862,7 +863,7 @@ fn rewrite_solve_xyz() {
         ],
     );
 
-    let rule_sets = match resolve_rule_sets(SolverName::Minion, vec!["Constant"]) {
+    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, vec!["Constant"]) {
         Ok(rs) => rs,
         Err(e) => {
             eprintln!("Error resolving rule sets: {}", e);

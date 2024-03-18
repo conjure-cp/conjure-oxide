@@ -43,6 +43,7 @@ pub use linkme::distributed_slice;
 /// ```
 #[doc(inline)]
 pub use conjure_rules_proc_macro::register_rule;
+
 /// This procedural macro registers a rule set with the global registry.
 /// It may be used in any downstream crate.
 ///
@@ -62,10 +63,11 @@ pub use conjure_rules_proc_macro::register_rule;
 /// register_rule_set!("MyRuleSet", 10, ("DependencyRuleSet", "AnotherRuleSet"));
 /// ```
 pub use conjure_rules_proc_macro::register_rule_set;
+
 pub use rule::{ApplicationError, ApplicationResult, Reduction, Rule};
 pub use rule_set::RuleSet;
 
-use crate::solvers::{SolverFamily, SolverName};
+use crate::solvers::{SolverFamily};
 
 pub mod rule;
 pub mod rule_set;
@@ -185,40 +187,6 @@ pub fn get_rule_set_by_name(name: &str) -> Option<&'static RuleSet<'static>> {
         .iter()
         .find(|rule_set| rule_set.name == name)
         .cloned()
-}
-
-/// Get all rule sets for a given solver.
-/// Returns a `Vec` of static references to all rule sets that are applicable to the given solver.
-///
-/// # Example
-/// ```rust
-/// use conjure_core::rules::get_rule_sets_for_solver;
-/// use conjure_core::solvers::SolverName;
-/// use conjure_core::solvers::SolverFamily;
-/// use conjure_core::rules::register_rule_set;
-///
-/// register_rule_set!("RS1", 10, ("DependencyRuleSet"));
-/// register_rule_set!("RS2", 5, ("AnotherRuleSet"), (), (SolverName::Minion));
-/// register_rule_set!("RS3", 5, ("AnotherRuleSet"), (SolverFamily::Minion));
-///
-/// let rule_sets = get_rule_sets_for_solver(SolverName::Minion);
-/// assert_eq!(rule_sets.len(), 2); // RS2 and RS3
-/// ```
-pub fn get_rule_sets_for_solver(solver: SolverName) -> Vec<&'static RuleSet<'static>> {
-    get_rule_sets()
-        .iter()
-        .filter(|rule_set| {
-            let mut solvers = rule_set.solvers.to_vec();
-            solvers.extend(
-                rule_set
-                    .solver_families
-                    .iter()
-                    .flat_map(|family| family.solvers()),
-            );
-            solvers.contains(&solver)
-        })
-        .cloned()
-        .collect()
 }
 
 /// Get all rule sets for a given solver family.

@@ -6,7 +6,7 @@ use std::sync::OnceLock;
 use log::warn;
 
 use crate::rules::{get_rule_set_by_name, get_rules, Rule};
-use crate::solvers::{SolverFamily, SolverName};
+use crate::solvers::SolverFamily;
 
 /// A set of rules with a name, priority, and dependencies.
 #[derive(Clone, Debug)]
@@ -22,9 +22,7 @@ pub struct RuleSet<'a> {
     dependency_rs_names: &'a [&'a str],
     dependencies: OnceLock<HashSet<&'a RuleSet<'a>>>,
     /// The solver families that this rule set applies to.
-    pub solver_families: &'a [SolverFamily],
-    /// The solvers that this rule set applies to.
-    pub solvers: &'a [SolverName],
+    pub solver_families: &'a [SolverFamily]
 }
 
 impl<'a> RuleSet<'a> {
@@ -33,13 +31,11 @@ impl<'a> RuleSet<'a> {
         order: u8,
         dependencies: &'a [&'a str],
         solver_families: &'a [SolverFamily],
-        solvers: &'a [SolverName],
     ) -> Self {
         Self {
             name,
             order,
             dependency_rs_names: dependencies,
-            solvers,
             solver_families,
             rules: OnceLock::new(),
             dependencies: OnceLock::new(),
@@ -162,11 +158,6 @@ impl<'a> Display for RuleSet<'a> {
             .iter()
             .map(|f| f.to_string())
             .collect::<Vec<String>>();
-        let solvers = self
-            .solvers
-            .iter()
-            .map(|s| s.to_string())
-            .collect::<Vec<String>>();
 
         write!(
             f,
@@ -175,9 +166,8 @@ impl<'a> Display for RuleSet<'a> {
             \torder: {}\n\
             \trules: {}\n\
             \tsolver_families: {:?}\n\
-            \tsolvers: {:?}\n\
         }}",
-            self.name, self.order, n_rules, solver_families, solvers
+            self.name, self.order, n_rules, solver_families
         )
     }
 }

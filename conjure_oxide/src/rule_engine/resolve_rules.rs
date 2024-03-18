@@ -3,7 +3,7 @@ use std::fmt::Display;
 
 use thiserror::Error;
 
-use crate::{get_rule_set_by_name, get_rule_sets_for_solver, Rule, RuleSet, SolverName};
+use crate::{get_rule_set_by_name, get_rule_sets_for_solver_family, Rule, RuleSet, SolverFamily};
 
 #[derive(Debug, Error)]
 pub enum ResolveRulesError {
@@ -67,12 +67,12 @@ pub fn rule_sets_by_names<'a>(
 ///
 #[allow(clippy::mutable_key_type)] // RuleSet is 'static so it's fine
 pub fn resolve_rule_sets<'a>(
-    target_solver: SolverName,
+    target_solver: SolverFamily,
     extra_rs_names: Vec<&str>,
 ) -> Result<Vec<&'a RuleSet<'static>>, ResolveRulesError> {
     let mut ans = HashSet::new();
 
-    for rs in get_rule_sets_for_solver(target_solver) {
+    for rs in get_rule_sets_for_solver_family(target_solver) {
         ans.extend(rs.with_dependencies());
     }
 
