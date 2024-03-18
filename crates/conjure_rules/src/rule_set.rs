@@ -1,12 +1,12 @@
 use crate::{get_rule_set_by_name, get_rules};
 use conjure_core::rule::Rule;
+use conjure_core::solvers::SolverFamily;
+use conjure_core::SolverName;
+use log::warn;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
 use std::sync::OnceLock;
-use log::warn;
-use conjure_core::SolverName;
-use conjure_core::solvers::SolverFamily;
 
 /// A set of rules with a name, priority, and dependencies.
 #[derive(Clone, Debug)]
@@ -28,7 +28,13 @@ pub struct RuleSet<'a> {
 }
 
 impl<'a> RuleSet<'a> {
-    pub const fn new(name: &'a str, order: u8, dependencies: &'a [&'a str], solver_families: &'a [SolverFamily], solvers: &'a [SolverName]) -> Self {
+    pub const fn new(
+        name: &'a str,
+        order: u8,
+        dependencies: &'a [&'a str],
+        solver_families: &'a [SolverFamily],
+        solvers: &'a [SolverName],
+    ) -> Self {
         Self {
             name,
             order,
@@ -115,10 +121,14 @@ impl<'a> RuleSet<'a> {
         for dep in self.dependency_rs_names {
             match get_rule_set_by_name(dep) {
                 None => {
-                    warn!("Rule set {} depends on non-existent rule set {}", &self.name, dep);
+                    warn!(
+                        "Rule set {} depends on non-existent rule set {}",
+                        &self.name, dep
+                    );
                 }
                 Some(rule_set) => {
-                    if !dependencies.contains(rule_set) { // Prevent cycles
+                    if !dependencies.contains(rule_set) {
+                        // Prevent cycles
                         dependencies.insert(rule_set);
                         dependencies.extend(rule_set.resolve_dependencies());
                     }
@@ -147,15 +157,27 @@ impl<'a> Hash for RuleSet<'a> {
 impl<'a> Display for RuleSet<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let n_rules = self.get_rules().len();
-        let solver_families = self.solver_families.iter().map(|f| f.to_string()).collect::<Vec<String>>();
-        let solvers = self.solvers.iter().map(|s| s.to_string()).collect::<Vec<String>>();
-        
-        write!(f, "RuleSet {{\n\
+        let solver_families = self
+            .solver_families
+            .iter()
+            .map(|f| f.to_string())
+            .collect::<Vec<String>>();
+        let solvers = self
+            .solvers
+            .iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>();
+
+        write!(
+            f,
+            "RuleSet {{\n\
             \tname: {}\n\
             \torder: {}\n\
             \trules: {}\n\
             \tsolver_families: {:?}\n\
             \tsolvers: {:?}\n\
-        }}", self.name, self.order, n_rules, solver_families, solvers)
+        }}",
+            self.name, self.order, n_rules, solver_families, solvers
+        )
     }
 }

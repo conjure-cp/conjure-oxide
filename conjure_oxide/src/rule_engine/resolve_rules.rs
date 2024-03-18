@@ -1,10 +1,10 @@
 use conjure_core::rule::Rule;
-use conjure_rules::{get_rule_set_by_name, get_rule_sets_for_solver};
+use conjure_core::SolverName;
 use conjure_rules::rule_set::RuleSet;
+use conjure_rules::{get_rule_set_by_name, get_rule_sets_for_solver};
 use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
 use thiserror::Error;
-use conjure_core::SolverName;
 
 #[derive(Debug, Error)]
 pub enum ResolveRulesError {
@@ -37,10 +37,10 @@ fn get_rule_set(rule_set_name: &str) -> Result<&'static RuleSet<'static>, Resolv
 ///
 /// # Arguments
 /// - `rule_set_names` The names of the rule sets to resolve.
-/// 
+///
 /// # Returns
 /// - A list of the given rule sets and all of their dependencies, or error
-/// 
+///
 #[allow(clippy::mutable_key_type)] // RuleSet is 'static so it's fine
 pub fn rule_sets_by_names<'a>(
     rule_set_names: Vec<&str>,
@@ -58,25 +58,25 @@ pub fn rule_sets_by_names<'a>(
 }
 
 /// Resolves the final set of rule sets to apply based on target solver and extra rule set names.
-/// 
+///
 /// # Arguments
 /// - `target_solver` The solver to resolve the rule sets for.
 /// - `extra_rs_names` The names of the extra rule sets to use
-/// 
+///
 /// # Returns
 /// - A vector of rule sets to apply.
-/// 
+///
 #[allow(clippy::mutable_key_type)] // RuleSet is 'static so it's fine
 pub fn resolve_rule_sets<'a>(
     target_solver: SolverName,
     extra_rs_names: Vec<&str>,
 ) -> Result<Vec<&'a RuleSet<'static>>, ResolveRulesError> {
     let mut ans = HashSet::new();
-    
+
     for rs in get_rule_sets_for_solver(target_solver) {
         ans.extend(rs.with_dependencies());
     }
-    
+
     ans.extend(rule_sets_by_names(extra_rs_names)?);
     Ok(ans.iter().cloned().collect())
 }

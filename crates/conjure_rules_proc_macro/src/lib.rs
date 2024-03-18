@@ -5,7 +5,10 @@ use proc_macro2::Span;
 use quote::quote;
 use syn::punctuated::Punctuated;
 use syn::token::Comma;
-use syn::{parenthesized, parse::Parse, parse::ParseStream, parse_macro_input, Ident, ItemFn, LitInt, LitStr, Result, Path};
+use syn::{
+    parenthesized, parse::Parse, parse::ParseStream, parse_macro_input, Ident, ItemFn, LitInt,
+    LitStr, Path, Result,
+};
 
 #[derive(Debug)]
 struct RuleSetAndPriority {
@@ -78,7 +81,7 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
 fn parse_parenthesized<T: Parse>(input: ParseStream) -> Result<Vec<T>> {
     let content;
     parenthesized!(content in input);
-    
+
     let mut paths = Vec::new();
     while !content.is_empty() {
         let path = content.parse()?;
@@ -88,7 +91,7 @@ fn parse_parenthesized<T: Parse>(input: ParseStream) -> Result<Vec<T>> {
         }
         content.parse::<Comma>()?;
     }
-    
+
     Ok(paths)
 }
 
@@ -172,7 +175,7 @@ pub fn register_rule_set(args: TokenStream) -> TokenStream {
         priority,
         dependencies,
         solver_families,
-        solvers
+        solvers,
     } = parse_macro_input!(args as RuleSetArgs);
 
     let static_name = format!("CONJURE_GEN_RULE_SET_{}", name.value()).to_uppercase();
@@ -181,11 +184,11 @@ pub fn register_rule_set(args: TokenStream) -> TokenStream {
     let dependencies = quote! {
         #(#dependencies),*
     };
-    
+
     let solver_families = quote! {
         #(#solver_families),*
     };
-    
+
     let solvers = quote! {
         #(#solvers),*
     };

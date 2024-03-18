@@ -5,12 +5,14 @@ use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
 use conjure_oxide::find_conjure::conjure_executable;
 
+use conjure_core::SolverName;
 use conjure_oxide::parse::model_from_json;
-use conjure_oxide::rule_engine::resolve_rules::{get_rule_priorities, get_rules_vec, resolve_rule_sets};
+use conjure_oxide::rule_engine::resolve_rules::{
+    get_rule_priorities, get_rules_vec, resolve_rule_sets,
+};
 use conjure_oxide::rule_engine::rewrite::rewrite_model;
 use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
 use std::path::PathBuf;
-use conjure_core::SolverName;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]

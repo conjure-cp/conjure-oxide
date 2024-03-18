@@ -2,8 +2,7 @@ use crate::{
     ast::{Constant as Const, Expression as Expr},
     metadata::Metadata,
     rule::{ApplicationError, ApplicationResult, Reduction},
-    Model,
-    SolverFamily
+    Model, SolverFamily,
 };
 use conjure_rules::{register_rule, register_rule_set};
 
