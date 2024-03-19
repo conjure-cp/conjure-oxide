@@ -10,7 +10,6 @@ use uniplate::uniplate::Uniplate;
 
 #[derive(Debug)]
 struct RuleResult<'a> {
-    #[allow(dead_code)] // Not used yet, but will be useful to have
     rule: &'a Rule<'a>,
     reduction: Reduction,
 }
@@ -49,7 +48,7 @@ pub fn rewrite_model<'a>(
     let mut new_model = model.clone();
 
     while let Some(step) = rewrite_iteration(&new_model.constraints, &new_model, &rules) {
-        step.apply(&mut new_model); // Apply side-effects (e.g. symbol table updates
+        step.apply(&mut new_model); // Apply side-effects (e.g. symbol table updates)
     }
     Ok(new_model)
 }
@@ -96,8 +95,12 @@ fn apply_all_rules<'a>(
                     rule,
                     reduction: red,
                 });
+                log::trace!("Rule applied: {:?}", rule);
             }
-            Err(_) => continue,
+            Err(_) => {
+                log::trace!("Rule attempted but not applied: {:?}", rule);
+                continue;
+            }
         }
     }
     results
@@ -111,6 +114,5 @@ fn choose_rewrite(results: &Vec<RuleResult>) -> Option<Reduction> {
         return None;
     }
     // Return the first result for now
-    // println!("Applying rule: {:?}", results[0].rule);
     Some(results[0].reduction.clone())
 }
