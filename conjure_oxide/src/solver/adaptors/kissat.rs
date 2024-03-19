@@ -1,3 +1,4 @@
+use conjure_core::solvers::SolverFamily;
 use crate::solver::SolverCallback;
 use crate::solver::SolverMutCallback;
 use crate::Model as ConjureModel;
@@ -57,5 +58,9 @@ impl SolverAdaptor for Kissat {
         _: private::Internal,
     ) -> Result<Self::Model, SolverError> {
         CNFModel::from_conjure(model)
+    }
+
+    fn get_family(&self) -> SolverFamily {
+        SolverFamily::SAT
     }
 }

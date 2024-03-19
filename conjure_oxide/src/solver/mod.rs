@@ -90,6 +90,7 @@ use std::fmt::{Debug, Display};
 use std::time::Instant;
 
 use thiserror::Error;
+use conjure_core::solvers::SolverFamily;
 
 use crate::ast::{Constant, Name};
 use crate::Model;
@@ -109,14 +110,14 @@ pub mod states;
 
 /// The type for user-defined callbacks for use with [Solver].
 ///
-/// Note that this enforces threadsafetyb
+/// Note that this enforces thread safety
 pub type SolverCallback = Box<dyn Fn(HashMap<Name, Constant>) -> bool + Send>;
 pub type SolverMutCallback<A> =
     Box<dyn Fn(HashMap<Name, Constant>, <A as SolverAdaptor>::Modifier) -> bool + Send>;
 
 /// A common interface for calling underlying solver APIs inside a [`Solver`].
 ///
-/// Implementations of this trait arn't directly callable and should be used through [`Solver`] .
+/// Implementations of this trait aren't directly callable and should be used through [`Solver`] .
 ///
 /// The below documentation lists the formal requirements that all implementations of
 /// [`SolverAdaptor`] should follow - **see the top level module documentation and [`Solver`] for
@@ -206,6 +207,9 @@ pub trait SolverAdaptor: private::Sealed {
         _: private::Internal,
     ) -> Result<Self::Model, SolverError>;
     fn init_solver(&mut self, _: private::Internal) {}
+    
+    /// Get the solver family that this solver adaptor belongs to
+    fn get_family(&self) -> SolverFamily;
 }
 
 /// An abstract representation of a constraints solver.
@@ -218,7 +222,7 @@ pub trait SolverAdaptor: private::Sealed {
 /// underlying solver used, the translation of the model to a solver compatible form, how solutions
 /// are translated back to [conjure_core::ast] types, and how incremental solving is implemented.
 /// As such, there may be multiple [SolverAdaptor] implementations for a single underlying solver:
-/// eg. one adaptor may give solutions in a representation close to the solvers, while another may
+/// e.g. one adaptor may give solutions in a representation close to the solvers, while another may
 /// attempt to rewrite it back into Essence.
 ///
 #[derive(Clone)]
@@ -238,6 +242,10 @@ impl<Adaptor: SolverAdaptor> Solver<Adaptor> {
 
         solver.adaptor.init_solver(private::Internal);
         solver
+    }
+    
+    pub fn get_family(&self) -> SolverFamily {
+        self.adaptor.get_family()
     }
 }
 

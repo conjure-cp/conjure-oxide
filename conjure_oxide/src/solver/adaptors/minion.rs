@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 
 use regex::Regex;
+use conjure_core::solvers::SolverFamily;
 
 use minion_ast::Model as MinionModel;
 use minion_rs::ast as minion_ast;
@@ -138,6 +139,10 @@ impl SolverAdaptor for Minion {
         parse_vars(&model, &mut minion_model)?;
         parse_exprs(&model, &mut minion_model)?;
         Ok(minion_model)
+    }
+
+    fn get_family(&self) -> SolverFamily {
+        SolverFamily::Minion
     }
 }
 
