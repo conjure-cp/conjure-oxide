@@ -2,8 +2,11 @@
 
 use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
+use serde_json::json;
+use structured_logger::{json::new_writer, unix_ms, Builder};
 use clap::{arg, command, Parser};
 use conjure_oxide::find_conjure::conjure_executable;
+use serde_json::to_string_pretty;
 
 use conjure_oxide::parse::model_from_json;
 use conjure_oxide::rule_engine::resolve_rules::{
@@ -11,6 +14,8 @@ use conjure_oxide::rule_engine::resolve_rules::{
 };
 use conjure_oxide::rule_engine::rewrite::rewrite_model;
 use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
+use std::fs::File;
+use std::io::stdout;
 use std::path::PathBuf;
 use std::process::exit;
 
@@ -28,6 +33,22 @@ struct Cli {
 }
 
 pub fn main() -> AnyhowResult<()> {
+
+
+    let log_file = File::options()
+        .create(true)
+        .append(true)
+        .open("conjure_oxide.log")
+        .unwrap();
+
+    Builder::new()
+        // Optional: set a specific writer (format to JSON, write to stdout) for target starts with "api"..
+        .with_target_writer("info", new_writer(stdout()))
+        // Optional: set a specific writer (format to JSON, write to app.log file) for target "file" and "db".
+        .with_target_writer("file,db", new_writer(log_file))
+        .init();
+
+
     let rule_sets = match resolve_rule_sets(vec!["Minion", "Constant"]) {
         Ok(rs) => rs,
         Err(e) => {
@@ -35,6 +56,9 @@ pub fn main() -> AnyhowResult<()> {
             exit(1);
         }
     };
+
+    log::info!(target: "info", "Rule sets: {}", rule_sets.iter().map(|rs| rs.name).collect::<Vec<_>>());
+
 
     println!("Rule sets:");
     print!("{{ ");
@@ -45,6 +69,8 @@ pub fn main() -> AnyhowResult<()> {
 
     let rule_priorities = get_rule_priorities(&rule_sets)?;
     let rules_vec = get_rules_vec(&rule_priorities);
+
+    log::info!(target: "info", "Rules and priorities: {:?}", rules_vec.iter().map(|rule| (rule.name, rule_priorities.get(rule).unwrap_or(&0))).collect::<Vec<_>>());
 
     println!("Rules and priorities:");
     rules_vec.iter().for_each(|rule| {
