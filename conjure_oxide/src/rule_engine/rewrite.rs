@@ -95,10 +95,10 @@ fn apply_all_rules<'a>(
                     rule,
                     reduction: red,
                 });
-                log::trace!("Rule applied: {:?}", rule);
+                log::trace!(target: "file", "Rule applied: {:?}", rule);
             }
             Err(_) => {
-                log::trace!("Rule attempted but not applied: {:?}", rule);
+                log::trace!(target: "file", "Rule attempted but not applied: {:?}", rule);
                 continue;
             }
         }

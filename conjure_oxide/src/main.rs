@@ -39,7 +39,7 @@ pub fn main() -> AnyhowResult<()> {
 
     Builder::new()
         .with_target_writer("info", new_writer(stdout()))
-        .with_target_writer("file,db", new_writer(log_file))
+        .with_target_writer("file", new_writer(log_file))
         .init();
 
     let rule_sets = match resolve_rule_sets(vec!["Minion", "Constant"]) {
