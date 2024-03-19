@@ -89,8 +89,8 @@ use std::error::Error;
 use std::fmt::{Debug, Display};
 use std::time::Instant;
 
-use thiserror::Error;
 use conjure_core::solvers::SolverFamily;
+use thiserror::Error;
 
 use crate::ast::{Constant, Name};
 use crate::Model;
@@ -207,7 +207,7 @@ pub trait SolverAdaptor: private::Sealed {
         _: private::Internal,
     ) -> Result<Self::Model, SolverError>;
     fn init_solver(&mut self, _: private::Internal) {}
-    
+
     /// Get the solver family that this solver adaptor belongs to
     fn get_family(&self) -> SolverFamily;
 }
@@ -243,7 +243,7 @@ impl<Adaptor: SolverAdaptor> Solver<Adaptor> {
         solver.adaptor.init_solver(private::Internal);
         solver
     }
-    
+
     pub fn get_family(&self) -> SolverFamily {
         self.adaptor.get_family()
     }

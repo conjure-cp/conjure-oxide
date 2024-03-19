@@ -19,7 +19,11 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn new(variables: SymbolTable, constraints: Expression, context: Context<'static>) -> Model {
+    pub fn new(
+        variables: SymbolTable,
+        constraints: Expression,
+        context: Context<'static>,
+    ) -> Model {
         Model {
             variables,
             constraints,

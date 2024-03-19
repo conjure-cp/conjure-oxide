@@ -1,7 +1,7 @@
-use conjure_core::solvers::SolverFamily;
 use crate::solver::SolverCallback;
 use crate::solver::SolverMutCallback;
 use crate::Model as ConjureModel;
+use conjure_core::solvers::SolverFamily;
 
 use super::super::model_modifier::NotModifiable;
 use super::super::private;

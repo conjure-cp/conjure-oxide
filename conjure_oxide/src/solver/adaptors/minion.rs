@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 
-use regex::Regex;
 use conjure_core::solvers::SolverFamily;
+use regex::Regex;
 
 use minion_ast::Model as MinionModel;
 use minion_rs::ast as minion_ast;
