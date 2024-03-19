@@ -275,12 +275,19 @@ fn parse_vec_op(
     let (key, value) = vec_op.into_iter().next()?;
     let constructor = vec_operators.get(key.as_str())?;
 
-    let args_parsed: Vec<Expression> = value["AbstractLiteral"]["AbsLitMatrix"][1]
+    let args_parsed: Vec<Option<Expression>> = value["AbstractLiteral"]["AbsLitMatrix"][1]
         .as_array()?
         .iter()
-        .map(|x| parse_expression(x).unwrap())
+        .map(parse_expression)
         .collect();
-    Some(constructor(Metadata::new(), args_parsed))
+
+    let number_of_args = args_parsed.len();
+    let valid_args: Vec<Expression> = args_parsed.into_iter().flatten().collect();
+    if number_of_args != valid_args.len() {
+        None
+    } else {
+        Some(constructor(Metadata::new(), valid_args))
+    }
 }
 
 fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expression> {

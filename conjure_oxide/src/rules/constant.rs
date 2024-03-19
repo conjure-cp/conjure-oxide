@@ -57,7 +57,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Const> {
         // Expr::Div(_, a, b) => bin_op::<i32, i32>(|a, b| a / b, a, b).map(Const::Int),
         // Expr::SafeDiv(_, a, b) => bin_op::<i32, i32>(|a, b| a / b, a, b).map(Const::Int),
         Expr::Min(_, exprs) => {
-            vec_op::<i32, i32>(|e| *e.iter().min().unwrap(), exprs).map(Const::Int)
+            opt_vec_op::<i32, i32>(|e| e.iter().min().copied(), exprs).map(Const::Int)
         }
         _ => {
             println!("WARNING: Unimplemented constant eval: {:?}", expr);
@@ -99,6 +99,14 @@ where
 {
     let a = a.iter().map(unwrap_expr).collect::<Option<Vec<T>>>()?;
     Some(f(a))
+}
+
+fn opt_vec_op<T, A>(f: fn(Vec<T>) -> Option<A>, a: &[Expr]) -> Option<A>
+where
+    T: TryFrom<Const>,
+{
+    let a = a.iter().map(unwrap_expr).collect::<Option<Vec<T>>>()?;
+    f(a)
 }
 
 fn flat_op<T, A>(f: fn(Vec<T>, T) -> A, a: &[Expr], b: &Expr) -> Option<A>
