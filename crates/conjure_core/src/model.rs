@@ -5,22 +5,25 @@ use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 
 use crate::ast::{DecisionVariable, Domain, Expression, Name, SymbolTable};
+use crate::context::Context;
 use crate::metadata::Metadata;
 
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Model {
+pub struct Model<'a, T> {
     #[serde_as(as = "Vec<(_, _)>")]
     pub variables: SymbolTable,
     pub constraints: Expression,
+    pub context: Context<'a, T>,
     next_var: RefCell<i32>,
 }
 
-impl Model {
-    pub fn new(variables: SymbolTable, constraints: Expression) -> Model {
+impl<'a, T> Model<'a, T> {
+    pub fn new(variables: SymbolTable, constraints: Expression, context: Context<'a, T>) -> Model<'a, T> {
         Model {
             variables,
             constraints,
+            context,
             next_var: RefCell::new(0),
         }
     }
@@ -80,8 +83,8 @@ impl Model {
     }
 }
 
-impl Default for Model {
+impl<'a, T> Default for Model<'a, T> {
     fn default() -> Self {
-        Self::new(SymbolTable::new(), Expression::Nothing)
+        Self::new(SymbolTable::new(), Expression::Nothing, Context::default())
     }
 }
