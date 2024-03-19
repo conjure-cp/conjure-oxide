@@ -1,5 +1,6 @@
 use std::fmt::{self, Display, Formatter};
 use std::hash::Hash;
+use serde::{Deserialize, Serialize};
 
 use thiserror::Error;
 

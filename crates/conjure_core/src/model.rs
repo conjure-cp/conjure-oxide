@@ -10,16 +10,16 @@ use crate::metadata::Metadata;
 
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Model<'a, T> {
+pub struct Model {
     #[serde_as(as = "Vec<(_, _)>")]
     pub variables: SymbolTable,
     pub constraints: Expression,
-    pub context: Context<'a, T>,
+    pub context: Context<'static>, // ToDo (gs248) - discuss about the 'static
     next_var: RefCell<i32>,
 }
 
-impl<'a, T> Model<'a, T> {
-    pub fn new(variables: SymbolTable, constraints: Expression, context: Context<'a, T>) -> Model<'a, T> {
+impl Model {
+    pub fn new(variables: SymbolTable, constraints: Expression, context: Context<'static>) -> Model {
         Model {
             variables,
             constraints,
@@ -83,7 +83,7 @@ impl<'a, T> Model<'a, T> {
     }
 }
 
-impl<'a, T> Default for Model<'a, T> {
+impl Default for Model {
     fn default() -> Self {
         Self::new(SymbolTable::new(), Expression::Nothing, Context::default())
     }
