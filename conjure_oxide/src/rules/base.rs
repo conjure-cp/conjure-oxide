@@ -397,22 +397,6 @@ fn evaluate_constant_not(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 }
 
-// /** Turn a Div into a SafeDiv and post a global constraint to avoid undefined. */
-// #[register_rule(("Base", 100))]
-// fn ensure_div(expr: &Expr, _: &Model) -> ApplicationResult {
-//     match expr {
-//         Expr::Div(metadata, a, b) => Ok(Reduction::with_top(
-//             Expr::SafeDiv(metadata.clone(), a.clone(), b.clone()),
-//             Expr::Neq(
-//                 Metadata::new(),
-//                 b.clone(),
-//                 Box::new(Expr::Constant(Metadata::new(), Const::Int(0))),
-//             ),
-//         )),
-//         _ => Err(ApplicationError::RuleNotApplicable),
-//     }
-// }
-
 /**
  * Turn a Min into a new variable and post a global constraint to ensure the new variable is the minimum.
  * ```text
