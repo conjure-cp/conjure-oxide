@@ -14,7 +14,8 @@ pub struct Model {
     #[serde_as(as = "Vec<(_, _)>")]
     pub variables: SymbolTable,
     pub constraints: Expression,
-    pub context: Context<'static>, // ToDo (gs248) - discuss about the 'static
+    #[serde(skip)]
+    pub context: Context<'static>,
     next_var: RefCell<i32>,
 }
 
