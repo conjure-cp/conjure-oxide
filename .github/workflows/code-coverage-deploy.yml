@@ -145,6 +145,26 @@ jobs:
         run: | 
           echo "num=$(cat deploy/prnumber)" > $GITHUB_OUTPUT
 
+      - name: Retrieve list of artifacts for the PR
+      id: find_artifacts
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const prNum = process.env.num;
+          const artifacts = await github.rest.actions.listArtifactsForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo
+          });
+          const artifactList = artifacts.data.artifacts.filter(artifact => artifact.name.includes(`coverage-${prNum}-`));
+          return artifactList;
+          
+      - name: Find previous artifact
+        id: prev_artifact
+        run: |
+          # assuming a sorted list of artifacts based on some naming convention
+          # extract the relevant information for the previous artifact (e.g., its ID)
+          echo "previous_artifact_id=<<extracted_id>>" >> $GITHUB_ENV
+
       - name: Install rust ${{ env.rust_release }}
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
@@ -152,7 +172,6 @@ jobs:
         continue-on-error: true
         id: lcov
         run: |
-
           sudo apt-get install -y lcov
           wget https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/main/lcov.info
           lcov --summary lcov.info > cov.txt
@@ -195,24 +214,45 @@ jobs:
               repo: context.repo.repo,
               comment_id: ${{ steps.fc.outputs.comment-id }}
             })
+      
+      - name: Download the previous lcov.info (historical) file
+        uses: actions/download-artifact@v2
+        run: |
+          name: code-coverage-${{ env.num }}-${{ env.previous_artifact_id }}
+          path: ./tools/code-coverage-diff/deploy-prev
 
       # this will be used for future visualizations in the coverage report (requiring external python libs)
       - name: Install python dependencies
         run: |
           pip install -r tools/code-coverage-diff/requirements.txt
 
-      - name: Calculate coverage difference
+      - name: Calculate current coverage difference PR <> main
         id: coveragediff
         run: |
-          # fetch main branch coverage data
-          wget https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/main/lcov.info
+          # pipeline lcov relevant stats to python script
+          python ./tools/code-coverage-diff/calculate_coverage_difference.py ${{ steps.lcov.outputs.main }} ${{ steps.lcov.outputs.pr }} > ./tools/code-coverage-diff/lcov/coverage_diff.txt
 
-          # compare main and PR lcov.info
-          python ./tools/code-coverage-diff/calculate_coverage_difference.py main_lcov.info ./deploy/lcov.info > ./tools/code-coverage-diff/lcov/coverage_diff.txt
-
-          echo "diff<<EOFABC" >> $GITHUB_ENV
+          # store into environment variable
+          echo "diff<<EOFABC" >> $GITHUB_OUTPUT
           cat ./tools/code-coverage-diff/lcov/coverage_diff.txt >> $GITHUB_ENV
-          echo 'EOFABC' >> $GITHUB_ENV
+          echo 'EOFABC' >> $GITHUB_OUTPUT
+
+          # create summary of previous (historical) lcov summary for main and pr
+          lcov --summary ./tools/code-coverage-diff/deploy-prev/lcov_main_previous.info > historical_coverage_lcov.txt
+          echo "hist_main_summary<<EOFABC" >> $GITHUB_OUTPUT
+          echo "$(cat historical_coverage_lcov.txt | tail -n +3)" >> $GITHUB_OUTPUT
+          echo 'EOFABC' >> $GITHUB_OUTPUT
+
+      - name: Calculate coverage difference with previous historical lcov artifact
+        id: historicalcoveragediff
+        run: |
+          # call python script to compare historical previous main coverage with current main coverage
+          python ./tools/code-coverage-diff/calculate_coverage_difference.py ${{ steps.lcov.outputs.main }} ${{ steps.coveragediff.outputs.hist_main_summary }} > ./tools/code-coverage-diff/lcov/hist_coverage_diff.txt
+
+          # store into output variable for comment display
+          echo "hist_diff<<EOFABC" >> $GITHUB_OUTPUT
+          cat ./tools/code-coverage-diff/lcov/hist_coverage_diff.txt >> $GITHUB_ENV
+          echo 'EOFABC' >> $GITHUB_OUTPUT
 
       - name: Create coverage comment
         uses: peter-evans/create-or-update-comment@v1
@@ -255,8 +295,14 @@ jobs:
             ${{ steps.lcov.outputs.main }}
             ```
 
-            ### Coverage Changes
+            ### Coverage Main & PR Coverage Change
 
             ```diff
-            ${{ env.diff }}
+            ${{ steps.coveragediff.outputs.diff }}
+            ```
+
+            ### Previous Main Coverage Change
+
+            ```diff
+            ${{ steps.historicalcoveragediff.outputs.hist_diff }}
             ```
