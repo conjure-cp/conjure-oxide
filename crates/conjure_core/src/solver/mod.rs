@@ -22,13 +22,13 @@
 //! ## A Successful Minion Model
 //!
 //! ```rust
-//! # use conjure_oxide::generate_custom::get_example_model;
-//! use conjure_oxide::rule_engine::rewrite::rewrite_model;
-//! use conjure_oxide::rule_engine::resolve_rules::resolve_rule_sets;
-//! use conjure_oxide::solver::{Solver,adaptors,SolverAdaptor};
-//! use conjure_oxide::solver::states::*;
-//! use conjure_oxide::SolverFamily;
 //! use std::sync::{Arc,Mutex};
+//! use conjure_core::parse::generate_custom::get_example_model;
+//! use conjure_core::rule_engine::resolve_rules::resolve_rule_sets;
+//! use conjure_core::rule_engine::rewrite::rewrite_model;
+//! use conjure_core::solver::{adaptors, Solver, SolverAdaptor};
+//! use conjure_core::solver::states::ModelLoaded;
+//! use conjure_core::solvers::SolverFamily;
 //!
 //! // Define and rewrite a model for minion.
 //! let model = get_example_model("bool-03").unwrap();
@@ -89,11 +89,11 @@ use std::error::Error;
 use std::fmt::{Debug, Display};
 use std::time::Instant;
 
-use conjure_core::solvers::SolverFamily;
 use thiserror::Error;
 
 use crate::ast::{Constant, Name};
 use crate::Model;
+use crate::solvers::SolverFamily;
 
 use self::model_modifier::*;
 use self::states::*;
