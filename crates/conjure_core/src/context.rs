@@ -31,8 +31,7 @@ impl<'a> Context<'a> {
 
 impl<'a> Debug for Context<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let target_solver_family: Option<SolverFamily> =
-            self.target_solver_family.read().unwrap().clone();
+        let target_solver_family: Option<SolverFamily> = *self.target_solver_family.read().unwrap();
         let extra_rule_set_names: Vec<String> = self.extra_rule_set_names.read().unwrap().clone();
         let rules: Vec<&str> = self.rules.read().unwrap().iter().map(|r| r.name).collect();
         let rule_sets: Vec<&str> = self

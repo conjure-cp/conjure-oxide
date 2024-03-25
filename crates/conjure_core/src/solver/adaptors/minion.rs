@@ -80,6 +80,12 @@ impl Minion {
     }
 }
 
+impl Default for Minion {
+    fn default() -> Self {
+        Minion::new()
+    }
+}
+
 impl SolverAdaptor for Minion {
     type Model = MinionModel;
     type Solution = minion_ast::Constant;

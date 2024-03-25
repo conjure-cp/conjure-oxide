@@ -1,6 +1,4 @@
-use crate::solver::SolverCallback;
-use crate::solver::SolverFamily;
-use crate::solver::SolverMutCallback;
+use crate::solver::{SolveSuccess, SolverCallback, SolverFamily, SolverMutCallback};
 use crate::Model as ConjureModel;
 
 use super::super::model_modifier::NotModifiable;
@@ -8,9 +6,9 @@ use super::super::private;
 use super::super::SearchComplete::*;
 use super::super::SearchIncomplete::*;
 use super::super::SearchStatus::*;
-use super::super::SolveSuccess;
 use super::super::SolverAdaptor;
 use super::super::SolverError;
+use super::super::SolverError::*;
 use super::super::SolverError::*;
 use super::sat_common::CNFModel;
 
@@ -26,6 +24,12 @@ impl Kissat {
         Kissat {
             __non_constructable: private::Internal,
         }
+    }
+}
+
+impl Default for Kissat {
+    fn default() -> Self {
+        Kissat::new()
     }
 }
 
