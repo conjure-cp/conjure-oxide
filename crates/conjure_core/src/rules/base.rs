@@ -2,10 +2,10 @@ use conjure_core::ast::{
     Constant as Const, DecisionVariable, Domain, Expression as Expr, Range, SymbolTable,
 };
 use conjure_core::metadata::Metadata;
-use conjure_core::Model;
 use conjure_core::rule_engine::{
-    ApplicationError, ApplicationResult, Reduction, register_rule, register_rule_set,
+    register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
 };
+use conjure_core::Model;
 use uniplate::uniplate::Uniplate;
 
 /*****************************************************************************/

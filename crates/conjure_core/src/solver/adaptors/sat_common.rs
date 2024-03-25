@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use thiserror::Error;
 
 use crate::{
-    ast as conjure_ast, Model as ConjureModel, solver::SolverError, solver::SolverError::*,
+    ast as conjure_ast, solver::SolverError, solver::SolverError::*, Model as ConjureModel,
 };
 // (nd60, march 24) - i basically copied all this from @gskorokod's SAT implemention for the old
 // solver interface.

@@ -8,8 +8,8 @@ pub use conjure_core::parse::generate_custom;
 pub use conjure_core::parse::parse;
 pub use conjure_core::rule_engine;
 pub use conjure_core::rule_engine::{
-    ApplicationError, ApplicationResult, get_rule_by_name, get_rule_set_by_name,
-    get_rule_sets, get_rule_sets_for_solver_family, get_rules, Reduction, register_rule, register_rule_set,
+    get_rule_by_name, get_rule_set_by_name, get_rule_sets, get_rule_sets_for_solver_family,
+    get_rules, register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
     Rule, RuleSet,
 };
 pub use conjure_core::rules;

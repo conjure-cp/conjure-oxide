@@ -1,18 +1,18 @@
-use crate::Model as ConjureModel;
 use crate::solver::SolverCallback;
 use crate::solver::SolverMutCallback;
 use crate::solvers::SolverFamily;
+use crate::Model as ConjureModel;
 
-use super::sat_common::CNFModel;
 use super::super::model_modifier::NotModifiable;
 use super::super::private;
 use super::super::SearchComplete::*;
 use super::super::SearchIncomplete::*;
 use super::super::SearchStatus::*;
+use super::super::SolveSuccess;
 use super::super::SolverAdaptor;
 use super::super::SolverError;
 use super::super::SolverError::*;
-use super::super::SolveSuccess;
+use super::sat_common::CNFModel;
 
 /// A [SolverAdaptor] for interacting with the Kissat SAT solver.
 pub struct Kissat {

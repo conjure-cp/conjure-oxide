@@ -2,15 +2,17 @@
 
 use std::path::PathBuf;
 
-use anyhow::{anyhow, bail};
 use anyhow::Result as AnyhowResult;
+use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
 
 use conjure_oxide::find_conjure::conjure_executable;
 use conjure_oxide::parse::model_from_json;
-use conjure_oxide::rule_engine::{get_rule_priorities, get_rules_vec, resolve_rule_sets, rewrite_model};
-use conjure_oxide::SolverFamily;
+use conjure_oxide::rule_engine::{
+    get_rule_priorities, get_rules_vec, resolve_rule_sets, rewrite_model,
+};
 use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
+use conjure_oxide::SolverFamily;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]

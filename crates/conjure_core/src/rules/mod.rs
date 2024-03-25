@@ -4,4 +4,3 @@ mod base;
 mod cnf;
 mod constant;
 mod minion;
-

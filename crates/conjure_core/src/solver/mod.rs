@@ -92,8 +92,8 @@ use std::time::Instant;
 use thiserror::Error;
 
 use crate::ast::{Constant, Name};
-use crate::Model;
 use crate::solvers::SolverFamily;
+use crate::Model;
 
 use self::model_modifier::*;
 use self::states::*;
