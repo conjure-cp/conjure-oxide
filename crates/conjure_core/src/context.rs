@@ -1,7 +1,7 @@
 use std::sync::{Arc, RwLock};
 
 use crate::rule_engine::{Rule, RuleSet};
-use crate::solvers::SolverFamily;
+use crate::solver::SolverFamily;
 
 #[derive(Clone, Debug)]
 #[non_exhaustive]

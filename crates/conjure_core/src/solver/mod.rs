@@ -23,12 +23,12 @@
 //!
 //! ```rust
 //! use std::sync::{Arc,Mutex};
-//! use conjure_core::parse::generate_custom::get_example_model;
-//! use conjure_core::rule_engine::resolve_rules::resolve_rule_sets;
-//! use conjure_core::rule_engine::rewrite::rewrite_model;
+//! use conjure_core::parse::get_example_model;
+//! use conjure_core::rule_engine::resolve_rule_sets;
+//! use conjure_core::rule_engine::rewrite_model;
 //! use conjure_core::solver::{adaptors, Solver, SolverAdaptor};
 //! use conjure_core::solver::states::ModelLoaded;
-//! use conjure_core::solvers::SolverFamily;
+//! use conjure_core::solver::SolverFamily;
 //!
 //! // Define and rewrite a model for minion.
 //! let model = get_example_model("bool-03").unwrap();
@@ -89,10 +89,11 @@ use std::error::Error;
 use std::fmt::{Debug, Display};
 use std::time::Instant;
 
+use serde::{Deserialize, Serialize};
+use strum_macros::{Display, EnumIter, EnumString};
 use thiserror::Error;
 
 use crate::ast::{Constant, Name};
-use crate::solvers::SolverFamily;
 use crate::Model;
 
 use self::model_modifier::*;
@@ -107,6 +108,14 @@ pub mod stats;
 mod private;
 
 pub mod states;
+
+#[derive(
+    Debug, EnumString, EnumIter, Display, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize,
+)]
+pub enum SolverFamily {
+    SAT,
+    Minion,
+}
 
 /// The type for user-defined callbacks for use with [Solver].
 ///

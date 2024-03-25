@@ -4,11 +4,11 @@
 
 use crate::ast::{Constant as Const, Expression as Expr};
 use crate::metadata::Metadata;
-use crate::rule_engine::{
-    register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
-};
-use crate::solvers::SolverFamily;
 use crate::Model;
+use crate::rule_engine::{
+    ApplicationError, ApplicationResult, Reduction, register_rule, register_rule_set,
+};
+use crate::solver::SolverFamily;
 
 register_rule_set!("Minion", 100, ("Base"), (SolverFamily::Minion));
 

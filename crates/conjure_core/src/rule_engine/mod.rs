@@ -67,12 +67,12 @@ pub use rewrite::{rewrite_model, RewriteError};
 pub use rule::{ApplicationError, ApplicationResult, Reduction, Rule};
 pub use rule_set::RuleSet;
 
-use crate::solvers::SolverFamily;
+use crate::solver::SolverFamily;
 
-pub mod resolve_rules;
-pub mod rewrite;
-pub mod rule;
-pub mod rule_set;
+mod resolve_rules;
+mod rewrite;
+mod rule;
+mod rule_set;
 
 #[doc(hidden)]
 #[distributed_slice]
@@ -197,7 +197,7 @@ pub fn get_rule_set_by_name(name: &str) -> Option<&'static RuleSet<'static>> {
 /// # Example
 ///
 /// ```rust
-/// use conjure_core::solvers::SolverFamily;
+/// use conjure_core::solver::SolverFamily;
 /// use conjure_core::rule_engine::get_rule_sets_for_solver_family;
 ///
 /// let rule_sets = get_rule_sets_for_solver_family(SolverFamily::SAT);

@@ -4,13 +4,13 @@ use std::process::exit;
 
 use conjure_core::context::Context;
 use conjure_core::rules::eval_constant;
-use conjure_core::solvers::SolverFamily;
+use conjure_core::solver::SolverFamily;
 use conjure_oxide::{
     ast::*,
     get_rule_by_name, get_rules,
-    rule_engine::{resolve_rules::resolve_rule_sets, rewrite::rewrite_model},
-    solver::{adaptors, Solver, SolverAdaptor as _},
-    Metadata, Model, Rule,
+    Metadata,
+    Model,
+    Rule, rule_engine::{resolve_rule_sets, rewrite_model}, solver::{adaptors, Solver, SolverAdaptor as _},
 };
 use uniplate::uniplate::Uniplate;
 

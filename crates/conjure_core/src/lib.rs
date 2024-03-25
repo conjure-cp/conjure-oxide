@@ -11,4 +11,3 @@ pub mod parse;
 pub mod rule_engine;
 pub mod rules;
 pub mod solver;
-pub mod solvers;

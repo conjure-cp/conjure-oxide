@@ -1,13 +1,14 @@
-use conjure_oxide::rule_engine::resolve_rules::resolve_rule_sets;
-use conjure_oxide::rule_engine::rewrite::rewrite_model;
+use std::env;
+use std::error::Error;
+use std::path::Path;
+
+use conjure_oxide::rule_engine::resolve_rule_sets;
+use conjure_oxide::rule_engine::rewrite_model;
 use conjure_oxide::utils::conjure::{get_minion_solutions, parse_essence_file};
 use conjure_oxide::utils::testing::{
     read_minion_solutions_json, read_model_json, save_minion_solutions_json, save_model_json,
 };
 use conjure_oxide::SolverFamily;
-use std::env;
-use std::error::Error;
-use std::path::Path;
 
 fn main() {
     let file_path = Path::new("/path/to/your/file.txt");

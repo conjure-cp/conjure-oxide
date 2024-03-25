@@ -6,7 +6,7 @@ use std::sync::OnceLock;
 use log::warn;
 
 use crate::rule_engine::{get_rule_set_by_name, get_rules, Rule};
-use crate::solvers::SolverFamily;
+use crate::solver::SolverFamily;
 
 /// A set of rules with a name, priority, and dependencies.
 #[derive(Clone, Debug)]

@@ -3,11 +3,11 @@
 /***********************************************************************************/
 
 use conjure_core::ast::Expression as Expr;
-use conjure_core::rule_engine::{
-    register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
-};
-use conjure_core::solvers::SolverFamily;
 use conjure_core::Model;
+use conjure_core::rule_engine::{
+    ApplicationError, ApplicationResult, Reduction, register_rule, register_rule_set,
+};
+use conjure_core::solver::SolverFamily;
 
 register_rule_set!("CNF", 100, ("Base"), (SolverFamily::SAT));
 
