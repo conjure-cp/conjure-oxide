@@ -9,20 +9,20 @@ use minion_rs::error::MinionError;
 use minion_rs::run_minion;
 
 use crate::ast as conjure_ast;
+use crate::Model as ConjureModel;
 use crate::solver::SolverCallback;
 use crate::solver::SolverFamily;
 use crate::solver::SolverMutCallback;
-use crate::Model as ConjureModel;
 
 use super::super::model_modifier::NotModifiable;
 use super::super::private;
 use super::super::SearchComplete::*;
 use super::super::SearchIncomplete::*;
 use super::super::SearchStatus::*;
-use super::super::SolveSuccess;
 use super::super::SolverAdaptor;
 use super::super::SolverError;
 use super::super::SolverError::*;
+use super::super::SolveSuccess;
 
 /// A [SolverAdaptor] for interacting with Minion.
 ///
@@ -71,16 +71,19 @@ fn minion_rs_callback(solutions: HashMap<minion_ast::VarName, minion_ast::Consta
 }
 
 impl private::Sealed for Minion {}
-impl SolverAdaptor for Minion {
-    type Model = MinionModel;
-    type Solution = minion_ast::Constant;
-    type Modifier = NotModifiable;
 
-    fn new() -> Minion {
+impl Minion {
+    pub fn new() -> Minion {
         Minion {
             __non_constructable: private::Internal,
         }
     }
+}
+
+impl SolverAdaptor for Minion {
+    type Model = MinionModel;
+    type Solution = minion_ast::Constant;
+    type Modifier = NotModifiable;
 
     #[allow(clippy::unwrap_used)]
     fn solve(

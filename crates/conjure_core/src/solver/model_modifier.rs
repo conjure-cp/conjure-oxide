@@ -20,11 +20,11 @@ use super::Solver;
 ///
 /// See also: [`Solver::solve_mut`].
 pub trait ModelModifier: private::Sealed {
-    fn add_constraint(constraint: Expression) -> Result<(), ModificationFailure> {
+    fn add_constraint(&self, constraint: Expression) -> Result<(), ModificationFailure> {
         Err(ModificationFailure::OpNotSupported)
     }
 
-    fn add_variable(name: Name, domain: Domain) -> Result<(), ModificationFailure> {
+    fn add_variable(&self, name: Name, domain: Domain) -> Result<(), ModificationFailure> {
         Err(ModificationFailure::OpNotSupported)
     }
 }

@@ -170,8 +170,6 @@ pub trait SolverAdaptor: private::Sealed {
     /// If incremental solving is not supported, this **should** be set to [NotModifiable](model_modifier::NotModifiable) .
     type Modifier: model_modifier::ModelModifier;
 
-    fn new() -> Self;
-
     /// Runs the solver on the given model.
     ///
     /// Implementations of this function **must** call the user provided callback whenever a solution

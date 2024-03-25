@@ -1,11 +1,19 @@
 use std::sync::{Arc, RwLock};
 
+use conjure_core::solver::model_modifier::ModelModifier;
+use conjure_core::solver::SolverAdaptor;
+use minion_rs::ast::Model;
+
 use crate::rule_engine::{Rule, RuleSet};
 use crate::solver::SolverFamily;
 
-#[derive(Clone, Debug)]
+type AdaptorInstance =
+    dyn SolverAdaptor<Model = Model, Modifier = dyn ModelModifier, Solution = ()>;
+
+#[derive(Clone)]
 #[non_exhaustive]
 pub struct Context<'a> {
+    pub target_solver_adaptor: Arc<RwLock<Option<&'a AdaptorInstance>>>,
     pub target_solver_family: Arc<RwLock<Option<SolverFamily>>>,
     pub extra_rule_set_names: Arc<RwLock<Vec<String>>>,
     pub rules: Arc<RwLock<Vec<&'a Rule<'a>>>>,
@@ -13,8 +21,13 @@ pub struct Context<'a> {
 }
 
 impl<'a> Context<'a> {
-    pub fn new(target_solver_family: SolverFamily, extra_rule_set_names: Vec<String>) -> Self {
+    pub fn new(
+        target_solver_adaptor: &'a AdaptorInstance,
+        target_solver_family: SolverFamily,
+        extra_rule_set_names: Vec<String>,
+    ) -> Self {
         Context {
+            target_solver_adaptor: Arc::new(RwLock::new(Some(target_solver_adaptor))),
             target_solver_family: Arc::new(RwLock::new(Some(target_solver_family))),
             extra_rule_set_names: Arc::new(RwLock::new(extra_rule_set_names)),
             rules: Arc::new(RwLock::new(Vec::new())),
@@ -26,6 +39,7 @@ impl<'a> Context<'a> {
 impl<'a> Default for Context<'a> {
     fn default() -> Self {
         Context {
+            target_solver_adaptor: Arc::new(RwLock::new(None)),
             target_solver_family: Arc::new(RwLock::new(None)),
             extra_rule_set_names: Arc::new(RwLock::new(Vec::new())),
             rules: Arc::new(RwLock::new(Vec::new())),

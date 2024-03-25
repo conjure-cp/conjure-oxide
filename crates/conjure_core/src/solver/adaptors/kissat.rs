@@ -1,18 +1,18 @@
+use crate::Model as ConjureModel;
 use crate::solver::SolverCallback;
 use crate::solver::SolverFamily;
 use crate::solver::SolverMutCallback;
-use crate::Model as ConjureModel;
 
+use super::sat_common::CNFModel;
 use super::super::model_modifier::NotModifiable;
 use super::super::private;
 use super::super::SearchComplete::*;
 use super::super::SearchIncomplete::*;
 use super::super::SearchStatus::*;
-use super::super::SolveSuccess;
 use super::super::SolverAdaptor;
 use super::super::SolverError;
 use super::super::SolverError::*;
-use super::sat_common::CNFModel;
+use super::super::SolveSuccess;
 
 /// A [SolverAdaptor] for interacting with the Kissat SAT solver.
 pub struct Kissat {
@@ -21,18 +21,20 @@ pub struct Kissat {
 
 impl private::Sealed for Kissat {}
 
+impl Kissat {
+    pub fn new() -> Self {
+        Kissat {
+            __non_constructable: private::Internal,
+        }
+    }
+}
+
 impl SolverAdaptor for Kissat {
     type Model = CNFModel;
 
     type Solution = ();
 
     type Modifier = NotModifiable;
-
-    fn new() -> Self {
-        Kissat {
-            __non_constructable: private::Internal,
-        }
-    }
 
     fn solve(
         &mut self,
