@@ -6,11 +6,12 @@ use uniplate::uniplate::Uniplate;
 
 use crate::{
     ast::Expression,
+    Model,
     rule_engine::resolve_rules::{
         get_rule_priorities, get_rules_vec, ResolveRulesError as ResolveError,
-    },
-    Model, Reduction, Rule, RuleSet,
+    }
 };
+use crate::rule_engine::{Reduction, Rule, RuleSet};
 
 #[derive(Debug)]
 struct RuleResult<'a> {

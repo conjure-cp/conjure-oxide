@@ -2,12 +2,11 @@
 
 use std::path::PathBuf;
 
+use project_root::get_project_root;
 use walkdir::WalkDir;
 
-use crate::Model;
 use crate::parse::parse::model_from_json;
-
-use std::path::PathBuf;
+use crate::Model;
 
 /// Searches recursively in `../tests/integration` folder for an `.essence` file matching the given
 /// filename, then uses conjure to process it into astjson, and returns the parsed model.
@@ -21,7 +20,7 @@ use std::path::PathBuf;
 /// Function returns a `Result<Value, anyhow::Error>`, where `Value` is the parsed model.
 pub fn get_example_model(filename: &str) -> Result<Model, anyhow::Error> {
     // define relative path -> integration tests dir
-    let base_dir = "tests/integration";
+    let base_dir = get_project_root()?;
     let mut essence_path = PathBuf::new();
 
     // walk through directory tree recursively starting at base

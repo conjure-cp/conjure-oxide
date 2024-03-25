@@ -3,7 +3,8 @@ use std::fmt::Display;
 
 use thiserror::Error;
 
-use crate::{get_rule_set_by_name, get_rule_sets_for_solver_family, Rule, RuleSet, SolverFamily};
+use crate::rule_engine::{get_rule_set_by_name, get_rule_sets_for_solver_family, Rule, RuleSet};
+use crate::solvers::SolverFamily;
 
 #[derive(Debug, Error)]
 pub enum ResolveRulesError {

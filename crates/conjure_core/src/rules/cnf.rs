@@ -1,11 +1,13 @@
-use crate::{
-    ast::Expression as Expr, register_rule, register_rule_set, ApplicationError, ApplicationResult,
-    Model, Reduction, SolverFamily,
-};
-
 /***********************************************************************************/
 /*        This file contains rules for converting logic expressions to CNF         */
 /***********************************************************************************/
+
+use conjure_core::ast::Expression as Expr;
+use conjure_core::Model;
+use conjure_core::rule_engine::{
+    ApplicationError, ApplicationResult, Reduction, register_rule, register_rule_set,
+};
+use conjure_core::solvers::SolverFamily;
 
 register_rule_set!("CNF", 100, ("Base"), (SolverFamily::SAT));
 

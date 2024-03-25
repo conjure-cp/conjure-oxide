@@ -1,10 +1,12 @@
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 
+use regex::Regex;
+
 use minion_ast::Model as MinionModel;
 use minion_rs::ast as minion_ast;
+use minion_rs::error::MinionError;
 use minion_rs::run_minion;
-use regex::Regex;
 
 use crate::ast as conjure_ast;
 use crate::Model as ConjureModel;
@@ -102,9 +104,9 @@ impl SolverAdaptor for Minion {
                              // user callback and not deadlock.
 
         run_minion(model, minion_rs_callback).map_err(|err| match err {
-            minion_rs::error::MinionError::RuntimeError(x) => Runtime(format!("{:#?}", x)),
-            minion_rs::error::MinionError::Other(x) => Runtime(format!("{:#?}", x)),
-            minion_rs::error::MinionError::NotImplemented(x) => RuntimeNotImplemented(x),
+            MinionError::RuntimeError(x) => Runtime(format!("{:#?}", x)),
+            MinionError::Other(x) => Runtime(format!("{:#?}", x)),
+            MinionError::NotImplemented(x) => RuntimeNotImplemented(x),
             x => Runtime(format!("unknown minion_rs error: {:#?}", x)),
         })?;
 

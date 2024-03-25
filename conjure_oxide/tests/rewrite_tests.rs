@@ -1,14 +1,16 @@
-use conjure_core::solvers::SolverFamily;
 use core::panic;
 use std::collections::HashMap;
 use std::process::exit;
 
+use conjure_core::context::Context;
+use conjure_core::rules::eval_constant;
+use conjure_core::solvers::SolverFamily;
 use conjure_oxide::{
     ast::*,
-    eval_constant, get_rule_by_name, get_rules,
-    rule_engine::{resolve_rules::resolve_rule_sets, rewrite::rewrite_model},
-    solver::{adaptors, Solver, SolverAdaptor as _},
-    Metadata, Model, Rule,
+    get_rule_by_name, get_rules,
+    Metadata,
+    Model,
+    Rule, rule_engine::{resolve_rules::resolve_rule_sets, rewrite::rewrite_model}, solver::{adaptors, Solver, SolverAdaptor as _},
 };
 use uniplate::uniplate::Uniplate;
 
@@ -328,6 +330,7 @@ fn reduce_solve_xyz() {
     let mut model = Model::new(
         HashMap::new(),
         Expression::And(Metadata::new(), vec![expr1, expr2]),
+        Context::default(),
     );
     model.variables.insert(
         Name::UserName(String::from("a")),
@@ -872,16 +875,19 @@ fn rewrite_solve_xyz() {
     };
 
     // Apply rewrite function to the nested expression
-    let rewritten_expr = rewrite_model(&Model::new(HashMap::new(), nested_expr), &rule_sets)
-        .unwrap()
-        .constraints;
+    let rewritten_expr = rewrite_model(
+        &Model::new(HashMap::new(), nested_expr, Context::default()),
+        &rule_sets,
+    )
+    .unwrap()
+    .constraints;
 
     // Check if the expression is in its simplest form
     let expr = rewritten_expr.clone();
     assert!(is_simple(&expr));
 
     // Create model with variables and constraints
-    let mut model = Model::new(HashMap::new(), rewritten_expr);
+    let mut model = Model::new(HashMap::new(), rewritten_expr, Context::default());
 
     // Insert variables and domains
     model.variables.insert(

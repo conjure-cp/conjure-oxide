@@ -1,12 +1,14 @@
-use crate::{
-    ast::{Constant as Const, Expression as Expr},
-    register_rule, register_rule_set, ApplicationError, ApplicationResult, Metadata, Model,
-    Reduction, SolverFamily,
-};
-
 /************************************************************************/
 /*        Rules for translating to Minion-supported constraints         */
 /************************************************************************/
+
+use crate::ast::{Constant as Const, Expression as Expr};
+use crate::metadata::Metadata;
+use crate::Model;
+use crate::rule_engine::{
+    ApplicationError, ApplicationResult, Reduction, register_rule, register_rule_set,
+};
+use crate::solvers::SolverFamily;
 
 register_rule_set!("Minion", 100, ("Base"), (SolverFamily::Minion));
 
