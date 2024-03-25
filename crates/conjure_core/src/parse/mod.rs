@@ -1,5 +1,5 @@
-pub use generate_custom::{get_example_model, get_example_model_by_path};
-pub use parse::model_from_json;
+pub use example_models::{get_example_model, get_example_model_by_path};
+pub use parse_model::model_from_json;
 
-mod generate_custom;
-mod parse;
+mod example_models;
+mod parse_model;

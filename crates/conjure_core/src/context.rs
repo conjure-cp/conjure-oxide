@@ -35,6 +35,7 @@ impl<'a> Default for Context<'a> {
 }
 
 impl PartialEq for Context<'_> {
+    #[allow(clippy::unwrap_used)] // A poisoned RWLock is probably panic worthy
     fn eq(&self, other: &Self) -> bool {
         self.target_solver_family
             .read()
