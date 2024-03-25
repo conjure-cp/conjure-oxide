@@ -2,17 +2,18 @@
 
 use std::path::PathBuf;
 
-use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
+use anyhow::Result as AnyhowResult;
 use clap::{arg, command, Parser};
 
+use conjure_core::context::Context;
 use conjure_oxide::find_conjure::conjure_executable;
 use conjure_oxide::model_from_json;
 use conjure_oxide::rule_engine::{
     get_rule_priorities, get_rules_vec, resolve_rule_sets, rewrite_model,
 };
-use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
 use conjure_oxide::SolverFamily;
+use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -28,7 +29,10 @@ struct Cli {
 }
 
 pub fn main() -> AnyhowResult<()> {
-    let rule_sets = resolve_rule_sets(SolverFamily::Minion, vec!["Constant"])?;
+    let target_family = SolverFamily::Minion; // ToDo get this from CLI input
+    let extra_rule_sets: Vec<String> = vec!["Constant".to_string()]; // ToDo get this from CLI input
+
+    let rule_sets = resolve_rule_sets(target_family, &extra_rule_sets)?;
 
     print!("Rule sets: {{");
     rule_sets.iter().for_each(|rule_set| {
@@ -74,8 +78,15 @@ pub fn main() -> AnyhowResult<()> {
     }
 
     let astjson = String::from_utf8(output.stdout)?;
-
     let mut model = model_from_json(&astjson)?;
+
+    let context = Context::new(
+        target_family,
+        extra_rule_sets.clone(),
+        rules_vec.clone(),
+        rule_sets.clone(),
+    );
+    model.set_context(context);
 
     println!("Initial model:");
     println!("{:#?}", model);

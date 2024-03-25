@@ -66,6 +66,10 @@ impl Model {
         }
     }
 
+    pub fn set_context(&mut self, context: Context<'static>) {
+        self.context = context;
+    }
+
     pub fn add_constraint(&mut self, expression: Expression) {
         // ToDo (gs248) - there is no checking whatsoever
         // We need to properly validate the expression but this is just for testing
