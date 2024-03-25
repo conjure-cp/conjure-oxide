@@ -32,7 +32,7 @@
 //!
 //! // Define and rewrite a model for minion.
 //! let model = get_example_model("bool-03").unwrap();
-//! let rule_sets = resolve_rule_sets(SolverFamily::Minion, vec!["Constant"]).unwrap();
+//! let rule_sets = resolve_rule_sets(SolverFamily::Minion, &vec!["Constant"]).unwrap();
 //! let model = rewrite_model(&model,&rule_sets).unwrap();
 //!
 //!

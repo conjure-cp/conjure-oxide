@@ -30,7 +30,7 @@ struct Cli {
 
 pub fn main() -> AnyhowResult<()> {
     let target_family = SolverFamily::Minion; // ToDo get this from CLI input
-    let extra_rule_sets: Vec<String> = vec!["Constant".to_string()]; // ToDo get this from CLI input
+    let extra_rule_sets: Vec<&str> = vec!["Constant"]; // ToDo get this from CLI input
 
     let rule_sets = resolve_rule_sets(target_family, &extra_rule_sets)?;
 

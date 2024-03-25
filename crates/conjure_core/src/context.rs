@@ -8,7 +8,7 @@ use crate::solver::SolverFamily;
 #[non_exhaustive]
 pub struct Context<'a> {
     pub target_solver_family: Arc<RwLock<Option<SolverFamily>>>,
-    pub extra_rule_set_names: Arc<RwLock<Vec<String>>>,
+    pub extra_rule_set_names: Arc<RwLock<Vec<&'a str>>>,
     pub rules: Arc<RwLock<Vec<&'a Rule<'a>>>>,
     pub rule_sets: Arc<RwLock<Vec<&'a RuleSet<'a>>>>,
 }
@@ -16,7 +16,7 @@ pub struct Context<'a> {
 impl<'a> Context<'a> {
     pub fn new(
         target_solver_family: SolverFamily,
-        extra_rule_set_names: Vec<String>,
+        extra_rule_set_names: Vec<&'a str>,
         rules: Vec<&'a Rule<'a>>,
         rule_sets: Vec<&'a RuleSet<'a>>,
     ) -> Self {
@@ -32,7 +32,7 @@ impl<'a> Context<'a> {
 impl<'a> Debug for Context<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let target_solver_family: Option<SolverFamily> = *self.target_solver_family.read().unwrap();
-        let extra_rule_set_names: Vec<String> = self.extra_rule_set_names.read().unwrap().clone();
+        let extra_rule_set_names: Vec<&str> = self.extra_rule_set_names.read().unwrap().clone();
         let rules: Vec<&str> = self.rules.read().unwrap().iter().map(|r| r.name).collect();
         let rule_sets: Vec<&str> = self
             .rule_sets
