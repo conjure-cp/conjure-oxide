@@ -8,9 +8,9 @@ use conjure_core::solver::SolverFamily;
 use conjure_oxide::{
     ast::*,
     get_rule_by_name, get_rules,
-    Metadata,
-    Model,
-    Rule, rule_engine::{resolve_rule_sets, rewrite_model}, solver::{adaptors, Solver, SolverAdaptor as _},
+    rule_engine::{resolve_rule_sets, rewrite_model},
+    solver::{adaptors, Solver, SolverAdaptor as _},
+    Metadata, Model, Rule,
 };
 use uniplate::uniplate::Uniplate;
 
