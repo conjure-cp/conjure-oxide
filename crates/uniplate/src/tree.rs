@@ -80,7 +80,7 @@ impl<T: Sized + Clone + Eq + 'static> Tree<T> {
 
     // Perform a map over all elements in the tree.
     pub fn map(self, op: Arc<dyn Fn(T) -> T>) -> Tree<T> {
-        match (self) {
+        match self {
             Zero => Zero,
             One(t) => One(op(t)),
             Many(ts) => Many(ts.into_iter().map(|t| t.map(op.clone())).collect()),
@@ -99,7 +99,7 @@ fn proptest_integer_trees() -> impl Strategy<Value = Tree<i32>> {
         10,  // levels deep
         512, // Shoot for maximum size of 512 nodes
         20,  // We put up to 20 items per collection
-        |inner| prop::collection::vec(inner.clone(), 0..20).prop_map(|vec| Tree::Many(vec.into())),
+        |inner| im::proptest::vector(inner.clone(), 0..20).prop_map(Tree::Many),
     )
 }
 
