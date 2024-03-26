@@ -2,7 +2,12 @@
 
 #![allow(clippy::type_complexity)]
 
+use std::sync::Arc;
+
 pub use super::Tree;
+use im;
+use im::vector;
+
 pub trait Biplate<To>
 where
     Self: Sized + Clone + Eq,
@@ -14,11 +19,11 @@ where
         todo!()
     }
 
-    fn universe_bi(&self) -> Vec<Self> {
+    fn universe_bi(&self) -> im::Vector<Self> {
         todo!()
     }
 
-    fn children_bi(&self) -> Vec<Self> {
+    fn children_bi(&self) -> im::Vector<Self> {
         todo!()
     }
 
@@ -29,27 +34,89 @@ where
 
 pub trait Uniplate
 where
-    Self: Sized + Clone + Eq,
+    Self: Sized + Clone + Eq + 'static,
 {
     fn uniplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>);
 
-    fn descend(&self, op: Box<dyn Fn(Self) -> Self>) -> Self {
-        todo!()
+    fn descend(&self, op: Arc<dyn Fn(Self) -> Self>) -> Self {
+        let (children, ctx) = self.uniplate();
+        ctx(children.map(op))
     }
 
-    fn universe(&self) -> Vec<Self> {
-        todo!()
+    /// Gest all children of a node, including itself and all children.
+    fn universe(&self) -> im::Vector<Self> {
+        let mut results = vector![self.clone()];
+        for child in self.children() {
+            results.append(child.universe());
+        }
+        results
     }
 
-    fn children(&self) -> Vec<Self> {
-        todo!()
+    /// Gets the direct children (maximal substructures) of a node.
+    fn children(&self) -> im::Vector<Self> {
+        let (children, _) = self.uniplate();
+        children.list().0.clone()
     }
 
-    fn transform(&self, f: fn(Self) -> Self) {
-        todo!()
+    /// Reconstructs the node with the given children.
+    ///
+    /// # Returns
+    ///
+    /// If there are a different number of children given as there were originally, None is
+    /// returned.
+    fn with_children(&self, children: im::Vector<Self>) -> Option<Self> {
+        // 1. Turn old tree into list.
+        // 2. Check lists are same size.
+        // 3. Use the reconstruction function given by old_children.list() to
+        //   create a tree with the same structure but the new lists' elements .
+
+        let (old_children, ctx) = self.uniplate();
+        let (old_children_lst, rebuild) = old_children.list();
+        if old_children_lst.len() != children.len() {
+            None
+        } else {
+            Some(ctx(rebuild(children)))
+        }
     }
 
-    fn cata<T>(&self, op: Box<dyn Fn(Self, Vec<T>) -> T>) -> T {
-        todo!()
+    /// Applies the given rule to all nodes bottom up.
+    fn transform(&self, f: Arc<dyn Fn(Self) -> Self>) -> Self {
+        let (children, ctx) = self.uniplate();
+        let f2 = f.clone(); // make another pointer to f for map.
+        f(ctx(
+            children.map(Arc::new(move |child| child.transform(f2.clone())))
+        ))
+    }
+
+    /// Rewrites by applying a rule everywhere it can.
+    fn rewrite(&self, f: Arc<dyn Fn(Self) -> Option<Self>>) -> Self {
+        let (children, ctx) = self.uniplate();
+
+        let f2 = f.clone(); // make another pointer to f for map.
+        let new_children = children.map(Arc::new(move |child| child.rewrite(f2.clone())));
+
+        match f(ctx(new_children.clone())) {
+            None => ctx(new_children),
+            Some(n) => n,
+        }
+    }
+    /// Performs a fold-like computation on each value.
+    ///
+    /// Working from the bottom up, this applies the given callback function to each nested
+    /// component.
+    ///
+    /// Unlike [`transform`](Uniplate::transform), this returns an arbitrary type, and is not
+    /// limited to T -> T transformations. In other words, it can transform a type into a new
+    /// one.
+    ///
+    /// The meaning of the callback function is the following:
+    ///
+    ///   f(element_to_fold, folded_children) -> folded_element
+    fn cata<T>(&self, op: Arc<dyn Fn(Self, Vec<T>) -> T>) -> T {
+        let children = self.children();
+        (*op)(
+            self.clone(),
+            children.into_iter().map(|c| c.cata(op.clone())).collect(),
+        )
     }
 }

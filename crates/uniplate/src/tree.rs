@@ -15,6 +15,19 @@ pub enum Tree<T: Sized + Clone + Eq> {
 
 use self::Tree::*;
 
+// NOTE (niklasdewally): This converts the entire tree into a list. Therefore this is only really
+// worth it when we use all the children returned. This is what we use this for inside Uniplate.
+// Because of this, I think a .iter() / IntoIterator for Tree<&T> is a bad idea.
+
+impl<T: Sized + Clone + Eq + 'static> IntoIterator for Tree<T> {
+    type Item = T;
+
+    type IntoIter = im::vector::ConsumingIter<T>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.list().0.into_iter()
+    }
+}
 impl<T: Sized + Clone + Eq + 'static> Tree<T> {
     /// Returns the tree as a list alongside a function to reconstruct the tree from a list.
     ///
@@ -66,7 +79,7 @@ impl<T: Sized + Clone + Eq + 'static> Tree<T> {
     }
 
     // Perform a map over all elements in the tree.
-    fn map(self, op: Arc<dyn Fn(T) -> T>) -> Tree<T> {
+    pub fn map(self, op: Arc<dyn Fn(T) -> T>) -> Tree<T> {
         match (self) {
             Zero => Zero,
             One(t) => One(op(t)),
