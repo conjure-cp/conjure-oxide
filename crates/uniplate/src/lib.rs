@@ -110,3 +110,6 @@ mod tree;
 pub mod uniplate;
 
 pub use tree::Tree;
+
+#[doc(hidden)]
+mod test_types;
