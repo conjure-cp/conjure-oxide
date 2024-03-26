@@ -30,7 +30,107 @@ pub enum Expr {
 
 impl Uniplate for Expr {
     fn uniplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>) {
-        todo!()
+        match self.clone() {
+            Add(f0, f1) => {
+                // Field 0 - Box<Expr>
+                let (f0_tree, f0_ctx) = <Expr as Biplate<Expr>>::biplate(&*f0);
+
+                // Field 1 - Box<Expr>
+                let (f1_tree, f1_ctx) = <Expr as Biplate<Expr>>::biplate(&*f1);
+
+                let tree = Many(vector![f0_tree, f1_tree]);
+                let ctx = Box::new(move |new_tree| {
+                    let Many(ts) = new_tree else { panic!() };
+                    assert_eq!(ts.len(), 2);
+                    Add(
+                        Box::new(f0_ctx(ts[0].clone())),
+                        Box::new(f1_ctx(ts[1].clone())),
+                    )
+                });
+
+                (tree, ctx)
+            }
+            Sub(f0, f1) => {
+                // Field 0 - Box<Expr>
+                let (f0_tree, f0_ctx) = <Expr as Biplate<Expr>>::biplate(&*f0);
+
+                // Field 1 - Box<Expr>
+                let (f1_tree, f1_ctx) = <Expr as Biplate<Expr>>::biplate(&*f1);
+
+                let tree = Many(vector![f0_tree, f1_tree]);
+                let ctx = Box::new(move |new_tree| {
+                    let Many(ts) = new_tree else { panic!() };
+                    assert_eq!(ts.len(), 2);
+                    Add(
+                        Box::new(f0_ctx(ts[0].clone())),
+                        Box::new(f1_ctx(ts[1].clone())),
+                    )
+                });
+
+                (tree, ctx)
+            }
+            Mul(f0, f1) => {
+                // Field 0 - Box<Expr>
+                let (f0_tree, f0_ctx) = <Expr as Biplate<Expr>>::biplate(&*f0);
+
+                // Field 1 - Box<Expr>
+                let (f1_tree, f1_ctx) = <Expr as Biplate<Expr>>::biplate(&*f1);
+
+                let tree = Many(vector![f0_tree, f1_tree]);
+                let ctx = Box::new(move |new_tree| {
+                    let Many(ts) = new_tree else { panic!() };
+                    assert_eq!(ts.len(), 2);
+                    Add(
+                        Box::new(f0_ctx(ts[0].clone())),
+                        Box::new(f1_ctx(ts[1].clone())),
+                    )
+                });
+
+                (tree, ctx)
+            }
+            Div(f0, f1) => {
+                // Field 0 - Box<Expr>
+                let (f0_tree, f0_ctx) = <Expr as Biplate<Expr>>::biplate(&*f0);
+
+                // Field 1 - Box<Expr>
+                let (f1_tree, f1_ctx) = <Expr as Biplate<Expr>>::biplate(&*f1);
+
+                let tree = Many(vector![f0_tree, f1_tree]);
+                let ctx = Box::new(move |new_tree| {
+                    let Many(ts) = new_tree else { panic!() };
+                    assert_eq!(ts.len(), 2);
+                    Add(
+                        Box::new(f0_ctx(ts[0].clone())),
+                        Box::new(f1_ctx(ts[1].clone())),
+                    )
+                });
+
+                (tree, ctx)
+            }
+
+            Val(f0) => (
+                Zero,
+                Box::new(move |x| {
+                    let Zero = x else { panic!() };
+                    Val(f0)
+                }),
+            ),
+            Var(f0) => (
+                Zero,
+                Box::new(move |x| {
+                    let Zero = x else { panic!() };
+                    Var(f0.clone())
+                }),
+            ),
+
+            Neg(f0) => (
+                Zero,
+                Box::new(move |x| {
+                    let Zero = x else { panic!() };
+                    Neg(f0.clone())
+                }),
+            ),
+        }
     }
 }
 
@@ -309,4 +409,41 @@ fn paper_multitype_childrenbi() {
     let Add(_, _) = children[1] else { panic!() };
     let Var(_) = children[2] else { panic!() };
     let Add(_, _) = children[3] else { panic!() };
+}
+
+#[test]
+fn paper_multitype_universebi() {
+    let my_stmt = Sequence(vec![
+        While(
+            Val(0),
+            Box::new(Assign(
+                "x".to_owned(),
+                Add(Box::new(Var("x".to_owned())), Box::new(Val(10))),
+            )),
+        ),
+        If(
+            Var("x".to_string()),
+            Box::new(Assign(
+                "x".to_string(),
+                Add(Box::new(Var("x".to_owned())), Box::new(Val(10))),
+            )),
+            Box::new(Sequence(vec![])),
+        ),
+    ]);
+
+    let expected_expr_universe = 8;
+
+    let children = <Stmt as Biplate<Expr>>::universe_bi(&my_stmt);
+
+    assert_eq!(expected_expr_universe, children.len());
+
+    println!("{:?}", children);
+    let Val(_) = children[0] else { panic!() };
+    let Add(_, _) = children[1] else { panic!() };
+    let Var(_) = children[2] else { panic!() };
+    let Val(_) = children[3] else { panic!() };
+    let Var(_) = children[4] else { panic!() };
+    let Add(_, _) = children[5] else { panic!() };
+    let Var(_) = children[6] else { panic!() };
+    let Val(_) = children[7] else { panic!() };
 }

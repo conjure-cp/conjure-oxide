@@ -34,7 +34,10 @@ where
     // What are children and universe are meant to be?
 
     fn universe_bi(&self) -> im::Vector<To> {
-        todo!()
+        self.children_bi()
+            .into_iter()
+            .flat_map(|child| child.universe())
+            .collect()
     }
 
     /// Returns the children of a type. If to == from then it returns the original element (in contrast to children).
