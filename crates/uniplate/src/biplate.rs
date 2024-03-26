@@ -39,7 +39,7 @@ where
 
     /// Returns the children of a type. If to == from then it returns the original element (in contrast to children).
     fn children_bi(&self) -> im::Vector<To> {
-        todo!()
+        self.biplate().0.list().0
     }
 
     fn transform_bi(&self, op: Arc<dyn Fn(To) -> To>) -> Self {

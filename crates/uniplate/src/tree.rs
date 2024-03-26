@@ -41,7 +41,7 @@ impl<T: Sized + Clone + Eq + 'static> Tree<T> {
                 (Zero, xs) => xs,
                 (One(x), xs) => {
                     let mut xs1 = xs.clone();
-                    xs1.push_front(x);
+                    xs1.push_back(x);
                     xs1
                 }
                 (Many(ts), xs) => ts.into_iter().fold(xs, |xs, t| flatten(t, xs)),
@@ -59,7 +59,7 @@ impl<T: Sized + Clone + Eq + 'static> Tree<T> {
                 (Zero, xs) => (Zero, xs),
                 (One(_), xs) => {
                     let mut xs1 = xs.clone();
-                    (One(xs1.pop_back().unwrap()), xs1)
+                    (One(xs1.pop_front().unwrap()), xs1)
                 }
                 (Many(ts), xs) => {
                     let (ts1, xs1) = ts.into_iter().fold((vector![], xs), |(ts1, xs), t| {
@@ -120,6 +120,28 @@ proptest! {
 
         for (old,new) in zip(old_children,new_children) {
             prop_assert_eq!(old+diff,new);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_list_order() {
+        let my_tree: Tree<i32> = Many(vector![
+            Many(vector![One(0), Zero]),
+            Many(vector![Many(vector![Zero, One(1), One(2)])]),
+            One(3),
+            Zero,
+            One(4)
+        ]);
+
+        let flat = my_tree.list().0;
+
+        for i in 0..5 {
+            assert_eq!(flat[i], i.try_into().unwrap());
         }
     }
 }
