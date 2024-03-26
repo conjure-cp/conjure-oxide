@@ -33,7 +33,7 @@ where
 {
     fn uniplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>);
 
-    fn descend(&self, op: Box<dyn Fn(Self) -> Self>) -> Vec<Self> {
+    fn descend(&self, op: Box<dyn Fn(Self) -> Self>) -> Self {
         todo!()
     }
 

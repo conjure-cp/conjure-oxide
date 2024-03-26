@@ -1,5 +1,7 @@
 //#![cfg(feature = "unstable")]
 
+use std::{iter::zip, sync::Arc};
+
 use im::vector;
 use proptest::prelude::*;
 use proptest_derive::Arbitrary;
@@ -62,6 +64,15 @@ impl<T: Sized + Clone + Eq + 'static> Tree<T> {
             Box::new(move |xs| recons(self.clone(), xs).0),
         )
     }
+
+    // Perform a map over all elements in the tree.
+    fn map(self, op: Arc<dyn Fn(T) -> T>) -> Tree<T> {
+        match (self) {
+            Zero => Zero,
+            One(t) => One(op(t)),
+            Many(ts) => Many(ts.into_iter().map(|t| t.map(op.clone())).collect()),
+        }
+    }
 }
 
 #[allow(dead_code)]
@@ -86,5 +97,16 @@ proptest! {
         let (children,func) = tree.clone().list();
         let new_tree = func(children);
         prop_assert_eq!(new_tree,tree);
+    }
+
+    #[test]
+    fn tree_map_add(tree in proptest_integer_trees(), diff in -100i32..100i32) {
+        let new_tree = tree.clone().map(Arc::new(move |a| a+diff));
+        let (old_children,_) = tree.list();
+        let (new_children,_) = new_tree.list();
+
+        for (old,new) in zip(old_children,new_children) {
+            prop_assert_eq!(old+diff,new);
+        }
     }
 }
