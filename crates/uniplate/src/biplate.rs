@@ -10,25 +10,41 @@ use im::vector;
 
 pub trait Biplate<To>
 where
-    Self: Sized + Clone + Eq,
-    To: Sized + Clone + Eq,
+    Self: Sized + Clone + Eq + Uniplate + 'static,
+    To: Sized + Clone + Eq + Uniplate + 'static,
 {
+    /// Returns all the top most children of type to within from.
+    ///
+    /// If from == to then this function should return the root as the single child.
     fn biplate(&self) -> (Tree<To>, Box<dyn Fn(Tree<To>) -> Self>);
 
-    fn descend_bi(&self, op: Box<dyn Fn(To) -> To>) -> Self {
+    /// Like descend but with more general types.
+    ///
+    /// If from == to then this function does not descend. Therefore, when writing definitions it
+    /// is highly unlikely that this function should be used in the recursive case. A common
+    /// pattern is to first match the types using descendBi, then continue the recursion with
+    /// descend.
+
+    fn descend_bi(&self, op: Arc<dyn Fn(To) -> To>) -> Self {
+        let (children, ctx) = self.biplate();
+        ctx(children.map(op))
+    }
+
+    // TODO (niklasdewally): Uniplate does some wierd Haskell I don't understand here.
+    // What are children and universe are meant to be?
+
+    fn universe_bi(&self) -> im::Vector<To> {
         todo!()
     }
 
-    fn universe_bi(&self) -> im::Vector<Self> {
+    /// Returns the children of a type. If to == from then it returns the original element (in contrast to children).
+    fn children_bi(&self) -> im::Vector<To> {
         todo!()
     }
 
-    fn children_bi(&self) -> im::Vector<Self> {
-        todo!()
-    }
-
-    fn transform_bi(&self, op: Box<dyn Fn(To) -> To>) -> Self {
-        todo!()
+    fn transform_bi(&self, op: Arc<dyn Fn(To) -> To>) -> Self {
+        let (children, ctx) = self.biplate();
+        ctx(children.map(Arc::new(move |child| child.transform(op.clone()))))
     }
 }
 
