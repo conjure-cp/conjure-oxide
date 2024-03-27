@@ -30,8 +30,12 @@ where
         ctx(children.map(op))
     }
 
-    // TODO (niklasdewally): Uniplate does some wierd Haskell I don't understand here.
-    // What are children and universe are meant to be?
+    // NOTE (niklasdewally): Uniplate does something different here, and  I don't know why. In
+    // particular, it doesn't use structure (its version of tree.list()) at all here, and uses some
+    // builder thing I don't understand. My children_bi and universe_bi work though, so this might
+    // just be performance and Haskell related.
+    //
+    // https://github.com/ndmitchell/uniplate/blob/66a2c55a7de0f5d8b0e437479719469244e00fa4/Data/Generics/Uniplate/Internal/OperationsInc.hs#L189
 
     fn universe_bi(&self) -> im::Vector<To> {
         self.children_bi()
