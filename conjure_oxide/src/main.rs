@@ -5,12 +5,12 @@ use std::io::stdout;
 use std::path::PathBuf;
 use std::process::exit;
 
-use anyhow::{anyhow, bail};
 use anyhow::Result as AnyhowResult;
+use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
 use serde_json::json;
 use serde_json::to_string_pretty;
-use structured_logger::{Builder, json::new_writer};
+use structured_logger::{json::new_writer, Builder};
 
 use conjure_core::context::Context;
 use conjure_oxide::find_conjure::conjure_executable;
@@ -18,8 +18,8 @@ use conjure_oxide::model_from_json;
 use conjure_oxide::rule_engine::{
     get_rule_priorities, get_rules_vec, resolve_rule_sets, rewrite_model,
 };
-use conjure_oxide::SolverFamily;
 use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
+use conjure_oxide::SolverFamily;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
