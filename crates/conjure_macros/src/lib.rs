@@ -66,7 +66,9 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
     let expanded = quote! {
         #func
 
-        #[::conjure_core::rule_engine::distributed_slice(::conjure_core::rule_engine::RULES_DISTRIBUTED_SLICE)]
+        use ::conjure_core::rule_engine::_dependencies::*;
+
+        #[::conjure_core::rule_engine::_dependencies::distributed_slice(::conjure_core::rule_engine::RULES_DISTRIBUTED_SLICE)]
         pub static #static_ident: ::conjure_core::rule_engine::Rule<'static> = ::conjure_core::rule_engine::Rule {
             name: stringify!(#rule_ident),
             application: #rule_ident,
@@ -170,7 +172,8 @@ pub fn register_rule_set(args: TokenStream) -> TokenStream {
     };
 
     let expanded = quote! {
-        #[::conjure_core::rule_engine::distributed_slice(::conjure_core::rule_engine::RULE_SETS_DISTRIBUTED_SLICE)]
+        use ::conjure_core::rule_engine::_dependencies::*;
+        #[::conjure_core::rule_engine::_dependencies::distributed_slice(::conjure_core::rule_engine::RULE_SETS_DISTRIBUTED_SLICE)]
         pub static #static_ident: ::conjure_core::rule_engine::RuleSet<'static> = ::conjure_core::rule_engine::RuleSet::new(#name, #priority, &[#dependencies], &[#solver_families]);
     };
 

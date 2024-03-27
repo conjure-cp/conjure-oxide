@@ -41,8 +41,8 @@ pub use linkme::distributed_slice;
 ///   Ok(Reduction::pure(expr.clone()))
 /// }
 /// ```
-#[doc(inline)]
 pub use conjure_rules_proc_macro::register_rule;
+
 /// This procedural macro registers a rule set with the global registry.
 /// It may be used in any downstream crate.
 ///
@@ -61,6 +61,7 @@ pub use conjure_rules_proc_macro::register_rule;
 ///
 /// register_rule_set!("MyRuleSet", 10, ("DependencyRuleSet", "AnotherRuleSet"));
 /// ```
+#[doc(inline)]
 pub use conjure_rules_proc_macro::register_rule_set;
 pub use resolve_rules::{get_rule_priorities, get_rules_vec, resolve_rule_sets};
 pub use rewrite::{rewrite_model, RewriteError};
@@ -81,6 +82,11 @@ pub static RULES_DISTRIBUTED_SLICE: [Rule<'static>];
 #[doc(hidden)]
 #[distributed_slice]
 pub static RULE_SETS_DISTRIBUTED_SLICE: [RuleSet<'static>];
+
+pub mod _dependencies {
+    pub use linkme;
+    pub use linkme::distributed_slice;
+}
 
 /// Returns a copied `Vec` of all rules registered with the `register_rule` macro.
 ///
