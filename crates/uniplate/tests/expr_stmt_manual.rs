@@ -379,7 +379,7 @@ impl Uniplate for Stmt {
 }
 
 #[test]
-fn paper_multitype_childrenbi() {
+fn children_bi_multitype() {
     let my_stmt = Sequence(vec![
         While(
             Val(0),
@@ -412,7 +412,7 @@ fn paper_multitype_childrenbi() {
 }
 
 #[test]
-fn paper_multitype_universebi() {
+fn universe_bi_multitype() {
     let my_stmt = Sequence(vec![
         While(
             Val(0),

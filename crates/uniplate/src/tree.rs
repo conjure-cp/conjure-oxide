@@ -103,33 +103,32 @@ fn proptest_integer_trees() -> impl Strategy<Value = Tree<i32>> {
     )
 }
 
-proptest! {
-    #[test]
-    // Is tree.recons() isomorphic?
-    fn tree_list_isomorphic_ints(tree in proptest_integer_trees()) {
-        let (children,func) = tree.clone().list();
-        let new_tree = func(children);
-        prop_assert_eq!(new_tree,tree);
-    }
-
-    #[test]
-    fn tree_map_add(tree in proptest_integer_trees(), diff in -100i32..100i32) {
-        let new_tree = tree.clone().map(Arc::new(move |a| a+diff));
-        let (old_children,_) = tree.list();
-        let (new_children,_) = new_tree.list();
-
-        for (old,new) in zip(old_children,new_children) {
-            prop_assert_eq!(old+diff,new);
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    proptest! {
+        #[test]
+        // Is tree.recons() isomorphic?
+        fn list_is_isomorphic(tree in proptest_integer_trees()) {
+            let (children,func) = tree.clone().list();
+            let new_tree = func(children);
+            prop_assert_eq!(new_tree,tree);
+        }
+
+        #[test]
+        fn map_add(tree in proptest_integer_trees(), diff in -100i32..100i32) {
+            let new_tree = tree.clone().map(Arc::new(move |a| a+diff));
+            let (old_children,_) = tree.list();
+            let (new_children,_) = new_tree.list();
+
+            for (old,new) in zip(old_children,new_children) {
+                prop_assert_eq!(old+diff,new);
+            }
+        }
+    }
     #[test]
-    fn test_list_order() {
+    fn list_preserves_ordering() {
         let my_tree: Tree<i32> = Many(vector![
             Many(vector![One(0), Zero]),
             Many(vector![Many(vector![Zero, One(1), One(2)])]),
