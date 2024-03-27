@@ -79,11 +79,11 @@ where
 
     /// Reconstructs the node with the given children.
     ///
-    /// # Returns
+    /// # Panics
     ///
-    /// If there are a different number of children given as there were originally, None is
-    /// returned.
-    fn with_children(&self, children: im::Vector<Self>) -> Option<Self> {
+    /// If there are a different number of children given as there were originally returned by
+    /// children().
+    fn with_children(&self, children: im::Vector<Self>) -> Self {
         // 1. Turn old tree into list.
         // 2. Check lists are same size.
         // 3. Use the reconstruction function given by old_children.list() to
@@ -92,9 +92,9 @@ where
         let (old_children, ctx) = self.uniplate();
         let (old_children_lst, rebuild) = old_children.list();
         if old_children_lst.len() != children.len() {
-            None
+            panic!("with_children() given an unexpected amount of children");
         } else {
-            Some(ctx(rebuild(children)))
+            ctx(rebuild(children))
         }
     }
 
