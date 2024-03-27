@@ -1,9 +1,10 @@
-// (niklasdewally): temporary, gut this if you want!
-
 use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
 use conjure_oxide::find_conjure::conjure_executable;
+use serde_json::json;
+use serde_json::to_string_pretty;
+use structured_logger::{json::new_writer, unix_ms, Builder};
 
 use conjure_oxide::parse::model_from_json;
 use conjure_oxide::rule_engine::resolve_rules::{
@@ -11,6 +12,8 @@ use conjure_oxide::rule_engine::resolve_rules::{
 };
 use conjure_oxide::rule_engine::rewrite::rewrite_model;
 use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
+use std::fs::File;
+use std::io::stdout;
 use std::path::PathBuf;
 use std::process::exit;
 
@@ -28,32 +31,43 @@ struct Cli {
 }
 
 pub fn main() -> AnyhowResult<()> {
+    let log_file = File::options()
+        .create(true)
+        .append(true)
+        .open("conjure_oxide.log")
+        .unwrap();
+
+    Builder::new()
+        .with_target_writer("info", new_writer(stdout()))
+        .with_target_writer("file", new_writer(log_file))
+        .init();
+
     let rule_sets = match resolve_rule_sets(vec!["Minion", "Constant"]) {
         Ok(rs) => rs,
         Err(e) => {
-            eprintln!("Error resolving rule sets: {}", e);
+            log::error!("Error resolving rule sets: {}", e);
             exit(1);
         }
     };
 
-    println!("Rule sets:");
-    print!("{{ ");
-    rule_sets.iter().for_each(|rule_set| {
-        print!("{}, ", rule_set.name);
-    });
-    print!("}}\n\n");
+    log::info!(
+        target: "info",
+        "Rule sets: {}",
+        rule_sets.iter().map(|rule_set| rule_set.name).collect::<Vec<_>>().join(", ")
+    );
 
     let rule_priorities = get_rule_priorities(&rule_sets)?;
     let rules_vec = get_rules_vec(&rule_priorities);
 
-    println!("Rules and priorities:");
-    rules_vec.iter().for_each(|rule| {
-        println!("{}: {}", rule.name, rule_priorities.get(rule).unwrap_or(&0));
-    });
-    println!();
+    log::info!(target: "info", 
+         "Rules and priorities: {}", 
+         rules_vec.iter()
+            .map(|rule| format!("{}: {}", rule.name, rule_priorities.get(rule).unwrap_or(&0)))
+            .collect::<Vec<_>>()
+            .join(", "));
 
     let cli = Cli::parse();
-    println!("Input file: {}", cli.input_file.display());
+    log::info!("Input file: {}", cli.input_file.display());
     let input_file: &str = cli.input_file.to_str().ok_or(anyhow!(
         "Given input_file could not be converted to a string"
     ))?;
@@ -64,6 +78,7 @@ pub fn main() -> AnyhowResult<()> {
 
     conjure_executable()
         .map_err(|e| anyhow!("Could not find correct conjure executable: {}", e))?;
+
     let mut cmd = std::process::Command::new("conjure");
     let output = cmd
         .arg("pretty")
@@ -80,17 +95,15 @@ pub fn main() -> AnyhowResult<()> {
 
     let mut model = model_from_json(&astjson)?;
 
-    println!("Initial model:");
-    println!("{:#?}", model);
+    log::info!("Initial model: {}", to_string_pretty(&json!(model))?);
 
-    println!("Rewriting model...");
+    log::info!("Rewriting model...");
     model = rewrite_model(&model, &rule_sets)?;
 
-    println!("\nRewritten model:");
-    println!("{:#?}", model);
+    log::info!("Rewritten model: {}", to_string_pretty(&json!(model))?);
 
     let solutions = get_minion_solutions(model)?;
-    println!("Solutions: {:#}", minion_solutions_to_json(&solutions));
+    log::info!("Solutions: {}", minion_solutions_to_json(&solutions));
 
     Ok(())
 }
