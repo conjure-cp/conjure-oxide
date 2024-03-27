@@ -1,21 +1,25 @@
-use anyhow::Result as AnyhowResult;
-use anyhow::{anyhow, bail};
-use clap::{arg, command, Parser};
-use conjure_oxide::find_conjure::conjure_executable;
-use serde_json::json;
-use serde_json::to_string_pretty;
-use structured_logger::{json::new_writer, unix_ms, Builder};
+// (niklasdewally): temporary, gut this if you want!
 
-use conjure_oxide::parse::model_from_json;
-use conjure_oxide::rule_engine::resolve_rules::{
-    get_rule_priorities, get_rules_vec, resolve_rule_sets,
-};
-use conjure_oxide::rule_engine::rewrite::rewrite_model;
-use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
 use std::fs::File;
 use std::io::stdout;
 use std::path::PathBuf;
 use std::process::exit;
+
+use anyhow::Result as AnyhowResult;
+use anyhow::{anyhow, bail};
+use clap::{arg, command, Parser};
+use serde_json::json;
+use serde_json::to_string_pretty;
+use structured_logger::{json::new_writer, Builder};
+
+use conjure_core::context::Context;
+use conjure_oxide::find_conjure::conjure_executable;
+use conjure_oxide::model_from_json;
+use conjure_oxide::rule_engine::{
+    get_rule_priorities, get_rules_vec, resolve_rule_sets, rewrite_model,
+};
+use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
+use conjure_oxide::SolverFamily;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -31,6 +35,9 @@ struct Cli {
 }
 
 pub fn main() -> AnyhowResult<()> {
+    let target_family = SolverFamily::Minion; // ToDo get this from CLI input
+    let extra_rule_sets: Vec<&str> = vec!["Constant"]; // ToDo get this from CLI input
+
     let log_file = File::options()
         .create(true)
         .append(true)
@@ -42,7 +49,7 @@ pub fn main() -> AnyhowResult<()> {
         .with_target_writer("file", new_writer(log_file))
         .init();
 
-    let rule_sets = match resolve_rule_sets(vec!["Minion", "Constant"]) {
+    let rule_sets = match resolve_rule_sets(target_family, &extra_rule_sets) {
         Ok(rs) => rs,
         Err(e) => {
             log::error!("Error resolving rule sets: {}", e);
@@ -92,8 +99,15 @@ pub fn main() -> AnyhowResult<()> {
     }
 
     let astjson = String::from_utf8(output.stdout)?;
-
     let mut model = model_from_json(&astjson)?;
+
+    let context = Context::new(
+        target_family,
+        extra_rule_sets.clone(),
+        rules_vec.clone(),
+        rule_sets.clone(),
+    );
+    model.set_context(context);
 
     log::info!("Initial model: {}", to_string_pretty(&json!(model))?);
 
@@ -110,7 +124,7 @@ pub fn main() -> AnyhowResult<()> {
 
 #[cfg(test)]
 mod tests {
-    use conjure_oxide::generate_custom::{get_example_model, get_example_model_by_path};
+    use conjure_oxide::{get_example_model, get_example_model_by_path};
 
     #[test]
     fn test_get_example_model_success() {

@@ -1,9 +1,12 @@
-mod utils;
-use crate::utils::generate::{generate_field_clones, generate_field_fills, generate_field_idents};
 use proc_macro::{self, TokenStream};
+
 use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
 use syn::{parse_macro_input, Data, DataEnum, DeriveInput, Ident, Variant};
+
+use crate::utils::generate::{generate_field_clones, generate_field_fills, generate_field_idents};
+
+mod utils;
 
 /// Generate the full match pattern for a variant
 fn generate_match_pattern(variant: &Variant, root_ident: &Ident) -> TokenStream2 {

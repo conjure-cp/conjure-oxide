@@ -105,12 +105,12 @@
 //! variable given to the model that does not have a constant value is considered a search
 //! variable. Solutions are returned through the [callback function](Callback) as a `HashMap`.
 
+pub use run::*;
+
 pub mod error;
 mod ffi;
 
-mod run;
-pub use run::*;
-
 pub mod ast;
+mod run;
 
 mod scoped_ptr;

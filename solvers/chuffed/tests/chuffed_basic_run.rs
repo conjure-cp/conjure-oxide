@@ -1,5 +1,5 @@
 use chuffed_rs::bindings::{
-    get_idx, new_dummy_problem, p_addVars, p_print, p_setcallback, vec, ConLevel_CL_DEF, IntVar,
+    get_idx, new_dummy_problem, p_addVars, p_setcallback, vec, ConLevel_CL_DEF, IntVar,
     VarBranch_VAR_INORDER, VarBranch_VAR_MIN_MIN,
 };
 use chuffed_rs::wrappers::{

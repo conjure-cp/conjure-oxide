@@ -1,8 +1,9 @@
-use crate::utils::parse::{check_field_type, parse_field_type, UniplateField};
 use proc_macro2::{Ident, Literal, TokenStream as TokenStream2};
 use quote::{quote, ToTokens};
 use syn::spanned::Spanned;
 use syn::{Field, Fields};
+
+use crate::utils::parse::{check_field_type, parse_field_type, UniplateField};
 
 /// Generate the code to fill a field in a variant
 fn get_fill(

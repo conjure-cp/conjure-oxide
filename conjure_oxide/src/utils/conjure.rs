@@ -1,14 +1,16 @@
-use crate::parse::model_from_json;
-use crate::utils::json::sort_json_object;
-use crate::Error as ParseErr;
-use conjure_core::ast::{Constant, Model, Name};
-use serde_json::{Map, Value as JsonValue};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+
+use serde_json::{Map, Value as JsonValue};
 use thiserror::Error as ThisError;
 
+use crate::ast::{Constant, Name};
+use crate::model_from_json;
 use crate::solver::adaptors::Minion;
-use crate::solver::{Solver, SolverAdaptor};
+use crate::solver::Solver;
+use crate::utils::json::sort_json_object;
+use crate::Error as ParseErr;
+use crate::Model;
 
 #[derive(Debug, ThisError)]
 pub enum EssenceParseError {
