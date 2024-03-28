@@ -1,4 +1,5 @@
 mod base;
+mod bubble;
 mod cnf;
 mod constant;
 mod minion;

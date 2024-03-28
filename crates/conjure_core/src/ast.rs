@@ -259,6 +259,10 @@ pub enum Expression {
      */
     Nothing,
 
+    /// An expression representing "A is valid as long as B is true"
+    /// Turns into a conjunction when it reaches a boolean context
+    Bubble(Metadata, Box<Expression>, Box<Expression>),
+
     #[compatible(Minion, JsonInput)]
     Constant(Metadata, Constant),
 
@@ -268,12 +272,6 @@ pub enum Expression {
     #[compatible(Minion, JsonInput)]
     Sum(Metadata, Vec<Expression>),
 
-    // /// Division after preventing division by zero, usually with a top-level constraint
-    // #[compatible(Minion)]
-    // SafeDiv(Metadata, Box<Expression>, Box<Expression>),
-    // /// Division with a possibly undefined value (division by 0)
-    // #[compatible(Minion, JsonInput)]
-    // Div(Metadata, Box<Expression>, Box<Expression>),
     #[compatible(JsonInput)]
     Min(Metadata, Vec<Expression>),
 
@@ -303,6 +301,14 @@ pub enum Expression {
 
     #[compatible(JsonInput)]
     Lt(Metadata, Box<Expression>, Box<Expression>),
+
+    /// Division after preventing division by zero, usually with a bubble
+    #[compatible(Minion)]
+    SafeDiv(Metadata, Box<Expression>, Box<Expression>),
+
+    /// Division with a possibly undefined value (division by 0)
+    #[compatible(Minion, JsonInput)]
+    Div(Metadata, Box<Expression>, Box<Expression>),
 
     /* Flattened SumEq.
      *
@@ -404,6 +410,9 @@ impl Display for Expression {
             Expression::Sum(metadata, expressions) => {
                 write!(f, "Sum({}, {})", metadata, display_expressions(expressions))
             }
+            Expression::Min(metadata, expressions) => {
+                write!(f, "Min({}, {})", metadata, display_expressions(expressions))
+            }
             Expression::Not(metadata, expr_box) => {
                 write!(f, "Not({}, {})", metadata, expr_box.clone())
             }
@@ -431,6 +440,15 @@ impl Display for Expression {
             Expression::Lt(metadata, box1, box2) => {
                 write!(f, "Lt({}, {}, {})", metadata, box1.clone(), box2.clone())
             }
+            Expression::SumEq(metadata, expressions, expr_box) => {
+                write!(
+                    f,
+                    "SumEq({}, {}, {})",
+                    metadata,
+                    display_expressions(expressions),
+                    expr_box.clone()
+                )
+            }
             Expression::SumGeq(metadata, box1, box2) => {
                 write!(
                     f,
@@ -457,6 +475,35 @@ impl Display for Expression {
                 box2.clone(),
                 box3.clone()
             ),
+            Expression::AllDiff(metadata, expressions) => {
+                write!(
+                    f,
+                    "AllDiff({}, {})",
+                    metadata,
+                    display_expressions(expressions)
+                )
+            }
+            Expression::Bubble(metadata, box1, box2) => {
+                write!(
+                    f,
+                    "Bubble({}, {}, {})",
+                    metadata,
+                    box1.clone(),
+                    box2.clone()
+                )
+            }
+            Expression::SafeDiv(metadata, box1, box2) => {
+                write!(
+                    f,
+                    "SafeDiv({}, {}, {})",
+                    metadata,
+                    box1.clone(),
+                    box2.clone()
+                )
+            }
+            Expression::Div(metadata, box1, box2) => {
+                write!(f, "Div({}, {}, {})", metadata, box1.clone(), box2.clone())
+            }
             #[allow(unreachable_patterns)]
             _ => write!(f, "Expression::Unknown"),
         }
