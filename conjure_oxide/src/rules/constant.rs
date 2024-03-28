@@ -65,6 +65,9 @@ pub fn eval_constant(expr: &Expr) -> Option<Const> {
             }
             bin_op::<i32, i32>(|a, b| a / b, a, b).map(Const::Int)
         }
+        Expr::DivEq(_, a, b, c) => {
+            tern_op::<i32, bool>(|a, b, c| a == b * c, a, b, c).map(Const::Bool)
+        }
         Expr::Bubble(_, a, b) => bin_op::<bool, bool>(|a, b| a && b, a, b).map(Const::Bool),
         _ => {
             println!("WARNING: Unimplemented constant eval: {:?}", expr);

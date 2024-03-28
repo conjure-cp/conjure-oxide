@@ -345,6 +345,9 @@ pub enum Expression {
     SumLeq(Metadata, Vec<Expression>, Box<Expression>),
 
     #[compatible(Minion)]
+    DivEq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
+
+    #[compatible(Minion)]
     Ineq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
 
     // #[compatible(Minion)]
@@ -411,6 +414,7 @@ impl Expression {
             Expression::SumEq(_, _, _) => Some(ReturnType::Bool),
             Expression::SumGeq(_, _, _) => Some(ReturnType::Bool),
             Expression::SumLeq(_, _, _) => Some(ReturnType::Bool),
+            Expression::DivEq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::Ineq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AllDiff(_, _) => Some(ReturnType::Bool),
             Expression::Bubble(_, _, _) => None,

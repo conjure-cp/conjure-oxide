@@ -266,13 +266,10 @@ fn read_expr(expr: conjureast::Expression) -> Result<minionast::Constraint, Solv
             read_var(*a)?,
             read_var(*b)?,
         ])),
-        // conjureast::Expression::DivEq(_metadata, a, b, c) => {
-        //     minion_model.constraints.push(minionast::Constraint::Div(
-        //         (read_var(*a)?, read_var(*b)?),
-        //         read_var(*c)?,
-        //     ));
-        //     Ok(())
-        // }
+        conjureast::Expression::DivEq(_metadata, a, b, c) => Ok(minionast::Constraint::Div(
+            (read_var(*a)?, read_var(*b)?),
+            read_var(*c)?,
+        )),
         conjureast::Expression::AllDiff(_metadata, vars) => {
             Ok(minionast::Constraint::AllDiff(read_vars(vars)?))
         }
