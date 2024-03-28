@@ -42,7 +42,7 @@ pub fn main() -> AnyhowResult<()> {
         .with_target_writer("file", new_writer(log_file))
         .init();
 
-    let rule_sets = match resolve_rule_sets(vec!["Minion", "Constant"]) {
+    let rule_sets = match resolve_rule_sets(vec!["Minion", "Constant", "Bubble"]) {
         Ok(rs) => rs,
         Err(e) => {
             log::error!("Error resolving rule sets: {}", e);

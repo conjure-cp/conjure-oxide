@@ -228,6 +228,24 @@ pub enum Constant {
     Bool(bool),
 }
 
+impl From<i32> for Constant {
+    fn from(i: i32) -> Self {
+        Constant::Int(i)
+    }
+}
+
+impl From<bool> for Constant {
+    fn from(b: bool) -> Self {
+        Constant::Bool(b)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ReturnType {
+    Int,
+    Bool,
+}
+
 impl TryFrom<Constant> for i32 {
     type Error = &'static str;
 
@@ -308,7 +326,7 @@ pub enum Expression {
 
     /// Division with a possibly undefined value (division by 0)
     #[compatible(Minion, JsonInput)]
-    Div(Metadata, Box<Expression>, Box<Expression>),
+    UnsafeDiv(Metadata, Box<Expression>, Box<Expression>),
 
     /* Flattened SumEq.
      *
@@ -371,6 +389,34 @@ impl Expression {
             _ => todo!(),
         }
     }
+
+    pub fn return_type(&self) -> Option<ReturnType> {
+        match self {
+            Expression::Constant(_, Constant::Int(_)) => Some(ReturnType::Int),
+            Expression::Constant(_, Constant::Bool(_)) => Some(ReturnType::Bool),
+            Expression::Reference(_, _) => None,
+            Expression::Sum(_, _) => Some(ReturnType::Int),
+            Expression::Min(_, _) => Some(ReturnType::Int),
+            Expression::Not(_, _) => Some(ReturnType::Bool),
+            Expression::Or(_, _) => Some(ReturnType::Bool),
+            Expression::And(_, _) => Some(ReturnType::Bool),
+            Expression::Eq(_, _, _) => Some(ReturnType::Bool),
+            Expression::Neq(_, _, _) => Some(ReturnType::Bool),
+            Expression::Geq(_, _, _) => Some(ReturnType::Bool),
+            Expression::Leq(_, _, _) => Some(ReturnType::Bool),
+            Expression::Gt(_, _, _) => Some(ReturnType::Bool),
+            Expression::Lt(_, _, _) => Some(ReturnType::Bool),
+            Expression::SafeDiv(_, _, _) => Some(ReturnType::Int),
+            Expression::UnsafeDiv(_, _, _) => Some(ReturnType::Int),
+            Expression::SumEq(_, _, _) => Some(ReturnType::Bool),
+            Expression::SumGeq(_, _, _) => Some(ReturnType::Bool),
+            Expression::SumLeq(_, _, _) => Some(ReturnType::Bool),
+            Expression::Ineq(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::AllDiff(_, _) => Some(ReturnType::Bool),
+            Expression::Bubble(_, _, _) => None,
+            Expression::Nothing => None,
+        }
+    }
 }
 
 fn display_expressions(expressions: &[Expression]) -> String {
@@ -398,6 +444,18 @@ impl Display for Constant {
             Constant::Int(i) => write!(f, "Int({})", i),
             Constant::Bool(b) => write!(f, "Bool({})", b),
         }
+    }
+}
+
+impl From<i32> for Expression {
+    fn from(i: i32) -> Self {
+        Expression::Constant(Metadata::new(), Constant::Int(i))
+    }
+}
+
+impl From<bool> for Expression {
+    fn from(b: bool) -> Self {
+        Expression::Constant(Metadata::new(), Constant::Bool(b))
     }
 }
 
@@ -501,7 +559,7 @@ impl Display for Expression {
                     box2.clone()
                 )
             }
-            Expression::Div(metadata, box1, box2) => {
+            Expression::UnsafeDiv(metadata, box1, box2) => {
                 write!(f, "Div({}, {}, {})", metadata, box1.clone(), box2.clone())
             }
             #[allow(unreachable_patterns)]

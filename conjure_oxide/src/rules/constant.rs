@@ -59,12 +59,13 @@ pub fn eval_constant(expr: &Expr) -> Option<Const> {
         Expr::Min(_, exprs) => {
             opt_vec_op::<i32, i32>(|e| e.iter().min().copied(), exprs).map(Const::Int)
         }
-        Expr::Div(_, a, b) | Expr::SafeDiv(_, a, b) => {
+        Expr::UnsafeDiv(_, a, b) | Expr::SafeDiv(_, a, b) => {
             if unwrap_expr::<i32>(b)? == 0 {
                 return None;
             }
             bin_op::<i32, i32>(|a, b| a / b, a, b).map(Const::Int)
         }
+        Expr::Bubble(_, a, b) => bin_op::<bool, bool>(|a, b| a && b, a, b).map(Const::Bool),
         _ => {
             println!("WARNING: Unimplemented constant eval: {:?}", expr);
             None
@@ -135,7 +136,7 @@ mod tests {
 
     #[test]
     fn div_by_zero() {
-        let expr = Expression::Div(
+        let expr = Expression::UnsafeDiv(
             Default::default(),
             Box::new(Expression::Constant(Default::default(), Constant::Int(1))),
             Box::new(Expression::Constant(Default::default(), Constant::Int(0))),

@@ -45,7 +45,7 @@ fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>
     assert_eq!(model, expected_model);
 
     // Stage 2: Rewrite the model using the rule engine and check that the result is as expected
-    let rule_sets = resolve_rule_sets(vec!["Minion", "Constant"])?;
+    let rule_sets = resolve_rule_sets(vec!["Minion", "Constant", "Bubble"])?;
     let model = rewrite_model(&model, &rule_sets)?;
     if verbose {
         println!("Rewritten model: {:#?}", model)
