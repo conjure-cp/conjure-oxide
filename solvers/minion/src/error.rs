@@ -1,7 +1,8 @@
 //! Error types.
 
-use crate::ffi;
 use thiserror::Error;
+
+use crate::ffi;
 
 /// Wraps all error types returned by `minion_rs`.
 #[derive(Debug, Error)]
