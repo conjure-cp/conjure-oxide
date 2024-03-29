@@ -20,10 +20,10 @@
 #![allow(clippy::unwrap_used)]
 #![allow(unstable_name_collisions)]
 
+use proc_macro::TokenStream;
 use std::collections::HashMap;
 
 use itertools::Itertools;
-use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
     parse_macro_input, parse_quote, punctuated::Punctuated, visit_mut::VisitMut, Attribute,

@@ -1,15 +1,19 @@
-use crate::utils::conjure::minion_solutions_to_json;
-use crate::utils::json::sort_json_object;
-use crate::utils::misc::to_set;
-use crate::Error;
-use conjure_core::ast::Name::UserName;
-use conjure_core::ast::{Constant, Model as ConjureModel, Name};
-use serde_json::{Error as JsonError, Value as JsonValue};
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::fs::File;
 use std::hash::Hash;
 use std::io::Write;
+
+use serde_json::{Error as JsonError, Value as JsonValue};
+
+use conjure_core::error::Error;
+
+use crate::ast::Name::UserName;
+use crate::ast::{Constant, Name};
+use crate::utils::conjure::minion_solutions_to_json;
+use crate::utils::json::sort_json_object;
+use crate::utils::misc::to_set;
+use crate::Model as ConjureModel;
 
 pub fn assert_eq_any_order<T: Eq + Hash + Debug + Clone>(a: &Vec<Vec<T>>, b: &Vec<Vec<T>>) {
     assert_eq!(a.len(), b.len());

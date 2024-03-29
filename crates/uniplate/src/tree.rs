@@ -1,10 +1,11 @@
 //#![cfg(feature = "unstable")]
 
-use std::{iter::zip, sync::Arc};
+use std::sync::Arc;
 
 use im::vector;
 use proptest::prelude::*;
-use proptest_derive::Arbitrary;
+
+use self::Tree::*;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Tree<T: Sized + Clone + Eq> {
@@ -12,8 +13,6 @@ pub enum Tree<T: Sized + Clone + Eq> {
     One(T),
     Many(im::Vector<Tree<T>>),
 }
-
-use self::Tree::*;
 
 // NOTE (niklasdewally): This converts the entire tree into a list. Therefore this is only really
 // worth it when we use all the children returned. This is what we use this for inside Uniplate.
@@ -32,6 +31,7 @@ impl<T: Sized + Clone + Eq + 'static> Tree<T> {
     /// Returns the tree as a list alongside a function to reconstruct the tree from a list.
     ///
     /// This preserves the structure of the tree.
+    #[allow(clippy::type_complexity)]
     pub fn list(self) -> (im::Vector<T>, Box<dyn Fn(im::Vector<T>) -> Tree<T>>) {
         // inspired by the Uniplate Haskell equivalent Data.Generics.Str::strStructure
         // https://github.com/ndmitchell/uniplate/blob/master/Data/Generics/Str.hs#L85
@@ -105,6 +105,8 @@ fn proptest_integer_trees() -> impl Strategy<Value = Tree<i32>> {
 
 #[cfg(test)]
 mod tests {
+    use std::iter::zip;
+
     use super::*;
 
     proptest! {

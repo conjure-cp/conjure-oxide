@@ -1,20 +1,22 @@
-// Tests for rewriting/simplifying parts of the AST
-use conjure_oxide::solver::SolverAdaptor as _;
 use core::panic;
 use std::collections::HashMap;
 use std::process::exit;
-use uniplate::uniplate::Uniplate;
 
-use conjure_core::{metadata::Metadata, rule::Rule};
-use conjure_oxide::ast::*;
-use conjure_oxide::eval_constant;
-use conjure_oxide::rule_engine::{resolve_rules::resolve_rule_sets, rewrite::rewrite_model};
-use conjure_oxide::solver::{adaptors, Solver};
-use conjure_rules::{get_rule_by_name, get_rules};
+use conjure_core::context::Context;
+use conjure_core::rules::eval_constant;
+use conjure_core::solver::SolverFamily;
+use conjure_oxide::{
+    ast::*,
+    get_rule_by_name, get_rules,
+    rule_engine::{resolve_rule_sets, rewrite_model},
+    solver::{adaptors, Solver, SolverAdaptor as _},
+    Metadata, Model, Rule,
+};
+use uniplate::uniplate::Uniplate;
 
 #[test]
 fn rules_present() {
-    let rules = conjure_rules::get_rules();
+    let rules = get_rules();
     assert!(!rules.is_empty());
 }
 
@@ -234,7 +236,7 @@ fn rule_sum_geq() {
 /// ```
 #[test]
 fn reduce_solve_xyz() {
-    println!("Rules: {:?}", conjure_rules::get_rules());
+    println!("Rules: {:?}", get_rules());
     let sum_constants = get_rule_by_name("sum_constants").unwrap();
     let unwrap_sum = get_rule_by_name("unwrap_sum").unwrap();
     let lt_to_ineq = get_rule_by_name("lt_to_ineq").unwrap();
@@ -328,6 +330,7 @@ fn reduce_solve_xyz() {
     let mut model = Model::new(
         HashMap::new(),
         Expression::And(Metadata::new(), vec![expr1, expr2]),
+        Context::default(),
     );
     model.variables.insert(
         Name::UserName(String::from("a")),
@@ -822,9 +825,9 @@ fn rule_distribute_or_over_and() {
 /// of applying the rules manually.
 #[test]
 fn rewrite_solve_xyz() {
-    println!("Rules: {:?}", conjure_rules::get_rules());
+    println!("Rules: {:?}", get_rules());
 
-    let rule_sets = match resolve_rule_sets(vec!["Minion", "Constant"]) {
+    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &vec!["Constant"]) {
         Ok(rs) => rs,
         Err(e) => {
             eprintln!("Error resolving rule sets: {}", e);
@@ -863,7 +866,7 @@ fn rewrite_solve_xyz() {
         ],
     );
 
-    let rule_sets = match resolve_rule_sets(vec!["Minion", "Constant"]) {
+    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &vec!["Constant"]) {
         Ok(rs) => rs,
         Err(e) => {
             eprintln!("Error resolving rule sets: {}", e);
@@ -872,16 +875,19 @@ fn rewrite_solve_xyz() {
     };
 
     // Apply rewrite function to the nested expression
-    let rewritten_expr = rewrite_model(&Model::new(HashMap::new(), nested_expr), &rule_sets)
-        .unwrap()
-        .constraints;
+    let rewritten_expr = rewrite_model(
+        &Model::new(HashMap::new(), nested_expr, Context::default()),
+        &rule_sets,
+    )
+    .unwrap()
+    .constraints;
 
     // Check if the expression is in its simplest form
     let expr = rewritten_expr.clone();
     assert!(is_simple(&expr));
 
     // Create model with variables and constraints
-    let mut model = Model::new(HashMap::new(), rewritten_expr);
+    let mut model = Model::new(HashMap::new(), rewritten_expr, Context::default());
 
     // Insert variables and domains
     model.variables.insert(
@@ -975,7 +981,7 @@ fn apply_all_rules<'a>(
 /// # Returns
 /// - Some(<new_expression>) after applying the first rule in `results`.
 /// - None if `results` is empty.
-fn choose_rewrite(results: &Vec<RuleResult>) -> Option<Expression> {
+fn choose_rewrite(results: &[RuleResult]) -> Option<Expression> {
     if results.is_empty() {
         return None;
     }
