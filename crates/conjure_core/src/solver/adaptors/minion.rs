@@ -127,7 +127,7 @@ impl SolverAdaptor for Minion {
             status = Complete(NoSolutions);
         }
         Ok(SolveSuccess {
-            stats: None,
+            stats: Default::default(),
             status,
         })
     }
@@ -150,6 +150,10 @@ impl SolverAdaptor for Minion {
 
     fn get_family(&self) -> SolverFamily {
         SolverFamily::Minion
+    }
+
+    fn get_name(&self) -> Option<String> {
+        Some("adaptors::Minion".to_owned())
     }
 }
 
