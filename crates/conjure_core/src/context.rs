@@ -11,6 +11,7 @@ use crate::stats::Stats;
 
 #[skip_serializing_none]
 #[derive(Clone, Serialize, Default, Derivative)]
+#[serde(rename_all = "camelCase")]
 #[derivative(Eq, PartialEq)]
 #[non_exhaustive]
 pub struct Context<'a> {

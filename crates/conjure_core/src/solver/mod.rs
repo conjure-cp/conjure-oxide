@@ -84,6 +84,7 @@
 #![allow(unused)]
 #![allow(clippy::manual_non_exhaustive)]
 
+use std::any::Any;
 use std::cell::OnceCell;
 use std::collections::HashMap;
 use std::error::Error;
@@ -161,7 +162,7 @@ pub type SolverMutCallback =
 /// Underlying solvers that only have one instance per process (such as Minion) **should** block
 /// (eg. using a [`Mutex<()>`](`std::sync::Mutex`)) to run calls to
 /// [`Solver<A,ModelLoaded>::solve()`] and [`Solver<A,ModelLoaded>::solve_mut()`] sequentially.
-pub trait SolverAdaptor: private::Sealed {
+pub trait SolverAdaptor: private::Sealed + Any {
     /// Runs the solver on the given model.
     ///
     /// Implementations of this function **must** call the user provided callback whenever a solution
@@ -203,6 +204,20 @@ pub trait SolverAdaptor: private::Sealed {
 
     /// Get the solver family that this solver adaptor belongs to
     fn get_family(&self) -> SolverFamily;
+
+    /// Gets the name of the solver adaptor for pretty printing.
+    fn get_name(&self) -> Option<String> {
+        None
+    }
+
+    /// Adds the solver adaptor name and family (if they exist) to the given stats object.
+    fn add_adaptor_info_to_stats(&self, stats: SolverStats) -> SolverStats {
+        SolverStats {
+            solver_adaptor: self.get_name(),
+            solver_family: Some(self.get_family()),
+            ..stats
+        }
+    }
 }
 
 /// An abstract representation of a constraints solver.
@@ -267,15 +282,22 @@ impl<A: SolverAdaptor> Solver<A, ModelLoaded> {
         let duration = start_time.elapsed();
 
         match result {
-            Ok(x) => Ok(Solver {
-                adaptor: self.adaptor,
-                state: ExecutionSuccess {
-                    stats: x.stats.with_timings(duration.as_secs_f64()),
-                    status: x.status,
-                    _sealed: private::Internal,
-                },
-                context: self.context,
-            }),
+            Ok(x) => {
+                let stats = self
+                    .adaptor
+                    .add_adaptor_info_to_stats(x.stats)
+                    .with_timings(duration.as_secs_f64());
+
+                Ok(Solver {
+                    adaptor: self.adaptor,
+                    state: ExecutionSuccess {
+                        stats,
+                        status: x.status,
+                        _sealed: private::Internal,
+                    },
+                    context: self.context,
+                })
+            }
             Err(x) => Err(x),
         }
     }
@@ -293,15 +315,22 @@ impl<A: SolverAdaptor> Solver<A, ModelLoaded> {
         let duration = start_time.elapsed();
 
         match result {
-            Ok(x) => Ok(Solver {
-                adaptor: self.adaptor,
-                state: ExecutionSuccess {
-                    stats: x.stats.with_timings(duration.as_secs_f64()),
-                    status: x.status,
-                    _sealed: private::Internal,
-                },
-                context: self.context,
-            }),
+            Ok(x) => {
+                let stats = self
+                    .adaptor
+                    .add_adaptor_info_to_stats(x.stats)
+                    .with_timings(duration.as_secs_f64());
+
+                Ok(Solver {
+                    adaptor: self.adaptor,
+                    state: ExecutionSuccess {
+                        stats,
+                        status: x.status,
+                        _sealed: private::Internal,
+                    },
+                    context: self.context,
+                })
+            }
             Err(x) => Err(x),
         }
     }

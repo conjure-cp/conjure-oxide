@@ -7,8 +7,8 @@ pub use solver_stats::SolverStats;
 #[allow(dead_code)]
 #[skip_serializing_none]
 #[derive(Default, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct Stats {
-    pub solve_wall_time_s: Option<f64>,
     pub solver_runs: Vec<SolverStats>,
 }
 

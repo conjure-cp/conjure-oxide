@@ -1,17 +1,23 @@
 use serde::Serialize;
 use serde_with::skip_serializing_none;
 
-use crate::solver::SolverFamily;
+use crate::solver::{SolverAdaptor, SolverFamily};
 
 #[skip_serializing_none]
 #[derive(Default, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 #[allow(dead_code)]
 pub struct SolverStats {
-    // Wall time as measured by Conjure Oxide.
-    // This is set by Solver, not SolverAdaptor
+    /// Wall time as measured by Conjure-oxide (not the solver).
+    #[serde(rename = "conjureSolverWallTime_s")]
     pub conjure_solver_wall_time_s: f64,
 
+    // This is set by Solver, not SolverAdaptor
+    /// The solver family used for this run.
     pub solver_family: Option<SolverFamily>,
+
+    /// The solver adaptor used for this run.
+    pub solver_adaptor: Option<String>,
 
     // NOTE (niklasdewally): these fields are copied from the list in Savile Row
     pub nodes: Option<u64>,
@@ -21,8 +27,7 @@ pub struct SolverStats {
 }
 
 impl SolverStats {
-    // If the given stats object exists, add the wall time value.
-    // Otherwise create a new stats object containing the wall time value.
+    // Adds the conjure_solver_wall_time_s to the stats.
     pub fn with_timings(self, wall_time_s: f64) -> SolverStats {
         SolverStats {
             conjure_solver_wall_time_s: wall_time_s,
