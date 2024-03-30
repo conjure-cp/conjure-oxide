@@ -20,7 +20,7 @@ fn modify_domain() {
     let mut m = Model::new(
         variables,
         Expression::And(Metadata::new(), Vec::new()),
-        Context::default(),
+        Default::default(),
     );
 
     assert_eq!(m.variables.get(&a).unwrap().domain, d1);

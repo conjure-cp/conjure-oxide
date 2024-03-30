@@ -84,9 +84,12 @@
 #![allow(unused)]
 #![allow(clippy::manual_non_exhaustive)]
 
+use std::cell::OnceCell;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::{Debug, Display};
+use std::rc::Rc;
+use std::sync::{Arc, RwLock};
 use std::time::Instant;
 
 use serde::{Deserialize, Serialize};
@@ -94,15 +97,15 @@ use strum_macros::{Display, EnumIter, EnumString};
 use thiserror::Error;
 
 use crate::ast::{Constant, Name};
+use crate::context::Context;
+use crate::stats::SolverStats;
 use crate::Model;
 
-use self::model_modifier::*;
+use self::model_modifier::ModelModifier;
 use self::states::*;
-use self::stats::SolverStats;
 
 pub mod adaptors;
 pub mod model_modifier;
-pub mod stats;
 
 #[doc(hidden)]
 mod private;
@@ -219,6 +222,7 @@ pub trait SolverAdaptor: private::Sealed {
 pub struct Solver<A: SolverAdaptor, State: SolverState = Init> {
     state: State,
     adaptor: A,
+    context: Option<Arc<RwLock<Context<'static>>>>,
 }
 
 impl<Adaptor: SolverAdaptor> Solver<Adaptor> {
@@ -226,6 +230,7 @@ impl<Adaptor: SolverAdaptor> Solver<Adaptor> {
         let mut solver = Solver {
             state: Init,
             adaptor: solver_adaptor,
+            context: None,
         };
 
         solver.adaptor.init_solver(private::Internal);
@@ -239,10 +244,11 @@ impl<Adaptor: SolverAdaptor> Solver<Adaptor> {
 
 impl<A: SolverAdaptor> Solver<A, Init> {
     pub fn load_model(mut self, model: Model) -> Result<Solver<A, ModelLoaded>, SolverError> {
-        let solver_model = &mut self.adaptor.load_model(model, private::Internal)?;
+        let solver_model = &mut self.adaptor.load_model(model.clone(), private::Internal)?;
         Ok(Solver {
             state: ModelLoaded,
             adaptor: self.adaptor,
+            context: Some(model.context.clone()),
         })
     }
 }
@@ -264,11 +270,11 @@ impl<A: SolverAdaptor> Solver<A, ModelLoaded> {
             Ok(x) => Ok(Solver {
                 adaptor: self.adaptor,
                 state: ExecutionSuccess {
-                    stats: x.stats,
+                    stats: x.stats.with_timings(duration.as_secs_f64()),
                     status: x.status,
                     _sealed: private::Internal,
-                    wall_time_s: duration.as_secs_f64(),
                 },
+                context: self.context,
             }),
             Err(x) => Err(x),
         }
@@ -290,11 +296,11 @@ impl<A: SolverAdaptor> Solver<A, ModelLoaded> {
             Ok(x) => Ok(Solver {
                 adaptor: self.adaptor,
                 state: ExecutionSuccess {
-                    stats: x.stats,
+                    stats: x.stats.with_timings(duration.as_secs_f64()),
                     status: x.status,
                     _sealed: private::Internal,
-                    wall_time_s: duration.as_secs_f64(),
                 },
+                context: self.context,
             }),
             Err(x) => Err(x),
         }
@@ -302,12 +308,25 @@ impl<A: SolverAdaptor> Solver<A, ModelLoaded> {
 }
 
 impl<A: SolverAdaptor> Solver<A, ExecutionSuccess> {
-    pub fn stats(self) -> Option<Box<dyn SolverStats>> {
-        self.state.stats
+    pub fn stats(&self) -> SolverStats {
+        self.state.stats.clone()
+    }
+
+    // Saves this solvers stats to the global context as a "solver run"
+    pub fn save_stats_to_context(&self) {
+        #[allow(clippy::unwrap_used)]
+        #[allow(clippy::expect_used)]
+        self.context
+            .as_ref()
+            .expect("")
+            .write()
+            .unwrap()
+            .stats
+            .add_solver_run(self.stats());
     }
 
     pub fn wall_time_s(&self) -> f64 {
-        self.state.wall_time_s
+        self.stats().conjure_solver_wall_time_s
     }
 }
 
@@ -340,7 +359,7 @@ pub enum SolverError {
 
 /// Returned from [SolverAdaptor] when solving is successful.
 pub struct SolveSuccess {
-    stats: Option<Box<dyn SolverStats>>,
+    stats: SolverStats,
     status: SearchStatus,
 }
 

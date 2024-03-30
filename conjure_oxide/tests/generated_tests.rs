@@ -1,7 +1,10 @@
 use std::env;
 use std::error::Error;
 use std::path::Path;
+use std::sync::Arc;
+use std::sync::RwLock;
 
+use conjure_core::context::Context;
 use conjure_oxide::rule_engine::resolve_rule_sets;
 use conjure_oxide::rule_engine::rewrite_model;
 use conjure_oxide::utils::conjure::{get_minion_solutions, parse_essence_file};
@@ -21,6 +24,7 @@ fn main() {
 }
 
 fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>> {
+    let context: Arc<RwLock<Context<'static>>> = Default::default();
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
 
@@ -32,7 +36,7 @@ fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>
     }
 
     // Stage 1: Read the essence file and check that the model is parsed correctly
-    let model = parse_essence_file(path, essence_base)?;
+    let model = parse_essence_file(path, essence_base, context)?;
     if verbose {
         println!("Parsed model: {:#?}", model)
     }

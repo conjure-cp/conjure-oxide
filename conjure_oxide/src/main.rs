@@ -4,6 +4,7 @@ use std::fs::File;
 use std::io::stdout;
 use std::path::PathBuf;
 use std::process::exit;
+use std::sync::{Arc, RwLock};
 
 use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
@@ -99,15 +100,15 @@ pub fn main() -> AnyhowResult<()> {
     }
 
     let astjson = String::from_utf8(output.stdout)?;
-    let mut model = model_from_json(&astjson)?;
 
-    let context = Context::new(
+    let context = Context::new_ptr(
         target_family,
         extra_rule_sets.clone(),
         rules_vec.clone(),
         rule_sets.clone(),
     );
-    model.set_context(context);
+
+    let mut model = model_from_json(&astjson, context.clone())?;
 
     log::info!("Initial model: {}", to_string_pretty(&json!(model))?);
 

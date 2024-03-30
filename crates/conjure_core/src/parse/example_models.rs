@@ -1,5 +1,6 @@
 // example_models with get_example_model function
 
+use std::default;
 use std::path::PathBuf;
 
 use project_root::get_project_root;
@@ -59,7 +60,7 @@ pub fn get_example_model(filename: &str) -> Result<Model, anyhow::Error> {
     //println!("ASTJSON: {}", astjson);
 
     // parse AST JSON from desired Model format
-    let generated_mdl = model_from_json(&astjson)?;
+    let generated_mdl = model_from_json(&astjson, Default::default())?;
 
     Ok(generated_mdl)
 }
@@ -101,7 +102,7 @@ pub fn get_example_model_by_path(filepath: &str) -> Result<Model, anyhow::Error>
     // println!("ASTJSON: {}", astjson);
 
     // parse AST JSON into the desired Model format
-    let generated_model = model_from_json(&astjson)?;
+    let generated_model = model_from_json(&astjson, Default::default())?;
 
     Ok(generated_model)
 }

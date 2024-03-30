@@ -3,6 +3,7 @@ use std::sync::{Arc, RwLock};
 
 use crate::rule_engine::{Rule, RuleSet};
 use crate::solver::SolverFamily;
+use crate::stats::Stats;
 
 #[derive(Clone)]
 #[non_exhaustive]
@@ -11,6 +12,7 @@ pub struct Context<'a> {
     pub extra_rule_set_names: Arc<RwLock<Vec<&'a str>>>,
     pub rules: Arc<RwLock<Vec<&'a Rule<'a>>>>,
     pub rule_sets: Arc<RwLock<Vec<&'a RuleSet<'a>>>>,
+    pub stats: Stats,
 }
 
 impl<'a> Context<'a> {
@@ -25,7 +27,24 @@ impl<'a> Context<'a> {
             extra_rule_set_names: Arc::new(RwLock::new(extra_rule_set_names)),
             rules: Arc::new(RwLock::new(rules)),
             rule_sets: Arc::new(RwLock::new(rule_sets)),
+            stats: Default::default(),
         }
+    }
+}
+
+impl Context<'static> {
+    pub fn new_ptr(
+        target_solver_family: SolverFamily,
+        extra_rule_set_names: Vec<&'static str>,
+        rules: Vec<&'static Rule<'static>>,
+        rule_sets: Vec<&'static RuleSet<'static>>,
+    ) -> Arc<RwLock<Context<'static>>> {
+        Arc::new(RwLock::new(Context::new(
+            target_solver_family,
+            extra_rule_set_names,
+            rules,
+            rule_sets,
+        )))
     }
 }
 
@@ -62,6 +81,7 @@ impl<'a> Default for Context<'a> {
             extra_rule_set_names: Arc::new(RwLock::new(Vec::new())),
             rules: Arc::new(RwLock::new(Vec::new())),
             rule_sets: Arc::new(RwLock::new(Vec::new())),
+            stats: Default::default(),
         }
     }
 }
@@ -86,5 +106,3 @@ impl PartialEq for Context<'_> {
                 .eq(&*other.rule_sets.read().unwrap())
     }
 }
-
-impl Eq for Context<'_> {}

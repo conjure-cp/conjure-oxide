@@ -1,6 +1,8 @@
 use std::cell::RefCell;
 use std::fmt::Debug;
+use std::sync::{Arc, RwLock};
 
+use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 
@@ -9,13 +11,15 @@ use crate::context::Context;
 use crate::metadata::Metadata;
 
 #[serde_as]
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Derivative, Clone, Debug, Serialize, Deserialize)]
+#[derivative(PartialEq, Eq)]
 pub struct Model {
     #[serde_as(as = "Vec<(_, _)>")]
     pub variables: SymbolTable,
     pub constraints: Expression,
     #[serde(skip)]
-    pub context: Context<'static>,
+    #[derivative(PartialEq = "ignore")]
+    pub context: Arc<RwLock<Context<'static>>>,
     next_var: RefCell<i32>,
 }
 
@@ -23,7 +27,7 @@ impl Model {
     pub fn new(
         variables: SymbolTable,
         constraints: Expression,
-        context: Context<'static>,
+        context: Arc<RwLock<Context<'static>>>,
     ) -> Model {
         Model {
             variables,
@@ -31,6 +35,10 @@ impl Model {
             context,
             next_var: RefCell::new(0),
         }
+    }
+
+    pub fn new_empty(context: Arc<RwLock<Context<'static>>>) -> Model {
+        Model::new(Default::default(), Expression::Nothing, context)
     }
     // Function to update a DecisionVariable based on its Name
     pub fn update_domain(&mut self, name: &Name, new_domain: Domain) {
@@ -66,7 +74,7 @@ impl Model {
         }
     }
 
-    pub fn set_context(&mut self, context: Context<'static>) {
+    pub fn set_context(&mut self, context: Arc<RwLock<Context<'static>>>) {
         self.context = context;
     }
 
@@ -89,11 +97,5 @@ impl Model {
         let num = *self.next_var.borrow();
         *(self.next_var.borrow_mut()) += 1;
         Name::MachineName(num) // incremented when inserted
-    }
-}
-
-impl Default for Model {
-    fn default() -> Self {
-        Self::new(SymbolTable::new(), Expression::Nothing, Context::default())
     }
 }

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, RwLock};
 
+use conjure_core::context::Context;
 use serde_json::{Map, Value as JsonValue};
 use thiserror::Error as ThisError;
 
@@ -26,7 +27,11 @@ impl From<ParseErr> for EssenceParseError {
     }
 }
 
-pub fn parse_essence_file(path: &str, filename: &str) -> Result<Model, EssenceParseError> {
+pub fn parse_essence_file(
+    path: &str,
+    filename: &str,
+    context: Arc<RwLock<Context<'static>>>,
+) -> Result<Model, EssenceParseError> {
     let mut cmd = std::process::Command::new("conjure");
     let output = match cmd
         .arg("pretty")
@@ -54,7 +59,7 @@ pub fn parse_essence_file(path: &str, filename: &str) -> Result<Model, EssencePa
         }
     };
 
-    let parsed_model = model_from_json(&astjson)?;
+    let parsed_model = model_from_json(&astjson, context)?;
     Ok(parsed_model)
 }
 
