@@ -93,6 +93,7 @@ use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumIter, EnumString};
 use thiserror::Error;
@@ -114,8 +115,20 @@ mod private;
 pub mod states;
 
 #[derive(
-    Debug, EnumString, EnumIter, Display, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize,
+    Debug,
+    EnumString,
+    EnumIter,
+    Display,
+    PartialEq,
+    Eq,
+    Hash,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    JsonSchema,
 )]
+
 pub enum SolverFamily {
     SAT,
     Minion,
