@@ -29,6 +29,7 @@ use super::super::SolverError::*;
 /// This adaptor uses the `minion_rs` crate to talk to Minion over FFI.
 pub struct Minion {
     __non_constructable: private::Internal,
+    model: Option<MinionModel>,
 }
 
 static MINION_LOCK: Mutex<()> = Mutex::new(());
@@ -76,6 +77,7 @@ impl Minion {
     pub fn new() -> Minion {
         Minion {
             __non_constructable: private::Internal,
+            model: None,
         }
     }
 }
@@ -87,14 +89,9 @@ impl Default for Minion {
 }
 
 impl SolverAdaptor for Minion {
-    type Model = MinionModel;
-    type Solution = minion_ast::Constant;
-    type Modifier = NotModifiable;
-
     #[allow(clippy::unwrap_used)]
     fn solve(
         &mut self,
-        model: MinionModel,
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
@@ -112,7 +109,11 @@ impl SolverAdaptor for Minion {
         drop(user_callback); // release mutex. REQUIRED so that run_minion can use the
                              // user callback and not deadlock.
 
-        run_minion(model, minion_rs_callback).map_err(|err| match err {
+        run_minion(
+            self.model.clone().expect("STATE MACHINE ERR"),
+            minion_rs_callback,
+        )
+        .map_err(|err| match err {
             MinionError::RuntimeError(x) => Runtime(format!("{:#?}", x)),
             MinionError::Other(x) => Runtime(format!("{:#?}", x)),
             MinionError::NotImplemented(x) => RuntimeNotImplemented(x),
@@ -133,22 +134,18 @@ impl SolverAdaptor for Minion {
 
     fn solve_mut(
         &mut self,
-        model: MinionModel,
-        callback: SolverMutCallback<Self>,
+        callback: SolverMutCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
         Err(OpNotImplemented("solve_mut".into()))
     }
 
-    fn load_model(
-        &mut self,
-        model: ConjureModel,
-        _: private::Internal,
-    ) -> Result<Self::Model, SolverError> {
+    fn load_model(&mut self, model: ConjureModel, _: private::Internal) -> Result<(), SolverError> {
         let mut minion_model = MinionModel::new();
         parse_vars(&model, &mut minion_model)?;
         parse_exprs(&model, &mut minion_model)?;
-        Ok(minion_model)
+        self.model = Some(minion_model);
+        Ok(())
     }
 
     fn get_family(&self) -> SolverFamily {

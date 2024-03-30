@@ -74,7 +74,7 @@
 //
 // To add support for a solver, implement the `SolverAdaptor` trait in a submodule.
 //
-// If incremental solving support is required, also implement `ModelModifier`. If this is not
+// If incremental solving support is required, also implement a new `ModelModifier`. If this is not
 // required, all `ModelModifier` instances required by the SolverAdaptor trait can be replaced with
 // NotModifiable.
 //
@@ -121,8 +121,8 @@ pub enum SolverFamily {
 ///
 /// Note that this enforces thread safety
 pub type SolverCallback = Box<dyn Fn(HashMap<Name, Constant>) -> bool + Send>;
-pub type SolverMutCallback<A> =
-    Box<dyn Fn(HashMap<Name, Constant>, <A as SolverAdaptor>::Modifier) -> bool + Send>;
+pub type SolverMutCallback =
+    Box<dyn Fn(HashMap<Name, Constant>, Box<dyn ModelModifier>) -> bool + Send>;
 
 /// A common interface for calling underlying solver APIs inside a [`Solver`].
 ///
@@ -159,17 +159,6 @@ pub type SolverMutCallback<A> =
 /// (eg. using a [`Mutex<()>`](`std::sync::Mutex`)) to run calls to
 /// [`Solver<A,ModelLoaded>::solve()`] and [`Solver<A,ModelLoaded>::solve_mut()`] sequentially.
 pub trait SolverAdaptor: private::Sealed {
-    /// The native model type of the underlying solver.
-    type Model: Clone;
-
-    /// The native solution type of the underlying solver.
-    type Solution: Clone;
-
-    /// The [`ModelModifier`](model_modifier::ModelModifier) used during incremental search.
-    ///
-    /// If incremental solving is not supported, this **should** be set to [NotModifiable](model_modifier::NotModifiable) .
-    type Modifier: model_modifier::ModelModifier;
-
     /// Runs the solver on the given model.
     ///
     /// Implementations of this function **must** call the user provided callback whenever a solution
@@ -190,7 +179,6 @@ pub trait SolverAdaptor: private::Sealed {
     /// [SearchIncomplete::UserTerminated].
     fn solve(
         &mut self,
-        model: Self::Model,
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError>;
@@ -204,15 +192,10 @@ pub trait SolverAdaptor: private::Sealed {
     /// Otherwise, this should work in the same way as [`solve`](SolverAdaptor::solve).
     fn solve_mut(
         &mut self,
-        model: Self::Model,
-        callback: SolverMutCallback<Self>,
+        callback: SolverMutCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError>;
-    fn load_model(
-        &mut self,
-        model: Model,
-        _: private::Internal,
-    ) -> Result<Self::Model, SolverError>;
+    fn load_model(&mut self, model: Model, _: private::Internal) -> Result<(), SolverError>;
     fn init_solver(&mut self, _: private::Internal) {}
 
     /// Get the solver family that this solver adaptor belongs to
@@ -236,7 +219,6 @@ pub trait SolverAdaptor: private::Sealed {
 pub struct Solver<A: SolverAdaptor, State: SolverState = Init> {
     state: State,
     adaptor: A,
-    model: Option<A::Model>,
 }
 
 impl<Adaptor: SolverAdaptor> Solver<Adaptor> {
@@ -244,7 +226,6 @@ impl<Adaptor: SolverAdaptor> Solver<Adaptor> {
         let mut solver = Solver {
             state: Init,
             adaptor: solver_adaptor,
-            model: None,
         };
 
         solver.adaptor.init_solver(private::Internal);
@@ -262,7 +243,6 @@ impl<A: SolverAdaptor> Solver<A, Init> {
         Ok(Solver {
             state: ModelLoaded,
             adaptor: self.adaptor,
-            model: Some(solver_model.clone()),
         })
     }
 }
@@ -276,16 +256,13 @@ impl<A: SolverAdaptor> Solver<A, ModelLoaded> {
         let start_time = Instant::now();
 
         #[allow(clippy::unwrap_used)]
-        let result = self
-            .adaptor
-            .solve(self.model.clone().unwrap(), callback, private::Internal);
+        let result = self.adaptor.solve(callback, private::Internal);
 
         let duration = start_time.elapsed();
 
         match result {
             Ok(x) => Ok(Solver {
                 adaptor: self.adaptor,
-                model: self.model,
                 state: ExecutionSuccess {
                     stats: x.stats,
                     status: x.status,
@@ -299,22 +276,19 @@ impl<A: SolverAdaptor> Solver<A, ModelLoaded> {
 
     pub fn solve_mut(
         mut self,
-        callback: SolverMutCallback<A>,
+        callback: SolverMutCallback,
     ) -> Result<Solver<A, ExecutionSuccess>, SolverError> {
         #[allow(clippy::unwrap_used)]
         let start_time = Instant::now();
 
         #[allow(clippy::unwrap_used)]
-        let result =
-            self.adaptor
-                .solve_mut(self.model.clone().unwrap(), callback, private::Internal);
+        let result = self.adaptor.solve_mut(callback, private::Internal);
 
         let duration = start_time.elapsed();
 
         match result {
             Ok(x) => Ok(Solver {
                 adaptor: self.adaptor,
-                model: self.model,
                 state: ExecutionSuccess {
                     stats: x.stats,
                     status: x.status,
