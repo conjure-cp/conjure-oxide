@@ -4,7 +4,6 @@ use std::fs::File;
 use std::io::stdout;
 use std::path::PathBuf;
 use std::process::exit;
-use std::sync::{Arc, RwLock};
 
 use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};

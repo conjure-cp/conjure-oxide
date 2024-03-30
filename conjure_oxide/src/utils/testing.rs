@@ -80,7 +80,7 @@ pub fn save_stats_json(
     test_name: &str,
 ) -> Result<(), std::io::Error> {
     #[allow(clippy::unwrap_used)]
-    let stats = context.read().unwrap().stats.clone();
+    let stats = context.read().unwrap().clone();
     let generated_json = sort_json_object(&serde_json::to_value(stats)?, false);
 
     // serialise to string
