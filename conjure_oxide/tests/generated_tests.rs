@@ -24,6 +24,7 @@ fn main() {
     }
 }
 
+#[allow(clippy::unwrap_used)]
 fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>> {
     let context: Arc<RwLock<Context<'static>>> = Default::default();
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
@@ -41,6 +42,8 @@ fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>
     if verbose {
         println!("Parsed model: {:#?}", model)
     }
+
+    context.as_ref().write().unwrap().file_name = Some(format!("{path}/{essence_base}.essence"));
 
     save_model_json(&model, path, essence_base, "parse", accept)?;
     let expected_model = read_model_json(path, essence_base, "expected", "parse")?;

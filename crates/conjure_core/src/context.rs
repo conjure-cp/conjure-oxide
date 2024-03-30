@@ -3,11 +3,13 @@ use std::sync::{Arc, RwLock};
 
 use derivative::Derivative;
 use serde::Serialize;
+use serde_with::skip_serializing_none;
 
 use crate::rule_engine::{Rule, RuleSet};
 use crate::solver::SolverFamily;
 use crate::stats::Stats;
 
+#[skip_serializing_none]
 #[derive(Clone, Serialize, Default, Derivative)]
 #[derivative(Eq, PartialEq)]
 #[non_exhaustive]
