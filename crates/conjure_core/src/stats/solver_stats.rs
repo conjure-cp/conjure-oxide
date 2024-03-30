@@ -1,7 +1,9 @@
 use serde::Serialize;
+use serde_with::skip_serializing_none;
 
 use crate::solver::SolverFamily;
 
+#[skip_serializing_none]
 #[derive(Default, Serialize, Clone)]
 #[allow(dead_code)]
 pub struct SolverStats {

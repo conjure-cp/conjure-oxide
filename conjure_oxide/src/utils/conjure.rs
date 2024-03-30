@@ -74,14 +74,19 @@ pub fn get_minion_solutions(model: Model) -> Result<Vec<HashMap<Name, Constant>>
     let all_solutions_ref = Arc::new(Mutex::<Vec<HashMap<Name, Constant>>>::new(vec![]));
     let all_solutions_ref_2 = all_solutions_ref.clone();
     #[allow(clippy::unwrap_used)]
-    solver.solve(Box::new(move |sols| {
-        let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
-        (*all_solutions).push(sols);
-        true
-    }))?;
+    let solver = solver
+        .solve(Box::new(move |sols| {
+            let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
+            (*all_solutions).push(sols);
+            true
+        }))
+        .unwrap();
+
+    solver.save_stats_to_context();
 
     #[allow(clippy::unwrap_used)]
     let sols = (*all_solutions_ref).lock().unwrap();
+
     Ok((*sols).clone())
 }
 

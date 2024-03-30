@@ -3,7 +3,9 @@ use std::fmt::Debug;
 use std::fs::File;
 use std::hash::Hash;
 use std::io::Write;
+use std::sync::{Arc, RwLock};
 
+use conjure_core::context::Context;
 use serde_json::{Error as JsonError, Value as JsonValue};
 
 use conjure_core::error::Error;
@@ -68,6 +70,24 @@ pub fn save_model_json(
             format!("{path}/{test_name}.expected-{test_stage}.serialised.json"),
         )?;
     }
+
+    Ok(())
+}
+
+pub fn save_stats_json(
+    context: Arc<RwLock<Context<'static>>>,
+    path: &str,
+    test_name: &str,
+) -> Result<(), std::io::Error> {
+    #[allow(clippy::unwrap_used)]
+    let stats = context.read().unwrap().stats.clone();
+    let generated_json = sort_json_object(&serde_json::to_value(stats)?, false);
+
+    // serialise to string
+    let generated_json_str = serde_json::to_string_pretty(&generated_json)?;
+
+    File::create(format!("{path}/{test_name}-stats.json"))?
+        .write_all(generated_json_str.as_bytes())?;
 
     Ok(())
 }

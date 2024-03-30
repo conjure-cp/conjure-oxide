@@ -8,6 +8,7 @@ use conjure_core::context::Context;
 use conjure_oxide::rule_engine::resolve_rule_sets;
 use conjure_oxide::rule_engine::rewrite_model;
 use conjure_oxide::utils::conjure::{get_minion_solutions, parse_essence_file};
+use conjure_oxide::utils::testing::save_stats_json;
 use conjure_oxide::utils::testing::{
     read_minion_solutions_json, read_model_json, save_minion_solutions_json, save_model_json,
 };
@@ -36,7 +37,7 @@ fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>
     }
 
     // Stage 1: Read the essence file and check that the model is parsed correctly
-    let model = parse_essence_file(path, essence_base, context)?;
+    let model = parse_essence_file(path, essence_base, context.clone())?;
     if verbose {
         println!("Parsed model: {:#?}", model)
     }
@@ -77,6 +78,8 @@ fn integration_test(path: &str, essence_base: &str) -> Result<(), Box<dyn Error>
     }
 
     assert_eq!(solutions_json, expected_solutions_json);
+
+    save_stats_json(context, path, essence_base)?;
 
     Ok(())
 }
