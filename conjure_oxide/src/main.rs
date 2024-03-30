@@ -2,12 +2,15 @@
 
 use std::fs::File;
 use std::io::stdout;
+use std::io::Write;
 use std::path::PathBuf;
 use std::process::exit;
 
 use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
+use conjure_oxide::utils::json::sort_json_object;
+use schemars::schema_for;
 use serde_json::json;
 use serde_json::to_string_pretty;
 use structured_logger::{json::new_writer, Builder};
@@ -32,12 +35,32 @@ struct Cli {
         default_value = "./conjure_oxide/tests/integration/xyz/input.essence"
     )]
     input_file: PathBuf,
+
+    // TODO: subcommands instead of these being a flag.
+    #[arg(long, default_value_t = false)]
+    /// Prints the schema for the info JSON then exits.
+    print_info_schema: bool,
+
+    #[arg(long)]
+    /// Saves execution info as JSON to the given file-path.
+    info_json_path: Option<PathBuf>,
 }
 
+#[allow(clippy::unwrap_used)]
 pub fn main() -> AnyhowResult<()> {
+    let cli = Cli::parse();
+
+    #[allow(clippy::unwrap_used)]
+    if cli.print_info_schema {
+        let schema = schema_for!(Context);
+        println!("{}", serde_json::to_string_pretty(&schema).unwrap());
+        return Ok(());
+    }
+
     let target_family = SolverFamily::Minion; // ToDo get this from CLI input
     let extra_rule_sets: Vec<&str> = vec!["Constant"]; // ToDo get this from CLI input
 
+    #[allow(clippy::unwrap_used)]
     let log_file = File::options()
         .create(true)
         .append(true)
@@ -73,7 +96,6 @@ pub fn main() -> AnyhowResult<()> {
             .collect::<Vec<_>>()
             .join(", "));
 
-    let cli = Cli::parse();
     log::info!("Input file: {}", cli.input_file.display());
     let input_file: &str = cli.input_file.to_str().ok_or(anyhow!(
         "Given input_file could not be converted to a string"
@@ -107,6 +129,8 @@ pub fn main() -> AnyhowResult<()> {
         rule_sets.clone(),
     );
 
+    context.write().unwrap().file_name = Some(cli.input_file.to_str().expect("").into());
+
     let mut model = model_from_json(&astjson, context.clone())?;
 
     log::info!("Initial model: {}", to_string_pretty(&json!(model))?);
@@ -119,6 +143,13 @@ pub fn main() -> AnyhowResult<()> {
     let solutions = get_minion_solutions(model)?;
     log::info!("Solutions: {}", minion_solutions_to_json(&solutions));
 
+    if let Some(path) = cli.info_json_path {
+        #[allow(clippy::unwrap_used)]
+        let context_obj = context.read().unwrap().clone();
+        let generated_json = &serde_json::to_value(context_obj)?;
+        let pretty_json = serde_json::to_string_pretty(&generated_json)?;
+        File::create(path)?.write_all(pretty_json.as_bytes())?;
+    }
     Ok(())
 }
 

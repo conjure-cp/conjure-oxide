@@ -2,6 +2,7 @@ use std::fmt::{Debug, Formatter};
 use std::sync::{Arc, RwLock};
 
 use derivative::Derivative;
+use schemars::{schema_for, JsonSchema};
 use serde::Serialize;
 use serde_with::skip_serializing_none;
 
@@ -10,7 +11,7 @@ use crate::solver::SolverFamily;
 use crate::stats::Stats;
 
 #[skip_serializing_none]
-#[derive(Clone, Serialize, Default, Derivative)]
+#[derive(Clone, Serialize, Default, Derivative, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 #[derivative(Eq, PartialEq)]
 #[non_exhaustive]
