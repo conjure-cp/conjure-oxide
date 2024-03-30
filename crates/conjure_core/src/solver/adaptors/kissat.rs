@@ -15,6 +15,7 @@ use super::sat_common::CNFModel;
 /// A [SolverAdaptor] for interacting with the Kissat SAT solver.
 pub struct Kissat {
     __non_constructable: private::Internal,
+    model: Option<CNFModel>,
 }
 
 impl private::Sealed for Kissat {}
@@ -23,6 +24,7 @@ impl Kissat {
     pub fn new() -> Self {
         Kissat {
             __non_constructable: private::Internal,
+            model: None,
         }
     }
 }
@@ -34,15 +36,8 @@ impl Default for Kissat {
 }
 
 impl SolverAdaptor for Kissat {
-    type Model = CNFModel;
-
-    type Solution = ();
-
-    type Modifier = NotModifiable;
-
     fn solve(
         &mut self,
-        model: Self::Model,
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
@@ -51,19 +46,15 @@ impl SolverAdaptor for Kissat {
 
     fn solve_mut(
         &mut self,
-        model: Self::Model,
-        callback: SolverMutCallback<Self>,
+        callback: SolverMutCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
         Err(OpNotSupported("solve_mut".to_owned()))
     }
 
-    fn load_model(
-        &mut self,
-        model: ConjureModel,
-        _: private::Internal,
-    ) -> Result<Self::Model, SolverError> {
-        CNFModel::from_conjure(model)
+    fn load_model(&mut self, model: ConjureModel, _: private::Internal) -> Result<(), SolverError> {
+        self.model = Some(CNFModel::from_conjure(model)?);
+        Ok(())
     }
 
     fn get_family(&self) -> SolverFamily {
