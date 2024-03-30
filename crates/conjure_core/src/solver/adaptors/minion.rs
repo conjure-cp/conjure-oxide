@@ -154,7 +154,7 @@ impl SolverAdaptor for Minion {
     }
 
     fn get_name(&self) -> Option<String> {
-        Some("adaptors::Minion".to_owned())
+        Some("Minion".to_owned())
     }
 }
 
