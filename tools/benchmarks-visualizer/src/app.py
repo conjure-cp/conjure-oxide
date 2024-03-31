@@ -1,96 +1,98 @@
-import styles as page
-import src.processing as processing
-import plotly_express as px
-from dash import Dash, dcc, html, callback, Output, Input
-import plotly.graph_objects as go
+# @script: app.py, to run dashboard using Dash
+# @author: Pedro Gronda Garrigues
 
-boxplotdata = processing.generateBoxplotdata(processing.data)
-scatterplotdata = processing.generateScatterplotdata(processing.data)
-problemNames = processing.data["Problem"].unique()
-#scatterplot = processing.createScatterplot(scatterplotdata)
+# dependencies
+from processing import extract_solver_stats_dataframe  # Updated function name
 
-resultants = []
-indices = []
-# paragraphs = [html.H3("Anomalous cases to investigate")]
-# with open('./anomalies.txt', 'r') as f:
-#     lines = f.readlines()
-#     for line in lines:
-#         paragraphs.append(html.P(children=line))
-# we create all the elements and put them in a list
-# then we simply set the children attribute of the app.layout div to be elements
-# this allows us to construct elements bit by bit, without making app layout wildly messy
-elements = []
+# import dash application libraries
+from dash import Dash, dcc, html, Input, Output
+from dash.exceptions import PreventUpdate
+import plotly.graph_objs as go
+import dash_bootstrap_components as dbc
 
-# we first add a header
-elements.append(html.Section(children=(html.H1(children="Solver Analytics", style=page.topsectionh1style, ),
-                                       html.P(
-                                           children=page.topsectionh1text,
-                                           style=page.introStyle),),
-                             style=page.topsectionstyle, ))
+root_dir = './data'                           # replace with actual data folder path
+df = extract_solver_stats_dataframe(root_dir) # ppdated function call
 
-processing.generateScatterplot(elements, scatterplotdata)
-# dropdowns for specifying the box plot graph
-elements.append(dcc.Dropdown(boxplotdata["Problem"].unique(), 'csplib-prob001', id='problemDropdown'))
-elements.append(dcc.Dropdown(boxplotdata["Model"].unique(), 'model.eprime', id='modelDropdown'))
-elements.append(dcc.Dropdown(boxplotdata["Solver"].unique(), 'lingeling', id='solverDropdown'))
+# initiate the Dash app
+app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-elements.append(dcc.Graph(id="boxPlot", style=page.barChartStyle))
-#elements.append(html.Section(children=paragraphs))
-# a footer section
-elements.append(html.Section(
-    children=[html.P(["A Vertically Integrated Project by Samvit Nagpal, University of St Andrews, 2024", html.Br(),
-                      "Under the supervision of Ozgur Akgun"], style=page.footerTextStyle)], style=page.footerStyle))
+# assuming Test Category Dropdown will dictate what tests show up in Test Folder Dropdown
+app.layout = html.Div([
+    # title and author Tag
+    html.H1("Benchmarks Visualizer: Native vs Oxide", style={'textAlign': 'center', 'marginTop': '10px'}),
+    html.Div(
+        "Author: Pedro Gronda Garrigues",
+        style={'textAlign': 'center', 'marginBottom': '10px'}
+    ),
 
-
-
-
-
-app = Dash(meta_tags=[
-    {"name": "viewport", "content": "width=device-width, initial-scale=1"}
+    # dropdown to select Test Category
+    dcc.Dropdown(
+        id='test-category-dropdown',
+        options=[{'label': i, 'value': i} for i in df.index.get_level_values('Test Category').unique()],
+        value=df.index.get_level_values('Test Category').unique()[0]
+    ),
+    # dropdown to select Test Folder based on Test Category
+    dcc.Dropdown(
+        id='test-folder-dropdown',  # options set by callback
+    ),
+    dcc.Graph(id='solver-nodes-graph'),
+    dcc.Graph(id='total-time-graph')
 ])
 
-app.layout = html.Div(
-    children=elements, style=page.body,
+# app callback (asynchronous function) to update Test Folder Dropdown based on Test Category Dropdown
+@app.callback(
+    Output('test-folder-dropdown', 'options'),
+    [Input('test-category-dropdown', 'value')]
 )
 
-# callback for selecting problem, solver and parameters to be displayed on the box plot
-@callback(Output('boxPlot', 'figure'),
-          [Input('problemDropdown', 'value')], [Input('modelDropdown', 'value')],
-          [Input('solverDropdown', 'value')])
-def update_boxplot(problem, model, solver):
+# function to set Test Folder Dropdown options based on selected Test Category
+def set_test_folder_options(selected_test_category):
+    test_folders = df.loc[selected_test_category].index.get_level_values('Test').unique()
+    return [{'label': i, 'value': i} for i in test_folders]
 
-    return px.box(boxplotdata,
-                  y=boxplotdata.loc[
-                      ((boxplotdata["Problem"] == problem) & (boxplotdata["Model"] == model) & (boxplotdata["Solver"] == solver))][
-                      "Total Solution Time"],
-                  title=("Solving " + problem + " with model " + model + " and solver " + solver), labels={
+@app.callback(
+    [Output('solver-nodes-graph', 'figure'),
+     Output('total-time-graph', 'figure')],
+    [Input('test-folder-dropdown', 'value'),
+     Input('test-category-dropdown', 'value')]
+)
 
-            "y": "Solution Time (ms)"
-        })
+def update_graphs(selected_test, selected_category):
+    if selected_test is None:
+        raise PreventUpdate
+    
+    filtered_df = df.loc[(selected_category, selected_test)]
+    
+    # assuming Solver Status OK data is desired
+    condition = filtered_df['Status'] == 'OK'
+    
+    # nodes Bar Graph
+    ### *NOTE: comparing nodes for SavileRow accross conjure native solvers is irrelevant
+    ###        it is, however, useful to compare the for Native vs Oxide.
+    ###        Seeing as there is only support for Oxide Minion so far (April 2024), the nodes are still on
+    ###        display for all solvers. The end goal is to have Native vs Oxide solvers as discrete variables
+    ###        to directly compare the performance of the two.
+    nodes_fig = go.Figure(data=[
+        go.Bar(
+            x=filtered_df[condition].index.get_level_values('Solver'),
+            y=filtered_df[condition]['SolverNodes'],
+            text=filtered_df[condition]['SolverNodes']
+        )
+    ])
+    nodes_fig.update_layout(title='Solver Nodes', xaxis_title='Solver', yaxis_title='Nodes')
+    
+    # total Time Bar Graph
+    time_fig = go.Figure(data=[
+        go.Bar(
+            x=filtered_df[condition].index.get_level_values('Solver'),
+            y=filtered_df[condition]['TotalTime'],
+            text=filtered_df[condition]['TotalTime']
+        )
+    ])
+    time_fig.update_layout(title='Total Time (Elapsed)', xaxis_title='Solver', yaxis_title='Time (ms)')
+    
+    return nodes_fig, time_fig
 
-@callback(Output('scatterplot', 'figure'),
-          [Input('problemDropdown', 'value')], [Input('scattermodelDropdown1', 'value')],
-          [Input('scattersolverDropdown1', 'value')], [Input('scattermodelDropdown2', 'value')],
-          [Input('scattersolverDropdown2', 'value')], [Input('scattertimeDropdown', 'value')])
-def update_Scatterplot(problem, model1, solver1, model2, solver2, time):
-    scatterplot = px.scatter(x=scatterplotdata.loc[(scatterplotdata["Problem"] == problem) & (scatterplotdata["Solver"] == solver1) & (scatterplotdata["Model"] == model1) & (scatterplotdata["Options"] == time)]["Time"],
-                             y=scatterplotdata.loc[(scatterplotdata["Problem"] == problem) & (scatterplotdata["Solver"] == solver2) & (scatterplotdata["Model"] == model2) & (scatterplotdata["Options"] == time)]["Time"],
-                             labels={"x": "Time taken by " + solver1, "y": "Time taken by " + solver2})
-    scatterplot.add_trace(
-        go.Scatter(x=scatterplotdata.loc[scatterplotdata["Solver"] == "minion"]["Time"],
-                   y=scatterplotdata.loc[scatterplotdata["Solver"] == "minion"]["Time"], name="y = x")
-    )
-    # changing the axis ranges and adding a bit of styling
-    scatterplot.update_xaxes(
-        range=[0, max(scatterplotdata.loc[(scatterplotdata["Problem"] == problem) & (scatterplotdata["Solver"] == solver1) & (scatterplotdata["Model"] == model1) & (scatterplotdata["Options"] == time)]["Time"])],
-        showline=True, linewidth=1, linecolor='black'
-    )
-
-    scatterplot.update_yaxes(
-        range=[0, max(scatterplotdata.loc[(scatterplotdata["Problem"] == problem) & (scatterplotdata["Solver"] == solver2) & (scatterplotdata["Model"] == model2) & (scatterplotdata["Options"] == time)]["Time"])],
-        showline=True, linewidth=1, linecolor='black'
-
-    )
-    return scatterplot
-
-app.run_server(debug=True)
+# run the app
+if __name__ == '__main__':
+    app.run_server(debug=True)

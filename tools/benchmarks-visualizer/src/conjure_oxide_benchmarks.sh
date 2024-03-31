@@ -8,10 +8,8 @@
 
 # define project directory relative to the script directory
 PROJECT_DIR="./tools/benchmarks-visualizer"
-
 # define directory containing the .essence files relative to benchmarks-visualizer directory
 REPO_DIR="tests/exhaustive"
-
 # define directory where output files will be written relative to benchmarks-visualizer directory
 OUTPUT_DIR="data"
 
@@ -24,7 +22,7 @@ cd ../..
 # define solvers to use for conjure oxide
 SOLVERS=(
   "minion"
-  "kissat"
+#   "kissat" # uncomment when support for KisSAT
 )
 
 # find all .essence files in the repository directory and loop through them
@@ -41,22 +39,29 @@ find $PROJECT_DIR/$REPO_DIR -type f -name "*.essence" | while read essence_file;
         # define json
         json_output_file="${stripped_essence_file%.essence}_oxide_$solver.json"
 
+        # when support for different solver, add -s <solver> to command after --
         echo "COMMAND SO FAR: cargo run -- --info-json-path $PROJECT_DIR/$OUTPUT_DIR/$json_output_file $essence_file"
 
-        # Skip the generation if the JSON file already exists
+        # skip the generation if the JSON file already exists
         if [[ -f "$PROJECT_DIR/$OUTPUT_DIR/$json_output_file" ]]; then
             echo "STATUS: Skipping $json_output_file as it already exists."
             continue
         fi
         
+        # execute cargo run command with correct file paths (JSON and .essence)
         echo "STATUS: Running solver $solver on $test_name"
-        if ! timeout 5s cargo run -- --info-json-path "$PROJECT_DIR/$OUTPUT_DIR/$json_output_file $essence_file"; then
-            echo "STATUS: Failed to run solver $solver on $test_name; timeout (5 seconds) reached, continuing with next test."
-            continue
-        fi
+        cargo run -- --info-json-path $PROJECT_DIR/$OUTPUT_DIR/$json_output_file $essence_file        
         echo "STATUS: Finished running solver $solver on $test_name"
     done
 done
 
 # move back into benchmarks_visualizer directory after execution
 cd ./tools/benchmarks-visualizer
+
+# SUPPORT FOR TIMEOUT:
+# echo "STATUS: Running solver $solver on $test_name"
+# if ! timeout 5s cargo run -- --info-json-path "$PROJECT_DIR/$OUTPUT_DIR/$json_output_file $essence_file"; then
+#     echo "STATUS: Failed to run solver $solver on $test_name; timeout (5 seconds) reached, continuing with next test."
+#     continue
+# fi 
+# echo "STATUS: Finished running solver $solver on $test_name"
