@@ -146,24 +146,35 @@ jobs:
           echo "num=$(cat deploy/prnumber)" > $GITHUB_OUTPUT
 
       - name: Retrieve list of artifacts for the PR
-      id: find_artifacts
-      uses: actions/github-script@v6
-      with:
-        script: |
-          const prNum = process.env.num;
-          const artifacts = await github.rest.actions.listArtifactsForRepo({
-            owner: context.repo.owner,
-            repo: context.repo.repo
-          });
-          const artifactList = artifacts.data.artifacts.filter(artifact => artifact.name.includes(`coverage-${prNum}-`));
-          return artifactList;
-          
+        id: find_artifacts
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const prNum = process.env.num;
+            const artifacts = await github.rest.actions.listArtifactsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo
+            });
+            // Filter artifacts by PR number in their name
+            const artifactList = artifacts.data.artifacts.filter(artifact => artifact.name.includes(`coverage-${prNum}-`));
+            return artifactList.map((artifact) => ({
+              id: artifact.id,
+              name: artifact.name,
+              created_at: artifact.created_at
+            }));
+      
+      # WARNING: Artifacts are deleted after 90 days (or per configured retention policy)  
       - name: Find previous artifact
-        id: prev_artifact
+        if: steps.find_artifacts.outputs.result != '[]'
         run: |
-          # assuming a sorted list of artifacts based on some naming convention
-          # extract the relevant information for the previous artifact (e.g., its ID)
-          echo "previous_artifact_id=<<extracted_id>>" >> $GITHUB_ENV
+          # parse the output from the previous step into a JSON array
+          previous_artifacts = ${{ fromJson(steps.find_artifacts.outputs.result) }}
+      
+          # assuming filtered and sorted the previous_artifacts by creation date in descending order
+          if (previous_artifacts.length > 1) {
+            # get the second latest artifact (since the latest would be the current one)
+            echo "previous_artifact_id=${{ previous_artifacts[1].id }}" >> $GITHUB_ENV
+          }
 
       - name: Install rust ${{ env.rust_release }}
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
@@ -217,7 +228,7 @@ jobs:
       
       - name: Download the previous lcov.info (historical) file
         uses: actions/download-artifact@v2
-        run: |
+        with: |
           name: code-coverage-${{ env.num }}-${{ env.previous_artifact_id }}
           path: ./tools/code-coverage-diff/deploy-prev
 
@@ -238,7 +249,7 @@ jobs:
           echo 'EOFABC' >> $GITHUB_OUTPUT
 
           # create summary of previous (historical) lcov summary for main and pr
-          lcov --summary ./tools/code-coverage-diff/deploy-prev/lcov_main_previous.info > historical_coverage_lcov.txt
+          lcov --summary ./tools/code-coverage-diff/deploy-prev/code-coverage-${{ env.num }}-${{ env.previous_artifact_id }} > historical_coverage_lcov.txt
           echo "hist_main_summary<<EOFABC" >> $GITHUB_OUTPUT
           echo "$(cat historical_coverage_lcov.txt | tail -n +3)" >> $GITHUB_OUTPUT
           echo 'EOFABC' >> $GITHUB_OUTPUT
