@@ -3,9 +3,9 @@ include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 #[cfg(test)]
 mod tests {
+    use std::ffi::CString;
 
     use super::*;
-    use std::ffi::CString;
 
     // solutions
     static mut X_VAL: i32 = 0;

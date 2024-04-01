@@ -1,19 +1,17 @@
-use crate::parse::model_from_json;
-use crate::solvers::minion::MinionModel;
-use crate::solvers::FromConjureModel;
-use crate::utils::json::sort_json_object;
-use crate::Error as ParseErr;
-use conjure_core::ast::Model;
-use minion_rs::ast::{Constant, VarName};
-use minion_rs::run_minion;
-use serde_json::{Map, Value as JsonValue};
 use std::collections::HashMap;
-use std::ops::Deref;
-use std::sync::{Condvar, Mutex};
+use std::sync::{Arc, Mutex, RwLock};
+
+use conjure_core::context::Context;
+use serde_json::{Map, Value as JsonValue};
 use thiserror::Error as ThisError;
 
-static ALL_SOLUTIONS: Mutex<Vec<HashMap<VarName, Constant>>> = Mutex::new(vec![]);
-static LOCK: (Mutex<bool>, Condvar) = (Mutex::new(false), Condvar::new());
+use crate::ast::{Constant, Name};
+use crate::model_from_json;
+use crate::solver::adaptors::Minion;
+use crate::solver::Solver;
+use crate::utils::json::sort_json_object;
+use crate::Error as ParseErr;
+use crate::Model;
 
 #[derive(Debug, ThisError)]
 pub enum EssenceParseError {
@@ -29,7 +27,11 @@ impl From<ParseErr> for EssenceParseError {
     }
 }
 
-pub fn parse_essence_file(path: &str, filename: &str) -> Result<Model, EssenceParseError> {
+pub fn parse_essence_file(
+    path: &str,
+    filename: &str,
+    context: Arc<RwLock<Context<'static>>>,
+) -> Result<Model, EssenceParseError> {
     let mut cmd = std::process::Command::new("conjure");
     let output = match cmd
         .arg("pretty")
@@ -57,81 +59,45 @@ pub fn parse_essence_file(path: &str, filename: &str) -> Result<Model, EssencePa
         }
     };
 
-    let parsed_model = model_from_json(&astjson)?;
+    let parsed_model = model_from_json(&astjson, context)?;
     Ok(parsed_model)
 }
 
-pub fn get_minion_solutions(
-    model: Model,
-) -> Result<Vec<HashMap<VarName, Constant>>, anyhow::Error> {
-    fn callback(solutions: HashMap<VarName, Constant>) -> bool {
-        match ALL_SOLUTIONS.lock() {
-            Ok(mut guard) => {
-                guard.push(solutions);
-                true
-            }
-            Err(e) => {
-                eprintln!("Error getting lock on ALL_SOLUTIONS: {}", e);
-                false
-            }
-        }
-    }
+pub fn get_minion_solutions(model: Model) -> Result<Vec<HashMap<Name, Constant>>, anyhow::Error> {
+    let solver = Solver::new(Minion::new());
 
     println!("Building Minion model...");
-    let minion_model = MinionModel::from_conjure(model)?;
-
-    // @niklasdewally would be able to explain this better
-    // We use a condvar to keep a lock on the ALL_SOLUTIONS mutex until it goes out of scope
-    // So, no other threads can mutate ALL_SOLUTIONS while we're running Minion, only our callback can
-    let (lock, condvar) = &LOCK;
-    #[allow(clippy::unwrap_used)] // If the mutex is poisoned, we want to panic anyway
-    let mut _lock_guard = condvar
-        .wait_while(lock.lock().unwrap(), |locked| *locked)
-        .unwrap();
-
-    *_lock_guard = true;
+    let solver = solver.load_model(model)?;
 
     println!("Running Minion...");
-    match run_minion(minion_model, callback) {
-        Ok(res) => res,
-        Err(e) => {
-            eprintln!("Error running Minion: {}", e);
-            return Err(anyhow::anyhow!("Error running Minion: {}", e));
-        }
-    };
 
-    let ans = match ALL_SOLUTIONS.lock() {
-        Ok(mut guard) => {
-            let ans = guard.deref().clone();
-            guard.clear(); // Clear the solutions for the next test
-            ans
-        }
-        Err(e) => {
-            eprintln!("Error getting lock on ALL_SOLUTIONS: {}", e);
-            return Err(anyhow::anyhow!(
-                "Error getting lock on ALL_SOLUTIONS: {}",
-                e
-            ));
-        }
-    };
+    let all_solutions_ref = Arc::new(Mutex::<Vec<HashMap<Name, Constant>>>::new(vec![]));
+    let all_solutions_ref_2 = all_solutions_ref.clone();
+    #[allow(clippy::unwrap_used)]
+    let solver = solver
+        .solve(Box::new(move |sols| {
+            let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
+            (*all_solutions).push(sols);
+            true
+        }))
+        .unwrap();
 
-    // Release the lock and wake the next waiting thread
-    *_lock_guard = false;
-    std::mem::drop(_lock_guard);
-    condvar.notify_one();
+    solver.save_stats_to_context();
 
-    Ok(ans)
+    #[allow(clippy::unwrap_used)]
+    let sols = (*all_solutions_ref).lock().unwrap();
+
+    Ok((*sols).clone())
 }
 
-pub fn minion_solutions_to_json(solutions: &Vec<HashMap<VarName, Constant>>) -> JsonValue {
+pub fn minion_solutions_to_json(solutions: &Vec<HashMap<Name, Constant>>) -> JsonValue {
     let mut json_solutions = Vec::new();
     for solution in solutions {
         let mut json_solution = Map::new();
         for (var_name, constant) in solution {
             let serialized_constant = match constant {
-                Constant::Integer(i) => JsonValue::Number((*i).into()),
+                Constant::Int(i) => JsonValue::Number((*i).into()),
                 Constant::Bool(b) => JsonValue::Bool(*b),
-                x => unimplemented!("{:#?}", x),
             };
             json_solution.insert(var_name.to_string(), serialized_constant);
         }

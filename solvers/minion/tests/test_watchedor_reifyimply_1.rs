@@ -23,7 +23,7 @@ use std::sync::Mutex;
 
 use minion_rs::ast::{Constant, Constraint, Model, Var, VarDomain, VarName};
 use minion_rs::error::MinionError;
-
+use minion_rs::get_from_table;
 #[test]
 #[allow(clippy::panic_in_result_fn)]
 fn test_watchedor_reifyimply_1() -> Result<(), MinionError> {
@@ -50,6 +50,7 @@ fn test_watchedor_reifyimply_1() -> Result<(), MinionError> {
 
     let guard = SOLS_COUNTER.lock().unwrap();
     assert_eq!(*guard, 7);
+    assert_ne!(get_from_table("Nodes".into()), None);
     Ok(())
 }
 

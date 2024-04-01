@@ -17,10 +17,13 @@
 //! The documentation this generates helps rewrite rule implementers determine which AST nodes are
 //! used for which backends by grouping AST nodes per solver.
 
+#![allow(clippy::unwrap_used)]
+#![allow(unstable_name_collisions)]
+
+use proc_macro::TokenStream;
 use std::collections::HashMap;
 
 use itertools::Itertools;
-use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
     parse_macro_input, parse_quote, punctuated::Punctuated, visit_mut::VisitMut, Attribute,
@@ -147,11 +150,9 @@ pub fn document_compatibility(_attr: TokenStream, input: TokenStream) -> TokenSt
                 match nodes_supported_by_solver.get_mut(&solver_name) {
                     None => {
                         nodes_supported_by_solver.insert(solver_name, vec![variant_ident.clone()]);
-                        ()
                     }
                     Some(a) => {
                         a.push(variant_ident.clone());
-                        ()
                     }
                 };
             }
@@ -184,7 +185,7 @@ pub fn document_compatibility(_attr: TokenStream, input: TokenStream) -> TokenSt
         }
 
         // end list
-        doc_msg.push_str("\n");
+        doc_msg.push('\n');
     }
 
     input.attrs.push(parse_quote!(#[doc = #doc_msg]));

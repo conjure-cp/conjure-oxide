@@ -1,13 +1,16 @@
+#![allow(unreachable_patterns)]
+
 use std::{
     collections::HashMap,
     ffi::CString,
-    sync::{atomic::AtomicBool, Mutex, MutexGuard},
-    sync::{atomic::Ordering, Condvar},
+    sync::Condvar,
+    sync::{Mutex, MutexGuard},
 };
+
+use anyhow::anyhow;
 
 use crate::ffi::{self};
 use crate::{ast::*, error::*, scoped_ptr::Scoped};
-use anyhow::anyhow;
 
 /// The callback function used to capture results from Minion as they are generated.
 ///
