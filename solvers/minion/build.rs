@@ -110,6 +110,7 @@ fn bind() {
         .allowlist_function("vec_vec_int_new")
         .allowlist_function("vec_vec_int_push_back")
         .allowlist_function("vec_vec_int_free")
+        .allowlist_function("TableOut_get")
         .clang_arg(format!("-I{}/build/src/", out_dir)) // generated from configure.py
         .clang_arg("-Ivendor/minion/")
         .clang_arg("-DLIBMINION")

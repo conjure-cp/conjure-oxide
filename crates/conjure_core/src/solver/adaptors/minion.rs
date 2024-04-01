@@ -6,12 +6,13 @@ use regex::Regex;
 use minion_ast::Model as MinionModel;
 use minion_rs::ast as minion_ast;
 use minion_rs::error::MinionError;
-use minion_rs::run_minion;
+use minion_rs::{get_from_table, run_minion};
 
 use crate::ast as conjure_ast;
 use crate::solver::SolverCallback;
 use crate::solver::SolverFamily;
 use crate::solver::SolverMutCallback;
+use crate::stats::SolverStats;
 use crate::Model as ConjureModel;
 
 use super::super::model_modifier::NotModifiable;
@@ -127,7 +128,7 @@ impl SolverAdaptor for Minion {
             status = Complete(NoSolutions);
         }
         Ok(SolveSuccess {
-            stats: Default::default(),
+            stats: get_solver_stats(),
             status,
         })
     }
@@ -153,7 +154,7 @@ impl SolverAdaptor for Minion {
     }
 
     fn get_name(&self) -> Option<String> {
-        Some("adaptors::Minion".to_owned())
+        Some("Minion".to_owned())
     }
 }
 
@@ -345,5 +346,13 @@ fn _name_to_string(name: conjure_ast::Name) -> String {
     match name {
         conjure_ast::Name::UserName(x) => x,
         conjure_ast::Name::MachineName(x) => format!("__conjure_machine_name_{}", x),
+    }
+}
+
+#[allow(clippy::unwrap_used)]
+fn get_solver_stats() -> SolverStats {
+    SolverStats {
+        nodes: get_from_table("Nodes".into()).map(|x| x.parse::<u64>().unwrap()),
+        ..Default::default()
     }
 }
