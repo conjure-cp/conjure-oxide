@@ -1,6 +1,5 @@
 // example_models with get_example_model function
 
-use std::default;
 use std::path::PathBuf;
 
 use project_root::get_project_root;

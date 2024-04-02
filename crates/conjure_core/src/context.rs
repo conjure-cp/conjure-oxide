@@ -2,7 +2,7 @@ use std::fmt::{Debug, Formatter};
 use std::sync::{Arc, RwLock};
 
 use derivative::Derivative;
-use schemars::{schema_for, JsonSchema};
+use schemars::JsonSchema;
 use serde::Serialize;
 use serde_with::skip_serializing_none;
 
@@ -20,7 +20,7 @@ pub struct Context<'a> {
 
     pub file_name: Option<String>,
 
-    pub extra_rule_set_names: Vec<&'a str>,
+    pub extra_rule_set_names: Vec<String>,
 
     #[serde(skip)]
     pub rules: Vec<&'a Rule<'a>>,
@@ -35,7 +35,7 @@ pub struct Context<'a> {
 impl<'a> Context<'a> {
     pub fn new(
         target_solver_family: SolverFamily,
-        extra_rule_set_names: Vec<&'a str>,
+        extra_rule_set_names: Vec<String>,
         rules: Vec<&'a Rule<'a>>,
         rule_sets: Vec<&'a RuleSet<'a>>,
     ) -> Self {
@@ -53,7 +53,7 @@ impl<'a> Context<'a> {
 impl Context<'static> {
     pub fn new_ptr(
         target_solver_family: SolverFamily,
-        extra_rule_set_names: Vec<&'static str>,
+        extra_rule_set_names: Vec<String>,
         rules: Vec<&'static Rule<'static>>,
         rule_sets: Vec<&'static RuleSet<'static>>,
     ) -> Arc<RwLock<Context<'static>>> {
@@ -69,7 +69,7 @@ impl Context<'static> {
 impl<'a> Debug for Context<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let target_solver_family: Option<SolverFamily> = self.target_solver_family;
-        let extra_rule_set_names: Vec<&str> = self.extra_rule_set_names.clone();
+        let extra_rule_set_names: Vec<String> = self.extra_rule_set_names.clone();
         let rules: Vec<&str> = self.rules.iter().map(|r| r.name).collect();
         let rule_sets: Vec<&str> = self.rule_sets.iter().map(|r| r.name).collect();
 
