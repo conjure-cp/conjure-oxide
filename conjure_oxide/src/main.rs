@@ -9,7 +9,6 @@ use std::process::exit;
 use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
-use conjure_oxide::utils::json::sort_json_object;
 use schemars::schema_for;
 use serde_json::json;
 use serde_json::to_string_pretty;
@@ -27,14 +26,17 @@ use conjure_oxide::SolverFamily;
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
-    #[arg(long, value_name = "SOLVER")]
-    solver: Option<String>,
-
     #[arg(
         value_name = "INPUT_ESSENCE",
         default_value = "./conjure_oxide/tests/integration/xyz/input.essence"
     )]
     input_file: PathBuf,
+
+    #[arg(long, value_name = "EXTRA_RULE_SETS")]
+    extra_rule_sets: Vec<String>,
+
+    #[arg(long, value_enum, value_name = "SOLVER", short = 's')]
+    solver: Option<SolverFamily>,
 
     // TODO: subcommands instead of these being a flag.
     #[arg(long, default_value_t = false)]
@@ -44,6 +46,9 @@ struct Cli {
     #[arg(long)]
     /// Saves execution info as JSON to the given file-path.
     info_json_path: Option<PathBuf>,
+
+    #[arg(long, short = 'o')]
+    output: Option<PathBuf>,
 }
 
 #[allow(clippy::unwrap_used)]
@@ -57,15 +62,24 @@ pub fn main() -> AnyhowResult<()> {
         return Ok(());
     }
 
-    let target_family = SolverFamily::Minion; // ToDo get this from CLI input
-    let extra_rule_sets: Vec<&str> = vec!["Constant"]; // ToDo get this from CLI input
+    let target_family = cli.solver.unwrap_or(SolverFamily::Minion);
+    let extra_rule_sets: Vec<String> = cli.extra_rule_sets;
+    let out_file: Option<File> = match &cli.output {
+        None => None,
+        Some(pth) => Some(
+            File::options()
+                .create(true)
+                .truncate(true)
+                .write(true)
+                .open(pth)?,
+        ),
+    };
 
     #[allow(clippy::unwrap_used)]
     let log_file = File::options()
         .create(true)
         .append(true)
-        .open("conjure_oxide.log")
-        .unwrap();
+        .open("conjure_oxide.log")?;
 
     Builder::new()
         .with_target_writer("info", new_writer(stdout()))
@@ -80,23 +94,30 @@ pub fn main() -> AnyhowResult<()> {
         }
     };
 
+    let pretty_rule_sets = rule_sets
+        .iter()
+        .map(|rule_set| rule_set.name)
+        .collect::<Vec<_>>()
+        .join(", ");
+
+    println!("Enabled rule sets: [{}]", pretty_rule_sets);
     log::info!(
-        target: "info",
+        target: "file",
         "Rule sets: {}",
-        rule_sets.iter().map(|rule_set| rule_set.name).collect::<Vec<_>>().join(", ")
+        pretty_rule_sets
     );
 
     let rule_priorities = get_rule_priorities(&rule_sets)?;
     let rules_vec = get_rules_vec(&rule_priorities);
 
-    log::info!(target: "info", 
+    log::info!(target: "file", 
          "Rules and priorities: {}", 
          rules_vec.iter()
             .map(|rule| format!("{}: {}", rule.name, rule_priorities.get(rule).unwrap_or(&0)))
             .collect::<Vec<_>>()
             .join(", "));
 
-    log::info!("Input file: {}", cli.input_file.display());
+    log::info!(target: "file", "Input file: {}", cli.input_file.display());
     let input_file: &str = cli.input_file.to_str().ok_or(anyhow!(
         "Given input_file could not be converted to a string"
     ))?;
@@ -133,15 +154,31 @@ pub fn main() -> AnyhowResult<()> {
 
     let mut model = model_from_json(&astjson, context.clone())?;
 
-    log::info!("Initial model: {}", to_string_pretty(&json!(model))?);
+    log::info!(target: "file", "Initial model: {}", json!(model));
 
-    log::info!("Rewriting model...");
+    log::info!(target: "file", "Rewriting model...");
     model = rewrite_model(&model, &rule_sets)?;
 
-    log::info!("Rewritten model: {}", to_string_pretty(&json!(model))?);
+    log::info!(target: "file", "Rewritten model: {}", json!(model));
 
     let solutions = get_minion_solutions(model)?;
-    log::info!("Solutions: {}", minion_solutions_to_json(&solutions));
+    log::info!(target: "file", "Solutions: {}", minion_solutions_to_json(&solutions));
+
+    let solutions_json = minion_solutions_to_json(&solutions);
+    let solutions_str = to_string_pretty(&solutions_json)?;
+    match out_file {
+        None => {
+            println!("Solutions:");
+            println!("{}", solutions_str);
+        }
+        Some(mut outf) => {
+            outf.write_all(solutions_str.as_bytes())?;
+            println!(
+                "Solutions saved to {:?}",
+                &cli.output.unwrap().canonicalize()?
+            )
+        }
+    }
 
     if let Some(path) = cli.info_json_path {
         #[allow(clippy::unwrap_used)]

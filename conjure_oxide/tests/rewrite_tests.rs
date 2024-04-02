@@ -2,7 +2,6 @@ use core::panic;
 use std::collections::HashMap;
 use std::process::exit;
 
-use conjure_core::context::Context;
 use conjure_core::rules::eval_constant;
 use conjure_core::solver::SolverFamily;
 use conjure_oxide::{
@@ -827,7 +826,7 @@ fn rule_distribute_or_over_and() {
 fn rewrite_solve_xyz() {
     println!("Rules: {:?}", get_rules());
 
-    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &vec!["Constant"]) {
+    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &vec!["Constant".to_string()]) {
         Ok(rs) => rs,
         Err(e) => {
             eprintln!("Error resolving rule sets: {}", e);
@@ -866,7 +865,7 @@ fn rewrite_solve_xyz() {
         ],
     );
 
-    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &vec!["Constant"]) {
+    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &vec!["Constant".to_string()]) {
         Ok(rs) => rs,
         Err(e) => {
             eprintln!("Error resolving rule sets: {}", e);
