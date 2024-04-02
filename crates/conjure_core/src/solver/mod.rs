@@ -32,7 +32,7 @@
 //!
 //! // Define and rewrite a model for minion.
 //! let model = get_example_model("bool-03").unwrap();
-//! let rule_sets = resolve_rule_sets(SolverFamily::Minion, &vec!["Constant"]).unwrap();
+//! let rule_sets = resolve_rule_sets(SolverFamily::Minion, &vec!["Constant".to_string()]).unwrap();
 //! let model = rewrite_model(&model,&rule_sets).unwrap();
 //!
 //!
@@ -74,7 +74,7 @@
 //
 // To add support for a solver, implement the `SolverAdaptor` trait in a submodule.
 //
-// If incremental solving support is required, also implement `ModelModifier`. If this is not
+// If incremental solving support is required, also implement a new `ModelModifier`. If this is not
 // required, all `ModelModifier` instances required by the SolverAdaptor trait can be replaced with
 // NotModifiable.
 //
@@ -84,25 +84,30 @@
 #![allow(unused)]
 #![allow(clippy::manual_non_exhaustive)]
 
+use std::any::Any;
+use std::cell::OnceCell;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::{Debug, Display};
+use std::rc::Rc;
+use std::sync::{Arc, RwLock};
 use std::time::Instant;
 
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumIter, EnumString};
 use thiserror::Error;
 
 use crate::ast::{Constant, Name};
+use crate::context::Context;
+use crate::stats::SolverStats;
 use crate::Model;
 
-use self::model_modifier::*;
+use self::model_modifier::ModelModifier;
 use self::states::*;
-use self::stats::SolverStats;
 
 pub mod adaptors;
 pub mod model_modifier;
-pub mod stats;
 
 #[doc(hidden)]
 mod private;
@@ -110,7 +115,18 @@ mod private;
 pub mod states;
 
 #[derive(
-    Debug, EnumString, EnumIter, Display, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize,
+    Debug,
+    EnumString,
+    EnumIter,
+    Display,
+    PartialEq,
+    Eq,
+    Hash,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    JsonSchema,
 )]
 pub enum SolverFamily {
     SAT,
@@ -121,8 +137,8 @@ pub enum SolverFamily {
 ///
 /// Note that this enforces thread safety
 pub type SolverCallback = Box<dyn Fn(HashMap<Name, Constant>) -> bool + Send>;
-pub type SolverMutCallback<A> =
-    Box<dyn Fn(HashMap<Name, Constant>, <A as SolverAdaptor>::Modifier) -> bool + Send>;
+pub type SolverMutCallback =
+    Box<dyn Fn(HashMap<Name, Constant>, Box<dyn ModelModifier>) -> bool + Send>;
 
 /// A common interface for calling underlying solver APIs inside a [`Solver`].
 ///
@@ -158,18 +174,7 @@ pub type SolverMutCallback<A> =
 /// Underlying solvers that only have one instance per process (such as Minion) **should** block
 /// (eg. using a [`Mutex<()>`](`std::sync::Mutex`)) to run calls to
 /// [`Solver<A,ModelLoaded>::solve()`] and [`Solver<A,ModelLoaded>::solve_mut()`] sequentially.
-pub trait SolverAdaptor: private::Sealed {
-    /// The native model type of the underlying solver.
-    type Model: Clone;
-
-    /// The native solution type of the underlying solver.
-    type Solution: Clone;
-
-    /// The [`ModelModifier`](model_modifier::ModelModifier) used during incremental search.
-    ///
-    /// If incremental solving is not supported, this **should** be set to [NotModifiable](model_modifier::NotModifiable) .
-    type Modifier: model_modifier::ModelModifier;
-
+pub trait SolverAdaptor: private::Sealed + Any {
     /// Runs the solver on the given model.
     ///
     /// Implementations of this function **must** call the user provided callback whenever a solution
@@ -190,7 +195,6 @@ pub trait SolverAdaptor: private::Sealed {
     /// [SearchIncomplete::UserTerminated].
     fn solve(
         &mut self,
-        model: Self::Model,
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError>;
@@ -204,19 +208,28 @@ pub trait SolverAdaptor: private::Sealed {
     /// Otherwise, this should work in the same way as [`solve`](SolverAdaptor::solve).
     fn solve_mut(
         &mut self,
-        model: Self::Model,
-        callback: SolverMutCallback<Self>,
+        callback: SolverMutCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError>;
-    fn load_model(
-        &mut self,
-        model: Model,
-        _: private::Internal,
-    ) -> Result<Self::Model, SolverError>;
+    fn load_model(&mut self, model: Model, _: private::Internal) -> Result<(), SolverError>;
     fn init_solver(&mut self, _: private::Internal) {}
 
     /// Get the solver family that this solver adaptor belongs to
     fn get_family(&self) -> SolverFamily;
+
+    /// Gets the name of the solver adaptor for pretty printing.
+    fn get_name(&self) -> Option<String> {
+        None
+    }
+
+    /// Adds the solver adaptor name and family (if they exist) to the given stats object.
+    fn add_adaptor_info_to_stats(&self, stats: SolverStats) -> SolverStats {
+        SolverStats {
+            solver_adaptor: self.get_name(),
+            solver_family: Some(self.get_family()),
+            ..stats
+        }
+    }
 }
 
 /// An abstract representation of a constraints solver.
@@ -236,7 +249,7 @@ pub trait SolverAdaptor: private::Sealed {
 pub struct Solver<A: SolverAdaptor, State: SolverState = Init> {
     state: State,
     adaptor: A,
-    model: Option<A::Model>,
+    context: Option<Arc<RwLock<Context<'static>>>>,
 }
 
 impl<Adaptor: SolverAdaptor> Solver<Adaptor> {
@@ -244,7 +257,7 @@ impl<Adaptor: SolverAdaptor> Solver<Adaptor> {
         let mut solver = Solver {
             state: Init,
             adaptor: solver_adaptor,
-            model: None,
+            context: None,
         };
 
         solver.adaptor.init_solver(private::Internal);
@@ -258,11 +271,11 @@ impl<Adaptor: SolverAdaptor> Solver<Adaptor> {
 
 impl<A: SolverAdaptor> Solver<A, Init> {
     pub fn load_model(mut self, model: Model) -> Result<Solver<A, ModelLoaded>, SolverError> {
-        let solver_model = &mut self.adaptor.load_model(model, private::Internal)?;
+        let solver_model = &mut self.adaptor.load_model(model.clone(), private::Internal)?;
         Ok(Solver {
             state: ModelLoaded,
             adaptor: self.adaptor,
-            model: Some(solver_model.clone()),
+            context: Some(model.context.clone()),
         })
     }
 }
@@ -276,64 +289,85 @@ impl<A: SolverAdaptor> Solver<A, ModelLoaded> {
         let start_time = Instant::now();
 
         #[allow(clippy::unwrap_used)]
-        let result = self
-            .adaptor
-            .solve(self.model.clone().unwrap(), callback, private::Internal);
+        let result = self.adaptor.solve(callback, private::Internal);
 
         let duration = start_time.elapsed();
 
         match result {
-            Ok(x) => Ok(Solver {
-                adaptor: self.adaptor,
-                model: self.model,
-                state: ExecutionSuccess {
-                    stats: x.stats,
-                    status: x.status,
-                    _sealed: private::Internal,
-                    wall_time_s: duration.as_secs_f64(),
-                },
-            }),
+            Ok(x) => {
+                let stats = self
+                    .adaptor
+                    .add_adaptor_info_to_stats(x.stats)
+                    .with_timings(duration.as_secs_f64());
+
+                Ok(Solver {
+                    adaptor: self.adaptor,
+                    state: ExecutionSuccess {
+                        stats,
+                        status: x.status,
+                        _sealed: private::Internal,
+                    },
+                    context: self.context,
+                })
+            }
             Err(x) => Err(x),
         }
     }
 
     pub fn solve_mut(
         mut self,
-        callback: SolverMutCallback<A>,
+        callback: SolverMutCallback,
     ) -> Result<Solver<A, ExecutionSuccess>, SolverError> {
         #[allow(clippy::unwrap_used)]
         let start_time = Instant::now();
 
         #[allow(clippy::unwrap_used)]
-        let result =
-            self.adaptor
-                .solve_mut(self.model.clone().unwrap(), callback, private::Internal);
+        let result = self.adaptor.solve_mut(callback, private::Internal);
 
         let duration = start_time.elapsed();
 
         match result {
-            Ok(x) => Ok(Solver {
-                adaptor: self.adaptor,
-                model: self.model,
-                state: ExecutionSuccess {
-                    stats: x.stats,
-                    status: x.status,
-                    _sealed: private::Internal,
-                    wall_time_s: duration.as_secs_f64(),
-                },
-            }),
+            Ok(x) => {
+                let stats = self
+                    .adaptor
+                    .add_adaptor_info_to_stats(x.stats)
+                    .with_timings(duration.as_secs_f64());
+
+                Ok(Solver {
+                    adaptor: self.adaptor,
+                    state: ExecutionSuccess {
+                        stats,
+                        status: x.status,
+                        _sealed: private::Internal,
+                    },
+                    context: self.context,
+                })
+            }
             Err(x) => Err(x),
         }
     }
 }
 
 impl<A: SolverAdaptor> Solver<A, ExecutionSuccess> {
-    pub fn stats(self) -> Option<Box<dyn SolverStats>> {
-        self.state.stats
+    pub fn stats(&self) -> SolverStats {
+        self.state.stats.clone()
+    }
+
+    // Saves this solvers stats to the global context as a "solver run"
+    pub fn save_stats_to_context(&self) {
+        #[allow(clippy::unwrap_used)]
+        #[allow(clippy::expect_used)]
+        self.context
+            .as_ref()
+            .expect("")
+            .write()
+            .unwrap()
+            .stats
+            .add_solver_run(self.stats());
     }
 
     pub fn wall_time_s(&self) -> f64 {
-        self.state.wall_time_s
+        self.stats().conjure_solver_wall_time_s
     }
 }
 
@@ -366,7 +400,7 @@ pub enum SolverError {
 
 /// Returned from [SolverAdaptor] when solving is successful.
 pub struct SolveSuccess {
-    stats: Option<Box<dyn SolverStats>>,
+    stats: SolverStats,
     status: SearchStatus,
 }
 

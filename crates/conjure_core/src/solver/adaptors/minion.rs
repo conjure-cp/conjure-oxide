@@ -6,12 +6,13 @@ use regex::Regex;
 use minion_ast::Model as MinionModel;
 use minion_rs::ast as minion_ast;
 use minion_rs::error::MinionError;
-use minion_rs::run_minion;
+use minion_rs::{get_from_table, run_minion};
 
 use crate::ast as conjure_ast;
 use crate::solver::SolverCallback;
 use crate::solver::SolverFamily;
 use crate::solver::SolverMutCallback;
+use crate::stats::SolverStats;
 use crate::Model as ConjureModel;
 
 use super::super::model_modifier::NotModifiable;
@@ -29,6 +30,7 @@ use super::super::SolverError::*;
 /// This adaptor uses the `minion_rs` crate to talk to Minion over FFI.
 pub struct Minion {
     __non_constructable: private::Internal,
+    model: Option<MinionModel>,
 }
 
 static MINION_LOCK: Mutex<()> = Mutex::new(());
@@ -76,6 +78,7 @@ impl Minion {
     pub fn new() -> Minion {
         Minion {
             __non_constructable: private::Internal,
+            model: None,
         }
     }
 }
@@ -87,14 +90,9 @@ impl Default for Minion {
 }
 
 impl SolverAdaptor for Minion {
-    type Model = MinionModel;
-    type Solution = minion_ast::Constant;
-    type Modifier = NotModifiable;
-
     #[allow(clippy::unwrap_used)]
     fn solve(
         &mut self,
-        model: MinionModel,
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
@@ -112,7 +110,11 @@ impl SolverAdaptor for Minion {
         drop(user_callback); // release mutex. REQUIRED so that run_minion can use the
                              // user callback and not deadlock.
 
-        run_minion(model, minion_rs_callback).map_err(|err| match err {
+        run_minion(
+            self.model.clone().expect("STATE MACHINE ERR"),
+            minion_rs_callback,
+        )
+        .map_err(|err| match err {
             MinionError::RuntimeError(x) => Runtime(format!("{:#?}", x)),
             MinionError::Other(x) => Runtime(format!("{:#?}", x)),
             MinionError::NotImplemented(x) => RuntimeNotImplemented(x),
@@ -126,33 +128,33 @@ impl SolverAdaptor for Minion {
             status = Complete(NoSolutions);
         }
         Ok(SolveSuccess {
-            stats: None,
+            stats: get_solver_stats(),
             status,
         })
     }
 
     fn solve_mut(
         &mut self,
-        model: MinionModel,
-        callback: SolverMutCallback<Self>,
+        callback: SolverMutCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
         Err(OpNotImplemented("solve_mut".into()))
     }
 
-    fn load_model(
-        &mut self,
-        model: ConjureModel,
-        _: private::Internal,
-    ) -> Result<Self::Model, SolverError> {
+    fn load_model(&mut self, model: ConjureModel, _: private::Internal) -> Result<(), SolverError> {
         let mut minion_model = MinionModel::new();
         parse_vars(&model, &mut minion_model)?;
         parse_exprs(&model, &mut minion_model)?;
-        Ok(minion_model)
+        self.model = Some(minion_model);
+        Ok(())
     }
 
     fn get_family(&self) -> SolverFamily {
         SolverFamily::Minion
+    }
+
+    fn get_name(&self) -> Option<String> {
+        Some("Minion".to_owned())
     }
 }
 
@@ -340,5 +342,13 @@ fn _name_to_string(name: conjure_ast::Name) -> String {
     match name {
         conjure_ast::Name::UserName(x) => x,
         conjure_ast::Name::MachineName(x) => format!("__conjure_machine_name_{}", x),
+    }
+}
+
+#[allow(clippy::unwrap_used)]
+fn get_solver_stats() -> SolverStats {
+    SolverStats {
+        nodes: get_from_table("Nodes".into()).map(|x| x.parse::<u64>().unwrap()),
+        ..Default::default()
     }
 }

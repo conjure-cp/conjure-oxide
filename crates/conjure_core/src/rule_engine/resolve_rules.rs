@@ -43,7 +43,7 @@ fn get_rule_set(rule_set_name: &str) -> Result<&'static RuleSet<'static>, Resolv
 ///
 #[allow(clippy::mutable_key_type)] // RuleSet is 'static so it's fine
 pub fn rule_sets_by_names<'a>(
-    rule_set_names: &Vec<&str>,
+    rule_set_names: &Vec<String>,
 ) -> Result<HashSet<&'a RuleSet<'static>>, ResolveRulesError> {
     let mut rs_set: HashSet<&'static RuleSet<'static>> = HashSet::new();
 
@@ -69,7 +69,7 @@ pub fn rule_sets_by_names<'a>(
 #[allow(clippy::mutable_key_type)] // RuleSet is 'static so it's fine
 pub fn resolve_rule_sets<'a>(
     target_solver: SolverFamily,
-    extra_rs_names: &Vec<&str>,
+    extra_rs_names: &Vec<String>,
 ) -> Result<Vec<&'a RuleSet<'static>>, ResolveRulesError> {
     let mut ans = HashSet::new();
 

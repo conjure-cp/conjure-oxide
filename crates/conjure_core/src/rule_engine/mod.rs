@@ -41,7 +41,7 @@ pub use linkme::distributed_slice;
 ///   Ok(Reduction::pure(expr.clone()))
 /// }
 /// ```
-pub use conjure_rules_proc_macro::register_rule;
+pub use conjure_macros::register_rule;
 
 /// This procedural macro registers a rule set with the global registry.
 /// It may be used in any downstream crate.
@@ -62,7 +62,7 @@ pub use conjure_rules_proc_macro::register_rule;
 /// register_rule_set!("MyRuleSet", 10, ("DependencyRuleSet", "AnotherRuleSet"));
 /// ```
 #[doc(inline)]
-pub use conjure_rules_proc_macro::register_rule_set;
+pub use conjure_macros::register_rule_set;
 pub use resolve_rules::{get_rule_priorities, get_rules_vec, resolve_rule_sets};
 pub use rewrite::{rewrite_model, RewriteError};
 pub use rule::{ApplicationError, ApplicationResult, Reduction, Rule};

@@ -163,7 +163,7 @@ dependencies = [
  "regex",
  "rustc-hash",
  "shlex",
- "syn 2.0.55",
+ "syn 2.0.57",
  "which",
 ]
 
@@ -303,7 +303,7 @@ dependencies = [
  "heck 0.5.0",
  "proc-macro2",
  "quote 1.0.35",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -323,7 +323,9 @@ name = "conjure_core"
 version = "0.0.1"
 dependencies = [
  "anyhow",
- "conjure_rules_proc_macro",
+ "clap",
+ "conjure_macros",
+ "derivative",
  "derive_is_enum_variant",
  "enum_compatability_macro",
  "linkme",
@@ -331,6 +333,7 @@ dependencies = [
  "minion_rs",
  "project-root",
  "regex",
+ "schemars",
  "serde",
  "serde_json",
  "serde_with",
@@ -343,18 +346,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "conjure_macros"
+version = "0.1.0"
+dependencies = [
+ "linkme",
+ "proc-macro2",
+ "quote 1.0.35",
+ "syn 2.0.57",
+]
+
+[[package]]
 name = "conjure_oxide"
 version = "0.0.1"
 dependencies = [
  "anyhow",
  "clap",
  "conjure_core",
- "conjure_rules_proc_macro",
  "itertools",
  "linkme",
  "log",
  "minion_rs",
  "regex",
+ "schemars",
  "serde",
  "serde_json",
  "serde_with",
@@ -366,16 +379,6 @@ dependencies = [
  "uniplate_derive",
  "versions",
  "walkdir",
-]
-
-[[package]]
-name = "conjure_rules_proc_macro"
-version = "0.1.0"
-dependencies = [
- "linkme",
- "proc-macro2",
- "quote 1.0.35",
- "syn 2.0.55",
 ]
 
 [[package]]
@@ -405,7 +408,7 @@ dependencies = [
  "proc-macro2",
  "quote 1.0.35",
  "strsim 0.10.0",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -416,7 +419,7 @@ checksum = "a668eda54683121533a393014d8692171709ff57a7d61f187b6e782719f8933f"
 dependencies = [
  "darling_core",
  "quote 1.0.35",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -427,6 +430,17 @@ checksum = "b42b6fa04a440b495c8b04d0e71b707c585f83cb9cb28cf8cd0d976c315e31b4"
 dependencies = [
  "powerfmt",
  "serde",
+]
+
+[[package]]
+name = "derivative"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fcc3dd5e9e9c0b295d6e1e4d811fb6f157d5ffd784b8d202fc62eac8035a770b"
+dependencies = [
+ "proc-macro2",
+ "quote 1.0.35",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -452,6 +466,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "dyn-clone"
+version = "1.0.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d6ef0072f8a535281e4876be788938b528e9a1d43900b82c2569af7da799125"
+
+[[package]]
 name = "either"
 version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -463,7 +483,7 @@ version = "0.1.0"
 dependencies = [
  "itertools",
  "quote 1.0.35",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -750,7 +770,7 @@ checksum = "adf157a4dc5a29b7b464aa8fe7edeff30076e07e13646a1c3874f58477dc99f8"
 dependencies = [
  "proc-macro2",
  "quote 1.0.35",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -798,6 +818,7 @@ dependencies = [
  "anyhow",
  "bindgen 0.69.4",
  "glob",
+ "libc",
  "thiserror",
 ]
 
@@ -905,7 +926,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8d3928fb5db768cb86f891ff014f0144589297e3c6a1aba6ed7cecfdace270c7"
 dependencies = [
  "proc-macro2",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -1120,6 +1141,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "schemars"
+version = "0.8.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "45a28f4c49489add4ce10783f7911893516f15afe45d015608d41faca6bc4d29"
+dependencies = [
+ "dyn-clone",
+ "schemars_derive",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "schemars_derive"
+version = "0.8.16"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c767fd6fa65d9ccf9cf026122c1b555f2ef9a4f0cea69da4d7dbc3e258d30967"
+dependencies = [
+ "proc-macro2",
+ "quote 1.0.35",
+ "serde_derive_internals",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "scopeguard"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1142,7 +1187,18 @@ checksum = "7eb0b34b42edc17f6b7cac84a52a1c5f0e1bb2227e997ca9011ea3dd34e8610b"
 dependencies = [
  "proc-macro2",
  "quote 1.0.35",
- "syn 2.0.55",
+ "syn 2.0.57",
+]
+
+[[package]]
+name = "serde_derive_internals"
+version = "0.26.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "85bf8229e7920a9f636479437026331ce11aa132b4dde37d121944a44d6e5f3c"
+dependencies = [
+ "proc-macro2",
+ "quote 1.0.35",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -1192,7 +1248,7 @@ dependencies = [
  "darling",
  "proc-macro2",
  "quote 1.0.35",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -1258,7 +1314,7 @@ dependencies = [
  "proc-macro2",
  "quote 1.0.35",
  "rustversion",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -1363,9 +1419,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.55"
+version = "2.0.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "002a1b3dbf967edfafc32655d0f377ab0bb7b994aa1d32c8cc7e9b8bf3ebb8f0"
+checksum = "11a6ae1e52eb25aab8f3fb9fca13be982a373b8f1157ca14b897a825ba4a2d35"
 dependencies = [
  "proc-macro2",
  "quote 1.0.35",
@@ -1410,7 +1466,7 @@ checksum = "c61f3ba182994efc43764a46c018c347bc492c79f024e705f46567b418f6d4f7"
 dependencies = [
  "proc-macro2",
  "quote 1.0.35",
- "syn 2.0.55",
+ "syn 2.0.57",
 ]
 
 [[package]]
@@ -1503,7 +1559,7 @@ dependencies = [
  "log",
  "proc-macro2",
  "quote 1.0.35",
- "syn 2.0.55",
+ "syn 2.0.57",
  "uniplate",
 ]
 
@@ -1611,7 +1667,7 @@ dependencies = [
  "once_cell",
  "proc-macro2",
  "quote 1.0.35",
- "syn 2.0.55",
+ "syn 2.0.57",
  "wasm-bindgen-shared",
 ]
 
@@ -1633,7 +1689,7 @@ checksum = "e94f17b526d0a461a191c78ea52bbce64071ed5c04c9ffe424dcb38f74171bb7"
 dependencies = [
  "proc-macro2",
  "quote 1.0.35",
- "syn 2.0.55",
+ "syn 2.0.57",
  "wasm-bindgen-backend",
  "wasm-bindgen-shared",
 ]

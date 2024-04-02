@@ -1,15 +1,17 @@
 use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 
 use serde_json::Value;
 use serde_json::Value as JsonValue;
 
 use crate::ast::{Constant, DecisionVariable, Domain, Expression, Name, Range};
+use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::metadata::Metadata;
 use crate::Model;
 
-pub fn model_from_json(str: &str) -> Result<Model> {
-    let mut m = Model::default();
+pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Result<Model> {
+    let mut m = Model::new_empty(context);
     let v: JsonValue = serde_json::from_str(str)?;
     let statements = v["mStatements"]
         .as_array()
