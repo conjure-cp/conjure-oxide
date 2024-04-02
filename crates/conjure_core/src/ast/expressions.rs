@@ -259,8 +259,6 @@ impl Expression {
             }
             Expression::Eq(metadata, box1, box2) => {
                 metadata.clean = bool_value;
-                box1.set_clean(bool_value);
-                box2.set_clean(bool_value);
             }
             Expression::Neq(metadata, box1, box2) => {
                 metadata.clean = bool_value;
