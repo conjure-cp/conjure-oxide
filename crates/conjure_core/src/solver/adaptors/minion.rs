@@ -287,6 +287,9 @@ fn read_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, So
                 .map(|x| read_expr(x.to_owned()))
                 .collect::<Result<Vec<minion_ast::Constraint>, SolverError>>()?,
         )),
+        conjure_ast::Expression::Eq(_metadata, a, b) => {
+            Ok(minion_ast::Constraint::Eq(read_var(*a)?, read_var(*b)?))
+        }
         x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
     }
 }

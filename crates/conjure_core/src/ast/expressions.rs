@@ -100,8 +100,6 @@ pub enum Expression {
     #[compatible(Minion)]
     Ineq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
 
-    // #[compatible(Minion)]
-    // DivEq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
     #[compatible(Minion)]
     AllDiff(Metadata, Vec<Expression>),
 }
@@ -142,20 +140,14 @@ impl Expression {
             Expression::UnsafeDiv(_, a, b) | Expression::SafeDiv(_, a, b) => {
                 let (a_min, a_max) = a.bounds(vars)?;
                 let (mut b_min, mut b_max) = b.bounds(vars)?;
-                // TODO: is this correct?
+                if b_min == 0 && b_max == 0 {
+                    return None;
+                }
                 if b_min == 0 {
-                    if b_max > b_min {
-                        b_min = 1; // Smallest number which avoids division by zero
-                    } else {
-                        return None; // b_min == b_max == 0; always division by zero
-                    }
+                    b_min += 1; // Smallest number which avoids division by zero
                 }
                 if b_max == 0 {
-                    if b_min < b_max {
-                        b_max = -1; // Largest number which avoids division by zero
-                    } else {
-                        return None; // b_min == b_max == 0; always division by zero
-                    }
+                    b_max -= 1; // Largest number which avoids division by zero
                 }
                 Some((a_min / b_max, a_max / b_min))
             }

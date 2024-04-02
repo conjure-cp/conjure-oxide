@@ -259,18 +259,17 @@ fn leq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 // }
 
 /*
-    Since Minion doesn't support arbitrary constraints with div (e.g. leq, neq), we add an intermediary variable to represent the division result.
+    Since Minion doesn't support some constraints with div (e.g. leq, neq), we add an auxiliary variable to represent the division result.
 */
 #[register_rule(("Minion", 101))]
 fn safediv_to_minion(expr: &Expr, mdl: &Model) -> ApplicationResult {
-    // div operations not supported by Minion
-    if expr.is_leq() || expr.is_geq() || expr.is_neq() || expr.is_all_diff() {
+    if expr.is_eq() || expr.is_leq() || expr.is_geq() || expr.is_neq() {
         let mut sub = expr.children();
 
         let mut new_vars = SymbolTable::new();
         let mut new_top = vec![];
 
-        // replace every safe div child with a reference
+        // replace every safe div child with a reference to a new variable
         for c in sub.iter_mut() {
             if let Expr::SafeDiv(_, a, b) = c.clone() {
                 let new_name = mdl.gensym();
@@ -295,12 +294,14 @@ fn safediv_to_minion(expr: &Expr, mdl: &Model) -> ApplicationResult {
             }
         }
         if !new_top.is_empty() {
-            return Ok(Reduction::new(
+            let ret = Reduction::new(
                 expr.with_children(sub)
                     .or(Err(ApplicationError::RuleNotApplicable))?,
                 Expr::And(Metadata::new(), new_top),
                 new_vars,
-            ));
+            );
+            println!("> safediv_to_minion: {:?}", ret.new_expression);
+            return Ok(ret);
         }
     }
     Err(ApplicationError::RuleNotApplicable)

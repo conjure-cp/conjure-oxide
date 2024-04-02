@@ -6,8 +6,6 @@ use conjure_core::rule_engine::{
 use conjure_core::Model;
 use uniplate::uniplate::Uniplate;
 
-use crate::ast::{DecisionVariable, Domain, Range, SymbolTable};
-
 register_rule_set!("Bubble", 254, ("Base"));
 
 // Bubble reduction rules
