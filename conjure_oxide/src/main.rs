@@ -28,26 +28,43 @@ use conjure_oxide::SolverFamily;
 struct Cli {
     #[arg(
         value_name = "INPUT_ESSENCE",
-        default_value = "./conjure_oxide/tests/integration/xyz/input.essence"
+        default_value = "./conjure_oxide/tests/integration/xyz/input.essence",
+        help = "The input Essence file"
     )]
     input_file: PathBuf,
 
-    #[arg(long, value_name = "EXTRA_RULE_SETS")]
+    #[arg(
+        long,
+        value_name = "EXTRA_RULE_SETS",
+        help = "Names of extra rule sets to enable"
+    )]
     extra_rule_sets: Vec<String>,
 
-    #[arg(long, value_enum, value_name = "SOLVER", short = 's')]
-    solver: Option<SolverFamily>,
+    #[arg(
+        long,
+        value_enum,
+        value_name = "SOLVER",
+        short = 's',
+        help = "Solver family use (Minion by default)"
+    )]
+    solver: Option<SolverFamily>, // ToDo this should probably set the solver adapter
 
     // TODO: subcommands instead of these being a flag.
-    #[arg(long, default_value_t = false)]
-    /// Prints the schema for the info JSON then exits.
+    #[arg(
+        long,
+        default_value_t = false,
+        help = "Print the schema for the info JSON and exit"
+    )]
     print_info_schema: bool,
 
-    #[arg(long)]
-    /// Saves execution info as JSON to the given file-path.
+    #[arg(long, help = "Save execution info as JSON to the given file-path.")]
     info_json_path: Option<PathBuf>,
 
-    #[arg(long, short = 'o')]
+    #[arg(
+        long,
+        short = 'o',
+        help = "Save solutions to a JSON file (prints to stdin by default)"
+    )]
     output: Option<PathBuf>,
 }
 
@@ -74,6 +91,11 @@ pub fn main() -> AnyhowResult<()> {
                 .open(pth)?,
         ),
     };
+
+    if target_family != SolverFamily::Minion {
+        log::error!("Only the Minion solver is currently supported!");
+        exit(1);
+    }
 
     #[allow(clippy::unwrap_used)]
     let log_file = File::options()
@@ -161,7 +183,7 @@ pub fn main() -> AnyhowResult<()> {
 
     log::info!(target: "file", "Rewritten model: {}", json!(model));
 
-    let solutions = get_minion_solutions(model)?;
+    let solutions = get_minion_solutions(model)?; // ToDo we need to properly set the solver adaptor here, not hard code minion
     log::info!(target: "file", "Solutions: {}", minion_solutions_to_json(&solutions));
 
     let solutions_json = minion_solutions_to_json(&solutions);
