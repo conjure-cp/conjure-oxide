@@ -242,17 +242,6 @@ fn leq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 }
 
-#[register_rule(("Minion", 100))]
-fn neq_to_alldiff(expr: &Expr, _: &Model) -> ApplicationResult {
-    match expr {
-        Expr::Neq(metadata, a, b) => Ok(Reduction::pure(Expr::AllDiff(
-            metadata.clone(),
-            vec![*a.clone(), *b.clone()],
-        ))),
-        _ => Err(ApplicationError::RuleNotApplicable),
-    }
-}
-
 // #[register_rule(("Minion", 99))]
 // fn eq_to_leq_geq(expr: &Expr, _: &Model) -> ApplicationResult {
 //     match expr {
