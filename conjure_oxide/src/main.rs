@@ -139,8 +139,6 @@ pub fn main() -> AnyhowResult<()> {
     model = rewrite_model(&model, &rule_sets)?;
 
     log::info!("Rewritten model: {}", to_string_pretty(&json!(model))?);
-    println!("\nRewritten model:");
-    println!("{:#?}", model); 
 
     let solutions = get_minion_solutions(model)?;
     log::info!("Solutions: {}", minion_solutions_to_json(&solutions));

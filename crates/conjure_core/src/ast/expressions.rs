@@ -140,9 +140,7 @@ impl Expression {
                 metadata.clean && exprs.iter().all(|e| e.is_clean())
             }
             Expression::Not(metadata, expr) => metadata.clean && expr.is_clean(),
-            Expression::Or(metadata, exprs) => {
-                metadata.clean && exprs.iter().all(|e| e.is_clean())
-            }
+            Expression::Or(metadata, exprs) => metadata.clean && exprs.iter().all(|e| e.is_clean()),
             Expression::And(metadata, exprs) => {
                 metadata.clean && exprs.iter().all(|e| e.is_clean())
             }
@@ -188,96 +186,55 @@ impl Expression {
             Expression::Nothing => {}
             Expression::Constant(metadata, _) => metadata.clean = bool_value,
             Expression::Reference(metadata, _) => metadata.clean = bool_value,
-            Expression::Sum(metadata, exprs) => {
-                metadata.clean =bool_value;
-                for e in exprs {
-                    e.set_clean(bool_value);
-                }
+            Expression::Sum(metadata, _) => {
+                metadata.clean = bool_value;
             }
-            Expression::Min(metadata, exprs) => {
-                metadata.clean =bool_value;
-                for e in exprs {
-                    e.set_clean(bool_value);
-                }
+            Expression::Min(metadata, _) => {
+                metadata.clean = bool_value;
             }
-            Expression::Not(metadata, expr) => {
-                metadata.clean =bool_value;
-                expr.set_clean(bool_value);
+            Expression::Not(metadata, _) => {
+                metadata.clean = bool_value;
             }
-            Expression::Or(metadata, exprs) => {
-                metadata.clean =bool_value;
-                for e in exprs {
-                    e.set_clean(bool_value);
-                }
+            Expression::Or(metadata, _) => {
+                metadata.clean = bool_value;
             }
-            Expression::And(metadata, exprs) => {
-                metadata.clean =bool_value;
-                for e in exprs {
-                    e.set_clean(bool_value);
-                }
+            Expression::And(metadata, _) => {
+                metadata.clean = bool_value;
             }
             Expression::Eq(metadata, box1, box2) => {
-                metadata.clean =bool_value;
+                metadata.clean = bool_value;
                 box1.set_clean(bool_value);
                 box2.set_clean(bool_value);
             }
             Expression::Neq(metadata, box1, box2) => {
-                metadata.clean =bool_value;
-                box1.set_clean(bool_value);
-                box2.set_clean(bool_value);
+                metadata.clean = bool_value;
             }
             Expression::Geq(metadata, box1, box2) => {
-                metadata.clean =bool_value;
-                box1.set_clean(bool_value);
-                box2.set_clean(bool_value);
+                metadata.clean = bool_value;
             }
             Expression::Leq(metadata, box1, box2) => {
-                metadata.clean =bool_value;
-                box1.set_clean(bool_value);
-                box2.set_clean(bool_value);
+                metadata.clean = bool_value;
             }
             Expression::Gt(metadata, box1, box2) => {
-                metadata.clean =bool_value;
-                box1.set_clean(bool_value);
-                box2.set_clean(bool_value);
+                metadata.clean = bool_value;
             }
             Expression::Lt(metadata, box1, box2) => {
-                metadata.clean =bool_value;
-                box1.set_clean(bool_value);
-                box2.set_clean(bool_value);
+                metadata.clean = bool_value;
             }
             Expression::SumGeq(metadata, box1, box2) => {
-                metadata.clean =bool_value;
-                for e in box1 {
-                    e.set_clean(bool_value);
-                }
-                box2.set_clean(bool_value);
+                metadata.clean = bool_value;
             }
             Expression::SumLeq(metadata, box1, box2) => {
-                metadata.clean =bool_value;
-                for e in box1 {
-                    e.set_clean(bool_value);
-                }
-                box2.set_clean(bool_value);
+                metadata.clean = bool_value;
             }
             Expression::Ineq(metadata, box1, box2, box3) => {
-                metadata.clean =bool_value;
-                box1.set_clean(bool_value);
-                box2.set_clean(bool_value);
-                box3.set_clean(bool_value);
+                metadata.clean = bool_value;
             }
             Expression::AllDiff(metadata, exprs) => {
-                metadata.clean =bool_value;
-                for e in exprs {
-                    e.set_clean(bool_value);
-                }
+                metadata.clean = bool_value;
             }
             Expression::SumEq(metadata, exprs, expr) => {
-                metadata.clean =bool_value;
-                for e in exprs {
-                    e.set_clean(bool_value);
-                }
-                expr.set_clean(bool_value);
+                metadata.clean = bool_value;
             }
         }
     }
