@@ -91,12 +91,6 @@ pub fn main() -> AnyhowResult<()> {
                 .open(pth)?,
         ),
     };
-
-    if target_family != SolverFamily::Minion {
-        log::error!("Only the Minion solver is currently supported!");
-        exit(1);
-    }
-
     #[allow(clippy::unwrap_used)]
     let log_file = File::options()
         .create(true)
@@ -107,6 +101,11 @@ pub fn main() -> AnyhowResult<()> {
         .with_target_writer("info", new_writer(stdout()))
         .with_target_writer("file", new_writer(log_file))
         .init();
+
+    if target_family != SolverFamily::Minion {
+        log::error!("Only the Minion solver is currently supported!");
+        exit(1);
+    }
 
     let rule_sets = match resolve_rule_sets(target_family, &extra_rule_sets) {
         Ok(rs) => rs,
