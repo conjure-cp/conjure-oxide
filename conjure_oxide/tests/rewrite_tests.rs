@@ -969,34 +969,30 @@ fn rewrite_solve_xyz_parameterized() {
         let nested_expr = Expression::Or(Metadata::new(), or_exprs);
 
         let model_for_rewrite = Model::new(HashMap::new(), nested_expr.clone(), Default::default());
-        let model_for_rewrite_unoptimized = Model::new(HashMap::new(), nested_expr.clone(), Default::default());
+        let model_for_rewrite_unoptimized =
+            Model::new(HashMap::new(), nested_expr.clone(), Default::default());
 
         // Apply rewrite function to the nested expression
-        let rewritten_expr = rewrite_model(
-            &model_for_rewrite,
-            &rule_sets,
-        )
-        .unwrap()
-        .constraints;
+        let rewritten_expr = rewrite_model(&model_for_rewrite, &rule_sets)
+            .unwrap()
+            .constraints;
 
         env::set_var("OPTIMIZATIONS", "0");
 
-        let rewritten_expr_unoptimized = rewrite_model(
-            &model_for_rewrite_unoptimized, 
-            &rule_sets,
-        )
-        .unwrap()
-        .constraints;
+        let rewritten_expr_unoptimized = rewrite_model(&model_for_rewrite_unoptimized, &rule_sets)
+            .unwrap()
+            .constraints;
 
         env::remove_var("OPTIMIZATIONS");
 
-        let info_file_name_optimized = format!("rewrite_solve_xyz_optimized_{}", num_or_clauses); 
-        let info_file_name_unoptimized = format!("rewrite_solve_xyz_unoptimized_{}", num_or_clauses);
-         
+        let info_file_name_optimized = format!("rewrite_solve_xyz_optimized_{}", num_or_clauses);
+        let info_file_name_unoptimized =
+            format!("rewrite_solve_xyz_unoptimized_{}", num_or_clauses);
+
         save_stats_json(
             model_for_rewrite.context,
             "tests",
-            &info_file_name_optimized, 
+            &info_file_name_optimized,
         );
         save_stats_json(
             model_for_rewrite_unoptimized.context,
@@ -1057,8 +1053,6 @@ fn rewrite_solve_xyz_parameterized() {
                 domain: domain.clone(),
             },
         );
-
-        
 
         let solver: Solver<adaptors::Minion> = Solver::new(adaptors::Minion::new());
         let solver = solver.load_model(model).unwrap();
