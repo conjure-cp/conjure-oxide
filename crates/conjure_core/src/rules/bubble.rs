@@ -6,6 +6,8 @@ use conjure_core::rule_engine::{
 use conjure_core::Model;
 use uniplate::uniplate::Uniplate;
 
+use crate::ast::{DecisionVariable, Domain, Range, SymbolTable};
+
 register_rule_set!("Bubble", 254, ("Base"));
 
 // Bubble reduction rules
@@ -71,10 +73,10 @@ fn bubble_up(expr: &Expression, _: &Model) -> ApplicationResult {
 */
 #[register_rule(("Bubble", 100))]
 fn div_to_bubble(expr: &Expression, _: &Model) -> ApplicationResult {
-    if let Expression::UnsafeDiv(m, a, b) = expr {
+    if let Expression::UnsafeDiv(_, a, b) = expr {
         return Ok(Reduction::pure(Expression::Bubble(
             Metadata::new(),
-            Box::new(Expression::SafeDiv(m.clone(), a.clone(), b.clone())),
+            Box::new(Expression::SafeDiv(Metadata::new(), a.clone(), b.clone())),
             Box::new(Expression::Neq(
                 Metadata::new(),
                 b.clone(),
