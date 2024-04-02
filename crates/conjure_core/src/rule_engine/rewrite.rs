@@ -118,7 +118,6 @@ fn choose_rewrite(results: &[RuleResult]) -> Option<Reduction> {
     if results.is_empty() {
         return None;
     }
-    println!("APPLIED: {}", results[0].rule.name);
     // Return the first result for now
     Some(results[0].reduction.clone())
 }

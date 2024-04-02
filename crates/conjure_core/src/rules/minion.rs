@@ -258,8 +258,8 @@ fn leq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 //     }
 // }
 
-/*
-    Since Minion doesn't support some constraints with div (e.g. leq, neq), we add an auxiliary variable to represent the division result.
+/**
+ * Since Minion doesn't support some constraints with div (e.g. leq, neq), we add an auxiliary variable to represent the division result.
 */
 #[register_rule(("Minion", 101))]
 fn safediv_to_minion(expr: &Expr, mdl: &Model) -> ApplicationResult {
@@ -294,14 +294,12 @@ fn safediv_to_minion(expr: &Expr, mdl: &Model) -> ApplicationResult {
             }
         }
         if !new_top.is_empty() {
-            let ret = Reduction::new(
+            return Ok(Reduction::new(
                 expr.with_children(sub)
                     .or(Err(ApplicationError::RuleNotApplicable))?,
                 Expr::And(Metadata::new(), new_top),
                 new_vars,
-            );
-            println!("> safediv_to_minion: {:?}", ret.new_expression);
-            return Ok(ret);
+            ));
         }
     }
     Err(ApplicationError::RuleNotApplicable)
