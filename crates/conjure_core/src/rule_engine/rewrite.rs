@@ -48,6 +48,7 @@ pub fn rewrite_model<'a>(
     model: &Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
 ) -> Result<Model, RewriteError> {
+    let start = std::time::Instant::now();
     let rule_priorities = get_rule_priorities(rule_sets)?;
     let rules = get_rules_vec(&rule_priorities);
     let mut new_model = model.clone();
@@ -55,6 +56,8 @@ pub fn rewrite_model<'a>(
     while let Some(step) = rewrite_iteration(&new_model.constraints, &new_model, &rules) {
         step.apply(&mut new_model); // Apply side-effects (e.g. symbol table updates)
     }
+    // Now - start time
+    model.context.write().unwrap().stats.rewriter_run_time = Some(start.elapsed());
     Ok(new_model)
 }
 
@@ -66,21 +69,35 @@ fn rewrite_iteration<'a>(
     model: &'a Model,
     rules: &'a Vec<&'a Rule<'a>>,
 ) -> Option<Reduction> {
-    let rule_results = apply_all_rules(expression, model, rules);
-    if let Some(new) = choose_rewrite(&rule_results) {
-        return Some(new);
-    } else {
-        let mut sub = expression.children();
+    if expression.is_clean() {
+        // Skip processing this expression if it's clean
+        return None;
+    }
 
-        for i in 0..sub.len() {
+    // Mark the expression as clean - will be marked dirty if any rule is applied
+    let mut expression = expression.clone();
+    expression.set_clean(true);
+
+    let rule_results = apply_all_rules(&expression, model, rules);
+    if let Some(mut new) = choose_rewrite(&rule_results) {
+        // If a rule is applied, mark the expression as dirty
+        new.new_expression.set_clean(false);
+        return Some(new);
+    }
+    
+    let mut sub = expression.children();
+    for i in 0..sub.len() {
             if let Some(red) = rewrite_iteration(&sub[i], model, rules) {
                 sub[i] = red.new_expression;
+                // If child is dirty, make this expression dirty
+                if !sub[i].is_clean() {
+                    expression.set_clean(false);
+                }
                 if let Ok(res) = expression.with_children(sub.clone()) {
                     return Some(Reduction::new(res, red.new_top, red.symbols));
                 }
             }
         }
-    }
     None // No rules applicable to this branch of the expression
 }
 

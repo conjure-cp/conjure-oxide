@@ -11,6 +11,7 @@ pub use solver_stats::SolverStats;
 #[serde(rename_all = "camelCase")]
 pub struct Stats {
     pub solver_runs: Vec<SolverStats>,
+    pub rewriter_run_time : Option<std::time::Duration>, 
 }
 
 impl Stats {
