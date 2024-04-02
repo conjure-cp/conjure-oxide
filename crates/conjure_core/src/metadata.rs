@@ -2,20 +2,14 @@ use std::fmt::{Debug, Display};
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Default)]
 pub struct Metadata {
-    pub dirtyclean: bool,
-}
-
-impl Default for Metadata {
-    fn default() -> Self {
-        Self::new()
-    }
+    pub clean: bool,
 }
 
 impl Metadata {
     pub fn new() -> Metadata {
-        Metadata { dirtyclean: false }
+        Metadata { clean: false }
     }
 }
 

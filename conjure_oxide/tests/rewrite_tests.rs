@@ -1,5 +1,6 @@
 use core::panic;
 use std::collections::HashMap;
+use std::env;
 use std::process::exit;
 
 use conjure_core::context::Context;
@@ -10,6 +11,7 @@ use conjure_oxide::{
     get_rule_by_name, get_rules,
     rule_engine::{resolve_rule_sets, rewrite_model},
     solver::{adaptors, Solver, SolverAdaptor as _},
+    utils::testing::save_stats_json,
     Metadata, Model, Rule,
 };
 use uniplate::uniplate::Uniplate;
@@ -912,6 +914,154 @@ fn rewrite_solve_xyz() {
     let solver: Solver<adaptors::Minion> = Solver::new(adaptors::Minion::new());
     let solver = solver.load_model(model).unwrap();
     solver.solve(Box::new(|_| true)).unwrap();
+}
+
+#[test]
+fn rewrite_solve_xyz_parameterized() {
+    println!("Rules: {:?}", get_rules());
+
+    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &vec!["Constant"]) {
+        Ok(rs) => rs,
+        Err(e) => {
+            eprintln!("Error resolving rule sets: {}", e);
+            exit(1);
+        }
+    };
+    println!("Rule sets: {:?}", rule_sets);
+
+    // Create variables and domain
+    let variable_a = Name::UserName(String::from("a"));
+    let variable_b = Name::UserName(String::from("b"));
+    let variable_c = Name::UserName(String::from("c"));
+    let domain = Domain::IntDomain(vec![Range::Bounded(1, 3)]);
+
+    // Create a vector of test cases with varying number of OR clauses
+    let test_cases = vec![1, 2, 3, 4];
+
+    for num_or_clauses in test_cases {
+        // Construct OR'd expression
+        let mut or_exprs = Vec::new();
+        for _i in 0..num_or_clauses {
+            let expr = Expression::And(
+                Metadata::new(),
+                vec![
+                    Expression::Eq(
+                        Metadata::new(),
+                        Box::new(Expression::Sum(
+                            Metadata::new(),
+                            vec![
+                                Expression::Reference(Metadata::new(), variable_a.clone()),
+                                Expression::Reference(Metadata::new(), variable_b.clone()),
+                                Expression::Reference(Metadata::new(), variable_c.clone()),
+                            ],
+                        )),
+                        Box::new(Expression::Constant(Metadata::new(), Constant::Int(4))),
+                    ),
+                    Expression::Lt(
+                        Metadata::new(),
+                        Box::new(Expression::Reference(Metadata::new(), variable_a.clone())),
+                        Box::new(Expression::Reference(Metadata::new(), variable_b.clone())),
+                    ),
+                ],
+            );
+            or_exprs.push(expr);
+        }
+        let nested_expr = Expression::Or(Metadata::new(), or_exprs);
+
+        let model_for_rewrite = Model::new(HashMap::new(), nested_expr.clone(), Default::default());
+        let model_for_rewrite_unoptimized =
+            Model::new(HashMap::new(), nested_expr.clone(), Default::default());
+
+        // Apply rewrite function to the nested expression
+        let rewritten_expr = rewrite_model(&model_for_rewrite, &rule_sets)
+            .unwrap()
+            .constraints;
+
+        env::set_var("OPTIMIZATIONS", "0");
+
+        let rewritten_expr_unoptimized = rewrite_model(&model_for_rewrite_unoptimized, &rule_sets)
+            .unwrap()
+            .constraints;
+
+        env::remove_var("OPTIMIZATIONS");
+
+        let info_file_name_optimized = format!("rewrite_solve_xyz_optimized_{}", num_or_clauses);
+        let info_file_name_unoptimized =
+            format!("rewrite_solve_xyz_unoptimized_{}", num_or_clauses);
+
+        save_stats_json(
+            model_for_rewrite.context,
+            "tests",
+            &info_file_name_optimized,
+        );
+        save_stats_json(
+            model_for_rewrite_unoptimized.context,
+            "tests",
+            &info_file_name_unoptimized,
+        );
+
+        // Check if the expression is in its simplest form
+        let expr = rewritten_expr.clone();
+        assert!(is_simple(&expr));
+
+        let expr_unoptimized = rewritten_expr_unoptimized.clone();
+        assert!(is_simple(&expr_unoptimized));
+
+        // Create model with variables and constraints
+        let mut model = Model::new(HashMap::new(), rewritten_expr, Default::default());
+        let mut model_unoptimized = Model::new(
+            HashMap::new(),
+            rewritten_expr_unoptimized,
+            Default::default(),
+        );
+
+        // Insert variables and domains
+        model.variables.insert(
+            variable_a.clone(),
+            DecisionVariable {
+                domain: domain.clone(),
+            },
+        );
+        model.variables.insert(
+            variable_b.clone(),
+            DecisionVariable {
+                domain: domain.clone(),
+            },
+        );
+        model.variables.insert(
+            variable_c.clone(),
+            DecisionVariable {
+                domain: domain.clone(),
+            },
+        );
+
+        model_unoptimized.variables.insert(
+            variable_a.clone(),
+            DecisionVariable {
+                domain: domain.clone(),
+            },
+        );
+        model_unoptimized.variables.insert(
+            variable_b.clone(),
+            DecisionVariable {
+                domain: domain.clone(),
+            },
+        );
+        model_unoptimized.variables.insert(
+            variable_c.clone(),
+            DecisionVariable {
+                domain: domain.clone(),
+            },
+        );
+
+        let solver: Solver<adaptors::Minion> = Solver::new(adaptors::Minion::new());
+        let solver = solver.load_model(model).unwrap();
+        solver.solve(Box::new(|_| true)).unwrap();
+
+        let solver_unoptimized: Solver<adaptors::Minion> = Solver::new(adaptors::Minion::new());
+        let solver_unoptimized = solver_unoptimized.load_model(model_unoptimized).unwrap();
+        solver_unoptimized.solve(Box::new(|_| true)).unwrap();
+    }
 }
 
 struct RuleResult<'a> {
