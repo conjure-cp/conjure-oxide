@@ -89,9 +89,14 @@ def extract_solver_stats_dataframe(root_dir):
     # convert the list of dictionaries to a DataFrame             
     df = pd.DataFrame(rows)
 
-    # set up a MultiIndex using the 'Test Category', 'Test', and 'Solver' columns
-    df.set_index(['Test Category', 'Test', 'Solver'], inplace=True)
-
+    try:
+        # set up a MultiIndex using the 'Test Category', 'Test', and 'Solver' columns
+        df.set_index(['Test Category', 'Test', 'Solver'], inplace=True)
+    except KeyError as e:
+        # KeyError here indicates that one of the columns doesn't exist in the dataframe (incomplete scraping of data)
+        print(f"Error: {e}. The data is not complete for conjure oxide and native.")
+        print("Please execute the data scripts to ensure all required data is present.")
+    
     # sort the index to make it easier to slice and view
     df.sort_index(inplace=True)
 
