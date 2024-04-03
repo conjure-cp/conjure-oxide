@@ -919,7 +919,7 @@ fn rewrite_solve_xyz() {
 fn rewrite_solve_xyz_parameterized() {
     println!("Rules: {:?}", get_rules());
 
-    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &vec!["Constant"]) {
+    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &vec!["Constant".to_string()]) {
         Ok(rs) => rs,
         Err(e) => {
             eprintln!("Error resolving rule sets: {}", e);
