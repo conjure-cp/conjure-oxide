@@ -9,7 +9,7 @@ use conjure_oxide::{
     ast::*,
     get_rule_by_name, get_rules,
     rule_engine::{resolve_rule_sets, rewrite_model},
-    solver::{adaptors, Solver, SolverAdaptor as _},
+    solver::{adaptors, Solver},
     utils::testing::save_stats_json,
     Metadata, Model, Rule,
 };
@@ -919,7 +919,7 @@ fn rewrite_solve_xyz() {
 fn rewrite_solve_xyz_parameterized() {
     println!("Rules: {:?}", get_rules());
 
-    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &vec!["Constant"]) {
+    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &vec!["Constant".to_string()]) {
         Ok(rs) => rs,
         Err(e) => {
             eprintln!("Error resolving rule sets: {}", e);
@@ -992,12 +992,14 @@ fn rewrite_solve_xyz_parameterized() {
             model_for_rewrite.context,
             "tests",
             &info_file_name_optimized,
-        );
+        )
+        .expect("Could not save stats!");
         save_stats_json(
             model_for_rewrite_unoptimized.context,
             "tests",
             &info_file_name_unoptimized,
-        );
+        )
+        .expect("Could not save stats!");
 
         // Check if the expression is in its simplest form
         let expr = rewritten_expr.clone();
