@@ -58,13 +58,30 @@ CARGO_TARGET_DIR=./tools/benchmarks-visualizer cargo build --bin conjure_native_
 
 # to write data to ./data for conjure oxide (Minion supported for now) -- warning: very verbose
 ./src/conjure_oxide_benchmarks.sh
+
+# WARNING: ensure figures are written to ./figure dir for static dashboard
+python3 ./src/download_visualizations.py
 ```
 
-## RUN DASHBOARD MANUALLY
+## GET STATIC DASHBOARD
+
+To get static HTML dashboard located in `tools/benchmarks-visualizer/html/dashboard.html` run the following commands:
+```bash
+# WARNING: ensure figures are written to ./figure dir for static dashboard
+python3 ./src/download_visualizations.py
+
+# (re)generate the .qml file
+python3 ./src/generate_qml_file.py
+
+# render to HTML using quarto
+quarto render ./html/dashboard.qmd
+```
+
+## RUN DYNAMIC DASHBOARD MANUALLY
 
 To run Dash dashboard manually simply execute the app.py script:
 ```bash
-python3 src/app.py
+python3 src/dash_dashboard.py
 ```
 
 To then visualize the dashboard (for now, until hosted), open a web browser and navigate to `http://127.0.0.1:8050/`:
