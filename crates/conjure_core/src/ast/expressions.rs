@@ -134,48 +134,48 @@ impl Expression {
             Expression::Constant(metadata, _) => metadata.clean,
             Expression::Reference(metadata, _) => metadata.clean,
             Expression::Sum(metadata, exprs) => {
-                metadata.clean && exprs.iter().all(|e| e.is_clean())
+                metadata.clean
             }
             Expression::Min(metadata, exprs) => {
-                metadata.clean && exprs.iter().all(|e| e.is_clean())
+                metadata.clean
             }
-            Expression::Not(metadata, expr) => metadata.clean && expr.is_clean(),
-            Expression::Or(metadata, exprs) => metadata.clean && exprs.iter().all(|e| e.is_clean()),
+            Expression::Not(metadata, expr) => metadata.clean,
+            Expression::Or(metadata, exprs) => metadata.clean,
             Expression::And(metadata, exprs) => {
-                metadata.clean && exprs.iter().all(|e| e.is_clean())
+                metadata.clean 
             }
             Expression::Eq(metadata, box1, box2) => {
-                metadata.clean && box1.is_clean() && box2.is_clean()
+                metadata.clean
             }
             Expression::Neq(metadata, box1, box2) => {
-                metadata.clean && box1.is_clean() && box2.is_clean()
+                metadata.clean
             }
             Expression::Geq(metadata, box1, box2) => {
-                metadata.clean && box1.is_clean() && box2.is_clean()
+                metadata.clean 
             }
             Expression::Leq(metadata, box1, box2) => {
-                metadata.clean && box1.is_clean() && box2.is_clean()
+                metadata.clean
             }
             Expression::Gt(metadata, box1, box2) => {
-                metadata.clean && box1.is_clean() && box2.is_clean()
+                metadata.clean 
             }
             Expression::Lt(metadata, box1, box2) => {
-                metadata.clean && box1.is_clean() && box2.is_clean()
+                metadata.clean
             }
             Expression::SumGeq(metadata, box1, box2) => {
-                metadata.clean && box1.iter().all(|e| e.is_clean()) && box2.is_clean()
+                metadata.clean
             }
             Expression::SumLeq(metadata, box1, box2) => {
-                metadata.clean && box1.iter().all(|e| e.is_clean()) && box2.is_clean()
+                metadata.clean 
             }
             Expression::Ineq(metadata, box1, box2, box3) => {
-                metadata.clean && box1.is_clean() && box2.is_clean() && box3.is_clean()
+                metadata.clean 
             }
             Expression::AllDiff(metadata, exprs) => {
-                metadata.clean && exprs.iter().all(|e| e.is_clean())
+                metadata.clean
             }
             Expression::SumEq(metadata, exprs, expr) => {
-                metadata.clean && exprs.iter().all(|e| e.is_clean()) && expr.is_clean()
+                metadata.clean 
             }
             _ => false,
         }
@@ -203,8 +203,6 @@ impl Expression {
             }
             Expression::Eq(metadata, box1, box2) => {
                 metadata.clean = bool_value;
-                box1.set_clean(bool_value);
-                box2.set_clean(bool_value);
             }
             Expression::Neq(metadata, _box1, _box2) => {
                 metadata.clean = bool_value;

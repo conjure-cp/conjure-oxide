@@ -25,9 +25,9 @@ fn distribute_not_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
             Expr::And(metadata, exprs) => {
                 let mut new_exprs = Vec::new();
                 for e in exprs {
-                    new_exprs.push(Expr::Not(metadata.clone(), Box::new(e.clone())));
+                    new_exprs.push(Expr::Not(metadata.clone_dirty(), Box::new(e.clone())));
                 }
-                Ok(Reduction::pure(Expr::Or(metadata.clone(), new_exprs)))
+                Ok(Reduction::pure(Expr::Or(metadata.clone_dirty(), new_exprs)))
             }
             _ => Err(ApplicationError::RuleNotApplicable),
         },
@@ -49,9 +49,9 @@ fn distribute_not_over_or(expr: &Expr, _: &Model) -> ApplicationResult {
             Expr::Or(metadata, exprs) => {
                 let mut new_exprs = Vec::new();
                 for e in exprs {
-                    new_exprs.push(Expr::Not(metadata.clone(), Box::new(e.clone())));
+                    new_exprs.push(Expr::Not(metadata.clone_dirty(), Box::new(e.clone())));
                 }
-                Ok(Reduction::pure(Expr::And(metadata.clone(), new_exprs)))
+                Ok(Reduction::pure(Expr::And(metadata.clone_dirty(), new_exprs)))
             }
             _ => Err(ApplicationError::RuleNotApplicable),
         },

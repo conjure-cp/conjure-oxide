@@ -77,7 +77,7 @@ impl Reduction {
                 Expression::And(metadata, mut exprs) => {
                     // Avoid creating a nested conjunction
                     exprs.push(self.new_top.clone());
-                    Expression::And(metadata.clone(), exprs)
+                    Expression::And(metadata.clone_dirty(), exprs)
                 }
                 _ => Expression::And(
                     Metadata::new(),

@@ -172,7 +172,7 @@ pub fn flatten_nested_sum(expr: &Expr, _: &Model) -> ApplicationResult {
             if !changed {
                 return Err(ApplicationError::RuleNotApplicable);
             }
-            Ok(Reduction::pure(Expr::Sum(metadata.clone(), new_exprs)))
+            Ok(Reduction::pure(Expr::Sum(metadata.clone_dirty(), new_exprs)))
         }
         _ => Err(ApplicationError::RuleNotApplicable),
     }
@@ -205,7 +205,7 @@ fn unwrap_nested_or(expr: &Expr, _: &Model) -> ApplicationResult {
             if !changed {
                 return Err(ApplicationError::RuleNotApplicable);
             }
-            Ok(Reduction::pure(Expr::Or(metadata.clone(), new_exprs)))
+            Ok(Reduction::pure(Expr::Or(metadata.clone_dirty(), new_exprs)))
         }
         _ => Err(ApplicationError::RuleNotApplicable),
     }
@@ -238,7 +238,7 @@ fn unwrap_nested_and(expr: &Expr, _: &Model) -> ApplicationResult {
             if !changed {
                 return Err(ApplicationError::RuleNotApplicable);
             }
-            Ok(Reduction::pure(Expr::And(metadata.clone(), new_exprs)))
+            Ok(Reduction::pure(Expr::And(metadata.clone_dirty(), new_exprs)))
         }
         _ => Err(ApplicationError::RuleNotApplicable),
     }
@@ -319,7 +319,7 @@ fn remove_constants_from_or(expr: &Expr, _: &Model) -> ApplicationResult {
                         if *val {
                             // If we find a true, the whole expression is true
                             return Ok(Reduction::pure(Expr::Constant(
-                                metadata.clone(),
+                                metadata.clone_dirty(),
                                 Const::Bool(true),
                             )));
                         } else {
@@ -333,7 +333,7 @@ fn remove_constants_from_or(expr: &Expr, _: &Model) -> ApplicationResult {
             if !changed {
                 return Err(ApplicationError::RuleNotApplicable);
             }
-            Ok(Reduction::pure(Expr::Or(metadata.clone(), new_exprs)))
+            Ok(Reduction::pure(Expr::Or(metadata.clone_dirty(), new_exprs)))
         }
         _ => Err(ApplicationError::RuleNotApplicable),
     }
@@ -358,7 +358,7 @@ fn remove_constants_from_and(expr: &Expr, _: &Model) -> ApplicationResult {
                         if !*val {
                             // If we find a false, the whole expression is false
                             return Ok(Reduction::pure(Expr::Constant(
-                                metadata.clone(),
+                                metadata.clone_dirty(),
                                 Const::Bool(false),
                             )));
                         } else {
@@ -372,7 +372,7 @@ fn remove_constants_from_and(expr: &Expr, _: &Model) -> ApplicationResult {
             if !changed {
                 return Err(ApplicationError::RuleNotApplicable);
             }
-            Ok(Reduction::pure(Expr::And(metadata.clone(), new_exprs)))
+            Ok(Reduction::pure(Expr::And(metadata.clone_dirty(), new_exprs)))
         }
         _ => Err(ApplicationError::RuleNotApplicable),
     }
@@ -390,7 +390,7 @@ fn evaluate_constant_not(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Not(_, contents) => match contents.as_ref() {
             Expr::Constant(metadata, Const::Bool(val)) => Ok(Reduction::pure(Expr::Constant(
-                metadata.clone(),
+                metadata.clone_dirty(),
                 Const::Bool(!val),
             ))),
             _ => Err(ApplicationError::RuleNotApplicable),
@@ -404,7 +404,7 @@ fn evaluate_constant_not(expr: &Expr, _: &Model) -> ApplicationResult {
 // fn ensure_div(expr: &Expr, _: &Model) -> ApplicationResult {
 //     match expr {
 //         Expr::Div(metadata, a, b) => Ok(Reduction::with_top(
-//             Expr::SafeDiv(metadata.clone(), a.clone(), b.clone()),
+//             Expr::SafeDiv(metadata.clone_dirty(), a.clone(), b.clone()),
 //             Expr::Neq(
 //                 Metadata::new(),
 //                 b.clone(),
@@ -465,7 +465,7 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
 
             Ok(Reduction::new(
                 Expr::Reference(Metadata::new(), new_name),
-                Expr::And(metadata.clone(), new_top),
+                Expr::And(metadata.clone_dirty(), new_top),
                 new_vars,
             ))
         }
@@ -506,11 +506,11 @@ fn distribute_or_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
                             // ToDo: Cloning everything may be a bit inefficient - discuss
                             let mut new_or_contents = rest.clone();
                             new_or_contents.push(e.clone());
-                            new_and_contents.push(Expr::Or(metadata.clone(), new_or_contents))
+                            new_and_contents.push(Expr::Or(metadata.clone_dirty(), new_or_contents))
                         }
 
                         Ok(Reduction::pure(Expr::And(
-                            metadata.clone(),
+                            metadata.clone_dirty(),
                             new_and_contents,
                         )))
                     }

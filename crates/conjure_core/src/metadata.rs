@@ -1,15 +1,24 @@
 use std::fmt::{Debug, Display};
+use crate::ast::types::ReturnType;
 
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Default)]
 pub struct Metadata {
     pub clean: bool,
+    pub etype: Option<ReturnType>,
 }
 
 impl Metadata {
     pub fn new() -> Metadata {
-        Metadata { clean: false }
+        Metadata { 
+            clean: false, 
+            etype: None,
+        }
+    }
+
+    pub fn clone_dirty(&self) -> Metadata {
+        Metadata { clean: false, ..self.clone() }
     }
 }
 
