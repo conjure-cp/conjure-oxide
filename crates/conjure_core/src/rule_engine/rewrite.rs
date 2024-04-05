@@ -109,14 +109,9 @@ fn rewrite_iteration<'a>(
     // Mark the expression as clean - will be marked dirty if any rule is applied
     let mut expression = expression.clone();
 
-
     let rule_results = apply_all_rules(&expression, model, rules, stats);
     if let Some(new) = choose_rewrite(&rule_results) {
         // If a rule is applied, mark the expression as dirty
-        // if apply_optimizations {
-        //     new.new_expression.set_clean(false);
-        //     
-        // }
         return Some(new);
     }
 
@@ -131,9 +126,9 @@ fn rewrite_iteration<'a>(
     }
     // If all children are clean, mark this expression as clean
     if apply_optimizations {
-        assert!(expression.children().iter().all(|c| c.is_clean())); 
+        assert!(expression.children().iter().all(|c| c.is_clean()));
         expression.set_clean(true);
-        return Some(Reduction::pure(expression))
+        return Some(Reduction::pure(expression));
     }
     None
 }

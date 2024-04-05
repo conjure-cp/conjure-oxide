@@ -1,5 +1,5 @@
-use std::fmt::{Debug, Display};
 use crate::ast::types::ReturnType;
+use std::fmt::{Debug, Display};
 
 use serde::{Deserialize, Serialize};
 
@@ -11,14 +11,17 @@ pub struct Metadata {
 
 impl Metadata {
     pub fn new() -> Metadata {
-        Metadata { 
-            clean: false, 
+        Metadata {
+            clean: false,
             etype: None,
         }
     }
 
     pub fn clone_dirty(&self) -> Metadata {
-        Metadata { clean: false, ..self.clone() }
+        Metadata {
+            clean: false,
+            ..self.clone()
+        }
     }
 }
 

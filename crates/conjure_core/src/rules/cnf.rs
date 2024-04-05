@@ -51,7 +51,10 @@ fn distribute_not_over_or(expr: &Expr, _: &Model) -> ApplicationResult {
                 for e in exprs {
                     new_exprs.push(Expr::Not(metadata.clone_dirty(), Box::new(e.clone())));
                 }
-                Ok(Reduction::pure(Expr::And(metadata.clone_dirty(), new_exprs)))
+                Ok(Reduction::pure(Expr::And(
+                    metadata.clone_dirty(),
+                    new_exprs,
+                )))
             }
             _ => Err(ApplicationError::RuleNotApplicable),
         },

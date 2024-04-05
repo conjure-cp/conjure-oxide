@@ -133,50 +133,22 @@ impl Expression {
             Expression::Nothing => true,
             Expression::Constant(metadata, _) => metadata.clean,
             Expression::Reference(metadata, _) => metadata.clean,
-            Expression::Sum(metadata, exprs) => {
-                metadata.clean
-            }
-            Expression::Min(metadata, exprs) => {
-                metadata.clean
-            }
+            Expression::Sum(metadata, exprs) => metadata.clean,
+            Expression::Min(metadata, exprs) => metadata.clean,
             Expression::Not(metadata, expr) => metadata.clean,
             Expression::Or(metadata, exprs) => metadata.clean,
-            Expression::And(metadata, exprs) => {
-                metadata.clean 
-            }
-            Expression::Eq(metadata, box1, box2) => {
-                metadata.clean
-            }
-            Expression::Neq(metadata, box1, box2) => {
-                metadata.clean
-            }
-            Expression::Geq(metadata, box1, box2) => {
-                metadata.clean 
-            }
-            Expression::Leq(metadata, box1, box2) => {
-                metadata.clean
-            }
-            Expression::Gt(metadata, box1, box2) => {
-                metadata.clean 
-            }
-            Expression::Lt(metadata, box1, box2) => {
-                metadata.clean
-            }
-            Expression::SumGeq(metadata, box1, box2) => {
-                metadata.clean
-            }
-            Expression::SumLeq(metadata, box1, box2) => {
-                metadata.clean 
-            }
-            Expression::Ineq(metadata, box1, box2, box3) => {
-                metadata.clean 
-            }
-            Expression::AllDiff(metadata, exprs) => {
-                metadata.clean
-            }
-            Expression::SumEq(metadata, exprs, expr) => {
-                metadata.clean 
-            }
+            Expression::And(metadata, exprs) => metadata.clean,
+            Expression::Eq(metadata, box1, box2) => metadata.clean,
+            Expression::Neq(metadata, box1, box2) => metadata.clean,
+            Expression::Geq(metadata, box1, box2) => metadata.clean,
+            Expression::Leq(metadata, box1, box2) => metadata.clean,
+            Expression::Gt(metadata, box1, box2) => metadata.clean,
+            Expression::Lt(metadata, box1, box2) => metadata.clean,
+            Expression::SumGeq(metadata, box1, box2) => metadata.clean,
+            Expression::SumLeq(metadata, box1, box2) => metadata.clean,
+            Expression::Ineq(metadata, box1, box2, box3) => metadata.clean,
+            Expression::AllDiff(metadata, exprs) => metadata.clean,
+            Expression::SumEq(metadata, exprs, expr) => metadata.clean,
             _ => false,
         }
     }

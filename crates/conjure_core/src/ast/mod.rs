@@ -10,5 +10,5 @@ mod constants;
 mod domains;
 mod expressions;
 mod symbol_table;
-mod variables;
 pub mod types;
+mod variables;

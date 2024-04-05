@@ -172,7 +172,10 @@ pub fn flatten_nested_sum(expr: &Expr, _: &Model) -> ApplicationResult {
             if !changed {
                 return Err(ApplicationError::RuleNotApplicable);
             }
-            Ok(Reduction::pure(Expr::Sum(metadata.clone_dirty(), new_exprs)))
+            Ok(Reduction::pure(Expr::Sum(
+                metadata.clone_dirty(),
+                new_exprs,
+            )))
         }
         _ => Err(ApplicationError::RuleNotApplicable),
     }
@@ -238,7 +241,10 @@ fn unwrap_nested_and(expr: &Expr, _: &Model) -> ApplicationResult {
             if !changed {
                 return Err(ApplicationError::RuleNotApplicable);
             }
-            Ok(Reduction::pure(Expr::And(metadata.clone_dirty(), new_exprs)))
+            Ok(Reduction::pure(Expr::And(
+                metadata.clone_dirty(),
+                new_exprs,
+            )))
         }
         _ => Err(ApplicationError::RuleNotApplicable),
     }
@@ -372,7 +378,10 @@ fn remove_constants_from_and(expr: &Expr, _: &Model) -> ApplicationResult {
             if !changed {
                 return Err(ApplicationError::RuleNotApplicable);
             }
-            Ok(Reduction::pure(Expr::And(metadata.clone_dirty(), new_exprs)))
+            Ok(Reduction::pure(Expr::And(
+                metadata.clone_dirty(),
+                new_exprs,
+            )))
         }
         _ => Err(ApplicationError::RuleNotApplicable),
     }
