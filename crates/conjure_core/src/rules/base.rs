@@ -519,10 +519,21 @@ fn distribute_not_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Not(_, contents) => match contents.as_ref() {
             Expr::And(metadata, exprs) => {
+                if exprs.len() == 1 {
+                    let single_expr = exprs[0].clone();
+                    return Ok(Reduction::pure(Expr::Not(
+                        Metadata::new(),
+                        Box::new(single_expr.clone()),
+                    )));
+                }
                 let mut new_exprs = Vec::new();
                 for e in exprs {
                     new_exprs.push(Expr::Not(metadata.clone(), Box::new(e.clone())));
                 }
+                println!(
+                    "new reduction: {:?}",
+                    Reduction::pure(Expr::Or(metadata.clone(), new_exprs.clone()))
+                );
                 Ok(Reduction::pure(Expr::Or(metadata.clone(), new_exprs)))
             }
             _ => Err(ApplicationError::RuleNotApplicable),
@@ -543,6 +554,13 @@ fn distribute_not_over_or(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Not(_, contents) => match contents.as_ref() {
             Expr::Or(metadata, exprs) => {
+                if exprs.len() == 1 {
+                    let single_expr = exprs[0].clone();
+                    return Ok(Reduction::pure(Expr::Not(
+                        Metadata::new(),
+                        Box::new(single_expr.clone()),
+                    )));
+                }
                 let mut new_exprs = Vec::new();
                 for e in exprs {
                     new_exprs.push(Expr::Not(metadata.clone(), Box::new(e.clone())));

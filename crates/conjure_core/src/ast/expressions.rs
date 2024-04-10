@@ -149,9 +149,19 @@ impl Expression {
                 if b_max == 0 {
                     b_max -= 1; // Largest number which avoids division by zero
                 }
-                Some((a_min / b_max, a_max / b_min))
+                Some((a_min / b_max, a_max / b_min)) // TODO: calculate bounds considering negativ values
             }
             _ => todo!(),
+        }
+    }
+
+    pub fn can_be_undefined(&self) -> bool {
+        // TODO: there will be more false cases but we are being conservative
+        match self {
+            Expression::Reference(_, _) => false,
+            Expression::Constant(_, Constant::Bool(_)) => false,
+            Expression::Constant(_, Constant::Int(_)) => false,
+            _ => true,
         }
     }
 
@@ -338,6 +348,7 @@ impl From<bool> for Expression {
 }
 
 impl Display for Expression {
+    // TODO: make display nicer using actual expression syntax
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
             Expression::Constant(metadata, c) => write!(f, "Constant({}, {})", metadata, c),
@@ -353,7 +364,7 @@ impl Display for Expression {
                 write!(f, "Not({}, {})", metadata, expr_box.clone())
             }
             Expression::Or(metadata, expressions) => {
-                write!(f, "Not({}, {})", metadata, display_expressions(expressions))
+                write!(f, "Or({}, {})", metadata, display_expressions(expressions))
             }
             Expression::And(metadata, expressions) => {
                 write!(f, "And({}, {})", metadata, display_expressions(expressions))

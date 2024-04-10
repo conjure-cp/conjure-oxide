@@ -279,10 +279,9 @@ fn read_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, So
         conjure_ast::Expression::Neq(_metadata, a, b) => {
             Ok(minion_ast::Constraint::DisEq(read_var(*a)?, read_var(*b)?))
         }
-        conjure_ast::Expression::DivEq(_metadata, a, b, c) => Ok(minion_ast::Constraint::Div(
-            (read_var(*a)?, read_var(*b)?),
-            read_var(*c)?,
-        )),
+        conjure_ast::Expression::DivEq(_metadata, a, b, c) => Ok(
+            minion_ast::Constraint::DivUndefZero((read_var(*a)?, read_var(*b)?), read_var(*c)?),
+        ),
         conjure_ast::Expression::Or(_metadata, exprs) => Ok(minion_ast::Constraint::WatchedOr(
             exprs
                 .iter()

@@ -262,7 +262,7 @@ fn leq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
  * Since Minion doesn't support some constraints with div (e.g. leq, neq), we add an auxiliary variable to represent the division result.
 */
 #[register_rule(("Minion", 101))]
-fn safediv_to_minion(expr: &Expr, mdl: &Model) -> ApplicationResult {
+fn flatten_safediv(expr: &Expr, mdl: &Model) -> ApplicationResult {
     if expr.is_eq() || expr.is_leq() || expr.is_geq() || expr.is_neq() {
         let mut sub = expr.children();
 
@@ -333,6 +333,48 @@ fn div_eq_to_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
                 Err(ApplicationError::RuleNotApplicable)
             }
         }
+        _ => Err(ApplicationError::RuleNotApplicable),
+    }
+}
+
+#[register_rule(("Minion", 100))]
+fn negated_neq_to_eq(expr: &Expr, _: &Model) -> ApplicationResult {
+    match expr {
+        Expr::Not(_, a) => match a.as_ref() {
+            Expr::Neq(_, b, c) => {
+                if !b.can_be_undefined() && !c.can_be_undefined() {
+                    Ok(Reduction::pure(Expr::Eq(
+                        Metadata::new(),
+                        b.clone(),
+                        c.clone(),
+                    )))
+                } else {
+                    Err(ApplicationError::RuleNotApplicable)
+                }
+            }
+            _ => Err(ApplicationError::RuleNotApplicable),
+        },
+        _ => Err(ApplicationError::RuleNotApplicable),
+    }
+}
+
+#[register_rule(("Minion", 100))]
+fn negated_eq_to_neq(expr: &Expr, _: &Model) -> ApplicationResult {
+    match expr {
+        Expr::Not(_, a) => match a.as_ref() {
+            Expr::Eq(_, b, c) => {
+                if !b.can_be_undefined() && !c.can_be_undefined() {
+                    Ok(Reduction::pure(Expr::Neq(
+                        Metadata::new(),
+                        b.clone(),
+                        c.clone(),
+                    )))
+                } else {
+                    Err(ApplicationError::RuleNotApplicable)
+                }
+            }
+            _ => Err(ApplicationError::RuleNotApplicable),
+        },
         _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
