@@ -189,7 +189,7 @@ impl Expression {
             Expression::DivEq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::Ineq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AllDiff(_, _) => Some(ReturnType::Bool),
-            Expression::Bubble(_, _, _) => None,
+            Expression::Bubble(_, _, _) => None, // TODO: (flm8) should this be a bool?
             Expression::Nothing => None,
         }
     }
@@ -317,22 +317,22 @@ impl Expression {
 }
 
 fn display_expressions(expressions: &[Expression]) -> String {
-    if expressions.len() <= 3 {
-        format!(
-            "[{}]",
-            expressions
-                .iter()
-                .map(|e| e.to_string())
-                .collect::<Vec<String>>()
-                .join(", ")
-        )
-    } else {
-        format!(
-            "[{}..{}]",
-            expressions[0],
-            expressions[expressions.len() - 1]
-        )
-    }
+    // if expressions.len() <= 3 {
+    format!(
+        "[{}]",
+        expressions
+            .iter()
+            .map(|e| e.to_string())
+            .collect::<Vec<String>>()
+            .join(", ")
+    )
+    // } else {
+    //     format!(
+    //         "[{}..{}]",
+    //         expressions[0],
+    //         expressions[expressions.len() - 1]
+    //     )
+    // }
 }
 
 impl From<i32> for Expression {
@@ -348,111 +348,95 @@ impl From<bool> for Expression {
 }
 
 impl Display for Expression {
-    // TODO: make display nicer using actual expression syntax
+    // TODO: (flm8) this will change once we implement a parser (two-way conversion)
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
-            Expression::Constant(metadata, c) => write!(f, "Constant({}, {})", metadata, c),
-            Expression::Reference(metadata, name) => write!(f, "Reference({}, {})", metadata, name),
+            Expression::Constant(_, c) => match c {
+                Constant::Bool(b) => write!(f, "{}", b),
+                Constant::Int(i) => write!(f, "{}", i),
+            },
+            Expression::Reference(_, name) => match name {
+                Name::MachineName(n) => write!(f, "_{}", n),
+                Name::UserName(s) => write!(f, "{}", s),
+            },
             Expression::Nothing => write!(f, "Nothing"),
-            Expression::Sum(metadata, expressions) => {
-                write!(f, "Sum({}, {})", metadata, display_expressions(expressions))
+            Expression::Sum(_, expressions) => {
+                write!(f, "Sum({})", display_expressions(expressions))
             }
-            Expression::Min(metadata, expressions) => {
-                write!(f, "Min({}, {})", metadata, display_expressions(expressions))
+            Expression::Min(_, expressions) => {
+                write!(f, "Min({})", display_expressions(expressions))
             }
-            Expression::Not(metadata, expr_box) => {
-                write!(f, "Not({}, {})", metadata, expr_box.clone())
+            Expression::Not(_, expr_box) => {
+                write!(f, "Not({})", expr_box.clone())
             }
-            Expression::Or(metadata, expressions) => {
-                write!(f, "Or({}, {})", metadata, display_expressions(expressions))
+            Expression::Or(_, expressions) => {
+                write!(f, "Or({})", display_expressions(expressions))
             }
-            Expression::And(metadata, expressions) => {
-                write!(f, "And({}, {})", metadata, display_expressions(expressions))
+            Expression::And(_, expressions) => {
+                write!(f, "And({})", display_expressions(expressions))
             }
-            Expression::Eq(metadata, box1, box2) => {
-                write!(f, "Eq({}, {}, {})", metadata, box1.clone(), box2.clone())
+            Expression::Eq(_, box1, box2) => {
+                write!(f, "({} = {})", box1.clone(), box2.clone())
             }
-            Expression::Neq(metadata, box1, box2) => {
-                write!(f, "Neq({}, {}, {})", metadata, box1.clone(), box2.clone())
+            Expression::Neq(_, box1, box2) => {
+                write!(f, "({} != {})", box1.clone(), box2.clone())
             }
-            Expression::Geq(metadata, box1, box2) => {
-                write!(f, "Geq({}, {}, {})", metadata, box1.clone(), box2.clone())
+            Expression::Geq(_, box1, box2) => {
+                write!(f, "({} >= {})", box1.clone(), box2.clone())
             }
-            Expression::Leq(metadata, box1, box2) => {
-                write!(f, "Leq({}, {}, {})", metadata, box1.clone(), box2.clone())
+            Expression::Leq(_, box1, box2) => {
+                write!(f, "({} <= {})", box1.clone(), box2.clone())
             }
-            Expression::Gt(metadata, box1, box2) => {
-                write!(f, "Gt({}, {}, {})", metadata, box1.clone(), box2.clone())
+            Expression::Gt(_, box1, box2) => {
+                write!(f, "({} > {})", box1.clone(), box2.clone())
             }
-            Expression::Lt(metadata, box1, box2) => {
-                write!(f, "Lt({}, {}, {})", metadata, box1.clone(), box2.clone())
+            Expression::Lt(_, box1, box2) => {
+                write!(f, "({} < {})", box1.clone(), box2.clone())
             }
-            Expression::SumEq(metadata, expressions, expr_box) => {
+            Expression::SumEq(_, expressions, expr_box) => {
                 write!(
                     f,
-                    "SumEq({}, {}, {})",
-                    metadata,
+                    "SumEq({}, {})",
                     display_expressions(expressions),
                     expr_box.clone()
                 )
             }
-            Expression::SumGeq(metadata, box1, box2) => {
-                write!(
-                    f,
-                    "SumGeq({}, {}. {})",
-                    metadata,
-                    display_expressions(box1),
-                    box2.clone()
-                )
+            Expression::SumGeq(_, box1, box2) => {
+                write!(f, "SumGeq({}, {})", display_expressions(box1), box2.clone())
             }
-            Expression::SumLeq(metadata, box1, box2) => {
-                write!(
-                    f,
-                    "SumLeq({}, {}, {})",
-                    metadata,
-                    display_expressions(box1),
-                    box2.clone()
-                )
+            Expression::SumLeq(_, box1, box2) => {
+                write!(f, "SumLeq({}, {})", display_expressions(box1), box2.clone())
             }
-            Expression::Ineq(metadata, box1, box2, box3) => write!(
+            Expression::Ineq(_, box1, box2, box3) => write!(
                 f,
-                "Ineq({}, {}, {}, {})",
-                metadata,
+                "Ineq({}, {}, {})",
                 box1.clone(),
                 box2.clone(),
                 box3.clone()
             ),
-            Expression::AllDiff(metadata, expressions) => {
-                write!(
-                    f,
-                    "AllDiff({}, {})",
-                    metadata,
-                    display_expressions(expressions)
-                )
+            Expression::AllDiff(_, expressions) => {
+                write!(f, "AllDiff({})", display_expressions(expressions))
             }
-            Expression::Bubble(metadata, box1, box2) => {
+            Expression::Bubble(_, box1, box2) => {
+                write!(f, "{{{} @ {}}}", box1.clone(), box2.clone())
+            }
+            Expression::SafeDiv(_, box1, box2) => {
+                write!(f, "SafeDiv({}, {})", box1.clone(), box2.clone())
+            }
+            Expression::UnsafeDiv(_, box1, box2) => {
+                write!(f, "UnsafeDiv({}, {})", box1.clone(), box2.clone())
+            }
+            Expression::DivEq(_, box1, box2, box3) => {
                 write!(
                     f,
-                    "Bubble({}, {}, {})",
-                    metadata,
+                    "DivEq({}, {}, {})",
                     box1.clone(),
-                    box2.clone()
+                    box2.clone(),
+                    box3.clone()
                 )
-            }
-            Expression::SafeDiv(metadata, box1, box2) => {
-                write!(
-                    f,
-                    "SafeDiv({}, {}, {})",
-                    metadata,
-                    box1.clone(),
-                    box2.clone()
-                )
-            }
-            Expression::UnsafeDiv(metadata, box1, box2) => {
-                write!(f, "Div({}, {}, {})", metadata, box1.clone(), box2.clone())
             }
             #[allow(unreachable_patterns)]
-            _ => write!(f, "Expression::Unknown"),
+            other => todo!("Implement display for {:?}", other),
         }
     }
 }
