@@ -2,7 +2,6 @@
 
 use std::collections::HashMap;
 
-use conjure_core::context::Context;
 use conjure_core::metadata::Metadata;
 use conjure_core::model::Model;
 use conjure_oxide::ast::*;

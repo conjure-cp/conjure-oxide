@@ -270,34 +270,34 @@ impl Expression {
             Expression::Eq(metadata, box1, box2) => {
                 metadata.clean = bool_value;
             }
-            Expression::Neq(metadata, box1, box2) => {
+            Expression::Neq(metadata, _box1, _box2) => {
                 metadata.clean = bool_value;
             }
-            Expression::Geq(metadata, box1, box2) => {
+            Expression::Geq(metadata, _box1, _box2) => {
                 metadata.clean = bool_value;
             }
-            Expression::Leq(metadata, box1, box2) => {
+            Expression::Leq(metadata, _box1, _box2) => {
                 metadata.clean = bool_value;
             }
-            Expression::Gt(metadata, box1, box2) => {
+            Expression::Gt(metadata, _box1, _box2) => {
                 metadata.clean = bool_value;
             }
-            Expression::Lt(metadata, box1, box2) => {
+            Expression::Lt(metadata, _box1, _box2) => {
                 metadata.clean = bool_value;
             }
-            Expression::SumGeq(metadata, box1, box2) => {
+            Expression::SumGeq(metadata, _box1, _box2) => {
                 metadata.clean = bool_value;
             }
-            Expression::SumLeq(metadata, box1, box2) => {
+            Expression::SumLeq(metadata, _box1, _box2) => {
                 metadata.clean = bool_value;
             }
-            Expression::Ineq(metadata, box1, box2, box3) => {
+            Expression::Ineq(metadata, _box1, _box2, _box3) => {
                 metadata.clean = bool_value;
             }
-            Expression::AllDiff(metadata, exprs) => {
+            Expression::AllDiff(metadata, _exprs) => {
                 metadata.clean = bool_value;
             }
-            Expression::SumEq(metadata, exprs, expr) => {
+            Expression::SumEq(metadata, _exprs, _expr) => {
                 metadata.clean = bool_value;
             }
             Expression::Bubble(metadata, box1, box2) => {

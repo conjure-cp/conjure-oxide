@@ -156,6 +156,7 @@ impl Biplate<Stmt> for Expr {
 }
 
 //this is the most interesting example!
+#[allow(clippy::type_complexity)]
 impl Biplate<Expr> for Stmt {
     fn biplate(&self) -> (Tree<Expr>, Box<dyn Fn(Tree<Expr>) -> Stmt>) {
         match self.clone() {
