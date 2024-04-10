@@ -419,21 +419,10 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
                     Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
                     Box::new(e.clone()),
                 ));
-                disjunction.push(Expr::And(
-                    // TODO: change to an Eq once we figure out how to apply them later
+                disjunction.push(Expr::Eq(
                     Metadata::new(),
-                    vec![
-                        Expr::Leq(
-                            Metadata::new(),
-                            Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
-                            Box::new(e.clone()),
-                        ),
-                        Expr::Geq(
-                            Metadata::new(),
-                            Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
-                            Box::new(e.clone()),
-                        ),
-                    ],
+                    Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
+                    Box::new(e.clone()),
                 ));
             }
             new_top.push(Expr::Or(Metadata::new(), disjunction));
@@ -530,10 +519,6 @@ fn distribute_not_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
                 for e in exprs {
                     new_exprs.push(Expr::Not(metadata.clone(), Box::new(e.clone())));
                 }
-                println!(
-                    "new reduction: {:?}",
-                    Reduction::pure(Expr::Or(metadata.clone(), new_exprs.clone()))
-                );
                 Ok(Reduction::pure(Expr::Or(metadata.clone(), new_exprs)))
             }
             _ => Err(ApplicationError::RuleNotApplicable),
