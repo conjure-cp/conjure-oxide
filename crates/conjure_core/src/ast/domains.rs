@@ -41,6 +41,7 @@ impl Domain {
     /// Returns None if the domains are not valid for i32 operations.
     pub fn apply_i32(&self, op: fn(i32, i32) -> Option<i32>, other: &Domain) -> Option<Domain> {
         if let (Some(vs1), Some(vs2)) = (self.values_i32(), other.values_i32()) {
+            // TODO: (flm8) Optimise to use smarter, less brute-force methods
             let mut new_ranges = vec![];
             for (v1, v2) in itertools::iproduct!(vs1, vs2) {
                 op(v1, v2).map(|v| new_ranges.push(Range::Single(v)));

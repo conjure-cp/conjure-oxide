@@ -106,7 +106,7 @@ pub enum Expression {
     AllDiff(Metadata, Vec<Expression>),
 }
 
-fn expr_vec_to_domain(
+fn expr_vec_to_domain_i32(
     exprs: &Vec<Expression>,
     op: fn(i32, i32) -> Option<i32>,
     vars: &SymbolTable,
@@ -118,19 +118,44 @@ fn expr_vec_to_domain(
         .flatten()
 }
 
+fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> (i32, i32) {
+    let mut min = i32::MAX;
+    let mut max = i32::MIN;
+    for r in ranges {
+        match r {
+            Range::Single(i) => {
+                if *i < min {
+                    min = *i;
+                }
+                if *i > max {
+                    max = *i;
+                }
+            }
+            Range::Bounded(i, j) => {
+                if *i < min {
+                    min = *i;
+                }
+                if *j > max {
+                    max = *j;
+                }
+            }
+        }
+    }
+    (min, max)
+}
+
 impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self, vars: &SymbolTable) -> Option<Domain> {
-        // TODO: (flm8) change this to return full Domains rather than just bounds
-        match self {
+        let ret = match self {
             Expression::Reference(_, name) => Some(vars.get(name)?.domain.clone()),
             Expression::Constant(_, Constant::Int(n)) => {
                 Some(Domain::IntDomain(vec![Range::Single(*n)]))
             }
             Expression::Constant(_, Constant::Bool(_)) => Some(Domain::BoolDomain),
-            Expression::Sum(_, exprs) => expr_vec_to_domain(exprs, |x, y| Some(x + y), vars),
+            Expression::Sum(_, exprs) => expr_vec_to_domain_i32(exprs, |x, y| Some(x + y), vars),
             Expression::Min(_, exprs) => {
-                expr_vec_to_domain(exprs, |x, y| Some(if x < y { x } else { y }), vars)
+                expr_vec_to_domain_i32(exprs, |x, y| Some(if x < y { x } else { y }), vars)
             }
             Expression::UnsafeDiv(_, a, b) | Expression::SafeDiv(_, a, b) => {
                 a.domain_of(vars)?.apply_i32(
@@ -140,6 +165,15 @@ impl Expression {
             }
             _ => todo!("Calculate domain of {:?}", self),
             // TODO: (flm8) Add support for calculating the domains of more expression types
+        };
+        match ret {
+            // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
+            // Once they support a full domain as we define it, we can remove this conversion
+            Some(Domain::IntDomain(ranges)) if ranges.len() > 1 => {
+                let (min, max) = range_vec_bounds_i32(&ranges);
+                Some(Domain::IntDomain(vec![Range::Bounded(min, max)]))
+            }
+            _ => ret,
         }
     }
 
@@ -504,14 +538,9 @@ mod tests {
             DecisionVariable::new(Domain::IntDomain(vec![Range::Bounded(1, 2)])),
         );
         let sum = Expression::Sum(Metadata::new(), vec![reference.clone(), reference.clone()]);
-        if let Domain::IntDomain(ranges) = sum.domain_of(&vars).unwrap() {
-            assert!(!ranges.contains(&Range::Single(1)));
-            assert!(ranges.contains(&Range::Single(2)));
-            assert!(ranges.contains(&Range::Single(3)));
-            assert!(ranges.contains(&Range::Single(4)));
-            assert!(!ranges.contains(&Range::Single(5)));
-        } else {
-            panic!();
-        }
+        assert_eq!(
+            sum.domain_of(&vars),
+            Some(Domain::IntDomain(vec![Range::Bounded(2, 4)]))
+        );
     }
 }
