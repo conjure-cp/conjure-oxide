@@ -29,6 +29,18 @@ impl TryFrom<Constant> for bool {
     }
 }
 
+impl From<i32> for Constant {
+    fn from(i: i32) -> Self {
+        Constant::Int(i)
+    }
+}
+
+impl From<bool> for Constant {
+    fn from(b: bool) -> Self {
+        Constant::Bool(b)
+    }
+}
+
 impl Display for Constant {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {

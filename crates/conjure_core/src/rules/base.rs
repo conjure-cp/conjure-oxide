@@ -399,22 +399,6 @@ fn evaluate_constant_not(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 }
 
-// /** Turn a Div into a SafeDiv and post a global constraint to avoid undefined. */
-// #[register_rule(("Base", 100))]
-// fn ensure_div(expr: &Expr, _: &Model) -> ApplicationResult {
-//     match expr {
-//         Expr::Div(metadata, a, b) => Ok(Reduction::with_top(
-//             Expr::SafeDiv(metadata.clone(), a.clone(), b.clone()),
-//             Expr::Neq(
-//                 Metadata::new(),
-//                 b.clone(),
-//                 Box::new(Expr::Constant(Metadata::new(), Const::Int(0))),
-//             ),
-//         )),
-//         _ => Err(ApplicationError::RuleNotApplicable),
-//     }
-// }
-
 /**
  * Turn a Min into a new variable and post a global constraint to ensure the new variable is the minimum.
  * ```text
@@ -435,33 +419,19 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
                     Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
                     Box::new(e.clone()),
                 ));
-                disjunction.push(Expr::And(
-                    // TODO: change to an Eq once we figure out how to apply them later
+                disjunction.push(Expr::Eq(
                     Metadata::new(),
-                    vec![
-                        Expr::Leq(
-                            Metadata::new(),
-                            Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
-                            Box::new(e.clone()),
-                        ),
-                        Expr::Geq(
-                            Metadata::new(),
-                            Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
-                            Box::new(e.clone()),
-                        ),
-                    ],
+                    Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
+                    Box::new(e.clone()),
                 ));
             }
             new_top.push(Expr::Or(Metadata::new(), disjunction));
 
             let mut new_vars = SymbolTable::new();
-            let bound = expr
-                .bounds(&mdl.variables)
-                .ok_or(ApplicationError::BoundError)?;
-            new_vars.insert(
-                new_name.clone(),
-                DecisionVariable::new(Domain::IntDomain(vec![Range::Bounded(bound.0, bound.1)])),
-            );
+            let domain = expr
+                .domain_of(&mdl.variables)
+                .ok_or(ApplicationError::DomainError)?;
+            new_vars.insert(new_name.clone(), DecisionVariable::new(domain));
 
             Ok(Reduction::new(
                 Expr::Reference(Metadata::new(), new_name),
@@ -518,6 +488,68 @@ fn distribute_or_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
                 }
             }
             None => Err(ApplicationError::RuleNotApplicable),
+        },
+        _ => Err(ApplicationError::RuleNotApplicable),
+    }
+}
+
+/**
+* Distribute `not` over `and` (De Morgan's Law):
+
+* ```text
+* not(and(a, b)) = or(not a, not b)
+* ```
+ */
+#[register_rule(("Base", 100))]
+fn distribute_not_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
+    match expr {
+        Expr::Not(_, contents) => match contents.as_ref() {
+            Expr::And(metadata, exprs) => {
+                if exprs.len() == 1 {
+                    let single_expr = exprs[0].clone();
+                    return Ok(Reduction::pure(Expr::Not(
+                        Metadata::new(),
+                        Box::new(single_expr.clone()),
+                    )));
+                }
+                let mut new_exprs = Vec::new();
+                for e in exprs {
+                    new_exprs.push(Expr::Not(metadata.clone(), Box::new(e.clone())));
+                }
+                Ok(Reduction::pure(Expr::Or(metadata.clone(), new_exprs)))
+            }
+            _ => Err(ApplicationError::RuleNotApplicable),
+        },
+        _ => Err(ApplicationError::RuleNotApplicable),
+    }
+}
+
+/**
+* Distribute `not` over `or` (De Morgan's Law):
+
+* ```text
+* not(or(a, b)) = and(not a, not b)
+* ```
+ */
+#[register_rule(("Base", 100))]
+fn distribute_not_over_or(expr: &Expr, _: &Model) -> ApplicationResult {
+    match expr {
+        Expr::Not(_, contents) => match contents.as_ref() {
+            Expr::Or(metadata, exprs) => {
+                if exprs.len() == 1 {
+                    let single_expr = exprs[0].clone();
+                    return Ok(Reduction::pure(Expr::Not(
+                        Metadata::new(),
+                        Box::new(single_expr.clone()),
+                    )));
+                }
+                let mut new_exprs = Vec::new();
+                for e in exprs {
+                    new_exprs.push(Expr::Not(metadata.clone(), Box::new(e.clone())));
+                }
+                Ok(Reduction::pure(Expr::And(metadata.clone(), new_exprs)))
+            }
+            _ => Err(ApplicationError::RuleNotApplicable),
         },
         _ => Err(ApplicationError::RuleNotApplicable),
     }
