@@ -113,3 +113,5 @@ pub use tree::Tree;
 
 #[doc(hidden)]
 pub mod test_common;
+
+pub use uniplate_derive::*;
