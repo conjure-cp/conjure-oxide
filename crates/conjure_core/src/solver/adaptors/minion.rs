@@ -276,26 +276,21 @@ fn read_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, So
             read_var(*b)?,
             minion_ast::Constant::Integer(read_const(*c)?),
         )),
-        conjure_ast::Expression::Neq(_metadata, a, b) => Ok(minion_ast::Constraint::AllDiff(vec![
-            read_var(*a)?,
-            read_var(*b)?,
-        ])),
-        // conjure_ast::Expression::DivEq(_metadata, a, b, c) => {
-        //     minion_model.constraints.push(minion_ast::Constraint::Div(
-        //         (read_var(*a)?, read_var(*b)?),
-        //         read_var(*c)?,
-        //     ));
-        //     Ok(())
-        // }
-        conjure_ast::Expression::AllDiff(_metadata, vars) => {
-            Ok(minion_ast::Constraint::AllDiff(read_vars(vars)?))
+        conjure_ast::Expression::Neq(_metadata, a, b) => {
+            Ok(minion_ast::Constraint::DisEq(read_var(*a)?, read_var(*b)?))
         }
+        conjure_ast::Expression::DivEq(_metadata, a, b, c) => Ok(
+            minion_ast::Constraint::DivUndefZero((read_var(*a)?, read_var(*b)?), read_var(*c)?),
+        ),
         conjure_ast::Expression::Or(_metadata, exprs) => Ok(minion_ast::Constraint::WatchedOr(
             exprs
                 .iter()
                 .map(|x| read_expr(x.to_owned()))
                 .collect::<Result<Vec<minion_ast::Constraint>, SolverError>>()?,
         )),
+        conjure_ast::Expression::Eq(_metadata, a, b) => {
+            Ok(minion_ast::Constraint::Eq(read_var(*a)?, read_var(*b)?))
+        }
         x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
     }
 }

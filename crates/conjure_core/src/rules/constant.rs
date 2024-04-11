@@ -60,6 +60,16 @@ pub fn eval_constant(expr: &Expr) -> Option<Const> {
         Expr::Min(_, exprs) => {
             opt_vec_op::<i32, i32>(|e| e.iter().min().copied(), exprs).map(Const::Int)
         }
+        Expr::UnsafeDiv(_, a, b) | Expr::SafeDiv(_, a, b) => {
+            if unwrap_expr::<i32>(b)? == 0 {
+                return None;
+            }
+            bin_op::<i32, i32>(|a, b| a / b, a, b).map(Const::Int)
+        }
+        Expr::DivEq(_, a, b, c) => {
+            tern_op::<i32, bool>(|a, b, c| a == b * c, a, b, c).map(Const::Bool)
+        }
+        Expr::Bubble(_, a, b) => bin_op::<bool, bool>(|a, b| a && b, a, b).map(Const::Bool),
         _ => {
             println!("WARNING: Unimplemented constant eval: {:?}", expr);
             None
@@ -122,4 +132,29 @@ where
 fn unwrap_expr<T: TryFrom<Const>>(expr: &Expr) -> Option<T> {
     let c = eval_constant(expr)?;
     TryInto::<T>::try_into(c).ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use conjure_core::ast::{Constant, Expression};
+
+    #[test]
+    fn div_by_zero() {
+        let expr = Expression::UnsafeDiv(
+            Default::default(),
+            Box::new(Expression::Constant(Default::default(), Constant::Int(1))),
+            Box::new(Expression::Constant(Default::default(), Constant::Int(0))),
+        );
+        assert_eq!(super::eval_constant(&expr), None);
+    }
+
+    #[test]
+    fn safediv_by_zero() {
+        let expr = Expression::SafeDiv(
+            Default::default(),
+            Box::new(Expression::Constant(Default::default(), Constant::Int(1))),
+            Box::new(Expression::Constant(Default::default(), Constant::Int(0))),
+        );
+        assert_eq!(super::eval_constant(&expr), None);
+    }
 }
