@@ -428,13 +428,10 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
             new_top.push(Expr::Or(Metadata::new(), disjunction));
 
             let mut new_vars = SymbolTable::new();
-            let bound = expr
-                .bounds(&mdl.variables)
-                .ok_or(ApplicationError::BoundError)?;
-            new_vars.insert(
-                new_name.clone(),
-                DecisionVariable::new(Domain::IntDomain(vec![Range::Bounded(bound.0, bound.1)])),
-            );
+            let domain = expr
+                .domain_of(&mdl.variables)
+                .ok_or(ApplicationError::DomainError)?;
+            new_vars.insert(new_name.clone(), DecisionVariable::new(domain));
 
             Ok(Reduction::new(
                 Expr::Reference(Metadata::new(), new_name),

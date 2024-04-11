@@ -273,15 +273,10 @@ fn flatten_safediv(expr: &Expr, mdl: &Model) -> ApplicationResult {
         for c in sub.iter_mut() {
             if let Expr::SafeDiv(_, a, b) = c.clone() {
                 let new_name = mdl.gensym();
-                let bound = c
-                    .bounds(&mdl.variables)
-                    .ok_or(ApplicationError::BoundError)?;
-                new_vars.insert(
-                    new_name.clone(),
-                    DecisionVariable::new(Domain::IntDomain(vec![Range::Bounded(
-                        bound.0, bound.1,
-                    )])),
-                );
+                let domain = c
+                    .domain_of(&mdl.variables)
+                    .ok_or(ApplicationError::DomainError)?;
+                new_vars.insert(new_name.clone(), DecisionVariable::new(domain));
 
                 new_top.push(Expr::DivEq(
                     Metadata::new(),
