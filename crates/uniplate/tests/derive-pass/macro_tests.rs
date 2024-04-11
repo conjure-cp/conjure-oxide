@@ -10,7 +10,7 @@ enum TestEnum {
     E(Box<TestEnum>, Box<TestEnum>),
     F((Box<TestEnum>, Box<TestEnum>)),
     G((Box<TestEnum>, (Box<TestEnum>, i32))),
-    H(Vec<Vec<TestEnum>>),
+    H(Vec<TestEnum>),
     I(Vec<TestEnum>, i32, Vec<TestEnum>),
 }
 

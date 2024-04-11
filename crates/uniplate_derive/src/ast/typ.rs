@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use itertools::Itertools;
+use quote::{quote_spanned, TokenStreamExt};
 
 /// All valid field wrapper types - e.g Box, Vec, ...
 #[derive(Clone, Debug)]
@@ -78,7 +79,7 @@ impl Parse for Type {
             ));
         };
 
-        if (param.args.len() != 1) {
+        if param.args.len() != 1 {
             // should never happen!
             return Err(syn::Error::new(
                 param.args.span(),
@@ -91,6 +92,14 @@ impl Parse for Type {
             return Err(syn::Error::new(
                 param.args.span(),
                 "Biplate: expected a type here.",
+            ));
+        };
+
+        // Cannot have a generic type for now
+        let syn::PathArguments::None = base_typ.path.segments.last().expect("").arguments else {
+            return Err(syn::Error::new(
+                last_segment.span(),
+                "Biplate: types has an unexpected <>",
             ));
         };
 
@@ -111,4 +120,24 @@ pub struct PlateableType {
     pub wrapper_typ: WrapperTypes,
 
     pub span: Span,
+}
+
+impl ToTokens for PlateableType {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+        let base_typ: TokenStream2 = self.base_typ.to_token_stream();
+        match self.wrapper_typ {
+            WrapperTypes::Box => {
+                tokens.append_all(quote! {Box<#base_typ>});
+            }
+            WrapperTypes::Vec => {
+                tokens.append_all(quote! {Vec<#base_typ>});
+            }
+            WrapperTypes::Option => {
+                tokens.append_all(quote! {Option<#base_typ>});
+            }
+            WrapperTypes::None => {
+                tokens.append_all(base_typ);
+            }
+        }
+    }
 }

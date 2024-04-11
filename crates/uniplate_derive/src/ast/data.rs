@@ -1,4 +1,8 @@
+use std::collections::HashSet;
+
 use crate::prelude::*;
+
+use super::PlateableType;
 
 #[derive(Clone, Debug)]
 pub enum Data {
@@ -9,6 +13,48 @@ impl Data {
     pub fn span(&self) -> Span {
         match self {
             Data::DataEnum(x) => x.span,
+        }
+    }
+
+    pub fn get_platable_types(&self) -> Vec<syn::Path> {
+        let mut output: HashSet<syn::Path> = HashSet::new();
+        match self {
+            Data::DataEnum(x) => {
+                for variant in &x.variants {
+                    for field in &variant.fields {
+                        if let ast::Type::Plateable(typ) = &field.typ {
+                            output.insert(typ.base_typ.clone());
+                        };
+                    }
+                }
+            }
+        };
+        output.into_iter().collect()
+    }
+}
+
+impl From<Data> for ast::PlateableType {
+    fn from(val: Data) -> Self {
+        match val {
+            Data::DataEnum(x) => {
+                let mut typ_segments: Punctuated<syn::PathSegment, syn::token::PathSep> =
+                    Punctuated::new();
+                typ_segments.push(syn::PathSegment {
+                    ident: x.ident,
+                    arguments: syn::PathArguments::None,
+                });
+
+                let base_typ: syn::Path = syn::Path {
+                    leading_colon: None,
+                    segments: typ_segments,
+                };
+
+                PlateableType {
+                    base_typ,
+                    wrapper_typ: ast::WrapperTypes::None,
+                    span: x.span,
+                }
+            }
         }
     }
 }

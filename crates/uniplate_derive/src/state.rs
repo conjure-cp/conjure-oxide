@@ -12,22 +12,25 @@ pub struct ParserState {
     pub data: ast::Data,
 
     /// The current To type.
-    pub to: Option<ast::PlateableType>,
+    pub to: Option<syn::Path>,
 
     /// Instances of Biplate<To> left to generate.
-    pub tos_left: VecDeque<ast::PlateableType>,
+    pub tos_left: VecDeque<syn::Path>,
 
     /// All valid biplatable types inside this one.
-    pub tos: Vec<ast::PlateableType>,
+    pub tos: Vec<syn::Path>,
 }
 
 impl ParserState {
     pub fn new(data: ast::Data) -> Self {
+        let mut tos = data.get_platable_types();
+        let from: ast::PlateableType = data.clone().into();
+        tos.push(from.base_typ.clone());
         Self {
-            from: todo!(),
-            to: todo!(),
-            tos_left: todo!(),
-            tos: todo!(),
+            to: None,
+            tos_left: tos.clone().into(),
+            tos,
+            from,
             data,
         }
     }
