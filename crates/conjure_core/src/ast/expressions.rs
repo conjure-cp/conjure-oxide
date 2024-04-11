@@ -12,6 +12,8 @@ use crate::ast::symbol_table::{Name, SymbolTable};
 use crate::ast::ReturnType;
 use crate::metadata::Metadata;
 
+use super::{Domain, Range};
+
 #[document_compatibility]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, is_enum_variant, Uniplate)]
 #[non_exhaustive]
@@ -104,55 +106,40 @@ pub enum Expression {
     AllDiff(Metadata, Vec<Expression>),
 }
 
+fn expr_vec_to_domain(
+    exprs: &Vec<Expression>,
+    op: fn(i32, i32) -> Option<i32>,
+    vars: &SymbolTable,
+) -> Option<Domain> {
+    let domains: Vec<Option<_>> = exprs.iter().map(|e| e.domain_of(vars)).collect();
+    domains
+        .into_iter()
+        .reduce(|a, b| a.and_then(|x| b.and_then(|y| x.apply_i32(op, &y))))
+        .flatten()
+}
+
 impl Expression {
-    pub fn bounds(&self, vars: &SymbolTable) -> Option<(i32, i32)> {
+    /// Returns the possible values of the expression, recursing to leaf expressions
+    pub fn domain_of(&self, vars: &SymbolTable) -> Option<Domain> {
         // TODO: (flm8) change this to return full Domains rather than just bounds
         match self {
-            Expression::Reference(_, name) => vars.get(name).and_then(|v| v.domain.min_max_i32()),
-            Expression::Constant(_, Constant::Int(i)) => Some((*i, *i)),
-            Expression::Sum(_, exprs) => {
-                if exprs.is_empty() {
-                    return None;
-                }
-                let (mut min, mut max) = (0, 0);
-                for e in exprs {
-                    if let Some((e_min, e_max)) = e.bounds(vars) {
-                        min += e_min;
-                        max += e_max;
-                    } else {
-                        return None;
-                    }
-                }
-                Some((min, max))
+            Expression::Reference(_, name) => Some(vars.get(name)?.domain.clone()),
+            Expression::Constant(_, Constant::Int(n)) => {
+                Some(Domain::IntDomain(vec![Range::Single(*n)]))
             }
+            Expression::Constant(_, Constant::Bool(_)) => Some(Domain::BoolDomain),
+            Expression::Sum(_, exprs) => expr_vec_to_domain(exprs, |x, y| Some(x + y), vars),
             Expression::Min(_, exprs) => {
-                if exprs.is_empty() {
-                    return None;
-                }
-                let bounds = exprs
-                    .iter()
-                    .map(|e| e.bounds(vars))
-                    .collect::<Option<Vec<(i32, i32)>>>()?;
-                Some((
-                    bounds.iter().map(|(min, _)| *min).min()?,
-                    bounds.iter().map(|(_, max)| *max).min()?,
-                ))
+                expr_vec_to_domain(exprs, |x, y| Some(if x < y { x } else { y }), vars)
             }
             Expression::UnsafeDiv(_, a, b) | Expression::SafeDiv(_, a, b) => {
-                let (a_min, a_max) = a.bounds(vars)?;
-                let (mut b_min, mut b_max) = b.bounds(vars)?;
-                if b_min == 0 && b_max == 0 {
-                    return None;
-                }
-                if b_min == 0 {
-                    b_min += 1; // Smallest number which avoids division by zero
-                }
-                if b_max == 0 {
-                    b_max -= 1; // Largest number which avoids division by zero
-                }
-                Some((a_min / b_max, a_max / b_min)) // TODO: calculate bounds considering negativ values
+                a.domain_of(vars)?.apply_i32(
+                    |x, y| if y != 0 { Some(x / y) } else { None },
+                    &b.domain_of(vars)?,
+                )
             }
-            _ => todo!(),
+            _ => todo!("Calculate domain of {:?}", self),
+            // TODO: (flm8) Add support for calculating the domains of more expression types
         }
     }
 
@@ -438,6 +425,93 @@ impl Display for Expression {
             }
             #[allow(unreachable_patterns)]
             other => todo!("Implement display for {:?}", other),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::ast::DecisionVariable;
+
+    use super::*;
+
+    #[test]
+    fn test_domain_of_constant_sum() {
+        let c1 = Expression::Constant(Metadata::new(), Constant::Int(1));
+        let c2 = Expression::Constant(Metadata::new(), Constant::Int(2));
+        let sum = Expression::Sum(Metadata::new(), vec![c1.clone(), c2.clone()]);
+        assert_eq!(
+            sum.domain_of(&SymbolTable::new()),
+            Some(Domain::IntDomain(vec![Range::Single(3)]))
+        );
+    }
+
+    #[test]
+    fn test_domain_of_constant_invalid_type() {
+        let c1 = Expression::Constant(Metadata::new(), Constant::Int(1));
+        let c2 = Expression::Constant(Metadata::new(), Constant::Bool(true));
+        let sum = Expression::Sum(Metadata::new(), vec![c1.clone(), c2.clone()]);
+        assert_eq!(sum.domain_of(&SymbolTable::new()), None);
+    }
+
+    #[test]
+    fn test_domain_of_empty_sum() {
+        let sum = Expression::Sum(Metadata::new(), vec![]);
+        assert_eq!(sum.domain_of(&SymbolTable::new()), None);
+    }
+
+    #[test]
+    fn test_domain_of_reference() {
+        let reference = Expression::Reference(Metadata::new(), Name::MachineName(0));
+        let mut vars = SymbolTable::new();
+        vars.insert(
+            Name::MachineName(0),
+            DecisionVariable::new(Domain::IntDomain(vec![Range::Single(1)])),
+        );
+        assert_eq!(
+            reference.domain_of(&vars),
+            Some(Domain::IntDomain(vec![Range::Single(1)]))
+        );
+    }
+
+    #[test]
+    fn test_domain_of_reference_not_found() {
+        let reference = Expression::Reference(Metadata::new(), Name::MachineName(0));
+        assert_eq!(reference.domain_of(&SymbolTable::new()), None);
+    }
+
+    #[test]
+    fn test_domain_of_reference_sum_single() {
+        let reference = Expression::Reference(Metadata::new(), Name::MachineName(0));
+        let mut vars = SymbolTable::new();
+        vars.insert(
+            Name::MachineName(0),
+            DecisionVariable::new(Domain::IntDomain(vec![Range::Single(1)])),
+        );
+        let sum = Expression::Sum(Metadata::new(), vec![reference.clone(), reference.clone()]);
+        assert_eq!(
+            sum.domain_of(&vars),
+            Some(Domain::IntDomain(vec![Range::Single(2)]))
+        );
+    }
+
+    #[test]
+    fn test_domain_of_reference_sum_bounded() {
+        let reference = Expression::Reference(Metadata::new(), Name::MachineName(0));
+        let mut vars = SymbolTable::new();
+        vars.insert(
+            Name::MachineName(0),
+            DecisionVariable::new(Domain::IntDomain(vec![Range::Bounded(1, 2)])),
+        );
+        let sum = Expression::Sum(Metadata::new(), vec![reference.clone(), reference.clone()]);
+        if let Domain::IntDomain(ranges) = sum.domain_of(&vars).unwrap() {
+            assert!(!ranges.contains(&Range::Single(1)));
+            assert!(ranges.contains(&Range::Single(2)));
+            assert!(ranges.contains(&Range::Single(3)));
+            assert!(ranges.contains(&Range::Single(4)));
+            assert!(!ranges.contains(&Range::Single(5)));
+        } else {
+            panic!();
         }
     }
 }
