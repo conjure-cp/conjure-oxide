@@ -90,13 +90,12 @@ impl Parse for DataEnum {
         let content;
         braced! {content in input};
 
-        let variants: Punctuated<Variant, Token![,]> =
-            content.call(Punctuated::parse_separated_nonempty)?;
+        let variants: Punctuated<Variant,Token![,]> = content.parse_terminated(Variant::parse,Token![,])?;
 
         Ok(DataEnum {
             span: ident.span(),
             ident,
-            variants: variants.into_iter().collect(),
+            variants: variants.into_iter().collect()
         })
     }
 }
