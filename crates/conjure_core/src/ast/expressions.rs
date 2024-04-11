@@ -106,6 +106,7 @@ pub enum Expression {
 
 impl Expression {
     pub fn bounds(&self, vars: &SymbolTable) -> Option<(i32, i32)> {
+        // TODO: (flm8) change this to return full Domains rather than just bounds
         match self {
             Expression::Reference(_, name) => vars.get(name).and_then(|v| v.domain.min_max_i32()),
             Expression::Constant(_, Constant::Int(i)) => Some((*i, *i)),
