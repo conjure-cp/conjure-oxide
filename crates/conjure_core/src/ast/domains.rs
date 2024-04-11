@@ -35,7 +35,7 @@ impl Domain {
 
     /// Return an unoptimised domain that is the result of applying a binary i32 operation to two domains.
     ///
-    /// The given operator may return None if the operation is not defined for the given arguments.
+    /// The given operator may return None if the operation is not defined for its arguments.
     /// Undefined values will not be included in the resulting domain.
     ///
     /// Returns None if the domains are not valid for i32 operations.
