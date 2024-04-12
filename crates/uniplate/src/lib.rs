@@ -108,6 +108,7 @@
 pub mod biplate;
 mod tree;
 pub mod uniplate;
+pub mod impls;
 
 pub use tree::Tree;
 
