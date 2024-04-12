@@ -12,21 +12,20 @@ pub fn uniplate_derive(input: TokenStream) -> TokenStream {
 
     let mut out_tokens: Vec<TokenStream2> = Vec::new();
 
-    //// Generate all the biplates
+    out_tokens.push(derive_a_uniplate(&mut state));
+
+    // Generate all the biplates
+    //eprintln!("{:#?}",state.tos);
     while let Some(to) = state.tos_left.pop_front() {
         state.to = Some(to);
         out_tokens.push(derive_a_biplate(&mut state));
-        out_tokens.push(derive_a_uniplate(&mut state));
     }
 
-    //syn::Error::new(input.span(), format!("{:#?}", input))
-    //    .to_compile_error()
-    //    .into()
     out_tokens.into_iter().collect::<TokenStream2>().into()
 }
 
 fn derive_a_uniplate(state: &mut ParserState) -> TokenStream2 {
-    let from = state.to.to_token_stream();
+    let from = state.from.to_token_stream();
     quote! {
         impl ::uniplate::biplate::Uniplate for #from {
             fn uniplate(&self) -> (::uniplate::Tree<#from>, Box<dyn Fn(::uniplate::Tree<#from>) -> #from>) {

@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use crate::prelude::*;
 
@@ -17,19 +17,23 @@ impl Data {
     }
 
     pub fn get_platable_types(&self) -> Vec<syn::Path> {
-        let mut output: HashSet<syn::Path> = HashSet::new();
+        let mut output: HashMap<String,syn::Path> = HashMap::new();
         match self {
             Data::DataEnum(x) => {
                 for variant in &x.variants {
                     for field in &variant.fields {
                         if let ast::Type::Plateable(typ) = &field.typ {
-                            output.insert(typ.base_typ.clone());
+                            // two syn::Paths with the same name are not usually identical due to
+                            // having different spans. Therefore, do a wierd hacky thing with
+                            // strings.
+                            output.insert(typ.base_typ.to_token_stream().to_string(),typ.base_typ.clone());
                         };
                     }
                 }
             }
         };
-        output.into_iter().collect()
+        //eprintln!("{:#?}",output);
+        output.into_values().collect()
     }
 }
 
@@ -119,7 +123,7 @@ impl Parse for Variant {
         parenthesized! {content in input};
 
         let fields: Punctuated<Field, Token![,]> =
-            content.call(Punctuated::parse_separated_nonempty)?;
+            content.call(Punctuated::parse_terminated)?;
 
         Ok(Variant {
             span: ident.span(),

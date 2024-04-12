@@ -25,7 +25,7 @@ impl ParserState {
     pub fn new(data: ast::Data) -> Self {
         let mut tos = data.get_platable_types();
         let from: ast::PlateableType = data.clone().into();
-        tos.push(from.base_typ.clone());
+        //tos.push(from.base_typ.clone());
         Self {
             to: None,
             tos_left: tos.clone().into(),
