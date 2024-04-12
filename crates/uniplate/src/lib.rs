@@ -106,9 +106,9 @@
 //! [(free copy)](https://www.cambridge.org/core/services/aop-cambridge-core/content/view/0C058890B8A9B588F26E6D68CF0CE204/S0956796897002864a.pdf/zipper.pdf)
 
 pub mod biplate;
+pub mod impls;
 mod tree;
 pub mod uniplate;
-pub mod impls;
 
 pub use tree::Tree;
 

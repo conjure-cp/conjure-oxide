@@ -14,19 +14,23 @@ use crate::Tree::*;
 // Blanket implementation for known std unplatable types.
 trait UnplatableMarker {}
 
-impl<T:UnplatableMarker> Biplate<T> for T 
-where T: Clone + Eq + Uniplate + Sized + 'static {
+impl<T: UnplatableMarker> Biplate<T> for T
+where
+    T: Clone + Eq + Uniplate + Sized + 'static,
+{
     fn biplate(&self) -> (Tree<T>, Box<dyn Fn(Tree<T>) -> Self>) {
         let val = self.clone();
-        (One(self.clone()),Box::new(move |_| val.clone()))
+        (One(self.clone()), Box::new(move |_| val.clone()))
     }
 }
 
 impl<T: UnplatableMarker> Uniplate for T
-where T: Clone + Eq + Sized + 'static {
+where
+    T: Clone + Eq + Sized + 'static,
+{
     fn uniplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>) {
         let val = self.clone();
-        (One(self.clone()),Box::new(move |_| val.clone()))
+        (One(self.clone()), Box::new(move |_| val.clone()))
     }
 }
 
@@ -59,7 +63,8 @@ impl UnplatableMarker for &str {}
 // there are conflicting impls of Biplate if I try to do this generically.
 
 impl<T> Biplate<T> for Vec<T>
-where T: Clone + Eq + Uniplate + Sized + 'static
+where
+    T: Clone + Eq + Uniplate + Sized + 'static,
 {
     fn biplate(&self) -> (Tree<T>, Box<dyn Fn(Tree<T>) -> Self>) {
         todo!()
@@ -67,10 +72,11 @@ where T: Clone + Eq + Uniplate + Sized + 'static
 }
 
 impl<T> Uniplate for Vec<T>
-where T: Clone + Eq + Uniplate + Sized + 'static
+where
+    T: Clone + Eq + Uniplate + Sized + 'static,
 {
     fn uniplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>) {
         let val = self.clone();
-        (Zero,Box::new(move |_| val.clone()))
+        (Zero, Box::new(move |_| val.clone()))
     }
 }

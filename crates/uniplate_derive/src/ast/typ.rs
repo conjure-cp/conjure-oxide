@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use itertools::Itertools;
-use quote::{quote_spanned, TokenStreamExt};
+use quote::TokenStreamExt;
 
 /// All valid field wrapper types - e.g Box, Vec, ...
 #[derive(Clone, Debug)]

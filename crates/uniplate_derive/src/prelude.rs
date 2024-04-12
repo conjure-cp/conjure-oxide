@@ -7,8 +7,7 @@ pub(crate) use proc_macro2::Span;
 pub(crate) use proc_macro2::TokenStream as TokenStream2;
 pub(crate) use quote::quote;
 pub(crate) use quote::ToTokens;
-pub(crate) use std::borrow::Borrow as _;
-pub(crate) use std::borrow::BorrowMut as _;
+
 pub(crate) use syn::braced;
 pub(crate) use syn::parenthesized;
 pub(crate) use syn::parse::Parse;

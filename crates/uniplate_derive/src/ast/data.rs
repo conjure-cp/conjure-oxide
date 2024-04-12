@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use crate::prelude::*;
 
@@ -10,6 +10,7 @@ pub enum Data {
 }
 
 impl Data {
+    #[allow(dead_code)]
     pub fn span(&self) -> Span {
         match self {
             Data::DataEnum(x) => x.span,
@@ -17,7 +18,7 @@ impl Data {
     }
 
     pub fn get_platable_types(&self) -> Vec<syn::Path> {
-        let mut output: HashMap<String,syn::Path> = HashMap::new();
+        let mut output: HashMap<String, syn::Path> = HashMap::new();
         match self {
             Data::DataEnum(x) => {
                 for variant in &x.variants {
@@ -26,7 +27,10 @@ impl Data {
                             // two syn::Paths with the same name are not usually identical due to
                             // having different spans. Therefore, do a wierd hacky thing with
                             // strings.
-                            output.insert(typ.base_typ.to_token_stream().to_string(),typ.base_typ.clone());
+                            output.insert(
+                                typ.base_typ.to_token_stream().to_string(),
+                                typ.base_typ.clone(),
+                            );
                         };
                     }
                 }
@@ -94,12 +98,13 @@ impl Parse for DataEnum {
         let content;
         braced! {content in input};
 
-        let variants: Punctuated<Variant,Token![,]> = content.parse_terminated(Variant::parse,Token![,])?;
+        let variants: Punctuated<Variant, Token![,]> =
+            content.parse_terminated(Variant::parse, Token![,])?;
 
         Ok(DataEnum {
             span: ident.span(),
             ident,
-            variants: variants.into_iter().collect()
+            variants: variants.into_iter().collect(),
         })
     }
 }
@@ -122,8 +127,7 @@ impl Parse for Variant {
         let content;
         parenthesized! {content in input};
 
-        let fields: Punctuated<Field, Token![,]> =
-            content.call(Punctuated::parse_terminated)?;
+        let fields: Punctuated<Field, Token![,]> = content.call(Punctuated::parse_terminated)?;
 
         Ok(Variant {
             span: ident.span(),
