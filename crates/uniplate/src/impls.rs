@@ -8,6 +8,9 @@
 // this and/or devirtualise the Box<dyn Fn()> when necessary to make this fast.
 // https://users.rust-lang.org/t/why-box-dyn-fn-is-the-same-fast-as-normal-fn/96392
 
+use im::Vector;
+use std::collections::VecDeque;
+
 use crate::biplate::*;
 use crate::derive_iter;
 use crate::derive_unplateable;
@@ -32,3 +35,5 @@ derive_unplateable!(String);
 // Implement Biplate for collections by converting them to iterators.
 
 derive_iter!(Vec);
+derive_iter!(VecDeque);
+derive_iter!(Vector);

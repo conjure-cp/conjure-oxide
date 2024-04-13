@@ -149,10 +149,29 @@ macro_rules! derive_iter {
         // Unwrap iterator
         impl<T> Biplate<T> for $t<T>
         where
-            T: Clone + Eq + Uniplate + Sized + 'static,
+            T: Clone + Eq + Uniplate + Biplate<T> + Sized + 'static,
         {
             fn biplate(&self) -> (Tree<T>, Box<dyn Fn(Tree<T>) -> Self>) {
-                todo!()
+                let mut children = ::im::vector![];
+                let mut ctxs = ::std::collections::VecDeque::new();
+                for child in self.clone().into_iter() {
+                    let (subtree, ctx) = <T as Biplate<T>>::biplate(&child);
+                    children.push_back(subtree);
+                    ctxs.push_back(ctx);
+                }
+
+                let ctx = Box::new(move |x| {
+                    let Tree::<T>::Many(xs) = x else {
+                        panic!("");
+                    };
+                    let mut out: ::std::collections::VecDeque<T> =
+                        ::std::collections::VecDeque::new();
+                    for (x, ctx) in ::std::iter::zip(xs, &ctxs) {
+                        out.push_back(ctx(x));
+                    }
+                    out.into_iter().collect()
+                });
+                (Tree::Many(children), ctx)
             }
         }
 
@@ -162,7 +181,8 @@ macro_rules! derive_iter {
             T: Clone + Eq + Uniplate + Sized + 'static,
         {
             fn biplate(&self) -> (Tree<$t<T>>, Box<dyn Fn(Tree<$t<T>>) -> Self>) {
-                todo!()
+                let val = self.clone();
+                (Tree::One(val.clone()), Box::new(move |_| val.clone()))
             }
         }
 
