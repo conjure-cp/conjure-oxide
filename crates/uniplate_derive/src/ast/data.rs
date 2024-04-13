@@ -2,8 +2,6 @@ use std::collections::HashMap;
 
 use crate::prelude::*;
 
-use super::PlateableType;
-
 #[derive(Clone, Debug)]
 pub enum Data {
     DataEnum(DataEnum),
@@ -22,17 +20,13 @@ impl Data {
         match self {
             Data::DataEnum(x) => {
                 for variant in &x.variants {
-                    for field in &variant.fields {
-                        if let ast::Type::Plateable(typ) = &field.typ {
-                            // two syn::Paths with the same name are not usually identical due to
-                            // having different spans. Therefore, do a wierd hacky thing with
-                            // strings.
-                            output.insert(
-                                typ.base_typ.to_token_stream().to_string(),
-                                typ.base_typ.clone(),
-                            );
-                        };
-                    }
+                    output.extend(
+                        variant
+                            .fields
+                            .iter()
+                            .filter_map(|f| f.typ.base_typ())
+                            .map(|t| (t.to_token_stream().to_string(), t)),
+                    );
                 }
             }
         };
@@ -57,10 +51,9 @@ impl From<Data> for ast::PlateableType {
                     segments: typ_segments,
                 };
 
-                PlateableType {
+                ast::PlateableType {
                     base_typ,
-                    wrapper_typ: ast::WrapperTypes::None,
-                    span: x.span,
+                    wrapper_typ: None,
                 }
             }
         }

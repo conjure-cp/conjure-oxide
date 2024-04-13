@@ -1,20 +1,48 @@
 use crate::prelude::*;
 use itertools::Itertools;
+use lazy_static::lazy_static;
 use quote::TokenStreamExt;
 
-/// All valid field wrapper types - e.g Box, Vec, ...
+/// All valid field smart pointer  - e.g Box, Vec, ...
 #[derive(Clone, Debug)]
-pub enum WrapperTypes {
+pub enum BoxType {
     Box,
-    Vec,
-    Option,
-    None,
 }
 
 #[derive(Clone, Debug)]
 pub enum Type {
+    BoxedPlateable(BoxedPlateableType),
     Plateable(PlateableType),
     Unplateable,
+}
+
+impl Type {
+    pub fn base_typ(&self) -> Option<syn::Path> {
+        match self {
+            Type::BoxedPlateable(x) => Some(x.base_typ()),
+            Type::Plateable(x) => Some(x.base_typ()),
+            Type::Unplateable => None,
+        }
+    }
+}
+
+impl ToTokens for Type {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+        match self {
+            Type::BoxedPlateable(x) => x.to_tokens(tokens),
+            Type::Plateable(x) => x.to_tokens(tokens),
+            Type::Unplateable => (),
+        }
+    }
+}
+
+pub trait HasBaseType {
+    fn base_typ(&self) -> syn::Path;
+}
+
+lazy_static! {
+    static ref BOX_PREFIXES: Vec<&'static str> =
+        vec!("::std::boxed::Box", "std::boxed::Box", "Box");
 }
 
 impl Parse for Type {
@@ -24,120 +52,170 @@ impl Parse for Type {
             return Ok(Type::Unplateable);
         };
 
-        // all possible names for types that we are interested  in
+        let mut base_path = typ.path.clone();
+        let mut wrapper_path: Option<syn::Path> = Some(typ.path);
 
-        //TODO: lazystatic this?
-        let box_strings = ["::std::boxed::Box", "std::boxed::Box", "Box"];
-        let vec_strings = [
-            "std::Vec",
-            "std::vec::Vec",
-            "::std::Vec",
-            "::std::vec::Vec",
-            "Vec",
-        ];
-        let option_strings = [
-            "std::Option",
-            "Option",
-            "core::Option",
-            "::std::Option",
-            "::core::Option",
-        ];
+        let mut box_type: Option<BoxType> = None;
+        let mut any_args = false; // special case: if we find no args wrapper type should be empty.
 
-        let type_str: String = typ
-            .path
-            .segments
-            .iter()
-            .map(|x| x.ident.to_string())
-            .intersperse("::".to_owned())
-            .collect();
-        let last_segment = typ.path.segments.last().expect("");
-        let wrapper_ty: WrapperTypes = if box_strings.contains(&type_str.as_str()) {
-            WrapperTypes::Box
-        } else if vec_strings.contains(&type_str.as_str()) {
-            WrapperTypes::Vec
-        } else if option_strings.contains(&type_str.as_str()) {
-            WrapperTypes::Option
-        } else {
-            // Cannot have a generic type for now
-            let syn::PathArguments::None = last_segment.arguments else {
+        while let syn::PathArguments::AngleBracketed(args) =
+            &base_path.segments.last().expect("").arguments.clone()
+        {
+            any_args = true;
+            if args.args.len() != 1 {
                 return Err(syn::Error::new(
-                    last_segment.span(),
-                    "Biplate: types with parameters are not supported",
+                    args.span(),
+                    format!(
+                        "Biplate: expected one generic argument here, got {}",
+                        args.args.len()
+                    ),
+                ));
+            }
+
+            let syn::GenericArgument::Type(syn::Type::Path(typ2)) = args.args.first().expect("")
+            else {
+                return Err(syn::Error::new(
+                    args.span(),
+                    "Biplate: expected type argument here",
                 ));
             };
-            return Ok(Type::Plateable(PlateableType {
-                span: typ.span(),
-                base_typ: typ.path,
-                wrapper_typ: WrapperTypes::None,
-            }));
-        };
-        // Check inside the angle brackets for the inner type
-        let syn::PathArguments::AngleBracketed(param) = last_segment.arguments.clone() else {
-            return Err(syn::Error::new(
-                last_segment.span(),
-                "Biplate: expected <> here",
-            ));
-        };
 
-        if param.args.len() != 1 {
-            // should never happen!
-            return Err(syn::Error::new(
-                param.args.span(),
-                "Biplate: only expected one generic argument here.",
-            ));
+            base_path = typ2.path.clone();
+
+            // Have we just found a box type?
+            let type_str: String = base_path
+                .segments
+                .iter()
+                .map(|x| x.ident.to_string())
+                .intersperse("::".to_owned())
+                .collect();
+
+            let mut new_box_type: Option<BoxType> = None;
+            if BOX_PREFIXES.contains(&type_str.as_str()) {
+                new_box_type = Some(BoxType::Box);
+            }
+
+            // Have a Box<Box<T>> - I don't know how to handle this
+            if new_box_type.is_some() && box_type.is_some() {
+                return Err(syn::Error::new(
+                    args.span(),
+                    "Biplate: nested Box<> is not supported.",
+                ));
+            }
+
+            if new_box_type.is_some() {
+                box_type = new_box_type;
+
+                wrapper_path = Some(base_path.clone());
+                any_args = false;
+            }
         }
-        let syn::GenericArgument::Type(syn::Type::Path(base_typ)) = param.args.first().expect("")
-        else {
-            // should never happen!
+
+        // ensure that we dont have parenthesised (...) type arguments.
+        let args = base_path.segments.last().expect("").arguments.clone();
+        let syn::PathArguments::None = args else {
             return Err(syn::Error::new(
-                param.args.span(),
-                "Biplate: expected a type here.",
+                args.span(),
+                "Biplate: expected no type arguments here.",
             ));
         };
 
-        // Cannot have a generic type for now
-        let syn::PathArguments::None = base_typ.path.segments.last().expect("").arguments else {
-            return Err(syn::Error::new(
-                last_segment.span(),
-                "Biplate: types has an unexpected <>",
-            ));
+        if !any_args {
+            // if we have no arguments in our path, there is no wrapper path.
+            wrapper_path = None;
+        } else {
+            wrapper_path
+                .clone()
+                .expect("")
+                .segments
+                .last_mut()
+                .expect("")
+                .arguments = syn::PathArguments::None;
+        }
+
+        let plateable_typ = PlateableType {
+            wrapper_typ: wrapper_path,
+            base_typ: base_path,
         };
 
-        Ok(Type::Plateable(PlateableType {
-            span: typ.span(),
-            base_typ: base_typ.path.clone(),
-            wrapper_typ: wrapper_ty,
-        }))
+        if let Some(box_type) = box_type {
+            Ok(Type::BoxedPlateable(BoxedPlateableType {
+                base_typ: plateable_typ,
+                box_typ: box_type,
+            }))
+        } else {
+            Ok(Type::Plateable(plateable_typ))
+        }
     }
 }
 
+/// A platable type inside a smart-pointer or cell.
+///
+/// Unlike most `PlateableType`s, the conversions from Box<T> to T are inlined in code generation
+/// instead of using builtin implementations of Biplate.
+///
+/// This is to avoid unnecessary moving of stuff between stack and heap - instead, we just
+/// dereference the smart pointer and pass that into Biplate<T>.
 #[derive(Clone, Debug)]
-pub struct PlateableType {
+pub struct BoxedPlateableType {
     /// The underlying type of the field.
-    pub base_typ: syn::Path,
+    pub base_typ: PlateableType,
 
     /// The wrapper type of the field.
-    pub wrapper_typ: WrapperTypes,
+    pub box_typ: BoxType,
+}
 
-    pub span: Span,
+impl ToTokens for BoxedPlateableType {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+        let base_typ = self.base_typ.clone();
+        match self.box_typ {
+            BoxType::Box => {
+                tokens.append_all(quote! {Box<#base_typ>});
+            }
+        }
+    }
+}
+
+impl HasBaseType for BoxedPlateableType {
+    fn base_typ(&self) -> syn::Path {
+        self.base_typ.base_typ()
+    }
+}
+
+/// A platable type.
+///
+/// This struct splits a type into wrapper and base components.
+/// Base types are used to determine what new instances of Biplate to derive.
+/// Wrapper types are unwrapped through builtin impls of uniplate.
+///
+/// For example, Vec<Vec<MyTyp>>  has the base type MyTyp and the wrapper type Vec<Vec<.
+/// This distinction between base and wrapper here means that we only derive Biplate for MyTyp, and
+/// we use preexisting rules to unwrap the vectors surrounding it.unwrhandle
+///
+/// Boxed / smart pointer types are handled differently - see `BoxedPlatableType`.
+#[derive(Clone, Debug)]
+pub struct PlateableType {
+    /// Container types of the field
+    pub wrapper_typ: Option<syn::Path>,
+
+    /// The innermost type of the field.
+    pub base_typ: syn::Path,
 }
 
 impl ToTokens for PlateableType {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
-        let base_typ: TokenStream2 = self.base_typ.to_token_stream();
-        match self.wrapper_typ {
-            WrapperTypes::Box => {
-                tokens.append_all(quote! {Box<#base_typ>});
-            }
-            WrapperTypes::Vec => {
-                tokens.append_all(quote! {Vec<#base_typ>});
-            }
-            WrapperTypes::Option => {
-                tokens.append_all(quote! {Option<#base_typ>});
-            }
-            WrapperTypes::None => {
-                tokens.append_all(base_typ);
-            }
+        let base_typ = self.base_typ.clone();
+
+        if let Some(wrapper) = self.wrapper_typ.clone() {
+            tokens.append_all(quote!(#wrapper<#base_typ>));
+        } else {
+            tokens.append_all(quote!(#base_typ));
         }
+    }
+}
+
+impl HasBaseType for PlateableType {
+    fn base_typ(&self) -> syn::Path {
+        self.base_typ.clone()
     }
 }
