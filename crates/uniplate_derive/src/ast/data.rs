@@ -33,6 +33,12 @@ impl Data {
         //eprintln!("{:#?}",output);
         output.into_values().collect()
     }
+
+    pub fn ident(&self) -> syn::Ident {
+        match self {
+            Data::DataEnum(x) => x.ident.clone(),
+        }
+    }
 }
 
 impl From<Data> for ast::PlateableType {
@@ -83,6 +89,7 @@ impl Parse for DataEnum {
     // https://docs.rs/syn/latest/syn/struct.ItemEnum.html
 
     fn parse(input: ParseStream) -> syn::Result<Self> {
+        input.parse::<syn::Visibility>()?;
         input.parse::<Token![enum]>()?;
         let ident = input.parse::<syn::Ident>()?;
 

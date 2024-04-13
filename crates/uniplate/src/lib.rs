@@ -197,3 +197,20 @@ macro_rules! derive_iter {
         }
     };
 }
+
+#[macro_export]
+macro_rules! unreachable {
+    ($from:ident,$to:ident) => {
+        impl ::uniplate::biplate::Biplate<$to> for $from {
+            fn biplate(
+                &self,
+            ) -> (
+                ::uniplate::Tree<$to>,
+                Box<dyn Fn(::uniplate::Tree<$to>) -> $from>,
+            ) {
+                let val = self.clone();
+                (::uniplate::Tree::Zero, Box::new(move |_| val.clone()))
+            }
+        }
+    };
+}

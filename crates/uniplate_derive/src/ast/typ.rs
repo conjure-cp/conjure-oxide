@@ -9,6 +9,16 @@ pub enum BoxType {
     Box,
 }
 
+impl ToTokens for BoxType {
+    fn to_tokens(&self, tokens: &mut TokenStream2) {
+        match self {
+            BoxType::Box => {
+                tokens.append_all(quote! {Box});
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum Type {
     BoxedPlateable(BoxedPlateableType),
@@ -57,6 +67,34 @@ impl Parse for Type {
 
         let mut box_type: Option<BoxType> = None;
         let mut any_args = false; // special case: if we find no args wrapper type should be empty.
+
+        // Is the outermost type a box?
+        let type_str: String = base_path
+            .segments
+            .iter()
+            .map(|x| x.ident.to_string())
+            .intersperse("::".to_owned())
+            .collect();
+
+        if BOX_PREFIXES.contains(&type_str.as_str()) {
+            box_type = Some(BoxType::Box);
+            let syn::PathArguments::AngleBracketed(args) =
+                &base_path.segments.last().expect("").arguments.clone()
+            else {
+                panic!();
+            };
+
+            let syn::GenericArgument::Type(syn::Type::Path(typ2)) = args.args.first().expect("")
+            else {
+                return Err(syn::Error::new(
+                    args.span(),
+                    "Biplate: expected type argument here",
+                ));
+            };
+            base_path = typ2.path.clone();
+
+            any_args = false;
+        }
 
         while let syn::PathArguments::AngleBracketed(args) =
             &base_path.segments.last().expect("").arguments.clone()
@@ -140,7 +178,7 @@ impl Parse for Type {
 
         if let Some(box_type) = box_type {
             Ok(Type::BoxedPlateable(BoxedPlateableType {
-                base_typ: plateable_typ,
+                inner_typ: plateable_typ,
                 box_typ: box_type,
             }))
         } else {
@@ -159,7 +197,7 @@ impl Parse for Type {
 #[derive(Clone, Debug)]
 pub struct BoxedPlateableType {
     /// The underlying type of the field.
-    pub base_typ: PlateableType,
+    pub inner_typ: PlateableType,
 
     /// The wrapper type of the field.
     pub box_typ: BoxType,
@@ -167,7 +205,7 @@ pub struct BoxedPlateableType {
 
 impl ToTokens for BoxedPlateableType {
     fn to_tokens(&self, tokens: &mut TokenStream2) {
-        let base_typ = self.base_typ.clone();
+        let base_typ = self.inner_typ.clone();
         match self.box_typ {
             BoxType::Box => {
                 tokens.append_all(quote! {Box<#base_typ>});
@@ -178,7 +216,7 @@ impl ToTokens for BoxedPlateableType {
 
 impl HasBaseType for BoxedPlateableType {
     fn base_typ(&self) -> syn::Path {
-        self.base_typ.base_typ()
+        self.inner_typ.base_typ()
     }
 }
 
@@ -207,7 +245,7 @@ impl ToTokens for PlateableType {
         let base_typ = self.base_typ.clone();
 
         if let Some(wrapper) = self.wrapper_typ.clone() {
-            tokens.append_all(quote!(#wrapper<#base_typ>));
+            tokens.append_all(quote!(#wrapper));
         } else {
             tokens.append_all(quote!(#base_typ));
         }
