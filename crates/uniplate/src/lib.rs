@@ -27,7 +27,7 @@
 //! The below example implements [`Uniplate`](uniplate::Uniplate) for this language AST, and uses uniplate methods to
 //! evaluate the encoded equation.
 //!
-//!```
+//!```ignore
 //! use uniplate::uniplate::{Uniplate, UniplateError};
 //!
 //! #[derive(Clone,Eq,PartialEq,Debug)]
@@ -108,7 +108,7 @@
 pub mod biplate;
 pub mod impls;
 mod tree;
-pub mod uniplate;
+//pub mod uniplate;
 
 pub use tree::Tree;
 
@@ -116,3 +116,64 @@ pub use tree::Tree;
 pub mod test_common;
 
 pub use uniplate_derive::*;
+
+extern crate self as uniplate;
+
+/// Generates a Biplate and Uniplate instance for an unplatable type.
+#[macro_export]
+macro_rules! derive_unplateable {
+    ($t:ty) => {
+        impl Uniplate for $t {
+            fn uniplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>) {
+                let val = self.clone();
+                (::uniplate::Tree::Zero, Box::new(move |_| val.clone()))
+            }
+        }
+
+        impl Biplate<$t> for $t {
+            fn biplate(&self) -> (Tree<$t>, Box<dyn Fn(Tree<$t>) -> $t>) {
+                let val = self.clone();
+                (
+                    ::uniplate::Tree::One(val.clone()),
+                    Box::new(move |_| val.clone()),
+                )
+            }
+        }
+    };
+}
+
+// Generates a Biplate and Uniplate instance for an iterable type.
+#[macro_export]
+macro_rules! derive_iter {
+    ($t:ident) => {
+        // Unwrap iterator
+        impl<T> Biplate<T> for $t<T>
+        where
+            T: Clone + Eq + Uniplate + Sized + 'static,
+        {
+            fn biplate(&self) -> (Tree<T>, Box<dyn Fn(Tree<T>) -> Self>) {
+                todo!()
+            }
+        }
+
+        // Identity Biplate
+        impl<T> Biplate<$t<T>> for $t<T>
+        where
+            T: Clone + Eq + Uniplate + Sized + 'static,
+        {
+            fn biplate(&self) -> (Tree<$t<T>>, Box<dyn Fn(Tree<$t<T>>) -> Self>) {
+                todo!()
+            }
+        }
+
+        impl<T> Uniplate for $t<T>
+        where
+            T: Clone + Eq + Uniplate + Sized + 'static,
+        {
+            fn uniplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>) {
+                let val = self.clone();
+                (Zero, Box::new(move |_| val.clone()))
+            }
+        }
+    };
+}
