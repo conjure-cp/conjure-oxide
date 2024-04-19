@@ -48,7 +48,7 @@ impl From<ResolveError> for RewriteError {
 fn optimizations_enabled() -> bool {
     match env::var("OPTIMIZATIONS") {
         Ok(val) => val == "1",
-        Err(_) => false, // Assume optimizations are disabled if the environment variable is not set 
+        Err(_) => false, // Assume optimizations are disabled if the environment variable is not set
     }
 }
 
@@ -72,7 +72,7 @@ pub fn rewrite_model<'a>(
         rewriter_rule_applications: Some(0),
     };
 
-    // Check if optimizations are enabled 
+    // Check if optimizations are enabled
     let apply_optimizations = optimizations_enabled();
 
     let start = std::time::Instant::now();
