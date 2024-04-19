@@ -40,15 +40,15 @@ impl From<ResolveError> for RewriteError {
     }
 }
 
-/// Checks if the OPTIMIZATIONS environment variable is set to "0".
+/// Checks if the OPTIMIZATIONS environment variable is set to "1".
 ///
 /// # Returns
-/// - true if the environment variable is set to "0".
+/// - true if the environment variable is set to "1".
 /// - false if the environment variable is not set or set to any other value.
-fn optimizations_disabled() -> bool {
+fn optimizations_enabled() -> bool {
     match env::var("OPTIMIZATIONS") {
-        Ok(val) => val == "0",
-        Err(_) => false, // Assume optimizations are enabled if the variable is not set
+        Ok(val) => val == "1",
+        Err(_) => false, // Assume optimizations are disabled if the environment variable is not set 
     }
 }
 
@@ -66,14 +66,14 @@ pub fn rewrite_model<'a>(
     let rules = get_rules_vec(&rule_priorities);
     let mut new_model = model.clone();
     let mut stats = RewriterStats {
-        is_optimization_enabled: Some(!optimizations_disabled()),
+        is_optimization_enabled: Some(optimizations_enabled()),
         rewriter_run_time: None,
         rewriter_rule_application_attempts: Some(0),
         rewriter_rule_applications: Some(0),
     };
 
-    // Check if optimizations are disabled
-    let apply_optimizations = !optimizations_disabled();
+    // Check if optimizations are enabled 
+    let apply_optimizations = optimizations_enabled();
 
     let start = std::time::Instant::now();
 

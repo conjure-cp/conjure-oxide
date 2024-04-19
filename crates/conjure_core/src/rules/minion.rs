@@ -2,7 +2,11 @@
 /*        Rules for translating to Minion-supported constraints         */
 /************************************************************************/
 
-use crate::ast::{Constant as Const, Expression as Expr};
+use uniplate::uniplate::Uniplate;
+
+use crate::ast::{
+    Constant as Const, DecisionVariable, Domain, Expression as Expr, Range, SymbolTable,
+};
 use crate::metadata::Metadata;
 use crate::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
@@ -109,12 +113,21 @@ fn sum_leq_to_sumleq(expr: &Expr, _: &Model) -> ApplicationResult {
 fn sum_eq_to_sumeq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Eq(metadata, a, b) => {
-            let exprs = sum_to_vector(a)?;
-            Ok(Reduction::pure(Expr::SumEq(
-                metadata.clone_dirty(),
-                exprs,
-                b.clone(),
-            )))
+            if let Ok(exprs) = sum_to_vector(a) {
+                Ok(Reduction::pure(Expr::SumEq(
+                    metadata.clone_dirty(),
+                    exprs,
+                    b.clone(),
+                )))
+            } else if let Ok(exprs) = sum_to_vector(b) {
+                Ok(Reduction::pure(Expr::SumEq(
+                    metadata.clone_dirty(),
+                    exprs,
+                    a.clone(),
+                )))
+            } else {
+                Err(ApplicationError::RuleNotApplicable)
+            }
         }
         _ => Err(ApplicationError::RuleNotApplicable),
     }
@@ -229,69 +242,134 @@ fn leq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 }
 
-// #[register_rule(("Minion", 100))]
-// fn safediv_eq_to_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
+// #[register_rule(("Minion", 99))]
+// fn eq_to_leq_geq(expr: &Expr, _: &Model) -> ApplicationResult {
 //     match expr {
 //         Expr::Eq(metadata, a, b) => {
-//             if let Expr::SafeDiv(_, x, y) = a.as_ref() {
-//                 if !(b.is_reference() || b.is_constant()) {
-//                     return Err(ApplicationError::RuleNotApplicable);
-//                 }
-//                 Ok(Reduction::pure(Expr::DivEq(
-//                     metadata.clone_dirty(),
-//                     x.clone(),
-//                     y.clone(),
-//                     b.clone(),
-//                 )))
-//             } else if let Expr::SafeDiv(_, x, y) = b.as_ref() {
-//                 if !(a.is_reference() || a.is_constant()) {
-//                     return Err(ApplicationError::RuleNotApplicable);
-//                 }
-//                 Ok(Reduction::pure(Expr::DivEq(
-//                     metadata.clone_dirty(),
-//                     x.clone(),
-//                     y.clone(),
-//                     a.clone(),
-//                 )))
-//             } else {
-//                 Err(ApplicationError::RuleNotApplicable)
-//             }
+//             return Ok(Reduction::pure(Expr::And(
+//                 metadata.clone(),
+//                 vec![
+//                     Expr::Leq(metadata.clone(), a.clone(), b.clone()),
+//                     Expr::Geq(metadata.clone(), a.clone(), b.clone()),
+//                 ],
+//             )));
 //         }
 //         _ => Err(ApplicationError::RuleNotApplicable),
 //     }
 // }
 
-#[register_rule(("Minion", 100))]
-fn neq_to_alldiff(expr: &Expr, _: &Model) -> ApplicationResult {
-    match expr {
-        Expr::Neq(metadata, a, b) => Ok(Reduction::pure(Expr::AllDiff(
-            metadata.clone_dirty(),
-            vec![*a.clone(), *b.clone()],
-        ))),
-        _ => Err(ApplicationError::RuleNotApplicable),
+/**
+ * Since Minion doesn't support some constraints with div (e.g. leq, neq), we add an auxiliary variable to represent the division result.
+*/
+#[register_rule(("Minion", 101))]
+fn flatten_safediv(expr: &Expr, mdl: &Model) -> ApplicationResult {
+    if expr.is_eq() || expr.is_leq() || expr.is_geq() || expr.is_neq() {
+        let mut sub = expr.children();
+
+        let mut new_vars = SymbolTable::new();
+        let mut new_top = vec![];
+
+        // replace every safe div child with a reference to a new variable
+        for c in sub.iter_mut() {
+            if let Expr::SafeDiv(_, a, b) = c.clone() {
+                let new_name = mdl.gensym();
+                let domain = c
+                    .domain_of(&mdl.variables)
+                    .ok_or(ApplicationError::DomainError)?;
+                new_vars.insert(new_name.clone(), DecisionVariable::new(domain));
+
+                new_top.push(Expr::DivEq(
+                    Metadata::new(),
+                    a.clone(),
+                    b.clone(),
+                    Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
+                ));
+
+                *c = Expr::Reference(Metadata::new(), new_name.clone());
+            }
+        }
+        if !new_top.is_empty() {
+            return Ok(Reduction::new(
+                expr.with_children(sub)
+                    .or(Err(ApplicationError::RuleNotApplicable))?,
+                Expr::And(Metadata::new(), new_top),
+                new_vars,
+            ));
+        }
     }
+    Err(ApplicationError::RuleNotApplicable)
 }
 
-#[register_rule(("Minion", 99))]
-fn eq_to_leq_geq(expr: &Expr, _: &Model) -> ApplicationResult {
+#[register_rule(("Minion", 100))]
+fn div_eq_to_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Eq(metadata, a, b) => {
-            if let Ok(exprs) = sum_to_vector(a) {
-                Ok(Reduction::pure(Expr::SumEq(
+            if let Expr::SafeDiv(_, x, y) = a.as_ref() {
+                if !(b.is_reference() || b.is_constant()) {
+                    return Err(ApplicationError::RuleNotApplicable);
+                }
+                Ok(Reduction::pure(Expr::DivEq(
                     metadata.clone_dirty(),
-                    exprs,
+                    x.clone(),
+                    y.clone(),
                     b.clone(),
                 )))
-            } else if let Ok(exprs) = sum_to_vector(b) {
-                Ok(Reduction::pure(Expr::SumEq(
+            } else if let Expr::SafeDiv(_, x, y) = b.as_ref() {
+                if !(a.is_reference() || a.is_constant()) {
+                    return Err(ApplicationError::RuleNotApplicable);
+                }
+                Ok(Reduction::pure(Expr::DivEq(
                     metadata.clone_dirty(),
-                    exprs,
+                    x.clone(),
+                    y.clone(),
                     a.clone(),
                 )))
             } else {
                 Err(ApplicationError::RuleNotApplicable)
             }
         }
+        _ => Err(ApplicationError::RuleNotApplicable),
+    }
+}
+
+#[register_rule(("Minion", 100))]
+fn negated_neq_to_eq(expr: &Expr, _: &Model) -> ApplicationResult {
+    match expr {
+        Expr::Not(_, a) => match a.as_ref() {
+            Expr::Neq(_, b, c) => {
+                if !b.can_be_undefined() && !c.can_be_undefined() {
+                    Ok(Reduction::pure(Expr::Eq(
+                        Metadata::new(),
+                        b.clone(),
+                        c.clone(),
+                    )))
+                } else {
+                    Err(ApplicationError::RuleNotApplicable)
+                }
+            }
+            _ => Err(ApplicationError::RuleNotApplicable),
+        },
+        _ => Err(ApplicationError::RuleNotApplicable),
+    }
+}
+
+#[register_rule(("Minion", 100))]
+fn negated_eq_to_neq(expr: &Expr, _: &Model) -> ApplicationResult {
+    match expr {
+        Expr::Not(_, a) => match a.as_ref() {
+            Expr::Eq(_, b, c) => {
+                if !b.can_be_undefined() && !c.can_be_undefined() {
+                    Ok(Reduction::pure(Expr::Neq(
+                        Metadata::new(),
+                        b.clone(),
+                        c.clone(),
+                    )))
+                } else {
+                    Err(ApplicationError::RuleNotApplicable)
+                }
+            }
+            _ => Err(ApplicationError::RuleNotApplicable),
+        },
         _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
