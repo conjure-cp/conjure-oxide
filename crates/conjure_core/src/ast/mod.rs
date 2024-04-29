@@ -2,7 +2,7 @@ mod constants;
 mod domains;
 mod expressions;
 mod symbol_table;
-mod types;
+pub mod types;
 mod variables;
 
 pub use constants::Constant;

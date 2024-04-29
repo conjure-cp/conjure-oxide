@@ -51,10 +51,10 @@ fn sum_to_vector(expr: &Expr) -> Result<Vec<Expr>, ApplicationError> {
 // fn eq_to_minion(expr: &Expr, _: &Model) -> ApplicationResult {
 //     match expr {
 //         Expr::Eq(metadata, a, b) => Ok(Reduction::pure(Expr::And(
-//             metadata.clone(),
+//             metadata.clone_dirty(),
 //             vec![
-//                 Expr::Geq(metadata.clone(), a.clone(), b.clone()),
-//                 Expr::Leq(metadata.clone(), a.clone(), b.clone()),
+//                 Expr::Geq(metadata.clone_dirty(), a.clone(), b.clone()),
+//                 Expr::Leq(metadata.clone_dirty(), a.clone(), b.clone()),
 //             ],
 //         ))),
 //         _ => Err(ApplicationError::RuleNotApplicable),
@@ -73,7 +73,7 @@ fn flatten_sum_geq(expr: &Expr, _: &Model) -> ApplicationResult {
         Expr::Geq(metadata, a, b) => {
             let exprs = sum_to_vector(a)?;
             Ok(Reduction::pure(Expr::SumGeq(
-                metadata.clone(),
+                metadata.clone_dirty(),
                 exprs,
                 b.clone(),
             )))
@@ -94,7 +94,7 @@ fn sum_leq_to_sumleq(expr: &Expr, _: &Model) -> ApplicationResult {
         Expr::Leq(metadata, a, b) => {
             let exprs = sum_to_vector(a)?;
             Ok(Reduction::pure(Expr::SumLeq(
-                metadata.clone(),
+                metadata.clone_dirty(),
                 exprs,
                 b.clone(),
             )))
@@ -115,13 +115,13 @@ fn sum_eq_to_sumeq(expr: &Expr, _: &Model) -> ApplicationResult {
         Expr::Eq(metadata, a, b) => {
             if let Ok(exprs) = sum_to_vector(a) {
                 Ok(Reduction::pure(Expr::SumEq(
-                    metadata.clone(),
+                    metadata.clone_dirty(),
                     exprs,
                     b.clone(),
                 )))
             } else if let Ok(exprs) = sum_to_vector(b) {
                 Ok(Reduction::pure(Expr::SumEq(
-                    metadata.clone(),
+                    metadata.clone_dirty(),
                     exprs,
                     a.clone(),
                 )))
@@ -152,10 +152,10 @@ fn sum_eq_to_sumeq(expr: &Expr, _: &Model) -> ApplicationResult {
 fn sumeq_to_minion(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::SumEq(metadata, exprs, eq_to) => Ok(Reduction::pure(Expr::And(
-            metadata.clone(),
+            Metadata::new(),
             vec![
-                Expr::SumGeq(metadata.clone(), exprs.clone(), Box::from(*eq_to.clone())),
-                Expr::SumLeq(metadata.clone(), exprs.clone(), Box::from(*eq_to.clone())),
+                Expr::SumGeq(Metadata::new(), exprs.clone(), Box::from(*eq_to.clone())),
+                Expr::SumLeq(Metadata::new(), exprs.clone(), Box::from(*eq_to.clone())),
             ],
         ))),
         _ => Err(ApplicationError::RuleNotApplicable),
@@ -173,7 +173,7 @@ fn sumeq_to_minion(expr: &Expr, _: &Model) -> ApplicationResult {
 fn lt_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Lt(metadata, a, b) => Ok(Reduction::pure(Expr::Ineq(
-            metadata.clone(),
+            metadata.clone_dirty(),
             a.clone(),
             b.clone(),
             Box::new(Expr::Constant(Metadata::new(), Const::Int(-1))),
@@ -193,7 +193,7 @@ fn lt_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 fn gt_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Gt(metadata, a, b) => Ok(Reduction::pure(Expr::Ineq(
-            metadata.clone(),
+            metadata.clone_dirty(),
             b.clone(),
             a.clone(),
             Box::new(Expr::Constant(Metadata::new(), Const::Int(-1))),
@@ -213,7 +213,7 @@ fn gt_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 fn geq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Geq(metadata, a, b) => Ok(Reduction::pure(Expr::Ineq(
-            metadata.clone(),
+            metadata.clone_dirty(),
             b.clone(),
             a.clone(),
             Box::new(Expr::Constant(Metadata::new(), Const::Int(0))),
@@ -233,7 +233,7 @@ fn geq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 fn leq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Leq(metadata, a, b) => Ok(Reduction::pure(Expr::Ineq(
-            metadata.clone(),
+            metadata.clone_dirty(),
             a.clone(),
             b.clone(),
             Box::new(Expr::Constant(Metadata::new(), Const::Int(0))),
@@ -309,7 +309,7 @@ fn div_eq_to_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
                     return Err(ApplicationError::RuleNotApplicable);
                 }
                 Ok(Reduction::pure(Expr::DivEq(
-                    metadata.clone(),
+                    metadata.clone_dirty(),
                     x.clone(),
                     y.clone(),
                     b.clone(),
@@ -319,7 +319,7 @@ fn div_eq_to_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
                     return Err(ApplicationError::RuleNotApplicable);
                 }
                 Ok(Reduction::pure(Expr::DivEq(
-                    metadata.clone(),
+                    metadata.clone_dirty(),
                     x.clone(),
                     y.clone(),
                     a.clone(),

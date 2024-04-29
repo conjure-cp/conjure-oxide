@@ -40,15 +40,15 @@ impl From<ResolveError> for RewriteError {
     }
 }
 
-/// Checks if the OPTIMIZATIONS environment variable is set to "0".
+/// Checks if the OPTIMIZATIONS environment variable is set to "1".
 ///
 /// # Returns
-/// - true if the environment variable is set to "0".
+/// - true if the environment variable is set to "1".
 /// - false if the environment variable is not set or set to any other value.
-fn optimizations_disabled() -> bool {
+fn optimizations_enabled() -> bool {
     match env::var("OPTIMIZATIONS") {
-        Ok(val) => val == "0",
-        Err(_) => false, // Assume optimizations are enabled if the variable is not set
+        Ok(val) => val == "1",
+        Err(_) => false, // Assume optimizations are disabled if the environment variable is not set
     }
 }
 
@@ -66,14 +66,14 @@ pub fn rewrite_model<'a>(
     let rules = get_rules_vec(&rule_priorities);
     let mut new_model = model.clone();
     let mut stats = RewriterStats {
-        is_optimization_enabled: Some(!optimizations_disabled()),
+        is_optimization_enabled: Some(optimizations_enabled()),
         rewriter_run_time: None,
         rewriter_rule_application_attempts: Some(0),
         rewriter_rule_applications: Some(0),
     };
 
-    // Check if optimizations are disabled
-    let apply_optimizations = !optimizations_disabled();
+    // Check if optimizations are enabled
+    let apply_optimizations = optimizations_enabled();
 
     let start = std::time::Instant::now();
 
@@ -108,16 +108,10 @@ fn rewrite_iteration<'a>(
 
     // Mark the expression as clean - will be marked dirty if any rule is applied
     let mut expression = expression.clone();
-    if apply_optimizations {
-        expression.set_clean(true);
-    }
 
     let rule_results = apply_all_rules(&expression, model, rules, stats);
-    if let Some(mut new) = choose_rewrite(&rule_results) {
+    if let Some(new) = choose_rewrite(&rule_results) {
         // If a rule is applied, mark the expression as dirty
-        if apply_optimizations {
-            new.new_expression.set_clean(false);
-        }
         return Some(new);
     }
 
@@ -125,17 +119,18 @@ fn rewrite_iteration<'a>(
     for i in 0..sub.len() {
         if let Some(red) = rewrite_iteration(&sub[i], model, rules, apply_optimizations, stats) {
             sub[i] = red.new_expression;
-            // If child is dirty, make this expression dirty
-
-            if apply_optimizations && !sub[i].is_clean() {
-                expression.set_clean(false);
-            }
             if let Ok(res) = expression.with_children(sub.clone()) {
                 return Some(Reduction::new(res, red.new_top, red.symbols));
             }
         }
     }
-    None // No rules applicable to this branch of the expression
+    // If all children are clean, mark this expression as clean
+    if apply_optimizations {
+        assert!(expression.children().iter().all(|c| c.is_clean()));
+        expression.set_clean(true);
+        return Some(Reduction::pure(expression));
+    }
+    None
 }
 
 /// # Returns
@@ -151,11 +146,14 @@ fn apply_all_rules<'a>(
     for rule in rules {
         match rule.apply(expression, model) {
             Ok(red) => {
-                log::trace!(target: "file", "Rule applied: {:?}, to Expression: {:?}, resulting in: {:?}", rule, expression, red.new_expression);
+                log::trace!(target: "file", "Rule applicable: {:?}, to Expression: {:?}, resulting in: {:?}", rule, expression, red.new_expression);
                 stats.rewriter_rule_application_attempts =
                     Some(stats.rewriter_rule_application_attempts.unwrap() + 1);
                 stats.rewriter_rule_applications =
                     Some(stats.rewriter_rule_applications.unwrap() + 1);
+                // Assert no clean children
+                // assert!(!red.new_expression.children().iter().any(|c| c.is_clean()), "Rule that caused assertion to fail: {:?}", rule.name);
+                // assert!(!red.new_expression.children().iter().any(|c| c.children().iter().any(|c| c.is_clean())));
                 results.push(RuleResult {
                     rule,
                     reduction: red,
