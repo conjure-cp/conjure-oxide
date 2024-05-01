@@ -7,6 +7,7 @@ use core::fmt::Display;
 use core::fmt::Formatter;
 use uniplate::Uniplate;
 #[derive(Clone, Debug, PartialEq, Eq, Uniplate)]
+#[uniplate()]
 enum Expression {
     Nothing,
     Bubble(Metadata, Box<Expression>, Box<Expression>),

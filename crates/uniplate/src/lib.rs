@@ -1,101 +1,205 @@
+//! Uniplate provides simple and low-boilerplate ways to traverse and manipulate data structures.
 //! A port of Haskell's [Uniplate](https://hackage.haskell.org/package/uniplate) in Rust.
 //!
 //!
-//! # Examples
+//! # Getting Started
 //!
-//! ## A Calculator Input Language
+//! *Adapted from (Mitchell and Runciman 2009)*
 //!
-//! Consider the AST of a calculator input language:
+//! Consider the abstract syntax tree for a simple calculator language:
 //!
-//! ```
-//! pub enum AST {
-//!     Int(i32),
-//!     Add(Box<AST>,Box<AST>),
-//!     Sub(Box<AST>,Box<AST>),
-//!     Div(Box<AST>,Box<AST>),
-//!     Mul(Box<AST>,Box<AST>)
-//! }
-//!```
-//!
-//! Using uniplate, one can implement a single function for this AST that can be used in a whole
-//! range of traversals.
-//!
-//! While this does not seem helpful in this toy example, the benefits amplify when the number of
-//! enum variants increase, and the different types contained in their fields increase.
-//!
-//!
-//! The below example implements [`Uniplate`](uniplate::Uniplate) for this language AST, and uses uniplate methods to
-//! evaluate the encoded equation.
-//!
-//!```ignore
-//! use uniplate::uniplate::{Uniplate, UniplateError};
-//!
-//! #[derive(Clone,Eq,PartialEq,Debug)]
-//! pub enum AST {
-//!     Int(i32),
-//!     Add(Box<AST>,Box<AST>),
-//!     Sub(Box<AST>,Box<AST>),
-//!     Div(Box<AST>,Box<AST>),
-//!     Mul(Box<AST>,Box<AST>)
-//! }
-//!
-//! // In the future would be automatically derived.
-//! impl Uniplate for AST {
-//!     fn uniplate(&self) -> (Vec<AST>, Box<dyn Fn(Vec<AST>) -> Result<AST, UniplateError> +'_>) {
-//!         let context: Box<dyn Fn(Vec<AST>) -> Result<AST, UniplateError>> = match self {
-//!             AST::Int(i) =>    Box::new(|_| Ok(AST::Int(*i))),
-//!             AST::Add(_, _) => Box::new(|exprs: Vec<AST>| Ok(AST::Add(Box::new(exprs[0].clone()),Box::new(exprs[1].clone())))),
-//!             AST::Sub(_, _) => Box::new(|exprs: Vec<AST>| Ok(AST::Sub(Box::new(exprs[0].clone()),Box::new(exprs[1].clone())))),
-//!             AST::Div(_, _) => Box::new(|exprs: Vec<AST>| Ok(AST::Div(Box::new(exprs[0].clone()),Box::new(exprs[1].clone())))),
-//!             AST::Mul(_, _) => Box::new(|exprs: Vec<AST>| Ok(AST::Mul(Box::new(exprs[0].clone()),Box::new(exprs[1].clone()))))
-//!         };
-//!
-//!         let children: Vec<AST> = match self {
-//!             AST::Add(a,b) => vec![*a.clone(),*b.clone()],
-//!             AST::Sub(a,b) => vec![*a.clone(),*b.clone()],
-//!             AST::Div(a,b) => vec![*a.clone(),*b.clone()],
-//!             AST::Mul(a,b) => vec![*a.clone(),*b.clone()],
-//!             _ => vec![]
-//!         };
-//!
-//!         (children,context)
-//!     }
-//! }
-//!
-//! pub fn my_rule(e: AST) -> AST{
-//!     match e {
-//!         AST::Int(a) => AST::Int(a),
-//!         AST::Add(a,b) => {match (&*a,&*b) { (AST::Int(a), AST::Int(b)) => AST::Int(a+b), _ => AST::Add(a,b) }}
-//!         AST::Sub(a,b) => {match (&*a,&*b) { (AST::Int(a), AST::Int(b)) => AST::Int(a-b), _ => AST::Sub(a,b) }}
-//!         AST::Mul(a,b) => {match (&*a,&*b) { (AST::Int(a), AST::Int(b)) => AST::Int(a*b), _ => AST::Mul(a,b) }}
-//!         AST::Div(a,b) => {match (&*a,&*b) { (AST::Int(a), AST::Int(b)) => AST::Int(a/b), _ => AST::Div(a,b) }}
-//!     }
-//! }
-//! pub fn main() {
-//!     let ast = AST::Add(
-//!                 Box::new(AST::Int(1)),
-//!                 Box::new(AST::Mul(
-//!                     Box::new(AST::Int(2)),
-//!                     Box::new(AST::Div(
-//!                         Box::new(AST::Add(Box::new(AST::Int(1)),Box::new(AST::Int(2)))),
-//!                         Box::new(AST::Int(3))
-//!                     )))));
-//!
-//!     let new_ast = ast.transform(my_rule);
-//!     assert!(new_ast.is_ok());
-//!     println!("{:?}",new_ast);
-//!     assert_eq!(new_ast.unwrap(), AST::Int(3));
+//! ```rust
+//! enum Expr {
+//!     Add(Box<Expr>, Box<Expr>),
+//!     Sub(Box<Expr>, Box<Expr>),
+//!     Mul(Box<Expr>, Box<Expr>),
+//!     Div(Box<Expr>, Box<Expr>),
+//!     Val(i32),
+//!     Var(String),
+//!     Neg(Box<Expr>),
 //! }
 //! ```
 //!
-//! ....MORE DOCS TO COME....
+//! Say we want to list all the used variable names inside a given expression:
 //!
-//! # Acknowledgements / Related Work
+//! ```rust
+//! # use uniplate::test_common::paper::Expr::*;
+//! # use uniplate::test_common::paper::Expr;
+//! fn vars(expr: &Expr) -> Vec<String>{
+//!     match expr {
+//!         Add(a,b) => {
+//!             [vars(a),vars(b)].concat()
+//!         },
+//!         Sub(a,b) => {
+//!             [vars(a),vars(b)].concat()
+//!         },
+//!         Mul(a,b) => {
+//!             [vars(a),vars(b)].concat()
+//!         },
+//!         Div(a,b) => {
+//!             [vars(a),vars(b)].concat()
+//!         },
+//!         Val(a) => {
+//!             Vec::new()
+//!         },
+//!         Var(a) => {
+//!             vec![a.clone()]
+//!         },
+//!         Neg(a) =>{
+//!             vars(a)
+//!         }
+//!     }
+//! }
+//! ```
 //!
-//! *This crate implements programming constructs from the following Haskell libraries and
-//! papers:*
+//! Functions like these are annoying to write: the first 4 constructors are basically identical,
+//! adding a new expression type requires a new line to be added to all match statement, and this
+//! code cannot be shared with similar functions (e.g. one that change all the variable names).
+//!
+//!
+//! With Uniplate, this boilerplate can be eliminated:
+//!
+//! ```rust
+//! # use uniplate::test_common::paper::Expr::*;
+//! # use uniplate::test_common::paper::Expr;
+//! use uniplate::biplate::Biplate;
+//! fn vars(expr: &Expr) -> Vec<String>{
+//!     <Expr as Biplate<String>>::universe_bi(expr).into_iter().collect()
+//! }
+//! ```
+//!
+//! The functionality of Uniplate comes from two main traits: [`Uniplate`](biplate::Uniplate) and
+//! [`Biplate<T>`](biplate::Biplate).
+//!
+//! * The [`Uniplate`](biplate::Uniplate) of `Expr` operates over all nested `Expr`s.
+//! * The [`Biplate<T>`](biplate::Biplate) of `Expr` operates over all nested values of some given type `T` within the
+//!   expression tree.
+//!
+//! These traits provide traversal operations (e.g. [`children`](Uniplate::children)) as well as
+//! functional programming constructs such as [`map`](Uniplate::map) and [`fold`](Uniplate::fold).
+//! See the trait documentation for the full list of operations provided.
+//!
+//! The easiest way to use Uniplate is with the derive macro.
+//!
+//! ## Derive Macro
+//!
+//! When no arguments are provided, the macro derives a Uniplate instance:
+//!
+//! ```rust
+//! use uniplate::Uniplate;
+//! #[derive(Clone,PartialEq,Eq,Debug,Uniplate)]
+//! enum Expr {
+//!     Add(Box<Expr>, Box<Expr>),
+//!     Sub(Box<Expr>, Box<Expr>),
+//!     Mul(Box<Expr>, Box<Expr>),
+//!     Div(Box<Expr>, Box<Expr>),
+//!     Val(i32),
+//!     Var(String),
+//!     Neg(Box<Expr>),
+//! }
+//! ```
+//!
+//! To derive Biplate instances, use the `#[biplate]` attribute:
+//!
+//! ```rust
+//! use uniplate::Uniplate;
+//! #[derive(Clone,PartialEq,Eq,Debug,Uniplate)]
+//! #[biplate(to=String)]
+//! #[biplate(to=i32)]
+//! enum Expr {
+//!     Add(Box<Expr>, Box<Expr>),
+//!     Sub(Box<Expr>, Box<Expr>),
+//!     Mul(Box<Expr>, Box<Expr>),
+//!     Div(Box<Expr>, Box<Expr>),
+//!     Val(i32),
+//!     Var(String),
+//!     Neg(Box<Expr>),
+//! }
+//! ```
+//!
+//! ## Multi-type traversals
+//!
+//! Lets expand our calculator language to include statements as well as expressions:
+//!
+//! ```rust
+//! enum Expr {
+//!     Add(Box<Expr>, Box<Expr>),
+//!     Sub(Box<Expr>, Box<Expr>),
+//!     Mul(Box<Expr>, Box<Expr>),
+//!     Div(Box<Expr>, Box<Expr>),
+//!     Val(i32),
+//!     Var(String),
+//!     Neg(Box<Expr>),
+//! }
+//!
+//! enum Stmt {
+//!     Assign(String, Expr),
+//!     Sequence(Vec<Stmt>),
+//!     If(Expr, Box<Stmt>, Box<Stmt>),
+//!     While(Expr, Box<Stmt>),
+//! }
+//! ```
+//!
+//! When looking for `Strings` in a given `Stmt`, we may want to identify not only the strings
+//! directly contained within a `Stmt`, but also any strings contained inside an `Expr` inside a
+//! `Stmt`.
+//!
+//! For example:
+//!
+//! ```
+//! # use uniplate::test_common::paper::Expr::*;
+//! # use uniplate::test_common::paper::Expr::*;
+//! # use uniplate::test_common::paper::Stmt;
+//! # use uniplate::test_common::paper::Stmt::*;
+//! use uniplate::biplate::Biplate;
+//!
+//! let stmt = Assign("x".into(), Add(Box::new(Var("y".into())),Box::new(Val(10))));
+//! let strings = <Stmt as Biplate<String>>::universe_bi(&stmt);
+//!
+//! assert!(strings.contains(&"x".into()));
+//!
+//! // Despite being inside an Expr::String, "y" is found by Biplate
+//! assert!(strings.contains(&"y".into()));
+//!
+//! assert_eq!(strings.len(), 2);
+//! ```
+//!
+//!
+//! To do this, a list of types to "walk into" can be given as an argument to the Biplate
+//! declaration:
+//! ```rust
+//! use uniplate::Uniplate;
+//! #[derive(Clone,PartialEq,Eq,Debug,Uniplate)]
+//! #[biplate(to=String)]
+//! enum Expr {
+//!     Add(Box<Expr>, Box<Expr>),
+//!     Sub(Box<Expr>, Box<Expr>),
+//!     Mul(Box<Expr>, Box<Expr>),
+//!     Div(Box<Expr>, Box<Expr>),
+//!     Val(i32),
+//!     Var(String),
+//!     Neg(Box<Expr>),
+//! }
+//!
+//! // Uniplate also supports walk_into.
+//! // In this case, it doesn't do much.
+//! #[derive(Clone,PartialEq,Eq,Debug,Uniplate)]
+//! #[biplate(to=String, walk_into=[Expr])]
+//! #[uniplate(walk_into=[Expr])]
+//! enum Stmt {
+//!     Assign(String, Expr),
+//!     Sequence(Vec<Stmt>),
+//!     If(Expr, Box<Stmt>, Box<Stmt>),
+//!     While(Expr, Box<Stmt>),
+//! }
+//! ```
+//!
+//!
+//! # Bibliography
+//!
+//! The techniques implemented in this crate originate from the following:
 //!  
-//! * [Uniplate](https://hackage.haskell.org/package/uniplate).
+//! * [The Uniplate Haskell Library](https://hackage.haskell.org/package/uniplate).
 //!
 //! * Neil Mitchell and Colin Runciman. 2007. Uniform boilerplate and list processing. In
 //! Proceedings of the ACM SIGPLAN workshop on Haskell workshop (Haskell '07). Association for

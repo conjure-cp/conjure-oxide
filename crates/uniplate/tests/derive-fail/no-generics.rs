@@ -1,6 +1,7 @@
 use uniplate::Uniplate;
 
 #[derive(PartialEq,Eq,Clone,Uniplate)]
+#[uniplate()]
 enum MyEnum {
     A(F<i32>,G)
 }

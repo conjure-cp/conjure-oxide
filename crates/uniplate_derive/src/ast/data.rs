@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::prelude::*;
 
 #[derive(Clone, Debug)]
@@ -13,25 +11,6 @@ impl Data {
         match self {
             Data::DataEnum(x) => x.span,
         }
-    }
-
-    pub fn get_platable_types(&self) -> Vec<syn::Path> {
-        let mut output: HashMap<String, syn::Path> = HashMap::new();
-        match self {
-            Data::DataEnum(x) => {
-                for variant in &x.variants {
-                    output.extend(
-                        variant
-                            .fields
-                            .iter()
-                            .filter_map(|f| f.typ.base_typ())
-                            .map(|t| (t.to_token_stream().to_string(), t)),
-                    );
-                }
-            }
-        };
-        //eprintln!("{:#?}",output);
-        output.into_values().collect()
     }
 
     pub fn ident(&self) -> syn::Ident {
@@ -68,6 +47,7 @@ impl From<Data> for ast::PlateableType {
 
 impl Parse for Data {
     fn parse(input: ParseStream) -> syn::Result<Self> {
+        input.parse::<syn::Visibility>()?;
         let lookahead = input.lookahead1();
         if lookahead.peek(Token![enum]) {
             input.parse().map(Data::DataEnum)
@@ -89,7 +69,7 @@ impl Parse for DataEnum {
     // https://docs.rs/syn/latest/syn/struct.ItemEnum.html
 
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        input.parse::<syn::Visibility>()?;
+        //input.parse::<syn::Visibility>()?;
         input.parse::<Token![enum]>()?;
         let ident = input.parse::<syn::Ident>()?;
 
