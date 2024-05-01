@@ -4,7 +4,7 @@ use conjure_core::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
 };
 use conjure_core::Model;
-use uniplate::uniplate::Uniplate;
+use uniplate::biplate::Uniplate;
 
 register_rule_set!("Bubble", 254, ("Base"));
 
@@ -50,10 +50,7 @@ fn bubble_up(expr: &Expression, _: &Model) -> ApplicationResult {
     }
     return Ok(Reduction::pure(Expression::Bubble(
         Metadata::new(),
-        Box::new(
-            expr.with_children(sub)
-                .or(Err(ApplicationError::RuleNotApplicable))?,
-        ),
+        Box::new(expr.with_children(sub)),
         Box::new(Expression::And(Metadata::new(), bubbled_conditions)),
     )));
 }

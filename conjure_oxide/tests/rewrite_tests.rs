@@ -13,7 +13,7 @@ use conjure_oxide::{
     utils::testing::save_stats_json,
     Metadata, Model, Rule,
 };
-use uniplate::uniplate::Uniplate;
+use uniplate::biplate::Uniplate;
 
 #[test]
 fn rules_present() {
@@ -1098,9 +1098,7 @@ fn is_simple_iteration<'a>(
         for i in 0..sub.len() {
             if let Some(new) = is_simple_iteration(&sub[i], rules) {
                 sub[i] = new;
-                if let Ok(res) = expression.with_children(sub.clone()) {
-                    return Some(res);
-                }
+                return Some(expression.with_children(sub.clone()));
             }
         }
     }
