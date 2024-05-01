@@ -149,7 +149,7 @@ impl Parse for Type {
             }
         }
 
-        // ensure that we dont have parenthesised (...) type arguments.
+        // ensure that we don't have parenthesised (...) type arguments.
         let args = base_path.segments.last().expect("").arguments.clone();
         let syn::PathArguments::None = args else {
             return Err(syn::Error::new(
@@ -220,7 +220,7 @@ impl HasBaseType for BoxedPlateableType {
     }
 }
 
-/// A platable type.
+/// A plateable type.
 ///
 /// This struct splits a type into wrapper and base components.
 /// Base types are used to determine what new instances of Biplate to derive.

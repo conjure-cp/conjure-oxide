@@ -119,7 +119,7 @@ pub use uniplate_derive::*;
 
 extern crate self as uniplate;
 
-/// Generates a Biplate and Uniplate instance for an unplatable type.
+/// Generates a Biplate and Uniplate instance for an unplateable type.
 #[macro_export]
 macro_rules! derive_unplateable {
     ($t:ty) => {
