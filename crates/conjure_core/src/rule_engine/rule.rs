@@ -12,8 +12,8 @@ pub enum ApplicationError {
     #[error("Rule is not applicable")]
     RuleNotApplicable,
 
-    #[error("Could not find the min/max bounds for the expression")]
-    BoundError,
+    #[error("Could not calculate the expression domain")]
+    DomainError,
 }
 
 /// The result of applying a rule to an expression.
@@ -77,7 +77,7 @@ impl Reduction {
                 Expression::And(metadata, mut exprs) => {
                     // Avoid creating a nested conjunction
                     exprs.push(self.new_top.clone());
-                    Expression::And(metadata.clone(), exprs)
+                    Expression::And(metadata.clone_dirty(), exprs)
                 }
                 _ => Expression::And(
                     Metadata::new(),
