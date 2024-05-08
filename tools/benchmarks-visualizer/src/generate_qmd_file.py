@@ -3,12 +3,16 @@
 
 # dependencies
 import os
+import sys
 
 # set the directory where figures stored
 figures_dir = './figures'
 
 # function to list down all image files in the figures directory
 def list_figure_files(directory):
+    # [SANITY CHECK] checks to see if the directory for node & time elapsed figures is empty
+    if not os.listdir(directory):
+        sys.exit("FATAL ERROR: The './figures' directory is empty. Please generate the appropriate solver statistics.")
     return [f for f in os.listdir(directory)]
 
 # function to write the content to the .qmd file

@@ -76,22 +76,3 @@ python3 ./src/generate_qml_file.py
 # render to HTML using quarto
 quarto render ./html/dashboard.qmd
 ```
-
-## RUN DYNAMIC DASHBOARD MANUALLY
-
-To run Dash dashboard manually simply execute the app.py script:
-```bash
-python3 src/dash_dashboard.py
-```
-
-To then visualize the dashboard (for now, until hosted), open a web browser and navigate to `http://127.0.0.1:8050/`:
-```bash
-# for windows 10/11
-start http://127.0.0.1:8050/
-
-# for macOS
-open http://127.0.0.1:8050/ 
-
-# for Linux (most desktop env)
-xdg-open http://127.0.0.1:8050/
-```
