@@ -5,7 +5,7 @@
 from processing import extract_solver_stats_dataframe
 
 # plotting libraries
-import plotly.graph_objs as go
+import plotly.graph_objects as go
 import plotly.io as pio
 import os
 
@@ -22,7 +22,7 @@ def save_figure(figure, filename):
 
     try:
         pio.write_image(figure, file_path)
-        print(f"STATUS: Figure saved as {file_path}") # output to help verify successful save
+        # print(f"STATUS: Figure saved as {file_path}") # output to help verify successful save
     except Exception as e:
         print(f"ERROR: Unable to save figure as {file_path}: {e}")
 
@@ -33,22 +33,71 @@ def generate_static_visualizations(df):
     for category in categories:
         test_folders = df.loc[category].index.get_level_values('Test').unique()
         
+
         for test_folder in test_folders:
 
             filtered_df = df.loc[(category, test_folder)]
+            # print(filtered_df)
+
             condition = filtered_df['Status'] == 'OK'
 
-            # solver Nodes Bar Graph
-            nodes_fig = go.Figure(data=[
-                go.Bar(
-                    x=filtered_df[condition].index.get_level_values('Solver'),
-                    y=filtered_df[condition]['SolverNodes']
-                )
-            ])
-            nodes_fig.update_layout(title=f'Solver Nodes for {test_folder}', xaxis_title='Solver', yaxis_title='Nodes')
+            ########### SOLVER NODE BAR GRAPH ###########
+
+            # get unique solver names (as a precaution)
+            solvers = filtered_df.index.get_level_values('Solver').unique()
+            solver_pairs = []
+            #  find matching solvers (modular for added solvers)
+            ## for more optimized code, hard code the solvers currently in use
+            for solver in solvers:
+                if solver.startswith('native_'):
+                    counterpart = 'oxide_' + solver.split('_', 1)[1]
+                elif solver.startswith('oxide_'):
+                    counterpart = 'native_' + solver.split('_', 1)[1]
+                else:
+                    continue
+
+                if counterpart in solvers:
+                    # append pairs and remove duplicates
+                    pair = tuple(sorted([solver, counterpart]))
+                    if pair not in solver_pairs:
+                        solver_pairs.append(pair)
+
+            bar_data = []
+            used_solvers = set()
+            for solver_pair in solver_pairs:
+                for solver in solver_pair:
+                    bar_data.append(go.Bar(
+                        name=solver,
+                        x=[solver.replace('native_', '').replace('oxide_', '')],
+                        y=[filtered_df.loc[solver]['SolverNodes']],
+                        width=0.4,
+                        offset=-0.2 if 'native_' in solver else 0.2,  # Adjust position based on solver type
+                    ))
+                    used_solvers.add(solver)
+
+            # add rest of solvers
+            for solver in solvers:
+                if solver not in used_solvers:
+                    bar_data.append(go.Bar(
+                        name=solver,
+                        x=[solver.replace('native_', '').replace('oxide_', '')],
+                        y=[filtered_df.loc[solver]['SolverNodes']],
+                        width=0.4,
+                        offset=0
+                    ))
+
+            # create the figure using bar data
+            nodes_fig = go.Figure(data=bar_data)
+            nodes_fig.update_layout(
+                title=f'Solver Nodes for {test_folder}',
+                xaxis_title='Solver',
+                yaxis_title='Nodes',
+                barmode='group'
+            )
             save_figure(nodes_fig, f'nodes_{category}_{test_folder}')
             
-            # total Time Bar Graph
+            ########### SOLVER TIME ELAPSED GRAPH ###########
+
             time_fig = go.Figure(data=[
                 go.Bar(
                     x=filtered_df[condition].index.get_level_values('Solver'),

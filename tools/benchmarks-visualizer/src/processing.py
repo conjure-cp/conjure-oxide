@@ -104,7 +104,7 @@ def extract_solver_stats_dataframe(root_dir):
     return df
 
 if __name__ == '__main__':
-    root_dir = './data'  # Replace with your actual data folder path
+    root_dir = './data'
     
     print(extract_solver_stats_dataframe(root_dir))
 
