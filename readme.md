@@ -13,6 +13,7 @@ This repository hosts the following projects:
 This project is being produced by staff and students of University of St
 Andrews, and is licenced under the [MPL 2.0](./LICENCE).
 
+
 ## Documentation
 
 API documentation can be found [here](https://conjure-cp.github.io/conjure-oxide/docs/).
@@ -20,6 +21,16 @@ API documentation can be found [here](https://conjure-cp.github.io/conjure-oxide
 ## Contributing
 
 See the [Contributors Guide](https://github.com/conjure-cp/conjure-oxide/wiki/Contributing).
+
+## Rust Nightly
+
+The `nightly` feature must be used when using the nightly Rust compiler:
+
+E.g.
+
+```
+cargo build --features nightly
+```
 
 <!-- vim: cc=80
 -->

@@ -57,13 +57,21 @@ jobs:
       - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
 
       - run: cargo build -vv --workspace
+        if: ${{ matrix.rust_release == 'stable' }}
+
+      - run: cargo build -vv --workspace --features nightly
+        if: ${{ matrix.rust_release == 'nightly' }}
 
       - uses: ./.github/actions/install-conjure
         with: 
           os_arch: ${{ matrix.release_suffix }}
           version: ${{ matrix.conjure_version }}
           
+      - run: cargo test --workspace --features nightly
+        if: ${{ matrix.rust_release == 'nightly' }}
+
       - run: cargo test --workspace
+        if: ${{ matrix.rust_release == 'stable' }}
 
   audit:
     name: "Dependency Audit"
