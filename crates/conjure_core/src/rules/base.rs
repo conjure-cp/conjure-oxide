@@ -6,7 +6,7 @@ use conjure_core::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
 };
 use conjure_core::Model;
-use uniplate::uniplate::Uniplate;
+use uniplate::biplate::Uniplate;
 
 /*****************************************************************************/
 /*        This file contains basic rules for simplifying expressions         */
@@ -55,7 +55,9 @@ fn remove_nothings(expr: &Expr, _: &Model) -> ApplicationResult {
         (lhs, rhs)
     }
 
-    let new_sub = remove_nothings(expr.children())?;
+    // FIXME (niklasdewally): temporary conversion until I get the Uniplate APIs figured out
+    // Uniplate *should* support Vec<> not im::Vector
+    let new_sub = remove_nothings(expr.children().into_iter().collect())?;
 
     match expr {
         Expr::And(md, _) => Ok(Reduction::pure(Expr::And(md.clone(), new_sub))),
