@@ -3,6 +3,7 @@ mod domains;
 mod expressions;
 mod symbol_table;
 pub mod types;
+mod uniplate;
 mod variables;
 
 pub use constants::Constant;

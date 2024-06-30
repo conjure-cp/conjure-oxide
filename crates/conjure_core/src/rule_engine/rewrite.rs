@@ -4,7 +4,7 @@ use std::fmt::Display;
 use thiserror::Error;
 
 use crate::stats::RewriterStats;
-use uniplate::uniplate::Uniplate;
+use uniplate::biplate::Uniplate;
 
 use crate::rule_engine::{Reduction, Rule, RuleSet};
 use crate::{
@@ -119,9 +119,8 @@ fn rewrite_iteration<'a>(
     for i in 0..sub.len() {
         if let Some(red) = rewrite_iteration(&sub[i], model, rules, apply_optimizations, stats) {
             sub[i] = red.new_expression;
-            if let Ok(res) = expression.with_children(sub.clone()) {
-                return Some(Reduction::new(res, red.new_top, red.symbols));
-            }
+            let res = expression.with_children(sub.clone());
+            return Some(Reduction::new(res, red.new_top, red.symbols));
         }
     }
     // If all children are clean, mark this expression as clean

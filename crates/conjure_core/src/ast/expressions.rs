@@ -4,8 +4,6 @@ use derive_is_enum_variant::is_enum_variant;
 use serde::{Deserialize, Serialize};
 
 use enum_compatability_macro::document_compatibility;
-use uniplate::uniplate::Uniplate;
-use uniplate_derive::Uniplate;
 
 use crate::ast::constants::Constant;
 use crate::ast::symbol_table::{Name, SymbolTable};
@@ -15,7 +13,7 @@ use crate::metadata::Metadata;
 use super::{Domain, Range};
 
 #[document_compatibility]
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, is_enum_variant, Uniplate)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, is_enum_variant)]
 #[non_exhaustive]
 pub enum Expression {
     /**

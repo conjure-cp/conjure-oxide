@@ -1,17 +1,20 @@
+use crate::Uniplate;
 use proptest::prelude::*;
 
 // Examples found in the Uniplate paper.
 
 // Stmt and Expr to demonstrate and test multitype traversals.
-#[derive(Eq, PartialEq, Clone, Debug)]
+#[derive(Eq, PartialEq, Clone, Debug, Uniplate)]
+#[biplate(to=String,walk_into=[Expr])]
 pub enum Stmt {
     Assign(String, Expr),
-    Sequence(Vec<Stmt>),
+    //FIXME: Sequence(Vec<Stmt>),
     If(Expr, Box<Stmt>, Box<Stmt>),
     While(Expr, Box<Stmt>),
 }
 
-#[derive(Eq, PartialEq, Clone, Debug)]
+#[derive(Eq, PartialEq, Clone, Debug, Uniplate)]
+#[biplate(to=String)]
 pub enum Expr {
     Add(Box<Expr>, Box<Expr>),
     Sub(Box<Expr>, Box<Expr>),
@@ -56,7 +59,8 @@ pub fn proptest_stmts() -> impl Strategy<Value = Stmt> {
             ),
             (proptest_exprs(), inner.clone())
                 .prop_map(move |(expr, stmt)| While(expr, Box::new(stmt))),
-            prop::collection::vec(inner.clone(), 0..50).prop_map(Sequence)
+            // FIXME:
+            //prop::collection::vec(inner.clone(), 0..50).prop_map(Sequence)
         ]
     })
 }

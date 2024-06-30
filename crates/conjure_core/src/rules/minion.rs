@@ -2,8 +2,6 @@
 /*        Rules for translating to Minion-supported constraints         */
 /************************************************************************/
 
-use uniplate::uniplate::Uniplate;
-
 use crate::ast::{
     Constant as Const, DecisionVariable, Domain, Expression as Expr, Range, SymbolTable,
 };
@@ -13,6 +11,7 @@ use crate::rule_engine::{
 };
 use crate::solver::SolverFamily;
 use crate::Model;
+use uniplate::biplate::Uniplate;
 
 register_rule_set!("Minion", 100, ("Base"), (SolverFamily::Minion));
 
@@ -290,8 +289,7 @@ fn flatten_safediv(expr: &Expr, mdl: &Model) -> ApplicationResult {
         }
         if !new_top.is_empty() {
             return Ok(Reduction::new(
-                expr.with_children(sub)
-                    .or(Err(ApplicationError::RuleNotApplicable))?,
+                expr.with_children(sub),
                 Expr::And(Metadata::new(), new_top),
                 new_vars,
             ));
