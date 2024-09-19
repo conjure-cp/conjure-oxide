@@ -66,7 +66,7 @@ where
         ctx(children.map(op))
     }
 
-    /// Gest all children of a node, including itself and all children.
+    /// Gets all children of a node, including itself and all children.
     fn universe(&self) -> im::Vector<Self> {
         let mut results = vector![self.clone()];
         for child in self.children() {
