@@ -9,7 +9,7 @@ register_rule_set!("Constant", 255, ());
 
 #[register_rule(("Constant", 255))]
 fn apply_eval_constant(expr: &Expr, _: &Model) -> ApplicationResult {
-    if expr.is_constant() {
+    if let Expr::Constant(_, _) = expr {
         return Err(ApplicationError::RuleNotApplicable);
     }
     eval_constant(expr)

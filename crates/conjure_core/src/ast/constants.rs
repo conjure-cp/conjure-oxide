@@ -1,8 +1,10 @@
 use std::fmt::{Display, Formatter};
 
 use serde::{Deserialize, Serialize};
+use uniplate::Uniplate;
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
+#[uniplate()]
 pub enum Constant {
     Int(i32),
     Bool(bool),

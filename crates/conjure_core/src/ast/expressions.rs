@@ -1,9 +1,9 @@
 use std::fmt::{Display, Formatter};
 
-use derive_is_enum_variant::is_enum_variant;
 use serde::{Deserialize, Serialize};
 
 use enum_compatability_macro::document_compatibility;
+use uniplate::Uniplate;
 
 use crate::ast::constants::Constant;
 use crate::ast::symbol_table::{Name, SymbolTable};
@@ -13,7 +13,9 @@ use crate::metadata::Metadata;
 use super::{Domain, Range};
 
 #[document_compatibility]
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, is_enum_variant)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
+#[uniplate(walk_into=[])]
+#[biplate(to=Constant)]
 #[non_exhaustive]
 pub enum Expression {
     /**
