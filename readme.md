@@ -34,7 +34,6 @@ API documentation can be found [here](https://conjure-cp.github.io/conjure-oxide
 
 ## Contributing
 
-See the [Contributors Guide](https://github.com/conjure-cp/conjure-oxide/wiki/Contributing).
-
+See the [project wiki](https://github.com/conjure-cp/conjure-oxide/wiki)
 <!-- vim: cc=80
 -->
