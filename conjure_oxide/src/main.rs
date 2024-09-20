@@ -97,6 +97,7 @@ pub fn main() -> AnyhowResult<()> {
         .append(true)
         .open("conjure_oxide.log")?;
 
+    //Builder::with_level("Trace")
     Builder::new()
         .with_target_writer("info", new_writer(stdout()))
         .with_target_writer("file", new_writer(log_file))

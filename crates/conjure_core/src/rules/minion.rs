@@ -262,38 +262,47 @@ fn leq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 */
 #[register_rule(("Minion", 101))]
 fn flatten_safediv(expr: &Expr, mdl: &Model) -> ApplicationResult {
-    if expr.is_eq() || expr.is_leq() || expr.is_geq() || expr.is_neq() {
-        let mut sub = expr.children();
-
-        let mut new_vars = SymbolTable::new();
-        let mut new_top = vec![];
-
-        // replace every safe div child with a reference to a new variable
-        for c in sub.iter_mut() {
-            if let Expr::SafeDiv(_, a, b) = c.clone() {
-                let new_name = mdl.gensym();
-                let domain = c
-                    .domain_of(&mdl.variables)
-                    .ok_or(ApplicationError::DomainError)?;
-                new_vars.insert(new_name.clone(), DecisionVariable::new(domain));
-
-                new_top.push(Expr::DivEq(
-                    Metadata::new(),
-                    a.clone(),
-                    b.clone(),
-                    Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
-                ));
-
-                *c = Expr::Reference(Metadata::new(), new_name.clone());
-            }
+    use Expr::*;
+    match expr {
+        Eq(_, _, _) => {}
+        Leq(_, _, _) => {}
+        Geq(_, _, _) => {}
+        Neq(_, _, _) => {}
+        _ => {
+            return Err(ApplicationError::RuleNotApplicable);
         }
-        if !new_top.is_empty() {
-            return Ok(Reduction::new(
-                expr.with_children(sub),
-                Expr::And(Metadata::new(), new_top),
-                new_vars,
+    }
+
+    let mut sub = expr.children();
+
+    let mut new_vars = SymbolTable::new();
+    let mut new_top = vec![];
+
+    // replace every safe div child with a reference to a new variable
+    for c in sub.iter_mut() {
+        if let Expr::SafeDiv(_, a, b) = c.clone() {
+            let new_name = mdl.gensym();
+            let domain = c
+                .domain_of(&mdl.variables)
+                .ok_or(ApplicationError::DomainError)?;
+            new_vars.insert(new_name.clone(), DecisionVariable::new(domain));
+
+            new_top.push(Expr::DivEq(
+                Metadata::new(),
+                a.clone(),
+                b.clone(),
+                Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
             ));
+
+            *c = Expr::Reference(Metadata::new(), new_name.clone());
         }
+    }
+    if !new_top.is_empty() {
+        return Ok(Reduction::new(
+            expr.with_children(sub),
+            Expr::And(Metadata::new(), new_top),
+            new_vars,
+        ));
     }
     Err(ApplicationError::RuleNotApplicable)
 }
@@ -303,9 +312,13 @@ fn div_eq_to_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Eq(metadata, a, b) => {
             if let Expr::SafeDiv(_, x, y) = a.as_ref() {
-                if !(b.is_reference() || b.is_constant()) {
-                    return Err(ApplicationError::RuleNotApplicable);
-                }
+                match **b {
+                    Expr::Reference(_, _) | Expr::Constant(_, _) => {}
+                    _ => {
+                        return Err(ApplicationError::RuleNotApplicable);
+                    }
+                };
+
                 Ok(Reduction::pure(Expr::DivEq(
                     metadata.clone_dirty(),
                     x.clone(),
@@ -313,9 +326,12 @@ fn div_eq_to_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
                     b.clone(),
                 )))
             } else if let Expr::SafeDiv(_, x, y) = b.as_ref() {
-                if !(a.is_reference() || a.is_constant()) {
-                    return Err(ApplicationError::RuleNotApplicable);
-                }
+                match **a {
+                    Expr::Reference(_, _) | Expr::Constant(_, _) => {}
+                    _ => {
+                        return Err(ApplicationError::RuleNotApplicable);
+                    }
+                };
                 Ok(Reduction::pure(Expr::DivEq(
                     metadata.clone_dirty(),
                     x.clone(),

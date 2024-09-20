@@ -70,7 +70,7 @@ impl Reduction {
     // Apply side-effects (e.g. symbol table updates
     pub fn apply(self, model: &mut Model) {
         model.variables.extend(self.symbols); // Add new assignments to the symbol table
-        if self.new_top.is_nothing() {
+        if let Expression::Nothing = self.new_top {
             model.constraints = self.new_expression.clone();
         } else {
             model.constraints = match self.new_expression {

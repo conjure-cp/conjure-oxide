@@ -1,190 +1,252 @@
-use proc_macro::{self, TokenStream};
+mod ast;
+mod prelude;
+mod state;
 
-use proc_macro2::TokenStream as TokenStream2;
-use quote::{format_ident, quote};
-use syn::{parse_macro_input, Data, DataEnum, DeriveInput, Ident, Variant};
+use std::collections::VecDeque;
 
-use crate::utils::generate::{generate_field_clones, generate_field_fills, generate_field_idents};
+use prelude::*;
+use quote::format_ident;
+use syn::parse_macro_input;
 
-mod utils;
+#[proc_macro_derive(Uniplate, attributes(uniplate, biplate))]
+pub fn uniplate_derive(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as ast::DeriveInput);
+    //eprintln!("{:#?}",input.clone());
+    let mut state: ParserState = ParserState::new(input.clone());
 
-/// Generate the full match pattern for a variant
-fn generate_match_pattern(variant: &Variant, root_ident: &Ident) -> TokenStream2 {
-    let field_idents = generate_field_idents(&variant.fields);
-    let variant_ident = &variant.ident;
+    let mut out_tokens: Vec<TokenStream2> = Vec::new();
+    out_tokens.push(quote! {
+        use std::borrow::Borrow as _;
+    });
 
-    if field_idents.is_empty() {
-        quote! {
-            #root_ident::#variant_ident
-        }
-    } else {
-        quote! {
-            #root_ident::#variant_ident(#(#field_idents,)*)
+    while state.next_instance().is_some() {
+        out_tokens.push(match &state.current_instance {
+            Some(ast::InstanceMeta::Uniplate(_)) => derive_a_uniplate(&mut state),
+            Some(ast::InstanceMeta::Biplate(_)) => derive_a_biplate(&mut state),
+            _ => unreachable!(),
+        });
+    }
+
+    out_tokens.into_iter().collect::<TokenStream2>().into()
+}
+
+fn derive_a_uniplate(state: &mut ParserState) -> TokenStream2 {
+    let from = state.from.to_token_stream();
+    let tokens: TokenStream2 = match state.data.clone() {
+        ast::Data::DataEnum(x) => _derive_a_enum_uniplate(state, x),
+    };
+
+    quote! {
+        impl ::uniplate::biplate::Uniplate for #from {
+            fn uniplate(&self) -> (::uniplate::Tree<#from>, Box<dyn Fn(::uniplate::Tree<#from>) -> #from>) {
+                #tokens
+            }
         }
     }
 }
 
-/// Generate the code to get the children of a variant
-fn generate_variant_children_match_arm(variant: &Variant, root_ident: &Ident) -> TokenStream2 {
-    let field_clones = generate_field_clones(&variant.fields, root_ident);
+fn _derive_a_enum_uniplate(state: &mut ParserState, data: ast::DataEnum) -> TokenStream2 {
+    let mut variant_tokens = VecDeque::<TokenStream2>::new();
+    for variant in data.variants {
+        if variant.fields.is_empty() {
+            let ident = variant.ident;
+            let enum_ident = state.data.ident();
+            variant_tokens.push_back(quote! {
+                #enum_ident::#ident => {
+                    (::uniplate::Tree::Zero,Box::new(|_| #enum_ident::#ident))
+                },
+            });
+        } else {
+            let field_idents: Vec<syn::Ident> = variant
+                .fields
+                .iter()
+                .enumerate()
+                .map(|(i, _)| format_ident!("_f{}", i))
+                .collect();
+            let field_defs: Vec<_> = std::iter::zip(variant.fields.clone(), field_idents.clone())
+                .map(|(field, ident)| _derive_for_field(state, field, ident))
+                .collect();
+            let children_def = _derive_children(state, &variant.fields);
+            let ctx_def = _derive_ctx(state, &variant.fields, &variant.ident);
+            let ident = variant.ident;
+            let enum_ident = state.data.ident();
+            variant_tokens.push_back(quote! {
+                #enum_ident::#ident(#(#field_idents),*) => {
+                    #(#field_defs)*
 
-    let match_pattern = generate_match_pattern(variant, root_ident);
+                    #children_def
 
-    let clones = if field_clones.is_empty() {
-        quote! {
-            Vec::new()
+                    #ctx_def
+
+                    (children,ctx)
+                },
+            });
         }
-    } else {
-        quote! {
-            vec![#(#field_clones,)*].iter().flatten().cloned().collect::<Vec<_>>()
-        }
-    };
+    }
 
-    let mach_arm = quote! {
-         #match_pattern => {
-            #clones
+    let variant_tokens = variant_tokens.iter();
+    quote! {
+        match self {
+            #(#variant_tokens)*
         }
-    };
-
-    mach_arm
+    }
 }
 
-/// Generate an implementation of `context` for a variant
-fn generate_variant_context_match_arm(variant: &Variant, root_ident: &Ident) -> TokenStream2 {
-    let variant_ident = &variant.ident;
-    let children_ident = Ident::new("children", variant_ident.span());
-    let field_fills = generate_field_fills(&variant.fields, root_ident, &children_ident);
-    let error_ident = format_ident!("UniplateError{}", root_ident);
-    let match_pattern = generate_match_pattern(variant, root_ident);
+fn _derive_for_field(
+    state: &mut ParserState,
+    field: ast::Field,
+    ident: syn::Ident,
+) -> TokenStream2 {
+    let children_ident = format_ident!("{}_children", ident);
+    let ctx_ident = format_ident!("{}_ctx", ident);
 
-    if field_fills.is_empty() {
+    let to_t = state.to.clone().expect("").to_token_stream();
+
+    if !state.walk_into_type(&field.typ) {
+        let copy_ident = format_ident!("{}_copy", ident);
         quote! {
-            #match_pattern => {
-                Box::new(|_| Ok(#root_ident::#variant_ident))
-            }
+            let #copy_ident = #ident.clone();
         }
     } else {
-        quote! {
-            #match_pattern => {
-                Box::new(|children| {
-                    if (children.len() != self.children().len()) {
-                        return Err(#error_ident::WrongNumberOfChildren(self.children().len(), children.len()));
+        match &field.typ {
+            // dereference the field
+            ast::Type::BoxedPlateable(x) => {
+                let from_t = x.inner_typ.to_token_stream();
+                quote! {
+                    let (#children_ident,#ctx_ident) = <#from_t as ::uniplate::biplate::Biplate<#to_t>>::biplate(#ident.borrow());
+                }
+            }
+            ast::Type::Plateable(x) => {
+                let from_t = x.to_token_stream();
+                quote! {
+                    let (#children_ident,#ctx_ident) = <#from_t as ::uniplate::biplate::Biplate<#to_t>>::biplate(#ident);
+                }
+            }
+            ast::Type::Unplateable => {
+                let copy_ident = format_ident!("{}_copy", ident);
+                quote! {
+                    let #copy_ident = #ident.clone();
+                }
+            }
+        }
+    }
+}
+
+fn _derive_children(state: &mut ParserState, fields: &[ast::Field]) -> TokenStream2 {
+    let mut subtrees: VecDeque<TokenStream2> = VecDeque::new();
+    for (i, field) in fields.iter().enumerate() {
+        if !state.walk_into_type(&field.typ) {
+            subtrees.push_back(quote!(::uniplate::Tree::Zero));
+            continue;
+        }
+        subtrees.push_back(match field.typ {
+            ast::Type::BoxedPlateable(_) => {
+                let children_ident = format_ident!("_f{}_children", i);
+                quote!(#children_ident)
+            }
+            ast::Type::Plateable(_) => {
+                let children_ident = format_ident!("_f{}_children", i);
+                quote!(#children_ident)
+            }
+            ast::Type::Unplateable => quote!(::uniplate::Tree::Zero),
+        });
+    }
+
+    match subtrees.len() {
+        0 => quote! {let children = ::uniplate::Tree::Zero;},
+        _ => {
+            let subtrees = subtrees.iter();
+            quote! {let children = ::uniplate::Tree::Many(::im::vector![#(#subtrees),*]);}
+        }
+    }
+}
+
+fn _derive_ctx(
+    state: &mut ParserState,
+    fields: &[ast::Field],
+    var_ident: &syn::Ident,
+) -> TokenStream2 {
+    let field_ctxs: Vec<_> = fields
+        .iter()
+        .enumerate()
+        .map(|(i, f)| {
+            if !state.walk_into_type(&f.typ) {
+                let ident = format_ident!("_f{}_copy", i);
+                quote! {#ident.clone()}
+            } else {
+                match &f.typ {
+                    ast::Type::Unplateable => {
+                        let ident = format_ident!("_f{}_copy", i);
+                        quote! {#ident.clone()}
                     }
 
-                    let mut #children_ident = children.clone();
-                    Ok(#root_ident::#variant_ident(#(#field_fills,)*))
-                })
+                    ast::Type::Plateable(_) => {
+                        let ctx_ident = format_ident!("_f{}_ctx", i);
+                        quote! {#ctx_ident(x[#i].clone())}
+                    }
+
+                    ast::Type::BoxedPlateable(x) => {
+                        let boxed_typ = x.box_typ.to_token_stream();
+                        let ctx_ident = format_ident!("_f{}_ctx", i);
+                        quote! {#boxed_typ::new(#ctx_ident(x[#i].clone()))}
+                    }
+                }
+            }
+        })
+        .collect();
+
+    let data_ident = state.data.ident();
+    let typ = state.to.clone();
+    match fields.len() {
+        0 => {
+            quote! {
+                let ctx = Box::new(move |x: ::uniplate::Tree<#typ>| {
+                    let ::uniplate::Tree::Zero = x else { panic!()};
+                    #data_ident::#var_ident
+                });
+            }
+        }
+        _ => {
+            quote! {
+                    let ctx = Box::new(move |x: ::uniplate::Tree<#typ>| {
+                        let ::uniplate::Tree::Many(x) = x else { panic!()};
+                        #data_ident::#var_ident(#(#field_ctxs),*)
+            });}
+        }
+    }
+}
+
+fn derive_a_biplate(state: &mut ParserState) -> TokenStream2 {
+    let from = state.from.base_typ.to_token_stream();
+    let to = state.to.to_token_stream();
+
+    if from.to_string() == to.to_string() {
+        return _derive_identity_biplate(from);
+    }
+
+    let tokens: TokenStream2 = match state.data.clone() {
+        ast::Data::DataEnum(x) => _derive_a_enum_uniplate(state, x),
+    };
+
+    quote! {
+        impl ::uniplate::biplate::Biplate<#to> for #from {
+            fn biplate(&self) -> (::uniplate::Tree<#to>, Box<dyn Fn(::uniplate::Tree<#to>) -> #from>) {
+                #tokens
             }
         }
     }
 }
 
-/// Derive the `Uniplate` trait for an arbitrary type
-///
-/// # WARNING
-///
-/// This is alpha code. It is not yet stable and some features are missing.
-///
-/// ## What works?
-///
-/// - Deriving `Uniplate` for enum types
-/// - `Box<T>` and `Vec<T>` fields, including nested vectors
-/// - Tuple fields, including nested tuples - e.g. `(Vec<T>, (Box<T>, i32))`
-///
-/// ## What does not work?
-///
-/// - Structs
-/// - Unions
-/// - Array fields
-/// - Multiple type arguments - e.g. `MyType<T, R>`
-/// - Any complex type arguments, e.g. `MyType<T: MyTrait1 + MyTrait2>`
-/// - Any collection type other than `Vec`
-/// - Any box type other than `Box`
-///
-/// # Usage
-///
-/// This macro is intended to replace a hand-coded implementation of the `Uniplate` trait.
-/// Example:
-///
-/// ```rust
-/// use uniplate_derive::Uniplate;
-/// use uniplate::uniplate::Uniplate;
-///
-/// #[derive(PartialEq, Eq, Debug, Clone, Uniplate)]
-/// enum MyEnum {
-///    A(Box<MyEnum>),
-///    B(Vec<MyEnum>),
-///    C(i32),
-/// }
-///
-/// let a = MyEnum::A(Box::new(MyEnum::C(42)));
-/// let (children, context) = a.uniplate();
-/// assert_eq!(children, vec![MyEnum::C(42)]);
-/// assert_eq!(context(vec![MyEnum::C(42)]).unwrap(), a);
-/// ```
-///
-#[proc_macro_derive(Uniplate)]
-pub fn derive(macro_input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(macro_input as DeriveInput);
-    let root_ident = &input.ident;
-    let data = &input.data;
-
-    let children_impl: TokenStream2 = match data {
-        Data::Struct(_) => unimplemented!("Structs currently not supported"), // ToDo support structs
-        Data::Union(_) => unimplemented!("Unions currently not supported"),   // ToDo support unions
-        Data::Enum(DataEnum { variants, .. }) => {
-            let match_arms: Vec<TokenStream2> = variants
-                .iter()
-                .map(|vt| generate_variant_children_match_arm(vt, root_ident))
-                .collect::<Vec<_>>();
-
-            let match_statement = quote! {
-                match self {
-                    #(#match_arms)*
-                }
-            };
-
-            match_statement
-        }
-    };
-
-    let context_impl = match data {
-        Data::Struct(_) => unimplemented!("Structs currently not supported"),
-        Data::Union(_) => unimplemented!("Unions currently not supported"),
-        Data::Enum(DataEnum { variants, .. }) => {
-            let match_arms: Vec<TokenStream2> = variants
-                .iter()
-                .map(|vt| generate_variant_context_match_arm(vt, root_ident))
-                .collect::<Vec<_>>();
-
-            let match_statement = quote! {
-                match self {
-                    #(#match_arms)*
-                }
-            };
-
-            match_statement
-        }
-    };
-
-    let error_ident = format_ident!("UniplateError{}", root_ident);
-
-    let output = quote! {
-        use uniplate::uniplate::UniplateError as #error_ident;
-
-        impl Uniplate for #root_ident {
-            #[allow(unused_variables)]
-            fn uniplate(&self) -> (Vec<#root_ident>, Box<dyn Fn(Vec<#root_ident>) -> Result<#root_ident, #error_ident> + '_>) {
-                let context: Box<dyn Fn(Vec<#root_ident>) -> Result<#root_ident, #error_ident>> = #context_impl;
-
-                let children: Vec<#root_ident> = #children_impl;
-
-                (children, context)
+fn _derive_identity_biplate(typ: TokenStream2) -> TokenStream2 {
+    quote! {
+        impl ::uniplate::biplate::Biplate<#typ> for #typ{
+            fn biplate(&self) -> (::uniplate::Tree<#typ>, Box<dyn Fn(::uniplate::Tree<#typ>) -> #typ>) {
+                let val = self.clone();
+                (::uniplate::Tree::One(val.clone()),Box::new(move |x| {
+                    let ::uniplate::Tree::One(x) = x else {todo!()};
+                    x
+                }))
             }
         }
-    };
-
-    // println!("Final macro output:\n{}", output.to_string());
-
-    output.into()
+    }
 }
