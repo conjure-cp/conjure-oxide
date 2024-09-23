@@ -23,3 +23,15 @@ reference:
 * [conjure_core](conjure_core/index.html)
 * [conjure_macros](conjure_macros/index.html)
 * [enum_compatability_macro](enum_compatability_macro/index.html)
+
+## Running Tests in Conjure Oxide
+
+1. Navigate to the root folder of the Conjure Oxide project:
+   ```bash
+   cd conjure-oxide
+   ```
+
+2. Run all tests in the workspace
+   ```bash
+   cargo test --workspace
+   ```
