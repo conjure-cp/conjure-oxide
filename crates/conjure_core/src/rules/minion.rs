@@ -11,7 +11,7 @@ use crate::rule_engine::{
 };
 use crate::solver::SolverFamily;
 use crate::Model;
-use uniplate::biplate::Uniplate;
+use uniplate::Uniplate;
 
 register_rule_set!("Minion", 100, ("Base"), (SolverFamily::Minion));
 

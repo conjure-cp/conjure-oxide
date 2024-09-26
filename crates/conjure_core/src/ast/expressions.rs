@@ -3,7 +3,8 @@ use std::fmt::{Display, Formatter};
 use serde::{Deserialize, Serialize};
 
 use enum_compatability_macro::document_compatibility;
-use uniplate::Uniplate;
+use uniplate::derive::Uniplate;
+use uniplate::{Biplate, Uniplate};
 
 use crate::ast::constants::Constant;
 use crate::ast::symbol_table::{Name, SymbolTable};

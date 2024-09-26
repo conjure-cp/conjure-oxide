@@ -4,7 +4,7 @@ use std::fmt::Display;
 use thiserror::Error;
 
 use crate::stats::RewriterStats;
-use uniplate::biplate::Uniplate;
+use uniplate::Uniplate;
 
 use crate::rule_engine::{Reduction, Rule, RuleSet};
 use crate::{
