@@ -6,7 +6,7 @@ use conjure_core::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
 };
 use conjure_core::Model;
-use uniplate::biplate::Uniplate;
+use uniplate::Uniplate;
 
 /*****************************************************************************/
 /*        This file contains basic rules for simplifying expressions         */

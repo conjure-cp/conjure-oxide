@@ -13,7 +13,7 @@ use conjure_oxide::{
     utils::testing::save_stats_json,
     Metadata, Model, Rule,
 };
-use uniplate::biplate::Uniplate;
+use uniplate::Uniplate;
 
 #[test]
 fn rules_present() {
