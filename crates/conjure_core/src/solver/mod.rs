@@ -65,6 +65,14 @@
 //! assert_eq!(*counter,2);
 //! ```
 //!
+//! # The Solver callback function
+//!
+//! The callback function given to `solve` is called whenever a solution is found by the solver.
+//!
+//! Its return value can be used to control how many solutions the solver finds:
+//!
+//! * If the callback function returns `true`, solver execution continues.
+//! * If the callback function returns `false`, the solver is terminated.
 //!
 
 // # Implementing Solver interfaces
