@@ -18,13 +18,13 @@ fn main() -> io::Result<()> {
     for subdir in WalkDir::new(test_dir) {
         let subdir = subdir?;
         if subdir.file_type().is_dir() {
-            let essence_files: Vec<String> = read_dir(subdir.path())?
+            let stems: Vec<String> = read_dir(subdir.path())?
                 .filter_map(Result::ok)
                 .filter(|entry| {
                     entry
                         .path()
                         .extension()
-                        .map_or(false, |ext| ext == "essence")
+                        .map_or(false, |ext| ext == "essence" || ext == "eprime")
                 })
                 .filter_map(|entry| {
                     entry
@@ -35,6 +35,25 @@ fn main() -> io::Result<()> {
                 })
                 .collect();
 
+            let exts: Vec<String> = read_dir(subdir.path())?
+                .filter_map(Result::ok)
+                .filter(|entry| {
+                    entry
+                        .path()
+                        .extension()
+                        .map_or(false, |ext| ext == "essence" || ext == "eprime")
+                })
+                .filter_map(|entry| {
+                    entry
+                        .path()
+                        .extension()
+                        .and_then(|ext| ext.to_str())
+                        .map(|s| s.to_owned())
+                })
+                .collect();
+
+            let essence_files = std::iter::zip(stems, exts).collect();
+
             write_test(&mut f, subdir.path().display().to_string(), essence_files)?;
         }
     }
@@ -42,7 +61,11 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-fn write_test(file: &mut File, path: String, essence_files: Vec<String>) -> io::Result<()> {
+fn write_test(
+    file: &mut File,
+    path: String,
+    essence_files: Vec<(String, String)>,
+) -> io::Result<()> {
     // TODO: Consider supporting multiple Essence files?
     if essence_files.len() == 1 {
         write!(
@@ -51,7 +74,8 @@ fn write_test(file: &mut File, path: String, essence_files: Vec<String>) -> io::
             // TODO: better sanitisation of paths to function names
             test_name = path.replace("./", "").replace(['/', '-'], "_"),
             test_dir = path,
-            essence_file = essence_files[0]
+            essence_file = essence_files[0].0,
+            ext = essence_files[0].1
         )
     } else {
         Ok(())
