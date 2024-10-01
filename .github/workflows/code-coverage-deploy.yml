@@ -165,16 +165,23 @@ jobs:
       
       # WARNING: Artifacts are deleted after 90 days (or per configured retention policy)  
       - name: Find previous artifact
+        id: previous-artifact
         if: steps.find_artifacts.outputs.result != '[]'
-        run: |
-          # parse the output from the previous step into a JSON array
-          previous_artifacts = ${{ fromJson(steps.find_artifacts.outputs.result) }}
-      
-          # assuming filtered and sorted the previous_artifacts by creation date in descending order
-          if (previous_artifacts.length > 1) {
-            # get the second latest artifact (since the latest would be the current one)
-            echo "previous_artifact_id=${{ previous_artifacts[1].id }}" >> $GITHUB_ENV
-          }
+        uses: actions/github-script@v6
+        with:
+          result-encoding: string
+          script: |
+            // parse the output from the previous step into a JSON array
+            previous_artifacts = ${{ fromJson(steps.find_artifacts.outputs.result) }}
+
+            // assuming filtered and sorted the previous_artifacts by creation date in descending order
+            if (previous_artifacts.length > 1) {
+              // get the second latest artifact (since the latest would be the current one)
+              return previous_artifacts[1].id
+            }
+
+      - run: |
+          echo "previous_artifact_id=${{steps.previous-artifact.outputs.result}}" >> $GITHUB_ENV
 
       - name: Install rust ${{ env.rust_release }}
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
