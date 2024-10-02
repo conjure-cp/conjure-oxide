@@ -55,6 +55,6 @@ echo ""
     echo -e "$test, \033[0;33m$test , disabled \033[0m\n"
   done
   for test in $DISABLED_EPRIME_TESTS; do
-    echo -e "$ test, \033[0;33m$test , disabled \033[0m\n"
+    echo -e "$test, \033[0;33m$test , disabled \033[0m\n"
   done
 } | sort -k1 -t, | cut -d, -f 2,3 | column -t -s,
