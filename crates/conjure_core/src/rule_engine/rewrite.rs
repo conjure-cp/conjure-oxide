@@ -52,12 +52,52 @@ fn optimizations_enabled() -> bool {
     }
 }
 
-/// Rewrites the model by applying the rules to all constraints.
+/// Rewrites the given model by applying a set of rules to all its constraints.
 ///
-/// Any side-effects such as symbol table updates and top-level constraints are applied to the returned model.
+/// This function iteratively applies transformations to the model's constraints using the specified rule sets.
+/// It returns a modified version of the model with all applicable rules applied, ensuring that any side-effects
+/// such as updates to the symbol table and top-level constraints are properly reflected in the returned model.
+///
+/// # Parameters
+/// - `model`: A reference to the [`Model`] to be rewritten. The function will clone this model to produce a modified version.
+/// - `rule_sets`: A vector of references to [`RuleSet`]s that define the rules to be applied to the model's constraints.
+///   Each `RuleSet` is expected to contain a collection of rules that can transform one or more constraints
+///   within the model. The lifetime parameter `'a` ensures that the rules' references are valid for the
+///   duration of the function execution.
 ///
 /// # Returns
-/// A copy of the model after all, if any, possible rules are applied to its constraints.
+/// - `Ok(Model)`: If successful, it returns a modified copy of the [`Model`] after all applicable rules have been
+///   applied. This new model includes any side-effects such as updates to the symbol table or modifications
+///   to the constraints.
+/// - `Err(RewriteError)`: If an error occurs during rule application (e.g., invalid rules or failed constraints),
+///   it returns a [`RewriteError`] with details about the failure.
+///
+/// # Side-Effects
+/// - When the model is rewritten, related data structures such as the symbol table (which tracks variable names and types)
+///   or other top-level constraints may also be updated to reflect these changes. These updates are applied to the returned model,
+///   ensuring that all related components stay consistent and aligned with the changes made during the rewrite.
+/// - The function collects statistics about the rewriting process, including the number of rule applications
+///   and the total runtime of the rewriter. These statistics are then stored in the model's context for
+///   performance monitoring and analysis.
+///
+/// # Example
+/// ```
+/// // Add an example
+/// ```
+///
+/// # Performance Considerations
+/// - The function checks if optimizations are enabled before applying rules, which may affect the performance
+///   of the rewriting process.
+/// - Depending on the size of the model and the number of rules, the rewriting process might take a significant
+///   amount of time. Use the statistics collected (`rewriter_run_time` and `rewriter_rule_application_attempts`)
+///   to monitor and optimize performance.
+///
+/// # Panics
+/// - This function may panic if the model's context is unavailable or if there is an issue with locking the context.
+///
+/// # See Also
+/// - [`get_rule_priorities`]: Retrieves the priorities for the given rules.
+/// - [`rewrite_iteration`]: Executes a single iteration of rewriting the model using the specified rules.
 pub fn rewrite_model<'a>(
     model: &Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
@@ -91,9 +131,43 @@ pub fn rewrite_model<'a>(
     Ok(new_model)
 }
 
+/// Attempts to apply a set of rules to the given expression and its sub-expressions in the model.
+///
+/// This function recursively traverses the provided expression, applying any applicable rules from the given set.
+/// If a rule is successfully applied to the expression or any of its sub-expressions, it returns a `Reduction`
+/// containing the new expression, modified top-level constraints, and any changes to symbols. If no rules can be
+/// applied at any level, it returns `None`.
+///
+/// # Parameters
+/// - `expression`: A reference to the [`Expression`] to be rewritten. This is the main expression that the function
+///   attempts to modify using the given rules.
+/// - `model`: A reference to the [`Model`] that provides context and additional constraints for evaluating the rules.
+/// - `rules`: A vector of references to [`Rule`]s that define the transformations to apply to the expression.
+/// - `apply_optimizations`: A boolean flag that indicates whether optimization checks should be applied during the rewriting process.
+///   If `true`, the function skips already "clean" (fully optimized or processed) expressions and marks them accordingly
+///   to avoid redundant work.
+/// - `stats`: A mutable reference to [`RewriterStats`] to collect statistics about the rule application process, such as
+///   the number of rules applied and the time taken for each iteration.
+///
 /// # Returns
-/// - Some(<new_expression>) after applying the first applicable rule to `expr` or a sub-expression.
-/// - None if no rule is applicable to the expression or any sub-expression.
+/// - `Some(<Reduction>)`: A [`Reduction`] containing the new expression and any associated modifications if a rule was applied
+///   to `expr` or one of its sub-expressions.
+/// - `None`: If no rule is applicable to the expression or any of its sub-expressions.
+///
+/// # Side-Effects
+/// - If `apply_optimizations` is enabled, the function will skip "clean" expressions and mark successfully rewritten
+///   expressions as "dirty". This is done to avoid unnecessary recomputation of expressions that have already been
+///   optimized or processed.
+///
+/// # Example
+/// ```
+/// // Add an example
+/// ```
+///
+/// # Notes
+/// - This function works recursively, meaning it traverses all sub-expressions within the given `expression` to find the
+///   first rule that can be applied. If a rule is applied, it immediately returns the modified expression and stops
+///   further traversal for that branch.
 fn rewrite_iteration<'a>(
     expression: &'a Expression,
     model: &'a Model,
