@@ -206,9 +206,53 @@ fn rewrite_iteration<'a>(
     None
 }
 
+/// Applies all the given rules to a specific expression within the model.
+///
+/// This function iterates through the provided rules and attempts to apply each rule to the given `expression`.
+/// If a rule is successfully applied, it creates a [`RuleResult`] containing the original rule and the resulting
+/// [`Reduction`]. The statistics (`stats`) are updated to reflect the number of rule application attempts and successful
+/// applications.
+///
+/// The function does not modify the provided `expression` directly. Instead, it collects all applicable rule results
+/// into a vector, which can then be used for further processing or selection (e.g., with [`choose_rewrite`]).
+///
+/// # Parameters
+/// - `expression`: A reference to the [`Expression`] that will be evaluated against the given rules. This is the main
+///   target for rule transformations and is expected to remain unchanged during the function execution.
+/// - `model`: A reference to the [`Model`] that provides context for rule evaluation, such as constraints and symbols.
+///   Rules may depend on information in the model to determine if they can be applied.
+/// - `rules`: A vector of references to [`Rule`]s that define the transformations to be applied to the expression.
+///   Each rule is applied independently, and all applicable rules are collected.
+/// - `stats`: A mutable reference to [`RewriterStats`] used to track statistics about rule application, such as
+///   the number of attempts and successful applications.
+///
 /// # Returns
-/// - A list of RuleResults after applying all rules to `expression`.
-/// - An empty list if no rules are applicable.
+/// - A `Vec<RuleResult>` containing all rule applications that were successful. Each element in the vector represents
+///   a rule that was applied to the given `expression` along with the resulting transformation.
+/// - An empty vector if no rules were applicable to the expression.
+///
+/// # Side-Effects
+/// - The function updates the provided `stats` with the number of rule application attempts and successful applications.
+/// - Debug or trace logging may be performed to track which rules were applicable or not for a given expression.
+///
+/// # Example
+/// ```rust
+/// let applicable_rules = apply_all_rules(&expr, &model, &rules, &mut stats);
+/// if !applicable_rules.is_empty() {
+///     for result in applicable_rules {
+///         println!("Rule applied: {:?}", result.rule);
+///     }
+/// }
+/// ```
+///
+/// # Notes
+/// - This function does not modify the input `expression` or `model` directly. The returned `RuleResult` vector
+///   provides information about successful transformations, allowing the caller to decide how to process them.
+/// - The function performs independent rule applications. If rules have dependencies or should be applied in a
+///   specific order, consider handling that logic outside of this function.
+///
+/// # See Also
+/// - [`choose_rewrite`]: Chooses a single reduction from the rule results provided by `apply_all_rules`.
 fn apply_all_rules<'a>(
     expression: &'a Expression,
     model: &'a Model,
@@ -217,7 +261,7 @@ fn apply_all_rules<'a>(
 ) -> Vec<RuleResult<'a>> {
     let mut results = Vec::new();
     for rule in rules {
-        match rule.apply(expression, model) {
+        match rule.apply(expression, modchooseel) {
             Ok(red) => {
                 log::trace!(target: "file", "Rule applicable: {:?}, to Expression: {:?}, resulting in: {:?}", rule, expression, red.new_expression);
                 stats.rewriter_rule_application_attempts =
@@ -243,9 +287,28 @@ fn apply_all_rules<'a>(
     results
 }
 
+/// Chooses the first applicable rule result from a list of rule applications.
+///
+/// This function selects a reduction from the provided `RuleResult` list, prioritizing the first rule
+/// that successfully transforms the expression. This strategy can be modified in the future to incorporate
+/// more complex selection criteria, such as prioritizing rules based on cost, complexity, or other heuristic metrics.
+///
+/// # Parameters
+/// - `results`: A slice of [`RuleResult`] containing potential rule applications to be considered. Each element
+///   represents a rule that was successfully applied to the expression, along with the resulting transformation.
+///
 /// # Returns
-/// - Some(<reduction>) after applying the first rule in `results`.
-/// - None if `results` is empty.
+/// - `Some(<Reduction>)`: Returns a [`Reduction`] representing the first rule's application if there is at least one
+///   rule that produced a successful transformation.
+/// - `None`: If no rule applications are available in the `results` slice (i.e., it is empty), it returns `None`.
+///
+/// # Example
+/// ```rust
+/// let rule_results = vec![rule1_result, rule2_result];
+/// if let Some(reduction) = choose_rewrite(&rule_results) {
+///     // Process the chosen reduction
+/// }
+/// ```
 fn choose_rewrite(results: &[RuleResult]) -> Option<Reduction> {
     if results.is_empty() {
         return None;
