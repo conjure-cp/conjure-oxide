@@ -318,7 +318,7 @@ fn apply_all_rules<'a>(
 ) -> Vec<RuleResult<'a>> {
     let mut results = Vec::new();
     for rule in rules {
-        match rule.apply(expression, modchooseel) {
+        match rule.apply(expression, model) {
             Ok(red) => {
                 log::trace!(target: "file", "Rule applicable: {:?}, to Expression: {:?}, resulting in: {:?}", rule, expression, red.new_expression);
                 stats.rewriter_rule_application_attempts =
