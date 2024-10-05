@@ -10,6 +10,36 @@ use crate::ast::{DecisionVariable, Domain, Expression, Name, SymbolTable};
 use crate::context::Context;
 use crate::metadata::Metadata;
 
+/// Represents a computational model containing variables, constraints, and a shared context.
+///
+/// The `Model` struct holds a set of variables and constraints for manipulating and evaluating symbolic expressions.
+///
+/// # Fields
+/// - `variables`:
+///   - Type: `SymbolTable`
+///   - A table that links each variable's name to its corresponding `DecisionVariable`.
+///   - For example, the name `x` might be linked to a `DecisionVariable` that says `x` can only take values between 1 and 10.
+///
+/// - `constraints`:
+///   - Type: `Expression`
+///   - Represents the logical constraints applied to the model's variables.
+///   - Can be a single constraint or a combination of various expressions, such as logical operations (e.g., `AND`, `OR`),
+///     arithmetic operations (e.g., `SafeDiv`, `UnsafeDiv`), or specialized constraints like `SumEq`.
+///
+/// - `context`:
+///   - Type: `Arc<RwLock<Context<'static>>>`
+///   - A shared object that stores global settings and state for the model.
+///   - Can be safely read or changed by multiple parts of the program at the same time, making it good for multi-threaded use.
+///
+/// - `next_var`:
+///   - Type: `RefCell<i32>`
+///   - A counter used to create new, unique variable names.
+///   - Allows updating the counter inside the model without making the whole model mutable.
+///
+/// # Usage
+/// This struct is typically used to:
+/// - Define a set of variables and constraints for rule-based evaluation.
+/// - Have transformations, optimizations, and simplifications applied to it using a set of rules.
 #[serde_as]
 #[derive(Derivative, Clone, Debug, Serialize, Deserialize)]
 #[derivative(PartialEq, Eq)]
