@@ -21,6 +21,9 @@ struct RuleResult<'a> {
     reduction: Reduction,
 }
 
+/// Represents errors that can occur during the model rewriting process.
+///
+/// This enum captures errors that occur when trying to resolve or apply rules in the model.
 #[derive(Debug, Error)]
 pub enum RewriteError {
     ResolveRulesError(ResolveError),
