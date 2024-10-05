@@ -81,8 +81,38 @@ fn optimizations_enabled() -> bool {
 ///   performance monitoring and analysis.
 ///
 /// # Example
-/// ```
-/// // Add an example
+/// - Using `rewrite_model` with the Expression `a + min(x, y)`
+///
+/// ```rust
+///     // Initial expression: a + min(x, y)
+///     let initial_constraints = Expression::new(Sum(Metadata, Vec<Expression(a + min(x, y)))),
+///     let variables = SymbolTable::new  //a hashamp that will hold variables a,x,y
+///    
+///     // Create a model containing the expression
+///     let model = Model::new(variables, initial_constraints, some_context, next_var);
+///
+///     // Define rule sets with simplification rules for the benefit of the example
+///     let rule_set_1 = RuleSet::new(vec![
+///         Rule::new("min(x, y) => d if d <= x and d<=y "),
+///         Rule::new("a + 0 => a"),
+///     ]);
+///
+///     let rule_set_2 = RuleSet::new(vec![
+///         Rule::new("x * 1 => x"),
+///     ]);
+///
+///     // Apply the rewriting model
+///     let optimized_model = rewrite_model(&model, &vec![&rule_set_1, &rule_set_2])?;
+///
+/// //Inside rewrite_model
+///     //After getting the rules by their priorities and getting additional statistics the while loop of single interations
+///     //is executed
+///     while let Some(step) = None // the loop is exited only when no more rules can be applied, when rewrite_iteration returns None
+///     
+///     //will result is side effects ((d<=x ^ d<=y) being the new_top and the model will now be a conjuction of that and (a+d)
+///     step.(&mut new_model)
+///      
+///     //Rewritten expression: ((a + d) ^ (d<=x ^ d<=y))/
 /// ```
 ///
 /// # Performance Considerations
@@ -117,6 +147,7 @@ pub fn rewrite_model<'a>(
 
     let start = std::time::Instant::now();
 
+    //the while loop is exited when None is returned implying the sub-expression is clean
     while let Some(step) = rewrite_iteration(
         &new_model.constraints,
         &new_model,
@@ -159,9 +190,35 @@ pub fn rewrite_model<'a>(
 ///   expressions as "dirty". This is done to avoid unnecessary recomputation of expressions that have already been
 ///   optimized or processed.
 ///
-/// # Example
-/// ```
-/// // Add an example
+/// # Example of rewtire iteration for the expression `a + min(x, y)`
+/// ```rust
+///  //Initially
+///  if apply_optimizations && expression.is_clean() //is not true yet since intially our expression is dirty
+///
+///  rule_results = null //apply_results returns a null vector since no rules can be applied at the top level
+///  let mut sub = expression.children();  // sub = [a, min(x, y)] - vector of subexpressions
+///
+/// //the function iterates through the vector of the children of the top expression and calls itself
+///
+/// //rewrite_iteration on a returns None, but on min(x, y) returns a Reduction object red. In this case, Rule 1 (min simplification) might apply:
+/// //d is added to the SymbolTable and the variables field is updated in the model. new_top is the side effects: (d<=x ^ d<=y)
+///  let red = Reduction::new(new_expression = d, new_top, symbols);
+///  sub[1] = red.new_expression;  // Update `min(x, y)` to `d`
+///
+/// //Since a child expression (min(x, y)) was rewritten to x, the parent expression (a + min(x, y)) is updated with the new child:
+///  let res = expression.with_children(sub.clone());  // res = `a + d`
+///  return Some(Reduction::new(res, red.new_top, red.symbols));  // `a + d`,
+///
+///  //the condition in the while loop in rewrite_model is met -> side effects are applied
+///
+///  //no more rules in our example can apply to the modified model -> mark all the children as clean and return a pure reduction
+///  return Some(Reduction::pure(expression));
+///    
+/// //on the last execution of rewrite_iteration
+///  if apply_optimizations && expression.is_clean() {
+///      return None; //the while loop is rewrite_model is exited
+/// }
+///
 /// ```
 ///
 /// # Notes
