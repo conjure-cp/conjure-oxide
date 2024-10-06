@@ -14,10 +14,10 @@ use crate::ast::domains::{Domain, Range};
 /// - `domain`:
 ///   - Type: `Domain`
 ///   - Represents the set of possible values that this decision variable can assume. The domain can be a range of integers
-///     (`IntDomain`) or a boolean domain (`BoolDomain`).
+///   (IntDomain) or a boolean domain (BoolDomain).
 ///
 /// # Example
-/// ```
+/// 
 /// use crate::ast::domains::{DecisionVariable, Domain, Range};
 ///
 /// let bool_var = DecisionVariable::new(Domain::BoolDomain);
@@ -25,10 +25,10 @@ use crate::ast::domains::{Domain, Range};
 ///
 /// println!("Boolean Variable: {}", bool_var);
 /// println!("Integer Variable: {}", int_var);
-/// ```
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+<<<<<<< HEAD
+///
+=======
 pub struct DecisionVariable {
-    pub domain: Domain,
 }
 
 impl DecisionVariable {

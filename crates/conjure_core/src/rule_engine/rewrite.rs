@@ -86,8 +86,7 @@ fn optimizations_enabled() -> bool {
 /// # Example
 /// - Using `rewrite_model` with the Expression `a + min(x, y)`
 ///
-/// ```rust
-///     // Initial expression: a + min(x, y)
+///     Initial expression: a + min(x, y)
 ///     let initial_constraints = Expression::new(Sum(Metadata, Vec<Expression(a + min(x, y)))),
 ///     let variables = SymbolTable::new  //a hashamp that will hold variables a,x,y
 ///    
@@ -104,7 +103,7 @@ fn optimizations_enabled() -> bool {
 ///         Rule::new("x * 1 => x"),
 ///     ]);
 ///
-///     // Apply the rewriting model
+///     Apply the rewriting model
 ///     let optimized_model = rewrite_model(&model, &vec![&rule_set_1, &rule_set_2])?;
 ///
 /// //Inside rewrite_model
@@ -116,7 +115,6 @@ fn optimizations_enabled() -> bool {
 ///     step.(&mut new_model)
 ///      
 ///     //Rewritten expression: ((a + d) ^ (d<=x ^ d<=y))/
-/// ```
 ///
 /// # Performance Considerations
 /// - The function checks if optimizations are enabled before applying rules, which may affect the performance
@@ -194,7 +192,7 @@ pub fn rewrite_model<'a>(
 ///   optimized or processed.
 ///
 /// # Example of rewtire iteration for the expression `a + min(x, y)`
-/// ```rust
+///
 ///  //Initially
 ///  if apply_optimizations && expression.is_clean() //is not true yet since intially our expression is dirty
 ///
@@ -220,9 +218,8 @@ pub fn rewrite_model<'a>(
 /// //on the last execution of rewrite_iteration
 ///  if apply_optimizations && expression.is_clean() {
 ///      return None; //the while loop is rewrite_model is exited
-/// }
 ///
-/// ```
+///
 ///
 /// # Notes
 /// - This function works recursively, meaning it traverses all sub-expressions within the given `expression` to find the
@@ -296,14 +293,14 @@ fn rewrite_iteration<'a>(
 /// - Debug or trace logging may be performed to track which rules were applicable or not for a given expression.
 ///
 /// # Example
-/// ```rust
+///
 /// let applicable_rules = apply_all_rules(&expr, &model, &rules, &mut stats);
 /// if !applicable_rules.is_empty() {
 ///     for result in applicable_rules {
 ///         println!("Rule applied: {:?}", result.rule);
 ///     }
 /// }
-/// ```
+///
 ///
 /// # Notes
 /// - This function does not modify the input `expression` or `model` directly. The returned `RuleResult` vector
@@ -363,12 +360,12 @@ fn apply_all_rules<'a>(
 /// - `None`: If no rule applications are available in the `results` slice (i.e., it is empty), it returns `None`.
 ///
 /// # Example
-/// ```rust
+///
 /// let rule_results = vec![rule1_result, rule2_result];
 /// if let Some(reduction) = choose_rewrite(&rule_results) {
-///     // Process the chosen reduction
+/// Process the chosen reduction
 /// }
-/// ```
+///
 fn choose_rewrite(results: &[RuleResult]) -> Option<Reduction> {
     if results.is_empty() {
         return None;
