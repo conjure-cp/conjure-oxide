@@ -236,7 +236,7 @@ jobs:
       - name: Download the previous lcov.info (historical) file
         if: steps.find_artifacts.outputs.result != '[]'
         uses: actions/download-artifact@v4
-        with: |
+        with:
           name: code-coverage-${{ env.num }}-${{ env.previous_artifact_id }}
           path: ./tools/code-coverage-diff/deploy-prev
 
@@ -263,6 +263,7 @@ jobs:
           echo 'EOFABC' >> $GITHUB_OUTPUT
 
       - name: Calculate coverage difference with previous historical lcov artifact
+        if: steps.find_artifacts.outputs.result != '[]'
         id: historicalcoveragediff
         run: |
           # call python script to compare historical previous main coverage with current main coverage
@@ -273,7 +274,56 @@ jobs:
           cat ./tools/code-coverage-diff/lcov/hist_coverage_diff.txt >> $GITHUB_ENV
           echo 'EOFABC' >> $GITHUB_OUTPUT
 
-      - name: Create coverage comment
+      - name: Create coverage comment (no previous lcov)
+        if: steps.find_artifacts.outputs.result == '[]'
+        uses: peter-evans/create-or-update-comment@v1
+        with:
+          issue-number: ${{ steps.prnum.outputs.num }}
+          body: |
+            ## Code and Documentation Coverage Report
+            
+            ### Documentation Coverage
+
+            <details>
+            <summary>Click to view documentation coverage for this PR</summary>
+
+            ```
+            ${{ steps.doccov.outputs.pr }}
+            ```
+
+            </details>
+
+            <details>
+            <summary>Click to view documentation coverage for main</summary>
+            
+            ```
+            ${{ steps.doccov.outputs.main }}
+            ```
+
+            </details>
+
+            ### Code Coverage Summary
+
+            **This PR**: [Detailed Report](https://${{ github.repository_owner }}.github.io/conjure-oxide/coverage/${{ steps.sha.outputs.result }}/index.html)
+
+            ```
+            ${{ steps.lcov.outputs.pr }}
+            ```
+
+            **Main**: [Detailed Report](https://${{ github.repository_owner }}.github.io/conjure-oxide/coverage/main/index.html)
+
+            ```
+            ${{ steps.lcov.outputs.main }}
+            ```
+
+            ### Coverage Main & PR Coverage Change
+
+            ```diff
+            ${{ steps.coveragediff.outputs.diff }}
+            ```
+
+      - name: Create coverage comment (previous lcov)
+        if: steps.find_artifacts.outputs.result != '[]'
         uses: peter-evans/create-or-update-comment@v1
         with:
           issue-number: ${{ steps.prnum.outputs.num }}
