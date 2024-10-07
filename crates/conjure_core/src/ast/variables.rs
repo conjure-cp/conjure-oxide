@@ -17,7 +17,7 @@ use crate::ast::domains::{Domain, Range};
 ///   (IntDomain) or a boolean domain (BoolDomain).
 ///
 /// # Example
-/// 
+///
 /// use crate::ast::domains::{DecisionVariable, Domain, Range};
 ///
 /// let bool_var = DecisionVariable::new(Domain::BoolDomain);
@@ -25,11 +25,8 @@ use crate::ast::domains::{Domain, Range};
 ///
 /// println!("Boolean Variable: {}", bool_var);
 /// println!("Integer Variable: {}", int_var);
-<<<<<<< HEAD
-///
-=======
-pub struct DecisionVariable {
-}
+
+pub struct DecisionVariable {}
 
 impl DecisionVariable {
     pub fn new(domain: Domain) -> DecisionVariable {
