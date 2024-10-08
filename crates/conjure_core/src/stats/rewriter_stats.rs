@@ -40,7 +40,7 @@ use serde_with::skip_serializing_none;
 ///   - If `None`, this metric is not tracked or not applicable for the current session.
 ///
 /// # Example
-/// ```
+///
 /// let stats = RewriterStats {
 ///     is_optimization_enabled: Some(true),
 ///     rewriter_run_time: Some(std::time::Duration::new(2, 0)),
@@ -51,7 +51,7 @@ use serde_with::skip_serializing_none;
 /// // Serialize the stats to JSON
 /// let serialized_stats = serde_json::to_string(&stats).unwrap();
 /// println!("Serialized Stats: {}", serialized_stats);
-/// ```
+///
 ///
 /// # Usage Notes
 /// - This struct is intended to be used in contexts where tracking the performance and behavior of rule-based

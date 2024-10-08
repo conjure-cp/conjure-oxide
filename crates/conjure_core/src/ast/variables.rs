@@ -26,8 +26,10 @@ use crate::ast::domains::{Domain, Range};
 /// println!("Boolean Variable: {}", bool_var);
 /// println!("Integer Variable: {}", int_var);
 
-pub struct DecisionVariable {}
-
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct DecisionVariable {
+    pub domain: Domain,
+}
 impl DecisionVariable {
     pub fn new(domain: Domain) -> DecisionVariable {
         DecisionVariable { domain }
