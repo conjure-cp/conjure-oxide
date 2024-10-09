@@ -16,9 +16,40 @@ pub enum ApplicationError {
     DomainError,
 }
 
-/// The result of applying a rule to an expression.
+/// Represents the result of applying a rule to an expression within a model.
 ///
-/// Contains an expression to replace the original, a top-level constraint to add to the top of the constraint AST, and an expansion to the model symbol table.
+/// A `Reduction` encapsulates the changes made to a model during a rule application.
+/// It includes a new expression to replace the original one, an optional top-level constraint
+/// to be added to the model, and any updates to the model's symbol table.
+///
+/// This struct allows for representing side-effects of rule applications, ensuring that
+/// all modifications, including symbol table expansions and additional constraints, are
+/// accounted for and can be applied to the model consistently.
+///
+/// # Fields
+/// - `new_expression`: The updated [`Expression`] that replaces the original one after applying the rule.
+/// - `new_top`: An additional top-level [`Expression`] constraint that should be added to the model. If no top-level
+///   constraint is needed, this field can be set to `Expression::Nothing`.
+/// - `symbols`: A [`SymbolTable`] containing any new symbol definitions or modifications to be added to the model's
+///   symbol table. If no symbols are modified, this field can be set to an empty symbol table.
+///
+/// # Usage
+/// A `Reduction` can be created using one of the provided constructors:
+/// - [`Reduction::new`]: Creates a reduction with a new expression, top-level constraint, and symbol modifications.
+/// - [`Reduction::pure`]: Creates a reduction with only a new expression and no side-effects on the symbol table or constraints.
+/// - [`Reduction::with_symbols`]: Creates a reduction with a new expression and symbol table modifications, but no top-level constraint.
+/// - [`Reduction::with_top`]: Creates a reduction with a new expression and a top-level constraint, but no symbol table modifications.
+///
+/// The `apply` method allows for applying the changes represented by the `Reduction` to a [`Model`].
+///
+/// # Example
+/// ```
+/// // Need to add an example
+/// ```
+///
+/// # See Also
+/// - [`ApplicationResult`]: Represents the result of applying a rule, which may either be a `Reduction` or an `ApplicationError`.
+/// - [`Model`]: The structure to which the `Reduction` changes are applied.
 #[non_exhaustive]
 #[derive(Clone, Debug)]
 pub struct Reduction {

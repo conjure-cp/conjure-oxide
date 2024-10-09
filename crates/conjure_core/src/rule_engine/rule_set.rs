@@ -8,7 +8,25 @@ use log::warn;
 use crate::rule_engine::{get_rule_set_by_name, get_rules, Rule};
 use crate::solver::SolverFamily;
 
-/// A set of rules with a name, priority, and dependencies.
+/// A structure representing a set of rules with a name, priority, and dependencies.
+///
+/// `RuleSet` is a way to group related rules together under a single name.
+/// You can think of it like a list of rules that belong to the same category.
+/// Each `RuleSet` can also have a number that tells it what order it should run in compared to other `RuleSet` instances.
+/// Additionally, a `RuleSet` can depend on other `RuleSet` instances, meaning it needs them to run first.
+///
+/// To make things efficient, `RuleSet` only figures out its rules and dependencies the first time they're needed,
+/// and then it remembers them so it doesn't have to do the work again.
+///
+/// # Fields
+/// - `name`: The name of the rule set.
+/// - `order`: A number that decides the order in which this `RuleSet` should be applied.
+/// If two `RuleSet` instances have the same rule but with different priorities,
+/// the one with the higher `order` number will be the one that is used.
+/// - `rules`: A lazily initialized map of rules to their priorities.
+/// - `dependency_rs_names`: The names of the rule sets that this rule set depends on.
+/// - `dependencies`: A lazily initialized set of `RuleSet` dependencies.
+/// - `solver_families`: The solver families that this rule set applies to.
 #[derive(Clone, Debug)]
 pub struct RuleSet<'a> {
     /// The name of the rule set.
