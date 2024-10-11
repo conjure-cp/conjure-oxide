@@ -2,6 +2,7 @@ use std::env;
 use std::error::Error;
 use std::path::Path;
 use std::sync::Arc;
+use std::sync::Mutex;
 use std::sync::RwLock;
 
 use conjure_core::context::Context;
@@ -24,8 +25,32 @@ fn main() {
     }
 }
 
-#[allow(clippy::unwrap_used)]
+// run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
+// correctly
+static GUARD: Mutex<()> = Mutex::new(());
+
+// wrapper to conditionally enforce sequential execution
 fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
+    let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
+
+    // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
+    // correctly
+    if verbose {
+        #[allow(clippy::unwrap_used)]
+        #[allow(unused_variables)]
+        let guard = GUARD.lock().unwrap();
+        integration_test_inner(path, essence_base, extension)
+    } else {
+        integration_test_inner(path, essence_base, extension)
+    }
+}
+
+#[allow(clippy::unwrap_used)]
+fn integration_test_inner(
+    path: &str,
+    essence_base: &str,
+    extension: &str,
+) -> Result<(), Box<dyn Error>> {
     let context: Arc<RwLock<Context<'static>>> = Default::default();
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
