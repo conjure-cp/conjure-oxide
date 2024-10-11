@@ -86,9 +86,10 @@ fn remove_nothings(expr: &Expr, _: &Model) -> ApplicationResult {
 #[register_rule(("Base", 100))]
 fn empty_to_nothing(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
-        Expr::Nothing | Expr::Reference(_, _) | Expr::Constant(_, _) => {
-            Err(ApplicationError::RuleNotApplicable)
-        }
+        Expr::Nothing
+        | Expr::Reference(_, _)
+        | Expr::Constant(_, _)
+        | Expr::WatchedLiteral(_, _, _) => Err(ApplicationError::RuleNotApplicable),
         _ => {
             if expr.children().is_empty() {
                 Ok(Reduction::pure(Expr::Nothing))

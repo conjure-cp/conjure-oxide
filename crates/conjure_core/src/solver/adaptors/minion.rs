@@ -291,6 +291,13 @@ fn read_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, So
         conjure_ast::Expression::Eq(_metadata, a, b) => {
             Ok(minion_ast::Constraint::Eq(read_var(*a)?, read_var(*b)?))
         }
+
+        conjure_ast::Expression::WatchedLiteral(_metadata, name, k) => {
+            Ok(minion_ast::Constraint::WLiteral(
+                minion_ast::Var::NameRef(_name_to_string(name)),
+                minion_ast::Constant::Integer(read_const_1(k)?),
+            ))
+        }
         x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
     }
 }
@@ -329,7 +336,19 @@ fn _read_ref(e: conjure_ast::Expression) -> Result<String, SolverError> {
 
 fn read_const(e: conjure_ast::Expression) -> Result<i32, SolverError> {
     match e {
-        conjure_ast::Expression::Constant(_, conjure_ast::Constant::Int(n)) => Ok(n),
+        conjure_ast::Expression::Constant(_, x) => Ok(read_const_1(x)?),
+        x => Err(ModelInvalid(format!(
+            "expected a constant, but got `{0:?}`",
+            x
+        ))),
+    }
+}
+
+fn read_const_1(k: conjure_ast::Constant) -> Result<i32, SolverError> {
+    match k {
+        conjure_ast::Constant::Int(n) => Ok(n),
+        conjure_ast::Constant::Bool(true) => Ok(1),
+        conjure_ast::Constant::Bool(false) => Ok(0),
         x => Err(ModelInvalid(format!(
             "expected a constant, but got `{0:?}`",
             x

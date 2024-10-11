@@ -145,7 +145,7 @@ fn integration_test_inner(
 }
 
 fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model) {
-    model.constraints.descend(Arc::new(|x| {
+    model.constraints.transform(Arc::new(|x| {
         use conjure_core::ast::Expression::*;
         match &x {
             Nothing => (),
@@ -174,6 +174,7 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
             // this is a vector operation, but we don't want to fold values into each-other in this
             // one
             AllDiff(_, _) => (),
+            WatchedLiteral(_, _, _) => (),
         };
         x.clone()
     }));

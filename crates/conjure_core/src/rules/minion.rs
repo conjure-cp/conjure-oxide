@@ -2,14 +2,17 @@
 /*        Rules for translating to Minion-supported constraints         */
 /************************************************************************/
 
-use crate::ast::{Constant as Const, DecisionVariable, Expression as Expr, SymbolTable};
+use crate::ast::{Constant as Const, DecisionVariable, Domain, Expression as Expr, SymbolTable};
+
 use crate::metadata::Metadata;
 use crate::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
 };
+
 use crate::solver::SolverFamily;
 use crate::Model;
 use uniplate::Uniplate;
+use ApplicationError::RuleNotApplicable;
 
 register_rule_set!("Minion", 100, ("Base"), (SolverFamily::Minion));
 
@@ -383,5 +386,74 @@ fn negated_eq_to_neq(expr: &Expr, _: &Model) -> ApplicationResult {
             _ => Err(ApplicationError::RuleNotApplicable),
         },
         _ => Err(ApplicationError::RuleNotApplicable),
+    }
+}
+
+/// Flattening rule that converts boolean variables to watched-literal constraints.
+///
+/// For some boolean variable x:
+/// ```text
+/// and([x,...]) ~> and([w-literal(x,1),..])
+///  or([x,...]) ~>  or([w-literal(x,1),..])
+/// ```
+///
+/// ## Rationale
+///
+/// Minion's watched-and and watched-or constraints only takes other constraints as arguments.
+///
+/// This restates boolean variables as the equivalent constraint "SAT if x is true".
+///
+#[register_rule(("Minion", 50))]
+fn boolean_literal_to_wliteral(expr: &Expr, mdl: &Model) -> ApplicationResult {
+    use Domain::BoolDomain;
+    use Expr::*;
+    match expr {
+        Or(m, vec) => {
+            let mut changed = false;
+            let mut new_vec = Vec::new();
+            for expr in vec {
+                new_vec.push(match expr {
+                    Reference(m, name)
+                        if mdl
+                            .get_domain(name)
+                            .is_some_and(|x| matches!(x, BoolDomain)) =>
+                    {
+                        changed = true;
+                        WatchedLiteral(m.clone_dirty(), name.clone(), Const::Bool(true))
+                    }
+                    e => e.clone(),
+                });
+            }
+
+            if !changed {
+                return Err(RuleNotApplicable);
+            }
+
+            Ok(Reduction::pure(Or(m.clone_dirty(), new_vec)))
+        }
+        And(m, vec) => {
+            let mut changed = false;
+            let mut new_vec = Vec::new();
+            for expr in vec {
+                new_vec.push(match expr {
+                    Reference(m, name)
+                        if mdl
+                            .get_domain(name)
+                            .is_some_and(|x| matches!(x, BoolDomain)) =>
+                    {
+                        changed = true;
+                        WatchedLiteral(m.clone_dirty(), name.clone(), Const::Bool(true))
+                    }
+                    e => e.clone(),
+                });
+            }
+
+            if !changed {
+                return Err(RuleNotApplicable);
+            }
+
+            Ok(Reduction::pure(And(m.clone_dirty(), new_vec)))
+        }
+        _ => Err(RuleNotApplicable),
     }
 }

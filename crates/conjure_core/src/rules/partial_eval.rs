@@ -273,5 +273,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             // nothing has changed
             Err(RuleNotApplicable)
         }
+
+        WatchedLiteral(_, _, _) => Err(RuleNotApplicable),
     }
 }

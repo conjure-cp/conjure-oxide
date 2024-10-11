@@ -562,7 +562,11 @@ unsafe fn constraint_add_args(
         //Constraint::WatchElementOne(_, _, _) => todo!(),
         //Constraint::WatchElementOneUndefZero(_, _, _) => todo!(),
         //Constraint::WatchElementUndefZero(_, _, _) => todo!(),
-        //Constraint::WLiteral(_, _) => todo!(),
+        Constraint::WLiteral(a, b) => {
+            read_var(i, r_constr, a)?;
+            read_constant(r_constr, b)?;
+            Ok(())
+        }
         //Constraint::WNotLiteral(_, _) => todo!(),
         //Constraint::WInIntervalSet(_, _) => todo!(),
         //Constraint::WInRange(_, _) => todo!(),
