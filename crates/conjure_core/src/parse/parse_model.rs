@@ -211,6 +211,10 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
             "MkOpMax",
             Box::new(Expression::Max) as Box<dyn Fn(_, _) -> _>,
         ),
+        (
+            "MkOpAllDiff",
+            Box::new(Expression::AllDiff) as Box<dyn Fn(_, _) -> _>,
+        ),
     ]
     .into_iter()
     .collect();
@@ -312,6 +316,11 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
             };
 
             Some(Expression::Constant(Metadata::new(), Constant::Int(int_32)))
+        }
+
+        Value::Object(b) if b.contains_key("ConstantBool") => {
+            let b: bool = b["ConstantBool"].as_bool().unwrap();
+            Some(Expression::Constant(Metadata::new(), Constant::Bool(b)))
         }
         otherwise => panic!("Unhandled parse_constant {:#?}", otherwise),
     }
