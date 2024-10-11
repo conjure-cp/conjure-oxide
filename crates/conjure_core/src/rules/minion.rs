@@ -3,7 +3,6 @@
 /************************************************************************/
 
 use crate::ast::{Constant as Const, DecisionVariable, Domain, Expression as Expr, SymbolTable};
-
 use crate::metadata::Metadata;
 use crate::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
@@ -395,6 +394,7 @@ fn negated_eq_to_neq(expr: &Expr, _: &Model) -> ApplicationResult {
 /// ```text
 /// and([x,...]) ~> and([w-literal(x,1),..])
 ///  or([x,...]) ~>  or([w-literal(x,1),..])
+///  not(x)      ~>  w-literal(x,0)
 /// ```
 ///
 /// ## Rationale
@@ -453,6 +453,22 @@ fn boolean_literal_to_wliteral(expr: &Expr, mdl: &Model) -> ApplicationResult {
             }
 
             Ok(Reduction::pure(And(m.clone_dirty(), new_vec)))
+        }
+
+        Not(m, expr) => {
+            if let Reference(_, name) = (**expr).clone() {
+                if mdl
+                    .get_domain(&name)
+                    .is_some_and(|x| matches!(x, BoolDomain))
+                {
+                    return Ok(Reduction::pure(WatchedLiteral(
+                        m.clone_dirty(),
+                        name.clone(),
+                        Const::Bool(false),
+                    )));
+                }
+            }
+            Err(RuleNotApplicable)
         }
         _ => Err(RuleNotApplicable),
     }
