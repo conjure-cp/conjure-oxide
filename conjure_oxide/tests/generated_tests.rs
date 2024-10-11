@@ -1,10 +1,12 @@
 use std::env;
 use std::error::Error;
+use std::fs;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::RwLock;
 
+use conjure_core::ast::Expression;
 use conjure_core::context::Context;
 use conjure_oxide::rule_engine::resolve_rule_sets;
 use conjure_oxide::rule_engine::rewrite_model;
@@ -14,6 +16,15 @@ use conjure_oxide::utils::testing::{
     read_minion_solutions_json, read_model_json, save_minion_solutions_json, save_model_json,
 };
 use conjure_oxide::SolverFamily;
+
+use uniplate::Uniplate;
+
+use serde::Deserialize;
+
+#[derive(Deserialize, Default)]
+struct TestConfig {
+    extra_rewriter_asserts: Vec<String>,
+}
 
 fn main() {
     let file_path = Path::new("/path/to/your/file.txt");
@@ -62,6 +73,13 @@ fn integration_test_inner(
         );
     }
 
+    let config: TestConfig =
+        if let Ok(config_contents) = fs::read_to_string(format!("{}/config.toml", path)) {
+            toml::from_str(&config_contents).unwrap()
+        } else {
+            Default::default()
+        };
+
     // Stage 1: Read the essence file and check that the model is parsed correctly
     let model = parse_essence_file(path, essence_base, extension, context.clone())?;
     if verbose {
@@ -90,6 +108,16 @@ fn integration_test_inner(
     }
 
     save_model_json(&model, path, essence_base, "rewrite", accept)?;
+
+    for extra_assert in config.extra_rewriter_asserts {
+        match extra_assert.as_str() {
+            "vector_operators_have_partially_evaluated" => {
+                assert_vector_operators_have_partially_evaluated(&model)
+            }
+            x => println!("Unrecognised extra assert: {}", x),
+        };
+    }
+
     let expected_model = read_model_json(path, essence_base, "expected", "rewrite")?;
     if verbose {
         println!("Expected model: {:#?}", expected_model)
@@ -114,6 +142,47 @@ fn integration_test_inner(
     save_stats_json(context, path, essence_base)?;
 
     Ok(())
+}
+
+fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model) {
+    model.constraints.descend(Arc::new(|x| {
+        use conjure_core::ast::Expression::*;
+        match &x {
+            Nothing => (),
+            Bubble(_, _, _) => (),
+            Constant(_, _) => (),
+            Reference(_, _) => (),
+            Sum(_, vec) => assert_constants_leq_one(&x, vec),
+            Min(_, vec) => assert_constants_leq_one(&x, vec),
+            Not(_, _) => (),
+            Or(_, vec) => assert_constants_leq_one(&x, vec),
+            And(_, vec) => assert_constants_leq_one(&x, vec),
+            Eq(_, _, _) => (),
+            Neq(_, _, _) => (),
+            Geq(_, _, _) => (),
+            Leq(_, _, _) => (),
+            Gt(_, _, _) => (),
+            Lt(_, _, _) => (),
+            SafeDiv(_, _, _) => (),
+            UnsafeDiv(_, _, _) => (),
+            SumEq(_, vec, _) => assert_constants_leq_one(&x, vec),
+            SumGeq(_, vec, _) => assert_constants_leq_one(&x, vec),
+            SumLeq(_, vec, _) => assert_constants_leq_one(&x, vec),
+            DivEq(_, _, _, _) => (),
+            Ineq(_, _, _, _) => (),
+            AllDiff(_, vec) => assert_constants_leq_one(&x, vec),
+        };
+        x.clone()
+    }));
+}
+
+fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
+    let count = exprs.iter().fold(0, |i, x| match x {
+        Expression::Constant(_, _) => i + 1,
+        _ => i,
+    });
+
+    assert!(count <= 1, "assert_vector_operators_have_partially_evaluated: expression {} is not partially evaluated",parent_expr)
 }
 
 #[test]
