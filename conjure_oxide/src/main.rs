@@ -28,7 +28,7 @@ use conjure_oxide::SolverFamily;
 struct Cli {
     #[arg(
         value_name = "INPUT_ESSENCE",
-        default_value = "./conjure_oxide/tests/integration/xyz/input.essence",
+        default_value = "./conjure_oxide/tests/integration/experiment/min.essence",
         help = "The input Essence file"
     )]
     input_file: PathBuf,
