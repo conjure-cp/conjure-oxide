@@ -5,3 +5,4 @@ mod bubble;
 mod cnf;
 mod constant;
 mod minion;
+mod partial_eval;

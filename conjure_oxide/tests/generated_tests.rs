@@ -171,7 +171,9 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
             SumLeq(_, vec, _) => assert_constants_leq_one(&x, vec),
             DivEq(_, _, _, _) => (),
             Ineq(_, _, _, _) => (),
-            AllDiff(_, vec) => assert_constants_leq_one(&x, vec),
+            // this is a vector operation, but we don't want to fold values into each-other in this
+            // one
+            AllDiff(_, _) => (),
         };
         x.clone()
     }));
