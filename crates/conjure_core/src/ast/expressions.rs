@@ -21,7 +21,6 @@ use super::{Domain, Range};
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
 #[uniplate(walk_into=[])]
 #[biplate(to=Constant)]
-#[non_exhaustive]
 pub enum Expression {
     /**
      * Represents an empty expression
