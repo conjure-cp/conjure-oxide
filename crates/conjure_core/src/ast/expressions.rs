@@ -47,6 +47,9 @@ pub enum Expression {
     #[compatible(JsonInput)]
     Min(Metadata, Vec<Expression>),
 
+    #[compatible(JsonInput)]
+    Max(Metadata, Vec<Expression>),
+
     #[compatible(JsonInput, SAT)]
     Not(Metadata, Box<Expression>),
 
@@ -158,6 +161,9 @@ impl Expression {
             Expression::Min(_, exprs) => {
                 expr_vec_to_domain_i32(exprs, |x, y| Some(if x < y { x } else { y }), vars)
             }
+            Expression::Max(_, exprs) => {
+                expr_vec_to_domain_i32(exprs, |x, y| Some(if x > y { x } else { y }), vars)
+            }
             Expression::UnsafeDiv(_, a, b) | Expression::SafeDiv(_, a, b) => {
                 a.domain_of(vars)?.apply_i32(
                     |x, y| if y != 0 { Some(x / y) } else { None },
@@ -195,6 +201,7 @@ impl Expression {
             Expression::Reference(_, _) => None,
             Expression::Sum(_, _) => Some(ReturnType::Int),
             Expression::Min(_, _) => Some(ReturnType::Int),
+            Expression::Max(_, _) => Some(ReturnType::Int),
             Expression::Not(_, _) => Some(ReturnType::Bool),
             Expression::Or(_, _) => Some(ReturnType::Bool),
             Expression::And(_, _) => Some(ReturnType::Bool),
@@ -224,6 +231,7 @@ impl Expression {
             Expression::Reference(metadata, _) => metadata.clean,
             Expression::Sum(metadata, exprs) => metadata.clean,
             Expression::Min(metadata, exprs) => metadata.clean,
+            Expression::Max(metadata, exprs) => metadata.clean,
             Expression::Not(metadata, expr) => metadata.clean,
             Expression::Or(metadata, exprs) => metadata.clean,
             Expression::And(metadata, exprs) => metadata.clean,
@@ -251,6 +259,9 @@ impl Expression {
                 metadata.clean = bool_value;
             }
             Expression::Min(metadata, _) => {
+                metadata.clean = bool_value;
+            }
+            Expression::Max(metadata, _) => {
                 metadata.clean = bool_value;
             }
             Expression::Not(metadata, _) => {
@@ -360,6 +371,9 @@ impl Display for Expression {
             }
             Expression::Min(_, expressions) => {
                 write!(f, "Min({})", display_expressions(expressions))
+            }
+            Expression::Max(_, expressions) => {
+                write!(f, "Max({})", display_expressions(expressions))
             }
             Expression::Not(_, expr_box) => {
                 write!(f, "Not({})", expr_box.clone())
