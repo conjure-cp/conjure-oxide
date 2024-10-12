@@ -288,6 +288,12 @@ fn read_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, So
                 .map(|x| read_expr(x.to_owned()))
                 .collect::<Result<Vec<minion_ast::Constraint>, SolverError>>()?,
         )),
+        conjure_ast::Expression::And(_metadata, exprs) => Ok(minion_ast::Constraint::WatchedAnd(
+            exprs
+                .iter()
+                .map(|x| read_expr(x.to_owned()))
+                .collect::<Result<Vec<minion_ast::Constraint>, SolverError>>()?,
+        )),
         conjure_ast::Expression::Eq(_metadata, a, b) => {
             Ok(minion_ast::Constraint::Eq(read_var(*a)?, read_var(*b)?))
         }
@@ -298,6 +304,10 @@ fn read_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, So
                 minion_ast::Constant::Integer(read_const_1(k)?),
             ))
         }
+        conjure_ast::Expression::Reify(_metadata, e, v) => Ok(minion_ast::Constraint::Reify(
+            Box::new(read_expr(*e)?),
+            read_var(*v)?,
+        )),
         x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
     }
 }

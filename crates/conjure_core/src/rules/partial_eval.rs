@@ -6,7 +6,7 @@ use crate::ast::{Constant as Const, Expression as Expr};
 use crate::rule_engine::{ApplicationResult, Reduction};
 use crate::Model;
 
-#[register_rule(("Base",200))]
+#[register_rule(("Base",9000))]
 fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
     use conjure_core::rule_engine::ApplicationError::RuleNotApplicable;
     use Expr::*;
@@ -275,5 +275,6 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
         }
 
         WatchedLiteral(_, _, _) => Err(RuleNotApplicable),
+        Reify(_, _, _) => Err(RuleNotApplicable),
     }
 }

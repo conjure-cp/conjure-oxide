@@ -122,10 +122,13 @@ pub enum Expression {
     ///
     #[compatible(Minion)]
     WatchedLiteral(Metadata, Name, Constant),
+
+    #[compatible(Minion)]
+    Reify(Metadata, Box<Expression>, Box<Expression>),
 }
 
 fn expr_vec_to_domain_i32(
-    exprs: &Vec<Expression>,
+    exprs: &[Expression],
     op: fn(i32, i32) -> Option<i32>,
     vars: &SymbolTable,
 ) -> Option<Domain> {
@@ -236,6 +239,7 @@ impl Expression {
             Expression::Bubble(_, _, _) => None, // TODO: (flm8) should this be a bool?
             Expression::Nothing => None,
             Expression::WatchedLiteral(_, _, _) => Some(ReturnType::Bool),
+            Expression::Reify(_, _, _) => Some(ReturnType::Bool),
         }
     }
 
@@ -334,6 +338,9 @@ impl Expression {
                 metadata.clean = bool_value;
             }
             Expression::WatchedLiteral(metadata, name, constant) => {
+                metadata.clean = bool_value;
+            }
+            Expression::Reify(metadata, _, _) => {
                 metadata.clean = bool_value;
             }
         }

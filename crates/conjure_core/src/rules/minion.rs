@@ -66,7 +66,7 @@ fn sum_to_vector(expr: &Expr) -> Result<Vec<Expr>, ApplicationError> {
  * sum([a, b, c]) >= d => sum_geq([a, b, c], d)
  * ```
  */
-#[register_rule(("Minion", 100))]
+#[register_rule(("Minion", 4400))]
 fn flatten_sum_geq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Geq(metadata, a, b) => {
@@ -87,7 +87,7 @@ fn flatten_sum_geq(expr: &Expr, _: &Model) -> ApplicationResult {
  * sum([a, b, c]) <= d => sum_leq([a, b, c], d)
  * ```
  */
-#[register_rule(("Minion", 100))]
+#[register_rule(("Minion", 4400))]
 fn sum_leq_to_sumleq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Leq(metadata, a, b) => {
@@ -108,7 +108,7 @@ fn sum_leq_to_sumleq(expr: &Expr, _: &Model) -> ApplicationResult {
  * eq(sum([a, b]), c) => sumeq([a, b], c)
  * ```
 */
-#[register_rule(("Minion", 100))]
+#[register_rule(("Minion", 4400))]
 fn sum_eq_to_sumeq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Eq(metadata, a, b) => {
@@ -147,7 +147,7 @@ fn sum_eq_to_sumeq(expr: &Expr, _: &Model) -> ApplicationResult {
  * a + b = c
  * ```
  */
-#[register_rule(("Minion", 100))]
+#[register_rule(("Minion", 4400))]
 fn sumeq_to_minion(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::SumEq(metadata, exprs, eq_to) => Ok(Reduction::pure(Expr::And(
@@ -168,7 +168,7 @@ fn sumeq_to_minion(expr: &Expr, _: &Model) -> ApplicationResult {
 * a < b => a - b < -1
 * ```
 */
-#[register_rule(("Minion", 100))]
+#[register_rule(("Minion", 4100))]
 fn lt_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Lt(metadata, a, b) => Ok(Reduction::pure(Expr::Ineq(
@@ -188,7 +188,7 @@ fn lt_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 * a > b => b - a < -1
 * ```
 */
-#[register_rule(("Minion", 100))]
+#[register_rule(("Minion", 4100))]
 fn gt_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Gt(metadata, a, b) => Ok(Reduction::pure(Expr::Ineq(
@@ -208,7 +208,7 @@ fn gt_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 * a >= b => b - a < 0
 * ```
 */
-#[register_rule(("Minion", 100))]
+#[register_rule(("Minion", 4100))]
 fn geq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Geq(metadata, a, b) => Ok(Reduction::pure(Expr::Ineq(
@@ -228,7 +228,7 @@ fn geq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 * a <= b => a - b < 0
 * ```
 */
-#[register_rule(("Minion", 100))]
+#[register_rule(("Minion", 4100))]
 fn leq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Leq(metadata, a, b) => Ok(Reduction::pure(Expr::Ineq(
@@ -260,7 +260,7 @@ fn leq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 /**
  * Since Minion doesn't support some constraints with div (e.g. leq, neq), we add an auxiliary variable to represent the division result.
 */
-#[register_rule(("Minion", 101))]
+#[register_rule(("Minion", 4400))]
 fn flatten_safediv(expr: &Expr, mdl: &Model) -> ApplicationResult {
     use Expr::*;
     match expr {
@@ -307,7 +307,7 @@ fn flatten_safediv(expr: &Expr, mdl: &Model) -> ApplicationResult {
     Err(ApplicationError::RuleNotApplicable)
 }
 
-#[register_rule(("Minion", 100))]
+#[register_rule(("Minion", 4400))]
 fn div_eq_to_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Eq(metadata, a, b) => {
@@ -346,7 +346,7 @@ fn div_eq_to_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 }
 
-#[register_rule(("Minion", 100))]
+#[register_rule(("Minion", 4400))]
 fn negated_neq_to_eq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Not(_, a) => match a.as_ref() {
@@ -367,7 +367,7 @@ fn negated_neq_to_eq(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 }
 
-#[register_rule(("Minion", 100))]
+#[register_rule(("Minion", 4400))]
 fn negated_eq_to_neq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Not(_, a) => match a.as_ref() {
@@ -403,7 +403,7 @@ fn negated_eq_to_neq(expr: &Expr, _: &Model) -> ApplicationResult {
 ///
 /// This restates boolean variables as the equivalent constraint "SAT if x is true".
 ///
-#[register_rule(("Minion", 50))]
+#[register_rule(("Minion", 4100))]
 fn boolean_literal_to_wliteral(expr: &Expr, mdl: &Model) -> ApplicationResult {
     use Domain::BoolDomain;
     use Expr::*;
@@ -472,4 +472,31 @@ fn boolean_literal_to_wliteral(expr: &Expr, mdl: &Model) -> ApplicationResult {
         }
         _ => Err(RuleNotApplicable),
     }
+}
+
+/// Flattening rule for not(X) in Minion, where X is a constraint.
+///
+/// ```text
+/// not(X) ~> reify(X,0)
+/// ```
+///
+/// This rule has lower priority than boolean_literal_to_wliteral so that we can assume that the
+/// nested expressions are constraints not variables.
+
+#[register_rule(("Minion", 4090))]
+fn not_constraint_to_reify(expr: &Expr, _: &Model) -> ApplicationResult {
+    use Expr::*;
+    if !matches!(expr, Not(_,c) if !matches!(**c, Reference(_,_)|Constant(_,_))) {
+        return Err(RuleNotApplicable);
+    }
+
+    let Not(m, e) = expr else {
+        unreachable!();
+    };
+
+    Ok(Reduction::pure(Reify(
+        m.clone(),
+        e.clone(),
+        Box::new(Constant(Metadata::new(), Const::Bool(false))),
+    )))
 }

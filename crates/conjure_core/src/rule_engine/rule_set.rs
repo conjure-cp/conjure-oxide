@@ -33,9 +33,9 @@ pub struct RuleSet<'a> {
     pub name: &'a str,
     /// Order of the RuleSet. Used to establish a consistent order of operations when resolving rules.
     /// If two RuleSets overlap (contain the same rule but with different priorities), the RuleSet with the higher order will be used as the source of truth.
-    pub order: u8,
+    pub order: u16,
     /// A map of rules to their priorities. This will be lazily initialized at runtime.
-    rules: OnceLock<HashMap<&'a Rule<'a>, u8>>,
+    rules: OnceLock<HashMap<&'a Rule<'a>, u16>>,
     /// The names of the rule sets that this rule set depends on.
     dependency_rs_names: &'a [&'a str],
     dependencies: OnceLock<HashSet<&'a RuleSet<'a>>>,
@@ -46,7 +46,7 @@ pub struct RuleSet<'a> {
 impl<'a> RuleSet<'a> {
     pub const fn new(
         name: &'a str,
-        order: u8,
+        order: u16,
         dependencies: &'a [&'a str],
         solver_families: &'a [SolverFamily],
     ) -> Self {
@@ -61,8 +61,8 @@ impl<'a> RuleSet<'a> {
     }
 
     /// Get the rules of this rule set, evaluating them lazily if necessary
-    /// Returns a `&HashMap<&Rule, u8>` where the key is the rule and the value is the priority of the rule.
-    pub fn get_rules(&self) -> &HashMap<&'a Rule<'a>, u8> {
+    /// Returns a `&HashMap<&Rule, u16>` where the key is the rule and the value is the priority of the rule.
+    pub fn get_rules(&self) -> &HashMap<&'a Rule<'a>, u16> {
         match self.rules.get() {
             None => {
                 let rules = self.resolve_rules();
@@ -104,12 +104,12 @@ impl<'a> RuleSet<'a> {
     }
 
     /// Resolve the rules of this rule set ("reverse the arrows")
-    fn resolve_rules(&self) -> HashMap<&'a Rule<'a>, u8> {
+    fn resolve_rules(&self) -> HashMap<&'a Rule<'a>, u16> {
         let mut rules = HashMap::new();
 
         for rule in get_rules() {
             let mut found = false;
-            let mut priority: u8 = 0;
+            let mut priority: u16 = 0;
 
             for (name, p) in rule.rule_sets {
                 if *name == self.name {

@@ -10,7 +10,7 @@ use uniplate::Uniplate;
 /*        This file contains basic rules for simplifying expressions         */
 /*****************************************************************************/
 
-register_rule_set!("Base", 150, ());
+register_rule_set!("Base", 100, ());
 
 /**
  * Remove nothing's from expressions:
@@ -21,7 +21,7 @@ register_rule_set!("Base", 150, ());
  * ...
  * ```
 */
-#[register_rule(("Base", 100))]
+#[register_rule(("Base", 8800))]
 fn remove_nothings(expr: &Expr, _: &Model) -> ApplicationResult {
     fn remove_nothings(exprs: Vec<Expr>) -> Result<Vec<Expr>, ApplicationError> {
         let mut changed = false;
@@ -83,7 +83,7 @@ fn remove_nothings(expr: &Expr, _: &Model) -> ApplicationResult {
  * [] = Nothing
  * ```
  */
-#[register_rule(("Base", 100))]
+#[register_rule(("Base", 8800))]
 fn empty_to_nothing(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Nothing
@@ -101,45 +101,12 @@ fn empty_to_nothing(expr: &Expr, _: &Model) -> ApplicationResult {
 }
 
 /**
- * Evaluate sum of constants:
- * ```text
- * sum([1, 2, 3]) = 6
- * ```
- */
-#[register_rule(("Base", 100))]
-fn sum_constants(expr: &Expr, _: &Model) -> ApplicationResult {
-    match expr {
-        Expr::Sum(_, exprs) => {
-            let mut sum = 0;
-            let mut new_exprs = Vec::new();
-            let mut changed = false;
-            for e in exprs {
-                match e {
-                    Expr::Constant(_metadata, Const::Int(i)) => {
-                        sum += i;
-                        changed = true;
-                    }
-                    _ => new_exprs.push(e.clone()),
-                }
-            }
-            if !changed {
-                return Err(ApplicationError::RuleNotApplicable);
-            }
-            // TODO (kf77): Get existing metadata instead of creating a new one
-            new_exprs.push(Expr::Constant(Metadata::new(), Const::Int(sum)));
-            Ok(Reduction::pure(Expr::Sum(Metadata::new(), new_exprs))) // Let other rules handle only one Expr being contained in the sum
-        }
-        _ => Err(ApplicationError::RuleNotApplicable),
-    }
-}
-
-/**
  * Unwrap trivial sums:
  * ```text
  * sum([a]) = a
  * ```
  */
-#[register_rule(("Base", 100))]
+#[register_rule(("Base", 8800))]
 fn unwrap_sum(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Sum(_, exprs) if (exprs.len() == 1) => Ok(Reduction::pure(exprs[0].clone())),
@@ -153,7 +120,7 @@ fn unwrap_sum(expr: &Expr, _: &Model) -> ApplicationResult {
  * sum(sum(a, b), c) = sum(a, b, c)
  * ```
  */
-#[register_rule(("Base", 100))]
+#[register_rule(("Base", 8800))]
 pub fn flatten_nested_sum(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Sum(metadata, exprs) => {
@@ -189,7 +156,7 @@ pub fn flatten_nested_sum(expr: &Expr, _: &Model) -> ApplicationResult {
 * or(or(a, b), c) = or(a, b, c)
 * ```
  */
-#[register_rule(("Base", 100))]
+#[register_rule(("Base", 8800))]
 fn unwrap_nested_or(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Or(metadata, exprs) => {
@@ -222,7 +189,7 @@ fn unwrap_nested_or(expr: &Expr, _: &Model) -> ApplicationResult {
 * and(and(a, b), c) = and(a, b, c)
 * ```
  */
-#[register_rule(("Base", 100))]
+#[register_rule(("Base", 8800))]
 fn unwrap_nested_and(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::And(metadata, exprs) => {
@@ -258,7 +225,7 @@ fn unwrap_nested_and(expr: &Expr, _: &Model) -> ApplicationResult {
 * not(not(a)) = a
 * ```
  */
-#[register_rule(("Base", 100))]
+#[register_rule(("Base", 8400))]
 fn remove_double_negation(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Not(_, contents) => match contents.as_ref() {
@@ -275,7 +242,7 @@ fn remove_double_negation(expr: &Expr, _: &Model) -> ApplicationResult {
  * and([a]) = a
  * ```
  */
-#[register_rule(("Base", 100))]
+#[register_rule(("Base", 8800))]
 fn remove_trivial_and(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::And(_, exprs) => {
@@ -294,7 +261,7 @@ fn remove_trivial_and(expr: &Expr, _: &Model) -> ApplicationResult {
  * or([a]) = a
  * ```
  */
-#[register_rule(("Base", 100))]
+#[register_rule(("Base", 8800))]
 fn remove_trivial_or(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Or(_, exprs) => {
@@ -308,6 +275,7 @@ fn remove_trivial_or(expr: &Expr, _: &Model) -> ApplicationResult {
 }
 
 /**
+<<<<<<< HEAD
  * Remove constant bools from or expressions
  * ```text
  * or([true, a]) = true
@@ -410,12 +378,12 @@ fn evaluate_constant_not(expr: &Expr, _: &Model) -> ApplicationResult {
 }
 
 /**
- * Turn a Min into a new variable and post a top level constraint to ensure the new variable is the minimum.
+ * Turn a Min into a new variable and post a top-level constraint to ensure the new variable is the minimum.
  * ```text
  * min([a, b]) ~> c ; c <= a & c <= b & (c = a | c = b)
  * ```
  */
-#[register_rule(("Base", 100))]
+#[register_rule(("Base", 2000))]
 fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
     match expr {
         Expr::Min(metadata, exprs) => {
@@ -504,7 +472,7 @@ fn max_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
 * or(and(a, b), c) = and(or(a, c), or(b, c))
 * ```
  */
-#[register_rule(("Base", 100))]
+#[register_rule(("Base", 8400))]
 fn distribute_or_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
     fn find_and(exprs: &[Expr]) -> Option<usize> {
         // ToDo: may be better to move this to some kind of utils module?
@@ -554,7 +522,7 @@ fn distribute_or_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
 * not(and(a, b)) = or(not a, not b)
 * ```
  */
-#[register_rule(("Base", 100))]
+#[register_rule(("Base", 8400))]
 fn distribute_not_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Not(_, contents) => match contents.as_ref() {
@@ -585,7 +553,7 @@ fn distribute_not_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
 * not(or(a, b)) = and(not a, not b)
 * ```
  */
-#[register_rule(("Base", 100))]
+#[register_rule(("Base", 8400))]
 fn distribute_not_over_or(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Not(_, contents) => match contents.as_ref() {
