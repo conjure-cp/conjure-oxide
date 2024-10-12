@@ -411,7 +411,7 @@ fn evaluate_constant_not(expr: &Expr, _: &Model) -> ApplicationResult {
 }
 
 /**
- * Turn a Min into a new variable and post a global constraint to ensure the new variable is the minimum.
+ * Turn a Min into a new variable and post a top level constraint to ensure the new variable is the minimum.
  * ```text
  * min([a, b]) ~> c ; c <= a & c <= b & (c = a | c = b)
  * ```
@@ -455,7 +455,7 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
 }
 
 /**
- * Turn a Min into a new variable and post a global constraint to ensure the new variable is the minimum.
+ * Turn a Max into a new variable and post a top level constraint to ensure the new variable is the minimum.
  * ```text
  * max([a, b]) ~> c ; c >= a & c >= b & (c = a | c = b)
  * ```

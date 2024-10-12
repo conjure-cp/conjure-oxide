@@ -61,7 +61,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Const> {
             opt_vec_op::<i32, i32>(|e| e.iter().min().copied(), exprs).map(Const::Int)
         }
         Expr::Max(_, exprs) => {
-            opt_vec_op::<i32, i32>(|e| e.iter().min().copied(), exprs).map(Const::Int)
+            opt_vec_op::<i32, i32>(|e| e.iter().max().copied(), exprs).map(Const::Int)
         }
         Expr::UnsafeDiv(_, a, b) | Expr::SafeDiv(_, a, b) => {
             if unwrap_expr::<i32>(b)? == 0 {
