@@ -250,7 +250,7 @@ jobs:
         id: coveragediff
         run: |
           # pipeline lcov relevant stats to python script
-          python ./tools/code-coverage-diff/calculate_coverage_difference.py ${{ steps.lcov.outputs.main }} ${{ steps.lcov.outputs.pr }} > ./tools/code-coverage-diff/lcov/coverage_diff.txt
+          python ./tools/code-coverage-diff/calculate_coverage_difference.py "${{ steps.lcov.outputs.main }}" "${{ steps.lcov.outputs.pr }}" > ./tools/code-coverage-diff/lcov/coverage_diff.txt
 
           # store into environment variable
           echo "diff<<EOFABC" >> $GITHUB_OUTPUT
@@ -268,7 +268,7 @@ jobs:
         id: historicalcoveragediff
         run: |
           # call python script to compare historical previous main coverage with current main coverage
-          python ./tools/code-coverage-diff/calculate_coverage_difference.py ${{ steps.lcov.outputs.main }} ${{ steps.coveragediff.outputs.hist_main_summary }} > ./tools/code-coverage-diff/lcov/hist_coverage_diff.txt
+          python ./tools/code-coverage-diff/calculate_coverage_difference.py "${{ steps.lcov.outputs.main }}" "${{ steps.coveragediff.outputs.hist_main_summary }}" > ./tools/code-coverage-diff/lcov/hist_coverage_diff.txt
 
           # store into output variable for comment display
           echo "hist_diff<<EOFABC" >> $GITHUB_OUTPUT
