@@ -1,5 +1,5 @@
 use conjure_core::ast::{
-    Constant as Const, DecisionVariable, Domain, Expression as Expr, Range, SymbolTable,
+    Constant as Const, DecisionVariable, Expression as Expr, SymbolTable,
 };
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{

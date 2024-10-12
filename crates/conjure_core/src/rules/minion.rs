@@ -3,7 +3,7 @@
 /************************************************************************/
 
 use crate::ast::{
-    Constant as Const, DecisionVariable, Domain, Expression as Expr, Range, SymbolTable,
+    Constant as Const, DecisionVariable, Expression as Expr, SymbolTable,
 };
 use crate::metadata::Metadata;
 use crate::rule_engine::{
