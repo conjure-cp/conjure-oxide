@@ -1,6 +1,4 @@
-use conjure_core::ast::{
-    Constant as Const, DecisionVariable, Expression as Expr, SymbolTable,
-};
+use conjure_core::ast::{Constant as Const, DecisionVariable, Expression as Expr, SymbolTable};
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
@@ -466,8 +464,8 @@ fn max_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
         Expr::Max(metadata, exprs) => {
             let new_name = mdl.gensym();
 
-            let mut new_top = Vec::new(); // the new variable must be less than or equal to all the other variables
-            let mut disjunction = Vec::new(); // the new variable must be equal to one of the variables
+            let mut new_top = Vec::new(); // the new variable must be more than or equal to all the other variables
+            let mut disjunction = Vec::new(); // the new variable must more than or equal to one of the variables
             for e in exprs {
                 new_top.push(Expr::Geq(
                     Metadata::new(),
