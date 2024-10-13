@@ -2,9 +2,7 @@
 /*        Rules for translating to Minion-supported constraints         */
 /************************************************************************/
 
-use crate::ast::{
-    Constant as Const, DecisionVariable, Expression as Expr, SymbolTable,
-};
+use crate::ast::{Constant as Const, DecisionVariable, Expression as Expr, SymbolTable};
 use crate::metadata::Metadata;
 use crate::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
