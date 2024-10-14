@@ -453,7 +453,7 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
 }
 
 /**
- * Turn a Max into a new variable and post a top level constraint to ensure the new variable is the minimum.
+ * Turn a Max into a new variable and post a top level constraint to ensure the new variable is the maximum.
  * ```text
  * max([a, b]) ~> c ; c >= a & c >= b & (c = a | c = b)
  * ```
