@@ -12,11 +12,14 @@ use crate::metadata::Metadata;
 
 use super::{Domain, Range};
 
+/// Represents different types of expressions used to define rules and constraints in the model.
+///
+/// The `Expression` enum includes operations, constants, and variable references
+/// used to build rules and conditions for the model.
 #[document_compatibility]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
 #[uniplate(walk_into=[])]
 #[biplate(to=Constant)]
-#[non_exhaustive]
 pub enum Expression {
     /**
      * Represents an empty expression
