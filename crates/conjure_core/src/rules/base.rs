@@ -1,6 +1,4 @@
-use conjure_core::ast::{
-    Constant as Const, DecisionVariable, Domain, Expression as Expr, Range, SymbolTable,
-};
+use conjure_core::ast::{Constant as Const, DecisionVariable, Expression as Expr, SymbolTable};
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
@@ -411,7 +409,7 @@ fn evaluate_constant_not(expr: &Expr, _: &Model) -> ApplicationResult {
 }
 
 /**
- * Turn a Min into a new variable and post a global constraint to ensure the new variable is the minimum.
+ * Turn a Min into a new variable and post a top level constraint to ensure the new variable is the minimum.
  * ```text
  * min([a, b]) ~> c ; c <= a & c <= b & (c = a | c = b)
  * ```
@@ -426,6 +424,50 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
             let mut disjunction = Vec::new(); // the new variable must be equal to one of the variables
             for e in exprs {
                 new_top.push(Expr::Leq(
+                    Metadata::new(),
+                    Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
+                    Box::new(e.clone()),
+                ));
+                disjunction.push(Expr::Eq(
+                    Metadata::new(),
+                    Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
+                    Box::new(e.clone()),
+                ));
+            }
+            new_top.push(Expr::Or(Metadata::new(), disjunction));
+
+            let mut new_vars = SymbolTable::new();
+            let domain = expr
+                .domain_of(&mdl.variables)
+                .ok_or(ApplicationError::DomainError)?;
+            new_vars.insert(new_name.clone(), DecisionVariable::new(domain));
+
+            Ok(Reduction::new(
+                Expr::Reference(Metadata::new(), new_name),
+                Expr::And(metadata.clone_dirty(), new_top),
+                new_vars,
+            ))
+        }
+        _ => Err(ApplicationError::RuleNotApplicable),
+    }
+}
+
+/**
+ * Turn a Max into a new variable and post a top level constraint to ensure the new variable is the maximum.
+ * ```text
+ * max([a, b]) ~> c ; c >= a & c >= b & (c = a | c = b)
+ * ```
+ */
+#[register_rule(("Base", 100))]
+fn max_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
+    match expr {
+        Expr::Max(metadata, exprs) => {
+            let new_name = mdl.gensym();
+
+            let mut new_top = Vec::new(); // the new variable must be more than or equal to all the other variables
+            let mut disjunction = Vec::new(); // the new variable must more than or equal to one of the variables
+            for e in exprs {
+                new_top.push(Expr::Geq(
                     Metadata::new(),
                     Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
                     Box::new(e.clone()),

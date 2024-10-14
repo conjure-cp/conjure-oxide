@@ -154,6 +154,7 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
             Reference(_, _) => (),
             Sum(_, vec) => assert_constants_leq_one(&x, vec),
             Min(_, vec) => assert_constants_leq_one(&x, vec),
+            Max(_, vec) => assert_constants_leq_one(&x, vec),
             Not(_, _) => (),
             Or(_, vec) => assert_constants_leq_one(&x, vec),
             And(_, vec) => assert_constants_leq_one(&x, vec),

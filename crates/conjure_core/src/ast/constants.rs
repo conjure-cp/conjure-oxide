@@ -2,7 +2,6 @@ use std::fmt::{Display, Formatter};
 
 use serde::{Deserialize, Serialize};
 use uniplate::derive::Uniplate;
-use uniplate::{Biplate, Uniplate};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
 #[uniplate()]
