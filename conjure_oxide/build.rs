@@ -1,4 +1,3 @@
-
 use std::env::var;
 use std::fs::{read_dir, File};
 use std::io::{self, Write};
@@ -19,14 +18,13 @@ fn main() -> io::Result<()> {
     for subdir in WalkDir::new(test_dir) {
         let subdir = subdir?;
         if subdir.file_type().is_dir() {
-            if std::env::var("ALLTEST").is_ok(){
+            if std::env::var("ALLTEST").is_ok() {
                 let stems: Vec<String> = read_dir(subdir.path())?
                     .filter_map(Result::ok)
                     .filter(|entry| {
-                        entry
-                            .path()
-                            .extension()
-                            .map_or(false, |ext| ext == "essence" || ext == "eprime" || ext == "disabled")
+                        entry.path().extension().map_or(false, |ext| {
+                            ext == "essence" || ext == "eprime" || ext == "disabled"
+                        })
                     })
                     .filter_map(|entry| {
                         entry
@@ -40,10 +38,9 @@ fn main() -> io::Result<()> {
                 let exts: Vec<String> = read_dir(subdir.path())?
                     .filter_map(Result::ok)
                     .filter(|entry| {
-                        entry
-                            .path()
-                            .extension()
-                            .map_or(false, |ext| ext == "essence" || ext == "eprime" || ext == "disabled")
+                        entry.path().extension().map_or(false, |ext| {
+                            ext == "essence" || ext == "eprime" || ext == "disabled"
+                        })
                     })
                     .filter_map(|entry| {
                         entry
@@ -57,9 +54,7 @@ fn main() -> io::Result<()> {
                 let essence_files = std::iter::zip(stems, exts).collect();
 
                 write_test(&mut f, subdir.path().display().to_string(), essence_files)?;
-            } 
-
-            else {
+            } else {
                 let stems: Vec<String> = read_dir(subdir.path())?
                     .filter_map(Result::ok)
                     .filter(|entry| {
@@ -100,7 +95,7 @@ fn main() -> io::Result<()> {
             }
         }
     }
-    
+
     Ok(())
 }
 
