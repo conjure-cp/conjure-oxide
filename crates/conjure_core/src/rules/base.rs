@@ -77,27 +77,33 @@ fn remove_nothings(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 }
 
-/**
- * Remove empty expressions:
- * ```text
- * [] = Nothing
- * ```
- */
+/// Remove empty expressions:
+///  ```text
+///   or([]) ~> false
+///   X([])  ~> Nothing
+///  ```
 #[register_rule(("Base", 8800))]
-fn empty_to_nothing(expr: &Expr, _: &Model) -> ApplicationResult {
-    match expr {
-        Expr::Nothing
-        | Expr::Reference(_, _)
-        | Expr::Constant(_, _)
-        | Expr::WatchedLiteral(_, _, _) => Err(ApplicationError::RuleNotApplicable),
-        _ => {
-            if expr.children().is_empty() {
-                Ok(Reduction::pure(Expr::Nothing))
-            } else {
-                Err(ApplicationError::RuleNotApplicable)
-            }
-        }
+fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
+    use Expr::*;
+
+    // excluded expressions
+    if matches!(
+        expr,
+        Nothing | Reference(_, _) | Constant(_, _) | WatchedLiteral(_, _, _)
+    ) {
+        return Err(ApplicationError::RuleNotApplicable);
     }
+
+    if !expr.children().is_empty() {
+        return Err(ApplicationError::RuleNotApplicable);
+    }
+
+    let new_expr = match expr {
+        Or(_, _) => Constant(Metadata::new(), Const::Bool(false)),
+        _ => Nothing,
+    };
+
+    Ok(Reduction::pure(new_expr))
 }
 
 /**

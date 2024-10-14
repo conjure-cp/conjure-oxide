@@ -372,6 +372,8 @@ unsafe fn get_constraint_type(constraint: &Constraint) -> Result<u32, MinionErro
         Constraint::GacEq(_, _) => Ok(ffi::ConstraintType_CT_GACEQ),
         Constraint::WatchLess(_, _) => Ok(ffi::ConstraintType_CT_WATCHED_LESS),
         Constraint::WatchNeq(_, _) => Ok(ffi::ConstraintType_CT_WATCHED_NEQ),
+        Constraint::True => Ok(ffi::ConstraintType_CT_TRUE),
+        Constraint::False => Ok(ffi::ConstraintType_CT_FALSE),
 
         #[allow(unreachable_patterns)]
         x => Err(MinionError::NotImplemented(format!(
@@ -592,6 +594,9 @@ unsafe fn constraint_add_args(
             read_var(i, r_constr, b)?;
             Ok(())
         }
+
+        Constraint::True => Ok(()),
+        Constraint::False => Ok(()),
         #[allow(unreachable_patterns)]
         x => Err(MinionError::NotImplemented(format!("{:?}", x))),
     }

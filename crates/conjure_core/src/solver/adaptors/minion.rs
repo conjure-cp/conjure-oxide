@@ -248,7 +248,28 @@ fn parse_exprs(
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     for expr in conjure_model.get_constraints_vec().iter() {
-        parse_expr(expr.to_owned(), minion_model)?;
+        // TODO: top level false / trues should not go to the solver to begin with
+        // ... but changing this at this stage would require rewriting the tester
+        use crate::metadata::Metadata;
+        use conjure_ast::Constant;
+        use conjure_ast::Expression as Expr;
+
+        match expr {
+            // top level false
+            Expr::Constant(_, Constant::Bool(false)) => {
+                minion_model.constraints.push(minion_ast::Constraint::False);
+                return Ok(());
+            }
+            // top level true
+            Expr::Constant(_, Constant::Bool(true)) => {
+                minion_model.constraints.push(minion_ast::Constraint::True);
+                return Ok(());
+            }
+
+            _ => {
+                parse_expr(expr.to_owned(), minion_model)?;
+            }
+        }
     }
     Ok(())
 }
