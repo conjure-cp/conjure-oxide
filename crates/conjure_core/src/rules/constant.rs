@@ -5,9 +5,9 @@ use conjure_core::rule_engine::{
 };
 use conjure_core::Model;
 
-register_rule_set!("Constant", 255, ());
+register_rule_set!("Constant", 100, ());
 
-#[register_rule(("Constant", 255))]
+#[register_rule(("Constant", 9001))]
 fn apply_eval_constant(expr: &Expr, _: &Model) -> ApplicationResult {
     if let Expr::Constant(_, _) = expr {
         return Err(ApplicationError::RuleNotApplicable);

@@ -110,10 +110,25 @@ pub enum Expression {
 
     #[compatible(Minion)]
     AllDiff(Metadata, Vec<Expression>),
+
+    /// w-literal(x,k) is SAT iff x == k, where x is a variable and k a constant.
+    ///
+    /// This is a low-level Minion constraint and you should (probably) use Eq instead. The main
+    /// use of w-literal is to convert boolean variables to constraints so that they can be used
+    /// inside watched-and and watched-or.
+    ///
+    /// See `rules::minion::boolean_literal_to_wliteral`.
+    ///
+    ///
+    #[compatible(Minion)]
+    WatchedLiteral(Metadata, Name, Constant),
+
+    #[compatible(Minion)]
+    Reify(Metadata, Box<Expression>, Box<Expression>),
 }
 
 fn expr_vec_to_domain_i32(
-    exprs: &Vec<Expression>,
+    exprs: &[Expression],
     op: fn(i32, i32) -> Option<i32>,
     vars: &SymbolTable,
 ) -> Option<Domain> {
@@ -223,6 +238,8 @@ impl Expression {
             Expression::AllDiff(_, _) => Some(ReturnType::Bool),
             Expression::Bubble(_, _, _) => None, // TODO: (flm8) should this be a bool?
             Expression::Nothing => None,
+            Expression::WatchedLiteral(_, _, _) => Some(ReturnType::Bool),
+            Expression::Reify(_, _, _) => Some(ReturnType::Bool),
         }
     }
 
@@ -318,6 +335,12 @@ impl Expression {
                 metadata.clean = bool_value;
             }
             Expression::DivEq(metadata, box1, box2, box3) => {
+                metadata.clean = bool_value;
+            }
+            Expression::WatchedLiteral(metadata, name, constant) => {
+                metadata.clean = bool_value;
+            }
+            Expression::Reify(metadata, _, _) => {
                 metadata.clean = bool_value;
             }
         }
