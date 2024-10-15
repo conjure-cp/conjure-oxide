@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 // use std::iter::Ste
 
+type DomainInt = i32;
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Range<A>
 where
@@ -13,12 +15,12 @@ where
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Domain {
     BoolDomain,
-    IntDomain(Vec<Range<i32>>),
+    IntDomain(Vec<Range<DomainInt>>),
 }
 
 impl Domain {
     /// Return a list of all possible i32 values in the domain if it is an IntDomain.
-    pub fn values_i32(&self) -> Option<Vec<i32>> {
+    pub fn values_i32(&self) -> Option<Vec<DomainInt>> {
         match self {
             Domain::IntDomain(ranges) => Some(
                 ranges
@@ -39,7 +41,11 @@ impl Domain {
     /// Undefined values will not be included in the resulting domain.
     ///
     /// Returns None if the domains are not valid for i32 operations.
-    pub fn apply_i32(&self, op: fn(i32, i32) -> Option<i32>, other: &Domain) -> Option<Domain> {
+    pub fn apply_i32(
+        &self,
+        op: fn(DomainInt, DomainInt) -> Option<DomainInt>,
+        other: &Domain,
+    ) -> Option<Domain> {
         if let (Some(vs1), Some(vs2)) = (self.values_i32(), other.values_i32()) {
             // TODO: (flm8) Optimise to use smarter, less brute-force methods
             let mut new_ranges = vec![];
