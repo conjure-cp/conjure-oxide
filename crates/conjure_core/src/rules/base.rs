@@ -105,6 +105,7 @@ fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
 
     let new_expr = match expr {
         Or(_, _) => Constant(Metadata::new(), Const::Bool(false)),
+        And(_, _) => Constant(Metadata::new(), Const::Bool(true)),
         _ => Nothing,
     };
 
