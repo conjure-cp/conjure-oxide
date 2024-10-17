@@ -77,11 +77,16 @@ fn remove_nothings(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 }
 
-/// Remove empty expressions:
-///  ```text
-///   or([]) ~> false
-///   X([])  ~> Nothing
-///  ```
+/// This rule simplifies expressions where the operator is applied to an empty set of sub-expressions.
+///
+/// For example:
+/// - `or([])` simplifies to `false` since no disjunction exists.
+///
+/// **Applicable examples:**
+/// ```text
+/// or([])  ~> false
+/// X([]) ~> Nothing
+/// ```
 #[register_rule(("Base", 8800))]
 fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
     use Expr::*;
@@ -100,6 +105,7 @@ fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
 
     let new_expr = match expr {
         Or(_, _) => Constant(Metadata::new(), Const::Bool(false)),
+        And(_, _) => Constant(Metadata::new(), Const::Bool(true)),
         _ => Nothing,
     };
 
