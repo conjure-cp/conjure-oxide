@@ -44,6 +44,8 @@ TARGET_DIR=$(cargo metadata 2> /dev/null | jq -r .target_directory 2>/dev/null)
 
 cd "$PROJECT_ROOT"
 
+export RUSTUP_TOOLCHAIN="nightly" # fixes https://github.com/mozilla/grcov/issues/677
+
 # Install required tools
 echo_err "info: installing nightly rust"
 rustup install nightly
