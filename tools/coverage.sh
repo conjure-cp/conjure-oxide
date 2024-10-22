@@ -65,8 +65,9 @@ rustup run nightly cargo install grcov
 rm -rf target/debug/coverage
 
 export CARGO_INCREMENTAL=0 
-export RUSTFLAGS='-Z unstable-options -Cinstrument-coverage' 
-export RUSTDOCFLAGS="-C instrument-coverage -Z unstable-options --persist-doctests target/debug/doctestbins"
+export RUSTFLAGS="$RUSTFLAGS -Z unstable-options -Cinstrument-coverage -Zlinker-features=-lld"
+export RUSTDOCFLAGS="$RUSTDOCFLAGS -C instrument-coverage -Z unstable-options --persist-doctests target/debug/doctestbins -Zlinker-features=-lld"
+cargo build <...>
 export LLVM_PROFILE_FILE='conjure-oxide-%p-%m.profraw' 
 
 echo_err "info: building with nightly"
