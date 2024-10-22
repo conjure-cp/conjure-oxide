@@ -250,6 +250,10 @@ jobs:
       - name: Calculate current coverage difference PR <> main
         id: coveragediff
         run: |
+
+          mkdir -p ./tools/code-coverage-diff/lcov
+          mkdir -p ./tools/code-coverage-diff/deploy-prev
+
           # pipeline lcov relevant stats to python script
           python3 ./tools/code-coverage-diff/calculate_coverage_difference.py "${{ steps.lcov.outputs.main }}" "${{ steps.lcov.outputs.pr }}" > ./tools/code-coverage-diff/lcov/coverage_diff.txt
 
