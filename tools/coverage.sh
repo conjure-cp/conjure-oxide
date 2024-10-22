@@ -44,6 +44,8 @@ TARGET_DIR=$(cargo metadata 2> /dev/null | jq -r .target_directory 2>/dev/null)
 
 cd "$PROJECT_ROOT"
 
+export RUSTUP_TOOLCHAIN="nightly" # fixes https://github.com/mozilla/grcov/issues/677
+
 # Install required tools
 echo_err "info: installing nightly rust"
 rustup install nightly
@@ -63,8 +65,8 @@ rustup run nightly cargo install grcov
 rm -rf target/debug/coverage
 
 export CARGO_INCREMENTAL=0 
-export RUSTFLAGS='-Z unstable-options -Cinstrument-coverage' 
-export RUSTDOCFLAGS="-C instrument-coverage -Z unstable-options --persist-doctests target/debug/doctestbins"
+export RUSTFLAGS="$RUSTFLAGS -Z unstable-options -Cinstrument-coverage -Zlinker-features=-lld"
+export RUSTDOCFLAGS="$RUSTDOCFLAGS -C instrument-coverage -Z unstable-options --persist-doctests target/debug/doctestbins -Zlinker-features=-lld"
 export LLVM_PROFILE_FILE='conjure-oxide-%p-%m.profraw' 
 
 echo_err "info: building with nightly"
@@ -74,6 +76,13 @@ echo_err "info: running tests"
 cargo +nightly test --workspace
 
 echo_err "info: generating coverage reports"
-grcov . -s . --binary-path ./target/debug -t html --ignore-not-existing --ignore "$HOME"'/.cargo/**/*.rs' --ignore 'target/**/*.rs' --ignore '**/main.rs' --ignore '**/build.rs' -o ./target/debug/coverage
-grcov . -s . --binary-path ./target/debug -t lcov --ignore-not-existing --ignore "$HOME"'/.cargo/**/*.rs' --ignore 'target/**/*.rs' --ignore '.cargo/**/*.rs' --ignore '**/main.rs' --ignore '**/build.rs' -o ./target/debug/lcov.info
+grcov . -s . --binary-path ./target/debug -t html --ignore-not-existing   --ignore "$HOME"'/.cargo/**/*.rs' --ignore 'target/**/*.rs' --ignore '**/main.rs' --ignore '**/build.rs' -o ./target/debug/coverage || { echo_err "fatal: html coverage generation failed" ; exit 1; }
+
+echo_err "info: html coverage report generated to target/debug/coverage/index.html"
+
+grcov . -s . --binary-path ./target/debug -t lcov --ignore-not-existing  --ignore "$HOME"'/.cargo/**/*.rs' --ignore 'target/**/*.rs' --ignore '**/tests/*.rs' --ignore '.cargo/**/*.rs' --ignore '**/main.rs' --ignore '**/build.rs' -o ./target/debug/lcov.info || { echo_err "fatal: lcov coverage generation failed" ; exit 1; }
+
+echo_err "info: lcov coverage report generated to target/debug/lcov.info"
+
 rm -rf **/*.profraw *.profraw
+
