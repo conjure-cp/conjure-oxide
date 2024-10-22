@@ -239,7 +239,7 @@ jobs:
         if: steps.find_artifacts.outputs.result != '[]'
         uses: actions/download-artifact@v4
         with:
-          name: code-coverage-${{ env.num }}-${{ env.previous_artifact_id }}
+          name: code-coverage-${{ steps.prnum.outputs.num}}-${{ env.previous_artifact_id }}
           path: ./tools/code-coverage-diff/deploy-prev
 
       # this will be used for future visualizations in the coverage report (requiring external python libs)
@@ -260,20 +260,21 @@ jobs:
           echo 'EOFABC'
           } >> "$GITHUB_ENV"
 
+
+      - name: Calculate coverage difference with previous historical lcov artifact
+        if: steps.find_artifacts.outputs.result != '[]'
+        id: historicalcoveragediff
+        run: |
           # create summary of previous (historical) lcov summary for main and pr
-          lcov --summary ./tools/code-coverage-diff/deploy-prev/code-coverage-${{ env.num }}-${{ env.previous_artifact_id }} > historical_coverage_lcov.txt
+          lcov --summary ./tools/code-coverage-diff/deploy-prev/code-coverage-${{ steps.prnum.outputs.num }}-${{ env.previous_artifact_id }} > historical_coverage_lcov.txt
           {
             echo "hist_main_summary<<EOFABC"
             cat historical_coverage_lcov.txt | tail -n +3
             echo "EOFABC"
           } >> "$GITHUB_ENV"
 
-      - name: Calculate coverage difference with previous historical lcov artifact
-        if: steps.find_artifacts.outputs.result != '[]'
-        id: historicalcoveragediff
-        run: |
           # call python script to compare historical previous main coverage with current main coverage
-          python ./tools/code-coverage-diff/calculate_coverage_difference.py "${{ steps.lcov.outputs.main }}" "${{ steps.coveragediff.outputs.hist_main_summary }}" > ./tools/code-coverage-diff/lcov/hist_coverage_diff.txt
+          python ./tools/code-coverage-diff/calculate_coverage_difference.py "${{ steps.lcov.outputs.main }}" "${{ env.hist_main_summary }}" > ./tools/code-coverage-diff/lcov/hist_coverage_diff.txt
 
           # store into output variable for comment display
           {
