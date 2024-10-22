@@ -16,6 +16,7 @@ def parse_coverage_data(coverage_data):
     
     coverage_dict = {}
     for line in coverage_data.splitlines():
+        line=line.strip()
         match = re.match(r'(\w+).*: ([\d.]+)% \((\d+) of (\d+)', line)
         if match:
             # store coverage details in a dictionary
