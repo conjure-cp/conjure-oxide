@@ -245,13 +245,13 @@ jobs:
       # this will be used for future visualizations in the coverage report (requiring external python libs)
       - name: Install python dependencies
         run: |
-          pip install -r tools/code-coverage-diff/requirements.txt
+          python3 -m pip install -r tools/code-coverage-diff/requirements.txt
 
       - name: Calculate current coverage difference PR <> main
         id: coveragediff
         run: |
           # pipeline lcov relevant stats to python script
-          python ./tools/code-coverage-diff/calculate_coverage_difference.py "${{ steps.lcov.outputs.main }}" "${{ steps.lcov.outputs.pr }}" > ./tools/code-coverage-diff/lcov/coverage_diff.txt
+          python3 ./tools/code-coverage-diff/calculate_coverage_difference.py "${{ steps.lcov.outputs.main }}" "${{ steps.lcov.outputs.pr }}" > ./tools/code-coverage-diff/lcov/coverage_diff.txt
 
           # store into environment variable
           {
@@ -274,7 +274,7 @@ jobs:
           } >> "$GITHUB_ENV"
 
           # call python script to compare historical previous main coverage with current main coverage
-          python ./tools/code-coverage-diff/calculate_coverage_difference.py "${{ steps.lcov.outputs.main }}" "${{ env.hist_main_summary }}" > ./tools/code-coverage-diff/lcov/hist_coverage_diff.txt
+          python3 ./tools/code-coverage-diff/calculate_coverage_difference.py "${{ steps.lcov.outputs.main }}" "${{ env.hist_main_summary }}" > ./tools/code-coverage-diff/lcov/hist_coverage_diff.txt
 
           # store into output variable for comment display
           {
