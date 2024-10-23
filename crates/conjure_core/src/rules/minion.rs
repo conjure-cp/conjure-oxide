@@ -241,6 +241,36 @@ fn leq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 }
 
+/// ```text
+/// x <= y + k ~> ineq(x,y,k)
+/// ```
+
+#[register_rule(("Minion",4400))]
+fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
+    let Expr::Leq(_, x, b) = expr else {
+        return Err(ApplicationError::RuleNotApplicable);
+    };
+
+    let x @ Expr::Reference(_, _) = *x.to_owned() else {
+        return Err(ApplicationError::RuleNotApplicable);
+    };
+
+    let Expr::Sum(_, c) = *b.to_owned() else {
+        return Err(ApplicationError::RuleNotApplicable);
+    };
+
+    let [ref y @ Expr::Reference(_, _), ref k @ Expr::Constant(_, _)] = c[..] else {
+        return Err(ApplicationError::RuleNotApplicable);
+    };
+
+    Ok(Reduction::pure(Expr::Ineq(
+        expr.get_meta().clone_dirty(),
+        Box::new(x),
+        Box::new(y.clone()),
+        Box::new(k.clone()),
+    )))
+}
+
 // #[register_rule(("Minion", 99))]
 // fn eq_to_leq_geq(expr: &Expr, _: &Model) -> ApplicationResult {
 //     match expr {
