@@ -165,7 +165,7 @@ fn sumeq_to_minion(expr: &Expr, _: &Model) -> ApplicationResult {
 * Convert a Lt to an Ineq:
 
 * ```text
-* a < b => a - b < -1
+* a < b ~> a <= b -1 ~> ineq(a,b,-1)
 * ```
 */
 #[register_rule(("Minion", 4100))]
@@ -185,7 +185,7 @@ fn lt_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 * Convert a Gt to an Ineq:
 *
 * ```text
-* a > b => b - a < -1
+* a > b ~> b <= a -1 ~> ineq(b,a,-1)
 * ```
 */
 #[register_rule(("Minion", 4100))]
@@ -205,7 +205,7 @@ fn gt_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 * Convert a Geq to an Ineq:
 *
 * ```text
-* a >= b => b - a < 0
+* a >= b ~> b <= a + 0 ~> ineq(b,a,0)
 * ```
 */
 #[register_rule(("Minion", 4100))]
@@ -225,7 +225,7 @@ fn geq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 * Convert a Leq to an Ineq:
 *
 * ```text
-* a <= b => a - b < 0
+* a <= b ~> a <= b + 0 ~> ineq(a,b,0)
 * ```
 */
 #[register_rule(("Minion", 4100))]
