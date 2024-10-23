@@ -30,7 +30,6 @@ macro_rules! parser_debug {
 ///
 /// - `msg`: A message that describes the cause of the panic.
 ///
-#[inline(always)]
 #[cfg_attr(coverage, allow(dead_code))]
 fn bug(msg: &str) -> ! {
     panic!("This should never happen! \n\n Message: {}", msg);
