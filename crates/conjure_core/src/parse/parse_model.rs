@@ -47,7 +47,7 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
                 let constraints_arr = match entry.1.as_array() {
                     Some(x) => x,
                     None => {
-                        return Err(Error::Parse("SuchThat is not a vector".to_owned()));
+                        unreachable!("SuchThat is not a vector");
                     }
                 };
 
