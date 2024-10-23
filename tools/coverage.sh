@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# gen_coverage.sh
+# coverage.sh
 echo_err () {
   echo "$@" 1>&2
 }
 
 usage () { 
-  echo_err 'gen_coverage.sh'
+  echo_err 'coverage.sh'
   echo_err ''
   echo_err 'Generate code coverage reports for the repository.'
   echo_err 'This generates target/debug/coverage/lcov.info (for editors) and target/debug/coverage/index.html.'
