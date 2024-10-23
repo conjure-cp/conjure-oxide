@@ -1,9 +1,12 @@
 use std::fmt::{Display, Formatter};
+use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
 
 use enum_compatability_macro::document_compatibility;
 use uniplate::derive::Uniplate;
+use uniplate::Biplate;
+use uniplate::Uniplate;
 
 use crate::ast::constants::Constant;
 use crate::ast::symbol_table::{Name, SymbolTable};
@@ -20,6 +23,7 @@ use super::{Domain, Range};
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
 #[uniplate(walk_into=[])]
 #[biplate(to=Constant)]
+#[biplate(to=Metadata)]
 pub enum Expression {
     /**
      * Represents an empty expression
@@ -153,9 +157,7 @@ fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> (i32, i32) {
                 }
             }
             Range::Bounded(i, j) => {
-                if *i < min {
-                    min = *i;
-                }
+                if *i < min {}
                 if *j > max {
                     max = *j;
                 }
@@ -201,6 +203,14 @@ impl Expression {
         }
     }
 
+    pub fn get_meta(&self) -> Metadata {
+        return <Expression as Biplate<Metadata>>::children_bi(&self)[0].clone();
+    }
+
+    pub fn set_meta(&self, meta: Metadata) {
+        <Expression as Biplate<Metadata>>::transform_bi(&self, Arc::new(move |_| meta.clone()));
+    }
+
     pub fn can_be_undefined(&self) -> bool {
         // TODO: there will be more false cases but we are being conservative
         match self {
@@ -244,106 +254,14 @@ impl Expression {
     }
 
     pub fn is_clean(&self) -> bool {
-        match self {
-            Expression::Nothing => true,
-            Expression::Constant(metadata, _) => metadata.clean,
-            Expression::Reference(metadata, _) => metadata.clean,
-            Expression::Sum(metadata, exprs) => metadata.clean,
-            Expression::Min(metadata, exprs) => metadata.clean,
-            Expression::Max(metadata, exprs) => metadata.clean,
-            Expression::Not(metadata, expr) => metadata.clean,
-            Expression::Or(metadata, exprs) => metadata.clean,
-            Expression::And(metadata, exprs) => metadata.clean,
-            Expression::Eq(metadata, box1, box2) => metadata.clean,
-            Expression::Neq(metadata, box1, box2) => metadata.clean,
-            Expression::Geq(metadata, box1, box2) => metadata.clean,
-            Expression::Leq(metadata, box1, box2) => metadata.clean,
-            Expression::Gt(metadata, box1, box2) => metadata.clean,
-            Expression::Lt(metadata, box1, box2) => metadata.clean,
-            Expression::SumGeq(metadata, box1, box2) => metadata.clean,
-            Expression::SumLeq(metadata, box1, box2) => metadata.clean,
-            Expression::Ineq(metadata, box1, box2, box3) => metadata.clean,
-            Expression::AllDiff(metadata, exprs) => metadata.clean,
-            Expression::SumEq(metadata, exprs, expr) => metadata.clean,
-            _ => false,
-        }
+        let metadata = self.get_meta();
+        metadata.clean
     }
 
     pub fn set_clean(&mut self, bool_value: bool) {
-        match self {
-            Expression::Nothing => {}
-            Expression::Constant(metadata, _) => metadata.clean = bool_value,
-            Expression::Reference(metadata, _) => metadata.clean = bool_value,
-            Expression::Sum(metadata, _) => {
-                metadata.clean = bool_value;
-            }
-            Expression::Min(metadata, _) => {
-                metadata.clean = bool_value;
-            }
-            Expression::Max(metadata, _) => {
-                metadata.clean = bool_value;
-            }
-            Expression::Not(metadata, _) => {
-                metadata.clean = bool_value;
-            }
-            Expression::Or(metadata, _) => {
-                metadata.clean = bool_value;
-            }
-            Expression::And(metadata, _) => {
-                metadata.clean = bool_value;
-            }
-            Expression::Eq(metadata, box1, box2) => {
-                metadata.clean = bool_value;
-            }
-            Expression::Neq(metadata, _box1, _box2) => {
-                metadata.clean = bool_value;
-            }
-            Expression::Geq(metadata, _box1, _box2) => {
-                metadata.clean = bool_value;
-            }
-            Expression::Leq(metadata, _box1, _box2) => {
-                metadata.clean = bool_value;
-            }
-            Expression::Gt(metadata, _box1, _box2) => {
-                metadata.clean = bool_value;
-            }
-            Expression::Lt(metadata, _box1, _box2) => {
-                metadata.clean = bool_value;
-            }
-            Expression::SumGeq(metadata, _box1, _box2) => {
-                metadata.clean = bool_value;
-            }
-            Expression::SumLeq(metadata, _box1, _box2) => {
-                metadata.clean = bool_value;
-            }
-            Expression::Ineq(metadata, _box1, _box2, _box3) => {
-                metadata.clean = bool_value;
-            }
-            Expression::AllDiff(metadata, _exprs) => {
-                metadata.clean = bool_value;
-            }
-            Expression::SumEq(metadata, _exprs, _expr) => {
-                metadata.clean = bool_value;
-            }
-            Expression::Bubble(metadata, box1, box2) => {
-                metadata.clean = bool_value;
-            }
-            Expression::SafeDiv(metadata, box1, box2) => {
-                metadata.clean = bool_value;
-            }
-            Expression::UnsafeDiv(metadata, box1, box2) => {
-                metadata.clean = bool_value;
-            }
-            Expression::DivEq(metadata, box1, box2, box3) => {
-                metadata.clean = bool_value;
-            }
-            Expression::WatchedLiteral(metadata, name, constant) => {
-                metadata.clean = bool_value;
-            }
-            Expression::Reify(metadata, _, _) => {
-                metadata.clean = bool_value;
-            }
-        }
+        let mut metadata = self.get_meta();
+        metadata.clean = bool_value;
+        self.set_meta(metadata);
     }
 }
 
