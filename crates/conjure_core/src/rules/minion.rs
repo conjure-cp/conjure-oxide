@@ -165,7 +165,7 @@ fn sumeq_to_minion(expr: &Expr, _: &Model) -> ApplicationResult {
 * Convert a Lt to an Ineq:
 
 * ```text
-* a < b => a - b < -1
+* a < b ~> a <= b -1 ~> ineq(a,b,-1)
 * ```
 */
 #[register_rule(("Minion", 4100))]
@@ -185,7 +185,7 @@ fn lt_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 * Convert a Gt to an Ineq:
 *
 * ```text
-* a > b => b - a < -1
+* a > b ~> b <= a -1 ~> ineq(b,a,-1)
 * ```
 */
 #[register_rule(("Minion", 4100))]
@@ -205,7 +205,7 @@ fn gt_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 * Convert a Geq to an Ineq:
 *
 * ```text
-* a >= b => b - a < 0
+* a >= b ~> b <= a + 0 ~> ineq(b,a,0)
 * ```
 */
 #[register_rule(("Minion", 4100))]
@@ -225,7 +225,7 @@ fn geq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 * Convert a Leq to an Ineq:
 *
 * ```text
-* a <= b => a - b < 0
+* a <= b ~> a <= b + 0 ~> ineq(a,b,0)
 * ```
 */
 #[register_rule(("Minion", 4100))]
@@ -239,6 +239,36 @@ fn leq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
         ))),
         _ => Err(ApplicationError::RuleNotApplicable),
     }
+}
+
+/// ```text
+/// x <= y + k ~> ineq(x,y,k)
+/// ```
+
+#[register_rule(("Minion",4400))]
+fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
+    let Expr::Leq(_, x, b) = expr else {
+        return Err(ApplicationError::RuleNotApplicable);
+    };
+
+    let x @ Expr::Reference(_, _) = *x.to_owned() else {
+        return Err(ApplicationError::RuleNotApplicable);
+    };
+
+    let Expr::Sum(_, c) = *b.to_owned() else {
+        return Err(ApplicationError::RuleNotApplicable);
+    };
+
+    let [ref y @ Expr::Reference(_, _), ref k @ Expr::Constant(_, _)] = c[..] else {
+        return Err(ApplicationError::RuleNotApplicable);
+    };
+
+    Ok(Reduction::pure(Expr::Ineq(
+        expr.get_meta().clone_dirty(),
+        Box::new(x),
+        Box::new(y.clone()),
+        Box::new(k.clone()),
+    )))
 }
 
 // #[register_rule(("Minion", 99))]
