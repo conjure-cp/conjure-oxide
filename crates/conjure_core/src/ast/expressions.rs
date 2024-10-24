@@ -189,6 +189,11 @@ impl Expression {
                     &b.domain_of(vars)?,
                 )
             }
+
+            Expression::DivEq(_, a, b, _) => a.domain_of(vars)?.apply_i32(
+                |x, y| if y != 0 { Some(x / y) } else { None },
+                &b.domain_of(vars)?,
+            ),
             _ => todo!("Calculate domain of {:?}", self),
             // TODO: (flm8) Add support for calculating the domains of more expression types
         };

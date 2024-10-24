@@ -67,7 +67,7 @@ fn sum_to_vector(expr: &Expr) -> Result<Vec<Expr>, ApplicationError> {
  * ```
  */
 #[register_rule(("Minion", 4400))]
-fn flatten_sum_geq(expr: &Expr, _: &Model) -> ApplicationResult {
+fn sumgeq_introduction(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Geq(metadata, a, b) => {
             let exprs = sum_to_vector(a)?;
@@ -150,7 +150,7 @@ fn sum_eq_to_sumeq(expr: &Expr, _: &Model) -> ApplicationResult {
 #[register_rule(("Minion", 4400))]
 fn sumeq_to_minion(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
-        Expr::SumEq(metadata, exprs, eq_to) => Ok(Reduction::pure(Expr::And(
+        Expr::SumEq(_, exprs, eq_to) => Ok(Reduction::pure(Expr::And(
             Metadata::new(),
             vec![
                 Expr::SumGeq(Metadata::new(), exprs.clone(), Box::from(*eq_to.clone())),
@@ -287,68 +287,13 @@ fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 //     }
 // }
 
-/**
- * Since Minion doesn't support some constraints with div (e.g. leq, neq), we add an auxiliary variable to represent the division result.
-*/
 #[register_rule(("Minion", 4400))]
-fn flatten_safediv(expr: &Expr, mdl: &Model) -> ApplicationResult {
-    use Expr::*;
-    match expr {
-        Eq(_, _, _) => {}
-        Leq(_, _, _) => {}
-        Geq(_, _, _) => {}
-        Neq(_, _, _) => {}
-        _ => {
-            return Err(ApplicationError::RuleNotApplicable);
-        }
-    }
-
-    let mut sub = expr.children();
-
-    let mut new_vars = SymbolTable::new();
-    let mut new_top = vec![];
-
-    // replace every safe div child with a reference to a new variable
-    for c in sub.iter_mut() {
-        if let Expr::SafeDiv(_, a, b) = c.clone() {
-            let new_name = mdl.gensym();
-            let domain = c
-                .domain_of(&mdl.variables)
-                .ok_or(ApplicationError::DomainError)?;
-            new_vars.insert(new_name.clone(), DecisionVariable::new(domain));
-
-            new_top.push(Expr::DivEq(
-                Metadata::new(),
-                a.clone(),
-                b.clone(),
-                Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
-            ));
-
-            *c = Expr::Reference(Metadata::new(), new_name.clone());
-        }
-    }
-    if !new_top.is_empty() {
-        return Ok(Reduction::new(
-            expr.with_children(sub),
-            Expr::And(Metadata::new(), new_top),
-            new_vars,
-        ));
-    }
-    Err(ApplicationError::RuleNotApplicable)
-}
-
-#[register_rule(("Minion", 4400))]
-fn div_eq_to_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
+fn div_to_diveq(expr: &Expr, m: &Model) -> ApplicationResult {
     match expr {
         Expr::Eq(metadata, a, b) => {
             if let Expr::SafeDiv(_, x, y) = a.as_ref() {
-                match **b {
-                    Expr::Reference(_, _) | Expr::Constant(_, _) => {}
-                    _ => {
-                        return Err(ApplicationError::RuleNotApplicable);
-                    }
-                };
-
+                // first put things into minion native constraints, then flatten.
+                // so no checks for constants, expressions,etc.
                 Ok(Reduction::pure(Expr::DivEq(
                     metadata.clone_dirty(),
                     x.clone(),
@@ -356,12 +301,7 @@ fn div_eq_to_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
                     b.clone(),
                 )))
             } else if let Expr::SafeDiv(_, x, y) = b.as_ref() {
-                match **a {
-                    Expr::Reference(_, _) | Expr::Constant(_, _) => {}
-                    _ => {
-                        return Err(ApplicationError::RuleNotApplicable);
-                    }
-                };
+                // flattening later on checks if this is ref or constant.
                 Ok(Reduction::pure(Expr::DivEq(
                     metadata.clone_dirty(),
                     x.clone(),
@@ -371,6 +311,27 @@ fn div_eq_to_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
             } else {
                 Err(ApplicationError::RuleNotApplicable)
             }
+        }
+        // must be in form x/y = z
+        // x/y ~> z, x/y=z
+        Expr::SafeDiv(_, x, y) => {
+            let mut m = m.clone();
+            let aux_var_domain = expr.domain_of(&m.variables).expect(&format!(
+                "expr.domain_of() failed in Minion div_to_diveq for {:#?}",
+                expr
+            ));
+
+            let aux_var_name = m.gensym();
+            m.add_variable(aux_var_name.clone(), DecisionVariable::new(aux_var_domain));
+
+            let new_expr = Expr::Reference(Metadata::new(), aux_var_name);
+            let new_top = Expr::DivEq(
+                Metadata::new(),
+                x.clone(),
+                y.clone(),
+                Box::new(new_expr.clone()),
+            );
+            Ok(Reduction::new(new_expr, new_top, m.variables))
         }
         _ => Err(ApplicationError::RuleNotApplicable),
     }
@@ -416,6 +377,57 @@ fn negated_eq_to_neq(expr: &Expr, _: &Model) -> ApplicationResult {
         },
         _ => Err(ApplicationError::RuleNotApplicable),
     }
+}
+
+/// Flatten binary constraints by introducing an auxiliary variable.
+///
+/// For example:
+///
+/// ```text
+///  a / (b/q) = d ~>
+///     x=b/q,
+///     a/x = d
+/// ```
+///
+/// This rule only applies when b and q are constants or references, as the posted constraint must
+/// also be flat. This, in effect, forces bottom-up flattening.
+///
+/// Note that we first turn expressions into arithmetic constraints (i.e. diveq not eq(safediv)), then flatten.
+#[register_rule(("Minion",4100))]
+fn flatten_binary_operators(expr: &Expr, m: &Model) -> ApplicationResult {
+    if !(matches!(expr, Expr::DivEq(_, _, _, _))) {
+        return Err(RuleNotApplicable);
+    }
+
+    let subexprs = expr.children();
+
+    // assuming binary operator = x
+    assert_eq!(subexprs.len(), 3);
+
+    if !subexprs
+        .iter()
+        .all(|x| matches!(x, Expr::Constant(_, _) | Expr::Reference(_, _)))
+    {
+        return Err(RuleNotApplicable);
+    };
+
+    let aux_var_domain = expr.domain_of(&m.variables).expect(&format!(
+        "expr.domain_of() failed in Minion flatten_arithmetic for {:#?}",
+        expr
+    ));
+
+    let aux_name = m.gensym();
+
+    let mut m = m.clone();
+    m.add_variable(aux_name.clone(), DecisionVariable::new(aux_var_domain));
+
+    let new_expr = Expr::Reference(Metadata::new(), aux_name.clone());
+
+    // a `op` b = new_var
+    let new_top =
+        expr.with_children(vec![subexprs[0].clone(), subexprs[1].clone(), new_expr.clone()].into());
+
+    Ok(Reduction::new(new_expr, new_top, m.variables))
 }
 
 /// Flattening rule that converts boolean variables to watched-literal constraints.
