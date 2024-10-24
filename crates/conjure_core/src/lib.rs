@@ -1,3 +1,5 @@
+#![feature(coverage_attribute)]
+
 pub extern crate self as conjure_core;
 
 pub use model::Model;

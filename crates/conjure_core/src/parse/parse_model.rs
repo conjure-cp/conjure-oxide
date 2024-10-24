@@ -22,6 +22,19 @@ macro_rules! parser_debug {
     };
 }
 
+/// Triggers a panic, similar to the `panic!` macro, but marked in a way that it is considered covered in code coverage tools.
+///
+/// This function is useful in cases where unreachable or bug-like conditions are encountered, and you want to signal an unrecoverable error while ensuring the coverage tools mark the line as covered.
+///
+/// # Parameters
+///
+/// - `msg`: A message that describes the cause of the panic.
+///
+#[coverage(off)]
+fn bug(msg: &str) -> ! {
+    panic!("This should never happen! \n\n Message: {}", msg);
+}
+
 pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Result<Model> {
     let mut m = Model::new_empty(context);
     let v: JsonValue = serde_json::from_str(str)?;
@@ -47,7 +60,7 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
                 let constraints_arr = match entry.1.as_array() {
                     Some(x) => x,
                     None => {
-                        return Err(Error::Parse("SuchThat is not a vector".to_owned()));
+                        bug("SuchThat is not a vector");
                     }
                 };
 
@@ -56,11 +69,7 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
                 m.add_constraints(constraints);
                 // println!("Nb constraints {}", m.constraints.len());
             }
-            otherwise =>
-            #[coverage(off)]
-            {
-                panic!("Unhandled Statement {:#?}", otherwise)
-            }
+            otherwise => panic!("Unhandled Statement {:#?}", otherwise),
         }
     }
 
