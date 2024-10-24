@@ -4,14 +4,39 @@ use conjure_core::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
 };
 use conjure_core::Model;
+use uniplate::Uniplate;
 
 register_rule_set!("Constant", 100, ());
 
 #[register_rule(("Constant", 9001))]
 fn apply_eval_constant(expr: &Expr, _: &Model) -> ApplicationResult {
+    // Check for expressions excluded by remove_empty_expression
+    if matches!(
+        expr,
+        Expr::Nothing
+            | Expr::Reference(_, _)
+            | Expr::Constant(_, _)
+            | Expr::WatchedLiteral(_, _, _)
+    ) {
+        return Err(ApplicationError::RuleNotApplicable);
+    }
+
+    // Handle empty children, similar to remove_empty_expression
+    if expr.children().is_empty() {
+        let new_expr = match expr {
+            Expr::Or(_, _) => Expr::Constant(Metadata::new(), Const::Bool(false)),
+            Expr::And(_, _) => Expr::Constant(Metadata::new(), Const::Bool(true)),
+            _ => Expr::Nothing,
+        };
+        return Ok(Reduction::pure(new_expr));
+    }
+
+    // If the expression is already a constant, we can't apply further simplification
     if let Expr::Constant(_, _) = expr {
         return Err(ApplicationError::RuleNotApplicable);
     }
+
+    // Call eval_constant to handle the remaining cases
     eval_constant(expr)
         .map(|c| Reduction::pure(Expr::Constant(Metadata::new(), c)))
         .ok_or(ApplicationError::RuleNotApplicable)
