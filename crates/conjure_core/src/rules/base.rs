@@ -77,41 +77,6 @@ fn remove_nothings(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 }
 
-/// This rule simplifies expressions where the operator is applied to an empty set of sub-expressions.
-///
-/// For example:
-/// - `or([])` simplifies to `false` since no disjunction exists.
-///
-/// **Applicable examples:**
-/// ```text
-/// or([])  ~> false
-/// X([]) ~> Nothing
-/// ```
-#[register_rule(("Base", 8800))]
-fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
-    use Expr::*;
-
-    // excluded expressions
-    if matches!(
-        expr,
-        Nothing | Reference(_, _) | Constant(_, _) | WatchedLiteral(_, _, _)
-    ) {
-        return Err(ApplicationError::RuleNotApplicable);
-    }
-
-    if !expr.children().is_empty() {
-        return Err(ApplicationError::RuleNotApplicable);
-    }
-
-    let new_expr = match expr {
-        Or(_, _) => Constant(Metadata::new(), Const::Bool(false)),
-        And(_, _) => Constant(Metadata::new(), Const::Bool(true)),
-        _ => Nothing,
-    };
-
-    Ok(Reduction::pure(new_expr))
-}
-
 /**
  * Unwrap trivial sums:
  * ```text
