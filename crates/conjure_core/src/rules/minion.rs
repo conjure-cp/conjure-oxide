@@ -150,7 +150,7 @@ fn sum_eq_to_sumeq(expr: &Expr, _: &Model) -> ApplicationResult {
 #[register_rule(("Minion", 4400))]
 fn sumeq_to_minion(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
-        Expr::SumEq(metadata, exprs, eq_to) => Ok(Reduction::pure(Expr::And(
+        Expr::SumEq(_metadata, exprs, eq_to) => Ok(Reduction::pure(Expr::And(
             Metadata::new(),
             vec![
                 Expr::SumGeq(Metadata::new(), exprs.clone(), Box::from(*eq_to.clone())),

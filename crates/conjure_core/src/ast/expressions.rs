@@ -293,7 +293,7 @@ impl Expression {
             Expression::And(metadata, _) => {
                 metadata.clean = bool_value;
             }
-            Expression::Eq(metadata, box1, box2) => {
+            Expression::Eq(metadata, _box1, _box2) => {
                 metadata.clean = bool_value;
             }
             Expression::Neq(metadata, _box1, _box2) => {
@@ -326,19 +326,19 @@ impl Expression {
             Expression::SumEq(metadata, _exprs, _expr) => {
                 metadata.clean = bool_value;
             }
-            Expression::Bubble(metadata, box1, box2) => {
+            Expression::Bubble(metadata, _box1, _box2) => {
                 metadata.clean = bool_value;
             }
-            Expression::SafeDiv(metadata, box1, box2) => {
+            Expression::SafeDiv(metadata, _box1, _box2) => {
                 metadata.clean = bool_value;
             }
-            Expression::UnsafeDiv(metadata, box1, box2) => {
+            Expression::UnsafeDiv(metadata, _box1, _box2) => {
                 metadata.clean = bool_value;
             }
-            Expression::DivEq(metadata, box1, box2, box3) => {
+            Expression::DivEq(metadata, _box1, _box2, _box3) => {
                 metadata.clean = bool_value;
             }
-            Expression::WatchedLiteral(metadata, name, constant) => {
+            Expression::WatchedLiteral(metadata, _name, _constant) => {
                 metadata.clean = bool_value;
             }
             Expression::Reify(metadata, _, _) => {
