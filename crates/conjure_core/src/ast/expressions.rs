@@ -243,28 +243,29 @@ impl Expression {
         }
     }
 
+    // TODO: rewrite to use uniplate
     pub fn is_clean(&self) -> bool {
         match self {
             Expression::Nothing => true,
             Expression::Constant(metadata, _) => metadata.clean,
             Expression::Reference(metadata, _) => metadata.clean,
-            Expression::Sum(metadata, exprs) => metadata.clean,
-            Expression::Min(metadata, exprs) => metadata.clean,
-            Expression::Max(metadata, exprs) => metadata.clean,
-            Expression::Not(metadata, expr) => metadata.clean,
-            Expression::Or(metadata, exprs) => metadata.clean,
-            Expression::And(metadata, exprs) => metadata.clean,
-            Expression::Eq(metadata, box1, box2) => metadata.clean,
-            Expression::Neq(metadata, box1, box2) => metadata.clean,
-            Expression::Geq(metadata, box1, box2) => metadata.clean,
-            Expression::Leq(metadata, box1, box2) => metadata.clean,
-            Expression::Gt(metadata, box1, box2) => metadata.clean,
-            Expression::Lt(metadata, box1, box2) => metadata.clean,
-            Expression::SumGeq(metadata, box1, box2) => metadata.clean,
-            Expression::SumLeq(metadata, box1, box2) => metadata.clean,
-            Expression::Ineq(metadata, box1, box2, box3) => metadata.clean,
-            Expression::AllDiff(metadata, exprs) => metadata.clean,
-            Expression::SumEq(metadata, exprs, expr) => metadata.clean,
+            Expression::Sum(metadata, _exprs) => metadata.clean,
+            Expression::Min(metadata, _exprs) => metadata.clean,
+            Expression::Max(metadata, _exprs) => metadata.clean,
+            Expression::Not(metadata, _expr) => metadata.clean,
+            Expression::Or(metadata, _exprs) => metadata.clean,
+            Expression::And(metadata, _exprs) => metadata.clean,
+            Expression::Eq(metadata, _box1, _box2) => metadata.clean,
+            Expression::Neq(metadata, _box1, _box2) => metadata.clean,
+            Expression::Geq(metadata, _box1, _box2) => metadata.clean,
+            Expression::Leq(metadata, _box1, _box2) => metadata.clean,
+            Expression::Gt(metadata, _box1, _box2) => metadata.clean,
+            Expression::Lt(metadata, _box1, _box2) => metadata.clean,
+            Expression::SumGeq(metadata, _box1, _box2) => metadata.clean,
+            Expression::SumLeq(metadata, _box1, _box2) => metadata.clean,
+            Expression::Ineq(metadata, _box1, _box2, _box3) => metadata.clean,
+            Expression::AllDiff(metadata, _exprs) => metadata.clean,
+            Expression::SumEq(metadata, _exprs, _expr) => metadata.clean,
             _ => false,
         }
     }
