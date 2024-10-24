@@ -22,20 +22,42 @@ macro_rules! parser_debug {
     };
 }
 
-/// Triggers a panic, similar to the `panic!` macro, but marked in a way that it is considered covered in code coverage tools.
+/// Triggers a panic with a detailed bug report message, while ensuring the panic is ignored in coverage reports.
 ///
-/// This function is useful in cases where unreachable or bug-like conditions are encountered, and you want to signal an unrecoverable error while ensuring the coverage tools mark the line as covered.
+/// This macro is useful in situations where an unreachable code path is hit or when a bug occurs.
 ///
 /// # Parameters
 ///
-/// - `msg`: A message that describes the cause of the panic.
+/// - `msg`: A string expression describing the cause of the panic or bug.
 ///
-#[coverage(off)]
-fn bug(msg: &str) -> ! {
-    panic!("This should never happen! \n\n Message: {}", msg);
+/// ```
+macro_rules! bug {
+    ($msg:expr) => {{
+        let full_message = format!(
+            r#"
+This should never happen, sorry!
+
+However, it did happen, so it must be a bug. Please report it to us!
+
+Conjure Oxide is actively developed and maintained. We will get back to you as soon as possible.
+
+You can help us by providing a minimal failing example.
+
+Issue tracker: http://github.com/conjure-cp/conjure-oxide/issues
+
+{}
+"#,
+            $msg
+        );
+
+        let f = #[coverage(off)]
+        || {
+            panic!("{}", full_message);
+        };
+        f()
+    }};
 }
 
-#[coverage(off)]
 pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Result<Model> {
     let mut m = Model::new_empty(context);
     let v: JsonValue = serde_json::from_str(str)?;
@@ -60,7 +82,7 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
             "SuchThat" => {
                 let constraints_arr = match entry.1.as_array() {
                     Some(x) => x,
-                    None => bug("SuchThat is not a vector"),
+                    None => bug!("SuchThat is not a vector"),
                 };
 
                 let constraints: Vec<Expression> =

@@ -1,4 +1,5 @@
 #![feature(coverage_attribute)]
+#![feature(stmt_expr_attributes)]
 
 pub extern crate self as conjure_core;
 
