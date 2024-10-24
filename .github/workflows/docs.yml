@@ -33,18 +33,18 @@ jobs:
 
       - name: Install rust ${{ env.rust_release }}
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
-      
+
       - name: Generate documentation
         working-directory: .
         run: |
           ./tools/gen_docs.sh
-          
+
       - name: Move all html to correct folders for deployment
         run: |
           mkdir deploy
           cp -r target/doc/* deploy
 
-      - name: Deploy to Github Pages 
+      - name: Deploy to Github Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: ./deploy

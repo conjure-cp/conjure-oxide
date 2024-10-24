@@ -16,12 +16,12 @@ env:
   rust_release: nightly
 
 jobs:
-  deploy-coverage: 
+  deploy-coverage:
     name: "Info: Code Coverage"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      
+
       - name: Set shas
         id: sha
         uses: actions/github-script@v6
@@ -37,10 +37,10 @@ jobs:
             console.log(callee_run);
 
             // from manual inspection in jq, seems to hold head.sha for PR, not
-            // whatever GITHUB_SHA is. 
+            // whatever GITHUB_SHA is.
             return callee_run.head_sha;
 
-        
+
       - name: Download artifact
         uses: dawidd6/action-download-artifact@v2
         with:
@@ -48,14 +48,14 @@ jobs:
           workflow: code-coverage.yml
           path: ./deploy
 
-      - name: Deploy to Github Pages 
+      - name: Deploy to Github Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: ./deploy
           target-folder: "coverage/${{ steps.sha.outputs.result }}"
           branch: gh-pages
           commit-message: "Actions: Code Coverage for ${{ steps.sha.outputs.result }}"
-    
+
   indexes:
     needs: deploy-coverage
     name: "Regenerate indexes for coverage"
@@ -132,7 +132,7 @@ jobs:
             console.log(callee_run);
 
             // from manual inspection in jq, seems to hold head.sha for PR, not
-            // whatever GITHUB_SHA is. 
+            // whatever GITHUB_SHA is.
             return callee_run.head_sha;
 
       - name: Download artifact
@@ -141,10 +141,10 @@ jobs:
           name: code-coverage-${{ steps.sha.outputs.result }}
           workflow: code-coverage.yml
           path: ./deploy
-      
+
       - name: Get PR number
         id: prnum
-        run: | 
+        run: |
           echo "num=$(cat deploy/prnumber)" > $GITHUB_OUTPUT
 
       - name: Retrieve list of artifacts for the PR
@@ -164,8 +164,8 @@ jobs:
               name: artifact.name,
               created_at: artifact.created_at
             }));
-      
-      # WARNING: Artifacts are deleted after 90 days (or per configured retention policy)  
+
+      # WARNING: Artifacts are deleted after 90 days (or per configured retention policy)
       - name: Find previous artifact
         id: previous-artifact
         if: steps.find_artifacts.outputs.result != '[]'
@@ -205,7 +205,7 @@ jobs:
           echo 'EOFABC' >> $GITHUB_OUTPUT
 
       - name: Get doc-coverage for main and pr
-        id: doccov 
+        id: doccov
         run: |
           wget https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/main/doc-coverage.txt
           echo "main<<EOFABC" >> $GITHUB_OUTPUT
@@ -234,7 +234,7 @@ jobs:
               repo: context.repo.repo,
               comment_id: ${{ steps.fc.outputs.comment-id }}
             })
-      
+
       - name: Download the previous lcov.info (historical) file
         if: steps.find_artifacts.outputs.result != '[]'
         uses: actions/download-artifact@v4
@@ -294,7 +294,7 @@ jobs:
           issue-number: ${{ steps.prnum.outputs.num }}
           body: |
             ## Code and Documentation Coverage Report
-            
+
             ### Documentation Coverage
 
             <details>
@@ -308,7 +308,7 @@ jobs:
 
             <details>
             <summary>Click to view documentation coverage for main</summary>
-            
+
             ```
             ${{ steps.doccov.outputs.main }}
             ```
@@ -342,7 +342,7 @@ jobs:
           issue-number: ${{ steps.prnum.outputs.num }}
           body: |
             ## Code and Documentation Coverage Report
-            
+
             ### Documentation Coverage
 
             <details>
@@ -356,7 +356,7 @@ jobs:
 
             <details>
             <summary>Click to view documentation coverage for main</summary>
-            
+
             ```
             ${{ steps.doccov.outputs.main }}
             ```
