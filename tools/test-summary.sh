@@ -20,7 +20,7 @@ PROJECT_ROOT=$(dirname $(cargo locate-project | jq -r .root 2> /dev/null))
 cd "$PROJECT_ROOT/conjure_oxide/"
 
 TMP=$(mktemp)
-cargo +nightly test --test generated_tests -- --format=json -Z unstable-options --features nightly 2>/dev/null | jq -s '.[] | select(.type | contains("test"))?' > "$TMP"
+cargo +nightly test --test generated_tests -- --format=json -Z unstable-options 2>/dev/null | jq -s '.[] | select(.type | contains("test"))?' > "$TMP"
 
 FAILED_TESTS=$(jq -sr '.[] | select(.event | contains("failed"))? | .name' < "$TMP")
 PASSED_TESTS=$(jq -sr '.[] | select(.event | contains("ok"))? | .name' < "$TMP")
