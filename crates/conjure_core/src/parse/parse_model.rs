@@ -35,6 +35,7 @@ fn bug(msg: &str) -> ! {
     panic!("This should never happen! \n\n Message: {}", msg);
 }
 
+#[coverage(off)]
 pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Result<Model> {
     let mut m = Model::new_empty(context);
     let v: JsonValue = serde_json::from_str(str)?;
@@ -59,9 +60,7 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
             "SuchThat" => {
                 let constraints_arr = match entry.1.as_array() {
                     Some(x) => x,
-                    None => {
-                        bug("SuchThat is not a vector");
-                    }
+                    None => bug("SuchThat is not a vector"),
                 };
 
                 let constraints: Vec<Expression> =
