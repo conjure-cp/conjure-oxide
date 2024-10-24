@@ -252,7 +252,6 @@ impl Expression {
         }
     }
 
-    // TODO: rewrite to use uniplate
     pub fn is_clean(&self) -> bool {
         let metadata = self.get_meta();
         metadata.clean
