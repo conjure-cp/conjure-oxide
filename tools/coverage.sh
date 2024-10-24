@@ -76,11 +76,11 @@ echo_err "info: running tests"
 cargo +nightly test --workspace --features nightly
 
 echo_err "info: generating coverage reports"
-grcov . -s . --binary-path ./target/debug -t html --ignore-not-existing   --ignore "$HOME"'/.cargo/**/*.rs' --ignore 'target/**/*.rs' --ignore '**/main.rs' --ignore '**/build.rs' -o ./target/debug/coverage || { echo_err "fatal: html coverage generation failed" ; exit 1; }
+grcov . -s . --binary-path ./target/debug -t html --ignore-not-existing   --ignore "$HOME"'/.cargo/**/*.rs' --ignore 'target/**/*.rs' --ignore '**/main.rs' --ignore '**/build.rs' --excl-line 'consider covered|bug!' -o ./target/debug/coverage || { echo_err "fatal: html coverage generation failed" ; exit 1; }
 
 echo_err "info: html coverage report generated to target/debug/coverage/index.html"
 
-grcov . -s . --binary-path ./target/debug -t lcov --ignore-not-existing  --ignore "$HOME"'/.cargo/**/*.rs' --ignore 'target/**/*.rs' --ignore '**/tests/*.rs' --ignore '.cargo/**/*.rs' --ignore '**/main.rs' --ignore '**/build.rs' -o ./target/debug/lcov.info || { echo_err "fatal: lcov coverage generation failed" ; exit 1; }
+grcov . -s . --binary-path ./target/debug -t lcov --ignore-not-existing  --ignore "$HOME"'/.cargo/**/*.rs' --ignore 'target/**/*.rs' --ignore '**/tests/*.rs' --ignore '.cargo/**/*.rs' --ignore '**/main.rs' --ignore '**/build.rs' --excl-line 'consider covered|bug!' -o ./target/debug/lcov.info || { echo_err "fatal: lcov coverage generation failed" ; exit 1; }
 
 echo_err "info: lcov coverage report generated to target/debug/lcov.info"
 

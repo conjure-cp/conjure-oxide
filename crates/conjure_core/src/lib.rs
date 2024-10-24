@@ -1,6 +1,3 @@
-#![cfg_attr(feature = "nightly", feature(coverage_attribute))]
-#![cfg_attr(feature = "nightly", feature(stmt_expr_attributes))]
-
 pub extern crate self as conjure_core;
 
 pub use model::Model;

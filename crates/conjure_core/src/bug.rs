@@ -27,18 +27,6 @@ Issue tracker: http://github.com/conjure-cp/conjure-oxide/issues
             $msg
         );
 
-        #[cfg(feature = "nightly")]
-        {
-            let f = #[coverage(off)]
-            || {
-                panic!("{}", full_message);
-            };
-            f()
-        }
-
-        #[cfg(not(feature = "nightly"))]
-        {
-            panic!("{}", full_message);
-        }
+        panic!("{}", full_message);
     }};
 }

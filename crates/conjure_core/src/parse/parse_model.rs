@@ -86,7 +86,7 @@ fn parse_variable(v: &JsonValue) -> Result<(Name, DecisionVariable)> {
         "DomainInt" => Ok(parse_int_domain(domain.1)?),
         "DomainBool" => Ok(Domain::BoolDomain),
         _ => Err(Error::Parse(
-            "FindOrGiven[2] is an unknown object".to_owned(),
+            "FindOrGiven[2] is an unknown object".to_owned(), // consider covered
         )),
     }?;
     Ok((name, DecisionVariable { domain }))
