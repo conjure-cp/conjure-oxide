@@ -166,7 +166,7 @@ fn rule_sum_constants() {
 
 #[test]
 fn rule_sum_geq() {
-    let flatten_sum_geq = get_rule_by_name("flatten_sum_geq").unwrap();
+    let flatten_sum_geq = get_rule_by_name("sumgeq_introduction").unwrap();
 
     let mut expr = Expression::Geq(
         Metadata::new(),
