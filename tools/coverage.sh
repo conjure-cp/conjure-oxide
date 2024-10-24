@@ -70,10 +70,10 @@ export RUSTDOCFLAGS="$RUSTDOCFLAGS -C instrument-coverage -Z unstable-options --
 export LLVM_PROFILE_FILE='conjure-oxide-%p-%m.profraw' 
 
 echo_err "info: building with nightly"
-cargo +nightly build --workspace
+cargo +nightly build --workspace --features nightly
 
 echo_err "info: running tests"
-cargo +nightly test --workspace
+cargo +nightly test --workspace --features nightly
 
 echo_err "info: generating coverage reports"
 grcov . -s . --binary-path ./target/debug -t html --ignore-not-existing   --ignore "$HOME"'/.cargo/**/*.rs' --ignore 'target/**/*.rs' --ignore '**/main.rs' --ignore '**/build.rs' -o ./target/debug/coverage || { echo_err "fatal: html coverage generation failed" ; exit 1; }
