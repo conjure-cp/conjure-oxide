@@ -9,7 +9,8 @@
 /// ```
 #[macro_export]
 macro_rules! bug {
-    ($msg:expr) => {{
+    ($msg:expr $(, $arg:tt)*) => {{
+        let formatted_msg = format!($msg, $($arg)*);
         let full_message = format!(
             r#"
 This should never happen, sorry!
@@ -23,9 +24,7 @@ You can help us by providing a minimal failing example.
 Issue tracker: http://github.com/conjure-cp/conjure-oxide/issues
 
 {}
-"#,
-            $msg
-        );
+"#, &formatted_msg);
 
         panic!("{}", full_message);
     }};

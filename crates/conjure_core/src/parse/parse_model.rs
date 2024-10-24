@@ -55,7 +55,7 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
                 m.add_constraints(constraints);
                 // println!("Nb constraints {}", m.constraints.len());
             }
-            otherwise => panic!("Unhandled Statement {:#?}", otherwise),
+            otherwise => bug!("Unhandled Statement {:#?}", otherwise),
         }
     }
 
