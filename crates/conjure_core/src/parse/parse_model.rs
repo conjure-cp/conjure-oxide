@@ -5,6 +5,7 @@ use serde_json::Value;
 use serde_json::Value as JsonValue;
 
 use crate::ast::{Constant, DecisionVariable, Domain, Expression, Name, Range};
+use crate::bug;
 use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::metadata::Metadata;
@@ -46,9 +47,7 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
             "SuchThat" => {
                 let constraints_arr = match entry.1.as_array() {
                     Some(x) => x,
-                    None => {
-                        return Err(Error::Parse("SuchThat is not a vector".to_owned()));
-                    }
+                    None => bug!("SuchThat is not a vector"),
                 };
 
                 let constraints: Vec<Expression> =
@@ -56,7 +55,7 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
                 m.add_constraints(constraints);
                 // println!("Nb constraints {}", m.constraints.len());
             }
-            otherwise => panic!("Unhandled Statement {:#?}", otherwise),
+            otherwise => bug!("Unhandled Statement {:#?}", otherwise),
         }
     }
 
@@ -87,7 +86,7 @@ fn parse_variable(v: &JsonValue) -> Result<(Name, DecisionVariable)> {
         "DomainInt" => Ok(parse_int_domain(domain.1)?),
         "DomainBool" => Ok(Domain::BoolDomain),
         _ => Err(Error::Parse(
-            "FindOrGiven[2] is an unknown object".to_owned(),
+            "FindOrGiven[2] is an unknown object".to_owned(), // consider covered
         )),
     }?;
     Ok((name, DecisionVariable { domain }))
