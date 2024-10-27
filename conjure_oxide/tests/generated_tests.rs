@@ -60,6 +60,25 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     }
 }
 
+/// Runs an integration test for a given Conjure model by:
+/// 1. Parsing the model from an Essence file.
+/// 2. Rewriting the model according to predefined rule sets.
+/// 3. Solving the model using the Minion solver and validating the solutions.
+///
+/// This function operates in three main stages:
+/// - **Parsing Stage**: Reads the Essence model file and verifies that it parses correctly.
+/// - **Rewrite Stage**: Applies a set of rules to the parsed model and validates the result.
+/// - **Solution Stage**: Uses Minion to solve the model and compares solutions with expected results.
+///
+/// # Arguments
+///
+/// * `path` - The file path where the Essence model and other resources are located.
+/// * `essence_base` - The base name of the Essence model file.
+/// * `extension` - The file extension for the Essence model.
+///
+/// # Errors
+///
+/// Returns an error if any stage fails due to a mismatch with expected results or file I/O issues.
 #[allow(clippy::unwrap_used)]
 fn integration_test_inner(
     path: &str,
