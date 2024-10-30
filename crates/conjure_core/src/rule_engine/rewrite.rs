@@ -89,13 +89,13 @@ fn optimizations_enabled() -> bool {
 ///   Initial expression: a + min(x, y)
 ///   A model containing the expression is created. The variables of the model are represented by a SymbolTable and contain a,x,y.
 ///   The contraints of the initail model is the expression itself.
-///     
+///
 ///   After getting the rules by their priorities and getting additional statistics the while loop of single interations is executed.
 ///   Details for this process can be found in [`rewrite_iteration`] documentation.
 ///
 ///   The loop is exited only when no more rules can be applied, when rewrite_iteration returns None and [`while let Some(step) = None`] occurs
-///     
-///     
+///
+///
 ///   Will result in side effects ((d<=x ^ d<=y) being the [`new_top`] and the model will now be a conjuction of that and (a+d)
 ///   Rewritten expression: ((a + d) ^ (d<=x ^ d<=y))
 ///
@@ -197,7 +197,7 @@ pub fn rewrite_model<'a>(
 ///
 ///   No more rules in our example can apply to the modified model -> mark all the children as clean and return a pure [`Reduction`].
 ///   [`return Some(Reduction::pure(expression))`]
-///    
+///
 ///   On the last execution of rewrite_iteration condition [`apply_optimizations && expression.is_clean()`] is met, [`None`] is returned.
 ///
 ///
@@ -301,6 +301,7 @@ fn apply_all_rules<'a>(
         match rule.apply(expression, model) {
             Ok(red) => {
                 log::trace!(target: "file", "Rule applicable: {:?}, to Expression: {:?}, resulting in: {:?}", rule, expression, red.new_expression);
+                print!("{:?}", rule);
                 stats.rewriter_rule_application_attempts =
                     Some(stats.rewriter_rule_application_attempts.unwrap() + 1);
                 stats.rewriter_rule_applications =
