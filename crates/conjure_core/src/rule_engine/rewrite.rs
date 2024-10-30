@@ -1,5 +1,7 @@
-use std::env;
 use std::fmt::Display;
+use std::fs::File;
+use std::io::Write;
+use std::{env, io};
 
 use thiserror::Error;
 
@@ -301,7 +303,7 @@ fn apply_all_rules<'a>(
         match rule.apply(expression, model) {
             Ok(red) => {
                 log::trace!(target: "file", "Rule applicable: {:?}, to Expression: {:?}, resulting in: {:?}", rule, expression, red.new_expression);
-                print!("{:?}", rule);
+                //print!("{:?}", rule);
                 stats.rewriter_rule_application_attempts =
                     Some(stats.rewriter_rule_application_attempts.unwrap() + 1);
                 stats.rewriter_rule_applications =
@@ -351,6 +353,18 @@ fn choose_rewrite(results: &[RuleResult]) -> Option<Reduction> {
     if results.is_empty() {
         return None;
     }
+    write_rule_to_file(results[0].rule);
     // Return the first result for now
+    print!("{:?}\n", results[0].rule);
     Some(results[0].reduction.clone())
+}
+
+fn write_rule_to_file(rule: &Rule) -> io::Result<()> {
+    // Open the file in write mode, creating it if it doesn’t exist
+    let mut file = File::create("conjure_oxide/tests/integration/xyz/rules.txt")?;
+
+    // Write the rule's data to the file
+    write!(file, "{:?}\n", rule)?;
+
+    Ok(())
 }
