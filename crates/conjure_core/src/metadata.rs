@@ -1,7 +1,9 @@
 use crate::ast::types::ReturnType;
-use std::fmt::{Debug, Display};
-
 use serde::{Deserialize, Serialize};
+use std::fmt::{Debug, Display};
+use uniplate::{derive_unplateable, Biplate, Uniplate};
+
+derive_unplateable!(Metadata);
 
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Default)]
 pub struct Metadata {

@@ -26,11 +26,11 @@ jobs:
       - name: Get Sha
         id: sha
         run: |
-          if [[ ${{ github.event_name }} == 'pull_request' ]] 
+          if [[ ${{ github.event_name }} == 'pull_request' ]]
           then
             echo -e "sha=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
             echo -e "sha=${{ github.event.pull_request.head.sha }}"
-          else 
+          else
             echo -e "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
             echo -e "sha=${{ github.sha }}"
           fi
@@ -42,20 +42,20 @@ jobs:
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - name: Disable rust-lld (to fix linkme)
-        run: | 
+        run: |
           echo RUSTFLAGS=${RUSTFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
           echo RUSTDOCFLAGS=${RUSTDOCFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
-        if: matrix.rust_release == 'nightly'
-      
+        if: env.rust_release == 'nightly'
+
       - uses: ./.github/actions/install-conjure
-        with: 
+        with:
           os_arch: linux
           version: 2.5.1
-          
+
       - name: Generate coverage reports
         run: |
           ./tools/coverage.sh
-          
+
       - name: Generate documentation coverage
         run: |
           RUSTDOCFLAGS='-Z unstable-options --show-coverage' cargo +nightly doc --workspace --no-deps > doc-coverage.txt
@@ -77,4 +77,4 @@ jobs:
         with:
           name: code-coverage-${{ steps.sha.outputs.sha }}
           path: deploy/**
-      
+

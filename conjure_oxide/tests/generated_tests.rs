@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::env;
 use std::error::Error;
 use std::fs;
@@ -6,11 +7,14 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::RwLock;
 
-use conjure_core::ast::Expression;
+use conjure_core::ast::{Constant, Expression, Name};
 use conjure_core::context::Context;
 use conjure_oxide::rule_engine::resolve_rule_sets;
 use conjure_oxide::rule_engine::rewrite_model;
-use conjure_oxide::utils::conjure::{get_minion_solutions, parse_essence_file};
+use conjure_oxide::utils::conjure::minion_solutions_to_json;
+use conjure_oxide::utils::conjure::{
+    get_minion_solutions, get_solutions_from_conjure, parse_essence_file,
+};
 use conjure_oxide::utils::testing::save_stats_json;
 use conjure_oxide::utils::testing::{
     read_minion_solutions_json, read_model_json, save_minion_solutions_json, save_model_json,
@@ -56,6 +60,25 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     }
 }
 
+/// Runs an integration test for a given Conjure model by:
+/// 1. Parsing the model from an Essence file.
+/// 2. Rewriting the model according to predefined rule sets.
+/// 3. Solving the model using the Minion solver and validating the solutions.
+///
+/// This function operates in three main stages:
+/// - **Parsing Stage**: Reads the Essence model file and verifies that it parses correctly.
+/// - **Rewrite Stage**: Applies a set of rules to the parsed model and validates the result.
+/// - **Solution Stage**: Uses Minion to solve the model and compares solutions with expected results.
+///
+/// # Arguments
+///
+/// * `path` - The file path where the Essence model and other resources are located.
+/// * `essence_base` - The base name of the Essence model file.
+/// * `extension` - The file extension for the Essence model.
+///
+/// # Errors
+///
+/// Returns an error if any stage fails due to a mismatch with expected results or file I/O issues.
 #[allow(clippy::unwrap_used)]
 fn integration_test_inner(
     path: &str,
@@ -127,9 +150,69 @@ fn integration_test_inner(
 
     // Stage 3: Run the model through the Minion solver and check that the solutions are as expected
     let solutions = get_minion_solutions(model)?;
+
     let solutions_json = save_minion_solutions_json(&solutions, path, essence_base, accept)?;
     if verbose {
         println!("Minion solutions: {:#?}", solutions_json)
+    }
+
+    // test solutions against conjure before writing
+    if accept {
+        let mut conjure_solutions: Vec<HashMap<Name, Constant>> =
+            get_solutions_from_conjure(&format!("{}/{}.{}", path, essence_base, extension))?;
+
+        // Change bools to nums in both outputs, as we currently don't convert 0,1 back to
+        // booleans for Minion.
+
+        // remove machine names from Minion solutions, as the conjure solutions won't have these.
+        let mut username_solutions = solutions.clone();
+        for solset in &mut username_solutions {
+            for (k, v) in solset.clone().into_iter() {
+                match k {
+                    conjure_core::ast::Name::MachineName(_) => {
+                        solset.remove(&k);
+                    }
+                    conjure_core::ast::Name::UserName(_) => match v {
+                        Constant::Bool(true) => {
+                            solset.insert(k, Constant::Int(1));
+                        }
+                        Constant::Bool(false) => {
+                            solset.insert(k, Constant::Int(0));
+                        }
+                        _ => {}
+                    },
+                }
+            }
+        }
+
+        for solset in &mut conjure_solutions {
+            for (k, v) in solset.clone().into_iter() {
+                match v {
+                    Constant::Bool(true) => {
+                        solset.insert(k, Constant::Int(1));
+                    }
+                    Constant::Bool(false) => {
+                        solset.insert(k, Constant::Int(0));
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        // I can't make these sets of hashmaps due to hashmaps not implementing hash; so, to
+        // compare these, I make them both json and compare that.
+
+        let mut conjure_solutions_json: serde_json::Value =
+            minion_solutions_to_json(&conjure_solutions);
+        let mut username_solutions_json: serde_json::Value =
+            minion_solutions_to_json(&username_solutions);
+        conjure_solutions_json.sort_all_objects();
+        username_solutions_json.sort_all_objects();
+
+        assert_eq!(
+            username_solutions_json, conjure_solutions_json,
+            "Solutions do not match conjure!"
+        );
     }
 
     let expected_solutions_json = read_minion_solutions_json(path, essence_base, "expected")?;
@@ -145,7 +228,7 @@ fn integration_test_inner(
 }
 
 fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model) {
-    model.constraints.descend(Arc::new(|x| {
+    model.constraints.transform(Arc::new(|x| {
         use conjure_core::ast::Expression::*;
         match &x {
             Nothing => (),
@@ -171,7 +254,11 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
             SumLeq(_, vec, _) => assert_constants_leq_one(&x, vec),
             DivEq(_, _, _, _) => (),
             Ineq(_, _, _, _) => (),
-            AllDiff(_, vec) => assert_constants_leq_one(&x, vec),
+            // this is a vector operation, but we don't want to fold values into each-other in this
+            // one
+            AllDiff(_, _) => (),
+            WatchedLiteral(_, _, _) => (),
+            Reify(_, _, _) => (),
         };
         x.clone()
     }));

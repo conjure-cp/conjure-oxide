@@ -131,14 +131,14 @@ impl Reduction {
 pub struct Rule<'a> {
     pub name: &'a str,
     pub application: fn(&Expression, &Model) -> ApplicationResult,
-    pub rule_sets: &'a [(&'a str, u8)], // (name, priority). At runtime, we add the rule to rulesets
+    pub rule_sets: &'a [(&'a str, u16)], // (name, priority). At runtime, we add the rule to rulesets
 }
 
 impl<'a> Rule<'a> {
     pub const fn new(
         name: &'a str,
         application: fn(&Expression, &Model) -> ApplicationResult,
-        rule_sets: &'a [(&'static str, u8)],
+        rule_sets: &'a [(&'static str, u16)],
     ) -> Self {
         Self {
             name,

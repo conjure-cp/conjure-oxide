@@ -58,7 +58,7 @@ pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream 
             let rule_set_name = &rule_set.rule_set;
             let priority = &rule_set.priority;
             quote! {
-                (#rule_set_name, #priority as u8)
+                (#rule_set_name, #priority as u16)
             }
         })
         .collect::<Vec<_>>();
