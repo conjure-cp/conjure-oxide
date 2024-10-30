@@ -248,7 +248,28 @@ fn parse_exprs(
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     for expr in conjure_model.get_constraints_vec().iter() {
-        parse_expr(expr.to_owned(), minion_model)?;
+        // TODO: top level false / trues should not go to the solver to begin with
+        // ... but changing this at this stage would require rewriting the tester
+        use crate::metadata::Metadata;
+        use conjure_ast::Constant;
+        use conjure_ast::Expression as Expr;
+
+        match expr {
+            // top level false
+            Expr::Constant(_, Constant::Bool(false)) => {
+                minion_model.constraints.push(minion_ast::Constraint::False);
+                return Ok(());
+            }
+            // top level true
+            Expr::Constant(_, Constant::Bool(true)) => {
+                minion_model.constraints.push(minion_ast::Constraint::True);
+                return Ok(());
+            }
+
+            _ => {
+                parse_expr(expr.to_owned(), minion_model)?;
+            }
+        }
     }
     Ok(())
 }
@@ -288,9 +309,26 @@ fn read_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, So
                 .map(|x| read_expr(x.to_owned()))
                 .collect::<Result<Vec<minion_ast::Constraint>, SolverError>>()?,
         )),
+        conjure_ast::Expression::And(_metadata, exprs) => Ok(minion_ast::Constraint::WatchedAnd(
+            exprs
+                .iter()
+                .map(|x| read_expr(x.to_owned()))
+                .collect::<Result<Vec<minion_ast::Constraint>, SolverError>>()?,
+        )),
         conjure_ast::Expression::Eq(_metadata, a, b) => {
             Ok(minion_ast::Constraint::Eq(read_var(*a)?, read_var(*b)?))
         }
+
+        conjure_ast::Expression::WatchedLiteral(_metadata, name, k) => {
+            Ok(minion_ast::Constraint::WLiteral(
+                minion_ast::Var::NameRef(_name_to_string(name)),
+                minion_ast::Constant::Integer(read_const_1(k)?),
+            ))
+        }
+        conjure_ast::Expression::Reify(_metadata, e, v) => Ok(minion_ast::Constraint::Reify(
+            Box::new(read_expr(*e)?),
+            read_var(*v)?,
+        )),
         x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
     }
 }
@@ -329,7 +367,19 @@ fn _read_ref(e: conjure_ast::Expression) -> Result<String, SolverError> {
 
 fn read_const(e: conjure_ast::Expression) -> Result<i32, SolverError> {
     match e {
-        conjure_ast::Expression::Constant(_, conjure_ast::Constant::Int(n)) => Ok(n),
+        conjure_ast::Expression::Constant(_, x) => Ok(read_const_1(x)?),
+        x => Err(ModelInvalid(format!(
+            "expected a constant, but got `{0:?}`",
+            x
+        ))),
+    }
+}
+
+fn read_const_1(k: conjure_ast::Constant) -> Result<i32, SolverError> {
+    match k {
+        conjure_ast::Constant::Int(n) => Ok(n),
+        conjure_ast::Constant::Bool(true) => Ok(1),
+        conjure_ast::Constant::Bool(false) => Ok(0),
         x => Err(ModelInvalid(format!(
             "expected a constant, but got `{0:?}`",
             x

@@ -5,9 +5,9 @@ use conjure_core::rule_engine::{
 };
 use conjure_core::Model;
 
-register_rule_set!("Constant", 255, ());
+register_rule_set!("Constant", 100, ());
 
-#[register_rule(("Constant", 255))]
+#[register_rule(("Constant", 9001))]
 fn apply_eval_constant(expr: &Expr, _: &Model) -> ApplicationResult {
     if let Expr::Constant(_, _) = expr {
         return Err(ApplicationError::RuleNotApplicable);
@@ -73,6 +73,8 @@ pub fn eval_constant(expr: &Expr) -> Option<Const> {
             tern_op::<i32, bool>(|a, b, c| a == b * c, a, b, c).map(Const::Bool)
         }
         Expr::Bubble(_, a, b) => bin_op::<bool, bool>(|a, b| a && b, a, b).map(Const::Bool),
+
+        Expr::Reify(_, a, b) => bin_op::<bool, bool>(|a, b| a == b, a, b).map(Const::Bool),
         _ => {
             println!("WARNING: Unimplemented constant eval: {:?}", expr);
             None

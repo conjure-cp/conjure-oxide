@@ -26,22 +26,21 @@ jobs:
 
       - name: Install rust ${{ env.rust_release }}
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
-      
+
       - name: Disable rust-lld (to fix linkme)
-        run: | 
+        run: |
           echo RUSTFLAGS=${RUSTFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
           echo RUSTDOCFLAGS=${RUSTDOCFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
-        if: matrix.rust_release == 'nightly'
 
       - uses: ./.github/actions/install-conjure
-        with: 
+        with:
           os_arch: linux
           version: 2.5.1
 
       - name: Generate coverage reports
         run: |
           ./tools/coverage.sh
-          
+
       - name: Generate documentation coverage
         run: |
           RUSTDOCFLAGS='-Z unstable-options --show-coverage' cargo +nightly doc --workspace --no-deps > doc-coverage.txt
@@ -56,7 +55,7 @@ jobs:
           cp target/debug/lcov.info deploy/         # used for diffing code coverage in PR comments
           cp doc-coverage.json deploy/
           cp doc-coverage.txt deploy/
-          
+
       - name: Copy coverage report to /main.
         uses: JamesIves/github-pages-deploy-action@v4
         with:

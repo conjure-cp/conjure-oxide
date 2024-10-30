@@ -111,6 +111,8 @@ pub enum Constraint {
     WatchLess(Var, Var),
     WatchNeq(Var, Var),
     Ineq(Var, Var, Constant),
+    False,
+    True,
 }
 
 /// Representation of a Minion Variable.

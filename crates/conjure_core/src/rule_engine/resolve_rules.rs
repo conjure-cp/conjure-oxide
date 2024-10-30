@@ -89,8 +89,8 @@ pub fn resolve_rule_sets<'a>(
 /// - A map of rules to their priorities.
 pub fn get_rule_priorities<'a>(
     rule_sets: &Vec<&'a RuleSet<'a>>,
-) -> Result<HashMap<&'a Rule<'a>, u8>, ResolveRulesError> {
-    let mut rule_priorities: HashMap<&'a Rule<'a>, (&'a RuleSet<'a>, u8)> = HashMap::new();
+) -> Result<HashMap<&'a Rule<'a>, u16>, ResolveRulesError> {
+    let mut rule_priorities: HashMap<&'a Rule<'a>, (&'a RuleSet<'a>, u16)> = HashMap::new();
 
     for rs in rule_sets {
         for (rule, priority) in rs.get_rules() {
@@ -104,7 +104,7 @@ pub fn get_rule_priorities<'a>(
         }
     }
 
-    let mut ans: HashMap<&'a Rule<'a>, u8> = HashMap::new();
+    let mut ans: HashMap<&'a Rule<'a>, u16> = HashMap::new();
     for (rule, (_, priority)) in rule_priorities {
         ans.insert(rule, priority);
     }
@@ -128,7 +128,7 @@ pub fn get_rule_priorities<'a>(
 pub fn rule_cmp<'a>(
     a: &Rule<'a>,
     b: &Rule<'a>,
-    rule_priorities: &HashMap<&'a Rule<'a>, u8>,
+    rule_priorities: &HashMap<&'a Rule<'a>, u16>,
 ) -> std::cmp::Ordering {
     let a_priority = *rule_priorities.get(a).unwrap_or(&0);
     let b_priority = *rule_priorities.get(b).unwrap_or(&0);
@@ -147,7 +147,7 @@ pub fn rule_cmp<'a>(
 ///
 /// # Returns
 /// - A list of rules sorted by their priorities and names.
-pub fn get_rules_vec<'a>(rule_priorities: &HashMap<&'a Rule<'a>, u8>) -> Vec<&'a Rule<'a>> {
+pub fn get_rules_vec<'a>(rule_priorities: &HashMap<&'a Rule<'a>, u16>) -> Vec<&'a Rule<'a>> {
     let mut rules: Vec<&'a Rule<'a>> = rule_priorities.keys().copied().collect();
     rules.sort_by(|a, b| rule_cmp(a, b, rule_priorities));
     rules

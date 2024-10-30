@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main # run for pushes to the main branch. other branches need to create a PR if they want testing.
-    paths: 
+    paths:
       - conjure_oxide/**
       - solvers/**
       - crates/**
@@ -12,7 +12,7 @@ on:
       - .github/workflows/test.yml
       - .github/workflows/code-coverage-deploy.yml
   pull_request:
-    paths: 
+    paths:
       - conjure_oxide/**
       - solvers/**
       - crates/**
@@ -55,7 +55,7 @@ jobs:
         uses: mozilla-actions/sccache-action@v0.0.3
 
       - name: Disable rust-lld (to fix linkme)
-        run: | 
+        run: |
           echo RUSTFLAGS=${RUSTFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
           echo RUSTDOCFLAGS=${RUSTDOCFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
         if: matrix.rust_release == 'nightly'
@@ -65,10 +65,10 @@ jobs:
       - run: cargo build -vv --workspace
 
       - uses: ./.github/actions/install-conjure
-        with: 
+        with:
           os_arch: ${{ matrix.release_suffix }}
           version: ${{ matrix.conjure_version }}
-          
+
       - run: cargo test --workspace
 
   audit:
@@ -83,5 +83,8 @@ jobs:
           - nightly
     steps:
       - uses: actions/checkout@v3
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.3
       - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
+      - run: cargo install cargo-audit
       - run: cargo audit

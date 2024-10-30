@@ -16,12 +16,12 @@ env:
   rust_release: nightly
 
 jobs:
-  deploy-coverage: 
+  deploy-coverage:
     name: "Info: Code Coverage"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      
+
       - name: Set shas
         id: sha
         uses: actions/github-script@v6
@@ -37,10 +37,10 @@ jobs:
             console.log(callee_run);
 
             // from manual inspection in jq, seems to hold head.sha for PR, not
-            // whatever GITHUB_SHA is. 
+            // whatever GITHUB_SHA is.
             return callee_run.head_sha;
 
-        
+
       - name: Download artifact
         uses: dawidd6/action-download-artifact@v2
         with:
@@ -48,14 +48,14 @@ jobs:
           workflow: code-coverage.yml
           path: ./deploy
 
-      - name: Deploy to Github Pages 
+      - name: Deploy to Github Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: ./deploy
           target-folder: "coverage/${{ steps.sha.outputs.result }}"
           branch: gh-pages
           commit-message: "Actions: Code Coverage for ${{ steps.sha.outputs.result }}"
-    
+
   indexes:
     needs: deploy-coverage
     name: "Regenerate indexes for coverage"
@@ -100,6 +100,7 @@ jobs:
     permissions: write-all
     needs: deploy-coverage
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v3
@@ -131,7 +132,7 @@ jobs:
             console.log(callee_run);
 
             // from manual inspection in jq, seems to hold head.sha for PR, not
-            // whatever GITHUB_SHA is. 
+            // whatever GITHUB_SHA is.
             return callee_run.head_sha;
 
       - name: Download artifact
@@ -140,10 +141,10 @@ jobs:
           name: code-coverage-${{ steps.sha.outputs.result }}
           workflow: code-coverage.yml
           path: ./deploy
-      
+
       - name: Get PR number
         id: prnum
-        run: | 
+        run: |
           echo "num=$(cat deploy/prnumber)" > $GITHUB_OUTPUT
 
       - name: Retrieve list of artifacts for the PR
@@ -163,8 +164,8 @@ jobs:
               name: artifact.name,
               created_at: artifact.created_at
             }));
-      
-      # WARNING: Artifacts are deleted after 90 days (or per configured retention policy)  
+
+      # WARNING: Artifacts are deleted after 90 days (or per configured retention policy)
       - name: Find previous artifact
         id: previous-artifact
         if: steps.find_artifacts.outputs.result != '[]'
@@ -204,7 +205,7 @@ jobs:
           echo 'EOFABC' >> $GITHUB_OUTPUT
 
       - name: Get doc-coverage for main and pr
-        id: doccov 
+        id: doccov
         run: |
           wget https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/main/doc-coverage.txt
           echo "main<<EOFABC" >> $GITHUB_OUTPUT
@@ -233,47 +234,58 @@ jobs:
               repo: context.repo.repo,
               comment_id: ${{ steps.fc.outputs.comment-id }}
             })
-      
+
       - name: Download the previous lcov.info (historical) file
         if: steps.find_artifacts.outputs.result != '[]'
         uses: actions/download-artifact@v4
         with:
-          name: code-coverage-${{ env.num }}-${{ env.previous_artifact_id }}
+          name: code-coverage-${{ steps.prnum.outputs.num}}-${{ env.previous_artifact_id }}
           path: ./tools/code-coverage-diff/deploy-prev
 
       # this will be used for future visualizations in the coverage report (requiring external python libs)
       - name: Install python dependencies
         run: |
-          pip install -r tools/code-coverage-diff/requirements.txt
+          python3 -m pip install -r tools/code-coverage-diff/requirements.txt
 
       - name: Calculate current coverage difference PR <> main
         id: coveragediff
         run: |
+
+          mkdir -p ./tools/code-coverage-diff/lcov
+          mkdir -p ./tools/code-coverage-diff/deploy-prev
+
           # pipeline lcov relevant stats to python script
-          python ./tools/code-coverage-diff/calculate_coverage_difference.py "${{ steps.lcov.outputs.main }}" "${{ steps.lcov.outputs.pr }}" > ./tools/code-coverage-diff/lcov/coverage_diff.txt
+          python3 ./tools/code-coverage-diff/calculate_coverage_difference.py "${{ steps.lcov.outputs.main }}" "${{ steps.lcov.outputs.pr }}" > ./tools/code-coverage-diff/lcov/coverage_diff.txt
 
           # store into environment variable
-          echo "diff<<EOFABC" >> $GITHUB_OUTPUT
-          cat ./tools/code-coverage-diff/lcov/coverage_diff.txt >> $GITHUB_ENV
-          echo 'EOFABC' >> $GITHUB_OUTPUT
+          {
+          echo 'diff<<EOFABC'
+          cat ./tools/code-coverage-diff/lcov/coverage_diff.txt
+          echo 'EOFABC'
+          } >> "$GITHUB_ENV"
 
-          # create summary of previous (historical) lcov summary for main and pr
-          lcov --summary ./tools/code-coverage-diff/deploy-prev/code-coverage-${{ env.num }}-${{ env.previous_artifact_id }} > historical_coverage_lcov.txt
-          echo "hist_main_summary<<EOFABC" >> $GITHUB_OUTPUT
-          echo "$(cat historical_coverage_lcov.txt | tail -n +3)" >> $GITHUB_OUTPUT
-          echo 'EOFABC' >> $GITHUB_OUTPUT
 
       - name: Calculate coverage difference with previous historical lcov artifact
         if: steps.find_artifacts.outputs.result != '[]'
         id: historicalcoveragediff
         run: |
+          # create summary of previous (historical) lcov summary for main and pr
+          lcov --summary ./tools/code-coverage-diff/deploy-prev/code-coverage-${{ steps.prnum.outputs.num }}-${{ env.previous_artifact_id }} > historical_coverage_lcov.txt
+          {
+            echo "hist_main_summary<<EOFABC"
+            cat historical_coverage_lcov.txt | tail -n +3
+            echo "EOFABC"
+          } >> "$GITHUB_ENV"
+
           # call python script to compare historical previous main coverage with current main coverage
-          python ./tools/code-coverage-diff/calculate_coverage_difference.py "${{ steps.lcov.outputs.main }}" "${{ steps.coveragediff.outputs.hist_main_summary }}" > ./tools/code-coverage-diff/lcov/hist_coverage_diff.txt
+          python3 ./tools/code-coverage-diff/calculate_coverage_difference.py "${{ steps.lcov.outputs.main }}" "${{ env.hist_main_summary }}" > ./tools/code-coverage-diff/lcov/hist_coverage_diff.txt
 
           # store into output variable for comment display
-          echo "hist_diff<<EOFABC" >> $GITHUB_OUTPUT
-          cat ./tools/code-coverage-diff/lcov/hist_coverage_diff.txt >> $GITHUB_ENV
-          echo 'EOFABC' >> $GITHUB_OUTPUT
+          {
+          echo 'hist_diff<<EOFABC' >
+          cat ./tools/code-coverage-diff/lcov/hist_coverage_diff.txt
+          echo EOFABC
+          }  >> "$GITHUB_ENV"
 
       - name: Create coverage comment (no previous lcov)
         if: steps.find_artifacts.outputs.result == '[]'
@@ -282,7 +294,7 @@ jobs:
           issue-number: ${{ steps.prnum.outputs.num }}
           body: |
             ## Code and Documentation Coverage Report
-            
+
             ### Documentation Coverage
 
             <details>
@@ -296,7 +308,7 @@ jobs:
 
             <details>
             <summary>Click to view documentation coverage for main</summary>
-            
+
             ```
             ${{ steps.doccov.outputs.main }}
             ```
@@ -320,7 +332,7 @@ jobs:
             ### Coverage Main & PR Coverage Change
 
             ```diff
-            ${{ steps.coveragediff.outputs.diff }}
+            ${{ env.diff }}
             ```
 
       - name: Create coverage comment (previous lcov)
@@ -330,7 +342,7 @@ jobs:
           issue-number: ${{ steps.prnum.outputs.num }}
           body: |
             ## Code and Documentation Coverage Report
-            
+
             ### Documentation Coverage
 
             <details>
@@ -344,7 +356,7 @@ jobs:
 
             <details>
             <summary>Click to view documentation coverage for main</summary>
-            
+
             ```
             ${{ steps.doccov.outputs.main }}
             ```
@@ -368,11 +380,11 @@ jobs:
             ### Coverage Main & PR Coverage Change
 
             ```diff
-            ${{ steps.coveragediff.outputs.diff }}
+            ${{ env.diff }}
             ```
 
             ### Previous Main Coverage Change
 
             ```diff
-            ${{ steps.historicalcoveragediff.outputs.hist_diff }}
+            ${{ env.hist_diff }}
             ```

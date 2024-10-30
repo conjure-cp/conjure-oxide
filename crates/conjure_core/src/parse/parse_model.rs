@@ -5,10 +5,23 @@ use serde_json::Value;
 use serde_json::Value as JsonValue;
 
 use crate::ast::{Constant, DecisionVariable, Domain, Expression, Name, Range};
+use crate::bug;
 use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::metadata::Metadata;
 use crate::Model;
+
+macro_rules! parser_trace {
+    ($($arg:tt)+) => {
+        log::trace!(target:"jsonparser",$($arg)+)
+    };
+}
+
+macro_rules! parser_debug {
+    ($($arg:tt)+) => {
+        log::debug!(target:"jsonparser",$($arg)+)
+    };
+}
 
 pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Result<Model> {
     let mut m = Model::new_empty(context);
@@ -34,9 +47,7 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
             "SuchThat" => {
                 let constraints_arr = match entry.1.as_array() {
                     Some(x) => x,
-                    None => {
-                        return Err(Error::Parse("SuchThat is not a vector".to_owned()));
-                    }
+                    None => bug!("SuchThat is not a vector"),
                 };
 
                 let constraints: Vec<Expression> =
@@ -44,7 +55,7 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
                 m.add_constraints(constraints);
                 // println!("Nb constraints {}", m.constraints.len());
             }
-            otherwise => panic!("Unhandled Statement {:#?}", otherwise),
+            otherwise => bug!("Unhandled Statement {:#?}", otherwise),
         }
     }
 
@@ -75,7 +86,7 @@ fn parse_variable(v: &JsonValue) -> Result<(Name, DecisionVariable)> {
         "DomainInt" => Ok(parse_int_domain(domain.1)?),
         "DomainBool" => Ok(Domain::BoolDomain),
         _ => Err(Error::Parse(
-            "FindOrGiven[2] is an unknown object".to_owned(),
+            "FindOrGiven[2] is an unknown object".to_owned(), // consider covered
         )),
     }?;
     Ok((name, DecisionVariable { domain }))
@@ -211,6 +222,10 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
             "MkOpMax",
             Box::new(Expression::Max) as Box<dyn Fn(_, _) -> _>,
         ),
+        (
+            "MkOpAllDiff",
+            Box::new(Expression::AllDiff) as Box<dyn Fn(_, _) -> _>,
+        ),
     ]
     .into_iter()
     .collect();
@@ -240,6 +255,10 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
             ))
         }
         Value::Object(constant) if constant.contains_key("Constant") => parse_constant(constant),
+        Value::Object(constant) if constant.contains_key("ConstantInt") => parse_constant(constant),
+        Value::Object(constant) if constant.contains_key("ConstantBool") => {
+            parse_constant(constant)
+        }
         otherwise => panic!("Unhandled Expression {:#?}", otherwise),
     }
 }
@@ -282,24 +301,46 @@ fn parse_vec_op(
     let (key, value) = vec_op.into_iter().next()?;
     let constructor = vec_operators.get(key.as_str())?;
 
-    let args_parsed: Vec<Option<Expression>> = value["AbstractLiteral"]["AbsLitMatrix"][1]
-        .as_array()?
-        .iter()
-        .map(parse_expression)
-        .collect();
+    parser_debug!("Trying to parse vec_op: {key} ...");
+
+    let mut args_parsed: Option<Vec<Option<Expression>>> = None;
+    if let Some(abs_lit_matrix) = value.pointer("/AbstractLiteral/AbsLitMatrix/1") {
+        parser_trace!("... containing a matrix of literals");
+        args_parsed = abs_lit_matrix.as_array().map(|x| {
+            x.iter()
+                .map(parse_expression)
+                .collect::<Vec<Option<Expression>>>()
+        });
+    }
+    // the input of this expression is constant - e.g. or([]), or([false]), min([2]), etc.
+    else if let Some(const_abs_lit_matrix) =
+        value.pointer("/Constant/ConstantAbstract/AbsLitMatrix/1")
+    {
+        parser_trace!("... containing a matrix of constants");
+        args_parsed = const_abs_lit_matrix.as_array().map(|x| {
+            x.iter()
+                .map(parse_expression)
+                .collect::<Vec<Option<Expression>>>()
+        });
+    }
+
+    let args_parsed = args_parsed?;
 
     let number_of_args = args_parsed.len();
+    parser_debug!("... with {number_of_args} args {args_parsed:#?}");
+
     let valid_args: Vec<Expression> = args_parsed.into_iter().flatten().collect();
     if number_of_args != valid_args.len() {
         None
     } else {
+        parser_debug!("... success!");
         Some(constructor(Metadata::new(), valid_args))
     }
 }
 
 fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expression> {
-    match &constant["Constant"] {
-        Value::Object(int) if int.contains_key("ConstantInt") => {
+    match &constant.get("Constant") {
+        Some(Value::Object(int)) if int.contains_key("ConstantInt") => {
             let int_32: i32 = match int["ConstantInt"].as_array()?[1].as_i64()?.try_into() {
                 Ok(x) => x,
                 Err(_) => {
@@ -312,6 +353,35 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
             };
 
             Some(Expression::Constant(Metadata::new(), Constant::Int(int_32)))
+        }
+
+        Some(Value::Object(b)) if b.contains_key("ConstantBool") => {
+            let b: bool = b["ConstantBool"].as_bool().unwrap();
+            Some(Expression::Constant(Metadata::new(), Constant::Bool(b)))
+        }
+
+        // sometimes (e.g. constant matrices) we can have a ConstantInt / Constant bool that is
+        // not wrapped in Constant
+        None => {
+            let int_expr = constant["ConstantInt"]
+                .as_array()
+                .and_then(|x| x[1].as_i64())
+                .and_then(|x| x.try_into().ok())
+                .map(|x| Expression::Constant(Metadata::new(), Constant::Int(x)));
+
+            if let e @ Some(_) = int_expr {
+                return e;
+            }
+
+            let bool_expr = constant["ConstantBool"]
+                .as_bool()
+                .map(|x| Expression::Constant(Metadata::new(), Constant::Bool(x)));
+
+            if let e @ Some(_) = bool_expr {
+                return e;
+            }
+
+            panic!("Unhandled parse_constant {:#?}", constant);
         }
         otherwise => panic!("Unhandled parse_constant {:#?}", otherwise),
     }

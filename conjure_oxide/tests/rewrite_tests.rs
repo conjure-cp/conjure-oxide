@@ -137,7 +137,7 @@ fn simplify_expression(expr: Expression) -> Expression {
 
 #[test]
 fn rule_sum_constants() {
-    let sum_constants = get_rule_by_name("sum_constants").unwrap();
+    let sum_constants = get_rule_by_name("partial_evaluator").unwrap();
     let unwrap_sum = get_rule_by_name("unwrap_sum").unwrap();
 
     let mut expr = Expression::Sum(
@@ -161,36 +161,6 @@ fn rule_sum_constants() {
     assert_eq!(
         expr,
         Expression::Constant(Metadata::new(), Constant::Int(6))
-    );
-}
-
-#[test]
-fn rule_sum_mixed() {
-    let sum_constants = get_rule_by_name("sum_constants").unwrap();
-
-    let mut expr = Expression::Sum(
-        Metadata::new(),
-        vec![
-            Expression::Constant(Metadata::new(), Constant::Int(1)),
-            Expression::Constant(Metadata::new(), Constant::Int(2)),
-            Expression::Reference(Metadata::new(), Name::UserName(String::from("a"))),
-        ],
-    );
-
-    expr = sum_constants
-        .apply(&expr, &Model::new_empty(Default::default()))
-        .unwrap()
-        .new_expression;
-
-    assert_eq!(
-        expr,
-        Expression::Sum(
-            Metadata::new(),
-            vec![
-                Expression::Reference(Metadata::new(), Name::UserName(String::from("a"))),
-                Expression::Constant(Metadata::new(), Constant::Int(3)),
-            ]
-        )
     );
 }
 
@@ -238,7 +208,7 @@ fn rule_sum_geq() {
 #[test]
 fn reduce_solve_xyz() {
     println!("Rules: {:?}", get_rules());
-    let sum_constants = get_rule_by_name("sum_constants").unwrap();
+    let sum_constants = get_rule_by_name("partial_evaluator").unwrap();
     let unwrap_sum = get_rule_by_name("unwrap_sum").unwrap();
     let lt_to_ineq = get_rule_by_name("lt_to_ineq").unwrap();
     let sum_leq_to_sumleq = get_rule_by_name("sum_leq_to_sumleq").unwrap();
@@ -517,88 +487,6 @@ fn remove_trivial_and_or() {
         expr_or,
         Expression::Constant(Metadata::new(), Constant::Bool(false))
     );
-}
-
-#[test]
-fn rule_remove_constants_from_or() {
-    let remove_constants_from_or = get_rule_by_name("remove_constants_from_or").unwrap();
-
-    let mut expr = Expression::Or(
-        Metadata::new(),
-        vec![
-            Expression::Constant(Metadata::new(), Constant::Bool(true)),
-            Expression::Constant(Metadata::new(), Constant::Bool(false)),
-            Expression::Reference(Metadata::new(), Name::UserName(String::from("a"))),
-        ],
-    );
-
-    expr = remove_constants_from_or
-        .apply(&expr, &Model::new_empty(Default::default()))
-        .unwrap()
-        .new_expression;
-
-    assert_eq!(
-        expr,
-        Expression::Constant(Metadata::new(), Constant::Bool(true))
-    );
-}
-
-#[test]
-fn rule_remove_constants_from_and() {
-    let remove_constants_from_and = get_rule_by_name("remove_constants_from_and").unwrap();
-
-    let mut expr = Expression::And(
-        Metadata::new(),
-        vec![
-            Expression::Constant(Metadata::new(), Constant::Bool(true)),
-            Expression::Constant(Metadata::new(), Constant::Bool(false)),
-            Expression::Reference(Metadata::new(), Name::UserName(String::from("a"))),
-        ],
-    );
-
-    expr = remove_constants_from_and
-        .apply(&expr, &Model::new_empty(Default::default()))
-        .unwrap()
-        .new_expression;
-
-    assert_eq!(
-        expr,
-        Expression::Constant(Metadata::new(), Constant::Bool(false))
-    );
-}
-
-#[test]
-fn remove_constants_from_or_not_changed() {
-    let remove_constants_from_or = get_rule_by_name("remove_constants_from_or").unwrap();
-
-    let expr = Expression::Or(
-        Metadata::new(),
-        vec![
-            Expression::Reference(Metadata::new(), Name::UserName(String::from("a"))),
-            Expression::Reference(Metadata::new(), Name::UserName(String::from("b"))),
-        ],
-    );
-
-    let result = remove_constants_from_or.apply(&expr, &Model::new_empty(Default::default()));
-
-    assert!(result.is_err());
-}
-
-#[test]
-fn remove_constants_from_and_not_changed() {
-    let remove_constants_from_and = get_rule_by_name("remove_constants_from_and").unwrap();
-
-    let expr = Expression::And(
-        Metadata::new(),
-        vec![
-            Expression::Reference(Metadata::new(), Name::UserName(String::from("a"))),
-            Expression::Reference(Metadata::new(), Name::UserName(String::from("b"))),
-        ],
-    );
-
-    let result = remove_constants_from_and.apply(&expr, &Model::new_empty(Default::default()));
-
-    assert!(result.is_err());
 }
 
 #[test]
