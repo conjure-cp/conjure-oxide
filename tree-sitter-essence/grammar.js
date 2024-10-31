@@ -83,7 +83,11 @@ module.exports = grammar({
 
     such_that_statement: $ => seq(
       "such that",
-      $.expression
+      $.expression,
+      optional(seq(
+        ",",
+        $.expression
+      ))
     ),
 
     where_statement: $ => seq(
@@ -286,10 +290,14 @@ module.exports = grammar({
     ),
 
     expression: $ => prec.left(choice(
-      $.assignment_expression,
+      $.assignment_expression, //move this to be its own thing
       $.literal,
-      $.operator,
-      $.identifier //can i do this?, relevant for the upper/lower/closed bound ranges
+      //$.operator,
+      $.identifier,
+      $.arithmetic_expression,
+      $.comparison_expression,
+      $.logical_expression,
+      $.parenthesized_expression
     )),
 
     literal: $ => choice(
@@ -310,12 +318,50 @@ module.exports = grammar({
       $.decimal_integer_literal
     ),
 
-    operator: $ => choice(
+    arithmetic_expression: $ => prec.left(seq(
+      $.expression,
+      $.arithmetic_operator,
+      $.expression
+    )),
+
+    comparison_expression: $ => prec.left(seq(
+      $.expression,
+      $.comparison_operator,
+      $.expression
+    )),
+
+    logical_expression: $ => prec.left(seq(
+      $.expression,
+      $.logical_operator,
+      $.expression
+    )),
+
+    parenthesized_expression: $ => prec.left(seq(
+      "(",
+      $.expression,
+      ")"
+    )),
+
+    arithmetic_operator: $ => choice(
       "+",
       "-",
       "*",
       "/",
+    ),
+
+    comparison_operator: $ => choice(
+      "==",
+      "!=",
+      "<",
+      ">",
+      "<=",
+      ">=",
       "="
+    ),
+
+    logical_operator: $ => choice(
+      "&&",
+      "||"
     ),
 
     identifier: $ => /[\p{XID_Start}_$][\p{XID_Continue}\u00A2_$]*/
