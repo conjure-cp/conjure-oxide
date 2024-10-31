@@ -9,7 +9,8 @@ use crate::rule_engine::{
 };
 
 use crate::solver::SolverFamily;
-use crate::Model;
+use crate::{bug, Model};
+use itertools::Itertools;
 use uniplate::Uniplate;
 use ApplicationError::RuleNotApplicable;
 
@@ -59,6 +60,89 @@ fn sum_to_vector(expr: &Expr) -> Result<Vec<Expr>, ApplicationError> {
 //         _ => Err(ApplicationError::RuleNotApplicable),
 //     }
 // }
+
+#[register_rule(("Minion", 4400))]
+fn flatten_binops(expr: &Expr, m: &Model) -> ApplicationResult {
+    use Expr::*;
+    if !matches!(expr, SafeDiv(_, _, _)) {
+        return Err(RuleNotApplicable);
+    }
+
+    // from the above guard, assuming that expr is a binop.
+    assert_eq!(expr.children().len(), 2);
+    let mut a = expr.children()[0].clone();
+    let mut b = expr.children()[1].clone();
+
+    let mut new_top_level_constraints: Vec<Expr> = vec![];
+    let mut m1 = m.clone();
+
+    // simplify lhs and rhs expressions.
+    if let Some((a1, a_top)) = expr_to_aux_var(&a, &mut m1) {
+        new_top_level_constraints.push(a_top);
+        a = a1;
+    };
+
+    if let Some((b1, b_top)) = expr_to_aux_var(&b, &mut m1) {
+        new_top_level_constraints.push(b_top);
+        b = b1;
+    };
+
+    let new_top = match new_top_level_constraints.as_slice() {
+        [] => {
+            return Err(RuleNotApplicable);
+        } // no change to expr
+        [a] => a.clone(),
+        [_, _] => Expr::And(Metadata::new(), new_top_level_constraints),
+        _ => unreachable!(),
+    };
+
+    let new_expr = expr.with_children(vec![a, b].into_iter().collect());
+    Ok(Reduction::new(new_expr, new_top, m1.variables))
+}
+
+/// Saves the given expression into a new auxiliary variable.
+///
+/// The model is mutated with the auxiliary variable. A tuple of the replacement expression (of the form
+/// Expr::Reference(...)), and a new top level constraint are returned.
+///
+/// If the expression is already a constant or a reference, None is returned.
+fn expr_to_aux_var(expr: &Expr, m: &mut Model) -> Option<(Expr, Expr)> {
+    if matches!(expr, Expr::Constant(_, _) | Expr::Reference(_, _)) {
+        return None;
+    }
+
+    let name = m.gensym();
+    let Some(domain) = expr.domain_of(&m.variables) else {
+        bug!("rules/minion.rs:expr_to_aux_var: Could not find domain of {expr}")
+    };
+
+    m.add_variable(name.clone(), DecisionVariable::new(domain));
+
+    let new_expr = Expr::Reference(Metadata::new(), name);
+    let new_top = Expr::Eq(
+        Metadata::new(),
+        Box::new(new_expr.clone()),
+        Box::new(expr.clone()),
+    );
+
+    Some((new_expr, new_top))
+}
+
+/// Returns true iff the children of `expr` are not nested expressions.
+fn is_flattened(expr: &Expr) -> bool {
+    use itertools::FoldWhile::{Continue, Done};
+
+    expr.children()
+        .into_iter()
+        .fold_while(true, |_, x| {
+            if matches!(x, Expr::Constant(_, _) | Expr::Reference(_, _)) {
+                Continue(true)
+            } else {
+                Done(false)
+            }
+        })
+        .into_inner()
+}
 
 /**
  * Convert a Geq to a SumGeq if the left hand side is a sum:
@@ -271,112 +355,87 @@ fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
     )))
 }
 
-// #[register_rule(("Minion", 99))]
-// fn eq_to_leq_geq(expr: &Expr, _: &Model) -> ApplicationResult {
-//     match expr {
-//         Expr::Eq(metadata, a, b) => {
-//             return Ok(Reduction::pure(Expr::And(
-//                 metadata.clone(),
-//                 vec![
-//                     Expr::Leq(metadata.clone(), a.clone(), b.clone()),
-//                     Expr::Geq(metadata.clone(), a.clone(), b.clone()),
-//                 ],
-//             )));
-//         }
-//         _ => Err(ApplicationError::RuleNotApplicable),
-//     }
-// }
-
-/**
- * Since Minion doesn't support some constraints with div (e.g. leq, neq), we add an auxiliary variable to represent the division result.
-*/
-#[register_rule(("Minion", 4400))]
-fn flatten_safediv(expr: &Expr, mdl: &Model) -> ApplicationResult {
-    use Expr::*;
-    match expr {
-        Eq(_, _, _) => {}
-        Leq(_, _, _) => {}
-        Geq(_, _, _) => {}
-        Neq(_, _, _) => {}
-        _ => {
-            return Err(ApplicationError::RuleNotApplicable);
-        }
-    }
-
-    let mut sub = expr.children();
-
-    let mut new_vars = SymbolTable::new();
-    let mut new_top = vec![];
-
-    // replace every safe div child with a reference to a new variable
-    for c in sub.iter_mut() {
-        if let Expr::SafeDiv(_, a, b) = c.clone() {
-            let new_name = mdl.gensym();
-            let domain = c
-                .domain_of(&mdl.variables)
-                .ok_or(ApplicationError::DomainError)?;
-            new_vars.insert(new_name.clone(), DecisionVariable::new(domain));
-
-            new_top.push(Expr::DivEq(
-                Metadata::new(),
-                a.clone(),
-                b.clone(),
-                Box::new(Expr::Reference(Metadata::new(), new_name.clone())),
-            ));
-
-            *c = Expr::Reference(Metadata::new(), new_name.clone());
-        }
-    }
-    if !new_top.is_empty() {
-        return Ok(Reduction::new(
-            expr.with_children(sub),
-            Expr::And(Metadata::new(), new_top),
-            new_vars,
-        ));
-    }
-    Err(ApplicationError::RuleNotApplicable)
-}
-
 #[register_rule(("Minion", 4400))]
 fn div_eq_to_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
-    match expr {
-        Expr::Eq(metadata, a, b) => {
-            if let Expr::SafeDiv(_, x, y) = a.as_ref() {
-                match **b {
-                    Expr::Reference(_, _) | Expr::Constant(_, _) => {}
-                    _ => {
-                        return Err(ApplicationError::RuleNotApplicable);
-                    }
-                };
+    use Expr::*;
 
-                Ok(Reduction::pure(Expr::DivEq(
-                    metadata.clone_dirty(),
-                    x.clone(),
-                    y.clone(),
-                    b.clone(),
-                )))
-            } else if let Expr::SafeDiv(_, x, y) = b.as_ref() {
-                match **a {
-                    Expr::Reference(_, _) | Expr::Constant(_, _) => {}
-                    _ => {
-                        return Err(ApplicationError::RuleNotApplicable);
-                    }
-                };
-                Ok(Reduction::pure(Expr::DivEq(
-                    metadata.clone_dirty(),
-                    x.clone(),
-                    y.clone(),
-                    a.clone(),
-                )))
-            } else {
-                Err(ApplicationError::RuleNotApplicable)
-            }
+    let negated = match expr {
+        Eq(_, _, _) => false,
+        Neq(_, _, _) => true,
+        _ => return Err(RuleNotApplicable),
+    };
+
+    // binary operators
+    assert_eq!(expr.children().len(), 2);
+
+    let metadata = expr.get_meta();
+    let a = expr.children()[0].clone();
+    let b = expr.children()[1].clone();
+
+    if let Expr::SafeDiv(_, x, y) = a.clone() {
+        if !is_flattened(&a) {
+            return Err(RuleNotApplicable);
         }
-        _ => Err(ApplicationError::RuleNotApplicable),
+        match b {
+            Reference(_, _) | Constant(_, _) => {}
+            _ => {
+                return Err(ApplicationError::RuleNotApplicable);
+            }
+        };
+
+        if negated {
+            return Ok(Reduction::pure(Not(
+                metadata.clone_dirty(),
+                Box::new(DivEq(
+                    Metadata::new(),
+                    x.clone(),
+                    y.clone(),
+                    Box::new(b.clone()),
+                )),
+            )));
+        } else {
+            return Ok(Reduction::pure(Expr::DivEq(
+                metadata.clone_dirty(),
+                x.clone(),
+                y.clone(),
+                Box::new(b.clone()),
+            )));
+        }
+    } else if let Expr::SafeDiv(_, x, y) = b.clone() {
+        if !is_flattened(&b) {
+            return Err(RuleNotApplicable);
+        }
+        match a {
+            Expr::Reference(_, _) | Expr::Constant(_, _) => {}
+            _ => {
+                return Err(ApplicationError::RuleNotApplicable);
+            }
+        };
+
+        if negated {
+            return Ok(Reduction::pure(Not(
+                metadata.clone_dirty(),
+                Box::new(DivEq(
+                    Metadata::new(),
+                    x.clone(),
+                    y.clone(),
+                    Box::new(a.clone()),
+                )),
+            )));
+        } else {
+            return Ok(Reduction::pure(Expr::DivEq(
+                metadata.clone_dirty(),
+                x.clone(),
+                y.clone(),
+                Box::new(a.clone()),
+            )));
+        }
+    } else {
+        Err(ApplicationError::RuleNotApplicable)
     }
 }
 
-#[register_rule(("Minion", 4400))]
+#[register_rule(("Minion", 4200))]
 fn negated_neq_to_eq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Not(_, a) => match a.as_ref() {
@@ -397,7 +456,7 @@ fn negated_neq_to_eq(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 }
 
-#[register_rule(("Minion", 4400))]
+#[register_rule(("Minion", 4200))]
 fn negated_eq_to_neq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Expr::Not(_, a) => match a.as_ref() {
