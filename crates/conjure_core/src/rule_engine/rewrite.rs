@@ -304,7 +304,6 @@ fn apply_all_rules<'a>(
         match rule.apply(expression, model) {
             Ok(red) => {
                 log::trace!(target: "file", "Rule applicable: {:?}, to Expression: {:?}, resulting in: {:?}", rule, expression, red.new_expression);
-                //print!("{:?}", rule);
                 stats.rewriter_rule_application_attempts =
                     Some(stats.rewriter_rule_application_attempts.unwrap() + 1);
                 stats.rewriter_rule_applications =
@@ -351,10 +350,6 @@ fn apply_all_rules<'a>(
 /// }
 ///
 fn choose_rewrite(results: &[RuleResult]) -> Option<Reduction> {
-    if results.len() > 1 {
-        bug!("There should be only 1 rule that can be applied to an expression at a time");
-    }
-
     if results.is_empty() {
         return None;
     }
