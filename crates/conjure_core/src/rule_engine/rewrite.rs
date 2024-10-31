@@ -5,6 +5,7 @@ use std::{env, io};
 
 use thiserror::Error;
 
+use crate::bug;
 use crate::stats::RewriterStats;
 use uniplate::Uniplate;
 
@@ -350,21 +351,13 @@ fn apply_all_rules<'a>(
 /// }
 ///
 fn choose_rewrite(results: &[RuleResult]) -> Option<Reduction> {
+    if results.len() > 1 {
+        bug!("There should be only 1 rule that can be applied to an expression at a time");
+    }
+
     if results.is_empty() {
         return None;
     }
-    write_rule_to_file(results[0].rule);
-    // Return the first result for now
-    print!("{:?}\n", results[0].rule);
+
     Some(results[0].reduction.clone())
-}
-
-fn write_rule_to_file(rule: &Rule) -> io::Result<()> {
-    // Open the file in write mode, creating it if it doesn’t exist
-    let mut file = File::create("conjure_oxide/tests/integration/xyz/rules.txt")?;
-
-    // Write the rule's data to the file
-    write!(file, "{:?}\n", rule)?;
-
-    Ok(())
 }
