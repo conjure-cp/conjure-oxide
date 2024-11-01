@@ -28,7 +28,7 @@ use conjure_oxide::SolverFamily;
 struct Cli {
     #[arg(
         value_name = "INPUT_ESSENCE",
-        default_value = "./conjure_oxide/tests/integration/basic/max/input.essence",
+        default_value = "./conjure_oxide/tests/integration//xyz/input.essence",
         help = "The input Essence file"
     )]
     input_file: PathBuf,
@@ -132,8 +132,8 @@ pub fn main() -> AnyhowResult<()> {
     let rule_priorities = get_rule_priorities(&rule_sets)?;
     let rules_vec = get_rules_vec(&rule_priorities);
 
-    log::info!(target: "file", 
-         "Rules and priorities: {}", 
+    log::info!(target: "file",
+         "Rules and priorities: {}",
          rules_vec.iter()
             .map(|rule| format!("{}: {}", rule.name, rule_priorities.get(rule).unwrap_or(&0)))
             .collect::<Vec<_>>()

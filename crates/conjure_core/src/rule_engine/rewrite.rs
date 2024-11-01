@@ -3,6 +3,7 @@ use std::fmt::Display;
 
 use thiserror::Error;
 
+use crate::bug;
 use crate::stats::RewriterStats;
 use uniplate::Uniplate;
 
@@ -89,13 +90,13 @@ fn optimizations_enabled() -> bool {
 ///   Initial expression: a + min(x, y)
 ///   A model containing the expression is created. The variables of the model are represented by a SymbolTable and contain a,x,y.
 ///   The contraints of the initail model is the expression itself.
-///     
+///
 ///   After getting the rules by their priorities and getting additional statistics the while loop of single interations is executed.
 ///   Details for this process can be found in [`rewrite_iteration`] documentation.
 ///
 ///   The loop is exited only when no more rules can be applied, when rewrite_iteration returns None and [`while let Some(step) = None`] occurs
-///     
-///     
+///
+///
 ///   Will result in side effects ((d<=x ^ d<=y) being the [`new_top`] and the model will now be a conjuction of that and (a+d)
 ///   Rewritten expression: ((a + d) ^ (d<=x ^ d<=y))
 ///
@@ -197,7 +198,7 @@ pub fn rewrite_model<'a>(
 ///
 ///   No more rules in our example can apply to the modified model -> mark all the children as clean and return a pure [`Reduction`].
 ///   [`return Some(Reduction::pure(expression))`]
-///    
+///
 ///   On the last execution of rewrite_iteration condition [`apply_optimizations && expression.is_clean()`] is met, [`None`] is returned.
 ///
 ///
@@ -347,6 +348,16 @@ fn apply_all_rules<'a>(
 /// }
 ///
 fn choose_rewrite(results: &[RuleResult]) -> Option<Reduction> {
+    if results.len() > 1 {
+        let expr = results[0].reduction.new_expression.clone();
+        let rules: Vec<_> = results.iter().map(|result| &result.rule).collect();
+
+        let message = format!(
+            "More than 1 rule can be applied to expression:{:?} \n\n Rules: {:?}",
+            expr, rules
+        );
+        bug!("{}", message);
+    }
     if results.is_empty() {
         return None;
     }
