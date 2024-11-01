@@ -26,11 +26,11 @@ jobs:
       - name: Get Sha
         id: sha
         run: |
-          if [[ ${{ github.event_name }} == 'pull_request' ]] 
+          if [[ ${{ github.event_name }} == 'pull_request' ]]
           then
             echo -e "sha=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_OUTPUT"
             echo -e "sha=${{ github.event.pull_request.head.sha }}"
-          else 
+          else
             echo -e "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
             echo -e "sha=${{ github.sha }}"
           fi
@@ -41,17 +41,14 @@ jobs:
       - name: Install rust ${{ env.rust_release }}
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
-      - name: link-dead-code
-        run: echo RUSTFLAGS=${RUSTFLAGS}\ -C link-dead-code >> $GITHUB_ENV
-
       - name: Disable rust-lld (to fix linkme)
-        run: | 
+        run: |
           echo RUSTFLAGS=${RUSTFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
           echo RUSTDOCFLAGS=${RUSTDOCFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
         if: env.rust_release == 'nightly'
 
       - uses: ./.github/actions/install-conjure
-        with: 
+        with:
           os_arch: linux
           version: 2.5.1
 
@@ -80,3 +77,4 @@ jobs:
         with:
           name: code-coverage-${{ steps.sha.outputs.sha }}
           path: deploy/**
+
