@@ -245,7 +245,7 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
             Value::Object(vec_op) if vec_operator_names.any(|key| vec_op.contains_key(*key)) => {
                 parse_vec_op(vec_op, vec_operators)
             }
-            otherwise => panic!("Unhandled Op {:#?}", otherwise),
+            otherwise => bug!("Unhandled Op {:#?}", otherwise),
         },
         Value::Object(refe) if refe.contains_key("Reference") => {
             let name = refe["Reference"].as_array()?[0].as_object()?["Name"].as_str()?;
@@ -259,7 +259,7 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
         Value::Object(constant) if constant.contains_key("ConstantBool") => {
             parse_constant(constant)
         }
-        otherwise => panic!("Unhandled Expression {:#?}", otherwise),
+        otherwise => bug!("Unhandled Expression {:#?}", otherwise),
     }
 }
 
@@ -279,7 +279,7 @@ fn parse_bin_op(
             let arg2 = parse_expression(&bin_op_args[1])?;
             Some(constructor(Metadata::new(), Box::new(arg1), Box::new(arg2)))
         }
-        otherwise => panic!("Unhandled parse_bin_op {:#?}", otherwise),
+        otherwise => bug!("Unhandled parse_bin_op {:#?}", otherwise),
     }
 }
 
@@ -381,8 +381,8 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
                 return e;
             }
 
-            panic!("Unhandled parse_constant {:#?}", constant);
+            bug!("Unhandled parse_constant {:#?}", constant);
         }
-        otherwise => panic!("Unhandled parse_constant {:#?}", otherwise),
+        otherwise => bug!("Unhandled parse_constant {:#?}", otherwise),
     }
 }
