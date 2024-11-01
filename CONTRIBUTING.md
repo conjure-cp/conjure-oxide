@@ -34,7 +34,7 @@ In short, when you submit code changes, your submissions will be understood to b
 We use GitHub issues to track public bugs. Report a bug by [opening a new issue](); it's that easy!
 
 ## Write bug reports with detail, background, and sample code
-[This is an example](http://stackoverflow.com/q/12488905/180626) of a bug report I wrote, and I think it's not a bad model. Here's [another example from Craig Hockenberry](http://www.openradar.me/11905408), an app developer whom I greatly respect.
+Take a look at [this advice from Simon Tatham](https://www.chiark.greenend.org.uk/~sgtatham/bugs.html) for how to effectively report Bugs. [This is an example](http://stackoverflow.com/q/12488905/180626) of a well written bug report. 
 
 **Great Bug Reports** tend to have:
 
@@ -49,7 +49,8 @@ We use GitHub issues to track public bugs. Report a bug by [opening a new issue]
 People *love* thorough bug reports. I'm not even kidding.
 
 ## Coding Style
-Please write clear and well doccumented code.
+- Run cargo fmt in the project directory to automatically format code
+- Use cargo clippy to lint the code and identify any common issues
 
 ## License
 By contributing, you agree that your contributions will be licensed under its Mozilla Public License.
