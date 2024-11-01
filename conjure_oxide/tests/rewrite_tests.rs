@@ -40,14 +40,9 @@ fn sum_of_constants() {
         ],
     );
 
-    match evaluate_sum_of_constants(&valid_sum_expression) {
-        Some(result) => assert_eq!(result, 6),
-        None => panic!(),
-    }
+    assert_eq!(evaluate_sum_of_constants(&valid_sum_expression), Some(6));
 
-    if evaluate_sum_of_constants(&invalid_sum_expression).is_some() {
-        panic!()
-    }
+    assert_eq!(evaluate_sum_of_constants(&invalid_sum_expression), None);
 }
 
 fn evaluate_sum_of_constants(expr: &Expression) -> Option<i32> {
