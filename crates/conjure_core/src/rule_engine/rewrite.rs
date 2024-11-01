@@ -348,16 +348,18 @@ fn apply_all_rules<'a>(
 /// }
 ///
 fn choose_rewrite(results: &[RuleResult]) -> Option<Reduction> {
-    if results.len() > 1 {
-        let expr = results[0].reduction.new_expression.clone();
-        let rules: Vec<_> = results.iter().map(|result| &result.rule).collect();
+    //Uncomment the following if want to check for mutual exclusivity of rules
+    // if results.len() > 1 {
+    //     let expr = results[0].reduction.new_expression.clone();
+    //     let rules: Vec<_> = results.iter().map(|result| &result.rule).collect();
 
-        let message = format!(
-            "More than 1 rule can be applied to expression:{:?} \n\n Rules: {:?}",
-            expr, rules
-        );
-        bug!("{}", message);
-    }
+    //     let message = format!(
+    //         "More than 1 rule can be applied to expression:{:?} \n\n Rules: {:?}",
+    //         expr, rules
+    //     );
+    //     bug!("{}", message);
+    // }
+
     if results.is_empty() {
         return None;
     }
