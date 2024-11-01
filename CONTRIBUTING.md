@@ -18,10 +18,10 @@ Pull requests are the best way to propose changes to the codebase (we use [Githu
 
 1. Make a fork.
 2. Create a branch on your fork, do not develop on main.
-3. Create a pull request as soon as you want others to be able to see your progress, comment, and/or help. 
+3. Create a pull request as soon as you want others to be able to see your progress, comment, and/or help. Err on the side of creating the pull request too early instead of too late. Having an active PR makes your work visible, allows others to help you and give feedback.
 4. Keep the PR in draft status until you think it's ready to be merged.
 5. Assign PR to reviewer(s) when it's ready to be merged.
-    - Only Oz (ozgurakgun) can merge PR's, so add him as a reviewer when you want your PR to be merged.
+    - Only Oz (@ozgurakgun) can merge PR's, so add him as a reviewer when you want your PR to be merged.
 7. We are happy to squash-merge, so feel free to push small commits to the PR. You can also tidy up the history (i.e. force-push) instead of a squash-merge if you choose to do that.
 
 ## What We Didn't Do
@@ -31,7 +31,7 @@ To prevent unknown unknowns, skim the documentation and [What We Didn't Do](http
 In short, when you submit code changes, your submissions will be understood to be under the same [Mozilla Public License](https://www.mozilla.org/en-US/MPL/2.0/) that covers the project. Feel free to contact the maintainers if that's a concern.
 
 ## Report bugs using Github's [issues](https://github.com/conjure-cp/conjure-oxide/issues)
-We use GitHub issues to track public bugs. Report a bug by [opening a new issue](); it's that easy!
+We use GitHub issues to track public bugs. Report a bug by [opening a new issue](https://github.com/conjure-cp/conjure-oxide/issues/new); it's that easy!
 
 ## Write bug reports with detail, background, and sample code
 Take a look at [this advice from Simon Tatham](https://www.chiark.greenend.org.uk/~sgtatham/bugs.html) for how to effectively report Bugs. [This is an example](http://stackoverflow.com/q/12488905/180626) of a well written bug report. 
@@ -49,8 +49,8 @@ Take a look at [this advice from Simon Tatham](https://www.chiark.greenend.org.u
 People *love* thorough bug reports. I'm not even kidding.
 
 ## Coding Style
-- Run cargo fmt in the project directory to automatically format code
-- Use cargo clippy to lint the code and identify any common issues
+- Run `cargo fmt` in the project directory to automatically format code
+- Use `cargo clippy` to lint the code and identify any common issues
 
 ## License
 By contributing, you agree that your contributions will be licensed under its Mozilla Public License.
