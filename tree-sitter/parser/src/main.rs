@@ -1,7 +1,8 @@
-use tree_sitter::{Parser, Language, Tree, Node};
-use std::path::Path;
 use libloading::{Library, Symbol};
 use std::fs;
+use std::path::Path;
+use tree_sitter::{Language, Node, Parser, Tree};
+use tree_sitter_essence::LANGUAGE;
 
 fn main() {
     let tree = get_tree("./test_code.txt");
@@ -11,22 +12,14 @@ fn main() {
 
 fn get_tree(source_code_path_str: &str) -> Tree {
     let mut parser = Parser::new();
-    let lib_path = Path::new("./../tree-sitter-essence/essence.dylib");
-    let lib = unsafe{ Library::new(lib_path).expect("Failed to load essence.dylib") };
-
-    unsafe {
-        let language_fn: Symbol<unsafe extern "C" fn() -> Language> =
-            lib.get(b"tree_sitter_essence").expect("Failed to load function from essence.dylib");
-
-        // Set the language in the parser
-        parser.set_language(&language_fn()).expect("Error setting language");
-    }
+    parser.set_language(&LANGUAGE.into()).unwrap();
 
     let source_code_path = Path::new(source_code_path_str);
-    let source_code = fs::read_to_string(source_code_path).expect("Failed to read the source code file");
+    let source_code =
+        fs::read_to_string(source_code_path).expect("Failed to read the source code file");
     let tree = parser.parse(source_code, None).expect("Failed to parse");
 
-    return tree
+    return tree;
 }
 
 fn print_tree(node: tree_sitter::Node, indent: usize) {
