@@ -9,12 +9,20 @@ enum Expr {
     Mul(Box<Expr>, Box<Expr>),
 }
 
+// Helper function to iterate over named children
+fn named_children<'a>(
+    node: &'a tree_sitter::Node<'a>,
+) -> impl Iterator<Item = tree_sitter::Node<'a>> + 'a {
+    (0..node.named_child_count()).filter_map(|i| node.named_child(i))
+}
+
 // Function to parse and convert Tree-sitter nodes to Expr
 fn parse_expr(node: tree_sitter::Node, source_code: &str) -> Option<Expr> {
     // println!("EXPR {:?}", node.to_sexp());
     match node.kind() {
         "literal" => {
-            let value = node.utf8_text(source_code.as_bytes()).ok()?.parse().ok()?;
+            let value_text = node.utf8_text(source_code.as_bytes()).ok()?.trim();
+            let value = value_text.parse().ok()?;
             Some(Expr::Int(value))
         }
         "variable" => {
@@ -57,15 +65,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let root_node = tree.root_node();
     // println!("{:?}", root_node.to_sexp());
 
-    let root_node = tree.root_node();
-    let mut cursor = root_node.walk();
-
-    // Find the "example" definition node
-
-    for child in root_node.named_children(&mut cursor) {
+    for child in named_children(&root_node) {
         if child.kind() == "declarations" {
-            let mut declarations_cursor = child.walk();
-            for decl in child.named_children(&mut declarations_cursor) {
+            for decl in named_children(&child) {
                 if decl.kind() == "bind" {
                     // Get the "name" field
                     let name_node = decl
@@ -77,13 +79,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let match_node = decl
                         .child_by_field_name("match")
                         .ok_or("Missing match in bind")?;
+
                     // Within "match", get the "expression" field
                     let expr_node = match_node
                         .child_by_field_name("expression")
                         .ok_or("Missing expression in match")?;
-                    // Now parse expr_node to our Expr type
+
                     // println!("1111 {:?}", expr_node.to_sexp());
                     // println!("2222 {:?}", source_code);
+
+                    // Parse expr_node to our Expr type
                     let expr = parse_expr(expr_node, source_code);
                     println!("{} is parsed as {:?}", name_text, expr);
                 }
