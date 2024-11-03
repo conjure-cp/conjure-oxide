@@ -4,10 +4,9 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-///
-// use tracing_log::LogTracer;
 
-// use tracing_subscriber::fmt::format::Format;
+use tracing_appender;
+
 use std::io::BufWriter;
 use std::path::Path;
 use std::sync::Arc;
@@ -15,7 +14,11 @@ use std::sync::Mutex;
 use std::sync::RwLock;
 use structured_logger::{json::new_writer, Builder};
 use tracing::{span, trace, Level};
-use tracing_subscriber::{fmt, EnvFilter};
+
+use tracing_appender::non_blocking::WorkerGuard;
+use tracing_subscriber::{
+    filter::EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt, Registry,
+};
 
 use conjure_core::ast::{Constant, Expression, Name};
 use conjure_core::context::Context;
@@ -30,10 +33,13 @@ use conjure_oxide::utils::testing::{
     read_minion_solutions_json, read_model_json, save_minion_solutions_json, save_model_json,
 };
 use conjure_oxide::SolverFamily;
-
+use serde::Deserialize;
 use uniplate::Uniplate;
 
-use serde::Deserialize;
+use tracing::Event;
+use tracing_subscriber::fmt::format::Writer;
+use tracing_subscriber::fmt::FormatEvent;
+use tracing_subscriber::registry::LookupSpan;
 
 #[derive(Deserialize, Default)]
 struct TestConfig {
@@ -41,6 +47,13 @@ struct TestConfig {
 }
 
 fn main() {
+    let _guard = create_scoped_subscriber("./logs", "test_log");
+
+    // Create a span and log a message
+    let test_span = span!(Level::TRACE, "test_span");
+    let _enter: span::Entered<'_> = test_span.enter();
+    trace!("trace test"); // This will log without the "test_span: " prefix.
+
     let file_path = Path::new("/path/to/your/file.txt");
     let base_name = file_path.file_stem().and_then(|stem| stem.to_str());
 
@@ -48,19 +61,6 @@ fn main() {
         Some(name) => println!("Base name: {}", name),
         None => println!("Could not extract the base name"),
     }
-
-    // //
-    // LogTracer::init().expect("Unable to initialize LogTracer");
-
-    // // use custom tracing subscriber
-    // // Set up the custom tracing subscriber
-    // let (subscriber, _guard) =
-    //     create_scoped_subscriber("./conjure_oxide/tests/integration/xyz", "rules");
-
-    // // Set the subscriber as the global default for `tracing`
-    // tracing::subscriber::set_global_default(subscriber)
-    //     .expect("Unable to set global default subscriber");
-    // //
 }
 
 // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
@@ -70,6 +70,9 @@ static GUARD: Mutex<()> = Mutex::new(());
 // wrapper to conditionally enforce sequential execution
 fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
+
+    // Lock here to ensure sequential execution
+    let _guard = GUARD.lock().unwrap();
 
     // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
     // correctly
@@ -81,12 +84,12 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
         // Create a span for the trace
         let test_span = span!(target: "rule_engine", Level::TRACE, "test_span");
         let _enter = test_span.enter();
-        trace!(target: "rule_engine", "hello");
+        trace!(target: "rule_engine", "trace test");
 
         // Execute tests based on verbosity
         if verbose {
             #[allow(clippy::unwrap_used)]
-            let guard = GUARD.lock().unwrap();
+            let _guard = GUARD.lock().unwrap();
             integration_test_inner(path, essence_base, extension)?
         } else {
             integration_test_inner(path, essence_base, extension)?
@@ -321,26 +324,24 @@ fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
     assert!(count <= 1, "assert_vector_operators_have_partially_evaluated: expression {} is not partially evaluated",parent_expr)
 }
 
-// fn example_tracing_test(path: &str, essence_base: &str) {
-//     let file = File::create(format!("{path}/{essence_base}-rules.txt"))
-//         .expect("Unable to create log file");
-//     let writer = BufWriter::new(file);
-//     let (non_blocking, _guard) = tracing_appender::non_blocking(writer);
+// using a custom formatter to ommit the span name in the log
+struct CustomFormatter;
 
-//     // Set up a subscriber to log `TRACE` level messages to the file
-//     let subscriber = fmt::Subscriber::builder()
-//         .with_env_filter(EnvFilter::new("rule_engine=trace"))
-//         .with_writer(non_blocking) // Use file-based writer
-//         .with_level(false) // Disable the log level
-//         .with_target(false) // Disable the target
-//         .without_time() // Disable timestamps
-//         .finish();
-
-//     // Set this subscriber globally
-//     let _default = tracing::subscriber::set_default(subscriber);
-//     // This log will be written to the specified file
-//     //trace!(target: "rule_engine", "meh");
-// }
+impl<S, N> FormatEvent<S, N> for CustomFormatter
+where
+    S: tracing::Subscriber + for<'span> LookupSpan<'span>,
+    N: for<'a> tracing_subscriber::fmt::FormatFields<'a> + 'static,
+{
+    fn format_event(
+        &self,
+        _ctx: &fmt::FmtContext<'_, S, N>,
+        mut writer: Writer<'_>,
+        event: &Event<'_>,
+    ) -> std::fmt::Result {
+        // using the debug formatter for the event
+        write!(writer, "{:?}\n", event)
+    }
+}
 
 pub fn create_scoped_subscriber(
     path: &str,
@@ -354,13 +355,20 @@ pub fn create_scoped_subscriber(
     let writer = BufWriter::new(file);
     let (non_blocking, guard) = tracing_appender::non_blocking(writer);
 
-    let subscriber = fmt::Subscriber::builder()
-        .with_env_filter(EnvFilter::new("rule_engine=trace"))
-        .with_writer(non_blocking) // Use file-based writer
-        .with_level(false) // Disable the log level
-        .with_target(false) // Disable the target
-        .without_time() // Disable timestamps
-        .finish();
+    // subscriver setup with the custom event formatter
+    let subscriber = Registry::default()
+        .with(EnvFilter::new("rule_engine=trace"))
+        .with(
+            fmt::layer()
+                .with_writer(non_blocking)
+                .event_format(CustomFormatter),
+        );
+
+    // sharing the subscriptor accross mutliple threads by wrapping it in an arc
+    let subscriber = Arc::new(subscriber) as Arc<dyn tracing::Subscriber + Send + Sync>;
+
+    // setting this subscriber as the default
+    let _default = tracing::subscriber::set_default(subscriber.clone());
 
     (subscriber, guard)
 }
