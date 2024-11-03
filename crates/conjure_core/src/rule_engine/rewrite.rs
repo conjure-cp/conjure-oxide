@@ -1,10 +1,13 @@
-use std::env;
 use std::fmt::Display;
+use std::fs::File;
+use std::io::Write;
+use std::{env, io};
 
 use thiserror::Error;
 
 use crate::bug;
 use crate::stats::RewriterStats;
+use tracing::{span, trace, Level};
 use uniplate::Uniplate;
 
 use crate::rule_engine::{Reduction, Rule, RuleSet};
@@ -222,6 +225,7 @@ fn rewrite_iteration<'a>(
     let mut expression = expression.clone();
 
     let rule_results = apply_all_rules(&expression, model, rules, stats);
+    //trace_rules(&rule_results[0], expression.clone());
     if let Some(new) = choose_rewrite(&rule_results) {
         // If a rule is applied, mark the expression as dirty
         return Some(new);
@@ -301,7 +305,7 @@ fn apply_all_rules<'a>(
     for rule in rules {
         match rule.apply(expression, model) {
             Ok(red) => {
-                log::trace!(target: "file", "Rule applicable: {:?}, to Expression: {:?}, resulting in: {:?}", rule, expression, red.new_expression);
+                trace!(target: "rule_engine", "Rule applicable: {:?}, to Expression: {:?}, resulting in: {:?}", rule, expression, red.new_expression);
                 stats.rewriter_rule_application_attempts =
                     Some(stats.rewriter_rule_application_attempts.unwrap() + 1);
                 stats.rewriter_rule_applications =
@@ -361,6 +365,12 @@ fn choose_rewrite(results: &[RuleResult]) -> Option<Reduction> {
     if results.is_empty() {
         return None;
     }
-    // Return the first result for now
+
     Some(results[0].reduction.clone())
 }
+
+// fn trace_rules(result: &RuleResult, expression: Expression) {
+//     let rule = result.rule;
+//     let new_expression = result.reduction.new_expression.clone();
+//     trace!(target: "rule_engine", "Rule applicable: {:?}, to Expression: {:?}, resulting in: {:?}", rule, expression, new_expression);
+// }
