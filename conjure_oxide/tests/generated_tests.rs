@@ -1,11 +1,21 @@
+use conjure_core::Model;
 use std::collections::HashMap;
 use std::env;
 use std::error::Error;
 use std::fs;
+use std::fs::File;
+///
+// use tracing_log::LogTracer;
+
+// use tracing_subscriber::fmt::format::Format;
+use std::io::BufWriter;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::RwLock;
+use structured_logger::{json::new_writer, Builder};
+use tracing::{span, trace, Level};
+use tracing_subscriber::{fmt, EnvFilter};
 
 use conjure_core::ast::{Constant, Expression, Name};
 use conjure_core::context::Context;
@@ -38,6 +48,19 @@ fn main() {
         Some(name) => println!("Base name: {}", name),
         None => println!("Could not extract the base name"),
     }
+
+    // //
+    // LogTracer::init().expect("Unable to initialize LogTracer");
+
+    // // use custom tracing subscriber
+    // // Set up the custom tracing subscriber
+    // let (subscriber, _guard) =
+    //     create_scoped_subscriber("./conjure_oxide/tests/integration/xyz", "rules");
+
+    // // Set the subscriber as the global default for `tracing`
+    // tracing::subscriber::set_global_default(subscriber)
+    //     .expect("Unable to set global default subscriber");
+    // //
 }
 
 // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
@@ -50,14 +73,27 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
 
     // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
     // correctly
-    if verbose {
-        #[allow(clippy::unwrap_used)]
-        #[allow(unused_variables)]
-        let guard = GUARD.lock().unwrap();
-        integration_test_inner(path, essence_base, extension)
-    } else {
-        integration_test_inner(path, essence_base, extension)
-    }
+
+    let (subscriber, _guard) = create_scoped_subscriber(path, essence_base);
+
+    // Set the subscriber as default
+    tracing::subscriber::with_default(subscriber, || {
+        // Create a span for the trace
+        let test_span = span!(target: "rule_engine", Level::TRACE, "test_span");
+        let _enter = test_span.enter();
+        trace!(target: "rule_engine", "hello");
+
+        // Execute tests based on verbosity
+        if verbose {
+            #[allow(clippy::unwrap_used)]
+            let guard = GUARD.lock().unwrap();
+            integration_test_inner(path, essence_base, extension)?
+        } else {
+            integration_test_inner(path, essence_base, extension)?
+        }
+
+        Ok(()) // Indicate success
+    })
 }
 
 /// Runs an integration test for a given Conjure model by:
@@ -125,7 +161,19 @@ fn integration_test_inner(
         SolverFamily::Minion,
         &vec!["Constant".to_string(), "Bubble".to_string()],
     )?;
+
+    // let (subscriber, _guard) = create_scoped_subscriber(path, essence_base);
+
+    // // Set the subscriber as default
+    // tracing::subscriber::with_default(subscriber, || {
+    //     // Create a span for the trace
+    //     let test_span = span!(target: "rule_engine", Level::TRACE, "test_span");
+    //     let _enter = test_span.enter();
+    //     trace!(target: "rule_engine", "hello");
+    // });
+
     let model = rewrite_model(&model, &rule_sets)?;
+
     if verbose {
         println!("Rewritten model: {:#?}", model)
     }
@@ -271,6 +319,50 @@ fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
     });
 
     assert!(count <= 1, "assert_vector_operators_have_partially_evaluated: expression {} is not partially evaluated",parent_expr)
+}
+
+// fn example_tracing_test(path: &str, essence_base: &str) {
+//     let file = File::create(format!("{path}/{essence_base}-rules.txt"))
+//         .expect("Unable to create log file");
+//     let writer = BufWriter::new(file);
+//     let (non_blocking, _guard) = tracing_appender::non_blocking(writer);
+
+//     // Set up a subscriber to log `TRACE` level messages to the file
+//     let subscriber = fmt::Subscriber::builder()
+//         .with_env_filter(EnvFilter::new("rule_engine=trace"))
+//         .with_writer(non_blocking) // Use file-based writer
+//         .with_level(false) // Disable the log level
+//         .with_target(false) // Disable the target
+//         .without_time() // Disable timestamps
+//         .finish();
+
+//     // Set this subscriber globally
+//     let _default = tracing::subscriber::set_default(subscriber);
+//     // This log will be written to the specified file
+//     //trace!(target: "rule_engine", "meh");
+// }
+
+pub fn create_scoped_subscriber(
+    path: &str,
+    test_name: &str,
+) -> (
+    impl tracing::Subscriber + Send + Sync,
+    tracing_appender::non_blocking::WorkerGuard,
+) {
+    let file =
+        File::create(format!("{path}/{test_name}-rules.txt")).expect("Unable to create log file");
+    let writer = BufWriter::new(file);
+    let (non_blocking, guard) = tracing_appender::non_blocking(writer);
+
+    let subscriber = fmt::Subscriber::builder()
+        .with_env_filter(EnvFilter::new("rule_engine=trace"))
+        .with_writer(non_blocking) // Use file-based writer
+        .with_level(false) // Disable the log level
+        .with_target(false) // Disable the target
+        .without_time() // Disable timestamps
+        .finish();
+
+    (subscriber, guard)
 }
 
 #[test]

@@ -97,10 +97,21 @@ pub fn main() -> AnyhowResult<()> {
         .append(true)
         .open("conjure_oxide.log")?;
 
+    let rules_log_file: File = File::options()
+        .create(true)
+        .write(true)
+        .open("./conjure_oxide/tests/integration/xyz/rules.txt")?;
+
+    // Builder::with_level("TRACE")
+    //     Builder::new()
+    //     .with_target_writer("rule_engine", new_writer(rules_log_file))
+    //     .init();
+
     Builder::with_level("TRACE")
         //Builder::new()
         .with_target_writer("info", new_writer(stdout()))
         .with_target_writer("file,jsonparser", new_writer(log_file))
+        //.with_target_writer("rule_engine", new_writer(rules_log_file))
         .init();
 
     if target_family != SolverFamily::Minion {
