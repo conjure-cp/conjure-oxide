@@ -62,6 +62,7 @@ mod tests {
         let d2 = Domain::IntDomain(vec![Range::Bounded(-2, 1)]);
         let res = d1.apply_i32(|a, b| Some(a * b), &d2).unwrap();
 
+        assert!(matches!(res, Domain::IntDomain(_)));
         if let Domain::IntDomain(ranges) = res {
             assert!(!ranges.contains(&Range::Single(-4)));
             assert!(!ranges.contains(&Range::Single(-3)));
@@ -72,8 +73,6 @@ mod tests {
             assert!(ranges.contains(&Range::Single(2)));
             assert!(!ranges.contains(&Range::Single(3)));
             assert!(ranges.contains(&Range::Single(4)));
-        } else {
-            panic!();
         }
     }
 
@@ -85,6 +84,7 @@ mod tests {
             .apply_i32(|a, b| if b != 0 { Some(a / b) } else { None }, &d2)
             .unwrap();
 
+        assert!(matches!(res, Domain::IntDomain(_)));
         if let Domain::IntDomain(ranges) = res {
             assert!(!ranges.contains(&Range::Single(-4)));
             assert!(!ranges.contains(&Range::Single(-3)));
@@ -95,8 +95,6 @@ mod tests {
             assert!(ranges.contains(&Range::Single(2)));
             assert!(!ranges.contains(&Range::Single(3)));
             assert!(!ranges.contains(&Range::Single(4)));
-        } else {
-            panic!();
         }
     }
 }
