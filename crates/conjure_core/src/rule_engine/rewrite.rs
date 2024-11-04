@@ -225,7 +225,7 @@ fn rewrite_iteration<'a>(
     let mut expression = expression.clone();
 
     let rule_results = apply_all_rules(&expression, model, rules, stats);
-    //trace_rules(&rule_results[0], expression.clone());
+    trace_rules(&rule_results, expression.clone());
     if let Some(new) = choose_rewrite(&rule_results) {
         // If a rule is applied, mark the expression as dirty
         return Some(new);
@@ -305,7 +305,7 @@ fn apply_all_rules<'a>(
     for rule in rules {
         match rule.apply(expression, model) {
             Ok(red) => {
-                trace!(target: "rule_engine", "Rule applicable: {:?}, to Expression: {:?}, resulting in: {:?}", rule, expression, red.new_expression);
+                log::trace!(target: "file", "Rule applicable: {:?}, to Expression: {:?}, resulting in: {:?}", rule, expression, red.new_expression);
                 stats.rewriter_rule_application_attempts =
                     Some(stats.rewriter_rule_application_attempts.unwrap() + 1);
                 stats.rewriter_rule_applications =
@@ -359,8 +359,10 @@ fn choose_rewrite(results: &[RuleResult]) -> Option<Reduction> {
     Some(results[0].reduction.clone())
 }
 
-// fn trace_rules(result: &RuleResult, expression: Expression) {
-//     let rule = result.rule;
-//     let new_expression = result.reduction.new_expression.clone();
-//     trace!(target: "rule_engine", "Rule applicable: {:?}, to Expression: {:?}, resulting in: {:?}", rule, expression, new_expression);
-// }
+fn trace_rules(results: &[RuleResult], expression: Expression) {
+    if !results.is_empty() {
+        let rule = results[0].rule;
+        let new_expression = results[0].reduction.new_expression.clone();
+        trace!(target: "rule_engine", "Rule applied: {:?}, to Expression: {:?}, resulting in: {:?}", rule, expression, new_expression);
+    }
+}

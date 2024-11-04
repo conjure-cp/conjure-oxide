@@ -1,4 +1,3 @@
-use conjure_core::Model;
 use std::collections::HashMap;
 use std::env;
 use std::error::Error;
@@ -12,13 +11,9 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::RwLock;
-use structured_logger::{json::new_writer, Builder};
 use tracing::{span, trace, Level};
 
-use tracing_appender::non_blocking::WorkerGuard;
-use tracing_subscriber::{
-    filter::EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt, Registry,
-};
+use tracing_subscriber::{filter::EnvFilter, fmt, layer::SubscriberExt, Registry};
 
 use conjure_core::ast::{Constant, Expression, Name};
 use conjure_core::context::Context;
@@ -47,13 +42,6 @@ struct TestConfig {
 }
 
 fn main() {
-    let _guard = create_scoped_subscriber("./logs", "test_log");
-
-    // Create a span and log a message
-    let test_span = span!(Level::TRACE, "test_span");
-    let _enter: span::Entered<'_> = test_span.enter();
-    trace!("trace test"); // This will log without the "test_span: " prefix.
-
     let file_path = Path::new("/path/to/your/file.txt");
     let base_name = file_path.file_stem().and_then(|stem| stem.to_str());
 
@@ -79,7 +67,6 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
 
     let (subscriber, _guard) = create_scoped_subscriber(path, essence_base);
 
-    // Set the subscriber as default
     tracing::subscriber::with_default(subscriber, || {
         // Create a span for the trace
         let test_span = span!(target: "rule_engine", Level::TRACE, "test_span");
@@ -164,16 +151,6 @@ fn integration_test_inner(
         SolverFamily::Minion,
         &vec!["Constant".to_string(), "Bubble".to_string()],
     )?;
-
-    // let (subscriber, _guard) = create_scoped_subscriber(path, essence_base);
-
-    // // Set the subscriber as default
-    // tracing::subscriber::with_default(subscriber, || {
-    //     // Create a span for the trace
-    //     let test_span = span!(target: "rule_engine", Level::TRACE, "test_span");
-    //     let _enter = test_span.enter();
-    //     trace!(target: "rule_engine", "hello");
-    // });
 
     let model = rewrite_model(&model, &rule_sets)?;
 
@@ -343,6 +320,7 @@ where
     }
 }
 
+///Creates a thread specific subsriber with a target "rul_engine" that writes trace messages to a test-specific file
 pub fn create_scoped_subscriber(
     path: &str,
     test_name: &str,
