@@ -18,71 +18,6 @@ use Lit::*;
 
 register_rule_set!("Base", 100, ());
 
-/**
- * Remove nothing's from expressions:
- * ```text
- * and([a, nothing, b]) = and([a, b])
- * sum([a, nothing, b]) = sum([a, b])
- * sum_leq([a, nothing, b], c) = sum_leq([a, b], c)
- * ...
- * ```
-*/
-#[register_rule(("Base", 8800))]
-fn remove_nothings(expr: &Expr, _: &Model) -> ApplicationResult {
-    fn remove_nothings(exprs: Vec<Expr>) -> Result<Vec<Expr>, ApplicationError> {
-        let mut changed = false;
-        let mut new_exprs = Vec::new();
-
-        for e in exprs {
-            match e.clone() {
-                Nothing => {
-                    changed = true;
-                }
-                _ => new_exprs.push(e),
-            }
-        }
-
-        if changed {
-            Ok(new_exprs)
-        } else {
-            Err(ApplicationError::RuleNotApplicable)
-        }
-    }
-
-    fn get_lhs_rhs(sub: Vec<Expr>) -> (Vec<Expr>, Box<Expr>) {
-        if sub.is_empty() {
-            return (Vec::new(), Box::new(Nothing));
-        }
-
-        let lhs = sub[..(sub.len() - 1)].to_vec();
-        let rhs = Box::new(sub[sub.len() - 1].clone());
-        (lhs, rhs)
-    }
-
-    // FIXME (niklasdewally): temporary conversion until I get the Uniplate APIs figured out
-    // Uniplate *should* support Vec<> not im::Vector
-    let new_sub = remove_nothings(expr.children().into_iter().collect())?;
-
-    match expr {
-        And(md, _) => Ok(Reduction::pure(And(md.clone(), new_sub))),
-        Or(md, _) => Ok(Reduction::pure(Or(md.clone(), new_sub))),
-        Sum(md, _) => Ok(Reduction::pure(Sum(md.clone(), new_sub))),
-        SumEq(md, _, _) => {
-            let (lhs, rhs) = get_lhs_rhs(new_sub);
-            Ok(Reduction::pure(SumEq(md.clone(), lhs, rhs)))
-        }
-        SumLeq(md, _lhs, _rhs) => {
-            let (lhs, rhs) = get_lhs_rhs(new_sub);
-            Ok(Reduction::pure(SumLeq(md.clone(), lhs, rhs)))
-        }
-        SumGeq(md, _lhs, _rhs) => {
-            let (lhs, rhs) = get_lhs_rhs(new_sub);
-            Ok(Reduction::pure(SumGeq(md.clone(), lhs, rhs)))
-        }
-        _ => Err(ApplicationError::RuleNotApplicable),
-    }
-}
-
 /// This rule simplifies expressions where the operator is applied to an empty set of sub-expressions.
 ///
 /// For example:
@@ -98,7 +33,7 @@ fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
     // excluded expressions
     if matches!(
         expr,
-        Nothing | FactorE(_, Reference(_,)) | FactorE(_, Literal(_)) | WatchedLiteral(_, _, _)
+        FactorE(_, Reference(_,)) | FactorE(_, Literal(_)) | WatchedLiteral(_, _, _)
     ) {
         return Err(ApplicationError::RuleNotApplicable);
     }
@@ -109,7 +44,7 @@ fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
 
     let new_expr = match expr {
         Or(_, _) => FactorE(Metadata::new(), Literal(Bool(false))),
-        _ => Nothing,
+        _ => And(Metadata::new(), vec![]), // TODO: (yb33) Change it to a simple vector after we refactor our model,
     };
 
     Ok(Reduction::pure(new_expr))
