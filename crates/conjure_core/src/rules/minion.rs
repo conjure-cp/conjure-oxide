@@ -309,8 +309,10 @@ fn flatten_safediv(expr: &Expr, mdl: &Model) -> ApplicationResult {
     let mut new_top = vec![];
 
     // replace every safe div child with a reference to a new variable
+    let mut num_changed = 0;
     for c in sub.iter_mut() {
         if let Expr::SafeDiv(_, a, b) = c.clone() {
+            num_changed += 1;
             let new_name = mdl.gensym();
             let domain = c
                 .domain_of(&mdl.variables)
@@ -327,6 +329,12 @@ fn flatten_safediv(expr: &Expr, mdl: &Model) -> ApplicationResult {
             *c = Expr::Reference(Metadata::new(), new_name.clone());
         }
     }
+
+    //  want to turn Eq(a/b,c) into DivEq(a,b,c) instead, so this rule doesn't apply!
+    if num_changed <= 1 && matches!(expr, Eq(_, _, _) | Neq(_, _, _)) {
+        return Err(RuleNotApplicable);
+    }
+
     if !new_top.is_empty() {
         return Ok(Reduction::new(
             expr.with_children(sub),
@@ -339,40 +347,72 @@ fn flatten_safediv(expr: &Expr, mdl: &Model) -> ApplicationResult {
 
 #[register_rule(("Minion", 4400))]
 fn div_eq_to_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
-    match expr {
-        Expr::Eq(metadata, a, b) => {
-            if let Expr::SafeDiv(_, x, y) = a.as_ref() {
-                match **b {
-                    Expr::Reference(_, _) | Expr::Constant(_, _) => {}
-                    _ => {
-                        return Err(ApplicationError::RuleNotApplicable);
-                    }
-                };
-
-                Ok(Reduction::pure(Expr::DivEq(
-                    metadata.clone_dirty(),
-                    x.clone(),
-                    y.clone(),
-                    b.clone(),
-                )))
-            } else if let Expr::SafeDiv(_, x, y) = b.as_ref() {
-                match **a {
-                    Expr::Reference(_, _) | Expr::Constant(_, _) => {}
-                    _ => {
-                        return Err(ApplicationError::RuleNotApplicable);
-                    }
-                };
-                Ok(Reduction::pure(Expr::DivEq(
-                    metadata.clone_dirty(),
-                    x.clone(),
-                    y.clone(),
-                    a.clone(),
-                )))
-            } else {
-                Err(ApplicationError::RuleNotApplicable)
-            }
+    use Expr::*;
+    let negated = match expr {
+        Eq(_, _, _) => false,
+        Neq(_, _, _) => true,
+        _ => {
+            return Err(RuleNotApplicable);
         }
-        _ => Err(ApplicationError::RuleNotApplicable),
+    };
+    let metadata = expr.get_meta();
+    let a = expr.children()[0].clone();
+    let b = expr.children()[1].clone();
+
+    if let Expr::SafeDiv(_, x, y) = a {
+        match b {
+            Expr::Reference(_, _) | Expr::Constant(_, _) => {}
+            _ => {
+                return Err(ApplicationError::RuleNotApplicable);
+            }
+        };
+
+        if negated {
+            Ok(Reduction::pure(Not(
+                metadata.clone_dirty(),
+                Box::new(DivEq(
+                    Metadata::new(),
+                    x.clone(),
+                    y.clone(),
+                    Box::new(b.clone()),
+                )),
+            )))
+        } else {
+            Ok(Reduction::pure(Expr::DivEq(
+                metadata.clone_dirty(),
+                x.clone(),
+                y.clone(),
+                Box::new(b.clone()),
+            )))
+        }
+    } else if let Expr::SafeDiv(_, x, y) = b {
+        match a {
+            Expr::Reference(_, _) | Expr::Constant(_, _) => {}
+            _ => {
+                return Err(ApplicationError::RuleNotApplicable);
+            }
+        };
+
+        if negated {
+            Ok(Reduction::pure(Not(
+                metadata.clone_dirty(),
+                Box::new(DivEq(
+                    Metadata::new(),
+                    x.clone(),
+                    y.clone(),
+                    Box::new(a.clone()),
+                )),
+            )))
+        } else {
+            Ok(Reduction::pure(Expr::DivEq(
+                metadata.clone_dirty(),
+                x.clone(),
+                y.clone(),
+                Box::new(a.clone()),
+            )))
+        }
+    } else {
+        Err(ApplicationError::RuleNotApplicable)
     }
 }
 
