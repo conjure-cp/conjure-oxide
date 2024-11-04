@@ -41,6 +41,8 @@ use tracing_subscriber::fmt::format::Writer;
 use tracing_subscriber::fmt::FormatEvent;
 use tracing_subscriber::registry::LookupSpan;
 
+use pretty_assertions::assert_eq;
+
 #[derive(Deserialize, Default)]
 struct TestConfig {
     extra_rewriter_asserts: Vec<String>,
@@ -262,7 +264,7 @@ fn integration_test_inner(
 
         assert_eq!(
             username_solutions_json, conjure_solutions_json,
-            "Solutions do not match conjure!"
+            "Solutions (left) do not match conjure (right)!"
         );
     }
 
