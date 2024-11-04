@@ -1,8 +1,8 @@
 use std::fs::File;
-use std::io::stdout;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::exit;
+use std::sync::Arc;
 
 use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
@@ -11,7 +11,6 @@ use conjure_oxide::defaults::get_default_rule_sets;
 use schemars::schema_for;
 use serde_json::json;
 use serde_json::to_string_pretty;
-use structured_logger::{json::new_writer, Builder};
 
 use conjure_core::context::Context;
 use conjure_oxide::find_conjure::conjure_executable;
@@ -19,8 +18,13 @@ use conjure_oxide::model_from_json;
 use conjure_oxide::rule_engine::{
     get_rule_priorities, get_rules_vec, resolve_rule_sets, rewrite_model,
 };
+
 use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
 use conjure_oxide::SolverFamily;
+use tracing_subscriber::filter::LevelFilter;
+use tracing_subscriber::layer::SubscriberExt as _;
+use tracing_subscriber::util::SubscriberInitExt as _;
+use tracing_subscriber::{EnvFilter, Layer};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -61,6 +65,9 @@ struct Cli {
         help = "Save solutions to a JSON file (prints to stdin by default)"
     )]
     output: Option<PathBuf>,
+
+    #[arg(long, short = 'v', help = "Log verbosely to sterr")]
+    verbose: bool,
 }
 
 #[allow(clippy::unwrap_used)]
@@ -88,16 +95,71 @@ pub fn main() -> AnyhowResult<()> {
                 .open(pth)?,
         ),
     };
-    #[allow(clippy::unwrap_used)]
+
+    // Logging:
+    //
+    // Using `tracing` framework, but this automatically reads stuff from `log`.
+    //
+    // A Subscriber is responsible for logging.
+    //
+    // It consists of composable layers, each of which logs to a different place in a different
+    // format.
+    let json_log_file = File::options()
+        .create(true)
+        .append(true)
+        .open("conjure_oxide_log.json")?;
+
     let log_file = File::options()
         .create(true)
         .append(true)
         .open("conjure_oxide.log")?;
 
-    Builder::with_level("TRACE")
-        //Builder::new()
-        .with_target_writer("info", new_writer(stdout()))
-        .with_target_writer("file,jsonparser", new_writer(log_file))
+    // get log level from env-var RUST_LOG
+
+    let json_layer = tracing_subscriber::fmt::layer()
+        .json()
+        .with_writer(Arc::new(json_log_file))
+        .with_filter(LevelFilter::TRACE);
+
+    let file_layer = tracing_subscriber::fmt::layer()
+        .compact()
+        .with_ansi(false)
+        .with_writer(Arc::new(log_file))
+        .with_filter(LevelFilter::TRACE);
+
+    let default_stderr_level = if cli.verbose {
+        LevelFilter::DEBUG
+    } else {
+        LevelFilter::WARN
+    };
+
+    let env_filter = EnvFilter::builder()
+        .with_default_directive(default_stderr_level.into())
+        .from_env_lossy();
+
+    let stderr_layer = if cli.verbose {
+        Layer::boxed(
+            tracing_subscriber::fmt::layer()
+                .pretty()
+                .with_writer(Arc::new(std::io::stderr()))
+                .with_ansi(true)
+                .with_filter(env_filter),
+        )
+    } else {
+        Layer::boxed(
+            tracing_subscriber::fmt::layer()
+                .compact()
+                .with_writer(Arc::new(std::io::stderr()))
+                .with_ansi(true)
+                .with_filter(env_filter),
+        )
+    };
+
+    // load the loggers
+    tracing_subscriber::registry()
+        .with(json_layer)
+        .with(stderr_layer)
+        .with(file_layer)
         .init();
 
     if target_family != SolverFamily::Minion {
