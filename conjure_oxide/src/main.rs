@@ -7,6 +7,7 @@ use std::process::exit;
 use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
+use conjure_oxide::defaults::get_default_rule_sets;
 use schemars::schema_for;
 use serde_json::json;
 use serde_json::to_string_pretty;
@@ -74,7 +75,9 @@ pub fn main() -> AnyhowResult<()> {
     }
 
     let target_family = cli.solver.unwrap_or(SolverFamily::Minion);
-    let extra_rule_sets: Vec<String> = cli.extra_rule_sets;
+    let mut extra_rule_sets: Vec<String> = get_default_rule_sets();
+    extra_rule_sets.extend(cli.extra_rule_sets);
+
     let out_file: Option<File> = match &cli.output {
         None => None,
         Some(pth) => Some(

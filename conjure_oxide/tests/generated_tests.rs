@@ -9,6 +9,7 @@ use std::sync::RwLock;
 
 use conjure_core::ast::{Constant, Expression, Name};
 use conjure_core::context::Context;
+use conjure_oxide::defaults::get_default_rule_sets;
 use conjure_oxide::rule_engine::resolve_rule_sets;
 use conjure_oxide::rule_engine::rewrite_model;
 use conjure_oxide::utils::conjure::minion_solutions_to_json;
@@ -123,10 +124,7 @@ fn integration_test_inner(
     assert_eq!(model, expected_model);
 
     // Stage 2: Rewrite the model using the rule engine and check that the result is as expected
-    let rule_sets = resolve_rule_sets(
-        SolverFamily::Minion,
-        &vec!["Constant".to_string(), "Bubble".to_string()],
-    )?;
+    let rule_sets = resolve_rule_sets(SolverFamily::Minion, &get_default_rule_sets())?;
     let model = rewrite_model(&model, &rule_sets)?;
     if verbose {
         println!("Rewritten model: {:#?}", model)
