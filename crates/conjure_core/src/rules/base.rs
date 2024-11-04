@@ -270,11 +270,9 @@ fn remove_trivial_and(expr: &Expr, _: &Model) -> ApplicationResult {
 #[register_rule(("Base", 8800))]
 fn remove_trivial_or(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
-        Expr::Or(_, exprs) => {
-            if exprs.len() == 1 {
-                return Ok(Reduction::pure(exprs[0].clone()));
-            }
-            Err(ApplicationError::RuleNotApplicable)
+        // do not conflict with unwrap_nested_or rule.
+        Expr::Or(_, exprs) if exprs.len() == 1 && !matches!(exprs[0], Expr::Or(_, _)) => {
+            Ok(Reduction::pure(exprs[0].clone()))
         }
         _ => Err(ApplicationError::RuleNotApplicable),
     }
