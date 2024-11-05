@@ -1,11 +1,6 @@
 use std::vec;
 
-use core::num;
-
-use rustsat::types::{Clause, Literal, Var};
-use rustsat::{clause, solvers, types::Lit};  
-use rustsat::instances::{self, SatInstance};
-
+use sat_tree::conv_to_fomula;
 
 use rustsat_minisat::core::MiniSat;
 fn main() {
@@ -25,35 +20,37 @@ fn main() {
     // sat solver
     let mut solver = MiniSat::default();
 
-    let l1: rustsat::types::Lit = inst.new_lit();
-    let cl1: Clause = Clause::new();
+    conv_to_fomula();
 }
 
-pub fn conv_to_clause(to_convert: Vec<i16>, instance_in_use: &mut SatInstance) -> () {
-    let l1: Lit = mk_lit(to_convert[0], instance_in_use);
-    let l2: Lit = mk_lit(to_convert[1], instance_in_use);
+#[cfg(test)]
+#[test]
+fn test1() {
+    use kissat_rs::Assignment;
+    use kissat_rs::Solver;
 
-    instance_in_use.add_binary(lit1, lit2);
-}
+    // Define three literals used in both formulae.
+    let x = 1;
+    let y = 2;
+    let z = 3;
 
-pub fn mk_lit(num: i16, instance_in_use: &mut SatInstance) -> Lit {
+    // Construct a formula from clauses (i.e. an iterator over literals).
+    // (~x || y) && (~y || z) && (x || ~z) && (x || y || z)
+    let formula1 = vec![vec![-x, y], vec![-y, z], vec![x, -z], vec![x, y, z]];
+    let satisfying_assignment = Solver::solve_formula(formula1).unwrap();
 
-    let var = instance_in_use.new_var();
-
-    let polarity: bool;
-    if num >= 0 {
-        polarity = true;
-    } else {
-        polarity = false;
+    // The formula from above is satisfied by the assignment: x -> True, y -> True, z -> True
+    if let Some(assignments) = satisfying_assignment {
+        assert_eq!(assignments.get(&x).unwrap(), &Some(Assignment::True));
+        assert_eq!(assignments.get(&y).unwrap(), &Some(Assignment::True));
+        assert_eq!(assignments.get(&z).unwrap(), &Some(Assignment::True));
     }
 
-    let lit = Literal::new(polarity);
-    lit
-}
+    // (x || y || ~z) && ~x && (x || y || z) && (x || ~y)
+    let formula2 = vec![vec![x, y, -z], vec![-x], vec![x, y, z], vec![x, -y]];
+    let unsat_result = Solver::solve_formula(formula2).unwrap();
 
-pub fn conv_to_fomula(vec_cnf: &Vec<Vec<i16>>, instance_in_use: &mut SatInstance) {
-    
-    for value in &vec_cnf {
-        instance_in_use.add_clause(conv_to_clause(value, instance_in_use));
-    }
+    // The second formula is unsatisfiable.
+    // This can for example be proved by resolution.
+    assert_eq!(unsat_result, None);
 }
