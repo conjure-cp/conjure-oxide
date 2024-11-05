@@ -25,7 +25,8 @@ use conjure_oxide::utils::conjure::{
 };
 use conjure_oxide::utils::testing::save_stats_json;
 use conjure_oxide::utils::testing::{
-    read_minion_solutions_json, read_model_json, save_minion_solutions_json, save_model_json,
+    read_minion_solutions_json, read_model_json, read_rule_trace, save_minion_solutions_json,
+    save_model_json,
 };
 use conjure_oxide::SolverFamily;
 use serde::Deserialize;
@@ -170,6 +171,12 @@ fn integration_test_inner(
             x => println!("Unrecognised extra assert: {}", x),
         };
     }
+    //checking if the rules applied deviate from the expected list and order
+    let expected_rule_trace = read_rule_trace(path, essence_base, "expected")?;
+    let generated_rule_trace = read_rule_trace(path, essence_base, "generated")?;
+
+    //the assertion does not work yet -> TODO create a json representation of the rules
+    //assert_eq!(expected_rule_trace, generated_rule_trace);
 
     let expected_model = read_model_json(path, essence_base, "expected", "rewrite")?;
     if verbose {
@@ -322,7 +329,7 @@ where
     }
 }
 
-///Creates a thread specific subsriber with a target "rul_engine" that writes trace messages to a test-specific file
+///Creates a thread specific subsriber with a target "rule_engine" that writes trace messages to a test-specific file
 pub fn create_scoped_subscriber(
     path: &str,
     test_name: &str,
@@ -330,8 +337,8 @@ pub fn create_scoped_subscriber(
     impl tracing::Subscriber + Send + Sync,
     tracing_appender::non_blocking::WorkerGuard,
 ) {
-    let file =
-        File::create(format!("{path}/{test_name}-rules.txt")).expect("Unable to create log file");
+    let file = File::create(format!("{path}/{test_name}.generated-rule-trace.txt"))
+        .expect("Unable to create log file");
     let writer = BufWriter::new(file);
     let (non_blocking, guard) = tracing_appender::non_blocking(writer);
 
