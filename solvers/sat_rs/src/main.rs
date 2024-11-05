@@ -2,9 +2,9 @@ use std::vec;
 
 use core::num;
 
-use rustsat::types::Clause;
+use rustsat::types::{Clause, Literal, Var};
 use rustsat::{clause, solvers, types::Lit};  
-use rustsat::instances::SatInstance;
+use rustsat::instances::{self, SatInstance};
 
 
 use rustsat_minisat::core::MiniSat;
@@ -29,25 +29,31 @@ fn main() {
     let cl1: Clause = Clause::new();
 }
 
-pub enum mode {
-    // negative/positve
-    zero_normal,
-    // traditional
-    general_cnf,
+pub fn conv_to_clause(to_convert: Vec<i16>, instance_in_use: &mut SatInstance) -> () {
+    let l1: Lit = mk_lit(to_convert[0], instance_in_use);
+    let l2: Lit = mk_lit(to_convert[1], instance_in_use);
+
+    instance_in_use.add_binary(lit1, lit2);
 }
 
-pub fn pretty_print_prob(var_type: mode, to_convert: Vec<Vec<i16>>) {
+pub fn mk_lit(num: i16, instance_in_use: &mut SatInstance) -> Lit {
 
+    let var = instance_in_use.new_var();
+
+    let polarity: bool;
+    if num >= 0 {
+        polarity = true;
+    } else {
+        polarity = false;
+    }
+
+    let lit = Literal::new(polarity);
+    lit
 }
 
-pub fn conv_to_clause(to_convert: Vec<i16>) {
+pub fn conv_to_fomula(vec_cnf: &Vec<Vec<i16>>, instance_in_use: &mut SatInstance) {
     
-}
-
-pub fn conv_to_fomula() {
-    
-}
-
-pub fn add_lits(vec_lits: Vec<Vec<>>) {
-
+    for value in &vec_cnf {
+        instance_in_use.add_clause(conv_to_clause(value, instance_in_use));
+    }
 }
