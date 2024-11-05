@@ -1,11 +1,13 @@
 use std::vec;
 
-use sat_tree::conv_to_fomula;
+mod sat_tree;
 
-use rustsat_minisat::core::MiniSat;
+use rustsat::instances::SatInstance;
+
+// use rustsat_minisat::core::MiniSat;
 fn main() {
     
-    /**
+    /*
      * Problem: (t or t) and (f or t) and (f or f)
     */
 
@@ -15,42 +17,43 @@ fn main() {
 
     let vec_problem: Vec<Vec<i16>> = vec![v1, v2, v3];
 
-    // tree
+    // tree (?)
     let mut inst: SatInstance = SatInstance::new();
+
     // sat solver
-    let mut solver = MiniSat::default();
+    // let mut solver = MiniSat::default();
 
-    conv_to_fomula();
+    sat_tree::conv_to_formula(&vec_problem, &mut inst);
 }
 
-#[cfg(test)]
-#[test]
-fn test1() {
-    use kissat_rs::Assignment;
-    use kissat_rs::Solver;
+// #[cfg(test)]
+// #[test]
+// fn test1() {
+//     use kissat_rs::Assignment;
+//     use kissat_rs::Solver;
 
-    // Define three literals used in both formulae.
-    let x = 1;
-    let y = 2;
-    let z = 3;
+//     // Define three literals used in both formulae.
+//     let x = 1;
+//     let y = 2;
+//     let z = 3;
 
-    // Construct a formula from clauses (i.e. an iterator over literals).
-    // (~x || y) && (~y || z) && (x || ~z) && (x || y || z)
-    let formula1 = vec![vec![-x, y], vec![-y, z], vec![x, -z], vec![x, y, z]];
-    let satisfying_assignment = Solver::solve_formula(formula1).unwrap();
+//     // Construct a formula from clauses (i.e. an iterator over literals).
+//     // (~x || y) && (~y || z) && (x || ~z) && (x || y || z)
+//     let formula1 = vec![vec![-x, y], vec![-y, z], vec![x, -z], vec![x, y, z]];
+//     let satisfying_assignment = Solver::solve_formula(formula1).unwrap();
 
-    // The formula from above is satisfied by the assignment: x -> True, y -> True, z -> True
-    if let Some(assignments) = satisfying_assignment {
-        assert_eq!(assignments.get(&x).unwrap(), &Some(Assignment::True));
-        assert_eq!(assignments.get(&y).unwrap(), &Some(Assignment::True));
-        assert_eq!(assignments.get(&z).unwrap(), &Some(Assignment::True));
-    }
+//     // The formula from above is satisfied by the assignment: x -> True, y -> True, z -> True
+//     if let Some(assignments) = satisfying_assignment {
+//         assert_eq!(assignments.get(&x).unwrap(), &Some(Assignment::True));
+//         assert_eq!(assignments.get(&y).unwrap(), &Some(Assignment::True));
+//         assert_eq!(assignments.get(&z).unwrap(), &Some(Assignment::True));
+//     }
 
-    // (x || y || ~z) && ~x && (x || y || z) && (x || ~y)
-    let formula2 = vec![vec![x, y, -z], vec![-x], vec![x, y, z], vec![x, -y]];
-    let unsat_result = Solver::solve_formula(formula2).unwrap();
+//     // (x || y || ~z) && ~x && (x || y || z) && (x || ~y)
+//     let formula2 = vec![vec![x, y, -z], vec![-x], vec![x, y, z], vec![x, -y]];
+//     let unsat_result = Solver::solve_formula(formula2).unwrap();
 
-    // The second formula is unsatisfiable.
-    // This can for example be proved by resolution.
-    assert_eq!(unsat_result, None);
-}
+//     // The second formula is unsatisfiable.
+//     // This can for example be proved by resolution.
+//     assert_eq!(unsat_result, None);
+// }    }
