@@ -12,7 +12,6 @@ Welcome to the documentation of Conjure Oxide.
 These crates contain Rust bindings for solvers:
 
 * [minion_rs](minion_rs/index.html)
-* [chuffed_rs](chuffed_rs/index.html)
 
 
 ## Developer Documentation
