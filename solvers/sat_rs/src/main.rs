@@ -5,7 +5,7 @@ mod sat_solvers;
 
 use rustsat::instances::SatInstance;
 
-// use rustsat_minisat::core::MiniSat;
+use rustsat_minisat::core::MiniSat;
 fn main() {
     
     /*
@@ -22,7 +22,21 @@ fn main() {
     let mut inst: SatInstance = SatInstance::new();
 
     // sat solver
-    // let mut solver = MiniSat::default();
+    let mut solver = MiniSatSolver::new();
+    // solve:
+    match solver.solve() {
+        Ok(true) => {
+            // If satisfiable, print satisfying assignments
+            println!("SATISFIABLE");
+            println!("a = {}", solver.value(var_a).unwrap());
+            println!("b = {}", solver.value(var_b).unwrap());
+        }
+        Ok(false) => println!("UNSATISFIABLE"),
+        Err(e) => println!("Error during solving: {:?}", e),
+    }
+
+    // or perhaps
+    solver.solve();
 
     sat_tree::conv_to_formula(&vec_problem, &mut inst);
 }
