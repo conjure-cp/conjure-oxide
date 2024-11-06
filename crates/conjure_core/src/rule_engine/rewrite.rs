@@ -222,7 +222,7 @@ fn rewrite_iteration<'a>(
     let mut expression = expression.clone();
 
     let rule_results = apply_all_rules(&expression, model, rules, stats);
-    if let Some(new) = choose_rewrite(&rule_results) {
+    if let Some(new) = choose_rewrite(&rule_results, &expression) {
         // If a rule is applied, mark the expression as dirty
         return Some(new);
     }
@@ -347,15 +347,18 @@ fn apply_all_rules<'a>(
 /// Process the chosen reduction
 /// }
 ///
-fn choose_rewrite(results: &[RuleResult]) -> Option<Reduction> {
-    //Uncomment the following if want to check for mutual exclusivity of rules
+fn choose_rewrite<'a>(
+    results: &[RuleResult],
+    initial_expression: &'a Expression,
+) -> Option<Reduction> {
     // if results.len() > 1 {
     //     let expr = results[0].reduction.new_expression.clone();
     //     let rules: Vec<_> = results.iter().map(|result| &result.rule).collect();
 
     //     let message = format!(
-    //         "More than 1 rule can be applied to expression:{:?} \n\n Rules: {:?}",
-    //         expr, rules
+    //         "More than 1 rule can be applied to expression: {:?} \n resulting in expression: {:?}
+    //         \n Rules: {:?}",
+    //         initial_expression, expr, rules
     //     );
     //     bug!("{}", message);
     // }
