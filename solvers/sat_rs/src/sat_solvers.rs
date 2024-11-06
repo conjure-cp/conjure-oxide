@@ -1,7 +1,7 @@
 use rustsat::instances::SatInstance;
 use rustsat_minisat;
 
-trait SatSolverInst{
+pub trait SatSolverInst{
     fn give(inst: SatInstance);
     fn solve();
 }

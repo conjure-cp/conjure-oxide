@@ -9,3 +9,4 @@ mod sat_common;
 
 mod kissat;
 mod minion;
+mod common;
