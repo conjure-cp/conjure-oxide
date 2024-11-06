@@ -1,6 +1,7 @@
 use std::vec;
 
 mod sat_tree;
+mod sat_solvers;
 
 use rustsat::instances::SatInstance;
 
