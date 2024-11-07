@@ -7,7 +7,8 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::RwLock;
 
-use conjure_core::ast::{Constant, Expression, Name};
+use conjure_core::ast::Factor;
+use conjure_core::ast::{Expression, Literal, Name};
 use conjure_core::context::Context;
 use conjure_oxide::defaults::get_default_rule_sets;
 use conjure_oxide::rule_engine::resolve_rule_sets;
@@ -158,7 +159,7 @@ fn integration_test_inner(
 
     // test solutions against conjure before writing
     if accept {
-        let mut conjure_solutions: Vec<HashMap<Name, Constant>> =
+        let mut conjure_solutions: Vec<HashMap<Name, Literal>> =
             get_solutions_from_conjure(&format!("{}/{}.{}", path, essence_base, extension))?;
 
         // Change bools to nums in both outputs, as we currently don't convert 0,1 back to
@@ -173,11 +174,11 @@ fn integration_test_inner(
                         solset.remove(&k);
                     }
                     conjure_core::ast::Name::UserName(_) => match v {
-                        Constant::Bool(true) => {
-                            solset.insert(k, Constant::Int(1));
+                        Literal::Bool(true) => {
+                            solset.insert(k, Literal::Int(1));
                         }
-                        Constant::Bool(false) => {
-                            solset.insert(k, Constant::Int(0));
+                        Literal::Bool(false) => {
+                            solset.insert(k, Literal::Int(0));
                         }
                         _ => {}
                     },
@@ -188,11 +189,11 @@ fn integration_test_inner(
         for solset in &mut conjure_solutions {
             for (k, v) in solset.clone().into_iter() {
                 match v {
-                    Constant::Bool(true) => {
-                        solset.insert(k, Constant::Int(1));
+                    Literal::Bool(true) => {
+                        solset.insert(k, Literal::Int(1));
                     }
-                    Constant::Bool(false) => {
-                        solset.insert(k, Constant::Int(0));
+                    Literal::Bool(false) => {
+                        solset.insert(k, Literal::Int(0));
                     }
                     _ => {}
                 }
@@ -233,8 +234,7 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
         match &x {
             Nothing => (),
             Bubble(_, _, _) => (),
-            Constant(_, _) => (),
-            Reference(_, _) => (),
+            FactorE(_, _) => (),
             Sum(_, vec) => assert_constants_leq_one(&x, vec),
             Min(_, vec) => assert_constants_leq_one(&x, vec),
             Max(_, vec) => assert_constants_leq_one(&x, vec),
@@ -266,7 +266,7 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
 
 fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
     let count = exprs.iter().fold(0, |i, x| match x {
-        Expression::Constant(_, _) => i + 1,
+        Expression::FactorE(_, Factor::Literal(_)) => i + 1,
         _ => i,
     });
 
