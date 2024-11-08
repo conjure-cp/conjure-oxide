@@ -2,12 +2,12 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use rand::Rng;
 
-pub struct EssenceSolver {
+pub struct SavileRowAsSolver {
     solver_adaptor: SRSolverAdaptor; //use custom solveradaptor
     tmp_dir: PathBuf,
 }
 
-impl EssenceSolver {
+impl SavileRowAsSolver {
 
     //constructor to initialise solver_adaptor with custom temporary directory
     pub fn new() -> Self {
