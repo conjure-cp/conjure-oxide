@@ -155,7 +155,9 @@ fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> (i32, i32) {
                 }
             }
             Range::Bounded(i, j) => {
-                *i < min;
+                if *i < min {
+                    min = *i;
+                }
                 if *j > max {
                     max = *j;
                 }
