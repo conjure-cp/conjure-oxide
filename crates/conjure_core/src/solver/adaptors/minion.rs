@@ -46,11 +46,11 @@ fn minion_rs_callback(solutions: HashMap<minion_ast::VarName, minion_ast::Consta
         .lock()
         .unwrap();
 
-    let mut conjure_solutions: HashMap<conjure_ast::Name, conjure_ast::Constant> = HashMap::new();
+    let mut conjure_solutions: HashMap<conjure_ast::Name, conjure_ast::Literal> = HashMap::new();
     for (minion_name, minion_const) in solutions.into_iter() {
         let conjure_const = match minion_const {
-            minion_ast::Constant::Bool(x) => conjure_ast::Constant::Bool(x),
-            minion_ast::Constant::Integer(x) => conjure_ast::Constant::Int(x),
+            minion_ast::Constant::Bool(x) => conjure_ast::Literal::Bool(x),
+            minion_ast::Constant::Integer(x) => conjure_ast::Literal::Int(x),
             _ => todo!(),
         };
 
@@ -251,17 +251,18 @@ fn parse_exprs(
         // TODO: top level false / trues should not go to the solver to begin with
         // ... but changing this at this stage would require rewriting the tester
         use crate::metadata::Metadata;
-        use conjure_ast::Constant;
         use conjure_ast::Expression as Expr;
+        use conjure_ast::Factor;
+        use conjure_ast::Literal::*;
 
         match expr {
             // top level false
-            Expr::Constant(_, Constant::Bool(false)) => {
+            Expr::FactorE(_, Factor::Literal(Bool(false))) => {
                 minion_model.constraints.push(minion_ast::Constraint::False);
                 return Ok(());
             }
             // top level true
-            Expr::Constant(_, Constant::Bool(true)) => {
+            Expr::FactorE(_, Factor::Literal(Bool(true))) => {
                 minion_model.constraints.push(minion_ast::Constraint::True);
                 return Ok(());
             }
@@ -354,7 +355,7 @@ fn read_var(e: conjure_ast::Expression) -> Result<minion_ast::Var, SolverError> 
 
 fn _read_ref(e: conjure_ast::Expression) -> Result<String, SolverError> {
     let name = match e {
-        conjure_ast::Expression::Reference(_metadata, n) => Ok(n),
+        conjure_ast::Expression::FactorE(_metadata, conjure_ast::Factor::Reference(n)) => Ok(n),
         x => Err(ModelInvalid(format!(
             "expected a reference, but got `{0:?}`",
             x
@@ -367,7 +368,9 @@ fn _read_ref(e: conjure_ast::Expression) -> Result<String, SolverError> {
 
 fn read_const(e: conjure_ast::Expression) -> Result<i32, SolverError> {
     match e {
-        conjure_ast::Expression::Constant(_, x) => Ok(read_const_1(x)?),
+        conjure_ast::Expression::FactorE(_, conjure_ast::Factor::Literal(x)) => {
+            Ok(read_const_1(x)?)
+        }
         x => Err(ModelInvalid(format!(
             "expected a constant, but got `{0:?}`",
             x
@@ -375,11 +378,11 @@ fn read_const(e: conjure_ast::Expression) -> Result<i32, SolverError> {
     }
 }
 
-fn read_const_1(k: conjure_ast::Constant) -> Result<i32, SolverError> {
+fn read_const_1(k: conjure_ast::Literal) -> Result<i32, SolverError> {
     match k {
-        conjure_ast::Constant::Int(n) => Ok(n),
-        conjure_ast::Constant::Bool(true) => Ok(1),
-        conjure_ast::Constant::Bool(false) => Ok(0),
+        conjure_ast::Literal::Int(n) => Ok(n),
+        conjure_ast::Literal::Bool(true) => Ok(1),
+        conjure_ast::Literal::Bool(false) => Ok(0),
         x => Err(ModelInvalid(format!(
             "expected a constant, but got `{0:?}`",
             x

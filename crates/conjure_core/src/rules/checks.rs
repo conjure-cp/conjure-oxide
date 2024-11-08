@@ -1,16 +1,15 @@
-use uniplate::Uniplate;
+use uniplate::Biplate;
 
-use crate::ast::Expression;
+use crate::ast::{Expression, Factor};
 
 /// True iff the entire AST is constants.
 pub fn is_all_constant(expression: &Expression) -> bool {
-    for expr in expression.universe() {
-        match expr {
-            Expression::Constant(_, _) => {}
-            Expression::Reference(_, _) => {
+    for factor in <Expression as Biplate<Factor>>::universe_bi(expression) {
+        match factor {
+            Factor::Literal(_) => {}
+            Factor::Reference(_) => {
                 return false;
             }
-            _ => {}
         }
     }
 

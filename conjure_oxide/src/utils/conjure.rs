@@ -4,7 +4,7 @@ use std::path::Path;
 use std::string::ToString;
 use std::sync::{Arc, Mutex, RwLock};
 
-use conjure_core::ast::{Constant, Name};
+use conjure_core::ast::{Literal, Name};
 use conjure_core::context::Context;
 use rand::Rng as _;
 use serde_json::{from_str, Map, Value as JsonValue};
@@ -78,7 +78,7 @@ pub fn parse_essence_file(
     Ok(parsed_model)
 }
 
-pub fn get_minion_solutions(model: Model) -> Result<Vec<HashMap<Name, Constant>>, anyhow::Error> {
+pub fn get_minion_solutions(model: Model) -> Result<Vec<HashMap<Name, Literal>>, anyhow::Error> {
     let solver = Solver::new(Minion::new());
 
     println!("Building Minion model...");
@@ -86,7 +86,7 @@ pub fn get_minion_solutions(model: Model) -> Result<Vec<HashMap<Name, Constant>>
 
     println!("Running Minion...");
 
-    let all_solutions_ref = Arc::new(Mutex::<Vec<HashMap<Name, Constant>>>::new(vec![]));
+    let all_solutions_ref = Arc::new(Mutex::<Vec<HashMap<Name, Literal>>>::new(vec![]));
     let all_solutions_ref_2 = all_solutions_ref.clone();
     #[allow(clippy::unwrap_used)]
     let solver = solver
@@ -108,7 +108,7 @@ pub fn get_minion_solutions(model: Model) -> Result<Vec<HashMap<Name, Constant>>
 #[allow(clippy::unwrap_used)]
 pub fn get_solutions_from_conjure(
     essence_file: &str,
-) -> Result<Vec<HashMap<Name, Constant>>, EssenceParseError> {
+) -> Result<Vec<HashMap<Name, Literal>>, EssenceParseError> {
     // this is ran in parallel, and we have no guarantee by rust that invocations to this function
     // don't share the same tmp dir.
     let mut rng = rand::thread_rng();
@@ -162,7 +162,7 @@ pub fn get_solutions_from_conjure(
             "expected solutions to be an array".to_owned(),
         ))?;
 
-    let mut solutions_set: Vec<HashMap<Name, Constant>> = Vec::new();
+    let mut solutions_set: Vec<HashMap<Name, Literal>> = Vec::new();
 
     for solution in solutions {
         let mut solution_map = HashMap::new();
@@ -174,8 +174,8 @@ pub fn get_solutions_from_conjure(
         for (name, value) in solution {
             let name = Name::UserName(name.to_owned());
             let value = match value {
-                JsonValue::Bool(b) => Ok(Constant::Bool(*b)),
-                JsonValue::Number(n) => Ok(Constant::Int(n.as_i64().unwrap().try_into().unwrap())),
+                JsonValue::Bool(b) => Ok(Literal::Bool(*b)),
+                JsonValue::Number(n) => Ok(Literal::Int(n.as_i64().unwrap().try_into().unwrap())),
                 a => Err(EssenceParseError::ConjureSolutionsError(
                     format!("expected constant, got {}", a).to_owned(),
                 )),
@@ -188,14 +188,14 @@ pub fn get_solutions_from_conjure(
     Ok(solutions_set)
 }
 
-pub fn minion_solutions_to_json(solutions: &Vec<HashMap<Name, Constant>>) -> JsonValue {
+pub fn minion_solutions_to_json(solutions: &Vec<HashMap<Name, Literal>>) -> JsonValue {
     let mut json_solutions = Vec::new();
     for solution in solutions {
         let mut json_solution = Map::new();
         for (var_name, constant) in solution {
             let serialized_constant = match constant {
-                Constant::Int(i) => JsonValue::Number((*i).into()),
-                Constant::Bool(b) => JsonValue::Bool(*b),
+                Literal::Int(i) => JsonValue::Number((*i).into()),
+                Literal::Bool(b) => JsonValue::Bool(*b),
             };
             json_solution.insert(var_name.to_string(), serialized_constant);
         }
