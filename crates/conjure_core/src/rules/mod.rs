@@ -8,7 +8,6 @@ pub use constant::eval_constant;
 
 mod base;
 mod bubble;
-pub mod checks;
 mod cnf;
 mod constant;
 mod minion;

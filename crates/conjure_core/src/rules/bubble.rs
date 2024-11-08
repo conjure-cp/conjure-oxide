@@ -7,7 +7,7 @@ use conjure_core::rule_engine::{
 use conjure_core::Model;
 use uniplate::Uniplate;
 
-use super::checks::is_all_constant;
+use super::utils::is_all_constant;
 
 register_rule_set!("Bubble", 100, ("Base"));
 
