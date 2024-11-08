@@ -1,3 +1,5 @@
+use uniplate::{Biplate, Uniplate};
+
 use crate::{
     ast::{DecisionVariable, Domain, Expression as Expr, Factor, Name},
     bug,
@@ -8,6 +10,30 @@ use crate::{
 /// True iff `expr` is a `Factor`.
 pub fn is_factor(expr: &Expr) -> bool {
     matches!(expr, Expr::FactorE(_, _))
+}
+
+/// True if `expr` is flat; i.e. it only contains factors.
+pub fn is_flat(expr: &Expr) -> bool {
+    for e in expr.children() {
+        if !is_factor(&e) {
+            return false;
+        }
+    }
+    true
+}
+
+/// True if the entire AST is constants.
+pub fn is_all_constant(expression: &Expr) -> bool {
+    for factor in <Expr as Biplate<Factor>>::universe_bi(expression) {
+        match factor {
+            Factor::Literal(_) => {}
+            Factor::Reference(_) => {
+                return false;
+            }
+        }
+    }
+
+    true
 }
 
 /// Creates a new auxiliary variable using the given expression.
