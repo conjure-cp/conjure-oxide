@@ -416,40 +416,6 @@ fn div_eq_to_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 }
 
-#[register_rule(("Minion", 4400))]
-fn negated_neq_to_eq(expr: &Expr, _: &Model) -> ApplicationResult {
-    match expr {
-        Not(_, a) => match a.as_ref() {
-            Neq(_, b, c) => {
-                if !b.can_be_undefined() && !c.can_be_undefined() {
-                    Ok(Reduction::pure(Eq(Metadata::new(), b.clone(), c.clone())))
-                } else {
-                    Err(RuleNotApplicable)
-                }
-            }
-            _ => Err(RuleNotApplicable),
-        },
-        _ => Err(RuleNotApplicable),
-    }
-}
-
-#[register_rule(("Minion", 4400))]
-fn negated_eq_to_neq(expr: &Expr, _: &Model) -> ApplicationResult {
-    match expr {
-        Not(_, a) => match a.as_ref() {
-            Eq(_, b, c) => {
-                if !b.can_be_undefined() && !c.can_be_undefined() {
-                    Ok(Reduction::pure(Neq(Metadata::new(), b.clone(), c.clone())))
-                } else {
-                    Err(RuleNotApplicable)
-                }
-            }
-            _ => Err(RuleNotApplicable),
-        },
-        _ => Err(RuleNotApplicable),
-    }
-}
-
 /// Flattening rule that converts boolean variables to watched-literal constraints.
 ///
 /// For some boolean variable x:
