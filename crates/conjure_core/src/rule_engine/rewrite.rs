@@ -332,7 +332,7 @@ fn apply_all_rules<'a>(
 /// that successfully transforms the expression. This strategy can be modified in the future to incorporate
 /// more complex selection criteria, such as prioritizing rules based on cost, complexity, or other heuristic metrics.
 ///
-/// The function also checks the priorities of all the applicable rules and detects if there are multiple rules of the same proiority
+/// The function also checks the priorities of all the applicable rules and detects if there are multiple rules of the same proirity
 ///
 /// # Parameters
 /// - `results`: A slice of [`RuleResult`] containing potential rule applications to be considered. Each element
@@ -377,7 +377,7 @@ fn choose_rewrite<'a>(
 /// # Parameters
 /// - `rules`: a vector of [`Rule`] containing all the applicable rules and their metadata for a specific expression.
 /// - `initial_expression`: [`Expression`] before rule the tranformation.
-/// - `new_expr`: [`Expression`] after the rule tranformation.
+/// - `new_expr`: [`Expression`] after the rule transformation.
 ///
 fn check_priority<'a>(
     rules: Vec<&&Rule<'_>>,
@@ -401,16 +401,16 @@ fn check_priority<'a>(
     }
 
     //filters the map, retaining only entries where there is more than 1 rule of the same priority
-    let duplicate_groups: HashMap<u16, Vec<&str>> = rules_by_priorities
+    let duplicate_rules: HashMap<u16, Vec<&str>> = rules_by_priorities
         .into_iter()
         .filter(|(_, group)| group.len() > 1)
         .collect();
 
-    if !duplicate_groups.is_empty() {
+    if !duplicate_rules.is_empty() {
         //accumulates all duplicates into a formatted message
         let mut message = String::from(format!("Found multiple rules of the same priority applicable to to expression: {:?} \n resulting in expression: {:?}", initial_expr, new_expr));
-        for (second, group) in &duplicate_groups {
-            message.push_str(&format!("Priority {:?} \n Rules: {:?}", second, group));
+        for (priority, rules) in &duplicate_rules {
+            message.push_str(&format!("Priority {:?} \n Rules: {:?}", priority, rules));
         }
         bug!("{}", message);
 
