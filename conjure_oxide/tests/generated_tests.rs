@@ -258,6 +258,7 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
             AllDiff(_, _) => (),
             WatchedLiteral(_, _, _) => (),
             Reify(_, _, _) => (),
+            AuxDeclaration(_, _, _) => (),
         };
         x.clone()
     }));

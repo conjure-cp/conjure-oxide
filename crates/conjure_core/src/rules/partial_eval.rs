@@ -6,6 +6,8 @@ use crate::ast::{Expression as Expr, Factor, Literal::*};
 use crate::rule_engine::{ApplicationResult, Reduction};
 use crate::Model;
 
+use super::utils::ToAuxVarOutput;
+
 #[register_rule(("Base",9000))]
 fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
     use conjure_core::rule_engine::ApplicationError::RuleNotApplicable;
@@ -286,5 +288,6 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
 
         WatchedLiteral(_, _, _) => Err(RuleNotApplicable),
         Reify(_, _, _) => Err(RuleNotApplicable),
+        AuxDeclaration(_, _, _) => Err(RuleNotApplicable),
     }
 }
