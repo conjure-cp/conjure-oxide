@@ -26,9 +26,21 @@ impl std::fmt::Display for Factor {
             }
 
             Factor::Reference(Name::MachineName(x)) => {
-                write!(f, "${x}")?;
+                write!(f, "__{x}")?;
                 Ok(())
             }
         }
+    }
+}
+
+impl From<Literal> for Factor {
+    fn from(value: Literal) -> Self {
+        Factor::Literal(value)
+    }
+}
+
+impl From<Name> for Factor {
+    fn from(value: Name) -> Self {
+        Factor::Reference(value)
     }
 }

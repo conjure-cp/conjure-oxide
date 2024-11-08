@@ -254,6 +254,14 @@ impl Expression {
         metadata.clean = bool_value;
         self.set_meta(metadata);
     }
+
+    pub fn as_factor(&self) -> Option<Factor> {
+        if let Expression::FactorE(_m, f) = self {
+            Some(f.clone())
+        } else {
+            None
+        }
+    }
 }
 
 fn display_expressions(expressions: &[Expression]) -> String {
@@ -287,6 +295,11 @@ impl From<bool> for Expression {
     }
 }
 
+impl From<Factor> for Expression {
+    fn from(value: Factor) -> Self {
+        Expression::FactorE(Metadata::new(), value)
+    }
+}
 impl Display for Expression {
     // TODO: (flm8) this will change once we implement a parser (two-way conversion)
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
