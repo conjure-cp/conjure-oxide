@@ -83,7 +83,7 @@ impl CNFModel {
 
     /// Gets the index of a Conjure variable.
     pub fn get_index(&self, var: &conjure_ast::Name) -> Option<i32> {
-        return self.variables.get(var).copied();
+        self.variables.get(var).copied()
     }
 
     /// Gets a Conjure variable by index.
@@ -317,7 +317,7 @@ pub trait HasVariable {
 
 impl HasVariable for i32 {
     fn has_variable(self, cnf: &CNFModel) -> bool {
-        return cnf.get_name(self).is_some();
+        cnf.get_name(self).is_some()
     }
 }
 

@@ -155,7 +155,7 @@ fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> (i32, i32) {
                 }
             }
             Range::Bounded(i, j) => {
-                if *i < min {}
+                *i < min;
                 if *j > max {
                     max = *j;
                 }
@@ -202,11 +202,11 @@ impl Expression {
     }
 
     pub fn get_meta(&self) -> Metadata {
-        return <Expression as Biplate<Metadata>>::children_bi(&self)[0].clone();
+        <Expression as Biplate<Metadata>>::children_bi(self)[0].clone()
     }
 
     pub fn set_meta(&self, meta: Metadata) {
-        <Expression as Biplate<Metadata>>::transform_bi(&self, Arc::new(move |_| meta.clone()));
+        <Expression as Biplate<Metadata>>::transform_bi(self, Arc::new(move |_| meta.clone()));
     }
 
     pub fn can_be_undefined(&self) -> bool {

@@ -15,7 +15,7 @@ use conjure_oxide::{
 use uniplate::{Biplate, Uniplate};
 
 fn var_name_from_factor(f: &Factor) -> Name {
-    <Factor as Biplate<Name>>::universe_bi(&f)[0].clone()
+    <Factor as Biplate<Name>>::universe_bi(f)[0].clone()
 }
 #[test]
 fn rules_present() {

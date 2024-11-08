@@ -112,7 +112,7 @@ use crate::stats::SolverStats;
 use crate::Model;
 
 use self::model_modifier::ModelModifier;
-use self::states::*;
+use self::states::{ExecutionSuccess, Init, ModelLoaded, SolverState};
 
 pub mod adaptors;
 pub mod model_modifier;

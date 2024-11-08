@@ -51,11 +51,11 @@ fn bubble_up(expr: &Expression, _: &Model) -> ApplicationResult {
     if bubbled_conditions.is_empty() {
         return Err(ApplicationError::RuleNotApplicable);
     }
-    return Ok(Reduction::pure(Expression::Bubble(
+    Ok(Reduction::pure(Expression::Bubble(
         Metadata::new(),
         Box::new(expr.with_children(sub)),
         Box::new(Expression::And(Metadata::new(), bubbled_conditions)),
-    )));
+    )))
 }
 
 // Bubble applications
@@ -85,5 +85,5 @@ fn div_to_bubble(expr: &Expression, _: &Model) -> ApplicationResult {
             )),
         )));
     }
-    return Err(ApplicationError::RuleNotApplicable);
+    Err(ApplicationError::RuleNotApplicable)
 }

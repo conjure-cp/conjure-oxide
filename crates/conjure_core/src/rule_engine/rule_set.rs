@@ -154,21 +154,21 @@ impl<'a> RuleSet<'a> {
     }
 }
 
-impl<'a> PartialEq for RuleSet<'a> {
+impl PartialEq for RuleSet<'_> {
     fn eq(&self, other: &Self) -> bool {
         self.name == other.name
     }
 }
 
-impl<'a> Eq for RuleSet<'a> {}
+impl Eq for RuleSet<'_> {}
 
-impl<'a> Hash for RuleSet<'a> {
+impl Hash for RuleSet<'_> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.name.hash(state);
     }
 }
 
-impl<'a> Display for RuleSet<'a> {
+impl Display for RuleSet<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let n_rules = self.get_rules().len();
         let solver_families = self
