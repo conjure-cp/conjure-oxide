@@ -1,7 +1,7 @@
 use uniplate::{Biplate, Uniplate};
 
 use crate::{
-    ast::{DecisionVariable, Domain, Expression as Expr, Factor, Name},
+    ast::{DecisionVariable, Domain, Expression as Expr, Factor, Name, ReturnType},
     bug,
     metadata::Metadata,
     Model,
@@ -34,6 +34,33 @@ pub fn is_all_constant(expression: &Expr) -> bool {
     }
 
     true
+}
+
+/// Creates a single `Expr` from a `Vec<Expr>` by forming the conjunction.
+///
+/// If it contains a single element, that element is returned, otherwise the conjunction of the
+/// elements is returned.
+///
+/// # Returns
+///
+/// - Some: the expression list is non empty, and all expressions are booleans (so can be
+/// conjuncted).
+///
+/// - None: the expression list is empty, or not all expressions are booleans.
+pub fn exprs_to_conjunction(exprs: &Vec<Expr>) -> Option<Expr> {
+    match exprs.as_slice() {
+        [] => None,
+        [a] if a.return_type() == Some(ReturnType::Bool) => Some(a.clone()),
+        [_, _, ..] => {
+            for expr in exprs {
+                if expr.return_type() != Some(ReturnType::Bool) {
+                    return None;
+                }
+            }
+            Some(Expr::And(Metadata::new(), exprs.clone()))
+        }
+        _ => None,
+    }
 }
 
 /// Creates a new auxiliary variable using the given expression.

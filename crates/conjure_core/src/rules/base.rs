@@ -34,7 +34,13 @@ fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
     // excluded expressions
     if matches!(
         expr,
-        FactorE(_, Reference(_,)) | FactorE(_, Literal(_)) | WatchedLiteral(_, _, _)
+        FactorE(_, Reference(_,))
+            | FactorE(_, Literal(_))
+            | WatchedLiteral(_, _, _)
+            | FactorE(_, Reference(_,))
+            | FactorE(_, Literal(_))
+            | WatchedLiteral(_, _, _)
+            | DivEq(_, _, _, _)
     ) {
         return Err(ApplicationError::RuleNotApplicable);
     }
