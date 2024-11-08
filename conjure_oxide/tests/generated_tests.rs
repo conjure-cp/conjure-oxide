@@ -232,7 +232,6 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
     model.constraints.transform(Arc::new(|x| {
         use conjure_core::ast::Expression::*;
         match &x {
-            Nothing => (),
             Bubble(_, _, _) => (),
             FactorE(_, _) => (),
             Sum(_, vec) => assert_constants_leq_one(&x, vec),

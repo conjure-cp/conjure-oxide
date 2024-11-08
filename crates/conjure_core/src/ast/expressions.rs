@@ -27,12 +27,6 @@ use super::{Domain, Range};
 #[biplate(to=Factor)]
 #[biplate(to=Name)]
 pub enum Expression {
-    /**
-     * Represents an empty expression
-     * NB: we only expect this at the top level of a model (if there is no constraints)
-     */
-    Nothing,
-
     /// An expression representing "A is valid as long as B is true"
     /// Turns into a conjunction when it reaches a boolean context
     Bubble(Metadata, Box<Expression>, Box<Expression>),
@@ -245,7 +239,6 @@ impl Expression {
             Expression::Ineq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AllDiff(_, _) => Some(ReturnType::Bool),
             Expression::Bubble(_, _, _) => None, // TODO: (flm8) should this be a bool?
-            Expression::Nothing => None,
             Expression::WatchedLiteral(_, _, _) => Some(ReturnType::Bool),
             Expression::Reify(_, _, _) => Some(ReturnType::Bool),
         }
@@ -306,7 +299,6 @@ impl Display for Expression {
                 Name::MachineName(n) => write!(f, "_{}", n),
                 Name::UserName(s) => write!(f, "{}", s),
             },
-            Expression::Nothing => write!(f, "Nothing"),
             Expression::Sum(_, expressions) => {
                 write!(f, "Sum({})", display_expressions(expressions))
             }
