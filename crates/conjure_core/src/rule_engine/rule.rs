@@ -75,7 +75,7 @@ impl Reduction {
     pub fn pure(new_expression: Expression) -> Self {
         Self {
             new_expression,
-            new_top: Expression::Nothing,
+            new_top: Expression::And(Metadata::new(), Vec::new()),
             symbols: SymbolTable::new(),
         }
     }
@@ -84,7 +84,7 @@ impl Reduction {
     pub fn with_symbols(new_expression: Expression, symbols: SymbolTable) -> Self {
         Self {
             new_expression,
-            new_top: Expression::Nothing,
+            new_top: Expression::And(Metadata::new(), Vec::new()),
             symbols,
         }
     }
@@ -101,21 +101,25 @@ impl Reduction {
     // Apply side-effects (e.g. symbol table updates
     pub fn apply(self, model: &mut Model) {
         model.variables.extend(self.symbols); // Add new assignments to the symbol table
-        if let Expression::Nothing = self.new_top {
-            model.constraints = self.new_expression.clone();
-        } else {
-            model.constraints = match self.new_expression {
-                Expression::And(metadata, mut exprs) => {
-                    // Avoid creating a nested conjunction
-                    exprs.push(self.new_top.clone());
-                    Expression::And(metadata.clone_dirty(), exprs)
-                }
-                _ => Expression::And(
-                    Metadata::new(),
-                    vec![self.new_expression.clone(), self.new_top],
-                ),
-            };
+                                              // TODO: (yb33) Remove it when we change constraints to a vector
+        if let Expression::And(_, exprs) = &self.new_top {
+            if exprs.is_empty() {
+                model.constraints = self.new_expression.clone();
+                return;
+            }
         }
+
+        model.constraints = match self.new_expression {
+            Expression::And(metadata, mut exprs) => {
+                // Avoid creating a nested conjunction
+                exprs.push(self.new_top.clone());
+                Expression::And(metadata.clone_dirty(), exprs)
+            }
+            _ => Expression::And(
+                Metadata::new(),
+                vec![self.new_expression.clone(), self.new_top],
+            ),
+        };
     }
 }
 
