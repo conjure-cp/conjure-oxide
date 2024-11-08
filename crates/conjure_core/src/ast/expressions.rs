@@ -11,6 +11,7 @@ use crate::ast::literals::Literal;
 use crate::ast::symbol_table::{Name, SymbolTable};
 use crate::ast::Factor;
 use crate::ast::ReturnType;
+use crate::bug;
 use crate::metadata::Metadata;
 
 use super::{Domain, Range};
@@ -98,8 +99,9 @@ pub enum Expression {
     #[compatible(Minion)]
     SumLeq(Metadata, Vec<Expression>, Box<Expression>),
 
+    /// `a / b = c`
     #[compatible(Minion)]
-    DivEq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
+    DivEq(Metadata, Factor, Factor, Factor),
 
     #[compatible(Minion)]
     Ineq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
@@ -189,7 +191,8 @@ impl Expression {
                     &b.domain_of(vars)?,
                 )
             }
-            _ => todo!("Calculate domain of {:?}", self),
+            Expression::Bubble(_, _, _) => None,
+            _ => bug!("Cannot calculate domain of {:?}", self),
             // TODO: (flm8) Add support for calculating the domains of more expression types
         };
         match ret {

@@ -66,7 +66,15 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             bin_op::<i32, i32>(|a, b| a / b, a, b).map(Lit::Int)
         }
         Expr::DivEq(_, a, b, c) => {
-            tern_op::<i32, bool>(|a, b, c| a == b * c, a, b, c).map(Lit::Bool)
+            let a = unwrap_factor::<i32>(a)?;
+            let b = unwrap_factor::<i32>(b)?;
+            let c = unwrap_factor::<i32>(c)?;
+
+            if b == 0 {
+                return None;
+            }
+
+            Some(Lit::Bool(a / b == c))
         }
         Expr::Bubble(_, a, b) => bin_op::<bool, bool>(|a, b| a && b, a, b).map(Lit::Bool),
 
@@ -133,6 +141,13 @@ where
 fn unwrap_expr<T: TryFrom<Lit>>(expr: &Expr) -> Option<T> {
     let c = eval_constant(expr)?;
     TryInto::<T>::try_into(c).ok()
+}
+
+fn unwrap_factor<T: TryFrom<Lit>>(factor: &Factor) -> Option<T> {
+    let Factor::Literal(c) = factor else {
+        return None;
+    };
+    TryInto::<T>::try_into(c.clone()).ok()
 }
 
 #[cfg(test)]
