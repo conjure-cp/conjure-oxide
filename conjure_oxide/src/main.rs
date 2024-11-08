@@ -233,6 +233,12 @@ pub fn main() -> AnyhowResult<()> {
 
     context.write().unwrap().file_name = Some(cli.input_file.to_str().expect("").into());
 
+    if cfg!(feature = "extra-rule-checks") {
+        log::info!("extra-rule-checks: enabled");
+    } else {
+        log::info!("extra-rule-checks: disabled");
+    }
+
     let mut model = model_from_json(&astjson, context.clone())?;
 
     log::info!(target: "file", "Initial model: {}", json!(model));
