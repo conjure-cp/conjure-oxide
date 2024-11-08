@@ -3,22 +3,40 @@ use std::path::{Path, PathBuf};
 use std::collections::HashMap;
 use conjure_oxide::conjure_core::essence::model::EssenceModel;
 
-//custom solver adaptor for solving using savile row
-pub struct SRSolverAdaptor;
+pub struct SRSolverAdaptor; 
 
 impl SolverAdaptor for SRSolverAdaptor {
-  
-     fn load_essence_model(&self, essence_file: &Path) -> Result<EssenceModel, SolveError> {
-        Err(SolveError::from("TODO"))
+   
+   //TODO
+    fn solve(
+        &mut self,
+        callback: SolverCallback,
+        _: Internal,
+    ) -> Result<SolveSuccess, SolverError> {
+        Err(SolverError::from("TODO"))
     }
 
-    // Transform the Essence model into Essence Prime format
-    fn to_essence_prime(&self, model: EssenceModel) -> Result<EssenceModel, SolveError> {
-        Err(SolveError::from("TODO"))
+    //TODO
+    fn solve_mut(
+        &mut self,
+        callback: SolverMutCallback,
+        _: Internal,
+    ) -> Result<SolveSuccess, SolverError> {
+        Err(SolverError::from("TODO"))
     }
 
-    // Solve the Essence Prime model using the specified solver
-    fn solve(&self, model: &EssenceModel, output_dir: &Path, solver_name: &str) -> Result<Vec<HashMap<String, String>>, SolveError> {
-        Err(SolveError::from("TODO"))
+    //TODO
+    fn load_model(
+        &mut self,
+        model: Model,
+        _: Internal,
+    ) -> Result<(), SolverError> {
+        Err(SolverError::from("TODO"))
     }
+    
+    //TODO
+    fn get_family(&self) -> SolverFamily {
+        SolverFamily::default() 
+    }
+
 }
