@@ -152,21 +152,21 @@ impl<'a> Rule<'a> {
     }
 }
 
-impl<'a> Display for Rule<'a> {
+impl Display for Rule<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.name)
     }
 }
 
-impl<'a> PartialEq for Rule<'a> {
+impl PartialEq for Rule<'_> {
     fn eq(&self, other: &Self) -> bool {
         self.name == other.name
     }
 }
 
-impl<'a> Eq for Rule<'a> {}
+impl Eq for Rule<'_> {}
 
-impl<'a> Hash for Rule<'a> {
+impl Hash for Rule<'_> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.name.hash(state);
     }
