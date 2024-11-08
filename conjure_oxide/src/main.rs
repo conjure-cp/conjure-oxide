@@ -191,8 +191,8 @@ pub fn main() -> AnyhowResult<()> {
     let rule_priorities = get_rule_priorities(&rule_sets)?;
     let rules_vec = get_rules_vec(&rule_priorities);
 
-    log::info!(target: "file", 
-         "Rules and priorities: {}", 
+    log::info!(target: "file",
+         "Rules and priorities: {}",
          rules_vec.iter()
             .map(|rule| format!("{}: {}", rule.name, rule_priorities.get(rule).unwrap_or(&0)))
             .collect::<Vec<_>>()
