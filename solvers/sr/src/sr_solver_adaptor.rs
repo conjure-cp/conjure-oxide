@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use std::collections::HashMap;
 use conjure_oxide::conjure_core::essence::model::EssenceModel;
 
+//custom SR solver class
 pub struct SRSolverAdaptor; 
 
 impl SolverAdaptor for SRSolverAdaptor {
