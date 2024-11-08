@@ -302,7 +302,13 @@ fn apply_all_rules<'a>(
     for rule in rules {
         match rule.apply(expression, model) {
             Ok(red) => {
-                log::trace!(target: "file", "Rule applicable: {:?}, to Expression: {:?}, resulting in: {:?}", rule, expression, red.new_expression);
+                log::info!(
+                    "Rule applicable: {} ({:?}), to expression: {}, resulting in: {}",
+                    rule.name,
+                    rule.rule_sets,
+                    expression,
+                    red.new_expression
+                );
                 stats.rewriter_rule_application_attempts =
                     Some(stats.rewriter_rule_application_attempts.unwrap() + 1);
                 stats.rewriter_rule_applications =
@@ -316,7 +322,12 @@ fn apply_all_rules<'a>(
                 });
             }
             Err(_) => {
-                log::trace!(target: "file", "Rule attempted but not applied: {:?}, to Expression: {:?}", rule, expression);
+                log::trace!(
+                    "Rule attempted but not applied: {} ({:?}), to expression: {}",
+                    rule.name,
+                    rule.rule_sets,
+                    expression
+                );
                 stats.rewriter_rule_application_attempts =
                     Some(stats.rewriter_rule_application_attempts.unwrap() + 1);
                 continue;
