@@ -330,6 +330,16 @@ fn read_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, So
             Box::new(read_expr(*e)?),
             read_var(*v)?,
         )),
+
+        conjure_ast::Expression::AuxDeclaration(_metadata, name, expr) => {
+            Ok(minion_ast::Constraint::Eq(
+                read_var(conjure_ast::Expression::FactorE(
+                    _metadata,
+                    conjure_ast::Factor::Reference(name),
+                ))?,
+                read_var(*expr)?,
+            ))
+        }
         x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
     }
 }

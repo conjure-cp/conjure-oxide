@@ -15,6 +15,8 @@ use crate::Model;
 use uniplate::Uniplate;
 use ApplicationError::RuleNotApplicable;
 
+use super::utils::to_aux_var;
+
 register_rule_set!("Minion", 100, ("Base"), (SolverFamily::Minion));
 
 fn is_nested_sum(exprs: &Vec<Expr>) -> bool {
@@ -294,6 +296,7 @@ fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 */
 #[register_rule(("Minion", 4400))]
 fn flatten_safediv(expr: &Expr, mdl: &Model) -> ApplicationResult {
+    let mut mdl = mdl.clone();
     match expr {
         Eq(_, _, _) => {}
         Leq(_, _, _) => {}
@@ -306,28 +309,23 @@ fn flatten_safediv(expr: &Expr, mdl: &Model) -> ApplicationResult {
 
     let mut sub = expr.children();
 
-    let mut new_vars = SymbolTable::new();
     let mut new_top = vec![];
 
     // replace every safe div child with a reference to a new variable
     let mut num_changed = 0;
     for c in sub.iter_mut() {
         if let SafeDiv(_, a, b) = c.clone() {
-            num_changed += 1;
-            let new_name = mdl.gensym();
-            let domain = c
-                .domain_of(&mdl.variables)
-                .ok_or(ApplicationError::DomainError)?;
-            new_vars.insert(new_name.clone(), DecisionVariable::new(domain));
-
-            new_top.push(DivEq(
-                Metadata::new(),
-                a.clone(),
-                b.clone(),
-                Box::new(FactorE(Metadata::new(), Reference(new_name.clone()))),
-            ));
-
-            *c = FactorE(Metadata::new(), Reference(new_name.clone()));
+            if let Some(aux_var_info) = to_aux_var(c, &mdl) {
+                num_changed += 1;
+                mdl = aux_var_info.model();
+                new_top.push(DivEq(
+                    Metadata::new(),
+                    a.clone(),
+                    b.clone(),
+                    Box::new(aux_var_info.as_expr()),
+                ));
+                *c = aux_var_info.as_expr();
+            }
         }
     }
 
@@ -340,7 +338,7 @@ fn flatten_safediv(expr: &Expr, mdl: &Model) -> ApplicationResult {
         return Ok(Reduction::new(
             expr.with_children(sub),
             And(Metadata::new(), new_top),
-            new_vars,
+            mdl.variables,
         ));
     }
     Err(RuleNotApplicable)
