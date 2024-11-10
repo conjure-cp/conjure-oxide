@@ -25,7 +25,7 @@ Pull requests are the best way to propose changes to the codebase (we use [Githu
       want your PR to be merged.
     - During reviewing, avoid force-pushing to the pull request, as this makes
       reviewing more difficult. Details on how to update a PR are given below.
-7. Once Oz has approved the PR:
+6. Once Oz has approved the PR:
     * Cleanup your git history (see below) or request your PR to be squash merged.
     * Update your PR to main by rebase or merge. This can be done through the
       Github UI or locally.
