@@ -18,14 +18,14 @@ Pull requests are the best way to propose changes to the codebase (we use [Githu
 
 1. Make a fork.
 2. Create a branch on your fork, do not develop on main.
-3. Create a pull request as soon as you want others to be able to see your progress, comment, and/or help. Err on the side of creating the pull request too early instead of too late. Having an active PR makes your work visible, allows others to help you and give feedback.
+3. Create a pull request as soon as you want others to be able to see your progress, comment, and/or help. Err on the side of creating the pull request too early instead of too late. Having an active PR makes your work visible, allows others to help you and give feedback. Request reviews from people who have worked on similar parts of the project.
 4. Keep the PR in draft status until you think it's ready to be merged.
 5. Assign PR to reviewer(s) when it's ready to be merged.
     - Only Oz (@ozgurakgun) can merge PR's, so add him as a reviewer when you
       want your PR to be merged.
     - During reviewing, avoid force-pushing to the pull request, as this makes
       reviewing more difficult. Details on how to update a PR are given below.
-6. Once Oz has approved the PR:
+7. Once Oz has approved the PR:
     * Cleanup your git history (see below) or request your PR to be squash merged.
     * Update your PR to main by rebase or merge. This can be done through the
       Github UI or locally.
