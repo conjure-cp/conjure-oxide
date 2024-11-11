@@ -2,21 +2,17 @@
 /*        Rules for translating to Minion-supported constraints         */
 /************************************************************************/
 
+use crate::ast::{
+    Atom::{self, *},
+    Domain,
+    Expression::{self as Expr, *},
+    Literal::*,
+};
 use crate::metadata::Metadata;
 use crate::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
 };
 use crate::rules::extra_check;
-use crate::{
-    ast::{
-        Atom::{self, *},
-        Domain,
-        Expression::{self as Expr, *},
-        Literal::*,
-    },
-    bug,
-    rules::utils::exprs_to_conjunction,
-};
 
 use crate::solver::SolverFamily;
 use crate::Model;
@@ -153,11 +149,7 @@ fn flatten_binop(expr: &Expr, model: &Model) -> ApplicationResult {
     }
 
     let expr = expr.with_children(children);
-    let new_top = exprs_to_conjunction(&new_tops).unwrap_or_else(|| {
-        bug!("rules::minion::flatten_binop : new_tops could be combined with And!")
-    });
-
-    Ok(Reduction::new(expr, new_top, model.variables))
+    Ok(Reduction::new(expr, new_tops, model.variables))
 }
 
 #[register_rule(("Minion", 4400))]
@@ -186,11 +178,8 @@ fn flatten_vecop(expr: &Expr, model: &Model) -> ApplicationResult {
     }
 
     let expr = expr.with_children(children);
-    let new_top = exprs_to_conjunction(&new_tops).unwrap_or_else(|| {
-        bug!("rules::minion::flatten_vecop : new_tops could be combined with And!")
-    });
 
-    Ok(Reduction::new(expr, new_top, model.variables))
+    Ok(Reduction::new(expr, new_tops, model.variables))
 }
 
 #[register_rule(("Minion", 4400))]
@@ -221,10 +210,8 @@ fn flatten_eq(expr: &Expr, model: &Model) -> ApplicationResult {
     }
 
     let expr = expr.with_children(children);
-    let new_top = exprs_to_conjunction(&new_tops)
-        .unwrap_or_else(|| bug!("rules::minion::flatten_eq: new_tops could be combined with And!"));
 
-    Ok(Reduction::new(expr, new_top, model.variables))
+    Ok(Reduction::new(expr, new_tops, model.variables))
 }
 
 fn is_nested_sum(exprs: &Vec<Expr>) -> bool {

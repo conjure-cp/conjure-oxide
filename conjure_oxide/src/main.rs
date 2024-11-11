@@ -254,8 +254,9 @@ pub fn main() -> AnyhowResult<()> {
 
     log::info!(target: "file", "Rewriting model...");
     model = rewrite_model(&model, &rule_sets)?;
+    let constraints_string = format!("{:?}", model.constraints);
+    tracing::info!(%constraints_string, model=%json!(model),"Rewritten model");
 
-    tracing::info!(constraints=%model.constraints,model=%json!(model),"Rewritten model");
     let solutions = get_minion_solutions(model, cli.number_of_solutions)?; // ToDo we need to properly set the solver adaptor here, not hard code minion
     log::info!(target: "file", "Solutions: {}", minion_solutions_to_json(&solutions));
 

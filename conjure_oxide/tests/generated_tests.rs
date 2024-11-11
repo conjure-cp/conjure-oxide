@@ -11,6 +11,7 @@ use tracing::{span, Level};
 use tracing_subscriber::{
     filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
 };
+use uniplate::Biplate;
 
 use tracing_appender::non_blocking::WorkerGuard;
 
@@ -35,7 +36,6 @@ use conjure_oxide::utils::testing::{
 };
 use conjure_oxide::SolverFamily;
 use serde::Deserialize;
-use uniplate::Uniplate;
 
 use pretty_assertions::assert_eq;
 
@@ -299,44 +299,20 @@ fn integration_test_inner(
 }
 
 fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model) {
-    model.constraints.transform(Arc::new(|x| {
+    for node in <_ as Biplate<Expression>>::universe_bi(&model.constraints) {
         use conjure_core::ast::Expression::*;
-        match &x {
-            Bubble(_, _, _) => (),
-            Atomic(_, _) => (),
-            Sum(_, vec) => assert_constants_leq_one(&x, vec),
-            Min(_, vec) => assert_constants_leq_one(&x, vec),
-            Max(_, vec) => assert_constants_leq_one(&x, vec),
-            Not(_, _) => (),
-            Or(_, vec) => assert_constants_leq_one(&x, vec),
-            And(_, vec) => assert_constants_leq_one(&x, vec),
-            Eq(_, _, _) => (),
-            Neq(_, _, _) => (),
-            Geq(_, _, _) => (),
-            Leq(_, _, _) => (),
-            Gt(_, _, _) => (),
-            Lt(_, _, _) => (),
-            SafeDiv(_, _, _) => (),
-            UnsafeDiv(_, _, _) => (),
-            SumEq(_, vec, _) => assert_constants_leq_one(&x, vec),
-            SumGeq(_, vec, _) => assert_constants_leq_one(&x, vec),
-            SumLeq(_, vec, _) => assert_constants_leq_one(&x, vec),
-            DivEqUndefZero(_, _, _, _) => (),
-            Ineq(_, _, _, _) => (),
-            // this is a vector operation, but we don't want to fold values into each-other in this
-            // one
-            AllDiff(_, _) => (),
-            WatchedLiteral(_, _, _) => (),
-            Reify(_, _, _) => (),
-            AuxDeclaration(_, _, _) => (),
-            UnsafeMod(_, _, _) => (),
-            SafeMod(_, _, _) => (),
-            ModuloEqUndefZero(_, _, _, _) => (),
-            Neg(_, _) => (),
-            Minus(_, _, _) => (),
+        match node {
+            Sum(_, ref vec) => assert_constants_leq_one(&node, vec),
+            Min(_, ref vec) => assert_constants_leq_one(&node, vec),
+            Max(_, ref vec) => assert_constants_leq_one(&node, vec),
+            Or(_, ref vec) => assert_constants_leq_one(&node, vec),
+            And(_, ref vec) => assert_constants_leq_one(&node, vec),
+            SumEq(_, ref vec, _) => assert_constants_leq_one(&node, vec),
+            SumGeq(_, ref vec, _) => assert_constants_leq_one(&node, vec),
+            SumLeq(_, ref vec, _) => assert_constants_leq_one(&node, vec),
+            _ => (),
         };
-        x.clone()
-    }));
+    }
 }
 
 fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
@@ -345,7 +321,11 @@ fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
         _ => i,
     });
 
-    assert!(count <= 1, "assert_vector_operators_have_partially_evaluated: expression {} is not partially evaluated",parent_expr)
+    assert!(
+        count <= 1,
+        "assert_vector_operators_have_partially_evaluated: expression {} is not partially evaluated",
+        parent_expr
+    );
 }
 
 pub fn create_scoped_subscriber(

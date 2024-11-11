@@ -9,7 +9,6 @@ use serde_with::serde_as;
 
 use crate::ast::{DecisionVariable, Domain, Expression, Name, SymbolTable};
 use crate::context::Context;
-use crate::metadata::Metadata;
 
 /// Represents a computational model containing variables, constraints, and a shared context.
 ///
@@ -22,7 +21,7 @@ use crate::metadata::Metadata;
 ///   - For example, the name `x` might be linked to a `DecisionVariable` that says `x` can only take values between 1 and 10.
 ///
 /// - `constraints`:
-///   - Type: `Expression`
+///   - Type: `Vec<Expression>`
 ///   - Represents the logical constraints applied to the model's variables.
 ///   - Can be a single constraint or a combination of various expressions, such as logical operations (e.g., `AND`, `OR`),
 ///     arithmetic operations (e.g., `SafeDiv`, `UnsafeDiv`), or specialized constraints like `SumEq`.
@@ -47,7 +46,7 @@ use crate::metadata::Metadata;
 pub struct Model {
     #[serde_as(as = "Vec<(_, _)>")]
     pub variables: SymbolTable,
-    pub constraints: Expression,
+    pub constraints: Vec<Expression>,
     #[serde(skip)]
     #[derivative(PartialEq = "ignore")]
     pub context: Arc<RwLock<Context<'static>>>,
@@ -57,7 +56,7 @@ pub struct Model {
 impl Model {
     pub fn new(
         variables: SymbolTable,
-        constraints: Expression,
+        constraints: Vec<Expression>,
         context: Arc<RwLock<Context<'static>>>,
     ) -> Model {
         Model {
@@ -69,11 +68,7 @@ impl Model {
     }
 
     pub fn new_empty(context: Arc<RwLock<Context<'static>>>) -> Model {
-        Model::new(
-            Default::default(),
-            Expression::And(Metadata::new(), Vec::new()),
-            context,
-        )
+        Model::new(Default::default(), Vec::new(), context)
     }
     // Function to update a DecisionVariable based on its Name
     pub fn update_domain(&mut self, name: &Name, new_domain: Domain) {
@@ -92,19 +87,14 @@ impl Model {
     }
 
     pub fn get_constraints_vec(&self) -> Vec<Expression> {
-        match &self.constraints {
-            Expression::And(_, constraints) => constraints.clone(),
-            _ => vec![self.constraints.clone()],
-        }
+        self.constraints.clone()
     }
 
     pub fn set_constraints(&mut self, constraints: Vec<Expression>) {
         if constraints.is_empty() {
-            self.constraints = Expression::And(Metadata::new(), Vec::new());
-        } else if constraints.len() == 1 {
-            self.constraints = constraints[0].clone();
+            self.constraints = Vec::new();
         } else {
-            self.constraints = Expression::And(Metadata::new(), constraints);
+            self.constraints = constraints;
         }
     }
 
