@@ -16,7 +16,18 @@ pub use conjure_core::solver;
 pub use conjure_core::solver::SolverFamily;
 
 pub mod find_conjure;
-pub mod utils;
+pub mod generate_custom;
+pub mod parse;
+pub mod rewrite;
+mod rules;
+pub mod solvers;
+mod utils;
 
-#[doc(hidden)]
+pub use conjure_core::ast; // re-export core::ast as conjure_oxide::ast
+pub use conjure_core::ast::Model; // rexport core::ast::Model as conjure_oxide::Model
+pub use conjure_core::solvers::Solver;
+pub use rules::eval_constant;
+
+pub use error::Error;
+
 pub mod unstable;

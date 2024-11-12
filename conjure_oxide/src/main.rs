@@ -16,12 +16,12 @@ use structured_logger::{json::new_writer, Builder};
 
 use conjure_core::context::Context;
 use conjure_oxide::find_conjure::conjure_executable;
-use conjure_oxide::model_from_json;
-use conjure_oxide::rule_engine::{
-    get_rule_priorities, get_rules_vec, resolve_rule_sets, rewrite_model,
-};
-use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
-use conjure_oxide::SolverFamily;
+use conjure_oxide::generate_custom::get_example_model;
+use conjure_oxide::parse::model_from_json;
+use conjure_oxide::rewrite::rewrite_model;
+use conjure_oxide::solvers::FromConjureModel;
+use minion_rs::ast::{Constant, Model as MinionModel, VarName};
+use minion_rs::run_minion;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -213,29 +213,17 @@ pub fn main() -> AnyhowResult<()> {
 
 #[cfg(test)]
 mod tests {
-    use conjure_oxide::{get_example_model, get_example_model_by_path};
+    use super::*;
 
     #[test]
     fn test_get_example_model_success() {
-        let filename = "input";
+        let filename = "basic/comprehension-01-1/comprehension-01-1";
         get_example_model(filename).unwrap();
-    }
-
-    #[test]
-    fn test_get_example_model_by_filepath() {
-        let filepath = "tests/integration/xyz/input.essence";
-        get_example_model_by_path(filepath).unwrap();
     }
 
     #[test]
     fn test_get_example_model_fail_empty_filename() {
         let filename = "";
         get_example_model(filename).unwrap_err();
-    }
-
-    #[test]
-    fn test_get_example_model_fail_empty_filepath() {
-        let filepath = "";
-        get_example_model_by_path(filepath).unwrap_err();
     }
 }
