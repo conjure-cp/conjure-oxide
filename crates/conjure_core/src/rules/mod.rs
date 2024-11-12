@@ -8,11 +8,12 @@ pub use constant::eval_constant;
 
 mod base;
 mod bubble;
-pub mod checks;
 mod cnf;
 mod constant;
 mod minion;
 mod partial_eval;
+
+mod utils;
 
 /// Denotes a block of code as extra, optional checks for a rule. Primarily, these are checks that
 /// are too expensive to do normally, or are implicit in the rule priorities and application order.

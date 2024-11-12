@@ -121,6 +121,12 @@ pub enum Expression {
 
     #[compatible(Minion)]
     Reify(Metadata, Box<Expression>, Box<Expression>),
+
+    /// Declaration of an auxiliary variable.
+    ///
+    /// As with Savile Row, we semantically distinguish this from `Eq`.
+    #[compatible(Minion)]
+    AuxDeclaration(Metadata, Name, Box<Expression>),
 }
 
 fn expr_vec_to_domain_i32(
@@ -241,6 +247,7 @@ impl Expression {
             Expression::Bubble(_, _, _) => None, // TODO: (flm8) should this be a bool?
             Expression::WatchedLiteral(_, _, _) => Some(ReturnType::Bool),
             Expression::Reify(_, _, _) => Some(ReturnType::Bool),
+            Expression::AuxDeclaration(_, _, _) => Some(ReturnType::Bool),
         }
     }
 
@@ -390,8 +397,15 @@ impl Display for Expression {
                     box3.clone()
                 )
             }
-            #[allow(unreachable_patterns)]
-            other => todo!("Implement display for {:?}", other),
+            Expression::WatchedLiteral(_, x, l) => {
+                write!(f, "WatchedLiteral({},{})", x, l)
+            }
+            Expression::Reify(_, box1, box2) => {
+                write!(f, "Reify({}, {})", box1.clone(), box2.clone())
+            }
+            Expression::AuxDeclaration(_, n, e) => {
+                write!(f, "{} =aux {}", n, e.clone())
+            }
         }
     }
 }
