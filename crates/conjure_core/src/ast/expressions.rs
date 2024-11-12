@@ -311,14 +311,7 @@ impl Display for Expression {
     // TODO: (flm8) this will change once we implement a parser (two-way conversion)
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
-            Expression::FactorE(_, Factor::Literal(c)) => match c {
-                Literal::Bool(b) => write!(f, "{}", b),
-                Literal::Int(i) => write!(f, "{}", i),
-            },
-            Expression::FactorE(_, Factor::Reference(name)) => match name {
-                Name::MachineName(n) => write!(f, "_{}", n),
-                Name::UserName(s) => write!(f, "{}", s),
-            },
+            Expression::FactorE(_, factor) => factor.fmt(f),
             Expression::Sum(_, expressions) => {
                 write!(f, "Sum({})", display_expressions(expressions))
             }
