@@ -1,5 +1,4 @@
 pub extern crate self as conjure_core;
-pub extern crate 
 
 pub use model::Model;
 

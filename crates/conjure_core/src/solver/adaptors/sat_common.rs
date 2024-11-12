@@ -271,7 +271,7 @@ impl CNFModel {
      */
     fn handle_expression(
         &self,
-        expression: &conjure_ast::Expression,
+        expression: &conjure_ast:ss:Expression,
     ) -> Result<Vec<Vec<i32>>, CNFError> {
         match expression {
             conjure_ast::Expression::And(_metadata, expressions) => self.handle_and(expressions),

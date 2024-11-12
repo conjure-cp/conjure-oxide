@@ -1,17 +1,17 @@
-use std::vec;
-
-mod sat_tree;
 mod sat_solvers;
+mod sat_tree;
 
-use rustsat::instances::SatInstance;
+use anyhow::Error;
 
-use rustsat_minisat::core::MiniSat;
+use rustsat::instances::{Cnf, SatInstance};
+use rustsat::solvers::{Solve, SolverResult};
+// use rustsat::solvers::minisat::MinisatSolver;
+use rustsat_minisat::core::Minisat;
+// use rustsat_minisat::core::{Minisat, Solve};
 fn main() {
-    
     /*
      * Problem: (t or t) and (f or t) and (f or f)
-    */
-
+     */
     let v1: Vec<i16> = vec![1, 1];
     let v2: Vec<i16> = vec![0, 1];
     let v3: Vec<i16> = vec![0, 0];
@@ -19,26 +19,35 @@ fn main() {
     let vec_problem: Vec<Vec<i16>> = vec![v1, v2, v3];
 
     // tree (?)
+    // for load_model() (?) use inst(?)
+    // TODO consult rest
     let mut inst: SatInstance = SatInstance::new();
+    sat_tree::conv_to_formula(&vec_problem, &mut inst);
 
     // sat solver
-    let mut solver = MiniSatSolver::new();
+    // for solve(), convert res to fit Result<SolveSuccess, SolverError>
+    // convert SoverResult to SolveSuccess (?) in sat_tree or sat_solvers
+    let cnf_func = inst.into_cnf();
+    let mut solver = Minisat::default();
+    solver.add_cnf(cnf_func.0);
+
+    let res: Result<SolverResult, Error> = solver.solve();
+    let unwrap: SolverResult = res.unwrap();
+
     // solve:
-    match solver.solve() {
-        Ok(true) => {
-            // If satisfiable, print satisfying assignments
-            println!("SATISFIABLE");
-            println!("a = {}", solver.value(var_a).unwrap());
-            println!("b = {}", solver.value(var_b).unwrap());
-        }
-        Ok(false) => println!("UNSATISFIABLE"),
-        Err(e) => println!("Error during solving: {:?}", e),
-    }
+    // match solver.solve() {
+    //     Ok(true) => {
+    //         // If satisfiable, print satisfying assignments
+    //         println!("SATISFIABLE");
+    //         // println!("a = {}", solver.value(var_a).unwrap());
+    //         // println!("b = {}", solver.value(var_b).unwrap());
+    //     }
+    //     Ok(false) => println!("UNSATISFIABLE"),
+    //     Err(e) => println!("Error during solving: {:?}", e),
+    // }
 
-    // or perhaps
-    solver.solve();
-
-    sat_tree::conv_to_formula(&vec_problem, &mut inst);
+    // // or perhaps
+    // solver.solve();
 }
 
 // #[cfg(test)]
@@ -71,4 +80,4 @@ fn main() {
 //     // The second formula is unsatisfiable.
 //     // This can for example be proved by resolution.
 //     assert_eq!(unsat_result, None);
-// }    }
+// }
