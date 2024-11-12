@@ -1,8 +1,8 @@
 //! Here we implement a simple lambda calculus interpreter.
 //! The beta-reduction rule has the side effect of increasing a counter in the metadata.
 
-use gen_reduce::*;
 use std::collections::HashSet;
+use tree_morph::*;
 use uniplate::derive::Uniplate;
 
 #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]

@@ -14,7 +14,7 @@
 //# TODO (Felix): choose a more concise example
 //!
 //! ```rust
-//! use gen_reduce::*;
+//! use tree_morph::*;
 //! use uniplate::derive::Uniplate;
 //!
 //! #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]

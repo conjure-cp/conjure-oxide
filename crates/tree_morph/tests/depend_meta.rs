@@ -1,7 +1,7 @@
 //! Here we test an interesting side-effect case, with rules return a reduction based on the metadata.
 //! These rules will not be run a second time if no other rule applies to the same node, which might be unexpected.
 
-use gen_reduce::*;
+use tree_morph::*;
 use uniplate::derive::Uniplate;
 
 #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
