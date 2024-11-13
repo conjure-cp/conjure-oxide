@@ -15,7 +15,7 @@ use conjure_oxide::rule_engine::resolve_rule_sets;
 use conjure_oxide::rule_engine::rewrite_model;
 use conjure_oxide::utils::conjure::minion_solutions_to_json;
 use conjure_oxide::utils::conjure::{
-    get_minion_solutions, get_solutions_from_conjure, parse_essence_file,
+    get_minion_solutions, get_solutions_from_conjure, parse_essence_file, PerformMetric,
 };
 use conjure_oxide::utils::testing::save_stats_json;
 use conjure_oxide::utils::testing::{
@@ -159,7 +159,7 @@ fn integration_test_inner(
 
     // test solutions against conjure before writing
     if accept {
-        let mut conjure_solutions: Vec<HashMap<Name, Literal>> =
+        let mut conjure_solutions: Vec<HashMap<Name, Literal>>=
             get_solutions_from_conjure(&format!("{}/{}.{}", path, essence_base, extension))?;
 
         // Change bools to nums in both outputs, as we currently don't convert 0,1 back to
