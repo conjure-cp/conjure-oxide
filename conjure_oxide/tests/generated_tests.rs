@@ -159,7 +159,7 @@ fn integration_test_inner(
 
     // test solutions against conjure before writing
     if accept {
-        let mut conjure_solutions: Vec<HashMap<Name, Literal>>=
+        let (mut conjure_solutions, mut conjure_stats): (Vec<HashMap<Name, Literal>>, PerformMetric) =
             get_solutions_from_conjure(&format!("{}/{}.{}", path, essence_base, extension))?;
 
         // Change bools to nums in both outputs, as we currently don't convert 0,1 back to

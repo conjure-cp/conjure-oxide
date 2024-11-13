@@ -106,21 +106,27 @@ pub fn get_minion_solutions(model: Model) -> Result<Vec<HashMap<Name, Literal>>,
     Ok((*sols).clone())
 }
 
+//will contain the relevant information from stats.json file
 #[derive(Deserialize)]
-#[serde(rename_all = "PascalCase")]
 pub struct PerformMetric {
-    #[serde(rename = "SolverTotalTime")] 
-    solver_total_time: f64,
+    #[serde(rename = "SavileRowInfo")]
+    savile_row_info: SavileRowInfo
+    status: String,
+}
+
+#[derive(Deserialize)]
+struct SavileRowInfo {
     #[serde(rename = "SavileRowTotalTime")]
-    savile_row_total_time: f64,
+    savile_row_total_time: f32,
     #[serde(rename = "SolverNodes")]
     solver_nodes: u32,
+    #[serde(rename = "SolverTotalTime")]
+    solver_total_time: f32,
 }
 
 #[allow(clippy::unwrap_used)]
 pub fn get_solutions_from_conjure(
     essence_file: &str,
-// ) -> Result<Vec<HashMap<Name,Literal>>,EssenceParseError> {
 ) -> Result<(Vec<HashMap<Name, Literal>>, PerformMetric), EssenceParseError> {
     // this is ran in parallel, and we have no guarantee by rust that invocations to this function
     // don't share the same tmp dir.
