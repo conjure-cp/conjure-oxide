@@ -48,8 +48,8 @@ impl From<bool> for Literal {
 impl Display for Literal {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
-            Literal::Int(i) => write!(f, "Int({})", i),
-            Literal::Bool(b) => write!(f, "Bool({})", b),
+            Literal::Int(i) => write!(f, "{}", i),
+            Literal::Bool(b) => write!(f, "{}", b),
         }
     }
 }
