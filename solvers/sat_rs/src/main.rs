@@ -50,6 +50,16 @@ fn main() {
     // solver.solve();
 }
 
+pub trait inst_solver {
+    fn solve_instance(inst: SatInstance) -> ();
+}
+
+impl inst_solver for Minisat {
+    fn solve_instance(inst: SatInstance) -> () {
+        todo!()
+    }
+}
+
 // #[cfg(test)]
 // #[test]
 // fn test1() {
