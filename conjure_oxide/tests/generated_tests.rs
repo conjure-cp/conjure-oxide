@@ -1,3 +1,6 @@
+use conjure_core::Model;
+use glob::glob;
+use serde_json::json;
 use std::collections::HashMap;
 use std::env;
 use std::error::Error;
@@ -11,9 +14,13 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::RwLock;
+use structured_logger::{json::new_writer, Builder};
 use tracing::{span, trace, Level};
 
-use tracing_subscriber::{filter::EnvFilter, fmt, layer::SubscriberExt, Registry};
+use tracing_appender::non_blocking::WorkerGuard;
+use tracing_subscriber::{
+    filter::EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt, Registry,
+};
 
 use conjure_core::ast::{Constant, Expression, Name};
 use conjure_core::context::Context;
@@ -25,19 +32,17 @@ use conjure_oxide::utils::conjure::{
 };
 use conjure_oxide::utils::testing::save_stats_json;
 use conjure_oxide::utils::testing::{
-    read_minion_solutions_json, read_model_json, read_rule_trace, save_minion_solutions_json,
-    save_model_json,
+    read_minion_solutions_json, read_model_json, save_minion_solutions_json, save_model_json,
 };
 use conjure_oxide::SolverFamily;
 use serde::Deserialize;
 use uniplate::Uniplate;
 
+use pretty_assertions::assert_eq;
 use tracing::Event;
 use tracing_subscriber::fmt::format::Writer;
 use tracing_subscriber::fmt::FormatEvent;
 use tracing_subscriber::registry::LookupSpan;
-
-use pretty_assertions::assert_eq;
 
 #[derive(Deserialize, Default)]
 struct TestConfig {
@@ -45,7 +50,22 @@ struct TestConfig {
 }
 
 fn main() {
-    let file_path = Path::new("/path/to/your/file.txt");
+    let _guard = create_scoped_subscriber("./logs", "test_log");
+
+    // creating a span and log a message
+    let test_span = span!(Level::TRACE, "test_span");
+    let _enter: span::Entered<'_> = test_span.enter();
+    trace!("trace test"); // this will log without the "test_span: " prefix. just a test
+
+    for entry in glob("conjure_oxide/tests/integration/*").expect("Failed to read glob pattern") {
+        match entry {
+            Ok(path) => println!("File: {:?}", path),
+            Err(e) => println!("Error: {:?}", e),
+        }
+    }
+
+    let file_path = Path::new("conjure_oxide/tests/integration/*"); // using relative path
+
     let base_name = file_path.file_stem().and_then(|stem| stem.to_str());
 
     match base_name {
@@ -70,13 +90,14 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
 
     let (subscriber, _guard) = create_scoped_subscriber(path, essence_base);
 
+    // set the subscriber as default
     tracing::subscriber::with_default(subscriber, || {
-        // Create a span for the trace
+        // create a span for the trace
         let test_span = span!(target: "rule_engine", Level::TRACE, "test_span");
         let _enter = test_span.enter();
-        trace!(target: "rule_engine", "trace test");
+        // trace!(target: "rule_engine", "trace test");
 
-        // Execute tests based on verbosity
+        // execute tests based on verbosity
         if verbose {
             #[allow(clippy::unwrap_used)]
             let _guard = GUARD.lock().unwrap();
@@ -85,7 +106,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
             integration_test_inner(path, essence_base, extension)?
         }
 
-        Ok(()) // Indicate success
+        Ok(())
     })
 }
 
@@ -171,12 +192,6 @@ fn integration_test_inner(
             x => println!("Unrecognised extra assert: {}", x),
         };
     }
-    //checking if the rules applied deviate from the expected list and order
-    let expected_rule_trace = read_rule_trace(path, essence_base, "expected")?;
-    let generated_rule_trace = read_rule_trace(path, essence_base, "generated")?;
-
-    //the assertion does not work yet -> TODO create a json representation of the rules
-    //assert_eq!(expected_rule_trace, generated_rule_trace);
 
     let expected_model = read_model_json(path, essence_base, "expected", "rewrite")?;
     if verbose {
@@ -248,7 +263,7 @@ fn integration_test_inner(
 
         assert_eq!(
             username_solutions_json, conjure_solutions_json,
-            "Solutions (left) do not match conjure (right)!"
+            "Solutions do not match conjure!"
         );
     }
 
@@ -310,10 +325,10 @@ fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
     assert!(count <= 1, "assert_vector_operators_have_partially_evaluated: expression {} is not partially evaluated",parent_expr)
 }
 
-// using a custom formatter to ommit the span name in the log
-struct CustomFormatter;
+// using a custom formatter to omit the span name in the log
+struct JsonFormatter;
 
-impl<S, N> FormatEvent<S, N> for CustomFormatter
+impl<S, N> FormatEvent<S, N> for JsonFormatter
 where
     S: tracing::Subscriber + for<'span> LookupSpan<'span>,
     N: for<'a> tracing_subscriber::fmt::FormatFields<'a> + 'static,
@@ -324,34 +339,38 @@ where
         mut writer: Writer<'_>,
         event: &Event<'_>,
     ) -> std::fmt::Result {
-        // using the debug formatter for the event
-        write!(writer, "{:?}\n", event)
+        // convert the event into JSON format
+        let log = json!({
+            "level": event.metadata().level().to_string(),
+            "target": event.metadata().target(),
+            "message": format!("{:?}", event),
+        });
+
+        // write JSON formatted log to file
+        write!(writer, "{}\n", log)
     }
 }
 
-///Creates a thread specific subsriber with a target "rule_engine" that writes trace messages to a test-specific file
 pub fn create_scoped_subscriber(
     path: &str,
     test_name: &str,
-) -> (
-    impl tracing::Subscriber + Send + Sync,
-    tracing_appender::non_blocking::WorkerGuard,
-) {
-    let file = File::create(format!("{path}/{test_name}.generated-rule-trace.txt"))
-        .expect("Unable to create log file");
+) -> (impl tracing::Subscriber + Send + Sync, WorkerGuard) {
+    // Change the file extension to .json for JSON log output
+    let file =
+        File::create(format!("{path}/{test_name}-rules.json")).expect("Unable to create log file");
     let writer = BufWriter::new(file);
     let (non_blocking, guard) = tracing_appender::non_blocking(writer);
 
-    // subscriver setup with the custom event formatter
+    // subscriber setup with the JSON formatter
     let subscriber = Registry::default()
         .with(EnvFilter::new("rule_engine=trace"))
         .with(
             fmt::layer()
                 .with_writer(non_blocking)
-                .event_format(CustomFormatter),
+                .event_format(JsonFormatter),
         );
 
-    // sharing the subscriptor accross mutliple threads by wrapping it in an arc
+    // wrapping the subscriber in an Arc to share across multiple threads
     let subscriber = Arc::new(subscriber) as Arc<dyn tracing::Subscriber + Send + Sync>;
 
     // setting this subscriber as the default
