@@ -106,11 +106,11 @@ pub fn get_minion_solutions(model: Model) -> Result<Vec<HashMap<Name, Literal>>,
     Ok((*sols).clone())
 }
 
-//will contain the relevant information from stats.json file
+//struct(s) for stats.json. contain only relevant information, serde will skip any objects not named
 #[derive(Deserialize)]
 pub struct PerformMetric {
     #[serde(rename = "SavileRowInfo")]
-    savile_row_info: SavileRowInfo
+    savile_row_info: SavileRowInfo,
     status: String,
 }
 
@@ -175,9 +175,11 @@ pub fn get_solutions_from_conjure(
         from_str(&json_str).map_err(|e| EssenceParseError::ConjureSolutionsError(e.to_string()))?;
     json.sort_all_objects();
 
+    //object for stats file
     let mut stats_file = File::open("model000001.solutions.json") 
         .unwrap();
 
+    //read to string and populate PerformanceMetric
     let mut stats_json_str = String::new();
     stats_file.read_to_string(&mut stats_json_str).unwrap();
     let stats: PerformMetric = serde_json::from_str(&stats_json_str).unwrap();
