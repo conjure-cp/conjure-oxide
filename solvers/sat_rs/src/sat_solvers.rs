@@ -1,7 +1,9 @@
+// use std::error::Error;
+
+use anyhow::{Error, Result};
 use rustsat::instances::SatInstance;
+use rustsat::solvers::{Solve, SolverResult};
 use rustsat_minisat::simp::Minisat;
-use rustsat::solvers::SolverResult;
-use anyhow::{anyhow, Result};
 
 pub trait Solver {
     fn solve(&self, instance: &SatInstance) -> Result<SolverResult>;
@@ -16,8 +18,8 @@ impl<SolverType: Solver> SatSolver<SolverType> {
         SatSolver { solver }
     }
 
-    pub fn solve(&self, inst: &SatInstance) -> Result<SolverResult> {
-        self.solver.solve(inst)
+    pub fn solve(&self, inst: SatInstance) -> Result<SolverResult> {
+        self.solver.solve(&inst)
     }
 
     pub fn solver_instance(&self) -> &SolverType {
@@ -26,10 +28,28 @@ impl<SolverType: Solver> SatSolver<SolverType> {
 }
 
 impl Solver for Minisat {
-    fn solve(&self, instance: &SatInstance) -> Result<SolverResult> {
-        self.solve_instance(instance).map_err(|e| anyhow!("Minisat error: {}", e))
+    fn solve(&self, instance: &SatInstance) -> Result<SolverResult, Error> {
+        // let cnf_func = instance.into_cnf();
+        // //let mut solver = Minisat::default();
+        // self.add_cnf(cnf_func.0);
+        let res: Result<SolverResult, Error> = self.solve(instance);
+        res
     }
 }
+
+// pub trait inst_solver {
+//     fn solve_instance(inst: SatInstance) -> ();
+// }
+
+// impl inst_solver for Minisat {
+//     fn solve_instance(&self, inst: SatInstance) -> () {
+//         let cnf_func = inst.into_cnf();
+//         //let mut solver = Minisat::default();
+//         self.add_cnf(cnf_func.0);
+//         let res: Result<SolverResult, Error> = solver.solve();
+//         //let unwrap: SolverResult = res.unwrap();
+//     }
+// }
 
 #[cfg(test)]
 mod tests {
@@ -49,7 +69,7 @@ mod tests {
 
         let solver = Minisat::default();
         let sat_solver = SatSolver::new(solver);
-        let result = sat_solver.solve(&instance).unwrap();
+        let result = sat_solver.solve(instance).unwrap();
 
         assert_eq!(result, SolverResult::Sat);
     }
@@ -66,12 +86,11 @@ mod tests {
 
         let solver = Minisat::default();
         let sat_solver = SatSolver::new(solver);
-        let result = sat_solver.solve(&instance).unwrap();
+        let result = sat_solver.solve(instance).unwrap();
 
         assert_eq!(result, SolverResult::Unsat);
     }
 }
-
 
 // use rustsat::instances::SatInstance;
 // use rustsat_minisat;

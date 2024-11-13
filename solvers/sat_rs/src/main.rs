@@ -3,7 +3,8 @@ use rustsat::solvers::SolverResult;
 use sat_rs::sat_solvers::SatSolver;
 use sat_rs::solver_utils::{initialize_solver, solve_problem};
 
-fn main() -> Result<(), Error> {
+// fn main() -> Result<(), Error> {
+fn main() -> () {
     let v1: Vec<i32> = vec![1, 2, -3];
     let v2: Vec<i32> = vec![-1, 3];
     let v3: Vec<i32> = vec![2, -3];
@@ -16,29 +17,23 @@ fn main() -> Result<(), Error> {
     let (sat_solver, inst) = initialize_solver(&vec_problem)?;
 
     // Solves the Problem
-    let res: SolverResult = solve_problem(&sat_solver, &inst)?;
+    let res: Result<SolverResult, Error> = solve_problem(&sat_solver, inst);
+    // let res: Result<SolverResult> = solve_problem(&sat_solver, inst)?;
 
     // Solver Result
-    match res {
-        SolverResult::Sat => {
-            println!("SATISFIABLE");
-        }
-        SolverResult::Unsat => println!("UNSATISFIABLE"),
-    }
+    // match res {
+    //     SolverResult::Sat => {
+    //         println!("SATISFIABLE");
+    //     }
+    //     SolverResult::Unsat => println!("UNSATISFIABLE"),
+    // }
+    // Ok(())
 
-    Ok(())
+    match res {
+        Ok
+    }
 }
 
-// mod sat_solvers;
-// mod sat_tree;
-
-// use anyhow::Error;
-
-// use rustsat::instances::{Cnf, SatInstance};
-// use rustsat::solvers::{Solve, SolverResult};
-// // use rustsat::solvers::minisat::MinisatSolver;
-// use rustsat_minisat::core::Minisat;
-// // use rustsat_minisat::core::{Minisat, Solve};
 // fn main() {
 //     /*
 //      * Problem: (t or t) and (f or t) and (f or f)
@@ -77,19 +72,9 @@ fn main() -> Result<(), Error> {
 //     //     Err(e) => println!("Error during solving: {:?}", e),
 //     // }
 
-    // // or perhaps
-    // solver.solve();
-}
-
-pub trait inst_solver {
-    fn solve_instance(inst: SatInstance) -> ();
-}
-
-impl inst_solver for Minisat {
-    fn solve_instance(inst: SatInstance) -> () {
-        todo!()
-    }
-}
+// // or perhaps
+// solver.solve();
+// }
 
 // // #[cfg(test)]
 // // #[test]
@@ -122,4 +107,3 @@ impl inst_solver for Minisat {
 // //     // This can for example be proved by resolution.
 // //     assert_eq!(unsat_result, None);
 // // }
-
