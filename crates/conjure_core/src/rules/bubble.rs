@@ -80,8 +80,8 @@ fn div_to_bubble(expr: &Expression, _: &Model) -> ApplicationResult {
             return Err(RuleNotApplicable);
         }
 
-        // only do one bubble at a time
-        if matches!(**a, Expression::Bubble(_, _, _)) || matches!(**b, Expression::Bubble(_, _, _))
+        // either do bubble / bubble or not bubble / not bubble
+        if matches!(**a, Expression::Bubble(_, _, _)) != matches!(**b, Expression::Bubble(_, _, _))
         {
             return Err(RuleNotApplicable);
         }
