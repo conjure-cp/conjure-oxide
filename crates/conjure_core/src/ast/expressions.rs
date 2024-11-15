@@ -220,6 +220,7 @@ impl Expression {
         // TODO: there will be more false cases but we are being conservative
         match self {
             Expression::FactorE(_, _) => false,
+            Expression::SafeDiv(_,_,_) => false,
             _ => true,
         }
     }

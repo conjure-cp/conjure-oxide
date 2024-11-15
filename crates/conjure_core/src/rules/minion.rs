@@ -2,6 +2,7 @@
 /*        Rules for translating to Minion-supported constraints         */
 /************************************************************************/
 
+use crate::rules::extra_check;
 use crate::metadata::Metadata;
 use crate::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
@@ -543,8 +544,15 @@ fn not_constraint_to_reify(expr: &Expr, _: &Model) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
+
     let Not(m, e) = expr else {
         unreachable!();
+    };
+
+    extra_check!{
+        if !is_flat(e) {
+            return Err(RuleNotApplicable);
+        }
     };
 
     Ok(Reduction::pure(Reify(

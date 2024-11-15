@@ -78,14 +78,19 @@ pub fn exprs_to_conjunction(exprs: &Vec<Expr>) -> Option<Expr> {
 pub fn to_aux_var(expr: &Expr, m: &Model) -> Option<ToAuxVarOutput> {
     let mut m = m.clone();
 
-
-    // No need to put a factor in an aux_var
-    if is_factor(expr) {
+    // Cannot add new aux-var for an undefined expression, as its context matters.
+    //
+    // In particular, if we have a Not(SomeOp(UnsafeDiv(x,y),z)), we could post a =aux
+    // UnsafeDiv(x,y) to the top level. However, the undefinedness semantics of the UnsafeDiv
+    // depends on the Not(..), which is lost here.
+    //
+    // I.e. Eq(UnsafeDiv(x,y),10) ~> Eq(SafeDiv(x,y),10), y!=0, but Not(Eq(UnsafeDiv(x,y),10))
+    if expr.can_be_undefined() {
         return None;
     }
 
-    // Anything that should be bubbled, bubble
-    if (expr.can_be_undefined()) {
+    // No need to put a factor in an aux_var
+    if is_factor(expr) {
         return None;
     }
 
