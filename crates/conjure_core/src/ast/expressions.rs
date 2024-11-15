@@ -185,12 +185,34 @@ impl Expression {
             Expression::Max(_, exprs) => {
                 expr_vec_to_domain_i32(exprs, |x, y| Some(if x > y { x } else { y }), vars)
             }
-            Expression::UnsafeDiv(_, a, b) | Expression::SafeDiv(_, a, b) => {
+            Expression::UnsafeDiv(_, a, b)  => {
                 a.domain_of(vars)?.apply_i32(
                     |x, y| if y != 0 { Some(x / y) } else { None },
                     &b.domain_of(vars)?,
                 )
             }
+            Expression::SafeDiv(_, a, b) => {
+                let domain = a.domain_of(vars)?.apply_i32(
+                    |x, y| if y != 0 { Some(x / y) } else { None },
+                    &b.domain_of(vars)?,
+                );
+                match domain {
+                    Some(Domain::IntDomain(v)) if v.len() == 1 => {
+                        let range = match v[0] {
+                            Range::Single(a) if a > 0 => Range::Bounded(0, a),
+                            Range::Single(a) if a < 0 => Range::Bounded(a, 0),
+                            Range::Single(0) => Range::Single(0),
+                            Range::Bounded(a, b) if a < 0 => Range::Bounded(a, b),
+                            Range::Bounded(_, b) => Range::Bounded(0, b),
+                            _ => unreachable!(),
+                        };
+
+                        Some(Domain::IntDomain(vec![range]))
+                    }
+                    _ => None,
+                }
+            }
+
             Expression::Bubble(_, _, _) => None,
             Expression::AuxDeclaration(_, _, _) => Some(Domain::BoolDomain),
             Expression::And(_, _) => Some(Domain::BoolDomain),

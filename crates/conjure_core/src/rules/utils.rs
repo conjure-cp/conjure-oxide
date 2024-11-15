@@ -1,3 +1,4 @@
+use tracing::instrument;
 use uniplate::{Biplate, Uniplate};
 
 use crate::{
@@ -75,6 +76,7 @@ pub fn exprs_to_conjunction(exprs: &Vec<Expr>) -> Option<Expr> {
 ///     + A new top level expression, containing the declaration of the auxiliary variable.
 ///     + A reference to the auxiliary variable to replace the existing expression with.
 ///
+#[instrument]
 pub fn to_aux_var(expr: &Expr, m: &Model) -> Option<ToAuxVarOutput> {
     let mut m = m.clone();
 
@@ -91,7 +93,7 @@ pub fn to_aux_var(expr: &Expr, m: &Model) -> Option<ToAuxVarOutput> {
     let name = m.gensym();
 
     let Some(domain) = expr.domain_of(&m.variables) else {
-        //bug!("rules::utils::to_aux_var: could not find domain of {expr}");
+        tracing::trace!("could not find domain of {}",expr);;
         return None;
     };
 

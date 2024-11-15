@@ -470,6 +470,11 @@ fn distribute_or_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
  */
 #[register_rule(("Base", 8400))]
 fn distribute_not_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
+    for child in expr.universe() {
+        if matches!(child, Expr::UnsafeDiv(_, _, _) | Expr::Bubble(_, _, _)) {
+            return Err(RuleNotApplicable);
+        }
+    }
     match expr {
         Not(_, contents) => match contents.as_ref() {
             And(metadata, exprs) => {

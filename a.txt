@@ -1,0 +1,224 @@
+warning: /Users/niklas/root/src/conjure-oxide/pr-flatten-div/crates/enum_compatability_macro/Cargo.toml: `proc_macro` is deprecated in favor of `proc-macro` and will not work in the 2024 edition
+(in the `enum_compatability_macro` library target)
+warning: /Users/niklas/root/src/conjure-oxide/pr-flatten-div/crates/conjure_macros/Cargo.toml: `proc_macro` is deprecated in favor of `proc-macro` and will not work in the 2024 edition
+(in the `conjure_macros` library target)
+warning: unused import: `HashSet`
+ --> crates/conjure_core/src/rule_engine/rewrite.rs:1:33
+  |
+1 | use std::collections::{HashMap, HashSet};
+  |                                 ^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` on by default
+
+warning: unused import: `std::collections::HashSet`
+ --> crates/conjure_core/src/rule_engine/rule.rs:1:5
+  |
+1 | use std::collections::HashSet;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `Name`
+ --> crates/conjure_core/src/rule_engine/rule.rs:7:30
+  |
+7 | use crate::ast::{Expression, Name, SymbolTable};
+  |                              ^^^^
+
+warning: unused imports: `DecisionVariable`, `SymbolTable`, and `is_factor`
+  --> crates/conjure_core/src/rules/minion.rs:12:9
+   |
+12 |         DecisionVariable, Domain,
+   |         ^^^^^^^^^^^^^^^^
+...
+16 |         SymbolTable,
+   |         ^^^^^^^^^^^
+...
+19 |     rules::utils::{exprs_to_conjunction, is_factor},
+   |                                          ^^^^^^^^^
+
+warning: unused import: `super::utils::ToAuxVarOutput`
+ --> crates/conjure_core/src/rules/partial_eval.rs:9:5
+  |
+9 | use super::utils::ToAuxVarOutput;
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: unused import: `bug`
+ --> crates/conjure_core/src/rules/utils.rs:5:5
+  |
+5 |     bug,
+  |     ^^^
+
+warning: unnecessary parentheses around `if` condition
+  --> crates/conjure_core/src/rules/utils.rs:87:8
+   |
+87 |     if (expr.can_be_undefined()) {
+   |        ^                       ^
+   |
+   = note: `#[warn(unused_parens)]` on by default
+help: remove these parentheses
+   |
+87 -     if (expr.can_be_undefined()) {
+87 +     if expr.can_be_undefined() {
+   |
+
+warning: unused import: `Borrow`
+ --> crates/conjure_core/src/model.rs:1:19
+  |
+1 | use std::borrow::{Borrow, BorrowMut};
+  |                   ^^^^^^
+
+warning: unused import: `BorrowMut`
+ --> crates/conjure_core/src/model.rs:1:27
+  |
+1 | use std::borrow::{Borrow, BorrowMut};
+  |                           ^^^^^^^^^
+
+warning: unreachable pattern
+   --> crates/conjure_core/src/ast/expressions.rs:194:13
+    |
+188 |             Expression::UnsafeDiv(_, a, b) | Expression::SafeDiv(_, a, b) => {
+    |             ------------------------------------------------------------- matches all the relevant values
+...
+194 |             Expression::SafeDiv(_, a, b) => {
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ no value can reach this
+    |
+    = note: `#[warn(unreachable_patterns)]` on by default
+
+warning: unused variable: `a`
+   --> crates/conjure_core/src/ast/expressions.rs:206:44
+    |
+206 | ...                   Range::Bounded(a, b) => Range::Bounded(0, b),
+    |                                      ^ help: if this is intentional, prefix it with an underscore: `_a`
+    |
+    = note: `#[warn(unused_variables)]` on by default
+
+warning: unreachable pattern
+  --> crates/conjure_core/src/rules/base.rs:40:15
+   |
+37 |         FactorE(_, Reference(_,))
+   |         ------------------------- matches all the relevant values
+...
+40 |             | FactorE(_, Reference(_,))
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^ no value can reach this
+
+warning: unreachable pattern
+  --> crates/conjure_core/src/rules/base.rs:41:15
+   |
+38 |             | FactorE(_, Literal(_))
+   |               ---------------------- matches all the relevant values
+...
+41 |             | FactorE(_, Literal(_))
+   |               ^^^^^^^^^^^^^^^^^^^^^^ no value can reach this
+
+warning: unreachable pattern
+  --> crates/conjure_core/src/rules/base.rs:42:15
+   |
+39 |             | WatchedLiteral(_, _, _)
+   |               ----------------------- matches all the relevant values
+...
+42 |             | WatchedLiteral(_, _, _)
+   |               ^^^^^^^^^^^^^^^^^^^^^^^ no value can reach this
+
+warning: unused variable: `c`
+  --> crates/conjure_core/src/rules/constant.rs:28:44
+   |
+28 |         Expr::FactorE(_, Factor::Reference(c)) => None,
+   |                                            ^ help: if this is intentional, prefix it with an underscore: `_c`
+
+warning: field `aux_domain` is never read
+   --> crates/conjure_core/src/rules/utils.rs:113:5
+    |
+110 | pub struct ToAuxVarOutput {
+    |            -------------- field in this struct
+...
+113 |     aux_domain: Domain,
+    |     ^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` on by default
+
+warning: `conjure_core` (lib) generated 16 warnings (run `cargo fix --lib -p conjure_core` to apply 7 suggestions)
+   Compiling conjure_oxide v0.0.1 (/Users/niklas/root/src/conjure-oxide/pr-flatten-div/conjure_oxide)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.86s
+     Running `target/debug/conjure_oxide --verbose conjure_oxide/tests/integration/minion_constraints/div_undefzero-05-nested-noteq/input.eprime`
+  [2m2024-11-15T22:23:16.539296Z[0m [32m INFO[0m [1;32mfile[0m[32m: [32mRule sets: Constant, Bubble, Minion, Base[0m
+    [2;3mat[0m conjure_oxide/src/main.rs:185
+
+  [2m2024-11-15T22:23:16.539915Z[0m [32m INFO[0m [1;32mfile[0m[32m: [32mRules and priorities: apply_eval_constant: 9001, partial_evaluator: 9000, bubble_up: 8900, expand_bubble: 8900, flatten_nested_sum: 8800, negated_eq_to_neq: 8800, negated_neq_to_eq: 8800, remove_empty_expression: 8800, remove_trivial_and: 8800, remove_trivial_or: 8800, unwrap_nested_and: 8800, unwrap_nested_or: 8800, unwrap_sum: 8800, distribute_not_over_and: 8400, distribute_not_over_or: 8400, distribute_or_over_and: 8400, remove_double_negation: 8400, div_to_bubble: 6000, flatten_binop: 4400, flatten_eq: 4400, flatten_sum_geq: 4400, flatten_vecop: 4400, sum_eq_to_sumeq: 4400, sum_leq_to_sumleq: 4400, sumeq_to_minion: 4400, x_leq_y_plus_k_to_ineq: 4400, introduce_diveq: 4200, boolean_literal_to_wliteral: 4100, geq_to_ineq: 4100, gt_to_ineq: 4100, leq_to_ineq: 4100, lt_to_ineq: 4100, not_constraint_to_reify: 4090, min_to_var: 2000, evaluate_constant_not: 100, max_to_var: 100, remove_constants_from_and: 100, remove_constants_from_or: 100[0m
+    [2;3mat[0m conjure_oxide/src/main.rs:194
+
+  [2m2024-11-15T22:23:16.539962Z[0m [32m INFO[0m [1;32mfile[0m[32m: [32mInput file: conjure_oxide/tests/integration/minion_constraints/div_undefzero-05-nested-noteq/input.eprime[0m
+    [2;3mat[0m conjure_oxide/src/main.rs:201
+
+  [2m2024-11-15T22:23:16.591291Z[0m [32m INFO[0m [1;32mconjure_oxide[0m[32m: [32mextra-rule-checks: enabled[0m
+    [2;3mat[0m conjure_oxide/src/main.rs:237
+
+  [2m2024-11-15T22:23:16.591913Z[0m [32m INFO[0m [1;32mfile[0m[32m: [32mInitial model: {"constraints":{"Not":[{"clean":false,"etype":null},{"Eq":[{"clean":false,"etype":null},{"UnsafeDiv":[{"clean":false,"etype":null},{"FactorE":[{"clean":false,"etype":null},{"Reference":{"UserName":"x"}}]},{"UnsafeDiv":[{"clean":false,"etype":null},{"FactorE":[{"clean":false,"etype":null},{"Reference":{"UserName":"y"}}]},{"FactorE":[{"clean":false,"etype":null},{"Reference":{"UserName":"z"}}]}]}]},{"FactorE":[{"clean":false,"etype":null},{"Literal":{"Int":10}}]}]}]},"next_var":0,"variables":[[{"UserName":"x"},{"domain":{"IntDomain":[{"Bounded":[5,20]}]}}],[{"UserName":"y"},{"domain":{"IntDomain":[{"Bounded":[0,5]}]}}],[{"UserName":"z"},{"domain":{"IntDomain":[{"Bounded":[0,6]}]}}]]}[0m
+    [2;3mat[0m conjure_oxide/src/main.rs:244
+
+  [2m2024-11-15T22:23:16.592066Z[0m [32m INFO[0m [1;32mfile[0m[32m: [32mRewriting model...[0m
+    [2;3mat[0m conjure_oxide/src/main.rs:246
+
+  [2m2024-11-15T22:23:16.599623Z[0m [32m INFO[0m [1;32mconjure_core::rule_engine::rewrite[0m[32m: [32mRule applicable: div_to_bubble ([("Bubble", 6000)]), to expression: UnsafeDiv(y, z), resulting in: {SafeDiv(y, z) @ (z != 0)}, [1;32mnew_top[0m[32m: And([])[0m
+    [2;3mat[0m crates/conjure_core/src/rule_engine/rewrite.rs:376
+
+  [2m2024-11-15T22:23:16.604789Z[0m [32m INFO[0m [1;32mconjure_core::rule_engine::rewrite[0m[32m: [32mRule applicable: bubble_up ([("Bubble", 8900)]), to expression: UnsafeDiv(x, {SafeDiv(y, z) @ (z != 0)}), resulting in: {UnsafeDiv(x, SafeDiv(y, z)) @ And([(z != 0)])}, [1;32mnew_top[0m[32m: And([])[0m
+    [2;3mat[0m crates/conjure_core/src/rule_engine/rewrite.rs:376
+
+  [2m2024-11-15T22:23:16.608637Z[0m [32m INFO[0m [1;32mconjure_core::rule_engine::rewrite[0m[32m: [32mRule applicable: bubble_up ([("Bubble", 8900)]), to expression: ({UnsafeDiv(x, SafeDiv(y, z)) @ And([(z != 0)])} = 10), resulting in: {(UnsafeDiv(x, SafeDiv(y, z)) = 10) @ And([And([(z != 0)])])}, [1;32mnew_top[0m[32m: And([])[0m
+    [2;3mat[0m crates/conjure_core/src/rule_engine/rewrite.rs:376
+
+  [2m2024-11-15T22:23:16.612509Z[0m [32m INFO[0m [1;32mconjure_core::rule_engine::rewrite[0m[32m: [32mRule applicable: expand_bubble ([("Bubble", 8900)]), to expression: {(UnsafeDiv(x, SafeDiv(y, z)) = 10) @ And([And([(z != 0)])])}, resulting in: And([(UnsafeDiv(x, SafeDiv(y, z)) = 10), And([And([(z != 0)])])]), [1;32mnew_top[0m[32m: And([])[0m
+    [2;3mat[0m crates/conjure_core/src/rule_engine/rewrite.rs:376
+
+  [2m2024-11-15T22:23:16.616389Z[0m [32m INFO[0m [1;32mconjure_core::rule_engine::rewrite[0m[32m: [32mRule applicable: unwrap_nested_and ([("Base", 8800)]), to expression: And([(UnsafeDiv(x, SafeDiv(y, z)) = 10), And([And([(z != 0)])])]), resulting in: And([(UnsafeDiv(x, SafeDiv(y, z)) = 10), And([(z != 0)])]), [1;32mnew_top[0m[32m: And([])[0m
+    [2;3mat[0m crates/conjure_core/src/rule_engine/rewrite.rs:376
+
+  [2m2024-11-15T22:23:16.619742Z[0m [32m INFO[0m [1;32mconjure_core::rule_engine::rewrite[0m[32m: [32mRule applicable: unwrap_nested_and ([("Base", 8800)]), to expression: And([(UnsafeDiv(x, SafeDiv(y, z)) = 10), And([(z != 0)])]), resulting in: And([(UnsafeDiv(x, SafeDiv(y, z)) = 10), (z != 0)]), [1;32mnew_top[0m[32m: And([])[0m
+    [2;3mat[0m crates/conjure_core/src/rule_engine/rewrite.rs:376
+
+  [2m2024-11-15T22:23:16.625129Z[0m [32m INFO[0m [1;32mconjure_core::rule_engine::rewrite[0m[32m: [32mRule applicable: div_to_bubble ([("Bubble", 6000)]), to expression: UnsafeDiv(x, SafeDiv(y, z)), resulting in: {SafeDiv(x, SafeDiv(y, z)) @ (SafeDiv(y, z) != 0)}, [1;32mnew_top[0m[32m: And([])[0m
+    [2;3mat[0m crates/conjure_core/src/rule_engine/rewrite.rs:376
+
+  [2m2024-11-15T22:23:16.630500Z[0m [32m INFO[0m [1;32mconjure_core::rule_engine::rewrite[0m[32m: [32mRule applicable: bubble_up ([("Bubble", 8900)]), to expression: ({SafeDiv(x, SafeDiv(y, z)) @ (SafeDiv(y, z) != 0)} = 10), resulting in: {(SafeDiv(x, SafeDiv(y, z)) = 10) @ And([(SafeDiv(y, z) != 0)])}, [1;32mnew_top[0m[32m: And([])[0m
+    [2;3mat[0m crates/conjure_core/src/rule_engine/rewrite.rs:376
+
+  [2m2024-11-15T22:23:16.636019Z[0m [32m INFO[0m [1;32mconjure_core::rule_engine::rewrite[0m[32m: [32mRule applicable: expand_bubble ([("Bubble", 8900)]), to expression: {(SafeDiv(x, SafeDiv(y, z)) = 10) @ And([(SafeDiv(y, z) != 0)])}, resulting in: And([(SafeDiv(x, SafeDiv(y, z)) = 10), And([(SafeDiv(y, z) != 0)])]), [1;32mnew_top[0m[32m: And([])[0m
+    [2;3mat[0m crates/conjure_core/src/rule_engine/rewrite.rs:376
+
+  [2m2024-11-15T22:23:16.638109Z[0m [32m INFO[0m [1;32mconjure_core::rule_engine::rewrite[0m[32m: [32mRule applicable: distribute_not_over_and ([("Base", 8400)]), to expression: Not(And([And([(SafeDiv(x, SafeDiv(y, z)) = 10), And([(SafeDiv(y, z) != 0)])]), (z != 0)])), resulting in: Or([Not(And([(SafeDiv(x, SafeDiv(y, z)) = 10), And([(SafeDiv(y, z) != 0)])])), Not((z != 0))]), [1;32mnew_top[0m[32m: And([])[0m
+    [2;3mat[0m crates/conjure_core/src/rule_engine/rewrite.rs:376
+
+  [2m2024-11-15T22:23:16.641912Z[0m [32m INFO[0m [1;32mconjure_core::rule_engine::rewrite[0m[32m: [32mRule applicable: distribute_not_over_and ([("Base", 8400)]), to expression: Not(And([(SafeDiv(x, SafeDiv(y, z)) = 10), And([(SafeDiv(y, z) != 0)])])), resulting in: Or([Not((SafeDiv(x, SafeDiv(y, z)) = 10)), Not(And([(SafeDiv(y, z) != 0)]))]), [1;32mnew_top[0m[32m: And([])[0m
+    [2;3mat[0m crates/conjure_core/src/rule_engine/rewrite.rs:376
+
+  [2m2024-11-15T22:23:16.644006Z[0m [32m INFO[0m [1;32mconjure_core::rule_engine::rewrite[0m[32m: [32mRule applicable: unwrap_nested_or ([("Base", 8800)]), to expression: Or([Or([Not((SafeDiv(x, SafeDiv(y, z)) = 10)), Not(And([(SafeDiv(y, z) != 0)]))]), Not((z != 0))]), resulting in: Or([Not((SafeDiv(x, SafeDiv(y, z)) = 10)), Not(And([(SafeDiv(y, z) != 0)])), Not((z != 0))]), [1;32mnew_top[0m[32m: And([])[0m
+    [2;3mat[0m crates/conjure_core/src/rule_engine/rewrite.rs:376
+
+  [2m2024-11-15T22:23:16.647198Z[0m [32m INFO[0m [1;32mconjure_core::rule_engine::rewrite[0m[32m: [32mRule applicable: negated_eq_to_neq ([("Base", 8800)]), to expression: Not((SafeDiv(x, SafeDiv(y, z)) = 10)), resulting in: (SafeDiv(x, SafeDiv(y, z)) != 10), [1;32mnew_top[0m[32m: And([])[0m
+    [2;3mat[0m crates/conjure_core/src/rule_engine/rewrite.rs:376
+
+  [2m2024-11-15T22:23:16.650290Z[0m [32m INFO[0m [1;32mconjure_core::rule_engine::rewrite[0m[32m: [32mRule applicable: flatten_binop ([("Minion", 4400)]), to expression: (SafeDiv(x, SafeDiv(y, z)) != 10), resulting in: (__0 != 10), [1;32mnew_top[0m[32m: __0 =aux SafeDiv(x, SafeDiv(y, z))[0m
+    [2;3mat[0m crates/conjure_core/src/rule_engine/rewrite.rs:376
+
+  [2m2024-11-15T22:23:16.668435Z[0m [32m INFO[0m [1;32mconjure_core::rule_engine::rewrite[0m[32m: [32mRule applicable: distribute_not_over_and ([("Base", 8400)]), to expression: Not(And([(SafeDiv(y, z) != 0)])), resulting in: Not((SafeDiv(y, z) != 0)), [1;32mnew_top[0m[32m: And([])[0m
+    [2;3mat[0m crates/conjure_core/src/rule_engine/rewrite.rs:376
+
+  [2m2024-11-15T22:23:16.677236Z[0m [32m INFO[0m [1;32mconjure_core::rule_engine::rewrite[0m[32m: [32mRule applicable: negated_neq_to_eq ([("Base", 8800)]), to expression: Not((SafeDiv(y, z) != 0)), resulting in: (SafeDiv(y, z) = 0), [1;32mnew_top[0m[32m: And([])[0m
+    [2;3mat[0m crates/conjure_core/src/rule_engine/rewrite.rs:376
+
+  [2m2024-11-15T22:23:16.684519Z[0m [32m INFO[0m [1;32mconjure_core::rule_engine::rewrite[0m[32m: [32mRule applicable: introduce_diveq ([("Minion", 4200)]), to expression: (SafeDiv(y, z) = 0), resulting in: DivEq(y, z, 0), [1;32mnew_top[0m[32m: And([])[0m
+    [2;3mat[0m crates/conjure_core/src/rule_engine/rewrite.rs:376
+
+  [2m2024-11-15T22:23:16.692462Z[0m [33m WARN[0m [1;33mconjure_core::rule_engine::rewrite[0m[33m: [33mMultiple rules of different priorities are applicable to expression Not(Metadata { clean: false, etype: None }, Neq(Metadata { clean: false, etype: None }, FactorE(Metadata { clean: false, etype: None }, Reference(UserName("z"))), FactorE(Metadata { clean: false, etype: None }, Literal(Int(0))))) 
+ resulting in expression: Eq(Metadata { clean: false, etype: None }, FactorE(Metadata { clean: false, etype: None }, Reference(UserName("z"))), FactorE(Metadata { clean: false, etype: None }, Literal(Int(0))))
+        
+ Rules[Rule { name: "negated_neq_to_eq", application: 0x102c86fb0, rule_sets: [("Base", 8800)] }, Rule { name: "not_constraint_to_reify", application: 0x102c8cb78, rule_sets: [("Minion", 4090)] }][0m
+    [2;3mat[0m crates/conjure_core/src/rule_engine/rewrite.rs:434
+
+  [2m2024-11-15T22:23:16.692506Z[0m [32m INFO[0m [1;32mconjure_core::rule_engine::rewrite[0m[32m: [32mRule applicable: negated_neq_to_eq ([("Base", 8800)]), to expression: Not((z != 0)), resulting in: (z = 0), [1;32mnew_top[0m[32m: And([])[0m
+    [2;3mat[0m crates/conjure_core/src/rule_engine/rewrite.rs:376
+
+  [2m2024-11-15T22:23:16.702118Z[0m [33m WARN[0m [1;33mconjure_core::rules::constant[0m[33m: [33mUnimplemented constant eval, [1;33mexpr[0m[33m: __0 =aux SafeDiv(x, SafeDiv(y, z))[0m
+    [2;3mat[0m crates/conjure_core/src/rules/constant.rs:84
+
+  [2m2024-11-15T22:23:16.704414Z[0m [32m INFO[0m [1;32mconjure_core::rule_engine::rewrite[0m[32m: [32mRule applicable: flatten_binop ([("Minion", 4400)]), to expression: SafeDiv(x, SafeDiv(y, z)), resulting in: SafeDiv(x, __1), [1;32mnew_top[0m[32m: __1 =aux SafeDiv(y, z)[0m
+    [2;3mat[0m crates/conjure_core/src/rule_engine/rewrite.rs:376
+
