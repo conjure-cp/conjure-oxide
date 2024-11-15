@@ -302,7 +302,8 @@ fn apply_all_rules<'a>(
     for rule in rules {
         match rule.apply(expression, model) {
             Ok(red) => {
-                log::info!(
+                tracing::info!(
+                    new_top=%red.new_top,
                     "Rule applicable: {} ({:?}), to expression: {}, resulting in: {}",
                     rule.name,
                     rule.rule_sets,

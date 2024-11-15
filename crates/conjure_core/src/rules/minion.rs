@@ -101,7 +101,7 @@ fn flatten_binop(expr: &Expr, model: &Model) -> ApplicationResult {
         bug!("rules::minion::flatten_binop : new_tops could be combined with And!")
     });
 
-    Ok(Reduction::new(new_top, expr, model.variables))
+    Ok(Reduction::new(expr, new_top, model.variables))
 }
 
 #[register_rule(("Minion", 4400))]
