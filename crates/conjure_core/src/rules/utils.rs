@@ -78,7 +78,6 @@ pub fn exprs_to_conjunction(exprs: &Vec<Expr>) -> Option<Expr> {
 pub fn to_aux_var(expr: &Expr, m: &Model) -> Option<ToAuxVarOutput> {
     let mut m = m.clone();
 
-
     // No need to put a factor in an aux_var
     if is_factor(expr) {
         return None;
