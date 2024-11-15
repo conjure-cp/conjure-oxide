@@ -185,30 +185,23 @@ impl Expression {
             Expression::Max(_, exprs) => {
                 expr_vec_to_domain_i32(exprs, |x, y| Some(if x > y { x } else { y }), vars)
             }
-            Expression::UnsafeDiv(_, a, b)  => {
-                a.domain_of(vars)?.apply_i32(
-                    |x, y| if y != 0 { Some(x / y) } else { None },
-                    &b.domain_of(vars)?,
-                )
-            }
+            Expression::UnsafeDiv(_, a, b) => a.domain_of(vars)?.apply_i32(
+                |x, y| if y != 0 { Some(x / y) } else { None },
+                &b.domain_of(vars)?,
+            ),
             Expression::SafeDiv(_, a, b) => {
                 let domain = a.domain_of(vars)?.apply_i32(
                     |x, y| if y != 0 { Some(x / y) } else { None },
                     &b.domain_of(vars)?,
                 );
-                match domain {
-                    Some(Domain::IntDomain(v)) if v.len() == 1 => {
-                        let range = match v[0] {
-                            Range::Single(a) if a > 0 => Range::Bounded(0, a),
-                            Range::Single(a) if a < 0 => Range::Bounded(a, 0),
-                            Range::Single(0) => Range::Single(0),
-                            Range::Bounded(a, b) if a < 0 => Range::Bounded(a, b),
-                            Range::Bounded(_, b) => Range::Bounded(0, b),
-                            _ => unreachable!(),
-                        };
 
-                        Some(Domain::IntDomain(vec![range]))
+                match domain {
+                    Some(Domain::IntDomain(ranges)) => {
+                        let mut ranges = ranges;
+                        ranges.push(Range::Single(0));
+                        Some(Domain::IntDomain(ranges))
                     }
+                    None => Some(Domain::IntDomain(vec![Range::Single(0)])),
                     _ => None,
                 }
             }
