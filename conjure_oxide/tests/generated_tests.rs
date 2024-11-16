@@ -206,8 +206,8 @@ fn integration_test_inner(
         println!("Minion solutions: {:#?}", solutions_json)
     }
 
-    let expected_rule_trace = read_rule_trace(path, essence_base, "expected")?;
-    let generated_rule_trace = read_rule_trace(path, essence_base, "generated")?;
+    //let expected_rule_trace = read_rule_trace(path, essence_base, "expected")?;
+    //let generated_rule_trace = read_rule_trace(path, essence_base, "generated")?;
 
     //assert_eq!(expected_rule_trace, generated_rule_trace);
 

@@ -5,12 +5,10 @@ use std::io::stdout;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::exit;
-use std::sync::Arc;
 
 use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
-use conjure_oxide::defaults::get_default_rule_sets;
 use schemars::schema_for;
 use serde_json::json;
 use serde_json::to_string_pretty;
