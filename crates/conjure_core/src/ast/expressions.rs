@@ -11,6 +11,7 @@ use crate::ast::literals::Literal;
 use crate::ast::symbol_table::{Name, SymbolTable};
 use crate::ast::Factor;
 use crate::ast::ReturnType;
+use crate::bug;
 use crate::metadata::Metadata;
 
 use super::{Domain, Range};
@@ -98,8 +99,9 @@ pub enum Expression {
     #[compatible(Minion)]
     SumLeq(Metadata, Vec<Expression>, Box<Expression>),
 
+    /// `a / b = c`
     #[compatible(Minion)]
-    DivEq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
+    DivEq(Metadata, Factor, Factor, Factor),
 
     #[compatible(Minion)]
     Ineq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
@@ -183,13 +185,51 @@ impl Expression {
             Expression::Max(_, exprs) => {
                 expr_vec_to_domain_i32(exprs, |x, y| Some(if x > y { x } else { y }), vars)
             }
-            Expression::UnsafeDiv(_, a, b) | Expression::SafeDiv(_, a, b) => {
-                a.domain_of(vars)?.apply_i32(
+            Expression::UnsafeDiv(_, a, b) => a.domain_of(vars)?.apply_i32(
+                |x, y| if y != 0 { Some(x / y) } else { None },
+                &b.domain_of(vars)?,
+            ),
+            Expression::SafeDiv(_, a, b) => {
+                let domain = a.domain_of(vars)?.apply_i32(
                     |x, y| if y != 0 { Some(x / y) } else { None },
                     &b.domain_of(vars)?,
-                )
+                );
+
+                match domain {
+                    Some(Domain::IntDomain(ranges)) => {
+                        let mut ranges = ranges;
+                        ranges.push(Range::Single(0));
+                        Some(Domain::IntDomain(ranges))
+                    }
+                    None => Some(Domain::IntDomain(vec![Range::Single(0)])),
+                    _ => None,
+                }
             }
-            _ => todo!("Calculate domain of {:?}", self),
+            Expression::SafeDiv(_, a, b) => {
+                let domain = a.domain_of(vars)?.apply_i32(
+                    |x, y| if y != 0 { Some(x / y) } else { None },
+                    &b.domain_of(vars)?,
+                );
+                match domain {
+                    Some(Domain::IntDomain(v)) if v.len() == 1 => {
+                        let range = match v[0] {
+                            Range::Single(a) if a > 0 => Range::Bounded(0, a),
+                            Range::Single(a) if a < 0 => Range::Bounded(a, 0),
+                            Range::Single(0) => Range::Single(0),
+                            Range::Bounded(a, b) if a < 0 => Range::Bounded(a, b),
+                            Range::Bounded(_, b) => Range::Bounded(0, b),
+                            _ => unreachable!(),
+                        };
+
+                        Some(Domain::IntDomain(vec![range]))
+                    }
+                    _ => None,
+                }
+            }
+            Expression::Bubble(_, _, _) => None,
+            Expression::AuxDeclaration(_, _, _) => Some(Domain::BoolDomain),
+            Expression::And(_, _) => Some(Domain::BoolDomain),
+            _ => bug!("Cannot calculate domain of {:?}", self),
             // TODO: (flm8) Add support for calculating the domains of more expression types
         };
         match ret {
@@ -215,6 +255,7 @@ impl Expression {
         // TODO: there will be more false cases but we are being conservative
         match self {
             Expression::FactorE(_, _) => false,
+            Expression::SafeDiv(_, _, _) => false,
             _ => true,
         }
     }

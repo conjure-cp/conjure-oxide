@@ -302,13 +302,6 @@ fn apply_all_rules<'a>(
     for rule in rules {
         match rule.apply(expression, model) {
             Ok(red) => {
-                log::info!(
-                    "Rule applicable: {} ({:?}), to expression: {}, resulting in: {}",
-                    rule.name,
-                    rule.rule_sets,
-                    expression,
-                    red.new_expression
-                );
                 stats.rewriter_rule_application_attempts =
                     Some(stats.rewriter_rule_application_attempts.unwrap() + 1);
                 stats.rewriter_rule_applications =
@@ -377,8 +370,19 @@ fn choose_rewrite<'a>(
     if results.is_empty() {
         return None;
     }
+
+    let red = results[0].reduction.clone();
+    let rule = results[0].rule;
+    tracing::info!(
+        new_top=%red.new_top,
+        "Rule applicable: {} ({:?}), to expression: {}, resulting in: {}",
+        rule.name,
+        rule.rule_sets,
+        initial_expression,
+        red.new_expression
+    );
     // Return the first result for now
-    Some(results[0].reduction.clone())
+    Some(red)
 }
 
 /// Function filters all the applicable rules based on their priority.
