@@ -159,14 +159,14 @@ impl CNFModel {
                 None => return Err(CNFError::ClauseIndexNotFound(*idx)),
                 Some(name) => {
                     if *idx > 0 {
-                        ans.push(conjure_ast::Expression::FactorE(
+                        ans.push(conjure_ast::Expression::Atomic(
                             Metadata::new(),
-                            conjure_ast::Factor::Reference(name.clone()),
+                            conjure_ast::Atom::Reference(name.clone()),
                         ));
                     } else {
-                        let expression: conjure_ast::Expression = conjure_ast::Expression::FactorE(
+                        let expression: conjure_ast::Expression = conjure_ast::Expression::Atomic(
                             Metadata::new(),
-                            conjure_ast::Factor::Reference(name.clone()),
+                            conjure_ast::Atom::Reference(name.clone()),
                         );
                         ans.push(conjure_ast::Expression::Not(
                             Metadata::new(),
@@ -207,7 +207,7 @@ impl CNFModel {
     fn handle_not(&self, expr: &conjure_ast::Expression) -> Result<Vec<i32>, CNFError> {
         match expr {
             // Expression inside the Not()
-            conjure_ast::Expression::FactorE(_metadata, conjure_ast::Factor::Reference(name)) => {
+            conjure_ast::Expression::Atomic(_metadata, conjure_ast::Atom::Reference(name)) => {
                 Ok(vec![-self.get_reference_index(name)?])
             }
             _ => Err(CNFError::UnexpectedExpressionInsideNot(expr.clone())),
@@ -238,7 +238,7 @@ impl CNFModel {
         expression: &conjure_ast::Expression,
     ) -> Result<Vec<i32>, CNFError> {
         match expression {
-            conjure_ast::Expression::FactorE(_metadata, conjure_ast::Factor::Reference(name)) => {
+            conjure_ast::Expression::Atomic(_metadata, conjure_ast::Atom::Reference(name)) => {
                 self.handle_reference(name)
             }
             conjure_ast::Expression::Not(_metadata, var_box) => self.handle_not(var_box),

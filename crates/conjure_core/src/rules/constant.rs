@@ -1,4 +1,4 @@
-use conjure_core::ast::{Expression as Expr, Factor, Literal as Lit};
+use conjure_core::ast::{Atom, Expression as Expr, Literal as Lit};
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
@@ -10,11 +10,11 @@ register_rule_set!("Constant", 100, ());
 
 #[register_rule(("Constant", 9001))]
 fn apply_eval_constant(expr: &Expr, _: &Model) -> ApplicationResult {
-    if let Expr::FactorE(_, Factor::Literal(_)) = expr {
+    if let Expr::Atomic(_, Atom::Literal(_)) = expr {
         return Err(ApplicationError::RuleNotApplicable);
     }
     eval_constant(expr)
-        .map(|c| Reduction::pure(Expr::FactorE(Metadata::new(), Factor::Literal(c))))
+        .map(|c| Reduction::pure(Expr::Atomic(Metadata::new(), Atom::Literal(c))))
         .ok_or(ApplicationError::RuleNotApplicable)
 }
 
@@ -24,8 +24,8 @@ fn apply_eval_constant(expr: &Expr, _: &Model) -> ApplicationResult {
 /// `Some(Const)` if the expression can be simplified to a constant
 pub fn eval_constant(expr: &Expr) -> Option<Lit> {
     match expr {
-        Expr::FactorE(_, Factor::Literal(c)) => Some(c.clone()),
-        Expr::FactorE(_, Factor::Reference(c)) => None,
+        Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
+        Expr::Atomic(_, Atom::Reference(c)) => None,
         Expr::Eq(_, a, b) => bin_op::<i32, bool>(|a, b| a == b, a, b)
             .or_else(|| bin_op::<bool, bool>(|a, b| a == b, a, b))
             .map(Lit::Bool),
@@ -67,9 +67,9 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             bin_op::<i32, i32>(|a, b| a / b, a, b).map(Lit::Int)
         }
         Expr::DivEq(_, a, b, c) => {
-            let a = unwrap_factor::<i32>(a)?;
-            let b = unwrap_factor::<i32>(b)?;
-            let c = unwrap_factor::<i32>(c)?;
+            let a = unwrap_atom::<i32>(a)?;
+            let b = unwrap_atom::<i32>(b)?;
+            let c = unwrap_atom::<i32>(c)?;
 
             if b == 0 {
                 return None;
@@ -144,8 +144,8 @@ fn unwrap_expr<T: TryFrom<Lit>>(expr: &Expr) -> Option<T> {
     TryInto::<T>::try_into(c).ok()
 }
 
-fn unwrap_factor<T: TryFrom<Lit>>(factor: &Factor) -> Option<T> {
-    let Factor::Literal(c) = factor else {
+fn unwrap_atom<T: TryFrom<Lit>>(atom: &Atom) -> Option<T> {
+    let Atom::Literal(c) = atom else {
         return None;
     };
     TryInto::<T>::try_into(c.clone()).ok()
@@ -153,19 +153,19 @@ fn unwrap_factor<T: TryFrom<Lit>>(factor: &Factor) -> Option<T> {
 
 #[cfg(test)]
 mod tests {
-    use conjure_core::ast::{Expression, Factor, Literal};
+    use conjure_core::ast::{Atom, Expression, Literal};
 
     #[test]
     fn div_by_zero() {
         let expr = Expression::UnsafeDiv(
             Default::default(),
-            Box::new(Expression::FactorE(
+            Box::new(Expression::Atomic(
                 Default::default(),
-                Factor::Literal(Literal::Int(1)),
+                Atom::Literal(Literal::Int(1)),
             )),
-            Box::new(Expression::FactorE(
+            Box::new(Expression::Atomic(
                 Default::default(),
-                Factor::Literal(Literal::Int(0)),
+                Atom::Literal(Literal::Int(0)),
             )),
         );
         assert_eq!(super::eval_constant(&expr), None);
@@ -175,13 +175,13 @@ mod tests {
     fn safediv_by_zero() {
         let expr = Expression::SafeDiv(
             Default::default(),
-            Box::new(Expression::FactorE(
+            Box::new(Expression::Atomic(
                 Default::default(),
-                Factor::Literal(Literal::Int(1)),
+                Atom::Literal(Literal::Int(1)),
             )),
-            Box::new(Expression::FactorE(
+            Box::new(Expression::Atomic(
                 Default::default(),
-                Factor::Literal(Literal::Int(0)),
+                Atom::Literal(Literal::Int(0)),
             )),
         );
         assert_eq!(super::eval_constant(&expr), None);

@@ -251,18 +251,18 @@ fn parse_exprs(
         // TODO: top level false / trues should not go to the solver to begin with
         // ... but changing this at this stage would require rewriting the tester
         use crate::metadata::Metadata;
+        use conjure_ast::Atom;
         use conjure_ast::Expression as Expr;
-        use conjure_ast::Factor;
         use conjure_ast::Literal::*;
 
         match expr {
             // top level false
-            Expr::FactorE(_, Factor::Literal(Bool(false))) => {
+            Expr::Atomic(_, Atom::Literal(Bool(false))) => {
                 minion_model.constraints.push(minion_ast::Constraint::False);
                 return Ok(());
             }
             // top level true
-            Expr::FactorE(_, Factor::Literal(Bool(true))) => {
+            Expr::Atomic(_, Atom::Literal(Bool(true))) => {
                 minion_model.constraints.push(minion_ast::Constraint::True);
                 return Ok(());
             }
@@ -336,9 +336,9 @@ fn read_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, So
 
         conjure_ast::Expression::AuxDeclaration(_metadata, name, expr) => {
             Ok(minion_ast::Constraint::Eq(
-                read_var(conjure_ast::Expression::FactorE(
+                read_var(conjure_ast::Expression::Atomic(
                     _metadata,
-                    conjure_ast::Factor::Reference(name),
+                    conjure_ast::Atom::Reference(name),
                 ))?,
                 read_var(*expr)?,
             ))
@@ -368,7 +368,7 @@ fn read_var(e: conjure_ast::Expression) -> Result<minion_ast::Var, SolverError> 
 
 fn _read_ref(e: conjure_ast::Expression) -> Result<String, SolverError> {
     let name = match e {
-        conjure_ast::Expression::FactorE(_metadata, conjure_ast::Factor::Reference(n)) => Ok(n),
+        conjure_ast::Expression::Atomic(_metadata, conjure_ast::Atom::Reference(n)) => Ok(n),
         x => Err(ModelInvalid(format!(
             "expected a reference, but got `{0:?}`",
             x
@@ -381,9 +381,7 @@ fn _read_ref(e: conjure_ast::Expression) -> Result<String, SolverError> {
 
 fn read_const(e: conjure_ast::Expression) -> Result<i32, SolverError> {
     match e {
-        conjure_ast::Expression::FactorE(_, conjure_ast::Factor::Literal(x)) => {
-            Ok(read_const_1(x)?)
-        }
+        conjure_ast::Expression::Atomic(_, conjure_ast::Atom::Literal(x)) => Ok(read_const_1(x)?),
         x => Err(ModelInvalid(format!(
             "expected a constant, but got `{0:?}`",
             x

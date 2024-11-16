@@ -9,7 +9,7 @@ use uniplate::Biplate;
 
 use crate::ast::literals::Literal;
 use crate::ast::symbol_table::{Name, SymbolTable};
-use crate::ast::Factor;
+use crate::ast::Atom;
 use crate::ast::ReturnType;
 use crate::bug;
 use crate::metadata::Metadata;
@@ -22,17 +22,17 @@ use super::{Domain, Range};
 /// used to build rules and conditions for the model.
 #[document_compatibility]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
-#[uniplate(walk_into=[Factor])]
+#[uniplate(walk_into=[Atom])]
 #[biplate(to=Literal)]
 #[biplate(to=Metadata)]
-#[biplate(to=Factor)]
+#[biplate(to=Atom)]
 #[biplate(to=Name)]
 pub enum Expression {
     /// An expression representing "A is valid as long as B is true"
     /// Turns into a conjunction when it reaches a boolean context
     Bubble(Metadata, Box<Expression>, Box<Expression>),
 
-    FactorE(Metadata, Factor),
+    Atomic(Metadata, Atom),
 
     #[compatible(Minion, JsonInput)]
     Sum(Metadata, Vec<Expression>),
@@ -101,7 +101,7 @@ pub enum Expression {
 
     /// `a / b = c`
     #[compatible(Minion)]
-    DivEq(Metadata, Factor, Factor, Factor),
+    DivEq(Metadata, Atom, Atom, Atom),
 
     #[compatible(Minion)]
     Ineq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
@@ -173,11 +173,11 @@ impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self, vars: &SymbolTable) -> Option<Domain> {
         let ret = match self {
-            Expression::FactorE(_, Factor::Reference(name)) => Some(vars.get(name)?.domain.clone()),
-            Expression::FactorE(_, Factor::Literal(Literal::Int(n))) => {
+            Expression::Atomic(_, Atom::Reference(name)) => Some(vars.get(name)?.domain.clone()),
+            Expression::Atomic(_, Atom::Literal(Literal::Int(n))) => {
                 Some(Domain::IntDomain(vec![Range::Single(*n)]))
             }
-            Expression::FactorE(_, Factor::Literal(Literal::Bool(_))) => Some(Domain::BoolDomain),
+            Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(Domain::BoolDomain),
             Expression::Sum(_, exprs) => expr_vec_to_domain_i32(exprs, |x, y| Some(x + y), vars),
             Expression::Min(_, exprs) => {
                 expr_vec_to_domain_i32(exprs, |x, y| Some(if x < y { x } else { y }), vars)
@@ -254,7 +254,7 @@ impl Expression {
     pub fn can_be_undefined(&self) -> bool {
         // TODO: there will be more false cases but we are being conservative
         match self {
-            Expression::FactorE(_, _) => false,
+            Expression::Atomic(_, _) => false,
             Expression::SafeDiv(_, _, _) => false,
             _ => true,
         }
@@ -262,9 +262,9 @@ impl Expression {
 
     pub fn return_type(&self) -> Option<ReturnType> {
         match self {
-            Expression::FactorE(_, Factor::Literal(Literal::Int(_))) => Some(ReturnType::Int),
-            Expression::FactorE(_, Factor::Literal(Literal::Bool(_))) => Some(ReturnType::Bool),
-            Expression::FactorE(_, Factor::Reference(_)) => None,
+            Expression::Atomic(_, Atom::Literal(Literal::Int(_))) => Some(ReturnType::Int),
+            Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(ReturnType::Bool),
+            Expression::Atomic(_, Atom::Reference(_)) => None,
             Expression::Sum(_, _) => Some(ReturnType::Int),
             Expression::Min(_, _) => Some(ReturnType::Int),
             Expression::Max(_, _) => Some(ReturnType::Int),
@@ -303,8 +303,8 @@ impl Expression {
         self.set_meta(metadata);
     }
 
-    pub fn as_factor(&self) -> Option<Factor> {
-        if let Expression::FactorE(_m, f) = self {
+    pub fn as_atom(&self) -> Option<Atom> {
+        if let Expression::Atomic(_m, f) = self {
             Some(f.clone())
         } else {
             None
@@ -333,26 +333,26 @@ fn display_expressions(expressions: &[Expression]) -> String {
 
 impl From<i32> for Expression {
     fn from(i: i32) -> Self {
-        Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(i)))
+        Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(i)))
     }
 }
 
 impl From<bool> for Expression {
     fn from(b: bool) -> Self {
-        Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(b)))
+        Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(b)))
     }
 }
 
-impl From<Factor> for Expression {
-    fn from(value: Factor) -> Self {
-        Expression::FactorE(Metadata::new(), value)
+impl From<Atom> for Expression {
+    fn from(value: Atom) -> Self {
+        Expression::Atomic(Metadata::new(), value)
     }
 }
 impl Display for Expression {
     // TODO: (flm8) this will change once we implement a parser (two-way conversion)
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
-            Expression::FactorE(_, factor) => factor.fmt(f),
+            Expression::Atomic(_, atom) => atom.fmt(f),
             Expression::Sum(_, expressions) => {
                 write!(f, "Sum({})", display_expressions(expressions))
             }
@@ -452,8 +452,8 @@ mod tests {
 
     #[test]
     fn test_domain_of_constant_sum() {
-        let c1 = Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(1)));
-        let c2 = Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(2)));
+        let c1 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1)));
+        let c2 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2)));
         let sum = Expression::Sum(Metadata::new(), vec![c1.clone(), c2.clone()]);
         assert_eq!(
             sum.domain_of(&SymbolTable::new()),
@@ -463,8 +463,8 @@ mod tests {
 
     #[test]
     fn test_domain_of_constant_invalid_type() {
-        let c1 = Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(1)));
-        let c2 = Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(true)));
+        let c1 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1)));
+        let c2 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
         let sum = Expression::Sum(Metadata::new(), vec![c1.clone(), c2.clone()]);
         assert_eq!(sum.domain_of(&SymbolTable::new()), None);
     }
@@ -477,8 +477,7 @@ mod tests {
 
     #[test]
     fn test_domain_of_reference() {
-        let reference =
-            Expression::FactorE(Metadata::new(), Factor::Reference(Name::MachineName(0)));
+        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
         let mut vars = SymbolTable::new();
         vars.insert(
             Name::MachineName(0),
@@ -492,15 +491,13 @@ mod tests {
 
     #[test]
     fn test_domain_of_reference_not_found() {
-        let reference =
-            Expression::FactorE(Metadata::new(), Factor::Reference(Name::MachineName(0)));
+        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
         assert_eq!(reference.domain_of(&SymbolTable::new()), None);
     }
 
     #[test]
     fn test_domain_of_reference_sum_single() {
-        let reference =
-            Expression::FactorE(Metadata::new(), Factor::Reference(Name::MachineName(0)));
+        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
         let mut vars = SymbolTable::new();
         vars.insert(
             Name::MachineName(0),
@@ -515,8 +512,7 @@ mod tests {
 
     #[test]
     fn test_domain_of_reference_sum_bounded() {
-        let reference =
-            Expression::FactorE(Metadata::new(), Factor::Reference(Name::MachineName(0)));
+        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
         let mut vars = SymbolTable::new();
         vars.insert(
             Name::MachineName(0),
