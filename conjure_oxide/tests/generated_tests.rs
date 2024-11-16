@@ -8,6 +8,8 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
+use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::Ordering;
 use tracing::field::Field;
 use tracing::field::Visit;
 use tracing::Subscriber;
@@ -390,7 +392,7 @@ pub fn create_scoped_subscriber(
     path: &str,
     test_name: &str,
 ) -> (impl tracing::Subscriber + Send + Sync, WorkerGuard) {
-    let file = File::create(format!("{path}/{test_name}-expected-rule-trace.json"))
+    let file = File::create(format!("{path}/{test_name}-generated-rule-trace.json"))
         .expect("Unable to create log file");
     let writer = BufWriter::new(file);
     let (non_blocking, guard) = tracing_appender::non_blocking(writer);

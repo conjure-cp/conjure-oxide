@@ -436,10 +436,28 @@ fn check_priority<'a>(
         \n Rules{:?}", initial_expr, new_expr, rules)
     }
 }
+// fn trace_rules(results: &[RuleResult], expression: Expression) {
+//     if !results.is_empty() {
+//         let rule = results[0].rule;
+//         let new_expression = results[0].reduction.new_expression.clone();
+//         trace!(target: "rule_engine", "Rule applied: {:?}, to Expression: {:?}, resulting in: {:?}", rule.name, expression, new_expression);
+//     }
+// }
 fn trace_rules(results: &[RuleResult], expression: Expression) {
     if !results.is_empty() {
         let rule = results[0].rule;
         let new_expression = results[0].reduction.new_expression.clone();
-        trace!(target: "rule_engine", "Rule applied: {:?}, to Expression: {:?}, resulting in: {:?}", rule.name, expression, new_expression);
+
+        // Track the count of results
+        let count = results.len();
+
+        trace!(
+            target: "rule_engine",
+            "Rule applied: {:?}, to Expression: {:?}, resulting in: {:?}, Total rules applied: {}",
+            rule.name,
+            expression,
+            new_expression,
+            count
+        );
     }
 }
