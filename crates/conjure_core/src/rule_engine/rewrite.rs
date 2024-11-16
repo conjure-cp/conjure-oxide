@@ -226,6 +226,7 @@ fn rewrite_iteration<'a>(
     let mut expression = expression.clone();
 
     let rule_results = apply_all_rules(&expression, model, rules, stats);
+    trace_rules(&rule_results, expression.clone());
     if let Some(new) = choose_rewrite(&rule_results, &expression) {
         // If a rule is applied, mark the expression as dirty
         return Some(new);
@@ -312,6 +313,7 @@ fn apply_all_rules<'a>(
                     expression,
                     red.new_expression
                 );
+
                 stats.rewriter_rule_application_attempts =
                     Some(stats.rewriter_rule_application_attempts.unwrap() + 1);
                 stats.rewriter_rule_applications =
@@ -432,5 +434,12 @@ fn check_priority<'a>(
     } else {
         log::warn!("Multiple rules of different priorities are applicable to expression {:?} \n resulting in expression: {:?}
         \n Rules{:?}", initial_expr, new_expr, rules)
+    }
+}
+fn trace_rules(results: &[RuleResult], expression: Expression) {
+    if !results.is_empty() {
+        let rule = results[0].rule;
+        let new_expression = results[0].reduction.new_expression.clone();
+        trace!(target: "rule_engine", "Rule applied: {:?}, to Expression: {:?}, resulting in: {:?}", rule.name, expression, new_expression);
     }
 }

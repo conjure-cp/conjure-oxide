@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
-use std::fs;
+
+use std::fs::read_to_string;
 use std::fs::File;
 use std::hash::Hash;
 use std::io::Write;
@@ -185,15 +186,11 @@ pub fn read_minion_solutions_json(
     Ok(expected_solutions)
 }
 
-pub fn read_rule_trace(
-    path: &str,
-    test_name: &str,
-    prefix: &str,
-) -> Result<JsonValue, anyhow::Error> {
-    let file_path = format!("{path}/{test_name}.{prefix}-rule-trace.json");
-    let rule_trace = fs::read_to_string(file_path)?;
-
-    let expected_rules: JsonValue = sort_json_object(&serde_json::from_str(&rule_trace)?, true);
-
-    Ok(expected_rules)
+pub fn read_rule_trace(path: &str, test_name: &str, prefix: &str) -> Vec<String> {
+    let filename = format!("{path}/{test_name}-{prefix}-rule-trace.json");
+    read_to_string(filename)
+        .unwrap()
+        .lines()
+        .map(String::from)
+        .collect()
 }

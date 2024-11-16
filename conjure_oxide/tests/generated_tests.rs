@@ -16,6 +16,7 @@ use tracing_subscriber::{filter::EnvFilter, fmt, fmt::FmtContext, layer::Subscri
 
 use tracing_appender::non_blocking::WorkerGuard;
 
+use std::fmt::Write;
 use std::io::BufWriter;
 use std::path::Path;
 use std::sync::Arc;
@@ -206,10 +207,10 @@ fn integration_test_inner(
         println!("Minion solutions: {:#?}", solutions_json)
     }
 
-    //let expected_rule_trace = read_rule_trace(path, essence_base, "expected")?;
-    //let generated_rule_trace = read_rule_trace(path, essence_base, "generated")?;
+    let expected_rule_trace = read_rule_trace(path, essence_base, "expected");
+    let generated_rule_trace = read_rule_trace(path, essence_base, "generated");
 
-    //assert_eq!(expected_rule_trace, generated_rule_trace);
+    assert_eq!(expected_rule_trace, generated_rule_trace);
 
     // test solutions against conjure before writing
     if accept {
@@ -389,7 +390,7 @@ pub fn create_scoped_subscriber(
     path: &str,
     test_name: &str,
 ) -> (impl tracing::Subscriber + Send + Sync, WorkerGuard) {
-    let file = File::create(format!("{path}/{test_name}-generated-rule-trace.json"))
+    let file = File::create(format!("{path}/{test_name}-expected-rule-trace.json"))
         .expect("Unable to create log file");
     let writer = BufWriter::new(file);
     let (non_blocking, guard) = tracing_appender::non_blocking(writer);
@@ -400,6 +401,7 @@ pub fn create_scoped_subscriber(
         .with(
             fmt::layer()
                 .with_writer(non_blocking)
+                .json()
                 .event_format(JsonFormatter),
         );
 
