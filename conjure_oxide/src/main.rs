@@ -1,3 +1,5 @@
+// (niklasdewally): temporary, gut this if you want!
+
 use std::fs::File;
 use std::io::stdout;
 use std::io::Write;
@@ -24,7 +26,11 @@ use conjure_oxide::SolverFamily;
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
-    #[arg(value_name = "INPUT_ESSENCE", help = "The input Essence file")]
+    #[arg(
+        value_name = "INPUT_ESSENCE",
+        default_value = "./conjure_oxide/tests/integration//xyz/input.essence",
+        help = "The input Essence file"
+    )]
     input_file: PathBuf,
 
     #[arg(
