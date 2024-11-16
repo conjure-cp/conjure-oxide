@@ -9,14 +9,14 @@ use crate::rule_engine::{
 use crate::rules::extra_check;
 use crate::{
     ast::{
+        Atom::{self, *},
         DecisionVariable, Domain,
         Expression::{self as Expr, *},
-        Factor::{self, *},
         Literal::*,
         SymbolTable,
     },
     bug,
-    rules::utils::{exprs_to_conjunction, is_factor},
+    rules::utils::{exprs_to_conjunction, is_atom},
 };
 
 use crate::solver::SolverFamily;
@@ -31,18 +31,18 @@ register_rule_set!("Minion", 100, ("Base"), (SolverFamily::Minion));
 #[register_rule(("Minion", 4200))]
 fn introduce_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
     // div = val
-    let val: Factor;
+    let val: Atom;
     let div: Expr;
     let meta: Metadata;
 
     match expr.clone() {
         Expr::Eq(m, a, b) => {
             meta = m;
-            if let Some(f) = a.as_factor() {
+            if let Some(f) = a.as_atom() {
                 // val = div
                 val = f;
                 div = *b;
-            } else if let Some(f) = b.as_factor() {
+            } else if let Some(f) = b.as_atom() {
                 // div = val
                 val = f;
                 div = *a;
@@ -65,8 +65,8 @@ fn introduce_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 
     let children = div.children();
-    let a = children[0].as_factor().ok_or(RuleNotApplicable)?;
-    let b = children[1].as_factor().ok_or(RuleNotApplicable)?;
+    let a = children[0].as_atom().ok_or(RuleNotApplicable)?;
+    let b = children[1].as_atom().ok_or(RuleNotApplicable)?;
 
     Ok(Reduction::pure(DivEq(meta.clone_dirty(), a, b, val)))
 }
@@ -332,7 +332,7 @@ fn lt_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
             metadata.clone_dirty(),
             a.clone(),
             b.clone(),
-            Box::new(FactorE(Metadata::new(), Literal(Int(-1)))),
+            Box::new(Atomic(Metadata::new(), Literal(Int(-1)))),
         ))),
         _ => Err(RuleNotApplicable),
     }
@@ -352,7 +352,7 @@ fn gt_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
             metadata.clone_dirty(),
             b.clone(),
             a.clone(),
-            Box::new(FactorE(Metadata::new(), Literal(Int(-1)))),
+            Box::new(Atomic(Metadata::new(), Literal(Int(-1)))),
         ))),
         _ => Err(RuleNotApplicable),
     }
@@ -372,7 +372,7 @@ fn geq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
             metadata.clone_dirty(),
             b.clone(),
             a.clone(),
-            Box::new(FactorE(Metadata::new(), Literal(Int(0)))),
+            Box::new(Atomic(Metadata::new(), Literal(Int(0)))),
         ))),
         _ => Err(RuleNotApplicable),
     }
@@ -392,7 +392,7 @@ fn leq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
             metadata.clone_dirty(),
             a.clone(),
             b.clone(),
-            Box::new(FactorE(Metadata::new(), Literal(Int(0)))),
+            Box::new(Atomic(Metadata::new(), Literal(Int(0)))),
         ))),
         _ => Err(RuleNotApplicable),
     }
@@ -408,7 +408,7 @@ fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let x @ FactorE(_, Reference(_)) = *x.to_owned() else {
+    let x @ Atomic(_, Reference(_)) = *x.to_owned() else {
         return Err(RuleNotApplicable);
     };
 
@@ -416,7 +416,7 @@ fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let [ref y @ FactorE(_, Reference(_)), ref k @ FactorE(_, Literal(_))] = c[..] else {
+    let [ref y @ Atomic(_, Reference(_)), ref k @ Atomic(_, Literal(_))] = c[..] else {
         return Err(RuleNotApplicable);
     };
 
@@ -468,7 +468,7 @@ fn boolean_literal_to_wliteral(expr: &Expr, mdl: &Model) -> ApplicationResult {
             let mut new_vec = Vec::new();
             for expr in vec {
                 new_vec.push(match expr {
-                    FactorE(m, Reference(name))
+                    Atomic(m, Reference(name))
                         if mdl
                             .get_domain(name)
                             .is_some_and(|x| matches!(x, BoolDomain)) =>
@@ -491,7 +491,7 @@ fn boolean_literal_to_wliteral(expr: &Expr, mdl: &Model) -> ApplicationResult {
             let mut new_vec = Vec::new();
             for expr in vec {
                 new_vec.push(match expr {
-                    FactorE(m, Reference(name))
+                    Atomic(m, Reference(name))
                         if mdl
                             .get_domain(name)
                             .is_some_and(|x| matches!(x, BoolDomain)) =>
@@ -511,7 +511,7 @@ fn boolean_literal_to_wliteral(expr: &Expr, mdl: &Model) -> ApplicationResult {
         }
 
         Not(m, expr) => {
-            if let FactorE(_, Reference(name)) = (**expr).clone() {
+            if let Atomic(_, Reference(name)) = (**expr).clone() {
                 if mdl
                     .get_domain(&name)
                     .is_some_and(|x| matches!(x, BoolDomain))
@@ -540,7 +540,7 @@ fn boolean_literal_to_wliteral(expr: &Expr, mdl: &Model) -> ApplicationResult {
 
 #[register_rule(("Minion", 4090))]
 fn not_constraint_to_reify(expr: &Expr, _: &Model) -> ApplicationResult {
-    if !matches!(expr, Not(_,c) if !matches!(**c, FactorE(_,_))) {
+    if !matches!(expr, Not(_,c) if !matches!(**c, Atomic(_,_))) {
         return Err(RuleNotApplicable);
     }
 
@@ -557,6 +557,6 @@ fn not_constraint_to_reify(expr: &Expr, _: &Model) -> ApplicationResult {
     Ok(Reduction::pure(Reify(
         m.clone(),
         e.clone(),
-        Box::new(FactorE(Metadata::new(), Literal(Bool(false)))),
+        Box::new(Atomic(Metadata::new(), Literal(Bool(false)))),
     )))
 }
