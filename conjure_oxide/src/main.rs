@@ -1,5 +1,3 @@
-// (niklasdewally): temporary, gut this if you want!
-
 use std::fs::File;
 use std::io::stdout;
 use std::io::Write;
