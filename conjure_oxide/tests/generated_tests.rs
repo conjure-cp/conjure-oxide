@@ -1,11 +1,17 @@
 use conjure_core::Model;
+use conjure_oxide::utils::testing::read_rule_trace;
 use glob::glob;
 use serde_json::json;
+use serde_json::Value;
 use std::collections::HashMap;
 use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
+use tracing::field::Field;
+use tracing::field::Visit;
+use tracing::Subscriber;
+use tracing_subscriber::fmt::FmtContext;
 
 use tracing_appender;
 
@@ -55,7 +61,6 @@ fn main() {
     // creating a span and log a message
     let test_span = span!(Level::TRACE, "test_span");
     let _enter: span::Entered<'_> = test_span.enter();
-    trace!("trace test"); // this will log without the "test_span: " prefix. just a test
 
     for entry in glob("conjure_oxide/tests/integration/*").expect("Failed to read glob pattern") {
         match entry {
@@ -95,7 +100,6 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
         // create a span for the trace
         let test_span = span!(target: "rule_engine", Level::TRACE, "test_span");
         let _enter = test_span.enter();
-        // trace!(target: "rule_engine", "trace test");
 
         // execute tests based on verbosity
         if verbose {
@@ -207,6 +211,11 @@ fn integration_test_inner(
     if verbose {
         println!("Minion solutions: {:#?}", solutions_json)
     }
+
+    let expected_rule_trace = read_rule_trace(path, essence_base, "expected")?;
+    let generated_rule_trace = read_rule_trace(path, essence_base, "generated")?;
+
+    assert_eq!(expected_rule_trace, generated_rule_trace);
 
     // test solutions against conjure before writing
     if accept {
@@ -326,27 +335,59 @@ fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
 }
 
 // using a custom formatter to omit the span name in the log
+// and removing the identifier and application fields for assertions
 struct JsonFormatter;
 
 impl<S, N> FormatEvent<S, N> for JsonFormatter
 where
-    S: tracing::Subscriber + for<'span> LookupSpan<'span>,
+    S: Subscriber + for<'span> LookupSpan<'span>,
     N: for<'a> tracing_subscriber::fmt::FormatFields<'a> + 'static,
 {
     fn format_event(
         &self,
-        _ctx: &fmt::FmtContext<'_, S, N>,
+        _ctx: &FmtContext<'_, S, N>,
         mut writer: Writer<'_>,
         event: &Event<'_>,
     ) -> std::fmt::Result {
-        // convert the event into JSON format
-        let log = json!({
+        // initialising the log object with level and target
+        let mut log = json!({
             "level": event.metadata().level().to_string(),
             "target": event.metadata().target(),
-            "message": format!("{:?}", event),
         });
 
-        // write JSON formatted log to file
+        // creating a visitor to capture fields
+        struct JsonVisitor {
+            log: Value,
+        }
+
+        impl Visit for JsonVisitor {
+            fn record_str(&mut self, field: &Field, value: &str) {
+                self.log
+                    .as_object_mut()
+                    .map(|obj| obj.insert(field.name().to_string(), json!(value)));
+            }
+
+            fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {
+                self.log
+                    .as_object_mut()
+                    .map(|obj| obj.insert(field.name().to_string(), json!(format!("{:?}", value))));
+            }
+        }
+
+        // using the visitor to record fields
+        let mut visitor = JsonVisitor { log: log.clone() };
+        event.record(&mut visitor);
+
+        // merging the visitor's log into the main log object
+        log.as_object_mut().map(|obj| {
+            if let Some(visitor_obj) = visitor.log.as_object() {
+                for (key, value) in visitor_obj {
+                    obj.insert(key.clone(), value.clone());
+                }
+            }
+        });
+
+        // Write the JSON log
         write!(writer, "{}\n", log)
     }
 }
@@ -355,9 +396,8 @@ pub fn create_scoped_subscriber(
     path: &str,
     test_name: &str,
 ) -> (impl tracing::Subscriber + Send + Sync, WorkerGuard) {
-    // Change the file extension to .json for JSON log output
-    let file =
-        File::create(format!("{path}/{test_name}-rules.json")).expect("Unable to create log file");
+    let file = File::create(format!("{path}/{test_name}-generated-rule-trace.json"))
+        .expect("Unable to create log file");
     let writer = BufWriter::new(file);
     let (non_blocking, guard) = tracing_appender::non_blocking(writer);
 

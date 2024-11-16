@@ -189,9 +189,11 @@ pub fn read_rule_trace(
     path: &str,
     test_name: &str,
     prefix: &str,
-) -> Result<String, std::io::Error> {
+) -> Result<JsonValue, anyhow::Error> {
     let file_path = format!("{path}/{test_name}.{prefix}-rule-trace.txt");
-    let contents = fs::read_to_string(file_path)?;
+    let rule_trace = fs::read_to_string(file_path)?;
 
-    Ok(contents)
+    let expected_rules: JsonValue = sort_json_object(&serde_json::from_str(&rule_trace)?, true);
+
+    Ok(expected_rules)
 }

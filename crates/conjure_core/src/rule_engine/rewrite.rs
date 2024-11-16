@@ -363,6 +363,20 @@ fn trace_rules(results: &[RuleResult], expression: Expression) {
     if !results.is_empty() {
         let rule = results[0].rule;
         let new_expression = results[0].reduction.new_expression.clone();
-        trace!(target: "rule_engine", "Rule applied: {:?}, to Expression: {:?}, resulting in: {:?}", rule, expression, new_expression);
+        trace!(target: "rule_engine", "Rule applied: {:?}, to Expression: {:?}, resulting in: {:?}", rule.name, expression, new_expression);
     }
 }
+
+// fn trace_rules(results: &[RuleResult], expression: Expression) {
+//     if !results.is_empty() {
+//         let rule_name = results[0].rule.name.clone(); // Explicitly log only `rule.name`
+//         let new_expression = results[0].reduction.new_expression.clone();
+//         trace!(
+//             target: "rule_engine",
+//             rule_name = ?rule_name,
+//             expression = ?expression,
+//             new_expression = ?new_expression,
+//             "Rule applied"
+//         );
+//     }
+// }
