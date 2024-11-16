@@ -4,6 +4,7 @@ use conjure_core::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
 };
 use conjure_core::Model;
+use tracing::warn;
 
 register_rule_set!("Constant", 100, ());
 
@@ -72,7 +73,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
         Expr::Reify(_, a, b) => bin_op::<bool, bool>(|a, b| a == b, a, b).map(Lit::Bool),
         _ => {
-            println!("WARNING: Unimplemented constant eval: {:?}", expr);
+            warn!(%expr,"Unimplemented constant eval");
             None
         }
     }

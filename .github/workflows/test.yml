@@ -72,6 +72,37 @@ jobs:
 
       - run: cargo test --workspace
 
+  examples:
+    name: "Build Examples"
+    timeout-minutes: 10
+    strategy:
+      # run all combinations of the matrix even if one combination fails.
+      fail-fast: false
+      matrix:
+        rust_release:
+          - stable
+          - nightly
+        os:
+          - ubuntu-latest
+          - macos-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.3
+
+      - name: Disable rust-lld (to fix linkme)
+        run: |
+          echo RUSTFLAGS=${RUSTFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
+          echo RUSTDOCFLAGS=${RUSTDOCFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
+        if: matrix.rust_release == 'nightly'
+
+      - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
+
+      - run: cargo build -vv --workspace --examples
+
   audit:
     name: "Dependency Audit"
     runs-on: ubuntu-latest

@@ -20,15 +20,7 @@ impl std::fmt::Display for Factor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Factor::Literal(x) => x.fmt(f),
-            Factor::Reference(Name::UserName(n)) => {
-                write!(f, "{n}")?;
-                Ok(())
-            }
-
-            Factor::Reference(Name::MachineName(x)) => {
-                write!(f, "__{x}")?;
-                Ok(())
-            }
+            Factor::Reference(x) => x.fmt(f),
         }
     }
 }
