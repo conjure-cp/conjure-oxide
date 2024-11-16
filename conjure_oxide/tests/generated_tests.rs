@@ -11,9 +11,10 @@ use std::fs::File;
 use tracing::field::Field;
 use tracing::field::Visit;
 use tracing::Subscriber;
-use tracing_subscriber::fmt::FmtContext;
+use tracing::{span, Level};
+use tracing_subscriber::{filter::EnvFilter, fmt, fmt::FmtContext, layer::SubscriberExt, Registry};
 
-use tracing_appender;
+use tracing_appender::non_blocking::WorkerGuard;
 
 use std::io::BufWriter;
 use std::path::Path;
@@ -63,6 +64,8 @@ fn main() {
             Err(e) => println!("Error: {:?}", e),
         }
     }
+    // let file_path = Path::new("/path/to/your/file.txt");
+    // let base_name = file_path.file_stem().and_then(|stem| stem.to_str());
 
     let file_path = Path::new("conjure_oxide/tests/integration/*"); // using relative path
 
