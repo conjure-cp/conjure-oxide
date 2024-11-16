@@ -41,6 +41,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
                 Ok(Reduction::pure(Sum(m, new_vec)))
             }
         }
+
         Min(m, vec) => {
             let mut acc: Option<i32> = None;
             let mut n_consts = 0;
@@ -282,9 +283,11 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             // nothing has changed
             Err(RuleNotApplicable)
         }
-
         WatchedLiteral(_, _, _) => Err(RuleNotApplicable),
         Reify(_, _, _) => Err(RuleNotApplicable),
         AuxDeclaration(_, _, _) => Err(RuleNotApplicable),
+        UnsafeMod(_, a, b) => Err(RuleNotApplicable),
+        SafeMod(_, a, b) => Err(RuleNotApplicable),
+        ModEq(_, _, _, _) => Err(RuleNotApplicable),
     }
 }

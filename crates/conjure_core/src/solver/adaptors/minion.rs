@@ -307,6 +307,12 @@ fn read_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, So
                 read_var(c.into())?,
             ))
         }
+        conjure_ast::Expression::ModEq(_metadata, a, b, c) => {
+            Ok(minion_ast::Constraint::ModuloUndefZero(
+                (read_var(a.into())?, read_var(b.into())?),
+                read_var(c.into())?,
+            ))
+        }
         conjure_ast::Expression::Or(_metadata, exprs) => Ok(minion_ast::Constraint::WatchedOr(
             exprs
                 .iter()

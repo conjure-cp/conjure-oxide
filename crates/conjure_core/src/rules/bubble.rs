@@ -60,15 +60,16 @@ fn bubble_up(expr: &Expression, _: &Model) -> ApplicationResult {
 
 // Bubble applications
 
-/*
-    Convert an unsafe division to a safe division with a bubble condition.
+/// Converts an unsafe division to a safe division with a bubble condition.
+///
+/// ```text
+///     a / b => (a / b) @ (b != 0)
+/// ```
+///
+/// Division by zero is undefined and therefore not allowed, so we add a condition to check for it.
+/// This condition is brought up the tree and expanded into a conjunction with the first
+/// boolean-type expression it is paired with.
 
-    Division by zero is undefined and therefore not allowed, so we add a condition to check for it.
-    This condition is brought up the tree and expanded into a conjunction with the first boolean-type expression it is paired with.
-
-    E.g. a / b => (a / b) @ (b != 0)
-
-*/
 #[register_rule(("Bubble", 6000))]
 fn div_to_bubble(expr: &Expression, _: &Model) -> ApplicationResult {
     if is_all_constant(expr) {
@@ -89,6 +90,46 @@ fn div_to_bubble(expr: &Expression, _: &Model) -> ApplicationResult {
         return Ok(Reduction::pure(Expression::Bubble(
             Metadata::new(),
             Box::new(Expression::SafeDiv(Metadata::new(), a.clone(), b.clone())),
+            Box::new(Expression::Neq(
+                Metadata::new(),
+                b.clone(),
+                Box::new(Expression::from(0)),
+            )),
+        )));
+    }
+    Err(ApplicationError::RuleNotApplicable)
+}
+
+/// Converts an unsafe mod to a safe mod with a bubble condition.
+///
+/// ```text
+/// a % b => (a % b) @ (b != 0)
+/// ```
+///
+/// Mod zero is undefined and therefore not allowed, so we add a condition to check for it.
+/// This condition is brought up the tree and expanded into a conjunction with the first
+/// boolean-type expression it is paired with.
+///
+#[register_rule(("Bubble", 6000))]
+fn mod_to_bubble(expr: &Expression, _: &Model) -> ApplicationResult {
+    if is_all_constant(expr) {
+        return Err(RuleNotApplicable);
+    }
+    if let Expression::UnsafeMod(_, a, b) = expr {
+        // bubble bottom up
+        if a.can_be_undefined() || b.can_be_undefined() {
+            return Err(RuleNotApplicable);
+        }
+
+        // either do bubble / bubble or not bubble / not bubble
+        if matches!(**a, Expression::Bubble(_, _, _)) != matches!(**b, Expression::Bubble(_, _, _))
+        {
+            return Err(RuleNotApplicable);
+        }
+
+        return Ok(Reduction::pure(Expression::Bubble(
+            Metadata::new(),
+            Box::new(Expression::SafeMod(Metadata::new(), a.clone(), b.clone())),
             Box::new(Expression::Neq(
                 Metadata::new(),
                 b.clone(),

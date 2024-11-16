@@ -259,6 +259,9 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
             WatchedLiteral(_, _, _) => (),
             Reify(_, _, _) => (),
             AuxDeclaration(_, _, _) => (),
+            UnsafeMod(_, _, _) => (),
+            SafeMod(_, _, _) => (),
+            ModEq(_, _, _, _) => (),
         };
         x.clone()
     }));
