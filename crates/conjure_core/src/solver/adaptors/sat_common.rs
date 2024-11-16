@@ -83,7 +83,7 @@ impl CNFModel {
 
     /// Gets the index of a Conjure variable.
     pub fn get_index(&self, var: &conjure_ast::Name) -> Option<i32> {
-        return self.variables.get(var).copied();
+        self.variables.get(var).copied()
     }
 
     /// Gets a Conjure variable by index.
@@ -159,13 +159,15 @@ impl CNFModel {
                 None => return Err(CNFError::ClauseIndexNotFound(*idx)),
                 Some(name) => {
                     if *idx > 0 {
-                        ans.push(conjure_ast::Expression::Reference(
+                        ans.push(conjure_ast::Expression::FactorE(
                             Metadata::new(),
-                            name.clone(),
+                            conjure_ast::Factor::Reference(name.clone()),
                         ));
                     } else {
-                        let expression: conjure_ast::Expression =
-                            conjure_ast::Expression::Reference(Metadata::new(), name.clone());
+                        let expression: conjure_ast::Expression = conjure_ast::Expression::FactorE(
+                            Metadata::new(),
+                            conjure_ast::Factor::Reference(name.clone()),
+                        );
                         ans.push(conjure_ast::Expression::Not(
                             Metadata::new(),
                             Box::from(expression),
@@ -205,7 +207,7 @@ impl CNFModel {
     fn handle_not(&self, expr: &conjure_ast::Expression) -> Result<Vec<i32>, CNFError> {
         match expr {
             // Expression inside the Not()
-            conjure_ast::Expression::Reference(_metadata, name) => {
+            conjure_ast::Expression::FactorE(_metadata, conjure_ast::Factor::Reference(name)) => {
                 Ok(vec![-self.get_reference_index(name)?])
             }
             _ => Err(CNFError::UnexpectedExpressionInsideNot(expr.clone())),
@@ -236,7 +238,9 @@ impl CNFModel {
         expression: &conjure_ast::Expression,
     ) -> Result<Vec<i32>, CNFError> {
         match expression {
-            conjure_ast::Expression::Reference(_metadata, name) => self.handle_reference(name),
+            conjure_ast::Expression::FactorE(_metadata, conjure_ast::Factor::Reference(name)) => {
+                self.handle_reference(name)
+            }
             conjure_ast::Expression::Not(_metadata, var_box) => self.handle_not(var_box),
             conjure_ast::Expression::Or(_metadata, expressions) => self.handle_or(expressions),
             _ => Err(CNFError::UnexpectedExpression(expression.clone())),
@@ -313,7 +317,7 @@ pub trait HasVariable {
 
 impl HasVariable for i32 {
     fn has_variable(self, cnf: &CNFModel) -> bool {
-        return cnf.get_name(self).is_some();
+        cnf.get_name(self).is_some()
     }
 }
 

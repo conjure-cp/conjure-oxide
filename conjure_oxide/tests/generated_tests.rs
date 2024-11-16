@@ -20,16 +20,11 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::RwLock;
-use structured_logger::{json::new_writer, Builder};
-use tracing::{span, trace, Level};
 
-use tracing_appender::non_blocking::WorkerGuard;
-use tracing_subscriber::{
-    filter::EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt, Registry,
-};
-
-use conjure_core::ast::{Constant, Expression, Name};
+use conjure_core::ast::Factor;
+use conjure_core::ast::{Expression, Literal, Name};
 use conjure_core::context::Context;
+use conjure_oxide::defaults::get_default_rule_sets;
 use conjure_oxide::rule_engine::resolve_rule_sets;
 use conjure_oxide::rule_engine::rewrite_model;
 use conjure_oxide::utils::conjure::minion_solutions_to_json;
@@ -175,11 +170,7 @@ fn integration_test_inner(
     assert_eq!(model, expected_model);
 
     // Stage 2: Rewrite the model using the rule engine and check that the result is as expected
-    let rule_sets = resolve_rule_sets(
-        SolverFamily::Minion,
-        &vec!["Constant".to_string(), "Bubble".to_string()],
-    )?;
-
+    let rule_sets = resolve_rule_sets(SolverFamily::Minion, &get_default_rule_sets())?;
     let model = rewrite_model(&model, &rule_sets)?;
 
     if verbose {
@@ -219,7 +210,7 @@ fn integration_test_inner(
 
     // test solutions against conjure before writing
     if accept {
-        let mut conjure_solutions: Vec<HashMap<Name, Constant>> =
+        let mut conjure_solutions: Vec<HashMap<Name, Literal>> =
             get_solutions_from_conjure(&format!("{}/{}.{}", path, essence_base, extension))?;
 
         // Change bools to nums in both outputs, as we currently don't convert 0,1 back to
@@ -234,11 +225,11 @@ fn integration_test_inner(
                         solset.remove(&k);
                     }
                     conjure_core::ast::Name::UserName(_) => match v {
-                        Constant::Bool(true) => {
-                            solset.insert(k, Constant::Int(1));
+                        Literal::Bool(true) => {
+                            solset.insert(k, Literal::Int(1));
                         }
-                        Constant::Bool(false) => {
-                            solset.insert(k, Constant::Int(0));
+                        Literal::Bool(false) => {
+                            solset.insert(k, Literal::Int(0));
                         }
                         _ => {}
                     },
@@ -249,11 +240,11 @@ fn integration_test_inner(
         for solset in &mut conjure_solutions {
             for (k, v) in solset.clone().into_iter() {
                 match v {
-                    Constant::Bool(true) => {
-                        solset.insert(k, Constant::Int(1));
+                    Literal::Bool(true) => {
+                        solset.insert(k, Literal::Int(1));
                     }
-                    Constant::Bool(false) => {
-                        solset.insert(k, Constant::Int(0));
+                    Literal::Bool(false) => {
+                        solset.insert(k, Literal::Int(0));
                     }
                     _ => {}
                 }
@@ -292,10 +283,8 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
     model.constraints.transform(Arc::new(|x| {
         use conjure_core::ast::Expression::*;
         match &x {
-            Nothing => (),
             Bubble(_, _, _) => (),
-            Constant(_, _) => (),
-            Reference(_, _) => (),
+            FactorE(_, _) => (),
             Sum(_, vec) => assert_constants_leq_one(&x, vec),
             Min(_, vec) => assert_constants_leq_one(&x, vec),
             Max(_, vec) => assert_constants_leq_one(&x, vec),
@@ -320,6 +309,7 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
             AllDiff(_, _) => (),
             WatchedLiteral(_, _, _) => (),
             Reify(_, _, _) => (),
+            AuxDeclaration(_, _, _) => (),
         };
         x.clone()
     }));
@@ -327,7 +317,7 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
 
 fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
     let count = exprs.iter().fold(0, |i, x| match x {
-        Expression::Constant(_, _) => i + 1,
+        Expression::FactorE(_, Factor::Literal(_)) => i + 1,
         _ => i,
     });
 

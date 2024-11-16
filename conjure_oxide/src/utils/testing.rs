@@ -12,7 +12,7 @@ use serde_json::{Error as JsonError, Value as JsonValue};
 use conjure_core::error::Error;
 
 use crate::ast::Name::UserName;
-use crate::ast::{Constant, Name};
+use crate::ast::{Literal, Name};
 use crate::utils::conjure::minion_solutions_to_json;
 use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
@@ -110,7 +110,7 @@ pub fn read_model_json(
 
 pub fn minion_solutions_from_json(
     serialized: &str,
-) -> Result<Vec<HashMap<Name, Constant>>, anyhow::Error> {
+) -> Result<Vec<HashMap<Name, Literal>>, anyhow::Error> {
     let json: JsonValue = serde_json::from_str(serialized)?;
 
     let json_array = json
@@ -131,9 +131,9 @@ pub fn minion_solutions_from_json(
                     let n = n
                         .as_i64()
                         .ok_or(Error::Parse("Invalid integer".to_owned()))?;
-                    Constant::Int(n as i32)
+                    Literal::Int(n as i32)
                 }
-                JsonValue::Bool(b) => Constant::Bool(*b),
+                JsonValue::Bool(b) => Literal::Bool(*b),
                 _ => return Err(Error::Parse("Invalid constant".to_owned()).into()),
             };
 
@@ -147,7 +147,7 @@ pub fn minion_solutions_from_json(
 }
 
 pub fn save_minion_solutions_json(
-    solutions: &Vec<HashMap<Name, Constant>>,
+    solutions: &Vec<HashMap<Name, Literal>>,
     path: &str,
     test_name: &str,
     accept: bool,

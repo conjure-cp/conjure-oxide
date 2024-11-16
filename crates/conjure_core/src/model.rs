@@ -68,7 +68,11 @@ impl Model {
     }
 
     pub fn new_empty(context: Arc<RwLock<Context<'static>>>) -> Model {
-        Model::new(Default::default(), Expression::Nothing, context)
+        Model::new(
+            Default::default(),
+            Expression::And(Metadata::new(), Vec::new()),
+            context,
+        )
     }
     // Function to update a DecisionVariable based on its Name
     pub fn update_domain(&mut self, name: &Name, new_domain: Domain) {
@@ -89,14 +93,13 @@ impl Model {
     pub fn get_constraints_vec(&self) -> Vec<Expression> {
         match &self.constraints {
             Expression::And(_, constraints) => constraints.clone(),
-            Expression::Nothing => vec![],
             _ => vec![self.constraints.clone()],
         }
     }
 
     pub fn set_constraints(&mut self, constraints: Vec<Expression>) {
         if constraints.is_empty() {
-            self.constraints = Expression::Nothing;
+            self.constraints = Expression::And(Metadata::new(), Vec::new());
         } else if constraints.len() == 1 {
             self.constraints = constraints[0].clone();
         } else {

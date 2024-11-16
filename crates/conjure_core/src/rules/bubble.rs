@@ -1,10 +1,13 @@
 use conjure_core::ast::{Expression, ReturnType};
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
-    register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
+    register_rule, register_rule_set, ApplicationError, ApplicationError::*, ApplicationResult,
+    Reduction,
 };
 use conjure_core::Model;
 use uniplate::Uniplate;
+
+use super::utils::is_all_constant;
 
 register_rule_set!("Bubble", 100, ("Base"));
 
@@ -48,11 +51,11 @@ fn bubble_up(expr: &Expression, _: &Model) -> ApplicationResult {
     if bubbled_conditions.is_empty() {
         return Err(ApplicationError::RuleNotApplicable);
     }
-    return Ok(Reduction::pure(Expression::Bubble(
+    Ok(Reduction::pure(Expression::Bubble(
         Metadata::new(),
         Box::new(expr.with_children(sub)),
         Box::new(Expression::And(Metadata::new(), bubbled_conditions)),
-    )));
+    )))
 }
 
 // Bubble applications
@@ -68,6 +71,9 @@ fn bubble_up(expr: &Expression, _: &Model) -> ApplicationResult {
 */
 #[register_rule(("Bubble", 6000))]
 fn div_to_bubble(expr: &Expression, _: &Model) -> ApplicationResult {
+    if is_all_constant(expr) {
+        return Err(RuleNotApplicable);
+    }
     if let Expression::UnsafeDiv(_, a, b) = expr {
         return Ok(Reduction::pure(Expression::Bubble(
             Metadata::new(),
@@ -79,5 +85,5 @@ fn div_to_bubble(expr: &Expression, _: &Model) -> ApplicationResult {
             )),
         )));
     }
-    return Err(ApplicationError::RuleNotApplicable);
+    Err(ApplicationError::RuleNotApplicable)
 }

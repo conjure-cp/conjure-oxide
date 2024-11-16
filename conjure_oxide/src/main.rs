@@ -1,18 +1,18 @@
 // (niklasdewally): temporary, gut this if you want!
 
 use std::fs::File;
-use std::io::stdout;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::exit;
+use std::sync::Arc;
 
 use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
+use conjure_oxide::defaults::get_default_rule_sets;
 use schemars::schema_for;
 use serde_json::json;
 use serde_json::to_string_pretty;
-use structured_logger::{json::new_writer, Builder};
 
 use conjure_core::context::Context;
 use conjure_oxide::find_conjure::conjure_executable;
@@ -20,8 +20,13 @@ use conjure_oxide::model_from_json;
 use conjure_oxide::rule_engine::{
     get_rule_priorities, get_rules_vec, resolve_rule_sets, rewrite_model,
 };
+
 use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
 use conjure_oxide::SolverFamily;
+use tracing_subscriber::filter::LevelFilter;
+use tracing_subscriber::layer::SubscriberExt as _;
+use tracing_subscriber::util::SubscriberInitExt as _;
+use tracing_subscriber::{EnvFilter, Layer};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -66,6 +71,9 @@ struct Cli {
         help = "Save solutions to a JSON file (prints to stdin by default)"
     )]
     output: Option<PathBuf>,
+
+    #[arg(long, short = 'v', help = "Log verbosely to sterr")]
+    verbose: bool,
 }
 
 #[allow(clippy::unwrap_used)]
@@ -80,7 +88,9 @@ pub fn main() -> AnyhowResult<()> {
     }
 
     let target_family = cli.solver.unwrap_or(SolverFamily::Minion);
-    let extra_rule_sets: Vec<String> = cli.extra_rule_sets;
+    let mut extra_rule_sets: Vec<String> = get_default_rule_sets();
+    extra_rule_sets.extend(cli.extra_rule_sets);
+
     let out_file: Option<File> = match &cli.output {
         None => None,
         Some(pth) => Some(
@@ -91,7 +101,20 @@ pub fn main() -> AnyhowResult<()> {
                 .open(pth)?,
         ),
     };
-    #[allow(clippy::unwrap_used)]
+
+    // Logging:
+    //
+    // Using `tracing` framework, but this automatically reads stuff from `log`.
+    //
+    // A Subscriber is responsible for logging.
+    //
+    // It consists of composable layers, each of which logs to a different place in a different
+    // format.
+    let json_log_file = File::options()
+        .create(true)
+        .append(true)
+        .open("conjure_oxide_log.json")?;
+
     let log_file = File::options()
         .create(true)
         .append(true)
@@ -173,6 +196,12 @@ pub fn main() -> AnyhowResult<()> {
     );
 
     context.write().unwrap().file_name = Some(cli.input_file.to_str().expect("").into());
+
+    if cfg!(feature = "extra-rule-checks") {
+        log::info!("extra-rule-checks: enabled");
+    } else {
+        log::info!("extra-rule-checks: disabled");
+    }
 
     let mut model = model_from_json(&astjson, context.clone())?;
 

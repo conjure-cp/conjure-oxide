@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet};
+use std::env;
 use std::fmt::Display;
 use std::fs::File;
 use std::io::Write;
@@ -225,8 +227,7 @@ fn rewrite_iteration<'a>(
     let mut expression = expression.clone();
 
     let rule_results = apply_all_rules(&expression, model, rules, stats);
-    trace_rules(&rule_results, expression.clone());
-    if let Some(new) = choose_rewrite(&rule_results) {
+    if let Some(new) = choose_rewrite(&rule_results, &expression) {
         // If a rule is applied, mark the expression as dirty
         return Some(new);
     }
@@ -305,7 +306,13 @@ fn apply_all_rules<'a>(
     for rule in rules {
         match rule.apply(expression, model) {
             Ok(red) => {
-                log::trace!(target: "file", "Rule applicable: {:?}, to Expression: {:?}, resulting in: {:?}", rule, expression, red.new_expression);
+                log::info!(
+                    "Rule applicable: {} ({:?}), to expression: {}, resulting in: {}",
+                    rule.name,
+                    rule.rule_sets,
+                    expression,
+                    red.new_expression
+                );
                 stats.rewriter_rule_application_attempts =
                     Some(stats.rewriter_rule_application_attempts.unwrap() + 1);
                 stats.rewriter_rule_applications =
@@ -319,7 +326,12 @@ fn apply_all_rules<'a>(
                 });
             }
             Err(_) => {
-                log::trace!(target: "file", "Rule attempted but not applied: {:?}, to Expression: {:?}", rule, expression);
+                log::trace!(
+                    "Rule attempted but not applied: {} ({:?}), to expression: {}",
+                    rule.name,
+                    rule.rule_sets,
+                    expression
+                );
                 stats.rewriter_rule_application_attempts =
                     Some(stats.rewriter_rule_application_attempts.unwrap() + 1);
                 continue;
@@ -335,9 +347,12 @@ fn apply_all_rules<'a>(
 /// that successfully transforms the expression. This strategy can be modified in the future to incorporate
 /// more complex selection criteria, such as prioritizing rules based on cost, complexity, or other heuristic metrics.
 ///
+/// The function also checks the priorities of all the applicable rules and detects if there are multiple rules of the same proirity
+///
 /// # Parameters
 /// - `results`: A slice of [`RuleResult`] containing potential rule applications to be considered. Each element
 ///   represents a rule that was successfully applied to the expression, along with the resulting transformation.
+/// -  `initial_expression`: [`Expression`] before the rule tranformation.
 ///
 /// # Returns
 /// - `Some(<Reduction>)`: Returns a [`Reduction`] representing the first rule's application if there is at least one
@@ -351,7 +366,18 @@ fn apply_all_rules<'a>(
 /// Process the chosen reduction
 /// }
 ///
-fn choose_rewrite(results: &[RuleResult]) -> Option<Reduction> {
+fn choose_rewrite<'a>(
+    results: &[RuleResult],
+    initial_expression: &'a Expression,
+) -> Option<Reduction> {
+    //in the case where multiple rules are applicable
+    if results.len() > 1 {
+        let expr = results[0].reduction.new_expression.clone();
+        let rules: Vec<_> = results.iter().map(|result| &result.rule).collect();
+
+        check_priority(rules.clone(), &initial_expression, &expr);
+    }
+
     if results.is_empty() {
         return None;
     }
@@ -359,24 +385,53 @@ fn choose_rewrite(results: &[RuleResult]) -> Option<Reduction> {
     Some(results[0].reduction.clone())
 }
 
-fn trace_rules(results: &[RuleResult], expression: Expression) {
-    if !results.is_empty() {
-        let rule = results[0].rule;
-        let new_expression = results[0].reduction.new_expression.clone();
-        trace!(target: "rule_engine", "Rule applied: {:?}, to Expression: {:?}, resulting in: {:?}", rule.name, expression, new_expression);
+/// Function filters all the applicable rules based on their priority.
+/// In the case where there are multiple rules of the same prioriy, a bug! is thrown listing all those duplicates.
+/// Otherwise, if there are multiple rules applicable but they all have different priorities, a warning message is dispalyed.
+///
+/// # Parameters
+/// - `rules`: a vector of [`Rule`] containing all the applicable rules and their metadata for a specific expression.
+/// - `initial_expression`: [`Expression`] before rule the tranformation.
+/// - `new_expr`: [`Expression`] after the rule transformation.
+///
+fn check_priority<'a>(
+    rules: Vec<&&Rule<'_>>,
+    initial_expr: &'a Expression,
+    new_expr: &'a Expression,
+) {
+    //getting the rule sets from the applicable rules
+    let rule_sets: Vec<_> = rules.iter().map(|rule| &rule.rule_sets).collect();
+
+    //a map with keys being rule priorities and their values neing all the rules of that priority found in the rule_sets
+    let mut rules_by_priorities: HashMap<u16, Vec<&str>> = HashMap::new();
+
+    //iterates over each rule_set and groups by the rule priority
+    for rule_set in &rule_sets {
+        if let Some((name, priority)) = rule_set.get(0) {
+            rules_by_priorities
+                .entry(*priority)
+                .or_insert(Vec::new())
+                .push(*name);
+        }
+    }
+
+    //filters the map, retaining only entries where there is more than 1 rule of the same priority
+    let duplicate_rules: HashMap<u16, Vec<&str>> = rules_by_priorities
+        .into_iter()
+        .filter(|(_, group)| group.len() > 1)
+        .collect();
+
+    if !duplicate_rules.is_empty() {
+        //accumulates all duplicates into a formatted message
+        let mut message = String::from(format!("Found multiple rules of the same priority applicable to to expression: {:?} \n resulting in expression: {:?}", initial_expr, new_expr));
+        for (priority, rules) in &duplicate_rules {
+            message.push_str(&format!("Priority {:?} \n Rules: {:?}", priority, rules));
+        }
+        bug!("{}", message);
+
+    //no duplicate rules of the same priorities were found in the set of applicable rules
+    } else {
+        log::warn!("Multiple rules of different priorities are applicable to expression {:?} \n resulting in expression: {:?}
+        \n Rules{:?}", initial_expr, new_expr, rules)
     }
 }
-
-// fn trace_rules(results: &[RuleResult], expression: Expression) {
-//     if !results.is_empty() {
-//         let rule_name = results[0].rule.name.clone(); // Explicitly log only `rule.name`
-//         let new_expression = results[0].reduction.new_expression.clone();
-//         trace!(
-//             target: "rule_engine",
-//             rule_name = ?rule_name,
-//             expression = ?expression,
-//             new_expression = ?new_expression,
-//             "Rule applied"
-//         );
-//     }
-// }
