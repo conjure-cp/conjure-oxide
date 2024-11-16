@@ -27,7 +27,9 @@ pub fn get_example_model(filename: &str) -> Result<Model, anyhow::Error> {
     for entry in WalkDir::new(base_dir).into_iter().filter_map(|e| e.ok()) {
         let path = entry.path();
         if path.is_file()
-            && path.extension().map_or(false, |e| e == "essence")
+            && path
+                .extension()
+                .map_or(false, |e| e == "essence" || e == "eprime")
             && path.file_stem() == Some(std::ffi::OsStr::new(filename))
         {
             essence_path = path.to_path_buf();
