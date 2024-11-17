@@ -209,8 +209,8 @@ fn integration_test_inner(
         println!("Minion solutions: {:#?}", solutions_json)
     }
 
-    let expected_rule_trace = read_rule_trace(path, essence_base, "expected");
-    let generated_rule_trace = read_rule_trace(path, essence_base, "generated");
+    let expected_rule_trace = read_rule_trace(path, essence_base, "expected")?;
+    let generated_rule_trace = read_rule_trace(path, essence_base, "generated")?;
 
     assert_eq!(expected_rule_trace, generated_rule_trace);
 
@@ -350,7 +350,7 @@ where
     ) -> std::fmt::Result {
         // initialising the log object with level and target
         let mut log = json!({
-            "level": event.metadata().level().to_string(),
+            //"level": event.metadata().level().to_string(),
             "target": event.metadata().target(),
         });
 
@@ -395,7 +395,7 @@ pub fn create_scoped_subscriber(
     path: &str,
     test_name: &str,
 ) -> (impl tracing::Subscriber + Send + Sync, WorkerGuard) {
-    let file = File::create(format!("{path}/{test_name}-generated-rule-trace.json"))
+    let file = File::create(format!("{path}/{test_name}-expected-rule-trace.json"))
         .expect("Unable to create log file");
     let writer = BufWriter::new(file);
     let (non_blocking, guard) = tracing_appender::non_blocking(writer);

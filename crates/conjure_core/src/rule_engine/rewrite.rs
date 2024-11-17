@@ -450,16 +450,13 @@ fn trace_rules(results: &[RuleResult], expression: Expression) {
         let rule = results[0].rule;
         let new_expression = results[0].reduction.new_expression.clone();
 
-        // Track the count of results
-        let count = results.len();
-
         trace!(
             target: "rule_engine",
-            "Rule applied: {:?}, to Expression: {:?}, resulting in: {:?}, Total rules applied: {}",
+            "Rule applicable: {} ({:?}), to expression: {}, resulting in: {}",
             rule.name,
+            rule.rule_sets,
             expression,
             new_expression,
-            count
         );
     }
 }

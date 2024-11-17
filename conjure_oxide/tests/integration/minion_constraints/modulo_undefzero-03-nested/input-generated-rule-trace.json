@@ -1,0 +1,17 @@
+{"message":"Rule applicable: mod_to_bubble ([(\"Bubble\", 6000)]), to expression: y % z, resulting in: {SafeMod(y,z) @ (z != 0)}","target":"rule_engine"}
+{"message":"Rule applicable: bubble_up ([(\"Bubble\", 8900)]), to expression: x % {SafeMod(y,z) @ (z != 0)}, resulting in: {x % SafeMod(y,z) @ And([(z != 0)])}","target":"rule_engine"}
+{"message":"Rule applicable: bubble_up ([(\"Bubble\", 8900)]), to expression: ({x % SafeMod(y,z) @ And([(z != 0)])} = 3), resulting in: {(x % SafeMod(y,z) = 3) @ And([And([(z != 0)])])}","target":"rule_engine"}
+{"message":"Rule applicable: expand_bubble ([(\"Bubble\", 8900)]), to expression: {(x % SafeMod(y,z) = 3) @ And([And([(z != 0)])])}, resulting in: And([(x % SafeMod(y,z) = 3), And([And([(z != 0)])])])","target":"rule_engine"}
+{"message":"Rule applicable: unwrap_nested_and ([(\"Base\", 8800)]), to expression: And([(x % SafeMod(y,z) = 3), And([And([(z != 0)])])]), resulting in: And([(x % SafeMod(y,z) = 3), And([(z != 0)])])","target":"rule_engine"}
+{"message":"Rule applicable: unwrap_nested_and ([(\"Base\", 8800)]), to expression: And([(x % SafeMod(y,z) = 3), And([(z != 0)])]), resulting in: And([(x % SafeMod(y,z) = 3), (z != 0)])","target":"rule_engine"}
+{"message":"Rule applicable: mod_to_bubble ([(\"Bubble\", 6000)]), to expression: x % SafeMod(y,z), resulting in: {SafeMod(x,SafeMod(y,z)) @ (SafeMod(y,z) != 0)}","target":"rule_engine"}
+{"message":"Rule applicable: bubble_up ([(\"Bubble\", 8900)]), to expression: ({SafeMod(x,SafeMod(y,z)) @ (SafeMod(y,z) != 0)} = 3), resulting in: {(SafeMod(x,SafeMod(y,z)) = 3) @ And([(SafeMod(y,z) != 0)])}","target":"rule_engine"}
+{"message":"Rule applicable: expand_bubble ([(\"Bubble\", 8900)]), to expression: {(SafeMod(x,SafeMod(y,z)) = 3) @ And([(SafeMod(y,z) != 0)])}, resulting in: And([(SafeMod(x,SafeMod(y,z)) = 3), And([(SafeMod(y,z) != 0)])])","target":"rule_engine"}
+{"message":"Rule applicable: unwrap_nested_and ([(\"Base\", 8800)]), to expression: And([And([(SafeMod(x,SafeMod(y,z)) = 3), And([(SafeMod(y,z) != 0)])]), (z != 0)]), resulting in: And([(SafeMod(x,SafeMod(y,z)) = 3), And([(SafeMod(y,z) != 0)]), (z != 0)])","target":"rule_engine"}
+{"message":"Rule applicable: unwrap_nested_and ([(\"Base\", 8800)]), to expression: And([(SafeMod(x,SafeMod(y,z)) = 3), And([(SafeMod(y,z) != 0)]), (z != 0)]), resulting in: And([(SafeMod(x,SafeMod(y,z)) = 3), (SafeMod(y,z) != 0), (z != 0)])","target":"rule_engine"}
+{"message":"Rule applicable: flatten_binop ([(\"Minion\", 4400)]), to expression: SafeMod(x,SafeMod(y,z)), resulting in: SafeMod(x,__0)","target":"rule_engine"}
+{"message":"Rule applicable: introduce_modeq ([(\"Minion\", 4200)]), to expression: (SafeMod(x,__0) = 3), resulting in: ModEq(x, __0, 3)","target":"rule_engine"}
+{"message":"Rule applicable: flatten_binop ([(\"Minion\", 4400)]), to expression: (SafeMod(y,z) != 0), resulting in: (__1 != 0)","target":"rule_engine"}
+{"message":"Rule applicable: introduce_modeq ([(\"Minion\", 4200)]), to expression: __0 =aux SafeMod(y,z), resulting in: ModEq(y, z, __0)","target":"rule_engine"}
+{"message":"Rule applicable: introduce_modeq ([(\"Minion\", 4200)]), to expression: __1 =aux SafeMod(y,z), resulting in: ModEq(y, z, __1)","target":"rule_engine"}
+{"count":16,"message":" Number of rules applied"}
