@@ -68,12 +68,68 @@ fn introduce_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
     let a = children[0].as_atom().ok_or(RuleNotApplicable)?;
     let b = children[1].as_atom().ok_or(RuleNotApplicable)?;
 
-    Ok(Reduction::pure(DivEq(meta.clone_dirty(), a, b, val)))
+    Ok(Reduction::pure(DivEqUndefZero(
+        meta.clone_dirty(),
+        a,
+        b,
+        val,
+    )))
+}
+
+#[register_rule(("Minion", 4200))]
+fn introduce_modeq(expr: &Expr, _: &Model) -> ApplicationResult {
+    // div = val
+    let val: Atom;
+    let div: Expr;
+    let meta: Metadata;
+
+    match expr.clone() {
+        Expr::Eq(m, a, b) => {
+            meta = m;
+            if let Some(f) = a.as_atom() {
+                // val = div
+                val = f;
+                div = *b;
+            } else if let Some(f) = b.as_atom() {
+                // div = val
+                val = f;
+                div = *a;
+            } else {
+                return Err(RuleNotApplicable);
+            }
+        }
+        Expr::AuxDeclaration(m, name, e) => {
+            meta = m;
+            val = name.into();
+            div = *e;
+        }
+        _ => {
+            return Err(RuleNotApplicable);
+        }
+    }
+
+    if !(matches!(div, Expr::SafeMod(_, _, _))) {
+        return Err(RuleNotApplicable);
+    }
+
+    let children = div.children();
+    let a = children[0].as_atom().ok_or(RuleNotApplicable)?;
+    let b = children[1].as_atom().ok_or(RuleNotApplicable)?;
+
+    Ok(Reduction::pure(ModuloEqUndefZero(
+        meta.clone_dirty(),
+        a,
+        b,
+        val,
+    )))
 }
 
 #[register_rule(("Minion", 4400))]
 fn flatten_binop(expr: &Expr, model: &Model) -> ApplicationResult {
-    if !matches!(expr, Expr::SafeDiv(_, _, _) | Expr::Neq(_, _, _)) {
+    if !matches!(
+        expr,
+        Expr::SafeDiv(_, _, _) | Expr::Neq(_, _, _) | Expr::SafeMod(_, _, _)
+    ) {
         return Err(RuleNotApplicable);
     }
 

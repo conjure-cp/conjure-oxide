@@ -251,7 +251,7 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
             SumEq(_, vec, _) => assert_constants_leq_one(&x, vec),
             SumGeq(_, vec, _) => assert_constants_leq_one(&x, vec),
             SumLeq(_, vec, _) => assert_constants_leq_one(&x, vec),
-            DivEq(_, _, _, _) => (),
+            DivEqUndefZero(_, _, _, _) => (),
             Ineq(_, _, _, _) => (),
             // this is a vector operation, but we don't want to fold values into each-other in this
             // one
@@ -259,6 +259,9 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
             WatchedLiteral(_, _, _) => (),
             Reify(_, _, _) => (),
             AuxDeclaration(_, _, _) => (),
+            UnsafeMod(_, _, _) => (),
+            SafeMod(_, _, _) => (),
+            ModuloEqUndefZero(_, _, _, _) => (),
         };
         x.clone()
     }));

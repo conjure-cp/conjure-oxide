@@ -83,6 +83,13 @@ pub enum Expression {
     #[compatible(JsonInput)]
     UnsafeDiv(Metadata, Box<Expression>, Box<Expression>),
 
+    /// Modulo after preventing mod 0, usually with a bubble
+    SafeMod(Metadata, Box<Expression>, Box<Expression>),
+
+    /// Modulo with a possibly undefined value (mod 0)
+    #[compatible(JsonInput)]
+    UnsafeMod(Metadata, Box<Expression>, Box<Expression>),
+
     /* Flattened SumEq.
      *
      * Note: this is an intermediary step that's used in the process of converting from conjure model to minion.
@@ -101,7 +108,11 @@ pub enum Expression {
 
     /// `a / b = c`
     #[compatible(Minion)]
-    DivEq(Metadata, Atom, Atom, Atom),
+    DivEqUndefZero(Metadata, Atom, Atom, Atom),
+
+    /// `a % b = c`
+    #[compatible(Minion)]
+    ModuloEqUndefZero(Metadata, Atom, Atom, Atom),
 
     #[compatible(Minion)]
     Ineq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
@@ -205,24 +216,24 @@ impl Expression {
                     _ => None,
                 }
             }
-            Expression::SafeDiv(_, a, b) => {
+            Expression::UnsafeMod(_, a, b) => a.domain_of(vars)?.apply_i32(
+                |x, y| if y != 0 { Some(x % y) } else { None },
+                &b.domain_of(vars)?,
+            ),
+
+            Expression::SafeMod(_, a, b) => {
                 let domain = a.domain_of(vars)?.apply_i32(
-                    |x, y| if y != 0 { Some(x / y) } else { None },
+                    |x, y| if y != 0 { Some(x % y) } else { None },
                     &b.domain_of(vars)?,
                 );
-                match domain {
-                    Some(Domain::IntDomain(v)) if v.len() == 1 => {
-                        let range = match v[0] {
-                            Range::Single(a) if a > 0 => Range::Bounded(0, a),
-                            Range::Single(a) if a < 0 => Range::Bounded(a, 0),
-                            Range::Single(0) => Range::Single(0),
-                            Range::Bounded(a, b) if a < 0 => Range::Bounded(a, b),
-                            Range::Bounded(_, b) => Range::Bounded(0, b),
-                            _ => unreachable!(),
-                        };
 
-                        Some(Domain::IntDomain(vec![range]))
+                match domain {
+                    Some(Domain::IntDomain(ranges)) => {
+                        let mut ranges = ranges;
+                        ranges.push(Range::Single(0));
+                        Some(Domain::IntDomain(ranges))
                     }
+                    None => Some(Domain::IntDomain(vec![Range::Single(0)])),
                     _ => None,
                 }
             }
@@ -256,6 +267,7 @@ impl Expression {
         match self {
             Expression::Atomic(_, _) => false,
             Expression::SafeDiv(_, _, _) => false,
+            Expression::SafeMod(_, _, _) => false,
             _ => true,
         }
     }
@@ -282,13 +294,16 @@ impl Expression {
             Expression::SumEq(_, _, _) => Some(ReturnType::Bool),
             Expression::SumGeq(_, _, _) => Some(ReturnType::Bool),
             Expression::SumLeq(_, _, _) => Some(ReturnType::Bool),
-            Expression::DivEq(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::DivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
             Expression::Ineq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AllDiff(_, _) => Some(ReturnType::Bool),
             Expression::Bubble(_, _, _) => None, // TODO: (flm8) should this be a bool?
             Expression::WatchedLiteral(_, _, _) => Some(ReturnType::Bool),
             Expression::Reify(_, _, _) => Some(ReturnType::Bool),
             Expression::AuxDeclaration(_, _, _) => Some(ReturnType::Bool),
+            Expression::UnsafeMod(_, _, _) => Some(ReturnType::Int),
+            Expression::SafeMod(_, _, _) => Some(ReturnType::Int),
+            Expression::ModuloEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
         }
     }
 
@@ -422,7 +437,7 @@ impl Display for Expression {
             Expression::UnsafeDiv(_, box1, box2) => {
                 write!(f, "UnsafeDiv({}, {})", box1.clone(), box2.clone())
             }
-            Expression::DivEq(_, box1, box2, box3) => {
+            Expression::DivEqUndefZero(_, box1, box2, box3) => {
                 write!(
                     f,
                     "DivEq({}, {}, {})",
@@ -431,6 +446,16 @@ impl Display for Expression {
                     box3.clone()
                 )
             }
+            Expression::ModuloEqUndefZero(_, box1, box2, box3) => {
+                write!(
+                    f,
+                    "ModEq({}, {}, {})",
+                    box1.clone(),
+                    box2.clone(),
+                    box3.clone()
+                )
+            }
+
             Expression::WatchedLiteral(_, x, l) => {
                 write!(f, "WatchedLiteral({},{})", x, l)
             }
@@ -439,6 +464,12 @@ impl Display for Expression {
             }
             Expression::AuxDeclaration(_, n, e) => {
                 write!(f, "{} =aux {}", n, e.clone())
+            }
+            Expression::UnsafeMod(_, a, b) => {
+                write!(f, "{} % {}", a.clone(), b.clone())
+            }
+            Expression::SafeMod(_, a, b) => {
+                write!(f, "SafeMod({},{})", a.clone(), b.clone())
             }
         }
     }

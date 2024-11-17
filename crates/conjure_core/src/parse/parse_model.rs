@@ -193,6 +193,10 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
             "MkOpDiv",
             Box::new(Expression::UnsafeDiv) as Box<dyn Fn(_, _, _) -> _>,
         ),
+        (
+            "MkOpMod",
+            Box::new(Expression::UnsafeMod) as Box<dyn Fn(_, _, _) -> _>,
+        ),
     ]
     .into_iter()
     .collect();

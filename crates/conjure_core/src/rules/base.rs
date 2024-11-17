@@ -32,13 +32,10 @@ fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
     // excluded expressions
     if matches!(
         expr,
-        Atomic(_, Reference(_,))
-            | Atomic(_, Literal(_))
+        Atomic(_, _)
             | WatchedLiteral(_, _, _)
-            | Atomic(_, Reference(_,))
-            | Atomic(_, Literal(_))
-            | WatchedLiteral(_, _, _)
-            | DivEq(_, _, _, _)
+            | DivEqUndefZero(_, _, _, _)
+            | ModuloEqUndefZero(_, _, _, _)
     ) {
         return Err(ApplicationError::RuleNotApplicable);
     }
@@ -469,7 +466,10 @@ fn distribute_or_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
 #[register_rule(("Base", 8400))]
 fn distribute_not_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
     for child in expr.universe() {
-        if matches!(child, Expr::UnsafeDiv(_, _, _) | Expr::Bubble(_, _, _)) {
+        if matches!(
+            child,
+            Expr::UnsafeDiv(_, _, _) | Expr::Bubble(_, _, _) | Expr::UnsafeMod(_, _, _)
+        ) {
             return Err(RuleNotApplicable);
         }
     }
