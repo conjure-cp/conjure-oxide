@@ -25,7 +25,7 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::RwLock;
 
-use conjure_core::ast::Factor;
+use conjure_core::ast::Atom;
 use conjure_core::ast::{Expression, Literal, Name};
 use conjure_core::context::Context;
 use conjure_oxide::defaults::get_default_rule_sets;
@@ -290,7 +290,7 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
         use conjure_core::ast::Expression::*;
         match &x {
             Bubble(_, _, _) => (),
-            FactorE(_, _) => (),
+            Atomic(_, _) => (),
             Sum(_, vec) => assert_constants_leq_one(&x, vec),
             Min(_, vec) => assert_constants_leq_one(&x, vec),
             Max(_, vec) => assert_constants_leq_one(&x, vec),
@@ -308,7 +308,7 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
             SumEq(_, vec, _) => assert_constants_leq_one(&x, vec),
             SumGeq(_, vec, _) => assert_constants_leq_one(&x, vec),
             SumLeq(_, vec, _) => assert_constants_leq_one(&x, vec),
-            DivEq(_, _, _, _) => (),
+            DivEqUndefZero(_, _, _, _) => (),
             Ineq(_, _, _, _) => (),
             // this is a vector operation, but we don't want to fold values into each-other in this
             // one
@@ -316,6 +316,9 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
             WatchedLiteral(_, _, _) => (),
             Reify(_, _, _) => (),
             AuxDeclaration(_, _, _) => (),
+            UnsafeMod(_, _, _) => (),
+            SafeMod(_, _, _) => (),
+            ModuloEqUndefZero(_, _, _, _) => (),
         };
         x.clone()
     }));
@@ -323,7 +326,7 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
 
 fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
     let count = exprs.iter().fold(0, |i, x| match x {
-        Expression::FactorE(_, Factor::Literal(_)) => i + 1,
+        Expression::Atomic(_, Atom::Literal(_)) => i + 1,
         _ => i,
     });
 

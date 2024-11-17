@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use conjure_macros::register_rule;
 
-use crate::ast::{Expression as Expr, Factor, Literal::*};
+use crate::ast::{Atom, Expression as Expr, Literal::*};
 use crate::rule_engine::{ApplicationResult, Reduction};
 use crate::Model;
 
@@ -18,13 +18,13 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
     // This is why we always check whether we found a constant or not.
     match expr.clone() {
         Bubble(_, _, _) => Err(RuleNotApplicable),
-        FactorE(_, _) => Err(RuleNotApplicable),
+        Atomic(_, _) => Err(RuleNotApplicable),
         Sum(m, vec) => {
             let mut acc = 0;
             let mut n_consts = 0;
             let mut new_vec: Vec<Expr> = Vec::new();
             for expr in vec {
-                if let Expr::FactorE(_, Factor::Literal(Int(x))) = expr {
+                if let Expr::Atomic(_, Atom::Literal(Int(x))) = expr {
                     acc += x;
                     n_consts += 1;
                 } else {
@@ -32,7 +32,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
                 }
             }
             if acc != 0 {
-                new_vec.push(Expr::FactorE(Default::default(), Factor::Literal(Int(acc))));
+                new_vec.push(Expr::Atomic(Default::default(), Atom::Literal(Int(acc))));
             }
 
             if n_consts <= 1 {
@@ -41,12 +41,13 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
                 Ok(Reduction::pure(Sum(m, new_vec)))
             }
         }
+
         Min(m, vec) => {
             let mut acc: Option<i32> = None;
             let mut n_consts = 0;
             let mut new_vec: Vec<Expr> = Vec::new();
             for expr in vec {
-                if let Expr::FactorE(_, Factor::Literal(Int(x))) = expr {
+                if let Expr::Atomic(_, Atom::Literal(Int(x))) = expr {
                     n_consts += 1;
                     acc = match acc {
                         Some(i) => {
@@ -64,7 +65,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             }
 
             if let Some(i) = acc {
-                new_vec.push(Expr::FactorE(Default::default(), Factor::Literal(Int(i))));
+                new_vec.push(Expr::Atomic(Default::default(), Atom::Literal(Int(i))));
             }
 
             if n_consts <= 1 {
@@ -78,7 +79,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             let mut n_consts = 0;
             let mut new_vec: Vec<Expr> = Vec::new();
             for expr in vec {
-                if let Expr::FactorE(_, Factor::Literal(Int(x))) = expr {
+                if let Expr::Atomic(_, Atom::Literal(Int(x))) = expr {
                     n_consts += 1;
                     acc = match acc {
                         Some(i) => {
@@ -96,7 +97,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             }
 
             if let Some(i) = acc {
-                new_vec.push(Expr::FactorE(Default::default(), Factor::Literal(Int(i))));
+                new_vec.push(Expr::Atomic(Default::default(), Atom::Literal(Int(i))));
             }
 
             if n_consts <= 1 {
@@ -110,12 +111,12 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             let mut new_vec: Vec<Expr> = Vec::new();
             let mut has_const: bool = false;
             for expr in vec {
-                if let Expr::FactorE(_, Factor::Literal(Bool(x))) = expr {
+                if let Expr::Atomic(_, Atom::Literal(Bool(x))) = expr {
                     has_const = true;
                     if x {
-                        return Ok(Reduction::pure(FactorE(
+                        return Ok(Reduction::pure(Atomic(
                             Default::default(),
-                            Factor::Literal(Bool(true)),
+                            Atom::Literal(Bool(true)),
                         )));
                     }
                 } else {
@@ -133,12 +134,12 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             let mut new_vec: Vec<Expr> = Vec::new();
             let mut has_const: bool = false;
             for expr in vec {
-                if let Expr::FactorE(_, Factor::Literal(Bool(x))) = expr {
+                if let Expr::Atomic(_, Atom::Literal(Bool(x))) = expr {
                     has_const = true;
                     if !x {
-                        return Ok(Reduction::pure(FactorE(
+                        return Ok(Reduction::pure(Atomic(
                             Default::default(),
-                            Factor::Literal(Bool(false)),
+                            Atom::Literal(Bool(false)),
                         )));
                     }
                 } else {
@@ -165,7 +166,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             let mut new_vec: Vec<Expr> = Vec::new();
             let mut n_consts = 0;
             for expr in vec {
-                if let Expr::FactorE(_, Factor::Literal(Int(x))) = expr {
+                if let Expr::Atomic(_, Atom::Literal(Int(x))) = expr {
                     n_consts += 1;
                     acc += x;
                 } else {
@@ -173,20 +174,20 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
                 }
             }
 
-            if let Expr::FactorE(_, Factor::Literal(Int(x))) = *eq {
+            if let Expr::Atomic(_, Atom::Literal(Int(x))) = *eq {
                 if acc != 0 {
                     // when rhs is a constant, move lhs constants to rhs
                     return Ok(Reduction::pure(SumEq(
                         m,
                         new_vec,
-                        Box::new(Expr::FactorE(
+                        Box::new(Expr::Atomic(
                             Default::default(),
-                            Factor::Literal(Int(x - acc)),
+                            Atom::Literal(Int(x - acc)),
                         )),
                     )));
                 }
             } else if acc != 0 {
-                new_vec.push(Expr::FactorE(Default::default(), Factor::Literal(Int(acc))));
+                new_vec.push(Expr::Atomic(Default::default(), Atom::Literal(Int(acc))));
             }
 
             if n_consts <= 1 {
@@ -200,7 +201,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             let mut new_vec: Vec<Expr> = Vec::new();
             let mut n_consts = 0;
             for expr in vec {
-                if let Expr::FactorE(_, Factor::Literal(Int(x))) = expr {
+                if let Expr::Atomic(_, Atom::Literal(Int(x))) = expr {
                     n_consts += 1;
                     acc += x;
                 } else {
@@ -208,20 +209,20 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
                 }
             }
 
-            if let Expr::FactorE(_, Factor::Literal(Int(x))) = *geq {
+            if let Expr::Atomic(_, Atom::Literal(Int(x))) = *geq {
                 if acc != 0 {
                     // when rhs is a constant, move lhs constants to rhs
                     return Ok(Reduction::pure(SumGeq(
                         m,
                         new_vec,
-                        Box::new(Expr::FactorE(
+                        Box::new(Expr::Atomic(
                             Default::default(),
-                            Factor::Literal(Int(x - acc)),
+                            Atom::Literal(Int(x - acc)),
                         )),
                     )));
                 }
             } else if acc != 0 {
-                new_vec.push(Expr::FactorE(Default::default(), Factor::Literal(Int(acc))));
+                new_vec.push(Expr::Atomic(Default::default(), Atom::Literal(Int(acc))));
             }
 
             if n_consts <= 1 {
@@ -235,7 +236,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             let mut new_vec: Vec<Expr> = Vec::new();
             let mut n_consts = 0;
             for expr in vec {
-                if let Expr::FactorE(_, Factor::Literal(Int(x))) = expr {
+                if let Expr::Atomic(_, Atom::Literal(Int(x))) = expr {
                     n_consts += 1;
                     acc += x;
                 } else {
@@ -243,20 +244,20 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
                 }
             }
 
-            if let Expr::FactorE(_, Factor::Literal(Int(x))) = *leq {
+            if let Expr::Atomic(_, Atom::Literal(Int(x))) = *leq {
                 // when rhs is a constant, move lhs constants to rhs
                 if acc != 0 {
                     return Ok(Reduction::pure(SumLeq(
                         m,
                         new_vec,
-                        Box::new(Expr::FactorE(
+                        Box::new(Expr::Atomic(
                             Default::default(),
-                            Factor::Literal(Int(x - acc)),
+                            Atom::Literal(Int(x - acc)),
                         )),
                     )));
                 }
             } else if acc != 0 {
-                new_vec.push(Expr::FactorE(Default::default(), Factor::Literal(Int(acc))));
+                new_vec.push(Expr::Atomic(Default::default(), Atom::Literal(Int(acc))));
             }
 
             if n_consts <= 1 {
@@ -265,19 +266,16 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
                 Ok(Reduction::pure(SumLeq(m, new_vec, leq)))
             }
         }
-        DivEq(_, _, _, _) => Err(RuleNotApplicable),
+        DivEqUndefZero(_, _, _, _) => Err(RuleNotApplicable),
         Ineq(_, _, _, _) => Err(RuleNotApplicable),
         AllDiff(m, vec) => {
             let mut consts: HashSet<i32> = HashSet::new();
 
             // check for duplicate constant values which would fail the constraint
             for expr in &vec {
-                if let Expr::FactorE(_, Factor::Literal(Int(x))) = expr {
+                if let Expr::Atomic(_, Atom::Literal(Int(x))) = expr {
                     if !consts.insert(*x) {
-                        return Ok(Reduction::pure(Expr::FactorE(
-                            m,
-                            Factor::Literal(Bool(false)),
-                        )));
+                        return Ok(Reduction::pure(Expr::Atomic(m, Atom::Literal(Bool(false)))));
                     }
                 }
             }
@@ -285,9 +283,11 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             // nothing has changed
             Err(RuleNotApplicable)
         }
-
         WatchedLiteral(_, _, _) => Err(RuleNotApplicable),
         Reify(_, _, _) => Err(RuleNotApplicable),
         AuxDeclaration(_, _, _) => Err(RuleNotApplicable),
+        UnsafeMod(_, a, b) => Err(RuleNotApplicable),
+        SafeMod(_, a, b) => Err(RuleNotApplicable),
+        ModuloEqUndefZero(_, _, _, _) => Err(RuleNotApplicable),
     }
 }

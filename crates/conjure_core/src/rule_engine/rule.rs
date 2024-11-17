@@ -1,9 +1,10 @@
+use std::collections::HashSet;
 use std::fmt::{self, Display, Formatter};
 use std::hash::Hash;
 
 use thiserror::Error;
 
-use crate::ast::{Expression, SymbolTable};
+use crate::ast::{Expression, Name, SymbolTable};
 use crate::metadata::Metadata;
 use crate::model::Model;
 
@@ -100,8 +101,9 @@ impl Reduction {
 
     // Apply side-effects (e.g. symbol table updates
     pub fn apply(self, model: &mut Model) {
-        model.variables.extend(self.symbols); // Add new assignments to the symbol table
-                                              // TODO: (yb33) Remove it when we change constraints to a vector
+        model.extend_sym_table(self.symbols);
+
+        // TODO: (yb33) Remove it when we change constraints to a vector
         if let Expression::And(_, exprs) = &self.new_top {
             if exprs.is_empty() {
                 model.constraints = self.new_expression.clone();

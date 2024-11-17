@@ -4,35 +4,35 @@ use super::{Expression, Literal, Name};
 use serde::{Deserialize, Serialize};
 use uniplate::derive::Uniplate;
 
-/// A `Factor` is an indivisible expression, such as a literal or a reference.
+/// An `Atom` is an indivisible expression, such as a literal or a reference.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
 #[uniplate()]
 #[biplate(to=Name)]
 #[biplate(to=Literal)]
 #[biplate(to=Metadata)]
 #[biplate(to=Expression)]
-pub enum Factor {
+pub enum Atom {
     Literal(Literal),
     Reference(Name),
 }
 
-impl std::fmt::Display for Factor {
+impl std::fmt::Display for Atom {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Factor::Literal(x) => x.fmt(f),
-            Factor::Reference(x) => x.fmt(f),
+            Atom::Literal(x) => x.fmt(f),
+            Atom::Reference(x) => x.fmt(f),
         }
     }
 }
 
-impl From<Literal> for Factor {
+impl From<Literal> for Atom {
     fn from(value: Literal) -> Self {
-        Factor::Literal(value)
+        Atom::Literal(value)
     }
 }
 
-impl From<Name> for Factor {
+impl From<Name> for Atom {
     fn from(value: Name) -> Self {
-        Factor::Reference(value)
+        Atom::Reference(value)
     }
 }
