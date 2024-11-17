@@ -68,7 +68,12 @@ fn introduce_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
     let a = children[0].as_atom().ok_or(RuleNotApplicable)?;
     let b = children[1].as_atom().ok_or(RuleNotApplicable)?;
 
-    Ok(Reduction::pure(DivEq(meta.clone_dirty(), a, b, val)))
+    Ok(Reduction::pure(DivEqUndefZero(
+        meta.clone_dirty(),
+        a,
+        b,
+        val,
+    )))
 }
 
 #[register_rule(("Minion", 4200))]
@@ -111,7 +116,12 @@ fn introduce_modeq(expr: &Expr, _: &Model) -> ApplicationResult {
     let a = children[0].as_atom().ok_or(RuleNotApplicable)?;
     let b = children[1].as_atom().ok_or(RuleNotApplicable)?;
 
-    Ok(Reduction::pure(ModEq(meta.clone_dirty(), a, b, val)))
+    Ok(Reduction::pure(ModuloEqUndefZero(
+        meta.clone_dirty(),
+        a,
+        b,
+        val,
+    )))
 }
 
 #[register_rule(("Minion", 4400))]

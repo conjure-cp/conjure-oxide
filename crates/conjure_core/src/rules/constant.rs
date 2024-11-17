@@ -72,7 +72,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             }
             bin_op::<i32, i32>(|a, b| a % b, a, b).map(Lit::Int)
         }
-        Expr::DivEq(_, a, b, c) => {
+        Expr::DivEqUndefZero(_, a, b, c) => {
             let a = unwrap_atom::<i32>(a)?;
             let b = unwrap_atom::<i32>(b)?;
             let c = unwrap_atom::<i32>(c)?;

@@ -32,7 +32,10 @@ fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
     // excluded expressions
     if matches!(
         expr,
-        Atomic(_, _) | WatchedLiteral(_, _, _) | DivEq(_, _, _, _) | ModEq(_, _, _, _)
+        Atomic(_, _)
+            | WatchedLiteral(_, _, _)
+            | DivEqUndefZero(_, _, _, _)
+            | ModuloEqUndefZero(_, _, _, _)
     ) {
         return Err(ApplicationError::RuleNotApplicable);
     }

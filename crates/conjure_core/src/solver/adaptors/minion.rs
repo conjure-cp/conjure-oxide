@@ -301,13 +301,13 @@ fn read_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, So
         conjure_ast::Expression::Neq(_metadata, a, b) => {
             Ok(minion_ast::Constraint::DisEq(read_var(*a)?, read_var(*b)?))
         }
-        conjure_ast::Expression::DivEq(_metadata, a, b, c) => {
+        conjure_ast::Expression::DivEqUndefZero(_metadata, a, b, c) => {
             Ok(minion_ast::Constraint::DivUndefZero(
                 (read_var(a.into())?, read_var(b.into())?),
                 read_var(c.into())?,
             ))
         }
-        conjure_ast::Expression::ModEq(_metadata, a, b, c) => {
+        conjure_ast::Expression::ModuloEqUndefZero(_metadata, a, b, c) => {
             Ok(minion_ast::Constraint::ModuloUndefZero(
                 (read_var(a.into())?, read_var(b.into())?),
                 read_var(c.into())?,

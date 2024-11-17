@@ -266,7 +266,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
                 Ok(Reduction::pure(SumLeq(m, new_vec, leq)))
             }
         }
-        DivEq(_, _, _, _) => Err(RuleNotApplicable),
+        DivEqUndefZero(_, _, _, _) => Err(RuleNotApplicable),
         Ineq(_, _, _, _) => Err(RuleNotApplicable),
         AllDiff(m, vec) => {
             let mut consts: HashSet<i32> = HashSet::new();
@@ -288,6 +288,6 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
         AuxDeclaration(_, _, _) => Err(RuleNotApplicable),
         UnsafeMod(_, a, b) => Err(RuleNotApplicable),
         SafeMod(_, a, b) => Err(RuleNotApplicable),
-        ModEq(_, _, _, _) => Err(RuleNotApplicable),
+        ModuloEqUndefZero(_, _, _, _) => Err(RuleNotApplicable),
     }
 }

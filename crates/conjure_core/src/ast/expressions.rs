@@ -108,11 +108,11 @@ pub enum Expression {
 
     /// `a / b = c`
     #[compatible(Minion)]
-    DivEq(Metadata, Atom, Atom, Atom),
+    DivEqUndefZero(Metadata, Atom, Atom, Atom),
 
     /// `a % b = c`
     #[compatible(Minion)]
-    ModEq(Metadata, Atom, Atom, Atom),
+    ModuloEqUndefZero(Metadata, Atom, Atom, Atom),
 
     #[compatible(Minion)]
     Ineq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
@@ -294,7 +294,7 @@ impl Expression {
             Expression::SumEq(_, _, _) => Some(ReturnType::Bool),
             Expression::SumGeq(_, _, _) => Some(ReturnType::Bool),
             Expression::SumLeq(_, _, _) => Some(ReturnType::Bool),
-            Expression::DivEq(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::DivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
             Expression::Ineq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AllDiff(_, _) => Some(ReturnType::Bool),
             Expression::Bubble(_, _, _) => None, // TODO: (flm8) should this be a bool?
@@ -303,7 +303,7 @@ impl Expression {
             Expression::AuxDeclaration(_, _, _) => Some(ReturnType::Bool),
             Expression::UnsafeMod(_, _, _) => Some(ReturnType::Int),
             Expression::SafeMod(_, _, _) => Some(ReturnType::Int),
-            Expression::ModEq(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::ModuloEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
         }
     }
 
@@ -437,7 +437,7 @@ impl Display for Expression {
             Expression::UnsafeDiv(_, box1, box2) => {
                 write!(f, "UnsafeDiv({}, {})", box1.clone(), box2.clone())
             }
-            Expression::DivEq(_, box1, box2, box3) => {
+            Expression::DivEqUndefZero(_, box1, box2, box3) => {
                 write!(
                     f,
                     "DivEq({}, {}, {})",
@@ -446,7 +446,7 @@ impl Display for Expression {
                     box3.clone()
                 )
             }
-            Expression::ModEq(_, box1, box2, box3) => {
+            Expression::ModuloEqUndefZero(_, box1, box2, box3) => {
                 write!(
                     f,
                     "ModEq({}, {}, {})",
