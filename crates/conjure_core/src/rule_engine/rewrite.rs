@@ -1,14 +1,12 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
+use std::env;
 use std::fmt::Display;
-use std::fs::File;
-use std::io::Write;
-use std::{env, io};
 
 use thiserror::Error;
 
 use crate::bug;
 use crate::stats::RewriterStats;
-use tracing::{span, trace, Level};
+use tracing::trace;
 use uniplate::Uniplate;
 
 use crate::rule_engine::{Reduction, Rule, RuleSet};
@@ -438,13 +436,7 @@ fn check_priority<'a>(
         \n Rules{:?}", initial_expr, new_expr, rules)
     }
 }
-// fn trace_rules(results: &[RuleResult], expression: Expression) {
-//     if !results.is_empty() {
-//         let rule = results[0].rule;
-//         let new_expression = results[0].reduction.new_expression.clone();
-//         trace!(target: "rule_engine", "Rule applied: {:?}, to Expression: {:?}, resulting in: {:?}", rule.name, expression, new_expression);
-//     }
-// }
+
 fn trace_rules(results: &[RuleResult], expression: Expression) {
     if !results.is_empty() {
         let rule = results[0].rule;

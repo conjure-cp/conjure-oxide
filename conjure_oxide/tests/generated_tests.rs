@@ -1,4 +1,3 @@
-use conjure_core::Model;
 use conjure_oxide::utils::testing::read_rule_trace;
 use glob::glob;
 use serde_json::json;
@@ -8,8 +7,6 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use std::sync::atomic::AtomicUsize;
-use std::sync::atomic::Ordering;
 use tracing::field::Field;
 use tracing::field::Visit;
 use tracing::Subscriber;
@@ -18,7 +15,6 @@ use tracing_subscriber::{filter::EnvFilter, fmt, fmt::FmtContext, layer::Subscri
 
 use tracing_appender::non_blocking::WorkerGuard;
 
-use std::fmt::Write;
 use std::io::BufWriter;
 use std::path::Path;
 use std::sync::Arc;
@@ -67,8 +63,6 @@ fn main() {
             Err(e) => println!("Error: {:?}", e),
         }
     }
-    // let file_path = Path::new("/path/to/your/file.txt");
-    // let base_name = file_path.file_stem().and_then(|stem| stem.to_str());
 
     let file_path = Path::new("conjure_oxide/tests/integration/*"); // using relative path
 
@@ -259,7 +253,6 @@ fn integration_test_inner(
 
         // I can't make these sets of hashmaps due to hashmaps not implementing hash; so, to
         // compare these, I make them both json and compare that.
-
         let mut conjure_solutions_json: serde_json::Value =
             minion_solutions_to_json(&conjure_solutions);
         let mut username_solutions_json: serde_json::Value =

@@ -199,7 +199,7 @@ pub fn read_rule_trace(
         .collect();
 
     //only count the number of rule in generated file (assumming the expected version already has that line and it is correct)
-    if (prefix == "expected") {
+    if prefix == "expected" {
         let rule_count = rules_trace.len();
 
         let count_message = json!({
