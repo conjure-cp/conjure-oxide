@@ -36,33 +36,35 @@ module.exports = grammar ({
       "int",
       optional(seq(
         "(",
-        choice(
+        prec.left(choice(
           $.range_list,
           $.expression
-        ),
+        )),
         ")"
       ))
     ),
 
     bool_domain: $ => "bool",
 
-    range_list: $ => seq(
+    range_list: $ => prec(2, seq(
       choice(
       $.lower_bound_range,
       $.upper_bound_range,
-      $.closed_range
+      $.closed_range,
+      $.integer
       ),
-      optional(repeat(
+      optional(repeat(seq(
         ",",
         choice(
           $.lower_bound_range,
           $.upper_bound_range,
-          $.closed_range
+          $.closed_range,
+          $.integer
         )
-      ))
-    ),
+      )))
+    )),
     
-    //can these be expresions not integers?
+    //should these be expresions not integers?
     lower_bound_range: $ => seq(
       $.integer,
       ".."
