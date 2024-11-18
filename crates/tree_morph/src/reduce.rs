@@ -1,4 +1,4 @@
-use crate::{Commands, Reduction, Rule};
+use crate::{helpers::one_or_select, Commands, Reduction, Rule};
 use uniplate::Uniplate;
 
 // TODO: (Felix) dirty/clean optimisation: replace tree with a custom tree structure,
@@ -96,7 +96,8 @@ where
 {
     reduce(
         |commands, subtree, meta| {
-            let selection = select(
+            let selection = one_or_select(
+                &select,
                 subtree,
                 &mut rules.iter().filter_map(|rule| {
                     Reduction::apply_transform(|c, t, m| rule.apply(c, t, m), subtree, meta)
