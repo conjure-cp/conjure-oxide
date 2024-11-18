@@ -23,6 +23,7 @@ use conjure_oxide::rule_engine::{
 use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
 use conjure_oxide::SolverFamily;
 
+
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
