@@ -172,9 +172,18 @@ fn parse_int_domain(root_node: Node, source_code: &str) -> Domain {
                                 .unwrap();
                             ranges.push(Range::Bounded(*lower_bound, *upper_bound));
                         }
+                        "integer" => {
+                            let range = range.child(0).expect("error");
+                            let integer_value = &source_code
+                            [range.start_byte()..range.end_byte()]
+                            .parse::<i32>()
+                            .unwrap();
+                            ranges.push(Range::Single(*integer_value));
+                        }
                         _ => {}
                     }
                 }
+                return Domain::IntDomain(ranges)
             }
             "expression" => { //todo: add this code, right now returns infinite integer domain
                 return Domain::IntDomain(vec![Range::Bounded(std::i32::MIN, std::i32::MAX)])
@@ -188,8 +197,8 @@ fn parse_int_domain(root_node: Node, source_code: &str) -> Domain {
 
 fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
     match root_node.kind() {
+        //TODO: when grammar is changed to allow multiple expressions, make this a for loop thing
         "constraint" => {
-            //TODO: when grammar is changed to allow multiple expressions, make this a for loop thing
             let mut cursor = root_node.walk();
             cursor.goto_first_child();
             return parse_constraint(cursor.node(), source_code)
@@ -203,10 +212,7 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
                 }
                 return Expression::Or(Metadata::new(), vec_exprs)
             }
-            //TODO: this can be made into a method getChild
-            let mut cursor = root_node.walk();
-            cursor.goto_first_child();
-            return parse_constraint(cursor.node(), source_code)
+            return parse_constraint(root_node.child(0).unwrap(), source_code)
         }
         "conjunction" => {
             if root_node.child_count() > 1 {
@@ -222,7 +228,7 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
             return parse_constraint(cursor.node(), source_code)
         }
         "comparison" => {
-            //TODO: right now assuming thers only two but really could be any number, change
+            //TODO: right now assuming there's only two but really could be any number, change
             if root_node.child_count() > 1 {
                 let expr1 = parse_constraint(root_node.child_by_field_id(0).unwrap(), source_code);
                 let expr2 = parse_constraint(root_node.child_by_field_id(2).unwrap(), source_code);
@@ -312,10 +318,3 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
 
     }
 }
-
-//not needed anymore, replaced with root_node.child_count() > 1 (for now, keeping just in case)
-// fn has_mult_children(root_node: Node) -> bool {
-//     let mut cursor = root_node.walk();
-//     cursor.goto_first_child();
-//     return cursor.goto_next_sibling();
-// }
