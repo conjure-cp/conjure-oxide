@@ -388,7 +388,7 @@ pub fn create_scoped_subscriber(
     path: &str,
     test_name: &str,
 ) -> (impl tracing::Subscriber + Send + Sync, WorkerGuard) {
-    let file = File::create(format!("{path}/{test_name}-expected-rule-trace.json"))
+    let file = File::create(format!("{path}/{test_name}-generated-rule-trace.json"))
         .expect("Unable to create log file");
     let writer = BufWriter::new(file);
     let (non_blocking, guard) = tracing_appender::non_blocking(writer);
