@@ -10,7 +10,11 @@ use std::{
 use anyhow::anyhow;
 
 use crate::ffi::{self};
-use crate::{ast::*, error::*, scoped_ptr::Scoped};
+use crate::{
+    ast::{Constant, Constraint, Model, Var, VarDomain, VarName},
+    error::{MinionError, RuntimeError},
+    scoped_ptr::Scoped,
+};
 
 /// The callback function used to capture results from Minion as they are generated.
 ///

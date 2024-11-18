@@ -1,4 +1,6 @@
+use std::borrow::{Borrow, BorrowMut};
 use std::cell::RefCell;
+use std::collections::HashSet;
 use std::fmt::Debug;
 use std::sync::{Arc, RwLock};
 
@@ -68,7 +70,11 @@ impl Model {
     }
 
     pub fn new_empty(context: Arc<RwLock<Context<'static>>>) -> Model {
-        Model::new(Default::default(), Expression::Nothing, context)
+        Model::new(
+            Default::default(),
+            Expression::And(Metadata::new(), Vec::new()),
+            context,
+        )
     }
     // Function to update a DecisionVariable based on its Name
     pub fn update_domain(&mut self, name: &Name, new_domain: Domain) {
@@ -89,14 +95,13 @@ impl Model {
     pub fn get_constraints_vec(&self) -> Vec<Expression> {
         match &self.constraints {
             Expression::And(_, constraints) => constraints.clone(),
-            Expression::Nothing => vec![],
             _ => vec![self.constraints.clone()],
         }
     }
 
     pub fn set_constraints(&mut self, constraints: Vec<Expression>) {
         if constraints.is_empty() {
-            self.constraints = Expression::Nothing;
+            self.constraints = Expression::And(Metadata::new(), Vec::new());
         } else if constraints.len() == 1 {
             self.constraints = constraints[0].clone();
         } else {
@@ -127,5 +132,28 @@ impl Model {
         let num = *self.next_var.borrow();
         *(self.next_var.borrow_mut()) += 1;
         Name::MachineName(num) // incremented when inserted
+    }
+
+    /// Extends the models symbol table with the given symbol table, updating the gensym counter if
+    /// necessary.
+    ///
+    pub fn extend_sym_table(&mut self, symbol_table: SymbolTable) {
+        if symbol_table.keys().len() > self.variables.keys().len() {
+            let new_vars = symbol_table.keys().collect::<HashSet<_>>();
+            let old_vars = self.variables.keys().collect::<HashSet<_>>();
+
+            for added_var in new_vars.difference(&old_vars) {
+                let mut next_var = self.next_var.borrow_mut();
+                match *added_var {
+                    Name::UserName(_) => {}
+                    Name::MachineName(m) => {
+                        if *m >= *next_var {
+                            *next_var = *m + 1;
+                        }
+                    }
+                }
+            }
+        }
+        self.variables.extend(symbol_table);
     }
 }
