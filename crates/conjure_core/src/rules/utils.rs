@@ -1,21 +1,22 @@
+use tracing::instrument;
 use uniplate::{Biplate, Uniplate};
 
 use crate::{
-    ast::{DecisionVariable, Domain, Expression as Expr, Factor, Name},
+    ast::{Atom, DecisionVariable, Domain, Expression as Expr, Name, ReturnType},
     bug,
     metadata::Metadata,
     Model,
 };
 
-/// True iff `expr` is a `Factor`.
-pub fn is_factor(expr: &Expr) -> bool {
-    matches!(expr, Expr::FactorE(_, _))
+/// True iff `expr` is an `Atom`.
+pub fn is_atom(expr: &Expr) -> bool {
+    matches!(expr, Expr::Atomic(_, _))
 }
 
-/// True if `expr` is flat; i.e. it only contains factors.
+/// True if `expr` is flat; i.e. it only contains atoms.
 pub fn is_flat(expr: &Expr) -> bool {
     for e in expr.children() {
-        if !is_factor(&e) {
+        if !is_atom(&e) {
             return false;
         }
     }
@@ -24,10 +25,10 @@ pub fn is_flat(expr: &Expr) -> bool {
 
 /// True if the entire AST is constants.
 pub fn is_all_constant(expression: &Expr) -> bool {
-    for factor in <Expr as Biplate<Factor>>::universe_bi(expression) {
-        match factor {
-            Factor::Literal(_) => {}
-            Factor::Reference(_) => {
+    for atom in <Expr as Biplate<Atom>>::universe_bi(expression) {
+        match atom {
+            Atom::Literal(_) => {}
+            Atom::Reference(_) => {
                 return false;
             }
         }
@@ -36,11 +37,37 @@ pub fn is_all_constant(expression: &Expr) -> bool {
     true
 }
 
+/// Creates a single `Expr` from a `Vec<Expr>` by forming the conjunction.
+///
+/// If it contains a single element, that element is returned, otherwise the conjunction of the
+/// elements is returned.
+///
+/// # Returns
+///
+/// - Some: the expression list is non empty, and all expressions are booleans (so can be
+/// conjuncted).
+///
+/// - None: the expression list is empty, or not all expressions are booleans.
+pub fn exprs_to_conjunction(exprs: &Vec<Expr>) -> Option<Expr> {
+    match exprs.as_slice() {
+        [] => None,
+        [a] if a.return_type() == Some(ReturnType::Bool) => Some(a.clone()),
+        _ => {
+            for expr in exprs {
+                if expr.return_type() != Some(ReturnType::Bool) {
+                    return None;
+                }
+            }
+            Some(Expr::And(Metadata::new(), exprs.clone()))
+        }
+    }
+}
+
 /// Creates a new auxiliary variable using the given expression.
 ///
 /// # Returns
 ///
-/// * `None` if `Expr` is a `Factor`, or `Expr` does not have a domain (for example, if it is a `Bubble`).
+/// * `None` if `Expr` is a `Atom`, or `Expr` does not have a domain (for example, if it is a `Bubble`).
 ///
 /// * `Some(ToAuxVarOutput)` if successful, containing:
 ///     
@@ -48,18 +75,24 @@ pub fn is_all_constant(expression: &Expr) -> bool {
 ///     + A new top level expression, containing the declaration of the auxiliary variable.
 ///     + A reference to the auxiliary variable to replace the existing expression with.
 ///
+#[instrument]
 pub fn to_aux_var(expr: &Expr, m: &Model) -> Option<ToAuxVarOutput> {
     let mut m = m.clone();
 
-    // No need to put a factor in an aux_var
-    if is_factor(expr) {
+    // No need to put an atom in an aux_var
+    if is_atom(expr) {
+        return None;
+    }
+
+    // Anything that should be bubbled, bubble
+    if (expr.can_be_undefined()) {
         return None;
     }
 
     let name = m.gensym();
 
     let Some(domain) = expr.domain_of(&m.variables) else {
-        //bug!("rules::utils::to_aux_var: could not find domain of {expr}");
+        tracing::trace!("could not find domain of {}", expr);
         return None;
     };
 
@@ -84,16 +117,16 @@ pub struct ToAuxVarOutput {
 }
 
 impl ToAuxVarOutput {
-    /// Returns the new auxiliary variable as a `Factor`.
-    pub fn as_factor(&self) -> Factor {
-        Factor::Reference(self.aux_name())
+    /// Returns the new auxiliary variable as an `Atom`.
+    pub fn as_atom(&self) -> Atom {
+        Atom::Reference(self.aux_name())
     }
 
     /// Returns the new auxiliary variable as an `Expression`.
     ///
     /// This expression will have default `Metadata`.
     pub fn as_expr(&self) -> Expr {
-        Expr::FactorE(Metadata::new(), self.as_factor())
+        Expr::Atomic(Metadata::new(), self.as_atom())
     }
 
     /// Returns the top level `Expression` to add to the model.

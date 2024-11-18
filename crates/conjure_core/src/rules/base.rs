@@ -1,6 +1,4 @@
-use conjure_core::ast::{
-    DecisionVariable, Expression as Expr, Factor, Literal as Lit, SymbolTable,
-};
+use conjure_core::ast::{Atom, DecisionVariable, Expression as Expr, Literal as Lit, SymbolTable};
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationError::RuleNotApplicable,
@@ -9,8 +7,8 @@ use conjure_core::rule_engine::{
 use conjure_core::Model;
 use uniplate::Uniplate;
 
+use Atom::*;
 use Expr::*;
-use Factor::*;
 use Lit::*;
 
 /*****************************************************************************/
@@ -34,7 +32,10 @@ fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
     // excluded expressions
     if matches!(
         expr,
-        FactorE(_, Reference(_,)) | FactorE(_, Literal(_)) | WatchedLiteral(_, _, _)
+        Atomic(_, _)
+            | WatchedLiteral(_, _, _)
+            | DivEqUndefZero(_, _, _, _)
+            | ModuloEqUndefZero(_, _, _, _)
     ) {
         return Err(ApplicationError::RuleNotApplicable);
     }
@@ -44,7 +45,7 @@ fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 
     let new_expr = match expr {
-        Or(_, _) => FactorE(Metadata::new(), Literal(Bool(false))),
+        Or(_, _) => Atomic(Metadata::new(), Literal(Bool(false))),
         _ => And(Metadata::new(), vec![]), // TODO: (yb33) Change it to a simple vector after we refactor our model,
     };
 
@@ -233,10 +234,10 @@ fn remove_constants_from_or(expr: &Expr, _: &Model) -> ApplicationResult {
             let mut changed = false;
             for e in exprs {
                 match e {
-                    FactorE(metadata, Literal(Bool(val))) => {
+                    Atomic(metadata, Literal(Bool(val))) => {
                         if *val {
                             // If we find a true, the whole expression is true
-                            return Ok(Reduction::pure(FactorE(
+                            return Ok(Reduction::pure(Atomic(
                                 metadata.clone_dirty(),
                                 Literal(Bool(true)),
                             )));
@@ -272,10 +273,10 @@ fn remove_constants_from_and(expr: &Expr, _: &Model) -> ApplicationResult {
             let mut changed = false;
             for e in exprs {
                 match e {
-                    FactorE(metadata, Literal(Bool(val))) => {
+                    Atomic(metadata, Literal(Bool(val))) => {
                         if !*val {
                             // If we find a false, the whole expression is false
-                            return Ok(Reduction::pure(FactorE(
+                            return Ok(Reduction::pure(Atomic(
                                 metadata.clone_dirty(),
                                 Literal(Bool(false)),
                             )));
@@ -307,7 +308,7 @@ fn remove_constants_from_and(expr: &Expr, _: &Model) -> ApplicationResult {
 fn evaluate_constant_not(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Not(_, contents) => match contents.as_ref() {
-            FactorE(metadata, Literal(Bool(val))) => Ok(Reduction::pure(FactorE(
+            Atomic(metadata, Literal(Bool(val))) => Ok(Reduction::pure(Atomic(
                 metadata.clone_dirty(),
                 Literal(Bool(!val)),
             ))),
@@ -334,12 +335,12 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
             for e in exprs {
                 new_top.push(Leq(
                     Metadata::new(),
-                    Box::new(FactorE(Metadata::new(), Reference(new_name.clone()))),
+                    Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
                     Box::new(e.clone()),
                 ));
                 disjunction.push(Eq(
                     Metadata::new(),
-                    Box::new(FactorE(Metadata::new(), Reference(new_name.clone()))),
+                    Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
                     Box::new(e.clone()),
                 ));
             }
@@ -352,7 +353,7 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
             new_vars.insert(new_name.clone(), DecisionVariable::new(domain));
 
             Ok(Reduction::new(
-                FactorE(Metadata::new(), Reference(new_name)),
+                Atomic(Metadata::new(), Reference(new_name)),
                 And(metadata.clone_dirty(), new_top),
                 new_vars,
             ))
@@ -378,12 +379,12 @@ fn max_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
             for e in exprs {
                 new_top.push(Geq(
                     Metadata::new(),
-                    Box::new(FactorE(Metadata::new(), Reference(new_name.clone()))),
+                    Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
                     Box::new(e.clone()),
                 ));
                 disjunction.push(Eq(
                     Metadata::new(),
-                    Box::new(FactorE(Metadata::new(), Reference(new_name.clone()))),
+                    Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
                     Box::new(e.clone()),
                 ));
             }
@@ -396,7 +397,7 @@ fn max_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
             new_vars.insert(new_name.clone(), DecisionVariable::new(domain));
 
             Ok(Reduction::new(
-                FactorE(Metadata::new(), Reference(new_name)),
+                Atomic(Metadata::new(), Reference(new_name)),
                 And(metadata.clone_dirty(), new_top),
                 new_vars,
             ))
@@ -464,6 +465,14 @@ fn distribute_or_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
  */
 #[register_rule(("Base", 8400))]
 fn distribute_not_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
+    for child in expr.universe() {
+        if matches!(
+            child,
+            Expr::UnsafeDiv(_, _, _) | Expr::Bubble(_, _, _) | Expr::UnsafeMod(_, _, _)
+        ) {
+            return Err(RuleNotApplicable);
+        }
+    }
     match expr {
         Not(_, contents) => match contents.as_ref() {
             And(metadata, exprs) => {

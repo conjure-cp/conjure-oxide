@@ -14,8 +14,8 @@ use conjure_oxide::{
 };
 use uniplate::{Biplate, Uniplate};
 
-fn var_name_from_factor(f: &Factor) -> Name {
-    <Factor as Biplate<Name>>::universe_bi(f)[0].clone()
+fn var_name_from_atom(a: &Atom) -> Name {
+    <Atom as Biplate<Name>>::universe_bi(a)[0].clone()
 }
 #[test]
 fn rules_present() {
@@ -28,19 +28,19 @@ fn sum_of_constants() {
     let valid_sum_expression = Expression::Sum(
         Metadata::new(),
         vec![
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(1))),
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(2))),
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(3))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(3))),
         ],
     );
 
     let invalid_sum_expression = Expression::Sum(
         Metadata::new(),
         vec![
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(1))),
-            Expression::FactorE(
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
+            Expression::Atomic(
                 Metadata::new(),
-                Factor::Reference(Name::UserName(String::from("a"))),
+                Atom::Reference(Name::UserName(String::from("a"))),
             ),
         ],
     );
@@ -56,7 +56,7 @@ fn evaluate_sum_of_constants(expr: &Expression) -> Option<i32> {
             let mut sum = 0;
             for e in expressions {
                 match e {
-                    Expression::FactorE(_, Factor::Literal(Literal::Int(value))) => {
+                    Expression::Atomic(_, Atom::Literal(Literal::Int(value))) => {
                         sum += value;
                     }
                     _ => return None,
@@ -75,24 +75,24 @@ fn recursive_sum_of_constants() {
         Box::new(Expression::Sum(
             Metadata::new(),
             vec![
-                Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(1))),
-                Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(2))),
+                Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
+                Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2))),
                 Expression::Sum(
                     Metadata::new(),
                     vec![
-                        Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(1))),
-                        Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(2))),
+                        Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
+                        Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2))),
                     ],
                 ),
-                Expression::FactorE(
+                Expression::Atomic(
                     Metadata::new(),
-                    Factor::Reference(Name::UserName(String::from("a"))),
+                    Atom::Reference(Name::UserName(String::from("a"))),
                 ),
             ],
         )),
-        Box::new(Expression::FactorE(
+        Box::new(Expression::Atomic(
             Metadata::new(),
-            Factor::Literal(Literal::Int(3)),
+            Atom::Literal(Literal::Int(3)),
         )),
     );
     let correct_simplified_expression = Expression::Eq(
@@ -100,18 +100,18 @@ fn recursive_sum_of_constants() {
         Box::new(Expression::Sum(
             Metadata::new(),
             vec![
-                Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(1))),
-                Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(2))),
-                Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(3))),
-                Expression::FactorE(
+                Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
+                Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2))),
+                Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(3))),
+                Expression::Atomic(
                     Metadata::new(),
-                    Factor::Reference(Name::UserName(String::from("a"))),
+                    Atom::Reference(Name::UserName(String::from("a"))),
                 ),
             ],
         )),
-        Box::new(Expression::FactorE(
+        Box::new(Expression::Atomic(
             Metadata::new(),
-            Factor::Literal(Literal::Int(3)),
+            Atom::Literal(Literal::Int(3)),
         )),
     );
 
@@ -125,7 +125,7 @@ fn simplify_expression(expr: Expression) -> Expression {
             if let Some(result) =
                 evaluate_sum_of_constants(&Expression::Sum(Metadata::new(), expressions.clone()))
             {
-                Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(result)))
+                Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(result)))
             } else {
                 Expression::Sum(
                     Metadata::new(),
@@ -155,9 +155,9 @@ fn rule_sum_constants() {
     let mut expr = Expression::Sum(
         Metadata::new(),
         vec![
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(1))),
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(2))),
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(3))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(3))),
         ],
     );
 
@@ -172,7 +172,7 @@ fn rule_sum_constants() {
 
     assert_eq!(
         expr,
-        Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(6)))
+        Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(6)))
     );
 }
 
@@ -185,13 +185,13 @@ fn rule_sum_geq() {
         Box::new(Expression::Sum(
             Metadata::new(),
             vec![
-                Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(1))),
-                Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(2))),
+                Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
+                Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2))),
             ],
         )),
-        Box::new(Expression::FactorE(
+        Box::new(Expression::Atomic(
             Metadata::new(),
-            Factor::Literal(Literal::Int(3)),
+            Atom::Literal(Literal::Int(3)),
         )),
     );
 
@@ -205,12 +205,12 @@ fn rule_sum_geq() {
         Expression::SumGeq(
             Metadata::new(),
             vec![
-                Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(1))),
-                Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(2))),
+                Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
+                Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2))),
             ],
-            Box::new(Expression::FactorE(
+            Box::new(Expression::Atomic(
                 Metadata::new(),
-                Factor::Literal(Literal::Int(3))
+                Atom::Literal(Literal::Int(3))
             ))
         )
     );
@@ -235,9 +235,9 @@ fn reduce_solve_xyz() {
     let mut expr1 = Expression::Sum(
         Metadata::new(),
         vec![
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(2))),
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(3))),
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(-1))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(3))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(-1))),
         ],
     );
 
@@ -251,7 +251,7 @@ fn reduce_solve_xyz() {
         .new_expression;
     assert_eq!(
         expr1,
-        Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(4)))
+        Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(4)))
     );
 
     // a + b + c = 4
@@ -260,17 +260,17 @@ fn reduce_solve_xyz() {
         Box::new(Expression::Sum(
             Metadata::new(),
             vec![
-                Expression::FactorE(
+                Expression::Atomic(
                     Metadata::new(),
-                    Factor::Reference(Name::UserName(String::from("a"))),
+                    Atom::Reference(Name::UserName(String::from("a"))),
                 ),
-                Expression::FactorE(
+                Expression::Atomic(
                     Metadata::new(),
-                    Factor::Reference(Name::UserName(String::from("b"))),
+                    Atom::Reference(Name::UserName(String::from("b"))),
                 ),
-                Expression::FactorE(
+                Expression::Atomic(
                     Metadata::new(),
-                    Factor::Reference(Name::UserName(String::from("c"))),
+                    Atom::Reference(Name::UserName(String::from("c"))),
                 ),
             ],
         )),
@@ -285,22 +285,22 @@ fn reduce_solve_xyz() {
         Expression::SumLeq(
             Metadata::new(),
             vec![
-                Expression::FactorE(
+                Expression::Atomic(
                     Metadata::new(),
-                    Factor::Reference(Name::UserName(String::from("a")))
+                    Atom::Reference(Name::UserName(String::from("a")))
                 ),
-                Expression::FactorE(
+                Expression::Atomic(
                     Metadata::new(),
-                    Factor::Reference(Name::UserName(String::from("b")))
+                    Atom::Reference(Name::UserName(String::from("b")))
                 ),
-                Expression::FactorE(
+                Expression::Atomic(
                     Metadata::new(),
-                    Factor::Reference(Name::UserName(String::from("c")))
+                    Atom::Reference(Name::UserName(String::from("c")))
                 ),
             ],
-            Box::new(Expression::FactorE(
+            Box::new(Expression::Atomic(
                 Metadata::new(),
-                Factor::Literal(Literal::Int(4))
+                Atom::Literal(Literal::Int(4))
             ))
         )
     );
@@ -308,13 +308,13 @@ fn reduce_solve_xyz() {
     // a < b
     let mut expr2 = Expression::Lt(
         Metadata::new(),
-        Box::new(Expression::FactorE(
+        Box::new(Expression::Atomic(
             Metadata::new(),
-            Factor::Reference(Name::UserName(String::from("a"))),
+            Atom::Reference(Name::UserName(String::from("a"))),
         )),
-        Box::new(Expression::FactorE(
+        Box::new(Expression::Atomic(
             Metadata::new(),
-            Factor::Reference(Name::UserName(String::from("b"))),
+            Atom::Reference(Name::UserName(String::from("b"))),
         )),
     );
     expr2 = lt_to_ineq
@@ -325,17 +325,17 @@ fn reduce_solve_xyz() {
         expr2,
         Expression::Ineq(
             Metadata::new(),
-            Box::new(Expression::FactorE(
+            Box::new(Expression::Atomic(
                 Metadata::new(),
-                Factor::Reference(Name::UserName(String::from("a")))
+                Atom::Reference(Name::UserName(String::from("a")))
             )),
-            Box::new(Expression::FactorE(
+            Box::new(Expression::Atomic(
                 Metadata::new(),
-                Factor::Reference(Name::UserName(String::from("b")))
+                Atom::Reference(Name::UserName(String::from("b")))
             )),
-            Box::new(Expression::FactorE(
+            Box::new(Expression::Atomic(
                 Metadata::new(),
-                Factor::Literal(Literal::Int(-1))
+                Atom::Literal(Literal::Int(-1))
             ))
         )
     );
@@ -377,9 +377,9 @@ fn rule_remove_double_negation() {
         Metadata::new(),
         Box::new(Expression::Not(
             Metadata::new(),
-            Box::new(Expression::FactorE(
+            Box::new(Expression::Atomic(
                 Metadata::new(),
-                Factor::Literal(Literal::Bool(true)),
+                Atom::Literal(Literal::Bool(true)),
             )),
         )),
     );
@@ -391,7 +391,7 @@ fn rule_remove_double_negation() {
 
     assert_eq!(
         expr,
-        Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(true)))
+        Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)))
     );
 }
 
@@ -405,11 +405,11 @@ fn rule_unwrap_nested_or() {
             Expression::Or(
                 Metadata::new(),
                 vec![
-                    Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(true))),
-                    Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(false))),
+                    Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
+                    Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
                 ],
             ),
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(true))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
         ],
     );
 
@@ -423,9 +423,9 @@ fn rule_unwrap_nested_or() {
         Expression::Or(
             Metadata::new(),
             vec![
-                Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(true))),
-                Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(false))),
-                Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(true))),
+                Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
+                Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
+                Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
             ]
         )
     );
@@ -441,11 +441,11 @@ fn rule_unwrap_nested_and() {
             Expression::And(
                 Metadata::new(),
                 vec![
-                    Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(true))),
-                    Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(false))),
+                    Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
+                    Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
                 ],
             ),
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(true))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
         ],
     );
 
@@ -459,9 +459,9 @@ fn rule_unwrap_nested_and() {
         Expression::And(
             Metadata::new(),
             vec![
-                Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(true))),
-                Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(false))),
-                Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(true))),
+                Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
+                Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
+                Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
             ]
         )
     );
@@ -474,8 +474,8 @@ fn unwrap_nested_or_not_changed() {
     let expr = Expression::Or(
         Metadata::new(),
         vec![
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(true))),
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(false))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
         ],
     );
 
@@ -491,8 +491,8 @@ fn unwrap_nested_and_not_changed() {
     let expr = Expression::And(
         Metadata::new(),
         vec![
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(true))),
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(false))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
         ],
     );
 
@@ -508,16 +508,16 @@ fn remove_trivial_and_or() {
 
     let mut expr_and = Expression::And(
         Metadata::new(),
-        vec![Expression::FactorE(
+        vec![Expression::Atomic(
             Metadata::new(),
-            Factor::Literal(Literal::Bool(true)),
+            Atom::Literal(Literal::Bool(true)),
         )],
     );
     let mut expr_or = Expression::Or(
         Metadata::new(),
-        vec![Expression::FactorE(
+        vec![Expression::Atomic(
             Metadata::new(),
-            Factor::Literal(Literal::Bool(false)),
+            Atom::Literal(Literal::Bool(false)),
         )],
     );
 
@@ -532,11 +532,11 @@ fn remove_trivial_and_or() {
 
     assert_eq!(
         expr_and,
-        Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(true)))
+        Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)))
     );
     assert_eq!(
         expr_or,
-        Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(false)))
+        Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)))
     );
 }
 
@@ -549,13 +549,13 @@ fn rule_distribute_not_over_and() {
         Box::new(Expression::And(
             Metadata::new(),
             vec![
-                Expression::FactorE(
+                Expression::Atomic(
                     Metadata::new(),
-                    Factor::Reference(Name::UserName(String::from("a"))),
+                    Atom::Reference(Name::UserName(String::from("a"))),
                 ),
-                Expression::FactorE(
+                Expression::Atomic(
                     Metadata::new(),
-                    Factor::Reference(Name::UserName(String::from("b"))),
+                    Atom::Reference(Name::UserName(String::from("b"))),
                 ),
             ],
         )),
@@ -573,16 +573,16 @@ fn rule_distribute_not_over_and() {
             vec![
                 Expression::Not(
                     Metadata::new(),
-                    Box::new(Expression::FactorE(
+                    Box::new(Expression::Atomic(
                         Metadata::new(),
-                        Factor::Reference(Name::UserName(String::from("a")))
+                        Atom::Reference(Name::UserName(String::from("a")))
                     ))
                 ),
                 Expression::Not(
                     Metadata::new(),
-                    Box::new(Expression::FactorE(
+                    Box::new(Expression::Atomic(
                         Metadata::new(),
-                        Factor::Reference(Name::UserName(String::from("b")))
+                        Atom::Reference(Name::UserName(String::from("b")))
                     ))
                 ),
             ]
@@ -599,13 +599,13 @@ fn rule_distribute_not_over_or() {
         Box::new(Expression::Or(
             Metadata::new(),
             vec![
-                Expression::FactorE(
+                Expression::Atomic(
                     Metadata::new(),
-                    Factor::Reference(Name::UserName(String::from("a"))),
+                    Atom::Reference(Name::UserName(String::from("a"))),
                 ),
-                Expression::FactorE(
+                Expression::Atomic(
                     Metadata::new(),
-                    Factor::Reference(Name::UserName(String::from("b"))),
+                    Atom::Reference(Name::UserName(String::from("b"))),
                 ),
             ],
         )),
@@ -623,16 +623,16 @@ fn rule_distribute_not_over_or() {
             vec![
                 Expression::Not(
                     Metadata::new(),
-                    Box::new(Expression::FactorE(
+                    Box::new(Expression::Atomic(
                         Metadata::new(),
-                        Factor::Reference(Name::UserName(String::from("a")))
+                        Atom::Reference(Name::UserName(String::from("a")))
                     ))
                 ),
                 Expression::Not(
                     Metadata::new(),
-                    Box::new(Expression::FactorE(
+                    Box::new(Expression::Atomic(
                         Metadata::new(),
-                        Factor::Reference(Name::UserName(String::from("b")))
+                        Atom::Reference(Name::UserName(String::from("b")))
                     ))
                 ),
             ]
@@ -646,9 +646,9 @@ fn rule_distribute_not_over_and_not_changed() {
 
     let expr = Expression::Not(
         Metadata::new(),
-        Box::new(Expression::FactorE(
+        Box::new(Expression::Atomic(
             Metadata::new(),
-            Factor::Reference(Name::UserName(String::from("a"))),
+            Atom::Reference(Name::UserName(String::from("a"))),
         )),
     );
 
@@ -663,9 +663,9 @@ fn rule_distribute_not_over_or_not_changed() {
 
     let expr = Expression::Not(
         Metadata::new(),
-        Box::new(Expression::FactorE(
+        Box::new(Expression::Atomic(
             Metadata::new(),
-            Factor::Reference(Name::UserName(String::from("a"))),
+            Atom::Reference(Name::UserName(String::from("a"))),
         )),
     );
 
@@ -684,11 +684,11 @@ fn rule_distribute_or_over_and() {
             Expression::And(
                 Metadata::new(),
                 vec![
-                    Expression::FactorE(Metadata::new(), Factor::Reference(Name::MachineName(1))),
-                    Expression::FactorE(Metadata::new(), Factor::Reference(Name::MachineName(2))),
+                    Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(1))),
+                    Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(2))),
                 ],
             ),
-            Expression::FactorE(Metadata::new(), Factor::Reference(Name::MachineName(3))),
+            Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(3))),
         ],
     );
 
@@ -704,78 +704,21 @@ fn rule_distribute_or_over_and() {
                 Expression::Or(
                     Metadata::new(),
                     vec![
-                        Expression::FactorE(
-                            Metadata::new(),
-                            Factor::Reference(Name::MachineName(3))
-                        ),
-                        Expression::FactorE(
-                            Metadata::new(),
-                            Factor::Reference(Name::MachineName(1))
-                        ),
+                        Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(3))),
+                        Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(1))),
                     ]
                 ),
                 Expression::Or(
                     Metadata::new(),
                     vec![
-                        Expression::FactorE(
-                            Metadata::new(),
-                            Factor::Reference(Name::MachineName(3))
-                        ),
-                        Expression::FactorE(
-                            Metadata::new(),
-                            Factor::Reference(Name::MachineName(2))
-                        ),
+                        Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(3))),
+                        Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(2))),
                     ]
                 ),
             ]
         ),
     );
 }
-
-// #[test]
-// fn rule_ensure_div() {
-//     let ensure_div = get_rule_by_name("ensure_div").unwrap();
-
-//     let expr = Expression::Div(
-//         Metadata::new(),
-//         Box::new(Expression::FactorE(
-//             Metadata::new(),
-//Factor::ReferenceF(Name::UserName("a".to_string())),
-//         )),
-//         Box::new(Expression::FactorE(
-//             Metadata::new(),
-//Factor::ReferenceF(Name::UserName("b".to_string())),
-//         )),
-//     );
-
-//     let red = ensure_div.apply(&expr, &Model::new_empty(Default::default())).unwrap();
-
-//     assert_eq!(
-//         red.new_expression,
-//         Expression::SafeDiv(
-//             Metadata::new(),
-//             Box::new(Expression::FactorE(
-//                 Metadata::new(),
-//Factor::ReferenceF(Name::UserName("a".to_string()))
-//             )),
-//             Box::new(Expression::FactorE(
-//                 Metadata::new(),
-//Factor::ReferenceF(Name::UserName("b".to_string()))
-//             )),
-//         ),
-//     );
-//     assert_eq!(
-//         red.new_top,
-//         Expression::Neq(
-//             Metadata::new(),
-//             Box::new(Expression::FactorE(
-//                 Metadata::new(),
-//Factor::ReferenceF(Name::UserName("b".to_string()))
-//             )),
-//             Box::new(Expression::Constant(Metadata::new(), Constant::Int(0)))
-//         )
-//     );
-// }
 
 ///
 /// Reduce and solve:
@@ -801,9 +744,9 @@ fn rewrite_solve_xyz() {
     println!("Rule sets: {:?}", rule_sets);
 
     // Create variables and domains
-    let variable_a = Factor::Reference(Name::UserName(String::from("a")));
-    let variable_b = Factor::Reference(Name::UserName(String::from("b")));
-    let variable_c = Factor::Reference(Name::UserName(String::from("c")));
+    let variable_a = Atom::Reference(Name::UserName(String::from("a")));
+    let variable_b = Atom::Reference(Name::UserName(String::from("b")));
+    let variable_c = Atom::Reference(Name::UserName(String::from("c")));
     let domain = Domain::IntDomain(vec![Range::Bounded(1, 3)]);
 
     // Construct nested expression
@@ -815,20 +758,20 @@ fn rewrite_solve_xyz() {
                 Box::new(Expression::Sum(
                     Metadata::new(),
                     vec![
-                        Expression::FactorE(Metadata::new(), variable_a.clone()),
-                        Expression::FactorE(Metadata::new(), variable_b.clone()),
-                        Expression::FactorE(Metadata::new(), variable_c.clone()),
+                        Expression::Atomic(Metadata::new(), variable_a.clone()),
+                        Expression::Atomic(Metadata::new(), variable_b.clone()),
+                        Expression::Atomic(Metadata::new(), variable_c.clone()),
                     ],
                 )),
-                Box::new(Expression::FactorE(
+                Box::new(Expression::Atomic(
                     Metadata::new(),
-                    Factor::Literal(Literal::Int(4)),
+                    Atom::Literal(Literal::Int(4)),
                 )),
             ),
             Expression::Lt(
                 Metadata::new(),
-                Box::new(Expression::FactorE(Metadata::new(), variable_a.clone())),
-                Box::new(Expression::FactorE(Metadata::new(), variable_b.clone())),
+                Box::new(Expression::Atomic(Metadata::new(), variable_a.clone())),
+                Box::new(Expression::Atomic(Metadata::new(), variable_b.clone())),
             ),
         ],
     );
@@ -858,19 +801,19 @@ fn rewrite_solve_xyz() {
 
     // Insert variables and domains
     model.variables.insert(
-        var_name_from_factor(&variable_a.clone()),
+        var_name_from_atom(&variable_a.clone()),
         DecisionVariable {
             domain: domain.clone(),
         },
     );
     model.variables.insert(
-        var_name_from_factor(&variable_b.clone()),
+        var_name_from_atom(&variable_b.clone()),
         DecisionVariable {
             domain: domain.clone(),
         },
     );
     model.variables.insert(
-        var_name_from_factor(&variable_c.clone()),
+        var_name_from_atom(&variable_c.clone()),
         DecisionVariable {
             domain: domain.clone(),
         },
@@ -895,9 +838,9 @@ fn rewrite_solve_xyz_parameterized() {
     println!("Rule sets: {:?}", rule_sets);
 
     // Create variables and domain
-    let variable_a = Factor::Reference(Name::UserName(String::from("a")));
-    let variable_b = Factor::Reference(Name::UserName(String::from("b")));
-    let variable_c = Factor::Reference(Name::UserName(String::from("c")));
+    let variable_a = Atom::Reference(Name::UserName(String::from("a")));
+    let variable_b = Atom::Reference(Name::UserName(String::from("b")));
+    let variable_c = Atom::Reference(Name::UserName(String::from("c")));
     let domain = Domain::IntDomain(vec![Range::Bounded(1, 3)]);
 
     // Create a vector of test cases with varying number of OR clauses
@@ -915,20 +858,20 @@ fn rewrite_solve_xyz_parameterized() {
                         Box::new(Expression::Sum(
                             Metadata::new(),
                             vec![
-                                Expression::FactorE(Metadata::new(), variable_a.clone()),
-                                Expression::FactorE(Metadata::new(), variable_b.clone()),
-                                Expression::FactorE(Metadata::new(), variable_c.clone()),
+                                Expression::Atomic(Metadata::new(), variable_a.clone()),
+                                Expression::Atomic(Metadata::new(), variable_b.clone()),
+                                Expression::Atomic(Metadata::new(), variable_c.clone()),
                             ],
                         )),
-                        Box::new(Expression::FactorE(
+                        Box::new(Expression::Atomic(
                             Metadata::new(),
-                            Factor::Literal(Literal::Int(4)),
+                            Atom::Literal(Literal::Int(4)),
                         )),
                     ),
                     Expression::Lt(
                         Metadata::new(),
-                        Box::new(Expression::FactorE(Metadata::new(), variable_a.clone())),
-                        Box::new(Expression::FactorE(Metadata::new(), variable_b.clone())),
+                        Box::new(Expression::Atomic(Metadata::new(), variable_a.clone())),
+                        Box::new(Expression::Atomic(Metadata::new(), variable_b.clone())),
                     ),
                 ],
             );
@@ -987,38 +930,38 @@ fn rewrite_solve_xyz_parameterized() {
 
         // Insert variables and domains
         model.variables.insert(
-            var_name_from_factor(&variable_a.clone()),
+            var_name_from_atom(&variable_a.clone()),
             DecisionVariable {
                 domain: domain.clone(),
             },
         );
         model.variables.insert(
-            var_name_from_factor(&variable_b.clone()),
+            var_name_from_atom(&variable_b.clone()),
             DecisionVariable {
                 domain: domain.clone(),
             },
         );
         model.variables.insert(
-            var_name_from_factor(&variable_c.clone()),
+            var_name_from_atom(&variable_c.clone()),
             DecisionVariable {
                 domain: domain.clone(),
             },
         );
 
         model_unoptimized.variables.insert(
-            var_name_from_factor(&variable_a.clone()),
+            var_name_from_atom(&variable_a.clone()),
             DecisionVariable {
                 domain: domain.clone(),
             },
         );
         model_unoptimized.variables.insert(
-            var_name_from_factor(&variable_b.clone()),
+            var_name_from_atom(&variable_b.clone()),
             DecisionVariable {
                 domain: domain.clone(),
             },
         );
         model_unoptimized.variables.insert(
-            var_name_from_factor(&variable_c.clone()),
+            var_name_from_atom(&variable_c.clone()),
             DecisionVariable {
                 domain: domain.clone(),
             },
@@ -1110,14 +1053,14 @@ fn choose_rewrite(results: &[RuleResult]) -> Option<Expression> {
 
 #[test]
 fn eval_const_int() {
-    let expr = Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(1)));
+    let expr = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1)));
     let result = eval_constant(&expr);
     assert_eq!(result, Some(Literal::Int(1)));
 }
 
 #[test]
 fn eval_const_bool() {
-    let expr = Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(true)));
+    let expr = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
     let result = eval_constant(&expr);
     assert_eq!(result, Some(Literal::Bool(true)));
 }
@@ -1127,8 +1070,8 @@ fn eval_const_and() {
     let expr = Expression::And(
         Metadata::new(),
         vec![
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(true))),
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(false))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
         ],
     );
     let result = eval_constant(&expr);
@@ -1137,9 +1080,9 @@ fn eval_const_and() {
 
 #[test]
 fn eval_const_ref() {
-    let expr = Expression::FactorE(
+    let expr = Expression::Atomic(
         Metadata::new(),
-        Factor::Reference(Name::UserName(String::from("a"))),
+        Atom::Reference(Name::UserName(String::from("a"))),
     );
     let result = eval_constant(&expr);
     assert_eq!(result, None);
@@ -1150,14 +1093,14 @@ fn eval_const_nested_ref() {
     let expr = Expression::Sum(
         Metadata::new(),
         vec![
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(1))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
             Expression::And(
                 Metadata::new(),
                 vec![
-                    Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(true))),
-                    Expression::FactorE(
+                    Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
+                    Expression::Atomic(
                         Metadata::new(),
-                        Factor::Reference(Name::UserName(String::from("a"))),
+                        Atom::Reference(Name::UserName(String::from("a"))),
                     ),
                 ],
             ),
@@ -1171,13 +1114,13 @@ fn eval_const_nested_ref() {
 fn eval_const_eq_int() {
     let expr = Expression::Eq(
         Metadata::new(),
-        Box::new(Expression::FactorE(
+        Box::new(Expression::Atomic(
             Metadata::new(),
-            Factor::Literal(Literal::Int(1)),
+            Atom::Literal(Literal::Int(1)),
         )),
-        Box::new(Expression::FactorE(
+        Box::new(Expression::Atomic(
             Metadata::new(),
-            Factor::Literal(Literal::Int(1)),
+            Atom::Literal(Literal::Int(1)),
         )),
     );
     let result = eval_constant(&expr);
@@ -1188,13 +1131,13 @@ fn eval_const_eq_int() {
 fn eval_const_eq_bool() {
     let expr = Expression::Eq(
         Metadata::new(),
-        Box::new(Expression::FactorE(
+        Box::new(Expression::Atomic(
             Metadata::new(),
-            Factor::Literal(Literal::Bool(true)),
+            Atom::Literal(Literal::Bool(true)),
         )),
-        Box::new(Expression::FactorE(
+        Box::new(Expression::Atomic(
             Metadata::new(),
-            Factor::Literal(Literal::Bool(true)),
+            Atom::Literal(Literal::Bool(true)),
         )),
     );
     let result = eval_constant(&expr);
@@ -1205,13 +1148,13 @@ fn eval_const_eq_bool() {
 fn eval_const_eq_mixed() {
     let expr = Expression::Eq(
         Metadata::new(),
-        Box::new(Expression::FactorE(
+        Box::new(Expression::Atomic(
             Metadata::new(),
-            Factor::Literal(Literal::Int(1)),
+            Atom::Literal(Literal::Int(1)),
         )),
-        Box::new(Expression::FactorE(
+        Box::new(Expression::Atomic(
             Metadata::new(),
-            Factor::Literal(Literal::Bool(true)),
+            Atom::Literal(Literal::Bool(true)),
         )),
     );
     let result = eval_constant(&expr);
@@ -1223,8 +1166,8 @@ fn eval_const_sum_mixed() {
     let expr = Expression::Sum(
         Metadata::new(),
         vec![
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Int(1))),
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(true))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
         ],
     );
     let result = eval_constant(&expr);
@@ -1241,34 +1184,34 @@ fn eval_const_sum_xyz() {
                 Box::new(Expression::Sum(
                     Metadata::new(),
                     vec![
-                        Expression::FactorE(
+                        Expression::Atomic(
                             Metadata::new(),
-                            Factor::Reference(Name::UserName(String::from("x"))),
+                            Atom::Reference(Name::UserName(String::from("x"))),
                         ),
-                        Expression::FactorE(
+                        Expression::Atomic(
                             Metadata::new(),
-                            Factor::Reference(Name::UserName(String::from("y"))),
+                            Atom::Reference(Name::UserName(String::from("y"))),
                         ),
-                        Expression::FactorE(
+                        Expression::Atomic(
                             Metadata::new(),
-                            Factor::Reference(Name::UserName(String::from("z"))),
+                            Atom::Reference(Name::UserName(String::from("z"))),
                         ),
                     ],
                 )),
-                Box::new(Expression::FactorE(
+                Box::new(Expression::Atomic(
                     Metadata::new(),
-                    Factor::Literal(Literal::Int(4)),
+                    Atom::Literal(Literal::Int(4)),
                 )),
             ),
             Expression::Geq(
                 Metadata::new(),
-                Box::new(Expression::FactorE(
+                Box::new(Expression::Atomic(
                     Metadata::new(),
-                    Factor::Reference(Name::UserName(String::from("x"))),
+                    Atom::Reference(Name::UserName(String::from("x"))),
                 )),
-                Box::new(Expression::FactorE(
+                Box::new(Expression::Atomic(
                     Metadata::new(),
-                    Factor::Reference(Name::UserName(String::from("y"))),
+                    Atom::Reference(Name::UserName(String::from("y"))),
                 )),
             ),
         ],
@@ -1282,8 +1225,8 @@ fn eval_const_or() {
     let expr = Expression::Or(
         Metadata::new(),
         vec![
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(false))),
-            Expression::FactorE(Metadata::new(), Factor::Literal(Literal::Bool(false))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
         ],
     );
     let result = eval_constant(&expr);
