@@ -13,16 +13,65 @@ We use github to host code, to track issues and feature requests, as well as acc
 ## Setting up your Development Environment
 For information on how to set up your environment, go to the [Contributor's Guide](https://github.com/conjure-cp/conjure-oxide/wiki/Setting-up-your-development-environment)
 
-## We Use [Github Flow](https://guides.github.com/introduction/flow/index.html), So All Code Changes Happen Through Pull Requests
+## We Use [Github Flow](https://guides.github.com/introduction/flow/index.html), so All Code Changes Happen Through Pull Requests
 Pull requests are the best way to propose changes to the codebase (we use [Github Flow](https://guides.github.com/introduction/flow/index.html)). We actively welcome your pull requests:
 
 1. Make a fork.
 2. Create a branch on your fork, do not develop on main.
-3. Create a pull request as soon as you want others to be able to see your progress, comment, and/or help. Err on the side of creating the pull request too early instead of too late. Having an active PR makes your work visible, allows others to help you and give feedback.
+3. Create a pull request as soon as you want others to be able to see your progress, comment, and/or help. Err on the side of creating the pull request too early instead of too late. Having an active PR makes your work visible, allows others to help you and give feedback. Request reviews from people who have worked on similar parts of the project.
 4. Keep the PR in draft status until you think it's ready to be merged.
 5. Assign PR to reviewer(s) when it's ready to be merged.
-    - Only Oz (@ozgurakgun) can merge PR's, so add him as a reviewer when you want your PR to be merged.
-7. We are happy to squash-merge, so feel free to push small commits to the PR. You can also tidy up the history (i.e. force-push) instead of a squash-merge if you choose to do that.
+    - Only Oz (@ozgurakgun) can merge PR's, so add him as a reviewer when you
+      want your PR to be merged.
+    - During reviewing, avoid force-pushing to the pull request, as this makes
+      reviewing more difficult. Details on how to update a PR are given below.
+6. Once Oz has approved the PR:
+    * Cleanup your git history (see below) or request your PR to be squash merged.
+    * Update your PR to main by rebase or merge. This can be done through the
+      Github UI or locally.
+
+### Rebasing Pull Requests and Force Pushes
+
+You should avoid rebasing, amending, and force-pushing changes during PR
+review. This makes code review difficult by removing the context around code
+review comments and changes to a commit. 
+
+Doing this is probably OK on a WIP PR which hasn't had any reviews yet.
+
+### Updating a Pull Request 
+
+You should avoid rebasing, amending, or force-pushing to a PR. When updating a
+pull request you should push additional "fixup" commits to your branch instead.
+
+Once your PR is ready to merge (i.e. approved by Oz), you should cleanup and
+rebase your PR and force push. 
+
+The recommended way to update PRs is to use gits [built-in support for
+fixups](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt---fixupamendrewordltcommitgt).
+
+To make a change to a commit (e.g. addressing a code review comment):
+
+```
+git commit --fixup <commit>
+git push
+```
+
+Once your PR is ready to merge, these fixup commits can be merged into their
+original commits like so: 
+
+```
+git rebase --autosquash main
+git push --force
+```
+
+We have CI checks to block accidental merging of `fixup!` commits.
+
+
+See: 
+ * https://rietta.com/blog/git-rebase-autosquash-code-reviews/
+ * https://git-scm.com/docs/git-commit#Documentation/git-commit.txt---fixupamendrewordltcommitgt
+
+
 
 ## What We Didn't Do
 To prevent unknown unknowns, skim the documentation and [What We Didn't Do](https://github.com/conjure-cp/conjure-oxide/wiki/What-We-Didn%27t-Do).

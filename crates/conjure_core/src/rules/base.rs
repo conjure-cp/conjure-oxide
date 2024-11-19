@@ -1,15 +1,14 @@
-use conjure_core::ast::{
-    DecisionVariable, Expression as Expr, Factor, Literal as Lit, SymbolTable,
-};
+use conjure_core::ast::{Atom, DecisionVariable, Expression as Expr, Literal as Lit, SymbolTable};
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
-    register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
+    register_rule, register_rule_set, ApplicationError, ApplicationError::RuleNotApplicable,
+    ApplicationResult, Reduction,
 };
 use conjure_core::Model;
 use uniplate::Uniplate;
 
+use Atom::*;
 use Expr::*;
-use Factor::*;
 use Lit::*;
 
 /*****************************************************************************/
@@ -18,82 +17,25 @@ use Lit::*;
 
 register_rule_set!("Base", 100, ());
 
-/**
- * Remove nothing's from expressions:
- * ```text
- * and([a, nothing, b]) = and([a, b])
- * sum([a, nothing, b]) = sum([a, b])
- * sum_leq([a, nothing, b], c) = sum_leq([a, b], c)
- * ...
- * ```
-*/
-#[register_rule(("Base", 8800))]
-fn remove_nothings(expr: &Expr, _: &Model) -> ApplicationResult {
-    fn remove_nothings(exprs: Vec<Expr>) -> Result<Vec<Expr>, ApplicationError> {
-        let mut changed = false;
-        let mut new_exprs = Vec::new();
-
-        for e in exprs {
-            match e.clone() {
-                Nothing => {
-                    changed = true;
-                }
-                _ => new_exprs.push(e),
-            }
-        }
-
-        if changed {
-            Ok(new_exprs)
-        } else {
-            Err(ApplicationError::RuleNotApplicable)
-        }
-    }
-
-    fn get_lhs_rhs(sub: Vec<Expr>) -> (Vec<Expr>, Box<Expr>) {
-        if sub.is_empty() {
-            return (Vec::new(), Box::new(Nothing));
-        }
-
-        let lhs = sub[..(sub.len() - 1)].to_vec();
-        let rhs = Box::new(sub[sub.len() - 1].clone());
-        (lhs, rhs)
-    }
-
-    // FIXME (niklasdewally): temporary conversion until I get the Uniplate APIs figured out
-    // Uniplate *should* support Vec<> not im::Vector
-    let new_sub = remove_nothings(expr.children().into_iter().collect())?;
-
-    match expr {
-        And(md, _) => Ok(Reduction::pure(And(md.clone(), new_sub))),
-        Or(md, _) => Ok(Reduction::pure(Or(md.clone(), new_sub))),
-        Sum(md, _) => Ok(Reduction::pure(Sum(md.clone(), new_sub))),
-        SumEq(md, _, _) => {
-            let (lhs, rhs) = get_lhs_rhs(new_sub);
-            Ok(Reduction::pure(SumEq(md.clone(), lhs, rhs)))
-        }
-        SumLeq(md, _lhs, _rhs) => {
-            let (lhs, rhs) = get_lhs_rhs(new_sub);
-            Ok(Reduction::pure(SumLeq(md.clone(), lhs, rhs)))
-        }
-        SumGeq(md, _lhs, _rhs) => {
-            let (lhs, rhs) = get_lhs_rhs(new_sub);
-            Ok(Reduction::pure(SumGeq(md.clone(), lhs, rhs)))
-        }
-        _ => Err(ApplicationError::RuleNotApplicable),
-    }
-}
-
-/// Remove empty expressions:
-///  ```text
-///   or([]) ~> false
-///   X([])  ~> Nothing
-///  ```
+/// This rule simplifies expressions where the operator is applied to an empty set of sub-expressions.
+///
+/// For example:
+/// - `or([])` simplifies to `false` since no disjunction exists.
+///
+/// **Applicable examples:**
+/// ```text
+/// or([])  ~> false
+/// X([]) ~> Nothing
+/// ```
 #[register_rule(("Base", 8800))]
 fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
     // excluded expressions
     if matches!(
         expr,
-        Nothing | FactorE(_, Reference(_,)) | FactorE(_, Literal(_)) | WatchedLiteral(_, _, _)
+        Atomic(_, _)
+            | WatchedLiteral(_, _, _)
+            | DivEqUndefZero(_, _, _, _)
+            | ModuloEqUndefZero(_, _, _, _)
     ) {
         return Err(ApplicationError::RuleNotApplicable);
     }
@@ -103,8 +45,8 @@ fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 
     let new_expr = match expr {
-        Or(_, _) => FactorE(Metadata::new(), Literal(Bool(false))),
-        _ => Nothing,
+        Or(_, _) => Atomic(Metadata::new(), Literal(Bool(false))),
+        _ => And(Metadata::new(), vec![]), // TODO: (yb33) Change it to a simple vector after we refactor our model,
     };
 
     Ok(Reduction::pure(new_expr))
@@ -292,10 +234,10 @@ fn remove_constants_from_or(expr: &Expr, _: &Model) -> ApplicationResult {
             let mut changed = false;
             for e in exprs {
                 match e {
-                    FactorE(metadata, Literal(Bool(val))) => {
+                    Atomic(metadata, Literal(Bool(val))) => {
                         if *val {
                             // If we find a true, the whole expression is true
-                            return Ok(Reduction::pure(FactorE(
+                            return Ok(Reduction::pure(Atomic(
                                 metadata.clone_dirty(),
                                 Literal(Bool(true)),
                             )));
@@ -331,10 +273,10 @@ fn remove_constants_from_and(expr: &Expr, _: &Model) -> ApplicationResult {
             let mut changed = false;
             for e in exprs {
                 match e {
-                    FactorE(metadata, Literal(Bool(val))) => {
+                    Atomic(metadata, Literal(Bool(val))) => {
                         if !*val {
                             // If we find a false, the whole expression is false
-                            return Ok(Reduction::pure(FactorE(
+                            return Ok(Reduction::pure(Atomic(
                                 metadata.clone_dirty(),
                                 Literal(Bool(false)),
                             )));
@@ -366,7 +308,7 @@ fn remove_constants_from_and(expr: &Expr, _: &Model) -> ApplicationResult {
 fn evaluate_constant_not(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Not(_, contents) => match contents.as_ref() {
-            FactorE(metadata, Literal(Bool(val))) => Ok(Reduction::pure(FactorE(
+            Atomic(metadata, Literal(Bool(val))) => Ok(Reduction::pure(Atomic(
                 metadata.clone_dirty(),
                 Literal(Bool(!val)),
             ))),
@@ -393,12 +335,12 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
             for e in exprs {
                 new_top.push(Leq(
                     Metadata::new(),
-                    Box::new(FactorE(Metadata::new(), Reference(new_name.clone()))),
+                    Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
                     Box::new(e.clone()),
                 ));
                 disjunction.push(Eq(
                     Metadata::new(),
-                    Box::new(FactorE(Metadata::new(), Reference(new_name.clone()))),
+                    Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
                     Box::new(e.clone()),
                 ));
             }
@@ -411,7 +353,7 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
             new_vars.insert(new_name.clone(), DecisionVariable::new(domain));
 
             Ok(Reduction::new(
-                FactorE(Metadata::new(), Reference(new_name)),
+                Atomic(Metadata::new(), Reference(new_name)),
                 And(metadata.clone_dirty(), new_top),
                 new_vars,
             ))
@@ -437,12 +379,12 @@ fn max_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
             for e in exprs {
                 new_top.push(Geq(
                     Metadata::new(),
-                    Box::new(FactorE(Metadata::new(), Reference(new_name.clone()))),
+                    Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
                     Box::new(e.clone()),
                 ));
                 disjunction.push(Eq(
                     Metadata::new(),
-                    Box::new(FactorE(Metadata::new(), Reference(new_name.clone()))),
+                    Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
                     Box::new(e.clone()),
                 ));
             }
@@ -455,7 +397,7 @@ fn max_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
             new_vars.insert(new_name.clone(), DecisionVariable::new(domain));
 
             Ok(Reduction::new(
-                FactorE(Metadata::new(), Reference(new_name)),
+                Atomic(Metadata::new(), Reference(new_name)),
                 And(metadata.clone_dirty(), new_top),
                 new_vars,
             ))
@@ -523,6 +465,14 @@ fn distribute_or_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
  */
 #[register_rule(("Base", 8400))]
 fn distribute_not_over_and(expr: &Expr, _: &Model) -> ApplicationResult {
+    for child in expr.universe() {
+        if matches!(
+            child,
+            Expr::UnsafeDiv(_, _, _) | Expr::Bubble(_, _, _) | Expr::UnsafeMod(_, _, _)
+        ) {
+            return Err(RuleNotApplicable);
+        }
+    }
     match expr {
         Not(_, contents) => match contents.as_ref() {
             And(metadata, exprs) => {
@@ -573,5 +523,31 @@ fn distribute_not_over_or(expr: &Expr, _: &Model) -> ApplicationResult {
             _ => Err(ApplicationError::RuleNotApplicable),
         },
         _ => Err(ApplicationError::RuleNotApplicable),
+    }
+}
+
+#[register_rule(("Base", 8800))]
+fn negated_neq_to_eq(expr: &Expr, _: &Model) -> ApplicationResult {
+    match expr {
+        Not(_, a) => match a.as_ref() {
+            Neq(_, b, c) if (!b.can_be_undefined() && !c.can_be_undefined()) => {
+                Ok(Reduction::pure(Eq(Metadata::new(), b.clone(), c.clone())))
+            }
+            _ => Err(RuleNotApplicable),
+        },
+        _ => Err(RuleNotApplicable),
+    }
+}
+
+#[register_rule(("Base", 8800))]
+fn negated_eq_to_neq(expr: &Expr, _: &Model) -> ApplicationResult {
+    match expr {
+        Not(_, a) => match a.as_ref() {
+            Eq(_, b, c) if (!b.can_be_undefined() && !c.can_be_undefined()) => {
+                Ok(Reduction::pure(Neq(Metadata::new(), b.clone(), c.clone())))
+            }
+            _ => Err(RuleNotApplicable),
+        },
+        _ => Err(RuleNotApplicable),
     }
 }

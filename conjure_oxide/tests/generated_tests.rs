@@ -1,13 +1,27 @@
+use conjure_oxide::utils::testing::read_rule_trace;
+use glob::glob;
+use serde_json::json;
+use serde_json::Value;
 use std::collections::HashMap;
 use std::env;
 use std::error::Error;
 use std::fs;
+use std::fs::File;
+use tracing::field::Field;
+use tracing::field::Visit;
+use tracing::Subscriber;
+use tracing::{span, Level};
+use tracing_subscriber::{filter::EnvFilter, fmt, fmt::FmtContext, layer::SubscriberExt, Registry};
+
+use tracing_appender::non_blocking::WorkerGuard;
+
+use std::io::BufWriter;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::RwLock;
 
-use conjure_core::ast::Factor;
+use conjure_core::ast::Atom;
 use conjure_core::ast::{Expression, Literal, Name};
 use conjure_core::context::Context;
 use conjure_oxide::defaults::get_default_rule_sets;
@@ -22,12 +36,14 @@ use conjure_oxide::utils::testing::{
     read_minion_solutions_json, read_model_json, save_minion_solutions_json, save_model_json,
 };
 use conjure_oxide::SolverFamily;
-
+use serde::Deserialize;
 use uniplate::Uniplate;
 
-use serde::Deserialize;
-
 use pretty_assertions::assert_eq;
+use tracing::Event;
+use tracing_subscriber::fmt::format::Writer;
+use tracing_subscriber::fmt::FormatEvent;
+use tracing_subscriber::registry::LookupSpan;
 
 #[derive(Deserialize, Default)]
 struct TestConfig {
@@ -35,7 +51,21 @@ struct TestConfig {
 }
 
 fn main() {
-    let file_path = Path::new("/path/to/your/file.txt");
+    let _guard = create_scoped_subscriber("./logs", "test_log");
+
+    // creating a span and log a message
+    let test_span = span!(Level::TRACE, "test_span");
+    let _enter: span::Entered<'_> = test_span.enter();
+
+    for entry in glob("conjure_oxide/tests/integration/*").expect("Failed to read glob pattern") {
+        match entry {
+            Ok(path) => println!("File: {:?}", path),
+            Err(e) => println!("Error: {:?}", e),
+        }
+    }
+
+    let file_path = Path::new("conjure_oxide/tests/integration/*"); // using relative path
+
     let base_name = file_path.file_stem().and_then(|stem| stem.to_str());
 
     match base_name {
@@ -52,16 +82,31 @@ static GUARD: Mutex<()> = Mutex::new(());
 fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
 
+    // Lock here to ensure sequential execution
+    let _guard = GUARD.lock().unwrap();
+
     // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
     // correctly
-    if verbose {
-        #[allow(clippy::unwrap_used)]
-        #[allow(unused_variables)]
-        let guard = GUARD.lock().unwrap();
-        integration_test_inner(path, essence_base, extension)
-    } else {
-        integration_test_inner(path, essence_base, extension)
-    }
+
+    let (subscriber, _guard) = create_scoped_subscriber(path, essence_base);
+
+    // set the subscriber as default
+    tracing::subscriber::with_default(subscriber, || {
+        // create a span for the trace
+        let test_span = span!(target: "rule_engine", Level::TRACE, "test_span");
+        let _enter = test_span.enter();
+
+        // execute tests based on verbosity
+        if verbose {
+            #[allow(clippy::unwrap_used)]
+            let _guard = GUARD.lock().unwrap();
+            integration_test_inner(path, essence_base, extension)?
+        } else {
+            integration_test_inner(path, essence_base, extension)?
+        }
+
+        Ok(())
+    })
 }
 
 /// Runs an integration test for a given Conjure model by:
@@ -127,6 +172,7 @@ fn integration_test_inner(
     // Stage 2: Rewrite the model using the rule engine and check that the result is as expected
     let rule_sets = resolve_rule_sets(SolverFamily::Minion, &get_default_rule_sets())?;
     let model = rewrite_model(&model, &rule_sets)?;
+
     if verbose {
         println!("Rewritten model: {:#?}", model)
     }
@@ -156,6 +202,11 @@ fn integration_test_inner(
     if verbose {
         println!("Minion solutions: {:#?}", solutions_json)
     }
+
+    let expected_rule_trace = read_rule_trace(path, essence_base, "expected")?;
+    let generated_rule_trace = read_rule_trace(path, essence_base, "generated")?;
+
+    assert_eq!(expected_rule_trace, generated_rule_trace);
 
     // test solutions against conjure before writing
     if accept {
@@ -202,7 +253,6 @@ fn integration_test_inner(
 
         // I can't make these sets of hashmaps due to hashmaps not implementing hash; so, to
         // compare these, I make them both json and compare that.
-
         let mut conjure_solutions_json: serde_json::Value =
             minion_solutions_to_json(&conjure_solutions);
         let mut username_solutions_json: serde_json::Value =
@@ -212,7 +262,7 @@ fn integration_test_inner(
 
         assert_eq!(
             username_solutions_json, conjure_solutions_json,
-            "Solutions (left) do not match conjure (right)!"
+            "Solutions do not match conjure!"
         );
     }
 
@@ -232,9 +282,8 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
     model.constraints.transform(Arc::new(|x| {
         use conjure_core::ast::Expression::*;
         match &x {
-            Nothing => (),
             Bubble(_, _, _) => (),
-            FactorE(_, _) => (),
+            Atomic(_, _) => (),
             Sum(_, vec) => assert_constants_leq_one(&x, vec),
             Min(_, vec) => assert_constants_leq_one(&x, vec),
             Max(_, vec) => assert_constants_leq_one(&x, vec),
@@ -252,13 +301,17 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
             SumEq(_, vec, _) => assert_constants_leq_one(&x, vec),
             SumGeq(_, vec, _) => assert_constants_leq_one(&x, vec),
             SumLeq(_, vec, _) => assert_constants_leq_one(&x, vec),
-            DivEq(_, _, _, _) => (),
+            DivEqUndefZero(_, _, _, _) => (),
             Ineq(_, _, _, _) => (),
             // this is a vector operation, but we don't want to fold values into each-other in this
             // one
             AllDiff(_, _) => (),
             WatchedLiteral(_, _, _) => (),
             Reify(_, _, _) => (),
+            AuxDeclaration(_, _, _) => (),
+            UnsafeMod(_, _, _) => (),
+            SafeMod(_, _, _) => (),
+            ModuloEqUndefZero(_, _, _, _) => (),
         };
         x.clone()
     }));
@@ -266,11 +319,97 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
 
 fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
     let count = exprs.iter().fold(0, |i, x| match x {
-        Expression::FactorE(_, Factor::Literal(_)) => i + 1,
+        Expression::Atomic(_, Atom::Literal(_)) => i + 1,
         _ => i,
     });
 
     assert!(count <= 1, "assert_vector_operators_have_partially_evaluated: expression {} is not partially evaluated",parent_expr)
+}
+
+// using a custom formatter to omit the span name in the log
+// and removing the identifier and application fields for assertions
+struct JsonFormatter;
+
+impl<S, N> FormatEvent<S, N> for JsonFormatter
+where
+    S: Subscriber + for<'span> LookupSpan<'span>,
+    N: for<'a> tracing_subscriber::fmt::FormatFields<'a> + 'static,
+{
+    fn format_event(
+        &self,
+        _ctx: &FmtContext<'_, S, N>,
+        mut writer: Writer<'_>,
+        event: &Event<'_>,
+    ) -> std::fmt::Result {
+        // initialising the log object with level and target
+        let mut log = json!({
+            //"level": event.metadata().level().to_string(),
+            "target": event.metadata().target(),
+        });
+
+        // creating a visitor to capture fields
+        struct JsonVisitor {
+            log: Value,
+        }
+
+        impl Visit for JsonVisitor {
+            fn record_str(&mut self, field: &Field, value: &str) {
+                self.log
+                    .as_object_mut()
+                    .map(|obj| obj.insert(field.name().to_string(), json!(value)));
+            }
+
+            fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {
+                self.log
+                    .as_object_mut()
+                    .map(|obj| obj.insert(field.name().to_string(), json!(format!("{:?}", value))));
+            }
+        }
+
+        // using the visitor to record fields
+        let mut visitor = JsonVisitor { log: log.clone() };
+        event.record(&mut visitor);
+
+        // merging the visitor's log into the main log object
+        log.as_object_mut().map(|obj| {
+            if let Some(visitor_obj) = visitor.log.as_object() {
+                for (key, value) in visitor_obj {
+                    obj.insert(key.clone(), value.clone());
+                }
+            }
+        });
+
+        // Write the JSON log
+        write!(writer, "{}\n", log)
+    }
+}
+
+pub fn create_scoped_subscriber(
+    path: &str,
+    test_name: &str,
+) -> (impl tracing::Subscriber + Send + Sync, WorkerGuard) {
+    let file = File::create(format!("{path}/{test_name}-generated-rule-trace.json"))
+        .expect("Unable to create log file");
+    let writer = BufWriter::new(file);
+    let (non_blocking, guard) = tracing_appender::non_blocking(writer);
+
+    // subscriber setup with the JSON formatter
+    let subscriber = Registry::default()
+        .with(EnvFilter::new("rule_engine=trace"))
+        .with(
+            fmt::layer()
+                .with_writer(non_blocking)
+                .json()
+                .event_format(JsonFormatter),
+        );
+
+    // wrapping the subscriber in an Arc to share across multiple threads
+    let subscriber = Arc::new(subscriber) as Arc<dyn tracing::Subscriber + Send + Sync>;
+
+    // setting this subscriber as the default
+    let _default = tracing::subscriber::set_default(subscriber.clone());
+
+    (subscriber, guard)
 }
 
 #[test]
