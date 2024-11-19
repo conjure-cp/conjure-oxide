@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::env;
 use std::fmt::Display;
 
@@ -6,6 +6,7 @@ use thiserror::Error;
 
 use crate::bug;
 use crate::stats::RewriterStats;
+use tracing::trace;
 use uniplate::Uniplate;
 
 use crate::rule_engine::{Reduction, Rule, RuleSet};
@@ -223,6 +224,7 @@ fn rewrite_iteration<'a>(
     let mut expression = expression.clone();
 
     let rule_results = apply_all_rules(&expression, model, rules, stats);
+    trace_rules(&rule_results, expression.clone());
     if let Some(new) = choose_rewrite(&rule_results, &expression) {
         // If a rule is applied, mark the expression as dirty
         return Some(new);
@@ -370,7 +372,6 @@ fn choose_rewrite<'a>(
     if results.is_empty() {
         return None;
     }
-
     let red = results[0].reduction.clone();
     let rule = results[0].rule;
     tracing::info!(
@@ -433,5 +434,21 @@ fn check_priority<'a>(
     } else {
         log::warn!("Multiple rules of different priorities are applicable to expression {:?} \n resulting in expression: {:?}
         \n Rules{:?}", initial_expr, new_expr, rules)
+    }
+}
+
+fn trace_rules(results: &[RuleResult], expression: Expression) {
+    if !results.is_empty() {
+        let rule = results[0].rule;
+        let new_expression = results[0].reduction.new_expression.clone();
+
+        trace!(
+            target: "rule_engine",
+            "Rule applicable: {} ({:?}), to expression: {}, resulting in: {}",
+            rule.name,
+            rule.rule_sets,
+            expression,
+            new_expression,
+        );
     }
 }

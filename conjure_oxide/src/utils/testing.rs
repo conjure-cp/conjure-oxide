@@ -1,12 +1,14 @@
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
+
 use std::fs::File;
+use std::fs::{read_to_string, OpenOptions};
 use std::hash::Hash;
 use std::io::Write;
 use std::sync::{Arc, RwLock};
 
 use conjure_core::context::Context;
-use serde_json::{Error as JsonError, Value as JsonValue};
+use serde_json::{json, Error as JsonError, Value as JsonValue};
 
 use conjure_core::error::Error;
 
@@ -182,4 +184,41 @@ pub fn read_minion_solutions_json(
         sort_json_object(&serde_json::from_str(&expected_json_str)?, true);
 
     Ok(expected_solutions)
+}
+
+pub fn read_rule_trace(
+    path: &str,
+    test_name: &str,
+    prefix: &str,
+) -> Result<Vec<String>, std::io::Error> {
+    let filename = format!("{path}/{test_name}-{prefix}-rule-trace.json");
+    let mut rules_trace: Vec<String> = read_to_string(&filename)
+        .unwrap()
+        .lines()
+        .map(String::from)
+        .collect();
+
+    //only count the number of rule in generated file (assumming the expected version already has that line and it is correct)
+    if prefix == "generated" {
+        let rule_count = rules_trace.len();
+
+        let count_message = json!({
+            "message": " Number of rules applied",
+            "count": rule_count
+        });
+
+        // Append the count message to the vector
+        let count_message_string = serde_json::to_string(&count_message)?;
+        rules_trace.push(count_message_string.clone());
+
+        // Write the updated rules trace back to the file
+        let mut file = OpenOptions::new()
+            .write(true)
+            .truncate(true) // Overwrite the file with updated content
+            .open(&filename)?;
+
+        writeln!(file, "{}", rules_trace.join("\n"))?;
+    }
+
+    Ok(rules_trace)
 }
