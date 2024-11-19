@@ -191,7 +191,7 @@ fn flatten_vecop(expr: &Expr, model: &Model) -> ApplicationResult {
         bug!("rules::minion::flatten_vecop : new_tops could be combined with And!")
     });
 
-    Ok(Reduction::new(new_top, expr, model.variables))
+    Ok(Reduction::new(expr, new_top, model.variables))
 }
 
 #[register_rule(("Minion", 4400))]
@@ -225,7 +225,7 @@ fn flatten_eq(expr: &Expr, model: &Model) -> ApplicationResult {
     let new_top = exprs_to_conjunction(&new_tops)
         .unwrap_or_else(|| bug!("rules::minion::flatten_eq: new_tops could be combined with And!"));
 
-    Ok(Reduction::new(new_top, expr, model.variables))
+    Ok(Reduction::new(expr, new_top, model.variables))
 }
 
 fn is_nested_sum(exprs: &Vec<Expr>) -> bool {
