@@ -2,19 +2,20 @@
 // use std::collections::btree_map::Entry;
 use std::fs;
 // use conjure_core::solver::SolverFamily;
+use std::sync::{Arc, RwLock};
+use conjure_core::error::Error;
 use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_essence::LANGUAGE;
-use std::sync::{Arc, RwLock};
 
-use conjure_core::ast::{Constant, DecisionVariable, Domain, Expression, Name, Range, SymbolTable};
+use conjure_core::ast::{DecisionVariable, Domain, Expression, Name, Range, SymbolTable, Atom, Literal};
 //use conjure_core::rule_engine::Rule;
 // use conjure_core::bug;
 use conjure_core::context::Context;
-// use conjure_core::error::{Error, Result};
 use conjure_core::metadata::Metadata;
 use conjure_core::Model;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use crate::utils::conjure::EssenceParseError;
 
 pub fn parse_essence_file(
     path: &str,
@@ -30,19 +31,20 @@ pub fn parse_essence_file(
     for statement in root_node.named_children(&mut cursor) {
         match statement.kind() {
             "find_statement" => {
-                let var_hashmap = parse_find_statement(statement, source_code);
+                let var_hashmap = parse_find_statement(statement, &source_code);
                 for (name, decision_variable) in var_hashmap {
                     model.add_variable(name, decision_variable);
                 }
             }
             "constraint" => {
-                let expression = parse_constraint(statement, source_code);
+                let constraint = statement.child(0).unwrap();
+                let expression = parse_constraint(constraint, &source_code);
                 model.add_constraint(expression);
             }
-            _ => panic!("Error"),
+            _ => return Err(EssenceParseError::ParseError(Error::Parse("Error".to_owned())))
         }
     }
-    return model
+    return Ok(model);
 }
 
 fn get_tree(path: &str, filename: &str, extension: &str) -> (Tree, String) {
@@ -50,7 +52,10 @@ fn get_tree(path: &str, filename: &str, extension: &str) -> (Tree, String) {
         .expect("Failed to read the source code file");
     let mut parser = Parser::new();
     parser.set_language(&LANGUAGE.into()).unwrap();
-    return (parser.parse(source_code, None).expect("Failed to parse"), source_code)
+    return (
+        parser.parse(source_code, None).expect("Failed to parse"),
+        source_code,
+    );
 }
 
 fn parse_find_statement(root_node: Node, source_code: &str) -> HashMap<Name, DecisionVariable> {
@@ -67,15 +72,15 @@ fn parse_find_statement(root_node: Node, source_code: &str) -> HashMap<Name, Dec
                     let variable_name = &source_code[variable.start_byte()..variable.end_byte()];
                     temp_symbols.insert(variable_name);
                 }
-            } 
+            }
             "domain" => {
                 domain = Some(parse_domain(node, source_code));
             }
-            _ => panic!("issue"), 
+            _ => panic!("issue"),
         }
     }
     let domain = domain.expect("No domain found");
-    
+
     for name in temp_symbols {
         let decision_variable = DecisionVariable::new(domain.clone());
         symbol_table.insert(Name::UserName(String::from(name)), decision_variable);
@@ -86,13 +91,9 @@ fn parse_find_statement(root_node: Node, source_code: &str) -> HashMap<Name, Dec
 fn parse_domain(root_node: Node, source_code: &str) -> Domain {
     let mut cursor = root_node.walk();
     cursor.goto_first_child();
-    match cursor.node().kind(){
-        "bool_domain" => {
-            return Domain::BoolDomain
-        }
-        "int_domain" => {
-            return parse_int_domain(cursor.node(), source_code)
-        }
+    match cursor.node().kind() {
+        "bool_domain" => return Domain::BoolDomain,
+        "int_domain" => return parse_int_domain(cursor.node(), source_code),
         _ => {
             panic!("No domain type found");
         }
@@ -100,8 +101,8 @@ fn parse_domain(root_node: Node, source_code: &str) -> Domain {
 }
 
 fn parse_int_domain(root_node: Node, source_code: &str) -> Domain {
-    if root_node.child_count() == 1{
-        return Domain::IntDomain(vec![Range::Bounded(std::i32::MIN, std::i32::MAX)])
+    if root_node.child_count() == 1 {
+        return Domain::IntDomain(vec![Range::Bounded(std::i32::MIN, std::i32::MAX)]);
     } else {
         let range_or_expr = root_node.child(2).expect("No range or expression found");
         match range_or_expr.kind() {
@@ -112,9 +113,7 @@ fn parse_int_domain(root_node: Node, source_code: &str) -> Domain {
                     match range.kind() {
                         "lower_bound_range" => {
                             let range = range.child(0).expect("Error");
-                            let lower_bound_node = range
-                                .child_by_field_id(0)
-                                .unwrap();
+                            let lower_bound_node = range.child_by_field_id(0).unwrap();
                             let lower_bound = &source_code
                                 [lower_bound_node.start_byte()..lower_bound_node.end_byte()]
                                 .parse::<i32>()
@@ -123,9 +122,7 @@ fn parse_int_domain(root_node: Node, source_code: &str) -> Domain {
                         }
                         "upper_bound_range" => {
                             let range = range.child(0).expect("Error");
-                            let upper_bound_node = range
-                                .child_by_field_id(1)
-                                .unwrap();
+                            let upper_bound_node = range.child_by_field_id(1).unwrap();
                             let upper_bound = &source_code
                                 [upper_bound_node.start_byte()..upper_bound_node.end_byte()]
                                 .parse::<i32>()
@@ -134,12 +131,8 @@ fn parse_int_domain(root_node: Node, source_code: &str) -> Domain {
                         }
                         "closed_range" => {
                             let range = range.child(0).expect("error");
-                            let lower_bound_node = range
-                                .child_by_field_id(0)
-                                .unwrap();
-                            let upper_bound_node = range
-                                .child_by_field_id(1)
-                                .unwrap();
+                            let lower_bound_node = range.child_by_field_id(0).unwrap();
+                            let upper_bound_node = range.child_by_field_id(1).unwrap();
                             let lower_bound = &source_code
                                 [lower_bound_node.start_byte()..lower_bound_node.end_byte()]
                                 .parse::<i32>()
@@ -152,19 +145,19 @@ fn parse_int_domain(root_node: Node, source_code: &str) -> Domain {
                         }
                         "integer" => {
                             let range = range.child(0).expect("error");
-                            let integer_value = &source_code
-                            [range.start_byte()..range.end_byte()]
-                            .parse::<i32>()
-                            .unwrap();
+                            let integer_value = &source_code[range.start_byte()..range.end_byte()]
+                                .parse::<i32>()
+                                .unwrap();
                             ranges.push(Range::Single(*integer_value));
                         }
                         _ => {}
                     }
                 }
-                return Domain::IntDomain(ranges)
+                return Domain::IntDomain(ranges);
             }
-            "expression" => { //todo: add this code, right now returns infinite integer domain
-                return Domain::IntDomain(vec![Range::Bounded(std::i32::MIN, std::i32::MAX)])
+            "expression" => {
+                //todo: add this code, right now returns infinite integer domain
+                return Domain::IntDomain(vec![Range::Bounded(std::i32::MIN, std::i32::MAX)]);
             }
             _ => {
                 panic!("No range or expression found");
@@ -175,12 +168,6 @@ fn parse_int_domain(root_node: Node, source_code: &str) -> Domain {
 
 fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
     match root_node.kind() {
-        //TODO: when grammar is changed to allow multiple expressions, make this a for loop thing
-        "constraint" => {
-            let mut cursor = root_node.walk();
-            cursor.goto_first_child();
-            return parse_constraint(cursor.node(), source_code)
-        }
         "expression" => {
             if root_node.child_count() > 1 {
                 let mut cursor = root_node.walk();
@@ -190,7 +177,7 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
                 }
                 return Expression::Or(Metadata::new(), vec_exprs)
             }
-            return parse_constraint(root_node.child(0).unwrap(), source_code)
+            return parse_constraint(root_node.child(0).unwrap(), source_code);
         }
         "conjunction" => {
             if root_node.child_count() > 1 {
@@ -199,20 +186,19 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
                 for comparison in root_node.named_children(&mut cursor) {
                     vec_exprs.push(parse_constraint(comparison, source_code));
                 }
-                return Expression::And(Metadata::new(), vec_exprs)
+                return Expression::And(Metadata::new(), vec_exprs);
             }
             let mut cursor = root_node.walk();
             cursor.goto_first_child();
-            return parse_constraint(cursor.node(), source_code)
+            return parse_constraint(cursor.node(), source_code);
         }
         "comparison" => {
             //TODO: right now assuming there's only two but really could be any number, change
             if root_node.child_count() > 1 {
                 let expr1 = parse_constraint(root_node.child_by_field_id(0).unwrap(), source_code);
                 let expr2 = parse_constraint(root_node.child_by_field_id(2).unwrap(), source_code);
-                
-                let comp_op = root_node.child_by_field_name("comp_op")
-                    .unwrap();
+
+                let comp_op = root_node.child_by_field_name("comp_op").unwrap();
                 let op_type = &source_code[comp_op.start_byte()..comp_op.end_byte()];
                 match op_type {
                     "=" => {
@@ -233,38 +219,40 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
                     ">" => {
                         return Expression::Gt(Metadata::new(), Box::new(expr1), Box::new(expr2));
                     }
-                    _ => panic!("error!")
+                    _ => panic!("error!"),
                 }
             }
             let mut cursor = root_node.walk();
             cursor.goto_first_child();
-            return parse_constraint(cursor.node(), source_code)
+            return parse_constraint(cursor.node(), source_code);
         }
         "addition" => {
             //TODO: right now assuming its a "+", add for if its a "-"
-            //TODO: right now assuming its only two terms, really could be any number 
-                //(pos use goto_last_child because its vec and then Box)
+            //TODO: right now assuming its only two terms, really could be any number
+            //(pos use goto_last_child because its vec and then Box)
             if root_node.child_count() > 1 {
                 let term1 = parse_constraint(root_node.child_by_field_id(0).unwrap(), source_code);
                 let term2 = parse_constraint(root_node.child_by_field_id(2).unwrap(), source_code);
-                return Expression::SumEq(Metadata::new(), vec![term1], Box::new(term2))
+                return Expression::SumEq(Metadata::new(), vec![term1], Box::new(term2));
             }
             let mut cursor = root_node.walk();
             cursor.goto_first_child();
-            return parse_constraint(cursor.node(), source_code)
+            return parse_constraint(cursor.node(), source_code);
         }
         "term" => {
             //TODO: right now assuming its a "/", add for if its a "*"
             //TODO: right now assuming its safe, could be unsafe
             //TODO: right now assuming its only two terms, really could be any number
             if root_node.child_count() > 1 {
-                let factor1 = parse_constraint(root_node.child_by_field_id(0).unwrap(), source_code);
-                let factor2 = parse_constraint(root_node.child_by_field_id(2).unwrap(), source_code);
-                return Expression::SafeDiv(Metadata::new(), Box::new(factor1), Box::new(factor2))
+                let factor1 =
+                    parse_constraint(root_node.child_by_field_id(0).unwrap(), source_code);
+                let factor2 =
+                    parse_constraint(root_node.child_by_field_id(2).unwrap(), source_code);
+                return Expression::SafeDiv(Metadata::new(), Box::new(factor1), Box::new(factor2));
             }
             let mut cursor = root_node.walk();
             cursor.goto_first_child();
-            return parse_constraint(cursor.node(), source_code)
+            return parse_constraint(cursor.node(), source_code);
         }
         "factor" => {
             let mut cursor = root_node.walk();
@@ -272,27 +260,25 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
             if root_node.child_count() > 1 {
                 cursor.goto_next_sibling();
             }
-            return parse_constraint(cursor.node(), source_code)
+            return parse_constraint(cursor.node(), source_code);
         }
         "constant" => {
             //once the grammar is changed, this will be more complicated
             let mut cursor = root_node.walk();
             cursor.goto_first_child();
-            let constant_value = &source_code
-                [cursor.node().start_byte()..cursor.node().end_byte()]
+            let constant_value = &source_code[cursor.node().start_byte()..cursor.node().end_byte()]
                 .parse::<i32>()
                 .unwrap();
-            return Expression::Constant(Metadata::new(), Constant::Int(*constant_value))
+            //TODO: right now its only Int but could be bool too
+            return Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(*constant_value)));
         }
         "variable" => {
             let mut cursor = root_node.walk();
             cursor.goto_first_child();
-            let variable_name = String::from(&source_code[cursor.node().start_byte()..cursor.node().end_byte()]);
-            return Expression::Reference(Metadata::new(), Name::UserName(variable_name))
+            let variable_name =
+                String::from(&source_code[cursor.node().start_byte()..cursor.node().end_byte()]);
+            return Expression::Atomic(Metadata::new(), Atom::Reference(Name::UserName(variable_name)));
         }
-        _ => {
-            return Expression::Nothing
-        }
-
+        _ => panic!("Error")
     }
 }

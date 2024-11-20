@@ -111,7 +111,7 @@ fn integration_test_inner(
         };
     
     // Stage 0: Compare the two methods of parsing
-    if !skip_native_parser {
+    if !config.skip_native_parser {
         let model_native = parse_essence_file_native(path, essence_base, extension, context.clone())?;
         let expected_model = read_model_json(path, essence_base, "expected", "parse")?;
         assert_eq!(model_native, expected_model);
