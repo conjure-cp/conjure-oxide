@@ -49,7 +49,7 @@ use tracing_subscriber::registry::LookupSpan;
 #[derive(Deserialize, Default)]
 struct TestConfig {
     extra_rewriter_asserts: Vec<String>,
-    skip_native_parser: bool,
+    skip_native_parser: Option<bool>,
 }
 
 fn main() {
@@ -155,7 +155,9 @@ fn integration_test_inner(
         };
 
     // Stage 0: Compare the two methods of parsing
-    if !config.skip_native_parser {
+    // skip if the field is set to true
+    // do not skip if it is unset, or if it is explicitly set to false
+    if config.skip_native_parser != Some(true) {
         let model_native =
             parse_essence_file_native(path, essence_base, extension, context.clone())?;
         let expected_model = read_model_json(path, essence_base, "expected", "parse")?;
