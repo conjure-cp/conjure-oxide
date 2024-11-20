@@ -1,23 +1,21 @@
-// use conjure_core::parse;
-// use std::collections::btree_map::Entry;
-use std::fs;
-// use conjure_core::solver::SolverFamily;
-use std::sync::{Arc, RwLock};
 use conjure_core::error::Error;
+use std::fs;
+use std::sync::{Arc, RwLock};
 use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_essence::LANGUAGE;
 
-use conjure_core::ast::{DecisionVariable, Domain, Expression, Name, Range, SymbolTable, Atom, Literal};
-//use conjure_core::rule_engine::Rule;
-// use conjure_core::bug;
+use conjure_core::ast::{
+    Atom, DecisionVariable, Domain, Expression, Literal, Name, Range, SymbolTable,
+};
+
+use crate::utils::conjure::EssenceParseError;
 use conjure_core::context::Context;
 use conjure_core::metadata::Metadata;
 use conjure_core::Model;
 use std::collections::HashMap;
 use std::collections::HashSet;
-use crate::utils::conjure::EssenceParseError;
 
-pub fn parse_essence_file(
+pub fn parse_essence_file_native(
     path: &str,
     filename: &str,
     extension: &str,
@@ -41,7 +39,11 @@ pub fn parse_essence_file(
                 let expression = parse_constraint(constraint, &source_code);
                 model.add_constraint(expression);
             }
-            _ => return Err(EssenceParseError::ParseError(Error::Parse("Error".to_owned())))
+            _ => {
+                return Err(EssenceParseError::ParseError(Error::Parse(
+                    "Error".to_owned(),
+                )))
+            }
         }
     }
     return Ok(model);
@@ -53,7 +55,9 @@ fn get_tree(path: &str, filename: &str, extension: &str) -> (Tree, String) {
     let mut parser = Parser::new();
     parser.set_language(&LANGUAGE.into()).unwrap();
     return (
-        parser.parse(source_code, None).expect("Failed to parse"),
+        parser
+            .parse(source_code.clone(), None)
+            .expect("Failed to parse"),
         source_code,
     );
 }
@@ -175,7 +179,7 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
                 for conjunction in root_node.named_children(&mut cursor) {
                     vec_exprs.push(parse_constraint(conjunction, source_code));
                 }
-                return Expression::Or(Metadata::new(), vec_exprs)
+                return Expression::Or(Metadata::new(), vec_exprs);
             }
             return parse_constraint(root_node.child(0).unwrap(), source_code);
         }
@@ -270,15 +274,21 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
                 .parse::<i32>()
                 .unwrap();
             //TODO: right now its only Int but could be bool too
-            return Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(*constant_value)));
+            return Expression::Atomic(
+                Metadata::new(),
+                Atom::Literal(Literal::Int(*constant_value)),
+            );
         }
         "variable" => {
             let mut cursor = root_node.walk();
             cursor.goto_first_child();
             let variable_name =
                 String::from(&source_code[cursor.node().start_byte()..cursor.node().end_byte()]);
-            return Expression::Atomic(Metadata::new(), Atom::Reference(Name::UserName(variable_name)));
+            return Expression::Atomic(
+                Metadata::new(),
+                Atom::Reference(Name::UserName(variable_name)),
+            );
         }
-        _ => panic!("Error")
+        _ => panic!("Error"),
     }
 }

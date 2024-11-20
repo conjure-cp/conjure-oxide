@@ -1,3 +1,4 @@
+use conjure_oxide::utils::essence_parser::parse_essence_file_native;
 use conjure_oxide::utils::testing::read_rule_trace;
 use glob::glob;
 use serde_json::json;
@@ -45,12 +46,10 @@ use tracing_subscriber::fmt::format::Writer;
 use tracing_subscriber::fmt::FormatEvent;
 use tracing_subscriber::registry::LookupSpan;
 
-use conjure_oxide::utils::essence_parser::parse_essence_file_native;
-
 #[derive(Deserialize, Default)]
 struct TestConfig {
     extra_rewriter_asserts: Vec<String>,
-    skip_native_parser: bool
+    skip_native_parser: bool,
 }
 
 fn main() {
@@ -154,14 +153,15 @@ fn integration_test_inner(
         } else {
             Default::default()
         };
-    
+
     // Stage 0: Compare the two methods of parsing
     if !config.skip_native_parser {
-        let model_native = parse_essence_file_native(path, essence_base, extension, context.clone())?;
+        let model_native =
+            parse_essence_file_native(path, essence_base, extension, context.clone())?;
         let expected_model = read_model_json(path, essence_base, "expected", "parse")?;
         assert_eq!(model_native, expected_model);
     }
-    
+
     // Stage 1: Read the essence file and check that the model is parsed correctly
     let model = parse_essence_file(path, essence_base, extension, context.clone())?;
     if verbose {
