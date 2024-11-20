@@ -285,6 +285,10 @@ fn parse_expr(
 
 fn read_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, SolverError> {
     match expr {
+        conjure_ast::Expression::Atomic(_metadata, reff) => Ok(minion_ast::Constraint::WLiteral(
+            read_var(reff.into())?,
+            minion_ast::Constant::Integer(1),
+        )),
         conjure_ast::Expression::SumLeq(_metadata, lhs, rhs) => Ok(minion_ast::Constraint::SumLeq(
             read_vars(lhs)?,
             read_var(*rhs)?,
