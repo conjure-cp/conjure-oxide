@@ -9,7 +9,8 @@ use crate::rule_engine::{
 use crate::rules::extra_check;
 use crate::{
     ast::{
-        Atom::{self, *}, Domain,
+        Atom::{self, *},
+        Domain,
         Expression::{self as Expr, *},
         Literal::*,
     },
