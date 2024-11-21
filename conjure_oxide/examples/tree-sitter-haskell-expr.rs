@@ -2,6 +2,7 @@ use tree_sitter::Parser;
 use tree_sitter_haskell::LANGUAGE;
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 enum Expr {
     Var(String),
     Int(i32),
