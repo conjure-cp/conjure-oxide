@@ -7,9 +7,11 @@ use enum_compatability_macro::document_compatibility;
 use uniplate::derive::Uniplate;
 use uniplate::Biplate;
 
-use crate::ast::constants::Constant;
+use crate::ast::literals::Literal;
 use crate::ast::symbol_table::{Name, SymbolTable};
+use crate::ast::Atom;
 use crate::ast::ReturnType;
+use crate::bug;
 use crate::metadata::Metadata;
 
 use super::{Domain, Range};
@@ -20,25 +22,17 @@ use super::{Domain, Range};
 /// used to build rules and conditions for the model.
 #[document_compatibility]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
-#[uniplate(walk_into=[])]
-#[biplate(to=Constant)]
+#[uniplate(walk_into=[Atom])]
+#[biplate(to=Literal)]
 #[biplate(to=Metadata)]
+#[biplate(to=Atom)]
+#[biplate(to=Name)]
 pub enum Expression {
-    /**
-     * Represents an empty expression
-     * NB: we only expect this at the top level of a model (if there is no constraints)
-     */
-    Nothing,
-
     /// An expression representing "A is valid as long as B is true"
     /// Turns into a conjunction when it reaches a boolean context
     Bubble(Metadata, Box<Expression>, Box<Expression>),
 
-    #[compatible(Minion, JsonInput)]
-    Constant(Metadata, Constant),
-
-    #[compatible(Minion, JsonInput, SAT)]
-    Reference(Metadata, Name),
+    Atomic(Metadata, Atom),
 
     #[compatible(Minion, JsonInput)]
     Sum(Metadata, Vec<Expression>),
@@ -89,6 +83,13 @@ pub enum Expression {
     #[compatible(JsonInput)]
     UnsafeDiv(Metadata, Box<Expression>, Box<Expression>),
 
+    /// Modulo after preventing mod 0, usually with a bubble
+    SafeMod(Metadata, Box<Expression>, Box<Expression>),
+
+    /// Modulo with a possibly undefined value (mod 0)
+    #[compatible(JsonInput)]
+    UnsafeMod(Metadata, Box<Expression>, Box<Expression>),
+
     /* Flattened SumEq.
      *
      * Note: this is an intermediary step that's used in the process of converting from conjure model to minion.
@@ -105,8 +106,13 @@ pub enum Expression {
     #[compatible(Minion)]
     SumLeq(Metadata, Vec<Expression>, Box<Expression>),
 
+    /// `a / b = c`
     #[compatible(Minion)]
-    DivEq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
+    DivEqUndefZero(Metadata, Atom, Atom, Atom),
+
+    /// `a % b = c`
+    #[compatible(Minion)]
+    ModuloEqUndefZero(Metadata, Atom, Atom, Atom),
 
     #[compatible(Minion)]
     Ineq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
@@ -124,10 +130,16 @@ pub enum Expression {
     ///
     ///
     #[compatible(Minion)]
-    WatchedLiteral(Metadata, Name, Constant),
+    WatchedLiteral(Metadata, Name, Literal),
 
     #[compatible(Minion)]
     Reify(Metadata, Box<Expression>, Box<Expression>),
+
+    /// Declaration of an auxiliary variable.
+    ///
+    /// As with Savile Row, we semantically distinguish this from `Eq`.
+    #[compatible(Minion)]
+    AuxDeclaration(Metadata, Name, Box<Expression>),
 }
 
 fn expr_vec_to_domain_i32(
@@ -156,7 +168,9 @@ fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> (i32, i32) {
                 }
             }
             Range::Bounded(i, j) => {
-                if *i < min {}
+                if *i < min {
+                    min = *i;
+                }
                 if *j > max {
                     max = *j;
                 }
@@ -170,11 +184,11 @@ impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self, vars: &SymbolTable) -> Option<Domain> {
         let ret = match self {
-            Expression::Reference(_, name) => Some(vars.get(name)?.domain.clone()),
-            Expression::Constant(_, Constant::Int(n)) => {
+            Expression::Atomic(_, Atom::Reference(name)) => Some(vars.get(name)?.domain.clone()),
+            Expression::Atomic(_, Atom::Literal(Literal::Int(n))) => {
                 Some(Domain::IntDomain(vec![Range::Single(*n)]))
             }
-            Expression::Constant(_, Constant::Bool(_)) => Some(Domain::BoolDomain),
+            Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(Domain::BoolDomain),
             Expression::Sum(_, exprs) => expr_vec_to_domain_i32(exprs, |x, y| Some(x + y), vars),
             Expression::Min(_, exprs) => {
                 expr_vec_to_domain_i32(exprs, |x, y| Some(if x < y { x } else { y }), vars)
@@ -182,13 +196,51 @@ impl Expression {
             Expression::Max(_, exprs) => {
                 expr_vec_to_domain_i32(exprs, |x, y| Some(if x > y { x } else { y }), vars)
             }
-            Expression::UnsafeDiv(_, a, b) | Expression::SafeDiv(_, a, b) => {
-                a.domain_of(vars)?.apply_i32(
+            Expression::UnsafeDiv(_, a, b) => a.domain_of(vars)?.apply_i32(
+                |x, y| if y != 0 { Some(x / y) } else { None },
+                &b.domain_of(vars)?,
+            ),
+            Expression::SafeDiv(_, a, b) => {
+                let domain = a.domain_of(vars)?.apply_i32(
                     |x, y| if y != 0 { Some(x / y) } else { None },
                     &b.domain_of(vars)?,
-                )
+                );
+
+                match domain {
+                    Some(Domain::IntDomain(ranges)) => {
+                        let mut ranges = ranges;
+                        ranges.push(Range::Single(0));
+                        Some(Domain::IntDomain(ranges))
+                    }
+                    None => Some(Domain::IntDomain(vec![Range::Single(0)])),
+                    _ => None,
+                }
             }
-            _ => todo!("Calculate domain of {:?}", self),
+            Expression::UnsafeMod(_, a, b) => a.domain_of(vars)?.apply_i32(
+                |x, y| if y != 0 { Some(x % y) } else { None },
+                &b.domain_of(vars)?,
+            ),
+
+            Expression::SafeMod(_, a, b) => {
+                let domain = a.domain_of(vars)?.apply_i32(
+                    |x, y| if y != 0 { Some(x % y) } else { None },
+                    &b.domain_of(vars)?,
+                );
+
+                match domain {
+                    Some(Domain::IntDomain(ranges)) => {
+                        let mut ranges = ranges;
+                        ranges.push(Range::Single(0));
+                        Some(Domain::IntDomain(ranges))
+                    }
+                    None => Some(Domain::IntDomain(vec![Range::Single(0)])),
+                    _ => None,
+                }
+            }
+            Expression::Bubble(_, _, _) => None,
+            Expression::AuxDeclaration(_, _, _) => Some(Domain::BoolDomain),
+            Expression::And(_, _) => Some(Domain::BoolDomain),
+            _ => bug!("Cannot calculate domain of {:?}", self),
             // TODO: (flm8) Add support for calculating the domains of more expression types
         };
         match ret {
@@ -203,28 +255,28 @@ impl Expression {
     }
 
     pub fn get_meta(&self) -> Metadata {
-        return <Expression as Biplate<Metadata>>::children_bi(&self)[0].clone();
+        <Expression as Biplate<Metadata>>::children_bi(self)[0].clone()
     }
 
     pub fn set_meta(&self, meta: Metadata) {
-        <Expression as Biplate<Metadata>>::transform_bi(&self, Arc::new(move |_| meta.clone()));
+        <Expression as Biplate<Metadata>>::transform_bi(self, Arc::new(move |_| meta.clone()));
     }
 
     pub fn can_be_undefined(&self) -> bool {
         // TODO: there will be more false cases but we are being conservative
         match self {
-            Expression::Reference(_, _) => false,
-            Expression::Constant(_, Constant::Bool(_)) => false,
-            Expression::Constant(_, Constant::Int(_)) => false,
+            Expression::Atomic(_, _) => false,
+            Expression::SafeDiv(_, _, _) => false,
+            Expression::SafeMod(_, _, _) => false,
             _ => true,
         }
     }
 
     pub fn return_type(&self) -> Option<ReturnType> {
         match self {
-            Expression::Constant(_, Constant::Int(_)) => Some(ReturnType::Int),
-            Expression::Constant(_, Constant::Bool(_)) => Some(ReturnType::Bool),
-            Expression::Reference(_, _) => None,
+            Expression::Atomic(_, Atom::Literal(Literal::Int(_))) => Some(ReturnType::Int),
+            Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(ReturnType::Bool),
+            Expression::Atomic(_, Atom::Reference(_)) => None,
             Expression::Sum(_, _) => Some(ReturnType::Int),
             Expression::Min(_, _) => Some(ReturnType::Int),
             Expression::Max(_, _) => Some(ReturnType::Int),
@@ -242,13 +294,16 @@ impl Expression {
             Expression::SumEq(_, _, _) => Some(ReturnType::Bool),
             Expression::SumGeq(_, _, _) => Some(ReturnType::Bool),
             Expression::SumLeq(_, _, _) => Some(ReturnType::Bool),
-            Expression::DivEq(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::DivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
             Expression::Ineq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AllDiff(_, _) => Some(ReturnType::Bool),
             Expression::Bubble(_, _, _) => None, // TODO: (flm8) should this be a bool?
-            Expression::Nothing => None,
             Expression::WatchedLiteral(_, _, _) => Some(ReturnType::Bool),
             Expression::Reify(_, _, _) => Some(ReturnType::Bool),
+            Expression::AuxDeclaration(_, _, _) => Some(ReturnType::Bool),
+            Expression::UnsafeMod(_, _, _) => Some(ReturnType::Int),
+            Expression::SafeMod(_, _, _) => Some(ReturnType::Int),
+            Expression::ModuloEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
         }
     }
 
@@ -261,6 +316,14 @@ impl Expression {
         let mut metadata = self.get_meta();
         metadata.clean = bool_value;
         self.set_meta(metadata);
+    }
+
+    pub fn as_atom(&self) -> Option<Atom> {
+        if let Expression::Atomic(_m, f) = self {
+            Some(f.clone())
+        } else {
+            None
+        }
     }
 }
 
@@ -285,29 +348,26 @@ fn display_expressions(expressions: &[Expression]) -> String {
 
 impl From<i32> for Expression {
     fn from(i: i32) -> Self {
-        Expression::Constant(Metadata::new(), Constant::Int(i))
+        Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(i)))
     }
 }
 
 impl From<bool> for Expression {
     fn from(b: bool) -> Self {
-        Expression::Constant(Metadata::new(), Constant::Bool(b))
+        Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(b)))
     }
 }
 
+impl From<Atom> for Expression {
+    fn from(value: Atom) -> Self {
+        Expression::Atomic(Metadata::new(), value)
+    }
+}
 impl Display for Expression {
     // TODO: (flm8) this will change once we implement a parser (two-way conversion)
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
-            Expression::Constant(_, c) => match c {
-                Constant::Bool(b) => write!(f, "{}", b),
-                Constant::Int(i) => write!(f, "{}", i),
-            },
-            Expression::Reference(_, name) => match name {
-                Name::MachineName(n) => write!(f, "_{}", n),
-                Name::UserName(s) => write!(f, "{}", s),
-            },
-            Expression::Nothing => write!(f, "Nothing"),
+            Expression::Atomic(_, atom) => atom.fmt(f),
             Expression::Sum(_, expressions) => {
                 write!(f, "Sum({})", display_expressions(expressions))
             }
@@ -377,7 +437,7 @@ impl Display for Expression {
             Expression::UnsafeDiv(_, box1, box2) => {
                 write!(f, "UnsafeDiv({}, {})", box1.clone(), box2.clone())
             }
-            Expression::DivEq(_, box1, box2, box3) => {
+            Expression::DivEqUndefZero(_, box1, box2, box3) => {
                 write!(
                     f,
                     "DivEq({}, {}, {})",
@@ -386,8 +446,31 @@ impl Display for Expression {
                     box3.clone()
                 )
             }
-            #[allow(unreachable_patterns)]
-            other => todo!("Implement display for {:?}", other),
+            Expression::ModuloEqUndefZero(_, box1, box2, box3) => {
+                write!(
+                    f,
+                    "ModEq({}, {}, {})",
+                    box1.clone(),
+                    box2.clone(),
+                    box3.clone()
+                )
+            }
+
+            Expression::WatchedLiteral(_, x, l) => {
+                write!(f, "WatchedLiteral({},{})", x, l)
+            }
+            Expression::Reify(_, box1, box2) => {
+                write!(f, "Reify({}, {})", box1.clone(), box2.clone())
+            }
+            Expression::AuxDeclaration(_, n, e) => {
+                write!(f, "{} =aux {}", n, e.clone())
+            }
+            Expression::UnsafeMod(_, a, b) => {
+                write!(f, "{} % {}", a.clone(), b.clone())
+            }
+            Expression::SafeMod(_, a, b) => {
+                write!(f, "SafeMod({},{})", a.clone(), b.clone())
+            }
         }
     }
 }
@@ -400,8 +483,8 @@ mod tests {
 
     #[test]
     fn test_domain_of_constant_sum() {
-        let c1 = Expression::Constant(Metadata::new(), Constant::Int(1));
-        let c2 = Expression::Constant(Metadata::new(), Constant::Int(2));
+        let c1 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1)));
+        let c2 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2)));
         let sum = Expression::Sum(Metadata::new(), vec![c1.clone(), c2.clone()]);
         assert_eq!(
             sum.domain_of(&SymbolTable::new()),
@@ -411,8 +494,8 @@ mod tests {
 
     #[test]
     fn test_domain_of_constant_invalid_type() {
-        let c1 = Expression::Constant(Metadata::new(), Constant::Int(1));
-        let c2 = Expression::Constant(Metadata::new(), Constant::Bool(true));
+        let c1 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1)));
+        let c2 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
         let sum = Expression::Sum(Metadata::new(), vec![c1.clone(), c2.clone()]);
         assert_eq!(sum.domain_of(&SymbolTable::new()), None);
     }
@@ -425,7 +508,7 @@ mod tests {
 
     #[test]
     fn test_domain_of_reference() {
-        let reference = Expression::Reference(Metadata::new(), Name::MachineName(0));
+        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
         let mut vars = SymbolTable::new();
         vars.insert(
             Name::MachineName(0),
@@ -439,13 +522,13 @@ mod tests {
 
     #[test]
     fn test_domain_of_reference_not_found() {
-        let reference = Expression::Reference(Metadata::new(), Name::MachineName(0));
+        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
         assert_eq!(reference.domain_of(&SymbolTable::new()), None);
     }
 
     #[test]
     fn test_domain_of_reference_sum_single() {
-        let reference = Expression::Reference(Metadata::new(), Name::MachineName(0));
+        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
         let mut vars = SymbolTable::new();
         vars.insert(
             Name::MachineName(0),
@@ -460,7 +543,7 @@ mod tests {
 
     #[test]
     fn test_domain_of_reference_sum_bounded() {
-        let reference = Expression::Reference(Metadata::new(), Name::MachineName(0));
+        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
         let mut vars = SymbolTable::new();
         vars.insert(
             Name::MachineName(0),

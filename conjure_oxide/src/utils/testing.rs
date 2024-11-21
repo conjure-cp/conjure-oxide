@@ -1,17 +1,19 @@
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
+
 use std::fs::File;
+use std::fs::{read_to_string, OpenOptions};
 use std::hash::Hash;
 use std::io::Write;
 use std::sync::{Arc, RwLock};
 
 use conjure_core::context::Context;
-use serde_json::{Error as JsonError, Value as JsonValue};
+use serde_json::{json, Error as JsonError, Value as JsonValue};
 
 use conjure_core::error::Error;
 
 use crate::ast::Name::UserName;
-use crate::ast::{Constant, Name};
+use crate::ast::{Literal, Name};
 use crate::utils::conjure::minion_solutions_to_json;
 use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
@@ -109,7 +111,7 @@ pub fn read_model_json(
 
 pub fn minion_solutions_from_json(
     serialized: &str,
-) -> Result<Vec<HashMap<Name, Constant>>, anyhow::Error> {
+) -> Result<Vec<HashMap<Name, Literal>>, anyhow::Error> {
     let json: JsonValue = serde_json::from_str(serialized)?;
 
     let json_array = json
@@ -130,9 +132,9 @@ pub fn minion_solutions_from_json(
                     let n = n
                         .as_i64()
                         .ok_or(Error::Parse("Invalid integer".to_owned()))?;
-                    Constant::Int(n as i32)
+                    Literal::Int(n as i32)
                 }
-                JsonValue::Bool(b) => Constant::Bool(*b),
+                JsonValue::Bool(b) => Literal::Bool(*b),
                 _ => return Err(Error::Parse("Invalid constant".to_owned()).into()),
             };
 
@@ -146,7 +148,7 @@ pub fn minion_solutions_from_json(
 }
 
 pub fn save_minion_solutions_json(
-    solutions: &Vec<HashMap<Name, Constant>>,
+    solutions: &Vec<HashMap<Name, Literal>>,
     path: &str,
     test_name: &str,
     accept: bool,
@@ -182,4 +184,41 @@ pub fn read_minion_solutions_json(
         sort_json_object(&serde_json::from_str(&expected_json_str)?, true);
 
     Ok(expected_solutions)
+}
+
+pub fn read_rule_trace(
+    path: &str,
+    test_name: &str,
+    prefix: &str,
+) -> Result<Vec<String>, std::io::Error> {
+    let filename = format!("{path}/{test_name}-{prefix}-rule-trace.json");
+    let mut rules_trace: Vec<String> = read_to_string(&filename)
+        .unwrap()
+        .lines()
+        .map(String::from)
+        .collect();
+
+    //only count the number of rule in generated file (assumming the expected version already has that line and it is correct)
+    if prefix == "generated" {
+        let rule_count = rules_trace.len();
+
+        let count_message = json!({
+            "message": " Number of rules applied",
+            "count": rule_count
+        });
+
+        // Append the count message to the vector
+        let count_message_string = serde_json::to_string(&count_message)?;
+        rules_trace.push(count_message_string.clone());
+
+        // Write the updated rules trace back to the file
+        let mut file = OpenOptions::new()
+            .write(true)
+            .truncate(true) // Overwrite the file with updated content
+            .open(&filename)?;
+
+        writeln!(file, "{}", rules_trace.join("\n"))?;
+    }
+
+    Ok(rules_trace)
 }

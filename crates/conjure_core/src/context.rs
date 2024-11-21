@@ -66,7 +66,7 @@ impl Context<'static> {
     }
 }
 
-impl<'a> Debug for Context<'a> {
+impl Debug for Context<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let target_solver_family: Option<SolverFamily> = self.target_solver_family;
         let extra_rule_set_names: Vec<String> = self.extra_rule_set_names.clone();

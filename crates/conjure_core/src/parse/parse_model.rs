@@ -4,7 +4,7 @@ use std::sync::{Arc, RwLock};
 use serde_json::Value;
 use serde_json::Value as JsonValue;
 
-use crate::ast::{Constant, DecisionVariable, Domain, Expression, Name, Range};
+use crate::ast::{Atom, DecisionVariable, Domain, Expression, Literal, Name, Range};
 use crate::bug;
 use crate::context::Context;
 use crate::error::{Error, Result};
@@ -193,6 +193,10 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
             "MkOpDiv",
             Box::new(Expression::UnsafeDiv) as Box<dyn Fn(_, _, _) -> _>,
         ),
+        (
+            "MkOpMod",
+            Box::new(Expression::UnsafeMod) as Box<dyn Fn(_, _, _) -> _>,
+        ),
     ]
     .into_iter()
     .collect();
@@ -249,9 +253,9 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
         },
         Value::Object(refe) if refe.contains_key("Reference") => {
             let name = refe["Reference"].as_array()?[0].as_object()?["Name"].as_str()?;
-            Some(Expression::Reference(
+            Some(Expression::Atomic(
                 Metadata::new(),
-                Name::UserName(name.to_string()),
+                Atom::Reference(Name::UserName(name.to_string())),
             ))
         }
         Value::Object(constant) if constant.contains_key("Constant") => parse_constant(constant),
@@ -352,12 +356,18 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
                 }
             };
 
-            Some(Expression::Constant(Metadata::new(), Constant::Int(int_32)))
+            Some(Expression::Atomic(
+                Metadata::new(),
+                Atom::Literal(Literal::Int(int_32)),
+            ))
         }
 
         Some(Value::Object(b)) if b.contains_key("ConstantBool") => {
             let b: bool = b["ConstantBool"].as_bool().unwrap();
-            Some(Expression::Constant(Metadata::new(), Constant::Bool(b)))
+            Some(Expression::Atomic(
+                Metadata::new(),
+                Atom::Literal(Literal::Bool(b)),
+            ))
         }
 
         // sometimes (e.g. constant matrices) we can have a ConstantInt / Constant bool that is
@@ -367,7 +377,7 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
                 .as_array()
                 .and_then(|x| x[1].as_i64())
                 .and_then(|x| x.try_into().ok())
-                .map(|x| Expression::Constant(Metadata::new(), Constant::Int(x)));
+                .map(|x| Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(x))));
 
             if let e @ Some(_) = int_expr {
                 return e;
@@ -375,7 +385,7 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
 
             let bool_expr = constant["ConstantBool"]
                 .as_bool()
-                .map(|x| Expression::Constant(Metadata::new(), Constant::Bool(x)));
+                .map(|x| Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(x))));
 
             if let e @ Some(_) = bool_expr {
                 return e;
