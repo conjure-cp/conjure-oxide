@@ -10,13 +10,12 @@ use crate::rules::extra_check;
 use crate::{
     ast::{
         Atom::{self, *},
-        DecisionVariable, Domain,
+        Domain,
         Expression::{self as Expr, *},
         Literal::*,
-        SymbolTable,
     },
     bug,
-    rules::utils::{exprs_to_conjunction, is_atom},
+    rules::utils::exprs_to_conjunction,
 };
 
 use crate::solver::SolverFamily;

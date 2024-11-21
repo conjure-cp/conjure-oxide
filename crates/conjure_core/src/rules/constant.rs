@@ -25,7 +25,7 @@ fn apply_eval_constant(expr: &Expr, _: &Model) -> ApplicationResult {
 pub fn eval_constant(expr: &Expr) -> Option<Lit> {
     match expr {
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
-        Expr::Atomic(_, Atom::Reference(c)) => None,
+        Expr::Atomic(_, Atom::Reference(_c)) => None,
         Expr::Eq(_, a, b) => bin_op::<i32, bool>(|a, b| a == b, a, b)
             .or_else(|| bin_op::<bool, bool>(|a, b| a == b, a, b))
             .map(Lit::Bool),
