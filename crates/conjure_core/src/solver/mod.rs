@@ -139,6 +139,7 @@ pub mod states;
 pub enum SolverFamily {
     SAT,
     Minion,
+    SavileRow
 }
 
 /// The type for user-defined callbacks for use with [Solver].
