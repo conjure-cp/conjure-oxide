@@ -203,6 +203,14 @@ fn integration_test_inner(
         println!("Minion solutions: {:#?}", solutions_json)
     }
 
+    use conjure_oxide::utils::testing::save_rule_traces_json;
+
+    // Save the rule trace JSON for the test case
+    let generated_rule_trace = save_rule_traces_json(path, essence_base, accept)?;
+    if verbose {
+        println!("Generated rule trace: {:#?}", generated_rule_trace);
+    }
+
     let expected_rule_trace = read_rule_trace(path, essence_base, "expected")?;
     let generated_rule_trace = read_rule_trace(path, essence_base, "generated")?;
 
