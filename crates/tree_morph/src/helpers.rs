@@ -35,6 +35,25 @@ where
     rs.next().map(|(_, r)| r)
 }
 
+/// Select the first result or panic if there is more than one.
+///
+/// This is useful when you expect exactly one rule to be applicable in all cases.
+pub fn select_first_or_panic<T, M, R>(
+    t: &T,
+    rs: &mut dyn Iterator<Item = (&R, Reduction<T, M>)>,
+) -> Option<Reduction<T, M>>
+where
+    T: Uniplate + Display,
+    R: Rule<T, M>,
+{
+    let mut rs = multipeek(rs);
+    if rs.peek_nth(1).is_some() {
+        // TODO (Felix) Log list of rules
+        panic!("Multiple rules applicable to expression \"{}\"", t);
+    }
+    rs.next().map(|(_, r)| r)
+}
+
 macro_rules! select_prompt {
     () => {
         "--- Current Expression ---
