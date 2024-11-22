@@ -190,6 +190,7 @@ pub fn read_rule_trace(
     path: &str,
     test_name: &str,
     prefix: &str,
+    accept: bool,
 ) -> Result<Vec<String>, std::io::Error> {
     let filename = format!("{path}/{test_name}-{prefix}-rule-trace.json");
     let mut rules_trace: Vec<String> = read_to_string(&filename)
@@ -220,34 +221,40 @@ pub fn read_rule_trace(
         writeln!(file, "{}", rules_trace.join("\n"))?;
     }
 
+    if accept {
+        std::fs::copy(
+            format!("{path}/{test_name}-generated-rule-trace.json"),
+            format!("{path}/{test_name}-expected-rule-trace.json"),
+        )?;
+    }
+
     Ok(rules_trace)
 }
 
-use std::fs::{self};
-use std::io::{self};
+// use std::fs::{self};
+// use std::io::{self};
 
-pub fn save_rule_traces_json(
-    path: &str,
-    test_name: &str,
-    accept: bool,
-) -> Result<JsonValue, io::Error> {
-    // Read the generated rule trace JSON file
-    let generated_trace_path = format!("{path}/{test_name}-generated-rule-trace.json");
-    let file_content = std::fs::read_to_string(&generated_trace_path)?;
+// pub fn save_rule_traces_json(
+//     path: &str,
+//     test_name: &str,
+//     accept: bool,
+// ) -> Result<JsonValue, io::Error> {
+//     // Read the generated rule trace JSON file
+//     let generated_trace_path = format!("{path}/{test_name}-generated-rule-trace.json");
+//     let file_content = std::fs::read_to_string(&generated_trace_path)?;
 
-    // Parse the content into a JSON value for manipulation or verification
-    let json_trace: JsonValue = serde_json::from_str(&file_content)?;
+//     // Parse the content into a JSON value for manipulation or verification
+//     let json_trace: JsonValue = serde_json::from_str(&file_content)?;
 
-    // Save the JSON trace
-    let formatted_path = format!("{path}/{test_name}.generated-rule-trace.json");
-    File::create(&formatted_path)?
-        .write_all(serde_json::to_string_pretty(&json_trace)?.as_bytes())?;
+//     // Save the JSON trace
+//     let formatted_path = format!("{path}/{test_name}.generated-rule-trace.json");
+//     File::create(&formatted_path)?
+//         .write_all(serde_json::to_string_pretty(&json_trace)?.as_bytes())?;
 
-    // Copy the generated trace to the expected trace file if 'accept' is true
-    if accept {
-        let expected_trace_path = format!("{path}/{test_name}-expected-rule-trace.json");
-        fs::copy(&generated_trace_path, &expected_trace_path)?;
-    }
+//     // Copy the generated trace to the expected trace file if 'accept' is true
+//     if accept {
+//         let expected_trace_path = format!("{path}/{test_name}-expected-rule-trace.json");
+//         fs::copy(&generated_trace_path, &expected_trace_path)?;
+//     }
 
-    Ok(json_trace)
-}
+//     Ok(json_trace)
