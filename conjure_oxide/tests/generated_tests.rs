@@ -388,7 +388,7 @@ where
         });
 
         // Write the JSON log
-        write!(writer, "{}\n", log)
+        writeln!(writer, "{}", log)
     }
 }
 

@@ -363,7 +363,7 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
         }
 
         Some(Value::Object(b)) if b.contains_key("ConstantBool") => {
-            let b: bool = b["ConstantBool"].as_bool().unwrap();
+            let b: bool = b["ConstantBool"].as_bool()?;
             Some(Expression::Atomic(
                 Metadata::new(),
                 Atom::Literal(Literal::Bool(b)),

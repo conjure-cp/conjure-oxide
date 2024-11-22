@@ -3,7 +3,6 @@ use uniplate::{Biplate, Uniplate};
 
 use crate::{
     ast::{Atom, DecisionVariable, Domain, Expression as Expr, Name, ReturnType},
-    bug,
     metadata::Metadata,
     Model,
 };
@@ -85,7 +84,7 @@ pub fn to_aux_var(expr: &Expr, m: &Model) -> Option<ToAuxVarOutput> {
     }
 
     // Anything that should be bubbled, bubble
-    if (expr.can_be_undefined()) {
+    if expr.can_be_undefined() {
         return None;
     }
 
@@ -111,6 +110,7 @@ pub fn to_aux_var(expr: &Expr, m: &Model) -> Option<ToAuxVarOutput> {
 pub struct ToAuxVarOutput {
     aux_name: Name,
     aux_decl: Expr,
+    #[allow(dead_code)] // TODO: aux_domain should be used soon, try removing this pragma
     aux_domain: Domain,
     new_model: Model,
     _unconstructable: (),

@@ -14,7 +14,7 @@ use crate::ast::domains::{Domain, Range};
 /// - `domain`:
 ///   - Type: `Domain`
 ///   - Represents the set of possible values that this decision variable can assume. The domain can be a range of integers
-///   (IntDomain) or a boolean domain (BoolDomain).
+///     (IntDomain) or a boolean domain (BoolDomain).
 ///
 /// # Example
 ///
