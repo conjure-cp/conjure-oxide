@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 use uniplate::Uniplate;
 
-pub enum Command<T, M>
+enum Command<T, M>
 where
     T: Uniplate,
 {
@@ -21,7 +21,7 @@ impl<T, M> Commands<T, M>
 where
     T: Uniplate,
 {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             commands: VecDeque::new(),
         }
