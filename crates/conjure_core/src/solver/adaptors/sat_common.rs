@@ -12,6 +12,8 @@ use crate::{
 // solver interface.
 use crate::metadata::Metadata;
 
+use super::sat_adaptor::CNFError;
+
 /// A representation of a model in CNF.
 ///
 /// Expects Model to be in the Conjunctive Normal Form:
@@ -21,27 +23,27 @@ use crate::metadata::Metadata;
 /// - The top level And() may contain nested Or()s. Any other nested expressions are not allowed.
 #[derive(Debug, Clone)]
 pub struct CNFModel {
-    pub clauses: Vec<Vec<i32>>,
+    pub CLAUSES: Vec<Vec<i32>>,
     variables: HashMap<conjure_ast::Name, i32>,
     next_ind: i32,
 }
 impl CNFModel {
     pub fn new() -> CNFModel {
         CNFModel {
-            clauses: Vec::new(),
+            CLAUSES: Vec::new(),
             variables: HashMap::new(),
             next_ind: 1,
         }
     }
 
     pub fn from_conjure(conjure_model: ConjureModel) -> Result<CNFModel, SolverError> {
-        let mut ans: CNFModel = CNFModel::new();
+        let mut cnf_model: CNFModel = CNFModel::new();
 
-        for var in conjure_model.variables.keys() {
+        for var_name in conjure_model.variables.keys() {
             // Check that domain has the correct type
-            let decision_var = match conjure_model.variables.get(var) {
+            let decision_var = match conjure_model.variables.get(var_name) {
                 None => {
-                    return Err(ModelInvalid(format!("variable {:?} not found", var)));
+                    return Err(ModelInvalid(format!("variable {:?} not found", var_name)));
                 }
                 Some(var) => var,
             };
@@ -53,11 +55,11 @@ impl CNFModel {
                 )));
             }
 
-            ans.add_variable(var);
+            cnf_model.add_variable(var_name);
         }
 
         for expr in conjure_model.get_constraints_vec() {
-            match ans.add_expression(&expr) {
+            match cnf_model.add_expression(&expr) {
                 Ok(_) => {}
                 Err(error) => {
                     let message = format!("{:?}", error);
@@ -66,11 +68,11 @@ impl CNFModel {
             }
         }
 
-        Ok(ans)
+        Ok(cnf_model)
     }
 
     /// Gets all the Conjure variables in the CNF.
-    #[allow(dead_code)] // It will be used once we actually run kissat
+    // #[allow(dead_code)] // It will be used once we actually run kissat
     pub fn get_variables(&self) -> Vec<&conjure_ast::Name> {
         let mut ans: Vec<&conjure_ast::Name> = Vec::new();
 
@@ -120,7 +122,7 @@ impl CNFModel {
                 return Err(CNFError::ClauseIndexNotFound(*idx));
             }
         }
-        self.clauses.push(vec.clone());
+        self.CLAUSES.push(vec.clone());
         Ok(())
     }
 
@@ -141,7 +143,7 @@ impl CNFModel {
     pub fn as_expression(&self) -> Result<conjure_ast::Expression, CNFError> {
         let mut expr_clauses: Vec<conjure_ast::Expression> = Vec::new();
 
-        for clause in &self.clauses {
+        for clause in &self.CLAUSES {
             expr_clauses.push(self.clause_to_expression(clause)?);
         }
 
@@ -271,7 +273,7 @@ impl CNFModel {
      */
     fn handle_expression(
         &self,
-        expression: &conjure_ast:ss:Expression,
+        expression: &conjure_ast::Expression,
     ) -> Result<Vec<Vec<i32>>, CNFError> {
         match expression {
             conjure_ast::Expression::And(_metadata, expressions) => self.handle_and(expressions),
@@ -284,26 +286,6 @@ impl Default for CNFModel {
     fn default() -> Self {
         Self::new()
     }
-}
-
-#[derive(Error, Debug)]
-pub enum CNFError {
-    #[error("Variable with name `{0}` not found")]
-    VariableNameNotFound(conjure_ast::Name),
-
-    #[error("Clause with index `{0}` not found")]
-    ClauseIndexNotFound(i32),
-
-    #[error("Unexpected Expression `{0}` inside Not(). Only Not(Reference) allowed!")]
-    UnexpectedExpressionInsideNot(conjure_ast::Expression),
-
-    #[error(
-        "Unexpected Expression `{0}` found. Only Reference, Not(Reference) and Or(...) allowed!"
-    )]
-    UnexpectedExpression(conjure_ast::Expression),
-
-    #[error("Unexpected nested And: {0}")]
-    NestedAnd(conjure_ast::Expression),
 }
 
 /// Helper trait for checking if a variable is present in the CNF polymorphically (i32 or conjure_ast::Name)

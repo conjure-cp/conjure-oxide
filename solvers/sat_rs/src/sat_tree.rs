@@ -1,7 +1,7 @@
+use anyhow::{anyhow, Result};
 use rustsat::instances::SatInstance;
-use rustsat::types::{Lit, Clause, Var};
+use rustsat::types::{Clause, Lit, Var};
 use std::collections::HashMap;
-use anyhow::{Result, anyhow};
 
 pub fn conv_to_clause(
     to_convert: &Vec<i32>,
@@ -17,7 +17,11 @@ pub fn conv_to_clause(
     Ok(())
 }
 
-pub fn mk_lit(num: i32, instance_in_use: &mut SatInstance, var_map: &mut HashMap<i32, Var>) -> Result<Lit, anyhow::Error> {
+pub fn mk_lit(
+    num: i32,
+    instance_in_use: &mut SatInstance,
+    var_map: &mut HashMap<i32, Var>,
+) -> Result<Lit, anyhow::Error> {
     if num == 0 {
         return Err(anyhow!("Variable index cannot be zero. Received: {}", num));
     }
@@ -44,7 +48,6 @@ pub fn conv_to_formula(vec_cnf: &Vec<Vec<i32>>, instance_in_use: &mut SatInstanc
     }
     Ok(())
 }
-
 
 // use rustsat::instances::SatInstance;
 // use rustsat::types::Lit;

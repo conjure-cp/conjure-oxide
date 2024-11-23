@@ -77,7 +77,7 @@ pub enum Expression {
     Leq(Metadata, Box<Expression>, Box<Expression>),
 
     #[compatible(JsonInput)]
-    Gt(Metadata, Box<Expression>, Box<Expression>),
+    Gt(Metadata, Box<Expression>, Box<Expression>),W
 
     #[compatible(JsonInput)]
     Lt(Metadata, Box<Expression>, Box<Expression>),
