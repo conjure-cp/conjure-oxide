@@ -409,7 +409,7 @@ pub fn create_scoped_subscriber(
     // setting this subscriber as the default
     let _default = tracing::subscriber::set_default(subscriber.clone());
 
-    (subscriber, guard) // change
+    (subscriber, guard)
 }
 
 #[test]
