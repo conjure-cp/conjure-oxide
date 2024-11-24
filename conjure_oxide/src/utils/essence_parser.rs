@@ -11,9 +11,9 @@ use conjure_core::ast::{
 use crate::utils::conjure::EssenceParseError;
 use conjure_core::context::Context;
 use conjure_core::metadata::Metadata;
-use conjure_core::Model;
+use conjure_core::{parse, Model};
 use std::collections::HashMap;
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 pub fn parse_essence_file_native(
     path: &str,
@@ -35,7 +35,7 @@ pub fn parse_essence_file_native(
                 }
             }
             "constraint" => {
-                let constraint = statement.child(0).unwrap();
+                let constraint = statement.child(1).unwrap();
                 let expression = parse_constraint(constraint, &source_code);
                 model.add_constraint(expression);
             }
@@ -64,7 +64,7 @@ fn get_tree(path: &str, filename: &str, extension: &str) -> (Tree, String) {
 
 fn parse_find_statement(root_node: Node, source_code: &str) -> HashMap<Name, DecisionVariable> {
     let mut symbol_table = SymbolTable::new();
-    let mut temp_symbols = HashSet::new();
+    let mut temp_symbols = BTreeSet::new();
     let mut domain: Option<Domain> = None;
 
     let mut cursor = root_node.walk();
@@ -116,7 +116,6 @@ fn parse_int_domain(root_node: Node, source_code: &str) -> Domain {
                 for range in range_or_expr.named_children(&mut cursor) {
                     match range.kind() {
                         "lower_bound_range" => {
-                            let range = range.child(0).expect("Error");
                             let lower_bound_node = range.child_by_field_id(0).unwrap();
                             let lower_bound = &source_code
                                 [lower_bound_node.start_byte()..lower_bound_node.end_byte()]
@@ -125,7 +124,6 @@ fn parse_int_domain(root_node: Node, source_code: &str) -> Domain {
                             ranges.push(Range::Bounded(*lower_bound, std::i32::MAX))
                         }
                         "upper_bound_range" => {
-                            let range = range.child(0).expect("Error");
                             let upper_bound_node = range.child_by_field_id(1).unwrap();
                             let upper_bound = &source_code
                                 [upper_bound_node.start_byte()..upper_bound_node.end_byte()]
@@ -134,9 +132,15 @@ fn parse_int_domain(root_node: Node, source_code: &str) -> Domain {
                             ranges.push(Range::Bounded(std::i32::MIN, *upper_bound))
                         }
                         "closed_range" => {
-                            let range = range.child(0).expect("error");
-                            let lower_bound_node = range.child_by_field_id(0).unwrap();
-                            let upper_bound_node = range.child_by_field_id(1).unwrap();
+                            let mut cursor = range.walk();
+
+                            cursor.goto_first_child();
+                            let lower_bound_node = cursor.node();
+
+                            cursor.goto_next_sibling();
+                            cursor.goto_next_sibling();
+                            let upper_bound_node = cursor.node();
+
                             let lower_bound = &source_code
                                 [lower_bound_node.start_byte()..lower_bound_node.end_byte()]
                                 .parse::<i32>()
@@ -148,7 +152,6 @@ fn parse_int_domain(root_node: Node, source_code: &str) -> Domain {
                             ranges.push(Range::Bounded(*lower_bound, *upper_bound));
                         }
                         "integer" => {
-                            let range = range.child(0).expect("error");
                             let integer_value = &source_code[range.start_byte()..range.end_byte()]
                                 .parse::<i32>()
                                 .unwrap();
@@ -199,11 +202,18 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
         "comparison" => {
             //TODO: right now assuming there's only two but really could be any number, change
             if root_node.child_count() > 1 {
-                let expr1 = parse_constraint(root_node.child_by_field_id(0).unwrap(), source_code);
-                let expr2 = parse_constraint(root_node.child_by_field_id(2).unwrap(), source_code);
+                let mut cursor = root_node.walk();
 
-                let comp_op = root_node.child_by_field_name("comp_op").unwrap();
+                cursor.goto_first_child();
+                let expr1 = parse_constraint(cursor.node(), source_code);
+
+                cursor.goto_next_sibling();
+                let comp_op = cursor.node();
                 let op_type = &source_code[comp_op.start_byte()..comp_op.end_byte()];
+
+                cursor.goto_next_sibling();
+                let expr2 = parse_constraint(cursor.node(), source_code);
+
                 match op_type {
                     "=" => {
                         return Expression::Eq(Metadata::new(), Box::new(expr1), Box::new(expr2));
@@ -231,6 +241,7 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
             return parse_constraint(cursor.node(), source_code);
         }
         "addition" => {
+            println!("addition");
             //TODO: right now assuming its a "+", add for if its a "-"
             //TODO: right now assuming its only two terms, really could be any number
             //(pos use goto_last_child because its vec and then Box)
@@ -244,15 +255,20 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
             return parse_constraint(cursor.node(), source_code);
         }
         "term" => {
+            println!("term");
             //TODO: right now assuming its a "/", add for if its a "*"
-            //TODO: right now assuming its safe, could be unsafe
+            //TODO: right now assuming its unsafe, could be safe
             //TODO: right now assuming its only two terms, really could be any number
             if root_node.child_count() > 1 {
+                let mut cursor = root_node.walk();
+                cursor.goto_first_child();
                 let factor1 =
-                    parse_constraint(root_node.child_by_field_id(0).unwrap(), source_code);
+                    parse_constraint(cursor.node(), source_code);
+                cursor.goto_next_sibling();
+                cursor.goto_next_sibling();
                 let factor2 =
-                    parse_constraint(root_node.child_by_field_id(2).unwrap(), source_code);
-                return Expression::SafeDiv(Metadata::new(), Box::new(factor1), Box::new(factor2));
+                    parse_constraint(cursor.node(), source_code);
+                return Expression::UnsafeDiv(Metadata::new(), Box::new(factor1), Box::new(factor2));
             }
             let mut cursor = root_node.walk();
             cursor.goto_first_child();
@@ -265,6 +281,22 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
                 cursor.goto_next_sibling();
             }
             return parse_constraint(cursor.node(), source_code);
+        }
+        "min" => {
+            let mut cursor = root_node.walk();
+            let mut variable_list: Vec<Expression> = Vec::new();
+            for variable in root_node.named_children(&mut cursor) {
+                variable_list.push(parse_constraint(variable, source_code));
+            }  
+            return Expression::Min(Metadata::new(), variable_list)
+        }
+        "max" => {
+            let mut cursor = root_node.walk();
+            let mut variable_list: Vec<Expression> = Vec::new();
+            for variable in root_node.named_children(&mut cursor) {
+                variable_list.push(parse_constraint(variable, source_code));
+            }  
+            return Expression::Max(Metadata::new(), variable_list)
         }
         "constant" => {
             //once the grammar is changed, this will be more complicated
@@ -280,10 +312,12 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
             );
         }
         "variable" => {
+            println!("variable");
             let mut cursor = root_node.walk();
             cursor.goto_first_child();
             let variable_name =
                 String::from(&source_code[cursor.node().start_byte()..cursor.node().end_byte()]);
+            println!("variable name: {variable_name}");
             return Expression::Atomic(
                 Metadata::new(),
                 Atom::Reference(Name::UserName(variable_name)),

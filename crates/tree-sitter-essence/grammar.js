@@ -5,16 +5,17 @@ module.exports = grammar ({
 
   rules: {
     program: $ => seq(
-      $.find_statement,
-      "such that",
+      "find",
+      repeat($.find_statement),
+      //add such that here and repeat for constraint
       $.constraint
     ),
 
     find_statement: $ => seq(
-      "find",
       $.variable_list,
       ":",
-      $.domain
+      $.domain,
+      optional(",")
     ),
 
     variable_list: $ => seq(
@@ -25,7 +26,10 @@ module.exports = grammar ({
       )))
     ),
 
-    constraint: $ => $.expression,
+    constraint: $ => seq(
+      "such that",
+      $.expression
+    ),
 
     domain: $ => choice(
       $.int_domain,
@@ -137,8 +141,28 @@ module.exports = grammar ({
         $.expression,
         ")"
       ),
+      $.min,
+      $.max,
       $.constant,
       $.variable
+    ),
+
+    min: $ => seq(
+      "min([",
+      repeat(seq(
+        $.variable,
+        ","
+      )),
+      "])"
+    ),
+
+    max: $ => seq(
+      "max([",
+      repeat(seq(
+        $.variable,
+        ","
+      )),
+      "])"
     ),
 
     comp_op: $ => choice(

@@ -6,12 +6,15 @@
       "type": "SEQ",
       "members": [
         {
-          "type": "SYMBOL",
-          "name": "find_statement"
+          "type": "STRING",
+          "value": "find"
         },
         {
-          "type": "STRING",
-          "value": "such that"
+          "type": "REPEAT",
+          "content": {
+            "type": "SYMBOL",
+            "name": "find_statement"
+          }
         },
         {
           "type": "SYMBOL",
@@ -23,10 +26,6 @@
       "type": "SEQ",
       "members": [
         {
-          "type": "STRING",
-          "value": "find"
-        },
-        {
           "type": "SYMBOL",
           "name": "variable_list"
         },
@@ -37,6 +36,18 @@
         {
           "type": "SYMBOL",
           "name": "domain"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "STRING",
+              "value": ","
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
         }
       ]
     },
@@ -74,8 +85,17 @@
       ]
     },
     "constraint": {
-      "type": "SYMBOL",
-      "name": "expression"
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "such that"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "expression"
+        }
+      ]
     },
     "domain": {
       "type": "CHOICE",
@@ -468,11 +488,77 @@
         },
         {
           "type": "SYMBOL",
+          "name": "min"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "max"
+        },
+        {
+          "type": "SYMBOL",
           "name": "constant"
         },
         {
           "type": "SYMBOL",
           "name": "variable"
+        }
+      ]
+    },
+    "min": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "min(["
+        },
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "variable"
+              },
+              {
+                "type": "STRING",
+                "value": ","
+              }
+            ]
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "])"
+        }
+      ]
+    },
+    "max": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "max(["
+        },
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "variable"
+              },
+              {
+                "type": "STRING",
+                "value": ","
+              }
+            ]
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "])"
         }
       ]
     },
