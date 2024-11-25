@@ -83,7 +83,8 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
 
     // Lock here to ensure sequential execution
-    let _guard = GUARD.lock().unwrap();
+    // Tests should still run if a previous test panics while holding this mutex
+    let _guard = GUARD.lock().unwrap_or_else(|e| e.into_inner());
 
     // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
     // correctly
@@ -99,7 +100,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
         // execute tests based on verbosity
         if verbose {
             #[allow(clippy::unwrap_used)]
-            let _guard = GUARD.lock().unwrap();
+            let _guard = GUARD.lock().unwrap_or_else(|e| e.into_inner());
             integration_test_inner(path, essence_base, extension)?
         } else {
             integration_test_inner(path, essence_base, extension)?
