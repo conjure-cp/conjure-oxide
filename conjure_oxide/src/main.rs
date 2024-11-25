@@ -26,8 +26,10 @@ use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
 use tracing_subscriber::{EnvFilter, Layer};
 
+static AFTER_HELP_TEXT: &str = include_str!("help_text.txt");
+
 #[derive(Parser)]
-#[command(author, version, about, long_about = None)]
+#[command(author, version, about, long_about = None, after_long_help=AFTER_HELP_TEXT)]
 struct Cli {
     #[arg(value_name = "INPUT_ESSENCE", help = "The input Essence file")]
     input_file: PathBuf,
