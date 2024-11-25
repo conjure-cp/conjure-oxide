@@ -11,7 +11,6 @@ use crate::ast::literals::Literal;
 use crate::ast::symbol_table::{Name, SymbolTable};
 use crate::ast::Atom;
 use crate::ast::ReturnType;
-use crate::bug;
 use crate::metadata::Metadata;
 
 use super::{Domain, Range};
@@ -237,11 +236,29 @@ impl Expression {
                     _ => None,
                 }
             }
+
             Expression::Bubble(_, _, _) => None,
             Expression::AuxDeclaration(_, _, _) => Some(Domain::BoolDomain),
             Expression::And(_, _) => Some(Domain::BoolDomain),
-            _ => bug!("Cannot calculate domain of {:?}", self),
-            // TODO: (flm8) Add support for calculating the domains of more expression types
+            Expression::Not(_, _) => Some(Domain::BoolDomain),
+            Expression::Or(_, _) => Some(Domain::BoolDomain),
+            Expression::Eq(_, _, _) => Some(Domain::BoolDomain),
+            Expression::Neq(_, _, _) => Some(Domain::BoolDomain),
+            Expression::Geq(_, _, _) => Some(Domain::BoolDomain),
+            Expression::Leq(_, _, _) => Some(Domain::BoolDomain),
+            Expression::Gt(_, _, _) => Some(Domain::BoolDomain),
+            Expression::Lt(_, _, _) => Some(Domain::BoolDomain),
+            Expression::SumEq(_, _, _) => Some(Domain::BoolDomain),
+            Expression::SumGeq(_, _, _) => Some(Domain::BoolDomain),
+            Expression::SumLeq(_, _, _) => Some(Domain::BoolDomain),
+            Expression::DivEqUndefZero(_, _, _, _) => Some(Domain::BoolDomain),
+            Expression::ModuloEqUndefZero(_, _, _, _) => Some(Domain::BoolDomain),
+            Expression::Ineq(_, _, _, _) => Some(Domain::BoolDomain),
+            Expression::AllDiff(_, _) => Some(Domain::BoolDomain),
+            Expression::WatchedLiteral(_, _, _) => Some(Domain::BoolDomain),
+            Expression::Reify(_, _, _) => Some(Domain::BoolDomain),
+            // #[allow(unreachable_patterns)]
+            // _ => bug!("Cannot calculate domain of {:?}", self),
         };
         match ret {
             // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
