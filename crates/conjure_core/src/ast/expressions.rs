@@ -342,6 +342,14 @@ impl Expression {
             None
         }
     }
+
+    /// True if the expression is an associative and commutative operator
+    pub fn is_associative_commutative_operator(&self) -> bool {
+        matches!(
+            self,
+            Expression::Sum(_, _) | Expression::Or(_, _) | Expression::And(_, _)
+        )
+    }
 }
 
 fn display_expressions(expressions: &[Expression]) -> String {
