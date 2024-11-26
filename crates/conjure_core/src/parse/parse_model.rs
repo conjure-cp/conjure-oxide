@@ -118,27 +118,18 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
                     .ok_or(Error::Parse("RangeBounded is not an array".to_owned()))?;
                 let mut nums = Vec::new();
                 for item in arr.iter() {
-                    let num = item["Constant"]["ConstantInt"][1]
-                        .as_i64()
-                        .ok_or(Error::Parse(
-                            "Could not parse int domain constant".to_owned(),
-                        ))?;
-                    let num32 = i32::try_from(num).map_err(|_| {
-                        Error::Parse("Could not parse int domain constant".to_owned())
-                    })?;
-                    nums.push(num32);
+                    let num = parse_domain_value_int(item).ok_or(Error::Parse(
+                        "Could not parse int domain constant".to_owned(),
+                    ))?;
+                    nums.push(num);
                 }
                 ranges.push(Range::Bounded(nums[0], nums[1]));
             }
             "RangeSingle" => {
-                let num = &range.1["Constant"]["ConstantInt"][1]
-                    .as_i64()
-                    .ok_or(Error::Parse(
-                        "Could not parse int domain constant".to_owned(),
-                    ))?;
-                let num32 = i32::try_from(*num)
-                    .map_err(|_| Error::Parse("Could not parse int domain constant".to_owned()))?;
-                ranges.push(Range::Single(num32));
+                let num = parse_domain_value_int(range.1).ok_or(Error::Parse(
+                    "Could not parse int domain constant".to_owned(),
+                ))?;
+                ranges.push(Range::Single(num));
             }
             _ => {
                 return Err(Error::Parse(
@@ -148,6 +139,58 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
         }
     }
     Ok(Domain::IntDomain(ranges))
+}
+
+/// Parses a (possibly) integer value inside the range of a domain
+///
+/// 1. (positive number) Constant/ConstantInt/1
+///
+/// 2. (negative number) Op/MkOpNegate/Constant/ConstantInt/1
+///
+/// Unlike `parse_constant` this handles the negation operator. `parse_constant` expects the
+/// negation to already have been handled as an expression; however, here we do not expect domain
+/// values to be part of larger expressions, only negated.
+///
+fn parse_domain_value_int(obj: &JsonValue) -> Option<i32> {
+    parser_trace!("trying to parse domain value: {}", obj);
+
+    fn try_parse_positive_int(obj: &JsonValue) -> Option<i32> {
+        parser_trace!(".. trying as a positive domain value: {}", obj);
+        // Positive number: Constant/ConstantInt/1
+
+        let leaf_node = obj.pointer("/Constant/ConstantInt/1")?;
+
+        match leaf_node.as_i64()?.try_into() {
+            Ok(x) => {
+                parser_trace!(".. success!");
+                Some(x)
+            }
+            Err(_) => {
+                println!(
+                    "Could not convert integer constant to i32: {:#?}",
+                    leaf_node
+                );
+                None
+            }
+        }
+    }
+
+    fn try_parse_negative_int(obj: &JsonValue) -> Option<i32> {
+        // Negative number: Op/MkOpNegate/Constant/ConstantInt/1
+
+        // Unwrap negation operator, giving us a Constant/ConstantInt/1
+        //
+        // This is just a positive constant, so try to parse it as such
+
+        parser_trace!(".. trying as a negative domain value: {}", obj);
+        let inner_constant_node = obj.pointer("/Op/MkOpNegate")?;
+        let inner_num = try_parse_positive_int(inner_constant_node)?;
+
+        parser_trace!(".. success!");
+        Some(-inner_num)
+    }
+
+    try_parse_positive_int(obj).or_else(|| try_parse_negative_int(obj))
 }
 
 // this needs an explicit type signature to force the closures to have the same type
@@ -201,10 +244,16 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
     .into_iter()
     .collect();
 
-    let unary_operators: HashMap<&str, UnaryOp> = [(
-        "MkOpNot",
-        Box::new(Expression::Not) as Box<dyn Fn(_, _) -> _>,
-    )]
+    let unary_operators: HashMap<&str, UnaryOp> = [
+        (
+            "MkOpNot",
+            Box::new(Expression::Not) as Box<dyn Fn(_, _) -> _>,
+        ),
+        (
+            "MkOpNegate",
+            Box::new(Expression::Neg) as Box<dyn Fn(_, _) -> _>,
+        ),
+    ]
     .into_iter()
     .collect();
 

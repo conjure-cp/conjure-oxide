@@ -313,6 +313,7 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
             UnsafeMod(_, _, _) => (),
             SafeMod(_, _, _) => (),
             ModuloEqUndefZero(_, _, _, _) => (),
+            Neg(_, _) => (),
         };
         x.clone()
     }));
