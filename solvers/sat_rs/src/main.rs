@@ -14,10 +14,10 @@ fn main() -> () {
     let vec_problem: Vec<Vec<i32>> = vec![v1, v2, v3, v4, v5];
 
     // Initializes SAT Solver and SAT Instance
-    let (sat_solver, inst) = initialize_solver(&vec_problem)?;
+    // let (sat_solver, inst) = initialize_solver(&vec_problem);
 
     // Solves the Problem
-    let res: Result<SolverResult, Error> = solve_problem(&sat_solver, inst);
+    // let res: Result<SolverResult, Error> = solve_problem(&sat_solver, inst);
     // let res: Result<SolverResult> = solve_problem(&sat_solver, inst)?;
 
     // Solver Result
@@ -29,9 +29,9 @@ fn main() -> () {
     // }
     // Ok(())
 
-    match res {
-        Ok
-    }
+    // match res {
+    //     Ok
+    // }
 }
 
 // fn main() {

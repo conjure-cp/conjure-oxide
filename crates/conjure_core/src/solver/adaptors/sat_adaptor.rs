@@ -9,10 +9,11 @@ use rustsat::encodings::am1::Def;
 use rustsat::solvers::SolverResult;
 use rustsat::types::Var as satVar;
 use rustsat_minisat::core::Minisat;
-use sat_rs::sat_tree::{self, conv_to_clause};
+use sat_rs::sat_tree::{self, conv_to_clause, conv_to_formula};
 use std::collections::HashMap;
 
-use crate::ast::Expression;
+use crate::ast::{Expression, Name};
+use crate::metadata::Metadata;
 use crate::solver::{SolveSuccess, SolverCallback, SolverFamily, SolverMutCallback};
 use crate::{ast as conjure_ast, model, Model as ConjureModel};
 
@@ -63,7 +64,7 @@ impl SAT {
 
     pub fn add_clause_to_mod(&self, clause_vec: Vec<i32>) -> () {}
 
-    pub fn from_conjure(conjure_model: ConjureModel) -> Result<SatInstance, SolverError> {
+    pub fn instantiate_model_from_conjure(conjure_model: ConjureModel) -> SatInstance {
         let mut inst: SatInstance = SatInstance::new();
 
         for var_name_ref in conjure_model.variables.keys() {
@@ -74,62 +75,29 @@ impl SAT {
 
             // process decision var
 
-            {
-                // todo: the scope change may be dumb as shit
-                // check domain, err if bad domain
-                let cdom = &curr_decision_var.domain;
-                if cdom != &conjure_ast::Domain::BoolDomain {
-                    return Err(ModelFeatureNotSupported(format!(
-                        "variable {:?}: expected BoolDomain, found: {:?}",
-                        curr_decision_var, curr_decision_var.domain
-                    )));
-                }
-            }
+            // {
+            //     // todo: the scope change may be unneeded
+            //     // check domain, err if bad domain
+            //     let cdom = &curr_decision_var.domain;
+            //     if cdom != &conjure_ast::Domain::BoolDomain {
+            //         return Err(ModelFeatureNotSupported(format!(
+            //             "variable {:?}: expected BoolDomain, found: {:?}",
+            //             curr_decision_var, curr_decision_var.domain
+            //         )));
+            //     }
+            // }
         }
 
-        let mut vector_constraints_in_cnf: Vec<Vec<i32>> = Vec::new();
-        for e in conjure_model.get_constraints_vec() {
-            // hell
-            // add expression to vec
-            match e {
-                Expression::And(_, _) =>
-                // add and
-                {
-                    Err(OpNotImplemented(format!(
-                        "{:?} operations not implemented",
-                        e
-                    )))?
-                }
-                Expression::Not(_, _) =>
-                // add_not
-                {
-                    Err(OpNotImplemented(format!(
-                        "{:?} operations not implemented",
-                        e
-                    )))?
-                }
-                Expression::Or((_), (_)) =>
-                // add_or()
-                {
-                    Err(OpNotImplemented(format!(
-                        "{:?} operations not implemented",
-                        e
-                    )))?
-                }
-                // default case, incompatible type
-                _ => {
-                    Err(OpNotSupported((
-                        // no oxford commmas in this Uni
-                        format!(
-                            "Bad Constraint: found type.\n
-                            SAT does not support constraints of type other than Expession::Not, Expression::And or Expression::Or."
-                        )
-                    )))?
-                }
-            }
-        }
+        let md = Metadata {
+            clean: false,
+            etype: None,
+        };
 
-        Err(OpNotImplemented((format!(""))))
+        let constraints_vec: Vec<Expression> = conjure_model.get_constraints_vec();
+        let vec_cnf = handle_and(Expression::And(md, constraints_vec));
+        conv_to_formula(&vec_cnf, &mut inst);
+
+        inst
     }
 }
 
@@ -163,29 +131,89 @@ impl SolverAdaptor for SAT {
 }
 
 // TODO (ss504): FIX ERROR TYPES
-fn handle_not(e: Expression) -> Result<bool, SolverError> {
-    let val: Box<Expression> = match e {
-        Expression::Not(_, ref boxed) => *boxed,
-        _ => OpNotSupported(format!(
-            "Wrong Function for {:?}, use function to handle variant.",
-            e
-        )),
-    };
 
-    match val {
-        Expression::Not => handle_not(val),
-        Expression::Constant => {
-            let ret: bool = match {
-                
-            }
-            ret?
-        }
-        _ => Err(OpNotSupported(
-            (format!("Wrong variant in expression for e")),
-        ))?,
+pub fn handle_expr(e: Expression) -> Vec<Vec<i32>> {
+    // todo(ss504): Add support for clause-only, literal only and empty expressions
+    match e {
+        Expression::And(_, _) => handle_and(e),
+        // Expression::Or(_,_) => handle_or(e),
+        // Expression::Not(_, _) => handle_lit(e),
+        // Expression::Reference(, ) => handle_lit(e)
+        // Expression::Nothing() => None,
+        _ => panic!("Villain, What hast thou done?\nThat which thou canst not undo."),
     }
 }
 
+pub fn get_namevar_as_int(name: Name) -> i32 {
+    match name {
+        Name::MachineName(n) => n,
+        _ => panic!("Villain, What hast thou done?\nThat which thou canst not undo."),
+    }
+}
+
+pub fn handle_lit(e: Expression) -> i32 {
+    let val = match e {
+        Expression::Not(_, heap_expr) => {
+            let expr = *heap_expr;
+            match expr {
+                Expression::Nothing => todo!(), // panic?
+                Expression::Not(_md, e) => handle_lit(*e),
+                // todo(ss504): decide
+                // Expression::Reference(_md, name) => get_namevar_as_int(name) * -1,
+                Expression::Reference(_md, name) => {
+                    let check = get_namevar_as_int(name);
+                    match check == 0 {
+                        true => 1,
+                        false => 0,
+                    }
+                }
+                _ => todo!(),
+            }
+        }
+        Expression::Reference(_md, name) => get_namevar_as_int(name),
+        _ => panic!("Villain, What hast thou done?\nThat which thou canst not undo."),
+    };
+
+    val
+}
+
+pub fn handle_or(e: Expression) -> Vec<i32> {
+    let vec_clause = match e {
+        Expression::Or(_md, vec) => vec,
+        _ => panic!("Villain, What hast thou done?\nThat which thou canst not undo."),
+    };
+
+    if vec_clause.len() != 2 {
+        panic!("Villain, What hast thou done?\nThat which thou canst not undo.")
+    };
+
+    let mut ret_clause: Vec<i32> = Vec::new();
+
+    for expr in vec_clause {
+        ret_clause.push(handle_lit(expr))
+    }
+
+    ret_clause
+}
+
+pub fn handle_and(e: Expression) -> Vec<Vec<i32>> {
+    let vec_cnf = match e {
+        Expression::And(_md, vec_and) => vec_and,
+        Expression::Not(_md, e) => todo!(),
+        Expression::Or(_md, vec_or) => todo!(),
+        Expression::Reference(_md, e) => todo!(),
+
+        _ => panic!("Villain, What hast thou done?\nThat which thou canst not undo."),
+    };
+
+    let mut ret_vec_of_vecs: Vec<Vec<i32>> = Vec::new();
+
+    for expr in vec_cnf {
+        ret_vec_of_vecs.push(handle_or(expr));
+    }
+
+    ret_vec_of_vecs
+}
 //CNF Error, may be replaced of integrated with error file
 #[derive(Error, Debug)]
 pub enum CNFError {
