@@ -85,7 +85,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
 
     // Lock here to ensure sequential execution
-    let _guard = GUARD.lock().unwrap();
+    //let _guard = GUARD.lock().unwrap();
 
     // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
     // correctly

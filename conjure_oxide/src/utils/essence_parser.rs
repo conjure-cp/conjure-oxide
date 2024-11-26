@@ -12,8 +12,8 @@ use crate::utils::conjure::EssenceParseError;
 use conjure_core::context::Context;
 use conjure_core::metadata::Metadata;
 use conjure_core::{parse, Model};
-use std::collections::HashMap;
 use std::collections::BTreeSet;
+use std::collections::HashMap;
 
 pub fn parse_essence_file_native(
     path: &str,
@@ -28,6 +28,7 @@ pub fn parse_essence_file_native(
     let mut cursor = root_node.walk();
     for statement in root_node.named_children(&mut cursor) {
         match statement.kind() {
+            "single_line_comment" => {}
             "find_statement" => {
                 let var_hashmap = parse_find_statement(statement, &source_code);
                 for (name, decision_variable) in var_hashmap {
@@ -268,7 +269,10 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
                 cursor.goto_next_sibling();
                 let factor2 =
                     parse_constraint(cursor.node(), source_code);
-                return Expression::UnsafeDiv(Metadata::new(), Box::new(factor1), Box::new(factor2));
+                return Expression::UnsafeDiv(
+                    Metadata::new(), 
+                    Box::new(factor1),
+                    Box::new(factor2));
             }
             let mut cursor = root_node.walk();
             cursor.goto_first_child();
@@ -288,7 +292,7 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
             for variable in root_node.named_children(&mut cursor) {
                 variable_list.push(parse_constraint(variable, source_code));
             }  
-            return Expression::Min(Metadata::new(), variable_list)
+            return Expression::Min(Metadata::new(), variable_list);
         }
         "max" => {
             let mut cursor = root_node.walk();
@@ -296,7 +300,7 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
             for variable in root_node.named_children(&mut cursor) {
                 variable_list.push(parse_constraint(variable, source_code));
             }  
-            return Expression::Max(Metadata::new(), variable_list)
+            return Expression::Max(Metadata::new(), variable_list);
         }
         "constant" => {
             //once the grammar is changed, this will be more complicated

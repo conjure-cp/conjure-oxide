@@ -3,13 +3,23 @@ module.exports = grammar ({
 
   //next: look into adding field names 
 
+  extras: $ => [
+    $.single_line_comment,
+    /\s/
+  ],
+
   rules: {
     program: $ => seq(
       "find",
       repeat($.find_statement),
       //add such that here and repeat for constraint
-      $.constraint
+      $.constraint,
     ),
+
+    single_line_comment: $ => token(seq(
+      '$',
+      /.*/
+    )),
 
     find_statement: $ => seq(
       $.variable_list,
