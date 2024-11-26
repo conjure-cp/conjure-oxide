@@ -26,7 +26,6 @@ use super::super::SolverAdaptor;
 use super::super::SolverError;
 use super::super::SolverError::*;
 use super::super::SolverError::*;
-use super::sat_common::CNFModel;
 
 use rustsat::instances::SatInstance;
 
@@ -67,26 +66,26 @@ impl SAT {
     pub fn instantiate_model_from_conjure(conjure_model: ConjureModel) -> SatInstance {
         let mut inst: SatInstance = SatInstance::new();
 
-        for var_name_ref in conjure_model.variables.keys() {
-            let curr_decision_var = conjure_model
-                .variables
-                .get(var_name_ref)
-                .ok_or_else(|| ModelInvalid(format!("variable {:?} not found", var_name_ref)))?;
+        // for var_name_ref in conjure_model.variables.keys() {
+        //     let curr_decision_var = conjure_model
+        //         .variables
+        //         .get(var_name_ref)
+        //         .ok_or_else(|| ModelInvalid(format!("variable {:?} not found", var_name_ref)))?;
 
-            // process decision var
+        // process decision var
 
-            // {
-            //     // todo: the scope change may be unneeded
-            //     // check domain, err if bad domain
-            //     let cdom = &curr_decision_var.domain;
-            //     if cdom != &conjure_ast::Domain::BoolDomain {
-            //         return Err(ModelFeatureNotSupported(format!(
-            //             "variable {:?}: expected BoolDomain, found: {:?}",
-            //             curr_decision_var, curr_decision_var.domain
-            //         )));
-            //     }
-            // }
-        }
+        // {
+        //     // todo: the scope change may be unneeded
+        //     // check domain, err if bad domain
+        //     let cdom = &curr_decision_var.domain;
+        //     if cdom != &conjure_ast::Domain::BoolDomain {
+        //         return Err(ModelFeatureNotSupported(format!(
+        //             "variable {:?}: expected BoolDomain, found: {:?}",
+        //             curr_decision_var, curr_decision_var.domain
+        //         )));
+        //     }
+        // }
+        // }
 
         let md = Metadata {
             clean: false,
