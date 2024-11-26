@@ -10,13 +10,12 @@ use crate::rules::extra_check;
 use crate::{
     ast::{
         Atom::{self, *},
-        DecisionVariable, Domain,
+        Domain,
         Expression::{self as Expr, *},
         Literal::*,
-        SymbolTable,
     },
     bug,
-    rules::utils::{exprs_to_conjunction, is_atom},
+    rules::utils::exprs_to_conjunction,
 };
 
 use crate::solver::SolverFamily;
@@ -500,12 +499,10 @@ fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 //     }
 // }
 
-/// Flattening rule that converts boolean variables to watched-literal constraints.
+/// Flattening rule for not(bool_lit)
 ///
 /// For some boolean variable x:
 /// ```text
-/// and([x,...]) ~> and([w-literal(x,1),..])
-///  or([x,...]) ~>  or([w-literal(x,1),..])
 ///  not(x)      ~>  w-literal(x,0)
 /// ```
 ///
@@ -515,57 +512,13 @@ fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 ///
 /// This restates boolean variables as the equivalent constraint "SAT if x is true".
 ///
+/// The regular bool_lit case is dealt with directly by the Minion solver interface (as it is a
+/// trivial match).
+
 #[register_rule(("Minion", 4100))]
-fn boolean_literal_to_wliteral(expr: &Expr, mdl: &Model) -> ApplicationResult {
+fn not_literal_to_wliteral(expr: &Expr, mdl: &Model) -> ApplicationResult {
     use Domain::BoolDomain;
     match expr {
-        Or(m, vec) => {
-            let mut changed = false;
-            let mut new_vec = Vec::new();
-            for expr in vec {
-                new_vec.push(match expr {
-                    Atomic(m, Reference(name))
-                        if mdl
-                            .get_domain(name)
-                            .is_some_and(|x| matches!(x, BoolDomain)) =>
-                    {
-                        changed = true;
-                        WatchedLiteral(m.clone_dirty(), name.clone(), Bool(true))
-                    }
-                    e => e.clone(),
-                });
-            }
-
-            if !changed {
-                return Err(RuleNotApplicable);
-            }
-
-            Ok(Reduction::pure(Or(m.clone_dirty(), new_vec)))
-        }
-        And(m, vec) => {
-            let mut changed = false;
-            let mut new_vec = Vec::new();
-            for expr in vec {
-                new_vec.push(match expr {
-                    Atomic(m, Reference(name))
-                        if mdl
-                            .get_domain(name)
-                            .is_some_and(|x| matches!(x, BoolDomain)) =>
-                    {
-                        changed = true;
-                        WatchedLiteral(m.clone_dirty(), name.clone(), Bool(true))
-                    }
-                    e => e.clone(),
-                });
-            }
-
-            if !changed {
-                return Err(RuleNotApplicable);
-            }
-
-            Ok(Reduction::pure(And(m.clone_dirty(), new_vec)))
-        }
-
         Not(m, expr) => {
             if let Atomic(_, Reference(name)) = (**expr).clone() {
                 if mdl

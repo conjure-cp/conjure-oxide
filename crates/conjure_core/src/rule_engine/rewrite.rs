@@ -357,16 +357,13 @@ fn apply_all_rules<'a>(
 /// Process the chosen reduction
 /// }
 ///
-fn choose_rewrite<'a>(
-    results: &[RuleResult],
-    initial_expression: &'a Expression,
-) -> Option<Reduction> {
+fn choose_rewrite(results: &[RuleResult], initial_expression: &Expression) -> Option<Reduction> {
     //in the case where multiple rules are applicable
     if results.len() > 1 {
         let expr = results[0].reduction.new_expression.clone();
         let rules: Vec<_> = results.iter().map(|result| &result.rule).collect();
 
-        check_priority(rules.clone(), &initial_expression, &expr);
+        check_priority(rules.clone(), initial_expression, &expr);
     }
 
     if results.is_empty() {
@@ -408,10 +405,10 @@ fn check_priority<'a>(
 
     //iterates over each rule_set and groups by the rule priority
     for rule_set in &rule_sets {
-        if let Some((name, priority)) = rule_set.get(0) {
+        if let Some((name, priority)) = rule_set.first() {
             rules_by_priorities
                 .entry(*priority)
-                .or_insert(Vec::new())
+                .or_default()
                 .push(*name);
         }
     }
@@ -424,7 +421,7 @@ fn check_priority<'a>(
 
     if !duplicate_rules.is_empty() {
         //accumulates all duplicates into a formatted message
-        let mut message = String::from(format!("Found multiple rules of the same priority applicable to to expression: {:?} \n resulting in expression: {:?}", initial_expr, new_expr));
+        let mut message = format!("Found multiple rules of the same priority applicable to to expression: {:?} \n resulting in expression: {:?}", initial_expr, new_expr);
         for (priority, rules) in &duplicate_rules {
             message.push_str(&format!("Priority {:?} \n Rules: {:?}", priority, rules));
         }

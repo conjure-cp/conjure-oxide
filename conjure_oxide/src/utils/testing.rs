@@ -190,6 +190,7 @@ pub fn read_rule_trace(
     path: &str,
     test_name: &str,
     prefix: &str,
+    accept: bool,
 ) -> Result<Vec<String>, std::io::Error> {
     let filename = format!("{path}/{test_name}-{prefix}-rule-trace.json");
     let mut rules_trace: Vec<String> = read_to_string(&filename)
@@ -218,6 +219,13 @@ pub fn read_rule_trace(
             .open(&filename)?;
 
         writeln!(file, "{}", rules_trace.join("\n"))?;
+    }
+
+    if accept {
+        std::fs::copy(
+            format!("{path}/{test_name}-generated-rule-trace.json"),
+            format!("{path}/{test_name}-expected-rule-trace.json"),
+        )?;
     }
 
     Ok(rules_trace)

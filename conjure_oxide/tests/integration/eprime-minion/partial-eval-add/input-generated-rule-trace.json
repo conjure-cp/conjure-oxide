@@ -1,0 +1,8 @@
+{"message":"Rule applicable: unwrap_nested_sum ([(\"Base\", 8800)]), to expression: Sum([Sum([Sum([Sum([x, 10]), 20]), y]), 5]), resulting in: Sum([Sum([Sum([x, 10]), 20]), y, 5])","target":"rule_engine"}
+{"message":"Rule applicable: unwrap_nested_sum ([(\"Base\", 8800)]), to expression: Sum([Sum([Sum([x, 10]), 20]), y, 5]), resulting in: Sum([Sum([x, 10]), 20, y, 5])","target":"rule_engine"}
+{"message":"Rule applicable: partial_evaluator ([(\"Base\", 9000)]), to expression: Sum([Sum([x, 10]), 20, y, 5]), resulting in: Sum([Sum([x, 10]), y, 25])","target":"rule_engine"}
+{"message":"Rule applicable: unwrap_nested_sum ([(\"Base\", 8800)]), to expression: Sum([Sum([x, 10]), y, 25]), resulting in: Sum([x, 10, y, 25])","target":"rule_engine"}
+{"message":"Rule applicable: sum_eq_to_sumeq ([(\"Minion\", 4400)]), to expression: (Sum([x, 10, y, 25]) = 100), resulting in: SumEq([x, 10, y, 25], 100)","target":"rule_engine"}
+{"message":"Rule applicable: partial_evaluator ([(\"Base\", 9000)]), to expression: SumEq([x, 10, y, 25], 100), resulting in: SumEq([x, y], 65)","target":"rule_engine"}
+{"message":"Rule applicable: sumeq_to_minion ([(\"Minion\", 4400)]), to expression: SumEq([x, y], 65), resulting in: And([SumGeq([x, y], 65), SumLeq([x, y], 65)])","target":"rule_engine"}
+{"count":7,"message":" Number of rules applied"}

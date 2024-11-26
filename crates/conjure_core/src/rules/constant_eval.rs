@@ -1,10 +1,11 @@
+use std::collections::HashSet;
+
 use conjure_core::ast::{Atom, Expression as Expr, Literal as Lit};
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
 };
 use conjure_core::Model;
-use tracing::warn;
 
 register_rule_set!("Constant", 100, ());
 
@@ -25,7 +26,7 @@ fn apply_eval_constant(expr: &Expr, _: &Model) -> ApplicationResult {
 pub fn eval_constant(expr: &Expr) -> Option<Lit> {
     match expr {
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
-        Expr::Atomic(_, Atom::Reference(c)) => None,
+        Expr::Atomic(_, Atom::Reference(_c)) => None,
         Expr::Eq(_, a, b) => bin_op::<i32, bool>(|a, b| a == b, a, b)
             .or_else(|| bin_op::<bool, bool>(|a, b| a == b, a, b))
             .map(Lit::Bool),
@@ -52,8 +53,6 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::SumLeq(_, exprs, a) => {
             flat_op::<i32, bool>(|e, a| e.iter().sum::<i32>() <= a, exprs, a).map(Lit::Bool)
         }
-        // Expr::Div(_, a, b) => bin_op::<i32, i32>(|a, b| a / b, a, b).map(Lit::Int),
-        // Expr::SafeDiv(_, a, b) => bin_op::<i32, i32>(|a, b| a / b, a, b).map(Lit::Int),
         Expr::Min(_, exprs) => {
             opt_vec_op::<i32, i32>(|e| e.iter().min().copied(), exprs).map(Lit::Int)
         }
@@ -64,15 +63,17 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             if unwrap_expr::<i32>(b)? == 0 {
                 return None;
             }
-            bin_op::<i32, i32>(|a, b| a / b, a, b).map(Lit::Int)
+            bin_op::<i32, i32>(|a, b| ((a as f32) / (b as f32)).floor() as i32, a, b).map(Lit::Int)
         }
         Expr::UnsafeMod(_, a, b) | Expr::SafeMod(_, a, b) => {
             if unwrap_expr::<i32>(b)? == 0 {
                 return None;
             }
-            bin_op::<i32, i32>(|a, b| a % b, a, b).map(Lit::Int)
+            bin_op::<i32, i32>(|a, b| a - b * (a as f32 / b as f32).floor() as i32, a, b)
+                .map(Lit::Int)
         }
         Expr::DivEqUndefZero(_, a, b, c) => {
+            // div always rounds down
             let a = unwrap_atom::<i32>(a)?;
             let b = unwrap_atom::<i32>(b)?;
             let c = unwrap_atom::<i32>(c)?;
@@ -81,15 +82,55 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 return None;
             }
 
-            Some(Lit::Bool(a / b == c))
+            let a = a as f32;
+            let b = b as f32;
+            let div: i32 = (a / b).floor() as i32;
+            Some(Lit::Bool(div == c))
         }
         Expr::Bubble(_, a, b) => bin_op::<bool, bool>(|a, b| a && b, a, b).map(Lit::Bool),
 
         Expr::Reify(_, a, b) => bin_op::<bool, bool>(|a, b| a == b, a, b).map(Lit::Bool),
-        _ => {
-            warn!(%expr,"Unimplemented constant eval");
-            None
+        Expr::SumEq(_, exprs, a) => {
+            flat_op::<i32, bool>(|e, a| e.iter().sum::<i32>() == a, exprs, a).map(Lit::Bool)
         }
+        Expr::ModuloEqUndefZero(_, a, b, c) => {
+            // From Savile Row. Same semantics as division.
+            //
+            //   a - (b * floor(a/b))
+            //
+            // We don't use % as it has the same semantics as /. We don't use / as we want to round
+            // down instead, not towards zero.
+            let a = unwrap_atom::<i32>(a)?;
+            let b = unwrap_atom::<i32>(b)?;
+            let c = unwrap_atom::<i32>(c)?;
+
+            if b == 0 {
+                return None;
+            }
+
+            let modulo = a - b * (a as f32 / b as f32).floor() as i32;
+            Some(Lit::Bool(modulo == c))
+        }
+        Expr::AllDiff(_, es) => {
+            let mut lits: HashSet<Lit> = HashSet::new();
+            for expr in es {
+                let Expr::Atomic(_, Atom::Literal(x)) = expr else {
+                    return None;
+                };
+                if lits.contains(x) {
+                    return Some(Lit::Bool(false));
+                } else {
+                    lits.insert(x.clone());
+                }
+            }
+            Some(Lit::Bool(true))
+        }
+        Expr::WatchedLiteral(_, _, _) => None,
+        Expr::AuxDeclaration(_, _, _) => None,
+        // _ => {
+        //     warn!(%expr,"Unimplemented constant eval");
+        //     None
+        // }
     }
 }
 
@@ -159,6 +200,7 @@ fn unwrap_atom<T: TryFrom<Lit>>(atom: &Atom) -> Option<T> {
 
 #[cfg(test)]
 mod tests {
+    use crate::rules::eval_constant;
     use conjure_core::ast::{Atom, Expression, Literal};
 
     #[test]
@@ -174,7 +216,7 @@ mod tests {
                 Atom::Literal(Literal::Int(0)),
             )),
         );
-        assert_eq!(super::eval_constant(&expr), None);
+        assert_eq!(eval_constant(&expr), None);
     }
 
     #[test]
@@ -190,6 +232,6 @@ mod tests {
                 Atom::Literal(Literal::Int(0)),
             )),
         );
-        assert_eq!(super::eval_constant(&expr), None);
+        assert_eq!(eval_constant(&expr), None);
     }
 }

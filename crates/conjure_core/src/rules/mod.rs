@@ -4,13 +4,14 @@
 //!
 #![doc = include_str!("./rule_semantics.md")]
 
-pub use constant::eval_constant;
+pub use constant_eval::eval_constant;
 
 mod base;
 mod bubble;
 mod cnf;
-mod constant;
+mod constant_eval;
 mod minion;
+mod normalisers;
 mod partial_eval;
 
 mod utils;
