@@ -127,10 +127,13 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         Expr::WatchedLiteral(_, _, _) => None,
         Expr::AuxDeclaration(_, _, _) => None,
-        // _ => {
-        //     warn!(%expr,"Unimplemented constant eval");
-        //     None
-        // }
+        Expr::Neg(_, a) => {
+            let a = unwrap_atom::<i32>(&a.as_atom()?)?;
+            Some(Lit::Int(-a))
+        } // _ => {
+          //     warn!(%expr,"Unimplemented constant eval");
+          //     None
+          // }
     }
 }
 

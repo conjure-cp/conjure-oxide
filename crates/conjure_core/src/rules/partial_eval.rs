@@ -281,6 +281,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             // nothing has changed
             Err(RuleNotApplicable)
         }
+        Neg(_, _) => Err(RuleNotApplicable),
         WatchedLiteral(_, _, _) => Err(RuleNotApplicable),
         Reify(_, _, _) => Err(RuleNotApplicable),
         AuxDeclaration(_, _, _) => Err(RuleNotApplicable),
