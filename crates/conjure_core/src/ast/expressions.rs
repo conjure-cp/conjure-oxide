@@ -26,6 +26,7 @@ use super::{Domain, Range};
 #[biplate(to=Metadata)]
 #[biplate(to=Atom)]
 #[biplate(to=Name)]
+#[biplate(to=Vec<Expression>)]
 pub enum Expression {
     /// An expression representing "A is valid as long as B is true"
     /// Turns into a conjunction when it reaches a boolean context

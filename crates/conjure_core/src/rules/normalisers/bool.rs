@@ -141,68 +141,6 @@ fn distribute_not_over_or(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 }
 
-/// Unwraps nested `or`
-///
-/// ```text
-/// or(or(a, b), c) ~> or(a, b, c)
-/// ```
-#[register_rule(("Base", 8800))]
-fn unwrap_nested_or(expr: &Expr, _: &Model) -> ApplicationResult {
-    match expr {
-        Or(metadata, exprs) => {
-            let mut new_exprs = Vec::new();
-            let mut changed = false;
-            for e in exprs {
-                match e {
-                    Or(_, exprs) => {
-                        changed = true;
-                        for e in exprs {
-                            new_exprs.push(e.clone());
-                        }
-                    }
-                    _ => new_exprs.push(e.clone()),
-                }
-            }
-            if !changed {
-                return Err(ApplicationError::RuleNotApplicable);
-            }
-            Ok(Reduction::pure(Or(metadata.clone_dirty(), new_exprs)))
-        }
-        _ => Err(ApplicationError::RuleNotApplicable),
-    }
-}
-
-/// Unwraps nested `and`
-///
-/// ``text
-/// and(and(a, b), c) ~> and(a, b, c)
-/// ```
-#[register_rule(("Base", 8800))]
-fn unwrap_nested_and(expr: &Expr, _: &Model) -> ApplicationResult {
-    match expr {
-        And(metadata, exprs) => {
-            let mut new_exprs = Vec::new();
-            let mut changed = false;
-            for e in exprs {
-                match e {
-                    And(_, exprs) => {
-                        changed = true;
-                        for e in exprs {
-                            new_exprs.push(e.clone());
-                        }
-                    }
-                    _ => new_exprs.push(e.clone()),
-                }
-            }
-            if !changed {
-                return Err(ApplicationError::RuleNotApplicable);
-            }
-            Ok(Reduction::pure(And(metadata.clone_dirty(), new_exprs)))
-        }
-        _ => Err(ApplicationError::RuleNotApplicable),
-    }
-}
-
 /// Removes ands with a single argument.
 ///
 /// ```text
