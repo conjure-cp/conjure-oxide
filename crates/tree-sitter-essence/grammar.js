@@ -9,17 +9,20 @@ module.exports = grammar ({
   ],
 
   rules: {
-    program: $ => seq(
-      "find",
-      repeat($.find_statement),
-      //add such that here and repeat for constraint
+    program: $ => repeat(choice(
+      $.find_statement_list,
       $.constraint,
-    ),
+    )),
 
     single_line_comment: $ => token(seq(
       '$',
       /.*/
     )),
+
+    find_statement_list: $ => seq(
+      "find",
+      repeat($.find_statement)
+    ),
 
     find_statement: $ => seq(
       $.variable_list,
@@ -36,27 +39,34 @@ module.exports = grammar ({
       )))
     ),
 
+    //make constraint list and add in constraint as separate thing (like find statement)
     constraint: $ => seq(
       "such that",
-      $.expression
+      repeat(seq(
+        $.expression,
+        optional(",")
+      ))
     ),
+
+    // constraint: $ => seq(
+    //   $.expression,
+    //   optional(",")
+    // ),
 
     domain: $ => choice(
       $.int_domain,
       $.bool_domain
     ),
 
-    int_domain: $ => seq(
+    int_domain: $ => prec.left(seq(
       "int",
       optional(seq(
         "(",
-        prec.left(choice(
-          $.range_list,
-          $.expression
-        )),
+        $.range_list,
+        //eventually add in expressions here
         ")"
       ))
-    ),
+    )),
 
     bool_domain: $ => "bool",
 
@@ -145,7 +155,7 @@ module.exports = grammar ({
       )))
     ),
 
-    factor: $ => choice(
+    factor: $ => prec.left(choice(
       seq(
         "(",
         $.expression,
@@ -155,7 +165,7 @@ module.exports = grammar ({
       $.max,
       $.constant,
       $.variable
-    ),
+    )),
 
     min: $ => seq(
       "min([",
