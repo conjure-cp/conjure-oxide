@@ -150,7 +150,7 @@ fn simplify_expression(expr: Expression) -> Expression {
 #[test]
 fn rule_sum_constants() {
     let sum_constants = get_rule_by_name("partial_evaluator").unwrap();
-    let unwrap_sum = get_rule_by_name("unwrap_sum").unwrap();
+    let unwrap_sum = get_rule_by_name("remove_unit_vector_sum").unwrap();
 
     let mut expr = Expression::Sum(
         Metadata::new(),
@@ -227,7 +227,7 @@ fn rule_sum_geq() {
 fn reduce_solve_xyz() {
     println!("Rules: {:?}", get_rules());
     let sum_constants = get_rule_by_name("partial_evaluator").unwrap();
-    let unwrap_sum = get_rule_by_name("unwrap_sum").unwrap();
+    let unwrap_sum = get_rule_by_name("remove_unit_vector_sum").unwrap();
     let lt_to_ineq = get_rule_by_name("lt_to_ineq").unwrap();
     let sum_leq_to_sumleq = get_rule_by_name("sum_leq_to_sumleq").unwrap();
 
@@ -503,8 +503,8 @@ fn unwrap_nested_and_not_changed() {
 
 #[test]
 fn remove_trivial_and_or() {
-    let remove_trivial_and = get_rule_by_name("remove_trivial_and").unwrap();
-    let remove_trivial_or = get_rule_by_name("remove_trivial_or").unwrap();
+    let remove_trivial_and = get_rule_by_name("remove_unit_vector_and").unwrap();
+    let remove_trivial_or = get_rule_by_name("remove_unit_vector_or").unwrap();
 
     let mut expr_and = Expression::And(
         Metadata::new(),

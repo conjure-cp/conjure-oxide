@@ -200,6 +200,7 @@ fn unwrap_atom<T: TryFrom<Lit>>(atom: &Atom) -> Option<T> {
 
 #[cfg(test)]
 mod tests {
+    use crate::rules::eval_constant;
     use conjure_core::ast::{Atom, Expression, Literal};
 
     #[test]
@@ -215,7 +216,7 @@ mod tests {
                 Atom::Literal(Literal::Int(0)),
             )),
         );
-        assert_eq!(super::eval_constant(&expr), None);
+        assert_eq!(eval_constant(&expr), None);
     }
 
     #[test]
@@ -231,6 +232,6 @@ mod tests {
                 Atom::Literal(Literal::Int(0)),
             )),
         );
-        assert_eq!(super::eval_constant(&expr), None);
+        assert_eq!(eval_constant(&expr), None);
     }
 }
