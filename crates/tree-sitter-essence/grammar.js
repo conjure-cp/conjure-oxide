@@ -7,14 +7,14 @@ module.exports = grammar ({
   ],
 
   rules: {
-    program: $ => repeat(choice(
-      $.find_statement_list,
-      $.constraint_list,
-    )),
-
     single_line_comment: $ => token(seq(
       '$',
       /.*/
+    )),
+
+    program: $ => repeat(choice(
+      $.find_statement_list,
+      $.constraint_list,
     )),
 
     find_statement_list: $ => seq(

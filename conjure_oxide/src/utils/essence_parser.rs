@@ -263,12 +263,13 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
         }
         "addition" => {
             //TODO: right now assuming its a "+", add for if its a "-"
-            //TODO: right now assuming its only two terms, really could be any number
-            //(pos use goto_last_child because its vec and then Box)
             if root_node.child_count() > 1 {
-                let term1 = parse_constraint(root_node.child_by_field_id(0).unwrap(), source_code);
-                let term2 = parse_constraint(root_node.child_by_field_id(2).unwrap(), source_code);
-                return Expression::SumEq(Metadata::new(), vec![term1], Box::new(term2));
+                let mut expr_vec: Vec<Expression> = Vec::new();
+                let mut cursor = root_node.walk();
+                for term in root_node.named_children(&mut cursor) {
+                    expr_vec.push(parse_constraint(term, source_code));
+                }
+                return Expression::Sum(Metadata::new(), expr_vec);            
             }
             let mut cursor = root_node.walk();
             cursor.goto_first_child();
