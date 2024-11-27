@@ -1,6 +1,5 @@
 use conjure_core::error::Error;
 use std::fs;
-use std::io::Cursor;
 use std::sync::{Arc, RwLock};
 use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_essence::LANGUAGE;
@@ -12,7 +11,7 @@ use conjure_core::ast::{
 use crate::utils::conjure::EssenceParseError;
 use conjure_core::context::Context;
 use conjure_core::metadata::Metadata;
-use conjure_core::{parse, Model};
+use conjure_core::Model;
 use std::collections::BTreeSet;
 use std::collections::HashMap;
 
