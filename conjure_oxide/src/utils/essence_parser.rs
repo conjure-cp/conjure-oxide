@@ -338,8 +338,15 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
             }  
             return Expression::Max(Metadata::new(), variable_list);
         }
+        "sum" => {
+            let mut expr_vec: Vec<Expression> = Vec::new();
+            let mut cursor = root_node.walk();
+            for factor in root_node.named_children(&mut cursor) {
+                expr_vec.push(parse_constraint(factor, source_code));
+            }
+            return Expression::Sum(Metadata::new(), expr_vec);
+        }
         "constant" => {
-            //once the grammar is changed, this will be more complicated
             let child = first_child(root_node);
             match child.kind() {
                 "integer" => {
@@ -375,7 +382,10 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
                 Atom::Reference(Name::UserName(variable_name)),
             );
         }
-        _ => panic!("Error"),
+        _ => {
+            let node_kind = root_node.kind();
+            panic!("{node_kind} is not a recognized node kind");
+        }
     }
 }
 

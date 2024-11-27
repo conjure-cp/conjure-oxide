@@ -163,6 +163,7 @@ module.exports = grammar ({
       $.max,
       $.constant,
       $.variable,
+      $.sum
     )),
 
     min: $ => seq(
@@ -179,6 +180,15 @@ module.exports = grammar ({
       repeat(seq(
         choice($.variable, $.constant),
         ","
+      )),
+      "])"
+    ),
+
+    sum: $ => seq(
+      "sum([",
+      repeat(seq(
+        $.factor,
+        optional(",")
       )),
       "])"
     ),
