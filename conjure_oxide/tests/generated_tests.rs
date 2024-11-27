@@ -48,7 +48,7 @@ use tracing_subscriber::registry::LookupSpan;
 
 #[derive(Deserialize, Default)]
 struct TestConfig {
-    extra_rewriter_asserts: Vec<String>,
+    extra_rewriter_asserts: Option<Vec<String>>,
     skip_native_parser: Option<bool>,
 }
 
@@ -192,13 +192,15 @@ fn integration_test_inner(
 
     save_model_json(&model, path, essence_base, "rewrite", accept)?;
 
-    for extra_assert in config.extra_rewriter_asserts {
-        match extra_assert.as_str() {
-            "vector_operators_have_partially_evaluated" => {
-                assert_vector_operators_have_partially_evaluated(&model)
-            }
-            x => println!("Unrecognised extra assert: {}", x),
-        };
+    if let Some(extra_asserts) = config.extra_rewriter_asserts {
+        for extra_assert in extra_asserts {
+            match extra_assert.as_str() {
+                "vector_operators_have_partially_evaluated" => {
+                    assert_vector_operators_have_partially_evaluated(&model)
+                }
+                x => println!("Unrecognised extra assert: {}", x),
+            };
+        }
     }
 
     let expected_model = read_model_json(path, essence_base, "expected", "rewrite")?;
