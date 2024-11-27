@@ -106,13 +106,13 @@ use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumIter, EnumString};
 use thiserror::Error;
 
-use crate::ast::{Constant, Name};
+use crate::ast::{Literal, Name};
 use crate::context::Context;
 use crate::stats::SolverStats;
 use crate::Model;
 
 use self::model_modifier::ModelModifier;
-use self::states::*;
+use self::states::{ExecutionSuccess, Init, ModelLoaded, SolverState};
 
 pub mod adaptors;
 pub mod model_modifier;
@@ -145,9 +145,9 @@ pub enum SolverFamily {
 /// The type for user-defined callbacks for use with [Solver].
 ///
 /// Note that this enforces thread safety
-pub type SolverCallback = Box<dyn Fn(HashMap<Name, Constant>) -> bool + Send>;
+pub type SolverCallback = Box<dyn Fn(HashMap<Name, Literal>) -> bool + Send>;
 pub type SolverMutCallback =
-    Box<dyn Fn(HashMap<Name, Constant>, Box<dyn ModelModifier>) -> bool + Send>;
+    Box<dyn Fn(HashMap<Name, Literal>, Box<dyn ModelModifier>) -> bool + Send>;
 
 /// A common interface for calling underlying solver APIs inside a [`Solver`].
 ///

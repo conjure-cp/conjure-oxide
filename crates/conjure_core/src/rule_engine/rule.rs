@@ -75,7 +75,7 @@ impl Reduction {
     pub fn pure(new_expression: Expression) -> Self {
         Self {
             new_expression,
-            new_top: Expression::Nothing,
+            new_top: Expression::And(Metadata::new(), Vec::new()),
             symbols: SymbolTable::new(),
         }
     }
@@ -84,7 +84,7 @@ impl Reduction {
     pub fn with_symbols(new_expression: Expression, symbols: SymbolTable) -> Self {
         Self {
             new_expression,
-            new_top: Expression::Nothing,
+            new_top: Expression::And(Metadata::new(), Vec::new()),
             symbols,
         }
     }
@@ -100,22 +100,27 @@ impl Reduction {
 
     // Apply side-effects (e.g. symbol table updates
     pub fn apply(self, model: &mut Model) {
-        model.variables.extend(self.symbols); // Add new assignments to the symbol table
-        if let Expression::Nothing = self.new_top {
-            model.constraints = self.new_expression.clone();
-        } else {
-            model.constraints = match self.new_expression {
-                Expression::And(metadata, mut exprs) => {
-                    // Avoid creating a nested conjunction
-                    exprs.push(self.new_top.clone());
-                    Expression::And(metadata.clone_dirty(), exprs)
-                }
-                _ => Expression::And(
-                    Metadata::new(),
-                    vec![self.new_expression.clone(), self.new_top],
-                ),
-            };
+        model.extend_sym_table(self.symbols);
+
+        // TODO: (yb33) Remove it when we change constraints to a vector
+        if let Expression::And(_, exprs) = &self.new_top {
+            if exprs.is_empty() {
+                model.constraints = self.new_expression.clone();
+                return;
+            }
         }
+
+        model.constraints = match self.new_expression {
+            Expression::And(metadata, mut exprs) => {
+                // Avoid creating a nested conjunction
+                exprs.push(self.new_top.clone());
+                Expression::And(metadata.clone_dirty(), exprs)
+            }
+            _ => Expression::And(
+                Metadata::new(),
+                vec![self.new_expression.clone(), self.new_top],
+            ),
+        };
     }
 }
 
@@ -152,21 +157,21 @@ impl<'a> Rule<'a> {
     }
 }
 
-impl<'a> Display for Rule<'a> {
+impl Display for Rule<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.name)
     }
 }
 
-impl<'a> PartialEq for Rule<'a> {
+impl PartialEq for Rule<'_> {
     fn eq(&self, other: &Self) -> bool {
         self.name == other.name
     }
 }
 
-impl<'a> Eq for Rule<'a> {}
+impl Eq for Rule<'_> {}
 
-impl<'a> Hash for Rule<'a> {
+impl Hash for Rule<'_> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.name.hash(state);
     }

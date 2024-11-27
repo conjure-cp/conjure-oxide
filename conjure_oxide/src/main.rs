@@ -26,8 +26,10 @@ use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
 use tracing_subscriber::{EnvFilter, Layer};
 
+static AFTER_HELP_TEXT: &str = include_str!("help_text.txt");
+
 #[derive(Parser)]
-#[command(author, version, about, long_about = None)]
+#[command(author, version, about, long_about = None, after_long_help=AFTER_HELP_TEXT)]
 struct Cli {
     #[arg(value_name = "INPUT_ESSENCE", help = "The input Essence file")]
     input_file: PathBuf,
@@ -191,8 +193,8 @@ pub fn main() -> AnyhowResult<()> {
     let rule_priorities = get_rule_priorities(&rule_sets)?;
     let rules_vec = get_rules_vec(&rule_priorities);
 
-    log::info!(target: "file", 
-         "Rules and priorities: {}", 
+    log::info!(target: "file",
+         "Rules and priorities: {}",
          rules_vec.iter()
             .map(|rule| format!("{}: {}", rule.name, rule_priorities.get(rule).unwrap_or(&0)))
             .collect::<Vec<_>>()
@@ -246,7 +248,7 @@ pub fn main() -> AnyhowResult<()> {
     log::info!(target: "file", "Rewriting model...");
     model = rewrite_model(&model, &rule_sets)?;
 
-    log::info!(target: "file", "Rewritten model: {}", json!(model));
+    tracing::info!(constraints=%model.constraints,model=%json!(model),"Rewritten model");
 
     let solutions = get_minion_solutions(model)?; // ToDo we need to properly set the solver adaptor here, not hard code minion
     log::info!(target: "file", "Solutions: {}", minion_solutions_to_json(&solutions));

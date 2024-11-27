@@ -69,6 +69,33 @@ export RUSTFLAGS="$RUSTFLAGS -Z unstable-options -Cinstrument-coverage -Zlinker-
 export RUSTDOCFLAGS="$RUSTDOCFLAGS -C instrument-coverage -Z unstable-options --persist-doctests target/debug/doctestbins -Zlinker-features=-lld"
 export LLVM_PROFILE_FILE='conjure-oxide-%p-%m.profraw' 
 
+# regex patterns to ignore
+GRCOV_EXCLUDE_LINES=(
+  'consider covered'
+  'bug!'
+  '#\[register_rule'
+  'register_rule_set!'
+)
+
+# construct an or regex
+GRCOV_EXCLUDE_FLAG="--excl-line=$(echo ${GRCOV_EXCLUDE_LINES[@]} | tr ' ' '|'})"
+
+GRCOV_IGNORE_FLAGS=(
+  '--ignore-not-existing'
+  '--ignore'
+  "${HOME}"'/.cargo/**/*.rs'
+  '--ignore'
+  'target/**/*.rs'
+  '--ignore'
+  '**/examples/*.rs'
+  '--ignore'
+  '**/build.rs'
+  '--ignore'
+  'conjure_oxide/tests/generated_tests.rs'
+)
+
+
+
 echo_err "info: building with nightly"
 cargo +nightly build --workspace
 
@@ -76,11 +103,15 @@ echo_err "info: running tests"
 cargo +nightly test --workspace
 
 echo_err "info: generating coverage reports"
-grcov . -s . --binary-path ./target/debug -t html --ignore-not-existing   --ignore "$HOME"'/.cargo/**/*.rs' --ignore 'target/**/*.rs' --ignore '**/main.rs' --ignore '**/build.rs' --excl-line 'consider covered|bug!' -o ./target/debug/coverage || { echo_err "fatal: html coverage generation failed" ; exit 1; }
+grcov . -s . --binary-path ./target/debug -t html\
+  "${GRCOV_IGNORE_FLAGS[@]}" ${GRCOV_EXCLUDE_FLAG}\
+  -o ./target/debug/coverage || { echo_err "fatal: html coverage generation failed" ; exit 1; }
 
 echo_err "info: html coverage report generated to target/debug/coverage/index.html"
 
-grcov . -s . --binary-path ./target/debug -t lcov --ignore-not-existing  --ignore "$HOME"'/.cargo/**/*.rs' --ignore 'target/**/*.rs' --ignore '**/tests/*.rs' --ignore '.cargo/**/*.rs' --ignore '**/main.rs' --ignore '**/build.rs' --excl-line 'consider covered|bug!' -o ./target/debug/lcov.info || { echo_err "fatal: lcov coverage generation failed" ; exit 1; }
+grcov . -s . --binary-path ./target/debug -t lcov\
+  "${GRCOV_IGNORE_FLAGS[@]}" ${GRCOV_EXCLUDE_FLAG}\
+  -o ./target/debug/lcov.info || { echo_err "fatal: lcov coverage generation failed" ; exit 1; }
 
 echo_err "info: lcov coverage report generated to target/debug/lcov.info"
 

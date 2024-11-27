@@ -1,0 +1,22 @@
+{"message":"Rule applicable: div_to_bubble ([(\"Bubble\", 6000)]), to expression: UnsafeDiv(y, z), resulting in: {SafeDiv(y, z) @ (z != 0)}","target":"rule_engine"}
+{"message":"Rule applicable: bubble_up ([(\"Bubble\", 8900)]), to expression: UnsafeDiv(x, {SafeDiv(y, z) @ (z != 0)}), resulting in: {UnsafeDiv(x, SafeDiv(y, z)) @ And([(z != 0)])}","target":"rule_engine"}
+{"message":"Rule applicable: bubble_up ([(\"Bubble\", 8900)]), to expression: ({UnsafeDiv(x, SafeDiv(y, z)) @ And([(z != 0)])} = 10), resulting in: {(UnsafeDiv(x, SafeDiv(y, z)) = 10) @ And([And([(z != 0)])])}","target":"rule_engine"}
+{"message":"Rule applicable: expand_bubble ([(\"Bubble\", 8900)]), to expression: {(UnsafeDiv(x, SafeDiv(y, z)) = 10) @ And([And([(z != 0)])])}, resulting in: And([(UnsafeDiv(x, SafeDiv(y, z)) = 10), And([And([(z != 0)])])])","target":"rule_engine"}
+{"message":"Rule applicable: div_to_bubble ([(\"Bubble\", 6000)]), to expression: UnsafeDiv(x, SafeDiv(y, z)), resulting in: {SafeDiv(x, SafeDiv(y, z)) @ (SafeDiv(y, z) != 0)}","target":"rule_engine"}
+{"message":"Rule applicable: bubble_up ([(\"Bubble\", 8900)]), to expression: ({SafeDiv(x, SafeDiv(y, z)) @ (SafeDiv(y, z) != 0)} = 10), resulting in: {(SafeDiv(x, SafeDiv(y, z)) = 10) @ And([(SafeDiv(y, z) != 0)])}","target":"rule_engine"}
+{"message":"Rule applicable: expand_bubble ([(\"Bubble\", 8900)]), to expression: {(SafeDiv(x, SafeDiv(y, z)) = 10) @ And([(SafeDiv(y, z) != 0)])}, resulting in: And([(SafeDiv(x, SafeDiv(y, z)) = 10), And([(SafeDiv(y, z) != 0)])])","target":"rule_engine"}
+{"message":"Rule applicable: distribute_not_over_and ([(\"Base\", 8400)]), to expression: Not(And([And([(SafeDiv(x, SafeDiv(y, z)) = 10), And([(SafeDiv(y, z) != 0)])]), And([And([(z != 0)])])])), resulting in: Or([Not(And([(SafeDiv(x, SafeDiv(y, z)) = 10), And([(SafeDiv(y, z) != 0)])])), Not(And([And([(z != 0)])]))])","target":"rule_engine"}
+{"message":"Rule applicable: distribute_not_over_and ([(\"Base\", 8400)]), to expression: Not(And([(SafeDiv(x, SafeDiv(y, z)) = 10), And([(SafeDiv(y, z) != 0)])])), resulting in: Or([Not((SafeDiv(x, SafeDiv(y, z)) = 10)), Not(And([(SafeDiv(y, z) != 0)]))])","target":"rule_engine"}
+{"message":"Rule applicable: normalise_associative_commutative ([(\"Base\", 8400)]), to expression: Or([Or([Not((SafeDiv(x, SafeDiv(y, z)) = 10)), Not(And([(SafeDiv(y, z) != 0)]))]), Not(And([And([(z != 0)])]))]), resulting in: Or([Not((SafeDiv(x, SafeDiv(y, z)) = 10)), Not(And([(SafeDiv(y, z) != 0)])), Not(And([And([(z != 0)])]))])","target":"rule_engine"}
+{"message":"Rule applicable: negated_eq_to_neq ([(\"Base\", 8800)]), to expression: Not((SafeDiv(x, SafeDiv(y, z)) = 10)), resulting in: (SafeDiv(x, SafeDiv(y, z)) != 10)","target":"rule_engine"}
+{"message":"Rule applicable: flatten_binop ([(\"Minion\", 4400)]), to expression: (SafeDiv(x, SafeDiv(y, z)) != 10), resulting in: (__0 != 10)","target":"rule_engine"}
+{"message":"Rule applicable: distribute_not_over_and ([(\"Base\", 8400)]), to expression: Not(And([(SafeDiv(y, z) != 0)])), resulting in: Not((SafeDiv(y, z) != 0))","target":"rule_engine"}
+{"message":"Rule applicable: negated_neq_to_eq ([(\"Base\", 8800)]), to expression: Not((SafeDiv(y, z) != 0)), resulting in: (SafeDiv(y, z) = 0)","target":"rule_engine"}
+{"message":"Rule applicable: introduce_diveq ([(\"Minion\", 4200)]), to expression: (SafeDiv(y, z) = 0), resulting in: DivEq(y, z, 0)","target":"rule_engine"}
+{"message":"Rule applicable: distribute_not_over_and ([(\"Base\", 8400)]), to expression: Not(And([And([(z != 0)])])), resulting in: Not(And([(z != 0)]))","target":"rule_engine"}
+{"message":"Rule applicable: distribute_not_over_and ([(\"Base\", 8400)]), to expression: Not(And([(z != 0)])), resulting in: Not((z != 0))","target":"rule_engine"}
+{"message":"Rule applicable: negated_neq_to_eq ([(\"Base\", 8800)]), to expression: Not((z != 0)), resulting in: (z = 0)","target":"rule_engine"}
+{"message":"Rule applicable: flatten_binop ([(\"Minion\", 4400)]), to expression: SafeDiv(x, SafeDiv(y, z)), resulting in: SafeDiv(x, __1)","target":"rule_engine"}
+{"message":"Rule applicable: introduce_diveq ([(\"Minion\", 4200)]), to expression: __0 =aux SafeDiv(x, __1), resulting in: DivEq(x, __1, __0)","target":"rule_engine"}
+{"message":"Rule applicable: introduce_diveq ([(\"Minion\", 4200)]), to expression: __1 =aux SafeDiv(y, z), resulting in: DivEq(y, z, __1)","target":"rule_engine"}
+{"count":21,"message":" Number of rules applied"}

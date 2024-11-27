@@ -18,6 +18,7 @@ env:
 jobs:
   deploy-coverage:
     name: "Info: Code Coverage"
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -42,7 +43,7 @@ jobs:
 
 
       - name: Download artifact
-        uses: dawidd6/action-download-artifact@v2
+        uses: dawidd6/action-download-artifact@v6
         with:
           name: code-coverage-${{ steps.sha.outputs.result }}
           workflow: code-coverage.yml
@@ -136,7 +137,7 @@ jobs:
             return callee_run.head_sha;
 
       - name: Download artifact
-        uses: dawidd6/action-download-artifact@v2
+        uses: dawidd6/action-download-artifact@v6
         with:
           name: code-coverage-${{ steps.sha.outputs.result }}
           workflow: code-coverage.yml

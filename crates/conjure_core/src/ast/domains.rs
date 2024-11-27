@@ -44,7 +44,9 @@ impl Domain {
             // TODO: (flm8) Optimise to use smarter, less brute-force methods
             let mut new_ranges = vec![];
             for (v1, v2) in itertools::iproduct!(vs1, vs2) {
-                op(v1, v2).map(|v| new_ranges.push(Range::Single(v)));
+                if let Some(v) = op(v1, v2) {
+                    new_ranges.push(Range::Single(v))
+                }
             }
             return Some(Domain::IntDomain(new_ranges));
         }
