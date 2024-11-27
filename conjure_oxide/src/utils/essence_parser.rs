@@ -1,5 +1,6 @@
 use conjure_core::error::Error;
 use std::fs;
+use std::io::Cursor;
 use std::sync::{Arc, RwLock};
 use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_essence::LANGUAGE;
@@ -240,7 +241,6 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
 
                 match op_type {
                     "=" => {
-                        println!("equals");
                         return Expression::Eq(Metadata::new(), Box::new(expr1), Box::new(expr2));
                     }
                     "!=" => {
@@ -266,7 +266,6 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
             return parse_constraint(cursor.node(), source_code);
         }
         "addition" => {
-            println!("addition");
             //TODO: right now assuming its a "+", add for if its a "-"
             //TODO: right now assuming its only two terms, really could be any number
             //(pos use goto_last_child because its vec and then Box)
@@ -280,7 +279,6 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
             return parse_constraint(cursor.node(), source_code);
         }
         "term" => {
-            println!("term");
             //TODO: right now assuming its a "/" or "%", add for if its a "*"
             //TODO: right now assuming its unsafe, could be safe
             //TODO: right now assuming its only two terms, really could be any number
@@ -321,6 +319,7 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
             return parse_constraint(cursor.node(), source_code);
         }
         "factor" => {
+            // eventually use first_child and sibling methods here
             let mut cursor = root_node.walk();
             cursor.goto_first_child();
             if root_node.child_count() > 1 {
@@ -346,11 +345,10 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
         }
         "constant" => {
             //once the grammar is changed, this will be more complicated
-            let mut cursor = root_node.walk();
-            cursor.goto_first_child();
-            match cursor.node().kind() {
+            let child = first_child(root_node);
+            match child.kind() {
                 "integer" => {
-                    let constant_value = &source_code[cursor.node().start_byte()..cursor.node().end_byte()]
+                    let constant_value = &source_code[child.start_byte()..child.end_byte()]
                     .parse::<i32>()
                     .unwrap();
                     return Expression::Atomic(
@@ -374,12 +372,9 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
             }
         }
         "variable" => {
-            println!("variable");
-            let mut cursor = root_node.walk();
-            cursor.goto_first_child();
+            let child = first_child(root_node);
             let variable_name =
-                String::from(&source_code[cursor.node().start_byte()..cursor.node().end_byte()]);
-            println!("variable name: {variable_name}");
+                String::from(&source_code[child.start_byte()..child.end_byte()]);
             return Expression::Atomic(
                 Metadata::new(),
                 Atom::Reference(Name::UserName(variable_name)),
@@ -387,4 +382,16 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
         }
         _ => panic!("Error"),
     }
+}
+
+fn first_child(node: Node) -> Node {
+    let mut cursor = node.walk();
+    cursor.goto_first_child();
+    return cursor.node();
+}
+
+fn sibling(node: Node) -> Node {
+    let mut cursor = node.walk();
+    cursor.goto_next_sibling();
+    return cursor.node();
 }
