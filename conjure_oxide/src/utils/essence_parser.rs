@@ -240,6 +240,7 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
 
                 match op_type {
                     "=" => {
+                        println!("equals");
                         return Expression::Eq(Metadata::new(), Box::new(expr1), Box::new(expr2));
                     }
                     "!=" => {
@@ -280,7 +281,7 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
         }
         "term" => {
             println!("term");
-            //TODO: right now assuming its a "/", add for if its a "*"
+            //TODO: right now assuming its a "/" or "%", add for if its a "*"
             //TODO: right now assuming its unsafe, could be safe
             //TODO: right now assuming its only two terms, really could be any number
             if root_node.child_count() > 1 {
@@ -289,13 +290,31 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
                 let factor1 =
                     parse_constraint(cursor.node(), source_code);
                 cursor.goto_next_sibling();
-                cursor.goto_next_sibling();
-                let factor2 =
-                    parse_constraint(cursor.node(), source_code);
-                return Expression::UnsafeDiv(
-                    Metadata::new(), 
-                    Box::new(factor1),
-                    Box::new(factor2));
+
+                match cursor.node().kind() {
+                    "/" => {
+                        cursor.goto_next_sibling();
+                        let factor2 =
+                            parse_constraint(cursor.node(), source_code);
+                        return Expression::UnsafeDiv(
+                            Metadata::new(), 
+                            Box::new(factor1),
+                            Box::new(factor2)
+                        );
+                    }
+                    "%" => {
+                        cursor.goto_next_sibling();
+                        let factor2 = 
+                            parse_constraint(cursor.node(), source_code);
+                        return Expression::UnsafeMod(
+                            Metadata::new(), 
+                            Box::new(factor1),
+                            Box::new(factor2)
+                        );
+                    }
+                    _ => panic!("No multiplication implemented yet or other error")
+                }
+                
             }
             let mut cursor = root_node.walk();
             cursor.goto_first_child();

@@ -148,7 +148,8 @@ module.exports = grammar ({
       optional(repeat(seq(
         choice(
           "*",
-          "/"
+          "/",
+          "%"
         ),
         $.factor
       )))
