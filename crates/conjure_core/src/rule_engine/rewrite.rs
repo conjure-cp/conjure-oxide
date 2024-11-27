@@ -440,6 +440,15 @@ fn trace_rules(results: &[RuleResult], expression: Expression) {
         let new_expression = results[0].reduction.new_expression.clone();
 
         trace!(
+            target: "rule_engine_human",
+            "Initial expression: {}, \n     Rule: {} ({:?}) \nResult: {} \n\n",
+            expression,
+            rule.name,
+            rule.rule_sets,
+            new_expression,
+        );
+
+        trace!(
             target: "rule_engine",
             "Rule applicable: {} ({:?}), to expression: {}, resulting in: {}",
             rule.name,
