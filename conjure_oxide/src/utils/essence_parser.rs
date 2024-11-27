@@ -192,6 +192,11 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
         "constraint" => {
             let mut cursor = root_node.walk();
             cursor.goto_first_child();
+            if cursor.node().kind() == "not" {
+                cursor.goto_next_sibling();
+                let expr = parse_constraint(cursor.node(), source_code);
+                return Expression::Not(Metadata::new(), Box::new(expr));
+            }
             return parse_constraint(cursor.node(), source_code);
         }
         "expression" => {

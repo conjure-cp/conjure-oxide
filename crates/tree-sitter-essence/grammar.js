@@ -45,9 +45,12 @@ module.exports = grammar ({
     ),
 
     constraint: $ => seq(
+      optional($.not),
       $.expression,
       optional(",")
     ),
+
+    not: $ => "!",
 
     domain: $ => choice(
       $.int_domain,
