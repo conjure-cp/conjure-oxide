@@ -1,8 +1,6 @@
 module.exports = grammar ({
   name: 'essence',
 
-  //next: look into adding field names 
-
   extras: $ => [
     $.single_line_comment,
     /\s/
