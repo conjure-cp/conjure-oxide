@@ -13,7 +13,7 @@
           },
           {
             "type": "SYMBOL",
-            "name": "constraint"
+            "name": "constraint_list"
           }
         ]
       }
@@ -112,7 +112,7 @@
         }
       ]
     },
-    "constraint": {
+    "constraint_list": {
       "type": "SEQ",
       "members": [
         {
@@ -122,26 +122,30 @@
         {
           "type": "REPEAT",
           "content": {
-            "type": "SEQ",
-            "members": [
-              {
-                "type": "SYMBOL",
-                "name": "expression"
-              },
-              {
-                "type": "CHOICE",
-                "members": [
-                  {
-                    "type": "STRING",
-                    "value": ","
-                  },
-                  {
-                    "type": "BLANK"
-                  }
-                ]
-              }
-            ]
+            "type": "SYMBOL",
+            "name": "constraint"
           }
+        }
+      ]
+    },
+    "constraint": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "expression"
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "STRING",
+              "value": ","
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
         }
       ]
     },
@@ -605,6 +609,14 @@
         }
       ]
     },
+    "TRUE": {
+      "type": "STRING",
+      "value": "true"
+    },
+    "FALSE": {
+      "type": "STRING",
+      "value": "false"
+    },
     "comp_op": {
       "type": "CHOICE",
       "members": [
@@ -635,8 +647,21 @@
       ]
     },
     "constant": {
-      "type": "SYMBOL",
-      "name": "integer"
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SYMBOL",
+          "name": "integer"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "TRUE"
+        },
+        {
+          "type": "SYMBOL",
+          "name": "FALSE"
+        }
+      ]
     },
     "integer": {
       "type": "PATTERN",

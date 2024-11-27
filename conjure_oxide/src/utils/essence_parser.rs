@@ -35,9 +35,19 @@ pub fn parse_essence_file_native(
                     model.add_variable(name, decision_variable);
                 }
             }
-            "constraint" => {
-                let constraint = statement.child(1).unwrap();
-                let expression = parse_constraint(constraint, &source_code);
+            "constraint_list" => {
+                let expression: Expression;
+                if statement.child_count() > 2{
+                    let mut constraint_vec: Vec<Expression> = Vec::new();
+                    let mut cursor = statement.walk();
+                    for constraint in statement.named_children(&mut cursor) {
+                        constraint_vec.push(parse_constraint(constraint, &source_code));
+                    }
+                    expression = Expression::And(Metadata::new(), constraint_vec);
+                } else {
+                    expression = parse_constraint(statement.child(1).unwrap(), &source_code);
+                }
+                
                 model.add_constraint(expression);
             }
             _ => {
@@ -179,9 +189,9 @@ fn parse_int_domain(root_node: Node, source_code: &str) -> Domain {
 
 fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
     match root_node.kind() {
-        "such that" => {
+        "constraint" => {
             let mut cursor = root_node.walk();
-            cursor.goto_next_sibling();
+            cursor.goto_first_child();
             return parse_constraint(cursor.node(), source_code);
         }
         "expression" => {
@@ -314,14 +324,30 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
             //once the grammar is changed, this will be more complicated
             let mut cursor = root_node.walk();
             cursor.goto_first_child();
-            let constant_value = &source_code[cursor.node().start_byte()..cursor.node().end_byte()]
-                .parse::<i32>()
-                .unwrap();
-            //TODO: right now its only Int but could be bool too
-            return Expression::Atomic(
-                Metadata::new(),
-                Atom::Literal(Literal::Int(*constant_value)),
-            );
+            match cursor.node().kind() {
+                "integer" => {
+                    let constant_value = &source_code[cursor.node().start_byte()..cursor.node().end_byte()]
+                    .parse::<i32>()
+                    .unwrap();
+                    return Expression::Atomic(
+                        Metadata::new(),
+                        Atom::Literal(Literal::Int(*constant_value)),
+                    );
+                }
+                "TRUE" => {
+                    return Expression::Atomic(
+                        Metadata::new(),
+                        Atom::Literal(Literal::Bool(true))
+                    );
+                }
+                "FALSE" => {
+                    return Expression::Atomic(
+                        Metadata::new(),
+                        Atom::Literal(Literal::Bool(false))
+                    );
+                }
+                _ => panic!("Error")
+            }
         }
         "variable" => {
             println!("variable");
