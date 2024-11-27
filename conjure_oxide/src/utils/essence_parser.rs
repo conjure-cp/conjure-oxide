@@ -38,7 +38,7 @@ pub fn parse_essence_file_native(
             }
             "constraint_list" => {
                 let expression: Expression;
-                if statement.child_count() > 2{
+                if statement.child_count() > 2 {
                     let mut constraint_vec: Vec<Expression> = Vec::new();
                     let mut cursor = statement.walk();
                     for constraint in statement.named_children(&mut cursor) {
@@ -48,7 +48,7 @@ pub fn parse_essence_file_native(
                 } else {
                     expression = parse_constraint(statement.child(1).unwrap(), &source_code);
                 }
-                
+
                 model.add_constraint(expression);
             }
             _ => {
@@ -80,8 +80,9 @@ fn parse_find_statement(root_node: Node, source_code: &str) -> HashMap<Name, Dec
     let mut cursor = root_node.walk();
     for find_statement in root_node.named_children(&mut cursor) {
         let mut temp_symbols = BTreeSet::new();
-        
-        let variable_list = find_statement.child_by_field_name("variable_list")
+
+        let variable_list = find_statement
+            .child_by_field_name("variable_list")
             .expect("No variable list found");
         let mut cursor = variable_list.walk();
         for variable in variable_list.named_children(&mut cursor) {
@@ -89,7 +90,8 @@ fn parse_find_statement(root_node: Node, source_code: &str) -> HashMap<Name, Dec
             temp_symbols.insert(variable_name);
         }
 
-        let domain = find_statement.child_by_field_name("domain")
+        let domain = find_statement
+            .child_by_field_name("domain")
             .expect("No domain found");
         let domain = Some(parse_domain(domain, source_code));
         let domain = domain.expect("No domain found");
@@ -280,34 +282,30 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
             if root_node.child_count() > 1 {
                 let mut cursor = root_node.walk();
                 cursor.goto_first_child();
-                let factor1 =
-                    parse_constraint(cursor.node(), source_code);
+                let factor1 = parse_constraint(cursor.node(), source_code);
                 cursor.goto_next_sibling();
 
                 match cursor.node().kind() {
                     "/" => {
                         cursor.goto_next_sibling();
-                        let factor2 =
-                            parse_constraint(cursor.node(), source_code);
+                        let factor2 = parse_constraint(cursor.node(), source_code);
                         return Expression::UnsafeDiv(
-                            Metadata::new(), 
+                            Metadata::new(),
                             Box::new(factor1),
-                            Box::new(factor2)
+                            Box::new(factor2),
                         );
                     }
                     "%" => {
                         cursor.goto_next_sibling();
-                        let factor2 = 
-                            parse_constraint(cursor.node(), source_code);
+                        let factor2 = parse_constraint(cursor.node(), source_code);
                         return Expression::UnsafeMod(
-                            Metadata::new(), 
+                            Metadata::new(),
                             Box::new(factor1),
-                            Box::new(factor2)
+                            Box::new(factor2),
                         );
                     }
-                    _ => panic!("No multiplication implemented yet or other error")
+                    _ => panic!("No multiplication implemented yet or other error"),
                 }
-                
             }
             let mut cursor = root_node.walk();
             cursor.goto_first_child();
@@ -327,7 +325,7 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
             let mut variable_list: Vec<Expression> = Vec::new();
             for variable in root_node.named_children(&mut cursor) {
                 variable_list.push(parse_constraint(variable, source_code));
-            }  
+            }
             return Expression::Min(Metadata::new(), variable_list);
         }
         "max" => {
@@ -335,7 +333,7 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
             let mut variable_list: Vec<Expression> = Vec::new();
             for variable in root_node.named_children(&mut cursor) {
                 variable_list.push(parse_constraint(variable, source_code));
-            }  
+            }
             return Expression::Max(Metadata::new(), variable_list);
         }
         "sum" => {
@@ -351,32 +349,28 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
             match child.kind() {
                 "integer" => {
                     let constant_value = &source_code[child.start_byte()..child.end_byte()]
-                    .parse::<i32>()
-                    .unwrap();
+                        .parse::<i32>()
+                        .unwrap();
                     return Expression::Atomic(
                         Metadata::new(),
                         Atom::Literal(Literal::Int(*constant_value)),
                     );
                 }
                 "TRUE" => {
-                    return Expression::Atomic(
-                        Metadata::new(),
-                        Atom::Literal(Literal::Bool(true))
-                    );
+                    return Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
                 }
                 "FALSE" => {
                     return Expression::Atomic(
                         Metadata::new(),
-                        Atom::Literal(Literal::Bool(false))
+                        Atom::Literal(Literal::Bool(false)),
                     );
                 }
-                _ => panic!("Error")
+                _ => panic!("Error"),
             }
         }
         "variable" => {
             let child = first_child(root_node);
-            let variable_name =
-                String::from(&source_code[child.start_byte()..child.end_byte()]);
+            let variable_name = String::from(&source_code[child.start_byte()..child.end_byte()]);
             return Expression::Atomic(
                 Metadata::new(),
                 Atom::Reference(Name::UserName(variable_name)),
