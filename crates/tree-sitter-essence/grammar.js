@@ -25,9 +25,9 @@ module.exports = grammar ({
     ),
 
     find_statement: $ => seq(
-      $.variable_list,
+      field("variable_list", $.variable_list),
       ":",
-      $.domain,
+      field("domain", $.domain),
       optional(",")
     ),
 

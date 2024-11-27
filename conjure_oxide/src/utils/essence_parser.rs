@@ -53,7 +53,7 @@ pub fn parse_essence_file_native(
             }
             _ => {
                 return Err(EssenceParseError::ParseError(Error::Parse(
-                    "Error".to_owned(),
+                    "Unrecognized top level statement".to_owned(),
                 )))
             }
         }
@@ -80,23 +80,18 @@ fn parse_find_statement(root_node: Node, source_code: &str) -> HashMap<Name, Dec
     let mut cursor = root_node.walk();
     for find_statement in root_node.named_children(&mut cursor) {
         let mut temp_symbols = BTreeSet::new();
-        let mut domain: Option<Domain> = None;
-        let mut cursor = find_statement.walk();
-        for node in find_statement.named_children(&mut cursor){
-            match node.kind() {
-                "variable_list" => {
-                    let mut cursor = node.walk();
-                    for variable in node.named_children(&mut cursor) {
-                        let variable_name = &source_code[variable.start_byte()..variable.end_byte()];
-                        temp_symbols.insert(variable_name);
-                    }
-                }
-                "domain" => {
-                    domain = Some(parse_domain(node, source_code));
-                }
-                _ => panic!("issue"),
-            }
+        
+        let variable_list = find_statement.child_by_field_name("variable_list")
+            .expect("No variable list found");
+        let mut cursor = variable_list.walk();
+        for variable in variable_list.named_children(&mut cursor) {
+            let variable_name = &source_code[variable.start_byte()..variable.end_byte()];
+            temp_symbols.insert(variable_name);
         }
+
+        let domain = find_statement.child_by_field_name("domain")
+            .expect("No domain found");
+        let domain = Some(parse_domain(domain, source_code));
         let domain = domain.expect("No domain found");
 
         for name in temp_symbols {
@@ -387,11 +382,5 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
 fn first_child(node: Node) -> Node {
     let mut cursor = node.walk();
     cursor.goto_first_child();
-    return cursor.node();
-}
-
-fn sibling(node: Node) -> Node {
-    let mut cursor = node.walk();
-    cursor.goto_next_sibling();
     return cursor.node();
 }
