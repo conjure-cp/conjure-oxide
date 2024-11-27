@@ -170,7 +170,7 @@ module.exports = grammar ({
     min: $ => seq(
       "min([",
       repeat(seq(
-        $.variable,
+        choice($.variable, $.constant),
         ","
       )),
       "])"
@@ -179,7 +179,7 @@ module.exports = grammar ({
     max: $ => seq(
       "max([",
       repeat(seq(
-        $.variable,
+        choice($.variable, $.constant),
         ","
       )),
       "])"
