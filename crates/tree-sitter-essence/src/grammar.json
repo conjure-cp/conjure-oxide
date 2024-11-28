@@ -207,8 +207,12 @@
                     "value": "("
                   },
                   {
-                    "type": "SYMBOL",
-                    "name": "range_list"
+                    "type": "FIELD",
+                    "name": "range_list",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "range_list"
+                    }
                   },
                   {
                     "type": "STRING",
@@ -239,15 +243,7 @@
             "members": [
               {
                 "type": "SYMBOL",
-                "name": "lower_bound_range"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "upper_bound_range"
-              },
-              {
-                "type": "SYMBOL",
-                "name": "closed_range"
+                "name": "int_range"
               },
               {
                 "type": "SYMBOL",
@@ -272,15 +268,7 @@
                       "members": [
                         {
                           "type": "SYMBOL",
-                          "name": "lower_bound_range"
-                        },
-                        {
-                          "type": "SYMBOL",
-                          "name": "upper_bound_range"
-                        },
-                        {
-                          "type": "SYMBOL",
-                          "name": "closed_range"
+                          "name": "int_range"
                         },
                         {
                           "type": "SYMBOL",
@@ -298,6 +286,39 @@
           }
         ]
       }
+    },
+    "int_range": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "expression"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        },
+        {
+          "type": "STRING",
+          "value": ".."
+        },
+        {
+          "type": "CHOICE",
+          "members": [
+            {
+              "type": "SYMBOL",
+              "name": "expression"
+            },
+            {
+              "type": "BLANK"
+            }
+          ]
+        }
+      ]
     },
     "lower_bound_range": {
       "type": "SEQ",

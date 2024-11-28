@@ -29,6 +29,7 @@ pub fn parse_essence_file_native(
     for statement in root_node.named_children(&mut cursor) {
         match statement.kind() {
             "single_line_comment" => {}
+            //"e_prime_label" => {}
             "find_statement_list" => {
                 let var_hashmap = parse_find_statement(statement, &source_code);
                 for (name, decision_variable) in var_hashmap {
@@ -109,78 +110,82 @@ fn parse_domain(root_node: Node, source_code: &str) -> Domain {
     match cursor.node().kind() {
         "bool_domain" => return Domain::BoolDomain,
         "int_domain" => return parse_int_domain(cursor.node(), source_code),
-        _ => {
-            panic!("No domain type found");
-        }
+        _ => panic!("Not bool or int domain")
     }
 }
 
 fn parse_int_domain(root_node: Node, source_code: &str) -> Domain {
-    if root_node.child_count() == 1 {
+    //TODO implement functionality for non-simple ints
+    if root_node.child_count() == 1{
         return Domain::IntDomain(vec![Range::Bounded(std::i32::MIN, std::i32::MAX)]);
     } else {
-        let range_or_expr = root_node.child(2).expect("No range or expression found");
-        match range_or_expr.kind() {
-            "range_list" => {
-                let mut cursor = range_or_expr.walk();
-                let mut ranges: Vec<Range<i32>> = Vec::new();
-                for range in range_or_expr.named_children(&mut cursor) {
-                    match range.kind() {
-                        "lower_bound_range" => {
-                            let lower_bound_node = range.child_by_field_id(0).unwrap();
-                            let lower_bound = &source_code
-                                [lower_bound_node.start_byte()..lower_bound_node.end_byte()]
+        let mut ranges: Vec<Range<i32>> = Vec::new();
+        let range_list = root_node
+            .child_by_field_name("range_list")
+            .expect("No range list found (expression ranges not supported yet");
+        let mut cursor = range_list.walk();
+        for int_range in range_list.named_children(&mut cursor) {
+            match int_range.kind() {
+                "integer" => {
+                    let integer_value = &source_code[int_range.start_byte()..int_range.end_byte()]
+                        .parse::<i32>()
+                        .unwrap();
+                    ranges.push(Range::Single(*integer_value));
+                }
+                "int_range" => {
+                    let lower_bound: Option<i32>;
+                    let upper_bound: Option<i32>;
+                    let mut cursor = int_range.walk();
+                    
+                    cursor.goto_first_child();
+                    match cursor.node().kind() {
+                        "expression" => {
+                            let mut cursor2 = cursor.node().walk();
+                            cursor2.goto_descendant(7);
+                            
+                            lower_bound = Some(*&source_code
+                                [cursor.node().start_byte()..cursor.node().end_byte()]
                                 .parse::<i32>()
-                                .unwrap();
-                            ranges.push(Range::Bounded(*lower_bound, std::i32::MAX))
-                        }
-                        "upper_bound_range" => {
-                            let upper_bound_node = range.child_by_field_id(1).unwrap();
-                            let upper_bound = &source_code
-                                [upper_bound_node.start_byte()..upper_bound_node.end_byte()]
-                                .parse::<i32>()
-                                .unwrap();
-                            ranges.push(Range::Bounded(std::i32::MIN, *upper_bound))
-                        }
-                        "closed_range" => {
-                            let mut cursor = range.walk();
-
-                            cursor.goto_first_child();
-                            let lower_bound_node = cursor.node();
-
+                                .unwrap());
+                    
                             cursor.goto_next_sibling();
+                            if !cursor.goto_next_sibling() {
+                                upper_bound = None;
+                            } else {
+                                upper_bound = Some(*&source_code
+                                    [cursor.node().start_byte()..cursor.node().end_byte()]
+                                    .parse::<i32>()
+                                    .unwrap());
+                            }
+                        }
+                        ".." => {
+                            lower_bound = None;
                             cursor.goto_next_sibling();
-                            let upper_bound_node = cursor.node();
-
-                            let lower_bound = &source_code
-                                [lower_bound_node.start_byte()..lower_bound_node.end_byte()]
+                            upper_bound = Some(*&source_code
+                                [cursor.node().start_byte()..cursor.node().end_byte()]
                                 .parse::<i32>()
-                                .unwrap();
-                            let upper_bound = &source_code
-                                [upper_bound_node.start_byte()..upper_bound_node.end_byte()]
-                                .parse::<i32>()
-                                .unwrap();
-                            ranges.push(Range::Bounded(*lower_bound, *upper_bound));
+                                .unwrap());
                         }
-                        "integer" => {
-                            let integer_value = &source_code[range.start_byte()..range.end_byte()]
-                                .parse::<i32>()
-                                .unwrap();
-                            ranges.push(Range::Single(*integer_value));
+                        _ => panic!("unsupported int range type")
+                    }
+                    
+                    match (lower_bound, upper_bound) {
+                        (Some(lb), Some(ub)) => {
+                            ranges.push(Range::Bounded(lb, ub))
                         }
-                        _ => {}
+                        (Some(lb), None) => {
+                            ranges.push(Range::Bounded(lb, std::i32::MAX))
+                        }
+                        (None, Some(ub)) => {
+                            ranges.push(Range::Bounded(std::i32::MIN, ub))
+                        }
+                        _ => panic!("Unsupported int range type")
                     }
                 }
-                return Domain::IntDomain(ranges);
-            }
-            "expression" => {
-                //todo: add this code, right now returns infinite integer domain
-                return Domain::IntDomain(vec![Range::Bounded(std::i32::MIN, std::i32::MAX)]);
-            }
-            _ => {
-                panic!("No range or expression found");
+                _ => panic!("unsupported int range type")
             }
         }
+        return Domain::IntDomain(ranges);
     }
 }
 
@@ -263,13 +268,14 @@ fn parse_constraint(root_node: Node, source_code: &str) -> Expression {
         }
         "addition" => {
             //TODO: right now assuming its a "+", add for if its a "-"
+            //TODO: still some issues with multiple, xyz test
             if root_node.child_count() > 1 {
                 let mut expr_vec: Vec<Expression> = Vec::new();
                 let mut cursor = root_node.walk();
                 for term in root_node.named_children(&mut cursor) {
                     expr_vec.push(parse_constraint(term, source_code));
                 }
-                return Expression::Sum(Metadata::new(), expr_vec);            
+                return Expression::Sum(Metadata::new(), expr_vec);
             }
             let mut cursor = root_node.walk();
             cursor.goto_first_child();
