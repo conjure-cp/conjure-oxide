@@ -149,6 +149,12 @@ pub enum Expression {
     /// As with Savile Row, we semantically distinguish this from `Eq`.
     #[compatible(Minion)]
     AuxDeclaration(Metadata, Name, Box<Expression>),
+
+    /// `x =-y`, where x and y are atoms.
+    ///
+    /// Low-level Minion constraint.
+    #[compatible(Minion)]
+    MinusEq(Metadata, Atom, Atom),
 }
 
 fn expr_vec_to_domain_i32(
@@ -283,8 +289,11 @@ impl Expression {
             }
             Expression::Minus(_, a, b) => a
                 .domain_of(vars)?
-                .apply_i32(|x, y| Some(x - y), &b.domain_of(vars)?), // #[allow(unreachable_patterns)]
-                                                                     // _ => bug!("Cannot calculate domain of {:?}", self),
+                .apply_i32(|x, y| Some(x - y), &b.domain_of(vars)?),
+
+            Expression::MinusEq(_, _, _) => Some(Domain::BoolDomain),
+            // #[allow(unreachable_patterns)]
+            // _ => bug!("Cannot calculate domain of {:?}", self),
         };
         match ret {
             // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
@@ -358,6 +367,7 @@ impl Expression {
             Expression::ModuloEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
             Expression::Neg(_, _) => Some(ReturnType::Int),
             Expression::Minus(_, _, _) => Some(ReturnType::Int),
+            Expression::MinusEq(_, _, _) => Some(ReturnType::Bool),
         }
     }
 
@@ -538,6 +548,9 @@ impl Display for Expression {
             }
             Expression::Minus(_, a, b) => {
                 write!(f, "({} - {})", a.clone(), b.clone())
+            }
+            Expression::MinusEq(_, a, b) => {
+                write!(f, "MinusEq({},{})", a.clone(), b.clone())
             }
         }
     }
