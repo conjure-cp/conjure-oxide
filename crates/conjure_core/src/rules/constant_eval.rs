@@ -135,6 +135,11 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             let a = unwrap_atom::<i32>(&a.as_atom()?)?;
             let b = unwrap_atom::<i32>(&b.as_atom()?)?;
             Some(Lit::Int(a - b))
+        }
+        Expr::MinusEq(_, a, b) => {
+            let a = unwrap_atom::<i32>(a)?;
+            let b = unwrap_atom::<i32>(b)?;
+            Some(Lit::Bool(a == -b))
         } // _ => {
           //     warn!(%expr,"Unimplemented constant eval");
           //     None
