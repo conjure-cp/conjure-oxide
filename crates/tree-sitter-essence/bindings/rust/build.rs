@@ -1,7 +1,11 @@
-use std::process::Command;
+// use std::process::Command;
+// use std::path::Path;
+use tree_sitter_generate::generate_parser_in_directory;
 
 fn main() {
     let src_dir = std::path::Path::new("src");
+
+    generate_parser_in_directory(src_dir, Some("grammar.js"), 13, None, None).expect("Failed to generate parser");
 
     let mut c_config = cc::Build::new();
     c_config.std("c11").include(src_dir);
@@ -9,10 +13,10 @@ fn main() {
     #[cfg(target_env = "msvc")]
     c_config.flag("-utf-8");
 
-    Command::new("cargo")
-        .args(["run", "--package", "tree-sitter-cli", "--", "generate"])
-        .status()
-        .expect("Failed to execute tree-sitter generate");
+    // Command::new("cargo")
+    //     .args(["run", "--package", "tree-sitter-cli", "--", "generate"])
+    //     .status()
+    //     .expect("Failed to execute tree-sitter generate");
 
     // let tree_sitter_cli = env::var("CARGO_BIN_EXE_tree-sitter").expect("tree-sitter-cli not found");
 
