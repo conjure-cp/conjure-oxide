@@ -94,6 +94,11 @@ pub enum Expression {
     #[compatible(JsonInput)]
     Neg(Metadata, Box<Expression>),
 
+    /// Binary subtraction operator
+    ///
+    /// This mainly exists for ease of parsing, and is immediately normalised to `Sum([a,-b])`.
+    #[compatible(JsonInput)]
+    Minus(Metadata, Box<Expression>, Box<Expression>),
     /* Flattened SumEq.
      *
      * Note: this is an intermediary step that's used in the process of converting from conjure model to minion.
@@ -275,8 +280,11 @@ impl Expression {
                 }
 
                 Some(Domain::IntDomain(ranges))
-            } // #[allow(unreachable_patterns)]
-              // _ => bug!("Cannot calculate domain of {:?}", self),
+            }
+            Expression::Minus(_, a, b) => a
+                .domain_of(vars)?
+                .apply_i32(|x, y| Some(x - y), &b.domain_of(vars)?), // #[allow(unreachable_patterns)]
+                                                                     // _ => bug!("Cannot calculate domain of {:?}", self),
         };
         match ret {
             // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
@@ -340,6 +348,7 @@ impl Expression {
             Expression::SafeMod(_, _, _) => Some(ReturnType::Int),
             Expression::ModuloEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
             Expression::Neg(_, _) => Some(ReturnType::Int),
+            Expression::Minus(_, _, _) => Some(ReturnType::Int),
         }
     }
 
@@ -517,6 +526,9 @@ impl Display for Expression {
             }
             Expression::Neg(_, a) => {
                 write!(f, "-({})", a.clone())
+            }
+            Expression::Minus(_, a, b) => {
+                write!(f, "({} - {})", a.clone(), b.clone())
             }
         }
     }
