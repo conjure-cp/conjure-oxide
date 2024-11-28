@@ -77,9 +77,9 @@ fn div_to_bubble(expr: &Expression, _: &Model) -> ApplicationResult {
     }
     if let Expression::UnsafeDiv(_, a, b) = expr {
         // bubble bottom up
-        if a.can_be_undefined() || b.can_be_undefined() {
-            return Err(RuleNotApplicable);
-        }
+        // if a.can_be_undefined() || b.can_be_undefined() {
+        //     return Err(RuleNotApplicable);
+        // }
 
         return Ok(Reduction::pure(Expression::Bubble(
             Metadata::new(),
