@@ -31,6 +31,7 @@ fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
             | WatchedLiteral(_, _, _)
             | DivEqUndefZero(_, _, _, _)
             | ModuloEqUndefZero(_, _, _, _)
+            | MinusEq(_, _, _)
     ) {
         return Err(ApplicationError::RuleNotApplicable);
     }
