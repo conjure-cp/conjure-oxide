@@ -1,6 +1,13 @@
-{"message":"Rule applicable: normalise_associative_commutative ([(\"Base\", 8400)]), to expression: Sum([Sum([a, b]), c]), resulting in: Sum([a, b, c])","target":"rule_engine"}
-{"message":"Rule applicable: sum_eq_to_sumeq ([(\"Minion\", 4400)]), to expression: (Sum([a, b, c]) = 4), resulting in: SumEq([a, b, c], 4)","target":"rule_engine"}
-{"message":"Rule applicable: sumeq_to_minion ([(\"Minion\", 4400)]), to expression: SumEq([a, b, c], 4), resulting in: And([SumGeq([a, b, c], 4), SumLeq([a, b, c], 4)])","target":"rule_engine"}
-{"message":"Rule applicable: normalise_associative_commutative ([(\"Base\", 8400)]), to expression: And([And([SumGeq([a, b, c], 4), SumLeq([a, b, c], 4)]), (a >= b)]), resulting in: And([SumGeq([a, b, c], 4), SumLeq([a, b, c], 4), (a >= b)])","target":"rule_engine"}
+{"message":"Rule applicable: sum_eq_to_sumeq ([(\"Minion\", 4400)]), to expression: (Sum([Sum([a, b]), c]) = 4), resulting in: SumEq([Sum([a, b]), c], 4)","target":"rule_engine"}
+{"message":"Rule applicable: sumeq_to_minion ([(\"Minion\", 4400)]), to expression: SumEq([Sum([a, b]), c], 4), resulting in: And([SumGeq([Sum([a, b]), c], 4), SumLeq([Sum([a, b]), c], 4)])","target":"rule_engine"}
+{"message":"Rule applicable: normalise_associative_commutative ([(\"Base\", 8400)]), to expression: And([And([SumGeq([Sum([a, b]), c], 4), SumLeq([Sum([a, b]), c], 4)]), (a >= b)]), resulting in: And([SumGeq([Sum([a, b]), c], 4), SumLeq([Sum([a, b]), c], 4), (a >= b)])","target":"rule_engine"}
+{"message":"Rule applicable: flatten_vecop ([(\"Minion\", 4400)]), to expression: SumGeq([Sum([a, b]), c], 4), resulting in: SumGeq([__0, c], 4)","target":"rule_engine"}
+{"message":"Rule applicable: flatten_vecop ([(\"Minion\", 4400)]), to expression: SumLeq([Sum([a, b]), c], 4), resulting in: SumLeq([__1, c], 4)","target":"rule_engine"}
 {"message":"Rule applicable: geq_to_ineq ([(\"Minion\", 4100)]), to expression: (a >= b), resulting in: Ineq(b, a, 0)","target":"rule_engine"}
-{"count":5,"message":" Number of rules applied"}
+{"message":"Rule applicable: sum_eq_to_sumeq ([(\"Minion\", 4400)]), to expression: __0 =aux Sum([a, b]), resulting in: SumEq([a, b], __0)","target":"rule_engine"}
+{"message":"Rule applicable: sumeq_to_minion ([(\"Minion\", 4400)]), to expression: SumEq([a, b], __0), resulting in: And([SumGeq([a, b], __0), SumLeq([a, b], __0)])","target":"rule_engine"}
+{"message":"Rule applicable: normalise_associative_commutative ([(\"Base\", 8400)]), to expression: And([SumGeq([__0, c], 4), SumLeq([__1, c], 4), Ineq(b, a, 0), And([SumGeq([a, b], __0), SumLeq([a, b], __0)]), __1 =aux Sum([a, b])]), resulting in: And([SumGeq([__0, c], 4), SumLeq([__1, c], 4), Ineq(b, a, 0), SumGeq([a, b], __0), SumLeq([a, b], __0), __1 =aux Sum([a, b])])","target":"rule_engine"}
+{"message":"Rule applicable: sum_eq_to_sumeq ([(\"Minion\", 4400)]), to expression: __1 =aux Sum([a, b]), resulting in: SumEq([a, b], __1)","target":"rule_engine"}
+{"message":"Rule applicable: sumeq_to_minion ([(\"Minion\", 4400)]), to expression: SumEq([a, b], __1), resulting in: And([SumGeq([a, b], __1), SumLeq([a, b], __1)])","target":"rule_engine"}
+{"message":"Rule applicable: normalise_associative_commutative ([(\"Base\", 8400)]), to expression: And([SumGeq([__0, c], 4), SumLeq([__1, c], 4), Ineq(b, a, 0), SumGeq([a, b], __0), SumLeq([a, b], __0), And([SumGeq([a, b], __1), SumLeq([a, b], __1)])]), resulting in: And([SumGeq([__0, c], 4), SumLeq([__1, c], 4), Ineq(b, a, 0), SumGeq([a, b], __0), SumLeq([a, b], __0), SumGeq([a, b], __1), SumLeq([a, b], __1)])","target":"rule_engine"}
+{"count":12,"message":" Number of rules applied"}
