@@ -325,26 +325,36 @@ fn sum_leq_to_sumleq(expr: &Expr, _: &Model) -> ApplicationResult {
 */
 #[register_rule(("Minion", 4400))]
 fn sum_eq_to_sumeq(expr: &Expr, _: &Model) -> ApplicationResult {
-    match expr {
-        Eq(metadata, a, b) => {
-            if let Ok(exprs) = sum_to_vector(a) {
-                Ok(Reduction::pure(SumEq(
-                    metadata.clone_dirty(),
-                    exprs,
-                    b.clone(),
-                )))
-            } else if let Ok(exprs) = sum_to_vector(b) {
-                Ok(Reduction::pure(SumEq(
-                    metadata.clone_dirty(),
-                    exprs,
-                    a.clone(),
-                )))
-            } else {
-                Err(RuleNotApplicable)
-            }
-        }
-        _ => Err(RuleNotApplicable),
+    fn try_get_args(sum_expr: &Expr, value: &Expr) -> Option<(Vec<Expr>, Expr)> {
+        let Sum(_, xs) = sum_expr else {
+            return None;
+        };
+
+        Some((xs.clone(), value.clone()))
     }
+
+    let (xs, value) = match expr {
+        Eq(_, a, b) => {
+            // get arguments symmetrically
+            try_get_args(a, b)
+                .or_else(|| try_get_args(b, a))
+                .ok_or(RuleNotApplicable)
+        }
+
+        AuxDeclaration(_, name, e) => {
+            let value = Atom::Reference(name.clone()).into();
+            let xs = match *e.clone() {
+                Sum(_, xs) => Ok(xs),
+                _ => Err(RuleNotApplicable),
+            }?;
+
+            Ok((xs, value))
+        }
+
+        _ => Err(RuleNotApplicable),
+    }?;
+
+    Ok(Reduction::pure(SumEq(Metadata::new(), xs, Box::new(value))))
 }
 
 /**
