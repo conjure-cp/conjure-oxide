@@ -51,6 +51,7 @@ pub fn parse_essence_file_native(
                 model.add_constraint(expression);
             }
             "e_prime_label" => {}
+            "ERROR" => {}
             _ => {
                 let kind = statement.kind();
                 return Err(EssenceParseError::ParseError(Error::Parse(
@@ -318,7 +319,8 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
                 | Some("sum_expr")
                 | Some("constant")
                 | Some("variable")
-                | Some("all_diff_expr") => {
+                | Some("all_diff_expr")
+                | Some("or_list") => {
                     let child = constraint.child(0).expect("Error with constraints");
                     return parse_constraint(child, source_code);
                 }
@@ -358,6 +360,13 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
                 term_list.push(parse_constraint(term, source_code));
             }
             return Expression::AllDiff(Metadata::new(), term_list);
+        }
+        "or" => {
+            let mut term_list = Vec::new();
+            for term in named_children(&constraint) {
+                term_list.push(parse_constraint(term, source_code));
+            }
+            return Expression::Or(Metadata::new(), term_list);
         }
         "constant" => {
             let child = constraint.child(0).expect("Error with constant");

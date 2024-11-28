@@ -119,6 +119,7 @@ module.exports = grammar ({
       field("max_expr", $.max),
       field("sum_expr", $.sum),
       field("all_diff_expr", $.all_diff),
+      field("or_list", $.or),
       field("constant", $.constant),
       field("variable", $.variable),
       field("sub_expr", seq("(", $.expression, ")"))
@@ -170,6 +171,15 @@ module.exports = grammar ({
 
     all_diff: $ => seq(
       "allDiff([",
+      repeat(seq(
+        $.expression,
+        optional(",")
+      )),
+      "])"
+    ),
+
+    or: $ => seq(
+      "or([",
       repeat(seq(
         $.expression,
         optional(",")
