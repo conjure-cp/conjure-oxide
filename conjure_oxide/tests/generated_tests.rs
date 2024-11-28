@@ -1,3 +1,4 @@
+use conjure_oxide::utils::conjure;
 use conjure_oxide::utils::testing::read_rule_trace;
 use glob::glob;
 use serde_json::json;
@@ -138,6 +139,7 @@ fn integration_test_inner(
     let context: Arc<RwLock<Context<'static>>> = Default::default();
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
+    let conjure_check = env::var("CONJURE_CHECK").unwrap_or("false".to_string()) == "true";
 
     if verbose {
         println!(
@@ -210,7 +212,7 @@ fn integration_test_inner(
     assert_eq!(expected_rule_trace, generated_rule_trace);
 
     // test solutions against conjure before writing
-    if accept {
+    if accept || conjure_check {
         let mut conjure_solutions: Vec<HashMap<Name, Literal>> =
             get_solutions_from_conjure(&format!("{}/{}.{}", path, essence_base, extension))?;
 
