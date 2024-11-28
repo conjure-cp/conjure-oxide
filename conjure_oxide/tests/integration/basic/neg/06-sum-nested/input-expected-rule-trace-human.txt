@@ -1,0 +1,96 @@
+Sum([Sum([-(y), -((Sum([z, 1]) - a))]), b]), 
+   ~~> normalise_associative_commutative ([("Base", 8400)]) 
+Sum([-(y), -((Sum([z, 1]) - a)), b]) 
+
+--
+
+(Sum([z, 1]) - a), 
+   ~~> minus_to_sum ([("Base", 8400)]) 
+Sum([Sum([z, 1]), -(a)]) 
+
+--
+
+-(Sum([Sum([z, 1]), -(a)])), 
+   ~~> distribute_negation_over_sum ([("Base", 8400)]) 
+Sum([-(Sum([z, 1])), -(-(a))]) 
+
+--
+
+Sum([-(y), Sum([-(Sum([z, 1])), -(-(a))]), b]), 
+   ~~> normalise_associative_commutative ([("Base", 8400)]) 
+Sum([-(y), -(Sum([z, 1])), -(-(a)), b]) 
+
+--
+
+-(Sum([z, 1])), 
+   ~~> distribute_negation_over_sum ([("Base", 8400)]) 
+Sum([-(z), -(1)]) 
+
+--
+
+-(1), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+-1 
+
+--
+
+Sum([-(y), Sum([-(z), -1]), -(-(a)), b]), 
+   ~~> normalise_associative_commutative ([("Base", 8400)]) 
+Sum([-(y), -(z), -1, -(-(a)), b]) 
+
+--
+
+-(-(a)), 
+   ~~> elmininate_double_negation ([("Base", 8400)]) 
+a 
+
+--
+
+(x = Sum([-(y), -(z), -1, a, b])), 
+   ~~> sum_eq_to_sumeq ([("Minion", 4400)]) 
+SumEq([-(y), -(z), -1, a, b], x) 
+
+--
+
+SumEq([-(y), -(z), -1, a, b], x), 
+   ~~> sumeq_to_minion ([("Minion", 4400)]) 
+And([SumGeq([-(y), -(z), -1, a, b], x), SumLeq([-(y), -(z), -1, a, b], x)]) 
+
+--
+
+SumGeq([-(y), -(z), -1, a, b], x), 
+   ~~> flatten_vecop ([("Minion", 4400)]) 
+SumGeq([__0, __1, -1, a, b], x) 
+
+--
+
+SumLeq([-(y), -(z), -1, a, b], x), 
+   ~~> flatten_vecop ([("Minion", 4400)]) 
+SumLeq([__2, __3, -1, a, b], x) 
+
+--
+
+__0 =aux -(y), 
+   ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)]) 
+MinusEq(__0,y) 
+
+--
+
+__1 =aux -(z), 
+   ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)]) 
+MinusEq(__1,z) 
+
+--
+
+__2 =aux -(y), 
+   ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)]) 
+MinusEq(__2,y) 
+
+--
+
+__3 =aux -(z), 
+   ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)]) 
+MinusEq(__3,z) 
+
+--
+
