@@ -51,7 +51,6 @@ pub fn parse_essence_file_native(
                 model.add_constraint(expression);
             }
             "e_prime_label" => {}
-            "ERROR" => {}
             _ => {
                 let kind = statement.kind();
                 return Err(EssenceParseError::ParseError(Error::Parse(
