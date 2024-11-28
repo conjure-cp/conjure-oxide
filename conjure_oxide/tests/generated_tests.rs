@@ -314,6 +314,7 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
             SafeMod(_, _, _) => (),
             ModuloEqUndefZero(_, _, _, _) => (),
             Neg(_, _) => (),
+            Minus(_, _, _) => (),
         };
         x.clone()
     }));
