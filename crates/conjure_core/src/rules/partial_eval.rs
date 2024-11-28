@@ -194,7 +194,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
                 Ok(Reduction::pure(SumEq(m, new_vec, eq)))
             }
         }
-        SumGeq(m, vec, geq) => {
+        FlatSumGeq(m, vec, geq) => {
             let mut acc = 0;
             let mut new_vec: Vec<Expr> = Vec::new();
             let mut n_consts = 0;
@@ -210,7 +210,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             if let Expr::Atomic(_, Atom::Literal(Int(x))) = *geq {
                 if acc != 0 {
                     // when rhs is a constant, move lhs constants to rhs
-                    return Ok(Reduction::pure(SumGeq(
+                    return Ok(Reduction::pure(FlatSumGeq(
                         m,
                         new_vec,
                         Box::new(Expr::Atomic(
@@ -226,10 +226,10 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             if n_consts <= 1 {
                 Err(RuleNotApplicable)
             } else {
-                Ok(Reduction::pure(SumGeq(m, new_vec, geq)))
+                Ok(Reduction::pure(FlatSumGeq(m, new_vec, geq)))
             }
         }
-        SumLeq(m, vec, leq) => {
+        FlatSumLeq(m, vec, leq) => {
             let mut acc = 0;
             let mut new_vec: Vec<Expr> = Vec::new();
             let mut n_consts = 0;
@@ -245,7 +245,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             if let Expr::Atomic(_, Atom::Literal(Int(x))) = *leq {
                 // when rhs is a constant, move lhs constants to rhs
                 if acc != 0 {
-                    return Ok(Reduction::pure(SumLeq(
+                    return Ok(Reduction::pure(FlatSumLeq(
                         m,
                         new_vec,
                         Box::new(Expr::Atomic(
@@ -261,7 +261,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             if n_consts <= 1 {
                 Err(RuleNotApplicable)
             } else {
-                Ok(Reduction::pure(SumLeq(m, new_vec, leq)))
+                Ok(Reduction::pure(FlatSumLeq(m, new_vec, leq)))
             }
         }
         DivEqUndefZero(_, _, _, _) => Err(RuleNotApplicable),

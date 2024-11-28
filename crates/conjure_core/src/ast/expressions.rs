@@ -101,10 +101,10 @@ pub enum Expression {
 
     // Flattened Constraints
     #[compatible(Minion)]
-    SumGeq(Metadata, Vec<Expression>, Box<Expression>),
+    FlatSumGeq(Metadata, Vec<Atom>, Atom),
 
     #[compatible(Minion)]
-    SumLeq(Metadata, Vec<Expression>, Box<Expression>),
+    FlatSumLeq(Metadata, Vec<Atom>, Atom),
 
     /// `a / b = c`
     #[compatible(Minion)]
@@ -250,8 +250,8 @@ impl Expression {
             Expression::Gt(_, _, _) => Some(Domain::BoolDomain),
             Expression::Lt(_, _, _) => Some(Domain::BoolDomain),
             Expression::SumEq(_, _, _) => Some(Domain::BoolDomain),
-            Expression::SumGeq(_, _, _) => Some(Domain::BoolDomain),
-            Expression::SumLeq(_, _, _) => Some(Domain::BoolDomain),
+            Expression::FlatSumGeq(_, _, _) => Some(Domain::BoolDomain),
+            Expression::FlatSumLeq(_, _, _) => Some(Domain::BoolDomain),
             Expression::DivEqUndefZero(_, _, _, _) => Some(Domain::BoolDomain),
             Expression::ModuloEqUndefZero(_, _, _, _) => Some(Domain::BoolDomain),
             Expression::Ineq(_, _, _, _) => Some(Domain::BoolDomain),
@@ -310,8 +310,8 @@ impl Expression {
             Expression::SafeDiv(_, _, _) => Some(ReturnType::Int),
             Expression::UnsafeDiv(_, _, _) => Some(ReturnType::Int),
             Expression::SumEq(_, _, _) => Some(ReturnType::Bool),
-            Expression::SumGeq(_, _, _) => Some(ReturnType::Bool),
-            Expression::SumLeq(_, _, _) => Some(ReturnType::Bool),
+            Expression::FlatSumGeq(_, _, _) => Some(ReturnType::Bool),
+            Expression::FlatSumLeq(_, _, _) => Some(ReturnType::Bool),
             Expression::DivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
             Expression::Ineq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AllDiff(_, _) => Some(ReturnType::Bool),
@@ -438,11 +438,22 @@ impl Display for Expression {
                     expr_box.clone()
                 )
             }
-            Expression::SumGeq(_, box1, box2) => {
-                write!(f, "SumGeq({}, {})", display_expressions(box1), box2.clone())
+            Expression::FlatSumGeq(_, atoms, atom) => {
+                write!(f, "__FlatSumGeq(")?;
+                write!(f, "[")?;
+                for atom in atoms {
+                    write!(f,"{}",atom)?;
+                }
+                write!(f, "],{})",atom)
+
             }
-            Expression::SumLeq(_, box1, box2) => {
-                write!(f, "SumLeq({}, {})", display_expressions(box1), box2.clone())
+            Expression::FlatSumLeq(_, atoms, atom) => {
+                write!(f, "__FlatSumLeq(")?;
+                write!(f, "[")?;
+                for atom in atoms {
+                    write!(f,"{}",atom)?;
+                }
+                write!(f, "],{})",atom)
             }
             Expression::Ineq(_, box1, box2, box3) => write!(
                 f,

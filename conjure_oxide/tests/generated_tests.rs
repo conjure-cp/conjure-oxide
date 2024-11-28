@@ -300,8 +300,8 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
             SafeDiv(_, _, _) => (),
             UnsafeDiv(_, _, _) => (),
             SumEq(_, vec, _) => assert_constants_leq_one(&x, vec),
-            SumGeq(_, vec, _) => assert_constants_leq_one(&x, vec),
-            SumLeq(_, vec, _) => assert_constants_leq_one(&x, vec),
+            FlatSumGeq(_, vec, _) => assert_constants_leq_one(&x, vec),
+            FlatSumLeq(_, vec, _) => assert_constants_leq_one(&x, vec),
             DivEqUndefZero(_, _, _, _) => (),
             Ineq(_, _, _, _) => (),
             // this is a vector operation, but we don't want to fold values into each-other in this

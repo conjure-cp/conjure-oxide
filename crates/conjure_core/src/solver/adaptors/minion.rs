@@ -289,11 +289,11 @@ fn read_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, So
             read_var(reff.into())?,
             minion_ast::Constant::Integer(1),
         )),
-        conjure_ast::Expression::SumLeq(_metadata, lhs, rhs) => Ok(minion_ast::Constraint::SumLeq(
+        conjure_ast::Expression::FlatSumLeq(_metadata, lhs, rhs) => Ok(minion_ast::Constraint::SumLeq(
             read_vars(lhs)?,
             read_var(*rhs)?,
         )),
-        conjure_ast::Expression::SumGeq(_metadata, lhs, rhs) => Ok(minion_ast::Constraint::SumGeq(
+        conjure_ast::Expression::FlatSumGeq(_metadata, lhs, rhs) => Ok(minion_ast::Constraint::SumGeq(
             read_vars(lhs)?,
             read_var(*rhs)?,
         )),

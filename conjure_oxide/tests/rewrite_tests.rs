@@ -202,7 +202,7 @@ fn rule_sum_geq() {
 
     assert_eq!(
         expr,
-        Expression::SumGeq(
+        Expression::FlatSumGeq(
             Metadata::new(),
             vec![
                 Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
@@ -282,7 +282,7 @@ fn reduce_solve_xyz() {
         .new_expression;
     assert_eq!(
         expr1,
-        Expression::SumLeq(
+        Expression::FlatSumLeq(
             Metadata::new(),
             vec![
                 Expression::Atomic(

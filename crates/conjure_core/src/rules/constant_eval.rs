@@ -47,10 +47,10 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             tern_op::<i32, bool>(|a, b, c| a <= (b + c), a, b, c).map(Lit::Bool)
         }
 
-        Expr::SumGeq(_, exprs, a) => {
+        Expr::FlatSumGeq(_, exprs, a) => {
             flat_op::<i32, bool>(|e, a| e.iter().sum::<i32>() >= a, exprs, a).map(Lit::Bool)
         }
-        Expr::SumLeq(_, exprs, a) => {
+        Expr::FlatSumLeq(_, exprs, a) => {
             flat_op::<i32, bool>(|e, a| e.iter().sum::<i32>() <= a, exprs, a).map(Lit::Bool)
         }
         Expr::Min(_, exprs) => {

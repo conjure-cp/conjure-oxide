@@ -283,7 +283,7 @@ fn flatten_sum_geq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Geq(metadata, a, b) => {
             let exprs = sum_to_vector(a)?;
-            Ok(Reduction::pure(SumGeq(
+            Ok(Reduction::pure(FlatSumGeq(
                 metadata.clone_dirty(),
                 exprs,
                 b.clone(),
@@ -304,7 +304,7 @@ fn sum_leq_to_sumleq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Leq(metadata, a, b) => {
             let exprs = sum_to_vector(a)?;
-            Ok(Reduction::pure(SumLeq(
+            Ok(Reduction::pure(FlatSumLeq(
                 metadata.clone_dirty(),
                 exprs,
                 b.clone(),
@@ -365,8 +365,8 @@ fn sumeq_to_minion(expr: &Expr, _: &Model) -> ApplicationResult {
         SumEq(_metadata, exprs, eq_to) => Ok(Reduction::pure(And(
             Metadata::new(),
             vec![
-                SumGeq(Metadata::new(), exprs.clone(), Box::from(*eq_to.clone())),
-                SumLeq(Metadata::new(), exprs.clone(), Box::from(*eq_to.clone())),
+                FlatSumGeq(Metadata::new(), exprs.clone(), Box::from(*eq_to.clone())),
+                FlatSumLeq(Metadata::new(), exprs.clone(), Box::from(*eq_to.clone())),
             ],
         ))),
         _ => Err(RuleNotApplicable),
