@@ -56,7 +56,7 @@ struct Cli {
         short = 'n',
         help = "number of solutions to return (0 for all)"
     )]
-    number_of_solutions : i32,
+    number_of_solutions: i32,
     // TODO: subcommands instead of these being a flag.
     #[arg(
         long,
@@ -256,7 +256,7 @@ pub fn main() -> AnyhowResult<()> {
     model = rewrite_model(&model, &rule_sets)?;
 
     tracing::info!(constraints=%model.constraints,model=%json!(model),"Rewritten model");
-    let solutions = get_minion_solutions(model,cli.number_of_solutions)?; // ToDo we need to properly set the solver adaptor here, not hard code minion
+    let solutions = get_minion_solutions(model, cli.number_of_solutions)?; // ToDo we need to properly set the solver adaptor here, not hard code minion
     log::info!(target: "file", "Solutions: {}", minion_solutions_to_json(&solutions));
 
     let solutions_json = minion_solutions_to_json(&solutions);
