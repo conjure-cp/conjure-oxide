@@ -7,6 +7,7 @@ module.exports = grammar ({
   ],
 
   rules: {
+    //top level statements
     program: $ => repeat(choice(
       $.find_statement_list,
       $.constraint_list
@@ -17,6 +18,24 @@ module.exports = grammar ({
       /.*/
     )),
 
+    //general
+    constant: $ => choice(
+      $.integer,
+      $.TRUE,
+      $.FALSE
+    ),
+
+    integer: $ => /[0-9]+/,
+
+    TRUE: $ => "true",
+
+    FALSE: $ => "false",
+
+    variable: $ => $.identifier,
+
+    identifier: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
+
+    //find statements
     find_statement_list: $ => seq(
       "find",
       repeat($.find_statement)
@@ -37,35 +56,22 @@ module.exports = grammar ({
       )))
     ),
 
-    constraint_list: $ => seq(
-      "such that",
-      repeat($.constraint)
-    ),
-
-    constraint: $ => seq(
-      optional($.not),
-      $.expression,
-      optional(",")
-    ),
-
-    not: $ => "!",
-
     domain: $ => choice(
-      $.int_domain,
-      $.bool_domain
+      $.bool_domain,
+      $.int_domain
     ),
+
+    bool_domain: $ => "bool",
 
     int_domain: $ => prec.left(seq(
-      "int",
+      "int", 
       optional(seq(
         "(",
         field("range_list", $.range_list),
-        //eventually add in expressions here
+        //TODO: eventually add in expressions here
         ")"
       ))
     )),
-
-    bool_domain: $ => "bool",
 
     range_list: $ => prec(2, seq(
       choice(
@@ -86,87 +92,52 @@ module.exports = grammar ({
       "..",
       optional($.expression)
     ),
-    
-    //should these be expresions not integers?
-    lower_bound_range: $ => seq(
-      $.integer,
-      ".."
+
+    //constraints
+    constraint_list: $ => seq(
+      "such that",
+      repeat($.constraint)
     ),
 
-    upper_bound_range: $ => seq(
-      "..",
-      $.integer
-    ),
-    
-    closed_range: $ => seq(
-      $.integer,
-      "..",
-      $.integer
+    constraint: $ => seq(
+      optional($.not),
+      $.expression,
+      optional(",")
     ),
 
-    variable: $ => $.identifier,
+    not: $ => "!",
 
-    identifier: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
-
-    expression: $ => seq(
-      $.conjunction,
-      optional(repeat(seq(
-        "or",
-        $.conjunction
-      )))
-    ),
-
-    conjunction: $ => seq(
-      $.comparison,
-      optional(repeat(seq(
-        "and",
-        $.comparison
-      )))
-    ),
-
-    comparison: $ => seq(
-      $.addition,
-      optional(repeat(seq(
-        $.comp_op,
-        $.addition
-      )))
-    ),
-
-    addition: $ => seq(
-      $.term,
-      optional(repeat(seq(
-        choice(
-          "+",
-          "-"
-        ),
-        $.term
-      )))
-    ),
-
-    term: $ => seq(
-      $.factor,
-      optional(repeat(seq(
-        choice(
-          "*",
-          "/",
-          "%"
-        ),
-        $.factor
-      )))
-    ),
-
-    factor: $ => prec.left(choice(
-      seq(
-        "(",
-        $.expression,
-        ")"
-      ),
-      $.min,
-      $.max,
-      $.constant,
-      $.variable,
-      $.sum
+    expression: $ => prec.left(choice(
+      field("or_expr", seq($.expression, "\\/", $.expression)),
+      field("and_expr", seq($.expression, "/\\", $.expression)),
+      prec(1, field("comp_op_expr", seq($.expression, $.comp_op, $.expression))),
+      prec(2, field("math_op_expr", seq($.expression, $.math_op, $.expression))),
+      field("min_expr", $.min),
+      field("max_expr", $.max),
+      field("sum_expr", $.sum),
+      field("constant", $.constant),
+      field("variable", $.variable),
+      field("sub_expr", seq("(", $.expression, ")"))
     )),
+
+    
+
+    comp_op: $ => choice(
+      "=",
+      "!=",
+      "<=",
+      ">=",
+      "<",
+      ">"
+    ),
+
+    math_op: $ => choice(
+      "+",
+      "-",
+      "*",
+      "/", 
+      "%"
+    ),
 
     min: $ => seq(
       "min([",
@@ -189,31 +160,10 @@ module.exports = grammar ({
     sum: $ => seq(
       "sum([",
       repeat(seq(
-        $.factor,
+        $.expression,
         optional(",")
       )),
       "])"
-    ),
-
-    TRUE: $ => "true",
-
-    FALSE: $ => "false",
-
-    comp_op: $ => choice(
-      "=",
-      "!=",
-      "<=",
-      ">=",
-      "<",
-      ">"
-    ),
-
-    constant: $ => choice(
-      $.integer,
-      $.TRUE,
-      $.FALSE
-    ),
-
-    integer: $ => /[0-9]+/
+    )
   }
 })
