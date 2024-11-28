@@ -320,6 +320,7 @@ impl Expression {
             Expression::Atomic(_, _) => false,
             Expression::SafeDiv(_, _, _) => false,
             Expression::SafeMod(_, _, _) => false,
+            Expression::Neg(_, _) => false,
             _ => true,
         }
     }
