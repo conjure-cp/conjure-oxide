@@ -200,7 +200,10 @@ pub fn get_solutions_from_conjure(
             }?;
             solution_map.insert(name, value);
         }
-        solutions_set.push(solution_map);
+
+        if !solution.is_empty() {
+            solutions_set.push(solution_map);
+        }
     }
 
     Ok(solutions_set)
