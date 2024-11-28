@@ -154,7 +154,10 @@ fn flatten_binop(expr: &Expr, model: &Model) -> ApplicationResult {
 
 #[register_rule(("Minion", 4400))]
 fn flatten_vecop(expr: &Expr, model: &Model) -> ApplicationResult {
-    if !matches!(expr, Expr::Sum(_, _)) {
+    if !matches!(
+        expr,
+        Expr::Sum(_, _) | Expr::SumGeq(_, _, _) | Expr::SumLeq(_, _, _)
+    ) {
         return Err(RuleNotApplicable);
     }
 
