@@ -1,0 +1,7 @@
+{"message":"Rule applicable: flatten_minuseq ([(\"Minion\", 4400)]), to expression: (x = -(UnsafeDiv(y, z))), resulting in: MinusEq(x,__0)","target":"rule_engine"}
+{"message":"Rule applicable: div_to_bubble ([(\"Bubble\", 6000)]), to expression: UnsafeDiv(y, z), resulting in: {SafeDiv(y, z) @ (z != 0)}","target":"rule_engine"}
+{"message":"Rule applicable: bubble_up ([(\"Bubble\", 8900)]), to expression: __0 =aux {SafeDiv(y, z) @ (z != 0)}, resulting in: {__0 =aux SafeDiv(y, z) @ And([(z != 0)])}","target":"rule_engine"}
+{"message":"Rule applicable: expand_bubble ([(\"Bubble\", 8900)]), to expression: {__0 =aux SafeDiv(y, z) @ And([(z != 0)])}, resulting in: And([__0 =aux SafeDiv(y, z), And([(z != 0)])])","target":"rule_engine"}
+{"message":"Rule applicable: normalise_associative_commutative ([(\"Base\", 8400)]), to expression: And([MinusEq(x,__0), And([__0 =aux SafeDiv(y, z), And([(z != 0)])])]), resulting in: And([MinusEq(x,__0), __0 =aux SafeDiv(y, z), (z != 0)])","target":"rule_engine"}
+{"message":"Rule applicable: introduce_diveq ([(\"Minion\", 4200)]), to expression: __0 =aux SafeDiv(y, z), resulting in: DivEq(y, z, __0)","target":"rule_engine"}
+{"count":6,"message":" Number of rules applied"}
