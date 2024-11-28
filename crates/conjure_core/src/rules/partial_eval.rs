@@ -289,5 +289,6 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
         SafeMod(_, _, _) => Err(RuleNotApplicable),
         ModuloEqUndefZero(_, _, _, _) => Err(RuleNotApplicable),
         Minus(_, _, _) => Err(RuleNotApplicable),
+        MinusEq(_, _, _) => Err(RuleNotApplicable),
     }
 }

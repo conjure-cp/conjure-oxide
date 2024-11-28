@@ -589,7 +589,11 @@ unsafe fn constraint_add_args(
             read_var(i, r_constr, b)?;
             Ok(())
         }
-        //Constraint::MinusEq(_, _) => todo!(),
+        Constraint::MinusEq(a, b) => {
+            read_var(i, r_constr, a)?;
+            read_var(i, r_constr, b)?;
+            Ok(())
+        }
         //Constraint::GacEq(_, _) => todo!(),
         //Constraint::WatchLess(_, _) => todo!(),
         // TODO: ensure that this is a bool?

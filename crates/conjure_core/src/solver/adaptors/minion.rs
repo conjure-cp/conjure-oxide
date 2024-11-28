@@ -353,6 +353,11 @@ fn read_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, So
                 read_var(*expr)?,
             ))
         }
+
+        conjure_ast::Expression::MinusEq(_metadata, a, b) => Ok(minion_ast::Constraint::MinusEq(
+            read_var(conjure_ast::Expression::Atomic(_metadata.clone(), a))?,
+            read_var(conjure_ast::Expression::Atomic(_metadata, b))?,
+        )),
         x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
     }
 }
