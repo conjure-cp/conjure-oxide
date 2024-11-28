@@ -5,7 +5,8 @@ use tree_sitter_generate::generate_parser_in_directory;
 fn main() {
     let src_dir = std::path::Path::new("src");
 
-    generate_parser_in_directory(src_dir, Some("grammar.js"), 13, None, None).expect("Failed to generate parser");
+    generate_parser_in_directory(std::path::Path::new(""), Some("grammar.js"), 13, None, None)
+        .expect("Failed to generate parser");
 
     let mut c_config = cc::Build::new();
     c_config.std("c11").include(src_dir);
