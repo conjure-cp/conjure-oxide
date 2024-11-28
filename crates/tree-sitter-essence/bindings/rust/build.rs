@@ -1,5 +1,5 @@
-use std::process::Command;
 use std::env;
+use std::process::Command;
 
 fn main() {
     let src_dir = std::path::Path::new("src");
@@ -10,8 +10,8 @@ fn main() {
     #[cfg(target_env = "msvc")]
     c_config.flag("-utf-8");
 
-    let tree_sitter_cli = env::var("Cargo_BIN_EXE_tree-sitter").expect("tree-sitter-cli not found");
-    
+    let tree_sitter_cli = env::var("CARGO_BIN_EXE_tree-sitter").expect("tree-sitter-cli not found");
+
     std::process::Command::new(tree_sitter_cli)
         .arg("generate")
         .status()
