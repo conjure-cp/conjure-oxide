@@ -39,7 +39,9 @@ pub fn parse_essence_file_native(
                 if statement.child_count() > 2 {
                     let mut constraint_vec: Vec<Expression> = Vec::new();
                     for constraint in named_children(&statement) {
-                        constraint_vec.push(parse_constraint(constraint, &source_code));
+                        if constraint.kind() != "single_line_comment" {
+                            constraint_vec.push(parse_constraint(constraint, &source_code));
+                        }
                     }
                     expression = Expression::And(Metadata::new(), constraint_vec);
                 } else {
@@ -48,10 +50,12 @@ pub fn parse_essence_file_native(
 
                 model.add_constraint(expression);
             }
+            "e_prime_label" => {}
             _ => {
+                let kind = statement.kind();
                 return Err(EssenceParseError::ParseError(Error::Parse(
-                    "Unrecognized top level statement".to_owned(),
-                )))
+                    format!("Unrecognized top level statement kind: {kind}").to_owned(),
+                )));
             }
         }
     }
@@ -185,15 +189,6 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
     match constraint.kind() {
         "constraint" => {
             let child = constraint.child(0).expect("Error: empty constraint");
-
-            if child.kind() == "not" {
-                let constraint = child
-                    .next_sibling()
-                    .expect("Error: no node after 'not' node");
-                let expr = parse_constraint(constraint, source_code);
-                return Expression::Not(Metadata::new(), Box::new(expr));
-            }
-
             return parse_constraint(child, source_code);
         }
         "expression" => {
@@ -311,8 +306,19 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
                         _ => panic!("Not a supported math_op"),
                     }
                 }
-                Some("min_expr") | Some("max_expr") | Some("sum_expr") | Some("constant")
-                | Some("variable") => {
+                Some("not_expr") => {
+                    let constraint = constraint
+                        .child(1)
+                        .expect("Error: no node after 'not' node");
+                    let expr = parse_constraint(constraint, source_code);
+                    return Expression::Not(Metadata::new(), Box::new(expr));
+                }
+                Some("min_expr")
+                | Some("max_expr")
+                | Some("sum_expr")
+                | Some("constant")
+                | Some("variable")
+                | Some("all_diff_expr") => {
                     let child = constraint.child(0).expect("Error with constraints");
                     return parse_constraint(child, source_code);
                 }
@@ -326,25 +332,32 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
             }
         }
         "min" => {
-            let mut variable_list: Vec<Expression> = Vec::new();
-            for variable in named_children(&constraint) {
-                variable_list.push(parse_constraint(variable, source_code));
+            let mut term_list = Vec::new();
+            for term in named_children(&constraint) {
+                term_list.push(parse_constraint(term, source_code));
             }
-            return Expression::Min(Metadata::new(), variable_list);
+            return Expression::Min(Metadata::new(), term_list);
         }
         "max" => {
-            let mut variable_list: Vec<Expression> = Vec::new();
-            for variable in named_children(&constraint) {
-                variable_list.push(parse_constraint(variable, source_code));
+            let mut term_list = Vec::new();
+            for term in named_children(&constraint) {
+                term_list.push(parse_constraint(term, source_code));
             }
-            return Expression::Max(Metadata::new(), variable_list);
+            return Expression::Max(Metadata::new(), term_list);
         }
         "sum" => {
-            let mut expr_vec: Vec<Expression> = Vec::new();
-            for factor in named_children(&constraint) {
-                expr_vec.push(parse_constraint(factor, source_code));
+            let mut term_list = Vec::new();
+            for term in named_children(&constraint) {
+                term_list.push(parse_constraint(term, source_code));
             }
-            return Expression::Sum(Metadata::new(), expr_vec);
+            return Expression::Sum(Metadata::new(), term_list);
+        }
+        "all_diff" => {
+            let mut term_list = Vec::new();
+            for term in named_children(&constraint) {
+                term_list.push(parse_constraint(term, source_code));
+            }
+            return Expression::AllDiff(Metadata::new(), term_list);
         }
         "constant" => {
             let child = constraint.child(0).expect("Error with constant");

@@ -3,7 +3,8 @@ module.exports = grammar ({
 
   extras: $ => [
     $.single_line_comment,
-    /\s/
+    /\s/,
+    $.e_prime_label
   ],
 
   rules: {
@@ -17,6 +18,8 @@ module.exports = grammar ({
       '$',
       /.*/
     )),
+
+    e_prime_label: $ => token("language ESSENCE' 1.0"),
 
     //general
     constant: $ => choice(
@@ -100,7 +103,6 @@ module.exports = grammar ({
     ),
 
     constraint: $ => seq(
-      optional($.not),
       $.expression,
       optional(",")
     ),
@@ -112,15 +114,15 @@ module.exports = grammar ({
       field("and_expr", seq($.expression, "/\\", $.expression)),
       prec(1, field("comp_op_expr", seq($.expression, $.comp_op, $.expression))),
       prec(2, field("math_op_expr", seq($.expression, $.math_op, $.expression))),
+      field("not_expr", seq($.not, $.expression)),
       field("min_expr", $.min),
       field("max_expr", $.max),
       field("sum_expr", $.sum),
+      field("all_diff_expr", $.all_diff),
       field("constant", $.constant),
       field("variable", $.variable),
       field("sub_expr", seq("(", $.expression, ")"))
     )),
-
-    
 
     comp_op: $ => choice(
       "=",
@@ -159,6 +161,15 @@ module.exports = grammar ({
 
     sum: $ => seq(
       "sum([",
+      repeat(seq(
+        $.expression,
+        optional(",")
+      )),
+      "])"
+    ),
+
+    all_diff: $ => seq(
+      "allDiff([",
       repeat(seq(
         $.expression,
         optional(",")

@@ -34,6 +34,13 @@
         ]
       }
     },
+    "e_prime_label": {
+      "type": "TOKEN",
+      "content": {
+        "type": "STRING",
+        "value": "language ESSENCE' 1.0"
+      }
+    },
     "constant": {
       "type": "CHOICE",
       "members": [
@@ -324,18 +331,6 @@
       "type": "SEQ",
       "members": [
         {
-          "type": "CHOICE",
-          "members": [
-            {
-              "type": "SYMBOL",
-              "name": "not"
-            },
-            {
-              "type": "BLANK"
-            }
-          ]
-        },
-        {
           "type": "SYMBOL",
           "name": "expression"
         },
@@ -457,6 +452,23 @@
           },
           {
             "type": "FIELD",
+            "name": "not_expr",
+            "content": {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "not"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "expression"
+                }
+              ]
+            }
+          },
+          {
+            "type": "FIELD",
             "name": "min_expr",
             "content": {
               "type": "SYMBOL",
@@ -477,6 +489,14 @@
             "content": {
               "type": "SYMBOL",
               "name": "sum"
+            }
+          },
+          {
+            "type": "FIELD",
+            "name": "all_diff_expr",
+            "content": {
+              "type": "SYMBOL",
+              "name": "all_diff"
             }
           },
           {
@@ -685,6 +705,43 @@
           "value": "])"
         }
       ]
+    },
+    "all_diff": {
+      "type": "SEQ",
+      "members": [
+        {
+          "type": "STRING",
+          "value": "allDiff(["
+        },
+        {
+          "type": "REPEAT",
+          "content": {
+            "type": "SEQ",
+            "members": [
+              {
+                "type": "SYMBOL",
+                "name": "expression"
+              },
+              {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": ","
+                  },
+                  {
+                    "type": "BLANK"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "type": "STRING",
+          "value": "])"
+        }
+      ]
     }
   },
   "extras": [
@@ -695,6 +752,10 @@
     {
       "type": "PATTERN",
       "value": "\\s"
+    },
+    {
+      "type": "SYMBOL",
+      "name": "e_prime_label"
     }
   ],
   "conflicts": [],
