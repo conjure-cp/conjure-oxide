@@ -91,20 +91,19 @@ module.exports = grammar ({
 
     constraint: $ => seq($.expression, optional(",")),
 
-    expression: $ => choice(
+    expression: $ => prec.left(choice(
       $.or_expr,
       $.and_expr,
-      $.comparison,
-      $.math_expr,
+      prec(1, $.comparison),
+      prec(2, $.math_expr),
       $.not_expr,
-      $.sub_expr,
       $.min,
       $.max,
       $.sum,
       $.all_diff,
       $.constant,
-      $.variable
-    ),
+      $.variable,
+    )),
     
     or_expr: $ => prec.left(choice(
       seq($.expression, "\\/", $.expression),
@@ -130,7 +129,7 @@ module.exports = grammar ({
       )
     )),
 
-    comparison: $ => prec(1, prec.left(seq($.expression, $.comp_op, $.expression))),
+    comparison: $ => prec.left(seq($.expression, $.comp_op, $.expression)),
 
     comp_op: $ => choice(
       "=",
@@ -141,7 +140,7 @@ module.exports = grammar ({
       ">"
     ),
 
-    math_expr: $ => prec(2, prec.left(seq($.expression, $.math_op, $.expression))),
+    math_expr: $ => prec.left(seq($.expression, $.math_op, $.expression)),
 
     math_op: $ => choice(
       "+",
@@ -152,8 +151,6 @@ module.exports = grammar ({
     ),
 
     not_expr: $ => prec.left(seq("!", $.expression)),
-
-    sub_expr: $ => seq("(", $.expression, ")"),
 
     min: $ => seq(
       "min([",

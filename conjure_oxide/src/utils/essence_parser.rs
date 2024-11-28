@@ -188,150 +188,114 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
 
 fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
     match constraint.kind() {
-        "constraint" => {
-            let child = constraint.child(0).expect("Error: empty constraint");
+        "constraint" | "expression" => {
+            let child = constraint
+                .child(0)
+                .expect("Error: mission node in constraint statement");
             return parse_constraint(child, source_code);
         }
-        "expression" => {
-            match constraint.field_name_for_child(0) {
-                Some("or_expr") => {
-                    let mut expr_vec = Vec::new();
-                    for expr in named_children(&constraint) {
-                        expr_vec.push(parse_constraint(expr, source_code));
-                    }
-                    return Expression::Or(Metadata::new(), expr_vec);
-                }
-                Some("and_expr") => {
-                    let mut vec_exprs = Vec::new();
-                    for expr in named_children(&constraint) {
-                        vec_exprs.push(parse_constraint(expr, source_code));
-                    }
-                    return Expression::And(Metadata::new(), vec_exprs);
-                }
-                Some("comp_op_expr") => {
-                    let expr1_node = constraint
-                        .child(0)
-                        .expect("Error with comparison expression");
-                    let expr1 = parse_constraint(expr1_node, source_code);
-                    let comp_op = expr1_node
-                        .next_sibling()
-                        .expect("Error with comparison expression");
-                    let op_type = &source_code[comp_op.start_byte()..comp_op.end_byte()];
-                    let expr2_node = comp_op
-                        .next_sibling()
-                        .expect("Error with comparison expression");
-                    let expr2 = parse_constraint(expr2_node, source_code);
-
-                    match op_type {
-                        "=" => {
-                            return Expression::Eq(
-                                Metadata::new(),
-                                Box::new(expr1),
-                                Box::new(expr2),
-                            );
-                        }
-                        "!=" => {
-                            return Expression::Neq(
-                                Metadata::new(),
-                                Box::new(expr1),
-                                Box::new(expr2),
-                            );
-                        }
-                        "<=" => {
-                            return Expression::Leq(
-                                Metadata::new(),
-                                Box::new(expr1),
-                                Box::new(expr2),
-                            );
-                        }
-                        ">=" => {
-                            return Expression::Geq(
-                                Metadata::new(),
-                                Box::new(expr1),
-                                Box::new(expr2),
-                            );
-                        }
-                        "<" => {
-                            return Expression::Lt(
-                                Metadata::new(),
-                                Box::new(expr1),
-                                Box::new(expr2),
-                            );
-                        }
-                        ">" => {
-                            return Expression::Gt(
-                                Metadata::new(),
-                                Box::new(expr1),
-                                Box::new(expr2),
-                            );
-                        }
-                        _ => panic!("Not a supported comp_op"),
-                    }
-                }
-                Some("math_op_expr") => {
-                    let expr1_node = constraint.child(0).expect("Error with math expression");
-                    let expr1 = parse_constraint(expr1_node, source_code);
-                    let math_op = expr1_node
-                        .next_sibling()
-                        .expect("Error with math expression");
-                    let op_type = &source_code[math_op.start_byte()..math_op.end_byte()];
-                    let expr2_node = math_op.next_sibling().expect("Error with math expression");
-                    let expr2 = parse_constraint(expr2_node, source_code);
-
-                    match op_type {
-                        "+" => {
-                            return Expression::Sum(Metadata::new(), vec![expr1, expr2]);
-                        }
-                        "-" => {
-                            panic!("Subtraction expressions not supported yet")
-                        }
-                        "*" => {
-                            panic!("Multiplication expressions not supported yet")
-                        }
-                        "/" => {
-                            //TODO: add checks for if division is safe or not
-                            return Expression::UnsafeDiv(
-                                Metadata::new(),
-                                Box::new(expr1),
-                                Box::new(expr2),
-                            );
-                        }
-                        "%" => {
-                            //TODO: add checks for if mod is safe or not
-                            return Expression::UnsafeMod(
-                                Metadata::new(),
-                                Box::new(expr1),
-                                Box::new(expr2),
-                            );
-                        }
-                        _ => panic!("Not a supported math_op"),
-                    }
-                }
-                Some("not_expr") => {
-                    let constraint = constraint
-                        .child(1)
-                        .expect("Error: no node after 'not' node");
-                    let expr = parse_constraint(constraint, source_code);
-                    return Expression::Not(Metadata::new(), Box::new(expr));
-                }
-                Some("min_expr")
-                | Some("max_expr")
-                | Some("sum_expr")
-                | Some("constant")
-                | Some("variable")
-                | Some("all_diff_expr")
-                | Some("or_list") => {
-                    let child = constraint.child(0).expect("Error with constraints");
-                    return parse_constraint(child, source_code);
-                }
-                Some("sub_expr") => {
-                    let expr = constraint
-                        .named_child(0)
-                        .expect("Error with sub expression");
-                    return parse_constraint(expr, source_code);
-                }
-                _ => panic!("Error: Unknown expression type/field"),
+        "or_expr" => {
+            let mut expr_vec = Vec::new();
+            for expr in named_children(&constraint) {
+                expr_vec.push(parse_constraint(expr, source_code));
             }
+            return Expression::Or(Metadata::new(), expr_vec);
+        }
+        "and_expr" => {
+            let mut vec_exprs = Vec::new();
+            for expr in named_children(&constraint) {
+                vec_exprs.push(parse_constraint(expr, source_code));
+            }
+            return Expression::And(Metadata::new(), vec_exprs);
+        }
+        "comparison" => {
+            let expr1_node = constraint
+                .child(0)
+                .expect("Error with comparison expression");
+            let expr1 = parse_constraint(expr1_node, source_code);
+            let comp_op = expr1_node
+                .next_sibling()
+                .expect("Error with comparison expression");
+            let op_type = &source_code[comp_op.start_byte()..comp_op.end_byte()];
+            let expr2_node = comp_op
+                .next_sibling()
+                .expect("Error with comparison expression");
+            let expr2 = parse_constraint(expr2_node, source_code);
+
+            match op_type {
+                "=" => {
+                    return Expression::Eq(Metadata::new(), Box::new(expr1), Box::new(expr2));
+                }
+                "!=" => {
+                    return Expression::Neq(Metadata::new(), Box::new(expr1), Box::new(expr2));
+                }
+                "<=" => {
+                    return Expression::Leq(Metadata::new(), Box::new(expr1), Box::new(expr2));
+                }
+                ">=" => {
+                    return Expression::Geq(Metadata::new(), Box::new(expr1), Box::new(expr2));
+                }
+                "<" => {
+                    return Expression::Lt(Metadata::new(), Box::new(expr1), Box::new(expr2));
+                }
+                ">" => {
+                    return Expression::Gt(Metadata::new(), Box::new(expr1), Box::new(expr2));
+                }
+                _ => panic!("Not a supported comp_op"),
+            }
+        }
+        "math_expr" => {
+            let expr1_node = constraint.child(0).expect("Error with math expression");
+            let expr1 = parse_constraint(expr1_node, source_code);
+            let math_op = expr1_node
+                .next_sibling()
+                .expect("Error with math expression");
+            let op_type = &source_code[math_op.start_byte()..math_op.end_byte()];
+            let expr2_node = math_op.next_sibling().expect("Error with math expression");
+            let expr2 = parse_constraint(expr2_node, source_code);
+
+            match op_type {
+                "+" => {
+                    return Expression::Sum(Metadata::new(), vec![expr1, expr2]);
+                }
+                "-" => {
+                    panic!("Subtraction expressions not supported yet")
+                }
+                "*" => {
+                    panic!("Multiplication expressions not supported yet")
+                }
+                "/" => {
+                    //TODO: add checks for if division is safe or not
+                    return Expression::UnsafeDiv(
+                        Metadata::new(),
+                        Box::new(expr1),
+                        Box::new(expr2),
+                    );
+                }
+                "%" => {
+                    //TODO: add checks for if mod is safe or not
+                    return Expression::UnsafeMod(
+                        Metadata::new(),
+                        Box::new(expr1),
+                        Box::new(expr2),
+                    );
+                }
+                _ => panic!("Not a supported math_op"),
+            }
+        }
+        "not_expr" => {
+            let constraint = constraint
+                .child(1)
+                .expect("Error: no node after 'not' node");
+            let expr = parse_constraint(constraint, source_code);
+            return Expression::Not(Metadata::new(), Box::new(expr));
+        }
+        "sub_expr" => {
+            println!("sub");
+            let expr = constraint
+                .named_child(0)
+                .expect("Error with sub expression");
+            return parse_constraint(expr, source_code);
         }
         "min" => {
             let mut term_list = Vec::new();
@@ -360,13 +324,6 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
                 term_list.push(parse_constraint(term, source_code));
             }
             return Expression::AllDiff(Metadata::new(), term_list);
-        }
-        "or" => {
-            let mut term_list = Vec::new();
-            for term in named_children(&constraint) {
-                term_list.push(parse_constraint(term, source_code));
-            }
-            return Expression::Or(Metadata::new(), term_list);
         }
         "constant" => {
             let child = constraint.child(0).expect("Error with constant");

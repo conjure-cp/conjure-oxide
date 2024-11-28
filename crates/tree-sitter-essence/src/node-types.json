@@ -15,9 +15,43 @@
     }
   },
   {
+    "type": "and_expr",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "comp_op",
     "named": true,
     "fields": {}
+  },
+  {
+    "type": "comparison",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "comp_op",
+          "named": true
+        },
+        {
+          "type": "expression",
+          "named": true
+        }
+      ]
+    }
   },
   {
     "type": "constant",
@@ -94,165 +128,60 @@
   {
     "type": "expression",
     "named": true,
-    "fields": {
-      "all_diff_expr": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "all_diff",
-            "named": true
-          }
-        ]
-      },
-      "and_expr": {
-        "multiple": true,
-        "required": false,
-        "types": [
-          {
-            "type": "/\\",
-            "named": false
-          },
-          {
-            "type": "expression",
-            "named": true
-          }
-        ]
-      },
-      "comp_op_expr": {
-        "multiple": true,
-        "required": false,
-        "types": [
-          {
-            "type": "comp_op",
-            "named": true
-          },
-          {
-            "type": "expression",
-            "named": true
-          }
-        ]
-      },
-      "constant": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "constant",
-            "named": true
-          }
-        ]
-      },
-      "math_op_expr": {
-        "multiple": true,
-        "required": false,
-        "types": [
-          {
-            "type": "expression",
-            "named": true
-          },
-          {
-            "type": "math_op",
-            "named": true
-          }
-        ]
-      },
-      "max_expr": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "max",
-            "named": true
-          }
-        ]
-      },
-      "min_expr": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "min",
-            "named": true
-          }
-        ]
-      },
-      "not_expr": {
-        "multiple": true,
-        "required": false,
-        "types": [
-          {
-            "type": "expression",
-            "named": true
-          },
-          {
-            "type": "not",
-            "named": true
-          }
-        ]
-      },
-      "or_expr": {
-        "multiple": true,
-        "required": false,
-        "types": [
-          {
-            "type": "\\/",
-            "named": false
-          },
-          {
-            "type": "expression",
-            "named": true
-          }
-        ]
-      },
-      "or_list": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "or",
-            "named": true
-          }
-        ]
-      },
-      "sub_expr": {
-        "multiple": true,
-        "required": false,
-        "types": [
-          {
-            "type": "(",
-            "named": false
-          },
-          {
-            "type": ")",
-            "named": false
-          },
-          {
-            "type": "expression",
-            "named": true
-          }
-        ]
-      },
-      "sum_expr": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "sum",
-            "named": true
-          }
-        ]
-      },
-      "variable": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "variable",
-            "named": true
-          }
-        ]
-      }
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "all_diff",
+          "named": true
+        },
+        {
+          "type": "and_expr",
+          "named": true
+        },
+        {
+          "type": "comparison",
+          "named": true
+        },
+        {
+          "type": "constant",
+          "named": true
+        },
+        {
+          "type": "math_expr",
+          "named": true
+        },
+        {
+          "type": "max",
+          "named": true
+        },
+        {
+          "type": "min",
+          "named": true
+        },
+        {
+          "type": "not_expr",
+          "named": true
+        },
+        {
+          "type": "or_expr",
+          "named": true
+        },
+        {
+          "type": "sub_expr",
+          "named": true
+        },
+        {
+          "type": "sum",
+          "named": true
+        },
+        {
+          "type": "variable",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -328,6 +257,25 @@
     }
   },
   {
+    "type": "math_expr",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": true,
+      "required": true,
+      "types": [
+        {
+          "type": "expression",
+          "named": true
+        },
+        {
+          "type": "math_op",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "math_op",
     "named": true,
     "fields": {}
@@ -371,7 +319,22 @@
     }
   },
   {
-    "type": "or",
+    "type": "not_expr",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "or_expr",
     "named": true,
     "fields": {},
     "children": {
@@ -425,6 +388,21 @@
     }
   },
   {
+    "type": "sub_expr",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "expression",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
     "type": "sum",
     "named": true,
     "fields": {},
@@ -468,6 +446,10 @@
         }
       ]
     }
+  },
+  {
+    "type": "!",
+    "named": false
   },
   {
     "type": "!=",
@@ -558,6 +540,10 @@
     "named": false
   },
   {
+    "type": "and[",
+    "named": false
+  },
+  {
     "type": "bool_domain",
     "named": true
   },
@@ -588,10 +574,6 @@
   {
     "type": "min([",
     "named": false
-  },
-  {
-    "type": "not",
-    "named": true
   },
   {
     "type": "or([",
