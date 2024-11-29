@@ -105,7 +105,6 @@ impl Reduction {
         // TODO: (yb33) Remove it when we change constraints to a vector
         if let Expression::And(_, exprs) = &self.new_top {
             if exprs.is_empty() {
-                model.constraints = self.new_expression.clone();
                 return;
             }
         }
