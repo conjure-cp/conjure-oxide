@@ -1,70 +1,70 @@
 UnsafeDiv(y, z), 
    ~~> div_to_bubble ([("Bubble", 6000)]) 
 {SafeDiv(y, z) @ (z != 0)} 
---
 
+--
 UnsafeDiv(x, {SafeDiv(y, z) @ (z != 0)}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
 {UnsafeDiv(x, SafeDiv(y, z)) @ And([(z != 0)])} 
---
 
+--
 ({UnsafeDiv(x, SafeDiv(y, z)) @ And([(z != 0)])} != 10), 
    ~~> bubble_up ([("Bubble", 8900)]) 
 {(UnsafeDiv(x, SafeDiv(y, z)) != 10) @ And([And([(z != 0)])])} 
---
 
+--
 {(UnsafeDiv(x, SafeDiv(y, z)) != 10) @ And([And([(z != 0)])])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
 And([(UnsafeDiv(x, SafeDiv(y, z)) != 10), And([And([(z != 0)])])]) 
---
 
+--
 UnsafeDiv(x, SafeDiv(y, z)), 
    ~~> div_to_bubble ([("Bubble", 6000)]) 
 {SafeDiv(x, SafeDiv(y, z)) @ (SafeDiv(y, z) != 0)} 
---
 
+--
 ({SafeDiv(x, SafeDiv(y, z)) @ (SafeDiv(y, z) != 0)} != 10), 
    ~~> bubble_up ([("Bubble", 8900)]) 
 {(SafeDiv(x, SafeDiv(y, z)) != 10) @ And([(SafeDiv(y, z) != 0)])} 
---
 
+--
 {(SafeDiv(x, SafeDiv(y, z)) != 10) @ And([(SafeDiv(y, z) != 0)])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
 And([(SafeDiv(x, SafeDiv(y, z)) != 10), And([(SafeDiv(y, z) != 0)])]) 
---
 
+--
 And([And([(SafeDiv(x, SafeDiv(y, z)) != 10), And([(SafeDiv(y, z) != 0)])]), And([And([(z != 0)])])]), 
    ~~> normalise_associative_commutative ([("Base", 8400)]) 
 And([(SafeDiv(x, SafeDiv(y, z)) != 10), (SafeDiv(y, z) != 0), (z != 0)]) 
---
 
+--
 (SafeDiv(x, SafeDiv(y, z)) != 10), 
    ~~> flatten_binop ([("Minion", 4400)]) 
 (__0 != 10) 
---
 
+--
 (SafeDiv(y, z) != 0), 
    ~~> flatten_binop ([("Minion", 4400)]) 
 (__1 != 0) 
---
 
+--
 SafeDiv(x, SafeDiv(y, z)), 
    ~~> flatten_binop ([("Minion", 4400)]) 
 SafeDiv(x, __2) 
---
 
+--
 __0 =aux SafeDiv(x, __2), 
    ~~> introduce_diveq ([("Minion", 4200)]) 
 DivEq(x, __2, __0) 
---
 
+--
 __1 =aux SafeDiv(y, z), 
    ~~> introduce_diveq ([("Minion", 4200)]) 
 DivEq(y, z, __1) 
---
 
+--
 __2 =aux SafeDiv(y, z), 
    ~~> introduce_diveq ([("Minion", 4200)]) 
 DivEq(y, z, __2) 
---
 
+--

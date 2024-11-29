@@ -1,25 +1,25 @@
 UnsafeDiv(x, y), 
    ~~> div_to_bubble ([("Bubble", 6000)]) 
 {SafeDiv(x, y) @ (y != 0)} 
---
 
+--
 ({SafeDiv(x, y) @ (y != 0)} = z), 
    ~~> bubble_up ([("Bubble", 8900)]) 
 {(SafeDiv(x, y) = z) @ And([(y != 0)])} 
---
 
+--
 {(SafeDiv(x, y) = z) @ And([(y != 0)])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
 And([(SafeDiv(x, y) = z), And([(y != 0)])]) 
---
 
+--
 (SafeDiv(x, y) = z), 
    ~~> introduce_diveq ([("Minion", 4200)]) 
 DivEq(x, y, z) 
---
 
+--
 And([(y != 0)]), 
    ~~> remove_unit_vector_and ([("Base", 8800)]) 
 (y != 0) 
---
 
+--

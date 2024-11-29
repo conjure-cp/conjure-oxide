@@ -1,25 +1,25 @@
 UnsafeDiv(8, a), 
    ~~> div_to_bubble ([("Bubble", 6000)]) 
 {SafeDiv(8, a) @ (a != 0)} 
---
 
+--
 (2 = {SafeDiv(8, a) @ (a != 0)}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
 {(2 = SafeDiv(8, a)) @ And([(a != 0)])} 
---
 
+--
 {(2 = SafeDiv(8, a)) @ And([(a != 0)])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
 And([(2 = SafeDiv(8, a)), And([(a != 0)])]) 
---
 
+--
 (2 = SafeDiv(8, a)), 
    ~~> introduce_diveq ([("Minion", 4200)]) 
 DivEq(8, a, 2) 
---
 
+--
 And([(a != 0)]), 
    ~~> remove_unit_vector_and ([("Base", 8800)]) 
 (a != 0) 
---
 
+--
