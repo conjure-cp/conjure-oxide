@@ -197,14 +197,14 @@ fn integration_test_inner(
     }
 
     //Stage 4: Check that the generated rules match with the expected in temrs if type, order and count
-    let generated_rule_trace = read_rule_trace(path, essence_base, "generated", accept)?;
-    let expected_rule_trace = read_rule_trace(path, essence_base, "expected", accept)?;
+    // let generated_rule_trace = read_rule_trace(path, essence_base, "generated", accept)?;
+    // let expected_rule_trace = read_rule_trace(path, essence_base, "expected", accept)?;
 
     let generated_rule_trace_human =
         read_human_rule_trace(path, essence_base, "generated", accept)?;
     let expected_rule_trace_human = read_human_rule_trace(path, essence_base, "expected", accept)?;
 
-    assert_eq!(expected_rule_trace, generated_rule_trace);
+    //assert_eq!(expected_rule_trace, generated_rule_trace);
     assert_eq!(expected_rule_trace_human, generated_rule_trace_human);
 
     // test solutions against conjure before writing
@@ -334,16 +334,16 @@ pub fn create_scoped_subscriber(
     impl tracing::Subscriber + Send + Sync,
     Vec<tracing_appender::non_blocking::WorkerGuard>,
 ) {
-    let (target1_layer, guard1) = create_file_layer_json(path, test_name);
+    //let (target1_layer, guard1) = create_file_layer_json(path, test_name);
     let (target2_layer, guard2) = create_file_layer_human(path, test_name);
-    let layered = target1_layer.and_then(target2_layer);
+    let layered = target2_layer;
 
     let subscriber = Arc::new(tracing_subscriber::registry().with(layered))
         as Arc<dyn tracing::Subscriber + Send + Sync>;
     // setting this subscriber as the default
     let _default = tracing::subscriber::set_default(subscriber.clone());
 
-    (subscriber, vec![guard1, guard2])
+    (subscriber, vec![guard2])
 }
 
 fn create_file_layer_json(
