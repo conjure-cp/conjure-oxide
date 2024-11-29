@@ -1,3 +1,4 @@
+use conjure_oxide::utils::essence_parser::parse_essence_file_native;
 use conjure_oxide::utils::testing::{read_human_rule_trace, read_rule_trace};
 use glob::glob;
 use std::collections::HashMap;
@@ -39,7 +40,8 @@ use pretty_assertions::assert_eq;
 
 #[derive(Deserialize, Default)]
 struct TestConfig {
-    extra_rewriter_asserts: Vec<String>,
+    extra_rewriter_asserts: Option<Vec<String>>,
+    skip_native_parser: Option<bool>,
 }
 
 fn main() {
@@ -145,6 +147,16 @@ fn integration_test_inner(
             Default::default()
         };
 
+    // Stage 0: Compare the two methods of parsing
+    // skip if the field is set to true
+    // do not skip if it is unset, or if it is explicitly set to false
+    if config.skip_native_parser != Some(true) {
+        let model_native =
+            parse_essence_file_native(path, essence_base, extension, context.clone())?;
+        let expected_model = read_model_json(path, essence_base, "expected", "parse")?;
+        assert_eq!(model_native, expected_model);
+    }
+
     // Stage 1: Read the essence file and check that the model is parsed correctly
     let model = parse_essence_file(path, essence_base, extension, context.clone())?;
     if verbose {
@@ -172,13 +184,15 @@ fn integration_test_inner(
 
     save_model_json(&model, path, essence_base, "rewrite", accept)?;
 
-    for extra_assert in config.extra_rewriter_asserts {
-        match extra_assert.as_str() {
-            "vector_operators_have_partially_evaluated" => {
-                assert_vector_operators_have_partially_evaluated(&model)
-            }
-            x => println!("Unrecognised extra assert: {}", x),
-        };
+    if let Some(extra_asserts) = config.extra_rewriter_asserts {
+        for extra_assert in extra_asserts {
+            match extra_assert.as_str() {
+                "vector_operators_have_partially_evaluated" => {
+                    assert_vector_operators_have_partially_evaluated(&model)
+                }
+                x => println!("Unrecognised extra assert: {}", x),
+            };
+        }
     }
 
     let expected_model = read_model_json(path, essence_base, "expected", "rewrite")?;
