@@ -19,6 +19,8 @@ use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
 use crate::Model as ConjureModel;
 
+use super::json::string_sort_json_object;
+
 pub fn assert_eq_any_order<T: Eq + Hash + Debug + Clone>(a: &Vec<Vec<T>>, b: &Vec<Vec<T>>) {
     assert_eq!(a.len(), b.len());
 
@@ -197,6 +199,7 @@ pub fn read_rule_trace(
         .unwrap()
         .lines()
         .map(String::from)
+        .map(|s| string_sort_json_object(&s, false))
         .collect();
 
     //only count the number of rule in generated file (assumming the expected version already has that line and it is correct)

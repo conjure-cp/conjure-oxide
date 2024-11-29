@@ -1,3 +1,4 @@
+use conjure_core::bug;
 use serde_json::Value;
 
 /// Compare two JSON values.
@@ -76,4 +77,12 @@ pub fn sort_json_object(value: &Value, sort_arrays: bool) -> Value {
         }
         _ => value.clone(),
     }
+}
+
+/// A string version of `sort_json_object`
+///
+pub fn string_sort_json_object(value: &str, sort_arrays: bool) -> String {
+    let json_val = serde_json::from_str(value).unwrap_or_else(|err| bug!("{}", err));
+    let sorted_json = sort_json_object(&json_val, sort_arrays);
+    serde_json::to_string(&sorted_json).unwrap_or_else(|err| bug!("{}", err))
 }
