@@ -230,3 +230,26 @@ pub fn read_rule_trace(
 
     Ok(rules_trace)
 }
+
+pub fn read_human_rule_trace(
+    path: &str,
+    test_name: &str,
+    prefix: &str,
+    accept: bool,
+) -> Result<Vec<String>, std::io::Error> {
+    let filename = format!("{path}/{test_name}-{prefix}-rule-trace-human.txt");
+    let rules_trace: Vec<String> = read_to_string(&filename)
+        .unwrap()
+        .lines()
+        .map(String::from)
+        .collect();
+
+    if accept {
+        std::fs::copy(
+            format!("{path}/{test_name}-generated-rule-trace-human.txt"),
+            format!("{path}/{test_name}-expected-rule-trace-human.txt"),
+        )?;
+    }
+
+    Ok(rules_trace)
+}

@@ -1,0 +1,30 @@
+Sum([Sum([a, b]), c]), 
+   ~~> normalise_associative_commutative ([("Base", 8400)]) 
+Sum([a, b, c]) 
+
+--
+
+(Sum([a, b, c]) = 4), 
+   ~~> sum_eq_to_sumeq ([("Minion", 4400)]) 
+SumEq([a, b, c], 4) 
+
+--
+
+SumEq([a, b, c], 4), 
+   ~~> sumeq_to_minion ([("Minion", 4400)]) 
+And([SumGeq([a, b, c], 4), SumLeq([a, b, c], 4)]) 
+
+--
+
+And([And([SumGeq([a, b, c], 4), SumLeq([a, b, c], 4)]), (a >= b)]), 
+   ~~> normalise_associative_commutative ([("Base", 8400)]) 
+And([SumGeq([a, b, c], 4), SumLeq([a, b, c], 4), (a >= b)]) 
+
+--
+
+(a >= b), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(b, a, 0) 
+
+--
+

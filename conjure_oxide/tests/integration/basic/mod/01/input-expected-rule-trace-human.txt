@@ -1,0 +1,30 @@
+a % b, 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(a,b) @ (b != 0)} 
+
+--
+
+({SafeMod(a,b) @ (b != 0)} = 1), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(SafeMod(a,b) = 1) @ And([(b != 0)])} 
+
+--
+
+{(SafeMod(a,b) = 1) @ And([(b != 0)])}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(SafeMod(a,b) = 1), And([(b != 0)])]) 
+
+--
+
+(SafeMod(a,b) = 1), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(a, b, 1) 
+
+--
+
+And([(b != 0)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(b != 0) 
+
+--
+

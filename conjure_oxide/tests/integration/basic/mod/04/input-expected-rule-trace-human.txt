@@ -1,0 +1,54 @@
+b % c, 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(b,c) @ (c != 0)} 
+
+--
+
+(a = {SafeMod(b,c) @ (c != 0)}), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(a = SafeMod(b,c)) @ And([(c != 0)])} 
+
+--
+
+{(a = SafeMod(b,c)) @ And([(c != 0)])}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(a = SafeMod(b,c)), And([(c != 0)])]) 
+
+--
+
+Not(And([(a = SafeMod(b,c)), And([(c != 0)])])), 
+   ~~> distribute_not_over_and ([("Base", 8400)]) 
+Or([Not((a = SafeMod(b,c))), Not(And([(c != 0)]))]) 
+
+--
+
+Not((a = SafeMod(b,c))), 
+   ~~> negated_eq_to_neq ([("Base", 8800)]) 
+(a != SafeMod(b,c)) 
+
+--
+
+(a != SafeMod(b,c)), 
+   ~~> flatten_binop ([("Minion", 4400)]) 
+(a != __0) 
+
+--
+
+Not(And([(c != 0)])), 
+   ~~> distribute_not_over_and ([("Base", 8400)]) 
+Not((c != 0)) 
+
+--
+
+Not((c != 0)), 
+   ~~> negated_neq_to_eq ([("Base", 8800)]) 
+(c = 0) 
+
+--
+
+__0 =aux SafeMod(b,c), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(b, c, __0) 
+
+--
+
