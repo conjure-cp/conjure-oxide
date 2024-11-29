@@ -3,28 +3,34 @@ UnsafeDiv(b, c),
 {SafeDiv(b, c) @ (c != 0)} 
 
 --
+
 (a != {SafeDiv(b, c) @ (c != 0)}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
 {(a != SafeDiv(b, c)) @ And([(c != 0)])} 
 
 --
+
 {(a != SafeDiv(b, c)) @ And([(c != 0)])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
 And([(a != SafeDiv(b, c)), And([(c != 0)])]) 
 
 --
+
 (a != SafeDiv(b, c)), 
    ~~> flatten_binop ([("Minion", 4400)]) 
 (a != __0) 
 
 --
+
 And([(c != 0)]), 
    ~~> remove_unit_vector_and ([("Base", 8800)]) 
 (c != 0) 
 
 --
+
 __0 =aux SafeDiv(b, c), 
    ~~> introduce_diveq ([("Minion", 4200)]) 
 DivEq(b, c, __0) 
 
 --
+

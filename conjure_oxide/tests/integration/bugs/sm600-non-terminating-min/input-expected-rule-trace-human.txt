@@ -3,28 +3,34 @@
 SumLeq([Min([a, b]), 6], 10) 
 
 --
+
 SumLeq([Min([a, b]), 6], 10), 
    ~~> partial_evaluator ([("Base", 9000)]) 
 SumLeq([Min([a, b])], 4) 
 
 --
+
 Min([a, b]), 
    ~~> min_to_var ([("Base", 2000)]) 
 __0 
 
 --
+
 And([SumLeq([__0], 4), And([(__0 <= a), (__0 <= b), Or([(__0 = a), (__0 = b)])])]), 
    ~~> normalise_associative_commutative ([("Base", 8400)]) 
 And([SumLeq([__0], 4), (__0 <= a), (__0 <= b), Or([(__0 = a), (__0 = b)])]) 
 
 --
+
 (__0 <= a), 
    ~~> leq_to_ineq ([("Minion", 4100)]) 
 Ineq(__0, a, 0) 
 
 --
+
 (__0 <= b), 
    ~~> leq_to_ineq ([("Minion", 4100)]) 
 Ineq(__0, b, 0) 
 
 --
+

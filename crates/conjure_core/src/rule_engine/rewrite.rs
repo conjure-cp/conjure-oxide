@@ -441,7 +441,7 @@ fn trace_rules(results: &[RuleResult], expression: Expression) {
 
         trace!(
             target: "rule_engine_human",
-            "{}, \n   ~~> {} ({:?}) \n{} \n\n--",
+            "{}, \n   ~~> {} ({:?}) \n{} \n\n--\n",
             expression,
             rule.name,
             rule.rule_sets,
