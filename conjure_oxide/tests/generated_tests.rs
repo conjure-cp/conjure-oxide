@@ -1,21 +1,17 @@
-use conjure_oxide::utils::testing::read_rule_trace;
+use conjure_oxide::utils::testing::{read_human_rule_trace, read_rule_trace};
 use glob::glob;
-use serde_json::json;
-use serde_json::Value;
 use std::collections::HashMap;
 use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use tracing::field::Field;
-use tracing::field::Visit;
-use tracing::Subscriber;
 use tracing::{span, Level};
-use tracing_subscriber::{filter::EnvFilter, fmt, fmt::FmtContext, layer::SubscriberExt, Registry};
+use tracing_subscriber::{
+    filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
+};
 
 use tracing_appender::non_blocking::WorkerGuard;
 
-use std::io::BufWriter;
 use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -40,10 +36,6 @@ use serde::Deserialize;
 use uniplate::Uniplate;
 
 use pretty_assertions::assert_eq;
-use tracing::Event;
-use tracing_subscriber::fmt::format::Writer;
-use tracing_subscriber::fmt::FormatEvent;
-use tracing_subscriber::registry::LookupSpan;
 
 #[derive(Deserialize, Default)]
 struct TestConfig {
@@ -94,8 +86,8 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     // set the subscriber as default
     tracing::subscriber::with_default(subscriber, || {
         // create a span for the trace
-        let test_span = span!(target: "rule_engine", Level::TRACE, "test_span");
-        let _enter = test_span.enter();
+        // let test_span = span!(target: "rule_engine", Level::TRACE, "test_span");
+        // let _enter = test_span.enter();
 
         // execute tests based on verbosity
         if verbose {
@@ -204,10 +196,16 @@ fn integration_test_inner(
         println!("Minion solutions: {:#?}", solutions_json)
     }
 
-    let generated_rule_trace = read_rule_trace(path, essence_base, "generated", accept)?;
-    let expected_rule_trace = read_rule_trace(path, essence_base, "expected", accept)?;
+    //Stage 4: Check that the generated rules match with the expected in temrs if type, order and count
+    // let generated_rule_trace = read_rule_trace(path, essence_base, "generated", accept)?;
+    // let expected_rule_trace = read_rule_trace(path, essence_base, "expected", accept)?;
 
-    assert_eq!(expected_rule_trace, generated_rule_trace);
+    let generated_rule_trace_human =
+        read_human_rule_trace(path, essence_base, "generated", accept)?;
+    let expected_rule_trace_human = read_human_rule_trace(path, essence_base, "expected", accept)?;
+
+    //assert_eq!(expected_rule_trace, generated_rule_trace);
+    assert_eq!(expected_rule_trace_human, generated_rule_trace_human);
 
     // test solutions against conjure before writing
     if accept {
@@ -329,90 +327,62 @@ fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
     assert!(count <= 1, "assert_vector_operators_have_partially_evaluated: expression {} is not partially evaluated",parent_expr)
 }
 
-// using a custom formatter to omit the span name in the log
-// and removing the identifier and application fields for assertions
-struct JsonFormatter;
-
-impl<S, N> FormatEvent<S, N> for JsonFormatter
-where
-    S: Subscriber + for<'span> LookupSpan<'span>,
-    N: for<'a> tracing_subscriber::fmt::FormatFields<'a> + 'static,
-{
-    fn format_event(
-        &self,
-        _ctx: &FmtContext<'_, S, N>,
-        mut writer: Writer<'_>,
-        event: &Event<'_>,
-    ) -> std::fmt::Result {
-        // initialising the log object with level and target
-        let mut log = json!({
-            //"level": event.metadata().level().to_string(),
-            "target": event.metadata().target(),
-        });
-
-        // creating a visitor to capture fields
-        struct JsonVisitor {
-            log: Value,
-        }
-
-        impl Visit for JsonVisitor {
-            fn record_str(&mut self, field: &Field, value: &str) {
-                self.log
-                    .as_object_mut()
-                    .map(|obj| obj.insert(field.name().to_string(), json!(value)));
-            }
-
-            fn record_debug(&mut self, field: &Field, value: &dyn std::fmt::Debug) {
-                self.log
-                    .as_object_mut()
-                    .map(|obj| obj.insert(field.name().to_string(), json!(format!("{:?}", value))));
-            }
-        }
-
-        // using the visitor to record fields
-        let mut visitor = JsonVisitor { log: log.clone() };
-        event.record(&mut visitor);
-
-        // merging the visitor's log into the main log object
-        log.as_object_mut().map(|obj| {
-            if let Some(visitor_obj) = visitor.log.as_object() {
-                for (key, value) in visitor_obj {
-                    obj.insert(key.clone(), value.clone());
-                }
-            }
-        });
-
-        // Write the JSON log
-        writeln!(writer, "{}", log)
-    }
-}
-
 pub fn create_scoped_subscriber(
     path: &str,
     test_name: &str,
-) -> (impl tracing::Subscriber + Send + Sync, WorkerGuard) {
-    let file = File::create(format!("{path}/{test_name}-generated-rule-trace.json"))
-        .expect("Unable to create log file");
-    let writer = BufWriter::new(file);
-    let (non_blocking, guard) = tracing_appender::non_blocking(writer);
+) -> (
+    impl tracing::Subscriber + Send + Sync,
+    Vec<tracing_appender::non_blocking::WorkerGuard>,
+) {
+    //let (target1_layer, guard1) = create_file_layer_json(path, test_name);
+    let (target2_layer, guard2) = create_file_layer_human(path, test_name);
+    let layered = target2_layer;
 
-    // subscriber setup with the JSON formatter
-    let subscriber = Registry::default()
-        .with(EnvFilter::new("rule_engine=trace"))
-        .with(
-            fmt::layer()
-                .with_writer(non_blocking)
-                .json()
-                .event_format(JsonFormatter),
-        );
-
-    // wrapping the subscriber in an Arc to share across multiple threads
-    let subscriber = Arc::new(subscriber) as Arc<dyn tracing::Subscriber + Send + Sync>;
-
+    let subscriber = Arc::new(tracing_subscriber::registry().with(layered))
+        as Arc<dyn tracing::Subscriber + Send + Sync>;
     // setting this subscriber as the default
     let _default = tracing::subscriber::set_default(subscriber.clone());
 
-    (subscriber, guard)
+    (subscriber, vec![guard2])
+}
+
+fn create_file_layer_json(
+    path: &str,
+    test_name: &str,
+) -> (impl Layer<Registry> + Send + Sync, WorkerGuard) {
+    let file = File::create(format!("{path}/{test_name}-generated-rule-trace.json"))
+        .expect("Unable to create log file");
+    let (non_blocking, guard1) = tracing_appender::non_blocking(file);
+
+    let layer1 = fmt::layer()
+        .with_writer(non_blocking)
+        .json()
+        .with_level(false)
+        .without_time()
+        .with_target(false)
+        .with_filter(EnvFilter::new("rule_engine=trace"))
+        .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine"));
+
+    (layer1, guard1)
+}
+
+fn create_file_layer_human(
+    path: &str,
+    test_name: &str,
+) -> (impl Layer<Registry> + Send + Sync, WorkerGuard) {
+    let file = File::create(format!("{path}/{test_name}-generated-rule-trace-human.txt"))
+        .expect("Unable to create log file");
+    let (non_blocking, guard2) = tracing_appender::non_blocking(file);
+
+    let layer2 = fmt::layer()
+        .with_writer(non_blocking)
+        .with_level(false)
+        .without_time()
+        .with_target(false)
+        .with_filter(EnvFilter::new(("rule_engine_human=trace")))
+        .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human"));
+
+    (layer2, guard2)
 }
 
 #[test]
