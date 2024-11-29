@@ -90,6 +90,15 @@ pub enum Expression {
     #[compatible(JsonInput)]
     UnsafeMod(Metadata, Box<Expression>, Box<Expression>),
 
+    /// Negation: `-x`
+    #[compatible(JsonInput)]
+    Neg(Metadata, Box<Expression>),
+
+    /// Binary subtraction operator
+    ///
+    /// This mainly exists for ease of parsing, and is immediately normalised to `Sum([a,-b])`.
+    #[compatible(JsonInput)]
+    Minus(Metadata, Box<Expression>, Box<Expression>),
     /* Flattened SumEq.
      *
      * Note: this is an intermediary step that's used in the process of converting from conjure model to minion.
@@ -258,8 +267,24 @@ impl Expression {
             Expression::AllDiff(_, _) => Some(Domain::BoolDomain),
             Expression::WatchedLiteral(_, _, _) => Some(Domain::BoolDomain),
             Expression::Reify(_, _, _) => Some(Domain::BoolDomain),
-            // #[allow(unreachable_patterns)]
-            // _ => bug!("Cannot calculate domain of {:?}", self),
+            Expression::Neg(_, x) => {
+                let Some(Domain::IntDomain(mut ranges)) = x.domain_of(vars) else {
+                    return None;
+                };
+
+                for range in ranges.iter_mut() {
+                    *range = match range {
+                        Range::Single(x) => Range::Single(-*x),
+                        Range::Bounded(x, y) => Range::Bounded(-*y, -*x),
+                    };
+                }
+
+                Some(Domain::IntDomain(ranges))
+            }
+            Expression::Minus(_, a, b) => a
+                .domain_of(vars)?
+                .apply_i32(|x, y| Some(x - y), &b.domain_of(vars)?), // #[allow(unreachable_patterns)]
+                                                                     // _ => bug!("Cannot calculate domain of {:?}", self),
         };
         match ret {
             // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
@@ -322,6 +347,8 @@ impl Expression {
             Expression::UnsafeMod(_, _, _) => Some(ReturnType::Int),
             Expression::SafeMod(_, _, _) => Some(ReturnType::Int),
             Expression::ModuloEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::Neg(_, _) => Some(ReturnType::Int),
+            Expression::Minus(_, _, _) => Some(ReturnType::Int),
         }
     }
 
@@ -496,6 +523,12 @@ impl Display for Expression {
             }
             Expression::SafeMod(_, a, b) => {
                 write!(f, "SafeMod({},{})", a.clone(), b.clone())
+            }
+            Expression::Neg(_, a) => {
+                write!(f, "-({})", a.clone())
+            }
+            Expression::Minus(_, a, b) => {
+                write!(f, "({} - {})", a.clone(), b.clone())
             }
         }
     }

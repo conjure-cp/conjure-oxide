@@ -78,9 +78,11 @@ pub fn parse_essence_file(
     Ok(parsed_model)
 }
 
-pub fn get_minion_solutions(model: Model) -> Result<Vec<HashMap<Name, Literal>>, anyhow::Error> {
+pub fn get_minion_solutions(
+    model: Model,
+    num_sols: i32,
+) -> Result<Vec<HashMap<Name, Literal>>, anyhow::Error> {
     let solver = Solver::new(Minion::new());
-
     println!("Building Minion model...");
     let solver = solver.load_model(model)?;
 
@@ -88,14 +90,30 @@ pub fn get_minion_solutions(model: Model) -> Result<Vec<HashMap<Name, Literal>>,
 
     let all_solutions_ref = Arc::new(Mutex::<Vec<HashMap<Name, Literal>>>::new(vec![]));
     let all_solutions_ref_2 = all_solutions_ref.clone();
-    #[allow(clippy::unwrap_used)]
-    let solver = solver
-        .solve(Box::new(move |sols| {
-            let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
-            (*all_solutions).push(sols);
-            true
-        }))
-        .unwrap();
+    let solver = if num_sols > 0 {
+        let sols_left = Mutex::new(num_sols);
+
+        #[allow(clippy::unwrap_used)]
+        solver
+            .solve(Box::new(move |sols| {
+                let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
+                (*all_solutions).push(sols);
+                let mut sols_left = sols_left.lock().unwrap();
+                *sols_left -= 1;
+
+                *sols_left != 0
+            }))
+            .unwrap()
+    } else {
+        #[allow(clippy::unwrap_used)]
+        solver
+            .solve(Box::new(move |sols| {
+                let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
+                (*all_solutions).push(sols);
+                true
+            }))
+            .unwrap()
+    };
 
     solver.save_stats_to_context();
 
@@ -182,7 +200,10 @@ pub fn get_solutions_from_conjure(
             }?;
             solution_map.insert(name, value);
         }
-        solutions_set.push(solution_map);
+
+        if !solution.is_empty() {
+            solutions_set.push(solution_map);
+        }
     }
 
     Ok(solutions_set)

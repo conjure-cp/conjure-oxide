@@ -3,4 +3,5 @@
 mod associative_commutative;
 mod bool;
 mod eq_neq;
+mod neg_minus;
 mod sum;
