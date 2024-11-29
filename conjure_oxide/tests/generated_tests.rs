@@ -189,7 +189,7 @@ fn integration_test_inner(
     assert_eq!(model, expected_model);
 
     // Stage 3: Run the model through the Minion solver and check that the solutions are as expected
-    let solutions = get_minion_solutions(model)?;
+    let solutions = get_minion_solutions(model, 0)?;
 
     let solutions_json = save_minion_solutions_json(&solutions, path, essence_base, accept)?;
     if verbose {
@@ -311,6 +311,8 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
             UnsafeMod(_, _, _) => (),
             SafeMod(_, _, _) => (),
             ModuloEqUndefZero(_, _, _, _) => (),
+            Neg(_, _) => (),
+            Minus(_, _, _) => (),
         };
         x.clone()
     }));
