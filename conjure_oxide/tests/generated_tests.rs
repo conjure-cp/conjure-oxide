@@ -1,4 +1,4 @@
-use conjure_oxide::utils::testing::read_rule_trace;
+use conjure_oxide::utils::testing::{read_human_rule_trace, read_rule_trace};
 use glob::glob;
 use std::collections::HashMap;
 use std::env;
@@ -196,10 +196,16 @@ fn integration_test_inner(
         println!("Minion solutions: {:#?}", solutions_json)
     }
 
+    //Stage 4: Check that the generated rules match with the expected in temrs if type, order and count
     let generated_rule_trace = read_rule_trace(path, essence_base, "generated", accept)?;
     let expected_rule_trace = read_rule_trace(path, essence_base, "expected", accept)?;
 
+    let generated_rule_trace_human =
+        read_human_rule_trace(path, essence_base, "generated", accept)?;
+    let expected_rule_trace_human = read_human_rule_trace(path, essence_base, "expected", accept)?;
+
     assert_eq!(expected_rule_trace, generated_rule_trace);
+    assert_eq!(expected_rule_trace_human, generated_rule_trace_human);
 
     // test solutions against conjure before writing
     if accept {
@@ -348,7 +354,7 @@ fn create_file_layer_json(
 
     let layer1 = fmt::layer()
         .with_writer(non_blocking)
-        .json() // Write logs in JSON format
+        .json()
         .with_level(false)
         .without_time()
         .with_target(false)

@@ -1,0 +1,80 @@
+(Max([a, b]) >= 2), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(2, Max([a, b]), 0) 
+--
+
+Max([a, b]), 
+   ~~> max_to_var ([("Base", 100)]) 
+__0 
+--
+
+And([Ineq(2, __0, 0), (x = Sum([Max([a, b]), 1])), And([(__0 >= a), (__0 >= b), Or([(__0 = a), (__0 = b)])])]), 
+   ~~> normalise_associative_commutative ([("Base", 8400)]) 
+And([Ineq(2, __0, 0), (x = Sum([Max([a, b]), 1])), (__0 >= a), (__0 >= b), Or([(__0 = a), (__0 = b)])]) 
+--
+
+(x = Sum([Max([a, b]), 1])), 
+   ~~> sum_eq_to_sumeq ([("Minion", 4400)]) 
+SumEq([Max([a, b]), 1], x) 
+--
+
+SumEq([Max([a, b]), 1], x), 
+   ~~> sumeq_to_minion ([("Minion", 4400)]) 
+And([SumGeq([Max([a, b]), 1], x), SumLeq([Max([a, b]), 1], x)]) 
+--
+
+And([Ineq(2, __0, 0), And([SumGeq([Max([a, b]), 1], x), SumLeq([Max([a, b]), 1], x)]), (__0 >= a), (__0 >= b), Or([(__0 = a), (__0 = b)])]), 
+   ~~> normalise_associative_commutative ([("Base", 8400)]) 
+And([Ineq(2, __0, 0), SumGeq([Max([a, b]), 1], x), SumLeq([Max([a, b]), 1], x), (__0 >= a), (__0 >= b), Or([(__0 = a), (__0 = b)])]) 
+--
+
+Max([a, b]), 
+   ~~> max_to_var ([("Base", 100)]) 
+__1 
+--
+
+And([Ineq(2, __0, 0), SumGeq([__1, 1], x), SumLeq([Max([a, b]), 1], x), (__0 >= a), (__0 >= b), Or([(__0 = a), (__0 = b)]), And([(__1 >= a), (__1 >= b), Or([(__1 = a), (__1 = b)])])]), 
+   ~~> normalise_associative_commutative ([("Base", 8400)]) 
+And([Ineq(2, __0, 0), SumGeq([__1, 1], x), SumLeq([Max([a, b]), 1], x), (__0 >= a), (__0 >= b), Or([(__0 = a), (__0 = b)]), (__1 >= a), (__1 >= b), Or([(__1 = a), (__1 = b)])]) 
+--
+
+Max([a, b]), 
+   ~~> max_to_var ([("Base", 100)]) 
+__2 
+--
+
+And([Ineq(2, __0, 0), SumGeq([__1, 1], x), SumLeq([__2, 1], x), (__0 >= a), (__0 >= b), Or([(__0 = a), (__0 = b)]), (__1 >= a), (__1 >= b), Or([(__1 = a), (__1 = b)]), And([(__2 >= a), (__2 >= b), Or([(__2 = a), (__2 = b)])])]), 
+   ~~> normalise_associative_commutative ([("Base", 8400)]) 
+And([Ineq(2, __0, 0), SumGeq([__1, 1], x), SumLeq([__2, 1], x), (__0 >= a), (__0 >= b), Or([(__0 = a), (__0 = b)]), (__1 >= a), (__1 >= b), Or([(__1 = a), (__1 = b)]), (__2 >= a), (__2 >= b), Or([(__2 = a), (__2 = b)])]) 
+--
+
+(__0 >= a), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(a, __0, 0) 
+--
+
+(__0 >= b), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(b, __0, 0) 
+--
+
+(__1 >= a), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(a, __1, 0) 
+--
+
+(__1 >= b), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(b, __1, 0) 
+--
+
+(__2 >= a), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(a, __2, 0) 
+--
+
+(__2 >= b), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(b, __2, 0) 
+--
+

@@ -1,0 +1,25 @@
+(Min([a, b]) <= 2), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(Min([a, b]), 2, 0) 
+--
+
+Min([a, b]), 
+   ~~> min_to_var ([("Base", 2000)]) 
+__0 
+--
+
+And([Ineq(__0, 2, 0), And([(__0 <= a), (__0 <= b), Or([(__0 = a), (__0 = b)])])]), 
+   ~~> normalise_associative_commutative ([("Base", 8400)]) 
+And([Ineq(__0, 2, 0), (__0 <= a), (__0 <= b), Or([(__0 = a), (__0 = b)])]) 
+--
+
+(__0 <= a), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(__0, a, 0) 
+--
+
+(__0 <= b), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(__0, b, 0) 
+--
+

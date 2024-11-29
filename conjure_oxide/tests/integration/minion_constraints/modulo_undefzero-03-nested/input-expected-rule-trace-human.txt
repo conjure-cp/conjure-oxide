@@ -1,0 +1,65 @@
+y % z, 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(y,z) @ (z != 0)} 
+--
+
+x % {SafeMod(y,z) @ (z != 0)}, 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{x % SafeMod(y,z) @ And([(z != 0)])} 
+--
+
+({x % SafeMod(y,z) @ And([(z != 0)])} = 3), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(x % SafeMod(y,z) = 3) @ And([And([(z != 0)])])} 
+--
+
+{(x % SafeMod(y,z) = 3) @ And([And([(z != 0)])])}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(x % SafeMod(y,z) = 3), And([And([(z != 0)])])]) 
+--
+
+x % SafeMod(y,z), 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(x,SafeMod(y,z)) @ (SafeMod(y,z) != 0)} 
+--
+
+({SafeMod(x,SafeMod(y,z)) @ (SafeMod(y,z) != 0)} = 3), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(SafeMod(x,SafeMod(y,z)) = 3) @ And([(SafeMod(y,z) != 0)])} 
+--
+
+{(SafeMod(x,SafeMod(y,z)) = 3) @ And([(SafeMod(y,z) != 0)])}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(SafeMod(x,SafeMod(y,z)) = 3), And([(SafeMod(y,z) != 0)])]) 
+--
+
+And([And([(SafeMod(x,SafeMod(y,z)) = 3), And([(SafeMod(y,z) != 0)])]), And([And([(z != 0)])])]), 
+   ~~> normalise_associative_commutative ([("Base", 8400)]) 
+And([(SafeMod(x,SafeMod(y,z)) = 3), (SafeMod(y,z) != 0), (z != 0)]) 
+--
+
+SafeMod(x,SafeMod(y,z)), 
+   ~~> flatten_binop ([("Minion", 4400)]) 
+SafeMod(x,__0) 
+--
+
+(SafeMod(x,__0) = 3), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(x, __0, 3) 
+--
+
+(SafeMod(y,z) != 0), 
+   ~~> flatten_binop ([("Minion", 4400)]) 
+(__1 != 0) 
+--
+
+__0 =aux SafeMod(y,z), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(y, z, __0) 
+--
+
+__1 =aux SafeMod(y,z), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(y, z, __1) 
+--
+

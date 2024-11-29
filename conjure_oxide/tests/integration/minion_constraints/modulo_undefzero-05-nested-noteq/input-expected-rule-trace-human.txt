@@ -1,0 +1,105 @@
+y % z, 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(y,z) @ (z != 0)} 
+--
+
+x % {SafeMod(y,z) @ (z != 0)}, 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{x % SafeMod(y,z) @ And([(z != 0)])} 
+--
+
+({x % SafeMod(y,z) @ And([(z != 0)])} = 3), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(x % SafeMod(y,z) = 3) @ And([And([(z != 0)])])} 
+--
+
+{(x % SafeMod(y,z) = 3) @ And([And([(z != 0)])])}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(x % SafeMod(y,z) = 3), And([And([(z != 0)])])]) 
+--
+
+x % SafeMod(y,z), 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(x,SafeMod(y,z)) @ (SafeMod(y,z) != 0)} 
+--
+
+({SafeMod(x,SafeMod(y,z)) @ (SafeMod(y,z) != 0)} = 3), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(SafeMod(x,SafeMod(y,z)) = 3) @ And([(SafeMod(y,z) != 0)])} 
+--
+
+{(SafeMod(x,SafeMod(y,z)) = 3) @ And([(SafeMod(y,z) != 0)])}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(SafeMod(x,SafeMod(y,z)) = 3), And([(SafeMod(y,z) != 0)])]) 
+--
+
+Not(And([And([(SafeMod(x,SafeMod(y,z)) = 3), And([(SafeMod(y,z) != 0)])]), And([And([(z != 0)])])])), 
+   ~~> distribute_not_over_and ([("Base", 8400)]) 
+Or([Not(And([(SafeMod(x,SafeMod(y,z)) = 3), And([(SafeMod(y,z) != 0)])])), Not(And([And([(z != 0)])]))]) 
+--
+
+Not(And([(SafeMod(x,SafeMod(y,z)) = 3), And([(SafeMod(y,z) != 0)])])), 
+   ~~> distribute_not_over_and ([("Base", 8400)]) 
+Or([Not((SafeMod(x,SafeMod(y,z)) = 3)), Not(And([(SafeMod(y,z) != 0)]))]) 
+--
+
+Or([Or([Not((SafeMod(x,SafeMod(y,z)) = 3)), Not(And([(SafeMod(y,z) != 0)]))]), Not(And([And([(z != 0)])]))]), 
+   ~~> normalise_associative_commutative ([("Base", 8400)]) 
+Or([Not((SafeMod(x,SafeMod(y,z)) = 3)), Not(And([(SafeMod(y,z) != 0)])), Not(And([And([(z != 0)])]))]) 
+--
+
+Not((SafeMod(x,SafeMod(y,z)) = 3)), 
+   ~~> negated_eq_to_neq ([("Base", 8800)]) 
+(SafeMod(x,SafeMod(y,z)) != 3) 
+--
+
+(SafeMod(x,SafeMod(y,z)) != 3), 
+   ~~> flatten_binop ([("Minion", 4400)]) 
+(__0 != 3) 
+--
+
+Not(And([(SafeMod(y,z) != 0)])), 
+   ~~> distribute_not_over_and ([("Base", 8400)]) 
+Not((SafeMod(y,z) != 0)) 
+--
+
+Not((SafeMod(y,z) != 0)), 
+   ~~> negated_neq_to_eq ([("Base", 8800)]) 
+(SafeMod(y,z) = 0) 
+--
+
+(SafeMod(y,z) = 0), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(y, z, 0) 
+--
+
+Not(And([And([(z != 0)])])), 
+   ~~> distribute_not_over_and ([("Base", 8400)]) 
+Not(And([(z != 0)])) 
+--
+
+Not(And([(z != 0)])), 
+   ~~> distribute_not_over_and ([("Base", 8400)]) 
+Not((z != 0)) 
+--
+
+Not((z != 0)), 
+   ~~> negated_neq_to_eq ([("Base", 8800)]) 
+(z = 0) 
+--
+
+SafeMod(x,SafeMod(y,z)), 
+   ~~> flatten_binop ([("Minion", 4400)]) 
+SafeMod(x,__1) 
+--
+
+__0 =aux SafeMod(x,__1), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(x, __1, __0) 
+--
+
+__1 =aux SafeMod(y,z), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(y, z, __1) 
+--
+
