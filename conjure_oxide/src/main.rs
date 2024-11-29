@@ -8,6 +8,7 @@ use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
 use conjure_core::ast::pretty::pretty_expressions_as_top_level;
+use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::defaults::get_default_rule_sets;
 use schemars::schema_for;
 use serde_json::json;
@@ -74,6 +75,13 @@ struct Cli {
         short = 'o',
         help = "Save solutions to a JSON file (prints to stdin by default)"
     )]
+    #[arg(
+        long,
+        help = "(debugging) use the naive rewriter",
+        default_value_t = false
+    )]
+    use_naive_rewriter: bool,
+
     output: Option<PathBuf>,
 
     #[arg(long, short = 'v', help = "Log verbosely to sterr")]
@@ -254,7 +262,15 @@ pub fn main() -> AnyhowResult<()> {
     log::info!(target: "file", "Initial model: {}", json!(model));
 
     log::info!(target: "file", "Rewriting model...");
-    model = rewrite_model(&model, &rule_sets)?;
+
+    if cli.use_naive_rewriter {
+        log::info!(target: "file", "Using the naive rewriter...");
+        model = rewrite_naive(&model, &rule_sets)?;
+    } else {
+        log::info!(target: "file", "Rewriting model...");
+        model = rewrite_model(&model, &rule_sets)?;
+    }
+
     let constraints_string = pretty_expressions_as_top_level(&model.constraints);
     tracing::info!(constraints=%constraints_string, model=%json!(model),"Rewritten model");
 
