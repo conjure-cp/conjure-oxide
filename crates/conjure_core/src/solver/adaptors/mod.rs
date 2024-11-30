@@ -4,10 +4,10 @@
 // pub use kissat::Kissat;
 #[doc(inline)]
 pub use minion::Minion;
-
+pub use sat_adaptor::SAT;
 // mod sat_common;
 
 // mod kissat;
 mod minion;
-mod sat_adaptor;
+pub mod sat_adaptor;                                //temp visibility
 // mod common;

@@ -4,6 +4,7 @@ use std::iter::Inspect;
 use std::ptr::null;
 use std::vec;
 
+use clap::error;
 use minion_rs::ast::Model;
 use rustsat::encodings::am1::Def;
 use rustsat::solvers::{Solve, SolverResult};
@@ -39,7 +40,7 @@ pub struct SAT {
     __non_constructable: private::Internal,
     model_inst: Option<SatInstance>,
     var_map: Option<HashMap<i32, satVar>>,
-    solver: Option<Minisat>,
+    solver_inst: Option<Minisat>,
 }
 
 impl private::Sealed for SAT {}
@@ -50,7 +51,7 @@ impl Default for SAT {
             __non_constructable: private::Internal,
             model_inst: None,
             var_map: None,
-            solver: Some(Minisat::default()),
+            solver_inst: Some(Minisat::default()),
         }
     }
 }
@@ -62,7 +63,7 @@ impl SAT {
             __non_constructable: private::Internal,
             model_inst: model_to_use,
             var_map: None,
-            solver: Some(Minisat::default()),
+            solver_inst: Some(Minisat::default()),
         }
     }
 
@@ -114,6 +115,7 @@ impl SolverAdaptor for SAT {
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
         // solver = self.solver
+        // handle
         let cnf_func = self.model_inst.clone().unwrap().into_cnf();
         // let res = self.solver.clone().unwrap().add_cnf(cnf_func.0);
 
@@ -139,7 +141,6 @@ impl SolverAdaptor for SAT {
     }
 
     fn load_model(&mut self, model: ConjureModel, _: private::Internal) -> Result<(), SolverError> {
-        // todo (ss504 + backend) fix error handling
         let inst_res = instantiate_model_from_conjure(model);
         self.model_inst = Some(inst_res.unwrap());
         Ok(())
@@ -151,14 +152,9 @@ impl SolverAdaptor for SAT {
 }
 
 pub fn handle_expr(e: Expression) -> Result<(Vec<Vec<i32>>), CNFError> {
-    // todo(ss504): Add support for clause-only, literal only and empty expressions
     match e {
         Expression::And(_, _) => Ok(handle_and(e).unwrap()),
-        // Expression::Or(_,_) => handle_or(e),
-        // Expression::Not(_, _) => handle_lit(e),
-        // Expression::Reference(, ) => handle_lit(e)
-        // Expression::Nothing() => None,
-        _ => Err(CNFError::UnexpectedExpression(e)), // panic!("Villain, What hast thou done?\nThat which thou canst not undo.")
+        _ => Err(CNFError::UnexpectedExpression(e)),
     }
 }
 
@@ -221,11 +217,7 @@ pub fn handle_or(e: Expression) -> Result<(Vec<i32>), CNFError> {
 
 pub fn handle_and(e: Expression) -> Result<(Vec<Vec<i32>>), CNFError> {
     let vec_cnf = match e {
-        // todo (ss504) check for nested ands
         Expression::And(_md, vec_and) => vec_and,
-        Expression::Not(_md, e) => todo!(),
-        Expression::Or(_md, vec_or) => todo!(),
-        Expression::Reference(_md, e) => todo!(),
 
         _ => panic!("Villain, What hast thou done?\nThat which thou canst not undo."),
     };
@@ -244,29 +236,26 @@ pub fn handle_and(e: Expression) -> Result<(Vec<Vec<i32>>), CNFError> {
 //CNF Error, may be replaced of integrated with error file
 #[derive(Error, Debug)]
 pub enum CNFError {
-    // #[error("Variable with name `{0}` not found")]
-    // VariableNameNotFound(conjure_ast::Name),
+    #[error("Variable with name `{0}` not found")]
+    VariableNameNotFound(conjure_ast::Name),
+
     #[error("Variable with name `{0}` not of right type")]
-    BadVariableType(conjure_ast::Name),
+    BadVariableType(Name),
 
     // #[error("Clause with index `{0}` not found")]
     // ClauseIndexNotFound(i32),
     #[error("Unexpected Expression `{0}` inside Not(). Only Not(Reference) or Not(Not) allowed!")]
-    UnexpectedExpressionInsideNot(conjure_ast::Expression),
+    UnexpectedExpressionInsideNot(Expression),
 
     #[error("Unexpected Expression `{0}` as literal. Only Not() or Reference() allowed!")]
-    UnexpectedLiteralExpression(conjure_ast::Expression),
+    UnexpectedLiteralExpression(Expression),
 
     #[error("Unexpected Expression `{0}` inside And(). Only And(vec<Or>) allowed!")]
-    UnexpectedExpressionInsideAnd(conjure_ast::Expression),
+    UnexpectedExpressionInsideAnd(Expression),
 
     #[error("Unexpected Expression `{0}` inside Or(). Only Or( ) allowed!")]
-    UnexpectedExpressionInsideOr(conjure_ast::Expression),
+    UnexpectedExpressionInsideOr(Expression),
 
-    // todo: change msg to suit
     #[error("Unexpected Expression `{0}` found!")]
-    UnexpectedExpression(conjure_ast::Expression),
-
-    #[error("Unexpected nested And: {0}")]
-    NestedAnd(conjure_ast::Expression),
+    UnexpectedExpression(Expression)
 }
