@@ -31,7 +31,6 @@ use super::super::SolverError::*;
 
 use rustsat::instances::SatInstance;
 
-// use anyhow::Error;
 use thiserror::Error;
 
 /// A [SolverAdaptor] for interacting with the SatSolver generic and the types thereof.
@@ -81,8 +80,6 @@ pub fn instantiate_model_from_conjure(
             .get(var_name_ref)
             .ok_or_else(|| ModelInvalid(format!("variable {:?} not found", var_name_ref)))?;
 
-        // process decision var
-
         {
             // todo: the scope change may be unneeded
             // check domain, err if bad domain
@@ -118,17 +115,6 @@ impl SolverAdaptor for SAT {
         // handle
         let cnf_func = self.model_inst.clone().unwrap().into_cnf();
         // let res = self.solver.clone().unwrap().add_cnf(cnf_func.0);
-
-        /**
-         * todo (ss504 + solver backend): ask at meeting
-         * Immediate:
-         *      Fix formatting for SolverSuccess
-         *      Fix Solver call
-         * Future:
-         *      Fix Solver call to implement generic solver type or traits to universalize the solver
-         *      implement new solvers
-         */
-        // Ok(SolveSuccess::)
         Err(OpNotImplemented("solve_mut".to_owned()))
     }
 
@@ -162,7 +148,6 @@ pub fn get_namevar_as_int(name: Name) -> Result<i32, CNFError> {
     match name {
         Name::MachineName(val) => Ok(val),
         _ => Err(CNFError::BadVariableType(name)),
-        // panic!("Villain, What hast thou done?\nThat which thou canst not undo."),
     }
 }
 
@@ -174,7 +159,6 @@ pub fn handle_lit(e: Expression) -> Result<i32, CNFError> {
                 Expression::Nothing => todo!(), // panic?
                 Expression::Not(_md, e) => handle_lit(*e),
                 // todo(ss504): decide
-                // Expression::Reference(_md, name) => get_namevar_as_int(name) * -1,
                 Expression::Reference(_md, name) => {
                     let check = get_namevar_as_int(name).unwrap();
                     match check == 0 {
@@ -187,20 +171,18 @@ pub fn handle_lit(e: Expression) -> Result<i32, CNFError> {
         }
         Expression::Reference(_md, name) => get_namevar_as_int(name),
         _ => Err(CNFError::UnexpectedLiteralExpression(e)),
-        // _ => panic!("Villain, What hast thou done?\nThat which thou canst not undo."),
     }
 }
 
 pub fn handle_or(e: Expression) -> Result<(Vec<i32>), CNFError> {
     let vec_clause = match e {
         Expression::Or(_md, vec) => vec,
-        // _ => panic!("Villain, What hast thou done?\nThat which thou canst not undo."),
         _ => Err(CNFError::UnexpectedExpression(e))?,
     };
 
-    if vec_clause.len() != 2 {
-        panic!("Villain, What hast thou done?\nThat which thou canst not undo.")
-    };
+    // if vec_clause.len() != 2 {
+    //     panic!("Villain, What hast thou done?\nThat which thou canst not undo.")
+    // };
 
     let mut ret_clause: Vec<i32> = Vec::new();
 
@@ -218,7 +200,6 @@ pub fn handle_or(e: Expression) -> Result<(Vec<i32>), CNFError> {
 pub fn handle_and(e: Expression) -> Result<(Vec<Vec<i32>>), CNFError> {
     let vec_cnf = match e {
         Expression::And(_md, vec_and) => vec_and,
-
         _ => panic!("Villain, What hast thou done?\nThat which thou canst not undo."),
     };
 
@@ -242,8 +223,6 @@ pub enum CNFError {
     #[error("Variable with name `{0}` not of right type")]
     BadVariableType(Name),
 
-    // #[error("Clause with index `{0}` not found")]
-    // ClauseIndexNotFound(i32),
     #[error("Unexpected Expression `{0}` inside Not(). Only Not(Reference) or Not(Not) allowed!")]
     UnexpectedExpressionInsideNot(Expression),
 
