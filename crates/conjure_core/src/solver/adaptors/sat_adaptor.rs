@@ -16,7 +16,8 @@ use rustsat_minisat::core::Minisat;
 
 use crate::ast::{Expression, Name};
 use crate::metadata::Metadata;
-use crate::solver::{self, SolveSuccess, SolverCallback, SolverFamily, SolverMutCallback};
+use crate::solver::{self, SearchStatus, SolveSuccess, SolverCallback, SolverFamily, SolverMutCallback};
+use crate::stats::SolverStats;
 use crate::{ast as conjure_ast, model, Model as ConjureModel};
 
 use super::super::model_modifier::NotModifiable;
@@ -39,7 +40,7 @@ pub struct SAT {
     __non_constructable: private::Internal,
     model_inst: Option<SatInstance>,
     var_map: Option<HashMap<i32, satVar>>,
-    solver_inst: Option<Minisat>,
+    solver_inst: Minisat,
 }
 
 impl private::Sealed for SAT {}
@@ -50,7 +51,7 @@ impl Default for SAT {
             __non_constructable: private::Internal,
             model_inst: None,
             var_map: None,
-            solver_inst: Some(Minisat::default()),
+            solver_inst: Minisat::default(),
         }
     }
 }
@@ -62,7 +63,7 @@ impl SAT {
             __non_constructable: private::Internal,
             model_inst: model_to_use,
             var_map: None,
-            solver_inst: Some(Minisat::default()),
+            solver_inst: Minisat::default(),
         }
     }
 
@@ -111,11 +112,8 @@ impl SolverAdaptor for SAT {
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
-        // solver = self.solver
-        // handle
-        let cnf_func = self.model_inst.clone().unwrap().into_cnf();
-        // let res = self.solver.clone().unwrap().add_cnf(cnf_func.0);
-        Err(OpNotImplemented("solve_mut".to_owned()))
+        // TODO: Solve
+        Err(OpNotImplemented(format!("Not Implemented")))
     }
 
     fn solve_mut(
@@ -232,7 +230,7 @@ pub enum CNFError {
     #[error("Unexpected Expression `{0}` inside And(). Only And(vec<Or>) allowed!")]
     UnexpectedExpressionInsideAnd(Expression),
 
-    #[error("Unexpected Expression `{0}` inside Or(). Only Or( ) allowed!")]
+    #[error("Unexpected Expression `{0}` inside Or(). Only Or(lit, lit) allowed!")]
     UnexpectedExpressionInsideOr(Expression),
 
     #[error("Unexpected Expression `{0}` found!")]
