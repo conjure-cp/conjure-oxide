@@ -1,5 +1,5 @@
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
-use conjure_oxide::utils::testing::{read_human_rule_trace, read_rule_trace};
+use conjure_oxide::utils::testing::read_human_rule_trace;
 use glob::glob;
 use std::collections::HashMap;
 use std::env;
@@ -153,7 +153,8 @@ fn integration_test_inner(
     if config.skip_native_parser != Some(true) {
         let model_native =
             parse_essence_file_native(path, essence_base, extension, context.clone())?;
-        let expected_model = read_model_json(path, essence_base, "expected", "parse")?;
+        save_model_json(&model_native, path, essence_base, "parse_native", accept)?;
+        let expected_model = read_model_json(path, essence_base, "expected", "parse_native")?;
         assert_eq!(model_native, expected_model);
     }
 
@@ -393,7 +394,7 @@ fn create_file_layer_human(
         .with_level(false)
         .without_time()
         .with_target(false)
-        .with_filter(EnvFilter::new(("rule_engine_human=trace")))
+        .with_filter(EnvFilter::new("rule_engine_human=trace"))
         .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human"));
 
     (layer2, guard2)
