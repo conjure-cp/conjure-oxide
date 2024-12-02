@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::io::Read;
 use std::path::Path;
 use std::string::ToString;
@@ -81,14 +81,14 @@ pub fn parse_essence_file(
 pub fn get_minion_solutions(
     model: Model,
     num_sols: i32,
-) -> Result<Vec<HashMap<Name, Literal>>, anyhow::Error> {
+) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
     let solver = Solver::new(Minion::new());
     println!("Building Minion model...");
     let solver = solver.load_model(model)?;
 
     println!("Running Minion...");
 
-    let all_solutions_ref = Arc::new(Mutex::<Vec<HashMap<Name, Literal>>>::new(vec![]));
+    let all_solutions_ref = Arc::new(Mutex::<Vec<BTreeMap<Name, Literal>>>::new(vec![]));
     let all_solutions_ref_2 = all_solutions_ref.clone();
     let solver = if num_sols > 0 {
         let sols_left = Mutex::new(num_sols);
@@ -97,7 +97,7 @@ pub fn get_minion_solutions(
         solver
             .solve(Box::new(move |sols| {
                 let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
-                (*all_solutions).push(sols);
+                (*all_solutions).push(sols.into_iter().collect());
                 let mut sols_left = sols_left.lock().unwrap();
                 *sols_left -= 1;
 
@@ -109,7 +109,7 @@ pub fn get_minion_solutions(
         solver
             .solve(Box::new(move |sols| {
                 let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
-                (*all_solutions).push(sols);
+                (*all_solutions).push(sols.into_iter().collect());
                 true
             }))
             .unwrap()
@@ -126,7 +126,7 @@ pub fn get_minion_solutions(
 #[allow(clippy::unwrap_used)]
 pub fn get_solutions_from_conjure(
     essence_file: &str,
-) -> Result<Vec<HashMap<Name, Literal>>, EssenceParseError> {
+) -> Result<Vec<BTreeMap<Name, Literal>>, EssenceParseError> {
     // this is ran in parallel, and we have no guarantee by rust that invocations to this function
     // don't share the same tmp dir.
     let mut rng = rand::thread_rng();
@@ -180,10 +180,10 @@ pub fn get_solutions_from_conjure(
             "expected solutions to be an array".to_owned(),
         ))?;
 
-    let mut solutions_set: Vec<HashMap<Name, Literal>> = Vec::new();
+    let mut solutions_set: Vec<BTreeMap<Name, Literal>> = Vec::new();
 
     for solution in solutions {
-        let mut solution_map = HashMap::new();
+        let mut solution_map = BTreeMap::new();
         let solution = solution
             .as_object()
             .ok_or(EssenceParseError::ConjureSolutionsError(
@@ -209,7 +209,7 @@ pub fn get_solutions_from_conjure(
     Ok(solutions_set)
 }
 
-pub fn minion_solutions_to_json(solutions: &Vec<HashMap<Name, Literal>>) -> JsonValue {
+pub fn minion_solutions_to_json(solutions: &Vec<BTreeMap<Name, Literal>>) -> JsonValue {
     let mut json_solutions = Vec::new();
     for solution in solutions {
         let mut json_solution = Map::new();

@@ -1,7 +1,8 @@
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
 use conjure_oxide::utils::testing::read_human_rule_trace;
 use glob::glob;
-use std::collections::HashMap;
+use itertools::Itertools;
+use std::collections::BTreeMap;
 use std::env;
 use std::error::Error;
 use std::fs;
@@ -224,7 +225,7 @@ fn integration_test_inner(
 
     // test solutions against conjure before writing
     if accept {
-        let mut conjure_solutions: Vec<HashMap<Name, Literal>> =
+        let mut conjure_solutions: Vec<BTreeMap<Name, Literal>> =
             get_solutions_from_conjure(&format!("{}/{}.{}", path, essence_base, extension))?;
 
         // Change bools to nums in both outputs, as we currently don't convert 0,1 back to
@@ -251,6 +252,9 @@ fn integration_test_inner(
             }
         }
 
+        // remove duplicate entries (created when we removed machine names above)
+        username_solutions = username_solutions.into_iter().unique().collect();
+
         for solset in &mut conjure_solutions {
             for (k, v) in solset.clone().into_iter() {
                 match v {
@@ -264,6 +268,8 @@ fn integration_test_inner(
                 }
             }
         }
+
+        conjure_solutions = conjure_solutions.into_iter().unique().collect();
 
         // I can't make these sets of hashmaps due to hashmaps not implementing hash; so, to
         // compare these, I make them both json and compare that.
