@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Debug;
 
 use std::fs::File;
@@ -148,7 +148,7 @@ pub fn minion_solutions_from_json(
 }
 
 pub fn save_minion_solutions_json(
-    solutions: &Vec<HashMap<Name, Literal>>,
+    solutions: &Vec<BTreeMap<Name, Literal>>,
     path: &str,
     test_name: &str,
     accept: bool,
