@@ -8,6 +8,7 @@ use conjure_core::ast::{Literal, Name};
 use conjure_core::context::Context;
 use rand::Rng as _;
 use serde_json::{from_str, Map, Value as JsonValue};
+use serde::Deserialize;
 use thiserror::Error as ThisError;
 
 use std::fs::File;
@@ -123,10 +124,28 @@ pub fn get_minion_solutions(
     Ok((*sols).clone())
 }
 
+//struct(s) for stats.json. contain only relevant information, serde will skip any objects not named
+#[derive(Deserialize)]
+pub struct PerformMetric {
+    #[serde(rename = "SavileRowInfo")]
+    savile_row_info: SavileRowInfo,
+    status: String,
+}
+
+#[derive(Deserialize)]
+struct SavileRowInfo {
+    #[serde(rename = "SavileRowTotalTime")]
+    savile_row_total_time: f32,
+    #[serde(rename = "SolverNodes")]
+    solver_nodes: u32,
+    #[serde(rename = "SolverTotalTime")]
+    solver_total_time: f32,
+}
+
 #[allow(clippy::unwrap_used)]
 pub fn get_solutions_from_conjure(
     essence_file: &str,
-) -> Result<Vec<HashMap<Name, Literal>>, EssenceParseError> {
+) -> Result<(Vec<HashMap<Name, Literal>>, PerformMetric), EssenceParseError> {
     // this is ran in parallel, and we have no guarantee by rust that invocations to this function
     // don't share the same tmp dir.
     let mut rng = rand::thread_rng();
@@ -174,6 +193,15 @@ pub fn get_solutions_from_conjure(
         from_str(&json_str).map_err(|e| EssenceParseError::ConjureSolutionsError(e.to_string()))?;
     json.sort_all_objects();
 
+    //object for stats file
+    let mut stats_file = File::open("model000001.solutions.json") 
+        .unwrap();
+
+    //read to string and populate PerformanceMetric
+    let mut stats_json_str = String::new();
+    stats_file.read_to_string(&mut stats_json_str).unwrap();
+    let stats: PerformMetric = serde_json::from_str(&stats_json_str).unwrap();
+
     let solutions = json
         .as_array()
         .ok_or(EssenceParseError::ConjureSolutionsError(
@@ -206,7 +234,7 @@ pub fn get_solutions_from_conjure(
         }
     }
 
-    Ok(solutions_set)
+    Ok((solutions_set, stats))
 }
 
 pub fn minion_solutions_to_json(solutions: &Vec<HashMap<Name, Literal>>) -> JsonValue {
