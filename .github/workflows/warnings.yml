@@ -1,4 +1,4 @@
-name: "Builds without any warnings"
+name: "Warnings and lints"
 
 on:
   push:
@@ -27,11 +27,11 @@ env:
   SCCACHE_GHA_VERSION: 5
 
 jobs:
-  build-and-test:
-    name: "Build and Test"
+  warnings-and-lints:
+    name: "Warnings and lints"
     timeout-minutes: 10
     strategy:
-      # run all combinations of the matrix even if one combination fails.
+      # just one combination at the moment, but sticking to matrix syntax for uniformity among workflow files.
       fail-fast: false
       matrix:
         rust_release:
@@ -48,6 +48,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.3
 
@@ -55,25 +56,6 @@ jobs:
 
       - run: RUSTFLAGS="-D warnings" cargo build -vv --workspace
 
-  examples:
-    name: "Build Examples"
-    timeout-minutes: 10
-    strategy:
-      # run all combinations of the matrix even if one combination fails.
-      fail-fast: false
-      matrix:
-        rust_release:
-          - stable
-        os:
-          - ubuntu-latest
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - uses: actions/checkout@v3
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.3
-
-      - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
-
       - run: RUSTFLAGS="-D warnings" cargo build -vv --workspace --examples
+
+      - run: cargo clippy -- -D warnings
