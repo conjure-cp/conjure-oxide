@@ -153,8 +153,8 @@ fn integration_test_inner(
     if config.skip_native_parser != Some(true) {
         let model_native =
             parse_essence_file_native(path, essence_base, extension, context.clone())?;
-        save_model_json(&model_native, path, essence_base, "parse", accept)?;
-        let expected_model = read_model_json(path, essence_base, "expected", "parse")?;
+        save_model_json(&model_native, path, essence_base, "parse_native", accept)?;
+        let expected_model = read_model_json(path, essence_base, "expected", "parse_native")?;
         assert_eq!(model_native, expected_model);
     }
 
