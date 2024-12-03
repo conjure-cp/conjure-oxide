@@ -59,7 +59,7 @@ pub fn parse_essence_file_native(
             }
         }
     }
-    Ok(model)
+    return Ok(model);
 }
 
 fn get_tree(path: &str, filename: &str, extension: &str) -> (Tree, String) {
@@ -67,12 +67,12 @@ fn get_tree(path: &str, filename: &str, extension: &str) -> (Tree, String) {
         .expect("Failed to read the source code file");
     let mut parser = Parser::new();
     parser.set_language(&LANGUAGE.into()).unwrap();
-    (
+    return (
         parser
             .parse(source_code.clone(), None)
             .expect("Failed to parse"),
         source_code,
-    )
+    );
 }
 
 fn parse_find_statement(
@@ -103,14 +103,14 @@ fn parse_find_statement(
             symbol_table.insert(Name::UserName(String::from(name)), decision_variable);
         }
     }
-    symbol_table
+    return symbol_table;
 }
 
 fn parse_domain(domain: Node, source_code: &str) -> Domain {
     let domain = domain.child(0).expect("No domain");
     match domain.kind() {
-        "bool_domain" => Domain::BoolDomain,
-        "int_domain" => parse_int_domain(domain, source_code),
+        "bool_domain" => return Domain::BoolDomain,
+        "int_domain" => return parse_int_domain(domain, source_code),
         _ => panic!("Not bool or int domain"),
     }
 }
@@ -118,7 +118,7 @@ fn parse_domain(domain: Node, source_code: &str) -> Domain {
 fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
     //TODO implement functionality for non-simple ints
     if int_domain.child_count() == 1 {
-        Domain::IntDomain(vec![Range::Bounded(std::i32::MIN, std::i32::MAX)])
+        return Domain::IntDomain(vec![Range::Bounded(std::i32::MIN, std::i32::MAX)]);
     } else {
         let mut ranges: Vec<Range<i32>> = Vec::new();
         let range_list = int_domain
@@ -139,7 +139,7 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
                     match range_component.kind() {
                         "expression" => {
                             lower_bound = Some(
-                                source_code
+                                *&source_code
                                     [range_component.start_byte()..range_component.end_byte()]
                                     .parse::<i32>()
                                     .unwrap(),
@@ -147,7 +147,7 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
 
                             if let Some(range_component) = range_component.next_named_sibling() {
                                 upper_bound = Some(
-                                    source_code
+                                    *&source_code
                                         [range_component.start_byte()..range_component.end_byte()]
                                         .parse::<i32>()
                                         .unwrap(),
@@ -162,7 +162,7 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
                                 .next_sibling()
                                 .expect("Error with integer range");
                             upper_bound = Some(
-                                source_code
+                                *&source_code
                                     [range_component.start_byte()..range_component.end_byte()]
                                     .parse::<i32>()
                                     .unwrap(),
@@ -181,7 +181,7 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
                 _ => panic!("unsupported int range type"),
             }
         }
-        Domain::IntDomain(ranges)
+        return Domain::IntDomain(ranges);
     }
 }
 
@@ -191,21 +191,21 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
             let child = constraint
                 .child(0)
                 .expect("Error: mission node in constraint statement");
-            parse_constraint(child, source_code)
+            return parse_constraint(child, source_code);
         }
         "or_expr" => {
             let mut expr_vec = Vec::new();
             for expr in named_children(&constraint) {
                 expr_vec.push(parse_constraint(expr, source_code));
             }
-            Expression::Or(Metadata::new(), expr_vec)
+            return Expression::Or(Metadata::new(), expr_vec);
         }
         "and_expr" => {
             let mut vec_exprs = Vec::new();
             for expr in named_children(&constraint) {
                 vec_exprs.push(parse_constraint(expr, source_code));
             }
-            Expression::And(Metadata::new(), vec_exprs)
+            return Expression::And(Metadata::new(), vec_exprs);
         }
         "comparison" => {
             let expr1_node = constraint
@@ -222,12 +222,24 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
             let expr2 = parse_constraint(expr2_node, source_code);
 
             match op_type {
-                "=" => Expression::Eq(Metadata::new(), Box::new(expr1), Box::new(expr2)),
-                "!=" => Expression::Neq(Metadata::new(), Box::new(expr1), Box::new(expr2)),
-                "<=" => Expression::Leq(Metadata::new(), Box::new(expr1), Box::new(expr2)),
-                ">=" => Expression::Geq(Metadata::new(), Box::new(expr1), Box::new(expr2)),
-                "<" => Expression::Lt(Metadata::new(), Box::new(expr1), Box::new(expr2)),
-                ">" => Expression::Gt(Metadata::new(), Box::new(expr1), Box::new(expr2)),
+                "=" => {
+                    return Expression::Eq(Metadata::new(), Box::new(expr1), Box::new(expr2));
+                }
+                "!=" => {
+                    return Expression::Neq(Metadata::new(), Box::new(expr1), Box::new(expr2));
+                }
+                "<=" => {
+                    return Expression::Leq(Metadata::new(), Box::new(expr1), Box::new(expr2));
+                }
+                ">=" => {
+                    return Expression::Geq(Metadata::new(), Box::new(expr1), Box::new(expr2));
+                }
+                "<" => {
+                    return Expression::Lt(Metadata::new(), Box::new(expr1), Box::new(expr2));
+                }
+                ">" => {
+                    return Expression::Gt(Metadata::new(), Box::new(expr1), Box::new(expr2));
+                }
                 _ => panic!("Not a supported comp_op"),
             }
         }
@@ -242,7 +254,9 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
             let expr2 = parse_constraint(expr2_node, source_code);
 
             match op_type {
-                "+" => Expression::Sum(Metadata::new(), vec![expr1, expr2]),
+                "+" => {
+                    return Expression::Sum(Metadata::new(), vec![expr1, expr2]);
+                }
                 "-" => {
                     panic!("Subtraction expressions not supported yet")
                 }
@@ -251,11 +265,19 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
                 }
                 "/" => {
                     //TODO: add checks for if division is safe or not
-                    Expression::UnsafeDiv(Metadata::new(), Box::new(expr1), Box::new(expr2))
+                    return Expression::UnsafeDiv(
+                        Metadata::new(),
+                        Box::new(expr1),
+                        Box::new(expr2),
+                    );
                 }
                 "%" => {
                     //TODO: add checks for if mod is safe or not
-                    Expression::UnsafeMod(Metadata::new(), Box::new(expr1), Box::new(expr2))
+                    return Expression::UnsafeMod(
+                        Metadata::new(),
+                        Box::new(expr1),
+                        Box::new(expr2),
+                    );
                 }
                 _ => panic!("Not a supported math_op"),
             }
@@ -265,42 +287,42 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
                 .child(1)
                 .expect("Error: no node after 'not' node");
             let expr = parse_constraint(constraint, source_code);
-            Expression::Not(Metadata::new(), Box::new(expr))
+            return Expression::Not(Metadata::new(), Box::new(expr));
         }
         "sub_expr" => {
             println!("sub");
             let expr = constraint
                 .named_child(0)
                 .expect("Error with sub expression");
-            parse_constraint(expr, source_code)
+            return parse_constraint(expr, source_code);
         }
         "min" => {
             let mut term_list = Vec::new();
             for term in named_children(&constraint) {
                 term_list.push(parse_constraint(term, source_code));
             }
-            Expression::Min(Metadata::new(), term_list)
+            return Expression::Min(Metadata::new(), term_list);
         }
         "max" => {
             let mut term_list = Vec::new();
             for term in named_children(&constraint) {
                 term_list.push(parse_constraint(term, source_code));
             }
-            Expression::Max(Metadata::new(), term_list)
+            return Expression::Max(Metadata::new(), term_list);
         }
         "sum" => {
             let mut term_list = Vec::new();
             for term in named_children(&constraint) {
                 term_list.push(parse_constraint(term, source_code));
             }
-            Expression::Sum(Metadata::new(), term_list)
+            return Expression::Sum(Metadata::new(), term_list);
         }
         "all_diff" => {
             let mut term_list = Vec::new();
             for term in named_children(&constraint) {
                 term_list.push(parse_constraint(term, source_code));
             }
-            Expression::AllDiff(Metadata::new(), term_list)
+            return Expression::AllDiff(Metadata::new(), term_list);
         }
         "constant" => {
             let child = constraint.child(0).expect("Error with constant");
@@ -309,23 +331,30 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
                     let constant_value = &source_code[child.start_byte()..child.end_byte()]
                         .parse::<i32>()
                         .unwrap();
-                    Expression::Atomic(
+                    return Expression::Atomic(
                         Metadata::new(),
                         Atom::Literal(Literal::Int(*constant_value)),
-                    )
+                    );
                 }
-                "TRUE" => Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
-                "FALSE" => Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
+                "TRUE" => {
+                    return Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
+                }
+                "FALSE" => {
+                    return Expression::Atomic(
+                        Metadata::new(),
+                        Atom::Literal(Literal::Bool(false)),
+                    );
+                }
                 _ => panic!("Error"),
             }
         }
         "variable" => {
             let child = constraint.child(0).expect("Error with varaible");
             let variable_name = String::from(&source_code[child.start_byte()..child.end_byte()]);
-            Expression::Atomic(
+            return Expression::Atomic(
                 Metadata::new(),
                 Atom::Reference(Name::UserName(variable_name)),
-            )
+            );
         }
         _ => {
             let node_kind = constraint.kind();
