@@ -304,13 +304,24 @@ jobs:
 
           # store into output variable for comment display
           {
-          echo 'hist_diff<<EOFABC' >
+          echo 'hist_diff<<EOFABC'
           cat ./tools/code-coverage-diff/lcov/hist_coverage_diff.txt
           echo EOFABC
           }  >> "$GITHUB_ENV"
 
-      - run: echo "MAIN_DOC_COVERAGE_SUMMARY=$(cat main-doc-coverage-summary.txt)" >> $GITHUB_ENV
-      - run: echo "PR_DOC_COVERAGE_SUMMARY=$(cat pr-doc-coverage-summary.txt)" >> $GITHUB_ENV
+      - run: |
+          {
+          echo 'MAIN_DOC_COVERAGE_SUMMARY<<EOFABC' 
+          cat main-doc-coverage-summary.txt
+          echo "EOFABC"
+          }>> $GITHUB_ENV
+
+      - run: |
+          {
+          echo 'PR_DOC_COVERAGE_SUMMARY<<EOFABC' 
+          cat pr-doc-coverage-summary.txt
+          echo "EOFABC"
+          }>> $GITHUB_ENV
 
       - name: Create coverage comment (no previous lcov)
         if: steps.find_artifacts.outputs.result == '[]'
