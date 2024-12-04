@@ -52,6 +52,17 @@ jobs:
           echo ""  >> $GITHUB_STEP_SUMMARY
           ./tools/ci/generate-doc-coverage-report-md.bash >> $GITHUB_STEP_SUMMARY
 
+      - name: Generate summary
+        run: | 
+          ./tools/ci/generate-doc-coverage-summary-md.bash > pr-doc-coverage-summary.txt
+
+      - name: Upload summary as artifact (for later use)
+        uses: actions/upload-artifact@v4
+        with: 
+          name: pr-doc-coverage-summary
+          path: pr-doc-coverage-summary.txt
+          overwrite: false 
+
   coverage:
     name: "Code Coverage"
     timeout-minutes: 20 

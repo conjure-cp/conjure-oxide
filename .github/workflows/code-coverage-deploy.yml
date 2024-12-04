@@ -205,6 +205,20 @@ jobs:
           echo "$(cat cov.txt | tail -n +3)" >> $GITHUB_OUTPUT
           echo 'EOFABC' >> $GITHUB_OUTPUT
 
+      - name: Download doc coverage summary for PR
+        uses: dawidd6/action-download-artifact@v7
+        with:
+          workflow: code-coverage.yml
+          pr: ${{steps.prnum.outputs.num}}
+          name: pr-doc-coverage-summary
+
+      - name: Download doc coverage summary for main
+        uses: dawidd6/action-download-artifact@v7
+        with:
+          workflow: code-coverage-main.yml
+          branch: main
+          name: main-doc-coverage-summary
+ 
 
       - name: Get doc coverage links for main and PR
         run: | 
@@ -295,6 +309,9 @@ jobs:
           echo EOFABC
           }  >> "$GITHUB_ENV"
 
+      - run: echo "MAIN_DOC_COVERAGE_SUMMARY=$(cat main-doc-coverage-summary.txt)" >> $GITHUB_ENV
+      - run: echo "PR_DOC_COVERAGE_SUMMARY=$(cat pr-doc-coverage-summary.txt)" >> $GITHUB_ENV
+
       - name: Create coverage comment (no previous lcov)
         if: steps.find_artifacts.outputs.result == '[]'
         uses: peter-evans/create-or-update-comment@v1
@@ -305,7 +322,16 @@ jobs:
 
             ### Documentation Coverage
 
-            * View documentation coverage for [main]($MAIN_DOC_URL), [this PR]($PR_DOC_URL)
+            **This PR:**
+
+            ${{ env.PR_DOC_COVERAGE_SUMMARY }} 
+
+            **Main:**
+
+            ${{ env.MAIN_DOC_COVERAGE_SUMMARY }} 
+
+
+            View full documentation coverage for [main]($MAIN_DOC_URL), [this PR]($PR_DOC_URL)
 
             ### Code Coverage Summary
 
@@ -337,23 +363,16 @@ jobs:
 
             ### Documentation Coverage
 
-            <details>
-            <summary>Click to view documentation coverage for this PR</summary>
+            **This PR:**
 
-            ```
-            ${{ steps.doccov.outputs.pr }}
-            ```
+            ${{ env.PR_DOC_COVERAGE_SUMMARY }} 
 
-            </details>
+            **Main:**
 
-            <details>
-            <summary>Click to view documentation coverage for main</summary>
+            ${{ env.MAIN_DOC_COVERAGE_SUMMARY }} 
 
-            ```
-            ${{ steps.doccov.outputs.main }}
-            ```
 
-            </details>
+            View full documentation coverage for [main]($MAIN_DOC_URL), [this PR]($PR_DOC_URL)
 
             ### Code Coverage Summary
 
