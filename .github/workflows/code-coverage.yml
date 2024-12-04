@@ -18,8 +18,40 @@ env:
   SCCACHE_GHA_VERSION: 5
 
 jobs:
+  doc-coverage:
+    name: "Documentation Coverage"
+    timeout-minutes: 20 
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.3
+
+      - name: Install rust ${{ env.rust_release }}
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
+
+      - name: Disable rust-lld (to fix linkme)
+        run: |
+          echo RUSTFLAGS=${RUSTFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
+          echo RUSTDOCFLAGS=${RUSTDOCFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
+        if: env.rust_release == 'nightly'
+
+      - name: Install pandoc
+        uses: pandoc/actions/setup@v1
+
+      - name: Generate documentation coverage report
+        run: |
+          echo "# Documentation Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "PR: [#${{github.event.pull_request.number}}](${{github.event.pull_request.html_url}})" >> $GITHUB_STEP_SUMMARY
+          echo "Commit: [${{github.event.pull_request.head.sha}}](https://github.com/conjure-cp/conjure-oxide/compare/${{github.event.pull_request.head.sha}})" >> $GITHUB_STEP_SUMMARY
+          echo ""  >> $GITHUB_STEP_SUMMARY
+          ./tools/ci/generate-doc-coverage-report-md.bash >> $GITHUB_STEP_SUMMARY
+
   coverage:
-    name: "Generate Code Coverage Reports"
+    name: "Code Coverage"
     timeout-minutes: 20 
     runs-on: ubuntu-latest
     steps:
@@ -55,24 +87,14 @@ jobs:
           os_arch: linux
           version: 2.5.1
 
-      - name: Generate coverage reports
+      - name: Generate code coverage reports
         run: |
           ./tools/coverage.sh
-
-      - name: Generate documentation coverage
-        run: |
-          RUSTDOCFLAGS='-Z unstable-options --show-coverage' cargo +nightly doc --workspace --no-deps > doc-coverage.txt
-
-      - name: Generate documentation coverage JSON
-        run: |
-          RUSTDOCFLAGS='-Z unstable-options --output-format json --show-coverage' cargo +nightly doc --workspace --no-deps > doc-coverage.json
 
       - run: |
           mkdir -p deploy/
           cp -r target/debug/coverage/* deploy/     # html
           cp target/debug/lcov.info deploy/         # used for comments
-          cp doc-coverage.json deploy/
-          cp doc-coverage.txt deploy/
           echo "${{github.event.pull_request.number}}" > deploy/prnumber
 
       - name: Archive code coverage results for deployment
