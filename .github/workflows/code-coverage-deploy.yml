@@ -205,16 +205,23 @@ jobs:
           echo "$(cat cov.txt | tail -n +3)" >> $GITHUB_OUTPUT
           echo 'EOFABC' >> $GITHUB_OUTPUT
 
-      - name: Get doc-coverage for main and pr
-        id: doccov
-        run: |
-          wget https://${{github.repository_owner}}.github.io/conjure-oxide/coverage/main/doc-coverage.txt
-          echo "main<<EOFABC" >> $GITHUB_OUTPUT
-          echo "$(cat doc-coverage.txt)" >> $GITHUB_OUTPUT
-          echo 'EOFABC' >> $GITHUB_OUTPUT
-          echo "pr<<EOFABC" >> $GITHUB_OUTPUT
-          echo "$(cat ./deploy/doc-coverage.txt)" >> $GITHUB_OUTPUT
-          echo 'EOFABC' >> $GITHUB_OUTPUT
+
+      - name: Get doc coverage links for main and PR
+        run: | 
+          # url of run, to use for summary
+          # the api call returns the url of the job which does not show the summary, so we change it to the run url instead, which does.
+          MAIN_URL=$(gh api -X GET -F 'filter=latest' -F 'status=completed' -F 'check_name=Documentation Coverage' \
+            -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/conjure-cp/conjure-oxide/commits/main/check-runs |\
+            jq '.check_runs[0] | .html_url | split("/")[0:-2] | join("/")')
+
+          PR_URL=$(gh api -X GET -F 'filter=latest' -F 'status=completed' -F 'check_name=Documentation Coverage' \
+            -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" \
+            /repos/conjure-cp/conjure-oxide/commits/${{steps.sha.outputs.result}}/check-runs |\
+            jq '.check_runs[0] | .html_url | split("/")[0:-2] | join("/")')
+
+          echo "MAIN_DOC_URL=$MAIN_URL" >> $GITHUB_ENV
+          echo "PR_DOC_URL=$PR_URL" >> $GITHUB_ENV
 
       - name: Find coverage comment
         uses: peter-evans/find-comment@v1
@@ -298,23 +305,7 @@ jobs:
 
             ### Documentation Coverage
 
-            <details>
-            <summary>Click to view documentation coverage for this PR</summary>
-
-            ```
-            ${{ steps.doccov.outputs.pr }}
-            ```
-
-            </details>
-
-            <details>
-            <summary>Click to view documentation coverage for main</summary>
-
-            ```
-            ${{ steps.doccov.outputs.main }}
-            ```
-
-            </details>
+            * View documentation coverage for [main]($MAIN_DOC_URL), [this PR]($PR_DOC_URL)
 
             ### Code Coverage Summary
 
