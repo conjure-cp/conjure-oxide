@@ -4,7 +4,6 @@ use super::{Expression, Literal, Name};
 use serde::{Deserialize, Serialize};
 use uniplate::derive::Uniplate;
 
-/// An `Atom` is an indivisible expression, such as a literal or a reference.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
 #[uniplate()]
 #[biplate(to=Name)]
