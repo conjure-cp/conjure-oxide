@@ -7,6 +7,7 @@ use std::sync::Arc;
 use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
+use conjure_core::ast::pretty::pretty_expressions_as_top_level;
 use conjure_oxide::defaults::get_default_rule_sets;
 use schemars::schema_for;
 use serde_json::json;
@@ -254,8 +255,8 @@ pub fn main() -> AnyhowResult<()> {
 
     log::info!(target: "file", "Rewriting model...");
     model = rewrite_model(&model, &rule_sets)?;
-    let constraints_string = format!("{:?}", model.constraints);
-    tracing::info!(%constraints_string, model=%json!(model),"Rewritten model");
+    let constraints_string = pretty_expressions_as_top_level(&model.constraints);
+    tracing::info!(constraints=%constraints_string, model=%json!(model),"Rewritten model");
 
     let solutions = get_minion_solutions(model, cli.number_of_solutions)?; // ToDo we need to properly set the solver adaptor here, not hard code minion
     log::info!(target: "file", "Solutions: {}", minion_solutions_to_json(&solutions));

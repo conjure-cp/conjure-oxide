@@ -4,6 +4,7 @@ use std::fmt::Display;
 
 use thiserror::Error;
 
+use crate::ast::pretty::pretty_expressions_as_conjunction;
 use crate::ast::ReturnType;
 use crate::bug;
 use crate::stats::RewriterStats;
@@ -394,7 +395,7 @@ fn choose_rewrite(results: &[RuleResult], initial_expression: &Expression) -> Op
     }
     let red = results[0].reduction.clone();
     let rule = results[0].rule;
-    let new_top_string = format!("{:?}", red.new_top);
+    let new_top_string = pretty_expressions_as_conjunction(&red.new_top);
     tracing::info!(
         %new_top_string,
         "Rule applicable: {} ({:?}), to expression: {}, resulting in: {}",
@@ -445,7 +446,7 @@ fn check_priority<'a>(
 
     if !duplicate_rules.is_empty() {
         //accumulates all duplicates into a formatted message
-        let mut message = format!("Found multiple rules of the same priority applicable to to expression: {:?} \n resulting in expression: {:?}", initial_expr, new_expr);
+        let mut message = format!("Found multiple rules of the same priority applicable to to expression: {} \n resulting in expression: {}", initial_expr, new_expr);
         for (priority, rules) in &duplicate_rules {
             message.push_str(&format!("Priority {:?} \n Rules: {:?}", priority, rules));
         }
@@ -453,7 +454,7 @@ fn check_priority<'a>(
 
     //no duplicate rules of the same priorities were found in the set of applicable rules
     } else {
-        log::warn!("Multiple rules of different priorities are applicable to expression {:?} \n resulting in expression: {:?}
+        log::warn!("Multiple rules of different priorities are applicable to expression {} \n resulting in expression: {}
         \n Rules{:?}", initial_expr, new_expr, rules)
     }
 }
