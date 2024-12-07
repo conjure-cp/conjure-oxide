@@ -56,7 +56,7 @@ fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
 #[register_rule(("Base", 2000))]
 fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
     match expr {
-        Min(metadata, exprs) => {
+        Min(_, exprs) => {
             let new_name = mdl.gensym();
 
             let mut new_top = Vec::new(); // the new variable must be less than or equal to all the other variables
@@ -83,7 +83,7 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
 
             Ok(Reduction::new(
                 Atomic(Metadata::new(), Reference(new_name)),
-                And(metadata.clone_dirty(), new_top),
+                new_top,
                 new_vars,
             ))
         }
@@ -100,7 +100,7 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
 #[register_rule(("Base", 100))]
 fn max_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
     match expr {
-        Max(metadata, exprs) => {
+        Max(_, exprs) => {
             let new_name = mdl.gensym();
 
             let mut new_top = Vec::new(); // the new variable must be more than or equal to all the other variables
@@ -127,7 +127,7 @@ fn max_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
 
             Ok(Reduction::new(
                 Atomic(Metadata::new(), Reference(new_name)),
-                And(metadata.clone_dirty(), new_top),
+                new_top,
                 new_vars,
             ))
         }

@@ -259,12 +259,10 @@ fn parse_exprs(
             // top level false
             Expr::Atomic(_, Atom::Literal(Bool(false))) => {
                 minion_model.constraints.push(minion_ast::Constraint::False);
-                return Ok(());
             }
             // top level true
             Expr::Atomic(_, Atom::Literal(Bool(true))) => {
                 minion_model.constraints.push(minion_ast::Constraint::True);
-                return Ok(());
             }
 
             _ => {

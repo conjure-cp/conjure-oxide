@@ -340,11 +340,7 @@ fn reduce_solve_xyz() {
         )
     );
 
-    let mut model = Model::new(
-        HashMap::new(),
-        Expression::And(Metadata::new(), vec![expr1, expr2]),
-        Default::default(),
-    );
+    let mut model = Model::new(HashMap::new(), vec![expr1, expr2], Default::default());
     model.variables.insert(
         Name::UserName(String::from("a")),
         DecisionVariable {
@@ -680,15 +676,15 @@ fn rewrite_solve_xyz() {
 
     // Apply rewrite function to the nested expression
     let rewritten_expr = rewrite_model(
-        &Model::new(HashMap::new(), nested_expr, Default::default()),
+        &Model::new(HashMap::new(), vec![nested_expr], Default::default()),
         &rule_sets,
     )
     .unwrap()
     .constraints;
 
     // Check if the expression is in its simplest form
-    let expr = rewritten_expr.clone();
-    assert!(is_simple(&expr));
+
+    assert!(rewritten_expr.iter().all(|expr| is_simple(expr)));
 
     // Create model with variables and constraints
     let mut model = Model::new(HashMap::new(), rewritten_expr, Default::default());
@@ -773,9 +769,16 @@ fn rewrite_solve_xyz_parameterized() {
         }
         let nested_expr = Expression::Or(Metadata::new(), or_exprs);
 
-        let model_for_rewrite = Model::new(HashMap::new(), nested_expr.clone(), Default::default());
-        let model_for_rewrite_unoptimized =
-            Model::new(HashMap::new(), nested_expr.clone(), Default::default());
+        let model_for_rewrite = Model::new(
+            HashMap::new(),
+            vec![nested_expr.clone()],
+            Default::default(),
+        );
+        let model_for_rewrite_unoptimized = Model::new(
+            HashMap::new(),
+            vec![nested_expr.clone()],
+            Default::default(),
+        );
 
         // Apply rewrite function to the nested expression
         let rewritten_expr = rewrite_model(&model_for_rewrite, &rule_sets)
@@ -808,11 +811,11 @@ fn rewrite_solve_xyz_parameterized() {
         .expect("Could not save stats!");
 
         // Check if the expression is in its simplest form
-        let expr = rewritten_expr.clone();
-        assert!(is_simple(&expr));
+        assert!(rewritten_expr.iter().all(|expr| is_simple(expr)));
 
-        let expr_unoptimized = rewritten_expr_unoptimized.clone();
-        assert!(is_simple(&expr_unoptimized));
+        assert!(rewritten_expr_unoptimized
+            .iter()
+            .all(|expr| is_simple(expr)));
 
         // Create model with variables and constraints
         let mut model = Model::new(HashMap::new(), rewritten_expr, Default::default());

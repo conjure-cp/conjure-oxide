@@ -4,6 +4,7 @@ use std::fmt::Display;
 
 use thiserror::Error;
 
+use crate::ast::ReturnType;
 use crate::bug;
 use crate::stats::RewriterStats;
 use tracing::trace;
@@ -135,18 +136,40 @@ pub fn rewrite_model<'a>(
     let start = std::time::Instant::now();
 
     //the while loop is exited when None is returned implying the sub-expression is clean
-    while let Some(step) = rewrite_iteration(
-        &new_model.constraints,
-        &new_model,
-        &rules,
-        apply_optimizations,
-        &mut stats,
-    ) {
-        step.apply(&mut new_model); // Apply side-effects (e.g. symbol table updates)
+    let mut i: usize = 0;
+    while i < new_model.constraints.len() {
+        while let Some(step) = rewrite_iteration(
+            &new_model.constraints[i],
+            &new_model,
+            &rules,
+            apply_optimizations,
+            &mut stats,
+        ) {
+            debug_assert!(is_vec_bool(&step.new_top)); // All new_top expressions should be boolean
+            new_model.constraints[i] = step.new_expression.clone();
+            step.apply(&mut new_model); // Apply side-effects (e.g., symbol table updates)
+        }
+
+        // If new constraints are added, continue processing them in the next iterations.
+        i += 1;
     }
+
     stats.rewriter_run_time = Some(start.elapsed());
     model.context.write().unwrap().stats.add_rewriter_run(stats);
     Ok(new_model)
+}
+
+/// Checks if all expressions in `Vec<Expr>` are booleans. This needs to be true so
+/// the vector could be conjuncted to the model.
+/// # Returns
+///
+/// - true: all expressions are booleans (so can be conjuncted).
+///
+/// - false: not all expressions are booleans.
+fn is_vec_bool(exprs: &Vec<Expression>) -> bool {
+    exprs
+        .iter()
+        .all(|expr| expr.return_type() == Some(ReturnType::Bool))
 }
 
 /// Attempts to apply a set of rules to the given expression and its sub-expressions in the model.
@@ -371,8 +394,9 @@ fn choose_rewrite(results: &[RuleResult], initial_expression: &Expression) -> Op
     }
     let red = results[0].reduction.clone();
     let rule = results[0].rule;
+    let new_top_string = format!("{:?}", red.new_top);
     tracing::info!(
-        new_top=%red.new_top,
+        %new_top_string,
         "Rule applicable: {} ({:?}), to expression: {}, resulting in: {}",
         rule.name,
         rule.rule_sets,
