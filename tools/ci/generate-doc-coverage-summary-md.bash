@@ -20,7 +20,7 @@ JQ_SCRIPT=$(cat <<- 'EOF'
  | ($coverage_info | [.[].with_examples] | add) as $with_examples
  | ($coverage_info | [.[].with_docs] | add) as $with_docs
  | ($coverage_info | [.[].total] | add) as $total
- | "\($avg)% documented, \($avg_examples)% with examples -- \($with_docs)/\($with_examples)/\($total)"
+ | "\($avg_examples)% with examples, \($avg)% documented -- \($with_examples)/\($with_docs)/\($total)"
 EOF)
 
 for crate in ${CRATES}; do
