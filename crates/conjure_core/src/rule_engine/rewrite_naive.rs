@@ -34,16 +34,30 @@ pub fn rewrite_naive<'a>(
 
     type CtxFn = Arc<dyn Fn(Expr) -> Vec<Expr>>;
 
-    // result of the pass, including some logging information
-    // reduction,rule name, priority, original expression, context fn
-    let mut result: Option<(Reduction, String, u16, Expr, CtxFn)>;
+    // List of applicable rules for this pass:
+    //
+    // (reduction,rule name, priority, original expression, context function)
+    //
+    // Each rule in this list should be at the same priority level
+    let mut results: Vec<(Reduction, String, u16, Expr, CtxFn)>;
 
     let mut model = model.clone();
+    let mut highest_applicable_rule_priority = 0;
 
     loop {
-        result = None;
+        results = vec![];
 
-        'rules: for rule in &rules {
+        // already found a rule of x priority that's applicable, do not bother trying ones that are
+        // lower.
+        highest_applicable_rule_priority = 0;
+
+        for rule in &rules {
+            let rule_priority = rule.rule_sets[0].1;
+
+            if rule_priority < highest_applicable_rule_priority {
+                break;
+            }
+
             for (expr, ctx) in Biplate::<Expr>::contexts_bi(&model.get_constraints_vec()) {
                 let Ok(red) = (rule.application)(&expr, &model) else {
                     tracing::trace!(
@@ -55,15 +69,36 @@ pub fn rewrite_naive<'a>(
                     continue;
                 };
 
-                result = Some((red, rule.name.into(), rule.rule_sets[0].1, expr, ctx));
-                break 'rules;
+                highest_applicable_rule_priority = rule_priority;
+                results.push((
+                    red,
+                    rule.name.into(),
+                    highest_applicable_rule_priority,
+                    expr,
+                    ctx,
+                ));
             }
         }
 
         // have we found a valid reduction?
-        let Some((red, name, priority, expr, ctx)) = result else {
+        if results.is_empty() {
             break;
         };
+
+        let (red, name, priority, expr, ctx) = results[0].clone();
+
+        // are there any equally applicable rules?
+        let mut also_applicable: Vec<_> = results[1..]
+            .iter()
+            .filter(|(_, _, p, e, _)| *e == expr && *p == priority)
+            .collect();
+
+        if !also_applicable.is_empty() {
+            also_applicable.push(&results[0]);
+            let names: Vec<_> = also_applicable.iter().map(|x| x.2).collect();
+            let expr = expr.clone();
+            bug!("Multiple equally applicable rules for {expr}: {names:#?}");
+        }
 
         tracing::info!(
             new_top = %pretty_vec(&red.new_top),
