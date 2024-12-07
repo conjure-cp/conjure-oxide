@@ -148,7 +148,7 @@ fn integration_test_inner(
             Default::default()
         };
 
-    // Stage 0: Compare native parser with expected (unless skipped)
+    // Stage 0: Run native parser (unless skipped)
     let mut model_native = None;
     if config.skip_native_parser != Some(true) {
         let mn = parse_essence_file_native(path, essence_base, extension, context.clone())?;
@@ -156,7 +156,7 @@ fn integration_test_inner(
         model_native = Some(mn);
     }
 
-    // Stage 1: Parse the model using the normal parser
+    // Stage 1: Parse the model using the Conjure JSON parser
     let model = parse_essence_file(path, essence_base, extension, context.clone())?;
     if verbose {
         println!("Parsed model: {:#?}", model);
