@@ -105,16 +105,16 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     })
 }
 
-/// Runs an integration test for a given Conjure model by:
-/// 1. Parsing the model from an Essence file.
-/// 2. Rewriting the model according to predefined rule sets.
-/// 3. Solving the model using the Minion solver and validating the solutions.
+/// Runs an integration test that:
+/// - **Parsing**: Parses the Essence model and optionally compares with expected output.
+/// - **Rewriting**: Applies rules to the parsed model, then compares with expected rewritten output.
+/// - **Solving**: Runs Minion on the rewritten model, checks solutions against expected outcomes.
+/// - **Tracing**: Validates the generated human-readable rule traces.
 ///
-/// This function operates in three main stages:
-/// - **Parsing Stage**: Reads the Essence model file and verifies that it parses correctly.
-/// - **Rewrite Stage**: Applies a set of rules to the parsed model and validates the result.
-/// - **Solution Stage**: Uses Minion to solve the model and compares solutions with expected results.
+/// **ACCEPT=false**: Compares all generated artifacts against expected files.
+/// **ACCEPT=true**: Only ensures final solutions match Conjure. If they do, overwrites expected files; otherwise, fails without overwriting.
 ///
+/// **VERBOSE=true**: Prints detailed information during each stage.
 /// # Arguments
 ///
 /// * `path` - The file path where the Essence model and other resources are located.
@@ -218,11 +218,12 @@ fn integration_test_inner(
         let expected_model = read_model_json(path, essence_base, "expected", "rewrite")?;
         assert_eq!(rewritten_model, expected_model);
 
+        // Check Stage 3 (solutions)
+        let expected_solutions_json = read_minion_solutions_json(path, essence_base, "expected")?;
+
         // Check Stage 4 (human-readable rule trace)
         assert_eq!(expected_rule_trace_human, generated_rule_trace_human);
 
-        // Check Stage 3 (solutions)
-        let expected_solutions_json = read_minion_solutions_json(path, essence_base, "expected")?;
         if verbose {
             println!("Expected solutions: {:#?}", expected_solutions_json);
         }
