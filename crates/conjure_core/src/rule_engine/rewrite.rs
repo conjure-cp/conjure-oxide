@@ -4,7 +4,7 @@ use std::fmt::Display;
 
 use thiserror::Error;
 
-use crate::ast::pretty::pretty_expressions_as_conjunction;
+use crate::ast::pretty::pretty_vec;
 use crate::ast::ReturnType;
 use crate::bug;
 use crate::stats::RewriterStats;
@@ -395,7 +395,7 @@ fn choose_rewrite(results: &[RuleResult], initial_expression: &Expression) -> Op
     }
     let red = results[0].reduction.clone();
     let rule = results[0].rule;
-    let new_top_string = pretty_expressions_as_conjunction(&red.new_top);
+    let new_top_string = pretty_vec(&red.new_top);
     tracing::info!(
         %new_top_string,
         "Rule applicable: {} ({:?}), to expression: {}, resulting in: {}",
