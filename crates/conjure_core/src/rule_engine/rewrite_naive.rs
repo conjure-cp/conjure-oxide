@@ -42,7 +42,7 @@ pub fn rewrite_naive<'a>(
     let mut results: Vec<(Reduction, String, u16, Expr, CtxFn)>;
 
     let mut model = model.clone();
-    let mut highest_applicable_rule_priority = 0;
+    let mut highest_applicable_rule_priority;
 
     loop {
         results = vec![];
