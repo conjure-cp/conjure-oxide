@@ -4,7 +4,7 @@ use uniplate::Biplate;
 
 use super::{RewriteError, RuleSet};
 use crate::{
-    ast::{pretty::pretty_expressions_as_conjunction, Expression as Expr},
+    ast::{pretty::pretty_vec, Expression as Expr},
     bug,
     rule_engine::{get_rule_priorities, get_rules_vec, Reduction},
     Model,
@@ -66,7 +66,7 @@ pub fn rewrite_naive<'a>(
         };
 
         tracing::info!(
-            new_top = %pretty_expressions_as_conjunction(&red.new_top),
+            new_top = %pretty_vec(&red.new_top),
             "Applying rule: {} (priority {}), to expression: {}, resulting in: {}",
             name,
             priority,
