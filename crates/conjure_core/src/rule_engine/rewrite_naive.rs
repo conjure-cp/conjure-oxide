@@ -4,9 +4,12 @@ use uniplate::Biplate;
 
 use super::{RewriteError, RuleSet};
 use crate::{
-    ast::{pretty::pretty_vec, Expression as Expr},
+    ast::Expression as Expr,
     bug,
-    rule_engine::{get_rule_priorities, get_rules_vec, Reduction},
+    rule_engine::{
+        get_rule_priorities, get_rules_vec,
+        rewriter_common::{log_rule_application, RuleResult},
+    },
     Model,
 };
 
@@ -36,10 +39,10 @@ pub fn rewrite_naive<'a>(
 
     // List of applicable rules for this pass:
     //
-    // (reduction,rule name, priority, original expression, context function)
+    // (ruleresult, original expression, context function)
     //
     // Each rule in this list should be at the same priority level
-    let mut results: Vec<(Reduction, String, u16, Expr, CtxFn)>;
+    let mut results: Vec<(RuleResult, Expr, CtxFn)>;
 
     let mut model = model.clone();
     let mut highest_applicable_rule_priority;
@@ -59,7 +62,7 @@ pub fn rewrite_naive<'a>(
             }
 
             for (expr, ctx) in Biplate::<Expr>::contexts_bi(&model.get_constraints_vec()) {
-                let Ok(red) = (rule.application)(&expr, &model) else {
+                let Ok(reduction) = (rule.application)(&expr, &model) else {
                     tracing::trace!(
                         "Rule attempted but not applied: {} ({:?}), to expression: {}",
                         rule.name,
@@ -70,13 +73,7 @@ pub fn rewrite_naive<'a>(
                 };
 
                 highest_applicable_rule_priority = rule_priority;
-                results.push((
-                    red,
-                    rule.name.into(),
-                    highest_applicable_rule_priority,
-                    expr,
-                    ctx,
-                ));
+                results.push((RuleResult { rule, reduction }, expr, ctx));
             }
         }
 
@@ -85,35 +82,28 @@ pub fn rewrite_naive<'a>(
             break;
         };
 
-        let (red, name, priority, expr, ctx) = results[0].clone();
+        let (result, expr, ctx) = results[0].clone();
 
         // are there any equally applicable rules?
         let mut also_applicable: Vec<_> = results[1..]
             .iter()
-            .filter(|(_, _, p, e, _)| *e == expr && *p == priority)
+            .filter(|(r, e, _)| *e == expr && r.rule.rule_sets[0].1 == result.rule.rule_sets[0].1)
             .collect();
 
         if !also_applicable.is_empty() {
             also_applicable.push(&results[0]);
-            let names: Vec<_> = also_applicable.iter().map(|x| x.2).collect();
-            let expr = expr.clone();
+            let names: Vec<_> = also_applicable.iter().map(|x| x.0.rule.name).collect();
+            let expr = &expr;
             bug!("Multiple equally applicable rules for {expr}: {names:#?}");
         }
 
-        tracing::info!(
-            new_top = %pretty_vec(&red.new_top),
-            "Applying rule: {} (priority {}), to expression: {}, resulting in: {}",
-            name,
-            priority,
-            expr,
-            &red.new_expression
-        );
+        log_rule_application(&result, &expr);
 
         // replace expr with new_expression
-        model.set_constraints(ctx(red.new_expression.clone()));
+        model.set_constraints(ctx(result.reduction.new_expression.clone()));
 
         // apply new symbols and top level
-        red.apply(&mut model);
+        result.reduction.apply(&mut model);
     }
     Ok(model)
 }

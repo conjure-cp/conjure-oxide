@@ -64,8 +64,9 @@ pub use conjure_macros::register_rule;
 #[doc(inline)]
 pub use conjure_macros::register_rule_set;
 pub use resolve_rules::{get_rule_priorities, get_rules_vec, resolve_rule_sets};
-pub use rewrite::{rewrite_model, RewriteError};
+pub use rewrite::rewrite_model;
 pub use rewrite_naive::rewrite_naive;
+pub use rewriter_common::RewriteError;
 pub use rule::{ApplicationError, ApplicationResult, Reduction, Rule};
 pub use rule_set::RuleSet;
 
@@ -74,6 +75,7 @@ use crate::solver::SolverFamily;
 mod resolve_rules;
 mod rewrite;
 mod rewrite_naive;
+mod rewriter_common;
 mod rule;
 mod rule_set;
 

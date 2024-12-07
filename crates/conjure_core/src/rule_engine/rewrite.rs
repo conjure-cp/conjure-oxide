@@ -1,52 +1,19 @@
 use std::collections::HashMap;
 use std::env;
-use std::fmt::Display;
 
-use thiserror::Error;
-
-use crate::ast::pretty::pretty_vec;
 use crate::ast::ReturnType;
 use crate::bug;
 use crate::stats::RewriterStats;
-use tracing::trace;
 use uniplate::Uniplate;
 
 use crate::rule_engine::{Reduction, Rule, RuleSet};
 use crate::{
     ast::Expression,
-    rule_engine::resolve_rules::{
-        get_rule_priorities, get_rules_vec, ResolveRulesError as ResolveError,
-    },
+    rule_engine::resolve_rules::{get_rule_priorities, get_rules_vec},
     Model,
 };
 
-#[derive(Debug)]
-struct RuleResult<'a> {
-    rule: &'a Rule<'a>,
-    reduction: Reduction,
-}
-
-/// Represents errors that can occur during the model rewriting process.
-///
-/// This enum captures errors that occur when trying to resolve or apply rules in the model.
-#[derive(Debug, Error)]
-pub enum RewriteError {
-    ResolveRulesError(ResolveError),
-}
-
-impl Display for RewriteError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            RewriteError::ResolveRulesError(e) => write!(f, "Error resolving rules: {}", e),
-        }
-    }
-}
-
-impl From<ResolveError> for RewriteError {
-    fn from(error: ResolveError) -> Self {
-        RewriteError::ResolveRulesError(error)
-    }
-}
+use super::rewriter_common::{log_rule_application, RewriteError, RuleResult};
 
 /// Checks if the OPTIMIZATIONS environment variable is set to "1".
 ///
@@ -248,10 +215,10 @@ fn rewrite_iteration<'a>(
     let mut expression = expression.clone();
 
     let rule_results = apply_all_rules(&expression, model, rules, stats);
-    trace_rules(&rule_results, expression.clone());
-    if let Some(new) = choose_rewrite(&rule_results, &expression) {
+    if let Some(result) = choose_rewrite(&rule_results, &expression) {
         // If a rule is applied, mark the expression as dirty
-        return Some(new);
+        log_rule_application(&result, &expression);
+        return Some(result.reduction);
     }
 
     let mut sub = expression.children();
@@ -381,7 +348,10 @@ fn apply_all_rules<'a>(
 /// Process the chosen reduction
 /// }
 ///
-fn choose_rewrite(results: &[RuleResult], initial_expression: &Expression) -> Option<Reduction> {
+fn choose_rewrite<'a>(
+    results: &[RuleResult<'a>],
+    initial_expression: &Expression,
+) -> Option<RuleResult<'a>> {
     //in the case where multiple rules are applicable
     if results.len() > 1 {
         let expr = results[0].reduction.new_expression.clone();
@@ -393,19 +363,9 @@ fn choose_rewrite(results: &[RuleResult], initial_expression: &Expression) -> Op
     if results.is_empty() {
         return None;
     }
-    let red = results[0].reduction.clone();
-    let rule = results[0].rule;
-    let new_top_string = pretty_vec(&red.new_top);
-    tracing::info!(
-        %new_top_string,
-        "Rule applicable: {} ({:?}), to expression: {}, resulting in: {}",
-        rule.name,
-        rule.rule_sets,
-        initial_expression,
-        red.new_expression
-    );
+
     // Return the first result for now
-    Some(red)
+    Some(results[0].clone())
 }
 
 /// Function filters all the applicable rules based on their priority.
@@ -456,30 +416,5 @@ fn check_priority<'a>(
     } else {
         log::warn!("Multiple rules of different priorities are applicable to expression {} \n resulting in expression: {}
         \n Rules{:?}", initial_expr, new_expr, rules)
-    }
-}
-
-fn trace_rules(results: &[RuleResult], expression: Expression) {
-    if !results.is_empty() {
-        let rule = results[0].rule;
-        let new_expression = results[0].reduction.new_expression.clone();
-
-        trace!(
-            target: "rule_engine_human",
-            "{}, \n   ~~> {} ({:?}) \n{} \n\n--\n",
-            expression,
-            rule.name,
-            rule.rule_sets,
-            new_expression,
-        );
-
-        trace!(
-            target: "rule_engine",
-            "Rule applicable: {} ({:?}), to expression: {}, resulting in: {}",
-            rule.name,
-            rule.rule_sets,
-            expression,
-            new_expression,
-        );
     }
 }
