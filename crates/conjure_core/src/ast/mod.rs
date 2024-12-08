@@ -2,6 +2,7 @@ mod atom;
 mod domains;
 mod expressions;
 mod literals;
+pub mod pretty;
 mod symbol_table;
 pub mod types;
 mod variables;
