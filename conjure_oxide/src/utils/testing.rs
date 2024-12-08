@@ -57,22 +57,10 @@ pub fn save_model_json(
     path: &str,
     test_name: &str,
     test_stage: &str,
-    accept: bool,
 ) -> Result<(), std::io::Error> {
     let generated_json_str = serialise_model(model)?;
-
-    File::create(format!(
-        "{path}/{test_name}.generated-{test_stage}.serialised.json"
-    ))?
-    .write_all(generated_json_str.as_bytes())?;
-
-    if accept {
-        std::fs::copy(
-            format!("{path}/{test_name}.generated-{test_stage}.serialised.json"),
-            format!("{path}/{test_name}.expected-{test_stage}.serialised.json"),
-        )?;
-    }
-
+    let filename = format!("{path}/{test_name}.generated-{test_stage}.serialised.json");
+    File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
     Ok(())
 }
 
@@ -147,27 +135,17 @@ pub fn minion_solutions_from_json(
     Ok(solutions)
 }
 
+/// Writes the minion solutions to a generated JSON file, and returns the JSON structure.
 pub fn save_minion_solutions_json(
     solutions: &Vec<BTreeMap<Name, Literal>>,
     path: &str,
     test_name: &str,
-    accept: bool,
 ) -> Result<JsonValue, std::io::Error> {
     let json_solutions = minion_solutions_to_json(solutions);
-
     let generated_json_str = serde_json::to_string_pretty(&json_solutions)?;
 
-    File::create(format!(
-        "{path}/{test_name}.generated-minion.solutions.json"
-    ))?
-    .write_all(generated_json_str.as_bytes())?;
-
-    if accept {
-        std::fs::copy(
-            format!("{path}/{test_name}.generated-minion.solutions.json"),
-            format!("{path}/{test_name}.expected-minion.solutions.json"),
-        )?;
-    }
+    let filename = format!("{path}/{test_name}.generated-minion.solutions.json");
+    File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
 
     Ok(json_solutions)
 }
@@ -186,70 +164,51 @@ pub fn read_minion_solutions_json(
     Ok(expected_solutions)
 }
 
+/// Reads a rule trace from a file. For the generated prefix, it appends a count message.
+/// Returns the lines of the file as a vector of strings.
 pub fn read_rule_trace(
     path: &str,
     test_name: &str,
     prefix: &str,
-    accept: bool,
 ) -> Result<Vec<String>, std::io::Error> {
     let filename = format!("{path}/{test_name}-{prefix}-rule-trace.json");
-    let mut rules_trace: Vec<String> = read_to_string(&filename)
-        .unwrap()
+    let mut rules_trace: Vec<String> = read_to_string(&filename)?
         .lines()
         .map(String::from)
         .collect();
 
-    //only count the number of rule in generated file (assumming the expected version already has that line and it is correct)
+    // If prefix is "generated", append the count message
     if prefix == "generated" {
         let rule_count = rules_trace.len();
-
         let count_message = json!({
-            "message": " Number of rules applied",
+            "message": "Number of rules applied",
             "count": rule_count
         });
-
-        // Append the count message to the vector
         let count_message_string = serde_json::to_string(&count_message)?;
-        rules_trace.push(count_message_string.clone());
+        rules_trace.push(count_message_string);
 
-        // Write the updated rules trace back to the file
+        // Overwrite the file with updated content (including the count message)
         let mut file = OpenOptions::new()
             .write(true)
-            .truncate(true) // Overwrite the file with updated content
+            .truncate(true)
             .open(&filename)?;
-
         writeln!(file, "{}", rules_trace.join("\n"))?;
-    }
-
-    if accept {
-        std::fs::copy(
-            format!("{path}/{test_name}-generated-rule-trace.json"),
-            format!("{path}/{test_name}-expected-rule-trace.json"),
-        )?;
     }
 
     Ok(rules_trace)
 }
 
+/// Reads a human-readable rule trace text file.
 pub fn read_human_rule_trace(
     path: &str,
     test_name: &str,
     prefix: &str,
-    accept: bool,
 ) -> Result<Vec<String>, std::io::Error> {
     let filename = format!("{path}/{test_name}-{prefix}-rule-trace-human.txt");
-    let rules_trace: Vec<String> = read_to_string(&filename)
-        .unwrap()
+    let rules_trace: Vec<String> = read_to_string(&filename)?
         .lines()
         .map(String::from)
         .collect();
-
-    if accept {
-        std::fs::copy(
-            format!("{path}/{test_name}-generated-rule-trace-human.txt"),
-            format!("{path}/{test_name}-expected-rule-trace-human.txt"),
-        )?;
-    }
 
     Ok(rules_trace)
 }
