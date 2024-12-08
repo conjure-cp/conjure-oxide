@@ -181,11 +181,15 @@ fn integration_test_inner(
     // Stage 2: Rewrite the model using the rule engine and check that the result is as expected
     let rule_sets = resolve_rule_sets(SolverFamily::Minion, &get_default_rule_sets())?;
 
-    let model = if let Some(true) = config.use_naive_rewriter {
-        rewrite_naive(&model, &rule_sets)?
-    } else {
-        rewrite_model(&model, &rule_sets)?
-    };
+    // TODO: temporarily set to always use rewrite_naive
+    // remove before merging?
+    // or we can decide to make native the default.
+    // let model = if let Some(true) = config.use_naive_rewriter {
+    //     rewrite_naive(&model, &rule_sets)?
+    // } else {
+    //     rewrite_model(&model, &rule_sets)?
+    // };
+    let model = rewrite_naive(&model, &rule_sets)?;
 
     if verbose {
         println!("Rewritten model: {:#?}", model)
