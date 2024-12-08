@@ -211,37 +211,6 @@ fn integration_test_inner(
     let generated_rule_trace_human = read_human_rule_trace(path, essence_base, "generated")?;
     let expected_rule_trace_human = read_human_rule_trace(path, essence_base, "expected")?;
 
-    // If ACCEPT = false, we assert all intermediate stages match expected values
-    if !accept {
-        // Check Stage 0 (native parser) if not skipped
-        if config.skip_native_parser != Some(true) {
-            let expected_model = read_model_json(path, essence_base, "expected", "parse")?;
-            let model_native = model_native.expect("model_native should exist here");
-            assert_eq!(model_native, expected_model);
-        }
-
-        // Check Stage 1 (parsed model)
-        let expected_model = read_model_json(path, essence_base, "expected", "parse")?;
-        assert_eq!(model, expected_model);
-
-        // Check Stage 2 (rewritten model)
-        let expected_model = read_model_json(path, essence_base, "expected", "rewrite")?;
-        assert_eq!(rewritten_model, expected_model);
-
-        // Check Stage 4 (human-readable rule trace)
-        assert_eq!(expected_rule_trace_human, generated_rule_trace_human);
-
-        // Check Stage 3 (solutions)
-        let expected_solutions_json = read_minion_solutions_json(path, essence_base, "expected")?;
-        if verbose {
-            println!("Expected solutions: {:#?}", expected_solutions_json);
-        }
-        assert_eq!(solutions_json, expected_solutions_json);
-
-        save_stats_json(context, path, essence_base)?;
-        return Ok(());
-    }
-
     // If ACCEPT = true, we skip intermediate assertions and only check conjure solutions
     if accept {
         // Check solutions against Conjure
@@ -267,7 +236,7 @@ fn integration_test_inner(
 
         // Overwrite expected parse and rewrite models
         if config.skip_native_parser != Some(true) {
-            model_native.expect("model_native should exist");
+            model_native.clone().expect("model_native should exist");
             copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
         }
         copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
@@ -279,8 +248,36 @@ fn integration_test_inner(
         // Overwrite the expected human rule trace
         copy_human_trace_generated_to_expected(path, essence_base)?;
 
-        save_stats_json(context, path, essence_base)?;
+        save_stats_json(context.clone(), path, essence_base)?;
     }
+
+    // Check Stage 0 (native parser) if not skipped
+    if config.skip_native_parser != Some(true) {
+        let expected_model = read_model_json(path, essence_base, "expected", "parse")?;
+        let model_native = model_native.expect("model_native should exist here");
+        assert_eq!(model_native, expected_model);
+    }
+
+    // Check Stage 1 (parsed model)
+    let expected_model = read_model_json(path, essence_base, "expected", "parse")?;
+    assert_eq!(model, expected_model);
+
+    // Check Stage 2 (rewritten model)
+    let expected_model = read_model_json(path, essence_base, "expected", "rewrite")?;
+    assert_eq!(rewritten_model, expected_model);
+
+    // Check Stage 3 (solutions)
+    let expected_solutions_json = read_minion_solutions_json(path, essence_base, "expected")?;
+
+    // Check Stage 4 (human-readable rule trace)
+    assert_eq!(expected_rule_trace_human, generated_rule_trace_human);
+
+    if verbose {
+        println!("Expected solutions: {:#?}", expected_solutions_json);
+    }
+    assert_eq!(solutions_json, expected_solutions_json);
+
+    save_stats_json(context, path, essence_base)?;
 
     Ok(())
 }
