@@ -27,7 +27,6 @@ mod utils;
 ///
 /// These only run when the extra-rule-checks feature flag is enabled. At time of writing, this is
 /// on by default.
-
 macro_rules! extra_check {
     {$($stmt:stmt)*} => {
         if cfg!(feature ="extra-rule-checks") {

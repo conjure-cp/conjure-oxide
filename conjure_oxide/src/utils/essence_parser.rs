@@ -1,3 +1,4 @@
+#![allow(clippy::legacy_numeric_constants)]
 use conjure_core::error::Error;
 use std::fs;
 use std::sync::{Arc, RwLock};
@@ -88,8 +89,7 @@ fn parse_find_statement(
         let domain = find_statement
             .child_by_field_name("domain")
             .expect("No domain found");
-        let domain = Some(parse_domain(domain, source_code));
-        let domain = domain.expect("No domain found");
+        let domain = parse_domain(domain, source_code);
 
         for name in temp_symbols {
             let decision_variable = DecisionVariable::new(domain.clone());
