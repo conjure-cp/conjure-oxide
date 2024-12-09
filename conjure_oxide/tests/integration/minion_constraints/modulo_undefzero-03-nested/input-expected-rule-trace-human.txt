@@ -22,6 +22,18 @@ And([(x % SafeMod(y,z) = 3), And([And([(z != 0)])])])
 
 --
 
+And([And([(z != 0)])]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+And([(z != 0)]) 
+
+--
+
+And([(z != 0)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(z != 0) 
+
+--
+
 x % SafeMod(y,z), 
    ~~> mod_to_bubble ([("Bubble", 6000)]) 
 {SafeMod(x,SafeMod(y,z)) @ (SafeMod(y,z) != 0)} 
@@ -40,7 +52,13 @@ And([(SafeMod(x,SafeMod(y,z)) = 3), And([(SafeMod(y,z) != 0)])])
 
 --
 
-And([And([(SafeMod(x,SafeMod(y,z)) = 3), And([(SafeMod(y,z) != 0)])]), And([And([(z != 0)])])]), 
+And([(SafeMod(y,z) != 0)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(SafeMod(y,z) != 0) 
+
+--
+
+And([And([(SafeMod(x,SafeMod(y,z)) = 3), (SafeMod(y,z) != 0)]), (z != 0)]), 
    ~~> normalise_associative_commutative ([("Base", 8400)]) 
 And([(SafeMod(x,SafeMod(y,z)) = 3), (SafeMod(y,z) != 0), (z != 0)]) 
 
@@ -52,15 +70,15 @@ SafeMod(x,__0)
 
 --
 
-(SafeMod(x,__0) = 3), 
-   ~~> introduce_modeq ([("Minion", 4200)]) 
-ModEq(x, __0, 3) 
-
---
-
 (SafeMod(y,z) != 0), 
    ~~> flatten_binop ([("Minion", 4400)]) 
 (__1 != 0) 
+
+--
+
+(SafeMod(x,__0) = 3), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(x, __0, 3) 
 
 --
 

@@ -1,3 +1,4 @@
+use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
 use conjure_oxide::utils::testing::read_human_rule_trace;
 use glob::glob;
@@ -25,7 +26,6 @@ use conjure_core::ast::{Expression, Literal, Name};
 use conjure_core::context::Context;
 use conjure_oxide::defaults::get_default_rule_sets;
 use conjure_oxide::rule_engine::resolve_rule_sets;
-use conjure_oxide::rule_engine::rewrite_model;
 use conjure_oxide::utils::conjure::minion_solutions_to_json;
 use conjure_oxide::utils::conjure::{
     get_minion_solutions, get_solutions_from_conjure, parse_essence_file,
@@ -43,6 +43,7 @@ use pretty_assertions::assert_eq;
 struct TestConfig {
     extra_rewriter_asserts: Option<Vec<String>>,
     skip_native_parser: Option<bool>,
+    use_naive_rewriter: Option<bool>,
 }
 
 fn main() {
@@ -178,7 +179,16 @@ fn integration_test_inner(
 
     // Stage 2: Rewrite the model using the rule engine and check that the result is as expected
     let rule_sets = resolve_rule_sets(SolverFamily::Minion, &get_default_rule_sets())?;
-    let model = rewrite_model(&model, &rule_sets)?;
+
+    // TODO: temporarily set to always use rewrite_naive
+    // remove before merging?
+    // or we can decide to make native the default.
+    // let model = if let Some(true) = config.use_naive_rewriter {
+    //     rewrite_naive(&model, &rule_sets, true)?
+    // } else {
+    //     rewrite_model(&model, &rule_sets)?
+    // };
+    let model = rewrite_naive(&model, &rule_sets, false)?;
 
     if verbose {
         println!("Rewritten model: {:#?}", model)
