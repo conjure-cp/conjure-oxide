@@ -1,12 +1,6 @@
-And([Or([Or([a, b]), false]), Or([AllDiff([1, 2, 3]), true]), And([c, true])]), 
-   ~~> normalise_associative_commutative ([("Base", 8400)]) 
-And([Or([Or([a, b]), false]), Or([AllDiff([1, 2, 3]), true]), c, true]) 
-
---
-
-And([Or([Or([a, b]), false]), Or([AllDiff([1, 2, 3]), true]), c, true]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-And([Or([Or([a, b]), false]), Or([AllDiff([1, 2, 3]), true]), c]) 
+Or([AllDiff([1, 2, 3]), true]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
 
 --
 
@@ -16,21 +10,21 @@ Or([Or([a, b])])
 
 --
 
+And([c, true]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+And([c]) 
+
+--
+
+And([c]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+c 
+
+--
+
 Or([Or([a, b])]), 
    ~~> normalise_associative_commutative ([("Base", 8400)]) 
 Or([a, b]) 
-
---
-
-Or([AllDiff([1, 2, 3]), true]), 
-   ~~> apply_eval_constant ([("Constant", 9001)]) 
-true 
-
---
-
-And([Or([a, b]), true, c]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-And([Or([a, b]), c]) 
 
 --
 

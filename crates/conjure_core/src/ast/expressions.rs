@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use enum_compatability_macro::document_compatibility;
 use uniplate::derive::Uniplate;
-use uniplate::Biplate;
+use uniplate::{Biplate, Uniplate as _};
 
 use crate::ast::literals::Literal;
 use crate::ast::symbol_table::{Name, SymbolTable};
@@ -149,6 +149,12 @@ pub enum Expression {
     /// As with Savile Row, we semantically distinguish this from `Eq`.
     #[compatible(Minion)]
     AuxDeclaration(Metadata, Name, Box<Expression>),
+
+    /// `x =-y`, where x and y are atoms.
+    ///
+    /// Low-level Minion constraint.
+    #[compatible(Minion)]
+    MinusEq(Metadata, Atom, Atom),
 }
 
 fn expr_vec_to_domain_i32(
@@ -283,8 +289,11 @@ impl Expression {
             }
             Expression::Minus(_, a, b) => a
                 .domain_of(vars)?
-                .apply_i32(|x, y| Some(x - y), &b.domain_of(vars)?), // #[allow(unreachable_patterns)]
-                                                                     // _ => bug!("Cannot calculate domain of {:?}", self),
+                .apply_i32(|x, y| Some(x - y), &b.domain_of(vars)?),
+
+            Expression::MinusEq(_, _, _) => Some(Domain::BoolDomain),
+            // #[allow(unreachable_patterns)]
+            // _ => bug!("Cannot calculate domain of {:?}", self),
         };
         match ret {
             // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
@@ -305,14 +314,23 @@ impl Expression {
         <Expression as Biplate<Metadata>>::transform_bi(self, Arc::new(move |_| meta.clone()));
     }
 
-    pub fn can_be_undefined(&self) -> bool {
-        // TODO: there will be more false cases but we are being conservative
-        match self {
-            Expression::Atomic(_, _) => false,
-            Expression::SafeDiv(_, _, _) => false,
-            Expression::SafeMod(_, _, _) => false,
-            _ => true,
+    /// Checks whether this expression is safe.
+    ///
+    /// An expression is unsafe if can be undefined, or if any of its children can be undefined.
+    ///
+    /// Unsafe expressions are (typically) prefixed with Unsafe in our AST, and can be made
+    /// safe through the use of bubble rules.
+    pub fn is_safe(&self) -> bool {
+        // TODO: memoise in Metadata
+        for expr in self.universe() {
+            match expr {
+                Expression::UnsafeDiv(_, _, _) | Expression::UnsafeMod(_, _, _) => {
+                    return false;
+                }
+                _ => {}
+            }
         }
+        true
     }
 
     pub fn return_type(&self) -> Option<ReturnType> {
@@ -349,6 +367,7 @@ impl Expression {
             Expression::ModuloEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
             Expression::Neg(_, _) => Some(ReturnType::Int),
             Expression::Minus(_, _, _) => Some(ReturnType::Int),
+            Expression::MinusEq(_, _, _) => Some(ReturnType::Bool),
         }
     }
 
@@ -529,6 +548,9 @@ impl Display for Expression {
             }
             Expression::Minus(_, a, b) => {
                 write!(f, "({} - {})", a.clone(), b.clone())
+            }
+            Expression::MinusEq(_, a, b) => {
+                write!(f, "MinusEq({},{})", a.clone(), b.clone())
             }
         }
     }

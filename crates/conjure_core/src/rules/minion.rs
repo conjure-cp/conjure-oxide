@@ -2,21 +2,20 @@
 /*        Rules for translating to Minion-supported constraints         */
 /************************************************************************/
 
+use crate::ast::{
+    Atom::{self, *},
+    Domain,
+    Expression::{self as Expr, *},
+    Literal::*,
+};
+use std::borrow::Borrow;
+
+use crate::ast::Name;
 use crate::metadata::Metadata;
 use crate::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
 };
 use crate::rules::extra_check;
-use crate::{
-    ast::{
-        Atom::{self, *},
-        Domain,
-        Expression::{self as Expr, *},
-        Literal::*,
-    },
-    bug,
-    rules::utils::exprs_to_conjunction,
-};
 
 use crate::solver::SolverFamily;
 use crate::Model;
@@ -123,6 +122,69 @@ fn introduce_modeq(expr: &Expr, _: &Model) -> ApplicationResult {
     )))
 }
 
+/// Introduces a Minion `MinusEq` constraint from `x = -y`, where x and y are atoms.
+///
+/// ```text
+/// x = -y ~> MinusEq(x,y)
+///
+///   where x,y are atoms
+/// ```
+#[register_rule(("Minion", 4400))]
+fn introduce_minuseq_from_eq(expr: &Expr, _: &Model) -> ApplicationResult {
+    let Eq(_, a, b) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    fn try_get_atoms(a: &Expr, b: &Expr) -> Option<(Atom, Atom)> {
+        let a = a.as_atom()?;
+        let Neg(_, b) = b else {
+            return None;
+        };
+
+        let b = (*b).as_atom()?;
+
+        Some((a, b))
+    }
+
+    let a = *a.clone();
+    let b = *b.clone();
+
+    // x = - y. Find this symmetrically (a = - b or b = -a)
+    let Some((x, y)) = try_get_atoms(&a, &b).or_else(|| try_get_atoms(&b, &a)) else {
+        return Err(RuleNotApplicable);
+    };
+
+    Ok(Reduction::pure(MinusEq(Metadata::new(), x, y)))
+}
+
+/// Introduces a Minion `MinusEq` constraint from `x =aux -y`, where x and y are atoms.
+///
+/// ```text
+/// x =aux -y ~> MinusEq(x,y)
+///
+///   where x,y are atoms
+/// ```
+#[register_rule(("Minion", 4400))]
+fn introduce_minuseq_from_aux_decl(expr: &Expr, _: &Model) -> ApplicationResult {
+    // a =aux -b
+    //
+    let AuxDeclaration(_, a, b) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let a = Atom::Reference(a.clone());
+
+    let Neg(_, b) = (**b).clone() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Some(b) = b.as_atom() else {
+        return Err(RuleNotApplicable);
+    };
+
+    Ok(Reduction::pure(MinusEq(Metadata::new(), a, b)))
+}
+
 #[register_rule(("Minion", 4400))]
 fn flatten_binop(expr: &Expr, model: &Model) -> ApplicationResult {
     if !matches!(
@@ -153,16 +215,15 @@ fn flatten_binop(expr: &Expr, model: &Model) -> ApplicationResult {
     }
 
     let expr = expr.with_children(children);
-    let new_top = exprs_to_conjunction(&new_tops).unwrap_or_else(|| {
-        bug!("rules::minion::flatten_binop : new_tops could be combined with And!")
-    });
-
-    Ok(Reduction::new(expr, new_top, model.variables))
+    Ok(Reduction::new(expr, new_tops, model.variables))
 }
 
 #[register_rule(("Minion", 4400))]
 fn flatten_vecop(expr: &Expr, model: &Model) -> ApplicationResult {
-    if !matches!(expr, Expr::Sum(_, _)) {
+    if !matches!(
+        expr,
+        Expr::Sum(_, _) | Expr::SumGeq(_, _, _) | Expr::SumLeq(_, _, _)
+    ) {
         return Err(RuleNotApplicable);
     }
 
@@ -186,11 +247,8 @@ fn flatten_vecop(expr: &Expr, model: &Model) -> ApplicationResult {
     }
 
     let expr = expr.with_children(children);
-    let new_top = exprs_to_conjunction(&new_tops).unwrap_or_else(|| {
-        bug!("rules::minion::flatten_vecop : new_tops could be combined with And!")
-    });
 
-    Ok(Reduction::new(expr, new_top, model.variables))
+    Ok(Reduction::new(expr, new_tops, model.variables))
 }
 
 #[register_rule(("Minion", 4400))]
@@ -221,10 +279,8 @@ fn flatten_eq(expr: &Expr, model: &Model) -> ApplicationResult {
     }
 
     let expr = expr.with_children(children);
-    let new_top = exprs_to_conjunction(&new_tops)
-        .unwrap_or_else(|| bug!("rules::minion::flatten_eq: new_tops could be combined with And!"));
 
-    Ok(Reduction::new(expr, new_top, model.variables))
+    Ok(Reduction::new(expr, new_tops, model.variables))
 }
 
 fn is_nested_sum(exprs: &Vec<Expr>) -> bool {
@@ -234,6 +290,61 @@ fn is_nested_sum(exprs: &Vec<Expr>) -> bool {
         }
     }
     false
+}
+
+/// Flattens `a=-e`, where e is a non-atomic expression.
+///
+/// ```text
+/// a = -e ~> a = MinusEq(a,__x), __x =aux e
+///  
+///  where a is atomic, e is not atomic
+/// ```
+#[register_rule(("Minion", 4400))]
+fn flatten_minuseq(expr: &Expr, m: &Model) -> ApplicationResult {
+    // TODO: case where a is a literal not a ref?
+
+    // parses arguments a = -e, where a is an atom and e is a non-atomic expression
+    // (when e is an atom, flattening is done, so introduce_minus_eq should be applied instead)
+    fn try_get_args(name: &Expr, negated_expr: &Expr) -> Option<(Name, Expr)> {
+        let Atomic(_, Atom::Reference(name)) = name else {
+            return None;
+        };
+
+        let Neg(_, e) = negated_expr else {
+            return None;
+        };
+
+        Some((name.clone(), *e.clone()))
+    }
+
+    let (name, e) = match expr {
+        // parse arguments symmetrically
+        Eq(_, a, b) => try_get_args(a.borrow(), b.borrow())
+            .or_else(|| try_get_args(b.borrow(), a.borrow()))
+            .ok_or(RuleNotApplicable),
+
+        AuxDeclaration(_, name, e) => match e.borrow() {
+            Neg(_, e) => Some((name.clone(), (*e.clone()))),
+            _ => None,
+        }
+        .ok_or(RuleNotApplicable),
+
+        _ => Err(RuleNotApplicable),
+    }?;
+
+    let aux_var_out = to_aux_var(&e, m).ok_or(RuleNotApplicable)?;
+
+    let new_expr = MinusEq(
+        Metadata::new(),
+        Atom::Reference(name),
+        aux_var_out.as_atom(),
+    );
+
+    Ok(Reduction::new(
+        new_expr,
+        vec![aux_var_out.top_level_expr()],
+        aux_var_out.model().variables,
+    ))
 }
 
 /**
@@ -322,26 +433,36 @@ fn sum_leq_to_sumleq(expr: &Expr, _: &Model) -> ApplicationResult {
 */
 #[register_rule(("Minion", 4400))]
 fn sum_eq_to_sumeq(expr: &Expr, _: &Model) -> ApplicationResult {
-    match expr {
-        Eq(metadata, a, b) => {
-            if let Ok(exprs) = sum_to_vector(a) {
-                Ok(Reduction::pure(SumEq(
-                    metadata.clone_dirty(),
-                    exprs,
-                    b.clone(),
-                )))
-            } else if let Ok(exprs) = sum_to_vector(b) {
-                Ok(Reduction::pure(SumEq(
-                    metadata.clone_dirty(),
-                    exprs,
-                    a.clone(),
-                )))
-            } else {
-                Err(RuleNotApplicable)
-            }
-        }
-        _ => Err(RuleNotApplicable),
+    fn try_get_args(sum_expr: &Expr, value: &Expr) -> Option<(Vec<Expr>, Expr)> {
+        let Sum(_, xs) = sum_expr else {
+            return None;
+        };
+
+        Some((xs.clone(), value.clone()))
     }
+
+    let (xs, value) = match expr {
+        Eq(_, a, b) => {
+            // get arguments symmetrically
+            try_get_args(a, b)
+                .or_else(|| try_get_args(b, a))
+                .ok_or(RuleNotApplicable)
+        }
+
+        AuxDeclaration(_, name, e) => {
+            let value = Atom::Reference(name.clone()).into();
+            let xs = match *e.clone() {
+                Sum(_, xs) => Ok(xs),
+                _ => Err(RuleNotApplicable),
+            }?;
+
+            Ok((xs, value))
+        }
+
+        _ => Err(RuleNotApplicable),
+    }?;
+
+    Ok(Reduction::pure(SumEq(Metadata::new(), xs, Box::new(value))))
 }
 
 /**

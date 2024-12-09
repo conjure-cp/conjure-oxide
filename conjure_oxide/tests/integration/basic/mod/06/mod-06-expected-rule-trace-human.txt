@@ -16,9 +16,15 @@ And([(a = SafeMod(b,c)), And([(c != 0)])])
 
 --
 
-Not(And([(a = SafeMod(b,c)), And([(c != 0)])])), 
+And([(c != 0)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(c != 0) 
+
+--
+
+Not(And([(a = SafeMod(b,c)), (c != 0)])), 
    ~~> distribute_not_over_and ([("Base", 8400)]) 
-Or([Not((a = SafeMod(b,c))), Not(And([(c != 0)]))]) 
+Or([Not((a = SafeMod(b,c))), Not((c != 0))]) 
 
 --
 
@@ -28,21 +34,15 @@ Not((a = SafeMod(b,c))),
 
 --
 
-(a != SafeMod(b,c)), 
-   ~~> flatten_binop ([("Minion", 4400)]) 
-(a != __0) 
-
---
-
-Not(And([(c != 0)])), 
-   ~~> distribute_not_over_and ([("Base", 8400)]) 
-Not((c != 0)) 
-
---
-
 Not((c != 0)), 
    ~~> negated_neq_to_eq ([("Base", 8800)]) 
 (c = 0) 
+
+--
+
+(a != SafeMod(b,c)), 
+   ~~> flatten_binop ([("Minion", 4400)]) 
+(a != __0) 
 
 --
 

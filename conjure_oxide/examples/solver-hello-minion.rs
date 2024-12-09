@@ -13,7 +13,10 @@ use std::collections::HashMap;
 #[allow(clippy::unwrap_used)]
 pub fn main() {
     use conjure_core::solver::SolverFamily;
-    use conjure_core::{parse::get_example_model, rule_engine::resolve_rule_sets};
+    use conjure_core::{
+        ast::pretty::pretty_expressions_as_top_level, parse::get_example_model,
+        rule_engine::resolve_rule_sets,
+    };
     use conjure_core::{
         rule_engine::rewrite_model,
         solver::{adaptors, Solver},
@@ -22,13 +25,19 @@ pub fn main() {
 
     // Load an example model and rewrite it with conjure oxide.
     let model = get_example_model("div-05").unwrap();
-    println!("Input model: \n {} \n", model.constraints);
+    println!(
+        "Input model: \n {} \n",
+        pretty_expressions_as_top_level(&model.constraints)
+    );
 
     // TODO: We will have a nicer way to do this in the future
     let rule_sets = resolve_rule_sets(SolverFamily::Minion, &get_default_rule_sets()).unwrap();
 
     let model = rewrite_model(&model, &rule_sets).unwrap();
-    println!("Rewritten model: \n {} \n", model.constraints);
+    println!(
+        "Rewritten model: \n {} \n",
+        pretty_expressions_as_top_level(&model.constraints)
+    );
 
     // To tell the `Solver` type what solver to use, you pass it a `SolverAdaptor`.
     // Here we use Minion.

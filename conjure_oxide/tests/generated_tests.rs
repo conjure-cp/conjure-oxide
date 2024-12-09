@@ -1,3 +1,4 @@
+use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
 use conjure_oxide::utils::testing::read_human_rule_trace;
 use glob::glob;
@@ -11,6 +12,7 @@ use tracing::{span, Level};
 use tracing_subscriber::{
     filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
 };
+use uniplate::Biplate;
 
 use tracing_appender::non_blocking::WorkerGuard;
 
@@ -24,7 +26,6 @@ use conjure_core::ast::{Expression, Literal, Name};
 use conjure_core::context::Context;
 use conjure_oxide::defaults::get_default_rule_sets;
 use conjure_oxide::rule_engine::resolve_rule_sets;
-use conjure_oxide::rule_engine::rewrite_model;
 use conjure_oxide::utils::conjure::minion_solutions_to_json;
 use conjure_oxide::utils::conjure::{
     get_minion_solutions, get_solutions_from_conjure, parse_essence_file,
@@ -35,7 +36,6 @@ use conjure_oxide::utils::testing::{
 };
 use conjure_oxide::SolverFamily;
 use serde::Deserialize;
-use uniplate::Uniplate;
 
 use pretty_assertions::assert_eq;
 
@@ -43,6 +43,7 @@ use pretty_assertions::assert_eq;
 struct TestConfig {
     extra_rewriter_asserts: Option<Vec<String>>,
     skip_native_parser: Option<bool>,
+    use_naive_rewriter: Option<bool>,
 }
 
 fn main() {
@@ -178,7 +179,16 @@ fn integration_test_inner(
 
     // Stage 2: Rewrite the model using the rule engine and check that the result is as expected
     let rule_sets = resolve_rule_sets(SolverFamily::Minion, &get_default_rule_sets())?;
-    let model = rewrite_model(&model, &rule_sets)?;
+
+    // TODO: temporarily set to always use rewrite_naive
+    // remove before merging?
+    // or we can decide to make native the default.
+    // let model = if let Some(true) = config.use_naive_rewriter {
+    //     rewrite_naive(&model, &rule_sets, true)?
+    // } else {
+    //     rewrite_model(&model, &rule_sets)?
+    // };
+    let model = rewrite_naive(&model, &rule_sets, false)?;
 
     if verbose {
         println!("Rewritten model: {:#?}", model)
@@ -299,44 +309,20 @@ fn integration_test_inner(
 }
 
 fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model) {
-    model.constraints.transform(Arc::new(|x| {
+    for node in <_ as Biplate<Expression>>::universe_bi(&model.constraints) {
         use conjure_core::ast::Expression::*;
-        match &x {
-            Bubble(_, _, _) => (),
-            Atomic(_, _) => (),
-            Sum(_, vec) => assert_constants_leq_one(&x, vec),
-            Min(_, vec) => assert_constants_leq_one(&x, vec),
-            Max(_, vec) => assert_constants_leq_one(&x, vec),
-            Not(_, _) => (),
-            Or(_, vec) => assert_constants_leq_one(&x, vec),
-            And(_, vec) => assert_constants_leq_one(&x, vec),
-            Eq(_, _, _) => (),
-            Neq(_, _, _) => (),
-            Geq(_, _, _) => (),
-            Leq(_, _, _) => (),
-            Gt(_, _, _) => (),
-            Lt(_, _, _) => (),
-            SafeDiv(_, _, _) => (),
-            UnsafeDiv(_, _, _) => (),
-            SumEq(_, vec, _) => assert_constants_leq_one(&x, vec),
-            SumGeq(_, vec, _) => assert_constants_leq_one(&x, vec),
-            SumLeq(_, vec, _) => assert_constants_leq_one(&x, vec),
-            DivEqUndefZero(_, _, _, _) => (),
-            Ineq(_, _, _, _) => (),
-            // this is a vector operation, but we don't want to fold values into each-other in this
-            // one
-            AllDiff(_, _) => (),
-            WatchedLiteral(_, _, _) => (),
-            Reify(_, _, _) => (),
-            AuxDeclaration(_, _, _) => (),
-            UnsafeMod(_, _, _) => (),
-            SafeMod(_, _, _) => (),
-            ModuloEqUndefZero(_, _, _, _) => (),
-            Neg(_, _) => (),
-            Minus(_, _, _) => (),
+        match node {
+            Sum(_, ref vec) => assert_constants_leq_one(&node, vec),
+            Min(_, ref vec) => assert_constants_leq_one(&node, vec),
+            Max(_, ref vec) => assert_constants_leq_one(&node, vec),
+            Or(_, ref vec) => assert_constants_leq_one(&node, vec),
+            And(_, ref vec) => assert_constants_leq_one(&node, vec),
+            SumEq(_, ref vec, _) => assert_constants_leq_one(&node, vec),
+            SumGeq(_, ref vec, _) => assert_constants_leq_one(&node, vec),
+            SumLeq(_, ref vec, _) => assert_constants_leq_one(&node, vec),
+            _ => (),
         };
-        x.clone()
-    }));
+    }
 }
 
 fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
@@ -345,7 +331,11 @@ fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
         _ => i,
     });
 
-    assert!(count <= 1, "assert_vector_operators_have_partially_evaluated: expression {} is not partially evaluated",parent_expr)
+    assert!(
+        count <= 1,
+        "assert_vector_operators_have_partially_evaluated: expression {} is not partially evaluated",
+        parent_expr
+    );
 }
 
 pub fn create_scoped_subscriber(

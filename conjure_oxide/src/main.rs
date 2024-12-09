@@ -7,6 +7,8 @@ use std::sync::Arc;
 use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
+use conjure_core::ast::pretty::pretty_expressions_as_top_level;
+use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::defaults::get_default_rule_sets;
 use schemars::schema_for;
 use serde_json::json;
@@ -73,6 +75,13 @@ struct Cli {
         short = 'o',
         help = "Save solutions to a JSON file (prints to stdin by default)"
     )]
+    #[arg(
+        long,
+        help = "use the, in development, dirty-clean optimising rewriter",
+        default_value_t = false
+    )]
+    use_optimising_rewriter: bool,
+
     output: Option<PathBuf>,
 
     #[arg(long, short = 'v', help = "Log verbosely to sterr")]
@@ -253,9 +262,18 @@ pub fn main() -> AnyhowResult<()> {
     log::info!(target: "file", "Initial model: {}", json!(model));
 
     log::info!(target: "file", "Rewriting model...");
-    model = rewrite_model(&model, &rule_sets)?;
 
-    tracing::info!(constraints=%model.constraints,model=%json!(model),"Rewritten model");
+    if cli.use_optimising_rewriter {
+        log::info!(target: "file", "Using the dirty-clean rewriter...");
+        model = rewrite_model(&model, &rule_sets)?;
+    } else {
+        log::info!(target: "file", "Rewriting model...");
+        model = rewrite_naive(&model, &rule_sets, false)?;
+    }
+
+    let constraints_string = pretty_expressions_as_top_level(&model.constraints);
+    tracing::info!(constraints=%constraints_string, model=%json!(model),"Rewritten model");
+
     let solutions = get_minion_solutions(model, cli.number_of_solutions)?; // ToDo we need to properly set the solver adaptor here, not hard code minion
     log::info!(target: "file", "Solutions: {}", minion_solutions_to_json(&solutions));
 

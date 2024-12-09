@@ -35,20 +35,13 @@ pub fn parse_essence_file_native(
                 }
             }
             "constraint_list" => {
-                let expression: Expression;
-                if statement.child_count() > 2 {
-                    let mut constraint_vec: Vec<Expression> = Vec::new();
-                    for constraint in named_children(&statement) {
-                        if constraint.kind() != "single_line_comment" {
-                            constraint_vec.push(parse_constraint(constraint, &source_code));
-                        }
+                let mut constraint_vec: Vec<Expression> = Vec::new();
+                for constraint in named_children(&statement) {
+                    if constraint.kind() != "single_line_comment" {
+                        constraint_vec.push(parse_constraint(constraint, &source_code));
                     }
-                    expression = Expression::And(Metadata::new(), constraint_vec);
-                } else {
-                    expression = parse_constraint(statement.child(1).unwrap(), &source_code);
                 }
-
-                model.add_constraint(expression);
+                model.constraints.extend(constraint_vec);
             }
             "e_prime_label" => {}
             _ => {

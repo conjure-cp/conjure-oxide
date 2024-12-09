@@ -4,7 +4,6 @@ use std::hash::Hash;
 use thiserror::Error;
 
 use crate::ast::{Expression, SymbolTable};
-use crate::metadata::Metadata;
 use crate::model::Model;
 
 #[derive(Debug, Error)]
@@ -28,8 +27,8 @@ pub enum ApplicationError {
 ///
 /// # Fields
 /// - `new_expression`: The updated [`Expression`] that replaces the original one after applying the rule.
-/// - `new_top`: An additional top-level [`Expression`] constraint that should be added to the model. If no top-level
-///   constraint is needed, this field can be set to `Expression::Nothing`.
+/// - `new_top`: An additional top-level [`Vec<Expression>`] constraint that should be added to the model. If no top-level
+///   constraint is needed, this field can be set to an empty vector [`Vec::new()`].
 /// - `symbols`: A [`SymbolTable`] containing any new symbol definitions or modifications to be added to the model's
 ///   symbol table. If no symbols are modified, this field can be set to an empty symbol table.
 ///
@@ -54,7 +53,7 @@ pub enum ApplicationError {
 #[derive(Clone, Debug)]
 pub struct Reduction {
     pub new_expression: Expression,
-    pub new_top: Expression,
+    pub new_top: Vec<Expression>,
     pub symbols: SymbolTable,
 }
 
@@ -63,7 +62,7 @@ pub struct Reduction {
 pub type ApplicationResult = Result<Reduction, ApplicationError>;
 
 impl Reduction {
-    pub fn new(new_expression: Expression, new_top: Expression, symbols: SymbolTable) -> Self {
+    pub fn new(new_expression: Expression, new_top: Vec<Expression>, symbols: SymbolTable) -> Self {
         Self {
             new_expression,
             new_top,
@@ -75,7 +74,7 @@ impl Reduction {
     pub fn pure(new_expression: Expression) -> Self {
         Self {
             new_expression,
-            new_top: Expression::And(Metadata::new(), Vec::new()),
+            new_top: Vec::new(),
             symbols: SymbolTable::new(),
         }
     }
@@ -84,13 +83,13 @@ impl Reduction {
     pub fn with_symbols(new_expression: Expression, symbols: SymbolTable) -> Self {
         Self {
             new_expression,
-            new_top: Expression::And(Metadata::new(), Vec::new()),
+            new_top: Vec::new(),
             symbols,
         }
     }
 
     /// Represents a reduction that also adds a top-level constraint to the model.
-    pub fn with_top(new_expression: Expression, new_top: Expression) -> Self {
+    pub fn with_top(new_expression: Expression, new_top: Vec<Expression>) -> Self {
         Self {
             new_expression,
             new_top,
@@ -98,29 +97,10 @@ impl Reduction {
         }
     }
 
-    // Apply side-effects (e.g. symbol table updates
+    // Apply side-effects (e.g. symbol table updates)
     pub fn apply(self, model: &mut Model) {
-        model.extend_sym_table(self.symbols);
-
-        // TODO: (yb33) Remove it when we change constraints to a vector
-        if let Expression::And(_, exprs) = &self.new_top {
-            if exprs.is_empty() {
-                model.constraints = self.new_expression.clone();
-                return;
-            }
-        }
-
-        model.constraints = match self.new_expression {
-            Expression::And(metadata, mut exprs) => {
-                // Avoid creating a nested conjunction
-                exprs.push(self.new_top.clone());
-                Expression::And(metadata.clone_dirty(), exprs)
-            }
-            _ => Expression::And(
-                Metadata::new(),
-                vec![self.new_expression.clone(), self.new_top],
-            ),
-        };
+        model.extend_sym_table(self.symbols); // Add new assignments to the symbol table
+        model.constraints.extend(self.new_top.clone());
     }
 }
 

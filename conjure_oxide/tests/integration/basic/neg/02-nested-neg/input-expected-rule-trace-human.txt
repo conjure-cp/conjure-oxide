@@ -1,0 +1,42 @@
+UnsafeDiv(-(y), z), 
+   ~~> div_to_bubble ([("Bubble", 6000)]) 
+{SafeDiv(-(y), z) @ (z != 0)} 
+
+--
+
+(x = {SafeDiv(-(y), z) @ (z != 0)}), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(x = SafeDiv(-(y), z)) @ And([(z != 0)])} 
+
+--
+
+{(x = SafeDiv(-(y), z)) @ And([(z != 0)])}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(x = SafeDiv(-(y), z)), And([(z != 0)])]) 
+
+--
+
+And([(z != 0)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(z != 0) 
+
+--
+
+SafeDiv(-(y), z), 
+   ~~> flatten_binop ([("Minion", 4400)]) 
+SafeDiv(__0, z) 
+
+--
+
+__0 =aux -(y), 
+   ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)]) 
+MinusEq(__0,y) 
+
+--
+
+(x = SafeDiv(__0, z)), 
+   ~~> introduce_diveq ([("Minion", 4200)]) 
+DivEq(__0, z, x) 
+
+--
+
