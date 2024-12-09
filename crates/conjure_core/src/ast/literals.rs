@@ -5,7 +5,6 @@ use uniplate::derive::Uniplate;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash)]
 #[uniplate()]
-
 /// A literal value, equivalent to constants in Conjure.
 pub enum Literal {
     Int(i32),

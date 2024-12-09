@@ -134,7 +134,7 @@ pub fn rewrite_model<'a>(
 /// - true: all expressions are booleans (so can be conjuncted).
 ///
 /// - false: not all expressions are booleans.
-fn is_vec_bool(exprs: &Vec<Expression>) -> bool {
+fn is_vec_bool(exprs: &[Expression]) -> bool {
     exprs
         .iter()
         .all(|expr| expr.return_type() == Some(ReturnType::Bool))

@@ -9,7 +9,7 @@
 //! - [Solver<Adaptor>] provides the API for interacting with constraints solvers.
 //!
 //! - The [SolverAdaptor] trait controls how solving actually occurs and handles translation
-//! between the [Solver] type and a specific solver.
+//!   between the [Solver] type and a specific solver.
 //!
 //! - [adaptors] contains all implemented solver adaptors.
 //!

@@ -160,7 +160,6 @@ unsafe extern "C" fn run_callback() -> bool {
 /// Run Minion on the given [Model].
 ///
 /// The given [callback](Callback) is ran whenever a new solution set is found.
-
 // Turn it into a warning for this function, cant unwarn it directly above callback wierdness
 #[allow(clippy::unwrap_used)]
 pub fn run_minion(model: Model, callback: Callback) -> Result<(), MinionError> {
