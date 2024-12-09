@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use super::{RewriteError, RuleSet};
 use crate::{
     ast::{pretty::pretty_vec, Expression as Expr},
@@ -12,57 +10,36 @@ use crate::{
     Model,
 };
 use std::collections::{BTreeMap, HashSet};
+use std::sync::Arc;
 use uniplate::Biplate;
 
-/// A naive, exhaustive rewriter.
-///
-/// **This rewriter should not be used in production, and is intended as a development tool.**
-///
-/// The goal of this rewriter is to model the correct rule application order. To this end, it uses
-/// the simplest implementation possible, disregarding performance.
-///
-/// **Rule application order:** apply the highest priority rule possible anywhere in the tree,
-/// favouring larger expressions as a tie-breaker.
-
+/// A naive, exhaustive rewriter for development purposes.
+/// Applies rules in priority order, favouring larger expressions as tie-breakers.
 pub fn rewrite_naive<'a>(
     model: &Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
     prop_multiple_equally_applicable: bool,
 ) -> Result<Model, RewriteError> {
-    // At each iteration, rules are checked against all expressions in order of priority until one
-    // is applicable. This is done until no more rules can be applied to any expression.
-
     let priorities =
         get_rule_priorities(rule_sets).unwrap_or_else(|_| bug!("get_rule_priorities() failed!"));
 
-    // Invert the map: group rules by their priority.
-    // BTreeMap because it maintains keys in sorted order
+    // Group rules by priority in descending order.
     let mut grouped: BTreeMap<u16, HashSet<&'a Rule<'a>>> = BTreeMap::new();
-
     for (rule, priority) in priorities {
         grouped
             .entry(priority)
             .or_insert_with(HashSet::new)
             .insert(rule);
     }
-
-    // `grouped` now holds rules organised by ascending priority
-    // If needed, you can convert this into a Vec of sets:
     let rules_by_priority: Vec<(u16, HashSet<&'a Rule<'a>>)> = grouped.into_iter().collect();
 
     type CtxFn = Arc<dyn Fn(Expr) -> Vec<Expr>>;
-
     let mut model = model.clone();
 
     loop {
-        // List of applicable rules for this pass:
-        //
-        // (reduction, rule name, priority, original expression, context function)
-        //
-        // Each rule in this list should be at the same priority level
         let mut results: Vec<(RuleResult<'_>, u16, Expr, CtxFn)> = vec![];
 
-        // Iterate over priority levels in descending order
+        // Iterate over rules by priority in descending order.
         for (priority, rule_set) in rules_by_priority.iter().rev() {
             for (expr, ctx) in Biplate::<Expr>::contexts_bi(&model.get_constraints_vec()) {
                 // Clone expr and ctx so they can be reused
@@ -100,9 +77,7 @@ pub fn rewrite_naive<'a>(
         }
 
         match results.as_slice() {
-            [] => {
-                break;
-            }
+            [] => break, // Exit if no rules are applicable.
             [(result, priority, expr, ctx), ..] => {
                 // Extract the single applicable rule and apply it
                 tracing::info!(
@@ -113,7 +88,6 @@ pub fn rewrite_naive<'a>(
                     expr,
                     result.reduction.new_expression
                 );
-                // let (result, expr, ctx) = results[0].clone();
 
                 log_rule_application(result, &expr);
 
