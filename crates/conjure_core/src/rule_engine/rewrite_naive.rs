@@ -102,7 +102,7 @@ pub fn rewrite_naive<'a>(
             [] => {
                 break;
             }
-            [(result, priority, expr, ctx), ..] => {
+            [(result, priority, expr, ctx)] => {
                 // Extract the single applicable rule and apply it
                 tracing::info!(
                     new_top = %pretty_vec(&result.reduction.new_top),
