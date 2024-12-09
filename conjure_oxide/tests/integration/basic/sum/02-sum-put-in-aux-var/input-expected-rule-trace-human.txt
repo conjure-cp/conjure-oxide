@@ -1,0 +1,54 @@
+Sum([Sum([x, y]), z]), 
+   ~~> normalise_associative_commutative ([("Base", 8400)]) 
+Sum([x, y, z]) 
+
+--
+
+UnsafeDiv(Sum([x, y, z]), a), 
+   ~~> div_to_bubble ([("Bubble", 6000)]) 
+{SafeDiv(Sum([x, y, z]), a) @ (a != 0)} 
+
+--
+
+({SafeDiv(Sum([x, y, z]), a) @ (a != 0)} = 3), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(SafeDiv(Sum([x, y, z]), a) = 3) @ And([(a != 0)])} 
+
+--
+
+{(SafeDiv(Sum([x, y, z]), a) = 3) @ And([(a != 0)])}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(SafeDiv(Sum([x, y, z]), a) = 3), And([(a != 0)])]) 
+
+--
+
+And([(a != 0)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(a != 0) 
+
+--
+
+SafeDiv(Sum([x, y, z]), a), 
+   ~~> flatten_binop ([("Minion", 4400)]) 
+SafeDiv(__0, a) 
+
+--
+
+__0 =aux Sum([x, y, z]), 
+   ~~> sum_eq_to_sumeq ([("Minion", 4400)]) 
+SumEq([x, y, z], __0) 
+
+--
+
+SumEq([x, y, z], __0), 
+   ~~> sumeq_to_minion ([("Minion", 4400)]) 
+And([SumGeq([x, y, z], __0), SumLeq([x, y, z], __0)]) 
+
+--
+
+(SafeDiv(__0, a) = 3), 
+   ~~> introduce_diveq ([("Minion", 4200)]) 
+DivEq(__0, a, 3) 
+
+--
+

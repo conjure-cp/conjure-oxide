@@ -77,10 +77,10 @@ struct Cli {
     )]
     #[arg(
         long,
-        help = "(debugging) use the naive rewriter",
+        help = "use the, in development, dirty-clean optimising rewriter",
         default_value_t = false
     )]
-    use_naive_rewriter: bool,
+    use_optimising_rewriter: bool,
 
     output: Option<PathBuf>,
 
@@ -263,12 +263,12 @@ pub fn main() -> AnyhowResult<()> {
 
     log::info!(target: "file", "Rewriting model...");
 
-    if cli.use_naive_rewriter {
-        log::info!(target: "file", "Using the naive rewriter...");
-        model = rewrite_naive(&model, &rule_sets, false)?;
+    if cli.use_optimising_rewriter {
+        log::info!(target: "file", "Using the dirty-clean rewriter...");
+        model = rewrite_model(&model, &rule_sets)?;
     } else {
         log::info!(target: "file", "Rewriting model...");
-        model = rewrite_model(&model, &rule_sets)?;
+        model = rewrite_naive(&model, &rule_sets, false)?;
     }
 
     let constraints_string = pretty_expressions_as_top_level(&model.constraints);

@@ -77,7 +77,7 @@ fn div_to_bubble(expr: &Expression, _: &Model) -> ApplicationResult {
     }
     if let Expression::UnsafeDiv(_, a, b) = expr {
         // bubble bottom up
-        if a.can_be_undefined() || b.can_be_undefined() {
+        if !a.is_safe() || !b.is_safe() {
             return Err(RuleNotApplicable);
         }
 
@@ -111,7 +111,7 @@ fn mod_to_bubble(expr: &Expression, _: &Model) -> ApplicationResult {
     }
     if let Expression::UnsafeMod(_, a, b) = expr {
         // bubble bottom up
-        if a.can_be_undefined() || b.can_be_undefined() {
+        if !a.is_safe() || !b.is_safe() {
             return Err(RuleNotApplicable);
         }
 
