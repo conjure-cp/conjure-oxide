@@ -18,7 +18,7 @@ use Expr::*;
 fn negated_neq_to_eq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Not(_, a) => match a.as_ref() {
-            Neq(_, b, c) if (!b.can_be_undefined() && !c.can_be_undefined()) => {
+            Neq(_, b, c) if (b.is_safe() && c.is_safe()) => {
                 Ok(Reduction::pure(Eq(Metadata::new(), b.clone(), c.clone())))
             }
             _ => Err(RuleNotApplicable),
@@ -36,7 +36,7 @@ fn negated_neq_to_eq(expr: &Expr, _: &Model) -> ApplicationResult {
 fn negated_eq_to_neq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr {
         Not(_, a) => match a.as_ref() {
-            Eq(_, b, c) if (!b.can_be_undefined() && !c.can_be_undefined()) => {
+            Eq(_, b, c) if (b.is_safe() && c.is_safe()) => {
                 Ok(Reduction::pure(Neq(Metadata::new(), b.clone(), c.clone())))
             }
             _ => Err(RuleNotApplicable),

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use enum_compatability_macro::document_compatibility;
 use uniplate::derive::Uniplate;
-use uniplate::Biplate;
+use uniplate::{Biplate, Uniplate as _};
 
 use crate::ast::literals::Literal;
 use crate::ast::symbol_table::{Name, SymbolTable};
@@ -305,14 +305,23 @@ impl Expression {
         <Expression as Biplate<Metadata>>::transform_bi(self, Arc::new(move |_| meta.clone()));
     }
 
-    pub fn can_be_undefined(&self) -> bool {
-        // TODO: there will be more false cases but we are being conservative
-        match self {
-            Expression::Atomic(_, _) => false,
-            Expression::SafeDiv(_, _, _) => false,
-            Expression::SafeMod(_, _, _) => false,
-            _ => true,
+    /// Checks whether this expression is safe.
+    ///
+    /// An expression is unsafe if can be undefined, or if any of its children can be undefined.
+    ///
+    /// Unsafe expressions are (typically) prefixed with Unsafe in our AST, and can be made
+    /// safe through the use of bubble rules.
+    pub fn is_safe(&self) -> bool {
+        // TODO: memoise in Metadata
+        for expr in self.universe() {
+            match expr {
+                Expression::UnsafeDiv(_, _, _) | Expression::UnsafeMod(_, _, _) => {
+                    return false;
+                }
+                _ => {}
+            }
         }
+        true
     }
 
     pub fn return_type(&self) -> Option<ReturnType> {

@@ -1,48 +1,24 @@
-UnsafeDiv(x, UnsafeDiv(y, z)), 
-   ~~> div_to_bubble ([("Bubble", 6000)]) 
-{SafeDiv(x, UnsafeDiv(y, z)) @ (UnsafeDiv(y, z) != 0)} 
-
---
-
-({SafeDiv(x, UnsafeDiv(y, z)) @ (UnsafeDiv(y, z) != 0)} = 10), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{(SafeDiv(x, UnsafeDiv(y, z)) = 10) @ And([(UnsafeDiv(y, z) != 0)])} 
-
---
-
-{(SafeDiv(x, UnsafeDiv(y, z)) = 10) @ And([(UnsafeDiv(y, z) != 0)])}, 
-   ~~> expand_bubble ([("Bubble", 8900)]) 
-And([(SafeDiv(x, UnsafeDiv(y, z)) = 10), And([(UnsafeDiv(y, z) != 0)])]) 
-
---
-
-And([(UnsafeDiv(y, z) != 0)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
-(UnsafeDiv(y, z) != 0) 
-
---
-
 UnsafeDiv(y, z), 
    ~~> div_to_bubble ([("Bubble", 6000)]) 
 {SafeDiv(y, z) @ (z != 0)} 
 
 --
 
-SafeDiv(x, {SafeDiv(y, z) @ (z != 0)}), 
+UnsafeDiv(x, {SafeDiv(y, z) @ (z != 0)}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{SafeDiv(x, SafeDiv(y, z)) @ And([(z != 0)])} 
+{UnsafeDiv(x, SafeDiv(y, z)) @ And([(z != 0)])} 
 
 --
 
-({SafeDiv(x, SafeDiv(y, z)) @ And([(z != 0)])} = 10), 
+({UnsafeDiv(x, SafeDiv(y, z)) @ And([(z != 0)])} = 10), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(SafeDiv(x, SafeDiv(y, z)) = 10) @ And([And([(z != 0)])])} 
+{(UnsafeDiv(x, SafeDiv(y, z)) = 10) @ And([And([(z != 0)])])} 
 
 --
 
-{(SafeDiv(x, SafeDiv(y, z)) = 10) @ And([And([(z != 0)])])}, 
+{(UnsafeDiv(x, SafeDiv(y, z)) = 10) @ And([And([(z != 0)])])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-And([(SafeDiv(x, SafeDiv(y, z)) = 10), And([And([(z != 0)])])]) 
+And([(UnsafeDiv(x, SafeDiv(y, z)) = 10), And([And([(z != 0)])])]) 
 
 --
 
@@ -58,39 +34,45 @@ And([(z != 0)]),
 
 --
 
-And([And([(SafeDiv(x, SafeDiv(y, z)) = 10), (z != 0)]), (UnsafeDiv(y, z) != 0)]), 
-   ~~> normalise_associative_commutative ([("Base", 8400)]) 
-And([(SafeDiv(x, SafeDiv(y, z)) = 10), (z != 0), (UnsafeDiv(y, z) != 0)]) 
-
---
-
-UnsafeDiv(y, z), 
+UnsafeDiv(x, SafeDiv(y, z)), 
    ~~> div_to_bubble ([("Bubble", 6000)]) 
-{SafeDiv(y, z) @ (z != 0)} 
+{SafeDiv(x, SafeDiv(y, z)) @ (SafeDiv(y, z) != 0)} 
 
 --
 
-({SafeDiv(y, z) @ (z != 0)} != 0), 
+({SafeDiv(x, SafeDiv(y, z)) @ (SafeDiv(y, z) != 0)} = 10), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(SafeDiv(y, z) != 0) @ And([(z != 0)])} 
+{(SafeDiv(x, SafeDiv(y, z)) = 10) @ And([(SafeDiv(y, z) != 0)])} 
 
 --
 
-{(SafeDiv(y, z) != 0) @ And([(z != 0)])}, 
+{(SafeDiv(x, SafeDiv(y, z)) = 10) @ And([(SafeDiv(y, z) != 0)])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-And([(SafeDiv(y, z) != 0), And([(z != 0)])]) 
+And([(SafeDiv(x, SafeDiv(y, z)) = 10), And([(SafeDiv(y, z) != 0)])]) 
 
 --
 
-And([(z != 0)]), 
+And([(SafeDiv(y, z) != 0)]), 
    ~~> remove_unit_vector_and ([("Base", 8800)]) 
-(z != 0) 
+(SafeDiv(y, z) != 0) 
 
 --
 
-Not(And([(SafeDiv(x, SafeDiv(y, z)) = 10), (z != 0), And([(SafeDiv(y, z) != 0), (z != 0)])])), 
+Not(And([And([(SafeDiv(x, SafeDiv(y, z)) = 10), (SafeDiv(y, z) != 0)]), (z != 0)])), 
    ~~> distribute_not_over_and ([("Base", 8400)]) 
-Or([Not((SafeDiv(x, SafeDiv(y, z)) = 10)), Not((z != 0)), Not(And([(SafeDiv(y, z) != 0), (z != 0)]))]) 
+Or([Not(And([(SafeDiv(x, SafeDiv(y, z)) = 10), (SafeDiv(y, z) != 0)])), Not((z != 0))]) 
+
+--
+
+Not((z != 0)), 
+   ~~> negated_neq_to_eq ([("Base", 8800)]) 
+(z = 0) 
+
+--
+
+Not(And([(SafeDiv(x, SafeDiv(y, z)) = 10), (SafeDiv(y, z) != 0)])), 
+   ~~> distribute_not_over_and ([("Base", 8400)]) 
+Or([Not((SafeDiv(x, SafeDiv(y, z)) = 10)), Not((SafeDiv(y, z) != 0))]) 
 
 --
 
@@ -100,33 +82,15 @@ Not((SafeDiv(x, SafeDiv(y, z)) = 10)),
 
 --
 
-Not((z != 0)), 
-   ~~> negated_neq_to_eq ([("Base", 8800)]) 
-(z = 0) 
-
---
-
-Not(And([(SafeDiv(y, z) != 0), (z != 0)])), 
-   ~~> distribute_not_over_and ([("Base", 8400)]) 
-Or([Not((SafeDiv(y, z) != 0)), Not((z != 0))]) 
-
---
-
 Not((SafeDiv(y, z) != 0)), 
    ~~> negated_neq_to_eq ([("Base", 8800)]) 
 (SafeDiv(y, z) = 0) 
 
 --
 
-Not((z != 0)), 
-   ~~> negated_neq_to_eq ([("Base", 8800)]) 
-(z = 0) 
-
---
-
-Or([(SafeDiv(x, SafeDiv(y, z)) != 10), (z = 0), Or([(SafeDiv(y, z) = 0), (z = 0)])]), 
+Or([Or([(SafeDiv(x, SafeDiv(y, z)) != 10), (SafeDiv(y, z) = 0)]), (z = 0)]), 
    ~~> normalise_associative_commutative ([("Base", 8400)]) 
-Or([(SafeDiv(x, SafeDiv(y, z)) != 10), (z = 0), (SafeDiv(y, z) = 0), (z = 0)]) 
+Or([(SafeDiv(x, SafeDiv(y, z)) != 10), (SafeDiv(y, z) = 0), (z = 0)]) 
 
 --
 

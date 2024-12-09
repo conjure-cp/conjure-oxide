@@ -58,9 +58,9 @@ pub fn to_aux_var(expr: &Expr, m: &Model) -> Option<ToAuxVarOutput> {
     }
 
     // Anything that should be bubbled, bubble
-    // if expr.can_be_undefined() {
-    //     return None;
-    // }
+    if !expr.is_safe() {
+        return None;
+    }
 
     let name = m.gensym();
 
