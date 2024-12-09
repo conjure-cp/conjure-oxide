@@ -1,5 +1,5 @@
-name: "Warnings and lints"
-
+name: "Hygiene"
+  
 on:
   push:
     branches:
@@ -10,7 +10,7 @@ on:
       - crates/**
       - Cargo.*
       - conjure_oxide/tests/**
-      - .github/workflows/warnings.yml
+      - .github/workflows/lint.yml
   pull_request:
     paths:
       - conjure_oxide/**
@@ -18,7 +18,7 @@ on:
       - crates/**
       - Cargo.*
       - conjure_oxide/tests/**
-      - .github/workflows/warnings.yml
+      - .github/workflows/lint.yml
   workflow_dispatch:
 
 env:
@@ -27,35 +27,23 @@ env:
   SCCACHE_GHA_VERSION: 5
 
 jobs:
-  warnings-and-lints:
-    name: "Warnings and lints"
+  Check:
+    runs-on: ubuntu-latest
     timeout-minutes: 10
-    strategy:
-      # just one combination at the moment, but sticking to matrix syntax for uniformity among workflow files.
-      fail-fast: false
-      matrix:
-        rust_release:
-          - stable
-        conjure_version:
-          - 2.5.1
-        os:
-          - ubuntu-latest
-        include:
-          - os: ubuntu-latest
-            release_suffix: linux
-
-    runs-on: ${{ matrix.os }}
-
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
 
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.3
-
-      - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
 
       - run: RUSTFLAGS="-D warnings" cargo build -vv --workspace
 
       - run: RUSTFLAGS="-D warnings" cargo build -vv --workspace --examples
 
       - run: cargo clippy -- -D warnings -A clippy::unwrap_used -A clippy::expect_used
+
+      - run: cargo fmt --check
+  
