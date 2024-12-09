@@ -684,7 +684,7 @@ fn rewrite_solve_xyz() {
 
     // Check if the expression is in its simplest form
 
-    assert!(rewritten_expr.iter().all(|expr| is_simple(expr)));
+    assert!(rewritten_expr.iter().all(is_simple));
 
     // Create model with variables and constraints
     let mut model = Model::new(HashMap::new(), rewritten_expr, Default::default());
@@ -811,11 +811,9 @@ fn rewrite_solve_xyz_parameterized() {
         .expect("Could not save stats!");
 
         // Check if the expression is in its simplest form
-        assert!(rewritten_expr.iter().all(|expr| is_simple(expr)));
+        assert!(rewritten_expr.iter().all(is_simple));
 
-        assert!(rewritten_expr_unoptimized
-            .iter()
-            .all(|expr| is_simple(expr)));
+        assert!(rewritten_expr_unoptimized.iter().all(is_simple));
 
         // Create model with variables and constraints
         let mut model = Model::new(HashMap::new(), rewritten_expr, Default::default());

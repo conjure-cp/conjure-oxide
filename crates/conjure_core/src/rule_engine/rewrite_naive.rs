@@ -26,10 +26,7 @@ pub fn rewrite_naive<'a>(
     // Group rules by priority in descending order.
     let mut grouped: BTreeMap<u16, HashSet<&'a Rule<'a>>> = BTreeMap::new();
     for (rule, priority) in priorities {
-        grouped
-            .entry(priority)
-            .or_insert_with(HashSet::new)
-            .insert(rule);
+        grouped.entry(priority).or_default().insert(rule);
     }
     let rules_by_priority: Vec<(u16, HashSet<&'a Rule<'a>>)> = grouped.into_iter().collect();
 
@@ -51,7 +48,7 @@ pub fn rewrite_naive<'a>(
                             // Collect applicable rules
                             results.push((
                                 RuleResult {
-                                    rule: rule,
+                                    rule,
                                     reduction: red,
                                 },
                                 *priority,
@@ -89,7 +86,7 @@ pub fn rewrite_naive<'a>(
                     result.reduction.new_expression
                 );
 
-                log_rule_application(result, &expr);
+                log_rule_application(result, expr);
 
                 // Replace expr with new_expression
                 model.set_constraints(ctx(result.reduction.new_expression.clone()));
