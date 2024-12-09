@@ -1,15 +1,3 @@
-(Max([a, b]) >= 2), 
-   ~~> geq_to_ineq ([("Minion", 4100)]) 
-Ineq(2, Max([a, b]), 0) 
-
---
-
-Max([a, b]), 
-   ~~> max_to_var ([("Base", 100)]) 
-__0 
-
---
-
 (x = Sum([Max([a, b]), 1])), 
    ~~> sum_eq_to_sumeq ([("Minion", 4400)]) 
 SumEq([Max([a, b]), 1], x) 
@@ -22,15 +10,15 @@ And([SumGeq([Max([a, b]), 1], x), SumLeq([Max([a, b]), 1], x)])
 
 --
 
-Max([a, b]), 
-   ~~> max_to_var ([("Base", 100)]) 
-__1 
+(Max([a, b]) >= 2), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(2, Max([a, b]), 0) 
 
 --
 
 Max([a, b]), 
    ~~> max_to_var ([("Base", 100)]) 
-__2 
+__0 
 
 --
 
@@ -46,6 +34,12 @@ Ineq(b, __0, 0)
 
 --
 
+Max([a, b]), 
+   ~~> max_to_var ([("Base", 100)]) 
+__1 
+
+--
+
 (__1 >= a), 
    ~~> geq_to_ineq ([("Minion", 4100)]) 
 Ineq(a, __1, 0) 
@@ -55,6 +49,12 @@ Ineq(a, __1, 0)
 (__1 >= b), 
    ~~> geq_to_ineq ([("Minion", 4100)]) 
 Ineq(b, __1, 0) 
+
+--
+
+Max([a, b]), 
+   ~~> max_to_var ([("Base", 100)]) 
+__2 
 
 --
 
