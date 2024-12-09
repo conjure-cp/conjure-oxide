@@ -265,7 +265,7 @@ pub fn main() -> AnyhowResult<()> {
 
     if cli.use_naive_rewriter {
         log::info!(target: "file", "Using the naive rewriter...");
-        model = rewrite_naive(&model, &rule_sets)?;
+        model = rewrite_naive(&model, &rule_sets, false)?;
     } else {
         log::info!(target: "file", "Rewriting model...");
         model = rewrite_model(&model, &rule_sets)?;

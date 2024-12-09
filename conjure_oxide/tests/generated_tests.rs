@@ -26,7 +26,6 @@ use conjure_core::ast::{Expression, Literal, Name};
 use conjure_core::context::Context;
 use conjure_oxide::defaults::get_default_rule_sets;
 use conjure_oxide::rule_engine::resolve_rule_sets;
-use conjure_oxide::rule_engine::rewrite_model;
 use conjure_oxide::utils::conjure::minion_solutions_to_json;
 use conjure_oxide::utils::conjure::{
     get_minion_solutions, get_solutions_from_conjure, parse_essence_file,
@@ -185,11 +184,11 @@ fn integration_test_inner(
     // remove before merging?
     // or we can decide to make native the default.
     // let model = if let Some(true) = config.use_naive_rewriter {
-    //     rewrite_naive(&model, &rule_sets)?
+    //     rewrite_naive(&model, &rule_sets, true)?
     // } else {
     //     rewrite_model(&model, &rule_sets)?
     // };
-    let model = rewrite_naive(&model, &rule_sets)?;
+    let model = rewrite_naive(&model, &rule_sets, false)?;
 
     if verbose {
         println!("Rewritten model: {:#?}", model)
