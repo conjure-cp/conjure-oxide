@@ -7,7 +7,7 @@ use crate::{
     rule_engine::{
         get_rule_priorities,
         rewriter_common::{log_rule_application, RuleResult},
-        Reduction, Rule,
+        Rule,
     },
     Model,
 };
