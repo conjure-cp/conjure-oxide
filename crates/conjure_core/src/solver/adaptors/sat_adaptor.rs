@@ -11,6 +11,7 @@ use rustsat::solvers::{Solve, SolverResult};
 use rustsat::types::{Var as satVar, Clause, Lit}; 
 use sat_rs::sat_tree::{self, conv_to_clause, conv_to_formula};
 use std::collections::{HashMap, VecDeque}; 
+use crate::context::Context;
 
 use rustsat_minisat::core::Minisat;
 
@@ -166,16 +167,20 @@ impl SolverAdaptor for SAT {
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
-        let cnf_func = match self.model_inst.clone() {
-            Some(model) => model.into_cnf().0,
-            None => return Err(SolverError::Runtime("No model instance found.".to_owned())),
-        };
+        // Extracts CNF from the model instance
+        let cnf_func = self.model_inst.clone()
+            .ok_or_else(|| SolverError::Runtime("No model instance found".to_owned()))?
+            .into_cnf()
+            .0;
     
+        // Then adds CNF to the solver instance
         self.solver_inst.add_cnf(cnf_func).map_err(|e| {
             SolverError::Runtime(format!("Failed to add CNF to the solver: {:?}", e))
         })?;
+    
+        // Now solving the SAT problem
         let res = self.solver_inst.solve().map_err(|e| {
-            SolverError::Runtime(format!("Solver encountered an error: {:?}", e))
+            SolverError::Runtime(format!("Solver faced an error: {:?}", e))
         })?;
     
         let solver_res = match res {
@@ -193,14 +198,19 @@ impl SolverAdaptor for SAT {
             if let Ok(solution) = self.solver_inst.full_solution() {
                 println!("SAT Solution: {:?}", solution);
             } else {
-                println!("Unable to extract full solution from the solver.");
+                println!("Unable to get the full solution from the solver.");
             }
         }
+        if !solver_res {
+            return Err(SolverError::Runtime(
+                "UNSAT result faced as expected.".to_owned(),
+            ));
+        }
+    
         println!("{}", solver_res);
         Err(OpNotImplemented("solve_mut".to_owned()))
-    }
+    }    
     
-
     fn solve_mut(
         &mut self,
         callback: SolverMutCallback,
@@ -233,16 +243,11 @@ pub fn handle_lit(e: Expression) -> Result<i32, CNFError> {
         Expression::Not(_, heap_expr) => {
             let expr = *heap_expr;
             match expr {
-                Expression::Nothing => todo!(), // panic?
-                Expression::Not(_md, e) => handle_lit(*e),
-                // todo(ss504): decide
                 Expression::Reference(_md, name) => {
-                    let check = get_namevar_as_int(name).unwrap();
-                    match check == 0 {
-                        true => Ok(1),
-                        false => Ok(0),
-                    }
+                    let lit_value = get_namevar_as_int(name)?;
+                    Ok(-lit_value)
                 }
+                Expression::Not(_, inner_expr) => handle_lit(*inner_expr),
                 _ => Err(CNFError::UnexpectedExpressionInsideNot(expr)),
             }
         }
@@ -251,39 +256,47 @@ pub fn handle_lit(e: Expression) -> Result<i32, CNFError> {
     }
 }
 
-pub fn handle_or(e: Expression) -> Result<(Vec<i32>), CNFError> {
-    let vec_clause = match e {
-        Expression::Or(_md, vec) => vec,
-        _ => Err(CNFError::UnexpectedExpression(e))?,
+pub fn handle_or(e: Expression) -> Result<Vec<i32>, CNFError> {
+    let vec_clause = match &e {
+        Expression::Or(_, vec) => vec,
+        _ => return Err(CNFError::UnexpectedExpression(e.clone())),
     };
 
     let mut ret_clause: Vec<i32> = Vec::new();
 
     for expr in vec_clause {
         match expr {
-            Expression::Reference(_, _) => ret_clause.push(handle_lit(expr).unwrap()),
-            Expression::Not(_, _) => ret_clause.push(handle_lit(expr).unwrap()),
-            _ => Err(CNFError::UnexpectedExpressionInsideOr(expr))?,
+            Expression::Reference(_, _) => ret_clause.push(handle_lit(expr.clone())?),
+            Expression::Not(_, _) => ret_clause.push(handle_lit(expr.clone())?),
+            Expression::Or(_, _) => return Err(CNFError::UnexpectedExpressionInsideOr(expr.clone())),
+            _ => return Err(CNFError::UnexpectedExpressionInsideOr(expr.clone())),
         }
     }
+
+    if ret_clause.is_empty() {
+        return Err(CNFError::UnexpectedExpressionInsideOr(e));
+    }
+
     Ok(ret_clause)
 }
 
-pub fn handle_and(e: Expression) -> Result<(Vec<Vec<i32>>), CNFError> {
-    let vec_cnf = match e {
-        Expression::And(_md, vec_and) => vec_and,
-        _ => panic!("Villain, What hast thou done?\nThat which thou canst not undo."),
+pub fn handle_and(e: Expression) -> Result<Vec<Vec<i32>>, CNFError> {
+    let vec_cnf = match &e {
+        Expression::And(_, vec_and) => vec_and,
+        _ => return Err(CNFError::UnexpectedExpression(e.clone())),
     };
 
     let mut ret_vec_of_vecs: Vec<Vec<i32>> = Vec::new();
 
     for expr in vec_cnf {
         match expr {
-            Expression::Or(_, _) => ret_vec_of_vecs.push(handle_or(expr).unwrap()),
-            _ => Err(CNFError::UnexpectedExpressionInsideOr(expr))?,
+            Expression::Or(_, _) => ret_vec_of_vecs.push(handle_or(expr.clone())?),
+            Expression::Reference(_, _) | Expression::Not(_, _) => {
+                ret_vec_of_vecs.push(vec![handle_lit(expr.clone())?])
+            }
+            _ => return Err(CNFError::UnexpectedExpressionInsideAnd(expr.clone())),
         }
     }
-
     Ok(ret_vec_of_vecs)
 }
 
