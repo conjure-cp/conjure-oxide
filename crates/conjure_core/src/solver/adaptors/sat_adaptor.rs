@@ -334,3 +334,212 @@ pub enum CNFError {
     #[error("Unexpected Expression {0} found!")]
     UnexpectedExpression(Expression)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::{Arc, RwLock};
+
+    // Helper to create a mock ConjureModel with single boolean variable
+    fn create_mock_conjure_model() -> ConjureModel {
+        let default_context = Arc::new(RwLock::new(Context::default()));
+
+        let mut model = ConjureModel::new_empty(default_context);
+        model.add_variable(
+            Name::MachineName(1),
+            conjure_ast::DecisionVariable {
+                domain: conjure_ast::Domain::BoolDomain,
+            },
+        );
+        model
+    }
+
+    // SAT::default() -> No model, mappings or clauses.
+    #[test]
+    fn test_default_sat() {
+        let sat = SAT::default();
+        assert!(sat.model_inst.is_none());
+        assert!(sat.var_map.is_none());
+        assert!(sat.reverse_var_map.is_none());
+        assert!(sat.incremental_clauses.is_empty());
+    }
+
+    // [1, -2, 3] -> Added to `incremental_clauses` function.
+    #[test]
+    fn test_add_incremental_clause() {
+        let mut sat = SAT::default();
+        let clause = vec![1, -2, 3];
+        let result = sat.add_incremental_clause(clause.clone());
+        assert!(result.is_ok());
+        assert_eq!(sat.incremental_clauses.len(), 1);
+        assert_eq!(sat.incremental_clauses.back().unwrap().len(), clause.len());
+    }
+
+    // Name::MachineName(1) -> Mapping between model and SAT variables.
+    #[test]
+    fn test_variable_mapping() {
+        let conjure_model = create_mock_conjure_model();
+        let (inst, var_map, reverse_var_map) = instantiate_model_from_conjure(conjure_model).unwrap();
+
+        assert_eq!(var_map.len(), 1);
+        assert_eq!(reverse_var_map.len(), 1);
+
+        let sat_var = var_map.get(&1).unwrap();
+        let model_var = reverse_var_map.get(sat_var).unwrap();
+        assert_eq!(*model_var, 1);
+    }
+
+    // [1] and [-1] -> UNSAT (error).
+    #[test]
+    fn test_solve_unsat() {
+        let conjure_model = create_mock_conjure_model();
+        let (inst, var_map, reverse_var_map) = instantiate_model_from_conjure(conjure_model).unwrap();
+
+        let mut sat = SAT {
+            model_inst: Some(inst),
+            var_map: Some(var_map),
+            reverse_var_map: Some(reverse_var_map),
+            ..SAT::default()
+        };
+
+        sat.add_incremental_clause(vec![1]).unwrap();
+        sat.add_incremental_clause(vec![-1]).unwrap();
+
+        let result = sat.solve(Box::new(|_| true), private::Internal);
+        assert!(matches!(result, Err(SolverError::Runtime(_))));
+    }
+
+    // [1] -> SAT solution attempted.
+    #[test]
+    fn test_solve_sat() {
+        let conjure_model = create_mock_conjure_model();
+        let (inst, var_map, reverse_var_map) = instantiate_model_from_conjure(conjure_model).unwrap();
+
+        let mut sat = SAT {
+            model_inst: Some(inst),
+            var_map: Some(var_map),
+            reverse_var_map: Some(reverse_var_map),
+            ..SAT::default()
+        };
+
+        sat.add_incremental_clause(vec![1]).unwrap();
+
+        let result = sat.solve(Box::new(|_| true), private::Internal);
+        assert!(matches!(result, Err(SolverError::OpNotImplemented(_))));
+    }
+
+    // Constraint [x] -> SAT instance created with mapping.
+    #[test]
+    fn test_with_constraints() {
+        let default_context = Arc::new(RwLock::new(Context::default()));
+
+        let mut model = ConjureModel::new_empty(default_context);
+        model.add_variable(
+            Name::MachineName(1),
+            conjure_ast::DecisionVariable {
+                domain: conjure_ast::Domain::BoolDomain,
+            },
+        );
+        model.add_constraint(
+            Expression::Reference(Metadata::new(), Name::MachineName(1)),
+        );
+
+        let result = instantiate_model_from_conjure(model);
+        assert!(result.is_ok());
+        let (inst, var_map, reverse_var_map) = result.unwrap();
+
+        assert_eq!(var_map.len(), 1);
+        assert_eq!(reverse_var_map.len(), 1);
+    }
+
+    // [0] -> Panic: "Literal value 0 is not allowed."
+    #[test]
+    #[should_panic(expected = "Literal value 0 is not allowed.")]
+    fn test_add_incremental_clause_with_zero() {
+        let mut sat = SAT::default();
+        sat.add_incremental_clause(vec![0]).unwrap();
+    }
+
+    // [x or y] -> [[1, 2]].
+    #[test]
+    fn test_handle_and_expression() {
+        let expr = Expression::And(
+            Metadata::new(),
+            vec![
+                Expression::Or(
+                    Metadata::new(),
+                    vec![
+                        Expression::Reference(Metadata::new(), Name::MachineName(1)),
+                        Expression::Reference(Metadata::new(), Name::MachineName(2)),
+                    ],
+                ),
+            ],
+        );
+
+        let result = handle_and(expr);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().len(), 1);
+    }
+
+    // [x or ~y] -> [1, -2].
+    #[test]
+    fn test_handle_or_expression() {
+        let expr = Expression::Or(
+            Metadata::new(),
+            vec![
+                Expression::Reference(Metadata::new(), Name::MachineName(1)),
+                Expression::Not(
+                    Metadata::new(),
+                    Box::new(Expression::Reference(Metadata::new(), Name::MachineName(2))),
+                ),
+            ],
+        );
+
+        let result = handle_or(expr);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().len(), 2);
+    }
+
+    // ~x -> [-1].
+    #[test]
+    fn test_handle_not_expression() {
+        let expr = Expression::Not(
+            Metadata::new(),
+            Box::new(Expression::Reference(Metadata::new(), Name::MachineName(1))),
+        );
+
+        let result = handle_lit(expr);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), -1);
+    }
+
+    // x -> [1].
+    #[test]
+    fn test_handle_reference_expression() {
+        let expr = Expression::Reference(Metadata::new(), Name::MachineName(1));
+
+        let result = handle_lit(expr);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), 1);
+    }
+
+    // (x) AND (~x) -> [[1], [-1]]
+    #[test]
+    fn test_solve_multi_clause_unsat() {
+        let conjure_model = create_mock_conjure_model();
+        let (inst, var_map, reverse_var_map) = instantiate_model_from_conjure(conjure_model).unwrap();
+
+        let mut sat = SAT {
+            model_inst: Some(inst),
+            var_map: Some(var_map),
+            reverse_var_map: Some(reverse_var_map),
+            ..SAT::default()
+        };
+
+        sat.add_incremental_clause(vec![1]).unwrap();  // (x)
+        sat.add_incremental_clause(vec![-1]).unwrap(); // (~x)
+
+        let result = sat.solve(Box::new(|_| true), private::Internal);
+        assert!(matches!(result, Err(SolverError::Runtime(_))));
+    }
+}
