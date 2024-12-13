@@ -78,6 +78,9 @@ impl SAT {
         let new_clause: Clause = clause
             .iter()
             .map(|&lit| {
+                if lit == 0 {
+                    panic!("Literal value 0 is not allowed.");
+                }
                 let abs_lit = lit.abs() as u32;
                 if lit > 0 {
                     Lit::positive(abs_lit)
