@@ -259,3 +259,105 @@ pub enum CNFError {
     #[error("Unexpected Expression `{0}` found!")]
     UnexpectedExpression(Expression)
 }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::ast::{Expression, Name};
+    use crate::metadata::Metadata;
+    use crate::solver::{self, SearchStatus, SolveSuccess, SolverCallback, SolverFamily, SolverMutCallback};
+    use crate::stats::SolverStats;
+    use crate::{ast as conjure_ast, model, Model as ConjureModel};
+
+
+    #[test]
+    fn test_handle_expr_unexpected_expression() {
+        let expr = Expression::Not(Metadata::new(), Box::new(Expression::Reference(Metadata::new(), Name::MachineName(1))));
+        let result = handle_expr(expr);
+        assert!(matches!(result, Err(CNFError::UnexpectedExpression(_))));
+    }
+
+    #[test]
+    fn test_handle_lit_unexpected_expression_inside_not() {
+        let expr = Expression::Not(Metadata::new(), Box::new(Expression::And(Metadata::new(), vec![])));
+        let result = handle_lit(expr);
+        assert!(matches!(result, Err(CNFError::UnexpectedExpressionInsideNot(_))));
+    }
+
+    #[test]
+    fn test_handle_lit_unexpected_literal_expression() {
+        let expr = Expression::And(Metadata::new(), vec![]);
+        let result = handle_lit(expr);
+        assert!(matches!(result, Err(CNFError::UnexpectedLiteralExpression(_))));
+    }
+
+    #[test]
+    fn test_handle_or_unexpected_expression_inside_or() {
+        let expr = Expression::Or(
+            Metadata::new(),
+            vec![
+                Expression::Reference(Metadata::new(), Name::MachineName(1)),
+                Expression::And(Metadata::new(), vec![]),
+            ],
+        );
+        let result = handle_or(expr);
+        assert!(matches!(result, Err(CNFError::UnexpectedExpressionInsideOr(_))));
+    }
+
+    #[test]
+    fn test_handle_expr_success_badval() {
+        let expr = Expression::And(
+            Metadata::new(),
+            vec![
+                Expression::Or(Metadata::new(), vec![
+                    Expression::Reference(Metadata::new(), Name::MachineName(1)),
+                    Expression::Reference(Metadata::new(), Name::MachineName(2)),
+                ]),
+            ],
+        );
+        let result = handle_expr(expr);
+        assert!(result.is_ok());
+        let cnf_result = result.unwrap();
+        assert_eq!(cnf_result.len(), 1); // Check that we have one clause
+        assert_eq!(cnf_result[0].len(), 2); // Check that the clause has two literals
+    }
+
+    #[test]
+    fn test_handle_expr_success_goodval() {
+        let expr = Expression::And(
+            Metadata::new(),
+            vec![
+                Expression::Or(Metadata::new(), vec![
+                    Expression::Reference(Metadata::new(), Name::MachineName(0)),
+                    Expression::Reference(Metadata::new(), Name::MachineName(0)),
+                ]),
+            ],
+        );
+        let result = handle_expr(expr);
+        assert!(result.is_ok());
+        let cnf_result = result.unwrap();
+        // Check number of clauses
+        assert_eq!(cnf_result.len(), 1); 
+        
+        // Check number of literals in clause
+        assert_eq!(cnf_result[0].len(), 2); 
+
+        // check literals
+        assert_eq!(cnf_result[0][0], 0);
+        assert_eq!(cnf_result[0][1], 0);
+    }
+
+    #[test]
+    fn test_handle_lit() {
+        let expr = Expression::Not(
+            Metadata::new(),
+            Box::new(
+                Expression::Reference(Metadata::new(), Name::MachineName(0)),
+            )
+        );
+
+        let result = handle_lit(expr);
+        assert!(result.is_ok());
+        let lit_result = result.unwrap();
+        assert_eq!(lit_result, 1); // Check that we have one clause
+    }
+}
