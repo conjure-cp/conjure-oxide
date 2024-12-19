@@ -24,8 +24,7 @@ pub fn solve_problem(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rustsat::{instances::SatInstance, solvers::SolverResult};
-    use std::collections::HashMap;
+    use rustsat::solvers::SolverResult;
 
     #[test]
     fn test_initialize_and_solve_satisfiable() {
