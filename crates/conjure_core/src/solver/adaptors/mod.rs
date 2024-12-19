@@ -1,13 +1,6 @@
-//! Solver adaptors.
 
-// #[doc(inline)]
-// pub use kissat::Kissat;
 #[doc(inline)]
 pub use minion::Minion;
-pub use sat_adaptor::SAT;
-// mod sat_common;
-
-// mod kissat;
+pub use rustsat::SAT;
 mod minion;
-pub mod sat_adaptor;                                //temp visibility
-// mod common;
+pub mod rustsat;
