@@ -9,7 +9,7 @@ use minion_rs::ast::Model;
 use rustsat::encodings::am1::Def;
 use rustsat::solvers::{Solve, SolverResult};
 use rustsat::types::Var as satVar;
-use sat_rs::sat_tree::{self, conv_to_clause, conv_to_formula};
+use sat_rs::conversions::{self, conv_to_clause, conv_to_formula};
 use std::collections::HashMap;
 
 use rustsat_minisat::core::Minisat;
