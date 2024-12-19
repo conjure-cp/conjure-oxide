@@ -1,5 +1,3 @@
-// use std::error::Error;
-
 use anyhow::{Error, Result};
 use rustsat::instances::SatInstance;
 use rustsat::solvers::{Solve, SolverResult};
@@ -29,27 +27,10 @@ impl<SolverType: Solver> SatSolver<SolverType> {
 
 impl Solver for Minisat {
     fn solve(&self, instance: &SatInstance) -> Result<SolverResult, Error> {
-        // let cnf_func = instance.into_cnf();
-        // //let mut solver = Minisat::default();
-        // self.add_cnf(cnf_func.0);
         let res: Result<SolverResult, Error> = self.solve(instance);
         res
     }
 }
-
-// pub trait inst_solver {
-//     fn solve_instance(inst: SatInstance) -> ();
-// }
-
-// impl inst_solver for Minisat {
-//     fn solve_instance(&self, inst: SatInstance) -> () {
-//         let cnf_func = inst.into_cnf();
-//         //let mut solver = Minisat::default();
-//         self.add_cnf(cnf_func.0);
-//         let res: Result<SolverResult, Error> = solver.solve();
-//         //let unwrap: SolverResult = res.unwrap();
-//     }
-// }
 
 #[cfg(test)]
 mod tests {
@@ -91,34 +72,3 @@ mod tests {
         assert_eq!(result, SolverResult::Unsat);
     }
 }
-
-// use rustsat::instances::SatInstance;
-// use rustsat_minisat;
-
-// pub trait Solver {
-//     fn solve(&self, instance: &SatInstance) -> bool;
-// }
-
-// pub struct SatSolver<SolverType> {
-//     inst: SatInstance,
-//     solver: SolverType,
-// }
-
-// impl<SolverType: Solver> SatSolver<SolverType> {
-//     // Constructor to create a new SatSolverInst
-//     // pub fn new(inst: &SatInstance, solver: SolverType) -> Self {
-//     //     SatSolver { inst, solver }
-//     // }
-
-//     pub fn new(solver: SolverType) -> Self {
-//         SatSolver {
-//             inst: SatInstance::new(),
-//             solver,
-//         }
-//     }
-
-//     // Method to solve the SAT instance using the specified solver
-//     pub fn solve(&self) -> bool {
-//         self.solver.solve(&self.inst)
-//     }
-// }
