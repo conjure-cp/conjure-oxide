@@ -39,11 +39,22 @@ use serde::Deserialize;
 
 use pretty_assertions::assert_eq;
 
-#[derive(Deserialize, Default)]
+#[derive(Deserialize)]
+#[serde(default)]
 struct TestConfig {
-    extra_rewriter_asserts: Option<Vec<String>>,
-    skip_native_parser: Option<bool>,
-    use_naive_rewriter: Option<bool>,
+    extra_rewriter_asserts: Vec<String>,
+    use_native_parser: bool,
+    use_naive_rewriter: bool,
+}
+
+impl Default for TestConfig {
+    fn default() -> Self {
+        Self {
+            extra_rewriter_asserts: vec!["vector_operators_have_partially_evaluated".into()],
+            use_native_parser: true,
+            use_naive_rewriter: true,
+        }
+    }
 }
 
 fn main() {
@@ -152,7 +163,7 @@ fn integration_test_inner(
     // Stage 0: Compare the two methods of parsing
     // skip if the field is set to true
     // do not skip if it is unset, or if it is explicitly set to false
-    if config.skip_native_parser != Some(true) {
+    if config.use_native_parser {
         let model_native =
             parse_essence_file_native(path, essence_base, extension, context.clone())?;
         save_model_json(&model_native, path, essence_base, "parse", accept)?;
@@ -183,7 +194,7 @@ fn integration_test_inner(
     // TODO: temporarily set to always use rewrite_naive
     // remove before merging?
     // or we can decide to make native the default.
-    // let model = if let Some(true) = config.use_naive_rewriter {
+    // let model = if config.use_naive_rewriter {
     //     rewrite_naive(&model, &rule_sets, true)?
     // } else {
     //     rewrite_model(&model, &rule_sets)?
@@ -196,8 +207,8 @@ fn integration_test_inner(
 
     save_model_json(&model, path, essence_base, "rewrite", accept)?;
 
-    if let Some(extra_asserts) = config.extra_rewriter_asserts {
-        for extra_assert in extra_asserts {
+    if !config.extra_rewriter_asserts.is_empty() {
+        for extra_assert in config.extra_rewriter_asserts {
             match extra_assert.as_str() {
                 "vector_operators_have_partially_evaluated" => {
                     assert_vector_operators_have_partially_evaluated(&model)
