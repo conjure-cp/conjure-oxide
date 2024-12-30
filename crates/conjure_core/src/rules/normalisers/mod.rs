@@ -6,3 +6,4 @@ mod eq_neq;
 mod neg_minus;
 mod product;
 mod sum;
+mod weighted_sums;
