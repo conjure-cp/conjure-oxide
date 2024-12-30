@@ -39,6 +39,9 @@ pub enum Expression {
     Sum(Metadata, Vec<Expression>),
 
     #[compatible(JsonInput)]
+    Product(Metadata, Vec<Expression>),
+
+    #[compatible(JsonInput)]
     Min(Metadata, Vec<Expression>),
 
     #[compatible(JsonInput)]
@@ -248,6 +251,9 @@ impl Expression {
             }
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(Domain::BoolDomain),
             Expression::Sum(_, exprs) => expr_vec_to_domain_i32(exprs, |x, y| Some(x + y), vars),
+            Expression::Product(_, exprs) => {
+                expr_vec_to_domain_i32(exprs, |x, y| Some(x * y), vars)
+            }
             Expression::Min(_, exprs) => {
                 expr_vec_to_domain_i32(exprs, |x, y| Some(if x < y { x } else { y }), vars)
             }
@@ -382,6 +388,7 @@ impl Expression {
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(ReturnType::Bool),
             Expression::Atomic(_, Atom::Reference(_)) => None,
             Expression::Sum(_, _) => Some(ReturnType::Int),
+            Expression::Product(_, _) => Some(ReturnType::Int),
             Expression::Min(_, _) => Some(ReturnType::Int),
             Expression::Max(_, _) => Some(ReturnType::Int),
             Expression::Not(_, _) => Some(ReturnType::Bool),
@@ -429,7 +436,10 @@ impl Expression {
     pub fn is_associative_commutative_operator(&self) -> bool {
         matches!(
             self,
-            Expression::Sum(_, _) | Expression::Or(_, _) | Expression::And(_, _)
+            Expression::Sum(_, _)
+                | Expression::Or(_, _)
+                | Expression::And(_, _)
+                | Expression::Product(_, _)
         )
     }
 }
@@ -458,6 +468,9 @@ impl Display for Expression {
             Expression::Atomic(_, atom) => atom.fmt(f),
             Expression::Sum(_, expressions) => {
                 write!(f, "Sum({})", pretty_vec(expressions))
+            }
+            Expression::Product(_, expressions) => {
+                write!(f, "Product({})", pretty_vec(expressions))
             }
             Expression::Min(_, expressions) => {
                 write!(f, "Min({})", pretty_vec(expressions))

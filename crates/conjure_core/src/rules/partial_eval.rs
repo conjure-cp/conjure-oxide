@@ -40,6 +40,29 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             }
         }
 
+        Product(m, vec) => {
+            let mut acc = 0;
+            let mut n_consts = 0;
+            let mut new_vec: Vec<Expr> = Vec::new();
+            for expr in vec {
+                if let Expr::Atomic(_, Atom::Literal(Int(x))) = expr {
+                    acc *= x;
+                    n_consts += 1;
+                } else {
+                    new_vec.push(expr);
+                }
+            }
+            if acc != 0 {
+                new_vec.push(Expr::Atomic(Default::default(), Atom::Literal(Int(acc))));
+            }
+
+            if n_consts <= 1 {
+                Err(RuleNotApplicable)
+            } else {
+                Ok(Reduction::pure(Product(m, new_vec)))
+            }
+        }
+
         Min(m, vec) => {
             let mut acc: Option<i32> = None;
             let mut n_consts = 0;

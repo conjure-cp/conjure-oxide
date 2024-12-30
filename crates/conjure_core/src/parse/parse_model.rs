@@ -267,6 +267,10 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
             Box::new(Expression::Sum) as Box<dyn Fn(_, _) -> _>,
         ),
         (
+            "MkOpProduct",
+            Box::new(Expression::Product) as Box<dyn Fn(_, _) -> _>,
+        ),
+        (
             "MkOpAnd",
             Box::new(Expression::And) as Box<dyn Fn(_, _) -> _>,
         ),
