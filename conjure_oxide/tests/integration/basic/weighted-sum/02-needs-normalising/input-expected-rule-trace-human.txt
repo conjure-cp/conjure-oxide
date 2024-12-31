@@ -1,0 +1,72 @@
+-(1), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+-1 
+
+--
+
+-(5), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+-5 
+
+--
+
+Product([Product([Product([y, 3]), 1]), 3]), 
+   ~~> reorder_product ([("Base", 8800)]) 
+Product([3, Product([Product([y, 3]), 1])]) 
+
+--
+
+Product([Product([y, 3]), 1]), 
+   ~~> reorder_product ([("Base", 8800)]) 
+Product([1, Product([y, 3])]) 
+
+--
+
+Product([y, 3]), 
+   ~~> reorder_product ([("Base", 8800)]) 
+Product([3, y]) 
+
+--
+
+Product([y, -5]), 
+   ~~> reorder_product ([("Base", 8800)]) 
+Product([-5, y]) 
+
+--
+
+Sum([Sum([Sum([Sum([Product([5, x]), Product([3, Product([1, Product([3, y])])])]), -(Product([3, x]))]), Product([-1, y])]), Product([-5, y])]), 
+   ~~> normalise_associative_commutative ([("Base", 8400)]) 
+Sum([Product([5, x]), Product([3, Product([1, Product([3, y])])]), -(Product([3, x])), Product([-1, y]), Product([-5, y])]) 
+
+--
+
+Product([3, Product([1, Product([3, y])])]), 
+   ~~> normalise_associative_commutative ([("Base", 8400)]) 
+Product([3, 1, 3, y]) 
+
+--
+
+Product([3, 1, 3, y]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Product([y, 9]) 
+
+--
+
+Product([y, 9]), 
+   ~~> reorder_product ([("Base", 8800)]) 
+Product([9, y]) 
+
+--
+
+Sum([Product([5, x]), Product([9, y]), -(Product([3, x])), Product([-1, y]), Product([-5, y])]), 
+   ~~> flatten_vecop ([("Minion", 4400)]) 
+Sum([__0, __1, __2, __3, __4]) 
+
+--
+
+__2 =aux -(Product([3, x])), 
+   ~~> flatten_minuseq ([("Minion", 4400)]) 
+MinusEq(__2,__5) 
+
+--
+
