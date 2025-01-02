@@ -36,13 +36,17 @@ fn introduce_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr.clone() {
         Expr::Eq(m, a, b) => {
             meta = m;
-            if let Some(f) = a.as_atom() {
+
+            let a_atom: Option<&Atom> = (&a).try_into().ok();
+            let b_atom: Option<&Atom> = (&b).try_into().ok();
+
+            if let Some(f) = a_atom {
                 // val = div
-                val = f;
+                val = f.clone();
                 div = *b;
-            } else if let Some(f) = b.as_atom() {
+            } else if let Some(f) = b_atom {
                 // div = val
-                val = f;
+                val = f.clone();
                 div = *a;
             } else {
                 return Err(RuleNotApplicable);
@@ -63,13 +67,13 @@ fn introduce_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 
     let children = div.children();
-    let a = children[0].as_atom().ok_or(RuleNotApplicable)?;
-    let b = children[1].as_atom().ok_or(RuleNotApplicable)?;
+    let a: &Atom = (&children[0]).try_into().or(Err(RuleNotApplicable))?;
+    let b: &Atom = (&children[1]).try_into().or(Err(RuleNotApplicable))?;
 
     Ok(Reduction::pure(DivEqUndefZero(
         meta.clone_dirty(),
-        a,
-        b,
+        a.clone(),
+        b.clone(),
         val,
     )))
 }
@@ -84,13 +88,16 @@ fn introduce_modeq(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr.clone() {
         Expr::Eq(m, a, b) => {
             meta = m;
-            if let Some(f) = a.as_atom() {
+            let a_atom: Option<&Atom> = (&a).try_into().ok();
+            let b_atom: Option<&Atom> = (&b).try_into().ok();
+
+            if let Some(f) = a_atom {
                 // val = div
-                val = f;
+                val = f.clone();
                 div = *b;
-            } else if let Some(f) = b.as_atom() {
+            } else if let Some(f) = b_atom {
                 // div = val
-                val = f;
+                val = f.clone();
                 div = *a;
             } else {
                 return Err(RuleNotApplicable);
@@ -111,13 +118,13 @@ fn introduce_modeq(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 
     let children = div.children();
-    let a = children[0].as_atom().ok_or(RuleNotApplicable)?;
-    let b = children[1].as_atom().ok_or(RuleNotApplicable)?;
+    let a: &Atom = (&children[0]).try_into().or(Err(RuleNotApplicable))?;
+    let b: &Atom = (&children[1]).try_into().or(Err(RuleNotApplicable))?;
 
     Ok(Reduction::pure(ModuloEqUndefZero(
         meta.clone_dirty(),
-        a,
-        b,
+        a.clone(),
+        b.clone(),
         val,
     )))
 }
@@ -136,14 +143,14 @@ fn introduce_minuseq_from_eq(expr: &Expr, _: &Model) -> ApplicationResult {
     };
 
     fn try_get_atoms(a: &Expr, b: &Expr) -> Option<(Atom, Atom)> {
-        let a = a.as_atom()?;
+        let a: &Atom = a.try_into().ok()?;
         let Neg(_, b) = b else {
             return None;
         };
 
-        let b = (*b).as_atom()?;
+        let b: &Atom = b.try_into().ok()?;
 
-        Some((a, b))
+        Some((a.clone(), b.clone()))
     }
 
     let a = *a.clone();
@@ -178,7 +185,7 @@ fn introduce_minuseq_from_aux_decl(expr: &Expr, _: &Model) -> ApplicationResult 
         return Err(RuleNotApplicable);
     };
 
-    let Some(b) = b.as_atom() else {
+    let Ok(b) = b.try_into() else {
         return Err(RuleNotApplicable);
     };
 

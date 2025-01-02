@@ -74,9 +74,9 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         Expr::DivEqUndefZero(_, a, b, c) => {
             // div always rounds down
-            let a = unwrap_atom::<i32>(a)?;
-            let b = unwrap_atom::<i32>(b)?;
-            let c = unwrap_atom::<i32>(c)?;
+            let a: i32 = a.try_into().ok()?;
+            let b: i32 = b.try_into().ok()?;
+            let c: i32 = c.try_into().ok()?;
 
             if b == 0 {
                 return None;
@@ -100,9 +100,10 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             //
             // We don't use % as it has the same semantics as /. We don't use / as we want to round
             // down instead, not towards zero.
-            let a = unwrap_atom::<i32>(a)?;
-            let b = unwrap_atom::<i32>(b)?;
-            let c = unwrap_atom::<i32>(c)?;
+
+            let a: i32 = a.try_into().ok()?;
+            let b: i32 = b.try_into().ok()?;
+            let c: i32 = c.try_into().ok()?;
 
             if b == 0 {
                 return None;
@@ -128,17 +129,22 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::WatchedLiteral(_, _, _) => None,
         Expr::AuxDeclaration(_, _, _) => None,
         Expr::Neg(_, a) => {
-            let a = unwrap_atom::<i32>(&a.as_atom()?)?;
+            let a: &Atom = a.try_into().ok()?;
+            let a: i32 = a.try_into().ok()?;
             Some(Lit::Int(-a))
         }
         Expr::Minus(_, a, b) => {
-            let a = unwrap_atom::<i32>(&a.as_atom()?)?;
-            let b = unwrap_atom::<i32>(&b.as_atom()?)?;
+            let a: &Atom = a.try_into().ok()?;
+            let a: i32 = a.try_into().ok()?;
+
+            let b: &Atom = b.try_into().ok()?;
+            let b: i32 = b.try_into().ok()?;
+
             Some(Lit::Int(a - b))
         }
         Expr::MinusEq(_, a, b) => {
-            let a = unwrap_atom::<i32>(a)?;
-            let b = unwrap_atom::<i32>(b)?;
+            let a: i32 = a.try_into().ok()?;
+            let b: i32 = b.try_into().ok()?;
             Some(Lit::Bool(a == -b))
         } // _ => {
           //     warn!(%expr,"Unimplemented constant eval");
@@ -202,13 +208,6 @@ where
 fn unwrap_expr<T: TryFrom<Lit>>(expr: &Expr) -> Option<T> {
     let c = eval_constant(expr)?;
     TryInto::<T>::try_into(c).ok()
-}
-
-fn unwrap_atom<T: TryFrom<Lit>>(atom: &Atom) -> Option<T> {
-    let Atom::Literal(c) = atom else {
-        return None;
-    };
-    TryInto::<T>::try_into(c.clone()).ok()
 }
 
 #[cfg(test)]

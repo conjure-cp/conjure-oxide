@@ -21,12 +21,35 @@ impl TryFrom<Literal> for i32 {
         }
     }
 }
+
+impl TryFrom<&Literal> for i32 {
+    type Error = &'static str;
+
+    fn try_from(value: &Literal) -> Result<Self, Self::Error> {
+        match value {
+            Literal::Int(i) => Ok(*i),
+            _ => Err("Cannot convert non-i32 literal to i32"),
+        }
+    }
+}
+
 impl TryFrom<Literal> for bool {
     type Error = &'static str;
 
     fn try_from(value: Literal) -> Result<Self, Self::Error> {
         match value {
             Literal::Bool(b) => Ok(b),
+            _ => Err("Cannot convert non-bool literal to bool"),
+        }
+    }
+}
+
+impl TryFrom<&Literal> for bool {
+    type Error = &'static str;
+
+    fn try_from(value: &Literal) -> Result<Self, Self::Error> {
+        match value {
+            Literal::Bool(b) => Ok(*b),
             _ => Err("Cannot convert non-bool literal to bool"),
         }
     }
