@@ -382,14 +382,6 @@ impl Expression {
         self.set_meta(metadata);
     }
 
-    pub fn as_atom(&self) -> Option<Atom> {
-        if let Expression::Atomic(_m, f) = self {
-            Some(f.clone())
-        } else {
-            None
-        }
-    }
-
     /// True if the expression is an associative and commutative operator
     pub fn is_associative_commutative_operator(&self) -> bool {
         matches!(
