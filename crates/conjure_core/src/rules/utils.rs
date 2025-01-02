@@ -36,6 +36,23 @@ pub fn is_all_constant(expression: &Expr) -> bool {
     true
 }
 
+/// Converts a vector of expressions to a vector of atoms.
+///
+/// # Returns
+///
+/// `Some(Vec<Atom>)` if the vectors direct children expressions are all atomic, otherwise `None`.
+pub fn expressions_to_atoms(exprs: &Vec<Expr>) -> Option<Vec<Atom>> {
+    let mut atoms: Vec<Atom> = vec![];
+    for expr in exprs {
+        let Expr::Atomic(_, atom) = expr else {
+            return None;
+        };
+        atoms.push(atom.clone());
+    }
+
+    Some(atoms)
+}
+
 /// Creates a new auxiliary variable using the given expression.
 ///
 /// # Returns

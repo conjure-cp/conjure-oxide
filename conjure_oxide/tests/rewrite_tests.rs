@@ -178,7 +178,7 @@ fn rule_sum_constants() {
 
 #[test]
 fn rule_sum_geq() {
-    let flatten_sum_geq = get_rule_by_name("flatten_sum_geq").unwrap();
+    let introduce_sumgeq = get_rule_by_name("introduce_sumgeq").unwrap();
 
     let mut expr = Expression::Geq(
         Metadata::new(),
@@ -195,23 +195,20 @@ fn rule_sum_geq() {
         )),
     );
 
-    expr = flatten_sum_geq
+    expr = introduce_sumgeq
         .apply(&expr, &Model::new_empty(Default::default()))
         .unwrap()
         .new_expression;
 
     assert_eq!(
         expr,
-        Expression::SumGeq(
+        Expression::FlatSumGeq(
             Metadata::new(),
             vec![
-                Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
-                Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2))),
+                Atom::Literal(Literal::Int(1)),
+                Atom::Literal(Literal::Int(2)),
             ],
-            Box::new(Expression::Atomic(
-                Metadata::new(),
-                Atom::Literal(Literal::Int(3))
-            ))
+            Atom::Literal(Literal::Int(3))
         )
     );
 }
@@ -229,7 +226,7 @@ fn reduce_solve_xyz() {
     let sum_constants = get_rule_by_name("partial_evaluator").unwrap();
     let unwrap_sum = get_rule_by_name("remove_unit_vector_sum").unwrap();
     let lt_to_ineq = get_rule_by_name("lt_to_ineq").unwrap();
-    let sum_leq_to_sumleq = get_rule_by_name("sum_leq_to_sumleq").unwrap();
+    let introduce_sumleq = get_rule_by_name("introduce_sumleq").unwrap();
 
     // 2 + 3 - 1
     let mut expr1 = Expression::Sum(
@@ -276,32 +273,20 @@ fn reduce_solve_xyz() {
         )),
         Box::new(expr1),
     );
-    expr1 = sum_leq_to_sumleq
+    expr1 = introduce_sumleq
         .apply(&expr1, &Model::new_empty(Default::default()))
         .unwrap()
         .new_expression;
     assert_eq!(
         expr1,
-        Expression::SumLeq(
+        Expression::FlatSumLeq(
             Metadata::new(),
             vec![
-                Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Reference(Name::UserName(String::from("a")))
-                ),
-                Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Reference(Name::UserName(String::from("b")))
-                ),
-                Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Reference(Name::UserName(String::from("c")))
-                ),
+                Atom::Reference(Name::UserName(String::from("a"))),
+                Atom::Reference(Name::UserName(String::from("b"))),
+                Atom::Reference(Name::UserName(String::from("c"))),
             ],
-            Box::new(Expression::Atomic(
-                Metadata::new(),
-                Atom::Literal(Literal::Int(4))
-            ))
+            Atom::Literal(Literal::Int(4))
         )
     );
 
@@ -323,20 +308,11 @@ fn reduce_solve_xyz() {
         .new_expression;
     assert_eq!(
         expr2,
-        Expression::Ineq(
+        Expression::FlatIneq(
             Metadata::new(),
-            Box::new(Expression::Atomic(
-                Metadata::new(),
-                Atom::Reference(Name::UserName(String::from("a")))
-            )),
-            Box::new(Expression::Atomic(
-                Metadata::new(),
-                Atom::Reference(Name::UserName(String::from("b")))
-            )),
-            Box::new(Expression::Atomic(
-                Metadata::new(),
-                Atom::Literal(Literal::Int(-1))
-            ))
+            Atom::Reference(Name::UserName(String::from("a"))),
+            Atom::Reference(Name::UserName(String::from("b"))),
+            Literal::Int(-1),
         )
     );
 
