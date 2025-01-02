@@ -194,78 +194,6 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
                 Ok(Reduction::pure(SumEq(m, new_vec, eq)))
             }
         }
-        SumGeq(m, vec, geq) => {
-            let mut acc = 0;
-            let mut new_vec: Vec<Expr> = Vec::new();
-            let mut n_consts = 0;
-            for expr in vec {
-                if let Expr::Atomic(_, Atom::Literal(Int(x))) = expr {
-                    n_consts += 1;
-                    acc += x;
-                } else {
-                    new_vec.push(expr);
-                }
-            }
-
-            if let Expr::Atomic(_, Atom::Literal(Int(x))) = *geq {
-                if acc != 0 {
-                    // when rhs is a constant, move lhs constants to rhs
-                    return Ok(Reduction::pure(SumGeq(
-                        m,
-                        new_vec,
-                        Box::new(Expr::Atomic(
-                            Default::default(),
-                            Atom::Literal(Int(x - acc)),
-                        )),
-                    )));
-                }
-            } else if acc != 0 {
-                new_vec.push(Expr::Atomic(Default::default(), Atom::Literal(Int(acc))));
-            }
-
-            if n_consts <= 1 {
-                Err(RuleNotApplicable)
-            } else {
-                Ok(Reduction::pure(SumGeq(m, new_vec, geq)))
-            }
-        }
-        SumLeq(m, vec, leq) => {
-            let mut acc = 0;
-            let mut new_vec: Vec<Expr> = Vec::new();
-            let mut n_consts = 0;
-            for expr in vec {
-                if let Expr::Atomic(_, Atom::Literal(Int(x))) = expr {
-                    n_consts += 1;
-                    acc += x;
-                } else {
-                    new_vec.push(expr);
-                }
-            }
-
-            if let Expr::Atomic(_, Atom::Literal(Int(x))) = *leq {
-                // when rhs is a constant, move lhs constants to rhs
-                if acc != 0 {
-                    return Ok(Reduction::pure(SumLeq(
-                        m,
-                        new_vec,
-                        Box::new(Expr::Atomic(
-                            Default::default(),
-                            Atom::Literal(Int(x - acc)),
-                        )),
-                    )));
-                }
-            } else if acc != 0 {
-                new_vec.push(Expr::Atomic(Default::default(), Atom::Literal(Int(acc))));
-            }
-
-            if n_consts <= 1 {
-                Err(RuleNotApplicable)
-            } else {
-                Ok(Reduction::pure(SumLeq(m, new_vec, leq)))
-            }
-        }
-        DivEqUndefZero(_, _, _, _) => Err(RuleNotApplicable),
-        Ineq(_, _, _, _) => Err(RuleNotApplicable),
         AllDiff(m, vec) => {
             let mut consts: HashSet<i32> = HashSet::new();
 
@@ -282,13 +210,20 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             Err(RuleNotApplicable)
         }
         Neg(_, _) => Err(RuleNotApplicable),
-        WatchedLiteral(_, _, _) => Err(RuleNotApplicable),
-        Reify(_, _, _) => Err(RuleNotApplicable),
         AuxDeclaration(_, _, _) => Err(RuleNotApplicable),
         UnsafeMod(_, _, _) => Err(RuleNotApplicable),
         SafeMod(_, _, _) => Err(RuleNotApplicable),
-        ModuloEqUndefZero(_, _, _, _) => Err(RuleNotApplicable),
         Minus(_, _, _) => Err(RuleNotApplicable),
-        MinusEq(_, _, _) => Err(RuleNotApplicable),
+
+        // As these are in a low level solver form, I'm assuming that these have already been
+        // simplified and partially evaluated.
+        FlatIneq(_, _, _, _) => Err(RuleNotApplicable),
+        FlatMinusEq(_, _, _) => Err(RuleNotApplicable),
+        FlatSumLeq(_, _, _) => Err(RuleNotApplicable),
+        FlatSumGeq(_, _, _) => Err(RuleNotApplicable),
+        FlatWatchedLiteral(_, _, _) => Err(RuleNotApplicable),
+        MinionDivEqUndefZero(_, _, _, _) => Err(RuleNotApplicable),
+        MinionModuloEqUndefZero(_, _, _, _) => Err(RuleNotApplicable),
+        MinionReify(_, _, _) => Err(RuleNotApplicable),
     }
 }
