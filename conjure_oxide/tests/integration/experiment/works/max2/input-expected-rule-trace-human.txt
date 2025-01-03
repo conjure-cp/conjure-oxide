@@ -1,26 +1,16 @@
-Sum([Max([a, b]), 1]), 
-   ~~> flatten_vecop ([("Minion", 4400)]) 
-Sum([__0, 1]) 
+Max([a, b]), 
+   ~~> max_to_var ([("Base", 6000)]) 
+__0 
 new variables:
   __0: int(1..4)
 new constraints:
-  __0 =aux Max([a, b])
---
-
-(x = Sum([__0, 1])), 
-   ~~> sum_eq_to_sumeq ([("Minion", 4200)]) 
-SumEq([__0, 1], x) 
-
---
-
-SumEq([__0, 1], x), 
-   ~~> sumeq_to_minion ([("Minion", 4400)]) 
-And([SumLeq([__0, 1], x), SumGeq([__0, 1], x)]) 
-
+  (__0 >= a)
+  (__0 >= b)
+  Or([(__0 = a), (__0 = b)])
 --
 
 Max([a, b]), 
-   ~~> max_to_var ([("Base", 100)]) 
+   ~~> max_to_var ([("Base", 6000)]) 
 __1 
 new variables:
   __1: int(1..4)
@@ -30,9 +20,33 @@ new constraints:
   Or([(__1 = a), (__1 = b)])
 --
 
-(__1 >= 2), 
+(x = Sum([__1, 1])), 
+   ~~> sum_eq_to_sumeq ([("Minion", 4200)]) 
+SumEq([__1, 1], x) 
+
+--
+
+SumEq([__1, 1], x), 
+   ~~> sumeq_to_minion ([("Minion", 4400)]) 
+And([SumLeq([__1, 1], x), SumGeq([__1, 1], x)]) 
+
+--
+
+(__0 >= 2), 
    ~~> geq_to_ineq ([("Minion", 4100)]) 
-Ineq(2, __1, 0) 
+Ineq(2, __0, 0) 
+
+--
+
+(__0 >= a), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(a, __0, 0) 
+
+--
+
+(__0 >= b), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(b, __0, 0) 
 
 --
 
@@ -45,29 +59,6 @@ Ineq(a, __1, 0)
 (__1 >= b), 
    ~~> geq_to_ineq ([("Minion", 4100)]) 
 Ineq(b, __1, 0) 
-
---
-
-Max([a, b]), 
-   ~~> max_to_var ([("Base", 100)]) 
-__2 
-new variables:
-  __2: int(1..4)
-new constraints:
-  (__2 >= a)
-  (__2 >= b)
-  Or([(__2 = a), (__2 = b)])
---
-
-(__2 >= a), 
-   ~~> geq_to_ineq ([("Minion", 4100)]) 
-Ineq(a, __2, 0) 
-
---
-
-(__2 >= b), 
-   ~~> geq_to_ineq ([("Minion", 4100)]) 
-Ineq(b, __2, 0) 
 
 --
 
