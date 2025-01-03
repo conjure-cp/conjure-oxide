@@ -24,7 +24,13 @@ Product([y, 3, 1, 3])
 
 Product([y, 3, 1, 3]), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-Product([y]) 
+Product([y, 9]) 
+
+--
+
+Product([y, 9]), 
+   ~~> reorder_product ([("Base", 8800)]) 
+Product([9, y]) 
 
 --
 
@@ -34,7 +40,7 @@ Product([-5, y])
 
 --
 
-Sum([Product([5, x]), Product([y]), -(Product([3, x])), Product([-1, y]), Product([-5, y])]), 
+Sum([Product([5, x]), Product([9, y]), -(Product([3, x])), Product([-1, y]), Product([-5, y])]), 
    ~~> flatten_vecop ([("Minion", 4400)]) 
 Sum([__0, __1, __2, __3, __4]) 
 
