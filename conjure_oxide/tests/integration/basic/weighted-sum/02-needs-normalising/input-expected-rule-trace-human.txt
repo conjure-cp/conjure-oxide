@@ -40,56 +40,86 @@ Product([-5, y])
 
 --
 
-Sum([Product([5, x]), Product([9, y]), -(Product([3, x])), Product([-1, y]), Product([-5, y])]), 
-   ~~> flatten_vecop ([("Minion", 4400)]) 
-Sum([__0, __1, __2, __3, __4]) 
-new variables:
-  __0: int(10..25)
-  __1: int(18..45)
-  __2: int(-15..-6)
-  __3: int(-5..-2)
-  __4: int(-25..-10)
-new constraints:
-  __0 =aux Product([5, x])
-  __1 =aux Product([9, y])
-  __2 =aux -(Product([3, x]))
-  __3 =aux Product([-1, y])
-  __4 =aux Product([-5, y])
---
-
-(Sum([__0, __1, __2, __3, __4]) < 10), 
+(Sum([Product([5, x]), Product([9, y]), -(Product([3, x])), Product([-1, y]), Product([-5, y])]) < 10), 
    ~~> flatten_binop ([("Minion", 4200)]) 
-(__5 < 10) 
+(__0 < 10) 
 new variables:
-  __5: int(-17..52)
+  __0: int(-17..52)
 new constraints:
-  __5 =aux Sum([__0, __1, __2, __3, __4])
+  __0 =aux Sum([Product([5, x]), Product([9, y]), -(Product([3, x])), Product([-1, y]), Product([-5, y])])
 --
 
-__2 =aux -(Product([3, x])), 
+Sum([Product([5, x]), Product([9, y]), -(Product([3, x])), Product([-1, y]), Product([-5, y])]), 
+   ~~> flatten_vecop ([("Minion", 4200)]) 
+Sum([__1, __2, __3, __4, __5]) 
+new variables:
+  __1: int(10..25)
+  __2: int(18..45)
+  __3: int(-15..-6)
+  __4: int(-5..-2)
+  __5: int(-25..-10)
+new constraints:
+  __1 =aux Product([5, x])
+  __2 =aux Product([9, y])
+  __3 =aux -(Product([3, x]))
+  __4 =aux Product([-1, y])
+  __5 =aux Product([-5, y])
+--
+
+__0 =aux Sum([__1, __2, __3, __4, __5]), 
+   ~~> sum_eq_to_sumeq ([("Minion", 4200)]) 
+SumEq([__1, __2, __3, __4, __5], __0) 
+
+--
+
+SumEq([__1, __2, __3, __4, __5], __0), 
+   ~~> sumeq_to_minion ([("Minion", 4400)]) 
+And([SumLeq([__1, __2, __3, __4, __5], __0), SumGeq([__1, __2, __3, __4, __5], __0)]) 
+
+--
+
+__1 =aux Product([5, x]), 
+   ~~> introduce_producteq ([("Minion", 4200)]) 
+FlatProductEq(x,5,__1) 
+
+--
+
+__2 =aux Product([9, y]), 
+   ~~> introduce_producteq ([("Minion", 4200)]) 
+FlatProductEq(y,9,__2) 
+
+--
+
+__3 =aux -(Product([3, x])), 
    ~~> flatten_minuseq ([("Minion", 4200)]) 
-MinusEq(__2,__6) 
+MinusEq(__3,__6) 
 new variables:
   __6: int(6..15)
 new constraints:
   __6 =aux Product([3, x])
 --
 
-__5 =aux Sum([__0, __1, __2, __3, __4]), 
-   ~~> sum_eq_to_sumeq ([("Minion", 4200)]) 
-SumEq([__0, __1, __2, __3, __4], __5) 
+__4 =aux Product([-1, y]), 
+   ~~> introduce_producteq ([("Minion", 4200)]) 
+FlatProductEq(y,-1,__4) 
 
 --
 
-SumEq([__0, __1, __2, __3, __4], __5), 
-   ~~> sumeq_to_minion ([("Minion", 4400)]) 
-And([SumLeq([__0, __1, __2, __3, __4], __5), SumGeq([__0, __1, __2, __3, __4], __5)]) 
+__5 =aux Product([-5, y]), 
+   ~~> introduce_producteq ([("Minion", 4200)]) 
+FlatProductEq(y,-5,__5) 
 
 --
 
-(__5 < 10), 
+__6 =aux Product([3, x]), 
+   ~~> introduce_producteq ([("Minion", 4200)]) 
+FlatProductEq(x,3,__6) 
+
+--
+
+(__0 < 10), 
    ~~> lt_to_ineq ([("Minion", 4100)]) 
-Ineq(__5, 10, -1) 
+Ineq(__0, 10, -1) 
 
 --
 

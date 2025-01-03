@@ -4,7 +4,7 @@
 
 use std::borrow::Borrow as _;
 
-use crate::ast::{Atom, Domain, Expression as Expr, Literal as Lit};
+use crate::ast::{Atom, DecisionVariable, Domain, Expression as Expr, Literal as Lit};
 
 use crate::ast::Name;
 use crate::metadata::Metadata;
@@ -22,6 +22,101 @@ use super::utils::{expressions_to_atoms, is_atom, is_flat, to_aux_var};
 
 register_rule_set!("Minion", 100, ("Base"), (SolverFamily::Minion));
 
+#[register_rule(("Minion", 4200))]
+fn introduce_producteq(expr: &Expr, model: &Model) -> ApplicationResult {
+    // product = val
+    let val: Atom;
+    let product: Expr;
+
+    match expr.clone() {
+        Expr::Eq(_m, a, b) => {
+            let a_atom: Option<&Atom> = (&a).try_into().ok();
+            let b_atom: Option<&Atom> = (&b).try_into().ok();
+
+            if let Some(f) = a_atom {
+                // val = product
+                val = f.clone();
+                product = *b;
+            } else if let Some(f) = b_atom {
+                // product = val
+                val = f.clone();
+                product = *a;
+            } else {
+                return Err(RuleNotApplicable);
+            }
+        }
+        Expr::AuxDeclaration(_m, name, e) => {
+            val = name.into();
+            product = *e;
+        }
+        _ => {
+            return Err(RuleNotApplicable);
+        }
+    }
+
+    if !(matches!(product, Expr::Product(_, _,))) {
+        return Err(RuleNotApplicable);
+    }
+
+    let Expr::Product(_, mut factors) = product else {
+        return Err(RuleNotApplicable);
+    };
+
+    if factors.len() < 2 {
+        return Err(RuleNotApplicable);
+    }
+
+    // Product is a vecop, but FlatProductEq a binop.
+    // Introduce auxvars until it is a binop
+
+    // the expression returned will be x*y=val.
+    // if factors is > 2 arguments, y will be an auxiliary variable
+
+    #[allow(clippy::unwrap_used)] // should never panic - length is checked above
+    let x: Atom = factors
+        .pop()
+        .unwrap()
+        .try_into()
+        .or(Err(RuleNotApplicable))?;
+
+    #[allow(clippy::unwrap_used)] // should never panic - length is checked above
+    let mut y: Atom = factors
+        .pop()
+        .unwrap()
+        .try_into()
+        .or(Err(RuleNotApplicable))?;
+
+    let mut model = model.clone();
+    let mut new_tops: Vec<Expr> = vec![];
+
+    // FIXME: add a test for this
+    while let Some(next_factor) = factors.pop() {
+        // Despite adding auxvars, I still require all atoms as factors, making this rule act
+        // similar to other introduction rules.
+        let next_factor_atom: Atom = next_factor.clone().try_into().or(Err(RuleNotApplicable))?;
+
+        let aux_var = model.gensym();
+        // TODO: find this domain without having to make unnecessary Expr and Metadata objects
+        // Just using the domain of expr doesn't work
+        let aux_domain = Expr::Product(Metadata::new(), vec![y.clone().into(), next_factor])
+            .domain_of(&model.variables)
+            .ok_or(ApplicationError::DomainError)?;
+
+        model.add_variable(aux_var.clone(), DecisionVariable { domain: aux_domain });
+
+        let new_top_expr =
+            Expr::FlatProductEq(Metadata::new(), y, next_factor_atom, aux_var.clone().into());
+
+        new_tops.push(new_top_expr);
+        y = aux_var.into();
+    }
+
+    Ok(Reduction::new(
+        Expr::FlatProductEq(Metadata::new(), x, y, val),
+        new_tops,
+        model.variables,
+    ))
+}
 #[register_rule(("Minion", 4200))]
 fn introduce_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
     // div = val
@@ -227,12 +322,9 @@ fn flatten_binop(expr: &Expr, model: &Model) -> ApplicationResult {
     Ok(Reduction::new(expr, new_tops, model.variables))
 }
 
-#[register_rule(("Minion", 4400))]
+#[register_rule(("Minion", 4200))]
 fn flatten_vecop(expr: &Expr, model: &Model) -> ApplicationResult {
-    if !matches!(
-        expr,
-        Expr::Sum(_, _) | Expr::FlatSumGeq(_, _, _) | Expr::FlatSumLeq(_, _, _)
-    ) {
+    if !matches!(expr, Expr::Sum(_, _) | Expr::Product(_, _)) {
         return Err(RuleNotApplicable);
     }
 
