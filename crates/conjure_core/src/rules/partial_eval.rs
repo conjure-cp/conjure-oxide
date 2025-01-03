@@ -52,14 +52,31 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
                     new_vec.push(expr);
                 }
             }
-            if acc != 0 {
-                new_vec.push(Expr::Atomic(Default::default(), Atom::Literal(Int(acc))));
+
+            if n_consts == 0 {
+                return Err(RuleNotApplicable);
             }
 
-            if n_consts <= 1 {
+            new_vec.push(Expr::Atomic(Default::default(), Atom::Literal(Int(acc))));
+            let new_product = Product(m, new_vec);
+
+            if acc == 0 {
+                // if safe, 0 * exprs ~> 0
+                // otherwise, just return 0* exprs
+                if new_product.is_safe() {
+                    Ok(Reduction::pure(Expr::Atomic(
+                        Default::default(),
+                        Atom::Literal(Int(0)),
+                    )))
+                } else {
+                    Ok(Reduction::pure(new_product))
+                }
+            } else if n_consts == 1 {
+                // acc !=0, only one constant
                 Err(RuleNotApplicable)
             } else {
-                Ok(Reduction::pure(Product(m, new_vec)))
+                // acc !=0, multiple constants found
+                Ok(Reduction::pure(new_product))
             }
         }
 
