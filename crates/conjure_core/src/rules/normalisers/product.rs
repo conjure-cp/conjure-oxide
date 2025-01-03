@@ -79,3 +79,22 @@ fn reorder_product(expr: &Expr, _: &Model) -> ApplicationResult {
 
     Ok(Reduction::pure(Expr::Product(meta, constant_coefficients)))
 }
+
+/// Removes products with a single argument.
+///
+/// ```text
+/// product([a]) ~> a
+/// ```
+///
+#[register_rule(("Base", 8800))]
+fn remove_unit_vector_products(expr: &Expr, _: &Model) -> ApplicationResult {
+    match expr {
+        Expr::Product(_, exprs) => {
+            if exprs.len() == 1 {
+                return Ok(Reduction::pure(exprs[0].clone()));
+            }
+            Err(RuleNotApplicable)
+        }
+        _ => Err(RuleNotApplicable),
+    }
+}
