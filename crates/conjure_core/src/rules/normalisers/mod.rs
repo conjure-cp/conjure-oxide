@@ -4,4 +4,6 @@ mod associative_commutative;
 mod bool;
 mod eq_neq;
 mod neg_minus;
+mod product;
 mod sum;
+mod weighted_sums;

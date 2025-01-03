@@ -239,9 +239,7 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
                 "-" => {
                     panic!("Subtraction expressions not supported yet")
                 }
-                "*" => {
-                    panic!("Multiplication expressions not supported yet")
-                }
+                "*" => Expression::Product(Metadata::new(), vec![expr1, expr2]),
                 "/" => {
                     //TODO: add checks for if division is safe or not
                     Expression::UnsafeDiv(Metadata::new(), Box::new(expr1), Box::new(expr2))

@@ -40,6 +40,46 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             }
         }
 
+        Product(m, vec) => {
+            let mut acc = 1;
+            let mut n_consts = 0;
+            let mut new_vec: Vec<Expr> = Vec::new();
+            for expr in vec {
+                if let Expr::Atomic(_, Atom::Literal(Int(x))) = expr {
+                    acc *= x;
+                    n_consts += 1;
+                } else {
+                    new_vec.push(expr);
+                }
+            }
+
+            if n_consts == 0 {
+                return Err(RuleNotApplicable);
+            }
+
+            new_vec.push(Expr::Atomic(Default::default(), Atom::Literal(Int(acc))));
+            let new_product = Product(m, new_vec);
+
+            if acc == 0 {
+                // if safe, 0 * exprs ~> 0
+                // otherwise, just return 0* exprs
+                if new_product.is_safe() {
+                    Ok(Reduction::pure(Expr::Atomic(
+                        Default::default(),
+                        Atom::Literal(Int(0)),
+                    )))
+                } else {
+                    Ok(Reduction::pure(new_product))
+                }
+            } else if n_consts == 1 {
+                // acc !=0, only one constant
+                Err(RuleNotApplicable)
+            } else {
+                // acc !=0, multiple constants found
+                Ok(Reduction::pure(new_product))
+            }
+        }
+
         Min(m, vec) => {
             let mut acc: Option<i32> = None;
             let mut n_consts = 0;
