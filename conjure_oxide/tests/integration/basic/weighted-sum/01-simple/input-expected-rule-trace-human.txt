@@ -1,30 +1,42 @@
-Sum([Product([2, x]), Product([3, y])]), 
-   ~~> flatten_vecop ([("Minion", 4400)]) 
-Sum([__0, __1]) 
-
---
-
-(Sum([__0, __1]) < 12), 
+(Sum([Product([2, x]), Product([3, y])]) < 12), 
    ~~> flatten_binop ([("Minion", 4200)]) 
-(__2 < 12) 
+(__0 < 12) 
 
 --
 
-__2 =aux Sum([__0, __1]), 
+Sum([Product([2, x]), Product([3, y])]), 
+   ~~> flatten_vecop ([("Minion", 4200)]) 
+Sum([__1, __2]) 
+
+--
+
+__0 =aux Sum([__1, __2]), 
    ~~> sum_eq_to_sumeq ([("Minion", 4200)]) 
-SumEq([__0, __1], __2) 
+SumEq([__1, __2], __0) 
 
 --
 
-SumEq([__0, __1], __2), 
+SumEq([__1, __2], __0), 
    ~~> sumeq_to_minion ([("Minion", 4400)]) 
-And([SumLeq([__0, __1], __2), SumGeq([__0, __1], __2)]) 
+And([SumLeq([__1, __2], __0), SumGeq([__1, __2], __0)]) 
 
 --
 
-(__2 < 12), 
+__1 =aux Product([2, x]), 
+   ~~> introduce_producteq ([("Minion", 4200)]) 
+FlatProductEq(x,2,__1) 
+
+--
+
+__2 =aux Product([3, y]), 
+   ~~> introduce_producteq ([("Minion", 4200)]) 
+FlatProductEq(y,3,__2) 
+
+--
+
+(__0 < 12), 
    ~~> lt_to_ineq ([("Minion", 4100)]) 
-Ineq(__2, 12, -1) 
+Ineq(__0, 12, -1) 
 
 --
 
