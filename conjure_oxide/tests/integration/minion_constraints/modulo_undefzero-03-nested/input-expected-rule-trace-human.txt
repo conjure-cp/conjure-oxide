@@ -59,20 +59,20 @@ And([(SafeMod(x,SafeMod(y,z)) = 3), (SafeMod(y,z) != 0), (z != 0)])
 --
 
 SafeMod(x,SafeMod(y,z)), 
-   ~~> flatten_binop ([("Minion", 4400)]) 
+   ~~> flatten_binop ([("Minion", 4200)]) 
 SafeMod(x,__0) 
-
---
-
-(SafeMod(y,z) != 0), 
-   ~~> flatten_binop ([("Minion", 4400)]) 
-(__1 != 0) 
 
 --
 
 (SafeMod(x,__0) = 3), 
    ~~> introduce_modeq ([("Minion", 4200)]) 
 ModEq(x, __0, 3) 
+
+--
+
+(SafeMod(y,z) != 0), 
+   ~~> flatten_binop ([("Minion", 4200)]) 
+(__1 != 0) 
 
 --
 

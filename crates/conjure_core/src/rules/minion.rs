@@ -18,7 +18,7 @@ use crate::Model;
 use uniplate::Uniplate;
 use ApplicationError::RuleNotApplicable;
 
-use super::utils::{expressions_to_atoms, is_flat, to_aux_var};
+use super::utils::{expressions_to_atoms, is_atom, is_flat, to_aux_var};
 
 register_rule_set!("Minion", 100, ("Base"), (SolverFamily::Minion));
 
@@ -188,11 +188,17 @@ fn introduce_minuseq_from_aux_decl(expr: &Expr, _: &Model) -> ApplicationResult 
     Ok(Reduction::pure(Expr::FlatMinusEq(Metadata::new(), a, b)))
 }
 
-#[register_rule(("Minion", 4400))]
+#[register_rule(("Minion", 4200))]
 fn flatten_binop(expr: &Expr, model: &Model) -> ApplicationResult {
     if !matches!(
         expr,
-        Expr::SafeDiv(_, _, _) | Expr::Neq(_, _, _) | Expr::SafeMod(_, _, _)
+        Expr::SafeDiv(_, _, _)
+            | Expr::Neq(_, _, _)
+            | Expr::SafeMod(_, _, _)
+            | Expr::Leq(_, _, _)
+            | Expr::Geq(_, _, _)
+            | Expr::Lt(_, _, _)
+            | Expr::Gt(_, _, _)
     ) {
         return Err(RuleNotApplicable);
     }
@@ -254,7 +260,7 @@ fn flatten_vecop(expr: &Expr, model: &Model) -> ApplicationResult {
     Ok(Reduction::new(expr, new_tops, model.variables))
 }
 
-#[register_rule(("Minion", 4400))]
+#[register_rule(("Minion", 4200))]
 fn flatten_eq(expr: &Expr, model: &Model) -> ApplicationResult {
     if !matches!(expr, Expr::Eq(_, _, _)) {
         return Err(RuleNotApplicable);
@@ -293,7 +299,7 @@ fn flatten_eq(expr: &Expr, model: &Model) -> ApplicationResult {
 ///  
 ///  where a is atomic, e is not atomic
 /// ```
-#[register_rule(("Minion", 4400))]
+#[register_rule(("Minion", 4200))]
 fn flatten_minuseq(expr: &Expr, m: &Model) -> ApplicationResult {
     // TODO: case where a is a literal not a ref?
 
@@ -431,6 +437,10 @@ fn sum_eq_to_sumeq(expr: &Expr, _: &Model) -> ApplicationResult {
 
         _ => Err(RuleNotApplicable),
     }?;
+
+    if !(xs.iter().all(is_atom)) {
+        return Err(RuleNotApplicable);
+    }
 
     Ok(Reduction::pure(Expr::SumEq(
         Metadata::new(),

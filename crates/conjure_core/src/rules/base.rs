@@ -58,7 +58,7 @@ fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
  * min([a, b]) ~> c ; c <= a & c <= b & (c = a | c = b)
  * ```
  */
-#[register_rule(("Base", 2000))]
+#[register_rule(("Base", 6000))]
 fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
     match expr {
         Min(_, exprs) => {
@@ -102,7 +102,7 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
  * max([a, b]) ~> c ; c >= a & c >= b & (c = a | c = b)
  * ```
  */
-#[register_rule(("Base", 100))]
+#[register_rule(("Base", 6000))]
 fn max_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
     match expr {
         Max(_, exprs) => {
