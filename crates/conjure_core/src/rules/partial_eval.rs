@@ -259,6 +259,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
         // simplified and partially evaluated.
         FlatIneq(_, _, _, _) => Err(RuleNotApplicable),
         FlatMinusEq(_, _, _) => Err(RuleNotApplicable),
+        FlatProductEq(_, _, _, _) => Err(RuleNotApplicable),
         FlatSumLeq(_, _, _) => Err(RuleNotApplicable),
         FlatSumGeq(_, _, _) => Err(RuleNotApplicable),
         FlatWatchedLiteral(_, _, _) => Err(RuleNotApplicable),

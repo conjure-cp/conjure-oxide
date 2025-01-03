@@ -32,6 +32,7 @@ fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
             | FlatMinusEq(_, _, _)
             | FlatSumGeq(_, _, _)
             | FlatSumLeq(_, _, _)
+            | FlatProductEq(_, _, _, _)
             | FlatWatchedLiteral(_, _, _)
             | MinionDivEqUndefZero(_, _, _, _)
             | MinionModuloEqUndefZero(_, _, _, _)

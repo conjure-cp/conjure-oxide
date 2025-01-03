@@ -165,6 +165,16 @@ pub enum Expression {
     #[compatible(Minion)]
     FlatMinusEq(Metadata, Atom, Atom),
 
+    /// Ensures that x*y=z.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#product)
+    #[compatible(Minion)]
+    FlatProductEq(Metadata, Atom, Atom, Atom),
+
     /// Ensures that floor(x/y)=z. Always true when y=0.
     ///
     /// Low-level Minion constraint.
@@ -341,6 +351,7 @@ impl Expression {
                 .apply_i32(|x, y| Some(x - y), &b.domain_of(vars)?),
 
             Expression::FlatMinusEq(_, _, _) => Some(Domain::BoolDomain),
+            Expression::FlatProductEq(_, _, _, _) => Some(Domain::BoolDomain),
             // #[allow(unreachable_patterns)]
             // _ => bug!("Cannot calculate domain of {:?}", self),
         };
@@ -418,6 +429,7 @@ impl Expression {
             Expression::Neg(_, _) => Some(ReturnType::Int),
             Expression::Minus(_, _, _) => Some(ReturnType::Int),
             Expression::FlatMinusEq(_, _, _) => Some(ReturnType::Bool),
+            Expression::FlatProductEq(_, _, _, _) => Some(ReturnType::Bool),
         }
     }
 
@@ -580,6 +592,15 @@ impl Display for Expression {
             }
             Expression::FlatMinusEq(_, a, b) => {
                 write!(f, "MinusEq({},{})", a.clone(), b.clone())
+            }
+            Expression::FlatProductEq(_, a, b, c) => {
+                write!(
+                    f,
+                    "FlatProductEq({},{},{})",
+                    a.clone(),
+                    b.clone(),
+                    c.clone()
+                )
             }
         }
     }

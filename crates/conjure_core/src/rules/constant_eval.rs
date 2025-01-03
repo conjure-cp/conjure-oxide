@@ -170,10 +170,12 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             let a: i32 = a.try_into().ok()?;
             let b: i32 = b.try_into().ok()?;
             Some(Lit::Bool(a == -b))
-        } // _ => {
-          //     warn!(%expr,"Unimplemented constant eval");
-          //     None
-          // }
+        }
+        Expr::FlatProductEq(_, a, b, c) => {
+            let a: i32 = a.try_into().ok()?;
+            let b: i32 = b.try_into().ok()?;
+            let c: i32 = c.try_into().ok()?;
+            Some(Lit::Bool(a * b == c))
     }
 }
 
