@@ -41,7 +41,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
         }
 
         Product(m, vec) => {
-            let mut acc = 0;
+            let mut acc = 1;
             let mut n_consts = 0;
             let mut new_vec: Vec<Expr> = Vec::new();
             for expr in vec {
