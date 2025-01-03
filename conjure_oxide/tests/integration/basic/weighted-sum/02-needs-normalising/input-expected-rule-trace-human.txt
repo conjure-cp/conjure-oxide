@@ -57,12 +57,39 @@ new constraints:
   __4 =aux Product([-5, y])
 --
 
-__2 =aux -(Product([3, x])), 
-   ~~> flatten_minuseq ([("Minion", 4400)]) 
-MinusEq(__2,__5) 
+(Sum([__0, __1, __2, __3, __4]) < 10), 
+   ~~> flatten_binop ([("Minion", 4200)]) 
+(__5 < 10) 
 new variables:
-  __5: int(6..15)
+  __5: int(-17..52)
 new constraints:
-  __5 =aux Product([3, x])
+  __5 =aux Sum([__0, __1, __2, __3, __4])
+--
+
+__2 =aux -(Product([3, x])), 
+   ~~> flatten_minuseq ([("Minion", 4200)]) 
+MinusEq(__2,__6) 
+new variables:
+  __6: int(6..15)
+new constraints:
+  __6 =aux Product([3, x])
+--
+
+__5 =aux Sum([__0, __1, __2, __3, __4]), 
+   ~~> sum_eq_to_sumeq ([("Minion", 4200)]) 
+SumEq([__0, __1, __2, __3, __4], __5) 
+
+--
+
+SumEq([__0, __1, __2, __3, __4], __5), 
+   ~~> sumeq_to_minion ([("Minion", 4400)]) 
+And([SumLeq([__0, __1, __2, __3, __4], __5), SumGeq([__0, __1, __2, __3, __4], __5)]) 
+
+--
+
+(__5 < 10), 
+   ~~> lt_to_ineq ([("Minion", 4100)]) 
+Ineq(__5, 10, -1) 
+
 --
 
