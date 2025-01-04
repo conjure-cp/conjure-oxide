@@ -66,18 +66,6 @@ new constraints:
   __5 =aux Product([-5, y])
 --
 
-__0 =aux Sum([__1, __2, __3, __4, __5]), 
-   ~~> sum_eq_to_sumeq ([("Minion", 4200)]) 
-SumEq([__1, __2, __3, __4, __5], __0) 
-
---
-
-SumEq([__1, __2, __3, __4, __5], __0), 
-   ~~> sumeq_to_minion ([("Minion", 4400)]) 
-And([SumLeq([__1, __2, __3, __4, __5], __0), SumGeq([__1, __2, __3, __4, __5], __0)]) 
-
---
-
 __1 =aux Product([5, x]), 
    ~~> introduce_producteq ([("Minion", 4200)]) 
 FlatProductEq(x,5,__1) 
@@ -120,6 +108,24 @@ FlatProductEq(x,3,__6)
 (__0 < 10), 
    ~~> lt_to_ineq ([("Minion", 4100)]) 
 Ineq(__0, 10, -1) 
+
+--
+
+__0 =aux Sum([__1, __2, __3, __4, __5]), 
+   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
+And([(Sum([__1, __2, __3, __4, __5]) <= __0), (Sum([__1, __2, __3, __4, __5]) >= __0)]) 
+
+--
+
+(Sum([__1, __2, __3, __4, __5]) <= __0), 
+   ~~> introduce_sumleq ([("Minion", 4400)]) 
+SumLeq([__1, __2, __3, __4, __5], __0) 
+
+--
+
+(Sum([__1, __2, __3, __4, __5]) >= __0), 
+   ~~> introduce_sumgeq ([("Minion", 4400)]) 
+SumGeq([__1, __2, __3, __4, __5], __0) 
 
 --
 

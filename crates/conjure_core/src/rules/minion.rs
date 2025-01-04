@@ -18,7 +18,7 @@ use crate::Model;
 use uniplate::Uniplate;
 use ApplicationError::RuleNotApplicable;
 
-use super::utils::{expressions_to_atoms, is_atom, is_flat, to_aux_var};
+use super::utils::{expressions_to_atoms, is_flat, to_aux_var};
 
 register_rule_set!("Minion", 100, ("Base"), (SolverFamily::Minion));
 
@@ -494,86 +494,6 @@ fn introduce_sumleq(expr: &Expr, _: &Model) -> ApplicationResult {
     Ok(Reduction::pure(Expr::FlatSumLeq(meta, atoms, rhs)))
 }
 
-/// Converts a 'Eq(Sum([...]))' to a SumEq
-/// ```text
-/// eq(sum([a, b]), c) => sumeq([a, b], c)
-/// ```
-
-#[register_rule(("Minion", 4200))]
-fn sum_eq_to_sumeq(expr: &Expr, _: &Model) -> ApplicationResult {
-    fn try_get_args(sum_expr: &Expr, value: &Expr) -> Option<(Vec<Expr>, Expr)> {
-        let Expr::Sum(_, xs) = sum_expr else {
-            return None;
-        };
-
-        Some((xs.clone(), value.clone()))
-    }
-
-    let (xs, value) = match expr {
-        Expr::Eq(_, a, b) => {
-            // get arguments symmetrically
-            try_get_args(a, b)
-                .or_else(|| try_get_args(b, a))
-                .ok_or(RuleNotApplicable)
-        }
-
-        Expr::AuxDeclaration(_, name, e) => {
-            let value = Atom::Reference(name.clone()).into();
-            let xs = match *e.clone() {
-                Expr::Sum(_, xs) => Ok(xs),
-                _ => Err(RuleNotApplicable),
-            }?;
-
-            Ok((xs, value))
-        }
-
-        _ => Err(RuleNotApplicable),
-    }?;
-
-    if !(xs.iter().all(is_atom)) {
-        return Err(RuleNotApplicable);
-    }
-
-    Ok(Reduction::pure(Expr::SumEq(
-        Metadata::new(),
-        xs,
-        Box::new(value),
-    )))
-}
-
-/// Converts a `SumEq` to an `And(SumGeq, SumLeq)`
-///
-/// This is a workaround for Minion not having support for a flat "equals" operation on sums
-///
-/// ```text
-/// sumeq([a, b], c) -> watched_and({
-///   sumleq([a, b], c),
-///   sumgeq([a, b], c)
-/// })
-/// ```
-#[register_rule(("Minion", 4400))]
-fn sumeq_to_minion(expr: &Expr, _: &Model) -> ApplicationResult {
-    let Expr::SumEq(_, exprs, eq_to) = expr.clone() else {
-        return Err(RuleNotApplicable);
-    };
-
-    let Some(atoms) = expressions_to_atoms(&exprs) else {
-        return Err(RuleNotApplicable);
-    };
-
-    let Expr::Atomic(_, eq_to_atom) = *eq_to else {
-        return Err(RuleNotApplicable);
-    };
-
-    Ok(Reduction::pure(Expr::And(
-        Metadata::new(),
-        vec![
-            Expr::FlatSumLeq(Metadata::new(), atoms.clone(), eq_to_atom.clone()),
-            Expr::FlatSumGeq(Metadata::new(), atoms, eq_to_atom),
-        ],
-    )))
-}
-
 /**
 * Convert a Lt to an Ineq
 
@@ -783,5 +703,35 @@ fn not_constraint_to_reify(expr: &Expr, _: &Model) -> ApplicationResult {
         m.clone(),
         e.clone(),
         Atom::Literal(Lit::Bool(false)),
+    )))
+}
+
+// FIXME: updatedisplay impl
+
+//FIXME: refactor symmetry checking for eq into its own function
+
+/// Decomposes `sum(....) = e` into `sum(...) =< e /\`sum(...) >= e`
+///
+/// # Rationale
+/// Minion only has `SumLeq` and `SumGeq` constraints.
+#[register_rule(("Minion", 4100))]
+fn sum_eq_to_inequalities(expr: &Expr, _: &Model) -> ApplicationResult {
+    //
+    let (sum, e1): (Box<Expr>, Box<Expr>) = match expr.clone() {
+        Expr::Eq(_, e1, e2) if matches!(*e1, Expr::Sum(_, _)) => Ok((e1, e2)),
+        Expr::Eq(_, e1, e2) if matches!(*e2, Expr::Sum(_, _)) => Ok((e2, e1)),
+
+        Expr::AuxDeclaration(_, name, e1) if matches!(*e1, Expr::Sum(_, _)) => {
+            Ok((e1, Box::new(Expr::Atomic(Metadata::new(), name.into()))))
+        }
+        _ => Err(RuleNotApplicable),
+    }?;
+
+    Ok(Reduction::pure(Expr::And(
+        Metadata::new(),
+        vec![
+            Expr::Leq(Metadata::new(), sum.clone(), e1.clone()),
+            Expr::Geq(Metadata::new(), sum.clone(), e1),
+        ],
     )))
 }

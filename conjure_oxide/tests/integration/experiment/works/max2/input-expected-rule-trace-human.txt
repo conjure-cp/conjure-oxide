@@ -20,21 +20,27 @@ new constraints:
   Or([(__1 = a), (__1 = b)])
 --
 
-(x = Sum([__1, 1])), 
-   ~~> sum_eq_to_sumeq ([("Minion", 4200)]) 
-SumEq([__1, 1], x) 
-
---
-
-SumEq([__1, 1], x), 
-   ~~> sumeq_to_minion ([("Minion", 4400)]) 
-And([SumLeq([__1, 1], x), SumGeq([__1, 1], x)]) 
-
---
-
 (__0 >= 2), 
    ~~> geq_to_ineq ([("Minion", 4100)]) 
 Ineq(2, __0, 0) 
+
+--
+
+(x = Sum([__1, 1])), 
+   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
+And([(Sum([__1, 1]) <= x), (Sum([__1, 1]) >= x)]) 
+
+--
+
+(Sum([__1, 1]) <= x), 
+   ~~> introduce_sumleq ([("Minion", 4400)]) 
+SumLeq([__1, 1], x) 
+
+--
+
+(Sum([__1, 1]) >= x), 
+   ~~> introduce_sumgeq ([("Minion", 4400)]) 
+SumGeq([__1, 1], x) 
 
 --
 

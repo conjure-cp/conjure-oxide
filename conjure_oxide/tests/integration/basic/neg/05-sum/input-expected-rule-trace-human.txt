@@ -14,14 +14,20 @@ MinusEq(__0,y)
 --
 
 (x = Sum([__0, z])), 
-   ~~> sum_eq_to_sumeq ([("Minion", 4200)]) 
-SumEq([__0, z], x) 
+   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
+And([(Sum([__0, z]) <= x), (Sum([__0, z]) >= x)]) 
 
 --
 
-SumEq([__0, z], x), 
-   ~~> sumeq_to_minion ([("Minion", 4400)]) 
-And([SumLeq([__0, z], x), SumGeq([__0, z], x)]) 
+(Sum([__0, z]) <= x), 
+   ~~> introduce_sumleq ([("Minion", 4400)]) 
+SumLeq([__0, z], x) 
+
+--
+
+(Sum([__0, z]) >= x), 
+   ~~> introduce_sumgeq ([("Minion", 4400)]) 
+SumGeq([__0, z], x) 
 
 --
 
