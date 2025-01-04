@@ -114,9 +114,6 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Bool(b == result))
         }
-        Expr::SumEq(_, exprs, a) => {
-            flat_op::<i32, bool>(|e, a| e.iter().sum::<i32>() == a, exprs, a).map(Lit::Bool)
-        }
         Expr::MinionModuloEqUndefZero(_, a, b, c) => {
             // From Savile Row. Same semantics as division.
             //
@@ -176,6 +173,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             let b: i32 = b.try_into().ok()?;
             let c: i32 = c.try_into().ok()?;
             Some(Lit::Bool(a * b == c))
+        }
     }
 }
 
@@ -223,6 +221,7 @@ where
     f(a)
 }
 
+#[allow(dead_code)]
 fn flat_op<T, A>(f: fn(Vec<T>, T) -> A, a: &[Expr], b: &Expr) -> Option<A>
 where
     T: TryFrom<Lit>,

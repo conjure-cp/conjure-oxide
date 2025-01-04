@@ -199,41 +199,6 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
         Lt(_, _, _) => Err(RuleNotApplicable),
         SafeDiv(_, _, _) => Err(RuleNotApplicable),
         UnsafeDiv(_, _, _) => Err(RuleNotApplicable),
-        SumEq(m, vec, eq) => {
-            let mut acc = 0;
-            let mut new_vec: Vec<Expr> = Vec::new();
-            let mut n_consts = 0;
-            for expr in vec {
-                if let Expr::Atomic(_, Atom::Literal(Int(x))) = expr {
-                    n_consts += 1;
-                    acc += x;
-                } else {
-                    new_vec.push(expr);
-                }
-            }
-
-            if let Expr::Atomic(_, Atom::Literal(Int(x))) = *eq {
-                if acc != 0 {
-                    // when rhs is a constant, move lhs constants to rhs
-                    return Ok(Reduction::pure(SumEq(
-                        m,
-                        new_vec,
-                        Box::new(Expr::Atomic(
-                            Default::default(),
-                            Atom::Literal(Int(x - acc)),
-                        )),
-                    )));
-                }
-            } else if acc != 0 {
-                new_vec.push(Expr::Atomic(Default::default(), Atom::Literal(Int(acc))));
-            }
-
-            if n_consts <= 1 {
-                Err(RuleNotApplicable)
-            } else {
-                Ok(Reduction::pure(SumEq(m, new_vec, eq)))
-            }
-        }
         AllDiff(m, vec) => {
             let mut consts: HashSet<i32> = HashSet::new();
 

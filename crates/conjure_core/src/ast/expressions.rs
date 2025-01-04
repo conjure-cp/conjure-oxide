@@ -101,15 +101,6 @@ pub enum Expression {
     #[compatible(JsonInput)]
     Minus(Metadata, Box<Expression>, Box<Expression>),
 
-    /* Flattened SumEq.
-     *
-     * Note: this is an intermediary step that's used in the process of converting from conjure model to minion.
-     * This is NOT a valid expression in either Essence or minion.
-     *
-     * ToDo: This is a stop gap solution. Eventually it may be better to have multiple constraints instead? (gs248)
-     */
-    SumEq(Metadata, Vec<Expression>, Box<Expression>),
-
     /// Ensures that sum(vec) >= x.
     ///
     /// Low-level Minion constraint.
@@ -323,7 +314,6 @@ impl Expression {
             Expression::Leq(_, _, _) => Some(Domain::BoolDomain),
             Expression::Gt(_, _, _) => Some(Domain::BoolDomain),
             Expression::Lt(_, _, _) => Some(Domain::BoolDomain),
-            Expression::SumEq(_, _, _) => Some(Domain::BoolDomain),
             Expression::FlatSumGeq(_, _, _) => Some(Domain::BoolDomain),
             Expression::FlatSumLeq(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionDivEqUndefZero(_, _, _, _) => Some(Domain::BoolDomain),
@@ -413,7 +403,6 @@ impl Expression {
             Expression::Lt(_, _, _) => Some(ReturnType::Bool),
             Expression::SafeDiv(_, _, _) => Some(ReturnType::Int),
             Expression::UnsafeDiv(_, _, _) => Some(ReturnType::Int),
-            Expression::SumEq(_, _, _) => Some(ReturnType::Bool),
             Expression::FlatSumGeq(_, _, _) => Some(ReturnType::Bool),
             Expression::FlatSumLeq(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionDivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
@@ -516,14 +505,6 @@ impl Display for Expression {
             }
             Expression::Lt(_, box1, box2) => {
                 write!(f, "({} < {})", box1.clone(), box2.clone())
-            }
-            Expression::SumEq(_, expressions, expr_box) => {
-                write!(
-                    f,
-                    "SumEq({}, {})",
-                    pretty_vec(expressions),
-                    expr_box.clone()
-                )
             }
             Expression::FlatSumGeq(_, box1, box2) => {
                 write!(f, "SumGeq({}, {})", pretty_vec(box1), box2.clone())

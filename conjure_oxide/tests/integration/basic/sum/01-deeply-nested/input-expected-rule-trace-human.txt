@@ -5,14 +5,20 @@ Sum([a, b, c, d, e])
 --
 
 (Sum([a, b, c, d, e]) = 5), 
-   ~~> sum_eq_to_sumeq ([("Minion", 4200)]) 
-SumEq([a, b, c, d, e], 5) 
+   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
+And([(Sum([a, b, c, d, e]) <= 5), (Sum([a, b, c, d, e]) >= 5)]) 
 
 --
 
-SumEq([a, b, c, d, e], 5), 
-   ~~> sumeq_to_minion ([("Minion", 4400)]) 
-And([SumLeq([a, b, c, d, e], 5), SumGeq([a, b, c, d, e], 5)]) 
+(Sum([a, b, c, d, e]) <= 5), 
+   ~~> introduce_sumleq ([("Minion", 4400)]) 
+SumLeq([a, b, c, d, e], 5) 
+
+--
+
+(Sum([a, b, c, d, e]) >= 5), 
+   ~~> introduce_sumgeq ([("Minion", 4400)]) 
+SumGeq([a, b, c, d, e], 5) 
 
 --
 

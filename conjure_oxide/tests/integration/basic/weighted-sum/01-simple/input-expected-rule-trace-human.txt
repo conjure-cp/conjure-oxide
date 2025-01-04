@@ -18,18 +18,6 @@ new constraints:
   __2 =aux Product([3, y])
 --
 
-__0 =aux Sum([__1, __2]), 
-   ~~> sum_eq_to_sumeq ([("Minion", 4200)]) 
-SumEq([__1, __2], __0) 
-
---
-
-SumEq([__1, __2], __0), 
-   ~~> sumeq_to_minion ([("Minion", 4400)]) 
-And([SumLeq([__1, __2], __0), SumGeq([__1, __2], __0)]) 
-
---
-
 __1 =aux Product([2, x]), 
    ~~> introduce_producteq ([("Minion", 4200)]) 
 FlatProductEq(x,2,__1) 
@@ -45,6 +33,24 @@ FlatProductEq(y,3,__2)
 (__0 < 12), 
    ~~> lt_to_ineq ([("Minion", 4100)]) 
 Ineq(__0, 12, -1) 
+
+--
+
+__0 =aux Sum([__1, __2]), 
+   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
+And([(Sum([__1, __2]) <= __0), (Sum([__1, __2]) >= __0)]) 
+
+--
+
+(Sum([__1, __2]) <= __0), 
+   ~~> introduce_sumleq ([("Minion", 4400)]) 
+SumLeq([__1, __2], __0) 
+
+--
+
+(Sum([__1, __2]) >= __0), 
+   ~~> introduce_sumgeq ([("Minion", 4400)]) 
+SumGeq([__1, __2], __0) 
 
 --
 
