@@ -21,7 +21,7 @@ pub fn log_rule_application(result: &RuleResult, initial_expression: &Expression
 
     info!(
         %new_top_string,
-        "Rule applicable: {} ({:?}), to expression: {}, resulting in: {}",
+        "Applying rule: {} ({:?}), to expression: {}, resulting in: {}",
         rule.name,
         rule.rule_sets,
         initial_expression,
