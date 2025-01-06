@@ -1,0 +1,41 @@
+[
+  {
+    "rule_applied": "sum_eq_to_sumeq ([(\\\"Minion\\\", 4400)])",
+    "initial_expression": "(x = Sum([-(y), z]))",
+    "tranformed_expression": "SumEq([-(y), z], x)",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "sumeq_to_minion ([(\\\"Minion\\\", 4400)])",
+    "initial_expression": "SumEq([-(y), z], x)",
+    "tranformed_expression": "And([SumGeq([-(y), z], x), SumLeq([-(y), z], x)])",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "flatten_vecop ([(\\\"Minion\\\", 4400)])",
+    "initial_expression": "SumGeq([-(y), z], x)",
+    "tranformed_expression": "SumGeq([__0, z], x)",
+    "new_top": "[__0 =aux -(y)]"
+  },
+  {
+    "rule_applied": "flatten_vecop ([(\\\"Minion\\\", 4400)])",
+    "initial_expression": "SumLeq([-(y), z], x)",
+    "tranformed_expression": "SumLeq([__1, z], x)",
+    "new_top": "[__1 =aux -(y)]"
+  },
+  {
+    "rule_applied": "introduce_minuseq_from_aux_decl ([(\\\"Minion\\\", 4400)])",
+    "initial_expression": "__0 =aux -(y)",
+    "tranformed_expression": "MinusEq(__0,y)",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "introduce_minuseq_from_aux_decl ([(\\\"Minion\\\", 4400)])",
+    "initial_expression": "__1 =aux -(y)",
+    "tranformed_expression": "MinusEq(__1,y)",
+    "new_top": "[]"
+  },
+  {
+    "Number of rules applied": 6
+  }
+]

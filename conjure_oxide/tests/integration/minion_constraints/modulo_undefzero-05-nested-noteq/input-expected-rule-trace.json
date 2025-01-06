@@ -1,0 +1,131 @@
+[
+  {
+    "rule_applied": "mod_to_bubble ([(\\\"Bubble\\\", 6000)])",
+    "initial_expression": "y % z",
+    "tranformed_expression": "{SafeMod(y,z) @ (z != 0)}",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "bubble_up ([(\\\"Bubble\\\", 8900)])",
+    "initial_expression": "x % {SafeMod(y,z) @ (z != 0)}",
+    "tranformed_expression": "{x % SafeMod(y,z) @ And([(z != 0)])}",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "bubble_up ([(\\\"Bubble\\\", 8900)])",
+    "initial_expression": "({x % SafeMod(y,z) @ And([(z != 0)])} = 3)",
+    "tranformed_expression": "{(x % SafeMod(y,z) = 3) @ And([And([(z != 0)])])}",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "expand_bubble ([(\\\"Bubble\\\", 8900)])",
+    "initial_expression": "{(x % SafeMod(y,z) = 3) @ And([And([(z != 0)])])}",
+    "tranformed_expression": "And([(x % SafeMod(y,z) = 3), And([And([(z != 0)])])])",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "remove_unit_vector_and ([(\\\"Base\\\", 8800)])",
+    "initial_expression": "And([And([(z != 0)])])",
+    "tranformed_expression": "And([(z != 0)])",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "remove_unit_vector_and ([(\\\"Base\\\", 8800)])",
+    "initial_expression": "And([(z != 0)])",
+    "tranformed_expression": "(z != 0)",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "mod_to_bubble ([(\\\"Bubble\\\", 6000)])",
+    "initial_expression": "x % SafeMod(y,z)",
+    "tranformed_expression": "{SafeMod(x,SafeMod(y,z)) @ (SafeMod(y,z) != 0)}",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "bubble_up ([(\\\"Bubble\\\", 8900)])",
+    "initial_expression": "({SafeMod(x,SafeMod(y,z)) @ (SafeMod(y,z) != 0)} = 3)",
+    "tranformed_expression": "{(SafeMod(x,SafeMod(y,z)) = 3) @ And([(SafeMod(y,z) != 0)])}",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "expand_bubble ([(\\\"Bubble\\\", 8900)])",
+    "initial_expression": "{(SafeMod(x,SafeMod(y,z)) = 3) @ And([(SafeMod(y,z) != 0)])}",
+    "tranformed_expression": "And([(SafeMod(x,SafeMod(y,z)) = 3), And([(SafeMod(y,z) != 0)])])",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "remove_unit_vector_and ([(\\\"Base\\\", 8800)])",
+    "initial_expression": "And([(SafeMod(y,z) != 0)])",
+    "tranformed_expression": "(SafeMod(y,z) != 0)",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "distribute_not_over_and ([(\\\"Base\\\", 8400)])",
+    "initial_expression": "Not(And([And([(SafeMod(x,SafeMod(y,z)) = 3), (SafeMod(y,z) != 0)]), (z != 0)]))",
+    "tranformed_expression": "Or([Not(And([(SafeMod(x,SafeMod(y,z)) = 3), (SafeMod(y,z) != 0)])), Not((z != 0))])",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "negated_neq_to_eq ([(\\\"Base\\\", 8800)])",
+    "initial_expression": "Not((z != 0))",
+    "tranformed_expression": "(z = 0)",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "distribute_not_over_and ([(\\\"Base\\\", 8400)])",
+    "initial_expression": "Not(And([(SafeMod(x,SafeMod(y,z)) = 3), (SafeMod(y,z) != 0)]))",
+    "tranformed_expression": "Or([Not((SafeMod(x,SafeMod(y,z)) = 3)), Not((SafeMod(y,z) != 0))])",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "negated_eq_to_neq ([(\\\"Base\\\", 8800)])",
+    "initial_expression": "Not((SafeMod(x,SafeMod(y,z)) = 3))",
+    "tranformed_expression": "(SafeMod(x,SafeMod(y,z)) != 3)",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "negated_neq_to_eq ([(\\\"Base\\\", 8800)])",
+    "initial_expression": "Not((SafeMod(y,z) != 0))",
+    "tranformed_expression": "(SafeMod(y,z) = 0)",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "normalise_associative_commutative ([(\\\"Base\\\", 8400)])",
+    "initial_expression": "Or([Or([(SafeMod(x,SafeMod(y,z)) != 3), (SafeMod(y,z) = 0)]), (z = 0)])",
+    "tranformed_expression": "Or([(SafeMod(x,SafeMod(y,z)) != 3), (SafeMod(y,z) = 0), (z = 0)])",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "flatten_binop ([(\\\"Minion\\\", 4400)])",
+    "initial_expression": "(SafeMod(x,SafeMod(y,z)) != 3)",
+    "tranformed_expression": "(__0 != 3)",
+    "new_top": "[__0 =aux SafeMod(x,SafeMod(y,z))]"
+  },
+  {
+    "rule_applied": "flatten_binop ([(\\\"Minion\\\", 4400)])",
+    "initial_expression": "SafeMod(x,SafeMod(y,z))",
+    "tranformed_expression": "SafeMod(x,__1)",
+    "new_top": "[__1 =aux SafeMod(y,z)]"
+  },
+  {
+    "rule_applied": "introduce_modeq ([(\\\"Minion\\\", 4200)])",
+    "initial_expression": "(SafeMod(y,z) = 0)",
+    "tranformed_expression": "ModEq(y, z, 0)",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "introduce_modeq ([(\\\"Minion\\\", 4200)])",
+    "initial_expression": "__0 =aux SafeMod(x,__1)",
+    "tranformed_expression": "ModEq(x, __1, __0)",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "introduce_modeq ([(\\\"Minion\\\", 4200)])",
+    "initial_expression": "__1 =aux SafeMod(y,z)",
+    "tranformed_expression": "ModEq(y, z, __1)",
+    "new_top": "[]"
+  },
+  {
+    "Number of rules applied": 21
+  }
+]

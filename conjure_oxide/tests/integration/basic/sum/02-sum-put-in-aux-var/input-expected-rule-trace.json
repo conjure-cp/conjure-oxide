@@ -1,0 +1,59 @@
+[
+  {
+    "rule_applied": "normalise_associative_commutative ([(\\\"Base\\\", 8400)])",
+    "initial_expression": "Sum([Sum([x, y]), z])",
+    "tranformed_expression": "Sum([x, y, z])",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "div_to_bubble ([(\\\"Bubble\\\", 6000)])",
+    "initial_expression": "UnsafeDiv(Sum([x, y, z]), a)",
+    "tranformed_expression": "{SafeDiv(Sum([x, y, z]), a) @ (a != 0)}",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "bubble_up ([(\\\"Bubble\\\", 8900)])",
+    "initial_expression": "({SafeDiv(Sum([x, y, z]), a) @ (a != 0)} = 3)",
+    "tranformed_expression": "{(SafeDiv(Sum([x, y, z]), a) = 3) @ And([(a != 0)])}",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "expand_bubble ([(\\\"Bubble\\\", 8900)])",
+    "initial_expression": "{(SafeDiv(Sum([x, y, z]), a) = 3) @ And([(a != 0)])}",
+    "tranformed_expression": "And([(SafeDiv(Sum([x, y, z]), a) = 3), And([(a != 0)])])",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "remove_unit_vector_and ([(\\\"Base\\\", 8800)])",
+    "initial_expression": "And([(a != 0)])",
+    "tranformed_expression": "(a != 0)",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "flatten_binop ([(\\\"Minion\\\", 4400)])",
+    "initial_expression": "SafeDiv(Sum([x, y, z]), a)",
+    "tranformed_expression": "SafeDiv(__0, a)",
+    "new_top": "[__0 =aux Sum([x, y, z])]"
+  },
+  {
+    "rule_applied": "sum_eq_to_sumeq ([(\\\"Minion\\\", 4400)])",
+    "initial_expression": "__0 =aux Sum([x, y, z])",
+    "tranformed_expression": "SumEq([x, y, z], __0)",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "sumeq_to_minion ([(\\\"Minion\\\", 4400)])",
+    "initial_expression": "SumEq([x, y, z], __0)",
+    "tranformed_expression": "And([SumGeq([x, y, z], __0), SumLeq([x, y, z], __0)])",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "introduce_diveq ([(\\\"Minion\\\", 4200)])",
+    "initial_expression": "(SafeDiv(__0, a) = 3)",
+    "tranformed_expression": "DivEq(__0, a, 3)",
+    "new_top": "[]"
+  },
+  {
+    "Number of rules applied": 9
+  }
+]

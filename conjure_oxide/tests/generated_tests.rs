@@ -1,6 +1,6 @@
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
-use conjure_oxide::utils::testing::read_human_rule_trace;
+use conjure_oxide::utils::testing::{read_human_rule_trace, read_rule_trace};
 use glob::glob;
 use itertools::Itertools;
 use std::collections::BTreeMap;
@@ -8,7 +8,7 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use tracing::{span, Level};
+use tracing::{span, Level, Metadata as OtherMetadata};
 use tracing_subscriber::{
     filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
 };
@@ -34,7 +34,7 @@ use conjure_oxide::utils::testing::save_stats_json;
 use conjure_oxide::utils::testing::{
     read_minion_solutions_json, read_model_json, save_minion_solutions_json, save_model_json,
 };
-use conjure_oxide::SolverFamily;
+use conjure_oxide::{Metadata, SolverFamily};
 use serde::Deserialize;
 
 use pretty_assertions::assert_eq;
@@ -234,14 +234,14 @@ fn integration_test_inner(
     }
 
     //Stage 4: Check that the generated rules match with the expected in temrs if type, order and count
-    // let generated_rule_trace = read_rule_trace(path, essence_base, "generated", accept)?;
-    // let expected_rule_trace = read_rule_trace(path, essence_base, "expected", accept)?;
+    let generated_rule_trace = read_rule_trace(path, essence_base, "generated", accept)?;
+    let expected_rule_trace = read_rule_trace(path, essence_base, "expected", accept)?;
 
     let generated_rule_trace_human =
         read_human_rule_trace(path, essence_base, "generated", accept)?;
     let expected_rule_trace_human = read_human_rule_trace(path, essence_base, "expected", accept)?;
 
-    //assert_eq!(expected_rule_trace, generated_rule_trace);
+    assert_eq!(expected_rule_trace, generated_rule_trace);
     assert_eq!(expected_rule_trace_human, generated_rule_trace_human);
 
     // test solutions against conjure before writing
@@ -356,34 +356,35 @@ pub fn create_scoped_subscriber(
     impl tracing::Subscriber + Send + Sync,
     Vec<tracing_appender::non_blocking::WorkerGuard>,
 ) {
-    //let (target1_layer, guard1) = create_file_layer_json(path, test_name);
+    let (target1_layer, guard1) = create_file_layer_json(path, test_name);
     let (target2_layer, guard2) = create_file_layer_human(path, test_name);
-    let layered = target2_layer;
+    let layered = target1_layer.and_then(target2_layer);
 
     let subscriber = Arc::new(tracing_subscriber::registry().with(layered))
         as Arc<dyn tracing::Subscriber + Send + Sync>;
     // setting this subscriber as the default
     let _default = tracing::subscriber::set_default(subscriber.clone());
 
-    (subscriber, vec![guard2])
+    (subscriber, vec![guard1, guard2])
 }
 
 fn create_file_layer_json(
     path: &str,
     test_name: &str,
 ) -> (impl Layer<Registry> + Send + Sync, WorkerGuard) {
-    let file = File::create(format!("{path}/{test_name}-generated-rule-trace.json"))
+    let file = File::create(format!("{path}/{test_name}-expected-rule-trace.json"))
         .expect("Unable to create log file");
     let (non_blocking, guard1) = tracing_appender::non_blocking(file);
 
     let layer1 = fmt::layer()
-        .with_writer(non_blocking)
         .json()
+        .with_writer(non_blocking)
         .with_level(false)
-        .without_time()
         .with_target(false)
-        .with_filter(EnvFilter::new("rule_engine=trace"))
-        .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine"));
+        .without_time()
+        .with_filter(FilterFn::new(|meta: &OtherMetadata| {
+            meta.target() == "rule_engine"
+        }));
 
     (layer1, guard1)
 }
