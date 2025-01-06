@@ -1,16 +1,101 @@
-{"fields":{"message":"; rule_applied: div_to_bubble ([(\"Bubble\", 6000)]); initial_expression: UnsafeDiv(y, z); tranformed_expression: {SafeDiv(y, z) @ (z != 0)}; new_top: []"}}
-{"fields":{"message":"; rule_applied: bubble_up ([(\"Bubble\", 8900)]); initial_expression: UnsafeDiv(x, {SafeDiv(y, z) @ (z != 0)}); tranformed_expression: {UnsafeDiv(x, SafeDiv(y, z)) @ And([(z != 0)])}; new_top: []"}}
-{"fields":{"message":"; rule_applied: bubble_up ([(\"Bubble\", 8900)]); initial_expression: ({UnsafeDiv(x, SafeDiv(y, z)) @ And([(z != 0)])} = 10); tranformed_expression: {(UnsafeDiv(x, SafeDiv(y, z)) = 10) @ And([And([(z != 0)])])}; new_top: []"}}
-{"fields":{"message":"; rule_applied: expand_bubble ([(\"Bubble\", 8900)]); initial_expression: {(UnsafeDiv(x, SafeDiv(y, z)) = 10) @ And([And([(z != 0)])])}; tranformed_expression: And([(UnsafeDiv(x, SafeDiv(y, z)) = 10), And([And([(z != 0)])])]); new_top: []"}}
-{"fields":{"message":"; rule_applied: remove_unit_vector_and ([(\"Base\", 8800)]); initial_expression: And([And([(z != 0)])]); tranformed_expression: And([(z != 0)]); new_top: []"}}
-{"fields":{"message":"; rule_applied: remove_unit_vector_and ([(\"Base\", 8800)]); initial_expression: And([(z != 0)]); tranformed_expression: (z != 0); new_top: []"}}
-{"fields":{"message":"; rule_applied: div_to_bubble ([(\"Bubble\", 6000)]); initial_expression: UnsafeDiv(x, SafeDiv(y, z)); tranformed_expression: {SafeDiv(x, SafeDiv(y, z)) @ (SafeDiv(y, z) != 0)}; new_top: []"}}
-{"fields":{"message":"; rule_applied: bubble_up ([(\"Bubble\", 8900)]); initial_expression: ({SafeDiv(x, SafeDiv(y, z)) @ (SafeDiv(y, z) != 0)} = 10); tranformed_expression: {(SafeDiv(x, SafeDiv(y, z)) = 10) @ And([(SafeDiv(y, z) != 0)])}; new_top: []"}}
-{"fields":{"message":"; rule_applied: expand_bubble ([(\"Bubble\", 8900)]); initial_expression: {(SafeDiv(x, SafeDiv(y, z)) = 10) @ And([(SafeDiv(y, z) != 0)])}; tranformed_expression: And([(SafeDiv(x, SafeDiv(y, z)) = 10), And([(SafeDiv(y, z) != 0)])]); new_top: []"}}
-{"fields":{"message":"; rule_applied: remove_unit_vector_and ([(\"Base\", 8800)]); initial_expression: And([(SafeDiv(y, z) != 0)]); tranformed_expression: (SafeDiv(y, z) != 0); new_top: []"}}
-{"fields":{"message":"; rule_applied: normalise_associative_commutative ([(\"Base\", 8400)]); initial_expression: And([And([(SafeDiv(x, SafeDiv(y, z)) = 10), (SafeDiv(y, z) != 0)]), (z != 0)]); tranformed_expression: And([(SafeDiv(x, SafeDiv(y, z)) = 10), (SafeDiv(y, z) != 0), (z != 0)]); new_top: []"}}
-{"fields":{"message":"; rule_applied: flatten_binop ([(\"Minion\", 4400)]); initial_expression: SafeDiv(x, SafeDiv(y, z)); tranformed_expression: SafeDiv(x, __0); new_top: [__0 =aux SafeDiv(y, z)]"}}
-{"fields":{"message":"; rule_applied: flatten_binop ([(\"Minion\", 4400)]); initial_expression: (SafeDiv(y, z) != 0); tranformed_expression: (__1 != 0); new_top: [__1 =aux SafeDiv(y, z)]"}}
-{"fields":{"message":"; rule_applied: introduce_diveq ([(\"Minion\", 4200)]); initial_expression: (SafeDiv(x, __0) = 10); tranformed_expression: DivEq(x, __0, 10); new_top: []"}}
-{"fields":{"message":"; rule_applied: introduce_diveq ([(\"Minion\", 4200)]); initial_expression: __0 =aux SafeDiv(y, z); tranformed_expression: DivEq(y, z, __0); new_top: []"}}
-{"fields":{"message":"; rule_applied: introduce_diveq ([(\"Minion\", 4200)]); initial_expression: __1 =aux SafeDiv(y, z); tranformed_expression: DivEq(y, z, __1); new_top: []"}}
+[
+  {
+    "rule_applied": "div_to_bubble ([(\\\"Bubble\\\", 6000)])",
+    "initial_expression": "UnsafeDiv(y, z)",
+    "tranformed_expression": "{SafeDiv(y, z) @ (z != 0)}",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "bubble_up ([(\\\"Bubble\\\", 8900)])",
+    "initial_expression": "UnsafeDiv(x, {SafeDiv(y, z) @ (z != 0)})",
+    "tranformed_expression": "{UnsafeDiv(x, SafeDiv(y, z)) @ And([(z != 0)])}",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "bubble_up ([(\\\"Bubble\\\", 8900)])",
+    "initial_expression": "({UnsafeDiv(x, SafeDiv(y, z)) @ And([(z != 0)])} = 10)",
+    "tranformed_expression": "{(UnsafeDiv(x, SafeDiv(y, z)) = 10) @ And([And([(z != 0)])])}",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "expand_bubble ([(\\\"Bubble\\\", 8900)])",
+    "initial_expression": "{(UnsafeDiv(x, SafeDiv(y, z)) = 10) @ And([And([(z != 0)])])}",
+    "tranformed_expression": "And([(UnsafeDiv(x, SafeDiv(y, z)) = 10), And([And([(z != 0)])])])",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "remove_unit_vector_and ([(\\\"Base\\\", 8800)])",
+    "initial_expression": "And([And([(z != 0)])])",
+    "tranformed_expression": "And([(z != 0)])",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "remove_unit_vector_and ([(\\\"Base\\\", 8800)])",
+    "initial_expression": "And([(z != 0)])",
+    "tranformed_expression": "(z != 0)",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "div_to_bubble ([(\\\"Bubble\\\", 6000)])",
+    "initial_expression": "UnsafeDiv(x, SafeDiv(y, z))",
+    "tranformed_expression": "{SafeDiv(x, SafeDiv(y, z)) @ (SafeDiv(y, z) != 0)}",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "bubble_up ([(\\\"Bubble\\\", 8900)])",
+    "initial_expression": "({SafeDiv(x, SafeDiv(y, z)) @ (SafeDiv(y, z) != 0)} = 10)",
+    "tranformed_expression": "{(SafeDiv(x, SafeDiv(y, z)) = 10) @ And([(SafeDiv(y, z) != 0)])}",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "expand_bubble ([(\\\"Bubble\\\", 8900)])",
+    "initial_expression": "{(SafeDiv(x, SafeDiv(y, z)) = 10) @ And([(SafeDiv(y, z) != 0)])}",
+    "tranformed_expression": "And([(SafeDiv(x, SafeDiv(y, z)) = 10), And([(SafeDiv(y, z) != 0)])])",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "remove_unit_vector_and ([(\\\"Base\\\", 8800)])",
+    "initial_expression": "And([(SafeDiv(y, z) != 0)])",
+    "tranformed_expression": "(SafeDiv(y, z) != 0)",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "normalise_associative_commutative ([(\\\"Base\\\", 8400)])",
+    "initial_expression": "And([And([(SafeDiv(x, SafeDiv(y, z)) = 10), (SafeDiv(y, z) != 0)]), (z != 0)])",
+    "tranformed_expression": "And([(SafeDiv(x, SafeDiv(y, z)) = 10), (SafeDiv(y, z) != 0), (z != 0)])",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "flatten_binop ([(\\\"Minion\\\", 4400)])",
+    "initial_expression": "SafeDiv(x, SafeDiv(y, z))",
+    "tranformed_expression": "SafeDiv(x, __0)",
+    "new_top": "[__0 =aux SafeDiv(y, z)]"
+  },
+  {
+    "rule_applied": "flatten_binop ([(\\\"Minion\\\", 4400)])",
+    "initial_expression": "(SafeDiv(y, z) != 0)",
+    "tranformed_expression": "(__1 != 0)",
+    "new_top": "[__1 =aux SafeDiv(y, z)]"
+  },
+  {
+    "rule_applied": "introduce_diveq ([(\\\"Minion\\\", 4200)])",
+    "initial_expression": "(SafeDiv(x, __0) = 10)",
+    "tranformed_expression": "DivEq(x, __0, 10)",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "introduce_diveq ([(\\\"Minion\\\", 4200)])",
+    "initial_expression": "__0 =aux SafeDiv(y, z)",
+    "tranformed_expression": "DivEq(y, z, __0)",
+    "new_top": "[]"
+  },
+  {
+    "rule_applied": "introduce_diveq ([(\\\"Minion\\\", 4200)])",
+    "initial_expression": "__1 =aux SafeDiv(y, z)",
+    "tranformed_expression": "DivEq(y, z, __1)",
+    "new_top": "[]"
+  },
+  {
+    "Number of rules applied": 16
+  }
+]

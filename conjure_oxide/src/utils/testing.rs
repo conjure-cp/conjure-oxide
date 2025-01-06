@@ -196,7 +196,7 @@ pub fn read_rule_trace(
 
     let rule_traces: JsonValue;
 
-    if prefix == "expected" {
+    if prefix == "generated" {
         rule_traces = count_and_sort_rules(&filename)?;
     } else {
         let file_contents = std::fs::read_to_string(&filename)?;

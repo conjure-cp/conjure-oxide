@@ -231,7 +231,7 @@ fn integration_test_inner(
     //Stage 3: Check that the generated rules match with the expected in terms if type, order and count
 
     let generated_json_rule_trace = read_rule_trace(path, essence_base, "generated", accept)?;
-    let expected_json_rule_trace = read_rule_trace(path, essence_base, "generated", accept)?;
+    let expected_json_rule_trace = read_rule_trace(path, essence_base, "expected", accept)?;
 
     assert_eq!(expected_json_rule_trace, generated_json_rule_trace);
 
@@ -401,7 +401,7 @@ fn create_file_layer_json(
     path: &str,
     test_name: &str,
 ) -> (impl Layer<Registry> + Send + Sync, WorkerGuard) {
-    let file = File::create(format!("{path}/{test_name}-expected-rule-trace.json"))
+    let file = File::create(format!("{path}/{test_name}-generated-rule-trace.json"))
         .expect("Unable to create log file");
     let (non_blocking, guard1) = tracing_appender::non_blocking(file);
 

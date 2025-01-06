@@ -3,7 +3,6 @@
 use super::{resolve_rules::ResolveRulesError, Reduction, Rule};
 use crate::ast::{pretty::pretty_vec, Expression};
 
-use itertools::Itertools;
 use thiserror::Error;
 use tracing::{info, trace};
 
