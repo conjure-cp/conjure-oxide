@@ -35,7 +35,7 @@ use conjure_oxide::utils::testing::save_stats_json;
 use conjure_oxide::utils::testing::{
     read_minion_solutions_json, read_model_json, save_minion_solutions_json, save_model_json,
 };
-use conjure_oxide::{Metadata, SolverFamily};
+use conjure_oxide::SolverFamily;
 use serde::Deserialize;
 
 use pretty_assertions::assert_eq;

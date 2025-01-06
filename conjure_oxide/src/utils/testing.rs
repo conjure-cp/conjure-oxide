@@ -216,19 +216,16 @@ pub fn read_rule_trace(
 
 pub fn count_and_sort_rules(filename: &str) -> Result<JsonValue, anyhow::Error> {
     let file_contents = read_to_string(&filename)?;
-    let mut sorted_json_rules = JsonValue::Null;
 
-    if file_contents.trim().is_empty() {
+    let sorted_json_rules = if file_contents.trim().is_empty() {
         let rule_count_message = json!({
             "Number of rules applied": 0,
         });
-
-        sorted_json_rules = sort_json_object(&rule_count_message, true);
+        sort_json_object(&rule_count_message, true) // Sort the rule count message
     } else {
         let rule_count = file_contents.lines().count();
-        sorted_json_rules = sort_json_rules(&file_contents);
+        let mut sorted_json_rules = sort_json_rules(&file_contents);
 
-        // Add the rule count message to the sorted rules
         let rule_count_message = json!({
             "Number of rules applied": rule_count,
         });
@@ -238,12 +235,11 @@ pub fn count_and_sort_rules(filename: &str) -> Result<JsonValue, anyhow::Error> 
         } else {
             return Err(anyhow::anyhow!("Expected JSON array").into());
         }
-    }
+        sorted_json_rules
+    };
 
-    // Serialize the sorted JSON back to a string
     let generated_sorted_json_rules = serde_json::to_string_pretty(&sorted_json_rules)?;
 
-    // Write the sorted JSON back to the file
     let mut file = OpenOptions::new()
         .write(true)
         .truncate(true)
