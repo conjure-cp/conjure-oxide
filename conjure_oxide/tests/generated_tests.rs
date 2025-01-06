@@ -328,9 +328,6 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
             Max(_, ref vec) => assert_constants_leq_one(&node, vec),
             Or(_, ref vec) => assert_constants_leq_one(&node, vec),
             And(_, ref vec) => assert_constants_leq_one(&node, vec),
-            SumEq(_, ref vec, _) => assert_constants_leq_one(&node, vec),
-            SumGeq(_, ref vec, _) => assert_constants_leq_one(&node, vec),
-            SumLeq(_, ref vec, _) => assert_constants_leq_one(&node, vec),
             _ => (),
         };
     }

@@ -46,27 +46,9 @@ a
 
 --
 
-(x = Sum([-(y), -(z), -1, a, b])), 
-   ~~> sum_eq_to_sumeq ([("Minion", 4400)]) 
-SumEq([-(y), -(z), -1, a, b], x) 
-
---
-
-SumEq([-(y), -(z), -1, a, b], x), 
-   ~~> sumeq_to_minion ([("Minion", 4400)]) 
-And([SumGeq([-(y), -(z), -1, a, b], x), SumLeq([-(y), -(z), -1, a, b], x)]) 
-
---
-
-SumGeq([-(y), -(z), -1, a, b], x), 
+Sum([-(y), -(z), -1, a, b]), 
    ~~> flatten_vecop ([("Minion", 4400)]) 
-SumGeq([__0, __1, -1, a, b], x) 
-
---
-
-SumLeq([-(y), -(z), -1, a, b], x), 
-   ~~> flatten_vecop ([("Minion", 4400)]) 
-SumLeq([__2, __3, -1, a, b], x) 
+Sum([__0, __1, -1, a, b]) 
 
 --
 
@@ -82,15 +64,15 @@ MinusEq(__1,z)
 
 --
 
-__2 =aux -(y), 
-   ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)]) 
-MinusEq(__2,y) 
+(x = Sum([__0, __1, -1, a, b])), 
+   ~~> sum_eq_to_sumeq ([("Minion", 4200)]) 
+SumEq([__0, __1, -1, a, b], x) 
 
 --
 
-__3 =aux -(z), 
-   ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)]) 
-MinusEq(__3,z) 
+SumEq([__0, __1, -1, a, b], x), 
+   ~~> sumeq_to_minion ([("Minion", 4400)]) 
+And([SumLeq([__0, __1, -1, a, b], x), SumGeq([__0, __1, -1, a, b], x)]) 
 
 --
 

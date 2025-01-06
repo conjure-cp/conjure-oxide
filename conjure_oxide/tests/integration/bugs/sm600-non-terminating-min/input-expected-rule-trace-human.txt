@@ -1,18 +1,12 @@
-(Sum([Min([a, b]), 6]) <= 10), 
-   ~~> sum_leq_to_sumleq ([("Minion", 4400)]) 
-SumLeq([Min([a, b]), 6], 10) 
-
---
-
-SumLeq([Min([a, b]), 6], 10), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-SumLeq([Min([a, b])], 4) 
-
---
-
-SumLeq([Min([a, b])], 4), 
+Sum([Min([a, b]), 6]), 
    ~~> flatten_vecop ([("Minion", 4400)]) 
-SumLeq([__0], 4) 
+Sum([__0, 6]) 
+
+--
+
+(Sum([__0, 6]) <= 10), 
+   ~~> introduce_sumleq ([("Minion", 4400)]) 
+SumLeq([__0, 6], 10) 
 
 --
 

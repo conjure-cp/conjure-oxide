@@ -28,10 +28,14 @@ fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
     if matches!(
         expr,
         Atomic(_, _)
-            | WatchedLiteral(_, _, _)
-            | DivEqUndefZero(_, _, _, _)
-            | ModuloEqUndefZero(_, _, _, _)
-            | MinusEq(_, _, _)
+            | FlatIneq(_, _, _, _)
+            | FlatMinusEq(_, _, _)
+            | FlatSumGeq(_, _, _)
+            | FlatSumLeq(_, _, _)
+            | FlatWatchedLiteral(_, _, _)
+            | MinionDivEqUndefZero(_, _, _, _)
+            | MinionModuloEqUndefZero(_, _, _, _)
+            | MinionReify(_, _, _)
     ) {
         return Err(ApplicationError::RuleNotApplicable);
     }
