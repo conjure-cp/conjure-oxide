@@ -194,15 +194,12 @@ pub fn read_rule_trace(
 ) -> Result<JsonValue, anyhow::Error> {
     let filename = format!("{path}/{test_name}-{prefix}-rule-trace.json");
 
-    let rule_traces: JsonValue;
-
-    if prefix == "generated" {
-        rule_traces = count_and_sort_rules(&filename)?;
+    let rule_traces = if prefix == "generated" {
+        count_and_sort_rules(&filename)?
     } else {
-        let file_contents = std::fs::read_to_string(&filename)?;
-
-        rule_traces = sort_json_object(&serde_json::from_str(&file_contents)?, false);
-    }
+        let file_contents = std::fs::read_to_string(filename)?;
+        sort_json_object(&serde_json::from_str(&file_contents)?, false)
+    };
 
     if accept {
         std::fs::copy(
@@ -215,7 +212,7 @@ pub fn read_rule_trace(
 }
 
 pub fn count_and_sort_rules(filename: &str) -> Result<JsonValue, anyhow::Error> {
-    let file_contents = read_to_string(&filename)?;
+    let file_contents = read_to_string(filename)?;
 
     let sorted_json_rules = if file_contents.trim().is_empty() {
         let rule_count_message = json!({
@@ -233,7 +230,7 @@ pub fn count_and_sort_rules(filename: &str) -> Result<JsonValue, anyhow::Error> 
         if let Some(array) = sorted_json_rules.as_array_mut() {
             array.push(rule_count_message);
         } else {
-            return Err(anyhow::anyhow!("Expected JSON array").into());
+            return Err(anyhow::anyhow!("Expected JSON array"));
         }
         sorted_json_rules
     };
