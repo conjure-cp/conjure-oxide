@@ -78,7 +78,7 @@ pub fn rewrite_naive<'a>(
             [(result, _priority, expr, ctx), ..] => {
                 // Extract the single applicable rule and apply it
 
-                log_rule_application(result, expr);
+                log_rule_application(result, expr, &model);
 
                 // Replace expr with new_expression
                 model.set_constraints(ctx(result.reduction.new_expression.clone()));

@@ -7,7 +7,7 @@ use std::fmt::Display;
 
 use itertools::Itertools;
 
-use super::Expression;
+use super::{Expression, Name, SymbolTable};
 
 /// Pretty prints a `Vec<Expression>` as if it were a top level constraint list in a `such that`.
 ///
@@ -58,4 +58,35 @@ pub fn pretty_vec<T: Display>(elems: &[T]) -> String {
     str.push(']');
 
     str
+}
+
+/// Pretty prints, in essence syntax, the variable declaration for the given symbol.
+///
+/// E.g.
+///
+/// ```text
+/// a: int(1..5)
+/// ```
+///
+/// Returns None if the symbol is not in the symbol table
+pub fn pretty_variable_declaration(symbol_table: &SymbolTable, var_name: &Name) -> Option<String> {
+    let var = symbol_table.get(var_name)?;
+    match &var.domain {
+        super::Domain::BoolDomain => Some(format!("{}: bool", var_name)),
+        super::Domain::IntDomain(domain) => {
+            let mut domain_ranges: Vec<String> = vec![];
+            for range in domain {
+                domain_ranges.push(match range {
+                    super::Range::Single(a) => a.to_string(),
+                    super::Range::Bounded(a, b) => format!("{}..{}", a, b),
+                });
+            }
+
+            if domain_ranges.is_empty() {
+                Some(format!("{}: int", var_name))
+            } else {
+                Some(format!("{}: int({})", var_name, domain_ranges.join(",")))
+            }
+        }
+    }
 }

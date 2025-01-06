@@ -1,7 +1,11 @@
 Sum([Max([a, b]), 1]), 
    ~~> flatten_vecop ([("Minion", 4400)]) 
 Sum([__0, 1]) 
+with new top level expressions:
+  __0 =aux Max([a, b])
 
+with changed declarations:
+  + __0: int(1..4)
 --
 
 (x = Sum([__0, 1])), 
@@ -19,7 +23,13 @@ And([SumLeq([__0, 1], x), SumGeq([__0, 1], x)])
 Max([a, b]), 
    ~~> max_to_var ([("Base", 100)]) 
 __1 
+with new top level expressions:
+  (__1 >= a)
+  (__1 >= b)
+  Or([(__1 = a), (__1 = b)])
 
+with changed declarations:
+  + __1: int(1..4)
 --
 
 (__1 >= 2), 
@@ -43,7 +53,13 @@ Ineq(b, __1, 0)
 Max([a, b]), 
    ~~> max_to_var ([("Base", 100)]) 
 __2 
+with new top level expressions:
+  (__2 >= a)
+  (__2 >= b)
+  Or([(__2 = a), (__2 = b)])
 
+with changed declarations:
+  + __2: int(1..4)
 --
 
 (__2 >= a), 

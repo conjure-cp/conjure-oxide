@@ -61,13 +61,21 @@ And([(SafeMod(x,SafeMod(y,z)) = 3), (SafeMod(y,z) != 0), (z != 0)])
 SafeMod(x,SafeMod(y,z)), 
    ~~> flatten_binop ([("Minion", 4400)]) 
 SafeMod(x,__0) 
+with new top level expressions:
+  __0 =aux SafeMod(y,z)
 
+with changed declarations:
+  + __0: int(0..5)
 --
 
 (SafeMod(y,z) != 0), 
    ~~> flatten_binop ([("Minion", 4400)]) 
 (__1 != 0) 
+with new top level expressions:
+  __1 =aux SafeMod(y,z)
 
+with changed declarations:
+  + __1: int(0..5)
 --
 
 (SafeMod(x,__0) = 3), 
