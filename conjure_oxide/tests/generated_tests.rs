@@ -230,8 +230,8 @@ fn integration_test_inner(
 
     //Stage 3: Check that the generated rules match with the expected in terms if type, order and count
 
-    let generated_json_rule_trace = read_rule_trace(path, essence_base, "generated", accept);
-    let expected_json_rule_trace = read_rule_trace(path, essence_base, "generated", accept);
+    let generated_json_rule_trace = read_rule_trace(path, essence_base, "generated", accept)?;
+    let expected_json_rule_trace = read_rule_trace(path, essence_base, "generated", accept)?;
 
     assert_eq!(expected_json_rule_trace, generated_json_rule_trace);
 
