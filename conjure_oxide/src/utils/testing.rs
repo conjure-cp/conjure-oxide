@@ -234,9 +234,9 @@ pub fn count_and_sort_rules(filename: &str) -> Result<JsonValue, anyhow::Error> 
         });
 
         if let Some(array) = sorted_json_rules.as_array_mut() {
-            array.push(sort_json_object(&rule_count_message, false));
+            array.push(rule_count_message);
         } else {
-            return Err(anyhow::anyhow!("Expected JSON array, but found something else").into());
+            return Err(anyhow::anyhow!("Expected JSON array").into());
         }
     }
 
