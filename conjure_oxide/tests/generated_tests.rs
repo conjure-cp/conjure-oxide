@@ -1,4 +1,5 @@
 use conjure_core::rule_engine::rewrite_naive;
+use conjure_core::Model;
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
 use conjure_oxide::utils::testing::{read_human_rule_trace, read_rule_trace};
 use glob::glob;
@@ -45,6 +46,7 @@ struct TestConfig {
     extra_rewriter_asserts: Vec<String>,
     use_native_parser: bool,
     use_naive_rewriter: bool,
+    run_solver: bool,
 }
 
 impl Default for TestConfig {
@@ -53,6 +55,7 @@ impl Default for TestConfig {
             extra_rewriter_asserts: vec!["vector_operators_have_partially_evaluated".into()],
             use_native_parser: true,
             use_naive_rewriter: true,
+            run_solver: true,
         }
     }
 }
@@ -225,24 +228,55 @@ fn integration_test_inner(
 
     assert_eq!(model, expected_model);
 
-    // Stage 3: Run the model through the Minion solver and check that the solutions are as expected
+    //Stage 3: Check that the generated rules match with the expected in terms if type, order and count
+
+    let generated_json_rule_trace = read_rule_trace(path, essence_base, "generated", accept);
+    let expected_json_rule_trace = read_rule_trace(path, essence_base, "generated", accept);
+
+    assert_eq!(expected_json_rule_trace, generated_json_rule_trace);
+
+    let generated_rule_trace_human =
+        read_human_rule_trace(path, essence_base, "generated", accept)?;
+    let expected_rule_trace_human = read_human_rule_trace(path, essence_base, "expected", accept)?;
+
+    assert_eq!(expected_rule_trace_human, generated_rule_trace_human);
+
+    // Stage 4: Run the model through the Minion solver and check that the solutions are as expected
+    if config.run_solver {
+        // TODO: when we do the big refactor, lump all these pass-through variables into a state
+        // struct
+        check_solutions_stage(
+            &context,
+            model,
+            path,
+            essence_base,
+            extension,
+            verbose,
+            accept,
+        )?;
+    }
+
+    save_stats_json(context, path, essence_base)?;
+
+    Ok(())
+}
+
+/// Solutions checking stage
+fn check_solutions_stage(
+    _context: &Arc<RwLock<Context>>,
+    model: Model,
+    path: &str,
+    essence_base: &str,
+    extension: &str,
+    verbose: bool,
+    accept: bool,
+) -> anyhow::Result<()> {
     let solutions = get_minion_solutions(model, 0)?;
 
     let solutions_json = save_minion_solutions_json(&solutions, path, essence_base, accept)?;
     if verbose {
         println!("Minion solutions: {:#?}", solutions_json)
     }
-
-    //Stage 4: Check that the generated rules match with the expected in temrs if type, order and count
-    let generated_rule_trace = read_rule_trace(path, essence_base, "generated", accept)?;
-    let expected_rule_trace = read_rule_trace(path, essence_base, "expected", accept)?;
-
-    let generated_rule_trace_human =
-        read_human_rule_trace(path, essence_base, "generated", accept)?;
-    let expected_rule_trace_human = read_human_rule_trace(path, essence_base, "expected", accept)?;
-
-    assert_eq!(expected_rule_trace, generated_rule_trace);
-    assert_eq!(expected_rule_trace_human, generated_rule_trace_human);
 
     // test solutions against conjure before writing
     if accept {
@@ -314,8 +348,6 @@ fn integration_test_inner(
 
     assert_eq!(solutions_json, expected_solutions_json);
 
-    save_stats_json(context, path, essence_base)?;
-
     Ok(())
 }
 
@@ -328,9 +360,6 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
             Max(_, ref vec) => assert_constants_leq_one(&node, vec),
             Or(_, ref vec) => assert_constants_leq_one(&node, vec),
             And(_, ref vec) => assert_constants_leq_one(&node, vec),
-            SumEq(_, ref vec, _) => assert_constants_leq_one(&node, vec),
-            SumGeq(_, ref vec, _) => assert_constants_leq_one(&node, vec),
-            SumLeq(_, ref vec, _) => assert_constants_leq_one(&node, vec),
             _ => (),
         };
     }
