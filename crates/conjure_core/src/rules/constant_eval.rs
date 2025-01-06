@@ -43,15 +43,31 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
         Expr::Sum(_, exprs) => vec_op::<i32, i32>(|e| e.iter().sum(), exprs).map(Lit::Int),
 
-        Expr::Ineq(_, a, b, c) => {
-            tern_op::<i32, bool>(|a, b, c| a <= (b + c), a, b, c).map(Lit::Bool)
+        Expr::FlatIneq(_, a, b, c) => {
+            let a: i32 = a.try_into().ok()?;
+            let b: i32 = b.try_into().ok()?;
+            let c: i32 = c.try_into().ok()?;
+
+            Some(Lit::Bool(a <= b + c))
         }
 
-        Expr::SumGeq(_, exprs, a) => {
-            flat_op::<i32, bool>(|e, a| e.iter().sum::<i32>() >= a, exprs, a).map(Lit::Bool)
+        Expr::FlatSumGeq(_, exprs, a) => {
+            let sum = exprs.iter().try_fold(0, |acc, atom: &Atom| {
+                let n: i32 = atom.try_into().ok()?;
+                let acc = acc + n;
+                Some(acc)
+            })?;
+
+            Some(Lit::Bool(sum >= a.try_into().ok()?))
         }
-        Expr::SumLeq(_, exprs, a) => {
-            flat_op::<i32, bool>(|e, a| e.iter().sum::<i32>() <= a, exprs, a).map(Lit::Bool)
+        Expr::FlatSumLeq(_, exprs, a) => {
+            let sum = exprs.iter().try_fold(0, |acc, atom: &Atom| {
+                let n: i32 = atom.try_into().ok()?;
+                let acc = acc + n;
+                Some(acc)
+            })?;
+
+            Some(Lit::Bool(sum >= a.try_into().ok()?))
         }
         Expr::Min(_, exprs) => {
             opt_vec_op::<i32, i32>(|e| e.iter().min().copied(), exprs).map(Lit::Int)
@@ -72,7 +88,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             bin_op::<i32, i32>(|a, b| a - b * (a as f32 / b as f32).floor() as i32, a, b)
                 .map(Lit::Int)
         }
-        Expr::DivEqUndefZero(_, a, b, c) => {
+        Expr::MinionDivEqUndefZero(_, a, b, c) => {
             // div always rounds down
             let a: i32 = a.try_into().ok()?;
             let b: i32 = b.try_into().ok()?;
@@ -89,11 +105,18 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         Expr::Bubble(_, a, b) => bin_op::<bool, bool>(|a, b| a && b, a, b).map(Lit::Bool),
 
-        Expr::Reify(_, a, b) => bin_op::<bool, bool>(|a, b| a == b, a, b).map(Lit::Bool),
+        Expr::MinionReify(_, a, b) => {
+            let result = eval_constant(a)?;
+
+            let result: bool = result.try_into().ok()?;
+            let b: bool = b.try_into().ok()?;
+
+            Some(Lit::Bool(b == result))
+        }
         Expr::SumEq(_, exprs, a) => {
             flat_op::<i32, bool>(|e, a| e.iter().sum::<i32>() == a, exprs, a).map(Lit::Bool)
         }
-        Expr::ModuloEqUndefZero(_, a, b, c) => {
+        Expr::MinionModuloEqUndefZero(_, a, b, c) => {
             // From Savile Row. Same semantics as division.
             //
             //   a - (b * floor(a/b))
@@ -126,7 +149,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             }
             Some(Lit::Bool(true))
         }
-        Expr::WatchedLiteral(_, _, _) => None,
+        Expr::FlatWatchedLiteral(_, _, _) => None,
         Expr::AuxDeclaration(_, _, _) => None,
         Expr::Neg(_, a) => {
             let a: &Atom = a.try_into().ok()?;
@@ -142,7 +165,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Int(a - b))
         }
-        Expr::MinusEq(_, a, b) => {
+        Expr::FlatMinusEq(_, a, b) => {
             let a: i32 = a.try_into().ok()?;
             let b: i32 = b.try_into().ok()?;
             Some(Lit::Bool(a == -b))
@@ -170,6 +193,7 @@ where
     Some(f(a, b))
 }
 
+#[allow(dead_code)]
 fn tern_op<T, A>(f: fn(T, T, T) -> A, a: &Expr, b: &Expr, c: &Expr) -> Option<A>
 where
     T: TryFrom<Lit>,

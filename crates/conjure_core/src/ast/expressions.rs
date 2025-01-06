@@ -8,6 +8,7 @@ use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Uniplate as _};
 
 use crate::ast::literals::Literal;
+use crate::ast::pretty::pretty_vec;
 use crate::ast::symbol_table::{Name, SymbolTable};
 use crate::ast::Atom;
 use crate::ast::ReturnType;
@@ -34,15 +35,9 @@ pub enum Expression {
 
     Atomic(Metadata, Atom),
 
-    #[compatible(Minion, JsonInput)]
+    #[compatible(JsonInput)]
     Sum(Metadata, Vec<Expression>),
 
-    // /// Division after preventing division by zero, usually with a top-level constraint
-    // #[compatible(Minion)]
-    // SafeDiv(Metadata, Box<Expression>, Box<Expression>),
-    // /// Division with a possibly undefined value (division by 0)
-    // #[compatible(Minion, JsonInput)]
-    // Div(Metadata, Box<Expression>, Box<Expression>),
     #[compatible(JsonInput)]
     Min(Metadata, Vec<Expression>),
 
@@ -94,11 +89,15 @@ pub enum Expression {
     #[compatible(JsonInput)]
     Neg(Metadata, Box<Expression>),
 
+    #[compatible(JsonInput)]
+    AllDiff(Metadata, Vec<Expression>),
+
     /// Binary subtraction operator
     ///
-    /// This mainly exists for ease of parsing, and is immediately normalised to `Sum([a,-b])`.
+    /// This is a parser-level construct, and is immediately normalised to `Sum([a,-b])`.
     #[compatible(JsonInput)]
     Minus(Metadata, Box<Expression>, Box<Expression>),
+
     /* Flattened SumEq.
      *
      * Note: this is an intermediary step that's used in the process of converting from conjure model to minion.
@@ -108,53 +107,97 @@ pub enum Expression {
      */
     SumEq(Metadata, Vec<Expression>, Box<Expression>),
 
-    // Flattened Constraints
-    #[compatible(Minion)]
-    SumGeq(Metadata, Vec<Expression>, Box<Expression>),
-
-    #[compatible(Minion)]
-    SumLeq(Metadata, Vec<Expression>, Box<Expression>),
-
-    /// `a / b = c`
-    #[compatible(Minion)]
-    DivEqUndefZero(Metadata, Atom, Atom, Atom),
-
-    /// `a % b = c`
-    #[compatible(Minion)]
-    ModuloEqUndefZero(Metadata, Atom, Atom, Atom),
-
-    #[compatible(Minion)]
-    Ineq(Metadata, Box<Expression>, Box<Expression>, Box<Expression>),
-
-    #[compatible(Minion)]
-    AllDiff(Metadata, Vec<Expression>),
-
-    /// w-literal(x,k) is SAT iff x == k, where x is a variable and k a constant.
+    /// Ensures that sum(vec) >= x.
     ///
-    /// This is a low-level Minion constraint and you should (probably) use Eq instead. The main
-    /// use of w-literal is to convert boolean variables to constraints so that they can be used
-    /// inside watched-and and watched-or.
+    /// Low-level Minion constraint.
     ///
-    /// See `rules::minion::boolean_literal_to_wliteral`.
+    /// # See also
     ///
-    ///
+    /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#sumgeq)
     #[compatible(Minion)]
-    WatchedLiteral(Metadata, Name, Literal),
+    FlatSumGeq(Metadata, Vec<Atom>, Atom),
 
+    /// Ensures that sum(vec) <= x.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#sumleq)
     #[compatible(Minion)]
-    Reify(Metadata, Box<Expression>, Box<Expression>),
+    FlatSumLeq(Metadata, Vec<Atom>, Atom),
+
+    /// `ineq(x,y,k)` ensures that x <= y + k.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#ineq)
+    #[compatible(Minion)]
+    FlatIneq(Metadata, Atom, Atom, Literal),
+
+    /// `w-literal(x,k)` ensures that x == k, where x is a variable and k a constant.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// This is a low-level Minion constraint and you should probably use Eq instead. The main use
+    /// of w-literal is to convert boolean variables to constraints so that they can be used inside
+    /// watched-and and watched-or.
+    ///
+    /// # See also
+    ///
+    /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#minuseq)
+    /// + `rules::minion::boolean_literal_to_wliteral`.
+    #[compatible(Minion)]
+    FlatWatchedLiteral(Metadata, Name, Literal),
+
+    /// Ensures that x =-y, where x and y are atoms.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#minuseq)
+    #[compatible(Minion)]
+    FlatMinusEq(Metadata, Atom, Atom),
+
+    /// Ensures that floor(x/y)=z. Always true when y=0.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#div_undefzero)
+    #[compatible(Minion)]
+    MinionDivEqUndefZero(Metadata, Atom, Atom, Atom),
+
+    /// Ensures that x%y=z. Always true when y=0.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#mod_undefzero)
+    #[compatible(Minion)]
+    MinionModuloEqUndefZero(Metadata, Atom, Atom, Atom),
+
+    /// `reify(constraint,r)` ensures that r=1 iff `constraint` is satisfied, where r is a 0/1
+    /// variable.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#reify)
+    #[compatible(Minion)]
+    MinionReify(Metadata, Box<Expression>, Atom),
 
     /// Declaration of an auxiliary variable.
     ///
     /// As with Savile Row, we semantically distinguish this from `Eq`.
     #[compatible(Minion)]
     AuxDeclaration(Metadata, Name, Box<Expression>),
-
-    /// `x =-y`, where x and y are atoms.
-    ///
-    /// Low-level Minion constraint.
-    #[compatible(Minion)]
-    MinusEq(Metadata, Atom, Atom),
 }
 
 fn expr_vec_to_domain_i32(
@@ -265,14 +308,14 @@ impl Expression {
             Expression::Gt(_, _, _) => Some(Domain::BoolDomain),
             Expression::Lt(_, _, _) => Some(Domain::BoolDomain),
             Expression::SumEq(_, _, _) => Some(Domain::BoolDomain),
-            Expression::SumGeq(_, _, _) => Some(Domain::BoolDomain),
-            Expression::SumLeq(_, _, _) => Some(Domain::BoolDomain),
-            Expression::DivEqUndefZero(_, _, _, _) => Some(Domain::BoolDomain),
-            Expression::ModuloEqUndefZero(_, _, _, _) => Some(Domain::BoolDomain),
-            Expression::Ineq(_, _, _, _) => Some(Domain::BoolDomain),
+            Expression::FlatSumGeq(_, _, _) => Some(Domain::BoolDomain),
+            Expression::FlatSumLeq(_, _, _) => Some(Domain::BoolDomain),
+            Expression::MinionDivEqUndefZero(_, _, _, _) => Some(Domain::BoolDomain),
+            Expression::MinionModuloEqUndefZero(_, _, _, _) => Some(Domain::BoolDomain),
+            Expression::FlatIneq(_, _, _, _) => Some(Domain::BoolDomain),
             Expression::AllDiff(_, _) => Some(Domain::BoolDomain),
-            Expression::WatchedLiteral(_, _, _) => Some(Domain::BoolDomain),
-            Expression::Reify(_, _, _) => Some(Domain::BoolDomain),
+            Expression::FlatWatchedLiteral(_, _, _) => Some(Domain::BoolDomain),
+            Expression::MinionReify(_, _, _) => Some(Domain::BoolDomain),
             Expression::Neg(_, x) => {
                 let Some(Domain::IntDomain(mut ranges)) = x.domain_of(vars) else {
                     return None;
@@ -291,7 +334,7 @@ impl Expression {
                 .domain_of(vars)?
                 .apply_i32(|x, y| Some(x - y), &b.domain_of(vars)?),
 
-            Expression::MinusEq(_, _, _) => Some(Domain::BoolDomain),
+            Expression::FlatMinusEq(_, _, _) => Some(Domain::BoolDomain),
             // #[allow(unreachable_patterns)]
             // _ => bug!("Cannot calculate domain of {:?}", self),
         };
@@ -353,21 +396,21 @@ impl Expression {
             Expression::SafeDiv(_, _, _) => Some(ReturnType::Int),
             Expression::UnsafeDiv(_, _, _) => Some(ReturnType::Int),
             Expression::SumEq(_, _, _) => Some(ReturnType::Bool),
-            Expression::SumGeq(_, _, _) => Some(ReturnType::Bool),
-            Expression::SumLeq(_, _, _) => Some(ReturnType::Bool),
-            Expression::DivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::Ineq(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::FlatSumGeq(_, _, _) => Some(ReturnType::Bool),
+            Expression::FlatSumLeq(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionDivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::FlatIneq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AllDiff(_, _) => Some(ReturnType::Bool),
             Expression::Bubble(_, _, _) => None, // TODO: (flm8) should this be a bool?
-            Expression::WatchedLiteral(_, _, _) => Some(ReturnType::Bool),
-            Expression::Reify(_, _, _) => Some(ReturnType::Bool),
+            Expression::FlatWatchedLiteral(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionReify(_, _, _) => Some(ReturnType::Bool),
             Expression::AuxDeclaration(_, _, _) => Some(ReturnType::Bool),
             Expression::UnsafeMod(_, _, _) => Some(ReturnType::Int),
             Expression::SafeMod(_, _, _) => Some(ReturnType::Int),
-            Expression::ModuloEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::MinionModuloEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
             Expression::Neg(_, _) => Some(ReturnType::Int),
             Expression::Minus(_, _, _) => Some(ReturnType::Int),
-            Expression::MinusEq(_, _, _) => Some(ReturnType::Bool),
+            Expression::FlatMinusEq(_, _, _) => Some(ReturnType::Bool),
         }
     }
 
@@ -389,25 +432,6 @@ impl Expression {
             Expression::Sum(_, _) | Expression::Or(_, _) | Expression::And(_, _)
         )
     }
-}
-
-fn display_expressions(expressions: &[Expression]) -> String {
-    // if expressions.len() <= 3 {
-    format!(
-        "[{}]",
-        expressions
-            .iter()
-            .map(|e| e.to_string())
-            .collect::<Vec<String>>()
-            .join(", ")
-    )
-    // } else {
-    //     format!(
-    //         "[{}..{}]",
-    //         expressions[0],
-    //         expressions[expressions.len() - 1]
-    //     )
-    // }
 }
 
 impl From<i32> for Expression {
@@ -433,22 +457,22 @@ impl Display for Expression {
         match &self {
             Expression::Atomic(_, atom) => atom.fmt(f),
             Expression::Sum(_, expressions) => {
-                write!(f, "Sum({})", display_expressions(expressions))
+                write!(f, "Sum({})", pretty_vec(expressions))
             }
             Expression::Min(_, expressions) => {
-                write!(f, "Min({})", display_expressions(expressions))
+                write!(f, "Min({})", pretty_vec(expressions))
             }
             Expression::Max(_, expressions) => {
-                write!(f, "Max({})", display_expressions(expressions))
+                write!(f, "Max({})", pretty_vec(expressions))
             }
             Expression::Not(_, expr_box) => {
                 write!(f, "Not({})", expr_box.clone())
             }
             Expression::Or(_, expressions) => {
-                write!(f, "Or({})", display_expressions(expressions))
+                write!(f, "Or({})", pretty_vec(expressions))
             }
             Expression::And(_, expressions) => {
-                write!(f, "And({})", display_expressions(expressions))
+                write!(f, "And({})", pretty_vec(expressions))
             }
             Expression::Eq(_, box1, box2) => {
                 write!(f, "({} = {})", box1.clone(), box2.clone())
@@ -472,17 +496,17 @@ impl Display for Expression {
                 write!(
                     f,
                     "SumEq({}, {})",
-                    display_expressions(expressions),
+                    pretty_vec(expressions),
                     expr_box.clone()
                 )
             }
-            Expression::SumGeq(_, box1, box2) => {
-                write!(f, "SumGeq({}, {})", display_expressions(box1), box2.clone())
+            Expression::FlatSumGeq(_, box1, box2) => {
+                write!(f, "SumGeq({}, {})", pretty_vec(box1), box2.clone())
             }
-            Expression::SumLeq(_, box1, box2) => {
-                write!(f, "SumLeq({}, {})", display_expressions(box1), box2.clone())
+            Expression::FlatSumLeq(_, box1, box2) => {
+                write!(f, "SumLeq({}, {})", pretty_vec(box1), box2.clone())
             }
-            Expression::Ineq(_, box1, box2, box3) => write!(
+            Expression::FlatIneq(_, box1, box2, box3) => write!(
                 f,
                 "Ineq({}, {}, {})",
                 box1.clone(),
@@ -490,7 +514,7 @@ impl Display for Expression {
                 box3.clone()
             ),
             Expression::AllDiff(_, expressions) => {
-                write!(f, "AllDiff({})", display_expressions(expressions))
+                write!(f, "AllDiff({})", pretty_vec(expressions))
             }
             Expression::Bubble(_, box1, box2) => {
                 write!(f, "{{{} @ {}}}", box1.clone(), box2.clone())
@@ -501,7 +525,7 @@ impl Display for Expression {
             Expression::UnsafeDiv(_, box1, box2) => {
                 write!(f, "UnsafeDiv({}, {})", box1.clone(), box2.clone())
             }
-            Expression::DivEqUndefZero(_, box1, box2, box3) => {
+            Expression::MinionDivEqUndefZero(_, box1, box2, box3) => {
                 write!(
                     f,
                     "DivEq({}, {}, {})",
@@ -510,7 +534,7 @@ impl Display for Expression {
                     box3.clone()
                 )
             }
-            Expression::ModuloEqUndefZero(_, box1, box2, box3) => {
+            Expression::MinionModuloEqUndefZero(_, box1, box2, box3) => {
                 write!(
                     f,
                     "ModEq({}, {}, {})",
@@ -520,10 +544,10 @@ impl Display for Expression {
                 )
             }
 
-            Expression::WatchedLiteral(_, x, l) => {
+            Expression::FlatWatchedLiteral(_, x, l) => {
                 write!(f, "WatchedLiteral({},{})", x, l)
             }
-            Expression::Reify(_, box1, box2) => {
+            Expression::MinionReify(_, box1, box2) => {
                 write!(f, "Reify({}, {})", box1.clone(), box2.clone())
             }
             Expression::AuxDeclaration(_, n, e) => {
@@ -541,7 +565,7 @@ impl Display for Expression {
             Expression::Minus(_, a, b) => {
                 write!(f, "({} - {})", a.clone(), b.clone())
             }
-            Expression::MinusEq(_, a, b) => {
+            Expression::FlatMinusEq(_, a, b) => {
                 write!(f, "MinusEq({},{})", a.clone(), b.clone())
             }
         }
