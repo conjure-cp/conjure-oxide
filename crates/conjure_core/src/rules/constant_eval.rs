@@ -6,6 +6,7 @@ use conjure_core::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
 };
 use conjure_core::Model;
+use itertools::izip;
 
 register_rule_set!("Constant", 100, ());
 
@@ -173,6 +174,37 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             let b: i32 = b.try_into().ok()?;
             let c: i32 = c.try_into().ok()?;
             Some(Lit::Bool(a * b == c))
+        }
+        Expr::FlatWeightedSumLeq(_, cs, vs, total) => {
+            let cs: Vec<i32> = cs
+                .iter()
+                .map(|x| TryInto::<i32>::try_into(x).ok())
+                .collect::<Option<Vec<i32>>>()?;
+            let vs: Vec<i32> = vs
+                .iter()
+                .map(|x| TryInto::<i32>::try_into(x).ok())
+                .collect::<Option<Vec<i32>>>()?;
+            let total: i32 = total.try_into().ok()?;
+
+            let sum: i32 = izip!(cs, vs).fold(0, |acc, (c, v)| acc + (c * v));
+
+            Some(Lit::Bool(sum <= total))
+        }
+
+        Expr::FlatWeightedSumGeq(_, cs, vs, total) => {
+            let cs: Vec<i32> = cs
+                .iter()
+                .map(|x| TryInto::<i32>::try_into(x).ok())
+                .collect::<Option<Vec<i32>>>()?;
+            let vs: Vec<i32> = vs
+                .iter()
+                .map(|x| TryInto::<i32>::try_into(x).ok())
+                .collect::<Option<Vec<i32>>>()?;
+            let total: i32 = total.try_into().ok()?;
+
+            let sum: i32 = izip!(cs, vs).fold(0, |acc, (c, v)| acc + (c * v));
+
+            Some(Lit::Bool(sum >= total))
         }
     }
 }
