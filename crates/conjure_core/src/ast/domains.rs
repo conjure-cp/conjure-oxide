@@ -17,6 +17,16 @@ pub enum Domain {
 }
 
 impl Domain {
+    /// Returns the minimum value in the domain if it is an IntDomain.
+    pub fn get_min_i32(&self) -> Option<i32> {
+        self.values_i32()?.iter().min().copied()
+    }
+
+    /// Returns the maximum value in the domain if it is an IntDomain.
+    pub fn get_max_i32(&self) -> Option<i32> {
+        self.values_i32()?.iter().max().copied()
+    }
+
     /// Return a list of all possible i32 values in the domain if it is an IntDomain.
     pub fn values_i32(&self) -> Option<Vec<i32>> {
         match self {

@@ -146,6 +146,32 @@ pub enum Expression {
     #[compatible(Minion)]
     FlatWatchedLiteral(Metadata, Name, Literal),
 
+    /// `weightedsumleq(cs,xs,total)` ensures that cs.xs <= total, where cs.xs is the scalar dot
+    /// product of cs and xs.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// Represents a weighted sum of the form `ax + by + cz + ...`
+    ///
+    /// # See also
+    ///
+    /// + [Minion
+    /// documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#weightedsumleq)
+    FlatWeightedSumLeq(Metadata, Vec<Literal>, Vec<Atom>, Atom),
+
+    /// `weightedsumgeq(cs,xs,total)` ensures that cs.xs >= total, where cs.xs is the scalar dot
+    /// product of cs and xs.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// Represents a weighted sum of the form `ax + by + cz + ...`
+    ///
+    /// # See also
+    ///
+    /// + [Minion
+    /// documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#weightedsumleq)
+    FlatWeightedSumGeq(Metadata, Vec<Literal>, Vec<Atom>, Atom),
+
     /// Ensures that x =-y, where x and y are atoms.
     ///
     /// Low-level Minion constraint.
@@ -342,6 +368,8 @@ impl Expression {
 
             Expression::FlatMinusEq(_, _, _) => Some(Domain::BoolDomain),
             Expression::FlatProductEq(_, _, _, _) => Some(Domain::BoolDomain),
+            Expression::FlatWeightedSumLeq(_, _, _, _) => Some(Domain::BoolDomain),
+            Expression::FlatWeightedSumGeq(_, _, _, _) => Some(Domain::BoolDomain),
             // #[allow(unreachable_patterns)]
             // _ => bug!("Cannot calculate domain of {:?}", self),
         };
@@ -419,6 +447,8 @@ impl Expression {
             Expression::Minus(_, _, _) => Some(ReturnType::Int),
             Expression::FlatMinusEq(_, _, _) => Some(ReturnType::Bool),
             Expression::FlatProductEq(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::FlatWeightedSumLeq(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
         }
     }
 
@@ -581,6 +611,25 @@ impl Display for Expression {
                     a.clone(),
                     b.clone(),
                     c.clone()
+                )
+            }
+            Expression::FlatWeightedSumLeq(_, cs, vs, total) => {
+                write!(
+                    f,
+                    "FlatWeightedSumLeq({},{},{})",
+                    pretty_vec(cs),
+                    pretty_vec(vs),
+                    total.clone()
+                )
+            }
+
+            Expression::FlatWeightedSumGeq(_, cs, vs, total) => {
+                write!(
+                    f,
+                    "FlatWeightedSumGeq({},{},{})",
+                    pretty_vec(cs),
+                    pretty_vec(vs),
+                    total.clone()
                 )
             }
         }

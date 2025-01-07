@@ -4,7 +4,7 @@
 
 use std::borrow::Borrow as _;
 
-use crate::ast::{Atom, DecisionVariable, Domain, Expression as Expr, Literal as Lit};
+use crate::ast::{Atom, DecisionVariable, Domain, Expression as Expr, Literal as Lit, Range};
 
 use crate::ast::Name;
 use crate::metadata::Metadata;
@@ -15,8 +15,9 @@ use crate::rules::extra_check;
 
 use crate::solver::SolverFamily;
 use crate::Model;
+use itertools::izip;
 use uniplate::Uniplate;
-use ApplicationError::RuleNotApplicable;
+use ApplicationError::*;
 
 use super::utils::{expressions_to_atoms, is_flat, to_aux_var};
 
@@ -116,6 +117,200 @@ fn introduce_producteq(expr: &Expr, model: &Model) -> ApplicationResult {
         new_tops,
         model.variables,
     ))
+}
+
+#[register_rule(("Minion", 4500))]
+fn introduce_weighted_sumleq_sumgeq(expr: &Expr, model: &Model) -> ApplicationResult {
+    // assume sum on lhs of leq/geq, as in introduce_sumleq
+    // is_leq is true if leq, false if geq
+    let (sum_expr, total, is_leq) = match expr.clone() {
+        Expr::Leq(_, sum_expr, total) => (*sum_expr, *total, true),
+        Expr::Geq(_, sum_expr, total) => (*sum_expr, *total, false),
+        _ => {
+            return Err(RuleNotApplicable);
+        }
+    };
+
+    let Expr::Sum(_, sum_terms) = sum_expr.clone() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let total: Atom = total.try_into().or(Err(RuleNotApplicable))?;
+
+    // To allow partial weighted sums (which have valid weighted sum terms added to more complex
+    // expressions), store a list of non-weighted sum terms as well as the coefficients and
+    // variables of the weighted sum.
+    //
+    // I think having the entire of a sum expression be a valid weighted sum is not common, so
+    // allowing partials here will help us use weighted sum as much as possible.
+    //
+    // We could deal with this higher up the chain by adding by adding an intermediate expression
+    // called WeightedSum. However, I want to keep the solver-independent bit of the language as
+    // small as possible; this allows a smaller number of generic rules to have a big impact,
+    // instead of needing to add extra rules to specific rarely-used expressions. Keeping weighted
+    // sums as sums and products allows all the standard arithmetic rules to work on weighted sums
+    // for free!
+    //
+    // Output depends on whether expr is a partial weighted sum or not:
+    //
+    // For a partially weighted sum, take the weighted sum bits out and put them in an aux var:
+    //
+    // ```
+    // ax + by + cz + e1 + e2 + e3 + ... <= d
+    //   ~> __0 + e1 + e2 + e3 <= d
+    //   with new constraints:
+    //     weighted_sumleq([a,b,c],[x,y,z],__0)
+    //     weighted_sumgeq([a,b,c],[x,y,z],__0)
+    // ```
+    //
+    // For a complete weighted sum, turn it directly into a weighted_sum constraint:
+    // ```
+    // ax + by + cz  <= d
+    //   ~> weighted_sumleq([a,b,c],[x,y,z],d)
+    // ```
+
+    let mut coefficients: Vec<Lit> = vec![];
+    let mut vars: Vec<Atom> = vec![];
+    let mut other_terms: Vec<Expr> = vec![];
+
+    // (coeff,var,is_prod_term)
+    fn split_weighted_sum_term(expr: &Expr) -> Option<(Lit, Atom, bool)> {
+        // Assuming that normalisation has transformed any possible weighted sum term into the form
+        // constant*var_ref. No handling of negations, commutativity, etc here!
+
+        match expr.clone() {
+            // constant * var_ref
+            Expr::Product(_, factors) => {
+                if let [coeff, var] = &factors[..] {
+                    let var: Atom = var.clone().try_into().ok()?;
+                    let coeff: Atom = coeff.clone().try_into().ok()?;
+                    let coeff: Lit = coeff.try_into().ok()?;
+                    Some((coeff, var, true))
+                } else {
+                    None
+                }
+            }
+
+            // var_ref
+            Expr::Atomic(_, atom @ Atom::Reference(_)) => Some((Lit::Int(1), atom, false)),
+
+            _ => None,
+        }
+    }
+
+    // don't want to turn sums with just atoms into weighted sums, use sum for these instead!
+    let mut has_product_term: bool = false;
+
+    for expr in sum_terms {
+        match split_weighted_sum_term(&expr) {
+            Some((coeff, var, is_product_term)) => {
+                has_product_term |= is_product_term;
+                coefficients.push(coeff);
+                vars.push(var);
+            }
+            None => {
+                other_terms.push(expr);
+            }
+        }
+    }
+
+    if vars.len() < 2 || !has_product_term {
+        return Err(RuleNotApplicable);
+    }
+
+    // total weighted sum
+    if other_terms.is_empty() {
+        if is_leq {
+            Ok(Reduction::pure(Expr::FlatWeightedSumLeq(
+                Metadata::new(),
+                coefficients,
+                vars,
+                total,
+            )))
+        } else {
+            Ok(Reduction::pure(Expr::FlatWeightedSumGeq(
+                Metadata::new(),
+                coefficients,
+                vars,
+                total,
+            )))
+        }
+    } else {
+        // partially weighted sum
+        let mut model = model.clone();
+        let aux_name = model.gensym();
+
+        // calculate domain of weighted sum
+        let mut min_domain_value = 0;
+        let mut max_domain_value = 0;
+
+        for (c, v) in izip!(coefficients.clone(), vars.clone()) {
+            let c: i32 = c.try_into().or(Err(DomainError))?;
+            match v {
+                Atom::Literal(val) => {
+                    let val: i32 = val.try_into().or(Err(DomainError))?;
+                    min_domain_value += c * val;
+                    max_domain_value += c * val;
+                }
+                Atom::Reference(name) => {
+                    let v_domain = model.get_domain(&name).ok_or(DomainError)?;
+
+                    let bound1 = c * v_domain.get_min_i32().ok_or(DomainError)?;
+                    let bound2 = c * v_domain.get_max_i32().ok_or(DomainError)?;
+
+                    if bound1 > bound2 {
+                        max_domain_value += bound1;
+                        min_domain_value += bound2;
+                    } else {
+                        max_domain_value += bound2;
+                        min_domain_value += bound1;
+                    }
+                }
+            }
+        }
+
+        let domain = Domain::IntDomain(vec![Range::Bounded(min_domain_value, max_domain_value)]);
+        model
+            .variables
+            .insert(aux_name.clone(), DecisionVariable { domain });
+
+        let new_top_exprs = vec![
+            Expr::FlatWeightedSumLeq(
+                Metadata::new(),
+                coefficients.clone(),
+                vars.clone(),
+                aux_name.clone().into(),
+            ),
+            Expr::FlatWeightedSumGeq(Metadata::new(), coefficients, vars, aux_name.clone().into()),
+        ];
+
+        let aux_atom: Atom = aux_name.into();
+        let aux_expr: Expr = aux_atom.into();
+
+        other_terms.push(aux_expr);
+
+        if is_leq {
+            Ok(Reduction::new(
+                Expr::Leq(
+                    Metadata::new(),
+                    Box::new(Expr::Sum(Metadata::new(), other_terms)),
+                    Box::new(total.into()),
+                ),
+                new_top_exprs,
+                model.variables,
+            ))
+        } else {
+            Ok(Reduction::new(
+                Expr::Geq(
+                    Metadata::new(),
+                    Box::new(Expr::Sum(Metadata::new(), other_terms)),
+                    Box::new(total.into()),
+                ),
+                new_top_exprs,
+                model.variables,
+            ))
+        }
+    }
 }
 
 #[register_rule(("Minion", 4200))]

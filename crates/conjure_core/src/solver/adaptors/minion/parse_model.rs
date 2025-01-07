@@ -221,6 +221,20 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
         conjure_ast::Expression::FlatProductEq(_metadata, a, b, c) => Ok(
             minion_ast::Constraint::Product((parse_atom(a)?, parse_atom(b)?), parse_atom(c)?),
         ),
+        conjure_ast::Expression::FlatWeightedSumLeq(_metadata, coeffs, vars, total) => {
+            Ok(minion_ast::Constraint::WeightedSumLeq(
+                parse_literals(coeffs)?,
+                parse_atoms(vars)?,
+                parse_atom(total)?,
+            ))
+        }
+        conjure_ast::Expression::FlatWeightedSumGeq(_metadata, coeffs, vars, total) => {
+            Ok(minion_ast::Constraint::WeightedSumGeq(
+                parse_literals(coeffs)?,
+                parse_atoms(vars)?,
+                parse_atom(total)?,
+            ))
+        }
         x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
     }
 }
@@ -264,6 +278,17 @@ fn parse_literal_as_int(k: conjure_ast::Literal) -> Result<i32, SolverError> {
             x
         ))),
     }
+}
+
+fn parse_literals(
+    literals: Vec<conjure_ast::Literal>,
+) -> Result<Vec<minion_ast::Constant>, SolverError> {
+    let mut minion_constants: Vec<minion_ast::Constant> = vec![];
+    for literal in literals {
+        let minion_constant = parse_literal(literal)?;
+        minion_constants.push(minion_constant);
+    }
+    Ok(minion_constants)
 }
 
 fn parse_literal(k: conjure_ast::Literal) -> Result<minion_ast::Constant, SolverError> {
