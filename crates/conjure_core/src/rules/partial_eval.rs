@@ -228,6 +228,8 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
         FlatSumLeq(_, _, _) => Err(RuleNotApplicable),
         FlatSumGeq(_, _, _) => Err(RuleNotApplicable),
         FlatWatchedLiteral(_, _, _) => Err(RuleNotApplicable),
+        FlatWeightedSumLeq(_, _, _, _) => Err(RuleNotApplicable),
+        FlatWeightedSumGeq(_, _, _, _) => Err(RuleNotApplicable),
         MinionDivEqUndefZero(_, _, _, _) => Err(RuleNotApplicable),
         MinionModuloEqUndefZero(_, _, _, _) => Err(RuleNotApplicable),
         MinionReify(_, _, _) => Err(RuleNotApplicable),

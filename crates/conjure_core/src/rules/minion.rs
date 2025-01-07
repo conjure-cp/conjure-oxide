@@ -16,7 +16,7 @@ use crate::rules::extra_check;
 use crate::solver::SolverFamily;
 use crate::Model;
 use uniplate::Uniplate;
-use ApplicationError::RuleNotApplicable;
+use ApplicationError::*;
 
 use super::utils::{expressions_to_atoms, is_flat, to_aux_var};
 
@@ -116,6 +116,190 @@ fn introduce_producteq(expr: &Expr, model: &Model) -> ApplicationResult {
         new_tops,
         model.variables,
     ))
+}
+
+/// Introduces `FlatWeightedSumLeq` / `FlatWeightedSumGeq` constraints.
+///
+/// # Details
+/// This rule is a bit unusual compared to other introduction rules in that
+/// it does its own flattening.
+///
+/// For example, introduce_sumleq only accepts sums of atoms and relies on
+/// the generic flattening rules (flatten_binop / flatten_vecop) to run
+/// before it flattens the sum.
+///
+/// ```text
+/// a + (b*c) + (d*e) <= 10
+///   ~~> flatten_vecop
+/// a + __0 + __1 <= 10
+///
+/// with new top level constraints
+///
+/// __0 =aux b*c
+/// __1 =aux d*e
+///
+/// ---
+///
+/// a + __0 + __1 <= 10
+///   ~~> introduce_sumleq
+/// flat_sumleq([a,__0,__1],10)
+///
+/// ...
+/// ```
+///
+/// However, weighted sums are expressed as sums of products, which are not
+/// flat. Flattening a weighted sum generically makes it indistinguishable
+/// from a sum:
+///
+///```text
+/// 1*a + 2*b + 3*c + d <= 10
+///   ~~> flatten_vecop
+/// __0 + __1 + __2 + d <= 10
+///
+/// with new top level constraints
+///
+/// __0 =aux 1*a
+/// __1 =aux 2*b
+/// __2 =aux 3*c
+/// ```
+///
+/// Therefore, introduce_weightedsumleq_sumgeq does its own flattening, and
+/// has a higher priority than flatten_vecop to prevent weighted sums being
+/// generically flattened.
+///
+/// Having custom flattening semantics means that we can make more things
+/// weighted sums.
+///
+/// For example, consider `a + 2*b + 3*c*d + (e / f) + 5*(g/h) <= 18`. This
+/// rule turns this into a single flat_weightedsumleq constraint:
+///
+///```text
+/// a + 2*b + 3*c*d + (e/f) + 5*(g/h) <= 30
+///
+///   ~> introduce_weightedsumleq_sumgeq
+///
+/// flat_weightedsumleq([1,2,3,1,5],[a,b,__0,__1,__2],30)
+///
+/// with new top level constraints
+///
+/// __0 = c*d
+/// __1 = e/f
+/// __2 = g/h
+/// ```
+///
+/// The rules to turn terms into coefficient variable pairs are the following:
+///
+/// 1. Non-weighted atom: `a ~> (1,a)`
+/// 2. Other non-weighted term: `e ~> (1,__0)`, with new constraint `__0 =aux e`
+/// 3. Weighted atom: `c*a ~> (c,a)`
+/// 4. Weighted non-atom: `c*e ~> (c,__0)` with new constraint` __0 =aux e`
+/// 5. Weighted product: `c*e*f ~> (c,__0)` with new constraint `__0 =aux (e*f)`
+#[register_rule(("Minion", 4500))]
+fn introduce_weighted_sumleq_sumgeq(expr: &Expr, model: &Model) -> ApplicationResult {
+    // assume sum on lhs of leq/geq, as in introduce_sumleq
+    // is_leq is true if leq, false if geq
+    let (sum_expr, total, is_leq) = match expr.clone() {
+        Expr::Leq(_, sum_expr, total) => (*sum_expr, *total, true),
+        Expr::Geq(_, sum_expr, total) => (*sum_expr, *total, false),
+        _ => {
+            return Err(RuleNotApplicable);
+        }
+    };
+
+    let total: Atom = total.try_into().or(Err(RuleNotApplicable))?;
+
+    let Expr::Sum(_, sum_exprs) = sum_expr.clone() else {
+        return Err(RuleNotApplicable);
+    };
+    let mut new_top_exprs: Vec<Expr> = vec![];
+    let mut model = model.clone();
+
+    let mut coefficients: Vec<Lit> = vec![];
+    let mut vars: Vec<Atom> = vec![];
+
+    // if all coefficients are 1, use normal sum rule instead
+    let mut found_non_one_coeff = false;
+
+    // for each sub-term, get the coefficient and the variable, flattening if necessary.
+    for expr in sum_exprs {
+        let (coeff, var): (Lit, Atom) = match expr {
+            // atom: v ~> 1*v
+            Expr::Atomic(_, atom) => (Lit::Int(1), atom),
+
+            // assuming normalisation / partial eval, literal will be first term
+
+            // weighted sum term: c * e.
+            // e can either be an atom, the rest of the product to be flattened, or an other expression that needs
+            // flattening
+            Expr::Product(_, factors)
+                if factors.len() > 1 && matches!(factors[0], Expr::Atomic(_, Atom::Literal(_))) =>
+            {
+                match &factors[..] {
+                    // c * <atom>
+                    [Expr::Atomic(_, Atom::Literal(c)), Expr::Atomic(_, atom)] => {
+                        (c.clone(), atom.clone())
+                    }
+
+                    // c * <some non-flat expression>
+                    [Expr::Atomic(_, Atom::Literal(c)), e1] => {
+                        #[allow(clippy::unwrap_used)] // aux var failing is a bug
+                        let aux_var_info = to_aux_var(e1, &model).unwrap();
+
+                        model = aux_var_info.model();
+                        let var = aux_var_info.as_atom();
+                        new_top_exprs.push(aux_var_info.top_level_expr());
+                        (c.clone(), var)
+                    }
+
+                    // c * a * b * c * ...
+                    [Expr::Atomic(_, Atom::Literal(c)), ref rest @ ..] => {
+                        let e1 = Expr::Product(Metadata::new(), rest.to_vec());
+
+                        #[allow(clippy::unwrap_used)] // aux var failing is a bug
+                        let aux_var_info = to_aux_var(&e1, &model).unwrap();
+
+                        model = aux_var_info.model();
+                        let var = aux_var_info.as_atom();
+                        new_top_exprs.push(aux_var_info.top_level_expr());
+                        (c.clone(), var)
+                    }
+
+                    _ => unreachable!(),
+                }
+            }
+
+            // flatten non-flat terms without coefficients: e1 ~> (1,__0)
+            //
+            // includes products without coefficients.
+            e => {
+                //
+                let aux_var_info = to_aux_var(&e, &model).ok_or(RuleNotApplicable)?;
+
+                model = aux_var_info.model();
+                let var = aux_var_info.as_atom();
+                new_top_exprs.push(aux_var_info.top_level_expr());
+                (Lit::Int(1), var)
+            }
+        };
+
+        let coeff_num: i32 = coeff.clone().try_into().or(Err(RuleNotApplicable))?;
+        found_non_one_coeff |= coeff_num != 1;
+        coefficients.push(coeff);
+        vars.push(var);
+    }
+
+    // the expr should use a regular sum instead if the coefficients are all 1.
+    if !found_non_one_coeff {
+        return Err(RuleNotApplicable);
+    }
+
+    let new_expr: Expr = if is_leq {
+        Expr::FlatWeightedSumLeq(Metadata::new(), coefficients, vars, total)
+    } else {
+        Expr::FlatWeightedSumGeq(Metadata::new(), coefficients, vars, total)
+    };
+
+    Ok(Reduction::new(new_expr, new_top_exprs, model.variables))
 }
 
 #[register_rule(("Minion", 4200))]
