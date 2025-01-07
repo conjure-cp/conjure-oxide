@@ -1,5 +1,5 @@
 Sum([Sum([-(y), -((Sum([z, 1]) - a))]), b]), 
-   ~~> normalise_associative_commutative ([("Base", 8400)]) 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
 Sum([-(y), -((Sum([z, 1]) - a)), b]) 
 
 --
@@ -10,21 +10,15 @@ Sum([Sum([z, 1]), -(a)])
 
 --
 
--(Sum([Sum([z, 1]), -(a)])), 
-   ~~> distribute_negation_over_sum ([("Base", 8400)]) 
-Sum([-(Sum([z, 1])), -(-(a))]) 
+Sum([Sum([z, 1]), -(a)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([z, 1, -(a)]) 
 
 --
 
-Sum([-(y), Sum([-(Sum([z, 1])), -(-(a))]), b]), 
-   ~~> normalise_associative_commutative ([("Base", 8400)]) 
-Sum([-(y), -(Sum([z, 1])), -(-(a)), b]) 
-
---
-
--(Sum([z, 1])), 
+-(Sum([z, 1, -(a)])), 
    ~~> distribute_negation_over_sum ([("Base", 8400)]) 
-Sum([-(z), -(1)]) 
+Sum([-(z), -(1), -(-(a))]) 
 
 --
 
@@ -34,8 +28,8 @@ Sum([-(z), -(1)])
 
 --
 
-Sum([-(y), Sum([-(z), -1]), -(-(a)), b]), 
-   ~~> normalise_associative_commutative ([("Base", 8400)]) 
+Sum([-(y), Sum([-(z), -1, -(-(a))]), b]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
 Sum([-(y), -(z), -1, -(-(a)), b]) 
 
 --

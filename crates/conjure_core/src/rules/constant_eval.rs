@@ -42,6 +42,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::Or(_, exprs) => vec_op::<bool, bool>(|e| e.iter().any(|&e| e), exprs).map(Lit::Bool),
 
         Expr::Sum(_, exprs) => vec_op::<i32, i32>(|e| e.iter().sum(), exprs).map(Lit::Int),
+        Expr::Product(_, exprs) => vec_op::<i32, i32>(|e| e.iter().product(), exprs).map(Lit::Int),
 
         Expr::FlatIneq(_, a, b, c) => {
             let a: i32 = a.try_into().ok()?;

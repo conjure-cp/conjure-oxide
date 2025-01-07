@@ -17,7 +17,7 @@ use uniplate::Biplate;
 /// v(v(a,b,...),c,d,...) ~> v(a,b,c,d)
 /// where v is an AC vector operator
 /// ```
-#[register_rule(("Base", 8400))]
+#[register_rule(("Base", 8900))]
 fn normalise_associative_commutative(expr: &Expr, _: &Model) -> ApplicationResult {
     if !expr.is_associative_commutative_operator() {
         return Err(RuleNotApplicable);
