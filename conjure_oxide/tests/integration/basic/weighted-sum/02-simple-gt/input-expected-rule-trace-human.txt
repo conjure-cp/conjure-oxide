@@ -1,0 +1,28 @@
+(Sum([Product([2, x]), Product([3, y])]) > 12), 
+   ~~> gt_to_geq ([("Base", 8400)]) 
+(Sum([Sum([Product([2, x]), Product([3, y])]), -1]) >= 12) 
+
+--
+
+Sum([Sum([Product([2, x]), Product([3, y])]), -1]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([Product([2, x]), Product([3, y]), -1]) 
+
+--
+
+(Sum([Product([2, x]), Product([3, y]), -1]) >= 12), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4500)]) 
+(Sum([-1, __0]) >= 12) 
+new variables:
+  __0: int(9..19)
+new constraints:
+  FlatWeightedSumLeq([2, 3],[x, y],__0)
+  FlatWeightedSumGeq([2, 3],[x, y],__0)
+--
+
+(Sum([-1, __0]) >= 12), 
+   ~~> introduce_sumgeq ([("Minion", 4400)]) 
+SumGeq([-1, __0], 12) 
+
+--
+

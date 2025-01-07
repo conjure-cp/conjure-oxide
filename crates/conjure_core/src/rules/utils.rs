@@ -2,7 +2,7 @@ use tracing::instrument;
 use uniplate::{Biplate, Uniplate};
 
 use crate::{
-    ast::{Atom, DecisionVariable, Domain, Expression as Expr, Name},
+    ast::{Atom, DecisionVariable, Domain, Expression as Expr, Literal, Name},
     metadata::Metadata,
     Model,
 };
