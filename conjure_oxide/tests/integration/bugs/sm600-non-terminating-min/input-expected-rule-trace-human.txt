@@ -1,7 +1,10 @@
 Sum([Min([a, b]), 6]), 
    ~~> flatten_vecop ([("Minion", 4400)]) 
 Sum([__0, 6]) 
-
+new variables:
+  __0: int(1..7)
+new constraints:
+  __0 =aux Min([a, b])
 --
 
 (Sum([__0, 6]) <= 10), 
@@ -13,7 +16,12 @@ SumLeq([__0, 6], 10)
 Min([a, b]), 
    ~~> min_to_var ([("Base", 2000)]) 
 __1 
-
+new variables:
+  __1: int(1..7)
+new constraints:
+  (__1 <= a)
+  (__1 <= b)
+  Or([(__1 = a), (__1 = b)])
 --
 
 (__1 <= a), 
