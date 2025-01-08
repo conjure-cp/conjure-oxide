@@ -41,8 +41,20 @@ Product([-5, y])
 --
 
 (Sum([Product([5, x]), Product([9, y]), -(Product([3, x])), Product([-1, y]), Product([-5, y])]) < 10), 
+   ~~> lt_to_leq ([("Base", 8400)]) 
+(Sum([Product([5, x]), Product([9, y]), -(Product([3, x])), Product([-1, y]), Product([-5, y])]) <= Sum([10, -1])) 
+
+--
+
+Sum([10, -1]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+9 
+
+--
+
+(Sum([Product([5, x]), Product([9, y]), -(Product([3, x])), Product([-1, y]), Product([-5, y])]) <= 9), 
    ~~> flatten_binop ([("Minion", 4200)]) 
-(__0 < 10) 
+(__0 <= 9) 
 new variables:
   __0: int(-17..52)
 new constraints:
@@ -105,9 +117,9 @@ FlatProductEq(x,3,__6)
 
 --
 
-(__0 < 10), 
-   ~~> lt_to_ineq ([("Minion", 4100)]) 
-Ineq(__0, 10, -1) 
+(__0 <= 9), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(__0, 9, 0) 
 
 --
 

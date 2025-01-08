@@ -117,6 +117,7 @@ fn introduce_producteq(expr: &Expr, model: &Model) -> ApplicationResult {
         model.variables,
     ))
 }
+
 #[register_rule(("Minion", 4200))]
 fn introduce_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
     // div = val
@@ -292,8 +293,6 @@ fn flatten_binop(expr: &Expr, model: &Model) -> ApplicationResult {
             | Expr::SafeMod(_, _, _)
             | Expr::Leq(_, _, _)
             | Expr::Geq(_, _, _)
-            | Expr::Lt(_, _, _)
-            | Expr::Gt(_, _, _)
     ) {
         return Err(RuleNotApplicable);
     }
@@ -494,62 +493,6 @@ fn introduce_sumleq(expr: &Expr, _: &Model) -> ApplicationResult {
     Ok(Reduction::pure(Expr::FlatSumLeq(meta, atoms, rhs)))
 }
 
-/**
-* Convert a Lt to an Ineq
-
-* ```text
-* x < y ~> x <= y -1 ~> ineq(x,y,-1)
-* ```
-*/
-#[register_rule(("Minion", 4100))]
-fn lt_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
-    let Expr::Lt(meta, e1, e2) = expr.clone() else {
-        return Err(RuleNotApplicable);
-    };
-
-    let Expr::Atomic(_, x) = *e1 else {
-        return Err(RuleNotApplicable);
-    };
-
-    let Expr::Atomic(_, y) = *e2 else {
-        return Err(RuleNotApplicable);
-    };
-
-    Ok(Reduction::pure(Expr::FlatIneq(
-        meta.clone_dirty(),
-        x,
-        y,
-        Lit::Int(-1),
-    )))
-}
-
-/// Converts a Gt to an Ineq
-///
-/// ```text
-/// x > y ~> y <= x -1 ~> ineq(y,x,-1)
-/// ```
-#[register_rule(("Minion", 4100))]
-fn gt_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
-    let Expr::Gt(meta, e1, e2) = expr.clone() else {
-        return Err(RuleNotApplicable);
-    };
-
-    let Expr::Atomic(_, x) = *e1 else {
-        return Err(RuleNotApplicable);
-    };
-
-    let Expr::Atomic(_, y) = *e2 else {
-        return Err(RuleNotApplicable);
-    };
-
-    Ok(Reduction::pure(Expr::FlatIneq(
-        meta.clone_dirty(),
-        y,
-        x,
-        Lit::Int(-1),
-    )))
-}
-
 /// Converts a Geq to an Ineq
 ///
 /// ```text
@@ -609,9 +552,39 @@ fn leq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 /// ```text
 /// x <= y + k ~> ineq(x,y,k)
 /// ```
-#[register_rule(("Minion",4400))]
+#[register_rule(("Minion",4500))]
 fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
     let Expr::Leq(meta, e1, e2) = expr.clone() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::Atomic(_, x) = *e1 else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::Sum(_, sum_exprs) = *e2 else {
+        return Err(RuleNotApplicable);
+    };
+
+    let [Expr::Atomic(_, y), Expr::Atomic(_, Atom::Literal(k))] = sum_exprs.as_slice() else {
+        return Err(RuleNotApplicable);
+    };
+
+    Ok(Reduction::pure(Expr::FlatIneq(
+        meta.clone_dirty(),
+        x,
+        y.clone(),
+        k.clone(),
+    )))
+}
+
+/// ```text
+/// y + k >= x ~> ineq(x,y,k)
+/// ```
+#[register_rule(("Minion",4500))]
+fn y_plus_k_geq_x_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
+    // impl same as x_leq_y_plus_k but with lhs and rhs flipped
+    let Expr::Geq(meta, e2, e1) = expr.clone() else {
         return Err(RuleNotApplicable);
     };
 
