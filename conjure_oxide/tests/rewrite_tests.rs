@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::env;
 use std::process::exit;
 
 use conjure_core::rules::eval_constant;
@@ -9,7 +8,6 @@ use conjure_oxide::{
     get_rule_by_name, get_rules,
     rule_engine::{resolve_rule_sets, rewrite_model},
     solver::{adaptors, Solver},
-    utils::testing::save_stats_json,
     Metadata, Model, Rule,
 };
 use uniplate::{Biplate, Uniplate};
