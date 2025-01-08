@@ -44,6 +44,7 @@ jobs:
         os:
           - ubuntu-latest
           - macos-latest
+        which_tests: [quick,all]
         include:
           - os: ubuntu-latest
             release_suffix: linux
@@ -73,6 +74,10 @@ jobs:
           version: ${{ matrix.conjure_version }}
 
       - run: cargo test --workspace
+        if: matrix.which_tests == 'quick'
+
+      - run: cargo test --workspace -- --include-ignored
+        if: matrix.which_tests == 'all'
 
   examples:
     name: "Examples"

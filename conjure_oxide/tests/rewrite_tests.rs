@@ -691,6 +691,7 @@ fn rewrite_solve_xyz() {
 }
 
 #[test]
+#[ignore]
 fn rewrite_solve_xyz_parameterized() {
     println!("Rules: {:?}", get_rules());
 
