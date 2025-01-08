@@ -62,7 +62,12 @@ jobs:
           echo RUSTFLAGS=${RUSTFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
           echo RUSTDOCFLAGS=${RUSTDOCFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
         if: matrix.rust_release == 'nightly'
-        
+
+      - name: Print mac ulimit to debug issue 516
+        run: ulimit -a
+        if: matrix.os == 'macos-latest'
+
+
       - name: Print files and modification dates before test run to debug issue 516
         run: |
          brew install tree
