@@ -223,7 +223,8 @@ fn reduce_solve_xyz() {
     println!("Rules: {:?}", get_rules());
     let sum_constants = get_rule_by_name("partial_evaluator").unwrap();
     let unwrap_sum = get_rule_by_name("remove_unit_vector_sum").unwrap();
-    let lt_to_ineq = get_rule_by_name("lt_to_ineq").unwrap();
+    let lt_to_leq = get_rule_by_name("lt_to_leq").unwrap();
+    let leq_to_ineq = get_rule_by_name("x_leq_y_plus_k_to_ineq").unwrap();
     let introduce_sumleq = get_rule_by_name("introduce_sumleq").unwrap();
 
     // 2 + 3 - 1
@@ -300,7 +301,12 @@ fn reduce_solve_xyz() {
             Atom::Reference(Name::UserName(String::from("b"))),
         )),
     );
-    expr2 = lt_to_ineq
+    expr2 = lt_to_leq
+        .apply(&expr2, &Model::new_empty(Default::default()))
+        .unwrap()
+        .new_expression;
+
+    expr2 = leq_to_ineq
         .apply(&expr2, &Model::new_empty(Default::default()))
         .unwrap()
         .new_expression;
