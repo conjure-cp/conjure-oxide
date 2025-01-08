@@ -82,7 +82,7 @@ jobs:
       
       - name: Print files and modification dates after test run to debug issue 516
         run: tree -D .
-        if: matrix.os == 'macos-latest'
+        if: (success() || failure()) && matrix.os == 'macos-latest'
        
   examples:
     name: "Examples"
