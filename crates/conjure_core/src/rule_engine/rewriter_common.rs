@@ -9,7 +9,6 @@ use crate::{
     Model,
 };
 
-use clap::builder::Str;
 use itertools::Itertools;
 use thiserror::Error;
 use tracing::{info, trace};
