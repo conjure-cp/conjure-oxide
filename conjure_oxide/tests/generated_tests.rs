@@ -1,3 +1,5 @@
+#![allow(clippy::expect_used)]
+
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_core::Model;
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
@@ -15,8 +17,6 @@ use tracing_subscriber::{
 };
 
 use uniplate::Biplate;
-
-use tracing_appender::non_blocking::WorkerGuard;
 
 use std::path::Path;
 use std::sync::Arc;
@@ -99,7 +99,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
     // correctly
 
-    let (subscriber, _guards) = create_scoped_subscriber(path, essence_base);
+    let subscriber = create_scoped_subscriber(path, essence_base);
 
     // set the subscriber as default
     tracing::subscriber::with_default(subscriber, || {
@@ -392,12 +392,9 @@ fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
 pub fn create_scoped_subscriber(
     path: &str,
     test_name: &str,
-) -> (
-    impl tracing::Subscriber + Send + Sync,
-    Vec<tracing_appender::non_blocking::WorkerGuard>,
-) {
-    let (target1_layer, guard1) = create_file_layer_json(path, test_name);
-    let (target2_layer, guard2) = create_file_layer_human(path, test_name);
+) -> (impl tracing::Subscriber + Send + Sync) {
+    let target1_layer = create_file_layer_json(path, test_name);
+    let target2_layer = create_file_layer_human(path, test_name);
     let layered = target1_layer.and_then(target2_layer);
 
     let subscriber = Arc::new(tracing_subscriber::registry().with(layered))
@@ -405,19 +402,15 @@ pub fn create_scoped_subscriber(
     // setting this subscriber as the default
     let _default = tracing::subscriber::set_default(subscriber.clone());
 
-    (subscriber, vec![guard1, guard2])
+    subscriber
 }
 
-fn create_file_layer_json(
-    path: &str,
-    test_name: &str,
-) -> (impl Layer<Registry> + Send + Sync, WorkerGuard) {
+fn create_file_layer_json(path: &str, test_name: &str) -> impl Layer<Registry> + Send + Sync {
     let file = File::create(format!("{path}/{test_name}-generated-rule-trace.json"))
         .expect("Unable to create log file");
-    let (non_blocking, guard1) = tracing_appender::non_blocking(file);
 
     let layer1 = fmt::layer()
-        .with_writer(non_blocking)
+        .with_writer(file)
         .with_level(false)
         .with_target(false)
         .without_time()
@@ -425,27 +418,22 @@ fn create_file_layer_json(
             meta.target() == "rule_engine"
         }));
 
-    (layer1, guard1)
+    layer1
 }
 
-fn create_file_layer_human(
-    path: &str,
-    test_name: &str,
-) -> (impl Layer<Registry> + Send + Sync, WorkerGuard) {
+fn create_file_layer_human(path: &str, test_name: &str) -> (impl Layer<Registry> + Send + Sync) {
     let file = File::create(format!("{path}/{test_name}-generated-rule-trace-human.txt"))
         .expect("Unable to create log file");
 
-    let (non_blocking, guard2) = tracing_appender::non_blocking(file);
-
     let layer2 = fmt::layer()
-        .with_writer(non_blocking)
+        .with_writer(file)
         .with_level(false)
         .without_time()
         .with_target(false)
         .with_filter(EnvFilter::new("rule_engine_human=trace"))
         .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human"));
 
-    (layer2, guard2)
+    layer2
 }
 
 #[test]
