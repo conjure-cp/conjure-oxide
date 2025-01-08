@@ -62,7 +62,13 @@ jobs:
           echo RUSTFLAGS=${RUSTFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
           echo RUSTDOCFLAGS=${RUSTDOCFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
         if: matrix.rust_release == 'nightly'
-
+        
+      - name: Print files and modification dates before test run to debug issue 516
+        run: |
+         brew install tree
+         tree -D .
+        if: matrix.os == 'macos-latest'
+        
       - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
 
       - run: cargo build -vv --workspace
@@ -73,7 +79,11 @@ jobs:
           version: ${{ matrix.conjure_version }}
 
       - run: cargo test --workspace
-
+      
+      - name: Print files and modification dates after test run to debug issue 516
+        run: tree -D .
+        if: matrix.os == 'macos-latest'
+       
   examples:
     name: "Examples"
     timeout-minutes: 10
