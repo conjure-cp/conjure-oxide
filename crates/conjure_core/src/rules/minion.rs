@@ -566,8 +566,12 @@ fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let [Expr::Atomic(_, y), Expr::Atomic(_, Atom::Literal(k))] = sum_exprs.as_slice() else {
-        return Err(RuleNotApplicable);
+    let (y, k) = match sum_exprs.as_slice() {
+        [Expr::Atomic(_, y), Expr::Atomic(_, Atom::Literal(k))] => (y, k),
+        [Expr::Atomic(_, Atom::Literal(k)), Expr::Atomic(_, y)] => (y, k),
+        _ => {
+            return Err(RuleNotApplicable);
+        }
     };
 
     Ok(Reduction::pure(Expr::FlatIneq(
@@ -596,8 +600,12 @@ fn y_plus_k_geq_x_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let [Expr::Atomic(_, y), Expr::Atomic(_, Atom::Literal(k))] = sum_exprs.as_slice() else {
-        return Err(RuleNotApplicable);
+    let (y, k) = match sum_exprs.as_slice() {
+        [Expr::Atomic(_, y), Expr::Atomic(_, Atom::Literal(k))] => (y, k),
+        [Expr::Atomic(_, Atom::Literal(k)), Expr::Atomic(_, y)] => (y, k),
+        _ => {
+            return Err(RuleNotApplicable);
+        }
     };
 
     Ok(Reduction::pure(Expr::FlatIneq(
