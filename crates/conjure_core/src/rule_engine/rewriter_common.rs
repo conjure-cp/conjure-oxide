@@ -9,6 +9,7 @@ use crate::{
     Model,
 };
 
+use clap::builder::Str;
 use itertools::Itertools;
 use thiserror::Error;
 use tracing::{info, trace};
@@ -40,7 +41,9 @@ pub fn log_rule_application(
     );
 
     // empty if no top level constraints
-    let top_level_str = if !red.new_top.is_empty() {
+    let top_level_str = if red.new_top.is_empty() {
+        String::new()
+    } else {
         let mut exprs: Vec<String> = vec![];
 
         for expr in &red.new_top {
@@ -49,52 +52,26 @@ pub fn log_rule_application(
 
         let exprs = exprs.iter().join("\n");
 
-        format!("with new top level expressions:\n{}\n", exprs)
-    } else {
-        String::new()
+        format!("new constraints:\n{}\n", exprs)
     };
 
-    let mut symbol_changes: Vec<String> = vec![];
+    // empty if no new variables
+    // TODO: consider printing modified and removed declarations too, though removing a declaration in a rule is less likely.
+    let new_variables_str = {
+        let mut vars: Vec<String> = vec![];
 
-    // show symbol changes in diff-like format
-    //
-    // + some added decl
-    // - some removed decl
-    //
-    // [old] x: someDomain
-    // [new] x: someNewDomain
-
-    // TODO: when we support them, print removed declarations with a - in-front of them.
-
-    for var_name in red.added_symbols(&initial_model.variables) {
-        #[allow(clippy::unwrap_used)]
-        symbol_changes.push(format!(
-            "  + {}",
-            pretty_variable_declaration(&red.symbols, &var_name).unwrap()
-        ));
-    }
-
-    for (var_name, _, _) in red.changed_symbols(&initial_model.variables) {
-        #[allow(clippy::unwrap_used)]
-        symbol_changes.push(format!(
-            "  [old] {}",
-            pretty_variable_declaration(&initial_model.variables, &var_name).unwrap()
-        ));
-
-        #[allow(clippy::unwrap_used)]
-        symbol_changes.push(format!(
-            "  [new] {}",
-            pretty_variable_declaration(&red.symbols, &var_name).unwrap()
-        ));
-    }
-
-    let symbol_changes_str = if symbol_changes.is_empty() {
-        String::new()
-    } else {
-        format!(
-            "with changed declarations:\n{}\n",
-            symbol_changes.join("\n")
-        )
+        for var_name in red.added_symbols(&initial_model.variables) {
+            #[allow(clippy::unwrap_used)]
+            vars.push(format!(
+                "  {}",
+                pretty_variable_declaration(&red.symbols, &var_name).unwrap()
+            ));
+        }
+        if vars.is_empty() {
+            String::new()
+        } else {
+            format!("new variables:\n{}", vars.join("\n"))
+        }
     };
 
     trace!(
@@ -104,8 +81,8 @@ pub fn log_rule_application(
         rule.name,
         rule.rule_sets,
         red.new_expression,
-        top_level_str,
-        symbol_changes_str
+        new_variables_str,
+        top_level_str
     );
 }
 

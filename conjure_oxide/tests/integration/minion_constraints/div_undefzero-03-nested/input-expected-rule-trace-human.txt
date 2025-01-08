@@ -61,21 +61,19 @@ And([(SafeDiv(x, SafeDiv(y, z)) = 10), (SafeDiv(y, z) != 0), (z != 0)])
 SafeDiv(x, SafeDiv(y, z)), 
    ~~> flatten_binop ([("Minion", 4400)]) 
 SafeDiv(x, __0) 
-with new top level expressions:
+new variables:
+  __0: int(0..5)
+new constraints:
   __0 =aux SafeDiv(y, z)
-
-with changed declarations:
-  + __0: int(0..5)
 --
 
 (SafeDiv(y, z) != 0), 
    ~~> flatten_binop ([("Minion", 4400)]) 
 (__1 != 0) 
-with new top level expressions:
+new variables:
+  __1: int(0..5)
+new constraints:
   __1 =aux SafeDiv(y, z)
-
-with changed declarations:
-  + __1: int(0..5)
 --
 
 (SafeDiv(x, __0) = 10), 

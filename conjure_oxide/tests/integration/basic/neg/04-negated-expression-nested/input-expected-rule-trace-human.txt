@@ -73,21 +73,19 @@ And([(x = SafeDiv(-(SafeDiv(y, z)), z)), (z != 0), (z != 0)])
 SafeDiv(-(SafeDiv(y, z)), z), 
    ~~> flatten_binop ([("Minion", 4400)]) 
 SafeDiv(__0, z) 
-with new top level expressions:
+new variables:
+  __0: int(-1..1)
+new constraints:
   __0 =aux -(SafeDiv(y, z))
-
-with changed declarations:
-  + __0: int(-1..1)
 --
 
 __0 =aux -(SafeDiv(y, z)), 
    ~~> flatten_minuseq ([("Minion", 4400)]) 
 MinusEq(__0,__1) 
-with new top level expressions:
+new variables:
+  __1: int(-1..1)
+new constraints:
   __1 =aux SafeDiv(y, z)
-
-with changed declarations:
-  + __1: int(-1..1)
 --
 
 (x = SafeDiv(__0, z)), 
