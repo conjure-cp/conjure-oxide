@@ -5,8 +5,20 @@ Product([x, y, z])
 --
 
 (Product([x, y, z]) < 15), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(Product([x, y, z]) <= Sum([15, -1])) 
+
+--
+
+Sum([15, -1]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+14 
+
+--
+
+(Product([x, y, z]) <= 14), 
    ~~> flatten_binop ([("Minion", 4200)]) 
-(__0 < 15) 
+(__0 <= 14) 
 new variables:
   __0: int(8..64)
 new constraints:
@@ -22,9 +34,9 @@ new constraints:
   FlatProductEq(y,x,__1)
 --
 
-(__0 < 15), 
-   ~~> lt_to_ineq ([("Minion", 4100)]) 
-Ineq(__0, 15, -1) 
+(__0 <= 14), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(__0, 14, 0) 
 
 --
 
