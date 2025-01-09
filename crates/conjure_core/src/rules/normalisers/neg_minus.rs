@@ -5,6 +5,7 @@
 //! 1. --x ~> x  (eliminate_double_negation)
 //! 2. -( x + y ) ~> -x + -y (distribute_negation_over_addition)
 //! 3. x - b ~>  x + -b (minus_to_sum)
+//! 4. -(x*y) ~> -1 * x * y (simplify_negation_of_product
 //! ```
 //!
 //! ## Rationale for `x - y ~> x + -y`
@@ -33,6 +34,7 @@ use conjure_core::Model;
 use uniplate::{Biplate, Uniplate as _};
 use Expr::*;
 
+use crate::ast::{Atom, Literal as Lit};
 use crate::metadata::Metadata;
 
 /// Eliminates double negation
@@ -60,7 +62,6 @@ fn distribute_negation_over_sum(expr: &Expr, _: &Model) -> ApplicationResult {
         _ => Err(RuleNotApplicable),
     }?;
 
-    // writing this generically so I can also use this for * later down the line
     let mut child_vecs = <_ as Biplate<Vec<Expr>>>::children_bi(&inner_expr);
 
     if child_vecs.is_empty() {
@@ -72,6 +73,26 @@ fn distribute_negation_over_sum(expr: &Expr, _: &Model) -> ApplicationResult {
     }
 
     Ok(Reduction::pure(inner_expr.with_children_bi(child_vecs)))
+}
+
+/// Simplifies the negation of a product
+///
+/// ```text
+/// -(x * y) ~> -1 * x * y
+/// ```
+#[register_rule(("Base", 8400))]
+fn simplify_negation_of_product(expr: &Expr, _: &Model) -> ApplicationResult {
+    let Expr::Neg(_, expr1) = expr.clone() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::Product(_, mut factors) = *expr1 else {
+        return Err(RuleNotApplicable);
+    };
+
+    factors.push(Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(-1))));
+
+    Ok(Reduction::pure(Expr::Product(Metadata::new(), factors)))
 }
 
 /// Converts a minus to a sum
