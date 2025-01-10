@@ -415,7 +415,7 @@ fn introduce_abseq(expr: &Expr, _: &Model) -> ApplicationResult {
             if let Some(a_atom) = a_atom {
                 Ok((a_atom.clone(), *b))
             } else if let Some(b_atom) = b_atom {
-                Ok((b_atom.clone(), *b))
+                Ok((b_atom.clone(), *a))
             } else {
                 Err(RuleNotApplicable)
             }
