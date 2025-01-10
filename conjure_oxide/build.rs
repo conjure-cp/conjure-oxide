@@ -22,7 +22,7 @@ fn main() -> io::Result<()> {
                 let stems: Vec<String> = read_dir(subdir.path())?
                     .filter_map(Result::ok)
                     .filter(|entry| {
-                        entry.path().extension().map_or(false, |ext| {
+                        entry.path().extension().is_some_and(|ext| {
                             ext == "essence" || ext == "eprime" || ext == "disabled"
                         })
                     })
@@ -38,7 +38,7 @@ fn main() -> io::Result<()> {
                 let exts: Vec<String> = read_dir(subdir.path())?
                     .filter_map(Result::ok)
                     .filter(|entry| {
-                        entry.path().extension().map_or(false, |ext| {
+                        entry.path().extension().is_some_and(|ext| {
                             ext == "essence" || ext == "eprime" || ext == "disabled"
                         })
                     })
@@ -61,7 +61,7 @@ fn main() -> io::Result<()> {
                         entry
                             .path()
                             .extension()
-                            .map_or(false, |ext| ext == "essence" || ext == "eprime")
+                            .is_some_and(|ext| ext == "essence" || ext == "eprime")
                     })
                     .filter_map(|entry| {
                         entry
@@ -78,7 +78,7 @@ fn main() -> io::Result<()> {
                         entry
                             .path()
                             .extension()
-                            .map_or(false, |ext| ext == "essence" || ext == "eprime")
+                            .is_some_and(|ext| ext == "essence" || ext == "eprime")
                     })
                     .filter_map(|entry| {
                         entry
