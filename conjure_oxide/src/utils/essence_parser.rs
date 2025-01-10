@@ -13,8 +13,7 @@ use crate::utils::conjure::EssenceParseError;
 use conjure_core::context::Context;
 use conjure_core::metadata::Metadata;
 use conjure_core::Model;
-use std::collections::BTreeSet;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 pub fn parse_essence_file_native(
     path: &str,
@@ -72,7 +71,7 @@ fn get_tree(path: &str, filename: &str, extension: &str) -> (Tree, String) {
 fn parse_find_statement(
     find_statement_list: Node,
     source_code: &str,
-) -> HashMap<Name, DecisionVariable> {
+) -> BTreeMap<Name, DecisionVariable> {
     let mut symbol_table = SymbolTable::new();
 
     for find_statement in named_children(&find_statement_list) {

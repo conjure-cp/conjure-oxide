@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::process::exit;
 
 use conjure_core::rules::eval_constant;
@@ -320,7 +320,7 @@ fn reduce_solve_xyz() {
         )
     );
 
-    let mut model = Model::new(HashMap::new(), vec![expr1, expr2], Default::default());
+    let mut model = Model::new(BTreeMap::new(), vec![expr1, expr2], Default::default());
     model.variables.insert(
         Name::UserName(String::from("a")),
         DecisionVariable {
@@ -656,7 +656,7 @@ fn rewrite_solve_xyz() {
 
     // Apply rewrite function to the nested expression
     let rewritten_expr = rewrite_model(
-        &Model::new(HashMap::new(), vec![nested_expr], Default::default()),
+        &Model::new(BTreeMap::new(), vec![nested_expr], Default::default()),
         &rule_sets,
     )
     .unwrap()
@@ -667,7 +667,7 @@ fn rewrite_solve_xyz() {
     assert!(rewritten_expr.iter().all(is_simple));
 
     // Create model with variables and constraints
-    let mut model = Model::new(HashMap::new(), rewritten_expr, Default::default());
+    let mut model = Model::new(BTreeMap::new(), rewritten_expr, Default::default());
 
     // Insert variables and domains
     model.variables.insert(
