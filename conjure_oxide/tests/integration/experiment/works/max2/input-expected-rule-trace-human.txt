@@ -1,3 +1,16 @@
+Model before rewriting:
+
+find a: int(1..4)
+find b: int(1..4)
+find x: int(1..4)
+
+such that
+
+(Max([a, b]) >= 2),
+(x = Sum([Max([a, b]), 1]))
+
+--
+
 Max([a, b]), 
    ~~> max_to_var ([("Base", 6000)]) 
 __0 
@@ -67,4 +80,23 @@ Ineq(a, __1, 0)
 Ineq(b, __1, 0) 
 
 --
+
+Final model:
+
+find a: int(1..4)
+find __0: int(1..4)
+find __1: int(1..4)
+find b: int(1..4)
+find x: int(1..4)
+
+such that
+
+Ineq(2, __0, 0),
+And([SumLeq([__1, 1], x), Ineq(x, __1, 1)]),
+Ineq(a, __0, 0),
+Ineq(b, __0, 0),
+Or([(__0 = a), (__0 = b)]),
+Ineq(a, __1, 0),
+Ineq(b, __1, 0),
+Or([(__1 = a), (__1 = b)])
 

@@ -1,3 +1,14 @@
+Model before rewriting:
+
+find a: int(1..2)
+find b: int(4..7)
+
+such that
+
+(Min([a, b]) >= 3)
+
+--
+
 Min([a, b]), 
    ~~> min_to_var ([("Base", 6000)]) 
 __0 
@@ -26,4 +37,17 @@ Ineq(__0, a, 0)
 Ineq(__0, b, 0) 
 
 --
+
+Final model:
+
+find __0: int(1..2)
+find a: int(1..2)
+find b: int(4..7)
+
+such that
+
+Ineq(3, __0, 0),
+Ineq(__0, a, 0),
+Ineq(__0, b, 0),
+Or([(__0 = a), (__0 = b)])
 

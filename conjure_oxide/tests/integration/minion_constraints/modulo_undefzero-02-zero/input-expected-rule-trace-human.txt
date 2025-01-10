@@ -1,3 +1,15 @@
+Model before rewriting:
+
+find y: int(0..2)
+find z: int(1..2)
+find x: int(1..5)
+
+such that
+
+(x % y = z)
+
+--
+
 x % y, 
    ~~> mod_to_bubble ([("Bubble", 6000)]) 
 {SafeMod(x,y) @ (y != 0)} 
@@ -27,4 +39,14 @@ And([(y != 0)]),
 ModEq(x, y, z) 
 
 --
+
+Final model:
+
+find y: int(0..2)
+find z: int(1..2)
+find x: int(1..5)
+
+such that
+
+And([ModEq(x, y, z), (y != 0)])
 

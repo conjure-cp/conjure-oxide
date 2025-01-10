@@ -1,3 +1,17 @@
+Model before rewriting:
+
+find x: int(1..3)
+find y: int(-1..1)
+find b: int(-1..1)
+find a: int(-1..1)
+find z: int(-1..1)
+
+such that
+
+(x = Sum([Sum([-(y), -((Sum([z, 1]) - a))]), b]))
+
+--
+
 Sum([Sum([-(y), -((Sum([z, 1]) - a))]), b]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
 Sum([-(y), -((Sum([z, 1]) - a)), b]) 
@@ -80,4 +94,20 @@ SumLeq([__0, __1, -1, a, b], x)
 SumGeq([__0, __1, -1, a, b], x) 
 
 --
+
+Final model:
+
+find x: int(1..3)
+find y: int(-1..1)
+find b: int(-1..1)
+find a: int(-1..1)
+find z: int(-1..1)
+find __1: int(-1..1)
+find __0: int(-1..1)
+
+such that
+
+And([SumLeq([__0, __1, -1, a, b], x), SumGeq([__0, __1, -1, a, b], x)]),
+MinusEq(__0,y),
+MinusEq(__1,z)
 
