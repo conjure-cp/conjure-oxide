@@ -405,6 +405,36 @@ fn introduce_modeq(expr: &Expr, _: &Model) -> ApplicationResult {
     )))
 }
 
+#[register_rule(("Minion", 4400))]
+fn introduce_abseq(expr: &Expr, _: &Model) -> ApplicationResult {
+    let (x, abs_y): (Atom, Expr) = match expr.clone() {
+        Expr::Eq(_, a, b) => {
+            let a_atom: Option<&Atom> = (&*a).try_into().ok();
+            let b_atom: Option<&Atom> = (&*b).try_into().ok();
+
+            if let Some(a_atom) = a_atom {
+                Ok((a_atom.clone(), *b))
+            } else if let Some(b_atom) = b_atom {
+                Ok((b_atom.clone(), *a))
+            } else {
+                Err(RuleNotApplicable)
+            }
+        }
+
+        Expr::AuxDeclaration(_, a, b) => Ok((a.into(), *b)),
+
+        _ => Err(RuleNotApplicable),
+    }?;
+
+    let Expr::Abs(_, y) = abs_y else {
+        return Err(RuleNotApplicable);
+    };
+
+    let y: Atom = (*y).try_into().or(Err(RuleNotApplicable))?;
+
+    Ok(Reduction::pure(Expr::FlatAbsEq(Metadata::new(), x, y)))
+}
+
 /// Introduces a Minion `MinusEq` constraint from `x = -y`, where x and y are atoms.
 ///
 /// ```text
@@ -498,6 +528,31 @@ fn flatten_binop(expr: &Expr, model: &Model) -> ApplicationResult {
     }
 
     if num_changed == 0 {
+        return Err(RuleNotApplicable);
+    }
+
+    let expr = expr.with_children(children);
+    Ok(Reduction::new(expr, new_tops, model.variables))
+}
+
+#[register_rule(("Minion", 4200))]
+fn flatten_unop(expr: &Expr, model: &Model) -> ApplicationResult {
+    if !matches!(expr, Expr::Abs(_, _)) {
+        return Err(RuleNotApplicable);
+    }
+
+    let mut children = expr.children();
+    debug_assert_eq!(children.len(), 1);
+    let child = &mut children[0];
+
+    let mut model = model.clone();
+    let mut new_tops: Vec<Expr> = vec![];
+
+    if let Some(aux_var_info) = to_aux_var(child, &model) {
+        model = aux_var_info.model();
+        new_tops.push(aux_var_info.top_level_expr());
+        *child = aux_var_info.as_expr();
+    } else {
         return Err(RuleNotApplicable);
     }
 

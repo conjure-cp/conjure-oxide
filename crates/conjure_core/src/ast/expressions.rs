@@ -35,6 +35,10 @@ pub enum Expression {
 
     Atomic(Metadata, Atom),
 
+    /// `|x|` - absolute value of `x`
+    #[compatible(JsonInput)]
+    Abs(Metadata, Box<Expression>),
+
     #[compatible(JsonInput)]
     Sum(Metadata, Vec<Expression>),
 
@@ -100,6 +104,16 @@ pub enum Expression {
     /// This is a parser-level construct, and is immediately normalised to `Sum([a,-b])`.
     #[compatible(JsonInput)]
     Minus(Metadata, Box<Expression>, Box<Expression>),
+
+    /// Ensures that x=|y| i.e. x is the absolute value of y.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#abs)
+    #[compatible(Minion)]
+    FlatAbsEq(Metadata, Atom, Atom),
 
     /// Ensures that sum(vec) >= x.
     ///
@@ -288,12 +302,28 @@ impl Expression {
                 expr_vec_to_domain_i32(exprs, |x, y| Some(if x > y { x } else { y }), vars)
             }
             Expression::UnsafeDiv(_, a, b) => a.domain_of(vars)?.apply_i32(
-                |x, y| if y != 0 { Some(x / y) } else { None },
+                // rust integer division is truncating; however, we want to always round down,
+                // including for negative numbers.
+                |x, y| {
+                    if y != 0 {
+                        Some((x as f32 / y as f32).floor() as i32)
+                    } else {
+                        None
+                    }
+                },
                 &b.domain_of(vars)?,
             ),
             Expression::SafeDiv(_, a, b) => {
+                // rust integer division is truncating; however, we want to always round down
+                // including for negative numbers.
                 let domain = a.domain_of(vars)?.apply_i32(
-                    |x, y| if y != 0 { Some(x / y) } else { None },
+                    |x, y| {
+                        if y != 0 {
+                            Some((x as f32 / y as f32).floor() as i32)
+                        } else {
+                            None
+                        }
+                    },
                     &b.domain_of(vars)?,
                 );
 
@@ -340,6 +370,7 @@ impl Expression {
             Expression::Leq(_, _, _) => Some(Domain::BoolDomain),
             Expression::Gt(_, _, _) => Some(Domain::BoolDomain),
             Expression::Lt(_, _, _) => Some(Domain::BoolDomain),
+            Expression::FlatAbsEq(_, _, _) => Some(Domain::BoolDomain),
             Expression::FlatSumGeq(_, _, _) => Some(Domain::BoolDomain),
             Expression::FlatSumLeq(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionDivEqUndefZero(_, _, _, _) => Some(Domain::BoolDomain),
@@ -370,8 +401,9 @@ impl Expression {
             Expression::FlatProductEq(_, _, _, _) => Some(Domain::BoolDomain),
             Expression::FlatWeightedSumLeq(_, _, _, _) => Some(Domain::BoolDomain),
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(Domain::BoolDomain),
-            // #[allow(unreachable_patterns)]
-            // _ => bug!("Cannot calculate domain of {:?}", self),
+            Expression::Abs(_, a) => a
+                .domain_of(vars)?
+                .apply_i32(|a, _| Some(a.abs()), &a.domain_of(vars)?),
         };
         match ret {
             // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
@@ -416,6 +448,7 @@ impl Expression {
             Expression::Atomic(_, Atom::Literal(Literal::Int(_))) => Some(ReturnType::Int),
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(ReturnType::Bool),
             Expression::Atomic(_, Atom::Reference(_)) => None,
+            Expression::Abs(_, _) => Some(ReturnType::Int),
             Expression::Sum(_, _) => Some(ReturnType::Int),
             Expression::Product(_, _) => Some(ReturnType::Int),
             Expression::Min(_, _) => Some(ReturnType::Int),
@@ -445,6 +478,7 @@ impl Expression {
             Expression::MinionModuloEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
             Expression::Neg(_, _) => Some(ReturnType::Int),
             Expression::Minus(_, _, _) => Some(ReturnType::Int),
+            Expression::FlatAbsEq(_, _, _) => Some(ReturnType::Bool),
             Expression::FlatMinusEq(_, _, _) => Some(ReturnType::Bool),
             Expression::FlatProductEq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::FlatWeightedSumLeq(_, _, _, _) => Some(ReturnType::Bool),
@@ -497,6 +531,7 @@ impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
             Expression::Atomic(_, atom) => atom.fmt(f),
+            Expression::Abs(_, a) => write!(f, "|{}|", a),
             Expression::Sum(_, expressions) => {
                 write!(f, "Sum({})", pretty_vec(expressions))
             }
@@ -600,6 +635,9 @@ impl Display for Expression {
             }
             Expression::Minus(_, a, b) => {
                 write!(f, "({} - {})", a.clone(), b.clone())
+            }
+            Expression::FlatAbsEq(_, a, b) => {
+                write!(f, "AbsEq({},{})", a.clone(), b.clone())
             }
             Expression::FlatMinusEq(_, a, b) => {
                 write!(f, "MinusEq({},{})", a.clone(), b.clone())
