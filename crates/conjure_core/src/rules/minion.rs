@@ -194,6 +194,11 @@ fn introduce_producteq(expr: &Expr, model: &Model) -> ApplicationResult {
 /// 3. Weighted atom: `c*a ~> (c,a)`
 /// 4. Weighted non-atom: `c*e ~> (c,__0)` with new constraint` __0 =aux e`
 /// 5. Weighted product: `c*e*f ~> (c,__0)` with new constraint `__0 =aux (e*f)`
+/// 6. Negated atom: `-x ~> (-1,x)`
+/// 7. Negated expression: `-e ~> (-1,__0)` with new constraint `__0 = e`
+///
+/// Cases 6 and 7 could potentially be a normalising rule `-e ~> -1*e`. However, I think that we
+/// should only turn negations into a product when they are inside a sum, not all the time.
 #[register_rule(("Minion", 4500))]
 fn introduce_weighted_sumleq_sumgeq(expr: &Expr, model: &Model) -> ApplicationResult {
     // assume sum on lhs of leq/geq, as in introduce_sumleq
@@ -266,6 +271,24 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, model: &Model) -> ApplicationRe
 
                     _ => unreachable!(),
                 }
+            }
+
+            // negated terms: `-e ~> -1*e`
+            //
+            // flatten e if non-atomic
+            Expr::Neg(_, e) => {
+                // needs flattening
+                let v: Atom = if let Some(aux_var_info) = to_aux_var(&e, &model) {
+                    model = aux_var_info.model();
+                    new_top_exprs.push(aux_var_info.top_level_expr());
+                    aux_var_info.as_atom()
+                } else {
+                    // if we can't flatten it, it must be an atom!
+                    #[allow(clippy::unwrap_used)]
+                    e.try_into().unwrap()
+                };
+
+                (Lit::Int(-1), v)
             }
 
             // flatten non-flat terms without coefficients: e1 ~> (1,__0)
@@ -519,6 +542,43 @@ fn flatten_binop(expr: &Expr, model: &Model) -> ApplicationResult {
     let mut new_tops: Vec<Expr> = vec![];
 
     for child in children.iter_mut() {
+        // do not flatten sums in <= and >=
+        // special case to avoid a loop.
+        //
+        //  ```
+        //  sum([|a|, |b|]) = c
+        //
+        //    ~~> sum_eq_to_inequalities
+        //
+        //  (sum([|a|, |b|]) <= c /\ sum([|a|, |b|]) <= c)
+        //
+        //  --
+        //
+        //  sum([|a|, |b|]) <= c
+        //
+        //    ~~> flatten_binop
+        //
+        //   __1 <= c
+        //
+        //   with new top level constraints:
+        //
+        //   __1 =aux sum([|a| , |b|])
+        //
+        //   --
+        //
+        //  sum([|a|, |b|]) =aux __1
+        //
+        //    ~~> sum_eq_to_inequalities
+        //
+        //  (sum([|a|, |b|]) <= __1 /\ sum([|a|, |b|]) <= __1)
+        //   ```
+        //   and so on
+        if matches!(expr, Expr::Leq(_, _, _) | Expr::Geq(_, _, _))
+            && matches!(child, Expr::Sum(_, _))
+        {
+            continue;
+        }
+
         if let Some(aux_var_info) = to_aux_var(child, &model) {
             model = aux_var_info.model();
             new_tops.push(aux_var_info.top_level_expr());
@@ -934,7 +994,18 @@ fn not_constraint_to_reify(expr: &Expr, _: &Model) -> ApplicationResult {
 ///
 /// # Rationale
 /// Minion only has `SumLeq` and `SumGeq` constraints.
-#[register_rule(("Minion", 4100))]
+///
+/// # Priority
+///
+/// This should run before any flattening rules.
+///
+/// This is because of weighted sums. introduce_weighted_sumleq_sumgeq only works on inequalities.
+/// Expressions in the form `<weighted sum> = t` should be turned into inequalities before they can
+/// flattened, otherwise, the weighted sum terms will be flattened away, turning the sum into a
+/// normal sum.
+///
+/// For more details, see the docstring for introduce_weighted_sumleq_sumgeq.
+#[register_rule(("Minion", 4500))]
 fn sum_eq_to_inequalities(expr: &Expr, _: &Model) -> ApplicationResult {
     //
     let (sum, e1): (Box<Expr>, Box<Expr>) = match expr.clone() {
