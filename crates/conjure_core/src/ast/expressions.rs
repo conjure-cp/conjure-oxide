@@ -302,12 +302,28 @@ impl Expression {
                 expr_vec_to_domain_i32(exprs, |x, y| Some(if x > y { x } else { y }), vars)
             }
             Expression::UnsafeDiv(_, a, b) => a.domain_of(vars)?.apply_i32(
-                |x, y| if y != 0 { Some(x / y) } else { None },
+                // rust integer division is truncating; however, we want to always round down,
+                // including for negative numbers.
+                |x, y| {
+                    if y != 0 {
+                        Some((x as f32 / y as f32).floor() as i32)
+                    } else {
+                        None
+                    }
+                },
                 &b.domain_of(vars)?,
             ),
             Expression::SafeDiv(_, a, b) => {
+                // rust integer division is truncating; however, we want to always round down
+                // including for negative numbers.
                 let domain = a.domain_of(vars)?.apply_i32(
-                    |x, y| if y != 0 { Some(x / y) } else { None },
+                    |x, y| {
+                        if y != 0 {
+                            Some((x as f32 / y as f32).floor() as i32)
+                        } else {
+                            None
+                        }
+                    },
                     &b.domain_of(vars)?,
                 );
 
