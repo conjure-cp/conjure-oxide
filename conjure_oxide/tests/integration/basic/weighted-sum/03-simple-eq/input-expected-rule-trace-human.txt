@@ -1,3 +1,14 @@
+Model before rewriting:
+
+find y: int(2..4)
+find x: int(2..4)
+
+such that
+
+(Sum([Product([2, x]), Product([3, y])]) = 12)
+
+--
+
 Sum([Product([2, x]), Product([3, y])]), 
    ~~> flatten_vecop ([("Minion", 4200)]) 
 Sum([__0, __1]) 
@@ -38,4 +49,17 @@ SumLeq([__0, __1], 12)
 SumGeq([__0, __1], 12) 
 
 --
+
+Final model:
+
+find __0: int(4..8)
+find y: int(2..4)
+find x: int(2..4)
+find __1: int(6..12)
+
+such that
+
+And([SumLeq([__0, __1], 12), SumGeq([__0, __1], 12)]),
+FlatProductEq(x,2,__0),
+FlatProductEq(y,3,__1)
 

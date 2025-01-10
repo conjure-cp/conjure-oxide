@@ -1,3 +1,15 @@
+Model before rewriting:
+
+find y: int(2..5)
+find x: int(2..5)
+find z: int(2..5)
+
+such that
+
+(Sum([Sum([Sum([Sum([Product([5, x]), Product([Product([Product([y, 3]), 1]), 3])]), -(Product([3, x]))]), Product([-(1), y])]), Product([y, -(5)])]) < 11)
+
+--
+
 -(1), 
    ~~> apply_eval_constant ([("Constant", 9001)]) 
 -1 
@@ -75,4 +87,14 @@ Product([-3, x])
 FlatWeightedSumLeq([5, 9, -3, -1, -5],[x, y, x, y, y],10) 
 
 --
+
+Final model:
+
+find y: int(2..5)
+find x: int(2..5)
+find z: int(2..5)
+
+such that
+
+FlatWeightedSumLeq([5, 9, -3, -1, -5],[x, y, x, y, y],10)
 

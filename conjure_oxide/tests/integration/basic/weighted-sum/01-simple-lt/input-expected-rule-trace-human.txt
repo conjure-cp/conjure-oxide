@@ -1,3 +1,15 @@
+Model before rewriting:
+
+find x: int(2..4)
+find z: int(2..4)
+find y: int(2..4)
+
+such that
+
+(Sum([Sum([Product([2, x]), Product([3, y])]), z]) < 14)
+
+--
+
 Sum([Sum([Product([2, x]), Product([3, y])]), z]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
 Sum([Product([2, x]), Product([3, y]), z]) 
@@ -21,4 +33,14 @@ Sum([14, -1]),
 FlatWeightedSumLeq([2, 3, 1],[x, y, z],13) 
 
 --
+
+Final model:
+
+find y: int(2..4)
+find x: int(2..4)
+find z: int(2..4)
+
+such that
+
+FlatWeightedSumLeq([2, 3, 1],[x, y, z],13)
 

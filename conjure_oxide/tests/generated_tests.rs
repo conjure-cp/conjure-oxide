@@ -177,7 +177,7 @@ fn integration_test_inner(
     // Stage 1: Read the essence file and check that the model is parsed correctly
     let model = parse_essence_file(path, essence_base, extension, context.clone())?;
     if verbose {
-        println!("Parsed model: {:#?}", model)
+        println!("Parsed model: {}", model)
     }
 
     context.as_ref().write().unwrap().file_name =
@@ -186,7 +186,7 @@ fn integration_test_inner(
     save_model_json(&model, path, essence_base, "parse", accept)?;
     let expected_model = read_model_json(path, essence_base, "expected", "parse")?;
     if verbose {
-        println!("Expected model: {:#?}", expected_model)
+        println!("Expected model: {}", expected_model)
     }
 
     assert_eq!(model, expected_model);
@@ -202,10 +202,21 @@ fn integration_test_inner(
     // } else {
     //     rewrite_model(&model, &rule_sets)?
     // };
+
+    tracing::trace!(
+        target: "rule_engine_human",
+        "Model before rewriting:\n\n{}\n--\n",
+        model
+    );
     let model = rewrite_naive(&model, &rule_sets, false)?;
 
+    tracing::trace!(
+        target: "rule_engine_human",
+        "Final model:\n\n{}",
+        model
+    );
     if verbose {
-        println!("Rewritten model: {:#?}", model)
+        println!("Rewritten model: {}", model)
     }
 
     save_model_json(&model, path, essence_base, "rewrite", accept)?;
@@ -223,7 +234,7 @@ fn integration_test_inner(
 
     let expected_model = read_model_json(path, essence_base, "expected", "rewrite")?;
     if verbose {
-        println!("Expected model: {:#?}", expected_model)
+        println!("Expected model: {}", expected_model)
     }
 
     assert_eq!(model, expected_model);
