@@ -28,6 +28,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
     match expr {
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
         Expr::Atomic(_, Atom::Reference(_c)) => None,
+        Expr::Abs(_, e) => un_op::<i32, i32>(|a| a.abs(), e).map(Lit::Int),
         Expr::Eq(_, a, b) => bin_op::<i32, bool>(|a, b| a == b, a, b)
             .or_else(|| bin_op::<bool, bool>(|a, b| a == b, a, b))
             .map(Lit::Bool),
@@ -205,6 +206,12 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             let sum: i32 = izip!(cs, vs).fold(0, |acc, (c, v)| acc + (c * v));
 
             Some(Lit::Bool(sum >= total))
+        }
+        Expr::FlatAbsEq(_, x, y) => {
+            let x: i32 = x.try_into().ok()?;
+            let y: i32 = y.try_into().ok()?;
+
+            Some(Lit::Bool(x == y.abs()))
         }
     }
 }

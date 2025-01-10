@@ -257,6 +257,10 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
             "MkOpNegate",
             Box::new(Expression::Neg) as Box<dyn Fn(_, _) -> _>,
         ),
+        (
+            "MkOpTwoBars",
+            Box::new(Expression::Abs) as Box<dyn Fn(_, _) -> _>,
+        ),
     ]
     .into_iter()
     .collect();

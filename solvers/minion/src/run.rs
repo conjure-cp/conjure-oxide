@@ -582,7 +582,11 @@ unsafe fn constraint_add_args(
         }
         //Constraint::WNotInRange(_, _) => todo!(),
         //Constraint::WNotInset(_, _) => todo!(),
-        //Constraint::Abs(_, _) => todo!(),
+        Constraint::Abs(a, b) => {
+            read_var(i, r_constr, a)?;
+            read_var(i, r_constr, b)?;
+            Ok(())
+        }
         Constraint::DisEq(a, b) => {
             read_var(i, r_constr, a)?;
             read_var(i, r_constr, b)?;

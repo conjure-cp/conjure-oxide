@@ -235,6 +235,9 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
                 parse_atom(total)?,
             ))
         }
+        conjure_ast::Expression::FlatAbsEq(_metadata, x, y) => {
+            Ok(minion_ast::Constraint::Abs(parse_atom(x)?, parse_atom(y)?))
+        }
         x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
     }
 }
