@@ -17,6 +17,10 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
     match expr.clone() {
         Bubble(_, _, _) => Err(RuleNotApplicable),
         Atomic(_, _) => Err(RuleNotApplicable),
+        Abs(m, e) => match *e {
+            Neg(_, inner) => Ok(Reduction::pure(Abs(m, inner))),
+            _ => Err(RuleNotApplicable),
+        },
         Sum(m, vec) => {
             let mut acc = 0;
             let mut n_consts = 0;
@@ -222,6 +226,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
 
         // As these are in a low level solver form, I'm assuming that these have already been
         // simplified and partially evaluated.
+        FlatAbsEq(_, _, _) => Err(RuleNotApplicable),
         FlatIneq(_, _, _, _) => Err(RuleNotApplicable),
         FlatMinusEq(_, _, _) => Err(RuleNotApplicable),
         FlatProductEq(_, _, _, _) => Err(RuleNotApplicable),
