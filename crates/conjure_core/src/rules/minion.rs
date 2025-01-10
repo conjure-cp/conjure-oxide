@@ -2,11 +2,8 @@
 /*        Rules for translating to Minion-supported constraints         */
 /************************************************************************/
 
-use std::borrow::Borrow as _;
-
 use crate::ast::{Atom, DecisionVariable, Domain, Expression as Expr, Literal as Lit};
 
-use crate::ast::Name;
 use crate::metadata::Metadata;
 use crate::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
@@ -510,6 +507,7 @@ fn flatten_generic(expr: &Expr, model: &Model) -> ApplicationResult {
             | Expr::Abs(_, _)
             | Expr::Sum(_, _)
             | Expr::Product(_, _)
+            | Expr::Neg(_, _)
     ) {
         return Err(RuleNotApplicable);
     }
@@ -568,61 +566,6 @@ fn flatten_eq(expr: &Expr, model: &Model) -> ApplicationResult {
     let expr = expr.with_children(children);
 
     Ok(Reduction::new(expr, new_tops, model.variables))
-}
-
-/// Flattens `a=-e`, where e is a non-atomic expression.
-///
-/// ```text
-/// a = -e ~> a = MinusEq(a,__x), __x =aux e
-///  
-///  where a is atomic, e is not atomic
-/// ```
-#[register_rule(("Minion", 4200))]
-fn flatten_minuseq(expr: &Expr, m: &Model) -> ApplicationResult {
-    // TODO: case where a is a literal not a ref?
-
-    // parses arguments a = -e, where a is an atom and e is a non-atomic expression
-    // (when e is an atom, flattening is done, so introduce_minus_eq should be applied instead)
-    fn try_get_args(name: &Expr, negated_expr: &Expr) -> Option<(Name, Expr)> {
-        let Expr::Atomic(_, Atom::Reference(name)) = name else {
-            return None;
-        };
-
-        let Expr::Neg(_, e) = negated_expr else {
-            return None;
-        };
-
-        Some((name.clone(), *e.clone()))
-    }
-
-    let (name, e) = match expr {
-        // parse arguments symmetrically
-        Expr::Eq(_, a, b) => try_get_args(a.borrow(), b.borrow())
-            .or_else(|| try_get_args(b.borrow(), a.borrow()))
-            .ok_or(RuleNotApplicable),
-
-        Expr::AuxDeclaration(_, name, e) => match e.borrow() {
-            Expr::Neg(_, e) => Some((name.clone(), (*e.clone()))),
-            _ => None,
-        }
-        .ok_or(RuleNotApplicable),
-
-        _ => Err(RuleNotApplicable),
-    }?;
-
-    let aux_var_out = to_aux_var(&e, m).ok_or(RuleNotApplicable)?;
-
-    let new_expr = Expr::FlatMinusEq(
-        Metadata::new(),
-        Atom::Reference(name),
-        aux_var_out.as_atom(),
-    );
-
-    Ok(Reduction::new(
-        new_expr,
-        vec![aux_var_out.top_level_expr()],
-        aux_var_out.model().variables,
-    ))
 }
 
 // TODO: normalise equalities such that atoms are always on the LHS.

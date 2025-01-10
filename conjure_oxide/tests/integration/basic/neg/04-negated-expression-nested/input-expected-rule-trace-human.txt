@@ -97,13 +97,19 @@ DivEq(__0, z, x)
 
 --
 
-__0 =aux -(SafeDiv(y, z)), 
-   ~~> flatten_minuseq ([("Minion", 4200)]) 
-MinusEq(__0,__1) 
+-(SafeDiv(y, z)), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+-(__1) 
 new variables:
   __1: int(-1..1)
 new constraints:
   __1 =aux SafeDiv(y, z)
+--
+
+__0 =aux -(__1), 
+   ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)]) 
+MinusEq(__0,__1) 
+
 --
 
 __1 =aux SafeDiv(y, z), 
