@@ -499,7 +499,7 @@ fn introduce_minuseq_from_aux_decl(expr: &Expr, _: &Model) -> ApplicationResult 
 }
 
 #[register_rule(("Minion", 4200))]
-fn flatten_binop(expr: &Expr, model: &Model) -> ApplicationResult {
+fn flatten_generic(expr: &Expr, model: &Model) -> ApplicationResult {
     if !matches!(
         expr,
         Expr::SafeDiv(_, _, _)
@@ -507,62 +507,10 @@ fn flatten_binop(expr: &Expr, model: &Model) -> ApplicationResult {
             | Expr::SafeMod(_, _, _)
             | Expr::Leq(_, _, _)
             | Expr::Geq(_, _, _)
+            | Expr::Abs(_, _)
+            | Expr::Sum(_, _)
+            | Expr::Product(_, _)
     ) {
-        return Err(RuleNotApplicable);
-    }
-
-    let mut children = expr.children();
-    debug_assert_eq!(children.len(), 2);
-
-    let mut model = model.clone();
-    let mut num_changed = 0;
-    let mut new_tops: Vec<Expr> = vec![];
-
-    for child in children.iter_mut() {
-        if let Some(aux_var_info) = to_aux_var(child, &model) {
-            model = aux_var_info.model();
-            new_tops.push(aux_var_info.top_level_expr());
-            *child = aux_var_info.as_expr();
-            num_changed += 1;
-        }
-    }
-
-    if num_changed == 0 {
-        return Err(RuleNotApplicable);
-    }
-
-    let expr = expr.with_children(children);
-    Ok(Reduction::new(expr, new_tops, model.variables))
-}
-
-#[register_rule(("Minion", 4200))]
-fn flatten_unop(expr: &Expr, model: &Model) -> ApplicationResult {
-    if !matches!(expr, Expr::Abs(_, _)) {
-        return Err(RuleNotApplicable);
-    }
-
-    let mut children = expr.children();
-    debug_assert_eq!(children.len(), 1);
-    let child = &mut children[0];
-
-    let mut model = model.clone();
-    let mut new_tops: Vec<Expr> = vec![];
-
-    if let Some(aux_var_info) = to_aux_var(child, &model) {
-        model = aux_var_info.model();
-        new_tops.push(aux_var_info.top_level_expr());
-        *child = aux_var_info.as_expr();
-    } else {
-        return Err(RuleNotApplicable);
-    }
-
-    let expr = expr.with_children(children);
-    Ok(Reduction::new(expr, new_tops, model.variables))
-}
-
-#[register_rule(("Minion", 4200))]
-fn flatten_vecop(expr: &Expr, model: &Model) -> ApplicationResult {
-    if !matches!(expr, Expr::Sum(_, _) | Expr::Product(_, _)) {
         return Err(RuleNotApplicable);
     }
 
