@@ -1,3 +1,14 @@
+Model before rewriting:
+
+find x: int(2..4)
+find y: int(2..4)
+
+such that
+
+(Sum([Product([2, x]), Product([3, y])]) > 12)
+
+--
+
 (Sum([Product([2, x]), Product([3, y])]) > 12), 
    ~~> gt_to_geq ([("Minion", 8400)]) 
 (Sum([Sum([Product([2, x]), Product([3, y])]), -1]) >= 12) 
@@ -15,4 +26,13 @@ Sum([Product([2, x]), Product([3, y]), -1])
 FlatWeightedSumGeq([2, 3, 1],[x, y, -1],12) 
 
 --
+
+Final model:
+
+find x: int(2..4)
+find y: int(2..4)
+
+such that
+
+FlatWeightedSumGeq([2, 3, 1],[x, y, -1],12)
 

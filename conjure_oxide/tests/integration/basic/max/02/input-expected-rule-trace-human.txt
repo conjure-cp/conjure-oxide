@@ -1,3 +1,13 @@
+Model before rewriting:
+
+find a: int(0..3)
+
+such that
+
+(Max([2, a]) <= 2)
+
+--
+
 Max([2, a]), 
    ~~> max_to_var ([("Base", 6000)]) 
 __0 
@@ -26,4 +36,16 @@ Ineq(2, __0, 0)
 Ineq(a, __0, 0) 
 
 --
+
+Final model:
+
+find a: int(0..3)
+find __0: int(2..3)
+
+such that
+
+Ineq(__0, 2, 0),
+Ineq(2, __0, 0),
+Ineq(a, __0, 0),
+Or([(__0 = 2), (__0 = a)])
 

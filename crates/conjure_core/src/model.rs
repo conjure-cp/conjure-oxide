@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 use std::collections::HashSet;
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 use std::sync::{Arc, RwLock};
 
 use derivative::Derivative;
@@ -9,6 +9,8 @@ use serde_with::serde_as;
 
 use crate::ast::{DecisionVariable, Domain, Expression, Name, SymbolTable};
 use crate::context::Context;
+
+use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_variable_declaration};
 
 /// Represents a computational model containing variables, constraints, and a shared context.
 ///
@@ -144,5 +146,24 @@ impl Model {
             }
         }
         self.variables.extend(symbol_table);
+    }
+}
+
+impl Display for Model {
+    #[allow(clippy::unwrap_used)] // [rustdocs]: should only fail iff the formatter fails
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for name in self.variables.keys() {
+            writeln!(
+                f,
+                "find {}",
+                pretty_variable_declaration(&self.variables, name).unwrap()
+            )?;
+        }
+
+        writeln!(f, "\nsuch that\n")?;
+
+        writeln!(f, "{}", pretty_expressions_as_top_level(&self.constraints))?;
+
+        Ok(())
     }
 }

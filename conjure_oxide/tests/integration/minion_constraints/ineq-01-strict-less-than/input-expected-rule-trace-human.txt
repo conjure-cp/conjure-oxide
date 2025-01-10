@@ -1,3 +1,14 @@
+Model before rewriting:
+
+find x: int(1..4)
+find y: int(1..4)
+
+such that
+
+(x < y)
+
+--
+
 (x < y), 
    ~~> lt_to_leq ([("Minion", 8400)]) 
 (x <= Sum([y, -1])) 
@@ -9,4 +20,13 @@
 Ineq(x, y, -1) 
 
 --
+
+Final model:
+
+find x: int(1..4)
+find y: int(1..4)
+
+such that
+
+Ineq(x, y, -1)
 

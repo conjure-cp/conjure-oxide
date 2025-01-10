@@ -7,11 +7,9 @@ use std::sync::Arc;
 use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
-use conjure_core::ast::pretty::pretty_expressions_as_top_level;
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::defaults::get_default_rule_sets;
 use schemars::schema_for;
-use serde_json::json;
 use serde_json::to_string_pretty;
 
 use conjure_core::context::Context;
@@ -181,14 +179,14 @@ pub fn main() -> AnyhowResult<()> {
         .init();
 
     if target_family != SolverFamily::Minion {
-        log::error!("Only the Minion solver is currently supported!");
+        tracing::error!("Only the Minion solver is currently supported!");
         exit(1);
     }
 
     let rule_sets = match resolve_rule_sets(target_family, &extra_rule_sets) {
         Ok(rs) => rs,
         Err(e) => {
-            log::error!("Error resolving rule sets: {}", e);
+            tracing::error!("Error resolving rule sets: {}", e);
             exit(1);
         }
     };
@@ -200,7 +198,7 @@ pub fn main() -> AnyhowResult<()> {
         .join(", ");
 
     println!("Enabled rule sets: [{}]", pretty_rule_sets);
-    log::info!(
+    tracing::info!(
         target: "file",
         "Rule sets: {}",
         pretty_rule_sets
@@ -209,14 +207,14 @@ pub fn main() -> AnyhowResult<()> {
     let rule_priorities = get_rule_priorities(&rule_sets)?;
     let rules_vec = get_rules_vec(&rule_priorities);
 
-    log::info!(target: "file",
+    tracing::info!(target: "file",
          "Rules and priorities: {}",
          rules_vec.iter()
             .map(|rule| format!("{}: {}", rule.name, rule_priorities.get(rule).unwrap_or(&0)))
             .collect::<Vec<_>>()
             .join(", "));
 
-    log::info!(target: "file", "Input file: {}", cli.input_file.display());
+    tracing::info!(target: "file", "Input file: {}", cli.input_file.display());
     let input_file: &str = cli.input_file.to_str().ok_or(anyhow!(
         "Given input_file could not be converted to a string"
     ))?;
@@ -252,30 +250,29 @@ pub fn main() -> AnyhowResult<()> {
     context.write().unwrap().file_name = Some(cli.input_file.to_str().expect("").into());
 
     if cfg!(feature = "extra-rule-checks") {
-        log::info!("extra-rule-checks: enabled");
+        tracing::info!("extra-rule-checks: enabled");
     } else {
-        log::info!("extra-rule-checks: disabled");
+        tracing::info!("extra-rule-checks: disabled");
     }
 
     let mut model = model_from_json(&astjson, context.clone())?;
 
-    log::info!(target: "file", "Initial model: {}", json!(model));
+    tracing::info!("Initial model: \n{}\n", model);
 
-    log::info!(target: "file", "Rewriting model...");
+    tracing::info!("Rewriting model...");
 
     if cli.use_optimising_rewriter {
-        log::info!(target: "file", "Using the dirty-clean rewriter...");
+        tracing::info!("Using the dirty-clean rewriter...");
         model = rewrite_model(&model, &rule_sets)?;
     } else {
-        log::info!(target: "file", "Rewriting model...");
+        tracing::info!("Rewriting model...");
         model = rewrite_naive(&model, &rule_sets, false)?;
     }
 
-    let constraints_string = pretty_expressions_as_top_level(&model.constraints);
-    tracing::info!(constraints=%constraints_string, model=%json!(model),"Rewritten model");
+    tracing::info!("Rewritten model: \n{}\n", model);
 
     let solutions = get_minion_solutions(model, cli.number_of_solutions)?; // ToDo we need to properly set the solver adaptor here, not hard code minion
-    log::info!(target: "file", "Solutions: {}", minion_solutions_to_json(&solutions));
+    tracing::info!(target: "file", "Solutions: {}", minion_solutions_to_json(&solutions));
 
     let solutions_json = minion_solutions_to_json(&solutions);
     let solutions_str = to_string_pretty(&solutions_json)?;

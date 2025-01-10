@@ -1,3 +1,15 @@
+Model before rewriting:
+
+find x: int(1..4)
+find y: int(1..4)
+
+such that
+
+((y - 1) >= x),
+(Sum([-(1), y]) >= x)
+
+--
+
 -(1), 
    ~~> apply_eval_constant ([("Constant", 9001)]) 
 -1 
@@ -27,4 +39,14 @@ Ineq(x, y, -1)
 Ineq(x, y, -1) 
 
 --
+
+Final model:
+
+find x: int(1..4)
+find y: int(1..4)
+
+such that
+
+Ineq(x, y, -1),
+Ineq(x, y, -1)
 

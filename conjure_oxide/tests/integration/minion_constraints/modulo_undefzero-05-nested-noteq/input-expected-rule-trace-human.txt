@@ -1,3 +1,15 @@
+Model before rewriting:
+
+find x: int(5..7)
+find y: int(0..3)
+find z: int(0..4)
+
+such that
+
+Not((x % y % z = 3))
+
+--
+
 y % z, 
    ~~> mod_to_bubble ([("Bubble", 6000)]) 
 {SafeMod(y,z) @ (z != 0)} 
@@ -117,4 +129,18 @@ __1 =aux SafeMod(y,z),
 ModEq(y, z, __1) 
 
 --
+
+Final model:
+
+find x: int(5..7)
+find y: int(0..3)
+find z: int(0..4)
+find __0: int(0..2)
+find __1: int(0..3)
+
+such that
+
+Or([(__0 != 3), ModEq(y, z, 0), (z = 0)]),
+ModEq(x, __1, __0),
+ModEq(y, z, __1)
 

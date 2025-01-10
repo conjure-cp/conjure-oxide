@@ -48,6 +48,7 @@ fn minion_rs_callback(solutions: HashMap<minion_ast::VarName, minion_ast::Consta
         .unwrap();
 
     let mut conjure_solutions: HashMap<conjure_ast::Name, conjure_ast::Literal> = HashMap::new();
+    let machine_name_re = Regex::new(r"__conjure_machine_name_([0-9]+)").unwrap();
     for (minion_name, minion_const) in solutions.into_iter() {
         let conjure_const = match minion_const {
             minion_ast::Constant::Bool(x) => conjure_ast::Literal::Bool(x),
@@ -55,7 +56,6 @@ fn minion_rs_callback(solutions: HashMap<minion_ast::VarName, minion_ast::Consta
             _ => todo!(),
         };
 
-        let machine_name_re = Regex::new(r"__conjure_machine_name_([0-9]+)").unwrap();
         let conjure_name = if let Some(caps) = machine_name_re.captures(&minion_name) {
             conjure_ast::Name::MachineName(caps[1].parse::<i32>().unwrap())
         } else {

@@ -1,3 +1,14 @@
+Model before rewriting:
+
+find a: int(0..3)
+find b: int(0..3)
+
+such that
+
+(UnsafeDiv(a, b) = 1)
+
+--
+
 UnsafeDiv(a, b), 
    ~~> div_to_bubble ([("Bubble", 6000)]) 
 {SafeDiv(a, b) @ (b != 0)} 
@@ -27,4 +38,13 @@ And([(b != 0)]),
 DivEq(a, b, 1) 
 
 --
+
+Final model:
+
+find a: int(0..3)
+find b: int(0..3)
+
+such that
+
+And([DivEq(a, b, 1), (b != 0)])
 

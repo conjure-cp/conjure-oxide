@@ -1,3 +1,15 @@
+Model before rewriting:
+
+find x: int(2..4)
+find y: int(2..4)
+find z: int(2..4)
+
+such that
+
+(Product([Product([x, y]), z]) < 15)
+
+--
+
 Product([Product([x, y]), z]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
 Product([x, y, z]) 
@@ -39,4 +51,18 @@ new constraints:
 Ineq(__0, 14, 0) 
 
 --
+
+Final model:
+
+find x: int(2..4)
+find y: int(2..4)
+find z: int(2..4)
+find __0: int(8..64)
+find __1: int(4..16)
+
+such that
+
+Ineq(__0, 14, 0),
+FlatProductEq(z,__1,__0),
+FlatProductEq(y,x,__1)
 

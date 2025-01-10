@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
@@ -23,4 +23,4 @@ impl Display for Name {
     }
 }
 
-pub type SymbolTable = HashMap<Name, DecisionVariable>;
+pub type SymbolTable = BTreeMap<Name, DecisionVariable>;
