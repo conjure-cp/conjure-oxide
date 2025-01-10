@@ -1,6 +1,6 @@
 // Tests for various functionalities of the Model
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use conjure_core::model::Model;
 use conjure_oxide::ast::*;
@@ -12,7 +12,7 @@ fn modify_domain() {
     let d1 = Domain::IntDomain(vec![Range::Bounded(1, 3)]);
     let d2 = Domain::IntDomain(vec![Range::Bounded(1, 2)]);
 
-    let mut variables = HashMap::new();
+    let mut variables = BTreeMap::new();
     variables.insert(a.clone(), DecisionVariable { domain: d1.clone() });
 
     let mut m = Model::new(variables, vec![], Default::default());
