@@ -434,6 +434,29 @@ fn introduce_abseq(expr: &Expr, _: &Model) -> ApplicationResult {
     Ok(Reduction::pure(Expr::FlatAbsEq(Metadata::new(), x, y)))
 }
 
+/// Introduces a `MinionPowEq` constraint from a `SafePow`
+#[register_rule(("Minion", 4200))]
+fn introduce_poweq(expr: &Expr, _: &Model) -> ApplicationResult {
+    let (a, b, total) = match expr.clone() {
+        Expr::Eq(_, e1, e2) => match (*e1, *e2) {
+            (Expr::Atomic(_, total), Expr::SafePow(_, a, b)) => Ok((a, b, total)),
+            (Expr::SafePow(_, a, b), Expr::Atomic(_, total)) => Ok((a, b, total)),
+            _ => Err(RuleNotApplicable),
+        },
+        _ => Err(RuleNotApplicable),
+    }?;
+
+    let a: Atom = (*a).try_into().or(Err(RuleNotApplicable))?;
+    let b: Atom = (*b).try_into().or(Err(RuleNotApplicable))?;
+
+    Ok(Reduction::pure(Expr::MinionPow(
+        Metadata::new(),
+        a,
+        b,
+        total,
+    )))
+}
+
 /// Introduces a Minion `MinusEq` constraint from `x = -y`, where x and y are atoms.
 ///
 /// ```text
@@ -581,6 +604,7 @@ fn flatten_generic(expr: &Expr, model: &Model) -> ApplicationResult {
         Expr::SafeDiv(_, _, _)
             | Expr::Neq(_, _, _)
             | Expr::SafeMod(_, _, _)
+            | Expr::SafePow(_, _, _)
             | Expr::Leq(_, _, _)
             | Expr::Geq(_, _, _)
             | Expr::Abs(_, _)

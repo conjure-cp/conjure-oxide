@@ -252,6 +252,8 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
         AuxDeclaration(_, _, _) => Err(RuleNotApplicable),
         UnsafeMod(_, _, _) => Err(RuleNotApplicable),
         SafeMod(_, _, _) => Err(RuleNotApplicable),
+        UnsafePow(_, _, _) => Err(RuleNotApplicable),
+        SafePow(_, _, _) => Err(RuleNotApplicable),
         Minus(_, _, _) => Err(RuleNotApplicable),
 
         // As these are in a low level solver form, I'm assuming that these have already been
@@ -267,6 +269,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
         FlatWeightedSumGeq(_, _, _, _) => Err(RuleNotApplicable),
         MinionDivEqUndefZero(_, _, _, _) => Err(RuleNotApplicable),
         MinionModuloEqUndefZero(_, _, _, _) => Err(RuleNotApplicable),
+        MinionPow(_, _, _, _) => Err(RuleNotApplicable),
         MinionReify(_, _, _) => Err(RuleNotApplicable),
         MinionReifyImply(_, _, _) => Err(RuleNotApplicable),
     }

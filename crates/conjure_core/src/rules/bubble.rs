@@ -7,6 +7,8 @@ use conjure_core::rule_engine::{
 use conjure_core::Model;
 use uniplate::Uniplate;
 
+use crate::ast::{Atom, Literal};
+
 use super::utils::is_all_constant;
 
 register_rule_set!("Bubble", 100, ("Base"));
@@ -122,6 +124,60 @@ fn mod_to_bubble(expr: &Expression, _: &Model) -> ApplicationResult {
                 Metadata::new(),
                 b.clone(),
                 Box::new(Expression::from(0)),
+            )),
+        )));
+    }
+    Err(ApplicationError::RuleNotApplicable)
+}
+
+/// Converts an unsafe pow to a safe pow with a bubble condition.
+///
+/// ```text
+/// a**b => (a ** b) @ ((a!=0 \/ b!=0) /\ b>=0
+/// ```
+///
+/// Pow is only defined when `(a!=0 \/ b!=0) /\ b>=0`, so we add a condition to check for it.
+/// This condition is brought up the tree and expanded into a conjunction with the first
+/// boolean-type expression it is paired with.
+///
+#[register_rule(("Bubble", 6000))]
+fn pow_to_bubble(expr: &Expression, _: &Model) -> ApplicationResult {
+    if is_all_constant(expr) {
+        return Err(RuleNotApplicable);
+    }
+    if let Expression::UnsafePow(_, a, b) = expr.clone() {
+        // bubble bottom up
+        if !a.is_safe() || !b.is_safe() {
+            return Err(RuleNotApplicable);
+        }
+
+        return Ok(Reduction::pure(Expression::Bubble(
+            Metadata::new(),
+            Box::new(Expression::SafePow(Metadata::new(), a.clone(), b.clone())),
+            Box::new(Expression::And(
+                Metadata::new(),
+                vec![
+                    Expression::Or(
+                        Metadata::new(),
+                        vec![
+                            Expression::Neq(
+                                Metadata::new(),
+                                a,
+                                Box::new(Atom::Literal(Literal::Int(0)).into()),
+                            ),
+                            Expression::Neq(
+                                Metadata::new(),
+                                b.clone(),
+                                Box::new(Atom::Literal(Literal::Int(0)).into()),
+                            ),
+                        ],
+                    ),
+                    Expression::Geq(
+                        Metadata::new(),
+                        b,
+                        Box::new(Atom::Literal(Literal::Int(0)).into()),
+                    ),
+                ],
             )),
         )));
     }
