@@ -163,6 +163,29 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             let modulo = a - b * (a as f32 / b as f32).floor() as i32;
             Some(Lit::Bool(modulo == c))
         }
+
+        Expr::MinionPow(_, a, b, c) => {
+            // only available for positive a b c
+
+            let a: i32 = a.try_into().ok()?;
+            let b: i32 = b.try_into().ok()?;
+            let c: i32 = c.try_into().ok()?;
+
+            if a <= 0 {
+                return None;
+            }
+
+            if b <= 0 {
+                return None;
+            }
+
+            if c <= 0 {
+                return None;
+            }
+
+            Some(Lit::Bool(a ^ b == c))
+        }
+
         Expr::AllDiff(_, es) => {
             let mut lits: HashSet<Lit> = HashSet::new();
             for expr in es {
@@ -240,6 +263,20 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             let y: i32 = y.try_into().ok()?;
 
             Some(Lit::Bool(x == y.abs()))
+        }
+
+        Expr::UnsafePow(_, a, b) | Expr::SafePow(_, a, b) => {
+            let a: &Atom = a.try_into().ok()?;
+            let a: i32 = a.try_into().ok()?;
+
+            let b: &Atom = b.try_into().ok()?;
+            let b: i32 = b.try_into().ok()?;
+
+            if (a != 0 || b != 0) && b >= 0 {
+                Some(Lit::Int(a ^ b))
+            } else {
+                None
+            }
         }
     }
 }

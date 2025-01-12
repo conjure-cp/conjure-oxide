@@ -1,0 +1,212 @@
+Model before rewriting:
+
+find x: int(2..20)
+find y: int(0..20)
+
+such that
+
+(UnsafePow(Sum([x, 2]), UnsafeDiv(y, 2)) = 4)
+
+--
+
+UnsafeDiv(y, 2), 
+   ~~> div_to_bubble ([("Bubble", 6000)]) 
+{SafeDiv(y, 2) @ (2 != 0)} 
+
+--
+
+(2 != 0), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+UnsafePow(Sum([x, 2]), {SafeDiv(y, 2) @ true}), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) @ And([true])} 
+
+--
+
+And([true]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+({UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) @ true} = 4), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4) @ And([true])} 
+
+--
+
+And([true]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+{(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4), true]) 
+
+--
+
+And([(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4), true]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+And([(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4)]) 
+
+--
+
+And([(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4) 
+
+--
+
+UnsafePow(Sum([x, 2]), SafeDiv(y, 2)), 
+   ~~> pow_to_bubble ([("Bubble", 6000)]) 
+{SafePow(Sum([x, 2]), SafeDiv(y, 2)) @ And([Or([(Sum([x, 2]) != 0), (SafeDiv(y, 2) != 0)]), (SafeDiv(y, 2) >= 0)])} 
+
+--
+
+({SafePow(Sum([x, 2]), SafeDiv(y, 2)) @ And([Or([(Sum([x, 2]) != 0), (SafeDiv(y, 2) != 0)]), (SafeDiv(y, 2) >= 0)])} = 4), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4) @ And([And([Or([(Sum([x, 2]) != 0), (SafeDiv(y, 2) != 0)]), (SafeDiv(y, 2) >= 0)])])} 
+
+--
+
+{(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4) @ And([And([Or([(Sum([x, 2]) != 0), (SafeDiv(y, 2) != 0)]), (SafeDiv(y, 2) >= 0)])])}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4), And([And([Or([(Sum([x, 2]) != 0), (SafeDiv(y, 2) != 0)]), (SafeDiv(y, 2) >= 0)])])]) 
+
+--
+
+And([(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4), And([And([Or([(Sum([x, 2]) != 0), (SafeDiv(y, 2) != 0)]), (SafeDiv(y, 2) >= 0)])])]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+And([(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4), Or([(Sum([x, 2]) != 0), (SafeDiv(y, 2) != 0)]), (SafeDiv(y, 2) >= 0)]) 
+
+--
+
+SafePow(Sum([x, 2]), SafeDiv(y, 2)), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+SafePow(__0, __1) 
+new variables:
+  __0: int(4..22)
+  __1: int(0..10)
+new constraints:
+  __0 =aux Sum([x, 2])
+  __1 =aux SafeDiv(y, 2)
+--
+
+(SafePow(__0, __1) = 4), 
+   ~~> introduce_poweq ([("Minion", 4200)]) 
+MinionPow(__0,__1,4) 
+
+--
+
+(Sum([x, 2]) != 0), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+(__2 != 0) 
+new variables:
+  __2: int(4..22)
+new constraints:
+  __2 =aux Sum([x, 2])
+--
+
+(SafeDiv(y, 2) != 0), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+(__3 != 0) 
+new variables:
+  __3: int(0..10)
+new constraints:
+  __3 =aux SafeDiv(y, 2)
+--
+
+(SafeDiv(y, 2) >= 0), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+(__4 >= 0) 
+new variables:
+  __4: int(0..10)
+new constraints:
+  __4 =aux SafeDiv(y, 2)
+--
+
+__1 =aux SafeDiv(y, 2), 
+   ~~> introduce_diveq ([("Minion", 4200)]) 
+DivEq(y, 2, __1) 
+
+--
+
+__3 =aux SafeDiv(y, 2), 
+   ~~> introduce_diveq ([("Minion", 4200)]) 
+DivEq(y, 2, __3) 
+
+--
+
+__4 =aux SafeDiv(y, 2), 
+   ~~> introduce_diveq ([("Minion", 4200)]) 
+DivEq(y, 2, __4) 
+
+--
+
+(__4 >= 0), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(0, __4, 0) 
+
+--
+
+__0 =aux Sum([x, 2]), 
+   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
+And([(Sum([x, 2]) <= __0), (Sum([x, 2]) >= __0)]) 
+
+--
+
+(Sum([x, 2]) >= __0), 
+   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4500)]) 
+Ineq(__0, x, 2) 
+
+--
+
+(Sum([x, 2]) <= __0), 
+   ~~> introduce_sumleq ([("Minion", 4400)]) 
+SumLeq([x, 2], __0) 
+
+--
+
+__2 =aux Sum([x, 2]), 
+   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
+And([(Sum([x, 2]) <= __2), (Sum([x, 2]) >= __2)]) 
+
+--
+
+(Sum([x, 2]) >= __2), 
+   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4500)]) 
+Ineq(__2, x, 2) 
+
+--
+
+(Sum([x, 2]) <= __2), 
+   ~~> introduce_sumleq ([("Minion", 4400)]) 
+SumLeq([x, 2], __2) 
+
+--
+
+Final model:
+
+find x: int(2..20)
+find y: int(0..20)
+find __0: int(4..22)
+find __1: int(0..10)
+find __2: int(4..22)
+find __3: int(0..10)
+find __4: int(0..10)
+
+such that
+
+And([MinionPow(__0,__1,4), Or([(__2 != 0), (__3 != 0)]), Ineq(0, __4, 0)]),
+And([SumLeq([x, 2], __0), Ineq(__0, x, 2)]),
+DivEq(y, 2, __1),
+And([SumLeq([x, 2], __2), Ineq(__2, x, 2)]),
+DivEq(y, 2, __3),
+DivEq(y, 2, __4)
+

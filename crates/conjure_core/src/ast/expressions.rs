@@ -100,6 +100,15 @@ pub enum Expression {
     #[compatible(JsonInput)]
     Neg(Metadata, Box<Expression>),
 
+    /// Unsafe power`x**y` (possibly undefined)
+    ///
+    /// Defined when (X!=0 \\/ Y!=0) /\ Y>=0
+    #[compatible(JsonInput)]
+    UnsafePow(Metadata, Box<Expression>, Box<Expression>),
+
+    /// `UnsafePow` after preventing undefinedness
+    SafePow(Metadata, Box<Expression>, Box<Expression>),
+
     #[compatible(JsonInput)]
     AllDiff(Metadata, Vec<Expression>),
 
@@ -229,6 +238,19 @@ pub enum Expression {
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#mod_undefzero)
     #[compatible(Minion)]
     MinionModuloEqUndefZero(Metadata, Atom, Atom, Atom),
+
+    /// Ensures that `x**y = z`.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// This constraint is false when `y<0` except for `1**y=1` and `(-1)**y=z` (where z is 1 if y
+    /// is odd and z is -1 if y is even).
+    ///
+    /// # See also
+    ///
+    /// + [Github comment about `pow` semantics](https://github.com/minion/minion/issues/40#issuecomment-2595914891)
+    /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#pow)
+    MinionPow(Metadata, Atom, Atom, Atom),
 
     /// `reify(constraint,r)` ensures that r=1 iff `constraint` is satisfied, where r is a 0/1
     /// variable.
@@ -374,6 +396,19 @@ impl Expression {
                 }
             }
 
+            Expression::SafePow(_, a, b) | Expression::UnsafePow(_, a, b) => {
+                a.domain_of(vars)?.apply_i32(
+                    |x, y| {
+                        if (x != 0 || y != 0) && y >= 0 {
+                            Some(x ^ y)
+                        } else {
+                            None
+                        }
+                    },
+                    &b.domain_of(vars)?,
+                )
+            }
+
             Expression::Bubble(_, _, _) => None,
             Expression::AuxDeclaration(_, _, _) => Some(Domain::BoolDomain),
             Expression::And(_, _) => Some(Domain::BoolDomain),
@@ -421,6 +456,7 @@ impl Expression {
             Expression::Abs(_, a) => a
                 .domain_of(vars)?
                 .apply_i32(|a, _| Some(a.abs()), &a.domain_of(vars)?),
+            Expression::MinionPow(_, _, _, _) => Some(Domain::BoolDomain),
         };
         match ret {
             // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
@@ -451,7 +487,9 @@ impl Expression {
         // TODO: memoise in Metadata
         for expr in self.universe() {
             match expr {
-                Expression::UnsafeDiv(_, _, _) | Expression::UnsafeMod(_, _, _) => {
+                Expression::UnsafeDiv(_, _, _)
+                | Expression::UnsafeMod(_, _, _)
+                | Expression::UnsafePow(_, _, _) => {
                     return false;
                 }
                 _ => {}
@@ -496,12 +534,15 @@ impl Expression {
             Expression::SafeMod(_, _, _) => Some(ReturnType::Int),
             Expression::MinionModuloEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
             Expression::Neg(_, _) => Some(ReturnType::Int),
+            Expression::UnsafePow(_, _, _) => Some(ReturnType::Int),
+            Expression::SafePow(_, _, _) => Some(ReturnType::Int),
             Expression::Minus(_, _, _) => Some(ReturnType::Int),
             Expression::FlatAbsEq(_, _, _) => Some(ReturnType::Bool),
             Expression::FlatMinusEq(_, _, _) => Some(ReturnType::Bool),
             Expression::FlatProductEq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::FlatWeightedSumLeq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::MinionPow(_, _, _, _) => Some(ReturnType::Bool),
         }
     }
 
@@ -618,6 +659,12 @@ impl Display for Expression {
             Expression::UnsafeDiv(_, box1, box2) => {
                 write!(f, "UnsafeDiv({}, {})", box1.clone(), box2.clone())
             }
+            Expression::UnsafePow(_, box1, box2) => {
+                write!(f, "UnsafePow({}, {})", box1.clone(), box2.clone())
+            }
+            Expression::SafePow(_, box1, box2) => {
+                write!(f, "SafePow({}, {})", box1.clone(), box2.clone())
+            }
             Expression::MinionDivEqUndefZero(_, box1, box2, box3) => {
                 write!(
                     f,
@@ -694,6 +741,9 @@ impl Display for Expression {
                     pretty_vec(vs),
                     total.clone()
                 )
+            }
+            Expression::MinionPow(_, atom, atom1, atom2) => {
+                write!(f, "MinionPow({},{},{})", atom, atom1, atom2)
             }
         }
     }
