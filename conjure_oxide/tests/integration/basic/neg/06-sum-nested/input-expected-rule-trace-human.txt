@@ -54,44 +54,9 @@ a
 
 --
 
-Sum([-(y), -(z), -1, a, b]), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-Sum([__0, __1, -1, a, b]) 
-new variables:
-  __0: int(-1..1)
-  __1: int(-1..1)
-new constraints:
-  __0 =aux -(y)
-  __1 =aux -(z)
---
-
-__0 =aux -(y), 
-   ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)]) 
-MinusEq(__0,y) 
-
---
-
-__1 =aux -(z), 
-   ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)]) 
-MinusEq(__1,z) 
-
---
-
-(x = Sum([__0, __1, -1, a, b])), 
-   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
-And([(Sum([__0, __1, -1, a, b]) <= x), (Sum([__0, __1, -1, a, b]) >= x)]) 
-
---
-
-(Sum([__0, __1, -1, a, b]) <= x), 
-   ~~> introduce_sumleq ([("Minion", 4400)]) 
-SumLeq([__0, __1, -1, a, b], x) 
-
---
-
-(Sum([__0, __1, -1, a, b]) >= x), 
-   ~~> introduce_sumgeq ([("Minion", 4400)]) 
-SumGeq([__0, __1, -1, a, b], x) 
+(x = Sum([-(y), -(z), -1, a, b])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([FlatWeightedSumLeq([-1, -1, 1, 1, 1],[y, z, -1, a, b],x), FlatWeightedSumGeq([-1, -1, 1, 1, 1],[y, z, -1, a, b],x)]) 
 
 --
 
@@ -102,12 +67,8 @@ find b: int(-1..1)
 find x: int(1..3)
 find y: int(-1..1)
 find z: int(-1..1)
-find __0: int(-1..1)
-find __1: int(-1..1)
 
 such that
 
-And([SumLeq([__0, __1, -1, a, b], x), SumGeq([__0, __1, -1, a, b], x)]),
-MinusEq(__0,y),
-MinusEq(__1,z)
+And([FlatWeightedSumLeq([-1, -1, 1, 1, 1],[y, z, -1, a, b],x), FlatWeightedSumGeq([-1, -1, 1, 1, 1],[y, z, -1, a, b],x)])
 
