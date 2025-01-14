@@ -1,0 +1,32 @@
+Model before rewriting:
+
+find x: bool
+find y: bool
+
+such that
+
+Not((Not(x)) -> (Not(y)))
+
+--
+
+Not(x), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
+WatchedLiteral(x,false) 
+
+--
+
+Not(y), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
+WatchedLiteral(y,false) 
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+
+such that
+
+Not((WatchedLiteral(x,false)) -> (WatchedLiteral(y,false)))
+

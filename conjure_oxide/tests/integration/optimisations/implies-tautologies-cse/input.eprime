@@ -1,0 +1,53 @@
+language ESSENCE' 1.0
+
+
+$ a simpler version can be found in basic/implies/03-tautologies
+
+find x,y,z,a,b,c,d,e: bool
+
+find l,m,n,o,p,q,r: int(1..10)
+
+such that
+
+$ all tautologies: should partially evaluate to true and never get to Minion
+
+$ p -> p ~> true (reflexivity)
+x -> x,
+
+$ (p->q) \/ (q->p) ~> true (totality)
+(a->z) \/ (z->a),
+
+$ (p->q) \/ (p-> !q) ~> true (conditional excluded middle)
+(b->c) \/ (b -> !c),
+
+$ non-trivial variations of the above 
+$
+$ tests CSE, variable unification, etc.
+$
+$ we probably will never reduce all these fully! (some of the reductions needed
+$ might be too expensive to be worth it)
+
+$ non-flat, syntactically identical reflexivity
+(l = 10) -> (l = 10),
+
+$ non-flat, syntactically identical totality
+((n < 6) -> (m %2 = 0)) \/ ((m % 2 = 0) -> (n < 6)),
+
+$ totality with extra stuff in the disjunction
+((n < 6) -> (m %2 = 0)) \/ a \/ b \/ ((m % 2 = 0) -> (n < 6)),
+
+$ totality but with intermediate, identical variables
+o = n,
+d = (n < 6),
+p = m % 2,
+
+((o < 6) -> (p = 0)) \/ ((m % 2 = 0) -> d),
+
+$ above but also with some extra stuff in the disjunction
+((o < 6) -> (p = 0)) \/ a \/ b \/ ((m % 2 = 0) -> d),
+
+$ non-flat, syntactically identical conditional excluded middle 
+((q/2 =r) -> (n < 6)) \/ ((q/2 = r) -> !(n<6)),
+
+$ conditional excluded middle with some extra stuff in the conjunction
+((q/2 =r) -> (n < 6)) \/ a \/ b \/ ((q/2 = r) -> !(n<6))

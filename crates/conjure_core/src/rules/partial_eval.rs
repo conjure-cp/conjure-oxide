@@ -2,9 +2,12 @@ use std::collections::HashSet;
 
 use conjure_macros::register_rule;
 
-use crate::ast::{Atom, Expression as Expr, Literal::*};
 use crate::rule_engine::{ApplicationResult, Reduction};
 use crate::Model;
+use crate::{
+    ast::{Atom, Expression as Expr, Literal as Lit, Literal::*},
+    metadata::Metadata,
+};
 
 #[register_rule(("Base",9000))]
 fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
@@ -116,6 +119,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
                 Ok(Reduction::pure(Min(m, new_vec)))
             }
         }
+
         Max(m, vec) => {
             let mut acc: Option<i32> = None;
             let mut n_consts = 0;
@@ -194,6 +198,32 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             } else {
                 Ok(Reduction::pure(And(m, new_vec)))
             }
+        }
+        Imply(_m, x, y) => {
+            if let Expr::Atomic(_, Atom::Literal(Lit::Bool(x))) = *x {
+                if x {
+                    // (true) -> y ~~> y
+                    return Ok(Reduction::pure(*y));
+                } else {
+                    // (false) -> y ~~> true
+                    return Ok(Reduction::pure(Expr::Atomic(Metadata::new(), true.into())));
+                }
+            };
+
+            // reflexivity: p -> p ~> true
+
+            // instead of checking syntactic equivalence of a possibly deep expression,
+            // let identical-CSE turn them into identical variables first. Then, check if they are
+            // identical variables.
+
+            let x: &Atom = (&*x).try_into().or(Err(RuleNotApplicable))?;
+            let y: &Atom = (&*y).try_into().or(Err(RuleNotApplicable))?;
+
+            if x == y {
+                return Ok(Reduction::pure(Expr::Atomic(Metadata::new(), true.into())));
+            }
+
+            Err(RuleNotApplicable)
         }
         Eq(_, _, _) => Err(RuleNotApplicable),
         Neq(_, _, _) => Err(RuleNotApplicable),

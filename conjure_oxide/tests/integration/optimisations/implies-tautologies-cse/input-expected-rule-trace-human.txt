@@ -1,0 +1,838 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+find l: int(1..10)
+find m: int(1..10)
+find n: int(1..10)
+find o: int(1..10)
+find p: int(1..10)
+find q: int(1..10)
+find r: int(1..10)
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+(x) -> (x),
+Or([(a) -> (z), (z) -> (a)]),
+Or([(b) -> (c), (b) -> (Not(c))]),
+((l = 10)) -> ((l = 10)),
+Or([((n < 6)) -> ((m % 2 = 0)), ((m % 2 = 0)) -> ((n < 6))]),
+Or([Or([Or([((n < 6)) -> ((m % 2 = 0)), a]), b]), ((m % 2 = 0)) -> ((n < 6))]),
+(o = n),
+(d = (n < 6)),
+(p = m % 2),
+Or([((o < 6)) -> ((p = 0)), ((m % 2 = 0)) -> (d)]),
+Or([Or([Or([((o < 6)) -> ((p = 0)), a]), b]), ((m % 2 = 0)) -> (d)]),
+Or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)), ((UnsafeDiv(q, 2) = r)) -> (Not((n < 6)))]),
+Or([Or([Or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)), a]), b]), ((UnsafeDiv(q, 2) = r)) -> (Not((n < 6)))])
+
+--
+
+(x) -> (x), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+true 
+
+--
+
+Or([Or([Or([((n < 6)) -> ((m % 2 = 0)), a]), b]), ((m % 2 = 0)) -> ((n < 6))]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Or([((n < 6)) -> ((m % 2 = 0)), a, b, ((m % 2 = 0)) -> ((n < 6))]) 
+
+--
+
+Or([Or([Or([((o < 6)) -> ((p = 0)), a]), b]), ((m % 2 = 0)) -> (d)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Or([((o < 6)) -> ((p = 0)), a, b, ((m % 2 = 0)) -> (d)]) 
+
+--
+
+Or([Or([Or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)), a]), b]), ((UnsafeDiv(q, 2) = r)) -> (Not((n < 6)))]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Or([((UnsafeDiv(q, 2) = r)) -> ((n < 6)), a, b, ((UnsafeDiv(q, 2) = r)) -> (Not((n < 6)))]) 
+
+--
+
+(n < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(n <= Sum([6, -1])) 
+
+--
+
+Sum([6, -1]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+5 
+
+--
+
+(n < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(n <= Sum([6, -1])) 
+
+--
+
+Sum([6, -1]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+5 
+
+--
+
+(n < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(n <= Sum([6, -1])) 
+
+--
+
+Sum([6, -1]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+5 
+
+--
+
+(n < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(n <= Sum([6, -1])) 
+
+--
+
+Sum([6, -1]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+5 
+
+--
+
+(n < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(n <= Sum([6, -1])) 
+
+--
+
+Sum([6, -1]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+5 
+
+--
+
+(o < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(o <= Sum([6, -1])) 
+
+--
+
+Sum([6, -1]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+5 
+
+--
+
+(o < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(o <= Sum([6, -1])) 
+
+--
+
+Sum([6, -1]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+5 
+
+--
+
+(n < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(n <= Sum([6, -1])) 
+
+--
+
+Sum([6, -1]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+5 
+
+--
+
+(n < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(n <= Sum([6, -1])) 
+
+--
+
+Sum([6, -1]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+5 
+
+--
+
+(n < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(n <= Sum([6, -1])) 
+
+--
+
+Sum([6, -1]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+5 
+
+--
+
+(n < 6), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(n <= Sum([6, -1])) 
+
+--
+
+Sum([6, -1]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+5 
+
+--
+
+m % 2, 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(m,2) @ (2 != 0)} 
+
+--
+
+(2 != 0), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+({SafeMod(m,2) @ true} = 0), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(SafeMod(m,2) = 0) @ And([true])} 
+
+--
+
+And([true]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+{(SafeMod(m,2) = 0) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(SafeMod(m,2) = 0), true]) 
+
+--
+
+And([(SafeMod(m,2) = 0), true]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+And([(SafeMod(m,2) = 0)]) 
+
+--
+
+And([(SafeMod(m,2) = 0)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(SafeMod(m,2) = 0) 
+
+--
+
+m % 2, 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(m,2) @ (2 != 0)} 
+
+--
+
+(2 != 0), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+({SafeMod(m,2) @ true} = 0), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(SafeMod(m,2) = 0) @ And([true])} 
+
+--
+
+And([true]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+{(SafeMod(m,2) = 0) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(SafeMod(m,2) = 0), true]) 
+
+--
+
+And([(SafeMod(m,2) = 0), true]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+And([(SafeMod(m,2) = 0)]) 
+
+--
+
+And([(SafeMod(m,2) = 0)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(SafeMod(m,2) = 0) 
+
+--
+
+m % 2, 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(m,2) @ (2 != 0)} 
+
+--
+
+(2 != 0), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+({SafeMod(m,2) @ true} = 0), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(SafeMod(m,2) = 0) @ And([true])} 
+
+--
+
+And([true]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+{(SafeMod(m,2) = 0) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(SafeMod(m,2) = 0), true]) 
+
+--
+
+And([(SafeMod(m,2) = 0), true]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+And([(SafeMod(m,2) = 0)]) 
+
+--
+
+And([(SafeMod(m,2) = 0)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(SafeMod(m,2) = 0) 
+
+--
+
+m % 2, 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(m,2) @ (2 != 0)} 
+
+--
+
+(2 != 0), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+({SafeMod(m,2) @ true} = 0), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(SafeMod(m,2) = 0) @ And([true])} 
+
+--
+
+And([true]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+{(SafeMod(m,2) = 0) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(SafeMod(m,2) = 0), true]) 
+
+--
+
+And([(SafeMod(m,2) = 0), true]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+And([(SafeMod(m,2) = 0)]) 
+
+--
+
+And([(SafeMod(m,2) = 0)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(SafeMod(m,2) = 0) 
+
+--
+
+m % 2, 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(m,2) @ (2 != 0)} 
+
+--
+
+(2 != 0), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+(p = {SafeMod(m,2) @ true}), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(p = SafeMod(m,2)) @ And([true])} 
+
+--
+
+And([true]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+{(p = SafeMod(m,2)) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(p = SafeMod(m,2)), true]) 
+
+--
+
+And([(p = SafeMod(m,2)), true]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+And([(p = SafeMod(m,2))]) 
+
+--
+
+And([(p = SafeMod(m,2))]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(p = SafeMod(m,2)) 
+
+--
+
+m % 2, 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(m,2) @ (2 != 0)} 
+
+--
+
+(2 != 0), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+({SafeMod(m,2) @ true} = 0), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(SafeMod(m,2) = 0) @ And([true])} 
+
+--
+
+And([true]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+{(SafeMod(m,2) = 0) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(SafeMod(m,2) = 0), true]) 
+
+--
+
+And([(SafeMod(m,2) = 0), true]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+And([(SafeMod(m,2) = 0)]) 
+
+--
+
+And([(SafeMod(m,2) = 0)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(SafeMod(m,2) = 0) 
+
+--
+
+m % 2, 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(m,2) @ (2 != 0)} 
+
+--
+
+(2 != 0), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+({SafeMod(m,2) @ true} = 0), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(SafeMod(m,2) = 0) @ And([true])} 
+
+--
+
+And([true]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+{(SafeMod(m,2) = 0) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(SafeMod(m,2) = 0), true]) 
+
+--
+
+And([(SafeMod(m,2) = 0), true]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+And([(SafeMod(m,2) = 0)]) 
+
+--
+
+And([(SafeMod(m,2) = 0)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(SafeMod(m,2) = 0) 
+
+--
+
+UnsafeDiv(q, 2), 
+   ~~> div_to_bubble ([("Bubble", 6000)]) 
+{SafeDiv(q, 2) @ (2 != 0)} 
+
+--
+
+(2 != 0), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+({SafeDiv(q, 2) @ true} = r), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(SafeDiv(q, 2) = r) @ And([true])} 
+
+--
+
+And([true]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+{(SafeDiv(q, 2) = r) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(SafeDiv(q, 2) = r), true]) 
+
+--
+
+And([(SafeDiv(q, 2) = r), true]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+And([(SafeDiv(q, 2) = r)]) 
+
+--
+
+And([(SafeDiv(q, 2) = r)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(SafeDiv(q, 2) = r) 
+
+--
+
+UnsafeDiv(q, 2), 
+   ~~> div_to_bubble ([("Bubble", 6000)]) 
+{SafeDiv(q, 2) @ (2 != 0)} 
+
+--
+
+(2 != 0), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+({SafeDiv(q, 2) @ true} = r), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(SafeDiv(q, 2) = r) @ And([true])} 
+
+--
+
+And([true]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+{(SafeDiv(q, 2) = r) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(SafeDiv(q, 2) = r), true]) 
+
+--
+
+And([(SafeDiv(q, 2) = r), true]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+And([(SafeDiv(q, 2) = r)]) 
+
+--
+
+And([(SafeDiv(q, 2) = r)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(SafeDiv(q, 2) = r) 
+
+--
+
+UnsafeDiv(q, 2), 
+   ~~> div_to_bubble ([("Bubble", 6000)]) 
+{SafeDiv(q, 2) @ (2 != 0)} 
+
+--
+
+(2 != 0), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+({SafeDiv(q, 2) @ true} = r), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(SafeDiv(q, 2) = r) @ And([true])} 
+
+--
+
+And([true]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+{(SafeDiv(q, 2) = r) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(SafeDiv(q, 2) = r), true]) 
+
+--
+
+And([(SafeDiv(q, 2) = r), true]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+And([(SafeDiv(q, 2) = r)]) 
+
+--
+
+And([(SafeDiv(q, 2) = r)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(SafeDiv(q, 2) = r) 
+
+--
+
+UnsafeDiv(q, 2), 
+   ~~> div_to_bubble ([("Bubble", 6000)]) 
+{SafeDiv(q, 2) @ (2 != 0)} 
+
+--
+
+(2 != 0), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+({SafeDiv(q, 2) @ true} = r), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(SafeDiv(q, 2) = r) @ And([true])} 
+
+--
+
+And([true]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+{(SafeDiv(q, 2) = r) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(SafeDiv(q, 2) = r), true]) 
+
+--
+
+And([(SafeDiv(q, 2) = r), true]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+And([(SafeDiv(q, 2) = r)]) 
+
+--
+
+And([(SafeDiv(q, 2) = r)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(SafeDiv(q, 2) = r) 
+
+--
+
+(SafeMod(m,2) = 0), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(m, 2, 0) 
+
+--
+
+(SafeMod(m,2) = 0), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(m, 2, 0) 
+
+--
+
+(SafeMod(m,2) = 0), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(m, 2, 0) 
+
+--
+
+(SafeMod(m,2) = 0), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(m, 2, 0) 
+
+--
+
+(p = SafeMod(m,2)), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(m, 2, p) 
+
+--
+
+(SafeMod(m,2) = 0), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(m, 2, 0) 
+
+--
+
+(SafeMod(m,2) = 0), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(m, 2, 0) 
+
+--
+
+(SafeDiv(q, 2) = r), 
+   ~~> introduce_diveq ([("Minion", 4200)]) 
+DivEq(q, 2, r) 
+
+--
+
+(SafeDiv(q, 2) = r), 
+   ~~> introduce_diveq ([("Minion", 4200)]) 
+DivEq(q, 2, r) 
+
+--
+
+(SafeDiv(q, 2) = r), 
+   ~~> introduce_diveq ([("Minion", 4200)]) 
+DivEq(q, 2, r) 
+
+--
+
+(SafeDiv(q, 2) = r), 
+   ~~> introduce_diveq ([("Minion", 4200)]) 
+DivEq(q, 2, r) 
+
+--
+
+Not(c), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
+WatchedLiteral(c,false) 
+
+--
+
+(n <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 5, 0) 
+
+--
+
+(n <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 5, 0) 
+
+--
+
+(n <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 5, 0) 
+
+--
+
+(n <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 5, 0) 
+
+--
+
+(n <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 5, 0) 
+
+--
+
+(o <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(o, 5, 0) 
+
+--
+
+(o <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(o, 5, 0) 
+
+--
+
+(n <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 5, 0) 
+
+--
+
+(n <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 5, 0) 
+
+--
+
+(n <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 5, 0) 
+
+--
+
+(n <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 5, 0) 
+
+--
+
+Not(Ineq(n, 5, 0)), 
+   ~~> not_constraint_to_reify ([("Minion", 4090)]) 
+Reify(Ineq(n, 5, 0), false) 
+
+--
+
+Not(Ineq(n, 5, 0)), 
+   ~~> not_constraint_to_reify ([("Minion", 4090)]) 
+Reify(Ineq(n, 5, 0), false) 
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+find e: bool
+find l: int(1..10)
+find m: int(1..10)
+find n: int(1..10)
+find o: int(1..10)
+find p: int(1..10)
+find q: int(1..10)
+find r: int(1..10)
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+true,
+Or([(a) -> (z), (z) -> (a)]),
+Or([(b) -> (c), (b) -> (WatchedLiteral(c,false))]),
+((l = 10)) -> ((l = 10)),
+Or([(Ineq(n, 5, 0)) -> (ModEq(m, 2, 0)), (ModEq(m, 2, 0)) -> (Ineq(n, 5, 0))]),
+Or([(Ineq(n, 5, 0)) -> (ModEq(m, 2, 0)), a, b, (ModEq(m, 2, 0)) -> (Ineq(n, 5, 0))]),
+(o = n),
+(d = Ineq(n, 5, 0)),
+ModEq(m, 2, p),
+Or([(Ineq(o, 5, 0)) -> ((p = 0)), (ModEq(m, 2, 0)) -> (d)]),
+Or([(Ineq(o, 5, 0)) -> ((p = 0)), a, b, (ModEq(m, 2, 0)) -> (d)]),
+Or([(DivEq(q, 2, r)) -> (Ineq(n, 5, 0)), (DivEq(q, 2, r)) -> (Reify(Ineq(n, 5, 0), false))]),
+Or([(DivEq(q, 2, r)) -> (Ineq(n, 5, 0)), a, b, (DivEq(q, 2, r)) -> (Reify(Ineq(n, 5, 0), false))])
+
