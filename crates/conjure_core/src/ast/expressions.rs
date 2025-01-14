@@ -60,6 +60,10 @@ pub enum Expression {
     #[compatible(JsonInput, SAT)]
     And(Metadata, Vec<Expression>),
 
+    /// Ensures that `a->b` (material implication).
+    #[compatible(JsonInput)]
+    Imply(Metadata, Box<Expression>, Box<Expression>),
+
     #[compatible(JsonInput)]
     Eq(Metadata, Box<Expression>, Box<Expression>),
 
@@ -364,6 +368,7 @@ impl Expression {
             Expression::And(_, _) => Some(Domain::BoolDomain),
             Expression::Not(_, _) => Some(Domain::BoolDomain),
             Expression::Or(_, _) => Some(Domain::BoolDomain),
+            Expression::Imply(_, _, _) => Some(Domain::BoolDomain),
             Expression::Eq(_, _, _) => Some(Domain::BoolDomain),
             Expression::Neq(_, _, _) => Some(Domain::BoolDomain),
             Expression::Geq(_, _, _) => Some(Domain::BoolDomain),
@@ -455,6 +460,7 @@ impl Expression {
             Expression::Max(_, _) => Some(ReturnType::Int),
             Expression::Not(_, _) => Some(ReturnType::Bool),
             Expression::Or(_, _) => Some(ReturnType::Bool),
+            Expression::Imply(_, _, _) => Some(ReturnType::Bool),
             Expression::And(_, _) => Some(ReturnType::Bool),
             Expression::Eq(_, _, _) => Some(ReturnType::Bool),
             Expression::Neq(_, _, _) => Some(ReturnType::Bool),
@@ -552,6 +558,9 @@ impl Display for Expression {
             }
             Expression::And(_, expressions) => {
                 write!(f, "And({})", pretty_vec(expressions))
+            }
+            Expression::Imply(_, box1, box2) => {
+                write!(f, "({}) -> ({})", box1, box2)
             }
             Expression::Eq(_, box1, box2) => {
                 write!(f, "({} = {})", box1.clone(), box2.clone())

@@ -1,0 +1,84 @@
+Model before rewriting:
+
+find x: int(1..5)
+find y: int(1..5)
+find z: int(1..5)
+
+such that
+
+((x < 3)) -> ((y >= 5)),
+((Sum([y, z]) = 8)) -> ((Sum([x, 2]) = 3))
+
+--
+
+(x < 3), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(x <= Sum([3, -1])) 
+
+--
+
+Sum([3, -1]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+2 
+
+--
+
+(x <= 2), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(x, 2, 0) 
+
+--
+
+(y >= 5), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(5, y, 0) 
+
+--
+
+(Sum([y, z]) = 8), 
+   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
+And([(Sum([y, z]) <= 8), (Sum([y, z]) >= 8)]) 
+
+--
+
+(Sum([y, z]) <= 8), 
+   ~~> introduce_sumleq ([("Minion", 4400)]) 
+SumLeq([y, z], 8) 
+
+--
+
+(Sum([y, z]) >= 8), 
+   ~~> introduce_sumgeq ([("Minion", 4400)]) 
+SumGeq([y, z], 8) 
+
+--
+
+(Sum([x, 2]) = 3), 
+   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
+And([(Sum([x, 2]) <= 3), (Sum([x, 2]) >= 3)]) 
+
+--
+
+(Sum([x, 2]) >= 3), 
+   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4500)]) 
+Ineq(3, x, 2) 
+
+--
+
+(Sum([x, 2]) <= 3), 
+   ~~> introduce_sumleq ([("Minion", 4400)]) 
+SumLeq([x, 2], 3) 
+
+--
+
+Final model:
+
+find x: int(1..5)
+find y: int(1..5)
+find z: int(1..5)
+
+such that
+
+(Ineq(x, 2, 0)) -> (Ineq(5, y, 0)),
+(And([SumLeq([y, z], 8), SumGeq([y, z], 8)])) -> (And([SumLeq([x, 2], 3), Ineq(3, x, 2)]))
+
