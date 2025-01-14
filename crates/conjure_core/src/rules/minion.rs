@@ -2,7 +2,9 @@
 /*        Rules for translating to Minion-supported constraints         */
 /************************************************************************/
 
-use crate::ast::{Atom, DecisionVariable, Domain, Expression as Expr, Literal as Lit};
+use std::convert::TryInto;
+
+use crate::ast::{Atom, DecisionVariable, Domain, Expression as Expr, Literal as Lit, ReturnType};
 
 use crate::metadata::Metadata;
 use crate::rule_engine::{
@@ -495,6 +497,83 @@ fn introduce_minuseq_from_aux_decl(expr: &Expr, _: &Model) -> ApplicationResult 
     Ok(Reduction::pure(Expr::FlatMinusEq(Metadata::new(), a, b)))
 }
 
+/// Converts an implication to either `ineq` or `reifyimply`
+///
+/// ```text
+/// x -> y ~> ineq(x,y,0)
+/// where x is atomic, y is atomic
+///
+/// x -> y ~> reifyimply(y,x)
+/// where x is atomic, y is non-atomic
+/// ```
+#[register_rule(("Minion", 4400))]
+fn introduce_reifyimply_ineq_from_imply(expr: &Expr, _: &Model) -> ApplicationResult {
+    let Expr::Imply(_, x, y) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let x_atom: &Atom = x.as_ref().try_into().or(Err(RuleNotApplicable))?;
+
+    // if both x and y are atoms,  x -> y ~> ineq(x,y,0)
+    //
+    // if only x is an atom, x -> y ~> reifyimply(y,x)
+    if let Ok(y_atom) = TryInto::<&Atom>::try_into(y.as_ref()) {
+        Ok(Reduction::pure(Expr::FlatIneq(
+            Metadata::new(),
+            x_atom.clone(),
+            y_atom.clone(),
+            0.into(),
+        )))
+    } else {
+        Ok(Reduction::pure(Expr::MinionReifyImply(
+            Metadata::new(),
+            y.clone(),
+            x_atom.clone(),
+        )))
+    }
+}
+
+/// Flattens an implication.
+///
+/// ```text
+/// e -> y  (where e is non atomic)
+///  ~~>
+/// __0 -> y,
+///
+/// with new top level constraints
+/// __0 =aux x
+///
+/// ```
+///
+/// Unlike other expressions, only the left hand side of implications are flattened. This is
+/// because implications can be expressed as a `reifyimply` constraint, which takes a constraint as
+/// an argument:
+///
+/// ``` text
+/// r -> c ~> refifyimply(r,c)
+///  where r is an atom, c is a constraint
+/// ```
+///
+/// See [`introduce_reifyimply_ineq_from_imply`].
+#[register_rule(("Minion", 4200))]
+fn flatten_imply(expr: &Expr, model: &Model) -> ApplicationResult {
+    let Expr::Imply(meta, x, y) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    // flatten x
+    let aux_var_info = to_aux_var(x.as_ref(), model).ok_or(RuleNotApplicable)?;
+
+    let model = aux_var_info.model();
+    let new_x = aux_var_info.as_expr();
+
+    Ok(Reduction::new(
+        Expr::Imply(meta.clone(), Box::new(new_x), y.clone()),
+        vec![aux_var_info.top_level_expr()],
+        model.variables,
+    ))
+}
+
 #[register_rule(("Minion", 4200))]
 fn flatten_generic(expr: &Expr, model: &Model) -> ApplicationResult {
     if !matches!(
@@ -508,6 +587,7 @@ fn flatten_generic(expr: &Expr, model: &Model) -> ApplicationResult {
             | Expr::Sum(_, _)
             | Expr::Product(_, _)
             | Expr::Neg(_, _)
+            | Expr::Not(_, _)
     ) {
         return Err(RuleNotApplicable);
     }
@@ -844,5 +924,39 @@ fn sum_eq_to_inequalities(expr: &Expr, _: &Model) -> ApplicationResult {
             Expr::Leq(Metadata::new(), sum.clone(), e1.clone()),
             Expr::Geq(Metadata::new(), sum.clone(), e1),
         ],
+    )))
+}
+
+/// Converts an equality to a boolean into a `reify` constraint.
+///
+/// ```text
+/// x =aux c ~> reify(c,x)
+/// x = c ~> reify(c,x)
+///
+/// where c is a boolean constraint
+/// ```
+#[register_rule(("Minion", 4400))]
+fn bool_eq_to_reify(expr: &Expr, _: &Model) -> ApplicationResult {
+    let (atom, e): (Atom, Box<Expr>) = match expr {
+        Expr::AuxDeclaration(_, name, e) => Ok((name.clone().into(), e.clone())),
+        Expr::Eq(_, a, b) => match (a.as_ref(), b.as_ref()) {
+            (Expr::Atomic(_, atom), _) => Ok((atom.clone(), b.clone())),
+            (_, Expr::Atomic(_, atom)) => Ok((atom.clone(), a.clone())),
+            _ => Err(RuleNotApplicable),
+        },
+
+        _ => Err(RuleNotApplicable),
+    }?;
+
+    // e does not have to be valid minion constraint yet, as long as we know it can turn into one
+    // (i.e. it is boolean).
+    let Some(ReturnType::Bool) = e.as_ref().return_type() else {
+        return Err(RuleNotApplicable);
+    };
+
+    Ok(Reduction::pure(Expr::MinionReify(
+        Metadata::new(),
+        e.clone(),
+        atom,
     )))
 }

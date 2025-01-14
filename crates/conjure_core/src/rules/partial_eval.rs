@@ -268,5 +268,6 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
         MinionDivEqUndefZero(_, _, _, _) => Err(RuleNotApplicable),
         MinionModuloEqUndefZero(_, _, _, _) => Err(RuleNotApplicable),
         MinionReify(_, _, _) => Err(RuleNotApplicable),
+        MinionReifyImply(_, _, _) => Err(RuleNotApplicable),
     }
 }
