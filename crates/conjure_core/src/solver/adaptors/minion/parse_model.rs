@@ -210,6 +210,10 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             parse_atom(v)?,
         )),
 
+        conjure_ast::Expression::MinionReifyImply(_metadata, e, v) => Ok(
+            minion_ast::Constraint::ReifyImply(Box::new(parse_expr(*e)?), parse_atom(v)?),
+        ),
+
         conjure_ast::Expression::AuxDeclaration(_metadata, name, expr) => Ok(
             minion_ast::Constraint::Eq(parse_name(name)?, parse_atomic_expr(*expr)?),
         ),

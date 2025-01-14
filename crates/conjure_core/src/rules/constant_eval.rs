@@ -131,6 +131,19 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Bool(b == result))
         }
+
+        Expr::MinionReifyImply(_, a, b) => {
+            let result = eval_constant(a)?;
+
+            let result: bool = result.try_into().ok()?;
+            let b: bool = b.try_into().ok()?;
+
+            if b {
+                Some(Lit::Bool(result))
+            } else {
+                Some(Lit::Bool(true))
+            }
+        }
         Expr::MinionModuloEqUndefZero(_, a, b, c) => {
             // From Savile Row. Same semantics as division.
             //

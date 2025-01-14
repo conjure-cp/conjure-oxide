@@ -652,9 +652,75 @@ And([(SafeDiv(q, 2) = r)]),
 
 --
 
-(SafeMod(m,2) = 0), 
-   ~~> introduce_modeq ([("Minion", 4200)]) 
-ModEq(m, 2, 0) 
+(a) -> (z), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+Ineq(a, z, 0) 
+
+--
+
+(z) -> (a), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+Ineq(z, a, 0) 
+
+--
+
+(b) -> (c), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+Ineq(b, c, 0) 
+
+--
+
+(b) -> (Not(c)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply(Not(c), b) 
+
+--
+
+(d = (n <= 5)), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((n <= 5), d) 
+
+--
+
+((l = 10)) -> ((l = 10)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__0) -> ((l = 10)) 
+new variables:
+  __0: bool
+new constraints:
+  __0 =aux (l = 10)
+--
+
+(__0) -> ((l = 10)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((l = 10), __0) 
+
+--
+
+__0 =aux (l = 10), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((l = 10), __0) 
+
+--
+
+((n <= 5)) -> ((SafeMod(m,2) = 0)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__1) -> ((SafeMod(m,2) = 0)) 
+new variables:
+  __1: bool
+new constraints:
+  __1 =aux (n <= 5)
+--
+
+(__1) -> ((SafeMod(m,2) = 0)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((SafeMod(m,2) = 0), __1) 
+
+--
+
+__1 =aux (n <= 5), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((n <= 5), __1) 
 
 --
 
@@ -664,21 +730,288 @@ ModEq(m, 2, 0)
 
 --
 
-(SafeMod(m,2) = 0), 
-   ~~> introduce_modeq ([("Minion", 4200)]) 
-ModEq(m, 2, 0) 
+((SafeMod(m,2) = 0)) -> ((n <= 5)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__2) -> ((n <= 5)) 
+new variables:
+  __2: bool
+new constraints:
+  __2 =aux (SafeMod(m,2) = 0)
+--
+
+(__2) -> ((n <= 5)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((n <= 5), __2) 
+
+--
+
+__2 =aux (SafeMod(m,2) = 0), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((SafeMod(m,2) = 0), __2) 
+
+--
+
+((n <= 5)) -> ((SafeMod(m,2) = 0)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__3) -> ((SafeMod(m,2) = 0)) 
+new variables:
+  __3: bool
+new constraints:
+  __3 =aux (n <= 5)
+--
+
+(__3) -> ((SafeMod(m,2) = 0)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((SafeMod(m,2) = 0), __3) 
+
+--
+
+__3 =aux (n <= 5), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((n <= 5), __3) 
 
 --
 
 (SafeMod(m,2) = 0), 
    ~~> introduce_modeq ([("Minion", 4200)]) 
 ModEq(m, 2, 0) 
+
+--
+
+((SafeMod(m,2) = 0)) -> ((n <= 5)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__4) -> ((n <= 5)) 
+new variables:
+  __4: bool
+new constraints:
+  __4 =aux (SafeMod(m,2) = 0)
+--
+
+(__4) -> ((n <= 5)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((n <= 5), __4) 
+
+--
+
+__4 =aux (SafeMod(m,2) = 0), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((SafeMod(m,2) = 0), __4) 
 
 --
 
 (p = SafeMod(m,2)), 
    ~~> introduce_modeq ([("Minion", 4200)]) 
 ModEq(m, 2, p) 
+
+--
+
+((o <= 5)) -> ((p = 0)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__5) -> ((p = 0)) 
+new variables:
+  __5: bool
+new constraints:
+  __5 =aux (o <= 5)
+--
+
+(__5) -> ((p = 0)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((p = 0), __5) 
+
+--
+
+__5 =aux (o <= 5), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((o <= 5), __5) 
+
+--
+
+((SafeMod(m,2) = 0)) -> (d), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__6) -> (d) 
+new variables:
+  __6: bool
+new constraints:
+  __6 =aux (SafeMod(m,2) = 0)
+--
+
+(__6) -> (d), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+Ineq(__6, d, 0) 
+
+--
+
+__6 =aux (SafeMod(m,2) = 0), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((SafeMod(m,2) = 0), __6) 
+
+--
+
+((o <= 5)) -> ((p = 0)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__7) -> ((p = 0)) 
+new variables:
+  __7: bool
+new constraints:
+  __7 =aux (o <= 5)
+--
+
+(__7) -> ((p = 0)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((p = 0), __7) 
+
+--
+
+__7 =aux (o <= 5), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((o <= 5), __7) 
+
+--
+
+((SafeMod(m,2) = 0)) -> (d), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__8) -> (d) 
+new variables:
+  __8: bool
+new constraints:
+  __8 =aux (SafeMod(m,2) = 0)
+--
+
+(__8) -> (d), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+Ineq(__8, d, 0) 
+
+--
+
+__8 =aux (SafeMod(m,2) = 0), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((SafeMod(m,2) = 0), __8) 
+
+--
+
+((SafeDiv(q, 2) = r)) -> ((n <= 5)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__9) -> ((n <= 5)) 
+new variables:
+  __9: bool
+new constraints:
+  __9 =aux (SafeDiv(q, 2) = r)
+--
+
+(__9) -> ((n <= 5)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((n <= 5), __9) 
+
+--
+
+__9 =aux (SafeDiv(q, 2) = r), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((SafeDiv(q, 2) = r), __9) 
+
+--
+
+((SafeDiv(q, 2) = r)) -> (Not((n <= 5))), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__10) -> (Not((n <= 5))) 
+new variables:
+  __10: bool
+new constraints:
+  __10 =aux (SafeDiv(q, 2) = r)
+--
+
+(__10) -> (Not((n <= 5))), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply(Not((n <= 5)), __10) 
+
+--
+
+__10 =aux (SafeDiv(q, 2) = r), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((SafeDiv(q, 2) = r), __10) 
+
+--
+
+Not((n <= 5)), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+Not(__11) 
+new variables:
+  __11: bool
+new constraints:
+  __11 =aux (n <= 5)
+--
+
+__11 =aux (n <= 5), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((n <= 5), __11) 
+
+--
+
+((SafeDiv(q, 2) = r)) -> ((n <= 5)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__12) -> ((n <= 5)) 
+new variables:
+  __12: bool
+new constraints:
+  __12 =aux (SafeDiv(q, 2) = r)
+--
+
+(__12) -> ((n <= 5)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((n <= 5), __12) 
+
+--
+
+__12 =aux (SafeDiv(q, 2) = r), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((SafeDiv(q, 2) = r), __12) 
+
+--
+
+((SafeDiv(q, 2) = r)) -> (Not((n <= 5))), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__13) -> (Not((n <= 5))) 
+new variables:
+  __13: bool
+new constraints:
+  __13 =aux (SafeDiv(q, 2) = r)
+--
+
+(__13) -> (Not((n <= 5))), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply(Not((n <= 5)), __13) 
+
+--
+
+__13 =aux (SafeDiv(q, 2) = r), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((SafeDiv(q, 2) = r), __13) 
+
+--
+
+Not((n <= 5)), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+Not(__14) 
+new variables:
+  __14: bool
+new constraints:
+  __14 =aux (n <= 5)
+--
+
+__14 =aux (n <= 5), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((n <= 5), __14) 
+
+--
+
+(SafeMod(m,2) = 0), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(m, 2, 0) 
+
+--
+
+(SafeMod(m,2) = 0), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(m, 2, 0) 
 
 --
 
@@ -748,6 +1081,30 @@ Ineq(n, 5, 0)
 
 --
 
+Not(__11), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
+WatchedLiteral(__11,false) 
+
+--
+
+(n <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 5, 0) 
+
+--
+
+Not(__14), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
+WatchedLiteral(__14,false) 
+
+--
+
+(n <= 5), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 5, 0) 
+
+--
+
 (n <= 5), 
    ~~> leq_to_ineq ([("Minion", 4100)]) 
 Ineq(n, 5, 0) 
@@ -775,30 +1132,6 @@ Ineq(n, 5, 0)
 (n <= 5), 
    ~~> leq_to_ineq ([("Minion", 4100)]) 
 Ineq(n, 5, 0) 
-
---
-
-(n <= 5), 
-   ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(n, 5, 0) 
-
---
-
-(n <= 5), 
-   ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(n, 5, 0) 
-
---
-
-Not(Ineq(n, 5, 0)), 
-   ~~> not_constraint_to_reify ([("Minion", 4090)]) 
-Reify(Ineq(n, 5, 0), false) 
-
---
-
-Not(Ineq(n, 5, 0)), 
-   ~~> not_constraint_to_reify ([("Minion", 4090)]) 
-Reify(Ineq(n, 5, 0), false) 
 
 --
 
@@ -819,20 +1152,50 @@ find r: int(1..10)
 find x: bool
 find y: bool
 find z: bool
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+find __5: bool
+find __6: bool
+find __7: bool
+find __8: bool
+find __9: bool
+find __10: bool
+find __11: bool
+find __12: bool
+find __13: bool
+find __14: bool
 
 such that
 
 true,
-Or([(a) -> (z), (z) -> (a)]),
-Or([(b) -> (c), (b) -> (WatchedLiteral(c,false))]),
-((l = 10)) -> ((l = 10)),
-Or([(Ineq(n, 5, 0)) -> (ModEq(m, 2, 0)), (ModEq(m, 2, 0)) -> (Ineq(n, 5, 0))]),
-Or([(Ineq(n, 5, 0)) -> (ModEq(m, 2, 0)), a, b, (ModEq(m, 2, 0)) -> (Ineq(n, 5, 0))]),
+Or([Ineq(a, z, 0), Ineq(z, a, 0)]),
+Or([Ineq(b, c, 0), ReifyImply(WatchedLiteral(c,false), b)]),
+ReifyImply((l = 10), __0),
+Or([ReifyImply(ModEq(m, 2, 0), __1), ReifyImply(Ineq(n, 5, 0), __2)]),
+Or([ReifyImply(ModEq(m, 2, 0), __3), a, b, ReifyImply(Ineq(n, 5, 0), __4)]),
 (o = n),
-(d = Ineq(n, 5, 0)),
+Reify(Ineq(n, 5, 0), d),
 ModEq(m, 2, p),
-Or([(Ineq(o, 5, 0)) -> ((p = 0)), (ModEq(m, 2, 0)) -> (d)]),
-Or([(Ineq(o, 5, 0)) -> ((p = 0)), a, b, (ModEq(m, 2, 0)) -> (d)]),
-Or([(DivEq(q, 2, r)) -> (Ineq(n, 5, 0)), (DivEq(q, 2, r)) -> (Reify(Ineq(n, 5, 0), false))]),
-Or([(DivEq(q, 2, r)) -> (Ineq(n, 5, 0)), a, b, (DivEq(q, 2, r)) -> (Reify(Ineq(n, 5, 0), false))])
+Or([ReifyImply((p = 0), __5), Ineq(__6, d, 0)]),
+Or([ReifyImply((p = 0), __7), a, b, Ineq(__8, d, 0)]),
+Or([ReifyImply(Ineq(n, 5, 0), __9), ReifyImply(WatchedLiteral(__11,false), __10)]),
+Or([ReifyImply(Ineq(n, 5, 0), __12), a, b, ReifyImply(WatchedLiteral(__14,false), __13)]),
+Reify((l = 10), __0),
+Reify(Ineq(n, 5, 0), __1),
+Reify(ModEq(m, 2, 0), __2),
+Reify(Ineq(n, 5, 0), __3),
+Reify(ModEq(m, 2, 0), __4),
+Reify(Ineq(o, 5, 0), __5),
+Reify(ModEq(m, 2, 0), __6),
+Reify(Ineq(o, 5, 0), __7),
+Reify(ModEq(m, 2, 0), __8),
+Reify(DivEq(q, 2, r), __9),
+Reify(DivEq(q, 2, r), __10),
+Reify(Ineq(n, 5, 0), __11),
+Reify(DivEq(q, 2, r), __12),
+Reify(DivEq(q, 2, r), __13),
+Reify(Ineq(n, 5, 0), __14)
 

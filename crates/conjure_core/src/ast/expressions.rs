@@ -241,6 +241,17 @@ pub enum Expression {
     #[compatible(Minion)]
     MinionReify(Metadata, Box<Expression>, Atom),
 
+    /// `reifyimply(constraint,r)` ensures that `r->constraint`, where r is a 0/1 variable.
+    /// variable.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#reifyimply)
+    #[compatible(Minion)]
+    MinionReifyImply(Metadata, Box<Expression>, Atom),
+
     /// Declaration of an auxiliary variable.
     ///
     /// As with Savile Row, we semantically distinguish this from `Eq`.
@@ -384,6 +395,7 @@ impl Expression {
             Expression::AllDiff(_, _) => Some(Domain::BoolDomain),
             Expression::FlatWatchedLiteral(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionReify(_, _, _) => Some(Domain::BoolDomain),
+            Expression::MinionReifyImply(_, _, _) => Some(Domain::BoolDomain),
             Expression::Neg(_, x) => {
                 let Some(Domain::IntDomain(mut ranges)) = x.domain_of(vars) else {
                     return None;
@@ -478,6 +490,7 @@ impl Expression {
             Expression::Bubble(_, _, _) => None, // TODO: (flm8) should this be a bool?
             Expression::FlatWatchedLiteral(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReify(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionReifyImply(_, _, _) => Some(ReturnType::Bool),
             Expression::AuxDeclaration(_, _, _) => Some(ReturnType::Bool),
             Expression::UnsafeMod(_, _, _) => Some(ReturnType::Int),
             Expression::SafeMod(_, _, _) => Some(ReturnType::Int),
@@ -629,6 +642,9 @@ impl Display for Expression {
             }
             Expression::MinionReify(_, box1, box2) => {
                 write!(f, "Reify({}, {})", box1.clone(), box2.clone())
+            }
+            Expression::MinionReifyImply(_, box1, box2) => {
+                write!(f, "ReifyImply({}, {})", box1.clone(), box2.clone())
             }
             Expression::AuxDeclaration(_, n, e) => {
                 write!(f, "{} =aux {}", n, e.clone())
