@@ -1,0 +1,46 @@
+Model before rewriting:
+
+find x: int(2..4)
+find y: int(2..4)
+find z: int(2..4)
+
+such that
+
+(Sum([Sum([Product([2, x]), Product([3, y])]), z]) < 14)
+
+--
+
+Sum([Sum([Product([2, x]), Product([3, y])]), z]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([Product([2, x]), Product([3, y]), z]) 
+
+--
+
+(Sum([Product([2, x]), Product([3, y]), z]) < 14), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(Sum([Product([2, x]), Product([3, y]), z]) <= Sum([14, -1])) 
+
+--
+
+Sum([14, -1]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+13 
+
+--
+
+(Sum([Product([2, x]), Product([3, y]), z]) <= 13), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4500)]) 
+FlatWeightedSumLeq([2, 3, 1],[x, y, z],13) 
+
+--
+
+Final model:
+
+find x: int(2..4)
+find y: int(2..4)
+find z: int(2..4)
+
+such that
+
+FlatWeightedSumLeq([2, 3, 1],[x, y, z],13)
+

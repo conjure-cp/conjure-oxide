@@ -1,7 +1,22 @@
-Sum([-(y), z]), 
-   ~~> flatten_vecop ([("Minion", 4400)]) 
-Sum([__0, z]) 
+Model before rewriting:
 
+find x: int(1..3)
+find y: int(-1..1)
+find z: int(-1..1)
+
+such that
+
+(x = Sum([-(y), z]))
+
+--
+
+Sum([-(y), z]), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+Sum([__0, z]) 
+new variables:
+  __0: int(-1..1)
+new constraints:
+  __0 =aux -(y)
 --
 
 __0 =aux -(y), 
@@ -11,14 +26,32 @@ MinusEq(__0,y)
 --
 
 (x = Sum([__0, z])), 
-   ~~> sum_eq_to_sumeq ([("Minion", 4200)]) 
-SumEq([__0, z], x) 
+   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
+And([(Sum([__0, z]) <= x), (Sum([__0, z]) >= x)]) 
 
 --
 
-SumEq([__0, z], x), 
-   ~~> sumeq_to_minion ([("Minion", 4400)]) 
-And([SumLeq([__0, z], x), SumGeq([__0, z], x)]) 
+(Sum([__0, z]) <= x), 
+   ~~> introduce_sumleq ([("Minion", 4400)]) 
+SumLeq([__0, z], x) 
 
 --
+
+(Sum([__0, z]) >= x), 
+   ~~> introduce_sumgeq ([("Minion", 4400)]) 
+SumGeq([__0, z], x) 
+
+--
+
+Final model:
+
+find x: int(1..3)
+find y: int(-1..1)
+find z: int(-1..1)
+find __0: int(-1..1)
+
+such that
+
+And([SumLeq([__0, z], x), SumGeq([__0, z], x)]),
+MinusEq(__0,y)
 

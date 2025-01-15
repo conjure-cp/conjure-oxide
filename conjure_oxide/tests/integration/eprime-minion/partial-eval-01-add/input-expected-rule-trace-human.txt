@@ -1,5 +1,16 @@
+Model before rewriting:
+
+find x: int(1..50)
+find y: int(1..50)
+
+such that
+
+(Sum([Sum([Sum([Sum([x, 10]), 20]), y]), 5]) = 100)
+
+--
+
 Sum([Sum([Sum([Sum([x, 10]), 20]), y]), 5]), 
-   ~~> normalise_associative_commutative ([("Base", 8400)]) 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
 Sum([x, 10, 20, y, 5]) 
 
 --
@@ -11,20 +22,29 @@ Sum([x, y, 35])
 --
 
 (Sum([x, y, 35]) = 100), 
-   ~~> sum_eq_to_sumeq ([("Minion", 4200)]) 
-SumEq([x, y, 35], 100) 
+   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
+And([(Sum([x, y, 35]) <= 100), (Sum([x, y, 35]) >= 100)]) 
 
 --
 
-SumEq([x, y, 35], 100), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-SumEq([x, y], 65) 
+(Sum([x, y, 35]) <= 100), 
+   ~~> introduce_sumleq ([("Minion", 4400)]) 
+SumLeq([x, y, 35], 100) 
 
 --
 
-SumEq([x, y], 65), 
-   ~~> sumeq_to_minion ([("Minion", 4400)]) 
-And([SumLeq([x, y], 65), SumGeq([x, y], 65)]) 
+(Sum([x, y, 35]) >= 100), 
+   ~~> introduce_sumgeq ([("Minion", 4400)]) 
+SumGeq([x, y, 35], 100) 
 
 --
+
+Final model:
+
+find x: int(1..50)
+find y: int(1..50)
+
+such that
+
+And([SumLeq([x, y, 35], 100), SumGeq([x, y, 35], 100)])
 

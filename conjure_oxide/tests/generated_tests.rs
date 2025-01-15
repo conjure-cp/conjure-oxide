@@ -99,7 +99,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
     // correctly
 
-    let (subscriber, _guard) = create_scoped_subscriber(path, essence_base);
+    let subscriber = create_scoped_subscriber(path, essence_base);
 
     // set the subscriber as default
     tracing::subscriber::with_default(subscriber, || {
@@ -177,7 +177,7 @@ fn integration_test_inner(
     // Stage 1: Read the essence file and check that the model is parsed correctly
     let model = parse_essence_file(path, essence_base, extension, context.clone())?;
     if verbose {
-        println!("Parsed model: {:#?}", model)
+        println!("Parsed model: {}", model)
     }
 
     context.as_ref().write().unwrap().file_name =
@@ -186,7 +186,7 @@ fn integration_test_inner(
     save_model_json(&model, path, essence_base, "parse", accept)?;
     let expected_model = read_model_json(path, essence_base, "expected", "parse")?;
     if verbose {
-        println!("Expected model: {:#?}", expected_model)
+        println!("Expected model: {}", expected_model)
     }
 
     assert_eq!(model, expected_model);
@@ -202,10 +202,21 @@ fn integration_test_inner(
     // } else {
     //     rewrite_model(&model, &rule_sets)?
     // };
+
+    tracing::trace!(
+        target: "rule_engine_human",
+        "Model before rewriting:\n\n{}\n--\n",
+        model
+    );
     let model = rewrite_naive(&model, &rule_sets, false)?;
 
+    tracing::trace!(
+        target: "rule_engine_human",
+        "Final model:\n\n{}",
+        model
+    );
     if verbose {
-        println!("Rewritten model: {:#?}", model)
+        println!("Rewritten model: {}", model)
     }
 
     save_model_json(&model, path, essence_base, "rewrite", accept)?;
@@ -223,7 +234,7 @@ fn integration_test_inner(
 
     let expected_model = read_model_json(path, essence_base, "expected", "rewrite")?;
     if verbose {
-        println!("Expected model: {:#?}", expected_model)
+        println!("Expected model: {}", expected_model)
     }
 
     assert_eq!(model, expected_model);
@@ -418,23 +429,19 @@ fn create_file_layer_json(
     (layer1, guard1)
 }
 
-fn create_file_layer_human(
-    path: &str,
-    test_name: &str,
-) -> (impl Layer<Registry> + Send + Sync, WorkerGuard) {
+fn create_file_layer_human(path: &str, test_name: &str) -> (impl Layer<Registry> + Send + Sync) {
     let file = File::create(format!("{path}/{test_name}-generated-rule-trace-human.txt"))
         .expect("Unable to create log file");
-    let (non_blocking, guard2) = tracing_appender::non_blocking(file);
 
     let layer2 = fmt::layer()
-        .with_writer(non_blocking)
+        .with_writer(file)
         .with_level(false)
         .without_time()
         .with_target(false)
         .with_filter(EnvFilter::new("rule_engine_human=trace"))
         .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human"));
 
-    (layer2, guard2)
+    layer2
 }
 
 #[test]

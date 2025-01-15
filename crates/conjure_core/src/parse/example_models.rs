@@ -29,7 +29,7 @@ pub fn get_example_model(filename: &str) -> Result<Model, anyhow::Error> {
         if path.is_file()
             && path
                 .extension()
-                .map_or(false, |e| e == "essence" || e == "eprime")
+                .is_some_and(|e| e == "essence" || e == "eprime")
             && path.file_stem() == Some(std::ffi::OsStr::new(filename))
         {
             essence_path = path.to_path_buf();

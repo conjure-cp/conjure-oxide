@@ -1,0 +1,153 @@
+Model before rewriting:
+
+find a: int(2..10)
+find b: int(2..10)
+find c: int(2..10)
+find d: int(2..10)
+find e: int(2..10)
+find f: int(2..10)
+find g: int(2..10)
+find h: int(2..10)
+
+such that
+
+(Sum([Sum([Sum([Sum([a, Product([2, b])]), Product([Product([3, c]), d])]), UnsafeDiv(e, f)]), Product([5, UnsafeDiv(g, h)])]) <= 18)
+
+--
+
+Sum([Sum([Sum([Sum([a, Product([2, b])]), Product([Product([3, c]), d])]), UnsafeDiv(e, f)]), Product([5, UnsafeDiv(g, h)])]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([a, Product([2, b]), Product([Product([3, c]), d]), UnsafeDiv(e, f), Product([5, UnsafeDiv(g, h)])]) 
+
+--
+
+Product([Product([3, c]), d]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Product([3, c, d]) 
+
+--
+
+UnsafeDiv(e, f), 
+   ~~> div_to_bubble ([("Bubble", 6000)]) 
+{SafeDiv(e, f) @ (f != 0)} 
+
+--
+
+Sum([a, Product([2, b]), Product([3, c, d]), {SafeDiv(e, f) @ (f != 0)}, Product([5, UnsafeDiv(g, h)])]), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{Sum([a, Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([5, UnsafeDiv(g, h)])]) @ And([(f != 0)])} 
+
+--
+
+({Sum([a, Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([5, UnsafeDiv(g, h)])]) @ And([(f != 0)])} <= 18), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(Sum([a, Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([5, UnsafeDiv(g, h)])]) <= 18) @ And([And([(f != 0)])])} 
+
+--
+
+{(Sum([a, Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([5, UnsafeDiv(g, h)])]) <= 18) @ And([And([(f != 0)])])}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(Sum([a, Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([5, UnsafeDiv(g, h)])]) <= 18), And([And([(f != 0)])])]) 
+
+--
+
+And([And([(f != 0)])]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+And([(f != 0)]) 
+
+--
+
+And([(f != 0)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(f != 0) 
+
+--
+
+UnsafeDiv(g, h), 
+   ~~> div_to_bubble ([("Bubble", 6000)]) 
+{SafeDiv(g, h) @ (h != 0)} 
+
+--
+
+Product([5, {SafeDiv(g, h) @ (h != 0)}]), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{Product([5, SafeDiv(g, h)]) @ And([(h != 0)])} 
+
+--
+
+Sum([a, Product([2, b]), Product([3, c, d]), SafeDiv(e, f), {Product([5, SafeDiv(g, h)]) @ And([(h != 0)])}]), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{Sum([a, Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([5, SafeDiv(g, h)])]) @ And([And([(h != 0)])])} 
+
+--
+
+({Sum([a, Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([5, SafeDiv(g, h)])]) @ And([And([(h != 0)])])} <= 18), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(Sum([a, Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([5, SafeDiv(g, h)])]) <= 18) @ And([And([And([(h != 0)])])])} 
+
+--
+
+{(Sum([a, Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([5, SafeDiv(g, h)])]) <= 18) @ And([And([And([(h != 0)])])])}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(Sum([a, Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([5, SafeDiv(g, h)])]) <= 18), And([And([And([(h != 0)])])])]) 
+
+--
+
+And([And([(Sum([a, Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([5, SafeDiv(g, h)])]) <= 18), And([And([And([(h != 0)])])])]), (f != 0)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+And([(Sum([a, Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([5, SafeDiv(g, h)])]) <= 18), (h != 0), (f != 0)]) 
+
+--
+
+(Sum([a, Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([5, SafeDiv(g, h)])]) <= 18), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4500)]) 
+FlatWeightedSumLeq([1, 2, 3, 1, 5],[a, b, __0, __1, __2],18) 
+new variables:
+  __0: int(4..100)
+  __1: int(0..5)
+  __2: int(0..5)
+new constraints:
+  __0 =aux Product([c, d])
+  __1 =aux SafeDiv(e, f)
+  __2 =aux SafeDiv(g, h)
+--
+
+__0 =aux Product([c, d]), 
+   ~~> introduce_producteq ([("Minion", 4200)]) 
+FlatProductEq(d,c,__0) 
+
+--
+
+__1 =aux SafeDiv(e, f), 
+   ~~> introduce_diveq ([("Minion", 4200)]) 
+DivEq(e, f, __1) 
+
+--
+
+__2 =aux SafeDiv(g, h), 
+   ~~> introduce_diveq ([("Minion", 4200)]) 
+DivEq(g, h, __2) 
+
+--
+
+Final model:
+
+find a: int(2..10)
+find b: int(2..10)
+find c: int(2..10)
+find d: int(2..10)
+find e: int(2..10)
+find f: int(2..10)
+find g: int(2..10)
+find h: int(2..10)
+find __0: int(4..100)
+find __1: int(0..5)
+find __2: int(0..5)
+
+such that
+
+And([FlatWeightedSumLeq([1, 2, 3, 1, 5],[a, b, __0, __1, __2],18), (h != 0), (f != 0)]),
+FlatProductEq(d,c,__0),
+DivEq(e, f, __1),
+DivEq(g, h, __2)
+

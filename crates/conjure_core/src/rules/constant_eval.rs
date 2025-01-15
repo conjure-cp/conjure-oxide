@@ -6,6 +6,7 @@ use conjure_core::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
 };
 use conjure_core::Model;
+use itertools::izip;
 
 register_rule_set!("Constant", 100, ());
 
@@ -27,6 +28,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
     match expr {
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
         Expr::Atomic(_, Atom::Reference(_c)) => None,
+        Expr::Abs(_, e) => un_op::<i32, i32>(|a| a.abs(), e).map(Lit::Int),
         Expr::Eq(_, a, b) => bin_op::<i32, bool>(|a, b| a == b, a, b)
             .or_else(|| bin_op::<bool, bool>(|a, b| a == b, a, b))
             .map(Lit::Bool),
@@ -42,6 +44,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::Or(_, exprs) => vec_op::<bool, bool>(|e| e.iter().any(|&e| e), exprs).map(Lit::Bool),
 
         Expr::Sum(_, exprs) => vec_op::<i32, i32>(|e| e.iter().sum(), exprs).map(Lit::Int),
+        Expr::Product(_, exprs) => vec_op::<i32, i32>(|e| e.iter().product(), exprs).map(Lit::Int),
 
         Expr::FlatIneq(_, a, b, c) => {
             let a: i32 = a.try_into().ok()?;
@@ -113,9 +116,6 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Bool(b == result))
         }
-        Expr::SumEq(_, exprs, a) => {
-            flat_op::<i32, bool>(|e, a| e.iter().sum::<i32>() == a, exprs, a).map(Lit::Bool)
-        }
         Expr::MinionModuloEqUndefZero(_, a, b, c) => {
             // From Savile Row. Same semantics as division.
             //
@@ -169,10 +169,50 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             let a: i32 = a.try_into().ok()?;
             let b: i32 = b.try_into().ok()?;
             Some(Lit::Bool(a == -b))
-        } // _ => {
-          //     warn!(%expr,"Unimplemented constant eval");
-          //     None
-          // }
+        }
+        Expr::FlatProductEq(_, a, b, c) => {
+            let a: i32 = a.try_into().ok()?;
+            let b: i32 = b.try_into().ok()?;
+            let c: i32 = c.try_into().ok()?;
+            Some(Lit::Bool(a * b == c))
+        }
+        Expr::FlatWeightedSumLeq(_, cs, vs, total) => {
+            let cs: Vec<i32> = cs
+                .iter()
+                .map(|x| TryInto::<i32>::try_into(x).ok())
+                .collect::<Option<Vec<i32>>>()?;
+            let vs: Vec<i32> = vs
+                .iter()
+                .map(|x| TryInto::<i32>::try_into(x).ok())
+                .collect::<Option<Vec<i32>>>()?;
+            let total: i32 = total.try_into().ok()?;
+
+            let sum: i32 = izip!(cs, vs).fold(0, |acc, (c, v)| acc + (c * v));
+
+            Some(Lit::Bool(sum <= total))
+        }
+
+        Expr::FlatWeightedSumGeq(_, cs, vs, total) => {
+            let cs: Vec<i32> = cs
+                .iter()
+                .map(|x| TryInto::<i32>::try_into(x).ok())
+                .collect::<Option<Vec<i32>>>()?;
+            let vs: Vec<i32> = vs
+                .iter()
+                .map(|x| TryInto::<i32>::try_into(x).ok())
+                .collect::<Option<Vec<i32>>>()?;
+            let total: i32 = total.try_into().ok()?;
+
+            let sum: i32 = izip!(cs, vs).fold(0, |acc, (c, v)| acc + (c * v));
+
+            Some(Lit::Bool(sum >= total))
+        }
+        Expr::FlatAbsEq(_, x, y) => {
+            let x: i32 = x.try_into().ok()?;
+            let y: i32 = y.try_into().ok()?;
+
+            Some(Lit::Bool(x == y.abs()))
+        }
     }
 }
 
@@ -220,6 +260,7 @@ where
     f(a)
 }
 
+#[allow(dead_code)]
 fn flat_op<T, A>(f: fn(Vec<T>, T) -> A, a: &[Expr], b: &Expr) -> Option<A>
 where
     T: TryFrom<Lit>,

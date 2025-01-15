@@ -1,9 +1,10 @@
+use std::collections::BTreeSet;
 use std::fmt::{self, Display, Formatter};
 use std::hash::Hash;
 
 use thiserror::Error;
 
-use crate::ast::{Expression, SymbolTable};
+use crate::ast::{DecisionVariable, Expression, Name, SymbolTable};
 use crate::model::Model;
 
 #[derive(Debug, Error)]
@@ -97,10 +98,42 @@ impl Reduction {
         }
     }
 
-    // Apply side-effects (e.g. symbol table updates)
+    /// Applies side-effects (e.g. symbol table updates)
     pub fn apply(self, model: &mut Model) {
         model.extend_sym_table(self.symbols); // Add new assignments to the symbol table
         model.constraints.extend(self.new_top.clone());
+    }
+
+    /// Gets symbols added by this reduction
+    pub fn added_symbols(&self, initial_symbols: &SymbolTable) -> BTreeSet<Name> {
+        let initial_symbols_set: BTreeSet<Name> = initial_symbols.keys().cloned().collect();
+        let new_symbols_set: BTreeSet<Name> = self.symbols.keys().cloned().collect();
+
+        new_symbols_set
+            .difference(&initial_symbols_set)
+            .cloned()
+            .collect()
+    }
+
+    /// Gets symbols changed by this reduction
+    ///
+    /// Returns a list of tuples of (name, domain before reduction, domain after reduction)
+    pub fn changed_symbols(
+        &self,
+        initial_symbols: &SymbolTable,
+    ) -> Vec<(Name, DecisionVariable, DecisionVariable)> {
+        let mut changes: Vec<(Name, DecisionVariable, DecisionVariable)> = vec![];
+
+        for (var_name, initial_value) in initial_symbols {
+            let Some(new_value) = self.symbols.get(var_name) else {
+                continue;
+            };
+
+            if new_value != initial_value {
+                changes.push((var_name.clone(), initial_value.clone(), new_value.clone()));
+            }
+        }
+        changes
     }
 }
 

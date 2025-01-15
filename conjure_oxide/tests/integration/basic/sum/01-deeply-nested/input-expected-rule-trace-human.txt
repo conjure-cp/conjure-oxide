@@ -1,18 +1,50 @@
+Model before rewriting:
+
+find a: int(1)
+find b: int(1)
+find c: int(1)
+find d: int(1)
+find e: int(1)
+
+such that
+
+(Sum([a, Sum([b, Sum([c, d])]), e]) = 5)
+
+--
+
 Sum([a, Sum([b, Sum([c, d])]), e]), 
-   ~~> normalise_associative_commutative ([("Base", 8400)]) 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
 Sum([a, b, c, d, e]) 
 
 --
 
 (Sum([a, b, c, d, e]) = 5), 
-   ~~> sum_eq_to_sumeq ([("Minion", 4200)]) 
-SumEq([a, b, c, d, e], 5) 
+   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
+And([(Sum([a, b, c, d, e]) <= 5), (Sum([a, b, c, d, e]) >= 5)]) 
 
 --
 
-SumEq([a, b, c, d, e], 5), 
-   ~~> sumeq_to_minion ([("Minion", 4400)]) 
-And([SumLeq([a, b, c, d, e], 5), SumGeq([a, b, c, d, e], 5)]) 
+(Sum([a, b, c, d, e]) <= 5), 
+   ~~> introduce_sumleq ([("Minion", 4400)]) 
+SumLeq([a, b, c, d, e], 5) 
 
 --
+
+(Sum([a, b, c, d, e]) >= 5), 
+   ~~> introduce_sumgeq ([("Minion", 4400)]) 
+SumGeq([a, b, c, d, e], 5) 
+
+--
+
+Final model:
+
+find a: int(1)
+find b: int(1)
+find c: int(1)
+find d: int(1)
+find e: int(1)
+
+such that
+
+And([SumLeq([a, b, c, d, e], 5), SumGeq([a, b, c, d, e], 5)])
 

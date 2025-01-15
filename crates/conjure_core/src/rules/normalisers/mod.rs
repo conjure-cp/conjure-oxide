@@ -3,5 +3,8 @@
 mod associative_commutative;
 mod bool;
 mod eq_neq;
+mod lt_gt;
 mod neg_minus;
+mod product;
 mod sum;
+mod weighted_sums;

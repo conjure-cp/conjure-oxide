@@ -1,6 +1,6 @@
 use super::{RewriteError, RuleSet};
 use crate::{
-    ast::{pretty::pretty_vec, Expression as Expr},
+    ast::Expression as Expr,
     bug,
     rule_engine::{
         get_rule_priorities,
@@ -75,18 +75,10 @@ pub fn rewrite_naive<'a>(
 
         match results.as_slice() {
             [] => break, // Exit if no rules are applicable.
-            [(result, priority, expr, ctx), ..] => {
+            [(result, _priority, expr, ctx), ..] => {
                 // Extract the single applicable rule and apply it
-                tracing::info!(
-                    new_top = %pretty_vec(&result.reduction.new_top),
-                    "Applying rule: {} (priority {}), to expression: {}, resulting in: {}",
-                    result.rule.name,
-                    priority,
-                    expr,
-                    result.reduction.new_expression
-                );
 
-                log_rule_application(result, expr);
+                log_rule_application(result, expr, &model);
 
                 // Replace expr with new_expression
                 model.set_constraints(ctx(result.reduction.new_expression.clone()));

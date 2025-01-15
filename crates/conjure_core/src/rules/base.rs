@@ -32,10 +32,14 @@ fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
             | FlatMinusEq(_, _, _)
             | FlatSumGeq(_, _, _)
             | FlatSumLeq(_, _, _)
+            | FlatProductEq(_, _, _, _)
             | FlatWatchedLiteral(_, _, _)
+            | FlatWeightedSumGeq(_, _, _, _)
+            | FlatWeightedSumLeq(_, _, _, _)
             | MinionDivEqUndefZero(_, _, _, _)
             | MinionModuloEqUndefZero(_, _, _, _)
             | MinionReify(_, _, _)
+            | FlatAbsEq(_, _, _)
     ) {
         return Err(ApplicationError::RuleNotApplicable);
     }
@@ -58,7 +62,7 @@ fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
  * min([a, b]) ~> c ; c <= a & c <= b & (c = a | c = b)
  * ```
  */
-#[register_rule(("Base", 2000))]
+#[register_rule(("Base", 6000))]
 fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
     match expr {
         Min(_, exprs) => {
@@ -102,7 +106,7 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
  * max([a, b]) ~> c ; c >= a & c >= b & (c = a | c = b)
  * ```
  */
-#[register_rule(("Base", 100))]
+#[register_rule(("Base", 6000))]
 fn max_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
     match expr {
         Max(_, exprs) => {

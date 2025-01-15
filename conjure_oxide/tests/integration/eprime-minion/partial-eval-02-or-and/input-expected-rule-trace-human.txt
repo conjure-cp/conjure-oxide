@@ -1,3 +1,17 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+Or([Or([a, b]), false]),
+Or([AllDiff([1, 2, 3]), true]),
+And([c, true])
+
+--
+
 Or([AllDiff([1, 2, 3]), true]), 
    ~~> apply_eval_constant ([("Constant", 9001)]) 
 true 
@@ -16,15 +30,27 @@ And([c])
 
 --
 
+Or([Or([a, b])]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Or([a, b]) 
+
+--
+
 And([c]), 
    ~~> remove_unit_vector_and ([("Base", 8800)]) 
 c 
 
 --
 
-Or([Or([a, b])]), 
-   ~~> normalise_associative_commutative ([("Base", 8400)]) 
-Or([a, b]) 
+Final model:
 
---
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+Or([a, b]),
+true,
+c
 

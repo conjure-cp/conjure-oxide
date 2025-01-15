@@ -1,3 +1,14 @@
+Model before rewriting:
+
+find a: int(0..3)
+find b: int(0..3)
+
+such that
+
+(a % b = 1)
+
+--
+
 a % b, 
    ~~> mod_to_bubble ([("Bubble", 6000)]) 
 {SafeMod(a,b) @ (b != 0)} 
@@ -27,4 +38,13 @@ And([(b != 0)]),
 ModEq(a, b, 1) 
 
 --
+
+Final model:
+
+find a: int(0..3)
+find b: int(0..3)
+
+such that
+
+And([ModEq(a, b, 1), (b != 0)])
 
