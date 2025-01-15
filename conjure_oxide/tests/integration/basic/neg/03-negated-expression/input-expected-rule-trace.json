@@ -49,8 +49,16 @@
   },
   {
     "fields": {
-      "initial_expression": "Eq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Neg(Metadata { clean: false, etype: None }, SafeDiv(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\"))))))",
-      "rule_name": "\"flatten_minuseq\"",
+      "initial_expression": "Neg(Metadata { clean: false, etype: None }, SafeDiv(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\")))))",
+      "rule_name": "\"flatten_generic\"",
+      "rule_set": "[(\"Minion\", 4200)]",
+      "transformed_expression": "Neg(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))))"
+    }
+  },
+  {
+    "fields": {
+      "initial_expression": "Eq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Neg(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0)))))",
+      "rule_name": "\"introduce_minuseq_from_eq\"",
       "rule_set": "[(\"Minion\", 4400)]",
       "transformed_expression": "FlatMinusEq(Metadata { clean: false, etype: None }, Reference(UserName(\"x\")), Reference(MachineName(0)))"
     }
@@ -64,6 +72,6 @@
     }
   },
   {
-    "Number of rules applied": 8
+    "Number of rules applied": 9
   }
 ]

@@ -3,7 +3,7 @@
     "fields": {
       "initial_expression": "Sum(Metadata { clean: false, etype: None }, [Sum(Metadata { clean: false, etype: None }, [Sum(Metadata { clean: false, etype: None }, [Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(10)))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(20)))]), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(5)))])",
       "rule_name": "\"normalise_associative_commutative\"",
-      "rule_set": "[(\"Base\", 8400)]",
+      "rule_set": "[(\"Base\", 8900)]",
       "transformed_expression": "Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(10))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(20))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(5)))])"
     }
   },
@@ -18,25 +18,25 @@
   {
     "fields": {
       "initial_expression": "Eq(Metadata { clean: false, etype: None }, Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(35)))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(100))))",
-      "rule_name": "\"sum_eq_to_sumeq\"",
-      "rule_set": "[(\"Minion\", 4200)]",
-      "transformed_expression": "SumEq(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(35)))], Atomic(Metadata { clean: false, etype: None }, Literal(Int(100))))"
+      "rule_name": "\"sum_eq_to_inequalities\"",
+      "rule_set": "[(\"Minion\", 4100)]",
+      "transformed_expression": "And(Metadata { clean: false, etype: None }, [Leq(Metadata { clean: false, etype: None }, Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(35)))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(100)))), Geq(Metadata { clean: false, etype: None }, Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(35)))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(100))))])"
     }
   },
   {
     "fields": {
-      "initial_expression": "SumEq(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(35)))], Atomic(Metadata { clean: false, etype: None }, Literal(Int(100))))",
-      "rule_name": "\"partial_evaluator\"",
-      "rule_set": "[(\"Base\", 9000)]",
-      "transformed_expression": "SumEq(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))], Atomic(Metadata { clean: false, etype: None }, Literal(Int(65))))"
-    }
-  },
-  {
-    "fields": {
-      "initial_expression": "SumEq(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))], Atomic(Metadata { clean: false, etype: None }, Literal(Int(65))))",
-      "rule_name": "\"sumeq_to_minion\"",
+      "initial_expression": "Leq(Metadata { clean: false, etype: None }, Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(35)))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(100))))",
+      "rule_name": "\"introduce_sumleq\"",
       "rule_set": "[(\"Minion\", 4400)]",
-      "transformed_expression": "And(Metadata { clean: false, etype: None }, [FlatSumLeq(Metadata { clean: false, etype: None }, [Reference(UserName(\"x\")), Reference(UserName(\"y\"))], Literal(Int(65))), FlatSumGeq(Metadata { clean: false, etype: None }, [Reference(UserName(\"x\")), Reference(UserName(\"y\"))], Literal(Int(65)))])"
+      "transformed_expression": "FlatSumLeq(Metadata { clean: false, etype: None }, [Reference(UserName(\"x\")), Reference(UserName(\"y\")), Literal(Int(35))], Literal(Int(100)))"
+    }
+  },
+  {
+    "fields": {
+      "initial_expression": "Geq(Metadata { clean: false, etype: None }, Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(35)))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(100))))",
+      "rule_name": "\"introduce_sumgeq\"",
+      "rule_set": "[(\"Minion\", 4400)]",
+      "transformed_expression": "FlatSumGeq(Metadata { clean: false, etype: None }, [Reference(UserName(\"x\")), Reference(UserName(\"y\")), Literal(Int(35))], Literal(Int(100)))"
     }
   },
   {

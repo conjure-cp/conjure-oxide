@@ -1,0 +1,29 @@
+[
+  {
+    "fields": {
+      "initial_expression": "Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Abs(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))))])",
+      "rule_name": "\"flatten_generic\"",
+      "rule_set": "[(\"Minion\", 4200)]",
+      "transformed_expression": "Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0)))])"
+    }
+  },
+  {
+    "fields": {
+      "initial_expression": "AuxDeclaration(Metadata { clean: false, etype: None }, MachineName(0), Abs(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\")))))",
+      "rule_name": "\"introduce_abseq\"",
+      "rule_set": "[(\"Minion\", 4400)]",
+      "transformed_expression": "FlatAbsEq(Metadata { clean: false, etype: None }, Reference(MachineName(0)), Reference(UserName(\"x\")))"
+    }
+  },
+  {
+    "fields": {
+      "initial_expression": "Eq(Metadata { clean: false, etype: None }, Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0)))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(2))))",
+      "rule_name": "\"introduce_producteq\"",
+      "rule_set": "[(\"Minion\", 4200)]",
+      "transformed_expression": "FlatProductEq(Metadata { clean: false, etype: None }, Reference(MachineName(0)), Reference(UserName(\"y\")), Literal(Int(2)))"
+    }
+  },
+  {
+    "Number of rules applied": 3
+  }
+]

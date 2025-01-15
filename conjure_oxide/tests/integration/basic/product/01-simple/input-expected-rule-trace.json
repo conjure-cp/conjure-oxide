@@ -1,0 +1,53 @@
+[
+  {
+    "fields": {
+      "initial_expression": "Product(Metadata { clean: false, etype: None }, [Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))]), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\")))])",
+      "rule_name": "\"normalise_associative_commutative\"",
+      "rule_set": "[(\"Base\", 8900)]",
+      "transformed_expression": "Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\")))])"
+    }
+  },
+  {
+    "fields": {
+      "initial_expression": "Lt(Metadata { clean: false, etype: None }, Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\")))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(15))))",
+      "rule_name": "\"lt_to_leq\"",
+      "rule_set": "[(\"Minion\", 8400)]",
+      "transformed_expression": "Leq(Metadata { clean: false, etype: None }, Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\")))]), Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Literal(Int(15))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(-1)))]))"
+    }
+  },
+  {
+    "fields": {
+      "initial_expression": "Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Literal(Int(15))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(-1)))])",
+      "rule_name": "\"apply_eval_constant\"",
+      "rule_set": "[(\"Constant\", 9001)]",
+      "transformed_expression": "Atomic(Metadata { clean: false, etype: None }, Literal(Int(14)))"
+    }
+  },
+  {
+    "fields": {
+      "initial_expression": "Leq(Metadata { clean: false, etype: None }, Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\")))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(14))))",
+      "rule_name": "\"flatten_generic\"",
+      "rule_set": "[(\"Minion\", 4200)]",
+      "transformed_expression": "Leq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(14))))"
+    }
+  },
+  {
+    "fields": {
+      "initial_expression": "AuxDeclaration(Metadata { clean: false, etype: None }, MachineName(0), Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\")))]))",
+      "rule_name": "\"introduce_producteq\"",
+      "rule_set": "[(\"Minion\", 4200)]",
+      "transformed_expression": "FlatProductEq(Metadata { clean: false, etype: None }, Reference(UserName(\"z\")), Reference(MachineName(1)), Reference(MachineName(0)))"
+    }
+  },
+  {
+    "fields": {
+      "initial_expression": "Leq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(14))))",
+      "rule_name": "\"leq_to_ineq\"",
+      "rule_set": "[(\"Minion\", 4100)]",
+      "transformed_expression": "FlatIneq(Metadata { clean: false, etype: None }, Reference(MachineName(0)), Literal(Int(14)), Int(0))"
+    }
+  },
+  {
+    "Number of rules applied": 6
+  }
+]

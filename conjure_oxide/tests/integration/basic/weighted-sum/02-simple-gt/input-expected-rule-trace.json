@@ -1,0 +1,29 @@
+[
+  {
+    "fields": {
+      "initial_expression": "Gt(Metadata { clean: false, etype: None }, Sum(Metadata { clean: false, etype: None }, [Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Literal(Int(2))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\")))]), Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Literal(Int(3))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))])]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(12))))",
+      "rule_name": "\"gt_to_geq\"",
+      "rule_set": "[(\"Minion\", 8400)]",
+      "transformed_expression": "Geq(Metadata { clean: false, etype: None }, Sum(Metadata { clean: false, etype: None }, [Sum(Metadata { clean: false, etype: None }, [Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Literal(Int(2))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\")))]), Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Literal(Int(3))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))])]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(-1)))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(12))))"
+    }
+  },
+  {
+    "fields": {
+      "initial_expression": "Sum(Metadata { clean: false, etype: None }, [Sum(Metadata { clean: false, etype: None }, [Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Literal(Int(2))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\")))]), Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Literal(Int(3))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))])]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(-1)))])",
+      "rule_name": "\"normalise_associative_commutative\"",
+      "rule_set": "[(\"Base\", 8900)]",
+      "transformed_expression": "Sum(Metadata { clean: false, etype: None }, [Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Literal(Int(2))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\")))]), Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Literal(Int(3))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(-1)))])"
+    }
+  },
+  {
+    "fields": {
+      "initial_expression": "Geq(Metadata { clean: false, etype: None }, Sum(Metadata { clean: false, etype: None }, [Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Literal(Int(2))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\")))]), Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Literal(Int(3))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(-1)))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(12))))",
+      "rule_name": "\"introduce_weighted_sumleq_sumgeq\"",
+      "rule_set": "[(\"Minion\", 4500)]",
+      "transformed_expression": "FlatWeightedSumGeq(Metadata { clean: false, etype: None }, [Int(2), Int(3), Int(1)], [Reference(UserName(\"x\")), Reference(UserName(\"y\")), Literal(Int(-1))], Literal(Int(12)))"
+    }
+  },
+  {
+    "Number of rules applied": 3
+  }
+]

@@ -99,7 +99,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
     // correctly
 
-    let subscriber = create_scoped_subscriber(path, essence_base);
+    let (subscriber, guards) = create_scoped_subscriber(path, essence_base);
 
     // set the subscriber as default
     tracing::subscriber::with_default(subscriber, || {
@@ -429,19 +429,24 @@ fn create_file_layer_json(
     (layer1, guard1)
 }
 
-fn create_file_layer_human(path: &str, test_name: &str) -> (impl Layer<Registry> + Send + Sync) {
+fn create_file_layer_human(
+    path: &str,
+    test_name: &str,
+) -> (impl Layer<Registry> + Send + Sync, WorkerGuard) {
     let file = File::create(format!("{path}/{test_name}-generated-rule-trace-human.txt"))
         .expect("Unable to create log file");
 
+    let (non_blocking, guard2) = tracing_appender::non_blocking(file);
+
     let layer2 = fmt::layer()
-        .with_writer(file)
+        .with_writer(non_blocking)
         .with_level(false)
         .without_time()
         .with_target(false)
         .with_filter(EnvFilter::new("rule_engine_human=trace"))
         .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human"));
 
-    layer2
+    (layer2, guard2)
 }
 
 #[test]

@@ -2,12 +2,20 @@
   {
     "fields": {
       "initial_expression": "Lt(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))))",
-      "rule_name": "\"lt_to_ineq\"",
-      "rule_set": "[(\"Minion\", 4100)]",
+      "rule_name": "\"lt_to_leq\"",
+      "rule_set": "[(\"Minion\", 8400)]",
+      "transformed_expression": "Leq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(-1)))]))"
+    }
+  },
+  {
+    "fields": {
+      "initial_expression": "Leq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(-1)))]))",
+      "rule_name": "\"x_leq_y_plus_k_to_ineq\"",
+      "rule_set": "[(\"Minion\", 4500)]",
       "transformed_expression": "FlatIneq(Metadata { clean: false, etype: None }, Reference(UserName(\"x\")), Reference(UserName(\"y\")), Int(-1))"
     }
   },
   {
-    "Number of rules applied": 1
+    "Number of rules applied": 2
   }
 ]
