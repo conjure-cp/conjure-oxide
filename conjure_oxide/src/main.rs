@@ -70,20 +70,37 @@ struct Cli {
 
     #[arg(
         long,
-        short = 'o',
-        help = "Save solutions to a JSON file (prints to stdin by default)"
-    )]
-    #[arg(
-        long,
         help = "use the, in development, dirty-clean optimising rewriter",
         default_value_t = false
     )]
     use_optimising_rewriter: bool,
 
+    #[arg(
+        long,
+        short = 'o',
+        help = "Save solutions to a JSON file (prints to stdout by default)"
+    )]
     output: Option<PathBuf>,
 
     #[arg(long, short = 'v', help = "Log verbosely to sterr")]
     verbose: bool,
+
+    // --no-x flag disables --x flag : https://jwodder.github.io/kbits/posts/clap-bool-negate/
+    /// Check for multiple equally applicable rules, exiting if any are found.
+    ///
+    /// Only compatible with the default rewriter.
+    #[arg(
+        long,
+        overrides_with = "_no_check_equally_applicable_rules",
+        default_value_t = false
+    )]
+    check_equally_applicable_rules: bool,
+
+    /// Do not check for multiple equally applicable rules [default].
+    ///
+    /// Only compatible with the default rewriter.
+    #[arg(long)]
+    _no_check_equally_applicable_rules: bool,
 }
 
 #[allow(clippy::unwrap_used)]
@@ -266,7 +283,7 @@ pub fn main() -> AnyhowResult<()> {
         model = rewrite_model(&model, &rule_sets)?;
     } else {
         tracing::info!("Rewriting model...");
-        model = rewrite_naive(&model, &rule_sets, false)?;
+        model = rewrite_naive(&model, &rule_sets, cli.check_equally_applicable_rules)?;
     }
 
     tracing::info!("Rewritten model: \n{}\n", model);
