@@ -1,33 +1,43 @@
 [
   {
-    "rule_applied": "div_to_bubble ([(\\\"Bubble\\\", 6000)])",
-    "initial_expression": "UnsafeDiv(8, a)",
-    "tranformed_expression": "{SafeDiv(8, a) @ (a != 0)}",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "UnsafeDiv(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Literal(Int(8))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))))",
+      "rule_name": "\"div_to_bubble\"",
+      "rule_set": "[(\"Bubble\", 6000)]",
+      "transformed_expression": "Bubble(Metadata { clean: false, etype: None }, SafeDiv(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Literal(Int(8))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\")))), Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(0)))))"
+    }
   },
   {
-    "rule_applied": "bubble_up ([(\\\"Bubble\\\", 8900)])",
-    "initial_expression": "(2 = {SafeDiv(8, a) @ (a != 0)})",
-    "tranformed_expression": "{(2 = SafeDiv(8, a)) @ And([(a != 0)])}",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Eq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Literal(Int(2))), Bubble(Metadata { clean: false, etype: None }, SafeDiv(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Literal(Int(8))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\")))), Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(0))))))",
+      "rule_name": "\"bubble_up\"",
+      "rule_set": "[(\"Bubble\", 8900)]",
+      "transformed_expression": "Bubble(Metadata { clean: false, etype: None }, Eq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Literal(Int(2))), SafeDiv(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Literal(Int(8))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))))), And(Metadata { clean: false, etype: None }, [Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(0))))]))"
+    }
   },
   {
-    "rule_applied": "expand_bubble ([(\\\"Bubble\\\", 8900)])",
-    "initial_expression": "{(2 = SafeDiv(8, a)) @ And([(a != 0)])}",
-    "tranformed_expression": "And([(2 = SafeDiv(8, a)), And([(a != 0)])])",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Bubble(Metadata { clean: false, etype: None }, Eq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Literal(Int(2))), SafeDiv(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Literal(Int(8))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))))), And(Metadata { clean: false, etype: None }, [Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(0))))]))",
+      "rule_name": "\"expand_bubble\"",
+      "rule_set": "[(\"Bubble\", 8900)]",
+      "transformed_expression": "And(Metadata { clean: false, etype: None }, [Eq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Literal(Int(2))), SafeDiv(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Literal(Int(8))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))))), And(Metadata { clean: false, etype: None }, [Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(0))))])])"
+    }
   },
   {
-    "rule_applied": "remove_unit_vector_and ([(\\\"Base\\\", 8800)])",
-    "initial_expression": "And([(a != 0)])",
-    "tranformed_expression": "(a != 0)",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "And(Metadata { clean: false, etype: None }, [Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(0))))])",
+      "rule_name": "\"remove_unit_vector_and\"",
+      "rule_set": "[(\"Base\", 8800)]",
+      "transformed_expression": "Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(0))))"
+    }
   },
   {
-    "rule_applied": "introduce_diveq ([(\\\"Minion\\\", 4200)])",
-    "initial_expression": "(2 = SafeDiv(8, a))",
-    "tranformed_expression": "DivEq(8, a, 2)",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Eq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Literal(Int(2))), SafeDiv(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Literal(Int(8))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\")))))",
+      "rule_name": "\"introduce_diveq\"",
+      "rule_set": "[(\"Minion\", 4200)]",
+      "transformed_expression": "MinionDivEqUndefZero(Metadata { clean: false, etype: None }, Literal(Int(8)), Reference(UserName(\"a\")), Literal(Int(2)))"
+    }
   },
   {
     "Number of rules applied": 5

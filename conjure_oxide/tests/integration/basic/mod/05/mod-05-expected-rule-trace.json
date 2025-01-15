@@ -1,39 +1,51 @@
 [
   {
-    "rule_applied": "mod_to_bubble ([(\\\"Bubble\\\", 6000)])",
-    "initial_expression": "b % c",
-    "tranformed_expression": "{SafeMod(b,c) @ (c != 0)}",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "UnsafeMod(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\"))))",
+      "rule_name": "\"mod_to_bubble\"",
+      "rule_set": "[(\"Bubble\", 6000)]",
+      "transformed_expression": "Bubble(Metadata { clean: false, etype: None }, SafeMod(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\")))), Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(0)))))"
+    }
   },
   {
-    "rule_applied": "bubble_up ([(\\\"Bubble\\\", 8900)])",
-    "initial_expression": "(a != {SafeMod(b,c) @ (c != 0)})",
-    "tranformed_expression": "{(a != SafeMod(b,c)) @ And([(c != 0)])}",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Bubble(Metadata { clean: false, etype: None }, SafeMod(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\")))), Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(0))))))",
+      "rule_name": "\"bubble_up\"",
+      "rule_set": "[(\"Bubble\", 8900)]",
+      "transformed_expression": "Bubble(Metadata { clean: false, etype: None }, Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), SafeMod(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\"))))), And(Metadata { clean: false, etype: None }, [Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(0))))]))"
+    }
   },
   {
-    "rule_applied": "expand_bubble ([(\\\"Bubble\\\", 8900)])",
-    "initial_expression": "{(a != SafeMod(b,c)) @ And([(c != 0)])}",
-    "tranformed_expression": "And([(a != SafeMod(b,c)), And([(c != 0)])])",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Bubble(Metadata { clean: false, etype: None }, Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), SafeMod(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\"))))), And(Metadata { clean: false, etype: None }, [Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(0))))]))",
+      "rule_name": "\"expand_bubble\"",
+      "rule_set": "[(\"Bubble\", 8900)]",
+      "transformed_expression": "And(Metadata { clean: false, etype: None }, [Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), SafeMod(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\"))))), And(Metadata { clean: false, etype: None }, [Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(0))))])])"
+    }
   },
   {
-    "rule_applied": "remove_unit_vector_and ([(\\\"Base\\\", 8800)])",
-    "initial_expression": "And([(c != 0)])",
-    "tranformed_expression": "(c != 0)",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "And(Metadata { clean: false, etype: None }, [Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(0))))])",
+      "rule_name": "\"remove_unit_vector_and\"",
+      "rule_set": "[(\"Base\", 8800)]",
+      "transformed_expression": "Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(0))))"
+    }
   },
   {
-    "rule_applied": "flatten_binop ([(\\\"Minion\\\", 4400)])",
-    "initial_expression": "(a != SafeMod(b,c))",
-    "tranformed_expression": "(a != __0)",
-    "new_top": "[__0 =aux SafeMod(b,c)]"
+    "fields": {
+      "initial_expression": "Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), SafeMod(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\")))))",
+      "rule_name": "\"flatten_binop\"",
+      "rule_set": "[(\"Minion\", 4400)]",
+      "transformed_expression": "Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))))"
+    }
   },
   {
-    "rule_applied": "introduce_modeq ([(\\\"Minion\\\", 4200)])",
-    "initial_expression": "__0 =aux SafeMod(b,c)",
-    "tranformed_expression": "ModEq(b, c, __0)",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "AuxDeclaration(Metadata { clean: false, etype: None }, MachineName(0), SafeMod(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\")))))",
+      "rule_name": "\"introduce_modeq\"",
+      "rule_set": "[(\"Minion\", 4200)]",
+      "transformed_expression": "MinionModuloEqUndefZero(Metadata { clean: false, etype: None }, Reference(UserName(\"b\")), Reference(UserName(\"c\")), Reference(MachineName(0)))"
+    }
   },
   {
     "Number of rules applied": 6

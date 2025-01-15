@@ -1,15 +1,19 @@
 [
   {
-    "rule_applied": "apply_eval_constant ([(\\\"Constant\\\", 9001)])",
-    "initial_expression": "Min([5, 7])",
-    "tranformed_expression": "5",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Min(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Literal(Int(5))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(7)))])",
+      "rule_name": "\"apply_eval_constant\"",
+      "rule_set": "[(\"Constant\", 9001)]",
+      "transformed_expression": "Atomic(Metadata { clean: false, etype: None }, Literal(Int(5)))"
+    }
   },
   {
-    "rule_applied": "introduce_sumleq ([(\\\"Minion\\\", 4400)])",
-    "initial_expression": "(Sum([5, c]) <= 10)",
-    "tranformed_expression": "SumLeq([5, c], 10)",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Leq(Metadata { clean: false, etype: None }, Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Literal(Int(5))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\")))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(10))))",
+      "rule_name": "\"introduce_sumleq\"",
+      "rule_set": "[(\"Minion\", 4400)]",
+      "transformed_expression": "FlatSumLeq(Metadata { clean: false, etype: None }, [Literal(Int(5)), Reference(UserName(\"c\"))], Literal(Int(10)))"
+    }
   },
   {
     "Number of rules applied": 2

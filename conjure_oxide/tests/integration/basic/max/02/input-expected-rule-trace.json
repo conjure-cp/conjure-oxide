@@ -1,27 +1,35 @@
 [
   {
-    "rule_applied": "max_to_var ([(\\\"Base\\\", 100)])",
-    "initial_expression": "Max([2, a])",
-    "tranformed_expression": "__0",
-    "new_top": "[(__0 >= 2), (__0 >= a), Or([(__0 = 2), (__0 = a)])]"
+    "fields": {
+      "initial_expression": "Max(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Literal(Int(2))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\")))])",
+      "rule_name": "\"max_to_var\"",
+      "rule_set": "[(\"Base\", 100)]",
+      "transformed_expression": "Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0)))"
+    }
   },
   {
-    "rule_applied": "leq_to_ineq ([(\\\"Minion\\\", 4100)])",
-    "initial_expression": "(__0 <= 2)",
-    "tranformed_expression": "Ineq(__0, 2, 0)",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Leq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(2))))",
+      "rule_name": "\"leq_to_ineq\"",
+      "rule_set": "[(\"Minion\", 4100)]",
+      "transformed_expression": "FlatIneq(Metadata { clean: false, etype: None }, Reference(MachineName(0)), Literal(Int(2)), Int(0))"
+    }
   },
   {
-    "rule_applied": "geq_to_ineq ([(\\\"Minion\\\", 4100)])",
-    "initial_expression": "(__0 >= 2)",
-    "tranformed_expression": "Ineq(2, __0, 0)",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Geq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(2))))",
+      "rule_name": "\"geq_to_ineq\"",
+      "rule_set": "[(\"Minion\", 4100)]",
+      "transformed_expression": "FlatIneq(Metadata { clean: false, etype: None }, Literal(Int(2)), Reference(MachineName(0)), Int(0))"
+    }
   },
   {
-    "rule_applied": "geq_to_ineq ([(\\\"Minion\\\", 4100)])",
-    "initial_expression": "(__0 >= a)",
-    "tranformed_expression": "Ineq(a, __0, 0)",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Geq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))))",
+      "rule_name": "\"geq_to_ineq\"",
+      "rule_set": "[(\"Minion\", 4100)]",
+      "transformed_expression": "FlatIneq(Metadata { clean: false, etype: None }, Reference(UserName(\"a\")), Reference(MachineName(0)), Int(0))"
+    }
   },
   {
     "Number of rules applied": 4

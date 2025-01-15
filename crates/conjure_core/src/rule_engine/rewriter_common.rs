@@ -21,7 +21,7 @@ pub fn log_rule_application(result: &RuleResult, initial_expression: &Expression
 
     info!(
         %new_top_string,
-        "Rule applicable: {} ({:?}), to expression: {}, resulting in: {}",
+        "Rule applicable: {} ({:?}), to expression: {:#?}, resulting in: {:#?}",
         rule.name,
         rule.rule_sets,
         initial_expression,
@@ -39,12 +39,11 @@ pub fn log_rule_application(result: &RuleResult, initial_expression: &Expression
 
     trace!(
         target: "rule_engine",
-        "; rule_applied: {} ({:?}); initial_expression: {}; tranformed_expression: {}; new_top: {}",
-        rule.name,
-        rule.rule_sets,
-        initial_expression,
-        red.new_expression,
-        new_top_string,
+        rule_name = ?result.rule.name,
+        rule_set = ?result.rule.rule_sets,
+        initial_expression = ?initial_expression,
+        transformed_expression = ?result.reduction.new_expression,
+
     )
 }
 

@@ -1,27 +1,35 @@
 [
   {
-    "rule_applied": "normalise_associative_commutative ([(\\\"Base\\\", 8400)])",
-    "initial_expression": "Sum([Sum([a, b]), c])",
-    "tranformed_expression": "Sum([a, b, c])",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Sum(Metadata { clean: false, etype: None }, [Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\")))]), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\")))])",
+      "rule_name": "\"normalise_associative_commutative\"",
+      "rule_set": "[(\"Base\", 8400)]",
+      "transformed_expression": "Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\")))])"
+    }
   },
   {
-    "rule_applied": "sum_eq_to_sumeq ([(\\\"Minion\\\", 4200)])",
-    "initial_expression": "(Sum([a, b, c]) = 4)",
-    "tranformed_expression": "SumEq([a, b, c], 4)",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Eq(Metadata { clean: false, etype: None }, Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\")))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(4))))",
+      "rule_name": "\"sum_eq_to_sumeq\"",
+      "rule_set": "[(\"Minion\", 4200)]",
+      "transformed_expression": "SumEq(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\")))], Atomic(Metadata { clean: false, etype: None }, Literal(Int(4))))"
+    }
   },
   {
-    "rule_applied": "sumeq_to_minion ([(\\\"Minion\\\", 4400)])",
-    "initial_expression": "SumEq([a, b, c], 4)",
-    "tranformed_expression": "And([SumLeq([a, b, c], 4), SumGeq([a, b, c], 4)])",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "SumEq(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\")))], Atomic(Metadata { clean: false, etype: None }, Literal(Int(4))))",
+      "rule_name": "\"sumeq_to_minion\"",
+      "rule_set": "[(\"Minion\", 4400)]",
+      "transformed_expression": "And(Metadata { clean: false, etype: None }, [FlatSumLeq(Metadata { clean: false, etype: None }, [Reference(UserName(\"a\")), Reference(UserName(\"b\")), Reference(UserName(\"c\"))], Literal(Int(4))), FlatSumGeq(Metadata { clean: false, etype: None }, [Reference(UserName(\"a\")), Reference(UserName(\"b\")), Reference(UserName(\"c\"))], Literal(Int(4)))])"
+    }
   },
   {
-    "rule_applied": "geq_to_ineq ([(\\\"Minion\\\", 4100)])",
-    "initial_expression": "(a >= b)",
-    "tranformed_expression": "Ineq(b, a, 0)",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Geq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\"))))",
+      "rule_name": "\"geq_to_ineq\"",
+      "rule_set": "[(\"Minion\", 4100)]",
+      "transformed_expression": "FlatIneq(Metadata { clean: false, etype: None }, Reference(UserName(\"b\")), Reference(UserName(\"a\")), Int(0))"
+    }
   },
   {
     "Number of rules applied": 4

@@ -1,21 +1,27 @@
 [
   {
-    "rule_applied": "normalise_associative_commutative ([(\\\"Base\\\", 8400)])",
-    "initial_expression": "Sum([a, Sum([b, Sum([c, d])]), e])",
-    "tranformed_expression": "Sum([a, b, c, d, e])",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\"))), Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"d\")))])]), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"e\")))])",
+      "rule_name": "\"normalise_associative_commutative\"",
+      "rule_set": "[(\"Base\", 8400)]",
+      "transformed_expression": "Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"d\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"e\")))])"
+    }
   },
   {
-    "rule_applied": "sum_eq_to_sumeq ([(\\\"Minion\\\", 4200)])",
-    "initial_expression": "(Sum([a, b, c, d, e]) = 5)",
-    "tranformed_expression": "SumEq([a, b, c, d, e], 5)",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Eq(Metadata { clean: false, etype: None }, Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"d\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"e\")))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(5))))",
+      "rule_name": "\"sum_eq_to_sumeq\"",
+      "rule_set": "[(\"Minion\", 4200)]",
+      "transformed_expression": "SumEq(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"d\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"e\")))], Atomic(Metadata { clean: false, etype: None }, Literal(Int(5))))"
+    }
   },
   {
-    "rule_applied": "sumeq_to_minion ([(\\\"Minion\\\", 4400)])",
-    "initial_expression": "SumEq([a, b, c, d, e], 5)",
-    "tranformed_expression": "And([SumLeq([a, b, c, d, e], 5), SumGeq([a, b, c, d, e], 5)])",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "SumEq(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"d\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"e\")))], Atomic(Metadata { clean: false, etype: None }, Literal(Int(5))))",
+      "rule_name": "\"sumeq_to_minion\"",
+      "rule_set": "[(\"Minion\", 4400)]",
+      "transformed_expression": "And(Metadata { clean: false, etype: None }, [FlatSumLeq(Metadata { clean: false, etype: None }, [Reference(UserName(\"a\")), Reference(UserName(\"b\")), Reference(UserName(\"c\")), Reference(UserName(\"d\")), Reference(UserName(\"e\"))], Literal(Int(5))), FlatSumGeq(Metadata { clean: false, etype: None }, [Reference(UserName(\"a\")), Reference(UserName(\"b\")), Reference(UserName(\"c\")), Reference(UserName(\"d\")), Reference(UserName(\"e\"))], Literal(Int(5)))])"
+    }
   },
   {
     "Number of rules applied": 3

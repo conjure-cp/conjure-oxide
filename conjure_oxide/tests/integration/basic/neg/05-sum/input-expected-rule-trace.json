@@ -1,27 +1,35 @@
 [
   {
-    "rule_applied": "flatten_vecop ([(\\\"Minion\\\", 4400)])",
-    "initial_expression": "Sum([-(y), z])",
-    "tranformed_expression": "Sum([__0, z])",
-    "new_top": "[__0 =aux -(y)]"
+    "fields": {
+      "initial_expression": "Sum(Metadata { clean: false, etype: None }, [Neg(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\")))])",
+      "rule_name": "\"flatten_vecop\"",
+      "rule_set": "[(\"Minion\", 4400)]",
+      "transformed_expression": "Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\")))])"
+    }
   },
   {
-    "rule_applied": "introduce_minuseq_from_aux_decl ([(\\\"Minion\\\", 4400)])",
-    "initial_expression": "__0 =aux -(y)",
-    "tranformed_expression": "MinusEq(__0,y)",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "AuxDeclaration(Metadata { clean: false, etype: None }, MachineName(0), Neg(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))))",
+      "rule_name": "\"introduce_minuseq_from_aux_decl\"",
+      "rule_set": "[(\"Minion\", 4400)]",
+      "transformed_expression": "FlatMinusEq(Metadata { clean: false, etype: None }, Reference(MachineName(0)), Reference(UserName(\"y\")))"
+    }
   },
   {
-    "rule_applied": "sum_eq_to_sumeq ([(\\\"Minion\\\", 4200)])",
-    "initial_expression": "(x = Sum([__0, z]))",
-    "tranformed_expression": "SumEq([__0, z], x)",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Eq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\")))]))",
+      "rule_name": "\"sum_eq_to_sumeq\"",
+      "rule_set": "[(\"Minion\", 4200)]",
+      "transformed_expression": "SumEq(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\")))], Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))))"
+    }
   },
   {
-    "rule_applied": "sumeq_to_minion ([(\\\"Minion\\\", 4400)])",
-    "initial_expression": "SumEq([__0, z], x)",
-    "tranformed_expression": "And([SumLeq([__0, z], x), SumGeq([__0, z], x)])",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "SumEq(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\")))], Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))))",
+      "rule_name": "\"sumeq_to_minion\"",
+      "rule_set": "[(\"Minion\", 4400)]",
+      "transformed_expression": "And(Metadata { clean: false, etype: None }, [FlatSumLeq(Metadata { clean: false, etype: None }, [Reference(MachineName(0)), Reference(UserName(\"z\"))], Reference(UserName(\"x\"))), FlatSumGeq(Metadata { clean: false, etype: None }, [Reference(MachineName(0)), Reference(UserName(\"z\"))], Reference(UserName(\"x\")))])"
+    }
   },
   {
     "Number of rules applied": 4

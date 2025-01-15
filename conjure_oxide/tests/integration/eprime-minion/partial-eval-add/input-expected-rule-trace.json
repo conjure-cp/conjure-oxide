@@ -1,33 +1,43 @@
 [
   {
-    "rule_applied": "normalise_associative_commutative ([(\\\"Base\\\", 8400)])",
-    "initial_expression": "Sum([Sum([Sum([Sum([x, 10]), 20]), y]), 5])",
-    "tranformed_expression": "Sum([x, 10, 20, y, 5])",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Sum(Metadata { clean: false, etype: None }, [Sum(Metadata { clean: false, etype: None }, [Sum(Metadata { clean: false, etype: None }, [Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(10)))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(20)))]), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(5)))])",
+      "rule_name": "\"normalise_associative_commutative\"",
+      "rule_set": "[(\"Base\", 8400)]",
+      "transformed_expression": "Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(10))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(20))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(5)))])"
+    }
   },
   {
-    "rule_applied": "partial_evaluator ([(\\\"Base\\\", 9000)])",
-    "initial_expression": "Sum([x, 10, 20, y, 5])",
-    "tranformed_expression": "Sum([x, y, 35])",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(10))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(20))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(5)))])",
+      "rule_name": "\"partial_evaluator\"",
+      "rule_set": "[(\"Base\", 9000)]",
+      "transformed_expression": "Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(35)))])"
+    }
   },
   {
-    "rule_applied": "sum_eq_to_sumeq ([(\\\"Minion\\\", 4200)])",
-    "initial_expression": "(Sum([x, y, 35]) = 100)",
-    "tranformed_expression": "SumEq([x, y, 35], 100)",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Eq(Metadata { clean: false, etype: None }, Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(35)))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(100))))",
+      "rule_name": "\"sum_eq_to_sumeq\"",
+      "rule_set": "[(\"Minion\", 4200)]",
+      "transformed_expression": "SumEq(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(35)))], Atomic(Metadata { clean: false, etype: None }, Literal(Int(100))))"
+    }
   },
   {
-    "rule_applied": "partial_evaluator ([(\\\"Base\\\", 9000)])",
-    "initial_expression": "SumEq([x, y, 35], 100)",
-    "tranformed_expression": "SumEq([x, y], 65)",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "SumEq(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(35)))], Atomic(Metadata { clean: false, etype: None }, Literal(Int(100))))",
+      "rule_name": "\"partial_evaluator\"",
+      "rule_set": "[(\"Base\", 9000)]",
+      "transformed_expression": "SumEq(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))], Atomic(Metadata { clean: false, etype: None }, Literal(Int(65))))"
+    }
   },
   {
-    "rule_applied": "sumeq_to_minion ([(\\\"Minion\\\", 4400)])",
-    "initial_expression": "SumEq([x, y], 65)",
-    "tranformed_expression": "And([SumLeq([x, y], 65), SumGeq([x, y], 65)])",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "SumEq(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))], Atomic(Metadata { clean: false, etype: None }, Literal(Int(65))))",
+      "rule_name": "\"sumeq_to_minion\"",
+      "rule_set": "[(\"Minion\", 4400)]",
+      "transformed_expression": "And(Metadata { clean: false, etype: None }, [FlatSumLeq(Metadata { clean: false, etype: None }, [Reference(UserName(\"x\")), Reference(UserName(\"y\"))], Literal(Int(65))), FlatSumGeq(Metadata { clean: false, etype: None }, [Reference(UserName(\"x\")), Reference(UserName(\"y\"))], Literal(Int(65)))])"
+    }
   },
   {
     "Number of rules applied": 5

@@ -1,63 +1,83 @@
 [
   {
-    "rule_applied": "flatten_vecop ([(\\\"Minion\\\", 4400)])",
-    "initial_expression": "Sum([Max([a, b]), 1])",
-    "tranformed_expression": "Sum([__0, 1])",
-    "new_top": "[__0 =aux Max([a, b])]"
+    "fields": {
+      "initial_expression": "Sum(Metadata { clean: false, etype: None }, [Max(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\")))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(1)))])",
+      "rule_name": "\"flatten_vecop\"",
+      "rule_set": "[(\"Minion\", 4400)]",
+      "transformed_expression": "Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(1)))])"
+    }
   },
   {
-    "rule_applied": "sum_eq_to_sumeq ([(\\\"Minion\\\", 4200)])",
-    "initial_expression": "(x = Sum([__0, 1]))",
-    "tranformed_expression": "SumEq([__0, 1], x)",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Eq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(1)))]))",
+      "rule_name": "\"sum_eq_to_sumeq\"",
+      "rule_set": "[(\"Minion\", 4200)]",
+      "transformed_expression": "SumEq(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(1)))], Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))))"
+    }
   },
   {
-    "rule_applied": "sumeq_to_minion ([(\\\"Minion\\\", 4400)])",
-    "initial_expression": "SumEq([__0, 1], x)",
-    "tranformed_expression": "And([SumLeq([__0, 1], x), SumGeq([__0, 1], x)])",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "SumEq(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(1)))], Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))))",
+      "rule_name": "\"sumeq_to_minion\"",
+      "rule_set": "[(\"Minion\", 4400)]",
+      "transformed_expression": "And(Metadata { clean: false, etype: None }, [FlatSumLeq(Metadata { clean: false, etype: None }, [Reference(MachineName(0)), Literal(Int(1))], Reference(UserName(\"x\"))), FlatSumGeq(Metadata { clean: false, etype: None }, [Reference(MachineName(0)), Literal(Int(1))], Reference(UserName(\"x\")))])"
+    }
   },
   {
-    "rule_applied": "max_to_var ([(\\\"Base\\\", 100)])",
-    "initial_expression": "Max([a, b])",
-    "tranformed_expression": "__1",
-    "new_top": "[(__1 >= a), (__1 >= b), Or([(__1 = a), (__1 = b)])]"
+    "fields": {
+      "initial_expression": "Max(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\")))])",
+      "rule_name": "\"max_to_var\"",
+      "rule_set": "[(\"Base\", 100)]",
+      "transformed_expression": "Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(1)))"
+    }
   },
   {
-    "rule_applied": "geq_to_ineq ([(\\\"Minion\\\", 4100)])",
-    "initial_expression": "(__1 >= 2)",
-    "tranformed_expression": "Ineq(2, __1, 0)",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Geq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(1))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(2))))",
+      "rule_name": "\"geq_to_ineq\"",
+      "rule_set": "[(\"Minion\", 4100)]",
+      "transformed_expression": "FlatIneq(Metadata { clean: false, etype: None }, Literal(Int(2)), Reference(MachineName(1)), Int(0))"
+    }
   },
   {
-    "rule_applied": "geq_to_ineq ([(\\\"Minion\\\", 4100)])",
-    "initial_expression": "(__1 >= a)",
-    "tranformed_expression": "Ineq(a, __1, 0)",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Geq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(1))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))))",
+      "rule_name": "\"geq_to_ineq\"",
+      "rule_set": "[(\"Minion\", 4100)]",
+      "transformed_expression": "FlatIneq(Metadata { clean: false, etype: None }, Reference(UserName(\"a\")), Reference(MachineName(1)), Int(0))"
+    }
   },
   {
-    "rule_applied": "geq_to_ineq ([(\\\"Minion\\\", 4100)])",
-    "initial_expression": "(__1 >= b)",
-    "tranformed_expression": "Ineq(b, __1, 0)",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Geq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(1))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\"))))",
+      "rule_name": "\"geq_to_ineq\"",
+      "rule_set": "[(\"Minion\", 4100)]",
+      "transformed_expression": "FlatIneq(Metadata { clean: false, etype: None }, Reference(UserName(\"b\")), Reference(MachineName(1)), Int(0))"
+    }
   },
   {
-    "rule_applied": "max_to_var ([(\\\"Base\\\", 100)])",
-    "initial_expression": "Max([a, b])",
-    "tranformed_expression": "__2",
-    "new_top": "[(__2 >= a), (__2 >= b), Or([(__2 = a), (__2 = b)])]"
+    "fields": {
+      "initial_expression": "Max(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\")))])",
+      "rule_name": "\"max_to_var\"",
+      "rule_set": "[(\"Base\", 100)]",
+      "transformed_expression": "Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(2)))"
+    }
   },
   {
-    "rule_applied": "geq_to_ineq ([(\\\"Minion\\\", 4100)])",
-    "initial_expression": "(__2 >= a)",
-    "tranformed_expression": "Ineq(a, __2, 0)",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Geq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(2))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"a\"))))",
+      "rule_name": "\"geq_to_ineq\"",
+      "rule_set": "[(\"Minion\", 4100)]",
+      "transformed_expression": "FlatIneq(Metadata { clean: false, etype: None }, Reference(UserName(\"a\")), Reference(MachineName(2)), Int(0))"
+    }
   },
   {
-    "rule_applied": "geq_to_ineq ([(\\\"Minion\\\", 4100)])",
-    "initial_expression": "(__2 >= b)",
-    "tranformed_expression": "Ineq(b, __2, 0)",
-    "new_top": "[]"
+    "fields": {
+      "initial_expression": "Geq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(2))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\"))))",
+      "rule_name": "\"geq_to_ineq\"",
+      "rule_set": "[(\"Minion\", 4100)]",
+      "transformed_expression": "FlatIneq(Metadata { clean: false, etype: None }, Reference(UserName(\"b\")), Reference(MachineName(2)), Int(0))"
+    }
   },
   {
     "Number of rules applied": 10
