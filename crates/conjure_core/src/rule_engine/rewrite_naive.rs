@@ -57,6 +57,8 @@ pub fn rewrite_naive<'a>(
                             ));
                         }
                         Err(_) => {
+                            // when called a lot, this becomes very expensive!
+                            #[cfg(debug_assertions)]
                             tracing::trace!(
                                 "Rule attempted but not applied: {} (priority {}), to expression: {}",
                                 rule.name,
