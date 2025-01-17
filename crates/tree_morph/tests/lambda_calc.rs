@@ -114,7 +114,7 @@ fn test_simple_application() {
         Box::new(Expr::Abs(0, Box::new(Expr::Var(0)))),
         Box::new(Expr::Var(1)),
     );
-    let (result, meta) = reduce(transform_beta_reduce, expr, 0);
+    let (result, meta) = reduce(&[transform_beta_reduce], expr, 0);
     assert_eq!(result, Expr::Var(1));
     assert_eq!(meta, 1);
 }
@@ -129,7 +129,7 @@ fn test_nested_application() {
         )),
         Box::new(Expr::Var(2)),
     );
-    let (result, meta) = reduce(transform_beta_reduce, expr, 0);
+    let (result, meta) = reduce(&[transform_beta_reduce], expr, 0);
     assert_eq!(result, Expr::Var(2));
     assert_eq!(meta, 2);
 }
@@ -141,7 +141,7 @@ fn test_capture_avoiding_substitution() {
         Box::new(Expr::Abs(0, Box::new(Expr::Abs(1, Box::new(Expr::Var(0)))))),
         Box::new(Expr::Var(1)),
     );
-    let (result, meta) = reduce(transform_beta_reduce, expr, 0);
+    let (result, meta) = reduce(&[transform_beta_reduce], expr, 0);
     assert_eq!(result, Expr::Abs(2, Box::new(Expr::Var(1))));
     assert_eq!(meta, 1);
 }
@@ -153,7 +153,7 @@ fn test_double_reduction() {
         Box::new(Expr::Abs(0, Box::new(Expr::Abs(1, Box::new(Expr::Var(1)))))),
         Box::new(Expr::Var(2)),
     );
-    let (result, meta) = reduce(transform_beta_reduce, expr, 0);
+    let (result, meta) = reduce(&[transform_beta_reduce], expr, 0);
     assert_eq!(result, Expr::Abs(1, Box::new(Expr::Var(1))));
     assert_eq!(meta, 1);
 }
@@ -162,7 +162,7 @@ fn test_double_reduction() {
 fn test_id() {
     // (\x. x) -> (\x. x)
     let expr = Expr::Abs(0, Box::new(Expr::Var(0)));
-    let (expr, meta) = reduce(transform_beta_reduce, expr, 0);
+    let (expr, meta) = reduce(&[transform_beta_reduce], expr, 0);
     assert_eq!(expr, Expr::Abs(0, Box::new(Expr::Var(0))));
     assert_eq!(meta, 0);
 }
@@ -171,7 +171,7 @@ fn test_id() {
 fn test_no_reduction() {
     // x -> x
     let expr = Expr::Var(1);
-    let (result, meta) = reduce(transform_beta_reduce, expr.clone(), 0);
+    let (result, meta) = reduce(&[transform_beta_reduce], expr.clone(), 0);
     assert_eq!(result, expr);
     assert_eq!(meta, 0);
 }
@@ -192,7 +192,7 @@ fn test_complex_expression() {
         )),
         Box::new(Expr::Abs(3, Box::new(Expr::Var(3)))),
     );
-    let (result, meta) = reduce(transform_beta_reduce, expr, 0);
+    let (result, meta) = reduce(&[transform_beta_reduce], expr, 0);
     assert_eq!(result, Expr::Abs(3, Box::new(Expr::Var(3))));
     assert_eq!(meta, 3);
 }

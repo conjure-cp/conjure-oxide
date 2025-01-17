@@ -8,6 +8,7 @@ use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
 use conjure_core::rule_engine::rewrite_naive;
+use conjure_core::Model;
 use conjure_oxide::defaults::get_default_rule_sets;
 use schemars::schema_for;
 use serde_json::to_string_pretty;
@@ -70,20 +71,44 @@ struct Cli {
 
     #[arg(
         long,
-        short = 'o',
-        help = "Save solutions to a JSON file (prints to stdin by default)"
-    )]
-    #[arg(
-        long,
         help = "use the, in development, dirty-clean optimising rewriter",
         default_value_t = false
     )]
     use_optimising_rewriter: bool,
 
+    #[arg(
+        long,
+        short = 'o',
+        help = "Save solutions to a JSON file (prints to stdout by default)"
+    )]
     output: Option<PathBuf>,
 
     #[arg(long, short = 'v', help = "Log verbosely to sterr")]
     verbose: bool,
+
+    /// Do not run the solver.
+    ///
+    /// The rewritten model is printed to stdout in an Essence-style syntax (but is not necessarily
+    /// valid Essence).
+    #[arg(long, default_value_t = false)]
+    no_run_solver: bool,
+
+    // --no-x flag disables --x flag : https://jwodder.github.io/kbits/posts/clap-bool-negate/
+    /// Check for multiple equally applicable rules, exiting if any are found.
+    ///
+    /// Only compatible with the default rewriter.
+    #[arg(
+        long,
+        overrides_with = "_no_check_equally_applicable_rules",
+        default_value_t = false
+    )]
+    check_equally_applicable_rules: bool,
+
+    /// Do not check for multiple equally applicable rules [default].
+    ///
+    /// Only compatible with the default rewriter.
+    #[arg(long)]
+    _no_check_equally_applicable_rules: bool,
 }
 
 #[allow(clippy::unwrap_used)]
@@ -99,18 +124,7 @@ pub fn main() -> AnyhowResult<()> {
 
     let target_family = cli.solver.unwrap_or(SolverFamily::Minion);
     let mut extra_rule_sets: Vec<String> = get_default_rule_sets();
-    extra_rule_sets.extend(cli.extra_rule_sets);
-
-    let out_file: Option<File> = match &cli.output {
-        None => None,
-        Some(pth) => Some(
-            File::options()
-                .create(true)
-                .truncate(true)
-                .write(true)
-                .open(pth)?,
-        ),
-    };
+    extra_rule_sets.extend(cli.extra_rule_sets.clone());
 
     // Logging:
     //
@@ -197,7 +211,7 @@ pub fn main() -> AnyhowResult<()> {
         .collect::<Vec<_>>()
         .join(", ");
 
-    println!("Enabled rule sets: [{}]", pretty_rule_sets);
+    tracing::info!("Enabled rule sets: [{}]", pretty_rule_sets);
     tracing::info!(
         target: "file",
         "Rule sets: {}",
@@ -266,10 +280,40 @@ pub fn main() -> AnyhowResult<()> {
         model = rewrite_model(&model, &rule_sets)?;
     } else {
         tracing::info!("Rewriting model...");
-        model = rewrite_naive(&model, &rule_sets, false)?;
+        model = rewrite_naive(&model, &rule_sets, cli.check_equally_applicable_rules)?;
     }
 
     tracing::info!("Rewritten model: \n{}\n", model);
+
+    if cli.no_run_solver {
+        println!("{}", model);
+    } else {
+        run_solver(&cli, model)?;
+    }
+
+    // still do postamble even if we didn't run the solver
+    if let Some(path) = cli.info_json_path {
+        #[allow(clippy::unwrap_used)]
+        let context_obj = context.read().unwrap().clone();
+        let generated_json = &serde_json::to_value(context_obj)?;
+        let pretty_json = serde_json::to_string_pretty(&generated_json)?;
+        File::create(path)?.write_all(pretty_json.as_bytes())?;
+    }
+    Ok(())
+}
+
+/// Runs the solver
+fn run_solver(cli: &Cli, model: Model) -> anyhow::Result<()> {
+    let out_file: Option<File> = match &cli.output {
+        None => None,
+        Some(pth) => Some(
+            File::options()
+                .create(true)
+                .truncate(true)
+                .write(true)
+                .open(pth)?,
+        ),
+    };
 
     let solutions = get_minion_solutions(model, cli.number_of_solutions)?; // ToDo we need to properly set the solver adaptor here, not hard code minion
     tracing::info!(target: "file", "Solutions: {}", minion_solutions_to_json(&solutions));
@@ -285,17 +329,9 @@ pub fn main() -> AnyhowResult<()> {
             outf.write_all(solutions_str.as_bytes())?;
             println!(
                 "Solutions saved to {:?}",
-                &cli.output.unwrap().canonicalize()?
+                &cli.output.clone().unwrap().canonicalize()?
             )
         }
-    }
-
-    if let Some(path) = cli.info_json_path {
-        #[allow(clippy::unwrap_used)]
-        let context_obj = context.read().unwrap().clone();
-        let generated_json = &serde_json::to_value(context_obj)?;
-        let pretty_json = serde_json::to_string_pretty(&generated_json)?;
-        File::create(path)?.write_all(pretty_json.as_bytes())?;
     }
     Ok(())
 }

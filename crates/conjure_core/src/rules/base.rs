@@ -38,7 +38,9 @@ fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
             | FlatWeightedSumLeq(_, _, _, _)
             | MinionDivEqUndefZero(_, _, _, _)
             | MinionModuloEqUndefZero(_, _, _, _)
+            | MinionPow(_, _, _, _)
             | MinionReify(_, _, _)
+            | MinionReifyImply(_, _, _)
             | FlatAbsEq(_, _, _)
     ) {
         return Err(ApplicationError::RuleNotApplicable);

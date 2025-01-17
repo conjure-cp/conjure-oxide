@@ -156,6 +156,6 @@ mod reduction;
 mod rule;
 
 pub use commands::Commands;
-pub use reduce::{reduce, reduce_with_rules};
+pub use reduce::{reduce, reduce_with_rule_groups, reduce_with_rules};
 pub use reduction::Reduction;
 pub use rule::Rule;
