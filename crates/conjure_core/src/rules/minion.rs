@@ -117,8 +117,8 @@ fn introduce_producteq(expr: &Expr, model: &Model) -> ApplicationResult {
 
 /// Introduces `FlatWeightedSumLeq`, `FlatWeightedSumGeq`, `FlatSumLeq`, FlatSumGeq` constraints.
 ///
-/// If the input is a weighted sum, the weighted sum constraints are used, otherwise the normal sum
-/// constraints are used.
+/// If the input is a weighted sum, the weighted sum constraints are used, otherwise the standard
+/// sum constraints are used.
 ///
 /// # Details
 /// This rule is a bit unusual compared to other introduction rules in that
@@ -214,25 +214,48 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, model: &Model) -> ApplicationRe
         Geq,
     }
 
-    // Given two sub-expressions, decide which (if any) is the total and which is the sum.
+    // Given the LHS, RHS, and the type of inequality, return the sum, total, and new inequality.
     //
-    // Returns the terms inside the sum, and the total as an atom.
-    fn match_sum_total(a: Expr, b: Expr) -> Result<(Vec<Expr>, Atom), ApplicationError> {
-        match (a, b) {
-            (Expr::Sum(_, sum_terms), Expr::Atomic(_, total)) => Ok((sum_terms, total)),
-            (Expr::Atomic(_, total), Expr::Sum(_, sum_terms)) => Ok((sum_terms, total)),
+    // The inequality returned is the one that puts the sum is on the left hand side and the total
+    // on the right hand side.
+    //
+    // For example, `1 <= a + b` will result in ([a,b],1,Geq).
+    fn match_sum_total(
+        a: Expr,
+        b: Expr,
+        equality_kind: EqualityKind,
+    ) -> Result<(Vec<Expr>, Atom, EqualityKind), ApplicationError> {
+        match (a, b, equality_kind) {
+            (Expr::Sum(_, sum_terms), Expr::Atomic(_, total), EqualityKind::Leq) => {
+                Ok((sum_terms, total, EqualityKind::Leq))
+            }
+            (Expr::Atomic(_, total), Expr::Sum(_, sum_terms), EqualityKind::Leq) => {
+                Ok((sum_terms, total, EqualityKind::Geq))
+            }
+            (Expr::Sum(_, sum_terms), Expr::Atomic(_, total), EqualityKind::Geq) => {
+                Ok((sum_terms, total, EqualityKind::Geq))
+            }
+            (Expr::Atomic(_, total), Expr::Sum(_, sum_terms), EqualityKind::Geq) => {
+                Ok((sum_terms, total, EqualityKind::Leq))
+            }
+            (Expr::Sum(_, sum_terms), Expr::Atomic(_, total), EqualityKind::Eq) => {
+                Ok((sum_terms, total, EqualityKind::Eq))
+            }
+            (Expr::Atomic(_, total), Expr::Sum(_, sum_terms), EqualityKind::Eq) => {
+                Ok((sum_terms, total, EqualityKind::Eq))
+            }
             _ => Err(RuleNotApplicable),
         }
     }
 
-    let ((sum_exprs, total), equality_kind) = match expr.clone() {
-        Expr::Leq(_, a, b) => Ok((match_sum_total(*a, *b)?, EqualityKind::Leq)),
-        Expr::Geq(_, a, b) => Ok((match_sum_total(*a, *b)?, EqualityKind::Geq)),
-        Expr::Eq(_, a, b) => Ok((match_sum_total(*a, *b)?, EqualityKind::Eq)),
+    let (sum_exprs, total, equality_kind) = match expr.clone() {
+        Expr::Leq(_, a, b) => Ok(match_sum_total(*a, *b, EqualityKind::Leq)?),
+        Expr::Geq(_, a, b) => Ok(match_sum_total(*a, *b, EqualityKind::Geq)?),
+        Expr::Eq(_, a, b) => Ok(match_sum_total(*a, *b, EqualityKind::Eq)?),
         Expr::AuxDeclaration(_, n, a) => {
             let total: Atom = n.into();
             if let Expr::Sum(_, sum_terms) = *a {
-                Ok(((sum_terms, total), EqualityKind::Eq))
+                Ok((sum_terms, total, EqualityKind::Eq))
             } else {
                 Err(RuleNotApplicable)
             }
@@ -730,7 +753,7 @@ fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 /// ```text
 /// y + k >= x ~> ineq(x,y,k)
 /// ```
-#[register_rule(("Minion",4500))]
+#[register_rule(("Minion",4800))]
 fn y_plus_k_geq_x_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
     // impl same as x_leq_y_plus_k but with lhs and rhs flipped
     let Expr::Geq(meta, e2, e1) = expr.clone() else {
