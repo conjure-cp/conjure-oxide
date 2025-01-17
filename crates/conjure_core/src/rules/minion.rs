@@ -15,7 +15,7 @@ use crate::Model;
 use uniplate::Uniplate;
 use ApplicationError::*;
 
-use super::utils::{expressions_to_atoms, is_flat, to_aux_var};
+use super::utils::{is_flat, to_aux_var};
 
 register_rule_set!("Minion", 100, ("Base"), (SolverFamily::Minion));
 
@@ -115,36 +115,16 @@ fn introduce_producteq(expr: &Expr, model: &Model) -> ApplicationResult {
     ))
 }
 
-/// Introduces `FlatWeightedSumLeq` / `FlatWeightedSumGeq` constraints.
+/// Introduces `FlatWeightedSumLeq`, `FlatWeightedSumGeq`, `FlatSumLeq`, FlatSumGeq` constraints.
+///
+/// If the input is a weighted sum, the weighted sum constraints are used, otherwise the normal sum
+/// constraints are used.
 ///
 /// # Details
 /// This rule is a bit unusual compared to other introduction rules in that
 /// it does its own flattening.
 ///
-/// For example, introduce_sumleq only accepts sums of atoms and relies on
-/// the generic flattening rules (flatten_binop / flatten_vecop) to run
-/// before it flattens the sum.
-///
-/// ```text
-/// a + (b*c) + (d*e) <= 10
-///   ~~> flatten_vecop
-/// a + __0 + __1 <= 10
-///
-/// with new top level constraints
-///
-/// __0 =aux b*c
-/// __1 =aux d*e
-///
-/// ---
-///
-/// a + __0 + __1 <= 10
-///   ~~> introduce_sumleq
-/// flat_sumleq([a,__0,__1],10)
-///
-/// ...
-/// ```
-///
-/// However, weighted sums are expressed as sums of products, which are not
+/// Weighted sums are expressed as sums of products, which are not
 /// flat. Flattening a weighted sum generically makes it indistinguishable
 /// from a sum:
 ///
@@ -160,9 +140,7 @@ fn introduce_producteq(expr: &Expr, model: &Model) -> ApplicationResult {
 /// __2 =aux 3*c
 /// ```
 ///
-/// Therefore, introduce_weightedsumleq_sumgeq does its own flattening, and
-/// has a higher priority than flatten_vecop to prevent weighted sums being
-/// generically flattened.
+/// Therefore, introduce_weightedsumleq_sumgeq does its own flattening.
 ///
 /// Having custom flattening semantics means that we can make more things
 /// weighted sums.
@@ -357,13 +335,10 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, model: &Model) -> ApplicationRe
         vars.push(var);
     }
 
+    let use_weighted_sum = found_non_one_coeff;
     // the expr should use a regular sum instead if the coefficients are all 1.
-    if !found_non_one_coeff {
-        return Err(RuleNotApplicable);
-    }
-
-    let new_expr: Expr = match equality_kind {
-        EqualityKind::Eq => Expr::And(
+    let new_expr: Expr = match (equality_kind, use_weighted_sum) {
+        (EqualityKind::Eq, true) => Expr::And(
             Metadata::new(),
             vec![
                 Expr::FlatWeightedSumLeq(
@@ -375,13 +350,21 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, model: &Model) -> ApplicationRe
                 Expr::FlatWeightedSumGeq(Metadata::new(), coefficients, vars, total),
             ],
         ),
-        EqualityKind::Leq => Expr::FlatWeightedSumLeq(
+        (EqualityKind::Eq, false) => Expr::And(
             Metadata::new(),
-            coefficients.clone(),
-            vars.clone(),
-            total.clone(),
+            vec![
+                Expr::FlatSumLeq(Metadata::new(), vars.clone(), total.clone()),
+                Expr::FlatSumGeq(Metadata::new(), vars, total),
+            ],
         ),
-        EqualityKind::Geq => Expr::FlatWeightedSumGeq(Metadata::new(), coefficients, vars, total),
+        (EqualityKind::Leq, true) => {
+            Expr::FlatWeightedSumLeq(Metadata::new(), coefficients, vars, total)
+        }
+        (EqualityKind::Leq, false) => Expr::FlatSumLeq(Metadata::new(), vars, total),
+        (EqualityKind::Geq, true) => {
+            Expr::FlatWeightedSumGeq(Metadata::new(), coefficients, vars, total)
+        }
+        (EqualityKind::Geq, false) => Expr::FlatSumGeq(Metadata::new(), vars, total),
     };
 
     Ok(Reduction::new(new_expr, new_top_exprs, model.variables))
@@ -593,7 +576,6 @@ fn flatten_generic(expr: &Expr, model: &Model) -> ApplicationResult {
             | Expr::Leq(_, _, _)
             | Expr::Geq(_, _, _)
             | Expr::Abs(_, _)
-            | Expr::Sum(_, _)
             | Expr::Product(_, _)
             | Expr::Neg(_, _)
     ) {
@@ -654,72 +636,6 @@ fn flatten_eq(expr: &Expr, model: &Model) -> ApplicationResult {
     let expr = expr.with_children(children);
 
     Ok(Reduction::new(expr, new_tops, model.variables))
-}
-
-/// Converts sums to sumgeq/sumleq constraints
-///
-/// For some atomic expressions a,b,c,d:
-///
-/// ```text
-/// sum([a, b, c]) <= d ~> sumleq([a, b, c], d)
-/// sum([a, b, c]) >= d ~> sumgeq([a, b, c], d)
-/// sum([a, b, c]) = d ~> sumleq([a, b, c], d) /\ sumgeq([a,b,c],d)
-/// ```
-#[register_rule(("Minion", 4400))]
-fn introduce_sumleq_sumgeq(expr: &Expr, _: &Model) -> ApplicationResult {
-    // Handle eq as well as leq and geq
-    //
-    // We used to have a serperate rule `x+y = z ~> x+y <= z /\ x+y >=z`
-    //
-    // See comment in weighted_sumleq_sumgeq
-    enum EqualityKind {
-        Eq,
-        Leq,
-        Geq,
-    }
-
-    // Given two sub-expressions, decide which (if any) is the total and which is the sum.
-    // Returns the atomic terms inside the sum, and the total as an atom.
-    fn match_sum_total(a: Expr, b: Expr) -> Result<(Vec<Expr>, Atom), ApplicationError> {
-        match (a, b) {
-            (Expr::Sum(_, sum_terms), Expr::Atomic(_, total)) => Ok((sum_terms, total)),
-            (Expr::Atomic(_, total), Expr::Sum(_, sum_terms)) => Ok((sum_terms, total)),
-            _ => Err(RuleNotApplicable),
-        }
-    }
-
-    let ((es, total), equality_kind) = match expr.clone() {
-        Expr::Leq(_, a, b) => Ok((match_sum_total(*a, *b)?, EqualityKind::Leq)),
-        Expr::Geq(_, a, b) => Ok((match_sum_total(*a, *b)?, EqualityKind::Geq)),
-        Expr::Eq(_, a, b) => Ok((match_sum_total(*a, *b)?, EqualityKind::Eq)),
-        Expr::AuxDeclaration(_, n, a) => {
-            let total: Atom = n.into();
-            if let Expr::Sum(_, sum_terms) = *a {
-                Ok(((sum_terms, total), EqualityKind::Eq))
-            } else {
-                Err(RuleNotApplicable)
-            }
-        }
-        _ => Err(RuleNotApplicable),
-    }?;
-
-    let Some(atoms) = expressions_to_atoms(&es) else {
-        return Err(RuleNotApplicable);
-    };
-
-    let new_expr = match equality_kind {
-        EqualityKind::Eq => Expr::And(
-            Metadata::new(),
-            vec![
-                Expr::FlatSumLeq(Metadata::new(), atoms.clone(), total.clone()),
-                Expr::FlatSumGeq(Metadata::new(), atoms, total),
-            ],
-        ),
-        EqualityKind::Leq => Expr::FlatSumLeq(Metadata::new(), atoms, total),
-        EqualityKind::Geq => Expr::FlatSumGeq(Metadata::new(), atoms, total),
-    };
-
-    Ok(Reduction::pure(new_expr))
 }
 
 /// Converts a Geq to an Ineq
