@@ -10,6 +10,8 @@ use uniplate::Uniplate;
 // TODO: (Felix) add "control" rules; e.g. ignore a subtree to a certain depth?
 //               test by ignoring everything once a metadata field is set? e.g. "reduce until contains X"
 
+/// TODO: rewrite for new interface
+///
 /// Exhaustively reduce a tree using a given transformation function.
 ///
 /// The transformation function is called on each node in the tree (in left-most, outer-most order) along with
@@ -31,44 +33,31 @@ use uniplate::Uniplate;
 ///
 /// # Returns
 /// A tuple containing the reduced tree and the final metadata.
-pub fn reduce<T, M, F>(transform: F, mut tree: T, mut meta: M) -> (T, M)
+pub fn reduce<T, M, F>(transforms: &[F], mut tree: T, mut meta: M) -> (T, M)
 where
     T: Uniplate,
     F: Fn(&mut Commands<T, M>, &T, &M) -> Option<T>,
 {
-    // Apply the transformation to the tree until no more changes are made
-    while let Some(mut reduction) = reduce_iteration(&transform, &tree, &meta) {
-        // Apply reduction side-effects
-        (tree, meta) = reduction.commands.apply(reduction.new_tree, meta);
+    let mut new_tree = tree;
+    'main: loop {
+        tree = new_tree;
+        for transform in transforms.iter() {
+            // Try each transform on the entire tree before moving to the next
+            for (node, ctx) in tree.contexts() {
+                let red_opt = Reduction::apply_transform(transform, &node, &meta);
+
+                if let Some(mut red) = red_opt {
+                    (new_tree, meta) = red.commands.apply(ctx(red.new_tree), meta);
+
+                    // Restart with the first transform every time a change is made
+                    continue 'main;
+                }
+            }
+        }
+        // All transforms were attempted without change
+        break;
     }
     (tree, meta)
-}
-
-fn reduce_iteration<T, M, F>(transform: &F, subtree: &T, meta: &M) -> Option<Reduction<T, M>>
-where
-    T: Uniplate,
-    F: Fn(&mut Commands<T, M>, &T, &M) -> Option<T>,
-{
-    // Try to apply the transformation to the current node
-    let reduction = Reduction::apply_transform(transform, subtree, meta);
-    if reduction.is_some() {
-        return reduction;
-    }
-
-    // Try to call the transformation on the children of the current node
-    // If successful, return the new subtree
-    let mut children = subtree.children();
-    for c in children.iter_mut() {
-        if let Some(reduction) = reduce_iteration(transform, c, meta) {
-            *c = reduction.new_tree;
-            return Some(Reduction {
-                new_tree: subtree.with_children(children),
-                ..reduction
-            });
-        }
-    }
-
-    None
 }
 
 /// Exhaustively reduce a tree by applying the given rules at each node.
@@ -94,23 +83,31 @@ where
     R: Rule<T, M>,
     S: Fn(&T, &mut dyn Iterator<Item = (&R, Reduction<T, M>)>) -> Option<Reduction<T, M>>,
 {
-    reduce(
-        |commands, subtree, meta| {
-            let selection = one_or_select(
-                &select,
-                subtree,
-                &mut rules.iter().filter_map(|rule| {
+    reduce_with_rule_groups(&[rules], select, tree, meta)
+}
+
+pub fn reduce_with_rule_groups<T, M, R, S>(groups: &[&[R]], select: S, tree: T, meta: M) -> (T, M)
+where
+    T: Uniplate,
+    R: Rule<T, M>,
+    S: Fn(&T, &mut dyn Iterator<Item = (&R, Reduction<T, M>)>) -> Option<Reduction<T, M>>,
+{
+    let transforms: Vec<_> = groups
+        .iter()
+        .map(|group| {
+            |commands: &mut Commands<T, M>, subtree: &T, meta: &M| {
+                let applicable = &mut group.iter().filter_map(|rule| {
                     Reduction::apply_transform(|c, t, m| rule.apply(c, t, m), subtree, meta)
                         .map(|r| (rule, r))
-                }),
-            );
-            selection.map(|r| {
-                // Ensure commands used by the engine are the ones resulting from this reduction
-                *commands = r.commands;
-                r.new_tree
-            })
-        },
-        tree,
-        meta,
-    )
+                });
+                let selection = one_or_select(&select, subtree, applicable);
+                selection.map(|r| {
+                    // Ensure commands used by the engine are the ones resulting from this reduction
+                    *commands = r.commands;
+                    r.new_tree
+                })
+            }
+        })
+        .collect();
+    reduce(&transforms, tree, meta)
 }

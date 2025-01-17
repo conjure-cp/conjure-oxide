@@ -1,6 +1,8 @@
 //! Here we test an interesting side-effect case, with rules which return a reduction based on a metadata field.
 //! These rules will not be run a second time if no other rule applies to the same node, which might be unexpected.
 
+// TODO (Felix) how might we fix this, in the engine or by blocking this use case?
+
 use tree_morph::*;
 use uniplate::derive::Uniplate;
 
@@ -22,10 +24,11 @@ fn transform(cmd: &mut Commands<Expr, bool>, expr: &Expr, meta: &bool) -> Option
     None
 }
 
-// #[test] // TODO (Felix) how might we fix this, in the engine or by blocking this use case?
+#[test]
+#[ignore = "this will fail until we fix it"]
 fn test_meta_branching_side_effect() {
     let expr = Expr::One;
-    let (expr, meta) = reduce(transform, expr, false);
+    let (expr, meta) = reduce(&[transform], expr, false);
     assert_eq!(expr, Expr::Two);
     assert_eq!(meta, true);
 }
