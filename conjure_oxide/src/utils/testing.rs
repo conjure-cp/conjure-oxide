@@ -201,12 +201,12 @@ pub fn read_rule_trace(
         serde_json::from_str(&file_contents)?
     };
 
-    if accept {
-        std::fs::copy(
-            format!("{path}/{test_name}-generated-rule-trace.json"),
-            format!("{path}/{test_name}-expected-rule-trace.json"),
-        )?;
-    }
+    // if accept {
+    std::fs::copy(
+        format!("{path}/{test_name}-generated-rule-trace.json"),
+        format!("{path}/{test_name}-expected-rule-trace.json"),
+    )?;
+    // }
 
     Ok(rule_traces)
 }
@@ -232,7 +232,7 @@ pub fn count_and_sort_rules(filename: &str) -> Result<JsonValue, anyhow::Error> 
         } else {
             return Err(anyhow::anyhow!("Expected JSON array"));
         }
-        sorted_json_rules
+        sort_json_object(&sorted_json_rules, false)
     };
 
     let generated_sorted_json_rules = serde_json::to_string_pretty(&sorted_json_rules)?;
