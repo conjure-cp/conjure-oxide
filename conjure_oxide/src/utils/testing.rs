@@ -201,12 +201,12 @@ pub fn read_rule_trace(
         serde_json::from_str(&file_contents)?
     };
 
-    // if accept {
-    std::fs::copy(
-        format!("{path}/{test_name}-generated-rule-trace.json"),
-        format!("{path}/{test_name}-expected-rule-trace.json"),
-    )?;
-    // }
+    if accept {
+        std::fs::copy(
+            format!("{path}/{test_name}-generated-rule-trace.json"),
+            format!("{path}/{test_name}-expected-rule-trace.json"),
+        )?;
+    }
 
     Ok(rule_traces)
 }
