@@ -1,0 +1,78 @@
+Model before rewriting:
+
+find x: bool
+find y: bool
+
+such that
+
+Not((Not(x)) -> (Not(y)))
+
+--
+
+Not((Not(x)) -> (Not(y))), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+Not(__0) 
+new variables:
+  __0: bool
+new constraints:
+  __0 =aux (Not(x)) -> (Not(y))
+--
+
+__0 =aux (Not(x)) -> (Not(y)), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((Not(x)) -> (Not(y)), __0) 
+
+--
+
+(Not(x)) -> (Not(y)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__1) -> (Not(y)) 
+new variables:
+  __1: bool
+new constraints:
+  __1 =aux Not(x)
+--
+
+(__1) -> (Not(y)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply(Not(y), __1) 
+
+--
+
+__1 =aux Not(x), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(Not(x), __1) 
+
+--
+
+Not(__0), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
+WatchedLiteral(__0,false) 
+
+--
+
+Not(y), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
+WatchedLiteral(y,false) 
+
+--
+
+Not(x), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
+WatchedLiteral(x,false) 
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find __0: bool
+find __1: bool
+
+such that
+
+WatchedLiteral(__0,false),
+Reify(ReifyImply(WatchedLiteral(y,false), __1), __0),
+Reify(WatchedLiteral(x,false), __1)
+

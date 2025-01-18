@@ -1,0 +1,58 @@
+Model before rewriting:
+
+find x: int(-2..0)
+find y: int(2..3)
+find z: int(-10..-1)
+
+such that
+
+(UnsafePow(x, y) = z)
+
+--
+
+UnsafePow(x, y), 
+   ~~> pow_to_bubble ([("Bubble", 6000)]) 
+{SafePow(x, y) @ And([Or([(x != 0), (y != 0)]), (y >= 0)])} 
+
+--
+
+({SafePow(x, y) @ And([Or([(x != 0), (y != 0)]), (y >= 0)])} = z), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(SafePow(x, y) = z) @ And([And([Or([(x != 0), (y != 0)]), (y >= 0)])])} 
+
+--
+
+{(SafePow(x, y) = z) @ And([And([Or([(x != 0), (y != 0)]), (y >= 0)])])}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+And([(SafePow(x, y) = z), And([And([Or([(x != 0), (y != 0)]), (y >= 0)])])]) 
+
+--
+
+And([(SafePow(x, y) = z), And([And([Or([(x != 0), (y != 0)]), (y >= 0)])])]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+And([(SafePow(x, y) = z), Or([(x != 0), (y != 0)]), (y >= 0)]) 
+
+--
+
+(SafePow(x, y) = z), 
+   ~~> introduce_poweq ([("Minion", 4200)]) 
+MinionPow(x,y,z) 
+
+--
+
+(y >= 0), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(0, y, 0) 
+
+--
+
+Final model:
+
+find x: int(-2..0)
+find y: int(2..3)
+find z: int(-10..-1)
+
+such that
+
+And([MinionPow(x,y,z), Or([(x != 0), (y != 0)]), Ineq(0, y, 0)])
+
