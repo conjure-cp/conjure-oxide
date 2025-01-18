@@ -1,10 +1,93 @@
 [
   {
-    "fields": {
-      "initial_expression": "Leq(Metadata { clean: false, etype: None }, Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))]), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\"))))",
-      "rule_name": "\"introduce_sumleq\"",
-      "rule_set": "[(\"Minion\", 4400)]",
-      "transformed_expression": "FlatSumLeq(Metadata { clean: false, etype: None }, [Reference(UserName(\"x\")), Reference(UserName(\"y\"))], Reference(UserName(\"z\")))"
+    "initial_expression": {
+      "Leq": [
+        {
+          "Atomic": [
+            {
+              "Reference": {
+                "UserName": "z"
+              }
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "Sum": [
+            [
+              {
+                "Atomic": [
+                  {
+                    "Reference": {
+                      "UserName": "x"
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              },
+              {
+                "Atomic": [
+                  {
+                    "Reference": {
+                      "UserName": "y"
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              }
+            ],
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "introduce_sumleq",
+    "rule_set": [
+      [
+        "Minion",
+        4400
+      ]
+    ],
+    "transformed _expression": {
+      "FlatSumLeq": [
+        [
+          {
+            "Reference": {
+              "UserName": "x"
+            }
+          },
+          {
+            "Reference": {
+              "UserName": "y"
+            }
+          }
+        ],
+        {
+          "Reference": {
+            "UserName": "z"
+          }
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {

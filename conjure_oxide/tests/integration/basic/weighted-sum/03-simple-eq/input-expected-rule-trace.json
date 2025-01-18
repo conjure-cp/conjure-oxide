@@ -1,50 +1,659 @@
 [
   {
-    "fields": {
-      "initial_expression": "Sum(Metadata { clean: false, etype: None }, [Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Literal(Int(2))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\")))]), Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Literal(Int(3))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))])])",
-      "rule_name": "\"flatten_generic\"",
-      "rule_set": "[(\"Minion\", 4200)]",
-      "transformed_expression": "Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))), Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(1)))])"
+    "initial_expression": {
+      "Sum": [
+        [
+          {
+            "Product": [
+              [
+                {
+                  "Atomic": [
+                    {
+                      "Literal": {
+                        "Int": 2
+                      }
+                    },
+                    {
+                      "clean": false,
+                      "etype": null
+                    }
+                  ]
+                },
+                {
+                  "Atomic": [
+                    {
+                      "Reference": {
+                        "UserName": "x"
+                      }
+                    },
+                    {
+                      "clean": false,
+                      "etype": null
+                    }
+                  ]
+                }
+              ],
+              {
+                "clean": false,
+                "etype": null
+              }
+            ]
+          },
+          {
+            "Product": [
+              [
+                {
+                  "Atomic": [
+                    {
+                      "Literal": {
+                        "Int": 3
+                      }
+                    },
+                    {
+                      "clean": false,
+                      "etype": null
+                    }
+                  ]
+                },
+                {
+                  "Atomic": [
+                    {
+                      "Reference": {
+                        "UserName": "y"
+                      }
+                    },
+                    {
+                      "clean": false,
+                      "etype": null
+                    }
+                  ]
+                }
+              ],
+              {
+                "clean": false,
+                "etype": null
+              }
+            ]
+          }
+        ],
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "flatten_generic",
+    "rule_set": [
+      [
+        "Minion",
+        4200
+      ]
+    ],
+    "transformed _expression": {
+      "Sum": [
+        [
+          {
+            "Atomic": [
+              {
+                "Reference": {
+                  "MachineName": 0
+                }
+              },
+              {
+                "clean": false,
+                "etype": null
+              }
+            ]
+          },
+          {
+            "Atomic": [
+              {
+                "Reference": {
+                  "MachineName": 1
+                }
+              },
+              {
+                "clean": false,
+                "etype": null
+              }
+            ]
+          }
+        ],
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {
-    "fields": {
-      "initial_expression": "AuxDeclaration(Metadata { clean: false, etype: None }, MachineName(0), Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Literal(Int(2))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\")))]))",
-      "rule_name": "\"introduce_producteq\"",
-      "rule_set": "[(\"Minion\", 4200)]",
-      "transformed_expression": "FlatProductEq(Metadata { clean: false, etype: None }, Reference(UserName(\"x\")), Literal(Int(2)), Reference(MachineName(0)))"
+    "initial_expression": {
+      "AuxDeclaration": [
+        {
+          "MachineName": 0
+        },
+        {
+          "Product": [
+            [
+              {
+                "Atomic": [
+                  {
+                    "Literal": {
+                      "Int": 2
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              },
+              {
+                "Atomic": [
+                  {
+                    "Reference": {
+                      "UserName": "x"
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              }
+            ],
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "introduce_producteq",
+    "rule_set": [
+      [
+        "Minion",
+        4200
+      ]
+    ],
+    "transformed _expression": {
+      "FlatProductEq": [
+        {
+          "Literal": {
+            "Int": 2
+          }
+        },
+        {
+          "Reference": {
+            "MachineName": 0
+          }
+        },
+        {
+          "Reference": {
+            "UserName": "x"
+          }
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {
-    "fields": {
-      "initial_expression": "AuxDeclaration(Metadata { clean: false, etype: None }, MachineName(1), Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Literal(Int(3))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))]))",
-      "rule_name": "\"introduce_producteq\"",
-      "rule_set": "[(\"Minion\", 4200)]",
-      "transformed_expression": "FlatProductEq(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")), Literal(Int(3)), Reference(MachineName(1)))"
+    "initial_expression": {
+      "AuxDeclaration": [
+        {
+          "MachineName": 1
+        },
+        {
+          "Product": [
+            [
+              {
+                "Atomic": [
+                  {
+                    "Literal": {
+                      "Int": 3
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              },
+              {
+                "Atomic": [
+                  {
+                    "Reference": {
+                      "UserName": "y"
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              }
+            ],
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "introduce_producteq",
+    "rule_set": [
+      [
+        "Minion",
+        4200
+      ]
+    ],
+    "transformed _expression": {
+      "FlatProductEq": [
+        {
+          "Literal": {
+            "Int": 3
+          }
+        },
+        {
+          "Reference": {
+            "MachineName": 1
+          }
+        },
+        {
+          "Reference": {
+            "UserName": "y"
+          }
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {
-    "fields": {
-      "initial_expression": "Eq(Metadata { clean: false, etype: None }, Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))), Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(1)))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(12))))",
-      "rule_name": "\"sum_eq_to_inequalities\"",
-      "rule_set": "[(\"Minion\", 4100)]",
-      "transformed_expression": "And(Metadata { clean: false, etype: None }, [Leq(Metadata { clean: false, etype: None }, Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))), Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(1)))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(12)))), Geq(Metadata { clean: false, etype: None }, Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))), Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(1)))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(12))))])"
+    "initial_expression": {
+      "Eq": [
+        {
+          "Atomic": [
+            {
+              "Literal": {
+                "Int": 12
+              }
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "Sum": [
+            [
+              {
+                "Atomic": [
+                  {
+                    "Reference": {
+                      "MachineName": 0
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              },
+              {
+                "Atomic": [
+                  {
+                    "Reference": {
+                      "MachineName": 1
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              }
+            ],
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "sum_eq_to_inequalities",
+    "rule_set": [
+      [
+        "Minion",
+        4100
+      ]
+    ],
+    "transformed _expression": {
+      "And": [
+        [
+          {
+            "Geq": [
+              {
+                "Atomic": [
+                  {
+                    "Literal": {
+                      "Int": 12
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              },
+              {
+                "Sum": [
+                  [
+                    {
+                      "Atomic": [
+                        {
+                          "Reference": {
+                            "MachineName": 0
+                          }
+                        },
+                        {
+                          "clean": false,
+                          "etype": null
+                        }
+                      ]
+                    },
+                    {
+                      "Atomic": [
+                        {
+                          "Reference": {
+                            "MachineName": 1
+                          }
+                        },
+                        {
+                          "clean": false,
+                          "etype": null
+                        }
+                      ]
+                    }
+                  ],
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              },
+              {
+                "clean": false,
+                "etype": null
+              }
+            ]
+          },
+          {
+            "Leq": [
+              {
+                "Atomic": [
+                  {
+                    "Literal": {
+                      "Int": 12
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              },
+              {
+                "Sum": [
+                  [
+                    {
+                      "Atomic": [
+                        {
+                          "Reference": {
+                            "MachineName": 0
+                          }
+                        },
+                        {
+                          "clean": false,
+                          "etype": null
+                        }
+                      ]
+                    },
+                    {
+                      "Atomic": [
+                        {
+                          "Reference": {
+                            "MachineName": 1
+                          }
+                        },
+                        {
+                          "clean": false,
+                          "etype": null
+                        }
+                      ]
+                    }
+                  ],
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              },
+              {
+                "clean": false,
+                "etype": null
+              }
+            ]
+          }
+        ],
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {
-    "fields": {
-      "initial_expression": "Leq(Metadata { clean: false, etype: None }, Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))), Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(1)))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(12))))",
-      "rule_name": "\"introduce_sumleq\"",
-      "rule_set": "[(\"Minion\", 4400)]",
-      "transformed_expression": "FlatSumLeq(Metadata { clean: false, etype: None }, [Reference(MachineName(0)), Reference(MachineName(1))], Literal(Int(12)))"
+    "initial_expression": {
+      "Leq": [
+        {
+          "Atomic": [
+            {
+              "Literal": {
+                "Int": 12
+              }
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "Sum": [
+            [
+              {
+                "Atomic": [
+                  {
+                    "Reference": {
+                      "MachineName": 0
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              },
+              {
+                "Atomic": [
+                  {
+                    "Reference": {
+                      "MachineName": 1
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              }
+            ],
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "introduce_sumleq",
+    "rule_set": [
+      [
+        "Minion",
+        4400
+      ]
+    ],
+    "transformed _expression": {
+      "FlatSumLeq": [
+        [
+          {
+            "Reference": {
+              "MachineName": 0
+            }
+          },
+          {
+            "Reference": {
+              "MachineName": 1
+            }
+          }
+        ],
+        {
+          "Literal": {
+            "Int": 12
+          }
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {
-    "fields": {
-      "initial_expression": "Geq(Metadata { clean: false, etype: None }, Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))), Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(1)))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(12))))",
-      "rule_name": "\"introduce_sumgeq\"",
-      "rule_set": "[(\"Minion\", 4400)]",
-      "transformed_expression": "FlatSumGeq(Metadata { clean: false, etype: None }, [Reference(MachineName(0)), Reference(MachineName(1))], Literal(Int(12)))"
+    "initial_expression": {
+      "Geq": [
+        {
+          "Atomic": [
+            {
+              "Literal": {
+                "Int": 12
+              }
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "Sum": [
+            [
+              {
+                "Atomic": [
+                  {
+                    "Reference": {
+                      "MachineName": 0
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              },
+              {
+                "Atomic": [
+                  {
+                    "Reference": {
+                      "MachineName": 1
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              }
+            ],
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "introduce_sumgeq",
+    "rule_set": [
+      [
+        "Minion",
+        4400
+      ]
+    ],
+    "transformed _expression": {
+      "FlatSumGeq": [
+        [
+          {
+            "Reference": {
+              "MachineName": 0
+            }
+          },
+          {
+            "Reference": {
+              "MachineName": 1
+            }
+          }
+        ],
+        {
+          "Literal": {
+            "Int": 12
+          }
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {

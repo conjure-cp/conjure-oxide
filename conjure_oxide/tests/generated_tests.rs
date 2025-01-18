@@ -13,6 +13,7 @@ use tracing::{span, Level, Metadata as OtherMetadata};
 use tracing_subscriber::{
     filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
 };
+
 use uniplate::Biplate;
 
 use tracing_appender::non_blocking::WorkerGuard;
@@ -36,9 +37,8 @@ use conjure_oxide::utils::testing::{
     read_minion_solutions_json, read_model_json, save_minion_solutions_json, save_model_json,
 };
 use conjure_oxide::SolverFamily;
-use serde::Deserialize;
-
 use pretty_assertions::assert_eq;
+use serde::Deserialize;
 
 #[derive(Deserialize)]
 #[serde(default)]
@@ -99,7 +99,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
     // correctly
 
-    let (subscriber, guards) = create_scoped_subscriber(path, essence_base);
+    let (subscriber, _guards) = create_scoped_subscriber(path, essence_base);
 
     // set the subscriber as default
     tracing::subscriber::with_default(subscriber, || {
@@ -417,7 +417,6 @@ fn create_file_layer_json(
     let (non_blocking, guard1) = tracing_appender::non_blocking(file);
 
     let layer1 = fmt::layer()
-        .json()
         .with_writer(non_blocking)
         .with_level(false)
         .with_target(false)

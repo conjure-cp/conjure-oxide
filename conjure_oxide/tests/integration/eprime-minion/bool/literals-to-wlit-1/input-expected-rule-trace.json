@@ -1,26 +1,264 @@
 [
   {
-    "fields": {
-      "initial_expression": "Or(Metadata { clean: false, etype: None }, [Not(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\")))), And(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\"))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"d\")))])])",
-      "rule_name": "\"distribute_or_over_and\"",
-      "rule_set": "[(\"Base\", 8400)]",
-      "transformed_expression": "And(Metadata { clean: false, etype: None }, [Or(Metadata { clean: false, etype: None }, [Not(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\")))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"b\")))]), Or(Metadata { clean: false, etype: None }, [Not(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\")))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"d\")))])])"
+    "initial_expression": {
+      "Or": [
+        [
+          {
+            "And": [
+              [
+                {
+                  "Atomic": [
+                    {
+                      "Reference": {
+                        "UserName": "b"
+                      }
+                    },
+                    {
+                      "clean": false,
+                      "etype": null
+                    }
+                  ]
+                },
+                {
+                  "Atomic": [
+                    {
+                      "Reference": {
+                        "UserName": "d"
+                      }
+                    },
+                    {
+                      "clean": false,
+                      "etype": null
+                    }
+                  ]
+                }
+              ],
+              {
+                "clean": false,
+                "etype": null
+              }
+            ]
+          },
+          {
+            "Not": [
+              {
+                "Atomic": [
+                  {
+                    "Reference": {
+                      "UserName": "c"
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              },
+              {
+                "clean": false,
+                "etype": null
+              }
+            ]
+          }
+        ],
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "distribute_or_over_and",
+    "rule_set": [
+      [
+        "Base",
+        8400
+      ]
+    ],
+    "transformed _expression": {
+      "And": [
+        [
+          {
+            "Or": [
+              [
+                {
+                  "Atomic": [
+                    {
+                      "Reference": {
+                        "UserName": "b"
+                      }
+                    },
+                    {
+                      "clean": false,
+                      "etype": null
+                    }
+                  ]
+                },
+                {
+                  "Not": [
+                    {
+                      "Atomic": [
+                        {
+                          "Reference": {
+                            "UserName": "c"
+                          }
+                        },
+                        {
+                          "clean": false,
+                          "etype": null
+                        }
+                      ]
+                    },
+                    {
+                      "clean": false,
+                      "etype": null
+                    }
+                  ]
+                }
+              ],
+              {
+                "clean": false,
+                "etype": null
+              }
+            ]
+          },
+          {
+            "Or": [
+              [
+                {
+                  "Atomic": [
+                    {
+                      "Reference": {
+                        "UserName": "d"
+                      }
+                    },
+                    {
+                      "clean": false,
+                      "etype": null
+                    }
+                  ]
+                },
+                {
+                  "Not": [
+                    {
+                      "Atomic": [
+                        {
+                          "Reference": {
+                            "UserName": "c"
+                          }
+                        },
+                        {
+                          "clean": false,
+                          "etype": null
+                        }
+                      ]
+                    },
+                    {
+                      "clean": false,
+                      "etype": null
+                    }
+                  ]
+                }
+              ],
+              {
+                "clean": false,
+                "etype": null
+              }
+            ]
+          }
+        ],
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {
-    "fields": {
-      "initial_expression": "Not(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\"))))",
-      "rule_name": "\"not_literal_to_wliteral\"",
-      "rule_set": "[(\"Minion\", 4100)]",
-      "transformed_expression": "FlatWatchedLiteral(Metadata { clean: false, etype: None }, UserName(\"c\"), Bool(false))"
+    "initial_expression": {
+      "Not": [
+        {
+          "Atomic": [
+            {
+              "Reference": {
+                "UserName": "c"
+              }
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "not_literal_to_wliteral",
+    "rule_set": [
+      [
+        "Minion",
+        4100
+      ]
+    ],
+    "transformed _expression": {
+      "FlatWatchedLiteral": [
+        {
+          "Bool": false
+        },
+        {
+          "UserName": "c"
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {
-    "fields": {
-      "initial_expression": "Not(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\"))))",
-      "rule_name": "\"not_literal_to_wliteral\"",
-      "rule_set": "[(\"Minion\", 4100)]",
-      "transformed_expression": "FlatWatchedLiteral(Metadata { clean: false, etype: None }, UserName(\"c\"), Bool(false))"
+    "initial_expression": {
+      "Not": [
+        {
+          "Atomic": [
+            {
+              "Reference": {
+                "UserName": "c"
+              }
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "not_literal_to_wliteral",
+    "rule_set": [
+      [
+        "Minion",
+        4100
+      ]
+    ],
+    "transformed _expression": {
+      "FlatWatchedLiteral": [
+        {
+          "Bool": false
+        },
+        {
+          "UserName": "c"
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {

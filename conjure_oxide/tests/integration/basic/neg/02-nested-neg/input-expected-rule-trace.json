@@ -1,58 +1,925 @@
 [
   {
-    "fields": {
-      "initial_expression": "UnsafeDiv(Metadata { clean: false, etype: None }, Neg(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\"))))",
-      "rule_name": "\"div_to_bubble\"",
-      "rule_set": "[(\"Bubble\", 6000)]",
-      "transformed_expression": "Bubble(Metadata { clean: false, etype: None }, SafeDiv(Metadata { clean: false, etype: None }, Neg(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\")))), Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(0)))))"
+    "initial_expression": {
+      "UnsafeDiv": [
+        {
+          "Atomic": [
+            {
+              "Reference": {
+                "UserName": "z"
+              }
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "Neg": [
+            {
+              "Atomic": [
+                {
+                  "Reference": {
+                    "UserName": "y"
+                  }
+                },
+                {
+                  "clean": false,
+                  "etype": null
+                }
+              ]
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "div_to_bubble",
+    "rule_set": [
+      [
+        "Bubble",
+        6000
+      ]
+    ],
+    "transformed _expression": {
+      "Bubble": [
+        {
+          "Neq": [
+            {
+              "Atomic": [
+                {
+                  "Literal": {
+                    "Int": 0
+                  }
+                },
+                {
+                  "clean": false,
+                  "etype": null
+                }
+              ]
+            },
+            {
+              "Atomic": [
+                {
+                  "Reference": {
+                    "UserName": "z"
+                  }
+                },
+                {
+                  "clean": false,
+                  "etype": null
+                }
+              ]
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "SafeDiv": [
+            {
+              "Atomic": [
+                {
+                  "Reference": {
+                    "UserName": "z"
+                  }
+                },
+                {
+                  "clean": false,
+                  "etype": null
+                }
+              ]
+            },
+            {
+              "Neg": [
+                {
+                  "Atomic": [
+                    {
+                      "Reference": {
+                        "UserName": "y"
+                      }
+                    },
+                    {
+                      "clean": false,
+                      "etype": null
+                    }
+                  ]
+                },
+                {
+                  "clean": false,
+                  "etype": null
+                }
+              ]
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {
-    "fields": {
-      "initial_expression": "Eq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), Bubble(Metadata { clean: false, etype: None }, SafeDiv(Metadata { clean: false, etype: None }, Neg(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\")))), Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(0))))))",
-      "rule_name": "\"bubble_up\"",
-      "rule_set": "[(\"Bubble\", 8900)]",
-      "transformed_expression": "Bubble(Metadata { clean: false, etype: None }, Eq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), SafeDiv(Metadata { clean: false, etype: None }, Neg(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\"))))), And(Metadata { clean: false, etype: None }, [Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(0))))]))"
+    "initial_expression": {
+      "Eq": [
+        {
+          "Atomic": [
+            {
+              "Reference": {
+                "UserName": "x"
+              }
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "Bubble": [
+            {
+              "Neq": [
+                {
+                  "Atomic": [
+                    {
+                      "Literal": {
+                        "Int": 0
+                      }
+                    },
+                    {
+                      "clean": false,
+                      "etype": null
+                    }
+                  ]
+                },
+                {
+                  "Atomic": [
+                    {
+                      "Reference": {
+                        "UserName": "z"
+                      }
+                    },
+                    {
+                      "clean": false,
+                      "etype": null
+                    }
+                  ]
+                },
+                {
+                  "clean": false,
+                  "etype": null
+                }
+              ]
+            },
+            {
+              "SafeDiv": [
+                {
+                  "Atomic": [
+                    {
+                      "Reference": {
+                        "UserName": "z"
+                      }
+                    },
+                    {
+                      "clean": false,
+                      "etype": null
+                    }
+                  ]
+                },
+                {
+                  "Neg": [
+                    {
+                      "Atomic": [
+                        {
+                          "Reference": {
+                            "UserName": "y"
+                          }
+                        },
+                        {
+                          "clean": false,
+                          "etype": null
+                        }
+                      ]
+                    },
+                    {
+                      "clean": false,
+                      "etype": null
+                    }
+                  ]
+                },
+                {
+                  "clean": false,
+                  "etype": null
+                }
+              ]
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "bubble_up",
+    "rule_set": [
+      [
+        "Bubble",
+        8900
+      ]
+    ],
+    "transformed _expression": {
+      "Bubble": [
+        {
+          "And": [
+            [
+              {
+                "Neq": [
+                  {
+                    "Atomic": [
+                      {
+                        "Literal": {
+                          "Int": 0
+                        }
+                      },
+                      {
+                        "clean": false,
+                        "etype": null
+                      }
+                    ]
+                  },
+                  {
+                    "Atomic": [
+                      {
+                        "Reference": {
+                          "UserName": "z"
+                        }
+                      },
+                      {
+                        "clean": false,
+                        "etype": null
+                      }
+                    ]
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              }
+            ],
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "Eq": [
+            {
+              "Atomic": [
+                {
+                  "Reference": {
+                    "UserName": "x"
+                  }
+                },
+                {
+                  "clean": false,
+                  "etype": null
+                }
+              ]
+            },
+            {
+              "SafeDiv": [
+                {
+                  "Atomic": [
+                    {
+                      "Reference": {
+                        "UserName": "z"
+                      }
+                    },
+                    {
+                      "clean": false,
+                      "etype": null
+                    }
+                  ]
+                },
+                {
+                  "Neg": [
+                    {
+                      "Atomic": [
+                        {
+                          "Reference": {
+                            "UserName": "y"
+                          }
+                        },
+                        {
+                          "clean": false,
+                          "etype": null
+                        }
+                      ]
+                    },
+                    {
+                      "clean": false,
+                      "etype": null
+                    }
+                  ]
+                },
+                {
+                  "clean": false,
+                  "etype": null
+                }
+              ]
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {
-    "fields": {
-      "initial_expression": "Bubble(Metadata { clean: false, etype: None }, Eq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), SafeDiv(Metadata { clean: false, etype: None }, Neg(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\"))))), And(Metadata { clean: false, etype: None }, [Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(0))))]))",
-      "rule_name": "\"expand_bubble\"",
-      "rule_set": "[(\"Bubble\", 8900)]",
-      "transformed_expression": "And(Metadata { clean: false, etype: None }, [Eq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), SafeDiv(Metadata { clean: false, etype: None }, Neg(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\"))))), And(Metadata { clean: false, etype: None }, [Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(0))))])])"
+    "initial_expression": {
+      "Bubble": [
+        {
+          "And": [
+            [
+              {
+                "Neq": [
+                  {
+                    "Atomic": [
+                      {
+                        "Literal": {
+                          "Int": 0
+                        }
+                      },
+                      {
+                        "clean": false,
+                        "etype": null
+                      }
+                    ]
+                  },
+                  {
+                    "Atomic": [
+                      {
+                        "Reference": {
+                          "UserName": "z"
+                        }
+                      },
+                      {
+                        "clean": false,
+                        "etype": null
+                      }
+                    ]
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              }
+            ],
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "Eq": [
+            {
+              "Atomic": [
+                {
+                  "Reference": {
+                    "UserName": "x"
+                  }
+                },
+                {
+                  "clean": false,
+                  "etype": null
+                }
+              ]
+            },
+            {
+              "SafeDiv": [
+                {
+                  "Atomic": [
+                    {
+                      "Reference": {
+                        "UserName": "z"
+                      }
+                    },
+                    {
+                      "clean": false,
+                      "etype": null
+                    }
+                  ]
+                },
+                {
+                  "Neg": [
+                    {
+                      "Atomic": [
+                        {
+                          "Reference": {
+                            "UserName": "y"
+                          }
+                        },
+                        {
+                          "clean": false,
+                          "etype": null
+                        }
+                      ]
+                    },
+                    {
+                      "clean": false,
+                      "etype": null
+                    }
+                  ]
+                },
+                {
+                  "clean": false,
+                  "etype": null
+                }
+              ]
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "expand_bubble",
+    "rule_set": [
+      [
+        "Bubble",
+        8900
+      ]
+    ],
+    "transformed _expression": {
+      "And": [
+        [
+          {
+            "And": [
+              [
+                {
+                  "Neq": [
+                    {
+                      "Atomic": [
+                        {
+                          "Literal": {
+                            "Int": 0
+                          }
+                        },
+                        {
+                          "clean": false,
+                          "etype": null
+                        }
+                      ]
+                    },
+                    {
+                      "Atomic": [
+                        {
+                          "Reference": {
+                            "UserName": "z"
+                          }
+                        },
+                        {
+                          "clean": false,
+                          "etype": null
+                        }
+                      ]
+                    },
+                    {
+                      "clean": false,
+                      "etype": null
+                    }
+                  ]
+                }
+              ],
+              {
+                "clean": false,
+                "etype": null
+              }
+            ]
+          },
+          {
+            "Eq": [
+              {
+                "Atomic": [
+                  {
+                    "Reference": {
+                      "UserName": "x"
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              },
+              {
+                "SafeDiv": [
+                  {
+                    "Atomic": [
+                      {
+                        "Reference": {
+                          "UserName": "z"
+                        }
+                      },
+                      {
+                        "clean": false,
+                        "etype": null
+                      }
+                    ]
+                  },
+                  {
+                    "Neg": [
+                      {
+                        "Atomic": [
+                          {
+                            "Reference": {
+                              "UserName": "y"
+                            }
+                          },
+                          {
+                            "clean": false,
+                            "etype": null
+                          }
+                        ]
+                      },
+                      {
+                        "clean": false,
+                        "etype": null
+                      }
+                    ]
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              },
+              {
+                "clean": false,
+                "etype": null
+              }
+            ]
+          }
+        ],
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {
-    "fields": {
-      "initial_expression": "And(Metadata { clean: false, etype: None }, [Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(0))))])",
-      "rule_name": "\"remove_unit_vector_and\"",
-      "rule_set": "[(\"Base\", 8800)]",
-      "transformed_expression": "Neq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\"))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(0))))"
+    "initial_expression": {
+      "And": [
+        [
+          {
+            "Neq": [
+              {
+                "Atomic": [
+                  {
+                    "Literal": {
+                      "Int": 0
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              },
+              {
+                "Atomic": [
+                  {
+                    "Reference": {
+                      "UserName": "z"
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              },
+              {
+                "clean": false,
+                "etype": null
+              }
+            ]
+          }
+        ],
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "remove_unit_vector_and",
+    "rule_set": [
+      [
+        "Base",
+        8800
+      ]
+    ],
+    "transformed _expression": {
+      "Neq": [
+        {
+          "Atomic": [
+            {
+              "Literal": {
+                "Int": 0
+              }
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "Atomic": [
+            {
+              "Reference": {
+                "UserName": "z"
+              }
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {
-    "fields": {
-      "initial_expression": "SafeDiv(Metadata { clean: false, etype: None }, Neg(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\"))))",
-      "rule_name": "\"flatten_generic\"",
-      "rule_set": "[(\"Minion\", 4200)]",
-      "transformed_expression": "SafeDiv(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\"))))"
+    "initial_expression": {
+      "SafeDiv": [
+        {
+          "Atomic": [
+            {
+              "Reference": {
+                "UserName": "z"
+              }
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "Neg": [
+            {
+              "Atomic": [
+                {
+                  "Reference": {
+                    "UserName": "y"
+                  }
+                },
+                {
+                  "clean": false,
+                  "etype": null
+                }
+              ]
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "flatten_generic",
+    "rule_set": [
+      [
+        "Minion",
+        4200
+      ]
+    ],
+    "transformed _expression": {
+      "SafeDiv": [
+        {
+          "Atomic": [
+            {
+              "Reference": {
+                "MachineName": 0
+              }
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "Atomic": [
+            {
+              "Reference": {
+                "UserName": "z"
+              }
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {
-    "fields": {
-      "initial_expression": "AuxDeclaration(Metadata { clean: false, etype: None }, MachineName(0), Neg(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\")))))",
-      "rule_name": "\"introduce_minuseq_from_aux_decl\"",
-      "rule_set": "[(\"Minion\", 4400)]",
-      "transformed_expression": "FlatMinusEq(Metadata { clean: false, etype: None }, Reference(MachineName(0)), Reference(UserName(\"y\")))"
+    "initial_expression": {
+      "AuxDeclaration": [
+        {
+          "MachineName": 0
+        },
+        {
+          "Neg": [
+            {
+              "Atomic": [
+                {
+                  "Reference": {
+                    "UserName": "y"
+                  }
+                },
+                {
+                  "clean": false,
+                  "etype": null
+                }
+              ]
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "introduce_minuseq_from_aux_decl",
+    "rule_set": [
+      [
+        "Minion",
+        4400
+      ]
+    ],
+    "transformed _expression": {
+      "FlatMinusEq": [
+        {
+          "Reference": {
+            "MachineName": 0
+          }
+        },
+        {
+          "Reference": {
+            "UserName": "y"
+          }
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {
-    "fields": {
-      "initial_expression": "Eq(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))), SafeDiv(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"z\")))))",
-      "rule_name": "\"introduce_diveq\"",
-      "rule_set": "[(\"Minion\", 4200)]",
-      "transformed_expression": "MinionDivEqUndefZero(Metadata { clean: false, etype: None }, Reference(MachineName(0)), Reference(UserName(\"z\")), Reference(UserName(\"x\")))"
+    "initial_expression": {
+      "Eq": [
+        {
+          "Atomic": [
+            {
+              "Reference": {
+                "UserName": "x"
+              }
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "SafeDiv": [
+            {
+              "Atomic": [
+                {
+                  "Reference": {
+                    "MachineName": 0
+                  }
+                },
+                {
+                  "clean": false,
+                  "etype": null
+                }
+              ]
+            },
+            {
+              "Atomic": [
+                {
+                  "Reference": {
+                    "UserName": "z"
+                  }
+                },
+                {
+                  "clean": false,
+                  "etype": null
+                }
+              ]
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "introduce_diveq",
+    "rule_set": [
+      [
+        "Minion",
+        4200
+      ]
+    ],
+    "transformed _expression": {
+      "MinionDivEqUndefZero": [
+        {
+          "Reference": {
+            "MachineName": 0
+          }
+        },
+        {
+          "Reference": {
+            "UserName": "x"
+          }
+        },
+        {
+          "Reference": {
+            "UserName": "z"
+          }
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {

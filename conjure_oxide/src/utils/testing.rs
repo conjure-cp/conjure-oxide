@@ -8,7 +8,7 @@ use std::io::Write;
 use std::sync::{Arc, RwLock};
 
 use conjure_core::context::Context;
-use serde_json::{json, Error as JsonError, Map, Value as JsonValue};
+use serde_json::{json, Error as JsonError, Value as JsonValue};
 
 use conjure_core::error::Error;
 
@@ -218,7 +218,7 @@ pub fn count_and_sort_rules(filename: &str) -> Result<JsonValue, anyhow::Error> 
         let rule_count_message = json!({
             "Number of rules applied": 0,
         });
-        sort_json_object(&rule_count_message, true) // Sort the rule count message
+        rule_count_message
     } else {
         let rule_count = file_contents.lines().count();
         let mut sorted_json_rules = sort_json_rules(&file_contents)?;
@@ -251,76 +251,12 @@ fn sort_json_rules(json_rule_traces: &str) -> Result<JsonValue, anyhow::Error> {
     let mut sorted_rule_traces = Vec::new();
 
     for line in json_rule_traces.lines() {
-        // Parse the line as JSON and expand specific fields
-
-        // let pretty_json = format_json_log(line)?;
         let pretty_json = sort_json_object(&serde_json::from_str(&line)?, true);
         sorted_rule_traces.push(pretty_json);
     }
 
     Ok(JsonValue::Array(sorted_rule_traces))
 }
-//     // Replace the "fields" object with the formatted version
-//     let mut output = parsed_json.clone();
-//     if let Some(obj) = output.as_object_mut() {
-//         obj.insert("fields".to_string(), JsonValue::Object(formatted_fields));
-//     }
-//     Ok(output)
-// } else {
-//     Err(anyhow::anyhow!("Missing 'fields' object in JSON"))
-// }
-fn format_json_log(input: &str) -> Result<JsonValue, anyhow::Error> {
-    let mut parsed_json: JsonValue = serde_json::from_str(input)?;
-
-    // Extract the "fields" object for modification
-    if let Some(fields) = parsed_json
-        .get_mut("fields")
-        .and_then(|f| f.as_object_mut())
-    {
-        for (key, value) in fields.iter_mut() {
-            // Modify specific fields into structured JSON objects
-            let new_value = match key.as_str() {
-                "initial_expression" | "transformed_expression" | "new_top" => {
-                    format_expression(value.as_str().unwrap_or(""))
-                }
-                _ => value.clone(),
-            };
-            *value = new_value; // Assign the new value back to the field
-        }
-    }
-
-    Ok(parsed_json) // Return the modified JSON
-}
-
-fn format_expression(input: &str) -> JsonValue {
-    match serde_json::from_str::<JsonValue>(input) {
-        Ok(parsed_expression) => parsed_expression,
-        Err(_) => JsonValue::String(input.to_string()), // Return as-is if parsing fails
-    }
-}
-
-// fn sort_json_rules(json_rule_traces: &str) -> JsonValue {
-//     let mut sorted_rule_traces = Vec::new();
-
-//     for line in json_rule_traces.lines() {
-//         let pretty_json = serde_json::from_str(&line)
-//         // let mut map = Map::new();
-
-//         // let parts = line.split("; ");
-
-//         // for part in parts {
-//         //     if let Some((key, value)) = part.split_once(": ") {
-//         //         map.insert(
-//         //             key.trim().to_string(),
-//         //             json!(value.trim().trim_end_matches("\"}}")),
-//         //         );
-//         //     }
-//         // }
-
-//         sorted_rule_traces.push(JsonValue::Object(map));
-//     }
-//     JsonValue::Array(sorted_rule_traces)
-// }
 
 pub fn read_human_rule_trace(
     path: &str,

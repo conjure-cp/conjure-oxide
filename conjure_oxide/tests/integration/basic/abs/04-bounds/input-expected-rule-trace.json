@@ -1,26 +1,239 @@
 [
   {
-    "fields": {
-      "initial_expression": "Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Abs(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\"))))])",
-      "rule_name": "\"flatten_generic\"",
-      "rule_set": "[(\"Minion\", 4200)]",
-      "transformed_expression": "Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0)))])"
+    "initial_expression": {
+      "Product": [
+        [
+          {
+            "Abs": [
+              {
+                "Atomic": [
+                  {
+                    "Reference": {
+                      "UserName": "x"
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              },
+              {
+                "clean": false,
+                "etype": null
+              }
+            ]
+          },
+          {
+            "Atomic": [
+              {
+                "Reference": {
+                  "UserName": "y"
+                }
+              },
+              {
+                "clean": false,
+                "etype": null
+              }
+            ]
+          }
+        ],
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "flatten_generic",
+    "rule_set": [
+      [
+        "Minion",
+        4200
+      ]
+    ],
+    "transformed _expression": {
+      "Product": [
+        [
+          {
+            "Atomic": [
+              {
+                "Reference": {
+                  "MachineName": 0
+                }
+              },
+              {
+                "clean": false,
+                "etype": null
+              }
+            ]
+          },
+          {
+            "Atomic": [
+              {
+                "Reference": {
+                  "UserName": "y"
+                }
+              },
+              {
+                "clean": false,
+                "etype": null
+              }
+            ]
+          }
+        ],
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {
-    "fields": {
-      "initial_expression": "AuxDeclaration(Metadata { clean: false, etype: None }, MachineName(0), Abs(Metadata { clean: false, etype: None }, Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"x\")))))",
-      "rule_name": "\"introduce_abseq\"",
-      "rule_set": "[(\"Minion\", 4400)]",
-      "transformed_expression": "FlatAbsEq(Metadata { clean: false, etype: None }, Reference(MachineName(0)), Reference(UserName(\"x\")))"
+    "initial_expression": {
+      "AuxDeclaration": [
+        {
+          "Abs": [
+            {
+              "Atomic": [
+                {
+                  "Reference": {
+                    "UserName": "x"
+                  }
+                },
+                {
+                  "clean": false,
+                  "etype": null
+                }
+              ]
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "MachineName": 0
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "introduce_abseq",
+    "rule_set": [
+      [
+        "Minion",
+        4400
+      ]
+    ],
+    "transformed _expression": {
+      "FlatAbsEq": [
+        {
+          "Reference": {
+            "MachineName": 0
+          }
+        },
+        {
+          "Reference": {
+            "UserName": "x"
+          }
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {
-    "fields": {
-      "initial_expression": "Eq(Metadata { clean: false, etype: None }, Product(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"y\"))), Atomic(Metadata { clean: false, etype: None }, Reference(MachineName(0)))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(2))))",
-      "rule_name": "\"introduce_producteq\"",
-      "rule_set": "[(\"Minion\", 4200)]",
-      "transformed_expression": "FlatProductEq(Metadata { clean: false, etype: None }, Reference(MachineName(0)), Reference(UserName(\"y\")), Literal(Int(2)))"
+    "initial_expression": {
+      "Eq": [
+        {
+          "Atomic": [
+            {
+              "Literal": {
+                "Int": 2
+              }
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "Product": [
+            [
+              {
+                "Atomic": [
+                  {
+                    "Reference": {
+                      "MachineName": 0
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              },
+              {
+                "Atomic": [
+                  {
+                    "Reference": {
+                      "UserName": "y"
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              }
+            ],
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "introduce_producteq",
+    "rule_set": [
+      [
+        "Minion",
+        4200
+      ]
+    ],
+    "transformed _expression": {
+      "FlatProductEq": [
+        {
+          "Literal": {
+            "Int": 2
+          }
+        },
+        {
+          "Reference": {
+            "MachineName": 0
+          }
+        },
+        {
+          "Reference": {
+            "UserName": "y"
+          }
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {

@@ -10,6 +10,8 @@ use crate::{
 };
 
 use itertools::Itertools;
+use serde_json::json;
+use std::fmt::Debug;
 use thiserror::Error;
 use tracing::{info, trace};
 
@@ -86,10 +88,13 @@ pub fn log_rule_application(
 
     trace!(
         target: "rule_engine",
-        rule_name = ?result.rule.name,
-        rule_set = ?result.rule.rule_sets,
-        initial_expression = ?initial_expression,
-        transformed_expression = ?result.reduction.new_expression,
+        "{}",
+    json!({
+        "rule_name": result.rule.name,
+        "rule_set": result.rule.rule_sets,
+        "initial_expression": serde_json::to_value(&initial_expression).unwrap(),
+        "transformed _expression": serde_json::to_value(&red.new_expression).unwrap()
+    })
 
     )
 }

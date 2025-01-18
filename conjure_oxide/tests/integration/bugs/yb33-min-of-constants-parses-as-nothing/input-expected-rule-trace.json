@@ -1,18 +1,151 @@
 [
   {
-    "fields": {
-      "initial_expression": "Min(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Literal(Int(5))), Atomic(Metadata { clean: false, etype: None }, Literal(Int(7)))])",
-      "rule_name": "\"apply_eval_constant\"",
-      "rule_set": "[(\"Constant\", 9001)]",
-      "transformed_expression": "Atomic(Metadata { clean: false, etype: None }, Literal(Int(5)))"
+    "initial_expression": {
+      "Min": [
+        [
+          {
+            "Atomic": [
+              {
+                "Literal": {
+                  "Int": 5
+                }
+              },
+              {
+                "clean": false,
+                "etype": null
+              }
+            ]
+          },
+          {
+            "Atomic": [
+              {
+                "Literal": {
+                  "Int": 7
+                }
+              },
+              {
+                "clean": false,
+                "etype": null
+              }
+            ]
+          }
+        ],
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "apply_eval_constant",
+    "rule_set": [
+      [
+        "Constant",
+        9001
+      ]
+    ],
+    "transformed _expression": {
+      "Atomic": [
+        {
+          "Literal": {
+            "Int": 5
+          }
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {
-    "fields": {
-      "initial_expression": "Leq(Metadata { clean: false, etype: None }, Sum(Metadata { clean: false, etype: None }, [Atomic(Metadata { clean: false, etype: None }, Literal(Int(5))), Atomic(Metadata { clean: false, etype: None }, Reference(UserName(\"c\")))]), Atomic(Metadata { clean: false, etype: None }, Literal(Int(10))))",
-      "rule_name": "\"introduce_sumleq\"",
-      "rule_set": "[(\"Minion\", 4400)]",
-      "transformed_expression": "FlatSumLeq(Metadata { clean: false, etype: None }, [Literal(Int(5)), Reference(UserName(\"c\"))], Literal(Int(10)))"
+    "initial_expression": {
+      "Leq": [
+        {
+          "Atomic": [
+            {
+              "Literal": {
+                "Int": 10
+              }
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "Sum": [
+            [
+              {
+                "Atomic": [
+                  {
+                    "Literal": {
+                      "Int": 5
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              },
+              {
+                "Atomic": [
+                  {
+                    "Reference": {
+                      "UserName": "c"
+                    }
+                  },
+                  {
+                    "clean": false,
+                    "etype": null
+                  }
+                ]
+              }
+            ],
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "introduce_sumleq",
+    "rule_set": [
+      [
+        "Minion",
+        4400
+      ]
+    ],
+    "transformed _expression": {
+      "FlatSumLeq": [
+        [
+          {
+            "Literal": {
+              "Int": 5
+            }
+          },
+          {
+            "Reference": {
+              "UserName": "c"
+            }
+          }
+        ],
+        {
+          "Literal": {
+            "Int": 10
+          }
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
     }
   },
   {
