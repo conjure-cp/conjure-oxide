@@ -92,7 +92,7 @@ pub fn log_rule_application(
     json!({
         "rule_name": result.rule.name,
         "rule_set": result.rule.rule_sets,
-        "initial_expression": serde_json::to_value(&initial_expression).unwrap(),
+        "initial_expression": serde_json::to_value(initial_expression).unwrap(),
         "transformed _expression": serde_json::to_value(&red.new_expression).unwrap()
     })
 

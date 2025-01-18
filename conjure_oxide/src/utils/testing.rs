@@ -251,7 +251,7 @@ fn sort_json_rules(json_rule_traces: &str) -> Result<JsonValue, anyhow::Error> {
     let mut sorted_rule_traces = Vec::new();
 
     for line in json_rule_traces.lines() {
-        let pretty_json = sort_json_object(&serde_json::from_str(&line)?, true);
+        let pretty_json = sort_json_object(&serde_json::from_str(line)?, true);
         sorted_rule_traces.push(pretty_json);
     }
 
