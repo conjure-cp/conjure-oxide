@@ -41,6 +41,7 @@ pub fn is_all_constant(expression: &Expr) -> bool {
 /// # Returns
 ///
 /// `Some(Vec<Atom>)` if the vectors direct children expressions are all atomic, otherwise `None`.
+#[allow(dead_code)]
 pub fn expressions_to_atoms(exprs: &Vec<Expr>) -> Option<Vec<Atom>> {
     let mut atoms: Vec<Atom> = vec![];
     for expr in exprs {

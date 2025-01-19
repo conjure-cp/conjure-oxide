@@ -21,9 +21,9 @@ such that
 
 --
 
-Sum([|x|, |y|]), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-Sum([__0, __1]) 
+(Sum([|x|, |y|]) = 10), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([__0, __1], 10), SumGeq([__0, __1], 10)]) 
 new variables:
   __0: int(0..5)
   __1: int(0..5)
@@ -41,24 +41,6 @@ AbsEq(__0,x)
 __1 =aux |y|, 
    ~~> introduce_abseq ([("Minion", 4400)]) 
 AbsEq(__1,y) 
-
---
-
-(Sum([__0, __1]) = 10), 
-   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
-And([(Sum([__0, __1]) <= 10), (Sum([__0, __1]) >= 10)]) 
-
---
-
-(Sum([__0, __1]) <= 10), 
-   ~~> introduce_sumleq ([("Minion", 4400)]) 
-SumLeq([__0, __1], 10) 
-
---
-
-(Sum([__0, __1]) >= 10), 
-   ~~> introduce_sumgeq ([("Minion", 4400)]) 
-SumGeq([__0, __1], 10) 
 
 --
 

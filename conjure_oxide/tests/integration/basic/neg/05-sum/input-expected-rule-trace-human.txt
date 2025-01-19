@@ -10,36 +10,9 @@ such that
 
 --
 
-Sum([-(y), z]), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-Sum([__0, z]) 
-new variables:
-  __0: int(-1..1)
-new constraints:
-  __0 =aux -(y)
---
-
-__0 =aux -(y), 
-   ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)]) 
-MinusEq(__0,y) 
-
---
-
-(x = Sum([__0, z])), 
-   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
-And([(Sum([__0, z]) <= x), (Sum([__0, z]) >= x)]) 
-
---
-
-(Sum([__0, z]) <= x), 
-   ~~> introduce_sumleq ([("Minion", 4400)]) 
-SumLeq([__0, z], x) 
-
---
-
-(Sum([__0, z]) >= x), 
-   ~~> introduce_sumgeq ([("Minion", 4400)]) 
-SumGeq([__0, z], x) 
+(x = Sum([-(y), z])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([FlatWeightedSumLeq([-1, 1],[y, z],x), FlatWeightedSumGeq([-1, 1],[y, z],x)]) 
 
 --
 
@@ -48,10 +21,8 @@ Final model:
 find x: int(1..3)
 find y: int(-1..1)
 find z: int(-1..1)
-find __0: int(-1..1)
 
 such that
 
-And([SumLeq([__0, z], x), SumGeq([__0, z], x)]),
-MinusEq(__0,y)
+And([FlatWeightedSumLeq([-1, 1],[y, z],x), FlatWeightedSumGeq([-1, 1],[y, z],x)])
 
