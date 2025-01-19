@@ -191,35 +191,15 @@ pub fn read_rule_trace(
     test_name: &str,
     prefix: &str,
     accept: bool,
-) -> Result<Vec<String>, std::io::Error> {
+) -> Result<JsonValue, anyhow::Error> {
     let filename = format!("{path}/{test_name}-{prefix}-rule-trace.json");
-    let mut rules_trace: Vec<String> = read_to_string(&filename)
-        .unwrap()
-        .lines()
-        .map(String::from)
-        .collect();
 
-    //only count the number of rule in generated file (assumming the expected version already has that line and it is correct)
-    if prefix == "generated" {
-        let rule_count = rules_trace.len();
-
-        let count_message = json!({
-            "message": " Number of rules applied",
-            "count": rule_count
-        });
-
-        // Append the count message to the vector
-        let count_message_string = serde_json::to_string(&count_message)?;
-        rules_trace.push(count_message_string.clone());
-
-        // Write the updated rules trace back to the file
-        let mut file = OpenOptions::new()
-            .write(true)
-            .truncate(true) // Overwrite the file with updated content
-            .open(&filename)?;
-
-        writeln!(file, "{}", rules_trace.join("\n"))?;
-    }
+    let rule_traces = if prefix == "generated" {
+        count_and_sort_rules(&filename)?
+    } else {
+        let file_contents = std::fs::read_to_string(filename)?;
+        serde_json::from_str(&file_contents)?
+    };
 
     if accept {
         std::fs::copy(
@@ -228,7 +208,54 @@ pub fn read_rule_trace(
         )?;
     }
 
-    Ok(rules_trace)
+    Ok(rule_traces)
+}
+
+pub fn count_and_sort_rules(filename: &str) -> Result<JsonValue, anyhow::Error> {
+    let file_contents = read_to_string(filename)?;
+
+    let sorted_json_rules = if file_contents.trim().is_empty() {
+        let rule_count_message = json!({
+            "Number of rules applied": 0,
+        });
+        rule_count_message
+    } else {
+        let rule_count = file_contents.lines().count();
+        let mut sorted_json_rules = sort_json_rules(&file_contents)?;
+
+        let rule_count_message = json!({
+            "Number of rules applied": rule_count,
+        });
+
+        if let Some(array) = sorted_json_rules.as_array_mut() {
+            array.push(rule_count_message);
+        } else {
+            return Err(anyhow::anyhow!("Expected JSON array"));
+        }
+        sort_json_object(&sorted_json_rules, false)
+    };
+
+    let generated_sorted_json_rules = serde_json::to_string_pretty(&sorted_json_rules)?;
+
+    let mut file = OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .open(filename)?;
+
+    file.write_all(generated_sorted_json_rules.as_bytes())?;
+
+    Ok(sorted_json_rules)
+}
+
+fn sort_json_rules(json_rule_traces: &str) -> Result<JsonValue, anyhow::Error> {
+    let mut sorted_rule_traces = Vec::new();
+
+    for line in json_rule_traces.lines() {
+        let pretty_json = sort_json_object(&serde_json::from_str(line)?, true);
+        sorted_rule_traces.push(pretty_json);
+    }
+
+    Ok(JsonValue::Array(sorted_rule_traces))
 }
 
 pub fn read_human_rule_trace(

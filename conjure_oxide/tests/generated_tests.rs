@@ -1,7 +1,7 @@
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_core::Model;
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
-use conjure_oxide::utils::testing::read_human_rule_trace;
+use conjure_oxide::utils::testing::{read_human_rule_trace, read_rule_trace};
 use glob::glob;
 use itertools::Itertools;
 use std::collections::BTreeMap;
@@ -9,10 +9,11 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use tracing::{span, Level};
+use tracing::{span, Level, Metadata as OtherMetadata};
 use tracing_subscriber::{
     filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
 };
+
 use uniplate::Biplate;
 
 use tracing_appender::non_blocking::WorkerGuard;
@@ -36,9 +37,8 @@ use conjure_oxide::utils::testing::{
     read_minion_solutions_json, read_model_json, save_minion_solutions_json, save_model_json,
 };
 use conjure_oxide::SolverFamily;
-use serde::Deserialize;
-
 use pretty_assertions::assert_eq;
+use serde::Deserialize;
 
 #[derive(Deserialize)]
 #[serde(default)]
@@ -99,7 +99,7 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
     // correctly
 
-    let subscriber = create_scoped_subscriber(path, essence_base);
+    let (subscriber, _guards) = create_scoped_subscriber(path, essence_base);
 
     // set the subscriber as default
     tracing::subscriber::with_default(subscriber, || {
@@ -240,6 +240,11 @@ fn integration_test_inner(
     assert_eq!(model, expected_model);
 
     //Stage 3: Check that the generated rules match with the expected in terms if type, order and count
+
+    let generated_json_rule_trace = read_rule_trace(path, essence_base, "generated", accept)?;
+    let expected_json_rule_trace = read_rule_trace(path, essence_base, "expected", accept)?;
+
+    assert_eq!(expected_json_rule_trace, generated_json_rule_trace);
 
     let generated_rule_trace_human =
         read_human_rule_trace(path, essence_base, "generated", accept)?;
@@ -387,17 +392,20 @@ fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
 pub fn create_scoped_subscriber(
     path: &str,
     test_name: &str,
-) -> (impl tracing::Subscriber + Send + Sync) {
-    //let (target1_layer, guard1) = create_file_layer_json(path, test_name);
-    let target2_layer = create_file_layer_human(path, test_name);
-    let layered = target2_layer;
+) -> (
+    impl tracing::Subscriber + Send + Sync,
+    Vec<tracing_appender::non_blocking::WorkerGuard>,
+) {
+    let (target1_layer, guard1) = create_file_layer_json(path, test_name);
+    let (target2_layer, guard2) = create_file_layer_human(path, test_name);
+    let layered = target1_layer.and_then(target2_layer);
 
     let subscriber = Arc::new(tracing_subscriber::registry().with(layered))
         as Arc<dyn tracing::Subscriber + Send + Sync>;
     // setting this subscriber as the default
     let _default = tracing::subscriber::set_default(subscriber.clone());
 
-    subscriber
+    (subscriber, vec![guard1, guard2])
 }
 
 fn create_file_layer_json(
@@ -410,29 +418,34 @@ fn create_file_layer_json(
 
     let layer1 = fmt::layer()
         .with_writer(non_blocking)
-        .json()
         .with_level(false)
-        .without_time()
         .with_target(false)
-        .with_filter(EnvFilter::new("rule_engine=trace"))
-        .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine"));
+        .without_time()
+        .with_filter(FilterFn::new(|meta: &OtherMetadata| {
+            meta.target() == "rule_engine"
+        }));
 
     (layer1, guard1)
 }
 
-fn create_file_layer_human(path: &str, test_name: &str) -> (impl Layer<Registry> + Send + Sync) {
+fn create_file_layer_human(
+    path: &str,
+    test_name: &str,
+) -> (impl Layer<Registry> + Send + Sync, WorkerGuard) {
     let file = File::create(format!("{path}/{test_name}-generated-rule-trace-human.txt"))
         .expect("Unable to create log file");
 
+    let (non_blocking, guard2) = tracing_appender::non_blocking(file);
+
     let layer2 = fmt::layer()
-        .with_writer(file)
+        .with_writer(non_blocking)
         .with_level(false)
         .without_time()
         .with_target(false)
         .with_filter(EnvFilter::new("rule_engine_human=trace"))
         .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human"));
 
-    layer2
+    (layer2, guard2)
 }
 
 #[test]

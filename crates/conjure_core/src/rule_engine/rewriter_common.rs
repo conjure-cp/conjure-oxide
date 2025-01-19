@@ -10,6 +10,8 @@ use crate::{
 };
 
 use itertools::Itertools;
+use serde_json::json;
+use std::fmt::Debug;
 use thiserror::Error;
 use tracing::{info, trace};
 
@@ -83,6 +85,18 @@ pub fn log_rule_application(
         new_variables_str,
         top_level_str
     );
+
+    trace!(
+        target: "rule_engine",
+        "{}",
+    json!({
+        "rule_name": result.rule.name,
+        "rule_set": result.rule.rule_sets,
+        "initial_expression": serde_json::to_value(initial_expression).unwrap(),
+        "transformed _expression": serde_json::to_value(&red.new_expression).unwrap()
+    })
+
+    )
 }
 
 /// Represents errors that can occur during the model rewriting process.
