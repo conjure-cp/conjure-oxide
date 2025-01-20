@@ -176,7 +176,7 @@ fn rule_sum_constants() {
 
 #[test]
 fn rule_sum_geq() {
-    let introduce_sumgeq = get_rule_by_name("introduce_sumgeq").unwrap();
+    let introduce_sumgeq = get_rule_by_name("introduce_weighted_sumleq_sumgeq").unwrap();
 
     let mut expr = Expression::Geq(
         Metadata::new(),
@@ -225,7 +225,7 @@ fn reduce_solve_xyz() {
     let unwrap_sum = get_rule_by_name("remove_unit_vector_sum").unwrap();
     let lt_to_leq = get_rule_by_name("lt_to_leq").unwrap();
     let leq_to_ineq = get_rule_by_name("x_leq_y_plus_k_to_ineq").unwrap();
-    let introduce_sumleq = get_rule_by_name("introduce_sumleq").unwrap();
+    let introduce_sumleq = get_rule_by_name("introduce_weighted_sumleq_sumgeq").unwrap();
 
     // 2 + 3 - 1
     let mut expr1 = Expression::Sum(

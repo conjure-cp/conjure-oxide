@@ -9,44 +9,9 @@ such that
 
 --
 
-Sum([Product([2, x]), Product([3, y])]), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-Sum([__0, __1]) 
-new variables:
-  __0: int(4..8)
-  __1: int(6..12)
-new constraints:
-  __0 =aux Product([2, x])
-  __1 =aux Product([3, y])
---
-
-__0 =aux Product([2, x]), 
-   ~~> introduce_producteq ([("Minion", 4200)]) 
-FlatProductEq(x,2,__0) 
-
---
-
-__1 =aux Product([3, y]), 
-   ~~> introduce_producteq ([("Minion", 4200)]) 
-FlatProductEq(y,3,__1) 
-
---
-
-(Sum([__0, __1]) = 12), 
-   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
-And([(Sum([__0, __1]) <= 12), (Sum([__0, __1]) >= 12)]) 
-
---
-
-(Sum([__0, __1]) <= 12), 
-   ~~> introduce_sumleq ([("Minion", 4400)]) 
-SumLeq([__0, __1], 12) 
-
---
-
-(Sum([__0, __1]) >= 12), 
-   ~~> introduce_sumgeq ([("Minion", 4400)]) 
-SumGeq([__0, __1], 12) 
+(Sum([Product([2, x]), Product([3, y])]) = 12), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([FlatWeightedSumLeq([2, 3],[x, y],12), FlatWeightedSumGeq([2, 3],[x, y],12)]) 
 
 --
 
@@ -54,12 +19,8 @@ Final model:
 
 find x: int(2..4)
 find y: int(2..4)
-find __0: int(4..8)
-find __1: int(6..12)
 
 such that
 
-And([SumLeq([__0, __1], 12), SumGeq([__0, __1], 12)]),
-FlatProductEq(x,2,__0),
-FlatProductEq(y,3,__1)
+And([FlatWeightedSumLeq([2, 3],[x, y],12), FlatWeightedSumGeq([2, 3],[x, y],12)])
 

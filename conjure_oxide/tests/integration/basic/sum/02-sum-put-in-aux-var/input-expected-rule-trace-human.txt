@@ -50,27 +50,15 @@ new constraints:
   __0 =aux Sum([x, y, z])
 --
 
+__0 =aux Sum([x, y, z]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x, y, z], __0), SumGeq([x, y, z], __0)]) 
+
+--
+
 (SafeDiv(__0, a) = 3), 
    ~~> introduce_diveq ([("Minion", 4200)]) 
 DivEq(__0, a, 3) 
-
---
-
-__0 =aux Sum([x, y, z]), 
-   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
-And([(Sum([x, y, z]) <= __0), (Sum([x, y, z]) >= __0)]) 
-
---
-
-(Sum([x, y, z]) <= __0), 
-   ~~> introduce_sumleq ([("Minion", 4400)]) 
-SumLeq([x, y, z], __0) 
-
---
-
-(Sum([x, y, z]) >= __0), 
-   ~~> introduce_sumgeq ([("Minion", 4400)]) 
-SumGeq([x, y, z], __0) 
 
 --
 

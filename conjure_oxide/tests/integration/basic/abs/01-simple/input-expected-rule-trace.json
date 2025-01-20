@@ -1,16 +1,37 @@
 [
   {
     "initial_expression": {
-      "Sum": [
-        [
-          {
-            "Abs": [
+      "Eq": [
+        {
+          "Atomic": [
+            {
+              "Literal": {
+                "Int": 10
+              }
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
+        {
+          "Sum": [
+            [
               {
-                "Atomic": [
+                "Abs": [
                   {
-                    "Reference": {
-                      "UserName": "x"
-                    }
+                    "Atomic": [
+                      {
+                        "Reference": {
+                          "UserName": "x"
+                        }
+                      },
+                      {
+                        "clean": false,
+                        "etype": null
+                      }
+                    ]
                   },
                   {
                     "clean": false,
@@ -19,54 +40,66 @@
                 ]
               },
               {
-                "clean": false,
-                "etype": null
-              }
-            ]
-          },
-          {
-            "Abs": [
-              {
-                "Atomic": [
+                "Abs": [
                   {
-                    "Reference": {
-                      "UserName": "y"
-                    }
+                    "Atomic": [
+                      {
+                        "Reference": {
+                          "UserName": "y"
+                        }
+                      },
+                      {
+                        "clean": false,
+                        "etype": null
+                      }
+                    ]
                   },
                   {
                     "clean": false,
                     "etype": null
                   }
                 ]
-              },
-              {
-                "clean": false,
-                "etype": null
               }
-            ]
-          }
-        ],
+            ],
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
         {
           "clean": false,
           "etype": null
         }
       ]
     },
-    "rule_name": "flatten_generic",
+    "rule_name": "introduce_weighted_sumleq_sumgeq",
     "rule_set": [
       [
         "Minion",
-        4200
+        4600
       ]
     ],
     "transformed _expression": {
-      "Sum": [
+      "And": [
         [
           {
-            "Atomic": [
+            "FlatSumGeq": [
+              [
+                {
+                  "Reference": {
+                    "MachineName": 0
+                  }
+                },
+                {
+                  "Reference": {
+                    "MachineName": 1
+                  }
+                }
+              ],
               {
-                "Reference": {
-                  "MachineName": 0
+                "Literal": {
+                  "Int": 10
                 }
               },
               {
@@ -76,10 +109,22 @@
             ]
           },
           {
-            "Atomic": [
+            "FlatSumLeq": [
+              [
+                {
+                  "Reference": {
+                    "MachineName": 0
+                  }
+                },
+                {
+                  "Reference": {
+                    "MachineName": 1
+                  }
+                }
+              ],
               {
-                "Reference": {
-                  "MachineName": 1
+                "Literal": {
+                  "Int": 10
                 }
               },
               {
@@ -215,378 +260,6 @@
     }
   },
   {
-    "initial_expression": {
-      "Eq": [
-        {
-          "Atomic": [
-            {
-              "Literal": {
-                "Int": 10
-              }
-            },
-            {
-              "clean": false,
-              "etype": null
-            }
-          ]
-        },
-        {
-          "Sum": [
-            [
-              {
-                "Atomic": [
-                  {
-                    "Reference": {
-                      "MachineName": 0
-                    }
-                  },
-                  {
-                    "clean": false,
-                    "etype": null
-                  }
-                ]
-              },
-              {
-                "Atomic": [
-                  {
-                    "Reference": {
-                      "MachineName": 1
-                    }
-                  },
-                  {
-                    "clean": false,
-                    "etype": null
-                  }
-                ]
-              }
-            ],
-            {
-              "clean": false,
-              "etype": null
-            }
-          ]
-        },
-        {
-          "clean": false,
-          "etype": null
-        }
-      ]
-    },
-    "rule_name": "sum_eq_to_inequalities",
-    "rule_set": [
-      [
-        "Minion",
-        4100
-      ]
-    ],
-    "transformed _expression": {
-      "And": [
-        [
-          {
-            "Geq": [
-              {
-                "Atomic": [
-                  {
-                    "Literal": {
-                      "Int": 10
-                    }
-                  },
-                  {
-                    "clean": false,
-                    "etype": null
-                  }
-                ]
-              },
-              {
-                "Sum": [
-                  [
-                    {
-                      "Atomic": [
-                        {
-                          "Reference": {
-                            "MachineName": 0
-                          }
-                        },
-                        {
-                          "clean": false,
-                          "etype": null
-                        }
-                      ]
-                    },
-                    {
-                      "Atomic": [
-                        {
-                          "Reference": {
-                            "MachineName": 1
-                          }
-                        },
-                        {
-                          "clean": false,
-                          "etype": null
-                        }
-                      ]
-                    }
-                  ],
-                  {
-                    "clean": false,
-                    "etype": null
-                  }
-                ]
-              },
-              {
-                "clean": false,
-                "etype": null
-              }
-            ]
-          },
-          {
-            "Leq": [
-              {
-                "Atomic": [
-                  {
-                    "Literal": {
-                      "Int": 10
-                    }
-                  },
-                  {
-                    "clean": false,
-                    "etype": null
-                  }
-                ]
-              },
-              {
-                "Sum": [
-                  [
-                    {
-                      "Atomic": [
-                        {
-                          "Reference": {
-                            "MachineName": 0
-                          }
-                        },
-                        {
-                          "clean": false,
-                          "etype": null
-                        }
-                      ]
-                    },
-                    {
-                      "Atomic": [
-                        {
-                          "Reference": {
-                            "MachineName": 1
-                          }
-                        },
-                        {
-                          "clean": false,
-                          "etype": null
-                        }
-                      ]
-                    }
-                  ],
-                  {
-                    "clean": false,
-                    "etype": null
-                  }
-                ]
-              },
-              {
-                "clean": false,
-                "etype": null
-              }
-            ]
-          }
-        ],
-        {
-          "clean": false,
-          "etype": null
-        }
-      ]
-    }
-  },
-  {
-    "initial_expression": {
-      "Leq": [
-        {
-          "Atomic": [
-            {
-              "Literal": {
-                "Int": 10
-              }
-            },
-            {
-              "clean": false,
-              "etype": null
-            }
-          ]
-        },
-        {
-          "Sum": [
-            [
-              {
-                "Atomic": [
-                  {
-                    "Reference": {
-                      "MachineName": 0
-                    }
-                  },
-                  {
-                    "clean": false,
-                    "etype": null
-                  }
-                ]
-              },
-              {
-                "Atomic": [
-                  {
-                    "Reference": {
-                      "MachineName": 1
-                    }
-                  },
-                  {
-                    "clean": false,
-                    "etype": null
-                  }
-                ]
-              }
-            ],
-            {
-              "clean": false,
-              "etype": null
-            }
-          ]
-        },
-        {
-          "clean": false,
-          "etype": null
-        }
-      ]
-    },
-    "rule_name": "introduce_sumleq",
-    "rule_set": [
-      [
-        "Minion",
-        4400
-      ]
-    ],
-    "transformed _expression": {
-      "FlatSumLeq": [
-        [
-          {
-            "Reference": {
-              "MachineName": 0
-            }
-          },
-          {
-            "Reference": {
-              "MachineName": 1
-            }
-          }
-        ],
-        {
-          "Literal": {
-            "Int": 10
-          }
-        },
-        {
-          "clean": false,
-          "etype": null
-        }
-      ]
-    }
-  },
-  {
-    "initial_expression": {
-      "Geq": [
-        {
-          "Atomic": [
-            {
-              "Literal": {
-                "Int": 10
-              }
-            },
-            {
-              "clean": false,
-              "etype": null
-            }
-          ]
-        },
-        {
-          "Sum": [
-            [
-              {
-                "Atomic": [
-                  {
-                    "Reference": {
-                      "MachineName": 0
-                    }
-                  },
-                  {
-                    "clean": false,
-                    "etype": null
-                  }
-                ]
-              },
-              {
-                "Atomic": [
-                  {
-                    "Reference": {
-                      "MachineName": 1
-                    }
-                  },
-                  {
-                    "clean": false,
-                    "etype": null
-                  }
-                ]
-              }
-            ],
-            {
-              "clean": false,
-              "etype": null
-            }
-          ]
-        },
-        {
-          "clean": false,
-          "etype": null
-        }
-      ]
-    },
-    "rule_name": "introduce_sumgeq",
-    "rule_set": [
-      [
-        "Minion",
-        4400
-      ]
-    ],
-    "transformed _expression": {
-      "FlatSumGeq": [
-        [
-          {
-            "Reference": {
-              "MachineName": 0
-            }
-          },
-          {
-            "Reference": {
-              "MachineName": 1
-            }
-          }
-        ],
-        {
-          "Literal": {
-            "Int": 10
-          }
-        },
-        {
-          "clean": false,
-          "etype": null
-        }
-      ]
-    }
-  },
-  {
-    "Number of rules applied": 6
+    "Number of rules applied": 3
   }
 ]
