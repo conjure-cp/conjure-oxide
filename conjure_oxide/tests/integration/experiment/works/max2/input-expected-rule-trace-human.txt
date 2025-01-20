@@ -33,27 +33,15 @@ new constraints:
   Or([(__1 = a), (__1 = b)])
 --
 
+(x = Sum([__1, 1])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([__1, 1], x), SumGeq([__1, 1], x)]) 
+
+--
+
 (__0 >= 2), 
    ~~> geq_to_ineq ([("Minion", 4100)]) 
 Ineq(2, __0, 0) 
-
---
-
-(x = Sum([__1, 1])), 
-   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
-And([(Sum([__1, 1]) <= x), (Sum([__1, 1]) >= x)]) 
-
---
-
-(Sum([__1, 1]) >= x), 
-   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4500)]) 
-Ineq(x, __1, 1) 
-
---
-
-(Sum([__1, 1]) <= x), 
-   ~~> introduce_sumleq ([("Minion", 4400)]) 
-SumLeq([__1, 1], x) 
 
 --
 
@@ -92,7 +80,7 @@ find __1: int(1..4)
 such that
 
 Ineq(2, __0, 0),
-And([SumLeq([__1, 1], x), Ineq(x, __1, 1)]),
+And([SumLeq([__1, 1], x), SumGeq([__1, 1], x)]),
 Ineq(a, __0, 0),
 Ineq(b, __0, 0),
 Or([(__0 = a), (__0 = b)]),

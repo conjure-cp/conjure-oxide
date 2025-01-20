@@ -23,6 +23,18 @@ Sum([3, -1]),
 
 --
 
+(Sum([y, z]) = 8), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([y, z], 8), SumGeq([y, z], 8)]) 
+
+--
+
+(Sum([x, 2]) = 3), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x, 2], 3), SumGeq([x, 2], 3)]) 
+
+--
+
 ((x <= 2)) -> ((y >= 5)), 
    ~~> flatten_imply ([("Minion", 4200)]) 
 (__0) -> ((y >= 5)) 
@@ -44,24 +56,24 @@ Reify((x <= 2), __0)
 
 --
 
-((Sum([y, z]) = 8)) -> ((Sum([x, 2]) = 3)), 
+(And([SumLeq([y, z], 8), SumGeq([y, z], 8)])) -> (And([SumLeq([x, 2], 3), SumGeq([x, 2], 3)])), 
    ~~> flatten_imply ([("Minion", 4200)]) 
-(__1) -> ((Sum([x, 2]) = 3)) 
+(__1) -> (And([SumLeq([x, 2], 3), SumGeq([x, 2], 3)])) 
 new variables:
   __1: bool
 new constraints:
-  __1 =aux (Sum([y, z]) = 8)
+  __1 =aux And([SumLeq([y, z], 8), SumGeq([y, z], 8)])
 --
 
-(__1) -> ((Sum([x, 2]) = 3)), 
+(__1) -> (And([SumLeq([x, 2], 3), SumGeq([x, 2], 3)])), 
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
-ReifyImply((Sum([x, 2]) = 3), __1) 
+ReifyImply(And([SumLeq([x, 2], 3), SumGeq([x, 2], 3)]), __1) 
 
 --
 
-__1 =aux (Sum([y, z]) = 8), 
+__1 =aux And([SumLeq([y, z], 8), SumGeq([y, z], 8)]), 
    ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify((Sum([y, z]) = 8), __1) 
+Reify(And([SumLeq([y, z], 8), SumGeq([y, z], 8)]), __1) 
 
 --
 
@@ -71,45 +83,9 @@ Ineq(5, y, 0)
 
 --
 
-(Sum([x, 2]) = 3), 
-   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
-And([(Sum([x, 2]) <= 3), (Sum([x, 2]) >= 3)]) 
-
---
-
-(Sum([x, 2]) >= 3), 
-   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4500)]) 
-Ineq(3, x, 2) 
-
---
-
-(Sum([x, 2]) <= 3), 
-   ~~> introduce_sumleq ([("Minion", 4400)]) 
-SumLeq([x, 2], 3) 
-
---
-
 (x <= 2), 
    ~~> leq_to_ineq ([("Minion", 4100)]) 
 Ineq(x, 2, 0) 
-
---
-
-(Sum([y, z]) = 8), 
-   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
-And([(Sum([y, z]) <= 8), (Sum([y, z]) >= 8)]) 
-
---
-
-(Sum([y, z]) <= 8), 
-   ~~> introduce_sumleq ([("Minion", 4400)]) 
-SumLeq([y, z], 8) 
-
---
-
-(Sum([y, z]) >= 8), 
-   ~~> introduce_sumgeq ([("Minion", 4400)]) 
-SumGeq([y, z], 8) 
 
 --
 
@@ -124,7 +100,7 @@ find __1: bool
 such that
 
 ReifyImply(Ineq(5, y, 0), __0),
-ReifyImply(And([SumLeq([x, 2], 3), Ineq(3, x, 2)]), __1),
+ReifyImply(And([SumLeq([x, 2], 3), SumGeq([x, 2], 3)]), __1),
 Reify(Ineq(x, 2, 0), __0),
 Reify(And([SumLeq([y, z], 8), SumGeq([y, z], 8)]), __1)
 

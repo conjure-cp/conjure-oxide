@@ -154,9 +154,9 @@ And([(Sum([|Sum([SafeDiv(x, 2), y, -(z)])|, SafeDiv(|y|, 2)]) = 10)]),
 
 --
 
-Sum([|Sum([SafeDiv(x, 2), y, -(z)])|, SafeDiv(|y|, 2)]), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-Sum([__0, __1]) 
+(Sum([|Sum([SafeDiv(x, 2), y, -(z)])|, SafeDiv(|y|, 2)]) = 10), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([__0, __1], 10), SumGeq([__0, __1], 10)]) 
 new variables:
   __0: int(0..10)
   __1: int(0..2)
@@ -174,6 +174,15 @@ new constraints:
   __2 =aux Sum([SafeDiv(x, 2), y, -(z)])
 --
 
+__2 =aux Sum([SafeDiv(x, 2), y, -(z)]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([FlatWeightedSumLeq([1, 1, -1],[__3, y, z],__2), FlatWeightedSumGeq([1, 1, -1],[__3, y, z],__2)]) 
+new variables:
+  __3: int(-3..1)
+new constraints:
+  __3 =aux SafeDiv(x, 2)
+--
+
 __0 =aux |__2|, 
    ~~> introduce_abseq ([("Minion", 4400)]) 
 AbsEq(__0,__2) 
@@ -182,81 +191,28 @@ AbsEq(__0,__2)
 
 SafeDiv(|y|, 2), 
    ~~> flatten_generic ([("Minion", 4200)]) 
-SafeDiv(__3, 2) 
+SafeDiv(__4, 2) 
 new variables:
-  __3: int(0..5)
+  __4: int(0..5)
 new constraints:
-  __3 =aux |y|
+  __4 =aux |y|
 --
 
-__3 =aux |y|, 
+__4 =aux |y|, 
    ~~> introduce_abseq ([("Minion", 4400)]) 
-AbsEq(__3,y) 
+AbsEq(__4,y) 
 
 --
 
-__1 =aux SafeDiv(__3, 2), 
+__1 =aux SafeDiv(__4, 2), 
    ~~> introduce_diveq ([("Minion", 4200)]) 
-DivEq(__3, 2, __1) 
+DivEq(__4, 2, __1) 
 
 --
 
-Sum([SafeDiv(x, 2), y, -(z)]), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-Sum([__4, y, __5]) 
-new variables:
-  __4: int(-3..1)
-  __5: int(-2..5)
-new constraints:
-  __4 =aux SafeDiv(x, 2)
-  __5 =aux -(z)
---
-
-__5 =aux -(z), 
-   ~~> introduce_minuseq_from_aux_decl ([("Minion", 4400)]) 
-MinusEq(__5,z) 
-
---
-
-__4 =aux SafeDiv(x, 2), 
+__3 =aux SafeDiv(x, 2), 
    ~~> introduce_diveq ([("Minion", 4200)]) 
-DivEq(x, 2, __4) 
-
---
-
-(Sum([__0, __1]) = 10), 
-   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
-And([(Sum([__0, __1]) <= 10), (Sum([__0, __1]) >= 10)]) 
-
---
-
-(Sum([__0, __1]) <= 10), 
-   ~~> introduce_sumleq ([("Minion", 4400)]) 
-SumLeq([__0, __1], 10) 
-
---
-
-(Sum([__0, __1]) >= 10), 
-   ~~> introduce_sumgeq ([("Minion", 4400)]) 
-SumGeq([__0, __1], 10) 
-
---
-
-__2 =aux Sum([__4, y, __5]), 
-   ~~> sum_eq_to_inequalities ([("Minion", 4100)]) 
-And([(Sum([__4, y, __5]) <= __2), (Sum([__4, y, __5]) >= __2)]) 
-
---
-
-(Sum([__4, y, __5]) <= __2), 
-   ~~> introduce_sumleq ([("Minion", 4400)]) 
-SumLeq([__4, y, __5], __2) 
-
---
-
-(Sum([__4, y, __5]) >= __2), 
-   ~~> introduce_sumgeq ([("Minion", 4400)]) 
-SumGeq([__4, y, __5], __2) 
+DivEq(x, 2, __3) 
 
 --
 
@@ -268,17 +224,15 @@ find z: int(-5..2)
 find __0: int(0..10)
 find __1: int(0..2)
 find __2: int(-10..8)
-find __3: int(0..5)
-find __4: int(-3..1)
-find __5: int(-2..5)
+find __3: int(-3..1)
+find __4: int(0..5)
 
 such that
 
 And([SumLeq([__0, __1], 10), SumGeq([__0, __1], 10)]),
 AbsEq(__0,__2),
-DivEq(__3, 2, __1),
-And([SumLeq([__4, y, __5], __2), SumGeq([__4, y, __5], __2)]),
-AbsEq(__3,y),
-DivEq(x, 2, __4),
-MinusEq(__5,z)
+DivEq(__4, 2, __1),
+And([FlatWeightedSumLeq([1, 1, -1],[__3, y, z],__2), FlatWeightedSumGeq([1, 1, -1],[__3, y, z],__2)]),
+DivEq(x, 2, __3),
+AbsEq(__4,y)
 
