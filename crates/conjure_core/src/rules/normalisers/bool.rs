@@ -1,4 +1,4 @@
-//! Normalising rules for boolean operations (not, and, or).
+//! Normalising rules for boolean operations (not, and, or, ->).
 
 use conjure_core::ast::Expression as Expr;
 use conjure_core::metadata::Metadata;
@@ -10,6 +10,8 @@ use conjure_core::Model;
 use uniplate::Uniplate;
 
 use Expr::*;
+
+use crate::ast::Atom;
 
 /// Removes double negations
 ///
@@ -173,4 +175,149 @@ fn remove_unit_vector_or(expr: &Expr, _: &Model) -> ApplicationResult {
         }
         _ => Err(ApplicationError::RuleNotApplicable),
     }
+}
+
+/// Applies the contrapositive of implication.
+///
+/// ```text
+/// !p -> !q ~> q -> p
+/// ```
+/// where p,q are safe.
+#[register_rule(("Base", 8800))]
+fn normalise_implies_contrapositive(expr: &Expr, _model: &Model) -> ApplicationResult {
+    let Expr::Imply(_, e1, e2) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::Not(_, p) = e1.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::Not(_, q) = e2.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    // we only negate e1, e2 if they are safe.
+    if !e1.is_safe() || !e2.is_safe() {
+        return Err(RuleNotApplicable);
+    }
+
+    Ok(Reduction::pure(Expr::Imply(
+        Metadata::new(),
+        q.clone(),
+        p.clone(),
+    )))
+}
+
+/// Simplifies the negation of implication.
+///
+/// ```text
+/// !(p->q) ~> p /\ !q
+/// ```,
+///
+/// where p->q is safe
+#[register_rule(("Base", 8800))]
+fn normalise_implies_negation(expr: &Expr, _: &Model) -> ApplicationResult {
+    let Expr::Not(_, e1) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::Imply(_, p, q) = e1.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    // p->q must be safe to negate
+    if !e1.is_safe() {
+        return Err(RuleNotApplicable);
+    }
+
+    Ok(Reduction::pure(Expr::And(
+        Metadata::new(),
+        vec![*p.clone(), Expr::Not(Metadata::new(), q.clone())],
+    )))
+}
+
+/// Applies left distributivity to implication.
+///
+/// ```text
+/// ((r -> p) -> (r->q)) ~> (r -> (p -> q))
+/// ```
+///
+/// This rule relies on CSE to unify the two instances of `r` to a single atom; therefore, it might
+/// not work as well when optimisations are disabled.
+///
+/// Has a higher priority than `normalise_implies_uncurry` as this should apply first. See the
+/// docstring for `normalise_implies_uncurry`.
+#[register_rule(("Base", 8800))]
+fn normalise_implies_left_distributivity(expr: &Expr, _: &Model) -> ApplicationResult {
+    let Expr::Imply(_, e1, e2) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::Imply(_, r1, p) = e1.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::Imply(_, r2, q) = e2.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    // Instead of checking deep equality, let CSE unify them to a common variable and check for
+    // that.
+
+    let r1_atom: &Atom = r1.as_ref().try_into().or(Err(RuleNotApplicable))?;
+    let r2_atom: &Atom = r2.as_ref().try_into().or(Err(RuleNotApplicable))?;
+
+    if !(r1_atom == r2_atom) {
+        return Err(RuleNotApplicable);
+    }
+
+    Ok(Reduction::pure(Expr::Imply(
+        Metadata::new(),
+        r1.clone(),
+        Box::new(Expr::Imply(Metadata::new(), p.clone(), q.clone())),
+    )))
+}
+
+/// Applies import-export to implication, i.e. uncurrying.
+///
+/// ```text
+/// p -> (q -> r) ~> (p/\q) -> r
+/// ```
+///
+/// This rule has a lower priority of 8400 to allow distributivity, contraposition, etc. to
+/// apply first.
+///
+/// For example, we want to do:
+///
+/// ```text
+/// ((r -> p) -> (r -> q)) ~> (r -> (p -> q))  [left-distributivity]
+/// (r -> (p -> q)) ~> (r/\p) ~> q [uncurry]
+/// ```
+///
+/// not
+///
+/// ```text
+/// ((r->p) -> (r->q)) ~> ((r->p) /\ r) -> q) ~> [uncurry]
+/// ```
+///
+/// # Rationale
+///
+/// With this rule, I am assuming (without empirical evidence) that and is a cheaper constraint
+/// than implication (in particular, Minion's reifyimply constraint).
+#[register_rule(("Base", 8400))]
+fn normalise_implies_uncurry(expr: &Expr, _: &Model) -> ApplicationResult {
+    let Expr::Imply(_, p, e1) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::Imply(_, q, r) = e1.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    Ok(Reduction::pure(Expr::Imply(
+        Metadata::new(),
+        Box::new(Expr::And(Metadata::new(), vec![*p.clone(), *q.clone()])),
+        r.clone(),
+    )))
 }
