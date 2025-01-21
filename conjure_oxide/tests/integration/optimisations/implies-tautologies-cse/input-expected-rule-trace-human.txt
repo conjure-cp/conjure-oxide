@@ -40,6 +40,18 @@ true
 
 --
 
+Or([(a) -> (z), (z) -> (a)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+true 
+
+--
+
+Or([(b) -> (c), (b) -> (Not(c))]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+true 
+
+--
+
 Or([Or([Or([((n < 6)) -> ((m % 2 = 0)), a]), b]), ((m % 2 = 0)) -> ((n < 6))]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
 Or([((n < 6)) -> ((m % 2 = 0)), a, b, ((m % 2 = 0)) -> ((n < 6))]) 
@@ -652,30 +664,6 @@ And([(SafeDiv(q, 2) = r)]),
 
 --
 
-(a) -> (z), 
-   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
-Ineq(a, z, 0) 
-
---
-
-(z) -> (a), 
-   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
-Ineq(z, a, 0) 
-
---
-
-(b) -> (c), 
-   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
-Ineq(b, c, 0) 
-
---
-
-(b) -> (Not(c)), 
-   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
-ReifyImply(Not(c), b) 
-
---
-
 (d = (n <= 5)), 
    ~~> bool_eq_to_reify ([("Minion", 4400)]) 
 Reify((n <= 5), d) 
@@ -1051,12 +1039,6 @@ DivEq(q, 2, r)
 
 --
 
-Not(c), 
-   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
-WatchedLiteral(c,false) 
-
---
-
 (n <= 5), 
    ~~> leq_to_ineq ([("Minion", 4100)]) 
 Ineq(n, 5, 0) 
@@ -1171,8 +1153,8 @@ find __14: bool
 such that
 
 true,
-Or([Ineq(a, z, 0), Ineq(z, a, 0)]),
-Or([Ineq(b, c, 0), ReifyImply(WatchedLiteral(c,false), b)]),
+true,
+true,
 ReifyImply((l = 10), __0),
 Or([ReifyImply(ModEq(m, 2, 0), __1), ReifyImply(Ineq(n, 5, 0), __2)]),
 Or([ReifyImply(ModEq(m, 2, 0), __3), a, b, ReifyImply(Ineq(n, 5, 0), __4)]),

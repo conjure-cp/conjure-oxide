@@ -567,6 +567,22 @@ impl Expression {
                 | Expression::Product(_, _)
         )
     }
+
+    /// True iff self and other are both atomic and identical.
+    ///
+    /// This method is useful to cheaply check equivalence. Assuming CSE is enabled, any unifiable
+    /// expressions will be rewritten to a common variable. This is much cheaper than checking the
+    /// entire subtrees of `self` and `other`.
+    pub fn identical_atom_to(&self, other: &Expression) -> bool {
+        let atom1: Result<&Atom, _> = self.try_into();
+        let atom2: Result<&Atom, _> = other.try_into();
+
+        if let (Ok(atom1), Ok(atom2)) = (atom1, atom2) {
+            atom2 == atom1
+        } else {
+            false
+        }
+    }
 }
 
 impl From<i32> for Expression {
