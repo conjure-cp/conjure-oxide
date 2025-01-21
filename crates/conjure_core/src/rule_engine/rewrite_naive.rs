@@ -13,8 +13,8 @@ use std::collections::{BTreeMap, HashSet};
 use std::sync::Arc;
 use uniplate::Biplate;
 
-/// A naive, exhaustive rewriter for development purposes.
-/// Applies rules in priority order, favouring larger expressions as tie-breakers.
+/// A naive, exhaustive rewriter for development purposes. Applies rules in priority order,
+/// favouring expressions found earlier during preorder traversal of the tree.
 pub fn rewrite_naive<'a>(
     model: &Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
@@ -37,7 +37,7 @@ pub fn rewrite_naive<'a>(
         let mut results: Vec<(RuleResult<'_>, u16, Expr, CtxFn)> = vec![];
 
         // Iterate over rules by priority in descending order.
-        for (priority, rule_set) in rules_by_priority.iter().rev() {
+        'top: for (priority, rule_set) in rules_by_priority.iter().rev() {
             for (expr, ctx) in Biplate::<Expr>::contexts_bi(&model.get_constraints_vec()) {
                 // Clone expr and ctx so they can be reused
                 let expr = expr.clone();
@@ -68,9 +68,10 @@ pub fn rewrite_naive<'a>(
                         }
                     }
                 }
-                // If any results were found at the current priority level, stop checking lower priorities
+                // This expression has the highest rule priority so far, so this is what we want to
+                // rewrite.
                 if !results.is_empty() {
-                    break;
+                    break 'top;
                 }
             }
         }
@@ -96,62 +97,6 @@ pub fn rewrite_naive<'a>(
 
                     // Extract the expression from the first result
                     let expr = results[0].2.clone();
-
-                    // bug!("Multiple equally applicable rules for {expr}: {names:#?}");
-
-                    // TODO, debugging code, remove before merging
-                    // TODO: write a separate test which generates this for a given backend solver and tests it using generated/expected style. Good for documentation too.
-                    // Current output:
-                    // Priority 9001:
-                    // - apply_eval_constant
-                    // Priority 9000:
-                    // - partial_evaluator
-                    // Priority 8900:
-                    // - bubble_up
-                    // - expand_bubble
-                    // Priority 8800:
-                    // - remove_empty_expression
-                    // - remove_unit_vector_and
-                    // - remove_unit_vector_sum
-                    // - negated_eq_to_neq
-                    // - negated_neq_to_eq
-                    // - remove_unit_vector_or
-                    // Priority 8400:
-                    // - distribute_negation_over_sum
-                    // - distribute_not_over_or
-                    // - minus_to_sum
-                    // - distribute_not_over_and
-                    // - remove_double_negation
-                    // - distribute_or_over_and
-                    // - normalise_associative_commutative
-                    // - elmininate_double_negation
-                    // Priority 6000:
-                    // - mod_to_bubble
-                    // - div_to_bubble
-                    // Priority 4400:
-                    // - flatten_vecop
-                    // - flatten_eq
-                    // - sum_leq_to_sumleq
-                    // - sum_eq_to_sumeq
-                    // - x_leq_y_plus_k_to_ineq
-                    // - flatten_sum_geq
-                    // - flatten_binop
-                    // - sumeq_to_minion
-                    // Priority 4200:
-                    // - introduce_modeq
-                    // - introduce_diveq
-                    // Priority 4100:
-                    // - leq_to_ineq
-                    // - gt_to_ineq
-                    // - geq_to_ineq
-                    // - lt_to_ineq
-                    // - not_literal_to_wliteral
-                    // Priority 4090:
-                    // - not_constraint_to_reify
-                    // Priority 2000:
-                    // - min_to_var
-                    // Priority 100:
-                    // - max_to_var
 
                     // Construct a single string to display the names of the rules grouped by priority
                     let mut rules_by_priority_string = String::new();
