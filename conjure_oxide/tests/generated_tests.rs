@@ -208,7 +208,7 @@ fn integration_test_inner(
         "Model before rewriting:\n\n{}\n--\n",
         model
     );
-    let model = rewrite_naive(&model, &rule_sets, false)?;
+    let model = rewrite_naive(&model, &rule_sets, true)?;
 
     tracing::trace!(
         target: "rule_engine_human",
