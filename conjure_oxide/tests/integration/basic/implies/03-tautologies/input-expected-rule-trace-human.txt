@@ -21,33 +21,15 @@ true
 
 --
 
-(a) -> (z), 
-   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
-Ineq(a, z, 0) 
+Or([(a) -> (z), (z) -> (a)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+true 
 
 --
 
-(z) -> (a), 
-   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
-Ineq(z, a, 0) 
-
---
-
-(b) -> (c), 
-   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
-Ineq(b, c, 0) 
-
---
-
-(b) -> (Not(c)), 
-   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
-ReifyImply(Not(c), b) 
-
---
-
-Not(c), 
-   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
-WatchedLiteral(c,false) 
+Or([(b) -> (c), (b) -> (Not(c))]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+true 
 
 --
 
@@ -63,6 +45,6 @@ find z: bool
 such that
 
 true,
-Or([Ineq(a, z, 0), Ineq(z, a, 0)]),
-Or([Ineq(b, c, 0), ReifyImply(WatchedLiteral(c,false), b)])
+true,
+true
 

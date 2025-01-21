@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use conjure_macros::register_rule;
+use itertools::iproduct;
 
 use crate::rule_engine::{ApplicationResult, Reduction};
 use crate::Model;
@@ -153,28 +154,40 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             }
         }
         Not(_, _) => Err(RuleNotApplicable),
-        Or(m, vec) => {
-            let mut new_vec: Vec<Expr> = Vec::new();
-            let mut has_const: bool = false;
-            for expr in vec {
+        Or(m, terms) => {
+            let mut has_changed = false;
+
+            // 2. boolean literals
+            let mut new_terms = vec![];
+            for expr in terms {
                 if let Expr::Atomic(_, Atom::Literal(Bool(x))) = expr {
-                    has_const = true;
+                    has_changed = true;
+
+                    // true ~~> entire or is true
+                    // false ~~> remove false from the or
                     if x {
-                        return Ok(Reduction::pure(Atomic(
-                            Default::default(),
-                            Atom::Literal(Bool(true)),
-                        )));
+                        return Ok(Reduction::pure(true.into()));
                     }
                 } else {
-                    new_vec.push(expr);
+                    new_terms.push(expr);
                 }
             }
 
-            if !has_const {
-                Err(RuleNotApplicable)
-            } else {
-                Ok(Reduction::pure(Or(m, new_vec)))
+            // 2. check pairwise tautologies.
+            if check_pairwise_or_tautologies(&new_terms) {
+                return Ok(Reduction::pure(true.into()));
             }
+
+            // 3. empty or ~~> false
+            if new_terms.is_empty() {
+                return Ok(Reduction::pure(false.into()));
+            }
+
+            if !has_changed {
+                return Err(RuleNotApplicable);
+            }
+
+            Ok(Reduction::pure(Or(m, new_terms)))
         }
         And(m, vec) => {
             let mut new_vec: Vec<Expr> = Vec::new();
@@ -216,11 +229,8 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             // let identical-CSE turn them into identical variables first. Then, check if they are
             // identical variables.
 
-            let x: &Atom = (&*x).try_into().or(Err(RuleNotApplicable))?;
-            let y: &Atom = (&*y).try_into().or(Err(RuleNotApplicable))?;
-
-            if x == y {
-                return Ok(Reduction::pure(Expr::Atomic(Metadata::new(), true.into())));
+            if x.identical_atom_to(y.as_ref()) {
+                return Ok(Reduction::pure(true.into()));
             }
 
             Err(RuleNotApplicable)
@@ -273,4 +283,53 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
         MinionReify(_, _, _) => Err(RuleNotApplicable),
         MinionReifyImply(_, _, _) => Err(RuleNotApplicable),
     }
+}
+
+/// Checks for tautologies involving pairs of terms inside an or, returning true if one is found.
+///
+/// This applies the following rules:
+///
+/// ```text
+/// (p->q) \/ (q->p) ~> true    [totality of implication]
+/// (p->q) \/ (p-> !q) ~> true  [conditional excluded middle]
+/// ```
+///
+fn check_pairwise_or_tautologies(or_terms: &[Expr]) -> bool {
+    // Collect terms that are structurally identical to the rule input.
+    // Then, try the rules on these terms, also checking the other conditions of the rules.
+
+    // stores (p,q) in p -> q
+    let mut p_implies_q: Vec<(&Expr, &Expr)> = vec![];
+
+    // stores (p,q) in p -> !q
+    let mut p_implies_not_q: Vec<(&Expr, &Expr)> = vec![];
+
+    for term in or_terms.iter() {
+        if let Expr::Imply(_, p, q) = term {
+            // we use identical_atom_to for equality later on, so these sets are mutually exclusive.
+            //
+            // in general however, p -> !q would be in p_implies_q as (p,!q)
+            if let Expr::Not(_, q_1) = q.as_ref() {
+                p_implies_not_q.push((p.as_ref(), q_1.as_ref()));
+            } else {
+                p_implies_q.push((p.as_ref(), q.as_ref()));
+            }
+        }
+    }
+
+    // `(p->q) \/ (q->p) ~> true    [totality of implication]`
+    for ((p1, q1), (q2, p2)) in iproduct!(p_implies_q.iter(), p_implies_q.iter()) {
+        if p1.identical_atom_to(p2) && q1.identical_atom_to(q2) {
+            return true;
+        }
+    }
+
+    // `(p->q) \/ (p-> !q) ~> true`    [conditional excluded middle]
+    for ((p1, q1), (p2, q2)) in iproduct!(p_implies_q.iter(), p_implies_not_q.iter()) {
+        if p1.identical_atom_to(p2) && q1.identical_atom_to(q2) {
+            return true;
+        }
+    }
+
+    false
 }
