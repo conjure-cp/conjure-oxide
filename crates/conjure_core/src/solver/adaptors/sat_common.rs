@@ -37,9 +37,9 @@ impl CNFModel {
     pub fn from_conjure(conjure_model: ConjureModel) -> Result<CNFModel, SolverError> {
         let mut ans: CNFModel = CNFModel::new();
 
-        for var in conjure_model.variables.keys() {
+        for var in conjure_model.symbols().keys() {
             // Check that domain has the correct type
-            let decision_var = match conjure_model.variables.get(var) {
+            let decision_var = match conjure_model.symbols().get_var(var) {
                 None => {
                     return Err(ModelInvalid(format!("variable {:?} not found", var)));
                 }

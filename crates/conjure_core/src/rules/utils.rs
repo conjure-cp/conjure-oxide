@@ -82,7 +82,7 @@ pub fn to_aux_var(expr: &Expr, m: &Model) -> Option<ToAuxVarOutput> {
 
     let name = m.gensym();
 
-    let Some(domain) = expr.domain_of(&m.variables) else {
+    let Some(domain) = expr.domain_of(m.symbols()) else {
         tracing::trace!("could not find domain of {}", expr);
         return None;
     };

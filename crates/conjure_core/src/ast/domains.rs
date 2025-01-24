@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
-// use std::iter::Ste
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Range<A>
 where
     A: Ord,
@@ -10,7 +9,7 @@ where
     Bounded(A, A),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub enum Domain {
     BoolDomain,
     IntDomain(Vec<Range<i32>>),

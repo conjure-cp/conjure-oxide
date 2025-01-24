@@ -26,7 +26,7 @@ use crate::ast::domains::{Domain, Range};
 /// println!("Boolean Variable: {}", bool_var);
 /// println!("Integer Variable: {}", int_var);
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct DecisionVariable {
     pub domain: Domain,
 }

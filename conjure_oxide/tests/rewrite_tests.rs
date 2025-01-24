@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, VecDeque};
+use std::collections::VecDeque;
 use std::process::exit;
 
 use conjure_core::rules::eval_constant;
@@ -321,20 +321,20 @@ fn reduce_solve_xyz() {
         )
     );
 
-    let mut model = Model::new(BTreeMap::new(), vec![expr1, expr2], Default::default());
-    model.variables.insert(
+    let mut model = Model::new(SymbolTable::new(), vec![expr1, expr2], Default::default());
+    model.add_variable(
         Name::UserName(String::from("a")),
         DecisionVariable {
             domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
         },
     );
-    model.variables.insert(
+    model.add_variable(
         Name::UserName(String::from("b")),
         DecisionVariable {
             domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
         },
     );
-    model.variables.insert(
+    model.add_variable(
         Name::UserName(String::from("c")),
         DecisionVariable {
             domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
@@ -657,7 +657,7 @@ fn rewrite_solve_xyz() {
 
     // Apply rewrite function to the nested expression
     let rewritten_expr = rewrite_model(
-        &Model::new(BTreeMap::new(), vec![nested_expr], Default::default()),
+        &Model::new(SymbolTable::new(), vec![nested_expr], Default::default()),
         &rule_sets,
     )
     .unwrap()
@@ -668,22 +668,22 @@ fn rewrite_solve_xyz() {
     assert!(rewritten_expr.iter().all(is_simple));
 
     // Create model with variables and constraints
-    let mut model = Model::new(BTreeMap::new(), rewritten_expr, Default::default());
+    let mut model = Model::new(SymbolTable::new(), rewritten_expr, Default::default());
 
     // Insert variables and domains
-    model.variables.insert(
+    model.add_variable(
         var_name_from_atom(&variable_a.clone()),
         DecisionVariable {
             domain: domain.clone(),
         },
     );
-    model.variables.insert(
+    model.add_variable(
         var_name_from_atom(&variable_b.clone()),
         DecisionVariable {
             domain: domain.clone(),
         },
     );
-    model.variables.insert(
+    model.add_variable(
         var_name_from_atom(&variable_c.clone()),
         DecisionVariable {
             domain: domain.clone(),
