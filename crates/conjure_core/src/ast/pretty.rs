@@ -70,7 +70,7 @@ pub fn pretty_vec<T: Display>(elems: &[T]) -> String {
 ///
 /// Returns None if the symbol is not in the symbol table
 pub fn pretty_variable_declaration(symbol_table: &SymbolTable, var_name: &Name) -> Option<String> {
-    let var = symbol_table.get(var_name)?;
+    let var = symbol_table.get_var(var_name)?;
     match &var.domain {
         super::Domain::BoolDomain => Some(format!("{}: bool", var_name)),
         super::Domain::IntDomain(domain) => {

@@ -322,24 +322,24 @@ fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> (i32, i32) {
 
 impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
-    pub fn domain_of(&self, vars: &SymbolTable) -> Option<Domain> {
+    pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
         let ret = match self {
-            Expression::Atomic(_, Atom::Reference(name)) => Some(vars.get(name)?.domain.clone()),
+            Expression::Atomic(_, Atom::Reference(name)) => Some(syms.domain_of(name)?.clone()),
             Expression::Atomic(_, Atom::Literal(Literal::Int(n))) => {
                 Some(Domain::IntDomain(vec![Range::Single(*n)]))
             }
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(Domain::BoolDomain),
-            Expression::Sum(_, exprs) => expr_vec_to_domain_i32(exprs, |x, y| Some(x + y), vars),
+            Expression::Sum(_, exprs) => expr_vec_to_domain_i32(exprs, |x, y| Some(x + y), syms),
             Expression::Product(_, exprs) => {
-                expr_vec_to_domain_i32(exprs, |x, y| Some(x * y), vars)
+                expr_vec_to_domain_i32(exprs, |x, y| Some(x * y), syms)
             }
             Expression::Min(_, exprs) => {
-                expr_vec_to_domain_i32(exprs, |x, y| Some(if x < y { x } else { y }), vars)
+                expr_vec_to_domain_i32(exprs, |x, y| Some(if x < y { x } else { y }), syms)
             }
             Expression::Max(_, exprs) => {
-                expr_vec_to_domain_i32(exprs, |x, y| Some(if x > y { x } else { y }), vars)
+                expr_vec_to_domain_i32(exprs, |x, y| Some(if x > y { x } else { y }), syms)
             }
-            Expression::UnsafeDiv(_, a, b) => a.domain_of(vars)?.apply_i32(
+            Expression::UnsafeDiv(_, a, b) => a.domain_of(syms)?.apply_i32(
                 // rust integer division is truncating; however, we want to always round down,
                 // including for negative numbers.
                 |x, y| {
@@ -349,12 +349,12 @@ impl Expression {
                         None
                     }
                 },
-                &b.domain_of(vars)?,
+                &b.domain_of(syms)?,
             ),
             Expression::SafeDiv(_, a, b) => {
                 // rust integer division is truncating; however, we want to always round down
                 // including for negative numbers.
-                let domain = a.domain_of(vars)?.apply_i32(
+                let domain = a.domain_of(syms)?.apply_i32(
                     |x, y| {
                         if y != 0 {
                             Some((x as f32 / y as f32).floor() as i32)
@@ -362,7 +362,7 @@ impl Expression {
                             None
                         }
                     },
-                    &b.domain_of(vars)?,
+                    &b.domain_of(syms)?,
                 );
 
                 match domain {
@@ -375,15 +375,15 @@ impl Expression {
                     _ => None,
                 }
             }
-            Expression::UnsafeMod(_, a, b) => a.domain_of(vars)?.apply_i32(
+            Expression::UnsafeMod(_, a, b) => a.domain_of(syms)?.apply_i32(
                 |x, y| if y != 0 { Some(x % y) } else { None },
-                &b.domain_of(vars)?,
+                &b.domain_of(syms)?,
             ),
 
             Expression::SafeMod(_, a, b) => {
-                let domain = a.domain_of(vars)?.apply_i32(
+                let domain = a.domain_of(syms)?.apply_i32(
                     |x, y| if y != 0 { Some(x % y) } else { None },
-                    &b.domain_of(vars)?,
+                    &b.domain_of(syms)?,
                 );
 
                 match domain {
@@ -398,7 +398,7 @@ impl Expression {
             }
 
             Expression::SafePow(_, a, b) | Expression::UnsafePow(_, a, b) => {
-                a.domain_of(vars)?.apply_i32(
+                a.domain_of(syms)?.apply_i32(
                     |x, y| {
                         if (x != 0 || y != 0) && y >= 0 {
                             Some(x ^ y)
@@ -406,7 +406,7 @@ impl Expression {
                             None
                         }
                     },
-                    &b.domain_of(vars)?,
+                    &b.domain_of(syms)?,
                 )
             }
 
@@ -433,7 +433,7 @@ impl Expression {
             Expression::MinionReify(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionReifyImply(_, _, _) => Some(Domain::BoolDomain),
             Expression::Neg(_, x) => {
-                let Some(Domain::IntDomain(mut ranges)) = x.domain_of(vars) else {
+                let Some(Domain::IntDomain(mut ranges)) = x.domain_of(syms) else {
                     return None;
                 };
 
@@ -447,16 +447,16 @@ impl Expression {
                 Some(Domain::IntDomain(ranges))
             }
             Expression::Minus(_, a, b) => a
-                .domain_of(vars)?
-                .apply_i32(|x, y| Some(x - y), &b.domain_of(vars)?),
+                .domain_of(syms)?
+                .apply_i32(|x, y| Some(x - y), &b.domain_of(syms)?),
 
             Expression::FlatMinusEq(_, _, _) => Some(Domain::BoolDomain),
             Expression::FlatProductEq(_, _, _, _) => Some(Domain::BoolDomain),
             Expression::FlatWeightedSumLeq(_, _, _, _) => Some(Domain::BoolDomain),
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(Domain::BoolDomain),
             Expression::Abs(_, a) => a
-                .domain_of(vars)?
-                .apply_i32(|a, _| Some(a.abs()), &a.domain_of(vars)?),
+                .domain_of(syms)?
+                .apply_i32(|a, _| Some(a.abs()), &a.domain_of(syms)?),
             Expression::MinionPow(_, _, _, _) => Some(Domain::BoolDomain),
         };
         match ret {
@@ -802,7 +802,7 @@ mod tests {
     fn test_domain_of_reference() {
         let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
         let mut vars = SymbolTable::new();
-        vars.insert(
+        vars.add_var(
             Name::MachineName(0),
             DecisionVariable::new(Domain::IntDomain(vec![Range::Single(1)])),
         );
@@ -822,7 +822,7 @@ mod tests {
     fn test_domain_of_reference_sum_single() {
         let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
         let mut vars = SymbolTable::new();
-        vars.insert(
+        vars.add_var(
             Name::MachineName(0),
             DecisionVariable::new(Domain::IntDomain(vec![Range::Single(1)])),
         );
@@ -837,7 +837,7 @@ mod tests {
     fn test_domain_of_reference_sum_bounded() {
         let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
         let mut vars = SymbolTable::new();
-        vars.insert(
+        vars.add_var(
             Name::MachineName(0),
             DecisionVariable::new(Domain::IntDomain(vec![Range::Bounded(1, 2)])),
         );

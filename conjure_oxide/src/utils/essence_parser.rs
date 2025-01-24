@@ -5,9 +5,7 @@ use std::sync::{Arc, RwLock};
 use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_essence::LANGUAGE;
 
-use conjure_core::ast::{
-    Atom, DecisionVariable, Domain, Expression, Literal, Name, Range, SymbolTable,
-};
+use conjure_core::ast::{Atom, DecisionVariable, Domain, Expression, Literal, Name, Range};
 
 use crate::utils::conjure::EssenceParseError;
 use conjure_core::context::Context;
@@ -72,7 +70,7 @@ fn parse_find_statement(
     find_statement_list: Node,
     source_code: &str,
 ) -> BTreeMap<Name, DecisionVariable> {
-    let mut symbol_table = SymbolTable::new();
+    let mut vars = BTreeMap::new();
 
     for find_statement in named_children(&find_statement_list) {
         let mut temp_symbols = BTreeSet::new();
@@ -92,10 +90,10 @@ fn parse_find_statement(
 
         for name in temp_symbols {
             let decision_variable = DecisionVariable::new(domain.clone());
-            symbol_table.insert(Name::UserName(String::from(name)), decision_variable);
+            vars.insert(Name::UserName(String::from(name)), decision_variable);
         }
     }
-    symbol_table
+    vars
 }
 
 fn parse_domain(domain: Node, source_code: &str) -> Domain {

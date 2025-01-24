@@ -26,7 +26,7 @@ fn load_symbol_table(
     conjure_model: &ConjureModel,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
-    for (name, variable) in conjure_model.variables.iter() {
+    for (name, variable) in conjure_model.symbols().iter_var() {
         load_var(name, variable, minion_model)?;
     }
     Ok(())

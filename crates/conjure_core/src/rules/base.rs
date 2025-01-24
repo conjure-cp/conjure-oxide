@@ -88,9 +88,9 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
 
             let mut new_vars = SymbolTable::new();
             let domain = expr
-                .domain_of(&mdl.variables)
+                .domain_of(mdl.symbols())
                 .ok_or(ApplicationError::DomainError)?;
-            new_vars.insert(new_name.clone(), DecisionVariable::new(domain));
+            new_vars.add_var(new_name.clone(), DecisionVariable::new(domain));
 
             Ok(Reduction::new(
                 Atomic(Metadata::new(), Reference(new_name)),
@@ -132,9 +132,9 @@ fn max_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
 
             let mut new_vars = SymbolTable::new();
             let domain = expr
-                .domain_of(&mdl.variables)
+                .domain_of(mdl.symbols())
                 .ok_or(ApplicationError::DomainError)?;
-            new_vars.insert(new_name.clone(), DecisionVariable::new(domain));
+            new_vars.add_var(new_name.clone(), DecisionVariable::new(domain));
 
             Ok(Reduction::new(
                 Atomic(Metadata::new(), Reference(new_name)),

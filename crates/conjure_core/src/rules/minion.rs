@@ -98,7 +98,7 @@ fn introduce_producteq(expr: &Expr, model: &Model) -> ApplicationResult {
         // TODO: find this domain without having to make unnecessary Expr and Metadata objects
         // Just using the domain of expr doesn't work
         let aux_domain = Expr::Product(Metadata::new(), vec![y.clone().into(), next_factor])
-            .domain_of(&model.variables)
+            .domain_of(&model.symbols().clone())
             .ok_or(ApplicationError::DomainError)?;
 
         model.add_variable(aux_var.clone(), DecisionVariable { domain: aux_domain });
@@ -113,7 +113,7 @@ fn introduce_producteq(expr: &Expr, model: &Model) -> ApplicationResult {
     Ok(Reduction::new(
         Expr::FlatProductEq(Metadata::new(), x, y, val),
         new_tops,
-        model.variables,
+        model.symbols().clone(),
     ))
 }
 
@@ -392,7 +392,11 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, model: &Model) -> ApplicationRe
         (EqualityKind::Geq, false) => Expr::FlatSumGeq(Metadata::new(), vars, total),
     };
 
-    Ok(Reduction::new(new_expr, new_top_exprs, model.variables))
+    Ok(Reduction::new(
+        new_expr,
+        new_top_exprs,
+        model.symbols().clone(),
+    ))
 }
 
 #[register_rule(("Minion", 4200))]
@@ -687,7 +691,7 @@ fn flatten_imply(expr: &Expr, model: &Model) -> ApplicationResult {
     Ok(Reduction::new(
         Expr::Imply(meta.clone(), Box::new(new_x), y.clone()),
         vec![aux_var_info.top_level_expr()],
-        model.variables,
+        model.symbols().clone(),
     ))
 }
 
@@ -730,7 +734,7 @@ fn flatten_generic(expr: &Expr, model: &Model) -> ApplicationResult {
 
     let expr = expr.with_children(children);
 
-    Ok(Reduction::new(expr, new_tops, model.variables))
+    Ok(Reduction::new(expr, new_tops, model.symbols().clone()))
 }
 
 #[register_rule(("Minion", 4200))]
@@ -762,7 +766,7 @@ fn flatten_eq(expr: &Expr, model: &Model) -> ApplicationResult {
 
     let expr = expr.with_children(children);
 
-    Ok(Reduction::new(expr, new_tops, model.variables))
+    Ok(Reduction::new(expr, new_tops, model.symbols().clone()))
 }
 
 /// Converts a Geq to an Ineq
