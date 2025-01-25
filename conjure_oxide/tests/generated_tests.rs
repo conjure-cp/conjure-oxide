@@ -119,11 +119,24 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
 /// 1. Parsing the model from an Essence file.
 /// 2. Rewriting the model according to predefined rule sets.
 /// 3. Solving the model using the Minion solver and validating the solutions.
+/// 4. Comparing generated rule traces with expected outputs.
 ///
-/// This function operates in three main stages:
-/// - **Parsing Stage**: Reads the Essence model file and verifies that it parses correctly.
-/// - **Rewrite Stage**: Applies a set of rules to the parsed model and validates the result.
-/// - **Solution Stage**: Uses Minion to solve the model and compares solutions with expected results.
+/// This function operates in multiple stages:
+///
+/// - **Parsing Stage**
+///   - **Stage 1a (Default)**: Reads the Essence model file and verifies that it parses correctly.
+///   - **Stage 1b (Optional)**: Runs the native parser if explicitly enabled.
+///
+/// - **Rewrite Stage**
+///   - **Stage 2a (Default)**: Applies a set of rules to the parsed model and validates the result.
+///   - **Stage 2b (Optional)**: Runs additional validation checks on the rewritten model if enabled.
+///
+/// - **Solution Stage**
+///   - **Stage 3a (Default)**: Uses Minion to solve the model and save the solutions.
+///   - **Stage 3b (Optional)**: Compares the Minion solutions against Conjure-generated solutions if enabled.
+///
+/// - **Rule Trace Validation Stage**
+///   - **Stage 4a (Default)**: Checks that the generated rules match expected traces.
 ///
 /// # Arguments
 ///
