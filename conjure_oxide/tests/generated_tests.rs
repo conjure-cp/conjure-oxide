@@ -1,3 +1,4 @@
+use conjure_core::rule_engine::rewrite_model;
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
 use conjure_oxide::utils::testing::read_human_rule_trace;
@@ -42,10 +43,18 @@ use pretty_assertions::assert_eq;
 #[derive(Deserialize, Default)]
 struct TestConfig {
     extra_rewriter_asserts: Option<Vec<String>>,
-    skip_native_parser: Option<bool>,
-    use_naive_rewriter: Option<bool>,
-}
 
+    disable_1a: Option<bool>,
+    enable_1b: Option<bool>,
+    disable_2a: Option<bool>,
+    enable_2b: Option<bool>,
+    disable_3a: Option<bool>,
+    enable_3b: Option<bool>,
+    disable_4a: Option<bool>,
+
+    enable_native_impl: Option<bool>,
+    enable_rewriter_impl: Option<bool>,
+}
 fn main() {
     let _guard = create_scoped_subscriber("./logs", "test_log");
 
@@ -149,76 +158,101 @@ fn integration_test_inner(
             Default::default()
         };
 
-    // Stage 0: Compare native parser with expected (unless skipped)
+    // Stage 1a: Parse the model using the normal parser (run unless explicitly disabled)
+    let model = if !config.disable_1a.unwrap_or(false) {
+        let parsed = parse_essence_file(path, essence_base, extension, context.clone())?;
+        if verbose {
+            println!("Parsed model: {:#?}", parsed);
+        }
+        save_model_json(&parsed, path, essence_base, "parse")?;
+        Some(parsed)
+    } else {
+        None
+    };
+
+    // Stage 1b: Run native parser (only if explicitly enabled)
     let mut model_native = None;
-    if config.skip_native_parser != Some(true) {
+    if config.enable_1b.unwrap_or(false) {
         let mn = parse_essence_file_native(path, essence_base, extension, context.clone())?;
         save_model_json(&mn, path, essence_base, "parse")?;
         model_native = Some(mn);
-    }
 
-    // Stage 1: Parse the model using the normal parser
-    let model = parse_essence_file(path, essence_base, extension, context.clone())?;
-    if verbose {
-        println!("Parsed model: {:#?}", model);
-    }
-
-    {
-        let mut ctx = context.as_ref().write().unwrap();
-        ctx.file_name = Some(format!("{path}/{essence_base}.{extension}"));
-    }
-
-    save_model_json(&model, path, essence_base, "parse")?;
-
-    // Stage 2: Rewrite the model using the rule engine
-    let rule_sets = resolve_rule_sets(SolverFamily::Minion, &get_default_rule_sets())?;
-
-    // TODO: temporarily set to always use rewrite_naive
-    // remove before merging?
-    // or we can decide to make native the default.
-    // let rewritten_model = if let Some(true) = config.use_naive_rewriter {
-    //     rewrite_naive(&model, &rule_sets, true)?
-    // } else {
-    //     rewrite_model(&model, &rule_sets)?
-    // };
-    let rewritten_model = rewrite_naive(&model, &rule_sets, false)?;
-
-    if verbose {
-        println!("Rewritten model: {:#?}", rewritten_model);
-    }
-
-    save_model_json(&rewritten_model, path, essence_base, "rewrite")?;
-
-    if let Some(extra_asserts) = config.extra_rewriter_asserts.clone() {
-        for extra_assert in extra_asserts {
-            match extra_assert.as_str() {
-                "vector_operators_have_partially_evaluated" => {
-                    assert_vector_operators_have_partially_evaluated(&rewritten_model)
-                }
-                x => println!("Unrecognised extra assert: {}", x),
-            };
+        {
+            let mut ctx = context.as_ref().write().unwrap();
+            ctx.file_name = Some(format!("{path}/{essence_base}.{extension}"));
         }
     }
 
-    // Stage 3: Run the model through the Minion solver
-    let solutions = get_minion_solutions(rewritten_model.clone(), 0)?;
-    let solutions_json = save_minion_solutions_json(&solutions, path, essence_base)?;
-    if verbose {
-        println!("Minion solutions: {:#?}", solutions_json);
+    // Stage 2a: Rewrite the model using the rule engine (run unless explicitly disabled)
+    let rewritten_model = if !config.disable_2a.unwrap_or(false) {
+        let rule_sets = resolve_rule_sets(SolverFamily::Minion, &get_default_rule_sets())?;
+
+        let rewritten = if config.enable_native_impl.unwrap_or(false) {
+            rewrite_model(
+                model.as_ref().expect("Model must be parsed in 1a"),
+                &rule_sets,
+            )?
+        } else {
+            rewrite_naive(
+                model.as_ref().expect("Model must be parsed in 1a"),
+                &rule_sets,
+                false,
+            )?
+        };
+
+        if verbose {
+            println!("Rewritten model: {:#?}", rewritten);
+        }
+
+        save_model_json(&rewritten, path, essence_base, "rewrite")?;
+        Some(rewritten)
+    } else {
+        None
+    };
+
+    // Stage 2b: Check model properties (extra_asserts) (Verify additional model properties
+    // (e.g., ensure vector operators are evaluated). (only if explicitly enabled)
+    if config.enable_2b.unwrap_or(false) {
+        if let Some(extra_asserts) = config.extra_rewriter_asserts.clone() {
+            for extra_assert in extra_asserts {
+                match extra_assert.as_str() {
+                    "vector_operators_have_partially_evaluated" => {
+                        assert_vector_operators_have_partially_evaluated(
+                            rewritten_model.as_ref().expect("Rewritten model required"),
+                        );
+                    }
+                    x => println!("Unrecognised extra assert: {}", x),
+                };
+            }
+        }
     }
 
-    // Stage 4: Check that the generated rules match expected traces
-    let generated_rule_trace_human = read_human_rule_trace(path, essence_base, "generated")?;
-    let expected_rule_trace_human = read_human_rule_trace(path, essence_base, "expected")?;
+    // Stage 3a: Run the model through the Minion solver (run unless explicitly disabled)
+    let solutions = if !config.disable_3a.unwrap_or(false) {
+        let solved = get_minion_solutions(
+            rewritten_model
+                .as_ref()
+                .expect("Rewritten model must be present in 2a")
+                .clone(),
+            0,
+        )?;
+        let solutions_json = save_minion_solutions_json(&solved, path, essence_base)?;
+        if verbose {
+            println!("Minion solutions: {:#?}", solutions_json);
+        }
+        Some(solved)
+    } else {
+        None
+    };
 
-    // If ACCEPT = true, we skip intermediate assertions and only check conjure solutions
-    if accept {
-        // Check solutions against Conjure
+    // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
+    if config.enable_3b.unwrap_or(false) {
         let conjure_solutions: Vec<BTreeMap<Name, Literal>> =
             get_solutions_from_conjure(&format!("{}/{}.{}", path, essence_base, extension))?;
 
-        // Normalize solutions to allow comparison
-        let username_solutions = normalize_solutions_for_comparison(&solutions);
+        let username_solutions = normalize_solutions_for_comparison(
+            solutions.as_ref().expect("Minion solutions required"),
+        );
         let conjure_solutions = normalize_solutions_for_comparison(&conjure_solutions);
 
         let mut conjure_solutions_json = minion_solutions_to_json(&conjure_solutions);
@@ -231,52 +265,87 @@ fn integration_test_inner(
             username_solutions_json, conjure_solutions_json,
             "Solutions do not match conjure!"
         );
+    }
 
-        // If we reach here, solutions match Conjure. We now overwrite the expected files.
+    // Stage 4a: Check that the generated rules match expected traces (run unless explicitly disabled)
+    let (generated_rule_trace_human, expected_rule_trace_human) =
+        if !config.disable_4a.unwrap_or(false) {
+            let generated = read_human_rule_trace(path, essence_base, "generated")?;
+            let expected = read_human_rule_trace(path, essence_base, "expected")?;
 
-        // Overwrite expected parse and rewrite models
-        if config.skip_native_parser != Some(true) {
+            // Perform the assertion immediately
+            assert_eq!(
+                expected, generated,
+                "Generated rule trace does not match the expected trace!"
+            );
+
+            (Some(generated), Some(expected))
+        } else {
+            (None, None) // Avoid uninitialized variables when 4a is disabled
+        };
+
+    if accept {
+        // Overwrite expected parse and rewrite models if enabled
+        if config.enable_1b.unwrap_or(false) {
             model_native.clone().expect("model_native should exist");
             copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
         }
-        copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
-        copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json")?;
+        if !config.disable_1a.unwrap_or(false) {
+            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
+        }
+        if !config.disable_2a.unwrap_or(false) {
+            copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json")?;
+        }
 
-        // Overwrite expected solutions
-        copy_generated_to_expected(path, essence_base, "minion", "solutions.json")?;
+        if !config.disable_3a.unwrap_or(false) {
+            copy_generated_to_expected(path, essence_base, "minion", "solutions.json")?;
+        }
 
-        // Overwrite the expected human rule trace
-        copy_human_trace_generated_to_expected(path, essence_base)?;
-
-        save_stats_json(context.clone(), path, essence_base)?;
+        if !config.disable_4a.unwrap_or(false) {
+            copy_human_trace_generated_to_expected(path, essence_base)?;
+            save_stats_json(context.clone(), path, essence_base)?;
+        }
     }
 
-    // Check Stage 0 (native parser) if not skipped
-    if config.skip_native_parser != Some(true) {
+    // Check Stage 1b (native parser)
+    if config.enable_1b.unwrap_or(false) {
         let expected_model = read_model_json(path, essence_base, "expected", "parse")?;
         let model_native = model_native.expect("model_native should exist here");
         assert_eq!(model_native, expected_model);
     }
 
-    // Check Stage 1 (parsed model)
-    let expected_model = read_model_json(path, essence_base, "expected", "parse")?;
-    assert_eq!(model, expected_model);
-
-    // Check Stage 2 (rewritten model)
-    let expected_model = read_model_json(path, essence_base, "expected", "rewrite")?;
-    assert_eq!(rewritten_model, expected_model);
-
-    // Check Stage 3 (solutions)
-    let expected_solutions_json = read_minion_solutions_json(path, essence_base, "expected")?;
-
-    // Check Stage 4 (human-readable rule trace)
-    assert_eq!(expected_rule_trace_human, generated_rule_trace_human);
-
-    if verbose {
-        println!("Expected solutions: {:#?}", expected_solutions_json);
+    // Check Stage 1a (parsed model)
+    if !config.disable_1a.unwrap_or(false) {
+        let expected_model = read_model_json(path, essence_base, "expected", "parse")?;
+        assert_eq!(model.expect("Model must be present in 1a"), expected_model);
     }
-    assert_eq!(solutions_json, expected_solutions_json);
 
+    // Check Stage 2a (rewritten model)
+    if !config.disable_2a.unwrap_or(false) {
+        let expected_model = read_model_json(path, essence_base, "expected", "rewrite")?;
+        assert_eq!(
+            rewritten_model.expect("Rewritten model must be present in 2a"),
+            expected_model
+        );
+    }
+
+    // Check Stage 3a (solutions)
+    if !config.disable_3a.unwrap_or(false) {
+        let expected_solutions_json = read_minion_solutions_json(path, essence_base, "expected")?;
+        let username_solutions_json =
+            minion_solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
+        assert_eq!(username_solutions_json, expected_solutions_json);
+    }
+
+    // Final assertion for rule trace (only if 4a was enabled)
+    if let (Some(expected), Some(generated)) =
+        (expected_rule_trace_human, generated_rule_trace_human)
+    {
+        assert_eq!(
+            expected, generated,
+            "Generated rule trace does not match the expected trace!"
+        );
+    }
     save_stats_json(context, path, essence_base)?;
 
     Ok(())
