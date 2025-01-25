@@ -91,33 +91,27 @@ static GUARD: Mutex<()> = Mutex::new(());
 // wrapper to conditionally enforce sequential execution
 fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
-
-    // Lock here to ensure sequential execution
-    // Tests should still run if a previous test panics while holding this mutex
-    let _guard = GUARD.lock().unwrap_or_else(|e| e.into_inner());
-
-    // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
-    // correctly
+    let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
 
     let subscriber = create_scoped_subscriber(path, essence_base);
+    // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
+    // correctly
+    //
+    // also with ACCEPT=true, as the conjure checking seems to get confused when ran too much at
+    // once.
+    if verbose || accept {
+        let _guard = GUARD.lock().unwrap_or_else(|e| e.into_inner());
 
-    // set the subscriber as default
-    tracing::subscriber::with_default(subscriber, || {
-        // create a span for the trace
-        // let test_span = span!(target: "rule_engine", Level::TRACE, "test_span");
-        // let _enter = test_span.enter();
-
-        // execute tests based on verbosity
-        if verbose {
-            #[allow(clippy::unwrap_used)]
-            let _guard = GUARD.lock().unwrap_or_else(|e| e.into_inner());
-            integration_test_inner(path, essence_base, extension)?
-        } else {
-            integration_test_inner(path, essence_base, extension)?
-        }
-
-        Ok(())
-    })
+        // set the subscriber as default
+        tracing::subscriber::with_default(subscriber, || {
+            integration_test_inner(path, essence_base, extension)
+        })
+    } else {
+        let subscriber = create_scoped_subscriber(path, essence_base);
+        tracing::subscriber::with_default(subscriber, || {
+            integration_test_inner(path, essence_base, extension)
+        })
+    }
 }
 
 /// Runs an integration test for a given Conjure model by:
