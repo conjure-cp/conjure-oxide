@@ -2,7 +2,7 @@
 //! The beta-reduction rule has the side effect of increasing a counter in the metadata.
 
 use std::collections::HashSet;
-use tree_morph::*;
+use tree_morph::prelude::*;
 use uniplate::derive::Uniplate;
 
 #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]

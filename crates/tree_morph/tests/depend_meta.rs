@@ -3,7 +3,7 @@
 
 // TODO (Felix) how might we fix this, in the engine or by blocking this use case?
 
-use tree_morph::*;
+use tree_morph::prelude::*;
 use uniplate::derive::Uniplate;
 
 #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]

@@ -149,14 +149,22 @@
 //! These functions can then be defined elsewhere for better organization.
 //!
 
-mod commands;
+pub mod commands;
 pub mod helpers;
-mod reduce;
-mod reduction;
-mod rule;
-mod skel;
+pub mod reduce;
+pub mod reduction;
+pub mod rule;
+pub mod zipper;
 
-pub use commands::Commands;
-pub use reduce::{reduce, reduce_with_rule_groups, reduce_with_rules};
-pub use reduction::Reduction;
-pub use rule::Rule;
+pub mod prelude {
+    use super::*;
+
+    pub use commands::Commands;
+    pub use helpers::select_first;
+    pub use reduce::{reduce, reduce_with_rule_groups, reduce_with_rules};
+    pub use reduction::Reduction;
+    pub use rule::Rule;
+}
+
+#[cfg(any(test, feature = "examples"))]
+pub mod examples;

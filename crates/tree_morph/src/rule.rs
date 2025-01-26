@@ -1,4 +1,4 @@
-use crate::Commands;
+use crate::commands::Commands;
 use uniplate::Uniplate;
 
 pub trait Rule<T, M>

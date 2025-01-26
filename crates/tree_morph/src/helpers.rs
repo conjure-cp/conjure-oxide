@@ -1,6 +1,6 @@
 use std::{fmt::Display, io::Write, sync::Arc};
 
-use crate::{Reduction, Rule};
+use crate::prelude::*;
 use multipeek::multipeek;
 use uniplate::Uniplate;
 
@@ -19,6 +19,14 @@ where
         return rs.next().map(|(_, r)| r);
     }
     select(t, &mut rs)
+}
+
+/// Returns the number of nodes in the given tree.
+pub(crate) fn tree_size<T>(tree: T) -> usize
+where
+    T: Uniplate,
+{
+    tree.cata(Arc::new(|_, sizes| sizes.iter().sum::<usize>() + 1))
 }
 
 /// Returns the first available `Reduction` if there is one, otherwise returns `None`.

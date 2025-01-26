@@ -5,7 +5,7 @@
 //! This lets us make powerful "evaluation" rules which greedily reduce the tree as much as possible, before other
 //! "rewriting" rules are applied.
 
-use tree_morph::{helpers::select_first, *};
+use tree_morph::prelude::*;
 use uniplate::derive::Uniplate;
 
 /// A simple language of two literals and a wrapper
