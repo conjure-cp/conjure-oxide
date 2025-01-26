@@ -22,7 +22,7 @@ where
 }
 
 /// Returns the number of nodes in the given tree.
-pub(crate) fn tree_size<T>(tree: T) -> usize
+pub(crate) fn tree_size<T>(tree: &T) -> usize
 where
     T: Uniplate,
 {

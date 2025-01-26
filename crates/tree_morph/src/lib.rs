@@ -14,7 +14,7 @@
 //# TODO (Felix): choose a more concise example
 //!
 //! ```rust
-//! use tree_morph::*;
+//! use tree_morph::prelude::*;
 //! use uniplate::derive::Uniplate;
 //!
 //! #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
@@ -133,7 +133,7 @@
 //!     // Ordering is important here: we evaluate first (1), then reduce (2..6), then change form (7)
 //!     let rules = [Eval, AddZero, AddSame, MulOne, MulZero, DoubleNeg, Associativity];
 //!
-//!     let (expr, _) = reduce_with_rules(&rules, helpers::select_first, expr, ());
+//!     let (expr, _) = reduce_with_rules(&rules, select_first, expr, ());
 //!     assert_eq!(expr, Mul(bx(Val(4)), bx(Var("x".to_string()))));
 //! }
 //!

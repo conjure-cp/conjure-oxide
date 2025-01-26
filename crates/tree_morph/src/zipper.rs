@@ -63,10 +63,10 @@ where
     /// Right siblings of the node, eldest first.
     right: Vector<T>,
 
-    /// Function to convert this layer back into a tree given a full list of children
+    /// Function to convert this layer back into a tree given a full list of children.
     rebuild_tree: Arc<dyn Fn(Vector<T>) -> Tree<T>>,
 
-    // Function to create the parent node, given its children as a tree
+    /// Function to create the parent node, given its children as a tree.
     ctx: Arc<dyn Fn(Tree<T>) -> T>,
 }
 
@@ -84,7 +84,7 @@ where
         for node in root.universe() {
             meta_list.push(Meta {
                 clean_before: 0,
-                subtree_size: tree_size(node),
+                subtree_size: tree_size(&node),
             })
         }
 
@@ -129,6 +129,8 @@ where
     }
 
     /// Rebuilds the root node from the Zipper.
+    ///
+    /// This is equivalent to calling `go_up` until the focus is the root node.
     pub fn rebuild_root(mut self) -> T {
         while self.go_up().is_some() {}
         self.focus
@@ -139,9 +141,19 @@ where
         self.path.len()
     }
 
+    // TODO: return previous focus from cursor methods?
+
     /// Sets the focus to the parent of the focus (if it exists).
     pub fn go_up(&mut self) -> Option<()> {
         let mut path_seg = self.path.pop()?;
+
+        // TODO: optimise this by looking at the cached subtree sizes
+        self.meta_index -= path_seg
+            .left
+            .iter()
+            .map(|node| tree_size(node))
+            .sum::<usize>()
+            + 1; // for the current node
 
         // TODO: get rid of the clone if possible
         path_seg.left.push_back(self.focus.clone());
@@ -168,6 +180,9 @@ where
 
         self.path.push(new_segment);
         self.focus = new_focus;
+
+        self.meta_index += 1;
+
         Some(())
     }
 
@@ -176,7 +191,11 @@ where
         let path_segment = self.path.last_mut()?;
         let new_focus = path_segment.left.pop_front()?;
         let old_focus = std::mem::replace(&mut self.focus, new_focus);
-        path_segment.right.push_back(old_focus);
+        path_segment.right.push_back(old_focus.clone());
+
+        // TODO: optimise this by looking at the cached subtree sizes
+        self.meta_index -= tree_size(&old_focus);
+
         Some(())
     }
 
@@ -186,6 +205,123 @@ where
         let new_focus = path_segment.right.pop_front()?;
         let old_focus = std::mem::replace(&mut self.focus, new_focus);
         path_segment.left.push_back(old_focus);
+
+        self.meta_index += self.meta().subtree_size;
+
         Some(())
+    }
+
+    /// Sets the focus to the next node in preorder traversal order (if it exists).
+    ///
+    /// If the focus is the last node in the tree, the zipper will move to the root return `None`.
+    pub fn go_next(&mut self) -> Option<()> {
+        if self.go_down().is_some() {
+            return Some(());
+        }
+
+        while self.go_right().is_none() {
+            self.go_up()?;
+        }
+
+        Some(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use uniplate::derive::Uniplate;
+
+    #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
+    #[uniplate()]
+    enum Tree {
+        Node(i32, Box<Tree>, Box<Tree>),
+        Leaf(i32),
+    }
+
+    impl Tree {
+        pub fn value(&self) -> i32 {
+            match self {
+                Tree::Node(v, _, _) => *v,
+                Tree::Leaf(v) => *v,
+            }
+        }
+    }
+
+    #[test]
+    fn test_go_next_single() {
+        let tree = Tree::Leaf(1);
+        let mut zipper = Zipper::new(tree);
+
+        assert_eq!(zipper.focus().value(), 1);
+        assert!(zipper.go_next().is_none());
+    }
+
+    #[test]
+    fn test_go_next_order() {
+        let tree = Tree::Node(
+            1,
+            Box::new(Tree::Node(
+                2,
+                Box::new(Tree::Leaf(3)),
+                Box::new(Tree::Leaf(4)),
+            )),
+            Box::new(Tree::Node(
+                5,
+                Box::new(Tree::Leaf(6)),
+                Box::new(Tree::Leaf(7)),
+            )),
+        );
+
+        let mut zipper = Zipper::new(tree);
+
+        let mut order = vec![];
+        loop {
+            order.push(zipper.focus().value());
+            if zipper.go_next().is_none() {
+                break;
+            }
+        }
+
+        assert_eq!(order, (1..8).collect::<Vec<_>>());
+    }
+
+    #[test]
+    fn test_go_up_meta_index() {
+        let tree = Tree::Node(
+            1,
+            Box::new(Tree::Node(
+                0,
+                Box::new(Tree::Leaf(0)),
+                Box::new(Tree::Leaf(0)),
+            )),
+            Box::new(Tree::Node(
+                0,
+                Box::new(Tree::Node(
+                    0,
+                    Box::new(Tree::Leaf(0)),
+                    Box::new(Tree::Leaf(0)),
+                )),
+                Box::new(Tree::Leaf(0)),
+            )),
+        );
+
+        let mut zipper = Zipper::new(tree);
+
+        let idx1 = zipper.meta_index;
+
+        zipper.go_down().unwrap();
+        zipper.go_right().unwrap();
+
+        let idx2 = zipper.meta_index;
+
+        zipper.go_down().unwrap();
+        zipper.go_right().unwrap();
+
+        zipper.go_up().unwrap();
+        assert_eq!(zipper.meta_index, idx2);
+
+        zipper.go_up().unwrap();
+        assert_eq!(zipper.meta_index, idx1);
     }
 }
