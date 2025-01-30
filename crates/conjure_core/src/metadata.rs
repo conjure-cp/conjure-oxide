@@ -1,7 +1,7 @@
 use crate::ast::types::ReturnType;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display};
-use uniplate::{derive_unplateable, Biplate, Uniplate};
+use uniplate::derive_unplateable;
 
 derive_unplateable!(Metadata);
 
