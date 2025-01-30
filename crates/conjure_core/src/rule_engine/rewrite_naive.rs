@@ -38,7 +38,7 @@ pub fn rewrite_naive<'a>(
 
         // Iterate over rules by priority in descending order.
         'top: for (priority, rule_set) in rules_by_priority.iter().rev() {
-            for (expr, ctx) in Biplate::<Expr>::contexts_bi(&model.get_constraints_vec()) {
+            for (expr, ctx) in <_ as Biplate<Expr>>::contexts_bi(&model.get_constraints_vec()) {
                 // Clone expr and ctx so they can be reused
                 let expr = expr.clone();
                 let ctx = ctx.clone();

@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, VecDeque};
 use std::process::exit;
 
 use conjure_core::rules::eval_constant;
@@ -13,7 +13,8 @@ use conjure_oxide::{
 use uniplate::{Biplate, Uniplate};
 
 fn var_name_from_atom(a: &Atom) -> Name {
-    <Atom as Biplate<Name>>::universe_bi(a)[0].clone()
+    let names: VecDeque<Name> = a.universe_bi();
+    names[0].clone()
 }
 #[test]
 fn rules_present() {

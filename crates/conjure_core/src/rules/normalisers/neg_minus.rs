@@ -36,6 +36,7 @@ use Expr::*;
 
 use crate::ast::{Atom, Literal as Lit};
 use crate::metadata::Metadata;
+use std::collections::VecDeque;
 
 /// Eliminates double negation
 ///
@@ -62,7 +63,7 @@ fn distribute_negation_over_sum(expr: &Expr, _: &Model) -> ApplicationResult {
         _ => Err(RuleNotApplicable),
     }?;
 
-    let mut child_vecs = <_ as Biplate<Vec<Expr>>>::children_bi(&inner_expr);
+    let mut child_vecs: VecDeque<Vec<Expr>> = inner_expr.children_bi();
 
     if child_vecs.is_empty() {
         return Err(RuleNotApplicable);

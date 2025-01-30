@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 
@@ -470,11 +471,12 @@ impl Expression {
     }
 
     pub fn get_meta(&self) -> Metadata {
-        <Expression as Biplate<Metadata>>::children_bi(self)[0].clone()
+        let metas: VecDeque<Metadata> = self.children_bi();
+        metas[0].clone()
     }
 
     pub fn set_meta(&self, meta: Metadata) {
-        <Expression as Biplate<Metadata>>::transform_bi(self, Arc::new(move |_| meta.clone()));
+        self.transform_bi(Arc::new(move |_| meta.clone()));
     }
 
     /// Checks whether this expression is safe.
