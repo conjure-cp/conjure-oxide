@@ -363,7 +363,7 @@ fn check_solutions_stage(
 }
 
 fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model) {
-    for node in <_ as Biplate<Expression>>::universe_bi(&model.constraints) {
+    for node in model.constraints.universe_bi() {
         use conjure_core::ast::Expression::*;
         match node {
             Sum(_, ref vec) => assert_constants_leq_one(&node, vec),

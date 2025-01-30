@@ -24,7 +24,7 @@ pub fn is_flat(expr: &Expr) -> bool {
 
 /// True if the entire AST is constants.
 pub fn is_all_constant(expression: &Expr) -> bool {
-    for atom in <Expr as Biplate<Atom>>::universe_bi(expression) {
+    for atom in expression.universe_bi() {
         match atom {
             Atom::Literal(_) => {}
             Atom::Reference(_) => {

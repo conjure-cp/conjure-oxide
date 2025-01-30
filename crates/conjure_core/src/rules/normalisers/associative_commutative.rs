@@ -1,5 +1,6 @@
 //! Generic normalising rules for associative-commutative operators.
 
+use std::collections::VecDeque;
 use std::mem::Discriminant;
 
 use conjure_core::ast::Expression as Expr;
@@ -34,7 +35,7 @@ fn normalise_associative_commutative(expr: &Expr, _: &Model) -> ApplicationResul
             return vec![expr];
         }
 
-        let child_vecs = <_ as Biplate<Vec<Expr>>>::children_bi(&expr);
+        let child_vecs: VecDeque<Vec<Expr>> = expr.children_bi();
 
         // empty expression
         if child_vecs.is_empty() {
@@ -56,7 +57,7 @@ fn normalise_associative_commutative(expr: &Expr, _: &Model) -> ApplicationResul
         new_children
     }
 
-    let child_vecs = <_ as Biplate<Vec<Expr>>>::children_bi(expr);
+    let child_vecs: VecDeque<Vec<Expr>> = expr.children_bi();
     if child_vecs.is_empty() {
         return Err(RuleNotApplicable);
     }
