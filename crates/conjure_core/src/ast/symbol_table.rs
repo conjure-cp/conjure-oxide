@@ -85,6 +85,7 @@ pub struct SymbolTable {
 enum SymbolKind {
     DecisionVariable(DecisionVariable),
     ValueLetting(Expression),
+    DomainLetting(Domain),
 }
 
 impl SymbolTable {
@@ -212,6 +213,47 @@ impl SymbolTable {
         }
     }
 
+    /// Returns an iterator over the names and definitions of all domain lettings in the symbol
+    /// table.
+    pub fn iter_domain_letting(&self) -> impl Iterator<Item = (&Name, &Domain)> {
+        self.table.iter().filter_map(|(n, s)| {
+            if let SymbolKind::DomainLetting(domain) = s {
+                Some((n, domain))
+            } else {
+                None
+            }
+        })
+    }
+
+    /// Returns a reference to the domain letting with the given name.
+    ///
+    /// Returns `None` if:
+    ///
+    /// + There is no domain letting with that name.
+    ///
+    /// + The object with that name is not a domain letting.
+    pub fn get_domain_letting(&self, name: &Name) -> Option<&Domain> {
+        if let Some(SymbolKind::DomainLetting(domain)) = self.table.get(name) {
+            Some(domain)
+        } else {
+            None
+        }
+    }
+
+    /// Returns a mutable reference to the domain letting with the given name.
+    ///
+    /// Returns `None` if:
+    ///
+    /// + There is no domain letting with that name.
+    ///
+    /// + The object with that name is not a domain letting.
+    pub fn get_domain_letting_mut(&mut self, name: &Name) -> Option<&mut Domain> {
+        if let Some(SymbolKind::DomainLetting(domain)) = self.table.get_mut(name) {
+            Some(domain)
+        } else {
+            None
+        }
+    }
     /********************************/
     /*        mutate entries        */
     /********************************/
@@ -258,6 +300,27 @@ impl SymbolTable {
         Some(())
     }
 
+    /// Adds a domain letting to the symbol table as `name`.
+    ///
+    /// Returns `None` if there is a domain letting or other object with that name in the symbol
+    /// table.
+    pub fn add_domain_letting(&mut self, name: Name, domain: Domain) -> Option<()> {
+        if let std::collections::btree_map::Entry::Vacant(e) = self.table.entry(name) {
+            e.insert(SymbolKind::DomainLetting(domain));
+            Some(())
+        } else {
+            None
+        }
+    }
+
+    /// Updates a domain letting to the symbol table as `name`, or adds it.
+    ///
+    /// Returns `None` if `name` refers to an object that is not a domain letting.
+    pub fn update_add_domain_letting(&mut self, name: Name, domain: Domain) -> Option<()> {
+        self.table.insert(name, SymbolKind::DomainLetting(domain));
+        Some(())
+    }
+
     /// Extends the symbol table with the given symbol table, updating the gensym counter if
     /// necessary.
     pub fn extend(&mut self, other: SymbolTable) {
@@ -289,6 +352,7 @@ impl SymbolTable {
         match self.table.get(name)? {
             SymbolKind::DecisionVariable(var) => Some(&var.domain),
             SymbolKind::ValueLetting(_) => None,
+            SymbolKind::DomainLetting(domain) => Some(domain),
         }
     }
 
@@ -297,6 +361,7 @@ impl SymbolTable {
         match self.table.get_mut(name)? {
             SymbolKind::DecisionVariable(var) => Some(&mut var.domain),
             SymbolKind::ValueLetting(_) => None,
+            SymbolKind::DomainLetting(domain) => Some(domain),
         }
     }
 
@@ -306,8 +371,14 @@ impl SymbolTable {
             SymbolKind::DecisionVariable(var) => match var.domain {
                 Domain::BoolDomain => Some(ReturnType::Bool),
                 Domain::IntDomain(_) => Some(ReturnType::Int),
+                Domain::DomainReference(ref n) => self.type_of(n),
             },
             SymbolKind::ValueLetting(expr) => expr.return_type(),
+            SymbolKind::DomainLetting(domain) => match domain {
+                Domain::BoolDomain => Some(ReturnType::Bool),
+                Domain::IntDomain(_) => Some(ReturnType::Int),
+                Domain::DomainReference(ref n) => self.type_of(n),
+            },
         }
     }
 

@@ -88,6 +88,7 @@ pub fn pretty_variable_declaration(symbol_table: &SymbolTable, var_name: &Name) 
                 Some(format!("{}: int({})", var_name, domain_ranges.join(",")))
             }
         }
+        super::Domain::DomainReference(name) => Some(format!("{}: {}", var_name, name)),
     }
 }
 
