@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use super::Name;
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Range<A>
 where
@@ -13,6 +15,7 @@ where
 pub enum Domain {
     BoolDomain,
     IntDomain(Vec<Range<i32>>),
+    DomainReference(Name),
 }
 
 impl Domain {
