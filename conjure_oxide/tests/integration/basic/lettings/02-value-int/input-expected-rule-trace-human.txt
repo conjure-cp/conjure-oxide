@@ -1,0 +1,32 @@
+Model before rewriting:
+
+letting A be 3
+find b: int(1..20)
+
+such that
+
+(b < A)
+
+--
+
+(b < A), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(b <= Sum([A, -1])) 
+
+--
+
+(b <= Sum([A, -1])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+SumGeq([A, -1], b) 
+
+--
+
+Final model:
+
+letting A be 3
+find b: int(1..20)
+
+such that
+
+SumGeq([A, -1], b)
+
