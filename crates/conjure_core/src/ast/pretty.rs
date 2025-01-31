@@ -68,7 +68,7 @@ pub fn pretty_vec<T: Display>(elems: &[T]) -> String {
 /// a: int(1..5)
 /// ```
 ///
-/// Returns None if the symbol is not in the symbol table
+/// Returns None if the symbol is not in the symbol table, or if it is not a variable.
 pub fn pretty_variable_declaration(symbol_table: &SymbolTable, var_name: &Name) -> Option<String> {
     let var = symbol_table.get_var(var_name)?;
     match &var.domain {
@@ -89,4 +89,18 @@ pub fn pretty_variable_declaration(symbol_table: &SymbolTable, var_name: &Name) 
             }
         }
     }
+}
+
+/// Pretty prints, in essence syntax, the declaration for the given value letting.
+///
+/// E.g.
+///
+/// ```text
+/// letting A be 1+2+3
+/// ```
+///
+/// Returns None if the symbol is not in the symbol table, or if it is not a value letting.
+pub fn pretty_value_letting_declaration(symbol_table: &SymbolTable, name: &Name) -> Option<String> {
+    let letting = symbol_table.get_value_letting(name)?;
+    Some(format!("letting {name} be {letting}"))
 }
