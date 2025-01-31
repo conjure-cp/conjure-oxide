@@ -1,7 +1,8 @@
 use conjure_macros::register_rule;
 
 use crate::{
-    ast::{Atom, Expression as Expr},
+    ast::{Atom, Domain, Expression as Expr},
+    bug,
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
     Model,
 };
@@ -26,4 +27,41 @@ fn substitute_value_lettings(expr: &Expr, m: &Model) -> ApplicationResult {
         .ok_or(RuleNotApplicable)?;
 
     Ok(Reduction::pure(value.clone()))
+}
+
+/// Substitutes domain lettings for their values in the symbol table.
+#[register_rule(("Base", 5000))]
+fn substitute_domain_lettings(expr: &Expr, m: &Model) -> ApplicationResult {
+    let mut model = m.clone();
+    let mut has_changed = false;
+    for name in m.symbols().names() {
+        if let Some(d) = model.symbols_mut().domain_of_mut(name) {
+            // For some reason, Rust didn't want to do this match in one go.
+            //
+            // if let Some(d @ Domain::Reference(domain_name)) gave borrow checker errors.
+            if let Domain::DomainReference(domain_name) = d {
+                *d = m
+                    .symbols()
+                    .get_domain_letting(&domain_name.clone())
+                    .unwrap_or_else(|| {
+                        bug!(
+                            "rule substitute_domain_lettings: domain reference {} does not exist",
+                            domain_name
+                        )
+                    })
+                    .clone();
+
+                has_changed = true;
+            }
+        }
+    }
+
+    if has_changed {
+        Ok(Reduction::with_symbols(
+            expr.clone(),
+            model.symbols().clone(),
+        ))
+    } else {
+        Err(RuleNotApplicable)
+    }
 }
