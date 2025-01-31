@@ -7,7 +7,9 @@ use serde::{Deserialize, Serialize};
 use crate::ast::{DecisionVariable, Domain, Expression, Name, SymbolTable};
 use crate::context::Context;
 
-use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_variable_declaration};
+use crate::ast::pretty::{
+    pretty_expressions_as_top_level, pretty_value_letting_declaration, pretty_variable_declaration,
+};
 
 /// Represents a computational model containing variables, constraints, and a shared context.
 ///
@@ -134,11 +136,19 @@ impl Model {
 impl Display for Model {
     #[allow(clippy::unwrap_used)] // [rustdocs]: should only fail iff the formatter fails
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for name in self.symbols.names() {
+        for (name, _) in self.symbols().iter_value_letting() {
+            writeln!(
+                f,
+                "{}",
+                pretty_value_letting_declaration(self.symbols(), name).unwrap()
+            )?;
+        }
+
+        for (name, _) in self.symbols().iter_var() {
             writeln!(
                 f,
                 "find {}",
-                pretty_variable_declaration(&self.symbols, name).unwrap()
+                pretty_variable_declaration(self.symbols(), name).unwrap()
             )?;
         }
 
