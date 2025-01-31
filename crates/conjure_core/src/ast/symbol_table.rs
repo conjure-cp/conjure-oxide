@@ -1,8 +1,6 @@
-//! The (global) symbol table ([`SymbolTable`]), mapping identifiers (of type [`Name`]) to their
-//! definitions.
+//! The symbol table.
 //!
-//! This only contains one type of definition at present, [`DecisionVariable`].
-
+//! See the item documentation for [`SymbolTable`] for more details.
 use std::collections::BTreeSet;
 use std::fmt::Display;
 use std::{cell::RefCell, collections::BTreeMap};
@@ -12,7 +10,7 @@ use serde_with::serde_as;
 
 use crate::ast::variables::DecisionVariable;
 
-use super::{Domain, ReturnType};
+use super::{Domain, Expression, ReturnType};
 use derivative::Derivative;
 
 /// A reference to an object stored in the [`SymbolTable`].
@@ -35,30 +33,65 @@ impl Display for Name {
     }
 }
 
-/// The global symbol table. Maps [`Names`](Name) to their definitions.
+/// The global symbol table, mapping names to their definitions.
 ///
 /// Names in the symbol table are unique, including between different types of object stored in the
 /// symbol table. For example, you cannot have a letting and decision variable with the same name.
+///
+/// # Symbol Kinds
+///
+/// The symbol table tracks the following types of symbol:
+///
+/// ## Decision Variables
+///
+/// ```text
+/// find NAME: DOMAIN
+/// ```
+///
+/// See [`DecisionVariable`](super::DecisionVariable).
+///
+/// ## Lettings
+///
+/// Lettings define constants, of which there are two types:
+///
+///   + **Constant values**: `letting val be A`, where A is an [`Expression`].
+///
+///     A can be any integer, boolean, or matrix expression.
+///     A can include references to other lettings, model parameters, and, unlike Savile Row,
+///     decision variables.
+///
+///   + **Constant domains**: `letting Domain be domain D`, where D is a [`Domain`].
+///
+///     D can include references to other lettings and model parameters, and, unlike Savile Row,
+///     decision variables.
+///
+/// Unless otherwise stated, these follow the semantics specified in section 2.2.2 of the Savile
+/// Row manual (version 1.9.1 at time of writing).
 #[derive(Derivative)]
-#[derivative(Hash, PartialEq)]
+#[derivative(PartialEq)]
 #[serde_as]
 #[derive(Clone, Debug, Eq, Serialize, Deserialize)]
 pub struct SymbolTable {
-    // doing some information hiding here to allow for future refactoring (in particular adding
-    // lettings, removing variables).
     #[serde_as(as = "Vec<(_, _)>")]
-    variables: BTreeMap<Name, DecisionVariable>,
+    table: BTreeMap<Name, SymbolKind>,
 
     #[derivative(Hash = "ignore")]
     #[derivative(PartialEq = "ignore")]
     next_machine_name: RefCell<i32>,
 }
 
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+enum SymbolKind {
+    DecisionVariable(DecisionVariable),
+    ValueLetting(Expression),
+}
+
 impl SymbolTable {
     /// Creates an empty symbol table.
     pub fn new() -> Self {
         SymbolTable {
-            variables: BTreeMap::new(),
+            table: BTreeMap::new(),
             next_machine_name: RefCell::new(0),
         }
     }
@@ -69,20 +102,26 @@ impl SymbolTable {
 
     /// Returns an iterator over the names in the symbol table.
     ///
-    /// Alias of [`names`].
+    /// Alias of [`names`](SymbolTable::names).
     pub fn keys(&self) -> impl Iterator<Item = &Name> {
         self.names()
     }
 
     /// Returns an iterator over the names in the symbol table.
     pub fn names(&self) -> impl Iterator<Item = &Name> {
-        self.variables.keys()
+        self.table.keys()
     }
 
-    /// Returns an iterator over the names and defintions of all decision variables in the symbol
+    /// Returns an iterator over the names and definitions of all decision variables in the symbol
     /// table.
     pub fn iter_var(&self) -> impl Iterator<Item = (&Name, &DecisionVariable)> {
-        self.variables.iter()
+        self.table.iter().filter_map(|(n, s)| {
+            if let SymbolKind::DecisionVariable(var) = s {
+                Some((n, var))
+            } else {
+                None
+            }
+        })
     }
 
     /// Returns a reference to the decision variable with the given name.
@@ -95,7 +134,11 @@ impl SymbolTable {
     ///
     /// + The object with that name is not a decision variable.
     pub fn get_var(&self, name: &Name) -> Option<&DecisionVariable> {
-        self.variables.get(name)
+        if let Some(SymbolKind::DecisionVariable(var)) = self.table.get(name) {
+            Some(var)
+        } else {
+            None
+        }
     }
 
     /// Returns a mutable reference to the decision variable with the given name.
@@ -108,7 +151,53 @@ impl SymbolTable {
     ///
     /// + The object with that name is not a decision variable.
     pub fn get_var_mut(&mut self, name: &Name) -> Option<&mut DecisionVariable> {
-        self.variables.get_mut(name)
+        if let Some(SymbolKind::DecisionVariable(var)) = self.table.get_mut(name) {
+            Some(var)
+        } else {
+            None
+        }
+    }
+
+    /// Returns an iterator over the names and definitions of all values lettings in the symbol
+    /// table.
+    pub fn iter_value_letting(&self) -> impl Iterator<Item = (&Name, &Expression)> {
+        self.table.iter().filter_map(|(n, s)| {
+            if let SymbolKind::ValueLetting(var) = s {
+                Some((n, var))
+            } else {
+                None
+            }
+        })
+    }
+
+    /// Returns a reference to the value letting with the given name.
+    ///
+    /// Returns `None` if:
+    ///
+    /// + There is no value letting with that name.
+    ///
+    /// + The object with that name is not a value letting.
+    pub fn get_value_letting(&self, name: &Name) -> Option<&Expression> {
+        if let Some(SymbolKind::ValueLetting(var)) = self.table.get(name) {
+            Some(var)
+        } else {
+            None
+        }
+    }
+
+    /// Returns a mutable reference to the value letting with the given name.
+    ///
+    /// Returns `None` if:
+    ///
+    /// + There is no value letting with that name.
+    ///
+    /// + The object with that name is not a value letting.
+    pub fn get_value_letting_mut(&mut self, name: &Name) -> Option<&mut Expression> {
+        if let Some(SymbolKind::ValueLetting(var)) = self.table.get_mut(name) {
+            Some(var)
+        } else {
+            None
+        }
     }
 
     /********************************/
@@ -120,8 +209,8 @@ impl SymbolTable {
     /// Returns `None` if there is a decision variable or other object with that name in the symbol
     /// table.
     pub fn add_var(&mut self, name: Name, var: DecisionVariable) -> Option<()> {
-        if let std::collections::btree_map::Entry::Vacant(e) = self.variables.entry(name) {
-            e.insert(var);
+        if let std::collections::btree_map::Entry::Vacant(e) = self.table.entry(name) {
+            e.insert(SymbolKind::DecisionVariable(var));
             Some(())
         } else {
             None
@@ -132,7 +221,28 @@ impl SymbolTable {
     ///
     /// Returns `None` if `name` refers to an object that is not a decision variable.
     pub fn update_add_var(&mut self, name: Name, var: DecisionVariable) -> Option<()> {
-        self.variables.insert(name, var);
+        self.table.insert(name, SymbolKind::DecisionVariable(var));
+        Some(())
+    }
+
+    /// Adds a value letting to the symbol table as `name`.
+    ///
+    /// Returns `None` if there is a value letting or other object with that name in the symbol
+    /// table.
+    pub fn add_value_letting(&mut self, name: Name, value: Expression) -> Option<()> {
+        if let std::collections::btree_map::Entry::Vacant(e) = self.table.entry(name) {
+            e.insert(SymbolKind::ValueLetting(value));
+            Some(())
+        } else {
+            None
+        }
+    }
+
+    /// Updates a value letting to the symbol table as `name`, or adds it.
+    ///
+    /// Returns `None` if `name` refers to an object that is not a value letting.
+    pub fn update_add_value_letting(&mut self, name: Name, value: Expression) -> Option<()> {
+        self.table.insert(name, SymbolKind::ValueLetting(value));
         Some(())
     }
 
@@ -155,7 +265,7 @@ impl SymbolTable {
                 }
             }
         }
-        self.variables.extend(other.variables);
+        self.table.extend(other.table);
     }
 
     /****************************************/
@@ -164,19 +274,28 @@ impl SymbolTable {
 
     /// Gets the domain of `name` if it exists and has a domain.
     pub fn domain_of(&self, name: &Name) -> Option<&Domain> {
-        Some(&self.variables.get(name)?.domain)
+        match self.table.get(name)? {
+            SymbolKind::DecisionVariable(var) => Some(&var.domain),
+            SymbolKind::ValueLetting(_) => None,
+        }
     }
 
     /// Gets the domain of `name` as a mutable reference if it exists and has a domain.
     pub fn domain_of_mut(&mut self, name: &Name) -> Option<&mut Domain> {
-        Some(&mut self.variables.get_mut(name)?.domain)
+        match self.table.get_mut(name)? {
+            SymbolKind::DecisionVariable(var) => Some(&mut var.domain),
+            SymbolKind::ValueLetting(_) => None,
+        }
     }
 
     /// Gets the type of `name` if it exists and has a type.
     pub fn type_of(&self, name: &Name) -> Option<ReturnType> {
-        match self.domain_of(name)? {
-            Domain::BoolDomain => Some(ReturnType::Bool),
-            Domain::IntDomain(_) => Some(ReturnType::Int),
+        match self.table.get(name)? {
+            SymbolKind::DecisionVariable(var) => match var.domain {
+                Domain::BoolDomain => Some(ReturnType::Bool),
+                Domain::IntDomain(_) => Some(ReturnType::Int),
+            },
+            SymbolKind::ValueLetting(expr) => expr.return_type(),
         }
     }
 
