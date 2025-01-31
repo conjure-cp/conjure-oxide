@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 
 use super::Name;
@@ -56,6 +58,31 @@ impl Domain {
     }
 }
 
+impl Display for Domain {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Domain::BoolDomain => {
+                write!(f, "bool")
+            }
+            Domain::IntDomain(vec) => {
+                let mut domain_ranges: Vec<String> = vec![];
+                for range in vec {
+                    domain_ranges.push(match range {
+                        Range::Single(a) => a.to_string(),
+                        Range::Bounded(a, b) => format!("{}..{}", a, b),
+                    });
+                }
+
+                if domain_ranges.is_empty() {
+                    write!(f, "int")
+                } else {
+                    write!(f, "int({})", domain_ranges.join(","))
+                }
+            }
+            Domain::DomainReference(name) => write!(f, "{}", name),
+        }
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;

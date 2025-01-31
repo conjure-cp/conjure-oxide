@@ -8,7 +8,8 @@ use crate::ast::{DecisionVariable, Domain, Expression, Name, SymbolTable};
 use crate::context::Context;
 
 use crate::ast::pretty::{
-    pretty_expressions_as_top_level, pretty_value_letting_declaration, pretty_variable_declaration,
+    pretty_domain_letting_declaration, pretty_expressions_as_top_level,
+    pretty_value_letting_declaration, pretty_variable_declaration,
 };
 
 /// Represents a computational model containing variables, constraints, and a shared context.
@@ -141,6 +142,13 @@ impl Display for Model {
                 f,
                 "{}",
                 pretty_value_letting_declaration(self.symbols(), name).unwrap()
+            )?;
+        }
+        for (name, _) in self.symbols().iter_domain_letting() {
+            writeln!(
+                f,
+                "{}",
+                pretty_domain_letting_declaration(self.symbols(), name).unwrap()
             )?;
         }
 
