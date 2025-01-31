@@ -101,7 +101,113 @@
   },
   {
     "initial_expression": {
+      "Atomic": [
+        {
+          "Reference": {
+            "UserName": "A"
+          }
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "substitute_value_lettings",
+    "rule_set": [
+      [
+        "Base",
+        5000
+      ]
+    ],
+    "transformed _expression": {
+      "Atomic": [
+        {
+          "Literal": {
+            "Int": 3
+          }
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    }
+  },
+  {
+    "initial_expression": {
+      "Sum": [
+        [
+          {
+            "Atomic": [
+              {
+                "Literal": {
+                  "Int": -1
+                }
+              },
+              {
+                "clean": false,
+                "etype": null
+              }
+            ]
+          },
+          {
+            "Atomic": [
+              {
+                "Literal": {
+                  "Int": 3
+                }
+              },
+              {
+                "clean": false,
+                "etype": null
+              }
+            ]
+          }
+        ],
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    },
+    "rule_name": "apply_eval_constant",
+    "rule_set": [
+      [
+        "Constant",
+        9001
+      ]
+    ],
+    "transformed _expression": {
+      "Atomic": [
+        {
+          "Literal": {
+            "Int": 2
+          }
+        },
+        {
+          "clean": false,
+          "etype": null
+        }
+      ]
+    }
+  },
+  {
+    "initial_expression": {
       "Leq": [
+        {
+          "Atomic": [
+            {
+              "Literal": {
+                "Int": 2
+              }
+            },
+            {
+              "clean": false,
+              "etype": null
+            }
+          ]
+        },
         {
           "Atomic": [
             {
@@ -116,68 +222,28 @@
           ]
         },
         {
-          "Sum": [
-            [
-              {
-                "Atomic": [
-                  {
-                    "Literal": {
-                      "Int": -1
-                    }
-                  },
-                  {
-                    "clean": false,
-                    "etype": null
-                  }
-                ]
-              },
-              {
-                "Atomic": [
-                  {
-                    "Reference": {
-                      "UserName": "A"
-                    }
-                  },
-                  {
-                    "clean": false,
-                    "etype": null
-                  }
-                ]
-              }
-            ],
-            {
-              "clean": false,
-              "etype": null
-            }
-          ]
-        },
-        {
           "clean": false,
           "etype": null
         }
       ]
     },
-    "rule_name": "introduce_weighted_sumleq_sumgeq",
+    "rule_name": "leq_to_ineq",
     "rule_set": [
       [
         "Minion",
-        4600
+        4100
       ]
     ],
     "transformed _expression": {
-      "FlatSumGeq": [
-        [
-          {
-            "Literal": {
-              "Int": -1
-            }
-          },
-          {
-            "Reference": {
-              "UserName": "A"
-            }
+      "FlatIneq": [
+        {
+          "Int": 0
+        },
+        {
+          "Literal": {
+            "Int": 2
           }
-        ],
+        },
         {
           "Reference": {
             "UserName": "b"
@@ -191,6 +257,6 @@
     }
   },
   {
-    "Number of rules applied": 2
+    "Number of rules applied": 4
   }
 ]

@@ -13,6 +13,7 @@ mod constant_eval;
 mod minion;
 mod normalisers;
 mod partial_eval;
+mod subsitute_lettings;
 
 mod utils;
 

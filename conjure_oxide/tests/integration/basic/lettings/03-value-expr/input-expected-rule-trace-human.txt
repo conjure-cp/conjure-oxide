@@ -22,9 +22,33 @@ Sum([3, -1]),
 
 --
 
-(NotA) -> ((b <= 2)), 
-   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
-ReifyImply((b <= 2), NotA) 
+NotA, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+Not(Not(Not(A))) 
+
+--
+
+Not(Not(Not(A))), 
+   ~~> remove_double_negation ([("Base", 8400)]) 
+Not(A) 
+
+--
+
+A, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+false 
+
+--
+
+Not(false), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+(true) -> ((b <= 2)), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(b <= 2) 
 
 --
 
@@ -42,5 +66,5 @@ find b: int(1..20)
 
 such that
 
-ReifyImply(Ineq(b, 2, 0), NotA)
+Ineq(b, 2, 0)
 
