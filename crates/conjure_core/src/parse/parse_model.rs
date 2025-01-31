@@ -114,6 +114,19 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
     let domain = match domain.0.as_str() {
         "DomainInt" => Ok(parse_int_domain(domain.1)?),
         "DomainBool" => Ok(Domain::BoolDomain),
+        "DomainReference" => Ok(Domain::DomainReference(Name::UserName(
+            domain
+                .1
+                .as_array()
+                .ok_or(Error::Parse("DomainReference is not an array".into()))?[0]
+                .as_object()
+                .ok_or(Error::Parse("DomainReference[0] is not an object".into()))?["Name"]
+                .as_str()
+                .ok_or(Error::Parse(
+                    "DomainReference[0].Name is not a string".into(),
+                ))?
+                .into(),
+        ))),
         _ => Err(Error::Parse(
             "FindOrGiven[2] is an unknown object".to_owned(), // consider covered
         )),
@@ -137,15 +150,40 @@ fn parse_letting(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
         .ok_or(Error::Parse("Letting[0].Name is not a string".to_owned()))?;
     let name = Name::UserName(name.to_owned());
 
-    // just value lettings for now
-    let value = parse_expression(&arr[1])
-        .ok_or(Error::Parse("Letting[1] is not a valid expression".into()))?;
+    // value letting
+    if let Some(value) = parse_expression(&arr[1]) {
+        symtab
+            .add_value_letting(name.clone(), value)
+            .ok_or(Error::Parse(format!(
+                "Could not add {name} to symbol table as it already exists"
+            )))
+    } else {
+        // domain letting
+        let domain = &arr[1]
+            .as_object()
+            .ok_or(Error::Parse("Letting[1] is not an object".to_owned()))?["Domain"]
+            .as_object()
+            .ok_or(Error::Parse(
+                "Letting[1].Domain is not an object".to_owned(),
+            ))?
+            .iter()
+            .next()
+            .ok_or(Error::Parse(
+                "Letting[1].Domain is an empty object".to_owned(),
+            ))?;
 
-    symtab
-        .add_value_letting(name.clone(), value)
-        .ok_or(Error::Parse(format!(
-            "Could not add {name} to symbol table as it already exists"
-        )))
+        let domain = match domain.0.as_str() {
+            "DomainInt" => Ok(parse_int_domain(domain.1)?),
+            "DomainBool" => Ok(Domain::BoolDomain),
+            _ => Err(Error::Parse("Letting[1] is an unknown object".to_owned())),
+        }?;
+
+        symtab
+            .add_domain_letting(name.clone(), domain)
+            .ok_or(Error::Parse(format!(
+                "Could not add {name} to symbol table as it already exists"
+            )))
+    }
 }
 
 fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
@@ -388,7 +426,7 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
         Value::Object(constant) if constant.contains_key("ConstantBool") => {
             parse_constant(constant)
         }
-        otherwise => bug!("Unhandled Expression {:#?}", otherwise),
+        _ => None,
     }
 }
 

@@ -1,0 +1,44 @@
+Model before rewriting:
+
+find x: A
+find y: B
+
+such that
+
+(x) -> ((y < 3))
+
+--
+
+(y < 3), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(y <= Sum([3, -1])) 
+
+--
+
+Sum([3, -1]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+2 
+
+--
+
+(x) -> ((y <= 2)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((y <= 2), x) 
+
+--
+
+(y <= 2), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(y, 2, 0) 
+
+--
+
+Final model:
+
+find x: A
+find y: B
+
+such that
+
+ReifyImply(Ineq(y, 2, 0), x)
+
