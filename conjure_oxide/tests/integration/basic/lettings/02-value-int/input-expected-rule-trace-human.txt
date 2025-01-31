@@ -15,9 +15,21 @@ such that
 
 --
 
-(b <= Sum([A, -1])), 
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-SumGeq([A, -1], b) 
+A, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+3 
+
+--
+
+Sum([3, -1]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+2 
+
+--
+
+(b <= 2), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(b, 2, 0) 
 
 --
 
@@ -28,5 +40,5 @@ find b: int(1..20)
 
 such that
 
-SumGeq([A, -1], b)
+Ineq(b, 2, 0)
 
