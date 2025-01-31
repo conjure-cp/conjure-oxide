@@ -170,6 +170,18 @@ impl SymbolTable {
         })
     }
 
+    /// Returns a mutable iterator over the names and definitions of all values lettings in the
+    /// symbol table.
+    pub fn iter_value_letting_mut(&mut self) -> impl Iterator<Item = (&Name, &mut Expression)> {
+        self.table.iter_mut().filter_map(|(n, s)| {
+            if let SymbolKind::ValueLetting(var) = s {
+                Some((n, var))
+            } else {
+                None
+            }
+        })
+    }
+
     /// Returns a reference to the value letting with the given name.
     ///
     /// Returns `None` if:
