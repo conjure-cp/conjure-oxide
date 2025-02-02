@@ -40,16 +40,16 @@ impl Eq for RuleData<'_> {}
 // Sort by priority (higher priority first), then by rule name (alphabetical).
 impl PartialOrd for RuleData<'_> {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        match self.priority.cmp(&other.priority) {
-            Ordering::Equal => Some(self.rule.name.cmp(other.rule.name)),
-            ord => Some(ord.reverse()),
-        }
+        Some(self.cmp(other))
     }
 }
 
 impl Ord for RuleData<'_> {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.partial_cmp(other).unwrap()
+        match self.priority.cmp(&other.priority) {
+            Ordering::Equal => self.rule.name.cmp(other.rule.name),
+            ord => ord.reverse(),
+        }
     }
 }
 
@@ -115,6 +115,8 @@ fn rule_sets_by_names(
 pub fn get_rules<'a>(
     rule_sets: &Vec<&'a RuleSet<'a>>,
 ) -> Result<impl IntoIterator<Item = RuleData<'a>>, ResolveRulesError> {
+    // Hashing is done by name which never changes, and the references are 'static
+    #[allow(clippy::mutable_key_type)]
     let mut ans = BTreeSet::<RuleData<'a>>::new();
 
     for rs in rule_sets {
@@ -164,6 +166,8 @@ pub fn resolve_rule_sets(
     target_solver: SolverFamily,
     extra_rs_names: &Vec<String>,
 ) -> Result<Vec<&'static RuleSet<'static>>, ResolveRulesError> {
+    #[allow(clippy::mutable_key_type)]
+    // Hashing is done by name which never changes, and the references are 'static
     let mut ans = HashSet::new();
 
     for rs in get_rule_sets_for_solver_family(target_solver) {
