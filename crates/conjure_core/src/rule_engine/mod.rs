@@ -98,7 +98,7 @@ pub mod _dependencies {
 ///
 /// # Example
 /// ```rust
-/// # use conjure_core::rule_engine::{ApplicationResult, Reduction, get_rules};
+/// # use conjure_core::rule_engine::{ApplicationResult, Reduction, get_all_rules};
 /// # use conjure_core::ast::Expression;
 /// # use conjure_core::model::Model;
 /// # use conjure_core::rule_engine::register_rule;
@@ -109,7 +109,7 @@ pub mod _dependencies {
 /// }
 ///
 /// fn main() {
-///   println!("Rules: {:?}", get_rules());
+///   println!("Rules: {:?}", get_all_rules());
 /// }
 /// ```
 ///
@@ -160,12 +160,12 @@ pub fn get_rule_by_name(name: &str) -> Option<&'static Rule<'static>> {
 /// # Example
 /// ```rust
 /// use conjure_core::rule_engine::register_rule_set;
-/// use conjure_core::rule_engine::get_rule_sets;
+/// use conjure_core::rule_engine::get_all_rule_sets;
 ///
 /// register_rule_set!("MyRuleSet", ("AnotherRuleSet"));
 /// register_rule_set!("AnotherRuleSet", ());
 ///
-/// println!("Rule sets: {:?}", get_rule_sets());
+/// println!("Rule sets: {:?}", get_all_rule_sets());
 /// ```
 ///
 /// This will print (if no other rule sets are registered):
