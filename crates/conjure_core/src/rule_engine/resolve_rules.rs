@@ -29,7 +29,7 @@ impl Display for RuleData<'_> {
 // Note: this is intentional.
 // If two RuleSets reference the same rule (possibly with different priorities),
 // we only want to keep one copy of the rule.
-impl<'a> PartialEq for RuleData<'a> {
+impl PartialEq for RuleData<'_> {
     fn eq(&self, other: &Self) -> bool {
         self.rule == other.rule
     }

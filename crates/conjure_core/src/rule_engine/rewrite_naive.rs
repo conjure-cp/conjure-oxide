@@ -45,9 +45,9 @@ pub fn rewrite_naive<'a>(
 // Tries to do a single rewrite on the model.
 //
 // Returns None if no change was made.
-fn try_rewrite_model<'a>(
+fn try_rewrite_model(
     model: &mut Model,
-    rules_grouped: &Vec<(u16, Vec<RuleData<'a>>)>,
+    rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
     prop_multiple_equally_applicable: bool,
 ) -> Option<()> {
     type CtxFn = Arc<dyn Fn(Expr) -> Vec<Expr>>;
@@ -120,9 +120,9 @@ fn try_rewrite_model<'a>(
 // Tries to do a single rewrite on the value lettings of the model.
 //
 // Returns None if no change was made.
-fn try_rewrite_value_lettings<'a>(
+fn try_rewrite_value_lettings(
     model: &mut Model,
-    rules_grouped: &Vec<(u16, Vec<RuleData<'a>>)>,
+    rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
     prop_multiple_equally_applicable: bool,
 ) -> Option<()> {
     // I don't like this clone, but otherwise I run into borrow checker issues with multiple
@@ -141,10 +141,10 @@ fn try_rewrite_value_lettings<'a>(
 // Tries to do a single rewrite on the given value letting.
 //
 // Returns None if no change was made.
-fn try_rewrite_value_letting<'a>(
+fn try_rewrite_value_letting(
     name: &Name,
     model: &mut Model,
-    rules_grouped: &Vec<(u16, Vec<RuleData<'a>>)>,
+    rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
     prop_multiple_equally_applicable: bool,
 ) -> Option<()> {
     type CtxFn = Arc<dyn Fn(Expr) -> Expr>;
@@ -223,9 +223,9 @@ fn try_rewrite_value_letting<'a>(
 }
 
 // Exits with a bug if there are multiple equally applicable rules for an expression.
-fn assert_no_multiple_equally_applicable_rules<'a, CtxFnType>(
+fn assert_no_multiple_equally_applicable_rules<CtxFnType>(
     results: &Vec<(RuleResult<'_>, u16, Expr, CtxFnType)>,
-    rules_grouped: &Vec<(u16, Vec<RuleData<'a>>)>,
+    rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
 ) {
     if results.len() <= 1 {
         return;

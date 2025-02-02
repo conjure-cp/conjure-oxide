@@ -335,7 +335,7 @@ fn choose_rewrite<'a>(
     initial_expression: &Expression,
 ) -> Option<RuleResult<'a>> {
     //in the case where multiple rules are applicable
-    if results.len() >= 1 {
+    if !results.is_empty() {
         let mut rewrite_options: Vec<RuleResult> = Vec::new();
         for (priority, group) in &results.iter().chunk_by(|result| result.rule_data.priority) {
             let options: Vec<&RuleResult> = group.collect();
@@ -375,5 +375,5 @@ fn choose_rewrite<'a>(
         return Some(rewrite_options[0].clone());
     }
 
-    return None;
+    None
 }
