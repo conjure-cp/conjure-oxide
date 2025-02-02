@@ -90,6 +90,7 @@ fn optimizations_enabled() -> bool {
 /// # Performance Considerations
 /// - We recursively traverse the tree multiple times to check if any rules can be applied.
 /// - Expressions are cloned on each rule application
+///
 /// This can be expensive for large models
 ///
 /// # Panics
