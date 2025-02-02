@@ -25,7 +25,10 @@ impl Display for RuleData<'_> {
     }
 }
 
-// Equality is based on rule and priority.
+// Equality is based on the rule itself.
+// Note: this is intentional.
+// If two RuleSets reference the same rule (possibly with different priorities),
+// we only want to keep one copy of the rule.
 impl<'a> PartialEq for RuleData<'a> {
     fn eq(&self, other: &Self) -> bool {
         self.rule == other.rule
