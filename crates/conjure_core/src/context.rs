@@ -6,7 +6,7 @@ use schemars::JsonSchema;
 use serde::Serialize;
 use serde_with::skip_serializing_none;
 
-use crate::rule_engine::{Rule, RuleSet};
+use crate::rule_engine::{RuleData, RuleSet};
 use crate::solver::SolverFamily;
 use crate::stats::Stats;
 
@@ -23,7 +23,7 @@ pub struct Context<'a> {
     pub extra_rule_set_names: Vec<String>,
 
     #[serde(skip)]
-    pub rules: Vec<&'a Rule<'a>>,
+    pub rules: Vec<RuleData<'a>>,
 
     #[serde(skip)]
     pub rule_sets: Vec<&'a RuleSet<'a>>,
@@ -36,7 +36,7 @@ impl<'a> Context<'a> {
     pub fn new(
         target_solver_family: SolverFamily,
         extra_rule_set_names: Vec<String>,
-        rules: Vec<&'a Rule<'a>>,
+        rules: Vec<RuleData<'a>>,
         rule_sets: Vec<&'a RuleSet<'a>>,
     ) -> Self {
         Context {
@@ -54,7 +54,7 @@ impl Context<'static> {
     pub fn new_ptr(
         target_solver_family: SolverFamily,
         extra_rule_set_names: Vec<String>,
-        rules: Vec<&'static Rule<'static>>,
+        rules: Vec<RuleData<'static>>,
         rule_sets: Vec<&'static RuleSet<'static>>,
     ) -> Arc<RwLock<Context<'static>>> {
         Arc::new(RwLock::new(Context::new(
@@ -70,7 +70,7 @@ impl Debug for Context<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let target_solver_family: Option<SolverFamily> = self.target_solver_family;
         let extra_rule_set_names: Vec<String> = self.extra_rule_set_names.clone();
-        let rules: Vec<&str> = self.rules.iter().map(|r| r.name).collect();
+        let rules: Vec<&str> = self.rules.iter().map(|rd| rd.rule.name).collect();
         let rule_sets: Vec<&str> = self.rule_sets.iter().map(|r| r.name).collect();
 
         write!(
