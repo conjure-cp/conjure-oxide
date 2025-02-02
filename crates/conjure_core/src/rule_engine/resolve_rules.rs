@@ -28,7 +28,7 @@ impl Display for RuleData<'_> {
 // Equality is based on rule and priority.
 impl<'a> PartialEq for RuleData<'a> {
     fn eq(&self, other: &Self) -> bool {
-        (self.rule == other.rule) && (self.priority == other.priority)
+        self.rule == other.rule
     }
 }
 
