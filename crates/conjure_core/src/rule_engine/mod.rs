@@ -51,7 +51,7 @@ pub use conjure_macros::register_rule;
 /// This macro uses the following syntax:
 ///
 /// ```text
-/// register_rule_set!(<RuleSet name>, <RuleSet order>, (<DependencyRuleSet1>, <DependencyRuleSet2>, ...));
+/// register_rule_set!(<RuleSet name>, (<DependencyRuleSet1>, <DependencyRuleSet2>, ...));
 /// ```
 ///
 /// # Example
@@ -59,7 +59,7 @@ pub use conjure_macros::register_rule;
 /// ```rust
 /// use conjure_core::rule_engine::register_rule_set;
 ///
-/// register_rule_set!("MyRuleSet", 10, ("DependencyRuleSet", "AnotherRuleSet"));
+/// register_rule_set!("MyRuleSet", ("DependencyRuleSet", "AnotherRuleSet"));
 /// ```
 #[doc(inline)]
 pub use conjure_macros::register_rule_set;
@@ -159,8 +159,8 @@ pub fn get_rule_by_name(name: &str) -> Option<&'static Rule<'static>> {
 /// use conjure_core::rule_engine::register_rule_set;
 /// use conjure_core::rule_engine::get_rule_sets;
 ///
-/// register_rule_set!("MyRuleSet", 10, ("AnotherRuleSet"));
-/// register_rule_set!("AnotherRuleSet", 5, ());
+/// register_rule_set!("MyRuleSet", ("AnotherRuleSet"));
+/// register_rule_set!("AnotherRuleSet", ());
 ///
 /// println!("Rule sets: {:?}", get_rule_sets());
 /// ```
@@ -168,8 +168,8 @@ pub fn get_rule_by_name(name: &str) -> Option<&'static Rule<'static>> {
 /// This will print (if no other rule sets are registered):
 /// ```text
 /// Rule sets: [
-///   RuleSet { name: "MyRuleSet", order: 10, rules: OnceLock { state: Uninitialized }, dependencies: ["AnotherRuleSet"] },
-///   RuleSet { name: "AnotherRuleSet", order: 5, rules: OnceLock { state: Uninitialized }, dependencies: [] }
+///   RuleSet { name: "MyRuleSet", rules: OnceLock { state: Uninitialized }, dependencies: ["AnotherRuleSet"] },
+///   RuleSet { name: "AnotherRuleSet", rules: OnceLock { state: Uninitialized }, dependencies: [] }
 /// ]
 /// ```
 ///
@@ -185,14 +185,14 @@ pub fn get_rule_sets() -> Vec<&'static RuleSet<'static>> {
 /// use conjure_core::rule_engine::register_rule_set;
 /// use conjure_core::rule_engine::get_rule_set_by_name;
 ///
-/// register_rule_set!("MyRuleSet", 10, ("DependencyRuleSet", "AnotherRuleSet"));
+/// register_rule_set!("MyRuleSet", ("DependencyRuleSet", "AnotherRuleSet"));
 ///
 /// println!("Rule set: {:?}", get_rule_set_by_name("MyRuleSet"));
 /// ```
 ///
 /// This will print:
 /// ```text
-/// Rule set: Some(RuleSet { name: "MyRuleSet", order: 10, rules: OnceLock { state: Uninitialized }, dependencies: ["DependencyRuleSet", "AnotherRuleSet"] })
+/// Rule set: Some(RuleSet { name: "MyRuleSet", rules: OnceLock { state: Uninitialized }, dependencies: ["DependencyRuleSet", "AnotherRuleSet"] })
 /// ```
 pub fn get_rule_set_by_name(name: &str) -> Option<&'static RuleSet<'static>> {
     get_rule_sets()
