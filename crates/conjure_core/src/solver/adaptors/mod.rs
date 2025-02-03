@@ -1,11 +1,10 @@
 //! Solver adaptors.
 
-mod kissat;
 mod minion;
-mod sat_common;
+mod rustsat;
+use std::arch::x86_64;
 
 #[doc(inline)]
-pub use kissat::Kissat;
-
 #[doc(inline)]
 pub use minion::Minion;
+pub use rustsat::SAT;
