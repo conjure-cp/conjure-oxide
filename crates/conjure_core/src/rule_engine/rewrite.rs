@@ -62,7 +62,7 @@ fn optimizations_enabled() -> bool {
 ///   ```
 ///
 ///   Rules:
-///   - `min_to_var`: min([a, b]) ~> c ; c <= a & c <= b & (c = a | c = b)
+///   - `min_to_var`: min([a, b]) ~> c ; c <= a & c <= b & (c = a \/ c = b)
 ///   - `const_eval`: c1 + c2 ~> (c1 + c2) ; c1, c2 are constants
 ///
 ///   Result:
@@ -72,7 +72,7 @@ fn optimizations_enabled() -> bool {
 ///       (a + aux + 32) = b,
 ///       aux <= x,
 ///       aux <= y,
-///       aux = x | aux = y
+///       aux = x \/ aux = y
 ///     ],
 ///     symbols: [a, b, x, y, aux]
 ///   }
@@ -195,7 +195,7 @@ fn is_vec_bool(exprs: &[Expression]) -> bool {
 ///      ```text
 ///      Reduction {
 ///        new_expression: aux,
-///        new_top: [aux <= x, aux <= y, aux = x | aux = y],
+///        new_top: [aux <= x, aux <= y, aux = x \/ aux = y],
 ///        symbols: [a, b, x, y, aux]
 ///      }
 ///      ```
