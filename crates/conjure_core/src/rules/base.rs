@@ -10,7 +10,7 @@ use Atom::*;
 use Expr::*;
 use Lit::*;
 
-register_rule_set!("Base", 100, ());
+register_rule_set!("Base", ());
 
 /// This rule simplifies expressions where the operator is applied to an empty set of sub-expressions.
 ///

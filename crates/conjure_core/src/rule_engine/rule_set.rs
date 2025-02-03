@@ -31,9 +31,6 @@ use crate::solver::SolverFamily;
 pub struct RuleSet<'a> {
     /// The name of the rule set.
     pub name: &'a str,
-    /// Order of the RuleSet. Used to establish a consistent order of operations when resolving rules.
-    /// If two RuleSets overlap (contain the same rule but with different priorities), the RuleSet with the higher order will be used as the source of truth.
-    pub order: u16,
     /// A map of rules to their priorities. This will be lazily initialized at runtime.
     rules: OnceLock<HashMap<&'a Rule<'a>, u16>>,
     /// The names of the rule sets that this rule set depends on.
@@ -46,13 +43,11 @@ pub struct RuleSet<'a> {
 impl<'a> RuleSet<'a> {
     pub const fn new(
         name: &'a str,
-        order: u16,
         dependencies: &'a [&'a str],
         solver_families: &'a [SolverFamily],
     ) -> Self {
         Self {
             name,
-            order,
             dependency_rs_names: dependencies,
             solver_families,
             rules: OnceLock::new(),
@@ -181,11 +176,10 @@ impl Display for RuleSet<'_> {
             f,
             "RuleSet {{\n\
             \tname: {}\n\
-            \torder: {}\n\
             \trules: {}\n\
             \tsolver_families: {:?}\n\
         }}",
-            self.name, self.order, n_rules, solver_families
+            self.name, n_rules, solver_families
         )
     }
 }

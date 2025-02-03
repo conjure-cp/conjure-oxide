@@ -98,7 +98,6 @@ fn parse_parenthesized<T: Parse>(input: ParseStream) -> Result<Vec<T>> {
 
 struct RuleSetArgs {
     name: LitStr,
-    priority: LitInt,
     dependencies: Vec<LitStr>,
     solver_families: Vec<Path>,
 }
@@ -106,13 +105,10 @@ struct RuleSetArgs {
 impl Parse for RuleSetArgs {
     fn parse(input: ParseStream) -> Result<Self> {
         let name = input.parse()?;
-        input.parse::<Comma>()?;
-        let priority = input.parse()?;
 
         if input.is_empty() {
             return Ok(Self {
                 name,
-                priority,
                 dependencies: Vec::new(),
                 solver_families: Vec::new(),
             });
@@ -124,7 +120,6 @@ impl Parse for RuleSetArgs {
         if input.is_empty() {
             return Ok(Self {
                 name,
-                priority,
                 dependencies,
                 solver_families: Vec::new(),
             });
@@ -135,7 +130,6 @@ impl Parse for RuleSetArgs {
 
         Ok(Self {
             name,
-            priority,
             dependencies,
             solver_families,
         })
@@ -143,19 +137,18 @@ impl Parse for RuleSetArgs {
 }
 
 /**
-* Register a rule set with the given name, priority, and dependencies.
+* Register a rule set with the given name, dependencies, and metadata.
 *
 * # Example
 * ```rust
  * use conjure_macros::register_rule_set;
- * register_rule_set!("MyRuleSet", 10, ("DependencyRuleSet", "AnotherRuleSet"));
+ * register_rule_set!("MyRuleSet", ("DependencyRuleSet", "AnotherRuleSet"));
 * ```
  */
 #[proc_macro]
 pub fn register_rule_set(args: TokenStream) -> TokenStream {
     let RuleSetArgs {
         name,
-        priority,
         dependencies,
         solver_families,
     } = parse_macro_input!(args as RuleSetArgs);
@@ -174,7 +167,7 @@ pub fn register_rule_set(args: TokenStream) -> TokenStream {
     let expanded = quote! {
         use ::conjure_core::rule_engine::_dependencies::*; // ToDo idk if we need to explicitly do that?
         #[::conjure_core::rule_engine::_dependencies::distributed_slice(::conjure_core::rule_engine::RULE_SETS_DISTRIBUTED_SLICE)]
-        pub static #static_ident: ::conjure_core::rule_engine::RuleSet<'static> = ::conjure_core::rule_engine::RuleSet::new(#name, #priority, &[#dependencies], &[#solver_families]);
+        pub static #static_ident: ::conjure_core::rule_engine::RuleSet<'static> = ::conjure_core::rule_engine::RuleSet::new(#name, &[#dependencies], &[#solver_families]);
     };
 
     TokenStream::from(expanded)

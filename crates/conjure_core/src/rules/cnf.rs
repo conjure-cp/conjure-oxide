@@ -5,4 +5,4 @@
 use conjure_core::rule_engine::register_rule_set;
 use conjure_core::solver::SolverFamily;
 
-register_rule_set!("CNF", 100, ("Base"), (SolverFamily::SAT));
+register_rule_set!("CNF", ("Base"), (SolverFamily::SAT));

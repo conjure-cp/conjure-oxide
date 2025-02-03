@@ -8,7 +8,7 @@ use conjure_core::rule_engine::{
 use conjure_core::Model;
 use itertools::izip;
 
-register_rule_set!("Constant", 100, ());
+register_rule_set!("Constant", ());
 
 #[register_rule(("Constant", 9001))]
 fn apply_eval_constant(expr: &Expr, _: &Model) -> ApplicationResult {

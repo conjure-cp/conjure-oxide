@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
 
+use log::warn;
 use thiserror::Error;
 
 use crate::rule_engine::{get_rule_set_by_name, get_rule_sets_for_solver_family, Rule, RuleSet};
@@ -94,10 +95,8 @@ pub fn get_rule_priorities<'a>(
 
     for rs in rule_sets {
         for (rule, priority) in rs.get_rules() {
-            if let Some((old_rs, _)) = rule_priorities.get(rule) {
-                if rs.order >= old_rs.order {
-                    rule_priorities.insert(rule, (rs, *priority));
-                }
+            if rule_priorities.contains_key(rule) {
+                warn!("Rule {} is defined in multiple rule sets.", rule.name);
             } else {
                 rule_priorities.insert(rule, (rs, *priority));
             }
