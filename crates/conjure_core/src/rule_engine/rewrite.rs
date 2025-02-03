@@ -341,6 +341,7 @@ fn choose_rewrite<'a>(
         for (priority, group) in &results.iter().chunk_by(|result| result.rule_data.priority) {
             let options: Vec<&RuleResult> = group.collect();
             if options.len() > 1 {
+                // Multiple rules with the same priority
                 let mut message = format!(
                     "Found multiple rules of the same priority {} applicable to expression: {}\n",
                     priority, initial_expression
@@ -353,11 +354,13 @@ fn choose_rewrite<'a>(
                 }
                 bug!("{}", message);
             } else {
+                // Only one rule with this priority, add it to the list
                 rewrite_options.push(options[0].clone());
             }
         }
 
         if rewrite_options.len() > 1 {
+            // Keep old behaviour: log a message and apply the highest priority rule
             let mut message = format!(
                 "Found multiple rules of different priorities applicable to expression: {}\n",
                 initial_expression
