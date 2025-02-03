@@ -1,11 +1,11 @@
 use std::collections::VecDeque;
 use std::process::exit;
 
-use conjure_core::rules::eval_constant;
 use conjure_core::solver::SolverFamily;
+use conjure_core::{rule_engine::get_all_rules, rules::eval_constant};
 use conjure_oxide::{
     ast::*,
-    get_rule_by_name, get_rules,
+    get_rule_by_name,
     rule_engine::{resolve_rule_sets, rewrite_model},
     solver::{adaptors, Solver},
     Metadata, Model, Rule,
@@ -18,7 +18,7 @@ fn var_name_from_atom(a: &Atom) -> Name {
 }
 #[test]
 fn rules_present() {
-    let rules = get_rules();
+    let rules = get_all_rules();
     assert!(!rules.is_empty());
 }
 
@@ -221,7 +221,7 @@ fn rule_sum_geq() {
 /// ```
 #[test]
 fn reduce_solve_xyz() {
-    println!("Rules: {:?}", get_rules());
+    println!("Rules: {:?}", get_all_rules());
     let sum_constants = get_rule_by_name("partial_evaluator").unwrap();
     let unwrap_sum = get_rule_by_name("remove_unit_vector_sum").unwrap();
     let lt_to_leq = get_rule_by_name("lt_to_leq").unwrap();
@@ -603,7 +603,7 @@ fn rule_distribute_or_over_and() {
 /// of applying the rules manually.
 #[test]
 fn rewrite_solve_xyz() {
-    println!("Rules: {:?}", get_rules());
+    println!("Rules: {:?}", get_all_rules());
 
     let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &vec!["Constant".to_string()]) {
         Ok(rs) => rs,
@@ -705,7 +705,7 @@ struct RuleResult<'a> {
 /// - True if `expression` is in its simplest form.
 /// - False otherwise.
 pub fn is_simple(expression: &Expression) -> bool {
-    let rules = get_rules();
+    let rules = get_all_rules();
     let mut new = expression.clone();
     while let Some(step) = is_simple_iteration(&new, &rules) {
         new = step;

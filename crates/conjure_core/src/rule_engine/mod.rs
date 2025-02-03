@@ -63,7 +63,7 @@ pub use conjure_macros::register_rule;
 /// ```
 #[doc(inline)]
 pub use conjure_macros::register_rule_set;
-pub use resolve_rules::{get_rule_priorities, get_rules_vec, resolve_rule_sets};
+pub use resolve_rules::{get_rules, get_rules_grouped, resolve_rule_sets, RuleData};
 pub use rewrite::rewrite_model;
 pub use rewrite_naive::rewrite_naive;
 pub use rewriter_common::RewriteError;
@@ -98,7 +98,7 @@ pub mod _dependencies {
 ///
 /// # Example
 /// ```rust
-/// # use conjure_core::rule_engine::{ApplicationResult, Reduction, get_rules};
+/// # use conjure_core::rule_engine::{ApplicationResult, Reduction, get_all_rules};
 /// # use conjure_core::ast::Expression;
 /// # use conjure_core::model::Model;
 /// # use conjure_core::rule_engine::register_rule;
@@ -109,7 +109,7 @@ pub mod _dependencies {
 /// }
 ///
 /// fn main() {
-///   println!("Rules: {:?}", get_rules());
+///   println!("Rules: {:?}", get_all_rules());
 /// }
 /// ```
 ///
@@ -118,7 +118,7 @@ pub mod _dependencies {
 ///   Rules: [Rule { name: "identity", application: MEM }]
 /// ```
 /// Where `MEM` is the memory address of the `identity` function.
-pub fn get_rules() -> Vec<&'static Rule<'static>> {
+pub fn get_all_rules() -> Vec<&'static Rule<'static>> {
     RULES_DISTRIBUTED_SLICE.iter().collect()
 }
 
@@ -147,7 +147,10 @@ pub fn get_rules() -> Vec<&'static Rule<'static>> {
 /// Rule: Some(Rule { name: "identity", application: MEM })
 /// ```
 pub fn get_rule_by_name(name: &str) -> Option<&'static Rule<'static>> {
-    get_rules().iter().find(|rule| rule.name == name).cloned()
+    get_all_rules()
+        .iter()
+        .find(|rule| rule.name == name)
+        .cloned()
 }
 
 /// Get all rule sets
@@ -157,12 +160,12 @@ pub fn get_rule_by_name(name: &str) -> Option<&'static Rule<'static>> {
 /// # Example
 /// ```rust
 /// use conjure_core::rule_engine::register_rule_set;
-/// use conjure_core::rule_engine::get_rule_sets;
+/// use conjure_core::rule_engine::get_all_rule_sets;
 ///
 /// register_rule_set!("MyRuleSet", ("AnotherRuleSet"));
 /// register_rule_set!("AnotherRuleSet", ());
 ///
-/// println!("Rule sets: {:?}", get_rule_sets());
+/// println!("Rule sets: {:?}", get_all_rule_sets());
 /// ```
 ///
 /// This will print (if no other rule sets are registered):
@@ -173,7 +176,7 @@ pub fn get_rule_by_name(name: &str) -> Option<&'static Rule<'static>> {
 /// ]
 /// ```
 ///
-pub fn get_rule_sets() -> Vec<&'static RuleSet<'static>> {
+pub fn get_all_rule_sets() -> Vec<&'static RuleSet<'static>> {
     RULE_SETS_DISTRIBUTED_SLICE.iter().collect()
 }
 
@@ -195,7 +198,7 @@ pub fn get_rule_sets() -> Vec<&'static RuleSet<'static>> {
 /// Rule set: Some(RuleSet { name: "MyRuleSet", rules: OnceLock { state: Uninitialized }, dependencies: ["DependencyRuleSet", "AnotherRuleSet"] })
 /// ```
 pub fn get_rule_set_by_name(name: &str) -> Option<&'static RuleSet<'static>> {
-    get_rule_sets()
+    get_all_rule_sets()
         .iter()
         .find(|rule_set| rule_set.name == name)
         .cloned()
@@ -217,7 +220,7 @@ pub fn get_rule_set_by_name(name: &str) -> Option<&'static RuleSet<'static>> {
 pub fn get_rule_sets_for_solver_family(
     solver_family: SolverFamily,
 ) -> Vec<&'static RuleSet<'static>> {
-    get_rule_sets()
+    get_all_rule_sets()
         .iter()
         .filter(|rule_set| {
             rule_set

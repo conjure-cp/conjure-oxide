@@ -1,16 +1,15 @@
-use super::{RewriteError, RuleSet};
+use super::{resolve_rules::RuleData, RewriteError, RuleSet};
 use crate::{
     ast::Expression as Expr,
     bug,
     rule_engine::{
-        get_rule_priorities,
+        get_rules_grouped,
         rewriter_common::{log_rule_application, RuleResult},
-        Rule,
     },
     Model,
 };
 
-use std::collections::{BTreeMap, HashSet};
+use itertools::Itertools;
 use std::sync::Arc;
 use uniplate::Biplate;
 
@@ -21,25 +20,17 @@ pub fn rewrite_naive<'a>(
     rule_sets: &Vec<&'a RuleSet<'a>>,
     prop_multiple_equally_applicable: bool,
 ) -> Result<Model, RewriteError> {
-    let priorities =
-        get_rule_priorities(rule_sets).unwrap_or_else(|_| bug!("get_rule_priorities() failed!"));
-
-    // Group rules by priority in descending order.
-    let mut grouped: BTreeMap<u16, HashSet<&'a Rule<'a>>> = BTreeMap::new();
-    for (rule, priority) in priorities {
-        grouped.entry(priority).or_default().insert(rule);
-    }
-    let rules_by_priority: Vec<(u16, HashSet<&'a Rule<'a>>)> = grouped.into_iter().collect();
+    let rules_grouped = get_rules_grouped(rule_sets)
+        .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
+        .into_iter()
+        .collect_vec();
 
     let mut model = model.clone();
 
     // Rewrite until there are no more rules left to apply.
-
-    while let Some(()) = try_rewrite_model(
-        &mut model,
-        &rules_by_priority,
-        prop_multiple_equally_applicable,
-    ) {}
+    while let Some(()) =
+        try_rewrite_model(&mut model, &rules_grouped, prop_multiple_equally_applicable)
+    {}
 
     Ok(model)
 }
@@ -47,29 +38,29 @@ pub fn rewrite_naive<'a>(
 // Tries to do a single rewrite on the model.
 //
 // Returns None if no change was made.
-fn try_rewrite_model<'a>(
+fn try_rewrite_model(
     model: &mut Model,
-    rules_by_priority: &Vec<(u16, HashSet<&'a Rule<'a>>)>,
+    rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
     prop_multiple_equally_applicable: bool,
 ) -> Option<()> {
     type CtxFn = Arc<dyn Fn(Expr) -> Model>;
     let mut results: Vec<(RuleResult<'_>, u16, Expr, CtxFn)> = vec![];
 
     // Iterate over rules by priority in descending order.
-    'top: for (priority, rule_set) in rules_by_priority.iter().rev() {
+    'top: for (priority, rules) in rules_grouped.iter() {
         // Using Biplate, rewrite both the expression tree, and any value lettings in the symbol
         // table.
         for (expr, ctx) in <_ as Biplate<Expr>>::contexts_bi(model) {
             // Clone expr and ctx so they can be reused
             let expr = expr.clone();
             let ctx = ctx.clone();
-            for rule in rule_set {
-                match (rule.application)(&expr, model) {
+            for rd in rules {
+                match (rd.rule.application)(&expr, model) {
                     Ok(red) => {
                         // Collect applicable rules
                         results.push((
                             RuleResult {
-                                rule,
+                                rule_data: rd.clone(),
                                 reduction: red,
                             },
                             *priority,
@@ -81,9 +72,10 @@ fn try_rewrite_model<'a>(
                         // when called a lot, this becomes very expensive!
                         #[cfg(debug_assertions)]
                         tracing::trace!(
-                            "Rule attempted but not applied: {} (priority {}), to expression: {}",
-                            rule.name,
+                            "Rule attempted but not applied: {} (priority {}, rule set {}), to expression: {}",
+                            rd.rule.name,
                             priority,
+                            rd.rule_set.name,
                             expr
                         );
                     }
@@ -103,7 +95,7 @@ fn try_rewrite_model<'a>(
         } // no rules are applicable.
         [(result, _priority, expr, ctx), ..] => {
             if prop_multiple_equally_applicable {
-                assert_no_multiple_equally_applicable_rules(&results, rules_by_priority);
+                assert_no_multiple_equally_applicable_rules(&results, rules_grouped);
             }
 
             // Extract the single applicable rule and apply it
@@ -121,9 +113,9 @@ fn try_rewrite_model<'a>(
 }
 
 // Exits with a bug if there are multiple equally applicable rules for an expression.
-fn assert_no_multiple_equally_applicable_rules<'a, CtxFnType>(
+fn assert_no_multiple_equally_applicable_rules<CtxFnType>(
     results: &Vec<(RuleResult<'_>, u16, Expr, CtxFnType)>,
-    rules_by_priority: &Vec<(u16, HashSet<&'a Rule<'a>>)>,
+    rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
 ) {
     if results.len() <= 1 {
         return;
@@ -131,7 +123,7 @@ fn assert_no_multiple_equally_applicable_rules<'a, CtxFnType>(
 
     let names: Vec<_> = results
         .iter()
-        .map(|(result, _, _, _)| result.rule.name)
+        .map(|(result, _, _, _)| result.rule_data.rule.name)
         .collect();
 
     // Extract the expression from the first result
@@ -140,10 +132,13 @@ fn assert_no_multiple_equally_applicable_rules<'a, CtxFnType>(
     // Construct a single string to display the names of the rules grouped by priority
     let mut rules_by_priority_string = String::new();
     rules_by_priority_string.push_str("Rules grouped by priority:\n");
-    for (priority, rule_set) in rules_by_priority.iter().rev() {
+    for (priority, rules) in rules_grouped.iter() {
         rules_by_priority_string.push_str(&format!("Priority {}:\n", priority));
-        for rule in rule_set {
-            rules_by_priority_string.push_str(&format!("  - {}\n", rule.name));
+        for rd in rules {
+            rules_by_priority_string.push_str(&format!(
+                "  - {} (from {})\n",
+                rd.rule.name, rd.rule_set.name
+            ));
         }
     }
     bug!("Multiple equally applicable rules for {expr}: {names:#?}\n\n{rules_by_priority_string}");

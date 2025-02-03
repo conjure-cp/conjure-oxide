@@ -5,7 +5,7 @@ use std::sync::OnceLock;
 
 use log::warn;
 
-use crate::rule_engine::{get_rule_set_by_name, get_rules, Rule};
+use crate::rule_engine::{get_all_rules, get_rule_set_by_name, Rule};
 use crate::solver::SolverFamily;
 
 /// A structure representing a set of rules with a name, priority, and dependencies.
@@ -102,7 +102,7 @@ impl<'a> RuleSet<'a> {
     fn resolve_rules(&self) -> HashMap<&'a Rule<'a>, u16> {
         let mut rules = HashMap::new();
 
-        for rule in get_rules() {
+        for rule in get_all_rules() {
             let mut found = false;
             let mut priority: u16 = 0;
 
