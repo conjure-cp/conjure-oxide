@@ -1,7 +1,8 @@
-use std::collections::HashSet;
+use std::collections::{HashSet, VecDeque};
 
 use conjure_macros::register_rule;
 use itertools::iproduct;
+use uniplate::Biplate;
 
 use crate::rule_engine::{ApplicationResult, Reduction};
 use crate::Model;
@@ -189,7 +190,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
 
             Ok(Reduction::pure(Or(m, new_terms)))
         }
-        And(m, vec) => {
+        And(_, vec) => {
             let mut new_vec: Vec<Expr> = Vec::new();
             let mut has_const: bool = false;
             for expr in vec {
@@ -209,7 +210,44 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
             if !has_const {
                 Err(RuleNotApplicable)
             } else {
-                Ok(Reduction::pure(And(m, new_vec)))
+                Ok(Reduction::pure(
+                    expr.with_children_bi(VecDeque::from([new_vec])),
+                ))
+            }
+        }
+
+        // similar to And, but booleans are returned wrapped in Root.
+        Root(_, vec) => {
+            // root([true]) / root([false]) are already evaluated
+            if vec.len() < 2 {
+                return Err(RuleNotApplicable);
+            }
+
+            let mut new_vec: Vec<Expr> = Vec::new();
+            let mut has_const: bool = false;
+            for expr in vec {
+                if let Expr::Atomic(_, Atom::Literal(Bool(x))) = expr {
+                    has_const = true;
+                    if !x {
+                        return Ok(Reduction::pure(Root(
+                            Metadata::new(),
+                            vec![Atomic(Default::default(), Atom::Literal(Bool(false)))],
+                        )));
+                    }
+                } else {
+                    new_vec.push(expr);
+                }
+            }
+
+            if !has_const {
+                Err(RuleNotApplicable)
+            } else {
+                if new_vec.is_empty() {
+                    new_vec.push(true.into());
+                }
+                Ok(Reduction::pure(
+                    expr.with_children_bi(VecDeque::from([new_vec])),
+                ))
             }
         }
         Imply(_m, x, y) => {

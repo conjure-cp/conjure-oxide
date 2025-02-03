@@ -27,7 +27,7 @@ pub fn main() {
     let model = get_example_model("div-05").unwrap();
     println!(
         "Input model: \n {} \n",
-        pretty_expressions_as_top_level(&model.constraints)
+        pretty_expressions_as_top_level(&model.get_constraints_vec())
     );
 
     // TODO: We will have a nicer way to do this in the future
@@ -36,7 +36,7 @@ pub fn main() {
     let model = rewrite_model(&model, &rule_sets).unwrap();
     println!(
         "Rewritten model: \n {} \n",
-        pretty_expressions_as_top_level(&model.constraints)
+        pretty_expressions_as_top_level(&model.get_constraints_vec())
     );
 
     // To tell the `Solver` type what solver to use, you pass it a `SolverAdaptor`.

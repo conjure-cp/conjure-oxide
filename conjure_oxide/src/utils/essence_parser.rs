@@ -39,7 +39,7 @@ pub fn parse_essence_file_native(
                         constraint_vec.push(parse_constraint(constraint, &source_code));
                     }
                 }
-                model.constraints.extend(constraint_vec);
+                model.add_constraints(constraint_vec);
             }
             "e_prime_label" => {}
             _ => {

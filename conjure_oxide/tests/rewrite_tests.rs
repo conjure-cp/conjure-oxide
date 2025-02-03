@@ -1,12 +1,13 @@
 use std::collections::VecDeque;
 use std::process::exit;
 
+use conjure_core::rule_engine::rewrite_naive;
 use conjure_core::solver::SolverFamily;
 use conjure_core::{rule_engine::get_all_rules, rules::eval_constant};
 use conjure_oxide::{
     ast::*,
     get_rule_by_name,
-    rule_engine::{resolve_rule_sets, rewrite_model},
+    rule_engine::resolve_rule_sets,
     solver::{adaptors, Solver},
     Metadata, Model, Rule,
 };
@@ -656,12 +657,13 @@ fn rewrite_solve_xyz() {
     };
 
     // Apply rewrite function to the nested expression
-    let rewritten_expr = rewrite_model(
+    let rewritten_expr = rewrite_naive(
         &Model::new(SymbolTable::new(), vec![nested_expr], Default::default()),
         &rule_sets,
+        true,
     )
     .unwrap()
-    .constraints;
+    .get_constraints_vec();
 
     // Check if the expression is in its simplest form
 
