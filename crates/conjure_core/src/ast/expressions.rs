@@ -34,6 +34,7 @@ pub enum Expression {
     /// Turns into a conjunction when it reaches a boolean context
     Bubble(Metadata, Box<Expression>, Box<Expression>),
 
+    // VAR: Temp
     Atomic(Metadata, Atom),
 
     /// `|x|` - absolute value of `x`

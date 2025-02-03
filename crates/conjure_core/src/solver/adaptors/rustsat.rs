@@ -9,12 +9,12 @@ use minion_rs::ast::Model;
 use rustsat::encodings::am1::Def;
 use rustsat::solvers::{Solve, SolverResult};
 use rustsat::types::Var as satVar;
-use sat_rs::conversions::{self, conv_to_clause, conv_to_formula};
+use sat::conversions::{self, conv_to_clause, conv_to_formula};
 use std::collections::HashMap;
 
 use rustsat_minisat::core::Minisat;
 
-use crate::ast::{Expression, Name};
+use crate::ast::{Atom, Expression, Name};
 use crate::metadata::Metadata;
 use crate::solver::{
     self, SearchStatus, SolveSuccess, SolverCallback, SolverFamily, SolverMutCallback,
@@ -77,24 +77,24 @@ pub fn instantiate_model_from_conjure(
 ) -> Result<SatInstance, SolverError> {
     let mut inst: SatInstance = SatInstance::new();
 
-    for var_name_ref in conjure_model.variables.keys() {
-        let curr_decision_var = conjure_model
-            .variables
-            .get(var_name_ref)
-            .ok_or_else(|| ModelInvalid(format!("variable {:?} not found", var_name_ref)))?;
+    // for var_name_ref in conjure_model.variables.keys() {
+    //     let curr_decision_var = conjure_model
+    //         .variables
+    //         .get(var_name_ref)
+    //         .ok_or_else(|| ModelInvalid(format!("variable {:?} not found", var_name_ref)))?;
 
-        {
-            // todo: the scope change may be unneeded
-            // check domain, err if bad domain
-            let cdom = &curr_decision_var.domain;
-            if cdom != &conjure_ast::Domain::BoolDomain {
-                return Err(ModelFeatureNotSupported(format!(
-                    "variable {:?}: expected BoolDomain, found: {:?}",
-                    curr_decision_var, curr_decision_var.domain
-                )));
-            }
-        }
-    }
+    //     {
+    //         // todo: the scope change may be unneeded
+    //         // check domain, err if bad domain
+    //         let cdom = &curr_decision_var.domain;
+    //         if cdom != &conjure_ast::Domain::BoolDomain {
+    //             return Err(ModelFeatureNotSupported(format!(
+    //                 "variable {:?}: expected BoolDomain, found: {:?}",
+    //                 curr_decision_var, curr_decision_var.domain
+    //             )));
+    //         }
+    //     }
+    // }
 
     let md = Metadata {
         clean: false,
@@ -169,10 +169,13 @@ pub fn handle_expr(e: Expression) -> Result<(Vec<Vec<i32>>), CNFError> {
     }
 }
 
-pub fn get_namevar_as_int(name: Name) -> Result<i32, CNFError> {
-    match name {
-        Name::MachineName(val) => Ok(val),
-        _ => Err(CNFError::BadVariableType(name)),
+pub fn get_atom_as_int(atom: Atom) -> Result<i32, CNFError> {
+    match atom {
+        Atom::Literal(literal) => todo!(),
+        Atom::Reference(name) => match name {
+            Name::MachineName(val) => Ok(val),
+            _ => Err(CNFError::BadVariableType(name)),
+        },
     }
 }
 
@@ -181,11 +184,10 @@ pub fn handle_lit(e: Expression) -> Result<i32, CNFError> {
         Expression::Not(_, heap_expr) => {
             let expr = *heap_expr;
             match expr {
-                Expression::Nothing => todo!(), // panic?
                 Expression::Not(_md, e) => handle_lit(*e),
                 // todo(ss504): decide
-                Expression::Reference(_md, name) => {
-                    let check = get_namevar_as_int(name).unwrap();
+                Expression::Atomic(_, atom) => {
+                    let check = get_atom_as_int(atom).unwrap();
                     match check == 0 {
                         true => Ok(1),
                         false => Ok(0),
@@ -194,7 +196,7 @@ pub fn handle_lit(e: Expression) -> Result<i32, CNFError> {
                 _ => Err(CNFError::UnexpectedExpressionInsideNot(expr)),
             }
         }
-        Expression::Reference(_md, name) => get_namevar_as_int(name),
+        Expression::Atomic(_md, atom) => get_atom_as_int(atom),
         _ => Err(CNFError::UnexpectedLiteralExpression(e)),
     }
 }
@@ -213,7 +215,7 @@ pub fn handle_or(e: Expression) -> Result<(Vec<i32>), CNFError> {
 
     for expr in vec_clause {
         match expr {
-            Expression::Reference(_, _) => ret_clause.push(handle_lit(expr).unwrap()),
+            Expression::Atomic(_, _) => ret_clause.push(handle_lit(expr).unwrap()),
             Expression::Not(_, _) => ret_clause.push(handle_lit(expr).unwrap()),
             _ => Err(CNFError::UnexpectedExpressionInsideOr(expr))?,
         }
@@ -278,7 +280,7 @@ mod tests {
     fn test_handle_expr_unexpected_expression() {
         let expr = Expression::Not(
             Metadata::new(),
-            Box::new(Expression::Reference(Metadata::new(), Name::MachineName(1))),
+            Box::new(Expression::Atomic(Metadata::new(), Name::MachineName(1))),
         );
         let result = handle_expr(expr);
         assert!(matches!(result, Err(CNFError::UnexpectedExpression(_))));
@@ -312,7 +314,7 @@ mod tests {
         let expr = Expression::Or(
             Metadata::new(),
             vec![
-                Expression::Reference(Metadata::new(), Name::MachineName(1)),
+                Expression::Atomic(Metadata::new(), Name::MachineName(1)),
                 Expression::And(Metadata::new(), vec![]),
             ],
         );
@@ -330,8 +332,8 @@ mod tests {
             vec![Expression::Or(
                 Metadata::new(),
                 vec![
-                    Expression::Reference(Metadata::new(), Name::MachineName(1)),
-                    Expression::Reference(Metadata::new(), Name::MachineName(2)),
+                    Expression::Atomic(Metadata::new(), Name::MachineName(1)),
+                    Expression::Atomic(Metadata::new(), Name::MachineName(2)),
                 ],
             )],
         );
@@ -349,8 +351,8 @@ mod tests {
             vec![Expression::Or(
                 Metadata::new(),
                 vec![
-                    Expression::Reference(Metadata::new(), Name::MachineName(0)),
-                    Expression::Reference(Metadata::new(), Name::MachineName(0)),
+                    Expression::Atomic(Metadata::new(), Name::MachineName(0)),
+                    Expression::Atomic(Metadata::new(), Name::MachineName(0)),
                 ],
             )],
         );
@@ -372,7 +374,7 @@ mod tests {
     fn test_handle_lit() {
         let expr = Expression::Not(
             Metadata::new(),
-            Box::new(Expression::Reference(Metadata::new(), Name::MachineName(0))),
+            Box::new(Expression::Atomic(Metadata::new(), Name::MachineName(0))),
         );
 
         let result = handle_lit(expr);
