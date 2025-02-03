@@ -1,8 +1,10 @@
+use std::collections::VecDeque;
 use std::fmt::{Debug, Display};
 use std::sync::{Arc, RwLock};
 
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
+use uniplate::{Biplate, Tree, Uniplate};
 
 use crate::ast::{DecisionVariable, Domain, Expression, Name, SymbolTable};
 use crate::context::Context;
@@ -131,6 +133,40 @@ impl Model {
     /// necessary.
     pub fn extend_sym_table(&mut self, other: SymbolTable) {
         self.symbols_mut().extend(other);
+    }
+}
+
+// At time of writing (03/02/2025), the Uniplate derive macro doesn't like the lifetimes inside
+// context, and we do not yet have a way of ignoring this field.
+impl Uniplate for Model {
+    fn uniplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>) {
+        // Model contains no sub-models.
+        let self2 = self.clone();
+        (Tree::Zero, Box::new(move |_| self2.clone()))
+    }
+}
+
+// TODO: replace with derive macro when possible.
+impl Biplate<Expression> for Model {
+    fn biplate(&self) -> (Tree<Expression>, Box<dyn Fn(Tree<Expression>) -> Self>) {
+        let (symtab_tree, symtab_ctx) = self.symbols.biplate();
+        let (constraints_tree, constraints_ctx) = self.constraints.biplate();
+
+        let tree = Tree::Many(VecDeque::from([symtab_tree, constraints_tree]));
+
+        let self2 = self.clone();
+        let ctx = Box::new(move |tree| {
+            let Tree::Many(fields) = tree else {
+                panic!("number of children changed!");
+            };
+
+            let mut self3 = self2.clone();
+            self3.symbols = (symtab_ctx)(fields[0].clone());
+            self3.constraints = (constraints_ctx)(fields[1].clone());
+            self3
+        });
+
+        (tree, ctx)
     }
 }
 

@@ -5,8 +5,12 @@ use std::collections::BTreeSet;
 use std::fmt::Display;
 use std::{cell::RefCell, collections::BTreeMap};
 
+use itertools::izip;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
+use uniplate::derive::Uniplate;
+use uniplate::Tree;
+use uniplate::{Biplate, Uniplate};
 
 use crate::ast::variables::DecisionVariable;
 
@@ -81,7 +85,7 @@ pub struct SymbolTable {
 }
 
 #[non_exhaustive]
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
 enum SymbolKind {
     DecisionVariable(DecisionVariable),
     ValueLetting(Expression),
@@ -387,6 +391,48 @@ impl SymbolTable {
         let num = *self.next_machine_name.borrow();
         *(self.next_machine_name.borrow_mut()) += 1;
         Name::MachineName(num) // incremented when inserted
+    }
+}
+
+// At time of writing (03/02/2025), the derive macro doesn't like maps or the RefCell.
+//
+// Eventually, we will be able to ignore the refcell field, and derive instances for the map, but
+// for now, here we use a manual implementation.
+impl Uniplate for SymbolTable {
+    fn uniplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>) {
+        // no recursion
+        let self2 = self.clone();
+        (Tree::Zero, Box::new(move |_| self2.clone()))
+    }
+}
+
+impl Biplate<Expression> for SymbolTable {
+    fn biplate(&self) -> (Tree<Expression>, Box<dyn Fn(Tree<Expression>) -> Self>) {
+        let tree = Tree::Many(
+            self.iter_value_letting()
+                .map(|(_, expr)| Tree::One(expr.clone()))
+                .collect(),
+        );
+
+        let self2 = self.clone();
+        let ctx = Box::new(move |tree| {
+            let Tree::Many(exprs) = tree else {
+                panic!("unexpected children structure");
+            };
+
+            let mut self3 = self2.clone();
+            for ((_, expr), new_expr) in izip!(self3.iter_value_letting_mut(), exprs.into_iter()) {
+                let Tree::One(new_expr) = new_expr else {
+                    panic!("unexpected children structure");
+                };
+
+                *expr = new_expr;
+            }
+
+            self3
+        });
+
+        (tree, ctx)
     }
 }
 
