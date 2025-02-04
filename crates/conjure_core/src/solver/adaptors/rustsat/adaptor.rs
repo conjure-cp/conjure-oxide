@@ -4,12 +4,12 @@ use std::iter::Inspect;
 use std::ptr::null;
 use std::vec;
 
+use super::conversions::{self, conv_to_clause, conv_to_formula, instantiate_model_from_conjure};
 use clap::error;
 use minion_rs::ast::Model;
 use rustsat::encodings::am1::Def;
 use rustsat::solvers::{Solve, SolverResult};
 use rustsat::types::Var as satVar;
-use sat::conversions::{self, conv_to_clause, conv_to_formula};
 use std::collections::HashMap;
 
 use rustsat_minisat::core::Minisat;
@@ -17,20 +17,21 @@ use rustsat_minisat::core::Minisat;
 use crate::ast::{Atom, Expression, Name};
 use crate::metadata::Metadata;
 use crate::solver::{
-    self, SearchStatus, SolveSuccess, SolverCallback, SolverFamily, SolverMutCallback,
+    self, private, SearchStatus, SolveSuccess, SolverAdaptor, SolverCallback, SolverError,
+    SolverFamily, SolverMutCallback,
 };
 use crate::stats::SolverStats;
 use crate::{ast as conjure_ast, model, Model as ConjureModel};
 
-use super::super::model_modifier::NotModifiable;
-use super::super::private;
-use super::super::SearchComplete::*;
-use super::super::SearchIncomplete::*;
-use super::super::SearchStatus::*;
-use super::super::SolverAdaptor;
-use super::super::SolverError;
-use super::super::SolverError::*;
-use super::super::SolverError::*;
+// use super::super::model_modifier::NotModifiable;
+// use super::super::private;
+// use super::super::SearchComplete::*;
+// use super::super::SearchIncomplete::*;
+// use super::super::SearchStatus::*;
+// use super::super::SolverAdaptor;
+// use super::super::SolverError;
+// use super::super::SolverError::*;
+// use super::super::SolverError::*;
 
 use rustsat::instances::SatInstance;
 
@@ -72,49 +73,13 @@ impl SAT {
     pub fn add_clause_to_mod(&self, clause_vec: Vec<i32>) -> () {}
 }
 
-pub fn instantiate_model_from_conjure(
-    conjure_model: ConjureModel,
-) -> Result<SatInstance, SolverError> {
-    let mut inst: SatInstance = SatInstance::new();
-
-    // for var_name_ref in conjure_model.variables.keys() {
-    //     let curr_decision_var = conjure_model
-    //         .variables
-    //         .get(var_name_ref)
-    //         .ok_or_else(|| ModelInvalid(format!("variable {:?} not found", var_name_ref)))?;
-
-    //     {
-    //         // todo: the scope change may be unneeded
-    //         // check domain, err if bad domain
-    //         let cdom = &curr_decision_var.domain;
-    //         if cdom != &conjure_ast::Domain::BoolDomain {
-    //             return Err(ModelFeatureNotSupported(format!(
-    //                 "variable {:?}: expected BoolDomain, found: {:?}",
-    //                 curr_decision_var, curr_decision_var.domain
-    //             )));
-    //         }
-    //     }
-    // }
-
-    let md = Metadata {
-        clean: false,
-        etype: None,
-    };
-
-    let constraints_vec: Vec<Expression> = conjure_model.get_constraints_vec();
-    let vec_cnf = handle_and(Expression::And(md, constraints_vec));
-    conv_to_formula(&(vec_cnf.unwrap()), &mut inst);
-
-    Ok(inst)
-}
-
 impl SolverAdaptor for SAT {
     fn solve(
         &mut self,
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
-        Err(OpNotImplemented(format!("not supp")))
+        Err(SolverError::OpNotImplemented(format!("not supp")))
     }
 
     fn solve_mut(
@@ -122,7 +87,7 @@ impl SolverAdaptor for SAT {
         callback: SolverMutCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
-        Err(OpNotSupported("solve_mut".to_owned()))
+        Err(SolverError::OpNotSupported("solve_mut".to_owned()))
     }
 
     fn load_model(&mut self, model: ConjureModel, _: private::Internal) -> Result<(), SolverError> {
@@ -136,111 +101,13 @@ impl SolverAdaptor for SAT {
     }
 }
 
-pub fn handle_expr(e: Expression) -> Result<(Vec<Vec<i32>>), CNFError> {
-    match e {
-        Expression::And(_, _) => Ok(handle_and(e).unwrap()),
-        _ => Err(CNFError::UnexpectedExpression(e)),
-    }
-}
-
-pub fn get_atom_as_int(atom: Atom) -> Result<i32, CNFError> {
-    match atom {
-        Atom::Literal(literal) => todo!(),
-        Atom::Reference(name) => match name {
-            Name::MachineName(val) => Ok(val),
-            _ => Err(CNFError::BadVariableType(name)),
-        },
-    }
-}
-
-pub fn handle_lit(e: Expression) -> Result<i32, CNFError> {
-    match e {
-        Expression::Not(_, heap_expr) => {
-            let expr = *heap_expr;
-            match expr {
-                Expression::Not(_md, e) => handle_lit(*e),
-                // todo(ss504): decide
-                Expression::Atomic(_, atom) => {
-                    let check = get_atom_as_int(atom).unwrap();
-                    match check == 0 {
-                        true => Ok(1),
-                        false => Ok(0),
-                    }
-                }
-                _ => Err(CNFError::UnexpectedExpressionInsideNot(expr)),
-            }
-        }
-        Expression::Atomic(_md, atom) => get_atom_as_int(atom),
-        _ => Err(CNFError::UnexpectedLiteralExpression(e)),
-    }
-}
-
-pub fn handle_or(e: Expression) -> Result<(Vec<i32>), CNFError> {
-    let vec_clause = match e {
-        Expression::Or(_md, vec) => vec,
-        _ => Err(CNFError::UnexpectedExpression(e))?,
-    };
-
-    let mut ret_clause: Vec<i32> = Vec::new();
-
-    for expr in vec_clause {
-        match expr {
-            Expression::Atomic(_, _) => ret_clause.push(handle_lit(expr).unwrap()),
-            Expression::Not(_, _) => ret_clause.push(handle_lit(expr).unwrap()),
-            _ => Err(CNFError::UnexpectedExpressionInsideOr(expr))?,
-        }
-    }
-
-    Ok(ret_clause)
-}
-
-pub fn handle_and(e: Expression) -> Result<(Vec<Vec<i32>>), CNFError> {
-    let vec_cnf = match e {
-        Expression::And(_md, vec_and) => vec_and,
-        _ => panic!("Villain, What hast thou done?\nThat which thou canst not undo."),
-    };
-
-    let mut ret_vec_of_vecs: Vec<Vec<i32>> = Vec::new();
-
-    for expr in vec_cnf {
-        match expr {
-            Expression::Or(_, _) => ret_vec_of_vecs.push(handle_or(expr).unwrap()),
-            _ => Err(CNFError::UnexpectedExpressionInsideOr(expr))?,
-        }
-    }
-
-    Ok(ret_vec_of_vecs)
-}
-//CNF Error, may be replaced of integrated with error file
-#[derive(Error, Debug)]
-pub enum CNFError {
-    #[error("Variable with name `{0}` not found")]
-    VariableNameNotFound(conjure_ast::Name),
-
-    #[error("Variable with name `{0}` not of right type")]
-    BadVariableType(Name),
-
-    #[error("Unexpected Expression `{0}` inside Not(). Only Not(Reference) or Not(Not) allowed!")]
-    UnexpectedExpressionInsideNot(Expression),
-
-    #[error("Unexpected Expression `{0}` as literal. Only Not() or Reference() allowed!")]
-    UnexpectedLiteralExpression(Expression),
-
-    #[error("Unexpected Expression `{0}` inside And(). Only And(vec<Or>) allowed!")]
-    UnexpectedExpressionInsideAnd(Expression),
-
-    #[error("Unexpected Expression `{0}` inside Or(). Only Or(lit, lit) allowed!")]
-    UnexpectedExpressionInsideOr(Expression),
-
-    #[error("Unexpected Expression `{0}` found!")]
-    UnexpectedExpression(Expression),
-}
 #[cfg(test)]
 mod tests {
     // outdated
     use super::*;
     use crate::ast::{Expression, Name};
     use crate::metadata::Metadata;
+    use crate::solver::adaptors::rustsat::conversions::{handle_lit, CNFError};
     use crate::solver::{
         self, SearchStatus, SolveSuccess, SolverCallback, SolverFamily, SolverMutCallback,
     };
