@@ -1,4 +1,4 @@
-use std::{fmt::Display, io::Write, sync::Arc};
+use std::{collections::VecDeque, fmt::Display, io::Write, sync::Arc};
 
 use crate::{Reduction, Rule};
 use multipeek::multipeek;
@@ -126,7 +126,7 @@ where
     R: Rule<T, M>,
 {
     use rand::seq::IteratorRandom;
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     rs.choose(&mut rng).map(|(_, r)| r)
 }
 
@@ -143,7 +143,7 @@ where
     R: Rule<T, M>,
 {
     rs.min_by_key(|(_, r)| {
-        r.new_tree.cata(Arc::new(|_, cs: Vec<i32>| {
+        r.new_tree.cata(Arc::new(|_, cs: VecDeque<i32>| {
             // Max subtree height + 1
             cs.iter().max().unwrap_or(&0) + 1
         }))
