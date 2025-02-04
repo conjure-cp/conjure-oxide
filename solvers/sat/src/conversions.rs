@@ -48,7 +48,6 @@ pub fn conv_to_formula(vec_cnf: &Vec<Vec<i32>>, instance_in_use: &mut SatInstanc
     }
     Ok(())
 }
-
 // use rustsat::instances::SatInstance;
 // use rustsat::types::Lit;
 

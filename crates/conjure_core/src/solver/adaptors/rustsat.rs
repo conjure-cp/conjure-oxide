@@ -114,33 +114,7 @@ impl SolverAdaptor for SAT {
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
-        // solver = self.solver
-        // handle
-        let cnf_func: rustsat::instances::Cnf = self.model_inst.clone().unwrap().into_cnf().0;
-        &self.solver_inst.add_cnf(cnf_func);
-        let res = &self.solver_inst.solve().unwrap();
-
-        let solver_res = match res {
-            SolverResult::Sat => true,
-            SolverResult::Unsat => false,
-
-            // should not arise:
-            SolverResult::Interrupted => Err(SolverError::Runtime(format!(
-                "SatInstance may be invalid, Interrupted."
-            )))?,
-        };
-
-        // error thrown always. impermanent
-        // will eventually have a SolveSucess instance being returned with Ok(), when the implementation is more permanent.
-        // Ok(SolveSuccess{
-        //     // stats tbd, fails
-        //     stats:SolverStats::with_timings(10.0),
-        //     status: SearchStatus::Complete(())
-        // });
-        print!("{}", solver_res);
-
-        Err(OpNotImplemented("solve_mut".to_owned()))
-        // Ok(())
+        Err(OpNotImplemented(format!("not supp")))
     }
 
     fn solve_mut(
@@ -152,7 +126,7 @@ impl SolverAdaptor for SAT {
     }
 
     fn load_model(&mut self, model: ConjureModel, _: private::Internal) -> Result<(), SolverError> {
-        let inst_res = instantiate_model_from_conjure(model);
+        let inst_res: Result<SatInstance, SolverError> = instantiate_model_from_conjure(model);
         self.model_inst = Some(inst_res.unwrap());
         Ok(())
     }
@@ -206,10 +180,6 @@ pub fn handle_or(e: Expression) -> Result<(Vec<i32>), CNFError> {
         Expression::Or(_md, vec) => vec,
         _ => Err(CNFError::UnexpectedExpression(e))?,
     };
-
-    // if vec_clause.len() != 2 {
-    //     panic!("Villain, What hast thou done?\nThat which thou canst not undo.")
-    // };
 
     let mut ret_clause: Vec<i32> = Vec::new();
 
