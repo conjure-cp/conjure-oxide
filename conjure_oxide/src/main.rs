@@ -270,7 +270,7 @@ pub fn main() -> AnyhowResult<()> {
     }
 
     let mut model = model_from_json(&astjson, context.clone())?;
-
+    println!("{}", model);
     tracing::info!("Initial model: \n{}\n", model);
 
     tracing::info!("Rewriting model...");
