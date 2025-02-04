@@ -129,8 +129,8 @@ pub fn get_solutions_from_conjure(
 ) -> Result<Vec<BTreeMap<Name, Literal>>, EssenceParseError> {
     // this is ran in parallel, and we have no guarantee by rust that invocations to this function
     // don't share the same tmp dir.
-    let mut rng = rand::thread_rng();
-    let rand: i8 = rng.gen();
+    let mut rng = rand::rng();
+    let rand: i8 = rng.random();
 
     let mut tmp_dir = std::env::temp_dir();
     tmp_dir.push(Path::new(&rand.to_string()));
