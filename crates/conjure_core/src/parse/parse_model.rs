@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
+use minion_rs::ast::Constant;
 use serde_json::Value;
 use serde_json::Value as JsonValue;
 
@@ -41,7 +42,7 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
             ))?;
         match entry.0.as_str() {
             "Declaration" => {
-                let (name, var) = parse_variable(entry.1)?;
+                let (name, var) = handle_letting_case(entry.1)?;
                 m.add_variable(name, var);
             }
             "SuchThat" => {
@@ -62,7 +63,73 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
     Ok(m)
 }
 
+fn handle_letting_case(v: &JsonValue) -> Result<(Name, DecisionVariable)> {
+    let obj = v.as_object().ok_or(Error::Parse("Declaration is not an object".to_owned()))?;
+    if obj.get("FindOrGiven").and_then(|v| v.as_array()).is_some() {
+        parse_variable(v)
+    } else {
+        hopefully_let(v)
+    }
+}
+fn hopefully_let(v: &JsonValue)->Result<(Name, DecisionVariable)>{
+    println!("Variable's: {}", v);
+    let arr = v
+        .as_object()
+        .ok_or(Error::Parse("Declaration is not an object".to_owned()))?["Letting"]
+        .as_array()
+        .ok_or(Error::Parse("Letting is not an array".to_owned()))?;
+    println!("1");
+    
+    let name = arr[0]
+        .as_object()
+        .ok_or(Error::Parse("Letting[0] is not an object".to_owned()))?["Name"]
+        .as_str()
+        .ok_or(Error::Parse(
+            "Letting[0].Name is not a string".to_owned(),
+        ))?;
+        let name = Name::UserName(name.to_owned());
+    println!("2");
+    let domain = arr[1]
+        .as_object()
+        .ok_or(Error::Parse("Letting[1] is not an object".to_owned()))?
+        .iter()
+        .next()
+        .ok_or(Error::Parse("Letting[1] is an empty object".to_owned()))?;
+    // println!("Domain is {:#?}", domain);
+    let domain: Domain = match domain.0.as_str() {
+        
+        "Constant" => {
+            let obj = domain.1.as_object().ok_or(Error::Parse("Constant[1] is not an object".to_owned()))?;
+            
+            let constant_int_array = obj.get("ConstantInt")
+    .and_then(|v| v.as_array()) // Ensure it's an array
+    .ok_or(Error::Parse("ConstantInt is not an array".to_owned()))?;
+
+    let first_element = constant_int_array.get(1)
+    .ok_or(Error::Parse("ConstantInt[0] is missing".to_owned()))?;
+
+    let mut ranges = Vec::new();
+    
+    let num = first_element.as_i64()
+    .ok_or(Error::Parse("Could not parse int domain constant".to_owned()))? as i32;
+    println!("{}",num);
+    ranges.push(Range::Single(num));
+    Ok(Domain::IntDomain(ranges))
+        },
+        // HERE
+        // "DomainMatrix" => Ok(parse_matrix_domain(domain.1)?),
+        _ => Err(Error::Parse(
+            "FindOrGiven[2] is an unknown object".to_owned(), // consider covered
+        )),
+    }?;
+    Ok((name, DecisionVariable { domain }))
+}
+
+
+
+
 fn parse_variable(v: &JsonValue) -> Result<(Name, DecisionVariable)> {
+    println!("Variable is: {}", v);
     let arr = v
         .as_object()
         .ok_or(Error::Parse("Declaration is not an object".to_owned()))?["FindOrGiven"]
@@ -82,15 +149,19 @@ fn parse_variable(v: &JsonValue) -> Result<(Name, DecisionVariable)> {
         .iter()
         .next()
         .ok_or(Error::Parse("FindOrGiven[2] is an empty object".to_owned()))?;
-    let domain = match domain.0.as_str() {
+    println!("Domain is {:#?}", domain);
+    let domain: Domain = match domain.0.as_str() {
         "DomainInt" => Ok(parse_int_domain(domain.1)?),
         "DomainBool" => Ok(Domain::BoolDomain),
+        // HERE
+        // "DomainMatrix" => Ok(parse_matrix_domain(domain.1)?),
         _ => Err(Error::Parse(
             "FindOrGiven[2] is an unknown object".to_owned(), // consider covered
         )),
     }?;
     Ok((name, DecisionVariable { domain }))
 }
+
 
 fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
     let mut ranges = Vec::new();
@@ -131,6 +202,7 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
                 ))?;
                 ranges.push(Range::Single(num));
             }
+        
             _ => {
                 return Err(Error::Parse(
                     "DomainInt[1] contains an unknown object".to_owned(),
