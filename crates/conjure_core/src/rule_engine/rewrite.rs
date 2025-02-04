@@ -119,16 +119,16 @@ pub fn rewrite_model<'a>(
 
     //the while loop is exited when None is returned implying the sub-expression is clean
     let mut i: usize = 0;
-    while i < new_model.constraints.len() {
+    while i < new_model.get_constraints_vec().len() {
         while let Some(step) = rewrite_iteration(
-            &new_model.constraints[i],
+            &new_model.get_constraints_vec()[i],
             &new_model,
             &rules,
             apply_optimizations,
             &mut stats,
         ) {
             debug_assert!(is_vec_bool(&step.new_top)); // All new_top expressions should be boolean
-            new_model.constraints[i] = step.new_expression.clone();
+            new_model.get_constraints_vec()[i] = step.new_expression.clone();
             step.apply(&mut new_model); // Apply side-effects (e.g., symbol table updates)
         }
 

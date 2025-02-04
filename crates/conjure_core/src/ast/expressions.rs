@@ -9,7 +9,7 @@ use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Uniplate as _};
 
 use crate::ast::literals::Literal;
-use crate::ast::pretty::pretty_vec;
+use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use crate::ast::symbol_table::{Name, SymbolTable};
 use crate::ast::Atom;
 use crate::ast::ReturnType;
@@ -30,6 +30,9 @@ use super::{Domain, Range};
 #[biplate(to=Name)]
 #[biplate(to=Vec<Expression>)]
 pub enum Expression {
+    /// The top of the model
+    Root(Metadata, Vec<Expression>),
+
     /// An expression representing "A is valid as long as B is true"
     /// Turns into a conjunction when it reaches a boolean context
     Bubble(Metadata, Box<Expression>, Box<Expression>),
@@ -410,6 +413,7 @@ impl Expression {
                 )
             }
 
+            Expression::Root(_, _) => None,
             Expression::Bubble(_, _, _) => None,
             Expression::AuxDeclaration(_, _, _) => Some(Domain::BoolDomain),
             Expression::And(_, _) => Some(Domain::BoolDomain),
@@ -502,6 +506,7 @@ impl Expression {
 
     pub fn return_type(&self) -> Option<ReturnType> {
         match self {
+            Expression::Root(_, _) => Some(ReturnType::Bool),
             Expression::Atomic(_, Atom::Literal(Literal::Int(_))) => Some(ReturnType::Int),
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(ReturnType::Bool),
             Expression::Atomic(_, Atom::Reference(_)) => None,
@@ -608,6 +613,9 @@ impl Display for Expression {
     // TODO: (flm8) this will change once we implement a parser (two-way conversion)
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
+            Expression::Root(_, exprs) => {
+                write!(f, "{}", pretty_expressions_as_top_level(exprs))
+            }
             Expression::Atomic(_, atom) => atom.fmt(f),
             Expression::Abs(_, a) => write!(f, "|{}|", a),
             Expression::Sum(_, expressions) => {

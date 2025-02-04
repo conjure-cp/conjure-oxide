@@ -28,6 +28,7 @@ fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
     if matches!(
         expr,
         Atomic(_, _)
+            | Root(_, _)
             | FlatIneq(_, _, _, _)
             | FlatMinusEq(_, _, _)
             | FlatSumGeq(_, _, _)
