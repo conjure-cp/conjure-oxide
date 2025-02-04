@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 
+use minion_rs::ast::Constant;
 use serde_json::Value;
 use serde_json::Value as JsonValue;
 
@@ -210,6 +211,7 @@ fn parse_letting(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
     }
 }
 
+
 fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
     let mut ranges = Vec::new();
     let arr = v
@@ -249,6 +251,7 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
                 ))?;
                 ranges.push(Range::Single(num));
             }
+        
             _ => {
                 return Err(Error::Parse(
                     "DomainInt[1] contains an unknown object".to_owned(),
