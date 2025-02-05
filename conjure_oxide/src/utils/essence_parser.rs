@@ -232,9 +232,7 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
 
             match op_type {
                 "+" => Expression::Sum(Metadata::new(), vec![expr1, expr2]),
-                "-" => {
-                    Expression::Minus(Metadata::new(), Box::new(expr1), Box::new(expr2))
-                }
+                "-" => Expression::Minus(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 "*" => Expression::Product(Metadata::new(), vec![expr1, expr2]),
                 "/" => {
                     //TODO: add checks for if division is safe or not
@@ -316,11 +314,19 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
         }
         "abs_value" => {
             let child = constraint.child(1).expect("Error with absolute value");
-            Expression::Abs(Metadata::new(), Box::new(parse_constraint(child, source_code)))
+            Expression::Abs(
+                Metadata::new(),
+                Box::new(parse_constraint(child, source_code)),
+            )
         }
         "unary_minus_expr" => {
-            let child = constraint.child(1).expect("Error with unary minus expression");
-            Expression::Neg(Metadata::new(), Box::new(parse_constraint(child, source_code)))
+            let child = constraint
+                .child(1)
+                .expect("Error with unary minus expression");
+            Expression::Neg(
+                Metadata::new(),
+                Box::new(parse_constraint(child, source_code)),
+            )
         }
         _ => {
             let node_kind = constraint.kind();
