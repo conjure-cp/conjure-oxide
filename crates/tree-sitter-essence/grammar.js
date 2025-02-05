@@ -92,6 +92,7 @@ module.exports = grammar ({
     constraint: $ => seq($.expression, optional(",")),
 
     expression: $ => choice(
+      $.unary_minus_expr,
       $.or_expr,
       $.and_expr,
       $.comparison,
@@ -106,6 +107,8 @@ module.exports = grammar ({
       $.variable,
       $.abs_value
     ),
+
+    unary_minus_expr: $ => prec.left(seq("-", $.expression)),
     
     or_expr: $ => prec.left(choice(
       seq($.expression, "\\/", $.expression),

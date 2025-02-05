@@ -10,7 +10,7 @@ use conjure_core::ast::{Atom, DecisionVariable, Domain, Expression, Literal, Nam
 use crate::utils::conjure::EssenceParseError;
 use conjure_core::context::Context;
 use conjure_core::metadata::Metadata;
-use conjure_core::{parse, Model};
+use conjure_core::Model;
 use std::collections::{BTreeMap, BTreeSet};
 
 pub fn parse_essence_file_native(
@@ -106,7 +106,6 @@ fn parse_domain(domain: Node, source_code: &str) -> Domain {
 }
 
 fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
-    //TODO implement functionality for non-simple ints
     if int_domain.child_count() == 1 {
         Domain::IntDomain(vec![Range::Bounded(std::i32::MIN, std::i32::MAX)])
     } else {
@@ -234,7 +233,7 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
             match op_type {
                 "+" => Expression::Sum(Metadata::new(), vec![expr1, expr2]),
                 "-" => {
-                    panic!("Subtraction expressions not supported yet")
+                    Expression::Minus(Metadata::new(), Box::new(expr1), Box::new(expr2))
                 }
                 "*" => Expression::Product(Metadata::new(), vec![expr1, expr2]),
                 "/" => {
@@ -316,8 +315,12 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
             )
         }
         "abs_value" => {
-            let child = constraint.child(0).expect("Error with absolute value");
+            let child = constraint.child(1).expect("Error with absolute value");
             Expression::Abs(Metadata::new(), Box::new(parse_constraint(child, source_code)))
+        }
+        "unary_minus_expr" => {
+            let child = constraint.child(1).expect("Error with unary minus expression");
+            Expression::Neg(Metadata::new(), Box::new(parse_constraint(child, source_code)))
         }
         _ => {
             let node_kind = constraint.kind();
