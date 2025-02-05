@@ -177,6 +177,19 @@ impl Biplate<Expression> for Model {
     }
 }
 
+impl Biplate<Model> for Model {
+    fn biplate(&self) -> (Tree<Model>, Box<dyn Fn(Tree<Model>) -> Self>) {
+        // return self
+        let tree = Tree::One(self.clone());
+        let ctx = Box::new(move |x| {
+            let Tree::One(x) = x else { panic!() };
+            x
+        });
+
+        (tree, ctx)
+    }
+}
+
 impl Display for Model {
     #[allow(clippy::unwrap_used)] // [rustdocs]: should only fail iff the formatter fails
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

@@ -14,6 +14,7 @@ use crate::ast::symbol_table::{Name, SymbolTable};
 use crate::ast::Atom;
 use crate::ast::ReturnType;
 use crate::metadata::Metadata;
+use crate::Model;
 
 use super::{Domain, Range};
 
@@ -23,8 +24,9 @@ use super::{Domain, Range};
 /// used to build rules and conditions for the model.
 #[document_compatibility]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
-#[uniplate(walk_into=[Atom])]
+#[uniplate(walk_into=[Atom,Model])]
 #[biplate(to=Literal)]
+#[biplate(to=Model)]
 #[biplate(to=Metadata)]
 #[biplate(to=Atom)]
 #[biplate(to=Name)]
@@ -38,6 +40,10 @@ pub enum Expression {
     Bubble(Metadata, Box<Expression>, Box<Expression>),
 
     Atomic(Metadata, Atom),
+
+    /// A new lexical scope, containing new symbol declarations and top level (structural)
+    /// constraints.
+    Scope(Metadata, Model),
 
     /// `|x|` - absolute value of `x`
     #[compatible(JsonInput)]
@@ -413,6 +419,7 @@ impl Expression {
                 )
             }
 
+            Expression::Scope(_, _) => None,
             Expression::Root(_, _) => None,
             Expression::Bubble(_, _, _) => None,
             Expression::AuxDeclaration(_, _, _) => Some(Domain::BoolDomain),
@@ -510,6 +517,7 @@ impl Expression {
             Expression::Atomic(_, Atom::Literal(Literal::Int(_))) => Some(ReturnType::Int),
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(ReturnType::Bool),
             Expression::Atomic(_, Atom::Reference(_)) => None,
+            Expression::Scope(_, _) => None,
             Expression::Abs(_, _) => Some(ReturnType::Int),
             Expression::Sum(_, _) => Some(ReturnType::Int),
             Expression::Product(_, _) => Some(ReturnType::Int),
@@ -770,6 +778,9 @@ impl Display for Expression {
             }
             Expression::MinionPow(_, atom, atom1, atom2) => {
                 write!(f, "MinionPow({},{},{})", atom, atom1, atom2)
+            }
+            Expression::Scope(_, model) => {
+                write!(f, "{{\n{}\n}}", model)
             }
         }
     }

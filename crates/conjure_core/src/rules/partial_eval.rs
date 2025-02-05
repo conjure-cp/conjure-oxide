@@ -20,6 +20,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
     // rule infinitely!
     // This is why we always check whether we found a constant or not.
     match expr.clone() {
+        Scope(_, _) => Err(RuleNotApplicable),
         Bubble(_, _, _) => Err(RuleNotApplicable),
         Atomic(_, _) => Err(RuleNotApplicable),
         Abs(m, e) => match *e {
