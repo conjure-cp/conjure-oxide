@@ -75,7 +75,7 @@ impl Default for TestConfig {
             enable_extra_validation: false,
             solve_with_minion: true,
             compare_solver_solutions: false,
-            validate_rule_traces: true,
+            validate_rule_traces: false,
         }
     }
 }
@@ -191,7 +191,7 @@ fn integration_test_inner(
         };
 
     // Stage 1a: Parse the model using the normal parser (run unless explicitly disabled)
-    let model = if !config.parse_model_default {
+    let model = if config.parse_model_default {
         let parsed = parse_essence_file(path, essence_base, extension, context.clone())?;
         if verbose {
             println!("Parsed model: {:#?}", parsed);
@@ -216,7 +216,7 @@ fn integration_test_inner(
     }
 
     // Stage 2a: Rewrite the model using the rule engine (run unless explicitly disabled)
-    let rewritten_model = if !config.apply_rewrite_rules {
+    let rewritten_model = if config.apply_rewrite_rules {
         let rule_sets = resolve_rule_sets(SolverFamily::Minion, &get_default_rule_sets())?;
 
         let rewritten = if config.enable_native_impl {
@@ -258,7 +258,7 @@ fn integration_test_inner(
     }
 
     // Stage 3a: Run the model through the Minion solver (run unless explicitly disabled)
-    let solutions = if !config.solve_with_minion {
+    let solutions = if config.solve_with_minion {
         let solved = get_minion_solutions(
             rewritten_model
                 .as_ref()
@@ -298,7 +298,7 @@ fn integration_test_inner(
     }
 
     // Stage 4a: Check that the generated rules match expected traces (run unless explicitly disabled)
-    let (generated_rule_trace_human, expected_rule_trace_human) = if !config.validate_rule_traces {
+    let (generated_rule_trace_human, expected_rule_trace_human) = if config.validate_rule_traces {
         let generated = read_human_rule_trace(path, essence_base, "generated")?;
         let expected = read_human_rule_trace(path, essence_base, "expected")?;
 
@@ -319,18 +319,18 @@ fn integration_test_inner(
             model_native.clone().expect("model_native should exist");
             copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
         }
-        if !config.parse_model_default {
+        if config.parse_model_default {
             copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
         }
-        if !config.apply_rewrite_rules {
+        if config.apply_rewrite_rules {
             copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json")?;
         }
 
-        if !config.solve_with_minion {
+        if config.solve_with_minion {
             copy_generated_to_expected(path, essence_base, "minion", "solutions.json")?;
         }
 
-        if !config.validate_rule_traces {
+        if config.validate_rule_traces {
             copy_human_trace_generated_to_expected(path, essence_base)?;
             save_stats_json(context.clone(), path, essence_base)?;
         }
@@ -344,13 +344,13 @@ fn integration_test_inner(
     }
 
     // Check Stage 1a (parsed model)
-    if !config.parse_model_default {
+    if config.parse_model_default {
         let expected_model = read_model_json(path, essence_base, "expected", "parse")?;
         assert_eq!(model.expect("Model must be present in 1a"), expected_model);
     }
 
     // Check Stage 2a (rewritten model)
-    if !config.apply_rewrite_rules {
+    if config.apply_rewrite_rules {
         let expected_model = read_model_json(path, essence_base, "expected", "rewrite")?;
         assert_eq!(
             rewritten_model.expect("Rewritten model must be present in 2a"),
@@ -359,7 +359,7 @@ fn integration_test_inner(
     }
 
     // Check Stage 3a (solutions)
-    if !config.solve_with_minion {
+    if config.solve_with_minion {
         let expected_solutions_json = read_minion_solutions_json(path, essence_base, "expected")?;
         let username_solutions_json =
             minion_solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
