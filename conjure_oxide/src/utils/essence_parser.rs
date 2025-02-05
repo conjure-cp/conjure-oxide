@@ -10,7 +10,7 @@ use conjure_core::ast::{Atom, DecisionVariable, Domain, Expression, Literal, Nam
 use crate::utils::conjure::EssenceParseError;
 use conjure_core::context::Context;
 use conjure_core::metadata::Metadata;
-use conjure_core::Model;
+use conjure_core::{parse, Model};
 use std::collections::{BTreeMap, BTreeSet};
 
 pub fn parse_essence_file_native(
@@ -314,6 +314,10 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
                 Metadata::new(),
                 Atom::Reference(Name::UserName(variable_name)),
             )
+        }
+        "abs_value" => {
+            let child = constraint.child(0).expect("Error with absolute value");
+            Expression::Abs(Metadata::new(), Box::new(parse_constraint(child, source_code)))
         }
         _ => {
             let node_kind = constraint.kind();

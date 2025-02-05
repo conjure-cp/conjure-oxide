@@ -103,7 +103,8 @@ module.exports = grammar ({
       $.sum,
       $.all_diff,
       $.constant,
-      $.variable
+      $.variable,
+      $.abs_value
     ),
     
     or_expr: $ => prec.left(choice(
@@ -189,6 +190,12 @@ module.exports = grammar ({
         optional(",")
       )),
       "])"
+    ),
+
+    abs_value: $ => seq(
+      "|",
+      $.expression,
+      "|"
     )
   }
 })
