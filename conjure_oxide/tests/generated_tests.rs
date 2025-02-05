@@ -2,7 +2,6 @@
 
 use conjure_core::rule_engine::rewrite_model;
 use conjure_core::rule_engine::rewrite_naive;
-use conjure_core::Model;
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
 use conjure_oxide::utils::testing::{read_human_rule_trace, read_rule_trace};
 use glob::glob;
@@ -49,13 +48,13 @@ struct TestConfig {
     use_naive_rewriter: bool,
     run_solver: bool,
 
-    disable_1a: bool,
-    enable_1b: bool,
-    disable_2a: bool,
-    enable_2b: bool,
-    disable_3a: bool,
-    enable_3b: bool,
-    disable_4a: bool,
+    parse_model_default: bool, // Stage 1a: Reads and verifies the Essence model file
+    enable_native_parser: bool, // Stage 1b: Runs the native parser if enabled
+    apply_rewrite_rules: bool, // Stage 2a: Applies predefined rules to the model
+    enable_extra_validation: bool, // Stage 2b: Runs additional validation checks
+    solve_with_minion: bool,   // Stage 3a: Solves the model using Minion
+    compare_solver_solutions: bool, // Stage 3b: Compares Minion and Conjure solutions
+    validate_rule_traces: bool, // Stage 4a: Checks rule traces against expected outputs
 
     enable_native_impl: bool,
     enable_rewriter_impl: bool,
@@ -67,16 +66,16 @@ impl Default for TestConfig {
             extra_rewriter_asserts: vec!["vector_operators_have_partially_evaluated".into()],
             use_native_parser: true,
             use_naive_rewriter: true,
-            enable_native_impl: true,
+            enable_native_impl: false,
             enable_rewriter_impl: true,
             run_solver: true,
-            disable_1a: false,
-            enable_1b: true,
-            disable_2a: false,
-            enable_2b: true,
-            disable_3a: false,
-            enable_3b: true,
-            disable_4a: false,
+            parse_model_default: false,
+            enable_native_parser: false,
+            apply_rewrite_rules: false,
+            enable_extra_validation: false,
+            solve_with_minion: false,
+            compare_solver_solutions: false,
+            validate_rule_traces: true,
         }
     }
 }
@@ -192,7 +191,7 @@ fn integration_test_inner(
         };
 
     // Stage 1a: Parse the model using the normal parser (run unless explicitly disabled)
-    let model = if !config.disable_1a.unwrap_or(false) {
+    let model = if !config.parse_model_default {
         let parsed = parse_essence_file(path, essence_base, extension, context.clone())?;
         if verbose {
             println!("Parsed model: {:#?}", parsed);
@@ -205,7 +204,7 @@ fn integration_test_inner(
 
     // Stage 1b: Run native parser (only if explicitly enabled)
     let mut model_native = None;
-    if config.enable_1b {
+    if config.enable_native_parser {
         let mn = parse_essence_file_native(path, essence_base, extension, context.clone())?;
         save_model_json(&mn, path, essence_base, "parse")?;
         model_native = Some(mn);
@@ -217,10 +216,10 @@ fn integration_test_inner(
     }
 
     // Stage 2a: Rewrite the model using the rule engine (run unless explicitly disabled)
-    let rewritten_model = if !config.disable_2a {
+    let rewritten_model = if !config.apply_rewrite_rules {
         let rule_sets = resolve_rule_sets(SolverFamily::Minion, &get_default_rule_sets())?;
 
-        let rewritten = if config.enable_native_impl.unwrap_or(false) {
+        let rewritten = if config.enable_native_impl {
             rewrite_model(
                 model.as_ref().expect("Model must be parsed in 1a"),
                 &rule_sets,
@@ -245,23 +244,21 @@ fn integration_test_inner(
 
     // Stage 2b: Check model properties (extra_asserts) (Verify additional model properties
     // (e.g., ensure vector operators are evaluated). (only if explicitly enabled)
-    if config.enable_2b {
-        if let Some(extra_asserts) = config.extra_rewriter_asserts.clone() {
-            for extra_assert in extra_asserts {
-                match extra_assert.as_str() {
-                    "vector_operators_have_partially_evaluated" => {
-                        assert_vector_operators_have_partially_evaluated(
-                            rewritten_model.as_ref().expect("Rewritten model required"),
-                        );
-                    }
-                    x => println!("Unrecognised extra assert: {}", x),
-                };
-            }
+    if config.enable_extra_validation {
+        for extra_assert in config.extra_rewriter_asserts.clone() {
+            match extra_assert.as_str() {
+                "vector_operators_have_partially_evaluated" => {
+                    assert_vector_operators_have_partially_evaluated(
+                        rewritten_model.as_ref().expect("Rewritten model required"),
+                    );
+                }
+                x => println!("Unrecognised extra assert: {}", x),
+            };
         }
     }
 
     // Stage 3a: Run the model through the Minion solver (run unless explicitly disabled)
-    let solutions = if !config.disable_3a {
+    let solutions = if !config.solve_with_minion {
         let solved = get_minion_solutions(
             rewritten_model
                 .as_ref()
@@ -279,7 +276,7 @@ fn integration_test_inner(
     };
 
     // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
-    if config.enable_3b.unwrap_or(false) {
+    if config.compare_solver_solutions {
         let conjure_solutions: Vec<BTreeMap<Name, Literal>> =
             get_solutions_from_conjure(&format!("{}/{}.{}", path, essence_base, extension))?;
 
@@ -301,60 +298,59 @@ fn integration_test_inner(
     }
 
     // Stage 4a: Check that the generated rules match expected traces (run unless explicitly disabled)
-    let (generated_rule_trace_human, expected_rule_trace_human) =
-        if !config.disable_4a.unwrap_or(false) {
-            let generated = read_human_rule_trace(path, essence_base, "generated")?;
-            let expected = read_human_rule_trace(path, essence_base, "expected")?;
+    let (generated_rule_trace_human, expected_rule_trace_human) = if !config.validate_rule_traces {
+        let generated = read_human_rule_trace(path, essence_base, "generated")?;
+        let expected = read_human_rule_trace(path, essence_base, "expected")?;
 
-            // Perform the assertion immediately
-            assert_eq!(
-                expected, generated,
-                "Generated rule trace does not match the expected trace!"
-            );
+        // Perform the assertion immediately
+        assert_eq!(
+            expected, generated,
+            "Generated rule trace does not match the expected trace!"
+        );
 
-            (Some(generated), Some(expected))
-        } else {
-            (None, None) // Avoid uninitialized variables when 4a is disabled
-        };
+        (Some(generated), Some(expected))
+    } else {
+        (None, None) // Avoid uninitialized variables when 4a is disabled
+    };
 
     if accept {
         // Overwrite expected parse and rewrite models if enabled
-        if config.enable_1b {
+        if config.enable_native_parser {
             model_native.clone().expect("model_native should exist");
             copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
         }
-        if !config.disable_1a {
+        if !config.parse_model_default {
             copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
         }
-        if !config.disable_2a {
+        if !config.apply_rewrite_rules {
             copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json")?;
         }
 
-        if !config.disable_3a {
+        if !config.solve_with_minion {
             copy_generated_to_expected(path, essence_base, "minion", "solutions.json")?;
         }
 
-        if !config.disable_4a {
+        if !config.validate_rule_traces {
             copy_human_trace_generated_to_expected(path, essence_base)?;
             save_stats_json(context.clone(), path, essence_base)?;
         }
     }
 
     // Check Stage 1b (native parser)
-    if config.enable_1b {
+    if config.enable_native_parser {
         let expected_model = read_model_json(path, essence_base, "expected", "parse")?;
         let model_native = model_native.expect("model_native should exist here");
         assert_eq!(model_native, expected_model);
     }
 
     // Check Stage 1a (parsed model)
-    if !config.disable_1a {
+    if !config.parse_model_default {
         let expected_model = read_model_json(path, essence_base, "expected", "parse")?;
         assert_eq!(model.expect("Model must be present in 1a"), expected_model);
     }
 
     // Check Stage 2a (rewritten model)
-    if !config.disable_2a {
+    if !config.apply_rewrite_rules {
         let expected_model = read_model_json(path, essence_base, "expected", "rewrite")?;
         assert_eq!(
             rewritten_model.expect("Rewritten model must be present in 2a"),
@@ -363,7 +359,7 @@ fn integration_test_inner(
     }
 
     // Check Stage 3a (solutions)
-    if !config.disable_3a {
+    if !config.solve_with_minion {
         let expected_solutions_json = read_minion_solutions_json(path, essence_base, "expected")?;
         let username_solutions_json =
             minion_solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
