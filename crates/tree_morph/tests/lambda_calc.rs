@@ -2,7 +2,7 @@
 //! The beta-reduction rule has the side effect of increasing a counter in the metadata.
 
 use std::collections::HashSet;
-use tree_morph::*;
+use tree_morph::prelude::*;
 use uniplate::derive::Uniplate;
 
 #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
@@ -108,19 +108,19 @@ fn transform_beta_reduce(cmd: &mut Commands<Expr, u32>, expr: &Expr, _: &u32) ->
 }
 
 #[test]
-fn test_simple_application() {
+fn simple_application() {
     // (\x. x) 1 -> 1
     let expr = Expr::App(
         Box::new(Expr::Abs(0, Box::new(Expr::Var(0)))),
         Box::new(Expr::Var(1)),
     );
-    let (result, meta) = reduce(&[transform_beta_reduce], expr, 0);
+    let (result, meta) = morph(vec![vec![transform_beta_reduce]], select_first, expr, 0);
     assert_eq!(result, Expr::Var(1));
     assert_eq!(meta, 1);
 }
 
 #[test]
-fn test_nested_application() {
+fn nested_application() {
     // ((\x. x) (\y. y)) 1 -> 1
     let expr = Expr::App(
         Box::new(Expr::App(
@@ -129,55 +129,60 @@ fn test_nested_application() {
         )),
         Box::new(Expr::Var(2)),
     );
-    let (result, meta) = reduce(&[transform_beta_reduce], expr, 0);
+    let (result, meta) = morph(vec![vec![transform_beta_reduce]], select_first, expr, 0);
     assert_eq!(result, Expr::Var(2));
     assert_eq!(meta, 2);
 }
 
 #[test]
-fn test_capture_avoiding_substitution() {
+fn capture_avoiding_substitution() {
     // (\x. (\y. x)) 1 -> (\y. 1)
     let expr = Expr::App(
         Box::new(Expr::Abs(0, Box::new(Expr::Abs(1, Box::new(Expr::Var(0)))))),
         Box::new(Expr::Var(1)),
     );
-    let (result, meta) = reduce(&[transform_beta_reduce], expr, 0);
+    let (result, meta) = morph(vec![vec![transform_beta_reduce]], select_first, expr, 0);
     assert_eq!(result, Expr::Abs(2, Box::new(Expr::Var(1))));
     assert_eq!(meta, 1);
 }
 
 #[test]
-fn test_double_reduction() {
+fn double_reduction() {
     // (\x. (\y. y)) 1 -> (\y. y)
     let expr = Expr::App(
         Box::new(Expr::Abs(0, Box::new(Expr::Abs(1, Box::new(Expr::Var(1)))))),
         Box::new(Expr::Var(2)),
     );
-    let (result, meta) = reduce(&[transform_beta_reduce], expr, 0);
+    let (result, meta) = morph(vec![vec![transform_beta_reduce]], select_first, expr, 0);
     assert_eq!(result, Expr::Abs(1, Box::new(Expr::Var(1))));
     assert_eq!(meta, 1);
 }
 
 #[test]
-fn test_id() {
+fn id() {
     // (\x. x) -> (\x. x)
     let expr = Expr::Abs(0, Box::new(Expr::Var(0)));
-    let (expr, meta) = reduce(&[transform_beta_reduce], expr, 0);
+    let (expr, meta) = morph(vec![vec![transform_beta_reduce]], select_first, expr, 0);
     assert_eq!(expr, Expr::Abs(0, Box::new(Expr::Var(0))));
     assert_eq!(meta, 0);
 }
 
 #[test]
-fn test_no_reduction() {
+fn no_reduction() {
     // x -> x
     let expr = Expr::Var(1);
-    let (result, meta) = reduce(&[transform_beta_reduce], expr.clone(), 0);
+    let (result, meta) = morph(
+        vec![vec![transform_beta_reduce]],
+        select_first,
+        expr.clone(),
+        0,
+    );
     assert_eq!(result, expr);
     assert_eq!(meta, 0);
 }
 
 #[test]
-fn test_complex_expression() {
+fn complex_expression() {
     // (((\x. (\y. x y)) (\z. z)) (\w. w)) -> (\y. (\w. w) y) -> (\w. w)
     let expr = Expr::App(
         Box::new(Expr::App(
@@ -192,7 +197,7 @@ fn test_complex_expression() {
         )),
         Box::new(Expr::Abs(3, Box::new(Expr::Var(3)))),
     );
-    let (result, meta) = reduce(&[transform_beta_reduce], expr, 0);
+    let (result, meta) = morph(vec![vec![transform_beta_reduce]], select_first, expr, 0);
     assert_eq!(result, Expr::Abs(3, Box::new(Expr::Var(3))));
     assert_eq!(meta, 3);
 }
