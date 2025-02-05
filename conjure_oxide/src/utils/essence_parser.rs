@@ -106,7 +106,6 @@ fn parse_domain(domain: Node, source_code: &str) -> Domain {
 }
 
 fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
-    //TODO implement functionality for non-simple ints
     if int_domain.child_count() == 1 {
         Domain::IntDomain(vec![Range::Bounded(std::i32::MIN, std::i32::MAX)])
     } else {
@@ -233,9 +232,7 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
 
             match op_type {
                 "+" => Expression::Sum(Metadata::new(), vec![expr1, expr2]),
-                "-" => {
-                    panic!("Subtraction expressions not supported yet")
-                }
+                "-" => Expression::Minus(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 "*" => Expression::Product(Metadata::new(), vec![expr1, expr2]),
                 "/" => {
                     //TODO: add checks for if division is safe or not
@@ -313,6 +310,22 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
             Expression::Atomic(
                 Metadata::new(),
                 Atom::Reference(Name::UserName(variable_name)),
+            )
+        }
+        "abs_value" => {
+            let child = constraint.child(1).expect("Error with absolute value");
+            Expression::Abs(
+                Metadata::new(),
+                Box::new(parse_constraint(child, source_code)),
+            )
+        }
+        "unary_minus_expr" => {
+            let child = constraint
+                .child(1)
+                .expect("Error with unary minus expression");
+            Expression::Neg(
+                Metadata::new(),
+                Box::new(parse_constraint(child, source_code)),
             )
         }
         _ => {
