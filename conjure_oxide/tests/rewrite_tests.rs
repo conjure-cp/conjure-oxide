@@ -322,7 +322,11 @@ fn reduce_solve_xyz() {
         )
     );
 
-    let mut model = Model::new(SymbolTable::new(), vec![expr1, expr2], Default::default());
+    let mut model = Model::new(
+        SymbolTable::new_global(),
+        vec![expr1, expr2],
+        Default::default(),
+    );
     model.add_variable(
         Name::UserName(String::from("a")),
         DecisionVariable {
@@ -658,7 +662,11 @@ fn rewrite_solve_xyz() {
 
     // Apply rewrite function to the nested expression
     let rewritten_expr = rewrite_naive(
-        &Model::new(SymbolTable::new(), vec![nested_expr], Default::default()),
+        &Model::new(
+            SymbolTable::new_global(),
+            vec![nested_expr],
+            Default::default(),
+        ),
         &rule_sets,
         true,
     )
@@ -670,7 +678,11 @@ fn rewrite_solve_xyz() {
     assert!(rewritten_expr.iter().all(is_simple));
 
     // Create model with variables and constraints
-    let mut model = Model::new(SymbolTable::new(), rewritten_expr, Default::default());
+    let mut model = Model::new(
+        SymbolTable::new_global(),
+        rewritten_expr,
+        Default::default(),
+    );
 
     // Insert variables and domains
     model.add_variable(

@@ -10,7 +10,7 @@ fn modify_domain() {
     let d1 = Domain::IntDomain(vec![Range::Bounded(1, 3)]);
     let d2 = Domain::IntDomain(vec![Range::Bounded(1, 2)]);
 
-    let mut symbols = SymbolTable::new();
+    let mut symbols = SymbolTable::new_global();
     symbols.add_var(a.clone(), DecisionVariable { domain: d1.clone() });
 
     let mut m = Model::new(symbols, vec![], Default::default());

@@ -798,7 +798,7 @@ mod tests {
         let c2 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2)));
         let sum = Expression::Sum(Metadata::new(), vec![c1.clone(), c2.clone()]);
         assert_eq!(
-            sum.domain_of(&SymbolTable::new()),
+            sum.domain_of(&SymbolTable::new_global()),
             Some(Domain::IntDomain(vec![Range::Single(3)]))
         );
     }
@@ -808,19 +808,19 @@ mod tests {
         let c1 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1)));
         let c2 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
         let sum = Expression::Sum(Metadata::new(), vec![c1.clone(), c2.clone()]);
-        assert_eq!(sum.domain_of(&SymbolTable::new()), None);
+        assert_eq!(sum.domain_of(&SymbolTable::new_global()), None);
     }
 
     #[test]
     fn test_domain_of_empty_sum() {
         let sum = Expression::Sum(Metadata::new(), vec![]);
-        assert_eq!(sum.domain_of(&SymbolTable::new()), None);
+        assert_eq!(sum.domain_of(&SymbolTable::new_global()), None);
     }
 
     #[test]
     fn test_domain_of_reference() {
         let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
-        let mut vars = SymbolTable::new();
+        let mut vars = SymbolTable::new_global();
         vars.add_var(
             Name::MachineName(0),
             DecisionVariable::new(Domain::IntDomain(vec![Range::Single(1)])),
@@ -834,13 +834,13 @@ mod tests {
     #[test]
     fn test_domain_of_reference_not_found() {
         let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
-        assert_eq!(reference.domain_of(&SymbolTable::new()), None);
+        assert_eq!(reference.domain_of(&SymbolTable::new_global()), None);
     }
 
     #[test]
     fn test_domain_of_reference_sum_single() {
         let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
-        let mut vars = SymbolTable::new();
+        let mut vars = SymbolTable::new_global();
         vars.add_var(
             Name::MachineName(0),
             DecisionVariable::new(Domain::IntDomain(vec![Range::Single(1)])),
@@ -855,7 +855,7 @@ mod tests {
     #[test]
     fn test_domain_of_reference_sum_bounded() {
         let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
-        let mut vars = SymbolTable::new();
+        let mut vars = SymbolTable::new_global();
         vars.add_var(
             Name::MachineName(0),
             DecisionVariable::new(Domain::IntDomain(vec![Range::Bounded(1, 2)])),

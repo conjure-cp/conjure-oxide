@@ -76,7 +76,7 @@ impl Reduction {
         Self {
             new_expression,
             new_top: Vec::new(),
-            symbols: SymbolTable::new(),
+            symbols: SymbolTable::new_global(),
         }
     }
 
@@ -94,7 +94,7 @@ impl Reduction {
         Self {
             new_expression,
             new_top,
-            symbols: SymbolTable::new(),
+            symbols: SymbolTable::new_global(),
         }
     }
 

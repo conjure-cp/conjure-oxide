@@ -87,7 +87,7 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
             }
             new_top.push(Or(Metadata::new(), disjunction));
 
-            let mut new_vars = SymbolTable::new();
+            let mut new_vars = SymbolTable::new_global();
             let domain = expr
                 .domain_of(mdl.symbols())
                 .ok_or(ApplicationError::DomainError)?;
@@ -131,7 +131,7 @@ fn max_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
             }
             new_top.push(Or(Metadata::new(), disjunction));
 
-            let mut new_vars = SymbolTable::new();
+            let mut new_vars = SymbolTable::new_global();
             let domain = expr
                 .domain_of(mdl.symbols())
                 .ok_or(ApplicationError::DomainError)?;

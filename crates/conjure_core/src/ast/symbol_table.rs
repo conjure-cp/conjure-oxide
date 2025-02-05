@@ -3,9 +3,10 @@
 //! See the item documentation for [`SymbolTable`] for more details.
 use std::collections::BTreeSet;
 use std::fmt::Display;
+use std::sync::Arc;
 use std::{cell::RefCell, collections::BTreeMap};
 
-use itertools::izip;
+use itertools::{chain, izip, Itertools as _};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use uniplate::derive::Uniplate;
@@ -74,7 +75,7 @@ impl Display for Name {
 #[derive(Derivative)]
 #[derivative(PartialEq)]
 #[serde_as]
-#[derive(Clone, Debug, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, Deserialize, Serialize)]
 pub struct SymbolTable {
     #[serde_as(as = "Vec<(_, _)>")]
     table: BTreeMap<Name, SymbolKind>,
@@ -82,6 +83,9 @@ pub struct SymbolTable {
     #[derivative(Hash = "ignore")]
     #[derivative(PartialEq = "ignore")]
     next_machine_name: RefCell<i32>,
+
+    #[serde(skip)]
+    parent: Option<Arc<SymbolTable>>,
 }
 
 #[non_exhaustive]
@@ -93,11 +97,21 @@ enum SymbolKind {
 }
 
 impl SymbolTable {
-    /// Creates an empty symbol table.
-    pub fn new() -> Self {
+    /// Creates an empty symbol table with no parent scope.
+    pub fn new_global() -> Self {
         SymbolTable {
             table: BTreeMap::new(),
             next_machine_name: RefCell::new(0),
+            parent: None,
+        }
+    }
+
+    /// Creates an empty symbol table with `parent` as the enclosing scope.
+    pub fn new_local(parent: Arc<SymbolTable>) -> Self {
+        SymbolTable {
+            table: BTreeMap::new(),
+            next_machine_name: RefCell::new(0),
+            parent: Some(parent),
         }
     }
 
@@ -105,28 +119,73 @@ impl SymbolTable {
     /*        get entries        */
     /*****************************/
 
-    /// Returns an iterator over the names in the symbol table.
+    /// Returns an iterator over the names known in this scope.
     ///
     /// Alias of [`names`](SymbolTable::names).
     pub fn keys(&self) -> impl Iterator<Item = &Name> {
         self.names()
     }
 
-    /// Returns an iterator over the names in the symbol table.
-    pub fn names(&self) -> impl Iterator<Item = &Name> {
-        self.table.keys()
+    /// Returns an iterator over the names known in this scope.
+    pub fn names<'a>(&'a self) -> Box<dyn Iterator<Item = &'a Name> + 'a> {
+        match &self.parent {
+            Some(parent) => Box::new(chain!(self.table.keys(), parent.names()).unique()),
+            None => Box::new(self.table.keys()),
+        }
     }
 
-    /// Returns an iterator over the names and definitions of all decision variables in the symbol
-    /// table.
+    /// Returns an iterator over the names and definitions of all symbols in scope.
+    ///
+    /// Private method, as wrapping this function in another hides the lifetimes and allows the
+    /// return type to be an impl Iterator, not a Box<dyn ..>. This prevents the public type
+    /// signatures of our iter from changing in the future.
+    ///
+    /// See [`iter_var`] for a use of this method.
+    fn iter_all_inner<'a>(&'a self) -> Box<dyn Iterator<Item = (&'a Name, &'a SymbolKind)> + 'a> {
+        let local_defs = self.table.iter();
+
+        match &self.parent {
+            // if there is a duplicate name, keep symbols in our table, not the parent table.
+            Some(parent) => {
+                Box::new(chain!(local_defs, parent.iter_all_inner()).unique_by(|(n, _)| *n))
+            }
+            None => Box::new(local_defs),
+        }
+    }
+
+    /// Returns a mutable iterator over the names and definitions of all symbols in scope.
+    ///
+    /// Non-local variables cannot be mutated, so are not returned by this function.
+    ///
+    /// See iter_all_inner
+    fn iter_all_mut_inner(&mut self) -> impl Iterator<Item = (&Name, &mut SymbolKind)> {
+        self.table.iter_mut()
+    }
+
+    /// Returns an iterator over the names and definitions of all decision variables in scope.
     pub fn iter_var(&self) -> impl Iterator<Item = (&Name, &DecisionVariable)> {
-        self.table.iter().filter_map(|(n, s)| {
+        self.iter_all_inner().filter_map(|(n, s)| {
             if let SymbolKind::DecisionVariable(var) = s {
                 Some((n, var))
             } else {
                 None
             }
         })
+    }
+
+    /// Returns a reference to the [`SymbolKind`] with the given name.
+    fn get(&self, name: &Name) -> Option<&SymbolKind> {
+        self.table.get(name).or_else(|| match &self.parent {
+            Some(parent) => parent.get(name),
+            None => None,
+        })
+    }
+
+    /// Returns a mutable reference to the [`SymbolKind`] with the given name.
+    ///
+    /// Non-local variables cannot be mutated, so are not returned by this function.
+    fn get_mut(&mut self, name: &Name) -> Option<&mut SymbolKind> {
+        self.table.get_mut(name)
     }
 
     /// Returns a reference to the decision variable with the given name.
@@ -139,7 +198,7 @@ impl SymbolTable {
     ///
     /// + The object with that name is not a decision variable.
     pub fn get_var(&self, name: &Name) -> Option<&DecisionVariable> {
-        if let Some(SymbolKind::DecisionVariable(var)) = self.table.get(name) {
+        if let Some(SymbolKind::DecisionVariable(var)) = self.get(name) {
             Some(var)
         } else {
             None
@@ -155,8 +214,10 @@ impl SymbolTable {
     /// + The decision variable with that name has been deleted.
     ///
     /// + The object with that name is not a decision variable.
+    ///
+    /// + The decision variable is not in our local scope so cannot be mutated.
     pub fn get_var_mut(&mut self, name: &Name) -> Option<&mut DecisionVariable> {
-        if let Some(SymbolKind::DecisionVariable(var)) = self.table.get_mut(name) {
+        if let Some(SymbolKind::DecisionVariable(var)) = self.get_mut(name) {
             Some(var)
         } else {
             None
@@ -166,7 +227,7 @@ impl SymbolTable {
     /// Returns an iterator over the names and definitions of all values lettings in the symbol
     /// table.
     pub fn iter_value_letting(&self) -> impl Iterator<Item = (&Name, &Expression)> {
-        self.table.iter().filter_map(|(n, s)| {
+        self.iter_all_inner().filter_map(|(n, s)| {
             if let SymbolKind::ValueLetting(var) = s {
                 Some((n, var))
             } else {
@@ -178,7 +239,7 @@ impl SymbolTable {
     /// Returns a mutable iterator over the names and definitions of all values lettings in the
     /// symbol table.
     pub fn iter_value_letting_mut(&mut self) -> impl Iterator<Item = (&Name, &mut Expression)> {
-        self.table.iter_mut().filter_map(|(n, s)| {
+        self.iter_all_mut_inner().filter_map(|(n, s)| {
             if let SymbolKind::ValueLetting(var) = s {
                 Some((n, var))
             } else {
@@ -209,6 +270,8 @@ impl SymbolTable {
     /// + There is no value letting with that name.
     ///
     /// + The object with that name is not a value letting.
+    ///
+    /// + The letting is not in our local scope so cannot be mutated.
     pub fn get_value_letting_mut(&mut self, name: &Name) -> Option<&mut Expression> {
         if let Some(SymbolKind::ValueLetting(var)) = self.table.get_mut(name) {
             Some(var)
@@ -251,6 +314,8 @@ impl SymbolTable {
     /// + There is no domain letting with that name.
     ///
     /// + The object with that name is not a domain letting.
+    ///
+    /// + The letting is not in our local scope so cannot be mutated.
     pub fn get_domain_letting_mut(&mut self, name: &Name) -> Option<&mut Domain> {
         if let Some(SymbolKind::DomainLetting(domain)) = self.table.get_mut(name) {
             Some(domain)
@@ -262,67 +327,99 @@ impl SymbolTable {
     /*        mutate entries        */
     /********************************/
 
+    /// Checks whether the given name is known in this scope.
+    pub fn name_defined(&self, name: &Name) -> bool {
+        if self.name_declared_locally(name) {
+            return true;
+        }
+
+        match &self.parent {
+            Some(parent) => parent.name_defined(name),
+            None => false,
+        }
+    }
+
+    /// Checks whether the given name is declared in this scope, not a parent scope.
+    pub fn name_declared_locally(&self, name: &Name) -> bool {
+        self.table.contains_key(name)
+    }
+
     /// Adds a decision variable to the symbol table as `name`.
     ///
-    /// Returns `None` if there is a decision variable or other object with that name in the symbol
-    /// table.
+    /// Returns `None` if there is a decision variable or other object with that name in the local
+    /// scope.
     pub fn add_var(&mut self, name: Name, var: DecisionVariable) -> Option<()> {
-        if let std::collections::btree_map::Entry::Vacant(e) = self.table.entry(name) {
-            e.insert(SymbolKind::DecisionVariable(var));
+        if !self.name_declared_locally(&name) {
+            self.table.insert(name, SymbolKind::DecisionVariable(var));
             Some(())
         } else {
             None
         }
     }
 
-    /// Updates a decision variable to the symbol table as `name`, or adds it.
+    /// Updates a decision variable to the symbol table as `name`.
     ///
-    /// Returns `None` if `name` refers to an object that is not a decision variable.
-    pub fn update_add_var(&mut self, name: Name, var: DecisionVariable) -> Option<()> {
-        self.table.insert(name, SymbolKind::DecisionVariable(var));
-        Some(())
+    /// Returns `None` if `name` refers to an object that is not a decision variable, or an object
+    /// in an enclosing scope (which cannot be edited).
+    pub fn update_var(&mut self, name: Name, var: DecisionVariable) -> Option<()> {
+        if let Some(SymbolKind::DecisionVariable(_)) = self.table.get(&name) {
+            self.table.insert(name, SymbolKind::DecisionVariable(var));
+            Some(())
+        } else {
+            None
+        }
     }
 
     /// Adds a value letting to the symbol table as `name`.
     ///
-    /// Returns `None` if there is a value letting or other object with that name in the symbol
-    /// table.
+    /// Returns `None` if there is a value letting or other object with that name in the local
+    /// scope.
     pub fn add_value_letting(&mut self, name: Name, value: Expression) -> Option<()> {
-        if let std::collections::btree_map::Entry::Vacant(e) = self.table.entry(name) {
-            e.insert(SymbolKind::ValueLetting(value));
+        if !self.name_declared_locally(&name) {
+            self.table.insert(name, SymbolKind::ValueLetting(value));
             Some(())
         } else {
             None
         }
     }
 
-    /// Updates a value letting to the symbol table as `name`, or adds it.
+    /// Updates a value letting to the symbol table as `name`.
     ///
-    /// Returns `None` if `name` refers to an object that is not a value letting.
-    pub fn update_add_value_letting(&mut self, name: Name, value: Expression) -> Option<()> {
-        self.table.insert(name, SymbolKind::ValueLetting(value));
-        Some(())
+    /// Returns `None` if `name` refers to an object that is not a value letting, or an object in
+    /// an enclosing scope (which cannot be edited).
+    pub fn update_value_letting(&mut self, name: Name, value: Expression) -> Option<()> {
+        if let Some(SymbolKind::ValueLetting(_)) = self.table.get(&name) {
+            self.table.insert(name, SymbolKind::ValueLetting(value));
+            Some(())
+        } else {
+            None
+        }
     }
 
     /// Adds a domain letting to the symbol table as `name`.
     ///
-    /// Returns `None` if there is a domain letting or other object with that name in the symbol
-    /// table.
+    /// Returns `None` if there is a domain letting or other object with that name in the local
+    /// scope.
     pub fn add_domain_letting(&mut self, name: Name, domain: Domain) -> Option<()> {
-        if let std::collections::btree_map::Entry::Vacant(e) = self.table.entry(name) {
-            e.insert(SymbolKind::DomainLetting(domain));
+        if !self.name_declared_locally(&name) {
+            self.table.insert(name, SymbolKind::DomainLetting(domain));
             Some(())
         } else {
             None
         }
     }
 
-    /// Updates a domain letting to the symbol table as `name`, or adds it.
+    /// Updates a domain letting to the symbol table as `name`.
     ///
-    /// Returns `None` if `name` refers to an object that is not a domain letting.
-    pub fn update_add_domain_letting(&mut self, name: Name, domain: Domain) -> Option<()> {
-        self.table.insert(name, SymbolKind::DomainLetting(domain));
-        Some(())
+    /// Returns `None` if `name` refers to an object that is not a domain letting, or an object in
+    /// an enclosing scope (which cannot be edited).
+    pub fn update_domain_letting(&mut self, name: Name, domain: Domain) -> Option<()> {
+        if let Some(SymbolKind::DomainLetting(_)) = self.table.get(&name) {
+            self.table.insert(name, SymbolKind::DomainLetting(domain));
+            Some(())
+        } else {
+            None
+        }
     }
 
     /// Extends the symbol table with the given symbol table, updating the gensym counter if
@@ -353,16 +450,17 @@ impl SymbolTable {
 
     /// Gets the domain of `name` if it exists and has a domain.
     pub fn domain_of(&self, name: &Name) -> Option<&Domain> {
-        match self.table.get(name)? {
+        match self.get(name)? {
             SymbolKind::DecisionVariable(var) => Some(&var.domain),
             SymbolKind::ValueLetting(_) => None,
             SymbolKind::DomainLetting(domain) => Some(domain),
         }
     }
 
-    /// Gets the domain of `name` as a mutable reference if it exists and has a domain.
+    /// Gets the domain of `name` as a mutable reference if it exists, has a domain, and is in the
+    /// local scope.
     pub fn domain_of_mut(&mut self, name: &Name) -> Option<&mut Domain> {
-        match self.table.get_mut(name)? {
+        match self.get_mut(name)? {
             SymbolKind::DecisionVariable(var) => Some(&mut var.domain),
             SymbolKind::ValueLetting(_) => None,
             SymbolKind::DomainLetting(domain) => Some(domain),
@@ -371,7 +469,7 @@ impl SymbolTable {
 
     /// Gets the type of `name` if it exists and has a type.
     pub fn type_of(&self, name: &Name) -> Option<ReturnType> {
-        match self.table.get(name)? {
+        match self.get(name)? {
             SymbolKind::DecisionVariable(var) => match var.domain {
                 Domain::BoolDomain => Some(ReturnType::Bool),
                 Domain::IntDomain(_) => Some(ReturnType::Int),
@@ -438,6 +536,6 @@ impl Biplate<Expression> for SymbolTable {
 
 impl Default for SymbolTable {
     fn default() -> Self {
-        Self::new()
+        Self::new_global()
     }
 }
