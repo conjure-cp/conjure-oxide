@@ -11,6 +11,7 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
+use std::str::FromStr;
 use tracing::{span, Level, Metadata as OtherMetadata};
 use tracing_subscriber::{
     filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
@@ -76,6 +77,56 @@ impl Default for TestConfig {
             solve_with_minion: true,
             compare_solver_solutions: false,
             validate_rule_traces: false,
+        }
+    }
+}
+
+fn env_var_override_bool(key: &str, default: bool) -> bool {
+    env::var(key).ok().map(|s| s == "true").unwrap_or(default)
+}
+impl TestConfig {
+    fn merge_env(self) -> Self {
+        Self {
+            use_native_parser: env_var_override_bool("USE_NATIVE_PARSER", self.use_native_parser),
+            use_naive_rewriter: env_var_override_bool(
+                "USE_NAIVE_REWRITER",
+                self.use_naive_rewriter,
+            ),
+            run_solver: env_var_override_bool("RUN_SOLVER", self.run_solver),
+            parse_model_default: env_var_override_bool(
+                "PARSE_MODEL_DEFAULT",
+                self.parse_model_default,
+            ),
+            enable_native_parser: env_var_override_bool(
+                "ENABLE_NATIVE_PARSER",
+                self.enable_native_parser,
+            ),
+            apply_rewrite_rules: env_var_override_bool(
+                "APPLY_REWRITE_RULES",
+                self.apply_rewrite_rules,
+            ),
+            enable_extra_validation: env_var_override_bool(
+                "ENABLE_EXTRA_VALIDATION",
+                self.enable_extra_validation,
+            ),
+            solve_with_minion: env_var_override_bool("SOLVE_WITH_MINION", self.solve_with_minion),
+            compare_solver_solutions: env_var_override_bool(
+                "COMPARE_SOLVER_SOLUTIONS",
+                self.compare_solver_solutions,
+            ),
+            validate_rule_traces: env_var_override_bool(
+                "VALIDATE_RULE_TRACES",
+                self.validate_rule_traces,
+            ),
+            enable_native_impl: env_var_override_bool(
+                "ENABLE_NATIVE_IMPL",
+                self.enable_native_impl,
+            ),
+            enable_rewriter_impl: env_var_override_bool(
+                "ENABLE_REWRITER_IMPL",
+                self.enable_rewriter_impl,
+            ),
+            extra_rewriter_asserts: self.extra_rewriter_asserts, // Not overridden by env vars
         }
     }
 }
@@ -183,12 +234,14 @@ fn integration_test_inner(
         );
     }
 
-    let config: TestConfig =
+    let file_config: TestConfig =
         if let Ok(config_contents) = fs::read_to_string(format!("{}/config.toml", path)) {
-            toml::from_str(&config_contents).unwrap()
+            toml::from_str(&config_contents).unwrap_or_default()
         } else {
             Default::default()
         };
+
+    let config = file_config.merge_env();
 
     // Stage 1a: Parse the model using the normal parser (run unless explicitly disabled)
     let model = if config.parse_model_default {
