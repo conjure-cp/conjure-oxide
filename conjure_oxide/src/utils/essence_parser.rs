@@ -217,6 +217,7 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
                 ">=" => Expression::Geq(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 "<" => Expression::Lt(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 ">" => Expression::Gt(Metadata::new(), Box::new(expr1), Box::new(expr2)),
+                "->" => Expression::Imply(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 _ => panic!("Not a supported comp_op"),
             }
         }
