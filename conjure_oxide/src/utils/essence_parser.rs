@@ -6,6 +6,8 @@ use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_essence::LANGUAGE;
 
 use conjure_core::ast::{Atom, DecisionVariable, Domain, Expression, Literal, Name, Range};
+    Atom, DecisionVariable, Domain, Expression, Literal, Name, Range, SymbolTable,
+};
 
 use crate::utils::conjure::EssenceParseError;
 use conjure_core::context::Context;
@@ -42,6 +44,8 @@ pub fn parse_essence_file_native(
                 model.add_constraints(constraint_vec);
             }
             "e_prime_label" => {}
+                model.extend_sym_table(letting_vars);
+            }
             _ => {
                 let kind = statement.kind();
                 return Err(EssenceParseError::ParseError(Error::Parse(
@@ -174,6 +178,13 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
     }
 }
 
+fn parse_letting_statement(letting_statement_list: Node, source_code: &str) -> SymbolTable {
+    let mut symbol_table = SymbolTable::new();
+
+    for letting_statement in named_children(&letting_statement_list) {
+        let mut temp_symbols = BTreeSet::new();
+
+        let variable_list = letting_statement.child(0).expect("No variable list found");
 fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
     match constraint.kind() {
         "constraint" | "expression" => {
@@ -217,7 +228,6 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
                 ">=" => Expression::Geq(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 "<" => Expression::Lt(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 ">" => Expression::Gt(Metadata::new(), Box::new(expr1), Box::new(expr2)),
-                "->" => Expression::Imply(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 _ => panic!("Not a supported comp_op"),
             }
         }
@@ -328,6 +338,17 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
                 Metadata::new(),
                 Box::new(parse_constraint(child, source_code)),
             )
+        }
+        "imply_expr" => {
+            let expr1_node = constraint
+                .named_child(0)
+                .expect("Error with imply expression");
+            let expr1 = parse_constraint(expr1_node, source_code);
+            let expr2_node = constraint
+                .named_child(1)
+                .expect("Error with imply expression");
+            let expr2 = parse_constraint(expr2_node, source_code);
+            Expression::Imply(Metadata::new(), Box::new(expr1), Box::new(expr2))
         }
         _ => {
             let node_kind = constraint.kind();

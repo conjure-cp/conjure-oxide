@@ -105,7 +105,8 @@ module.exports = grammar ({
       $.all_diff,
       $.constant,
       $.variable,
-      $.abs_value
+      $.abs_value,
+      $.imply_expr
     ),
 
     unary_minus_expr: $ => prec.left(seq("-", $.expression)),
@@ -143,7 +144,6 @@ module.exports = grammar ({
       ">=",
       "<",
       ">",
-      "->"
     ),
 
     math_expr: $ => prec(2, prec.left(seq($.expression, $.math_op, $.expression))),
@@ -200,6 +200,12 @@ module.exports = grammar ({
       "|",
       $.expression,
       "|"
-    )
+    ),
+
+    imply_expr: $ => prec.left(seq(
+      $.expression,
+      "->",
+      $.expression
+    ))
   }
 })
