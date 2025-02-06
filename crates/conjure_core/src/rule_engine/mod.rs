@@ -78,6 +78,7 @@ mod rewrite_naive;
 mod rewriter_common;
 mod rule;
 mod rule_set;
+mod scope_zipper;
 
 #[doc(hidden)]
 #[distributed_slice]
@@ -141,7 +142,7 @@ pub fn get_all_rules() -> Vec<&'static Rule<'static>> {
 /// println!("Rule: {:?}", get_rule_by_name("identity"));
 /// }
 /// ```
-///
+//
 /// This will print:
 /// ```text
 /// Rule: Some(Rule { name: "identity", application: MEM })

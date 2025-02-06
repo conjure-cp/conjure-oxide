@@ -77,6 +77,11 @@ impl Model {
         &mut self.symbols
     }
 
+    /// The symbol table for this model, as an Arc<RwLock<SymbolTable>>
+    pub fn symbols_ptr(&self) -> Arc<RwLock<SymbolTable>> {
+        todo!()
+    }
+
     // Function to update a DecisionVariable based on its Name
     pub fn update_domain(&mut self, name: &Name, new_domain: Domain) {
         if let Some(decision_var) = self.symbols_mut().get_var_mut(name) {
@@ -97,6 +102,9 @@ impl Model {
         self.symbols_mut().add_var(name, decision_var)
     }
 
+    pub fn get_root_constraint(&self) -> Expression {
+        *self.constraints.clone()
+    }
     pub fn get_constraints_vec(&self) -> Vec<Expression> {
         match *self.constraints {
             Expression::Root(_, ref exprs) => exprs.clone(),
