@@ -11,7 +11,8 @@ module.exports = grammar ({
     //top level statements
     program: $ => repeat(choice(
       $.find_statement_list,
-      $.constraint_list
+      $.constraint_list,
+      $.letting_statement_list,
     )),
 
     single_line_comment: $ => token(seq('$', /.*/)),
@@ -55,7 +56,8 @@ module.exports = grammar ({
 
     domain: $ => choice(
       $.bool_domain,
-      $.int_domain
+      $.int_domain,
+      $.variable
     ),
 
     bool_domain: $ => "bool",
@@ -86,6 +88,14 @@ module.exports = grammar ({
 
     int_range: $ => seq(optional($.expression), "..", optional($.expression)),
 
+    //letting statements
+    letting_statement_list: $ => seq("letting", repeat($.letting_statement)),
+
+    letting_statement: $ => seq(
+      $.variable_list,
+      "be",
+      choice($.expression, seq("domain", $.domain))
+    ),
     //constraints
     constraint_list: $ => seq("such that", repeat($.constraint)),
 

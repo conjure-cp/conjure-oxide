@@ -5,7 +5,7 @@ use std::sync::{Arc, RwLock};
 use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_essence::LANGUAGE;
 
-use conjure_core::ast::{Atom, DecisionVariable, Domain, Expression, Literal, Name, Range};
+use conjure_core::ast::{
     Atom, DecisionVariable, Domain, Expression, Literal, Name, Range, SymbolTable,
 };
 
@@ -44,6 +44,8 @@ pub fn parse_essence_file_native(
                 model.add_constraints(constraint_vec);
             }
             "e_prime_label" => {}
+            "letting_statement_list" => {
+                let letting_vars = parse_letting_statement(statement, &source_code);
                 model.extend_sym_table(letting_vars);
             }
             _ => {
@@ -105,6 +107,7 @@ fn parse_domain(domain: Node, source_code: &str) -> Domain {
     match domain.kind() {
         "bool_domain" => Domain::BoolDomain,
         "int_domain" => parse_int_domain(domain, source_code),
+        "variable" => parse_variable_reference_domain(domain, source_code),
         _ => panic!("Not bool or int domain"),
     }
 }
@@ -178,6 +181,10 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
     }
 }
 
+fn parse_variable_reference_domain(domain: Node, source_code: &str) -> Domain {
+    let variable_name = &source_code[domain.start_byte()..domain.end_byte()];
+    Domain::DomainReference(Name::UserName(String::from(variable_name)))
+}
 fn parse_letting_statement(letting_statement_list: Node, source_code: &str) -> SymbolTable {
     let mut symbol_table = SymbolTable::new();
 
@@ -185,6 +192,37 @@ fn parse_letting_statement(letting_statement_list: Node, source_code: &str) -> S
         let mut temp_symbols = BTreeSet::new();
 
         let variable_list = letting_statement.child(0).expect("No variable list found");
+        for variable in named_children(&variable_list) {
+            let variable_name = &source_code[variable.start_byte()..variable.end_byte()];
+            temp_symbols.insert(variable_name);
+        }
+
+        let expr_or_domain = letting_statement
+            .named_child(1)
+            .expect("No domain or expression found for letting statement");
+        match expr_or_domain.kind() {
+            "expression" => {
+                for name in temp_symbols {
+                    symbol_table.add_value_letting(
+                        Name::UserName(String::from(name)),
+                        parse_constraint(expr_or_domain, source_code),
+                    );
+                }
+            }
+            "domain" => {
+                for name in temp_symbols {
+                    symbol_table.add_domain_letting(
+                        Name::UserName(String::from(name)),
+                        parse_domain(expr_or_domain, source_code),
+                    );
+                }
+            }
+            _ => panic!("Unrecognized node in letting statement"),
+        }
+    }
+    symbol_table
+}
+
 fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
     match constraint.kind() {
         "constraint" | "expression" => {
