@@ -29,7 +29,7 @@ pub fn parse_essence_file_native(
             "find_statement_list" => {
                 let var_hashmap = parse_find_statement(statement, &source_code);
                 for (name, decision_variable) in var_hashmap {
-                    model.add_variable(name, decision_variable);
+                    model.symbols_mut().add_var(name, decision_variable);
                 }
             }
             "constraint_list" => {

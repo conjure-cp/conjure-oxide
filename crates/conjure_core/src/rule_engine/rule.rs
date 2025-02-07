@@ -100,7 +100,7 @@ impl Reduction {
 
     /// Applies side-effects (e.g. symbol table updates)
     pub fn apply(self, model: &mut Model) {
-        model.extend_sym_table(self.symbols); // Add new assignments to the symbol table
+        model.symbols_mut().extend(self.symbols); // Add new assignments to the symbol table
         model.add_constraints(self.new_top.clone());
     }
 

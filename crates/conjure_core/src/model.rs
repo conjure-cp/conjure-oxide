@@ -6,7 +6,7 @@ use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use uniplate::{Biplate, Tree, Uniplate};
 
-use crate::ast::{DecisionVariable, Domain, Expression, Name, SymbolTable};
+use crate::ast::{Expression, SymbolTable};
 use crate::bug;
 use crate::context::Context;
 
@@ -77,26 +77,6 @@ impl Model {
         &mut self.symbols
     }
 
-    // Function to update a DecisionVariable based on its Name
-    pub fn update_domain(&mut self, name: &Name, new_domain: Domain) {
-        if let Some(decision_var) = self.symbols_mut().get_var_mut(name) {
-            decision_var.domain = new_domain;
-        }
-    }
-
-    /// Gets the domain of `name` if it exists and has one.
-    pub fn get_domain(&self, name: &Name) -> Option<&Domain> {
-        self.symbols().domain_of(name)
-    }
-
-    /// Adds a decision variable to the model.
-    ///
-    /// Returns `None` if there is a decision variable or other object with that name in the symbol
-    /// table.
-    pub fn add_variable(&mut self, name: Name, decision_var: DecisionVariable) -> Option<()> {
-        self.symbols_mut().add_var(name, decision_var)
-    }
-
     pub fn get_constraints_vec(&self) -> Vec<Expression> {
         match *self.constraints {
             Expression::Root(_, ref exprs) => exprs.clone(),
@@ -129,17 +109,6 @@ impl Model {
         let mut constraints = self.get_constraints_vec();
         constraints.extend(expressions);
         self.set_constraints(constraints);
-    }
-
-    /// Returns an arbitrary variable name that is not in the model.
-    pub fn gensym(&self) -> Name {
-        self.symbols().gensym()
-    }
-
-    /// Extends the models symbol table with the given symbol table, updating the gensym counter if
-    /// necessary.
-    pub fn extend_sym_table(&mut self, other: SymbolTable) {
-        self.symbols_mut().extend(other);
     }
 }
 

@@ -323,19 +323,19 @@ fn reduce_solve_xyz() {
     );
 
     let mut model = Model::new(SymbolTable::new(), vec![expr1, expr2], Default::default());
-    model.add_variable(
+    model.symbols_mut().add_var(
         Name::UserName(String::from("a")),
         DecisionVariable {
             domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
         },
     );
-    model.add_variable(
+    model.symbols_mut().add_var(
         Name::UserName(String::from("b")),
         DecisionVariable {
             domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
         },
     );
-    model.add_variable(
+    model.symbols_mut().add_var(
         Name::UserName(String::from("c")),
         DecisionVariable {
             domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
@@ -673,19 +673,19 @@ fn rewrite_solve_xyz() {
     let mut model = Model::new(SymbolTable::new(), rewritten_expr, Default::default());
 
     // Insert variables and domains
-    model.add_variable(
+    model.symbols_mut().add_var(
         var_name_from_atom(&variable_a.clone()),
         DecisionVariable {
             domain: domain.clone(),
         },
     );
-    model.add_variable(
+    model.symbols_mut().add_var(
         var_name_from_atom(&variable_b.clone()),
         DecisionVariable {
             domain: domain.clone(),
         },
     );
-    model.add_variable(
+    model.symbols_mut().add_var(
         var_name_from_atom(&variable_c.clone()),
         DecisionVariable {
             domain: domain.clone(),
