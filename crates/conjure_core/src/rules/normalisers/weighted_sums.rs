@@ -7,11 +7,10 @@ use std::collections::BTreeMap;
 
 use conjure_macros::register_rule;
 
-use crate::ast::{Atom, Expression as Expr, Literal as Lit, Name};
+use crate::ast::{Atom, Expression as Expr, Literal as Lit, Name, SymbolTable};
 use crate::metadata::Metadata;
 use crate::rule_engine::ApplicationError::RuleNotApplicable;
 use crate::rule_engine::{ApplicationResult, Reduction};
-use crate::Model;
 
 /// Collects like terms in a weighted sum.
 ///
@@ -21,7 +20,7 @@ use crate::Model;
 /// (c1 * v)  + .. + (c2 * v) + ... ~> ((c1 + c2) * v) + ...
 /// ```
 #[register_rule(("Base", 8400))]
-fn collect_like_terms(expr: &Expr, _m: &Model) -> ApplicationResult {
+fn collect_like_terms(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Sum(meta, exprs) = expr.clone() else {
         return Err(RuleNotApplicable);
     };

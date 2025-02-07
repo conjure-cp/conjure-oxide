@@ -162,11 +162,11 @@ fn rule_sum_constants() {
     );
 
     expr = sum_constants
-        .apply(&expr, &Model::new_empty(Default::default()))
+        .apply(&expr, &SymbolTable::new())
         .unwrap()
         .new_expression;
     expr = unwrap_sum
-        .apply(&expr, &Model::new_empty(Default::default()))
+        .apply(&expr, &SymbolTable::new())
         .unwrap()
         .new_expression;
 
@@ -196,7 +196,7 @@ fn rule_sum_geq() {
     );
 
     expr = introduce_sumgeq
-        .apply(&expr, &Model::new_empty(Default::default()))
+        .apply(&expr, &SymbolTable::new())
         .unwrap()
         .new_expression;
 
@@ -240,11 +240,11 @@ fn reduce_solve_xyz() {
     );
 
     expr1 = sum_constants
-        .apply(&expr1, &Model::new_empty(Default::default()))
+        .apply(&expr1, &SymbolTable::new())
         .unwrap()
         .new_expression;
     expr1 = unwrap_sum
-        .apply(&expr1, &Model::new_empty(Default::default()))
+        .apply(&expr1, &SymbolTable::new())
         .unwrap()
         .new_expression;
     assert_eq!(
@@ -275,7 +275,7 @@ fn reduce_solve_xyz() {
         Box::new(expr1),
     );
     expr1 = introduce_sumleq
-        .apply(&expr1, &Model::new_empty(Default::default()))
+        .apply(&expr1, &SymbolTable::new())
         .unwrap()
         .new_expression;
     assert_eq!(
@@ -304,12 +304,12 @@ fn reduce_solve_xyz() {
         )),
     );
     expr2 = lt_to_leq
-        .apply(&expr2, &Model::new_empty(Default::default()))
+        .apply(&expr2, &SymbolTable::new())
         .unwrap()
         .new_expression;
 
     expr2 = leq_to_ineq
-        .apply(&expr2, &Model::new_empty(Default::default()))
+        .apply(&expr2, &SymbolTable::new())
         .unwrap()
         .new_expression;
     assert_eq!(
@@ -363,7 +363,7 @@ fn rule_remove_double_negation() {
     );
 
     expr = remove_double_negation
-        .apply(&expr, &Model::new_empty(Default::default()))
+        .apply(&expr, &SymbolTable::new())
         .unwrap()
         .new_expression;
 
@@ -394,11 +394,11 @@ fn remove_trivial_and_or() {
     );
 
     expr_and = remove_trivial_and
-        .apply(&expr_and, &Model::new_empty(Default::default()))
+        .apply(&expr_and, &SymbolTable::new())
         .unwrap()
         .new_expression;
     expr_or = remove_trivial_or
-        .apply(&expr_or, &Model::new_empty(Default::default()))
+        .apply(&expr_or, &SymbolTable::new())
         .unwrap()
         .new_expression;
 
@@ -434,7 +434,7 @@ fn rule_distribute_not_over_and() {
     );
 
     expr = distribute_not_over_and
-        .apply(&expr, &Model::new_empty(Default::default()))
+        .apply(&expr, &SymbolTable::new())
         .unwrap()
         .new_expression;
 
@@ -484,7 +484,7 @@ fn rule_distribute_not_over_or() {
     );
 
     expr = distribute_not_over_or
-        .apply(&expr, &Model::new_empty(Default::default()))
+        .apply(&expr, &SymbolTable::new())
         .unwrap()
         .new_expression;
 
@@ -524,7 +524,7 @@ fn rule_distribute_not_over_and_not_changed() {
         )),
     );
 
-    let result = distribute_not_over_and.apply(&expr, &Model::new_empty(Default::default()));
+    let result = distribute_not_over_and.apply(&expr, &SymbolTable::new());
 
     assert!(result.is_err());
 }
@@ -541,7 +541,7 @@ fn rule_distribute_not_over_or_not_changed() {
         )),
     );
 
-    let result = distribute_not_over_or.apply(&expr, &Model::new_empty(Default::default()));
+    let result = distribute_not_over_or.apply(&expr, &SymbolTable::new());
 
     assert!(result.is_err());
 }
@@ -565,7 +565,7 @@ fn rule_distribute_or_over_and() {
     );
 
     let red = distribute_or_over_and
-        .apply(&expr, &Model::new_empty(Default::default()))
+        .apply(&expr, &SymbolTable::new())
         .unwrap();
 
     assert_eq!(
@@ -746,7 +746,7 @@ fn apply_all_rules<'a>(
 ) -> Vec<RuleResult<'a>> {
     let mut results = Vec::new();
     for rule in rules {
-        match rule.apply(expression, &Model::new_empty(Default::default())) {
+        match rule.apply(expression, &SymbolTable::new()) {
             Ok(red) => {
                 results.push(RuleResult {
                     rule,

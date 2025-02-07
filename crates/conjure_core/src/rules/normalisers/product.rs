@@ -4,11 +4,10 @@ use std::iter;
 
 use conjure_macros::register_rule;
 
-use crate::ast::{Atom, Expression as Expr, Literal as Lit};
+use crate::ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable};
 use crate::metadata::Metadata;
 use crate::rule_engine::ApplicationError::RuleNotApplicable;
 use crate::rule_engine::{ApplicationResult, Reduction};
-use crate::Model;
 
 /// Reorders a product expression.
 ///
@@ -24,7 +23,7 @@ use crate::Model;
 ///
 /// Having a canonical ordering here is helpful in identifying weighted sums: 2x + 3y + 4d + ....
 #[register_rule(("Base", 8800))]
-fn reorder_product(expr: &Expr, _: &Model) -> ApplicationResult {
+fn reorder_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Product(meta, exprs) = expr.clone() else {
         return Err(RuleNotApplicable);
     };
@@ -87,7 +86,7 @@ fn reorder_product(expr: &Expr, _: &Model) -> ApplicationResult {
 /// ```
 ///
 #[register_rule(("Base", 8800))]
-fn remove_unit_vector_products(expr: &Expr, _: &Model) -> ApplicationResult {
+fn remove_unit_vector_products(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Product(_, exprs) => {
             if exprs.len() == 1 {

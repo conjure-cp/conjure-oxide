@@ -137,6 +137,9 @@ impl Reduction {
     }
 }
 
+/// The function type used in a [`Rule`].
+pub type RuleFn = fn(&Expression, &SymbolTable) -> ApplicationResult;
+
 /**
  * A rule with a name, application function, and rule sets.
  *
@@ -148,14 +151,14 @@ impl Reduction {
 #[derive(Clone, Debug)]
 pub struct Rule<'a> {
     pub name: &'a str,
-    pub application: fn(&Expression, &Model) -> ApplicationResult,
+    pub application: RuleFn,
     pub rule_sets: &'a [(&'a str, u16)], // (name, priority). At runtime, we add the rule to rulesets
 }
 
 impl<'a> Rule<'a> {
     pub const fn new(
         name: &'a str,
-        application: fn(&Expression, &Model) -> ApplicationResult,
+        application: RuleFn,
         rule_sets: &'a [(&'static str, u16)],
     ) -> Self {
         Self {
@@ -165,8 +168,8 @@ impl<'a> Rule<'a> {
         }
     }
 
-    pub fn apply(&self, expr: &Expression, mdl: &Model) -> ApplicationResult {
-        (self.application)(expr, mdl)
+    pub fn apply(&self, expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
+        (self.application)(expr, symbols)
     }
 }
 

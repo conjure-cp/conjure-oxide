@@ -32,12 +32,12 @@ pub use linkme::distributed_slice;
 /// For example:
 /// ```rust
 /// use conjure_core::ast::Expression;
-/// use conjure_core::model::Model;
+/// use conjure_core::ast::SymbolTable;
 /// use conjure_core::rule_engine::{ApplicationError, ApplicationResult, Reduction};
 /// use conjure_core::rule_engine::register_rule;
 ///
 /// #[register_rule(("RuleSetName", 10))]
-/// fn identity(expr: &Expression, mdl: &Model) -> ApplicationResult {
+/// fn identity(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
 ///   Ok(Reduction::pure(expr.clone()))
 /// }
 /// ```
@@ -100,11 +100,11 @@ pub mod _dependencies {
 /// ```rust
 /// # use conjure_core::rule_engine::{ApplicationResult, Reduction, get_all_rules};
 /// # use conjure_core::ast::Expression;
-/// # use conjure_core::model::Model;
+/// # use conjure_core::ast::SymbolTable;
 /// # use conjure_core::rule_engine::register_rule;
 ///
 /// #[register_rule]
-/// fn identity(expr: &Expression, mdl: &Model) -> ApplicationResult {
+/// fn identity(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
 ///   Ok(Reduction::pure(expr.clone()))
 /// }
 ///
@@ -130,10 +130,10 @@ pub fn get_all_rules() -> Vec<&'static Rule<'static>> {
 /// use conjure_core::rule_engine::register_rule;
 /// use conjure_core::rule_engine::{Rule, ApplicationResult, Reduction, get_rule_by_name};
 /// use conjure_core::ast::Expression;
-/// use conjure_core::model::Model;
+/// use conjure_core::ast::SymbolTable;
 ///
 /// #[register_rule]
-/// fn identity(expr: &Expression, mdl: &Model) -> ApplicationResult {
+/// fn identity(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
 ///  Ok(Reduction::pure(expr.clone()))
 /// }
 ///

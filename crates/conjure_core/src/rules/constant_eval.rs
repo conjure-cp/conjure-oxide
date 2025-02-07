@@ -6,13 +6,14 @@ use conjure_core::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationError::RuleNotApplicable,
     ApplicationResult, Reduction,
 };
-use conjure_core::Model;
 use itertools::izip;
+
+use crate::ast::SymbolTable;
 
 register_rule_set!("Constant", ());
 
 #[register_rule(("Constant", 9001))]
-fn apply_eval_constant(expr: &Expr, _: &Model) -> ApplicationResult {
+fn apply_eval_constant(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     if let Expr::Atomic(_, Atom::Literal(_)) = expr {
         return Err(ApplicationError::RuleNotApplicable);
     }
@@ -289,7 +290,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 ///
 /// This returns either Expr::Root([true]) or Expr::Root([false]).
 #[register_rule(("Constant", 9001))]
-fn eval_root(expr: &Expr, _: &Model) -> ApplicationResult {
+fn eval_root(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // this is its own rule not part of apply_eval_constant, because root should return a new root
     // with a literal inside it, not just a literal
 
