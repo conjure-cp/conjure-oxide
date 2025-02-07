@@ -329,7 +329,7 @@ fn integration_test_inner(
     };
 
     // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
-    if config.compare_solver_solutions {
+    if config.compare_solver_solutions || accept {
         let conjure_solutions: Vec<BTreeMap<Name, Literal>> =
             get_solutions_from_conjure(&format!("{}/{}.{}", path, essence_base, extension))?;
 
