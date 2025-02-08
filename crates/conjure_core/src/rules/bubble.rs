@@ -11,7 +11,7 @@ use crate::ast::{Atom, Literal};
 
 use super::utils::is_all_constant;
 
-register_rule_set!("Bubble", 100, ("Base"));
+register_rule_set!("Bubble", ("Base"));
 
 // Bubble reduction rules
 

@@ -3,12 +3,13 @@ use std::collections::HashSet;
 use conjure_core::ast::{Atom, Expression as Expr, Literal as Lit};
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
-    register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
+    register_rule, register_rule_set, ApplicationError, ApplicationError::RuleNotApplicable,
+    ApplicationResult, Reduction,
 };
 use conjure_core::Model;
 use itertools::izip;
 
-register_rule_set!("Constant", 100, ());
+register_rule_set!("Constant", ());
 
 #[register_rule(("Constant", 9001))]
 fn apply_eval_constant(expr: &Expr, _: &Model) -> ApplicationResult {
@@ -41,6 +42,9 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::Not(_, expr) => un_op::<bool, bool>(|e| !e, expr).map(Lit::Bool),
 
         Expr::And(_, exprs) => vec_op::<bool, bool>(|e| e.iter().all(|&e| e), exprs).map(Lit::Bool),
+        // this is done elsewhere instead - root should return a new root with a literal inside it,
+        // not a literal
+        Expr::Root(_, _) => None,
         Expr::Or(_, exprs) => vec_op::<bool, bool>(|e| e.iter().any(|&e| e), exprs).map(Lit::Bool),
         Expr::Imply(_, box1, box2) => {
             let a: &Atom = (&**box1).try_into().ok()?;
@@ -277,6 +281,36 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             } else {
                 None
             }
+        }
+    }
+}
+
+/// Evaluate the root expression.
+///
+/// This returns either Expr::Root([true]) or Expr::Root([false]).
+#[register_rule(("Constant", 9001))]
+fn eval_root(expr: &Expr, _: &Model) -> ApplicationResult {
+    // this is its own rule not part of apply_eval_constant, because root should return a new root
+    // with a literal inside it, not just a literal
+
+    let Expr::Root(_, exprs) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    match exprs.len() {
+        0 => Ok(Reduction::pure(Expr::Root(
+            Metadata::new(),
+            vec![true.into()],
+        ))),
+        1 => Err(RuleNotApplicable),
+        _ => {
+            let lit =
+                vec_op::<bool, bool>(|e| e.iter().all(|&e| e), exprs).ok_or(RuleNotApplicable)?;
+
+            Ok(Reduction::pure(Expr::Root(
+                Metadata::new(),
+                vec![lit.into()],
+            )))
         }
     }
 }

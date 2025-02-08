@@ -55,6 +55,7 @@ impl Display for DecisionVariable {
                 }
                 Ok(())
             }
+            Domain::DomainReference(name) => write!(f, "{}", name),
         }
     }
 }

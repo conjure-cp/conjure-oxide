@@ -3,7 +3,7 @@ name: "Code and Documentation Coverage (Deploy)"
 
 on:
   workflow_run:
-    workflows: ["Code and Documentation Coverage (PR)"]
+    workflows: ["Coverage (PR)"]
     types:
       - completed
 
@@ -229,7 +229,7 @@ jobs:
             /repos/conjure-cp/conjure-oxide/commits/main/check-runs |\
             jq '.check_runs[0] | .html_url | split("/")[0:-2] | join("/")')
 
-          PR_URL=$(gh api -X GET -F 'filter=latest' -F 'status=completed' -F 'check_name=Documentation Coverage' \
+          PR_URL=$(gh api -X GET -F 'filter=latest' -F 'status=completed' -F 'check_name=Documentation' \
             -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" \
             /repos/conjure-cp/conjure-oxide/commits/${{steps.sha.outputs.result}}/check-runs |\
             jq '.check_runs[0] | .html_url | split("/")[0:-2] | join("/")')

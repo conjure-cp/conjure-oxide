@@ -1,0 +1,70 @@
+Model before rewriting:
+
+letting A be false
+letting NotA be Not(Not(Not(A)))
+find b: int(1..20)
+
+such that
+
+(NotA) -> ((b < 3))
+
+--
+
+Not(Not(Not(A))), 
+   ~~> remove_double_negation ([("Base", 8400)]) 
+Not(A) 
+
+--
+
+(b < 3), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(b <= Sum([3, -1])) 
+
+--
+
+Sum([3, -1]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+2 
+
+--
+
+A, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+false 
+
+--
+
+Not(false), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+NotA, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+true 
+
+--
+
+(true) -> ((b <= 2)), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(b <= 2) 
+
+--
+
+(b <= 2), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(b, 2, 0) 
+
+--
+
+Final model:
+
+letting A be false
+letting NotA be true
+find b: int(1..20)
+
+such that
+
+Ineq(b, 2, 0)
+

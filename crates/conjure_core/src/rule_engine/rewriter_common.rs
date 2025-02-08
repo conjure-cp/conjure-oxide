@@ -1,6 +1,8 @@
 //! Common utilities and types for rewriters.
-
-use super::{resolve_rules::ResolveRulesError, Reduction, Rule};
+use super::{
+    resolve_rules::{ResolveRulesError, RuleData},
+    Reduction,
+};
 use crate::{
     ast::{
         pretty::{pretty_variable_declaration, pretty_vec},
@@ -17,7 +19,7 @@ use tracing::{info, trace};
 
 #[derive(Debug, Clone)]
 pub struct RuleResult<'a> {
-    pub rule: &'a Rule<'a>,
+    pub rule_data: RuleData<'a>,
     pub reduction: Reduction,
 }
 
@@ -29,7 +31,7 @@ pub fn log_rule_application(
     initial_model: &Model,
 ) {
     let red = &result.reduction;
-    let rule = result.rule;
+    let rule = result.rule_data.rule;
     let new_top_string = pretty_vec(&red.new_top);
 
     info!(
@@ -90,10 +92,13 @@ pub fn log_rule_application(
         target: "rule_engine",
         "{}",
     json!({
-        "rule_name": result.rule.name,
-        "rule_set": result.rule.rule_sets,
+        "rule_name": result.rule_data.rule.name,
+        "rule_priority": result.rule_data.priority,
+        "rule_set": {
+            "name": result.rule_data.rule_set.name,
+        },
         "initial_expression": serde_json::to_value(initial_expression).unwrap(),
-        "transformed _expression": serde_json::to_value(&red.new_expression).unwrap()
+        "transformed_expression": serde_json::to_value(&red.new_expression).unwrap()
     })
 
     )

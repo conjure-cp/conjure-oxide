@@ -19,7 +19,7 @@ use ApplicationError::*;
 
 use super::utils::{is_flat, to_aux_var};
 
-register_rule_set!("Minion", 100, ("Base"), (SolverFamily::Minion));
+register_rule_set!("Minion", ("Base"), (SolverFamily::Minion));
 
 #[register_rule(("Minion", 4200))]
 fn introduce_producteq(expr: &Expr, model: &Model) -> ApplicationResult {

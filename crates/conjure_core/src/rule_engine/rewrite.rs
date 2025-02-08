@@ -1,25 +1,18 @@
-use std::collections::HashMap;
 use std::env;
 
-use crate::ast::ReturnType;
-use crate::bug;
-use crate::stats::RewriterStats;
+use itertools::Itertools;
 use uniplate::Uniplate;
 
-use crate::rule_engine::{Reduction, Rule, RuleSet};
-use crate::{
-    ast::Expression,
-    rule_engine::resolve_rules::{get_rule_priorities, get_rules_vec},
-    Model,
-};
+use crate::ast::{Expression, ReturnType};
+use crate::bug;
+use crate::rule_engine::{get_rules, Reduction, RuleSet};
+use crate::stats::RewriterStats;
+use crate::Model;
 
+use super::resolve_rules::RuleData;
 use super::rewriter_common::{log_rule_application, RewriteError, RuleResult};
 
 /// Checks if the OPTIMIZATIONS environment variable is set to "1".
-///
-/// # Returns
-/// - true if the environment variable is set to "1".
-/// - false if the environment variable is not set or set to any other value.
 fn optimizations_enabled() -> bool {
     match env::var("OPTIMIZATIONS") {
         Ok(val) => val == "1",
@@ -27,69 +20,90 @@ fn optimizations_enabled() -> bool {
     }
 }
 
-/// Rewrites the given model by applying a set of rules to all its constraints.
+/// Rewrites the given model by applying a set of rules to all its constraints, until no more rules can be applied.
 ///
-/// This function iteratively applies transformations to the model's constraints using the specified rule sets.
-/// It returns a modified version of the model with all applicable rules applied, ensuring that any side-effects
-/// such as updates to the symbol table and top-level constraints are properly reflected in the returned model.
+/// Rules are applied in order of priority (from highest to lowest)
+/// Rules can:
+/// - Apply transformations to the constraints in the model (or their sub-expressions)
+/// - Add new constraints to the model
+/// - Modify the symbol table (e.g. add new variables)
 ///
 /// # Parameters
-/// - `model`: A reference to the [`Model`] to be rewritten. The function will clone this model to produce a modified version.
-/// - `rule_sets`: A vector of references to [`RuleSet`]s that define the rules to be applied to the model's constraints.
-///   Each `RuleSet` is expected to contain a collection of rules that can transform one or more constraints
-///   within the model. The lifetime parameter `'a` ensures that the rules' references are valid for the
-///   duration of the function execution.
+/// - `model`: A reference to the [`Model`] to be rewritten.
+/// - `rule_sets`: A vector of references to [`RuleSet`]s to be applied.
+///
+/// Each `RuleSet` contains a map of rules to priorities.
 ///
 /// # Returns
-/// - `Ok(Model)`: If successful, it returns a modified copy of the [`Model`] after all applicable rules have been
-///   applied. This new model includes any side-effects such as updates to the symbol table or modifications
-///   to the constraints.
-/// - `Err(RewriteError)`: If an error occurs during rule application (e.g., invalid rules or failed constraints),
-///   it returns a [`RewriteError`] with details about the failure.
+/// - `Ok(Model)`: If successful, it returns a modified copy of the [`Model`]
+/// - `Err(RewriteError)`: If an error occurs during rule application (e.g., invalid rules)
 ///
 /// # Side-Effects
-/// - When the model is rewritten, related data structures such as the symbol table (which tracks variable names and types)
-///   or other top-level constraints may also be updated to reflect these changes. These updates are applied to the returned model,
-///   ensuring that all related components stay consistent and aligned with the changes made during the rewrite.
-/// - The function collects statistics about the rewriting process, including the number of rule applications
-///   and the total runtime of the rewriter. These statistics are then stored in the model's context for
-///   performance monitoring and analysis.
+/// - Rules can apply side-effects to the model (e.g. adding new constraints or variables).
+///   The original model is cloned and a modified copy is returned.
+/// - Rule engine statistics (e.g. number of rule applications, run time) are collected and stored in the new model's context.
 ///
 /// # Example
-/// - Using `rewrite_model` with the Expression `a + min(x, y)`
+/// - Using `rewrite_model` with the constraint `(a + min(x, y)) = b`
 ///
-///   Initial expression: a + min(x, y)
-///   A model containing the expression is created. The variables of the model are represented by a SymbolTable and contain a,x,y.
-///   The contraints of the initail model is the expression itself.
+///   Original model:
+///   ```text
+///   model: {
+///     constraints: [(a + min(x, y) + 42 - 10) = b],
+///     symbols: [a, b, x, y]
+///   }
+///   rule_sets: [{
+///       name: "MyRuleSet",
+///       rules: [
+///         min_to_var: 10,
+///         const_eval: 20
+///       ]
+///     }]
+///   ```
 ///
-///   After getting the rules by their priorities and getting additional statistics the while loop of single interations is executed.
+///   Rules:
+///   - `min_to_var`: min([a, b]) ~> c ; c <= a & c <= b & (c = a \/ c = b)
+///   - `const_eval`: c1 + c2 ~> (c1 + c2) ; c1, c2 are constants
+///
+///   Result:
+///   ```text
+///   model: {
+///     constraints: [
+///       (a + aux + 32) = b,
+///       aux <= x,
+///       aux <= y,
+///       aux = x \/ aux = y
+///     ],
+///     symbols: [a, b, x, y, aux]
+///   }
+///   ```
+///
+///   Process:
+///   1. We traverse the expression tree until a rule can be applied.
+///   2. If multiple rules can be applied to the same expression, the higher priority one goes first.
+///      In this case, `const_eval` is applied before `min_to_var`.
+///   3. The rule `min_to_var` adds a new variable `aux` and new constraints to the model.
+///   4. When no more rules can be applied, the resulting model is returned.
+///
 ///   Details for this process can be found in [`rewrite_iteration`] documentation.
 ///
-///   The loop is exited only when no more rules can be applied, when rewrite_iteration returns None and [`while let Some(step) = None`] occurs
-///
-///
-///   Will result in side effects ((d<=x ^ d<=y) being the [`new_top`] and the model will now be a conjuction of that and (a+d)
-///   Rewritten expression: ((a + d) ^ (d<=x ^ d<=y))
-///
 /// # Performance Considerations
-/// - The function checks if optimizations are enabled before applying rules, which may affect the performance
-///   of the rewriting process.
-/// - Depending on the size of the model and the number of rules, the rewriting process might take a significant
-///   amount of time. Use the statistics collected (`rewriter_run_time` and `rewriter_rule_application_attempts`)
-///   to monitor and optimize performance.
+/// - We recursively traverse the tree multiple times to check if any rules can be applied.
+/// - Expressions are cloned on each rule application
+///
+/// This can be expensive for large models
 ///
 /// # Panics
 /// - This function may panic if the model's context is unavailable or if there is an issue with locking the context.
 ///
 /// # See Also
-/// - [`get_rule_priorities`]: Retrieves the priorities for the given rules.
+/// - [`get_rules`]: Resolves the rules from the provided rule sets and sorts them by priority.
 /// - [`rewrite_iteration`]: Executes a single iteration of rewriting the model using the specified rules.
 pub fn rewrite_model<'a>(
     model: &Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
 ) -> Result<Model, RewriteError> {
-    let rule_priorities = get_rule_priorities(rule_sets)?;
-    let rules = get_rules_vec(&rule_priorities);
+    let rules = get_rules(rule_sets)?.into_iter().collect();
     let mut new_model = model.clone();
     let mut stats = RewriterStats {
         is_optimization_enabled: Some(optimizations_enabled()),
@@ -105,16 +119,16 @@ pub fn rewrite_model<'a>(
 
     //the while loop is exited when None is returned implying the sub-expression is clean
     let mut i: usize = 0;
-    while i < new_model.constraints.len() {
+    while i < new_model.get_constraints_vec().len() {
         while let Some(step) = rewrite_iteration(
-            &new_model.constraints[i],
+            &new_model.get_constraints_vec()[i],
             &new_model,
             &rules,
             apply_optimizations,
             &mut stats,
         ) {
             debug_assert!(is_vec_bool(&step.new_top)); // All new_top expressions should be boolean
-            new_model.constraints[i] = step.new_expression.clone();
+            new_model.get_constraints_vec()[i] = step.new_expression.clone();
             step.apply(&mut new_model); // Apply side-effects (e.g., symbol table updates)
         }
 
@@ -127,13 +141,8 @@ pub fn rewrite_model<'a>(
     Ok(new_model)
 }
 
-/// Checks if all expressions in `Vec<Expr>` are booleans. This needs to be true so
-/// the vector could be conjuncted to the model.
-/// # Returns
-///
-/// - true: all expressions are booleans (so can be conjuncted).
-///
-/// - false: not all expressions are booleans.
+/// Checks if all expressions in `Vec<Expr>` are booleans.
+/// All top-level constraints in a model should be boolean expressions.
 fn is_vec_bool(exprs: &[Expression]) -> bool {
     exprs
         .iter()
@@ -142,67 +151,61 @@ fn is_vec_bool(exprs: &[Expression]) -> bool {
 
 /// Attempts to apply a set of rules to the given expression and its sub-expressions in the model.
 ///
-/// This function recursively traverses the provided expression, applying any applicable rules from the given set.
-/// If a rule is successfully applied to the expression or any of its sub-expressions, it returns a `Reduction`
-/// containing the new expression, modified top-level constraints, and any changes to symbols. If no rules can be
-/// applied at any level, it returns `None`.
+/// 1. Checks if the expression is "clean" (all possible rules have been applied).
+/// 2. Tries to apply rules to the top-level expression, in oprder of priority.
+/// 3. If no rules can be applied to the top-level expression, recurses into its sub-expressions.
+///
+/// When a successful rule application is found, immediately returns a `Reduction` and stops.
+/// The `Reduction` contains the new expression and any side-effects (e.g., new constraints, variables).
+/// If no rule applications are possible in this expression tree, returns `None`.
 ///
 /// # Parameters
-/// - `expression`: A reference to the [`Expression`] to be rewritten. This is the main expression that the function
-///   attempts to modify using the given rules.
-/// - `model`: A reference to the [`Model`] that provides context and additional constraints for evaluating the rules.
-/// - `rules`: A vector of references to [`Rule`]s that define the transformations to apply to the expression.
-/// - `apply_optimizations`: A boolean flag that indicates whether optimization checks should be applied during the rewriting process.
-///   If `true`, the function skips already "clean" (fully optimized or processed) expressions and marks them accordingly
-///   to avoid redundant work.
-/// - `stats`: A mutable reference to [`RewriterStats`] to collect statistics about the rule application process, such as
-///   the number of rules applied and the time taken for each iteration.
+/// - `expression`: The [`Expression`] to be rewritten.
+/// - `model`: The root [`Model`] for access to the context and symbol table.
+/// - `rules`: A max-heap of [`RuleData`] containing rules, priorities, and metadata. Ordered by rule priority.
+/// - `apply_optimizations`: If `true`, skip already "clean" expressions to avoid redundant work.
+/// - `stats`: A mutable reference to [`RewriterStats`] to collect statistics
 ///
 /// # Returns
-/// - `Some(<Reduction>)`: A [`Reduction`] containing the new expression and any associated modifications if a rule was applied
-///   to `expr` or one of its sub-expressions.
+/// - `Some(<Reduction>)`: If a rule is successfully applied to the expression or any of its sub-expressions.
+///                        Contains the new expression and any side-effects to apply to the model.
 /// - `None`: If no rule is applicable to the expression or any of its sub-expressions.
 ///
-/// # Side-Effects
-/// - If `apply_optimizations` is enabled, the function will skip "clean" expressions and mark successfully rewritten
-///   expressions as "dirty". This is done to avoid unnecessary recomputation of expressions that have already been
-///   optimized or processed.
-///
 /// # Example
-/// - Recursively applying [`rewrite_iteration`]  to [`a + min(x, y)`]
 ///
-///   Initially [`if apply_optimizations && expression.is_clean()`] is not true yet since intially our expression is dirty.
+/// - Rewriting the expression `a + min(x, y)`:
 ///
-///   [`apply_results`] returns a null vector since no rules can be applied at the top level.
-///   After calling function [`children`] on the expression a vector of sub-expression [`[a, min(x, y)]`] is returned.
+///   Input:
+///   ```text
+///   expression: a + min(x, y)
+///   rules: [min_to_var]
+///   model: {
+///     constraints: [(a + min(x, y)) = b],
+///     symbols: [a, b, x, y]
+///   }
+///   apply_optimizations: true
+///   ```
 ///
-///   The function iterates through the vector of the children from the top expression and calls itself.
-///
-///   [rewrite_iteration] on on the child [`a`] returns None, but on [`min(x, y)`] returns a [`Reduction`] object [`red`].
-///   In this case, a rule (min simplification) can apply:
-///   - d is added to the SymbolTable and the variables field is updated in the model. new_top is the side effects: (d<=x ^ d<=y)
-///   - [`red = Reduction::new(new_expression = d, new_top, symbols)`];
-///   - [`sub[1] = red.new_expression`] - Updates the second element in the vector of sub-expressions from [`min(x, y)`] to [`d`]
-///
-///   Since a child expression [`min(x, y)`] was rewritten to d, the parent expression [`a + min(x, y)`] is updated with the new child [`a+d`].
-///   New [`Reduction`] is returned containing the modifications
-///
-///   The condition [`Some(step) = Some(new reduction)`] in the while loop in [`rewrite_model`] is met -> side effects are applied.
-///
-///   No more rules in our example can apply to the modified model -> mark all the children as clean and return a pure [`Reduction`].
-///   [`return Some(Reduction::pure(expression))`]
-///
-///   On the last execution of rewrite_iteration condition [`apply_optimizations && expression.is_clean()`] is met, [`None`] is returned.
-///
-///
-/// # Notes
-/// - This function works recursively, meaning it traverses all sub-expressions within the given `expression` to find the
-///   first rule that can be applied. If a rule is applied, it immediately returns the modified expression and stops
-///   further traversal for that branch.
-fn rewrite_iteration<'a>(
-    expression: &'a Expression,
-    model: &'a Model,
-    rules: &'a Vec<&'a Rule<'a>>,
+///   Process:
+///   1. Initially, the expression is dirty, so we proceed with the rewrite.
+///   2. No rules can be applied to the top-level expression `a + min(x, y)`.
+///      Try its children: `a` and `min(x, y)`.
+///   3. No rules can be applied to `a`. Mark it as clean and return None.
+///   4. The rule `min_to_var` can be applied to `min(x, y)`. Return the `Reduction`.
+///      ```text
+///      Reduction {
+///        new_expression: aux,
+///        new_top: [aux <= x, aux <= y, aux = x \/ aux = y],
+///        symbols: [a, b, x, y, aux]
+///      }
+///      ```
+///   5. Update the parent expression `a + min(x, y)` with the new child `a + aux`.
+///      Add new constraints and variables to the model.
+///   6. No more rules can be applied to this expression. Mark it as clean and return a pure `Reduction`.
+fn rewrite_iteration(
+    expression: &Expression,
+    model: &Model,
+    rules: &Vec<RuleData<'_>>,
     apply_optimizations: bool,
     stats: &mut RewriterStats,
 ) -> Option<Reduction> {
@@ -238,62 +241,47 @@ fn rewrite_iteration<'a>(
     None
 }
 
-/// Applies all the given rules to a specific expression within the model.
+/// Tries to apply rules to an expression and returns a list of successful applications.
 ///
-/// This function iterates through the provided rules and attempts to apply each rule to the given `expression`.
-/// If a rule is successfully applied, it creates a [`RuleResult`] containing the original rule and the resulting
-/// [`Reduction`]. The statistics (`stats`) are updated to reflect the number of rule application attempts and successful
-/// applications.
-///
-/// The function does not modify the provided `expression` directly. Instead, it collects all applicable rule results
-/// into a vector, which can then be used for further processing or selection (e.g., with [`choose_rewrite`]).
+/// The expression or model is NOT modified directly.
+/// We create a list of `RuleResult`s containing the reductions and pass it to `choose_rewrite` to select one to apply.
 ///
 /// # Parameters
-/// - `expression`: A reference to the [`Expression`] that will be evaluated against the given rules. This is the main
-///   target for rule transformations and is expected to remain unchanged during the function execution.
-/// - `model`: A reference to the [`Model`] that provides context for rule evaluation, such as constraints and symbols.
-///   Rules may depend on information in the model to determine if they can be applied.
-/// - `rules`: A vector of references to [`Rule`]s that define the transformations to be applied to the expression.
-///   Each rule is applied independently, and all applicable rules are collected.
-/// - `stats`: A mutable reference to [`RewriterStats`] used to track statistics about rule application, such as
-///   the number of attempts and successful applications.
+/// - `expression`: A reference to the [`Expression`] to evaluate.
+/// - `model`: A reference to the [`Model`] for access to the symbol table and context.
+/// - `rules`: A vector of references to [`Rule`]s to try.
+/// - `stats`: A mutable reference to [`RewriterStats`] used to track the number of rule applications and other statistics.
 ///
 /// # Returns
-/// - A `Vec<RuleResult>` containing all rule applications that were successful. Each element in the vector represents
-///   a rule that was applied to the given `expression` along with the resulting transformation.
-/// - An empty vector if no rules were applicable to the expression.
+/// - A `Vec<RuleResult>` containing all successful rule applications to the expression.
+///   Each `RuleResult` contains the rule that was applied and the resulting `Reduction`.
 ///
 /// # Side-Effects
 /// - The function updates the provided `stats` with the number of rule application attempts and successful applications.
 /// - Debug or trace logging may be performed to track which rules were applicable or not for a given expression.
 ///
 /// # Example
-///
 /// let applicable_rules = apply_all_rules(&expr, &model, &rules, &mut stats);
 /// if !applicable_rules.is_empty() {
 ///     for result in applicable_rules {
-///         println!("Rule applied: {:?}", result.rule);
+///         println!("Rule applied: {:?}", result.rule_data.rule);
 ///     }
 /// }
 ///
-///
-/// # Notes
-/// - This function does not modify the input `expression` or `model` directly. The returned `RuleResult` vector
-///   provides information about successful transformations, allowing the caller to decide how to process them.
-/// - The function performs independent rule applications. If rules have dependencies or should be applied in a
-///   specific order, consider handling that logic outside of this function.
+/// ## Note
+/// - Rules are applied only to the given expression, not its children.
 ///
 /// # See Also
 /// - [`choose_rewrite`]: Chooses a single reduction from the rule results provided by `apply_all_rules`.
 fn apply_all_rules<'a>(
-    expression: &'a Expression,
-    model: &'a Model,
-    rules: &'a Vec<&'a Rule<'a>>,
+    expression: &Expression,
+    model: &Model,
+    rules: &Vec<RuleData<'a>>,
     stats: &mut RewriterStats,
 ) -> Vec<RuleResult<'a>> {
     let mut results = Vec::new();
-    for rule in rules {
-        match rule.apply(expression, model) {
+    for rule_data in rules {
+        match rule_data.rule.apply(expression, model) {
             Ok(red) => {
                 stats.rewriter_rule_application_attempts =
                     Some(stats.rewriter_rule_application_attempts.unwrap() + 1);
@@ -303,16 +291,16 @@ fn apply_all_rules<'a>(
                 // assert!(!red.new_expression.children().iter().any(|c| c.is_clean()), "Rule that caused assertion to fail: {:?}", rule.name);
                 // assert!(!red.new_expression.children().iter().any(|c| c.children().iter().any(|c| c.is_clean())));
                 results.push(RuleResult {
-                    rule,
+                    rule_data: rule_data.clone(),
                     reduction: red,
                 });
             }
             Err(_) => {
                 log::trace!(
-                    "Rule attempted but not applied: {} ({:?}), to expression: {}",
-                    rule.name,
-                    rule.rule_sets,
-                    expression
+                    "Rule attempted but not applied: {}, to expression: {} ({:?})",
+                    rule_data.rule,
+                    expression,
+                    rule_data
                 );
                 stats.rewriter_rule_application_attempts =
                     Some(stats.rewriter_rule_application_attempts.unwrap() + 1);
@@ -325,27 +313,22 @@ fn apply_all_rules<'a>(
 
 /// Chooses the first applicable rule result from a list of rule applications.
 ///
-/// This function selects a reduction from the provided `RuleResult` list, prioritizing the first rule
-/// that successfully transforms the expression. This strategy can be modified in the future to incorporate
-/// more complex selection criteria, such as prioritizing rules based on cost, complexity, or other heuristic metrics.
-///
-/// The function also checks the priorities of all the applicable rules and detects if there are multiple rules of the same proirity
+/// Currently, applies the rule with the highest priority.
+/// If multiple rules have the same priority, logs an error message and panics.
 ///
 /// # Parameters
-/// - `results`: A slice of [`RuleResult`] containing potential rule applications to be considered. Each element
-///   represents a rule that was successfully applied to the expression, along with the resulting transformation.
-/// -  `initial_expression`: [`Expression`] before the rule tranformation.
+/// - `results`: A slice of [`RuleResult`]s to consider.
+/// -  `initial_expression`: [`Expression`] before the rule application.
 ///
 /// # Returns
-/// - `Some(<Reduction>)`: Returns a [`Reduction`] representing the first rule's application if there is at least one
-///   rule that produced a successful transformation.
-/// - `None`: If no rule applications are available in the `results` slice (i.e., it is empty), it returns `None`.
+/// - `Some(<Reduction>)`: If there is at least one successful rule application, returns a [`Reduction`] to apply.
+/// - `None`: If there are no successful rule applications (i.e. `results` is empty).
 ///
 /// # Example
 ///
 /// let rule_results = vec![rule1_result, rule2_result];
 /// if let Some(reduction) = choose_rewrite(&rule_results) {
-/// Process the chosen reduction
+///   // Process the chosen reduction
 /// }
 ///
 fn choose_rewrite<'a>(
@@ -353,68 +336,48 @@ fn choose_rewrite<'a>(
     initial_expression: &Expression,
 ) -> Option<RuleResult<'a>> {
     //in the case where multiple rules are applicable
-    if results.len() > 1 {
-        let expr = results[0].reduction.new_expression.clone();
-        let rules: Vec<_> = results.iter().map(|result| &result.rule).collect();
-
-        check_priority(rules.clone(), initial_expression, &expr);
-    }
-
-    if results.is_empty() {
-        return None;
-    }
-
-    // Return the first result for now
-    Some(results[0].clone())
-}
-
-/// Function filters all the applicable rules based on their priority.
-/// In the case where there are multiple rules of the same prioriy, a bug! is thrown listing all those duplicates.
-/// Otherwise, if there are multiple rules applicable but they all have different priorities, a warning message is dispalyed.
-///
-/// # Parameters
-/// - `rules`: a vector of [`Rule`] containing all the applicable rules and their metadata for a specific expression.
-/// - `initial_expression`: [`Expression`] before rule the tranformation.
-/// - `new_expr`: [`Expression`] after the rule transformation.
-///
-fn check_priority<'a>(
-    rules: Vec<&&Rule<'_>>,
-    initial_expr: &'a Expression,
-    new_expr: &'a Expression,
-) {
-    //getting the rule sets from the applicable rules
-    let rule_sets: Vec<_> = rules.iter().map(|rule| &rule.rule_sets).collect();
-
-    //a map with keys being rule priorities and their values neing all the rules of that priority found in the rule_sets
-    let mut rules_by_priorities: HashMap<u16, Vec<&str>> = HashMap::new();
-
-    //iterates over each rule_set and groups by the rule priority
-    for rule_set in &rule_sets {
-        if let Some((name, priority)) = rule_set.first() {
-            rules_by_priorities
-                .entry(*priority)
-                .or_default()
-                .push(*name);
+    if !results.is_empty() {
+        let mut rewrite_options: Vec<RuleResult> = Vec::new();
+        for (priority, group) in &results.iter().chunk_by(|result| result.rule_data.priority) {
+            let options: Vec<&RuleResult> = group.collect();
+            if options.len() > 1 {
+                // Multiple rules with the same priority
+                let mut message = format!(
+                    "Found multiple rules of the same priority {} applicable to expression: {}\n",
+                    priority, initial_expression
+                );
+                for option in options {
+                    message.push_str(&format!(
+                        "- Rule: {} (from {})\n",
+                        option.rule_data.rule.name, option.rule_data.rule_set.name
+                    ));
+                }
+                bug!("{}", message);
+            } else {
+                // Only one rule with this priority, add it to the list
+                rewrite_options.push(options[0].clone());
+            }
         }
-    }
 
-    //filters the map, retaining only entries where there is more than 1 rule of the same priority
-    let duplicate_rules: HashMap<u16, Vec<&str>> = rules_by_priorities
-        .into_iter()
-        .filter(|(_, group)| group.len() > 1)
-        .collect();
-
-    if !duplicate_rules.is_empty() {
-        //accumulates all duplicates into a formatted message
-        let mut message = format!("Found multiple rules of the same priority applicable to to expression: {} \n resulting in expression: {}", initial_expr, new_expr);
-        for (priority, rules) in &duplicate_rules {
-            message.push_str(&format!("Priority {:?} \n Rules: {:?}", priority, rules));
+        if rewrite_options.len() > 1 {
+            // Keep old behaviour: log a message and apply the highest priority rule
+            let mut message = format!(
+                "Found multiple rules of different priorities applicable to expression: {}\n",
+                initial_expression
+            );
+            for option in &rewrite_options {
+                message.push_str(&format!(
+                    "- Rule: {} (priority {}, from {})\n",
+                    option.rule_data.rule.name,
+                    option.rule_data.priority,
+                    option.rule_data.rule_set.name
+                ));
+            }
+            log::warn!("{}", message);
         }
-        bug!("{}", message);
 
-    //no duplicate rules of the same priorities were found in the set of applicable rules
-    } else {
-        log::warn!("Multiple rules of different priorities are applicable to expression {} \n resulting in expression: {}
-        \n Rules{:?}", initial_expr, new_expr, rules)
+        return Some(rewrite_options[0].clone());
     }
+
+    None
 }

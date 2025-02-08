@@ -4,7 +4,7 @@ use std::sync::{Arc, RwLock};
 use serde_json::Value;
 use serde_json::Value as JsonValue;
 
-use crate::ast::{Atom, DecisionVariable, Domain, Expression, Literal, Name, Range};
+use crate::ast::{Atom, DecisionVariable, Domain, Expression, Literal, Name, Range, SymbolTable};
 use crate::bug;
 use crate::context::Context;
 use crate::error::{Error, Result};
@@ -39,10 +39,31 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
             .ok_or(Error::Parse(
                 "mStatements contains an empty object".to_owned(),
             ))?;
+
         match entry.0.as_str() {
             "Declaration" => {
-                let (name, var) = parse_variable(entry.1)?;
-                m.add_variable(name, var);
+                let decl = entry
+                    .1
+                    .as_object()
+                    .ok_or(Error::Parse("Declaration is not an object".to_owned()))?;
+
+                // One field in the declaration should tell us what kind it is.
+                //
+                // Find it, ignoring the other fields.
+                //
+                // e.g. FindOrGiven,
+
+                let mut valid_decl: bool = false;
+                for (kind, value) in decl {
+                    if parse_declaration(kind, value, m.symbols_mut()).is_ok() {
+                        valid_decl = true;
+                        break;
+                    }
+                }
+
+                if !valid_decl {
+                    return Err(Error::Parse("Invalid declaration".into()));
+                }
             }
             "SuchThat" => {
                 let constraints_arr = match entry.1.as_array() {
@@ -62,10 +83,18 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
     Ok(m)
 }
 
-fn parse_variable(v: &JsonValue) -> Result<(Name, DecisionVariable)> {
+fn parse_declaration(kind: &str, value: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
+    match kind {
+        "FindOrGiven" => parse_variable(value, symtab),
+        "Letting" => parse_letting(value, symtab),
+        kind => Err(Error::Parse(format!(
+            "Unrecognised declaration kind: {kind}"
+        ))),
+    }
+}
+
+fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
     let arr = v
-        .as_object()
-        .ok_or(Error::Parse("Declaration is not an object".to_owned()))?["FindOrGiven"]
         .as_array()
         .ok_or(Error::Parse("FindOrGiven is not an array".to_owned()))?;
     let name = arr[1]
@@ -85,11 +114,76 @@ fn parse_variable(v: &JsonValue) -> Result<(Name, DecisionVariable)> {
     let domain = match domain.0.as_str() {
         "DomainInt" => Ok(parse_int_domain(domain.1)?),
         "DomainBool" => Ok(Domain::BoolDomain),
+        "DomainReference" => Ok(Domain::DomainReference(Name::UserName(
+            domain
+                .1
+                .as_array()
+                .ok_or(Error::Parse("DomainReference is not an array".into()))?[0]
+                .as_object()
+                .ok_or(Error::Parse("DomainReference[0] is not an object".into()))?["Name"]
+                .as_str()
+                .ok_or(Error::Parse(
+                    "DomainReference[0].Name is not a string".into(),
+                ))?
+                .into(),
+        ))),
         _ => Err(Error::Parse(
             "FindOrGiven[2] is an unknown object".to_owned(), // consider covered
         )),
     }?;
-    Ok((name, DecisionVariable { domain }))
+
+    symtab
+        .add_var(name.clone(), DecisionVariable { domain })
+        .ok_or(Error::Parse(format!(
+            "Could not add {name} to symbol table as it already exists"
+        )))
+}
+
+fn parse_letting(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
+    let arr = v
+        .as_array()
+        .ok_or(Error::Parse("Letting is not an array".to_owned()))?;
+    let name = arr[0]
+        .as_object()
+        .ok_or(Error::Parse("Letting[0] is not an object".to_owned()))?["Name"]
+        .as_str()
+        .ok_or(Error::Parse("Letting[0].Name is not a string".to_owned()))?;
+    let name = Name::UserName(name.to_owned());
+
+    // value letting
+    if let Some(value) = parse_expression(&arr[1]) {
+        symtab
+            .add_value_letting(name.clone(), value)
+            .ok_or(Error::Parse(format!(
+                "Could not add {name} to symbol table as it already exists"
+            )))
+    } else {
+        // domain letting
+        let domain = &arr[1]
+            .as_object()
+            .ok_or(Error::Parse("Letting[1] is not an object".to_owned()))?["Domain"]
+            .as_object()
+            .ok_or(Error::Parse(
+                "Letting[1].Domain is not an object".to_owned(),
+            ))?
+            .iter()
+            .next()
+            .ok_or(Error::Parse(
+                "Letting[1].Domain is an empty object".to_owned(),
+            ))?;
+
+        let domain = match domain.0.as_str() {
+            "DomainInt" => Ok(parse_int_domain(domain.1)?),
+            "DomainBool" => Ok(Domain::BoolDomain),
+            _ => Err(Error::Parse("Letting[1] is an unknown object".to_owned())),
+        }?;
+
+        symtab
+            .add_domain_letting(name.clone(), domain)
+            .ok_or(Error::Parse(format!(
+                "Could not add {name} to symbol table as it already exists"
+            )))
+    }
 }
 
 fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
@@ -332,7 +426,7 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
         Value::Object(constant) if constant.contains_key("ConstantBool") => {
             parse_constant(constant)
         }
-        otherwise => bug!("Unhandled Expression {:#?}", otherwise),
+        _ => None,
     }
 }
 

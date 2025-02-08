@@ -15,10 +15,8 @@ use serde_json::to_string_pretty;
 
 use conjure_core::context::Context;
 use conjure_oxide::find_conjure::conjure_executable;
-use conjure_oxide::model_from_json;
-use conjure_oxide::rule_engine::{
-    get_rule_priorities, get_rules_vec, resolve_rule_sets, rewrite_model,
-};
+use conjure_oxide::rule_engine::{resolve_rule_sets, rewrite_model};
+use conjure_oxide::{get_rules, model_from_json};
 
 use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
 use conjure_oxide::SolverFamily;
@@ -218,15 +216,12 @@ pub fn main() -> AnyhowResult<()> {
         pretty_rule_sets
     );
 
-    let rule_priorities = get_rule_priorities(&rule_sets)?;
-    let rules_vec = get_rules_vec(&rule_priorities);
-
-    tracing::info!(target: "file",
-         "Rules and priorities: {}",
-         rules_vec.iter()
-            .map(|rule| format!("{}: {}", rule.name, rule_priorities.get(rule).unwrap_or(&0)))
-            .collect::<Vec<_>>()
-            .join(", "));
+    let rules = get_rules(&rule_sets)?.into_iter().collect::<Vec<_>>();
+    tracing::info!(
+        target: "file",
+        "Rules: {}",
+        rules.iter().map(|rd| format!("{}", rd)).collect::<Vec<_>>().join("\n")
+    );
 
     tracing::info!(target: "file", "Input file: {}", cli.input_file.display());
     let input_file: &str = cli.input_file.to_str().ok_or(anyhow!(
@@ -257,7 +252,7 @@ pub fn main() -> AnyhowResult<()> {
     let context = Context::new_ptr(
         target_family,
         extra_rule_sets.clone(),
-        rules_vec.clone(),
+        rules,
         rule_sets.clone(),
     );
 

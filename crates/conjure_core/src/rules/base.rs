@@ -10,7 +10,7 @@ use Atom::*;
 use Expr::*;
 use Lit::*;
 
-register_rule_set!("Base", 100, ());
+register_rule_set!("Base", ());
 
 /// This rule simplifies expressions where the operator is applied to an empty set of sub-expressions.
 ///
@@ -28,6 +28,7 @@ fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
     if matches!(
         expr,
         Atomic(_, _)
+            | Root(_, _)
             | FlatIneq(_, _, _, _)
             | FlatMinusEq(_, _, _)
             | FlatSumGeq(_, _, _)

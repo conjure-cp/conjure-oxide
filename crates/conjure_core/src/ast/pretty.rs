@@ -68,25 +68,40 @@ pub fn pretty_vec<T: Display>(elems: &[T]) -> String {
 /// a: int(1..5)
 /// ```
 ///
-/// Returns None if the symbol is not in the symbol table
+/// Returns None if the symbol is not in the symbol table, or if it is not a variable.
 pub fn pretty_variable_declaration(symbol_table: &SymbolTable, var_name: &Name) -> Option<String> {
     let var = symbol_table.get_var(var_name)?;
-    match &var.domain {
-        super::Domain::BoolDomain => Some(format!("{}: bool", var_name)),
-        super::Domain::IntDomain(domain) => {
-            let mut domain_ranges: Vec<String> = vec![];
-            for range in domain {
-                domain_ranges.push(match range {
-                    super::Range::Single(a) => a.to_string(),
-                    super::Range::Bounded(a, b) => format!("{}..{}", a, b),
-                });
-            }
+    let domain = &var.domain;
+    Some(format!("{var_name}: {domain}"))
+}
 
-            if domain_ranges.is_empty() {
-                Some(format!("{}: int", var_name))
-            } else {
-                Some(format!("{}: int({})", var_name, domain_ranges.join(",")))
-            }
-        }
-    }
+/// Pretty prints, in essence syntax, the declaration for the given value letting.
+///
+/// E.g.
+///
+/// ```text
+/// letting A be 1+2+3
+/// ```
+///
+/// Returns None if the symbol is not in the symbol table, or if it is not a value letting.
+pub fn pretty_value_letting_declaration(symbol_table: &SymbolTable, name: &Name) -> Option<String> {
+    let letting = symbol_table.get_value_letting(name)?;
+    Some(format!("letting {name} be {letting}"))
+}
+
+/// Pretty prints, in essence syntax, the declaration for the given domain letting.
+///
+/// E.g.
+///
+/// ```text
+/// letting A be domain bool
+/// ```
+///
+/// Returns None if the symbol is not in the symbol table, or if it is not a domain letting.
+pub fn pretty_domain_letting_declaration(
+    symbol_table: &SymbolTable,
+    name: &Name,
+) -> Option<String> {
+    let letting = symbol_table.get_domain_letting(name)?;
+    Some(format!("letting {name} be domain {letting}"))
 }
