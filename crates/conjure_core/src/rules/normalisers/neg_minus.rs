@@ -30,11 +30,10 @@ use conjure_core::ast::Expression as Expr;
 use conjure_core::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
 };
-use conjure_core::Model;
 use uniplate::{Biplate, Uniplate as _};
 use Expr::*;
 
-use crate::ast::{Atom, Literal as Lit};
+use crate::ast::{Atom, Literal as Lit, SymbolTable};
 use crate::metadata::Metadata;
 use std::collections::VecDeque;
 
@@ -44,7 +43,7 @@ use std::collections::VecDeque;
 /// --x ~> x
 /// ```
 #[register_rule(("Base", 8400))]
-fn elmininate_double_negation(expr: &Expr, _: &Model) -> ApplicationResult {
+fn elmininate_double_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Neg(_, a) if matches!(**a, Neg(_, _)) => Ok(Reduction::pure(a.children()[0].clone())),
         _ => Err(RuleNotApplicable),
@@ -57,7 +56,7 @@ fn elmininate_double_negation(expr: &Expr, _: &Model) -> ApplicationResult {
 /// -(x + y) ~> -x + -y
 /// ```
 #[register_rule(("Base", 8400))]
-fn distribute_negation_over_sum(expr: &Expr, _: &Model) -> ApplicationResult {
+fn distribute_negation_over_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let inner_expr = match expr {
         Neg(_, e) if matches!(**e, Sum(_, _)) => Ok(*e.clone()),
         _ => Err(RuleNotApplicable),
@@ -82,7 +81,7 @@ fn distribute_negation_over_sum(expr: &Expr, _: &Model) -> ApplicationResult {
 /// -(x * y) ~> -1 * x * y
 /// ```
 #[register_rule(("Base", 8400))]
-fn simplify_negation_of_product(expr: &Expr, _: &Model) -> ApplicationResult {
+fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Neg(_, expr1) = expr.clone() else {
         return Err(RuleNotApplicable);
     };
@@ -102,7 +101,7 @@ fn simplify_negation_of_product(expr: &Expr, _: &Model) -> ApplicationResult {
 /// x - y ~> x + -y
 /// ```
 #[register_rule(("Base", 8400))]
-fn minus_to_sum(expr: &Expr, _: &Model) -> ApplicationResult {
+fn minus_to_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs) = match expr {
         Minus(_, lhs, rhs) => Ok((lhs.clone(), rhs.clone())),
         _ => Err(RuleNotApplicable),

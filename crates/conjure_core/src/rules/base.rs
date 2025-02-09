@@ -3,7 +3,6 @@ use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
 };
-use conjure_core::Model;
 use uniplate::Uniplate;
 
 use Atom::*;
@@ -23,7 +22,7 @@ register_rule_set!("Base", ());
 /// X([]) ~> Nothing
 /// ```
 #[register_rule(("Base", 8800))]
-fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
+fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // excluded expressions
     if matches!(
         expr,
@@ -66,10 +65,11 @@ fn remove_empty_expression(expr: &Expr, _: &Model) -> ApplicationResult {
  * ```
  */
 #[register_rule(("Base", 6000))]
-fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
+fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     match expr {
         Min(_, exprs) => {
-            let new_name = mdl.gensym();
+            let mut symbols = symbols.clone();
+            let new_name = symbols.gensym();
 
             let mut new_top = Vec::new(); // the new variable must be less than or equal to all the other variables
             let mut disjunction = Vec::new(); // the new variable must be equal to one of the variables
@@ -87,16 +87,15 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
             }
             new_top.push(Or(Metadata::new(), disjunction));
 
-            let mut new_vars = SymbolTable::new();
             let domain = expr
-                .domain_of(mdl.symbols())
+                .domain_of(&symbols)
                 .ok_or(ApplicationError::DomainError)?;
-            new_vars.add_var(new_name.clone(), DecisionVariable::new(domain));
+            symbols.add_var(new_name.clone(), DecisionVariable::new(domain));
 
             Ok(Reduction::new(
                 Atomic(Metadata::new(), Reference(new_name)),
                 new_top,
-                new_vars,
+                symbols,
             ))
         }
         _ => Err(ApplicationError::RuleNotApplicable),
@@ -110,10 +109,11 @@ fn min_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
  * ```
  */
 #[register_rule(("Base", 6000))]
-fn max_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
+fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     match expr {
         Max(_, exprs) => {
-            let new_name = mdl.gensym();
+            let mut symbols = symbols.clone();
+            let new_name = symbols.gensym();
 
             let mut new_top = Vec::new(); // the new variable must be more than or equal to all the other variables
             let mut disjunction = Vec::new(); // the new variable must more than or equal to one of the variables
@@ -131,16 +131,15 @@ fn max_to_var(expr: &Expr, mdl: &Model) -> ApplicationResult {
             }
             new_top.push(Or(Metadata::new(), disjunction));
 
-            let mut new_vars = SymbolTable::new();
             let domain = expr
-                .domain_of(mdl.symbols())
+                .domain_of(&symbols)
                 .ok_or(ApplicationError::DomainError)?;
-            new_vars.add_var(new_name.clone(), DecisionVariable::new(domain));
+            symbols.add_var(new_name.clone(), DecisionVariable::new(domain));
 
             Ok(Reduction::new(
                 Atomic(Metadata::new(), Reference(new_name)),
                 new_top,
-                new_vars,
+                symbols,
             ))
         }
         _ => Err(ApplicationError::RuleNotApplicable),

@@ -7,8 +7,9 @@ use conjure_core::ast::Expression as Expr;
 use conjure_core::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
 };
-use conjure_core::Model;
 use uniplate::Biplate;
+
+use crate::ast::SymbolTable;
 
 /// Normalises associative_commutative operations.
 ///
@@ -19,7 +20,7 @@ use uniplate::Biplate;
 /// where v is an AC vector operator
 /// ```
 #[register_rule(("Base", 8900))]
-fn normalise_associative_commutative(expr: &Expr, _: &Model) -> ApplicationResult {
+fn normalise_associative_commutative(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     if !expr.is_associative_commutative_operator() {
         return Err(RuleNotApplicable);
     }

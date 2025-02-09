@@ -5,10 +5,9 @@
 use conjure_macros::register_rule;
 
 use crate::{
-    ast::{Atom, Expression as Expr, Literal as Lit},
+    ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable},
     metadata::Metadata,
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
-    Model,
 };
 
 /// Converts Lt to Leq
@@ -21,7 +20,7 @@ use crate::{
 /// This transformation makes Lt work with these constraints too without needing special
 /// cases in the Minion conversion rules.
 #[register_rule(("Minion", 8400))]
-fn lt_to_leq(expr: &Expr, _: &Model) -> ApplicationResult {
+fn lt_to_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Lt(_, lhs, rhs) = expr.clone() else {
         return Err(RuleNotApplicable);
     };
@@ -50,7 +49,7 @@ fn lt_to_leq(expr: &Expr, _: &Model) -> ApplicationResult {
 /// This transformation makes Gt work with these constraints too without needing special
 /// cases in the Minion conversion rules.
 #[register_rule(("Minion", 8400))]
-fn gt_to_geq(expr: &Expr, _: &Model) -> ApplicationResult {
+fn gt_to_geq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Gt(_, lhs, total) = expr.clone() else {
         return Err(RuleNotApplicable);
     };

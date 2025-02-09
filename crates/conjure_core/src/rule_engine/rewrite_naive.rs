@@ -55,7 +55,7 @@ fn try_rewrite_model(
             let expr = expr.clone();
             let ctx = ctx.clone();
             for rd in rules {
-                match (rd.rule.application)(&expr, model) {
+                match (rd.rule.application)(&expr, model.symbols()) {
                     Ok(red) => {
                         // Collect applicable rules
                         results.push((
