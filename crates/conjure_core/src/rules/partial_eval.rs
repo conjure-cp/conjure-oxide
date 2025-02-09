@@ -4,15 +4,15 @@ use conjure_macros::register_rule;
 use itertools::iproduct;
 use uniplate::Biplate;
 
+use crate::ast::SymbolTable;
 use crate::rule_engine::{ApplicationResult, Reduction};
-use crate::Model;
 use crate::{
     ast::{Atom, Expression as Expr, Literal as Lit, Literal::*},
     metadata::Metadata,
 };
 
 #[register_rule(("Base",9000))]
-fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
+fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     use conjure_core::rule_engine::ApplicationError::RuleNotApplicable;
     use Expr::*;
 

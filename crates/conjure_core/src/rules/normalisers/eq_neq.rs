@@ -5,9 +5,10 @@ use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
 };
-use conjure_core::Model;
 
 use Expr::*;
+
+use crate::ast::SymbolTable;
 
 /// Converts a negated `Neq` to an `Eq`
 ///
@@ -15,7 +16,7 @@ use Expr::*;
 /// not(neq(x)) ~> eq(x)
 /// ```
 #[register_rule(("Base", 8800))]
-fn negated_neq_to_eq(expr: &Expr, _: &Model) -> ApplicationResult {
+fn negated_neq_to_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Not(_, a) => match a.as_ref() {
             Neq(_, b, c) if (b.is_safe() && c.is_safe()) => {
@@ -33,7 +34,7 @@ fn negated_neq_to_eq(expr: &Expr, _: &Model) -> ApplicationResult {
 /// not(eq(x)) ~> neq(x)
 /// ```
 #[register_rule(("Base", 8800))]
-fn negated_eq_to_neq(expr: &Expr, _: &Model) -> ApplicationResult {
+fn negated_eq_to_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Not(_, a) => match a.as_ref() {
             Eq(_, b, c) if (b.is_safe() && c.is_safe()) => {

@@ -1,6 +1,6 @@
 // Tests for various functionalities of the Model
 
-use conjure_core::model::Model;
+use conjure_core::ast::Model;
 use conjure_oxide::ast::*;
 
 #[test]
@@ -17,7 +17,7 @@ fn modify_domain() {
 
     assert_eq!(m.symbols().domain_of(&a).unwrap(), &d1);
 
-    m.update_domain(&a, d2.clone());
+    *m.symbols_mut().domain_of_mut(&a).unwrap() = d2.clone();
 
     assert_eq!(m.symbols().domain_of(&a).unwrap(), &d2);
 }

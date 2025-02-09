@@ -4,8 +4,7 @@ use std::hash::Hash;
 
 use thiserror::Error;
 
-use crate::ast::{DecisionVariable, Expression, Name, SymbolTable};
-use crate::model::Model;
+use crate::ast::{DecisionVariable, Expression, Model, Name, SymbolTable};
 
 #[derive(Debug, Error)]
 pub enum ApplicationError {
@@ -100,7 +99,7 @@ impl Reduction {
 
     /// Applies side-effects (e.g. symbol table updates)
     pub fn apply(self, model: &mut Model) {
-        model.extend_sym_table(self.symbols); // Add new assignments to the symbol table
+        model.symbols_mut().extend(self.symbols); // Add new assignments to the symbol table
         model.add_constraints(self.new_top.clone());
     }
 
@@ -137,6 +136,9 @@ impl Reduction {
     }
 }
 
+/// The function type used in a [`Rule`].
+pub type RuleFn = fn(&Expression, &SymbolTable) -> ApplicationResult;
+
 /**
  * A rule with a name, application function, and rule sets.
  *
@@ -148,14 +150,14 @@ impl Reduction {
 #[derive(Clone, Debug)]
 pub struct Rule<'a> {
     pub name: &'a str,
-    pub application: fn(&Expression, &Model) -> ApplicationResult,
+    pub application: RuleFn,
     pub rule_sets: &'a [(&'a str, u16)], // (name, priority). At runtime, we add the rule to rulesets
 }
 
 impl<'a> Rule<'a> {
     pub const fn new(
         name: &'a str,
-        application: fn(&Expression, &Model) -> ApplicationResult,
+        application: RuleFn,
         rule_sets: &'a [(&'static str, u16)],
     ) -> Self {
         Self {
@@ -165,8 +167,8 @@ impl<'a> Rule<'a> {
         }
     }
 
-    pub fn apply(&self, expr: &Expression, mdl: &Model) -> ApplicationResult {
-        (self.application)(expr, mdl)
+    pub fn apply(&self, expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
+        (self.application)(expr, symbols)
     }
 }
 
