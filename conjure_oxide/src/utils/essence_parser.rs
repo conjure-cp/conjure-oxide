@@ -107,7 +107,10 @@ fn parse_domain(domain: Node, source_code: &str) -> Domain {
     match domain.kind() {
         "bool_domain" => Domain::BoolDomain,
         "int_domain" => parse_int_domain(domain, source_code),
-        "variable" => parse_variable_reference_domain(domain, source_code),
+        "variable" => {
+            let variable_name = &source_code[domain.start_byte()..domain.end_byte()];
+            Domain::DomainReference(Name::UserName(String::from(variable_name)))
+        }
         _ => panic!("Not bool or int domain"),
     }
 }
@@ -181,10 +184,6 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
     }
 }
 
-fn parse_variable_reference_domain(domain: Node, source_code: &str) -> Domain {
-    let variable_name = &source_code[domain.start_byte()..domain.end_byte()];
-    Domain::DomainReference(Name::UserName(String::from(variable_name)))
-}
 fn parse_letting_statement(letting_statement_list: Node, source_code: &str) -> SymbolTable {
     let mut symbol_table = SymbolTable::new();
 
