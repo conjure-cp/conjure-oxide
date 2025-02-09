@@ -153,7 +153,7 @@ module.exports = grammar ({
       "<=",
       ">=",
       "<",
-      ">",
+      ">"
     ),
 
     math_expr: $ => prec(2, prec.left(seq($.expression, $.math_op, $.expression))),
