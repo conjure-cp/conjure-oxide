@@ -4,8 +4,7 @@ use std::hash::Hash;
 
 use thiserror::Error;
 
-use crate::ast::{DecisionVariable, Expression, Name, SymbolTable};
-use crate::model::Model;
+use crate::ast::{DecisionVariable, Expression, Model, Name, SymbolTable};
 
 #[derive(Debug, Error)]
 pub enum ApplicationError {

@@ -1,6 +1,6 @@
 // Tests for various functionalities of the Model
 
-use conjure_core::model::Model;
+use conjure_core::ast::Model;
 use conjure_oxide::ast::*;
 
 #[test]
