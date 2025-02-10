@@ -46,7 +46,7 @@ pub fn parse_essence_file_native(
             "e_prime_label" => {}
             "letting_statement_list" => {
                 let letting_vars = parse_letting_statement(statement, &source_code);
-                model.extend_sym_table(letting_vars);
+                model.symbols_mut().extend(letting_vars);
             }
             _ => {
                 let kind = statement.kind();
