@@ -163,7 +163,8 @@ module.exports = grammar ({
       "-",
       "*",
       "/", 
-      "%"
+      "%",
+      "**"
     ),
 
     not_expr: $ => prec(2, prec.left(seq("!", $.expression))),

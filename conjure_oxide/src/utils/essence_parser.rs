@@ -290,6 +290,10 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
                     //TODO: add checks for if mod is safe or not
                     Expression::UnsafeMod(Metadata::new(), Box::new(expr1), Box::new(expr2))
                 }
+                "**" => {
+                    //TODO: add checks for if pow is safe or not
+                    Expression::UnsafePow(Metadata::new(), Box::new(expr1), Box::new(expr2))
+                }
                 _ => panic!("Not a supported math_op"),
             }
         }
