@@ -119,7 +119,7 @@ module.exports = grammar ({
       $.imply_expr
     ),
 
-    unary_minus_expr: $ => prec.left(seq("-", $.expression)),
+    unary_minus_expr: $ => prec(3, prec.left(seq("-", $.expression))),
     
     or_expr: $ => prec.left(choice(
       seq($.expression, "\\/", $.expression),
