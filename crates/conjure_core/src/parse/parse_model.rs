@@ -55,7 +55,7 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
 
                 let mut valid_decl: bool = false;
                 for (kind, value) in decl {
-                    if parse_declaration(kind, value, m.symbols_mut()).is_ok() {
+                    if parse_declaration(kind, value, &mut m.symbols_mut()).is_ok() {
                         valid_decl = true;
                         break;
                     }

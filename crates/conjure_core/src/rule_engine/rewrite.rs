@@ -281,7 +281,7 @@ fn apply_all_rules<'a>(
 ) -> Vec<RuleResult<'a>> {
     let mut results = Vec::new();
     for rule_data in rules {
-        match rule_data.rule.apply(expression, model.symbols()) {
+        match rule_data.rule.apply(expression, &model.symbols()) {
             Ok(red) => {
                 stats.rewriter_rule_application_attempts =
                     Some(stats.rewriter_rule_application_attempts.unwrap() + 1);

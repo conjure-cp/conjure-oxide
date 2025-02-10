@@ -39,7 +39,8 @@ impl CNFModel {
 
         for var in conjure_model.symbols().keys() {
             // Check that domain has the correct type
-            let decision_var = match conjure_model.symbols().get_var(var) {
+            let symbols = conjure_model.symbols();
+            let decision_var = match symbols.get_var(var) {
                 None => {
                     return Err(ModelInvalid(format!("variable {:?} not found", var)));
                 }

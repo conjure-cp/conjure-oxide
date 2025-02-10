@@ -63,7 +63,7 @@ pub fn log_rule_application(
     let new_variables_str = {
         let mut vars: Vec<String> = vec![];
 
-        for var_name in red.added_symbols(initial_model.symbols()) {
+        for var_name in red.added_symbols(&initial_model.symbols()) {
             #[allow(clippy::unwrap_used)]
             vars.push(format!(
                 "  {}",

@@ -1,8 +1,10 @@
 //! The symbol table.
 //!
 //! See the item documentation for [`SymbolTable`] for more details.
+use std::cell::Ref;
 use std::collections::BTreeSet;
 use std::fmt::Display;
+use std::rc::Rc;
 use std::{cell::RefCell, collections::BTreeMap};
 
 use itertools::izip;
@@ -82,6 +84,8 @@ pub struct SymbolTable {
     #[derivative(Hash = "ignore")]
     #[derivative(PartialEq = "ignore")]
     next_machine_name: RefCell<i32>,
+
+    parent: Option<Rc<RefCell<SymbolTable>>>
 }
 
 #[non_exhaustive]
@@ -98,6 +102,16 @@ impl SymbolTable {
         SymbolTable {
             table: BTreeMap::new(),
             next_machine_name: RefCell::new(0),
+            parent: None,
+        }
+    }
+
+    /// Creates an empty symbol table with the given parent.
+    pub fn with_parent(parent: Rc<RefCell<SymbolTable>>) -> Self {
+        SymbolTable {
+            table: BTreeMap::new(),
+            next_machine_name: RefCell::new(0),
+            parent: Some(parent),
         }
     }
 
@@ -109,17 +123,18 @@ impl SymbolTable {
     ///
     /// Alias of [`names`](SymbolTable::names).
     pub fn keys(&self) -> impl Iterator<Item = &Name> {
-        self.names()
+        panic!("Not possible deeply");
     }
 
     /// Returns an iterator over the names in the symbol table.
     pub fn names(&self) -> impl Iterator<Item = &Name> {
-        self.table.keys()
+        panic!("Not possible deeply");
     }
 
     /// Returns an iterator over the names and definitions of all decision variables in the symbol
     /// table.
     pub fn iter_var(&self) -> impl Iterator<Item = (&Name, &DecisionVariable)> {
+        panic!("Not possible deeply");
         self.table.iter().filter_map(|(n, s)| {
             if let SymbolKind::DecisionVariable(var) = s {
                 Some((n, var))
@@ -138,11 +153,16 @@ impl SymbolTable {
     /// + The decision variable with that name has been deleted.
     ///
     /// + The object with that name is not a decision variable.
-    pub fn get_var(&self, name: &Name) -> Option<&DecisionVariable> {
+    pub fn get_var(&self, name: &Name) -> Option<Ref<DecisionVariable>> {
         if let Some(SymbolKind::DecisionVariable(var)) = self.table.get(name) {
-            Some(var)
-        } else {
-            None
+            Some(var) // this one is not a ref, but a &
+        } else if let Some(parent) = self.parent {
+
+            let parent_ref = (*parent).borrow();
+            let my_result = Ref::map(parent,|x| x.get_var(&name));
+            // this one is a Ref, not a &
+            // also would need to return Ref<Option<>> not Option<Ref<>>
+            todo!()
         }
     }
 

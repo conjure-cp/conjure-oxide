@@ -1,5 +1,7 @@
+use std::cell::{Ref, RefCell, RefMut};
 use std::collections::VecDeque;
 use std::fmt::{Debug, Display};
+use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
 use derivative::Derivative;
@@ -42,7 +44,7 @@ pub struct Model {
     /// Top level constraints. This should be a `Expression::Root`.
     constraints: Box<Expression>,
 
-    symbols: SymbolTable,
+    symbols: Rc<RefCell<SymbolTable>>,
 
     #[serde(skip)]
     #[derivative(PartialEq = "ignore")]
@@ -57,7 +59,7 @@ impl Model {
         context: Arc<RwLock<Context<'static>>>,
     ) -> Model {
         Model {
-            symbols,
+            symbols: Rc::new(RefCell::new(symbols)),
             constraints: Box::new(Expression::Root(Metadata::new(), constraints)),
             context,
         }
@@ -68,13 +70,13 @@ impl Model {
     }
 
     /// The global symbol table for this model.
-    pub fn symbols(&self) -> &SymbolTable {
-        &self.symbols
+    pub fn symbols(&self) -> Ref<SymbolTable> {
+        (*self.symbols).borrow()
     }
 
     /// The global symbol table for this model, as a mutable reference.
-    pub fn symbols_mut(&mut self) -> &mut SymbolTable {
-        &mut self.symbols
+    pub fn symbols_mut(&mut self) -> RefMut<SymbolTable> {
+        (*self.symbols).borrow_mut()
     }
 
     pub fn get_constraints_vec(&self) -> Vec<Expression> {
@@ -125,7 +127,7 @@ impl Uniplate for Model {
 // TODO: replace with derive macro when possible.
 impl Biplate<Expression> for Model {
     fn biplate(&self) -> (Tree<Expression>, Box<dyn Fn(Tree<Expression>) -> Self>) {
-        let (symtab_tree, symtab_ctx) = self.symbols.biplate();
+        let (symtab_tree, symtab_ctx) = self.symbols().biplate();
         let (constraints_tree, constraints_ctx) = self.constraints.biplate();
 
         let tree = Tree::Many(VecDeque::from([symtab_tree, constraints_tree]));
@@ -137,7 +139,7 @@ impl Biplate<Expression> for Model {
             };
 
             let mut self3 = self2.clone();
-            self3.symbols = (symtab_ctx)(fields[0].clone());
+            *self3.symbols_mut() = (symtab_ctx)(fields[0].clone());
             self3.constraints = Box::new((constraints_ctx)(fields[1].clone()));
             self3
         });
@@ -153,14 +155,14 @@ impl Display for Model {
             writeln!(
                 f,
                 "{}",
-                pretty_value_letting_declaration(self.symbols(), name).unwrap()
+                pretty_value_letting_declaration(&self.symbols(), name).unwrap()
             )?;
         }
         for (name, _) in self.symbols().iter_domain_letting() {
             writeln!(
                 f,
                 "{}",
-                pretty_domain_letting_declaration(self.symbols(), name).unwrap()
+                pretty_domain_letting_declaration(&self.symbols(), name).unwrap()
             )?;
         }
 
@@ -168,7 +170,7 @@ impl Display for Model {
             writeln!(
                 f,
                 "find {}",
-                pretty_variable_declaration(self.symbols(), name).unwrap()
+                pretty_variable_declaration(&self.symbols(), name).unwrap()
             )?;
         }
 
