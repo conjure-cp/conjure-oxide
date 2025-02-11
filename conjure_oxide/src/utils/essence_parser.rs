@@ -5,7 +5,9 @@ use std::sync::{Arc, RwLock};
 use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_essence::LANGUAGE;
 
-use conjure_core::ast::{Atom, DecisionVariable, Domain, Expression, Literal, Name, Range};
+use conjure_core::ast::{
+    Atom, DecisionVariable, Domain, Expression, Literal, Name, Range, SymbolTable,
+};
 
 use crate::utils::conjure::EssenceParseError;
 use conjure_core::context::Context;
@@ -42,6 +44,10 @@ pub fn parse_essence_file_native(
                 model.add_constraints(constraint_vec);
             }
             "e_prime_label" => {}
+            "letting_statement_list" => {
+                let letting_vars = parse_letting_statement(statement, &source_code);
+                model.symbols_mut().extend(letting_vars);
+            }
             _ => {
                 let kind = statement.kind();
                 return Err(EssenceParseError::ParseError(Error::Parse(
@@ -101,6 +107,10 @@ fn parse_domain(domain: Node, source_code: &str) -> Domain {
     match domain.kind() {
         "bool_domain" => Domain::BoolDomain,
         "int_domain" => parse_int_domain(domain, source_code),
+        "variable" => {
+            let variable_name = &source_code[domain.start_byte()..domain.end_byte()];
+            Domain::DomainReference(Name::UserName(String::from(variable_name)))
+        }
         _ => panic!("Not bool or int domain"),
     }
 }
@@ -174,6 +184,44 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
     }
 }
 
+fn parse_letting_statement(letting_statement_list: Node, source_code: &str) -> SymbolTable {
+    let mut symbol_table = SymbolTable::new();
+
+    for letting_statement in named_children(&letting_statement_list) {
+        let mut temp_symbols = BTreeSet::new();
+
+        let variable_list = letting_statement.child(0).expect("No variable list found");
+        for variable in named_children(&variable_list) {
+            let variable_name = &source_code[variable.start_byte()..variable.end_byte()];
+            temp_symbols.insert(variable_name);
+        }
+
+        let expr_or_domain = letting_statement
+            .named_child(1)
+            .expect("No domain or expression found for letting statement");
+        match expr_or_domain.kind() {
+            "expression" => {
+                for name in temp_symbols {
+                    symbol_table.add_value_letting(
+                        Name::UserName(String::from(name)),
+                        parse_constraint(expr_or_domain, source_code),
+                    );
+                }
+            }
+            "domain" => {
+                for name in temp_symbols {
+                    symbol_table.add_domain_letting(
+                        Name::UserName(String::from(name)),
+                        parse_domain(expr_or_domain, source_code),
+                    );
+                }
+            }
+            _ => panic!("Unrecognized node in letting statement"),
+        }
+    }
+    symbol_table
+}
+
 fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
     match constraint.kind() {
         "constraint" | "expression" => {
@@ -217,7 +265,6 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
                 ">=" => Expression::Geq(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 "<" => Expression::Lt(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 ">" => Expression::Gt(Metadata::new(), Box::new(expr1), Box::new(expr2)),
-                "->" => Expression::Imply(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 _ => panic!("Not a supported comp_op"),
             }
         }
@@ -242,6 +289,10 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
                 "%" => {
                     //TODO: add checks for if mod is safe or not
                     Expression::UnsafeMod(Metadata::new(), Box::new(expr1), Box::new(expr2))
+                }
+                "**" => {
+                    //TODO: add checks for if pow is safe or not
+                    Expression::UnsafePow(Metadata::new(), Box::new(expr1), Box::new(expr2))
                 }
                 _ => panic!("Not a supported math_op"),
             }
@@ -328,6 +379,17 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
                 Metadata::new(),
                 Box::new(parse_constraint(child, source_code)),
             )
+        }
+        "imply_expr" => {
+            let expr1_node = constraint
+                .named_child(0)
+                .expect("Error with imply expression");
+            let expr1 = parse_constraint(expr1_node, source_code);
+            let expr2_node = constraint
+                .named_child(1)
+                .expect("Error with imply expression");
+            let expr2 = parse_constraint(expr2_node, source_code);
+            Expression::Imply(Metadata::new(), Box::new(expr1), Box::new(expr2))
         }
         _ => {
             let node_kind = constraint.kind();

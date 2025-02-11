@@ -11,7 +11,8 @@ module.exports = grammar ({
     //top level statements
     program: $ => repeat(choice(
       $.find_statement_list,
-      $.constraint_list
+      $.constraint_list,
+      $.letting_statement_list,
     )),
 
     single_line_comment: $ => token(seq('$', /.*/)),
@@ -55,7 +56,8 @@ module.exports = grammar ({
 
     domain: $ => choice(
       $.bool_domain,
-      $.int_domain
+      $.int_domain,
+      $.variable
     ),
 
     bool_domain: $ => "bool",
@@ -86,6 +88,14 @@ module.exports = grammar ({
 
     int_range: $ => seq(optional($.expression), "..", optional($.expression)),
 
+    //letting statements
+    letting_statement_list: $ => seq("letting", repeat($.letting_statement)),
+
+    letting_statement: $ => seq(
+      $.variable_list,
+      "be",
+      choice($.expression, seq("domain", $.domain))
+    ),
     //constraints
     constraint_list: $ => seq("such that", repeat($.constraint)),
 
@@ -105,10 +115,11 @@ module.exports = grammar ({
       $.all_diff,
       $.constant,
       $.variable,
-      $.abs_value
+      $.abs_value,
+      $.imply_expr
     ),
 
-    unary_minus_expr: $ => prec.left(seq("-", $.expression)),
+    unary_minus_expr: $ => prec(3, prec.left(seq("-", $.expression))),
     
     or_expr: $ => prec.left(choice(
       seq($.expression, "\\/", $.expression),
@@ -142,8 +153,7 @@ module.exports = grammar ({
       "<=",
       ">=",
       "<",
-      ">",
-      "->"
+      ">"
     ),
 
     math_expr: $ => prec(2, prec.left(seq($.expression, $.math_op, $.expression))),
@@ -153,7 +163,8 @@ module.exports = grammar ({
       "-",
       "*",
       "/", 
-      "%"
+      "%",
+      "**"
     ),
 
     not_expr: $ => prec(2, prec.left(seq("!", $.expression))),
@@ -200,6 +211,12 @@ module.exports = grammar ({
       "|",
       $.expression,
       "|"
-    )
+    ),
+
+    imply_expr: $ => prec.left(seq(
+      $.expression,
+      "->",
+      $.expression
+    ))
   }
 })
