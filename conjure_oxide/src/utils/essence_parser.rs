@@ -237,13 +237,7 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
         ),
         "exponent" | "product_expr" | "sum_expr" | "comparison" | "and_expr" | "or_expr"
         | "implication" => {
-            let expr1_node = constraint.child(0).unwrap_or_else(|| {
-                panic!(
-                    "Error: missing node in expression of kind {}",
-                    constraint.kind()
-                )
-            });
-            let expr1 = parse_constraint(expr1_node, source_code);
+            let expr1 = child_expr(constraint, source_code);
             let op = constraint.child(1).unwrap_or_else(|| {
                 panic!(
                     "Error: missing node in expression of kind {}",
@@ -346,11 +340,11 @@ fn named_children<'a>(node: &'a Node<'a>) -> impl Iterator<Item = Node<'a>> + 'a
     (0..node.named_child_count()).filter_map(|i| node.named_child(i))
 }
 
-fn child_expr(constraint: Node, source_code: &str) -> Expression {
-    let child = constraint.named_child(0).unwrap_or_else(|| {
+fn child_expr(node: Node, source_code: &str) -> Expression {
+    let child = node.named_child(0).unwrap_or_else(|| {
         panic!(
             "Error: missing node in expression of kind {}",
-            constraint.kind()
+            node.kind()
         )
     });
     parse_constraint(child, source_code)
