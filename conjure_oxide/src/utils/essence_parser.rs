@@ -341,11 +341,8 @@ fn named_children<'a>(node: &'a Node<'a>) -> impl Iterator<Item = Node<'a>> + 'a
 }
 
 fn child_expr(node: Node, source_code: &str) -> Expression {
-    let child = node.named_child(0).unwrap_or_else(|| {
-        panic!(
-            "Error: missing node in expression of kind {}",
-            node.kind()
-        )
-    });
+    let child = node
+        .named_child(0)
+        .unwrap_or_else(|| panic!("Error: missing node in expression of kind {}", node.kind()));
     parse_constraint(child, source_code)
 }
