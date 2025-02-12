@@ -231,41 +231,35 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
             Metadata::new(),
             Box::new(child_expr(constraint, source_code)),
         ),
-        "exponent" => {
-            let child1 = constraint.named_child(0).expect(&format!(
-                "Error: missing node in expression of kind {}",
-                constraint.kind()
-            ));
-            let expr1 = parse_constraint(child1, source_code);
-            let child2 = constraint.named_child(1).expect(&format!(
-                "Error: missing node in expression of kind {}",
-                constraint.kind()
-            ));
-            let expr2 = parse_constraint(child2, source_code);
-            Expression::UnsafePow(Metadata::new(), Box::new(expr1), Box::new(expr2))
-        }
         "negative_expr" => Expression::Neg(
             Metadata::new(),
             Box::new(child_expr(constraint, source_code)),
         ),
-        "product_expr" | "sum_expr" | "comparison" | "and_expr" | "or_expr" | "implication" => {
-            let expr1_node = constraint.child(0).expect(&format!(
-                "Error: missing node in expression of kind {}",
-                constraint.kind()
-            ));
+        "exponent" | "product_expr" | "sum_expr" | "comparison" | "and_expr" | "or_expr" | "implication" => {
+            let expr1_node = constraint.child(0).unwrap_or_else(|| {
+                panic!(
+                    "Error: missing node in expression of kind {}",
+                    constraint.kind()
+                )
+            });
             let expr1 = parse_constraint(expr1_node, source_code);
-            let op = constraint.child(1).expect(&format!(
-                "Error: missing node in expression of kind {}",
-                constraint.kind()
-            ));
+            let op = constraint.child(1).unwrap_or_else(|| {
+                panic!(
+                    "Error: missing node in expression of kind {}",
+                    constraint.kind()
+                )
+            });
             let op_type = &source_code[op.start_byte()..op.end_byte()];
-            let expr2_node = constraint.child(2).expect(&format!(
-                "Error: missing node in expression of kind {}",
-                constraint.kind()
-            ));
+            let expr2_node = constraint.child(2).unwrap_or_else(|| {
+                panic!(
+                    "Error: missing node in expression of kind {}",
+                    constraint.kind()
+                )
+            });
             let expr2 = parse_constraint(expr2_node, source_code);
 
             match op_type {
+                "**" => Expression::UnsafePow(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 "+" => Expression::Sum(Metadata::new(), vec![expr1, expr2]),
                 "-" => Expression::Minus(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 "*" => Expression::Product(Metadata::new(), vec![expr1, expr2]),
@@ -295,10 +289,12 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
                 expr_list.push(parse_constraint(expr, source_code));
             }
 
-            let quantifier = constraint.child(0).expect(&format!(
-                "Error: missing node in expression of kind {}",
-                constraint.kind()
-            ));
+            let quantifier = constraint.child(0).unwrap_or_else(|| {
+                panic!(
+                    "Error: missing node in expression of kind {}",
+                    constraint.kind()
+                )
+            });
             let quantifier_type = &source_code[quantifier.start_byte()..quantifier.end_byte()];
 
             match quantifier_type {
@@ -312,10 +308,12 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
             }
         }
         "constant" => {
-            let child = constraint.child(0).expect(&format!(
-                "Error: missing node in expression of kind {}",
-                constraint.kind()
-            ));
+            let child = constraint.child(0).unwrap_or_else(|| {
+                panic!(
+                    "Error: missing node in expression of kind {}",
+                    constraint.kind()
+                )
+            });
             match child.kind() {
                 "integer" => {
                     let constant_value = &source_code[child.start_byte()..child.end_byte()]
@@ -348,9 +346,11 @@ fn named_children<'a>(node: &'a Node<'a>) -> impl Iterator<Item = Node<'a>> + 'a
 }
 
 fn child_expr(constraint: Node, source_code: &str) -> Expression {
-    let child = constraint.named_child(0).expect(&format!(
-        "Error: missing node in expression of kind {}",
-        constraint.kind()
-    ));
+    let child = constraint.named_child(0).unwrap_or_else(|| {
+        panic!(
+            "Error: missing node in expression of kind {}",
+            constraint.kind()
+        )
+    });
     parse_constraint(child, source_code)
 }
