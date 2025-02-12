@@ -235,7 +235,8 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
             Metadata::new(),
             Box::new(child_expr(constraint, source_code)),
         ),
-        "exponent" | "product_expr" | "sum_expr" | "comparison" | "and_expr" | "or_expr" | "implication" => {
+        "exponent" | "product_expr" | "sum_expr" | "comparison" | "and_expr" | "or_expr"
+        | "implication" => {
             let expr1_node = constraint.child(0).unwrap_or_else(|| {
                 panic!(
                     "Error: missing node in expression of kind {}",
