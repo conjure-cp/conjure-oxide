@@ -7,8 +7,6 @@
 /// - `msg`: A string expression describing the cause of the panic or bug.
 ///
 /// ```
-// rust doesn't recognize the git_version macro for some reason, so can't use 'use git_version::git_version;'
-
 #[macro_export]
 macro_rules! bug {
     ($msg:expr $(, $arg:tt)*) => {{
