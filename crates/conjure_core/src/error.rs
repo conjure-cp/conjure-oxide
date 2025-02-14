@@ -19,3 +19,20 @@ pub enum Error {
     #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
+
+
+// Macro to add an error with the line number and function name
+#[macro_export]
+macro_rules! throw_error {
+    ($msg:expr) => {{
+        let error_msg = format!(
+            " {} | File: {} | Function: {} | Line: {}",
+            $msg,
+            file!(),
+            module_path!(),
+            line!()
+        );
+        Err(Error::Parse(error_msg))?
+    }};
+}
+

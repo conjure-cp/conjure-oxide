@@ -5,7 +5,7 @@ use serde_json::Value;
 use serde_json::Value as JsonValue;
 
 use crate::ast::{Atom, DecisionVariable, Domain, Expression, Literal, Name, Range, SymbolTable};
-use crate::bug;
+use crate::{bug, throw_error};
 use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::metadata::Metadata;
@@ -55,14 +55,15 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
 
                 let mut valid_decl: bool = false;
                 for (kind, value) in decl {
-                    if parse_declaration(kind, value, m.symbols_mut()).is_ok() {
-                        valid_decl = true;
-                        break;
+                    match kind.as_str() {
+                        "FindOrGiven" => {parse_variable(value, m.symbols_mut())?; valid_decl = true; break} 
+                        "letting" => {parse_letting(value, m.symbols_mut())?; valid_decl = true; break}
+                        _ => {continue}
                     }
                 }
-
+                
                 if !valid_decl {
-                    return Err(Error::Parse("Invalid declaration".into()));
+                    throw_error!("Declaration is not a valid kind");
                 }
             }
             "SuchThat" => {
@@ -81,16 +82,6 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
     }
 
     Ok(m)
-}
-
-fn parse_declaration(kind: &str, value: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
-    match kind {
-        "FindOrGiven" => parse_variable(value, symtab),
-        "Letting" => parse_letting(value, symtab),
-        kind => Err(Error::Parse(format!(
-            "Unrecognised declaration kind: {kind}"
-        ))),
-    }
 }
 
 fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
