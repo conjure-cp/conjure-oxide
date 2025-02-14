@@ -7,7 +7,7 @@
 /// - `msg`: A string expression describing the cause of the panic or bug.
 ///
 /// ```
-use git_version::git_version;
+// rust doesn't recognize the git_version macro for some reason, so can't use 'use git_version::git_version;'
 
 #[macro_export]
 macro_rules! bug {
@@ -28,7 +28,7 @@ Issue tracker: http://github.com/conjure-cp/conjure-oxide/issues
 version: {}
 
 {}
-"#, git_version!(), &formatted_msg);
+"#, git_version::git_version!(), &formatted_msg);
 
         panic!("{}", full_message);
     }};

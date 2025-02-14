@@ -20,11 +20,11 @@ use conjure_oxide::{get_rules, model_from_json};
 
 use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
 use conjure_oxide::SolverFamily;
+use git_version::git_version;
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
 use tracing_subscriber::{EnvFilter, Layer};
-use git_version::git_version;
 
 static AFTER_HELP_TEXT: &str = include_str!("help_text.txt");
 
