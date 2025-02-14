@@ -57,7 +57,7 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
                 for (kind, value) in decl {
                     match kind.as_str() {
                         "FindOrGiven" => {parse_variable(value, m.symbols_mut())?; valid_decl = true; break} 
-                        "letting" => {parse_letting(value, m.symbols_mut())?; valid_decl = true; break}
+                        "Letting" => {parse_letting(value, m.symbols_mut())?; valid_decl = true; break}
                         _ => {continue}
                     }
                 }
