@@ -5,11 +5,11 @@ use serde_json::Value;
 use serde_json::Value as JsonValue;
 
 use crate::ast::{Atom, DecisionVariable, Domain, Expression, Literal, Name, Range, SymbolTable};
-use crate::{bug, throw_error};
 use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::metadata::Metadata;
 use crate::Model;
+use crate::{bug, error, throw_error};
 
 macro_rules! parser_trace {
     ($($arg:tt)+) => {
@@ -28,24 +28,22 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
     let v: JsonValue = serde_json::from_str(str)?;
     let statements = v["mStatements"]
         .as_array()
-        .ok_or(Error::Parse("mStatements is not an array".to_owned()))?;
+        .ok_or(error!("mStatements is not an array"))?;
 
     for statement in statements {
         let entry = statement
             .as_object()
-            .ok_or(Error::Parse("mStatements contains a non-object".to_owned()))?
+            .ok_or(error!("mStatements contains a non-object"))?
             .iter()
             .next()
-            .ok_or(Error::Parse(
-                "mStatements contains an empty object".to_owned(),
-            ))?;
+            .ok_or(error!("mStatements contains an empty object"))?;
 
         match entry.0.as_str() {
             "Declaration" => {
                 let decl = entry
                     .1
                     .as_object()
-                    .ok_or(Error::Parse("Declaration is not an object".to_owned()))?;
+                    .ok_or(error!("Declaration is not an object".to_owned()))?;
 
                 // One field in the declaration should tell us what kind it is.
                 //
@@ -56,14 +54,22 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
                 let mut valid_decl: bool = false;
                 for (kind, value) in decl {
                     match kind.as_str() {
-                        "FindOrGiven" => {parse_variable(value, m.symbols_mut())?; valid_decl = true; break} 
-                        "Letting" => {parse_letting(value, m.symbols_mut())?; valid_decl = true; break}
-                        _ => {continue}
+                        "FindOrGiven" => {
+                            parse_variable(value, m.symbols_mut())?;
+                            valid_decl = true;
+                            break;
+                        }
+                        "Letting" => {
+                            parse_letting(value, m.symbols_mut())?;
+                            valid_decl = true;
+                            break;
+                        }
+                        _ => continue,
                     }
                 }
-                
+
                 if !valid_decl {
-                    throw_error!("Declaration is not a valid kind");
+                    throw_error!("Declaration is not a valid kind")?;
                 }
             }
             "SuchThat" => {
@@ -85,23 +91,20 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
 }
 
 fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
-    let arr = v
-        .as_array()
-        .ok_or(Error::Parse("FindOrGiven is not an array".to_owned()))?;
+    let arr = v.as_array().ok_or(error!("FindOrGiven is not an array"))?;
     let name = arr[1]
         .as_object()
-        .ok_or(Error::Parse("FindOrGiven[1] is not an object".to_owned()))?["Name"]
+        .ok_or(error!("FindOrGiven[1] is not an object"))?["Name"]
         .as_str()
-        .ok_or(Error::Parse(
-            "FindOrGiven[1].Name is not a string".to_owned(),
-        ))?;
+        .ok_or(error!("FindOrGiven[1].Name is not a string"))?;
+
     let name = Name::UserName(name.to_owned());
     let domain = arr[2]
         .as_object()
-        .ok_or(Error::Parse("FindOrGiven[2] is not an object".to_owned()))?
+        .ok_or(error!("FindOrGiven[2] is not an object"))?
         .iter()
         .next()
-        .ok_or(Error::Parse("FindOrGiven[2] is an empty object".to_owned()))?;
+        .ok_or(error!("FindOrGiven[2] is an empty object"))?;
     let domain = match domain.0.as_str() {
         "DomainInt" => Ok(parse_int_domain(domain.1)?),
         "DomainBool" => Ok(Domain::BoolDomain),
@@ -109,69 +112,61 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
             domain
                 .1
                 .as_array()
-                .ok_or(Error::Parse("DomainReference is not an array".into()))?[0]
+                .ok_or(error!("DomainReference is not an array"))?[0]
                 .as_object()
-                .ok_or(Error::Parse("DomainReference[0] is not an object".into()))?["Name"]
+                .ok_or(error!("DomainReference[0] is not an object"))?["Name"]
                 .as_str()
-                .ok_or(Error::Parse(
-                    "DomainReference[0].Name is not a string".into(),
-                ))?
+                .ok_or(error!("DomainReference[0].Name is not a string"))?
                 .into(),
         ))),
-        _ => Err(Error::Parse(
-            "FindOrGiven[2] is an unknown object".to_owned(), // consider covered
-        )),
+        _ => throw_error!(
+            "FindOrGiven[2] is an unknown object" // consider covered
+        ),
     }?;
 
     symtab
         .add_var(name.clone(), DecisionVariable { domain })
-        .ok_or(Error::Parse(format!(
+        .ok_or(error!(format!(
             "Could not add {name} to symbol table as it already exists"
         )))
 }
 
 fn parse_letting(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
-    let arr = v
-        .as_array()
-        .ok_or(Error::Parse("Letting is not an array".to_owned()))?;
+    let arr = v.as_array().ok_or(error!("Letting is not an array"))?;
     let name = arr[0]
         .as_object()
-        .ok_or(Error::Parse("Letting[0] is not an object".to_owned()))?["Name"]
+        .ok_or(error!("Letting[0] is not an object"))?["Name"]
         .as_str()
-        .ok_or(Error::Parse("Letting[0].Name is not a string".to_owned()))?;
+        .ok_or(error!("Letting[0].Name is not a string"))?;
     let name = Name::UserName(name.to_owned());
 
     // value letting
     if let Some(value) = parse_expression(&arr[1]) {
         symtab
             .add_value_letting(name.clone(), value)
-            .ok_or(Error::Parse(format!(
+            .ok_or(error!(format!(
                 "Could not add {name} to symbol table as it already exists"
             )))
     } else {
         // domain letting
         let domain = &arr[1]
             .as_object()
-            .ok_or(Error::Parse("Letting[1] is not an object".to_owned()))?["Domain"]
+            .ok_or(error!("Letting[1] is not an object".to_owned()))?["Domain"]
             .as_object()
-            .ok_or(Error::Parse(
-                "Letting[1].Domain is not an object".to_owned(),
-            ))?
+            .ok_or(error!("Letting[1].Domain is not an object"))?
             .iter()
             .next()
-            .ok_or(Error::Parse(
-                "Letting[1].Domain is an empty object".to_owned(),
-            ))?;
+            .ok_or(error!("Letting[1].Domain is an empty object"))?;
 
         let domain = match domain.0.as_str() {
             "DomainInt" => Ok(parse_int_domain(domain.1)?),
             "DomainBool" => Ok(Domain::BoolDomain),
-            _ => Err(Error::Parse("Letting[1] is an unknown object".to_owned())),
+            _ => throw_error!("Letting[1] is an unknown object".to_owned()),
         }?;
 
         symtab
             .add_domain_letting(name.clone(), domain)
-            .ok_or(Error::Parse(format!(
+            .ok_or(error!(format!(
                 "Could not add {name} to symbol table as it already exists"
             )))
     }
@@ -181,46 +176,36 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
     let mut ranges = Vec::new();
     let arr = v
         .as_array()
-        .ok_or(Error::Parse("DomainInt is not an array".to_owned()))?[1]
+        .ok_or(error!("DomainInt is not an array".to_owned()))?[1]
         .as_array()
-        .ok_or(Error::Parse("DomainInt[1] is not an array".to_owned()))?;
+        .ok_or(error!("DomainInt[1] is not an array".to_owned()))?;
     for range in arr {
         let range = range
             .as_object()
-            .ok_or(Error::Parse(
-                "DomainInt[1] contains a non-object".to_owned(),
-            ))?
+            .ok_or(error!("DomainInt[1] contains a non-object"))?
             .iter()
             .next()
-            .ok_or(Error::Parse(
-                "DomainInt[1] contains an empty object".to_owned(),
-            ))?;
+            .ok_or(error!("DomainInt[1] contains an empty object"))?;
         match range.0.as_str() {
             "RangeBounded" => {
                 let arr = range
                     .1
                     .as_array()
-                    .ok_or(Error::Parse("RangeBounded is not an array".to_owned()))?;
+                    .ok_or(error!("RangeBounded is not an array".to_owned()))?;
                 let mut nums = Vec::new();
                 for item in arr.iter() {
-                    let num = parse_domain_value_int(item).ok_or(Error::Parse(
-                        "Could not parse int domain constant".to_owned(),
-                    ))?;
+                    let num = parse_domain_value_int(item)
+                        .ok_or(error!("Could not parse int domain constant"))?;
                     nums.push(num);
                 }
                 ranges.push(Range::Bounded(nums[0], nums[1]));
             }
             "RangeSingle" => {
-                let num = parse_domain_value_int(range.1).ok_or(Error::Parse(
-                    "Could not parse int domain constant".to_owned(),
-                ))?;
+                let num = parse_domain_value_int(range.1)
+                    .ok_or(error!("Could not parse int domain constant"))?;
                 ranges.push(Range::Single(num));
             }
-            _ => {
-                return Err(Error::Parse(
-                    "DomainInt[1] contains an unknown object".to_owned(),
-                ))
-            }
+            _ => return throw_error!("DomainInt[1] contains an unknown object"),
         }
     }
     Ok(Domain::IntDomain(ranges))
