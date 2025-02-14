@@ -20,7 +20,7 @@ pub enum Error {
     Other(#[from] anyhow::Error),
 }
 
-// Macro to add an error with the line number and function name
+// Macro to throw an error with the line number and function name
 #[macro_export]
 macro_rules! throw_error {
     ($msg:expr) => {{
@@ -35,7 +35,7 @@ macro_rules! throw_error {
     }};
 }
 
-// Macro to add an error with the line number and function name
+// Macro to add an error with the line number and function name (for functions that take an error like ok_or)
 #[macro_export]
 macro_rules! error {
     ($msg:expr) => {{

@@ -7,6 +7,8 @@
 /// - `msg`: A string expression describing the cause of the panic or bug.
 ///
 /// ```
+use git_version::git_version;
+
 #[macro_export]
 macro_rules! bug {
     ($msg:expr $(, $arg:tt)*) => {{
@@ -23,8 +25,10 @@ You can help us by providing a minimal failing example.
 
 Issue tracker: http://github.com/conjure-cp/conjure-oxide/issues
 
+version: {}
+
 {}
-"#, &formatted_msg);
+"#, git_version!(), &formatted_msg);
 
         panic!("{}", full_message);
     }};

@@ -24,11 +24,12 @@ use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
 use tracing_subscriber::{EnvFilter, Layer};
+use git_version::git_version;
 
 static AFTER_HELP_TEXT: &str = include_str!("help_text.txt");
 
 #[derive(Parser)]
-#[command(author, version, about, long_about = None, after_long_help=AFTER_HELP_TEXT)]
+#[command(author, about, long_about = None, after_long_help=AFTER_HELP_TEXT)]
 struct Cli {
     #[arg(value_name = "INPUT_ESSENCE", help = "The input Essence file")]
     input_file: PathBuf,
@@ -63,6 +64,13 @@ struct Cli {
         help = "Print the schema for the info JSON and exit"
     )]
     print_info_schema: bool,
+
+    #[arg(
+        long = "version",
+        short = 'V',
+        help = "Print the version of the program (git commit) and exit"
+    )]
+    version: bool,
 
     #[arg(long, help = "Save execution info as JSON to the given file-path.")]
     info_json_path: Option<PathBuf>,
@@ -182,6 +190,11 @@ pub fn main() -> AnyhowResult<()> {
                 .with_filter(env_filter),
         )
     };
+
+    if cli.version {
+        println!("Version: {}", git_version!());
+        return Ok(());
+    }
 
     // load the loggers
     tracing_subscriber::registry()
