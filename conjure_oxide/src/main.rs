@@ -20,6 +20,7 @@ use conjure_oxide::{get_rules, model_from_json};
 
 use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
 use conjure_oxide::SolverFamily;
+use git_version::git_version;
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
@@ -27,11 +28,11 @@ use tracing_subscriber::{EnvFilter, Layer};
 
 static AFTER_HELP_TEXT: &str = include_str!("help_text.txt");
 
-#[derive(Parser)]
-#[command(author, version, about, long_about = None, after_long_help=AFTER_HELP_TEXT)]
+#[derive(Parser, Clone)]
+#[command(author, about, long_about = None, after_long_help=AFTER_HELP_TEXT)]
 struct Cli {
     #[arg(value_name = "INPUT_ESSENCE", help = "The input Essence file")]
-    input_file: PathBuf,
+    input_file: Option<PathBuf>,
 
     #[arg(
         long,
@@ -63,6 +64,13 @@ struct Cli {
         help = "Print the schema for the info JSON and exit"
     )]
     print_info_schema: bool,
+
+    #[arg(
+        long = "version",
+        short = 'V',
+        help = "Print the version of the program (git commit) and exit"
+    )]
+    version: bool,
 
     #[arg(long, help = "Save execution info as JSON to the given file-path.")]
     info_json_path: Option<PathBuf>,
@@ -183,6 +191,11 @@ pub fn main() -> AnyhowResult<()> {
         )
     };
 
+    if cli.version {
+        println!("Version: {}", git_version!());
+        return Ok(());
+    }
+
     // load the loggers
     tracing_subscriber::registry()
         .with(json_layer)
@@ -222,9 +235,9 @@ pub fn main() -> AnyhowResult<()> {
         "Rules: {}",
         rules.iter().map(|rd| format!("{}", rd)).collect::<Vec<_>>().join("\n")
     );
-
-    tracing::info!(target: "file", "Input file: {}", cli.input_file.display());
-    let input_file: &str = cli.input_file.to_str().ok_or(anyhow!(
+    let input = cli.input_file.clone().expect("No input file given");
+    tracing::info!(target: "file", "Input file: {}", input.display());
+    let input_file: &str = input.to_str().ok_or(anyhow!(
         "Given input_file could not be converted to a string"
     ))?;
 
@@ -256,7 +269,7 @@ pub fn main() -> AnyhowResult<()> {
         rule_sets.clone(),
     );
 
-    context.write().unwrap().file_name = Some(cli.input_file.to_str().expect("").into());
+    context.write().unwrap().file_name = Some(input.to_str().expect("").into());
 
     if cfg!(feature = "extra-rule-checks") {
         tracing::info!("extra-rule-checks: enabled");
@@ -283,7 +296,7 @@ pub fn main() -> AnyhowResult<()> {
     if cli.no_run_solver {
         println!("{}", model);
     } else {
-        run_solver(&cli, model)?;
+        run_solver(&cli.clone(), model)?;
     }
 
     // still do postamble even if we didn't run the solver
