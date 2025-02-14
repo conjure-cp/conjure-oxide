@@ -1,11 +1,14 @@
 //! Parse / `load_model` step of running Minion.
 
+use std::cell::Ref;
+
 use minion_ast::Model as MinionModel;
 use minion_rs::ast as minion_ast;
 use minion_rs::error::MinionError;
 use minion_rs::{get_from_table, run_minion};
 
 use crate::ast as conjure_ast;
+use crate::ast::declaration::Declaration;
 use crate::solver::SolverError::*;
 use crate::solver::SolverFamily;
 use crate::solver::SolverMutCallback;
@@ -26,8 +29,12 @@ fn load_symbol_table(
     conjure_model: &ConjureModel,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
-    for (name, variable) in conjure_model.symbols().iter_var() {
-        load_var(name, variable, minion_model)?;
+    for (name, decl) in conjure_model.symbols().clone().into_iter_local() {
+        let Some(var) = decl.as_var() else {
+            continue;
+        }; // ignore lettings, etc.
+
+        load_var(&name, var, minion_model)?;
     }
     Ok(())
 }

@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use conjure_macros::register_rule;
 
 use crate::{
@@ -20,7 +22,8 @@ fn substitute_value_lettings(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
         return Err(RuleNotApplicable);
     };
 
-    let value = symbols.get_value_letting(name).ok_or(RuleNotApplicable)?;
+    let decl = symbols.lookup(name).ok_or(RuleNotApplicable)?;
+    let value = decl.as_value_letting().ok_or(RuleNotApplicable)?;
 
     Ok(Reduction::pure(value.clone()))
 }
@@ -31,25 +34,24 @@ fn substitute_domain_lettings(expr: &Expr, symbols: &SymbolTable) -> Application
     let mut new_symbols = symbols.clone();
     let mut has_changed = false;
 
-    // using both the old and new symbol tables to placate the borrow checker.
-    for name in symbols.names() {
-        if let Some(d) = new_symbols.domain_of_mut(name) {
-            if let Domain::DomainReference(domain_name) = d {
-                *d = symbols
-                    .get_domain_letting(&domain_name.clone())
-                    .unwrap_or_else(|| {
-                        bug!(
-                            "rule substitute_domain_lettings: domain reference {} does not exist",
-                            domain_name
-                        )
-                    })
-                    .clone();
+    for (_, mut decl) in symbols.clone().into_iter() {
+        let Some(mut var) = decl.as_var().cloned() else {
+            continue;
+        };
 
-                has_changed = true;
-            }
-        }
+        if let Domain::DomainReference(ref d) = var.domain {
+            var.domain = symbols.domain(d).unwrap_or_else(|| {
+                bug!(
+                    "rule substitute_domain_lettings: domain reference {} does not exist",
+                    d
+                )
+            });
+            *(Rc::make_mut(&mut decl).as_var_mut().unwrap()) = var;
+            has_changed = true;
+        };
+
+        new_symbols.update_insert(decl);
     }
-
     if has_changed {
         Ok(Reduction::with_symbols(expr.clone(), new_symbols))
     } else {

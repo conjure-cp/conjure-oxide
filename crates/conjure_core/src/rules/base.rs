@@ -1,4 +1,6 @@
-use conjure_core::ast::{Atom, DecisionVariable, Expression as Expr, Literal as Lit, SymbolTable};
+use std::rc::Rc;
+
+use conjure_core::ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable};
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
@@ -8,6 +10,8 @@ use uniplate::Uniplate;
 use Atom::*;
 use Expr::*;
 use Lit::*;
+
+use crate::ast::declaration::Declaration;
 
 register_rule_set!("Base", ());
 
@@ -90,7 +94,7 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             let domain = expr
                 .domain_of(&symbols)
                 .ok_or(ApplicationError::DomainError)?;
-            symbols.add_var(new_name.clone(), DecisionVariable::new(domain));
+            symbols.insert(Rc::new(Declaration::new_var(new_name.clone(), domain)));
 
             Ok(Reduction::new(
                 Atomic(Metadata::new(), Reference(new_name)),
@@ -134,7 +138,7 @@ fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             let domain = expr
                 .domain_of(&symbols)
                 .ok_or(ApplicationError::DomainError)?;
-            symbols.add_var(new_name.clone(), DecisionVariable::new(domain));
+            symbols.insert(Rc::new(Declaration::new_var(new_name.clone(), domain)));
 
             Ok(Reduction::new(
                 Atomic(Metadata::new(), Reference(new_name)),

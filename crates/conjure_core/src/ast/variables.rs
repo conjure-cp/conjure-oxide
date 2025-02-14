@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::ast::domains::{Domain, Range};
 
+use super::{types::Typeable, ReturnType};
+
 /// Represents a decision variable within a computational model.
 ///
 /// A `DecisionVariable` has a domain that defines the set of values it can take. The domain could be:
@@ -30,9 +32,16 @@ use crate::ast::domains::{Domain, Range};
 pub struct DecisionVariable {
     pub domain: Domain,
 }
+
 impl DecisionVariable {
     pub fn new(domain: Domain) -> DecisionVariable {
         DecisionVariable { domain }
+    }
+}
+
+impl Typeable for DecisionVariable {
+    fn return_type(&self) -> Option<ReturnType> {
+        todo!()
     }
 }
 

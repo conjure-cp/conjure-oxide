@@ -1,10 +1,12 @@
 use std::collections::HashMap;
+use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
 use serde_json::Value;
 use serde_json::Value as JsonValue;
 
-use crate::ast::{Atom, DecisionVariable, Domain, Expression, Literal, Name, Range, SymbolTable};
+use crate::ast::declaration::Declaration;
+use crate::ast::{Atom, Domain, Expression, Literal, Name, Range, SymbolTable};
 use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::metadata::Metadata;
@@ -55,12 +57,12 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
                 for (kind, value) in decl {
                     match kind.as_str() {
                         "FindOrGiven" => {
-                            parse_variable(value, m.symbols_mut())?;
+                            parse_variable(value, &mut m.symbols_mut())?;
                             valid_decl = true;
                             break;
                         }
                         "Letting" => {
-                            parse_letting(value, m.symbols_mut())?;
+                            parse_letting(value, &mut m.symbols_mut())?;
                             valid_decl = true;
                             break;
                         }
@@ -125,8 +127,8 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
     }?;
 
     symtab
-        .add_var(name.clone(), DecisionVariable { domain })
-        .ok_or(error!(format!(
+        .insert(Rc::new(Declaration::new_var(name.clone(), domain)))
+        .ok_or(Error::Parse(format!(
             "Could not add {name} to symbol table as it already exists"
         )))
 }
@@ -143,8 +145,8 @@ fn parse_letting(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
     // value letting
     if let Some(value) = parse_expression(&arr[1]) {
         symtab
-            .add_value_letting(name.clone(), value)
-            .ok_or(error!(format!(
+            .insert(Rc::new(Declaration::new_value_letting(name.clone(), value)))
+            .ok_or(Error::Parse(format!(
                 "Could not add {name} to symbol table as it already exists"
             )))
     } else {
@@ -165,8 +167,11 @@ fn parse_letting(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
         }?;
 
         symtab
-            .add_domain_letting(name.clone(), domain)
-            .ok_or(error!(format!(
+            .insert(Rc::new(Declaration::new_domain_letting(
+                name.clone(),
+                domain,
+            )))
+            .ok_or(Error::Parse(format!(
                 "Could not add {name} to symbol table as it already exists"
             )))
     }
