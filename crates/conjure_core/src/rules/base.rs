@@ -11,7 +11,7 @@ use Atom::*;
 use Expr::*;
 use Lit::*;
 
-use crate::ast::declaration::Declaration;
+use crate::ast::Declaration;
 
 register_rule_set!("Base", ());
 

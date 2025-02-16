@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::ast::{declaration::Declaration, SymbolTable};
+use crate::ast::{Declaration, SymbolTable};
 use tracing::instrument;
 use uniplate::{Biplate, Uniplate};
 
