@@ -20,7 +20,7 @@ use uniplate::Tree;
 use uniplate::{Biplate, Uniplate};
 
 use super::name::Name;
-use super::{Domain, Expression, ReturnType};
+use super::{Domain, Expression, ReturnType, SubModel};
 use derivative::Derivative;
 
 // Count symbol tables per thread / model.
@@ -333,5 +333,21 @@ impl Biplate<Expression> for SymbolTable {
         });
 
         (tree, ctx)
+    }
+}
+
+impl Biplate<SubModel> for SymbolTable {
+    // walk into expressions
+    fn biplate(&self) -> (Tree<SubModel>, Box<dyn Fn(Tree<SubModel>) -> Self>) {
+        let (exprs, exprs_ctx) = <SymbolTable as Biplate<Expression>>::biplate(self);
+        let (submodel_tree, submodel_ctx) =
+            <VecDeque<Expression> as Biplate<SubModel>>::biplate(&exprs.into_iter().collect());
+
+        let ctx = Box::new(move |x| {
+            exprs_ctx(Tree::Many(
+                submodel_ctx(x).into_iter().map(Tree::One).collect(),
+            ))
+        });
+        (submodel_tree, ctx)
     }
 }

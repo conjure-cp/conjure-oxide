@@ -5,7 +5,7 @@ use std::sync::{Arc, RwLock};
 use serde_json::Value;
 use serde_json::Value as JsonValue;
 
-use crate::ast::declaration::Declaration;
+use crate::ast::Declaration;
 use crate::ast::{Atom, Domain, Expression, Literal, Name, Range, SymbolTable};
 use crate::context::Context;
 use crate::error::{Error, Result};
@@ -26,7 +26,7 @@ macro_rules! parser_debug {
 }
 
 pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Result<Model> {
-    let mut m = Model::new_empty(context);
+    let mut m = Model::new(context);
     let v: JsonValue = serde_json::from_str(str)?;
     let statements = v["mStatements"]
         .as_array()
@@ -54,15 +54,16 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
                 // e.g. FindOrGiven,
 
                 let mut valid_decl: bool = false;
+                let submodel = m.as_submodel_mut();
                 for (kind, value) in decl {
                     match kind.as_str() {
                         "FindOrGiven" => {
-                            parse_variable(value, &mut m.symbols_mut())?;
+                            parse_variable(value, &mut submodel.symbols_mut())?;
                             valid_decl = true;
                             break;
                         }
                         "Letting" => {
-                            parse_letting(value, &mut m.symbols_mut())?;
+                            parse_letting(value, &mut submodel.symbols_mut())?;
                             valid_decl = true;
                             break;
                         }
@@ -82,7 +83,7 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
 
                 let constraints: Vec<Expression> =
                     constraints_arr.iter().flat_map(parse_expression).collect();
-                m.add_constraints(constraints);
+                m.as_submodel_mut().add_constraints(constraints);
                 // println!("Nb constraints {}", m.constraints.len());
             }
             otherwise => bug!("Unhandled Statement {:#?}", otherwise),

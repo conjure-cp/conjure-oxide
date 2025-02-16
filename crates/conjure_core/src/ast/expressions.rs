@@ -16,7 +16,7 @@ use crate::ast::Name;
 use crate::ast::ReturnType;
 use crate::metadata::Metadata;
 
-use super::{Domain, Range};
+use super::{Domain, Range, SubModel};
 
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
@@ -24,12 +24,13 @@ use super::{Domain, Range};
 /// used to build rules and conditions for the model.
 #[document_compatibility]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
-#[uniplate(walk_into=[Atom])]
+#[uniplate(walk_into=[Atom,Submodel])]
 #[biplate(to=Literal)]
 #[biplate(to=Metadata)]
 #[biplate(to=Atom)]
 #[biplate(to=Name)]
 #[biplate(to=Vec<Expression>)]
+#[biplate(to=SubModel)]
 pub enum Expression {
     /// The top of the model
     Root(Metadata, Vec<Expression>),

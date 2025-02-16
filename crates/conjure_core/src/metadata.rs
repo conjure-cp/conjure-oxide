@@ -1,4 +1,4 @@
-use crate::ast::types::ReturnType;
+use crate::ast::ReturnType;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display};
 use uniplate::derive_unplateable;
