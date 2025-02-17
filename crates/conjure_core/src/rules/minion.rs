@@ -3,10 +3,10 @@
 /************************************************************************/
 
 use std::convert::TryInto;
+use std::rc::Rc;
 
-use crate::ast::{
-    Atom, DecisionVariable, Domain, Expression as Expr, Literal as Lit, ReturnType, SymbolTable,
-};
+use crate::ast::declaration::Declaration;
+use crate::ast::{Atom, Domain, Expression as Expr, Literal as Lit, ReturnType, SymbolTable};
 
 use crate::metadata::Metadata;
 use crate::rule_engine::{
@@ -102,7 +102,7 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
             .domain_of(&symbols)
             .ok_or(ApplicationError::DomainError)?;
 
-        symbols.add_var(aux_var.clone(), DecisionVariable { domain: aux_domain });
+        symbols.insert(Rc::new(Declaration::new_var(aux_var.clone(), aux_domain)));
 
         let new_top_expr =
             Expr::FlatProductEq(Metadata::new(), y, next_factor_atom, aux_var.clone().into());
@@ -912,7 +912,7 @@ fn not_literal_to_wliteral(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
         Expr::Not(m, expr) => {
             if let Expr::Atomic(_, Atom::Reference(name)) = (**expr).clone() {
                 if symbols
-                    .domain_of(&name)
+                    .domain(&name)
                     .is_some_and(|x| matches!(x, BoolDomain))
                 {
                     return Ok(Reduction::pure(Expr::FlatWatchedLiteral(

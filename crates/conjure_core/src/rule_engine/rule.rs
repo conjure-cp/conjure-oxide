@@ -1,10 +1,12 @@
 use std::collections::BTreeSet;
 use std::fmt::{self, Display, Formatter};
 use std::hash::Hash;
+use std::rc::Rc;
 
 use thiserror::Error;
 
-use crate::ast::{DecisionVariable, Expression, Model, Name, SymbolTable};
+use crate::ast::declaration::Declaration;
+use crate::ast::{Expression, Model, Name, SymbolTable};
 
 #[derive(Debug, Error)]
 pub enum ApplicationError {
@@ -105,8 +107,17 @@ impl Reduction {
 
     /// Gets symbols added by this reduction
     pub fn added_symbols(&self, initial_symbols: &SymbolTable) -> BTreeSet<Name> {
-        let initial_symbols_set: BTreeSet<Name> = initial_symbols.names().cloned().collect();
-        let new_symbols_set: BTreeSet<Name> = self.symbols.names().cloned().collect();
+        let initial_symbols_set: BTreeSet<Name> = initial_symbols
+            .clone()
+            .into_iter_local()
+            .map(|x| x.0)
+            .collect();
+        let new_symbols_set: BTreeSet<Name> = self
+            .symbols
+            .clone()
+            .into_iter_local()
+            .map(|x| x.0)
+            .collect();
 
         new_symbols_set
             .difference(&initial_symbols_set)
@@ -120,11 +131,11 @@ impl Reduction {
     pub fn changed_symbols(
         &self,
         initial_symbols: &SymbolTable,
-    ) -> Vec<(Name, DecisionVariable, DecisionVariable)> {
-        let mut changes: Vec<(Name, DecisionVariable, DecisionVariable)> = vec![];
+    ) -> Vec<(Name, Rc<Declaration>, Rc<Declaration>)> {
+        let mut changes: Vec<(Name, Rc<Declaration>, Rc<Declaration>)> = vec![];
 
-        for (var_name, initial_value) in initial_symbols.iter_var() {
-            let Some(new_value) = self.symbols.get_var(var_name) else {
+        for (var_name, initial_value) in initial_symbols.clone().into_iter_local() {
+            let Some(new_value) = self.symbols.lookup(&var_name) else {
                 continue;
             };
 

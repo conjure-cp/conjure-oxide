@@ -1,11 +1,15 @@
+use std::cell::{Ref, RefCell, RefMut};
 use std::collections::VecDeque;
 use std::fmt::{Debug, Display};
+use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 use uniplate::{Biplate, Tree, Uniplate};
 
+use crate::ast::serde::RcRefCellAsInner;
 use crate::ast::{Expression, SymbolTable};
 use crate::bug;
 use crate::context::Context;
@@ -16,35 +20,21 @@ use crate::ast::pretty::{
 };
 use crate::metadata::Metadata;
 
+use super::declaration::DeclarationKind;
+use super::types::Typeable;
+use super::ReturnType;
+
 /// Represents a computational model containing variables, constraints, and a shared context.
 ///
-/// The `Model` struct holds a set of variables and constraints for manipulating and evaluating symbolic expressions.
-///
-/// # Fields
-/// - `constraints`:
-///   - Type: `Vec<Expression>`
-///   - Represents the logical constraints applied to the model's variables.
-///   - Can be a single constraint or a combination of various expressions, such as logical operations (e.g., `AND`, `OR`),
-///     arithmetic operations (e.g., `SafeDiv`, `UnsafeDiv`), or specialized constraints like `SumEq`.
-///
-/// - `context`:
-///   - Type: `Arc<RwLock<Context<'static>>>`
-///   - A shared object that stores global settings and state for the model.
-///   - Can be safely read or changed by multiple parts of the program at the same time, making it good for multi-threaded use.
-///
-/// # Usage
-/// This struct is typically used to:
-/// - Define a set of variables and constraints for rule-based evaluation.
-/// - Have transformations, optimizations, and simplifications applied to it using a set of rules.
-#[derive(Derivative, Clone, Debug, Serialize, Deserialize)]
+/// To de/serialise a model using serde, see [`SerdeModel`].
+#[derive(Derivative, Clone, Debug)]
 #[derivative(PartialEq, Eq)]
 pub struct Model {
     /// Top level constraints. This should be a `Expression::Root`.
     constraints: Box<Expression>,
 
-    symbols: SymbolTable,
+    symbols: Rc<RefCell<SymbolTable>>,
 
-    #[serde(skip)]
     #[derivative(PartialEq = "ignore")]
     pub context: Arc<RwLock<Context<'static>>>,
 }
@@ -52,7 +42,7 @@ pub struct Model {
 impl Model {
     /// Creates a new model.
     pub fn new(
-        symbols: SymbolTable,
+        symbols: Rc<RefCell<SymbolTable>>,
         constraints: Vec<Expression>,
         context: Arc<RwLock<Context<'static>>>,
     ) -> Model {
@@ -67,14 +57,22 @@ impl Model {
         Model::new(Default::default(), Vec::new(), context)
     }
 
-    /// The global symbol table for this model.
-    pub fn symbols(&self) -> &SymbolTable {
+    /// The symbol table for this model as a pointer.
+    ///
+    /// The caller should only mutate the returned symbol table if this method was called on a
+    /// mutable model.
+    pub fn symbols_ptr_unchecked(&self) -> &Rc<RefCell<SymbolTable>> {
         &self.symbols
     }
 
-    /// The global symbol table for this model, as a mutable reference.
-    pub fn symbols_mut(&mut self) -> &mut SymbolTable {
-        &mut self.symbols
+    /// The global symbol table for this model as a reference.
+    pub fn symbols(&self) -> Ref<SymbolTable> {
+        (*self.symbols).borrow()
+    }
+
+    /// The global symbol table for this model as a mutable reference.
+    pub fn symbols_mut(&self) -> RefMut<SymbolTable> {
+        (*self.symbols).borrow_mut()
     }
 
     pub fn get_constraints_vec(&self) -> Vec<Expression> {
@@ -112,6 +110,12 @@ impl Model {
     }
 }
 
+impl Typeable for Model {
+    fn return_type(&self) -> Option<ReturnType> {
+        Some(ReturnType::Bool)
+    }
+}
+
 // At time of writing (03/02/2025), the Uniplate derive macro doesn't like the lifetimes inside
 // context, and we do not yet have a way of ignoring this field.
 impl Uniplate for Model {
@@ -125,7 +129,7 @@ impl Uniplate for Model {
 // TODO: replace with derive macro when possible.
 impl Biplate<Expression> for Model {
     fn biplate(&self) -> (Tree<Expression>, Box<dyn Fn(Tree<Expression>) -> Self>) {
-        let (symtab_tree, symtab_ctx) = self.symbols.biplate();
+        let (symtab_tree, symtab_ctx) = (*self.symbols).borrow().biplate();
         let (constraints_tree, constraints_ctx) = self.constraints.biplate();
 
         let tree = Tree::Many(VecDeque::from([symtab_tree, constraints_tree]));
@@ -137,7 +141,10 @@ impl Biplate<Expression> for Model {
             };
 
             let mut self3 = self2.clone();
-            self3.symbols = (symtab_ctx)(fields[0].clone());
+            {
+                let mut symbols = (*self3.symbols).borrow_mut();
+                *symbols = (symtab_ctx)(fields[0].clone());
+            }
             self3.constraints = Box::new((constraints_ctx)(fields[1].clone()));
             self3
         });
@@ -149,27 +156,30 @@ impl Biplate<Expression> for Model {
 impl Display for Model {
     #[allow(clippy::unwrap_used)] // [rustdocs]: should only fail iff the formatter fails
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for (name, _) in self.symbols().iter_value_letting() {
-            writeln!(
-                f,
-                "{}",
-                pretty_value_letting_declaration(self.symbols(), name).unwrap()
-            )?;
-        }
-        for (name, _) in self.symbols().iter_domain_letting() {
-            writeln!(
-                f,
-                "{}",
-                pretty_domain_letting_declaration(self.symbols(), name).unwrap()
-            )?;
-        }
-
-        for (name, _) in self.symbols().iter_var() {
-            writeln!(
-                f,
-                "find {}",
-                pretty_variable_declaration(self.symbols(), name).unwrap()
-            )?;
+        for (name, decl) in self.symbols().clone().into_iter_local() {
+            match decl.kind() {
+                DeclarationKind::DecisionVariable(_) => {
+                    writeln!(
+                        f,
+                        "{}",
+                        pretty_variable_declaration(&self.symbols(), &name).unwrap()
+                    )?;
+                }
+                DeclarationKind::ValueLetting(_) => {
+                    writeln!(
+                        f,
+                        "{}",
+                        pretty_value_letting_declaration(&self.symbols(), &name).unwrap()
+                    )?;
+                }
+                DeclarationKind::DomainLetting(_) => {
+                    writeln!(
+                        f,
+                        "{}",
+                        pretty_domain_letting_declaration(&self.symbols(), &name).unwrap()
+                    )?;
+                }
+            }
         }
 
         writeln!(f, "\nsuch that\n")?;
@@ -181,5 +191,43 @@ impl Display for Model {
         )?;
 
         Ok(())
+    }
+}
+
+/// A model that is de/serializable using `serde`.
+///
+/// To turn this into a rewritable model, it needs to be initialised using [`initialise`](SerdeModel::initialise).
+///
+/// To deserialise a [`Model`], use `.into()` to convert it into a `SerdeModel` first.
+#[serde_as]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct SerdeModel {
+    constraints: Box<Expression>,
+
+    #[serde_as(as = "RcRefCellAsInner")]
+    symbols: Rc<RefCell<SymbolTable>>,
+}
+
+impl SerdeModel {
+    /// Initialises the model for rewriting.
+    pub fn initialise(self, context: Arc<RwLock<Context<'static>>>) -> Option<Model> {
+        // TODO: Once we have submodels and multiple symbol tables, de-duplicate deserialized
+        // Rc<RefCell<>> symbol tables and declarations using their stored ids.
+        //
+        // See ast::serde::RcRefCellAsId.
+        Some(Model {
+            constraints: self.constraints,
+            symbols: self.symbols,
+            context,
+        })
+    }
+}
+
+impl From<Model> for SerdeModel {
+    fn from(val: Model) -> Self {
+        SerdeModel {
+            constraints: val.constraints,
+            symbols: val.symbols,
+        }
     }
 }

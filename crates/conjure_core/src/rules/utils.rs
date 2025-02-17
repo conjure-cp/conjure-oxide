@@ -1,9 +1,11 @@
-use crate::ast::SymbolTable;
+use std::rc::Rc;
+
+use crate::ast::{declaration::Declaration, SymbolTable};
 use tracing::instrument;
 use uniplate::{Biplate, Uniplate};
 
 use crate::{
-    ast::{Atom, DecisionVariable, Domain, Expression as Expr, Name},
+    ast::{Atom, Domain, Expression as Expr, Name},
     metadata::Metadata,
 };
 
@@ -87,8 +89,7 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
         return None;
     };
 
-    symbols.add_var(name.clone(), DecisionVariable::new(domain.clone()));
-
+    symbols.insert(Rc::new(Declaration::new_var(name.clone(), domain.clone())))?;
     Some(ToAuxVarOutput {
         aux_name: name.clone(),
         aux_decl: Expr::AuxDeclaration(Metadata::new(), name, Box::new(expr.clone())),

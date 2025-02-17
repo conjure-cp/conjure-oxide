@@ -1,5 +1,7 @@
+use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::process::exit;
+use std::rc::Rc;
 
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_core::solver::SolverFamily;
@@ -11,6 +13,7 @@ use conjure_oxide::{
     solver::{adaptors, Solver},
     Metadata, Model, Rule,
 };
+use declaration::Declaration;
 use uniplate::{Biplate, Uniplate};
 
 fn var_name_from_atom(a: &Atom) -> Name {
@@ -322,25 +325,32 @@ fn reduce_solve_xyz() {
         )
     );
 
-    let mut model = Model::new(SymbolTable::new(), vec![expr1, expr2], Default::default());
-    model.symbols_mut().add_var(
-        Name::UserName(String::from("a")),
-        DecisionVariable {
-            domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
-        },
+    let model = Model::new(
+        Rc::new(RefCell::new(SymbolTable::new())),
+        vec![expr1, expr2],
+        Default::default(),
     );
-    model.symbols_mut().add_var(
-        Name::UserName(String::from("b")),
-        DecisionVariable {
-            domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
-        },
-    );
-    model.symbols_mut().add_var(
-        Name::UserName(String::from("c")),
-        DecisionVariable {
-            domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
-        },
-    );
+    model
+        .symbols_mut()
+        .insert(Rc::new(Declaration::new_var(
+            Name::UserName(String::from("a")),
+            Domain::IntDomain(vec![Range::Bounded(1, 3)]),
+        )))
+        .unwrap();
+    model
+        .symbols_mut()
+        .insert(Rc::new(Declaration::new_var(
+            Name::UserName(String::from("b")),
+            Domain::IntDomain(vec![Range::Bounded(1, 3)]),
+        )))
+        .unwrap();
+    model
+        .symbols_mut()
+        .insert(Rc::new(Declaration::new_var(
+            Name::UserName(String::from("c")),
+            Domain::IntDomain(vec![Range::Bounded(1, 3)]),
+        )))
+        .unwrap();
 
     let solver: Solver<adaptors::Minion> = Solver::new(adaptors::Minion::new());
     let solver = solver.load_model(model).unwrap();
@@ -658,7 +668,11 @@ fn rewrite_solve_xyz() {
 
     // Apply rewrite function to the nested expression
     let rewritten_expr = rewrite_naive(
-        &Model::new(SymbolTable::new(), vec![nested_expr], Default::default()),
+        &Model::new(
+            Rc::new(RefCell::new(SymbolTable::new())),
+            vec![nested_expr],
+            Default::default(),
+        ),
         &rule_sets,
         true,
     )
@@ -670,27 +684,34 @@ fn rewrite_solve_xyz() {
     assert!(rewritten_expr.iter().all(is_simple));
 
     // Create model with variables and constraints
-    let mut model = Model::new(SymbolTable::new(), rewritten_expr, Default::default());
+    let model = Model::new(
+        Rc::new(RefCell::new(SymbolTable::new())),
+        rewritten_expr,
+        Default::default(),
+    );
 
     // Insert variables and domains
-    model.symbols_mut().add_var(
-        var_name_from_atom(&variable_a.clone()),
-        DecisionVariable {
-            domain: domain.clone(),
-        },
-    );
-    model.symbols_mut().add_var(
-        var_name_from_atom(&variable_b.clone()),
-        DecisionVariable {
-            domain: domain.clone(),
-        },
-    );
-    model.symbols_mut().add_var(
-        var_name_from_atom(&variable_c.clone()),
-        DecisionVariable {
-            domain: domain.clone(),
-        },
-    );
+    model
+        .symbols_mut()
+        .insert(Rc::new(Declaration::new_var(
+            var_name_from_atom(&variable_a.clone()),
+            domain.clone(),
+        )))
+        .unwrap();
+    model
+        .symbols_mut()
+        .insert(Rc::new(Declaration::new_var(
+            var_name_from_atom(&variable_b.clone()),
+            domain.clone(),
+        )))
+        .unwrap();
+    model
+        .symbols_mut()
+        .insert(Rc::new(Declaration::new_var(
+            var_name_from_atom(&variable_c.clone()),
+            domain.clone(),
+        )))
+        .unwrap();
 
     let solver: Solver<adaptors::Minion> = Solver::new(adaptors::Minion::new());
     let solver = solver.load_model(model).unwrap();

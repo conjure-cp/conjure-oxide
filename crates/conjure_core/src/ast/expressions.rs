@@ -10,8 +10,9 @@ use uniplate::{Biplate, Uniplate as _};
 
 use crate::ast::literals::Literal;
 use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
-use crate::ast::symbol_table::{Name, SymbolTable};
+use crate::ast::symbol_table::SymbolTable;
 use crate::ast::Atom;
+use crate::ast::Name;
 use crate::ast::ReturnType;
 use crate::metadata::Metadata;
 
@@ -327,7 +328,7 @@ impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
         let ret = match self {
-            Expression::Atomic(_, Atom::Reference(name)) => Some(syms.domain_of(name)?.clone()),
+            Expression::Atomic(_, Atom::Reference(name)) => Some(syms.domain(name)?),
             Expression::Atomic(_, Atom::Literal(Literal::Int(n))) => {
                 Some(Domain::IntDomain(vec![Range::Single(*n)]))
             }
@@ -777,7 +778,9 @@ impl Display for Expression {
 
 #[cfg(test)]
 mod tests {
-    use crate::ast::DecisionVariable;
+    use std::rc::Rc;
+
+    use crate::ast::declaration::Declaration;
 
     use super::*;
 
@@ -810,10 +813,11 @@ mod tests {
     fn test_domain_of_reference() {
         let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
         let mut vars = SymbolTable::new();
-        vars.add_var(
+        vars.insert(Rc::new(Declaration::new_var(
             Name::MachineName(0),
-            DecisionVariable::new(Domain::IntDomain(vec![Range::Single(1)])),
-        );
+            Domain::IntDomain(vec![Range::Single(1)]),
+        )))
+        .unwrap();
         assert_eq!(
             reference.domain_of(&vars),
             Some(Domain::IntDomain(vec![Range::Single(1)]))
@@ -830,10 +834,11 @@ mod tests {
     fn test_domain_of_reference_sum_single() {
         let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
         let mut vars = SymbolTable::new();
-        vars.add_var(
+        vars.insert(Rc::new(Declaration::new_var(
             Name::MachineName(0),
-            DecisionVariable::new(Domain::IntDomain(vec![Range::Single(1)])),
-        );
+            Domain::IntDomain(vec![Range::Single(1)]),
+        )))
+        .unwrap();
         let sum = Expression::Sum(Metadata::new(), vec![reference.clone(), reference.clone()]);
         assert_eq!(
             sum.domain_of(&vars),
@@ -845,10 +850,10 @@ mod tests {
     fn test_domain_of_reference_sum_bounded() {
         let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
         let mut vars = SymbolTable::new();
-        vars.add_var(
+        vars.insert(Rc::new(Declaration::new_var(
             Name::MachineName(0),
-            DecisionVariable::new(Domain::IntDomain(vec![Range::Bounded(1, 2)])),
-        );
+            Domain::IntDomain(vec![Range::Bounded(1, 2)]),
+        )));
         let sum = Expression::Sum(Metadata::new(), vec![reference.clone(), reference.clone()]);
         assert_eq!(
             sum.domain_of(&vars),
