@@ -109,16 +109,16 @@ impl SymbolTable {
         }
     }
 
-    // Looks up the declaration with the given name in the current scope only.
-    //
-    // Returns `None` if there is no declaration with that name in the current scope.
+    /// Looks up the declaration with the given name in the current scope only.
+    ///
+    /// Returns `None` if there is no declaration with that name in the current scope.
     pub fn lookup_local(&self, name: &Name) -> Option<Rc<Declaration>> {
         self.table.get(name).cloned()
     }
 
-    // Looks up the declaration with the given name, checking all enclosing scopes.
-    //
-    // Returns `None` if there is no declaration with that name in scope.
+    /// Looks up the declaration with the given name, checking all enclosing scopes.
+    ///
+    /// Returns `None` if there is no declaration with that name in scope.
     pub fn lookup(&self, name: &Name) -> Option<Rc<Declaration>> {
         self.lookup_local(name).or_else(|| {
             self.parent
@@ -127,9 +127,9 @@ impl SymbolTable {
         })
     }
 
-    // Inserts a declaration into the symbol table.
-    //
-    // Returns `None` if there is already a symbol with this name in the local scope.
+    /// Inserts a declaration into the symbol table.
+    ///
+    /// Returns `None` if there is already a symbol with this name in the local scope.
     pub fn insert(&mut self, declaration: Rc<Declaration>) -> Option<()> {
         let name = declaration.name().clone();
         if let Entry::Vacant(e) = self.table.entry(name) {
@@ -140,7 +140,7 @@ impl SymbolTable {
         }
     }
 
-    // Updates or adds a declaration in the immediate local scope.
+    /// Updates or adds a declaration in the immediate local scope.
     pub fn update_insert(&mut self, declaration: Rc<Declaration>) {
         let name = declaration.name().clone();
         self.table.insert(name, declaration);
@@ -156,7 +156,7 @@ impl SymbolTable {
         self.lookup_local(name).and_then(|x| x.return_type())
     }
 
-    // Looks up the domain of name if it has one and is in scope.
+    /// Looks up the domain of name if it has one and is in scope.
     pub fn domain(&self, name: &Name) -> Option<Domain> {
         // TODO: do not clone here: in the future, we might want to wrap all domains in Rc's to get
         // clone-on-write behaviour (saving memory in scenarios such as matrix decomposition where
