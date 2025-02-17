@@ -379,20 +379,20 @@ fn integration_test_inner(
 
     // Check Stage 1b (native parser)
     if config.enable_native_parser {
-        let expected_model = read_model_json(path, essence_base, "expected", "parse")?;
+        let expected_model = read_model_json(&context, path, essence_base, "expected", "parse")?;
         let model_native = model_native.expect("model_native should exist here");
         assert_eq!(model_native, expected_model);
     }
 
     // Check Stage 1a (parsed model)
     if config.parse_model_default {
-        let expected_model = read_model_json(path, essence_base, "expected", "parse")?;
+        let expected_model = read_model_json(&context, path, essence_base, "expected", "parse")?;
         assert_eq!(model.expect("Model must be present in 1a"), expected_model);
     }
 
     // Check Stage 2a (rewritten model)
     if config.apply_rewrite_rules {
-        let expected_model = read_model_json(path, essence_base, "expected", "rewrite")?;
+        let expected_model = read_model_json(&context, path, essence_base, "expected", "rewrite")?;
         assert_eq!(
             rewritten_model.expect("Rewritten model must be present in 2a"),
             expected_model
