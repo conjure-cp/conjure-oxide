@@ -61,7 +61,6 @@ impl Model {
     ///
     /// The caller should only mutate the returned symbol table if this method was called on a
     /// mutable model.
-
     pub fn symbols_ptr_unchecked(&self) -> &Rc<RefCell<SymbolTable>> {
         &self.symbols
     }
