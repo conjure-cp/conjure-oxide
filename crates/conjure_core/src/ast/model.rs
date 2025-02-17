@@ -1,4 +1,7 @@
+use std::cell::RefCell;
+use std::collections::HashMap;
 use std::fmt::{Debug, Display};
+use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
 use derivative::Derivative;
@@ -8,9 +11,10 @@ use uniplate::{Biplate, Tree, Uniplate};
 use crate::ast::Expression;
 use crate::context::Context;
 
+use super::serde::{HasId, ObjId};
 use super::types::Typeable;
-use super::ReturnType;
 use super::SubModel;
+use super::{ReturnType, SymbolTable};
 
 /// An Essence model.
 ///
@@ -88,6 +92,25 @@ impl Biplate<Expression> for Model {
     }
 }
 
+impl Biplate<SubModel> for Model {
+    fn biplate(&self) -> (Tree<SubModel>, Box<dyn Fn(Tree<SubModel>) -> Self>) {
+        let submodel = self.as_submodel().clone();
+
+        let self2 = self.clone();
+        let ctx = Box::new(move |x| {
+            let Tree::One(submodel) = x else {
+                panic!();
+            };
+
+            let mut self3 = self2.clone();
+            self3.replace_submodel(submodel);
+            self3
+        });
+
+        (Tree::One(submodel), ctx)
+    }
+}
+
 impl Display for Model {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Display::fmt(self.as_submodel(), f)
@@ -108,10 +131,40 @@ pub struct SerdeModel {
 impl SerdeModel {
     /// Initialises the model for rewriting.
     pub fn initialise(self, context: Arc<RwLock<Context<'static>>>) -> Option<Model> {
-        // TODO: Once we have submodels and multiple symbol tables, de-duplicate deserialized
-        // Rc<RefCell<>> symbol tables and declarations using their stored ids.
+        // The definitive versions of each symbol table are stored in the submodels. Parent
+        // pointers store dummy values with the correct ids, but nothing else. We need to replace
+        // these dummy values with pointers to the actual parent symbol tables, using the ids to
+        // know which tables should be equal.
         //
-        // See ast::serde::RcRefCellAsId.
+        // See super::serde::RcRefCellToInner, super::serde::RcRefCellToId.
+
+        // Store the definitive versions of all symbol tables by id.
+        let mut tables: HashMap<ObjId, Rc<RefCell<SymbolTable>>> = HashMap::new();
+
+        // Find the definitive versions by traversing the sub-models.
+        for submodel in self.submodel.universe() {
+            let id = submodel.symbols().id();
+
+            // ids should be unique!
+            assert_eq!(
+                tables.insert(id, submodel.symbols_ptr_unchecked().clone()),
+                None
+            );
+        }
+
+        // Restore parent pointers using `tables`.
+        for table in tables.clone().into_values() {
+            let mut table_mut = table.borrow_mut();
+            let parent_mut = table_mut.parent_mut_unchecked();
+
+            #[allow(clippy::unwrap_used)]
+            if let Some(parent) = parent_mut {
+                let parent_id = parent.borrow().id();
+
+                *parent = tables.get(&parent_id).unwrap().clone();
+            }
+        }
+
         Some(Model {
             submodel: self.submodel,
             context,

@@ -283,6 +283,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 None
             }
         }
+        Expr::Scope(_, _) => None,
     }
 }
 

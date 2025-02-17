@@ -3,12 +3,9 @@ use super::{
     resolve_rules::{ResolveRulesError, RuleData},
     Reduction,
 };
-use crate::{
-    ast::{
-        pretty::{pretty_variable_declaration, pretty_vec},
-        Expression,
-    },
-    Model,
+use crate::ast::{
+    pretty::{pretty_variable_declaration, pretty_vec},
+    Expression, SubModel,
 };
 
 use itertools::Itertools;
@@ -28,7 +25,7 @@ pub struct RuleResult<'a> {
 pub fn log_rule_application(
     result: &RuleResult,
     initial_expression: &Expression,
-    initial_model: &Model,
+    initial_model: &SubModel,
 ) {
     let red = &result.reduction;
     let rule = result.rule_data.rule;
@@ -63,7 +60,7 @@ pub fn log_rule_application(
     let new_variables_str = {
         let mut vars: Vec<String> = vec![];
 
-        for var_name in red.added_symbols(&initial_model.as_submodel().symbols()) {
+        for var_name in red.added_symbols(&initial_model.symbols()) {
             #[allow(clippy::unwrap_used)]
             vars.push(format!(
                 "  {}",
