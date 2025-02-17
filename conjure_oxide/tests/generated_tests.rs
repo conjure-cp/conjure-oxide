@@ -45,9 +45,6 @@ use serde::Deserialize;
 #[serde(default)]
 struct TestConfig {
     extra_rewriter_asserts: Vec<String>,
-    use_native_parser: bool,
-    use_naive_rewriter: bool,
-    run_solver: bool,
 
     parse_model_default: bool, // Stage 1a: Reads and verifies the Essence model file
     enable_native_parser: bool, // Stage 1b: Runs the native parser if enabled
@@ -65,11 +62,8 @@ impl Default for TestConfig {
     fn default() -> Self {
         Self {
             extra_rewriter_asserts: vec!["vector_operators_have_partially_evaluated".into()],
-            use_native_parser: true,
-            use_naive_rewriter: true,
             enable_native_impl: false,
             enable_rewriter_impl: true,
-            run_solver: true,
             parse_model_default: true,
             enable_native_parser: false,
             apply_rewrite_rules: true,
@@ -87,12 +81,6 @@ fn env_var_override_bool(key: &str, default: bool) -> bool {
 impl TestConfig {
     fn merge_env(self) -> Self {
         Self {
-            use_native_parser: env_var_override_bool("USE_NATIVE_PARSER", self.use_native_parser),
-            use_naive_rewriter: env_var_override_bool(
-                "USE_NAIVE_REWRITER",
-                self.use_naive_rewriter,
-            ),
-            run_solver: env_var_override_bool("RUN_SOLVER", self.run_solver),
             parse_model_default: env_var_override_bool(
                 "PARSE_MODEL_DEFAULT",
                 self.parse_model_default,
