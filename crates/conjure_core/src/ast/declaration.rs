@@ -88,6 +88,7 @@ impl Declaration {
         }
     }
 
+    /// The name of this declaration.
     pub fn name(&self) -> &Name {
         &self.name
     }
