@@ -202,6 +202,13 @@ impl SymbolTable {
         *(self.next_machine_name.borrow_mut()) += 1;
         Name::MachineName(num) // incremented when inserted
     }
+
+    /// Gets the parent of this symbol table as a mutable reference.
+    ///
+    /// This function provides no sanity checks.
+    pub fn parent_mut_unchecked(&mut self) -> &mut Option<Rc<RefCell<SymbolTable>>> {
+        &mut self.parent
+    }
 }
 
 impl IntoIterator for SymbolTable {

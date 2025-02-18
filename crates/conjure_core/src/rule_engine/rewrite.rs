@@ -129,7 +129,7 @@ pub fn rewrite_model<'a>(
         ) {
             debug_assert!(is_vec_bool(&step.new_top)); // All new_top expressions should be boolean
             new_model.as_submodel_mut().constraints_mut()[i] = step.new_expression.clone();
-            step.apply(&mut new_model); // Apply side-effects (e.g., symbol table updates)
+            step.apply(new_model.as_submodel_mut()); // Apply side-effects (e.g., symbol table updates)
         }
 
         // If new constraints are added, continue processing them in the next iterations.
@@ -220,7 +220,7 @@ fn rewrite_iteration(
     let rule_results = apply_all_rules(&expression, model, rules, stats);
     if let Some(result) = choose_rewrite(&rule_results, &expression) {
         // If a rule is applied, mark the expression as dirty
-        log_rule_application(&result, &expression, model);
+        log_rule_application(&result, &expression, model.as_submodel());
         return Some(result.reduction);
     }
 

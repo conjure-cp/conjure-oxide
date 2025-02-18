@@ -271,3 +271,17 @@ impl Biplate<Expression> for SubModel {
         (tree, ctx)
     }
 }
+
+impl Biplate<SubModel> for SubModel {
+    fn biplate(&self) -> (Tree<SubModel>, Box<dyn Fn(Tree<SubModel>) -> Self>) {
+        (
+            Tree::One(self.clone()),
+            Box::new(move |x| {
+                let Tree::One(x) = x else {
+                    panic!();
+                };
+                x
+            }),
+        )
+    }
+}
