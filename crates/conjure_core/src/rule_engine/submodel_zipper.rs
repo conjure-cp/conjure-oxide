@@ -22,6 +22,7 @@ pub(super) fn submodel_ctx(
 
 /// A zipper that traverses over the current submodel only, and does not traverse into nested
 /// scopes.
+#[derive(Clone)]
 struct SubmodelZipper {
     inner: Zipper<Expression>,
 }
@@ -39,11 +40,15 @@ impl SubmodelZipper {
         self.inner.go_up()
     }
 
+    fn rebuild_root(self) -> Expression {
+        self.inner.rebuild_root()
+    }
+
     fn go_down(&mut self) -> Option<()> {
         if matches!(self.inner.focus(), Expression::Scope(_, _)) {
             None
         } else {
-            self.go_down()
+            self.inner.go_down()
         }
     }
 
@@ -71,9 +76,13 @@ impl Iterator for SubmodelCtx {
         }
         let node = self.zipper.focus().clone();
         let submodel = self.submodel.clone();
+        let zipper = self.zipper.clone();
         let ctx = Arc::new(move |x| {
+            let mut zipper2 = zipper.clone();
+            *zipper2.focus_mut() = x;
+            let root = zipper2.rebuild_root();
             let mut submodel2 = submodel.clone();
-            submodel2.replace_root(x);
+            submodel2.replace_root(root);
             submodel2
         });
 
