@@ -77,6 +77,8 @@ impl Iterator for SubmodelCtx {
         let node = self.zipper.focus().clone();
         let submodel = self.submodel.clone();
         let zipper = self.zipper.clone();
+
+        #[allow(clippy::arc_with_non_send_sync)]
         let ctx = Arc::new(move |x| {
             let mut zipper2 = zipper.clone();
             *zipper2.focus_mut() = x;
