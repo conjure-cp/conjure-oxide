@@ -94,7 +94,7 @@ pub fn read_model_json(
     let expected_json_str = std::fs::read_to_string(format!(
         "{path}/{test_name}.{prefix}-{test_stage}.serialised.json"
     ))?;
-
+    println!("{path}/{test_name}.{prefix}-{test_stage}.serialised.json");
     let expected_model: SerdeModel = serde_json::from_str(&expected_json_str)?;
 
     Ok(expected_model.initialise(ctx.clone()).unwrap())
