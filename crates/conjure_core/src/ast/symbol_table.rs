@@ -376,12 +376,14 @@ impl SymbolTable {
                 Domain::BoolDomain => Some(ReturnType::Bool),
                 Domain::IntDomain(_) => Some(ReturnType::Int),
                 Domain::DomainReference(ref n) => self.type_of(n),
+                Domain::DomainSet(_) => Some(ReturnType::Set),
             },
             SymbolKind::ValueLetting(expr) => expr.return_type(),
             SymbolKind::DomainLetting(domain) => match domain {
                 Domain::BoolDomain => Some(ReturnType::Bool),
                 Domain::IntDomain(_) => Some(ReturnType::Int),
                 Domain::DomainReference(ref n) => self.type_of(n),
+                Domain::DomainSet(_) => Some(ReturnType::Set),
             },
         }
     }
