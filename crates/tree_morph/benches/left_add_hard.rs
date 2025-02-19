@@ -1,6 +1,5 @@
-///This is a simple benchmark that tests how long it takes tree-morph to evaluate (1+(1+...)).
-///This benchmark is designed to be compared with right_add.
-///
+///Added 4 extra rules (that never apply) to left_add, showing a performance cost of > +400%
+///Good optimisations will meant that this cost is vastly reduced (I am not sure by how much, but I think < +100% makes sense)
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use tree_morph::prelude::*;
 use uniplate::derive::Uniplate;
@@ -37,6 +36,10 @@ fn rule_eval_mul(_: &mut Commands<Expr, Meta>, expr: &Expr, _: &Meta) -> Option<
 enum MyRule {
     EvalAdd,
     EvalMul,
+    Fee,
+    Fi,
+    Fo,
+    Fum,
 }
 
 impl Rule<Expr, Meta> for MyRule {
@@ -45,6 +48,10 @@ impl Rule<Expr, Meta> for MyRule {
         match self {
             MyRule::EvalAdd => rule_eval_add(cmd, expr, meta),
             MyRule::EvalMul => rule_eval_mul(cmd, expr, meta),
+            MyRule::Fee => None,
+            MyRule::Fi => None,
+            MyRule::Fo => None,
+            MyRule::Fum => None,
         }
     }
 }
@@ -76,17 +83,26 @@ fn nested_addition(n: i32) -> Box<Expr> {
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     let base: i32 = 2;
-    let expr = *nested_addition(base.pow(5));
-    let rules = vec![vec![MyRule::EvalAdd, MyRule::EvalMul]];
+    let rules = vec![
+        vec![MyRule::Fee],
+        vec![MyRule::Fi],
+        vec![MyRule::Fo],
+        vec![MyRule::Fum],
+        vec![MyRule::EvalAdd, MyRule::EvalMul],
+    ];
 
-    c.bench_function("left_add", |b| {
-        b.iter(|| {
-            let meta = Meta {
-                num_applications: 0,
-            };
-            morph(rules.clone(), select_first, black_box(expr.clone()), meta)
-        })
-    });
+    for exp in [2, 3, 4, 5, 6] {
+        let expr = *nested_addition(base.pow(exp));
+
+        c.bench_function(&format!("left_add_hard{}", exp), |b| {
+            b.iter(|| {
+                let meta = Meta {
+                    num_applications: 0,
+                };
+                morph(rules.clone(), select_first, black_box(expr.clone()), meta)
+            })
+        });
+    }
 }
 
 criterion_group!(benches, criterion_benchmark);
