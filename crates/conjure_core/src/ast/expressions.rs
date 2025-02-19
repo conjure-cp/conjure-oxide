@@ -16,7 +16,7 @@ use crate::ast::Name;
 use crate::ast::ReturnType;
 use crate::metadata::Metadata;
 
-use super::{Domain, Range};
+use super::{Domain, Range, SubModel, Typeable};
 
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
@@ -24,12 +24,13 @@ use super::{Domain, Range};
 /// used to build rules and conditions for the model.
 #[document_compatibility]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
-#[uniplate(walk_into=[Atom])]
+#[uniplate(walk_into=[Atom,SubModel])]
 #[biplate(to=Literal)]
 #[biplate(to=Metadata)]
 #[biplate(to=Atom)]
 #[biplate(to=Name)]
 #[biplate(to=Vec<Expression>)]
+#[biplate(to=SubModel)]
 pub enum Expression {
     /// The top of the model
     Root(Metadata, Vec<Expression>),
@@ -39,6 +40,8 @@ pub enum Expression {
     Bubble(Metadata, Box<Expression>, Box<Expression>),
 
     Atomic(Metadata, Atom),
+
+    Scope(Metadata, Box<SubModel>),
 
     /// `|x|` - absolute value of `x`
     #[compatible(JsonInput)]
@@ -333,6 +336,7 @@ impl Expression {
                 Some(Domain::IntDomain(vec![Range::Single(*n)]))
             }
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(Domain::BoolDomain),
+            Expression::Scope(_, _) => Some(Domain::BoolDomain),
             Expression::Sum(_, exprs) => expr_vec_to_domain_i32(exprs, |x, y| Some(x + y), syms),
             Expression::Product(_, exprs) => {
                 expr_vec_to_domain_i32(exprs, |x, y| Some(x * y), syms)
@@ -511,6 +515,7 @@ impl Expression {
             Expression::Atomic(_, Atom::Literal(Literal::Int(_))) => Some(ReturnType::Int),
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(ReturnType::Bool),
             Expression::Atomic(_, Atom::Reference(_)) => None,
+            Expression::Scope(_, scope) => scope.return_type(),
             Expression::Abs(_, _) => Some(ReturnType::Int),
             Expression::Sum(_, _) => Some(ReturnType::Int),
             Expression::Product(_, _) => Some(ReturnType::Int),
@@ -618,6 +623,7 @@ impl Display for Expression {
                 write!(f, "{}", pretty_expressions_as_top_level(exprs))
             }
             Expression::Atomic(_, atom) => atom.fmt(f),
+            Expression::Scope(_, submodel) => write!(f, "{{\n{submodel}\n}}"),
             Expression::Abs(_, a) => write!(f, "|{}|", a),
             Expression::Sum(_, expressions) => {
                 write!(f, "Sum({})", pretty_vec(expressions))

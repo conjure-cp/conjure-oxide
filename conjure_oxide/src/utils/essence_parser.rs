@@ -1,5 +1,5 @@
 #![allow(clippy::legacy_numeric_constants)]
-use conjure_core::ast::declaration::Declaration;
+use conjure_core::ast::Declaration;
 use conjure_core::error::Error;
 use std::fs;
 use std::rc::Rc;
@@ -23,7 +23,7 @@ pub fn parse_essence_file_native(
 ) -> Result<Model, EssenceParseError> {
     let (tree, source_code) = get_tree(path, filename, extension);
 
-    let mut model = Model::new_empty(context);
+    let mut model = Model::new(context);
     let root_node = tree.root_node();
     for statement in named_children(&root_node) {
         match statement.kind() {
@@ -32,6 +32,7 @@ pub fn parse_essence_file_native(
                 let var_hashmap = parse_find_statement(statement, &source_code);
                 for (name, decision_variable) in var_hashmap {
                     model
+                        .as_submodel_mut()
                         .symbols_mut()
                         .insert(Rc::new(Declaration::new_var(name, decision_variable)));
                 }
@@ -43,12 +44,12 @@ pub fn parse_essence_file_native(
                         constraint_vec.push(parse_constraint(constraint, &source_code));
                     }
                 }
-                model.add_constraints(constraint_vec);
+                model.as_submodel_mut().add_constraints(constraint_vec);
             }
             "e_prime_label" => {}
             "letting_statement_list" => {
                 let letting_vars = parse_letting_statement(statement, &source_code);
-                model.symbols_mut().extend(letting_vars);
+                model.as_submodel_mut().symbols_mut().extend(letting_vars);
             }
             _ => {
                 let kind = statement.kind();

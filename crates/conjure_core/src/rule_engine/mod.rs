@@ -69,6 +69,7 @@ pub use rewrite_naive::rewrite_naive;
 pub use rewriter_common::RewriteError;
 pub use rule::{ApplicationError, ApplicationResult, Reduction, Rule};
 pub use rule_set::RuleSet;
+mod submodel_zipper;
 
 use crate::solver::SolverFamily;
 

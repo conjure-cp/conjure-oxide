@@ -7,7 +7,7 @@ use std::hash::Hash;
 use std::io::Write;
 use std::sync::{Arc, RwLock};
 
-use conjure_core::ast::model::SerdeModel;
+use conjure_core::ast::SerdeModel;
 use conjure_core::context::Context;
 use serde_json::{json, Error as JsonError, Value as JsonValue};
 

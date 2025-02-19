@@ -1,24 +1,27 @@
 pub mod pretty;
-pub mod types;
+pub mod serde;
 
 mod atom;
-pub mod declaration;
+mod declaration;
 mod domains;
 mod expressions;
 mod literals;
-pub mod model;
+mod model;
 mod name;
-pub mod serde;
+mod submodel;
 mod symbol_table;
+mod types;
 mod variables;
 
 pub use atom::Atom;
+pub use declaration::*;
 pub use domains::Domain;
 pub use domains::Range;
 pub use expressions::Expression;
 pub use literals::Literal;
-pub use model::Model;
+pub use model::*;
 pub use name::Name;
+pub use submodel::SubModel;
 pub use symbol_table::SymbolTable;
-pub use types::ReturnType;
+pub use types::*;
 pub use variables::DecisionVariable;

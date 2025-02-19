@@ -39,7 +39,8 @@ impl CNFModel {
     pub fn from_conjure(conjure_model: ConjureModel) -> Result<CNFModel, SolverError> {
         let mut ans: CNFModel = CNFModel::new();
 
-        let symtab = conjure_model.symbols();
+        let submodel = conjure_model.as_submodel();
+        let symtab = submodel.symbols();
         for (name, decl) in symtab.clone().into_iter() {
             // ignore symbols that are not variables.
             let Some(var) = decl.as_var() else {
@@ -57,8 +58,8 @@ impl CNFModel {
             ans.add_variable(&name);
         }
 
-        for expr in conjure_model.get_constraints_vec() {
-            match ans.add_expression(&expr) {
+        for expr in submodel.constraints() {
+            match ans.add_expression(expr) {
                 Ok(_) => {}
                 Err(error) => {
                     let message = format!("{:?}", error);

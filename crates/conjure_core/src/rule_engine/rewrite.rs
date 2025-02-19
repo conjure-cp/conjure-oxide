@@ -119,17 +119,17 @@ pub fn rewrite_model<'a>(
 
     //the while loop is exited when None is returned implying the sub-expression is clean
     let mut i: usize = 0;
-    while i < new_model.get_constraints_vec().len() {
+    while i < new_model.as_submodel().constraints().len() {
         while let Some(step) = rewrite_iteration(
-            &new_model.get_constraints_vec()[i],
+            &new_model.as_submodel().constraints()[i],
             &new_model,
             &rules,
             apply_optimizations,
             &mut stats,
         ) {
             debug_assert!(is_vec_bool(&step.new_top)); // All new_top expressions should be boolean
-            new_model.get_constraints_vec()[i] = step.new_expression.clone();
-            step.apply(&mut new_model); // Apply side-effects (e.g., symbol table updates)
+            new_model.as_submodel_mut().constraints_mut()[i] = step.new_expression.clone();
+            step.apply(new_model.as_submodel_mut()); // Apply side-effects (e.g., symbol table updates)
         }
 
         // If new constraints are added, continue processing them in the next iterations.
@@ -220,7 +220,7 @@ fn rewrite_iteration(
     let rule_results = apply_all_rules(&expression, model, rules, stats);
     if let Some(result) = choose_rewrite(&rule_results, &expression) {
         // If a rule is applied, mark the expression as dirty
-        log_rule_application(&result, &expression, model);
+        log_rule_application(&result, &expression, model.as_submodel());
         return Some(result.reduction);
     }
 
@@ -281,7 +281,10 @@ fn apply_all_rules<'a>(
 ) -> Vec<RuleResult<'a>> {
     let mut results = Vec::new();
     for rule_data in rules {
-        match rule_data.rule.apply(expression, &model.symbols()) {
+        match rule_data
+            .rule
+            .apply(expression, &model.as_submodel().symbols())
+        {
             Ok(red) => {
                 stats.rewriter_rule_application_attempts =
                     Some(stats.rewriter_rule_application_attempts.unwrap() + 1);

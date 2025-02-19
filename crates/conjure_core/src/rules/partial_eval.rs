@@ -22,6 +22,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr.clone() {
         Bubble(_, _, _) => Err(RuleNotApplicable),
         Atomic(_, _) => Err(RuleNotApplicable),
+        Scope(_, _) => Err(RuleNotApplicable),
         Abs(m, e) => match *e {
             Neg(_, inner) => Ok(Reduction::pure(Abs(m, inner))),
             _ => Err(RuleNotApplicable),

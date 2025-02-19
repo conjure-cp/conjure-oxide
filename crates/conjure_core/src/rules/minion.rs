@@ -5,7 +5,7 @@
 use std::convert::TryInto;
 use std::rc::Rc;
 
-use crate::ast::declaration::Declaration;
+use crate::ast::Declaration;
 use crate::ast::{Atom, Domain, Expression as Expr, Literal as Lit, ReturnType, SymbolTable};
 
 use crate::metadata::Metadata;
