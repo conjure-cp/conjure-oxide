@@ -57,6 +57,15 @@ impl Model {
     }
 }
 
+impl Default for Model {
+    fn default() -> Self {
+        Model {
+            submodel: SubModel::new_top_level(),
+            context: Arc::new(RwLock::new(Context::default())),
+        }
+    }
+}
+
 impl Typeable for Model {
     fn return_type(&self) -> Option<ReturnType> {
         Some(ReturnType::Bool)
