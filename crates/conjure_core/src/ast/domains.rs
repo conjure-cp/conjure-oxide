@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
-use super::Name;
+use super::{types::Typeable, Name, ReturnType};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Range<A>
@@ -85,6 +85,12 @@ impl Display for Domain {
                 write!(f, "set of ({})", domain)
             }
         }
+    }
+}
+
+impl Typeable for Domain {
+    fn return_type(&self) -> Option<ReturnType> {
+        todo!()
     }
 }
 #[cfg(test)]

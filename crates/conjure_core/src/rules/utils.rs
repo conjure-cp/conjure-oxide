@@ -1,10 +1,12 @@
+use std::rc::Rc;
+
+use crate::ast::{Declaration, SymbolTable};
 use tracing::instrument;
 use uniplate::{Biplate, Uniplate};
 
 use crate::{
-    ast::{Atom, DecisionVariable, Domain, Expression as Expr, Name},
+    ast::{Atom, Domain, Expression as Expr, Name},
     metadata::Metadata,
-    Model,
 };
 
 /// True iff `expr` is an `Atom`.
@@ -62,13 +64,13 @@ pub fn expressions_to_atoms(exprs: &Vec<Expr>) -> Option<Vec<Atom>> {
 ///
 /// * `Some(ToAuxVarOutput)` if successful, containing:
 ///     
-///     + A new model, modified to include the auxiliary variable in the symbol table.
+///     + A new symbol table, modified to include the auxiliary variable.
 ///     + A new top level expression, containing the declaration of the auxiliary variable.
 ///     + A reference to the auxiliary variable to replace the existing expression with.
 ///
 #[instrument]
-pub fn to_aux_var(expr: &Expr, m: &Model) -> Option<ToAuxVarOutput> {
-    let mut m = m.clone();
+pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> {
+    let mut symbols = symbols.clone();
 
     // No need to put an atom in an aux_var
     if is_atom(expr) {
@@ -80,20 +82,19 @@ pub fn to_aux_var(expr: &Expr, m: &Model) -> Option<ToAuxVarOutput> {
         return None;
     }
 
-    let name = m.gensym();
+    let name = symbols.gensym();
 
-    let Some(domain) = expr.domain_of(m.symbols()) else {
+    let Some(domain) = expr.domain_of(&symbols) else {
         tracing::trace!("could not find domain of {}", expr);
         return None;
     };
 
-    m.add_variable(name.clone(), DecisionVariable::new(domain.clone()));
-
+    symbols.insert(Rc::new(Declaration::new_var(name.clone(), domain.clone())))?;
     Some(ToAuxVarOutput {
         aux_name: name.clone(),
         aux_decl: Expr::AuxDeclaration(Metadata::new(), name, Box::new(expr.clone())),
         aux_domain: domain,
-        new_model: m,
+        symbols,
         _unconstructable: (),
     })
 }
@@ -104,7 +105,7 @@ pub struct ToAuxVarOutput {
     aux_decl: Expr,
     #[allow(dead_code)] // TODO: aux_domain should be used soon, try removing this pragma
     aux_domain: Domain,
-    new_model: Model,
+    symbols: SymbolTable,
     _unconstructable: (),
 }
 
@@ -126,12 +127,9 @@ impl ToAuxVarOutput {
         self.aux_decl.clone()
     }
 
-    /// Returns the new `Model`, modified to contain this auxiliary variable in the symbol table.
-    ///
-    /// Like `Reduction`, this new model does not include the new top level expression. To get
-    /// this, use [`top_level_expr()`](`ToAuxVarOutput::top_level_expr()`).
-    pub fn model(&self) -> Model {
-        self.new_model.clone()
+    /// Returns the new `SymbolTable`, modified to contain this auxiliary variable in the symbol table.
+    pub fn symbols(&self) -> SymbolTable {
+        self.symbols.clone()
     }
 
     /// Returns the name of the auxiliary variable.

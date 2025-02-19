@@ -1,5 +1,6 @@
 use std::collections::VecDeque;
 use std::process::exit;
+use std::rc::Rc;
 
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_core::solver::SolverFamily;
@@ -162,11 +163,11 @@ fn rule_sum_constants() {
     );
 
     expr = sum_constants
-        .apply(&expr, &Model::new_empty(Default::default()))
+        .apply(&expr, &SymbolTable::new())
         .unwrap()
         .new_expression;
     expr = unwrap_sum
-        .apply(&expr, &Model::new_empty(Default::default()))
+        .apply(&expr, &SymbolTable::new())
         .unwrap()
         .new_expression;
 
@@ -196,7 +197,7 @@ fn rule_sum_geq() {
     );
 
     expr = introduce_sumgeq
-        .apply(&expr, &Model::new_empty(Default::default()))
+        .apply(&expr, &SymbolTable::new())
         .unwrap()
         .new_expression;
 
@@ -240,11 +241,11 @@ fn reduce_solve_xyz() {
     );
 
     expr1 = sum_constants
-        .apply(&expr1, &Model::new_empty(Default::default()))
+        .apply(&expr1, &SymbolTable::new())
         .unwrap()
         .new_expression;
     expr1 = unwrap_sum
-        .apply(&expr1, &Model::new_empty(Default::default()))
+        .apply(&expr1, &SymbolTable::new())
         .unwrap()
         .new_expression;
     assert_eq!(
@@ -275,7 +276,7 @@ fn reduce_solve_xyz() {
         Box::new(expr1),
     );
     expr1 = introduce_sumleq
-        .apply(&expr1, &Model::new_empty(Default::default()))
+        .apply(&expr1, &SymbolTable::new())
         .unwrap()
         .new_expression;
     assert_eq!(
@@ -304,12 +305,12 @@ fn reduce_solve_xyz() {
         )),
     );
     expr2 = lt_to_leq
-        .apply(&expr2, &Model::new_empty(Default::default()))
+        .apply(&expr2, &SymbolTable::new())
         .unwrap()
         .new_expression;
 
     expr2 = leq_to_ineq
-        .apply(&expr2, &Model::new_empty(Default::default()))
+        .apply(&expr2, &SymbolTable::new())
         .unwrap()
         .new_expression;
     assert_eq!(
@@ -322,25 +323,33 @@ fn reduce_solve_xyz() {
         )
     );
 
-    let mut model = Model::new(SymbolTable::new(), vec![expr1, expr2], Default::default());
-    model.add_variable(
-        Name::UserName(String::from("a")),
-        DecisionVariable {
-            domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
-        },
-    );
-    model.add_variable(
-        Name::UserName(String::from("b")),
-        DecisionVariable {
-            domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
-        },
-    );
-    model.add_variable(
-        Name::UserName(String::from("c")),
-        DecisionVariable {
-            domain: Domain::IntDomain(vec![Range::Bounded(1, 3)]),
-        },
-    );
+    let mut model = Model::new(Default::default());
+    *model.as_submodel_mut().constraints_mut() = vec![expr1, expr2];
+
+    model
+        .as_submodel_mut()
+        .symbols_mut()
+        .insert(Rc::new(Declaration::new_var(
+            Name::UserName(String::from("a")),
+            Domain::IntDomain(vec![Range::Bounded(1, 3)]),
+        )))
+        .unwrap();
+    model
+        .as_submodel_mut()
+        .symbols_mut()
+        .insert(Rc::new(Declaration::new_var(
+            Name::UserName(String::from("b")),
+            Domain::IntDomain(vec![Range::Bounded(1, 3)]),
+        )))
+        .unwrap();
+    model
+        .as_submodel_mut()
+        .symbols_mut()
+        .insert(Rc::new(Declaration::new_var(
+            Name::UserName(String::from("c")),
+            Domain::IntDomain(vec![Range::Bounded(1, 3)]),
+        )))
+        .unwrap();
 
     let solver: Solver<adaptors::Minion> = Solver::new(adaptors::Minion::new());
     let solver = solver.load_model(model).unwrap();
@@ -363,7 +372,7 @@ fn rule_remove_double_negation() {
     );
 
     expr = remove_double_negation
-        .apply(&expr, &Model::new_empty(Default::default()))
+        .apply(&expr, &SymbolTable::new())
         .unwrap()
         .new_expression;
 
@@ -394,11 +403,11 @@ fn remove_trivial_and_or() {
     );
 
     expr_and = remove_trivial_and
-        .apply(&expr_and, &Model::new_empty(Default::default()))
+        .apply(&expr_and, &SymbolTable::new())
         .unwrap()
         .new_expression;
     expr_or = remove_trivial_or
-        .apply(&expr_or, &Model::new_empty(Default::default()))
+        .apply(&expr_or, &SymbolTable::new())
         .unwrap()
         .new_expression;
 
@@ -434,7 +443,7 @@ fn rule_distribute_not_over_and() {
     );
 
     expr = distribute_not_over_and
-        .apply(&expr, &Model::new_empty(Default::default()))
+        .apply(&expr, &SymbolTable::new())
         .unwrap()
         .new_expression;
 
@@ -484,7 +493,7 @@ fn rule_distribute_not_over_or() {
     );
 
     expr = distribute_not_over_or
-        .apply(&expr, &Model::new_empty(Default::default()))
+        .apply(&expr, &SymbolTable::new())
         .unwrap()
         .new_expression;
 
@@ -524,7 +533,7 @@ fn rule_distribute_not_over_and_not_changed() {
         )),
     );
 
-    let result = distribute_not_over_and.apply(&expr, &Model::new_empty(Default::default()));
+    let result = distribute_not_over_and.apply(&expr, &SymbolTable::new());
 
     assert!(result.is_err());
 }
@@ -541,7 +550,7 @@ fn rule_distribute_not_over_or_not_changed() {
         )),
     );
 
-    let result = distribute_not_over_or.apply(&expr, &Model::new_empty(Default::default()));
+    let result = distribute_not_over_or.apply(&expr, &SymbolTable::new());
 
     assert!(result.is_err());
 }
@@ -565,7 +574,7 @@ fn rule_distribute_or_over_and() {
     );
 
     let red = distribute_or_over_and
-        .apply(&expr, &Model::new_empty(Default::default()))
+        .apply(&expr, &SymbolTable::new())
         .unwrap();
 
     assert_eq!(
@@ -657,40 +666,40 @@ fn rewrite_solve_xyz() {
     };
 
     // Apply rewrite function to the nested expression
-    let rewritten_expr = rewrite_naive(
-        &Model::new(SymbolTable::new(), vec![nested_expr], Default::default()),
-        &rule_sets,
-        true,
-    )
-    .unwrap()
-    .get_constraints_vec();
+    let mut model = Model::new(Default::default());
+    *model.as_submodel_mut().constraints_mut() = vec![nested_expr];
+    model = rewrite_naive(&model, &rule_sets, true).unwrap();
+    let rewritten_expr = model.as_submodel().constraints();
 
     // Check if the expression is in its simplest form
 
     assert!(rewritten_expr.iter().all(is_simple));
 
-    // Create model with variables and constraints
-    let mut model = Model::new(SymbolTable::new(), rewritten_expr, Default::default());
-
     // Insert variables and domains
-    model.add_variable(
-        var_name_from_atom(&variable_a.clone()),
-        DecisionVariable {
-            domain: domain.clone(),
-        },
-    );
-    model.add_variable(
-        var_name_from_atom(&variable_b.clone()),
-        DecisionVariable {
-            domain: domain.clone(),
-        },
-    );
-    model.add_variable(
-        var_name_from_atom(&variable_c.clone()),
-        DecisionVariable {
-            domain: domain.clone(),
-        },
-    );
+    model
+        .as_submodel_mut()
+        .symbols_mut()
+        .insert(Rc::new(Declaration::new_var(
+            var_name_from_atom(&variable_a.clone()),
+            domain.clone(),
+        )))
+        .unwrap();
+    model
+        .as_submodel_mut()
+        .symbols_mut()
+        .insert(Rc::new(Declaration::new_var(
+            var_name_from_atom(&variable_b.clone()),
+            domain.clone(),
+        )))
+        .unwrap();
+    model
+        .as_submodel_mut()
+        .symbols_mut()
+        .insert(Rc::new(Declaration::new_var(
+            var_name_from_atom(&variable_c.clone()),
+            domain.clone(),
+        )))
+        .unwrap();
 
     let solver: Solver<adaptors::Minion> = Solver::new(adaptors::Minion::new());
     let solver = solver.load_model(model).unwrap();
@@ -746,7 +755,7 @@ fn apply_all_rules<'a>(
 ) -> Vec<RuleResult<'a>> {
     let mut results = Vec::new();
     for rule in rules {
-        match rule.apply(expression, &Model::new_empty(Default::default())) {
+        match rule.apply(expression, &SymbolTable::new()) {
             Ok(red) => {
                 results.push(RuleResult {
                     rule,

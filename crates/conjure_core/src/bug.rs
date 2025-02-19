@@ -23,8 +23,11 @@ You can help us by providing a minimal failing example.
 
 Issue tracker: http://github.com/conjure-cp/conjure-oxide/issues
 
+version: {}
+location: {}:{}:{}
+
 {}
-"#, &formatted_msg);
+"#, git_version::git_version!(),file!(),module_path!(),line!(), &formatted_msg);
 
         panic!("{}", full_message);
     }};

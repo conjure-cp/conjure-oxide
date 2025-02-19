@@ -1,23 +1,32 @@
 // Tests for various functionalities of the Model
 
-use conjure_core::model::Model;
+use std::rc::Rc;
+
+use conjure_core::ast::Model;
 use conjure_oxide::ast::*;
 
 #[test]
 fn modify_domain() {
+    let mut m = Model::new(Default::default());
+
+    let mut symbols = m.as_submodel_mut().symbols_mut();
+
     let a = Name::UserName(String::from("a"));
 
     let d1 = Domain::IntDomain(vec![Range::Bounded(1, 3)]);
     let d2 = Domain::IntDomain(vec![Range::Bounded(1, 2)]);
 
-    let mut symbols = SymbolTable::new();
-    symbols.add_var(a.clone(), DecisionVariable { domain: d1.clone() });
+    symbols
+        .insert(Rc::new(Declaration::new_var(a.clone(), d1.clone())))
+        .unwrap();
 
-    let mut m = Model::new(symbols, vec![], Default::default());
+    assert_eq!(symbols.domain(&a).unwrap(), d1);
 
-    assert_eq!(m.symbols().domain_of(&a).unwrap(), &d1);
+    let mut decl_a = symbols.lookup(&a).unwrap();
 
-    m.update_domain(&a, d2.clone());
+    Rc::make_mut(&mut decl_a).as_var_mut().unwrap().domain = d2.clone();
 
-    assert_eq!(m.symbols().domain_of(&a).unwrap(), &d2);
+    symbols.update_insert(decl_a);
+
+    assert_eq!(symbols.domain(&a).unwrap(), d2);
 }

@@ -5,15 +5,15 @@ use itertools::iproduct;
 use schemars::Set;
 use uniplate::Biplate;
 
+use crate::ast::SymbolTable;
 use crate::rule_engine::{ApplicationResult, Reduction};
-use crate::Model;
 use crate::{
     ast::{Atom, Expression as Expr, Literal as Lit, Literal::*},
     metadata::Metadata,
 };
 
 #[register_rule(("Base",9000))]
-fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
+fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     use conjure_core::rule_engine::ApplicationError::RuleNotApplicable;
     use Expr::*;
 
@@ -24,6 +24,7 @@ fn partial_evaluator(expr: &Expr, _: &Model) -> ApplicationResult {
         Set(_, _) => Err(RuleNotApplicable),
         Bubble(_, _, _) => Err(RuleNotApplicable),
         Atomic(_, _) => Err(RuleNotApplicable),
+        Scope(_, _) => Err(RuleNotApplicable),
         Abs(m, e) => match *e {
             Neg(_, inner) => Ok(Reduction::pure(Abs(m, inner))),
             _ => Err(RuleNotApplicable),

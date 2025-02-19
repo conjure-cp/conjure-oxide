@@ -3,8 +3,10 @@
 /************************************************************************/
 
 use std::convert::TryInto;
+use std::rc::Rc;
 
-use crate::ast::{Atom, DecisionVariable, Domain, Expression as Expr, Literal as Lit, ReturnType};
+use crate::ast::Declaration;
+use crate::ast::{Atom, Domain, Expression as Expr, Literal as Lit, ReturnType, SymbolTable};
 
 use crate::metadata::Metadata;
 use crate::rule_engine::{
@@ -13,7 +15,6 @@ use crate::rule_engine::{
 use crate::rules::extra_check;
 
 use crate::solver::SolverFamily;
-use crate::Model;
 use uniplate::Uniplate;
 use ApplicationError::*;
 
@@ -22,7 +23,7 @@ use super::utils::{is_flat, to_aux_var};
 register_rule_set!("Minion", ("Base"), (SolverFamily::Minion));
 
 #[register_rule(("Minion", 4200))]
-fn introduce_producteq(expr: &Expr, model: &Model) -> ApplicationResult {
+fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // product = val
     let val: Atom;
     let product: Expr;
@@ -85,7 +86,7 @@ fn introduce_producteq(expr: &Expr, model: &Model) -> ApplicationResult {
         .try_into()
         .or(Err(RuleNotApplicable))?;
 
-    let mut model = model.clone();
+    let mut symbols = symbols.clone();
     let mut new_tops: Vec<Expr> = vec![];
 
     // FIXME: add a test for this
@@ -94,14 +95,14 @@ fn introduce_producteq(expr: &Expr, model: &Model) -> ApplicationResult {
         // similar to other introduction rules.
         let next_factor_atom: Atom = next_factor.clone().try_into().or(Err(RuleNotApplicable))?;
 
-        let aux_var = model.gensym();
+        let aux_var = symbols.gensym();
         // TODO: find this domain without having to make unnecessary Expr and Metadata objects
         // Just using the domain of expr doesn't work
         let aux_domain = Expr::Product(Metadata::new(), vec![y.clone().into(), next_factor])
-            .domain_of(&model.symbols().clone())
+            .domain_of(&symbols)
             .ok_or(ApplicationError::DomainError)?;
 
-        model.add_variable(aux_var.clone(), DecisionVariable { domain: aux_domain });
+        symbols.insert(Rc::new(Declaration::new_var(aux_var.clone(), aux_domain)));
 
         let new_top_expr =
             Expr::FlatProductEq(Metadata::new(), y, next_factor_atom, aux_var.clone().into());
@@ -113,7 +114,7 @@ fn introduce_producteq(expr: &Expr, model: &Model) -> ApplicationResult {
     Ok(Reduction::new(
         Expr::FlatProductEq(Metadata::new(), x, y, val),
         new_tops,
-        model.symbols().clone(),
+        symbols,
     ))
 }
 
@@ -177,7 +178,7 @@ fn introduce_producteq(expr: &Expr, model: &Model) -> ApplicationResult {
 /// Cases 6 and 7 could potentially be a normalising rule `-e ~> -1*e`. However, I think that we
 /// should only turn negations into a product when they are inside a sum, not all the time.
 #[register_rule(("Minion", 4600))]
-fn introduce_weighted_sumleq_sumgeq(expr: &Expr, model: &Model) -> ApplicationResult {
+fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // Keep track of which type of (in)equality was in the input, and use this to decide what
     // constraints to make at the end
 
@@ -266,7 +267,7 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, model: &Model) -> ApplicationRe
     }?;
 
     let mut new_top_exprs: Vec<Expr> = vec![];
-    let mut model = model.clone();
+    let mut symbols = symbols.clone();
 
     let mut coefficients: Vec<Lit> = vec![];
     let mut vars: Vec<Atom> = vec![];
@@ -297,9 +298,9 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, model: &Model) -> ApplicationRe
                     // c * <some non-flat expression>
                     [Expr::Atomic(_, Atom::Literal(c)), e1] => {
                         #[allow(clippy::unwrap_used)] // aux var failing is a bug
-                        let aux_var_info = to_aux_var(e1, &model).unwrap();
+                        let aux_var_info = to_aux_var(e1, &symbols).unwrap();
 
-                        model = aux_var_info.model();
+                        symbols = aux_var_info.symbols();
                         let var = aux_var_info.as_atom();
                         new_top_exprs.push(aux_var_info.top_level_expr());
                         (c.clone(), var)
@@ -310,9 +311,9 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, model: &Model) -> ApplicationRe
                         let e1 = Expr::Product(Metadata::new(), rest.to_vec());
 
                         #[allow(clippy::unwrap_used)] // aux var failing is a bug
-                        let aux_var_info = to_aux_var(&e1, &model).unwrap();
+                        let aux_var_info = to_aux_var(&e1, &symbols).unwrap();
 
-                        model = aux_var_info.model();
+                        symbols = aux_var_info.symbols();
                         let var = aux_var_info.as_atom();
                         new_top_exprs.push(aux_var_info.top_level_expr());
                         (c.clone(), var)
@@ -327,8 +328,8 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, model: &Model) -> ApplicationRe
             // flatten e if non-atomic
             Expr::Neg(_, e) => {
                 // needs flattening
-                let v: Atom = if let Some(aux_var_info) = to_aux_var(&e, &model) {
-                    model = aux_var_info.model();
+                let v: Atom = if let Some(aux_var_info) = to_aux_var(&e, &symbols) {
+                    symbols = aux_var_info.symbols();
                     new_top_exprs.push(aux_var_info.top_level_expr());
                     aux_var_info.as_atom()
                 } else {
@@ -345,9 +346,9 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, model: &Model) -> ApplicationRe
             // includes products without coefficients.
             e => {
                 //
-                let aux_var_info = to_aux_var(&e, &model).ok_or(RuleNotApplicable)?;
+                let aux_var_info = to_aux_var(&e, &symbols).ok_or(RuleNotApplicable)?;
 
-                model = aux_var_info.model();
+                symbols = aux_var_info.symbols();
                 let var = aux_var_info.as_atom();
                 new_top_exprs.push(aux_var_info.top_level_expr());
                 (Lit::Int(1), var)
@@ -392,15 +393,11 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, model: &Model) -> ApplicationRe
         (EqualityKind::Geq, false) => Expr::FlatSumGeq(Metadata::new(), vars, total),
     };
 
-    Ok(Reduction::new(
-        new_expr,
-        new_top_exprs,
-        model.symbols().clone(),
-    ))
+    Ok(Reduction::new(new_expr, new_top_exprs, symbols))
 }
 
 #[register_rule(("Minion", 4200))]
-fn introduce_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
+fn introduce_diveq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // div = val
     let val: Atom;
     let div: Expr;
@@ -452,7 +449,7 @@ fn introduce_diveq(expr: &Expr, _: &Model) -> ApplicationResult {
 }
 
 #[register_rule(("Minion", 4200))]
-fn introduce_modeq(expr: &Expr, _: &Model) -> ApplicationResult {
+fn introduce_modeq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // div = val
     let val: Atom;
     let div: Expr;
@@ -503,7 +500,7 @@ fn introduce_modeq(expr: &Expr, _: &Model) -> ApplicationResult {
 }
 
 #[register_rule(("Minion", 4400))]
-fn introduce_abseq(expr: &Expr, _: &Model) -> ApplicationResult {
+fn introduce_abseq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (x, abs_y): (Atom, Expr) = match expr.clone() {
         Expr::Eq(_, a, b) => {
             let a_atom: Option<&Atom> = (&*a).try_into().ok();
@@ -534,7 +531,7 @@ fn introduce_abseq(expr: &Expr, _: &Model) -> ApplicationResult {
 
 /// Introduces a `MinionPowEq` constraint from a `SafePow`
 #[register_rule(("Minion", 4200))]
-fn introduce_poweq(expr: &Expr, _: &Model) -> ApplicationResult {
+fn introduce_poweq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (a, b, total) = match expr.clone() {
         Expr::Eq(_, e1, e2) => match (*e1, *e2) {
             (Expr::Atomic(_, total), Expr::SafePow(_, a, b)) => Ok((a, b, total)),
@@ -563,7 +560,7 @@ fn introduce_poweq(expr: &Expr, _: &Model) -> ApplicationResult {
 ///   where x,y are atoms
 /// ```
 #[register_rule(("Minion", 4400))]
-fn introduce_minuseq_from_eq(expr: &Expr, _: &Model) -> ApplicationResult {
+fn introduce_minuseq_from_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, a, b) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -598,7 +595,7 @@ fn introduce_minuseq_from_eq(expr: &Expr, _: &Model) -> ApplicationResult {
 ///   where x,y are atoms
 /// ```
 #[register_rule(("Minion", 4400))]
-fn introduce_minuseq_from_aux_decl(expr: &Expr, _: &Model) -> ApplicationResult {
+fn introduce_minuseq_from_aux_decl(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // a =aux -b
     //
     let Expr::AuxDeclaration(_, a, b) = expr else {
@@ -628,7 +625,7 @@ fn introduce_minuseq_from_aux_decl(expr: &Expr, _: &Model) -> ApplicationResult 
 /// where x is atomic, y is non-atomic
 /// ```
 #[register_rule(("Minion", 4400))]
-fn introduce_reifyimply_ineq_from_imply(expr: &Expr, _: &Model) -> ApplicationResult {
+fn introduce_reifyimply_ineq_from_imply(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Imply(_, x, y) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -677,26 +674,26 @@ fn introduce_reifyimply_ineq_from_imply(expr: &Expr, _: &Model) -> ApplicationRe
 ///
 /// See [`introduce_reifyimply_ineq_from_imply`].
 #[register_rule(("Minion", 4200))]
-fn flatten_imply(expr: &Expr, model: &Model) -> ApplicationResult {
+fn flatten_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Imply(meta, x, y) = expr else {
         return Err(RuleNotApplicable);
     };
 
     // flatten x
-    let aux_var_info = to_aux_var(x.as_ref(), model).ok_or(RuleNotApplicable)?;
+    let aux_var_info = to_aux_var(x.as_ref(), symbols).ok_or(RuleNotApplicable)?;
 
-    let model = aux_var_info.model();
+    let symbols = aux_var_info.symbols();
     let new_x = aux_var_info.as_expr();
 
     Ok(Reduction::new(
         Expr::Imply(meta.clone(), Box::new(new_x), y.clone()),
         vec![aux_var_info.top_level_expr()],
-        model.symbols().clone(),
+        symbols,
     ))
 }
 
 #[register_rule(("Minion", 4200))]
-fn flatten_generic(expr: &Expr, model: &Model) -> ApplicationResult {
+fn flatten_generic(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if !matches!(
         expr,
         Expr::SafeDiv(_, _, _)
@@ -715,13 +712,13 @@ fn flatten_generic(expr: &Expr, model: &Model) -> ApplicationResult {
 
     let mut children = expr.children();
 
-    let mut model = model.clone();
+    let mut symbols = symbols.clone();
     let mut num_changed = 0;
     let mut new_tops: Vec<Expr> = vec![];
 
     for child in children.iter_mut() {
-        if let Some(aux_var_info) = to_aux_var(child, &model) {
-            model = aux_var_info.model();
+        if let Some(aux_var_info) = to_aux_var(child, &symbols) {
+            symbols = aux_var_info.symbols();
             new_tops.push(aux_var_info.top_level_expr());
             *child = aux_var_info.as_expr();
             num_changed += 1;
@@ -734,11 +731,11 @@ fn flatten_generic(expr: &Expr, model: &Model) -> ApplicationResult {
 
     let expr = expr.with_children(children);
 
-    Ok(Reduction::new(expr, new_tops, model.symbols().clone()))
+    Ok(Reduction::new(expr, new_tops, symbols))
 }
 
 #[register_rule(("Minion", 4200))]
-fn flatten_eq(expr: &Expr, model: &Model) -> ApplicationResult {
+fn flatten_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     if !matches!(expr, Expr::Eq(_, _, _)) {
         return Err(RuleNotApplicable);
     }
@@ -746,13 +743,13 @@ fn flatten_eq(expr: &Expr, model: &Model) -> ApplicationResult {
     let mut children = expr.children();
     debug_assert_eq!(children.len(), 2);
 
-    let mut model = model.clone();
+    let mut symbols = symbols.clone();
     let mut num_changed = 0;
     let mut new_tops: Vec<Expr> = vec![];
 
     for child in children.iter_mut() {
-        if let Some(aux_var_info) = to_aux_var(child, &model) {
-            model = aux_var_info.model();
+        if let Some(aux_var_info) = to_aux_var(child, &symbols) {
+            symbols = aux_var_info.symbols();
             new_tops.push(aux_var_info.top_level_expr());
             *child = aux_var_info.as_expr();
             num_changed += 1;
@@ -766,7 +763,7 @@ fn flatten_eq(expr: &Expr, model: &Model) -> ApplicationResult {
 
     let expr = expr.with_children(children);
 
-    Ok(Reduction::new(expr, new_tops, model.symbols().clone()))
+    Ok(Reduction::new(expr, new_tops, symbols))
 }
 
 /// Converts a Geq to an Ineq
@@ -775,7 +772,7 @@ fn flatten_eq(expr: &Expr, model: &Model) -> ApplicationResult {
 /// x >= y ~> y <= x + 0 ~> ineq(y,x,0)
 /// ```
 #[register_rule(("Minion", 4100))]
-fn geq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
+fn geq_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Geq(meta, e1, e2) = expr.clone() else {
         return Err(RuleNotApplicable);
     };
@@ -802,7 +799,7 @@ fn geq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 /// x <= y ~> x <= y + 0 ~> ineq(x,y,0)
 /// ```
 #[register_rule(("Minion", 4100))]
-fn leq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
+fn leq_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Leq(meta, e1, e2) = expr.clone() else {
         return Err(RuleNotApplicable);
     };
@@ -829,7 +826,7 @@ fn leq_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 /// x <= y + k ~> ineq(x,y,k)
 /// ```
 #[register_rule(("Minion",4500))]
-fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
+fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Leq(meta, e1, e2) = expr.clone() else {
         return Err(RuleNotApplicable);
     };
@@ -862,7 +859,7 @@ fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 /// y + k >= x ~> ineq(x,y,k)
 /// ```
 #[register_rule(("Minion",4800))]
-fn y_plus_k_geq_x_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
+fn y_plus_k_geq_x_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // impl same as x_leq_y_plus_k but with lhs and rhs flipped
     let Expr::Geq(meta, e2, e1) = expr.clone() else {
         return Err(RuleNotApplicable);
@@ -909,13 +906,13 @@ fn y_plus_k_geq_x_to_ineq(expr: &Expr, _: &Model) -> ApplicationResult {
 /// trivial match).
 
 #[register_rule(("Minion", 4100))]
-fn not_literal_to_wliteral(expr: &Expr, mdl: &Model) -> ApplicationResult {
+fn not_literal_to_wliteral(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     use Domain::BoolDomain;
     match expr {
         Expr::Not(m, expr) => {
             if let Expr::Atomic(_, Atom::Reference(name)) = (**expr).clone() {
-                if mdl
-                    .get_domain(&name)
+                if symbols
+                    .domain(&name)
                     .is_some_and(|x| matches!(x, BoolDomain))
                 {
                     return Ok(Reduction::pure(Expr::FlatWatchedLiteral(
@@ -941,7 +938,7 @@ fn not_literal_to_wliteral(expr: &Expr, mdl: &Model) -> ApplicationResult {
 /// nested expressions are constraints not variables.
 
 #[register_rule(("Minion", 4090))]
-fn not_constraint_to_reify(expr: &Expr, _: &Model) -> ApplicationResult {
+fn not_constraint_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     if !matches!(expr, Expr::Not(_,c) if !matches!(**c, Expr::Atomic(_,_))) {
         return Err(RuleNotApplicable);
     }
@@ -972,7 +969,7 @@ fn not_constraint_to_reify(expr: &Expr, _: &Model) -> ApplicationResult {
 /// where c is a boolean constraint
 /// ```
 #[register_rule(("Minion", 4400))]
-fn bool_eq_to_reify(expr: &Expr, _: &Model) -> ApplicationResult {
+fn bool_eq_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (atom, e): (Atom, Box<Expr>) = match expr {
         Expr::AuxDeclaration(_, name, e) => Ok((name.clone().into(), e.clone())),
         Expr::Eq(_, a, b) => match (a.as_ref(), b.as_ref()) {

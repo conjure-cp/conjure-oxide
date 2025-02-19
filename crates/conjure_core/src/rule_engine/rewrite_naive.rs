@@ -1,10 +1,11 @@
 use super::{resolve_rules::RuleData, RewriteError, RuleSet};
 use crate::{
-    ast::Expression as Expr,
+    ast::{Expression as Expr, SubModel},
     bug,
     rule_engine::{
         get_rules_grouped,
         rewriter_common::{log_rule_application, RuleResult},
+        submodel_zipper::submodel_ctx,
     },
     Model,
 };
@@ -26,11 +27,31 @@ pub fn rewrite_naive<'a>(
         .collect_vec();
 
     let mut model = model.clone();
+    let mut done_something = true;
 
     // Rewrite until there are no more rules left to apply.
-    while let Some(()) =
-        try_rewrite_model(&mut model, &rules_grouped, prop_multiple_equally_applicable)
-    {}
+    while done_something {
+        let mut new_model = None;
+        done_something = false;
+
+        // Rewrite each sub-model in the tree, largest first.
+        for (mut submodel, ctx) in <_ as Biplate<SubModel>>::contexts_bi(&model) {
+            if try_rewrite_model(
+                &mut submodel,
+                &rules_grouped,
+                prop_multiple_equally_applicable,
+            )
+            .is_some()
+            {
+                new_model = Some(ctx(submodel));
+                done_something = true;
+                break;
+            }
+        }
+        if let Some(new_model) = new_model {
+            model = new_model;
+        }
+    }
 
     Ok(model)
 }
@@ -39,23 +60,23 @@ pub fn rewrite_naive<'a>(
 //
 // Returns None if no change was made.
 fn try_rewrite_model(
-    model: &mut Model,
+    submodel: &mut SubModel,
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
     prop_multiple_equally_applicable: bool,
 ) -> Option<()> {
-    type CtxFn = Arc<dyn Fn(Expr) -> Model>;
+    type CtxFn = Arc<dyn Fn(Expr) -> SubModel>;
     let mut results: Vec<(RuleResult<'_>, u16, Expr, CtxFn)> = vec![];
 
     // Iterate over rules by priority in descending order.
     'top: for (priority, rules) in rules_grouped.iter() {
         // Using Biplate, rewrite both the expression tree, and any value lettings in the symbol
         // table.
-        for (expr, ctx) in <_ as Biplate<Expr>>::contexts_bi(model) {
+        for (expr, ctx) in submodel_ctx(submodel.clone()) {
             // Clone expr and ctx so they can be reused
             let expr = expr.clone();
             let ctx = ctx.clone();
             for rd in rules {
-                match (rd.rule.application)(&expr, model) {
+                match (rd.rule.application)(&expr, &submodel.symbols()) {
                     Ok(red) => {
                         // Collect applicable rules
                         results.push((
@@ -99,13 +120,15 @@ fn try_rewrite_model(
             }
 
             // Extract the single applicable rule and apply it
-            log_rule_application(result, expr, model);
+            log_rule_application(result, expr, submodel);
 
             // Replace expr with new_expression
-            *model = ctx(result.reduction.new_expression.clone());
+            *submodel = ctx(result.reduction.new_expression.clone());
 
             // Apply new symbols and top level
-            result.reduction.clone().apply(model);
+            result.reduction.clone().apply(submodel);
+
+            println!("{}", &submodel);
         }
     }
 

@@ -7,6 +7,7 @@ use std::hash::Hash;
 use std::io::Write;
 use std::sync::{Arc, RwLock};
 
+use conjure_core::ast::SerdeModel;
 use conjure_core::context::Context;
 use serde_json::{json, Error as JsonError, Value as JsonValue};
 
@@ -44,7 +45,8 @@ pub fn serialise_model(model: &ConjureModel) -> Result<String, JsonError> {
     // A consistent sorting of the keys of json objects
     // only required for the generated version
     // since the expected version will already be sorted
-    let generated_json = sort_json_object(&serde_json::to_value(model.clone())?, false);
+    let serde_model: SerdeModel = model.clone().into();
+    let generated_json = sort_json_object(&serde_json::to_value(serde_model)?, false);
 
     // serialise to string
     let generated_json_str = serde_json::to_string_pretty(&generated_json)?;
@@ -95,6 +97,7 @@ pub fn save_stats_json(
 }
 
 pub fn read_model_json(
+    ctx: &Arc<RwLock<Context<'static>>>,
     path: &str,
     test_name: &str,
     prefix: &str,
@@ -104,9 +107,9 @@ pub fn read_model_json(
         "{path}/{test_name}.{prefix}-{test_stage}.serialised.json"
     ))?;
 
-    let expected_model: ConjureModel = serde_json::from_str(&expected_json_str)?;
+    let expected_model: SerdeModel = serde_json::from_str(&expected_json_str)?;
 
-    Ok(expected_model)
+    Ok(expected_model.initialise(ctx.clone()).unwrap())
 }
 
 pub fn minion_solutions_from_json(

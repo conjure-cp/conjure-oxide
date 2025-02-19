@@ -1,11 +1,12 @@
 use std::collections::BTreeSet;
 use std::fmt::{self, Display, Formatter};
 use std::hash::Hash;
+use std::rc::Rc;
 
 use thiserror::Error;
 
-use crate::ast::{DecisionVariable, Expression, Name, SymbolTable};
-use crate::model::Model;
+use crate::ast::Declaration;
+use crate::ast::{Expression, Name, SubModel, SymbolTable};
 
 #[derive(Debug, Error)]
 pub enum ApplicationError {
@@ -99,15 +100,24 @@ impl Reduction {
     }
 
     /// Applies side-effects (e.g. symbol table updates)
-    pub fn apply(self, model: &mut Model) {
-        model.extend_sym_table(self.symbols); // Add new assignments to the symbol table
+    pub fn apply(self, model: &mut SubModel) {
+        model.symbols_mut().extend(self.symbols); // Add new assignments to the symbol table
         model.add_constraints(self.new_top.clone());
     }
 
     /// Gets symbols added by this reduction
     pub fn added_symbols(&self, initial_symbols: &SymbolTable) -> BTreeSet<Name> {
-        let initial_symbols_set: BTreeSet<Name> = initial_symbols.names().cloned().collect();
-        let new_symbols_set: BTreeSet<Name> = self.symbols.names().cloned().collect();
+        let initial_symbols_set: BTreeSet<Name> = initial_symbols
+            .clone()
+            .into_iter_local()
+            .map(|x| x.0)
+            .collect();
+        let new_symbols_set: BTreeSet<Name> = self
+            .symbols
+            .clone()
+            .into_iter_local()
+            .map(|x| x.0)
+            .collect();
 
         new_symbols_set
             .difference(&initial_symbols_set)
@@ -121,11 +131,11 @@ impl Reduction {
     pub fn changed_symbols(
         &self,
         initial_symbols: &SymbolTable,
-    ) -> Vec<(Name, DecisionVariable, DecisionVariable)> {
-        let mut changes: Vec<(Name, DecisionVariable, DecisionVariable)> = vec![];
+    ) -> Vec<(Name, Rc<Declaration>, Rc<Declaration>)> {
+        let mut changes: Vec<(Name, Rc<Declaration>, Rc<Declaration>)> = vec![];
 
-        for (var_name, initial_value) in initial_symbols.iter_var() {
-            let Some(new_value) = self.symbols.get_var(var_name) else {
+        for (var_name, initial_value) in initial_symbols.clone().into_iter_local() {
+            let Some(new_value) = self.symbols.lookup(&var_name) else {
                 continue;
             };
 
@@ -136,6 +146,9 @@ impl Reduction {
         changes
     }
 }
+
+/// The function type used in a [`Rule`].
+pub type RuleFn = fn(&Expression, &SymbolTable) -> ApplicationResult;
 
 /**
  * A rule with a name, application function, and rule sets.
@@ -148,14 +161,14 @@ impl Reduction {
 #[derive(Clone, Debug)]
 pub struct Rule<'a> {
     pub name: &'a str,
-    pub application: fn(&Expression, &Model) -> ApplicationResult,
+    pub application: RuleFn,
     pub rule_sets: &'a [(&'a str, u16)], // (name, priority). At runtime, we add the rule to rulesets
 }
 
 impl<'a> Rule<'a> {
     pub const fn new(
         name: &'a str,
-        application: fn(&Expression, &Model) -> ApplicationResult,
+        application: RuleFn,
         rule_sets: &'a [(&'static str, u16)],
     ) -> Self {
         Self {
@@ -165,8 +178,8 @@ impl<'a> Rule<'a> {
         }
     }
 
-    pub fn apply(&self, expr: &Expression, mdl: &Model) -> ApplicationResult {
-        (self.application)(expr, mdl)
+    pub fn apply(&self, expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
+        (self.application)(expr, symbols)
     }
 }
 

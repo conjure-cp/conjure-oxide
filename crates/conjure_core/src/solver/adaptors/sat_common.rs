@@ -1,7 +1,9 @@
 //! Common code for SAT adaptors.
 //! Primarily, this is CNF related code.
 
+use std::cell::Ref;
 use std::collections::HashMap;
+use std::rc::Rc;
 
 use thiserror::Error;
 
@@ -37,27 +39,27 @@ impl CNFModel {
     pub fn from_conjure(conjure_model: ConjureModel) -> Result<CNFModel, SolverError> {
         let mut ans: CNFModel = CNFModel::new();
 
-        for var in conjure_model.symbols().keys() {
-            // Check that domain has the correct type
-            let decision_var = match conjure_model.symbols().get_var(var) {
-                None => {
-                    return Err(ModelInvalid(format!("variable {:?} not found", var)));
-                }
-                Some(var) => var,
+        let submodel = conjure_model.as_submodel();
+        let symtab = submodel.symbols();
+        for (name, decl) in symtab.clone().into_iter() {
+            // ignore symbols that are not variables.
+            let Some(var) = decl.as_var() else {
+                continue;
             };
 
-            if decision_var.domain != conjure_ast::Domain::BoolDomain {
+            // Check that domain has the correct type
+            if var.domain != conjure_ast::Domain::BoolDomain {
                 return Err(ModelFeatureNotSupported(format!(
                     "variable {:?} is not BoolDomain",
-                    decision_var
+                    name
                 )));
             }
 
-            ans.add_variable(var);
+            ans.add_variable(&name);
         }
 
-        for expr in conjure_model.get_constraints_vec() {
-            match ans.add_expression(&expr) {
+        for expr in submodel.constraints() {
+            match ans.add_expression(expr) {
                 Ok(_) => {}
                 Err(error) => {
                     let message = format!("{:?}", error);

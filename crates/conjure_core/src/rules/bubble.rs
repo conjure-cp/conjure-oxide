@@ -4,10 +4,9 @@ use conjure_core::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationError::*, ApplicationResult,
     Reduction,
 };
-use conjure_core::Model;
 use uniplate::Uniplate;
 
-use crate::ast::{Atom, Literal};
+use crate::ast::{Atom, Literal, SymbolTable};
 
 use super::utils::is_all_constant;
 
@@ -21,7 +20,7 @@ register_rule_set!("Bubble", ("Base"));
     e.g. (a / b = c) @ (b != 0) => (a / b = c) & (b != 0)
 */
 #[register_rule(("Bubble", 8900))]
-fn expand_bubble(expr: &Expression, _: &Model) -> ApplicationResult {
+fn expand_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expression::Bubble(_, a, b) if a.return_type() == Some(ReturnType::Bool) => {
             Ok(Reduction::pure(Expression::And(
@@ -39,7 +38,7 @@ fn expand_bubble(expr: &Expression, _: &Model) -> ApplicationResult {
     E.g. ((a / b) @ (b != 0)) = c => (a / b = c) @ (b != 0)
 */
 #[register_rule(("Bubble", 8900))]
-fn bubble_up(expr: &Expression, _: &Model) -> ApplicationResult {
+fn bubble_up(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     let mut sub = expr.children();
     let mut bubbled_conditions = vec![];
     for e in sub.iter_mut() {
@@ -73,7 +72,7 @@ fn bubble_up(expr: &Expression, _: &Model) -> ApplicationResult {
 /// boolean-type expression it is paired with.
 
 #[register_rule(("Bubble", 6000))]
-fn div_to_bubble(expr: &Expression, _: &Model) -> ApplicationResult {
+fn div_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     if is_all_constant(expr) {
         return Err(RuleNotApplicable);
     }
@@ -107,7 +106,7 @@ fn div_to_bubble(expr: &Expression, _: &Model) -> ApplicationResult {
 /// boolean-type expression it is paired with.
 ///
 #[register_rule(("Bubble", 6000))]
-fn mod_to_bubble(expr: &Expression, _: &Model) -> ApplicationResult {
+fn mod_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     if is_all_constant(expr) {
         return Err(RuleNotApplicable);
     }
@@ -141,7 +140,7 @@ fn mod_to_bubble(expr: &Expression, _: &Model) -> ApplicationResult {
 /// boolean-type expression it is paired with.
 ///
 #[register_rule(("Bubble", 6000))]
-fn pow_to_bubble(expr: &Expression, _: &Model) -> ApplicationResult {
+fn pow_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     if is_all_constant(expr) {
         return Err(RuleNotApplicable);
     }

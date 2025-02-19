@@ -10,12 +10,13 @@ use uniplate::{Biplate, Uniplate as _};
 
 use crate::ast::literals::Literal;
 use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
-use crate::ast::symbol_table::{Name, SymbolTable};
+use crate::ast::symbol_table::SymbolTable;
 use crate::ast::Atom;
+use crate::ast::Name;
 use crate::ast::ReturnType;
 use crate::metadata::Metadata;
 
-use super::{Domain, Range};
+use super::{Domain, Range, SubModel, Typeable};
 
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
@@ -23,12 +24,13 @@ use super::{Domain, Range};
 /// used to build rules and conditions for the model.
 #[document_compatibility]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
-#[uniplate(walk_into=[Atom])]
+#[uniplate(walk_into=[Atom,SubModel])]
 #[biplate(to=Literal)]
 #[biplate(to=Metadata)]
 #[biplate(to=Atom)]
 #[biplate(to=Name)]
 #[biplate(to=Vec<Expression>)]
+#[biplate(to=SubModel)]
 pub enum Expression {
     /// The top of the model
     Root(Metadata, Vec<Expression>),
@@ -43,6 +45,8 @@ pub enum Expression {
     #[compatible(JsonInput)]
     Set(Metadata, Vec<Expression>),
     
+    Scope(Metadata, Box<SubModel>),
+
     /// `|x|` - absolute value of `x`
     #[compatible(JsonInput)]
     Abs(Metadata, Box<Expression>),
@@ -332,11 +336,12 @@ impl Expression {
     pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
         let ret = match self {
             Expression::Set(_, _) => None,
-            Expression::Atomic(_, Atom::Reference(name)) => Some(syms.domain_of(name)?.clone()),
+            Expression::Atomic(_, Atom::Reference(name)) => Some(syms.domain(name)?),
             Expression::Atomic(_, Atom::Literal(Literal::Int(n))) => {
                 Some(Domain::IntDomain(vec![Range::Single(*n)]))
             }
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(Domain::BoolDomain),
+            Expression::Scope(_, _) => Some(Domain::BoolDomain),
             Expression::Sum(_, exprs) => expr_vec_to_domain_i32(exprs, |x, y| Some(x + y), syms),
             Expression::Product(_, exprs) => {
                 expr_vec_to_domain_i32(exprs, |x, y| Some(x * y), syms)
@@ -516,6 +521,7 @@ impl Expression {
             Expression::Atomic(_, Atom::Literal(Literal::Int(_))) => Some(ReturnType::Int),
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(ReturnType::Bool),
             Expression::Atomic(_, Atom::Reference(_)) => None,
+            Expression::Scope(_, scope) => scope.return_type(),
             Expression::Abs(_, _) => Some(ReturnType::Int),
             Expression::Sum(_, _) => Some(ReturnType::Int),
             Expression::Product(_, _) => Some(ReturnType::Int),
@@ -626,6 +632,7 @@ impl Display for Expression {
                 write!(f, "{}", pretty_expressions_as_top_level(exprs))
             }
             Expression::Atomic(_, atom) => atom.fmt(f),
+            Expression::Scope(_, submodel) => write!(f, "{{\n{submodel}\n}}"),
             Expression::Abs(_, a) => write!(f, "|{}|", a),
             Expression::Sum(_, expressions) => {
                 write!(f, "Sum({})", pretty_vec(expressions))
@@ -786,7 +793,9 @@ impl Display for Expression {
 
 #[cfg(test)]
 mod tests {
-    use crate::ast::DecisionVariable;
+    use std::rc::Rc;
+
+    use crate::ast::declaration::Declaration;
 
     use super::*;
 
@@ -819,10 +828,11 @@ mod tests {
     fn test_domain_of_reference() {
         let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
         let mut vars = SymbolTable::new();
-        vars.add_var(
+        vars.insert(Rc::new(Declaration::new_var(
             Name::MachineName(0),
-            DecisionVariable::new(Domain::IntDomain(vec![Range::Single(1)])),
-        );
+            Domain::IntDomain(vec![Range::Single(1)]),
+        )))
+        .unwrap();
         assert_eq!(
             reference.domain_of(&vars),
             Some(Domain::IntDomain(vec![Range::Single(1)]))
@@ -839,10 +849,11 @@ mod tests {
     fn test_domain_of_reference_sum_single() {
         let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
         let mut vars = SymbolTable::new();
-        vars.add_var(
+        vars.insert(Rc::new(Declaration::new_var(
             Name::MachineName(0),
-            DecisionVariable::new(Domain::IntDomain(vec![Range::Single(1)])),
-        );
+            Domain::IntDomain(vec![Range::Single(1)]),
+        )))
+        .unwrap();
         let sum = Expression::Sum(Metadata::new(), vec![reference.clone(), reference.clone()]);
         assert_eq!(
             sum.domain_of(&vars),
@@ -854,10 +865,10 @@ mod tests {
     fn test_domain_of_reference_sum_bounded() {
         let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
         let mut vars = SymbolTable::new();
-        vars.add_var(
+        vars.insert(Rc::new(Declaration::new_var(
             Name::MachineName(0),
-            DecisionVariable::new(Domain::IntDomain(vec![Range::Bounded(1, 2)])),
-        );
+            Domain::IntDomain(vec![Range::Bounded(1, 2)]),
+        )));
         let sum = Expression::Sum(Metadata::new(), vec![reference.clone(), reference.clone()]);
         assert_eq!(
             sum.domain_of(&vars),

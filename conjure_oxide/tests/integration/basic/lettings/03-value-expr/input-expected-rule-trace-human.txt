@@ -10,12 +10,6 @@ such that
 
 --
 
-Not(Not(Not(A))), 
-   ~~> remove_double_negation ([("Base", 8400)]) 
-Not(A) 
-
---
-
 (b < 3), 
    ~~> lt_to_leq ([("Minion", 8400)]) 
 (b <= Sum([3, -1])) 
@@ -28,6 +22,18 @@ Sum([3, -1]),
 
 --
 
+NotA, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+Not(Not(Not(A))) 
+
+--
+
+Not(Not(Not(A))), 
+   ~~> remove_double_negation ([("Base", 8400)]) 
+Not(A) 
+
+--
+
 A, 
    ~~> substitute_value_lettings ([("Base", 5000)]) 
 false 
@@ -36,12 +42,6 @@ false
 
 Not(false), 
    ~~> apply_eval_constant ([("Constant", 9001)]) 
-true 
-
---
-
-NotA, 
-   ~~> substitute_value_lettings ([("Base", 5000)]) 
 true 
 
 --
@@ -61,7 +61,7 @@ Ineq(b, 2, 0)
 Final model:
 
 letting A be false
-letting NotA be true
+letting NotA be Not(Not(Not(A)))
 find b: int(1..20)
 
 such that
