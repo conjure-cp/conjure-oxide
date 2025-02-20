@@ -196,47 +196,6 @@ impl SymbolTable {
         self.table.extend(other.table);
     }
 
-    /****************************************/
-    /*        get info about symbols        */
-    /****************************************/
-
-    /// Gets the domain of `name` if it exists and has a domain.
-    pub fn domain_of(&self, name: &Name) -> Option<&Domain> {
-        match self.table.get(name)? {
-            SymbolKind::DecisionVariable(var) => Some(&var.domain),
-            SymbolKind::ValueLetting(_) => None,
-            SymbolKind::DomainLetting(domain) => Some(domain),
-        }
-    }
-
-    /// Gets the domain of `name` as a mutable reference if it exists and has a domain.
-    pub fn domain_of_mut(&mut self, name: &Name) -> Option<&mut Domain> {
-        match self.table.get_mut(name)? {
-            SymbolKind::DecisionVariable(var) => Some(&mut var.domain),
-            SymbolKind::ValueLetting(_) => None,
-            SymbolKind::DomainLetting(domain) => Some(domain),
-        }
-    }
-
-    /// Gets the type of `name` if it exists and has a type.
-    pub fn type_of(&self, name: &Name) -> Option<ReturnType> {
-        match self.table.get(name)? {
-            SymbolKind::DecisionVariable(var) => match var.domain {
-                Domain::BoolDomain => Some(ReturnType::Bool),
-                Domain::IntDomain(_) => Some(ReturnType::Int),
-                Domain::DomainReference(ref n) => self.type_of(n),
-                Domain::DomainSet(_) => Some(ReturnType::Set),
-            },
-            SymbolKind::ValueLetting(expr) => expr.return_type(),
-            SymbolKind::DomainLetting(domain) => match domain {
-                Domain::BoolDomain => Some(ReturnType::Bool),
-                Domain::IntDomain(_) => Some(ReturnType::Int),
-                Domain::DomainReference(ref n) => self.type_of(n),
-                Domain::DomainSet(_) => Some(ReturnType::Set),
-            },
-        }
-    }
-
     /// Returns an arbitrary variable name that is not in the symbol table.
     pub fn gensym(&self) -> Name {
         let num = *self.next_machine_name.borrow();

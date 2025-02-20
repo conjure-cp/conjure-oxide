@@ -125,7 +125,7 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
         ))),
         "DomainSet" => {
                 let dom = domain.1.get(2).and_then(|v| v.as_object());
-                if let Some((domain_obj)) = dom {
+                if let Some(domain_obj) = dom {
                     let domain =domain_obj.iter().next().ok_or(Error::Parse("DomainSet is an empty object".to_owned()))?;
                     let domain = match domain.0.as_str() {
                         "DomainInt" => {

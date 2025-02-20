@@ -276,35 +276,37 @@ pub fn main() -> AnyhowResult<()> {
     } else {
         tracing::info!("extra-rule-checks: disabled");
     }
-    
+
     let mut model = model_from_json(&astjson, context.clone())?;
-    println!("{}", model);
+
     tracing::info!("Initial model: \n{}\n", model);
 
-    // if cli.use_optimising_rewriter {
-    //     tracing::info!("Using the dirty-clean rewriter...");
-    //     model = rewrite_model(&model, &rule_sets)?;
-    // } else {
-    //     tracing::info!("Rewriting model...");
-    //     model = rewrite_naive(&model, &rule_sets, cli.check_equally_applicable_rules)?;
-    // }
+    tracing::info!("Rewriting model...");
 
-    // tracing::info!("Rewritten model: \n{}\n", model);
+    if cli.use_optimising_rewriter {
+        tracing::info!("Using the dirty-clean rewriter...");
+        model = rewrite_model(&model, &rule_sets)?;
+    } else {
+        tracing::info!("Rewriting model...");
+        model = rewrite_naive(&model, &rule_sets, cli.check_equally_applicable_rules)?;
+    }
 
-    // if cli.no_run_solver {
-    //     println!("{}", model);
-    // } else {
-    //     run_solver(&cli.clone(), model)?;
-    // }
+    tracing::info!("Rewritten model: \n{}\n", model);
 
-    // // still do postamble even if we didn't run the solver
-    // if let Some(path) = cli.info_json_path {
-    //     #[allow(clippy::unwrap_used)]
-    //     let context_obj = context.read().unwrap().clone();
-    //     let generated_json = &serde_json::to_value(context_obj)?;
-    //     let pretty_json = serde_json::to_string_pretty(&generated_json)?;
-    //     File::create(path)?.write_all(pretty_json.as_bytes())?;
-    // }
+    if cli.no_run_solver {
+        println!("{}", model);
+    } else {
+        run_solver(&cli.clone(), model)?;
+    }
+
+    // still do postamble even if we didn't run the solver
+    if let Some(path) = cli.info_json_path {
+        #[allow(clippy::unwrap_used)]
+        let context_obj = context.read().unwrap().clone();
+        let generated_json = &serde_json::to_value(context_obj)?;
+        let pretty_json = serde_json::to_string_pretty(&generated_json)?;
+        File::create(path)?.write_all(pretty_json.as_bytes())?;
+    }
     Ok(())
 }
 
