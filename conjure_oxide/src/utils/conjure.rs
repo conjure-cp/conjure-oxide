@@ -217,6 +217,8 @@ pub fn minion_solutions_to_json(solutions: &Vec<BTreeMap<Name, Literal>>) -> Jso
             let serialized_constant = match constant {
                 Literal::Int(i) => JsonValue::Number((*i).into()),
                 Literal::Bool(b) => JsonValue::Bool(*b),
+                //todo
+                Literal::Set(_) => JsonValue::Null,
             };
             json_solution.insert(var_name.to_string(), serialized_constant);
         }
