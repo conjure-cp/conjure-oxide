@@ -41,10 +41,9 @@ pub enum Expression {
 
     Atomic(Metadata, Atom),
 
-
     #[compatible(JsonInput)]
-    Set(Metadata, Vec<Expression>),
-    
+    Set(Metadata, Literal),
+
     Scope(Metadata, Box<SubModel>),
 
     /// `|x|` - absolute value of `x`
@@ -335,12 +334,14 @@ impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
         let ret = match self {
+            //todo
             Expression::Set(_, _) => None,
             Expression::Atomic(_, Atom::Reference(name)) => Some(syms.domain(name)?),
             Expression::Atomic(_, Atom::Literal(Literal::Int(n))) => {
                 Some(Domain::IntDomain(vec![Range::Single(*n)]))
             }
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(Domain::BoolDomain),
+            Expression::Atomic(_, Atom::Literal(Literal::Set(_))) => None,
             Expression::Scope(_, _) => Some(Domain::BoolDomain),
             Expression::Sum(_, exprs) => expr_vec_to_domain_i32(exprs, |x, y| Some(x + y), syms),
             Expression::Product(_, exprs) => {
@@ -516,10 +517,13 @@ impl Expression {
 
     pub fn return_type(&self) -> Option<ReturnType> {
         match self {
-            Expression::Set(_, _) => Some(ReturnType::Bool),
+            Expression::Set(_, Literal::Int(_)) => Some(ReturnType::Int),
+            Expression::Set(_, Literal::Bool(_)) => Some(ReturnType::Bool),
+            Expression::Set(_, Literal::Set(_)) => Some(ReturnType::Set),
             Expression::Root(_, _) => Some(ReturnType::Bool),
             Expression::Atomic(_, Atom::Literal(Literal::Int(_))) => Some(ReturnType::Int),
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(ReturnType::Bool),
+            Expression::Atomic(_, Atom::Literal(Literal::Set(_))) => Some(ReturnType::Set),
             Expression::Atomic(_, Atom::Reference(_)) => None,
             Expression::Scope(_, scope) => scope.return_type(),
             Expression::Abs(_, _) => Some(ReturnType::Int),
@@ -625,9 +629,7 @@ impl Display for Expression {
     // TODO: (flm8) this will change once we implement a parser (two-way conversion)
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
-            Expression::Set(_, exprs) => {
-                write!(f, "Set({})", pretty_vec(exprs))
-            }
+            Expression::Set(_, lit) => lit.fmt(f),
             Expression::Root(_, exprs) => {
                 write!(f, "{}", pretty_expressions_as_top_level(exprs))
             }

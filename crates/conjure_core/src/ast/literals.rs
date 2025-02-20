@@ -1,14 +1,15 @@
 use std::fmt::{Display, Formatter};
 
+use super::Atom;
 use serde::{Deserialize, Serialize};
 use uniplate::derive::Uniplate;
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash)]
 #[uniplate()]
 /// A literal value, equivalent to constants in Conjure.
 pub enum Literal {
     Int(i32),
     Bool(bool),
+    Set(Vec<Atom>),
 }
 
 impl TryFrom<Literal> for i32 {
@@ -72,6 +73,10 @@ impl Display for Literal {
         match &self {
             Literal::Int(i) => write!(f, "{}", i),
             Literal::Bool(b) => write!(f, "{}", b),
+            Literal::Set(a) => {
+                let elements: Vec<String> = a.iter().map(|lit| lit.to_string()).collect();
+                write!(f, "{{{}}}", elements.join(", "))
+            }
         }
     }
 }

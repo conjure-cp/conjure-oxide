@@ -102,7 +102,7 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
         .ok_or(error!("FindOrGiven[1].Name is not a string"))?;
 
     let name = Name::UserName(name.to_owned());
-    
+
     let domain = arr[2]
         .as_object()
         .ok_or(error!("FindOrGiven[2] is not an object"))?
@@ -124,26 +124,29 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
                 .into(),
         ))),
         "DomainSet" => {
-                let dom = domain.1.get(2).and_then(|v| v.as_object());
-                if let Some(domain_obj) = dom {
-                    let domain =domain_obj.iter().next().ok_or(Error::Parse("DomainSet is an empty object".to_owned()))?;
-                    let domain = match domain.0.as_str() {
-                        "DomainInt" => {
-                            println!("DomainInt: {:#?}", domain.1);
-                            Ok(parse_int_domain(domain.1)?)
-                        }
-                        "DomainBool" => Ok(Domain::BoolDomain),
-                        _ => Err(Error::Parse(
-                            "FindOrGiven[2] is an unknown object".to_owned(),
-                        )),
-                    }?;
-                    Ok(Domain::DomainSet(Box::new(domain)))
-                } else {
-                    Err(Error::Parse("FindOrGiven[2] is an unknown object".to_owned()))
-                }
+            let dom = domain.1.get(2).and_then(|v| v.as_object());
+            if let Some((domain_obj)) = dom {
+                let domain = domain_obj
+                    .iter()
+                    .next()
+                    .ok_or(Error::Parse("DomainSet is an empty object".to_owned()))?;
+                let domain = match domain.0.as_str() {
+                    "DomainInt" => {
+                        println!("DomainInt: {:#?}", domain.1);
+                        Ok(parse_int_domain(domain.1)?)
+                    }
+                    "DomainBool" => Ok(Domain::BoolDomain),
+                    _ => Err(Error::Parse(
+                        "FindOrGiven[2] is an unknown object".to_owned(),
+                    )),
+                }?;
+                Ok(Domain::DomainSet(Box::new(domain)))
+            } else {
+                Err(Error::Parse(
+                    "FindOrGiven[2] is an unknown object".to_owned(),
+                ))
             }
-
-
+        }
 
         _ => Err(Error::Parse(
             "FindOrGiven[2] is an unknown object".to_owned(), // consider covered
@@ -165,7 +168,7 @@ fn parse_letting(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
         .as_str()
         .ok_or(error!("Letting[0].Name is not a string"))?;
     let name = Name::UserName(name.to_owned());
-   
+
     // value letting
     if let Some(value) = parse_expression(&arr[1]) {
         symtab
@@ -298,7 +301,6 @@ type UnaryOp = Box<dyn Fn(Metadata, Box<Expression>) -> Expression>;
 type VecOp = Box<dyn Fn(Metadata, Vec<Expression>) -> Expression>;
 
 fn parse_expression(obj: &JsonValue) -> Option<Expression> {
-    
     let binary_operators: HashMap<&str, BinOp> = [
         (
             "MkOpEq",
@@ -406,7 +408,7 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
     let mut binary_operator_names = binary_operators.iter().map(|x| x.0);
     let mut unary_operator_names = unary_operators.iter().map(|x| x.0);
     let mut vec_operator_names = vec_operators.iter().map(|x| x.0);
-    
+
     match obj {
         Value::Object(op) if op.contains_key("Op") => match &op["Op"] {
             Value::Object(bin_op) if binary_operator_names.any(|key| bin_op.contains_key(*key)) => {
@@ -427,7 +429,7 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
                 Atom::Reference(Name::UserName(name.to_string())),
             ))
         }
-        
+
         Value::Object(constant) if constant.contains_key("Constant") => parse_constant(constant),
         Value::Object(constant) if constant.contains_key("ConstantInt") => parse_constant(constant),
         Value::Object(constant) if constant.contains_key("ConstantBool") => {
@@ -513,7 +515,6 @@ fn parse_vec_op(
 }
 
 fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expression> {
-    
     match &constant.get("Constant") {
         Some(Value::Object(int)) if int.contains_key("ConstantInt") => {
             let int_32: i32 = match int["ConstantInt"].as_array()?[1].as_i64()?.try_into() {
@@ -541,24 +542,20 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
             ))
         }
 
-        
         Some(Value::Object(int)) if int.contains_key("ConstantAbstract") => {
             if let Some(Value::Object(obj)) = int.get("ConstantAbstract") {
                 if let Some(arr) = obj.get("AbsLitSet") {
-                    
-                    let expressions: Vec<Expression> = arr
-                        .as_array()?
-                        .iter()
-                        .filter_map(parse_expression)
-                        .collect();
-                    return Some(Expression::Set(
-                        Metadata::new(),
-                        expressions,
-                    ));
+                    let mut atoms = Vec::new();
+
+                    for expr in arr.as_array()?.iter().filter_map(parse_expression) {
+                        if let Expression::Atomic(_, Atom::Literal(literal)) = expr {
+                            atoms.push(Atom::Literal(literal))
+                        }
+                    }
+                    return Some(Expression::Set(Metadata::new(), Literal::Set(atoms)));
                 }
             }
-            
-            
+
             // let arr = int
             //     .as_array()
             //     .ok_or(Error::Parse("DomainInt is not an array".to_owned()))?[1]
