@@ -268,13 +268,8 @@ pub fn main() -> AnyhowResult<()> {
         rules,
         rule_sets.clone(),
     );
-<<<<<<< HEAD
-    println!("{}",astjson);
-    context.write().unwrap().file_name = Some(cli.input_file.to_str().expect("").into());
-=======
 
     context.write().unwrap().file_name = Some(input.to_str().expect("").into());
->>>>>>> ad7290def97bcbe25b0381c540de7f4d8042ceec
 
     if cfg!(feature = "extra-rule-checks") {
         tracing::info!("extra-rule-checks: enabled");
@@ -299,10 +294,9 @@ pub fn main() -> AnyhowResult<()> {
     // if cli.no_run_solver {
     //     println!("{}", model);
     // } else {
-    //     run_solver(&cli, model)?;
+    //     run_solver(&cli.clone(), model)?;
     // }
 
-<<<<<<< HEAD
     // // still do postamble even if we didn't run the solver
     // if let Some(path) = cli.info_json_path {
     //     #[allow(clippy::unwrap_used)]
@@ -311,22 +305,6 @@ pub fn main() -> AnyhowResult<()> {
     //     let pretty_json = serde_json::to_string_pretty(&generated_json)?;
     //     File::create(path)?.write_all(pretty_json.as_bytes())?;
     // }
-=======
-    if cli.no_run_solver {
-        println!("{}", model);
-    } else {
-        run_solver(&cli.clone(), model)?;
-    }
-
-    // still do postamble even if we didn't run the solver
-    if let Some(path) = cli.info_json_path {
-        #[allow(clippy::unwrap_used)]
-        let context_obj = context.read().unwrap().clone();
-        let generated_json = &serde_json::to_value(context_obj)?;
-        let pretty_json = serde_json::to_string_pretty(&generated_json)?;
-        File::create(path)?.write_all(pretty_json.as_bytes())?;
-    }
->>>>>>> ad7290def97bcbe25b0381c540de7f4d8042ceec
     Ok(())
 }
 
