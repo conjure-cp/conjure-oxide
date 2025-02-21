@@ -2,6 +2,7 @@ use std::collections::VecDeque;
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use crate::ast::literals::AbstractLiteral;
@@ -29,6 +30,7 @@ use super::{Domain, Range, SubModel, Typeable};
 #[biplate(to=Atom)]
 #[biplate(to=Name)]
 #[biplate(to=Vec<Expression>)]
+#[biplate(to=Option<Expression>)]
 #[biplate(to=SubModel)]
 #[biplate(to=AbstractLiteral<Expression>)]
 #[biplate(to=AbstractLiteral<Literal>,walk_into=[Atom])]
@@ -48,6 +50,19 @@ pub enum Expression {
     FromSolution(Metadata, Box<Expression>),
 
     Atomic(Metadata, Atom),
+
+    // TODO(niklasdewally): add index and slicing safety semantics from Savile Row
+    //
+    /// A matrix index
+    UnsafeIndex(Metadata, Box<Expression>, Vec<Expression>),
+    /// A matrix slice: `a[indices]`.
+    ///
+    /// One of the indicies may be `None`, representing the dimension of the matrix we want to take
+    /// a slice of. For example, for some 3d matrix a, `a[1,..,2]` has the indices
+    /// `Some(1),None,Some(2)`.
+    ///
+    /// It is assumed that the slice only has one "wild-card" dimension and thus is 1 dimensional.
+    UnsafeSlice(Metadata, Box<Expression>, Vec<Option<Expression>>),
 
     Scope(Metadata, Box<SubModel>),
 
@@ -343,6 +358,8 @@ impl Expression {
             Expression::AbstractLiteral(_, _) => None,
             Expression::DominanceRelation(_, _) => Some(Domain::BoolDomain),
             Expression::FromSolution(_, expr) => expr.domain_of(syms),
+            Expression::UnsafeIndex(_, _, _) => None,
+            Expression::UnsafeSlice(_, _, _) => None,
             Expression::Atomic(_, Atom::Reference(name)) => Some(syms.domain(name)?),
             Expression::Atomic(_, Atom::Literal(Literal::Int(n))) => {
                 Some(Domain::IntDomain(vec![Range::Single(*n)]))
@@ -525,6 +542,8 @@ impl Expression {
     pub fn return_type(&self) -> Option<ReturnType> {
         match self {
             Expression::AbstractLiteral(_, _) => None,
+            Expression::UnsafeIndex(_, _, _) => None,
+            Expression::UnsafeSlice(_, _, _) => None,
             Expression::Root(_, _) => Some(ReturnType::Bool),
             Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
             Expression::FromSolution(_, expr) => expr.return_type(),
@@ -633,12 +652,23 @@ impl From<Atom> for Expression {
     }
 }
 impl Display for Expression {
-    // TODO: (flm8) this will change once we implement a parser (two-way conversion)
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
-            // TODO: add display impl
-            Expression::AbstractLiteral(_, _) => {
-                write!(f, "todo")
+            Expression::AbstractLiteral(_, l) => l.fmt(f),
+            Expression::UnsafeIndex(_, e1, e2) => {
+                write!(f, "{e1}[{}]", pretty_vec(e2))
+            }
+
+            Expression::UnsafeSlice(_, e1, es) => {
+                let args = es
+                    .iter()
+                    .map(|x| match x {
+                        Some(x) => format!("{}", x),
+                        None => "..".into(),
+                    })
+                    .join(",");
+
+                write!(f, "{e1}[{args}]")
             }
             Expression::Root(_, exprs) => {
                 write!(f, "{}", pretty_expressions_as_top_level(exprs))
