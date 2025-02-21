@@ -42,6 +42,10 @@ pub enum Expression {
     Atomic(Metadata, Atom),
 
     #[compatible(JsonInput)]
+    // TODO: put into abstractliteral once it exists.
+    VecLit(Metadata, Vec<Expression>),
+
+    #[compatible(JsonInput)]
     Set(Metadata, Literal),
 
     Scope(Metadata, Box<SubModel>),
@@ -336,12 +340,14 @@ impl Expression {
         let ret = match self {
             //todo
             Expression::Set(_, _) => None,
+            Expression::VecLit(_,_) => None, 
             Expression::Atomic(_, Atom::Reference(name)) => Some(syms.domain(name)?),
             Expression::Atomic(_, Atom::Literal(Literal::Int(n))) => {
                 Some(Domain::IntDomain(vec![Range::Single(*n)]))
             }
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(Domain::BoolDomain),
             Expression::Atomic(_, Atom::Literal(Literal::Set(_))) => None,
+            Expression::Atomic(_, _) => todo!(),
             Expression::Scope(_, _) => Some(Domain::BoolDomain),
             Expression::Sum(_, exprs) => expr_vec_to_domain_i32(exprs, |x, y| Some(x + y), syms),
             Expression::Product(_, exprs) => {
@@ -520,11 +526,14 @@ impl Expression {
             Expression::Set(_, Literal::Int(_)) => Some(ReturnType::Int),
             Expression::Set(_, Literal::Bool(_)) => Some(ReturnType::Bool),
             Expression::Set(_, Literal::Set(_)) => Some(ReturnType::Set),
+            Expression::VecLit(_, _) => todo!(),
             Expression::Root(_, _) => Some(ReturnType::Bool),
             Expression::Atomic(_, Atom::Literal(Literal::Int(_))) => Some(ReturnType::Int),
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(ReturnType::Bool),
             Expression::Atomic(_, Atom::Literal(Literal::Set(_))) => Some(ReturnType::Set),
             Expression::Atomic(_, Atom::Reference(_)) => None,
+            Expression::Atomic(_, Atom::MatrixSlice(_,_)) => None,
+            Expression::Atomic(_, Atom::MatrixIndex(_,_)) => None,
             Expression::Scope(_, scope) => scope.return_type(),
             Expression::Abs(_, _) => Some(ReturnType::Int),
             Expression::Sum(_, _) => Some(ReturnType::Int),
@@ -630,6 +639,9 @@ impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
             Expression::Set(_, lit) => lit.fmt(f),
+            Expression::VecLit(_, v) =>  {
+                write!(f,"[{}]", pretty_vec(v))
+            },
             Expression::Root(_, exprs) => {
                 write!(f, "{}", pretty_expressions_as_top_level(exprs))
             }

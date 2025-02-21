@@ -29,7 +29,7 @@ pub fn is_all_constant(expression: &Expr) -> bool {
     for atom in expression.universe_bi() {
         match atom {
             Atom::Literal(_) => {}
-            Atom::Reference(_) => {
+            _ => {
                 return false;
             }
         }

@@ -3,6 +3,7 @@ use std::borrow::Borrow;
 use crate::metadata::Metadata;
 
 use super::{Expression, Literal, Name};
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use uniplate::derive::Uniplate;
 
@@ -16,6 +17,8 @@ use uniplate::derive::Uniplate;
 pub enum Atom {
     Literal(Literal),
     Reference(Name),
+    MatrixSlice(Name, Vec<Option<i32>>),
+    MatrixIndex(Name, Vec<i32>),
 }
 
 impl std::fmt::Display for Atom {
@@ -23,6 +26,22 @@ impl std::fmt::Display for Atom {
         match self {
             Atom::Literal(x) => x.fmt(f),
             Atom::Reference(x) => x.fmt(f),
+            Atom::MatrixSlice(name, vec) => {
+                let slice = vec
+                    .iter()
+                    .map(|x| match x {
+                        Some(x) => x.to_string(),
+                        None => "_".to_owned(),
+                    })
+                    .join(",");
+
+                writeln!(f, "{name}[{slice}]")
+            }
+            Atom::MatrixIndex(name, vec) => {
+                let slice = vec.iter().map(|x| x.to_string()).join(",");
+
+                writeln!(f, "{name}[{slice}]")
+            }
         }
     }
 }
