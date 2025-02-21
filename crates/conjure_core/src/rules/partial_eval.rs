@@ -23,6 +23,8 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         AbstractLiteral(_, _) => Err(RuleNotApplicable),
         DominanceRelation(_, _) => Err(RuleNotApplicable),
         FromSolution(_, _) => Err(RuleNotApplicable),
+        UnsafeIndex(_, _, _) => Err(RuleNotApplicable), // TODO:: partially evaluate this sometimes?
+        UnsafeSlice(_, _, _) => Err(RuleNotApplicable), //TODO: partially evaluate this sometimes?
         Bubble(_, _, _) => Err(RuleNotApplicable),
         Atomic(_, _) => Err(RuleNotApplicable),
         Scope(_, _) => Err(RuleNotApplicable),

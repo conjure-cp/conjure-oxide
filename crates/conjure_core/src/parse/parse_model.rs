@@ -81,8 +81,10 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
                     None => bug!("SuchThat is not a vector"),
                 };
 
-                let constraints: Vec<Expression> =
-                    constraints_arr.iter().flat_map(parse_expression).collect();
+                let constraints: Vec<Expression> = constraints_arr
+                    .iter()
+                    .map(|x| parse_expression(x).unwrap())
+                    .collect();
                 m.as_submodel_mut().add_constraints(constraints);
                 // println!("Nb constraints {}", m.constraints.len());
             }
