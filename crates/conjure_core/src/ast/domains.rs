@@ -1,6 +1,9 @@
 use std::fmt::Display;
 
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+
+use crate::ast::pretty::pretty_vec;
 
 use super::{types::Typeable, Name, ReturnType};
 
@@ -13,13 +16,25 @@ where
     Bounded(A, A),
 }
 
+impl<A: Ord + Display> Display for Range<A> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Range::Single(i) => write!(f, "{i}"),
+            Range::Bounded(i, j) => write!(f, "{i}..{j}"),
+        }
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub enum Domain {
     BoolDomain,
     IntDomain(Vec<Range<i32>>),
     DomainReference(Name),
     DomainSet(SetAttr, Box<Domain>),
+    /// A n-dimensional matrix with a value domain and n-index domains
+    DomainMatrix(Box<Domain>, Vec<Domain>),
 }
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum SetAttr {
     None,
@@ -90,6 +105,13 @@ impl Display for Domain {
             Domain::DomainReference(name) => write!(f, "{}", name),
             Domain::DomainSet(_, domain) => {
                 write!(f, "set of ({})", domain)
+            }
+            Domain::DomainMatrix(value_domain, index_domains) => {
+                write!(
+                    f,
+                    "matrix indexed by [{}] of {value_domain}",
+                    pretty_vec(&index_domains.iter().collect_vec())
+                )
             }
         }
     }

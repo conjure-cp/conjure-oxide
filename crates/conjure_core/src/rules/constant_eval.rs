@@ -33,6 +33,8 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::FromSolution(_, _) => None,
         // Same as Expr::Root, we should not replace the dominance relation with a constant
         Expr::DominanceRelation(_, _) => None,
+        Expr::UnsafeIndex(_, _, _) => None,
+        Expr::UnsafeSlice(_, _, _) => None,
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
         Expr::Atomic(_, Atom::Reference(_c)) => None,
         Expr::Abs(_, e) => un_op::<i32, i32>(|a| a.abs(), e).map(Lit::Int),
