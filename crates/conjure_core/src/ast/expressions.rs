@@ -45,6 +45,11 @@ pub enum Expression {
     // TODO: put into abstractliteral once it exists.
     VecLit(Metadata, Vec<Expression>),
 
+    /// A matrix index or slice
+    ///
+    /// TODO: should this be Expr -> Vec<Expr> -> Expr - can the index be an expression?
+    Index(Metadata,Box<Expression>,Vec<Expression>),
+
     #[compatible(JsonInput)]
     Set(Metadata, Literal),
 
@@ -339,6 +344,7 @@ impl Expression {
     pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
         let ret = match self {
             //todo
+            Expression::Index(_, _, _) => None, //FIXME:
             Expression::Set(_, _) => None,
             Expression::VecLit(_,_) => None, 
             Expression::Atomic(_, Atom::Reference(name)) => Some(syms.domain(name)?),
@@ -523,6 +529,7 @@ impl Expression {
 
     pub fn return_type(&self) -> Option<ReturnType> {
         match self {
+            Expression::Index(_, _, _) => None, //FIXME:
             Expression::Set(_, Literal::Int(_)) => Some(ReturnType::Int),
             Expression::Set(_, Literal::Bool(_)) => Some(ReturnType::Bool),
             Expression::Set(_, Literal::Set(_)) => Some(ReturnType::Set),
@@ -532,8 +539,6 @@ impl Expression {
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(ReturnType::Bool),
             Expression::Atomic(_, Atom::Literal(Literal::Set(_))) => Some(ReturnType::Set),
             Expression::Atomic(_, Atom::Reference(_)) => None,
-            Expression::Atomic(_, Atom::MatrixSlice(_,_)) => None,
-            Expression::Atomic(_, Atom::MatrixIndex(_,_)) => None,
             Expression::Scope(_, scope) => scope.return_type(),
             Expression::Abs(_, _) => Some(ReturnType::Int),
             Expression::Sum(_, _) => Some(ReturnType::Int),
@@ -641,6 +646,9 @@ impl Display for Expression {
             Expression::Set(_, lit) => lit.fmt(f),
             Expression::VecLit(_, v) =>  {
                 write!(f,"[{}]", pretty_vec(v))
+            },
+            Expression::Index(_, e1, e2) => {
+                write!(f,"{e1}[{}]",pretty_vec(e2))
             },
             Expression::Root(_, exprs) => {
                 write!(f, "{}", pretty_expressions_as_top_level(exprs))

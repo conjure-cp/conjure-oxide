@@ -1,0 +1,32 @@
+Model before rewriting:
+
+find a: matrix indexed by [[int(1..5)]] of bool
+
+such that
+
+(a[[1]] = true),
+(a[[2]] = true),
+(a[[3]] = true),
+(a[[4]] = true),
+(a[[5]] = Not(a[[4]]))
+
+--
+
+Not(a[[4]]), 
+   ~~> not_constraint_to_reify ([("Minion", 4090)]) 
+Reify(a[[4]], false) 
+
+--
+
+Final model:
+
+find a: matrix indexed by [[int(1..5)]] of bool
+
+such that
+
+(a[[1]] = true),
+(a[[2]] = true),
+(a[[3]] = true),
+(a[[4]] = true),
+(a[[5]] = Reify(a[[4]], false))
+

@@ -1,0 +1,276 @@
+Model before rewriting:
+
+letting Blue be 4
+letting Chesterfields be 2
+letting Coffee be 0
+letting Dog be 0
+letting English be 0
+letting Fox be 1
+letting Green be 1
+letting Horse be 2
+letting Ivory be 2
+letting Japanese be 4
+letting Kools be 1
+letting LuckyStrike be 3
+letting Milk be 2
+letting Norwegian be 3
+letting OldGold be 0
+letting OrangeJuice be 3
+letting Parliaments be 4
+letting Red be 0
+letting Snails be 4
+letting Spanish be 1
+letting Tea be 1
+letting Ukrainian be 2
+letting Water be 4
+letting Yellow be 3
+letting Zebra be 3
+find animal: matrix indexed by [[int(0..4)]] of int(0..4)
+find colour: matrix indexed by [[int(0..4)]] of int(0..4)
+find drink: matrix indexed by [[int(0..4)]] of int(0..4)
+find nation: matrix indexed by [[int(0..4)]] of int(0..4)
+find smoke: matrix indexed by [[int(0..4)]] of int(0..4)
+
+such that
+
+(nation[[English]] = colour[[Red]]),
+(nation[[Spanish]] = animal[[Dog]]),
+(drink[[Coffee]] = colour[[Green]]),
+(nation[[Ukrainian]] = drink[[Tea]]),
+(colour[[Green]] = Sum([colour[[Ivory]], 1])),
+(smoke[[OldGold]] = animal[[Snails]]),
+(smoke[[Kools]] = colour[[Yellow]]),
+(drink[[Milk]] = 2),
+(nation[[Norwegian]] = 0),
+(|(smoke[[Chesterfields]] - animal[[Fox]])| = 1),
+(|(smoke[[Kools]] - animal[[Horse]])| = 1),
+(smoke[[LuckyStrike]] = drink[[OrangeJuice]]),
+(nation[[Japanese]] = smoke[[Parliaments]]),
+(|(nation[[Norwegian]] - colour[[Blue]])| = 1)
+
+--
+
+(smoke[[Chesterfields]] - animal[[Fox]]), 
+   ~~> minus_to_sum ([("Base", 8400)]) 
+Sum([smoke[[Chesterfields]], -(animal[[Fox]])]) 
+
+--
+
+(smoke[[Kools]] - animal[[Horse]]), 
+   ~~> minus_to_sum ([("Base", 8400)]) 
+Sum([smoke[[Kools]], -(animal[[Horse]])]) 
+
+--
+
+(nation[[Norwegian]] - colour[[Blue]]), 
+   ~~> minus_to_sum ([("Base", 8400)]) 
+Sum([nation[[Norwegian]], -(colour[[Blue]])]) 
+
+--
+
+English, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+0 
+
+--
+
+Red, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+0 
+
+--
+
+Spanish, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+1 
+
+--
+
+Dog, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+0 
+
+--
+
+Coffee, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+0 
+
+--
+
+Green, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+1 
+
+--
+
+Ukrainian, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+2 
+
+--
+
+Tea, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+1 
+
+--
+
+Green, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+1 
+
+--
+
+Ivory, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+2 
+
+--
+
+OldGold, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+0 
+
+--
+
+Snails, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+4 
+
+--
+
+Kools, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+1 
+
+--
+
+Yellow, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+3 
+
+--
+
+Milk, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+2 
+
+--
+
+Norwegian, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+3 
+
+--
+
+Chesterfields, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+2 
+
+--
+
+Fox, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+1 
+
+--
+
+Kools, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+1 
+
+--
+
+Horse, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+2 
+
+--
+
+LuckyStrike, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+3 
+
+--
+
+OrangeJuice, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+3 
+
+--
+
+Japanese, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+4 
+
+--
+
+Parliaments, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+4 
+
+--
+
+Norwegian, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+3 
+
+--
+
+Blue, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+4 
+
+--
+
+Final model:
+
+letting Blue be 4
+letting Chesterfields be 2
+letting Coffee be 0
+letting Dog be 0
+letting English be 0
+letting Fox be 1
+letting Green be 1
+letting Horse be 2
+letting Ivory be 2
+letting Japanese be 4
+letting Kools be 1
+letting LuckyStrike be 3
+letting Milk be 2
+letting Norwegian be 3
+letting OldGold be 0
+letting OrangeJuice be 3
+letting Parliaments be 4
+letting Red be 0
+letting Snails be 4
+letting Spanish be 1
+letting Tea be 1
+letting Ukrainian be 2
+letting Water be 4
+letting Yellow be 3
+letting Zebra be 3
+find animal: matrix indexed by [[int(0..4)]] of int(0..4)
+find colour: matrix indexed by [[int(0..4)]] of int(0..4)
+find drink: matrix indexed by [[int(0..4)]] of int(0..4)
+find nation: matrix indexed by [[int(0..4)]] of int(0..4)
+find smoke: matrix indexed by [[int(0..4)]] of int(0..4)
+
+such that
+
+(nation[[0]] = colour[[0]]),
+(nation[[1]] = animal[[0]]),
+(drink[[0]] = colour[[1]]),
+(nation[[2]] = drink[[1]]),
+(colour[[1]] = Sum([colour[[2]], 1])),
+(smoke[[0]] = animal[[4]]),
+(smoke[[1]] = colour[[3]]),
+(drink[[2]] = 2),
+(nation[[3]] = 0),
+(|Sum([smoke[[2]], -(animal[[1]])])| = 1),
+(|Sum([smoke[[1]], -(animal[[2]])])| = 1),
+(smoke[[3]] = drink[[3]]),
+(nation[[4]] = smoke[[4]]),
+(|Sum([nation[[3]], -(colour[[4]])])| = 1)
+

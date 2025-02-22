@@ -109,49 +109,7 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
         .iter()
         .next()
         .ok_or(error!("FindOrGiven[2] is an empty object"))?;
-    let domain = match domain.0.as_str() {
-        "DomainInt" => Ok(parse_int_domain(domain.1)?),
-        "DomainBool" => Ok(Domain::BoolDomain),
-        "DomainReference" => Ok(Domain::DomainReference(Name::UserName(
-            domain
-                .1
-                .as_array()
-                .ok_or(error!("DomainReference is not an array"))?[0]
-                .as_object()
-                .ok_or(error!("DomainReference[0] is not an object"))?["Name"]
-                .as_str()
-                .ok_or(error!("DomainReference[0].Name is not a string"))?
-                .into(),
-        ))),
-        "DomainSet" => {
-            let dom = domain.1.get(2).and_then(|v| v.as_object());
-            if let Some((domain_obj)) = dom {
-                let domain = domain_obj
-                    .iter()
-                    .next()
-                    .ok_or(Error::Parse("DomainSet is an empty object".to_owned()))?;
-                let domain = match domain.0.as_str() {
-                    "DomainInt" => {
-                        println!("DomainInt: {:#?}", domain.1);
-                        Ok(parse_int_domain(domain.1)?)
-                    }
-                    "DomainBool" => Ok(Domain::BoolDomain),
-                    _ => Err(Error::Parse(
-                        "FindOrGiven[2] is an unknown object".to_owned(),
-                    )),
-                }?;
-                Ok(Domain::DomainSet(Box::new(domain)))
-            } else {
-                Err(Error::Parse(
-                    "FindOrGiven[2] is an unknown object".to_owned(),
-                ))
-            }
-        }
-
-        _ => Err(Error::Parse(
-            "FindOrGiven[2] is an unknown object".to_owned(), // consider covered
-        )),
-    }?;
+    let domain = parse_domain(domain.0, domain.1)?;
 
     symtab
         .insert(Rc::new(Declaration::new_var(name.clone(), domain)))
@@ -187,11 +145,7 @@ fn parse_letting(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
             .next()
             .ok_or(error!("Letting[1].Domain is an empty object"))?;
 
-        let domain = match domain.0.as_str() {
-            "DomainInt" => Ok(parse_int_domain(domain.1)?),
-            "DomainBool" => Ok(Domain::BoolDomain),
-            _ => throw_error!("Letting[1] is an unknown object".to_owned()),
-        }?;
+        let domain = parse_domain(domain.0, domain.1)?;
 
         symtab
             .insert(Rc::new(Declaration::new_domain_letting(
@@ -201,6 +155,96 @@ fn parse_letting(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
             .ok_or(Error::Parse(format!(
                 "Could not add {name} to symbol table as it already exists"
             )))
+    }
+}
+
+fn parse_domain(domain_name: &str, domain_value: &JsonValue) -> Result<Domain> {
+    match domain_name {
+        "DomainInt" => Ok(parse_int_domain(domain_value)?),
+        "DomainBool" => Ok(Domain::BoolDomain),
+        "DomainReference" => Ok(Domain::DomainReference(Name::UserName(
+            domain_value
+                .as_array()
+                .ok_or(error!("DomainReference is not an array"))?[0]
+                .as_object()
+                .ok_or(error!("DomainReference[0] is not an object"))?["Name"]
+                .as_str()
+                .ok_or(error!("DomainReference[0].Name is not a string"))?
+                .into(),
+        ))),
+        "DomainSet" => {
+            let dom = domain_value.get(2).and_then(|v| v.as_object());
+            if let Some(domain_obj) = dom {
+                let domain = domain_obj
+                    .iter()
+                    .next()
+                    .ok_or(Error::Parse("DomainSet is an empty object".to_owned()))?;
+                let domain = match domain.0.as_str() {
+                    "DomainInt" => {
+                        println!("DomainInt: {:#?}", domain.1);
+                        Ok(parse_int_domain(domain.1)?)
+                    }
+                    "DomainBool" => Ok(Domain::BoolDomain),
+                    _ => Err(Error::Parse(
+                        "FindOrGiven[2] is an unknown object".to_owned(),
+                    )),
+                }?;
+                Ok(Domain::DomainSet(Box::new(domain)))
+            } else {
+                Err(Error::Parse(
+                    "FindOrGiven[2] is an unknown object".to_owned(),
+                ))
+            }
+        }
+
+        "DomainMatrix" => {
+            let domain_value = domain_value
+                .as_array()
+                .ok_or(error!("Domain matrix is not an array"))?;
+
+            let indexed_by_domain = domain_value[0].clone();
+            let (_, index_domain_value) = indexed_by_domain
+                .as_object()
+                .ok_or(error!("DomainMatrix[0] is not an object"))?
+                .iter()
+                .next()
+                .ok_or(error!(""))?;
+
+            let (value_domain_name, value_domain_value) = domain_value[1]
+                .as_object()
+                .ok_or(error!(""))?
+                .iter()
+                .next()
+                .ok_or(error!(""))?;
+
+            // Conjure stores a 2-d matrix as a matrix of a matrix.
+            //
+            // Therefore, the index is always a single Domain::IntDomain.
+
+            let mut index_domains: Vec<Vec<Range<i32>>> = vec![];
+
+            index_domains.push(match parse_int_domain(index_domain_value)? {
+                Domain::IntDomain(ranges) => Ok(ranges),
+                x => Err(error!(format!("unexpected index domain {x}"))),
+            }?);
+
+            // We want to store 2-d matrices as a matrix with two index domains, not a matrix in a
+            // matrix.
+            //
+            // Walk through the value domain until it is not a MatrixDomain, adding the index to
+            // our list of indices.
+            let mut value_domain = parse_domain(value_domain_name, value_domain_value)?;
+            while let Domain::MatrixDomain(mut indices, new_value_domain) = value_domain {
+                index_domains.append(&mut indices);
+                value_domain = *new_value_domain.clone()
+            }
+
+            Ok(Domain::MatrixDomain(index_domains, Box::new(value_domain)))
+        }
+
+        _ => Err(Error::Parse(
+            "FindOrGiven[2] is an unknown object".to_owned(), // consider covered
+        )),
     }
 }
 
@@ -420,6 +464,10 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
             Value::Object(vec_op) if vec_operator_names.any(|key| vec_op.contains_key(*key)) => {
                 parse_vec_op(vec_op, vec_operators)
             }
+
+            Value::Object(op) if op.contains_key("MkOpIndexing") => {
+                parse_indexing_op(op)
+            }
             otherwise => bug!("Unhandled Op {:#?}", otherwise),
         },
         Value::Object(refe) if refe.contains_key("Reference") => {
@@ -458,6 +506,42 @@ fn parse_bin_op(
         otherwise => bug!("Unhandled parse_bin_op {:#?}", otherwise),
     }
 }
+
+fn parse_indexing_op(op: &serde_json::Map<String, Value>) -> Option<Expression> {
+    // we know there is a single key value pair in this object
+    // extract the value, ignore the key
+    let (key, value) = op.into_iter().next()?;
+    
+    if key != "MkOpIndexing" {
+        return None;
+    }
+
+    // we know that this is meant to be a mkopindexing, so anything that goes wrong from here is a
+    // bug!
+    
+    // Conjure does a[1,2,3] as MkOpIndexing(MkOpIndexing(MkOpIndexing(a,3),2),1).
+    //
+    // However, we want this in a flattened form: Index(a, [1,2,3])
+    let mut target: Expression;
+    let mut indices: Vec<Expression> = vec![];
+
+    match &value {
+        Value::Array(op_args) if op_args.len() == 2 => {
+            target = parse_expression(&op_args[0]).expect("expected an expression");
+            indices.push(parse_expression(&op_args[1]).expect("expected an expression"));
+        }
+        otherwise => bug!("Unhandled parse_bin_op {:#?}", otherwise),
+    }
+
+    while let Expression::Index(_, new_target, new_indices) = &mut target {
+        indices.append(new_indices);
+        target = *new_target.clone();
+    }
+
+    Some(Expression::Index(Metadata::new(), Box::new(target), indices))
+
+}
+
 
 fn parse_unary_op(
     un_op: &serde_json::Map<String, Value>,

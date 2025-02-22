@@ -21,6 +21,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // rule infinitely!
     // This is why we always check whether we found a constant or not.
     match expr.clone() {
+        Index(_,_,_) => Err(RuleNotApplicable), //FIXME:
         Set(_, _) => Err(RuleNotApplicable),
         VecLit(_,_) => Err(RuleNotApplicable),
         Bubble(_, _, _) => Err(RuleNotApplicable),

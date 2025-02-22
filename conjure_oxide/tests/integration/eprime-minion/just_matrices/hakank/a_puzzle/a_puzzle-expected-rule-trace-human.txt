@@ -1,0 +1,420 @@
+Model before rewriting:
+
+letting R be domain int(0..9)
+find all: matrix indexed by [[int(1..10)]] of R
+find x: R
+find x0: R
+find x1: R
+find x2: R
+find x3: R
+find x4: R
+find x5: R
+find x6: R
+find x7: R
+find x8: R
+find x9: R
+
+such that
+
+(all[[1]] = x0),
+(all[[2]] = x1),
+(all[[3]] = x2),
+(all[[4]] = x3),
+(all[[5]] = x4),
+(all[[6]] = x5),
+(all[[7]] = x6),
+(all[[8]] = x7),
+(all[[9]] = x8),
+(all[[10]] = x9),
+(Sum([Sum([Sum([x8, x8]), x0]), x9]) = 6),
+(Sum([Sum([Sum([x7, x1]), x1]), x1]) = 0),
+(Sum([Sum([Sum([x2, x1]), x7]), x2]) = 0),
+(Sum([Sum([Sum([x6, x6]), x6]), x6]) = 4),
+(Sum([Sum([Sum([x1, x1]), x1]), x1]) = 0),
+(Sum([Sum([Sum([x3, x2]), x1]), x3]) = 0),
+(Sum([Sum([Sum([x7, x6]), x6]), x2]) = 2),
+(Sum([Sum([Sum([x9, x3]), x1]), x2]) = 1),
+(Sum([Sum([Sum([x0, x0]), x0]), x0]) = 4),
+(Sum([Sum([Sum([x2, x2]), x2]), x2]) = 0),
+(Sum([Sum([Sum([x3, x3]), x3]), x3]) = 0),
+(Sum([Sum([Sum([x5, x5]), x5]), x5]) = 0),
+(Sum([Sum([Sum([x8, x1]), x9]), x3]) = 3),
+(Sum([Sum([Sum([x8, x0]), x9]), x6]) = 5),
+(Sum([Sum([Sum([x7, x7]), x7]), x7]) = 0),
+(Sum([Sum([Sum([x9, x9]), x9]), x9]) = 4),
+(Sum([Sum([Sum([x7, x7]), x5]), x6]) = 1),
+(Sum([Sum([Sum([x6, x8]), x5]), x5]) = 3),
+(Sum([Sum([Sum([x9, x8]), x8]), x1]) = 5),
+(Sum([Sum([Sum([x5, x5]), x3]), x1]) = 0),
+(Sum([Sum([Sum([x2, x5]), x8]), x1]) = x)
+
+--
+
+Sum([Sum([Sum([x8, x8]), x0]), x9]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([x8, x8, x0, x9]) 
+
+--
+
+Sum([Sum([Sum([x7, x1]), x1]), x1]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([x7, x1, x1, x1]) 
+
+--
+
+Sum([Sum([Sum([x2, x1]), x7]), x2]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([x2, x1, x7, x2]) 
+
+--
+
+Sum([Sum([Sum([x6, x6]), x6]), x6]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([x6, x6, x6, x6]) 
+
+--
+
+Sum([Sum([Sum([x1, x1]), x1]), x1]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([x1, x1, x1, x1]) 
+
+--
+
+Sum([Sum([Sum([x3, x2]), x1]), x3]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([x3, x2, x1, x3]) 
+
+--
+
+Sum([Sum([Sum([x7, x6]), x6]), x2]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([x7, x6, x6, x2]) 
+
+--
+
+Sum([Sum([Sum([x9, x3]), x1]), x2]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([x9, x3, x1, x2]) 
+
+--
+
+Sum([Sum([Sum([x0, x0]), x0]), x0]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([x0, x0, x0, x0]) 
+
+--
+
+Sum([Sum([Sum([x2, x2]), x2]), x2]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([x2, x2, x2, x2]) 
+
+--
+
+Sum([Sum([Sum([x3, x3]), x3]), x3]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([x3, x3, x3, x3]) 
+
+--
+
+Sum([Sum([Sum([x5, x5]), x5]), x5]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([x5, x5, x5, x5]) 
+
+--
+
+Sum([Sum([Sum([x8, x1]), x9]), x3]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([x8, x1, x9, x3]) 
+
+--
+
+Sum([Sum([Sum([x8, x0]), x9]), x6]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([x8, x0, x9, x6]) 
+
+--
+
+Sum([Sum([Sum([x7, x7]), x7]), x7]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([x7, x7, x7, x7]) 
+
+--
+
+Sum([Sum([Sum([x9, x9]), x9]), x9]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([x9, x9, x9, x9]) 
+
+--
+
+Sum([Sum([Sum([x7, x7]), x5]), x6]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([x7, x7, x5, x6]) 
+
+--
+
+Sum([Sum([Sum([x6, x8]), x5]), x5]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([x6, x8, x5, x5]) 
+
+--
+
+Sum([Sum([Sum([x9, x8]), x8]), x1]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([x9, x8, x8, x1]) 
+
+--
+
+Sum([Sum([Sum([x5, x5]), x3]), x1]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([x5, x5, x3, x1]) 
+
+--
+
+Sum([Sum([Sum([x2, x5]), x8]), x1]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([x2, x5, x8, x1]) 
+
+--
+
+(all[[1]] = x0),
+(all[[2]] = x1),
+(all[[3]] = x2),
+(all[[4]] = x3),
+(all[[5]] = x4),
+(all[[6]] = x5),
+(all[[7]] = x6),
+(all[[8]] = x7),
+(all[[9]] = x8),
+(all[[10]] = x9),
+(Sum([x8, x8, x0, x9]) = 6),
+(Sum([x7, x1, x1, x1]) = 0),
+(Sum([x2, x1, x7, x2]) = 0),
+(Sum([x6, x6, x6, x6]) = 4),
+(Sum([x1, x1, x1, x1]) = 0),
+(Sum([x3, x2, x1, x3]) = 0),
+(Sum([x7, x6, x6, x2]) = 2),
+(Sum([x9, x3, x1, x2]) = 1),
+(Sum([x0, x0, x0, x0]) = 4),
+(Sum([x2, x2, x2, x2]) = 0),
+(Sum([x3, x3, x3, x3]) = 0),
+(Sum([x5, x5, x5, x5]) = 0),
+(Sum([x8, x1, x9, x3]) = 3),
+(Sum([x8, x0, x9, x6]) = 5),
+(Sum([x7, x7, x7, x7]) = 0),
+(Sum([x9, x9, x9, x9]) = 4),
+(Sum([x7, x7, x5, x6]) = 1),
+(Sum([x6, x8, x5, x5]) = 3),
+(Sum([x9, x8, x8, x1]) = 5),
+(Sum([x5, x5, x3, x1]) = 0),
+(Sum([x2, x5, x8, x1]) = x), 
+   ~~> substitute_domain_lettings ([("Base", 5000)]) 
+(all[[1]] = x0),
+(all[[2]] = x1),
+(all[[3]] = x2),
+(all[[4]] = x3),
+(all[[5]] = x4),
+(all[[6]] = x5),
+(all[[7]] = x6),
+(all[[8]] = x7),
+(all[[9]] = x8),
+(all[[10]] = x9),
+(Sum([x8, x8, x0, x9]) = 6),
+(Sum([x7, x1, x1, x1]) = 0),
+(Sum([x2, x1, x7, x2]) = 0),
+(Sum([x6, x6, x6, x6]) = 4),
+(Sum([x1, x1, x1, x1]) = 0),
+(Sum([x3, x2, x1, x3]) = 0),
+(Sum([x7, x6, x6, x2]) = 2),
+(Sum([x9, x3, x1, x2]) = 1),
+(Sum([x0, x0, x0, x0]) = 4),
+(Sum([x2, x2, x2, x2]) = 0),
+(Sum([x3, x3, x3, x3]) = 0),
+(Sum([x5, x5, x5, x5]) = 0),
+(Sum([x8, x1, x9, x3]) = 3),
+(Sum([x8, x0, x9, x6]) = 5),
+(Sum([x7, x7, x7, x7]) = 0),
+(Sum([x9, x9, x9, x9]) = 4),
+(Sum([x7, x7, x5, x6]) = 1),
+(Sum([x6, x8, x5, x5]) = 3),
+(Sum([x9, x8, x8, x1]) = 5),
+(Sum([x5, x5, x3, x1]) = 0),
+(Sum([x2, x5, x8, x1]) = x) 
+
+--
+
+(Sum([x8, x8, x0, x9]) = 6), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x8, x8, x0, x9], 6), SumGeq([x8, x8, x0, x9], 6)]) 
+
+--
+
+(Sum([x7, x1, x1, x1]) = 0), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x7, x1, x1, x1], 0), SumGeq([x7, x1, x1, x1], 0)]) 
+
+--
+
+(Sum([x2, x1, x7, x2]) = 0), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x2, x1, x7, x2], 0), SumGeq([x2, x1, x7, x2], 0)]) 
+
+--
+
+(Sum([x6, x6, x6, x6]) = 4), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x6, x6, x6, x6], 4), SumGeq([x6, x6, x6, x6], 4)]) 
+
+--
+
+(Sum([x1, x1, x1, x1]) = 0), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x1, x1, x1, x1], 0), SumGeq([x1, x1, x1, x1], 0)]) 
+
+--
+
+(Sum([x3, x2, x1, x3]) = 0), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x3, x2, x1, x3], 0), SumGeq([x3, x2, x1, x3], 0)]) 
+
+--
+
+(Sum([x7, x6, x6, x2]) = 2), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x7, x6, x6, x2], 2), SumGeq([x7, x6, x6, x2], 2)]) 
+
+--
+
+(Sum([x9, x3, x1, x2]) = 1), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x9, x3, x1, x2], 1), SumGeq([x9, x3, x1, x2], 1)]) 
+
+--
+
+(Sum([x0, x0, x0, x0]) = 4), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x0, x0, x0, x0], 4), SumGeq([x0, x0, x0, x0], 4)]) 
+
+--
+
+(Sum([x2, x2, x2, x2]) = 0), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x2, x2, x2, x2], 0), SumGeq([x2, x2, x2, x2], 0)]) 
+
+--
+
+(Sum([x3, x3, x3, x3]) = 0), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x3, x3, x3, x3], 0), SumGeq([x3, x3, x3, x3], 0)]) 
+
+--
+
+(Sum([x5, x5, x5, x5]) = 0), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x5, x5, x5, x5], 0), SumGeq([x5, x5, x5, x5], 0)]) 
+
+--
+
+(Sum([x8, x1, x9, x3]) = 3), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x8, x1, x9, x3], 3), SumGeq([x8, x1, x9, x3], 3)]) 
+
+--
+
+(Sum([x8, x0, x9, x6]) = 5), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x8, x0, x9, x6], 5), SumGeq([x8, x0, x9, x6], 5)]) 
+
+--
+
+(Sum([x7, x7, x7, x7]) = 0), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x7, x7, x7, x7], 0), SumGeq([x7, x7, x7, x7], 0)]) 
+
+--
+
+(Sum([x9, x9, x9, x9]) = 4), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x9, x9, x9, x9], 4), SumGeq([x9, x9, x9, x9], 4)]) 
+
+--
+
+(Sum([x7, x7, x5, x6]) = 1), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x7, x7, x5, x6], 1), SumGeq([x7, x7, x5, x6], 1)]) 
+
+--
+
+(Sum([x6, x8, x5, x5]) = 3), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x6, x8, x5, x5], 3), SumGeq([x6, x8, x5, x5], 3)]) 
+
+--
+
+(Sum([x9, x8, x8, x1]) = 5), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x9, x8, x8, x1], 5), SumGeq([x9, x8, x8, x1], 5)]) 
+
+--
+
+(Sum([x5, x5, x3, x1]) = 0), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x5, x5, x3, x1], 0), SumGeq([x5, x5, x3, x1], 0)]) 
+
+--
+
+(Sum([x2, x5, x8, x1]) = x), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([x2, x5, x8, x1], x), SumGeq([x2, x5, x8, x1], x)]) 
+
+--
+
+Final model:
+
+letting R be domain int(0..9)
+find all: matrix indexed by [[int(1..10)]] of R
+find x: int(0..9)
+find x0: int(0..9)
+find x1: int(0..9)
+find x2: int(0..9)
+find x3: int(0..9)
+find x4: int(0..9)
+find x5: int(0..9)
+find x6: int(0..9)
+find x7: int(0..9)
+find x8: int(0..9)
+find x9: int(0..9)
+
+such that
+
+(all[[1]] = x0),
+(all[[2]] = x1),
+(all[[3]] = x2),
+(all[[4]] = x3),
+(all[[5]] = x4),
+(all[[6]] = x5),
+(all[[7]] = x6),
+(all[[8]] = x7),
+(all[[9]] = x8),
+(all[[10]] = x9),
+And([SumLeq([x8, x8, x0, x9], 6), SumGeq([x8, x8, x0, x9], 6)]),
+And([SumLeq([x7, x1, x1, x1], 0), SumGeq([x7, x1, x1, x1], 0)]),
+And([SumLeq([x2, x1, x7, x2], 0), SumGeq([x2, x1, x7, x2], 0)]),
+And([SumLeq([x6, x6, x6, x6], 4), SumGeq([x6, x6, x6, x6], 4)]),
+And([SumLeq([x1, x1, x1, x1], 0), SumGeq([x1, x1, x1, x1], 0)]),
+And([SumLeq([x3, x2, x1, x3], 0), SumGeq([x3, x2, x1, x3], 0)]),
+And([SumLeq([x7, x6, x6, x2], 2), SumGeq([x7, x6, x6, x2], 2)]),
+And([SumLeq([x9, x3, x1, x2], 1), SumGeq([x9, x3, x1, x2], 1)]),
+And([SumLeq([x0, x0, x0, x0], 4), SumGeq([x0, x0, x0, x0], 4)]),
+And([SumLeq([x2, x2, x2, x2], 0), SumGeq([x2, x2, x2, x2], 0)]),
+And([SumLeq([x3, x3, x3, x3], 0), SumGeq([x3, x3, x3, x3], 0)]),
+And([SumLeq([x5, x5, x5, x5], 0), SumGeq([x5, x5, x5, x5], 0)]),
+And([SumLeq([x8, x1, x9, x3], 3), SumGeq([x8, x1, x9, x3], 3)]),
+And([SumLeq([x8, x0, x9, x6], 5), SumGeq([x8, x0, x9, x6], 5)]),
+And([SumLeq([x7, x7, x7, x7], 0), SumGeq([x7, x7, x7, x7], 0)]),
+And([SumLeq([x9, x9, x9, x9], 4), SumGeq([x9, x9, x9, x9], 4)]),
+And([SumLeq([x7, x7, x5, x6], 1), SumGeq([x7, x7, x5, x6], 1)]),
+And([SumLeq([x6, x8, x5, x5], 3), SumGeq([x6, x8, x5, x5], 3)]),
+And([SumLeq([x9, x8, x8, x1], 5), SumGeq([x9, x8, x8, x1], 5)]),
+And([SumLeq([x5, x5, x3, x1], 0), SumGeq([x5, x5, x3, x1], 0)]),
+And([SumLeq([x2, x5, x8, x1], x), SumGeq([x2, x5, x8, x1], x)])
+

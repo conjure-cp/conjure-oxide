@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use crate::ast::pretty::pretty_vec;
@@ -30,7 +31,7 @@ pub enum Domain {
     IntDomain(Vec<Range<i32>>),
     DomainReference(Name),
     DomainSet(Box<Domain>),
-    MatrixDomain(Vec<Range<i32>>, Box<Domain>),
+    MatrixDomain(Vec<Vec<Range<i32>>>, Box<Domain>),
 }
 
 impl Domain {
@@ -97,7 +98,16 @@ impl Display for Domain {
                 write!(f, "set of ({})", domain)
             }
             Domain::MatrixDomain(vec, domain) => {
-                write!(f, "matrix indexed by [{}] of {domain}", pretty_vec(vec))
+                write!(
+                    f,
+                    "matrix indexed by [{}] of {domain}",
+                    pretty_vec(
+                        &vec.into_iter()
+                            .cloned()
+                            .map(|x| Domain::IntDomain(x))
+                            .collect_vec()
+                    )
+                )
             }
         }
     }
