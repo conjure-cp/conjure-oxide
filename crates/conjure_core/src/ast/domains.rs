@@ -2,6 +2,8 @@ use std::fmt::Display;
 
 use serde::{Deserialize, Serialize};
 
+use crate::ast::pretty::pretty_vec;
+
 use super::{types::Typeable, Name, ReturnType};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -13,12 +15,22 @@ where
     Bounded(A, A),
 }
 
+impl<A: Ord + Display> Display for Range<A> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Range::Single(i) => write!(f, "{i}"),
+            Range::Bounded(i, j) => write!(f, "{i}..{j}"),
+        }
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub enum Domain {
     BoolDomain,
     IntDomain(Vec<Range<i32>>),
     DomainReference(Name),
     DomainSet(Box<Domain>),
+    MatrixDomain(Vec<Range<i32>>, Box<Domain>),
 }
 
 impl Domain {
@@ -83,6 +95,9 @@ impl Display for Domain {
             Domain::DomainReference(name) => write!(f, "{}", name),
             Domain::DomainSet(domain) => {
                 write!(f, "set of ({})", domain)
+            }
+            Domain::MatrixDomain(vec, domain) => {
+                write!(f, "matrix indexed by [{}] of {domain}", pretty_vec(vec))
             }
         }
     }
