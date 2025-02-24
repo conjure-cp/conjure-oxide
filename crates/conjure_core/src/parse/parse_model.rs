@@ -4,6 +4,10 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
+use itertools::Itertools;
+use serde_json::Value;
+use serde_json::Value as JsonValue;
+
 use crate::ast::Declaration;
 use crate::ast::{
     AbstractLiteral, Atom, Domain, Expression, Literal, Name, Range, SetAttr, SymbolTable,
@@ -11,10 +15,7 @@ use crate::ast::{
 use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::metadata::Metadata;
-use crate::Model;
-use crate::{bug, error, throw_error};
-use serde_json::Value;
-use serde_json::Value as JsonValue;
+use crate::{bug, error, into_matrix_expr, throw_error, Model};
 macro_rules! parser_trace {
     ($($arg:tt)+) => {
         log::trace!(target:"jsonparser",$($arg)+)
@@ -413,19 +414,6 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
             "MkOpTwoBars",
             Box::new(Expression::Abs) as Box<dyn Fn(_, _) -> _>,
         ),
-    ]
-    .into_iter()
-    .collect();
-
-    let vec_operators: HashMap<&str, VecOp> = [
-        (
-            "MkOpSum",
-            Box::new(Expression::Sum) as Box<dyn Fn(_, _) -> _>,
-        ),
-        (
-            "MkOpProduct",
-            Box::new(Expression::Product) as Box<dyn Fn(_, _) -> _>,
-        ),
         (
             "MkOpAnd",
             Box::new(Expression::And) as Box<dyn Fn(_, _) -> _>,
@@ -447,20 +435,34 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
     .into_iter()
     .collect();
 
+    let vec_operators: HashMap<&str, VecOp> = [
+        (
+            "MkOpSum",
+            Box::new(Expression::Sum) as Box<dyn Fn(_, _) -> _>,
+        ),
+        (
+            "MkOpProduct",
+            Box::new(Expression::Product) as Box<dyn Fn(_, _) -> _>,
+        ),
+    ]
+    .into_iter()
+    .collect();
+
     let mut binary_operator_names = binary_operators.iter().map(|x| x.0);
     let mut unary_operator_names = unary_operators.iter().map(|x| x.0);
     let mut vec_operator_names = vec_operators.iter().map(|x| x.0);
 
+    #[allow(clippy::unwrap_used)]
     match obj {
         Value::Object(op) if op.contains_key("Op") => match &op["Op"] {
             Value::Object(bin_op) if binary_operator_names.any(|key| bin_op.contains_key(*key)) => {
-                parse_bin_op(bin_op, binary_operators)
+                Some(parse_bin_op(bin_op, binary_operators).unwrap())
             }
             Value::Object(un_op) if unary_operator_names.any(|key| un_op.contains_key(*key)) => {
-                parse_unary_op(un_op, unary_operators)
+                Some(parse_unary_op(un_op, unary_operators).unwrap())
             }
             Value::Object(vec_op) if vec_operator_names.any(|key| vec_op.contains_key(*key)) => {
-                parse_vec_op(vec_op, vec_operators)
+                Some(parse_vec_op(vec_op, vec_operators).unwrap())
             }
 
             Value::Object(op)
@@ -477,11 +479,20 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
                 Atom::Reference(Name::UserName(name.to_string())),
             ))
         }
+        Value::Object(abslit) if abslit.contains_key("AbstractLiteral") => {
+            Some(parse_abstract_literal_as_expr(obj).unwrap())
+        }
 
-        Value::Object(constant) if constant.contains_key("Constant") => parse_constant(constant),
-        Value::Object(constant) if constant.contains_key("ConstantInt") => parse_constant(constant),
-        Value::Object(constant) if constant.contains_key("ConstantBool") => {
+        Value::Object(constant) if constant.contains_key("Constant") => Some(
             parse_constant(constant)
+                .or_else(|| parse_abstract_literal_as_expr(obj))
+                .unwrap(),
+        ),
+        Value::Object(constant) if constant.contains_key("ConstantInt") => {
+            Some(parse_constant(constant).unwrap())
+        }
+        Value::Object(constant) if constant.contains_key("ConstantBool") => {
+            Some(parse_constant(constant).unwrap())
         }
         _ => None,
     }
@@ -642,6 +653,37 @@ fn parse_vec_op(
     } else {
         parser_debug!("... success!");
         Some(constructor(Metadata::new(), valid_args))
+    }
+}
+
+// Takes in { AbstractLiteral: .... }
+fn parse_abstract_literal_as_expr(value: &serde_json::Value) -> Option<Expression> {
+    if let Some(abs_lit_matrix) = value.pointer("/AbstractLiteral/AbsLitMatrix/1") {
+        parser_trace!("... found AbstractLiteral/AbstractLitMatrix");
+        let args_parsed = abs_lit_matrix.as_array().map(|x| {
+            x.iter()
+                .map(parse_expression)
+                .map(|x| x.expect("invalid subexpression"))
+                .collect::<Vec<Expression>>()
+        })?;
+
+        // FIXME: remove parsing literals from this PR.
+        Some(into_matrix_expr![args_parsed])
+    }
+    // the input of this expression is constant - e.g. or([]), or([false]), min([2]), etc.
+    else if let Some(const_abs_lit_matrix) =
+        value.pointer("/Constant/ConstantAbstract/AbsLitMatrix/1")
+    {
+        parser_trace!("... found ConstantAbstract/AbstractLitMatrix");
+        let args_parsed = const_abs_lit_matrix.as_array().map(|x| {
+            x.iter()
+                .map(parse_expression)
+                .map(|x| x.expect("invalid subexpression"))
+                .collect::<Vec<Expression>>()
+        })?;
+        Some(into_matrix_expr![args_parsed])
+    } else {
+        None
     }
 }
 

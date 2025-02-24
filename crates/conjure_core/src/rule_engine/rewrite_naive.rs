@@ -127,8 +127,6 @@ fn try_rewrite_model(
 
             // Apply new symbols and top level
             result.reduction.clone().apply(submodel);
-
-            println!("{}", &submodel);
         }
     }
 

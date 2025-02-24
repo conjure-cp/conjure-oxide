@@ -1,6 +1,7 @@
 use conjure_core::{
     ast::{Atom, Expression},
     context::Context,
+    matrix_expr,
 };
 use conjure_oxide::{utils::essence_parser::parse_essence_file_native, Metadata};
 use pretty_assertions::assert_eq;
@@ -17,10 +18,10 @@ fn test_parse_dominance() {
         Metadata::new(),
         Box::new(Expression::And(
             Metadata::new(),
-            vec![
+            Box::new(matrix_expr![
                 Expression::And(
                     Metadata::new(),
-                    vec![
+                    Box::new(matrix_expr![
                         Expression::Leq(
                             Metadata::new(),
                             Box::new(Expression::Atomic(Metadata::new(), Atom::new_uref("cost"))),
@@ -46,11 +47,11 @@ fn test_parse_dominance() {
                                 )),
                             )),
                         ),
-                    ],
+                    ]),
                 ),
                 Expression::Or(
                     Metadata::new(),
-                    vec![
+                    Box::new(matrix_expr![
                         Expression::Lt(
                             Metadata::new(),
                             Box::new(Expression::Atomic(Metadata::new(), Atom::new_uref("cost"))),
@@ -76,9 +77,9 @@ fn test_parse_dominance() {
                                 )),
                             )),
                         ),
-                    ],
+                    ]),
                 ),
-            ],
+            ]),
         )),
     ));
 

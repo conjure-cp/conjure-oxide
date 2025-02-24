@@ -7,6 +7,7 @@ use std::rc::Rc;
 
 use thiserror::Error;
 
+use crate::into_matrix_expr;
 use crate::{
     ast as conjure_ast, solver::SolverError, solver::SolverError::*, Model as ConjureModel,
 };
@@ -147,7 +148,10 @@ impl CNFModel {
             expr_clauses.push(self.clause_to_expression(clause)?);
         }
 
-        Ok(conjure_ast::Expression::And(Metadata::new(), expr_clauses))
+        Ok(conjure_ast::Expression::And(
+            Metadata::new(),
+            Box::new(into_matrix_expr![expr_clauses]),
+        ))
     }
 
     /**
@@ -179,7 +183,10 @@ impl CNFModel {
             }
         }
 
-        Ok(conjure_ast::Expression::Or(Metadata::new(), ans))
+        Ok(conjure_ast::Expression::Or(
+            Metadata::new(),
+            Box::new(into_matrix_expr![ans]),
+        ))
     }
 
     /**
@@ -244,7 +251,12 @@ impl CNFModel {
                 self.handle_reference(name)
             }
             conjure_ast::Expression::Not(_metadata, var_box) => self.handle_not(var_box),
-            conjure_ast::Expression::Or(_metadata, expressions) => self.handle_or(expressions),
+            conjure_ast::Expression::Or(_metadata, e) => {
+                let Some(expressions) = e.clone().unwrap_list() else {
+                    return Err(CNFError::UnexpectedExpression(e.as_ref().clone()));
+                };
+                self.handle_or(&expressions)
+            }
             _ => Err(CNFError::UnexpectedExpression(expression.clone())),
         }
     }
@@ -280,7 +292,13 @@ impl CNFModel {
         expression: &conjure_ast::Expression,
     ) -> Result<Vec<Vec<i32>>, CNFError> {
         match expression {
-            conjure_ast::Expression::And(_metadata, expressions) => self.handle_and(expressions),
+            conjure_ast::Expression::And(_metadata, e) => {
+                let Some(expressions) = e.clone().unwrap_list() else {
+                    return Err(CNFError::UnexpectedExpression(e.as_ref().clone()));
+                };
+
+                self.handle_and(&expressions)
+            }
             _ => Ok(vec![self.handle_flat_expression(expression)?]),
         }
     }

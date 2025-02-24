@@ -6,7 +6,7 @@ use std::hash::Hasher;
 use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Tree, Uniplate};
 
-use super::{Atom, Domain, Expression};
+use super::{Atom, Domain, Expression, Range};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash)]
 #[uniplate(walk_into=[AbstractLiteral<Literal>])]
@@ -29,6 +29,33 @@ pub enum AbstractLiteral<T: Uniplate + Biplate<AbstractLiteral<T>> + Biplate<T>>
     Matrix(Vec<T>, Domain),
 }
 
+impl<T> AbstractLiteral<T>
+where
+    T: Uniplate + Biplate<AbstractLiteral<T>> + Biplate<T>,
+{
+    /// Creates a matrix with elements `elems`, with domain `int(1..)`.
+    ///
+    /// This acts as a variable sized list.
+    pub fn matrix_implied_indices(elems: Vec<T>) -> Self {
+        AbstractLiteral::Matrix(elems, Domain::IntDomain(vec![Range::UnboundedR(1)]))
+    }
+
+    /// If the AbstractLiteral is a list, returns its elements.
+    ///
+    /// A list is any a matrix with the domain `int(1..)`. This includes matrix literals without
+    /// any explicitly specified domain.
+    pub fn unwrap_list(&self) -> Option<&Vec<T>> {
+        let AbstractLiteral::Matrix(elems, Domain::IntDomain(ranges)) = self else {
+            return None;
+        };
+
+        let [Range::UnboundedR(1)] = ranges[..] else {
+            return None;
+        };
+
+        Some(elems)
+    }
+}
 impl<T> Display for AbstractLiteral<T>
 where
     T: Uniplate + Biplate<AbstractLiteral<T>> + Biplate<T> + Display,

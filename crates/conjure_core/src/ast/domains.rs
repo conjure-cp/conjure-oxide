@@ -14,6 +14,12 @@ where
 {
     Single(A),
     Bounded(A, A),
+
+    /// int(i..)
+    UnboundedR(A),
+
+    /// int(..i)
+    UnboundedL(A),
 }
 
 impl<A: Ord + Display> Display for Range<A> {
@@ -21,6 +27,8 @@ impl<A: Ord + Display> Display for Range<A> {
         match self {
             Range::Single(i) => write!(f, "{i}"),
             Range::Bounded(i, j) => write!(f, "{i}..{j}"),
+            Range::UnboundedR(i) => write!(f, "{i}.."),
+            Range::UnboundedL(i) => write!(f, "..{i}"),
         }
     }
 }
@@ -44,17 +52,22 @@ pub enum SetAttr {
     MinMaxSize(i32, i32),
 }
 impl Domain {
-    /// Return a list of all possible i32 values in the domain if it is an IntDomain.
+    /// Return a list of all possible i32 values in the domain if it is an IntDomain and is
+    /// bounded.
     pub fn values_i32(&self) -> Option<Vec<i32>> {
         match self {
             Domain::IntDomain(ranges) => Some(
                 ranges
                     .iter()
-                    .flat_map(|r| match r {
-                        Range::Single(i) => vec![*i],
-                        Range::Bounded(i, j) => (*i..=*j).collect(),
+                    .map(|r| match r {
+                        Range::Single(i) => Some(vec![*i]),
+                        Range::Bounded(i, j) => Some((*i..=*j).collect()),
+                        Range::UnboundedR(_) => None,
+                        Range::UnboundedL(_) => None,
                     })
-                    .collect(),
+                    .while_some()
+                    .flatten()
+                    .collect_vec(),
             ),
             _ => None,
         }
@@ -88,18 +101,12 @@ impl Display for Domain {
                 write!(f, "bool")
             }
             Domain::IntDomain(vec) => {
-                let mut domain_ranges: Vec<String> = vec![];
-                for range in vec {
-                    domain_ranges.push(match range {
-                        Range::Single(a) => a.to_string(),
-                        Range::Bounded(a, b) => format!("{}..{}", a, b),
-                    });
-                }
+                let domain_ranges: String = vec.iter().map(|x| format!("{x}")).join(",");
 
                 if domain_ranges.is_empty() {
                     write!(f, "int")
                 } else {
-                    write!(f, "int({})", domain_ranges.join(","))
+                    write!(f, "int({domain_ranges})")
                 }
             }
             Domain::DomainReference(name) => write!(f, "{}", name),
