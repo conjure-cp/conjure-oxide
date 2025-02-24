@@ -6,46 +6,46 @@ find c: bool
 
 such that
 
-Or([Or([a, b]), false]),
-Or([AllDiff([1, 2, 3]), true]),
-And([c, true])
+or([[or([[a, b]]), false]]),
+or([[allDiff([[1, 2, 3]]), true]]),
+and([[c, true]])
 
 --
 
-Or([AllDiff([1, 2, 3]), true]), 
+or([[allDiff([[1, 2, 3]]), true]]), 
    ~~> apply_eval_constant ([("Constant", 9001)]) 
 true 
 
 --
 
-Or([Or([a, b]), false]),
+or([[or([[a, b]]), false]]),
 true,
-And([c, true]), 
+and([[c, true]]), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-Or([Or([a, b]), false]),
-And([c, true]) 
+or([[or([[a, b]]), false]]),
+and([[c, true]]) 
 
 --
 
-Or([Or([a, b]), false]), 
+or([[or([[a, b]]), false]]), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-Or([Or([a, b])]) 
+or([[or([[a, b]])]]) 
 
 --
 
-And([c, true]), 
+and([[c, true]]), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-And([c]) 
+and([[c]]) 
 
 --
 
-Or([Or([a, b])]), 
+or([[or([[a, b]])]]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
-Or([a, b]) 
+or([[a, b]]) 
 
 --
 
-And([c]), 
+and([[c]]), 
    ~~> remove_unit_vector_and ([("Base", 8800)]) 
 c 
 
@@ -59,6 +59,6 @@ find c: bool
 
 such that
 
-Or([a, b]),
+or([[a, b]]),
 c
 

@@ -6,12 +6,12 @@ find x: int(1..4)
 
 such that
 
-(Max([a, b]) >= 2),
-(x = Sum([Max([a, b]), 1]))
+(max([[a, b]]) >= 2),
+(x = Sum([max([[a, b]]), 1]))
 
 --
 
-Max([a, b]), 
+max([[a, b]]), 
    ~~> max_to_var ([("Base", 6000)]) 
 __0 
 new variables:
@@ -19,10 +19,10 @@ new variables:
 new constraints:
   (__0 >= a)
   (__0 >= b)
-  Or([(__0 = a), (__0 = b)])
+  or([[(__0 = a), (__0 = b)]])
 --
 
-Max([a, b]), 
+max([[a, b]]), 
    ~~> max_to_var ([("Base", 6000)]) 
 __1 
 new variables:
@@ -30,12 +30,12 @@ new variables:
 new constraints:
   (__1 >= a)
   (__1 >= b)
-  Or([(__1 = a), (__1 = b)])
+  or([[(__1 = a), (__1 = b)]])
 --
 
 (x = Sum([__1, 1])), 
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-And([SumLeq([__1, 1], x), SumGeq([__1, 1], x)]) 
+and([[SumLeq([__1, 1], x), SumGeq([__1, 1], x)]]) 
 
 --
 
@@ -80,11 +80,11 @@ find __1: int(1..4)
 such that
 
 Ineq(2, __0, 0),
-And([SumLeq([__1, 1], x), SumGeq([__1, 1], x)]),
+and([[SumLeq([__1, 1], x), SumGeq([__1, 1], x)]]),
 Ineq(a, __0, 0),
 Ineq(b, __0, 0),
-Or([(__0 = a), (__0 = b)]),
+or([[(__0 = a), (__0 = b)]]),
 Ineq(a, __1, 0),
 Ineq(b, __1, 0),
-Or([(__1 = a), (__1 = b)])
+or([[(__1 = a), (__1 = b)]])
 

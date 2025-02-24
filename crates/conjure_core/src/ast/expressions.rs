@@ -45,10 +45,10 @@ pub enum Expression {
     // TODO: put into abstractliteral once it exists.
     VecLit(Metadata, Vec<Expression>),
 
-    /// A matrix index or slice
+    /// A matrix index or slice.
     ///
     /// TODO: should this be Expr -> Vec<Expr> -> Expr - can the index be an expression?
-    Index(Metadata,Box<Expression>,Vec<Expression>),
+    Index(Metadata, Box<Expression>, Vec<Expression>),
 
     #[compatible(JsonInput)]
     Set(Metadata, Literal),
@@ -59,26 +59,33 @@ pub enum Expression {
     #[compatible(JsonInput)]
     Abs(Metadata, Box<Expression>),
 
+    /// `a + b + c + ...`
     #[compatible(JsonInput)]
     Sum(Metadata, Vec<Expression>),
 
+    /// `a * b * c * ...`
     #[compatible(JsonInput)]
     Product(Metadata, Vec<Expression>),
 
+    /// `min(<vec_expr>)`
     #[compatible(JsonInput)]
-    Min(Metadata, Vec<Expression>),
+    Min(Metadata, Box<Expression>),
 
+    /// `max(<vec_expr>)`
     #[compatible(JsonInput)]
-    Max(Metadata, Vec<Expression>),
+    Max(Metadata, Box<Expression>),
 
+    /// `not(a)`
     #[compatible(JsonInput, SAT)]
     Not(Metadata, Box<Expression>),
 
+    /// `or(<vec_expr>)`
     #[compatible(JsonInput, SAT)]
-    Or(Metadata, Vec<Expression>),
+    Or(Metadata, Box<Expression>),
 
+    /// `and(<vec_expr>)`
     #[compatible(JsonInput, SAT)]
-    And(Metadata, Vec<Expression>),
+    And(Metadata, Box<Expression>),
 
     /// Ensures that `a->b` (material implication).
     #[compatible(JsonInput)]
@@ -129,8 +136,9 @@ pub enum Expression {
     /// `UnsafePow` after preventing undefinedness
     SafePow(Metadata, Box<Expression>, Box<Expression>),
 
+    /// `allDiff(<vec_expr>)`
     #[compatible(JsonInput)]
-    AllDiff(Metadata, Vec<Expression>),
+    AllDiff(Metadata, Box<Expression>),
 
     /// Binary subtraction operator
     ///
@@ -312,6 +320,14 @@ fn expr_vec_to_domain_i32(
         .reduce(|a, b| a.and_then(|x| b.and_then(|y| x.apply_i32(op, &y))))
         .flatten()
 }
+fn expr_vec_lit_to_domain_i32(
+    e: &Expression,
+    op: fn(i32, i32) -> Option<i32>,
+    vars: &SymbolTable,
+) -> Option<Domain> {
+    let exprs = e.unwrap_vec_literal()?;
+    expr_vec_to_domain_i32(exprs, op, vars)
+}
 
 fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> (i32, i32) {
     let mut min = i32::MAX;
@@ -346,24 +362,23 @@ impl Expression {
             //todo
             Expression::Index(_, _, _) => None, //FIXME:
             Expression::Set(_, _) => None,
-            Expression::VecLit(_,_) => None, 
+            Expression::VecLit(_, _) => None,
             Expression::Atomic(_, Atom::Reference(name)) => Some(syms.domain(name)?),
             Expression::Atomic(_, Atom::Literal(Literal::Int(n))) => {
                 Some(Domain::IntDomain(vec![Range::Single(*n)]))
             }
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(Domain::BoolDomain),
             Expression::Atomic(_, Atom::Literal(Literal::Set(_))) => None,
-            Expression::Atomic(_, _) => todo!(),
             Expression::Scope(_, _) => Some(Domain::BoolDomain),
             Expression::Sum(_, exprs) => expr_vec_to_domain_i32(exprs, |x, y| Some(x + y), syms),
             Expression::Product(_, exprs) => {
                 expr_vec_to_domain_i32(exprs, |x, y| Some(x * y), syms)
             }
-            Expression::Min(_, exprs) => {
-                expr_vec_to_domain_i32(exprs, |x, y| Some(if x < y { x } else { y }), syms)
+            Expression::Min(_, e) => {
+                expr_vec_lit_to_domain_i32(e, |x, y| Some(if x < y { x } else { y }), syms)
             }
-            Expression::Max(_, exprs) => {
-                expr_vec_to_domain_i32(exprs, |x, y| Some(if x > y { x } else { y }), syms)
+            Expression::Max(_, e) => {
+                expr_vec_lit_to_domain_i32(e, |x, y| Some(if x > y { x } else { y }), syms)
             }
             Expression::UnsafeDiv(_, a, b) => a.domain_of(syms)?.apply_i32(
                 // rust integer division is truncating; however, we want to always round down,
@@ -620,6 +635,15 @@ impl Expression {
             false
         }
     }
+
+    /// If the expression is a vector literal, returns the inner expressions. Otherwise, returns [`None`].
+    pub fn unwrap_vec_literal(&self) -> Option<&Vec<Expression>> {
+        if let Expression::VecLit(_, exprs) = self {
+            Some(exprs)
+        } else {
+            None
+        }
+    }
 }
 
 impl From<i32> for Expression {
@@ -644,12 +668,12 @@ impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
             Expression::Set(_, lit) => lit.fmt(f),
-            Expression::VecLit(_, v) =>  {
-                write!(f,"[{}]", pretty_vec(v))
-            },
+            Expression::VecLit(_, v) => {
+                write!(f, "[{}]", pretty_vec(v))
+            }
             Expression::Index(_, e1, e2) => {
-                write!(f,"{e1}[{}]",pretty_vec(e2))
-            },
+                write!(f, "{e1}[{}]", pretty_vec(e2))
+            }
             Expression::Root(_, exprs) => {
                 write!(f, "{}", pretty_expressions_as_top_level(exprs))
             }
@@ -662,20 +686,20 @@ impl Display for Expression {
             Expression::Product(_, expressions) => {
                 write!(f, "Product({})", pretty_vec(expressions))
             }
-            Expression::Min(_, expressions) => {
-                write!(f, "Min({})", pretty_vec(expressions))
+            Expression::Min(_, e) => {
+                write!(f, "min({e})")
             }
-            Expression::Max(_, expressions) => {
-                write!(f, "Max({})", pretty_vec(expressions))
+            Expression::Max(_, e) => {
+                write!(f, "max({e})")
             }
             Expression::Not(_, expr_box) => {
                 write!(f, "Not({})", expr_box.clone())
             }
-            Expression::Or(_, expressions) => {
-                write!(f, "Or({})", pretty_vec(expressions))
+            Expression::Or(_, e) => {
+                write!(f, "or({e})")
             }
-            Expression::And(_, expressions) => {
-                write!(f, "And({})", pretty_vec(expressions))
+            Expression::And(_, e) => {
+                write!(f, "and({e})")
             }
             Expression::Imply(_, box1, box2) => {
                 write!(f, "({}) -> ({})", box1, box2)
@@ -711,8 +735,8 @@ impl Display for Expression {
                 box2.clone(),
                 box3.clone()
             ),
-            Expression::AllDiff(_, expressions) => {
-                write!(f, "AllDiff({})", pretty_vec(expressions))
+            Expression::AllDiff(_, e) => {
+                write!(f, "allDiff({e})")
             }
             Expression::Bubble(_, box1, box2) => {
                 write!(f, "{{{} @ {}}}", box1.clone(), box2.clone())

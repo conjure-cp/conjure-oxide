@@ -3,16 +3,17 @@ use std::rc::Rc;
 use conjure_core::ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable};
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
-    register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
+    register_rule, register_rule_set, ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
 };
 use uniplate::Uniplate;
 
 use Atom::*;
 use Expr::*;
-use Lit::Int;
 use Lit::Bool;
+use Lit::Int;
 
 use crate::ast::Declaration;
+use crate::{boxed_vec_lit, into_boxed_vec_lit, into_vec_lit, vec_lit};
 
 register_rule_set!("Base", ());
 
@@ -47,6 +48,9 @@ fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             | MinionReify(_, _, _)
             | MinionReifyImply(_, _, _)
             | FlatAbsEq(_, _, _)
+            | Min(_,_)
+            | Max(_,_)
+            | AllDiff(_,_)
     ) {
         return Err(ApplicationError::RuleNotApplicable);
     }
@@ -57,7 +61,7 @@ fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     let new_expr = match expr {
         Or(_, _) => Atomic(Metadata::new(), Literal(Bool(false))),
-        _ => And(Metadata::new(), vec![]), // TODO: (yb33) Change it to a simple vector after we refactor our model,
+        _ => And(Metadata::new(), boxed_vec_lit![]) 
     };
 
     Ok(Reduction::pure(new_expr))
@@ -71,40 +75,44 @@ fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
  */
 #[register_rule(("Base", 6000))]
 fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    match expr {
-        Min(_, exprs) => {
-            let mut symbols = symbols.clone();
-            let new_name = symbols.gensym();
+    let Expr::Min(_, inside_min_expr) = expr else {
+        return Err(RuleNotApplicable);
+    };
 
-            let mut new_top = Vec::new(); // the new variable must be less than or equal to all the other variables
-            let mut disjunction = Vec::new(); // the new variable must be equal to one of the variables
-            for e in exprs {
-                new_top.push(Leq(
-                    Metadata::new(),
-                    Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
-                    Box::new(e.clone()),
-                ));
-                disjunction.push(Eq(
-                    Metadata::new(),
-                    Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
-                    Box::new(e.clone()),
-                ));
-            }
-            new_top.push(Or(Metadata::new(), disjunction));
+    // let matrix expressions / comprehensions be unrolled first before applying this rule.
+    let Expr::VecLit(_, exprs) = inside_min_expr.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
 
-            let domain = expr
-                .domain_of(&symbols)
-                .ok_or(ApplicationError::DomainError)?;
-            symbols.insert(Rc::new(Declaration::new_var(new_name.clone(), domain)));
+    let mut symbols = symbols.clone();
+    let new_name = symbols.gensym();
 
-            Ok(Reduction::new(
-                Atomic(Metadata::new(), Reference(new_name)),
-                new_top,
-                symbols,
-            ))
-        }
-        _ => Err(ApplicationError::RuleNotApplicable),
+    let mut new_top = Vec::new(); // the new variable must be less than or equal to all the other variables
+    let mut disjunction = Vec::new(); // the new variable must be equal to one of the variables
+    for e in exprs {
+        new_top.push(Leq(
+            Metadata::new(),
+            Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
+            Box::new(e.clone()),
+        ));
+        disjunction.push(Eq(
+            Metadata::new(),
+            Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
+            Box::new(e.clone()),
+        ));
     }
+    new_top.push(Or(Metadata::new(), into_boxed_vec_lit![disjunction]));
+
+    let domain = expr
+        .domain_of(&symbols)
+        .ok_or(ApplicationError::DomainError)?;
+    symbols.insert(Rc::new(Declaration::new_var(new_name.clone(), domain)));
+
+    Ok(Reduction::new(
+        Atomic(Metadata::new(), Reference(new_name)),
+        new_top,
+        symbols,
+    ))
 }
 
 /**
@@ -115,8 +123,14 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
  */
 #[register_rule(("Base", 6000))]
 fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    match expr {
-        Max(_, exprs) => {
+    let Expr::Max(_,inside_max_expr) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::VecLit(_, exprs) = inside_max_expr.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
             let mut symbols = symbols.clone();
             let new_name = symbols.gensym();
 
@@ -134,7 +148,7 @@ fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
                     Box::new(e.clone()),
                 ));
             }
-            new_top.push(Or(Metadata::new(), disjunction));
+            new_top.push(Or(Metadata::new(), into_boxed_vec_lit![disjunction]));
 
             let domain = expr
                 .domain_of(&symbols)
@@ -146,7 +160,4 @@ fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
                 new_top,
                 symbols,
             ))
-        }
-        _ => Err(ApplicationError::RuleNotApplicable),
-    }
 }

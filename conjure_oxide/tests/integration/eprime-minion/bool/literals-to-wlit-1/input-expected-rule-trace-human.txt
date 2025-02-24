@@ -7,16 +7,16 @@ find d: bool
 
 such that
 
-Or([a, b]),
-Or([Not(c), And([b, d])]),
+or([[a, b]]),
+or([[Not(c), and([[b, d]])]]),
 b,
-Or([d, c])
+or([[d, c]])
 
 --
 
-Or([Not(c), And([b, d])]), 
+or([[Not(c), and([[b, d]])]]), 
    ~~> distribute_or_over_and ([("Base", 8400)]) 
-And([Or([Not(c), b]), Or([Not(c), d])]) 
+and([[or([[Not(c), b]]), or([[Not(c), d]])]]) 
 
 --
 
@@ -41,8 +41,8 @@ find d: bool
 
 such that
 
-Or([a, b]),
-And([Or([WatchedLiteral(c,false), b]), Or([WatchedLiteral(c,false), d])]),
+or([[a, b]]),
+and([[or([[WatchedLiteral(c,false), b]]), or([[WatchedLiteral(c,false), d]])]]),
 b,
-Or([d, c])
+or([[d, c]])
 

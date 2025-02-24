@@ -7,6 +7,7 @@ use conjure_core::rule_engine::{
 use uniplate::Uniplate;
 
 use crate::ast::{Atom, Literal, SymbolTable};
+use crate::{boxed_vec_lit, into_boxed_vec_lit};
 
 use super::utils::is_all_constant;
 
@@ -25,7 +26,7 @@ fn expand_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
         Expression::Bubble(_, a, b) if a.return_type() == Some(ReturnType::Bool) => {
             Ok(Reduction::pure(Expression::And(
                 Metadata::new(),
-                vec![*a.clone(), *b.clone()],
+                boxed_vec_lit![*a.clone(), *b.clone()],
             )))
         }
         _ => Err(ApplicationError::RuleNotApplicable),
@@ -55,7 +56,7 @@ fn bubble_up(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::pure(Expression::Bubble(
         Metadata::new(),
         Box::new(expr.with_children(sub)),
-        Box::new(Expression::And(Metadata::new(), bubbled_conditions)),
+        Box::new(Expression::And(Metadata::new(), into_boxed_vec_lit![bubbled_conditions])),
     )))
 }
 
@@ -155,10 +156,10 @@ fn pow_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
             Box::new(Expression::SafePow(Metadata::new(), a.clone(), b.clone())),
             Box::new(Expression::And(
                 Metadata::new(),
-                vec![
+                boxed_vec_lit![
                     Expression::Or(
                         Metadata::new(),
-                        vec![
+                        boxed_vec_lit![
                             Expression::Neq(
                                 Metadata::new(),
                                 a,

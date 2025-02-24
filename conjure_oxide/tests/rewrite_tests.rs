@@ -2,6 +2,7 @@ use std::collections::VecDeque;
 use std::process::exit;
 use std::rc::Rc;
 
+use conjure_core::boxed_vec_lit;
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_core::solver::SolverFamily;
 use conjure_core::{rule_engine::get_all_rules, rules::eval_constant};
@@ -389,14 +390,14 @@ fn remove_trivial_and_or() {
 
     let mut expr_and = Expression::And(
         Metadata::new(),
-        vec![Expression::Atomic(
+        boxed_vec_lit![Expression::Atomic(
             Metadata::new(),
             Atom::Literal(Literal::Bool(true)),
         )],
     );
     let mut expr_or = Expression::Or(
         Metadata::new(),
-        vec![Expression::Atomic(
+        boxed_vec_lit![Expression::Atomic(
             Metadata::new(),
             Atom::Literal(Literal::Bool(false)),
         )],
@@ -429,7 +430,7 @@ fn rule_distribute_not_over_and() {
         Metadata::new(),
         Box::new(Expression::And(
             Metadata::new(),
-            vec![
+            boxed_vec_lit![
                 Expression::Atomic(
                     Metadata::new(),
                     Atom::Reference(Name::UserName(String::from("a"))),
@@ -451,7 +452,7 @@ fn rule_distribute_not_over_and() {
         expr,
         Expression::Or(
             Metadata::new(),
-            vec![
+            boxed_vec_lit![
                 Expression::Not(
                     Metadata::new(),
                     Box::new(Expression::Atomic(
@@ -479,7 +480,7 @@ fn rule_distribute_not_over_or() {
         Metadata::new(),
         Box::new(Expression::Or(
             Metadata::new(),
-            vec![
+            boxed_vec_lit![
                 Expression::Atomic(
                     Metadata::new(),
                     Atom::Reference(Name::UserName(String::from("a"))),
@@ -501,7 +502,7 @@ fn rule_distribute_not_over_or() {
         expr,
         Expression::And(
             Metadata::new(),
-            vec![
+            boxed_vec_lit![
                 Expression::Not(
                     Metadata::new(),
                     Box::new(Expression::Atomic(
@@ -561,10 +562,10 @@ fn rule_distribute_or_over_and() {
 
     let expr = Expression::Or(
         Metadata::new(),
-        vec![
+        boxed_vec_lit![
             Expression::And(
                 Metadata::new(),
-                vec![
+                boxed_vec_lit![
                     Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(1))),
                     Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(2))),
                 ],
@@ -581,17 +582,17 @@ fn rule_distribute_or_over_and() {
         red.new_expression,
         Expression::And(
             Metadata::new(),
-            vec![
+            boxed_vec_lit![
                 Expression::Or(
                     Metadata::new(),
-                    vec![
+                    boxed_vec_lit![
                         Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(3))),
                         Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(1))),
                     ]
                 ),
                 Expression::Or(
                     Metadata::new(),
-                    vec![
+                    boxed_vec_lit![
                         Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(3))),
                         Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(2))),
                     ]
@@ -633,7 +634,7 @@ fn rewrite_solve_xyz() {
     // Construct nested expression
     let nested_expr = Expression::And(
         Metadata::new(),
-        vec![
+        boxed_vec_lit![
             Expression::Eq(
                 Metadata::new(),
                 Box::new(Expression::Sum(
@@ -798,7 +799,7 @@ fn eval_const_bool() {
 fn eval_const_and() {
     let expr = Expression::And(
         Metadata::new(),
-        vec![
+        boxed_vec_lit![
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
         ],
@@ -825,7 +826,7 @@ fn eval_const_nested_ref() {
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
             Expression::And(
                 Metadata::new(),
-                vec![
+                boxed_vec_lit![
                     Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
                     Expression::Atomic(
                         Metadata::new(),
@@ -907,7 +908,7 @@ fn eval_const_sum_mixed() {
 fn eval_const_sum_xyz() {
     let expr = Expression::And(
         Metadata::new(),
-        vec![
+        boxed_vec_lit![
             Expression::Eq(
                 Metadata::new(),
                 Box::new(Expression::Sum(
@@ -953,7 +954,7 @@ fn eval_const_sum_xyz() {
 fn eval_const_or() {
     let expr = Expression::Or(
         Metadata::new(),
-        vec![
+        boxed_vec_lit![
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false))),
         ],

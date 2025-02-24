@@ -2,10 +2,10 @@ use std::collections::{HashSet, VecDeque};
 
 use conjure_macros::register_rule;
 use itertools::iproduct;
-use schemars::Set;
 use uniplate::Biplate;
 
 use crate::ast::SymbolTable;
+use crate::into_boxed_vec_lit;
 use crate::rule_engine::{ApplicationResult, Reduction};
 use crate::{
     ast::{Atom, Expression as Expr, Literal as Lit, Literal::*},
@@ -94,7 +94,10 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             }
         }
 
-        Min(m, vec) => {
+        Min(m, e) => {
+            let Expr::VecLit(_,vec)= *e else {
+                return Err(RuleNotApplicable);
+            };
             let mut acc: Option<i32> = None;
             let mut n_consts = 0;
             let mut new_vec: Vec<Expr> = Vec::new();
@@ -123,11 +126,15 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             if n_consts <= 1 {
                 Err(RuleNotApplicable)
             } else {
-                Ok(Reduction::pure(Min(m, new_vec)))
+                Ok(Reduction::pure(Min(m, into_boxed_vec_lit![new_vec])))
             }
         }
 
-        Max(m, vec) => {
+        Max(m, e) => {
+            let Expr::VecLit(_,vec)= *e else {
+                return Err(RuleNotApplicable);
+            };
+
             let mut acc: Option<i32> = None;
             let mut n_consts = 0;
             let mut new_vec: Vec<Expr> = Vec::new();
@@ -156,11 +163,15 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             if n_consts <= 1 {
                 Err(RuleNotApplicable)
             } else {
-                Ok(Reduction::pure(Max(m, new_vec)))
+                Ok(Reduction::pure(Max(m, into_boxed_vec_lit![new_vec])))
             }
         }
         Not(_, _) => Err(RuleNotApplicable),
-        Or(m, terms) => {
+        Or(m, e) => {
+            let Expr::VecLit(_,terms) = *e else {
+                return Err(RuleNotApplicable);
+            };
+
             let mut has_changed = false;
 
             // 2. boolean literals
@@ -193,9 +204,12 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 return Err(RuleNotApplicable);
             }
 
-            Ok(Reduction::pure(Or(m, new_terms)))
+            Ok(Reduction::pure(Or(m, into_boxed_vec_lit![new_terms])))
         }
-        And(_, vec) => {
+        And(_, e) => {
+            let Expr::VecLit(_,vec) = *e else {
+                return Err(RuleNotApplicable);
+            };
             let mut new_vec: Vec<Expr> = Vec::new();
             let mut has_const: bool = false;
             for expr in vec {
@@ -216,7 +230,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 Err(RuleNotApplicable)
             } else {
                 Ok(Reduction::pure(
-                    expr.with_children_bi(VecDeque::from([new_vec])),
+                    Expr::And(Metadata::new(),into_boxed_vec_lit![new_vec])
                 ))
             }
         }
@@ -286,11 +300,16 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         Lt(_, _, _) => Err(RuleNotApplicable),
         SafeDiv(_, _, _) => Err(RuleNotApplicable),
         UnsafeDiv(_, _, _) => Err(RuleNotApplicable),
-        AllDiff(m, vec) => {
+        AllDiff(m, e) => {
+
+            let Expr::VecLit(_,vec ) = e.as_ref() else  {
+                return Err(RuleNotApplicable);
+            };
+
             let mut consts: HashSet<i32> = HashSet::new();
 
             // check for duplicate constant values which would fail the constraint
-            for expr in &vec {
+            for expr in vec {
                 if let Expr::Atomic(_, Atom::Literal(Int(x))) = expr {
                     if !consts.insert(*x) {
                         return Ok(Reduction::pure(Expr::Atomic(m, Atom::Literal(Bool(false)))));
