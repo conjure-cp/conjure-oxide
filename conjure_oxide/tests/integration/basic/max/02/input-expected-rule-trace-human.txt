@@ -4,11 +4,17 @@ find a: int(0..3)
 
 such that
 
-(Max([2, a]) <= 2)
+(max([2,a;int(1..2)]) <= 2)
 
 --
 
-Max([2, a]), 
+max([2,a;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+max([2,a;int(1..)]) 
+
+--
+
+max([2,a;int(1..)]), 
    ~~> max_to_var ([("Base", 6000)]) 
 __0 
 new variables:
@@ -16,7 +22,7 @@ new variables:
 new constraints:
   (__0 >= 2)
   (__0 >= a)
-  Or([(__0 = 2), (__0 = a)])
+  or([(__0 = 2),(__0 = a);int(1..)])
 --
 
 (__0 <= 2), 
@@ -47,5 +53,5 @@ such that
 Ineq(__0, 2, 0),
 Ineq(2, __0, 0),
 Ineq(a, __0, 0),
-Or([(__0 = 2), (__0 = a)])
+or([(__0 = 2),(__0 = a);int(1..)])
 

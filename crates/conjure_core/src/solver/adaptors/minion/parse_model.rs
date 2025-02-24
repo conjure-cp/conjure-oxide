@@ -197,14 +197,26 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
                 parse_atom(c)?,
             ))
         }
-        conjure_ast::Expression::Or(_metadata, exprs) => Ok(minion_ast::Constraint::WatchedOr(
-            exprs
+        conjure_ast::Expression::Or(_metadata, e) => Ok(minion_ast::Constraint::WatchedOr(
+            e.unwrap_matrix_unchecked()
+                .ok_or_else(|| {
+                    SolverError::ModelFeatureNotSupported(
+                        "The inside of an or expression is not a matrix.".to_string(),
+                    )
+                })?
+                .0
                 .iter()
                 .map(|x| parse_expr(x.to_owned()))
                 .collect::<Result<Vec<minion_ast::Constraint>, SolverError>>()?,
         )),
-        conjure_ast::Expression::And(_metadata, exprs) => Ok(minion_ast::Constraint::WatchedAnd(
-            exprs
+        conjure_ast::Expression::And(_metadata, e) => Ok(minion_ast::Constraint::WatchedAnd(
+            e.unwrap_matrix_unchecked()
+                .ok_or_else(|| {
+                    SolverError::ModelFeatureNotSupported(
+                        "The inside of an and expression is not a matrix.".to_string(),
+                    )
+                })?
+                .0
                 .iter()
                 .map(|x| parse_expr(x.to_owned()))
                 .collect::<Result<Vec<minion_ast::Constraint>, SolverError>>()?,

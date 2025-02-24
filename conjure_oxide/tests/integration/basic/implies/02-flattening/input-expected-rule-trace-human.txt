@@ -25,13 +25,13 @@ Sum([3, -1]),
 
 (Sum([y, z]) = 8), 
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-And([SumLeq([y, z], 8), SumGeq([y, z], 8)]) 
+and([SumLeq([y, z], 8),SumGeq([y, z], 8);int(1..)]) 
 
 --
 
 (Sum([x, 2]) = 3), 
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-And([SumLeq([x, 2], 3), SumGeq([x, 2], 3)]) 
+and([SumLeq([x, 2], 3),SumGeq([x, 2], 3);int(1..)]) 
 
 --
 
@@ -56,24 +56,24 @@ Reify((x <= 2), __0)
 
 --
 
-(And([SumLeq([y, z], 8), SumGeq([y, z], 8)])) -> (And([SumLeq([x, 2], 3), SumGeq([x, 2], 3)])), 
+(and([SumLeq([y, z], 8),SumGeq([y, z], 8);int(1..)])) -> (and([SumLeq([x, 2], 3),SumGeq([x, 2], 3);int(1..)])), 
    ~~> flatten_imply ([("Minion", 4200)]) 
-(__1) -> (And([SumLeq([x, 2], 3), SumGeq([x, 2], 3)])) 
+(__1) -> (and([SumLeq([x, 2], 3),SumGeq([x, 2], 3);int(1..)])) 
 new variables:
   find __1: bool
 new constraints:
-  __1 =aux And([SumLeq([y, z], 8), SumGeq([y, z], 8)])
+  __1 =aux and([SumLeq([y, z], 8),SumGeq([y, z], 8);int(1..)])
 --
 
-(__1) -> (And([SumLeq([x, 2], 3), SumGeq([x, 2], 3)])), 
+(__1) -> (and([SumLeq([x, 2], 3),SumGeq([x, 2], 3);int(1..)])), 
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
-ReifyImply(And([SumLeq([x, 2], 3), SumGeq([x, 2], 3)]), __1) 
+ReifyImply(and([SumLeq([x, 2], 3),SumGeq([x, 2], 3);int(1..)]), __1) 
 
 --
 
-__1 =aux And([SumLeq([y, z], 8), SumGeq([y, z], 8)]), 
+__1 =aux and([SumLeq([y, z], 8),SumGeq([y, z], 8);int(1..)]), 
    ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify(And([SumLeq([y, z], 8), SumGeq([y, z], 8)]), __1) 
+Reify(and([SumLeq([y, z], 8),SumGeq([y, z], 8);int(1..)]), __1) 
 
 --
 
@@ -100,7 +100,7 @@ find __1: bool
 such that
 
 ReifyImply(Ineq(5, y, 0), __0),
-ReifyImply(And([SumLeq([x, 2], 3), SumGeq([x, 2], 3)]), __1),
+ReifyImply(and([SumLeq([x, 2], 3),SumGeq([x, 2], 3);int(1..)]), __1),
 Reify(Ineq(x, 2, 0), __0),
-Reify(And([SumLeq([y, z], 8), SumGeq([y, z], 8)]), __1)
+Reify(and([SumLeq([y, z], 8),SumGeq([y, z], 8);int(1..)]), __1)
 
