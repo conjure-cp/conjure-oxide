@@ -39,6 +39,11 @@ pub enum Expression {
     /// Turns into a conjunction when it reaches a boolean context
     Bubble(Metadata, Box<Expression>, Box<Expression>),
 
+    /// Defines dominance ("Solution A is preferred over Solution B")
+    DominanceRelation(Metadata, Box<Expression>),
+    /// `fromSolution(name)` - Used in dominance relation definitions
+    FromSolution(Metadata, Box<Expression>),
+
     Atomic(Metadata, Atom),
 
     Scope(Metadata, Box<SubModel>),
@@ -331,6 +336,8 @@ impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
         let ret = match self {
+            Expression::DominanceRelation(_, _) => Some(Domain::BoolDomain),
+            Expression::FromSolution(_, expr) => expr.domain_of(syms),
             Expression::Atomic(_, Atom::Reference(name)) => Some(syms.domain(name)?),
             Expression::Atomic(_, Atom::Literal(Literal::Int(n))) => {
                 Some(Domain::IntDomain(vec![Range::Single(*n)]))
@@ -512,6 +519,8 @@ impl Expression {
     pub fn return_type(&self) -> Option<ReturnType> {
         match self {
             Expression::Root(_, _) => Some(ReturnType::Bool),
+            Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
+            Expression::FromSolution(_, expr) => expr.return_type(),
             Expression::Atomic(_, Atom::Literal(Literal::Int(_))) => Some(ReturnType::Int),
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(ReturnType::Bool),
             Expression::Atomic(_, Atom::Reference(_)) => None,
@@ -622,6 +631,8 @@ impl Display for Expression {
             Expression::Root(_, exprs) => {
                 write!(f, "{}", pretty_expressions_as_top_level(exprs))
             }
+            Expression::DominanceRelation(_, expr) => write!(f, "DominanceRelation({})", expr),
+            Expression::FromSolution(_, expr) => write!(f, "FromSolution({})", expr),
             Expression::Atomic(_, atom) => atom.fmt(f),
             Expression::Scope(_, submodel) => write!(f, "{{\n{submodel}\n}}"),
             Expression::Abs(_, a) => write!(f, "|{}|", a),

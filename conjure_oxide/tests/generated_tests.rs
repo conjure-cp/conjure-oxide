@@ -2,6 +2,7 @@
 
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_core::Model;
+use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
 use conjure_oxide::utils::testing::{read_human_rule_trace, read_rule_trace};
 use glob::glob;
@@ -26,7 +27,6 @@ use std::sync::RwLock;
 use conjure_core::ast::Atom;
 use conjure_core::ast::{Expression, Literal, Name};
 use conjure_core::context::Context;
-use conjure_oxide::defaults::get_default_rule_sets;
 use conjure_oxide::rule_engine::resolve_rule_sets;
 use conjure_oxide::utils::conjure::minion_solutions_to_json;
 use conjure_oxide::utils::conjure::{
@@ -186,7 +186,7 @@ fn integration_test_inner(
     assert_eq!(model, expected_model);
 
     // Stage 2: Rewrite the model using the rule engine and check that the result is as expected
-    let rule_sets = resolve_rule_sets(SolverFamily::Minion, &get_default_rule_sets())?;
+    let rule_sets = resolve_rule_sets(SolverFamily::Minion, DEFAULT_RULE_SETS)?;
 
     // TODO: temporarily set to always use rewrite_naive
     // remove before merging?
