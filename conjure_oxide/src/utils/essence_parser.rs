@@ -78,7 +78,7 @@ pub fn parse_essence_file_native(
 fn get_tree(path: &str, filename: &str, extension: &str) -> (Tree, String) {
     let pth = format!("{path}/{filename}.{extension}");
     let source_code = fs::read_to_string(&pth)
-        .expect(format!("Failed to read the source code file {}", pth).as_str());
+        .unwrap_or_else(|_| panic!("Failed to read the source code file {}", pth));
     let mut parser = Parser::new();
     parser.set_language(&LANGUAGE.into()).unwrap();
     (
