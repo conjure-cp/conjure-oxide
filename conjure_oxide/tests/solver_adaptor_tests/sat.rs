@@ -1,12 +1,21 @@
+use conjure_oxide::ast::{
+    Atom::Reference, Declaration, Domain::BoolDomain, Domain::IntDomain, Expression::*, Name, Range,
+};
+use conjure_oxide::solver::adaptors::sat_common::CNFModel;
+use conjure_oxide::solver::SolverError;
+use conjure_oxide::utils::testing::assert_eq_any_order;
+use conjure_oxide::{Metadata, Model as ConjureModel};
+
 #[test]
 fn test_single_var() {
     // x -> [[1]]
 
     let mut model: ConjureModel = ConjureModel::default();
+    let submodel = model.as_submodel_mut();
 
     let x: Name = Name::UserName(String::from('x'));
-    model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
-    model.add_constraint(Reference(Metadata::new(), x.clone()));
+    submodel.add_symbol(Declaration::new_var(x.clone(), BoolDomain));
+    submodel.add_constraint(Atomic(Metadata::new(), Reference(x.clone())));
 
     let res: Result<CNFModel, SolverError> = CNFModel::from_conjure(model);
     assert!(res.is_ok());
@@ -25,12 +34,13 @@ fn test_single_not() {
     // Not(x) -> [[-1]]
 
     let mut model: ConjureModel = ConjureModel::default();
+    let submodel = model.as_submodel_mut();
 
     let x: Name = Name::UserName(String::from('x'));
-    model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
-    model.add_constraint(Not(
+    submodel.add_symbol(Declaration::new_var(x.clone(), BoolDomain));
+    submodel.add_constraint(Not(
         Metadata::new(),
-        Box::from(Reference(Metadata::new(), x.clone())),
+        Box::from(Atomic(Metadata::new(), Reference(x.clone()))),
     ));
 
     let cnf: CNFModel = CNFModel::from_conjure(model).unwrap();
@@ -45,7 +55,7 @@ fn test_single_not() {
                 Metadata::new(),
                 vec![Not(
                     Metadata::new(),
-                    Box::from(Reference(Metadata::new(), x.clone()))
+                    Box::from(Atomic(Metadata::new(), Reference(x.clone())))
                 )]
             )]
         )
@@ -57,18 +67,18 @@ fn test_single_or() {
     // Or(x, y) -> [[1, 2]]
 
     let mut model: ConjureModel = ConjureModel::default();
+    let submodel = model.as_submodel_mut();
 
     let x: Name = Name::UserName(String::from('x'));
     let y: Name = Name::UserName(String::from('y'));
 
-    model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
-    model.add_variable(y.clone(), DecisionVariable { domain: BoolDomain });
-
-    model.add_constraint(Or(
+    submodel.add_symbol(Declaration::new_var(x.clone(), BoolDomain));
+    submodel.add_symbol(Declaration::new_var(y.clone(), BoolDomain));
+    submodel.add_constraint(Or(
         Metadata::new(),
         vec![
-            Reference(Metadata::new(), x.clone()),
-            Reference(Metadata::new(), y.clone()),
+            Atomic(Metadata::new(), Reference(x.clone())),
+            Atomic(Metadata::new(), Reference(y.clone())),
         ],
     ));
 
@@ -85,9 +95,9 @@ fn test_single_or() {
             vec![Or(
                 Metadata::new(),
                 vec![
-                    Reference(Metadata::new(), x.clone()),
-                    Reference(Metadata::new(), y.clone())
-                ]
+                    Atomic(Metadata::new(), Reference(x.clone())),
+                    Atomic(Metadata::new(), Reference(y.clone())),
+                ],
             )]
         )
     )
@@ -98,20 +108,20 @@ fn test_or_not() {
     // Or(x, Not(y)) -> [[1, -2]]
 
     let mut model: ConjureModel = ConjureModel::default();
+    let submodel = model.as_submodel_mut();
 
     let x: Name = Name::UserName(String::from('x'));
     let y: Name = Name::UserName(String::from('y'));
 
-    model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
-    model.add_variable(y.clone(), DecisionVariable { domain: BoolDomain });
-
-    model.add_constraint(Or(
+    submodel.add_symbol(Declaration::new_var(x.clone(), BoolDomain));
+    submodel.add_symbol(Declaration::new_var(y.clone(), BoolDomain));
+    submodel.add_constraint(Or(
         Metadata::new(),
         vec![
-            Reference(Metadata::new(), x.clone()),
+            Atomic(Metadata::new(), Reference(x.clone())),
             Not(
                 Metadata::new(),
-                Box::from(Reference(Metadata::new(), y.clone())),
+                Box::from(Atomic(Metadata::new(), Reference(y.clone()))),
             ),
         ],
     ));
@@ -129,11 +139,11 @@ fn test_or_not() {
             vec![Or(
                 Metadata::new(),
                 vec![
-                    Reference(Metadata::new(), x.clone()),
+                    Atomic(Metadata::new(), Reference(x.clone())),
                     Not(
                         Metadata::new(),
-                        Box::from(Reference(Metadata::new(), y.clone()))
-                    )
+                        Box::from(Atomic(Metadata::new(), Reference(y.clone())))
+                    ),
                 ]
             )]
         )
@@ -145,15 +155,15 @@ fn test_multiple() {
     // [x, y] - equivalent to And(x, y) -> [[1], [2]]
 
     let mut model: ConjureModel = ConjureModel::default();
+    let submodel = model.as_submodel_mut();
 
     let x: Name = Name::UserName(String::from('x'));
     let y: Name = Name::UserName(String::from('y'));
 
-    model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
-    model.add_variable(y.clone(), DecisionVariable { domain: BoolDomain });
-
-    model.add_constraint(Reference(Metadata::new(), x.clone()));
-    model.add_constraint(Reference(Metadata::new(), y.clone()));
+    submodel.add_symbol(Declaration::new_var(x.clone(), BoolDomain));
+    submodel.add_symbol(Declaration::new_var(y.clone(), BoolDomain));
+    submodel.add_constraint(Atomic(Metadata::new(), Reference(x.clone())));
+    submodel.add_constraint(Atomic(Metadata::new(), Reference(y.clone())));
 
     let cnf: CNFModel = CNFModel::from_conjure(model).unwrap();
 
@@ -166,8 +176,14 @@ fn test_multiple() {
         And(
             Metadata::new(),
             vec![
-                Or(Metadata::new(), vec![Reference(Metadata::new(), x.clone())]),
-                Or(Metadata::new(), vec![Reference(Metadata::new(), y.clone())])
+                Or(
+                    Metadata::new(),
+                    vec![Atomic(Metadata::new(), Reference(x.clone()))]
+                ),
+                Or(
+                    Metadata::new(),
+                    vec![Atomic(Metadata::new(), Reference(y.clone()))]
+                )
             ]
         )
     )
@@ -178,18 +194,18 @@ fn test_and() {
     // And(x, y) -> [[1], [2]]
 
     let mut model: ConjureModel = ConjureModel::default();
+    let submodel = model.as_submodel_mut();
 
     let x: Name = Name::UserName(String::from('x'));
     let y: Name = Name::UserName(String::from('y'));
 
-    model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
-    model.add_variable(y.clone(), DecisionVariable { domain: BoolDomain });
-
-    model.add_constraint(And(
+    submodel.add_symbol(Declaration::new_var(x.clone(), BoolDomain));
+    submodel.add_symbol(Declaration::new_var(y.clone(), BoolDomain));
+    submodel.add_constraint(And(
         Metadata::new(),
         vec![
-            Reference(Metadata::new(), x.clone()),
-            Reference(Metadata::new(), y.clone()),
+            Atomic(Metadata::new(), Reference(x.clone())),
+            Atomic(Metadata::new(), Reference(y.clone())),
         ],
     ));
 
@@ -204,8 +220,14 @@ fn test_and() {
         And(
             Metadata::new(),
             vec![
-                Or(Metadata::new(), vec![Reference(Metadata::new(), x.clone())]),
-                Or(Metadata::new(), vec![Reference(Metadata::new(), y.clone())])
+                Or(
+                    Metadata::new(),
+                    vec![Atomic(Metadata::new(), Reference(x.clone())),]
+                ),
+                Or(
+                    Metadata::new(),
+                    vec![Atomic(Metadata::new(), Reference(y.clone())),]
+                )
             ]
         )
     )
@@ -216,24 +238,25 @@ fn test_nested_ors() {
     // Or(x, Or(y, z)) -> [[1, 2, 3]]
 
     let mut model: ConjureModel = ConjureModel::default();
+    let submodel = model.as_submodel_mut();
 
     let x: Name = Name::UserName(String::from('x'));
     let y: Name = Name::UserName(String::from('y'));
     let z: Name = Name::UserName(String::from('z'));
 
-    model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
-    model.add_variable(y.clone(), DecisionVariable { domain: BoolDomain });
-    model.add_variable(z.clone(), DecisionVariable { domain: BoolDomain });
+    submodel.add_symbol(Declaration::new_var(x.clone(), BoolDomain));
+    submodel.add_symbol(Declaration::new_var(y.clone(), BoolDomain));
+    submodel.add_symbol(Declaration::new_var(z.clone(), BoolDomain));
 
-    model.add_constraint(Or(
+    submodel.add_constraint(Or(
         Metadata::new(),
         vec![
-            Reference(Metadata::new(), x.clone()),
+            Atomic(Metadata::new(), Reference(x.clone())),
             Or(
                 Metadata::new(),
                 vec![
-                    Reference(Metadata::new(), y.clone()),
-                    Reference(Metadata::new(), z.clone()),
+                    Atomic(Metadata::new(), Reference(y.clone())),
+                    Atomic(Metadata::new(), Reference(z.clone())),
                 ],
             ),
         ],
@@ -253,9 +276,9 @@ fn test_nested_ors() {
             vec![Or(
                 Metadata::new(),
                 vec![
-                    Reference(Metadata::new(), x.clone()),
-                    Reference(Metadata::new(), y.clone()),
-                    Reference(Metadata::new(), z.clone())
+                    Atomic(Metadata::new(), Reference(x.clone())),
+                    Atomic(Metadata::new(), Reference(y.clone())),
+                    Atomic(Metadata::new(), Reference(z.clone())),
                 ]
             )]
         )
@@ -267,20 +290,19 @@ fn test_int() {
     // y is an IntDomain - only booleans should be allowed
 
     let mut model: ConjureModel = ConjureModel::default();
+    let submodel = model.as_submodel_mut();
 
     let x: Name = Name::UserName(String::from('x'));
     let y: Name = Name::UserName(String::from('y'));
 
-    model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
-    model.add_variable(
+    submodel.add_symbol(Declaration::new_var(x.clone(), BoolDomain));
+    submodel.add_symbol(Declaration::new_var(
         y.clone(),
-        DecisionVariable {
-            domain: IntDomain(vec![]),
-        },
-    );
+        IntDomain(vec![Range::Bounded(1, 2)]),
+    ));
 
-    model.add_constraint(Reference(Metadata::new(), x.clone()));
-    model.add_constraint(Reference(Metadata::new(), y.clone()));
+    submodel.add_constraint(Atomic(Metadata::new(), Reference(x.clone())));
+    submodel.add_constraint(Atomic(Metadata::new(), Reference(y.clone())));
 
     let cnf: Result<CNFModel, SolverError> = CNFModel::from_conjure(model);
     assert!(cnf.is_err());
@@ -291,17 +313,18 @@ fn test_eq() {
     // Eq(x, y) - this operation is not allowed
 
     let mut model: ConjureModel = ConjureModel::default();
+    let submodel = model.as_submodel_mut();
 
     let x: Name = Name::UserName(String::from('x'));
     let y: Name = Name::UserName(String::from('y'));
 
-    model.add_variable(x.clone(), DecisionVariable { domain: BoolDomain });
-    model.add_variable(y.clone(), DecisionVariable { domain: BoolDomain });
+    submodel.add_symbol(Declaration::new_var(x.clone(), BoolDomain));
+    submodel.add_symbol(Declaration::new_var(y.clone(), BoolDomain));
 
-    model.add_constraint(Expression::Eq(
+    submodel.add_constraint(Eq(
         Metadata::new(),
-        Box::from(Reference(Metadata::new(), x.clone())),
-        Box::from(Reference(Metadata::new(), y.clone())),
+        Box::from(Atomic(Metadata::new(), Reference(x.clone()))),
+        Box::from(Atomic(Metadata::new(), Reference(y.clone()))),
     ));
 
     let cnf: Result<CNFModel, SolverError> = CNFModel::from_conjure(model);

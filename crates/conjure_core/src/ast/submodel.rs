@@ -5,6 +5,7 @@ use super::{
         pretty_value_letting_declaration, pretty_variable_declaration,
     },
     serde::RcRefCellAsInner,
+    Declaration,
 };
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
@@ -136,6 +137,12 @@ impl SubModel {
     /// Adds top-level constraints.
     pub fn add_constraints(&mut self, constraints: Vec<Expression>) {
         self.constraints_mut().extend(constraints);
+    }
+
+    /// Adds a new symbol to the symbol table
+    /// (Wrapper over `SymbolTable.insert`)
+    pub fn add_symbol(&mut self, sym: Declaration) -> Option<()> {
+        self.symbols_mut().insert(Rc::new(sym))
     }
 }
 
