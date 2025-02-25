@@ -83,26 +83,23 @@ fn nested_addition(n: i32) -> Box<Expr> {
 
 pub fn criterion_benchmark(c: &mut Criterion) {
     let base: i32 = 2;
+    let expr = *nested_addition(base.pow(5));
     let rules = vec![
-        vec![MyRule::Fee],
         vec![MyRule::Fi],
+        vec![MyRule::Fee],
         vec![MyRule::Fo],
         vec![MyRule::Fum],
         vec![MyRule::EvalAdd, MyRule::EvalMul],
     ];
 
-    for exp in [2, 3, 4, 5, 6] {
-        let expr = *nested_addition(base.pow(exp));
-
-        c.bench_function(&format!("left_add_hard{}", exp), |b| {
-            b.iter(|| {
-                let meta = Meta {
-                    num_applications: 0,
-                };
-                morph(rules.clone(), select_first, black_box(expr.clone()), meta)
-            })
-        });
-    }
+    c.bench_function("left_add_hard", |b| {
+        b.iter(|| {
+            let meta = Meta {
+                num_applications: 0,
+            };
+            morph(rules.clone(), select_first, black_box(expr.clone()), meta)
+        })
+    });
 }
 
 criterion_group!(benches, criterion_benchmark);
