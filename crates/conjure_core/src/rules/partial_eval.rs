@@ -21,9 +21,10 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // rule infinitely!
     // This is why we always check whether we found a constant or not.
     match expr.clone() {
-        Index(_,_,_) => Err(RuleNotApplicable), //FIXME:
+        Index(_, _, _) => Err(RuleNotApplicable), //FIXME:
+        Slice(_, _, _) => Err(RuleNotApplicable), //FIXME:
         Set(_, _) => Err(RuleNotApplicable),
-        VecLit(_,_) => Err(RuleNotApplicable),
+        VecLit(_, _) => Err(RuleNotApplicable),
         Bubble(_, _, _) => Err(RuleNotApplicable),
         Atomic(_, _) => Err(RuleNotApplicable),
         Scope(_, _) => Err(RuleNotApplicable),
@@ -95,7 +96,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
 
         Min(m, e) => {
-            let Expr::VecLit(_,vec)= *e else {
+            let Expr::VecLit(_, vec) = *e else {
                 return Err(RuleNotApplicable);
             };
             let mut acc: Option<i32> = None;
@@ -131,7 +132,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
 
         Max(m, e) => {
-            let Expr::VecLit(_,vec)= *e else {
+            let Expr::VecLit(_, vec) = *e else {
                 return Err(RuleNotApplicable);
             };
 
@@ -168,7 +169,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
         Not(_, _) => Err(RuleNotApplicable),
         Or(m, e) => {
-            let Expr::VecLit(_,terms) = *e else {
+            let Expr::VecLit(_, terms) = *e else {
                 return Err(RuleNotApplicable);
             };
 
@@ -207,7 +208,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             Ok(Reduction::pure(Or(m, into_boxed_vec_lit![new_terms])))
         }
         And(_, e) => {
-            let Expr::VecLit(_,vec) = *e else {
+            let Expr::VecLit(_, vec) = *e else {
                 return Err(RuleNotApplicable);
             };
             let mut new_vec: Vec<Expr> = Vec::new();
@@ -229,9 +230,10 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             if !has_const {
                 Err(RuleNotApplicable)
             } else {
-                Ok(Reduction::pure(
-                    Expr::And(Metadata::new(),into_boxed_vec_lit![new_vec])
-                ))
+                Ok(Reduction::pure(Expr::And(
+                    Metadata::new(),
+                    into_boxed_vec_lit![new_vec],
+                )))
             }
         }
 
@@ -301,8 +303,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         SafeDiv(_, _, _) => Err(RuleNotApplicable),
         UnsafeDiv(_, _, _) => Err(RuleNotApplicable),
         AllDiff(m, e) => {
-
-            let Expr::VecLit(_,vec ) = e.as_ref() else  {
+            let Expr::VecLit(_, vec) = e.as_ref() else {
                 return Err(RuleNotApplicable);
             };
 

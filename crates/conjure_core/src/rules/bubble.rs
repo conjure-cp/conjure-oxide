@@ -56,7 +56,10 @@ fn bubble_up(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::pure(Expression::Bubble(
         Metadata::new(),
         Box::new(expr.with_children(sub)),
-        Box::new(Expression::And(Metadata::new(), into_boxed_vec_lit![bubbled_conditions])),
+        Box::new(Expression::And(
+            Metadata::new(),
+            into_boxed_vec_lit![bubbled_conditions],
+        )),
     )))
 }
 

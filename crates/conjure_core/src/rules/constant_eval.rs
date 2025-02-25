@@ -31,6 +31,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::Set(_, _) => None,
         Expr::VecLit(_, _) => None,
         Expr::Index(_, _, _) => None, // FIXME::
+        Expr::Slice(_, _, _) => None, // FIXME::
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
         Expr::Atomic(_, Atom::Reference(_c)) => None,
         Expr::Abs(_, e) => un_op::<i32, i32>(|a| a.abs(), e).map(Lit::Int),
@@ -45,11 +46,15 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
         Expr::Not(_, expr) => un_op::<bool, bool>(|e| !e, expr).map(Lit::Bool),
 
-        Expr::And(_, e) => vec_lit_op::<bool, bool>(|e| e.iter().all(|&e| e), e.as_ref()).map(Lit::Bool),
+        Expr::And(_, e) => {
+            vec_lit_op::<bool, bool>(|e| e.iter().all(|&e| e), e.as_ref()).map(Lit::Bool)
+        }
         // this is done elsewhere instead - root should return a new root with a literal inside it,
         // not a literal
         Expr::Root(_, _) => None,
-        Expr::Or(_, e) => vec_lit_op::<bool, bool>(|e| e.iter().any(|&e| e), e.as_ref()).map(Lit::Bool),
+        Expr::Or(_, e) => {
+            vec_lit_op::<bool, bool>(|e| e.iter().any(|&e| e), e.as_ref()).map(Lit::Bool)
+        }
         Expr::Imply(_, box1, box2) => {
             let a: &Atom = (&**box1).try_into().ok()?;
             let b: &Atom = (&**box2).try_into().ok()?;

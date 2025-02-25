@@ -36,7 +36,6 @@ fn remove_double_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ```
 #[register_rule(("Base", 8400))]
 fn distribute_or_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-
     fn find_and(exprs: &[Expr]) -> Option<usize> {
         // ToDo: may be better to move this to some kind of utils module?
         for (i, e) in exprs.iter().enumerate() {
@@ -60,8 +59,7 @@ fn distribute_or_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
                     match and_expr {
                         And(metadata, e) => {
-
-                            let Expr::VecLit(_,and_exprs) = *e else {
+                            let Expr::VecLit(_, and_exprs) = *e else {
                                 return Err(RuleNotApplicable);
                             };
 
@@ -71,7 +69,10 @@ fn distribute_or_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                                 // ToDo: Cloning everything may be a bit inefficient - discuss
                                 let mut new_or_contents = rest.clone();
                                 new_or_contents.push(e.clone());
-                                new_and_contents.push(Or(metadata.clone_dirty(), into_boxed_vec_lit![new_or_contents]))
+                                new_and_contents.push(Or(
+                                    metadata.clone_dirty(),
+                                    into_boxed_vec_lit![new_or_contents],
+                                ))
                             }
 
                             Ok(Reduction::pure(And(
@@ -107,7 +108,7 @@ fn distribute_not_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Not(_, contents) => match contents.as_ref() {
             And(metadata, e) => {
-                let Expr::VecLit(_,exprs) = e.as_ref() else {
+                let Expr::VecLit(_, exprs) = e.as_ref() else {
                     return Err(RuleNotApplicable);
                 };
 
@@ -122,7 +123,10 @@ fn distribute_not_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 for e in exprs {
                     new_exprs.push(Not(metadata.clone(), Box::new(e.clone())));
                 }
-                Ok(Reduction::pure(Or(metadata.clone(), into_boxed_vec_lit![new_exprs])))
+                Ok(Reduction::pure(Or(
+                    metadata.clone(),
+                    into_boxed_vec_lit![new_exprs],
+                )))
             }
             _ => Err(ApplicationError::RuleNotApplicable),
         },
@@ -140,7 +144,7 @@ fn distribute_not_over_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Not(_, contents) => match contents.as_ref() {
             Or(metadata, e) => {
-                let Expr::VecLit(_,exprs) = e.as_ref() else {
+                let Expr::VecLit(_, exprs) = e.as_ref() else {
                     return Err(RuleNotApplicable);
                 };
 
@@ -158,7 +162,10 @@ fn distribute_not_over_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                     new_exprs.push(Not(metadata.clone(), Box::new(e.clone())));
                 }
 
-                Ok(Reduction::pure(And(metadata.clone(), into_boxed_vec_lit![new_exprs])))
+                Ok(Reduction::pure(And(
+                    metadata.clone(),
+                    into_boxed_vec_lit![new_exprs],
+                )))
             }
             _ => Err(ApplicationError::RuleNotApplicable),
         },
@@ -175,7 +182,7 @@ fn distribute_not_over_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 fn remove_unit_vector_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         And(_, e) => {
-            let Expr::VecLit(_,exprs) = e.as_ref() else {
+            let Expr::VecLit(_, exprs) = e.as_ref() else {
                 return Err(RuleNotApplicable);
             };
 
@@ -196,16 +203,16 @@ fn remove_unit_vector_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ```
 #[register_rule(("Base", 8800))]
 fn remove_unit_vector_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let Expr::Or(_,e) = expr else {
+    let Expr::Or(_, e) = expr else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::VecLit(_,exprs) = e.as_ref() else {
+    let Expr::VecLit(_, exprs) = e.as_ref() else {
         return Err(RuleNotApplicable);
     };
 
     // do not conflict with unwrap_nested_or rule.
-    if exprs.len() >= 1 || matches!(exprs[0],Expr::Or(_,_)) {
+    if exprs.len() >= 1 || matches!(exprs[0], Expr::Or(_, _)) {
         return Err(RuleNotApplicable);
     }
 
@@ -352,7 +359,10 @@ fn normalise_implies_uncurry(expr: &Expr, _: &SymbolTable) -> ApplicationResult 
 
     Ok(Reduction::pure(Expr::Imply(
         Metadata::new(),
-        Box::new(Expr::And(Metadata::new(), boxed_vec_lit![*p.clone(), *q.clone()])),
+        Box::new(Expr::And(
+            Metadata::new(),
+            boxed_vec_lit![*p.clone(), *q.clone()],
+        )),
         r.clone(),
     )))
 }

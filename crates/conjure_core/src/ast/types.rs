@@ -12,7 +12,7 @@ pub enum ReturnType {
     Matrix {
         /// The indices of each dimension of the matrix.
         dimensions: Vec<Vec<Range<i32>>>,
-        
+
         /// The type of values in the matrix.
         values: Box<ReturnType>,
     },

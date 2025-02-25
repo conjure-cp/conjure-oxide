@@ -2,6 +2,7 @@ use std::collections::VecDeque;
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use enum_compatability_macro::document_compatibility;
@@ -30,6 +31,7 @@ use super::{Domain, Range, SubModel, Typeable};
 #[biplate(to=Atom)]
 #[biplate(to=Name)]
 #[biplate(to=Vec<Expression>)]
+#[biplate(to=Option<Expression>)]
 #[biplate(to=SubModel)]
 pub enum Expression {
     /// The top of the model
@@ -45,10 +47,19 @@ pub enum Expression {
     // TODO: put into abstractliteral once it exists.
     VecLit(Metadata, Vec<Expression>),
 
-    /// A matrix index or slice.
+    /// A matrix index.
     ///
     /// TODO: should this be Expr -> Vec<Expr> -> Expr - can the index be an expression?
     Index(Metadata, Box<Expression>, Vec<Expression>),
+
+    /// A matrix slice: `a[indices]`.
+    ///
+    /// One of the indicies may be `None`, representing the dimension of the matrix we want to take
+    /// a slice of. For example, for some 3d matrix a, `a[1,..,2]` has the indices
+    /// `Some(1),None,Some(2)`.
+    ///
+    /// It is assumed that the slice only has one "wild-card" dimension and thus is 1 dimensional.
+    Slice(Metadata, Box<Expression>, Vec<Option<Expression>>),
 
     #[compatible(JsonInput)]
     Set(Metadata, Literal),
@@ -361,6 +372,7 @@ impl Expression {
         let ret = match self {
             //todo
             Expression::Index(_, _, _) => None, //FIXME:
+            Expression::Slice(_, _, _) => None, // FIXME:
             Expression::Set(_, _) => None,
             Expression::VecLit(_, _) => None,
             Expression::Atomic(_, Atom::Reference(name)) => Some(syms.domain(name)?),
@@ -545,6 +557,7 @@ impl Expression {
     pub fn return_type(&self) -> Option<ReturnType> {
         match self {
             Expression::Index(_, _, _) => None, //FIXME:
+            Expression::Slice(_, _, _) => None, //FIXME:
             Expression::Set(_, Literal::Int(_)) => Some(ReturnType::Int),
             Expression::Set(_, Literal::Bool(_)) => Some(ReturnType::Bool),
             Expression::Set(_, Literal::Set(_)) => Some(ReturnType::Set),
@@ -673,6 +686,18 @@ impl Display for Expression {
             }
             Expression::Index(_, e1, e2) => {
                 write!(f, "{e1}[{}]", pretty_vec(e2))
+            }
+
+            Expression::Slice(_, e1, es) => {
+                let args = es
+                    .iter()
+                    .map(|x| match x {
+                        Some(x) => format!("{}", x),
+                        None => "..".into(),
+                    })
+                    .join(",");
+
+                write!(f, "{e1}[{args}]")
             }
             Expression::Root(_, exprs) => {
                 write!(f, "{}", pretty_expressions_as_top_level(exprs))

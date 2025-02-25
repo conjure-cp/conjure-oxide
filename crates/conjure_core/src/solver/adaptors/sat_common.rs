@@ -7,10 +7,10 @@ use std::rc::Rc;
 
 use thiserror::Error;
 
-use crate::{boxed_vec_lit, into_boxed_vec_lit};
 use crate::{
     ast as conjure_ast, solver::SolverError, solver::SolverError::*, Model as ConjureModel,
 };
+use crate::{boxed_vec_lit, into_boxed_vec_lit};
 // (nd60, march 24) - i basically copied all this from @gskorokod's SAT implemention for the old
 // solver interface.
 use crate::metadata::Metadata;
@@ -148,7 +148,10 @@ impl CNFModel {
             expr_clauses.push(self.clause_to_expression(clause)?);
         }
 
-        Ok(conjure_ast::Expression::And(Metadata::new(), into_boxed_vec_lit![expr_clauses]))
+        Ok(conjure_ast::Expression::And(
+            Metadata::new(),
+            into_boxed_vec_lit![expr_clauses],
+        ))
     }
 
     /**
@@ -180,7 +183,10 @@ impl CNFModel {
             }
         }
 
-        Ok(conjure_ast::Expression::Or(Metadata::new(), into_boxed_vec_lit![ans]))
+        Ok(conjure_ast::Expression::Or(
+            Metadata::new(),
+            into_boxed_vec_lit![ans],
+        ))
     }
 
     /**
@@ -246,11 +252,10 @@ impl CNFModel {
             }
             conjure_ast::Expression::Not(_metadata, var_box) => self.handle_not(var_box),
             conjure_ast::Expression::Or(_metadata, e) => {
-                let conjure_ast::Expression::VecLit(_,expressions) = e.as_ref() else {
+                let conjure_ast::Expression::VecLit(_, expressions) = e.as_ref() else {
                     return Err(CNFError::UnexpectedExpression(e.as_ref().clone()));
                 };
                 self.handle_or(expressions)
-
             }
             _ => Err(CNFError::UnexpectedExpression(expression.clone())),
         }
@@ -288,12 +293,12 @@ impl CNFModel {
     ) -> Result<Vec<Vec<i32>>, CNFError> {
         match expression {
             conjure_ast::Expression::And(_metadata, e) => {
-                let conjure_ast::Expression::VecLit(_,expressions) = e.as_ref() else {
+                let conjure_ast::Expression::VecLit(_, expressions) = e.as_ref() else {
                     return Err(CNFError::UnexpectedExpression(e.as_ref().clone()));
                 };
 
                 self.handle_and(expressions)
-            },
+            }
             _ => Ok(vec![self.handle_flat_expression(expression)?]),
         }
     }

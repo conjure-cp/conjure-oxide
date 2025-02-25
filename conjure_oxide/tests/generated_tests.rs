@@ -371,9 +371,8 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
 }
 
 fn assert_constants_leq_one_vec_lit(parent_expr: &Expression, expr: &Expression) {
-
-    if let Some(exprs)  = expr.unwrap_vec_literal() {
-        assert_constants_leq_one(parent_expr,exprs);
+    if let Some(exprs) = expr.unwrap_vec_literal() {
+        assert_constants_leq_one(parent_expr, exprs);
     };
 }
 
