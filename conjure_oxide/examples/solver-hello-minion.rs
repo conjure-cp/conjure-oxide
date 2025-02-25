@@ -6,7 +6,7 @@ use conjure_core::{
     ast::{Literal, Name},
     solver::{adaptors::Minion, states::ExecutionSuccess},
 };
-use conjure_oxide::defaults::get_default_rule_sets;
+use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use itertools::Itertools;
 use std::collections::HashMap;
 
@@ -25,7 +25,7 @@ pub fn main() {
     println!("Input model: \n {model} \n",);
 
     // TODO: We will have a nicer way to do this in the future
-    let rule_sets = resolve_rule_sets(SolverFamily::Minion, &get_default_rule_sets()).unwrap();
+    let rule_sets = resolve_rule_sets(SolverFamily::Minion, DEFAULT_RULE_SETS).unwrap();
 
     let model = rewrite_model(&model, &rule_sets).unwrap();
     println!("Rewritten model: \n {model} \n",);

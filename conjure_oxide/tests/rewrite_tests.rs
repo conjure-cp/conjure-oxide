@@ -615,7 +615,7 @@ fn rule_distribute_or_over_and() {
 fn rewrite_solve_xyz() {
     println!("Rules: {:?}", get_all_rules());
 
-    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &vec!["Constant".to_string()]) {
+    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &["Constant"]) {
         Ok(rs) => rs,
         Err(e) => {
             eprintln!("Error resolving rule sets: {}", e);
@@ -657,7 +657,7 @@ fn rewrite_solve_xyz() {
         ],
     );
 
-    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &vec!["Constant".to_string()]) {
+    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &["Constant"]) {
         Ok(rs) => rs,
         Err(e) => {
             eprintln!("Error resolving rule sets: {}", e);

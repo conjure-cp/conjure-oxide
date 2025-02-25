@@ -1,5 +1,5 @@
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::fmt::{Debug, Display};
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
@@ -27,7 +27,7 @@ use super::{ReturnType, SymbolTable};
 #[derivative(PartialEq, Eq)]
 pub struct Model {
     submodel: SubModel,
-
+    pub dominance: Option<Expression>,
     #[derivative(PartialEq = "ignore")]
     pub context: Arc<RwLock<Context<'static>>>,
 }
@@ -37,6 +37,7 @@ impl Model {
     pub fn new(context: Arc<RwLock<Context<'static>>>) -> Model {
         Model {
             submodel: SubModel::new_top_level(),
+            dominance: None,
             context,
         }
     }
@@ -61,6 +62,7 @@ impl Default for Model {
     fn default() -> Self {
         Model {
             submodel: SubModel::new_top_level(),
+            dominance: None,
             context: Arc::new(RwLock::new(Context::default())),
         }
     }
@@ -86,18 +88,44 @@ impl Biplate<Expression> for Model {
     fn biplate(&self) -> (Tree<Expression>, Box<dyn Fn(Tree<Expression>) -> Self>) {
         // walk into submodel
         let submodel = self.as_submodel();
-
         let (expr_tree, expr_ctx) = <SubModel as Biplate<Expression>>::biplate(submodel);
 
+        // walk into dominance relation if it exists
+        let dom_tree = match &self.dominance {
+            Some(expr) => Tree::One(expr.clone()),
+            None => Tree::Zero,
+        };
+        let tree = Tree::<Expression>::Many(VecDeque::from([expr_tree, dom_tree]));
+
         let self2 = self.clone();
-        let ctx = Box::new(move |x| {
-            let submodel = expr_ctx(x);
-            let mut self3 = self2.clone();
-            self3.replace_submodel(submodel);
-            self3
+        let ctx = Box::new(move |x| match x {
+            Tree::Many(xs) => {
+                if xs.len() != 2 {
+                    panic!("Expected a tree with two children");
+                }
+                let submodel_tree = xs[0].clone();
+                let dom_tree = xs[1].clone();
+
+                // reconstruct the submodel
+                let submodel = expr_ctx(submodel_tree);
+                // reconstruct the dominance relation
+                let dominance = match dom_tree {
+                    Tree::One(expr) => Some(expr),
+                    Tree::Zero => None,
+                    _ => panic!("Expected a tree with two children"),
+                };
+
+                let mut self3 = self2.clone();
+                self3.replace_submodel(submodel);
+                self3.dominance = dominance;
+                self3
+            }
+            _ => {
+                panic!("Expected a tree with two children");
+            }
         });
 
-        (expr_tree, ctx)
+        (tree, ctx)
     }
 }
 
@@ -135,6 +163,7 @@ impl Display for Model {
 pub struct SerdeModel {
     #[serde(flatten)]
     submodel: SubModel,
+    dominance: Option<Expression>,
 }
 
 impl SerdeModel {
@@ -176,6 +205,7 @@ impl SerdeModel {
 
         Some(Model {
             submodel: self.submodel,
+            dominance: self.dominance,
             context,
         })
     }
@@ -185,6 +215,7 @@ impl From<Model> for SerdeModel {
     fn from(val: Model) -> Self {
         SerdeModel {
             submodel: val.submodel,
+            dominance: val.dominance,
         }
     }
 }

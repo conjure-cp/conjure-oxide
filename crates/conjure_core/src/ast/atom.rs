@@ -18,6 +18,13 @@ pub enum Atom {
     Reference(Name),
 }
 
+impl Atom {
+    /// Shorthand to create a reference by user name.
+    pub fn new_uref(name: &str) -> Atom {
+        Atom::Reference(Name::UserName(name.to_string()))
+    }
+}
+
 impl std::fmt::Display for Atom {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
