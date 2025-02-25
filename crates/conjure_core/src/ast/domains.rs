@@ -18,6 +18,7 @@ pub enum Domain {
     BoolDomain,
     IntDomain(Vec<Range<i32>>),
     DomainReference(Name),
+    DomainSet(Box<Domain>),
 }
 
 impl Domain {
@@ -80,6 +81,9 @@ impl Display for Domain {
                 }
             }
             Domain::DomainReference(name) => write!(f, "{}", name),
+            Domain::DomainSet(domain) => {
+                write!(f, "set of ({})", domain)
+            }
         }
     }
 }
