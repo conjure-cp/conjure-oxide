@@ -1,3 +1,5 @@
+#![allow(clippy::unwrap_used)]
+#![allow(clippy::expect_used)]
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
@@ -469,7 +471,11 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
                 Some(parse_vec_op(vec_op, vec_operators).unwrap())
             }
 
-            Value::Object(op) if op.contains_key("MkOpIndexing") => parse_indexing_op(op),
+            Value::Object(op)
+                if op.contains_key("MkOpIndexing") || op.contains_key("MkOpSlicing") =>
+            {
+                parse_indexing_slicing_op(op)
+            }
             otherwise => bug!("Unhandled Op {:#?}", otherwise),
         },
         Value::Object(refe) if refe.contains_key("Reference") => {
@@ -518,42 +524,87 @@ fn parse_bin_op(
     }
 }
 
-fn parse_indexing_op(op: &serde_json::Map<String, Value>) -> Option<Expression> {
+fn parse_indexing_slicing_op(op: &serde_json::Map<String, Value>) -> Option<Expression> {
     // we know there is a single key value pair in this object
     // extract the value, ignore the key
     let (key, value) = op.into_iter().next()?;
-
-    if key != "MkOpIndexing" {
-        return None;
-    }
 
     // we know that this is meant to be a mkopindexing, so anything that goes wrong from here is a
     // bug!
 
     // Conjure does a[1,2,3] as MkOpIndexing(MkOpIndexing(MkOpIndexing(a,3),2),1).
     //
+    // And  a[1,..,3] as MkOpIndexing(MkOpSlicing(MkOpIndexing(a,3)),1).
+    //
     // However, we want this in a flattened form: Index(a, [1,2,3])
     let mut target: Expression;
-    let mut indices: Vec<Expression> = vec![];
+    let mut indices: Vec<Option<Expression>> = vec![];
 
-    match &value {
-        Value::Array(op_args) if op_args.len() == 2 => {
-            target = parse_expression(&op_args[0]).expect("expected an expression");
-            indices.push(parse_expression(&op_args[1]).expect("expected an expression"));
+    // true if this has no slicing, false otherwise.
+    let mut all_known = true;
+
+    match key.as_str() {
+        "MkOpIndexing" => {
+            match &value {
+                Value::Array(op_args) if op_args.len() == 2 => {
+                    target = parse_expression(&op_args[0]).expect("expected an expression");
+                    indices.push(Some(
+                        parse_expression(&op_args[1]).expect("expected an expression"),
+                    ));
+                }
+                otherwise => bug!("Unknown object inside MkOpIndexing: {:#?}", otherwise),
+            };
         }
-        otherwise => bug!("Unhandled parse_bin_op {:#?}", otherwise),
+
+        "MkOpSlicing" => {
+            all_known = false;
+            match &value {
+                Value::Array(op_args) if op_args.len() == 3 => {
+                    target = parse_expression(&op_args[0]).expect("expected an expression");
+                    indices.push(None);
+                }
+                otherwise => bug!("Unknown object inside MkOpSlicing: {:#?}", otherwise),
+            };
+        }
+
+        _ => {
+            return None;
+        }
     }
 
-    while let Expression::Index(_, new_target, new_indices) = &mut target {
-        indices.append(new_indices);
-        target = *new_target.clone();
+    loop {
+        match &mut target {
+            Expression::Index(_, new_target, new_indices) => {
+                indices.extend(new_indices.iter().cloned().map(Some));
+                target = *new_target.clone();
+            }
+
+            Expression::Slice(_, new_target, new_indices) => {
+                all_known = false;
+                indices.append(new_indices);
+                target = *new_target.clone();
+            }
+
+            _ => {
+                // not a slice or an index, we have reached the target.
+                break;
+            }
+        }
     }
 
-    Some(Expression::Index(
-        Metadata::new(),
-        Box::new(target),
-        indices,
-    ))
+    if all_known {
+        Some(Expression::Index(
+            Metadata::new(),
+            Box::new(target),
+            indices.into_iter().map(|x| x.unwrap()).collect(),
+        ))
+    } else {
+        Some(Expression::Slice(
+            Metadata::new(),
+            Box::new(target),
+            indices,
+        ))
+    }
 }
 
 fn parse_unary_op(
@@ -688,7 +739,7 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
             //     .ok_or(Error::Parse("DomainInt is not an array".to_owned()))?[1]
             //     .as_array()
             //     .ok_or(Error::Parse("DomainInt[1] is not an array".to_owned()))?;
-            return None;
+            None
         }
 
         // sometimes (e.g. constant matrices) we can have a ConstantInt / Constant bool that is
