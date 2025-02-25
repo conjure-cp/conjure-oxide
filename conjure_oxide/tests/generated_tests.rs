@@ -2,10 +2,9 @@
 
 use conjure_core::rule_engine::rewrite_model;
 use conjure_core::rule_engine::rewrite_naive;
-use conjure_core::Model;
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
-use conjure_oxide::utils::testing::{read_human_rule_trace, read_rule_trace};
+use conjure_oxide::utils::testing::read_human_rule_trace;
 use glob::glob;
 use itertools::Itertools;
 use std::collections::BTreeMap;
@@ -13,7 +12,6 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use std::str::FromStr;
 use tracing::{span, Level, Metadata as OtherMetadata};
 use tracing_subscriber::{
     filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
