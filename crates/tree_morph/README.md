@@ -4,7 +4,7 @@
 
 ## Quick Example
 
-Tree-morph makes applying rules to tree shaped data easy and free of any boilerplate. In this simple example, we use tree-morph to calculate mathematical expressions using multiplication, addition and squaring. We first bring relevant modules into scope and define our expression types. 
+In this simple example, we use tree-morph to calculate mathematical expressions using multiplication, addition and squaring.
 
 ```rust
 use tree_morph::prelude::*;
