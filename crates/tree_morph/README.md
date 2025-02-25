@@ -19,7 +19,7 @@ enum Expr {
     Val(i32),
 }
 ```
-As you can see, tree-morph makes use of the [Uniplate Crate](https://crates.io/crates/uniplate/0.2.1), which allows for boilerplate-free tree traversals. In our expression types, we make use of [boxes](https://doc.rust-lang.org/std/boxed/struct.Box.html), which provides ownership of a value allocated on the heap and is commonly used for recursive problems. By recursively nesting these four expressions, we can build any mathematical expression involving addition, multiplication and raising to integer powers. For example, the expression ``(1+2)^2`` can be written as:
+Tree-morph makes use of the [Uniplate crate](https://crates.io/crates/uniplate/0.2.1), which allows for boilerplate-free tree traversals. By recursively nesting these four expressions, we can build any mathematical expression involving addition, multiplication and raising to integer powers. For example, the expression ``(1+2)^2`` can be written as:
 
 ```rust
 let my_expression = Expr::Sqr(
