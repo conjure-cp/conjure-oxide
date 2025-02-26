@@ -125,8 +125,22 @@ fn rule_eval_add(cmds: &mut Commands<Expr, i32>, subtree: &Expr, meta: &i32) -> 
     None
 }
 ```
-Now, each time that the addition rule is successfully applied, the value of num_applications_addition will increase by 1! The following test block verifies that two addition operations take place. 
+Now, each time that the addition rule is successfully applied, the value of num_applications_addition will increase by 1! We may also 
+choose to place the commands before the ``if`` block, as side-effects are only evaluated upon a successful rule update. This can make the code in the block a little easier to read. The following is 
+completely equivalent to the above code. 
 
+```rust
+fn rule_eval_add(cmds: &mut Commands<Expr, i32>, subtree: &Expr, meta: &i32) -> Option<Expr> {
+    cmds.mut_meta(|m| m.num_applications_addition += 1); //new location
+    if let Expr::Add(a, b) = subtree {
+        if let (Expr::Val(a_v), Expr::Val(b_v)) = (a.as_ref(), b.as_ref()) {
+            return Some(Expr::Val(a_v + b_v));
+        }
+    }
+    None
+}
+```
+The following test block verifies that two addition operations take place. 
 ```rust
 #[test]
 fn number_of_operations() {
