@@ -115,7 +115,7 @@ fn rule_expand_sqr(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta)
 Now the function types make sense, to add one to ``num_applications_addition`` each time an addition rule is applied, we just need to add a metadata command to the ``Commands`` queue each time that a successful rule application is undertaken. 
 
 ```rust
-fn rule_eval_add(cmds: &mut Commands<Expr, i32>, subtree: &Expr, meta: &i32) -> Option<Expr> {
+fn rule_eval_add(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -> Option<Expr> {
     if let Expr::Add(a, b) = subtree {
         if let (Expr::Val(a_v), Expr::Val(b_v)) = (a.as_ref(), b.as_ref()) {
             cmds.mut_meta(|m| m.num_applications_addition += 1); //new
@@ -130,7 +130,7 @@ choose to place the commands before the ``if`` block, as side-effects are only e
 completely equivalent to the above code. 
 
 ```rust
-fn rule_eval_add(cmds: &mut Commands<Expr, i32>, subtree: &Expr, meta: &i32) -> Option<Expr> {
+fn rule_eval_add(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -> Option<Expr> {
     cmds.mut_meta(|m| m.num_applications_addition += 1); //new location
     if let Expr::Add(a, b) = subtree {
         if let (Expr::Val(a_v), Expr::Val(b_v)) = (a.as_ref(), b.as_ref()) {
@@ -202,7 +202,6 @@ fn number_of_operations() {
         my_expression.clone(),
         metadata,
     );
-    // --snip--
     assert_eq!(metaresult.num_applications_addition, 1); //new, only one addition performed
 }
 ```
