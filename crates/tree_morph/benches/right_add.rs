@@ -9,7 +9,6 @@ use uniplate::derive::Uniplate;
 #[uniplate()]
 enum Expr {
     Add(Box<Expr>, Box<Expr>),
-    Mul(Box<Expr>, Box<Expr>),
     Val(i32),
 }
 
@@ -23,20 +22,9 @@ fn rule_eval_add(_: &mut Commands<Expr, Meta>, expr: &Expr, _: &Meta) -> Option<
     }
 }
 
-fn rule_eval_mul(_: &mut Commands<Expr, Meta>, expr: &Expr, _: &Meta) -> Option<Expr> {
-    match expr {
-        Expr::Mul(a, b) => match (a.as_ref(), b.as_ref()) {
-            (Expr::Val(x), Expr::Val(y)) => Some(Expr::Val(x * y)),
-            _ => None,
-        },
-        _ => None,
-    }
-}
-
 #[derive(Clone)]
 enum MyRule {
     EvalAdd,
-    EvalMul,
 }
 
 impl Rule<Expr, Meta> for MyRule {
@@ -44,7 +32,6 @@ impl Rule<Expr, Meta> for MyRule {
         cmd.mut_meta(|m| m.num_applications += 1); // Only applied if successful
         match self {
             MyRule::EvalAdd => rule_eval_add(cmd, expr, meta),
-            MyRule::EvalMul => rule_eval_mul(cmd, expr, meta),
         }
     }
 }
@@ -62,11 +49,7 @@ fn add(lhs: Box<Expr>, rhs: Box<Expr>) -> Box<Expr> {
     Box::new(Expr::Add(lhs, rhs))
 }
 
-fn mul(lhs: Box<Expr>, rhs: Box<Expr>) -> Box<Expr> {
-    Box::new(Expr::Mul(lhs, rhs))
-}
-
-fn nested_addition(n: usize) -> Box<Expr> {
+fn nested_addition(n: i32) -> Box<Expr> {
     if n == 1 {
         val(1)
     } else {
@@ -75,9 +58,10 @@ fn nested_addition(n: usize) -> Box<Expr> {
 }
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    let expr = *nested_addition(25);
-    let rules = vec![vec![MyRule::EvalAdd, MyRule::EvalMul]];
-    println!("Benchmark is running...");
+    let base: i32 = 2;
+    let expr = *nested_addition(base.pow(5));
+    let rules = vec![vec![MyRule::EvalAdd]];
+
     c.bench_function("right_add", |b| {
         b.iter(|| {
             let meta = Meta {
