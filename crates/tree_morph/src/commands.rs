@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 use uniplate::Uniplate;
 
 enum Command<T: Uniplate, M> {
-    Transform(fn(T) -> T),
+    Transform(Box<dyn FnOnce(T) -> T>),
     MutMeta(Box<dyn FnOnce(&mut M)>),
 }
 
@@ -38,10 +38,10 @@ enum Command<T: Uniplate, M> {
 /// }
 ///
 /// fn rule(cmds: &mut Commands<Expr, bool>, subtree: &Expr, meta: &bool) -> Option<Expr> {
-///     cmds.transform(|t| match t { // A pure transformation (no other side-effects)
+///     cmds.transform(Box::new(|t| match t { // A pure transformation (no other side-effects)
 ///         Expr::B => Expr::C,
 ///         _ => t,
-///     });
+///     }));
 ///     cmds.mut_meta(Box::new(|m: &mut bool| *m = true)); // Set the metadata to 'true'
 ///
 ///     match subtree {
@@ -76,7 +76,7 @@ impl<T: Uniplate, M> Commands<T, M> {
     /// tree.
     ///
     /// Side-effects are applied in order of registration after the rule is applied.
-    pub fn transform(&mut self, f: fn(T) -> T) {
+    pub fn transform(&mut self, f: Box<dyn FnOnce(T) -> T>) {
         self.commands.push_back(Command::Transform(f));
     }
 
