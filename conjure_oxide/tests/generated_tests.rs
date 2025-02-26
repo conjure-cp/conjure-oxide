@@ -2,8 +2,9 @@
 
 use conjure_core::rule_engine::rewrite_model;
 use conjure_core::rule_engine::rewrite_naive;
+use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
-use conjure_oxide::utils::testing::{read_human_rule_trace, read_rule_trace};
+use conjure_oxide::utils::testing::read_human_rule_trace;
 use glob::glob;
 use itertools::Itertools;
 use std::collections::BTreeMap;
@@ -11,7 +12,6 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use std::str::FromStr;
 use tracing::{span, Level, Metadata as OtherMetadata};
 use tracing_subscriber::{
     filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
@@ -27,7 +27,6 @@ use std::sync::RwLock;
 use conjure_core::ast::Atom;
 use conjure_core::ast::{Expression, Literal, Name};
 use conjure_core::context::Context;
-use conjure_oxide::defaults::get_default_rule_sets;
 use conjure_oxide::rule_engine::resolve_rule_sets;
 use conjure_oxide::utils::conjure::minion_solutions_to_json;
 use conjure_oxide::utils::conjure::{
@@ -258,7 +257,7 @@ fn integration_test_inner(
 
     // Stage 2a: Rewrite the model using the rule engine (run unless explicitly disabled)
     let rewritten_model = if config.apply_rewrite_rules {
-        let rule_sets = resolve_rule_sets(SolverFamily::Minion, &get_default_rule_sets())?;
+        let rule_sets = resolve_rule_sets(SolverFamily::Minion, DEFAULT_RULE_SETS)?;
 
         let rewritten = if config.enable_native_impl {
             rewrite_model(

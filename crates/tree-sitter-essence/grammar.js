@@ -13,6 +13,7 @@ module.exports = grammar ({
       $.find_statement_list,
       $.constraint_list,
       $.letting_statement_list,
+      $.dominance_relation
     )),
 
     single_line_comment: $ => token(seq('$', /.*/)),
@@ -112,7 +113,8 @@ module.exports = grammar ({
       $.implication,
       $.quantifier_expr,
       $.constant,
-      $.variable
+      $.variable,
+      $.from_solution
     ),
 
     not_expr: $ => prec(20, seq("!", $.expression)),
@@ -150,5 +152,17 @@ module.exports = grammar ({
       )),
       "])"
     )),
+
+    from_solution: $ => seq(
+      "fromSolution",
+      "(",
+      $.variable,
+      ")"
+    ),
+
+    dominance_relation: $ => seq(
+      "dominanceRelation",
+      $.expression
+    )
   }
 })
