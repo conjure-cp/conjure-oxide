@@ -605,6 +605,17 @@ impl Expression {
             false
         }
     }
+
+    /// For a Root expression, extends the inner vec with the given vec.
+    ///
+    /// # Panics
+    /// Panics if the expression is not Root.
+    // TODO (yb33): implement this
+    pub fn extend_root(self, exprs: Vec<Expression>) -> Expression {
+        match exprs {
+            None => panic!(),
+        }
+    }
 }
 
 impl From<i32> for Expression {
