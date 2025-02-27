@@ -114,16 +114,6 @@ mod tests {
     use crate::stats::SolverStats;
     use crate::{ast as conjure_ast, model, Model as ConjureModel};
 
-    // #[test]
-    // fn test_handle_expr_unexpected_expression() {
-    //     let expr = Expression::Not(
-    //         Metadata::new(),
-    //         Box::new(Expression::Atomic(Metadata::new(), Name::MachineName(1))),
-    //     );
-    //     let result = handle_expr(expr);
-    //     assert!(matches!(result, Err(CNFError::UnexpectedExpression(_))));
-    // }
-
     #[test]
     fn test_handle_lit_unexpected_expression_inside_not() {
         let expr = Expression::Not(

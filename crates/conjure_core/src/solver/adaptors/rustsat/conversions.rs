@@ -51,7 +51,6 @@ pub fn handle_lit(e: Expression) -> Result<i32, CNFError> {
             let expr = *heap_expr;
             match expr {
                 Expression::Not(_md, e) => handle_lit(*e),
-                // todo(ss504): decide
                 Expression::Atomic(_, atom) => {
                     let check = get_atom_as_int(atom).unwrap();
                     match check == 0 {
