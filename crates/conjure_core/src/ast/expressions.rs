@@ -775,10 +775,13 @@ impl Expression {
     ///
     /// # Panics
     /// Panics if the expression is not Root.
-    // TODO (yb33): implement this
     pub fn extend_root(self, exprs: Vec<Expression>) -> Expression {
-        match exprs {
-            None => panic!(),
+        match self {
+            Expression::Root(meta, mut children) => {
+                children.extend(exprs);
+                return Expression::Root(meta, children);
+            }
+            _ => panic!("extend_root called on a non-Root expression"),
         }
     }
 }

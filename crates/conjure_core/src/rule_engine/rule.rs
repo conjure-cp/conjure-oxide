@@ -213,6 +213,21 @@ impl MorphRule<Expression, SymbolTable> for Rule<'_> {
     ) -> Option<Expression> {
         let reduction = self.apply(subtree, meta).ok()?;
         commands.mut_meta(Box::new(|m: &mut SymbolTable| m.extend(reduction.symbols)));
+        commands.transform(Box::new(|m| m.extend_root(reduction.new_top)));
+        Some(reduction.new_expression)
+    }
+}
+
+impl MorphRule<Expression, SymbolTable> for &Rule<'_> {
+    fn apply(
+        &self,
+        commands: &mut tree_morph::Commands<Expression, SymbolTable>,
+        subtree: &Expression,
+        meta: &SymbolTable,
+    ) -> Option<Expression> {
+        let reduction = Rule::apply(self, subtree, meta).ok()?;
+        commands.mut_meta(Box::new(|m: &mut SymbolTable| m.extend(reduction.symbols)));
+        commands.transform(Box::new(|m| m.extend_root(reduction.new_top)));
         Some(reduction.new_expression)
     }
 }

@@ -1,4 +1,5 @@
 #![allow(clippy::expect_used)]
+use conjure_core::ast::SymbolTable;
 use conjure_core::bug;
 use conjure_core::rule_engine::get_rules_grouped;
 use conjure_core::rule_engine::rewrite_model;
@@ -298,24 +299,8 @@ fn integration_test_inner(
                 .map(|(_, rule)| rule.into_iter().map(|f| f.rule).collect_vec())
                 .collect_vec();
 
-            // let rules_grouped: Vec<Vec<Box<dyn Rule<_, _>>>> = get_rules_grouped(&rule_sets)
-            //     .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
-            //     .into_iter()
-            //     .map(|(_, rules)| {
-            //         rules
-            //             .into_iter()
-            //             .map(|r| Box::new(r) as Box<dyn Rule<_, _>>)
-            //             .collect()
-            //     })
-            //     .collect();
-            morph(
-                rules_grouped,
-                select_panic,
-                model,
-                context.as_ref().write().unwrap(),
-            )
-            .0
-            .unwrap()
+            let (expr, symbol_table): (Expression, SymbolTable) =
+                morph(rules_grouped, select_panic, model, context.as_ref());
         };
         if verbose {
             println!("Rewritten model: {:#?}", rewritten);
