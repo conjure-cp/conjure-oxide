@@ -500,6 +500,9 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
         Value::Object(constant) if constant.contains_key("ConstantBool") => {
             Some(parse_constant(constant).unwrap())
         }
+        Value::Object(constant) if constant.contains_key("ConstantAbstract") => Some(
+            parse_abstract_literal_as_expr(obj).expect("a valid ConstantAbstract object"),
+        ),
         _ => None,
     }
 }
@@ -662,8 +665,9 @@ fn parse_vec_op(
     }
 }
 
-// Takes in { AbstractLiteral: .... }
+/// Parses abstract literals into expressions.
 fn parse_abstract_literal_as_expr(value: &serde_json::Value) -> Option<Expression> {
+        parser_trace!("Trying to parse a AbsLitMatrix");
     if let Some(abs_lit_matrix) = value.pointer("/AbstractLiteral/AbsLitMatrix/1") {
         parser_trace!("... found AbstractLiteral/AbstractLitMatrix");
         let args_parsed = abs_lit_matrix.as_array().map(|x| {
@@ -679,14 +683,27 @@ fn parse_abstract_literal_as_expr(value: &serde_json::Value) -> Option<Expressio
     else if let Some(const_abs_lit_matrix) =
         value.pointer("/Constant/ConstantAbstract/AbsLitMatrix/1")
     {
-        parser_trace!("... found ConstantAbstract/AbstractLitMatrix");
+        parser_trace!("... found /Constant/ConstantAbstract/AbsLitMatrix/1");
         let args_parsed = const_abs_lit_matrix.as_array().map(|x| {
             x.iter()
                 .map(parse_expression)
-                .map(|x| x.expect("invalid subexpression"))
+                .map(|x| x.expect("a valid subexpression"))
                 .collect::<Vec<Expression>>()
         })?;
         Some(into_vec_lit![args_parsed])
+
+    // when reading nested abslit matrix literals, we get ConstantAbstract without Constant in
+    // front. 
+    } else if let Some(const_abs_lit_matrix) = value.pointer("/ConstantAbstract/AbsLitMatrix/1") {
+        parser_trace!("... found /ConstantAbstract/AbsLitMatrix/1");
+        let args_parsed = const_abs_lit_matrix.as_array().map(|x| {
+            x.iter()
+                .map(parse_expression)
+                .map(|x| x.expect("a valid subexpression"))
+                .collect::<Vec<Expression>>()
+        })?;
+        Some(into_vec_lit![args_parsed])
+
     } else {
         None
     }
@@ -731,6 +748,9 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
                         }
                     }
                     return Some(Expression::Set(Metadata::new(), Literal::Set(atoms)));
+                }
+                else {
+                    return parse_abstract_literal_as_expr(&Value::Object(constant.clone()));
                 }
             }
 
