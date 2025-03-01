@@ -102,7 +102,7 @@ fn beta_reduce(expr: &Expr) -> Option<Expr> {
 fn transform_beta_reduce(cmd: &mut Commands<Expr, u32>, expr: &Expr, _: &u32) -> Option<Expr> {
     let retval = beta_reduce(expr);
     if retval.is_some() {
-        cmd.mut_meta(Box::new(|m: &mut u32| *m += 1));
+        cmd.mut_meta(|m| *m += 1);
     }
     retval
 }
