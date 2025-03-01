@@ -44,7 +44,7 @@ use uniplate::Uniplate;
 ///
 /// // a * b ~> (value of) a * b, where 'a' and 'b' are literal values
 /// fn rule_eval_mul(cmds: &mut Commands<Expr, i32>, subtree: &Expr, meta: &i32) -> Option<Expr> {
-///     cmds.mut_meta(Box::new(|m: &mut i32| *m += 1));
+///     cmds.mut_meta(|m| *m += 1);
 ///
 ///     if let Expr::Mul(a, b) = subtree {
 ///         if let (Expr::Val(a_v), Expr::Val(b_v)) = (a.as_ref(), b.as_ref()) {
@@ -58,7 +58,7 @@ use uniplate::Uniplate;
 /// // If this rule is applied before the sub-expression is fully evaluated, duplicate work
 /// // will be done on the resulting two identical sub-expressions.
 /// fn rule_expand_sqr(cmds: &mut Commands<Expr, i32>, subtree: &Expr, meta: &i32) -> Option<Expr> {
-///     cmds.mut_meta(Box::new(|m: &mut i32| *m += 1));
+///     cmds.mut_meta(|m| *m += 1);
 ///
 ///     if let Expr::Sqr(expr) = subtree {
 ///         return Some(Expr::Mul(
