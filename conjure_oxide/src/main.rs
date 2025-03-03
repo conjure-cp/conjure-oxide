@@ -16,10 +16,8 @@ use serde_json::to_string_pretty;
 use conjure_core::context::Context;
 use conjure_oxide::find_conjure::conjure_executable;
 use conjure_oxide::rule_engine::{resolve_rule_sets, rewrite_model};
-use conjure_oxide::{get_rules, model_from_json};
+use conjure_oxide::{get_rules, model_from_json, SolverFamily};
 
-use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
-use conjure_oxide::SolverFamily;
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
@@ -45,7 +43,7 @@ struct Cli {
         value_enum,
         value_name = "SOLVER",
         short = 's',
-        help = "Solver family use (Minion by default)"
+        help = "Diagnostic change only: Solver family use (SAT for current diagnostic)"
     )]
     solver: Option<SolverFamily>, // ToDo this should probably set the solver adapter
 
@@ -120,7 +118,7 @@ pub fn main() -> AnyhowResult<()> {
         return Ok(());
     }
 
-    let target_family = cli.solver.unwrap_or(SolverFamily::Minion);
+    let target_family = cli.solver.unwrap_or(SolverFamily::SAT);
     let mut extra_rule_sets: Vec<String> = get_default_rule_sets();
     extra_rule_sets.extend(cli.extra_rule_sets.clone());
 
@@ -190,8 +188,8 @@ pub fn main() -> AnyhowResult<()> {
         .with(file_layer)
         .init();
 
-    if target_family != SolverFamily::Minion {
-        tracing::error!("Only the Minion solver is currently supported!");
+    if target_family != SolverFamily::SAT {
+        tracing::error!("Diagnostic: Only the SAT solver is currently supported!");
         exit(1);
     }
 
@@ -299,35 +297,7 @@ pub fn main() -> AnyhowResult<()> {
 
 /// Runs the solver
 fn run_solver(cli: &Cli, model: Model) -> anyhow::Result<()> {
-    let out_file: Option<File> = match &cli.output {
-        None => None,
-        Some(pth) => Some(
-            File::options()
-                .create(true)
-                .truncate(true)
-                .write(true)
-                .open(pth)?,
-        ),
-    };
-
-    let solutions = get_minion_solutions(model, cli.number_of_solutions)?; // ToDo we need to properly set the solver adaptor here, not hard code minion
-    tracing::info!(target: "file", "Solutions: {}", minion_solutions_to_json(&solutions));
-
-    let solutions_json = minion_solutions_to_json(&solutions);
-    let solutions_str = to_string_pretty(&solutions_json)?;
-    match out_file {
-        None => {
-            println!("Solutions:");
-            println!("{}", solutions_str);
-        }
-        Some(mut outf) => {
-            outf.write_all(solutions_str.as_bytes())?;
-            println!(
-                "Solutions saved to {:?}",
-                &cli.output.clone().unwrap().canonicalize()?
-            )
-        }
-    }
+    println!("..SAT solver to be run..");
     Ok(())
 }
 
