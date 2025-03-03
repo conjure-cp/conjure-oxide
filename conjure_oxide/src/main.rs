@@ -11,7 +11,6 @@ use conjure_core::rule_engine::rewrite_naive;
 use conjure_core::Model;
 use conjure_oxide::defaults::get_default_rule_sets;
 use schemars::schema_for;
-use serde_json::to_string_pretty;
 
 use conjure_core::context::Context;
 use conjure_oxide::find_conjure::conjure_executable;
@@ -119,8 +118,11 @@ pub fn main() -> AnyhowResult<()> {
     }
 
     let target_family = cli.solver.unwrap_or(SolverFamily::SAT);
+    println!("Running1");
     let mut extra_rule_sets: Vec<String> = get_default_rule_sets();
     extra_rule_sets.extend(cli.extra_rule_sets.clone());
+
+    println!("Running2");
 
     // Logging:
     //
@@ -135,6 +137,8 @@ pub fn main() -> AnyhowResult<()> {
         .append(true)
         .open("conjure_oxide_log.json")?;
 
+    println!("Running3");
+
     let log_file = File::options()
         .create(true)
         .append(true)
@@ -142,26 +146,32 @@ pub fn main() -> AnyhowResult<()> {
 
     // get log level from env-var RUST_LOG
 
+    println!("Running4");
+
     let json_layer = tracing_subscriber::fmt::layer()
         .json()
         .with_writer(Arc::new(json_log_file))
         .with_filter(LevelFilter::TRACE);
+    println!("Running5");
 
     let file_layer = tracing_subscriber::fmt::layer()
         .compact()
         .with_ansi(false)
         .with_writer(Arc::new(log_file))
         .with_filter(LevelFilter::TRACE);
+    println!("Running6");
 
     let default_stderr_level = if cli.verbose {
         LevelFilter::DEBUG
     } else {
         LevelFilter::WARN
     };
+    println!("Running7");
 
     let env_filter = EnvFilter::builder()
         .with_default_directive(default_stderr_level.into())
         .from_env_lossy();
+    println!("Running8");
 
     let stderr_layer = if cli.verbose {
         Layer::boxed(
@@ -226,6 +236,8 @@ pub fn main() -> AnyhowResult<()> {
         "Given input_file could not be converted to a string"
     ))?;
 
+    println!("Running9");
+
     /******************************************************/
     /*        Parse essence to json using Conjure         */
     /******************************************************/
@@ -253,6 +265,7 @@ pub fn main() -> AnyhowResult<()> {
         rules,
         rule_sets.clone(),
     );
+    println!("Running10");
 
     context.write().unwrap().file_name = Some(cli.input_file.to_str().expect("").into());
 
@@ -296,7 +309,7 @@ pub fn main() -> AnyhowResult<()> {
 }
 
 /// Runs the solver
-fn run_solver(cli: &Cli, model: Model) -> anyhow::Result<()> {
+fn run_solver(_cli: &Cli, _model: Model) -> anyhow::Result<()> {
     println!("..SAT solver to be run..");
     Ok(())
 }
