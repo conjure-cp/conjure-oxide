@@ -2,15 +2,18 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
-use serde_json::Value;
-use serde_json::Value as JsonValue;
 use crate::ast::Declaration;
-use crate::ast::{Atom, Domain, Expression, Literal, Name, Range, SetAttr, SymbolTable, AbstractLiteral};
+use crate::ast::{
+    AbstractLiteral, Atom, Domain, Expression, Literal, Name, Range, SetAttr, SymbolTable,
+};
 use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::metadata::Metadata;
 use crate::Model;
 use crate::{bug, error, throw_error};
+use serde_json::Value;
+use serde_json::Value as JsonValue;
+use tracing_subscriber::filter::combinator::Or;
 
 macro_rules! parser_trace {
     ($($arg:tt)+) => {
@@ -130,16 +133,12 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
                     .next()
                     .ok_or(Error::Parse("DomainSet is an empty object".to_owned()))?;
                 let domain = match domain.0.as_str() {
-                    "DomainInt" => {
-                        println!("DomainInt: {:#?}", domain.1);
-                        Ok(parse_int_domain(domain.1)?)
-                    }
+                    "DomainInt" => Ok(parse_int_domain(domain.1)?),
                     "DomainBool" => Ok(Domain::BoolDomain),
                     _ => Err(Error::Parse(
                         "FindOrGiven[2] is an unknown object".to_owned(),
                     )),
                 }?;
-                print!("{:?}", domain);
                 Ok(Domain::DomainSet(SetAttr::None, Box::new(domain)))
             } else {
                 Err(Error::Parse(
@@ -168,7 +167,6 @@ fn parse_letting(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
         .as_str()
         .ok_or(error!("Letting[0].Name is not a string"))?;
     let name = Name::UserName(name.to_owned());
-    println!("{:?}", arr[1]);
     // value letting
     if let Some(value) = parse_expression(&arr[1]) {
         symtab
@@ -435,6 +433,10 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
         Value::Object(constant) if constant.contains_key("ConstantBool") => {
             parse_constant(constant)
         }
+        Value::Object(constant) if constant.contains_key("AbstractLiteral") => {
+            parse_abs_lit(constant)
+        }
+
         _ => None,
     }
 }
@@ -514,6 +516,30 @@ fn parse_vec_op(
     }
 }
 
+fn parse_abs_lit(constant: &serde_json::Map<String, Value>) -> Option<Expression> {
+    if let Some(Value::Object(obj)) = constant.get("AbstractLiteral") {
+        if let Some(arr) = obj.get("AbsLitSet") {
+            let mut expressions: Vec<Expression> = Vec::new();
+            for expr in arr.as_array()?.iter().filter_map(parse_expression) {
+                match expr {
+                    Expression::Atomic(_, Atom::Reference(name)) => {
+                        expressions.push(Expression::Atomic(Metadata::new(), Atom::Reference(name)))
+                    }
+                    Expression::Sum(_, vec) => {
+                        expressions.push(Expression::Sum(Metadata::new(), vec))
+                    }
+                    _ => {}
+                }
+            }
+            return Some(Expression::AbstractLiteral(
+                Metadata::new(),
+                AbstractLiteral::Set(expressions),
+            ));
+        }
+    }
+    return None;
+}
+
 fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expression> {
     match &constant.get("Constant") {
         Some(Value::Object(int)) if int.contains_key("ConstantInt") => {
@@ -543,27 +569,23 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
         }
 
         Some(Value::Object(int)) if int.contains_key("ConstantAbstract") => {
-            println!("{:?}", int);
-            // will have list of expressions
-            // will go into abstractLit::Set
-
-
-
             if let Some(Value::Object(obj)) = int.get("ConstantAbstract") {
                 if let Some(arr) = obj.get("AbsLitSet") {
-                     let mut expressions: Vec<Expression> = Vec::new();
+                    let mut expressions: Vec<Expression> = Vec::new();
 
-                     for expr in arr.as_array()?.iter().filter_map(parse_expression) {
+                    for expr in arr.as_array()?.iter().filter_map(parse_expression) {
                         if let Expression::Atomic(_, Atom::Literal(literal)) = expr {
-                             expressions.push(Expression::Atomic(Metadata::new(), Atom::Literal(literal)))
+                            expressions
+                                .push(Expression::Atomic(Metadata::new(), Atom::Literal(literal)))
                         }
-                        //  support other expressions as well
-                     }
-                     println!("{}", expressions.len());
-                     return Some(Expression::AbstractLiteral(Metadata::new(), AbstractLiteral::Set(expressions)));
-                 }
-             }
-            
+                    }
+                    return Some(Expression::AbstractLiteral(
+                        Metadata::new(),
+                        AbstractLiteral::Set(expressions),
+                    ));
+                }
+            }
+
             return None;
         }
 
