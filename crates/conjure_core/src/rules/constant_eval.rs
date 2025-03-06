@@ -28,7 +28,7 @@ fn apply_eval_constant(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// `Some(Const)` if the expression can be simplified to a constant
 pub fn eval_constant(expr: &Expr) -> Option<Lit> {
     match expr {
-        Expr::Set(_, _) => None,
+        Expr::AbstractLiteral(_, _) => None,
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
         Expr::Atomic(_, Atom::Reference(_c)) => None,
         Expr::Abs(_, e) => un_op::<i32, i32>(|a| a.abs(), e).map(Lit::Int),
@@ -198,10 +198,15 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 let Expr::Atomic(_, Atom::Literal(x)) = expr else {
                     return None;
                 };
-                if lits.contains(x) {
-                    return Some(Lit::Bool(false));
-                } else {
-                    lits.insert(x.clone());
+                match x {
+                    Lit::Int(_) | Lit::Bool(_) => {
+                        if lits.contains(x) {
+                            return Some(Lit::Bool(false));
+                        } else {
+                            lits.insert(x.clone());
+                        }
+                    }
+                    Lit::AbstractLiteral(_) => return None, // Reject AbstractLiteral cases
                 }
             }
             Some(Lit::Bool(true))

@@ -65,8 +65,8 @@ impl Display for DecisionVariable {
                 Ok(())
             }
             Domain::DomainReference(name) => write!(f, "{}", name),
-            Domain::DomainSet(domain) => {
-                write!(f, "{}",domain)?;
+            Domain::DomainSet(attr, domain) => {
+                write!(f, "{}", domain)?;
                 Ok(())
             }
         }

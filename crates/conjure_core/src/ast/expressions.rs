@@ -4,10 +4,7 @@ use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
 
-use enum_compatability_macro::document_compatibility;
-use uniplate::derive::Uniplate;
-use uniplate::{Biplate, Uniplate as _};
-
+use crate::ast::literals::AbstractLiteral;
 use crate::ast::literals::Literal;
 use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use crate::ast::symbol_table::SymbolTable;
@@ -15,6 +12,9 @@ use crate::ast::Atom;
 use crate::ast::Name;
 use crate::ast::ReturnType;
 use crate::metadata::Metadata;
+use enum_compatability_macro::document_compatibility;
+use uniplate::derive::Uniplate;
+use uniplate::{Biplate, Uniplate as _};
 
 use super::{Domain, Range, SubModel, Typeable};
 
@@ -24,14 +24,17 @@ use super::{Domain, Range, SubModel, Typeable};
 /// used to build rules and conditions for the model.
 #[document_compatibility]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
-#[uniplate(walk_into=[Atom,SubModel])]
-#[biplate(to=Literal)]
+#[uniplate(walk_into=[Atom,SubModel,AbstractLiteral<Expression>])]
 #[biplate(to=Metadata)]
 #[biplate(to=Atom)]
 #[biplate(to=Name)]
 #[biplate(to=Vec<Expression>)]
 #[biplate(to=SubModel)]
+#[biplate(to=AbstractLiteral<Expression>)]
+#[biplate(to=AbstractLiteral<Literal>,walk_into=[Atom])]
+#[biplate(to=Literal,walk_into=[Atom])]
 pub enum Expression {
+    AbstractLiteral(Metadata, AbstractLiteral<Expression>),
     /// The top of the model
     Root(Metadata, Vec<Expression>),
 
@@ -41,9 +44,7 @@ pub enum Expression {
 
     Atomic(Metadata, Atom),
 
-    #[compatible(JsonInput)]
-    Set(Metadata, Literal),
-
+    
     Scope(Metadata, Box<SubModel>),
 
     /// `|x|` - absolute value of `x`
@@ -335,13 +336,13 @@ impl Expression {
     pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
         let ret = match self {
             //todo
-            Expression::Set(_, _) => None,
+            Expression::AbstractLiteral(_, _) => None,
             Expression::Atomic(_, Atom::Reference(name)) => Some(syms.domain(name)?),
             Expression::Atomic(_, Atom::Literal(Literal::Int(n))) => {
                 Some(Domain::IntDomain(vec![Range::Single(*n)]))
             }
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(Domain::BoolDomain),
-            Expression::Atomic(_, Atom::Literal(Literal::Set(_))) => None,
+            Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(_))) => None,
             Expression::Scope(_, _) => Some(Domain::BoolDomain),
             Expression::Sum(_, exprs) => expr_vec_to_domain_i32(exprs, |x, y| Some(x + y), syms),
             Expression::Product(_, exprs) => {
@@ -517,13 +518,11 @@ impl Expression {
 
     pub fn return_type(&self) -> Option<ReturnType> {
         match self {
-            Expression::Set(_, Literal::Int(_)) => Some(ReturnType::Int),
-            Expression::Set(_, Literal::Bool(_)) => Some(ReturnType::Bool),
-            Expression::Set(_, Literal::Set(_)) => Some(ReturnType::Set),
+            Expression::AbstractLiteral(_, _) => None,
             Expression::Root(_, _) => Some(ReturnType::Bool),
             Expression::Atomic(_, Atom::Literal(Literal::Int(_))) => Some(ReturnType::Int),
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(ReturnType::Bool),
-            Expression::Atomic(_, Atom::Literal(Literal::Set(_))) => Some(ReturnType::Set),
+            Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(_))) => None,
             Expression::Atomic(_, Atom::Reference(_)) => None,
             Expression::Scope(_, scope) => scope.return_type(),
             Expression::Abs(_, _) => Some(ReturnType::Int),
@@ -629,7 +628,10 @@ impl Display for Expression {
     // TODO: (flm8) this will change once we implement a parser (two-way conversion)
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
-            Expression::Set(_, lit) => lit.fmt(f),
+           
+            Expression::AbstractLiteral(_, _) => {
+                write!(f, "todo")
+            }
             Expression::Root(_, exprs) => {
                 write!(f, "{}", pretty_expressions_as_top_level(exprs))
             }

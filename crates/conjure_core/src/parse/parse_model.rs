@@ -4,9 +4,8 @@ use std::sync::{Arc, RwLock};
 
 use serde_json::Value;
 use serde_json::Value as JsonValue;
-
 use crate::ast::Declaration;
-use crate::ast::{Atom, Domain, Expression, Literal, Name, Range, SymbolTable};
+use crate::ast::{Atom, Domain, Expression, Literal, Name, Range, SetAttr, SymbolTable, AbstractLiteral};
 use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::metadata::Metadata;
@@ -140,7 +139,8 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
                         "FindOrGiven[2] is an unknown object".to_owned(),
                     )),
                 }?;
-                Ok(Domain::DomainSet(Box::new(domain)))
+                print!("{:?}", domain);
+                Ok(Domain::DomainSet(SetAttr::None, Box::new(domain)))
             } else {
                 Err(Error::Parse(
                     "FindOrGiven[2] is an unknown object".to_owned(),
@@ -543,24 +543,27 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
         }
 
         Some(Value::Object(int)) if int.contains_key("ConstantAbstract") => {
+            println!("{:?}", int);
+            // will have list of expressions
+            // will go into abstractLit::Set
+
+
+
             if let Some(Value::Object(obj)) = int.get("ConstantAbstract") {
                 if let Some(arr) = obj.get("AbsLitSet") {
-                    let mut atoms = Vec::new();
+                     let mut expressions: Vec<Expression> = Vec::new();
 
-                    for expr in arr.as_array()?.iter().filter_map(parse_expression) {
+                     for expr in arr.as_array()?.iter().filter_map(parse_expression) {
                         if let Expression::Atomic(_, Atom::Literal(literal)) = expr {
-                            atoms.push(Atom::Literal(literal))
+                             expressions.push(Expression::Atomic(Metadata::new(), Atom::Literal(literal)))
                         }
-                    }
-                    return Some(Expression::Set(Metadata::new(), Literal::Set(atoms)));
-                }
-            }
-
-            // let arr = int
-            //     .as_array()
-            //     .ok_or(Error::Parse("DomainInt is not an array".to_owned()))?[1]
-            //     .as_array()
-            //     .ok_or(Error::Parse("DomainInt[1] is not an array".to_owned()))?;
+                        //  support other expressions as well
+                     }
+                     println!("{}", expressions.len());
+                     return Some(Expression::AbstractLiteral(Metadata::new(), AbstractLiteral::Set(expressions)));
+                 }
+             }
+            
             return None;
         }
 

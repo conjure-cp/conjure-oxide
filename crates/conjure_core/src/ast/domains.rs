@@ -18,9 +18,16 @@ pub enum Domain {
     BoolDomain,
     IntDomain(Vec<Range<i32>>),
     DomainReference(Name),
-    DomainSet(Box<Domain>),
+    DomainSet(SetAttr, Box<Domain>),
 }
-
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum SetAttr {
+    None,
+    Size(i32),
+    MinSize(i32),
+    MaxSize(i32),
+    MinMaxSize(i32, i32),
+}
 impl Domain {
     /// Return a list of all possible i32 values in the domain if it is an IntDomain.
     pub fn values_i32(&self) -> Option<Vec<i32>> {
@@ -81,7 +88,7 @@ impl Display for Domain {
                 }
             }
             Domain::DomainReference(name) => write!(f, "{}", name),
-            Domain::DomainSet(domain) => {
+            Domain::DomainSet(attr, domain) => {
                 write!(f, "set of ({})", domain)
             }
         }

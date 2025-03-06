@@ -2,17 +2,17 @@ use std::borrow::Borrow;
 
 use crate::metadata::Metadata;
 
-use super::{Expression, Literal, Name};
+use super::{literals::AbstractLiteral, Expression, Literal, Name};
 use serde::{Deserialize, Serialize};
 use uniplate::derive::Uniplate;
 
 /// An `Atom` is an indivisible expression, such as a literal or a reference.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
 #[uniplate()]
-#[biplate(to=Name)]
 #[biplate(to=Literal)]
-#[biplate(to=Metadata)]
 #[biplate(to=Expression)]
+#[biplate(to=AbstractLiteral<Literal>,walk_into=[Literal])]
+#[biplate(to=Name)]
 pub enum Atom {
     Literal(Literal),
     Reference(Name),
