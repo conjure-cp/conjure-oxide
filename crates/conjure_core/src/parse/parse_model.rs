@@ -168,7 +168,7 @@ fn parse_letting(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
         .as_str()
         .ok_or(error!("Letting[0].Name is not a string"))?;
     let name = Name::UserName(name.to_owned());
-
+    println!("{:?}", arr[1]);
     // value letting
     if let Some(value) = parse_expression(&arr[1]) {
         symtab

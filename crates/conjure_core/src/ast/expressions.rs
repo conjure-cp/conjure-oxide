@@ -629,8 +629,12 @@ impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
            
-            Expression::AbstractLiteral(_, _) => {
-                write!(f, "todo")
+            Expression::AbstractLiteral(_, expressions) => {
+                match expressions {
+                    AbstractLiteral::Set(vec) => write!(f, "Set({})", pretty_vec(vec)),
+                    AbstractLiteral::Matrix(vec) => write!(f, "Matrix({})", pretty_vec(vec)),
+                }
+                
             }
             Expression::Root(_, exprs) => {
                 write!(f, "{}", pretty_expressions_as_top_level(exprs))
