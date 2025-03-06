@@ -1,3 +1,5 @@
+#![allow(clippy::unwrap_used)]
+#![allow(clippy::expect_used)]
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
@@ -111,50 +113,8 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
         .iter()
         .next()
         .ok_or(error!("FindOrGiven[2] is an empty object"))?;
-    let domain = match domain.0.as_str() {
-        "DomainInt" => Ok(parse_int_domain(domain.1)?),
-        "DomainBool" => Ok(Domain::BoolDomain),
-        "DomainReference" => Ok(Domain::DomainReference(Name::UserName(
-            domain
-                .1
-                .as_array()
-                .ok_or(error!("DomainReference is not an array"))?[0]
-                .as_object()
-                .ok_or(error!("DomainReference[0] is not an object"))?["Name"]
-                .as_str()
-                .ok_or(error!("DomainReference[0].Name is not a string"))?
-                .into(),
-        ))),
-        "DomainSet" => {
-            let dom = domain.1.get(2).and_then(|v| v.as_object());
-            if let Some(domain_obj) = dom {
-                let domain = domain_obj
-                    .iter()
-                    .next()
-                    .ok_or(Error::Parse("DomainSet is an empty object".to_owned()))?;
-                let domain = match domain.0.as_str() {
-                    "DomainInt" => {
-                        println!("DomainInt: {:#?}", domain.1);
-                        Ok(parse_int_domain(domain.1)?)
-                    }
-                    "DomainBool" => Ok(Domain::BoolDomain),
-                    _ => Err(Error::Parse(
-                        "FindOrGiven[2] is an unknown object".to_owned(),
-                    )),
-                }?;
-                print!("{:?}", domain);
-                Ok(Domain::DomainSet(SetAttr::None, Box::new(domain)))
-            } else {
-                Err(Error::Parse(
-                    "FindOrGiven[2] is an unknown object".to_owned(),
-                ))
-            }
-        }
 
-        _ => Err(Error::Parse(
-            "FindOrGiven[2] is an unknown object".to_owned(), // consider covered
-        )),
-    }?;
+    let domain = parse_domain(domain.0, domain.1)?;
 
     symtab
         .insert(Rc::new(Declaration::new_var(name.clone(), domain)))
@@ -190,11 +150,7 @@ fn parse_letting(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
             .next()
             .ok_or(error!("Letting[1].Domain is an empty object"))?;
 
-        let domain = match domain.0.as_str() {
-            "DomainInt" => Ok(parse_int_domain(domain.1)?),
-            "DomainBool" => Ok(Domain::BoolDomain),
-            _ => throw_error!("Letting[1] is an unknown object".to_owned()),
-        }?;
+        let domain = parse_domain(domain.0, domain.1)?;
 
         symtab
             .insert(Rc::new(Declaration::new_domain_letting(
@@ -204,6 +160,89 @@ fn parse_letting(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
             .ok_or(Error::Parse(format!(
                 "Could not add {name} to symbol table as it already exists"
             )))
+    }
+}
+
+fn parse_domain(domain_name: &str, domain_value: &JsonValue) -> Result<Domain> {
+    match domain_name {
+        "DomainInt" => Ok(parse_int_domain(domain_value)?),
+        "DomainBool" => Ok(Domain::BoolDomain),
+        "DomainReference" => Ok(Domain::DomainReference(Name::UserName(
+            domain_value
+                .as_array()
+                .ok_or(error!("DomainReference is not an array"))?[0]
+                .as_object()
+                .ok_or(error!("DomainReference[0] is not an object"))?["Name"]
+                .as_str()
+                .ok_or(error!("DomainReference[0].Name is not a string"))?
+                .into(),
+        ))),
+        "DomainSet" => {
+            let dom = domain_value.get(2).and_then(|v| v.as_object());
+            let domain_obj = dom.expect("domain object exists");
+            let domain = domain_obj
+                .iter()
+                .next()
+                .ok_or(Error::Parse("DomainSet is an empty object".to_owned()))?;
+            let domain = match domain_name {
+                "DomainInt" => {
+                    println!("DomainInt: {:#?}", domain.1);
+                    Ok(parse_int_domain(domain.1)?)
+                }
+                "DomainBool" => Ok(Domain::BoolDomain),
+                _ => Err(Error::Parse(
+                    "FindOrGiven[2] is an unknown object".to_owned(),
+                )),
+            }?;
+            print!("{:?}", domain);
+            Ok(Domain::DomainSet(SetAttr::None, Box::new(domain)))
+        }
+
+        "DomainMatrix" => {
+            let domain_value = domain_value
+                .as_array()
+                .ok_or(error!("Domain matrix is not an array"))?;
+
+            let indexed_by_domain = domain_value[0].clone();
+            let (index_domain_name, index_domain_value) = indexed_by_domain
+                .as_object()
+                .ok_or(error!("DomainMatrix[0] is not an object"))?
+                .iter()
+                .next()
+                .ok_or(error!(""))?;
+
+            let (value_domain_name, value_domain_value) = domain_value[1]
+                .as_object()
+                .ok_or(error!(""))?
+                .iter()
+                .next()
+                .ok_or(error!(""))?;
+
+            // Conjure stores a 2-d matrix as a matrix of a matrix.
+            //
+            // Therefore, the index is always a Domain.
+
+            let mut index_domains: Vec<Domain> = vec![];
+
+            index_domains.push(parse_domain(index_domain_name, index_domain_value)?);
+
+            // We want to store 2-d matrices as a matrix with two index domains, not a matrix in a
+            // matrix.
+            //
+            // Walk through the value domain until it is not a DomainMatrix, adding the index to
+            // our list of indices.
+            let mut value_domain = parse_domain(value_domain_name, value_domain_value)?;
+            while let Domain::DomainMatrix(new_value_domain, mut indices) = value_domain {
+                index_domains.append(&mut indices);
+                value_domain = *new_value_domain.clone()
+            }
+
+            Ok(Domain::DomainMatrix(Box::new(value_domain), index_domains))
+        }
+
+        _ => Err(Error::Parse(
+            "FindOrGiven[2] is an unknown object".to_owned(), // consider covered
+        )),
     }
 }
 
@@ -423,6 +462,12 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
             Value::Object(vec_op) if vec_operator_names.any(|key| vec_op.contains_key(*key)) => {
                 parse_vec_op(vec_op, vec_operators)
             }
+
+            Value::Object(op)
+                if op.contains_key("MkOpIndexing") || op.contains_key("MkOpSlicing") =>
+            {
+                parse_indexing_slicing_op(op)
+            }
             otherwise => bug!("Unhandled Op {:#?}", otherwise),
         },
         Value::Object(refe) if refe.contains_key("Reference") => {
@@ -459,6 +504,89 @@ fn parse_bin_op(
             Some(constructor(Metadata::new(), Box::new(arg1), Box::new(arg2)))
         }
         otherwise => bug!("Unhandled parse_bin_op {:#?}", otherwise),
+    }
+}
+
+fn parse_indexing_slicing_op(op: &serde_json::Map<String, Value>) -> Option<Expression> {
+    // we know there is a single key value pair in this object
+    // extract the value, ignore the key
+    let (key, value) = op.into_iter().next()?;
+
+    // we know that this is meant to be a mkopindexing, so anything that goes wrong from here is a
+    // bug!
+
+    // Conjure does a[1,2,3] as MkOpIndexing(MkOpIndexing(MkOpIndexing(a,3),2),1).
+    //
+    // And  a[1,..,3] as MkOpIndexing(MkOpSlicing(MkOpIndexing(a,3)),1).
+    //
+    // However, we want this in a flattened form: Index(a, [1,2,3])
+    let mut target: Expression;
+    let mut indices: Vec<Option<Expression>> = vec![];
+
+    // true if this has no slicing, false otherwise.
+    let mut all_known = true;
+
+    match key.as_str() {
+        "MkOpIndexing" => {
+            match &value {
+                Value::Array(op_args) if op_args.len() == 2 => {
+                    target = parse_expression(&op_args[0]).expect("expected an expression");
+                    indices.push(Some(
+                        parse_expression(&op_args[1]).expect("expected an expression"),
+                    ));
+                }
+                otherwise => bug!("Unknown object inside MkOpIndexing: {:#?}", otherwise),
+            };
+        }
+
+        "MkOpSlicing" => {
+            all_known = false;
+            match &value {
+                Value::Array(op_args) if op_args.len() == 3 => {
+                    target = parse_expression(&op_args[0]).expect("expected an expression");
+                    indices.push(None);
+                }
+                otherwise => bug!("Unknown object inside MkOpSlicing: {:#?}", otherwise),
+            };
+        }
+
+        _ => {
+            return None;
+        }
+    }
+
+    loop {
+        match &mut target {
+            Expression::UnsafeIndex(_, new_target, new_indices) => {
+                indices.extend(new_indices.iter().cloned().map(Some));
+                target = *new_target.clone();
+            }
+
+            Expression::UnsafeSlice(_, new_target, new_indices) => {
+                all_known = false;
+                indices.append(new_indices);
+                target = *new_target.clone();
+            }
+
+            _ => {
+                // not a slice or an index, we have reached the target.
+                break;
+            }
+        }
+    }
+
+    if all_known {
+        Some(Expression::UnsafeIndex(
+            Metadata::new(),
+            Box::new(target),
+            indices.into_iter().map(|x| x.unwrap()).collect(),
+        ))
+    } else {
+        Some(Expression::UnsafeSlice(
+            Metadata::new(),
+            Box::new(target),
+            indices,
+        ))
     }
 }
 
