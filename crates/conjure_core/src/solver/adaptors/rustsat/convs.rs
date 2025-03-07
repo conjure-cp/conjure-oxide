@@ -116,34 +116,32 @@ pub fn handle_disjn(
     inst_in_use.add_binary(lit1, lit2);
 }
 
-pub fn handle_cnf(vec_cnf: &Vec<Expression>) {
+pub fn handle_cnf(vec_cnf: &Vec<Expression>) -> SatInstance {
     let mut vars_added: HashMap<String, Lit> = HashMap::new();
-    let mut inst_in_use = SatInstance::new();
+    let mut inst = SatInstance::new();
 
     println!("------------Or Constraints------------\n\n");
 
     for disjn in vec_cnf {
-        handle_disjn(disjn, &mut vars_added, &mut inst_in_use);
+        handle_disjn(disjn, &mut vars_added, &mut inst);
     }
 
     println!("\n..finished loading..\n\n");
 
-    println!("---------------Solution---------------\n\n");
-    let mut solver: Minisat = rustsat_minisat::core::Minisat::default();
+    inst
+    // println!("---------------Solution---------------\n\n");
+    // let mut solver: Minisat = rustsat_minisat::core::Minisat::default();
 
-    let cnf: (Cnf, BasicVarManager) = inst_in_use.into_cnf();
-    println!("CNF: {:?}", cnf.0);
+    // let cnf: (Cnf, BasicVarManager) = inst_in_use.into_cnf();
+    // println!("CNF: {:?}", cnf.0);
 
-    solver.add_cnf(cnf.0).unwrap();
-    let res = solver.solve().unwrap();
+    // solver.add_cnf(cnf.0).unwrap();
+    // let res = solver.solve().unwrap();
 
-    print!("Solution: ");
-    match res {
-        SolverResult::Sat => println!("SAT"),
-        SolverResult::Unsat => println!("UNSAT"),
-        SolverResult::Interrupted => println!("NOPE"),
-    }
-
-    // assert_eq!(res[l1.var()], TernaryVal::True);
-    // assert_eq!(res[l2.var()], TernaryVal::True);
+    // print!("Solution: ");
+    // match res {
+    //     SolverResult::Sat => println!("SAT"),
+    //     SolverResult::Unsat => println!("UNSAT"),
+    //     SolverResult::Interrupted => println!("NOPE"),
+    // }
 }

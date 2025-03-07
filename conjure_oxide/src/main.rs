@@ -12,7 +12,7 @@ use conjure_core::ast::{Expression, Literal};
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_core::solver::adaptors::rustsat::convs::handle_cnf;
 use conjure_core::solver::adaptors::SAT;
-use conjure_core::solver::SolverAdaptor;
+use conjure_core::solver::{self, SolverAdaptor};
 use conjure_core::Model;
 use conjure_oxide::defaults::get_default_rule_sets;
 use schemars::schema_for;
@@ -312,23 +312,8 @@ fn run_solver(_cli: &Cli, model: Model) -> anyhow::Result<()> {
         // println!("..Made SAT adaptor instance..");
     }
 
-    let vec_constr = model.clone().get_constraints_vec();
-
-    let constr = &vec_constr[0];
-
-    let vec_cnf = match constr {
-        Expression::And(_, vec) => vec,
-        _ => panic!("OnO"),
-    };
-
-    {
-        // DEGUB BLOCK
-        // println!("{}", vec_cnf);
-    }
-
-    handle_cnf(vec_cnf);
-
-    println!("..finished..");
+    let mut solver = SAT::default();
+    solver.get_sat_solution(model);
 
     Ok(())
 } // fn handle
