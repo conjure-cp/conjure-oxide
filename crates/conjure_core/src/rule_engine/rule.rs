@@ -7,6 +7,7 @@ use thiserror::Error;
 
 use crate::ast::Declaration;
 use crate::ast::{Expression, Name, SubModel, SymbolTable};
+use tree_morph::Rule as MorphRule;
 
 #[derive(Debug, Error)]
 pub enum ApplicationError {
@@ -200,5 +201,33 @@ impl Eq for Rule<'_> {}
 impl Hash for Rule<'_> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.name.hash(state);
+    }
+}
+
+impl MorphRule<Expression, SymbolTable> for Rule<'_> {
+    fn apply(
+        &self,
+        commands: &mut tree_morph::Commands<Expression, SymbolTable>,
+        subtree: &Expression,
+        meta: &SymbolTable,
+    ) -> Option<Expression> {
+        let reduction = self.apply(subtree, meta).ok()?;
+        commands.mut_meta(Box::new(|m: &mut SymbolTable| m.extend(reduction.symbols)));
+        commands.transform(Box::new(|m| m.extend_root(reduction.new_top)));
+        Some(reduction.new_expression)
+    }
+}
+
+impl MorphRule<Expression, SymbolTable> for &Rule<'_> {
+    fn apply(
+        &self,
+        commands: &mut tree_morph::Commands<Expression, SymbolTable>,
+        subtree: &Expression,
+        meta: &SymbolTable,
+    ) -> Option<Expression> {
+        let reduction = Rule::apply(self, subtree, meta).ok()?;
+        commands.mut_meta(Box::new(|m: &mut SymbolTable| m.extend(reduction.symbols)));
+        commands.transform(Box::new(|m| m.extend_root(reduction.new_top)));
+        Some(reduction.new_expression)
     }
 }

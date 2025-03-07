@@ -38,14 +38,13 @@ enum MyRule {
 
 impl Rule<Expr, Meta> for MyRule {
     fn apply(&self, cmd: &mut Commands<Expr, Meta>, expr: &Expr, meta: &Meta) -> Option<Expr> {
-        cmd.mut_meta(|m| m.num_applications += 1); // Only applied if successful
+        cmd.mut_meta(Box::new(|m: &mut Meta| m.num_applications += 1)); // Only applied if successful
         match self {
             MyRule::EvalAdd => rule_eval_add(cmd, expr, meta),
             MyRule::EvalMul => rule_eval_mul(cmd, expr, meta),
         }
     }
 }
-
 struct Meta {
     num_applications: u32,
 }
