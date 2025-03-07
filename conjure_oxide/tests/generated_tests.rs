@@ -214,6 +214,15 @@ fn integration_test_inner(
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
 
+    // When running accept=true, only regenerate the expected files for these tests if the test
+    // fails.
+    //
+    // This reduces unnecessary git diffs when only the id of items in a model changes. These
+    // change every run of the tester, but do not change the correctness of the model.
+    let mut parsed_model_dirty = false;
+    let mut parsed_native_model_dirty = false;
+    let mut rewritten_model_dirty = false;
+
     if verbose {
         println!(
             "Running integration test for {}/{}, ACCEPT={}",
@@ -353,19 +362,30 @@ fn integration_test_inner(
         (None, None) // Avoid uninitialized variables when 4a is disabled
     };
 
+    // Before testing against the generated tests, if the generated tests don't exist, make them.
+    //
+    // We rewrite out-of-date tests (if necessary) after testing them.
     if accept {
         // Overwrite expected parse and rewrite models if enabled
-        if config.enable_native_parser {
+        if config.enable_native_parser
+            && !expected_exists_for(path, essence_base, "parse", "serialised.json")
+        {
             model_native.clone().expect("model_native should exist");
             copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
         }
-        if config.parse_model_default {
+        if config.parse_model_default
+            && !expected_exists_for(path, essence_base, "parse", "serialised.json")
+        {
             copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
         }
-        if config.apply_rewrite_rules {
+        if config.apply_rewrite_rules
+            && !expected_exists_for(path, essence_base, "rewrite", "serialised.json")
+        {
             copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json")?;
         }
 
+        // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
+        // based on the test results, so they don't get done later.
         if config.solve_with_minion {
             copy_generated_to_expected(path, essence_base, "minion", "solutions.json")?;
         }
@@ -379,25 +399,40 @@ fn integration_test_inner(
     // Check Stage 1b (native parser)
     if config.enable_native_parser {
         let expected_model = read_model_json(&context, path, essence_base, "expected", "parse")?;
-        let model_native = model_native.expect("model_native should exist here");
-        assert_eq!(model_native, expected_model);
+        let model_native = model_native
+            .clone()
+            .expect("model_native should exist here");
+        if accept {
+            parsed_native_model_dirty = model_native != expected_model;
+        } else {
+            assert_eq!(model_native, expected_model);
+        }
     }
 
-    // TODO (yb33): Investigate: for some reason, model.expect(), and model from "expected" file aren't identical.
     // Check Stage 1a (parsed model)
     if config.parse_model_default {
         let expected_model = read_model_json(&context, path, essence_base, "expected", "parse")?;
         let model_from_file = read_model_json(&context, path, essence_base, "generated", "parse")?;
-        assert_eq!(model_from_file, expected_model);
+
+        if accept {
+            parsed_model_dirty = model_from_file != expected_model;
+        } else {
+            assert_eq!(model_from_file, expected_model);
+        }
     }
 
     // Check Stage 2a (rewritten model)
     if config.apply_rewrite_rules {
         let expected_model = read_model_json(&context, path, essence_base, "expected", "rewrite")?;
-        assert_eq!(
-            rewritten_model.expect("Rewritten model must be present in 2a"),
-            expected_model
-        );
+        if accept {
+            rewritten_model_dirty =
+                rewritten_model.expect("Rewritten model must be present in 2a") != expected_model;
+        } else {
+            assert_eq!(
+                rewritten_model.expect("Rewritten model must be present in 2a"),
+                expected_model
+            );
+        }
     }
 
     // Check Stage 3a (solutions)
@@ -416,6 +451,20 @@ fn integration_test_inner(
             expected, generated,
             "Generated rule trace does not match the expected trace!"
         );
+    }
+
+    if accept {
+        // Overwrite expected parse and rewrite models if needed
+        if config.enable_native_parser && parsed_native_model_dirty {
+            model_native.clone().expect("model_native should exist");
+            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
+        }
+        if config.parse_model_default && parsed_model_dirty {
+            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
+        }
+        if config.apply_rewrite_rules && rewritten_model_dirty {
+            copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json")?;
+        }
     }
     save_stats_json(context, path, essence_base)?;
 
@@ -444,6 +493,10 @@ fn copy_generated_to_expected(
         format!("{path}/{test_name}.expected-{stage}.{extension}"),
     )?;
     Ok(())
+}
+
+fn expected_exists_for(path: &str, test_name: &str, stage: &str, extension: &str) -> bool {
+    Path::new(&format!("{path}/{test_name}.expected-{stage}.{extension}")).exists()
 }
 
 fn normalize_solutions_for_comparison(
