@@ -3,11 +3,16 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::process::exit;
 use std::sync::Arc;
+use std::vec;
 
 use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
+use conjure_core::ast::{Expression, Literal};
 use conjure_core::rule_engine::rewrite_naive;
+use conjure_core::solver::adaptors::rustsat::convs::handle_cnf;
+use conjure_core::solver::adaptors::SAT;
+use conjure_core::solver::SolverAdaptor;
 use conjure_core::Model;
 use conjure_oxide::defaults::get_default_rule_sets;
 use schemars::schema_for;
@@ -298,10 +303,35 @@ pub fn main() -> AnyhowResult<()> {
 }
 
 /// Runs the solver
-fn run_solver(_cli: &Cli, _model: Model) -> anyhow::Result<()> {
-    println!("..SAT solver to be run..");
+fn run_solver(_cli: &Cli, model: Model) -> anyhow::Result<()> {
+    println!("..SAT solver Running..");
+
+    {
+        // DEBUG BLOCK
+        // let s: SAT = SAT::new(model);
+        // println!("..Made SAT adaptor instance..");
+    }
+
+    let vec_constr = model.clone().get_constraints_vec();
+
+    let constr = &vec_constr[0];
+
+    let vec_cnf = match constr {
+        Expression::And(_, vec) => vec,
+        _ => panic!("OnO"),
+    };
+
+    {
+        // DEGUB BLOCK
+        // println!("{}", vec_cnf);
+    }
+
+    handle_cnf(vec_cnf);
+
+    println!("..finished..");
+
     Ok(())
-}
+} // fn handle
 
 #[cfg(test)]
 mod tests {

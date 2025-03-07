@@ -23,16 +23,6 @@ use crate::solver::{
 use crate::stats::SolverStats;
 use crate::{ast as conjure_ast, model, Model as ConjureModel};
 
-// use super::super::model_modifier::NotModifiable;
-// use super::super::private;
-// use super::super::SearchComplete::*;
-// use super::super::SearchIncomplete::*;
-// use super::super::SearchStatus::*;
-// use super::super::SolverAdaptor;
-// use super::super::SolverError;
-// use super::super::SolverError::*;
-// use super::super::SolverError::*;
-
 use rustsat::instances::SatInstance;
 
 use thiserror::Error;

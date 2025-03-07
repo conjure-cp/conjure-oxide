@@ -1,7 +1,7 @@
 //! Solver adaptors.
 
 mod minion;
-mod rustsat;
+pub mod rustsat;
 use std::arch::x86_64;
 
 #[doc(inline)]
