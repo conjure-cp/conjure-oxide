@@ -19,11 +19,12 @@ pub fn handle_lit(
     inst: &mut SatInstance,
 ) -> Lit {
     match l1 {
+        // simple literal
+        // TODO (ss504) check what can be done to avoid cloning
+        Expression::Atomic(_, _) => handle_atom(l1.clone(), true, vars_added, inst),
         // not literal
         Expression::Not(_, _) => handle_not(l1, vars_added, inst),
 
-        // simple literal
-        Expression::Atomic(_, _) => handle_atom(l1.clone(), true, vars_added, inst),
         _ => panic!("Literal expected"),
     }
 }
@@ -35,7 +36,9 @@ pub fn handle_not(
 ) -> Lit {
     match expr {
         Expression::Not(_, ref_heap_a) => {
+            // TODO (ss504) check what can be done to avoid cloning
             let a = ref_heap_a.clone();
+            // and then unbox
             handle_atom(*a, false, vars_added, inst)
         }
         _ => panic!("Not Expected"),

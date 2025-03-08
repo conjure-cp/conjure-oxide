@@ -50,7 +50,6 @@ impl Default for SAT {
         SAT {
             __non_constructable: private::Internal,
             solver_inst: None,
-            // TODO: The following two properties may not be needed
             var_map: None,
             model_inst: None,
             decision_refs: None,
@@ -151,21 +150,13 @@ impl SolverAdaptor for SAT {
             // }
 
             let name = find_ref.0;
-
-            // match name {
-            //     Name::UserName(n) => finds.push(n.to_string()),
-            //     Name::MachineName(_) => todo!("Don't know how we're handling MachineName(s)"),
-            // };
-
             finds.push(name.to_string());
         }
 
         self.decision_refs = Some(finds);
 
         let vec_constr = model.clone().get_constraints_vec();
-
         let constr = &vec_constr[0];
-
         let vec_cnf = match constr {
             Expression::And(_, vec) => vec,
             _ => panic!("Bad Constraint type, only accepting And constraint"),
@@ -176,7 +167,7 @@ impl SolverAdaptor for SAT {
         let inst: SatInstance = handle_cnf(vec_cnf, &mut var_map);
 
         self.var_map = Some(var_map);
-        // TODO: temp clone
+        // TODO: temp clone for debug
         let cnf: (Cnf, BasicVarManager) = inst.clone().into_cnf();
         println!("CNF: {:?}", cnf.0);
         self.model_inst = Some(inst);
