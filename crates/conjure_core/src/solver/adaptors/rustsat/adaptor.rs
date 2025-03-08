@@ -91,7 +91,7 @@ impl SAT {
 
         solver.add_cnf(cnf.0);
         let res = solver.solve().unwrap();
-        println!(
+        tracing::info!(
             "Result: {}",
             match res {
                 SolverResult::Sat => ("Satisfiable"),
@@ -116,8 +116,6 @@ impl SolverAdaptor for SAT {
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
-        println!("---------------Solution---------------\n\n");
-
         let mut solver = Minisat::default();
         // self.solver_inst = Some(solver);
 
@@ -174,7 +172,7 @@ impl SolverAdaptor for SAT {
         self.var_map = Some(var_map);
         // TODO: temp clone for debug
         let cnf: (Cnf, BasicVarManager) = inst.clone().into_cnf();
-        println!("CNF: {:?}", cnf.0);
+        tracing::info!("CNF: {:?}", cnf.0);
         self.model_inst = Some(inst);
 
         Ok(())
