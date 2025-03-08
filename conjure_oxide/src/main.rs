@@ -312,6 +312,8 @@ fn run_solver(_cli: &Cli, model: Model) -> anyhow::Result<()> {
     }
 
     let mut solver = SAT::default();
+    solver.get_sat_solution(model.clone());
+    println!("\n------------------------sol1 done------------------------\n");
     solver.get_sat_solution(model);
 
     Ok(())
