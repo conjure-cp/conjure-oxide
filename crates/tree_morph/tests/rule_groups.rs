@@ -21,7 +21,7 @@ enum Expr {
 struct Rl(fn(&Expr) -> Option<Expr>);
 
 impl Rule<Expr, ()> for Rl {
-    fn apply(&self, cmd: &mut Commands<Expr, ()>, expr: &Expr, _: &()) -> Option<Expr> {
+    fn apply(&self, _cmd: &mut Commands<Expr, ()>, expr: &Expr, _: &()) -> Option<Expr> {
         self.0(expr)
     }
 }

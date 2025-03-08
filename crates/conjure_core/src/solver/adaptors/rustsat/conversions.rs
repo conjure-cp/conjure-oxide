@@ -9,7 +9,7 @@ use crate::metadata::Metadata;
 use crate::solver::Error;
 use crate::solver::SolverError;
 use crate::Model as ConjureModel;
-// use crate::;
+// use crate::
 
 pub fn instantiate_model_from_conjure(
     conjure_model: ConjureModel,
@@ -150,26 +150,3 @@ pub fn conv_to_formula(vec_cnf: &Vec<Vec<i32>>, instance_in_use: &mut SatInstanc
 }
 
 //CNF Error, may be replaced of integrated with error file
-#[derive(Error, Debug)]
-pub enum CNFError {
-    #[error("Variable with name `{0}` not found")]
-    VariableNameNotFound(Name),
-
-    #[error("Variable with name `{0}` not of right type")]
-    BadVariableType(Name),
-
-    #[error("Unexpected Expression `{0}` inside Not(). Only Not(Reference) or Not(Not) allowed!")]
-    UnexpectedExpressionInsideNot(Expression),
-
-    #[error("Unexpected Expression `{0}` as literal. Only Not() or Reference() allowed!")]
-    UnexpectedLiteralExpression(Expression),
-
-    #[error("Unexpected Expression `{0}` inside And(). Only And(vec<Or>) allowed!")]
-    UnexpectedExpressionInsideAnd(Expression),
-
-    #[error("Unexpected Expression `{0}` inside Or(). Only Or(lit, lit) allowed!")]
-    UnexpectedExpressionInsideOr(Expression),
-
-    #[error("Unexpected Expression `{0}` found!")]
-    UnexpectedExpression(Expression),
-}

@@ -7,14 +7,11 @@ use rustsat::{
     types::{Lit, TernaryVal},
 };
 
-// use rustsat::{
-//     instances::{BasicVarManager, Cnf, SatInstance},
-//     solvers::SolverResult,
-//     types::Lit,
-// };
 use rustsat_minisat::core::Minisat;
 
-use crate::ast::Expression;
+use anyhow::{anyhow, Result};
+
+use crate::{ast::Expression, solver::Error};
 
 pub fn handle_lit(
     l1: &Expression,
@@ -52,25 +49,27 @@ pub fn handle_atom(
     inst: &mut SatInstance,
 ) -> Lit {
     // polarity false for not
-
-    // let lit: Lit;
     match a {
         Expression::Atomic(_, atom) => match atom {
-            conjure_core::ast::Atom::Literal(literal) => todo!(),
+            conjure_core::ast::Atom::Literal(literal) => {
+                todo!("Not Sure if we are handling Lits as-is or not..")
+            }
             conjure_core::ast::Atom::Reference(name) => match name {
                 conjure_core::ast::Name::UserName(n) => {
                     // TODO: Temp Clone
-                    let m = n.clone();
+                    // let m = n.clone();
                     let lit_temp: Lit = fetch_lit(n, vars_added, inst);
                     if polarity {
-                        print!("  {} ", m);
+                        // print!("  {} ", m);
                         lit_temp
                     } else {
-                        print!(" ¬{} ", m);
+                        // print!(" ¬{} ", m);
                         !lit_temp
                     }
                 }
-                conjure_core::ast::Name::MachineName(_) => todo!(),
+                conjure_core::ast::Name::MachineName(_) => {
+                    todo!("Change Here for Conjure generated variables?")
+                }
             },
         },
         _ => panic!("atomic expected"),
@@ -97,51 +96,59 @@ pub fn handle_disjn(
     vars_added: &mut HashMap<String, Lit>,
     inst_in_use: &mut SatInstance,
 ) {
-    let cl = match disjn {
+    let cl: &Vec<Expression> = match disjn {
         Expression::Or(_, vec) => vec,
         _ => panic!(),
     };
     let l1 = &cl[0];
     let l2 = &cl[1];
 
-    print!("clause i.e: ");
+    print!("..clause i.e..");
     // handle literal:
     let lit1: Lit = handle_lit(l1, vars_added, inst_in_use);
     // also handle literal
     let lit2: Lit = handle_lit(l2, vars_added, inst_in_use);
 
     print!("\n");
-    println!("clause being added: {}, {}", lit1, lit2);
+    // println!("clause being added: {}, {}", lit1, lit2);
 
     inst_in_use.add_binary(lit1, lit2);
 }
 
-pub fn handle_cnf(vec_cnf: &Vec<Expression>) -> SatInstance {
-    let mut vars_added: HashMap<String, Lit> = HashMap::new();
+pub fn handle_cnf(vec_cnf: &Vec<Expression>, vars_added: &mut HashMap<String, Lit>) -> SatInstance {
     let mut inst = SatInstance::new();
 
-    println!("------------Or Constraints------------\n\n");
+    // println!("------------Or Constraints------------\n\n");
 
     for disjn in vec_cnf {
-        handle_disjn(disjn, &mut vars_added, &mut inst);
+        handle_disjn(disjn, vars_added, &mut inst);
     }
 
-    println!("\n..finished loading..\n\n");
+    println!("..finished loading..");
 
     inst
-    // println!("---------------Solution---------------\n\n");
-    // let mut solver: Minisat = rustsat_minisat::core::Minisat::default();
+}
 
-    // let cnf: (Cnf, BasicVarManager) = inst_in_use.into_cnf();
-    // println!("CNF: {:?}", cnf.0);
+#[derive(Error, Debug)]
+pub enum CNFError {
+    #[error("Variable with name `{0}` not found")]
+    VariableNameNotFound(String),
 
-    // solver.add_cnf(cnf.0).unwrap();
-    // let res = solver.solve().unwrap();
+    #[error("Variable with name `{0}` not of right type")]
+    BadVariableType(String),
 
-    // print!("Solution: ");
-    // match res {
-    //     SolverResult::Sat => println!("SAT"),
-    //     SolverResult::Unsat => println!("UNSAT"),
-    //     SolverResult::Interrupted => println!("NOPE"),
-    // }
+    #[error("Unexpected Expression `{0}` inside Not(). Only Not(Reference) or Not(Not) allowed!")]
+    UnexpectedExpressionInsideNot(Expression),
+
+    #[error("Unexpected Expression `{0}` as literal. Only Not() or Reference() allowed!")]
+    UnexpectedLiteralExpression(Expression),
+
+    #[error("Unexpected Expression `{0}` inside And(). Only And(vec<Or>) allowed!")]
+    UnexpectedExpressionInsideAnd(Expression),
+
+    #[error("Unexpected Expression `{0}` inside Or(). Only Or(lit, lit) allowed!")]
+    UnexpectedExpressionInsideOr(Expression),
+
+    #[error("Unexpected Expression `{0}` found!")]
+    UnexpectedExpression(Expression),
 }

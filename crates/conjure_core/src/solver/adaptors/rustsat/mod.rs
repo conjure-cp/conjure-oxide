@@ -1,5 +1,4 @@
 mod adaptor;
-mod conversions;
-pub mod convs;
+mod convs;
 
 pub use adaptor::SAT;
