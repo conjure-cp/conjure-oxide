@@ -178,4 +178,18 @@ impl SolverAdaptor for SAT {
     fn get_family(&self) -> SolverFamily {
         SolverFamily::SAT
     }
+
+    fn init_solver(&mut self, _: private::Internal) {}
+
+    fn get_name(&self) -> Option<String> {
+        Some("SAT".to_string())
+    }
+
+    fn add_adaptor_info_to_stats(&self, stats: SolverStats) -> SolverStats {
+        SolverStats {
+            solver_adaptor: self.get_name(),
+            solver_family: Some(self.get_family()),
+            ..stats
+        }
+    }
 }
