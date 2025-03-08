@@ -106,29 +106,19 @@ pub fn handle_disjn(
     let l1 = &cl[0];
     let l2 = &cl[1];
 
-    print!("..clause i.e..");
     // handle literal:
     let lit1: Lit = handle_lit(l1, vars_added, inst_in_use);
     // also handle literal
     let lit2: Lit = handle_lit(l2, vars_added, inst_in_use);
-
-    print!("\n");
-    // println!("clause being added: {}, {}", lit1, lit2);
 
     inst_in_use.add_binary(lit1, lit2);
 }
 
 pub fn handle_cnf(vec_cnf: &Vec<Expression>, vars_added: &mut HashMap<String, Lit>) -> SatInstance {
     let mut inst = SatInstance::new();
-
-    // println!("------------Or Constraints------------\n\n");
-
     for disjn in vec_cnf {
         handle_disjn(disjn, vars_added, &mut inst);
     }
-
-    println!("..finished loading..");
-
     inst
 }
 

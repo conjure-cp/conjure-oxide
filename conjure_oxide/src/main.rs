@@ -28,7 +28,9 @@ use tracing_subscriber::{EnvFilter, Layer};
 
 use serde_json::to_string_pretty;
 
-use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
+use conjure_oxide::utils::conjure::{
+    get_minion_solutions, get_sat_solutions, minion_solutions_to_json,
+};
 
 static AFTER_HELP_TEXT: &str = include_str!("help_text.txt");
 
@@ -351,15 +353,50 @@ fn run_minion(cli: &Cli, model: Model) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn run_sat_solver(_cli: &Cli, model: Model) -> anyhow::Result<()> {
-    println!("..SAT solver Running..");
+fn run_sat_solver(cli: &Cli, model: Model) -> anyhow::Result<()> {
+    let out_file: Option<File> = match &cli.output {
+        None => None,
+        Some(pth) => Some(
+            File::options()
+                .create(true)
+                .truncate(true)
+                .write(true)
+                .open(pth)?,
+        ),
+    };
 
+    let solutions = get_sat_solutions(model, cli.number_of_solutions)?;
+    tracing::info!(target: "file", "Solutions: {}", minion_solutions_to_json(&solutions));
+
+    let solutions_json = minion_solutions_to_json(&solutions);
+    let solutions_str = to_string_pretty(&solutions_json)?;
+    match out_file {
+        None => {
+            println!("Solutions:");
+            println!("{}", solutions_str);
+        }
+        Some(mut outf) => {
+            outf.write_all(solutions_str.as_bytes())?;
+            println!(
+                "Solutions saved to {:?}",
+                &cli.output.clone().unwrap().canonicalize()?
+            )
+        }
+    }
+    Ok(())
+}
+
+fn sat_solutions(_cli: &Cli, model: Model) -> anyhow::Result<()> {
     let mut solver = SAT::default();
 
-    for _i in [0..1] {
-        solver.get_sat_solution(model.clone());
-        println!("\n------------------------sol done------------------------\n");
-    }
+    solver.get_sat_solution(model.clone());
+    // for i in 0..1 {
+    //     solver.get_sat_solution(model.clone());
+    //     println!(
+    //         "\n------------------------solution #{} done------------------------\n",
+    //         i + 1
+    //     );
+    // }
 
     Ok(())
 } // fn handle

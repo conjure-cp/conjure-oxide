@@ -6,6 +6,8 @@ use std::sync::{Arc, Mutex, RwLock};
 
 use conjure_core::ast::{Literal, Name};
 use conjure_core::context::Context;
+use conjure_core::solver;
+use conjure_core::solver::adaptors::SAT;
 use rand::Rng as _;
 use serde_json::{from_str, Map, Value as JsonValue};
 use thiserror::Error as ThisError;
@@ -121,6 +123,31 @@ pub fn get_minion_solutions(
     let sols = (*all_solutions_ref).lock().unwrap();
 
     Ok((*sols).clone())
+}
+
+pub fn get_sat_solutions(
+    model: Model,
+    num_sols: i32,
+) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
+    let mut sols: Vec<BTreeMap<Name, Literal>> = Vec::new();
+
+    // let solver = Solver::new(SAT::default());
+    // println!("Building SAT model...");
+    // let solver = solver.load_model(model);
+    // println!("Running Minion...");
+
+    let mut solver: SAT = SAT::default();
+    // solver.get_sat_solution(model.clone());
+    for _i in 0..num_sols + 1 {
+        // should always be run with num_sols = 1
+        let solution = solver.get_sat_solution(model.clone());
+        // println!(
+        //     "\n------------------------solution #{} done------------------------\n",
+        //     i + 1
+        // );
+        sols.push(solution);
+    }
+    Ok(sols)
 }
 
 #[allow(clippy::unwrap_used)]

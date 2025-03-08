@@ -11,7 +11,7 @@ use minion_rs::ast::Model;
 use rustsat::encodings::am1::Def;
 use rustsat::solvers::{Solve, SolverResult};
 use rustsat::types::{Assignment, Lit, TernaryVal, Var as satVar};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::result::Result::Ok;
 use tracing_subscriber::filter::DynFilterFn;
 
@@ -19,7 +19,7 @@ use crate::ast::Domain::BoolDomain;
 
 use rustsat_minisat::core::Minisat;
 
-use crate::ast::{Atom, Expression, Name};
+use crate::ast::{Atom, Expression, Literal, Name};
 use crate::metadata::Metadata;
 use crate::solver::adaptors::rustsat::convs::handle_cnf;
 use crate::solver::{
@@ -58,20 +58,30 @@ impl Default for SAT {
 }
 
 // maybe use for callback?
-fn get_ref_sols(find_refs: Vec<String>, sol: Assignment, var_map: HashMap<String, Lit>) {
+fn get_ref_sols(
+    find_refs: Vec<String>,
+    sol: Assignment,
+    var_map: HashMap<String, Lit>,
+) -> BTreeMap<Name, Literal> {
+    let mut solution: BTreeMap<Name, Literal> = BTreeMap::new();
+
     for reference in find_refs {
-        print!("{} is ", reference);
+        // print!("{} is ", reference);
         let lit: Lit = *var_map.get(&reference).unwrap();
-        println!("{}", sol[lit.var()].to_bool_with_def(false));
+        // println!("{}", sol[lit.var()].to_bool_with_def(false));
+        solution.insert(
+            Name::UserName((reference)),
+            Literal::Bool((sol[lit.var()].to_bool_with_def(false))),
+        );
     }
+
+    solution
 }
 
 impl SAT {
     // TODO: maybe move this to utils?
-    pub fn get_sat_solution(&mut self, model: ConjureModel) {
-        println!("..loading model..");
+    pub fn get_sat_solution(&mut self, model: ConjureModel) -> BTreeMap<Name, Literal> {
         self.load_model(model, private::Internal);
-        println!("..getting solutions..");
 
         let mut solver = Minisat::default();
         // self.solver_inst = Some(solver);
@@ -82,23 +92,21 @@ impl SAT {
         solver.add_cnf(cnf.0);
         let res = solver.solve().unwrap();
         println!(
-            "Solution: {}",
+            "Result: {}",
             match res {
-                SolverResult::Sat => ("SAT"),
-                SolverResult::Unsat => ("UNSAT"), // TODO: Maybe Err here
+                SolverResult::Sat => ("Satisfiable"),
+                SolverResult::Unsat => ("Unsatisfiable"), // TODO: Maybe Err here
                 SolverResult::Interrupted => ("!!Interrupted!!"), // TODO: Absolutely Err here
             }
         );
 
         let sol = solver.full_solution().unwrap();
 
-        println!("Full Solution: ");
-
         get_ref_sols(
             self.decision_refs.clone().unwrap(),
             sol,
             self.var_map.clone().unwrap(),
-        );
+        )
     }
 }
 
@@ -142,12 +150,9 @@ impl SolverAdaptor for SAT {
         let mut finds: Vec<String> = Vec::new();
 
         for find_ref in decisions {
-            println!("finding: {}", find_ref.0);
-
-            // TODO: maybe?
-            // if (find_ref.1.domain != BoolDomain) {
-            //     panic!("Expected Find of domain Boolean");
-            // }
+            if (find_ref.1.domain != BoolDomain) {
+                panic!("Expected decision variable of domain Boolean");
+            }
 
             let name = find_ref.0;
             finds.push(name.to_string());
