@@ -2,16 +2,17 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
-use serde_json::Value;
-use serde_json::Value as JsonValue;
 use crate::ast::Declaration;
-use crate::ast::{Atom, Domain, Expression, Literal, Name, Range, SetAttr, SymbolTable, AbstractLiteral};
+use crate::ast::{
+    AbstractLiteral, Atom, Domain, Expression, Literal, Name, Range, SetAttr, SymbolTable,
+};
 use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::metadata::Metadata;
 use crate::Model;
 use crate::{bug, error, throw_error};
-
+use serde_json::Value;
+use serde_json::Value as JsonValue;
 macro_rules! parser_trace {
     ($($arg:tt)+) => {
         log::trace!(target:"jsonparser",$($arg)+)
@@ -543,19 +544,22 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
         }
 
         Some(Value::Object(int)) if int.contains_key("ConstantAbstract") => {
-            
             // TODO: add more types of expressions
             if let Some(Value::Object(obj)) = int.get("ConstantAbstract") {
                 if let Some(arr) = obj.get("AbsLitSet") {
-                     let mut expressions: Vec<Expression> = Vec::new();
+                    let mut expressions: Vec<Expression> = Vec::new();
 
-                     for expr in arr.as_array()?.iter().filter_map(parse_expression) {
+                    for expr in arr.as_array()?.iter().filter_map(parse_expression) {
                         if let Expression::Atomic(_, Atom::Literal(literal)) = expr {
-                             expressions.push(Expression::Atomic(Metadata::new(), Atom::Literal(literal)))
+                            expressions
+                                .push(Expression::Atomic(Metadata::new(), Atom::Literal(literal)))
                         }
                         //  support other expressions as well
-                     }
-                     return Some(Expression::AbstractLiteral(Metadata::new(), AbstractLiteral::Set(expressions)));
+                    }
+                    return Some(Expression::AbstractLiteral(
+                        Metadata::new(),
+                        AbstractLiteral::Set(expressions)
+                    ));
                  }
              }
             

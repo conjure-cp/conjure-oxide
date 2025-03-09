@@ -1,7 +1,7 @@
+use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
 use std::hash::Hasher;
-use serde::{Deserialize, Serialize};
 use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Tree, Uniplate};
 
@@ -25,7 +25,6 @@ pub enum AbstractLiteral<T: Uniplate + Biplate<AbstractLiteral<T>> + Biplate<T>>
     Matrix(Vec<T>),
 }
 
-
 impl Hash for AbstractLiteral<Literal> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         match self {
@@ -40,7 +39,6 @@ impl Hash for AbstractLiteral<Literal> {
         }
     }
 }
-
 
 impl<T> Uniplate for AbstractLiteral<T>
 where
