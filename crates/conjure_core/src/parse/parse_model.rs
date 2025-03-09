@@ -559,7 +559,7 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
                  }
              }
             
-            return None;
+            None
         }
 
         // sometimes (e.g. constant matrices) we can have a ConstantInt / Constant bool that is

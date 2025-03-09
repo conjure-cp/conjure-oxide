@@ -13,7 +13,6 @@ use super::{Atom, Expression};
 #[biplate(to=AbstractLiteral<Literal>)]
 #[biplate(to=AbstractLiteral<Expression>)]
 #[biplate(to=Expression)]
-
 /// A literal value, equivalent to constants in Conjure.
 pub enum Literal {
     Int(i32),
