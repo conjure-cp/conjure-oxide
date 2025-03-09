@@ -562,7 +562,6 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
                     ));
                 }
             }
-            
             None
         }
 
