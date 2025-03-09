@@ -555,7 +555,6 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
                         }
                         //  support other expressions as well
                      }
-                     println!("{}", expressions.len());
                      return Some(Expression::AbstractLiteral(Metadata::new(), AbstractLiteral::Set(expressions)));
                  }
              }
