@@ -9,7 +9,6 @@ use uniplate::Uniplate;
 
 use Atom::*;
 use Expr::*;
-use Lit::Int;
 use Lit::Bool;
 
 use crate::ast::Declaration;

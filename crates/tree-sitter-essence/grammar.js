@@ -13,6 +13,7 @@ module.exports = grammar ({
       $.find_statement_list,
       $.constraint_list,
       $.letting_statement_list,
+      $.dominance_relation
     )),
 
     single_line_comment: $ => token(seq('$', /.*/)),
@@ -61,7 +62,7 @@ module.exports = grammar ({
     bool_domain: $ => "bool",
 
     int_domain: $ => prec.left(seq(
-      "int", 
+      "int",
       optional(seq(
         "(",
         $.range_list,
@@ -112,7 +113,8 @@ module.exports = grammar ({
       $.implication,
       $.quantifier_expr,
       $.constant,
-      $.variable
+      $.variable,
+      $.from_solution
     ),
 
     not_expr: $ => prec(20, seq("!", $.expression)),
@@ -124,19 +126,19 @@ module.exports = grammar ({
     negative_expr: $ => prec(15, prec.left(seq("-", $.expression))),
 
     product_expr: $ => prec(10, prec.left(seq($.expression, $.multiplicative_op, $.expression))),
-    
+
     multiplicative_op: $ => choice("*", "/", "%"),
 
     sum_expr: $ => prec(1, prec.left(seq($.expression, $.additive_op, $.expression))),
 
-    additive_op: $ => choice("+", "-"), 
+    additive_op: $ => choice("+", "-"),
 
     comparison: $ => prec(0, prec.left(seq($.expression, $.comp_op, $.expression))),
 
     comp_op: $ => choice("=", "!=", "<=", ">=", "<", ">"),
 
     and_expr: $ => prec(-1, prec.left(seq($.expression, "/\\", $.expression))),
-    
+
     or_expr: $ => prec(-2, prec.left(seq($.expression, "\\/", $.expression))),
 
     implication: $ => prec(-4, prec.left(seq($.expression, "->", $.expression))),
@@ -150,5 +152,17 @@ module.exports = grammar ({
       )),
       "])"
     )),
+
+    from_solution: $ => seq(
+      "fromSolution",
+      "(",
+      $.variable,
+      ")"
+    ),
+
+    dominance_relation: $ => seq(
+      "dominanceRelation",
+      $.expression
+    )
   }
 })

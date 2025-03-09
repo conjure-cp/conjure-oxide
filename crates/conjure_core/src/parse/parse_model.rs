@@ -124,7 +124,7 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
         ))),
         "DomainSet" => {
             let dom = domain.1.get(2).and_then(|v| v.as_object());
-            if let Some((domain_obj)) = dom {
+            if let Some(domain_obj) = dom {
                 let domain = domain_obj
                     .iter()
                     .next()
@@ -543,12 +543,8 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
         }
 
         Some(Value::Object(int)) if int.contains_key("ConstantAbstract") => {
-            println!("{:?}", int);
-            // will have list of expressions
-            // will go into abstractLit::Set
-
-
-
+            
+            // TODO: add more types of expressions
             if let Some(Value::Object(obj)) = int.get("ConstantAbstract") {
                 if let Some(arr) = obj.get("AbsLitSet") {
                      let mut expressions: Vec<Expression> = Vec::new();

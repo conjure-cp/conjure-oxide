@@ -88,7 +88,7 @@ impl Display for Domain {
                 }
             }
             Domain::DomainReference(name) => write!(f, "{}", name),
-            Domain::DomainSet(attr, domain) => {
+            Domain::DomainSet(_, domain) => {
                 write!(f, "set of ({})", domain)
             }
         }

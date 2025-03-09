@@ -91,7 +91,7 @@ fn get_rule_set(rule_set_name: &str) -> Result<&'static RuleSet<'static>, Resolv
 ///
 #[allow(clippy::mutable_key_type)] // RuleSet is 'static so it's fine
 fn rule_sets_by_names(
-    rule_set_names: &Vec<String>,
+    rule_set_names: &[&str],
 ) -> Result<HashSet<&'static RuleSet<'static>>, ResolveRulesError> {
     let mut rs_set: HashSet<&'static RuleSet<'static>> = HashSet::new();
 
@@ -164,7 +164,7 @@ pub fn get_rules_grouped<'a>(
 ///
 pub fn resolve_rule_sets(
     target_solver: SolverFamily,
-    extra_rs_names: &Vec<String>,
+    extra_rs_names: &[&str],
 ) -> Result<Vec<&'static RuleSet<'static>>, ResolveRulesError> {
     #[allow(clippy::mutable_key_type)]
     // Hashing is done by name which never changes, and the references are 'static

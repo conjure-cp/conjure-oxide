@@ -1,4 +1,4 @@
-use std::fmt::{write, Display, Formatter};
+use std::fmt::{Display, Formatter};
 use std::hash::Hash;
 use std::hash::Hasher;
 use serde::{Deserialize, Serialize};

@@ -1,8 +1,8 @@
 //! Solver adaptors.
 
-mod kissat;
-mod minion;
-mod sat_common;
+pub mod kissat;
+pub mod minion;
+pub mod sat_common;
 
 #[doc(inline)]
 pub use kissat::Kissat;

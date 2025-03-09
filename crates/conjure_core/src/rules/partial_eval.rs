@@ -2,7 +2,6 @@ use std::collections::{HashSet, VecDeque};
 
 use conjure_macros::register_rule;
 use itertools::iproduct;
-use schemars::Set;
 use uniplate::Biplate;
 
 use crate::ast::SymbolTable;
@@ -22,6 +21,8 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // This is why we always check whether we found a constant or not.
     match expr.clone() {
         AbstractLiteral(_,_) => Err(RuleNotApplicable),
+        DominanceRelation(_, _) => Err(RuleNotApplicable),
+        FromSolution(_, _) => Err(RuleNotApplicable),
         Bubble(_, _, _) => Err(RuleNotApplicable),
         Atomic(_, _) => Err(RuleNotApplicable),
         Scope(_, _) => Err(RuleNotApplicable),

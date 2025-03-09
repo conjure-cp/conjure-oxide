@@ -32,7 +32,7 @@
 //!
 //! // Define and rewrite a model for minion.
 //! let model = get_example_model("bool-03").unwrap();
-//! let rule_sets = resolve_rule_sets(SolverFamily::Minion, &vec!["Constant".to_string()]).unwrap();
+//! let rule_sets = resolve_rule_sets(SolverFamily::Minion, &vec!["Constant"]).unwrap();
 //! let model = rewrite_model(&model,&rule_sets).unwrap();
 //!
 //!
@@ -157,7 +157,7 @@ pub type SolverMutCallback =
 /// usage details.**
 ///
 /// # Encapsulation
-///  
+///
 ///  The [`SolverAdaptor`] trait **must** only be implemented inside a submodule of this one,
 ///  and **should** only be called through [`Solver`].
 ///

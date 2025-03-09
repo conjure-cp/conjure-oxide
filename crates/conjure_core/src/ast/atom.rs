@@ -1,7 +1,5 @@
 use std::borrow::Borrow;
 
-use crate::metadata::Metadata;
-
 use super::{literals::AbstractLiteral, Expression, Literal, Name};
 use serde::{Deserialize, Serialize};
 use uniplate::derive::Uniplate;
@@ -16,6 +14,13 @@ use uniplate::derive::Uniplate;
 pub enum Atom {
     Literal(Literal),
     Reference(Name),
+}
+
+impl Atom {
+    /// Shorthand to create a reference by user name.
+    pub fn new_uref(name: &str) -> Atom {
+        Atom::Reference(Name::UserName(name.to_string()))
+    }
 }
 
 impl std::fmt::Display for Atom {

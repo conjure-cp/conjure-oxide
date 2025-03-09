@@ -7,24 +7,24 @@ use std::sync::Arc;
 use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
-use conjure_core::rule_engine::rewrite_naive;
-use conjure_core::Model;
-use conjure_oxide::defaults::get_default_rule_sets;
+use git_version::git_version;
 use schemars::schema_for;
 use serde_json::to_string_pretty;
-
-use conjure_core::context::Context;
-use conjure_oxide::find_conjure::conjure_executable;
-use conjure_oxide::rule_engine::{resolve_rule_sets, rewrite_model};
-use conjure_oxide::{get_rules, model_from_json};
-
-use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
-use conjure_oxide::SolverFamily;
-use git_version::git_version;
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
 use tracing_subscriber::{EnvFilter, Layer};
+
+use conjure_core::context::Context;
+use conjure_core::rule_engine::rewrite_naive;
+use conjure_core::Model;
+
+use conjure_oxide::defaults::DEFAULT_RULE_SETS;
+use conjure_oxide::find_conjure::conjure_executable;
+use conjure_oxide::rule_engine::{resolve_rule_sets, rewrite_model};
+use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
+use conjure_oxide::SolverFamily;
+use conjure_oxide::{get_rules, model_from_json};
 
 static AFTER_HELP_TEXT: &str = include_str!("help_text.txt");
 
@@ -129,8 +129,10 @@ pub fn main() -> AnyhowResult<()> {
     }
 
     let target_family = cli.solver.unwrap_or(SolverFamily::Minion);
-    let mut extra_rule_sets: Vec<String> = get_default_rule_sets();
-    extra_rule_sets.extend(cli.extra_rule_sets.clone());
+    let mut extra_rule_sets: Vec<&str> = DEFAULT_RULE_SETS.to_vec();
+    for rs in &cli.extra_rule_sets {
+        extra_rule_sets.push(rs.as_str());
+    }
 
     // Logging:
     //
@@ -264,7 +266,7 @@ pub fn main() -> AnyhowResult<()> {
 
     let context = Context::new_ptr(
         target_family,
-        extra_rule_sets.clone(),
+        extra_rule_sets.iter().map(|rs| rs.to_string()).collect(),
         rules,
         rule_sets.clone(),
     );

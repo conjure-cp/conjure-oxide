@@ -29,6 +29,10 @@ fn apply_eval_constant(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 pub fn eval_constant(expr: &Expr) -> Option<Lit> {
     match expr {
         Expr::AbstractLiteral(_, _) => None,
+        // `fromSolution()` pulls a literal value from last found solution
+        Expr::FromSolution(_, _) => None,
+        // Same as Expr::Root, we should not replace the dominance relation with a constant
+        Expr::DominanceRelation(_, _) => None,
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
         Expr::Atomic(_, Atom::Reference(_c)) => None,
         Expr::Abs(_, e) => un_op::<i32, i32>(|a| a.abs(), e).map(Lit::Int),
