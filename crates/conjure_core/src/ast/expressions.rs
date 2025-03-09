@@ -49,7 +49,6 @@ pub enum Expression {
 
     Atomic(Metadata, Atom),
 
-    
     Scope(Metadata, Box<SubModel>),
 
     /// `|x|` - absolute value of `x`
