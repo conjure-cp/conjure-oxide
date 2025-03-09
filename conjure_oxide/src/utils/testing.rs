@@ -14,7 +14,7 @@ use conjure_core::error::Error;
 
 use crate::ast::Name::UserName;
 use crate::ast::{Literal, Name};
-use crate::utils::conjure::minion_solutions_to_json;
+use crate::utils::conjure::solutions_to_json;
 use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
 use crate::Model as ConjureModel;
@@ -153,7 +153,7 @@ pub fn save_minion_solutions_json(
     test_name: &str,
     accept: bool,
 ) -> Result<JsonValue, std::io::Error> {
-    let json_solutions = minion_solutions_to_json(solutions);
+    let json_solutions = solutions_to_json(solutions);
 
     let generated_json_str = serde_json::to_string_pretty(&json_solutions)?;
 

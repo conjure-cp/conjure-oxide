@@ -22,6 +22,7 @@ use rustsat_minisat::core::Minisat;
 use crate::ast::{Atom, Expression, Literal, Name};
 use crate::metadata::Metadata;
 use crate::solver::adaptors::rustsat::convs::handle_cnf;
+use crate::solver::SearchComplete::NoSolutions;
 use crate::solver::{
     self, private, SearchStatus, SolveSuccess, SolverAdaptor, SolverCallback, SolverError,
     SolverFamily, SolverMutCallback,
@@ -39,7 +40,7 @@ pub struct SAT {
     __non_constructable: private::Internal,
     model_inst: Option<SatInstance>,
     var_map: Option<HashMap<String, Lit>>,
-    solver_inst: Option<Minisat>,
+    solver_inst: Minisat,
     decision_refs: Option<Vec<String>>,
 }
 
@@ -49,7 +50,7 @@ impl Default for SAT {
     fn default() -> Self {
         SAT {
             __non_constructable: private::Internal,
-            solver_inst: None,
+            solver_inst: Minisat::default(),
             var_map: None,
             model_inst: None,
             decision_refs: None,
@@ -71,7 +72,12 @@ fn get_ref_sols(
         // println!("{}", sol[lit.var()].to_bool_with_def(false));
         solution.insert(
             Name::UserName((reference)),
-            Literal::Bool((sol[lit.var()].to_bool_with_def(false))),
+            // Literal::Bool((sol[lit.var()].to_bool_with_def(false))),
+            match sol[lit.var()] {
+                TernaryVal::True => Literal::Int(1),
+                TernaryVal::False => Literal::Int(0),
+                TernaryVal::DontCare => Literal::Int(2),
+            }, // Literal::Int((sol[lit.var()])),
         );
     }
 
@@ -110,28 +116,58 @@ impl SAT {
     }
 }
 
+#[allow(clippy::unwrap_used)]
+fn sat_rs_callback(_solutions: HashMap<String, i32>) -> bool {
+    // currently, this returns false by default
+    // this is because currently we only have support for ONE solution
+    // TODO (ss504) figure out multiple solutions
+    false
+}
+
 impl SolverAdaptor for SAT {
     fn solve(
         &mut self,
         callback: SolverCallback,
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
-        let mut solver = Minisat::default();
+        let mut solver = &mut self.solver_inst;
         // self.solver_inst = Some(solver);
 
         let cnf: (Cnf, BasicVarManager) = self.model_inst.clone().unwrap().into_cnf();
+        // println!("CNF: {:?}", cnf.0);
 
-        solver.add_cnf(cnf.0);
-        print!("Solution: ");
+        (*(solver)).add_cnf(cnf.0);
         let res = solver.solve().unwrap();
+        tracing::info!(
+            "Result: {}",
+            match res {
+                SolverResult::Sat => ("Satisfiable"),
+                SolverResult::Unsat => ("Unsatisfiable"), // TODO: Maybe Err here
+                SolverResult::Interrupted => ("!!Interrupted!!"), // TODO: Absolutely Err here
+            }
+        );
 
-        match res {
-            SolverResult::Sat => println!("SAT"),
-            SolverResult::Unsat => println!("UNSAT"),
-            SolverResult::Interrupted => println!("NOPE"),
-        };
+        let sol = solver.full_solution().unwrap();
 
-        Err(SolverError::OpNotImplemented("solve".to_string()))
+        let solution = get_ref_sols(
+            self.decision_refs.clone().unwrap(),
+            sol,
+            self.var_map.clone().unwrap(),
+        );
+
+        Ok(SolveSuccess {
+            // TODO: This SHOULD NOT be magic constants, excpet wall time
+            stats: SolverStats {
+                conjure_solver_wall_time_s: -1.0,
+                solver_family: Some(self.get_family()),
+                solver_adaptor: Some("SAT".to_string()),
+                nodes: None,
+                satisfiable: None,
+                sat_vars: None,
+                sat_clauses: None,
+            },
+            status: SearchStatus::Complete(NoSolutions),
+        })
     }
 
     fn solve_mut(

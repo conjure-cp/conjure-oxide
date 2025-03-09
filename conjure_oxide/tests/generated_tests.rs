@@ -28,7 +28,7 @@ use conjure_core::ast::{Expression, Literal, Name};
 use conjure_core::context::Context;
 use conjure_oxide::defaults::get_default_rule_sets;
 use conjure_oxide::rule_engine::resolve_rule_sets;
-use conjure_oxide::utils::conjure::minion_solutions_to_json;
+use conjure_oxide::utils::conjure::solutions_to_json;
 use conjure_oxide::utils::conjure::{
     get_minion_solutions, get_solutions_from_conjure, parse_essence_file,
 };
@@ -334,9 +334,9 @@ fn check_solutions_stage(
         // I can't make these sets of hashmaps due to hashmaps not implementing hash; so, to
         // compare these, I make them both json and compare that.
         let mut conjure_solutions_json: serde_json::Value =
-            minion_solutions_to_json(&conjure_solutions);
+            solutions_to_json(&conjure_solutions);
         let mut username_solutions_json: serde_json::Value =
-            minion_solutions_to_json(&username_solutions);
+            solutions_to_json(&username_solutions);
         conjure_solutions_json.sort_all_objects();
         username_solutions_json.sort_all_objects();
 

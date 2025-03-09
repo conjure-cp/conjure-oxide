@@ -129,22 +129,25 @@ pub fn get_sat_solutions(
     model: Model,
     num_sols: i32,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
-    let mut sols: Vec<BTreeMap<Name, Literal>> = Vec::new();
-
     // let solver = Solver::new(SAT::default());
     // println!("Building SAT model...");
-    // let solver = solver.load_model(model);
-    // println!("Running Minion...");
+    // let solver = solver.load_model(model)?;
+
+    // println!("Running SAT...");
 
     let mut solver: SAT = SAT::default();
+
+    let mut sols: Vec<BTreeMap<Name, Literal>> = Vec::new();
     // solver.get_sat_solution(model.clone());
     for _i in 0..num_sols + 1 {
         // should always be run with num_sols = 1
+        // let solution =
+        //         solver
+        //         .adaptor
+        //         .get_sat_solution()
+
         let solution = solver.get_sat_solution(model.clone());
-        // println!(
-        //     "\n------------------------solution #{} done------------------------\n",
-        //     i + 1
-        // );
+
         sols.push(solution);
     }
     Ok(sols)
@@ -236,7 +239,7 @@ pub fn get_solutions_from_conjure(
     Ok(solutions_set)
 }
 
-pub fn minion_solutions_to_json(solutions: &Vec<BTreeMap<Name, Literal>>) -> JsonValue {
+pub fn solutions_to_json(solutions: &Vec<BTreeMap<Name, Literal>>) -> JsonValue {
     let mut json_solutions = Vec::new();
     for solution in solutions {
         let mut json_solution = Map::new();

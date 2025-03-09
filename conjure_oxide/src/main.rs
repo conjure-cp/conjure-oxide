@@ -28,9 +28,7 @@ use tracing_subscriber::{EnvFilter, Layer};
 
 use serde_json::to_string_pretty;
 
-use conjure_oxide::utils::conjure::{
-    get_minion_solutions, get_sat_solutions, minion_solutions_to_json,
-};
+use conjure_oxide::utils::conjure::{get_minion_solutions, get_sat_solutions, solutions_to_json};
 
 static AFTER_HELP_TEXT: &str = include_str!("help_text.txt");
 
@@ -333,9 +331,9 @@ fn run_minion(cli: &Cli, model: Model) -> anyhow::Result<()> {
     };
 
     let solutions = get_minion_solutions(model, cli.number_of_solutions)?;
-    tracing::info!(target: "file", "Solutions: {}", minion_solutions_to_json(&solutions));
+    tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
 
-    let solutions_json = minion_solutions_to_json(&solutions);
+    let solutions_json = solutions_to_json(&solutions);
     let solutions_str = to_string_pretty(&solutions_json)?;
     match out_file {
         None => {
@@ -366,9 +364,9 @@ fn run_sat_solver(cli: &Cli, model: Model) -> anyhow::Result<()> {
     };
 
     let solutions = get_sat_solutions(model, cli.number_of_solutions)?;
-    tracing::info!(target: "file", "Solutions: {}", minion_solutions_to_json(&solutions));
+    tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
 
-    let solutions_json = minion_solutions_to_json(&solutions);
+    let solutions_json = solutions_to_json(&solutions);
     let solutions_str = to_string_pretty(&solutions_json)?;
     match out_file {
         None => {
@@ -385,21 +383,6 @@ fn run_sat_solver(cli: &Cli, model: Model) -> anyhow::Result<()> {
     }
     Ok(())
 }
-
-fn sat_solutions(_cli: &Cli, model: Model) -> anyhow::Result<()> {
-    let mut solver = SAT::default();
-
-    solver.get_sat_solution(model.clone());
-    // for i in 0..1 {
-    //     solver.get_sat_solution(model.clone());
-    //     println!(
-    //         "\n------------------------solution #{} done------------------------\n",
-    //         i + 1
-    //     );
-    // }
-
-    Ok(())
-} // fn handle
 
 #[cfg(test)]
 mod tests {
