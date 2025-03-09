@@ -65,6 +65,10 @@ impl Display for DecisionVariable {
                 Ok(())
             }
             Domain::DomainReference(name) => write!(f, "{}", name),
+            Domain::DomainSet(_, domain) => {
+                write!(f, "{}", domain)?;
+                Ok(())
+            }
         }
     }
 }
