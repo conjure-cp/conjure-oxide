@@ -60,7 +60,7 @@ fn factorial_eval(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) 
 fn rule_eval_add(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -> Option<Expr> {
     if let Expr::Add(a, b) = subtree {
         if let (Expr::Val(a_v), Expr::Val(b_v)) = (a.as_ref(), b.as_ref()) {
-            cmds.mut_meta(|m| m.num_applications_addition += 1);
+            cmds.mut_meta(Box::new(|m: &mut Meta| m.num_applications_addition += 1));
             return Some(Expr::Val((a_v + b_v) % 10));
         }
     }
@@ -70,7 +70,9 @@ fn rule_eval_add(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -
 fn rule_eval_mul(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -> Option<Expr> {
     if let Expr::Mul(a, b) = subtree {
         if let (Expr::Val(a_v), Expr::Val(b_v)) = (a.as_ref(), b.as_ref()) {
-            cmds.mut_meta(|m| m.num_applications_multiplication += 1);
+            cmds.mut_meta(Box::new(|m: &mut Meta| {
+                m.num_applications_multiplication += 1
+            }));
             return Some(Expr::Val((a_v * b_v) % 10));
         }
     }
