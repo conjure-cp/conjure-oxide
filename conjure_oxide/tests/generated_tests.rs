@@ -3,7 +3,7 @@
 use conjure_core::rule_engine::rewrite_model;
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
-use conjure_oxide::utils::essence_parser::parse_essence_file_native;
+use conjure_oxide::parse_essence_file_native;
 use conjure_oxide::utils::testing::read_human_rule_trace;
 use glob::glob;
 use itertools::Itertools;
