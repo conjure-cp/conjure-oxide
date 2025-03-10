@@ -1,7 +1,10 @@
 #![allow(clippy::expect_used)]
-
+use conjure_core::ast::SymbolTable;
+use conjure_core::bug;
+use conjure_core::rule_engine::get_rules_grouped;
 use conjure_core::rule_engine::rewrite_model;
 use conjure_core::rule_engine::rewrite_naive;
+use conjure_core::rule_engine::RuleData;
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
 use conjure_oxide::utils::testing::read_human_rule_trace;
@@ -12,10 +15,13 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
+use std::thread::panicking;
 use tracing::{span, Level, Metadata as OtherMetadata};
 use tracing_subscriber::{
     filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
 };
+use tree_morph::{helpers::select_panic, prelude::*, Rule as MorphRule};
+use uniplate::derive::Uniplate;
 
 use uniplate::Biplate;
 
@@ -54,6 +60,8 @@ struct TestConfig {
     validate_rule_traces: bool, // Stage 4a: Checks rule traces against expected outputs
 
     enable_native_impl: bool,
+    enable_morph_impl: bool,
+    enable_naive_impl: bool,
     enable_rewriter_impl: bool,
 }
 
@@ -62,6 +70,8 @@ impl Default for TestConfig {
         Self {
             extra_rewriter_asserts: vec!["vector_operators_have_partially_evaluated".into()],
             enable_native_impl: false,
+            enable_naive_impl: false,
+            enable_morph_impl: false,
             enable_rewriter_impl: true,
             parse_model_default: true,
             enable_native_parser: false,
@@ -84,6 +94,8 @@ impl TestConfig {
                 "PARSE_MODEL_DEFAULT",
                 self.parse_model_default,
             ),
+            enable_morph_impl: env_var_override_bool("ENABLE_MORPH_IMPL", self.parse_model_default),
+            enable_naive_impl: env_var_override_bool("ENABLE_NAIVE_IMPL", self.enable_naive_impl),
             enable_native_parser: env_var_override_bool(
                 "ENABLE_NATIVE_PARSER",
                 self.enable_native_parser,
@@ -273,14 +285,23 @@ fn integration_test_inner(
                 model.as_ref().expect("Model must be parsed in 1a"),
                 &rule_sets,
             )?
-        } else {
+        } else if config.enable_naive_impl {
             rewrite_naive(
                 model.as_ref().expect("Model must be parsed in 1a"),
                 &rule_sets,
                 false,
             )?
-        };
+        } else {
+            let submodel_owned = model.map(|m| m.as_submodel());
+            let rules_grouped = get_rules_grouped(&rule_sets)
+                .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
+                .into_iter()
+                .map(|(_, rule)| rule.into_iter().map(|f| f.rule).collect_vec())
+                .collect_vec();
 
+            let (expr, symbol_table): (Expression, SymbolTable) =
+                morph(rules_grouped, select_panic, model, context.as_ref());
+        };
         if verbose {
             println!("Rewritten model: {:#?}", rewritten);
         }
