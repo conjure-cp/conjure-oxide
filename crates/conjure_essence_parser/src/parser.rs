@@ -1,19 +1,20 @@
 #![allow(clippy::legacy_numeric_constants)]
-use conjure_core::ast::Declaration;
-use conjure_core::error::Error;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
+
 use tree_sitter::{Node, Parser, Tree};
 use tree_sitter_essence::LANGUAGE;
 
+use conjure_core::ast::Declaration;
 use conjure_core::ast::{Atom, Domain, Expression, Literal, Name, Range, SymbolTable};
-
-use crate::utils::conjure::EssenceParseError;
 use conjure_core::context::Context;
+use conjure_core::error::Error;
 use conjure_core::metadata::Metadata;
 use conjure_core::Model;
-use std::collections::{BTreeMap, BTreeSet};
+
+use crate::errors::EssenceParseError;
 
 pub fn parse_essence_file_native(
     path: &str,

@@ -2,7 +2,7 @@ use conjure_core::{
     ast::{Atom, Expression},
     context::Context,
 };
-use conjure_oxide::{utils::essence_parser::parse_essence_file_native, Metadata};
+use conjure_oxide::{parse_essence_file_native, Metadata};
 use pretty_assertions::assert_eq;
 use project_root::get_project_root;
 use std::sync::{Arc, RwLock};
