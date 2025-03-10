@@ -7,7 +7,7 @@ use std::vec;
 
 // use super::conversions::{self, conv_to_clause, conv_to_formula, instantiate_model_from_conjure};
 use clap::error;
-use minion_rs::ast::Model;
+use minion_rs::ast::{Model, Tuple};
 use rustsat::encodings::am1::Def;
 use rustsat::solvers::{Solve, SolverResult};
 use rustsat::types::{Assignment, Lit, TernaryVal, Var as satVar};
@@ -63,8 +63,8 @@ fn get_ref_sols(
     find_refs: Vec<String>,
     sol: Assignment,
     var_map: HashMap<String, Lit>,
-) -> BTreeMap<Name, Literal> {
-    let mut solution: BTreeMap<Name, Literal> = BTreeMap::new();
+) -> HashMap<Name, Literal> {
+    let mut solution: HashMap<Name, Literal> = HashMap::new();
 
     for reference in find_refs {
         // print!("{} is ", reference);
@@ -86,7 +86,7 @@ fn get_ref_sols(
 
 impl SAT {
     // TODO: maybe move this to utils?
-    pub fn get_sat_solution(&mut self, model: ConjureModel) -> BTreeMap<Name, Literal> {
+    pub fn get_sat_solution(&mut self, model: ConjureModel) -> HashMap<Name, Literal> {
         self.load_model(model, private::Internal);
 
         let mut solver = Minisat::default();
@@ -97,6 +97,7 @@ impl SAT {
 
         solver.add_cnf(cnf.0);
         let res = solver.solve().unwrap();
+
         tracing::info!(
             "Result: {}",
             match res {
@@ -116,14 +117,6 @@ impl SAT {
     }
 }
 
-#[allow(clippy::unwrap_used)]
-fn sat_rs_callback(_solutions: HashMap<String, i32>) -> bool {
-    // currently, this returns false by default
-    // this is because currently we only have support for ONE solution
-    // TODO (ss504) figure out multiple solutions
-    false
-}
-
 impl SolverAdaptor for SAT {
     fn solve(
         &mut self,
@@ -131,43 +124,69 @@ impl SolverAdaptor for SAT {
         _: private::Internal,
     ) -> Result<SolveSuccess, SolverError> {
         let mut solver = &mut self.solver_inst;
-        // self.solver_inst = Some(solver);
 
         let cnf: (Cnf, BasicVarManager) = self.model_inst.clone().unwrap().into_cnf();
-        // println!("CNF: {:?}", cnf.0);
 
         (*(solver)).add_cnf(cnf.0);
-        let res = solver.solve().unwrap();
-        tracing::info!(
-            "Result: {}",
+
+        let mut has_sol = false;
+        loop {
+            let res = solver.solve().unwrap();
+
             match res {
-                SolverResult::Sat => ("Satisfiable"),
-                SolverResult::Unsat => ("Unsatisfiable"), // TODO: Maybe Err here
-                SolverResult::Interrupted => ("!!Interrupted!!"), // TODO: Absolutely Err here
+                SolverResult::Sat => {
+                    println!("REMOVE: new sols");
+                }
+                SolverResult::Unsat => {
+                    return Ok(SolveSuccess {
+                        // TODO: This SHOULD NOT be magic constants, excpet wall time
+                        stats: SolverStats {
+                            conjure_solver_wall_time_s: -1.0,
+                            solver_family: Some(self.get_family()),
+                            solver_adaptor: Some("SAT".to_string()),
+                            nodes: None,
+                            satisfiable: None,
+                            sat_vars: None,
+                            sat_clauses: None,
+                        },
+                        status: if has_sol {
+                            SearchStatus::Complete(solver::SearchComplete::HasSolutions)
+                        } else {
+                            SearchStatus::Complete(NoSolutions)
+                        },
+                    });
+                }
+                SolverResult::Interrupted => {
+                    return Err(SolverError::Runtime("!!Interrupted Solution!!".to_string()))
+                }
+            };
+
+            let sol = solver.full_solution().unwrap();
+            has_sol = true;
+            let solution = get_ref_sols(
+                self.decision_refs.clone().unwrap(),
+                sol,
+                self.var_map.clone().unwrap(),
+            );
+
+            if !callback(solution) {
+                return Ok(SolveSuccess {
+                    // TODO: This SHOULD NOT be magic constants, excpet wall time
+                    stats: SolverStats {
+                        conjure_solver_wall_time_s: -1.0,
+                        solver_family: Some(self.get_family()),
+                        solver_adaptor: Some("SAT".to_string()),
+                        nodes: None,
+                        satisfiable: None,
+                        sat_vars: None,
+                        sat_clauses: None,
+                    },
+                    status: SearchStatus::Incomplete(solver::SearchIncomplete::UserTerminated),
+                });
             }
-        );
 
-        let sol = solver.full_solution().unwrap();
-
-        let solution = get_ref_sols(
-            self.decision_refs.clone().unwrap(),
-            sol,
-            self.var_map.clone().unwrap(),
-        );
-
-        Ok(SolveSuccess {
-            // TODO: This SHOULD NOT be magic constants, excpet wall time
-            stats: SolverStats {
-                conjure_solver_wall_time_s: -1.0,
-                solver_family: Some(self.get_family()),
-                solver_adaptor: Some("SAT".to_string()),
-                nodes: None,
-                satisfiable: None,
-                sat_vars: None,
-                sat_clauses: None,
-            },
-            status: SearchStatus::Complete(NoSolutions),
-        })
+            // TODO: prepare to get next solution
+        }
     }
 
     fn solve_mut(

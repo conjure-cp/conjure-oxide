@@ -129,28 +129,17 @@ pub fn get_sat_solutions(
     model: Model,
     num_sols: i32,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
-    // let solver = Solver::new(SAT::default());
-    // println!("Building SAT model...");
-    // let solver = solver.load_model(model)?;
+    let solver = Solver::new(SAT::default());
+    println!("Building SAT model...");
+    let solver = solver.load_model(model)?;
 
-    // println!("Running SAT...");
+    println!("Running SAT...");
 
-    let mut solver: SAT = SAT::default();
+    let mut all_sols: Vec<BTreeMap<Name, Literal>> = Vec::new();
+    // solve
+    // get solution
 
-    let mut sols: Vec<BTreeMap<Name, Literal>> = Vec::new();
-    // solver.get_sat_solution(model.clone());
-    for _i in 0..num_sols + 1 {
-        // should always be run with num_sols = 1
-        // let solution =
-        //         solver
-        //         .adaptor
-        //         .get_sat_solution()
-
-        let solution = solver.get_sat_solution(model.clone());
-
-        sols.push(solution);
-    }
-    Ok(sols)
+    Ok(all_sols)
 }
 
 #[allow(clippy::unwrap_used)]
