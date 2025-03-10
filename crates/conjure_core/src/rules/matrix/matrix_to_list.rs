@@ -10,6 +10,7 @@ use uniplate::Uniplate;
 use crate::ast::{Domain, Range};
 use crate::into_matrix_expr;
 
+
 /// Converts a matrix to a list if possible.
 ///
 /// A list is a matrix with the unbounded domain `int(1..)`. Unlike matrices in general, lists can
@@ -17,21 +18,21 @@ use crate::into_matrix_expr;
 ///
 /// A matrix can be converted to a list if:
 ///
-///     1. It has some contiguous domain `int(1..n)`.
+///  1. It has some contiguous domain `int(1..n)`.
 ///
-///     2. It is a matrix literal (i.e. not a reference to a decision variable).
+///  2. It is a matrix literal (i.e. not a reference to a decision variable).
 ///
-///     3. Its direct parent is a constraint, not another matrix or `AbstractLiteral`.
+///  3. Its direct parent is a constraint, not another matrix or `AbstractLiteral`.
 ///
-///       This prevents the conversion of rows in a 2d matrix from being turned into lists. If were
-///       to happen, the rows of the matrix might become different lengths, which is invalid!
+///    This prevents the conversion of rows in a 2d matrix from being turned into lists. If were
+///    to happen, the rows of the matrix might become different lengths, which is invalid!
 ///
-///     4. The matrix is stored as `Expression` type inside (i.e. not as an `Atom` inside
+///  4. The matrix is stored as `Expression` type inside (i.e. not as an `Atom` inside a Minion
+///     constraint)
 ///
 /// Because of condition 4, and this rules low priority, this rule will not run post-flattening, so
 /// matrices that do not need to be converted to lists in order to get them ready for Minion will
 /// be left alone.
-
 #[register_rule(("Base", 2000))]
 fn matrix_to_list(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // match on the parent: do not apply this rule to things descended from abstract literal, or
