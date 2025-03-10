@@ -1,3 +1,4 @@
+use std::fs;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
@@ -14,12 +15,31 @@ mod domain;
 mod expression;
 mod find;
 mod letting;
+mod traversal;
 mod util;
 
 use expression::parse_expression;
 use find::parse_find_statement;
 use letting::parse_letting_statement;
-use util::{named_children, read_essence_file};
+use util::{get_tree, named_children, query_toplevel};
+
+pub fn parse_expressions(src: &str) -> Result<Vec<Expression>, EssenceParseError> {
+    let (tree, source_code) = match get_tree(src) {
+        Some(t) => t,
+        None => {
+            return Err(EssenceParseError::TreeSitterError(
+                "Failed to parse source code".to_string(),
+            ))
+        }
+    };
+
+    let root = tree.root_node();
+    let mut ans = Vec::new();
+    for expr in query_toplevel(&root, &|n| n.kind() == "expression") {
+        ans.push(parse_expression(expr, &source_code, &root));
+    }
+    Ok(ans)
+}
 
 /// Parse an Essence file into a Model using the tree-sitter parser.
 pub fn parse_essence_file_native(
@@ -28,7 +48,24 @@ pub fn parse_essence_file_native(
     extension: &str,
     context: Arc<RwLock<Context<'static>>>,
 ) -> Result<Model, EssenceParseError> {
-    let (tree, source_code) = read_essence_file(path, filename, extension);
+    let pth = format!("{path}/{filename}.{extension}");
+    let source_code = fs::read_to_string(&pth)
+        .unwrap_or_else(|_| panic!("Failed to read the source code file {}", pth));
+    parse_essence_with_context(&source_code, context)
+}
+
+pub fn parse_essence_with_context(
+    src: &str,
+    context: Arc<RwLock<Context<'static>>>,
+) -> Result<Model, EssenceParseError> {
+    let (tree, source_code) = match get_tree(src) {
+        Some(tree) => tree,
+        None => {
+            return Err(EssenceParseError::TreeSitterError(
+                "Failed to parse source code".to_string(),
+            ))
+        }
+    };
 
     let mut model = Model::new(context);
     let root_node = tree.root_node();
@@ -80,4 +117,38 @@ pub fn parse_essence_file_native(
         }
     }
     Ok(model)
+}
+
+mod test {
+    #[allow(unused)]
+    use super::parse_expressions;
+    #[allow(unused)]
+    use conjure_core::{ast::Atom, ast::Expression, metadata::Metadata};
+
+    #[test]
+    pub fn test_parse_expressions() {
+        let src = "x >= 5, y = a / 2";
+        let exprs = parse_expressions(src).unwrap();
+        assert_eq!(exprs.len(), 2);
+        assert_eq!(
+            exprs[0],
+            Expression::Geq(
+                Metadata::new(),
+                Box::new(Expression::Atomic(Metadata::new(), Atom::new_uref("x"))),
+                Box::new(Expression::Atomic(Metadata::new(), 5.into()))
+            )
+        );
+        assert_eq!(
+            exprs[1],
+            Expression::Eq(
+                Metadata::new(),
+                Box::new(Expression::Atomic(Metadata::new(), Atom::new_uref("y"))),
+                Box::new(Expression::UnsafeDiv(
+                    Metadata::new(),
+                    Box::new(Expression::Atomic(Metadata::new(), Atom::new_uref("a"))),
+                    Box::new(Expression::Atomic(Metadata::new(), 2.into()))
+                ))
+            )
+        );
+    }
 }

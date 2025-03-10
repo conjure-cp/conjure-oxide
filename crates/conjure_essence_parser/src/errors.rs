@@ -3,6 +3,8 @@ use thiserror::Error as ThisError;
 
 #[derive(Debug, ThisError)]
 pub enum EssenceParseError {
+    #[error("Could not parse Essence AST: {0}")]
+    TreeSitterError(String),
     #[error("Error running conjure pretty: {0}")]
     ConjurePrettyError(String),
     #[error("Error running conjure solve: {0}")]
