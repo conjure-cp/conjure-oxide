@@ -2,17 +2,17 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
-use serde_json::Value;
-use serde_json::Value as JsonValue;
-
 use crate::ast::Declaration;
-use crate::ast::{Atom, Domain, Expression, Literal, Name, Range, SymbolTable};
+use crate::ast::{
+    AbstractLiteral, Atom, Domain, Expression, Literal, Name, Range, SetAttr, SymbolTable,
+};
 use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::metadata::Metadata;
 use crate::Model;
 use crate::{bug, error, throw_error};
-
+use serde_json::Value;
+use serde_json::Value as JsonValue;
 macro_rules! parser_trace {
     ($($arg:tt)+) => {
         log::trace!(target:"jsonparser",$($arg)+)
@@ -102,6 +102,7 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
         .ok_or(error!("FindOrGiven[1].Name is not a string"))?;
 
     let name = Name::UserName(name.to_owned());
+
     let domain = arr[2]
         .as_object()
         .ok_or(error!("FindOrGiven[2] is not an object"))?
@@ -122,9 +123,35 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
                 .ok_or(error!("DomainReference[0].Name is not a string"))?
                 .into(),
         ))),
-        _ => throw_error!(
-            "FindOrGiven[2] is an unknown object" // consider covered
-        ),
+        "DomainSet" => {
+            let dom = domain.1.get(2).and_then(|v| v.as_object());
+            if let Some(domain_obj) = dom {
+                let domain = domain_obj
+                    .iter()
+                    .next()
+                    .ok_or(Error::Parse("DomainSet is an empty object".to_owned()))?;
+                let domain = match domain.0.as_str() {
+                    "DomainInt" => {
+                        println!("DomainInt: {:#?}", domain.1);
+                        Ok(parse_int_domain(domain.1)?)
+                    }
+                    "DomainBool" => Ok(Domain::BoolDomain),
+                    _ => Err(Error::Parse(
+                        "FindOrGiven[2] is an unknown object".to_owned(),
+                    )),
+                }?;
+                print!("{:?}", domain);
+                Ok(Domain::DomainSet(SetAttr::None, Box::new(domain)))
+            } else {
+                Err(Error::Parse(
+                    "FindOrGiven[2] is an unknown object".to_owned(),
+                ))
+            }
+        }
+
+        _ => Err(Error::Parse(
+            "FindOrGiven[2] is an unknown object".to_owned(), // consider covered
+        )),
     }?;
 
     symtab
@@ -403,6 +430,7 @@ fn parse_expression(obj: &JsonValue) -> Option<Expression> {
                 Atom::Reference(Name::UserName(name.to_string())),
             ))
         }
+
         Value::Object(constant) if constant.contains_key("Constant") => parse_constant(constant),
         Value::Object(constant) if constant.contains_key("ConstantInt") => parse_constant(constant),
         Value::Object(constant) if constant.contains_key("ConstantBool") => {
@@ -513,6 +541,28 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
                 Metadata::new(),
                 Atom::Literal(Literal::Bool(b)),
             ))
+        }
+
+        Some(Value::Object(int)) if int.contains_key("ConstantAbstract") => {
+            // TODO: add more types of expressions
+            if let Some(Value::Object(obj)) = int.get("ConstantAbstract") {
+                if let Some(arr) = obj.get("AbsLitSet") {
+                    let mut expressions: Vec<Expression> = Vec::new();
+
+                    for expr in arr.as_array()?.iter().filter_map(parse_expression) {
+                        if let Expression::Atomic(_, Atom::Literal(literal)) = expr {
+                            expressions
+                                .push(Expression::Atomic(Metadata::new(), Atom::Literal(literal)))
+                        }
+                        //  support other expressions as well
+                    }
+                    return Some(Expression::AbstractLiteral(
+                        Metadata::new(),
+                        AbstractLiteral::Set(expressions),
+                    ));
+                }
+            }
+            None
         }
 
         // sometimes (e.g. constant matrices) we can have a ConstantInt / Constant bool that is
