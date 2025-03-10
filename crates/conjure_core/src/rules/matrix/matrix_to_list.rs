@@ -10,7 +10,6 @@ use uniplate::Uniplate;
 use crate::ast::{Domain, Range};
 use crate::into_matrix_expr;
 
-
 /// Converts a matrix to a list if possible.
 ///
 /// A list is a matrix with the unbounded domain `int(1..)`. Unlike matrices in general, lists can
