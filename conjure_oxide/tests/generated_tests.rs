@@ -69,7 +69,7 @@ impl Default for TestConfig {
             enable_extra_validation: false,
             solve_with_minion: true,
             compare_solver_solutions: false,
-            validate_rule_traces: false,
+            validate_rule_traces: true,
         }
     }
 }
@@ -346,22 +346,6 @@ fn integration_test_inner(
         );
     }
 
-    // Stage 4a: Check that the generated rules match expected traces (run unless explicitly disabled)
-    let (generated_rule_trace_human, expected_rule_trace_human) = if config.validate_rule_traces {
-        let generated = read_human_rule_trace(path, essence_base, "generated")?;
-        let expected = read_human_rule_trace(path, essence_base, "expected")?;
-
-        // Perform the assertion immediately
-        assert_eq!(
-            expected, generated,
-            "Generated rule trace does not match the expected trace!"
-        );
-
-        (Some(generated), Some(expected))
-    } else {
-        (None, None) // Avoid uninitialized variables when 4a is disabled
-    };
-
     // Before testing against the generated tests, if the generated tests don't exist, make them.
     //
     // We rewrite out-of-date tests (if necessary) after testing them.
@@ -491,15 +475,16 @@ fn integration_test_inner(
         assert_eq!(username_solutions_json, expected_solutions_json);
     }
 
-    // Final assertion for rule trace (only if 4a was enabled)
-    if let (Some(expected), Some(generated)) =
-        (expected_rule_trace_human, generated_rule_trace_human)
-    {
+    // Stage 4a: Check that the generated rules trace matches the expected
+    if config.validate_rule_traces {
+        let generated = read_human_rule_trace(path, essence_base, "generated")?;
+        let expected = read_human_rule_trace(path, essence_base, "expected")?;
+
         assert_eq!(
             expected, generated,
             "Generated rule trace does not match the expected trace!"
         );
-    }
+    };
 
     if accept {
         // Overwrite expected parse and rewrite models if needed
