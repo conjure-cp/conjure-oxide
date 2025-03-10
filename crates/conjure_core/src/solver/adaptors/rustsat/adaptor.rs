@@ -170,6 +170,7 @@ impl SolverAdaptor for SAT {
             );
 
             if !callback(solution) {
+                println!("callback false");
                 return Ok(SolveSuccess {
                     // TODO: This SHOULD NOT be magic constants, excpet wall time
                     stats: SolverStats {
@@ -186,6 +187,8 @@ impl SolverAdaptor for SAT {
             }
 
             // TODO: prepare to get next solution
+            println!("..More Solutions..");
+            panic!("Not Supported");
         }
     }
 

@@ -135,11 +135,39 @@ pub fn get_sat_solutions(
 
     println!("Running SAT...");
 
-    let mut all_sols: Vec<BTreeMap<Name, Literal>> = Vec::new();
-    // solve
-    // get solution
+    let all_solutions_ref = Arc::new(Mutex::<Vec<BTreeMap<Name, Literal>>>::new(vec![]));
+    let all_solutions_ref_2 = all_solutions_ref.clone();
+    let solver = if num_sols > 0 {
+        let sols_left = Mutex::new(num_sols);
 
-    Ok(all_sols)
+        #[allow(clippy::unwrap_used)]
+        solver
+            .solve(Box::new(move |sols| {
+                let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
+                (*all_solutions).push(sols.into_iter().collect());
+                let mut sols_left = sols_left.lock().unwrap();
+                *sols_left -= 1;
+
+                *sols_left != 0
+            }))
+            .unwrap()
+    } else {
+        #[allow(clippy::unwrap_used)]
+        solver
+            .solve(Box::new(move |sols| {
+                let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
+                (*all_solutions).push(sols.into_iter().collect());
+                true
+            }))
+            .unwrap()
+    };
+
+    solver.save_stats_to_context();
+
+    #[allow(clippy::unwrap_used)]
+    let sols = (*all_solutions_ref).lock().unwrap();
+
+    Ok((*sols).clone())
 }
 
 #[allow(clippy::unwrap_used)]
