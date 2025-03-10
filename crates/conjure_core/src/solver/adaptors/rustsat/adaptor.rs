@@ -10,7 +10,7 @@ use clap::error;
 use minion_rs::ast::{Model, Tuple};
 use rustsat::encodings::am1::Def;
 use rustsat::solvers::{Solve, SolverResult};
-use rustsat::types::{Assignment, Lit, TernaryVal, Var as satVar};
+use rustsat::types::{Assignment, Clause, Lit, TernaryVal, Var as satVar};
 use std::collections::{BTreeMap, HashMap};
 use std::result::Result::Ok;
 use tracing_subscriber::filter::DynFilterFn;
@@ -165,7 +165,7 @@ impl SolverAdaptor for SAT {
             has_sol = true;
             let solution = get_ref_sols(
                 self.decision_refs.clone().unwrap(),
-                sol,
+                sol.clone(),
                 self.var_map.clone().unwrap(),
             );
 
@@ -187,8 +187,16 @@ impl SolverAdaptor for SAT {
             }
 
             // TODO: prepare to get next solution
+
+            let blocking_vec: Vec<_> = sol.clone().iter().map(|lit| !lit).collect();
+            let mut blocking_cl = Clause::new();
+            for lit_i in blocking_vec {
+                blocking_cl.add(lit_i);
+            }
+
+            solver.add_clause(blocking_cl).unwrap();
             println!("..More Solutions..");
-            panic!("Not Supported");
+            // panic!("Not Supported");
         }
     }
 
