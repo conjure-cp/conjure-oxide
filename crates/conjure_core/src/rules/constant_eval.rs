@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use std::collections::HashSet;
 
 use conjure_core::ast::{Atom, Expression as Expr, Literal as Lit};
