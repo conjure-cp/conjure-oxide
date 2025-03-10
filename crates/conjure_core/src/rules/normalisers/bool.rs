@@ -212,7 +212,7 @@ fn remove_unit_vector_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     };
 
     // do not conflict with unwrap_nested_or rule.
-    if !exprs.is_empty() || matches!(exprs[0], Expr::Or(_, _)) {
+    if exprs.len() != 1 || matches!(exprs[0], Expr::Or(_, _)) {
         return Err(RuleNotApplicable);
     }
 

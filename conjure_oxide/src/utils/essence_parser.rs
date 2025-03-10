@@ -1,3 +1,4 @@
+#[allow(clippy::legacy_numeric_constants)]
 use conjure_core::ast::Declaration;
 use conjure_core::error::Error;
 use std::fs;
