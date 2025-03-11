@@ -2,8 +2,8 @@ use std::collections::VecDeque;
 use uniplate::Uniplate;
 
 enum Command<T: Uniplate, M> {
-    Transform(fn(T) -> T),
-    MutMeta(fn(&mut M)),
+    Transform(Box<dyn FnOnce(T) -> T>),
+    MutMeta(Box<dyn FnOnce(&mut M)>),
 }
 
 /// A queue of commands (side-effects) to be applied after a successful rule application.
@@ -38,11 +38,11 @@ enum Command<T: Uniplate, M> {
 /// }
 ///
 /// fn rule(cmds: &mut Commands<Expr, bool>, subtree: &Expr, meta: &bool) -> Option<Expr> {
-///     cmds.transform(|t| match t { // A pure transformation (no other side-effects)
+///     cmds.transform(Box::new(|t| match t { // A pure transformation (no other side-effects)
 ///         Expr::B => Expr::C,
 ///         _ => t,
-///     });
-///     cmds.mut_meta(|m| *m = true); // Set the metadata to 'true'
+///     }));
+///     cmds.mut_meta(Box::new(|m: &mut bool| *m = true)); // Set the metadata to 'true'
 ///
 ///     match subtree {
 ///         Expr::A => Some(Expr::B),
@@ -76,14 +76,14 @@ impl<T: Uniplate, M> Commands<T, M> {
     /// tree.
     ///
     /// Side-effects are applied in order of registration after the rule is applied.
-    pub fn transform(&mut self, f: fn(T) -> T) {
+    pub fn transform(&mut self, f: Box<dyn FnOnce(T) -> T>) {
         self.commands.push_back(Command::Transform(f));
     }
 
     /// Updates the global metadata in-place via a mutable reference.
     ///
     /// Side-effects are applied in order of registration after the rule is applied.
-    pub fn mut_meta(&mut self, f: fn(&mut M)) {
+    pub fn mut_meta(&mut self, f: Box<dyn FnOnce(&mut M)>) {
         self.commands.push_back(Command::MutMeta(f));
     }
 

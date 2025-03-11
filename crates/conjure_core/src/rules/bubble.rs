@@ -7,6 +7,7 @@ use conjure_core::rule_engine::{
 use uniplate::Uniplate;
 
 use crate::ast::{Atom, Literal, SymbolTable};
+use crate::{into_matrix_expr, matrix_expr};
 
 use super::utils::is_all_constant;
 
@@ -25,7 +26,7 @@ fn expand_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
         Expression::Bubble(_, a, b) if a.return_type() == Some(ReturnType::Bool) => {
             Ok(Reduction::pure(Expression::And(
                 Metadata::new(),
-                vec![*a.clone(), *b.clone()],
+                Box::new(matrix_expr![*a.clone(), *b.clone()]),
             )))
         }
         _ => Err(ApplicationError::RuleNotApplicable),
@@ -55,7 +56,10 @@ fn bubble_up(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::pure(Expression::Bubble(
         Metadata::new(),
         Box::new(expr.with_children(sub)),
-        Box::new(Expression::And(Metadata::new(), bubbled_conditions)),
+        Box::new(Expression::And(
+            Metadata::new(),
+            Box::new(into_matrix_expr![bubbled_conditions]),
+        )),
     )))
 }
 
@@ -155,10 +159,10 @@ fn pow_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
             Box::new(Expression::SafePow(Metadata::new(), a.clone(), b.clone())),
             Box::new(Expression::And(
                 Metadata::new(),
-                vec![
+                Box::new(matrix_expr![
                     Expression::Or(
                         Metadata::new(),
-                        vec![
+                        Box::new(matrix_expr![
                             Expression::Neq(
                                 Metadata::new(),
                                 a,
@@ -169,14 +173,14 @@ fn pow_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
                                 b.clone(),
                                 Box::new(Atom::Literal(Literal::Int(0)).into()),
                             ),
-                        ],
+                        ]),
                     ),
                     Expression::Geq(
                         Metadata::new(),
                         b,
                         Box::new(Atom::Literal(Literal::Int(0)).into()),
                     ),
-                ],
+                ]),
             )),
         )));
     }

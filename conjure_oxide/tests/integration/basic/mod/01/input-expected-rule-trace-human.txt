@@ -17,17 +17,17 @@ a % b,
 
 ({SafeMod(a,b) @ (b != 0)} = 1), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(SafeMod(a,b) = 1) @ And([(b != 0)])} 
+{(SafeMod(a,b) = 1) @ and([(b != 0);int(1..)])} 
 
 --
 
-{(SafeMod(a,b) = 1) @ And([(b != 0)])}, 
+{(SafeMod(a,b) = 1) @ and([(b != 0);int(1..)])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-And([(SafeMod(a,b) = 1), And([(b != 0)])]) 
+and([(SafeMod(a,b) = 1),and([(b != 0);int(1..)]);int(1..)]) 
 
 --
 
-And([(b != 0)]), 
+and([(b != 0);int(1..)]), 
    ~~> remove_unit_vector_and ([("Base", 8800)]) 
 (b != 0) 
 
@@ -46,5 +46,5 @@ find b: int(0..3)
 
 such that
 
-And([ModEq(a, b, 1), (b != 0)])
+and([ModEq(a, b, 1),(b != 0);int(1..)])
 

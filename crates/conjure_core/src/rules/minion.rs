@@ -8,6 +8,7 @@ use std::rc::Rc;
 use crate::ast::Declaration;
 use crate::ast::{Atom, Domain, Expression as Expr, Literal as Lit, ReturnType, SymbolTable};
 
+use crate::matrix_expr;
 use crate::metadata::Metadata;
 use crate::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
@@ -366,7 +367,7 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symbols: &SymbolTable) -> Appli
     let new_expr: Expr = match (equality_kind, use_weighted_sum) {
         (EqualityKind::Eq, true) => Expr::And(
             Metadata::new(),
-            vec![
+            Box::new(matrix_expr![
                 Expr::FlatWeightedSumLeq(
                     Metadata::new(),
                     coefficients.clone(),
@@ -374,14 +375,14 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symbols: &SymbolTable) -> Appli
                     total.clone(),
                 ),
                 Expr::FlatWeightedSumGeq(Metadata::new(), coefficients, vars, total),
-            ],
+            ]),
         ),
         (EqualityKind::Eq, false) => Expr::And(
             Metadata::new(),
-            vec![
+            Box::new(matrix_expr![
                 Expr::FlatSumLeq(Metadata::new(), vars.clone(), total.clone()),
                 Expr::FlatSumGeq(Metadata::new(), vars, total),
-            ],
+            ]),
         ),
         (EqualityKind::Leq, true) => {
             Expr::FlatWeightedSumLeq(Metadata::new(), coefficients, vars, total)

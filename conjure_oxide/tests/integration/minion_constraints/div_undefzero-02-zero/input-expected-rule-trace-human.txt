@@ -18,17 +18,17 @@ UnsafeDiv(x, y),
 
 ({SafeDiv(x, y) @ (y != 0)} = z), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(SafeDiv(x, y) = z) @ And([(y != 0)])} 
+{(SafeDiv(x, y) = z) @ and([(y != 0);int(1..)])} 
 
 --
 
-{(SafeDiv(x, y) = z) @ And([(y != 0)])}, 
+{(SafeDiv(x, y) = z) @ and([(y != 0);int(1..)])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-And([(SafeDiv(x, y) = z), And([(y != 0)])]) 
+and([(SafeDiv(x, y) = z),and([(y != 0);int(1..)]);int(1..)]) 
 
 --
 
-And([(y != 0)]), 
+and([(y != 0);int(1..)]), 
    ~~> remove_unit_vector_and ([("Base", 8800)]) 
 (y != 0) 
 
@@ -48,5 +48,5 @@ find z: int(1..2)
 
 such that
 
-And([DivEq(x, y, z), (y != 0)])
+and([DivEq(x, y, z),(y != 0);int(1..)])
 

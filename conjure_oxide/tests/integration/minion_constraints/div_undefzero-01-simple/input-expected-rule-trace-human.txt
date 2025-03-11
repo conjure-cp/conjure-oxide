@@ -17,17 +17,17 @@ UnsafeDiv(x, y),
 
 ({SafeDiv(x, y) @ (y != 0)} = 5), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(SafeDiv(x, y) = 5) @ And([(y != 0)])} 
+{(SafeDiv(x, y) = 5) @ and([(y != 0);int(1..)])} 
 
 --
 
-{(SafeDiv(x, y) = 5) @ And([(y != 0)])}, 
+{(SafeDiv(x, y) = 5) @ and([(y != 0);int(1..)])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-And([(SafeDiv(x, y) = 5), And([(y != 0)])]) 
+and([(SafeDiv(x, y) = 5),and([(y != 0);int(1..)]);int(1..)]) 
 
 --
 
-And([(y != 0)]), 
+and([(y != 0);int(1..)]), 
    ~~> remove_unit_vector_and ([("Base", 8800)]) 
 (y != 0) 
 
@@ -46,5 +46,5 @@ find y: int(2..4)
 
 such that
 
-And([DivEq(x, y, 5), (y != 0)])
+and([DivEq(x, y, 5),(y != 0);int(1..)])
 

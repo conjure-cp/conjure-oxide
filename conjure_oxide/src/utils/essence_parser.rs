@@ -12,7 +12,7 @@ use conjure_core::ast::{Atom, Domain, Expression, Literal, Name, Range, SymbolTa
 use crate::utils::conjure::EssenceParseError;
 use conjure_core::context::Context;
 use conjure_core::metadata::Metadata;
-use conjure_core::Model;
+use conjure_core::{into_matrix_expr, matrix_expr, Model};
 use std::collections::{BTreeMap, BTreeSet};
 
 pub fn parse_essence_file_native(
@@ -285,8 +285,8 @@ fn parse_constraint(constraint: Node, source_code: &str, root: &Node) -> Express
                 ">=" => Expression::Geq(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 "<" => Expression::Lt(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 ">" => Expression::Gt(Metadata::new(), Box::new(expr1), Box::new(expr2)),
-                "/\\" => Expression::And(Metadata::new(), vec![expr1, expr2]),
-                "\\/" => Expression::Or(Metadata::new(), vec![expr1, expr2]),
+                "/\\" => Expression::And(Metadata::new(), Box::new(matrix_expr![expr1, expr2])),
+                "\\/" => Expression::Or(Metadata::new(), Box::new(matrix_expr![expr1, expr2])),
                 "->" => Expression::Imply(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 _ => panic!("Error: unsupported operator"),
             }
@@ -306,12 +306,14 @@ fn parse_constraint(constraint: Node, source_code: &str, root: &Node) -> Express
             let quantifier_type = &source_code[quantifier.start_byte()..quantifier.end_byte()];
 
             match quantifier_type {
-                "and" => Expression::And(Metadata::new(), expr_list),
-                "or" => Expression::Or(Metadata::new(), expr_list),
-                "min" => Expression::Min(Metadata::new(), expr_list),
-                "max" => Expression::Max(Metadata::new(), expr_list),
+                "and" => Expression::And(Metadata::new(), Box::new(into_matrix_expr![expr_list])),
+                "or" => Expression::Or(Metadata::new(), Box::new(into_matrix_expr![expr_list])),
+                "min" => Expression::Min(Metadata::new(), Box::new(into_matrix_expr![expr_list])),
+                "max" => Expression::Max(Metadata::new(), Box::new(into_matrix_expr![expr_list])),
                 "sum" => Expression::Sum(Metadata::new(), expr_list),
-                "allDiff" => Expression::AllDiff(Metadata::new(), expr_list),
+                "allDiff" => {
+                    Expression::AllDiff(Metadata::new(), Box::new(into_matrix_expr![expr_list]))
+                }
                 _ => panic!("Error: unsupported quantifier"),
             }
         }
