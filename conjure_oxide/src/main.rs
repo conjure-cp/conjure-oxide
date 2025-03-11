@@ -9,13 +9,10 @@ use anyhow::{anyhow, bail};
 
 use clap::{arg, command, Parser};
 
-use conjure_core::context::Context;
-use conjure_core::rule_engine::rewrite_naive;
-use conjure_core::Model;
-
 use schemars::schema_for;
 
-use conjure_oxide::defaults::get_default_rule_sets;
+// use conjure_oxide::defaults::get_default_rule_sets;
+use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::find_conjure::conjure_executable;
 use conjure_oxide::rule_engine::{resolve_rule_sets, rewrite_model};
 use conjure_oxide::utils::conjure::{get_minion_solutions, get_sat_solutions, solutions_to_json};
@@ -30,12 +27,7 @@ use conjure_core::context::Context;
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_core::Model;
 
-use conjure_oxide::defaults::DEFAULT_RULE_SETS;
-use conjure_oxide::find_conjure::conjure_executable;
-use conjure_oxide::rule_engine::{resolve_rule_sets, rewrite_model};
-use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
-use conjure_oxide::SolverFamily;
-use conjure_oxide::{get_rules, model_from_json};
+use git_version::git_version;
 
 use serde_json::to_string_pretty;
 

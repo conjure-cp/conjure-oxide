@@ -334,8 +334,8 @@ fn integration_test_inner(
         );
         let conjure_solutions = normalize_solutions_for_comparison(&conjure_solutions);
 
-        let mut conjure_solutions_json = minion_solutions_to_json(&conjure_solutions);
-        let mut username_solutions_json = minion_solutions_to_json(&username_solutions);
+        let mut conjure_solutions_json = solutions_to_json(&conjure_solutions);
+        let mut username_solutions_json = solutions_to_json(&username_solutions);
 
         conjure_solutions_json.sort_all_objects();
         username_solutions_json.sort_all_objects();
@@ -470,8 +470,7 @@ fn integration_test_inner(
     // Check Stage 3a (solutions)
     if config.solve_with_minion {
         let expected_solutions_json = read_minion_solutions_json(path, essence_base, "expected")?;
-        let username_solutions_json =
-            minion_solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
+        let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
         assert_eq!(username_solutions_json, expected_solutions_json);
     }
 

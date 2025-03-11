@@ -2,6 +2,7 @@ use std::any::type_name;
 use std::fmt::format;
 use std::hash::Hash;
 use std::iter::Inspect;
+use std::ops::Deref;
 use std::ptr::null;
 use std::vec;
 
@@ -28,7 +29,11 @@ use crate::solver::{
     SolverFamily, SolverMutCallback,
 };
 use crate::stats::SolverStats;
-use crate::{ast as conjure_ast, model, Model as ConjureModel};
+use crate::{
+    ast as conjure_ast,
+    // Model,
+    Model as ConjureModel,
+};
 
 use rustsat::instances::{BasicVarManager, Cnf, SatInstance};
 
@@ -169,12 +174,14 @@ impl SolverAdaptor for SAT {
     }
 
     fn load_model(&mut self, model: ConjureModel, _: private::Internal) -> Result<(), SolverError> {
-        let decisions = model.symbols().iter_var();
+        let sym_tab = model.as_submodel().symbols().deref().clone();
+        let decisions = sym_tab.into_iter();
 
         let mut finds: Vec<String> = Vec::new();
 
         for find_ref in decisions {
-            if (find_ref.1.domain != BoolDomain) {
+            // TODO: maybe no unwrap, maybe other
+            if (*find_ref.1.domain().unwrap() != BoolDomain) {
                 Err(SolverError::ModelInvalid(
                     "Only Boolean Decision Variables supported".to_string(),
                 ))?;
@@ -186,7 +193,8 @@ impl SolverAdaptor for SAT {
 
         self.decision_refs = Some(finds);
 
-        let vec_constr = model.clone().get_constraints_vec();
+        let m_clone = model.clone();
+        let vec_constr = m_clone.as_submodel().constraints();
         let constr = &vec_constr[0];
         let vec_cnf = match constr {
             Expression::And(_, vec) => vec,
@@ -197,7 +205,7 @@ impl SolverAdaptor for SAT {
 
         let mut var_map: HashMap<String, Lit> = HashMap::new();
 
-        let inst: SatInstance = handle_cnf(vec_cnf, &mut var_map);
+        let inst: SatInstance = handle_cnf(&vec_cnf, &mut var_map);
 
         self.var_map = Some(var_map);
         let cnf: (Cnf, BasicVarManager) = inst.clone().into_cnf();
