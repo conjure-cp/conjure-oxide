@@ -28,7 +28,7 @@ use conjure_core::ast::Atom;
 use conjure_core::ast::{Expression, Literal, Name};
 use conjure_core::context::Context;
 use conjure_oxide::rule_engine::resolve_rule_sets;
-use conjure_oxide::utils::conjure::minion_solutions_to_json;
+use conjure_oxide::utils::conjure::solutions_to_json;
 use conjure_oxide::utils::conjure::{
     get_minion_solutions, get_solutions_from_conjure, parse_essence_file,
 };
