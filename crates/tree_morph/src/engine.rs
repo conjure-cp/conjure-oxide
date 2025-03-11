@@ -1,5 +1,5 @@
 use crate::{helpers::one_or_select, Commands, Rule, Update};
-use uniplate::Uniplate;
+use uniplate::{zipper::Zipper, Uniplate};
 
 /// Exhaustively rewrites a tree using a set of transformation rules.
 ///
@@ -158,4 +158,25 @@ fn morph_impl<T: Uniplate, M>(
         break;
     }
     (tree, meta)
+}
+
+fn morph_zipper_impl<T: Uniplate, M>(
+    transforms: Vec<impl Fn(&T, &M) -> Option<Update<T, M>>>,
+    mut tree: T,
+    mut meta: M,
+) -> (T, M) {
+    let mut new_tree = tree;
+    let mut zipper = Zipper::new(new_tree.clone());
+
+    let focus = zipper.focus_mut();
+    'main: loop {
+        for transform in transforms.iter() {
+            if let Some(mut update) = transform(&focus, &meta) {
+                // Unsure, why run commands on the entire subtree?
+                let (new_subtree, meta) = update.commands.apply(update.new_subtree, meta);
+                zipper.replace_focus(new_subtree);
+            }
+        }
+    }
+    todo!()
 }
