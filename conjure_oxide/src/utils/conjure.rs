@@ -6,7 +6,6 @@ use std::sync::{Arc, Mutex, RwLock};
 
 use conjure_core::ast::{Literal, Name};
 use conjure_core::context::Context;
-use conjure_core::solver;
 use conjure_core::solver::adaptors::SAT;
 use rand::Rng as _;
 use serde_json::{from_str, Map, Value as JsonValue};

@@ -1,24 +1,24 @@
+use anyhow::Result as AnyhowResult;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::exit;
 use std::sync::Arc;
 
-use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
+
 use clap::{arg, command, Parser};
-// use conjure_core::ast::{Expression, Literal};
-use conjure_core::rule_engine::rewrite_naive;
-// use conjure_core::solver::adaptors::rustsat::convs::handle_cnf;
-use conjure_core::solver::adaptors::SAT;
-// use conjure_core::solver::{self, SolverAdaptor};
-use conjure_core::Model;
-use conjure_oxide::defaults::get_default_rule_sets;
-use schemars::schema_for;
 
 use conjure_core::context::Context;
+use conjure_core::rule_engine::rewrite_naive;
+use conjure_core::Model;
+
+use schemars::schema_for;
+
+use conjure_oxide::defaults::get_default_rule_sets;
 use conjure_oxide::find_conjure::conjure_executable;
 use conjure_oxide::rule_engine::{resolve_rule_sets, rewrite_model};
+use conjure_oxide::utils::conjure::{get_minion_solutions, get_sat_solutions, solutions_to_json};
 use conjure_oxide::{get_rules, model_from_json, SolverFamily};
 
 use tracing_subscriber::filter::LevelFilter;
@@ -27,8 +27,6 @@ use tracing_subscriber::util::SubscriberInitExt as _;
 use tracing_subscriber::{EnvFilter, Layer};
 
 use serde_json::to_string_pretty;
-
-use conjure_oxide::utils::conjure::{get_minion_solutions, get_sat_solutions, solutions_to_json};
 
 static AFTER_HELP_TEXT: &str = include_str!("help_text.txt");
 
@@ -306,7 +304,6 @@ pub fn main() -> AnyhowResult<()> {
 }
 
 /// Runs the solver
-
 fn run_solver(cli: &Cli, model: Model) -> anyhow::Result<()> {
     let solver = cli.solver;
     match solver {
