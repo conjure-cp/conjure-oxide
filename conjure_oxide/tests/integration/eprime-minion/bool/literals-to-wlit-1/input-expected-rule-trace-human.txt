@@ -7,28 +7,46 @@ find d: bool
 
 such that
 
-Or([a, b]),
-Or([Not(c), And([b, d])]),
+or([a,b;int(1..2)]),
+or([Not(c),and([b,d;int(1..2)]);int(1..2)]),
 b,
-Or([d, c])
+or([d,c;int(1..2)])
 
 --
 
-Or([Not(c), And([b, d])]), 
+Not(c), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
+WatchedLiteral(c,false) 
+
+--
+
+or([a,b;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([a,b;int(1..)]) 
+
+--
+
+or([WatchedLiteral(c,false),and([b,d;int(1..2)]);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([WatchedLiteral(c,false),and([b,d;int(1..2)]);int(1..)]) 
+
+--
+
+and([b,d;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+and([b,d;int(1..)]) 
+
+--
+
+or([WatchedLiteral(c,false),and([b,d;int(1..)]);int(1..)]), 
    ~~> distribute_or_over_and ([("Base", 8400)]) 
-And([Or([Not(c), b]), Or([Not(c), d])]) 
+and([or([WatchedLiteral(c,false),b;int(1..)]),or([WatchedLiteral(c,false),d;int(1..)]);int(1..)]) 
 
 --
 
-Not(c), 
-   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
-WatchedLiteral(c,false) 
-
---
-
-Not(c), 
-   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
-WatchedLiteral(c,false) 
+or([d,c;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([d,c;int(1..)]) 
 
 --
 
@@ -41,8 +59,8 @@ find d: bool
 
 such that
 
-Or([a, b]),
-And([Or([WatchedLiteral(c,false), b]), Or([WatchedLiteral(c,false), d])]),
+or([a,b;int(1..)]),
+and([or([WatchedLiteral(c,false),b;int(1..)]),or([WatchedLiteral(c,false),d;int(1..)]);int(1..)]),
 b,
-Or([d, c])
+or([d,c;int(1..)])
 

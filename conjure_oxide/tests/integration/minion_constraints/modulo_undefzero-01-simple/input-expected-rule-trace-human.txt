@@ -17,17 +17,17 @@ x % y,
 
 ({SafeMod(x,y) @ (y != 0)} = 3), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(SafeMod(x,y) = 3) @ And([(y != 0)])} 
+{(SafeMod(x,y) = 3) @ and([(y != 0);int(1..)])} 
 
 --
 
-{(SafeMod(x,y) = 3) @ And([(y != 0)])}, 
+{(SafeMod(x,y) = 3) @ and([(y != 0);int(1..)])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-And([(SafeMod(x,y) = 3), And([(y != 0)])]) 
+and([(SafeMod(x,y) = 3),and([(y != 0);int(1..)]);int(1..)]) 
 
 --
 
-And([(y != 0)]), 
+and([(y != 0);int(1..)]), 
    ~~> remove_unit_vector_and ([("Base", 8800)]) 
 (y != 0) 
 
@@ -46,5 +46,5 @@ find y: int(2..4)
 
 such that
 
-And([ModEq(x, y, 3), (y != 0)])
+and([ModEq(x, y, 3),(y != 0);int(1..)])
 

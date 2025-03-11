@@ -1,3 +1,4 @@
+use conjure_core::matrix_expr;
 use conjure_oxide::ast::{
     Atom::Reference, Declaration, Domain::BoolDomain, Domain::IntDomain, Expression::*, Name, Range,
 };
@@ -51,13 +52,13 @@ fn test_single_not() {
         cnf.as_expression().unwrap(),
         And(
             Metadata::new(),
-            vec![Or(
+            Box::new(matrix_expr![Or(
                 Metadata::new(),
-                vec![Not(
+                Box::new(matrix_expr![Not(
                     Metadata::new(),
                     Box::from(Atomic(Metadata::new(), Reference(x.clone())))
-                )]
-            )]
+                )])
+            )])
         )
     )
 }
@@ -76,10 +77,10 @@ fn test_single_or() {
     submodel.add_symbol(Declaration::new_var(y.clone(), BoolDomain));
     submodel.add_constraint(Or(
         Metadata::new(),
-        vec![
+        Box::new(matrix_expr![
             Atomic(Metadata::new(), Reference(x.clone())),
             Atomic(Metadata::new(), Reference(y.clone())),
-        ],
+        ]),
     ));
 
     let cnf: CNFModel = CNFModel::from_conjure(model).unwrap();
@@ -92,13 +93,13 @@ fn test_single_or() {
         cnf.as_expression().unwrap(),
         And(
             Metadata::new(),
-            vec![Or(
+            Box::new(matrix_expr![Or(
                 Metadata::new(),
-                vec![
+                Box::new(matrix_expr![
                     Atomic(Metadata::new(), Reference(x.clone())),
                     Atomic(Metadata::new(), Reference(y.clone())),
-                ],
-            )]
+                ]),
+            )])
         )
     )
 }
@@ -117,13 +118,13 @@ fn test_or_not() {
     submodel.add_symbol(Declaration::new_var(y.clone(), BoolDomain));
     submodel.add_constraint(Or(
         Metadata::new(),
-        vec![
+        Box::new(matrix_expr![
             Atomic(Metadata::new(), Reference(x.clone())),
             Not(
                 Metadata::new(),
                 Box::from(Atomic(Metadata::new(), Reference(y.clone()))),
             ),
-        ],
+        ]),
     ));
 
     let cnf: CNFModel = CNFModel::from_conjure(model).unwrap();
@@ -136,16 +137,16 @@ fn test_or_not() {
         cnf.as_expression().unwrap(),
         And(
             Metadata::new(),
-            vec![Or(
+            Box::new(matrix_expr![Or(
                 Metadata::new(),
-                vec![
+                Box::new(matrix_expr![
                     Atomic(Metadata::new(), Reference(x.clone())),
                     Not(
                         Metadata::new(),
                         Box::from(Atomic(Metadata::new(), Reference(y.clone())))
                     ),
-                ]
-            )]
+                ])
+            )])
         )
     )
 }
@@ -175,16 +176,16 @@ fn test_multiple() {
         cnf.as_expression().unwrap(),
         And(
             Metadata::new(),
-            vec![
+            Box::new(matrix_expr![
                 Or(
                     Metadata::new(),
-                    vec![Atomic(Metadata::new(), Reference(x.clone()))]
+                    Box::new(matrix_expr![Atomic(Metadata::new(), Reference(x.clone()))])
                 ),
                 Or(
                     Metadata::new(),
-                    vec![Atomic(Metadata::new(), Reference(y.clone()))]
+                    Box::new(matrix_expr![Atomic(Metadata::new(), Reference(y.clone()))])
                 )
-            ]
+            ])
         )
     )
 }
@@ -203,10 +204,10 @@ fn test_and() {
     submodel.add_symbol(Declaration::new_var(y.clone(), BoolDomain));
     submodel.add_constraint(And(
         Metadata::new(),
-        vec![
+        Box::new(matrix_expr![
             Atomic(Metadata::new(), Reference(x.clone())),
             Atomic(Metadata::new(), Reference(y.clone())),
-        ],
+        ]),
     ));
 
     let cnf: CNFModel = CNFModel::from_conjure(model).unwrap();
@@ -219,16 +220,16 @@ fn test_and() {
         cnf.as_expression().unwrap(),
         And(
             Metadata::new(),
-            vec![
+            Box::new(matrix_expr![
                 Or(
                     Metadata::new(),
-                    vec![Atomic(Metadata::new(), Reference(x.clone())),]
+                    Box::new(matrix_expr![Atomic(Metadata::new(), Reference(x.clone())),])
                 ),
                 Or(
                     Metadata::new(),
-                    vec![Atomic(Metadata::new(), Reference(y.clone())),]
+                    Box::new(matrix_expr![Atomic(Metadata::new(), Reference(y.clone())),])
                 )
-            ]
+            ])
         )
     )
 }
@@ -250,16 +251,16 @@ fn test_nested_ors() {
 
     submodel.add_constraint(Or(
         Metadata::new(),
-        vec![
+        Box::new(matrix_expr![
             Atomic(Metadata::new(), Reference(x.clone())),
             Or(
                 Metadata::new(),
-                vec![
+                Box::new(matrix_expr![
                     Atomic(Metadata::new(), Reference(y.clone())),
                     Atomic(Metadata::new(), Reference(z.clone())),
-                ],
+                ]),
             ),
-        ],
+        ]),
     ));
 
     let cnf: CNFModel = CNFModel::from_conjure(model).unwrap();
@@ -273,14 +274,14 @@ fn test_nested_ors() {
         cnf.as_expression().unwrap(),
         And(
             Metadata::new(),
-            vec![Or(
+            Box::new(matrix_expr![Or(
                 Metadata::new(),
-                vec![
+                Box::new(matrix_expr![
                     Atomic(Metadata::new(), Reference(x.clone())),
                     Atomic(Metadata::new(), Reference(y.clone())),
                     Atomic(Metadata::new(), Reference(z.clone())),
-                ]
-            )]
+                ])
+            )])
         )
     )
 }

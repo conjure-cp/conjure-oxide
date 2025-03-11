@@ -16,17 +16,17 @@ such that
 
 (2 = {SafeMod(8,a) @ (a != 0)}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(2 = SafeMod(8,a)) @ And([(a != 0)])} 
+{(2 = SafeMod(8,a)) @ and([(a != 0);int(1..)])} 
 
 --
 
-{(2 = SafeMod(8,a)) @ And([(a != 0)])}, 
+{(2 = SafeMod(8,a)) @ and([(a != 0);int(1..)])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-And([(2 = SafeMod(8,a)), And([(a != 0)])]) 
+and([(2 = SafeMod(8,a)),and([(a != 0);int(1..)]);int(1..)]) 
 
 --
 
-And([(a != 0)]), 
+and([(a != 0);int(1..)]), 
    ~~> remove_unit_vector_and ([("Base", 8800)]) 
 (a != 0) 
 
@@ -44,5 +44,5 @@ find a: int(0..9)
 
 such that
 
-And([ModEq(8, a, 2), (a != 0)])
+and([ModEq(8, a, 2),(a != 0);int(1..)])
 

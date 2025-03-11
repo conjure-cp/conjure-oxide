@@ -18,25 +18,25 @@ UnsafeDiv(b, c),
 
 (a = {SafeDiv(b, c) @ (c != 0)}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(a = SafeDiv(b, c)) @ And([(c != 0)])} 
+{(a = SafeDiv(b, c)) @ and([(c != 0);int(1..)])} 
 
 --
 
-{(a = SafeDiv(b, c)) @ And([(c != 0)])}, 
+{(a = SafeDiv(b, c)) @ and([(c != 0);int(1..)])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-And([(a = SafeDiv(b, c)), And([(c != 0)])]) 
+and([(a = SafeDiv(b, c)),and([(c != 0);int(1..)]);int(1..)]) 
 
 --
 
-And([(c != 0)]), 
+and([(c != 0);int(1..)]), 
    ~~> remove_unit_vector_and ([("Base", 8800)]) 
 (c != 0) 
 
 --
 
-Not(And([(a = SafeDiv(b, c)), (c != 0)])), 
+Not(and([(a = SafeDiv(b, c)),(c != 0);int(1..)])), 
    ~~> distribute_not_over_and ([("Base", 8400)]) 
-Or([Not((a = SafeDiv(b, c))), Not((c != 0))]) 
+or([Not((a = SafeDiv(b, c))),Not((c != 0));int(1..)]) 
 
 --
 
@@ -76,6 +76,6 @@ find __0: int(0..3)
 
 such that
 
-Or([(a != __0), (c = 0)]),
+or([(a != __0),(c = 0);int(1..)]),
 DivEq(b, c, __0)
 

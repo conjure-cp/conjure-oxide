@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use std::collections::HashSet;
 
 use conjure_core::ast::{Atom, Expression as Expr, Literal as Lit};
@@ -49,11 +50,15 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
         Expr::Not(_, expr) => un_op::<bool, bool>(|e| !e, expr).map(Lit::Bool),
 
-        Expr::And(_, exprs) => vec_op::<bool, bool>(|e| e.iter().all(|&e| e), exprs).map(Lit::Bool),
+        Expr::And(_, e) => {
+            vec_lit_op::<bool, bool>(|e| e.iter().all(|&e| e), e.as_ref()).map(Lit::Bool)
+        }
         // this is done elsewhere instead - root should return a new root with a literal inside it,
         // not a literal
         Expr::Root(_, _) => None,
-        Expr::Or(_, exprs) => vec_op::<bool, bool>(|e| e.iter().any(|&e| e), exprs).map(Lit::Bool),
+        Expr::Or(_, e) => {
+            vec_lit_op::<bool, bool>(|e| e.iter().any(|&e| e), e.as_ref()).map(Lit::Bool)
+        }
         Expr::Imply(_, box1, box2) => {
             let a: &Atom = (&**box1).try_into().ok()?;
             let b: &Atom = (&**box2).try_into().ok()?;
@@ -99,11 +104,11 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Bool(sum >= a.try_into().ok()?))
         }
-        Expr::Min(_, exprs) => {
-            opt_vec_op::<i32, i32>(|e| e.iter().min().copied(), exprs).map(Lit::Int)
+        Expr::Min(_, e) => {
+            opt_vec_lit_op::<i32, i32>(|e| e.iter().min().copied(), e.as_ref()).map(Lit::Int)
         }
-        Expr::Max(_, exprs) => {
-            opt_vec_op::<i32, i32>(|e| e.iter().max().copied(), exprs).map(Lit::Int)
+        Expr::Max(_, e) => {
+            opt_vec_lit_op::<i32, i32>(|e| e.iter().max().copied(), e.as_ref()).map(Lit::Int)
         }
         Expr::UnsafeDiv(_, a, b) | Expr::SafeDiv(_, a, b) => {
             if unwrap_expr::<i32>(b)? == 0 {
@@ -198,7 +203,8 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             Some(Lit::Bool(a ^ b == c))
         }
 
-        Expr::AllDiff(_, es) => {
+        Expr::AllDiff(_, e) => {
+            let es = e.clone().unwrap_list()?;
             let mut lits: HashSet<Lit> = HashSet::new();
             for expr in es {
                 let Expr::Atomic(_, Atom::Literal(x)) = expr else {
@@ -206,7 +212,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 };
                 match x {
                     Lit::Int(_) | Lit::Bool(_) => {
-                        if lits.contains(x) {
+                        if lits.contains(&x) {
                             return Some(Lit::Bool(false));
                         } else {
                             lits.insert(x.clone());
@@ -365,10 +371,29 @@ where
     Some(f(a))
 }
 
+fn vec_lit_op<T, A>(f: fn(Vec<T>) -> A, a: &Expr) -> Option<A>
+where
+    T: TryFrom<Lit>,
+{
+    let a = a.clone().unwrap_list()?;
+    let a = a.iter().map(unwrap_expr).collect::<Option<Vec<T>>>()?;
+    Some(f(a))
+}
+
 fn opt_vec_op<T, A>(f: fn(Vec<T>) -> Option<A>, a: &[Expr]) -> Option<A>
 where
     T: TryFrom<Lit>,
 {
+    let a = a.iter().map(unwrap_expr).collect::<Option<Vec<T>>>()?;
+    f(a)
+}
+
+fn opt_vec_lit_op<T, A>(f: fn(Vec<T>) -> Option<A>, a: &Expr) -> Option<A>
+where
+    T: TryFrom<Lit>,
+{
+    let a = a.clone().unwrap_list()?;
+    // FIXME: deal with explicit matrix domains
     let a = a.iter().map(unwrap_expr).collect::<Option<Vec<T>>>()?;
     f(a)
 }
