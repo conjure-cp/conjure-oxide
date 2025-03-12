@@ -1,8 +1,7 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{helpers::one_or_select, Commands, Rule, Update};
-use uniplate::{
-    zipper::{self, Zipper},
-    Uniplate,
-};
+use uniplate::{zipper::Zipper, Uniplate};
 
 /// Exhaustively rewrites a tree using a set of transformation rules.
 ///
@@ -129,7 +128,8 @@ where
             }
         })
         .collect();
-    morph_impl(transforms, tree, meta)
+    // morph_impl(transforms, tree, meta)
+    morph_zipper_impl(transforms, tree, meta)
 }
 
 /// This implements the core rewriting logic for the engine.
@@ -164,9 +164,9 @@ fn morph_impl<T: Uniplate, M>(
 }
 
 struct NodeState {
-    parent: Option<Box<NodeState>>,
+    parent: Option<Rc<RefCell<NodeState>>>,
     current_child_index: usize,
-    children: Vec<NodeState>,
+    children: Vec<Rc<RefCell<NodeState>>>,
     dirty: bool,
 }
 
@@ -190,9 +190,47 @@ impl NodeState {
     }
 }
 
+impl std::fmt::Debug for NodeState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // Start a debug struct for the current node
+        let mut debug_struct = f.debug_struct("NodeState");
+
+        // Add basic fields
+        debug_struct
+            .field("dirty", &self.dirty)
+            .field("current_child_index", &self.current_child_index)
+            .field("num_children", &self.children.len());
+
+        // Add children information without recursing into their parents
+        let children_debug: Vec<_> = self
+            .children
+            .iter()
+            .enumerate()
+            .map(|(idx, child)| {
+                // Create a custom debug representation for each child
+                // that avoids recursing into parent
+                format!(
+                    "Child[{}]: {{ dirty: {}, num_children: {} }}",
+                    idx,
+                    child.borrow().dirty,
+                    child.borrow().children.len()
+                )
+            })
+            .collect();
+
+        debug_struct.field("children", &children_debug);
+
+        // Indicate if a parent exists without recursing
+        debug_struct.field("has_parent", &self.parent.is_some());
+
+        // Finish and output the debug struct
+        debug_struct.finish()
+    }
+}
+
 struct DirtyZipper<T: Uniplate> {
     zipper: Zipper<T>,
-    node_state: Option<NodeState>,
+    node_state: Option<Rc<RefCell<NodeState>>>,
 }
 
 impl<T: Uniplate> DirtyZipper<T> {
@@ -204,66 +242,167 @@ impl<T: Uniplate> DirtyZipper<T> {
     }
 
     /// Marks all ancetors of a subtree as dirty and moves the zipper at the start of the tree,
-    /// ready for new rule application.
+    /// ready for new rule applications.
+    /// Set the children of the node to be empty - This is a new tree so we don't know what's
+    /// below it.
     pub fn mark_dirty(&mut self) {
-        let mut node_state = self
+        println!("Marking Dirty!");
+        let node = self
             .node_state
-            .as_mut()
+            .as_ref()
             .expect("NodeState and Zipper out of Sync");
-        node_state.dirty = true;
-        while let Some(_) = self.zipper.go_up() {
-            node_state = &mut *node_state
-                .parent
-                .as_mut()
-                .expect("NodeState and Zipper out of sync");
-            node_state.dirty = true;
+        let mut node_state = Rc::clone(&node);
+        {
+            let mut node_state_mut = node_state.borrow_mut();
+            node_state_mut.dirty = true;
+            node_state_mut.current_child_index = 0;
+            node_state_mut.children.clear();
         }
+        while let Some(_) = self.zipper.go_up() {
+            println!("Marked Parent as dirty");
+            // Is there a way to do this without cloning?
+            let parent_option = node_state.borrow().parent.clone();
+            let parent_ref = parent_option
+                .as_ref()
+                .expect("NodeState and Zipper out of Sync. Missing Parent");
+            let mut parent_mut = parent_ref.borrow_mut();
+            parent_mut.dirty = true;
+            parent_mut.current_child_index = 0;
+            node_state.borrow_mut().parent = Some(Rc::clone(parent_ref));
+            node_state = Rc::clone(parent_ref);
+            self.node_state = Some(Rc::clone(parent_ref));
+        }
+        dbg!(&self.node_state);
     }
 
     pub fn mark_clean(&mut self) {
-        let node_state = self
+        let node = self
             .node_state
-            .as_mut()
+            .as_ref()
             .expect("NodeState and Zipper out of Sync");
-        node_state.dirty = false;
+        let node_state = Rc::clone(&node);
+        node_state.borrow_mut().dirty = false;
     }
 
+    /// Im in the thick of it rn...
+    /// This is currently NOT working
+    /// The state is not properly synced right now 
+    /// This will still exhaustively go through all nodes 
+    ///
+    /// Skill issue from my end:
+    /// The way I've handled the state movement isnt very clear 
+    /// so I probably got confused from my own writing and somehow not linked the parent and child
+    /// note states together 
+    ///
+    /// When it marks as dirty and moves up, for some reason the root has no children (where did
+    /// they go???)
     pub fn get_next_dirty(&mut self) -> Option<&T> {
         if self.node_state.is_none() {
-            self.node_state = Some(NodeState::new_dirty());
+            // TODO: Revisit Clean or Dirty
+            self.node_state = Some(Rc::new(RefCell::new(NodeState::new_clean())));
             return Some(self.zipper.focus());
         }
+
+        if self.node_state.as_ref().unwrap().borrow().dirty {
+            return Some(self.zipper.focus());
+        }
+
+        let node = Rc::clone(self.node_state.as_ref().unwrap());
 
         if let Some(_) = self.zipper.go_down() {
-            // Safety: The parent is already created as above 
-            let parent = self.node_state.as_mut().unwrap();
+            println!("Going Down");
+            let mut node_state = node.borrow_mut();
+            // Safety: The parent is already created as above
+            let child_index = node_state.current_child_index;
 
-            if parent.current_child_index < parent.children.len() {
-                let mut child = parent.children[parent.current_child_index];
-                self.node_state = Some(child);
+            // We have a child
+            println!("{}  < {}", child_index, node_state.children.len());
+            if child_index < node_state.children.len() {
+                let child = &node_state.children[child_index];
+                if child.borrow().dirty {
+                    self.node_state = Some(Rc::clone(child));
+                    return Some(self.zipper.focus());
+                }
+                println!("Child is clean");
+                // Child is Clean, move right so do nothing
             } else {
+                // No child, create state and return focus
+                println!("New Child Made");
                 let mut child = NodeState::new_clean();
-                child.parent = Some(Box::new(parent));
-                self.node_state = Some(child);
+                child.parent = Some(Rc::clone(&node));
+                node_state.children.push(Rc::new(RefCell::new(child)));
+                self.node_state = Some(Rc::clone(&node_state.children.last().unwrap()));
+                return Some(self.zipper.focus());
             }
-
-            return Some(self.zipper.focus());
         }
 
-        // Try to go right (to sibling)
-        if let Some(_) = self.zipper.go_right() {
-            // If we move right, we need to update current_child_index in parent
-            if let Some(state) = &mut self.node_state {
-                if let Some(parent) = &mut state.parent {
-                    parent.current_child_index += 1;
+        // TODO: ASK FELIX
+        // Either the child is clean or there is no child
+        while let Some(_) = self.zipper.go_right() {
+            println!("Going Right");
+            let node_state = node.borrow();
+            let mut parent_node_state = node_state.parent.as_ref().unwrap().borrow_mut();
+            // If we can go right then there is a parent state node
+            parent_node_state.current_child_index += 1;
+            let child_index = parent_node_state.current_child_index;
+
+            println!("{}  < {}", child_index, node_state.children.len());
+            if child_index < parent_node_state.children.len() {
+                let child = &parent_node_state.children[child_index];
+                if child.borrow().dirty {
+                    self.node_state = Some(Rc::clone(child));
+                    return Some(self.zipper.focus());
+                }
+                println!("Child is clean");
+            } else {
+                // Need to make child
+                println!("New Child Made");
+                let mut child = NodeState::new_clean();
+                child.parent = Some(Rc::clone(&node));
+                parent_node_state
+                    .children
+                    .push(Rc::new(RefCell::new(child)));
+                self.node_state = Some(Rc::clone(&parent_node_state.children.last().unwrap()));
+                return Some(self.zipper.focus());
+            }
+        }
+
+        // Failed to go Down, Failed to go Right
+
+        while let Some(_) = self.zipper.go_up() {
+            println!("Going Up");
+            let node_state = node.borrow();
+            let mut parent_node_state = node_state
+                .parent
+                .as_ref()
+                .expect("NodeState and Zipper out of Sync")
+                .borrow_mut();
+            while let Some(_) = self.zipper.go_right() {
+                println!("Going Right");
+                parent_node_state.current_child_index += 1;
+                let child_index = parent_node_state.current_child_index;
+                println!("{}  < {}", child_index, node_state.children.len());
+                if child_index < parent_node_state.children.len() {
+                    let child = &parent_node_state.children[child_index];
+                    if child.borrow().dirty {
+                        self.node_state = Some(Rc::clone(child));
+                        return Some(self.zipper.focus());
+                    }
+                    println!("Child is clean");
+                } else {
+                    // Need to make child
+                    println!("New Child Made");
+                    let mut child = NodeState::new_clean();
+                    child.parent = Some(Rc::clone(&node));
+                    parent_node_state
+                        .children
+                        .push(Rc::new(RefCell::new(child)));
+                    self.node_state = Some(Rc::clone(&parent_node_state.children.last().unwrap()));
+                    return Some(self.zipper.focus());
                 }
             }
-
-            return Some(self.zipper.focus());
         }
-
-        // while let Some(_) = self.zipper.go_up() {
-        // }
+        None
     }
 }
 
@@ -273,14 +412,25 @@ fn morph_zipper_impl<T: Uniplate, M>(
     mut meta: M,
 ) -> (T, M) {
     let mut new_tree = tree;
-    let mut zipper = Zipper::new(new_tree.clone());
-
-    let focus = zipper.focus_mut();
-    loop {
+    let zipper = Zipper::new(new_tree.clone());
+    let mut dirty_zipper = DirtyZipper::new(zipper);
+    'main: loop {
+        // I need to do my thing
         for transform in transforms.iter() {
-            if let Some(mut update) = transform(&focus, &meta) {}
+            while let Some(node) = dirty_zipper.get_next_dirty() {
+                println!("Got next dirty node");
+                if let Some(update) = transform(&node, &meta) {
+                    println!("Applying Rule!!!!!");
+                    dirty_zipper.zipper.replace_focus(update.new_subtree);
+                    dirty_zipper.mark_dirty();
+                    // update.commands.apply(dirtyZipper.zipper.focus().clone(), meta);
+                    continue 'main;
+                } else {
+                    dirty_zipper.mark_clean();
+                }
+            }
         }
         break;
     }
-    todo!()
+    (dirty_zipper.zipper.rebuild_root(), meta)
 }
