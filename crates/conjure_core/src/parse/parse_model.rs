@@ -592,6 +592,8 @@ fn parse_indexing_slicing_op(op: &serde_json::Map<String, Value>) -> Option<Expr
         }
     }
 
+    indices.reverse();
+
     if all_known {
         Some(Expression::UnsafeIndex(
             Metadata::new(),
