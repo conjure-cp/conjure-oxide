@@ -25,6 +25,11 @@ impl fmt::Display for RuleTrace<'_> {
         Ok(())
     }
 }
+pub enum VerbosityLevel {
+    Low,
+    Medium,
+    High,
+}
 pub trait Trace<F: MessageFormatter> {
     fn capture(&self, rule_trace: &RuleTrace);
 }
