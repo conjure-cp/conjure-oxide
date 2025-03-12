@@ -727,9 +727,8 @@ impl Display for Expression {
         match &self {
             Expression::AbstractLiteral(_, l) => l.fmt(f),
             Expression::UnsafeIndex(_, e1, e2) => {
-                write!(f, "{e1}[{}]", pretty_vec(e2))
+                write!(f, "{e1}{}", pretty_vec(e2))
             }
-
             Expression::UnsafeSlice(_, e1, es) => {
                 let args = es
                     .iter()

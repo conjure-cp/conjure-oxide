@@ -51,6 +51,7 @@ fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             | Min(_, _)
             | Max(_, _)
             | AllDiff(_, _)
+            | AbstractLiteral(_, _)
     ) {
         return Err(ApplicationError::RuleNotApplicable);
     }

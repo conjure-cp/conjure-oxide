@@ -302,7 +302,9 @@ fn parse_domain_value_int(obj: &JsonValue) -> Option<i32> {
         parser_trace!(".. trying as a positive domain value: {}", obj);
         // Positive number: Constant/ConstantInt/1
 
-        let leaf_node = obj.pointer("/Constant/ConstantInt/1")?;
+        let leaf_node = obj
+            .pointer("/Constant/ConstantInt/1")
+            .or_else(|| obj.pointer("/ConstantInt/1"))?;
 
         match leaf_node.as_i64()?.try_into() {
             Ok(x) => {
@@ -708,10 +710,15 @@ fn parse_abstract_matrix_as_expr(value: &serde_json::Value) -> Option<Expression
             .map(|x| x.expect("invalid subexpression"))
             .collect::<Vec<Expression>>()
     })?;
-    parser_trace!(
-        "... successfully parsed values as expressions: {}, ... ",
-        args_parsed[0]
-    );
+
+    if !args_parsed.is_empty() {
+        parser_trace!(
+            ".. successfully parsed values as expressions: {}, ... ",
+            args_parsed[0]
+        );
+    } else {
+        parser_trace!(".. successfully parsed empty values ",);
+    }
     match parse_domain(domain_name, domain_value) {
         Ok(domain) => {
             parser_trace!("... sucessfully parsed domain as {domain}");
