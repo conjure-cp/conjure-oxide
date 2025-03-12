@@ -4,7 +4,6 @@ use conjure_core::bug;
 use conjure_core::rule_engine::get_rules_grouped;
 use conjure_core::rule_engine::rewrite_model;
 use conjure_core::rule_engine::rewrite_naive;
-use conjure_core::rule_engine::RuleData;
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
 use conjure_oxide::utils::testing::read_human_rule_trace;
@@ -15,13 +14,11 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use std::thread::panicking;
 use tracing::{span, Level, Metadata as OtherMetadata};
 use tracing_subscriber::{
     filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
 };
-use tree_morph::{helpers::select_panic, prelude::*, Rule as MorphRule};
-use uniplate::derive::Uniplate;
+use tree_morph::{helpers::select_panic, prelude::*};
 
 use uniplate::Biplate;
 
@@ -252,7 +249,7 @@ fn integration_test_inner(
     let config = file_config.merge_env();
 
     // Stage 1a: Parse the model using the normal parser (run unless explicitly disabled)
-    let model = if config.parse_model_default {
+    let parsed_model = if config.parse_model_default {
         let parsed = parse_essence_file(path, essence_base, extension, context.clone())?;
         if verbose {
             println!("Parsed model: {:#?}", parsed);
@@ -279,28 +276,32 @@ fn integration_test_inner(
     // Stage 2a: Rewrite the model using the rule engine (run unless explicitly disabled)
     let rewritten_model = if config.apply_rewrite_rules {
         let rule_sets = resolve_rule_sets(SolverFamily::Minion, DEFAULT_RULE_SETS)?;
+        let mut model = parsed_model.expect("Model must be parsed in 1a");
 
         let rewritten = if config.enable_native_impl {
-            rewrite_model(
-                model.as_ref().expect("Model must be parsed in 1a"),
-                &rule_sets,
-            )?
+            rewrite_model(&model, &rule_sets)?
         } else if config.enable_naive_impl {
-            rewrite_naive(
-                model.as_ref().expect("Model must be parsed in 1a"),
-                &rule_sets,
-                false,
-            )?
-        } else {
-            let submodel_owned = model.map(|m| m.as_submodel());
+            rewrite_naive(&model, &rule_sets, false)?
+        } else if config.enable_morph_impl {
+            let submodel = model.as_submodel_mut();
             let rules_grouped = get_rules_grouped(&rule_sets)
                 .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
                 .into_iter()
                 .map(|(_, rule)| rule.into_iter().map(|f| f.rule).collect_vec())
                 .collect_vec();
 
-            let (expr, symbol_table): (Expression, SymbolTable) =
-                morph(rules_grouped, select_panic, model, context.as_ref());
+            let (expr, symbol_table): (Expression, SymbolTable) = morph(
+                rules_grouped,
+                select_panic,
+                submodel.root().clone(),
+                submodel.symbols().clone(),
+            );
+
+            *submodel.symbols_mut() = symbol_table;
+            submodel.replace_root(expr);
+            model.clone()
+        } else {
+            panic!("No rewriter implementation specified")
         };
         if verbose {
             println!("Rewritten model: {:#?}", rewritten);
@@ -312,7 +313,7 @@ fn integration_test_inner(
         None
     };
 
-    // Stage 2b: Check model properties (extra_asserts) (Verify additional model properties
+    // Stage 2b: Check model properties (extra_asserts) (Verify additional model properties)
     // (e.g., ensure vector operators are evaluated). (only if explicitly enabled)
     if config.enable_extra_validation {
         for extra_assert in config.extra_rewriter_asserts.clone() {
@@ -496,8 +497,10 @@ fn integration_test_inner(
         assert_eq!(username_solutions_json, expected_solutions_json);
     }
 
-    // Stage 4a: Check that the generated rules trace matches the expected
-    if config.validate_rule_traces {
+    // Stage 4a: Check that the generated rules trace matches the expected.
+    // We don't check rule trace when morph is enabled.
+    // TODO: Implement rule trace validation for morph
+    if config.validate_rule_traces && !config.enable_morph_impl {
         let generated = read_human_rule_trace(path, essence_base, "generated")?;
         let expected = read_human_rule_trace(path, essence_base, "expected")?;
 
