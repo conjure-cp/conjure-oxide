@@ -33,7 +33,14 @@ pub struct Model {
 }
 
 impl Model {
-    /// Creates a new model.
+    pub fn from_submodel(submodel: SubModel) -> Model {
+        Model {
+            submodel,
+            ..Default::default()
+        }
+    }
+
+    /// Creates a new model from the given context.
     pub fn new(context: Arc<RwLock<Context<'static>>>) -> Model {
         Model {
             submodel: SubModel::new_top_level(),
