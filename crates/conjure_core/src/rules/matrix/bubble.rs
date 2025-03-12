@@ -21,7 +21,7 @@ fn index_to_bubble(expr: &Expression, symbols: &SymbolTable) -> ApplicationResul
         .ok_or(ApplicationError::DomainError)?;
 
     let Domain::DomainMatrix(_, index_domains) = domain else {
-        bug!("subject of an index expression should have a matrix domain. subject: {:?}, with domain: {:?}",subject,domain);
+        bug!("subject of an index expression should have a matrix domain. subject: {:?}, with domain: {:?}", subject, domain);
     };
 
     assert_eq!(index_domains.len(),indices.len(),"in an index expression, there should be the same number of indices as the subject has index domains");
@@ -57,7 +57,7 @@ fn slice_to_bubble(expr: &Expression, symbols: &SymbolTable) -> ApplicationResul
         .ok_or(ApplicationError::DomainError)?;
 
     let Domain::DomainMatrix(_, index_domains) = domain else {
-        bug!("subject of a slice expression should have a matrix domain. subject: {:?}, with domain: {:?}",subject,domain);
+        bug!("subject of a slice expression should have a matrix domain. subject: {:?}, with domain: {:?}", subject, domain);
     };
 
     assert_eq!(index_domains.len(),indices.len(),"in a slice expression, there should be the same number of indices as the subject has index domains");
