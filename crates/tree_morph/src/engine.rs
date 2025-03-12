@@ -1,5 +1,8 @@
 use crate::{helpers::one_or_select, Commands, Rule, Update};
-use uniplate::{zipper::Zipper, Uniplate};
+use uniplate::{
+    zipper::{self, Zipper},
+    Uniplate,
+};
 
 /// Exhaustively rewrites a tree using a set of transformation rules.
 ///
@@ -160,6 +163,110 @@ fn morph_impl<T: Uniplate, M>(
     (tree, meta)
 }
 
+struct NodeState {
+    parent: Option<Box<NodeState>>,
+    current_child_index: usize,
+    children: Vec<NodeState>,
+    dirty: bool,
+}
+
+impl NodeState {
+    pub fn new_dirty() -> Self {
+        Self {
+            current_child_index: 0,
+            dirty: true,
+            parent: None,
+            children: Vec::new(),
+        }
+    }
+
+    pub fn new_clean() -> Self {
+        Self {
+            current_child_index: 0,
+            dirty: false,
+            parent: None,
+            children: Vec::new(),
+        }
+    }
+}
+
+struct DirtyZipper<T: Uniplate> {
+    zipper: Zipper<T>,
+    node_state: Option<NodeState>,
+}
+
+impl<T: Uniplate> DirtyZipper<T> {
+    pub fn new(zipper: Zipper<T>) -> Self {
+        Self {
+            zipper,
+            node_state: None,
+        }
+    }
+
+    /// Marks all ancetors of a subtree as dirty and moves the zipper at the start of the tree,
+    /// ready for new rule application.
+    pub fn mark_dirty(&mut self) {
+        let mut node_state = self
+            .node_state
+            .as_mut()
+            .expect("NodeState and Zipper out of Sync");
+        node_state.dirty = true;
+        while let Some(_) = self.zipper.go_up() {
+            node_state = &mut *node_state
+                .parent
+                .as_mut()
+                .expect("NodeState and Zipper out of sync");
+            node_state.dirty = true;
+        }
+    }
+
+    pub fn mark_clean(&mut self) {
+        let node_state = self
+            .node_state
+            .as_mut()
+            .expect("NodeState and Zipper out of Sync");
+        node_state.dirty = false;
+    }
+
+    pub fn get_next_dirty(&mut self) -> Option<&T> {
+        if self.node_state.is_none() {
+            self.node_state = Some(NodeState::new_dirty());
+            return Some(self.zipper.focus());
+        }
+
+        if let Some(_) = self.zipper.go_down() {
+            // Safety: The parent is already created as above 
+            let parent = self.node_state.as_mut().unwrap();
+
+            if parent.current_child_index < parent.children.len() {
+                let mut child = parent.children[parent.current_child_index];
+                self.node_state = Some(child);
+            } else {
+                let mut child = NodeState::new_clean();
+                child.parent = Some(Box::new(parent));
+                self.node_state = Some(child);
+            }
+
+            return Some(self.zipper.focus());
+        }
+
+        // Try to go right (to sibling)
+        if let Some(_) = self.zipper.go_right() {
+            // If we move right, we need to update current_child_index in parent
+            if let Some(state) = &mut self.node_state {
+                if let Some(parent) = &mut state.parent {
+                    parent.current_child_index += 1;
+                }
+            }
+
+            return Some(self.zipper.focus());
+        }
+
+        // while let Some(_) = self.zipper.go_up() {
+        // }
+    }
+}
+
 fn morph_zipper_impl<T: Uniplate, M>(
     transforms: Vec<impl Fn(&T, &M) -> Option<Update<T, M>>>,
     mut tree: T,
@@ -169,14 +276,11 @@ fn morph_zipper_impl<T: Uniplate, M>(
     let mut zipper = Zipper::new(new_tree.clone());
 
     let focus = zipper.focus_mut();
-    'main: loop {
+    loop {
         for transform in transforms.iter() {
-            if let Some(mut update) = transform(&focus, &meta) {
-                // Unsure, why run commands on the entire subtree?
-                let (new_subtree, meta) = update.commands.apply(update.new_subtree, meta);
-                zipper.replace_focus(new_subtree);
-            }
+            if let Some(mut update) = transform(&focus, &meta) {}
         }
+        break;
     }
     todo!()
 }
