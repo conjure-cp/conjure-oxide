@@ -157,6 +157,9 @@ impl SymbolTable {
     }
 
     /// Looks up the domain of name if it has one and is in scope.
+    ///
+    /// This method can return domain references: if a ground domain is always required, use
+    /// [`SymbolTable::resolve_domain`].
     pub fn domain(&self, name: &Name) -> Option<Domain> {
         // TODO: do not clone here: in the future, we might want to wrap all domains in Rc's to get
         // clone-on-write behaviour (saving memory in scenarios such as matrix decomposition where
@@ -164,6 +167,18 @@ impl SymbolTable {
         let decl = self.lookup(name)?;
 
         decl.domain().cloned()
+    }
+
+    /// Looks up the domain of name, resolving domain references to ground domains.
+    ///
+    /// See [`SymbolTable::domain`].
+    pub fn resolve_domain(&self, name: &Name) -> Option<Domain> {
+        match self.domain(name) {
+            Some(Domain::DomainReference(name)) => self
+                .lookup(&name)
+                .and_then(|decl| decl.as_domain_letting().cloned()),
+            result => result,
+        }
     }
 
     /// Iterates over entries in the local symbol table only.

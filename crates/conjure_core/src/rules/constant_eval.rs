@@ -35,7 +35,18 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         // Same as Expr::Root, we should not replace the dominance relation with a constant
         Expr::DominanceRelation(_, _) => None,
         Expr::UnsafeIndex(_, _, _) => None,
+        // handled elsewhere
+        Expr::SafeIndex(_, _, _) => None,
         Expr::UnsafeSlice(_, _, _) => None,
+        // handled elsewhere
+        Expr::SafeSlice(_, _, _) => None,
+        Expr::InDomain(_, e, domain) => {
+            let Expr::Atomic(_, Atom::Literal(lit)) = e.as_ref() else {
+                return None;
+            };
+
+            domain.contains(lit).map(Into::into)
+        }
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
         Expr::Atomic(_, Atom::Reference(_c)) => None,
         Expr::Abs(_, e) => un_op::<i32, i32>(|a| a.abs(), e).map(Lit::Int),
