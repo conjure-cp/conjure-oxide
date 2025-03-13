@@ -173,6 +173,9 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             parse_atom(atom)?,
             minion_ast::Constant::Integer(1),
         )),
+        conjure_ast::Expression::FlatAllDiff(_metadata, atoms) => {
+            Ok(minion_ast::Constraint::AllDiff(parse_atoms(atoms)?))
+        }
         conjure_ast::Expression::FlatSumLeq(_metadata, lhs, rhs) => Ok(
             minion_ast::Constraint::SumLeq(parse_atoms(lhs)?, parse_atom(rhs)?),
         ),

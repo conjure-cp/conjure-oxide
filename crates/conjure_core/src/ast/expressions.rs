@@ -190,6 +190,16 @@ pub enum Expression {
     #[compatible(Minion)]
     FlatAbsEq(Metadata, Atom, Atom),
 
+    /// Ensures that `alldiff([a,b,...])`.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#alldiff)
+    #[compatible(Minion)]
+    FlatAllDiff(Metadata, Vec<Atom>),
+
     /// Ensures that sum(vec) >= x.
     ///
     /// Low-level Minion constraint.
@@ -557,6 +567,7 @@ impl Expression {
                 .domain_of(syms)?
                 .apply_i32(|x, y| Some(x - y), &b.domain_of(syms)?),
 
+            Expression::FlatAllDiff(_, _) => Some(Domain::BoolDomain),
             Expression::FlatMinusEq(_, _, _) => Some(Domain::BoolDomain),
             Expression::FlatProductEq(_, _, _, _) => Some(Domain::BoolDomain),
             Expression::FlatWeightedSumLeq(_, _, _, _) => Some(Domain::BoolDomain),
@@ -644,6 +655,7 @@ impl Expression {
             Expression::Lt(_, _, _) => Some(ReturnType::Bool),
             Expression::SafeDiv(_, _, _) => Some(ReturnType::Int),
             Expression::UnsafeDiv(_, _, _) => Some(ReturnType::Int),
+            Expression::FlatAllDiff(_, _) => Some(ReturnType::Bool),
             Expression::FlatSumGeq(_, _, _) => Some(ReturnType::Bool),
             Expression::FlatSumLeq(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionDivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
@@ -922,6 +934,9 @@ impl Display for Expression {
             }
             Expression::Minus(_, a, b) => {
                 write!(f, "({} - {})", a.clone(), b.clone())
+            }
+            Expression::FlatAllDiff(_, es) => {
+                write!(f, "__flat_alldiff({})", pretty_vec(es))
             }
             Expression::FlatAbsEq(_, a, b) => {
                 write!(f, "AbsEq({},{})", a.clone(), b.clone())
