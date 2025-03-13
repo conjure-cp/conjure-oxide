@@ -179,6 +179,9 @@ impl State {
 
     pub fn mark(&mut self, dirty: bool) {
         self.node.borrow_mut().dirty = dirty;
+        if dirty {
+            self.node.borrow_mut().current_child_index = 0;
+        }
     }
 
     pub fn get_dirty(&self) -> bool {
@@ -351,12 +354,12 @@ impl<T: Uniplate> DirtyZipper<T> {
             return Some(self.zipper.focus());
         }
 
-        println!("Clean Node");
-
         if let Some(_) = self.zipper.go_down() {
             println!("Go Down");
+            dbg!(&self.state.node);
             self.state.go_down();
             if self.state.get_dirty() {
+                println!("IS DIRTY");
                 return Some(self.zipper.focus());
             }
         }
@@ -408,6 +411,8 @@ fn morph_zipper_impl<T: Uniplate, M>(
                     dirty_zipper.mark_dirty();
                     println!("AFTER DIRTY");
                     dbg!(&dirty_zipper.state.root);
+                    println!("AFTER DIRTY Current Node");
+                    dbg!(&dirty_zipper.state.node);
 
                     // update.commands.apply(dirtyZipper.zipper.focus().clone(), meta);
                     continue 'main;
