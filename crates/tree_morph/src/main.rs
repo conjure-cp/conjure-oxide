@@ -67,13 +67,14 @@ fn left_branch_clean() {
     // Left Branch has two Nested Subtractions which do not have any rules
     // So atoms
     // Right brigh has Mul and Add which DO have rules
-    let expr = Expr::Add(
-        Box::new(Expr::Sub(
-            Box::new(Expr::Val(1)),
-            Box::new(Expr::Val(1)),
-            // Box::new(Expr::Sub(Box::new(Expr::Val(1)), Box::new(Expr::Val(2)))),
-            // Box::new(Expr::Sub(Box::new(Expr::Val(3)), Box::new(Expr::Val(10)))),
-        )),
+    let expr = Expr::Sub(
+        Box::new(Expr::Val(1)),
+        // Box::new(Expr::Sub(
+        //     Box::new(Expr::Val(1)),
+        //     Box::new(Expr::Val(1)),
+        //     // Box::new(Expr::Sub(Box::new(Expr::Val(1)), Box::new(Expr::Val(2)))),
+        //     // Box::new(Expr::Sub(Box::new(Expr::Val(3)), Box::new(Expr::Val(10)))),
+        // )),
         Box::new(Expr::Mul(Box::new(Expr::Val(10)), Box::new(Expr::Val(5)))),
     );
 
