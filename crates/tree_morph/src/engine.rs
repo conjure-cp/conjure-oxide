@@ -165,12 +165,15 @@ fn morph_impl<T: Uniplate, M>(
 
 struct State {
     node: Rc<RefCell<NodeState>>,
+    root: Rc<RefCell<NodeState>>,
 }
 
 impl State {
     pub fn new() -> Self {
+        let node = Rc::new(RefCell::new(NodeState::new_dirty()));
         Self {
-            node: Rc::new(RefCell::new(NodeState::new_dirty())),
+            root: Rc::clone(&node),
+            node,
         }
     }
 
@@ -234,6 +237,8 @@ impl State {
     }
 }
 
+use std::fmt;
+
 struct NodeState {
     parent: Option<Rc<RefCell<NodeState>>>,
     children: Vec<Rc<RefCell<NodeState>>>,
@@ -259,43 +264,37 @@ impl NodeState {
             children: Vec::new(),
         }
     }
+
+    fn fmt_children(&self, f: &mut fmt::Formatter<'_>, indent: usize) -> fmt::Result {
+        for (i, child) in self.children.iter().enumerate() {
+            writeln!(f, "{}Child {}: {{", " ".repeat(indent), i)?;
+            let child = child.borrow();
+            writeln!(f, "{}  dirty: {},", " ".repeat(indent), child.dirty)?;
+            writeln!(
+                f,
+                "{}  current_child_index: {},",
+                " ".repeat(indent),
+                child.current_child_index
+            )?;
+            writeln!(f, "{}  children: [", " ".repeat(indent))?;
+            child.fmt_children(f, indent + 4)?;
+            writeln!(f, "{}  ]", " ".repeat(indent))?;
+            writeln!(f, "{}}}", " ".repeat(indent))?;
+        }
+        Ok(())
+    }
 }
 
-impl std::fmt::Debug for NodeState {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // Start a debug struct for the current node
-        let mut debug_struct = f.debug_struct("NodeState");
-
-        // Add basic fields
-        debug_struct
-            .field("dirty", &self.dirty)
-            .field("current_child_index", &self.current_child_index)
-            .field("num_children", &self.children.len());
-
-        // Add children information without recursing into their parents
-        let children_debug: Vec<_> = self
-            .children
-            .iter()
-            .enumerate()
-            .map(|(idx, child)| {
-                // Create a custom debug representation for each child
-                // that avoids recursing into parent
-                format!(
-                    "Child[{}]: {{ dirty: {}, num_children: {} }}",
-                    idx,
-                    child.borrow().dirty,
-                    child.borrow().children.len()
-                )
-            })
-            .collect();
-
-        debug_struct.field("children", &children_debug);
-
-        // Indicate if a parent exists without recursing
-        debug_struct.field("has_parent", &self.parent.is_some());
-
-        // Finish and output the debug struct
-        debug_struct.finish()
+impl fmt::Debug for NodeState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "NodeState {{")?;
+        writeln!(f, "  dirty: {},", self.dirty)?;
+        writeln!(f, "  current_child_index: {},", self.current_child_index)?;
+        writeln!(f, "  parent: {},", self.parent.is_some())?;
+        writeln!(f, "  children: [")?;
+        self.fmt_children(f, 4)?;
+        writeln!(f, "  ]")?;
+        write!(f, "}}")
     }
 }
 
@@ -404,7 +403,12 @@ fn morph_zipper_impl<T: Uniplate, M>(
                 if let Some(update) = transform(&node, &meta) {
                     println!("Applying Rule!!!!!");
                     dirty_zipper.zipper.replace_focus(update.new_subtree);
+                    println!("BEFORE DIRTY");
+                    dbg!(&dirty_zipper.state.root);
                     dirty_zipper.mark_dirty();
+                    println!("AFTER DIRTY");
+                    dbg!(&dirty_zipper.state.root);
+
                     // update.commands.apply(dirtyZipper.zipper.focus().clone(), meta);
                     continue 'main;
                 } else {
