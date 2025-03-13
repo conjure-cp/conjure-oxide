@@ -163,10 +163,81 @@ fn morph_impl<T: Uniplate, M>(
     (tree, meta)
 }
 
+struct State {
+    node: Rc<RefCell<NodeState>>,
+}
+
+impl State {
+    pub fn new() -> Self {
+        Self {
+            node: Rc::new(RefCell::new(NodeState::new_dirty())),
+        }
+    }
+
+    pub fn mark(&mut self, dirty: bool) {
+        self.node.borrow_mut().dirty = dirty;
+    }
+
+    pub fn get_dirty(&self) -> bool {
+        self.node.borrow().dirty
+    }
+
+    pub fn clear_children(&mut self) {
+        let mut node_state = self.node.borrow_mut();
+        node_state.children.clear();
+        node_state.current_child_index = 0;
+    }
+
+    //TODO: MODULARITY
+
+    pub fn go_down(&mut self) {
+        let node = Rc::clone(&self.node);
+        let mut node_state = node.borrow_mut();
+
+        if node_state.current_child_index < node_state.children.len() {
+            self.node = Rc::clone(&node_state.children[node_state.current_child_index]);
+            return;
+        }
+        println!("Create Child");
+        let mut new_node = NodeState::new_dirty();
+        new_node.parent = Some(Rc::clone(&self.node));
+        node_state.children.push(Rc::new(RefCell::new(new_node)));
+        // Left most outer most
+        self.node = Rc::clone(&node_state.children[0]);
+    }
+
+    pub fn go_right(&mut self) {
+        let left_sibling = Rc::clone(&self.node);
+        let left_sibling_state = left_sibling.borrow();
+
+        let parent = left_sibling_state.parent.as_ref().unwrap();
+        let mut parent_state = parent.borrow_mut();
+        parent_state.current_child_index += 1;
+
+        if parent_state.current_child_index < parent_state.children.len() {
+            self.node = Rc::clone(&parent_state.children[parent_state.current_child_index]);
+            return;
+        }
+
+        println!("Create Child");
+        let mut new_node = NodeState::new_dirty();
+        new_node.parent = Some(Rc::clone(&parent));
+        parent_state.children.push(Rc::new(RefCell::new(new_node)));
+        self.node = Rc::clone(&parent_state.children[parent_state.current_child_index]);
+    }
+
+    pub fn go_up(&mut self) {
+        let node = Rc::clone(&self.node);
+        let node_state = node.borrow();
+
+        self.node = Rc::clone(node_state.parent.as_ref().unwrap());
+    }
+}
+
 struct NodeState {
     parent: Option<Rc<RefCell<NodeState>>>,
-    current_child_index: usize,
     children: Vec<Rc<RefCell<NodeState>>>,
+    current_child_index: usize,
     dirty: bool,
 }
 
@@ -230,14 +301,14 @@ impl std::fmt::Debug for NodeState {
 
 struct DirtyZipper<T: Uniplate> {
     zipper: Zipper<T>,
-    node_state: Option<Rc<RefCell<NodeState>>>,
+    state: State,
 }
 
 impl<T: Uniplate> DirtyZipper<T> {
     pub fn new(zipper: Zipper<T>) -> Self {
         Self {
             zipper,
-            node_state: None,
+            state: State::new(),
         }
     }
 
@@ -246,160 +317,71 @@ impl<T: Uniplate> DirtyZipper<T> {
     /// Set the children of the node to be empty - This is a new tree so we don't know what's
     /// below it.
     pub fn mark_dirty(&mut self) {
-        println!("Marking Dirty!");
-        let node = self
-            .node_state
-            .as_ref()
-            .expect("NodeState and Zipper out of Sync");
-        let mut node_state = Rc::clone(&node);
-        {
-            let mut node_state_mut = node_state.borrow_mut();
-            node_state_mut.dirty = true;
-            node_state_mut.current_child_index = 0;
-            node_state_mut.children.clear();
-        }
+        self.state.mark(true);
+        self.state.clear_children();
+
         while let Some(_) = self.zipper.go_up() {
-            println!("Marked Parent as dirty");
-            // Is there a way to do this without cloning?
-            let parent_option = node_state.borrow().parent.clone();
-            let parent_ref = parent_option
-                .as_ref()
-                .expect("NodeState and Zipper out of Sync. Missing Parent");
-            let mut parent_mut = parent_ref.borrow_mut();
-            parent_mut.dirty = true;
-            parent_mut.current_child_index = 0;
-            node_state.borrow_mut().parent = Some(Rc::clone(parent_ref));
-            node_state = Rc::clone(parent_ref);
-            self.node_state = Some(Rc::clone(parent_ref));
+            self.state.go_up();
+            self.state.mark(true);
         }
-        dbg!(&self.node_state);
     }
 
-    pub fn mark_clean(&mut self) {
-        let node = self
-            .node_state
-            .as_ref()
-            .expect("NodeState and Zipper out of Sync");
-        let node_state = Rc::clone(&node);
-        node_state.borrow_mut().dirty = false;
-    }
+    // pub fn mark_clean(&mut self) {
+    //     let node = self
+    //         .node_state
+    //         .as_ref()
+    //         .expect("NodeState and Zipper out of Sync");
+    //     let node_state = Rc::clone(&node);
+    //     node_state.borrow_mut().dirty = false;
+    // }
 
     /// Im in the thick of it rn...
     /// This is currently NOT working
-    /// The state is not properly synced right now 
-    /// This will still exhaustively go through all nodes 
+    /// The state is not properly synced right now
+    /// This will still exhaustively go through all nodes
     ///
     /// Skill issue from my end:
-    /// The way I've handled the state movement isnt very clear 
+    /// The way I've handled the state movement isnt very clear
     /// so I probably got confused from my own writing and somehow not linked the parent and child
-    /// note states together 
+    /// note states together
     ///
     /// When it marks as dirty and moves up, for some reason the root has no children (where did
     /// they go???)
     pub fn get_next_dirty(&mut self) -> Option<&T> {
-        if self.node_state.is_none() {
-            // TODO: Revisit Clean or Dirty
-            self.node_state = Some(Rc::new(RefCell::new(NodeState::new_clean())));
+        if self.state.get_dirty() {
             return Some(self.zipper.focus());
         }
 
-        if self.node_state.as_ref().unwrap().borrow().dirty {
-            return Some(self.zipper.focus());
-        }
-
-        let node = Rc::clone(self.node_state.as_ref().unwrap());
+        println!("Clean Node");
 
         if let Some(_) = self.zipper.go_down() {
-            println!("Going Down");
-            let mut node_state = node.borrow_mut();
-            // Safety: The parent is already created as above
-            let child_index = node_state.current_child_index;
-
-            // We have a child
-            println!("{}  < {}", child_index, node_state.children.len());
-            if child_index < node_state.children.len() {
-                let child = &node_state.children[child_index];
-                if child.borrow().dirty {
-                    self.node_state = Some(Rc::clone(child));
-                    return Some(self.zipper.focus());
-                }
-                println!("Child is clean");
-                // Child is Clean, move right so do nothing
-            } else {
-                // No child, create state and return focus
-                println!("New Child Made");
-                let mut child = NodeState::new_clean();
-                child.parent = Some(Rc::clone(&node));
-                node_state.children.push(Rc::new(RefCell::new(child)));
-                self.node_state = Some(Rc::clone(&node_state.children.last().unwrap()));
+            println!("Go Down");
+            self.state.go_down();
+            if self.state.get_dirty() {
                 return Some(self.zipper.focus());
             }
         }
+        println!("Clean Node");
 
-        // TODO: ASK FELIX
-        // Either the child is clean or there is no child
         while let Some(_) = self.zipper.go_right() {
             println!("Going Right");
-            let node_state = node.borrow();
-            let mut parent_node_state = node_state.parent.as_ref().unwrap().borrow_mut();
-            // If we can go right then there is a parent state node
-            parent_node_state.current_child_index += 1;
-            let child_index = parent_node_state.current_child_index;
-
-            println!("{}  < {}", child_index, node_state.children.len());
-            if child_index < parent_node_state.children.len() {
-                let child = &parent_node_state.children[child_index];
-                if child.borrow().dirty {
-                    self.node_state = Some(Rc::clone(child));
-                    return Some(self.zipper.focus());
-                }
-                println!("Child is clean");
-            } else {
-                // Need to make child
-                println!("New Child Made");
-                let mut child = NodeState::new_clean();
-                child.parent = Some(Rc::clone(&node));
-                parent_node_state
-                    .children
-                    .push(Rc::new(RefCell::new(child)));
-                self.node_state = Some(Rc::clone(&parent_node_state.children.last().unwrap()));
+            self.state.go_right();
+            if self.state.get_dirty() {
                 return Some(self.zipper.focus());
             }
         }
 
-        // Failed to go Down, Failed to go Right
-
+        println!("Clean Node");
         while let Some(_) = self.zipper.go_up() {
             println!("Going Up");
-            let node_state = node.borrow();
-            let mut parent_node_state = node_state
-                .parent
-                .as_ref()
-                .expect("NodeState and Zipper out of Sync")
-                .borrow_mut();
+            self.state.go_up();
             while let Some(_) = self.zipper.go_right() {
                 println!("Going Right");
-                parent_node_state.current_child_index += 1;
-                let child_index = parent_node_state.current_child_index;
-                println!("{}  < {}", child_index, node_state.children.len());
-                if child_index < parent_node_state.children.len() {
-                    let child = &parent_node_state.children[child_index];
-                    if child.borrow().dirty {
-                        self.node_state = Some(Rc::clone(child));
-                        return Some(self.zipper.focus());
-                    }
-                    println!("Child is clean");
-                } else {
-                    // Need to make child
-                    println!("New Child Made");
-                    let mut child = NodeState::new_clean();
-                    child.parent = Some(Rc::clone(&node));
-                    parent_node_state
-                        .children
-                        .push(Rc::new(RefCell::new(child)));
-                    self.node_state = Some(Rc::clone(&parent_node_state.children.last().unwrap()));
+                self.state.go_right();
+                if self.state.get_dirty() {
                     return Some(self.zipper.focus());
                 }
+                println!("Clean Node");
             }
         }
         None
@@ -426,7 +408,8 @@ fn morph_zipper_impl<T: Uniplate, M>(
                     // update.commands.apply(dirtyZipper.zipper.focus().clone(), meta);
                     continue 'main;
                 } else {
-                    dirty_zipper.mark_clean();
+                    dirty_zipper.state.mark(false);
+                    println!("Marked as Clean");
                 }
             }
         }
