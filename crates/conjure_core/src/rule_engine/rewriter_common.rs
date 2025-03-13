@@ -17,23 +17,29 @@ use std::fmt::Debug;
 use thiserror::Error;
 use tracing::{info, trace};
 
+// The RuleResult struct represents the
+// result of applying a rule to an expression.
 #[derive(Debug, Clone)]
 pub struct RuleResult<'a> {
     pub rule_data: RuleData<'a>,
     pub reduction: Reduction,
 }
 
-/// Logs, to the main log, and the human readable traces used by the integration tester, that the
-/// rule has been applied to the expression
+/// Logs the application of a rule and its effects,
+/// to the main log, and the human readable traces used by the integration tester,
+/// that the rule has been applied to the expression
 pub fn log_rule_application(
     result: &RuleResult,
     initial_expression: &Expression,
     initial_model: &SubModel,
 ) {
+    /// extracts data from the RuleResult struct
+    /// red = reduction and any constraints and variables
     let red = &result.reduction;
     let rule = result.rule_data.rule;
     let new_top_string = pretty_vec(&red.new_top);
 
+    /// logs rule application to the main log
     info!(
         %new_top_string,
         "Applying rule: {} ({:?}), to expression: {}, resulting in: {}",
