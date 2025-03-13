@@ -7,7 +7,9 @@ use crate::ast::{
     pretty::{pretty_variable_declaration, pretty_vec},
     Expression, SubModel,
 };
-use crate::pro_trace::{HumanFormatter, MessageFormatter, RuleTrace, StdoutConsumer, Trace};
+use crate::pro_trace::{
+    Consumer, HumanFormatter, RuleTrace, StdoutConsumer, Trace, VerbosityLevel,
+};
 
 use itertools::Itertools;
 use serde_json::json;
@@ -100,21 +102,6 @@ pub fn log_rule_application(
     })
 
     );
-
-    let rule_trace = RuleTrace {
-        initial_expression: initial_expression.clone(),
-        transformed_expression: red.new_expression.clone(),
-        rule_name: rule.name.to_string(),
-        rule_sets: rule.rule_sets.to_vec(),
-        new_variables_str: new_variables_str,
-        top_level_str: top_level_str,
-    };
-
-    let stdout_consumer = StdoutConsumer {
-        formatter: HumanFormatter {},
-    };
-
-    stdout_consumer.capture(&rule_trace);
 }
 
 /// Represents errors that can occur during the model rewriting process.

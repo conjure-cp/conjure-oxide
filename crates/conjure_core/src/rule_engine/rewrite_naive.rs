@@ -1,4 +1,8 @@
 use super::{resolve_rules::RuleData, RewriteError, RuleSet};
+use crate::pro_trace::{
+    capture_trace, check_verbosity_level, Consumer, MessageFormatter, RuleTrace, TraceStruct,
+    VerbosityLevel,
+};
 use crate::{
     ast::{Expression as Expr, SubModel},
     bug,
@@ -17,11 +21,15 @@ use uniplate::Biplate;
 
 /// A naive, exhaustive rewriter for development purposes. Applies rules in priority order,
 /// favouring expressions found earlier during preorder traversal of the tree.
-pub fn rewrite_naive<'a>(
+pub fn rewrite_naive<'a, F>(
     model: &Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
     prop_multiple_equally_applicable: bool,
-) -> Result<Model, RewriteError> {
+    consumer: Option<Consumer<F>>,
+) -> Result<Model, RewriteError>
+where
+    F: MessageFormatter,
+{
     let rules_grouped = get_rules_grouped(rule_sets)
         .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
         .into_iter()
@@ -47,6 +55,7 @@ pub fn rewrite_naive<'a>(
                 &mut submodel,
                 &rules_grouped,
                 prop_multiple_equally_applicable,
+                &consumer,
             )
             .is_some()
             {
@@ -71,13 +80,18 @@ pub fn rewrite_naive<'a>(
 // Tries to do a single rewrite on the model.
 //
 // Returns None if no change was made.
-fn try_rewrite_model(
+fn try_rewrite_model<F>(
     submodel: &mut SubModel,
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
     prop_multiple_equally_applicable: bool,
-) -> Option<()> {
+    consumer: &Option<Consumer<F>>,
+) -> Option<()>
+where
+    F: MessageFormatter,
+{
     type CtxFn = Arc<dyn Fn(Expr) -> SubModel>;
     let mut results: Vec<(RuleResult<'_>, u16, Expr, CtxFn)> = vec![];
+    let tracing_activated = consumer.is_some();
 
     // Iterate over rules by priority in descending order.
     'top: for (priority, rules) in rules_grouped.iter() {
@@ -102,15 +116,30 @@ fn try_rewrite_model(
                         ));
                     }
                     Err(_) => {
-                        // when called a lot, this becomes very expensive!
-                        #[cfg(debug_assertions)]
-                        tracing::trace!(
-                            "Rule attempted but not applied: {} (priority {}, rule set {}), to expression: {}",
-                            rd.rule.name,
-                            priority,
-                            rd.rule_set.name,
-                            expr
-                        );
+                        if let Some(consumer_ref) = consumer {
+                            if check_verbosity_level(&consumer_ref) == VerbosityLevel::High {
+                                let rule_trace = RuleTrace {
+                                    initial_expression: expr.clone(),
+                                    rule_name: rd.rule.name.to_string(),
+                                    rule_set_name: rd.rule_set.name.to_string(),
+                                    rule_priority: rd.priority,
+                                    transformed_expression: None,
+                                    new_variables_str: None,
+                                    top_level_str: None,
+                                };
+
+                                capture_trace(&consumer_ref, TraceStruct::RuleTrace(rule_trace));
+                            }
+                        }
+                        // // when called a lot, this becomes very expensive!
+                        // #[cfg(debug_assertions)]
+                        // tracing::trace!(
+                        //     "Rule attempted but not applied: {} (priority {}, rule set {}), to expression: {}",
+                        //     rd.rule.name,
+                        //     priority,
+                        //     rd.rule_set.name,
+                        //     expr
+                        // );
                     }
                 }
             }
