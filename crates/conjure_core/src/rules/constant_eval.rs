@@ -234,6 +234,26 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             }
             Some(Lit::Bool(true))
         }
+        Expr::FlatAllDiff(_, es) => {
+            let mut lits: HashSet<Lit> = HashSet::new();
+            for atom in es {
+                let Atom::Literal(x) = atom else {
+                    return None;
+                };
+
+                match x {
+                    Lit::Int(_) | Lit::Bool(_) => {
+                        if lits.contains(x) {
+                            return Some(Lit::Bool(false));
+                        } else {
+                            lits.insert(x.clone());
+                        }
+                    }
+                    Lit::AbstractLiteral(_) => return None, // Reject AbstractLiteral cases
+                }
+            }
+            Some(Lit::Bool(true))
+        }
         Expr::FlatWatchedLiteral(_, _, _) => None,
         Expr::AuxDeclaration(_, _, _) => None,
         Expr::Neg(_, a) => {

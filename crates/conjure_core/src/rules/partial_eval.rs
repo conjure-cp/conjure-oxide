@@ -344,6 +344,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
         // As these are in a low level solver form, I'm assuming that these have already been
         // simplified and partially evaluated.
+        FlatAllDiff(_, _) => Err(RuleNotApplicable),
         FlatAbsEq(_, _, _) => Err(RuleNotApplicable),
         FlatIneq(_, _, _, _) => Err(RuleNotApplicable),
         FlatMinusEq(_, _, _) => Err(RuleNotApplicable),
