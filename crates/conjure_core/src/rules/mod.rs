@@ -16,6 +16,7 @@ mod normalisers;
 mod partial_eval;
 mod subsitute_lettings;
 
+mod select_representation;
 mod utils;
 
 /// Denotes a block of code as extra, optional checks for a rule. Primarily, these are checks that

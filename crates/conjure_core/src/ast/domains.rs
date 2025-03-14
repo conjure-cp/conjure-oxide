@@ -1,9 +1,11 @@
 use std::fmt::Display;
 
+use conjure_core::ast::SymbolTable;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use crate::ast::pretty::pretty_vec;
+use uniplate::{derive::Uniplate, Uniplate};
 
 use super::{types::Typeable, AbstractLiteral, Literal, Name, ReturnType};
 
@@ -44,7 +46,8 @@ impl<A: Ord + Display> Display for Range<A> {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize, Uniplate)]
+#[uniplate()]
 pub enum Domain {
     BoolDomain,
 
@@ -127,6 +130,7 @@ impl Domain {
             (Domain::DomainSet(_, _), _) => Some(false),
         }
     }
+
     /// Return a list of all possible i32 values in the domain if it is an IntDomain and is
     /// bounded.
     pub fn values_i32(&self) -> Option<Vec<i32>> {
@@ -148,6 +152,23 @@ impl Domain {
         }
     }
 
+    /// Gets all the values inside this domain, as a [`Literal`]. Returns `None` if the domain is not
+    /// finite.
+    pub fn values(&self) -> Option<Vec<Literal>> {
+        match self {
+            Domain::BoolDomain => Some(vec![false.into(), true.into()]),
+            Domain::IntDomain(_) => self
+                .values_i32()
+                .map(|xs| xs.iter().map(|x| Literal::Int(*x)).collect_vec()),
+
+            // ~niklasdewally: don't know how to define this for collections, so leaving it for
+            // now... However, it definitely can be done, as matrices can be indexed by matrices.
+            Domain::DomainSet(_, _) => todo!(),
+            Domain::DomainMatrix(_, _) => todo!(),
+            Domain::DomainReference(_) => None,
+        }
+    }
+
     /// Return an unoptimised domain that is the result of applying a binary i32 operation to two domains.
     ///
     /// The given operator may return None if the operation is not defined for its arguments.
@@ -166,6 +187,64 @@ impl Domain {
             return Some(Domain::IntDomain(new_ranges));
         }
         None
+    }
+
+    /// Whether this domain has a finite number of values.
+    ///
+    /// Returns `None` if this cannot be determined, e.g. if `self` is a domain reference.
+    pub fn is_finite(&self) -> Option<bool> {
+        for domain in self.universe() {
+            if let Domain::IntDomain(ranges) = domain {
+                if ranges.is_empty() {
+                    return Some(false);
+                }
+
+                if ranges.iter().any(|range| match range {
+                    Range::UnboundedL(_) => true,
+                    Range::UnboundedR(_) => true,
+                    _ => false,
+                }) {
+                    return Some(false);
+                }
+            } else if let Domain::DomainReference(_) = domain {
+                return None;
+            }
+        }
+        Some(true)
+    }
+
+    /// Resolves this domain to a ground domain, using the symbol table provided to resolve
+    /// references.
+    ///
+    /// A domain is ground iff it is not a domain reference, nor contains any domain references.
+    ///
+    /// See also: [`SymbolTable::resolve_domain`](crate::ast::SymbolTable::resolve_domain).
+    ///
+    /// # Panics
+    ///
+    /// + If a reference domain in `self` does not exist in the given symbol table.
+    pub fn resolve(mut self, symbols: &SymbolTable) -> Domain {
+        // FIXME: cannot use Uniplate::transform here due to reference lifetime shenanigans...
+        // dont see any reason why Uniplate::transform requires a closure that only uses borrows
+        // with a 'static lifetime... ~niklasdewally
+        // ..
+        // Also, still want to make the Uniplate variant which uses FnOnce not Fn with methods that
+        // take self instead of &self -- that would come in handy here!
+
+        let mut done_something = true;
+        while done_something {
+            done_something = false;
+            for (domain, ctx) in self.clone().contexts() {
+                if let Domain::DomainReference(name) = domain {
+                    self = ctx(symbols
+                        .resolve_domain(&name)
+                        .expect("domain reference should exist in the symbol table")
+                        .resolve(symbols));
+                    done_something = true;
+                }
+            }
+        }
+        self
     }
 }
 
