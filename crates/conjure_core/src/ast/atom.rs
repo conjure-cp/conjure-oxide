@@ -24,7 +24,7 @@ impl Atom {
 }
 
 impl std::fmt::Display for Atom {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { 
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Atom::Literal(x) => x.fmt(f),
             Atom::Reference(x) => x.fmt(f),
