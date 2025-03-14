@@ -1,4 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, rc::Rc, usize};
 
 use crate::{helpers::one_or_select, Commands, Rule, Update};
 use uniplate::{zipper::Zipper, Uniplate};
@@ -165,27 +165,24 @@ fn morph_impl<T: Uniplate, M>(
 
 struct State {
     node: Rc<RefCell<NodeState>>,
-    root: Rc<RefCell<NodeState>>,
 }
 
 impl State {
     pub fn new() -> Self {
         let node = Rc::new(RefCell::new(NodeState::new_dirty()));
-        Self {
-            root: Rc::clone(&node),
-            node,
-        }
+        Self { node }
     }
 
-    pub fn mark(&mut self, dirty: bool) {
-        self.node.borrow_mut().dirty = dirty;
-        if dirty {
+    pub fn mark(&mut self, cleanliness: usize) {
+        let old = self.node.borrow().cleanliness;
+        self.node.borrow_mut().cleanliness = cleanliness;
+        if cleanliness < old {
             self.node.borrow_mut().current_child_index = 0;
         }
     }
 
-    pub fn get_dirty(&self) -> bool {
-        self.node.borrow().dirty
+    pub fn get_cleanliness(&self) -> usize {
+        self.node.borrow().cleanliness
     }
 
     pub fn clear_children(&mut self) {
@@ -204,7 +201,6 @@ impl State {
             self.node = Rc::clone(&node_state.children[node_state.current_child_index]);
             return;
         }
-        println!("Create Child");
         let mut new_node = NodeState::new_dirty();
         new_node.parent = Some(Rc::clone(&self.node));
         node_state.children.push(Rc::new(RefCell::new(new_node)));
@@ -246,14 +242,14 @@ struct NodeState {
     parent: Option<Rc<RefCell<NodeState>>>,
     children: Vec<Rc<RefCell<NodeState>>>,
     current_child_index: usize,
-    dirty: bool,
+    cleanliness: usize,
 }
 
 impl NodeState {
     pub fn new_dirty() -> Self {
         Self {
             current_child_index: 0,
-            dirty: true,
+            cleanliness: 0,
             parent: None,
             children: Vec::new(),
         }
@@ -262,7 +258,7 @@ impl NodeState {
     pub fn new_clean() -> Self {
         Self {
             current_child_index: 0,
-            dirty: false,
+            cleanliness: usize::MAX,
             parent: None,
             children: Vec::new(),
         }
@@ -272,7 +268,7 @@ impl NodeState {
         for (i, child) in self.children.iter().enumerate() {
             writeln!(f, "{}Child {}: {{", " ".repeat(indent), i)?;
             let child = child.borrow();
-            writeln!(f, "{}  dirty: {},", " ".repeat(indent), child.dirty)?;
+            writeln!(f, "{}  dirty: {},", " ".repeat(indent), child.cleanliness)?;
             writeln!(
                 f,
                 "{}  current_child_index: {},",
@@ -291,7 +287,7 @@ impl NodeState {
 impl fmt::Debug for NodeState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "NodeState {{")?;
-        writeln!(f, "  dirty: {},", self.dirty)?;
+        writeln!(f, "  cleanliness: {},", self.cleanliness)?;
         writeln!(f, "  current_child_index: {},", self.current_child_index)?;
         writeln!(f, "  parent: {},", self.parent.is_some())?;
         writeln!(f, "  children: [")?;
@@ -318,72 +314,42 @@ impl<T: Uniplate> DirtyZipper<T> {
     /// ready for new rule applications.
     /// Set the children of the node to be empty - This is a new tree so we don't know what's
     /// below it.
-    pub fn mark_dirty(&mut self) {
-        self.state.mark(true);
+    pub fn mark_cleanliness(&mut self) {
+        self.state.mark(0);
         self.state.clear_children();
 
         while let Some(_) = self.zipper.go_up() {
             self.state.go_up();
-            self.state.mark(true);
+            self.state.mark(0);
         }
     }
 
-    // pub fn mark_clean(&mut self) {
-    //     let node = self
-    //         .node_state
-    //         .as_ref()
-    //         .expect("NodeState and Zipper out of Sync");
-    //     let node_state = Rc::clone(&node);
-    //     node_state.borrow_mut().dirty = false;
-    // }
-
-    /// Im in the thick of it rn...
-    /// This is currently NOT working
-    /// The state is not properly synced right now
-    /// This will still exhaustively go through all nodes
-    ///
-    /// Skill issue from my end:
-    /// The way I've handled the state movement isnt very clear
-    /// so I probably got confused from my own writing and somehow not linked the parent and child
-    /// note states together
-    ///
-    /// When it marks as dirty and moves up, for some reason the root has no children (where did
-    /// they go???)
-    pub fn get_next_dirty(&mut self) -> Option<&T> {
-        if self.state.get_dirty() {
+    pub fn get_next_dirty(&mut self, level: usize) -> Option<&T> {
+        if self.state.get_cleanliness() <= level {
             return Some(self.zipper.focus());
         }
 
         if let Some(_) = self.zipper.go_down() {
-            println!("Go Down");
             dbg!(&self.state.node);
             self.state.go_down();
-            if self.state.get_dirty() {
-                println!("IS DIRTY");
+            if self.state.get_cleanliness() <= level {
                 return Some(self.zipper.focus());
             }
         }
-        println!("Clean Node");
-
         while let Some(_) = self.zipper.go_right() {
-            println!("Going Right");
             self.state.go_right();
-            if self.state.get_dirty() {
+            if self.state.get_cleanliness() <= level {
                 return Some(self.zipper.focus());
             }
         }
 
-        println!("Clean Node");
         while let Some(_) = self.zipper.go_up() {
-            println!("Going Up");
             self.state.go_up();
             while let Some(_) = self.zipper.go_right() {
-                println!("Going Right");
                 self.state.go_right();
-                if self.state.get_dirty() {
+                if self.state.get_cleanliness() <= level {
                     return Some(self.zipper.focus());
                 }
-                println!("Clean Node");
             }
         }
         None
@@ -400,25 +366,16 @@ fn morph_zipper_impl<T: Uniplate, M>(
     let mut dirty_zipper = DirtyZipper::new(zipper);
     'main: loop {
         // I need to do my thing
-        for transform in transforms.iter() {
-            while let Some(node) = dirty_zipper.get_next_dirty() {
-                println!("Got next dirty node");
+        for (level, transform) in transforms.iter().enumerate() {
+            println!("Level: {}", level);
+            while let Some(node) = dirty_zipper.get_next_dirty(level) {
                 if let Some(update) = transform(&node, &meta) {
-                    println!("Applying Rule!!!!!");
                     dirty_zipper.zipper.replace_focus(update.new_subtree);
-                    println!("BEFORE DIRTY");
-                    dbg!(&dirty_zipper.state.root);
-                    dirty_zipper.mark_dirty();
-                    println!("AFTER DIRTY");
-                    dbg!(&dirty_zipper.state.root);
-                    println!("AFTER DIRTY Current Node");
-                    dbg!(&dirty_zipper.state.node);
-
+                    dirty_zipper.mark_cleanliness();
                     // update.commands.apply(dirtyZipper.zipper.focus().clone(), meta);
                     continue 'main;
                 } else {
-                    dirty_zipper.state.mark(false);
-                    println!("Marked as Clean");
+                    dirty_zipper.state.mark(level + 1);
                 }
             }
         }
