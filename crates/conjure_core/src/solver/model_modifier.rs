@@ -12,7 +12,7 @@ use super::Solver;
 
 /// A ModelModifier provides an interface to modify a model during solving.
 ///
-/// Modifications are defined in terms of  nodes, so must be translated to a solver
+/// Modifications are defined in terms of Conjure AST nodes, so must be translated to a solver
 /// specfic form before use.
 ///
 /// It is implementation defined whether these constraints can be given at high level and passed

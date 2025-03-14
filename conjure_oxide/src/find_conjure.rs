@@ -8,7 +8,7 @@ const CORRECT_FIRST_LINE: &str = "Conjure: The Automated Constraint Modelling To
 /// Returns () on success and an error on failure.
 pub fn conjure_executable() -> Result<()> {
     let mut cmd = std::process::Command::new("conjure");
-    let output = cmd.output()?;
+    let output = cmd.arg("--version").output()?;
     let stdout = String::from_utf8(output.stdout)?;
     let stderr = String::from_utf8(output.stderr)?;
     if !stderr.is_empty() {

@@ -211,7 +211,7 @@ pub fn main() -> AnyhowResult<()> {
         .init();
 
     if !(target_family == SolverFamily::SAT || target_family == SolverFamily::Minion) {
-        tracing::error!("Diagnostic: Only the SAT and Minion solver is currently supported!");
+        tracing::error!("Only the SAT and Minion solver is currently supported!");
         exit(1);
     }
 
@@ -328,7 +328,7 @@ fn run_solver(cli: &Cli, model: Model) -> anyhow::Result<()> {
             SolverFamily::SAT => run_sat_solver(cli, model),
             SolverFamily::Minion => run_minion(cli, model),
         },
-        None => run_sat_solver(cli, model),
+        None => panic!("main::run_solver() : Unreachable: Should never be None"),
     }
 }
 
