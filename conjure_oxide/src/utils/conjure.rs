@@ -6,6 +6,7 @@ use std::sync::{Arc, Mutex, RwLock};
 
 use conjure_core::ast::{Literal, Name};
 use conjure_core::context::Context;
+use conjure_core::solver::adaptors::SAT;
 use rand::Rng as _;
 use serde_json::{from_str, Map, Value as JsonValue};
 use thiserror::Error as ThisError;
@@ -87,6 +88,51 @@ pub fn get_minion_solutions(
     let solver = solver.load_model(model)?;
 
     println!("Running Minion...");
+
+    let all_solutions_ref = Arc::new(Mutex::<Vec<BTreeMap<Name, Literal>>>::new(vec![]));
+    let all_solutions_ref_2 = all_solutions_ref.clone();
+    let solver = if num_sols > 0 {
+        let sols_left = Mutex::new(num_sols);
+
+        #[allow(clippy::unwrap_used)]
+        solver
+            .solve(Box::new(move |sols| {
+                let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
+                (*all_solutions).push(sols.into_iter().collect());
+                let mut sols_left = sols_left.lock().unwrap();
+                *sols_left -= 1;
+
+                *sols_left != 0
+            }))
+            .unwrap()
+    } else {
+        #[allow(clippy::unwrap_used)]
+        solver
+            .solve(Box::new(move |sols| {
+                let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
+                (*all_solutions).push(sols.into_iter().collect());
+                true
+            }))
+            .unwrap()
+    };
+
+    solver.save_stats_to_context();
+
+    #[allow(clippy::unwrap_used)]
+    let sols = (*all_solutions_ref).lock().unwrap();
+
+    Ok((*sols).clone())
+}
+
+pub fn get_sat_solutions(
+    model: Model,
+    num_sols: i32,
+) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
+    let solver = Solver::new(SAT::default());
+    println!("Building SAT model...");
+    let solver = solver.load_model(model)?;
+
+    println!("Running SAT...");
 
     let all_solutions_ref = Arc::new(Mutex::<Vec<BTreeMap<Name, Literal>>>::new(vec![]));
     let all_solutions_ref_2 = all_solutions_ref.clone();
@@ -209,7 +255,7 @@ pub fn get_solutions_from_conjure(
     Ok(solutions_set)
 }
 
-pub fn minion_solutions_to_json(solutions: &Vec<BTreeMap<Name, Literal>>) -> JsonValue {
+pub fn solutions_to_json(solutions: &Vec<BTreeMap<Name, Literal>>) -> JsonValue {
     let mut json_solutions = Vec::new();
     for solution in solutions {
         let mut json_solution = Map::new();
