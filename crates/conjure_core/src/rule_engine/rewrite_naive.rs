@@ -129,6 +129,7 @@ where
                                 };
 
                                 capture_trace(&consumer_ref, TraceStruct::RuleTrace(rule_trace));
+                                println!("help");
                             }
                         }
                         // // when called a lot, this becomes very expensive!

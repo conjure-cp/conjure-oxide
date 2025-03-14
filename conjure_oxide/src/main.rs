@@ -7,7 +7,9 @@ use std::sync::Arc;
 use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
-use conjure_core::pro_trace::{self, Consumer, HumanFormatter, StdoutConsumer, VerbosityLevel};
+use conjure_core::pro_trace::{
+    self, Consumer, FileConsumer, HumanFormatter, JsonFormatter, StdoutConsumer, VerbosityLevel,
+};
 use git_version::git_version;
 use schemars::schema_for;
 use serde_json::to_string_pretty;
@@ -246,12 +248,13 @@ pub fn main() -> AnyhowResult<()> {
 
     //consumer for protrace
     //will later be created from command-line arguments
-    let formatter = HumanFormatter;
-    let stdout_consumer = StdoutConsumer {
+    let formatter = JsonFormatter;
+    let file_consumer = FileConsumer {
         formatter,
         verbosity: VerbosityLevel::High,
+        file_path: "conjure_oxide/src/protrace.json".to_string(),
     };
-    let consumer = Some(Consumer::StdoutConsumer(stdout_consumer));
+    let consumer: Option<Consumer<JsonFormatter>> = Some(Consumer::FileConsumer(file_consumer));
     /******************************************************/
     /*        Parse essence to json using Conjure         */
     /******************************************************/

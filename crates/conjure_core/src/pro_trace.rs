@@ -88,6 +88,8 @@ impl MessageFormatter for JsonFormatter {
 
 // represents the different types of consumers
 // one consumer writes to the console, the other writes to a file
+// a Consumer recieves a TraceStruct, processes its data
+// according to the consumer type, and sends it to the appropriate destination
 pub enum Consumer<F: MessageFormatter> {
     StdoutConsumer(StdoutConsumer<F>),
     FileConsumer(FileConsumer<F>),
@@ -119,9 +121,8 @@ impl<F: MessageFormatter> Trace<F> for FileConsumer<F> {
     fn capture(&self, trace: TraceStruct) {
         let formatted_output = self.formatter.format(trace);
         let mut file = OpenOptions::new()
-            .write(true) // overwrite the file if it already exists
+            .append(true) // overwrite the file if it already exists
             .create(true)
-            .truncate(true) // clear the file before writing
             .open(&self.file_path)
             .unwrap();
         writeln!(file, "{}", formatted_output).unwrap();
@@ -136,7 +137,7 @@ where
 {
     match consumer {
         Consumer::StdoutConsumer(stdout_consumer) => stdout_consumer.verbosity.clone(),
-        Consumer::FileConsumer(_) => VerbosityLevel::Medium,
+        Consumer::FileConsumer(file_consumer) => file_consumer.verbosity.clone(),
     }
 }
 
