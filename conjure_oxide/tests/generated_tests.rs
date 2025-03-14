@@ -1,5 +1,6 @@
 #![allow(clippy::expect_used)]
 
+use conjure_core::pro_trace::{self, Consumer, HumanFormatter, StdoutConsumer, VerbosityLevel};
 use conjure_core::rule_engine::rewrite_model;
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
@@ -274,10 +275,16 @@ fn integration_test_inner(
                 &rule_sets,
             )?
         } else {
+            //temporarilly
+            //termporary
+            let consumer: Option<Consumer<HumanFormatter>> =
+                Option::<Consumer<HumanFormatter>>::None;
+
             rewrite_naive(
                 model.as_ref().expect("Model must be parsed in 1a"),
                 &rule_sets,
                 false,
+                consumer,
             )?
         };
 

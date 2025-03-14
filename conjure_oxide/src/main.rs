@@ -7,6 +7,9 @@ use std::sync::Arc;
 use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
+use conjure_core::pro_trace::{
+    self, Consumer, FileConsumer, HumanFormatter, JsonFormatter, StdoutConsumer, VerbosityLevel,
+};
 use git_version::git_version;
 use schemars::schema_for;
 use serde_json::to_string_pretty;
@@ -243,6 +246,15 @@ pub fn main() -> AnyhowResult<()> {
         "Given input_file could not be converted to a string"
     ))?;
 
+    //consumer for protrace
+    //will later be created from command-line arguments
+    let formatter = JsonFormatter;
+    let file_consumer = FileConsumer {
+        formatter,
+        verbosity: VerbosityLevel::High,
+        file_path: "conjure_oxide/src/protrace.json".to_string(),
+    };
+    let consumer: Option<Consumer<JsonFormatter>> = Some(Consumer::FileConsumer(file_consumer));
     /******************************************************/
     /*        Parse essence to json using Conjure         */
     /******************************************************/
@@ -290,7 +302,12 @@ pub fn main() -> AnyhowResult<()> {
         model = rewrite_model(&model, &rule_sets)?;
     } else {
         tracing::info!("Rewriting model...");
-        model = rewrite_naive(&model, &rule_sets, cli.check_equally_applicable_rules)?;
+        model = rewrite_naive(
+            &model,
+            &rule_sets,
+            cli.check_equally_applicable_rules,
+            consumer,
+        )?;
     }
 
     tracing::info!("Rewritten model: \n{}\n", model);

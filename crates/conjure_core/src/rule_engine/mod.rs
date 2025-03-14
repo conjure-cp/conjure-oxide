@@ -72,7 +72,6 @@ pub use rule_set::RuleSet;
 mod submodel_zipper;
 
 use crate::solver::SolverFamily;
-
 mod resolve_rules;
 mod rewrite;
 mod rewrite_naive;
