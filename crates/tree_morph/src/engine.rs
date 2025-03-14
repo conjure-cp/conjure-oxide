@@ -150,7 +150,7 @@ fn morph_impl<T: Uniplate, M>(
             for (node, ctx) in tree.contexts() {
                 if let Some(mut update) = transform(&node, &meta) {
                     let whole_tree = ctx(update.new_subtree);
-                    (new_tree, meta) = update.commands.apply(whole_tree, meta);
+                    (new_tree, meta, _) = update.commands.apply(whole_tree, meta);
 
                     // Restart with the first transform every time a change is made
                     continue 'main;
@@ -173,7 +173,7 @@ impl State {
         Self { node }
     }
 
-    pub fn mark(&mut self, cleanliness: usize) {
+    pub fn mark_cleanliness(&mut self, cleanliness: usize) {
         let old = self.node.borrow().cleanliness;
         self.node.borrow_mut().cleanliness = cleanliness;
         if cleanliness < old {
@@ -221,7 +221,6 @@ impl State {
             return;
         }
 
-        println!("Create Child");
         let mut new_node = NodeState::new_dirty();
         new_node.parent = Some(Rc::clone(&parent));
         parent_state.children.push(Rc::new(RefCell::new(new_node)));
@@ -314,13 +313,13 @@ impl<T: Uniplate> DirtyZipper<T> {
     /// ready for new rule applications.
     /// Set the children of the node to be empty - This is a new tree so we don't know what's
     /// below it.
-    pub fn mark_cleanliness(&mut self) {
-        self.state.mark(0);
+    pub fn mark_dirty(&mut self) {
+        self.state.mark_cleanliness(0);
         self.state.clear_children();
 
         while let Some(_) = self.zipper.go_up() {
             self.state.go_up();
-            self.state.mark(0);
+            self.state.mark_cleanliness(0);
         }
     }
 
@@ -366,15 +365,22 @@ fn morph_zipper_impl<T: Uniplate, M>(
     'main: loop {
         // I need to do my thing
         for (level, transform) in transforms.iter().enumerate() {
-            println!("Level: {}", level);
             while let Some(node) = dirty_zipper.get_next_dirty(level) {
-                if let Some(update) = transform(&node, &meta) {
+                if let Some(mut update) = transform(&node, &meta) {
                     dirty_zipper.zipper.replace_focus(update.new_subtree);
-                    dirty_zipper.mark_cleanliness();
+                    dirty_zipper.mark_dirty();
+                    let (new_tree, m, transformed) = update
+                        .commands
+                        .apply(dirty_zipper.zipper.focus().clone(), meta);
+                    meta = m;
+                    if transformed {
+                        dirty_zipper.state = State::new();
+                        dirty_zipper.zipper = Zipper::new(new_tree);
+                    }
                     // update.commands.apply(dirtyZipper.zipper.focus().clone(), meta);
                     continue 'main;
                 } else {
-                    dirty_zipper.state.mark(level + 1);
+                    dirty_zipper.state.mark_cleanliness(level + 1);
                 }
             }
         }
