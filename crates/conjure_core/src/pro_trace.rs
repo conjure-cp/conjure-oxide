@@ -1,6 +1,7 @@
 use crate::ast::Expression;
 use std::fmt;
 
+/// represents the trace of a rule application
 pub struct RuleTrace {
     pub initial_expression: Expression,
     pub rule_name: String,
@@ -11,11 +12,13 @@ pub struct RuleTrace {
     pub top_level_str: Option<String>,
 }
 
+/// represents different types of traces
 pub enum TraceStruct {
     RuleTrace(RuleTrace),
     Model,
 }
 
+/// provides a human readable representation of the RuleTrace struct
 impl fmt::Display for RuleTrace {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -39,13 +42,14 @@ impl fmt::Display for RuleTrace {
     }
 }
 
+/// represents the level of detail in the trace
 #[derive(Clone, PartialEq)]
 pub enum VerbosityLevel {
     Low,
     Medium,
     High,
 }
-
+/// defines trait for formatting traces
 pub trait Trace<F: MessageFormatter> {
     fn capture(&self, trace: TraceStruct);
 }
@@ -56,6 +60,7 @@ pub trait MessageFormatter {
 
 pub struct HumanFormatter;
 
+// human-readable formatter implementing the MessageFormatter trait
 impl MessageFormatter for HumanFormatter {
     fn format(&self, trace: TraceStruct) -> String {
         match trace {
@@ -67,6 +72,8 @@ impl MessageFormatter for HumanFormatter {
     }
 }
 
+// represents the different types of consumers
+// one consumer writes to the console, the other writes to a file
 pub enum Consumer<F: MessageFormatter> {
     StdoutConsumer(StdoutConsumer<F>),
     FileConsumer(FileConsumer<F>),
@@ -81,6 +88,9 @@ pub struct FileConsumer<F: MessageFormatter> {
     pub formatter: F,
 }
 
+// implementation of the Trace trait for the StdoutConsumer struct
+// provides an implementation for the capture method, which
+// formats the trace and prints it to the console
 impl<F: MessageFormatter> Trace<F> for StdoutConsumer<F> {
     fn capture(&self, trace: TraceStruct) {
         let formatted_output = self.formatter.format(trace);
@@ -88,10 +98,12 @@ impl<F: MessageFormatter> Trace<F> for StdoutConsumer<F> {
     }
 }
 
+// implementation of the Trace trait for the FileConsumer struct
 impl<F: MessageFormatter> Trace<F> for FileConsumer<F> {
-    fn capture(&self, trace: TraceStruct) {}
+    fn capture(&self, trace: TraceStruct) {} // needs to be defined
 }
 
+// which returns the verbosity level of the consumer
 pub fn check_verbosity_level<F>(consumer: &Consumer<F>) -> VerbosityLevel
 where
     F: MessageFormatter,
@@ -102,6 +114,8 @@ where
     }
 }
 
+// provides an implementation for the capture method, which
+// sends the trace to the appropriate consumer
 pub fn capture_trace<F>(consumer: &Consumer<F>, trace: TraceStruct)
 where
     F: MessageFormatter,
