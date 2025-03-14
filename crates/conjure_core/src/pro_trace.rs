@@ -1,6 +1,8 @@
 use crate::ast::Expression;
-use std::fmt;
+use serde_json;
+use std::{fmt, fs::OpenOptions, io::Write};
 
+#[derive(serde::Serialize)] // added for serialisation to JSON using serde
 /// represents the trace of a rule application
 pub struct RuleTrace {
     pub initial_expression: Expression,
@@ -72,6 +74,18 @@ impl MessageFormatter for HumanFormatter {
     }
 }
 
+pub struct JsonFormatter;
+
+// JSON formatter implementing the MessageFormatter trait
+impl MessageFormatter for JsonFormatter {
+    fn format(&self, trace: TraceStruct) -> String {
+        match trace {
+            TraceStruct::RuleTrace(rule_trace) => serde_json::to_string(&rule_trace).unwrap(),
+            _ => String::from("Unknown trace"),
+        }
+    }
+}
+
 // represents the different types of consumers
 // one consumer writes to the console, the other writes to a file
 pub enum Consumer<F: MessageFormatter> {
@@ -86,6 +100,8 @@ pub struct StdoutConsumer<F: MessageFormatter> {
 
 pub struct FileConsumer<F: MessageFormatter> {
     pub formatter: F,
+    pub verbosity: VerbosityLevel,
+    pub file_path: String, // path to file where the trace will be written
 }
 
 // implementation of the Trace trait for the StdoutConsumer struct
@@ -100,7 +116,17 @@ impl<F: MessageFormatter> Trace<F> for StdoutConsumer<F> {
 
 // implementation of the Trace trait for the FileConsumer struct
 impl<F: MessageFormatter> Trace<F> for FileConsumer<F> {
-    fn capture(&self, trace: TraceStruct) {} // needs to be defined
+    fn capture(&self, trace: TraceStruct) {
+        let formatted_output = self.formatter.format(trace);
+        let mut file = OpenOptions::new()
+            .write(true) // overwrite the file if it already exists
+            .create(true)
+            .truncate(true) // clear the file before writing
+            .open(&self.file_path)
+            .unwrap();
+        writeln!(file, "{}", formatted_output).unwrap();
+        // could do better error handling with Ok(()) ? or expect()
+    }
 }
 
 // which returns the verbosity level of the consumer
