@@ -100,7 +100,7 @@ pub fn handle_disjn(
     inst_in_use: &mut SatInstance,
 ) {
     let cl: &Vec<Expression> = match disjn {
-        Expression::Or(_, vec) => vec,
+        Expression::Or(_, vec) => &vec.clone().unwrap_list().unwrap(),
         _ => panic!(),
     };
     let l1 = &cl[0];
