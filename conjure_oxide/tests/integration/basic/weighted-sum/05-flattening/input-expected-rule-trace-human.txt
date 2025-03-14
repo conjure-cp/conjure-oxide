@@ -35,29 +35,29 @@ UnsafeDiv(e, f),
 
 Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), {SafeDiv(e, f) @ (f != 0)}, Product([6, UnsafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, UnsafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) @ And([(f != 0)])} 
+{Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, UnsafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) @ and([(f != 0);int(1..)])} 
 
 --
 
-({Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, UnsafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) @ And([(f != 0)])} <= 18), 
+({Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, UnsafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) @ and([(f != 0);int(1..)])} <= 18), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, UnsafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18) @ And([And([(f != 0)])])} 
+{(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, UnsafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18) @ and([and([(f != 0);int(1..)]);int(1..)])} 
 
 --
 
-{(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, UnsafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18) @ And([And([(f != 0)])])}, 
+{(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, UnsafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18) @ and([and([(f != 0);int(1..)]);int(1..)])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-And([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, UnsafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18), And([And([(f != 0)])])]) 
+and([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, UnsafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18),and([and([(f != 0);int(1..)]);int(1..)]);int(1..)]) 
 
 --
 
-And([And([(f != 0)])]), 
+and([and([(f != 0);int(1..)]);int(1..)]), 
    ~~> remove_unit_vector_and ([("Base", 8800)]) 
-And([(f != 0)]) 
+and([(f != 0);int(1..)]) 
 
 --
 
-And([(f != 0)]), 
+and([(f != 0);int(1..)]), 
    ~~> remove_unit_vector_and ([("Base", 8800)]) 
 (f != 0) 
 
@@ -71,31 +71,31 @@ UnsafeDiv(g, h),
 
 Product([6, {SafeDiv(g, h) @ (h != 0)}]), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{Product([6, SafeDiv(g, h)]) @ And([(h != 0)])} 
+{Product([6, SafeDiv(g, h)]) @ and([(h != 0);int(1..)])} 
 
 --
 
-Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), {Product([6, SafeDiv(g, h)]) @ And([(h != 0)])}, -(a), -(UnsafeDiv(g, h))]), 
+Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), {Product([6, SafeDiv(g, h)]) @ and([(h != 0);int(1..)])}, -(a), -(UnsafeDiv(g, h))]), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) @ And([And([(h != 0)])])} 
+{Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) @ and([and([(h != 0);int(1..)]);int(1..)])} 
 
 --
 
-({Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) @ And([And([(h != 0)])])} <= 18), 
+({Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) @ and([and([(h != 0);int(1..)]);int(1..)])} <= 18), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18) @ And([And([And([(h != 0)])])])} 
+{(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18) @ and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)])} 
 
 --
 
-{(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18) @ And([And([And([(h != 0)])])])}, 
+{(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18) @ and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-And([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18), And([And([And([(h != 0)])])])]) 
+and([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18),and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
 
 --
 
-And([And([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18), And([And([And([(h != 0)])])])]), (f != 0)]), 
+and([and([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18),and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]),(f != 0);int(1..)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
-And([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18), (h != 0), (f != 0)]) 
+and([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18),(h != 0),(f != 0);int(1..)]) 
 
 --
 
@@ -107,31 +107,31 @@ UnsafeDiv(g, h),
 
 -({SafeDiv(g, h) @ (h != 0)}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{-(SafeDiv(g, h)) @ And([(h != 0)])} 
+{-(SafeDiv(g, h)) @ and([(h != 0);int(1..)])} 
 
 --
 
-Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), {-(SafeDiv(g, h)) @ And([(h != 0)])}]), 
+Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), {-(SafeDiv(g, h)) @ and([(h != 0);int(1..)])}]), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) @ And([And([(h != 0)])])} 
+{Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) @ and([and([(h != 0);int(1..)]);int(1..)])} 
 
 --
 
-({Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) @ And([And([(h != 0)])])} <= 18), 
+({Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) @ and([and([(h != 0);int(1..)]);int(1..)])} <= 18), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) <= 18) @ And([And([And([(h != 0)])])])} 
+{(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) <= 18) @ and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)])} 
 
 --
 
-{(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) <= 18) @ And([And([And([(h != 0)])])])}, 
+{(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) <= 18) @ and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-And([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) <= 18), And([And([And([(h != 0)])])])]) 
+and([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) <= 18),and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
 
 --
 
-And([And([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) <= 18), And([And([And([(h != 0)])])])]), (h != 0), (f != 0)]), 
+and([and([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) <= 18),and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]),(h != 0),(f != 0);int(1..)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
-And([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) <= 18), (h != 0), (h != 0), (f != 0)]) 
+and([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) <= 18),(h != 0),(h != 0),(f != 0);int(1..)]) 
 
 --
 
@@ -191,7 +191,7 @@ find __3: int(0..5)
 
 such that
 
-And([FlatWeightedSumLeq([2, 2, 3, 1, 6, -1, -1],[a, b, __0, __1, __2, a, __3],18), (h != 0), (h != 0), (f != 0)]),
+and([FlatWeightedSumLeq([2, 2, 3, 1, 6, -1, -1],[a, b, __0, __1, __2, a, __3],18),(h != 0),(h != 0),(f != 0);int(1..)]),
 FlatProductEq(d,c,__0),
 DivEq(e, f, __1),
 DivEq(g, h, __2),

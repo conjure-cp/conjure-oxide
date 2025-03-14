@@ -573,13 +573,19 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
         use conjure_core::ast::Expression::*;
         match node {
             Sum(_, ref vec) => assert_constants_leq_one(&node, vec),
-            Min(_, ref vec) => assert_constants_leq_one(&node, vec),
-            Max(_, ref vec) => assert_constants_leq_one(&node, vec),
-            Or(_, ref vec) => assert_constants_leq_one(&node, vec),
-            And(_, ref vec) => assert_constants_leq_one(&node, vec),
+            Min(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),
+            Max(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),
+            Or(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),
+            And(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),
             _ => (),
         };
     }
+}
+
+fn assert_constants_leq_one_vec_lit(parent_expr: &Expression, expr: &Expression) {
+    if let Some(exprs) = expr.clone().unwrap_list() {
+        assert_constants_leq_one(parent_expr, &exprs);
+    };
 }
 
 fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {

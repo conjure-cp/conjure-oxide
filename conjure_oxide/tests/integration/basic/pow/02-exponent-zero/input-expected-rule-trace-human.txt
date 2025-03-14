@@ -11,25 +11,25 @@ such that
 
 UnsafePow(x, y), 
    ~~> pow_to_bubble ([("Bubble", 6000)]) 
-{SafePow(x, y) @ And([Or([(x != 0), (y != 0)]), (y >= 0)])} 
+{SafePow(x, y) @ and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)])} 
 
 --
 
-({SafePow(x, y) @ And([Or([(x != 0), (y != 0)]), (y >= 0)])} = 4), 
+({SafePow(x, y) @ and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)])} = 4), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(SafePow(x, y) = 4) @ And([And([Or([(x != 0), (y != 0)]), (y >= 0)])])} 
+{(SafePow(x, y) = 4) @ and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)])} 
 
 --
 
-{(SafePow(x, y) = 4) @ And([And([Or([(x != 0), (y != 0)]), (y >= 0)])])}, 
+{(SafePow(x, y) = 4) @ and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-And([(SafePow(x, y) = 4), And([And([Or([(x != 0), (y != 0)]), (y >= 0)])])]) 
+and([(SafePow(x, y) = 4),and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)]);int(1..)]) 
 
 --
 
-And([(SafePow(x, y) = 4), And([And([Or([(x != 0), (y != 0)]), (y >= 0)])])]), 
+and([(SafePow(x, y) = 4),and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)]);int(1..)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
-And([(SafePow(x, y) = 4), Or([(x != 0), (y != 0)]), (y >= 0)]) 
+and([(SafePow(x, y) = 4),or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]) 
 
 --
 
@@ -52,5 +52,5 @@ find y: int(0..5)
 
 such that
 
-And([MinionPow(x,y,4), Or([(x != 0), (y != 0)]), Ineq(0, y, 0)])
+and([MinionPow(x,y,4),or([(x != 0),(y != 0);int(1..)]),Ineq(0, y, 0);int(1..)])
 

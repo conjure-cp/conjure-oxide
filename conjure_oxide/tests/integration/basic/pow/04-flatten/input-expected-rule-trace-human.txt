@@ -23,11 +23,11 @@ true
 
 UnsafePow(Sum([x, 2]), {SafeDiv(y, 2) @ true}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) @ And([true])} 
+{UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) @ and([true;int(1..)])} 
 
 --
 
-And([true]), 
+and([true;int(1..)]), 
    ~~> apply_eval_constant ([("Constant", 9001)]) 
 true 
 
@@ -35,11 +35,11 @@ true
 
 ({UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) @ true} = 4), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4) @ And([true])} 
+{(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4) @ and([true;int(1..)])} 
 
 --
 
-And([true]), 
+and([true;int(1..)]), 
    ~~> apply_eval_constant ([("Constant", 9001)]) 
 true 
 
@@ -47,17 +47,17 @@ true
 
 {(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4) @ true}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-And([(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4), true]) 
+and([(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4),true;int(1..)]) 
 
 --
 
-And([(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4), true]), 
+and([(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4),true;int(1..)]), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-And([(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4)]) 
+and([(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4);int(1..)]) 
 
 --
 
-And([(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4)]), 
+and([(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4);int(1..)]), 
    ~~> remove_unit_vector_and ([("Base", 8800)]) 
 (UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4) 
 
@@ -65,25 +65,25 @@ And([(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4)]),
 
 UnsafePow(Sum([x, 2]), SafeDiv(y, 2)), 
    ~~> pow_to_bubble ([("Bubble", 6000)]) 
-{SafePow(Sum([x, 2]), SafeDiv(y, 2)) @ And([Or([(Sum([x, 2]) != 0), (SafeDiv(y, 2) != 0)]), (SafeDiv(y, 2) >= 0)])} 
+{SafePow(Sum([x, 2]), SafeDiv(y, 2)) @ and([or([(Sum([x, 2]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),(SafeDiv(y, 2) >= 0);int(1..)])} 
 
 --
 
-({SafePow(Sum([x, 2]), SafeDiv(y, 2)) @ And([Or([(Sum([x, 2]) != 0), (SafeDiv(y, 2) != 0)]), (SafeDiv(y, 2) >= 0)])} = 4), 
+({SafePow(Sum([x, 2]), SafeDiv(y, 2)) @ and([or([(Sum([x, 2]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),(SafeDiv(y, 2) >= 0);int(1..)])} = 4), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4) @ And([And([Or([(Sum([x, 2]) != 0), (SafeDiv(y, 2) != 0)]), (SafeDiv(y, 2) >= 0)])])} 
+{(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4) @ and([and([or([(Sum([x, 2]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),(SafeDiv(y, 2) >= 0);int(1..)]);int(1..)])} 
 
 --
 
-{(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4) @ And([And([Or([(Sum([x, 2]) != 0), (SafeDiv(y, 2) != 0)]), (SafeDiv(y, 2) >= 0)])])}, 
+{(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4) @ and([and([or([(Sum([x, 2]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),(SafeDiv(y, 2) >= 0);int(1..)]);int(1..)])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-And([(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4), And([And([Or([(Sum([x, 2]) != 0), (SafeDiv(y, 2) != 0)]), (SafeDiv(y, 2) >= 0)])])]) 
+and([(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4),and([and([or([(Sum([x, 2]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),(SafeDiv(y, 2) >= 0);int(1..)]);int(1..)]);int(1..)]) 
 
 --
 
-And([(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4), And([And([Or([(Sum([x, 2]) != 0), (SafeDiv(y, 2) != 0)]), (SafeDiv(y, 2) >= 0)])])]), 
+and([(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4),and([and([or([(Sum([x, 2]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),(SafeDiv(y, 2) >= 0);int(1..)]);int(1..)]);int(1..)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
-And([(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4), Or([(Sum([x, 2]) != 0), (SafeDiv(y, 2) != 0)]), (SafeDiv(y, 2) >= 0)]) 
+and([(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4),or([(Sum([x, 2]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),(SafeDiv(y, 2) >= 0);int(1..)]) 
 
 --
 
@@ -100,7 +100,7 @@ new constraints:
 
 __0 =aux Sum([x, 2]), 
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-And([SumLeq([x, 2], __0), SumGeq([x, 2], __0)]) 
+and([SumLeq([x, 2], __0),SumGeq([x, 2], __0);int(1..)]) 
 
 --
 
@@ -121,7 +121,7 @@ new constraints:
 
 __2 =aux Sum([x, 2]), 
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-And([SumLeq([x, 2], __2), SumGeq([x, 2], __2)]) 
+and([SumLeq([x, 2], __2),SumGeq([x, 2], __2);int(1..)]) 
 
 --
 
@@ -179,10 +179,10 @@ find __4: int(0..10)
 
 such that
 
-And([MinionPow(__0,__1,4), Or([(__2 != 0), (__3 != 0)]), Ineq(0, __4, 0)]),
-And([SumLeq([x, 2], __0), SumGeq([x, 2], __0)]),
+and([MinionPow(__0,__1,4),or([(__2 != 0),(__3 != 0);int(1..)]),Ineq(0, __4, 0);int(1..)]),
+and([SumLeq([x, 2], __0),SumGeq([x, 2], __0);int(1..)]),
 DivEq(y, 2, __1),
-And([SumLeq([x, 2], __2), SumGeq([x, 2], __2)]),
+and([SumLeq([x, 2], __2),SumGeq([x, 2], __2);int(1..)]),
 DivEq(y, 2, __3),
 DivEq(y, 2, __4)
 
