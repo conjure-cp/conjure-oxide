@@ -51,7 +51,7 @@ struct Cli {
         value_enum,
         value_name = "SOLVER",
         short = 's',
-        help = "Solver family to use"
+        help = "Solver family to use (Minion by default)"
     )]
     solver: Option<SolverFamily>, // ToDo this should probably set the solver adapter
 
@@ -248,8 +248,6 @@ pub fn main() -> AnyhowResult<()> {
         "Given input_file could not be converted to a string"
     ))?;
 
-    println!("input file: {}", input_file);
-
     /******************************************************/
     /*        Parse essence to json using Conjure         */
     /******************************************************/
@@ -266,7 +264,6 @@ pub fn main() -> AnyhowResult<()> {
 
     let conjure_stderr = String::from_utf8(output.stderr)?;
     if !conjure_stderr.is_empty() {
-        println!("Running11");
         bail!(conjure_stderr);
     }
 

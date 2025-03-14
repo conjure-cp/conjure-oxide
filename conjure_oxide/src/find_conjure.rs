@@ -11,6 +11,7 @@ pub fn conjure_executable() -> Result<()> {
     let output = cmd.arg("--version").output()?;
     let stdout = String::from_utf8(output.stdout)?;
     let stderr = String::from_utf8(output.stderr)?;
+
     if !stderr.is_empty() {
         bail!("'conjure' results in error: ".to_string() + &stderr);
     }
