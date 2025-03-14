@@ -330,7 +330,6 @@ impl<T: Uniplate> DirtyZipper<T> {
         }
 
         if let Some(_) = self.zipper.go_down() {
-            dbg!(&self.state.node);
             self.state.go_down();
             if self.state.get_cleanliness() <= level {
                 return Some(self.zipper.focus());
