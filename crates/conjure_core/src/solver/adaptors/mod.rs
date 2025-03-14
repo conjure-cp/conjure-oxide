@@ -1,10 +1,11 @@
 //! Solver adaptors.
 
 mod minion;
-pub mod rustsat;
+mod rustsat;
 use std::arch::x86_64;
 
 #[doc(inline)]
-#[doc(inline)]
 pub use minion::Minion;
+
+#[doc(inline)]
 pub use rustsat::SAT;

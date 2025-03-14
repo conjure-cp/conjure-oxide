@@ -71,7 +71,7 @@ fn get_ref_sols(
     let mut solution: HashMap<Name, Literal> = HashMap::new();
 
     for reference in find_refs {
-        // TODO: lit is 'Nothing' for unconstrained
+        // lit is 'Nothing' for unconstrained
         let lit: Lit = *var_map.get(&reference).unwrap();
         solution.insert(
             Name::UserName((reference)),
@@ -103,12 +103,9 @@ impl SolverAdaptor for SAT {
             let res = solver.solve().unwrap();
 
             match res {
-                SolverResult::Sat => {
-                    println!("REMOVE: new sols");
-                }
+                SolverResult::Sat => {}
                 SolverResult::Unsat => {
                     return Ok(SolveSuccess {
-                        // TODO: This SHOULD NOT be magic constants, excpet wall time
                         stats: SolverStats {
                             conjure_solver_wall_time_s: -1.0,
                             solver_family: Some(self.get_family()),
@@ -141,7 +138,6 @@ impl SolverAdaptor for SAT {
             if !callback(solution) {
                 println!("callback false");
                 return Ok(SolveSuccess {
-                    // TODO: This SHOULD NOT be magic constants, excpet wall time
                     stats: SolverStats {
                         conjure_solver_wall_time_s: -1.0,
                         solver_family: Some(self.get_family()),
@@ -180,7 +176,6 @@ impl SolverAdaptor for SAT {
         let mut finds: Vec<String> = Vec::new();
 
         for find_ref in decisions {
-            // TODO: maybe no unwrap, maybe other
             if (*find_ref.1.domain().unwrap() != BoolDomain) {
                 Err(SolverError::ModelInvalid(
                     "Only Boolean Decision Variables supported".to_string(),
