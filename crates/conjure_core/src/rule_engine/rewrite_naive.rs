@@ -12,6 +12,7 @@ use crate::{
 
 use itertools::Itertools;
 use std::sync::Arc;
+use tracing::trace;
 use uniplate::Biplate;
 
 /// A naive, exhaustive rewriter for development purposes. Applies rules in priority order,
@@ -28,6 +29,12 @@ pub fn rewrite_naive<'a>(
 
     let mut model = model.clone();
     let mut done_something = true;
+
+    trace!(
+        target: "rule_engine_human",
+        "Model before rewriting:\n\n{}\n--\n",
+        model
+    );
 
     // Rewrite until there are no more rules left to apply.
     while done_something {
@@ -53,6 +60,11 @@ pub fn rewrite_naive<'a>(
         }
     }
 
+    trace!(
+        target: "rule_engine_human",
+        "Final model:\n\n{}",
+        model
+    );
     Ok(model)
 }
 
@@ -127,8 +139,6 @@ fn try_rewrite_model(
 
             // Apply new symbols and top level
             result.reduction.clone().apply(submodel);
-
-            println!("{}", &submodel);
         }
     }
 

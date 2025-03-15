@@ -4,11 +4,17 @@ find c: int(1..7)
 
 such that
 
-(Sum([Min([5, 7]), c]) <= 10)
+(Sum([min([5,7;int(1..2)]), c]) <= 10)
 
 --
 
-Min([5, 7]), 
+min([5,7;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+min([5,7;int(1..)]) 
+
+--
+
+min([5,7;int(1..)]), 
    ~~> apply_eval_constant ([("Constant", 9001)]) 
 5 
 

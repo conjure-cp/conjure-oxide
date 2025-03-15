@@ -9,7 +9,11 @@
 /// ```
 #[macro_export]
 macro_rules! bug {
-    ($msg:expr $(, $arg:tt)*) => {{
+    ($msg:expr)=> {
+        $crate::bug!($msg,)
+    };
+
+    ($msg:expr, $($arg:tt)*) => {{
         let formatted_msg = format!($msg, $($arg)*);
         let full_message = format!(
             r#"
