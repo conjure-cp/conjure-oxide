@@ -39,11 +39,4 @@ jobs:
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.3
 
-      - run: RUSTFLAGS="-D warnings" cargo build -vv --workspace
-
-      - run: RUSTFLAGS="-D warnings" cargo build -vv --workspace --examples
-
-      - run: cargo clippy -- -D warnings -A clippy::unwrap_used -A clippy::expect_used
-
-      - run: cargo fmt --check
-  
+      - run: make EXTRA_CARGO_CHECK_FLAGS=-v check
