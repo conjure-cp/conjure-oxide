@@ -118,6 +118,20 @@ struct Cli {
     /// Only compatible with the default rewriter.
     #[arg(long)]
     _no_check_equally_applicable_rules: bool,
+
+    // New logging arguments:
+    // Tracing: T
+    // Consumer: stdout, json file
+    // Verbosity: low medium high
+    // Format: human readable, json
+    // Optional file path
+    #[arg(
+        long,
+        short = 'T',
+        default_value_t = false,
+        help = "Enable tracing (default to false)"
+    )]
+    tracing: bool,
 }
 
 #[allow(clippy::unwrap_used)]
@@ -248,13 +262,14 @@ pub fn main() -> AnyhowResult<()> {
 
     //consumer for protrace
     //will later be created from command-line arguments
-    let formatter = JsonFormatter;
-    let file_consumer = FileConsumer {
+    let formatter = HumanFormatter;
+    let stdout_consumer = StdoutConsumer {
         formatter,
         verbosity: VerbosityLevel::High,
-        file_path: "conjure_oxide/src/protrace.json".to_string(),
+        // file_path: "conjure_oxide/src/protrace.json".to_string(),
     };
-    let consumer: Option<Consumer<JsonFormatter>> = Some(Consumer::FileConsumer(file_consumer));
+    let consumer: Option<Consumer<HumanFormatter>> =
+        Some(Consumer::StdoutConsumer(stdout_consumer));
     /******************************************************/
     /*        Parse essence to json using Conjure         */
     /******************************************************/
@@ -293,24 +308,36 @@ pub fn main() -> AnyhowResult<()> {
 
     let mut model = model_from_json(&astjson, context.clone())?;
 
-    tracing::info!("Initial model: \n{}\n", model);
-
-    tracing::info!("Rewriting model...");
-
-    if cli.use_optimising_rewriter {
-        tracing::info!("Using the dirty-clean rewriter...");
-        model = rewrite_model(&model, &rule_sets)?;
-    } else {
-        tracing::info!("Rewriting model...");
+    if cli.tracing {
+        println!("here");
         model = rewrite_naive(
             &model,
             &rule_sets,
             cli.check_equally_applicable_rules,
             consumer,
         )?;
+    } else {
+        model = rewrite_model(&model, &rule_sets)?;
     }
 
-    tracing::info!("Rewritten model: \n{}\n", model);
+    // tracing::info!("Initial model: \n{}\n", model);
+
+    // tracing::info!("Rewriting model...");
+
+    // if cli.use_optimising_rewriter {
+    //     tracing::info!("Using the dirty-clean rewriter...");
+    //     model = rewrite_model(&model, &rule_sets)?;
+    // } else {
+    //     tracing::info!("Rewriting model...");
+    //     model = rewrite_naive(
+    //         &model,
+    //         &rule_sets,
+    //         cli.check_equally_applicable_rules,
+    //         consumer,
+    //     )?;
+    // }
+
+    // tracing::info!("Rewritten model: \n{}\n", model);
 
     if cli.no_run_solver {
         println!("{}", model);
