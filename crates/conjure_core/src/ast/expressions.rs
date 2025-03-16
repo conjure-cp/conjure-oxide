@@ -779,7 +779,7 @@ impl Expression {
         match self {
             Expression::Root(meta, mut children) => {
                 children.extend(exprs);
-                return Expression::Root(meta, children);
+                Expression::Root(meta, children)
             }
             _ => panic!("extend_root called on a non-Root expression"),
         }
