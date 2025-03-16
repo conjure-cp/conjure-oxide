@@ -113,7 +113,7 @@ where
             |subtree: &T, meta: &M| {
                 let applicable = &mut group.iter().filter_map(|rule| {
                     let mut commands = Commands::new();
-                    let new_tree = rule.apply(&mut commands, &subtree, &meta)?;
+                    let new_tree = rule.apply(&mut commands, subtree, meta)?;
                     Some((
                         rule,
                         Update {

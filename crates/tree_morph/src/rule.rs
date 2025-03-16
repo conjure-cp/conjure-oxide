@@ -75,7 +75,7 @@ use uniplate::Uniplate;
 /// let (result, _) = morph(vec![vec![CustomRule(true)]], select_first, Term::A, ());
 /// assert_eq!(result, Term::B);
 /// ```
-
+///
 pub trait Rule<T: Uniplate, M> {
     /// Applies the rule to the given subtree and returns the result if applicable.
     ///
@@ -133,7 +133,6 @@ pub type RuleFn<T, M> = fn(&mut Commands<T, M>, &T, &M) -> Option<T>;
 ///
 /// morph(rules, select_first, Foo, ());
 /// ```
-
 #[macro_export]
 macro_rules! rule_fns {
     [$($x:expr),+ $(,)?] => {
