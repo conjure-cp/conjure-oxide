@@ -56,7 +56,6 @@ struct TestConfig {
     compare_solver_solutions: bool, // Stage 3b: Compares Minion and Conjure solutions
     validate_rule_traces: bool, // Stage 4a: Checks rule traces against expected outputs
 
-    enable_native_impl: bool,
     enable_morph_impl: bool,
     enable_naive_impl: bool,
     enable_rewriter_impl: bool,
@@ -66,8 +65,7 @@ impl Default for TestConfig {
     fn default() -> Self {
         Self {
             extra_rewriter_asserts: vec!["vector_operators_have_partially_evaluated".into()],
-            enable_native_impl: false,
-            enable_naive_impl: false,
+            enable_naive_impl: true,
             enable_morph_impl: false,
             enable_rewriter_impl: true,
             parse_model_default: true,
@@ -113,10 +111,6 @@ impl TestConfig {
             validate_rule_traces: env_var_override_bool(
                 "VALIDATE_RULE_TRACES",
                 self.validate_rule_traces,
-            ),
-            enable_native_impl: env_var_override_bool(
-                "ENABLE_NATIVE_IMPL",
-                self.enable_native_impl,
             ),
             enable_rewriter_impl: env_var_override_bool(
                 "ENABLE_REWRITER_IMPL",
@@ -278,9 +272,7 @@ fn integration_test_inner(
         let rule_sets = resolve_rule_sets(SolverFamily::Minion, DEFAULT_RULE_SETS)?;
         let mut model = parsed_model.expect("Model must be parsed in 1a");
 
-        let rewritten = if config.enable_native_impl {
-            rewrite_model(&model, &rule_sets)?
-        } else if config.enable_naive_impl {
+        let rewritten = if config.enable_naive_impl {
             rewrite_naive(&model, &rule_sets, false)?
         } else if config.enable_morph_impl {
             let submodel = model.as_submodel_mut();
