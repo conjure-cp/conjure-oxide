@@ -1,6 +1,8 @@
 #![allow(clippy::expect_used)]
 
-use conjure_core::pro_trace::{self, Consumer, HumanFormatter, StdoutConsumer, VerbosityLevel};
+use conjure_core::pro_trace::{
+    self, create_consumer, Consumer, HumanFormatter, StdoutConsumer, VerbosityLevel,
+};
 use conjure_core::rule_engine::rewrite_model;
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
@@ -277,8 +279,9 @@ fn integration_test_inner(
         } else {
             //temporarilly
             //termporary
-            let consumer: Option<Consumer<HumanFormatter>> =
-                Option::<Consumer<HumanFormatter>>::None;
+            let file_path = "conjure_oxide/src/protrace.json".to_string();
+            let consumer: Consumer =
+                create_consumer("file", VerbosityLevel::High, "json", Some(file_path));
 
             rewrite_naive(
                 model.as_ref().expect("Model must be parsed in 1a"),
