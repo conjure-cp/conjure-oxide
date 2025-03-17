@@ -31,6 +31,7 @@ static AFTER_HELP_TEXT: &str = include_str!("help_text.txt");
 #[derive(Parser, Clone)]
 #[command(author, about, long_about = None, after_long_help=AFTER_HELP_TEXT)]
 struct Cli {
+    
     #[arg(value_name = "INPUT_ESSENCE", help = "The input Essence file")]
     input_file: Option<PathBuf>,
 

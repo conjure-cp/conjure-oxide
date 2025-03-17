@@ -33,6 +33,7 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
     let statements = v["mStatements"]
         .as_array()
         .ok_or(error!("mStatements is not an array"))?;
+    println!("{:?}", statements);
 
     for statement in statements {
         let entry = statement
