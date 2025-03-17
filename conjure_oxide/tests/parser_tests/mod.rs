@@ -115,16 +115,10 @@ fn test_no_dominance() {
 
     let pth = path.to_str().unwrap();
     let filepath = format!("{pth}/no_dominance.essence");
-    let res_nodom = parse_essence_file_native(
-        &filepath,
-        Arc::new(RwLock::new(Context::default())),
-    );
+    let res_nodom = parse_essence_file_native(&filepath, Arc::new(RwLock::new(Context::default())));
 
     let filepath = format!("{pth}/dominance_simple.essence");
-    let res_dom = parse_essence_file_native(
-        &filepath,
-        Arc::new(RwLock::new(Context::default())),
-    );
+    let res_dom = parse_essence_file_native(&filepath, Arc::new(RwLock::new(Context::default())));
 
     assert!(res_nodom.is_ok());
     assert!(res_dom.is_ok());
