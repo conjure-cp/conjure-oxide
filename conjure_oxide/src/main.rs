@@ -22,7 +22,9 @@ use conjure_core::Model;
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::find_conjure::conjure_executable;
 use conjure_oxide::rule_engine::{resolve_rule_sets, rewrite_model};
-use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json, EssenceParseError};
+use conjure_oxide::utils::conjure::{
+    get_minion_solutions, minion_solutions_to_json, EssenceParseError,
+};
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
 use conjure_oxide::SolverFamily;
 use conjure_oxide::{get_rules, model_from_json};
@@ -117,7 +119,11 @@ struct Cli {
     #[arg(long)]
     _no_check_equally_applicable_rules: bool,
 
-    #[arg(long, default_value_t = false, help = "Use the native parser to parse the essence file")]
+    #[arg(
+        long,
+        default_value_t = false,
+        help = "Use the native parser to parse the essence file"
+    )]
     enable_native_parser: bool,
 }
 
@@ -250,7 +256,7 @@ pub fn main() -> AnyhowResult<()> {
     /******************************************************/
     /*        Parse essence to json using Conjure         */
     /******************************************************/
-    
+
     let context = Context::new_ptr(
         target_family,
         extra_rule_sets.iter().map(|rs| rs.to_string()).collect(),
@@ -264,7 +270,7 @@ pub fn main() -> AnyhowResult<()> {
         model = parse_essence_file_native(input_file, context.clone())?;
     } else {
         conjure_executable()
-        .map_err(|e| anyhow!("Could not find correct conjure executable: {}", e))?;
+            .map_err(|e| anyhow!("Could not find correct conjure executable: {}", e))?;
 
         let mut cmd = std::process::Command::new("conjure");
         let output = cmd
