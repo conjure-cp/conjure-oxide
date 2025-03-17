@@ -8,7 +8,8 @@ use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
 use conjure_core::pro_trace::{
-    self, Consumer, FileConsumer, HumanFormatter, JsonFormatter, StdoutConsumer, VerbosityLevel,
+    self, Consumer, FileConsumer, HumanFormatter, JsonFormatter, MessageFormatter, StdoutConsumer,
+    VerbosityLevel,
 };
 use git_version::git_version;
 use schemars::schema_for;
@@ -94,7 +95,6 @@ struct Cli {
 
     #[arg(long, short = 'v', help = "Log verbosely to sterr")]
     verbose: bool,
-
     /// Do not run the solver.
     ///
     /// The rewritten model is printed to stdout in an Essence-style syntax (but is not necessarily
@@ -121,7 +121,7 @@ struct Cli {
 
     // New logging arguments:
     // Tracing: T
-    // Consumer: stdout, json file
+    // Output: stdout, json file
     // Verbosity: low medium high
     // Format: human readable, json
     // Optional file path
@@ -129,9 +129,21 @@ struct Cli {
         long,
         short = 'T',
         default_value_t = false,
-        help = "Enable tracing (default to false)"
+        help = "Enable rule tracing (default to false)"
     )]
     tracing: bool,
+
+    #[arg(
+        long,
+        help = "Save rule tracing to a JSON file (prints to stdout by default)"
+    )]
+    trace_output: Option<String>,
+
+    #[arg(long, default_value = "low", help = "Select verbosity level for trace")]
+    verbosity: VerbosityLevel,
+
+    #[arg(long, short = 'F', help = "Switch to JSON formatter")]
+    formatter: bool,
 }
 
 #[allow(clippy::unwrap_used)]
@@ -262,14 +274,52 @@ pub fn main() -> AnyhowResult<()> {
 
     //consumer for protrace
     //will later be created from command-line arguments
-    let formatter = HumanFormatter;
-    let stdout_consumer = StdoutConsumer {
-        formatter,
-        verbosity: VerbosityLevel::High,
-        // file_path: "conjure_oxide/src/protrace.json".to_string(),
+
+    // TODO: add formatter arguments
+
+    // let formatter = HumanFormatter;
+    // let stdout_consumer = StdoutConsumer{
+    //     formatter,
+    //     verbosity = VerbosityLevel::High,
+    // }
+
+    let consumer = {
+        // let formatter = if cli.formatter {
+        //     JsonFormatter
+        // } else {
+        //     HumanFormatter
+        // };
+        // let human_formatter = HumanFormatter;
+        // let json_formatter = JsonFormatter;
+        // if cli.formatter {
+
+        // }
+
+        let verbosity = cli.verbosity.clone();
+        let formatter = HumanFormatter;
+        // let formatter: Box<dyn MessageFormatter> = if cli.formatter {
+        //     Box::new(JsonFormatter)
+        // } else {
+        //     Box::new(HumanFormatter)
+        // };
+        match cli.trace_output.clone() {
+            None => {
+                let stdout_consumer = StdoutConsumer {
+                    formatter,
+                    verbosity,
+                };
+                Consumer::StdoutConsumer(stdout_consumer)
+            }
+            Some(file_path) => {
+                let file_consumer = FileConsumer {
+                    formatter,
+                    verbosity,
+                    file_path,
+                };
+                Consumer::FileConsumer(file_consumer)
+            }
+        }
     };
-    let consumer: Option<Consumer<HumanFormatter>> =
-        Some(Consumer::StdoutConsumer(stdout_consumer));
     /******************************************************/
     /*        Parse essence to json using Conjure         */
     /******************************************************/
@@ -309,12 +359,11 @@ pub fn main() -> AnyhowResult<()> {
     let mut model = model_from_json(&astjson, context.clone())?;
 
     if cli.tracing {
-        println!("here");
         model = rewrite_naive(
             &model,
             &rule_sets,
             cli.check_equally_applicable_rules,
-            consumer,
+            Some(consumer),
         )?;
     } else {
         model = rewrite_model(&model, &rule_sets)?;

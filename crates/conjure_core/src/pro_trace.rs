@@ -1,5 +1,6 @@
 use crate::ast::Expression;
 use serde_json;
+// use serde::Serialize;
 use std::{fmt, fs::OpenOptions, io::Write};
 
 #[derive(serde::Serialize)] // added for serialisation to JSON using serde
@@ -45,8 +46,10 @@ impl fmt::Display for RuleTrace {
 }
 
 /// represents the level of detail in the trace
-#[derive(Clone, PartialEq)]
+#[derive(clap::ValueEnum, serde::Serialize, Clone, PartialEq, Default)]
+#[serde(rename_all = "kebab-case")]
 pub enum VerbosityLevel {
+    #[default]
     Low,
     Medium,
     High,
