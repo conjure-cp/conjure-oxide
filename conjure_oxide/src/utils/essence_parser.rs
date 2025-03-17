@@ -49,13 +49,6 @@ pub fn parse_essence_file_native(
                 let letting_vars = parse_letting_statement(statement, &source_code);
                 model.as_submodel_mut().symbols_mut().extend(letting_vars);
             }
-            "ERROR" => {
-                let message = parse_error(statement, &source_code);
-                return Err(EssenceParseError::ParseError(Error::Parse(format!(
-                    "Error:\n\t{}:\n{}",
-                    filepath, message
-                ))));
-            }
             "dominance_relation" => {
                 let inner = statement
                     .child(1)
@@ -380,32 +373,4 @@ fn child_expr(node: Node, source_code: &str, root: &Node) -> Expression {
         .named_child(0)
         .unwrap_or_else(|| panic!("Error: missing node in expression of kind {}", node.kind()));
     parse_constraint(child, source_code, root)
-}
-
-fn parse_error(node: Node, source_code: &str) -> String {
-    let line = node.start_position().row + 1;
-    let character = node.start_position().column + 1;
-    let line_text = source_code
-        .lines()
-        .nth(line - 1)
-        .unwrap_or("Line not found");
-    let child = node.named_child(0);
-    let pointer_line = format!("  |{}^", " ".repeat(character));
-
-    match child {
-        Some(child_node) => match child_node.kind() {
-            "comparative_op" => {
-                return format!(
-                    "{}:{}:\n|\n{}| {}\n{}\nMissing Expression",
-                    line, character, line, line_text, pointer_line
-                );
-            }
-            _ => {
-                panic!("");
-            }
-        },
-        None => {
-            panic!("");
-        }
-    }
 }
