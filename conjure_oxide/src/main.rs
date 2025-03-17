@@ -21,7 +21,7 @@ use conjure_core::Model;
 
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::find_conjure::conjure_executable;
-use conjure_oxide::rule_engine::{resolve_rule_sets, rewrite_model};
+use conjure_oxide::rule_engine::resolve_rule_sets;
 use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
 use conjure_oxide::SolverFamily;
 use conjure_oxide::{get_rules, model_from_json};
@@ -285,10 +285,7 @@ pub fn main() -> AnyhowResult<()> {
 
     tracing::info!("Rewriting model...");
 
-    if cli.use_optimising_rewriter {
-        tracing::info!("Using the dirty-clean rewriter...");
-        model = rewrite_model(&model, &rule_sets)?;
-    } else {
+    if !cli.use_optimising_rewriter {
         tracing::info!("Rewriting model...");
         model = rewrite_naive(&model, &rule_sets, cli.check_equally_applicable_rules)?;
     }
