@@ -16,10 +16,10 @@ use conjure_core::{into_matrix_expr, matrix_expr, Model};
 use std::collections::{BTreeMap, BTreeSet};
 
 pub fn parse_essence_file_native(
-    file_path: &str,
+    filepath: &str,
     context: Arc<RwLock<Context<'static>>>,
 ) -> Result<Model, EssenceParseError> {
-    let (tree, source_code) = get_tree(file_path);
+    let (tree, source_code) = get_tree(filepath);
 
     let mut model = Model::new(context);
     let root_node = tree.root_node();
@@ -53,7 +53,7 @@ pub fn parse_essence_file_native(
                 let message = parse_error(statement, &source_code);
                 return Err(EssenceParseError::ParseError(Error::Parse(format!(
                     "Error:\n\t{}:\n{}",
-                    file_path, message
+                    filepath, message
                 ))));
             }
             "dominance_relation" => {
@@ -80,9 +80,9 @@ pub fn parse_essence_file_native(
     Ok(model)
 }
 
-fn get_tree(file_path: &str) -> (Tree, String) {
-    let source_code = fs::read_to_string(file_path)
-        .unwrap_or_else(|_| panic!("Failed to read the source code file {}", file_path));
+fn get_tree(filepath: &str) -> (Tree, String) {
+    let source_code = fs::read_to_string(filepath)
+        .unwrap_or_else(|_| panic!("Failed to read the source code file {}", filepath));
     let mut parser = Parser::new();
     parser.set_language(&LANGUAGE.into()).unwrap();
     (
