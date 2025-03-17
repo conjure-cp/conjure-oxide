@@ -182,12 +182,7 @@ impl SymbolTable {
     ///
     /// See [`SymbolTable::domain`].
     pub fn resolve_domain(&self, name: &Name) -> Option<Domain> {
-        match self.domain(name) {
-            Some(Domain::DomainReference(name)) => self
-                .lookup(&name)
-                .and_then(|decl| decl.as_domain_letting().cloned().map(|x| x.resolve(self))),
-            result => result,
-        }
+        self.domain(name).map(|domain| domain.resolve(self))
     }
 
     /// Iterates over entries in the local symbol table only.
