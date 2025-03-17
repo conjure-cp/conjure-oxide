@@ -181,7 +181,7 @@ pub fn create_consumer(
 ) -> Consumer {
     let formatter: Box<dyn MessageFormatter> = match output_format.to_lowercase().as_str() {
         "json" => Box::new(JsonFormatter),
-        "human " => Box::new(HumanFormatter),
+        "human" => Box::new(HumanFormatter),
         other => panic!("Unknown format type: {}", other),
     };
 

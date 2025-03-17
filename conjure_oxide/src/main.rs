@@ -129,21 +129,31 @@ struct Cli {
         long,
         short = 'T',
         default_value_t = false,
-        help = "Enable rule tracing (default to false)"
+        help = "Enable rule tracing (defaults to false)"
     )]
     tracing: bool,
 
     #[arg(
         long,
-        help = "Save rule tracing to a JSON file (prints to stdout by default)"
+        short = 'O',
+        default_value = "stdout",
+        help = "Select output location for trace result: stdout or file (defaults to stdout)"
     )]
-    trace_output: Option<String>,
+    trace_output: String,
 
     #[arg(long, default_value = "low", help = "Select verbosity level for trace")]
     verbosity: VerbosityLevel,
 
-    #[arg(long, short = 'F', help = "Switch to JSON formatter")]
-    formatter: bool,
+    #[arg(
+        long,
+        short = 'F',
+        default_value = "human",
+        help = "Select the format of the trace output: human or json"
+    )]
+    formatter: String,
+
+    #[arg(long, short = 'f', help = "Save rule trace to the given JSON file")]
+    trace_file: Option<String>,
 }
 
 #[allow(clippy::unwrap_used)]
@@ -273,9 +283,12 @@ pub fn main() -> AnyhowResult<()> {
     ))?;
 
     //consumer for protrace
-    //will later be created from command-line arguments
-    let file_path = "conjure_oxide/src/protrace.json".to_string();
-    let consumer: Consumer = create_consumer("file", VerbosityLevel::High, "json", Some(file_path));
+    let consumer: Consumer = create_consumer(
+        cli.trace_output.as_str(),
+        cli.verbosity.clone(),
+        cli.formatter.as_str(),
+        cli.trace_file.clone(),
+    );
     /******************************************************/
     /*        Parse essence to json using Conjure         */
     /******************************************************/
