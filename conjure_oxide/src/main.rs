@@ -21,7 +21,7 @@ use conjure_core::Model;
 
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::find_conjure::conjure_executable;
-use conjure_oxide::rule_engine::{resolve_rule_sets, rewrite_model};
+use conjure_oxide::rule_engine::resolve_rule_sets;
 use conjure_oxide::utils::conjure::{
     get_minion_solutions, minion_solutions_to_json, EssenceParseError,
 };
