@@ -1,4 +1,6 @@
-use conjure_core::pro_trace::{self, Consumer, HumanFormatter, StdoutConsumer, VerbosityLevel};
+use conjure_core::pro_trace::{
+    self, create_consumer, Consumer, HumanFormatter, StdoutConsumer, VerbosityLevel,
+};
 use std::collections::VecDeque;
 use std::process::exit;
 use std::rc::Rc;
@@ -673,7 +675,8 @@ fn rewrite_solve_xyz() {
     *model.as_submodel_mut().constraints_mut() = vec![nested_expr];
 
     //termporary
-    let consumer: Option<Consumer<HumanFormatter>> = Option::<Consumer<HumanFormatter>>::None;
+    let file_path = "conjure_oxide/src/protrace.json".to_string();
+    let consumer: Consumer = create_consumer("file", VerbosityLevel::High, "json", Some(file_path));
     model = rewrite_naive(&model, &rule_sets, true, consumer).unwrap();
     let rewritten_expr = model.as_submodel().constraints();
 

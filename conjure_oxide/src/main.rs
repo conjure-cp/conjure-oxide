@@ -8,7 +8,7 @@ use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
 use conjure_core::pro_trace::{
-    self, Consumer, FileConsumer, HumanFormatter, JsonFormatter, MessageFormatter, StdoutConsumer,
+    self, create_consumer, Consumer, FileConsumer, HumanFormatter, JsonFormatter, StdoutConsumer,
     VerbosityLevel,
 };
 use git_version::git_version;
@@ -274,52 +274,8 @@ pub fn main() -> AnyhowResult<()> {
 
     //consumer for protrace
     //will later be created from command-line arguments
-
-    // TODO: add formatter arguments
-
-    // let formatter = HumanFormatter;
-    // let stdout_consumer = StdoutConsumer{
-    //     formatter,
-    //     verbosity = VerbosityLevel::High,
-    // }
-
-    let consumer = {
-        // let formatter = if cli.formatter {
-        //     JsonFormatter
-        // } else {
-        //     HumanFormatter
-        // };
-        // let human_formatter = HumanFormatter;
-        // let json_formatter = JsonFormatter;
-        // if cli.formatter {
-
-        // }
-
-        let verbosity = cli.verbosity.clone();
-        let formatter = HumanFormatter;
-        // let formatter: Box<dyn MessageFormatter> = if cli.formatter {
-        //     Box::new(JsonFormatter)
-        // } else {
-        //     Box::new(HumanFormatter)
-        // };
-        match cli.trace_output.clone() {
-            None => {
-                let stdout_consumer = StdoutConsumer {
-                    formatter,
-                    verbosity,
-                };
-                Consumer::StdoutConsumer(stdout_consumer)
-            }
-            Some(file_path) => {
-                let file_consumer = FileConsumer {
-                    formatter,
-                    verbosity,
-                    file_path,
-                };
-                Consumer::FileConsumer(file_consumer)
-            }
-        }
-    };
+    let file_path = "conjure_oxide/src/protrace.json".to_string();
+    let consumer: Consumer = create_consumer("file", VerbosityLevel::High, "json", Some(file_path));
     /******************************************************/
     /*        Parse essence to json using Conjure         */
     /******************************************************/
@@ -363,7 +319,7 @@ pub fn main() -> AnyhowResult<()> {
             &model,
             &rule_sets,
             cli.check_equally_applicable_rules,
-            Some(consumer),
+            consumer,
         )?;
     } else {
         model = rewrite_model(&model, &rule_sets)?;
