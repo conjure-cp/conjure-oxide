@@ -784,6 +784,25 @@ impl Expression {
             _ => panic!("extend_root called on a non-Root expression"),
         }
     }
+
+    /// Converts the expression to a literal, if possible.
+    pub fn to_literal(self) -> Option<Literal> {
+        match self {
+            Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
+            Expression::AbstractLiteral(_, abslit) => {
+                Some(Literal::AbstractLiteral(abslit.clone().as_literals()?))
+            }
+            Expression::Neg(_, e) => {
+                let Literal::Int(i) = e.to_literal()? else {
+                    bug!("negated literal should be an int");
+                };
+
+                Some(Literal::Int(-i))
+            }
+
+            _ => None,
+        }
+    }
 }
 
 impl From<i32> for Expression {
