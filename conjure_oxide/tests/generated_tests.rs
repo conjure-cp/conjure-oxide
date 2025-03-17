@@ -255,8 +255,9 @@ fn integration_test_inner(
 
     // Stage 1b: Run native parser (only if explicitly enabled)
     let mut model_native = None;
+    let file_path = format!("{path}/{essence_base}.{extension}");
     if config.enable_native_parser {
-        let mn = parse_essence_file_native(path, essence_base, extension, context.clone())?;
+        let mn = parse_essence_file_native(&file_path, context.clone())?;
         save_model_json(&mn, path, essence_base, "parse")?;
         model_native = Some(mn);
 

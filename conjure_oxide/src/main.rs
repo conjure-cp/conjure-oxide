@@ -23,6 +23,7 @@ use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::find_conjure::conjure_executable;
 use conjure_oxide::rule_engine::resolve_rule_sets;
 use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
+use conjure_oxide::utils::essence_parser::parse_essence_file_native;
 use conjure_oxide::SolverFamily;
 use conjure_oxide::{get_rules, model_from_json};
 
@@ -115,6 +116,13 @@ struct Cli {
     /// Only compatible with the default rewriter.
     #[arg(long)]
     _no_check_equally_applicable_rules: bool,
+
+    #[arg(
+        long,
+        default_value_t = false,
+        help = "Use the native parser to parse the essence file"
+    )]
+    enable_native_parser: bool,
 }
 
 #[allow(clippy::unwrap_used)]
@@ -247,39 +255,43 @@ pub fn main() -> AnyhowResult<()> {
     /*        Parse essence to json using Conjure         */
     /******************************************************/
 
-    conjure_executable()
-        .map_err(|e| anyhow!("Could not find correct conjure executable: {}", e))?;
-
-    let mut cmd = std::process::Command::new("conjure");
-    let output = cmd
-        .arg("pretty")
-        .arg("--output-format=astjson")
-        .arg(input_file)
-        .output()?;
-
-    let conjure_stderr = String::from_utf8(output.stderr)?;
-    if !conjure_stderr.is_empty() {
-        bail!(conjure_stderr);
-    }
-
-    let astjson = String::from_utf8(output.stdout)?;
-
     let context = Context::new_ptr(
         target_family,
         extra_rule_sets.iter().map(|rs| rs.to_string()).collect(),
         rules,
         rule_sets.clone(),
     );
-
     context.write().unwrap().file_name = Some(input.to_str().expect("").into());
 
-    if cfg!(feature = "extra-rule-checks") {
-        tracing::info!("extra-rule-checks: enabled");
+    let mut model;
+    if cli.enable_native_parser {
+        model = parse_essence_file_native(input_file, context.clone())?;
     } else {
-        tracing::info!("extra-rule-checks: disabled");
-    }
+        conjure_executable()
+            .map_err(|e| anyhow!("Could not find correct conjure executable: {}", e))?;
 
-    let mut model = model_from_json(&astjson, context.clone())?;
+        let mut cmd = std::process::Command::new("conjure");
+        let output = cmd
+            .arg("pretty")
+            .arg("--output-format=astjson")
+            .arg(input_file)
+            .output()?;
+
+        let conjure_stderr = String::from_utf8(output.stderr)?;
+        if !conjure_stderr.is_empty() {
+            bail!(conjure_stderr);
+        }
+
+        let astjson = String::from_utf8(output.stdout)?;
+
+        if cfg!(feature = "extra-rule-checks") {
+            tracing::info!("extra-rule-checks: enabled");
+        } else {
+            tracing::info!("extra-rule-checks: disabled");
+        }
+
+        model = model_from_json(&astjson, context.clone())?;
+    }
 
     tracing::info!("Initial model: \n{}\n", model);
 
