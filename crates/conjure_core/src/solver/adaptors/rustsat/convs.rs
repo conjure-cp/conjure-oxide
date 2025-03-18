@@ -70,8 +70,8 @@ pub fn handle_atom(
                         !lit_temp
                     }
                 }
-                conjure_core::ast::Name::MachineName(_) => {
-                    todo!("Change Here for Conjure generated variables?")
+                _ => {
+                    todo!("Change Here for other types of vars")
                 }
             },
         },

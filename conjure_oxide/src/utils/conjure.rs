@@ -8,11 +8,9 @@ use conjure_core::bug;
 use conjure_core::context::Context;
 
 use conjure_core::solver::adaptors::SAT;
-use rand::Rng as _;
-use serde_json::{from_str, Map, Value as JsonValue};
+use serde_json::{Map, Value as JsonValue};
 
 use itertools::Itertools as _;
-use serde_json::{Map, Value as JsonValue};
 use tempfile::tempdir;
 
 use thiserror::Error as ThisError;
