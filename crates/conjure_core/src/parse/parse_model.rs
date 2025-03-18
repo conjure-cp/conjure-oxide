@@ -522,14 +522,96 @@ fn parse_abs_lit(constant: &serde_json::Map<String, Value>) -> Option<Expression
             let mut expressions: Vec<Expression> = Vec::new();
             for expr in arr.as_array()?.iter().filter_map(parse_expression) {
                 match expr {
-                    Expression::Atomic(_, Atom::Reference(name)) => {
-                        expressions.push(Expression::Atomic(Metadata::new(), Atom::Reference(name)))
+                    Expression::Atomic(_, atom) => {
+                        expressions.push(Expression::Atomic(Metadata::new(), atom));
                     }
                     Expression::Sum(_, vec) => {
-                        expressions.push(Expression::Sum(Metadata::new(), vec))
+                        expressions.push(Expression::Sum(Metadata::new(), vec));
+                    }
+                    Expression::AbstractLiteral(_, abstract_lit) => {
+                        expressions.push(Expression::AbstractLiteral(Metadata::new(), abstract_lit));
+                    }
+                    Expression::Root(_, vec) => {
+                        expressions.push(Expression::Root(Metadata::new(), vec));
+                    }
+                    Expression::Bubble(_, box1, box2) => {
+                        expressions.push(Expression::Bubble(Metadata::new(), box1, box2));
+                    }
+                    Expression::Scope(_, sub_model) => {
+                        expressions.push(Expression::Scope(Metadata::new(), sub_model));
+                    }
+                    Expression::Abs(_, expr) => {
+                        expressions.push(Expression::Abs(Metadata::new(), expr));
+                    }
+                    Expression::Product(_, vec) => {
+                        expressions.push(Expression::Product(Metadata::new(), vec));
+                    }
+                    Expression::Min(_, vec) => {
+                        expressions.push(Expression::Min(Metadata::new(), vec));
+                    }
+                    Expression::Max(_, vec) => {
+                        expressions.push(Expression::Max(Metadata::new(), vec));
+                    }
+                    Expression::Not(_, expr) => {
+                        expressions.push(Expression::Not(Metadata::new(), expr));
+                    }
+                    Expression::Or(_, vec) => {
+                        expressions.push(Expression::Or(Metadata::new(), vec));
+                    }
+                    Expression::And(_, vec) => {
+                        expressions.push(Expression::And(Metadata::new(), vec));
+                    }
+                    Expression::Imply(_, expr1, expr2) => {
+                        expressions.push(Expression::Imply(Metadata::new(), expr1, expr2));
+                    }
+                    Expression::Eq(_, expr1, expr2) => {
+                        expressions.push(Expression::Eq(Metadata::new(), expr1, expr2));
+                    }
+                    Expression::Neq(_, expr1, expr2) => {
+                        expressions.push(Expression::Neq(Metadata::new(), expr1, expr2));
+                    }
+                    Expression::Geq(_, expr1, expr2) => {
+                        expressions.push(Expression::Geq(Metadata::new(), expr1, expr2));
+                    }
+                    Expression::Leq(_, expr1, expr2) => {
+                        expressions.push(Expression::Leq(Metadata::new(), expr1, expr2));
+                    }
+                    Expression::Gt(_, expr1, expr2) => {
+                        expressions.push(Expression::Gt(Metadata::new(), expr1, expr2));
+                    }
+                    Expression::Lt(_, expr1, expr2) => {
+                        expressions.push(Expression::Lt(Metadata::new(), expr1, expr2));
+                    }
+                    Expression::SafeDiv(_, expr1, expr2) => {
+                        expressions.push(Expression::SafeDiv(Metadata::new(), expr1, expr2));
+                    }
+                    Expression::UnsafeDiv(_, expr1, expr2) => {
+                        expressions.push(Expression::UnsafeDiv(Metadata::new(), expr1, expr2));
+                    }
+                    Expression::SafeMod(_, expr1, expr2) => {
+                        expressions.push(Expression::SafeMod(Metadata::new(), expr1, expr2));
+                    }
+                    Expression::UnsafeMod(_, expr1, expr2) => {
+                        expressions.push(Expression::UnsafeMod(Metadata::new(), expr1, expr2));
+                    }
+                    Expression::Neg(_, expr) => {
+                        expressions.push(Expression::Neg(Metadata::new(), expr));
+                    }
+                    Expression::UnsafePow(_, expr1, expr2) => {
+                        expressions.push(Expression::UnsafePow(Metadata::new(), expr1, expr2));
+                    }
+                    Expression::SafePow(_, expr1, expr2) => {
+                        expressions.push(Expression::SafePow(Metadata::new(), expr1, expr2));
+                    }
+                    Expression::AllDiff(_, vec) => {
+                        expressions.push(Expression::AllDiff(Metadata::new(), vec));
+                    }
+                    Expression::Minus(_, expr1, expr2) => {
+                        expressions.push(Expression::Minus(Metadata::new(), expr1, expr2));
                     }
                     _ => {}
                 }
+                
             }
             return Some(Expression::AbstractLiteral(
                 Metadata::new(),
