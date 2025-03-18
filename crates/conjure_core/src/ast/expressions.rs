@@ -770,6 +770,20 @@ impl Expression {
             _ => None,
         }
     }
+
+    /// For a Root expression, extends the inner vec with the given vec.
+    ///
+    /// # Panics
+    /// Panics if the expression is not Root.
+    pub fn extend_root(self, exprs: Vec<Expression>) -> Expression {
+        match self {
+            Expression::Root(meta, mut children) => {
+                children.extend(exprs);
+                Expression::Root(meta, children)
+            }
+            _ => panic!("extend_root called on a non-Root expression"),
+        }
+    }
 }
 
 impl From<i32> for Expression {
