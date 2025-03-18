@@ -59,7 +59,7 @@ where
         S: serde::Serializer,
     {
         let id = (**source).borrow().id();
-        serializer.collect_str(&id)
+        serializer.serialize_u32(id)
     }
 }
 
