@@ -34,9 +34,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::FromSolution(_, _) => None,
         // Same as Expr::Root, we should not replace the dominance relation with a constant
         Expr::DominanceRelation(_, _) => None,
-        Expr::UnsafeIndex(_, _, _) => None,
-        // handled elsewhere
-        Expr::SafeIndex(_, _, _) => None,
+        Expr::UnsafeIndex(_, _, _) | Expr::SafeIndex(_, _, _) => None,
         Expr::UnsafeSlice(_, _, _) => None,
         // handled elsewhere
         Expr::SafeSlice(_, _, _) => None,
