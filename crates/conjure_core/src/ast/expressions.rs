@@ -37,6 +37,10 @@ use super::{Domain, Range, SubModel, Typeable};
 #[biplate(to=AbstractLiteral<Literal>,walk_into=[Atom])]
 #[biplate(to=Literal,walk_into=[Atom])]
 pub enum Expression {
+    /// adding subset expression
+    #[compatible(JSonInput)]
+    Subset(Metadata, Box<Expression>, Box<Expression>),
+
     AbstractLiteral(Metadata, AbstractLiteral<Expression>),
     /// The top of the model
     Root(Metadata, Vec<Expression>),
@@ -405,6 +409,7 @@ impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
         let ret = match self {
+            Expression::Subset(_, _, _) => Some(Domain::BoolDomain),
             //todo
             Expression::AbstractLiteral(_, _) => None,
             Expression::DominanceRelation(_, _) => Some(Domain::BoolDomain),
@@ -622,6 +627,7 @@ impl Expression {
 
     pub fn return_type(&self) -> Option<ReturnType> {
         match self {
+            Expression::Subset(_, _, _) => Some(ReturnType::Bool),
             Expression::AbstractLiteral(_, _) => None,
             Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
                 Some(subject.return_type()?)
@@ -806,6 +812,10 @@ impl From<Atom> for Expression {
 impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
+            Expression::Subset(_, box1, box2) => {
+                write!(f, "({} subset {})", box1.clone(), box2.clone())
+            }
+
             Expression::AbstractLiteral(_, l) => l.fmt(f),
             Expression::UnsafeIndex(_, e1, e2) | Expression::SafeIndex(_, e1, e2) => {
                 write!(f, "{e1}{}", pretty_vec(e2))

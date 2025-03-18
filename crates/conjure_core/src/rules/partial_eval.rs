@@ -307,6 +307,8 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
             Err(RuleNotApplicable)
         }
+        //TODO for subset
+        Subset(_, _, _) => Err(RuleNotApplicable),
         Eq(_, _, _) => Err(RuleNotApplicable),
         Neq(_, _, _) => Err(RuleNotApplicable),
         Geq(_, _, _) => Err(RuleNotApplicable),

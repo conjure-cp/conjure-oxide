@@ -33,7 +33,6 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
     let statements = v["mStatements"]
         .as_array()
         .ok_or(error!("mStatements is not an array"))?;
-    println!("{:?}", statements);
 
     for statement in statements {
         let entry = statement
@@ -347,6 +346,10 @@ type VecOp = Box<dyn Fn(Metadata, Vec<Expression>) -> Expression>;
 
 fn parse_expression(obj: &JsonValue) -> Option<Expression> {
     let binary_operators: HashMap<&str, BinOp> = [
+        (
+            "MkOpSubset",
+            Box::new(Expression::Subset) as Box<dyn Fn(_, _, _) -> _>,
+        ),
         (
             "MkOpEq",
             Box::new(Expression::Eq) as Box<dyn Fn(_, _, _) -> _>,
