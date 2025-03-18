@@ -4,20 +4,18 @@
 /// The model is `conjure_oxide/tests/integration/basic/div/05/div-05.essence`
 use conjure_core::{
     ast::{Literal, Name},
+    rule_engine::rewrite_naive,
     solver::{adaptors::Minion, states::ExecutionSuccess},
 };
-use conjure_oxide::defaults::get_default_rule_sets;
+use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use itertools::Itertools;
 use std::collections::HashMap;
 
 #[allow(clippy::unwrap_used)]
 pub fn main() {
     use conjure_core::solver::SolverFamily;
+    use conjure_core::solver::{adaptors, Solver};
     use conjure_core::{parse::get_example_model, rule_engine::resolve_rule_sets};
-    use conjure_core::{
-        rule_engine::rewrite_model,
-        solver::{adaptors, Solver},
-    };
     use std::sync::{Arc, Mutex};
 
     // Load an example model and rewrite it with conjure oxide.
@@ -25,9 +23,9 @@ pub fn main() {
     println!("Input model: \n {model} \n",);
 
     // TODO: We will have a nicer way to do this in the future
-    let rule_sets = resolve_rule_sets(SolverFamily::Minion, &get_default_rule_sets()).unwrap();
+    let rule_sets = resolve_rule_sets(SolverFamily::Minion, DEFAULT_RULE_SETS).unwrap();
 
-    let model = rewrite_model(&model, &rule_sets).unwrap();
+    let model = rewrite_naive(&model, &rule_sets, true).unwrap();
     println!("Rewritten model: \n {model} \n",);
 
     // To tell the `Solver` type what solver to use, you pass it a `SolverAdaptor`.

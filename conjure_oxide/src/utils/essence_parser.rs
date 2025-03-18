@@ -12,16 +12,14 @@ use conjure_core::ast::{Atom, Domain, Expression, Literal, Name, Range, SymbolTa
 use crate::utils::conjure::EssenceParseError;
 use conjure_core::context::Context;
 use conjure_core::metadata::Metadata;
-use conjure_core::Model;
+use conjure_core::{into_matrix_expr, matrix_expr, Model};
 use std::collections::{BTreeMap, BTreeSet};
 
 pub fn parse_essence_file_native(
-    path: &str,
-    filename: &str,
-    extension: &str,
+    filepath: &str,
     context: Arc<RwLock<Context<'static>>>,
 ) -> Result<Model, EssenceParseError> {
-    let (tree, source_code) = get_tree(path, filename, extension);
+    let (tree, source_code) = get_tree(filepath);
 
     let mut model = Model::new(context);
     let root_node = tree.root_node();
@@ -41,15 +39,28 @@ pub fn parse_essence_file_native(
                 let mut constraint_vec: Vec<Expression> = Vec::new();
                 for constraint in named_children(&statement) {
                     if constraint.kind() != "single_line_comment" {
-                        constraint_vec.push(parse_constraint(constraint, &source_code));
+                        constraint_vec.push(parse_constraint(constraint, &source_code, &statement));
                     }
                 }
                 model.as_submodel_mut().add_constraints(constraint_vec);
             }
-            "e_prime_label" => {}
+            "language_label" => {}
             "letting_statement_list" => {
                 let letting_vars = parse_letting_statement(statement, &source_code);
                 model.as_submodel_mut().symbols_mut().extend(letting_vars);
+            }
+            "dominance_relation" => {
+                let inner = statement
+                    .child(1)
+                    .expect("Expected a sub-expression inside `dominanceRelation`");
+                let expr = parse_constraint(inner, &source_code, &statement);
+                let dominance = Expression::DominanceRelation(Metadata::new(), Box::new(expr));
+                if model.dominance.is_some() {
+                    return Err(EssenceParseError::ParseError(Error::Parse(
+                        "Duplicate dominance relation".to_owned(),
+                    )));
+                }
+                model.dominance = Some(dominance);
             }
             _ => {
                 let kind = statement.kind();
@@ -62,9 +73,9 @@ pub fn parse_essence_file_native(
     Ok(model)
 }
 
-fn get_tree(path: &str, filename: &str, extension: &str) -> (Tree, String) {
-    let source_code = fs::read_to_string(format!("{path}/{filename}.{extension}"))
-        .expect("Failed to read the source code file");
+fn get_tree(filepath: &str) -> (Tree, String) {
+    let source_code = fs::read_to_string(filepath)
+        .unwrap_or_else(|_| panic!("Failed to read the source code file {}", filepath));
     let mut parser = Parser::new();
     parser.set_language(&LANGUAGE.into()).unwrap();
     (
@@ -201,7 +212,7 @@ fn parse_letting_statement(letting_statement_list: Node, source_code: &str) -> S
                 for name in temp_symbols {
                     symbol_table.insert(Rc::new(Declaration::new_value_letting(
                         Name::UserName(String::from(name)),
-                        parse_constraint(expr_or_domain, source_code),
+                        parse_constraint(expr_or_domain, source_code, &letting_statement_list),
                     )));
                 }
             }
@@ -219,24 +230,25 @@ fn parse_letting_statement(letting_statement_list: Node, source_code: &str) -> S
     symbol_table
 }
 
-fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
+fn parse_constraint(constraint: Node, source_code: &str, root: &Node) -> Expression {
     match constraint.kind() {
-        "constraint" | "expression" => child_expr(constraint, source_code),
+        "constraint" | "expression" | "boolean_expr" | "comparison_expr" | "arithmetic_expr"
+        | "primary_expr" | "sub_expr" => child_expr(constraint, source_code, root),
         "not_expr" => Expression::Not(
             Metadata::new(),
-            Box::new(child_expr(constraint, source_code)),
+            Box::new(child_expr(constraint, source_code, root)),
         ),
         "abs_value" => Expression::Abs(
             Metadata::new(),
-            Box::new(child_expr(constraint, source_code)),
+            Box::new(child_expr(constraint, source_code, root)),
         ),
         "negative_expr" => Expression::Neg(
             Metadata::new(),
-            Box::new(child_expr(constraint, source_code)),
+            Box::new(child_expr(constraint, source_code, root)),
         ),
         "exponent" | "product_expr" | "sum_expr" | "comparison" | "and_expr" | "or_expr"
         | "implication" => {
-            let expr1 = child_expr(constraint, source_code);
+            let expr1 = child_expr(constraint, source_code, root);
             let op = constraint.child(1).unwrap_or_else(|| {
                 panic!(
                     "Error: missing node in expression of kind {}",
@@ -250,7 +262,7 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
                     constraint.kind()
                 )
             });
-            let expr2 = parse_constraint(expr2_node, source_code);
+            let expr2 = parse_constraint(expr2_node, source_code, root);
 
             match op_type {
                 "**" => Expression::UnsafePow(Metadata::new(), Box::new(expr1), Box::new(expr2)),
@@ -271,8 +283,8 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
                 ">=" => Expression::Geq(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 "<" => Expression::Lt(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 ">" => Expression::Gt(Metadata::new(), Box::new(expr1), Box::new(expr2)),
-                "/\\" => Expression::And(Metadata::new(), vec![expr1, expr2]),
-                "\\/" => Expression::Or(Metadata::new(), vec![expr1, expr2]),
+                "/\\" => Expression::And(Metadata::new(), Box::new(matrix_expr![expr1, expr2])),
+                "\\/" => Expression::Or(Metadata::new(), Box::new(matrix_expr![expr1, expr2])),
                 "->" => Expression::Imply(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 _ => panic!("Error: unsupported operator"),
             }
@@ -280,7 +292,7 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
         "quantifier_expr" => {
             let mut expr_list = Vec::new();
             for expr in named_children(&constraint) {
-                expr_list.push(parse_constraint(expr, source_code));
+                expr_list.push(parse_constraint(expr, source_code, root));
             }
 
             let quantifier = constraint.child(0).unwrap_or_else(|| {
@@ -292,12 +304,14 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
             let quantifier_type = &source_code[quantifier.start_byte()..quantifier.end_byte()];
 
             match quantifier_type {
-                "and" => Expression::And(Metadata::new(), expr_list),
-                "or" => Expression::Or(Metadata::new(), expr_list),
-                "min" => Expression::Min(Metadata::new(), expr_list),
-                "max" => Expression::Max(Metadata::new(), expr_list),
+                "and" => Expression::And(Metadata::new(), Box::new(into_matrix_expr![expr_list])),
+                "or" => Expression::Or(Metadata::new(), Box::new(into_matrix_expr![expr_list])),
+                "min" => Expression::Min(Metadata::new(), Box::new(into_matrix_expr![expr_list])),
+                "max" => Expression::Max(Metadata::new(), Box::new(into_matrix_expr![expr_list])),
                 "sum" => Expression::Sum(Metadata::new(), expr_list),
-                "allDiff" => Expression::AllDiff(Metadata::new(), expr_list),
+                "allDiff" => {
+                    Expression::AllDiff(Metadata::new(), Box::new(into_matrix_expr![expr_list]))
+                }
                 _ => panic!("Error: unsupported quantifier"),
             }
         }
@@ -331,6 +345,21 @@ fn parse_constraint(constraint: Node, source_code: &str) -> Expression {
                 Atom::Reference(Name::UserName(variable_name)),
             )
         }
+        "ERROR" => {
+            panic!("");
+        }
+        "from_solution" => match root.kind() {
+            "dominance_relation" => {
+                let inner = child_expr(constraint, source_code, root);
+                match inner {
+                    Expression::Atomic(_, _) => {
+                        Expression::FromSolution(Metadata::new(), Box::new(inner))
+                    }
+                    _ => panic!("Expression inside a `fromSolution()` must be a variable name"),
+                }
+            }
+            _ => panic!("`fromSolution()` is only allowed inside dominance relation definitions"),
+        },
         _ => panic!("{} is not a recognized node kind", constraint.kind()),
     }
 }
@@ -339,9 +368,9 @@ fn named_children<'a>(node: &'a Node<'a>) -> impl Iterator<Item = Node<'a>> + 'a
     (0..node.named_child_count()).filter_map(|i| node.named_child(i))
 }
 
-fn child_expr(node: Node, source_code: &str) -> Expression {
+fn child_expr(node: Node, source_code: &str, root: &Node) -> Expression {
     let child = node
         .named_child(0)
         .unwrap_or_else(|| panic!("Error: missing node in expression of kind {}", node.kind()));
-    parse_constraint(child, source_code)
+    parse_constraint(child, source_code, root)
 }

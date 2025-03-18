@@ -1,8 +1,11 @@
 use std::fmt::Display;
 
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-use super::{types::Typeable, Name, ReturnType};
+use crate::ast::pretty::pretty_vec;
+
+use super::{types::Typeable, AbstractLiteral, Literal, Name, ReturnType};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Range<A>
@@ -11,15 +14,54 @@ where
 {
     Single(A),
     Bounded(A, A),
+
+    /// int(i..)
+    UnboundedR(A),
+
+    /// int(..i)
+    UnboundedL(A),
+}
+
+impl<A: Ord> Range<A> {
+    pub fn contains(&self, val: &A) -> bool {
+        match self {
+            Range::Single(x) => x == val,
+            Range::Bounded(x, y) => x <= val && val <= y,
+            Range::UnboundedR(x) => x <= val,
+            Range::UnboundedL(x) => x >= val,
+        }
+    }
+}
+
+impl<A: Ord + Display> Display for Range<A> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Range::Single(i) => write!(f, "{i}"),
+            Range::Bounded(i, j) => write!(f, "{i}..{j}"),
+            Range::UnboundedR(i) => write!(f, "{i}.."),
+            Range::UnboundedL(i) => write!(f, "..{i}"),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub enum Domain {
     BoolDomain,
+
+    /// An integer domain.
+    ///
+    /// + If multiple ranges are inside the domain, the values in the domain are the union of these
+    ///   ranges.
+    ///
+    /// + If no ranges are given, the int domain is considered unconstrained, and can take any
+    ///   integer value.
     IntDomain(Vec<Range<i32>>),
     DomainReference(Name),
     DomainSet(SetAttr, Box<Domain>),
+    /// A n-dimensional matrix with a value domain and n-index domains
+    DomainMatrix(Box<Domain>, Vec<Domain>),
 }
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum SetAttr {
     None,
@@ -29,17 +71,78 @@ pub enum SetAttr {
     MinMaxSize(i32, i32),
 }
 impl Domain {
-    /// Return a list of all possible i32 values in the domain if it is an IntDomain.
+    // Whether the literal is a member of this domain.
+    //
+    // Returns `None` if this cannot be determined (e.g. `self` is a `DomainReference`).
+    pub fn contains(&self, lit: &Literal) -> Option<bool> {
+        // not adding a generic wildcard condition for all domains, so that this gives a compile
+        // error when a domain is added.
+        match (self, lit) {
+            (Domain::IntDomain(ranges), Literal::Int(x)) => {
+                // unconstrained int domain
+                if ranges.is_empty() {
+                    return Some(true);
+                };
+
+                Some(ranges.iter().any(|range| range.contains(x)))
+            }
+            (Domain::IntDomain(_), _) => Some(false),
+            (Domain::BoolDomain, Literal::Bool(_)) => Some(true),
+            (Domain::BoolDomain, _) => Some(false),
+            (Domain::DomainReference(_), _) => None,
+
+            (
+                Domain::DomainMatrix(elem_domain, index_domains),
+                Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx_domain)),
+            ) => {
+                let mut index_domains = index_domains.clone();
+                if index_domains
+                    .pop()
+                    .expect("a matrix should have atleast one index domain")
+                    != *idx_domain
+                {
+                    return Some(false);
+                };
+
+                // matrix literals are represented as nested 1d matrices, so the elements of
+                // the matrix literal will be the inner dimensions of the matrix.
+                let next_elem_domain = if index_domains.is_empty() {
+                    elem_domain.as_ref().clone()
+                } else {
+                    Domain::DomainMatrix(elem_domain.clone(), index_domains)
+                };
+
+                for elem in elems {
+                    if !next_elem_domain.contains(elem)? {
+                        return Some(false);
+                    }
+                }
+
+                Some(true)
+            }
+            (Domain::DomainMatrix(_, _), _) => Some(false),
+            (Domain::DomainSet(_, _), Literal::AbstractLiteral(AbstractLiteral::Set(_))) => {
+                todo!()
+            }
+            (Domain::DomainSet(_, _), _) => Some(false),
+        }
+    }
+    /// Return a list of all possible i32 values in the domain if it is an IntDomain and is
+    /// bounded.
     pub fn values_i32(&self) -> Option<Vec<i32>> {
         match self {
             Domain::IntDomain(ranges) => Some(
                 ranges
                     .iter()
-                    .flat_map(|r| match r {
-                        Range::Single(i) => vec![*i],
-                        Range::Bounded(i, j) => (*i..=*j).collect(),
+                    .map(|r| match r {
+                        Range::Single(i) => Some(vec![*i]),
+                        Range::Bounded(i, j) => Some((*i..=*j).collect()),
+                        Range::UnboundedR(_) => None,
+                        Range::UnboundedL(_) => None,
                     })
-                    .collect(),
+                    .while_some()
+                    .flatten()
+                    .collect_vec(),
             ),
             _ => None,
         }
@@ -73,23 +176,24 @@ impl Display for Domain {
                 write!(f, "bool")
             }
             Domain::IntDomain(vec) => {
-                let mut domain_ranges: Vec<String> = vec![];
-                for range in vec {
-                    domain_ranges.push(match range {
-                        Range::Single(a) => a.to_string(),
-                        Range::Bounded(a, b) => format!("{}..{}", a, b),
-                    });
-                }
+                let domain_ranges: String = vec.iter().map(|x| format!("{x}")).join(",");
 
                 if domain_ranges.is_empty() {
                     write!(f, "int")
                 } else {
-                    write!(f, "int({})", domain_ranges.join(","))
+                    write!(f, "int({domain_ranges})")
                 }
             }
             Domain::DomainReference(name) => write!(f, "{}", name),
-            Domain::DomainSet(attr, domain) => {
+            Domain::DomainSet(_, domain) => {
                 write!(f, "set of ({})", domain)
+            }
+            Domain::DomainMatrix(value_domain, index_domains) => {
+                write!(
+                    f,
+                    "matrix indexed by [{}] of {value_domain}",
+                    pretty_vec(&index_domains.iter().collect_vec())
+                )
             }
         }
     }

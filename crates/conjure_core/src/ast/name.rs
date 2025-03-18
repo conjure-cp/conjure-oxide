@@ -21,3 +21,21 @@ impl Display for Name {
         }
     }
 }
+
+impl From<String> for Name {
+    fn from(s: String) -> Self {
+        Name::UserName(s)
+    }
+}
+
+impl From<&str> for Name {
+    fn from(s: &str) -> Self {
+        Name::UserName(s.to_string())
+    }
+}
+
+impl From<i32> for Name {
+    fn from(i: i32) -> Self {
+        Name::MachineName(i)
+    }
+}

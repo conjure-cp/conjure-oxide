@@ -1,0 +1,316 @@
+Model before rewriting:
+
+find a: matrix indexed by [[int(1..5)]] of bool
+
+such that
+
+(a[1] = true),
+(a[2] = true),
+(a[3] = true),
+(a[4] = true),
+(a[5] = Not(a[4]))
+
+--
+
+a[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{a[1] @ and([__inDomain(1,int(1..5));int(1..)])} 
+
+--
+
+and([__inDomain(1,int(1..5));int(1..)]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+({a[1] @ true} = true), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(a[1] = true) @ and([true;int(1..)])} 
+
+--
+
+and([true;int(1..)]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+{(a[1] = true) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+and([(a[1] = true),true;int(1..)]) 
+
+--
+
+and([(a[1] = true),true;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([(a[1] = true);int(1..)]) 
+
+--
+
+and([(a[1] = true);int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(a[1] = true) 
+
+--
+
+a[2], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{a[2] @ and([__inDomain(2,int(1..5));int(1..)])} 
+
+--
+
+and([__inDomain(2,int(1..5));int(1..)]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+({a[2] @ true} = true), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(a[2] = true) @ and([true;int(1..)])} 
+
+--
+
+and([true;int(1..)]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+{(a[2] = true) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+and([(a[2] = true),true;int(1..)]) 
+
+--
+
+and([(a[2] = true),true;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([(a[2] = true);int(1..)]) 
+
+--
+
+and([(a[2] = true);int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(a[2] = true) 
+
+--
+
+a[3], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{a[3] @ and([__inDomain(3,int(1..5));int(1..)])} 
+
+--
+
+and([__inDomain(3,int(1..5));int(1..)]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+({a[3] @ true} = true), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(a[3] = true) @ and([true;int(1..)])} 
+
+--
+
+and([true;int(1..)]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+{(a[3] = true) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+and([(a[3] = true),true;int(1..)]) 
+
+--
+
+and([(a[3] = true),true;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([(a[3] = true);int(1..)]) 
+
+--
+
+and([(a[3] = true);int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(a[3] = true) 
+
+--
+
+a[4], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{a[4] @ and([__inDomain(4,int(1..5));int(1..)])} 
+
+--
+
+and([__inDomain(4,int(1..5));int(1..)]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+({a[4] @ true} = true), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(a[4] = true) @ and([true;int(1..)])} 
+
+--
+
+and([true;int(1..)]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+{(a[4] = true) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+and([(a[4] = true),true;int(1..)]) 
+
+--
+
+and([(a[4] = true),true;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([(a[4] = true);int(1..)]) 
+
+--
+
+and([(a[4] = true);int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(a[4] = true) 
+
+--
+
+a[5], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{a[5] @ and([__inDomain(5,int(1..5));int(1..)])} 
+
+--
+
+and([__inDomain(5,int(1..5));int(1..)]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+({a[5] @ true} = Not(a[4])), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(a[5] = Not(a[4])) @ and([true;int(1..)])} 
+
+--
+
+and([true;int(1..)]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+{(a[5] = Not(a[4])) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+and([(a[5] = Not(a[4])),true;int(1..)]) 
+
+--
+
+and([(a[5] = Not(a[4])),true;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([(a[5] = Not(a[4]));int(1..)]) 
+
+--
+
+and([(a[5] = Not(a[4]));int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(a[5] = Not(a[4])) 
+
+--
+
+a[4], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{a[4] @ and([__inDomain(4,int(1..5));int(1..)])} 
+
+--
+
+and([__inDomain(4,int(1..5));int(1..)]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+Not({a[4] @ true}), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{Not(a[4]) @ and([true;int(1..)])} 
+
+--
+
+and([true;int(1..)]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+{Not(a[4]) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+and([Not(a[4]),true;int(1..)]) 
+
+--
+
+and([Not(a[4]),true;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([Not(a[4]);int(1..)]) 
+
+--
+
+and([Not(a[4]);int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+Not(a[4]) 
+
+--
+
+(a[5] = Not(a[4])), 
+   ~~> flatten_eq ([("Minion", 4200)]) 
+(__0 = __1) 
+new variables:
+  find __0: bool
+  find __1: bool
+new constraints:
+  __0 =aux a[5]
+  __1 =aux Not(a[4])
+--
+
+__1 =aux Not(a[4]), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(Not(a[4]), __1) 
+
+--
+
+Not(a[4]), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+Not(__2) 
+new variables:
+  find __2: bool
+new constraints:
+  __2 =aux a[4]
+--
+
+Not(__2), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
+WatchedLiteral(__2,false) 
+
+--
+
+Final model:
+
+find a: matrix indexed by [[int(1..5)]] of bool
+find __0: bool
+find __1: bool
+find __2: bool
+
+such that
+
+(a[1] = true),
+(a[2] = true),
+(a[3] = true),
+(a[4] = true),
+(__0 = __1),
+__0 =aux a[5],
+Reify(WatchedLiteral(__2,false), __1),
+__2 =aux a[4]
+

@@ -6,46 +6,64 @@ find c: bool
 
 such that
 
-Or([Or([a, b]), false]),
-Or([AllDiff([1, 2, 3]), true]),
-And([c, true])
+or([or([a,b;int(1..2)]),false;int(1..2)]),
+or([allDiff([1,2,3;int(1..3)]),true;int(1..2)]),
+and([c,true;int(1..2)])
 
 --
 
-Or([AllDiff([1, 2, 3]), true]), 
-   ~~> apply_eval_constant ([("Constant", 9001)]) 
+or([or([a,b;int(1..2)]),false;int(1..2)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+or([a,b,false;int(1..2)]) 
+
+--
+
+or([a,b,false;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([a,b,false;int(1..)]) 
+
+--
+
+or([a,b,false;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+or([a,b;int(1..)]) 
+
+--
+
+or([allDiff([1,2,3;int(1..3)]),true;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([allDiff([1,2,3;int(1..3)]),true;int(1..)]) 
+
+--
+
+or([allDiff([1,2,3;int(1..3)]),true;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
 true 
 
 --
 
-Or([Or([a, b]), false]),
+or([a,b;int(1..)]),
 true,
-And([c, true]), 
+and([c,true;int(1..2)]), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-Or([Or([a, b]), false]),
-And([c, true]) 
+or([a,b;int(1..)]),
+and([c,true;int(1..2)]) 
 
 --
 
-Or([Or([a, b]), false]), 
+and([c,true;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+and([c,true;int(1..)]) 
+
+--
+
+and([c,true;int(1..)]), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-Or([Or([a, b])]) 
+and([c;int(1..)]) 
 
 --
 
-And([c, true]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-And([c]) 
-
---
-
-Or([Or([a, b])]), 
-   ~~> normalise_associative_commutative ([("Base", 8900)]) 
-Or([a, b]) 
-
---
-
-And([c]), 
+and([c;int(1..)]), 
    ~~> remove_unit_vector_and ([("Base", 8800)]) 
 c 
 
@@ -59,6 +77,6 @@ find c: bool
 
 such that
 
-Or([a, b]),
+or([a,b;int(1..)]),
 c
 
