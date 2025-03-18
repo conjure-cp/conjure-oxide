@@ -84,14 +84,10 @@ pub fn fetch_lit(
     vars_added: &mut HashMap<String, Lit>,
     inst: &mut SatInstance,
 ) -> Lit {
-    let lit_to_add: Lit;
-
     if !vars_added.contains_key(&symbol) {
         vars_added.insert(symbol.to_string(), inst.new_lit());
     }
-
-    lit_to_add = *(vars_added.get(&symbol).unwrap());
-    lit_to_add
+    *(vars_added.get(&symbol).unwrap())
 }
 
 pub fn handle_disjn(

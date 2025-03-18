@@ -6,7 +6,6 @@ use std::ops::Deref;
 use std::ptr::null;
 use std::vec;
 
-// use super::conversions::{self, conv_to_clause, conv_to_formula, instantiate_model_from_conjure};
 use clap::error;
 use minion_rs::ast::{Model, Tuple};
 use rustsat::encodings::am1::Def;
@@ -29,18 +28,13 @@ use crate::solver::{
     SolverFamily, SolverMutCallback,
 };
 use crate::stats::SolverStats;
-use crate::{
-    ast as conjure_ast,
-    // Model,
-    Model as ConjureModel,
-};
+use crate::{ast as conjure_ast, Model as ConjureModel};
 
 use rustsat::instances::{BasicVarManager, Cnf, SatInstance};
 
 use thiserror::Error;
 
 /// A [SolverAdaptor] for interacting with the SatSolver generic and the types thereof.
-
 pub struct SAT {
     __non_constructable: private::Internal,
     model_inst: Option<SatInstance>,
@@ -74,7 +68,7 @@ fn get_ref_sols(
         // lit is 'Nothing' for unconstrained
         let lit: Lit = *var_map.get(&reference).unwrap();
         solution.insert(
-            Name::UserName((reference)),
+            Name::UserName(reference),
             match sol[lit.var()] {
                 TernaryVal::True => Literal::Int(1),
                 TernaryVal::False => Literal::Int(0),
