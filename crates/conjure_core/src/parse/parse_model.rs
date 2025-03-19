@@ -1,10 +1,10 @@
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::expect_used)]
+use serde_json::Value;
+use serde_json::Value as JsonValue;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
-use serde_json::Value;
-use serde_json::Value as JsonValue;
 
 use crate::ast::Declaration;
 use crate::ast::{
@@ -478,7 +478,10 @@ pub fn parse_expression(obj: &JsonValue) -> Option<Expression> {
             ))
         }
         Value::Object(abslit) if abslit.contains_key("AbstractLiteral") => {
-            if abslit["AbstractLiteral"].as_object()?.contains_key("AbsLitSet") {
+            if abslit["AbstractLiteral"]
+                .as_object()?
+                .contains_key("AbsLitSet")
+            {
                 Some(parse_abs_lit(&abslit["AbstractLiteral"]["AbsLitSet"]).unwrap())
             } else {
                 Some(parse_abstract_matrix_as_expr(obj).unwrap())
@@ -501,7 +504,6 @@ pub fn parse_expression(obj: &JsonValue) -> Option<Expression> {
         Value::Object(constant) if constant.contains_key("ConstantBool") => {
             Some(parse_constant(constant).unwrap())
         }
-        
 
         _ => None,
     }
@@ -520,7 +522,6 @@ fn parse_abs_lit(abs_set: &Value) -> Option<Expression> {
         AbstractLiteral::Set(expressions),
     ))
 }
-
 
 fn parse_bin_op(
     bin_op: &serde_json::Map<String, Value>,
