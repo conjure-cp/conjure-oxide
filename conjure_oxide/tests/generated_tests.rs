@@ -35,7 +35,7 @@ use conjure_core::context::Context;
 use conjure_oxide::rule_engine::resolve_rule_sets;
 use conjure_oxide::utils::conjure::solutions_to_json;
 use conjure_oxide::utils::conjure::{
-    get_minion_solutions, get_solutions_from_conjure, parse_essence_file,
+    get_minion_solutions, get_sat_solutions, get_solutions_from_conjure, parse_essence_file,
 };
 use conjure_oxide::utils::testing::save_stats_json;
 use conjure_oxide::utils::testing::{
@@ -55,6 +55,7 @@ struct TestConfig {
     apply_rewrite_rules: bool, // Stage 2a: Applies predefined rules to the model
     enable_extra_validation: bool, // Stage 2b: Runs additional validation checks
     solve_with_minion: bool,   // Stage 3a: Solves the model using Minion
+    solve_with_sat: bool,      // TODO - add stage mark
     compare_solver_solutions: bool, // Stage 3b: Compares Minion and Conjure solutions
     validate_rule_traces: bool, // Stage 4a: Checks rule traces against expected outputs
 
@@ -68,6 +69,7 @@ impl Default for TestConfig {
         Self {
             extra_rewriter_asserts: vec!["vector_operators_have_partially_evaluated".into()],
             enable_naive_impl: true,
+            solve_with_sat: false,
             enable_morph_impl: false,
             enable_rewriter_impl: true,
             parse_model_default: true,
@@ -91,7 +93,7 @@ impl TestConfig {
                 "PARSE_MODEL_DEFAULT",
                 self.parse_model_default,
             ),
-            enable_morph_impl: env_var_override_bool("ENABLE_MORPH_IMPL", self.parse_model_default),
+            enable_morph_impl: env_var_override_bool("ENABLE_MORPH_IMPL", self.enable_morph_impl),
             enable_naive_impl: env_var_override_bool("ENABLE_NAIVE_IMPL", self.enable_naive_impl),
             enable_native_parser: env_var_override_bool(
                 "ENABLE_NATIVE_PARSER",
@@ -106,6 +108,7 @@ impl TestConfig {
                 self.enable_extra_validation,
             ),
             solve_with_minion: env_var_override_bool("SOLVE_WITH_MINION", self.solve_with_minion),
+            solve_with_sat: env_var_override_bool("SOVLE_WITH_SAT", self.parse_model_default),
             compare_solver_solutions: env_var_override_bool(
                 "COMPARE_SOLVER_SOLUTIONS",
                 self.compare_solver_solutions,
@@ -326,6 +329,19 @@ fn integration_test_inner(
     // Stage 3a: Run the model through the Minion solver (run unless explicitly disabled)
     let solutions = if config.solve_with_minion {
         let solved = get_minion_solutions(
+            rewritten_model
+                .as_ref()
+                .expect("Rewritten model must be present in 2a")
+                .clone(),
+            0,
+        )?;
+        let solutions_json = save_minion_solutions_json(&solved, path, essence_base)?;
+        if verbose {
+            println!("Minion solutions: {:#?}", solutions_json);
+        }
+        Some(solved)
+    } else if config.solve_with_sat {
+        let solved = get_sat_solutions(
             rewritten_model
                 .as_ref()
                 .expect("Rewritten model must be present in 2a")
