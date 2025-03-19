@@ -172,13 +172,10 @@ impl State {
         let node = Rc::new(RefCell::new(NodeState::new_dirty()));
         Self { node }
     }
-
+    
     pub fn mark_cleanliness(&mut self, cleanliness: usize) {
-        let old = self.node.borrow().cleanliness;
         self.node.borrow_mut().cleanliness = cleanliness;
-        if cleanliness < old {
-            self.node.borrow_mut().current_child_index = 0;
-        }
+        self.node.borrow_mut().current_child_index = 0;
     }
 
     pub fn get_cleanliness(&self) -> usize {
@@ -190,8 +187,6 @@ impl State {
         node_state.children.clear();
         node_state.current_child_index = 0;
     }
-
-    //TODO: MODULARITY
 
     pub fn go_down(&mut self) {
         let node = Rc::clone(&self.node);
@@ -311,18 +306,18 @@ impl<T: Uniplate> DirtyZipper<T> {
 
     /// Marks all ancetors of a subtree as dirty and moves the zipper at the start of the tree,
     /// ready for new rule applications.
-    /// Set the children of the node to be empty - This is a new tree so we don't know what's
-    /// below it.
     pub fn mark_dirty(&mut self) {
         self.state.mark_cleanliness(0);
         self.state.clear_children();
-
+        
+        // Effectively the same as rebuild_root
         while let Some(_) = self.zipper.go_up() {
             self.state.go_up();
             self.state.mark_cleanliness(0);
         }
     }
-
+    
+    // Can I use recursion here to make this less clunky?
     pub fn get_next_dirty(&mut self, level: usize) -> Option<&T> {
         if self.state.get_cleanliness() <= level {
             return Some(self.zipper.focus());
@@ -356,28 +351,28 @@ impl<T: Uniplate> DirtyZipper<T> {
 
 fn morph_zipper_impl<T: Uniplate, M>(
     transforms: Vec<impl Fn(&T, &M) -> Option<Update<T, M>>>,
-    mut tree: T,
+    tree: T,
     mut meta: M,
 ) -> (T, M) {
-    let mut new_tree = tree;
-    let zipper = Zipper::new(new_tree.clone());
+    let zipper = Zipper::new(tree);
     let mut dirty_zipper = DirtyZipper::new(zipper);
     'main: loop {
-        // I need to do my thing
         for (level, transform) in transforms.iter().enumerate() {
             while let Some(node) = dirty_zipper.get_next_dirty(level) {
                 if let Some(mut update) = transform(&node, &meta) {
                     dirty_zipper.zipper.replace_focus(update.new_subtree);
                     dirty_zipper.mark_dirty();
-                    let (new_tree, m, transformed) = update
+                    let (new_tree, new_meta, transformed) = update
                         .commands
                         .apply(dirty_zipper.zipper.focus().clone(), meta);
-                    meta = m;
+                    meta = new_meta;
+
+                    // Transformations are defined as fn(T) -> T, so sadly we must throw the state
+                    // away
                     if transformed {
                         dirty_zipper.state = State::new();
                         dirty_zipper.zipper = Zipper::new(new_tree);
                     }
-                    // update.commands.apply(dirtyZipper.zipper.focus().clone(), meta);
                     continue 'main;
                 } else {
                     dirty_zipper.state.mark_cleanliness(level + 1);
