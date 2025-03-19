@@ -2,6 +2,7 @@
 use conjure_core::ast::SymbolTable;
 use conjure_core::bug;
 use conjure_core::rule_engine::get_rules_grouped;
+
 use conjure_core::ast::AbstractLiteral;
 use conjure_core::ast::Domain;
 use conjure_core::rule_engine::rewrite_naive;

@@ -809,7 +809,6 @@ impl Expression {
             _ => None,
         }
     }
-  
 }
 
 impl From<i32> for Expression {
