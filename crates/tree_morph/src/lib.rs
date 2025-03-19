@@ -469,7 +469,7 @@ mod update;
 
 /// Re-exported functions and types for convenience.
 pub mod prelude {
-    use super::*;
+    use super::{commands, engine, helpers, rule, update};
 
     pub use crate::rule_fns;
     pub use commands::Commands;

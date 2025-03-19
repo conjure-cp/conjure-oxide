@@ -16,12 +16,10 @@ use conjure_core::{into_matrix_expr, matrix_expr, Model};
 use std::collections::{BTreeMap, BTreeSet};
 
 pub fn parse_essence_file_native(
-    path: &str,
-    filename: &str,
-    extension: &str,
+    filepath: &str,
     context: Arc<RwLock<Context<'static>>>,
 ) -> Result<Model, EssenceParseError> {
-    let (tree, source_code) = get_tree(path, filename, extension);
+    let (tree, source_code) = get_tree(filepath);
 
     let mut model = Model::new(context);
     let root_node = tree.root_node();
@@ -46,7 +44,7 @@ pub fn parse_essence_file_native(
                 }
                 model.as_submodel_mut().add_constraints(constraint_vec);
             }
-            "e_prime_label" => {}
+            "language_label" => {}
             "letting_statement_list" => {
                 let letting_vars = parse_letting_statement(statement, &source_code);
                 model.as_submodel_mut().symbols_mut().extend(letting_vars);
@@ -75,10 +73,9 @@ pub fn parse_essence_file_native(
     Ok(model)
 }
 
-fn get_tree(path: &str, filename: &str, extension: &str) -> (Tree, String) {
-    let pth = format!("{path}/{filename}.{extension}");
-    let source_code = fs::read_to_string(&pth)
-        .unwrap_or_else(|_| panic!("Failed to read the source code file {}", pth));
+fn get_tree(filepath: &str) -> (Tree, String) {
+    let source_code = fs::read_to_string(filepath)
+        .unwrap_or_else(|_| panic!("Failed to read the source code file {}", filepath));
     let mut parser = Parser::new();
     parser.set_language(&LANGUAGE.into()).unwrap();
     (
@@ -235,7 +232,8 @@ fn parse_letting_statement(letting_statement_list: Node, source_code: &str) -> S
 
 fn parse_constraint(constraint: Node, source_code: &str, root: &Node) -> Expression {
     match constraint.kind() {
-        "constraint" | "expression" => child_expr(constraint, source_code, root),
+        "constraint" | "expression" | "boolean_expr" | "comparison_expr" | "arithmetic_expr"
+        | "primary_expr" | "sub_expr" => child_expr(constraint, source_code, root),
         "not_expr" => Expression::Not(
             Metadata::new(),
             Box::new(child_expr(constraint, source_code, root)),
@@ -346,6 +344,9 @@ fn parse_constraint(constraint: Node, source_code: &str, root: &Node) -> Express
                 Metadata::new(),
                 Atom::Reference(Name::UserName(variable_name)),
             )
+        }
+        "ERROR" => {
+            panic!("");
         }
         "from_solution" => match root.kind() {
             "dominance_relation" => {
