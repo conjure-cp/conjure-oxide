@@ -2,8 +2,8 @@ use std::collections::VecDeque;
 use uniplate::Uniplate;
 
 enum Command<T: Uniplate, M> {
-    Transform(fn(T) -> T),
-    MutMeta(fn(&mut M)),
+    Transform(Box<dyn FnOnce(T) -> T>),
+    MutMeta(Box<dyn FnOnce(&mut M)>),
 }
 
 /// A queue of commands (side-effects) to be applied after a successful rule application.
@@ -17,8 +17,8 @@ enum Command<T: Uniplate, M> {
 /// A rule may not be applied due to different reasons, for example:
 /// - It does not return a new subtree (i.e. it returns `None`).
 /// - It returns a new subtree but the resulting [`Update`](crate::update::Update) is not chosen
-/// by the user-defined selector function. The function may select a different rule's update or
-/// no update at all.
+///   by the user-defined selector function. The function may select a different rule's update or
+///   no update at all.
 /// - It is part of a lower-priority rule group and a higher-priority rule is applied first.
 ///
 /// In these cases, any side-effects which are registered by the rule are not applied and are
@@ -38,11 +38,11 @@ enum Command<T: Uniplate, M> {
 /// }
 ///
 /// fn rule(cmds: &mut Commands<Expr, bool>, subtree: &Expr, meta: &bool) -> Option<Expr> {
-///     cmds.transform(|t| match t { // A pure transformation (no other side-effects)
+///     cmds.transform(Box::new(|t| match t { // A pure transformation (no other side-effects)
 ///         Expr::B => Expr::C,
 ///         _ => t,
-///     });
-///     cmds.mut_meta(|m| *m = true); // Set the metadata to 'true'
+///     }));
+///     cmds.mut_meta(Box::new(|m: &mut bool| *m = true)); // Set the metadata to 'true'
 ///
 ///     match subtree {
 ///         Expr::A => Some(Expr::B),
@@ -57,7 +57,6 @@ enum Command<T: Uniplate, M> {
 /// assert_eq!(result, Expr::C);
 /// assert_eq!(meta, true);
 /// ```
-
 pub struct Commands<T: Uniplate, M> {
     commands: VecDeque<Command<T, M>>,
 }
@@ -76,14 +75,14 @@ impl<T: Uniplate, M> Commands<T, M> {
     /// tree.
     ///
     /// Side-effects are applied in order of registration after the rule is applied.
-    pub fn transform(&mut self, f: fn(T) -> T) {
+    pub fn transform(&mut self, f: Box<dyn FnOnce(T) -> T>) {
         self.commands.push_back(Command::Transform(f));
     }
 
     /// Updates the global metadata in-place via a mutable reference.
     ///
     /// Side-effects are applied in order of registration after the rule is applied.
-    pub fn mut_meta(&mut self, f: fn(&mut M)) {
+    pub fn mut_meta(&mut self, f: Box<dyn FnOnce(&mut M)>) {
         self.commands.push_back(Command::MutMeta(f));
     }
 

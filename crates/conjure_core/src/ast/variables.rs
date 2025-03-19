@@ -1,8 +1,9 @@
 use std::fmt::Display;
 
+use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 
-use crate::ast::domains::{Domain, Range};
+use crate::{ast::domains::Domain, representation::Representation};
 
 use super::{types::Typeable, ReturnType};
 
@@ -28,14 +29,24 @@ use super::{types::Typeable, ReturnType};
 /// println!("Boolean Variable: {}", bool_var);
 /// println!("Integer Variable: {}", int_var);
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Derivative)]
+#[derivative(Hash, PartialEq, Eq)]
 pub struct DecisionVariable {
     pub domain: Domain,
+
+    // use this through [`Declaration`] - in the future, this probably will be stored in
+    // declaration / domain, not here.
+    #[serde(skip)]
+    #[derivative(Hash = "ignore", PartialEq = "ignore")]
+    pub(super) representations: Vec<Vec<Box<dyn Representation>>>,
 }
 
 impl DecisionVariable {
     pub fn new(domain: Domain) -> DecisionVariable {
-        DecisionVariable { domain }
+        DecisionVariable {
+            domain,
+            representations: vec![],
+        }
     }
 }
 
@@ -47,24 +58,6 @@ impl Typeable for DecisionVariable {
 
 impl Display for DecisionVariable {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self.domain {
-            Domain::BoolDomain => write!(f, "bool"),
-            Domain::IntDomain(ranges) => {
-                let mut first = true;
-                for r in ranges {
-                    if first {
-                        first = false;
-                    } else {
-                        write!(f, " or ")?;
-                    }
-                    match r {
-                        Range::Single(i) => write!(f, "{}", i)?,
-                        Range::Bounded(i, j) => write!(f, "{}..{}", i, j)?,
-                    }
-                }
-                Ok(())
-            }
-            Domain::DomainReference(name) => write!(f, "{}", name),
-        }
+        self.domain.fmt(f)
     }
 }

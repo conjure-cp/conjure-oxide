@@ -215,7 +215,7 @@
 //! fn rule_eval_add(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -> Option<Expr> {
 //!     if let Expr::Add(a, b) = subtree {
 //!         if let (Expr::Val(a_v), Expr::Val(b_v)) = (a.as_ref(), b.as_ref()) {
-//!             cmds.mut_meta(|m| m.num_applications_addition += 1); //new
+//!             cmds.mut_meta(Box::new(|m: &mut Meta| m.num_applications_addition += 1)); //new
 //!             return Some(Expr::Val(a_v + b_v));
 //!         }
 //!     }
@@ -242,7 +242,7 @@
 //! # num_applications_addition: i32,
 //! # }
 //! fn rule_eval_add(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -> Option<Expr> {
-//!     cmds.mut_meta(|m| m.num_applications_addition += 1); //new location
+//!     cmds.mut_meta(Box::new(|m: &mut Meta| m.num_applications_addition += 1)); //new location
 //!     if let Expr::Add(a, b) = subtree {
 //!         if let (Expr::Val(a_v), Expr::Val(b_v)) = (a.as_ref(), b.as_ref()) {
 //!             return Some(Expr::Val(a_v + b_v));
@@ -270,7 +270,7 @@
 //! # fn rule_eval_add(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -> Option<Expr> {
 //! #     if let Expr::Add(a, b) = subtree {
 //! #         if let (Expr::Val(a_v), Expr::Val(b_v)) = (a.as_ref(), b.as_ref()) {
-//! #             cmds.mut_meta(|m| m.num_applications_addition += 1); //new
+//! #             cmds.mut_meta(Box::new(|m: &mut Meta| m.num_applications_addition += 1)); //new
 //! #             return Some(Expr::Val(a_v + b_v));
 //! #         }
 //! #     }
@@ -339,7 +339,7 @@
 //! # fn rule_eval_add(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -> Option<Expr> {
 //! #     if let Expr::Add(a, b) = subtree {
 //! #         if let (Expr::Val(a_v), Expr::Val(b_v)) = (a.as_ref(), b.as_ref()) {
-//! #             cmds.mut_meta(|m| m.num_applications_addition += 1); //new
+//! #             cmds.mut_meta(Box::new(|m: &mut Meta| m.num_applications_addition += 1)); //new
 //! #             return Some(Expr::Val(a_v + b_v));
 //! #         }
 //! #     }
@@ -404,7 +404,7 @@
 //! # fn rule_eval_add(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -> Option<Expr> {
 //! #     if let Expr::Add(a, b) = subtree {
 //! #         if let (Expr::Val(a_v), Expr::Val(b_v)) = (a.as_ref(), b.as_ref()) {
-//! #             cmds.mut_meta(|m| m.num_applications_addition += 1); //new
+//! #             cmds.mut_meta(Box::new(|m: &mut Meta| m.num_applications_addition += 1)); //new
 //! #             return Some(Expr::Val(a_v + b_v));
 //! #         }
 //! #     }
@@ -469,7 +469,7 @@ mod update;
 
 /// Re-exported functions and types for convenience.
 pub mod prelude {
-    use super::*;
+    use super::{commands, engine, helpers, rule, update};
 
     pub use crate::rule_fns;
     pub use commands::Commands;

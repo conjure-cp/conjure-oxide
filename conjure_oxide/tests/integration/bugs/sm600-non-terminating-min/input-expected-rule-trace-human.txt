@@ -5,11 +5,17 @@ find b: int(1..7)
 
 such that
 
-(Sum([Min([a, b]), 6]) <= 10)
+(Sum([min([a,b;int(1..2)]), 6]) <= 10)
 
 --
 
-Min([a, b]), 
+min([a,b;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+min([a,b;int(1..)]) 
+
+--
+
+min([a,b;int(1..)]), 
    ~~> min_to_var ([("Base", 6000)]) 
 __0 
 new variables:
@@ -17,7 +23,7 @@ new variables:
 new constraints:
   (__0 <= a)
   (__0 <= b)
-  Or([(__0 = a), (__0 = b)])
+  or([(__0 = a),(__0 = b);int(1..)])
 --
 
 (Sum([__0, 6]) <= 10), 
@@ -49,5 +55,5 @@ such that
 SumLeq([__0, 6], 10),
 Ineq(__0, a, 0),
 Ineq(__0, b, 0),
-Or([(__0 = a), (__0 = b)])
+or([(__0 = a),(__0 = b);int(1..)])
 

@@ -1,82 +1,21 @@
 use std::collections::BTreeMap;
-use std::io::Read;
-use std::path::Path;
+use std::rc::Rc;
 use std::string::ToString;
 use std::sync::{Arc, Mutex, RwLock};
 
 use conjure_core::ast::{Literal, Name};
+use conjure_core::bug;
 use conjure_core::context::Context;
-use rand::Rng as _;
-use serde_json::{from_str, Map, Value as JsonValue};
-use thiserror::Error as ThisError;
+use itertools::Itertools as _;
+use serde_json::{Map, Value as JsonValue};
+use tempfile::tempdir;
 
-use std::fs::File;
-
-use crate::model_from_json;
 use crate::solver::adaptors::Minion;
 use crate::solver::Solver;
 use crate::utils::json::sort_json_object;
-use crate::Error as ParseErr;
-use crate::Model;
+use crate::{parse_essence_file, EssenceParseError, Model};
 
 use glob::glob;
-
-#[derive(Debug, ThisError)]
-pub enum EssenceParseError {
-    #[error("Error running conjure pretty: {0}")]
-    ConjurePrettyError(String),
-    #[error("Error running conjure solve: {0}")]
-    ConjureSolveError(String),
-    #[error("Error parsing essence file: {0}")]
-    ParseError(ParseErr),
-    #[error("Error parsing Conjure solutions file: {0}")]
-    ConjureSolutionsError(String),
-    #[error("No solutions file for {0}")]
-    ConjureNoSolutionsFile(String),
-}
-
-impl From<ParseErr> for EssenceParseError {
-    fn from(e: ParseErr) -> Self {
-        EssenceParseError::ParseError(e)
-    }
-}
-
-pub fn parse_essence_file(
-    path: &str,
-    filename: &str,
-    extension: &str,
-    context: Arc<RwLock<Context<'static>>>,
-) -> Result<Model, EssenceParseError> {
-    let mut cmd = std::process::Command::new("conjure");
-    let output = match cmd
-        .arg("pretty")
-        .arg("--output-format=astjson")
-        .arg(format!("{path}/{filename}.{extension}"))
-        .output()
-    {
-        Ok(output) => output,
-        Err(e) => return Err(EssenceParseError::ConjurePrettyError(e.to_string())),
-    };
-
-    if !output.status.success() {
-        let stderr_string = String::from_utf8(output.stderr)
-            .unwrap_or("stderr is not a valid UTF-8 string".to_string());
-        return Err(EssenceParseError::ConjurePrettyError(stderr_string));
-    }
-
-    let astjson = match String::from_utf8(output.stdout) {
-        Ok(astjson) => astjson,
-        Err(e) => {
-            return Err(EssenceParseError::ConjurePrettyError(format!(
-                "Error parsing output from conjure: {:#?}",
-                e
-            )))
-        }
-    };
-
-    let parsed_model = model_from_json(&astjson, context)?;
-    Ok(parsed_model)
-}
 
 pub fn get_minion_solutions(
     model: Model,
@@ -84,6 +23,10 @@ pub fn get_minion_solutions(
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
     let solver = Solver::new(Minion::new());
     println!("Building Minion model...");
+
+    // for later...
+    let symbols_rc = Rc::clone(model.as_submodel().symbols_ptr_unchecked());
+
     let solver = solver.load_model(model)?;
 
     println!("Running Minion...");
@@ -118,32 +61,63 @@ pub fn get_minion_solutions(
     solver.save_stats_to_context();
 
     #[allow(clippy::unwrap_used)]
-    let sols = (*all_solutions_ref).lock().unwrap();
+    let mut sols_guard = (*all_solutions_ref).lock().unwrap();
+    let sols = &mut *sols_guard;
+    let symbols = symbols_rc.borrow();
 
-    Ok((*sols).clone())
+    let names = symbols.clone().into_iter().map(|x| x.0).collect_vec();
+    let representations = names
+        .into_iter()
+        .filter_map(|x| symbols.representations_for(&x).map(|repr| (x, repr)))
+        .filter_map(|(name, reprs)| {
+            if reprs.is_empty() {
+                return None;
+            }
+            assert!(
+                reprs.len() <= 1,
+                "multiple representations for a variable is not yet implemented"
+            );
+
+            assert_eq!(
+                reprs[0].len(),
+                1,
+                "nested representations are not yet implemented"
+            );
+            Some((name, reprs[0][0].clone()))
+        })
+        .collect_vec();
+
+    for sol in sols.iter_mut() {
+        for (name, representation) in representations.iter() {
+            let value = representation.value_up(sol).unwrap();
+            sol.insert(name.clone(), value);
+        }
+
+        // remove represented variables
+        *sol = sol
+            .clone()
+            .into_iter()
+            .filter(|(name, _)| !matches!(name, Name::RepresentedName(_, _, _)))
+            .collect();
+    }
+
+    Ok(sols.clone().into_iter().filter(|x| !x.is_empty()).collect())
 }
 
 #[allow(clippy::unwrap_used)]
 pub fn get_solutions_from_conjure(
     essence_file: &str,
+    context: Arc<RwLock<Context<'static>>>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, EssenceParseError> {
-    // this is ran in parallel, and we have no guarantee by rust that invocations to this function
-    // don't share the same tmp dir.
-    let mut rng = rand::rng();
-    let rand: i8 = rng.random();
-
-    let mut tmp_dir = std::env::temp_dir();
-    tmp_dir.push(Path::new(&rand.to_string()));
+    let tmp_dir = tempdir().unwrap();
 
     let mut cmd = std::process::Command::new("conjure");
     let output = cmd
         .arg("solve")
-        .arg("--output-format=json")
-        .arg("--solutions-in-one-file")
         .arg("--number-of-solutions=all")
         .arg("--copy-solutions=no")
         .arg("-o")
-        .arg(&tmp_dir)
+        .arg(tmp_dir.path())
         .arg(essence_file)
         .output()
         .map_err(|e| EssenceParseError::ConjureSolveError(e.to_string()))?;
@@ -155,58 +129,38 @@ pub fn get_solutions_from_conjure(
         )));
     }
 
-    let solutions_files: Vec<_> = glob(&format!("{}/*.solutions.json", tmp_dir.display()))
+    let solutions_files: Vec<_> = glob(&format!("{}/*.solution", tmp_dir.path().display()))
         .unwrap()
         .collect();
 
-    if solutions_files.is_empty() {
-        return Err(EssenceParseError::ConjureNoSolutionsFile(
-            tmp_dir.display().to_string(),
-        ));
+    let mut solutions_set = vec![];
+    for solutions_file in solutions_files {
+        let solutions_file = solutions_file.unwrap();
+        let model = parse_essence_file(solutions_file.to_str().unwrap(), Arc::clone(&context))
+            .expect("conjure solutions files to be parsable");
+
+        let mut solutions = BTreeMap::new();
+        for (name, decl) in model.as_submodel().symbols().clone().into_iter() {
+            match decl.kind() {
+                conjure_core::ast::DeclarationKind::ValueLetting(expression) => {
+                    let literal = expression
+                        .clone()
+                        .to_literal()
+                        .expect("lettings in a solution should only contain literals");
+                    solutions.insert(name, literal);
+                }
+                _ => {
+                    bug!("only expect value letting declarations in solutions")
+                }
+            }
+        }
+        solutions_set.push(solutions);
     }
 
-    let solutions_file = solutions_files[0].as_ref().unwrap();
-    let mut file = File::open(solutions_file).unwrap();
-
-    let mut json_str = String::new();
-    file.read_to_string(&mut json_str).unwrap();
-    let mut json: JsonValue =
-        from_str(&json_str).map_err(|e| EssenceParseError::ConjureSolutionsError(e.to_string()))?;
-    json.sort_all_objects();
-
-    let solutions = json
-        .as_array()
-        .ok_or(EssenceParseError::ConjureSolutionsError(
-            "expected solutions to be an array".to_owned(),
-        ))?;
-
-    let mut solutions_set: Vec<BTreeMap<Name, Literal>> = Vec::new();
-
-    for solution in solutions {
-        let mut solution_map = BTreeMap::new();
-        let solution = solution
-            .as_object()
-            .ok_or(EssenceParseError::ConjureSolutionsError(
-                "invalid json".to_owned(),
-            ))?;
-        for (name, value) in solution {
-            let name = Name::UserName(name.to_owned());
-            let value = match value {
-                JsonValue::Bool(b) => Ok(Literal::Bool(*b)),
-                JsonValue::Number(n) => Ok(Literal::Int(n.as_i64().unwrap().try_into().unwrap())),
-                a => Err(EssenceParseError::ConjureSolutionsError(
-                    format!("expected constant, got {}", a).to_owned(),
-                )),
-            }?;
-            solution_map.insert(name, value);
-        }
-
-        if !solution.is_empty() {
-            solutions_set.push(solution_map);
-        }
-    }
-
-    Ok(solutions_set)
+    Ok(solutions_set
+        .into_iter()
+        .filter(|x| !x.is_empty())
+        .collect())
 }
 
 pub fn minion_solutions_to_json(solutions: &Vec<BTreeMap<Name, Literal>>) -> JsonValue {
@@ -214,10 +168,7 @@ pub fn minion_solutions_to_json(solutions: &Vec<BTreeMap<Name, Literal>>) -> Jso
     for solution in solutions {
         let mut json_solution = Map::new();
         for (var_name, constant) in solution {
-            let serialized_constant = match constant {
-                Literal::Int(i) => JsonValue::Number((*i).into()),
-                Literal::Bool(b) => JsonValue::Bool(*b),
-            };
+            let serialized_constant = serde_json::to_value(constant).unwrap();
             json_solution.insert(var_name.to_string(), serialized_constant);
         }
         json_solutions.push(JsonValue::Object(json_solution));

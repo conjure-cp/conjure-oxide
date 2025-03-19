@@ -1,6 +1,10 @@
 #![allow(clippy::expect_used)]
+use conjure_core::ast::SymbolTable;
+use conjure_core::bug;
+use conjure_core::rule_engine::get_rules_grouped;
 
-use conjure_core::rule_engine::rewrite_model;
+use conjure_core::ast::AbstractLiteral;
+use conjure_core::ast::Domain;
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::parse_essence_file_native;
@@ -16,8 +20,9 @@ use tracing::{span, Level, Metadata as OtherMetadata};
 use tracing_subscriber::{
     filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
 };
+use tree_morph::{helpers::select_panic, prelude::*};
 
-use uniplate::Biplate;
+use uniplate::{Biplate, Uniplate};
 
 use std::path::Path;
 use std::sync::Arc;
@@ -29,14 +34,12 @@ use conjure_core::ast::{Expression, Literal, Name};
 use conjure_core::context::Context;
 use conjure_oxide::rule_engine::resolve_rule_sets;
 use conjure_oxide::utils::conjure::minion_solutions_to_json;
-use conjure_oxide::utils::conjure::{
-    get_minion_solutions, get_solutions_from_conjure, parse_essence_file,
-};
+use conjure_oxide::utils::conjure::{get_minion_solutions, get_solutions_from_conjure};
 use conjure_oxide::utils::testing::save_stats_json;
 use conjure_oxide::utils::testing::{
     read_minion_solutions_json, read_model_json, save_minion_solutions_json, save_model_json,
 };
-use conjure_oxide::SolverFamily;
+use conjure_oxide::{parse_essence_file, SolverFamily};
 use pretty_assertions::assert_eq;
 use serde::Deserialize;
 
@@ -53,7 +56,8 @@ struct TestConfig {
     compare_solver_solutions: bool, // Stage 3b: Compares Minion and Conjure solutions
     validate_rule_traces: bool, // Stage 4a: Checks rule traces against expected outputs
 
-    enable_native_impl: bool,
+    enable_morph_impl: bool,
+    enable_naive_impl: bool,
     enable_rewriter_impl: bool,
 }
 
@@ -61,7 +65,8 @@ impl Default for TestConfig {
     fn default() -> Self {
         Self {
             extra_rewriter_asserts: vec!["vector_operators_have_partially_evaluated".into()],
-            enable_native_impl: false,
+            enable_naive_impl: true,
+            enable_morph_impl: false,
             enable_rewriter_impl: true,
             parse_model_default: true,
             enable_native_parser: false,
@@ -69,7 +74,7 @@ impl Default for TestConfig {
             enable_extra_validation: false,
             solve_with_minion: true,
             compare_solver_solutions: false,
-            validate_rule_traces: false,
+            validate_rule_traces: true,
         }
     }
 }
@@ -84,6 +89,8 @@ impl TestConfig {
                 "PARSE_MODEL_DEFAULT",
                 self.parse_model_default,
             ),
+            enable_morph_impl: env_var_override_bool("ENABLE_MORPH_IMPL", self.parse_model_default),
+            enable_naive_impl: env_var_override_bool("ENABLE_NAIVE_IMPL", self.enable_naive_impl),
             enable_native_parser: env_var_override_bool(
                 "ENABLE_NATIVE_PARSER",
                 self.enable_native_parser,
@@ -104,10 +111,6 @@ impl TestConfig {
             validate_rule_traces: env_var_override_bool(
                 "VALIDATE_RULE_TRACES",
                 self.validate_rule_traces,
-            ),
-            enable_native_impl: env_var_override_bool(
-                "ENABLE_NATIVE_IMPL",
-                self.enable_native_impl,
             ),
             enable_rewriter_impl: env_var_override_bool(
                 "ENABLE_REWRITER_IMPL",
@@ -238,10 +241,11 @@ fn integration_test_inner(
         };
 
     let config = file_config.merge_env();
+    let file_path = format!("{path}/{essence_base}.{extension}");
 
     // Stage 1a: Parse the model using the normal parser (run unless explicitly disabled)
-    let model = if config.parse_model_default {
-        let parsed = parse_essence_file(path, essence_base, extension, context.clone())?;
+    let parsed_model = if config.parse_model_default {
+        let parsed = parse_essence_file(&file_path, context.clone())?;
         if verbose {
             println!("Parsed model: {:#?}", parsed);
         }
@@ -254,7 +258,7 @@ fn integration_test_inner(
     // Stage 1b: Run native parser (only if explicitly enabled)
     let mut model_native = None;
     if config.enable_native_parser {
-        let mn = parse_essence_file_native(path, essence_base, extension, context.clone())?;
+        let mn = parse_essence_file_native(&file_path, context.clone())?;
         save_model_json(&mn, path, essence_base, "parse")?;
         model_native = Some(mn);
 
@@ -267,20 +271,31 @@ fn integration_test_inner(
     // Stage 2a: Rewrite the model using the rule engine (run unless explicitly disabled)
     let rewritten_model = if config.apply_rewrite_rules {
         let rule_sets = resolve_rule_sets(SolverFamily::Minion, DEFAULT_RULE_SETS)?;
+        let mut model = parsed_model.expect("Model must be parsed in 1a");
 
-        let rewritten = if config.enable_native_impl {
-            rewrite_model(
-                model.as_ref().expect("Model must be parsed in 1a"),
-                &rule_sets,
-            )?
+        let rewritten = if config.enable_naive_impl {
+            rewrite_naive(&model, &rule_sets, false)?
+        } else if config.enable_morph_impl {
+            let submodel = model.as_submodel_mut();
+            let rules_grouped = get_rules_grouped(&rule_sets)
+                .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
+                .into_iter()
+                .map(|(_, rule)| rule.into_iter().map(|f| f.rule).collect_vec())
+                .collect_vec();
+
+            let (expr, symbol_table): (Expression, SymbolTable) = morph(
+                rules_grouped,
+                select_panic,
+                submodel.root().clone(),
+                submodel.symbols().clone(),
+            );
+
+            *submodel.symbols_mut() = symbol_table;
+            submodel.replace_root(expr);
+            model.clone()
         } else {
-            rewrite_naive(
-                model.as_ref().expect("Model must be parsed in 1a"),
-                &rule_sets,
-                false,
-            )?
+            panic!("No rewriter implementation specified")
         };
-
         if verbose {
             println!("Rewritten model: {:#?}", rewritten);
         }
@@ -291,7 +306,7 @@ fn integration_test_inner(
         None
     };
 
-    // Stage 2b: Check model properties (extra_asserts) (Verify additional model properties
+    // Stage 2b: Check model properties (extra_asserts) (Verify additional model properties)
     // (e.g., ensure vector operators are evaluated). (only if explicitly enabled)
     if config.enable_extra_validation {
         for extra_assert in config.extra_rewriter_asserts.clone() {
@@ -326,8 +341,10 @@ fn integration_test_inner(
 
     // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
     if config.compare_solver_solutions || accept && config.solve_with_minion {
-        let conjure_solutions: Vec<BTreeMap<Name, Literal>> =
-            get_solutions_from_conjure(&format!("{}/{}.{}", path, essence_base, extension))?;
+        let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
+            &format!("{}/{}.{}", path, essence_base, extension),
+            Arc::clone(&context),
+        )?;
 
         let username_solutions = normalize_solutions_for_comparison(
             solutions.as_ref().expect("Minion solutions required"),
@@ -342,25 +359,9 @@ fn integration_test_inner(
 
         assert_eq!(
             username_solutions_json, conjure_solutions_json,
-            "Solutions do not match conjure!"
+            "Solutions (<) do not match conjure (>)!"
         );
     }
-
-    // Stage 4a: Check that the generated rules match expected traces (run unless explicitly disabled)
-    let (generated_rule_trace_human, expected_rule_trace_human) = if config.validate_rule_traces {
-        let generated = read_human_rule_trace(path, essence_base, "generated")?;
-        let expected = read_human_rule_trace(path, essence_base, "expected")?;
-
-        // Perform the assertion immediately
-        assert_eq!(
-            expected, generated,
-            "Generated rule trace does not match the expected trace!"
-        );
-
-        (Some(generated), Some(expected))
-    } else {
-        (None, None) // Avoid uninitialized variables when 4a is disabled
-    };
 
     // Before testing against the generated tests, if the generated tests don't exist, make them.
     //
@@ -398,40 +399,88 @@ fn integration_test_inner(
 
     // Check Stage 1b (native parser)
     if config.enable_native_parser {
-        let expected_model = read_model_json(&context, path, essence_base, "expected", "parse")?;
-        let model_native = model_native
-            .clone()
-            .expect("model_native should exist here");
-        if accept {
-            parsed_native_model_dirty = model_native != expected_model;
-        } else {
-            assert_eq!(model_native, expected_model);
+        let expected_model = read_model_json(&context, path, essence_base, "expected", "parse");
+
+        // A JSON reading error could just mean that the ast has changed since the file was
+        // generated.
+        //
+        // When ACCEPT=true, regenerate the json instead of failing the test.
+        match expected_model {
+            Err(_) if accept => {
+                parsed_native_model_dirty = true;
+            }
+            Err(e) => {
+                return Err(Box::new(e));
+            }
+            Ok(expected_model) => {
+                let model_native = model_native
+                    .clone()
+                    .expect("model_native should exist here");
+                if accept {
+                    parsed_native_model_dirty = model_native != expected_model;
+                } else {
+                    assert_eq!(model_native, expected_model);
+                }
+            }
         }
     }
 
     // Check Stage 1a (parsed model)
     if config.parse_model_default {
-        let expected_model = read_model_json(&context, path, essence_base, "expected", "parse")?;
-        let model_from_file = read_model_json(&context, path, essence_base, "generated", "parse")?;
+        let expected_model = read_model_json(&context, path, essence_base, "expected", "parse");
+        let model_from_file = read_model_json(&context, path, essence_base, "generated", "parse");
 
-        if accept {
-            parsed_model_dirty = model_from_file != expected_model;
-        } else {
-            assert_eq!(model_from_file, expected_model);
+        // A JSON reading error could just mean that the ast has changed since the file was
+        // generated.
+        //
+        // When ACCEPT=true, regenerate the json instead of failing the test.
+        match (expected_model, model_from_file) {
+            (Err(_), _) | (_, Err(_)) if accept => {
+                parsed_model_dirty = true;
+            }
+
+            (Err(e), _) => {
+                return Err(Box::new(e));
+            }
+
+            (_, Err(e)) => {
+                return Err(Box::new(e));
+            }
+
+            (Ok(expected_model), Ok(model_from_file)) if accept => {
+                parsed_model_dirty = model_from_file != expected_model;
+            }
+
+            (Ok(expected_model), Ok(model_from_file)) => {
+                assert_eq!(model_from_file, expected_model);
+            }
         }
     }
 
     // Check Stage 2a (rewritten model)
     if config.apply_rewrite_rules {
-        let expected_model = read_model_json(&context, path, essence_base, "expected", "rewrite")?;
-        if accept {
-            rewritten_model_dirty =
-                rewritten_model.expect("Rewritten model must be present in 2a") != expected_model;
-        } else {
-            assert_eq!(
-                rewritten_model.expect("Rewritten model must be present in 2a"),
-                expected_model
-            );
+        let expected_model = read_model_json(&context, path, essence_base, "expected", "rewrite");
+        // A JSON reading error could just mean that the ast has changed since the file was
+        // generated.
+        //
+        // When ACCEPT=true, regenerate the json instead of failing the test.
+        match expected_model {
+            Err(_) if accept => {
+                rewritten_model_dirty = true;
+            }
+            Err(e) => {
+                return Err(Box::new(e));
+            }
+            Ok(expected_model) => {
+                let rewritten_model =
+                    rewritten_model.expect("Rewritten model must be present in 2a");
+
+                if accept {
+                    rewritten_model_dirty = rewritten_model != expected_model;
+                } else {
+                    assert_eq!(rewritten_model, expected_model);
+                }
+            }
         }
     }
 
@@ -443,15 +492,18 @@ fn integration_test_inner(
         assert_eq!(username_solutions_json, expected_solutions_json);
     }
 
-    // Final assertion for rule trace (only if 4a was enabled)
-    if let (Some(expected), Some(generated)) =
-        (expected_rule_trace_human, generated_rule_trace_human)
-    {
+    // Stage 4a: Check that the generated rules trace matches the expected.
+    // We don't check rule trace when morph is enabled.
+    // TODO: Implement rule trace validation for morph
+    if config.validate_rule_traces && !config.enable_morph_impl {
+        let generated = read_human_rule_trace(path, essence_base, "generated")?;
+        let expected = read_human_rule_trace(path, essence_base, "expected")?;
+
         assert_eq!(
             expected, generated,
             "Generated rule trace does not match the expected trace!"
         );
-    }
+    };
 
     if accept {
         // Overwrite expected parse and rewrite models if needed
@@ -500,9 +552,9 @@ fn expected_exists_for(path: &str, test_name: &str, stage: &str, extension: &str
 }
 
 fn normalize_solutions_for_comparison(
-    input_solutions: &Vec<BTreeMap<Name, Literal>>,
+    input_solutions: &[BTreeMap<Name, Literal>],
 ) -> Vec<BTreeMap<Name, Literal>> {
-    let mut normalized = input_solutions.clone();
+    let mut normalized = input_solutions.to_vec();
 
     for solset in &mut normalized {
         // remove machine names
@@ -521,6 +573,36 @@ fn normalize_solutions_for_comparison(
                 match v {
                     Literal::Bool(true) => updates.push((k, Literal::Int(1))),
                     Literal::Bool(false) => updates.push((k, Literal::Int(0))),
+                    Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)) => {
+                        // make all domains the same (this is just in the tester so the types dont
+                        // actually matter)
+
+                        let mut matrix = AbstractLiteral::Matrix(elems, Domain::IntDomain(vec![]));
+                        matrix =
+                            matrix.transform(Arc::new(
+                                move |x: AbstractLiteral<Literal>| match x {
+                                    AbstractLiteral::Matrix(items, _) => {
+                                        let items = items
+                                            .into_iter()
+                                            .map(|x| match x {
+                                                Literal::Bool(false) => Literal::Int(0),
+                                                Literal::Bool(true) => Literal::Int(1),
+                                                x => x,
+                                            })
+                                            .collect_vec();
+                                        let matrix = AbstractLiteral::Matrix(
+                                            items,
+                                            Domain::IntDomain(vec![]),
+                                        );
+                                        eprintln!("inside transform {matrix}");
+                                        matrix
+                                    }
+                                    x => x,
+                                },
+                            ));
+                        eprintln!("matrix {matrix}");
+                        updates.push((k, Literal::AbstractLiteral(matrix)));
+                    }
                     _ => {}
                 }
             }
@@ -541,13 +623,19 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
         use conjure_core::ast::Expression::*;
         match node {
             Sum(_, ref vec) => assert_constants_leq_one(&node, vec),
-            Min(_, ref vec) => assert_constants_leq_one(&node, vec),
-            Max(_, ref vec) => assert_constants_leq_one(&node, vec),
-            Or(_, ref vec) => assert_constants_leq_one(&node, vec),
-            And(_, ref vec) => assert_constants_leq_one(&node, vec),
+            Min(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),
+            Max(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),
+            Or(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),
+            And(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),
             _ => (),
         };
     }
+}
+
+fn assert_constants_leq_one_vec_lit(parent_expr: &Expression, expr: &Expression) {
+    if let Some(exprs) = expr.clone().unwrap_list() {
+        assert_constants_leq_one(parent_expr, &exprs);
+    };
 }
 
 fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {

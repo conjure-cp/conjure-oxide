@@ -5,15 +5,13 @@ use std::sync::{Arc, RwLock};
 
 pub fn parse_essence_file(
     path: &str,
-    filename: &str,
-    extension: &str,
     context: Arc<RwLock<Context<'static>>>,
 ) -> Result<Model, EssenceParseError> {
     let mut cmd = std::process::Command::new("conjure");
     let output = match cmd
         .arg("pretty")
         .arg("--output-format=astjson")
-        .arg(format!("{path}/{filename}.{extension}"))
+        .arg(path)
         .output()
     {
         Ok(output) => output,

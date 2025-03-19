@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 pub enum ReturnType {
     Int,
     Bool,
+    Matrix(Box<ReturnType>),
 }
 
 /// Something with a return type

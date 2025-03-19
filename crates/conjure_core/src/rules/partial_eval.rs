@@ -5,6 +5,7 @@ use itertools::iproduct;
 use uniplate::Biplate;
 
 use crate::ast::SymbolTable;
+use crate::into_matrix_expr;
 use crate::rule_engine::{ApplicationResult, Reduction};
 use crate::{
     ast::{Atom, Expression as Expr, Literal as Lit, Literal::*},
@@ -20,8 +21,14 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // rule infinitely!
     // This is why we always check whether we found a constant or not.
     match expr.clone() {
+        AbstractLiteral(_, _) => Err(RuleNotApplicable),
         DominanceRelation(_, _) => Err(RuleNotApplicable),
         FromSolution(_, _) => Err(RuleNotApplicable),
+        UnsafeIndex(_, _, _) => Err(RuleNotApplicable),
+        UnsafeSlice(_, _, _) => Err(RuleNotApplicable),
+        SafeIndex(_, _, _) => Err(RuleNotApplicable),
+        SafeSlice(_, _, _) => Err(RuleNotApplicable),
+        InDomain(_, _, _) => Err(RuleNotApplicable),
         Bubble(_, _, _) => Err(RuleNotApplicable),
         Atomic(_, _) => Err(RuleNotApplicable),
         Scope(_, _) => Err(RuleNotApplicable),
@@ -92,7 +99,10 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             }
         }
 
-        Min(m, vec) => {
+        Min(m, e) => {
+            let Some(vec) = e.unwrap_list() else {
+                return Err(RuleNotApplicable);
+            };
             let mut acc: Option<i32> = None;
             let mut n_consts = 0;
             let mut new_vec: Vec<Expr> = Vec::new();
@@ -121,11 +131,18 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             if n_consts <= 1 {
                 Err(RuleNotApplicable)
             } else {
-                Ok(Reduction::pure(Min(m, new_vec)))
+                Ok(Reduction::pure(Min(
+                    m,
+                    Box::new(into_matrix_expr![new_vec]),
+                )))
             }
         }
 
-        Max(m, vec) => {
+        Max(m, e) => {
+            let Some(vec) = e.unwrap_list() else {
+                return Err(RuleNotApplicable);
+            };
+
             let mut acc: Option<i32> = None;
             let mut n_consts = 0;
             let mut new_vec: Vec<Expr> = Vec::new();
@@ -154,11 +171,18 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             if n_consts <= 1 {
                 Err(RuleNotApplicable)
             } else {
-                Ok(Reduction::pure(Max(m, new_vec)))
+                Ok(Reduction::pure(Max(
+                    m,
+                    Box::new(into_matrix_expr![new_vec]),
+                )))
             }
         }
         Not(_, _) => Err(RuleNotApplicable),
-        Or(m, terms) => {
+        Or(m, e) => {
+            let Some(terms) = e.unwrap_list() else {
+                return Err(RuleNotApplicable);
+            };
+
             let mut has_changed = false;
 
             // 2. boolean literals
@@ -191,9 +215,15 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 return Err(RuleNotApplicable);
             }
 
-            Ok(Reduction::pure(Or(m, new_terms)))
+            Ok(Reduction::pure(Or(
+                m,
+                Box::new(into_matrix_expr![new_terms]),
+            )))
         }
-        And(_, vec) => {
+        And(_, e) => {
+            let Some(vec) = e.unwrap_list() else {
+                return Err(RuleNotApplicable);
+            };
             let mut new_vec: Vec<Expr> = Vec::new();
             let mut has_const: bool = false;
             for expr in vec {
@@ -213,9 +243,10 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             if !has_const {
                 Err(RuleNotApplicable)
             } else {
-                Ok(Reduction::pure(
-                    expr.with_children_bi(VecDeque::from([new_vec])),
-                ))
+                Ok(Reduction::pure(Expr::And(
+                    Metadata::new(),
+                    Box::new(into_matrix_expr![new_vec]),
+                )))
             }
         }
 
@@ -284,13 +315,17 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         Lt(_, _, _) => Err(RuleNotApplicable),
         SafeDiv(_, _, _) => Err(RuleNotApplicable),
         UnsafeDiv(_, _, _) => Err(RuleNotApplicable),
-        AllDiff(m, vec) => {
+        AllDiff(m, e) => {
+            let Some(vec) = e.unwrap_list() else {
+                return Err(RuleNotApplicable);
+            };
+
             let mut consts: HashSet<i32> = HashSet::new();
 
             // check for duplicate constant values which would fail the constraint
-            for expr in &vec {
+            for expr in vec {
                 if let Expr::Atomic(_, Atom::Literal(Int(x))) = expr {
-                    if !consts.insert(*x) {
+                    if !consts.insert(x) {
                         return Ok(Reduction::pure(Expr::Atomic(m, Atom::Literal(Bool(false)))));
                     }
                 }
@@ -309,6 +344,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
         // As these are in a low level solver form, I'm assuming that these have already been
         // simplified and partially evaluated.
+        FlatAllDiff(_, _) => Err(RuleNotApplicable),
         FlatAbsEq(_, _, _) => Err(RuleNotApplicable),
         FlatIneq(_, _, _, _) => Err(RuleNotApplicable),
         FlatMinusEq(_, _, _) => Err(RuleNotApplicable),

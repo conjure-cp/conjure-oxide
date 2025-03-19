@@ -18,17 +18,17 @@ b % c,
 
 (a != {SafeMod(b,c) @ (c != 0)}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(a != SafeMod(b,c)) @ And([(c != 0)])} 
+{(a != SafeMod(b,c)) @ and([(c != 0);int(1..)])} 
 
 --
 
-{(a != SafeMod(b,c)) @ And([(c != 0)])}, 
+{(a != SafeMod(b,c)) @ and([(c != 0);int(1..)])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-And([(a != SafeMod(b,c)), And([(c != 0)])]) 
+and([(a != SafeMod(b,c)),and([(c != 0);int(1..)]);int(1..)]) 
 
 --
 
-And([(c != 0)]), 
+and([(c != 0);int(1..)]), 
    ~~> remove_unit_vector_and ([("Base", 8800)]) 
 (c != 0) 
 
@@ -58,6 +58,6 @@ find __0: int(0..2)
 
 such that
 
-And([(a != __0), (c != 0)]),
+and([(a != __0),(c != 0);int(1..)]),
 ModEq(b, c, __0)
 

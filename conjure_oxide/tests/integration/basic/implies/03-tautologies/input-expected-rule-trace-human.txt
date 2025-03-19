@@ -10,8 +10,8 @@ find z: bool
 such that
 
 (x) -> (x),
-Or([(a) -> (z), (z) -> (a)]),
-Or([(b) -> (c), (b) -> (Not(c))])
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (Not(c));int(1..2)])
 
 --
 
@@ -22,30 +22,53 @@ true
 --
 
 true,
-Or([(a) -> (z), (z) -> (a)]),
-Or([(b) -> (c), (b) -> (Not(c))]), 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (Not(c));int(1..2)]), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-Or([(a) -> (z), (z) -> (a)]),
-Or([(b) -> (c), (b) -> (Not(c))]) 
+or([(a) -> (z),(z) -> (a);int(1..2)]),
+or([(b) -> (c),(b) -> (Not(c));int(1..2)]) 
 
 --
 
-Or([(a) -> (z), (z) -> (a)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-true 
+(a) -> (z), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+Ineq(a, z, 0) 
 
 --
 
-true,
-Or([(b) -> (c), (b) -> (Not(c))]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-Or([(b) -> (c), (b) -> (Not(c))]) 
+(z) -> (a), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+Ineq(z, a, 0) 
 
 --
 
-Or([(b) -> (c), (b) -> (Not(c))]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-true 
+(b) -> (c), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+Ineq(b, c, 0) 
+
+--
+
+(b) -> (Not(c)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply(Not(c), b) 
+
+--
+
+Not(c), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
+WatchedLiteral(c,false) 
+
+--
+
+or([Ineq(a, z, 0),Ineq(z, a, 0);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([Ineq(a, z, 0),Ineq(z, a, 0);int(1..)]) 
+
+--
+
+or([Ineq(b, c, 0),ReifyImply(WatchedLiteral(c,false), b);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([Ineq(b, c, 0),ReifyImply(WatchedLiteral(c,false), b);int(1..)]) 
 
 --
 
@@ -60,5 +83,6 @@ find z: bool
 
 such that
 
-true
+or([Ineq(a, z, 0),Ineq(z, a, 0);int(1..)]),
+or([Ineq(b, c, 0),ReifyImply(WatchedLiteral(c,false), b);int(1..)])
 

@@ -4,8 +4,8 @@ use std::path::PathBuf;
 use std::process::exit;
 use std::sync::Arc;
 
+use anyhow::anyhow;
 use anyhow::Result as AnyhowResult;
-use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
 use git_version::git_version;
 use schemars::schema_for;
@@ -20,11 +20,10 @@ use conjure_core::rule_engine::rewrite_naive;
 use conjure_core::Model;
 
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
-use conjure_oxide::find_conjure::conjure_executable;
-use conjure_oxide::rule_engine::{resolve_rule_sets, rewrite_model};
+use conjure_oxide::rule_engine::{get_rules, resolve_rule_sets};
 use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
 use conjure_oxide::SolverFamily;
-use conjure_oxide::{get_rules, model_from_json};
+use conjure_oxide::{parse_essence_file, parse_essence_file_native};
 
 static AFTER_HELP_TEXT: &str = include_str!("help_text.txt");
 
@@ -115,6 +114,13 @@ struct Cli {
     /// Only compatible with the default rewriter.
     #[arg(long)]
     _no_check_equally_applicable_rules: bool,
+
+    #[arg(
+        long,
+        default_value_t = false,
+        help = "Use the native parser to parse the essence file"
+    )]
+    enable_native_parser: bool,
 }
 
 #[allow(clippy::unwrap_used)]
@@ -247,48 +253,26 @@ pub fn main() -> AnyhowResult<()> {
     /*        Parse essence to json using Conjure         */
     /******************************************************/
 
-    conjure_executable()
-        .map_err(|e| anyhow!("Could not find correct conjure executable: {}", e))?;
-
-    let mut cmd = std::process::Command::new("conjure");
-    let output = cmd
-        .arg("pretty")
-        .arg("--output-format=astjson")
-        .arg(input_file)
-        .output()?;
-
-    let conjure_stderr = String::from_utf8(output.stderr)?;
-    if !conjure_stderr.is_empty() {
-        bail!(conjure_stderr);
-    }
-
-    let astjson = String::from_utf8(output.stdout)?;
-
     let context = Context::new_ptr(
         target_family,
         extra_rule_sets.iter().map(|rs| rs.to_string()).collect(),
         rules,
         rule_sets.clone(),
     );
-
     context.write().unwrap().file_name = Some(input.to_str().expect("").into());
 
-    if cfg!(feature = "extra-rule-checks") {
-        tracing::info!("extra-rule-checks: enabled");
+    let mut model;
+    if cli.enable_native_parser {
+        model = parse_essence_file_native(input_file, context.clone())?;
     } else {
-        tracing::info!("extra-rule-checks: disabled");
+        model = parse_essence_file(input_file, context.clone())?;
     }
-
-    let mut model = model_from_json(&astjson, context.clone())?;
 
     tracing::info!("Initial model: \n{}\n", model);
 
     tracing::info!("Rewriting model...");
 
-    if cli.use_optimising_rewriter {
-        tracing::info!("Using the dirty-clean rewriter...");
-        model = rewrite_model(&model, &rule_sets)?;
-    } else {
+    if !cli.use_optimising_rewriter {
         tracing::info!("Rewriting model...");
         model = rewrite_naive(&model, &rule_sets, cli.check_equally_applicable_rules)?;
     }

@@ -18,29 +18,29 @@ y % z,
 
 x % {SafeMod(y,z) @ (z != 0)}, 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{x % SafeMod(y,z) @ And([(z != 0)])} 
+{x % SafeMod(y,z) @ and([(z != 0);int(1..)])} 
 
 --
 
-({x % SafeMod(y,z) @ And([(z != 0)])} = 3), 
+({x % SafeMod(y,z) @ and([(z != 0);int(1..)])} = 3), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(x % SafeMod(y,z) = 3) @ And([And([(z != 0)])])} 
+{(x % SafeMod(y,z) = 3) @ and([and([(z != 0);int(1..)]);int(1..)])} 
 
 --
 
-{(x % SafeMod(y,z) = 3) @ And([And([(z != 0)])])}, 
+{(x % SafeMod(y,z) = 3) @ and([and([(z != 0);int(1..)]);int(1..)])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-And([(x % SafeMod(y,z) = 3), And([And([(z != 0)])])]) 
+and([(x % SafeMod(y,z) = 3),and([and([(z != 0);int(1..)]);int(1..)]);int(1..)]) 
 
 --
 
-And([And([(z != 0)])]), 
+and([and([(z != 0);int(1..)]);int(1..)]), 
    ~~> remove_unit_vector_and ([("Base", 8800)]) 
-And([(z != 0)]) 
+and([(z != 0);int(1..)]) 
 
 --
 
-And([(z != 0)]), 
+and([(z != 0);int(1..)]), 
    ~~> remove_unit_vector_and ([("Base", 8800)]) 
 (z != 0) 
 
@@ -54,25 +54,25 @@ x % SafeMod(y,z),
 
 ({SafeMod(x,SafeMod(y,z)) @ (SafeMod(y,z) != 0)} = 3), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(SafeMod(x,SafeMod(y,z)) = 3) @ And([(SafeMod(y,z) != 0)])} 
+{(SafeMod(x,SafeMod(y,z)) = 3) @ and([(SafeMod(y,z) != 0);int(1..)])} 
 
 --
 
-{(SafeMod(x,SafeMod(y,z)) = 3) @ And([(SafeMod(y,z) != 0)])}, 
+{(SafeMod(x,SafeMod(y,z)) = 3) @ and([(SafeMod(y,z) != 0);int(1..)])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-And([(SafeMod(x,SafeMod(y,z)) = 3), And([(SafeMod(y,z) != 0)])]) 
+and([(SafeMod(x,SafeMod(y,z)) = 3),and([(SafeMod(y,z) != 0);int(1..)]);int(1..)]) 
 
 --
 
-And([And([(SafeMod(x,SafeMod(y,z)) = 3), And([(SafeMod(y,z) != 0)])]), (z != 0)]), 
+and([and([(SafeMod(x,SafeMod(y,z)) = 3),and([(SafeMod(y,z) != 0);int(1..)]);int(1..)]),(z != 0);int(1..)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
-And([(SafeMod(x,SafeMod(y,z)) = 3), (SafeMod(y,z) != 0), (z != 0)]) 
+and([(SafeMod(x,SafeMod(y,z)) = 3),(SafeMod(y,z) != 0),(z != 0);int(1..)]) 
 
 --
 
-Not(And([(SafeMod(x,SafeMod(y,z)) = 3), (SafeMod(y,z) != 0), (z != 0)])), 
+Not(and([(SafeMod(x,SafeMod(y,z)) = 3),(SafeMod(y,z) != 0),(z != 0);int(1..)])), 
    ~~> distribute_not_over_and ([("Base", 8400)]) 
-Or([Not((SafeMod(x,SafeMod(y,z)) = 3)), Not((SafeMod(y,z) != 0)), Not((z != 0))]) 
+or([Not((SafeMod(x,SafeMod(y,z)) = 3)),Not((SafeMod(y,z) != 0)),Not((z != 0));int(1..)]) 
 
 --
 
@@ -140,7 +140,7 @@ find __1: int(0..3)
 
 such that
 
-Or([(__0 != 3), ModEq(y, z, 0), (z = 0)]),
+or([(__0 != 3),ModEq(y, z, 0),(z = 0);int(1..)]),
 ModEq(x, __1, __0),
 ModEq(y, z, __1)
 

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use std::collections::HashSet;
 
 use conjure_core::ast::{Atom, Expression as Expr, Literal as Lit};
@@ -6,9 +7,11 @@ use conjure_core::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationError::RuleNotApplicable,
     ApplicationResult, Reduction,
 };
-use itertools::izip;
+use itertools::{izip, Itertools as _};
 
-use crate::ast::SymbolTable;
+use crate::ast::matrix;
+use crate::ast::{AbstractLiteral, SymbolTable};
+use crate::into_matrix;
 
 register_rule_set!("Constant", ());
 
@@ -32,8 +35,79 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::FromSolution(_, _) => None,
         // Same as Expr::Root, we should not replace the dominance relation with a constant
         Expr::DominanceRelation(_, _) => None,
+        Expr::InDomain(_, e, domain) => {
+            let Expr::Atomic(_, Atom::Literal(lit)) = e.as_ref() else {
+                return None;
+            };
+
+            domain.contains(lit).map(Into::into)
+        }
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
         Expr::Atomic(_, Atom::Reference(_c)) => None,
+        Expr::AbstractLiteral(_, _) => None,
+        Expr::UnsafeIndex(_, subject, indices) | Expr::SafeIndex(_, subject, indices) => {
+            let subject: Lit = subject.as_ref().clone().to_literal()?;
+            let indices: Vec<Lit> = indices
+                .iter()
+                .cloned()
+                .map(|x| x.to_literal())
+                .collect::<Option<Vec<Lit>>>()?;
+
+            let Lit::AbstractLiteral(subject @ AbstractLiteral::Matrix(_, _)) = subject else {
+                return None;
+            };
+
+            matrix::flatten_enumerate(subject)
+                .find(|(i, _)| i == &indices)
+                .map(|(_, x)| x)
+        }
+        Expr::UnsafeSlice(_, subject, indices) | Expr::SafeSlice(_, subject, indices) => {
+            let subject: Lit = subject.as_ref().clone().to_literal()?;
+            let Lit::AbstractLiteral(subject @ AbstractLiteral::Matrix(_, _)) = subject else {
+                return None;
+            };
+
+            let hole_dim = indices
+                .iter()
+                .cloned()
+                .position(|x| x.is_none())
+                .expect("slice expression should have a hole dimension");
+
+            let missing_domain = matrix::index_domains(subject.clone())[hole_dim].clone();
+
+            let indices: Vec<Option<Lit>> = indices
+                .iter()
+                .cloned()
+                .map(|x| {
+                    // the outer option represents success of this iterator, the inner the index
+                    // slice.
+                    match x {
+                        Some(x) => x.to_literal().map(Some),
+                        None => Some(None),
+                    }
+                })
+                .collect::<Option<Vec<Option<Lit>>>>()?;
+
+            let indices_in_slice: Vec<Vec<Lit>> = missing_domain
+                .values()?
+                .into_iter()
+                .map(|i| {
+                    let mut indices = indices.clone();
+                    indices[hole_dim] = Some(i);
+                    // These unwraps will only fail if we have multiple holes.
+                    // As this is invalid, panicking is fine.
+                    indices.into_iter().map(|x| x.unwrap()).collect_vec()
+                })
+                .collect_vec();
+
+            // Note: indices_in_slice is not necessarily sorted, so this is the best way.
+            let elems = matrix::flatten_enumerate(subject)
+                .filter(|(i, _)| indices_in_slice.contains(i))
+                .map(|(_, elem)| elem)
+                .collect();
+
+            Some(Lit::AbstractLiteral(into_matrix![elems]))
+        }
         Expr::Abs(_, e) => un_op::<i32, i32>(|a| a.abs(), e).map(Lit::Int),
         Expr::Eq(_, a, b) => bin_op::<i32, bool>(|a, b| a == b, a, b)
             .or_else(|| bin_op::<bool, bool>(|a, b| a == b, a, b))
@@ -46,11 +120,15 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
         Expr::Not(_, expr) => un_op::<bool, bool>(|e| !e, expr).map(Lit::Bool),
 
-        Expr::And(_, exprs) => vec_op::<bool, bool>(|e| e.iter().all(|&e| e), exprs).map(Lit::Bool),
+        Expr::And(_, e) => {
+            vec_lit_op::<bool, bool>(|e| e.iter().all(|&e| e), e.as_ref()).map(Lit::Bool)
+        }
         // this is done elsewhere instead - root should return a new root with a literal inside it,
         // not a literal
         Expr::Root(_, _) => None,
-        Expr::Or(_, exprs) => vec_op::<bool, bool>(|e| e.iter().any(|&e| e), exprs).map(Lit::Bool),
+        Expr::Or(_, e) => {
+            vec_lit_op::<bool, bool>(|e| e.iter().any(|&e| e), e.as_ref()).map(Lit::Bool)
+        }
         Expr::Imply(_, box1, box2) => {
             let a: &Atom = (&**box1).try_into().ok()?;
             let b: &Atom = (&**box2).try_into().ok()?;
@@ -96,11 +174,11 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Bool(sum >= a.try_into().ok()?))
         }
-        Expr::Min(_, exprs) => {
-            opt_vec_op::<i32, i32>(|e| e.iter().min().copied(), exprs).map(Lit::Int)
+        Expr::Min(_, e) => {
+            opt_vec_lit_op::<i32, i32>(|e| e.iter().min().copied(), e.as_ref()).map(Lit::Int)
         }
-        Expr::Max(_, exprs) => {
-            opt_vec_op::<i32, i32>(|e| e.iter().max().copied(), exprs).map(Lit::Int)
+        Expr::Max(_, e) => {
+            opt_vec_lit_op::<i32, i32>(|e| e.iter().max().copied(), e.as_ref()).map(Lit::Int)
         }
         Expr::UnsafeDiv(_, a, b) | Expr::SafeDiv(_, a, b) => {
             if unwrap_expr::<i32>(b)? == 0 {
@@ -195,16 +273,42 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             Some(Lit::Bool(a ^ b == c))
         }
 
-        Expr::AllDiff(_, es) => {
+        Expr::AllDiff(_, e) => {
+            let es = e.clone().unwrap_list()?;
             let mut lits: HashSet<Lit> = HashSet::new();
             for expr in es {
                 let Expr::Atomic(_, Atom::Literal(x)) = expr else {
                     return None;
                 };
-                if lits.contains(x) {
-                    return Some(Lit::Bool(false));
-                } else {
-                    lits.insert(x.clone());
+                match x {
+                    Lit::Int(_) | Lit::Bool(_) => {
+                        if lits.contains(&x) {
+                            return Some(Lit::Bool(false));
+                        } else {
+                            lits.insert(x.clone());
+                        }
+                    }
+                    Lit::AbstractLiteral(_) => return None, // Reject AbstractLiteral cases
+                }
+            }
+            Some(Lit::Bool(true))
+        }
+        Expr::FlatAllDiff(_, es) => {
+            let mut lits: HashSet<Lit> = HashSet::new();
+            for atom in es {
+                let Atom::Literal(x) = atom else {
+                    return None;
+                };
+
+                match x {
+                    Lit::Int(_) | Lit::Bool(_) => {
+                        if lits.contains(x) {
+                            return Some(Lit::Bool(false));
+                        } else {
+                            lits.insert(x.clone());
+                        }
+                    }
+                    Lit::AbstractLiteral(_) => return None, // Reject AbstractLiteral cases
                 }
             }
             Some(Lit::Bool(true))
@@ -357,10 +461,29 @@ where
     Some(f(a))
 }
 
+fn vec_lit_op<T, A>(f: fn(Vec<T>) -> A, a: &Expr) -> Option<A>
+where
+    T: TryFrom<Lit>,
+{
+    let a = a.clone().unwrap_list()?;
+    let a = a.iter().map(unwrap_expr).collect::<Option<Vec<T>>>()?;
+    Some(f(a))
+}
+
 fn opt_vec_op<T, A>(f: fn(Vec<T>) -> Option<A>, a: &[Expr]) -> Option<A>
 where
     T: TryFrom<Lit>,
 {
+    let a = a.iter().map(unwrap_expr).collect::<Option<Vec<T>>>()?;
+    f(a)
+}
+
+fn opt_vec_lit_op<T, A>(f: fn(Vec<T>) -> Option<A>, a: &Expr) -> Option<A>
+where
+    T: TryFrom<Lit>,
+{
+    let a = a.clone().unwrap_list()?;
+    // FIXME: deal with explicit matrix domains
     let a = a.iter().map(unwrap_expr).collect::<Option<Vec<T>>>()?;
     f(a)
 }

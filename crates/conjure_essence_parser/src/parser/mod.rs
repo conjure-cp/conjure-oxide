@@ -44,13 +44,10 @@ pub fn parse_expressions(src: &str) -> Result<Vec<Expression>, EssenceParseError
 /// Parse an Essence file into a Model using the tree-sitter parser.
 pub fn parse_essence_file_native(
     path: &str,
-    filename: &str,
-    extension: &str,
     context: Arc<RwLock<Context<'static>>>,
 ) -> Result<Model, EssenceParseError> {
-    let pth = format!("{path}/{filename}.{extension}");
-    let source_code = fs::read_to_string(&pth)
-        .unwrap_or_else(|_| panic!("Failed to read the source code file {}", pth));
+    let source_code = fs::read_to_string(&path)
+        .unwrap_or_else(|_| panic!("Failed to read the source code file {}", path));
     parse_essence_with_context(&source_code, context)
 }
 
@@ -90,7 +87,7 @@ pub fn parse_essence_with_context(
                 }
                 model.as_submodel_mut().add_constraints(constraint_vec);
             }
-            "e_prime_label" => {}
+            "language_label" => {}
             "letting_statement_list" => {
                 let letting_vars = parse_letting_statement(statement, &source_code);
                 model.as_submodel_mut().symbols_mut().extend(letting_vars);

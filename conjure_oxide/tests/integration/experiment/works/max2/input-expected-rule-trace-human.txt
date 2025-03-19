@@ -6,12 +6,18 @@ find x: int(1..4)
 
 such that
 
-(Max([a, b]) >= 2),
-(x = Sum([Max([a, b]), 1]))
+(max([a,b;int(1..2)]) >= 2),
+(x = Sum([max([a,b;int(1..2)]), 1]))
 
 --
 
-Max([a, b]), 
+max([a,b;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+max([a,b;int(1..)]) 
+
+--
+
+max([a,b;int(1..)]), 
    ~~> max_to_var ([("Base", 6000)]) 
 __0 
 new variables:
@@ -19,24 +25,7 @@ new variables:
 new constraints:
   (__0 >= a)
   (__0 >= b)
-  Or([(__0 = a), (__0 = b)])
---
-
-Max([a, b]), 
-   ~~> max_to_var ([("Base", 6000)]) 
-__1 
-new variables:
-  find __1: int(1..4)
-new constraints:
-  (__1 >= a)
-  (__1 >= b)
-  Or([(__1 = a), (__1 = b)])
---
-
-(x = Sum([__1, 1])), 
-   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-And([SumLeq([__1, 1], x), SumGeq([__1, 1], x)]) 
-
+  or([(__0 = a),(__0 = b);int(1..)])
 --
 
 (__0 >= 2), 
@@ -54,6 +43,29 @@ Ineq(a, __0, 0)
 (__0 >= b), 
    ~~> geq_to_ineq ([("Minion", 4100)]) 
 Ineq(b, __0, 0) 
+
+--
+
+max([a,b;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+max([a,b;int(1..)]) 
+
+--
+
+max([a,b;int(1..)]), 
+   ~~> max_to_var ([("Base", 6000)]) 
+__1 
+new variables:
+  find __1: int(1..4)
+new constraints:
+  (__1 >= a)
+  (__1 >= b)
+  or([(__1 = a),(__1 = b);int(1..)])
+--
+
+(x = Sum([__1, 1])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+and([SumLeq([__1, 1], x),SumGeq([__1, 1], x);int(1..)]) 
 
 --
 
@@ -80,11 +92,11 @@ find __1: int(1..4)
 such that
 
 Ineq(2, __0, 0),
-And([SumLeq([__1, 1], x), SumGeq([__1, 1], x)]),
+and([SumLeq([__1, 1], x),SumGeq([__1, 1], x);int(1..)]),
 Ineq(a, __0, 0),
 Ineq(b, __0, 0),
-Or([(__0 = a), (__0 = b)]),
+or([(__0 = a),(__0 = b);int(1..)]),
 Ineq(a, __1, 0),
 Ineq(b, __1, 0),
-Or([(__1 = a), (__1 = b)])
+or([(__1 = a),(__1 = b);int(1..)])
 

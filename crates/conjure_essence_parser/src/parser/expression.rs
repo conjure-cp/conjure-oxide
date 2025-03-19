@@ -3,6 +3,7 @@ use tree_sitter::Node;
 
 use conjure_core::ast::{Atom, Expression, Literal, Name};
 use conjure_core::metadata::Metadata;
+use conjure_core::{into_matrix_expr, matrix_expr};
 
 use super::util::named_children;
 
@@ -10,7 +11,8 @@ use super::util::named_children;
 pub fn parse_expression(constraint: Node, source_code: &str, root: &Node) -> Expression {
     // TODO (gskorokhod) - Factor this further (make match arms into separate functions, extract common logic)
     match constraint.kind() {
-        "constraint" | "expression" => child_expr(constraint, source_code, root),
+        "constraint" | "expression" | "boolean_expr" | "comparison_expr" | "arithmetic_expr"
+        | "primary_expr" | "sub_expr" => child_expr(constraint, source_code, root),
         "not_expr" => Expression::Not(
             Metadata::new(),
             Box::new(child_expr(constraint, source_code, root)),
@@ -60,8 +62,8 @@ pub fn parse_expression(constraint: Node, source_code: &str, root: &Node) -> Exp
                 ">=" => Expression::Geq(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 "<" => Expression::Lt(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 ">" => Expression::Gt(Metadata::new(), Box::new(expr1), Box::new(expr2)),
-                "/\\" => Expression::And(Metadata::new(), vec![expr1, expr2]),
-                "\\/" => Expression::Or(Metadata::new(), vec![expr1, expr2]),
+                "/\\" => Expression::And(Metadata::new(), Box::new(matrix_expr![expr1, expr2])),
+                "\\/" => Expression::Or(Metadata::new(), Box::new(matrix_expr![expr1, expr2])),
                 "->" => Expression::Imply(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 _ => panic!("Error: unsupported operator"),
             }
@@ -81,12 +83,14 @@ pub fn parse_expression(constraint: Node, source_code: &str, root: &Node) -> Exp
             let quantifier_type = &source_code[quantifier.start_byte()..quantifier.end_byte()];
 
             match quantifier_type {
-                "and" => Expression::And(Metadata::new(), expr_list),
-                "or" => Expression::Or(Metadata::new(), expr_list),
-                "min" => Expression::Min(Metadata::new(), expr_list),
-                "max" => Expression::Max(Metadata::new(), expr_list),
+                "and" => Expression::And(Metadata::new(), Box::new(into_matrix_expr![expr_list])),
+                "or" => Expression::Or(Metadata::new(), Box::new(into_matrix_expr![expr_list])),
+                "min" => Expression::Min(Metadata::new(), Box::new(into_matrix_expr![expr_list])),
+                "max" => Expression::Max(Metadata::new(), Box::new(into_matrix_expr![expr_list])),
                 "sum" => Expression::Sum(Metadata::new(), expr_list),
-                "allDiff" => Expression::AllDiff(Metadata::new(), expr_list),
+                "allDiff" => {
+                    Expression::AllDiff(Metadata::new(), Box::new(into_matrix_expr![expr_list]))
+                }
                 _ => panic!("Error: unsupported quantifier"),
             }
         }

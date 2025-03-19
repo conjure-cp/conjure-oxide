@@ -38,6 +38,17 @@ fn load_symbol_table(
         let Some(var) = decl.as_var() else {
             continue;
         }; // ignore lettings, etc.
+           //
+
+        // this variable has representations, so ignore it
+        if !conjure_model
+            .as_submodel()
+            .symbols()
+            .representations_for(&name)
+            .is_none_or(|x| x.is_empty())
+        {
+            continue;
+        };
 
         load_var(&name, var, minion_model)?;
     }
@@ -121,8 +132,13 @@ fn _try_add_var(
 
 fn name_to_string(name: conjure_ast::Name) -> String {
     match name {
-        conjure_ast::Name::UserName(x) => x,
+        // print machine names in a custom, easier to regex, way.
         conjure_ast::Name::MachineName(x) => format!("__conjure_machine_name_{}", x),
+        conjure_ast::Name::RepresentedName(name, rule, suffix) => {
+            let name = name_to_string(*name);
+            format!("__conjure_represented_name##{name}##{rule}___{suffix}")
+        }
+        x => format!("{x}"),
     }
 }
 
@@ -173,6 +189,9 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             parse_atom(atom)?,
             minion_ast::Constant::Integer(1),
         )),
+        conjure_ast::Expression::FlatAllDiff(_metadata, atoms) => {
+            Ok(minion_ast::Constraint::AllDiff(parse_atoms(atoms)?))
+        }
         conjure_ast::Expression::FlatSumLeq(_metadata, lhs, rhs) => Ok(
             minion_ast::Constraint::SumLeq(parse_atoms(lhs)?, parse_atom(rhs)?),
         ),
@@ -197,14 +216,26 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
                 parse_atom(c)?,
             ))
         }
-        conjure_ast::Expression::Or(_metadata, exprs) => Ok(minion_ast::Constraint::WatchedOr(
-            exprs
+        conjure_ast::Expression::Or(_metadata, e) => Ok(minion_ast::Constraint::WatchedOr(
+            e.unwrap_matrix_unchecked()
+                .ok_or_else(|| {
+                    SolverError::ModelFeatureNotSupported(
+                        "The inside of an or expression is not a matrix.".to_string(),
+                    )
+                })?
+                .0
                 .iter()
                 .map(|x| parse_expr(x.to_owned()))
                 .collect::<Result<Vec<minion_ast::Constraint>, SolverError>>()?,
         )),
-        conjure_ast::Expression::And(_metadata, exprs) => Ok(minion_ast::Constraint::WatchedAnd(
-            exprs
+        conjure_ast::Expression::And(_metadata, e) => Ok(minion_ast::Constraint::WatchedAnd(
+            e.unwrap_matrix_unchecked()
+                .ok_or_else(|| {
+                    SolverError::ModelFeatureNotSupported(
+                        "The inside of an and expression is not a matrix.".to_string(),
+                    )
+                })?
+                .0
                 .iter()
                 .map(|x| parse_expr(x.to_owned()))
                 .collect::<Result<Vec<minion_ast::Constraint>, SolverError>>()?,
@@ -288,6 +319,11 @@ fn parse_atom(atom: conjure_ast::Atom) -> Result<minion_ast::Var, SolverError> {
             Ok(minion_ast::Var::ConstantAsVar(parse_literal_as_int(l)?))
         }
         conjure_ast::Atom::Reference(name) => Ok(parse_name(name))?,
+
+        x => Err(ModelFeatureNotSupported(format!(
+            "expected a literal or a reference but got `{0}`",
+            x
+        ))),
     }
 }
 
