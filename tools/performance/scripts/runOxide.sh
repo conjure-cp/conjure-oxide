@@ -7,11 +7,12 @@ ESSENCE=$2
 FULL_ESSENCE="$(pwd)/tests/${PROBLEM}/${ESSENCE}"
 
 DATA_DIR="$(pwd)/data/NV_CO/${PROBLEM}/"
-rm -r $DATA_DIR
+rm -r -f $DATA_DIR
 mkdir $DATA_DIR
 JSON_FILE="${DATA_DIR}/oxide-stats.json"
 
-cargo run -- --info-json-path $JSON_FILE $FULL_ESSENCE
+# look into adding one flag 
+../../target/release/conjure_oxide --info-json-path $JSON_FILE $FULL_ESSENCE #this means it uses precompiled co
 
 rm $(pwd)/*.log
 rm $(pwd)/conjure_oxide_log.json

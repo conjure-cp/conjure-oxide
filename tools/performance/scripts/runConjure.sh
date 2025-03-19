@@ -17,11 +17,13 @@ else
     exit 1
 fi
 
-rm -r $DATA_DIR
+rm -r -f $DATA_DIR
 mkdir $DATA_DIR
-conjure solve -o  $DATA_DIR $FULL_ESSENCE
-SOLUTION="${FULL_ESSENCE%.*}"
-SOLUTION="${SOLUTION}.solution"
+
+conjure solve -o $DATA_DIR --number-of-solutions=all $FULL_ESSENCE #what oxide does right now
+SOLUTION=${WORKING_DIR}/tests/${PROBLEM}
+SOLUTION="${SOLUTION}/*.solution"
+
 rm $SOLUTION
 
-rm -f $DATA_DIR/*.{eprime,eprime-solution,eprime-infor,eprime-minion}
+rm -f $DATA_DIR/*.{eprime,eprime-solution,eprime-infor,eprime-minion,conjure-checksum}
