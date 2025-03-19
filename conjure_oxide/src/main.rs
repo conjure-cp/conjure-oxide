@@ -129,7 +129,7 @@ struct Cli {
         long,
         short = 'T',
         default_value_t = false,
-        help = "Enable rule tracing (defaults to false)"
+        help = "Enable rule tracing"
     )]
     tracing: bool,
 
@@ -137,11 +137,15 @@ struct Cli {
         long,
         short = 'O',
         default_value = "stdout",
-        help = "Select output location for trace result: stdout or file (defaults to stdout)"
+        help = "Select output location for trace result: stdout or file"
     )]
     trace_output: String,
 
-    #[arg(long, default_value = "low", help = "Select verbosity level for trace")]
+    #[arg(
+        long,
+        default_value = "medium",
+        help = "Select verbosity level for trace"
+    )]
     verbosity: VerbosityLevel,
 
     #[arg(
@@ -152,7 +156,11 @@ struct Cli {
     )]
     formatter: String,
 
-    #[arg(long, short = 'f', help = "Save rule trace to the given JSON file")]
+    #[arg(
+        long,
+        short = 'f',
+        help = "Save rule trace to the given JSON file (defaults to input file location)"
+    )]
     trace_file: Option<String>,
 }
 
@@ -283,12 +291,16 @@ pub fn main() -> AnyhowResult<()> {
     ))?;
 
     //consumer for protrace
-    let consumer: Consumer = create_consumer(
-        cli.trace_output.as_str(),
-        cli.verbosity.clone(),
-        cli.formatter.as_str(),
-        cli.trace_file.clone(),
-    );
+    let consumer: Option<Consumer> = if cli.tracing {
+        Some(create_consumer(
+            cli.trace_output.as_str(),
+            cli.verbosity.clone(),
+            cli.formatter.as_str(),
+            cli.trace_file.clone(),
+        ))
+    } else {
+        None
+    };
     /******************************************************/
     /*        Parse essence to json using Conjure         */
     /******************************************************/
@@ -327,16 +339,13 @@ pub fn main() -> AnyhowResult<()> {
 
     let mut model = model_from_json(&astjson, context.clone())?;
 
-    if cli.tracing {
-        model = rewrite_naive(
-            &model,
-            &rule_sets,
-            cli.check_equally_applicable_rules,
-            consumer,
-        )?;
-    } else {
-        model = rewrite_model(&model, &rule_sets)?;
-    }
+    model = rewrite_naive(
+        &model,
+        &rule_sets,
+        cli.check_equally_applicable_rules,
+        consumer,
+    )?;
+    model = rewrite_model(&model, &rule_sets)?;
 
     // tracing::info!("Initial model: \n{}\n", model);
 

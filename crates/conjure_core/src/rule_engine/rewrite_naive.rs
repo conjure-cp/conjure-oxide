@@ -25,7 +25,7 @@ pub fn rewrite_naive<'a>(
     model: &Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
     prop_multiple_equally_applicable: bool,
-    consumer: Consumer,
+    consumer: Option<Consumer>,
 ) -> Result<Model, RewriteError> {
     let rules_grouped = get_rules_grouped(rule_sets)
         .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
@@ -81,7 +81,7 @@ fn try_rewrite_model(
     submodel: &mut SubModel,
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
     prop_multiple_equally_applicable: bool,
-    consumer: &Consumer,
+    consumer: &Option<Consumer>,
 ) -> Option<()> {
     type CtxFn = Arc<dyn Fn(Expr) -> SubModel>;
     let mut results: Vec<(RuleResult<'_>, u16, Expr, CtxFn)> = vec![];
@@ -109,18 +109,20 @@ fn try_rewrite_model(
                         ));
                     }
                     Err(_) => {
-                        if check_verbosity_level(&consumer) == VerbosityLevel::High {
-                            let rule_trace = RuleTrace {
-                                initial_expression: expr.clone(),
-                                rule_name: rd.rule.name.to_string(),
-                                rule_set_name: rd.rule_set.name.to_string(),
-                                rule_priority: rd.priority,
-                                transformed_expression: None,
-                                new_variables_str: None,
-                                top_level_str: None,
-                            };
+                        if let Some(consumer) = consumer {
+                            if check_verbosity_level(&consumer) == VerbosityLevel::High {
+                                let rule_trace = RuleTrace {
+                                    initial_expression: expr.clone(),
+                                    rule_name: rd.rule.name.to_string(),
+                                    rule_set_name: rd.rule_set.name.to_string(),
+                                    rule_priority: rd.priority,
+                                    transformed_expression: None,
+                                    new_variables_str: None,
+                                    top_level_str: None,
+                                };
 
-                            capture_trace(&consumer, TraceStruct::RuleTrace(rule_trace));
+                                capture_trace(&consumer, TraceStruct::RuleTrace(rule_trace));
+                            }
                         }
                     } // // when called a lot, this becomes very expensive!
                       // #[cfg(debug_assertions)]
