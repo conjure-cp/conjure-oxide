@@ -2,6 +2,8 @@
 use conjure_core::ast::SymbolTable;
 use conjure_core::bug;
 use conjure_core::rule_engine::get_rules_grouped;
+use conjure_core::ast::AbstractLiteral;
+use conjure_core::ast::Domain;
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
@@ -19,7 +21,7 @@ use tracing_subscriber::{
 };
 use tree_morph::{helpers::select_panic, prelude::*};
 
-use uniplate::Biplate;
+use uniplate::{Biplate, Uniplate};
 
 use std::path::Path;
 use std::sync::Arc;
@@ -340,8 +342,10 @@ fn integration_test_inner(
 
     // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
     if config.compare_solver_solutions || accept && config.solve_with_minion {
-        let conjure_solutions: Vec<BTreeMap<Name, Literal>> =
-            get_solutions_from_conjure(&format!("{}/{}.{}", path, essence_base, extension))?;
+        let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
+            &format!("{}/{}.{}", path, essence_base, extension),
+            Arc::clone(&context),
+        )?;
 
         let username_solutions = normalize_solutions_for_comparison(
             solutions.as_ref().expect("Minion solutions required"),
@@ -356,7 +360,7 @@ fn integration_test_inner(
 
         assert_eq!(
             username_solutions_json, conjure_solutions_json,
-            "Solutions do not match conjure!"
+            "Solutions (<) do not match conjure (>)!"
         );
     }
 
@@ -549,9 +553,9 @@ fn expected_exists_for(path: &str, test_name: &str, stage: &str, extension: &str
 }
 
 fn normalize_solutions_for_comparison(
-    input_solutions: &Vec<BTreeMap<Name, Literal>>,
+    input_solutions: &[BTreeMap<Name, Literal>],
 ) -> Vec<BTreeMap<Name, Literal>> {
-    let mut normalized = input_solutions.clone();
+    let mut normalized = input_solutions.to_vec();
 
     for solset in &mut normalized {
         // remove machine names
@@ -570,6 +574,36 @@ fn normalize_solutions_for_comparison(
                 match v {
                     Literal::Bool(true) => updates.push((k, Literal::Int(1))),
                     Literal::Bool(false) => updates.push((k, Literal::Int(0))),
+                    Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)) => {
+                        // make all domains the same (this is just in the tester so the types dont
+                        // actually matter)
+
+                        let mut matrix = AbstractLiteral::Matrix(elems, Domain::IntDomain(vec![]));
+                        matrix =
+                            matrix.transform(Arc::new(
+                                move |x: AbstractLiteral<Literal>| match x {
+                                    AbstractLiteral::Matrix(items, _) => {
+                                        let items = items
+                                            .into_iter()
+                                            .map(|x| match x {
+                                                Literal::Bool(false) => Literal::Int(0),
+                                                Literal::Bool(true) => Literal::Int(1),
+                                                x => x,
+                                            })
+                                            .collect_vec();
+                                        let matrix = AbstractLiteral::Matrix(
+                                            items,
+                                            Domain::IntDomain(vec![]),
+                                        );
+                                        eprintln!("inside transform {matrix}");
+                                        matrix
+                                    }
+                                    x => x,
+                                },
+                            ));
+                        eprintln!("matrix {matrix}");
+                        updates.push((k, Literal::AbstractLiteral(matrix)));
+                    }
                     _ => {}
                 }
             }

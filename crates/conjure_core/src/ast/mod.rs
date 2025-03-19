@@ -6,6 +6,7 @@ mod declaration;
 mod domains;
 mod expressions;
 mod literals;
+pub mod matrix;
 mod model;
 mod name;
 mod submodel;
