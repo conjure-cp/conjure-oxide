@@ -343,7 +343,7 @@ type BinOp = Box<dyn Fn(Metadata, Box<Expression>, Box<Expression>) -> Expressio
 type UnaryOp = Box<dyn Fn(Metadata, Box<Expression>) -> Expression>;
 type VecOp = Box<dyn Fn(Metadata, Vec<Expression>) -> Expression>;
 
-fn parse_expression(obj: &JsonValue) -> Option<Expression> {
+pub fn parse_expression(obj: &JsonValue) -> Option<Expression> {
     let binary_operators: HashMap<&str, BinOp> = [
         (
             "MkOpEq",
@@ -792,8 +792,9 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
         // sometimes (e.g. constant matrices) we can have a ConstantInt / Constant bool that is
         // not wrapped in Constant
         None => {
-            let int_expr = constant["ConstantInt"]
-                .as_array()
+            let int_expr = constant
+                .get("ConstantInt")
+                .and_then(|x| x.as_array())
                 .and_then(|x| x[1].as_i64())
                 .and_then(|x| x.try_into().ok())
                 .map(|x| Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(x))));
@@ -802,8 +803,9 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
                 return e;
             }
 
-            let bool_expr = constant["ConstantBool"]
-                .as_bool()
+            let bool_expr = constant
+                .get("ConstantBool")
+                .and_then(|x| x.as_bool())
                 .map(|x| Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(x))));
 
             if let e @ Some(_) = bool_expr {

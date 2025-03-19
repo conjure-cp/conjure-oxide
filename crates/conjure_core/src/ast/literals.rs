@@ -120,19 +120,38 @@ where
     U: Biplate<To> + Biplate<U> + Biplate<AbstractLiteral<U>>,
 {
     fn biplate(&self) -> (Tree<To>, Box<dyn Fn(Tree<To>) -> Self>) {
-        // walking into T
-        match self {
-            AbstractLiteral::Set(vec) => {
-                let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(vec);
-                (f1_tree, Box::new(move |x| AbstractLiteral::Set(f1_ctx(x))))
+        if std::any::TypeId::of::<To>() == std::any::TypeId::of::<AbstractLiteral<U>>() {
+            // To ==From => return One(self)
+
+            unsafe {
+                // SAFETY: asserted the type equality above
+                let self_to = std::mem::transmute::<&AbstractLiteral<U>, &To>(self).clone();
+                let tree = Tree::One(self_to.clone());
+                let ctx = Box::new(move |x| {
+                    let Tree::One(x) = x else {
+                        panic!();
+                    };
+
+                    std::mem::transmute::<&To, &AbstractLiteral<U>>(&x).clone()
+                });
+
+                (tree, ctx)
             }
-            AbstractLiteral::Matrix(elems, index_domain) => {
-                let index_domain = index_domain.clone();
-                let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(elems);
-                (
-                    f1_tree,
-                    Box::new(move |x| AbstractLiteral::Matrix(f1_ctx(x), index_domain.clone())),
-                )
+        } else {
+            // walking into T
+            match self {
+                AbstractLiteral::Set(vec) => {
+                    let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(vec);
+                    (f1_tree, Box::new(move |x| AbstractLiteral::Set(f1_ctx(x))))
+                }
+                AbstractLiteral::Matrix(elems, index_domain) => {
+                    let index_domain = index_domain.clone();
+                    let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(elems);
+                    (
+                        f1_tree,
+                        Box::new(move |x| AbstractLiteral::Matrix(f1_ctx(x), index_domain.clone())),
+                    )
+                }
             }
         }
     }
@@ -194,6 +213,31 @@ impl From<bool> for Literal {
     }
 }
 
+impl AbstractLiteral<Expression> {
+    /// If all the elements are literals, returns this as an AbstractLiteral<Literal>.
+    /// Otherwise, returns `None`.
+    pub fn as_literals(self) -> Option<AbstractLiteral<Literal>> {
+        match self {
+            AbstractLiteral::Set(_) => todo!(),
+            AbstractLiteral::Matrix(items, domain) => {
+                let mut literals = vec![];
+                for item in items {
+                    let literal = match item {
+                        Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
+                        Expression::AbstractLiteral(_, abslit) => {
+                            Some(Literal::AbstractLiteral(abslit.as_literals()?))
+                        }
+                        _ => None,
+                    }?;
+                    literals.push(literal);
+                }
+
+                Some(AbstractLiteral::Matrix(literals, domain))
+            }
+        }
+    }
+}
+
 // need display implementations for other types as well
 impl Display for Literal {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -202,5 +246,36 @@ impl Display for Literal {
             Literal::Bool(b) => write!(f, "{}", b),
             Literal::AbstractLiteral(l) => write!(f, "{:?}", l),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use super::*;
+    use crate::{into_matrix, matrix};
+    use uniplate::Uniplate;
+
+    #[test]
+    fn matrix_uniplate_universe() {
+        // Can we traverse through matrices with uniplate?
+        let my_matrix: AbstractLiteral<Literal> = into_matrix![
+            vec![Literal::AbstractLiteral(matrix![Literal::Bool(true);Domain::BoolDomain]); 5];
+            Domain::BoolDomain
+        ];
+
+        let expected_index_domains = vec![Domain::BoolDomain; 6];
+        let actual_index_domains: Vec<Domain> = my_matrix.cata(Arc::new(move |elem, children| {
+            let mut res = vec![];
+            res.extend(children.into_iter().flatten());
+            if let AbstractLiteral::Matrix(_, index_domain) = elem {
+                res.push(index_domain);
+            }
+
+            res
+        }));
+
+        assert_eq!(actual_index_domains, expected_index_domains);
     }
 }
