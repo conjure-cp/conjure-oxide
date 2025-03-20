@@ -71,3 +71,14 @@ pub struct RewriterStats {
     pub rewriter_rule_application_attempts: Option<usize>,
     pub rewriter_rule_applications: Option<usize>,
 }
+
+impl RewriterStats {
+    pub fn new() -> Self {
+        Self {
+            is_optimization_enabled: None,
+            rewriter_run_time: None,
+            rewriter_rule_application_attempts: None,
+            rewriter_rule_applications: None,
+        }
+    }
+}

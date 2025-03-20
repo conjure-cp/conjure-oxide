@@ -1,11 +1,14 @@
 #![allow(clippy::unwrap_used)]
 #![allow(clippy::expect_used)]
-use serde_json::Value;
-use serde_json::Value as JsonValue;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
+use serde_json::Value;
+use serde_json::Value as JsonValue;
+
+use crate::ast::comprehension::ComprehensionBuilder;
 use crate::ast::Declaration;
 use crate::ast::{
     AbstractLiteral, Atom, Domain, Expression, Literal, Name, Range, SetAttr, SymbolTable,
@@ -55,6 +58,7 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
                 // e.g. FindOrGiven,
 
                 let mut valid_decl: bool = false;
+                let scope = m.as_submodel().symbols_ptr_unchecked().clone();
                 let submodel = m.as_submodel_mut();
                 for (kind, value) in decl {
                     match kind.as_str() {
@@ -64,7 +68,7 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
                             break;
                         }
                         "Letting" => {
-                            parse_letting(value, &mut submodel.symbols_mut())?;
+                            parse_letting(value, &mut submodel.symbols_mut(), &scope)?;
                             valid_decl = true;
                             break;
                         }
@@ -84,7 +88,9 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
 
                 let constraints: Vec<Expression> = constraints_arr
                     .iter()
-                    .map(|x| parse_expression(x).unwrap())
+                    .map(|x| {
+                        parse_expression(x, m.as_submodel_mut().symbols_ptr_unchecked()).unwrap()
+                    })
                     .collect();
                 m.as_submodel_mut().add_constraints(constraints);
                 // println!("Nb constraints {}", m.constraints.len());
@@ -122,7 +128,11 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
         )))
 }
 
-fn parse_letting(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
+fn parse_letting(
+    v: &JsonValue,
+    symtab: &mut SymbolTable,
+    scope: &Rc<RefCell<SymbolTable>>,
+) -> Result<()> {
     let arr = v.as_array().ok_or(error!("Letting is not an array"))?;
     let name = arr[0]
         .as_object()
@@ -131,7 +141,7 @@ fn parse_letting(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
         .ok_or(error!("Letting[0].Name is not a string"))?;
     let name = Name::UserName(name.to_owned());
     // value letting
-    if let Some(value) = parse_expression(&arr[1]) {
+    if let Some(value) = parse_expression(&arr[1], scope) {
         symtab
             .insert(Rc::new(Declaration::new_value_letting(name.clone(), value)))
             .ok_or(Error::Parse(format!(
@@ -342,7 +352,7 @@ type BinOp = Box<dyn Fn(Metadata, Box<Expression>, Box<Expression>) -> Expressio
 type UnaryOp = Box<dyn Fn(Metadata, Box<Expression>) -> Expression>;
 type VecOp = Box<dyn Fn(Metadata, Vec<Expression>) -> Expression>;
 
-pub fn parse_expression(obj: &JsonValue) -> Option<Expression> {
+pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Option<Expression> {
     let binary_operators: HashMap<&str, BinOp> = [
         (
             "MkOpEq",
@@ -454,22 +464,25 @@ pub fn parse_expression(obj: &JsonValue) -> Option<Expression> {
     match obj {
         Value::Object(op) if op.contains_key("Op") => match &op["Op"] {
             Value::Object(bin_op) if binary_operator_names.any(|key| bin_op.contains_key(*key)) => {
-                Some(parse_bin_op(bin_op, binary_operators).unwrap())
+                Some(parse_bin_op(bin_op, binary_operators, scope).unwrap())
             }
             Value::Object(un_op) if unary_operator_names.any(|key| un_op.contains_key(*key)) => {
-                Some(parse_unary_op(un_op, unary_operators).unwrap())
+                Some(parse_unary_op(un_op, unary_operators, scope).unwrap())
             }
             Value::Object(vec_op) if vec_operator_names.any(|key| vec_op.contains_key(*key)) => {
-                Some(parse_vec_op(vec_op, vec_operators).unwrap())
+                Some(parse_vec_op(vec_op, vec_operators, scope).unwrap())
             }
 
             Value::Object(op)
                 if op.contains_key("MkOpIndexing") || op.contains_key("MkOpSlicing") =>
             {
-                parse_indexing_slicing_op(op)
+                parse_indexing_slicing_op(op, scope)
             }
             otherwise => bug!("Unhandled Op {:#?}", otherwise),
         },
+        Value::Object(comprehension) if comprehension.contains_key("Comprehension") => {
+            Some(parse_comprehension(comprehension, Rc::clone(scope)).unwrap())
+        }
         Value::Object(refe) if refe.contains_key("Reference") => {
             let name = refe["Reference"].as_array()?[0].as_object()?["Name"].as_str()?;
             Some(Expression::Atomic(
@@ -482,39 +495,39 @@ pub fn parse_expression(obj: &JsonValue) -> Option<Expression> {
                 .as_object()?
                 .contains_key("AbsLitSet")
             {
-                Some(parse_abs_lit(&abslit["AbstractLiteral"]["AbsLitSet"]).unwrap())
+                Some(parse_abs_lit(&abslit["AbstractLiteral"]["AbsLitSet"], scope).unwrap())
             } else {
-                Some(parse_abstract_matrix_as_expr(obj).unwrap())
+                Some(parse_abstract_matrix_as_expr(obj, scope).unwrap())
             }
         }
 
         Value::Object(constant) if constant.contains_key("Constant") => Some(
-            parse_constant(constant)
-                .or_else(|| parse_abstract_matrix_as_expr(obj))
+            parse_constant(constant, scope)
+                .or_else(|| parse_abstract_matrix_as_expr(obj, scope))
                 .unwrap(),
         ),
 
         Value::Object(constant) if constant.contains_key("ConstantAbstract") => {
-            Some(parse_abstract_matrix_as_expr(obj).unwrap())
+            Some(parse_abstract_matrix_as_expr(obj, scope).unwrap())
         }
 
         Value::Object(constant) if constant.contains_key("ConstantInt") => {
-            Some(parse_constant(constant).unwrap())
+            Some(parse_constant(constant, scope).unwrap())
         }
         Value::Object(constant) if constant.contains_key("ConstantBool") => {
-            Some(parse_constant(constant).unwrap())
+            Some(parse_constant(constant, scope).unwrap())
         }
 
         _ => None,
     }
 }
 
-fn parse_abs_lit(abs_set: &Value) -> Option<Expression> {
+fn parse_abs_lit(abs_set: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Option<Expression> {
     let values = abs_set.as_array()?; // Ensure it's an array
     let expressions = values
         .iter()
-        .map(parse_expression)
-        .map(|x| x.expect("invalid subexpression")) // Ensure valid expressions
+        .map(|values| parse_expression(values, scope))
+        .map(|values| values.expect("invalid subexpression")) // Ensure valid expressions
         .collect::<Vec<Expression>>(); // Collect all expressions
 
     Some(Expression::AbstractLiteral(
@@ -522,10 +535,50 @@ fn parse_abs_lit(abs_set: &Value) -> Option<Expression> {
         AbstractLiteral::Set(expressions),
     ))
 }
+fn parse_comprehension(
+    comprehension: &serde_json::Map<String, Value>,
+    scope: Rc<RefCell<SymbolTable>>,
+) -> Option<Expression> {
+    let value = &comprehension["Comprehension"];
+    let mut comprehension = ComprehensionBuilder::new();
+    let expr = parse_expression(value.pointer("/0")?, &scope)?;
+
+    let generators_and_guards = value.pointer("/1")?.as_array()?.iter();
+
+    for value in generators_and_guards {
+        let value = value.as_object()?;
+        let (name, value) = value.iter().next()?;
+        comprehension = match name.as_str() {
+            "Generator" => {
+                // TODO: more things than GenDomainNoRepr and Single names here?
+                let name = value.pointer("/GenDomainNoRepr/0/Single/Name")?.as_str()?;
+                let (domain_name, domain_value) = value
+                    .pointer("/GenDomainNoRepr/1")?
+                    .as_object()?
+                    .iter()
+                    .next()?;
+                let domain = parse_domain(domain_name, domain_value).ok()?;
+                comprehension.generator(Name::UserName(name.to_string()), domain)
+            }
+
+            "Condition" => comprehension.guard(parse_expression(value, &scope)?),
+
+            x => {
+                bug!("unknown field inside comprehension {x}");
+            }
+        }
+    }
+
+    Some(Expression::Comprehension(
+        Metadata::new(),
+        Box::new(comprehension.with_return_value(expr, scope)),
+    ))
+}
 
 fn parse_bin_op(
     bin_op: &serde_json::Map<String, Value>,
     binary_operators: HashMap<&str, BinOp>,
+    scope: &Rc<RefCell<SymbolTable>>,
 ) -> Option<Expression> {
     // we know there is a single key value pair in this object
     // extract the value, ignore the key
@@ -535,15 +588,18 @@ fn parse_bin_op(
 
     match &value {
         Value::Array(bin_op_args) if bin_op_args.len() == 2 => {
-            let arg1 = parse_expression(&bin_op_args[0])?;
-            let arg2 = parse_expression(&bin_op_args[1])?;
+            let arg1 = parse_expression(&bin_op_args[0], scope)?;
+            let arg2 = parse_expression(&bin_op_args[1], scope)?;
             Some(constructor(Metadata::new(), Box::new(arg1), Box::new(arg2)))
         }
         otherwise => bug!("Unhandled parse_bin_op {:#?}", otherwise),
     }
 }
 
-fn parse_indexing_slicing_op(op: &serde_json::Map<String, Value>) -> Option<Expression> {
+fn parse_indexing_slicing_op(
+    op: &serde_json::Map<String, Value>,
+    scope: &Rc<RefCell<SymbolTable>>,
+) -> Option<Expression> {
     // we know there is a single key value pair in this object
     // extract the value, ignore the key
     let (key, value) = op.into_iter().next()?;
@@ -566,9 +622,9 @@ fn parse_indexing_slicing_op(op: &serde_json::Map<String, Value>) -> Option<Expr
         "MkOpIndexing" => {
             match &value {
                 Value::Array(op_args) if op_args.len() == 2 => {
-                    target = parse_expression(&op_args[0]).expect("expected an expression");
+                    target = parse_expression(&op_args[0], scope).expect("expected an expression");
                     indices.push(Some(
-                        parse_expression(&op_args[1]).expect("expected an expression"),
+                        parse_expression(&op_args[1], scope).expect("expected an expression"),
                     ));
                 }
                 otherwise => bug!("Unknown object inside MkOpIndexing: {:#?}", otherwise),
@@ -579,7 +635,7 @@ fn parse_indexing_slicing_op(op: &serde_json::Map<String, Value>) -> Option<Expr
             all_known = false;
             match &value {
                 Value::Array(op_args) if op_args.len() == 3 => {
-                    target = parse_expression(&op_args[0]).expect("expected an expression");
+                    target = parse_expression(&op_args[0], scope).expect("expected an expression");
                     indices.push(None);
                 }
                 otherwise => bug!("Unknown object inside MkOpSlicing: {:#?}", otherwise),
@@ -631,17 +687,19 @@ fn parse_indexing_slicing_op(op: &serde_json::Map<String, Value>) -> Option<Expr
 fn parse_unary_op(
     un_op: &serde_json::Map<String, Value>,
     unary_operators: HashMap<&str, UnaryOp>,
+    scope: &Rc<RefCell<SymbolTable>>,
 ) -> Option<Expression> {
     let (key, value) = un_op.into_iter().next()?;
     let constructor = unary_operators.get(key.as_str())?;
 
-    let arg = parse_expression(value)?;
+    let arg = parse_expression(value, scope)?;
     Some(constructor(Metadata::new(), Box::new(arg)))
 }
 
 fn parse_vec_op(
     vec_op: &serde_json::Map<String, Value>,
     vec_operators: HashMap<&str, VecOp>,
+    scope: &Rc<RefCell<SymbolTable>>,
 ) -> Option<Expression> {
     let (key, value) = vec_op.into_iter().next()?;
     let constructor = vec_operators.get(key.as_str())?;
@@ -653,7 +711,7 @@ fn parse_vec_op(
         parser_trace!("... containing a matrix of literals");
         args_parsed = abs_lit_matrix.as_array().map(|x| {
             x.iter()
-                .map(parse_expression)
+                .map(|x| parse_expression(x, scope))
                 .collect::<Vec<Option<Expression>>>()
         });
     }
@@ -664,7 +722,7 @@ fn parse_vec_op(
         parser_trace!("... containing a matrix of constants");
         args_parsed = const_abs_lit_matrix.as_array().map(|x| {
             x.iter()
-                .map(parse_expression)
+                .map(|x| parse_expression(x, scope))
                 .collect::<Vec<Option<Expression>>>()
         });
     }
@@ -684,7 +742,10 @@ fn parse_vec_op(
 }
 
 // Takes in { AbstractLiteral: .... }
-fn parse_abstract_matrix_as_expr(value: &serde_json::Value) -> Option<Expression> {
+fn parse_abstract_matrix_as_expr(
+    value: &serde_json::Value,
+    scope: &Rc<RefCell<SymbolTable>>,
+) -> Option<Expression> {
     parser_trace!("trying to parse an abstract literal matrix");
     let (values, domain_name, domain_value) =
         if let Some(abs_lit_matrix) = value.pointer("/AbstractLiteral/AbsLitMatrix") {
@@ -727,7 +788,7 @@ fn parse_abstract_matrix_as_expr(value: &serde_json::Value) -> Option<Expression
 
     let args_parsed = values.as_array().map(|x| {
         x.iter()
-            .map(parse_expression)
+            .map(|x| parse_expression(x, scope))
             .map(|x| x.expect("invalid subexpression"))
             .collect::<Vec<Expression>>()
     })?;
@@ -752,7 +813,10 @@ fn parse_abstract_matrix_as_expr(value: &serde_json::Value) -> Option<Expression
     }
 }
 
-fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expression> {
+fn parse_constant(
+    constant: &serde_json::Map<String, Value>,
+    scope: &Rc<RefCell<SymbolTable>>,
+) -> Option<Expression> {
     match &constant.get("Constant") {
         Some(Value::Object(int)) if int.contains_key("ConstantInt") => {
             let int_32: i32 = match int["ConstantInt"].as_array()?[1].as_i64()?.try_into() {
@@ -783,7 +847,7 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
         Some(Value::Object(int)) if int.contains_key("ConstantAbstract") => {
             if let Some(Value::Object(obj)) = int.get("ConstantAbstract") {
                 if let Some(arr) = obj.get("AbsLitSet") {
-                    return parse_abs_lit(arr);
+                    return parse_abs_lit(arr, scope);
                 }
             }
             None
