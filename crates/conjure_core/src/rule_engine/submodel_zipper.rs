@@ -45,7 +45,11 @@ impl SubmodelZipper {
     }
 
     fn go_down(&mut self) -> Option<()> {
-        if matches!(self.inner.focus(), Expression::Scope(_, _)) {
+        // do not enter things that create new submodels
+        if matches!(
+            self.inner.focus(),
+            Expression::Scope(_, _) | Expression::Comprehension(_, _)
+        ) {
             None
         } else {
             self.inner.go_down()
