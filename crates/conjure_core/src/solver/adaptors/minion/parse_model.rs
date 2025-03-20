@@ -225,6 +225,11 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
                     .collect_vec(),
             ))
         }
+
+        conjure_ast::Expression::MinionElementOne(_, vec, i, e) => Ok(
+            minion_ast::Constraint::ElementOne(parse_atoms(vec)?, parse_atom(i)?, parse_atom(e)?),
+        ),
+
         conjure_ast::Expression::Or(_metadata, e) => Ok(minion_ast::Constraint::WatchedOr(
             e.unwrap_matrix_unchecked()
                 .ok_or_else(|| {

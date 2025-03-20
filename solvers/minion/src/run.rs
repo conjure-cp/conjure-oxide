@@ -561,10 +561,15 @@ unsafe fn constraint_add_args(
         //Constraint::NvalueGeq(_, _) => todo!(),
         //Constraint::NvalueLeq(_, _) => todo!(),
         //Constraint::Element(_, _, _) => todo!(),
-        //Constraint::ElementOne(_, _, _) => todo!(),
         //Constraint::ElementUndefZero(_, _, _) => todo!(),
         //Constraint::WatchElement(_, _, _) => todo!(),
         //Constraint::WatchElementOne(_, _, _) => todo!(),
+        Constraint::ElementOne(vec, j, e) => {
+            read_list(i, r_constr, vec)?;
+            read_var(i, r_constr, j)?;
+            read_var(i, r_constr, e)?;
+            Ok(())
+        }
         //Constraint::WatchElementOneUndefZero(_, _, _) => todo!(),
         //Constraint::WatchElementUndefZero(_, _, _) => todo!(),
         Constraint::WLiteral(a, b) => {
@@ -573,7 +578,11 @@ unsafe fn constraint_add_args(
             Ok(())
         }
         //Constraint::WNotLiteral(_, _) => todo!(),
-        //Constraint::WInIntervalSet(_, _) => todo!(),
+        Constraint::WInIntervalSet(var, consts) => {
+            read_var(i, r_constr, var)?;
+            read_constant_list(r_constr, consts)?;
+            Ok(())
+        }
         //Constraint::WInRange(_, _) => todo!(),
         Constraint::WInset(a, b) => {
             read_var(i, r_constr, a)?;
