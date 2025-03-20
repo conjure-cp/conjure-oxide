@@ -1,12 +1,11 @@
 #![allow(clippy::expect_used)]
-use conjure_core::ast::SymbolTable;
+use conjure_core::ast::{AbstractLiteral, Domain, SymbolTable};
 use conjure_core::bug;
 use conjure_core::rule_engine::get_rules_grouped;
 
 use conjure_core::pro_trace::{
     self, create_consumer, Consumer, HumanFormatter, StdoutConsumer, VerbosityLevel,
 };
-use conjure_core::rule_engine::rewrite_model;
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
@@ -278,7 +277,7 @@ fn integration_test_inner(
         let mut model = parsed_model.expect("Model must be parsed in 1a");
 
         let rewritten = if config.enable_naive_impl {
-            rewrite_naive(&model, &rule_sets, false)?
+            rewrite_naive(&model, &rule_sets, false, None)?
         } else if config.enable_morph_impl {
             let submodel = model.as_submodel_mut();
             let rules_grouped = get_rules_grouped(&rule_sets)
@@ -299,13 +298,6 @@ fn integration_test_inner(
             model.clone()
         } else {
             //termporary
-
-            rewrite_naive(
-                model.as_ref().expect("Model must be parsed in 1a"),
-                &rule_sets,
-                false,
-                None,
-            )?
             panic!("No rewriter implementation specified")
         };
         if verbose {

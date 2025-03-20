@@ -163,6 +163,13 @@ struct Cli {
         help = "Save rule trace to the given JSON file (defaults to input file location)"
     )]
     trace_file: Option<String>,
+
+    #[arg(
+        long,
+        default_value_t = false,
+        help = "Use the native parser to parse the essence file"
+    )]
+    enable_native_parser: bool,
 }
 
 #[allow(clippy::unwrap_used)]
@@ -347,33 +354,21 @@ pub fn main() -> AnyhowResult<()> {
         model = model_from_json(&astjson, context.clone())?;
     }
 
-    model = rewrite_naive(
-        &model,
-        &rule_sets,
-        cli.check_equally_applicable_rules,
-        consumer,
-    )?;
-    model = rewrite_model(&model, &rule_sets)?;
+    tracing::info!("Initial model: \n{}\n", model);
 
-    // tracing::info!("Initial model: \n{}\n", model);
+    tracing::info!("Rewriting model...");
 
-    // tracing::info!("Rewriting model...");
+    if !cli.use_optimising_rewriter {
+        tracing::info!("Rewriting model...");
+        model = rewrite_naive(
+            &model,
+            &rule_sets,
+            cli.check_equally_applicable_rules,
+            consumer,
+        )?;
+    }
 
-    // if cli.use_optimising_rewriter {
-    //     tracing::info!("Using the dirty-clean rewriter...");
-    //     model = rewrite_model(&model, &rule_sets)?;
-    // } else {
-    //     tracing::info!("Rewriting model...");
-    //     model = rewrite_naive(
-    //         &model,
-    //         &rule_sets,
-    //         cli.check_equally_applicable_rules,
-    //         consumer,
-    //     )?;
-    // }
-
-    // tracing::info!("Rewritten model: \n{}\n", model);
-
+    tracing::info!("Rewritten model: \n{}\n", model);
     if cli.no_run_solver {
         println!("{}", model);
     } else {
