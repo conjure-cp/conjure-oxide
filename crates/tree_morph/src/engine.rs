@@ -172,7 +172,7 @@ impl State {
         let node = Rc::new(RefCell::new(NodeState::new_dirty()));
         Self { node }
     }
-    
+
     pub fn mark_cleanliness(&mut self, cleanliness: usize) {
         self.node.borrow_mut().cleanliness = cleanliness;
         self.node.borrow_mut().current_child_index = 0;
@@ -249,15 +249,6 @@ impl NodeState {
         }
     }
 
-    pub fn new_clean() -> Self {
-        Self {
-            current_child_index: 0,
-            cleanliness: usize::MAX,
-            parent: None,
-            children: Vec::new(),
-        }
-    }
-
     fn fmt_children(&self, f: &mut fmt::Formatter<'_>, indent: usize) -> fmt::Result {
         for (i, child) in self.children.iter().enumerate() {
             writeln!(f, "{}Child {}: {{", " ".repeat(indent), i)?;
@@ -309,14 +300,14 @@ impl<T: Uniplate> DirtyZipper<T> {
     pub fn mark_dirty(&mut self) {
         self.state.mark_cleanliness(0);
         self.state.clear_children();
-        
+
         // Effectively the same as rebuild_root
         while let Some(_) = self.zipper.go_up() {
             self.state.go_up();
             self.state.mark_cleanliness(0);
         }
     }
-    
+
     // Can I use recursion here to make this less clunky?
     pub fn get_next_dirty(&mut self, level: usize) -> Option<&T> {
         if self.state.get_cleanliness() <= level {
