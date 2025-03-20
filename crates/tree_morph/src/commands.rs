@@ -17,8 +17,8 @@ enum Command<T: Uniplate, M> {
 /// A rule may not be applied due to different reasons, for example:
 /// - It does not return a new subtree (i.e. it returns `None`).
 /// - It returns a new subtree but the resulting [`Update`](crate::update::Update) is not chosen
-/// by the user-defined selector function. The function may select a different rule's update or
-/// no update at all.
+///   by the user-defined selector function. The function may select a different rule's update or
+///   no update at all.
 /// - It is part of a lower-priority rule group and a higher-priority rule is applied first.
 ///
 /// In these cases, any side-effects which are registered by the rule are not applied and are
@@ -57,7 +57,6 @@ enum Command<T: Uniplate, M> {
 /// assert_eq!(result, Expr::C);
 /// assert_eq!(meta, true);
 /// ```
-
 pub struct Commands<T: Uniplate, M> {
     commands: VecDeque<Command<T, M>>,
 }

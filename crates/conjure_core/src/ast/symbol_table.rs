@@ -2,6 +2,10 @@
 //!
 //! See the item documentation for [`SymbolTable`] for more details.
 
+use crate::bug;
+use crate::representation::{get_repr_rule, Representation};
+
+use super::comprehension::Comprehension;
 use super::serde::{RcRefCellAsId, RcRefCellAsInner};
 use std::cell::RefCell;
 use std::collections::btree_map::Entry;
@@ -13,7 +17,7 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use super::declaration::Declaration;
 use super::serde::{DefaultWithId, HasId, ObjId};
 use super::types::Typeable;
-use itertools::izip;
+use itertools::{izip, Itertools as _};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use uniplate::Tree;
@@ -157,13 +161,28 @@ impl SymbolTable {
     }
 
     /// Looks up the domain of name if it has one and is in scope.
+    ///
+    /// This method can return domain references: if a ground domain is always required, use
+    /// [`SymbolTable::resolve_domain`].
     pub fn domain(&self, name: &Name) -> Option<Domain> {
         // TODO: do not clone here: in the future, we might want to wrap all domains in Rc's to get
         // clone-on-write behaviour (saving memory in scenarios such as matrix decomposition where
         // a lot of the domains would be the same).
-        let decl = self.lookup(name)?;
 
-        decl.domain().cloned()
+        if let Name::WithRepresentation(name, _) = name {
+            let decl = self.lookup(name.as_ref())?;
+            decl.domain().cloned()
+        } else {
+            let decl = self.lookup(name)?;
+            decl.domain().cloned()
+        }
+    }
+
+    /// Looks up the domain of name, resolving domain references to ground domains.
+    ///
+    /// See [`SymbolTable::domain`].
+    pub fn resolve_domain(&self, name: &Name) -> Option<Domain> {
+        self.domain(name).map(|domain| domain.resolve(self))
     }
 
     /// Iterates over entries in the local symbol table only.
@@ -182,12 +201,9 @@ impl SymbolTable {
 
             for added_var in new_vars.difference(&old_vars) {
                 let mut next_var = self.next_machine_name.borrow_mut();
-                match *added_var {
-                    Name::UserName(_) => {}
-                    Name::MachineName(m) => {
-                        if *m >= *next_var {
-                            *next_var = *m + 1;
-                        }
+                if let Name::MachineName(m) = *added_var {
+                    if *m >= *next_var {
+                        *next_var = *m + 1;
                     }
                 }
             }
@@ -208,6 +224,103 @@ impl SymbolTable {
     /// This function provides no sanity checks.
     pub fn parent_mut_unchecked(&mut self) -> &mut Option<Rc<RefCell<SymbolTable>>> {
         &mut self.parent
+    }
+
+    /// Gets the representation `representation` for `name`.
+    ///
+    /// # Returns
+    ///
+    /// + `None` if `name` does not exist, is not a decision variable, or does not have that representation.
+    pub fn get_representation(
+        &self,
+        name: &Name,
+        representation: &[&str],
+    ) -> Option<Vec<Box<dyn Representation>>> {
+        // TODO: move representation stuff to declaration / variable to avoid cloning? (we have to
+        // move inside of an rc here, so cannot return borrows)
+        //
+        // Also would prevent constant "does exist" "is var" checks.
+        //
+        // The reason it is not there now is because I'm getting serde issues...
+        //
+        // Also might run into issues putting get_or_add into declaration/variable, as that
+        // requires us to mutably borrow both the symbol table, and the variable inside the symbol
+        // table..
+
+        let decl = self.lookup(name)?;
+        let var = decl.as_var()?;
+
+        var.representations
+            .iter()
+            .find(|x| &x.iter().map(|r| r.repr_name()).collect_vec()[..] == representation)
+            .cloned()
+            .clone()
+    }
+
+    /// Gets all initialised representations for `name`.
+    ///
+    /// # Returns
+    ///
+    /// + `None` if `name` does not exist, or is not a decision variable.
+    pub fn representations_for(&self, name: &Name) -> Option<Vec<Vec<Box<dyn Representation>>>> {
+        let decl = self.lookup(name)?;
+        decl.as_var().map(|x| x.representations.clone())
+    }
+
+    /// Gets the representation `representation` for `name`, creating it if it does not exist.
+    ///
+    /// If the representation does not exist, this method initialises the representation in this
+    /// symbol table, adding the representation to `name`, and the declarations for the represented
+    /// variables to the symbol table.
+    ///
+    /// # Usage
+    ///
+    /// Representations for variable references should be selected and created by the
+    /// `select_representation` rule. Therefore, this method should not be used in other rules.
+    /// Consider using [`get_representation`](`SymbolTable::get_representation`) instead.
+    ///
+    /// # Returns
+    ///
+    /// + `None` if `name` does not exist, is not a decision variable, or cannot be given that
+    ///    representation.
+    pub fn get_or_add_representation(
+        &mut self,
+        name: &Name,
+        representation: &[&str],
+    ) -> Option<Vec<Box<dyn Representation>>> {
+        let decl = self.lookup(name)?;
+        let var = decl.as_var()?;
+
+        var.representations
+            .iter()
+            .find(|x| &x.iter().map(|r| r.repr_name()).collect_vec()[..] == representation)
+            .cloned()
+            .clone()
+            .or_else(|| {
+                let mut decl: Declaration = Rc::unwrap_or_clone(decl);
+                let var = decl.as_var_mut()?;
+
+                // TODO: no idea how to deal with initialising representations for nested things..
+
+                if representation.len() != 1 {
+                    bug!("nested representations not implemented")
+                }
+
+                let repr_rule = get_repr_rule(representation[0])?;
+
+                let reprs = vec![repr_rule(name, self)?];
+                for repr in &reprs {
+                    repr.declaration_down()
+                        .ok()
+                        .unwrap()
+                        .iter()
+                        .for_each(|x| self.update_insert(Rc::new(x.clone())));
+                }
+                var.representations.push(reprs.clone());
+
+                self.update_insert(Rc::new(decl));
+                Some(reprs)
+            })
     }
 }
 
@@ -340,6 +453,29 @@ impl Biplate<Expression> for SymbolTable {
         });
 
         (tree, ctx)
+    }
+}
+
+impl Biplate<Comprehension> for SymbolTable {
+    fn biplate(
+        &self,
+    ) -> (
+        Tree<Comprehension>,
+        Box<dyn Fn(Tree<Comprehension>) -> Self>,
+    ) {
+        let (expr_tree, expr_ctx) = <SymbolTable as Biplate<Expression>>::biplate(self);
+        let (comprehension_tree, comprehension_ctx) =
+            <VecDeque<Expression> as Biplate<Comprehension>>::biplate(
+                &expr_tree.into_iter().collect(),
+            );
+
+        let ctx = Box::new(move |x| {
+            expr_ctx(Tree::Many(
+                comprehension_ctx(x).into_iter().map(Tree::One).collect(),
+            ))
+        });
+
+        (comprehension_tree, ctx)
     }
 }
 

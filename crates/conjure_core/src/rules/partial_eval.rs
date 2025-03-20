@@ -22,10 +22,14 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // This is why we always check whether we found a constant or not.
     match expr.clone() {
         AbstractLiteral(_, _) => Err(RuleNotApplicable),
+        Comprehension(_, _) => Err(RuleNotApplicable),
         DominanceRelation(_, _) => Err(RuleNotApplicable),
         FromSolution(_, _) => Err(RuleNotApplicable),
-        UnsafeIndex(_, _, _) => Err(RuleNotApplicable), // TODO:: partially evaluate this sometimes?
-        UnsafeSlice(_, _, _) => Err(RuleNotApplicable), //TODO: partially evaluate this sometimes?
+        UnsafeIndex(_, _, _) => Err(RuleNotApplicable),
+        UnsafeSlice(_, _, _) => Err(RuleNotApplicable),
+        SafeIndex(_, _, _) => Err(RuleNotApplicable),
+        SafeSlice(_, _, _) => Err(RuleNotApplicable),
+        InDomain(_, _, _) => Err(RuleNotApplicable),
         Bubble(_, _, _) => Err(RuleNotApplicable),
         Atomic(_, _) => Err(RuleNotApplicable),
         Scope(_, _) => Err(RuleNotApplicable),
@@ -341,6 +345,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
         // As these are in a low level solver form, I'm assuming that these have already been
         // simplified and partially evaluated.
+        FlatAllDiff(_, _) => Err(RuleNotApplicable),
         FlatAbsEq(_, _, _) => Err(RuleNotApplicable),
         FlatIneq(_, _, _, _) => Err(RuleNotApplicable),
         FlatMinusEq(_, _, _) => Err(RuleNotApplicable),

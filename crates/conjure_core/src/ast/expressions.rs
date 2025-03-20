@@ -12,11 +12,13 @@ use crate::ast::symbol_table::SymbolTable;
 use crate::ast::Atom;
 use crate::ast::Name;
 use crate::ast::ReturnType;
+use crate::bug;
 use crate::metadata::Metadata;
 use enum_compatability_macro::document_compatibility;
 use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Uniplate as _};
 
+use super::comprehension::Comprehension;
 use super::{Domain, Range, SubModel, Typeable};
 
 /// Represents different types of expressions used to define rules and constraints in the model.
@@ -25,13 +27,14 @@ use super::{Domain, Range, SubModel, Typeable};
 /// used to build rules and conditions for the model.
 #[document_compatibility]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
-#[uniplate(walk_into=[Atom,SubModel,AbstractLiteral<Expression>])]
+#[uniplate(walk_into=[Atom,SubModel,AbstractLiteral<Expression>,Comprehension])]
 #[biplate(to=Metadata)]
 #[biplate(to=Atom)]
-#[biplate(to=Name)]
+#[biplate(to=Name,walk_into=[Atom])]
 #[biplate(to=Vec<Expression>)]
 #[biplate(to=Option<Expression>)]
-#[biplate(to=SubModel)]
+#[biplate(to=SubModel,walk_into=[Comprehension])]
+#[biplate(to=Comprehension)]
 #[biplate(to=AbstractLiteral<Expression>)]
 #[biplate(to=AbstractLiteral<Literal>,walk_into=[Atom])]
 #[biplate(to=Literal,walk_into=[Atom])]
@@ -44,6 +47,11 @@ pub enum Expression {
     /// Turns into a conjunction when it reaches a boolean context
     Bubble(Metadata, Box<Expression>, Box<Expression>),
 
+    /// A comprehension.
+    ///
+    /// The inside of the comprehension opens a new scope.
+    Comprehension(Metadata, Box<Comprehension>),
+
     /// Defines dominance ("Solution A is preferred over Solution B")
     DominanceRelation(Metadata, Box<Expression>),
     /// `fromSolution(name)` - Used in dominance relation definitions
@@ -51,10 +59,17 @@ pub enum Expression {
 
     Atomic(Metadata, Atom),
 
-    // TODO(niklasdewally): add index and slicing safety semantics from Savile Row
-    //
-    /// A matrix index
+    /// A matrix index.
+    ///
+    /// Defined iff the indices are within their respective index domains.
+    #[compatible(JsonInput)]
     UnsafeIndex(Metadata, Box<Expression>, Vec<Expression>),
+
+    /// A safe matrix index.
+    ///
+    /// See [`Expression::UnsafeIndex`]
+    SafeIndex(Metadata, Box<Expression>, Vec<Expression>),
+
     /// A matrix slice: `a[indices]`.
     ///
     /// One of the indicies may be `None`, representing the dimension of the matrix we want to take
@@ -62,7 +77,22 @@ pub enum Expression {
     /// `Some(1),None,Some(2)`.
     ///
     /// It is assumed that the slice only has one "wild-card" dimension and thus is 1 dimensional.
+    ///
+    /// Defined iff the defined indices are within their respective index domains.
+    #[compatible(JsonInput)]
     UnsafeSlice(Metadata, Box<Expression>, Vec<Option<Expression>>),
+
+    /// A safe matrix slice: `a[indices]`.
+    ///
+    /// See [`Expression::UnsafeSlice`].
+    SafeSlice(Metadata, Box<Expression>, Vec<Option<Expression>>),
+
+    /// `inDomain(x,domain)` iff `x` is in the domain `domain`.
+    ///
+    /// This cannot be constructed from Essence input, nor passed to a solver: this expression is
+    /// mainly used during the conversion of `UnsafeIndex` and `UnsafeSlice` to `SafeIndex` and
+    /// `SafeSlice` respectively.
+    InDomain(Metadata, Box<Expression>, Domain),
 
     Scope(Metadata, Box<SubModel>),
 
@@ -166,6 +196,16 @@ pub enum Expression {
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#abs)
     #[compatible(Minion)]
     FlatAbsEq(Metadata, Atom, Atom),
+
+    /// Ensures that `alldiff([a,b,...])`.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#alldiff)
+    #[compatible(Minion)]
+    FlatAllDiff(Metadata, Vec<Atom>),
 
     /// Ensures that sum(vec) >= x.
     ///
@@ -376,9 +416,35 @@ impl Expression {
             Expression::AbstractLiteral(_, _) => None,
             Expression::DominanceRelation(_, _) => Some(Domain::BoolDomain),
             Expression::FromSolution(_, expr) => expr.domain_of(syms),
-            Expression::UnsafeIndex(_, _, _) => None,
-            Expression::UnsafeSlice(_, _, _) => None,
-            Expression::Atomic(_, Atom::Reference(name)) => Some(syms.domain(name)?),
+            Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
+            Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
+                let Domain::DomainMatrix(elem_domain, _) = matrix.domain_of(syms)? else {
+                    bug!("subject of an index operation should be a matrix");
+                };
+
+                Some(*elem_domain)
+            }
+            Expression::UnsafeSlice(_, matrix, indices)
+            | Expression::SafeSlice(_, matrix, indices) => {
+                let sliced_dimension = indices.iter().position(Option::is_none);
+
+                let Domain::DomainMatrix(elem_domain, index_domains) = matrix.domain_of(syms)?
+                else {
+                    bug!("subject of an index operation should be a matrix");
+                };
+
+                match sliced_dimension {
+                    Some(dimension) => Some(Domain::DomainMatrix(
+                        elem_domain,
+                        vec![index_domains[dimension].clone()],
+                    )),
+
+                    // same as index
+                    None => Some(*elem_domain),
+                }
+            }
+            Expression::InDomain(_, _, _) => Some(Domain::BoolDomain),
+            Expression::Atomic(_, Atom::Reference(name)) => Some(syms.resolve_domain(name)?),
             Expression::Atomic(_, Atom::Literal(Literal::Int(n))) => {
                 Some(Domain::IntDomain(vec![Range::Single(*n)]))
             }
@@ -509,6 +575,7 @@ impl Expression {
                 .domain_of(syms)?
                 .apply_i32(|x, y| Some(x - y), &b.domain_of(syms)?),
 
+            Expression::FlatAllDiff(_, _) => Some(Domain::BoolDomain),
             Expression::FlatMinusEq(_, _, _) => Some(Domain::BoolDomain),
             Expression::FlatProductEq(_, _, _, _) => Some(Domain::BoolDomain),
             Expression::FlatWeightedSumLeq(_, _, _, _) => Some(Domain::BoolDomain),
@@ -550,7 +617,9 @@ impl Expression {
             match expr {
                 Expression::UnsafeDiv(_, _, _)
                 | Expression::UnsafeMod(_, _, _)
-                | Expression::UnsafePow(_, _, _) => {
+                | Expression::UnsafePow(_, _, _)
+                | Expression::UnsafeIndex(_, _, _)
+                | Expression::UnsafeSlice(_, _, _) => {
                     return false;
                 }
                 _ => {}
@@ -562,8 +631,14 @@ impl Expression {
     pub fn return_type(&self) -> Option<ReturnType> {
         match self {
             Expression::AbstractLiteral(_, _) => None,
-            Expression::UnsafeIndex(_, _, _) => None,
-            Expression::UnsafeSlice(_, _, _) => None,
+            Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
+                Some(subject.return_type()?)
+            }
+            Expression::UnsafeSlice(_, subject, _) | Expression::SafeSlice(_, subject, _) => {
+                Some(ReturnType::Matrix(Box::new(subject.return_type()?)))
+            }
+            Expression::InDomain(_, _, _) => Some(ReturnType::Bool),
+            Expression::Comprehension(_, _) => None,
             Expression::Root(_, _) => Some(ReturnType::Bool),
             Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
             Expression::FromSolution(_, expr) => expr.return_type(),
@@ -589,6 +664,7 @@ impl Expression {
             Expression::Lt(_, _, _) => Some(ReturnType::Bool),
             Expression::SafeDiv(_, _, _) => Some(ReturnType::Int),
             Expression::UnsafeDiv(_, _, _) => Some(ReturnType::Int),
+            Expression::FlatAllDiff(_, _) => Some(ReturnType::Bool),
             Expression::FlatSumGeq(_, _, _) => Some(ReturnType::Bool),
             Expression::FlatSumLeq(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionDivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
@@ -703,6 +779,39 @@ impl Expression {
             _ => None,
         }
     }
+
+    /// For a Root expression, extends the inner vec with the given vec.
+    ///
+    /// # Panics
+    /// Panics if the expression is not Root.
+    pub fn extend_root(self, exprs: Vec<Expression>) -> Expression {
+        match self {
+            Expression::Root(meta, mut children) => {
+                children.extend(exprs);
+                Expression::Root(meta, children)
+            }
+            _ => panic!("extend_root called on a non-Root expression"),
+        }
+    }
+
+    /// Converts the expression to a literal, if possible.
+    pub fn to_literal(self) -> Option<Literal> {
+        match self {
+            Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
+            Expression::AbstractLiteral(_, abslit) => {
+                Some(Literal::AbstractLiteral(abslit.clone().as_literals()?))
+            }
+            Expression::Neg(_, e) => {
+                let Literal::Int(i) = e.to_literal()? else {
+                    bug!("negated literal should be an int");
+                };
+
+                Some(Literal::Int(-i))
+            }
+
+            _ => None,
+        }
+    }
 }
 
 impl From<i32> for Expression {
@@ -726,11 +835,11 @@ impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
             Expression::AbstractLiteral(_, l) => l.fmt(f),
-            Expression::UnsafeIndex(_, e1, e2) => {
-                write!(f, "{e1}[{}]", pretty_vec(e2))
+            Expression::Comprehension(_, c) => c.fmt(f),
+            Expression::UnsafeIndex(_, e1, e2) | Expression::SafeIndex(_, e1, e2) => {
+                write!(f, "{e1}{}", pretty_vec(e2))
             }
-
-            Expression::UnsafeSlice(_, e1, es) => {
+            Expression::UnsafeSlice(_, e1, es) | Expression::SafeSlice(_, e1, es) => {
                 let args = es
                     .iter()
                     .map(|x| match x {
@@ -740,6 +849,10 @@ impl Display for Expression {
                     .join(",");
 
                 write!(f, "{e1}[{args}]")
+            }
+
+            Expression::InDomain(_, e, domain) => {
+                write!(f, "__inDomain({e},{domain})")
             }
             Expression::Root(_, exprs) => {
                 write!(f, "{}", pretty_expressions_as_top_level(exprs))
@@ -864,6 +977,9 @@ impl Display for Expression {
             }
             Expression::Minus(_, a, b) => {
                 write!(f, "({} - {})", a.clone(), b.clone())
+            }
+            Expression::FlatAllDiff(_, es) => {
+                write!(f, "__flat_alldiff({})", pretty_vec(es))
             }
             Expression::FlatAbsEq(_, a, b) => {
                 write!(f, "AbsEq({},{})", a.clone(), b.clone())

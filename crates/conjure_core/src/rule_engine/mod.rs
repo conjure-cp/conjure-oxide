@@ -64,7 +64,6 @@ pub use conjure_macros::register_rule;
 #[doc(inline)]
 pub use conjure_macros::register_rule_set;
 pub use resolve_rules::{get_rules, get_rules_grouped, resolve_rule_sets, RuleData};
-pub use rewrite::rewrite_model;
 pub use rewrite_naive::rewrite_naive;
 pub use rewriter_common::RewriteError;
 pub use rule::{ApplicationError, ApplicationResult, Reduction, Rule};
@@ -73,7 +72,6 @@ mod submodel_zipper;
 
 use crate::solver::SolverFamily;
 mod resolve_rules;
-mod rewrite;
 mod rewrite_naive;
 mod rewriter_common;
 mod rule;
