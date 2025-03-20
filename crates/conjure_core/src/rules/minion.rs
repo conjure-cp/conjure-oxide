@@ -673,6 +673,48 @@ fn introduce_reifyimply_ineq_from_imply(expr: &Expr, _: &SymbolTable) -> Applica
     }
 }
 
+/// Converts `__inDomain(a,domain) to w-inintervalset.
+///
+/// This applies if domain is integer and finite.
+#[register_rule(("Minion", 4400))]
+fn introduce_wininterval_set_from_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::InDomain(_, e, domain) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::Atomic(_, atom @ Atom::Reference(_)) = e.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Domain::IntDomain(ranges) = domain else {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut out_ranges = vec![];
+
+    for range in ranges {
+        match range {
+            crate::ast::Range::Single(x) => {
+                out_ranges.push(*x);
+                out_ranges.push(*x);
+            }
+            crate::ast::Range::Bounded(x, y) => {
+                out_ranges.push(*x);
+                out_ranges.push(*y);
+            }
+            crate::ast::Range::UnboundedR(_) | crate::ast::Range::UnboundedL(_) => {
+                return Err(RuleNotApplicable);
+            }
+        }
+    }
+
+    Ok(Reduction::pure(Expr::MinionWInIntervalSet(
+        Metadata::new(),
+        atom.clone(),
+        out_ranges,
+    )))
+}
+
 /// Flattens an implication.
 ///
 /// ```text

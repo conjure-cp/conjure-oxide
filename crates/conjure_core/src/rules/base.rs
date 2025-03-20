@@ -45,6 +45,7 @@ fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             | FlatWeightedSumLeq(_, _, _, _)
             | MinionDivEqUndefZero(_, _, _, _)
             | MinionModuloEqUndefZero(_, _, _, _)
+            | MinionWInIntervalSet(_, _, _)
             | MinionPow(_, _, _, _)
             | MinionReify(_, _, _)
             | MinionReifyImply(_, _, _)

@@ -360,6 +360,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         MinionPow(_, _, _, _) => Err(RuleNotApplicable),
         MinionReify(_, _, _) => Err(RuleNotApplicable),
         MinionReifyImply(_, _, _) => Err(RuleNotApplicable),
+        MinionWInIntervalSet(_, _, _) => Err(RuleNotApplicable),
     }
 }
 

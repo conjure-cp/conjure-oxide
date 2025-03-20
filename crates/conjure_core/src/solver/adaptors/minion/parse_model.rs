@@ -2,6 +2,7 @@
 
 use std::cell::Ref;
 
+use itertools::Itertools as _;
 use minion_ast::Model as MinionModel;
 use minion_rs::ast as minion_ast;
 use minion_rs::error::MinionError;
@@ -214,6 +215,14 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             Ok(minion_ast::Constraint::ModuloUndefZero(
                 (parse_atom(a)?, parse_atom(b)?),
                 parse_atom(c)?,
+            ))
+        }
+        conjure_ast::Expression::MinionWInIntervalSet(_metadata, a, xs) => {
+            Ok(minion_ast::Constraint::WInIntervalSet(
+                parse_atom(a)?,
+                xs.into_iter()
+                    .map(minion_ast::Constant::Integer)
+                    .collect_vec(),
             ))
         }
         conjure_ast::Expression::Or(_metadata, e) => Ok(minion_ast::Constraint::WatchedOr(

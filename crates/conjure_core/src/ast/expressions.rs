@@ -353,6 +353,19 @@ pub enum Expression {
     #[compatible(Minion)]
     MinionReifyImply(Metadata, Box<Expression>, Atom),
 
+    /// `w-inintervalset(x, [a1,a2, b1,b2, … ])` ensures that the value of x belongs to one of the
+    /// intervals {a1,…,a2}, {b1,…,b2} etc.
+    ///
+    /// The list of intervals must be given in numerical order.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#w-inintervalset)
+    #[compatible(Minion)]
+    MinionWInIntervalSet(Metadata, Atom, Vec<i32>),
+
     /// Declaration of an auxiliary variable.
     ///
     /// As with Savile Row, we semantically distinguish this from `Eq`.
@@ -555,6 +568,7 @@ impl Expression {
             Expression::FlatWatchedLiteral(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionReify(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionReifyImply(_, _, _) => Some(Domain::BoolDomain),
+            Expression::MinionWInIntervalSet(_, _, _) => Some(Domain::BoolDomain),
             Expression::Neg(_, x) => {
                 let Some(Domain::IntDomain(mut ranges)) = x.domain_of(syms) else {
                     return None;
@@ -674,6 +688,7 @@ impl Expression {
             Expression::FlatWatchedLiteral(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReify(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReifyImply(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionWInIntervalSet(_, _, _) => Some(ReturnType::Bool),
             Expression::AuxDeclaration(_, _, _) => Some(ReturnType::Bool),
             Expression::UnsafeMod(_, _, _) => Some(ReturnType::Int),
             Expression::SafeMod(_, _, _) => Some(ReturnType::Int),
@@ -962,6 +977,10 @@ impl Display for Expression {
             }
             Expression::MinionReifyImply(_, box1, box2) => {
                 write!(f, "ReifyImply({}, {})", box1.clone(), box2.clone())
+            }
+            Expression::MinionWInIntervalSet(_, atom, intervals) => {
+                let intervals = intervals.iter().join(",");
+                write!(f, "__minion_w_inintervalset({atom},{intervals})")
             }
             Expression::AuxDeclaration(_, n, e) => {
                 write!(f, "{} =aux {}", n, e.clone())
