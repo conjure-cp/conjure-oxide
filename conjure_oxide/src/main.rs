@@ -7,6 +7,10 @@ use std::sync::Arc;
 use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
+use conjure_core::pro_trace::{
+    self, create_consumer, specify_trace_file, Consumer, FileConsumer, HumanFormatter,
+    JsonFormatter, StdoutConsumer, VerbosityLevel,
+};
 use git_version::git_version;
 use schemars::schema_for;
 use serde_json::to_string_pretty;
@@ -92,7 +96,6 @@ struct Cli {
 
     #[arg(long, short = 'v', help = "Log verbosely to sterr")]
     verbose: bool,
-
     /// Do not run the solver.
     ///
     /// The rewritten model is printed to stdout in an Essence-style syntax (but is not necessarily
@@ -116,6 +119,50 @@ struct Cli {
     /// Only compatible with the default rewriter.
     #[arg(long)]
     _no_check_equally_applicable_rules: bool,
+
+    // New logging arguments:
+    // Tracing: T
+    // Output: stdout, json file
+    // Verbosity: low medium high
+    // Format: human readable, json
+    // Optional file path
+    #[arg(
+        long,
+        short = 'T',
+        default_value_t = false,
+        help = "Enable rule tracing"
+    )]
+    tracing: bool,
+
+    #[arg(
+        long,
+        short = 'O',
+        default_value = "stdout",
+        help = "Select output location for trace result: stdout or file"
+    )]
+    trace_output: String,
+
+    #[arg(
+        long,
+        default_value = "medium",
+        help = "Select verbosity level for trace"
+    )]
+    verbosity: VerbosityLevel,
+
+    #[arg(
+        long,
+        short = 'F',
+        default_value = "human",
+        help = "Select the format of the trace output: human or json"
+    )]
+    formatter: String,
+
+    #[arg(
+        long,
+        short = 'f',
+        help = "Save rule trace to the given JSON file (defaults to input file location)"
+    )]
+    trace_file: Option<String>,
 
     #[arg(
         long,
@@ -243,7 +290,7 @@ pub fn main() -> AnyhowResult<()> {
     tracing::info!(
         target: "file",
         "Rules: {}",
-        rules.iter().map(|rd| format!("{}", rd)).collect::<Vec<_>>().join("\n")
+        rules.iter().map(|rd| format!("{}", rd )).collect::<Vec<_>>().join("\n")
     );
     let input = cli.input_file.clone().expect("No input file given");
     tracing::info!(target: "file", "Input file: {}", input.display());
@@ -251,6 +298,20 @@ pub fn main() -> AnyhowResult<()> {
         "Given input_file could not be converted to a string"
     ))?;
 
+    let file = specify_trace_file(
+        input_file.to_string(),
+        cli.trace_file.clone(),
+        cli.formatter.as_str(),
+    );
+    //consumer for protrace
+    let consumer: Option<Consumer> = cli.tracing.then(|| {
+        create_consumer(
+            cli.trace_output.as_str(),
+            cli.verbosity.clone(),
+            cli.formatter.as_str(),
+            file,
+        )
+    });
     /******************************************************/
     /*        Parse essence to json using Conjure         */
     /******************************************************/
@@ -299,11 +360,15 @@ pub fn main() -> AnyhowResult<()> {
 
     if !cli.use_optimising_rewriter {
         tracing::info!("Rewriting model...");
-        model = rewrite_naive(&model, &rule_sets, cli.check_equally_applicable_rules)?;
+        model = rewrite_naive(
+            &model,
+            &rule_sets,
+            cli.check_equally_applicable_rules,
+            consumer,
+        )?;
     }
 
     tracing::info!("Rewritten model: \n{}\n", model);
-
     if cli.no_run_solver {
         println!("{}", model);
     } else {
