@@ -31,9 +31,7 @@ fn apply_eval_constant(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// `Some(Const)` if the expression can be simplified to a constant
 pub fn eval_constant(expr: &Expr) -> Option<Lit> {
     match expr {
-        // `fromSolution()` pulls a literal value from last found solution
         Expr::FromSolution(_, _) => None,
-        // Same as Expr::Root, we should not replace the dominance relation with a constant
         Expr::DominanceRelation(_, _) => None,
         Expr::InDomain(_, e, domain) => {
             let Expr::Atomic(_, Atom::Literal(lit)) = e.as_ref() else {
@@ -118,14 +116,10 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::Gt(_, a, b) => bin_op::<i32, bool>(|a, b| a > b, a, b).map(Lit::Bool),
         Expr::Leq(_, a, b) => bin_op::<i32, bool>(|a, b| a <= b, a, b).map(Lit::Bool),
         Expr::Geq(_, a, b) => bin_op::<i32, bool>(|a, b| a >= b, a, b).map(Lit::Bool),
-
         Expr::Not(_, expr) => un_op::<bool, bool>(|e| !e, expr).map(Lit::Bool),
-
         Expr::And(_, e) => {
             vec_lit_op::<bool, bool>(|e| e.iter().all(|&e| e), e.as_ref()).map(Lit::Bool)
         }
-        // this is done elsewhere instead - root should return a new root with a literal inside it,
-        // not a literal
         Expr::Root(_, _) => None,
         Expr::Or(_, e) => {
             vec_lit_op::<bool, bool>(|e| e.iter().any(|&e| e), e.as_ref()).map(Lit::Bool)
@@ -145,10 +139,8 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 Some(Lit::Bool(true))
             }
         }
-
         Expr::Sum(_, exprs) => vec_op::<i32, i32>(|e| e.iter().sum(), exprs).map(Lit::Int),
         Expr::Product(_, exprs) => vec_op::<i32, i32>(|e| e.iter().product(), exprs).map(Lit::Int),
-
         Expr::FlatIneq(_, a, b, c) => {
             let a: i32 = a.try_into().ok()?;
             let b: i32 = b.try_into().ok()?;
@@ -156,7 +148,6 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Bool(a <= b + c))
         }
-
         Expr::FlatSumGeq(_, exprs, a) => {
             let sum = exprs.iter().try_fold(0, |acc, atom: &Atom| {
                 let n: i32 = atom.try_into().ok()?;
@@ -210,7 +201,6 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             Some(Lit::Bool(div == c))
         }
         Expr::Bubble(_, a, b) => bin_op::<bool, bool>(|a, b| a && b, a, b).map(Lit::Bool),
-
         Expr::MinionReify(_, a, b) => {
             let result = eval_constant(a)?;
 
@@ -219,7 +209,6 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Bool(b == result))
         }
-
         Expr::MinionReifyImply(_, a, b) => {
             let result = eval_constant(a)?;
 
@@ -251,7 +240,6 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             let modulo = a - b * (a as f32 / b as f32).floor() as i32;
             Some(Lit::Bool(modulo == c))
         }
-
         Expr::MinionPow(_, a, b, c) => {
             // only available for positive a b c
 
@@ -273,9 +261,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Bool(a ^ b == c))
         }
-
         Expr::MinionWInIntervalSet(_, _, _) => None,
-
         Expr::AllDiff(_, e) => {
             let es = e.clone().unwrap_list()?;
             let mut lits: HashSet<Lit> = HashSet::new();
@@ -358,7 +344,6 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Bool(sum <= total))
         }
-
         Expr::FlatWeightedSumGeq(_, cs, vs, total) => {
             let cs: Vec<i32> = cs
                 .iter()
@@ -380,7 +365,6 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Bool(x == y.abs()))
         }
-
         Expr::UnsafePow(_, a, b) | Expr::SafePow(_, a, b) => {
             let a: &Atom = a.try_into().ok()?;
             let a: i32 = a.try_into().ok()?;
@@ -395,6 +379,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             }
         }
         Expr::Scope(_, _) => None,
+        Expr::MinionElementOne(_, _, _, _) => None,
     }
 }
 

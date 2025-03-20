@@ -366,6 +366,17 @@ pub enum Expression {
     #[compatible(Minion)]
     MinionWInIntervalSet(Metadata, Atom, Vec<i32>),
 
+    /// `element_one(vec, i, e)` specifies that `vec[i] = e`. This implies that i is
+    /// in the range `[1..len(vec)]`.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#element_one)
+    #[compatible(Minion)]
+    MinionElementOne(Metadata, Vec<Atom>, Atom, Atom),
+
     /// Declaration of an auxiliary variable.
     ///
     /// As with Savile Row, we semantically distinguish this from `Eq`.
@@ -569,6 +580,7 @@ impl Expression {
             Expression::MinionReify(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionReifyImply(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionWInIntervalSet(_, _, _) => Some(Domain::BoolDomain),
+            Expression::MinionElementOne(_, _, _, _) => Some(Domain::BoolDomain),
             Expression::Neg(_, x) => {
                 let Some(Domain::IntDomain(mut ranges)) = x.domain_of(syms) else {
                     return None;
@@ -689,6 +701,7 @@ impl Expression {
             Expression::MinionReify(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReifyImply(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionWInIntervalSet(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionElementOne(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AuxDeclaration(_, _, _) => Some(ReturnType::Bool),
             Expression::UnsafeMod(_, _, _) => Some(ReturnType::Int),
             Expression::SafeMod(_, _, _) => Some(ReturnType::Int),
@@ -865,7 +878,6 @@ impl Display for Expression {
 
                 write!(f, "{e1}[{args}]")
             }
-
             Expression::InDomain(_, e, domain) => {
                 write!(f, "__inDomain({e},{domain})")
             }
@@ -968,7 +980,6 @@ impl Display for Expression {
                     box3.clone()
                 )
             }
-
             Expression::FlatWatchedLiteral(_, x, l) => {
                 write!(f, "WatchedLiteral({},{})", x, l)
             }
@@ -1024,7 +1035,6 @@ impl Display for Expression {
                     total.clone()
                 )
             }
-
             Expression::FlatWeightedSumGeq(_, cs, vs, total) => {
                 write!(
                     f,
@@ -1036,6 +1046,10 @@ impl Display for Expression {
             }
             Expression::MinionPow(_, atom, atom1, atom2) => {
                 write!(f, "MinionPow({},{},{})", atom, atom1, atom2)
+            }
+            Expression::MinionElementOne(_, atoms, atom, atom1) => {
+                let atoms = atoms.iter().join(",");
+                write!(f, "__minion_element_one([{atoms}],{atom},{atom1})")
             }
         }
     }

@@ -715,6 +715,59 @@ fn introduce_wininterval_set_from_indomain(expr: &Expr, _: &SymbolTable) -> Appl
     )))
 }
 
+/// Converts `[....][i]` to `element_one` if:
+///
+/// 1. the subject is a list literal
+/// 2. the subject is one dimensional
+#[register_rule(("Minion", 4400))]
+fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let (equalto, subject, indices) = match expr.clone() {
+        Expr::Eq(_, e1, e2) => match (*e1, *e2) {
+            (Expr::Atomic(_, eq), Expr::SafeIndex(_, subject, indices)) => {
+                Ok((eq, subject, indices))
+            }
+            (Expr::SafeIndex(_, subject, indices), Expr::Atomic(_, eq)) => {
+                Ok((eq, subject, indices))
+            }
+            _ => Err(RuleNotApplicable),
+        },
+        Expr::AuxDeclaration(_, name, expr) => match *expr {
+            Expr::SafeIndex(_, subject, indices) => Ok((Atom::Reference(name), subject, indices)),
+            _ => Err(RuleNotApplicable),
+        },
+        _ => Err(RuleNotApplicable),
+    }?;
+
+    if indices.len() != 1 {
+        return Err(RuleNotApplicable);
+    }
+
+    let Some(list) = subject.unwrap_list() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::Atomic(_, index) = indices[0].clone() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut atom_list = vec![];
+
+    for elem in list {
+        let Expr::Atomic(_, elem) = elem else {
+            return Err(RuleNotApplicable);
+        };
+
+        atom_list.push(elem);
+    }
+
+    Ok(Reduction::pure(Expr::MinionElementOne(
+        Metadata::new(),
+        atom_list,
+        index,
+        equalto,
+    )))
+}
+
 /// Flattens an implication.
 ///
 /// ```text
@@ -770,6 +823,8 @@ fn flatten_generic(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             | Expr::Product(_, _)
             | Expr::Neg(_, _)
             | Expr::Not(_, _)
+            | Expr::SafeIndex(_, _, _)
+            | Expr::InDomain(_, _, _)
     ) {
         return Err(RuleNotApplicable);
     }
