@@ -8,8 +8,8 @@ use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
 use conjure_core::pro_trace::{
-    self, create_consumer, Consumer, FileConsumer, HumanFormatter, JsonFormatter, StdoutConsumer,
-    VerbosityLevel,
+    self, create_consumer, specify_trace_file, Consumer, FileConsumer, HumanFormatter,
+    JsonFormatter, StdoutConsumer, VerbosityLevel,
 };
 use git_version::git_version;
 use schemars::schema_for;
@@ -282,7 +282,7 @@ pub fn main() -> AnyhowResult<()> {
     tracing::info!(
         target: "file",
         "Rules: {}",
-        rules.iter().map(|rd| format!("{}", rd)).collect::<Vec<_>>().join("\n")
+        rules.iter().map(|rd| format!("{}", rd )).collect::<Vec<_>>().join("\n")
     );
     let input = cli.input_file.clone().expect("No input file given");
     tracing::info!(target: "file", "Input file: {}", input.display());
@@ -290,17 +290,20 @@ pub fn main() -> AnyhowResult<()> {
         "Given input_file could not be converted to a string"
     ))?;
 
+    let file = specify_trace_file(
+        input_file.to_string(),
+        cli.trace_file.clone(),
+        cli.formatter.as_str(),
+    );
     //consumer for protrace
-    let consumer: Option<Consumer> = if cli.tracing {
-        Some(create_consumer(
+    let consumer: Option<Consumer> = cli.tracing.then(|| {
+        create_consumer(
             cli.trace_output.as_str(),
             cli.verbosity.clone(),
             cli.formatter.as_str(),
-            cli.trace_file.clone(),
-        ))
-    } else {
-        None
-    };
+            file,
+        )
+    });
     /******************************************************/
     /*        Parse essence to json using Conjure         */
     /******************************************************/

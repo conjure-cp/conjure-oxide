@@ -220,7 +220,7 @@ fn rewrite_iteration(
     let rule_results = apply_all_rules(&expression, model, rules, stats);
     if let Some(result) = choose_rewrite(&rule_results, &expression) {
         // If a rule is applied, mark the expression as dirty
-        log_rule_application(&result, &expression, model.as_submodel());
+        //log_rule_application(&result, &expression, model.as_submodel());
         return Some(result.reduction);
     }
 

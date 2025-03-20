@@ -1,6 +1,7 @@
 use crate::ast::Expression;
 use serde_json;
-// use serde::Serialize;
+use std::fs;
+use std::path::PathBuf;
 use std::{fmt, fs::OpenOptions, io::Write};
 
 #[derive(serde::Serialize)] // added for serialisation to JSON using serde
@@ -26,12 +27,12 @@ impl fmt::Display for RuleTrace {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{}, ~~> {} [{}{}]",
+            "{}, \n~~> {} [{};{}]",
             self.initial_expression, self.rule_name, self.rule_priority, self.rule_set_name,
         )?;
 
         if let Some(expr) = &self.transformed_expression {
-            write!(f, " -> {}", expr)?;
+            write!(f, "\n{}", expr)?;
         }
         if let Some(vars) = &self.new_variables_str {
             write!(f, " {}", vars)?;
@@ -40,7 +41,7 @@ impl fmt::Display for RuleTrace {
             write!(f, " {}", top)?;
         }
 
-        write!(f, " --")?;
+        write!(f, "\n--\n")?;
         Ok(())
     }
 }
@@ -70,7 +71,11 @@ impl MessageFormatter for HumanFormatter {
     fn format(&self, trace: TraceStruct) -> String {
         match trace {
             TraceStruct::RuleTrace(rule_trace) => {
-                format!("Formatted rule trace: {}", rule_trace)
+                if (rule_trace.transformed_expression.is_some()) {
+                    format!("Successful Tranformation: \n{}", rule_trace)
+                } else {
+                    format!("Unsuccessful Tranformation: \n{}", rule_trace)
+                }
             }
             _ => String::from("Unknown trace"),
         }
@@ -177,7 +182,7 @@ pub fn create_consumer(
     consumer_type: &str,
     verbosity: VerbosityLevel,
     output_format: &str,
-    file_path: Option<String>,
+    file_path: String,
 ) -> Consumer {
     let formatter: Box<dyn MessageFormatter> = match output_format.to_lowercase().as_str() {
         "json" => Box::new(JsonFormatter),
@@ -191,17 +196,46 @@ pub fn create_consumer(
             verbosity,
         }),
         "file" => {
-            let path = file_path.expect("File consumer requires a file path");
-            let path_ref = std::path::Path::new(&path);
-            if path_ref.exists() {
-                std::fs::remove_file(path_ref).unwrap();
+            let path = PathBuf::from(&file_path);
+            if path.exists() {
+                fs::remove_file(&path).unwrap();
             }
+
             Consumer::FileConsumer(FileConsumer {
                 formatter,
                 verbosity,
-                file_path: path,
+                file_path,
             })
         }
         other => panic!("Unknown consumer type: {}", other),
+    }
+}
+
+pub fn specify_trace_file(
+    essence_file: String,
+    passed_file: Option<String>,
+    output_format: &str,
+) -> String {
+    match passed_file {
+        Some(trace_file) => trace_file,
+        None => {
+            let new_extension = match output_format.to_lowercase().as_str() {
+                "json" => "json",
+                "human" => "txt",
+                _ => panic!("Unknown output format: {}", output_format),
+            };
+
+            let mut path = PathBuf::from(essence_file);
+
+            if let Some(stem) = path.file_stem() {
+                let mut new_name = stem.to_string_lossy().into_owned();
+                new_name.push_str("_protrace"); // Append `_protrace`
+
+                path.set_file_name(new_name);
+                path.set_extension(new_extension); // Set new extension
+            }
+
+            path.to_string_lossy().into_owned()
+        }
     }
 }

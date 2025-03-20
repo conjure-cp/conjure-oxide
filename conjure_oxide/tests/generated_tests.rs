@@ -277,17 +277,13 @@ fn integration_test_inner(
                 &rule_sets,
             )?
         } else {
-            //temporarilly
             //termporary
-            let file_path = "conjure_oxide/src/protrace.json".to_string();
-            let consumer: Consumer =
-                create_consumer("file", VerbosityLevel::High, "json", Some(file_path));
 
             rewrite_naive(
                 model.as_ref().expect("Model must be parsed in 1a"),
                 &rule_sets,
                 false,
-                consumer,
+                None,
             )?
         };
 

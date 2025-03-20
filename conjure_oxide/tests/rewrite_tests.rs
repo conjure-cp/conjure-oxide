@@ -675,9 +675,7 @@ fn rewrite_solve_xyz() {
     *model.as_submodel_mut().constraints_mut() = vec![nested_expr];
 
     //termporary
-    let file_path = "conjure_oxide/src/protrace.json".to_string();
-    let consumer: Consumer = create_consumer("file", VerbosityLevel::High, "json", Some(file_path));
-    model = rewrite_naive(&model, &rule_sets, true, consumer).unwrap();
+    model = rewrite_naive(&model, &rule_sets, true, None).unwrap();
     let rewritten_expr = model.as_submodel().constraints();
 
     // Check if the expression is in its simplest form

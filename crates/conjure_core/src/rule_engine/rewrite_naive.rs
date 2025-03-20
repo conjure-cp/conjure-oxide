@@ -153,7 +153,7 @@ fn try_rewrite_model(
             }
 
             // Extract the single applicable rule and apply it
-            log_rule_application(result, expr, submodel);
+            log_rule_application(result, expr, submodel, &consumer);
 
             // Replace expr with new_expression
             *submodel = ctx(result.reduction.new_expression.clone());
