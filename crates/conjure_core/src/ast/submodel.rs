@@ -1,4 +1,5 @@
 use super::{
+    comprehension::Comprehension,
     declaration::DeclarationKind,
     pretty::{
         pretty_domain_letting_declaration, pretty_expressions_as_top_level,
@@ -290,5 +291,42 @@ impl Biplate<SubModel> for SubModel {
                 x
             }),
         )
+    }
+}
+
+impl Biplate<Comprehension> for SubModel {
+    fn biplate(
+        &self,
+    ) -> (
+        Tree<Comprehension>,
+        Box<dyn Fn(Tree<Comprehension>) -> Self>,
+    ) {
+        let (f1_tree, f1_ctx) = <_ as Biplate<Comprehension>>::biplate(&self.constraints);
+        let (f2_tree, f2_ctx) =
+            <SymbolTable as Biplate<Comprehension>>::biplate(&self.symbols.borrow());
+
+        let tree = Tree::Many(VecDeque::from([f1_tree, f2_tree]));
+        let self2 = self.clone();
+        let ctx = Box::new(move |x| {
+            let Tree::Many(xs) = x else {
+                panic!();
+            };
+
+            let root = f1_ctx(xs[0].clone());
+            let symtab = f2_ctx(xs[1].clone());
+
+            let mut self3 = self2.clone();
+
+            let Expression::Root(_, _) = root else {
+                bug!("root expression not root");
+            };
+
+            *self3.symbols_mut() = symtab;
+            *self3.root_mut_unchecked() = root;
+
+            self3
+        });
+
+        (tree, ctx)
     }
 }
