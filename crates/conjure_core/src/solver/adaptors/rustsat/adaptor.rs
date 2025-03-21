@@ -136,7 +136,7 @@ impl SolverAdaptor for SAT {
             );
 
             if !callback(solution) {
-                println!("callback false");
+                // println!("callback false");
                 return Ok(SolveSuccess {
                     stats: SolverStats {
                         conjure_solver_wall_time_s: -1.0,
