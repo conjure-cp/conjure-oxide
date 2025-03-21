@@ -16,8 +16,6 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use std::panic::RefUnwindSafe;
-use std::result;
 use tracing::{span, Level, Metadata as OtherMetadata};
 use tracing_subscriber::{
     filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
