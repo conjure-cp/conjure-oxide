@@ -45,6 +45,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
         Expr::Atomic(_, Atom::Reference(_c)) => None,
         Expr::AbstractLiteral(_, _) => None,
+        Expr::Comprehension(_, _) => None,
         Expr::UnsafeIndex(_, subject, indices) | Expr::SafeIndex(_, subject, indices) => {
             let subject: Lit = subject.as_ref().clone().to_literal()?;
             let indices: Vec<Lit> = indices

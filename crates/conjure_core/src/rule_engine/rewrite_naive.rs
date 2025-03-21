@@ -7,11 +7,12 @@ use crate::{
         rewriter_common::{log_rule_application, RuleResult},
         submodel_zipper::submodel_ctx,
     },
+    stats::RewriterStats,
     Model,
 };
 
 use itertools::Itertools;
-use std::sync::Arc;
+use std::{sync::Arc, time::Instant};
 use tracing::trace;
 use uniplate::Biplate;
 
@@ -30,6 +31,10 @@ pub fn rewrite_naive<'a>(
     let mut model = model.clone();
     let mut done_something = true;
 
+    let mut rewriter_stats = RewriterStats::new();
+    rewriter_stats.is_optimization_enabled = Some(false);
+    let run_start = Instant::now();
+
     trace!(
         target: "rule_engine_human",
         "Model before rewriting:\n\n{}\n--\n",
@@ -47,6 +52,7 @@ pub fn rewrite_naive<'a>(
                 &mut submodel,
                 &rules_grouped,
                 prop_multiple_equally_applicable,
+                &mut rewriter_stats,
             )
             .is_some()
             {
@@ -59,6 +65,16 @@ pub fn rewrite_naive<'a>(
             model = new_model;
         }
     }
+
+    let run_end = Instant::now();
+    rewriter_stats.rewriter_run_time = Some(run_end - run_start);
+
+    model
+        .context
+        .write()
+        .unwrap()
+        .stats
+        .add_rewriter_run(rewriter_stats);
 
     trace!(
         target: "rule_engine_human",
@@ -75,6 +91,7 @@ fn try_rewrite_model(
     submodel: &mut SubModel,
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
     prop_multiple_equally_applicable: bool,
+    stats: &mut RewriterStats,
 ) -> Option<()> {
     type CtxFn = Arc<dyn Fn(Expr) -> SubModel>;
     let mut results: Vec<(RuleResult<'_>, u16, Expr, CtxFn)> = vec![];
@@ -88,8 +105,16 @@ fn try_rewrite_model(
             let expr = expr.clone();
             let ctx = ctx.clone();
             for rd in rules {
+                // Count rule application attempts
+                stats.rewriter_rule_application_attempts =
+                    Some(stats.rewriter_rule_application_attempts.unwrap_or(0) + 1);
+
                 match (rd.rule.application)(&expr, &submodel.symbols()) {
                     Ok(red) => {
+                        // Count successful rule applications
+                        stats.rewriter_rule_applications =
+                            Some(stats.rewriter_rule_applications.unwrap_or(0) + 1);
+
                         // Collect applicable rules
                         results.push((
                             RuleResult {

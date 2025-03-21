@@ -18,6 +18,7 @@ use enum_compatability_macro::document_compatibility;
 use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Uniplate as _};
 
+use super::comprehension::Comprehension;
 use super::{Domain, Range, SubModel, Typeable};
 
 /// Represents different types of expressions used to define rules and constraints in the model.
@@ -26,13 +27,14 @@ use super::{Domain, Range, SubModel, Typeable};
 /// used to build rules and conditions for the model.
 #[document_compatibility]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
-#[uniplate(walk_into=[Atom,SubModel,AbstractLiteral<Expression>])]
+#[uniplate(walk_into=[Atom,SubModel,AbstractLiteral<Expression>,Comprehension])]
 #[biplate(to=Metadata)]
 #[biplate(to=Atom)]
-#[biplate(to=Name)]
+#[biplate(to=Name,walk_into=[Atom])]
 #[biplate(to=Vec<Expression>)]
 #[biplate(to=Option<Expression>)]
-#[biplate(to=SubModel)]
+#[biplate(to=SubModel,walk_into=[Comprehension])]
+#[biplate(to=Comprehension)]
 #[biplate(to=AbstractLiteral<Expression>)]
 #[biplate(to=AbstractLiteral<Literal>,walk_into=[Atom])]
 #[biplate(to=Literal,walk_into=[Atom])]
@@ -44,6 +46,11 @@ pub enum Expression {
     /// An expression representing "A is valid as long as B is true"
     /// Turns into a conjunction when it reaches a boolean context
     Bubble(Metadata, Box<Expression>, Box<Expression>),
+
+    /// A comprehension.
+    ///
+    /// The inside of the comprehension opens a new scope.
+    Comprehension(Metadata, Box<Comprehension>),
 
     /// Defines dominance ("Solution A is preferred over Solution B")
     DominanceRelation(Metadata, Box<Expression>),
@@ -409,6 +416,7 @@ impl Expression {
             Expression::AbstractLiteral(_, _) => None,
             Expression::DominanceRelation(_, _) => Some(Domain::BoolDomain),
             Expression::FromSolution(_, expr) => expr.domain_of(syms),
+            Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
                 let Domain::DomainMatrix(elem_domain, _) = matrix.domain_of(syms)? else {
                     bug!("subject of an index operation should be a matrix");
@@ -630,6 +638,7 @@ impl Expression {
                 Some(ReturnType::Matrix(Box::new(subject.return_type()?)))
             }
             Expression::InDomain(_, _, _) => Some(ReturnType::Bool),
+            Expression::Comprehension(_, _) => None,
             Expression::Root(_, _) => Some(ReturnType::Bool),
             Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
             Expression::FromSolution(_, expr) => expr.return_type(),
@@ -826,6 +835,7 @@ impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
             Expression::AbstractLiteral(_, l) => l.fmt(f),
+            Expression::Comprehension(_, c) => c.fmt(f),
             Expression::UnsafeIndex(_, e1, e2) | Expression::SafeIndex(_, e1, e2) => {
                 write!(f, "{e1}{}", pretty_vec(e2))
             }
