@@ -283,13 +283,11 @@ fn integration_test_inner(
     let rewritten_model = if config.apply_rewrite_rules {
         // rule set selection based on solver
 
-        let solver_fam;
-
-        if config.solve_with_sat {
-            solver_fam = SolverFamily::SAT;
+        let solver_fam = if config.solve_with_sat {
+            SolverFamily::SAT;
         } else {
-            solver_fam = SolverFamily::Minion;
-        }
+            SolverFamily::Minion;
+        };
 
         let rule_sets = resolve_rule_sets(solver_fam, DEFAULT_RULE_SETS)?;
 
