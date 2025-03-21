@@ -92,13 +92,17 @@ impl<T: Uniplate, M> Commands<T, M> {
     }
 
     /// Consumes and apply the side-effects currently in the queue.
-    pub(crate) fn apply(&mut self, mut tree: T, mut meta: M) -> (T, M) {
+    pub(crate) fn apply(&mut self, mut tree: T, mut meta: M) -> (T, M, bool) {
+        let mut transformed = false;
         while let Some(cmd) = self.commands.pop_front() {
             match cmd {
-                Command::Transform(f) => tree = f(tree),
+                Command::Transform(f) => {
+                    transformed = true;
+                    tree = f(tree);
+                },
                 Command::MutMeta(f) => f(&mut meta),
             }
         }
-        (tree, meta)
+        (tree, meta, transformed)
     }
 }

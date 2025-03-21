@@ -481,5 +481,9 @@ pub mod prelude {
 
 pub use commands::Commands;
 pub use engine::morph;
+pub use engine::morph_impl;
+pub use engine::DirtyZipper;
+pub use engine::NodeState;
+pub use engine::State;
 pub use rule::{Rule, RuleFn};
 pub use update::Update;
