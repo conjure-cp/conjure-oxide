@@ -221,16 +221,14 @@ use std::fmt;
 
 /// Contains the core information for the the skeleton tree. The recursive tree structure is captured using `<Rc<RefCell<NodeState>>>`, which allows for
 /// multiple owners of a value, as well as mutable access to data even if a reference is immutable.
-///
-/// # Fields:
-/// - Parent: `Option<>` is used as this node may be a root node, having no parents.
-/// - Children: `Vec` containing all children of a node. It is empty by default.
-/// - Current_child_index: Keeps track of which child is currently active in the tree traversal process.
-/// - Cleanliness: Integer that marks up to which rule level a certain node has been checked. By default nodes start off with a cleanliness of 0.
 pub struct NodeState {
+    ///Holds the parents of a node. It is wrapped in an `Option<>` as a node may have no parents (i.e. it may be a root node)
     pub parent: Option<Rc<RefCell<NodeState>>>,
+    ///C`Vec` containing all children of a node. It is empty by default.
     pub children: Vec<Rc<RefCell<NodeState>>>,
+    ///Keeps track of which child is currently active in the tree traversal process.
     pub current_child_index: usize,
+    ///Integer that marks up to which rule level a certain node has been checked. By default nodes start off with a cleanliness of 0.
     pub cleanliness: usize,
 }
 
@@ -282,12 +280,14 @@ impl fmt::Debug for NodeState {
 ///At any point in time these should be in sync, meaning that where zipper is in the user-given tree
 /// should correspond to the position in the skeleton tree.
 pub struct DirtyZipper<T: Uniplate> {
+    ///Allows for efficient traversal of the user-given tree.
     pub zipper: Zipper<T>,
+    ///Skeleton tree for cleanliness data
     pub state: State,
 }
 
 impl<T: Uniplate> DirtyZipper<T> {
-    //Given a zipper, create a root node initialised to the current location of the zipper
+    ///Given a zipper, create a root node initialised to the current location of the zipper
     pub fn new(zipper: Zipper<T>) -> Self {
         Self {
             zipper,
