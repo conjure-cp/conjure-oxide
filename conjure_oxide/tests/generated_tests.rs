@@ -284,9 +284,9 @@ fn integration_test_inner(
         // rule set selection based on solver
 
         let solver_fam = if config.solve_with_sat {
-            SolverFamily::SAT;
+            SolverFamily::SAT
         } else {
-            SolverFamily::Minion;
+            SolverFamily::Minion
         };
 
         let rule_sets = resolve_rule_sets(solver_fam, DEFAULT_RULE_SETS)?;
