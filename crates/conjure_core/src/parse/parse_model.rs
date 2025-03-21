@@ -140,7 +140,6 @@ fn parse_letting(
         .as_str()
         .ok_or(error!("Letting[0].Name is not a string"))?;
     let name = Name::UserName(name.to_owned());
-
     // value letting
     if let Some(value) = parse_expression(&arr[1], scope) {
         symtab
@@ -461,7 +460,6 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
     let mut binary_operator_names = binary_operators.iter().map(|x| x.0);
     let mut unary_operator_names = unary_operators.iter().map(|x| x.0);
     let mut vec_operator_names = vec_operators.iter().map(|x| x.0);
-
     #[allow(clippy::unwrap_used)]
     match obj {
         Value::Object(op) if op.contains_key("Op") => match &op["Op"] {
@@ -493,7 +491,14 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
             ))
         }
         Value::Object(abslit) if abslit.contains_key("AbstractLiteral") => {
-            Some(parse_abstract_matrix_as_expr(obj, scope).unwrap())
+            if abslit["AbstractLiteral"]
+                .as_object()?
+                .contains_key("AbsLitSet")
+            {
+                Some(parse_abs_lit(&abslit["AbstractLiteral"]["AbsLitSet"], scope).unwrap())
+            } else {
+                Some(parse_abstract_matrix_as_expr(obj, scope).unwrap())
+            }
         }
 
         Value::Object(constant) if constant.contains_key("Constant") => Some(
@@ -512,10 +517,24 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
         Value::Object(constant) if constant.contains_key("ConstantBool") => {
             Some(parse_constant(constant, scope).unwrap())
         }
+
         _ => None,
     }
 }
 
+fn parse_abs_lit(abs_set: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Option<Expression> {
+    let values = abs_set.as_array()?; // Ensure it's an array
+    let expressions = values
+        .iter()
+        .map(|values| parse_expression(values, scope))
+        .map(|values| values.expect("invalid subexpression")) // Ensure valid expressions
+        .collect::<Vec<Expression>>(); // Collect all expressions
+
+    Some(Expression::AbstractLiteral(
+        Metadata::new(),
+        AbstractLiteral::Set(expressions),
+    ))
+}
 fn parse_comprehension(
     comprehension: &serde_json::Map<String, Value>,
     scope: Rc<RefCell<SymbolTable>>,
@@ -826,26 +845,9 @@ fn parse_constant(
         }
 
         Some(Value::Object(int)) if int.contains_key("ConstantAbstract") => {
-            // TODO: add more types of expressions
             if let Some(Value::Object(obj)) = int.get("ConstantAbstract") {
                 if let Some(arr) = obj.get("AbsLitSet") {
-                    let mut expressions: Vec<Expression> = Vec::new();
-
-                    for expr in arr
-                        .as_array()?
-                        .iter()
-                        .filter_map(|x| parse_expression(x, scope))
-                    {
-                        if let Expression::Atomic(_, Atom::Literal(literal)) = expr {
-                            expressions
-                                .push(Expression::Atomic(Metadata::new(), Atom::Literal(literal)))
-                        }
-                        //  support other expressions as well
-                    }
-                    return Some(Expression::AbstractLiteral(
-                        Metadata::new(),
-                        AbstractLiteral::Set(expressions),
-                    ));
+                    return parse_abs_lit(arr, scope);
                 }
             }
             None
