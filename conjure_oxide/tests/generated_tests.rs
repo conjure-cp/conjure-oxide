@@ -284,19 +284,14 @@ fn integration_test_inner(
         // rule set selection based on solver
 
         let solver_fam;
-        let rule_sets;
 
         if config.solve_with_sat {
             solver_fam = SolverFamily::SAT;
-            // TODO: use to set rules
-            rule_sets = DEFAULT_RULE_SETS;
         } else {
             solver_fam = SolverFamily::Minion;
-            // TODO: use to set rules
-            rule_sets = DEFAULT_RULE_SETS;
         }
 
-        let rule_sets = resolve_rule_sets(solver_fam, rule_sets)?;
+        let rule_sets = resolve_rule_sets(solver_fam, DEFAULT_RULE_SETS)?;
 
         let mut model = parsed_model.expect("Model must be parsed in 1a");
 
