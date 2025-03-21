@@ -16,6 +16,8 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
+use std::panic::RefUnwindSafe;
+use std::result;
 use tracing::{span, Level, Metadata as OtherMetadata};
 use tracing_subscriber::{
     filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
@@ -108,7 +110,7 @@ impl TestConfig {
                 self.enable_extra_validation,
             ),
             solve_with_minion: env_var_override_bool("SOLVE_WITH_MINION", self.solve_with_minion),
-            solve_with_sat: env_var_override_bool("SOVLE_WITH_SAT", self.parse_model_default),
+            solve_with_sat: env_var_override_bool("SOLVE_WITH_SAT", self.solve_with_sat),
             compare_solver_solutions: env_var_override_bool(
                 "COMPARE_SOLVER_SOLUTIONS",
                 self.compare_solver_solutions,
@@ -275,7 +277,23 @@ fn integration_test_inner(
 
     // Stage 2a: Rewrite the model using the rule engine (run unless explicitly disabled)
     let rewritten_model = if config.apply_rewrite_rules {
-        let rule_sets = resolve_rule_sets(SolverFamily::Minion, DEFAULT_RULE_SETS)?;
+        // rule set selection based on solver
+
+        let solver_fam;
+        let rule_sets;
+
+        if config.solve_with_sat {
+            solver_fam = SolverFamily::SAT;
+            // TODO: use to set rules
+            rule_sets = DEFAULT_RULE_SETS;
+        } else {
+            solver_fam = SolverFamily::Minion;
+            // TODO: use to set rules
+            rule_sets = DEFAULT_RULE_SETS;
+        }
+
+        let rule_sets = resolve_rule_sets(solver_fam, rule_sets)?;
+
         let mut model = parsed_model.expect("Model must be parsed in 1a");
 
         let rewritten = if config.enable_naive_impl {
@@ -358,7 +376,10 @@ fn integration_test_inner(
     };
 
     // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
-    if config.compare_solver_solutions || accept && config.solve_with_minion {
+    // todo double-check here
+    if config.compare_solver_solutions
+        || accept && (config.solve_with_minion || config.solve_with_sat)
+    {
         let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
             &format!("{}/{}.{}", path, essence_base, extension),
             Arc::clone(&context),
@@ -407,6 +428,8 @@ fn integration_test_inner(
         // based on the test results, so they don't get done later.
         if config.solve_with_minion {
             copy_generated_to_expected(path, essence_base, "minion", "solutions.json")?;
+        } else if config.solve_with_sat {
+            copy_generated_to_expected(path, essence_base, "SAT", "solutions.json")?;
         }
 
         if config.validate_rule_traces {
@@ -504,6 +527,10 @@ fn integration_test_inner(
 
     // Check Stage 3a (solutions)
     if config.solve_with_minion {
+        let expected_solutions_json = read_minion_solutions_json(path, essence_base, "expected")?;
+        let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
+        assert_eq!(username_solutions_json, expected_solutions_json);
+    } else if config.solve_with_sat {
         let expected_solutions_json = read_minion_solutions_json(path, essence_base, "expected")?;
         let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
         assert_eq!(username_solutions_json, expected_solutions_json);
