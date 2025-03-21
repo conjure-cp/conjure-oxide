@@ -78,7 +78,7 @@ impl Default for TestConfig {
             enable_extra_validation: false,
             solve_with_minion: true,
             compare_solver_solutions: false,
-            validate_rule_traces: false,
+            validate_rule_traces: true,
         }
     }
 }
