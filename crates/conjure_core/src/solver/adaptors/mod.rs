@@ -1,7 +1,7 @@
 //! Solver adaptors.
 
-mod minion;
-mod rustsat;
+pub mod minion;
+pub mod rustsat;
 
 #[doc(inline)]
 pub use minion::Minion;
