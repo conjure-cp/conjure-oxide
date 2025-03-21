@@ -5,6 +5,7 @@
 use crate::bug;
 use crate::representation::{get_repr_rule, Representation};
 
+use super::comprehension::Comprehension;
 use super::serde::{RcRefCellAsId, RcRefCellAsInner};
 use std::cell::RefCell;
 use std::collections::btree_map::Entry;
@@ -181,12 +182,7 @@ impl SymbolTable {
     ///
     /// See [`SymbolTable::domain`].
     pub fn resolve_domain(&self, name: &Name) -> Option<Domain> {
-        match self.domain(name) {
-            Some(Domain::DomainReference(name)) => self
-                .lookup(&name)
-                .and_then(|decl| decl.as_domain_letting().cloned().map(|x| x.resolve(self))),
-            result => result,
-        }
+        self.domain(name).map(|domain| domain.resolve(self))
     }
 
     /// Iterates over entries in the local symbol table only.
@@ -457,6 +453,29 @@ impl Biplate<Expression> for SymbolTable {
         });
 
         (tree, ctx)
+    }
+}
+
+impl Biplate<Comprehension> for SymbolTable {
+    fn biplate(
+        &self,
+    ) -> (
+        Tree<Comprehension>,
+        Box<dyn Fn(Tree<Comprehension>) -> Self>,
+    ) {
+        let (expr_tree, expr_ctx) = <SymbolTable as Biplate<Expression>>::biplate(self);
+        let (comprehension_tree, comprehension_ctx) =
+            <VecDeque<Expression> as Biplate<Comprehension>>::biplate(
+                &expr_tree.into_iter().collect(),
+            );
+
+        let ctx = Box::new(move |x| {
+            expr_ctx(Tree::Many(
+                comprehension_ctx(x).into_iter().map(Tree::One).collect(),
+            ))
+        });
+
+        (comprehension_tree, ctx)
     }
 }
 
