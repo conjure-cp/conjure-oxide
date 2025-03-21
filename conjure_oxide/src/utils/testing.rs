@@ -19,6 +19,7 @@ use crate::utils::conjure::solutions_to_json;
 use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
 use crate::Model as ConjureModel;
+use crate::SolverFamily;
 
 pub fn assert_eq_any_order<T: Eq + Hash + Debug + Clone>(a: &Vec<Vec<T>>, b: &Vec<Vec<T>>) {
     assert_eq!(a.len(), b.len());
@@ -139,27 +140,40 @@ pub fn minion_solutions_from_json(
 }
 
 /// Writes the minion solutions to a generated JSON file, and returns the JSON structure.
-pub fn save_minion_solutions_json(
+pub fn save_solutions_json(
     solutions: &Vec<BTreeMap<Name, Literal>>,
     path: &str,
     test_name: &str,
+    solver: SolverFamily,
 ) -> Result<JsonValue, std::io::Error> {
     let json_solutions = solutions_to_json(solutions);
     let generated_json_str = serde_json::to_string_pretty(&json_solutions)?;
 
-    let filename = format!("{path}/{test_name}.generated-minion.solutions.json");
+    let solver_name = match solver {
+        SolverFamily::SAT => "sat",
+        SolverFamily::Minion => "minion",
+    };
+
+    let filename = format!("{path}/{test_name}.generated-{solver_name}.solutions.json");
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
 
     Ok(json_solutions)
 }
 
-pub fn read_minion_solutions_json(
+pub fn read_solutions_json(
     path: &str,
     test_name: &str,
     prefix: &str,
+    solver: SolverFamily,
 ) -> Result<JsonValue, anyhow::Error> {
-    let expected_json_str =
-        std::fs::read_to_string(format!("{path}/{test_name}.{prefix}-minion.solutions.json"))?;
+    let solver_name = match solver {
+        SolverFamily::SAT => "sat",
+        SolverFamily::Minion => "minion",
+    };
+
+    let expected_json_str = std::fs::read_to_string(format!(
+        "{path}/{test_name}.{prefix}-{solver_name}.solutions.json"
+    ))?;
 
     let expected_solutions: JsonValue =
         sort_json_object(&serde_json::from_str(&expected_json_str)?, true);

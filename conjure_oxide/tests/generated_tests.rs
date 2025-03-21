@@ -39,7 +39,7 @@ use conjure_oxide::utils::conjure::{
 };
 use conjure_oxide::utils::testing::save_stats_json;
 use conjure_oxide::utils::testing::{
-    read_minion_solutions_json, read_model_json, save_minion_solutions_json, save_model_json,
+    read_model_json, read_solutions_json, save_model_json, save_solutions_json,
 };
 use conjure_oxide::SolverFamily;
 use pretty_assertions::assert_eq;
@@ -247,6 +247,12 @@ fn integration_test_inner(
 
     let config = file_config.merge_env();
 
+    // TODO: allow either Minion or SAT but not both; eventually allow both sovlers to be tested
+
+    if config.solve_with_sat && config.solve_with_minion {
+        todo!("Not yet implement simultaneous testing of both solvers")
+    }
+
     // Stage 1a: Parse the model using the normal parser (run unless explicitly disabled)
     let parsed_model = if config.parse_model_default {
         let parsed = parse_essence_file(path, essence_base, extension, context.clone())?;
@@ -351,7 +357,8 @@ fn integration_test_inner(
                 .clone(),
             0,
         )?;
-        let solutions_json = save_minion_solutions_json(&solved, path, essence_base)?;
+        let solutions_json =
+            save_solutions_json(&solved, path, essence_base, SolverFamily::Minion)?;
         if verbose {
             println!("Minion solutions: {:#?}", solutions_json);
         }
@@ -364,7 +371,7 @@ fn integration_test_inner(
                 .clone(),
             0,
         )?;
-        let solutions_json = save_minion_solutions_json(&solved, path, essence_base)?;
+        let solutions_json = save_solutions_json(&solved, path, essence_base, SolverFamily::SAT)?;
         if verbose {
             println!("Minion solutions: {:#?}", solutions_json);
         }
@@ -525,11 +532,13 @@ fn integration_test_inner(
 
     // Check Stage 3a (solutions)
     if config.solve_with_minion {
-        let expected_solutions_json = read_minion_solutions_json(path, essence_base, "expected")?;
+        let expected_solutions_json =
+            read_solutions_json(path, essence_base, "expected", SolverFamily::Minion)?;
         let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
         assert_eq!(username_solutions_json, expected_solutions_json);
     } else if config.solve_with_sat {
-        let expected_solutions_json = read_minion_solutions_json(path, essence_base, "expected")?;
+        let expected_solutions_json =
+            read_solutions_json(path, essence_base, "expected", SolverFamily::SAT)?;
         let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
         assert_eq!(username_solutions_json, expected_solutions_json);
     }
