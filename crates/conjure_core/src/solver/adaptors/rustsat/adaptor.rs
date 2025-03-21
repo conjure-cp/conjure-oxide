@@ -28,7 +28,7 @@ use crate::solver::{
     SolverFamily, SolverMutCallback,
 };
 use crate::stats::SolverStats;
-use crate::{ast as conjure_ast, Model as ConjureModel};
+use crate::{ast as conjure_ast, bug, Model as ConjureModel};
 
 use rustsat::instances::{BasicVarManager, Cnf, SatInstance};
 
@@ -65,8 +65,14 @@ fn get_ref_sols(
     let mut solution: HashMap<Name, Literal> = HashMap::new();
 
     for reference in find_refs {
-        // lit is 'Nothing' for unconstrained
-        let lit: Lit = *var_map.get(&reference).unwrap();
+        // lit is 'Nothing' for unconstrained - if this is actually happenning, panicking is fine
+        // we are not supposed to do anything to resolve that here.
+        let lit: Lit = match var_map.get(&reference) {
+            Some(a) => *a,
+            None => panic!(
+                "There should never be a non-just literal occurring here. Something is broken upstream."
+            ),
+        };
         solution.insert(
             Name::UserName(reference),
             match sol[lit.var()] {

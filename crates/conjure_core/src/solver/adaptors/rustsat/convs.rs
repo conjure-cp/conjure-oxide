@@ -63,10 +63,8 @@ pub fn handle_atom(
                     // let m = n.clone();
                     let lit_temp: Lit = fetch_lit(n, vars_added, inst);
                     if polarity {
-                        // print!("  {} ", m);
                         lit_temp
                     } else {
-                        // print!(" ¬{} ", m);
                         !lit_temp
                     }
                 }
