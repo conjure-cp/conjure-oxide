@@ -1,15 +1,23 @@
+use anyhow::Result as AnyhowResult;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::exit;
 use std::sync::Arc;
 
-use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
+
 use clap::{arg, command, Parser};
-use git_version::git_version;
+
 use schemars::schema_for;
-use serde_json::to_string_pretty;
+
+// use conjure_oxide::defaults::get_default_rule_sets;
+use conjure_oxide::defaults::DEFAULT_RULE_SETS;
+use conjure_oxide::find_conjure::conjure_executable;
+use conjure_oxide::rule_engine::resolve_rule_sets;
+use conjure_oxide::utils::conjure::{get_minion_solutions, get_sat_solutions, solutions_to_json};
+use conjure_oxide::{get_rules, model_from_json, SolverFamily};
+
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
@@ -19,13 +27,11 @@ use conjure_core::context::Context;
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_core::Model;
 
-use conjure_oxide::defaults::DEFAULT_RULE_SETS;
-use conjure_oxide::find_conjure::conjure_executable;
-use conjure_oxide::rule_engine::resolve_rule_sets;
-use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
+use git_version::git_version;
+
+use serde_json::to_string_pretty;
+
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
-use conjure_oxide::SolverFamily;
-use conjure_oxide::{get_rules, model_from_json};
 
 static AFTER_HELP_TEXT: &str = include_str!("help_text.txt");
 
@@ -43,11 +49,11 @@ struct Cli {
     extra_rule_sets: Vec<String>,
 
     #[arg(
-        long,
+        long = "solver",
         value_enum,
         value_name = "SOLVER",
         short = 's',
-        help = "Solver family use (Minion by default)"
+        help = "Solver family to use (Minion by default)"
     )]
     solver: Option<SolverFamily>, // ToDo this should probably set the solver adapter
 
@@ -213,8 +219,8 @@ pub fn main() -> AnyhowResult<()> {
         .with(file_layer)
         .init();
 
-    if target_family != SolverFamily::Minion {
-        tracing::error!("Only the Minion solver is currently supported!");
+    if !(target_family == SolverFamily::SAT || target_family == SolverFamily::Minion) {
+        tracing::error!("Only the SAT and Minion solver is currently supported!");
         exit(1);
     }
 
@@ -323,6 +329,17 @@ pub fn main() -> AnyhowResult<()> {
 
 /// Runs the solver
 fn run_solver(cli: &Cli, model: Model) -> anyhow::Result<()> {
+    let solver = cli.solver;
+    match solver {
+        Some(sol_family) => match sol_family {
+            SolverFamily::SAT => run_sat_solver(cli, model),
+            SolverFamily::Minion => run_minion(cli, model),
+        },
+        None => panic!("main::run_solver() : Unreachable: Should never be None"),
+    }
+}
+
+fn run_minion(cli: &Cli, model: Model) -> anyhow::Result<()> {
     let out_file: Option<File> = match &cli.output {
         None => None,
         Some(pth) => Some(
@@ -334,10 +351,43 @@ fn run_solver(cli: &Cli, model: Model) -> anyhow::Result<()> {
         ),
     };
 
-    let solutions = get_minion_solutions(model, cli.number_of_solutions)?; // ToDo we need to properly set the solver adaptor here, not hard code minion
-    tracing::info!(target: "file", "Solutions: {}", minion_solutions_to_json(&solutions));
+    let solutions = get_minion_solutions(model, cli.number_of_solutions)?;
+    tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
 
-    let solutions_json = minion_solutions_to_json(&solutions);
+    let solutions_json = solutions_to_json(&solutions);
+    let solutions_str = to_string_pretty(&solutions_json)?;
+    match out_file {
+        None => {
+            println!("Solutions:");
+            println!("{}", solutions_str);
+        }
+        Some(mut outf) => {
+            outf.write_all(solutions_str.as_bytes())?;
+            println!(
+                "Solutions saved to {:?}",
+                &cli.output.clone().unwrap().canonicalize()?
+            )
+        }
+    }
+    Ok(())
+}
+
+fn run_sat_solver(cli: &Cli, model: Model) -> anyhow::Result<()> {
+    let out_file: Option<File> = match &cli.output {
+        None => None,
+        Some(pth) => Some(
+            File::options()
+                .create(true)
+                .truncate(true)
+                .write(true)
+                .open(pth)?,
+        ),
+    };
+
+    let solutions = get_sat_solutions(model, cli.number_of_solutions)?;
+    tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
+
+    let solutions_json = solutions_to_json(&solutions);
     let solutions_str = to_string_pretty(&solutions_json)?;
     match out_file {
         None => {
