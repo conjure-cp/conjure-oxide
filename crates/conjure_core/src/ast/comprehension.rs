@@ -28,6 +28,7 @@ use super::{Declaration, Domain, Expression, Model, Name, Range, SubModel, Symbo
 pub struct Comprehension {
     expression: Expression,
     submodel: SubModel,
+    induction_vars: Vec<Name>,
 }
 
 impl Comprehension {
@@ -36,6 +37,9 @@ impl Comprehension {
         let minion = Solver::new(crate::solver::adaptors::Minion::new());
         // FIXME: weave proper context through
         let mut model = Model::new(Arc::new(RwLock::new(Context::default())));
+
+        // only branch on the induction variables.
+        model.search_order = Some(self.induction_vars.clone());
 
         *model.as_submodel_mut() = self.submodel.clone();
 
@@ -177,6 +181,7 @@ impl ComprehensionBuilder {
         Comprehension {
             expression,
             submodel,
+            induction_vars: induction_variables.into_iter().collect_vec(),
         }
     }
 }
