@@ -2,7 +2,7 @@ use clap::{arg, command, Args, Parser, Subcommand};
 
 use conjure_oxide::SolverFamily;
 
-use crate::solve;
+use crate::{solve, test_solve};
 static AFTER_HELP_TEXT: &str = include_str!("help_text.txt");
 
 /// All subcommands of conjure-oxide
@@ -12,6 +12,11 @@ pub enum Command {
     Solve(solve::Args),
     /// Print the JSON info file schema
     PrintJsonSchema,
+    /// Tests whether the Essence model is solvable with Conjure Oxide, and whether it gets the
+    /// same solutions as Conjure.
+    ///
+    /// Return-code will be 0 if the solutions match, 1 if they don't, and >1 on crash.
+    TestSolve(test_solve::Args),
 }
 
 /// Global command line arguments.
@@ -38,10 +43,6 @@ pub struct GlobalArgs {
     /// Solver family to use
     #[arg(long, value_enum, value_name = "SOLVER", short = 's', global = true)]
     pub solver: Option<SolverFamily>,
-
-    /// Use the in development dirty-clean optimising rewriter
-    #[arg(long, default_value_t = false, global = true)]
-    pub use_optimising_rewriter: bool,
 
     /// Log verbosely
     #[arg(long, short = 'v', help = "Log verbosely to sterr", global = true)]
