@@ -228,6 +228,7 @@ unsafe fn convert_model_to_raw(
     let mut print_vars_guard = PRINT_VARS.lock().unwrap();
     *print_vars_guard = Some(vec![]);
 
+    // initialise all variables, and add all variables to the print order
     for var_name in model.named_variables.get_variable_order() {
         let c_str = CString::new(var_name.clone()).map_err(|_| {
             anyhow!(
@@ -264,7 +265,17 @@ unsafe fn convert_model_to_raw(
 
         #[allow(clippy::unwrap_used)]
         (*print_vars_guard).as_mut().unwrap().push(var_name.clone());
+    }
 
+    // only add search variables to search order
+    for search_var_name in model.named_variables.get_search_variable_order() {
+        let c_str = CString::new(search_var_name.clone()).map_err(|_| {
+            anyhow!(
+                "Variable name {:?} contains a null character.",
+                search_var_name.clone()
+            )
+        })?;
+        let var = ffi::getVarByName(instance, c_str.as_ptr() as _);
         ffi::vec_var_push_back(search_vars.ptr, var);
     }
 
