@@ -31,6 +31,8 @@ fn apply_eval_constant(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// `Some(Const)` if the expression can be simplified to a constant
 pub fn eval_constant(expr: &Expr) -> Option<Lit> {
     match expr {
+        // Must be replaced before the rewrite stage anyway
+        Expr::Metavar(_, _) => None,
         // `fromSolution()` pulls a literal value from last found solution
         Expr::FromSolution(_, _) => None,
         // Same as Expr::Root, we should not replace the dominance relation with a constant

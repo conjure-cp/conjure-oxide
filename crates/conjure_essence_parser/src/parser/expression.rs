@@ -136,6 +136,13 @@ pub fn parse_expression(constraint: Node, source_code: &str, root: &Node) -> Exp
             }
             _ => panic!("`fromSolution()` is only allowed inside dominance relation definitions"),
         },
+        "metavar" => {
+            let inner = constraint
+                .named_child(0)
+                .expect("Expected name for meta-variable");
+            let name = &source_code[inner.start_byte()..inner.end_byte()];
+            Expression::Metavar(Metadata::new(), name.to_string())
+        }
         _ => panic!("{} is not a recognized node kind", constraint.kind()),
     }
 }

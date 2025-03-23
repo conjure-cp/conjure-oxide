@@ -50,6 +50,10 @@ pub enum Expression {
     /// `fromSolution(name)` - Used in dominance relation definitions
     FromSolution(Metadata, Box<Expression>),
 
+    /// A "meta-variable" (i.e. named template argument to be replaced before evaluation)
+    Metavar(Metadata, String),
+
+    /// An atomic expression (variable or literal)
     Atomic(Metadata, Atom),
 
     /// A matrix index.
@@ -406,6 +410,7 @@ impl Expression {
     pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
         let ret = match self {
             //todo
+            Expression::Metavar(_, _) => None,
             Expression::AbstractLiteral(_, _) => None,
             Expression::DominanceRelation(_, _) => Some(Domain::BoolDomain),
             Expression::FromSolution(_, expr) => expr.domain_of(syms),
@@ -622,6 +627,7 @@ impl Expression {
 
     pub fn return_type(&self) -> Option<ReturnType> {
         match self {
+            Expression::Metavar(_, _) => None,
             Expression::AbstractLiteral(_, _) => None,
             Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
                 Some(subject.return_type()?)
@@ -825,6 +831,7 @@ impl From<Atom> for Expression {
 impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
+            Expression::Metavar(_, s) => write!(f, "&{}", s),
             Expression::AbstractLiteral(_, l) => l.fmt(f),
             Expression::UnsafeIndex(_, e1, e2) | Expression::SafeIndex(_, e1, e2) => {
                 write!(f, "{e1}{}", pretty_vec(e2))

@@ -92,7 +92,7 @@ impl<'a> Iterator for WalkBFS<'a> {
 
 #[cfg(test)]
 mod test {
-    use super::super::get_tree;
+    use super::super::util::get_tree;
     use super::*;
 
     #[test]

@@ -51,3 +51,26 @@ pub fn query_toplevel<'a>(
 ) -> impl Iterator<Item = Node<'a>> + 'a {
     WalkDFS::with_retract(node, predicate).filter(|n| n.is_named() && predicate(n))
 }
+
+/// Get all meta-variable names in a node
+pub fn get_metavars<'a>(node: &'a Node<'a>, src: &'a str) -> impl Iterator<Item = String> + 'a {
+    query_toplevel(node, &|n| n.kind() == "metavar").filter_map(|child| {
+        child
+            .named_child(0)
+            .and_then(|name| Some(src[name.start_byte()..name.end_byte()].to_string()))
+    })
+}
+
+mod test {
+    #[allow(unused)]
+    use super::*;
+
+    #[test]
+    fn test_get_metavars() {
+        let src = "such that &x = y";
+        let (tree, _) = get_tree(src).unwrap();
+        let root = tree.root_node();
+        let metavars = get_metavars(&root, &src).collect::<Vec<_>>();
+        assert_eq!(metavars, vec!["x"]);
+    }
+}

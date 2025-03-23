@@ -21,6 +21,10 @@ impl Atom {
     pub fn new_uref(name: &str) -> Atom {
         Atom::Reference(Name::UserName(name.to_string()))
     }
+
+    pub fn new_ilit(value: i32) -> Atom {
+        Atom::Literal(Literal::Int(value))
+    }
 }
 
 impl std::fmt::Display for Atom {
