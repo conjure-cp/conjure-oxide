@@ -30,28 +30,74 @@ fn load_symbol_table(
     conjure_model: &ConjureModel,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
-    for (name, decl) in conjure_model
-        .as_submodel()
-        .symbols()
-        .clone()
-        .into_iter_local()
-    {
-        let Some(var) = decl.as_var() else {
-            continue;
-        }; // ignore lettings, etc.
-           //
+    if let Some(ref vars) = conjure_model.search_order {
+        // add search vars in order first
+        for name in vars {
+            let decl = conjure_model
+                .as_submodel()
+                .symbols()
+                .lookup(name)
+                .expect("search var should exist");
+            let var = decl.as_var().expect("search var should be a var");
 
-        // this variable has representations, so ignore it
-        if !conjure_model
+            load_var(name, var, true, minion_model)?;
+        }
+
+        // then add the rest as non-search vars
+        for (name, decl) in conjure_model
             .as_submodel()
             .symbols()
-            .representations_for(&name)
-            .is_none_or(|x| x.is_empty())
+            .clone()
+            .into_iter_local()
         {
-            continue;
-        };
+            // search var - already added
+            if vars.contains(&name) {
+                continue;
+            };
 
-        load_var(&name, var, minion_model)?;
+            let Some(var) = decl.as_var() else {
+                continue;
+            }; // ignore lettings, etc.
+               //
+
+            // this variable has representations, so ignore it
+            if !conjure_model
+                .as_submodel()
+                .symbols()
+                .representations_for(&name)
+                .is_none_or(|x| x.is_empty())
+            {
+                continue;
+            };
+
+            load_var(&name, var, false, minion_model)?;
+        }
+    } else {
+        for (name, decl) in conjure_model
+            .as_submodel()
+            .symbols()
+            .clone()
+            .into_iter_local()
+        {
+            let Some(var) = decl.as_var() else {
+                continue;
+            }; // ignore lettings, etc.
+               //
+
+            // this variable has representations, so ignore it
+            if !conjure_model
+                .as_submodel()
+                .symbols()
+                .representations_for(&name)
+                .is_none_or(|x| x.is_empty())
+            {
+                continue;
+            };
+
+            let is_search_var = !matches!(name, conjure_ast::Name::MachineName(_));
+
+            load_var(&name, var, is_search_var, minion_model)?;
+        }
     }
     Ok(())
 }
@@ -60,11 +106,14 @@ fn load_symbol_table(
 fn load_var(
     name: &conjure_ast::Name,
     var: &conjure_ast::DecisionVariable,
+    search_var: bool,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     match &var.domain {
-        conjure_ast::Domain::IntDomain(ranges) => load_intdomain_var(name, ranges, minion_model),
-        conjure_ast::Domain::BoolDomain => load_booldomain_var(name, minion_model),
+        conjure_ast::Domain::IntDomain(ranges) => {
+            load_intdomain_var(name, ranges, search_var, minion_model)
+        }
+        conjure_ast::Domain::BoolDomain => load_booldomain_var(name, search_var, minion_model),
         x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
     }
 }
@@ -73,6 +122,7 @@ fn load_var(
 fn load_intdomain_var(
     name: &conjure_ast::Name,
     ranges: &[conjure_ast::Range<i32>],
+    search_var: bool,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     let str_name = name_to_string(name.to_owned());
@@ -100,24 +150,26 @@ fn load_intdomain_var(
     let domain = minion_ast::VarDomain::Bound(low, high);
     let str_name = str_name.to_owned();
 
-    if let conjure_ast::Name::MachineName(_) = name {
-        _try_add_aux_var(str_name, domain, minion_model)
-    } else {
+    if search_var {
         _try_add_var(str_name, domain, minion_model)
+    } else {
+        _try_add_aux_var(str_name, domain, minion_model)
     }
 }
 
 /// Loads a variable with domain BoolDomain into `minion_model`
 fn load_booldomain_var(
     name: &conjure_ast::Name,
+    search_var: bool,
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     let str_name = name_to_string(name.to_owned());
-    _try_add_var(
-        str_name.to_owned(),
-        minion_ast::VarDomain::Bool,
-        minion_model,
-    )
+    let domain = minion_ast::VarDomain::Bool;
+    if search_var {
+        _try_add_var(str_name, domain, minion_model)
+    } else {
+        _try_add_aux_var(str_name, domain, minion_model)
+    }
 }
 
 fn _try_add_var(
