@@ -1,147 +1,33 @@
+mod cli;
+mod print_info_schema;
+mod solve;
+use clap::Parser as _;
+use cli::{Cli, GlobalArgs};
+use print_info_schema::run_print_info_schema_command;
+use solve::run_solve_command;
 use std::fs::File;
-use std::io::Write;
-use std::path::PathBuf;
-use std::process::exit;
 use std::sync::Arc;
 
-use anyhow::Result as AnyhowResult;
-use anyhow::{anyhow, bail};
-use clap::{arg, command, Parser};
 use git_version::git_version;
-use schemars::schema_for;
-use serde_json::to_string_pretty;
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
 use tracing_subscriber::{EnvFilter, Layer};
 
-use conjure_core::context::Context;
-use conjure_core::rule_engine::rewrite_naive;
-use conjure_core::Model;
-
-use conjure_oxide::defaults::DEFAULT_RULE_SETS;
-use conjure_oxide::find_conjure::conjure_executable;
-use conjure_oxide::rule_engine::resolve_rule_sets;
-use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
-use conjure_oxide::utils::essence_parser::parse_essence_file_native;
-use conjure_oxide::SolverFamily;
-use conjure_oxide::{get_rules, model_from_json};
-
-static AFTER_HELP_TEXT: &str = include_str!("help_text.txt");
-
-#[derive(Parser, Clone)]
-#[command(author, about, long_about = None, after_long_help=AFTER_HELP_TEXT)]
-struct Cli {
-    #[arg(value_name = "INPUT_ESSENCE", help = "The input Essence file")]
-    input_file: Option<PathBuf>,
-
-    #[arg(
-        long,
-        value_name = "EXTRA_RULE_SETS",
-        help = "Names of extra rule sets to enable"
-    )]
-    extra_rule_sets: Vec<String>,
-
-    #[arg(
-        long,
-        value_enum,
-        value_name = "SOLVER",
-        short = 's',
-        help = "Solver family use (Minion by default)"
-    )]
-    solver: Option<SolverFamily>, // ToDo this should probably set the solver adapter
-
-    #[arg(
-        long,
-        default_value_t = 0,
-        short = 'n',
-        help = "number of solutions to return (0 for all)"
-    )]
-    number_of_solutions: i32,
-    // TODO: subcommands instead of these being a flag.
-    #[arg(
-        long,
-        default_value_t = false,
-        help = "Print the schema for the info JSON and exit"
-    )]
-    print_info_schema: bool,
-
-    #[arg(
-        long = "version",
-        short = 'V',
-        help = "Print the version of the program (git commit) and exit"
-    )]
-    version: bool,
-
-    #[arg(long, help = "Save execution info as JSON to the given file-path.")]
-    info_json_path: Option<PathBuf>,
-
-    #[arg(
-        long,
-        help = "use the, in development, dirty-clean optimising rewriter",
-        default_value_t = false
-    )]
-    use_optimising_rewriter: bool,
-
-    #[arg(
-        long,
-        short = 'o',
-        help = "Save solutions to a JSON file (prints to stdout by default)"
-    )]
-    output: Option<PathBuf>,
-
-    #[arg(long, short = 'v', help = "Log verbosely to sterr")]
-    verbose: bool,
-
-    /// Do not run the solver.
-    ///
-    /// The rewritten model is printed to stdout in an Essence-style syntax (but is not necessarily
-    /// valid Essence).
-    #[arg(long, default_value_t = false)]
-    no_run_solver: bool,
-
-    // --no-x flag disables --x flag : https://jwodder.github.io/kbits/posts/clap-bool-negate/
-    /// Check for multiple equally applicable rules, exiting if any are found.
-    ///
-    /// Only compatible with the default rewriter.
-    #[arg(
-        long,
-        overrides_with = "_no_check_equally_applicable_rules",
-        default_value_t = false
-    )]
-    check_equally_applicable_rules: bool,
-
-    /// Do not check for multiple equally applicable rules [default].
-    ///
-    /// Only compatible with the default rewriter.
-    #[arg(long)]
-    _no_check_equally_applicable_rules: bool,
-
-    #[arg(
-        long,
-        default_value_t = false,
-        help = "Use the native parser to parse the essence file"
-    )]
-    enable_native_parser: bool,
-}
-
 #[allow(clippy::unwrap_used)]
-pub fn main() -> AnyhowResult<()> {
+pub fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
-    #[allow(clippy::unwrap_used)]
-    if cli.print_info_schema {
-        let schema = schema_for!(Context);
-        println!("{}", serde_json::to_string_pretty(&schema).unwrap());
+    if cli.version {
+        println!("Version: {}", git_version!());
         return Ok(());
     }
 
-    let target_family = cli.solver.unwrap_or(SolverFamily::Minion);
-    let mut extra_rule_sets: Vec<&str> = DEFAULT_RULE_SETS.to_vec();
-    for rs in &cli.extra_rule_sets {
-        extra_rule_sets.push(rs.as_str());
-    }
+    setup_logging(&cli.global_args)?;
+    run_subcommand(cli)
+}
 
+fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
     // Logging:
     //
     // Using `tracing` framework, but this automatically reads stuff from `log`.
@@ -173,7 +59,7 @@ pub fn main() -> AnyhowResult<()> {
         .with_writer(Arc::new(log_file))
         .with_filter(LevelFilter::TRACE);
 
-    let default_stderr_level = if cli.verbose {
+    let default_stderr_level = if global_args.verbose {
         LevelFilter::DEBUG
     } else {
         LevelFilter::WARN
@@ -183,7 +69,7 @@ pub fn main() -> AnyhowResult<()> {
         .with_default_directive(default_stderr_level.into())
         .from_env_lossy();
 
-    let stderr_layer = if cli.verbose {
+    let stderr_layer = if global_args.verbose {
         Layer::boxed(
             tracing_subscriber::fmt::layer()
                 .pretty()
@@ -201,11 +87,6 @@ pub fn main() -> AnyhowResult<()> {
         )
     };
 
-    if cli.version {
-        println!("Version: {}", git_version!());
-        return Ok(());
-    }
-
     // load the loggers
     tracing_subscriber::registry()
         .with(json_layer)
@@ -213,146 +94,15 @@ pub fn main() -> AnyhowResult<()> {
         .with(file_layer)
         .init();
 
-    if target_family != SolverFamily::Minion {
-        tracing::error!("Only the Minion solver is currently supported!");
-        exit(1);
-    }
-
-    let rule_sets = match resolve_rule_sets(target_family, &extra_rule_sets) {
-        Ok(rs) => rs,
-        Err(e) => {
-            tracing::error!("Error resolving rule sets: {}", e);
-            exit(1);
-        }
-    };
-
-    let pretty_rule_sets = rule_sets
-        .iter()
-        .map(|rule_set| rule_set.name)
-        .collect::<Vec<_>>()
-        .join(", ");
-
-    tracing::info!("Enabled rule sets: [{}]", pretty_rule_sets);
-    tracing::info!(
-        target: "file",
-        "Rule sets: {}",
-        pretty_rule_sets
-    );
-
-    let rules = get_rules(&rule_sets)?.into_iter().collect::<Vec<_>>();
-    tracing::info!(
-        target: "file",
-        "Rules: {}",
-        rules.iter().map(|rd| format!("{}", rd)).collect::<Vec<_>>().join("\n")
-    );
-    let input = cli.input_file.clone().expect("No input file given");
-    tracing::info!(target: "file", "Input file: {}", input.display());
-    let input_file: &str = input.to_str().ok_or(anyhow!(
-        "Given input_file could not be converted to a string"
-    ))?;
-
-    /******************************************************/
-    /*        Parse essence to json using Conjure         */
-    /******************************************************/
-
-    let context = Context::new_ptr(
-        target_family,
-        extra_rule_sets.iter().map(|rs| rs.to_string()).collect(),
-        rules,
-        rule_sets.clone(),
-    );
-    context.write().unwrap().file_name = Some(input.to_str().expect("").into());
-
-    let mut model;
-    if cli.enable_native_parser {
-        model = parse_essence_file_native(input_file, context.clone())?;
-    } else {
-        conjure_executable()
-            .map_err(|e| anyhow!("Could not find correct conjure executable: {}", e))?;
-
-        let mut cmd = std::process::Command::new("conjure");
-        let output = cmd
-            .arg("pretty")
-            .arg("--output-format=astjson")
-            .arg(input_file)
-            .output()?;
-
-        let conjure_stderr = String::from_utf8(output.stderr)?;
-        if !conjure_stderr.is_empty() {
-            bail!(conjure_stderr);
-        }
-
-        let astjson = String::from_utf8(output.stdout)?;
-
-        if cfg!(feature = "extra-rule-checks") {
-            tracing::info!("extra-rule-checks: enabled");
-        } else {
-            tracing::info!("extra-rule-checks: disabled");
-        }
-
-        model = model_from_json(&astjson, context.clone())?;
-    }
-
-    tracing::info!("Initial model: \n{}\n", model);
-
-    tracing::info!("Rewriting model...");
-
-    if !cli.use_optimising_rewriter {
-        tracing::info!("Rewriting model...");
-        model = rewrite_naive(&model, &rule_sets, cli.check_equally_applicable_rules)?;
-    }
-
-    tracing::info!("Rewritten model: \n{}\n", model);
-
-    if cli.no_run_solver {
-        println!("{}", model);
-    } else {
-        run_solver(&cli.clone(), model)?;
-    }
-
-    // still do postamble even if we didn't run the solver
-    if let Some(path) = cli.info_json_path {
-        #[allow(clippy::unwrap_used)]
-        let context_obj = context.read().unwrap().clone();
-        let generated_json = &serde_json::to_value(context_obj)?;
-        let pretty_json = serde_json::to_string_pretty(&generated_json)?;
-        File::create(path)?.write_all(pretty_json.as_bytes())?;
-    }
     Ok(())
 }
 
-/// Runs the solver
-fn run_solver(cli: &Cli, model: Model) -> anyhow::Result<()> {
-    let out_file: Option<File> = match &cli.output {
-        None => None,
-        Some(pth) => Some(
-            File::options()
-                .create(true)
-                .truncate(true)
-                .write(true)
-                .open(pth)?,
-        ),
-    };
-
-    let solutions = get_minion_solutions(model, cli.number_of_solutions)?; // ToDo we need to properly set the solver adaptor here, not hard code minion
-    tracing::info!(target: "file", "Solutions: {}", minion_solutions_to_json(&solutions));
-
-    let solutions_json = minion_solutions_to_json(&solutions);
-    let solutions_str = to_string_pretty(&solutions_json)?;
-    match out_file {
-        None => {
-            println!("Solutions:");
-            println!("{}", solutions_str);
-        }
-        Some(mut outf) => {
-            outf.write_all(solutions_str.as_bytes())?;
-            println!(
-                "Solutions saved to {:?}",
-                &cli.output.clone().unwrap().canonicalize()?
-            )
-        }
+/// Runs the selected subcommand
+fn run_subcommand(cli: Cli) -> anyhow::Result<()> {
+    match cli.subcommand {
+        cli::Command::Solve(solve_args) => run_solve_command(cli.global_args, solve_args),
+        cli::Command::PrintJsonSchema => run_print_info_schema_command(),
     }
-    Ok(())
 }
 
 #[cfg(test)]
