@@ -1,12 +1,16 @@
+#![allow(clippy::unwrap_used)]
 mod cli;
 mod print_info_schema;
 mod solve;
+mod test_solve;
 use clap::Parser as _;
 use cli::{Cli, GlobalArgs};
 use print_info_schema::run_print_info_schema_command;
 use solve::run_solve_command;
 use std::fs::File;
+use std::process::exit;
 use std::sync::Arc;
+use test_solve::run_test_solve_command;
 
 use git_version::git_version;
 use tracing_subscriber::filter::LevelFilter;
@@ -14,8 +18,20 @@ use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
 use tracing_subscriber::{EnvFilter, Layer};
 
-#[allow(clippy::unwrap_used)]
-pub fn main() -> anyhow::Result<()> {
+pub fn main() {
+    // exit with 2 instead of 1 on failure,like grep
+    match run() {
+        Ok(_) => {
+            exit(0);
+        }
+        Err(e) => {
+            eprintln!("{:?}", e);
+            exit(2);
+        }
+    }
+}
+
+pub fn run() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     if cli.version {
@@ -99,8 +115,10 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
 
 /// Runs the selected subcommand
 fn run_subcommand(cli: Cli) -> anyhow::Result<()> {
+    let global_args = cli.global_args;
     match cli.subcommand {
-        cli::Command::Solve(solve_args) => run_solve_command(cli.global_args, solve_args),
+        cli::Command::Solve(solve_args) => run_solve_command(global_args, solve_args),
+        cli::Command::TestSolve(local_args) => run_test_solve_command(global_args, local_args),
         cli::Command::PrintJsonSchema => run_print_info_schema_command(),
     }
 }
