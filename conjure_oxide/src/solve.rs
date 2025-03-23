@@ -1,6 +1,12 @@
 //! conjure_oxide solve sub-command
 #![allow(clippy::unwrap_used)]
-use std::{fs::File, io::Write as _, path::PathBuf, process::exit};
+use std::{
+    fs::File,
+    io::Write as _,
+    path::PathBuf,
+    process::exit,
+    sync::{Arc, RwLock},
+};
 
 use anyhow::{anyhow, ensure};
 use conjure_core::{
@@ -49,6 +55,36 @@ pub struct Args {
 }
 
 pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::Result<()> {
+    let input_file = solve_args.input_file.clone();
+
+    // each step is in its own method so that similar commands (e.g. testsolve) can reuse some of
+    // these steps.
+
+    let context = init_context(&global_args, input_file)?;
+    let model = parse(&global_args, Arc::clone(&context))?;
+    let rewritten_model = rewrite(model, &global_args, Arc::clone(&context))?;
+
+    if solve_args.no_run_solver {
+        println!("{}", rewritten_model);
+    } else {
+        run_solver(&solve_args, rewritten_model)?;
+    }
+
+    // still do postamble even if we didn't run the solver
+    if let Some(ref path) = solve_args.info_json_path {
+        let context_obj = context.read().unwrap().clone();
+        let generated_json = &serde_json::to_value(context_obj)?;
+        let pretty_json = serde_json::to_string_pretty(&generated_json)?;
+        File::create(path)?.write_all(pretty_json.as_bytes())?;
+    }
+    Ok(())
+}
+
+/// Initialises the context for solving.
+pub(crate) fn init_context(
+    global_args: &GlobalArgs,
+    input_file: PathBuf,
+) -> anyhow::Result<Arc<RwLock<Context<'static>>>> {
     let target_family = global_args.solver.unwrap_or(SolverFamily::Minion);
     let mut extra_rule_sets: Vec<&str> = DEFAULT_RULE_SETS.to_vec();
     for rs in &global_args.extra_rule_sets {
@@ -87,27 +123,32 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
         "Rules: {}",
         rules.iter().map(|rd| format!("{}", rd)).collect::<Vec<_>>().join("\n")
     );
-    let input = solve_args.input_file.clone();
-    tracing::info!(target: "file", "Input file: {}", input.display());
-    let input_file: &str = input.to_str().ok_or(anyhow!(
-        "Given input_file could not be converted to a string"
-    ))?;
-
-    /******************************************************/
-    /*        Parse essence to json using Conjure         */
-    /******************************************************/
-
     let context = Context::new_ptr(
         target_family,
         extra_rule_sets.iter().map(|rs| rs.to_string()).collect(),
         rules,
         rule_sets.clone(),
     );
-    context.write().unwrap().file_name = Some(input.to_str().expect("").into());
 
-    let mut model;
+    context.write().unwrap().file_name = Some(input_file.to_str().expect("").into());
+
+    Ok(context)
+}
+
+pub(crate) fn parse(
+    global_args: &GlobalArgs,
+    context: Arc<RwLock<Context<'static>>>,
+) -> anyhow::Result<Model> {
+    let input_file: String = context
+        .read()
+        .unwrap()
+        .file_name
+        .clone()
+        .expect("context should contain the input file");
+
+    tracing::info!(target: "file", "Input file: {}", input_file);
     if global_args.enable_native_parser {
-        model = parse_essence_file_native(input_file, context.clone())?;
+        parse_essence_file_native(input_file.as_str(), context.clone()).map_err(|e| anyhow!(e))
     } else {
         conjure_executable()
             .map_err(|e| anyhow!("Could not find correct conjure executable: {}", e))?;
@@ -131,38 +172,29 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
             tracing::info!("extra-rule-checks: disabled");
         }
 
-        model = model_from_json(&astjson, context.clone())?;
+        model_from_json(&astjson, context.clone()).map_err(|e| anyhow!(e))
     }
+}
 
+pub(crate) fn rewrite(
+    model: Model,
+    global_args: &GlobalArgs,
+    context: Arc<RwLock<Context<'static>>>,
+) -> anyhow::Result<Model> {
     tracing::info!("Initial model: \n{}\n", model);
 
     tracing::info!("Rewriting model...");
 
-    if !global_args.use_optimising_rewriter {
-        tracing::info!("Rewriting model...");
-        model = rewrite_naive(
-            &model,
-            &rule_sets,
-            global_args.check_equally_applicable_rules,
-        )?;
-    }
+    let rule_sets = context.read().unwrap().rule_sets.clone();
+    tracing::info!("Rewriting model...");
+    let new_model = rewrite_naive(
+        &model,
+        &rule_sets,
+        global_args.check_equally_applicable_rules,
+    )?;
 
     tracing::info!("Rewritten model: \n{}\n", model);
-
-    if solve_args.no_run_solver {
-        println!("{}", model);
-    } else {
-        run_solver(&solve_args, model)?;
-    }
-
-    // still do postamble even if we didn't run the solver
-    if let Some(ref path) = solve_args.info_json_path {
-        let context_obj = context.read().unwrap().clone();
-        let generated_json = &serde_json::to_value(context_obj)?;
-        let pretty_json = serde_json::to_string_pretty(&generated_json)?;
-        File::create(path)?.write_all(pretty_json.as_bytes())?;
-    }
-    Ok(())
+    Ok(new_model)
 }
 
 fn run_solver(cmd_args: &Args, model: Model) -> anyhow::Result<()> {

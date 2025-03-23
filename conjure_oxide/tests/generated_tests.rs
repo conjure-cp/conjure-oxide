@@ -3,12 +3,10 @@ use conjure_core::ast::SymbolTable;
 use conjure_core::bug;
 use conjure_core::rule_engine::get_rules_grouped;
 
-use conjure_core::ast::AbstractLiteral;
-use conjure_core::ast::Domain;
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
-use conjure_oxide::utils::testing::read_human_rule_trace;
+use conjure_oxide::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
 use glob::glob;
 use itertools::Itertools;
 use std::collections::BTreeMap;
@@ -22,7 +20,7 @@ use tracing_subscriber::{
 };
 use tree_morph::{helpers::select_panic, prelude::*};
 
-use uniplate::{Biplate, Uniplate};
+use uniplate::Biplate;
 
 use std::path::Path;
 use std::sync::Arc;
@@ -551,73 +549,6 @@ fn copy_generated_to_expected(
 
 fn expected_exists_for(path: &str, test_name: &str, stage: &str, extension: &str) -> bool {
     Path::new(&format!("{path}/{test_name}.expected-{stage}.{extension}")).exists()
-}
-
-fn normalize_solutions_for_comparison(
-    input_solutions: &[BTreeMap<Name, Literal>],
-) -> Vec<BTreeMap<Name, Literal>> {
-    let mut normalized = input_solutions.to_vec();
-
-    for solset in &mut normalized {
-        // remove machine names
-        let keys_to_remove: Vec<Name> = solset
-            .keys()
-            .filter(|k| matches!(k, Name::MachineName(_)))
-            .cloned()
-            .collect();
-        for k in keys_to_remove {
-            solset.remove(&k);
-        }
-
-        let mut updates = vec![];
-        for (k, v) in solset.clone() {
-            if let Name::UserName(_) = k {
-                match v {
-                    Literal::Bool(true) => updates.push((k, Literal::Int(1))),
-                    Literal::Bool(false) => updates.push((k, Literal::Int(0))),
-                    Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)) => {
-                        // make all domains the same (this is just in the tester so the types dont
-                        // actually matter)
-
-                        let mut matrix = AbstractLiteral::Matrix(elems, Domain::IntDomain(vec![]));
-                        matrix =
-                            matrix.transform(Arc::new(
-                                move |x: AbstractLiteral<Literal>| match x {
-                                    AbstractLiteral::Matrix(items, _) => {
-                                        let items = items
-                                            .into_iter()
-                                            .map(|x| match x {
-                                                Literal::Bool(false) => Literal::Int(0),
-                                                Literal::Bool(true) => Literal::Int(1),
-                                                x => x,
-                                            })
-                                            .collect_vec();
-                                        let matrix = AbstractLiteral::Matrix(
-                                            items,
-                                            Domain::IntDomain(vec![]),
-                                        );
-                                        eprintln!("inside transform {matrix}");
-                                        matrix
-                                    }
-                                    x => x,
-                                },
-                            ));
-                        eprintln!("matrix {matrix}");
-                        updates.push((k, Literal::AbstractLiteral(matrix)));
-                    }
-                    _ => {}
-                }
-            }
-        }
-
-        for (k, v) in updates {
-            solset.insert(k, v);
-        }
-    }
-
-    // Remove duplicates
-    normalized = normalized.into_iter().unique().collect();
-    normalized
 }
 
 fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model) {
