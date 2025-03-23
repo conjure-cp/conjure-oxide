@@ -97,11 +97,14 @@ fn load_intdomain_var(
         x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
     }?;
 
-    _try_add_var(
-        str_name.to_owned(),
-        minion_ast::VarDomain::Bound(low, high),
-        minion_model,
-    )
+    let domain = minion_ast::VarDomain::Bound(low, high);
+    let str_name = str_name.to_owned();
+
+    if let conjure_ast::Name::MachineName(_) = name {
+        _try_add_aux_var(str_name, domain, minion_model)
+    } else {
+        _try_add_var(str_name, domain, minion_model)
+    }
 }
 
 /// Loads a variable with domain BoolDomain into `minion_model`
@@ -125,6 +128,20 @@ fn _try_add_var(
     minion_model
         .named_variables
         .add_var(name.clone(), domain)
+        .ok_or(ModelInvalid(format!(
+            "variable {:?} is defined twice",
+            name
+        )))
+}
+
+fn _try_add_aux_var(
+    name: minion_ast::VarName,
+    domain: minion_ast::VarDomain,
+    minion_model: &mut MinionModel,
+) -> Result<(), SolverError> {
+    minion_model
+        .named_variables
+        .add_aux_var(name.clone(), domain)
         .ok_or(ModelInvalid(format!(
             "variable {:?} is defined twice",
             name
