@@ -344,8 +344,12 @@ type BinOp = Box<dyn Fn(Metadata, Box<Expression>, Box<Expression>) -> Expressio
 type UnaryOp = Box<dyn Fn(Metadata, Box<Expression>) -> Expression>;
 type VecOp = Box<dyn Fn(Metadata, Vec<Expression>) -> Expression>;
 
-pub fn parse_expression(obj: &JsonValue) -> Option<Expression> {
+fn parse_expression(obj: &JsonValue) -> Option<Expression> {
     let binary_operators: HashMap<&str, BinOp> = [
+        (
+            "MkOpIntersect",
+            Box::new(Expression::Intersect) as Box<dyn Fn(_, _, _) -> _>, 
+        ),
         (
             "MkOpSubset",
             Box::new(Expression::Subset) as Box<dyn Fn(_, _, _) -> _>,
@@ -521,6 +525,7 @@ fn parse_bin_op(
     match &value {
         Value::Array(bin_op_args) if bin_op_args.len() == 2 => {
             let arg1 = parse_expression(&bin_op_args[0])?;
+            println!("{:?}", &bin_op_args[0]);
             let arg2 = parse_expression(&bin_op_args[1])?;
             Some(constructor(Metadata::new(), Box::new(arg1), Box::new(arg2)))
         }
@@ -790,9 +795,8 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
         // sometimes (e.g. constant matrices) we can have a ConstantInt / Constant bool that is
         // not wrapped in Constant
         None => {
-            let int_expr = constant
-                .get("ConstantInt")
-                .and_then(|x| x.as_array())
+            let int_expr = constant["ConstantInt"]
+                .as_array()
                 .and_then(|x| x[1].as_i64())
                 .and_then(|x| x.try_into().ok())
                 .map(|x| Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(x))));
@@ -801,9 +805,8 @@ fn parse_constant(constant: &serde_json::Map<String, Value>) -> Option<Expressio
                 return e;
             }
 
-            let bool_expr = constant
-                .get("ConstantBool")
-                .and_then(|x| x.as_bool())
+            let bool_expr = constant["ConstantBool"]
+                .as_bool()
                 .map(|x| Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(x))));
 
             if let e @ Some(_) = bool_expr {
