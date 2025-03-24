@@ -193,7 +193,7 @@ pub(crate) fn rewrite(
         global_args.check_equally_applicable_rules,
     )?;
 
-    tracing::info!("Rewritten model: \n{}\n", model);
+    tracing::info!("Rewritten model: \n{}\n", new_model);
     Ok(new_model)
 }
 
