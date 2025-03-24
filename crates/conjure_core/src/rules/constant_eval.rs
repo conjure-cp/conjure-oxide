@@ -109,6 +109,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             Some(Lit::AbstractLiteral(into_matrix![elems]))
         }
         Expr::Abs(_, e) => un_op::<i32, i32>(|a| a.abs(), e).map(Lit::Int),
+        Expr::Intersect(_, _, _) => None,
         Expr::Subset(_, _, _) => None,
         Expr::Eq(_, a, b) => bin_op::<i32, bool>(|a, b| a == b, a, b)
             .or_else(|| bin_op::<bool, bool>(|a, b| a == b, a, b))

@@ -5,6 +5,7 @@ use std::sync::Arc;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
+use crate::ast::SetAttr;
 use crate::ast::literals::AbstractLiteral;
 use crate::ast::literals::Literal;
 use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
@@ -37,6 +38,10 @@ use super::{Domain, Range, SubModel, Typeable};
 #[biplate(to=AbstractLiteral<Literal>,walk_into=[Atom])]
 #[biplate(to=Literal,walk_into=[Atom])]
 pub enum Expression {
+    /// adding intersection expression
+    #[compatible(JSonInput)]
+    Intersect(Metadata, Box<Expression>, Box<Expression>),
+    
     /// adding subset expression
     #[compatible(JSonInput)]
     Subset(Metadata, Box<Expression>, Box<Expression>),
@@ -409,6 +414,7 @@ impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
         let ret = match self {
+            Expression::Intersect(_, set1, _) => Some(Domain::DomainSet(SetAttr::None, Box::new(set1.domain_of(syms)?))),
             Expression::Subset(_, _, _) => Some(Domain::BoolDomain),
             //todo
             Expression::AbstractLiteral(_, _) => None,
@@ -627,6 +633,7 @@ impl Expression {
 
     pub fn return_type(&self) -> Option<ReturnType> {
         match self {
+            Expression::Intersect(_, set1, _) => Some(ReturnType::Set(Box::new(set1.return_type()?))),
             Expression::Subset(_, _, _) => Some(ReturnType::Bool),
             Expression::AbstractLiteral(_, _) => None,
             Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
@@ -831,6 +838,10 @@ impl From<Atom> for Expression {
 impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
+            Expression::Intersect(_, box1, box2) => {
+                write!(f, "({} intersect {})", box1.clone(), box2.clone())
+            }
+
             Expression::Subset(_, box1, box2) => {
                 write!(f, "({} subset {})", box1.clone(), box2.clone())
             }
