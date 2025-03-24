@@ -1,5 +1,6 @@
 use crate::ast::Expression;
 use serde_json;
+use std::any::Any;
 use std::fs;
 use std::path::PathBuf;
 use std::{fmt, fs::OpenOptions, io::Write};
@@ -47,7 +48,7 @@ impl fmt::Display for RuleTrace {
 }
 
 /// represents the level of detail in the trace
-#[derive(clap::ValueEnum, serde::Serialize, Clone, PartialEq, Default)]
+#[derive(clap::ValueEnum, serde::Serialize, Clone, PartialEq, Default, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub enum VerbosityLevel {
     #[default]
@@ -60,7 +61,7 @@ pub trait Trace {
     fn capture(&self, trace: TraceStruct);
 }
 
-pub trait MessageFormatter {
+pub trait MessageFormatter: Any + Send + Sync {
     fn format(&self, trace: TraceStruct) -> String;
 }
 
@@ -116,15 +117,6 @@ pub struct FileConsumer {
     pub file_path: String, // path to file where the trace will be written
 }
 
-// implementation of the Trace trait for the StdoutConsumer struct
-// provides an implementation for the capture method, which
-// formats the trace and prints it to the console
-// impl<F: MessageFormatter> Trace<F> for StdoutConsumer {
-//     fn capture(&self, trace: TraceStruct) {
-//         let formatted_output = self.formatter.format(trace);
-//         println!("{}", formatted_output);
-//     }
-// }
 impl Trace for StdoutConsumer {
     fn capture(&self, trace: TraceStruct) {
         let formatted_output = self.formatter.format(trace);
@@ -132,19 +124,6 @@ impl Trace for StdoutConsumer {
     }
 }
 
-// implementation of the Trace trait for the FileConsumer struct
-// impl<F: MessageFormatter> Trace<F> for FileConsumer {
-//     fn capture(&self, trace: TraceStruct) {
-//         let formatted_output = self.formatter.format(trace);
-//         let mut file = OpenOptions::new()
-//             .append(true)
-//             .create(true)
-//             .open(&self.file_path)
-//             .unwrap();
-//         writeln!(file, "{}", formatted_output).unwrap();
-//         // could do better error handling with Ok(()) ? or expect()
-//     }
-// }
 impl Trace for FileConsumer {
     fn capture(&self, trace: TraceStruct) {
         let formatted_output = self.formatter.format(trace);
@@ -229,13 +208,72 @@ pub fn specify_trace_file(
 
             if let Some(stem) = path.file_stem() {
                 let mut new_name = stem.to_string_lossy().into_owned();
-                new_name.push_str("_protrace"); // Append `_protrace`
+                new_name.push_str("_protrace");
 
                 path.set_file_name(new_name);
-                path.set_extension(new_extension); // Set new extension
+                path.set_extension(new_extension);
             }
 
             path.to_string_lossy().into_owned()
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_create_stdout_consumer() {
+        let consumer = create_consumer("stdout", VerbosityLevel::High, "human", "".into());
+        assert!(matches!(consumer, Consumer::StdoutConsumer(_)));
+    }
+
+    #[test]
+    fn test_create_file_consumer() {
+        let file_path = "test_trace_output.json".to_string();
+        let consumer = create_consumer("file", VerbosityLevel::Medium, "json", file_path.clone());
+        if let Consumer::FileConsumer(file_consumer) = &consumer {
+            assert_eq!(file_consumer.file_path, file_path);
+        } else {
+            panic!("Expected a FileConsumer");
+        }
+
+        assert!(matches!(consumer, Consumer::FileConsumer(_)));
+        fs::remove_file(file_path).ok();
+    }
+
+    #[test]
+    fn test_check_verbosity_level() {
+        let consumer = Consumer::StdoutConsumer(StdoutConsumer {
+            formatter: Box::new(HumanFormatter),
+            verbosity: VerbosityLevel::High,
+        });
+        assert_eq!(check_verbosity_level(&consumer), VerbosityLevel::High);
+
+        let consumer_2 = create_consumer("stdout", VerbosityLevel::Medium, "human", "".into());
+        assert_eq!(check_verbosity_level(&consumer_2), VerbosityLevel::Medium);
+    }
+
+    #[test]
+    fn test_specify_trace_file_json() {
+        let output_file = specify_trace_file("example.essence".into(), None, "json");
+        assert_eq!(output_file, "example_protrace.json");
+    }
+
+    #[test]
+    fn test_specify_trace_file_human() {
+        let output_file = specify_trace_file("example.essence".into(), None, "human");
+        assert_eq!(output_file, "example_protrace.txt");
+    }
+
+    #[test]
+    fn test_specify_trace_file_passed() {
+        let output_file = specify_trace_file(
+            "example.essence".into(),
+            Some("example.essence_trace".to_string()),
+            "human",
+        );
+        assert_eq!(output_file, "example.essence_trace");
     }
 }

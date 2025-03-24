@@ -297,7 +297,6 @@ fn integration_test_inner(
             submodel.replace_root(expr);
             model.clone()
         } else {
-            //termporary
             panic!("No rewriter implementation specified")
         };
         if verbose {
