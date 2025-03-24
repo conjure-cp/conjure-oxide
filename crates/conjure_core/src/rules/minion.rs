@@ -540,6 +540,11 @@ fn introduce_poweq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             (Expr::SafePow(_, a, b), Expr::Atomic(_, total)) => Ok((a, b, total)),
             _ => Err(RuleNotApplicable),
         },
+
+        Expr::AuxDeclaration(_, total, e) => match *e {
+            Expr::SafePow(_, a, b) => Ok((a, b, Atom::Reference(total))),
+            _ => Err(RuleNotApplicable),
+        },
         _ => Err(RuleNotApplicable),
     }?;
 

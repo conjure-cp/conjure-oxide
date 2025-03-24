@@ -547,7 +547,7 @@ impl Expression {
                 a.domain_of(syms)?.apply_i32(
                     |x, y| {
                         if (x != 0 || y != 0) && y >= 0 {
-                            Some(x ^ y)
+                            Some(x.pow(y as u32))
                         } else {
                             None
                         }
