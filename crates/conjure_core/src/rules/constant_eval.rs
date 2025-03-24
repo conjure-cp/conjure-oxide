@@ -373,7 +373,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             let b: i32 = b.try_into().ok()?;
 
             if (a != 0 || b != 0) && b >= 0 {
-                Some(Lit::Int(a ^ b))
+                Some(Lit::Int(a.pow(b as u32)))
             } else {
                 None
             }
