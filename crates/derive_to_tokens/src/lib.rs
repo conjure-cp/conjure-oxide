@@ -2,12 +2,13 @@ mod util;
 
 use crate::util::add_bounds;
 use proc_macro;
-use proc_macro2::TokenStream;
-use quote::{format_ident, quote};
+use proc_macro2::{Delimiter, Group, Literal, Punct, Spacing, TokenStream, TokenTree};
+use quote::{format_ident, quote, ToTokens, TokenStreamExt};
 use syn::spanned::Spanned;
-use syn::{parse_quote, FieldsUnnamed};
+use syn::{parse_quote, Field, FieldsUnnamed, Type};
 use syn::{Data, DataEnum, DataStruct, DeriveInput, Error, Fields, Result};
 use syn::{Ident, Index};
+use util::{field_wrapper, FieldWrapper};
 
 #[proc_macro_derive(ToTokens, attributes(to_tokens))]
 pub fn derive_to_tokens(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -67,11 +68,11 @@ fn expand_variants(ty_name: &Ident, data: &DataEnum) -> Result<TokenStream> {
             },
             Fields::Unnamed(fields) => {
                 // For tuple variants, generate bindings for each field.
-                let field_bindings: Vec<Ident> =
-                    (0..fields.unnamed.len()).map(|i| format_ident!("field_{}", i)).collect();
+                let (field_idents, field_values, extra_top) = expand_fields_unnamed(fields);
                 Ok(quote! {
-                    #ty_name::#variant_name ( #( ref #field_bindings ),* ) => {
-                        tokens.extend(quote! { #ty_name::#variant_name ( #(##field_bindings.into()),* ) });
+                    #ty_name::#variant_name ( #( ref #field_idents ),* ) => {
+                        #extra_top
+                        tokens.extend(quote! { #ty_name::#variant_name ( #(#field_values),* ) });
                     }
                 })
             },
@@ -95,12 +96,78 @@ fn expand_variants(ty_name: &Ident, data: &DataEnum) -> Result<TokenStream> {
     })
 }
 
-// fn expand_fields_unnamed(fields: &FieldsUnnamed) -> Result<TokenStream> {
-//     let field_bindings: Vec<Ident> = (0..fields.unnamed.len()).map(|i| format_ident!("field_{}", i)).collect();
-//     let field_values =
-//     // Ok(quote! {
-//     //     #ty_name::#variant_name ( #( ref #field_bindings ),* ) => {
-//     //         tokens.extend(quote! { #ty_name::#variant_name ( #(##field_bindings.into()),* ) });
-//     //     }
-//     // })
-// }
+fn expand_fields_unnamed(fields: &FieldsUnnamed) -> (Vec<Ident>, Vec<TokenStream>, TokenStream) {
+    let mut field_idents: Vec<Ident> = Vec::new();
+    let mut field_values: Vec<TokenStream> = Vec::new();
+    let mut extra_top: TokenStream = TokenStream::new();
+    for (i, field) in fields.unnamed.iter().enumerate() {
+        let ident = format_ident!("field_{}", i);
+        field_idents.push(ident.clone());
+        let (val, top) = expand_field(&field.ty, &ident);
+        field_values.push(val);
+        extra_top.extend(top);
+    }
+    (field_idents, field_values, extra_top)
+}
+
+fn expand_field(ty: &Type, ident: &Ident) -> (TokenStream, TokenStream) {
+    match field_wrapper(ty) {
+        Some(FieldWrapper::Box(inner)) => {
+            // Wrap boxed values into Box::new()
+            let (inner_val, inner_top) = expand_field(&inner, &ident);
+            let val = quote! { Box::new(#inner_val) };
+            (val, inner_top)
+        }
+        Some(FieldWrapper::Option(inner)) => {
+            let gen_ident = format_ident!("{}_option", ident);
+            let val_ident = format_ident!("{}_option_val", ident);
+            let (inner_val, inner_top) = expand_field(&inner, &val_ident);
+            let top = quote! {
+                #inner_top
+                let #gen_ident = match #ident {
+                    Some(#val_ident) => quote! { Some(#inner_val) },
+                    None => quote! { None },
+                };
+            };
+            (quote! { ##gen_ident }, top)
+        }
+        Some(FieldWrapper::Vec(inner)) => {
+            let gen_ident = format_ident!("{}_vec", ident);
+            let val_ident = format_ident!("{}_vec_val", ident);
+            let (inner_val, inner_top) = expand_field(&inner, &val_ident);
+            let top = quote! {
+
+                let #gen_ident = #ident.iter().map(|#val_ident: &#inner| { #inner_top quote! { #inner_val } }).collect::<Vec<_>>();
+            };
+            let seq = expand_sequence(&gen_ident);
+            let val = quote! { vec! [ #seq ] };
+            (val, top)
+        }
+        _ => {
+            // Just insert the tokens of other types directly;
+            // Add `into()` to hopefully convert the resulting literal back to the correct type
+            (quote! { ##ident.into() }, TokenStream::new())
+        }
+    }
+}
+
+fn expand_sequence(seq: &Ident) -> TokenStream {
+    // Expands to: "#(#ident),*"
+    let mut inner = TokenStream::new();
+
+    // Add "#"
+    inner.append(Punct::new('#', Spacing::Alone));
+
+    // Add parenthesized group "(#<field ident>)"
+    let mut paren_content = TokenStream::new();
+    paren_content.append(Punct::new('#', Spacing::Alone));
+    paren_content.append(seq.clone());
+    let paren_group = Group::new(Delimiter::Parenthesis, paren_content);
+    inner.append(paren_group);
+
+    // Add ",*"
+    inner.append(Punct::new(',', Spacing::Alone));
+    inner.append(Punct::new('*', Spacing::Alone));
+
+    inner
+}
