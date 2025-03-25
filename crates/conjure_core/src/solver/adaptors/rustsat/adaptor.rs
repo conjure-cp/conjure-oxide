@@ -29,6 +29,7 @@ use crate::solver::{
 };
 use crate::stats::SolverStats;
 use crate::{ast as conjure_ast, bug, Model as ConjureModel};
+use crate::{into_matrix_expr, matrix_expr};
 
 use rustsat::instances::{BasicVarManager, Cnf, SatInstance};
 
@@ -193,6 +194,13 @@ impl SolverAdaptor for SAT {
         let constr = &vec_constr[0];
         let vec_cnf: Vec<Expression> = match constr {
             Expression::And(_, vec) => vec.clone().unwrap_list().unwrap(),
+            Expression::Or(_, _) => vec![constr.clone()],
+            Expression::Atomic(_, _) => {
+                vec![Expression::Or(
+                    Metadata::new(),
+                    Box::new(into_matrix_expr![vec![constr.clone()]]),
+                )]
+            }
             _ => Err(SolverError::ModelInvalid(
                 "Only And Constraints supported".to_string(),
             ))?,
