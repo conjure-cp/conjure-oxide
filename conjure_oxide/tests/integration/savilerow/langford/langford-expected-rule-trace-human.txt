@@ -1,0 +1,590 @@
+Model before rewriting:
+
+letting k be 3
+find position: matrix indexed by [[positionDomain]] of positionDomain
+letting positionDomain be domain int(1..6)
+letting two_k be 6
+
+such that
+
+and([(position[Sum([i, k])] = Sum([Sum([position[i], i]), 1])) | i: int(1..3),]),
+allDiff(position)
+
+--
+
+position, 
+   ~~> select_representation ([("Base", 8000)]) 
+position#matrix_to_atom 
+new variables:
+  find position#matrix_to_atom_1: int(1..6)
+  find position#matrix_to_atom_2: int(1..6)
+  find position#matrix_to_atom_3: int(1..6)
+  find position#matrix_to_atom_4: int(1..6)
+  find position#matrix_to_atom_5: int(1..6)
+  find position#matrix_to_atom_6: int(1..6)
+--
+
+allDiff(position#matrix_to_atom), 
+   ~~> matrix_ref_to_atom ([("Base", 2000)]) 
+allDiff([position#matrix_to_atom_1,position#matrix_to_atom_2,position#matrix_to_atom_3,position#matrix_to_atom_4,position#matrix_to_atom_5,position#matrix_to_atom_6;int(1..)]) 
+
+--
+
+allDiff([position#matrix_to_atom_1,position#matrix_to_atom_2,position#matrix_to_atom_3,position#matrix_to_atom_4,position#matrix_to_atom_5,position#matrix_to_atom_6;int(1..)]), 
+   ~~> introduce_flat_alldiff ([("Minion", 4200)]) 
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]) 
+
+--
+
+[(position[Sum([i, k])] = Sum([Sum([position[i], i]), 1])) | i: int(1..3),], 
+   ~~> expand_comprehension ([("Base", 1000)]) 
+[(position[Sum([1, k])] = Sum([Sum([position[1], 1]), 1])),(position[Sum([2, k])] = Sum([Sum([position[2], 2]), 1])),(position[Sum([3, k])] = Sum([Sum([position[3], 3]), 1]));int(1..)] 
+
+--
+
+Sum([Sum([position[1], 1]), 1]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([position[1], 1, 1]) 
+
+--
+
+Sum([position[1], 1, 1]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Sum([position[1], 2]) 
+
+--
+
+Sum([Sum([position[2], 2]), 1]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([position[2], 2, 1]) 
+
+--
+
+Sum([position[2], 2, 1]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Sum([position[2], 3]) 
+
+--
+
+Sum([Sum([position[3], 3]), 1]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([position[3], 3, 1]) 
+
+--
+
+Sum([position[3], 3, 1]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Sum([position[3], 4]) 
+
+--
+
+position, 
+   ~~> select_representation ([("Base", 8000)]) 
+position#matrix_to_atom 
+
+--
+
+position, 
+   ~~> select_representation ([("Base", 8000)]) 
+position#matrix_to_atom 
+
+--
+
+position, 
+   ~~> select_representation ([("Base", 8000)]) 
+position#matrix_to_atom 
+
+--
+
+position, 
+   ~~> select_representation ([("Base", 8000)]) 
+position#matrix_to_atom 
+
+--
+
+position, 
+   ~~> select_representation ([("Base", 8000)]) 
+position#matrix_to_atom 
+
+--
+
+position, 
+   ~~> select_representation ([("Base", 8000)]) 
+position#matrix_to_atom 
+
+--
+
+position#matrix_to_atom[Sum([1, k])], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{position#matrix_to_atom[Sum([1, k])] @ and([__inDomain(Sum([1, k]),int(1..6));int(1..)])} 
+
+--
+
+({position#matrix_to_atom[Sum([1, k])] @ and([__inDomain(Sum([1, k]),int(1..6));int(1..)])} = Sum([position#matrix_to_atom[1], 2])), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])) @ and([and([__inDomain(Sum([1, k]),int(1..6));int(1..)]);int(1..)])} 
+
+--
+
+{(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])) @ and([and([__inDomain(Sum([1, k]),int(1..6));int(1..)]);int(1..)])}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),and([and([__inDomain(Sum([1, k]),int(1..6));int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+and([and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),and([and([__inDomain(Sum([1, k]),int(1..6));int(1..)]);int(1..)]);int(1..)]),(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4]));int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),__inDomain(Sum([1, k]),int(1..6)),(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4]));int(1..)]) 
+
+--
+
+position#matrix_to_atom[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{position#matrix_to_atom[1] @ and([__inDomain(1,int(1..6));int(1..)])} 
+
+--
+
+and([__inDomain(1,int(1..6));int(1..)]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+Sum([{position#matrix_to_atom[1] @ true}, 2]), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{Sum([position#matrix_to_atom[1], 2]) @ and([true;int(1..)])} 
+
+--
+
+and([true;int(1..)]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+(position#matrix_to_atom[Sum([1, k])] = {Sum([position#matrix_to_atom[1], 2]) @ true}), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])) @ and([true;int(1..)])} 
+
+--
+
+and([true;int(1..)]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+{(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),true;int(1..)]) 
+
+--
+
+and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),true;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2]));int(1..)]) 
+
+--
+
+and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2]));int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])) 
+
+--
+
+position#matrix_to_atom[Sum([2, k])], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{position#matrix_to_atom[Sum([2, k])] @ and([__inDomain(Sum([2, k]),int(1..6));int(1..)])} 
+
+--
+
+({position#matrix_to_atom[Sum([2, k])] @ and([__inDomain(Sum([2, k]),int(1..6));int(1..)])} = Sum([position#matrix_to_atom[2], 3])), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])) @ and([and([__inDomain(Sum([2, k]),int(1..6));int(1..)]);int(1..)])} 
+
+--
+
+{(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])) @ and([and([__inDomain(Sum([2, k]),int(1..6));int(1..)]);int(1..)])}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+and([(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),and([and([__inDomain(Sum([2, k]),int(1..6));int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),__inDomain(Sum([1, k]),int(1..6)),and([(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),and([and([__inDomain(Sum([2, k]),int(1..6));int(1..)]);int(1..)]);int(1..)]),(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4]));int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),__inDomain(Sum([1, k]),int(1..6)),(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),__inDomain(Sum([2, k]),int(1..6)),(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4]));int(1..)]) 
+
+--
+
+position#matrix_to_atom[2], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{position#matrix_to_atom[2] @ and([__inDomain(2,int(1..6));int(1..)])} 
+
+--
+
+and([__inDomain(2,int(1..6));int(1..)]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+Sum([{position#matrix_to_atom[2] @ true}, 3]), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{Sum([position#matrix_to_atom[2], 3]) @ and([true;int(1..)])} 
+
+--
+
+and([true;int(1..)]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+(position#matrix_to_atom[Sum([2, k])] = {Sum([position#matrix_to_atom[2], 3]) @ true}), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])) @ and([true;int(1..)])} 
+
+--
+
+and([true;int(1..)]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+{(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+and([(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),true;int(1..)]) 
+
+--
+
+and([(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),true;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3]));int(1..)]) 
+
+--
+
+and([(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3]));int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])) 
+
+--
+
+position#matrix_to_atom[Sum([3, k])], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{position#matrix_to_atom[Sum([3, k])] @ and([__inDomain(Sum([3, k]),int(1..6));int(1..)])} 
+
+--
+
+({position#matrix_to_atom[Sum([3, k])] @ and([__inDomain(Sum([3, k]),int(1..6));int(1..)])} = Sum([position#matrix_to_atom[3], 4])), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])) @ and([and([__inDomain(Sum([3, k]),int(1..6));int(1..)]);int(1..)])} 
+
+--
+
+{(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])) @ and([and([__inDomain(Sum([3, k]),int(1..6));int(1..)]);int(1..)])}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+and([(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),and([and([__inDomain(Sum([3, k]),int(1..6));int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),__inDomain(Sum([1, k]),int(1..6)),(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),__inDomain(Sum([2, k]),int(1..6)),and([(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),and([and([__inDomain(Sum([3, k]),int(1..6));int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),__inDomain(Sum([1, k]),int(1..6)),(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),__inDomain(Sum([2, k]),int(1..6)),(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),__inDomain(Sum([3, k]),int(1..6));int(1..)]) 
+
+--
+
+position#matrix_to_atom[3], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{position#matrix_to_atom[3] @ and([__inDomain(3,int(1..6));int(1..)])} 
+
+--
+
+and([__inDomain(3,int(1..6));int(1..)]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+Sum([{position#matrix_to_atom[3] @ true}, 4]), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{Sum([position#matrix_to_atom[3], 4]) @ and([true;int(1..)])} 
+
+--
+
+and([true;int(1..)]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+(position#matrix_to_atom[Sum([3, k])] = {Sum([position#matrix_to_atom[3], 4]) @ true}), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])) @ and([true;int(1..)])} 
+
+--
+
+and([true;int(1..)]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+{(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+and([(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),true;int(1..)]) 
+
+--
+
+and([(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),true;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4]));int(1..)]) 
+
+--
+
+and([(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4]));int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])) 
+
+--
+
+k, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+3 
+
+--
+
+Sum([1, 3]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+4 
+
+--
+
+k, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+3 
+
+--
+
+Sum([1, 3]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+4 
+
+--
+
+__inDomain(4,int(1..6)), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+and([(position#matrix_to_atom[4] = Sum([position#matrix_to_atom[1], 2])),true,(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),__inDomain(Sum([2, k]),int(1..6)),(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),__inDomain(Sum([3, k]),int(1..6));int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([(position#matrix_to_atom[4] = Sum([position#matrix_to_atom[1], 2])),(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),__inDomain(Sum([2, k]),int(1..6)),(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),__inDomain(Sum([3, k]),int(1..6));int(1..)]) 
+
+--
+
+k, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+3 
+
+--
+
+Sum([2, 3]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+5 
+
+--
+
+k, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+3 
+
+--
+
+Sum([2, 3]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+5 
+
+--
+
+__inDomain(5,int(1..6)), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+and([(position#matrix_to_atom[4] = Sum([position#matrix_to_atom[1], 2])),(position#matrix_to_atom[5] = Sum([position#matrix_to_atom[2], 3])),true,(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),__inDomain(Sum([3, k]),int(1..6));int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([(position#matrix_to_atom[4] = Sum([position#matrix_to_atom[1], 2])),(position#matrix_to_atom[5] = Sum([position#matrix_to_atom[2], 3])),(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),__inDomain(Sum([3, k]),int(1..6));int(1..)]) 
+
+--
+
+k, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+3 
+
+--
+
+Sum([3, 3]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+6 
+
+--
+
+k, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+3 
+
+--
+
+Sum([3, 3]), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+6 
+
+--
+
+__inDomain(6,int(1..6)), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+true 
+
+--
+
+and([(position#matrix_to_atom[4] = Sum([position#matrix_to_atom[1], 2])),(position#matrix_to_atom[5] = Sum([position#matrix_to_atom[2], 3])),(position#matrix_to_atom[6] = Sum([position#matrix_to_atom[3], 4])),true;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([(position#matrix_to_atom[4] = Sum([position#matrix_to_atom[1], 2])),(position#matrix_to_atom[5] = Sum([position#matrix_to_atom[2], 3])),(position#matrix_to_atom[6] = Sum([position#matrix_to_atom[3], 4]));int(1..)]) 
+
+--
+
+(position#matrix_to_atom[4] = Sum([position#matrix_to_atom[1], 2])), 
+   ~~> flatten_eq ([("Minion", 4200)]) 
+(__0 = __1) 
+new variables:
+  find __0: int(1..6)
+  find __1: int(3..8)
+new constraints:
+  __0 =aux position#matrix_to_atom[4]
+  __1 =aux Sum([position#matrix_to_atom[1], 2])
+--
+
+__1 =aux Sum([position#matrix_to_atom[1], 2]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+and([SumLeq([__2, 2], __1),SumGeq([__2, 2], __1);int(1..)]) 
+new variables:
+  find __2: int(1..6)
+new constraints:
+  __2 =aux position#matrix_to_atom[1]
+--
+
+(position#matrix_to_atom[5] = Sum([position#matrix_to_atom[2], 3])), 
+   ~~> flatten_eq ([("Minion", 4200)]) 
+(__3 = __4) 
+new variables:
+  find __3: int(1..6)
+  find __4: int(4..9)
+new constraints:
+  __3 =aux position#matrix_to_atom[5]
+  __4 =aux Sum([position#matrix_to_atom[2], 3])
+--
+
+__4 =aux Sum([position#matrix_to_atom[2], 3]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+and([SumLeq([__5, 3], __4),SumGeq([__5, 3], __4);int(1..)]) 
+new variables:
+  find __5: int(1..6)
+new constraints:
+  __5 =aux position#matrix_to_atom[2]
+--
+
+(position#matrix_to_atom[6] = Sum([position#matrix_to_atom[3], 4])), 
+   ~~> flatten_eq ([("Minion", 4200)]) 
+(__6 = __7) 
+new variables:
+  find __6: int(1..6)
+  find __7: int(5..10)
+new constraints:
+  __6 =aux position#matrix_to_atom[6]
+  __7 =aux Sum([position#matrix_to_atom[3], 4])
+--
+
+__7 =aux Sum([position#matrix_to_atom[3], 4]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+and([SumLeq([__8, 4], __7),SumGeq([__8, 4], __7);int(1..)]) 
+new variables:
+  find __8: int(1..6)
+new constraints:
+  __8 =aux position#matrix_to_atom[3]
+--
+
+position#matrix_to_atom[4], 
+   ~~> index_matrix_to_atom ([("Base", 2000)]) 
+position#matrix_to_atom_4 
+
+--
+
+position#matrix_to_atom[1], 
+   ~~> index_matrix_to_atom ([("Base", 2000)]) 
+position#matrix_to_atom_1 
+
+--
+
+position#matrix_to_atom[5], 
+   ~~> index_matrix_to_atom ([("Base", 2000)]) 
+position#matrix_to_atom_5 
+
+--
+
+position#matrix_to_atom[2], 
+   ~~> index_matrix_to_atom ([("Base", 2000)]) 
+position#matrix_to_atom_2 
+
+--
+
+position#matrix_to_atom[6], 
+   ~~> index_matrix_to_atom ([("Base", 2000)]) 
+position#matrix_to_atom_6 
+
+--
+
+position#matrix_to_atom[3], 
+   ~~> index_matrix_to_atom ([("Base", 2000)]) 
+position#matrix_to_atom_3 
+
+--
+
+Final model:
+
+letting k be 3
+find position: matrix indexed by [[positionDomain]] of positionDomain
+letting positionDomain be domain int(1..6)
+letting two_k be 6
+find __0: int(1..6)
+find __1: int(3..8)
+find __2: int(1..6)
+find __3: int(1..6)
+find __4: int(4..9)
+find __5: int(1..6)
+find __6: int(1..6)
+find __7: int(5..10)
+find __8: int(1..6)
+find position#matrix_to_atom_1: int(1..6)
+find position#matrix_to_atom_2: int(1..6)
+find position#matrix_to_atom_3: int(1..6)
+find position#matrix_to_atom_4: int(1..6)
+find position#matrix_to_atom_5: int(1..6)
+find position#matrix_to_atom_6: int(1..6)
+
+such that
+
+and([(__0 = __1),(__3 = __4),(__6 = __7);int(1..)]),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]),
+__0 =aux position#matrix_to_atom_4,
+and([SumLeq([__2, 2], __1),SumGeq([__2, 2], __1);int(1..)]),
+__2 =aux position#matrix_to_atom_1,
+__3 =aux position#matrix_to_atom_5,
+and([SumLeq([__5, 3], __4),SumGeq([__5, 3], __4);int(1..)]),
+__5 =aux position#matrix_to_atom_2,
+__6 =aux position#matrix_to_atom_6,
+and([SumLeq([__8, 4], __7),SumGeq([__8, 4], __7);int(1..)]),
+__8 =aux position#matrix_to_atom_3
+
