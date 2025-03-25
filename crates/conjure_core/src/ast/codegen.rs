@@ -149,24 +149,40 @@ impl ToTokens for Atom {
     }
 }
 
-impl ToTokens for Expression {
-    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
-        match self {
-            Expression::Eq(m, l, r) => todo!("Implement Expression::Eq"),
-            Expression::And(m, v) => todo!("Implement Expression::And"),
-            Expression::Or(m, v) => todo!("Implement Expression::Or"),
-            Expression::Not(m, v) => todo!("Implement Expression::Not"),
-            Expression::UnsafeSlice(m, e, idx) => todo!("Implement Expression::UnsafeSlice"),
-            Expression::Gt(m, l, r) => todo!("Implement Expression::Gt"),
-            Expression::Lt(m, l, r) => todo!("Implement Expression::Lt"),
-            Expression::Geq(m, l, r) => todo!("Implement Expression::Gte"),
-            Expression::Leq(m, l, r) => todo!("Implement Expression::Lte"),
-            Expression::AbstractLiteral(m, a) => todo!("Implement Expression::AbstractLiteral"),
-            Expression::Abs(m, x) => todo!("Implement Expression::Abs"),
-            Expression::Root(m, x) => todo!("Implement Expression::Root"),
-            Expression::Bubble(m, l, r) => todo!("Implement Expression::Bubble"),
-            Expression::DominanceRelation(m, r) => todo!("Implement Expression::DominanceRelation"),
-            Expression::FromSolution(m, n) => todo!("Implement Expression::FromSolution"),
-        }
-    }
-}
+// impl ToTokens for Expression {
+//     fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+//         match self {
+//             Expression::Eq(m, l, r) => todo!("Implement Expression::Eq"),
+//             Expression::And(m, v) => todo!("Implement Expression::And"),
+//             Expression::Or(m, v) => todo!("Implement Expression::Or"),
+//             Expression::Not(m, v) => todo!("Implement Expression::Not"),
+//             Expression::UnsafeSlice(m, e, idx) => todo!("Implement Expression::UnsafeSlice"),
+//             Expression::Gt(m, l, r) => todo!("Implement Expression::Gt"),
+//             Expression::Lt(m, l, r) => todo!("Implement Expression::Lt"),
+//             Expression::Geq(m, l, r) => todo!("Implement Expression::Gte"),
+//             Expression::Leq(m, l, r) => todo!("Implement Expression::Lte"),
+//             Expression::AbstractLiteral(m, a) => todo!("Implement Expression::AbstractLiteral"),
+//             Expression::Abs(m, x) => todo!("Implement Expression::Abs"),
+//             Expression::Root(m, x) => todo!("Implement Expression::Root"),
+//             Expression::Bubble(m, l, r) => todo!("Implement Expression::Bubble"),
+//             Expression::DominanceRelation(m, r) => todo!("Implement Expression::DominanceRelation"),
+//             Expression::FromSolution(m, n) => todo!("Implement Expression::FromSolution"),
+//             Expression::Metavar(m, n) => todo!("Implement Expression::Metavar"),
+//             Expression::Atomic(m, a) => todo!("Implement Expression::Atomic"),
+//             Expression::UnsafeIndex(m, e, idx) => todo!("Implement Expression::UnsafeIndex"),
+//             Expression::SafeIndex(m, e, idx) => todo!("Implement Expression::SafeIndex"),
+//             Expression::SafeSlice(m, e, idx) => todo!("Implement Expression::SafeSlice"),
+//             Expression::InDomain(n, e, d) => todo!("Implement Expression::InDomain"),
+//             Expression::Scope(m, sm) => todo!("Implement Expression::Scope"),
+//             Expression::Sum(m, v) => todo!("Implement Expression::Sum"),
+//             Expression::Product(m, v) => todo!("Implement Expression::Product"),
+//             Expression::Min(m, v) => todo!("Implement Expression::Min"),
+//             Expression::Max(m, v) => todo!("Implement Expression::Max"),
+//             Expression::Imply(m, l, r) => todo!("Implement Expression::Imply"),
+//             Expression::Neq(m, l, r) => todo!("Implement Expression::Neq"),
+//             Expression::SafeDiv(m, l, r) => todo!("Implement Expression::SafeDiv"),
+//             Expression::SafeMod(m, l, r) => todo!("Implement Expression::SafeMod"),
+//             Expression::UnsafeDiv(m, l, r) => todo!("Implement Expression::UnsafeDiv"),
+//         }
+//     }
+// }
