@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 #![allow(missing_docs)]
-use std::{cell::RefCell, rc::Rc, usize};
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{helpers::one_or_select, Commands, Rule, Update};
 use uniplate::{zipper::Zipper, Uniplate};
@@ -204,7 +204,7 @@ impl State {
         }
 
         let mut new_node = NodeState::new_dirty();
-        new_node.parent = Some(Rc::clone(&parent));
+        new_node.parent = Some(Rc::clone(parent));
         parent_state.children.push(Rc::new(RefCell::new(new_node)));
         self.node = Rc::clone(&parent_state.children[parent_state.current_child_index]);
     }
@@ -215,6 +215,12 @@ impl State {
         let node_state = node.borrow();
 
         self.node = Rc::clone(node_state.parent.as_ref().unwrap());
+    }
+}
+
+impl Default for State {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -303,7 +309,7 @@ impl<T: Uniplate> DirtyZipper<T> {
         self.state.clear_children();
 
         // Effectively the same as rebuild_root
-        while let Some(_) = self.zipper.go_up() {
+        while self.zipper.go_up().is_some() {
             self.state.go_up();
             self.state.mark_cleanliness(0);
         }
@@ -318,22 +324,22 @@ impl<T: Uniplate> DirtyZipper<T> {
             return Some(self.zipper.focus());
         }
 
-        if let Some(_) = self.zipper.go_down() {
+        if self.zipper.go_down().is_some() {
             self.state.go_down();
             if self.state.get_cleanliness() <= level {
                 return Some(self.zipper.focus());
             }
         }
-        while let Some(_) = self.zipper.go_right() {
+        while self.zipper.go_right().is_some() {
             self.state.go_right();
             if self.state.get_cleanliness() <= level {
                 return Some(self.zipper.focus());
             }
         }
 
-        while let Some(_) = self.zipper.go_up() {
+        while self.zipper.go_up().is_some() {
             self.state.go_up();
-            while let Some(_) = self.zipper.go_right() {
+            while self.zipper.go_right().is_some() {
                 self.state.go_right();
                 if self.state.get_cleanliness() <= level {
                     return Some(self.zipper.focus());
@@ -354,7 +360,7 @@ pub fn morph_impl<T: Uniplate, M>(
     'main: loop {
         for (level, transform) in transforms.iter().enumerate() {
             while let Some(node) = dirty_zipper.get_next_dirty(level) {
-                if let Some(mut update) = transform(&node, &meta) {
+                if let Some(mut update) = transform(node, &meta) {
                     dirty_zipper.zipper.replace_focus(update.new_subtree);
                     dirty_zipper.mark_dirty();
                     let (new_tree, new_meta, transformed) = update
@@ -395,7 +401,7 @@ where
             |subtree: &T, meta: &M| {
                 let applicable = &mut group.iter().filter_map(|rule| {
                     let mut commands = Commands::new();
-                    let new_tree = rule.apply(&mut commands, &subtree, &meta)?;
+                    let new_tree = rule.apply(&mut commands, subtree, meta)?;
                     Some((
                         rule,
                         Update {

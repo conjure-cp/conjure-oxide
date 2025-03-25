@@ -99,7 +99,7 @@ impl<T: Uniplate, M> Commands<T, M> {
                 Command::Transform(f) => {
                     transformed = true;
                     tree = f(tree);
-                },
+                }
                 Command::MutMeta(f) => f(&mut meta),
             }
         }
