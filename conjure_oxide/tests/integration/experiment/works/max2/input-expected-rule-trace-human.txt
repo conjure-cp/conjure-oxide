@@ -7,7 +7,7 @@ find x: int(1..4)
 such that
 
 (max([a,b;int(1..2)]) >= 2),
-(x = Sum([max([a,b;int(1..2)]), 1]))
+(x = Sum([max([a,b;int(1..2)]),1;int(1..2)]))
 
 --
 
@@ -46,6 +46,12 @@ Ineq(b, __0, 0)
 
 --
 
+Sum([max([a,b;int(1..2)]),1;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+Sum([max([a,b;int(1..2)]),1;int(1..)]) 
+
+--
+
 max([a,b;int(1..2)]), 
    ~~> matrix_to_list ([("Base", 2000)]) 
 max([a,b;int(1..)]) 
@@ -63,7 +69,7 @@ new constraints:
   or([(__1 = a),(__1 = b);int(1..)])
 --
 
-(x = Sum([__1, 1])), 
+(x = Sum([__1,1;int(1..)])), 
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
 and([SumLeq([__1, 1], x),SumGeq([__1, 1], x);int(1..)]) 
 

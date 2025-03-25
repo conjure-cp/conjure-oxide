@@ -6,6 +6,7 @@ use conjure_macros::register_rule;
 
 use crate::{
     ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable},
+    matrix_expr,
     metadata::Metadata,
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
 };
@@ -31,10 +32,10 @@ fn lt_to_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         lhs,
         Box::new(Expr::Sum(
             Metadata::new(),
-            vec![
+            Box::new(matrix_expr![
                 *rhs,
                 Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(-1))),
-            ],
+            ]),
         )),
     )))
 }
@@ -58,10 +59,10 @@ fn gt_to_geq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         Metadata::new(),
         Box::new(Expr::Sum(
             Metadata::new(),
-            vec![
+            Box::new(matrix_expr![
                 *lhs,
                 Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(-1))),
-            ],
+            ]),
         )),
         total,
     )))
