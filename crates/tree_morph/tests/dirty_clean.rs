@@ -41,14 +41,13 @@ enum MyRule {
 
 struct Meta {
     num_applications: u32,
-    num_checks: u32,
 }
 
 impl Rule<Expr, Meta> for MyRule {
     fn apply(&self, cmd: &mut Commands<Expr, Meta>, expr: &Expr, meta: &Meta) -> Option<Expr> {
-        cmd.mut_meta(|m| m.num_applications += 1); // Only applied if successful
-                                                   // THIS IS FOR TESTING ONLY
-                                                   // Not meant to integrated into the main code.
+        cmd.mut_meta(Box::new(|m: &mut Meta| m.num_applications += 1)); // Only applied if successful
+                                                                        // THIS IS FOR TESTING ONLY
+                                                                        // Not meant to integrated into the main code.
         unsafe {
             GLOBAL_RULE_CHECKS.set(GLOBAL_RULE_CHECKS.get() + 1);
         }
@@ -77,7 +76,6 @@ fn left_branch_clean() {
 
     let meta = Meta {
         num_applications: 0,
-        num_checks: 0,
     };
 
     let (expr, meta) = morph(
