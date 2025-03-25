@@ -5,11 +5,17 @@ find y: int(2..4)
 
 such that
 
-(Sum([Product([2, x]), Product([3, y])]) = 12)
+(Sum([Product([2, x]),Product([3, y]);int(1..2)]) = 12)
 
 --
 
-(Sum([Product([2, x]), Product([3, y])]) = 12), 
+Sum([Product([2, x]),Product([3, y]);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+Sum([Product([2, x]),Product([3, y]);int(1..)]) 
+
+--
+
+(Sum([Product([2, x]),Product([3, y]);int(1..)]) = 12), 
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
 and([FlatWeightedSumLeq([2, 3],[x, y],12),FlatWeightedSumGeq([2, 3],[x, y],12);int(1..)]) 
 

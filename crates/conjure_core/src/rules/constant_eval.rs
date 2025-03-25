@@ -141,7 +141,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 Some(Lit::Bool(true))
             }
         }
-        Expr::Sum(_, exprs) => vec_op::<i32, i32>(|e| e.iter().sum(), exprs).map(Lit::Int),
+        Expr::Sum(_, exprs) => vec_lit_op::<i32, i32>(|e| e.iter().sum(), exprs).map(Lit::Int),
         Expr::Product(_, exprs) => vec_op::<i32, i32>(|e| e.iter().product(), exprs).map(Lit::Int),
         Expr::FlatIneq(_, a, b, c) => {
             let a: i32 = a.try_into().ok()?;

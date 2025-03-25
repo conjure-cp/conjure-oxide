@@ -189,7 +189,7 @@ fn index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
             Atom::Literal(Literal::Int(1)),
         ));
 
-        let flat_index = Expr::Sum(Metadata::new(), sum_terms);
+        let flat_index = Expr::Sum(Metadata::new(), Box::new(into_matrix_expr![sum_terms]));
 
         // now lets get the flat matrix.
 

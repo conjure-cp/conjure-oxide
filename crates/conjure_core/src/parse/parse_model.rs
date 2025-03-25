@@ -8,7 +8,7 @@ use std::sync::{Arc, RwLock};
 use serde_json::Value;
 use serde_json::Value as JsonValue;
 
-use crate::ast::comprehension::ComprehensionBuilder;
+use crate::ast::comprehension::{ComprehensionBuilder, ComprehensionKind};
 use crate::ast::{
     AbstractLiteral, Atom, Domain, Expression, Literal, Name, Range, SetAttr, SymbolTable,
 };
@@ -467,6 +467,10 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
             "MkOpAnd",
             Box::new(Expression::And) as Box<dyn Fn(_, _) -> _>,
         ),
+        (
+            "MkOpSum",
+            Box::new(Expression::Sum) as Box<dyn Fn(_, _) -> _>,
+        ),
         ("MkOpOr", Box::new(Expression::Or) as Box<dyn Fn(_, _) -> _>),
         (
             "MkOpMin",
@@ -484,16 +488,10 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
     .into_iter()
     .collect();
 
-    let vec_operators: HashMap<&str, VecOp> = [
-        (
-            "MkOpSum",
-            Box::new(Expression::Sum) as Box<dyn Fn(_, _) -> _>,
-        ),
-        (
-            "MkOpProduct",
-            Box::new(Expression::Product) as Box<dyn Fn(_, _) -> _>,
-        ),
-    ]
+    let vec_operators: HashMap<&str, VecOp> = [(
+        "MkOpProduct",
+        Box::new(Expression::Product) as Box<dyn Fn(_, _) -> _>,
+    )]
     .into_iter()
     .collect();
 
@@ -521,7 +519,7 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
             otherwise => bug!("Unhandled Op {:#?}", otherwise),
         },
         Value::Object(comprehension) if comprehension.contains_key("Comprehension") => {
-            Some(parse_comprehension(comprehension, Rc::clone(scope)).unwrap())
+            Some(parse_comprehension(comprehension, Rc::clone(scope), None).unwrap())
         }
         Value::Object(refe) if refe.contains_key("Reference") => {
             let name = refe["Reference"].as_array()?[0].as_object()?["Name"].as_str()?;
@@ -578,6 +576,7 @@ fn parse_abs_lit(abs_set: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Option<Ex
 fn parse_comprehension(
     comprehension: &serde_json::Map<String, Value>,
     scope: Rc<RefCell<SymbolTable>>,
+    comprehension_kind: Option<ComprehensionKind>,
 ) -> Option<Expression> {
     let value = &comprehension["Comprehension"];
     let mut comprehension = ComprehensionBuilder::new();
@@ -611,7 +610,7 @@ fn parse_comprehension(
 
     Some(Expression::Comprehension(
         Metadata::new(),
-        Box::new(comprehension.with_return_value(expr, scope)),
+        Box::new(comprehension.with_return_value(expr, scope, comprehension_kind)),
     ))
 }
 
@@ -732,7 +731,22 @@ fn parse_unary_op(
     let (key, value) = un_op.into_iter().next()?;
     let constructor = unary_operators.get(key.as_str())?;
 
-    let arg = parse_expression(value, scope)?;
+    // unops are the main things that contain comprehensions
+    //
+    // if the current expr is a quantifier like and/or/sum and it contains a comprehension, let the comprehension know what it is inside.
+    let arg = match value {
+        Value::Object(comprehension) if comprehension.contains_key("Comprehension") => {
+            let comprehension_kind = match key.as_str() {
+                "MkOpOr" => Some(ComprehensionKind::Or),
+                "MkOpAnd" => Some(ComprehensionKind::And),
+                "MkOpSum" => Some(ComprehensionKind::Sum),
+                _ => None,
+            };
+            Some(parse_comprehension(comprehension, Rc::clone(scope), comprehension_kind).unwrap())
+        }
+        _ => parse_expression(value, scope),
+    }?;
+
     Some(constructor(Metadata::new(), Box::new(arg)))
 }
 
