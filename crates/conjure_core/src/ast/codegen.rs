@@ -1,7 +1,7 @@
 use quote::{quote, ToTokens};
 use uniplate::{Biplate, Uniplate};
 
-use super::{AbstractLiteral, Atom, Domain, Literal, Name, Range, SetAttr};
+use super::{AbstractLiteral, Atom, Domain, Expression, Literal, Name, Range, SetAttr};
 
 fn vec_to_tokens<T: ToTokens>(vec: &Vec<T>) -> proc_macro2::TokenStream {
     quote! { vec![#(#vec),*] }
@@ -145,6 +145,28 @@ impl ToTokens for Atom {
             Atom::Literal(lit) => tokens.extend(quote! {
                 conjure_core::ast::Atom::Literal(#lit)
             }),
+        }
+    }
+}
+
+impl ToTokens for Expression {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        match self {
+            Expression::Eq(m, l, r) => todo!("Implement Expression::Eq"),
+            Expression::And(m, v) => todo!("Implement Expression::And"),
+            Expression::Or(m, v) => todo!("Implement Expression::Or"),
+            Expression::Not(m, v) => todo!("Implement Expression::Not"),
+            Expression::UnsafeSlice(m, e, idx) => todo!("Implement Expression::UnsafeSlice"),
+            Expression::Gt(m, l, r) => todo!("Implement Expression::Gt"),
+            Expression::Lt(m, l, r) => todo!("Implement Expression::Lt"),
+            Expression::Geq(m, l, r) => todo!("Implement Expression::Gte"),
+            Expression::Leq(m, l, r) => todo!("Implement Expression::Lte"),
+            Expression::AbstractLiteral(m, a) => todo!("Implement Expression::AbstractLiteral"),
+            Expression::Abs(m, x) => todo!("Implement Expression::Abs"),
+            Expression::Root(m, x) => todo!("Implement Expression::Root"),
+            Expression::Bubble(m, l, r) => todo!("Implement Expression::Bubble"),
+            Expression::DominanceRelation(m, r) => todo!("Implement Expression::DominanceRelation"),
+            Expression::FromSolution(m, n) => todo!("Implement Expression::FromSolution"),
         }
     }
 }
