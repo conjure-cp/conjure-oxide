@@ -20,9 +20,18 @@ pub fn parse_essence_file_native(
     context: Arc<RwLock<Context<'static>>>,
 ) -> Result<Model, EssenceParseError> {
     let (tree, source_code) = get_tree(filepath);
+    let root_node = tree.root_node();
+
+    if root_node.has_error() {
+        let messages = parse_error(root_node, &source_code);
+        return Err(EssenceParseError::ParseError(Error::Parse(format!(
+            "{}:{}",
+            filepath,
+            messages.join("\n")
+        ))));
+    }
 
     let mut model = Model::new(context);
-    let root_node = tree.root_node();
     for statement in named_children(&root_node) {
         match statement.kind() {
             "single_line_comment" => {}
@@ -373,4 +382,85 @@ fn child_expr(node: Node, source_code: &str, root: &Node) -> Expression {
         .named_child(0)
         .unwrap_or_else(|| panic!("Error: missing node in expression of kind {}", node.kind()));
     parse_constraint(child, source_code, root)
+}
+
+fn parse_error(node: Node, source_code: &str) -> Vec<String> {
+    let mut messages: Vec<String> = Vec::new();
+    // let mut accepted_children_map: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+
+    // accepted_children_map.extend([
+    //     (
+    //         "program".to_string(),
+    //         BTreeSet::from([
+    //             "find_statement_list".to_string(),
+    //             "constraint_list".to_string(),
+    //             "letting_statement_list".to_string(),
+    //             "dominance_relation".to_string(),
+    //         ]),
+    //     ),
+    //     (
+    //         "find_statement_list".to_string(),
+    //         BTreeSet::from(["find_statement".to_string()])
+    //     ),
+    //     (
+    //         "constraint_list".to_string(),
+    //         BTreeSet::from(["expression".to_string()])
+    //     ),
+    //     (
+    //         "find_statement".to_string(),
+    //         BTreeSet::from(["variable_list".to_string(), "domain".to_string()])
+    //     ),
+    //     (
+    //         "domain_realation".to_string(),
+    //         BTreeSet::from(["expression".to_string()])
+    //     ),
+    //     (
+    //         "letting_statement_list".to_string(),
+    //         BTreeSet::from(["letting_statement".to_string()])
+    //     )
+    // ]);
+    check_node(node, &mut messages, source_code);
+
+    return messages;
+}
+
+fn check_node(node: Node, list: &mut Vec<String>, source_code: &str) {
+    let mut i = 0;
+    for child_node in named_children(&node) {
+        check_node(child_node, list, source_code);
+
+        let x = node.field_name_for_named_child(i);
+        i += 1;
+        if x.is_some() {
+            continue;
+        }
+
+        let message = format!(
+            "{}Invalid {}",
+            get_line(child_node, source_code),
+            child_node.kind()
+        );
+        list.push(message);
+        break;
+    }
+}
+
+fn get_line(node: Node, source_code: &str) -> String {
+    let line = node.start_position().row + 1;
+    let character = node.start_position().column + 1;
+    let line_text = source_code
+        .lines()
+        .nth(line - 1)
+        .unwrap_or("Line not found");
+    let pointer_line = format!("  |{}^", " ".repeat(character));
+
+    return format!(
+        "{}:{}:\n|\n{}|  {}\n{}\nInvalid {}",
+        line,
+        character,
+        line,
+        line_text,
+        pointer_line,
+        node.kind()
+    );
 }
