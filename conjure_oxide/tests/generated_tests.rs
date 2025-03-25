@@ -2,10 +2,11 @@
 use conjure_core::ast::SymbolTable;
 use conjure_core::bug;
 use conjure_core::rule_engine::get_rules_grouped;
+
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
-use conjure_oxide::utils::testing::read_human_rule_trace;
+use conjure_oxide::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
 use glob::glob;
 use itertools::Itertools;
 use std::collections::BTreeMap;
@@ -340,8 +341,10 @@ fn integration_test_inner(
 
     // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
     if config.compare_solver_solutions || accept && config.solve_with_minion {
-        let conjure_solutions: Vec<BTreeMap<Name, Literal>> =
-            get_solutions_from_conjure(&format!("{}/{}.{}", path, essence_base, extension))?;
+        let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
+            &format!("{}/{}.{}", path, essence_base, extension),
+            Arc::clone(&context),
+        )?;
 
         let username_solutions = normalize_solutions_for_comparison(
             solutions.as_ref().expect("Minion solutions required"),
@@ -356,7 +359,7 @@ fn integration_test_inner(
 
         assert_eq!(
             username_solutions_json, conjure_solutions_json,
-            "Solutions do not match conjure!"
+            "Solutions (<) do not match conjure (>)!"
         );
     }
 
@@ -546,43 +549,6 @@ fn copy_generated_to_expected(
 
 fn expected_exists_for(path: &str, test_name: &str, stage: &str, extension: &str) -> bool {
     Path::new(&format!("{path}/{test_name}.expected-{stage}.{extension}")).exists()
-}
-
-fn normalize_solutions_for_comparison(
-    input_solutions: &Vec<BTreeMap<Name, Literal>>,
-) -> Vec<BTreeMap<Name, Literal>> {
-    let mut normalized = input_solutions.clone();
-
-    for solset in &mut normalized {
-        // remove machine names
-        let keys_to_remove: Vec<Name> = solset
-            .keys()
-            .filter(|k| matches!(k, Name::MachineName(_)))
-            .cloned()
-            .collect();
-        for k in keys_to_remove {
-            solset.remove(&k);
-        }
-
-        let mut updates = vec![];
-        for (k, v) in solset.clone() {
-            if let Name::UserName(_) = k {
-                match v {
-                    Literal::Bool(true) => updates.push((k, Literal::Int(1))),
-                    Literal::Bool(false) => updates.push((k, Literal::Int(0))),
-                    _ => {}
-                }
-            }
-        }
-
-        for (k, v) in updates {
-            solset.insert(k, v);
-        }
-    }
-
-    // Remove duplicates
-    normalized = normalized.into_iter().unique().collect();
-    normalized
 }
 
 fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model) {

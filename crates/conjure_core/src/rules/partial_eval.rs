@@ -22,6 +22,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // This is why we always check whether we found a constant or not.
     match expr.clone() {
         AbstractLiteral(_, _) => Err(RuleNotApplicable),
+        Comprehension(_, _) => Err(RuleNotApplicable),
         DominanceRelation(_, _) => Err(RuleNotApplicable),
         FromSolution(_, _) => Err(RuleNotApplicable),
         UnsafeIndex(_, _, _) => Err(RuleNotApplicable),
@@ -359,6 +360,8 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         MinionPow(_, _, _, _) => Err(RuleNotApplicable),
         MinionReify(_, _, _) => Err(RuleNotApplicable),
         MinionReifyImply(_, _, _) => Err(RuleNotApplicable),
+        MinionWInIntervalSet(_, _, _) => Err(RuleNotApplicable),
+        MinionElementOne(_, _, _, _) => Err(RuleNotApplicable),
     }
 }
 

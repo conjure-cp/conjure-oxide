@@ -7,9 +7,11 @@ use conjure_core::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationError::RuleNotApplicable,
     ApplicationResult, Reduction,
 };
-use itertools::izip;
+use itertools::{izip, Itertools as _};
 
-use crate::ast::SymbolTable;
+use crate::ast::matrix;
+use crate::ast::{AbstractLiteral, SymbolTable};
+use crate::into_matrix;
 
 register_rule_set!("Constant", ());
 
@@ -29,17 +31,8 @@ fn apply_eval_constant(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// `Some(Const)` if the expression can be simplified to a constant
 pub fn eval_constant(expr: &Expr) -> Option<Lit> {
     match expr {
-        Expr::AbstractLiteral(_, _) => None,
-        // `fromSolution()` pulls a literal value from last found solution
         Expr::FromSolution(_, _) => None,
-        // Same as Expr::Root, we should not replace the dominance relation with a constant
         Expr::DominanceRelation(_, _) => None,
-        Expr::UnsafeIndex(_, _, _) => None,
-        // handled elsewhere
-        Expr::SafeIndex(_, _, _) => None,
-        Expr::UnsafeSlice(_, _, _) => None,
-        // handled elsewhere
-        Expr::SafeSlice(_, _, _) => None,
         Expr::InDomain(_, e, domain) => {
             let Expr::Atomic(_, Atom::Literal(lit)) = e.as_ref() else {
                 return None;
@@ -49,6 +42,71 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
         Expr::Atomic(_, Atom::Reference(_c)) => None,
+        Expr::AbstractLiteral(_, _) => None,
+        Expr::Comprehension(_, _) => None,
+        Expr::UnsafeIndex(_, subject, indices) | Expr::SafeIndex(_, subject, indices) => {
+            let subject: Lit = subject.as_ref().clone().to_literal()?;
+            let indices: Vec<Lit> = indices
+                .iter()
+                .cloned()
+                .map(|x| x.to_literal())
+                .collect::<Option<Vec<Lit>>>()?;
+
+            let Lit::AbstractLiteral(subject @ AbstractLiteral::Matrix(_, _)) = subject else {
+                return None;
+            };
+
+            matrix::flatten_enumerate(subject)
+                .find(|(i, _)| i == &indices)
+                .map(|(_, x)| x)
+        }
+        Expr::UnsafeSlice(_, subject, indices) | Expr::SafeSlice(_, subject, indices) => {
+            let subject: Lit = subject.as_ref().clone().to_literal()?;
+            let Lit::AbstractLiteral(subject @ AbstractLiteral::Matrix(_, _)) = subject else {
+                return None;
+            };
+
+            let hole_dim = indices
+                .iter()
+                .cloned()
+                .position(|x| x.is_none())
+                .expect("slice expression should have a hole dimension");
+
+            let missing_domain = matrix::index_domains(subject.clone())[hole_dim].clone();
+
+            let indices: Vec<Option<Lit>> = indices
+                .iter()
+                .cloned()
+                .map(|x| {
+                    // the outer option represents success of this iterator, the inner the index
+                    // slice.
+                    match x {
+                        Some(x) => x.to_literal().map(Some),
+                        None => Some(None),
+                    }
+                })
+                .collect::<Option<Vec<Option<Lit>>>>()?;
+
+            let indices_in_slice: Vec<Vec<Lit>> = missing_domain
+                .values()?
+                .into_iter()
+                .map(|i| {
+                    let mut indices = indices.clone();
+                    indices[hole_dim] = Some(i);
+                    // These unwraps will only fail if we have multiple holes.
+                    // As this is invalid, panicking is fine.
+                    indices.into_iter().map(|x| x.unwrap()).collect_vec()
+                })
+                .collect_vec();
+
+            // Note: indices_in_slice is not necessarily sorted, so this is the best way.
+            let elems = matrix::flatten_enumerate(subject)
+                .filter(|(i, _)| indices_in_slice.contains(i))
+                .map(|(_, elem)| elem)
+                .collect();
+
+            Some(Lit::AbstractLiteral(into_matrix![elems]))
+        }
         Expr::Abs(_, e) => un_op::<i32, i32>(|a| a.abs(), e).map(Lit::Int),
         Expr::Eq(_, a, b) => bin_op::<i32, bool>(|a, b| a == b, a, b)
             .or_else(|| bin_op::<bool, bool>(|a, b| a == b, a, b))
@@ -58,14 +116,10 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::Gt(_, a, b) => bin_op::<i32, bool>(|a, b| a > b, a, b).map(Lit::Bool),
         Expr::Leq(_, a, b) => bin_op::<i32, bool>(|a, b| a <= b, a, b).map(Lit::Bool),
         Expr::Geq(_, a, b) => bin_op::<i32, bool>(|a, b| a >= b, a, b).map(Lit::Bool),
-
         Expr::Not(_, expr) => un_op::<bool, bool>(|e| !e, expr).map(Lit::Bool),
-
         Expr::And(_, e) => {
             vec_lit_op::<bool, bool>(|e| e.iter().all(|&e| e), e.as_ref()).map(Lit::Bool)
         }
-        // this is done elsewhere instead - root should return a new root with a literal inside it,
-        // not a literal
         Expr::Root(_, _) => None,
         Expr::Or(_, e) => {
             vec_lit_op::<bool, bool>(|e| e.iter().any(|&e| e), e.as_ref()).map(Lit::Bool)
@@ -85,10 +139,8 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 Some(Lit::Bool(true))
             }
         }
-
         Expr::Sum(_, exprs) => vec_op::<i32, i32>(|e| e.iter().sum(), exprs).map(Lit::Int),
         Expr::Product(_, exprs) => vec_op::<i32, i32>(|e| e.iter().product(), exprs).map(Lit::Int),
-
         Expr::FlatIneq(_, a, b, c) => {
             let a: i32 = a.try_into().ok()?;
             let b: i32 = b.try_into().ok()?;
@@ -96,7 +148,6 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Bool(a <= b + c))
         }
-
         Expr::FlatSumGeq(_, exprs, a) => {
             let sum = exprs.iter().try_fold(0, |acc, atom: &Atom| {
                 let n: i32 = atom.try_into().ok()?;
@@ -150,7 +201,6 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             Some(Lit::Bool(div == c))
         }
         Expr::Bubble(_, a, b) => bin_op::<bool, bool>(|a, b| a && b, a, b).map(Lit::Bool),
-
         Expr::MinionReify(_, a, b) => {
             let result = eval_constant(a)?;
 
@@ -159,7 +209,6 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Bool(b == result))
         }
-
         Expr::MinionReifyImply(_, a, b) => {
             let result = eval_constant(a)?;
 
@@ -191,7 +240,6 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             let modulo = a - b * (a as f32 / b as f32).floor() as i32;
             Some(Lit::Bool(modulo == c))
         }
-
         Expr::MinionPow(_, a, b, c) => {
             // only available for positive a b c
 
@@ -213,7 +261,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Bool(a ^ b == c))
         }
-
+        Expr::MinionWInIntervalSet(_, _, _) => None,
         Expr::AllDiff(_, e) => {
             let es = e.clone().unwrap_list()?;
             let mut lits: HashSet<Lit> = HashSet::new();
@@ -296,7 +344,6 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Bool(sum <= total))
         }
-
         Expr::FlatWeightedSumGeq(_, cs, vs, total) => {
             let cs: Vec<i32> = cs
                 .iter()
@@ -318,7 +365,6 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Bool(x == y.abs()))
         }
-
         Expr::UnsafePow(_, a, b) | Expr::SafePow(_, a, b) => {
             let a: &Atom = a.try_into().ok()?;
             let a: i32 = a.try_into().ok()?;
@@ -327,12 +373,13 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             let b: i32 = b.try_into().ok()?;
 
             if (a != 0 || b != 0) && b >= 0 {
-                Some(Lit::Int(a ^ b))
+                Some(Lit::Int(a.pow(b as u32)))
             } else {
                 None
             }
         }
         Expr::Scope(_, _) => None,
+        Expr::MinionElementOne(_, _, _, _) => None,
     }
 }
 

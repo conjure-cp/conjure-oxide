@@ -13,7 +13,7 @@ use crate::context::Context;
 
 use super::serde::{HasId, ObjId};
 use super::types::Typeable;
-use super::SubModel;
+use super::{Name, SubModel};
 use super::{ReturnType, SymbolTable};
 
 /// An Essence model.
@@ -27,6 +27,7 @@ use super::{ReturnType, SymbolTable};
 #[derivative(PartialEq, Eq)]
 pub struct Model {
     submodel: SubModel,
+    pub search_order: Option<Vec<Name>>,
     pub dominance: Option<Expression>,
     #[derivative(PartialEq = "ignore")]
     pub context: Arc<RwLock<Context<'static>>>,
@@ -46,6 +47,7 @@ impl Model {
             submodel: SubModel::new_top_level(),
             dominance: None,
             context,
+            search_order: None,
         }
     }
 
@@ -71,6 +73,7 @@ impl Default for Model {
             submodel: SubModel::new_top_level(),
             dominance: None,
             context: Arc::new(RwLock::new(Context::default())),
+            search_order: None,
         }
     }
 }
@@ -170,6 +173,7 @@ impl Display for Model {
 pub struct SerdeModel {
     #[serde(flatten)]
     submodel: SubModel,
+    search_order: Option<Vec<Name>>, // TODO: make this a [expressions]
     dominance: Option<Expression>,
 }
 
@@ -214,6 +218,7 @@ impl SerdeModel {
             submodel: self.submodel,
             dominance: self.dominance,
             context,
+            search_order: self.search_order,
         })
     }
 }
@@ -223,6 +228,7 @@ impl From<Model> for SerdeModel {
         SerdeModel {
             submodel: val.submodel,
             dominance: val.dominance,
+            search_order: val.search_order,
         }
     }
 }

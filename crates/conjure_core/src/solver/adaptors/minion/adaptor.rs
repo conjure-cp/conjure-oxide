@@ -7,7 +7,7 @@ use minion_rs::ast as minion_ast;
 use minion_rs::error::MinionError;
 use minion_rs::{get_from_table, run_minion};
 
-use crate::ast as conjure_ast;
+use crate::ast::{self as conjure_ast, Name};
 use crate::solver::SolverCallback;
 use crate::solver::SolverFamily;
 use crate::solver::SolverMutCallback;
@@ -39,6 +39,23 @@ static USER_CALLBACK: OnceLock<Mutex<SolverCallback>> = OnceLock::new();
 static ANY_SOLUTIONS: Mutex<bool> = Mutex::new(false);
 static USER_TERMINATED: Mutex<bool> = Mutex::new(false);
 
+fn parse_name(minion_name: &str) -> Name {
+    let machine_name_re = Regex::new(r"__conjure_machine_name_([0-9]+)").unwrap();
+    let represented_name_re = Regex::new(r"__conjure_represented_name##(.*)##(.*)___(.*)").unwrap();
+
+    if let Some(caps) = machine_name_re.captures(minion_name) {
+        conjure_ast::Name::MachineName(caps[1].parse::<i32>().unwrap())
+    } else if let Some(caps) = represented_name_re.captures(minion_name) {
+        conjure_ast::Name::RepresentedName(
+            Box::new(parse_name(&caps[1])),
+            caps[2].to_string(),
+            caps[3].to_string(),
+        )
+    } else {
+        conjure_ast::Name::UserName(minion_name.to_string())
+    }
+}
+
 #[allow(clippy::unwrap_used)]
 fn minion_rs_callback(solutions: HashMap<minion_ast::VarName, minion_ast::Constant>) -> bool {
     *(ANY_SOLUTIONS.lock().unwrap()) = true;
@@ -48,7 +65,6 @@ fn minion_rs_callback(solutions: HashMap<minion_ast::VarName, minion_ast::Consta
         .unwrap();
 
     let mut conjure_solutions: HashMap<conjure_ast::Name, conjure_ast::Literal> = HashMap::new();
-    let machine_name_re = Regex::new(r"__conjure_machine_name_([0-9]+)").unwrap();
     for (minion_name, minion_const) in solutions.into_iter() {
         let conjure_const = match minion_const {
             minion_ast::Constant::Bool(x) => conjure_ast::Literal::Bool(x),
@@ -56,12 +72,7 @@ fn minion_rs_callback(solutions: HashMap<minion_ast::VarName, minion_ast::Consta
             _ => todo!(),
         };
 
-        let conjure_name = if let Some(caps) = machine_name_re.captures(&minion_name) {
-            conjure_ast::Name::MachineName(caps[1].parse::<i32>().unwrap())
-        } else {
-            conjure_ast::Name::UserName(minion_name)
-        };
-
+        let conjure_name = parse_name(&minion_name);
         conjure_solutions.insert(conjure_name, conjure_const);
     }
 

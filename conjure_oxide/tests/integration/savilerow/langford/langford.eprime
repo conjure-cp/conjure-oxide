@@ -1,0 +1,26 @@
+language ESSENCE' 1.0
+
+$$ param file: savile-row/test-instances/langford.eprime.param
+
+$ letting k be 11 
+$ letting two_k be 22 
+
+letting k be 3
+letting two_k be 6
+
+$$ model file: savile-row/test-instances/langford.eprime
+
+$ given k : int(..) 
+
+$ we don't support expressions in domains yet... 
+
+$ letting positionDomain be domain int(1..(2 * k))
+
+letting positionDomain be domain int(1..two_k)
+find position : matrix indexed by [positionDomain] of positionDomain
+
+such that
+
+forAll i : int(1..k) . position[(i + k)]= position[i] + i + 1,
+
+allDiff(position)

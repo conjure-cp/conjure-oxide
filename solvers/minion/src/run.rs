@@ -228,6 +228,7 @@ unsafe fn convert_model_to_raw(
     let mut print_vars_guard = PRINT_VARS.lock().unwrap();
     *print_vars_guard = Some(vec![]);
 
+    // initialise all variables, and add all variables to the print order
     for var_name in model.named_variables.get_variable_order() {
         let c_str = CString::new(var_name.clone()).map_err(|_| {
             anyhow!(
@@ -264,7 +265,17 @@ unsafe fn convert_model_to_raw(
 
         #[allow(clippy::unwrap_used)]
         (*print_vars_guard).as_mut().unwrap().push(var_name.clone());
+    }
 
+    // only add search variables to search order
+    for search_var_name in model.named_variables.get_search_variable_order() {
+        let c_str = CString::new(search_var_name.clone()).map_err(|_| {
+            anyhow!(
+                "Variable name {:?} contains a null character.",
+                search_var_name.clone()
+            )
+        })?;
+        let var = ffi::getVarByName(instance, c_str.as_ptr() as _);
         ffi::vec_var_push_back(search_vars.ptr, var);
     }
 
@@ -561,10 +572,15 @@ unsafe fn constraint_add_args(
         //Constraint::NvalueGeq(_, _) => todo!(),
         //Constraint::NvalueLeq(_, _) => todo!(),
         //Constraint::Element(_, _, _) => todo!(),
-        //Constraint::ElementOne(_, _, _) => todo!(),
         //Constraint::ElementUndefZero(_, _, _) => todo!(),
         //Constraint::WatchElement(_, _, _) => todo!(),
         //Constraint::WatchElementOne(_, _, _) => todo!(),
+        Constraint::ElementOne(vec, j, e) => {
+            read_list(i, r_constr, vec)?;
+            read_var(i, r_constr, j)?;
+            read_var(i, r_constr, e)?;
+            Ok(())
+        }
         //Constraint::WatchElementOneUndefZero(_, _, _) => todo!(),
         //Constraint::WatchElementUndefZero(_, _, _) => todo!(),
         Constraint::WLiteral(a, b) => {
@@ -573,7 +589,11 @@ unsafe fn constraint_add_args(
             Ok(())
         }
         //Constraint::WNotLiteral(_, _) => todo!(),
-        //Constraint::WInIntervalSet(_, _) => todo!(),
+        Constraint::WInIntervalSet(var, consts) => {
+            read_var(i, r_constr, var)?;
+            read_constant_list(r_constr, consts)?;
+            Ok(())
+        }
         //Constraint::WInRange(_, _) => todo!(),
         Constraint::WInset(a, b) => {
             read_var(i, r_constr, a)?;

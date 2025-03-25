@@ -155,8 +155,11 @@ pub enum VarDomain {
 pub struct SymbolTable {
     table: HashMap<VarName, VarDomain>,
 
-    // for now doubles both as Minion's SearchOrder and print order
+    // order of all variables
     var_order: Vec<VarName>,
+
+    // search order
+    search_var_order: Vec<VarName>,
 }
 
 impl SymbolTable {
@@ -164,15 +167,35 @@ impl SymbolTable {
         SymbolTable {
             table: HashMap::new(),
             var_order: Vec::new(),
+            search_var_order: Vec::new(),
         }
     }
 
-    /// Creates a new variable and adds it to the symbol table.
+    /// Creates a new search variable and adds it to the symbol table.
     ///
     /// # Returns
     ///
     /// If a variable already exists with the given name, `None` is returned.
     pub fn add_var(&mut self, name: VarName, vartype: VarDomain) -> Option<()> {
+        if self.table.contains_key(&name) {
+            return None;
+        }
+
+        self.table.insert(name.clone(), vartype);
+        self.var_order.push(name.clone());
+        self.search_var_order.push(name);
+
+        Some(())
+    }
+
+    /// Creates a new auxiliary variable and adds it to the symbol table.
+    ///
+    /// This variable will excluded from Minions search and printing order.
+    ///
+    /// # Returns
+    ///
+    /// If a variable already exists with the given name, `None` is returned.
+    pub fn add_aux_var(&mut self, name: VarName, vartype: VarDomain) -> Option<()> {
         if self.table.contains_key(&name) {
             return None;
         }
@@ -192,9 +215,14 @@ impl SymbolTable {
         self.table.get(&name).cloned()
     }
 
-    /// Gets the canonical ordering of variables.
+    /// Gets the canonical ordering of all variables.
     pub fn get_variable_order(&self) -> Vec<VarName> {
         self.var_order.clone()
+    }
+
+    /// Gets the canonical ordering of search variables.
+    pub fn get_search_variable_order(&self) -> Vec<VarName> {
+        self.search_var_order.clone()
     }
 
     pub fn contains(&self, name: VarName) -> bool {

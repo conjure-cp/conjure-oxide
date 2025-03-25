@@ -18,6 +18,7 @@ use enum_compatability_macro::document_compatibility;
 use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Uniplate as _};
 
+use super::comprehension::Comprehension;
 use super::{Domain, Range, SubModel, Typeable};
 
 /// Represents different types of expressions used to define rules and constraints in the model.
@@ -26,13 +27,14 @@ use super::{Domain, Range, SubModel, Typeable};
 /// used to build rules and conditions for the model.
 #[document_compatibility]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
-#[uniplate(walk_into=[Atom,SubModel,AbstractLiteral<Expression>])]
+#[uniplate(walk_into=[Atom,SubModel,AbstractLiteral<Expression>,Comprehension])]
 #[biplate(to=Metadata)]
 #[biplate(to=Atom)]
-#[biplate(to=Name)]
+#[biplate(to=Name,walk_into=[Atom])]
 #[biplate(to=Vec<Expression>)]
 #[biplate(to=Option<Expression>)]
-#[biplate(to=SubModel)]
+#[biplate(to=SubModel,walk_into=[Comprehension])]
+#[biplate(to=Comprehension)]
 #[biplate(to=AbstractLiteral<Expression>)]
 #[biplate(to=AbstractLiteral<Literal>,walk_into=[Atom])]
 #[biplate(to=Literal,walk_into=[Atom])]
@@ -44,6 +46,11 @@ pub enum Expression {
     /// An expression representing "A is valid as long as B is true"
     /// Turns into a conjunction when it reaches a boolean context
     Bubble(Metadata, Box<Expression>, Box<Expression>),
+
+    /// A comprehension.
+    ///
+    /// The inside of the comprehension opens a new scope.
+    Comprehension(Metadata, Box<Comprehension>),
 
     /// Defines dominance ("Solution A is preferred over Solution B")
     DominanceRelation(Metadata, Box<Expression>),
@@ -346,6 +353,30 @@ pub enum Expression {
     #[compatible(Minion)]
     MinionReifyImply(Metadata, Box<Expression>, Atom),
 
+    /// `w-inintervalset(x, [a1,a2, b1,b2, … ])` ensures that the value of x belongs to one of the
+    /// intervals {a1,…,a2}, {b1,…,b2} etc.
+    ///
+    /// The list of intervals must be given in numerical order.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#w-inintervalset)
+    #[compatible(Minion)]
+    MinionWInIntervalSet(Metadata, Atom, Vec<i32>),
+
+    /// `element_one(vec, i, e)` specifies that `vec[i] = e`. This implies that i is
+    /// in the range `[1..len(vec)]`.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#element_one)
+    #[compatible(Minion)]
+    MinionElementOne(Metadata, Vec<Atom>, Atom, Atom),
+
     /// Declaration of an auxiliary variable.
     ///
     /// As with Savile Row, we semantically distinguish this from `Eq`.
@@ -409,6 +440,7 @@ impl Expression {
             Expression::AbstractLiteral(_, _) => None,
             Expression::DominanceRelation(_, _) => Some(Domain::BoolDomain),
             Expression::FromSolution(_, expr) => expr.domain_of(syms),
+            Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
                 let Domain::DomainMatrix(elem_domain, _) = matrix.domain_of(syms)? else {
                     bug!("subject of an index operation should be a matrix");
@@ -515,7 +547,7 @@ impl Expression {
                 a.domain_of(syms)?.apply_i32(
                     |x, y| {
                         if (x != 0 || y != 0) && y >= 0 {
-                            Some(x ^ y)
+                            Some(x.pow(y as u32))
                         } else {
                             None
                         }
@@ -547,6 +579,8 @@ impl Expression {
             Expression::FlatWatchedLiteral(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionReify(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionReifyImply(_, _, _) => Some(Domain::BoolDomain),
+            Expression::MinionWInIntervalSet(_, _, _) => Some(Domain::BoolDomain),
+            Expression::MinionElementOne(_, _, _, _) => Some(Domain::BoolDomain),
             Expression::Neg(_, x) => {
                 let Some(Domain::IntDomain(mut ranges)) = x.domain_of(syms) else {
                     return None;
@@ -630,6 +664,7 @@ impl Expression {
                 Some(ReturnType::Matrix(Box::new(subject.return_type()?)))
             }
             Expression::InDomain(_, _, _) => Some(ReturnType::Bool),
+            Expression::Comprehension(_, _) => None,
             Expression::Root(_, _) => Some(ReturnType::Bool),
             Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
             Expression::FromSolution(_, expr) => expr.return_type(),
@@ -665,6 +700,8 @@ impl Expression {
             Expression::FlatWatchedLiteral(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReify(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReifyImply(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionWInIntervalSet(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionElementOne(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AuxDeclaration(_, _, _) => Some(ReturnType::Bool),
             Expression::UnsafeMod(_, _, _) => Some(ReturnType::Int),
             Expression::SafeMod(_, _, _) => Some(ReturnType::Int),
@@ -784,6 +821,25 @@ impl Expression {
             _ => panic!("extend_root called on a non-Root expression"),
         }
     }
+
+    /// Converts the expression to a literal, if possible.
+    pub fn to_literal(self) -> Option<Literal> {
+        match self {
+            Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
+            Expression::AbstractLiteral(_, abslit) => {
+                Some(Literal::AbstractLiteral(abslit.clone().as_literals()?))
+            }
+            Expression::Neg(_, e) => {
+                let Literal::Int(i) = e.to_literal()? else {
+                    bug!("negated literal should be an int");
+                };
+
+                Some(Literal::Int(-i))
+            }
+
+            _ => None,
+        }
+    }
 }
 
 impl From<i32> for Expression {
@@ -807,6 +863,7 @@ impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
             Expression::AbstractLiteral(_, l) => l.fmt(f),
+            Expression::Comprehension(_, c) => c.fmt(f),
             Expression::UnsafeIndex(_, e1, e2) | Expression::SafeIndex(_, e1, e2) => {
                 write!(f, "{e1}{}", pretty_vec(e2))
             }
@@ -821,7 +878,6 @@ impl Display for Expression {
 
                 write!(f, "{e1}[{args}]")
             }
-
             Expression::InDomain(_, e, domain) => {
                 write!(f, "__inDomain({e},{domain})")
             }
@@ -924,7 +980,6 @@ impl Display for Expression {
                     box3.clone()
                 )
             }
-
             Expression::FlatWatchedLiteral(_, x, l) => {
                 write!(f, "WatchedLiteral({},{})", x, l)
             }
@@ -933,6 +988,10 @@ impl Display for Expression {
             }
             Expression::MinionReifyImply(_, box1, box2) => {
                 write!(f, "ReifyImply({}, {})", box1.clone(), box2.clone())
+            }
+            Expression::MinionWInIntervalSet(_, atom, intervals) => {
+                let intervals = intervals.iter().join(",");
+                write!(f, "__minion_w_inintervalset({atom},{intervals})")
             }
             Expression::AuxDeclaration(_, n, e) => {
                 write!(f, "{} =aux {}", n, e.clone())
@@ -976,7 +1035,6 @@ impl Display for Expression {
                     total.clone()
                 )
             }
-
             Expression::FlatWeightedSumGeq(_, cs, vs, total) => {
                 write!(
                     f,
@@ -988,6 +1046,10 @@ impl Display for Expression {
             }
             Expression::MinionPow(_, atom, atom1, atom2) => {
                 write!(f, "MinionPow({},{},{})", atom, atom1, atom2)
+            }
+            Expression::MinionElementOne(_, atoms, atom, atom1) => {
+                let atoms = atoms.iter().join(",");
+                write!(f, "__minion_element_one([{atoms}],{atom},{atom1})")
             }
         }
     }
