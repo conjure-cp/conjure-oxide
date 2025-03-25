@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![allow(missing_docs)]
 use std::{cell::RefCell, rc::Rc, usize};
 
 use crate::{helpers::one_or_select, Commands, Rule, Update};
@@ -407,7 +408,7 @@ where
             }
         })
         .collect();
-    morph_impl(transforms, tree, meta)
+    morph_impl_not_opt(transforms, tree, meta)
 }
 /// This implements the core rewriting logic for the engine.
 ///
