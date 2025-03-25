@@ -1,3 +1,6 @@
+//! This file is for testing purposes only.
+//! It is not meant to be integrated into the main code.
+
 use std::cell::Cell;
 
 use tree_morph::prelude::*;
@@ -49,9 +52,9 @@ struct Meta {
 impl Rule<Expr, Meta> for MyRule {
     fn apply(&self, cmd: &mut Commands<Expr, Meta>, expr: &Expr, meta: &Meta) -> Option<Expr> {
         println!("Trying Rule");
-        cmd.mut_meta(|m| m.num_applications += 1); // Only applied if successful
-                                                   // THIS IS FOR TESTING ONLY
-                                                   // Not meant to integrated into the main code.
+        cmd.mut_meta(Box::new(|m: &mut Meta| m.num_applications += 1)); // Only applied if successful
+                                                                        // THIS IS FOR TESTING ONLY
+                                                                        // Not meant to integrated into the main code.
         unsafe {
             GLOBAL_RULE_CHECKS.set(GLOBAL_RULE_CHECKS.get() + 1);
         }
