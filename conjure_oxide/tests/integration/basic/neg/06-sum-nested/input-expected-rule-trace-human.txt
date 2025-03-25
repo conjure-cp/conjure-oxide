@@ -8,31 +8,31 @@ find z: int(-1..1)
 
 such that
 
-(x = Sum([Sum([-(y), -((Sum([z, 1]) - a))]), b]))
+(x = Sum([Sum([-(y),-((Sum([z,1;int(1..2)]) - a));int(1..2)]),b;int(1..2)]))
 
 --
 
-Sum([Sum([-(y), -((Sum([z, 1]) - a))]), b]), 
+Sum([Sum([-(y),-((Sum([z,1;int(1..2)]) - a));int(1..2)]),b;int(1..2)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
-Sum([-(y), -((Sum([z, 1]) - a)), b]) 
+Sum([-(y),-((Sum([z,1;int(1..2)]) - a)),b;int(1..2)]) 
 
 --
 
-(Sum([z, 1]) - a), 
+(Sum([z,1;int(1..2)]) - a), 
    ~~> minus_to_sum ([("Base", 8400)]) 
-Sum([Sum([z, 1]), -(a)]) 
+Sum([Sum([z,1;int(1..2)]),-(a);int(1..)]) 
 
 --
 
-Sum([Sum([z, 1]), -(a)]), 
+Sum([Sum([z,1;int(1..2)]),-(a);int(1..)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
-Sum([z, 1, -(a)]) 
+Sum([z,1,-(a);int(1..)]) 
 
 --
 
--(Sum([z, 1, -(a)])), 
+-(Sum([z,1,-(a);int(1..)])), 
    ~~> distribute_negation_over_sum ([("Base", 8400)]) 
-Sum([-(z), -(1), -(-(a))]) 
+Sum([-(z),-(1),-(-(a));int(1..)]) 
 
 --
 
@@ -42,9 +42,9 @@ Sum([-(z), -(1), -(-(a))])
 
 --
 
-Sum([-(y), Sum([-(z), -1, -(-(a))]), b]), 
+Sum([-(y),Sum([-(z),-1,-(-(a));int(1..)]),b;int(1..2)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
-Sum([-(y), -(z), -1, -(-(a)), b]) 
+Sum([-(y),-(z),-1,-(-(a)),b;int(1..2)]) 
 
 --
 
@@ -54,7 +54,13 @@ a
 
 --
 
-(x = Sum([-(y), -(z), -1, a, b])), 
+Sum([-(y),-(z),-1,a,b;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+Sum([-(y),-(z),-1,a,b;int(1..)]) 
+
+--
+
+(x = Sum([-(y),-(z),-1,a,b;int(1..)])), 
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
 and([FlatWeightedSumLeq([-1, -1, 1, 1, 1],[y, z, -1, a, b],x),FlatWeightedSumGeq([-1, -1, 1, 1, 1],[y, z, -1, a, b],x);int(1..)]) 
 

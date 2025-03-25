@@ -37,6 +37,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             _ => Err(RuleNotApplicable),
         },
         Sum(m, vec) => {
+            let vec = vec.unwrap_list().ok_or(RuleNotApplicable)?;
             let mut acc = 0;
             let mut n_consts = 0;
             let mut new_vec: Vec<Expr> = Vec::new();
@@ -55,7 +56,10 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             if n_consts <= 1 {
                 Err(RuleNotApplicable)
             } else {
-                Ok(Reduction::pure(Sum(m, new_vec)))
+                Ok(Reduction::pure(Sum(
+                    m,
+                    Box::new(into_matrix_expr![new_vec]),
+                )))
             }
         }
 
