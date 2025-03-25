@@ -2,6 +2,7 @@ pub mod pretty;
 pub mod serde;
 
 mod atom;
+mod codegen;
 mod declaration;
 mod domains;
 mod expressions;
