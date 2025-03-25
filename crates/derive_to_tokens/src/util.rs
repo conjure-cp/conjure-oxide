@@ -64,7 +64,7 @@ pub fn add_bounds(
 }
 
 /// Return the type of the field if it isn't marked
-/// with the `#[parsel(recursive)]` attribute.
+/// with the `#[to_tokens(recursive)]` attribute.
 fn field_type(mut field: Field) -> Result<Option<Type>> {
     let attrs: Attrs = deluxe::extract_attributes(&mut field)?;
     let ty = if attrs.recursive {
@@ -79,7 +79,7 @@ fn field_type(mut field: Field) -> Result<Option<Type>> {
 /// Helper type for parsing the meta attributes of the
 /// type for which `Parse` and `ToTokens` are being `#[derive]`d.
 #[derive(Clone, Default, Debug, ExtractAttributes)]
-#[deluxe(attributes(parsel))]
+#[deluxe(attributes(to_tokens))]
 pub struct Attrs {
     /// Indicates that the field participates in (possibly mutual) recursion
     /// at the type level, e.g. a parent-child relationship within the same
@@ -91,4 +91,28 @@ pub struct Attrs {
     /// see [this issue](https://github.com/rust-lang/rust/issues/48214)
     #[deluxe(default = false)]
     pub recursive: bool,
+}
+
+pub enum FieldWrapper {
+    Box,
+    Vec,
+}
+
+pub fn field_wrapper(field: Field) -> Option<FieldWrapper> {
+    match field.ty {
+        Type::Path(path) => match path
+            .path
+            .segments
+            .last()
+            .unwrap()
+            .ident
+            .to_string()
+            .as_str()
+        {
+            "Box" => Some(FieldWrapper::Box),
+            "Vec" => Some(FieldWrapper::Vec),
+            _ => None,
+        },
+        _ => None,
+    }
 }

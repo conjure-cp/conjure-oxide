@@ -1,4 +1,4 @@
-use quote::{quote, ToTokens};
+pub use quote::{quote, ToTokens};
 use uniplate::{Biplate, Uniplate};
 
 use super::{AbstractLiteral, Atom, Domain, Expression, Literal, Name, Range, SetAttr};

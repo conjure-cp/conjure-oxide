@@ -1,14 +1,15 @@
 mod util;
 
 use crate::util::add_bounds;
+use proc_macro;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use syn::parse_quote;
 use syn::spanned::Spanned;
+use syn::{parse_quote, FieldsUnnamed};
 use syn::{Data, DataEnum, DataStruct, DeriveInput, Error, Fields, Result};
 use syn::{Ident, Index};
 
-#[proc_macro_derive(ToTokens)]
+#[proc_macro_derive(ToTokens, attributes(to_tokens))]
 pub fn derive_to_tokens(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let res = expand(item.into()).unwrap_or_else(|err| err.to_compile_error());
     res.into()
@@ -22,56 +23,22 @@ fn expand(stream: TokenStream) -> Result<TokenStream> {
     let body = match &item.data {
         Data::Union(_) => return Err(Error::new_spanned(&item, "unions are not supported")),
         Data::Enum(data) => expand_enum(&ty_name, data)?,
-        Data::Struct(data) => expand_struct(data)?,
+        Data::Struct(data) => todo!("Implement struct expansion"),
     };
     let generics = item.generics.clone();
     let (impl_gen, ty_gen, where_clause) = generics.split_for_impl();
-    let bounds = parse_quote!(::syn::ToTokens);
+    let bounds = parse_quote!(::quote::ToTokens);
     let where_clause = add_bounds(item, where_clause, bounds)?;
 
     Ok(quote! {
         #[automatically_derived]
         #[allow(non_snake_case)]
-        impl #impl_gen ::syn::ToTokens for #ty_name #ty_gen #where_clause {
-            fn to_tokens(&self, tokens: &mut ::syn::TokenStream) {
+        impl #impl_gen ::quote::ToTokens for #ty_name #ty_gen #where_clause {
+            fn to_tokens(&self, tokens: &mut ::proc_macro2::TokenStream) {
                 #body
             }
         }
     })
-}
-
-/// Prints every field in sequence, in the order they are specified in the source.
-fn expand_struct(data: &DataStruct) -> Result<TokenStream> {
-    match &data.fields {
-        Fields::Named(fields) => fields
-            .named
-            .iter()
-            .map(|field| {
-                let field_name = field
-                    .ident
-                    .as_ref()
-                    .ok_or_else(|| Error::new(field.span(), "unnamed field in named struct"))?;
-
-                Ok(quote! {
-                    ::syn::ToTokens::to_tokens(&self.#field_name, &mut *tokens);
-                })
-            })
-            .collect(),
-        Fields::Unnamed(fields) => fields
-            .unnamed
-            .iter()
-            .zip(0..)
-            .map(|(field, index)| {
-                let span = field.span();
-                let field_index = Index { index, span };
-
-                Ok(quote! {
-                    ::syn::ToTokens::to_tokens(&self.#field_index, &mut *tokens);
-                })
-            })
-            .collect(),
-        Fields::Unit => Ok(TokenStream::new()),
-    }
 }
 
 fn expand_enum(ty_name: &Ident, data: &DataEnum) -> Result<TokenStream> {
@@ -87,39 +54,53 @@ fn expand_enum(ty_name: &Ident, data: &DataEnum) -> Result<TokenStream> {
 /// Generates a `match` so that the fields of the currently active variant
 /// will be appended to the token stream.
 fn expand_variants(ty_name: &Ident, data: &DataEnum) -> Result<TokenStream> {
-    data.variants
-        .iter()
-        .map(|variant| {
-            let variant_name = &variant.ident;
-            let field_names = match &variant.fields {
-                Fields::Unit => Vec::new(),
-                Fields::Named(fields) => fields
-                    .named
-                    .iter()
-                    .map(|field| {
-                        field.ident.clone().ok_or_else(|| {
-                            Error::new(field.span(), "unnamed field in named struct")
-                        })
-                    })
-                    .collect::<Result<_>>()?,
-                Fields::Unnamed(fields) => fields
-                    .unnamed
-                    .iter()
-                    .enumerate()
-                    .map(|(i, _)| format_ident!("syn_field_{}_{}", variant_name, i))
-                    .collect(),
-            };
-            let bindings = match &variant.fields {
-                Fields::Unit => TokenStream::new(),
-                Fields::Named(_) => quote!({ #(#field_names,)* }),
-                Fields::Unnamed(_) => quote! { (#(#field_names),*) },
-            };
+    let arms: Vec<TokenStream> = data.variants.iter().map(|variant| {
+        let variant_name = &variant.ident;
+        match &variant.fields {
+            Fields::Unit => {
+                // For unit variants, there is nothing to bind.
+                Ok(quote! {
+                    #ty_name::#variant_name => {
+                        tokens.extend(quote! { #ty_name::#variant_name });
+                    }
+                })
+            },
+            Fields::Unnamed(fields) => {
+                // For tuple variants, generate bindings for each field.
+                let field_bindings: Vec<Ident> =
+                    (0..fields.unnamed.len()).map(|i| format_ident!("field_{}", i)).collect();
+                Ok(quote! {
+                    #ty_name::#variant_name ( #( ref #field_bindings ),* ) => {
+                        tokens.extend(quote! { #ty_name::#variant_name ( #(##field_bindings.into()),* ) });
+                    }
+                })
+            },
+            Fields::Named(fields) => {
+                // For named variants, use the actual field names.
+                // Since we're in a named variant, each field is expected to have an identifier.
+                let field_idents: Vec<Ident> = fields.named.iter()
+                    .map(|f| f.ident.clone().expect("named variant must have field names"))
+                    .collect();
+                Ok(quote! {
+                    #ty_name::#variant_name { #( ref #field_idents, )* } => {
+                        tokens.extend(quote! { #ty_name::#variant_name { #( #field_idents: ##field_idents.into() ),* } });
+                    }
+                })
+            },
+        }
+    }).collect::<Result<Vec<_>>>()?;
 
-            Ok(quote! {
-                #ty_name::#variant_name #bindings => {
-                    #(::syn::ToTokens::to_tokens(#field_names, &mut *tokens);)*
-                }
-            })
-        })
-        .collect()
+    Ok(quote! {
+        #(#arms)*
+    })
 }
+
+// fn expand_fields_unnamed(fields: &FieldsUnnamed) -> Result<TokenStream> {
+//     let field_bindings: Vec<Ident> = (0..fields.unnamed.len()).map(|i| format_ident!("field_{}", i)).collect();
+//     let field_values =
+//     // Ok(quote! {
+//     //     #ty_name::#variant_name ( #( ref #field_bindings ),* ) => {
+//     //         tokens.extend(quote! { #ty_name::#variant_name ( #(##field_bindings.into()),* ) });
+//     //     }
+//     // })
+// }
