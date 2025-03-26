@@ -45,10 +45,10 @@ pub fn essence_expr(args: TokenStream) -> TokenStream {
         .next()
         .unwrap_or_else(|| panic!("No expressions found"));
 
-    let expanded = quote! {
-        todo!()
-    };
-    TokenStream::from(expanded)
+    quote! {
+        #expr
+    }
+    .into()
 }
 
 mod test {

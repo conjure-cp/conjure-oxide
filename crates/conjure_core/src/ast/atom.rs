@@ -1,11 +1,11 @@
-use std::borrow::Borrow;
-
 use super::{literals::AbstractLiteral, Expression, Literal, Name};
+use derive_to_tokens::ToTokens;
 use serde::{Deserialize, Serialize};
+use std::borrow::Borrow;
 use uniplate::derive::Uniplate;
 
 /// An `Atom` is an indivisible expression, such as a literal or a reference.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, ToTokens)]
 #[uniplate()]
 #[biplate(to=Literal)]
 #[biplate(to=Expression)]

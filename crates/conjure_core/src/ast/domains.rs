@@ -1,15 +1,15 @@
 use std::fmt::Display;
 
+use crate::ast::pretty::pretty_vec;
 use conjure_core::ast::SymbolTable;
+use derive_to_tokens::ToTokens;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-
-use crate::ast::pretty::pretty_vec;
 use uniplate::{derive::Uniplate, Uniplate};
 
 use super::{types::Typeable, AbstractLiteral, Literal, Name, ReturnType};
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, ToTokens)]
 pub enum Range<A>
 where
     A: Ord,
@@ -46,7 +46,7 @@ impl<A: Ord + Display> Display for Range<A> {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize, Uniplate)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize, Uniplate, ToTokens)]
 #[uniplate()]
 pub enum Domain {
     BoolDomain,
@@ -60,12 +60,15 @@ pub enum Domain {
     ///   integer value.
     IntDomain(Vec<Range<i32>>),
     DomainReference(Name),
-    DomainSet(SetAttr, Box<Domain>),
+    DomainSet(SetAttr, #[to_tokens(recursive)] Box<Domain>),
     /// A n-dimensional matrix with a value domain and n-index domains
-    DomainMatrix(Box<Domain>, Vec<Domain>),
+    DomainMatrix(
+        #[to_tokens(recursive)] Box<Domain>,
+        #[to_tokens(recursive)] Vec<Domain>,
+    ),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, ToTokens)]
 pub enum SetAttr {
     None,
     Size(i32),

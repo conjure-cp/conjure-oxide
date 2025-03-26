@@ -42,7 +42,6 @@ fn expand(stream: TokenStream) -> Result<TokenStream> {
     })
 }
 
-
 /// Prints every field in sequence, in the order they are specified in the source.
 fn expand_struct(ty_name: &Ident, data: &DataStruct) -> Result<TokenStream> {
     match &data.fields {
@@ -52,7 +51,7 @@ fn expand_struct(ty_name: &Ident, data: &DataStruct) -> Result<TokenStream> {
             Ok(quote! {
                 #declarations
                 #extra_top
-                tokens.extend(quote! { #ty_name { #(#field_idents: #field_values),* } });
+                tokens.extend(::quote::quote! { #ty_name { #(#field_idents: #field_values),* } });
             })
         }
         Fields::Unnamed(fields) => {
@@ -61,12 +60,12 @@ fn expand_struct(ty_name: &Ident, data: &DataStruct) -> Result<TokenStream> {
             Ok(quote! {
                 #declarations
                 #extra_top
-                tokens.extend(quote! { #ty_name { #(#field_values),* } });
+                tokens.extend(::quote::quote! { #ty_name { #(#field_values),* } });
             })
         }
         Fields::Unit => Ok(quote! {
-            tokens.extend(quote! { #ty_name {} });
-        })
+            tokens.extend(::quote::quote! { #ty_name {} });
+        }),
     }
 }
 
@@ -100,7 +99,7 @@ fn expand_variants(ty_name: &Ident, data: &DataEnum) -> Result<TokenStream> {
                 // For unit variants, there is nothing to bind.
                 Ok(quote! {
                     #ty_name::#variant_name => {
-                        tokens.extend(quote! { #ty_name::#variant_name });
+                        tokens.extend(::quote::quote! { #ty_name::#variant_name });
                     }
                 })
             },
@@ -110,7 +109,7 @@ fn expand_variants(ty_name: &Ident, data: &DataEnum) -> Result<TokenStream> {
                 Ok(quote! {
                     #ty_name::#variant_name ( #( ref #field_idents ),* ) => {
                         #extra_top
-                        tokens.extend(quote! { #ty_name::#variant_name ( #(#field_values),* ) });
+                        tokens.extend(::quote::quote! { #ty_name::#variant_name ( #(#field_values),* ) });
                     }
                 })
             },
@@ -124,7 +123,7 @@ fn expand_variants(ty_name: &Ident, data: &DataEnum) -> Result<TokenStream> {
                 Ok(quote! {
                     #ty_name::#variant_name { #( ref #field_idents, )* } => {
                         #extra_top
-                        tokens.extend(quote! { #ty_name::#variant_name { #( #field_idents: #field_values ),* } });
+                        tokens.extend(::quote::quote! { #ty_name::#variant_name { #( #field_idents: #field_values ),* } });
                     }
                 })
             },
@@ -142,8 +141,8 @@ fn expand_fields_unnamed(fields: &FieldsUnnamed) -> (Vec<Ident>, Vec<TokenStream
     let mut extra_top: TokenStream = TokenStream::new();
     for (i, field) in fields.unnamed.iter().enumerate() {
         let ident = format_ident!("field_{}", i);
-        field_idents.push(ident.clone());
         let (val, top) = expand_field(&field.ty, &ident);
+        field_idents.push(ident.clone());
         field_values.push(val);
         extra_top.extend(top);
     }
@@ -155,9 +154,12 @@ fn expand_fields_named(fields: &FieldsNamed) -> (Vec<Ident>, Vec<TokenStream>, T
     let mut field_values: Vec<TokenStream> = Vec::new();
     let mut extra_top: TokenStream = TokenStream::new();
     for field in fields.named.iter() {
-        let ident = field.ident.clone().expect("named variant must have field names");
-        field_idents.push(ident.clone());
+        let ident = field
+            .ident
+            .clone()
+            .expect("named variant must have field names");
         let (val, top) = expand_field(&field.ty, &ident);
+        field_idents.push(ident.clone());
         field_values.push(val);
         extra_top.extend(top);
     }
@@ -179,8 +181,8 @@ fn expand_field(ty: &Type, ident: &Ident) -> (TokenStream, TokenStream) {
             let top = quote! {
                 #inner_top
                 let #gen_ident = match #ident {
-                    Some(#val_ident) => quote! { Some(#inner_val) },
-                    None => quote! { None },
+                    Some(#val_ident) => ::quote::quote! { Some(#inner_val) },
+                    None => ::quote::quote! { None },
                 };
             };
             (quote! { ##gen_ident }, top)
@@ -190,8 +192,7 @@ fn expand_field(ty: &Type, ident: &Ident) -> (TokenStream, TokenStream) {
             let val_ident = format_ident!("{}_vec_val", ident);
             let (inner_val, inner_top) = expand_field(&inner, &val_ident);
             let top = quote! {
-
-                let #gen_ident = #ident.iter().map(|#val_ident: &#inner| { #inner_top quote! { #inner_val } }).collect::<Vec<_>>();
+                let #gen_ident = #ident.iter().map(|#val_ident: &#inner| { #inner_top ::quote::quote! { #inner_val } }).collect::<Vec<_>>();
             };
             let seq = expand_sequence(&gen_ident);
             let val = quote! { vec! [ #seq ] };

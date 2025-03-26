@@ -1,11 +1,12 @@
 use crate::ast::ReturnType;
+use derive_to_tokens::ToTokens;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display};
 use uniplate::derive_unplateable;
 
 derive_unplateable!(Metadata);
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Default, ToTokens)]
 pub struct Metadata {
     pub clean: bool,
     pub etype: Option<ReturnType>,

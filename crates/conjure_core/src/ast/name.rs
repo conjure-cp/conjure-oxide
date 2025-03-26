@@ -1,9 +1,9 @@
+use derive_to_tokens::ToTokens;
+use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
-use serde::{Deserialize, Serialize};
-
 /// A reference to an object stored in the [`SymbolTable`].
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize, ToTokens)]
 pub enum Name {
     /// A name given in the input model.
     UserName(String),
@@ -13,6 +13,7 @@ pub enum Name {
     /// A representation variable.
     RepresentedName(
         /// The source variable
+        #[to_tokens(recursive)]
         Box<Name>,
         /// The representation rule used
         String,
@@ -21,7 +22,7 @@ pub enum Name {
     ),
 
     WithRepresentation(
-        Box<Name>,
+        #[to_tokens(recursive)] Box<Name>,
         /// representations chosen
         Vec<String>,
     ),
