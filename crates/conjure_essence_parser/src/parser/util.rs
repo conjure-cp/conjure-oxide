@@ -56,8 +56,7 @@ pub fn query_toplevel<'a>(
 pub fn get_metavars<'a>(node: &'a Node<'a>, src: &'a str) -> impl Iterator<Item = String> + 'a {
     query_toplevel(node, &|n| n.kind() == "metavar").filter_map(|child| {
         child
-            .named_child(0)
-            .and_then(|name| Some(src[name.start_byte()..name.end_byte()].to_string()))
+            .named_child(0).map(|name| src[name.start_byte()..name.end_byte()].to_string())
     })
 }
 
