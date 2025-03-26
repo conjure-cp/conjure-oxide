@@ -73,19 +73,6 @@ pub fn add_bounds(
     Ok(where_clause)
 }
 
-/// Return the type of the field if it isn't marked
-/// with the `#[to_tokens(recursive)]` attribute.
-fn field_type(mut field: Field) -> Result<Option<Type>> {
-    let attrs: Attrs = deluxe::extract_attributes(&mut field)?;
-    let ty = if attrs.recursive {
-        None
-    } else {
-        Some(field.ty)
-    };
-
-    Ok(ty)
-}
-
 /// Helper type for parsing the meta attributes of the
 /// type for which `Parse` and `ToTokens` are being `#[derive]`d.
 #[derive(Clone, Default, Debug, ExtractAttributes)]

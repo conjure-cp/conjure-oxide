@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::rc::Rc;
 use std::sync::Arc;
 
 use conjure_core::ast::Expression;
@@ -40,8 +39,9 @@ pub fn parse_exprs(src: &str) -> Result<Vec<Expression>, EssenceParseError> {
     Ok(ans)
 }
 
-fn replace_metavars(expr: &Expression, metavars: Rc<HashMap<String, Expression>>) -> Expression {
-    expr.rewrite(Rc::new(move |sub| match &sub {
+fn replace_metavars(expr: &Expression, metavars: Arc<HashMap<String, Expression>>) -> Expression {
+    #[allow(clippy::arc_with_non_send_sync)]
+    expr.rewrite(Arc::new(move |sub| match &sub {
         Expression::Metavar(_, name) => metavars.get(name).cloned(),
         _ => None,
     }))
@@ -49,14 +49,14 @@ fn replace_metavars(expr: &Expression, metavars: Rc<HashMap<String, Expression>>
 
 pub fn parse_expr_with_metavars(
     src: &str,
-    metavars: Rc<HashMap<String, Expression>>,
+    metavars: Arc<HashMap<String, Expression>>,
 ) -> Result<Expression, EssenceParseError> {
     Ok(replace_metavars(&parse_expr(src)?, metavars))
 }
 
 pub fn parse_exprs_with_metavars(
     src: &str,
-    metavars: Rc<HashMap<String, Expression>>,
+    metavars: Arc<HashMap<String, Expression>>,
 ) -> Result<Vec<Expression>, EssenceParseError> {
     Ok(parse_exprs(src)?
         .iter()

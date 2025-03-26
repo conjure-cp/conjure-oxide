@@ -3,7 +3,6 @@ mod util;
 use crate::util::add_bounds;
 use proc_macro2::{Delimiter, Group, Punct, Spacing, TokenStream};
 use quote::{format_ident, quote, TokenStreamExt};
-use syn::spanned::Spanned;
 use syn::Ident;
 use syn::{parse_quote, FieldsNamed, FieldsUnnamed, Type};
 use syn::{Data, DataEnum, DataStruct, DeriveInput, Error, Fields, Result};
