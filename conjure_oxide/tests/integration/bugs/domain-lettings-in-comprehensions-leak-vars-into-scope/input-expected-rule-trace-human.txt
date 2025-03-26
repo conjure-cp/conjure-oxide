@@ -1,0 +1,33 @@
+Model before rewriting:
+
+letting DOM be domain int(1..3)
+find a: matrix indexed by [[DOM]] of DOM
+
+such that
+
+and([(a[i] = i) | i: DOM,])
+
+--
+
+, 
+   ~~> eval_root ([("Constant", 9001)]) 
+true 
+
+--
+
+true, 
+   ~~> substitute_domain_lettings ([("Base", 5000)]) 
+true 
+new variables:
+  find a: matrix indexed by [[DOM]] of DOM
+--
+
+Final model:
+
+letting DOM be domain int(1..3)
+find a: matrix indexed by [[DOM]] of DOM
+
+such that
+
+and([(a[i] = i) | a: matrix indexed by [[DOM]] of DOM,i: int(1..3),true])
+
