@@ -39,7 +39,10 @@ pub fn essence_expr(args: TokenStream) -> TokenStream {
         .unwrap_or_else(|| panic!("No expressions found"));
 
     quote! {
-        #expr
+        {
+            use ::conjure_core::ast::*;
+            #expr
+        }
     }
     .into()
 }

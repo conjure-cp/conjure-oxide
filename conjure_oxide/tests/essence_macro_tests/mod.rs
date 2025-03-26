@@ -1,4 +1,4 @@
-use conjure_core::ast::{Atom, Expression, Literal, Name};
+use conjure_core::ast::{Atom, Expression};
 use conjure_oxide::Metadata;
 use essence_macros::essence_expr;
 
