@@ -1,6 +1,13 @@
 use crate::ast::Expression;
-use serde_json;
+use serde_json::json;
+use std::sync::{Arc, Mutex};
 use std::{fmt, fs::OpenOptions, io::Write};
+
+// to have all the traces as a single JSON object, we need to have a vector of traces
+// so this is a lazy static for accumulating traces
+// lazy_static! {
+//     static ref TRACE_COLLECTION: Mutex<Vec<RuleTrace>> = Mutex::new(Vec<RuleTrace>);
+// }
 
 #[derive(serde::Serialize)] // added for serialisation to JSON using serde
 /// represents the trace of a rule application
@@ -74,13 +81,28 @@ impl MessageFormatter for HumanFormatter {
     }
 }
 
-pub struct JsonFormatter;
+// add a collection of traces
+pub struct JsonFormatter {
+    trace_collection: Arc<Mutex<Vec<RuleTrace>>>,
+}
+
+impl JsonFormatter {
+    pub fn new() -> Self {
+        Self {
+            trace_collection: Arc::new(Mutex::new(Vec::new())),
+        }
+    }
+}
 
 // JSON formatter implementing the MessageFormatter trait
 impl MessageFormatter for JsonFormatter {
     fn format(&self, trace: TraceStruct) -> String {
         match trace {
-            TraceStruct::RuleTrace(rule_trace) => serde_json::to_string(&rule_trace).unwrap(),
+            TraceStruct::RuleTrace(rule_trace) => {
+                let mut traces = self.trace_collection.lock().unwrap();
+                traces.push(rule_trace);
+                serde_json::to_string(&json!({"traces": *traces})).unwrap()
+            }
             _ => String::from("Unknown trace"),
         }
     }
