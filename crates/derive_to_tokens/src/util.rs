@@ -1,9 +1,9 @@
 //! Helpers that don't fit anywhere else.
 
 use deluxe::ExtractAttributes;
+use itertools::Itertools;
 use quote::ToTokens;
 use std::collections::HashSet;
-use itertools::Itertools;
 use syn::punctuated::Punctuated;
 use syn::{parse_quote, GenericArgument, PathArguments};
 use syn::{Data, DeriveInput, Error, Field, Fields, Result, Token, Type};
@@ -24,15 +24,15 @@ pub fn add_bounds(
                 .into_iter()
                 .flat_map(|f| field_leaf_types(f))
                 .collect::<HashSet<_>>(),
-                //.filter_map(|f| field_type(f).transpose())
-                //.collect::<Result<_>>()?,
+            //.filter_map(|f| field_type(f).transpose())
+            //.collect::<Result<_>>()?,
             Fields::Unnamed(fields) => fields
                 .unnamed
                 .into_iter()
                 .flat_map(|f| field_leaf_types(f))
                 .collect::<HashSet<_>>(),
-                // .filter_map(|f| field_type(f).transpose())
-                // .collect::<Result<_>>()?,
+            // .filter_map(|f| field_type(f).transpose())
+            // .collect::<Result<_>>()?,
         },
         Data::Enum(data) => data
             .variants
@@ -44,18 +44,18 @@ pub fn add_bounds(
                     .into_iter()
                     .flat_map(|f| field_leaf_types(f))
                     .collect::<Vec<_>>(),
-                    // .filter_map(|f| field_type(f).transpose())
-                    // .collect::<Vec<_>>(),
+                // .filter_map(|f| field_type(f).transpose())
+                // .collect::<Vec<_>>(),
                 Fields::Unnamed(fields) => fields
                     .unnamed
                     .into_iter()
                     .flat_map(|f| field_leaf_types(f))
                     .collect::<Vec<_>>(),
-                    // .filter_map(|f| field_type(f).transpose())
-                    // .collect::<Vec<_>>(),
+                // .filter_map(|f| field_type(f).transpose())
+                // .collect::<Vec<_>>(),
             })
             .collect::<HashSet<_>>(),
-            // .collect::<Result<_>>()?,
+        // .collect::<Result<_>>()?,
     };
 
     let mut where_clause = where_clause.cloned().unwrap_or_else(|| WhereClause {
@@ -121,9 +121,11 @@ pub fn field_leaf_types(mut field: Field) -> Vec<Type> {
 pub fn field_leaf_types_impl(ty: &Type) -> Vec<Type> {
     match field_wrapper(ty) {
         Some(fw) => match &fw {
-            FieldWrapper::Box(inner) | FieldWrapper::Vec(inner) | FieldWrapper::Option(inner) => field_leaf_types_impl(inner),
+            FieldWrapper::Box(inner) | FieldWrapper::Vec(inner) | FieldWrapper::Option(inner) => {
+                field_leaf_types_impl(inner)
+            }
             FieldWrapper::Tuple(inner) => inner.iter().flat_map(field_leaf_types_impl).collect(),
-        }
+        },
         None => vec![ty.clone()],
     }
 }
@@ -136,17 +138,17 @@ pub fn field_wrapper(ty: &Type) -> Option<FieldWrapper> {
             let last = path.path.segments.last().unwrap();
             let ident = last.ident.to_string();
             let inners = match last.arguments {
-                PathArguments::AngleBracketed(ref args) => {
-                    args.args.iter().filter_map(|a| {
-                        match a {
-                            GenericArgument::Type(inner) => Some(inner.clone()),
-                            _ => {
-                                println!("Couldn't parse generic type argument: {:#?}", a);
-                                None
-                            }
+                PathArguments::AngleBracketed(ref args) => args
+                    .args
+                    .iter()
+                    .filter_map(|a| match a {
+                        GenericArgument::Type(inner) => Some(inner.clone()),
+                        _ => {
+                            println!("Couldn't parse generic type argument: {:#?}", a);
+                            None
                         }
-                    }).collect_vec()
-                }
+                    })
+                    .collect_vec(),
                 _ => {
                     // println!("Invalid type arguments for: {:#?}", ty);
                     vec![]

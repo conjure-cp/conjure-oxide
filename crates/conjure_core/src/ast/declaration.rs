@@ -1,14 +1,14 @@
 use std::sync::atomic::{AtomicU32, Ordering};
 
-use derivative::Derivative;
-use serde::{Deserialize, Serialize};
-use uniplate::derive::Uniplate;
-use uniplate::{Biplate, Tree};
-use derive_to_tokens::ToTokens;
 use super::name::Name;
 use super::serde::{DefaultWithId, HasId, ObjId};
 use super::types::Typeable;
 use super::{DecisionVariable, Domain, Expression, ReturnType};
+use derivative::Derivative;
+use derive_to_tokens::ToTokens;
+use serde::{Deserialize, Serialize};
+use uniplate::derive::Uniplate;
+use uniplate::{Biplate, Tree};
 
 static ID_COUNTER: AtomicU32 = AtomicU32::new(0);
 
