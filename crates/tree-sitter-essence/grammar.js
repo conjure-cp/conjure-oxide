@@ -20,13 +20,24 @@ module.exports = grammar({
     language_label: $ => token(seq("language", /.*/)),
 
     // Basic components
-    constant: $ => choice($.integer, $.TRUE, $.FALSE),
+    constant: $ => choice(field("integer", $.integer), field("true", $.TRUE), field("false", $.FALSE)),
     integer: $ => /[0-9]+/,
     TRUE: $ => "true",
     FALSE: $ => "false",
     variable: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
+    // variable: $ => choice(
+    //   /[a-zA-Z_][a-zA-Z0-9_]*/, $.reserved_keyword
+    // ),
+  
+    // reserved_keyword: $ => choice(
+    //   $.SUCH_THAT, $.FIND, $.LETTING
+    // ),
+    SUCH_THAT: $ => "such that",
+    FIND: $ => "find",
+    LETTING: $ => "letting",
 
     // Find statements
+    // find_statement_list: $ => prec.right(seq(field("find", $.FIND), repeat(field("find_statement", $.find_statement)))),
     find_statement_list: $ => seq("find", repeat(field("find_statement", $.find_statement))),
     find_statement: $ => seq(
       field("variables", $.variable_list),
@@ -69,6 +80,7 @@ module.exports = grammar({
     ),
 
     // Letting statements
+    // letting_statement_list: $ => prec.right(seq(field("letting", $.LETTING), repeat(field("letting_statement", $.letting_statement)))),
     letting_statement_list: $ => seq("letting", repeat(field("letting_statement", $.letting_statement))),
     letting_statement: $ => seq(
       field("variable_list", $.variable_list), 
@@ -77,9 +89,11 @@ module.exports = grammar({
     ),
 
     // Constraints
+    // constraint_list: $ => prec.right(seq(
+      // field("such_that", $.SUCH_THAT), 
     constraint_list: $ => seq(
       "such that", 
-      field("first_expression", $.expression), 
+      field("expression", $.expression), 
       optional(repeat(seq(",", field("expression", $.expression)))), 
       optional(",")
     ),

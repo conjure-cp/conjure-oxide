@@ -23,12 +23,14 @@ pub fn parse_essence_file_native(
     let root_node = tree.root_node();
 
     if root_node.has_error() {
-        let messages = parse_error(root_node, &source_code);
+        let mut messages: Vec<String> = Vec::new();
+        parse_error(root_node, &source_code, &mut messages);
+        let messages_joined = messages.join(&format!("\n{}:", filepath));
         return Err(EssenceParseError::ParseError(Error::Parse(format!(
-            "{}:{}",
+            "\n{}:{}",
             filepath,
-            messages.join("\n")
-        ))));
+            messages_joined)
+        )));
     }
 
     let mut model = Model::new(context);
@@ -354,9 +356,6 @@ fn parse_constraint(constraint: Node, source_code: &str, root: &Node) -> Express
                 Atom::Reference(Name::UserName(variable_name)),
             )
         }
-        "ERROR" => {
-            panic!("");
-        }
         "from_solution" => match root.kind() {
             "dominance_relation" => {
                 let inner = child_expr(constraint, source_code, root);
@@ -384,64 +383,18 @@ fn child_expr(node: Node, source_code: &str, root: &Node) -> Expression {
     parse_constraint(child, source_code, root)
 }
 
-fn parse_error(node: Node, source_code: &str) -> Vec<String> {
-    let mut messages: Vec<String> = Vec::new();
-    // let mut accepted_children_map: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
-
-    // accepted_children_map.extend([
-    //     (
-    //         "program".to_string(),
-    //         BTreeSet::from([
-    //             "find_statement_list".to_string(),
-    //             "constraint_list".to_string(),
-    //             "letting_statement_list".to_string(),
-    //             "dominance_relation".to_string(),
-    //         ]),
-    //     ),
-    //     (
-    //         "find_statement_list".to_string(),
-    //         BTreeSet::from(["find_statement".to_string()])
-    //     ),
-    //     (
-    //         "constraint_list".to_string(),
-    //         BTreeSet::from(["expression".to_string()])
-    //     ),
-    //     (
-    //         "find_statement".to_string(),
-    //         BTreeSet::from(["variable_list".to_string(), "domain".to_string()])
-    //     ),
-    //     (
-    //         "domain_realation".to_string(),
-    //         BTreeSet::from(["expression".to_string()])
-    //     ),
-    //     (
-    //         "letting_statement_list".to_string(),
-    //         BTreeSet::from(["letting_statement".to_string()])
-    //     )
-    // ]);
-    check_node(node, &mut messages, source_code);
-
-    return messages;
-}
-
-fn check_node(node: Node, list: &mut Vec<String>, source_code: &str) {
+fn parse_error(node: Node, source_code: &str, messages: &mut Vec<String>) {
     let mut i = 0;
     for child_node in named_children(&node) {
-        check_node(child_node, list, source_code);
-
+        // if child_node.is_extra() {continue;}
         let x = node.field_name_for_named_child(i);
         i += 1;
         if x.is_some() {
+            parse_error(child_node, source_code, messages);
             continue;
         }
 
-        let message = format!(
-            "{}Invalid {}",
-            get_line(child_node, source_code),
-            child_node.kind()
-        );
-        list.push(message);
-        break;
+        messages.push(get_line(child_node, source_code));
     }
 }
 
@@ -452,15 +405,34 @@ fn get_line(node: Node, source_code: &str) -> String {
         .lines()
         .nth(line - 1)
         .unwrap_or("Line not found");
-    let pointer_line = format!("  |{}^", " ".repeat(character));
+    let pointer_line = format!(" |{}^", " ".repeat(character));
+    let message;
+    if node.parent().unwrap().kind() == "program" {
+        message = format!("Invalid {}", pretty(node.prev_sibling().unwrap().kind()));
+    } else if node.kind() == "ERROR" {
+        message = format!("Invalid {}", pretty(node.parent().unwrap().kind()));
+    } else {
+        message = format!("Invalid {}", pretty(node.kind()));
+    }
 
     return format!(
-        "{}:{}:\n|\n{}|  {}\n{}\nInvalid {}",
+        "{}:{}:\n |\n{}| {}\n{}\n{}\n",
         line,
         character,
         line,
         line_text,
         pointer_line,
-        node.kind()
+        message
     );
+}
+
+
+fn pretty(kind: &str) -> String {
+    let pretty_str = kind
+        .replace("_", " ")
+        .replace(" expr ", " expression ")
+        .replace(" op ", " operator")
+        .replace(" int ", " integer ");
+
+    pretty_str
 }
