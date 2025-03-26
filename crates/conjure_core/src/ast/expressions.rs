@@ -133,6 +133,9 @@ pub enum Expression {
     Imply(Metadata, Box<Expression>, Box<Expression>),
 
     #[compatible(JsonInput)]
+    SubsetEq(Metadata, Box<Expression>, Box<Expression>),
+
+    #[compatible(JsonInput)]
     Eq(Metadata, Box<Expression>, Box<Expression>),
 
     #[compatible(JsonInput)]
@@ -436,6 +439,7 @@ impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
         let ret = match self {
+            Expression::SubsetEq(_, _, _) => Some(Domain::BoolDomain),
             //todo
             Expression::AbstractLiteral(_, _) => None,
             Expression::DominanceRelation(_, _) => Some(Domain::BoolDomain),
@@ -656,6 +660,7 @@ impl Expression {
 
     pub fn return_type(&self) -> Option<ReturnType> {
         match self {
+            Expression::SubsetEq(_, _, _) => Some(ReturnType::Bool),
             Expression::AbstractLiteral(_, _) => None,
             Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
                 Some(subject.return_type()?)
@@ -862,6 +867,9 @@ impl From<Atom> for Expression {
 impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
+            Expression::SubsetEq(_, box1, box2) => {
+                write!(f, "({} subsetEq {})", box1.clone(), box2.clone())
+            }
             Expression::AbstractLiteral(_, l) => l.fmt(f),
             Expression::Comprehension(_, c) => c.fmt(f),
             Expression::UnsafeIndex(_, e1, e2) | Expression::SafeIndex(_, e1, e2) => {
