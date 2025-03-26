@@ -1,17 +1,13 @@
-use conjure_core::ast::Expression;
 use conjure_essence_parser::expression::parse_expression;
 use conjure_essence_parser::util::{get_metavars, get_tree, query_toplevel};
 use proc_macro::TokenStream;
 #[allow(unused)]
 use uniplate::Uniplate;
 
-use proc_macro2::Span;
-use quote::{quote, ToTokens};
-use syn::punctuated::Punctuated;
-use syn::token::Comma;
+use quote::quote;
 use syn::{
-    parenthesized, parse::Parse, parse::ParseStream, parse_macro_input, Ident, ItemFn, LitInt,
-    LitStr, Path, Result,
+    parse::Parse, parse::ParseStream, parse_macro_input,
+    LitStr, Result,
 };
 
 struct EssenceExprArgs {
@@ -52,8 +48,8 @@ pub fn essence_expr(args: TokenStream) -> TokenStream {
 }
 
 mod test {
-    use conjure_essence_parser::parse_expr;
-    use quote::quote;
+    
+    
 
     #[test]
     pub fn test_to_tokens() {
