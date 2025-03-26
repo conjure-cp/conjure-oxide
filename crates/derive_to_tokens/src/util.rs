@@ -2,7 +2,6 @@
 
 use deluxe::ExtractAttributes;
 use itertools::Itertools;
-use quote::ToTokens;
 use std::collections::HashSet;
 use syn::punctuated::Punctuated;
 use syn::{parse_quote, GenericArgument, PathArguments};
@@ -22,14 +21,14 @@ pub fn add_bounds(
             Fields::Named(fields) => fields
                 .named
                 .into_iter()
-                .flat_map(|f| field_leaf_types(f))
+                .flat_map(field_leaf_types)
                 .collect::<HashSet<_>>(),
             //.filter_map(|f| field_type(f).transpose())
             //.collect::<Result<_>>()?,
             Fields::Unnamed(fields) => fields
                 .unnamed
                 .into_iter()
-                .flat_map(|f| field_leaf_types(f))
+                .flat_map(field_leaf_types)
                 .collect::<HashSet<_>>(),
             // .filter_map(|f| field_type(f).transpose())
             // .collect::<Result<_>>()?,
@@ -42,14 +41,14 @@ pub fn add_bounds(
                 Fields::Named(fields) => fields
                     .named
                     .into_iter()
-                    .flat_map(|f| field_leaf_types(f))
+                    .flat_map(field_leaf_types)
                     .collect::<Vec<_>>(),
                 // .filter_map(|f| field_type(f).transpose())
                 // .collect::<Vec<_>>(),
                 Fields::Unnamed(fields) => fields
                     .unnamed
                     .into_iter()
-                    .flat_map(|f| field_leaf_types(f))
+                    .flat_map(field_leaf_types)
                     .collect::<Vec<_>>(),
                 // .filter_map(|f| field_type(f).transpose())
                 // .collect::<Vec<_>>(),

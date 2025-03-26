@@ -1,13 +1,12 @@
 mod util;
 
 use crate::util::add_bounds;
-use proc_macro;
-use proc_macro2::{Delimiter, Group, Literal, Punct, Spacing, TokenStream, TokenTree};
-use quote::{format_ident, quote, ToTokens, TokenStreamExt};
+use proc_macro2::{Delimiter, Group, Punct, Spacing, TokenStream};
+use quote::{format_ident, quote, TokenStreamExt};
 use syn::spanned::Spanned;
-use syn::{parse_quote, Field, FieldsNamed, FieldsUnnamed, Type};
+use syn::{parse_quote, FieldsNamed, FieldsUnnamed, Type};
 use syn::{Data, DataEnum, DataStruct, DeriveInput, Error, Fields, Result};
-use syn::{Ident, Index};
+use syn::Ident;
 use util::{field_wrapper, FieldWrapper};
 
 #[proc_macro_derive(ToTokens, attributes(to_tokens))]
@@ -170,7 +169,7 @@ fn expand_field(ty: &Type, ident: &Ident) -> (TokenStream, TokenStream) {
     match field_wrapper(ty) {
         Some(FieldWrapper::Box(inner)) => {
             // Wrap boxed values into Box::new()
-            let (inner_val, inner_top) = expand_field(&inner, &ident);
+            let (inner_val, inner_top) = expand_field(&inner, ident);
             let val = quote! { Box::new(#inner_val) };
             (val, inner_top)
         }
