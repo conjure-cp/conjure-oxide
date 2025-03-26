@@ -24,6 +24,14 @@ new variables:
   find position#matrix_to_atom_6: int(1..6)
 --
 
+and([(position[Sum([i, k])] = Sum([Sum([position[i], i]), 1])) | i: int(1..3),]),
+allDiff(position#matrix_to_atom), 
+   ~~> substitute_domain_lettings ([("Base", 5000)]) 
+and([(position[Sum([i, k])] = Sum([Sum([position[i], i]), 1])) | i: int(1..3),]),
+allDiff(position#matrix_to_atom) 
+
+--
+
 allDiff(position#matrix_to_atom), 
    ~~> matrix_ref_to_atom ([("Base", 2000)]) 
 allDiff([position#matrix_to_atom_1,position#matrix_to_atom_2,position#matrix_to_atom_3,position#matrix_to_atom_4,position#matrix_to_atom_5,position#matrix_to_atom_6;int(1..)]) 
@@ -555,7 +563,7 @@ position#matrix_to_atom_3
 Final model:
 
 letting k be 3
-find position: matrix indexed by [[positionDomain]] of positionDomain
+find position: matrix indexed by [[int(1..6)]] of int(1..6)
 letting positionDomain be domain int(1..6)
 letting two_k be 6
 find __0: int(1..6)
