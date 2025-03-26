@@ -46,7 +46,7 @@ pub fn test_enum() {
     let c = TestEnum::C(42, true);
     let d = TestEnum::D(Box::new(TestEnum::A));
     let e = TestEnum::E(vec![TestEnum::A, TestEnum::B("World".into())]);
-    let f1 = TestEnum::F(Some(Box::new(TestEnum::A.into())));
+    let f1 = TestEnum::F(Some(Box::new(TestEnum::A)));
     let f2 = TestEnum::F(None);
     let g = TestEnum::G(vec![vec![1, 2, 3], vec![4, 5, 6]]);
 
