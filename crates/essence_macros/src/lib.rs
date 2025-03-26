@@ -23,7 +23,7 @@ pub fn essence_expr(args: TokenStream) -> TokenStream {
     let EssenceExprArgs { essence } = parse_macro_input!(args as EssenceExprArgs);
     let (tree, src) = get_tree(&essence.value()).unwrap();
     let root = tree.root_node();
-    let metavars = get_metavars(&root, &src);
+    let _metavars = get_metavars(&root, &src);
     let mut exprs = query_toplevel(&root, &|n| n.kind() == "expression")
         .map(|node| parse_expression(node, &src, &root));
     // TODO: We know how to get the expressions, but ideally we want the macro to use this information to construct the AST at compile time
@@ -42,13 +42,4 @@ pub fn essence_expr(args: TokenStream) -> TokenStream {
         #expr
     }
     .into()
-}
-
-mod test {
-
-    #[test]
-    pub fn test_to_tokens() {
-        let expr = parse_expr("x + 2").unwrap();
-        println!("{}", quote! {#expr})
-    }
 }
