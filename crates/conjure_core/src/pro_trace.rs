@@ -104,6 +104,7 @@ impl MessageFormatter for JsonFormatter {
 pub enum Consumer {
     StdoutConsumer(StdoutConsumer),
     FileConsumer(FileConsumer),
+    BothConsumer(BothConsumer),
 }
 
 pub struct StdoutConsumer {
@@ -112,6 +113,12 @@ pub struct StdoutConsumer {
 }
 
 pub struct FileConsumer {
+    pub formatter: Box<dyn MessageFormatter>,
+    pub verbosity: VerbosityLevel,
+    pub file_path: String, // path to file where the trace will be written
+}
+
+pub struct BothConsumer {
     pub formatter: Box<dyn MessageFormatter>,
     pub verbosity: VerbosityLevel,
     pub file_path: String, // path to file where the trace will be written
@@ -136,11 +143,25 @@ impl Trace for FileConsumer {
     }
 }
 
+impl Trace for BothConsumer {
+    fn capture(&self, trace: TraceStruct) {
+        let formatted_output = self.formatter.format(trace);
+        println!("{}", formatted_output);
+        let mut file = OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(&self.file_path)
+            .unwrap();
+        writeln!(file, "{}", formatted_output).unwrap();
+    }
+}
+
 // which returns the verbosity level of the consumer
 pub fn check_verbosity_level(consumer: &Consumer) -> VerbosityLevel {
     match consumer {
         Consumer::StdoutConsumer(stdout_consumer) => stdout_consumer.verbosity.clone(),
         Consumer::FileConsumer(file_consumer) => file_consumer.verbosity.clone(),
+        Consumer::BothConsumer(both_consumer) => both_consumer.verbosity.clone(),
     }
 }
 
@@ -154,6 +175,7 @@ pub fn capture_trace(consumer: &Consumer, trace: TraceStruct) {
         Consumer::FileConsumer(file_consumer) => {
             file_consumer.capture(trace);
         }
+        Consumer::BothConsumer(both_consumer) => both_consumer.capture(trace),
     }
 }
 
@@ -181,6 +203,18 @@ pub fn create_consumer(
             }
 
             Consumer::FileConsumer(FileConsumer {
+                formatter,
+                verbosity,
+                file_path,
+            })
+        }
+        "both" => {
+            let path = PathBuf::from(&file_path);
+            if path.exists() {
+                fs::remove_file(&path).unwrap();
+            }
+
+            Consumer::BothConsumer(BothConsumer {
                 formatter,
                 verbosity,
                 file_path,

@@ -143,6 +143,12 @@ struct Cli {
     trace_output: String,
 
     #[arg(
+        long = "trace-output-all",
+        help = "Select output location for trace result: stdout or file"
+    )]
+    trace_output_all: bool,
+
+    #[arg(
         long,
         default_value = "medium",
         help = "Select verbosity level for trace"
@@ -360,6 +366,19 @@ pub fn main() -> AnyhowResult<()> {
 
     if !cli.use_optimising_rewriter {
         tracing::info!("Rewriting model...");
+        // if cli.trace_output_all {
+        //     model = rewrite_naive(
+        //         &model,
+        //         &rule_sets,
+        //         cli.check_equally_applicable_rules,
+        //         Some(create_consumer(
+        //             "file",
+        //             cli.verbosity.clone(),
+        //             cli.formatter.as_str(),
+        //             file,
+        //         )),
+        //     )
+        // }
         model = rewrite_naive(
             &model,
             &rule_sets,
