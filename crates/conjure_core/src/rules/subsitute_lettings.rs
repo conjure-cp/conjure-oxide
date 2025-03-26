@@ -3,8 +3,7 @@ use std::rc::Rc;
 use conjure_macros::register_rule;
 
 use crate::{
-    ast::{Atom, Domain, Expression as Expr, SymbolTable},
-    bug,
+    ast::{Atom, Expression as Expr, SymbolTable},
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
 };
 
@@ -34,23 +33,18 @@ fn substitute_domain_lettings(expr: &Expr, symbols: &SymbolTable) -> Application
     let mut new_symbols = symbols.clone();
     let mut has_changed = false;
 
-    for (_, mut decl) in symbols.clone().into_iter() {
+    for (_, mut decl) in symbols.clone().into_iter_local() {
         let Some(mut var) = decl.as_var().cloned() else {
             continue;
         };
 
-        if let Domain::DomainReference(ref d) = var.domain {
-            var.domain = symbols.domain(d).unwrap_or_else(|| {
-                bug!(
-                    "rule substitute_domain_lettings: domain reference {} does not exist",
-                    d
-                )
-            });
+        let old_domain = var.domain;
+        var.domain = old_domain.clone().resolve(symbols);
+        if old_domain != var.domain {
             *(Rc::make_mut(&mut decl).as_var_mut().unwrap()) = var;
             has_changed = true;
+            new_symbols.update_insert(decl);
         };
-
-        new_symbols.update_insert(decl);
     }
     if has_changed {
         Ok(Reduction::with_symbols(expr.clone(), new_symbols))
