@@ -5,7 +5,7 @@ use proc_macro;
 use proc_macro2::{Delimiter, Group, Literal, Punct, Spacing, TokenStream, TokenTree};
 use quote::{format_ident, quote, ToTokens, TokenStreamExt};
 use syn::spanned::Spanned;
-use syn::{parse_quote, Field, FieldsUnnamed, Type};
+use syn::{parse_quote, Field, FieldsNamed, FieldsUnnamed, Type};
 use syn::{Data, DataEnum, DataStruct, DeriveInput, Error, Fields, Result};
 use syn::{Ident, Index};
 use util::{field_wrapper, FieldWrapper};
@@ -24,7 +24,7 @@ fn expand(stream: TokenStream) -> Result<TokenStream> {
     let body = match &item.data {
         Data::Union(_) => return Err(Error::new_spanned(&item, "unions are not supported")),
         Data::Enum(data) => expand_enum(&ty_name, data)?,
-        Data::Struct(data) => todo!("Implement struct expansion"),
+        Data::Struct(data) => expand_struct(&ty_name, data)?,
     };
     let generics = item.generics.clone();
     let (impl_gen, ty_gen, where_clause) = generics.split_for_impl();
@@ -40,6 +40,44 @@ fn expand(stream: TokenStream) -> Result<TokenStream> {
             }
         }
     })
+}
+
+
+/// Prints every field in sequence, in the order they are specified in the source.
+fn expand_struct(ty_name: &Ident, data: &DataStruct) -> Result<TokenStream> {
+    match &data.fields {
+        Fields::Named(fields) => {
+            let (field_idents, field_values, extra_top) = expand_fields_named(fields);
+            let declarations = make_declarations(&field_idents);
+            Ok(quote! {
+                #declarations
+                #extra_top
+                tokens.extend(quote! { #ty_name { #(#field_idents: #field_values),* } });
+            })
+        }
+        Fields::Unnamed(fields) => {
+            let (field_idents, field_values, extra_top) = expand_fields_unnamed(fields);
+            let declarations = make_declarations(&field_idents);
+            Ok(quote! {
+                #declarations
+                #extra_top
+                tokens.extend(quote! { #ty_name { #(#field_values),* } });
+            })
+        }
+        Fields::Unit => Ok(quote! {
+            tokens.extend(quote! { #ty_name {} });
+        })
+    }
+}
+
+fn make_declarations(idents: &[Ident]) -> TokenStream {
+    let mut tokens = TokenStream::new();
+    for ident in idents {
+        tokens.extend(quote! {
+            let #ident = &self.#ident;
+        })
+    }
+    tokens
 }
 
 fn expand_enum(ty_name: &Ident, data: &DataEnum) -> Result<TokenStream> {
@@ -79,12 +117,14 @@ fn expand_variants(ty_name: &Ident, data: &DataEnum) -> Result<TokenStream> {
             Fields::Named(fields) => {
                 // For named variants, use the actual field names.
                 // Since we're in a named variant, each field is expected to have an identifier.
-                let field_idents: Vec<Ident> = fields.named.iter()
-                    .map(|f| f.ident.clone().expect("named variant must have field names"))
-                    .collect();
+                // let field_idents: Vec<Ident> = fields.named.iter()
+                //     .map(|f| f.ident.clone().expect("named variant must have field names"))
+                //     .collect();
+                let (field_idents, field_values, extra_top) = expand_fields_named(fields);
                 Ok(quote! {
                     #ty_name::#variant_name { #( ref #field_idents, )* } => {
-                        tokens.extend(quote! { #ty_name::#variant_name { #( #field_idents: ##field_idents.into() ),* } });
+                        #extra_top
+                        tokens.extend(quote! { #ty_name::#variant_name { #( #field_idents: #field_values ),* } });
                     }
                 })
             },
@@ -102,6 +142,20 @@ fn expand_fields_unnamed(fields: &FieldsUnnamed) -> (Vec<Ident>, Vec<TokenStream
     let mut extra_top: TokenStream = TokenStream::new();
     for (i, field) in fields.unnamed.iter().enumerate() {
         let ident = format_ident!("field_{}", i);
+        field_idents.push(ident.clone());
+        let (val, top) = expand_field(&field.ty, &ident);
+        field_values.push(val);
+        extra_top.extend(top);
+    }
+    (field_idents, field_values, extra_top)
+}
+
+fn expand_fields_named(fields: &FieldsNamed) -> (Vec<Ident>, Vec<TokenStream>, TokenStream) {
+    let mut field_idents: Vec<Ident> = Vec::new();
+    let mut field_values: Vec<TokenStream> = Vec::new();
+    let mut extra_top: TokenStream = TokenStream::new();
+    for field in fields.named.iter() {
+        let ident = field.ident.clone().expect("named variant must have field names");
         field_idents.push(ident.clone());
         let (val, top) = expand_field(&field.ty, &ident);
         field_values.push(val);
