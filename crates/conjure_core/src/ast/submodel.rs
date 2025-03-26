@@ -11,15 +11,15 @@ use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use uniplate::{Biplate, Tree, Uniplate};
 
+use super::{types::Typeable, Expression, ReturnType, SymbolTable};
 use crate::{bug, metadata::Metadata};
+use quote::ToTokens;
 use std::{
     cell::{Ref, RefCell, RefMut},
     collections::VecDeque,
     fmt::Display,
     rc::Rc,
 };
-
-use super::{types::Typeable, Expression, ReturnType, SymbolTable};
 
 /// A sub-model, representing a lexical scope in the model.
 ///
@@ -33,6 +33,12 @@ pub struct SubModel {
     constraints: Expression,
     #[serde_as(as = "RcRefCellAsInner")]
     symbols: Rc<RefCell<SymbolTable>>,
+}
+
+impl ToTokens for SubModel {
+    fn to_tokens(&self, _tokens: &mut proc_macro2::TokenStream) {
+        panic!("Codegen for SubModel not implemented yet.");
+    }
 }
 
 impl SubModel {

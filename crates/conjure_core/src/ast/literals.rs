@@ -1,3 +1,4 @@
+use derive_to_tokens::ToTokens;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
@@ -8,7 +9,7 @@ use uniplate::{Biplate, Tree, Uniplate};
 
 use super::{Atom, Domain, Expression, Range};
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash, ToTokens)]
 #[uniplate(walk_into=[AbstractLiteral<Literal>])]
 #[biplate(to=Atom)]
 #[biplate(to=AbstractLiteral<Literal>)]
@@ -18,7 +19,7 @@ use super::{Atom, Domain, Expression, Range};
 pub enum Literal {
     Int(i32),
     Bool(bool),
-    AbstractLiteral(AbstractLiteral<Literal>),
+    AbstractLiteral(#[to_tokens(recursive)] AbstractLiteral<Literal>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

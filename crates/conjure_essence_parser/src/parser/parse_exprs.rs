@@ -40,6 +40,7 @@ pub fn parse_exprs(src: &str) -> Result<Vec<Expression>, EssenceParseError> {
 }
 
 fn replace_metavars(expr: &Expression, metavars: Arc<HashMap<String, Expression>>) -> Expression {
+    #[allow(clippy::arc_with_non_send_sync)]
     expr.rewrite(Arc::new(move |sub| match &sub {
         Expression::Metavar(_, name) => metavars.get(name).cloned(),
         _ => None,
@@ -59,7 +60,7 @@ pub fn parse_exprs_with_metavars(
 ) -> Result<Vec<Expression>, EssenceParseError> {
     Ok(parse_exprs(src)?
         .iter()
-        .map(|expr| replace_metavars(&expr, metavars.clone()))
+        .map(|expr| replace_metavars(expr, metavars.clone()))
         .collect())
 }
 

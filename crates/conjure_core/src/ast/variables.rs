@@ -1,9 +1,9 @@
 use std::fmt::Display;
 
-use derivative::Derivative;
-use serde::{Deserialize, Serialize};
-
 use crate::{ast::domains::Domain, representation::Representation};
+use derivative::Derivative;
+use quote::ToTokens;
+use serde::{Deserialize, Serialize};
 
 use super::{types::Typeable, ReturnType};
 
@@ -39,6 +39,12 @@ pub struct DecisionVariable {
     #[serde(skip)]
     #[derivative(Hash = "ignore", PartialEq = "ignore")]
     pub(super) representations: Vec<Vec<Box<dyn Representation>>>,
+}
+
+impl ToTokens for DecisionVariable {
+    fn to_tokens(&self, _tokens: &mut proc_macro2::TokenStream) {
+        panic!("Codegen for DecisionVariable not implemented yet.")
+    }
 }
 
 impl DecisionVariable {

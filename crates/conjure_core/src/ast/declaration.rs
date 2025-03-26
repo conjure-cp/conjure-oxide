@@ -1,20 +1,20 @@
 use std::sync::atomic::{AtomicU32, Ordering};
 
-use derivative::Derivative;
-use serde::{Deserialize, Serialize};
-use uniplate::derive::Uniplate;
-use uniplate::{Biplate, Tree};
-
 use super::name::Name;
 use super::serde::{DefaultWithId, HasId, ObjId};
 use super::types::Typeable;
 use super::{DecisionVariable, Domain, Expression, ReturnType};
+use derivative::Derivative;
+use derive_to_tokens::ToTokens;
+use serde::{Deserialize, Serialize};
+use uniplate::derive::Uniplate;
+use uniplate::{Biplate, Tree};
 
 static ID_COUNTER: AtomicU32 = AtomicU32::new(0);
 
 #[derive(Derivative)]
 #[derivative(PartialEq)]
-#[derive(Debug, Serialize, Deserialize, Eq, Uniplate)]
+#[derive(Debug, Serialize, Deserialize, Eq, Uniplate, ToTokens)]
 #[biplate(to=Expression)]
 #[uniplate(walk_into=[DeclarationKind])]
 pub struct Declaration {
@@ -43,7 +43,7 @@ impl Biplate<Declaration> for DeclarationKind {
 
 /// A specific kind of declaration.
 #[non_exhaustive]
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, ToTokens)]
 #[biplate(to=Expression)]
 pub enum DeclarationKind {
     DecisionVariable(DecisionVariable),

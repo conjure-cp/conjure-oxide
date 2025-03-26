@@ -1,3 +1,4 @@
+use derive_to_tokens::ToTokens;
 use std::collections::VecDeque;
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
@@ -25,7 +26,7 @@ use super::{Domain, Range, SubModel, Typeable};
 /// The `Expression` enum includes operations, constants, and variable references
 /// used to build rules and conditions for the model.
 #[document_compatibility]
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, ToTokens)]
 #[uniplate(walk_into=[Atom,SubModel,AbstractLiteral<Expression>])]
 #[biplate(to=Metadata)]
 #[biplate(to=Atom)]
@@ -37,18 +38,25 @@ use super::{Domain, Range, SubModel, Typeable};
 #[biplate(to=AbstractLiteral<Literal>,walk_into=[Atom])]
 #[biplate(to=Literal,walk_into=[Atom])]
 pub enum Expression {
-    AbstractLiteral(Metadata, AbstractLiteral<Expression>),
+    AbstractLiteral(
+        Metadata,
+        #[to_tokens(recursive)] AbstractLiteral<Expression>,
+    ),
     /// The top of the model
-    Root(Metadata, Vec<Expression>),
+    Root(Metadata, #[to_tokens(recursive)] Vec<Expression>),
 
     /// An expression representing "A is valid as long as B is true"
     /// Turns into a conjunction when it reaches a boolean context
-    Bubble(Metadata, Box<Expression>, Box<Expression>),
+    Bubble(
+        Metadata,
+        #[to_tokens(recursive)] Box<Expression>,
+        #[to_tokens(recursive)] Box<Expression>,
+    ),
 
     /// Defines dominance ("Solution A is preferred over Solution B")
-    DominanceRelation(Metadata, Box<Expression>),
+    DominanceRelation(Metadata, #[to_tokens(recursive)] Box<Expression>),
     /// `fromSolution(name)` - Used in dominance relation definitions
-    FromSolution(Metadata, Box<Expression>),
+    FromSolution(Metadata, #[to_tokens(recursive)] Box<Expression>),
 
     /// A "meta-variable" (i.e. named template argument to be replaced before evaluation)
     Metavar(Metadata, String),
@@ -60,12 +68,20 @@ pub enum Expression {
     ///
     /// Defined iff the indices are within their respective index domains.
     #[compatible(JsonInput)]
-    UnsafeIndex(Metadata, Box<Expression>, Vec<Expression>),
+    UnsafeIndex(
+        Metadata,
+        #[to_tokens(recursive)] Box<Expression>,
+        #[to_tokens(recursive)] Vec<Expression>,
+    ),
 
     /// A safe matrix index.
     ///
     /// See [`Expression::UnsafeIndex`]
-    SafeIndex(Metadata, Box<Expression>, Vec<Expression>),
+    SafeIndex(
+        Metadata,
+        #[to_tokens(recursive)] Box<Expression>,
+        #[to_tokens(recursive)] Vec<Expression>,
+    ),
 
     /// A matrix slice: `a[indices]`.
     ///
@@ -77,112 +93,176 @@ pub enum Expression {
     ///
     /// Defined iff the defined indices are within their respective index domains.
     #[compatible(JsonInput)]
-    UnsafeSlice(Metadata, Box<Expression>, Vec<Option<Expression>>),
+    UnsafeSlice(
+        Metadata,
+        #[to_tokens(recursive)] Box<Expression>,
+        #[to_tokens(recursive)] Vec<Option<Expression>>,
+    ),
 
     /// A safe matrix slice: `a[indices]`.
     ///
     /// See [`Expression::UnsafeSlice`].
-    SafeSlice(Metadata, Box<Expression>, Vec<Option<Expression>>),
+    SafeSlice(
+        Metadata,
+        #[to_tokens(recursive)] Box<Expression>,
+        #[to_tokens(recursive)] Vec<Option<Expression>>,
+    ),
 
     /// `inDomain(x,domain)` iff `x` is in the domain `domain`.
     ///
     /// This cannot be constructed from Essence input, nor passed to a solver: this expression is
     /// mainly used during the conversion of `UnsafeIndex` and `UnsafeSlice` to `SafeIndex` and
     /// `SafeSlice` respectively.
-    InDomain(Metadata, Box<Expression>, Domain),
+    InDomain(Metadata, #[to_tokens(recursive)] Box<Expression>, Domain),
 
     Scope(Metadata, Box<SubModel>),
 
     /// `|x|` - absolute value of `x`
     #[compatible(JsonInput)]
-    Abs(Metadata, Box<Expression>),
+    Abs(Metadata, #[to_tokens(recursive)] Box<Expression>),
 
     /// `a + b + c + ...`
     #[compatible(JsonInput)]
-    Sum(Metadata, Vec<Expression>),
+    Sum(Metadata, #[to_tokens(recursive)] Vec<Expression>),
 
     /// `a * b * c * ...`
     #[compatible(JsonInput)]
-    Product(Metadata, Vec<Expression>),
+    Product(Metadata, #[to_tokens(recursive)] Vec<Expression>),
 
     /// `min(<vec_expr>)`
     #[compatible(JsonInput)]
-    Min(Metadata, Box<Expression>),
+    Min(Metadata, #[to_tokens(recursive)] Box<Expression>),
 
     /// `max(<vec_expr>)`
     #[compatible(JsonInput)]
-    Max(Metadata, Box<Expression>),
+    Max(Metadata, #[to_tokens(recursive)] Box<Expression>),
 
     /// `not(a)`
     #[compatible(JsonInput, SAT)]
-    Not(Metadata, Box<Expression>),
+    Not(Metadata, #[to_tokens(recursive)] Box<Expression>),
 
     /// `or(<vec_expr>)`
     #[compatible(JsonInput, SAT)]
-    Or(Metadata, Box<Expression>),
+    Or(Metadata, #[to_tokens(recursive)] Box<Expression>),
 
     /// `and(<vec_expr>)`
     #[compatible(JsonInput, SAT)]
-    And(Metadata, Box<Expression>),
+    And(Metadata, #[to_tokens(recursive)] Box<Expression>),
 
     /// Ensures that `a->b` (material implication).
     #[compatible(JsonInput)]
-    Imply(Metadata, Box<Expression>, Box<Expression>),
+    Imply(
+        Metadata,
+        #[to_tokens(recursive)] Box<Expression>,
+        #[to_tokens(recursive)] Box<Expression>,
+    ),
 
     #[compatible(JsonInput)]
-    Eq(Metadata, Box<Expression>, Box<Expression>),
+    Eq(
+        Metadata,
+        #[to_tokens(recursive)] Box<Expression>,
+        #[to_tokens(recursive)] Box<Expression>,
+    ),
 
     #[compatible(JsonInput)]
-    Neq(Metadata, Box<Expression>, Box<Expression>),
+    Neq(
+        Metadata,
+        #[to_tokens(recursive)] Box<Expression>,
+        #[to_tokens(recursive)] Box<Expression>,
+    ),
 
     #[compatible(JsonInput)]
-    Geq(Metadata, Box<Expression>, Box<Expression>),
+    Geq(
+        Metadata,
+        #[to_tokens(recursive)] Box<Expression>,
+        #[to_tokens(recursive)] Box<Expression>,
+    ),
 
     #[compatible(JsonInput)]
-    Leq(Metadata, Box<Expression>, Box<Expression>),
+    Leq(
+        Metadata,
+        #[to_tokens(recursive)] Box<Expression>,
+        #[to_tokens(recursive)] Box<Expression>,
+    ),
 
     #[compatible(JsonInput)]
-    Gt(Metadata, Box<Expression>, Box<Expression>),
+    Gt(
+        Metadata,
+        #[to_tokens(recursive)] Box<Expression>,
+        #[to_tokens(recursive)] Box<Expression>,
+    ),
 
     #[compatible(JsonInput)]
-    Lt(Metadata, Box<Expression>, Box<Expression>),
+    Lt(
+        Metadata,
+        #[to_tokens(recursive)] Box<Expression>,
+        #[to_tokens(recursive)] Box<Expression>,
+    ),
 
     /// Division after preventing division by zero, usually with a bubble
-    SafeDiv(Metadata, Box<Expression>, Box<Expression>),
+    SafeDiv(
+        Metadata,
+        #[to_tokens(recursive)] Box<Expression>,
+        #[to_tokens(recursive)] Box<Expression>,
+    ),
 
     /// Division with a possibly undefined value (division by 0)
     #[compatible(JsonInput)]
-    UnsafeDiv(Metadata, Box<Expression>, Box<Expression>),
+    UnsafeDiv(
+        Metadata,
+        #[to_tokens(recursive)] Box<Expression>,
+        #[to_tokens(recursive)] Box<Expression>,
+    ),
 
     /// Modulo after preventing mod 0, usually with a bubble
-    SafeMod(Metadata, Box<Expression>, Box<Expression>),
+    SafeMod(
+        Metadata,
+        #[to_tokens(recursive)] Box<Expression>,
+        #[to_tokens(recursive)] Box<Expression>,
+    ),
 
     /// Modulo with a possibly undefined value (mod 0)
     #[compatible(JsonInput)]
-    UnsafeMod(Metadata, Box<Expression>, Box<Expression>),
+    UnsafeMod(
+        Metadata,
+        #[to_tokens(recursive)] Box<Expression>,
+        #[to_tokens(recursive)] Box<Expression>,
+    ),
 
     /// Negation: `-x`
     #[compatible(JsonInput)]
-    Neg(Metadata, Box<Expression>),
+    Neg(Metadata, #[to_tokens(recursive)] Box<Expression>),
 
     /// Unsafe power`x**y` (possibly undefined)
     ///
     /// Defined when (X!=0 \\/ Y!=0) /\ Y>=0
     #[compatible(JsonInput)]
-    UnsafePow(Metadata, Box<Expression>, Box<Expression>),
+    UnsafePow(
+        Metadata,
+        #[to_tokens(recursive)] Box<Expression>,
+        #[to_tokens(recursive)] Box<Expression>,
+    ),
 
     /// `UnsafePow` after preventing undefinedness
-    SafePow(Metadata, Box<Expression>, Box<Expression>),
+    SafePow(
+        Metadata,
+        #[to_tokens(recursive)] Box<Expression>,
+        #[to_tokens(recursive)] Box<Expression>,
+    ),
 
     /// `allDiff(<vec_expr>)`
     #[compatible(JsonInput)]
-    AllDiff(Metadata, Box<Expression>),
+    AllDiff(Metadata, #[to_tokens(recursive)] Box<Expression>),
 
     /// Binary subtraction operator
     ///
     /// This is a parser-level construct, and is immediately normalised to `Sum([a,-b])`.
     #[compatible(JsonInput)]
-    Minus(Metadata, Box<Expression>, Box<Expression>),
+    Minus(
+        Metadata,
+        #[to_tokens(recursive)] Box<Expression>,
+        #[to_tokens(recursive)] Box<Expression>,
+    ),
 
     /// Ensures that x=|y| i.e. x is the absolute value of y.
     ///
@@ -337,7 +417,7 @@ pub enum Expression {
     ///
     ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#reify)
     #[compatible(Minion)]
-    MinionReify(Metadata, Box<Expression>, Atom),
+    MinionReify(Metadata, #[to_tokens(recursive)] Box<Expression>, Atom),
 
     /// `reifyimply(constraint,r)` ensures that `r->constraint`, where r is a 0/1 variable.
     /// variable.
@@ -348,13 +428,13 @@ pub enum Expression {
     ///
     ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#reifyimply)
     #[compatible(Minion)]
-    MinionReifyImply(Metadata, Box<Expression>, Atom),
+    MinionReifyImply(Metadata, #[to_tokens(recursive)] Box<Expression>, Atom),
 
     /// Declaration of an auxiliary variable.
     ///
     /// As with Savile Row, we semantically distinguish this from `Eq`.
     #[compatible(Minion)]
-    AuxDeclaration(Metadata, Name, Box<Expression>),
+    AuxDeclaration(Metadata, Name, #[to_tokens(recursive)] Box<Expression>),
 }
 
 fn expr_vec_to_domain_i32(
