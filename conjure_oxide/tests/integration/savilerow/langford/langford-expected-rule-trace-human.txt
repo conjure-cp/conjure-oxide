@@ -50,6 +50,16 @@ __flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#m
 
 --
 
+and([(position[Sum([1, k])] = Sum([Sum([position[1], 1]), 1])),(position[Sum([2, k])] = Sum([Sum([position[2], 2]), 1])),(position[Sum([3, k])] = Sum([Sum([position[3], 3]), 1]));int(1..)]),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(position[Sum([1, k])] = Sum([Sum([position[1], 1]), 1])),
+(position[Sum([2, k])] = Sum([Sum([position[2], 2]), 1])),
+(position[Sum([3, k])] = Sum([Sum([position[3], 3]), 1])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]) 
+
+--
+
 Sum([Sum([position[1], 1]), 1]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
 Sum([position[1], 1, 1]) 
@@ -140,9 +150,44 @@ and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2]
 
 --
 
-and([and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),and([and([__inDomain(Sum([1, k]),int(1..6));int(1..)]);int(1..)]);int(1..)]),(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4]));int(1..)]), 
-   ~~> normalise_associative_commutative ([("Base", 8900)]) 
-and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),__inDomain(Sum([1, k]),int(1..6)),(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4]));int(1..)]) 
+and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),and([and([__inDomain(Sum([1, k]),int(1..6));int(1..)]);int(1..)]);int(1..)]),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+and([and([__inDomain(Sum([1, k]),int(1..6));int(1..)]);int(1..)]),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]) 
+
+--
+
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+and([and([__inDomain(Sum([1, k]),int(1..6));int(1..)]);int(1..)]),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+and([__inDomain(Sum([1, k]),int(1..6));int(1..)]),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]) 
+
+--
+
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+and([__inDomain(Sum([1, k]),int(1..6));int(1..)]),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]) 
 
 --
 
@@ -188,15 +233,33 @@ and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2]
 
 --
 
-and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),true;int(1..)]), 
+and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),true;int(1..)]),
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2]));int(1..)]) 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+true,
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]) 
 
 --
 
-and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2]));int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
-(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])) 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+true,
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]) 
 
 --
 
@@ -218,9 +281,50 @@ and([(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3]
 
 --
 
-and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),__inDomain(Sum([1, k]),int(1..6)),and([(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),and([and([__inDomain(Sum([2, k]),int(1..6));int(1..)]);int(1..)]);int(1..)]),(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4]));int(1..)]), 
-   ~~> normalise_associative_commutative ([("Base", 8900)]) 
-and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),__inDomain(Sum([1, k]),int(1..6)),(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),__inDomain(Sum([2, k]),int(1..6)),(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4]));int(1..)]) 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+and([(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),and([and([__inDomain(Sum([2, k]),int(1..6));int(1..)]);int(1..)]);int(1..)]),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+and([and([__inDomain(Sum([2, k]),int(1..6));int(1..)]);int(1..)]),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]) 
+
+--
+
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+and([and([__inDomain(Sum([2, k]),int(1..6));int(1..)]);int(1..)]),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+and([__inDomain(Sum([2, k]),int(1..6));int(1..)]),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]) 
+
+--
+
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+and([__inDomain(Sum([2, k]),int(1..6));int(1..)]),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+__inDomain(Sum([2, k]),int(1..6)),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]) 
 
 --
 
@@ -266,15 +370,37 @@ and([(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3]
 
 --
 
-and([(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),true;int(1..)]), 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+and([(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),true;int(1..)]),
+__inDomain(Sum([2, k]),int(1..6)),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-and([(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3]));int(1..)]) 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+true,
+__inDomain(Sum([2, k]),int(1..6)),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]) 
 
 --
 
-and([(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3]));int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
-(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])) 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+true,
+__inDomain(Sum([2, k]),int(1..6)),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+__inDomain(Sum([2, k]),int(1..6)),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]) 
 
 --
 
@@ -296,9 +422,56 @@ and([(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4]
 
 --
 
-and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),__inDomain(Sum([1, k]),int(1..6)),(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),__inDomain(Sum([2, k]),int(1..6)),and([(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),and([and([__inDomain(Sum([3, k]),int(1..6));int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
-   ~~> normalise_associative_commutative ([("Base", 8900)]) 
-and([(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),__inDomain(Sum([1, k]),int(1..6)),(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),__inDomain(Sum([2, k]),int(1..6)),(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),__inDomain(Sum([3, k]),int(1..6));int(1..)]) 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+__inDomain(Sum([2, k]),int(1..6)),
+and([(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),and([and([__inDomain(Sum([3, k]),int(1..6));int(1..)]);int(1..)]);int(1..)]),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+__inDomain(Sum([2, k]),int(1..6)),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+and([and([__inDomain(Sum([3, k]),int(1..6));int(1..)]);int(1..)]),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]) 
+
+--
+
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+__inDomain(Sum([2, k]),int(1..6)),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+and([and([__inDomain(Sum([3, k]),int(1..6));int(1..)]);int(1..)]),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+__inDomain(Sum([2, k]),int(1..6)),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+and([__inDomain(Sum([3, k]),int(1..6));int(1..)]),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]) 
+
+--
+
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+__inDomain(Sum([2, k]),int(1..6)),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+and([__inDomain(Sum([3, k]),int(1..6));int(1..)]),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+__inDomain(Sum([2, k]),int(1..6)),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__inDomain(Sum([3, k]),int(1..6)),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]) 
 
 --
 
@@ -344,15 +517,41 @@ and([(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4]
 
 --
 
-and([(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),true;int(1..)]), 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+__inDomain(Sum([2, k]),int(1..6)),
+and([(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),true;int(1..)]),
+__inDomain(Sum([3, k]),int(1..6)),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-and([(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4]));int(1..)]) 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+__inDomain(Sum([2, k]),int(1..6)),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+true,
+__inDomain(Sum([3, k]),int(1..6)),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]) 
 
 --
 
-and([(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4]));int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
-(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])) 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+__inDomain(Sum([2, k]),int(1..6)),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+true,
+__inDomain(Sum([3, k]),int(1..6)),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(position#matrix_to_atom[Sum([1, k])] = Sum([position#matrix_to_atom[1], 2])),
+__inDomain(Sum([1, k]),int(1..6)),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+__inDomain(Sum([2, k]),int(1..6)),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__inDomain(Sum([3, k]),int(1..6)),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]) 
 
 --
 
@@ -386,9 +585,20 @@ true
 
 --
 
-and([(position#matrix_to_atom[4] = Sum([position#matrix_to_atom[1], 2])),true,(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),__inDomain(Sum([2, k]),int(1..6)),(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),__inDomain(Sum([3, k]),int(1..6));int(1..)]), 
+(position#matrix_to_atom[4] = Sum([position#matrix_to_atom[1], 2])),
+true,
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+__inDomain(Sum([2, k]),int(1..6)),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__inDomain(Sum([3, k]),int(1..6)),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-and([(position#matrix_to_atom[4] = Sum([position#matrix_to_atom[1], 2])),(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),__inDomain(Sum([2, k]),int(1..6)),(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),__inDomain(Sum([3, k]),int(1..6));int(1..)]) 
+(position#matrix_to_atom[4] = Sum([position#matrix_to_atom[1], 2])),
+(position#matrix_to_atom[Sum([2, k])] = Sum([position#matrix_to_atom[2], 3])),
+__inDomain(Sum([2, k]),int(1..6)),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__inDomain(Sum([3, k]),int(1..6)),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]) 
 
 --
 
@@ -422,9 +632,18 @@ true
 
 --
 
-and([(position#matrix_to_atom[4] = Sum([position#matrix_to_atom[1], 2])),(position#matrix_to_atom[5] = Sum([position#matrix_to_atom[2], 3])),true,(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),__inDomain(Sum([3, k]),int(1..6));int(1..)]), 
+(position#matrix_to_atom[4] = Sum([position#matrix_to_atom[1], 2])),
+(position#matrix_to_atom[5] = Sum([position#matrix_to_atom[2], 3])),
+true,
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__inDomain(Sum([3, k]),int(1..6)),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-and([(position#matrix_to_atom[4] = Sum([position#matrix_to_atom[1], 2])),(position#matrix_to_atom[5] = Sum([position#matrix_to_atom[2], 3])),(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),__inDomain(Sum([3, k]),int(1..6));int(1..)]) 
+(position#matrix_to_atom[4] = Sum([position#matrix_to_atom[1], 2])),
+(position#matrix_to_atom[5] = Sum([position#matrix_to_atom[2], 3])),
+(position#matrix_to_atom[Sum([3, k])] = Sum([position#matrix_to_atom[3], 4])),
+__inDomain(Sum([3, k]),int(1..6)),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]) 
 
 --
 
@@ -458,9 +677,16 @@ true
 
 --
 
-and([(position#matrix_to_atom[4] = Sum([position#matrix_to_atom[1], 2])),(position#matrix_to_atom[5] = Sum([position#matrix_to_atom[2], 3])),(position#matrix_to_atom[6] = Sum([position#matrix_to_atom[3], 4])),true;int(1..)]), 
+(position#matrix_to_atom[4] = Sum([position#matrix_to_atom[1], 2])),
+(position#matrix_to_atom[5] = Sum([position#matrix_to_atom[2], 3])),
+(position#matrix_to_atom[6] = Sum([position#matrix_to_atom[3], 4])),
+true,
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-and([(position#matrix_to_atom[4] = Sum([position#matrix_to_atom[1], 2])),(position#matrix_to_atom[5] = Sum([position#matrix_to_atom[2], 3])),(position#matrix_to_atom[6] = Sum([position#matrix_to_atom[3], 4]));int(1..)]) 
+(position#matrix_to_atom[4] = Sum([position#matrix_to_atom[1], 2])),
+(position#matrix_to_atom[5] = Sum([position#matrix_to_atom[2], 3])),
+(position#matrix_to_atom[6] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]) 
 
 --
 
@@ -484,6 +710,25 @@ new constraints:
   __2 =aux position#matrix_to_atom[1]
 --
 
+(__0 = __1),
+(position#matrix_to_atom[5] = Sum([position#matrix_to_atom[2], 3])),
+(position#matrix_to_atom[6] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]),
+__0 =aux position#matrix_to_atom[4],
+and([SumLeq([__2, 2], __1),SumGeq([__2, 2], __1);int(1..)]),
+__2 =aux position#matrix_to_atom[1], 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(__0 = __1),
+(position#matrix_to_atom[5] = Sum([position#matrix_to_atom[2], 3])),
+(position#matrix_to_atom[6] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]),
+__0 =aux position#matrix_to_atom[4],
+SumLeq([__2, 2], __1),
+SumGeq([__2, 2], __1),
+__2 =aux position#matrix_to_atom[1] 
+
+--
+
 (position#matrix_to_atom[5] = Sum([position#matrix_to_atom[2], 3])), 
    ~~> flatten_eq ([("Minion", 4200)]) 
 (__3 = __4) 
@@ -504,6 +749,33 @@ new constraints:
   __5 =aux position#matrix_to_atom[2]
 --
 
+(__0 = __1),
+(__3 = __4),
+(position#matrix_to_atom[6] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]),
+__0 =aux position#matrix_to_atom[4],
+SumLeq([__2, 2], __1),
+SumGeq([__2, 2], __1),
+__2 =aux position#matrix_to_atom[1],
+__3 =aux position#matrix_to_atom[5],
+and([SumLeq([__5, 3], __4),SumGeq([__5, 3], __4);int(1..)]),
+__5 =aux position#matrix_to_atom[2], 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(__0 = __1),
+(__3 = __4),
+(position#matrix_to_atom[6] = Sum([position#matrix_to_atom[3], 4])),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]),
+__0 =aux position#matrix_to_atom[4],
+SumLeq([__2, 2], __1),
+SumGeq([__2, 2], __1),
+__2 =aux position#matrix_to_atom[1],
+__3 =aux position#matrix_to_atom[5],
+SumLeq([__5, 3], __4),
+SumGeq([__5, 3], __4),
+__5 =aux position#matrix_to_atom[2] 
+
+--
+
 (position#matrix_to_atom[6] = Sum([position#matrix_to_atom[3], 4])), 
    ~~> flatten_eq ([("Minion", 4200)]) 
 (__6 = __7) 
@@ -522,6 +794,41 @@ new variables:
   find __8: int(1..6)
 new constraints:
   __8 =aux position#matrix_to_atom[3]
+--
+
+(__0 = __1),
+(__3 = __4),
+(__6 = __7),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]),
+__0 =aux position#matrix_to_atom[4],
+SumLeq([__2, 2], __1),
+SumGeq([__2, 2], __1),
+__2 =aux position#matrix_to_atom[1],
+__3 =aux position#matrix_to_atom[5],
+SumLeq([__5, 3], __4),
+SumGeq([__5, 3], __4),
+__5 =aux position#matrix_to_atom[2],
+__6 =aux position#matrix_to_atom[6],
+and([SumLeq([__8, 4], __7),SumGeq([__8, 4], __7);int(1..)]),
+__8 =aux position#matrix_to_atom[3], 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(__0 = __1),
+(__3 = __4),
+(__6 = __7),
+__flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]),
+__0 =aux position#matrix_to_atom[4],
+SumLeq([__2, 2], __1),
+SumGeq([__2, 2], __1),
+__2 =aux position#matrix_to_atom[1],
+__3 =aux position#matrix_to_atom[5],
+SumLeq([__5, 3], __4),
+SumGeq([__5, 3], __4),
+__5 =aux position#matrix_to_atom[2],
+__6 =aux position#matrix_to_atom[6],
+SumLeq([__8, 4], __7),
+SumGeq([__8, 4], __7),
+__8 =aux position#matrix_to_atom[3] 
+
 --
 
 position#matrix_to_atom[4], 
@@ -584,15 +891,20 @@ find position#matrix_to_atom_6: int(1..6)
 
 such that
 
-and([(__0 = __1),(__3 = __4),(__6 = __7);int(1..)]),
+(__0 = __1),
+(__3 = __4),
+(__6 = __7),
 __flat_alldiff([position#matrix_to_atom_1, position#matrix_to_atom_2, position#matrix_to_atom_3, position#matrix_to_atom_4, position#matrix_to_atom_5, position#matrix_to_atom_6]),
 __0 =aux position#matrix_to_atom_4,
-and([SumLeq([__2, 2], __1),SumGeq([__2, 2], __1);int(1..)]),
+SumLeq([__2, 2], __1),
+SumGeq([__2, 2], __1),
 __2 =aux position#matrix_to_atom_1,
 __3 =aux position#matrix_to_atom_5,
-and([SumLeq([__5, 3], __4),SumGeq([__5, 3], __4);int(1..)]),
+SumLeq([__5, 3], __4),
+SumGeq([__5, 3], __4),
 __5 =aux position#matrix_to_atom_2,
 __6 =aux position#matrix_to_atom_6,
-and([SumLeq([__8, 4], __7),SumGeq([__8, 4], __7);int(1..)]),
+SumLeq([__8, 4], __7),
+SumGeq([__8, 4], __7),
 __8 =aux position#matrix_to_atom_3
 

@@ -28,8 +28,17 @@ and([(a != SafeDiv(b, c)),and([(c != 0);int(1..)]);int(1..)])
 
 --
 
+and([(a != SafeDiv(b, c)),and([(c != 0);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(a != SafeDiv(b, c)),
+and([(c != 0);int(1..)]) 
+
+--
+
+(a != SafeDiv(b, c)),
 and([(c != 0);int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(a != SafeDiv(b, c)),
 (c != 0) 
 
 --
@@ -58,6 +67,7 @@ find __0: int(0..3)
 
 such that
 
-and([(a != __0),(c != 0);int(1..)]),
+(a != __0),
+(c != 0),
 DivEq(b, c, __0)
 

@@ -35,6 +35,16 @@ Ineq(x, 3, 0)
 
 --
 
+(x = 1),
+and([((y < 5)) -> ((m[1] = 1)),((y < 5)) -> ((m[2] = 2)),((y < 5)) -> ((m[3] = 3));int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(x = 1),
+((y < 5)) -> ((m[1] = 1)),
+((y < 5)) -> ((m[2] = 2)),
+((y < 5)) -> ((m[3] = 3)) 
+
+--
+
 (y < 5), 
    ~~> lt_to_leq ([("Minion", 8400)]) 
 (y <= Sum([5, -1])) 
@@ -336,7 +346,9 @@ find m#matrix_to_atom_5: int(1..5)
 such that
 
 (x = 1),
-and([ReifyImply((m#matrix_to_atom_1 = 1), __0),ReifyImply((m#matrix_to_atom_2 = 2), __1),ReifyImply((m#matrix_to_atom_3 = 3), __2);int(1..)]),
+ReifyImply((m#matrix_to_atom_1 = 1), __0),
+ReifyImply((m#matrix_to_atom_2 = 2), __1),
+ReifyImply((m#matrix_to_atom_3 = 3), __2),
 Reify(Ineq(y, 4, 0), __0),
 Reify(Ineq(y, 4, 0), __1),
 Reify(Ineq(y, 4, 0), __2)

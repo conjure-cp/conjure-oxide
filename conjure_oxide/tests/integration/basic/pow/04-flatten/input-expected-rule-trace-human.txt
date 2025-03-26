@@ -53,12 +53,14 @@ and([(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4),true;int(1..)])
 
 and([(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4),true;int(1..)]), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-and([(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4);int(1..)]) 
+(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4),
+true 
 
 --
 
-and([(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4);int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4),
+true, 
+   ~~> partial_evaluator ([("Base", 9000)]) 
 (UnsafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4) 
 
 --
@@ -82,8 +84,26 @@ and([(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4),and([and([or([(Sum([x, 2]) != 0),
 --
 
 and([(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4),and([and([or([(Sum([x, 2]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),(SafeDiv(y, 2) >= 0);int(1..)]);int(1..)]);int(1..)]), 
-   ~~> normalise_associative_commutative ([("Base", 8900)]) 
-and([(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4),or([(Sum([x, 2]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),(SafeDiv(y, 2) >= 0);int(1..)]) 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4),
+and([and([or([(Sum([x, 2]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),(SafeDiv(y, 2) >= 0);int(1..)]);int(1..)]) 
+
+--
+
+(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4),
+and([and([or([(Sum([x, 2]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),(SafeDiv(y, 2) >= 0);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4),
+and([or([(Sum([x, 2]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),(SafeDiv(y, 2) >= 0);int(1..)]) 
+
+--
+
+(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4),
+and([or([(Sum([x, 2]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),(SafeDiv(y, 2) >= 0);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(SafePow(Sum([x, 2]), SafeDiv(y, 2)) = 4),
+or([(Sum([x, 2]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),
+(SafeDiv(y, 2) >= 0) 
 
 --
 
@@ -101,6 +121,21 @@ new constraints:
 __0 =aux Sum([x, 2]), 
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
 and([SumLeq([x, 2], __0),SumGeq([x, 2], __0);int(1..)]) 
+
+--
+
+(SafePow(__0, __1) = 4),
+or([(Sum([x, 2]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),
+(SafeDiv(y, 2) >= 0),
+and([SumLeq([x, 2], __0),SumGeq([x, 2], __0);int(1..)]),
+__1 =aux SafeDiv(y, 2), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(SafePow(__0, __1) = 4),
+or([(Sum([x, 2]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),
+(SafeDiv(y, 2) >= 0),
+SumLeq([x, 2], __0),
+SumGeq([x, 2], __0),
+__1 =aux SafeDiv(y, 2) 
 
 --
 
@@ -122,6 +157,25 @@ new constraints:
 __2 =aux Sum([x, 2]), 
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
 and([SumLeq([x, 2], __2),SumGeq([x, 2], __2);int(1..)]) 
+
+--
+
+MinionPow(__0,__1,4),
+or([(__2 != 0),(SafeDiv(y, 2) != 0);int(1..)]),
+(SafeDiv(y, 2) >= 0),
+SumLeq([x, 2], __0),
+SumGeq([x, 2], __0),
+__1 =aux SafeDiv(y, 2),
+and([SumLeq([x, 2], __2),SumGeq([x, 2], __2);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+MinionPow(__0,__1,4),
+or([(__2 != 0),(SafeDiv(y, 2) != 0);int(1..)]),
+(SafeDiv(y, 2) >= 0),
+SumLeq([x, 2], __0),
+SumGeq([x, 2], __0),
+__1 =aux SafeDiv(y, 2),
+SumLeq([x, 2], __2),
+SumGeq([x, 2], __2) 
 
 --
 
@@ -179,10 +233,14 @@ find __4: int(0..2)
 
 such that
 
-and([MinionPow(__0,__1,4),or([(__2 != 0),(__3 != 0);int(1..)]),Ineq(0, __4, 0);int(1..)]),
-and([SumLeq([x, 2], __0),SumGeq([x, 2], __0);int(1..)]),
+MinionPow(__0,__1,4),
+or([(__2 != 0),(__3 != 0);int(1..)]),
+Ineq(0, __4, 0),
+SumLeq([x, 2], __0),
+SumGeq([x, 2], __0),
 DivEq(y, 2, __1),
-and([SumLeq([x, 2], __2),SumGeq([x, 2], __2);int(1..)]),
+SumLeq([x, 2], __2),
+SumGeq([x, 2], __2),
 DivEq(y, 2, __3),
 DivEq(y, 2, __4)
 
