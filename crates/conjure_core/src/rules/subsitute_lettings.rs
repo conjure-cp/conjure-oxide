@@ -30,6 +30,10 @@ fn substitute_value_lettings(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
 /// Substitutes domain lettings for their values in the symbol table.
 #[register_rule(("Base", 5000))]
 fn substitute_domain_lettings(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Root(_, _) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
     let mut new_symbols = symbols.clone();
     let mut has_changed = false;
 
