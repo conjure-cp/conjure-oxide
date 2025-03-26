@@ -33,6 +33,14 @@ true
 
 --
 
+and([(a[1] = 1),(a[2] = 2),(a[3] = 3);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(a[1] = 1),
+(a[2] = 2),
+(a[3] = 3) 
+
+--
+
 a, 
    ~~> select_representation ([("Base", 8000)]) 
 a#matrix_to_atom 
@@ -84,15 +92,25 @@ and([(a#matrix_to_atom[1] = 1),true;int(1..)])
 
 --
 
-and([(a#matrix_to_atom[1] = 1),true;int(1..)]), 
+and([(a#matrix_to_atom[1] = 1),true;int(1..)]),
+(a#matrix_to_atom[2] = 2),
+(a#matrix_to_atom[3] = 3), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-and([(a#matrix_to_atom[1] = 1);int(1..)]) 
+(a#matrix_to_atom[1] = 1),
+true,
+(a#matrix_to_atom[2] = 2),
+(a#matrix_to_atom[3] = 3) 
 
 --
 
-and([(a#matrix_to_atom[1] = 1);int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
-(a#matrix_to_atom[1] = 1) 
+(a#matrix_to_atom[1] = 1),
+true,
+(a#matrix_to_atom[2] = 2),
+(a#matrix_to_atom[3] = 3), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(a#matrix_to_atom[1] = 1),
+(a#matrix_to_atom[2] = 2),
+(a#matrix_to_atom[3] = 3) 
 
 --
 
@@ -126,15 +144,25 @@ and([(a#matrix_to_atom[2] = 2),true;int(1..)])
 
 --
 
-and([(a#matrix_to_atom[2] = 2),true;int(1..)]), 
+(a#matrix_to_atom[1] = 1),
+and([(a#matrix_to_atom[2] = 2),true;int(1..)]),
+(a#matrix_to_atom[3] = 3), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-and([(a#matrix_to_atom[2] = 2);int(1..)]) 
+(a#matrix_to_atom[1] = 1),
+(a#matrix_to_atom[2] = 2),
+true,
+(a#matrix_to_atom[3] = 3) 
 
 --
 
-and([(a#matrix_to_atom[2] = 2);int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
-(a#matrix_to_atom[2] = 2) 
+(a#matrix_to_atom[1] = 1),
+(a#matrix_to_atom[2] = 2),
+true,
+(a#matrix_to_atom[3] = 3), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(a#matrix_to_atom[1] = 1),
+(a#matrix_to_atom[2] = 2),
+(a#matrix_to_atom[3] = 3) 
 
 --
 
@@ -168,14 +196,24 @@ and([(a#matrix_to_atom[3] = 3),true;int(1..)])
 
 --
 
+(a#matrix_to_atom[1] = 1),
+(a#matrix_to_atom[2] = 2),
 and([(a#matrix_to_atom[3] = 3),true;int(1..)]), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-and([(a#matrix_to_atom[3] = 3);int(1..)]) 
+(a#matrix_to_atom[1] = 1),
+(a#matrix_to_atom[2] = 2),
+(a#matrix_to_atom[3] = 3),
+true 
 
 --
 
-and([(a#matrix_to_atom[3] = 3);int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(a#matrix_to_atom[1] = 1),
+(a#matrix_to_atom[2] = 2),
+(a#matrix_to_atom[3] = 3),
+true, 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(a#matrix_to_atom[1] = 1),
+(a#matrix_to_atom[2] = 2),
 (a#matrix_to_atom[3] = 3) 
 
 --
@@ -208,5 +246,7 @@ find a#matrix_to_atom_3: int(1..3)
 
 such that
 
-and([(a#matrix_to_atom_1 = 1),(a#matrix_to_atom_2 = 2),(a#matrix_to_atom_3 = 3);int(1..)])
+(a#matrix_to_atom_1 = 1),
+(a#matrix_to_atom_2 = 2),
+(a#matrix_to_atom_3 = 3)
 
