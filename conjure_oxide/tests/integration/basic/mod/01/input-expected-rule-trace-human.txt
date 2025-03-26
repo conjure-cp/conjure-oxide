@@ -27,8 +27,17 @@ and([(SafeMod(a,b) = 1),and([(b != 0);int(1..)]);int(1..)])
 
 --
 
+and([(SafeMod(a,b) = 1),and([(b != 0);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(SafeMod(a,b) = 1),
+and([(b != 0);int(1..)]) 
+
+--
+
+(SafeMod(a,b) = 1),
 and([(b != 0);int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(SafeMod(a,b) = 1),
 (b != 0) 
 
 --
@@ -46,5 +55,6 @@ find b: int(0..3)
 
 such that
 
-and([ModEq(a, b, 1),(b != 0);int(1..)])
+ModEq(a, b, 1),
+(b != 0)
 

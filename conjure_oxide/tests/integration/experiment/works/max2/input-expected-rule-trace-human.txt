@@ -69,6 +69,27 @@ and([SumLeq([__1, 1], x),SumGeq([__1, 1], x);int(1..)])
 
 --
 
+Ineq(2, __0, 0),
+and([SumLeq([__1, 1], x),SumGeq([__1, 1], x);int(1..)]),
+Ineq(a, __0, 0),
+Ineq(b, __0, 0),
+or([(__0 = a),(__0 = b);int(1..)]),
+(__1 >= a),
+(__1 >= b),
+or([(__1 = a),(__1 = b);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Ineq(2, __0, 0),
+SumLeq([__1, 1], x),
+SumGeq([__1, 1], x),
+Ineq(a, __0, 0),
+Ineq(b, __0, 0),
+or([(__0 = a),(__0 = b);int(1..)]),
+(__1 >= a),
+(__1 >= b),
+or([(__1 = a),(__1 = b);int(1..)]) 
+
+--
+
 (__1 >= a), 
    ~~> geq_to_ineq ([("Minion", 4100)]) 
 Ineq(a, __1, 0) 
@@ -92,7 +113,8 @@ find __1: int(1..4)
 such that
 
 Ineq(2, __0, 0),
-and([SumLeq([__1, 1], x),SumGeq([__1, 1], x);int(1..)]),
+SumLeq([__1, 1], x),
+SumGeq([__1, 1], x),
 Ineq(a, __0, 0),
 Ineq(b, __0, 0),
 or([(__0 = a),(__0 = b);int(1..)]),
