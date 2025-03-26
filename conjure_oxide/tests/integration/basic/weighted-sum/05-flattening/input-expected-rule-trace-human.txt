@@ -51,14 +51,25 @@ and([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), 
 
 --
 
+and([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, UnsafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18),and([and([(f != 0);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, UnsafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18),
+and([and([(f != 0);int(1..)]);int(1..)]) 
+
+--
+
+(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, UnsafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18),
 and([and([(f != 0);int(1..)]);int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, UnsafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18),
 and([(f != 0);int(1..)]) 
 
 --
 
+(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, UnsafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18),
 and([(f != 0);int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, UnsafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18),
 (f != 0) 
 
 --
@@ -93,9 +104,42 @@ and([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), 
 
 --
 
-and([and([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18),and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]),(f != 0);int(1..)]), 
-   ~~> normalise_associative_commutative ([("Base", 8900)]) 
-and([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18),(h != 0),(f != 0);int(1..)]) 
+and([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18),and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(f != 0), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18),
+and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]),
+(f != 0) 
+
+--
+
+(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18),
+and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]),
+(f != 0), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18),
+and([and([(h != 0);int(1..)]);int(1..)]),
+(f != 0) 
+
+--
+
+(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18),
+and([and([(h != 0);int(1..)]);int(1..)]),
+(f != 0), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18),
+and([(h != 0);int(1..)]),
+(f != 0) 
+
+--
+
+(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18),
+and([(h != 0);int(1..)]),
+(f != 0), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(UnsafeDiv(g, h))]) <= 18),
+(h != 0),
+(f != 0) 
 
 --
 
@@ -129,9 +173,50 @@ and([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), 
 
 --
 
-and([and([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) <= 18),and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]),(h != 0),(f != 0);int(1..)]), 
-   ~~> normalise_associative_commutative ([("Base", 8900)]) 
-and([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) <= 18),(h != 0),(h != 0),(f != 0);int(1..)]) 
+and([(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) <= 18),and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(h != 0),
+(f != 0), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) <= 18),
+and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]),
+(h != 0),
+(f != 0) 
+
+--
+
+(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) <= 18),
+and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]),
+(h != 0),
+(f != 0), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) <= 18),
+and([and([(h != 0);int(1..)]);int(1..)]),
+(h != 0),
+(f != 0) 
+
+--
+
+(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) <= 18),
+and([and([(h != 0);int(1..)]);int(1..)]),
+(h != 0),
+(f != 0), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) <= 18),
+and([(h != 0);int(1..)]),
+(h != 0),
+(f != 0) 
+
+--
+
+(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) <= 18),
+and([(h != 0);int(1..)]),
+(h != 0),
+(f != 0), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(Sum([Product([2, a]), Product([2, b]), Product([3, c, d]), SafeDiv(e, f), Product([6, SafeDiv(g, h)]), -(a), -(SafeDiv(g, h))]) <= 18),
+(h != 0),
+(h != 0),
+(f != 0) 
 
 --
 
@@ -191,7 +276,10 @@ find __3: int(0..5)
 
 such that
 
-and([FlatWeightedSumLeq([2, 2, 3, 1, 6, -1, -1],[a, b, __0, __1, __2, a, __3],18),(h != 0),(h != 0),(f != 0);int(1..)]),
+FlatWeightedSumLeq([2, 2, 3, 1, 6, -1, -1],[a, b, __0, __1, __2, a, __3],18),
+(h != 0),
+(h != 0),
+(f != 0),
 FlatProductEq(d,c,__0),
 DivEq(e, f, __1),
 DivEq(g, h, __2),

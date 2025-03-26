@@ -20,6 +20,17 @@ new constraints:
   __1 =aux |y|
 --
 
+and([SumLeq([__0, __1], 10),SumGeq([__0, __1], 10);int(1..)]),
+__0 =aux |x|,
+__1 =aux |y|, 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+SumLeq([__0, __1], 10),
+SumGeq([__0, __1], 10),
+__0 =aux |x|,
+__1 =aux |y| 
+
+--
+
 __0 =aux |x|, 
    ~~> introduce_abseq ([("Minion", 4400)]) 
 AbsEq(__0,x) 
@@ -41,7 +52,8 @@ find __1: int(0..5)
 
 such that
 
-and([SumLeq([__0, __1], 10),SumGeq([__0, __1], 10);int(1..)]),
+SumLeq([__0, __1], 10),
+SumGeq([__0, __1], 10),
 AbsEq(__0,x),
 AbsEq(__1,y)
 

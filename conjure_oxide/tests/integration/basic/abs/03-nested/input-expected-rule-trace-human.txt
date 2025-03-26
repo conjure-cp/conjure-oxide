@@ -90,12 +90,14 @@ and([(Sum([|Sum([SafeDiv(x, 2), y, -(z)])|, UnsafeDiv(|y|, 2)]) = 10),true;int(1
 
 and([(Sum([|Sum([SafeDiv(x, 2), y, -(z)])|, UnsafeDiv(|y|, 2)]) = 10),true;int(1..)]), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-and([(Sum([|Sum([SafeDiv(x, 2), y, -(z)])|, UnsafeDiv(|y|, 2)]) = 10);int(1..)]) 
+(Sum([|Sum([SafeDiv(x, 2), y, -(z)])|, UnsafeDiv(|y|, 2)]) = 10),
+true 
 
 --
 
-and([(Sum([|Sum([SafeDiv(x, 2), y, -(z)])|, UnsafeDiv(|y|, 2)]) = 10);int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(Sum([|Sum([SafeDiv(x, 2), y, -(z)])|, UnsafeDiv(|y|, 2)]) = 10),
+true, 
+   ~~> partial_evaluator ([("Base", 9000)]) 
 (Sum([|Sum([SafeDiv(x, 2), y, -(z)])|, UnsafeDiv(|y|, 2)]) = 10) 
 
 --
@@ -144,12 +146,14 @@ and([(Sum([|Sum([SafeDiv(x, 2), y, -(z)])|, SafeDiv(|y|, 2)]) = 10),true;int(1..
 
 and([(Sum([|Sum([SafeDiv(x, 2), y, -(z)])|, SafeDiv(|y|, 2)]) = 10),true;int(1..)]), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-and([(Sum([|Sum([SafeDiv(x, 2), y, -(z)])|, SafeDiv(|y|, 2)]) = 10);int(1..)]) 
+(Sum([|Sum([SafeDiv(x, 2), y, -(z)])|, SafeDiv(|y|, 2)]) = 10),
+true 
 
 --
 
-and([(Sum([|Sum([SafeDiv(x, 2), y, -(z)])|, SafeDiv(|y|, 2)]) = 10);int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(Sum([|Sum([SafeDiv(x, 2), y, -(z)])|, SafeDiv(|y|, 2)]) = 10),
+true, 
+   ~~> partial_evaluator ([("Base", 9000)]) 
 (Sum([|Sum([SafeDiv(x, 2), y, -(z)])|, SafeDiv(|y|, 2)]) = 10) 
 
 --
@@ -163,6 +167,17 @@ new variables:
 new constraints:
   __0 =aux |Sum([SafeDiv(x, 2), y, -(z)])|
   __1 =aux SafeDiv(|y|, 2)
+--
+
+and([SumLeq([__0, __1], 10),SumGeq([__0, __1], 10);int(1..)]),
+__0 =aux |Sum([SafeDiv(x, 2), y, -(z)])|,
+__1 =aux SafeDiv(|y|, 2), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+SumLeq([__0, __1], 10),
+SumGeq([__0, __1], 10),
+__0 =aux |Sum([SafeDiv(x, 2), y, -(z)])|,
+__1 =aux SafeDiv(|y|, 2) 
+
 --
 
 |Sum([SafeDiv(x, 2), y, -(z)])|, 
@@ -181,6 +196,23 @@ new variables:
   find __3: int(-3..1)
 new constraints:
   __3 =aux SafeDiv(x, 2)
+--
+
+SumLeq([__0, __1], 10),
+SumGeq([__0, __1], 10),
+__0 =aux |__2|,
+__1 =aux SafeDiv(|y|, 2),
+and([FlatWeightedSumLeq([1, 1, -1],[__3, y, z],__2),FlatWeightedSumGeq([1, 1, -1],[__3, y, z],__2);int(1..)]),
+__3 =aux SafeDiv(x, 2), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+SumLeq([__0, __1], 10),
+SumGeq([__0, __1], 10),
+__0 =aux |__2|,
+__1 =aux SafeDiv(|y|, 2),
+FlatWeightedSumLeq([1, 1, -1],[__3, y, z],__2),
+FlatWeightedSumGeq([1, 1, -1],[__3, y, z],__2),
+__3 =aux SafeDiv(x, 2) 
+
 --
 
 __0 =aux |__2|, 
@@ -229,10 +261,12 @@ find __4: int(0..5)
 
 such that
 
-and([SumLeq([__0, __1], 10),SumGeq([__0, __1], 10);int(1..)]),
+SumLeq([__0, __1], 10),
+SumGeq([__0, __1], 10),
 AbsEq(__0,__2),
 DivEq(__4, 2, __1),
-and([FlatWeightedSumLeq([1, 1, -1],[__3, y, z],__2),FlatWeightedSumGeq([1, 1, -1],[__3, y, z],__2);int(1..)]),
+FlatWeightedSumLeq([1, 1, -1],[__3, y, z],__2),
+FlatWeightedSumGeq([1, 1, -1],[__3, y, z],__2),
 DivEq(x, 2, __3),
 AbsEq(__4,y)
 
