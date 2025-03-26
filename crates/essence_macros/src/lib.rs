@@ -5,10 +5,7 @@ use proc_macro::TokenStream;
 use uniplate::Uniplate;
 
 use quote::quote;
-use syn::{
-    parse::Parse, parse::ParseStream, parse_macro_input,
-    LitStr, Result,
-};
+use syn::{parse::Parse, parse::ParseStream, parse_macro_input, LitStr, Result};
 
 struct EssenceExprArgs {
     essence: LitStr,
@@ -48,8 +45,6 @@ pub fn essence_expr(args: TokenStream) -> TokenStream {
 }
 
 mod test {
-    
-    
 
     #[test]
     pub fn test_to_tokens() {
