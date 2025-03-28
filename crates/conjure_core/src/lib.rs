@@ -8,6 +8,7 @@ pub mod context;
 pub mod error;
 pub mod metadata;
 pub mod parse;
+pub mod pro_trace;
 pub mod representation;
 mod representations;
 pub mod rule_engine;
