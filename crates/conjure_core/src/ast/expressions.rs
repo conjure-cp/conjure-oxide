@@ -100,9 +100,9 @@ pub enum Expression {
     #[compatible(JsonInput)]
     Abs(Metadata, Box<Expression>),
 
-    /// `a + b + c + ...`
+    /// `sum(<vec_expr>)`
     #[compatible(JsonInput)]
-    Sum(Metadata, Vec<Expression>),
+    Sum(Metadata, Box<Expression>),
 
     /// `a * b * c * ...`
     #[compatible(JsonInput)]
@@ -353,6 +353,30 @@ pub enum Expression {
     #[compatible(Minion)]
     MinionReifyImply(Metadata, Box<Expression>, Atom),
 
+    /// `w-inintervalset(x, [a1,a2, b1,b2, … ])` ensures that the value of x belongs to one of the
+    /// intervals {a1,…,a2}, {b1,…,b2} etc.
+    ///
+    /// The list of intervals must be given in numerical order.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#w-inintervalset)
+    #[compatible(Minion)]
+    MinionWInIntervalSet(Metadata, Atom, Vec<i32>),
+
+    /// `element_one(vec, i, e)` specifies that `vec[i] = e`. This implies that i is
+    /// in the range `[1..len(vec)]`.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#element_one)
+    #[compatible(Minion)]
+    MinionElementOne(Metadata, Vec<Atom>, Atom, Atom),
+
     /// Declaration of an auxiliary variable.
     ///
     /// As with Savile Row, we semantically distinguish this from `Eq`.
@@ -451,7 +475,7 @@ impl Expression {
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(Domain::BoolDomain),
             Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(_))) => None,
             Expression::Scope(_, _) => Some(Domain::BoolDomain),
-            Expression::Sum(_, exprs) => expr_vec_to_domain_i32(exprs, |x, y| Some(x + y), syms),
+            Expression::Sum(_, e) => expr_vec_lit_to_domain_i32(e, |x, y| Some(x + y), syms),
             Expression::Product(_, exprs) => {
                 expr_vec_to_domain_i32(exprs, |x, y| Some(x * y), syms)
             }
@@ -523,7 +547,7 @@ impl Expression {
                 a.domain_of(syms)?.apply_i32(
                     |x, y| {
                         if (x != 0 || y != 0) && y >= 0 {
-                            Some(x ^ y)
+                            Some(x.pow(y as u32))
                         } else {
                             None
                         }
@@ -555,6 +579,8 @@ impl Expression {
             Expression::FlatWatchedLiteral(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionReify(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionReifyImply(_, _, _) => Some(Domain::BoolDomain),
+            Expression::MinionWInIntervalSet(_, _, _) => Some(Domain::BoolDomain),
+            Expression::MinionElementOne(_, _, _, _) => Some(Domain::BoolDomain),
             Expression::Neg(_, x) => {
                 let Some(Domain::IntDomain(mut ranges)) = x.domain_of(syms) else {
                     return None;
@@ -674,6 +700,8 @@ impl Expression {
             Expression::FlatWatchedLiteral(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReify(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReifyImply(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionWInIntervalSet(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionElementOne(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AuxDeclaration(_, _, _) => Some(ReturnType::Bool),
             Expression::UnsafeMod(_, _, _) => Some(ReturnType::Int),
             Expression::SafeMod(_, _, _) => Some(ReturnType::Int),
@@ -850,7 +878,6 @@ impl Display for Expression {
 
                 write!(f, "{e1}[{args}]")
             }
-
             Expression::InDomain(_, e, domain) => {
                 write!(f, "__inDomain({e},{domain})")
             }
@@ -862,8 +889,8 @@ impl Display for Expression {
             Expression::Atomic(_, atom) => atom.fmt(f),
             Expression::Scope(_, submodel) => write!(f, "{{\n{submodel}\n}}"),
             Expression::Abs(_, a) => write!(f, "|{}|", a),
-            Expression::Sum(_, expressions) => {
-                write!(f, "Sum({})", pretty_vec(expressions))
+            Expression::Sum(_, e) => {
+                write!(f, "Sum({e})")
             }
             Expression::Product(_, expressions) => {
                 write!(f, "Product({})", pretty_vec(expressions))
@@ -953,7 +980,6 @@ impl Display for Expression {
                     box3.clone()
                 )
             }
-
             Expression::FlatWatchedLiteral(_, x, l) => {
                 write!(f, "WatchedLiteral({},{})", x, l)
             }
@@ -962,6 +988,10 @@ impl Display for Expression {
             }
             Expression::MinionReifyImply(_, box1, box2) => {
                 write!(f, "ReifyImply({}, {})", box1.clone(), box2.clone())
+            }
+            Expression::MinionWInIntervalSet(_, atom, intervals) => {
+                let intervals = intervals.iter().join(",");
+                write!(f, "__minion_w_inintervalset({atom},{intervals})")
             }
             Expression::AuxDeclaration(_, n, e) => {
                 write!(f, "{} =aux {}", n, e.clone())
@@ -1005,7 +1035,6 @@ impl Display for Expression {
                     total.clone()
                 )
             }
-
             Expression::FlatWeightedSumGeq(_, cs, vs, total) => {
                 write!(
                     f,
@@ -1018,6 +1047,10 @@ impl Display for Expression {
             Expression::MinionPow(_, atom, atom1, atom2) => {
                 write!(f, "MinionPow({},{},{})", atom, atom1, atom2)
             }
+            Expression::MinionElementOne(_, atoms, atom, atom1) => {
+                let atoms = atoms.iter().join(",");
+                write!(f, "__minion_element_one([{atoms}],{atom},{atom1})")
+            }
         }
     }
 }
@@ -1026,7 +1059,7 @@ impl Display for Expression {
 mod tests {
     use std::rc::Rc;
 
-    use crate::ast::declaration::Declaration;
+    use crate::{ast::declaration::Declaration, matrix_expr};
 
     use super::*;
 
@@ -1034,7 +1067,10 @@ mod tests {
     fn test_domain_of_constant_sum() {
         let c1 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1)));
         let c2 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2)));
-        let sum = Expression::Sum(Metadata::new(), vec![c1.clone(), c2.clone()]);
+        let sum = Expression::Sum(
+            Metadata::new(),
+            Box::new(matrix_expr![c1.clone(), c2.clone()]),
+        );
         assert_eq!(
             sum.domain_of(&SymbolTable::new()),
             Some(Domain::IntDomain(vec![Range::Single(3)]))
@@ -1045,13 +1081,16 @@ mod tests {
     fn test_domain_of_constant_invalid_type() {
         let c1 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1)));
         let c2 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
-        let sum = Expression::Sum(Metadata::new(), vec![c1.clone(), c2.clone()]);
+        let sum = Expression::Sum(
+            Metadata::new(),
+            Box::new(matrix_expr![c1.clone(), c2.clone()]),
+        );
         assert_eq!(sum.domain_of(&SymbolTable::new()), None);
     }
 
     #[test]
     fn test_domain_of_empty_sum() {
-        let sum = Expression::Sum(Metadata::new(), vec![]);
+        let sum = Expression::Sum(Metadata::new(), Box::new(matrix_expr![]));
         assert_eq!(sum.domain_of(&SymbolTable::new()), None);
     }
 
@@ -1085,7 +1124,10 @@ mod tests {
             Domain::IntDomain(vec![Range::Single(1)]),
         )))
         .unwrap();
-        let sum = Expression::Sum(Metadata::new(), vec![reference.clone(), reference.clone()]);
+        let sum = Expression::Sum(
+            Metadata::new(),
+            Box::new(matrix_expr![reference.clone(), reference.clone()]),
+        );
         assert_eq!(
             sum.domain_of(&vars),
             Some(Domain::IntDomain(vec![Range::Single(2)]))
@@ -1100,7 +1142,10 @@ mod tests {
             Name::MachineName(0),
             Domain::IntDomain(vec![Range::Bounded(1, 2)]),
         )));
-        let sum = Expression::Sum(Metadata::new(), vec![reference.clone(), reference.clone()]);
+        let sum = Expression::Sum(
+            Metadata::new(),
+            Box::new(matrix_expr![reference.clone(), reference.clone()]),
+        );
         assert_eq!(
             sum.domain_of(&vars),
             Some(Domain::IntDomain(vec![Range::Bounded(2, 4)]))

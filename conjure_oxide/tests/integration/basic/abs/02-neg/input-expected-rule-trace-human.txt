@@ -5,7 +5,7 @@ find y: int(-5..5)
 
 such that
 
-(Sum([|-(x)|, |-(y)|]) = 10)
+(Sum([|-(x)|,|-(y)|;int(1..2)]) = 10)
 
 --
 
@@ -21,7 +21,13 @@ such that
 
 --
 
-(Sum([|x|, |y|]) = 10), 
+Sum([|x|,|y|;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+Sum([|x|,|y|;int(1..)]) 
+
+--
+
+(Sum([|x|,|y|;int(1..)]) = 10), 
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
 and([SumLeq([__0, __1], 10),SumGeq([__0, __1], 10);int(1..)]) 
 new variables:
@@ -30,6 +36,17 @@ new variables:
 new constraints:
   __0 =aux |x|
   __1 =aux |y|
+--
+
+and([SumLeq([__0, __1], 10),SumGeq([__0, __1], 10);int(1..)]),
+__0 =aux |x|,
+__1 =aux |y|, 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+SumLeq([__0, __1], 10),
+SumGeq([__0, __1], 10),
+__0 =aux |x|,
+__1 =aux |y| 
+
 --
 
 __0 =aux |x|, 
@@ -53,7 +70,8 @@ find __1: int(0..5)
 
 such that
 
-and([SumLeq([__0, __1], 10),SumGeq([__0, __1], 10);int(1..)]),
+SumLeq([__0, __1], 10),
+SumGeq([__0, __1], 10),
 AbsEq(__0,x),
 AbsEq(__1,y)
 
