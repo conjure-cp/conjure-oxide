@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use clap::{arg, command, Args, Parser, Subcommand};
 
+use conjure_core::pro_trace::VerbosityLevel;
 use conjure_oxide::SolverFamily;
 
 use crate::{solve, test_solve};
@@ -75,4 +76,53 @@ pub struct GlobalArgs {
     /// Use the native parser instead of Conjure's.
     #[arg(long, default_value_t = false, global = true)]
     pub enable_native_parser: bool,
+
+    // New logging arguments:
+    // Tracing: T
+    // Output: stdout, json file
+    // Verbosity: low medium high
+    // Format: human readable, json
+    // Optional file path
+    #[arg(
+        long,
+        short = 'T',
+        default_value_t = false,
+        global = true,
+        help = "Enable rule tracing"
+    )]
+    pub tracing: bool,
+
+    #[arg(
+        long,
+        short = 'O',
+        default_value = "stdout",
+        global = true,
+        help = "Select output location for trace result: stdout or file"
+    )]
+    pub trace_output: String,
+
+    #[arg(
+        long,
+        default_value = "medium",
+        global = true,
+        help = "Select verbosity level for trace"
+    )]
+    pub verbosity: VerbosityLevel,
+
+    #[arg(
+        long,
+        short = 'F',
+        default_value = "human",
+        global = true,
+        help = "Select the format of the trace output: human or json"
+    )]
+    pub formatter: String,
+
+    #[arg(
+        long,
+        short = 'f',
+        global = true,
+        help = "Save rule trace to the given JSON file (defaults to input file location)"
+    )]
+    pub trace_file: Option<String>,
 }

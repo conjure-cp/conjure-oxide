@@ -5,13 +5,26 @@ mod solve;
 mod test_solve;
 use clap::Parser as _;
 use cli::{Cli, GlobalArgs};
+use conjure_core::context::Context;
+use conjure_core::rule_engine::{resolve_rule_sets, rewrite_naive};
+use conjure_oxide::find_conjure::conjure_executable;
+use conjure_oxide::utils::essence_parser::parse_essence_file_native;
+use conjure_oxide::{get_rules, model_from_json, SolverFamily};
 use print_info_schema::run_print_info_schema_command;
 use solve::run_solve_command;
 use std::fs::File;
+use std::io::Write;
 use std::process::exit;
 use std::sync::Arc;
 use test_solve::run_test_solve_command;
 
+use anyhow::Result as AnyhowResult;
+use anyhow::{anyhow, bail};
+use clap::{arg, command, Parser};
+use conjure_core::pro_trace::{
+    self, create_consumer, specify_trace_file, Consumer, FileConsumer, HumanFormatter,
+    JsonFormatter, StdoutConsumer, VerbosityLevel,
+};
 use git_version::git_version;
 use tracing_subscriber::filter::{FilterFn, LevelFilter};
 use tracing_subscriber::layer::SubscriberExt as _;
@@ -124,6 +137,10 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
 
     Ok(())
 }
+
+/******************************************************/
+/*        Parse essence to json using Conjure         */
+/******************************************************/
 
 /// Runs the selected subcommand
 fn run_subcommand(cli: Cli) -> anyhow::Result<()> {
