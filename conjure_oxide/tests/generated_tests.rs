@@ -1,7 +1,11 @@
 #![allow(clippy::expect_used)]
+use conjure_core::ast::{AbstractLiteral, Domain, SymbolTable};
+use conjure_core::bug;
+use conjure_core::rule_engine::get_rules_grouped;
 
-use conjure_core::pro_trace::{self, Consumer, HumanFormatter, StdoutConsumer, VerbosityLevel};
-use conjure_core::rule_engine::rewrite_model;
+use conjure_core::pro_trace::{
+    self, create_consumer, Consumer, HumanFormatter, StdoutConsumer, VerbosityLevel,
+};
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
@@ -17,8 +21,9 @@ use tracing::{span, Level, Metadata as OtherMetadata};
 use tracing_subscriber::{
     filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
 };
+use tree_morph::{helpers::select_panic, prelude::*};
 
-use uniplate::Biplate;
+use uniplate::{Biplate, Uniplate};
 
 use std::path::Path;
 use std::sync::Arc;
@@ -54,7 +59,8 @@ struct TestConfig {
     compare_solver_solutions: bool, // Stage 3b: Compares Minion and Conjure solutions
     validate_rule_traces: bool, // Stage 4a: Checks rule traces against expected outputs
 
-    enable_native_impl: bool,
+    enable_morph_impl: bool,
+    enable_naive_impl: bool,
     enable_rewriter_impl: bool,
 }
 
@@ -62,7 +68,8 @@ impl Default for TestConfig {
     fn default() -> Self {
         Self {
             extra_rewriter_asserts: vec!["vector_operators_have_partially_evaluated".into()],
-            enable_native_impl: false,
+            enable_naive_impl: true,
+            enable_morph_impl: false,
             enable_rewriter_impl: true,
             parse_model_default: true,
             enable_native_parser: false,
@@ -85,6 +92,8 @@ impl TestConfig {
                 "PARSE_MODEL_DEFAULT",
                 self.parse_model_default,
             ),
+            enable_morph_impl: env_var_override_bool("ENABLE_MORPH_IMPL", self.parse_model_default),
+            enable_naive_impl: env_var_override_bool("ENABLE_NAIVE_IMPL", self.enable_naive_impl),
             enable_native_parser: env_var_override_bool(
                 "ENABLE_NATIVE_PARSER",
                 self.enable_native_parser,
@@ -105,10 +114,6 @@ impl TestConfig {
             validate_rule_traces: env_var_override_bool(
                 "VALIDATE_RULE_TRACES",
                 self.validate_rule_traces,
-            ),
-            enable_native_impl: env_var_override_bool(
-                "ENABLE_NATIVE_IMPL",
-                self.enable_native_impl,
             ),
             enable_rewriter_impl: env_var_override_bool(
                 "ENABLE_REWRITER_IMPL",
@@ -241,7 +246,7 @@ fn integration_test_inner(
     let config = file_config.merge_env();
 
     // Stage 1a: Parse the model using the normal parser (run unless explicitly disabled)
-    let model = if config.parse_model_default {
+    let parsed_model = if config.parse_model_default {
         let parsed = parse_essence_file(path, essence_base, extension, context.clone())?;
         if verbose {
             println!("Parsed model: {:#?}", parsed);
@@ -254,8 +259,9 @@ fn integration_test_inner(
 
     // Stage 1b: Run native parser (only if explicitly enabled)
     let mut model_native = None;
+    let file_path = format!("{path}/{essence_base}.{extension}");
     if config.enable_native_parser {
-        let mn = parse_essence_file_native(path, essence_base, extension, context.clone())?;
+        let mn = parse_essence_file_native(&file_path, context.clone())?;
         save_model_json(&mn, path, essence_base, "parse")?;
         model_native = Some(mn);
 
@@ -268,26 +274,31 @@ fn integration_test_inner(
     // Stage 2a: Rewrite the model using the rule engine (run unless explicitly disabled)
     let rewritten_model = if config.apply_rewrite_rules {
         let rule_sets = resolve_rule_sets(SolverFamily::Minion, DEFAULT_RULE_SETS)?;
+        let mut model = parsed_model.expect("Model must be parsed in 1a");
 
-        let rewritten = if config.enable_native_impl {
-            rewrite_model(
-                model.as_ref().expect("Model must be parsed in 1a"),
-                &rule_sets,
-            )?
+        let rewritten = if config.enable_naive_impl {
+            rewrite_naive(&model, &rule_sets, false, None)?
+        } else if config.enable_morph_impl {
+            let submodel = model.as_submodel_mut();
+            let rules_grouped = get_rules_grouped(&rule_sets)
+                .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
+                .into_iter()
+                .map(|(_, rule)| rule.into_iter().map(|f| f.rule).collect_vec())
+                .collect_vec();
+
+            let (expr, symbol_table): (Expression, SymbolTable) = morph(
+                rules_grouped,
+                select_panic,
+                submodel.root().clone(),
+                submodel.symbols().clone(),
+            );
+
+            *submodel.symbols_mut() = symbol_table;
+            submodel.replace_root(expr);
+            model.clone()
         } else {
-            //temporarilly
-            //termporary
-            let consumer: Option<Consumer<HumanFormatter>> =
-                Option::<Consumer<HumanFormatter>>::None;
-
-            rewrite_naive(
-                model.as_ref().expect("Model must be parsed in 1a"),
-                &rule_sets,
-                false,
-                consumer,
-            )?
+            panic!("No rewriter implementation specified")
         };
-
         if verbose {
             println!("Rewritten model: {:#?}", rewritten);
         }
@@ -298,7 +309,7 @@ fn integration_test_inner(
         None
     };
 
-    // Stage 2b: Check model properties (extra_asserts) (Verify additional model properties
+    // Stage 2b: Check model properties (extra_asserts) (Verify additional model properties)
     // (e.g., ensure vector operators are evaluated). (only if explicitly enabled)
     if config.enable_extra_validation {
         for extra_assert in config.extra_rewriter_asserts.clone() {
@@ -333,8 +344,10 @@ fn integration_test_inner(
 
     // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
     if config.compare_solver_solutions || accept && config.solve_with_minion {
-        let conjure_solutions: Vec<BTreeMap<Name, Literal>> =
-            get_solutions_from_conjure(&format!("{}/{}.{}", path, essence_base, extension))?;
+        let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
+            &format!("{}/{}.{}", path, essence_base, extension),
+            Arc::clone(&context),
+        )?;
 
         let username_solutions = normalize_solutions_for_comparison(
             solutions.as_ref().expect("Minion solutions required"),
@@ -349,7 +362,7 @@ fn integration_test_inner(
 
         assert_eq!(
             username_solutions_json, conjure_solutions_json,
-            "Solutions do not match conjure!"
+            "Solutions (<) do not match conjure (>)!"
         );
     }
 
@@ -482,8 +495,10 @@ fn integration_test_inner(
         assert_eq!(username_solutions_json, expected_solutions_json);
     }
 
-    // Stage 4a: Check that the generated rules trace matches the expected
-    if config.validate_rule_traces {
+    // Stage 4a: Check that the generated rules trace matches the expected.
+    // We don't check rule trace when morph is enabled.
+    // TODO: Implement rule trace validation for morph
+    if config.validate_rule_traces && !config.enable_morph_impl {
         let generated = read_human_rule_trace(path, essence_base, "generated")?;
         let expected = read_human_rule_trace(path, essence_base, "expected")?;
 
@@ -540,9 +555,9 @@ fn expected_exists_for(path: &str, test_name: &str, stage: &str, extension: &str
 }
 
 fn normalize_solutions_for_comparison(
-    input_solutions: &Vec<BTreeMap<Name, Literal>>,
+    input_solutions: &[BTreeMap<Name, Literal>],
 ) -> Vec<BTreeMap<Name, Literal>> {
-    let mut normalized = input_solutions.clone();
+    let mut normalized = input_solutions.to_vec();
 
     for solset in &mut normalized {
         // remove machine names
@@ -561,6 +576,36 @@ fn normalize_solutions_for_comparison(
                 match v {
                     Literal::Bool(true) => updates.push((k, Literal::Int(1))),
                     Literal::Bool(false) => updates.push((k, Literal::Int(0))),
+                    Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)) => {
+                        // make all domains the same (this is just in the tester so the types dont
+                        // actually matter)
+
+                        let mut matrix = AbstractLiteral::Matrix(elems, Domain::IntDomain(vec![]));
+                        matrix =
+                            matrix.transform(Arc::new(
+                                move |x: AbstractLiteral<Literal>| match x {
+                                    AbstractLiteral::Matrix(items, _) => {
+                                        let items = items
+                                            .into_iter()
+                                            .map(|x| match x {
+                                                Literal::Bool(false) => Literal::Int(0),
+                                                Literal::Bool(true) => Literal::Int(1),
+                                                x => x,
+                                            })
+                                            .collect_vec();
+                                        let matrix = AbstractLiteral::Matrix(
+                                            items,
+                                            Domain::IntDomain(vec![]),
+                                        );
+                                        eprintln!("inside transform {matrix}");
+                                        matrix
+                                    }
+                                    x => x,
+                                },
+                            ));
+                        eprintln!("matrix {matrix}");
+                        updates.push((k, Literal::AbstractLiteral(matrix)));
+                    }
                     _ => {}
                 }
             }

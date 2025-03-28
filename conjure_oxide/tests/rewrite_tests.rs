@@ -1,4 +1,6 @@
-use conjure_core::pro_trace::{self, Consumer, HumanFormatter, StdoutConsumer, VerbosityLevel};
+use conjure_core::pro_trace::{
+    self, create_consumer, Consumer, HumanFormatter, StdoutConsumer, VerbosityLevel,
+};
 use std::collections::VecDeque;
 use std::process::exit;
 use std::rc::Rc;
@@ -673,8 +675,7 @@ fn rewrite_solve_xyz() {
     *model.as_submodel_mut().constraints_mut() = vec![nested_expr];
 
     //termporary
-    let consumer: Option<Consumer<HumanFormatter>> = Option::<Consumer<HumanFormatter>>::None;
-    model = rewrite_naive(&model, &rule_sets, true, consumer).unwrap();
+    model = rewrite_naive(&model, &rule_sets, true, None).unwrap();
     let rewritten_expr = model.as_submodel().constraints();
 
     // Check if the expression is in its simplest form

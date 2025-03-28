@@ -85,8 +85,9 @@ fn test_parse_dominance() {
 
     let ctx = Arc::new(RwLock::new(Context::default()));
     let pth = path.to_str().unwrap();
+    let filepath = format!("{pth}/{file}.essence");
 
-    let res = parse_essence_file_native(pth, file, "essence", ctx);
+    let res = parse_essence_file_native(&filepath, ctx);
     assert!(res.is_ok());
 
     let model = res.unwrap();
@@ -101,8 +102,9 @@ fn test_dominance_twice() {
 
     let ctx = Arc::new(RwLock::new(Context::default()));
     let pth = path.to_str().unwrap();
+    let filepath = format!("{pth}/{file}.essence");
 
-    let res = parse_essence_file_native(pth, file, "essence", ctx);
+    let res = parse_essence_file_native(&filepath, ctx);
     assert!(res.is_err());
 }
 
@@ -112,18 +114,11 @@ fn test_no_dominance() {
     let path = root.join("conjure_oxide/tests/parser_tests");
 
     let pth = path.to_str().unwrap();
-    let res_nodom = parse_essence_file_native(
-        pth,
-        "no_dominance",
-        "essence",
-        Arc::new(RwLock::new(Context::default())),
-    );
-    let res_dom = parse_essence_file_native(
-        pth,
-        "dominance_simple",
-        "essence",
-        Arc::new(RwLock::new(Context::default())),
-    );
+    let filepath = format!("{pth}/no_dominance.essence");
+    let res_nodom = parse_essence_file_native(&filepath, Arc::new(RwLock::new(Context::default())));
+
+    let filepath = format!("{pth}/dominance_simple.essence");
+    let res_dom = parse_essence_file_native(&filepath, Arc::new(RwLock::new(Context::default())));
 
     assert!(res_nodom.is_ok());
     assert!(res_dom.is_ok());

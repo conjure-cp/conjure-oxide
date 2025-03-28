@@ -11,25 +11,23 @@ use crate::{
         rewriter_common::{log_rule_application, RuleResult},
         submodel_zipper::submodel_ctx,
     },
+    stats::RewriterStats,
     Model,
 };
 
 use itertools::Itertools;
-use std::sync::Arc;
+use std::{sync::Arc, time::Instant};
 use tracing::trace;
 use uniplate::Biplate;
 
 /// A naive, exhaustive rewriter for development purposes. Applies rules in priority order,
 /// favouring expressions found earlier during preorder traversal of the tree.
-pub fn rewrite_naive<'a, F>(
+pub fn rewrite_naive<'a>(
     model: &Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
     prop_multiple_equally_applicable: bool,
-    consumer: Option<Consumer<F>>,
-) -> Result<Model, RewriteError>
-where
-    F: MessageFormatter,
-{
+    consumer: Option<Consumer>,
+) -> Result<Model, RewriteError> {
     let rules_grouped = get_rules_grouped(rule_sets)
         .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
         .into_iter()
@@ -37,6 +35,10 @@ where
 
     let mut model = model.clone();
     let mut done_something = true;
+
+    let mut rewriter_stats = RewriterStats::new();
+    rewriter_stats.is_optimization_enabled = Some(false);
+    let run_start = Instant::now();
 
     trace!(
         target: "rule_engine_human",
@@ -55,6 +57,7 @@ where
                 &mut submodel,
                 &rules_grouped,
                 prop_multiple_equally_applicable,
+                &mut rewriter_stats,
                 &consumer,
             )
             .is_some()
@@ -69,6 +72,16 @@ where
         }
     }
 
+    let run_end = Instant::now();
+    rewriter_stats.rewriter_run_time = Some(run_end - run_start);
+
+    model
+        .context
+        .write()
+        .unwrap()
+        .stats
+        .add_rewriter_run(rewriter_stats);
+
     trace!(
         target: "rule_engine_human",
         "Final model:\n\n{}",
@@ -80,18 +93,15 @@ where
 // Tries to do a single rewrite on the model.
 //
 // Returns None if no change was made.
-fn try_rewrite_model<F>(
+fn try_rewrite_model(
     submodel: &mut SubModel,
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
     prop_multiple_equally_applicable: bool,
-    consumer: &Option<Consumer<F>>,
-) -> Option<()>
-where
-    F: MessageFormatter,
-{
+    stats: &mut RewriterStats,
+    consumer: &Option<Consumer>,
+) -> Option<()> {
     type CtxFn = Arc<dyn Fn(Expr) -> SubModel>;
     let mut results: Vec<(RuleResult<'_>, u16, Expr, CtxFn)> = vec![];
-    let tracing_activated = consumer.is_some();
 
     // Iterate over rules by priority in descending order.
     'top: for (priority, rules) in rules_grouped.iter() {
@@ -102,8 +112,16 @@ where
             let expr = expr.clone();
             let ctx = ctx.clone();
             for rd in rules {
+                // Count rule application attempts
+                stats.rewriter_rule_application_attempts =
+                    Some(stats.rewriter_rule_application_attempts.unwrap_or(0) + 1);
+
                 match (rd.rule.application)(&expr, &submodel.symbols()) {
                     Ok(red) => {
+                        // Count successful rule applications
+                        stats.rewriter_rule_applications =
+                            Some(stats.rewriter_rule_applications.unwrap_or(0) + 1);
+
                         // Collect applicable rules
                         results.push((
                             RuleResult {
@@ -116,8 +134,8 @@ where
                         ));
                     }
                     Err(_) => {
-                        if let Some(consumer_ref) = consumer {
-                            if check_verbosity_level(&consumer_ref) == VerbosityLevel::High {
+                        if let Some(consumer) = consumer {
+                            if check_verbosity_level(&consumer) == VerbosityLevel::High {
                                 let rule_trace = RuleTrace {
                                     initial_expression: expr.clone(),
                                     rule_name: rd.rule.name.to_string(),
@@ -128,20 +146,18 @@ where
                                     top_level_str: None,
                                 };
 
-                                capture_trace(&consumer_ref, TraceStruct::RuleTrace(rule_trace));
-                                println!("help");
+                                capture_trace(&consumer, TraceStruct::RuleTrace(rule_trace));
                             }
                         }
-                        // // when called a lot, this becomes very expensive!
-                        // #[cfg(debug_assertions)]
-                        // tracing::trace!(
-                        //     "Rule attempted but not applied: {} (priority {}, rule set {}), to expression: {}",
-                        //     rd.rule.name,
-                        //     priority,
-                        //     rd.rule_set.name,
-                        //     expr
-                        // );
-                    }
+                    } // // when called a lot, this becomes very expensive!
+                      // #[cfg(debug_assertions)]
+                      // tracing::trace!(
+                      //     "Rule attempted but not applied: {} (priority {}, rule set {}), to expression: {}",
+                      //     rd.rule.name,
+                      //     priority,
+                      //     rd.rule_set.name,
+                      //     expr
+                      // );
                 }
             }
             // This expression has the highest rule priority so far, so this is what we want to
@@ -162,7 +178,7 @@ where
             }
 
             // Extract the single applicable rule and apply it
-            log_rule_application(result, expr, submodel);
+            log_rule_application(result, expr, submodel, &consumer);
 
             // Replace expr with new_expression
             *submodel = ctx(result.reduction.new_expression.clone());

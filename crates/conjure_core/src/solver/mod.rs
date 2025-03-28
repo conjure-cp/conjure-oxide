@@ -25,7 +25,7 @@
 //! use std::sync::{Arc,Mutex};
 //! use conjure_core::parse::get_example_model;
 //! use conjure_core::rule_engine::resolve_rule_sets;
-//! use conjure_core::rule_engine::rewrite_model;
+//! use conjure_core::rule_engine::rewrite_naive;
 //! use conjure_core::solver::{adaptors, Solver, SolverAdaptor};
 //! use conjure_core::solver::states::ModelLoaded;
 //! use conjure_core::solver::SolverFamily;
@@ -33,7 +33,7 @@
 //! // Define and rewrite a model for minion.
 //! let model = get_example_model("bool-03").unwrap();
 //! let rule_sets = resolve_rule_sets(SolverFamily::Minion, &vec!["Constant"]).unwrap();
-//! let model = rewrite_model(&model,&rule_sets).unwrap();
+//! let model = rewrite_naive(&model, &rule_sets, true, None).unwrap();
 //!
 //!
 //! // Solve using Minion.

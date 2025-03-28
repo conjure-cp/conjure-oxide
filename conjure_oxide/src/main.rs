@@ -8,7 +8,8 @@ use anyhow::Result as AnyhowResult;
 use anyhow::{anyhow, bail};
 use clap::{arg, command, Parser};
 use conjure_core::pro_trace::{
-    self, Consumer, FileConsumer, HumanFormatter, JsonFormatter, StdoutConsumer, VerbosityLevel,
+    self, create_consumer, specify_trace_file, Consumer, FileConsumer, HumanFormatter,
+    JsonFormatter, StdoutConsumer, VerbosityLevel,
 };
 use git_version::git_version;
 use schemars::schema_for;
@@ -24,8 +25,9 @@ use conjure_core::Model;
 
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::find_conjure::conjure_executable;
-use conjure_oxide::rule_engine::{resolve_rule_sets, rewrite_model};
+use conjure_oxide::rule_engine::resolve_rule_sets;
 use conjure_oxide::utils::conjure::{get_minion_solutions, minion_solutions_to_json};
+use conjure_oxide::utils::essence_parser::parse_essence_file_native;
 use conjure_oxide::SolverFamily;
 use conjure_oxide::{get_rules, model_from_json};
 
@@ -94,7 +96,6 @@ struct Cli {
 
     #[arg(long, short = 'v', help = "Log verbosely to sterr")]
     verbose: bool,
-
     /// Do not run the solver.
     ///
     /// The rewritten model is printed to stdout in an Essence-style syntax (but is not necessarily
@@ -118,6 +119,57 @@ struct Cli {
     /// Only compatible with the default rewriter.
     #[arg(long)]
     _no_check_equally_applicable_rules: bool,
+
+    // New logging arguments:
+    // Tracing: T
+    // Output: stdout, json file
+    // Verbosity: low medium high
+    // Format: human readable, json
+    // Optional file path
+    #[arg(
+        long,
+        short = 'T',
+        default_value_t = false,
+        help = "Enable rule tracing"
+    )]
+    tracing: bool,
+
+    #[arg(
+        long,
+        short = 'O',
+        default_value = "stdout",
+        help = "Select output location for trace result: stdout or file"
+    )]
+    trace_output: String,
+
+    #[arg(
+        long,
+        default_value = "medium",
+        help = "Select verbosity level for trace"
+    )]
+    verbosity: VerbosityLevel,
+
+    #[arg(
+        long,
+        short = 'F',
+        default_value = "human",
+        help = "Select the format of the trace output: human or json"
+    )]
+    formatter: String,
+
+    #[arg(
+        long,
+        short = 'f',
+        help = "Save rule trace to the given JSON file (defaults to input file location)"
+    )]
+    trace_file: Option<String>,
+
+    #[arg(
+        long,
+        default_value_t = false,
+        help = "Use the native parser to parse the essence file"
+    )]
+    enable_native_parser: bool,
 }
 
 #[allow(clippy::unwrap_used)]
@@ -238,7 +290,7 @@ pub fn main() -> AnyhowResult<()> {
     tracing::info!(
         target: "file",
         "Rules: {}",
-        rules.iter().map(|rd| format!("{}", rd)).collect::<Vec<_>>().join("\n")
+        rules.iter().map(|rd| format!("{}", rd )).collect::<Vec<_>>().join("\n")
     );
     let input = cli.input_file.clone().expect("No input file given");
     tracing::info!(target: "file", "Input file: {}", input.display());
@@ -246,35 +298,23 @@ pub fn main() -> AnyhowResult<()> {
         "Given input_file could not be converted to a string"
     ))?;
 
+    let file = specify_trace_file(
+        input_file.to_string(),
+        cli.trace_file.clone(),
+        cli.formatter.as_str(),
+    );
     //consumer for protrace
-    //will later be created from command-line arguments
-    let formatter = JsonFormatter;
-    let file_consumer = FileConsumer {
-        formatter,
-        verbosity: VerbosityLevel::High,
-        file_path: "conjure_oxide/src/protrace.json".to_string(),
-    };
-    let consumer: Option<Consumer<JsonFormatter>> = Some(Consumer::FileConsumer(file_consumer));
+    let consumer: Option<Consumer> = cli.tracing.then(|| {
+        create_consumer(
+            cli.trace_output.as_str(),
+            cli.verbosity.clone(),
+            cli.formatter.as_str(),
+            file,
+        )
+    });
     /******************************************************/
     /*        Parse essence to json using Conjure         */
     /******************************************************/
-
-    conjure_executable()
-        .map_err(|e| anyhow!("Could not find correct conjure executable: {}", e))?;
-
-    let mut cmd = std::process::Command::new("conjure");
-    let output = cmd
-        .arg("pretty")
-        .arg("--output-format=astjson")
-        .arg(input_file)
-        .output()?;
-
-    let conjure_stderr = String::from_utf8(output.stderr)?;
-    if !conjure_stderr.is_empty() {
-        bail!(conjure_stderr);
-    }
-
-    let astjson = String::from_utf8(output.stdout)?;
 
     let context = Context::new_ptr(
         target_family,
@@ -282,25 +322,43 @@ pub fn main() -> AnyhowResult<()> {
         rules,
         rule_sets.clone(),
     );
-
     context.write().unwrap().file_name = Some(input.to_str().expect("").into());
 
-    if cfg!(feature = "extra-rule-checks") {
-        tracing::info!("extra-rule-checks: enabled");
+    let mut model;
+    if cli.enable_native_parser {
+        model = parse_essence_file_native(input_file, context.clone())?;
     } else {
-        tracing::info!("extra-rule-checks: disabled");
-    }
+        conjure_executable()
+            .map_err(|e| anyhow!("Could not find correct conjure executable: {}", e))?;
 
-    let mut model = model_from_json(&astjson, context.clone())?;
+        let mut cmd = std::process::Command::new("conjure");
+        let output = cmd
+            .arg("pretty")
+            .arg("--output-format=astjson")
+            .arg(input_file)
+            .output()?;
+
+        let conjure_stderr = String::from_utf8(output.stderr)?;
+        if !conjure_stderr.is_empty() {
+            bail!(conjure_stderr);
+        }
+
+        let astjson = String::from_utf8(output.stdout)?;
+
+        if cfg!(feature = "extra-rule-checks") {
+            tracing::info!("extra-rule-checks: enabled");
+        } else {
+            tracing::info!("extra-rule-checks: disabled");
+        }
+
+        model = model_from_json(&astjson, context.clone())?;
+    }
 
     tracing::info!("Initial model: \n{}\n", model);
 
     tracing::info!("Rewriting model...");
 
-    if cli.use_optimising_rewriter {
-        tracing::info!("Using the dirty-clean rewriter...");
-        model = rewrite_model(&model, &rule_sets)?;
-    } else {
+    if !cli.use_optimising_rewriter {
         tracing::info!("Rewriting model...");
         model = rewrite_naive(
             &model,
@@ -311,7 +369,6 @@ pub fn main() -> AnyhowResult<()> {
     }
 
     tracing::info!("Rewritten model: \n{}\n", model);
-
     if cli.no_run_solver {
         println!("{}", model);
     } else {

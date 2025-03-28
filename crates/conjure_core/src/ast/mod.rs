@@ -2,10 +2,12 @@ pub mod pretty;
 pub mod serde;
 
 mod atom;
+pub mod comprehension;
 mod declaration;
 mod domains;
 mod expressions;
 mod literals;
+pub mod matrix;
 mod model;
 mod name;
 mod submodel;

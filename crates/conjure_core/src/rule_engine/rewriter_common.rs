@@ -3,12 +3,16 @@ use super::{
     resolve_rules::{ResolveRulesError, RuleData},
     Reduction,
 };
-use crate::ast::{
-    pretty::{pretty_variable_declaration, pretty_vec},
-    Expression, SubModel,
-};
 use crate::pro_trace::{
-    Consumer, HumanFormatter, RuleTrace, StdoutConsumer, Trace, VerbosityLevel,
+    check_verbosity_level, Consumer, HumanFormatter, RuleTrace, StdoutConsumer, Trace,
+    VerbosityLevel,
+};
+use crate::{
+    ast::{
+        pretty::{pretty_variable_declaration, pretty_vec},
+        Expression, SubModel,
+    },
+    pro_trace::{capture_trace, TraceStruct},
 };
 
 use itertools::Itertools;
@@ -32,6 +36,7 @@ pub fn log_rule_application(
     result: &RuleResult,
     initial_expression: &Expression,
     initial_model: &SubModel,
+    consumer: &Option<Consumer>,
 ) {
     /// extracts data from the RuleResult struct
     /// red = reduction and any constraints and variables
@@ -108,6 +113,22 @@ pub fn log_rule_application(
     })
 
     );
+
+    if let Some(consumer) = consumer {
+        if check_verbosity_level(&consumer) != VerbosityLevel::Low {
+            let rule_trace = RuleTrace {
+                initial_expression: initial_expression.clone(),
+                rule_name: rule.name.to_string(),
+                rule_set_name: result.rule_data.rule_set.name.to_string(),
+                rule_priority: result.rule_data.priority,
+                transformed_expression: Some(red.new_expression.clone()),
+                new_variables_str: Some(new_variables_str.to_string()),
+                top_level_str: Some(top_level_str.to_string()),
+            };
+
+            capture_trace(&consumer, TraceStruct::RuleTrace(rule_trace));
+        }
+    }
 }
 
 /// Represents errors that can occur during the model rewriting process.

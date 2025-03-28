@@ -34,6 +34,7 @@ fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         expr,
         Atomic(_, _)
             | Root(_, _)
+            | Comprehension(_, _)
             | FlatIneq(_, _, _, _)
             | FlatMinusEq(_, _, _)
             | FlatSumGeq(_, _, _)
@@ -51,6 +52,8 @@ fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             | Min(_, _)
             | Max(_, _)
             | AllDiff(_, _)
+            | FlatAllDiff(_, _)
+            | AbstractLiteral(_, _)
     ) {
         return Err(ApplicationError::RuleNotApplicable);
     }
