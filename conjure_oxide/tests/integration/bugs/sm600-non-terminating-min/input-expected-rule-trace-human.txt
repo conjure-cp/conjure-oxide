@@ -5,7 +5,13 @@ find b: int(1..7)
 
 such that
 
-(Sum([min([a,b;int(1..2)]), 6]) <= 10)
+(Sum([min([a,b;int(1..2)]),6;int(1..2)]) <= 10)
+
+--
+
+Sum([min([a,b;int(1..2)]),6;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+Sum([min([a,b;int(1..2)]),6;int(1..)]) 
 
 --
 
@@ -26,7 +32,7 @@ new constraints:
   or([(__0 = a),(__0 = b);int(1..)])
 --
 
-(Sum([__0, 6]) <= 10), 
+(Sum([__0,6;int(1..)]) <= 10), 
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
 SumLeq([__0, 6], 10) 
 
