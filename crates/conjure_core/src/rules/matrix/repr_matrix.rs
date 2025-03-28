@@ -39,7 +39,10 @@ fn index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
     // ensure that the subject has a matrix domain.
     let decl = symbols.lookup(name).unwrap();
 
-    let Some(Domain::DomainMatrix(_, index_domains)) = decl.domain() else {
+    // resolve index domains so that we can enumerate them later
+    let Some(Domain::DomainMatrix(_, index_domains)) =
+        decl.domain().cloned().map(|x| x.resolve(symbols))
+    else {
         return Err(RuleNotApplicable);
     };
 
@@ -186,7 +189,7 @@ fn index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
             Atom::Literal(Literal::Int(1)),
         ));
 
-        let flat_index = Expr::Sum(Metadata::new(), sum_terms);
+        let flat_index = Expr::Sum(Metadata::new(), Box::new(into_matrix_expr![sum_terms]));
 
         // now lets get the flat matrix.
 
@@ -233,7 +236,10 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         .unwrap()[0]
         .clone();
 
-    let Some(Domain::DomainMatrix(_, index_domains)) = decl.domain() else {
+    // resolve index domains so that we can enumerate them later
+    let Some(Domain::DomainMatrix(_, index_domains)) =
+        decl.domain().cloned().map(|x| x.resolve(symbols))
+    else {
         return Err(RuleNotApplicable);
     };
 
@@ -304,7 +310,10 @@ fn matrix_ref_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             .unwrap()[0]
             .clone();
 
-        let Some(Domain::DomainMatrix(_, index_domains)) = decl.domain() else {
+        // resolve index domains so that we can enumerate them later
+        let Some(Domain::DomainMatrix(_, index_domains)) =
+            decl.domain().cloned().map(|x| x.resolve(symbols))
+        else {
             continue;
         };
 
@@ -316,7 +325,7 @@ fn matrix_ref_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             continue;
         };
 
-        let flat_values = matrix::enumerate_indices(index_domains.clone())
+        let flat_values = matrix::enumerate_indices(index_domains)
             .map(|i| {
                 matrix_values[&Name::RepresentedName(
                     name.clone(),

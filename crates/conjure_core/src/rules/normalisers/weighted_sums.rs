@@ -8,6 +8,7 @@ use std::collections::BTreeMap;
 use conjure_macros::register_rule;
 
 use crate::ast::{Atom, Expression as Expr, Literal as Lit, Name, SymbolTable};
+use crate::into_matrix_expr;
 use crate::metadata::Metadata;
 use crate::rule_engine::ApplicationError::RuleNotApplicable;
 use crate::rule_engine::{ApplicationResult, Reduction};
@@ -24,6 +25,8 @@ fn collect_like_terms(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Sum(meta, exprs) = expr.clone() else {
         return Err(RuleNotApplicable);
     };
+
+    let exprs = exprs.unwrap_list().ok_or(RuleNotApplicable)?;
 
     // Store:
     //  * map variable -> coefficient for weighted sum terms
@@ -93,5 +96,8 @@ fn collect_like_terms(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    Ok(Reduction::pure(Expr::Sum(meta, new_exprs)))
+    Ok(Reduction::pure(Expr::Sum(
+        meta,
+        Box::new(into_matrix_expr![new_exprs]),
+    )))
 }

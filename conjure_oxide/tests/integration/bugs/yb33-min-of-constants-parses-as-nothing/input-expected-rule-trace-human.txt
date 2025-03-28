@@ -4,7 +4,13 @@ find c: int(1..7)
 
 such that
 
-(Sum([min([5,7;int(1..2)]), c]) <= 10)
+(Sum([min([5,7;int(1..2)]),c;int(1..2)]) <= 10)
+
+--
+
+Sum([min([5,7;int(1..2)]),c;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+Sum([min([5,7;int(1..2)]),c;int(1..)]) 
 
 --
 
@@ -20,7 +26,7 @@ min([5,7;int(1..)]),
 
 --
 
-(Sum([5, c]) <= 10), 
+(Sum([5,c;int(1..)]) <= 10), 
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
 SumLeq([5, c], 10) 
 

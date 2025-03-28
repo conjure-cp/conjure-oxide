@@ -232,21 +232,27 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symbols: &SymbolTable) -> Appli
     ) -> Result<(Vec<Expr>, Atom, EqualityKind), ApplicationError> {
         match (a, b, equality_kind) {
             (Expr::Sum(_, sum_terms), Expr::Atomic(_, total), EqualityKind::Leq) => {
+                let sum_terms = sum_terms.unwrap_list().ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Leq))
             }
             (Expr::Atomic(_, total), Expr::Sum(_, sum_terms), EqualityKind::Leq) => {
+                let sum_terms = sum_terms.unwrap_list().ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Geq))
             }
             (Expr::Sum(_, sum_terms), Expr::Atomic(_, total), EqualityKind::Geq) => {
+                let sum_terms = sum_terms.unwrap_list().ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Geq))
             }
             (Expr::Atomic(_, total), Expr::Sum(_, sum_terms), EqualityKind::Geq) => {
+                let sum_terms = sum_terms.unwrap_list().ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Leq))
             }
             (Expr::Sum(_, sum_terms), Expr::Atomic(_, total), EqualityKind::Eq) => {
+                let sum_terms = sum_terms.unwrap_list().ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Eq))
             }
             (Expr::Atomic(_, total), Expr::Sum(_, sum_terms), EqualityKind::Eq) => {
+                let sum_terms = sum_terms.unwrap_list().ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Eq))
             }
             _ => Err(RuleNotApplicable),
@@ -260,6 +266,7 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symbols: &SymbolTable) -> Appli
         Expr::AuxDeclaration(_, n, a) => {
             let total: Atom = n.into();
             if let Expr::Sum(_, sum_terms) = *a {
+                let sum_terms = sum_terms.unwrap_list().ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Eq))
             } else {
                 Err(RuleNotApplicable)
@@ -538,6 +545,11 @@ fn introduce_poweq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         Expr::Eq(_, e1, e2) => match (*e1, *e2) {
             (Expr::Atomic(_, total), Expr::SafePow(_, a, b)) => Ok((a, b, total)),
             (Expr::SafePow(_, a, b), Expr::Atomic(_, total)) => Ok((a, b, total)),
+            _ => Err(RuleNotApplicable),
+        },
+
+        Expr::AuxDeclaration(_, total, e) => match *e {
+            Expr::SafePow(_, a, b) => Ok((a, b, Atom::Reference(total))),
             _ => Err(RuleNotApplicable),
         },
         _ => Err(RuleNotApplicable),
@@ -958,6 +970,7 @@ fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
+    let sum_exprs = sum_exprs.unwrap_list().ok_or(RuleNotApplicable)?;
     let (y, k) = match sum_exprs.as_slice() {
         [Expr::Atomic(_, y), Expr::Atomic(_, Atom::Literal(k))] => (y, k),
         [Expr::Atomic(_, Atom::Literal(k)), Expr::Atomic(_, y)] => (y, k),
@@ -992,6 +1005,7 @@ fn y_plus_k_geq_x_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
+    let sum_exprs = sum_exprs.unwrap_list().ok_or(RuleNotApplicable)?;
     let (y, k) = match sum_exprs.as_slice() {
         [Expr::Atomic(_, y), Expr::Atomic(_, Atom::Literal(k))] => (y, k),
         [Expr::Atomic(_, Atom::Literal(k)), Expr::Atomic(_, y)] => (y, k),
