@@ -5,12 +5,6 @@ use std::fs;
 use std::path::PathBuf;
 use std::{fmt, fs::OpenOptions, io::Write};
 
-// to have all the traces as a single JSON object, we need to have a vector of traces
-// so this is a lazy static for accumulating traces
-// lazy_static! {
-//     static ref TRACE_COLLECTION: Mutex<Vec<RuleTrace>> = Mutex::new(Vec<RuleTrace>);
-// }
-
 #[derive(serde::Serialize)] // added for serialisation to JSON using serde
 /// represents the trace of a rule application
 pub struct RuleTrace {
@@ -78,7 +72,7 @@ impl MessageFormatter for HumanFormatter {
     fn format(&self, trace: TraceStruct) -> String {
         match trace {
             TraceStruct::RuleTrace(rule_trace) => {
-                if (rule_trace.transformed_expression.is_some()) {
+                if rule_trace.transformed_expression.is_some() {
                     format!("Successful Tranformation: \n{}", rule_trace)
                 } else {
                     format!("Unsuccessful Tranformation: \n{}", rule_trace)
@@ -90,17 +84,7 @@ impl MessageFormatter for HumanFormatter {
 }
 
 // add a collection of traces
-pub struct JsonFormatter {
-    trace_collection: Arc<Mutex<Vec<RuleTrace>>>,
-}
-
-impl JsonFormatter {
-    pub fn new() -> Self {
-        Self {
-            trace_collection: Arc::new(Mutex::new(Vec::new())),
-        }
-    }
-}
+pub struct JsonFormatter;
 
 // JSON formatter implementing the MessageFormatter trait
 impl MessageFormatter for JsonFormatter {
@@ -132,6 +116,7 @@ pub struct FileConsumer {
     pub formatter: Box<dyn MessageFormatter>,
     pub verbosity: VerbosityLevel,
     pub file_path: String, // path to file where the trace will be written
+    pub is_first: std::cell::Cell<bool>, // for json formatting, trust me
 }
 
 impl Trace for StdoutConsumer {
@@ -149,8 +134,19 @@ impl Trace for FileConsumer {
             .create(true)
             .open(&self.file_path)
             .unwrap();
-        writeln!(file, "{}", formatted_output).unwrap();
+        if self.is_first.get() {
+            writeln!(file, "[").unwrap();
+            writeln!(file, "{}", formatted_output).unwrap();
+            self.is_first.set(false);
+        } else {
+            writeln!(file, ",\n{}", formatted_output).unwrap();
+        }
     }
+}
+
+pub fn finalise_trace_file(path: &str) {
+    let mut file = OpenOptions::new().append(true).open(path).unwrap();
+    writeln!(file, "\n]").unwrap();
 }
 
 // which returns the verbosity level of the consumer
@@ -201,6 +197,7 @@ pub fn create_consumer(
                 formatter,
                 verbosity,
                 file_path,
+                is_first: std::cell::Cell::new(true), // for json formatting, trust me
             })
         }
         other => panic!("Unknown consumer type: {}", other),

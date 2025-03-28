@@ -1,0 +1,343 @@
+{
+  "initial_expression": {
+    "Sum": [
+      {
+        "clean": false,
+        "etype": null
+      },
+      [
+        {
+          "Sum": [
+            {
+              "clean": false,
+              "etype": null
+            },
+            [
+              {
+                "Atomic": [
+                  {
+                    "clean": false,
+                    "etype": null
+                  },
+                  {
+                    "Reference": {
+                      "UserName": "a"
+                    }
+                  }
+                ]
+              },
+              {
+                "Atomic": [
+                  {
+                    "clean": false,
+                    "etype": null
+                  },
+                  {
+                    "Reference": {
+                      "UserName": "b"
+                    }
+                  }
+                ]
+              }
+            ]
+          ]
+        },
+        {
+          "Atomic": [
+            {
+              "clean": false,
+              "etype": null
+            },
+            {
+              "Reference": {
+                "UserName": "c"
+              }
+            }
+          ]
+        }
+      ]
+    ]
+  },
+  "rule_name": "normalise_associative_commutative",
+  "rule_priority": 8900,
+  "rule_set_name": "Base",
+  "transformed_expression": {
+    "Sum": [
+      {
+        "clean": false,
+        "etype": null
+      },
+      [
+        {
+          "Atomic": [
+            {
+              "clean": false,
+              "etype": null
+            },
+            {
+              "Reference": {
+                "UserName": "a"
+              }
+            }
+          ]
+        },
+        {
+          "Atomic": [
+            {
+              "clean": false,
+              "etype": null
+            },
+            {
+              "Reference": {
+                "UserName": "b"
+              }
+            }
+          ]
+        },
+        {
+          "Atomic": [
+            {
+              "clean": false,
+              "etype": null
+            },
+            {
+              "Reference": {
+                "UserName": "c"
+              }
+            }
+          ]
+        }
+      ]
+    ]
+  },
+  "new_variables_str": "",
+  "top_level_str": ""
+}
+{
+  "initial_expression": {
+    "Eq": [
+      {
+        "clean": false,
+        "etype": null
+      },
+      {
+        "Sum": [
+          {
+            "clean": false,
+            "etype": null
+          },
+          [
+            {
+              "Atomic": [
+                {
+                  "clean": false,
+                  "etype": null
+                },
+                {
+                  "Reference": {
+                    "UserName": "a"
+                  }
+                }
+              ]
+            },
+            {
+              "Atomic": [
+                {
+                  "clean": false,
+                  "etype": null
+                },
+                {
+                  "Reference": {
+                    "UserName": "b"
+                  }
+                }
+              ]
+            },
+            {
+              "Atomic": [
+                {
+                  "clean": false,
+                  "etype": null
+                },
+                {
+                  "Reference": {
+                    "UserName": "c"
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      },
+      {
+        "Atomic": [
+          {
+            "clean": false,
+            "etype": null
+          },
+          {
+            "Literal": {
+              "Int": 4
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "rule_name": "introduce_weighted_sumleq_sumgeq",
+  "rule_priority": 4600,
+  "rule_set_name": "Minion",
+  "transformed_expression": {
+    "And": [
+      {
+        "clean": false,
+        "etype": null
+      },
+      {
+        "AbstractLiteral": [
+          {
+            "clean": false,
+            "etype": null
+          },
+          {
+            "Matrix": [
+              [
+                {
+                  "FlatSumLeq": [
+                    {
+                      "clean": false,
+                      "etype": null
+                    },
+                    [
+                      {
+                        "Reference": {
+                          "UserName": "a"
+                        }
+                      },
+                      {
+                        "Reference": {
+                          "UserName": "b"
+                        }
+                      },
+                      {
+                        "Reference": {
+                          "UserName": "c"
+                        }
+                      }
+                    ],
+                    {
+                      "Literal": {
+                        "Int": 4
+                      }
+                    }
+                  ]
+                },
+                {
+                  "FlatSumGeq": [
+                    {
+                      "clean": false,
+                      "etype": null
+                    },
+                    [
+                      {
+                        "Reference": {
+                          "UserName": "a"
+                        }
+                      },
+                      {
+                        "Reference": {
+                          "UserName": "b"
+                        }
+                      },
+                      {
+                        "Reference": {
+                          "UserName": "c"
+                        }
+                      }
+                    ],
+                    {
+                      "Literal": {
+                        "Int": 4
+                      }
+                    }
+                  ]
+                }
+              ],
+              {
+                "IntDomain": [
+                  {
+                    "UnboundedR": 1
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "new_variables_str": "",
+  "top_level_str": ""
+}
+{
+  "initial_expression": {
+    "Geq": [
+      {
+        "clean": false,
+        "etype": null
+      },
+      {
+        "Atomic": [
+          {
+            "clean": false,
+            "etype": null
+          },
+          {
+            "Reference": {
+              "UserName": "a"
+            }
+          }
+        ]
+      },
+      {
+        "Atomic": [
+          {
+            "clean": false,
+            "etype": null
+          },
+          {
+            "Reference": {
+              "UserName": "b"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "rule_name": "geq_to_ineq",
+  "rule_priority": 4100,
+  "rule_set_name": "Minion",
+  "transformed_expression": {
+    "FlatIneq": [
+      {
+        "clean": false,
+        "etype": null
+      },
+      {
+        "Reference": {
+          "UserName": "b"
+        }
+      },
+      {
+        "Reference": {
+          "UserName": "a"
+        }
+      },
+      {
+        "Int": 0
+      }
+    ]
+  },
+  "new_variables_str": "",
+  "top_level_str": ""
+}
