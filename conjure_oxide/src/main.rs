@@ -13,10 +13,10 @@ use std::sync::Arc;
 use test_solve::run_test_solve_command;
 
 use git_version::git_version;
-use tracing_subscriber::filter::LevelFilter;
+use tracing_subscriber::filter::{FilterFn, LevelFilter};
 use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
-use tracing_subscriber::{EnvFilter, Layer};
+use tracing_subscriber::{fmt, EnvFilter, Layer};
 
 pub fn main() {
     // exit with 2 instead of 1 on failure,like grep
@@ -40,6 +40,7 @@ pub fn run() -> anyhow::Result<()> {
     }
 
     setup_logging(&cli.global_args)?;
+
     run_subcommand(cli)
 }
 
@@ -103,11 +104,22 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
         )
     };
 
+    let human_rule_trace_layer = global_args.human_rule_trace.clone().map(|x| {
+        let file = File::create(x).expect("Unable to create rule trace file");
+        fmt::layer()
+            .with_writer(file)
+            .with_level(false)
+            .without_time()
+            .with_target(false)
+            .with_filter(EnvFilter::new("rule_engine_human=trace"))
+            .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human"))
+    });
     // load the loggers
     tracing_subscriber::registry()
         .with(json_layer)
         .with(stderr_layer)
         .with(file_layer)
+        .with(human_rule_trace_layer)
         .init();
 
     Ok(())

@@ -13,13 +13,18 @@ use uniplate::{derive::Uniplate, Biplate as _};
 use crate::{
     ast::Atom,
     context::Context,
-    into_matrix_expr,
+    into_matrix_expr, matrix_expr,
     metadata::Metadata,
     solver::{Solver, SolverError},
 };
 
 use super::{Declaration, Domain, Expression, Model, Name, Range, SubModel, SymbolTable};
 
+pub enum ComprehensionKind {
+    Sum,
+    And,
+    Or,
+}
 /// A comprehension.
 #[derive(Clone, PartialEq, Eq, Uniplate, Serialize, Deserialize, Debug)]
 #[uniplate(walk_into=[SubModel])]
@@ -136,10 +141,15 @@ impl ComprehensionBuilder {
         self
     }
 
+    /// Creates a comprehension with the given return expression.
+    ///
+    /// If a comprehension kind is not given, comprehension guards containing decision variables
+    /// are invalid, and will cause a panic.
     pub fn with_return_value(
         self,
-        expression: Expression,
+        mut expression: Expression,
         parent: Rc<RefCell<SymbolTable>>,
+        comprehension_kind: Option<ComprehensionKind>,
     ) -> Comprehension {
         let mut submodel = SubModel::new(parent);
 
@@ -153,23 +163,34 @@ impl ComprehensionBuilder {
             .into_iter()
             .partition(|x| is_induction_guard(&induction_variables, x));
 
-        // non-induction guards go in front of the expression instead.
-        let expression = match other_guards.len() {
-            0_usize => expression,
-            1_usize => Expression::Imply(
-                Metadata::new(),
-                Box::new(other_guards[0].clone()),
-                Box::new(expression),
-            ),
-            _ => Expression::Imply(
-                Metadata::new(),
-                Box::new(Expression::And(
+        // handle guards that reference non-induction variables
+        if !other_guards.is_empty() {
+            let comprehension_kind = comprehension_kind.expect(
+                "if any guards reference decision variables, a comprehension kind should be given",
+            );
+
+            let guard_expr = match other_guards.as_slice() {
+                [x] => x.clone(),
+                xs => Expression::And(Metadata::new(), Box::new(into_matrix_expr!(xs.to_vec()))),
+            };
+
+            expression = match comprehension_kind {
+                ComprehensionKind::And => {
+                    Expression::Imply(Metadata::new(), Box::new(guard_expr), Box::new(expression))
+                }
+                ComprehensionKind::Or => Expression::And(
                     Metadata::new(),
-                    Box::new(into_matrix_expr!(other_guards)),
-                )),
-                Box::new(expression),
-            ),
-        };
+                    Box::new(Expression::And(
+                        Metadata::new(),
+                        Box::new(matrix_expr![guard_expr, expression]),
+                    )),
+                ),
+
+                ComprehensionKind::Sum => {
+                    panic!("guards that reference decision variables not yet implemented for sum");
+                }
+            }
+        }
 
         submodel.add_constraints(induction_guards);
         for (name, domain) in self.generators {

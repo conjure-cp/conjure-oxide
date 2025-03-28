@@ -555,7 +555,7 @@ fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model)
     for node in model.universe_bi() {
         use conjure_core::ast::Expression::*;
         match node {
-            Sum(_, ref vec) => assert_constants_leq_one(&node, vec),
+            Sum(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),
             Min(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),
             Max(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),
             Or(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),
