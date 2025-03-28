@@ -5,10 +5,15 @@ mod solve;
 mod test_solve;
 use clap::Parser as _;
 use cli::{Cli, GlobalArgs};
-use conjure_oxide::SolverFamily;
+use conjure_core::context::Context;
+use conjure_core::rule_engine::{resolve_rule_sets, rewrite_naive};
+use conjure_oxide::find_conjure::conjure_executable;
+use conjure_oxide::utils::essence_parser::parse_essence_file_native;
+use conjure_oxide::{get_rules, model_from_json, SolverFamily};
 use print_info_schema::run_print_info_schema_command;
 use solve::run_solve_command;
 use std::fs::File;
+use std::io::Write;
 use std::process::exit;
 use std::sync::Arc;
 use test_solve::run_test_solve_command;
@@ -130,131 +135,12 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
         .with(human_rule_trace_layer)
         .init();
 
-    if target_family != SolverFamily::Minion {
-        tracing::error!("Only the Minion solver is currently supported!");
-        exit(1);
-    }
-
-    let rule_sets = match resolve_rule_sets(target_family, &extra_rule_sets) {
-        Ok(rs) => rs,
-        Err(e) => {
-            tracing::error!("Error resolving rule sets: {}", e);
-            exit(1);
-        }
-    };
-
-    let pretty_rule_sets = rule_sets
-        .iter()
-        .map(|rule_set| rule_set.name)
-        .collect::<Vec<_>>()
-        .join(", ");
-
-    tracing::info!("Enabled rule sets: [{}]", pretty_rule_sets);
-    tracing::info!(
-        target: "file",
-        "Rule sets: {}",
-        pretty_rule_sets
-    );
-
-    let rules = get_rules(&rule_sets)?.into_iter().collect::<Vec<_>>();
-    tracing::info!(
-        target: "file",
-        "Rules: {}",
-        rules.iter().map(|rd| format!("{}", rd )).collect::<Vec<_>>().join("\n")
-    );
-    let input = cli.input_file.clone().expect("No input file given");
-    tracing::info!(target: "file", "Input file: {}", input.display());
-    let input_file: &str = input.to_str().ok_or(anyhow!(
-        "Given input_file could not be converted to a string"
-    ))?;
-
-    let file = specify_trace_file(
-        input_file.to_string(),
-        cli.trace_file.clone(),
-        cli.formatter.as_str(),
-    );
-    //consumer for protrace
-    let consumer: Option<Consumer> = cli.tracing.then(|| {
-        create_consumer(
-            cli.trace_output.as_str(),
-            cli.verbosity.clone(),
-            cli.formatter.as_str(),
-            file,
-        )
-    });
-    /******************************************************/
-    /*        Parse essence to json using Conjure         */
-    /******************************************************/
-
-    let context = Context::new_ptr(
-        target_family,
-        extra_rule_sets.iter().map(|rs| rs.to_string()).collect(),
-        rules,
-        rule_sets.clone(),
-    );
-    context.write().unwrap().file_name = Some(input.to_str().expect("").into());
-
-    let mut model;
-    if cli.enable_native_parser {
-        model = parse_essence_file_native(input_file, context.clone())?;
-    } else {
-        conjure_executable()
-            .map_err(|e| anyhow!("Could not find correct conjure executable: {}", e))?;
-
-        let mut cmd = std::process::Command::new("conjure");
-        let output = cmd
-            .arg("pretty")
-            .arg("--output-format=astjson")
-            .arg(input_file)
-            .output()?;
-
-        let conjure_stderr = String::from_utf8(output.stderr)?;
-        if !conjure_stderr.is_empty() {
-            bail!(conjure_stderr);
-        }
-
-        let astjson = String::from_utf8(output.stdout)?;
-
-        if cfg!(feature = "extra-rule-checks") {
-            tracing::info!("extra-rule-checks: enabled");
-        } else {
-            tracing::info!("extra-rule-checks: disabled");
-        }
-
-        model = model_from_json(&astjson, context.clone())?;
-    }
-
-    tracing::info!("Initial model: \n{}\n", model);
-
-    tracing::info!("Rewriting model...");
-
-    if !cli.use_optimising_rewriter {
-        tracing::info!("Rewriting model...");
-        model = rewrite_naive(
-            &model,
-            &rule_sets,
-            cli.check_equally_applicable_rules,
-            consumer,
-        )?;
-    }
-
-    tracing::info!("Rewritten model: \n{}\n", model);
-    if cli.no_run_solver {
-        println!("{}", model);
-    } else {
-        run_solver(&cli.clone(), model)?;
-    }
-
-    // still do postamble even if we didn't run the solver
-    if let Some(path) = cli.info_json_path {
-        #[allow(clippy::unwrap_used)]
-        let context_obj = context.read().unwrap().clone();
-        let generated_json = &serde_json::to_value(context_obj)?;
-        let pretty_json = serde_json::to_string_pretty(&generated_json)?;
-        File::create(path)?.write_all(pretty_json.as_bytes())?;
-    }
     Ok(())
 }
+
+/******************************************************/
+/*        Parse essence to json using Conjure         */
+/******************************************************/
 
 /// Runs the selected subcommand
 fn run_subcommand(cli: Cli) -> anyhow::Result<()> {

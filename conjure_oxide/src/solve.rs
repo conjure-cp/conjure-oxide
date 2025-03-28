@@ -11,6 +11,7 @@ use std::{
 use anyhow::{anyhow, ensure};
 use conjure_core::{
     context::Context,
+    pro_trace::{create_consumer, specify_trace_file, Consumer},
     rule_engine::{resolve_rule_sets, rewrite_naive},
     Model,
 };
@@ -26,7 +27,7 @@ use conjure_oxide::{
 };
 use serde_json::to_string_pretty;
 
-use crate::cli::GlobalArgs;
+use crate::cli::{self, GlobalArgs};
 
 #[derive(Clone, Debug, clap::Args)]
 pub struct Args {
@@ -57,12 +58,24 @@ pub struct Args {
 pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::Result<()> {
     let input_file = solve_args.input_file.clone();
 
-    // each step is in its own method so that similar commands (e.g. testsolve) can reuse some of
-    // these steps.
+    let file = specify_trace_file(
+        input_file.to_string_lossy().into_owned(),
+        global_args.trace_file.clone(),
+        global_args.formatter.as_str(),
+    );
+    //consumer for protrace
+    let consumer: Option<Consumer> = global_args.tracing.then(|| {
+        create_consumer(
+            global_args.trace_output.as_str(),
+            global_args.verbosity.clone(),
+            global_args.formatter.as_str(),
+            file,
+        )
+    });
 
     let context = init_context(&global_args, input_file)?;
     let model = parse(&global_args, Arc::clone(&context))?;
-    let rewritten_model = rewrite(model, &global_args, Arc::clone(&context))?;
+    let rewritten_model = rewrite(model, &global_args, Arc::clone(&context), consumer)?;
 
     if solve_args.no_run_solver {
         println!("{}", rewritten_model);
@@ -180,6 +193,7 @@ pub(crate) fn rewrite(
     model: Model,
     global_args: &GlobalArgs,
     context: Arc<RwLock<Context<'static>>>,
+    consumer: Option<Consumer>,
 ) -> anyhow::Result<Model> {
     tracing::info!("Initial model: \n{}\n", model);
 
@@ -191,6 +205,7 @@ pub(crate) fn rewrite(
         &model,
         &rule_sets,
         global_args.check_equally_applicable_rules,
+        consumer,
     )?;
 
     tracing::info!("Rewritten model: \n{}\n", new_model);
