@@ -190,13 +190,16 @@ impl SolverAdaptor for SAT {
 
         let m_clone = model.clone();
         let vec_constr = m_clone.as_submodel().constraints();
-        let constr = &vec_constr[0];
-        let vec_cnf: Vec<Expression> = match constr {
-            Expression::And(_, vec) => vec.clone().unwrap_list().unwrap(),
-            _ => Err(SolverError::ModelInvalid(
-                "Only And Constraints supported".to_string(),
-            ))?,
-        };
+
+        let vec_cnf = vec_constr.clone();
+        // let constr = &vec_constr[0];
+        // let vec_cnf: Vec<Expression> = match constr {
+        //     Expression::And(_, vec) => vec.clone().unwrap_list().unwrap(),
+
+        //     _ => Err(SolverError::ModelInvalid(
+        //         "Only And Constraints supported".to_string(),
+        //     ))?,
+        // };
 
         let mut var_map: HashMap<String, Lit> = HashMap::new();
 

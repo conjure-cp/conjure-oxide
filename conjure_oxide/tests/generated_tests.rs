@@ -248,7 +248,7 @@ fn integration_test_inner(
     // TODO: allow either Minion or SAT but not both; eventually allow both sovlers to be tested
 
     if config.solve_with_sat && config.solve_with_minion {
-        todo!("Not yet implement simultaneous testing of both solvers")
+        todo!("Not yet implemented simultaneous testing of both solvers")
     }
 
     // Stage 1a: Parse the model using the normal parser (run unless explicitly disabled)
@@ -286,6 +286,12 @@ fn integration_test_inner(
         } else {
             SolverFamily::Minion
         };
+
+        // let defaults = if config.solve_with_sat {
+        //     &[]
+        // } else {
+        //     DEFAULT_RULE_SETS
+        // };
 
         let rule_sets = resolve_rule_sets(solver_fam, DEFAULT_RULE_SETS)?;
 
@@ -372,7 +378,6 @@ fn integration_test_inner(
     };
 
     // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
-    // todo double-check here
     if config.compare_solver_solutions
         || accept && (config.solve_with_minion || config.solve_with_sat)
     {

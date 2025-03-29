@@ -73,7 +73,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
                     run_sat_solver(&solve_args, rewritten_model)?;
                 }
                 SolverFamily::Minion => {
-                    run_minion_solver(&solve_args, rewritten_model)?;
+                    run_minion(&solve_args, rewritten_model)?;
                 }
             },
             None => panic!("Should be unreachable"),
@@ -102,8 +102,8 @@ pub(crate) fn init_context(
     }
 
     ensure!(
-        target_family == SolverFamily::Minion,
-        "Only the Minion solver is currently supported!"
+        target_family == SolverFamily::Minion || target_family == SolverFamily::SAT,
+        "Only the Minion and SAT solvers is currently supported!"
     );
 
     let rule_sets = match resolve_rule_sets(target_family, &extra_rule_sets) {
@@ -207,16 +207,17 @@ pub(crate) fn rewrite(
     Ok(new_model)
 }
 
-fn run_solver(cli: &Args, model: Model) -> anyhow::Result<()> {
-    let solver = cli.solver;
-    match solver {
-        Some(sol_family) => match sol_family {
-            SolverFamily::SAT => run_sat_solver(cli, model),
-            SolverFamily::Minion => run_minion(cli, model),
-        },
-        None => panic!("main::run_solver() : Unreachable: Should never be None"),
-    }
-}
+// fn run_solver(cli: &Args, model: Model) -> anyhow::Result<()> {
+// let solver = cli.solver;
+// match solver {
+//     Some(sol_family) => match sol_family {
+//         SolverFamily::SAT => run_sat_solver(cli, model),
+//         SolverFamily::Minion => run_minion(cli, model),
+//     },
+//     None => panic!("main::run_solver() : Unreachable: Should never be None"),
+// }
+
+// }
 
 fn run_minion(cli: &Args, model: Model) -> anyhow::Result<()> {
     let out_file: Option<File> = match &cli.output {
