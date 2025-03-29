@@ -207,8 +207,8 @@ pub(crate) fn rewrite(
     Ok(new_model)
 }
 
-fn run_minion(cli: &Args, model: Model) -> anyhow::Result<()> {
-    let out_file: Option<File> = match &cli.output {
+fn run_minion(cmd_args: &Args, model: Model) -> anyhow::Result<()> {
+    let out_file: Option<File> = match &cmd_args.output {
         None => None,
         Some(pth) => Some(
             File::options()
@@ -219,7 +219,7 @@ fn run_minion(cli: &Args, model: Model) -> anyhow::Result<()> {
         ),
     };
 
-    let solutions = get_minion_solutions(model, cli.number_of_solutions)?;
+    let solutions = get_minion_solutions(model, cmd_args.number_of_solutions)?;
     tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
 
     let solutions_json = solutions_to_json(&solutions);
@@ -233,15 +233,15 @@ fn run_minion(cli: &Args, model: Model) -> anyhow::Result<()> {
             outf.write_all(solutions_str.as_bytes())?;
             println!(
                 "Solutions saved to {:?}",
-                &cli.output.clone().unwrap().canonicalize()?
+                &cmd_args.output.clone().unwrap().canonicalize()?
             )
         }
     }
     Ok(())
 }
 
-fn run_sat_solver(cli: &Args, model: Model) -> anyhow::Result<()> {
-    let out_file: Option<File> = match &cli.output {
+fn run_sat_solver(cmd_args: &Args, model: Model) -> anyhow::Result<()> {
+    let out_file: Option<File> = match &cmd_args.output {
         None => None,
         Some(pth) => Some(
             File::options()
@@ -252,7 +252,7 @@ fn run_sat_solver(cli: &Args, model: Model) -> anyhow::Result<()> {
         ),
     };
 
-    let solutions = get_sat_solutions(model, cli.number_of_solutions)?;
+    let solutions = get_sat_solutions(model, cmd_args.number_of_solutions)?;
     tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
 
     let solutions_json = solutions_to_json(&solutions);
@@ -266,7 +266,7 @@ fn run_sat_solver(cli: &Args, model: Model) -> anyhow::Result<()> {
             outf.write_all(solutions_str.as_bytes())?;
             println!(
                 "Solutions saved to {:?}",
-                &cli.output.clone().unwrap().canonicalize()?
+                &cmd_args.output.clone().unwrap().canonicalize()?
             )
         }
     }
