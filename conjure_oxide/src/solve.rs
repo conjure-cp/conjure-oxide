@@ -26,7 +26,7 @@ use conjure_oxide::{
 };
 use serde_json::to_string_pretty;
 
-use crate::{cli::GlobalArgs, Cli};
+use crate::cli::GlobalArgs;
 
 #[derive(Clone, Debug, clap::Args)]
 pub struct Args {
