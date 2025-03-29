@@ -8,10 +8,12 @@ use std::{
     sync::{Arc, RwLock},
 };
 
+use std::{fs::OpenOptions, io::Write};
+
 use anyhow::{anyhow, ensure};
 use conjure_core::{
     context::Context,
-    pro_trace::{create_consumer, specify_trace_file, Consumer},
+    pro_trace::{create_consumer, finalise_trace_file, specify_trace_file, Consumer},
     rule_engine::{resolve_rule_sets, rewrite_naive},
     Model,
 };
@@ -69,7 +71,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
             global_args.trace_output.as_str(),
             global_args.verbosity.clone(),
             global_args.formatter.as_str(),
-            file,
+            file.clone(),
         )
     });
 
@@ -89,6 +91,11 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
         let generated_json = &serde_json::to_value(context_obj)?;
         let pretty_json = serde_json::to_string_pretty(&generated_json)?;
         File::create(path)?.write_all(pretty_json.as_bytes())?;
+    }
+
+    if global_args.trace_output == "file" && global_args.formatter == "json" {
+        let mut file = OpenOptions::new().append(true).open(file).unwrap();
+        writeln!(file, "\n]").unwrap();
     }
     Ok(())
 }

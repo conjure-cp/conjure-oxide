@@ -65,6 +65,13 @@ pub trait MessageFormatter: Any + Send + Sync {
     fn format(&self, trace: TraceStruct) -> String;
 }
 
+// it's here to be able to check the formatter type later on
+#[derive(PartialEq)]
+pub enum FormatterType {
+    Json,
+    Human,
+}
+
 pub struct HumanFormatter;
 
 // human-readable formatter implementing the MessageFormatter trait
@@ -114,6 +121,7 @@ pub struct StdoutConsumer {
 
 pub struct FileConsumer {
     pub formatter: Box<dyn MessageFormatter>,
+    pub formatter_type: FormatterType, // trust me again, it's for the json formtting
     pub verbosity: VerbosityLevel,
     pub file_path: String, // path to file where the trace will be written
     pub is_first: std::cell::Cell<bool>, // for json formatting, trust me
@@ -134,18 +142,28 @@ impl Trace for FileConsumer {
             .create(true)
             .open(&self.file_path)
             .unwrap();
-        if self.is_first.get() {
-            writeln!(file, "[").unwrap();
-            writeln!(file, "{}", formatted_output).unwrap();
-            self.is_first.set(false);
+        if self.formatter_type == FormatterType::Json {
+            if self.is_first.get() {
+                writeln!(file, "[").unwrap();
+                writeln!(file, "{}", formatted_output).unwrap();
+                self.is_first.set(false);
+            } else {
+                writeln!(file, ",\n{}", formatted_output).unwrap();
+            }
         } else {
-            writeln!(file, ",\n{}", formatted_output).unwrap();
+            writeln!(file, "{}", formatted_output).unwrap();
         }
     }
 }
 
 pub fn finalise_trace_file(path: &str) {
-    let mut file = OpenOptions::new().append(true).open(path).unwrap();
+    println!("{}", &path);
+
+    let mut file = OpenOptions::new()
+        .append(true)
+        .create(true)
+        .open(path)
+        .unwrap();
     writeln!(file, "\n]").unwrap();
 }
 
@@ -176,11 +194,12 @@ pub fn create_consumer(
     output_format: &str,
     file_path: String,
 ) -> Consumer {
-    let formatter: Box<dyn MessageFormatter> = match output_format.to_lowercase().as_str() {
-        "json" => Box::new(JsonFormatter),
-        "human" => Box::new(HumanFormatter),
-        other => panic!("Unknown format type: {}", other),
-    };
+    let (formatter, formatter_type): (Box<dyn MessageFormatter>, FormatterType) =
+        match output_format.to_lowercase().as_str() {
+            "json" => (Box::new(JsonFormatter), FormatterType::Json),
+            "human" => (Box::new(HumanFormatter), FormatterType::Human),
+            other => panic!("Unknown format type: {}", other),
+        };
 
     match consumer_type.to_lowercase().as_str() {
         "stdout" => Consumer::StdoutConsumer(StdoutConsumer {
@@ -195,6 +214,7 @@ pub fn create_consumer(
 
             Consumer::FileConsumer(FileConsumer {
                 formatter,
+                formatter_type,
                 verbosity,
                 file_path,
                 is_first: std::cell::Cell::new(true), // for json formatting, trust me
