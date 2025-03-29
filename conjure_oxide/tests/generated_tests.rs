@@ -287,12 +287,6 @@ fn integration_test_inner(
             SolverFamily::Minion
         };
 
-        // let defaults = if config.solve_with_sat {
-        //     &[]
-        // } else {
-        //     DEFAULT_RULE_SETS
-        // };
-
         let rule_sets = resolve_rule_sets(solver_fam, DEFAULT_RULE_SETS)?;
 
         let mut model = parsed_model.expect("Model must be parsed in 1a");

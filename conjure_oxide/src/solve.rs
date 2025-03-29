@@ -207,18 +207,6 @@ pub(crate) fn rewrite(
     Ok(new_model)
 }
 
-// fn run_solver(cli: &Args, model: Model) -> anyhow::Result<()> {
-// let solver = cli.solver;
-// match solver {
-//     Some(sol_family) => match sol_family {
-//         SolverFamily::SAT => run_sat_solver(cli, model),
-//         SolverFamily::Minion => run_minion(cli, model),
-//     },
-//     None => panic!("main::run_solver() : Unreachable: Should never be None"),
-// }
-
-// }
-
 fn run_minion(cli: &Args, model: Model) -> anyhow::Result<()> {
     let out_file: Option<File> = match &cli.output {
         None => None,
