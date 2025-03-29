@@ -31,7 +31,8 @@ fn apply_eval_constant(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// `Some(Const)` if the expression can be simplified to a constant
 pub fn eval_constant(expr: &Expr) -> Option<Lit> {
     match expr {
-        // need to specify for subsetEq
+        // need to specify for subsetEq + intersection
+        Expr::Intersect(_, _, _) => None,
         Expr::SubsetEq(_, _, _) => None,
         Expr::FromSolution(_, _) => None,
         Expr::DominanceRelation(_, _) => None,
