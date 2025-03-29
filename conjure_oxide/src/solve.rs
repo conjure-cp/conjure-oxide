@@ -19,14 +19,14 @@ use conjure_oxide::{
     find_conjure::conjure_executable,
     get_rules, model_from_json,
     utils::{
-        conjure::{get_minion_solutions, minion_solutions_to_json},
+        conjure::{get_minion_solutions, get_sat_solutions, solutions_to_json},
         essence_parser::parse_essence_file_native,
     },
     SolverFamily,
 };
 use serde_json::to_string_pretty;
 
-use crate::cli::GlobalArgs;
+use crate::{cli::GlobalArgs, Cli};
 
 #[derive(Clone, Debug, clap::Args)]
 pub struct Args {
@@ -67,7 +67,17 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     if solve_args.no_run_solver {
         println!("{}", rewritten_model);
     } else {
-        run_solver(&solve_args, rewritten_model)?;
+        match global_args.solver {
+            Some(s) => match s {
+                SolverFamily::SAT => {
+                    run_sat_solver(&solve_args, rewritten_model)?;
+                }
+                SolverFamily::Minion => {
+                    run_minion_solver(&solve_args, rewritten_model)?;
+                }
+            },
+            None => panic!("Should be unreachable"),
+        }
     }
 
     // still do postamble even if we didn't run the solver
@@ -197,7 +207,7 @@ pub(crate) fn rewrite(
     Ok(new_model)
 }
 
-fn run_solver(cli: &Cli, model: Model) -> anyhow::Result<()> {
+fn run_solver(cli: &Args, model: Model) -> anyhow::Result<()> {
     let solver = cli.solver;
     match solver {
         Some(sol_family) => match sol_family {
@@ -208,7 +218,7 @@ fn run_solver(cli: &Cli, model: Model) -> anyhow::Result<()> {
     }
 }
 
-fn run_minion(cli: &Cli, model: Model) -> anyhow::Result<()> {
+fn run_minion(cli: &Args, model: Model) -> anyhow::Result<()> {
     let out_file: Option<File> = match &cli.output {
         None => None,
         Some(pth) => Some(
@@ -241,7 +251,7 @@ fn run_minion(cli: &Cli, model: Model) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn run_sat_solver(cli: &Cli, model: Model) -> anyhow::Result<()> {
+fn run_sat_solver(cli: &Args, model: Model) -> anyhow::Result<()> {
     let out_file: Option<File> = match &cli.output {
         None => None,
         Some(pth) => Some(
