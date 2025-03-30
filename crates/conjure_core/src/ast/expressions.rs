@@ -39,6 +39,8 @@ use super::{Domain, Range, SubModel, Typeable};
 #[biplate(to=AbstractLiteral<Literal>,walk_into=[Atom])]
 #[biplate(to=Literal,walk_into=[Atom])]
 pub enum Expression {
+    In(Metadata, Box<Expression>, Box<Expression>),
+
     AbstractLiteral(Metadata, AbstractLiteral<Expression>),
     /// The top of the model
     Root(Metadata, Vec<Expression>),
@@ -436,7 +438,7 @@ impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
         let ret = match self {
-            //todo
+            Expression::In(_, _, _) => None,
             Expression::AbstractLiteral(_, _) => None,
             Expression::DominanceRelation(_, _) => Some(Domain::BoolDomain),
             Expression::FromSolution(_, expr) => expr.domain_of(syms),
@@ -656,6 +658,7 @@ impl Expression {
 
     pub fn return_type(&self) -> Option<ReturnType> {
         match self {
+            Expression::In(_, _, _) => Some(ReturnType::Bool),
             Expression::AbstractLiteral(_, _) => None,
             Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
                 Some(subject.return_type()?)
@@ -862,6 +865,9 @@ impl From<Atom> for Expression {
 impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
+            Expression::In(_, e1, e2) => {
+                write!(f, "{} in {}", e1, e2)
+            }
             Expression::AbstractLiteral(_, l) => l.fmt(f),
             Expression::Comprehension(_, c) => c.fmt(f),
             Expression::UnsafeIndex(_, e1, e2) | Expression::SafeIndex(_, e1, e2) => {

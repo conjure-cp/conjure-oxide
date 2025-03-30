@@ -20,6 +20,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // rule infinitely!
     // This is why we always check whether we found a constant or not.
     match expr.clone() {
+        In(_, _, _) => Err(RuleNotApplicable),
         AbstractLiteral(_, _) => Err(RuleNotApplicable),
         Comprehension(_, _) => Err(RuleNotApplicable),
         DominanceRelation(_, _) => Err(RuleNotApplicable),

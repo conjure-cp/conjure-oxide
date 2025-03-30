@@ -1,17 +1,17 @@
 #![allow(dead_code)]
 use std::collections::HashSet;
 
-use conjure_core::ast::{Atom, Expression as Expr, Literal as Lit};
+use crate::ast::matrix;
+use crate::ast::SymbolTable;
+use crate::into_matrix;
+use conjure_core::ast::{AbstractLiteral, Atom, Expression as Expr, Literal as Lit};
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationError::RuleNotApplicable,
     ApplicationResult, Reduction,
 };
 use itertools::{izip, Itertools as _};
-
-use crate::ast::matrix;
-use crate::ast::{AbstractLiteral, SymbolTable};
-use crate::into_matrix;
+use Expr::*;
 
 register_rule_set!("Constant", ());
 
@@ -31,6 +31,7 @@ fn apply_eval_constant(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// `Some(Const)` if the expression can be simplified to a constant
 pub fn eval_constant(expr: &Expr) -> Option<Lit> {
     match expr {
+        Expr::In(_, _, _) => None,
         Expr::FromSolution(_, _) => None,
         Expr::DominanceRelation(_, _) => None,
         Expr::InDomain(_, e, domain) => {
@@ -108,9 +109,41 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             Some(Lit::AbstractLiteral(into_matrix![elems]))
         }
         Expr::Abs(_, e) => un_op::<i32, i32>(|a| a.abs(), e).map(Lit::Int),
-        Expr::Eq(_, a, b) => bin_op::<i32, bool>(|a, b| a == b, a, b)
-            .or_else(|| bin_op::<bool, bool>(|a, b| a == b, a, b))
-            .map(Lit::Bool),
+        Expr::Eq(_, a, b) => match (a.as_ref(), b.as_ref()) {
+            (
+                Expr::Atomic(_, Atom::Literal(Lit::Int(_))),
+                Expr::Atomic(_, Atom::Literal(Lit::Int(_))),
+            ) => bin_op::<i32, bool>(|a, b| a == b, a, b).map(Lit::Bool),
+            (
+                Expr::Atomic(_, Atom::Literal(Lit::Bool(_))),
+                Expr::Atomic(_, Atom::Literal(Lit::Bool(_))),
+            ) => bin_op::<bool, bool>(|a, b| a == b, a, b).map(Lit::Bool),
+            (
+                Expr::AbstractLiteral(_, AbstractLiteral::Set(a)),
+                Expr::AbstractLiteral(_, AbstractLiteral::Set(b)),
+            ) => {
+                let mut list: HashSet<Lit> = HashSet::new();
+                for expr in a.iter() {
+                    if let Atomic(_, Atom::Literal(x)) = expr {
+                        list.insert(x.clone());
+                    } else {
+                        return None;
+                    }
+                }
+
+                let mut list2: HashSet<Lit> = HashSet::new();
+                for expr in b.iter() {
+                    if let Atomic(_, Atom::Literal(x)) = expr {
+                        list2.insert(x.clone());
+                    } else {
+                        return None;
+                    }
+                }
+                Some(list.eq(&list2)).map(Lit::Bool)
+            }
+            _ => None,
+        },
+
         Expr::Neq(_, a, b) => bin_op::<i32, bool>(|a, b| a != b, a, b).map(Lit::Bool),
         Expr::Lt(_, a, b) => bin_op::<i32, bool>(|a, b| a < b, a, b).map(Lit::Bool),
         Expr::Gt(_, a, b) => bin_op::<i32, bool>(|a, b| a > b, a, b).map(Lit::Bool),
