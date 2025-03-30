@@ -1,6 +1,6 @@
 use super::{resolve_rules::RuleData, RewriteError, RuleSet};
 use crate::pro_trace::{
-    capture_trace, check_verbosity_level, Consumer, MessageFormatter, RuleTrace, TraceStruct,
+    capture_trace, check_verbosity_level, Consumer, ModelTrace, RuleTrace, TraceType,
     VerbosityLevel,
 };
 use crate::{
@@ -17,7 +17,6 @@ use crate::{
 
 use itertools::Itertools;
 use std::{sync::Arc, time::Instant};
-use tracing::trace;
 use uniplate::Biplate;
 
 /// A naive, exhaustive rewriter for development purposes. Applies rules in priority order,
@@ -40,11 +39,15 @@ pub fn rewrite_naive<'a>(
     rewriter_stats.is_optimization_enabled = Some(false);
     let run_start = Instant::now();
 
-    trace!(
-        target: "rule_engine_human",
-        "Model before rewriting:\n\n{}\n--\n",
-        model
-    );
+    let mut model_trace = ModelTrace {
+        initial_model: model.clone(),
+        rewritten_model: None,
+    };
+
+    // Tracing the initial model
+    if let Some(ref consumer) = consumer {
+        capture_trace(consumer, TraceType::ModelTrace(&model_trace));
+    }
 
     // Rewrite until there are no more rules left to apply.
     while done_something {
@@ -82,11 +85,12 @@ pub fn rewrite_naive<'a>(
         .stats
         .add_rewriter_run(rewriter_stats);
 
-    trace!(
-        target: "rule_engine_human",
-        "Final model:\n\n{}",
-        model
-    );
+    // Tracing the rewritten model
+    if let Some(ref consumer) = consumer {
+        model_trace.rewritten_model = Some(model.clone());
+        capture_trace(consumer, TraceType::ModelTrace(&model_trace));
+    }
+
     Ok(model)
 }
 
@@ -146,18 +150,10 @@ fn try_rewrite_model(
                                     top_level_str: None,
                                 };
 
-                                capture_trace(&consumer, TraceStruct::RuleTrace(rule_trace));
+                                capture_trace(&consumer, TraceType::RuleTrace(rule_trace));
                             }
                         }
-                    } // // when called a lot, this becomes very expensive!
-                      // #[cfg(debug_assertions)]
-                      // tracing::trace!(
-                      //     "Rule attempted but not applied: {} (priority {}, rule set {}), to expression: {}",
-                      //     rd.rule.name,
-                      //     priority,
-                      //     rd.rule_set.name,
-                      //     expr
-                      // );
+                    }
                 }
             }
             // This expression has the highest rule priority so far, so this is what we want to

@@ -12,7 +12,7 @@ use crate::{
         pretty::{pretty_variable_declaration, pretty_vec},
         Expression, SubModel,
     },
-    pro_trace::{capture_trace, TraceStruct},
+    pro_trace::{capture_trace, TraceType},
 };
 
 use itertools::Itertools;
@@ -126,7 +126,7 @@ pub fn log_rule_application(
                 top_level_str: Some(top_level_str.to_string()),
             };
 
-            capture_trace(&consumer, TraceStruct::RuleTrace(rule_trace));
+            capture_trace(&consumer, TraceType::RuleTrace(rule_trace));
         }
     }
 }

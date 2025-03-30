@@ -1,11 +1,15 @@
 use crate::ast::Expression;
+use crate::Model;
 use serde_json;
 use std::any::Any;
-use std::fs;
+use std::fmt::write;
+use std::fs::{self, File};
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::{fmt, fs::OpenOptions, io::Write};
 
 #[derive(serde::Serialize)] // added for serialisation to JSON using serde
+#[derive(Clone)]
 /// represents the trace of a rule application
 pub struct RuleTrace {
     pub initial_expression: Expression,
@@ -17,18 +21,24 @@ pub struct RuleTrace {
     pub top_level_str: Option<String>,
 }
 
-/// represents different types of traces
-pub enum TraceStruct {
-    RuleTrace(RuleTrace),
-    Model,
+pub struct ModelTrace {
+    pub initial_model: Model,
+    pub rewritten_model: Option<Model>,
 }
 
-/// provides a human readable representation of the RuleTrace struct
+/// Different types of traces
+#[derive(Clone)]
+pub enum TraceType<'a> {
+    RuleTrace(RuleTrace),
+    ModelTrace(&'a ModelTrace),
+}
+
+/// Provides a human readable representation of the RuleTrace struct
 impl fmt::Display for RuleTrace {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{}, \n~~> {} [{};{}]",
+            "{}, \n~~> {} [{}; {}]",
             self.initial_expression, self.rule_name, self.rule_priority, self.rule_set_name,
         )?;
 
@@ -47,6 +57,23 @@ impl fmt::Display for RuleTrace {
     }
 }
 
+// Human -readable representation of ModelTrace
+impl fmt::Display for ModelTrace {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(model) = &self.rewritten_model {
+            write!(f, "\nFinal model:\n\n{}", model)?;
+        } else {
+            write!(
+                f,
+                "\nModel before rewriting:\n\n{}\n--\n",
+                self.initial_model
+            )?;
+        }
+
+        Ok(())
+    }
+}
+
 /// represents the level of detail in the trace
 #[derive(clap::ValueEnum, serde::Serialize, Clone, PartialEq, Default, Debug)]
 #[serde(rename_all = "kebab-case")]
@@ -58,11 +85,11 @@ pub enum VerbosityLevel {
 }
 /// defines trait for formatting traces
 pub trait Trace {
-    fn capture(&self, trace: TraceStruct);
+    fn capture(&self, trace: TraceType);
 }
 
 pub trait MessageFormatter: Any + Send + Sync {
-    fn format(&self, trace: TraceStruct) -> String;
+    fn format(&self, trace: TraceType) -> String;
 }
 
 // it's here to be able to check the formatter type later on
@@ -76,16 +103,16 @@ pub struct HumanFormatter;
 
 // human-readable formatter implementing the MessageFormatter trait
 impl MessageFormatter for HumanFormatter {
-    fn format(&self, trace: TraceStruct) -> String {
+    fn format(&self, trace: TraceType) -> String {
         match trace {
-            TraceStruct::RuleTrace(rule_trace) => {
-                if rule_trace.transformed_expression.is_some() {
+            TraceType::RuleTrace(rule_trace) => {
+                if (rule_trace.transformed_expression.is_some()) {
                     format!("Successful Tranformation: \n{}", rule_trace)
                 } else {
                     format!("Unsuccessful Tranformation: \n{}", rule_trace)
                 }
             }
-            _ => String::from("Unknown trace"),
+            TraceType::ModelTrace(model) => format!("{}", model),
         }
     }
 }
@@ -95,11 +122,14 @@ pub struct JsonFormatter;
 
 // JSON formatter implementing the MessageFormatter trait
 impl MessageFormatter for JsonFormatter {
-    fn format(&self, trace: TraceStruct) -> String {
+    fn format(&self, trace: TraceType) -> String {
         match trace {
-            TraceStruct::RuleTrace(rule_trace) => {
-                serde_json::to_string_pretty(&rule_trace).unwrap()
+            TraceType::RuleTrace(rule_trace) => {
+                let json_str = serde_json::to_string_pretty(&rule_trace).unwrap();
+
+                format!("{}", json_str)
             }
+            TraceType::ModelTrace(_) => String::new(),
             _ => String::from("Unknown trace"),
         }
     }
@@ -116,12 +146,12 @@ pub enum Consumer {
 }
 
 pub struct StdoutConsumer {
-    pub formatter: Box<dyn MessageFormatter>,
+    pub formatter: Arc<dyn MessageFormatter>,
     pub verbosity: VerbosityLevel,
 }
 
 pub struct FileConsumer {
-    pub formatter: Box<dyn MessageFormatter>,
+    pub formatter: Arc<dyn MessageFormatter>,
     pub formatter_type: FormatterType, // trust me again, it's for the json formtting
     pub verbosity: VerbosityLevel,
     pub file_path: String, // path to file where the trace will be written
@@ -129,73 +159,71 @@ pub struct FileConsumer {
 }
 
 pub struct BothConsumer {
-    pub formatter: Box<dyn MessageFormatter>,
-    pub formatter_type: FormatterType, // trust me again, it's for the json formtting
-    pub verbosity: VerbosityLevel,
-    pub file_path: String, // path to file where the trace will be written
-    pub is_first: std::cell::Cell<bool>, // for json formatting, trust me
+    stdout_consumer: StdoutConsumer,
+    file_consumer: FileConsumer,
+    // pub formatter: Box<dyn MessageFormatter>,
+    // pub formatter_type: FormatterType, // trust me again, it's for the json formtting
+    // pub verbosity: VerbosityLevel,
+    // pub file_path: String, // path to file where the trace will be written
+    // pub is_first: std::cell::Cell<bool>, // for json formatting, trust me
 }
 
 impl Trace for StdoutConsumer {
-    fn capture(&self, trace: TraceStruct) {
+    fn capture(&self, trace: TraceType) {
         let formatted_output = self.formatter.format(trace);
         println!("{}", formatted_output);
     }
 }
 
 impl Trace for FileConsumer {
-    fn capture(&self, trace: TraceStruct) {
-        let formatted_output = self.formatter.format(trace);
+    fn capture(&self, trace: TraceType) {
+        let formatted_output = self.formatter.format(trace.clone());
         let mut file = OpenOptions::new()
             .append(true)
             .create(true)
             .open(&self.file_path)
             .unwrap();
+
         if self.formatter_type == FormatterType::Json {
-            if self.is_first.get() {
-                writeln!(file, "[").unwrap();
-                writeln!(file, "{}", formatted_output).unwrap();
-                self.is_first.set(false);
-            } else {
-                writeln!(file, ",\n{}", formatted_output).unwrap();
+            match trace {
+                // If the trace is a RuleTrace, handle the comma insertion
+                TraceType::RuleTrace(_) => {
+                    if self.is_first.get() {
+                        writeln!(file, "[").unwrap(); // Start JSON array
+                        writeln!(file, "{}", formatted_output).unwrap();
+                        self.is_first.set(false);
+                    } else {
+                        writeln!(file, ",{}", formatted_output).unwrap(); // Append comma and object
+                    }
+                }
+                // If it's any other type, just write the formatted output without commas
+                _ => {
+                    writeln!(file, "{}", formatted_output).unwrap();
+                }
             }
         } else {
+            // For non-JSON formatting, just write the formatted output
             writeln!(file, "{}", formatted_output).unwrap();
         }
+
+        // if self.formatter_type == FormatterType::Json {
+        //     if self.is_first.get() {
+        //         writeln!(file, "[").unwrap(); // Start JSON array
+        //         writeln!(file, "{}", formatted_output).unwrap();
+        //         self.is_first.set(false);
+        //     } else {
+        //         writeln!(file, ",{}", formatted_output).unwrap(); // Append comma and object
+        //     }
+        // } else {
+        //     writeln!(file, "{}", formatted_output).unwrap();
+        // }
     }
 }
 
-pub fn finalise_trace_file(path: &str) {
-    println!("{}", &path);
-
-    let mut file = OpenOptions::new()
-        .append(true)
-        .create(true)
-        .open(path)
-        .unwrap();
-    writeln!(file, "\n]").unwrap();
-}
-
 impl Trace for BothConsumer {
-    fn capture(&self, trace: TraceStruct) {
-        let formatted_output = self.formatter.format(trace);
-        println!("{}", formatted_output);
-        let mut file = OpenOptions::new()
-            .append(true)
-            .create(true)
-            .open(&self.file_path)
-            .unwrap();
-        if self.formatter_type == FormatterType::Json {
-            if self.is_first.get() {
-                writeln!(file, "[").unwrap();
-                writeln!(file, "{}", formatted_output).unwrap();
-                self.is_first.set(false);
-            } else {
-                writeln!(file, ",\n{}", formatted_output).unwrap();
-            }
-        } else {
-            writeln!(file, "{}", formatted_output).unwrap();
-        }
+    fn capture(&self, trace: TraceType) {
+        self.stdout_consumer.capture(trace.clone());
+        self.file_consumer.capture(trace);
     }
 }
 
@@ -204,13 +232,13 @@ pub fn check_verbosity_level(consumer: &Consumer) -> VerbosityLevel {
     match consumer {
         Consumer::StdoutConsumer(stdout_consumer) => stdout_consumer.verbosity.clone(),
         Consumer::FileConsumer(file_consumer) => file_consumer.verbosity.clone(),
-        Consumer::BothConsumer(both_consumer) => both_consumer.verbosity.clone(),
+        Consumer::BothConsumer(both_consumer) => both_consumer.stdout_consumer.verbosity.clone(),
     }
 }
 
 // provides an implementation for the capture method, which
 // sends the trace to the appropriate consumer
-pub fn capture_trace(consumer: &Consumer, trace: TraceStruct) {
+pub fn capture_trace(consumer: &Consumer, trace: TraceType) {
     match consumer {
         Consumer::StdoutConsumer(stdout_consumer) => {
             stdout_consumer.capture(trace);
@@ -222,16 +250,17 @@ pub fn capture_trace(consumer: &Consumer, trace: TraceStruct) {
     }
 }
 
+/// Creates a consumer for tracing functionality based on the desired type(file/stdout), format (human/json) and verbosity of the output
 pub fn create_consumer(
     consumer_type: &str,
     verbosity: VerbosityLevel,
     output_format: &str,
     file_path: String,
 ) -> Consumer {
-    let (formatter, formatter_type): (Box<dyn MessageFormatter>, FormatterType) =
+    let (formatter, formatter_type): (Arc<dyn MessageFormatter>, FormatterType) =
         match output_format.to_lowercase().as_str() {
-            "json" => (Box::new(JsonFormatter), FormatterType::Json),
-            "human" => (Box::new(HumanFormatter), FormatterType::Human),
+            "json" => (Arc::new(JsonFormatter), FormatterType::Json),
+            "human" => (Arc::new(HumanFormatter), FormatterType::Human),
             other => panic!("Unknown format type: {}", other),
         };
 
@@ -245,6 +274,9 @@ pub fn create_consumer(
             if path.exists() {
                 fs::remove_file(&path).unwrap();
             }
+
+            // Create the file if it doesn't exist
+            File::create(&path).unwrap();
 
             Consumer::FileConsumer(FileConsumer {
                 formatter,
@@ -261,17 +293,33 @@ pub fn create_consumer(
             }
 
             Consumer::BothConsumer(BothConsumer {
-                formatter,
-                formatter_type,
-                verbosity,
-                file_path,
-                is_first: std::cell::Cell::new(true), // for json formatting, trust me
+                stdout_consumer: StdoutConsumer {
+                    formatter: formatter.clone(),
+                    verbosity: verbosity.clone(),
+                },
+                file_consumer: FileConsumer {
+                    formatter,
+                    formatter_type,
+                    verbosity,
+                    file_path,
+                    is_first: std::cell::Cell::new(true), // for JSON formatting
+                },
             })
+
+            // Consumer::BothConsumer(BothConsumer {
+            //     formatter,
+            //     formatter_type,
+            //     verbosity,
+            //     file_path,
+            //     is_first: std::cell::Cell::new(true), // for json formatting, trust me
+            // })
         }
         other => panic!("Unknown consumer type: {}", other),
     }
 }
 
+/// Creates a dedicated file name for the tracing output
+/// If the user did not specify an output file, the file name is constructed based on the input essence file path and the type of trace expected
 pub fn specify_trace_file(
     essence_file: String,
     passed_file: Option<String>,
@@ -298,6 +346,25 @@ pub fn specify_trace_file(
 
             path.to_string_lossy().into_owned()
         }
+    }
+}
+
+/// General function to capture desired messages
+/// If a file is specified, the message will be written there, otherwise it will be printed out to the terminal
+pub fn display_message(message: String, file_path: Option<String>) {
+    if let Some(file_path) = file_path {
+        let mut file = match OpenOptions::new().append(true).create(true).open(file_path) {
+            Ok(f) => f,
+            Err(e) => {
+                eprintln!("Error opening file: {}", e);
+                return;
+            }
+        };
+        if let Err(e) = writeln!(file, "{}", message) {
+            eprintln!("Error writing to file: {}", e);
+        }
+    } else {
+        println!("{}", message);
     }
 }
 
@@ -328,7 +395,7 @@ mod tests {
     #[test]
     fn test_check_verbosity_level() {
         let consumer = Consumer::StdoutConsumer(StdoutConsumer {
-            formatter: Box::new(HumanFormatter),
+            formatter: Arc::new(HumanFormatter),
             verbosity: VerbosityLevel::High,
         });
         assert_eq!(check_verbosity_level(&consumer), VerbosityLevel::High);
