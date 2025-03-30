@@ -13,7 +13,9 @@ use std::{fs::OpenOptions, io::Write};
 use anyhow::{anyhow, ensure};
 use conjure_core::{
     context::Context,
-    pro_trace::{create_consumer, display_message, specify_trace_file, Consumer},
+    pro_trace::{
+        create_consumer, display_message, set_kind_filter, specify_trace_file, Consumer, Kind,
+    },
     rule_engine::{resolve_rule_sets, rewrite_naive},
     Model,
 };
@@ -59,6 +61,8 @@ pub struct Args {
 
 pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::Result<()> {
     let input_file = solve_args.input_file.clone();
+
+    set_kind_filter(global_args.kind_filter.clone());
 
     // Determining the file for the output of the trace
     let file = specify_trace_file(
@@ -240,7 +244,7 @@ fn run_solver(cmd_args: &Args, model: Model) -> anyhow::Result<()> {
     let solutions_str = to_string_pretty(&solutions_json)?;
     match out_file {
         None => {
-            display_message(format!("Solutions:\n{}", solutions_str), None);
+            display_message(format!("Solutions:\n{}", solutions_str), None, Kind::Parser);
         }
         Some(mut outf) => {
             outf.write_all(solutions_str.as_bytes())?;
@@ -250,6 +254,7 @@ fn run_solver(cmd_args: &Args, model: Model) -> anyhow::Result<()> {
                     &cmd_args.output.clone().unwrap().canonicalize()?
                 ),
                 None,
+                Kind::Parser,
             );
         }
     }

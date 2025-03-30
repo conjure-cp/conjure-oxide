@@ -1,12 +1,40 @@
 use crate::ast::Expression;
 use crate::Model;
+// use once_cell::sync::Lazy;
+use clap::ValueEnum;
 use serde_json;
 use std::any::Any;
 use std::fmt::write;
 use std::fs::{self, File};
 use std::path::PathBuf;
-use std::sync::Arc;
+use std::str::FromStr;
+use std::sync::{Arc, Mutex};
 use std::{fmt, fs::OpenOptions, io::Write};
+
+#[derive(PartialEq, Clone, Debug, ValueEnum)]
+pub enum Kind {
+    Parser,
+    RuleAttempt,
+    RuleSuccess,
+    Error,
+}
+
+// Create kind_filter as a global variable
+// pub static KIND_FILTER: Option<Kind> = None;
+pub static KIND_FILTER: Mutex<Option<Kind>> = Mutex::new(None);
+
+// Set the kind_filter
+pub fn set_kind_filter(kind: Option<Kind>) {
+    // let mut filter = &KIND_FILTER;
+    let mut filter = KIND_FILTER.lock().unwrap();
+    *filter = kind;
+}
+
+// Get the kind_filter
+pub fn get_kind_filter() -> Option<Kind> {
+    let filter = KIND_FILTER.lock().unwrap();
+    filter.clone()
+}
 
 #[derive(serde::Serialize)] // added for serialisation to JSON using serde
 #[derive(Clone)]
@@ -351,7 +379,12 @@ pub fn specify_trace_file(
 
 /// General function to capture desired messages
 /// If a file is specified, the message will be written there, otherwise it will be printed out to the terminal
-pub fn display_message(message: String, file_path: Option<String>) {
+pub fn display_message(message: String, file_path: Option<String>, kind: Kind) {
+    if let Some(filter) = get_kind_filter() {
+        if filter != kind {
+            return;
+        }
+    }
     if let Some(file_path) = file_path {
         let mut file = match OpenOptions::new().append(true).create(true).open(file_path) {
             Ok(f) => f,
@@ -365,31 +398,6 @@ pub fn display_message(message: String, file_path: Option<String>) {
         }
     } else {
         println!("{}", message);
-    }
-}
-
-pub enum Kind {
-    Parser,
-    RuleAttempt,
-    RuleSuccess,
-    Error,
-}
-
-pub fn log_msg (file: File, message: &str, kind: Kind) {
-    writeln!(file, message,)
-    match kind {
-        Kind::Parser => {
-
-        }
-        Kind::RuleAttempt => {
-
-        }
-        Kind::RuleSuccess => {
-
-        }
-        Kind::Error {
-
-        }
     }
 }
 
