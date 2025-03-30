@@ -368,6 +368,31 @@ pub fn display_message(message: String, file_path: Option<String>) {
     }
 }
 
+pub enum Kind {
+    Parser,
+    RuleAttempt,
+    RuleSuccess,
+    Error,
+}
+
+pub fn log_msg (file: File, message: &str, kind: Kind) {
+    writeln!(file, message,)
+    match kind {
+        Kind::Parser => {
+
+        }
+        Kind::RuleAttempt => {
+
+        }
+        Kind::RuleSuccess => {
+
+        }
+        Kind::Error {
+
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
