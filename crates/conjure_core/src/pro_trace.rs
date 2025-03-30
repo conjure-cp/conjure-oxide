@@ -112,6 +112,7 @@ impl MessageFormatter for JsonFormatter {
 pub enum Consumer {
     StdoutConsumer(StdoutConsumer),
     FileConsumer(FileConsumer),
+    BothConsumer(BothConsumer),
 }
 
 pub struct StdoutConsumer {
@@ -120,6 +121,14 @@ pub struct StdoutConsumer {
 }
 
 pub struct FileConsumer {
+    pub formatter: Box<dyn MessageFormatter>,
+    pub formatter_type: FormatterType, // trust me again, it's for the json formtting
+    pub verbosity: VerbosityLevel,
+    pub file_path: String, // path to file where the trace will be written
+    pub is_first: std::cell::Cell<bool>, // for json formatting, trust me
+}
+
+pub struct BothConsumer {
     pub formatter: Box<dyn MessageFormatter>,
     pub formatter_type: FormatterType, // trust me again, it's for the json formtting
     pub verbosity: VerbosityLevel,
@@ -167,11 +176,35 @@ pub fn finalise_trace_file(path: &str) {
     writeln!(file, "\n]").unwrap();
 }
 
+impl Trace for BothConsumer {
+    fn capture(&self, trace: TraceStruct) {
+        let formatted_output = self.formatter.format(trace);
+        println!("{}", formatted_output);
+        let mut file = OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(&self.file_path)
+            .unwrap();
+        if self.formatter_type == FormatterType::Json {
+            if self.is_first.get() {
+                writeln!(file, "[").unwrap();
+                writeln!(file, "{}", formatted_output).unwrap();
+                self.is_first.set(false);
+            } else {
+                writeln!(file, ",\n{}", formatted_output).unwrap();
+            }
+        } else {
+            writeln!(file, "{}", formatted_output).unwrap();
+        }
+    }
+}
+
 // which returns the verbosity level of the consumer
 pub fn check_verbosity_level(consumer: &Consumer) -> VerbosityLevel {
     match consumer {
         Consumer::StdoutConsumer(stdout_consumer) => stdout_consumer.verbosity.clone(),
         Consumer::FileConsumer(file_consumer) => file_consumer.verbosity.clone(),
+        Consumer::BothConsumer(both_consumer) => both_consumer.verbosity.clone(),
     }
 }
 
@@ -185,6 +218,7 @@ pub fn capture_trace(consumer: &Consumer, trace: TraceStruct) {
         Consumer::FileConsumer(file_consumer) => {
             file_consumer.capture(trace);
         }
+        Consumer::BothConsumer(both_consumer) => both_consumer.capture(trace),
     }
 }
 
@@ -213,6 +247,20 @@ pub fn create_consumer(
             }
 
             Consumer::FileConsumer(FileConsumer {
+                formatter,
+                formatter_type,
+                verbosity,
+                file_path,
+                is_first: std::cell::Cell::new(true), // for json formatting, trust me
+            })
+        }
+        "both" => {
+            let path = PathBuf::from(&file_path);
+            if path.exists() {
+                fs::remove_file(&path).unwrap();
+            }
+
+            Consumer::BothConsumer(BothConsumer {
                 formatter,
                 formatter_type,
                 verbosity,
