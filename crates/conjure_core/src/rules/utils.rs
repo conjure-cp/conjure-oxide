@@ -112,7 +112,7 @@ pub struct ToAuxVarOutput {
 impl ToAuxVarOutput {
     /// Returns the new auxiliary variable as an `Atom`.
     pub fn as_atom(&self) -> Atom {
-        Atom::Reference(self.aux_name())
+        Atom::Reference(self.aux_name(), None)
     }
 
     /// Returns the new auxiliary variable as an `Expression`.

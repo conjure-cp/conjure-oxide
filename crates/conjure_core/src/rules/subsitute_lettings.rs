@@ -17,7 +17,7 @@ use crate::{
 /// it ceases to be an expression, so we cannot match over it.
 #[register_rule(("Base", 5000))]
 fn substitute_value_lettings(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let Expr::Atomic(_, Atom::Reference(name)) = expr else {
+    let Expr::Atomic(_, Atom::Reference(name, None)) = expr else {
         return Err(RuleNotApplicable);
     };
 

@@ -468,7 +468,7 @@ impl Expression {
                 }
             }
             Expression::InDomain(_, _, _) => Some(Domain::BoolDomain),
-            Expression::Atomic(_, Atom::Reference(name)) => Some(syms.resolve_domain(name)?),
+            Expression::Atomic(_, Atom::Reference(name, _)) => Some(syms.resolve_domain(name)?),
             Expression::Atomic(_, Atom::Literal(Literal::Int(n))) => {
                 Some(Domain::IntDomain(vec![Range::Single(*n)]))
             }
@@ -671,7 +671,7 @@ impl Expression {
             Expression::Atomic(_, Atom::Literal(Literal::Int(_))) => Some(ReturnType::Int),
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(ReturnType::Bool),
             Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(_))) => None,
-            Expression::Atomic(_, Atom::Reference(_)) => None,
+            Expression::Atomic(_, Atom::Reference(_, _)) => None,
             Expression::Scope(_, scope) => scope.return_type(),
             Expression::Abs(_, _) => Some(ReturnType::Int),
             Expression::Sum(_, _) => Some(ReturnType::Int),
@@ -1096,7 +1096,8 @@ mod tests {
 
     #[test]
     fn test_domain_of_reference() {
-        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
+        let reference =
+            Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0), None));
         let mut vars = SymbolTable::new();
         vars.insert(Rc::new(Declaration::new_var(
             Name::MachineName(0),
@@ -1111,13 +1112,15 @@ mod tests {
 
     #[test]
     fn test_domain_of_reference_not_found() {
-        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
+        let reference =
+            Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0), None));
         assert_eq!(reference.domain_of(&SymbolTable::new()), None);
     }
 
     #[test]
     fn test_domain_of_reference_sum_single() {
-        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
+        let reference =
+            Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0), None));
         let mut vars = SymbolTable::new();
         vars.insert(Rc::new(Declaration::new_var(
             Name::MachineName(0),
@@ -1136,7 +1139,8 @@ mod tests {
 
     #[test]
     fn test_domain_of_reference_sum_bounded() {
-        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
+        let reference =
+            Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0), None));
         let mut vars = SymbolTable::new();
         vars.insert(Rc::new(Declaration::new_var(
             Name::MachineName(0),

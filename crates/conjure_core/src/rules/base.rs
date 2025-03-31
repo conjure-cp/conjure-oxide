@@ -97,12 +97,12 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     for e in exprs {
         new_top.push(Leq(
             Metadata::new(),
-            Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
+            Box::new(Atomic(Metadata::new(), Reference(new_name.clone(), None))),
             Box::new(e.clone()),
         ));
         disjunction.push(Eq(
             Metadata::new(),
-            Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
+            Box::new(Atomic(Metadata::new(), Reference(new_name.clone(), None))),
             Box::new(e.clone()),
         ));
     }
@@ -118,7 +118,7 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     symbols.insert(Rc::new(Declaration::new_var(new_name.clone(), domain)));
 
     Ok(Reduction::new(
-        Atomic(Metadata::new(), Reference(new_name)),
+        Atomic(Metadata::new(), Reference(new_name, None)),
         new_top,
         symbols,
     ))
@@ -148,12 +148,12 @@ fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     for e in exprs {
         new_top.push(Geq(
             Metadata::new(),
-            Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
+            Box::new(Atomic(Metadata::new(), Reference(new_name.clone(), None))),
             Box::new(e.clone()),
         ));
         disjunction.push(Eq(
             Metadata::new(),
-            Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
+            Box::new(Atomic(Metadata::new(), Reference(new_name.clone(), None))),
             Box::new(e.clone()),
         ));
     }
@@ -169,7 +169,7 @@ fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     symbols.insert(Rc::new(Declaration::new_var(new_name.clone(), domain)));
 
     Ok(Reduction::new(
-        Atomic(Metadata::new(), Reference(new_name)),
+        Atomic(Metadata::new(), Reference(new_name, None)),
         new_top,
         symbols,
     ))

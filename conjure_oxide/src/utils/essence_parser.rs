@@ -342,7 +342,7 @@ fn parse_constraint(constraint: Node, source_code: &str, root: &Node) -> Express
                 String::from(&source_code[constraint.start_byte()..constraint.end_byte()]);
             Expression::Atomic(
                 Metadata::new(),
-                Atom::Reference(Name::UserName(variable_name)),
+                Atom::Reference(Name::UserName(variable_name), None),
             )
         }
         "ERROR" => {

@@ -175,7 +175,7 @@ impl Representation for MatrixToAtom {
             .map(|name| {
                 (
                     name.clone(),
-                    Expression::Atomic(Metadata::new(), Atom::Reference(name)),
+                    Expression::Atomic(Metadata::new(), Atom::Reference(name, None)),
                 )
             })
             .collect())

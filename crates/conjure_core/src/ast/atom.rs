@@ -1,6 +1,8 @@
 use std::borrow::Borrow;
+use std::cell::RefCell;
+use std::rc::Rc;
 
-use super::{literals::AbstractLiteral, Expression, Literal, Name};
+use super::{AbstractLiteral, Declaration, Expression, Literal, Name};
 use serde::{Deserialize, Serialize};
 use uniplate::derive::Uniplate;
 
@@ -9,17 +11,17 @@ use uniplate::derive::Uniplate;
 #[uniplate()]
 #[biplate(to=Literal)]
 #[biplate(to=Expression)]
-#[biplate(to=AbstractLiteral<Literal>,walk_into=[Literal])]
+#[biplate(to=AbstractLiteral<Literal>)]
 #[biplate(to=Name)]
 pub enum Atom {
     Literal(Literal),
-    Reference(Name),
+    Reference(Name, #[serde(skip)] Option<Rc<RefCell<Declaration>>>),
 }
 
 impl Atom {
     /// Shorthand to create a reference by user name.
     pub fn new_uref(name: &str) -> Atom {
-        Atom::Reference(Name::UserName(name.to_string()))
+        Atom::Reference(Name::UserName(name.to_string()), None)
     }
 }
 
@@ -27,7 +29,7 @@ impl std::fmt::Display for Atom {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Atom::Literal(x) => x.fmt(f),
-            Atom::Reference(x) => x.fmt(f),
+            Atom::Reference(x, _) => x.fmt(f),
         }
     }
 }
@@ -40,7 +42,13 @@ impl From<Literal> for Atom {
 
 impl From<Name> for Atom {
     fn from(value: Name) -> Self {
-        Atom::Reference(value)
+        Atom::Reference(value, None)
+    }
+}
+
+impl From<(Name, Option<Rc<RefCell<Declaration>>>)> for Atom {
+    fn from((name, decl): (Name, Option<Rc<RefCell<Declaration>>>)) -> Self {
+        Atom::Reference(name, decl)
     }
 }
 
@@ -122,7 +130,7 @@ impl TryFrom<Atom> for Name {
 
     fn try_from(value: Atom) -> Result<Self, Self::Error> {
         match value {
-            Atom::Reference(n) => Ok(n),
+            Atom::Reference(n, _) => Ok(n),
             _ => Err("Cannot convert non-reference atom to Name"),
         }
     }
@@ -133,7 +141,7 @@ impl<'a> TryFrom<&'a Atom> for &'a Name {
 
     fn try_from(value: &'a Atom) -> Result<Self, Self::Error> {
         match value {
-            Atom::Reference(n) => Ok(n),
+            Atom::Reference(n, _) => Ok(n),
             _ => Err("Cannot convert non-reference atom to Name"),
         }
     }

@@ -401,7 +401,7 @@ fn parse_atom(atom: conjure_ast::Atom) -> Result<minion_ast::Var, SolverError> {
         conjure_ast::Atom::Literal(l) => {
             Ok(minion_ast::Var::ConstantAsVar(parse_literal_as_int(l)?))
         }
-        conjure_ast::Atom::Reference(name) => Ok(parse_name(name))?,
+        conjure_ast::Atom::Reference(name, None) => Ok(parse_name(name))?,
 
         x => Err(ModelFeatureNotSupported(format!(
             "expected a literal or a reference but got `{0}`",

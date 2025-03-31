@@ -549,7 +549,7 @@ fn introduce_poweq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         },
 
         Expr::AuxDeclaration(_, total, e) => match *e {
-            Expr::SafePow(_, a, b) => Ok((a, b, Atom::Reference(total))),
+            Expr::SafePow(_, a, b) => Ok((a, b, Atom::Reference(total, None))),
             _ => Err(RuleNotApplicable),
         },
         _ => Err(RuleNotApplicable),
@@ -636,7 +636,7 @@ fn introduce_minuseq_from_aux_decl(expr: &Expr, _: &SymbolTable) -> ApplicationR
         return Err(RuleNotApplicable);
     };
 
-    let a = Atom::Reference(a.clone());
+    let a = Atom::Reference(a.clone(), None);
 
     let Expr::Neg(_, b) = (**b).clone() else {
         return Err(RuleNotApplicable);
@@ -694,7 +694,7 @@ fn introduce_wininterval_set_from_indomain(expr: &Expr, _: &SymbolTable) -> Appl
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, atom @ Atom::Reference(_)) = e.as_ref() else {
+    let Expr::Atomic(_, atom @ Atom::Reference(_, _)) = e.as_ref() else {
         return Err(RuleNotApplicable);
     };
 
@@ -744,7 +744,9 @@ fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResu
             _ => Err(RuleNotApplicable),
         },
         Expr::AuxDeclaration(_, name, expr) => match *expr {
-            Expr::SafeIndex(_, subject, indices) => Ok((Atom::Reference(name), subject, indices)),
+            Expr::SafeIndex(_, subject, indices) => {
+                Ok((Atom::Reference(name, None), subject, indices))
+            }
             _ => Err(RuleNotApplicable),
         },
         _ => Err(RuleNotApplicable),
@@ -1043,7 +1045,7 @@ fn not_literal_to_wliteral(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
     use Domain::BoolDomain;
     match expr {
         Expr::Not(m, expr) => {
-            if let Expr::Atomic(_, Atom::Reference(name)) = (**expr).clone() {
+            if let Expr::Atomic(_, Atom::Reference(name, _)) = (**expr).clone() {
                 if symbols
                     .domain(&name)
                     .is_some_and(|x| matches!(x, BoolDomain))
