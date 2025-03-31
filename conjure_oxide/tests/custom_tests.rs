@@ -1,4 +1,5 @@
 use pretty_assertions::assert_eq;
+use std::borrow::Cow;
 use std::env;
 use std::error::Error;
 use std::fs;
@@ -50,12 +51,8 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
 
     if accept {
         // Overwrite expected files
-        if !actual_output.trim().is_empty() {
-            fs::write(&expected_output_path, actual_output.as_bytes())?;
-        }
-        if !actual_error.trim().is_empty() {
-            fs::write(&expected_error_path, actual_error.as_bytes())?;
-        }
+        update_file(expected_output_path, actual_output)?;
+        update_file(expected_error_path, actual_error)?;
     } else {
         // Compare results
         let expected_output = if expected_output_path.exists() {
@@ -73,6 +70,18 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
         assert_eq!(expected_error, actual_error, "Standard error mismatch");
     }
 
+    Ok(())
+}
+
+fn update_file(
+    expected_file_path: PathBuf,
+    actual_output: Cow<'_, str>,
+) -> Result<(), Box<dyn Error>> {
+    if !actual_output.trim().is_empty() {
+        fs::write(&expected_file_path, actual_output.as_bytes())?;
+    } else {
+        fs::remove_file(&expected_file_path)?;
+    }
     Ok(())
 }
 
