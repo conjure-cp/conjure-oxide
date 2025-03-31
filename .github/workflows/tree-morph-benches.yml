@@ -1,63 +1,60 @@
-name : "tree-morph Benchmarks"
+name: "tree-morph Benchmarks"
 
 on:
-    push:
-      branches:
-        - main 
-        - auto-bench 
-      paths:
-        - conjure_oxide/**
-        - solvers/**
-        - crates/**
-        - Cargo.*
-        - conjure_oxide/tests/**
-        - .github/workflows/**
-    pull_request:
-      paths:
-        - conjure_oxide/**
-        - solvers/**
-        - crates/**
-        - Cargo.*
-        - conjure_oxide/tests/**
-        - .github/workflows/**
-    workflow_dispatch:
+  push:
+    branches:
+      - main 
+      - auto-bench 
+    paths:
+      - conjure_oxide/**
+      - solvers/**
+      - crates/**
+      - Cargo.*
+      - conjure_oxide/tests/**
+      - .github/workflows/**
+  pull_request:
+    paths:
+      - conjure_oxide/**
+      - solvers/**
+      - crates/**
+      - Cargo.*
+      - conjure_oxide/tests/**
+      - .github/workflows/**
+  workflow_dispatch:
 
 env:
-
   SCCACHE_GHA_ENABLED: "true"
   RUSTC_WRAPPER: "sccache"
   SCCACHE_GHA_VERSION: 5
 
-
 jobs:
-    benches:
-        name: "Run tree-morph benchmarks"
-        runs-on: ubuntu-latest
-        timeout-minutes: 10
+  benches:
+    name: "Run tree-morph benchmarks"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
 
-        strategy:
-            # run all combinations of the matrix even if one combination fails.
-            fail-fast: false
-            matrix:
-                rust_release:
-                        - stable
-                        - nightly
-        steps:
-              - uses: actions/checkout@v3
+    strategy:
+      # run all combinations of the matrix even if one combination fails.
+      fail-fast: false
+      matrix:
+        rust_release:
+          - stable
+          - nightly
+    steps:
+      - uses: actions/checkout@v4
 
-              - uses: dtolnay/rust-toolchain@stable
-                with:
-                    toolchain: ${{ matrix.rust_release }}
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ matrix.rust_release }}
 
-              - name: Run sccache-cache
-                uses: mozilla-actions/sccache-action@v0.0.3
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.3
 
-              - name: Run tree-morph benchmarks
-                run: cargo bench --manifest-path crates/tree_morph/Cargo.toml
-            
-              - name: Upload benchmark results
-                uses: actions/upload-artifact@v3
-                with:
-                  path: target/criterion/
-                
-    
+      - name: Run tree-morph benchmarks
+        run: cargo bench --manifest-path crates/tree_morph/Cargo.toml
+      
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: criterion-results-${{ matrix.rust_release }}
+          path: target/criterion/
