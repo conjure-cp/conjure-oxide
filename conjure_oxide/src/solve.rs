@@ -19,7 +19,7 @@ use conjure_oxide::{
     find_conjure::conjure_executable,
     get_rules, model_from_json,
     utils::{
-        conjure::{get_minion_solutions, minion_solutions_to_json},
+        conjure::{get_minion_solutions, get_sat_solutions, solutions_to_json},
         essence_parser::parse_essence_file_native,
     },
     SolverFamily,
@@ -67,7 +67,17 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     if solve_args.no_run_solver {
         println!("{}", rewritten_model);
     } else {
-        run_solver(&solve_args, rewritten_model)?;
+        match global_args.solver {
+            Some(s) => match s {
+                SolverFamily::SAT => {
+                    run_sat_solver(&solve_args, rewritten_model)?;
+                }
+                SolverFamily::Minion => {
+                    run_minion(&solve_args, rewritten_model)?;
+                }
+            },
+            None => panic!("Should be unreachable"),
+        }
     }
 
     // still do postamble even if we didn't run the solver
@@ -92,8 +102,8 @@ pub(crate) fn init_context(
     }
 
     ensure!(
-        target_family == SolverFamily::Minion,
-        "Only the Minion solver is currently supported!"
+        target_family == SolverFamily::Minion || target_family == SolverFamily::SAT,
+        "Only the Minion and SAT solvers is currently supported!"
     );
 
     let rule_sets = match resolve_rule_sets(target_family, &extra_rule_sets) {
@@ -197,7 +207,7 @@ pub(crate) fn rewrite(
     Ok(new_model)
 }
 
-fn run_solver(cmd_args: &Args, model: Model) -> anyhow::Result<()> {
+fn run_minion(cmd_args: &Args, model: Model) -> anyhow::Result<()> {
     let out_file: Option<File> = match &cmd_args.output {
         None => None,
         Some(pth) => Some(
@@ -209,10 +219,43 @@ fn run_solver(cmd_args: &Args, model: Model) -> anyhow::Result<()> {
         ),
     };
 
-    let solutions = get_minion_solutions(model, cmd_args.number_of_solutions)?; // ToDo we need to properly set the solver adaptor here, not hard code minion
-    tracing::info!(target: "file", "Solutions: {}", minion_solutions_to_json(&solutions));
+    let solutions = get_minion_solutions(model, cmd_args.number_of_solutions)?;
+    tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
 
-    let solutions_json = minion_solutions_to_json(&solutions);
+    let solutions_json = solutions_to_json(&solutions);
+    let solutions_str = to_string_pretty(&solutions_json)?;
+    match out_file {
+        None => {
+            println!("Solutions:");
+            println!("{}", solutions_str);
+        }
+        Some(mut outf) => {
+            outf.write_all(solutions_str.as_bytes())?;
+            println!(
+                "Solutions saved to {:?}",
+                &cmd_args.output.clone().unwrap().canonicalize()?
+            )
+        }
+    }
+    Ok(())
+}
+
+fn run_sat_solver(cmd_args: &Args, model: Model) -> anyhow::Result<()> {
+    let out_file: Option<File> = match &cmd_args.output {
+        None => None,
+        Some(pth) => Some(
+            File::options()
+                .create(true)
+                .truncate(true)
+                .write(true)
+                .open(pth)?,
+        ),
+    };
+
+    let solutions = get_sat_solutions(model, cmd_args.number_of_solutions)?;
+    tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
+
+    let solutions_json = solutions_to_json(&solutions);
     let solutions_str = to_string_pretty(&solutions_json)?;
     match out_file {
         None => {
