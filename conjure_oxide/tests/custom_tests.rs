@@ -10,11 +10,19 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
 
     // Convert test directory to a PathBuf
     let test_path = PathBuf::from(test_dir);
-    assert!(test_path.exists(), "Test directory not found: {:?}", test_path);
+    assert!(
+        test_path.exists(),
+        "Test directory not found: {:?}",
+        test_path
+    );
 
     // Get paths
     let script_path = test_path.join("run.sh");
-    assert!(script_path.exists(), "Test script not found: {:?}", script_path);
+    assert!(
+        script_path.exists(),
+        "Test script not found: {:?}",
+        script_path
+    );
     let expected_output_path = test_path.join("stdout.expected");
     let expected_error_path = test_path.join("stderr.expected");
 
@@ -49,7 +57,7 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
             fs::write(&expected_error_path, actual_error.as_bytes())?;
         }
     } else {
-        // Compare results 
+        // Compare results
         let expected_output = if expected_output_path.exists() {
             fs::read_to_string(&expected_output_path)?
         } else {
