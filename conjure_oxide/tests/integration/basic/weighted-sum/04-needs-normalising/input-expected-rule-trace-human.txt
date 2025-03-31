@@ -6,7 +6,7 @@ find z: int(2..5)
 
 such that
 
-(Sum([Sum([Sum([Sum([Product([5, x]), Product([Product([Product([y, 3]), 1]), 3])]), -(Product([3, x]))]), Product([-(1), y])]), Product([y, -(5)])]) < 11)
+(Sum([Sum([Sum([Sum([Product([5, x]),Product([Product([Product([y, 3]), 1]), 3]);int(1..2)]),-(Product([3, x]));int(1..2)]),Product([-(1), y]);int(1..2)]),Product([y, -(5)]);int(1..2)]) < 11)
 
 --
 
@@ -22,9 +22,9 @@ such that
 
 --
 
-Sum([Sum([Sum([Sum([Product([5, x]), Product([Product([Product([y, 3]), 1]), 3])]), -(Product([3, x]))]), Product([-1, y])]), Product([y, -5])]), 
+Sum([Sum([Sum([Sum([Product([5, x]),Product([Product([Product([y, 3]), 1]), 3]);int(1..2)]),-(Product([3, x]));int(1..2)]),Product([-1, y]);int(1..2)]),Product([y, -5]);int(1..2)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
-Sum([Product([5, x]), Product([Product([Product([y, 3]), 1]), 3]), -(Product([3, x])), Product([-1, y]), Product([y, -5])]) 
+Sum([Product([5, x]),Product([Product([Product([y, 3]), 1]), 3]),-(Product([3, x])),Product([-1, y]),Product([y, -5]);int(1..2)]) 
 
 --
 
@@ -52,13 +52,13 @@ Product([-5, y])
 
 --
 
-(Sum([Product([5, x]), Product([9, y]), -(Product([3, x])), Product([-1, y]), Product([-5, y])]) < 11), 
+(Sum([Product([5, x]),Product([9, y]),-(Product([3, x])),Product([-1, y]),Product([-5, y]);int(1..2)]) < 11), 
    ~~> lt_to_leq ([("Minion", 8400)]) 
-(Sum([Product([5, x]), Product([9, y]), -(Product([3, x])), Product([-1, y]), Product([-5, y])]) <= Sum([11, -1])) 
+(Sum([Product([5, x]),Product([9, y]),-(Product([3, x])),Product([-1, y]),Product([-5, y]);int(1..2)]) <= Sum([11,-1;int(1..)])) 
 
 --
 
-Sum([11, -1]), 
+Sum([11,-1;int(1..)]), 
    ~~> apply_eval_constant ([("Constant", 9001)]) 
 10 
 
@@ -82,7 +82,13 @@ Product([-3, x])
 
 --
 
-(Sum([Product([5, x]), Product([9, y]), Product([-3, x]), Product([-1, y]), Product([-5, y])]) <= 10), 
+Sum([Product([5, x]),Product([9, y]),Product([-3, x]),Product([-1, y]),Product([-5, y]);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+Sum([Product([5, x]),Product([9, y]),Product([-3, x]),Product([-1, y]),Product([-5, y]);int(1..)]) 
+
+--
+
+(Sum([Product([5, x]),Product([9, y]),Product([-3, x]),Product([-1, y]),Product([-5, y]);int(1..)]) <= 10), 
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
 FlatWeightedSumLeq([5, 9, -3, -1, -5],[x, y, x, y, y],10) 
 
