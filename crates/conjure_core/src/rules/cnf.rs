@@ -8,14 +8,13 @@ use conjure_core::solver::SolverFamily;
 use conjure_core::ast::Expression as Expr;
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
-    register_rule, ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult,
-    Reduction,
+    register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
 };
 
 use Expr::*;
 
-use crate::ast::{Atom, SymbolTable};
-use crate::{into_matrix_expr, matrix_expr};
+use crate::ast::SymbolTable;
+use crate::matrix_expr;
 
 register_rule_set!("CNF", ("Base"), (SolverFamily::SAT));
 
@@ -55,10 +54,7 @@ fn remove_equivalence(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         Box::new(matrix_expr![
             Expr::And(
                 Metadata::new(),
-                Box::new(matrix_expr![
-                   *x.clone(),
-                    *y.clone()
-                ]),
+                Box::new(matrix_expr![*x.clone(), *y.clone()]),
             ),
             Expr::And(
                 Metadata::new(),
@@ -70,6 +66,3 @@ fn remove_equivalence(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         ]),
     )))
 }
-
-
-
