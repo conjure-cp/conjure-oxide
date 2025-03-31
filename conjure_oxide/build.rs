@@ -14,7 +14,7 @@ fn main() -> io::Result<()> {
 
     let out_dir = var("OUT_DIR").map_err(|e| io::Error::new(io::ErrorKind::Other, e))?; // wrapping in a std::io::Error to match main's error type
 
-    // Generated Tests
+    // Integration Tests
     let dest = Path::new(&out_dir).join("gen_tests.rs");
     let mut f = File::create(dest)?;
     let test_dir = "tests/integration";
@@ -57,7 +57,7 @@ fn main() -> io::Result<()> {
 
                 let essence_files = std::iter::zip(stems, exts).collect();
 
-                write_test(&mut f, subdir.path().display().to_string(), essence_files)?;
+                write_integration_test(&mut f, subdir.path().display().to_string(), essence_files)?;
             } else {
                 let stems: Vec<String> = read_dir(subdir.path())?
                     .filter_map(Result::ok)
@@ -95,7 +95,7 @@ fn main() -> io::Result<()> {
 
                 let essence_files = std::iter::zip(stems, exts).collect();
 
-                write_test(&mut f, subdir.path().display().to_string(), essence_files)?;
+                write_integration_test(&mut f, subdir.path().display().to_string(), essence_files)?;
             }
         }
     }
@@ -107,21 +107,20 @@ fn main() -> io::Result<()> {
 
     for subdir in WalkDir::new(test_dir) {
         let subdir = subdir?;
-        if subdir.file_type().is_dir() {
-            if read_dir(subdir.path())
+        if subdir.file_type().is_dir()
+            && read_dir(subdir.path())
                 .unwrap_or_else(|_| std::fs::read_dir(subdir.path()).unwrap())
                 .filter_map(Result::ok)
                 .any(|entry| entry.file_name() == "run.sh" && entry.path().is_file())
-            {
-                write_custom_test(&mut f, subdir.path().display().to_string())?;
-            }
+        {
+            write_custom_test(&mut f, subdir.path().display().to_string())?;
         }
     }
 
     Ok(())
 }
 
-fn write_test(
+fn write_integration_test(
     file: &mut File,
     path: String,
     essence_files: Vec<(String, String)>,
