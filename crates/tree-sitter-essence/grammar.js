@@ -42,6 +42,7 @@ module.exports = grammar({
     find_statement: $ => seq(
       field("variables", $.variable_list),
       field("colon", $.COLON),
+      field("colon", $.COLON),
       field("domain", $.domain),
       optional(",")
     ),
