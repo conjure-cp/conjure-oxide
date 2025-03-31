@@ -5,6 +5,7 @@ use itertools::iproduct;
 
 use crate::ast::SymbolTable;
 use crate::into_matrix_expr;
+use crate::rule_engine::ApplicationError::RuleNotApplicable;
 use crate::rule_engine::{ApplicationResult, Reduction};
 use crate::{
     ast::{Atom, Expression as Expr, Literal as Lit, Literal::*},
@@ -20,6 +21,8 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // rule infinitely!
     // This is why we always check whether we found a constant or not.
     match expr.clone() {
+        Intersect(_, _, _) => Err(RuleNotApplicable),
+        SubsetEq(_, _, _) => Err(RuleNotApplicable),
         AbstractLiteral(_, _) => Err(RuleNotApplicable),
         Comprehension(_, _) => Err(RuleNotApplicable),
         DominanceRelation(_, _) => Err(RuleNotApplicable),
