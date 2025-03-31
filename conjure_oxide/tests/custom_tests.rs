@@ -1,9 +1,9 @@
-use std::fs;
-use std::process::{Command, Output};
-use std::path::Path;
-use std::error::Error;
 use pretty_assertions::assert_eq;
 use std::env;
+use std::error::Error;
+use std::fs;
+use std::path::Path;
+use std::process::{Command, Output};
 
 pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
@@ -33,7 +33,7 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
     // Convert captured output/error to string
     let actual_output = String::from_utf8_lossy(&output.stdout);
     let actual_error = String::from_utf8_lossy(&output.stderr);
-    
+
     if accept {
         fs::write(&expected_output_path, actual_output.as_bytes())?;
         fs::write(&expected_error_path, actual_error.as_bytes())?;
