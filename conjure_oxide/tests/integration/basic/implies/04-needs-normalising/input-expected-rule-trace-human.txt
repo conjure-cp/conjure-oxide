@@ -26,6 +26,19 @@ and([Not(x),Not(Not(y));int(1..)])
 
 --
 
+and([Not(x),Not(Not(y));int(1..)]),
+(Not(a)) -> (Not(b)),
+(c) -> ((d) -> (e)),
+((h) -> (f)) -> ((h) -> (g)), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(x),
+Not(Not(y)),
+(Not(a)) -> (Not(b)),
+(c) -> ((d) -> (e)),
+((h) -> (f)) -> ((h) -> (g)) 
+
+--
+
 (Not(a)) -> (Not(b)), 
    ~~> normalise_implies_contrapositive ([("Base", 8800)]) 
 (b) -> (a) 
@@ -127,7 +140,8 @@ find __1: bool
 
 such that
 
-and([WatchedLiteral(x,false),y;int(1..)]),
+WatchedLiteral(x,false),
+y,
 Ineq(b, a, 0),
 Ineq(__0, e, 0),
 Ineq(__1, g, 0),

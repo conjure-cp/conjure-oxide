@@ -6,13 +6,26 @@ find z: int(-1..1)
 
 such that
 
-(x = Sum([-(y), z]))
+(x = Sum([-(y),z;int(1..2)]))
 
 --
 
-(x = Sum([-(y), z])), 
+Sum([-(y),z;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+Sum([-(y),z;int(1..)]) 
+
+--
+
+(x = Sum([-(y),z;int(1..)])), 
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
 and([FlatWeightedSumLeq([-1, 1],[y, z],x),FlatWeightedSumGeq([-1, 1],[y, z],x);int(1..)]) 
+
+--
+
+and([FlatWeightedSumLeq([-1, 1],[y, z],x),FlatWeightedSumGeq([-1, 1],[y, z],x);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+FlatWeightedSumLeq([-1, 1],[y, z],x),
+FlatWeightedSumGeq([-1, 1],[y, z],x) 
 
 --
 
@@ -24,5 +37,6 @@ find z: int(-1..1)
 
 such that
 
-and([FlatWeightedSumLeq([-1, 1],[y, z],x),FlatWeightedSumGeq([-1, 1],[y, z],x);int(1..)])
+FlatWeightedSumLeq([-1, 1],[y, z],x),
+FlatWeightedSumGeq([-1, 1],[y, z],x)
 

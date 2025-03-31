@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::{arg, command, Args, Parser, Subcommand};
 
 use conjure_oxide::SolverFamily;
@@ -59,6 +61,10 @@ pub struct GlobalArgs {
         global = true
     )]
     pub check_equally_applicable_rules: bool,
+
+    /// Output file for the human readable rule trace.
+    #[arg(long, global = true)]
+    pub human_rule_trace: Option<PathBuf>,
 
     /// Do not check for multiple equally applicable rules [default].
     ///

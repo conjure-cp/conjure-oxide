@@ -28,8 +28,17 @@ and([(SafeDiv(x, y) = z),and([(y != 0);int(1..)]);int(1..)])
 
 --
 
+and([(SafeDiv(x, y) = z),and([(y != 0);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(SafeDiv(x, y) = z),
+and([(y != 0);int(1..)]) 
+
+--
+
+(SafeDiv(x, y) = z),
 and([(y != 0);int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(SafeDiv(x, y) = z),
 (y != 0) 
 
 --
@@ -48,5 +57,6 @@ find z: int(1..2)
 
 such that
 
-and([DivEq(x, y, z),(y != 0);int(1..)])
+DivEq(x, y, z),
+(y != 0)
 

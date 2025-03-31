@@ -277,7 +277,7 @@ fn parse_constraint(constraint: Node, source_code: &str, root: &Node) -> Express
 
             match op_type {
                 "**" => Expression::UnsafePow(Metadata::new(), Box::new(expr1), Box::new(expr2)),
-                "+" => Expression::Sum(Metadata::new(), vec![expr1, expr2]),
+                "+" => Expression::Sum(Metadata::new(), Box::new(matrix_expr![expr1, expr2])),
                 "-" => Expression::Minus(Metadata::new(), Box::new(expr1), Box::new(expr2)),
                 "*" => Expression::Product(Metadata::new(), vec![expr1, expr2]),
                 "/" => {
@@ -319,7 +319,7 @@ fn parse_constraint(constraint: Node, source_code: &str, root: &Node) -> Express
                 "or" => Expression::Or(Metadata::new(), Box::new(into_matrix_expr![expr_list])),
                 "min" => Expression::Min(Metadata::new(), Box::new(into_matrix_expr![expr_list])),
                 "max" => Expression::Max(Metadata::new(), Box::new(into_matrix_expr![expr_list])),
-                "sum" => Expression::Sum(Metadata::new(), expr_list),
+                "sum" => Expression::Sum(Metadata::new(), Box::new(into_matrix_expr![expr_list])),
                 "allDiff" => {
                     Expression::AllDiff(Metadata::new(), Box::new(into_matrix_expr![expr_list]))
                 }
