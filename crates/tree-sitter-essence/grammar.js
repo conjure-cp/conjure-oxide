@@ -25,24 +25,16 @@ module.exports = grammar({
     TRUE: $ => "true",
     FALSE: $ => "false",
     variable: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
-    // variable: $ => choice(
-    //   /[a-zA-Z_][a-zA-Z0-9_]*/, $.reserved_keyword
-    // ),
-  
-    // reserved_keyword: $ => choice(
-    //   $.SUCH_THAT, $.FIND, $.LETTING
-    // ),
+
     SUCH_THAT: $ => "such that",
     FIND: $ => "find",
     LETTING: $ => "letting",
 
     // Find statements
-    // find_statement_list: $ => prec.right(seq(field("find", $.FIND), repeat(field("find_statement", $.find_statement)))),
-    find_statement_list: $ => seq("find", repeat(field("find_statement", $.find_statement))),
+    find_statement_list: $ => prec.right(seq(field("find", $.FIND), repeat(field("find_statement", $.find_statement)))),
     find_statement: $ => seq(
       field("variables", $.variable_list),
-      field("colon", $.COLON),
-      field("colon", $.COLON),
+      field("colon", ":"),
       field("domain", $.domain),
       optional(",")
     ),
