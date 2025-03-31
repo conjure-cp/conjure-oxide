@@ -34,6 +34,7 @@ use uniplate::{Biplate, Uniplate as _};
 use Expr::*;
 
 use crate::ast::{Atom, Literal as Lit, SymbolTable};
+use crate::matrix_expr;
 use crate::metadata::Metadata;
 use std::collections::VecDeque;
 
@@ -109,6 +110,6 @@ fn minus_to_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::pure(Sum(
         Metadata::new(),
-        vec![*lhs, Neg(Metadata::new(), rhs)],
+        Box::new(matrix_expr![*lhs, Neg(Metadata::new(), rhs)]),
     )))
 }
