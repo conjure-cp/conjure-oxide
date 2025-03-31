@@ -400,6 +400,10 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
             Box::new(Expression::Union) as Box<dyn Fn(_, _, _) -> _>,
         ),
         (
+            "MkOpUnion",
+            Box::new(Expression::Union) as Box<dyn Fn(_, _, _) -> _>,
+        ),
+        (
             "MkOpIntersect",
             Box::new(Expression::Intersect) as Box<dyn Fn(_, _, _) -> _>,
         ),

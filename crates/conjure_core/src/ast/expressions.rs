@@ -675,6 +675,7 @@ impl Expression {
 
     pub fn return_type(&self) -> Option<ReturnType> {
         match self {
+            Expression::Union(_, subject, _) => Some(ReturnType::Set(Box::new(subject.return_type()?))),
             // might want to check for different return types in the two sets
             // Expression::Difference(_, subject, _) => Some(ReturnType::Set(Box::new(subject.return_type()?))),
             Expression::Union(_, subject, _) => Some(ReturnType::Set(Box::new(subject.return_type()?))),
