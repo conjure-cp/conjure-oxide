@@ -38,3 +38,38 @@ fn remove_implication(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         ]),
     )))
 }
+
+/// Converts an equivalence to cnf
+///
+/// ```text
+/// x <-> y ~>  (x /\ y) \/ (!x /\ !y)
+/// ```
+#[register_rule(("CNF", 4100))]
+fn remove_equivalence(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::Eq(_, x, y) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    Ok(Reduction::pure(Expr::Or(
+        Metadata::new(),
+        Box::new(matrix_expr![
+            Expr::And(
+                Metadata::new(),
+                Box::new(matrix_expr![
+                   *x.clone(),
+                    *y.clone()
+                ]),
+            ),
+            Expr::And(
+                Metadata::new(),
+                Box::new(matrix_expr![
+                    Expr::Not(Metadata::new(), x.clone()),
+                    Expr::Not(Metadata::new(), y.clone())
+                ]),
+            )
+        ]),
+    )))
+}
+
+
+
