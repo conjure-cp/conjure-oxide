@@ -1,1 +1,1 @@
-cargo run -- --enable-native-parser solve model.eprime
+conjure_oxide --enable-native-parser solve model.eprime

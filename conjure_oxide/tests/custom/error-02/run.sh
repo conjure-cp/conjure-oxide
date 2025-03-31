@@ -1,1 +1,1 @@
-cargo run -- --enable-native-parser solve conjure_oxide/tests/custom/error-02/model.eprime
+conjure_oxide --enable-native-parser solve model.eprime
