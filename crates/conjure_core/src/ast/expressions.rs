@@ -100,9 +100,9 @@ pub enum Expression {
     #[compatible(JsonInput)]
     Abs(Metadata, Box<Expression>),
 
-    /// `a + b + c + ...`
+    /// `sum(<vec_expr>)`
     #[compatible(JsonInput)]
-    Sum(Metadata, Vec<Expression>),
+    Sum(Metadata, Box<Expression>),
 
     /// `a * b * c * ...`
     #[compatible(JsonInput)]
@@ -475,7 +475,7 @@ impl Expression {
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(Domain::BoolDomain),
             Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(_))) => None,
             Expression::Scope(_, _) => Some(Domain::BoolDomain),
-            Expression::Sum(_, exprs) => expr_vec_to_domain_i32(exprs, |x, y| Some(x + y), syms),
+            Expression::Sum(_, e) => expr_vec_lit_to_domain_i32(e, |x, y| Some(x + y), syms),
             Expression::Product(_, exprs) => {
                 expr_vec_to_domain_i32(exprs, |x, y| Some(x * y), syms)
             }
@@ -547,7 +547,7 @@ impl Expression {
                 a.domain_of(syms)?.apply_i32(
                     |x, y| {
                         if (x != 0 || y != 0) && y >= 0 {
-                            Some(x ^ y)
+                            Some(x.pow(y as u32))
                         } else {
                             None
                         }
@@ -889,8 +889,8 @@ impl Display for Expression {
             Expression::Atomic(_, atom) => atom.fmt(f),
             Expression::Scope(_, submodel) => write!(f, "{{\n{submodel}\n}}"),
             Expression::Abs(_, a) => write!(f, "|{}|", a),
-            Expression::Sum(_, expressions) => {
-                write!(f, "Sum({})", pretty_vec(expressions))
+            Expression::Sum(_, e) => {
+                write!(f, "Sum({e})")
             }
             Expression::Product(_, expressions) => {
                 write!(f, "Product({})", pretty_vec(expressions))
@@ -1059,7 +1059,7 @@ impl Display for Expression {
 mod tests {
     use std::rc::Rc;
 
-    use crate::ast::declaration::Declaration;
+    use crate::{ast::declaration::Declaration, matrix_expr};
 
     use super::*;
 
@@ -1067,7 +1067,10 @@ mod tests {
     fn test_domain_of_constant_sum() {
         let c1 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1)));
         let c2 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2)));
-        let sum = Expression::Sum(Metadata::new(), vec![c1.clone(), c2.clone()]);
+        let sum = Expression::Sum(
+            Metadata::new(),
+            Box::new(matrix_expr![c1.clone(), c2.clone()]),
+        );
         assert_eq!(
             sum.domain_of(&SymbolTable::new()),
             Some(Domain::IntDomain(vec![Range::Single(3)]))
@@ -1078,13 +1081,16 @@ mod tests {
     fn test_domain_of_constant_invalid_type() {
         let c1 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1)));
         let c2 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
-        let sum = Expression::Sum(Metadata::new(), vec![c1.clone(), c2.clone()]);
+        let sum = Expression::Sum(
+            Metadata::new(),
+            Box::new(matrix_expr![c1.clone(), c2.clone()]),
+        );
         assert_eq!(sum.domain_of(&SymbolTable::new()), None);
     }
 
     #[test]
     fn test_domain_of_empty_sum() {
-        let sum = Expression::Sum(Metadata::new(), vec![]);
+        let sum = Expression::Sum(Metadata::new(), Box::new(matrix_expr![]));
         assert_eq!(sum.domain_of(&SymbolTable::new()), None);
     }
 
@@ -1118,7 +1124,10 @@ mod tests {
             Domain::IntDomain(vec![Range::Single(1)]),
         )))
         .unwrap();
-        let sum = Expression::Sum(Metadata::new(), vec![reference.clone(), reference.clone()]);
+        let sum = Expression::Sum(
+            Metadata::new(),
+            Box::new(matrix_expr![reference.clone(), reference.clone()]),
+        );
         assert_eq!(
             sum.domain_of(&vars),
             Some(Domain::IntDomain(vec![Range::Single(2)]))
@@ -1133,7 +1142,10 @@ mod tests {
             Name::MachineName(0),
             Domain::IntDomain(vec![Range::Bounded(1, 2)]),
         )));
-        let sum = Expression::Sum(Metadata::new(), vec![reference.clone(), reference.clone()]);
+        let sum = Expression::Sum(
+            Metadata::new(),
+            Box::new(matrix_expr![reference.clone(), reference.clone()]),
+        );
         assert_eq!(
             sum.domain_of(&vars),
             Some(Domain::IntDomain(vec![Range::Bounded(2, 4)]))

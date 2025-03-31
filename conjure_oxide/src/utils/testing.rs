@@ -1,13 +1,15 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Debug;
 
+use itertools::Itertools as _;
 use std::fs::File;
 use std::fs::{read_to_string, OpenOptions};
 use std::hash::Hash;
 use std::io::Write;
 use std::sync::{Arc, RwLock};
+use uniplate::Uniplate;
 
-use conjure_core::ast::SerdeModel;
+use conjure_core::ast::{AbstractLiteral, Domain, SerdeModel};
 use conjure_core::context::Context;
 use serde_json::{json, Error as JsonError, Value as JsonValue};
 
@@ -228,4 +230,67 @@ pub fn read_human_rule_trace(
         .collect();
 
     Ok(rules_trace)
+}
+
+#[doc(hidden)]
+pub fn normalize_solutions_for_comparison(
+    input_solutions: &[BTreeMap<Name, Literal>],
+) -> Vec<BTreeMap<Name, Literal>> {
+    let mut normalized = input_solutions.to_vec();
+
+    for solset in &mut normalized {
+        // remove machine names
+        let keys_to_remove: Vec<Name> = solset
+            .keys()
+            .filter(|k| matches!(k, Name::MachineName(_)))
+            .cloned()
+            .collect();
+        for k in keys_to_remove {
+            solset.remove(&k);
+        }
+
+        let mut updates = vec![];
+        for (k, v) in solset.clone() {
+            if let Name::UserName(_) = k {
+                match v {
+                    Literal::Bool(true) => updates.push((k, Literal::Int(1))),
+                    Literal::Bool(false) => updates.push((k, Literal::Int(0))),
+                    Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)) => {
+                        // make all domains the same (this is just in the tester so the types dont
+                        // actually matter)
+
+                        let mut matrix = AbstractLiteral::Matrix(elems, Domain::IntDomain(vec![]));
+                        matrix =
+                            matrix.transform(Arc::new(
+                                move |x: AbstractLiteral<Literal>| match x {
+                                    AbstractLiteral::Matrix(items, _) => {
+                                        let items = items
+                                            .into_iter()
+                                            .map(|x| match x {
+                                                Literal::Bool(false) => Literal::Int(0),
+                                                Literal::Bool(true) => Literal::Int(1),
+                                                x => x,
+                                            })
+                                            .collect_vec();
+
+                                        AbstractLiteral::Matrix(items, Domain::IntDomain(vec![]))
+                                    }
+                                    x => x,
+                                },
+                            ));
+                        updates.push((k, Literal::AbstractLiteral(matrix)));
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        for (k, v) in updates {
+            solset.insert(k, v);
+        }
+    }
+
+    // Remove duplicates
+    normalized = normalized.into_iter().unique().collect();
+    normalized
 }

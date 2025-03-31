@@ -8,11 +8,11 @@ use std::sync::{Arc, RwLock};
 use serde_json::Value;
 use serde_json::Value as JsonValue;
 
-use crate::ast::comprehension::ComprehensionBuilder;
-use crate::ast::Declaration;
+use crate::ast::comprehension::{ComprehensionBuilder, ComprehensionKind};
 use crate::ast::{
     AbstractLiteral, Atom, Domain, Expression, Literal, Name, Range, SetAttr, SymbolTable,
 };
+use crate::ast::{Declaration, DeclarationKind};
 use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::metadata::Metadata;
@@ -68,7 +68,7 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
                             break;
                         }
                         "Letting" => {
-                            parse_letting(value, &mut submodel.symbols_mut(), &scope)?;
+                            parse_letting(value, &scope)?;
                             valid_decl = true;
                             break;
                         }
@@ -119,7 +119,7 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
         .next()
         .ok_or(error!("FindOrGiven[2] is an empty object"))?;
 
-    let domain = parse_domain(domain.0, domain.1)?;
+    let domain = parse_domain(domain.0, domain.1, symtab)?;
 
     symtab
         .insert(Rc::new(Declaration::new_var(name.clone(), domain)))
@@ -128,11 +128,7 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
         )))
 }
 
-fn parse_letting(
-    v: &JsonValue,
-    symtab: &mut SymbolTable,
-    scope: &Rc<RefCell<SymbolTable>>,
-) -> Result<()> {
+fn parse_letting(v: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Result<()> {
     let arr = v.as_array().ok_or(error!("Letting is not an array"))?;
     let name = arr[0]
         .as_object()
@@ -142,6 +138,7 @@ fn parse_letting(
     let name = Name::UserName(name.to_owned());
     // value letting
     if let Some(value) = parse_expression(&arr[1], scope) {
+        let mut symtab = scope.borrow_mut();
         symtab
             .insert(Rc::new(Declaration::new_value_letting(name.clone(), value)))
             .ok_or(Error::Parse(format!(
@@ -158,7 +155,8 @@ fn parse_letting(
             .next()
             .ok_or(error!("Letting[1].Domain is an empty object"))?;
 
-        let domain = parse_domain(domain.0, domain.1)?;
+        let mut symtab = scope.borrow_mut();
+        let domain = parse_domain(domain.0, domain.1, &symtab)?;
 
         symtab
             .insert(Rc::new(Declaration::new_domain_letting(
@@ -171,9 +169,13 @@ fn parse_letting(
     }
 }
 
-fn parse_domain(domain_name: &str, domain_value: &JsonValue) -> Result<Domain> {
+fn parse_domain(
+    domain_name: &str,
+    domain_value: &JsonValue,
+    symbols: &SymbolTable,
+) -> Result<Domain> {
     match domain_name {
-        "DomainInt" => Ok(parse_int_domain(domain_value)?),
+        "DomainInt" => Ok(parse_int_domain(domain_value, symbols)?),
         "DomainBool" => Ok(Domain::BoolDomain),
         "DomainReference" => Ok(Domain::DomainReference(Name::UserName(
             domain_value
@@ -195,7 +197,7 @@ fn parse_domain(domain_name: &str, domain_value: &JsonValue) -> Result<Domain> {
             let domain = match domain_name {
                 "DomainInt" => {
                     println!("DomainInt: {:#?}", domain.1);
-                    Ok(parse_int_domain(domain.1)?)
+                    Ok(parse_int_domain(domain.1, symbols)?)
                 }
                 "DomainBool" => Ok(Domain::BoolDomain),
                 _ => Err(Error::Parse(
@@ -232,14 +234,18 @@ fn parse_domain(domain_name: &str, domain_value: &JsonValue) -> Result<Domain> {
 
             let mut index_domains: Vec<Domain> = vec![];
 
-            index_domains.push(parse_domain(index_domain_name, index_domain_value)?);
+            index_domains.push(parse_domain(
+                index_domain_name,
+                index_domain_value,
+                symbols,
+            )?);
 
             // We want to store 2-d matrices as a matrix with two index domains, not a matrix in a
             // matrix.
             //
             // Walk through the value domain until it is not a DomainMatrix, adding the index to
             // our list of indices.
-            let mut value_domain = parse_domain(value_domain_name, value_domain_value)?;
+            let mut value_domain = parse_domain(value_domain_name, value_domain_value, symbols)?;
             while let Domain::DomainMatrix(new_value_domain, mut indices) = value_domain {
                 index_domains.append(&mut indices);
                 value_domain = *new_value_domain.clone()
@@ -254,7 +260,7 @@ fn parse_domain(domain_name: &str, domain_value: &JsonValue) -> Result<Domain> {
     }
 }
 
-fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
+fn parse_int_domain(v: &JsonValue, symbols: &SymbolTable) -> Result<Domain> {
     let mut ranges = Vec::new();
     let arr = v
         .as_array()
@@ -276,14 +282,14 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
                     .ok_or(error!("RangeBounded is not an array".to_owned()))?;
                 let mut nums = Vec::new();
                 for item in arr.iter() {
-                    let num = parse_domain_value_int(item)
+                    let num = parse_domain_value_int(item, symbols)
                         .ok_or(error!("Could not parse int domain constant"))?;
                     nums.push(num);
                 }
                 ranges.push(Range::Bounded(nums[0], nums[1]));
             }
             "RangeSingle" => {
-                let num = parse_domain_value_int(range.1)
+                let num = parse_domain_value_int(range.1, symbols)
                     .ok_or(error!("Could not parse int domain constant"))?;
                 ranges.push(Range::Single(num));
             }
@@ -303,7 +309,7 @@ fn parse_int_domain(v: &JsonValue) -> Result<Domain> {
 /// negation to already have been handled as an expression; however, here we do not expect domain
 /// values to be part of larger expressions, only negated.
 ///
-fn parse_domain_value_int(obj: &JsonValue) -> Option<i32> {
+fn parse_domain_value_int(obj: &JsonValue, symbols: &SymbolTable) -> Option<i32> {
     parser_trace!("trying to parse domain value: {}", obj);
 
     fn try_parse_positive_int(obj: &JsonValue) -> Option<i32> {
@@ -344,7 +350,37 @@ fn parse_domain_value_int(obj: &JsonValue) -> Option<i32> {
         Some(-inner_num)
     }
 
-    try_parse_positive_int(obj).or_else(|| try_parse_negative_int(obj))
+    // it will be too annoying to store references inside all our int domain ranges, so just
+    // resolve them here.
+    //
+    // this matches savilerow, where lettings must be declared before they are used.
+    //
+    // TODO: we shouldn't do this long term, add support for ranges containing domain references.
+    fn try_parse_reference(obj: &JsonValue, symbols: &SymbolTable) -> Option<i32> {
+        parser_trace!(".. trying as a domain reference: {}", obj);
+        let inner_name = obj.pointer("/Reference/0/Name")?.as_str()?;
+        parser_trace!(
+            ".. found domain reference to {}, trying to resolve it",
+            inner_name
+        );
+        let name = Name::UserName(inner_name.to_string());
+        let decl = symbols.lookup(&name)?;
+        let DeclarationKind::ValueLetting(d) = decl.kind() else {
+            parser_trace!(".. name exists but is not a value letting!");
+            return None;
+        };
+
+        let a = d.clone().to_literal()?;
+        let Literal::Int(a) = a else {
+            return None;
+        };
+
+        Some(a)
+    }
+
+    try_parse_positive_int(obj)
+        .or_else(|| try_parse_negative_int(obj))
+        .or_else(|| try_parse_reference(obj, symbols))
 }
 
 // this needs an explicit type signature to force the closures to have the same type
@@ -427,6 +463,10 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
             "MkOpAnd",
             Box::new(Expression::And) as Box<dyn Fn(_, _) -> _>,
         ),
+        (
+            "MkOpSum",
+            Box::new(Expression::Sum) as Box<dyn Fn(_, _) -> _>,
+        ),
         ("MkOpOr", Box::new(Expression::Or) as Box<dyn Fn(_, _) -> _>),
         (
             "MkOpMin",
@@ -444,16 +484,10 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
     .into_iter()
     .collect();
 
-    let vec_operators: HashMap<&str, VecOp> = [
-        (
-            "MkOpSum",
-            Box::new(Expression::Sum) as Box<dyn Fn(_, _) -> _>,
-        ),
-        (
-            "MkOpProduct",
-            Box::new(Expression::Product) as Box<dyn Fn(_, _) -> _>,
-        ),
-    ]
+    let vec_operators: HashMap<&str, VecOp> = [(
+        "MkOpProduct",
+        Box::new(Expression::Product) as Box<dyn Fn(_, _) -> _>,
+    )]
     .into_iter()
     .collect();
 
@@ -481,7 +515,7 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
             otherwise => bug!("Unhandled Op {:#?}", otherwise),
         },
         Value::Object(comprehension) if comprehension.contains_key("Comprehension") => {
-            Some(parse_comprehension(comprehension, Rc::clone(scope)).unwrap())
+            Some(parse_comprehension(comprehension, Rc::clone(scope), None).unwrap())
         }
         Value::Object(refe) if refe.contains_key("Reference") => {
             let name = refe["Reference"].as_array()?[0].as_object()?["Name"].as_str()?;
@@ -538,6 +572,7 @@ fn parse_abs_lit(abs_set: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Option<Ex
 fn parse_comprehension(
     comprehension: &serde_json::Map<String, Value>,
     scope: Rc<RefCell<SymbolTable>>,
+    comprehension_kind: Option<ComprehensionKind>,
 ) -> Option<Expression> {
     let value = &comprehension["Comprehension"];
     let mut comprehension = ComprehensionBuilder::new();
@@ -557,7 +592,7 @@ fn parse_comprehension(
                     .as_object()?
                     .iter()
                     .next()?;
-                let domain = parse_domain(domain_name, domain_value).ok()?;
+                let domain = parse_domain(domain_name, domain_value, &scope.borrow()).ok()?;
                 comprehension.generator(Name::UserName(name.to_string()), domain)
             }
 
@@ -571,7 +606,7 @@ fn parse_comprehension(
 
     Some(Expression::Comprehension(
         Metadata::new(),
-        Box::new(comprehension.with_return_value(expr, scope)),
+        Box::new(comprehension.with_return_value(expr, scope, comprehension_kind)),
     ))
 }
 
@@ -692,7 +727,22 @@ fn parse_unary_op(
     let (key, value) = un_op.into_iter().next()?;
     let constructor = unary_operators.get(key.as_str())?;
 
-    let arg = parse_expression(value, scope)?;
+    // unops are the main things that contain comprehensions
+    //
+    // if the current expr is a quantifier like and/or/sum and it contains a comprehension, let the comprehension know what it is inside.
+    let arg = match value {
+        Value::Object(comprehension) if comprehension.contains_key("Comprehension") => {
+            let comprehension_kind = match key.as_str() {
+                "MkOpOr" => Some(ComprehensionKind::Or),
+                "MkOpAnd" => Some(ComprehensionKind::And),
+                "MkOpSum" => Some(ComprehensionKind::Sum),
+                _ => None,
+            };
+            Some(parse_comprehension(comprehension, Rc::clone(scope), comprehension_kind).unwrap())
+        }
+        _ => parse_expression(value, scope),
+    }?;
+
     Some(constructor(Metadata::new(), Box::new(arg)))
 }
 
@@ -801,7 +851,9 @@ fn parse_abstract_matrix_as_expr(
     } else {
         parser_trace!(".. successfully parsed empty values ",);
     }
-    match parse_domain(domain_name, domain_value) {
+
+    let symbols = scope.borrow();
+    match parse_domain(domain_name, domain_value, &symbols) {
         Ok(domain) => {
             parser_trace!("... sucessfully parsed domain as {domain}");
             Some(into_matrix_expr![args_parsed;domain])

@@ -115,6 +115,8 @@ pub fn handle_cnf(vec_cnf: &Vec<Expression>, vars_added: &mut HashMap<String, Li
     inst
 }
 
+// Error reserved for future use
+// TODO: Integrate or remove
 #[derive(Error, Debug)]
 pub enum CNFError {
     #[error("Variable with name `{0}` not found")]
