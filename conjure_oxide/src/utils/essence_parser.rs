@@ -407,13 +407,15 @@ fn get_line(node: Node, source_code: &str) -> String {
         .unwrap_or("Line not found");
     let pointer_line = format!(" |{}^", " ".repeat(character));
     let message;
-    if node.parent().unwrap().kind() == "program" {
-        message = format!("Invalid {}", pretty(node.prev_sibling().unwrap().kind()));
-    } else if node.kind() == "ERROR" {
+    // if node.parent().unwrap().kind() == "program" {
+    //     message = format!("Invalid {}", pretty(node.prev_sibling().unwrap().kind()));
+    // } else 
+    if node.kind() == "ERROR" {
         message = format!("Invalid {}", pretty(node.parent().unwrap().kind()));
     } else {
         message = format!("Invalid {}", pretty(node.kind()));
     }
+    let pointer_line = format!("  |{}^", " ".repeat(character));
 
     return format!(
         "{}:{}:\n |\n{}| {}\n{}\n{}\n",

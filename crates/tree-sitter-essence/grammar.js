@@ -41,7 +41,7 @@ module.exports = grammar({
     find_statement_list: $ => seq("find", repeat(field("find_statement", $.find_statement))),
     find_statement: $ => seq(
       field("variables", $.variable_list),
-      ":",
+      field("colon", $.COLON),
       field("domain", $.domain),
       optional(",")
     ),
@@ -81,7 +81,7 @@ module.exports = grammar({
 
     // Letting statements
     // letting_statement_list: $ => prec.right(seq(field("letting", $.LETTING), repeat(field("letting_statement", $.letting_statement)))),
-    letting_statement_list: $ => seq("letting", repeat(field("letting_statement", $.letting_statement))),
+    letting_statement_list: $ => prec.right(seq(field("letting", $.LETTING), repeat(field("letting_statement", $.letting_statement)))),
     letting_statement: $ => seq(
       field("variable_list", $.variable_list), 
       "be", 
@@ -91,10 +91,20 @@ module.exports = grammar({
     // Constraints
     // constraint_list: $ => prec.right(seq(
       // field("such_that", $.SUCH_THAT), 
+    // constraint_list: $ => seq(
+    //   field("such_that", $.SUCH_THAT), 
+    //   field("expression", $.expression), 
+    //   optional(repeat(seq(",", field("expression", $.expression)))), 
+    //   optional(",")
+    // ),
+
     constraint_list: $ => seq(
-      "such that", 
+      field("such_that", $.SUCH_THAT), 
+      repeat(field("constraint", $.constraint))
+    ),
+
+    constraint: $ => seq(
       field("expression", $.expression), 
-      optional(repeat(seq(",", field("expression", $.expression)))), 
       optional(",")
     ),
 
