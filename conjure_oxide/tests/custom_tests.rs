@@ -27,11 +27,13 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
     let expected_output_path = test_path.join("stdout.expected");
     let expected_error_path = test_path.join("stderr.expected");
 
-    // Locate `conjure_oxide` automatically in target/XX (debug or release)
-    let mut conjure_oxide_path = env::current_exe().unwrap(); // target/XX/deps/TESTPROGNAME
-    conjure_oxide_path.pop(); // Go up a directory (target/XX/deps)
-    conjure_oxide_path.pop(); // Go up again (target/XX)
-    conjure_oxide_path.push("conjure_oxide"); // Add binary name (target/XX/conjure_oxide)
+    // Get conjure_oxide binary path from test binary path:
+    // The test binary is at target/XX/deps/TESTPROGNAME and conjure_oxide is at target/XX/conjure_oxide 
+    // so from test binary, need to go up two directories and add 'conjure_oxide'
+    let mut conjure_oxide_path = env::current_exe().unwrap();
+    conjure_oxide_path.pop();
+    conjure_oxide_path.pop();
+    conjure_oxide_path.push("conjure_oxide");
 
     // Modify PATH so run.sh can find conjure_oxide
     let mut path_var = env::var("PATH").unwrap_or_else(|_| "".to_string());
