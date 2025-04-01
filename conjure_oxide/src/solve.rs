@@ -75,17 +75,6 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
                 run_minion(&solve_args, rewritten_model)?;
             }
         }
-        // match global_args.solver {
-        //     Some(s) => match s {
-        //         SolverFamily::SAT => {
-        //             run_sat_solver(&solve_args, rewritten_model)?;
-        //         }
-        //         SolverFamily::Minion => {
-        //             run_minion(&solve_args, rewritten_model)?;
-        //         }
-        //     },
-        //     None => panic!("Should be unreachable"),
-        // }
     }
 
     // still do postamble even if we didn't run the solver
