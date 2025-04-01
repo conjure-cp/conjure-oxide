@@ -1,0 +1,47 @@
+language ESSENCE' 1.0
+
+$ Place n queens on an nxn chessboard such that no queen threatens each-other.
+$
+$ CSPLIB 54 (https://www.csplib.org/Problems/prob054/)
+
+
+$ 4-queens:
+
+$ Say, arbitrarily, that queen 0 is in column 0, queen 1 in column 1, ...
+$
+$ So each queen, q, has some position (q,row[q]) on the board.
+
+find row: matrix indexed by [ int(0..7) ] of  int(0..7)
+
+$ Queens are different iff:
+
+$ * they are all in different columns 
+$
+$ * they are all on different major diagonals (column+row) 
+$
+$ * they are all on different minor diagonals (column-row) 
+
+
+$ possible minor diagonals are in the domain (0-3)..(3-0) 
+find minorDiagonal: matrix indexed by [ int(0..3) ] of int(-3..3)
+
+$ possible major diagonals are in the domain (0+0)..(3+3)
+find majorDiagonal: matrix indexed by [ int(0..3) ] of int(0..6)
+
+
+such that 
+
+$ define the diagonals
+forAll queen: int(0..3) . 
+  and([majorDiagonal[queen] = queen + row[queen],
+       minorDiagonal[queen] = queen - row[queen]]),
+
+$ different rows
+allDiff(row),
+
+$ different major diagonals
+allDiff(majorDiagonal),
+
+$ different minor diagonals
+allDiff(minorDiagonal)
+
