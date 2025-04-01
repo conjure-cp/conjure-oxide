@@ -3,12 +3,10 @@ use conjure_core::ast::SymbolTable;
 use conjure_core::bug;
 use conjure_core::rule_engine::get_rules_grouped;
 
-use conjure_core::ast::AbstractLiteral;
-use conjure_core::ast::Domain;
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::utils::essence_parser::parse_essence_file_native;
-use conjure_oxide::utils::testing::read_human_rule_trace;
+use conjure_oxide::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
 use glob::glob;
 use itertools::Itertools;
 use std::collections::BTreeMap;
@@ -22,7 +20,7 @@ use tracing_subscriber::{
 };
 use tree_morph::{helpers::select_panic, prelude::*};
 
-use uniplate::{Biplate, Uniplate};
+use uniplate::Biplate;
 
 use std::path::Path;
 use std::sync::Arc;
@@ -33,13 +31,13 @@ use conjure_core::ast::Atom;
 use conjure_core::ast::{Expression, Literal, Name};
 use conjure_core::context::Context;
 use conjure_oxide::rule_engine::resolve_rule_sets;
-use conjure_oxide::utils::conjure::minion_solutions_to_json;
+use conjure_oxide::utils::conjure::solutions_to_json;
 use conjure_oxide::utils::conjure::{
-    get_minion_solutions, get_solutions_from_conjure, parse_essence_file,
+    get_minion_solutions, get_sat_solutions, get_solutions_from_conjure, parse_essence_file,
 };
 use conjure_oxide::utils::testing::save_stats_json;
 use conjure_oxide::utils::testing::{
-    read_minion_solutions_json, read_model_json, save_minion_solutions_json, save_model_json,
+    read_model_json, read_solutions_json, save_model_json, save_solutions_json,
 };
 use conjure_oxide::SolverFamily;
 use pretty_assertions::assert_eq;
@@ -55,6 +53,7 @@ struct TestConfig {
     apply_rewrite_rules: bool, // Stage 2a: Applies predefined rules to the model
     enable_extra_validation: bool, // Stage 2b: Runs additional validation checks
     solve_with_minion: bool,   // Stage 3a: Solves the model using Minion
+    solve_with_sat: bool,      // TODO - add stage mark
     compare_solver_solutions: bool, // Stage 3b: Compares Minion and Conjure solutions
     validate_rule_traces: bool, // Stage 4a: Checks rule traces against expected outputs
 
@@ -68,6 +67,7 @@ impl Default for TestConfig {
         Self {
             extra_rewriter_asserts: vec!["vector_operators_have_partially_evaluated".into()],
             enable_naive_impl: true,
+            solve_with_sat: false,
             enable_morph_impl: false,
             enable_rewriter_impl: true,
             parse_model_default: true,
@@ -91,7 +91,7 @@ impl TestConfig {
                 "PARSE_MODEL_DEFAULT",
                 self.parse_model_default,
             ),
-            enable_morph_impl: env_var_override_bool("ENABLE_MORPH_IMPL", self.parse_model_default),
+            enable_morph_impl: env_var_override_bool("ENABLE_MORPH_IMPL", self.enable_morph_impl),
             enable_naive_impl: env_var_override_bool("ENABLE_NAIVE_IMPL", self.enable_naive_impl),
             enable_native_parser: env_var_override_bool(
                 "ENABLE_NATIVE_PARSER",
@@ -106,6 +106,7 @@ impl TestConfig {
                 self.enable_extra_validation,
             ),
             solve_with_minion: env_var_override_bool("SOLVE_WITH_MINION", self.solve_with_minion),
+            solve_with_sat: env_var_override_bool("SOLVE_WITH_SAT", self.solve_with_sat),
             compare_solver_solutions: env_var_override_bool(
                 "COMPARE_SOLVER_SOLUTIONS",
                 self.compare_solver_solutions,
@@ -244,6 +245,12 @@ fn integration_test_inner(
 
     let config = file_config.merge_env();
 
+    // TODO: allow either Minion or SAT but not both; eventually allow both sovlers to be tested
+
+    if config.solve_with_sat && config.solve_with_minion {
+        todo!("Not yet implemented simultaneous testing of both solvers")
+    }
+
     // Stage 1a: Parse the model using the normal parser (run unless explicitly disabled)
     let parsed_model = if config.parse_model_default {
         let parsed = parse_essence_file(path, essence_base, extension, context.clone())?;
@@ -272,7 +279,16 @@ fn integration_test_inner(
 
     // Stage 2a: Rewrite the model using the rule engine (run unless explicitly disabled)
     let rewritten_model = if config.apply_rewrite_rules {
-        let rule_sets = resolve_rule_sets(SolverFamily::Minion, DEFAULT_RULE_SETS)?;
+        // rule set selection based on solver
+
+        let solver_fam = if config.solve_with_sat {
+            SolverFamily::SAT
+        } else {
+            SolverFamily::Minion
+        };
+
+        let rule_sets = resolve_rule_sets(solver_fam, DEFAULT_RULE_SETS)?;
+
         let mut model = parsed_model.expect("Model must be parsed in 1a");
 
         let rewritten = if config.enable_naive_impl {
@@ -332,7 +348,21 @@ fn integration_test_inner(
                 .clone(),
             0,
         )?;
-        let solutions_json = save_minion_solutions_json(&solved, path, essence_base)?;
+        let solutions_json =
+            save_solutions_json(&solved, path, essence_base, SolverFamily::Minion)?;
+        if verbose {
+            println!("Minion solutions: {:#?}", solutions_json);
+        }
+        Some(solved)
+    } else if config.solve_with_sat {
+        let solved = get_sat_solutions(
+            rewritten_model
+                .as_ref()
+                .expect("Rewritten model must be present in 2a")
+                .clone(),
+            0,
+        )?;
+        let solutions_json = save_solutions_json(&solved, path, essence_base, SolverFamily::SAT)?;
         if verbose {
             println!("Minion solutions: {:#?}", solutions_json);
         }
@@ -342,7 +372,9 @@ fn integration_test_inner(
     };
 
     // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
-    if config.compare_solver_solutions || accept && config.solve_with_minion {
+    if config.compare_solver_solutions
+        || accept && (config.solve_with_minion || config.solve_with_sat)
+    {
         let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
             &format!("{}/{}.{}", path, essence_base, extension),
             Arc::clone(&context),
@@ -353,8 +385,8 @@ fn integration_test_inner(
         );
         let conjure_solutions = normalize_solutions_for_comparison(&conjure_solutions);
 
-        let mut conjure_solutions_json = minion_solutions_to_json(&conjure_solutions);
-        let mut username_solutions_json = minion_solutions_to_json(&username_solutions);
+        let mut conjure_solutions_json = solutions_to_json(&conjure_solutions);
+        let mut username_solutions_json = solutions_to_json(&username_solutions);
 
         conjure_solutions_json.sort_all_objects();
         username_solutions_json.sort_all_objects();
@@ -391,6 +423,8 @@ fn integration_test_inner(
         // based on the test results, so they don't get done later.
         if config.solve_with_minion {
             copy_generated_to_expected(path, essence_base, "minion", "solutions.json")?;
+        } else if config.solve_with_sat {
+            copy_generated_to_expected(path, essence_base, "SAT", "solutions.json")?;
         }
 
         if config.validate_rule_traces {
@@ -488,9 +522,14 @@ fn integration_test_inner(
 
     // Check Stage 3a (solutions)
     if config.solve_with_minion {
-        let expected_solutions_json = read_minion_solutions_json(path, essence_base, "expected")?;
-        let username_solutions_json =
-            minion_solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
+        let expected_solutions_json =
+            read_solutions_json(path, essence_base, "expected", SolverFamily::Minion)?;
+        let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
+        assert_eq!(username_solutions_json, expected_solutions_json);
+    } else if config.solve_with_sat {
+        let expected_solutions_json =
+            read_solutions_json(path, essence_base, "expected", SolverFamily::SAT)?;
+        let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
         assert_eq!(username_solutions_json, expected_solutions_json);
     }
 
@@ -553,78 +592,11 @@ fn expected_exists_for(path: &str, test_name: &str, stage: &str, extension: &str
     Path::new(&format!("{path}/{test_name}.expected-{stage}.{extension}")).exists()
 }
 
-fn normalize_solutions_for_comparison(
-    input_solutions: &[BTreeMap<Name, Literal>],
-) -> Vec<BTreeMap<Name, Literal>> {
-    let mut normalized = input_solutions.to_vec();
-
-    for solset in &mut normalized {
-        // remove machine names
-        let keys_to_remove: Vec<Name> = solset
-            .keys()
-            .filter(|k| matches!(k, Name::MachineName(_)))
-            .cloned()
-            .collect();
-        for k in keys_to_remove {
-            solset.remove(&k);
-        }
-
-        let mut updates = vec![];
-        for (k, v) in solset.clone() {
-            if let Name::UserName(_) = k {
-                match v {
-                    Literal::Bool(true) => updates.push((k, Literal::Int(1))),
-                    Literal::Bool(false) => updates.push((k, Literal::Int(0))),
-                    Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)) => {
-                        // make all domains the same (this is just in the tester so the types dont
-                        // actually matter)
-
-                        let mut matrix = AbstractLiteral::Matrix(elems, Domain::IntDomain(vec![]));
-                        matrix =
-                            matrix.transform(Arc::new(
-                                move |x: AbstractLiteral<Literal>| match x {
-                                    AbstractLiteral::Matrix(items, _) => {
-                                        let items = items
-                                            .into_iter()
-                                            .map(|x| match x {
-                                                Literal::Bool(false) => Literal::Int(0),
-                                                Literal::Bool(true) => Literal::Int(1),
-                                                x => x,
-                                            })
-                                            .collect_vec();
-                                        let matrix = AbstractLiteral::Matrix(
-                                            items,
-                                            Domain::IntDomain(vec![]),
-                                        );
-                                        eprintln!("inside transform {matrix}");
-                                        matrix
-                                    }
-                                    x => x,
-                                },
-                            ));
-                        eprintln!("matrix {matrix}");
-                        updates.push((k, Literal::AbstractLiteral(matrix)));
-                    }
-                    _ => {}
-                }
-            }
-        }
-
-        for (k, v) in updates {
-            solset.insert(k, v);
-        }
-    }
-
-    // Remove duplicates
-    normalized = normalized.into_iter().unique().collect();
-    normalized
-}
-
 fn assert_vector_operators_have_partially_evaluated(model: &conjure_core::Model) {
     for node in model.universe_bi() {
         use conjure_core::ast::Expression::*;
         match node {
-            Sum(_, ref vec) => assert_constants_leq_one(&node, vec),
+            Sum(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),
             Min(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),
             Max(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),
             Or(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),

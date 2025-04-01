@@ -1,8 +1,7 @@
-use std::collections::{HashSet, VecDeque};
+use std::collections::HashSet;
 
 use conjure_macros::register_rule;
 use itertools::iproduct;
-use uniplate::Biplate;
 
 use crate::ast::SymbolTable;
 use crate::into_matrix_expr;
@@ -22,6 +21,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // This is why we always check whether we found a constant or not.
     match expr.clone() {
         AbstractLiteral(_, _) => Err(RuleNotApplicable),
+        Comprehension(_, _) => Err(RuleNotApplicable),
         DominanceRelation(_, _) => Err(RuleNotApplicable),
         FromSolution(_, _) => Err(RuleNotApplicable),
         UnsafeIndex(_, _, _) => Err(RuleNotApplicable),
@@ -37,6 +37,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             _ => Err(RuleNotApplicable),
         },
         Sum(m, vec) => {
+            let vec = vec.unwrap_list().ok_or(RuleNotApplicable)?;
             let mut acc = 0;
             let mut n_consts = 0;
             let mut new_vec: Vec<Expr> = Vec::new();
@@ -55,7 +56,10 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             if n_consts <= 1 {
                 Err(RuleNotApplicable)
             } else {
-                Ok(Reduction::pure(Sum(m, new_vec)))
+                Ok(Reduction::pure(Sum(
+                    m,
+                    Box::new(into_matrix_expr![new_vec]),
+                )))
             }
         }
 
@@ -251,37 +255,52 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
 
         // similar to And, but booleans are returned wrapped in Root.
-        Root(_, vec) => {
-            // root([true]) / root([false]) are already evaluated
-            if vec.len() < 2 {
-                return Err(RuleNotApplicable);
-            }
+        Root(_, es) => {
+            match es.as_slice() {
+                [] => Err(RuleNotApplicable),
+                // want to unwrap nested ands
+                [Expr::And(_, _)] => Ok(()),
+                // root([true]) / root([false]) are already evaluated
+                [_] => Err(RuleNotApplicable),
+                [_, _, ..] => Ok(()),
+            }?;
 
             let mut new_vec: Vec<Expr> = Vec::new();
-            let mut has_const: bool = false;
-            for expr in vec {
-                if let Expr::Atomic(_, Atom::Literal(Bool(x))) = expr {
-                    has_const = true;
-                    if !x {
-                        return Ok(Reduction::pure(Root(
-                            Metadata::new(),
-                            vec![Atomic(Default::default(), Atom::Literal(Bool(false)))],
-                        )));
+            let mut has_changed: bool = false;
+            for expr in es {
+                eprintln!("{expr}");
+                match expr {
+                    Expr::Atomic(_, Atom::Literal(Bool(x))) => {
+                        has_changed = true;
+                        if !x {
+                            // false
+                            return Ok(Reduction::pure(Root(
+                                Metadata::new(),
+                                vec![Atomic(Default::default(), Atom::Literal(Bool(false)))],
+                            )));
+                        }
+                        // remove trues
                     }
-                } else {
-                    new_vec.push(expr);
+
+                    // flatten ands in root
+                    Expr::And(_, ref vecs) => match vecs.clone().unwrap_list() {
+                        Some(mut list) => {
+                            has_changed = true;
+                            new_vec.append(&mut list);
+                        }
+                        None => new_vec.push(expr),
+                    },
+                    _ => new_vec.push(expr),
                 }
             }
 
-            if !has_const {
+            if !has_changed {
                 Err(RuleNotApplicable)
             } else {
                 if new_vec.is_empty() {
                     new_vec.push(true.into());
                 }
-                Ok(Reduction::pure(
-                    expr.with_children_bi(VecDeque::from([new_vec])),
-                ))
+                Ok(Reduction::pure(Expr::Root(Metadata::new(), new_vec)))
             }
         }
         Imply(_m, x, y) => {
@@ -359,6 +378,8 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         MinionPow(_, _, _, _) => Err(RuleNotApplicable),
         MinionReify(_, _, _) => Err(RuleNotApplicable),
         MinionReifyImply(_, _, _) => Err(RuleNotApplicable),
+        MinionWInIntervalSet(_, _, _) => Err(RuleNotApplicable),
+        MinionElementOne(_, _, _, _) => Err(RuleNotApplicable),
     }
 }
 

@@ -18,6 +18,7 @@ use enum_compatability_macro::document_compatibility;
 use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Uniplate as _};
 
+use super::comprehension::Comprehension;
 use super::{Domain, Range, SubModel, Typeable};
 
 /// Represents different types of expressions used to define rules and constraints in the model.
@@ -26,13 +27,14 @@ use super::{Domain, Range, SubModel, Typeable};
 /// used to build rules and conditions for the model.
 #[document_compatibility]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
-#[uniplate(walk_into=[Atom,SubModel,AbstractLiteral<Expression>])]
+#[uniplate(walk_into=[Atom,SubModel,AbstractLiteral<Expression>,Comprehension])]
 #[biplate(to=Metadata)]
 #[biplate(to=Atom)]
-#[biplate(to=Name)]
+#[biplate(to=Name,walk_into=[Atom])]
 #[biplate(to=Vec<Expression>)]
 #[biplate(to=Option<Expression>)]
-#[biplate(to=SubModel)]
+#[biplate(to=SubModel,walk_into=[Comprehension])]
+#[biplate(to=Comprehension)]
 #[biplate(to=AbstractLiteral<Expression>)]
 #[biplate(to=AbstractLiteral<Literal>,walk_into=[Atom])]
 #[biplate(to=Literal,walk_into=[Atom])]
@@ -44,6 +46,11 @@ pub enum Expression {
     /// An expression representing "A is valid as long as B is true"
     /// Turns into a conjunction when it reaches a boolean context
     Bubble(Metadata, Box<Expression>, Box<Expression>),
+
+    /// A comprehension.
+    ///
+    /// The inside of the comprehension opens a new scope.
+    Comprehension(Metadata, Box<Comprehension>),
 
     /// Defines dominance ("Solution A is preferred over Solution B")
     DominanceRelation(Metadata, Box<Expression>),
@@ -93,9 +100,9 @@ pub enum Expression {
     #[compatible(JsonInput)]
     Abs(Metadata, Box<Expression>),
 
-    /// `a + b + c + ...`
+    /// `sum(<vec_expr>)`
     #[compatible(JsonInput)]
-    Sum(Metadata, Vec<Expression>),
+    Sum(Metadata, Box<Expression>),
 
     /// `a * b * c * ...`
     #[compatible(JsonInput)]
@@ -346,6 +353,30 @@ pub enum Expression {
     #[compatible(Minion)]
     MinionReifyImply(Metadata, Box<Expression>, Atom),
 
+    /// `w-inintervalset(x, [a1,a2, b1,b2, … ])` ensures that the value of x belongs to one of the
+    /// intervals {a1,…,a2}, {b1,…,b2} etc.
+    ///
+    /// The list of intervals must be given in numerical order.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#w-inintervalset)
+    #[compatible(Minion)]
+    MinionWInIntervalSet(Metadata, Atom, Vec<i32>),
+
+    /// `element_one(vec, i, e)` specifies that `vec[i] = e`. This implies that i is
+    /// in the range `[1..len(vec)]`.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#element_one)
+    #[compatible(Minion)]
+    MinionElementOne(Metadata, Vec<Atom>, Atom, Atom),
+
     /// Declaration of an auxiliary variable.
     ///
     /// As with Savile Row, we semantically distinguish this from `Eq`.
@@ -409,6 +440,7 @@ impl Expression {
             Expression::AbstractLiteral(_, _) => None,
             Expression::DominanceRelation(_, _) => Some(Domain::BoolDomain),
             Expression::FromSolution(_, expr) => expr.domain_of(syms),
+            Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
                 let Domain::DomainMatrix(elem_domain, _) = matrix.domain_of(syms)? else {
                     bug!("subject of an index operation should be a matrix");
@@ -443,7 +475,7 @@ impl Expression {
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(Domain::BoolDomain),
             Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(_))) => None,
             Expression::Scope(_, _) => Some(Domain::BoolDomain),
-            Expression::Sum(_, exprs) => expr_vec_to_domain_i32(exprs, |x, y| Some(x + y), syms),
+            Expression::Sum(_, e) => expr_vec_lit_to_domain_i32(e, |x, y| Some(x + y), syms),
             Expression::Product(_, exprs) => {
                 expr_vec_to_domain_i32(exprs, |x, y| Some(x * y), syms)
             }
@@ -515,7 +547,7 @@ impl Expression {
                 a.domain_of(syms)?.apply_i32(
                     |x, y| {
                         if (x != 0 || y != 0) && y >= 0 {
-                            Some(x ^ y)
+                            Some(x.pow(y as u32))
                         } else {
                             None
                         }
@@ -547,6 +579,8 @@ impl Expression {
             Expression::FlatWatchedLiteral(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionReify(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionReifyImply(_, _, _) => Some(Domain::BoolDomain),
+            Expression::MinionWInIntervalSet(_, _, _) => Some(Domain::BoolDomain),
+            Expression::MinionElementOne(_, _, _, _) => Some(Domain::BoolDomain),
             Expression::Neg(_, x) => {
                 let Some(Domain::IntDomain(mut ranges)) = x.domain_of(syms) else {
                     return None;
@@ -630,6 +664,7 @@ impl Expression {
                 Some(ReturnType::Matrix(Box::new(subject.return_type()?)))
             }
             Expression::InDomain(_, _, _) => Some(ReturnType::Bool),
+            Expression::Comprehension(_, _) => None,
             Expression::Root(_, _) => Some(ReturnType::Bool),
             Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
             Expression::FromSolution(_, expr) => expr.return_type(),
@@ -665,6 +700,8 @@ impl Expression {
             Expression::FlatWatchedLiteral(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReify(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReifyImply(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionWInIntervalSet(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionElementOne(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AuxDeclaration(_, _, _) => Some(ReturnType::Bool),
             Expression::UnsafeMod(_, _, _) => Some(ReturnType::Int),
             Expression::SafeMod(_, _, _) => Some(ReturnType::Int),
@@ -826,6 +863,7 @@ impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
             Expression::AbstractLiteral(_, l) => l.fmt(f),
+            Expression::Comprehension(_, c) => c.fmt(f),
             Expression::UnsafeIndex(_, e1, e2) | Expression::SafeIndex(_, e1, e2) => {
                 write!(f, "{e1}{}", pretty_vec(e2))
             }
@@ -840,7 +878,6 @@ impl Display for Expression {
 
                 write!(f, "{e1}[{args}]")
             }
-
             Expression::InDomain(_, e, domain) => {
                 write!(f, "__inDomain({e},{domain})")
             }
@@ -852,8 +889,8 @@ impl Display for Expression {
             Expression::Atomic(_, atom) => atom.fmt(f),
             Expression::Scope(_, submodel) => write!(f, "{{\n{submodel}\n}}"),
             Expression::Abs(_, a) => write!(f, "|{}|", a),
-            Expression::Sum(_, expressions) => {
-                write!(f, "Sum({})", pretty_vec(expressions))
+            Expression::Sum(_, e) => {
+                write!(f, "Sum({e})")
             }
             Expression::Product(_, expressions) => {
                 write!(f, "Product({})", pretty_vec(expressions))
@@ -943,7 +980,6 @@ impl Display for Expression {
                     box3.clone()
                 )
             }
-
             Expression::FlatWatchedLiteral(_, x, l) => {
                 write!(f, "WatchedLiteral({},{})", x, l)
             }
@@ -952,6 +988,10 @@ impl Display for Expression {
             }
             Expression::MinionReifyImply(_, box1, box2) => {
                 write!(f, "ReifyImply({}, {})", box1.clone(), box2.clone())
+            }
+            Expression::MinionWInIntervalSet(_, atom, intervals) => {
+                let intervals = intervals.iter().join(",");
+                write!(f, "__minion_w_inintervalset({atom},{intervals})")
             }
             Expression::AuxDeclaration(_, n, e) => {
                 write!(f, "{} =aux {}", n, e.clone())
@@ -995,7 +1035,6 @@ impl Display for Expression {
                     total.clone()
                 )
             }
-
             Expression::FlatWeightedSumGeq(_, cs, vs, total) => {
                 write!(
                     f,
@@ -1008,6 +1047,10 @@ impl Display for Expression {
             Expression::MinionPow(_, atom, atom1, atom2) => {
                 write!(f, "MinionPow({},{},{})", atom, atom1, atom2)
             }
+            Expression::MinionElementOne(_, atoms, atom, atom1) => {
+                let atoms = atoms.iter().join(",");
+                write!(f, "__minion_element_one([{atoms}],{atom},{atom1})")
+            }
         }
     }
 }
@@ -1016,7 +1059,7 @@ impl Display for Expression {
 mod tests {
     use std::rc::Rc;
 
-    use crate::ast::declaration::Declaration;
+    use crate::{ast::declaration::Declaration, matrix_expr};
 
     use super::*;
 
@@ -1024,7 +1067,10 @@ mod tests {
     fn test_domain_of_constant_sum() {
         let c1 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1)));
         let c2 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2)));
-        let sum = Expression::Sum(Metadata::new(), vec![c1.clone(), c2.clone()]);
+        let sum = Expression::Sum(
+            Metadata::new(),
+            Box::new(matrix_expr![c1.clone(), c2.clone()]),
+        );
         assert_eq!(
             sum.domain_of(&SymbolTable::new()),
             Some(Domain::IntDomain(vec![Range::Single(3)]))
@@ -1035,13 +1081,16 @@ mod tests {
     fn test_domain_of_constant_invalid_type() {
         let c1 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1)));
         let c2 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
-        let sum = Expression::Sum(Metadata::new(), vec![c1.clone(), c2.clone()]);
+        let sum = Expression::Sum(
+            Metadata::new(),
+            Box::new(matrix_expr![c1.clone(), c2.clone()]),
+        );
         assert_eq!(sum.domain_of(&SymbolTable::new()), None);
     }
 
     #[test]
     fn test_domain_of_empty_sum() {
-        let sum = Expression::Sum(Metadata::new(), vec![]);
+        let sum = Expression::Sum(Metadata::new(), Box::new(matrix_expr![]));
         assert_eq!(sum.domain_of(&SymbolTable::new()), None);
     }
 
@@ -1075,7 +1124,10 @@ mod tests {
             Domain::IntDomain(vec![Range::Single(1)]),
         )))
         .unwrap();
-        let sum = Expression::Sum(Metadata::new(), vec![reference.clone(), reference.clone()]);
+        let sum = Expression::Sum(
+            Metadata::new(),
+            Box::new(matrix_expr![reference.clone(), reference.clone()]),
+        );
         assert_eq!(
             sum.domain_of(&vars),
             Some(Domain::IntDomain(vec![Range::Single(2)]))
@@ -1090,7 +1142,10 @@ mod tests {
             Name::MachineName(0),
             Domain::IntDomain(vec![Range::Bounded(1, 2)]),
         )));
-        let sum = Expression::Sum(Metadata::new(), vec![reference.clone(), reference.clone()]);
+        let sum = Expression::Sum(
+            Metadata::new(),
+            Box::new(matrix_expr![reference.clone(), reference.clone()]),
+        );
         assert_eq!(
             sum.domain_of(&vars),
             Some(Domain::IntDomain(vec![Range::Bounded(2, 4)]))

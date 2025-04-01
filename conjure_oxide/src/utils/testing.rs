@@ -1,13 +1,15 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Debug;
 
+use itertools::Itertools as _;
 use std::fs::File;
 use std::fs::{read_to_string, OpenOptions};
 use std::hash::Hash;
 use std::io::Write;
 use std::sync::{Arc, RwLock};
+use uniplate::Uniplate;
 
-use conjure_core::ast::SerdeModel;
+use conjure_core::ast::{AbstractLiteral, Domain, SerdeModel};
 use conjure_core::context::Context;
 use serde_json::{json, Error as JsonError, Value as JsonValue};
 
@@ -15,10 +17,11 @@ use conjure_core::error::Error;
 
 use crate::ast::Name::UserName;
 use crate::ast::{Literal, Name};
-use crate::utils::conjure::minion_solutions_to_json;
+use crate::utils::conjure::solutions_to_json;
 use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
 use crate::Model as ConjureModel;
+use crate::SolverFamily;
 
 pub fn assert_eq_any_order<T: Eq + Hash + Debug + Clone>(a: &Vec<Vec<T>>, b: &Vec<Vec<T>>) {
     assert_eq!(a.len(), b.len());
@@ -139,27 +142,40 @@ pub fn minion_solutions_from_json(
 }
 
 /// Writes the minion solutions to a generated JSON file, and returns the JSON structure.
-pub fn save_minion_solutions_json(
+pub fn save_solutions_json(
     solutions: &Vec<BTreeMap<Name, Literal>>,
     path: &str,
     test_name: &str,
+    solver: SolverFamily,
 ) -> Result<JsonValue, std::io::Error> {
-    let json_solutions = minion_solutions_to_json(solutions);
+    let json_solutions = solutions_to_json(solutions);
     let generated_json_str = serde_json::to_string_pretty(&json_solutions)?;
 
-    let filename = format!("{path}/{test_name}.generated-minion.solutions.json");
+    let solver_name = match solver {
+        SolverFamily::SAT => "sat",
+        SolverFamily::Minion => "minion",
+    };
+
+    let filename = format!("{path}/{test_name}.generated-{solver_name}.solutions.json");
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
 
     Ok(json_solutions)
 }
 
-pub fn read_minion_solutions_json(
+pub fn read_solutions_json(
     path: &str,
     test_name: &str,
     prefix: &str,
+    solver: SolverFamily,
 ) -> Result<JsonValue, anyhow::Error> {
-    let expected_json_str =
-        std::fs::read_to_string(format!("{path}/{test_name}.{prefix}-minion.solutions.json"))?;
+    let solver_name = match solver {
+        SolverFamily::SAT => "sat",
+        SolverFamily::Minion => "minion",
+    };
+
+    let expected_json_str = std::fs::read_to_string(format!(
+        "{path}/{test_name}.{prefix}-{solver_name}.solutions.json"
+    ))?;
 
     let expected_solutions: JsonValue =
         sort_json_object(&serde_json::from_str(&expected_json_str)?, true);
@@ -214,4 +230,67 @@ pub fn read_human_rule_trace(
         .collect();
 
     Ok(rules_trace)
+}
+
+#[doc(hidden)]
+pub fn normalize_solutions_for_comparison(
+    input_solutions: &[BTreeMap<Name, Literal>],
+) -> Vec<BTreeMap<Name, Literal>> {
+    let mut normalized = input_solutions.to_vec();
+
+    for solset in &mut normalized {
+        // remove machine names
+        let keys_to_remove: Vec<Name> = solset
+            .keys()
+            .filter(|k| matches!(k, Name::MachineName(_)))
+            .cloned()
+            .collect();
+        for k in keys_to_remove {
+            solset.remove(&k);
+        }
+
+        let mut updates = vec![];
+        for (k, v) in solset.clone() {
+            if let Name::UserName(_) = k {
+                match v {
+                    Literal::Bool(true) => updates.push((k, Literal::Int(1))),
+                    Literal::Bool(false) => updates.push((k, Literal::Int(0))),
+                    Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)) => {
+                        // make all domains the same (this is just in the tester so the types dont
+                        // actually matter)
+
+                        let mut matrix = AbstractLiteral::Matrix(elems, Domain::IntDomain(vec![]));
+                        matrix =
+                            matrix.transform(Arc::new(
+                                move |x: AbstractLiteral<Literal>| match x {
+                                    AbstractLiteral::Matrix(items, _) => {
+                                        let items = items
+                                            .into_iter()
+                                            .map(|x| match x {
+                                                Literal::Bool(false) => Literal::Int(0),
+                                                Literal::Bool(true) => Literal::Int(1),
+                                                x => x,
+                                            })
+                                            .collect_vec();
+
+                                        AbstractLiteral::Matrix(items, Domain::IntDomain(vec![]))
+                                    }
+                                    x => x,
+                                },
+                            ));
+                        updates.push((k, Literal::AbstractLiteral(matrix)));
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        for (k, v) in updates {
+            solset.insert(k, v);
+        }
+    }
+
+    // Remove duplicates
+    normalized = normalized.into_iter().unique().collect();
+    normalized
 }
