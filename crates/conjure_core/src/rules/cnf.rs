@@ -41,7 +41,7 @@ fn remove_implication(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// Converts an equivalence to cnf
 ///
 /// ```text
-/// x <-> y ~>  (x /\ y) \/ (!x /\ !y)
+/// x = y ~>  (!x \/ y) /\ (x /\ !y)
 /// ```
 #[register_rule(("CNF", 4100))]
 fn remove_equivalence(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
@@ -49,17 +49,20 @@ fn remove_equivalence(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    Ok(Reduction::pure(Expr::Or(
+    Ok(Reduction::pure(Expr::And(
         Metadata::new(),
         Box::new(matrix_expr![
-            Expr::And(
-                Metadata::new(),
-                Box::new(matrix_expr![*x.clone(), *y.clone()]),
-            ),
-            Expr::And(
+            Expr::Or(
                 Metadata::new(),
                 Box::new(matrix_expr![
                     Expr::Not(Metadata::new(), x.clone()),
+                    *y.clone()
+                ]),
+            ),
+            Expr::Or(
+                Metadata::new(),
+                Box::new(matrix_expr![
+                    *x.clone(),
                     Expr::Not(Metadata::new(), y.clone())
                 ]),
             )
