@@ -39,6 +39,10 @@ use super::{Domain, Range, SubModel, Typeable};
 #[biplate(to=AbstractLiteral<Literal>,walk_into=[Atom])]
 #[biplate(to=Literal,walk_into=[Atom])]
 pub enum Expression {
+    Intersect(Metadata, Box<Expression>, Box<Expression>),
+
+    Union(Metadata, Box<Expression>, Box<Expression>),
+
     In(Metadata, Box<Expression>, Box<Expression>),
 
     AbstractLiteral(Metadata, AbstractLiteral<Expression>),
@@ -438,6 +442,9 @@ impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
         let ret = match self {
+            // TODO: to check later
+            Expression::Intersect(_, _, _) => None,
+            Expression::Union(_, _, _) => None,
             Expression::In(_, _, _) => None,
             Expression::AbstractLiteral(_, _) => None,
             Expression::DominanceRelation(_, _) => Some(Domain::BoolDomain),
@@ -658,6 +665,9 @@ impl Expression {
 
     pub fn return_type(&self) -> Option<ReturnType> {
         match self {
+            // TODO: to check later
+            Expression::Intersect(_, _, _) => None,
+            Expression::Union(_, _, _) => None,
             Expression::In(_, _, _) => Some(ReturnType::Bool),
             Expression::AbstractLiteral(_, _) => None,
             Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
@@ -865,6 +875,12 @@ impl From<Atom> for Expression {
 impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
+            Expression::Intersect(_, e1, e2) => {
+                write!(f, "{} intersect {}", e1, e2)
+            }
+            Expression::Union(_, e1, e2) => {
+                write!(f, "{} union {}", e1, e2)
+            }
             Expression::In(_, e1, e2) => {
                 write!(f, "{} in {}", e1, e2)
             }
