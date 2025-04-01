@@ -125,26 +125,26 @@ pub fn handle_cnf(vec_cnf: &Vec<Expression>, vars_added: &mut HashMap<String, Li
 
 // Error reserved for future use
 // TODO: Integrate or remove
-// #[derive(Error, Debug)]
-// pub enum CNFError {
-//     #[error("Variable with name `{0}` not found")]
-//     VariableNameNotFound(String),
+#[derive(Error, Debug)]
+pub enum CNFError {
+    #[error("Variable with name `{0}` not found")]
+    VariableNameNotFound(String),
 
-//     #[error("Variable with name `{0}` not of right type")]
-//     BadVariableType(String),
+    #[error("Variable with name `{0}` not of right type")]
+    BadVariableType(String),
 
-//     #[error("Unexpected Expression `{0}` inside Not(). Only Not(Reference) or Not(Not) allowed!")]
-//     UnexpectedExpressionInsideNot(Expression),
+    #[error("Unexpected Expression `{0}` inside Not(). Only Not(Reference) or Not(Not) allowed!")]
+    UnexpectedExpressionInsideNot(Expression),
 
-//     #[error("Unexpected Expression `{0}` as literal. Only Not() or Reference() allowed!")]
-//     UnexpectedLiteralExpression(Expression),
+    #[error("Unexpected Expression `{0}` as literal. Only Not() or Reference() allowed!")]
+    UnexpectedLiteralExpression(Expression),
 
-//     #[error("Unexpected Expression `{0}` inside And(). Only And(vec<Or>) allowed!")]
-//     UnexpectedExpressionInsideAnd(Expression),
+    #[error("Unexpected Expression `{0}` inside And(). Only And(vec<Or>) allowed!")]
+    UnexpectedExpressionInsideAnd(Expression),
 
-//     #[error("Unexpected Expression `{0}` inside Or(). Only Or(lit, lit) allowed!")]
-//     UnexpectedExpressionInsideOr(Expression),
+    #[error("Unexpected Expression `{0}` inside Or(). Only Or(lit, lit) allowed!")]
+    UnexpectedExpressionInsideOr(Expression),
 
-//     #[error("Unexpected Expression `{0}` found!")]
-//     UnexpectedExpression(Expression),
-// }
+    #[error("Unexpected Expression `{0}` found!")]
+    UnexpectedExpression(Expression),
+}
