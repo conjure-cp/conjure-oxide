@@ -36,6 +36,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 Expr::AbstractLiteral(_, AbstractLiteral::Set(a)),
                 Expr::AbstractLiteral(_, AbstractLiteral::Set(b)),
             ) => {
+                //create hashset of the first set
                 let mut list1: HashSet<Lit> = HashSet::new();
                 for expr in a.iter() {
                     if let Atomic(_, Atom::Literal(x)) = expr {
@@ -44,6 +45,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                         return None;
                     }
                 }
+                // create hashset of the second set
                 let mut list2: HashSet<Lit> = HashSet::new();
                 for expr in b.iter() {
                     if let Atomic(_, Atom::Literal(x)) = expr {
@@ -52,6 +54,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                         return None;
                     }
                 }
+                // return their intersection
                 let mut list: Vec<Lit> = Vec::new();
                 for expr in list1.intersection(&list2) {
                     list.push(expr.clone());
@@ -61,29 +64,12 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             (
                 Expr::AbstractLiteral(_, AbstractLiteral::Set(a)),
                 Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => {
-                let mut list1: HashSet<Lit> = HashSet::new();
-                for expr in a.iter() {
-                    if let Atomic(_, Atom::Literal(x)) = expr {
-                        list1.insert(x.clone());
-                    } else {
-                        return None;
-                    }
-                }
-                let mut list2: HashSet<Lit> = HashSet::new();
-                for lit in b.iter() {
-                    list2.insert(lit.clone());
-                }
-                let mut list: Vec<Lit> = Vec::new();
-                for expr in list1.intersection(&list2) {
-                    list.push(expr.clone());
-                }
-                Some(Lit::AbstractLiteral(AbstractLiteral::Set(list)))
-            }
-            (
+            )
+            | (
                 Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
                 Expr::AbstractLiteral(_, AbstractLiteral::Set(a)),
             ) => {
+                //create hashset of the first set
                 let mut list1: HashSet<Lit> = HashSet::new();
                 for expr in a.iter() {
                     if let Atomic(_, Atom::Literal(x)) = expr {
@@ -92,16 +78,19 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                         return None;
                     }
                 }
+                // create hashset of the second set
                 let mut list2: HashSet<Lit> = HashSet::new();
                 for lit in b.iter() {
                     list2.insert(lit.clone());
                 }
+                // return their intersection
                 let mut list: Vec<Lit> = Vec::new();
                 for expr in list1.intersection(&list2) {
                     list.push(expr.clone());
                 }
                 Some(Lit::AbstractLiteral(AbstractLiteral::Set(list)))
             }
+
             _ => None,
         },
         Expr::Union(_, a, b) => match (a.as_ref(), b.as_ref()) {
@@ -109,6 +98,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 Expr::AbstractLiteral(_, AbstractLiteral::Set(a)),
                 Expr::AbstractLiteral(_, AbstractLiteral::Set(b)),
             ) => {
+                //we do this to check that all elements are literals
                 let mut list: Vec<Lit> = Vec::new();
                 for expr in a.iter() {
                     if let Atomic(_, Atom::Literal(x)) = expr {
@@ -129,24 +119,12 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             (
                 Expr::AbstractLiteral(_, AbstractLiteral::Set(a)),
                 Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => {
-                let mut list: Vec<Lit> = Vec::new();
-                for expr in a.iter() {
-                    if let Atomic(_, Atom::Literal(x)) = expr {
-                        list.push(x.clone());
-                    } else {
-                        return None;
-                    }
-                }
-                for lit in b.iter() {
-                    list.push(lit.clone());
-                }
-                Some(Lit::AbstractLiteral(AbstractLiteral::Set(list)))
-            }
-            (
+            )
+            | (
                 Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
                 Expr::AbstractLiteral(_, AbstractLiteral::Set(a)),
             ) => {
+                //we do this to check that all elements are literals
                 let mut list: Vec<Lit> = Vec::new();
                 for expr in a.iter() {
                     if let Atomic(_, Atom::Literal(x)) = expr {
@@ -160,6 +138,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 }
                 Some(Lit::AbstractLiteral(AbstractLiteral::Set(list)))
             }
+
             _ => None,
         },
         Expr::In(_, _, _) => None,
