@@ -9,7 +9,7 @@ use rustsat::{
     clause,
     instances::{BasicVarManager, Cnf, SatInstance},
     solvers::{Solve, SolverResult},
-    types::{Lit, TernaryVal},
+    types::{Clause, Lit, TernaryVal},
 };
 
 use rustsat_minisat::core::Minisat;
@@ -104,15 +104,22 @@ pub fn handle_disjn(
         Expression::Or(_, vec) => &vec.clone().unwrap_list().unwrap(),
         _ => panic!(),
     };
-    let l1 = &cl[0];
-    let l2 = &cl[1];
 
-    // handle literal:
-    let lit1: Lit = handle_lit(l1, vars_added, inst_in_use);
-    // also handle literal
-    let lit2: Lit = handle_lit(l2, vars_added, inst_in_use);
+    let mut clause: Clause = Clause::new();
+    for lit in cl {
+        let temp: Lit = handle_lit(lit, vars_added, inst_in_use);
+        clause.add(temp);
+    }
 
-    inst_in_use.add_binary(lit1, lit2);
+    // let l1 = &cl[0];
+    // let l2 = &cl[1];
+
+    // // handle literal:
+    // let lit1: Lit = handle_lit(l1, vars_added, inst_in_use);
+    // // also handle literal
+    // let lit2: Lit = handle_lit(l2, vars_added, inst_in_use);
+
+    inst_in_use.add_clause(clause);
 }
 
 pub fn handle_cnf(
