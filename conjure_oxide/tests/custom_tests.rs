@@ -28,7 +28,7 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
     let expected_error_path = test_path.join("stderr.expected");
 
     // Get conjure_oxide binary path from test binary path:
-    // The test binary is at target/XX/deps/TESTPROGNAME and conjure_oxide is at target/XX/conjure_oxide 
+    // The test binary is at target/XX/deps/TESTPROGNAME and conjure_oxide is at target/XX/conjure_oxide
     // so from test binary, need to go up two directories and add 'conjure_oxide'
     let mut conjure_oxide_path = env::current_exe().unwrap();
     conjure_oxide_path.pop();
@@ -79,10 +79,12 @@ fn update_file(
     expected_file_path: PathBuf,
     actual_output: Cow<'_, str>,
 ) -> Result<(), Box<dyn Error>> {
-    if !actual_output.trim().is_empty() {
-        fs::write(&expected_file_path, actual_output.as_bytes())?;
-    } else {
+    if expected_file_path.exists() {
         fs::remove_file(&expected_file_path)?;
+    }
+    if !actual_output.trim().is_empty() {
+        fs::File::create(&expected_file_path)?;
+        fs::write(&expected_file_path, actual_output.as_bytes())?;
     }
     Ok(())
 }
