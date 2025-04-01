@@ -1,4 +1,3 @@
-use core::panic;
 use std::{collections::HashMap, env::Vars, io::Lines};
 
 use rustsat::{
@@ -12,10 +11,7 @@ use rustsat_minisat::core::Minisat;
 
 use anyhow::{anyhow, Result};
 
-use crate::{
-    ast::{Atom, Expression},
-    solver::Literal,
-};
+use crate::{ast::Expression, solver::Error};
 
 pub fn handle_lit(
     l1: &Expression,
@@ -99,10 +95,7 @@ pub fn handle_disjn(
 ) {
     let cl: &Vec<Expression> = match disjn {
         Expression::Or(_, vec) => &vec.clone().unwrap_list().unwrap(),
-        Expression::Atomic(_, Atom::Literal(Literal::Bool(a))) => {
-            todo!("Adding functionality for atomic Lit {:?}", a)
-        }
-        _ => panic!("disjn or atom expected"),
+        _ => panic!(),
     };
     let l1 = &cl[0];
     let l2 = &cl[1];
