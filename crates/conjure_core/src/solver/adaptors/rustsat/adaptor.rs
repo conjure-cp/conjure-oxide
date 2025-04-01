@@ -135,6 +135,9 @@ impl SolverAdaptor for SAT {
                 let inserter = sol.var_value(lit.var());
                 sol.assign_var(lit.var(), inserter);
             }
+
+            sol.replace_dont_care(false);
+
             has_sol = true;
             let solution = get_ref_sols(
                 self.decision_refs.clone().unwrap(),
@@ -143,7 +146,6 @@ impl SolverAdaptor for SAT {
             );
 
             if !callback(solution) {
-                // println!("callback false");
                 return Ok(SolveSuccess {
                     stats: SolverStats {
                         conjure_solver_wall_time_s: -1.0,
