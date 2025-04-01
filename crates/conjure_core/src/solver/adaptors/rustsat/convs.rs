@@ -1,4 +1,9 @@
-use std::{collections::HashMap, env::Vars, io::Lines};
+use core::panic;
+use std::{
+    collections::HashMap,
+    env::{vars, Vars},
+    io::Lines,
+};
 
 use rustsat::{
     clause,
@@ -83,7 +88,9 @@ pub fn fetch_lit(
     inst: &mut SatInstance,
 ) -> Lit {
     if !vars_added.contains_key(&symbol) {
-        vars_added.insert(symbol.to_string(), inst.new_lit());
+        panic!(
+            "The code should never reach this point. You may have found a bug, please report it."
+        );
     }
     *(vars_added.get(&symbol).unwrap())
 }
@@ -108,11 +115,23 @@ pub fn handle_disjn(
     inst_in_use.add_binary(lit1, lit2);
 }
 
-pub fn handle_cnf(vec_cnf: &Vec<Expression>, vars_added: &mut HashMap<String, Lit>) -> SatInstance {
+pub fn handle_cnf(
+    vec_cnf: &Vec<Expression>,
+    vars_added: &mut HashMap<String, Lit>,
+    finds: Vec<String>,
+) -> SatInstance {
     let mut inst = SatInstance::new();
+
+    tracing::info!("{:?} are all the decision vars found.", finds);
+
+    for name in finds {
+        vars_added.insert(name, inst.new_lit());
+    }
+
     for disjn in vec_cnf {
         handle_disjn(disjn, vars_added, &mut inst);
     }
+
     inst
 }
 
