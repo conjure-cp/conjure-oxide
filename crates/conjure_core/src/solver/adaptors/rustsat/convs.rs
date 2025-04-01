@@ -1,3 +1,4 @@
+use core::panic;
 use std::{collections::HashMap, env::Vars, io::Lines};
 
 use rustsat::{
@@ -11,7 +12,10 @@ use rustsat_minisat::core::Minisat;
 
 use anyhow::{anyhow, Result};
 
-use crate::{ast::Expression, solver::Error};
+use crate::{
+    ast::{Atom, Expression},
+    solver::Literal,
+};
 
 pub fn handle_lit(
     l1: &Expression,
@@ -95,7 +99,10 @@ pub fn handle_disjn(
 ) {
     let cl: &Vec<Expression> = match disjn {
         Expression::Or(_, vec) => &vec.clone().unwrap_list().unwrap(),
-        _ => panic!(),
+        Expression::Atomic(_, Atom::Literal(Literal::Bool(a))) => {
+            todo!("Adding functionality for atomic Lit {:?}", a)
+        }
+        _ => panic!("disjn or atom expected"),
     };
     let l1 = &cl[0];
     let l2 = &cl[1];
@@ -118,26 +125,26 @@ pub fn handle_cnf(vec_cnf: &Vec<Expression>, vars_added: &mut HashMap<String, Li
 
 // Error reserved for future use
 // TODO: Integrate or remove
-#[derive(Error, Debug)]
-pub enum CNFError {
-    #[error("Variable with name `{0}` not found")]
-    VariableNameNotFound(String),
+// #[derive(Error, Debug)]
+// pub enum CNFError {
+//     #[error("Variable with name `{0}` not found")]
+//     VariableNameNotFound(String),
 
-    #[error("Variable with name `{0}` not of right type")]
-    BadVariableType(String),
+//     #[error("Variable with name `{0}` not of right type")]
+//     BadVariableType(String),
 
-    #[error("Unexpected Expression `{0}` inside Not(). Only Not(Reference) or Not(Not) allowed!")]
-    UnexpectedExpressionInsideNot(Expression),
+//     #[error("Unexpected Expression `{0}` inside Not(). Only Not(Reference) or Not(Not) allowed!")]
+//     UnexpectedExpressionInsideNot(Expression),
 
-    #[error("Unexpected Expression `{0}` as literal. Only Not() or Reference() allowed!")]
-    UnexpectedLiteralExpression(Expression),
+//     #[error("Unexpected Expression `{0}` as literal. Only Not() or Reference() allowed!")]
+//     UnexpectedLiteralExpression(Expression),
 
-    #[error("Unexpected Expression `{0}` inside And(). Only And(vec<Or>) allowed!")]
-    UnexpectedExpressionInsideAnd(Expression),
+//     #[error("Unexpected Expression `{0}` inside And(). Only And(vec<Or>) allowed!")]
+//     UnexpectedExpressionInsideAnd(Expression),
 
-    #[error("Unexpected Expression `{0}` inside Or(). Only Or(lit, lit) allowed!")]
-    UnexpectedExpressionInsideOr(Expression),
+//     #[error("Unexpected Expression `{0}` inside Or(). Only Or(lit, lit) allowed!")]
+//     UnexpectedExpressionInsideOr(Expression),
 
-    #[error("Unexpected Expression `{0}` found!")]
-    UnexpectedExpression(Expression),
-}
+//     #[error("Unexpected Expression `{0}` found!")]
+//     UnexpectedExpression(Expression),
+// }

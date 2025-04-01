@@ -68,16 +68,24 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
         println!("{}", rewritten_model);
     } else {
         match global_args.solver {
-            Some(s) => match s {
-                SolverFamily::SAT => {
-                    run_sat_solver(&solve_args, rewritten_model)?;
-                }
-                SolverFamily::Minion => {
-                    run_minion(&solve_args, rewritten_model)?;
-                }
-            },
-            None => panic!("Should be unreachable"),
+            SolverFamily::SAT => {
+                run_sat_solver(&solve_args, rewritten_model)?;
+            }
+            SolverFamily::Minion => {
+                run_minion(&solve_args, rewritten_model)?;
+            }
         }
+        // match global_args.solver {
+        //     Some(s) => match s {
+        //         SolverFamily::SAT => {
+        //             run_sat_solver(&solve_args, rewritten_model)?;
+        //         }
+        //         SolverFamily::Minion => {
+        //             run_minion(&solve_args, rewritten_model)?;
+        //         }
+        //     },
+        //     None => panic!("Should be unreachable"),
+        // }
     }
 
     // still do postamble even if we didn't run the solver
@@ -95,7 +103,7 @@ pub(crate) fn init_context(
     global_args: &GlobalArgs,
     input_file: PathBuf,
 ) -> anyhow::Result<Arc<RwLock<Context<'static>>>> {
-    let target_family = global_args.solver.unwrap_or(SolverFamily::Minion);
+    let target_family = global_args.solver;
     let mut extra_rule_sets: Vec<&str> = DEFAULT_RULE_SETS.to_vec();
     for rs in &global_args.extra_rule_sets {
         extra_rule_sets.push(rs.as_str());
