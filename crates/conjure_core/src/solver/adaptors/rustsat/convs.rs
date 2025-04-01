@@ -111,14 +111,6 @@ pub fn handle_disjn(
         clause.add(temp);
     }
 
-    // let l1 = &cl[0];
-    // let l2 = &cl[1];
-
-    // // handle literal:
-    // let lit1: Lit = handle_lit(l1, vars_added, inst_in_use);
-    // // also handle literal
-    // let lit2: Lit = handle_lit(l2, vars_added, inst_in_use);
-
     inst_in_use.add_clause(clause);
 }
 

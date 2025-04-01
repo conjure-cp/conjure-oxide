@@ -64,7 +64,6 @@ fn get_ref_sols(
 ) -> HashMap<Name, Literal> {
     let mut solution: HashMap<Name, Literal> = HashMap::new();
 
-    // tracing::info!("Solution: {:?}", sol);
     for reference in find_refs {
         // lit is `Nothing` for variables that don't exist. This should have trhown an error at parse-time.
         let lit: Lit = match var_map.get(&reference) {
@@ -73,9 +72,11 @@ fn get_ref_sols(
                 "There should never be a non-just literal occurring here. Something is broken upstream."
             ),
         };
+
+        // TODO: solution assignment
         solution.insert(
             Name::UserName(reference),
-            match sol.var_value(lit.var()) {
+            match sol[lit.var()] {
                 TernaryVal::True => Literal::Int(1),
                 TernaryVal::False => Literal::Int(0),
                 TernaryVal::DontCare => Literal::Int(2),
@@ -127,7 +128,13 @@ impl SolverAdaptor for SAT {
                 }
             };
 
-            let sol = solver.full_solution().unwrap();
+            let mut sol = solver.full_solution().unwrap();
+
+            // add DontCares into the solution
+            for (name, lit) in self.var_map.clone().unwrap() {
+                let inserter = sol.var_value(lit.var());
+                sol.assign_var(lit.var(), inserter);
+            }
             has_sol = true;
             let solution = get_ref_sols(
                 self.decision_refs.clone().unwrap(),
