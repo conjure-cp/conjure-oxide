@@ -11,21 +11,22 @@ use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::{fmt, fs::OpenOptions, io::Write};
 
+// Values for different kinds of trace messages
 #[derive(PartialEq, Clone, Debug, ValueEnum)]
 pub enum Kind {
     Parser,
     RuleAttempt,
     RuleSuccess,
     Error,
+    Solver,
+    Other,
 }
 
 // Create kind_filter as a global variable
-// pub static KIND_FILTER: Option<Kind> = None;
 pub static KIND_FILTER: Mutex<Option<Kind>> = Mutex::new(None);
 
 // Set the kind_filter
 pub fn set_kind_filter(kind: Option<Kind>) {
-    // let mut filter = &KIND_FILTER;
     let mut filter = KIND_FILTER.lock().unwrap();
     *filter = kind;
 }
@@ -381,7 +382,7 @@ pub fn specify_trace_file(
 /// If a file is specified, the message will be written there, otherwise it will be printed out to the terminal
 pub fn display_message(message: String, file_path: Option<String>, kind: Kind) {
     if let Some(filter) = get_kind_filter() {
-        if filter != kind {
+        if kind != filter && kind != Kind::Solver {
             return;
         }
     }

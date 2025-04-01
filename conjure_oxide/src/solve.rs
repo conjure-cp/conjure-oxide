@@ -244,7 +244,7 @@ fn run_solver(cmd_args: &Args, model: Model) -> anyhow::Result<()> {
     let solutions_str = to_string_pretty(&solutions_json)?;
     match out_file {
         None => {
-            display_message(format!("Solutions:\n{}", solutions_str), None, Kind::Parser);
+            display_message(format!("Solutions:\n{}", solutions_str), None, Kind::Solver);
         }
         Some(mut outf) => {
             outf.write_all(solutions_str.as_bytes())?;
