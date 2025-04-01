@@ -16,7 +16,7 @@ use crate::into_matrix;
 register_rule_set!("Constant", ());
 
 #[register_rule(("Constant", 9001))]
-fn apply_eval_constant(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+fn constant_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     if let Expr::Atomic(_, Atom::Literal(_)) = expr {
         return Err(ApplicationError::RuleNotApplicable);
     }
