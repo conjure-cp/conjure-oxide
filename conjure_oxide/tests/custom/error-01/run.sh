@@ -1,1 +1,1 @@
-conjure_oxide --enable-native-parser solve model.eprime
+conjure_oxide --solver Minion solve model.eprime
