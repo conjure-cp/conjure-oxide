@@ -21,7 +21,7 @@ register_rule_set!("CNF", ("Base"), (SolverFamily::SAT));
 /// Converts an implication to cnf
 ///
 /// ```text
-/// x -> y ~> !x \/ y
+/// x -> y ~~> !x \/ y
 /// ```
 #[register_rule(("CNF", 4100))]
 fn remove_implication(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
@@ -41,7 +41,9 @@ fn remove_implication(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// Converts an equivalence to cnf
 ///
 /// ```text
-/// x = y ~>  (!x \/ y) /\ (x /\ !y)
+/// x = y ~~> (x -> y) /\ (y -> x) ~~> (!x \/ y) /\ (!y \/ x)
+///
+/// This converts boolean expressions using equivalence to CNF.
 /// ```
 #[register_rule(("CNF", 4100))]
 fn remove_equivalence(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
