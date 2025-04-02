@@ -11,52 +11,14 @@ such that
 
 (a = b), 
    ~~> remove_equivalence ([("CNF", 4100)]) 
-or([and([a,b;int(1..)]),and([Not(a),Not(b);int(1..)]);int(1..)]) 
+and([or([Not(a),b;int(1..)]),or([a,Not(b);int(1..)]);int(1..)]) 
 
 --
 
-or([and([a,b;int(1..)]),and([Not(a),Not(b);int(1..)]);int(1..)]), 
-   ~~> distribute_or_over_and ([("Base", 8400)]) 
-and([or([and([Not(a),Not(b);int(1..)]),a;int(1..)]),or([and([Not(a),Not(b);int(1..)]),b;int(1..)]);int(1..)]) 
-
---
-
-and([or([and([Not(a),Not(b);int(1..)]),a;int(1..)]),or([and([Not(a),Not(b);int(1..)]),b;int(1..)]);int(1..)]), 
+and([or([Not(a),b;int(1..)]),or([a,Not(b);int(1..)]);int(1..)]), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-or([and([Not(a),Not(b);int(1..)]),a;int(1..)]),
-or([and([Not(a),Not(b);int(1..)]),b;int(1..)]) 
-
---
-
-or([and([Not(a),Not(b);int(1..)]),a;int(1..)]), 
-   ~~> distribute_or_over_and ([("Base", 8400)]) 
-and([or([a,Not(a);int(1..)]),or([a,Not(b);int(1..)]);int(1..)]) 
-
---
-
-and([or([a,Not(a);int(1..)]),or([a,Not(b);int(1..)]);int(1..)]),
-or([and([Not(a),Not(b);int(1..)]),b;int(1..)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-or([a,Not(a);int(1..)]),
-or([a,Not(b);int(1..)]),
-or([and([Not(a),Not(b);int(1..)]),b;int(1..)]) 
-
---
-
-or([and([Not(a),Not(b);int(1..)]),b;int(1..)]), 
-   ~~> distribute_or_over_and ([("Base", 8400)]) 
-and([or([b,Not(a);int(1..)]),or([b,Not(b);int(1..)]);int(1..)]) 
-
---
-
-or([a,Not(a);int(1..)]),
-or([a,Not(b);int(1..)]),
-and([or([b,Not(a);int(1..)]),or([b,Not(b);int(1..)]);int(1..)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-or([a,Not(a);int(1..)]),
-or([a,Not(b);int(1..)]),
-or([b,Not(a);int(1..)]),
-or([b,Not(b);int(1..)]) 
+or([Not(a),b;int(1..)]),
+or([a,Not(b);int(1..)]) 
 
 --
 
@@ -67,8 +29,6 @@ find b: bool
 
 such that
 
-or([a,Not(a);int(1..)]),
-or([a,Not(b);int(1..)]),
-or([b,Not(a);int(1..)]),
-or([b,Not(b);int(1..)])
+or([Not(a),b;int(1..)]),
+or([a,Not(b);int(1..)])
 
