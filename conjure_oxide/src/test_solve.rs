@@ -27,7 +27,7 @@ pub fn run_test_solve_command(global_args: GlobalArgs, local_args: Args) -> anyh
 
     // now we are stealing from the integration tester
 
-    let our_solutions = match global_args.solver.unwrap() {
+    let our_solutions = match global_args.solver {
         conjure_oxide::SolverFamily::SAT => get_sat_solutions(rewritten_model, 0),
         conjure_oxide::SolverFamily::Minion => get_minion_solutions(rewritten_model, 0),
     }?;
