@@ -16,7 +16,7 @@ use rustsat_minisat::core::Minisat;
 
 use anyhow::{anyhow, Result};
 
-use crate::{ast::Expression, solver::Error};
+use crate::{ast::Expression, bug, solver::Error};
 
 pub fn handle_lit(
     l1: &Expression,
@@ -64,8 +64,6 @@ pub fn handle_atom(
             }
             conjure_core::ast::Atom::Reference(name) => match name {
                 conjure_core::ast::Name::UserName(n) => {
-                    // TODO: Temp Clone
-                    // let m = n.clone();
                     let lit_temp: Lit = fetch_lit(n, vars_added, inst);
                     if polarity {
                         lit_temp
@@ -88,9 +86,7 @@ pub fn fetch_lit(
     inst: &mut SatInstance,
 ) -> Lit {
     if !vars_added.contains_key(&symbol) {
-        panic!(
-            "The code should never reach this point. You may have found a bug, please report it."
-        );
+        bug!("All decision variables are expected to have been added to the CNF by now.");
     }
     *(vars_added.get(&symbol).unwrap())
 }
