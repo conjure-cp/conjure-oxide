@@ -1,0 +1,48 @@
+Model before rewriting:
+
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+and([or([x,x;int(1..2)]),or([Not(y),Not(y);int(1..2)]);int(1..2)])
+
+--
+
+and([or([x,x;int(1..2)]),or([Not(y),Not(y);int(1..2)]);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+and([or([x,x;int(1..2)]),or([Not(y),Not(y);int(1..2)]);int(1..)]) 
+
+--
+
+and([or([x,x;int(1..2)]),or([Not(y),Not(y);int(1..2)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+or([x,x;int(1..2)]),
+or([Not(y),Not(y);int(1..2)]) 
+
+--
+
+or([x,x;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([x,x;int(1..)]) 
+
+--
+
+or([Not(y),Not(y);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([Not(y),Not(y);int(1..)]) 
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+or([x,x;int(1..)]),
+or([Not(y),Not(y);int(1..)])
+
