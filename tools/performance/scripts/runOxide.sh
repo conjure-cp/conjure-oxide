@@ -12,7 +12,7 @@ mkdir $DATA_DIR
 JSON_FILE="${DATA_DIR}/oxide-stats.json"
 
 # look into adding one flag 
-../../target/release/conjure_oxide --info-json-path $JSON_FILE $FULL_ESSENCE #this means it uses precompiled co
+../../target/release/conjure_oxide solve --solver Minion --info-json-path=$JSON_FILE $FULL_ESSENCE #this means it uses precompiled oxide
 
 rm $(pwd)/*.log
 rm $(pwd)/conjure_oxide_log.json

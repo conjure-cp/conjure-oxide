@@ -26,4 +26,9 @@ SOLUTION="${SOLUTION}/*.solution"
 
 rm $SOLUTION
 
-rm -f $DATA_DIR/*.{eprime,eprime-solution,eprime-infor,eprime-minion,conjure-checksum}
+rm -f $DATA_DIR/*.{eprime,eprime-solution,eprime-infor,eprime-*,conjure-checksum}
+# rm -v !($DATA_DIR/*.stats.json)
+# pushd $DATA_DIR
+# rm -v !(*.stats.json)
+# popd
+# rm -v !($DATA_DIR/)
