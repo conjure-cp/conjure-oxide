@@ -4,7 +4,7 @@ use rustsat::{
     clause,
     instances::{BasicVarManager, Cnf, SatInstance},
     solvers::{Solve, SolverResult},
-    types::{Lit, TernaryVal},
+    types::{Clause, Lit, TernaryVal},
 };
 
 use rustsat_minisat::core::Minisat;
@@ -95,17 +95,16 @@ pub fn handle_disjn(
 ) {
     let cl: &Vec<Expression> = match disjn {
         Expression::Or(_, vec) => &vec.clone().unwrap_list().unwrap(),
-        _ => panic!(),
+        _ => panic!("Expected an 'Or' expression!"),
     };
-    let l1 = &cl[0];
-    let l2 = &cl[1];
 
-    // handle literal:
-    let lit1: Lit = handle_lit(l1, vars_added, inst_in_use);
-    // also handle literal
-    let lit2: Lit = handle_lit(l2, vars_added, inst_in_use);
+    let mut lits = Clause::new();
+    for literal in cl {
+        let lit: Lit = handle_lit(literal, vars_added, inst_in_use);
+        lits.add(lit);
+    }
 
-    inst_in_use.add_binary(lit1, lit2);
+    inst_in_use.add_clause(lits);
 }
 
 pub fn handle_cnf(vec_cnf: &Vec<Expression>, vars_added: &mut HashMap<String, Lit>) -> SatInstance {
