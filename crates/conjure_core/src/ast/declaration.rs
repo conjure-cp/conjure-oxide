@@ -49,6 +49,7 @@ pub enum DeclarationKind {
     DecisionVariable(DecisionVariable),
     ValueLetting(Expression),
     DomainLetting(Domain),
+    Given(Domain),
 }
 
 impl Declaration {
@@ -102,9 +103,9 @@ impl Declaration {
     pub fn domain(&self) -> Option<&Domain> {
         match self.kind() {
             DeclarationKind::DecisionVariable(var) => Some(&var.domain),
-            // TODO: this needs a symbol table :(
             DeclarationKind::ValueLetting(_) => None,
             DeclarationKind::DomainLetting(domain) => Some(domain),
+            DeclarationKind::Given(domain) => Some(domain),
         }
     }
 
@@ -195,6 +196,7 @@ impl Typeable for Declaration {
             DeclarationKind::DecisionVariable(var) => var.return_type(),
             DeclarationKind::ValueLetting(expression) => expression.return_type(),
             DeclarationKind::DomainLetting(domain) => domain.return_type(),
+            DeclarationKind::Given(domain) => domain.return_type(),
         }
     }
 }
