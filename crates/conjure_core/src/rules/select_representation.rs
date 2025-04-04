@@ -1,16 +1,133 @@
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
+use std::sync::Arc;
+
 use conjure_core::ast::Expression as Expr;
 use conjure_core::ast::SymbolTable;
 use conjure_core::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
 };
 use itertools::Itertools;
+use uniplate::Biplate;
 
+use crate::ast::serde::HasId;
 use crate::ast::Atom;
 use crate::ast::Domain;
 use crate::ast::Name;
-use crate::bug;
+use crate::ast::SubModel;
 use crate::metadata::Metadata;
 use crate::representation::Representation;
+
+// special case rule to select representations for matrices in one go.
+//
+// we know that they only have one possible representation, so this rule adds a representation for all matrices in the model.
+#[register_rule(("Base", 8001))]
+fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Root(_, _) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    // cannot create representations on non-local variables, so use lookup_local.
+    let matrix_vars = symbols
+        .clone()
+        .into_iter_local()
+        .filter_map(|(n, decl)| {
+            let id = decl.id();
+            decl.as_var().cloned().map(|x| (n, id, x))
+        })
+        .filter(|(_, _, var)| {
+            let Domain::DomainMatrix(valdom, indexdoms) = &var.domain else {
+                return false;
+            };
+
+            // TODO: loosen these requirements once we are able to
+            if !matches!(valdom.as_ref(), Domain::BoolDomain | Domain::IntDomain(_)) {
+                return false;
+            }
+
+            if indexdoms
+                .iter()
+                .any(|x| !matches!(x, Domain::BoolDomain | Domain::IntDomain(_)))
+            {
+                return false;
+            }
+
+            true
+        });
+
+    let mut symbols = symbols.clone();
+    let mut expr = expr.clone();
+    let has_changed = Arc::new(AtomicBool::new(false));
+    for (name, id, _) in matrix_vars {
+        // Even if we have no references to this matrix, still give it the matrix_to_atom
+        // representation, as we still currently need to give it to minion even if its unused.
+        //
+        // If this var has no represnetation yet, the below call to get_or_add will modify the
+        // symbol table by adding the representation and represented variable declarations to the
+        // symbol table.
+        if symbols.representations_for(&name).unwrap().is_empty() {
+            has_changed.store(true, Ordering::Relaxed);
+        }
+
+        // (creates the represented variables as a side effect)
+        let _ = symbols
+            .get_or_add_representation(&name, &["matrix_to_atom"])
+            .unwrap();
+
+        let old_name = name.clone();
+        let new_name = Name::WithRepresentation(
+            Box::new(old_name.clone()),
+            vec!["matrix_to_atom".to_owned()],
+        );
+        // give all references to this matrix this representation
+        // also do this inside subscopes, as long as they dont define their own variable that shadows this
+        // one.
+
+        let old_name_2 = old_name.clone();
+        let new_name_2 = new_name.clone();
+        let has_changed_ptr = Arc::clone(&has_changed);
+        expr = expr.transform_bi(Arc::new(move |n: Name| {
+            if n == old_name_2 {
+                has_changed_ptr.store(true, Ordering::SeqCst);
+                new_name_2.clone()
+            } else {
+                n
+            }
+        }));
+
+        let has_changed_ptr = Arc::clone(&has_changed);
+        let old_name = old_name.clone();
+        let new_name = new_name.clone();
+        expr = expr.transform_bi(Arc::new(move |mut x: SubModel| {
+            let old_name = old_name.clone();
+            let new_name = new_name.clone();
+            let has_changed_ptr = Arc::clone(&has_changed_ptr);
+
+            // only do things if this inscope and not shadowed..
+            if x.symbols()
+                .lookup(&old_name)
+                .is_none_or(|x| x.as_ref().id() == id)
+            {
+                let root = x.root_mut_unchecked();
+                *root = root.transform_bi(Arc::new(move |n: Name| {
+                    if n == old_name {
+                        has_changed_ptr.store(true, Ordering::SeqCst);
+                        new_name.clone()
+                    } else {
+                        n
+                    }
+                }));
+            }
+            x
+        }));
+    }
+
+    if has_changed.load(Ordering::Relaxed) {
+        Ok(Reduction::with_symbols(expr, symbols))
+    } else {
+        Err(RuleNotApplicable)
+    }
+}
 
 #[register_rule(("Base", 8000))]
 fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
@@ -61,8 +178,8 @@ fn needs_representation(name: &Name, symbols: &SymbolTable) -> bool {
 fn domain_needs_representation(domain: &Domain) -> bool {
     // very simple implementation for now
     match domain {
-        Domain::BoolDomain | Domain::IntDomain(_) => false,
-        Domain::DomainSet(_, _) | Domain::DomainMatrix(_, _) => true,
+        Domain::BoolDomain | Domain::IntDomain(_) | Domain::DomainMatrix(_, _) => false,
+        Domain::DomainSet(_, _) => true,
         Domain::DomainReference(_) => unreachable!("domain should be resolved"),
     }
 }
@@ -83,15 +200,7 @@ fn get_or_create_representation(
 
     match symbols.resolve_domain(name).unwrap() {
         Domain::DomainSet(_, _) => None,
-        Domain::DomainMatrix(elem_domain, _) => {
-            // easy, only one possible representation
-
-            if domain_needs_representation(elem_domain.as_ref()) {
-                bug!("representing nested abstract domains is not implemented");
-            }
-
-            symbols.get_or_add_representation(name, &["matrix_to_atom"])
-        }
+        Domain::DomainMatrix(_, _) => None,
         _ => unreachable!("non abstract domains should never need representations"),
     }
 }

@@ -15,9 +15,9 @@ UnsafeDiv(y, 2),
 
 --
 
-(2 != 0), 
+(UnsafePow(Sum([x,2;int(1..2)]), {SafeDiv(y, 2) @ (2 != 0)}) = 4), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(UnsafePow(Sum([x,2;int(1..2)]), {SafeDiv(y, 2) @ true}) = 4) 
 
 --
 
@@ -27,9 +27,9 @@ UnsafePow(Sum([x,2;int(1..2)]), {SafeDiv(y, 2) @ true}),
 
 --
 
-and([true;int(1..)]), 
+({UnsafePow(Sum([x,2;int(1..2)]), SafeDiv(y, 2)) @ and([true;int(1..)])} = 4), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+({UnsafePow(Sum([x,2;int(1..2)]), SafeDiv(y, 2)) @ true} = 4) 
 
 --
 
@@ -39,9 +39,9 @@ true
 
 --
 
-and([true;int(1..)]), 
+{(UnsafePow(Sum([x,2;int(1..2)]), SafeDiv(y, 2)) = 4) @ and([true;int(1..)])}, 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+{(UnsafePow(Sum([x,2;int(1..2)]), SafeDiv(y, 2)) = 4) @ true} 
 
 --
 
@@ -52,15 +52,7 @@ and([(UnsafePow(Sum([x,2;int(1..2)]), SafeDiv(y, 2)) = 4),true;int(1..)])
 --
 
 and([(UnsafePow(Sum([x,2;int(1..2)]), SafeDiv(y, 2)) = 4),true;int(1..)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-(UnsafePow(Sum([x,2;int(1..2)]), SafeDiv(y, 2)) = 4),
-true 
-
---
-
-(UnsafePow(Sum([x,2;int(1..2)]), SafeDiv(y, 2)) = 4),
-true, 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 (UnsafePow(Sum([x,2;int(1..2)]), SafeDiv(y, 2)) = 4) 
 
 --
@@ -84,7 +76,7 @@ and([(SafePow(Sum([x,2;int(1..2)]), SafeDiv(y, 2)) = 4),and([and([or([(Sum([x,2;
 --
 
 and([(SafePow(Sum([x,2;int(1..2)]), SafeDiv(y, 2)) = 4),and([and([or([(Sum([x,2;int(1..2)]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),(SafeDiv(y, 2) >= 0);int(1..)]);int(1..)]);int(1..)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 (SafePow(Sum([x,2;int(1..2)]), SafeDiv(y, 2)) = 4),
 and([and([or([(Sum([x,2;int(1..2)]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),(SafeDiv(y, 2) >= 0);int(1..)]);int(1..)]) 
 
@@ -92,7 +84,7 @@ and([and([or([(Sum([x,2;int(1..2)]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),(SafeD
 
 (SafePow(Sum([x,2;int(1..2)]), SafeDiv(y, 2)) = 4),
 and([and([or([(Sum([x,2;int(1..2)]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),(SafeDiv(y, 2) >= 0);int(1..)]);int(1..)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 (SafePow(Sum([x,2;int(1..2)]), SafeDiv(y, 2)) = 4),
 and([or([(Sum([x,2;int(1..2)]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),(SafeDiv(y, 2) >= 0);int(1..)]) 
 
@@ -100,7 +92,7 @@ and([or([(Sum([x,2;int(1..2)]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),(SafeDiv(y,
 
 (SafePow(Sum([x,2;int(1..2)]), SafeDiv(y, 2)) = 4),
 and([or([(Sum([x,2;int(1..2)]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),(SafeDiv(y, 2) >= 0);int(1..)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 (SafePow(Sum([x,2;int(1..2)]), SafeDiv(y, 2)) = 4),
 or([(Sum([x,2;int(1..2)]) != 0),(SafeDiv(y, 2) != 0);int(1..)]),
 (SafeDiv(y, 2) >= 0) 
@@ -186,7 +178,7 @@ DivEq(y, 2, __0),
 DivEq(y, 2, __1),
 DivEq(y, 2, __2),
 and([SumLeq([x, 2], __3),SumGeq([x, 2], __3);int(1..)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 (SafePow(__3, __0) = 4),
 or([(Sum([x,2;int(1..2)]) != 0),(__1 != 0);int(1..)]),
 Ineq(0, __2, 0),
@@ -234,7 +226,7 @@ DivEq(y, 2, __2),
 SumLeq([x, 2], __3),
 SumGeq([x, 2], __3),
 and([SumLeq([x, 2], __4),SumGeq([x, 2], __4);int(1..)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 MinionPow(__3,__0,4),
 or([(__4 != 0),(__1 != 0);int(1..)]),
 Ineq(0, __2, 0),

@@ -16,6 +16,7 @@ mod normalisers;
 mod partial_eval;
 mod subsitute_lettings;
 
+mod bottom_up_adaptor;
 mod expand_comprehension;
 mod select_representation;
 mod utils;

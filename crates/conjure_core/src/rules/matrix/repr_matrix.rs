@@ -12,10 +12,15 @@ use crate::ast::Name;
 use crate::ast::{Atom, Range};
 use crate::into_matrix_expr;
 use crate::metadata::Metadata;
+use crate::rules::bottom_up_adaptor::as_bottom_up;
 
 /// Using the `matrix_to_atom`  representation rule, rewrite matrix indexing.
-#[register_rule(("Base", 2000))]
+#[register_rule(("Base", 5000))]
 fn index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    (as_bottom_up(index_matrix_to_atom_impl))(expr, symbols)
+}
+
+fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // is this an indexing operation?
     let Expr::SafeIndex(_, subject, indices) = expr else {
         return Err(RuleNotApplicable);

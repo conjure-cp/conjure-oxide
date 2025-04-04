@@ -13,9 +13,12 @@ use crate::{
 
 #[register_rule(("Base",9000))]
 fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    run_partial_evaluator(expr)
+}
+
+pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
     use conjure_core::rule_engine::ApplicationError::RuleNotApplicable;
     use Expr::*;
-
     // NOTE: If nothing changes, we must return RuleNotApplicable, or the rewriter will try this
     // rule infinitely!
     // This is why we always check whether we found a constant or not.

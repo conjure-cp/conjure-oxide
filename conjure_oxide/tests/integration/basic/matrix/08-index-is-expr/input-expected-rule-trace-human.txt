@@ -13,9 +13,17 @@ such that
 
 --
 
-a, 
-   ~~> select_representation ([("Base", 8000)]) 
-a#matrix_to_atom 
+(a[i, i] = i),
+(a[1, 2] = 1),
+(a[2, 1] = 1),
+(a[3, 1] = 1),
+(a[3, 2] = 1), 
+   ~~> select_representation_matrix ([("Base", 8001)]) 
+(a#matrix_to_atom[i, i] = i),
+(a#matrix_to_atom[1, 2] = 1),
+(a#matrix_to_atom[2, 1] = 1),
+(a#matrix_to_atom[3, 1] = 1),
+(a#matrix_to_atom[3, 2] = 1) 
 new variables:
   find a#matrix_to_atom_1_1: int(1..5)
   find a#matrix_to_atom_1_2: int(1..5)
@@ -23,30 +31,6 @@ new variables:
   find a#matrix_to_atom_2_2: int(1..5)
   find a#matrix_to_atom_3_1: int(1..5)
   find a#matrix_to_atom_3_2: int(1..5)
---
-
-a, 
-   ~~> select_representation ([("Base", 8000)]) 
-a#matrix_to_atom 
-
---
-
-a, 
-   ~~> select_representation ([("Base", 8000)]) 
-a#matrix_to_atom 
-
---
-
-a, 
-   ~~> select_representation ([("Base", 8000)]) 
-a#matrix_to_atom 
-
---
-
-a, 
-   ~~> select_representation ([("Base", 8000)]) 
-a#matrix_to_atom 
-
 --
 
 a#matrix_to_atom[i, i], 
@@ -72,7 +56,7 @@ and([(a#matrix_to_atom[i, i] = i),and([and([__inDomain(i,int(1..3)),__inDomain(i
 (a#matrix_to_atom[2, 1] = 1),
 (a#matrix_to_atom[3, 1] = 1),
 (a#matrix_to_atom[3, 2] = 1), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 (a#matrix_to_atom[i, i] = i),
 and([and([__inDomain(i,int(1..3)),__inDomain(i,int(1..2));int(1..)]);int(1..)]),
 (a#matrix_to_atom[1, 2] = 1),
@@ -88,7 +72,7 @@ and([and([__inDomain(i,int(1..3)),__inDomain(i,int(1..2));int(1..)]);int(1..)]),
 (a#matrix_to_atom[2, 1] = 1),
 (a#matrix_to_atom[3, 1] = 1),
 (a#matrix_to_atom[3, 2] = 1), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 (a#matrix_to_atom[i, i] = i),
 and([__inDomain(i,int(1..3)),__inDomain(i,int(1..2));int(1..)]),
 (a#matrix_to_atom[1, 2] = 1),
@@ -104,7 +88,7 @@ and([__inDomain(i,int(1..3)),__inDomain(i,int(1..2));int(1..)]),
 (a#matrix_to_atom[2, 1] = 1),
 (a#matrix_to_atom[3, 1] = 1),
 (a#matrix_to_atom[3, 2] = 1), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 (a#matrix_to_atom[i, i] = i),
 __inDomain(i,int(1..3)),
 __inDomain(i,int(1..2)),
@@ -121,9 +105,21 @@ a#matrix_to_atom[1, 2],
 
 --
 
-and([__inDomain(1,int(1..3)),__inDomain(2,int(1..2));int(1..)]), 
+(a#matrix_to_atom[i, i] = i),
+__inDomain(i,int(1..3)),
+__inDomain(i,int(1..2)),
+({a#matrix_to_atom[1, 2] @ and([__inDomain(1,int(1..3)),__inDomain(2,int(1..2));int(1..)])} = 1),
+(a#matrix_to_atom[2, 1] = 1),
+(a#matrix_to_atom[3, 1] = 1),
+(a#matrix_to_atom[3, 2] = 1), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(a#matrix_to_atom[i, i] = i),
+__inDomain(i,int(1..3)),
+__inDomain(i,int(1..2)),
+({a#matrix_to_atom[1, 2] @ true} = 1),
+(a#matrix_to_atom[2, 1] = 1),
+(a#matrix_to_atom[3, 1] = 1),
+(a#matrix_to_atom[3, 2] = 1) 
 
 --
 
@@ -133,9 +129,21 @@ true
 
 --
 
-and([true;int(1..)]), 
+(a#matrix_to_atom[i, i] = i),
+__inDomain(i,int(1..3)),
+__inDomain(i,int(1..2)),
+{(a#matrix_to_atom[1, 2] = 1) @ and([true;int(1..)])},
+(a#matrix_to_atom[2, 1] = 1),
+(a#matrix_to_atom[3, 1] = 1),
+(a#matrix_to_atom[3, 2] = 1), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(a#matrix_to_atom[i, i] = i),
+__inDomain(i,int(1..3)),
+__inDomain(i,int(1..2)),
+{(a#matrix_to_atom[1, 2] = 1) @ true},
+(a#matrix_to_atom[2, 1] = 1),
+(a#matrix_to_atom[3, 1] = 1),
+(a#matrix_to_atom[3, 2] = 1) 
 
 --
 
@@ -152,27 +160,7 @@ and([(a#matrix_to_atom[1, 2] = 1),true;int(1..)]),
 (a#matrix_to_atom[2, 1] = 1),
 (a#matrix_to_atom[3, 1] = 1),
 (a#matrix_to_atom[3, 2] = 1), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-(a#matrix_to_atom[i, i] = i),
-__inDomain(i,int(1..3)),
-__inDomain(i,int(1..2)),
-(a#matrix_to_atom[1, 2] = 1),
-true,
-(a#matrix_to_atom[2, 1] = 1),
-(a#matrix_to_atom[3, 1] = 1),
-(a#matrix_to_atom[3, 2] = 1) 
-
---
-
-(a#matrix_to_atom[i, i] = i),
-__inDomain(i,int(1..3)),
-__inDomain(i,int(1..2)),
-(a#matrix_to_atom[1, 2] = 1),
-true,
-(a#matrix_to_atom[2, 1] = 1),
-(a#matrix_to_atom[3, 1] = 1),
-(a#matrix_to_atom[3, 2] = 1), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 (a#matrix_to_atom[i, i] = i),
 __inDomain(i,int(1..3)),
 __inDomain(i,int(1..2)),
@@ -189,9 +177,21 @@ a#matrix_to_atom[2, 1],
 
 --
 
-and([__inDomain(2,int(1..3)),__inDomain(1,int(1..2));int(1..)]), 
+(a#matrix_to_atom[i, i] = i),
+__inDomain(i,int(1..3)),
+__inDomain(i,int(1..2)),
+(a#matrix_to_atom[1, 2] = 1),
+({a#matrix_to_atom[2, 1] @ and([__inDomain(2,int(1..3)),__inDomain(1,int(1..2));int(1..)])} = 1),
+(a#matrix_to_atom[3, 1] = 1),
+(a#matrix_to_atom[3, 2] = 1), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(a#matrix_to_atom[i, i] = i),
+__inDomain(i,int(1..3)),
+__inDomain(i,int(1..2)),
+(a#matrix_to_atom[1, 2] = 1),
+({a#matrix_to_atom[2, 1] @ true} = 1),
+(a#matrix_to_atom[3, 1] = 1),
+(a#matrix_to_atom[3, 2] = 1) 
 
 --
 
@@ -201,9 +201,21 @@ true
 
 --
 
-and([true;int(1..)]), 
+(a#matrix_to_atom[i, i] = i),
+__inDomain(i,int(1..3)),
+__inDomain(i,int(1..2)),
+(a#matrix_to_atom[1, 2] = 1),
+{(a#matrix_to_atom[2, 1] = 1) @ and([true;int(1..)])},
+(a#matrix_to_atom[3, 1] = 1),
+(a#matrix_to_atom[3, 2] = 1), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(a#matrix_to_atom[i, i] = i),
+__inDomain(i,int(1..3)),
+__inDomain(i,int(1..2)),
+(a#matrix_to_atom[1, 2] = 1),
+{(a#matrix_to_atom[2, 1] = 1) @ true},
+(a#matrix_to_atom[3, 1] = 1),
+(a#matrix_to_atom[3, 2] = 1) 
 
 --
 
@@ -220,27 +232,7 @@ __inDomain(i,int(1..2)),
 and([(a#matrix_to_atom[2, 1] = 1),true;int(1..)]),
 (a#matrix_to_atom[3, 1] = 1),
 (a#matrix_to_atom[3, 2] = 1), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-(a#matrix_to_atom[i, i] = i),
-__inDomain(i,int(1..3)),
-__inDomain(i,int(1..2)),
-(a#matrix_to_atom[1, 2] = 1),
-(a#matrix_to_atom[2, 1] = 1),
-true,
-(a#matrix_to_atom[3, 1] = 1),
-(a#matrix_to_atom[3, 2] = 1) 
-
---
-
-(a#matrix_to_atom[i, i] = i),
-__inDomain(i,int(1..3)),
-__inDomain(i,int(1..2)),
-(a#matrix_to_atom[1, 2] = 1),
-(a#matrix_to_atom[2, 1] = 1),
-true,
-(a#matrix_to_atom[3, 1] = 1),
-(a#matrix_to_atom[3, 2] = 1), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 (a#matrix_to_atom[i, i] = i),
 __inDomain(i,int(1..3)),
 __inDomain(i,int(1..2)),
@@ -257,9 +249,21 @@ a#matrix_to_atom[3, 1],
 
 --
 
-and([__inDomain(3,int(1..3)),__inDomain(1,int(1..2));int(1..)]), 
+(a#matrix_to_atom[i, i] = i),
+__inDomain(i,int(1..3)),
+__inDomain(i,int(1..2)),
+(a#matrix_to_atom[1, 2] = 1),
+(a#matrix_to_atom[2, 1] = 1),
+({a#matrix_to_atom[3, 1] @ and([__inDomain(3,int(1..3)),__inDomain(1,int(1..2));int(1..)])} = 1),
+(a#matrix_to_atom[3, 2] = 1), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(a#matrix_to_atom[i, i] = i),
+__inDomain(i,int(1..3)),
+__inDomain(i,int(1..2)),
+(a#matrix_to_atom[1, 2] = 1),
+(a#matrix_to_atom[2, 1] = 1),
+({a#matrix_to_atom[3, 1] @ true} = 1),
+(a#matrix_to_atom[3, 2] = 1) 
 
 --
 
@@ -269,9 +273,21 @@ true
 
 --
 
-and([true;int(1..)]), 
+(a#matrix_to_atom[i, i] = i),
+__inDomain(i,int(1..3)),
+__inDomain(i,int(1..2)),
+(a#matrix_to_atom[1, 2] = 1),
+(a#matrix_to_atom[2, 1] = 1),
+{(a#matrix_to_atom[3, 1] = 1) @ and([true;int(1..)])},
+(a#matrix_to_atom[3, 2] = 1), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(a#matrix_to_atom[i, i] = i),
+__inDomain(i,int(1..3)),
+__inDomain(i,int(1..2)),
+(a#matrix_to_atom[1, 2] = 1),
+(a#matrix_to_atom[2, 1] = 1),
+{(a#matrix_to_atom[3, 1] = 1) @ true},
+(a#matrix_to_atom[3, 2] = 1) 
 
 --
 
@@ -288,27 +304,7 @@ __inDomain(i,int(1..2)),
 (a#matrix_to_atom[2, 1] = 1),
 and([(a#matrix_to_atom[3, 1] = 1),true;int(1..)]),
 (a#matrix_to_atom[3, 2] = 1), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-(a#matrix_to_atom[i, i] = i),
-__inDomain(i,int(1..3)),
-__inDomain(i,int(1..2)),
-(a#matrix_to_atom[1, 2] = 1),
-(a#matrix_to_atom[2, 1] = 1),
-(a#matrix_to_atom[3, 1] = 1),
-true,
-(a#matrix_to_atom[3, 2] = 1) 
-
---
-
-(a#matrix_to_atom[i, i] = i),
-__inDomain(i,int(1..3)),
-__inDomain(i,int(1..2)),
-(a#matrix_to_atom[1, 2] = 1),
-(a#matrix_to_atom[2, 1] = 1),
-(a#matrix_to_atom[3, 1] = 1),
-true,
-(a#matrix_to_atom[3, 2] = 1), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 (a#matrix_to_atom[i, i] = i),
 __inDomain(i,int(1..3)),
 __inDomain(i,int(1..2)),
@@ -325,9 +321,21 @@ a#matrix_to_atom[3, 2],
 
 --
 
-and([__inDomain(3,int(1..3)),__inDomain(2,int(1..2));int(1..)]), 
+(a#matrix_to_atom[i, i] = i),
+__inDomain(i,int(1..3)),
+__inDomain(i,int(1..2)),
+(a#matrix_to_atom[1, 2] = 1),
+(a#matrix_to_atom[2, 1] = 1),
+(a#matrix_to_atom[3, 1] = 1),
+({a#matrix_to_atom[3, 2] @ and([__inDomain(3,int(1..3)),__inDomain(2,int(1..2));int(1..)])} = 1), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(a#matrix_to_atom[i, i] = i),
+__inDomain(i,int(1..3)),
+__inDomain(i,int(1..2)),
+(a#matrix_to_atom[1, 2] = 1),
+(a#matrix_to_atom[2, 1] = 1),
+(a#matrix_to_atom[3, 1] = 1),
+({a#matrix_to_atom[3, 2] @ true} = 1) 
 
 --
 
@@ -337,9 +345,21 @@ true
 
 --
 
-and([true;int(1..)]), 
+(a#matrix_to_atom[i, i] = i),
+__inDomain(i,int(1..3)),
+__inDomain(i,int(1..2)),
+(a#matrix_to_atom[1, 2] = 1),
+(a#matrix_to_atom[2, 1] = 1),
+(a#matrix_to_atom[3, 1] = 1),
+{(a#matrix_to_atom[3, 2] = 1) @ and([true;int(1..)])}, 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(a#matrix_to_atom[i, i] = i),
+__inDomain(i,int(1..3)),
+__inDomain(i,int(1..2)),
+(a#matrix_to_atom[1, 2] = 1),
+(a#matrix_to_atom[2, 1] = 1),
+(a#matrix_to_atom[3, 1] = 1),
+{(a#matrix_to_atom[3, 2] = 1) @ true} 
 
 --
 
@@ -356,15 +376,14 @@ __inDomain(i,int(1..2)),
 (a#matrix_to_atom[2, 1] = 1),
 (a#matrix_to_atom[3, 1] = 1),
 and([(a#matrix_to_atom[3, 2] = 1),true;int(1..)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 (a#matrix_to_atom[i, i] = i),
 __inDomain(i,int(1..3)),
 __inDomain(i,int(1..2)),
 (a#matrix_to_atom[1, 2] = 1),
 (a#matrix_to_atom[2, 1] = 1),
 (a#matrix_to_atom[3, 1] = 1),
-(a#matrix_to_atom[3, 2] = 1),
-true 
+(a#matrix_to_atom[3, 2] = 1) 
 
 --
 
@@ -374,16 +393,63 @@ __inDomain(i,int(1..2)),
 (a#matrix_to_atom[1, 2] = 1),
 (a#matrix_to_atom[2, 1] = 1),
 (a#matrix_to_atom[3, 1] = 1),
-(a#matrix_to_atom[3, 2] = 1),
-true, 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-(a#matrix_to_atom[i, i] = i),
+(a#matrix_to_atom[3, 2] = 1), 
+   ~~> index_matrix_to_atom ([("Base", 5000)]) 
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2,a#matrix_to_atom_3_1,a#matrix_to_atom_3_2;int(1..)][Sum([Product([2, (i - 1)]),Product([1, (i - 1)]),1;int(1..)])] = i),
 __inDomain(i,int(1..3)),
 __inDomain(i,int(1..2)),
-(a#matrix_to_atom[1, 2] = 1),
-(a#matrix_to_atom[2, 1] = 1),
-(a#matrix_to_atom[3, 1] = 1),
-(a#matrix_to_atom[3, 2] = 1) 
+(a#matrix_to_atom_1_2 = 1),
+(a#matrix_to_atom_2_1 = 1),
+(a#matrix_to_atom_3_1 = 1),
+(a#matrix_to_atom_3_2 = 1) 
+
+--
+
+(i - 1), 
+   ~~> minus_to_sum ([("Base", 8400)]) 
+Sum([i,-(1);int(1..)]) 
+
+--
+
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2,a#matrix_to_atom_3_1,a#matrix_to_atom_3_2;int(1..)][Sum([Product([2, Sum([i,-(1);int(1..)])]),Product([1, (i - 1)]),1;int(1..)])] = i),
+__inDomain(i,int(1..3)),
+__inDomain(i,int(1..2)),
+(a#matrix_to_atom_1_2 = 1),
+(a#matrix_to_atom_2_1 = 1),
+(a#matrix_to_atom_3_1 = 1),
+(a#matrix_to_atom_3_2 = 1), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2,a#matrix_to_atom_3_1,a#matrix_to_atom_3_2;int(1..)][Sum([Product([2, Sum([i,-1;int(1..)])]),Product([1, (i - 1)]),1;int(1..)])] = i),
+__inDomain(i,int(1..3)),
+__inDomain(i,int(1..2)),
+(a#matrix_to_atom_1_2 = 1),
+(a#matrix_to_atom_2_1 = 1),
+(a#matrix_to_atom_3_1 = 1),
+(a#matrix_to_atom_3_2 = 1) 
+
+--
+
+(i - 1), 
+   ~~> minus_to_sum ([("Base", 8400)]) 
+Sum([i,-(1);int(1..)]) 
+
+--
+
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2,a#matrix_to_atom_3_1,a#matrix_to_atom_3_2;int(1..)][Sum([Product([2, Sum([i,-1;int(1..)])]),Product([1, Sum([i,-(1);int(1..)])]),1;int(1..)])] = i),
+__inDomain(i,int(1..3)),
+__inDomain(i,int(1..2)),
+(a#matrix_to_atom_1_2 = 1),
+(a#matrix_to_atom_2_1 = 1),
+(a#matrix_to_atom_3_1 = 1),
+(a#matrix_to_atom_3_2 = 1), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2,a#matrix_to_atom_3_1,a#matrix_to_atom_3_2;int(1..)][Sum([Product([2, Sum([i,-1;int(1..)])]),Product([1, Sum([i,-1;int(1..)])]),1;int(1..)])] = i),
+__inDomain(i,int(1..3)),
+__inDomain(i,int(1..2)),
+(a#matrix_to_atom_1_2 = 1),
+(a#matrix_to_atom_2_1 = 1),
+(a#matrix_to_atom_3_1 = 1),
+(a#matrix_to_atom_3_2 = 1) 
 
 --
 
@@ -396,36 +462,6 @@ __minion_w_inintervalset(i,[1,3])
 __inDomain(i,int(1..2)), 
    ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)]) 
 __minion_w_inintervalset(i,[1,2]) 
-
---
-
-a#matrix_to_atom[i, i], 
-   ~~> index_matrix_to_atom ([("Base", 2000)]) 
-[a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2,a#matrix_to_atom_3_1,a#matrix_to_atom_3_2;int(1..)][Sum([Product([2, (i - 1)]),Product([1, (i - 1)]),1;int(1..)])] 
-
---
-
-(i - 1), 
-   ~~> minus_to_sum ([("Base", 8400)]) 
-Sum([i,-(1);int(1..)]) 
-
---
-
--(1), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
--1 
-
---
-
-(i - 1), 
-   ~~> minus_to_sum ([("Base", 8400)]) 
-Sum([i,-(1);int(1..)]) 
-
---
-
--(1), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
--1 
 
 --
 
@@ -452,21 +488,21 @@ new constraints:
 ([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2,a#matrix_to_atom_3_1,a#matrix_to_atom_3_2;int(1..)][__0] = i),
 __minion_w_inintervalset(i,[1,3]),
 __minion_w_inintervalset(i,[1,2]),
-(a#matrix_to_atom[1, 2] = 1),
-(a#matrix_to_atom[2, 1] = 1),
-(a#matrix_to_atom[3, 1] = 1),
-(a#matrix_to_atom[3, 2] = 1),
+(a#matrix_to_atom_1_2 = 1),
+(a#matrix_to_atom_2_1 = 1),
+(a#matrix_to_atom_3_1 = 1),
+(a#matrix_to_atom_3_2 = 1),
 and([FlatWeightedSumLeq([2, 1, 1],[__1, __2, 1],__0),FlatWeightedSumGeq([2, 1, 1],[__1, __2, 1],__0);int(1..)]),
 __1 =aux Sum([i,-1;int(1..)]),
 __2 =aux Sum([i,-1;int(1..)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 ([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2,a#matrix_to_atom_3_1,a#matrix_to_atom_3_2;int(1..)][__0] = i),
 __minion_w_inintervalset(i,[1,3]),
 __minion_w_inintervalset(i,[1,2]),
-(a#matrix_to_atom[1, 2] = 1),
-(a#matrix_to_atom[2, 1] = 1),
-(a#matrix_to_atom[3, 1] = 1),
-(a#matrix_to_atom[3, 2] = 1),
+(a#matrix_to_atom_1_2 = 1),
+(a#matrix_to_atom_2_1 = 1),
+(a#matrix_to_atom_3_1 = 1),
+(a#matrix_to_atom_3_2 = 1),
 FlatWeightedSumLeq([2, 1, 1],[__1, __2, 1],__0),
 FlatWeightedSumGeq([2, 1, 1],[__1, __2, 1],__0),
 __1 =aux Sum([i,-1;int(1..)]),
@@ -483,22 +519,22 @@ and([SumLeq([i, -1], __1),SumGeq([i, -1], __1);int(1..)])
 ([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2,a#matrix_to_atom_3_1,a#matrix_to_atom_3_2;int(1..)][__0] = i),
 __minion_w_inintervalset(i,[1,3]),
 __minion_w_inintervalset(i,[1,2]),
-(a#matrix_to_atom[1, 2] = 1),
-(a#matrix_to_atom[2, 1] = 1),
-(a#matrix_to_atom[3, 1] = 1),
-(a#matrix_to_atom[3, 2] = 1),
+(a#matrix_to_atom_1_2 = 1),
+(a#matrix_to_atom_2_1 = 1),
+(a#matrix_to_atom_3_1 = 1),
+(a#matrix_to_atom_3_2 = 1),
 FlatWeightedSumLeq([2, 1, 1],[__1, __2, 1],__0),
 FlatWeightedSumGeq([2, 1, 1],[__1, __2, 1],__0),
 and([SumLeq([i, -1], __1),SumGeq([i, -1], __1);int(1..)]),
 __2 =aux Sum([i,-1;int(1..)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 ([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2,a#matrix_to_atom_3_1,a#matrix_to_atom_3_2;int(1..)][__0] = i),
 __minion_w_inintervalset(i,[1,3]),
 __minion_w_inintervalset(i,[1,2]),
-(a#matrix_to_atom[1, 2] = 1),
-(a#matrix_to_atom[2, 1] = 1),
-(a#matrix_to_atom[3, 1] = 1),
-(a#matrix_to_atom[3, 2] = 1),
+(a#matrix_to_atom_1_2 = 1),
+(a#matrix_to_atom_2_1 = 1),
+(a#matrix_to_atom_3_1 = 1),
+(a#matrix_to_atom_3_2 = 1),
 FlatWeightedSumLeq([2, 1, 1],[__1, __2, 1],__0),
 FlatWeightedSumGeq([2, 1, 1],[__1, __2, 1],__0),
 SumLeq([i, -1], __1),
@@ -516,23 +552,23 @@ and([SumLeq([i, -1], __2),SumGeq([i, -1], __2);int(1..)])
 ([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2,a#matrix_to_atom_3_1,a#matrix_to_atom_3_2;int(1..)][__0] = i),
 __minion_w_inintervalset(i,[1,3]),
 __minion_w_inintervalset(i,[1,2]),
-(a#matrix_to_atom[1, 2] = 1),
-(a#matrix_to_atom[2, 1] = 1),
-(a#matrix_to_atom[3, 1] = 1),
-(a#matrix_to_atom[3, 2] = 1),
+(a#matrix_to_atom_1_2 = 1),
+(a#matrix_to_atom_2_1 = 1),
+(a#matrix_to_atom_3_1 = 1),
+(a#matrix_to_atom_3_2 = 1),
 FlatWeightedSumLeq([2, 1, 1],[__1, __2, 1],__0),
 FlatWeightedSumGeq([2, 1, 1],[__1, __2, 1],__0),
 SumLeq([i, -1], __1),
 SumGeq([i, -1], __1),
 and([SumLeq([i, -1], __2),SumGeq([i, -1], __2);int(1..)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 ([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2,a#matrix_to_atom_3_1,a#matrix_to_atom_3_2;int(1..)][__0] = i),
 __minion_w_inintervalset(i,[1,3]),
 __minion_w_inintervalset(i,[1,2]),
-(a#matrix_to_atom[1, 2] = 1),
-(a#matrix_to_atom[2, 1] = 1),
-(a#matrix_to_atom[3, 1] = 1),
-(a#matrix_to_atom[3, 2] = 1),
+(a#matrix_to_atom_1_2 = 1),
+(a#matrix_to_atom_2_1 = 1),
+(a#matrix_to_atom_3_1 = 1),
+(a#matrix_to_atom_3_2 = 1),
 FlatWeightedSumLeq([2, 1, 1],[__1, __2, 1],__0),
 FlatWeightedSumGeq([2, 1, 1],[__1, __2, 1],__0),
 SumLeq([i, -1], __1),
@@ -545,30 +581,6 @@ SumGeq([i, -1], __2)
 ([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2,a#matrix_to_atom_3_1,a#matrix_to_atom_3_2;int(1..)][__0] = i), 
    ~~> introduce_element_from_index ([("Minion", 4400)]) 
 __minion_element_one([a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_2_1,a#matrix_to_atom_2_2,a#matrix_to_atom_3_1,a#matrix_to_atom_3_2],__0,i) 
-
---
-
-a#matrix_to_atom[1, 2], 
-   ~~> index_matrix_to_atom ([("Base", 2000)]) 
-a#matrix_to_atom_1_2 
-
---
-
-a#matrix_to_atom[2, 1], 
-   ~~> index_matrix_to_atom ([("Base", 2000)]) 
-a#matrix_to_atom_2_1 
-
---
-
-a#matrix_to_atom[3, 1], 
-   ~~> index_matrix_to_atom ([("Base", 2000)]) 
-a#matrix_to_atom_3_1 
-
---
-
-a#matrix_to_atom[3, 2], 
-   ~~> index_matrix_to_atom ([("Base", 2000)]) 
-a#matrix_to_atom_3_2 
 
 --
 
