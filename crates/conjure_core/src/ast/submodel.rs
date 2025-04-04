@@ -179,6 +179,9 @@ impl Display for SubModel {
                         pretty_domain_letting_declaration(&self.symbols(), &name).unwrap()
                     )?;
                 }
+                DeclarationKind::Given(d) => {
+                    writeln!(f, "given {name}: {d}")?;
+                }
             }
         }
 
