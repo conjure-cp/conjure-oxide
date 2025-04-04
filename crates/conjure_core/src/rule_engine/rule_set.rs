@@ -21,8 +21,8 @@ use crate::solver::SolverFamily;
 /// # Fields
 /// - `name`: The name of the rule set.
 /// - `order`: A number that decides the order in which this `RuleSet` should be applied.
-///     If two `RuleSet` instances have the same rule but with different priorities,
-///     the one with the higher `order` number will be the one that is used.
+///   If two `RuleSet` instances have the same rule but with different priorities,
+///   the one with the higher `order` number will be the one that is used.
 /// - `rules`: A lazily initialized map of rules to their priorities.
 /// - `dependency_rs_names`: The names of the rule sets that this rule set depends on.
 /// - `dependencies`: A lazily initialized set of `RuleSet` dependencies.
