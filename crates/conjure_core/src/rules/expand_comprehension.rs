@@ -5,19 +5,20 @@ use conjure_core::rule_engine::{
 
 use crate::into_matrix_expr;
 
-#[register_rule(("Base", 1000))]
-fn expand_comprehension(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+#[register_rule(("Base", 6000))]
+fn expand_comprehension(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Comprehension(_, comprehension) = expr else {
         return Err(RuleNotApplicable);
     };
 
     // TODO: check what kind of error this throws and maybe panic
 
+    let mut symbols = symbols.clone();
     let results = comprehension
         .as_ref()
         .clone()
-        .solve_with_minion()
+        .solve_with_minion(&mut symbols)
         .or(Err(RuleNotApplicable))?;
 
-    Ok(Reduction::pure(into_matrix_expr!(results)))
+    Ok(Reduction::with_symbols(into_matrix_expr!(results), symbols))
 }

@@ -6,7 +6,12 @@ find row: matrix indexed by [[int(0..7)]] of int(0..7)
 
 such that
 
-and([and([(majorDiagonal[queen] = Sum([queen,row[queen];int(1..2)])),(minorDiagonal[queen] = (queen - row[queen]));int(1..2)]) | queen: int(0..3),]),
+and([given queen: int(0..3)
+
+such that
+
+and([(majorDiagonal[queen] = Sum([queen,row[queen];int(1..2)])),(minorDiagonal[queen] = (queen - row[queen]));int(1..2)])
+ | queen: int(0..3),]),
 allDiff(row),
 allDiff(majorDiagonal),
 allDiff(minorDiagonal)
@@ -47,60 +52,29 @@ new variables:
   find minorDiagonal#matrix_to_atom_3: int(-3..3)
 --
 
-allDiff(row#matrix_to_atom), 
-   ~~> matrix_ref_to_atom ([("Base", 2000)]) 
-allDiff([row#matrix_to_atom_0,row#matrix_to_atom_1,row#matrix_to_atom_2,row#matrix_to_atom_3,row#matrix_to_atom_4,row#matrix_to_atom_5,row#matrix_to_atom_6,row#matrix_to_atom_7;int(1..)]) 
+[given queen: int(0..3)
 
---
+such that
 
-allDiff([row#matrix_to_atom_0,row#matrix_to_atom_1,row#matrix_to_atom_2,row#matrix_to_atom_3,row#matrix_to_atom_4,row#matrix_to_atom_5,row#matrix_to_atom_6,row#matrix_to_atom_7;int(1..)]), 
-   ~~> introduce_flat_alldiff ([("Minion", 4200)]) 
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]) 
-
---
-
-allDiff(majorDiagonal#matrix_to_atom), 
-   ~~> matrix_ref_to_atom ([("Base", 2000)]) 
-allDiff([majorDiagonal#matrix_to_atom_0,majorDiagonal#matrix_to_atom_1,majorDiagonal#matrix_to_atom_2,majorDiagonal#matrix_to_atom_3;int(1..)]) 
-
---
-
-allDiff([majorDiagonal#matrix_to_atom_0,majorDiagonal#matrix_to_atom_1,majorDiagonal#matrix_to_atom_2,majorDiagonal#matrix_to_atom_3;int(1..)]), 
-   ~~> introduce_flat_alldiff ([("Minion", 4200)]) 
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]) 
-
---
-
-allDiff(minorDiagonal#matrix_to_atom), 
-   ~~> matrix_ref_to_atom ([("Base", 2000)]) 
-allDiff([minorDiagonal#matrix_to_atom_0,minorDiagonal#matrix_to_atom_1,minorDiagonal#matrix_to_atom_2,minorDiagonal#matrix_to_atom_3;int(1..)]) 
-
---
-
-allDiff([minorDiagonal#matrix_to_atom_0,minorDiagonal#matrix_to_atom_1,minorDiagonal#matrix_to_atom_2,minorDiagonal#matrix_to_atom_3;int(1..)]), 
-   ~~> introduce_flat_alldiff ([("Minion", 4200)]) 
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]) 
-
---
-
-[and([(majorDiagonal[queen] = Sum([queen,row[queen];int(1..2)])),(minorDiagonal[queen] = (queen - row[queen]));int(1..2)]) | queen: int(0..3),], 
-   ~~> expand_comprehension ([("Base", 1000)]) 
+and([(majorDiagonal[queen] = Sum([queen,row[queen];int(1..2)])),(minorDiagonal[queen] = (queen - row[queen]));int(1..2)])
+ | queen: int(0..3),], 
+   ~~> expand_comprehension ([("Base", 6000)]) 
 [and([(majorDiagonal[0] = Sum([0,row[0];int(1..2)])),(minorDiagonal[0] = (0 - row[0]));int(1..2)]),and([(majorDiagonal[1] = Sum([1,row[1];int(1..2)])),(minorDiagonal[1] = (1 - row[1]));int(1..2)]),and([(majorDiagonal[2] = Sum([2,row[2];int(1..2)])),(minorDiagonal[2] = (2 - row[2]));int(1..2)]),and([(majorDiagonal[3] = Sum([3,row[3];int(1..2)])),(minorDiagonal[3] = (3 - row[3]));int(1..2)]);int(1..)] 
 
 --
 
 and([and([(majorDiagonal[0] = Sum([0,row[0];int(1..2)])),(minorDiagonal[0] = (0 - row[0]));int(1..2)]),and([(majorDiagonal[1] = Sum([1,row[1];int(1..2)])),(minorDiagonal[1] = (1 - row[1]));int(1..2)]),and([(majorDiagonal[2] = Sum([2,row[2];int(1..2)])),(minorDiagonal[2] = (2 - row[2]));int(1..2)]),and([(majorDiagonal[3] = Sum([3,row[3];int(1..2)])),(minorDiagonal[3] = (3 - row[3]));int(1..2)]);int(1..)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]), 
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom), 
    ~~> partial_evaluator ([("Base", 9000)]) 
 and([(majorDiagonal[0] = Sum([0,row[0];int(1..2)])),(minorDiagonal[0] = (0 - row[0]));int(1..2)]),
 and([(majorDiagonal[1] = Sum([1,row[1];int(1..2)])),(minorDiagonal[1] = (1 - row[1]));int(1..2)]),
 and([(majorDiagonal[2] = Sum([2,row[2];int(1..2)])),(minorDiagonal[2] = (2 - row[2]));int(1..2)]),
 and([(majorDiagonal[3] = Sum([3,row[3];int(1..2)])),(minorDiagonal[3] = (3 - row[3]));int(1..2)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]) 
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom) 
 
 --
 
@@ -1160,9 +1134,9 @@ and([(majorDiagonal#matrix_to_atom[0] = Sum([0,row#matrix_to_atom[0];int(1..2)])
 and([(majorDiagonal#matrix_to_atom[1] = Sum([1,row#matrix_to_atom[1];int(1..2)])),(minorDiagonal#matrix_to_atom[1] = Sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[2] = Sum([2,row#matrix_to_atom[2];int(1..2)])),(minorDiagonal#matrix_to_atom[2] = Sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),(minorDiagonal#matrix_to_atom[3] = Sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 and([FlatWeightedSumLeq([1, -1],[0, __2],__1),FlatWeightedSumGeq([1, -1],[0, __2],__1);int(1..)]),
 __2 =aux row#matrix_to_atom[0], 
@@ -1171,9 +1145,9 @@ and([(majorDiagonal#matrix_to_atom[0] = Sum([0,row#matrix_to_atom[0];int(1..2)])
 and([(majorDiagonal#matrix_to_atom[1] = Sum([1,row#matrix_to_atom[1];int(1..2)])),(minorDiagonal#matrix_to_atom[1] = Sum([1,-(row#matrix_to_atom[1]);int(1..)]));int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[2] = Sum([2,row#matrix_to_atom[2];int(1..2)])),(minorDiagonal#matrix_to_atom[2] = Sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),(minorDiagonal#matrix_to_atom[3] = Sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1205,9 +1179,9 @@ and([(majorDiagonal#matrix_to_atom[0] = Sum([0,row#matrix_to_atom[0];int(1..2)])
 and([(majorDiagonal#matrix_to_atom[1] = Sum([1,row#matrix_to_atom[1];int(1..2)])),(__3 = __4);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[2] = Sum([2,row#matrix_to_atom[2];int(1..2)])),(minorDiagonal#matrix_to_atom[2] = Sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),(minorDiagonal#matrix_to_atom[3] = Sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1220,9 +1194,9 @@ and([(majorDiagonal#matrix_to_atom[0] = Sum([0,row#matrix_to_atom[0];int(1..2)])
 and([(majorDiagonal#matrix_to_atom[1] = Sum([1,row#matrix_to_atom[1];int(1..2)])),(__3 = __4);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[2] = Sum([2,row#matrix_to_atom[2];int(1..2)])),(minorDiagonal#matrix_to_atom[2] = Sum([2,-(row#matrix_to_atom[2]);int(1..)]));int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),(minorDiagonal#matrix_to_atom[3] = Sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1258,9 +1232,9 @@ and([(majorDiagonal#matrix_to_atom[0] = Sum([0,row#matrix_to_atom[0];int(1..2)])
 and([(majorDiagonal#matrix_to_atom[1] = Sum([1,row#matrix_to_atom[1];int(1..2)])),(__3 = __4);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[2] = Sum([2,row#matrix_to_atom[2];int(1..2)])),(__6 = __7);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),(minorDiagonal#matrix_to_atom[3] = Sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1277,9 +1251,9 @@ and([(majorDiagonal#matrix_to_atom[0] = Sum([0,row#matrix_to_atom[0];int(1..2)])
 and([(majorDiagonal#matrix_to_atom[1] = Sum([1,row#matrix_to_atom[1];int(1..2)])),(__3 = __4);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[2] = Sum([2,row#matrix_to_atom[2];int(1..2)])),(__6 = __7);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),(minorDiagonal#matrix_to_atom[3] = Sum([3,-(row#matrix_to_atom[3]);int(1..)]));int(1..2)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1319,9 +1293,9 @@ and([(majorDiagonal#matrix_to_atom[0] = Sum([0,row#matrix_to_atom[0];int(1..2)])
 and([(majorDiagonal#matrix_to_atom[1] = Sum([1,row#matrix_to_atom[1];int(1..2)])),(__3 = __4);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[2] = Sum([2,row#matrix_to_atom[2];int(1..2)])),(__6 = __7);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),(__9 = __10);int(1..2)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1342,9 +1316,9 @@ and([(majorDiagonal#matrix_to_atom[0] = Sum([0,row#matrix_to_atom[0];int(1..2)])
 and([(majorDiagonal#matrix_to_atom[1] = Sum([1,row#matrix_to_atom[1];int(1..2)])),(__3 = __4);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[2] = Sum([2,row#matrix_to_atom[2];int(1..2)])),(__6 = __7);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),(__9 = __10);int(1..2)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1374,9 +1348,9 @@ and([(majorDiagonal#matrix_to_atom[0] = Sum([0,row#matrix_to_atom[0];int(1..2)])
 and([(majorDiagonal#matrix_to_atom[1] = Sum([1,row#matrix_to_atom[1];int(1..2)])),(__3 = __4);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[2] = Sum([2,row#matrix_to_atom[2];int(1..2)])),(__6 = __7);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),(__9 = __10);int(1..2)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1399,9 +1373,9 @@ __11 =aux row#matrix_to_atom[3],
 and([(majorDiagonal#matrix_to_atom[1] = Sum([1,row#matrix_to_atom[1];int(1..2)])),(__3 = __4);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[2] = Sum([2,row#matrix_to_atom[2];int(1..2)])),(__6 = __7);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),(__9 = __10);int(1..2)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1447,9 +1421,9 @@ and([SumLeq([0, __12], majorDiagonal#matrix_to_atom_0),SumGeq([0, __12], majorDi
 and([(majorDiagonal#matrix_to_atom[1] = Sum([1,row#matrix_to_atom[1];int(1..2)])),(__3 = __4);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[2] = Sum([2,row#matrix_to_atom[2];int(1..2)])),(__6 = __7);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),(__9 = __10);int(1..2)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1474,9 +1448,9 @@ SumGeq([0, __12], majorDiagonal#matrix_to_atom_0),
 and([(majorDiagonal#matrix_to_atom[1] = Sum([1,row#matrix_to_atom[1];int(1..2)])),(__3 = __4);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[2] = Sum([2,row#matrix_to_atom[2];int(1..2)])),(__6 = __7);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),(__9 = __10);int(1..2)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1509,9 +1483,9 @@ SumGeq([0, __12], majorDiagonal#matrix_to_atom_0),
 and([(majorDiagonal#matrix_to_atom[1] = Sum([1,row#matrix_to_atom[1];int(1..2)])),(__3 = __4);int(1..)]),
 and([(majorDiagonal#matrix_to_atom[2] = Sum([2,row#matrix_to_atom[2];int(1..2)])),(__6 = __7);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),(__9 = __10);int(1..2)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1537,9 +1511,9 @@ SumGeq([0, __12], majorDiagonal#matrix_to_atom_0),
 (__3 = __4),
 and([(majorDiagonal#matrix_to_atom[2] = Sum([2,row#matrix_to_atom[2];int(1..2)])),(__6 = __7);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),(__9 = __10);int(1..2)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1588,9 +1562,9 @@ and([SumLeq([1, __13], majorDiagonal#matrix_to_atom_1),SumGeq([1, __13], majorDi
 (__3 = __4),
 and([(majorDiagonal#matrix_to_atom[2] = Sum([2,row#matrix_to_atom[2];int(1..2)])),(__6 = __7);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),(__9 = __10);int(1..2)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1618,9 +1592,9 @@ SumGeq([1, __13], majorDiagonal#matrix_to_atom_1),
 (__3 = __4),
 and([(majorDiagonal#matrix_to_atom[2] = Sum([2,row#matrix_to_atom[2];int(1..2)])),(__6 = __7);int(1..2)]),
 and([(majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),(__9 = __10);int(1..2)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1656,9 +1630,9 @@ SumGeq([1, __13], majorDiagonal#matrix_to_atom_1),
 (__3 = __4),
 and([(majorDiagonal#matrix_to_atom[2] = Sum([2,row#matrix_to_atom[2];int(1..2)])),(__6 = __7);int(1..)]),
 and([(majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),(__9 = __10);int(1..2)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1687,9 +1661,9 @@ SumGeq([1, __13], majorDiagonal#matrix_to_atom_1),
 (majorDiagonal#matrix_to_atom[2] = Sum([2,row#matrix_to_atom[2];int(1..2)])),
 (__6 = __7),
 and([(majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),(__9 = __10);int(1..2)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1741,9 +1715,9 @@ SumGeq([1, __13], majorDiagonal#matrix_to_atom_1),
 and([SumLeq([2, __14], majorDiagonal#matrix_to_atom_2),SumGeq([2, __14], majorDiagonal#matrix_to_atom_2);int(1..)]),
 (__6 = __7),
 and([(majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),(__9 = __10);int(1..2)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1774,9 +1748,9 @@ SumLeq([2, __14], majorDiagonal#matrix_to_atom_2),
 SumGeq([2, __14], majorDiagonal#matrix_to_atom_2),
 (__6 = __7),
 and([(majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),(__9 = __10);int(1..2)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1815,9 +1789,9 @@ SumLeq([2, __14], majorDiagonal#matrix_to_atom_2),
 SumGeq([2, __14], majorDiagonal#matrix_to_atom_2),
 (__6 = __7),
 and([(majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),(__9 = __10);int(1..)]),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1849,9 +1823,9 @@ SumGeq([2, __14], majorDiagonal#matrix_to_atom_2),
 (__6 = __7),
 (majorDiagonal#matrix_to_atom[3] = Sum([3,row#matrix_to_atom[3];int(1..2)])),
 (__9 = __10),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1906,9 +1880,9 @@ SumGeq([2, __14], majorDiagonal#matrix_to_atom_2),
 (__6 = __7),
 and([SumLeq([3, __15], majorDiagonal#matrix_to_atom_3),SumGeq([3, __15], majorDiagonal#matrix_to_atom_3);int(1..)]),
 (__9 = __10),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1942,9 +1916,9 @@ SumGeq([2, __14], majorDiagonal#matrix_to_atom_2),
 SumLeq([3, __15], majorDiagonal#matrix_to_atom_3),
 SumGeq([3, __15], majorDiagonal#matrix_to_atom_3),
 (__9 = __10),
-__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]),
-__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]),
-__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]),
+allDiff(row#matrix_to_atom),
+allDiff(majorDiagonal#matrix_to_atom),
+allDiff(minorDiagonal#matrix_to_atom),
 __0 =aux minorDiagonal#matrix_to_atom[0],
 FlatWeightedSumLeq([1, -1],[0, __2],__1),
 FlatWeightedSumGeq([1, -1],[0, __2],__1),
@@ -1965,6 +1939,42 @@ __12 =aux row#matrix_to_atom[0],
 __13 =aux row#matrix_to_atom[1],
 __14 =aux row#matrix_to_atom[2],
 __15 =aux row#matrix_to_atom[3] 
+
+--
+
+allDiff(row#matrix_to_atom), 
+   ~~> matrix_ref_to_atom ([("Base", 2000)]) 
+allDiff([row#matrix_to_atom_0,row#matrix_to_atom_1,row#matrix_to_atom_2,row#matrix_to_atom_3,row#matrix_to_atom_4,row#matrix_to_atom_5,row#matrix_to_atom_6,row#matrix_to_atom_7;int(1..)]) 
+
+--
+
+allDiff([row#matrix_to_atom_0,row#matrix_to_atom_1,row#matrix_to_atom_2,row#matrix_to_atom_3,row#matrix_to_atom_4,row#matrix_to_atom_5,row#matrix_to_atom_6,row#matrix_to_atom_7;int(1..)]), 
+   ~~> introduce_flat_alldiff ([("Minion", 4200)]) 
+__flat_alldiff([row#matrix_to_atom_0, row#matrix_to_atom_1, row#matrix_to_atom_2, row#matrix_to_atom_3, row#matrix_to_atom_4, row#matrix_to_atom_5, row#matrix_to_atom_6, row#matrix_to_atom_7]) 
+
+--
+
+allDiff(majorDiagonal#matrix_to_atom), 
+   ~~> matrix_ref_to_atom ([("Base", 2000)]) 
+allDiff([majorDiagonal#matrix_to_atom_0,majorDiagonal#matrix_to_atom_1,majorDiagonal#matrix_to_atom_2,majorDiagonal#matrix_to_atom_3;int(1..)]) 
+
+--
+
+allDiff([majorDiagonal#matrix_to_atom_0,majorDiagonal#matrix_to_atom_1,majorDiagonal#matrix_to_atom_2,majorDiagonal#matrix_to_atom_3;int(1..)]), 
+   ~~> introduce_flat_alldiff ([("Minion", 4200)]) 
+__flat_alldiff([majorDiagonal#matrix_to_atom_0, majorDiagonal#matrix_to_atom_1, majorDiagonal#matrix_to_atom_2, majorDiagonal#matrix_to_atom_3]) 
+
+--
+
+allDiff(minorDiagonal#matrix_to_atom), 
+   ~~> matrix_ref_to_atom ([("Base", 2000)]) 
+allDiff([minorDiagonal#matrix_to_atom_0,minorDiagonal#matrix_to_atom_1,minorDiagonal#matrix_to_atom_2,minorDiagonal#matrix_to_atom_3;int(1..)]) 
+
+--
+
+allDiff([minorDiagonal#matrix_to_atom_0,minorDiagonal#matrix_to_atom_1,minorDiagonal#matrix_to_atom_2,minorDiagonal#matrix_to_atom_3;int(1..)]), 
+   ~~> introduce_flat_alldiff ([("Minion", 4200)]) 
+__flat_alldiff([minorDiagonal#matrix_to_atom_0, minorDiagonal#matrix_to_atom_1, minorDiagonal#matrix_to_atom_2, minorDiagonal#matrix_to_atom_3]) 
 
 --
 
