@@ -57,6 +57,12 @@ jobs:
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.3
 
+      # Override RUSTUP_TOOLCHAIN to nightly when we are testing with nightly
+      # This value is read from the rust-toolchain.toml file otherwise
+      - name: Set RUSTUP_TOOLCHAIN
+        if: matrix.rust_release == 'nightly'
+        run: echo "RUSTUP_TOOLCHAIN=nightly" >> $GITHUB_ENV
+
       - name: Disable rust-lld (to fix linkme)
         run: |
           echo RUSTFLAGS=${RUSTFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
@@ -94,6 +100,12 @@ jobs:
       - uses: actions/checkout@v3
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.3
+
+      # Override RUSTUP_TOOLCHAIN to nightly when we are testing with nightly
+      # This value is read from the rust-toolchain.toml file otherwise
+      - name: Set RUSTUP_TOOLCHAIN
+        if: matrix.rust_release == 'nightly'
+        run: echo "RUSTUP_TOOLCHAIN=nightly" >> $GITHUB_ENV
 
       - name: Disable rust-lld (to fix linkme)
         run: |
