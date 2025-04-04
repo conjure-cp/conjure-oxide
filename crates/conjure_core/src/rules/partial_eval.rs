@@ -268,7 +268,6 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             let mut new_vec: Vec<Expr> = Vec::new();
             let mut has_changed: bool = false;
             for expr in es {
-                eprintln!("{expr}");
                 match expr {
                     Expr::Atomic(_, Atom::Literal(Bool(x))) => {
                         has_changed = true;
