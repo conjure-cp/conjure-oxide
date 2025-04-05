@@ -1,11 +1,11 @@
-use std::rc::Rc;
-
 use conjure_core::ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable};
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
     register_rule, register_rule_set, ApplicationError, ApplicationError::RuleNotApplicable,
     ApplicationResult, Reduction,
 };
+use std::cell::RefCell;
+use std::rc::Rc;
 use uniplate::Uniplate;
 
 use Atom::*;
@@ -97,12 +97,24 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     for e in exprs {
         new_top.push(Leq(
             Metadata::new(),
-            Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
+            Box::new(Atomic(
+                Metadata::new(),
+                Reference(
+                    new_name.clone(),
+                    Rc::new(RefCell::new(Declaration::default())),
+                ),
+            )),
             Box::new(e.clone()),
         ));
         disjunction.push(Eq(
             Metadata::new(),
-            Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
+            Box::new(Atomic(
+                Metadata::new(),
+                Reference(
+                    new_name.clone(),
+                    Rc::new(RefCell::new(Declaration::default())),
+                ),
+            )),
             Box::new(e.clone()),
         ));
     }
@@ -118,7 +130,10 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     symbols.insert(Rc::new(Declaration::new_var(new_name.clone(), domain)));
 
     Ok(Reduction::new(
-        Atomic(Metadata::new(), Reference(new_name)),
+        Atomic(
+            Metadata::new(),
+            Reference(new_name, Rc::new(RefCell::new(Declaration::default()))),
+        ),
         new_top,
         symbols,
     ))
@@ -148,12 +163,24 @@ fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     for e in exprs {
         new_top.push(Geq(
             Metadata::new(),
-            Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
+            Box::new(Atomic(
+                Metadata::new(),
+                Reference(
+                    new_name.clone(),
+                    Rc::new(RefCell::new(Declaration::default())),
+                ),
+            )),
             Box::new(e.clone()),
         ));
         disjunction.push(Eq(
             Metadata::new(),
-            Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
+            Box::new(Atomic(
+                Metadata::new(),
+                Reference(
+                    new_name.clone(),
+                    Rc::new(RefCell::new(Declaration::default())),
+                ),
+            )),
             Box::new(e.clone()),
         ));
     }
@@ -169,7 +196,10 @@ fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     symbols.insert(Rc::new(Declaration::new_var(new_name.clone(), domain)));
 
     Ok(Reduction::new(
-        Atomic(Metadata::new(), Reference(new_name)),
+        Atomic(
+            Metadata::new(),
+            Reference(new_name, Rc::new(RefCell::new(Declaration::default()))),
+        ),
         new_top,
         symbols,
     ))

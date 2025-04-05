@@ -4,8 +4,11 @@ use conjure_core::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
 };
 use itertools::Itertools;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use crate::ast::Atom;
+use crate::ast::Declaration;
 use crate::ast::Domain;
 use crate::ast::Name;
 use crate::bug;
@@ -15,7 +18,7 @@ use crate::representation::Representation;
 #[register_rule(("Base", 8000))]
 fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
-    let Expr::Atomic(_, Atom::Reference(name)) = expr else {
+    let Expr::Atomic(_, Atom::Reference(name, _)) = expr else {
         return Err(RuleNotApplicable);
     };
 
@@ -42,7 +45,10 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
     let new_name = Name::WithRepresentation(Box::new(name.clone()), representation_names);
 
     Ok(Reduction::with_symbols(
-        Expr::Atomic(Metadata::new(), Atom::Reference(new_name)),
+        Expr::Atomic(
+            Metadata::new(),
+            Atom::Reference(new_name, Rc::new(RefCell::new(Declaration::default()))),
+        ),
         symbols,
     ))
 }
@@ -59,7 +65,7 @@ fn needs_representation(name: &Name, symbols: &SymbolTable) -> bool {
 
 /// Returns whether `domain` needs representing.
 fn domain_needs_representation(domain: &Domain) -> bool {
-    // very simple implementation for now
+    // very simple implementation for nows
     match domain {
         Domain::BoolDomain | Domain::IntDomain(_) => false,
         Domain::DomainSet(_, _) | Domain::DomainMatrix(_, _) => true,

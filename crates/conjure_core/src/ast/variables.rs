@@ -29,7 +29,7 @@ use super::{types::Typeable, ReturnType};
 /// println!("Boolean Variable: {}", bool_var);
 /// println!("Integer Variable: {}", int_var);
 
-#[derive(Clone, Debug, Serialize, Deserialize, Derivative)]
+#[derive(Default, Clone, Debug, Serialize, Deserialize, Derivative)]
 #[derivative(Hash, PartialEq, Eq)]
 pub struct DecisionVariable {
     pub domain: Domain,

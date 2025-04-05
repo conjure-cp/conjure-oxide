@@ -2,9 +2,6 @@ use std::collections::VecDeque;
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 
-use itertools::Itertools;
-use serde::{Deserialize, Serialize};
-
 use crate::ast::literals::AbstractLiteral;
 use crate::ast::literals::Literal;
 use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
@@ -15,6 +12,9 @@ use crate::ast::ReturnType;
 use crate::bug;
 use crate::metadata::Metadata;
 use enum_compatability_macro::document_compatibility;
+use itertools::Itertools;
+use serde::{Deserialize, Serialize};
+use std::cell::RefCell;
 use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Uniplate as _};
 
@@ -468,7 +468,7 @@ impl Expression {
                 }
             }
             Expression::InDomain(_, _, _) => Some(Domain::BoolDomain),
-            Expression::Atomic(_, Atom::Reference(name)) => Some(syms.resolve_domain(name)?),
+            Expression::Atomic(_, Atom::Reference(name, _)) => Some(syms.resolve_domain(name)?),
             Expression::Atomic(_, Atom::Literal(Literal::Int(n))) => {
                 Some(Domain::IntDomain(vec![Range::Single(*n)]))
             }
@@ -671,7 +671,7 @@ impl Expression {
             Expression::Atomic(_, Atom::Literal(Literal::Int(_))) => Some(ReturnType::Int),
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(ReturnType::Bool),
             Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(_))) => None,
-            Expression::Atomic(_, Atom::Reference(_)) => None,
+            Expression::Atomic(_, Atom::Reference(_, _)) => None,
             Expression::Scope(_, scope) => scope.return_type(),
             Expression::Abs(_, _) => Some(ReturnType::Int),
             Expression::Sum(_, _) => Some(ReturnType::Int),
@@ -1096,7 +1096,13 @@ mod tests {
 
     #[test]
     fn test_domain_of_reference() {
-        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
+        let reference = Expression::Atomic(
+            Metadata::new(),
+            Atom::Reference(
+                Name::MachineName(0),
+                Rc::new(RefCell::new(Declaration::default())),
+            ),
+        );
         let mut vars = SymbolTable::new();
         vars.insert(Rc::new(Declaration::new_var(
             Name::MachineName(0),
@@ -1111,13 +1117,25 @@ mod tests {
 
     #[test]
     fn test_domain_of_reference_not_found() {
-        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
+        let reference = Expression::Atomic(
+            Metadata::new(),
+            Atom::Reference(
+                Name::MachineName(0),
+                Rc::new(RefCell::new(Declaration::default())),
+            ),
+        );
         assert_eq!(reference.domain_of(&SymbolTable::new()), None);
     }
 
     #[test]
     fn test_domain_of_reference_sum_single() {
-        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
+        let reference = Expression::Atomic(
+            Metadata::new(),
+            Atom::Reference(
+                Name::MachineName(0),
+                Rc::new(RefCell::new(Declaration::default())),
+            ),
+        );
         let mut vars = SymbolTable::new();
         vars.insert(Rc::new(Declaration::new_var(
             Name::MachineName(0),
@@ -1136,7 +1154,13 @@ mod tests {
 
     #[test]
     fn test_domain_of_reference_sum_bounded() {
-        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
+        let reference = Expression::Atomic(
+            Metadata::new(),
+            Atom::Reference(
+                Name::MachineName(0),
+                Rc::new(RefCell::new(Declaration::default())),
+            ),
+        );
         let mut vars = SymbolTable::new();
         vars.insert(Rc::new(Declaration::new_var(
             Name::MachineName(0),

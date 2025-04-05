@@ -1,6 +1,6 @@
-use std::rc::Rc;
-
 use crate::ast::{Declaration, SymbolTable};
+use std::cell::RefCell;
+use std::rc::Rc;
 use tracing::instrument;
 use uniplate::{Biplate, Uniplate};
 
@@ -112,7 +112,10 @@ pub struct ToAuxVarOutput {
 impl ToAuxVarOutput {
     /// Returns the new auxiliary variable as an `Atom`.
     pub fn as_atom(&self) -> Atom {
-        Atom::Reference(self.aux_name())
+        Atom::Reference(
+            self.aux_name(),
+            Rc::new(RefCell::new(Declaration::default())),
+        )
     }
 
     /// Returns the new auxiliary variable as an `Expression`.
