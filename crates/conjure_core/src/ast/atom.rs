@@ -11,7 +11,7 @@ use uniplate::derive::Uniplate;
 #[uniplate()]
 #[biplate(to=Literal)]
 #[biplate(to=Expression)]
-#[biplate(to=AbstractLiteral<Literal>)]
+#[biplate(to=AbstractLiteral<Literal>,walk_into=[Literal])]
 #[biplate(to=Name)]
 pub enum Atom {
     Literal(Literal),
