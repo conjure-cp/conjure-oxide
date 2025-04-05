@@ -12,7 +12,7 @@ use super::{DecisionVariable, Domain, Expression, ReturnType};
 
 static ID_COUNTER: AtomicU32 = AtomicU32::new(0);
 
-#[derive(Derivative)]
+#[derive(Derivative, Default)]
 #[derivative(PartialEq)]
 #[derive(Debug, Serialize, Deserialize, Eq, Uniplate)]
 #[biplate(to=Expression)]
@@ -49,6 +49,12 @@ pub enum DeclarationKind {
     DecisionVariable(DecisionVariable),
     ValueLetting(Expression),
     DomainLetting(Domain),
+}
+
+impl Default for DeclarationKind {
+    fn default() -> Self {
+        Self::DecisionVariable(DecisionVariable::default())
+    }
 }
 
 impl Declaration {

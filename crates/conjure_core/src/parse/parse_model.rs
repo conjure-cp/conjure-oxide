@@ -521,7 +521,10 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
             let name = refe["Reference"].as_array()?[0].as_object()?["Name"].as_str()?;
             Some(Expression::Atomic(
                 Metadata::new(),
-                Atom::Reference(Name::UserName(name.to_string()), None),
+                Atom::Reference(
+                    Name::UserName(name.to_string()),
+                    Rc::new(RefCell::new(Declaration::default())),
+                ),
             ))
         }
         Value::Object(abslit) if abslit.contains_key("AbstractLiteral") => {

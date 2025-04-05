@@ -1,6 +1,7 @@
-use std::collections::BTreeMap;
-
 use itertools::{izip, Itertools};
+use std::cell::RefCell;
+use std::collections::BTreeMap;
+use std::rc::Rc;
 
 use super::prelude::*;
 use crate::{ast::matrix, into_matrix};
@@ -175,7 +176,10 @@ impl Representation for MatrixToAtom {
             .map(|name| {
                 (
                     name.clone(),
-                    Expression::Atomic(Metadata::new(), Atom::Reference(name, None)),
+                    Expression::Atomic(
+                        Metadata::new(),
+                        Atom::Reference(name, Rc::new(RefCell::new(Declaration::default()))),
+                    ),
                 )
             })
             .collect())

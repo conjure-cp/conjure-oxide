@@ -15,13 +15,16 @@ use uniplate::derive::Uniplate;
 #[biplate(to=Name)]
 pub enum Atom {
     Literal(Literal),
-    Reference(Name, #[serde(skip)] Option<Rc<RefCell<Declaration>>>),
+    Reference(Name, #[serde(skip)] Rc<RefCell<Declaration>>),
 }
 
 impl Atom {
     /// Shorthand to create a reference by user name.
     pub fn new_uref(name: &str) -> Atom {
-        Atom::Reference(Name::UserName(name.to_string()), None)
+        Atom::Reference(
+            Name::UserName(name.to_string()),
+            Rc::new(RefCell::new(Declaration::default())),
+        )
     }
 }
 
@@ -42,12 +45,12 @@ impl From<Literal> for Atom {
 
 impl From<Name> for Atom {
     fn from(value: Name) -> Self {
-        Atom::Reference(value, None)
+        Atom::Reference(value, Rc::new(RefCell::new(Declaration::default())))
     }
 }
 
-impl From<(Name, Option<Rc<RefCell<Declaration>>>)> for Atom {
-    fn from((name, decl): (Name, Option<Rc<RefCell<Declaration>>>)) -> Self {
+impl From<(Name, Rc<RefCell<Declaration>>)> for Atom {
+    fn from((name, decl): (Name, Rc<RefCell<Declaration>>)) -> Self {
         Atom::Reference(name, decl)
     }
 }

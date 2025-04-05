@@ -1,6 +1,7 @@
 #![allow(clippy::legacy_numeric_constants)]
 use conjure_core::ast::Declaration;
 use conjure_core::error::Error;
+use std::cell::RefCell;
 use std::fs;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
@@ -342,7 +343,10 @@ fn parse_constraint(constraint: Node, source_code: &str, root: &Node) -> Express
                 String::from(&source_code[constraint.start_byte()..constraint.end_byte()]);
             Expression::Atomic(
                 Metadata::new(),
-                Atom::Reference(Name::UserName(variable_name), None),
+                Atom::Reference(
+                    Name::UserName(variable_name),
+                    Rc::new(RefCell::new(Declaration::default())),
+                ),
             )
         }
         "ERROR" => {
