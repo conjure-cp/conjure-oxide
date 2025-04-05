@@ -92,6 +92,7 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
                         parse_expression(x, m.as_submodel_mut().symbols_ptr_unchecked()).unwrap()
                     })
                     .collect();
+                println!("Constraints {:?}", constraints);
                 m.as_submodel_mut().add_constraints(constraints);
                 // println!("Nb constraints {}", m.constraints.len());
             }
@@ -187,24 +188,26 @@ fn parse_domain(
                 .ok_or(error!("DomainReference[0].Name is not a string"))?
                 .into(),
         ))),
+        // TODO: add set attributes
         "DomainSet" => {
+            let attrs = domain_value.get(1).and_then(|v| v.as_object());
             let dom = domain_value.get(2).and_then(|v| v.as_object());
             let domain_obj = dom.expect("domain object exists");
-            let domain = domain_obj
+            let (domain_name, domain_value) = domain_obj
                 .iter()
                 .next()
                 .ok_or(Error::Parse("DomainSet is an empty object".to_owned()))?;
-            let domain = match domain_name {
+            let domain = match domain_name.as_str() {
                 "DomainInt" => {
-                    println!("DomainInt: {:#?}", domain.1);
-                    Ok(parse_int_domain(domain.1, symbols)?)
+                    println!("DomainInt: {:#?}", domain_value);
+                    Ok(parse_int_domain(domain_value, symbols)?)
                 }
                 "DomainBool" => Ok(Domain::BoolDomain),
                 _ => Err(Error::Parse(
                     "FindOrGiven[2] is an unknown object".to_owned(),
                 )),
             }?;
-            print!("{:?}", domain);
+            println!("{:?}", domain);
             Ok(Domain::DomainSet(SetAttr::None, Box::new(domain)))
         }
 
