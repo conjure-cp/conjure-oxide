@@ -1,6 +1,6 @@
 use regex::Regex;
 use std::collections::HashMap;
-use std::sync::{Mutex, OnceLock};
+use std::sync::{LazyLock, Mutex, OnceLock};
 
 use minion_ast::Model as MinionModel;
 use minion_rs::ast as minion_ast;
@@ -40,12 +40,14 @@ static ANY_SOLUTIONS: Mutex<bool> = Mutex::new(false);
 static USER_TERMINATED: Mutex<bool> = Mutex::new(false);
 
 fn parse_name(minion_name: &str) -> Name {
-    let machine_name_re = Regex::new(r"__conjure_machine_name_([0-9]+)").unwrap();
-    let represented_name_re = Regex::new(r"__conjure_represented_name##(.*)##(.*)___(.*)").unwrap();
+    static MACHINE_NAME_RE: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"__conjure_machine_name_([0-9]+)").unwrap());
+    static REPRESENTED_NAME_RE: LazyLock<Regex> =
+        LazyLock::new(|| Regex::new(r"__conjure_represented_name##(.*)##(.*)___(.*)").unwrap());
 
-    if let Some(caps) = machine_name_re.captures(minion_name) {
+    if let Some(caps) = MACHINE_NAME_RE.captures(minion_name) {
         conjure_ast::Name::MachineName(caps[1].parse::<i32>().unwrap())
-    } else if let Some(caps) = represented_name_re.captures(minion_name) {
+    } else if let Some(caps) = REPRESENTED_NAME_RE.captures(minion_name) {
         conjure_ast::Name::RepresentedName(
             Box::new(parse_name(&caps[1])),
             caps[2].to_string(),
