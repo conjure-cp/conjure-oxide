@@ -20,7 +20,7 @@ mod expand_comprehension;
 mod select_representation;
 mod utils;
 
-mod equals;
+mod sets;
 
 /// Denotes a block of code as extra, optional checks for a rule. Primarily, these are checks that
 /// are too expensive to do normally, or are implicit in the rule priorities and application order.
