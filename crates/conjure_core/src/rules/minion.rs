@@ -232,21 +232,27 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symbols: &SymbolTable) -> Appli
     ) -> Result<(Vec<Expr>, Atom, EqualityKind), ApplicationError> {
         match (a, b, equality_kind) {
             (Expr::Sum(_, sum_terms), Expr::Atomic(_, total), EqualityKind::Leq) => {
+                let sum_terms = sum_terms.unwrap_list().ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Leq))
             }
             (Expr::Atomic(_, total), Expr::Sum(_, sum_terms), EqualityKind::Leq) => {
+                let sum_terms = sum_terms.unwrap_list().ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Geq))
             }
             (Expr::Sum(_, sum_terms), Expr::Atomic(_, total), EqualityKind::Geq) => {
+                let sum_terms = sum_terms.unwrap_list().ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Geq))
             }
             (Expr::Atomic(_, total), Expr::Sum(_, sum_terms), EqualityKind::Geq) => {
+                let sum_terms = sum_terms.unwrap_list().ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Leq))
             }
             (Expr::Sum(_, sum_terms), Expr::Atomic(_, total), EqualityKind::Eq) => {
+                let sum_terms = sum_terms.unwrap_list().ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Eq))
             }
             (Expr::Atomic(_, total), Expr::Sum(_, sum_terms), EqualityKind::Eq) => {
+                let sum_terms = sum_terms.unwrap_list().ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Eq))
             }
             _ => Err(RuleNotApplicable),
@@ -260,6 +266,7 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symbols: &SymbolTable) -> Appli
         Expr::AuxDeclaration(_, n, a) => {
             let total: Atom = n.into();
             if let Expr::Sum(_, sum_terms) = *a {
+                let sum_terms = sum_terms.unwrap_list().ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Eq))
             } else {
                 Err(RuleNotApplicable)
@@ -540,6 +547,11 @@ fn introduce_poweq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             (Expr::SafePow(_, a, b), Expr::Atomic(_, total)) => Ok((a, b, total)),
             _ => Err(RuleNotApplicable),
         },
+
+        Expr::AuxDeclaration(_, total, e) => match *e {
+            Expr::SafePow(_, a, b) => Ok((a, b, Atom::Reference(total))),
+            _ => Err(RuleNotApplicable),
+        },
         _ => Err(RuleNotApplicable),
     }?;
 
@@ -673,6 +685,101 @@ fn introduce_reifyimply_ineq_from_imply(expr: &Expr, _: &SymbolTable) -> Applica
     }
 }
 
+/// Converts `__inDomain(a,domain) to w-inintervalset.
+///
+/// This applies if domain is integer and finite.
+#[register_rule(("Minion", 4400))]
+fn introduce_wininterval_set_from_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::InDomain(_, e, domain) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::Atomic(_, atom @ Atom::Reference(_)) = e.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Domain::IntDomain(ranges) = domain else {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut out_ranges = vec![];
+
+    for range in ranges {
+        match range {
+            crate::ast::Range::Single(x) => {
+                out_ranges.push(*x);
+                out_ranges.push(*x);
+            }
+            crate::ast::Range::Bounded(x, y) => {
+                out_ranges.push(*x);
+                out_ranges.push(*y);
+            }
+            crate::ast::Range::UnboundedR(_) | crate::ast::Range::UnboundedL(_) => {
+                return Err(RuleNotApplicable);
+            }
+        }
+    }
+
+    Ok(Reduction::pure(Expr::MinionWInIntervalSet(
+        Metadata::new(),
+        atom.clone(),
+        out_ranges,
+    )))
+}
+
+/// Converts `[....][i]` to `element_one` if:
+///
+/// 1. the subject is a list literal
+/// 2. the subject is one dimensional
+#[register_rule(("Minion", 4400))]
+fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let (equalto, subject, indices) = match expr.clone() {
+        Expr::Eq(_, e1, e2) => match (*e1, *e2) {
+            (Expr::Atomic(_, eq), Expr::SafeIndex(_, subject, indices)) => {
+                Ok((eq, subject, indices))
+            }
+            (Expr::SafeIndex(_, subject, indices), Expr::Atomic(_, eq)) => {
+                Ok((eq, subject, indices))
+            }
+            _ => Err(RuleNotApplicable),
+        },
+        Expr::AuxDeclaration(_, name, expr) => match *expr {
+            Expr::SafeIndex(_, subject, indices) => Ok((Atom::Reference(name), subject, indices)),
+            _ => Err(RuleNotApplicable),
+        },
+        _ => Err(RuleNotApplicable),
+    }?;
+
+    if indices.len() != 1 {
+        return Err(RuleNotApplicable);
+    }
+
+    let Some(list) = subject.unwrap_list() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::Atomic(_, index) = indices[0].clone() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut atom_list = vec![];
+
+    for elem in list {
+        let Expr::Atomic(_, elem) = elem else {
+            return Err(RuleNotApplicable);
+        };
+
+        atom_list.push(elem);
+    }
+
+    Ok(Reduction::pure(Expr::MinionElementOne(
+        Metadata::new(),
+        atom_list,
+        index,
+        equalto,
+    )))
+}
+
 /// Flattens an implication.
 ///
 /// ```text
@@ -728,6 +835,8 @@ fn flatten_generic(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             | Expr::Product(_, _)
             | Expr::Neg(_, _)
             | Expr::Not(_, _)
+            | Expr::SafeIndex(_, _, _)
+            | Expr::InDomain(_, _, _)
     ) {
         return Err(RuleNotApplicable);
     }
@@ -861,6 +970,7 @@ fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
+    let sum_exprs = sum_exprs.unwrap_list().ok_or(RuleNotApplicable)?;
     let (y, k) = match sum_exprs.as_slice() {
         [Expr::Atomic(_, y), Expr::Atomic(_, Atom::Literal(k))] => (y, k),
         [Expr::Atomic(_, Atom::Literal(k)), Expr::Atomic(_, y)] => (y, k),
@@ -895,6 +1005,7 @@ fn y_plus_k_geq_x_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
+    let sum_exprs = sum_exprs.unwrap_list().ok_or(RuleNotApplicable)?;
     let (y, k) = match sum_exprs.as_slice() {
         [Expr::Atomic(_, y), Expr::Atomic(_, Atom::Literal(k))] => (y, k),
         [Expr::Atomic(_, Atom::Literal(k)), Expr::Atomic(_, y)] => (y, k),

@@ -19,8 +19,8 @@
 //! Converting to a sum is especially helpful for converting the model to Minion as:
 //!
 //! 1. normalise_associative_commutative concatenates nested sums, reducing the
-//!     amount of flattening we need to do to convert this to Minion (reducing the number of
-//!     auxiliary variables needed).
+//!    amount of flattening we need to do to convert this to Minion (reducing the number of
+//!    auxiliary variables needed).
 //!
 //! 2. A sum of variables with constant coefficients can be trivially converted into the
 //!    weightedsumgeq and weightedsumleq constraints. A negated number is just a number
@@ -34,6 +34,7 @@ use uniplate::{Biplate, Uniplate as _};
 use Expr::*;
 
 use crate::ast::{Atom, Literal as Lit, SymbolTable};
+use crate::matrix_expr;
 use crate::metadata::Metadata;
 use std::collections::VecDeque;
 
@@ -109,6 +110,6 @@ fn minus_to_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::pure(Sum(
         Metadata::new(),
-        vec![*lhs, Neg(Metadata::new(), rhs)],
+        Box::new(matrix_expr![*lhs, Neg(Metadata::new(), rhs)]),
     )))
 }
