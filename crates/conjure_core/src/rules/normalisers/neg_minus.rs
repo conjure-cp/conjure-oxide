@@ -107,7 +107,7 @@ fn minus_to_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         Minus(_, lhs, rhs) => Ok((lhs.clone(), rhs.clone())),
         _ => Err(RuleNotApplicable),
     }?;
-
+    // add if here to catch sets
     Ok(Reduction::pure(Sum(
         Metadata::new(),
         Box::new(matrix_expr![*lhs, Neg(Metadata::new(), rhs)]),
