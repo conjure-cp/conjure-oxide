@@ -20,7 +20,7 @@ pub fn expand_expr(essence: &TokenTree) -> Result<TokenStream> {
     // We only expect one expression, error if that's not the case
     if let Some(expr) = query.next() {
         let tokens = &source_code[expr.start_byte()..expr.end_byte()];
-        return Err(Error::new(essence.span(), format!("Unexpected tokens: `{}`. Expected a single Essence expression. Perhaps you meant `essence_exprs!`?", tokens)));
+        return Err(Error::new(essence.span(), format!("Unexpected tokens: `{}`. Expected a single Essence expression. Perhaps you meant `essence_vec!`?", tokens)));
     }
 
     // Parse expression and build the token stream
