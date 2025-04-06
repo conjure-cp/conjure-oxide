@@ -26,6 +26,11 @@ impl Atom {
     pub fn new_ilit(value: i32) -> Atom {
         Atom::Literal(Literal::Int(value))
     }
+
+    /// Shorthand to create a boolean literal.
+    pub fn new_blit(value: bool) -> Atom {
+        Atom::Literal(Literal::Bool(value))
+    }
 }
 
 impl std::fmt::Display for Atom {

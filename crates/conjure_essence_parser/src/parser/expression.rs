@@ -203,16 +203,18 @@ pub fn parse_expression(
                     Expression::Atomic(_, _) => {
                         Ok(Expression::FromSolution(Metadata::new(), Box::new(inner)))
                     }
-                    _ => Err(format!(
+                    _ => Err(
                         "Expression inside a `fromSolution()` must be a variable name"
-                    )
-                    .into()),
+                            .to_string()
+                            .into(),
+                    ),
                 }
             }
-            _ => Err(format!(
+            _ => Err(
                 "`fromSolution()` is only allowed inside dominance relation definitions"
-            )
-            .into()),
+                    .to_string()
+                    .into(),
+            ),
         },
         _ => Err(format!("{} is not a recognized node kind", constraint.kind()).into()),
     }

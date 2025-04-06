@@ -63,7 +63,7 @@ pub fn parse_expr_to_ts(
                 )}),
                 "+" => Ok(quote! {::conjure_core::ast::Expression::Sum(
                     ::conjure_core::metadata::Metadata::new(),
-                    Box::new(matrix_expr![#expr1, #expr2]),
+                    Box::new(::conjure_core::matrix_expr![#expr1, #expr2]),
                 )}),
                 "-" => Ok(quote! {::conjure_core::ast::Expression::Minus(
                     ::conjure_core::metadata::Metadata::new(),
@@ -121,11 +121,11 @@ pub fn parse_expr_to_ts(
                 )}),
                 "/\\" => Ok(quote! {::conjure_core::ast::Expression::And(
                     ::conjure_core::metadata::Metadata::new(),
-                    Box::new(matrix_expr![#expr1, #expr2]),
+                    Box::new(::conjure_core::matrix_expr![#expr1, #expr2]),
                 )}),
                 "\\/" => Ok(quote! {::conjure_core::ast::Expression::Or(
                     ::conjure_core::metadata::Metadata::new(),
-                    Box::new(matrix_expr![#expr1, #expr2]),
+                    Box::new(::conjure_core::matrix_expr![#expr1, #expr2]),
                 )}),
                 "->" => Ok(quote! {::conjure_core::ast::Expression::Imply(
                     ::conjure_core::metadata::Metadata::new(),
@@ -217,21 +217,23 @@ pub fn parse_expr_to_ts(
                     ::conjure_core::ast::Expression::Atomic(_, _) => Ok(quote! {
                         ::conjure_core::ast::Expression::FromSolution(::conjure_core::metadata::Metadata::new(), Box::new(#inner_ts))
                     }),
-                    _ => Err(format!(
+                    _ => Err(
                         "Expression inside a `fromSolution()` must be a variable name"
-                    )
-                    .into()),
+                            .to_string()
+                            .into(),
+                    ),
                 }
             }
-            _ => Err(format!(
+            _ => Err(
                 "`fromSolution()` is only allowed inside dominance relation definitions"
-            )
-            .into()),
+                    .to_string()
+                    .into(),
+            ),
         },
         "metavar" => {
             let inner = constraint
                 .named_child(0)
-                .ok_or(format!("Expected name for meta-variable"))?;
+                .ok_or("Expected name for meta-variable".to_string())?;
             let name = &source_code[inner.start_byte()..inner.end_byte()];
             let ident = Ident::new(name, Span::call_site());
             Ok(quote! {#ident.into()})
