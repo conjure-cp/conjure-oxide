@@ -137,6 +137,9 @@ pub enum Expression {
     Union(Metadata, Box<Expression>, Box<Expression>),
 
     #[compatible(JsonInput)]
+    // Difference(Metadata, Box<Expression>, Box<Expression>),
+    
+    #[compatible(JsonInput)]
     Intersect(Metadata, Box<Expression>, Box<Expression>),
 
     #[compatible(JsonInput)]
@@ -446,9 +449,12 @@ impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
         let ret = match self {
+            // should use something better than union for difference to make it narrower
+            // Expression::Difference(_, a, b) => Some(Domain::DomainSet(SetAttr::None, Box::new(a.domain_of(syms)?.union(&b.domain_of(syms)?)?))),
             Expression::Union(_, a, b) => Some(Domain::DomainSet(SetAttr::None, Box::new(a.domain_of(syms)?.union(&b.domain_of(syms)?)?))),
             Expression::Intersect(_, a, b) => Some(Domain::DomainSet(SetAttr::None, Box::new(a.domain_of(syms)?.intersect(&b.domain_of(syms)?)?))),
             Expression::SubsetEq(_, _, _) => Some(Domain::BoolDomain),
+
             //todo
             Expression::AbstractLiteral(_, _) => None,
             Expression::DominanceRelation(_, _) => Some(Domain::BoolDomain),
@@ -669,10 +675,12 @@ impl Expression {
 
     pub fn return_type(&self) -> Option<ReturnType> {
         match self {
-            Expression::Union(_, subject, _) => Some(ReturnType::Set(Box::new(subject.return_type()?))),
             // might want to check for different return types in the two sets
+            // Expression::Difference(_, subject, _) => Some(ReturnType::Set(Box::new(subject.return_type()?))),
+            Expression::Union(_, subject, _) => Some(ReturnType::Set(Box::new(subject.return_type()?))),
             Expression::Intersect(_, subject, _) => Some(ReturnType::Set(Box::new(subject.return_type()?))),
             Expression::SubsetEq(_, _, _) => Some(ReturnType::Bool),
+
             Expression::AbstractLiteral(_, _) => None,
             Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
                 Some(subject.return_type()?)
@@ -879,6 +887,9 @@ impl From<Atom> for Expression {
 impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
+            // Expression::Difference(_, box1, box2) => {
+            //     write!(f, "({} difference {})", box1.clone(), box2.clone())
+            // }
             Expression::Union(_, box1, box2) => {
                 write!(f, "({} union {})", box1.clone(), box2.clone())
             }
@@ -888,6 +899,7 @@ impl Display for Expression {
             Expression::SubsetEq(_, box1, box2) => {
                 write!(f, "({} subsetEq {})", box1.clone(), box2.clone())
             }
+
             Expression::AbstractLiteral(_, l) => l.fmt(f),
             Expression::Comprehension(_, c) => c.fmt(f),
             Expression::UnsafeIndex(_, e1, e2) | Expression::SafeIndex(_, e1, e2) => {
