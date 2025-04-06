@@ -1,24 +1,26 @@
-use conjure_essence_parser::expression::parse_expression;
-use conjure_essence_parser::util::{get_metavars, get_tree, query_toplevel};
 use proc_macro::TokenStream;
-#[allow(unused)]
-use uniplate::Uniplate;
+use proc_macro2::{Delimiter, Group, TokenStream as TokenStream2, TokenTree};
 
-use quote::quote;
-use syn::{parse::Parse, parse::ParseStream, parse_macro_input, LitStr, Result};
-
+mod expand;
 mod expression;
 
-struct EssenceExprArgs {
-    essence: LitStr,
-}
+use expand::*;
 
-impl Parse for EssenceExprArgs {
-    fn parse(input: ParseStream) -> Result<Self> {
-        let essence = input.parse::<LitStr>()?;
-        Ok(Self { essence })
+#[proc_macro]
+pub fn essence_expr(args: TokenStream) -> TokenStream {
+    let ts = TokenStream2::from(args);
+    let tt = TokenTree::Group(Group::new(Delimiter::None, ts));
+    match expand_expr(&tt) {
+        Ok(tokens) => tokens.into(),
+        Err(err) => err.to_compile_error().into(),
     }
 }
 
 #[proc_macro]
-pub fn essence_expr(args: TokenStream) -> TokenStream {}
+pub fn essence_vec(args: TokenStream) -> TokenStream {
+    let ts = TokenStream2::from(args);
+    match expand_expr_vec(ts) {
+        Ok(tokens) => tokens.into(),
+        Err(err) => err.to_compile_error().into(),
+    }
+}

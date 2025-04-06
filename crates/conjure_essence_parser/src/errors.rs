@@ -22,3 +22,15 @@ impl From<ConjureParseError> for EssenceParseError {
         EssenceParseError::ParseError(e)
     }
 }
+
+impl From<&str> for EssenceParseError {
+    fn from(e: &str) -> Self {
+        EssenceParseError::ParseError(ConjureParseError::Parse(e.to_string()))
+    }
+}
+
+impl From<String> for EssenceParseError {
+    fn from(e: String) -> Self {
+        EssenceParseError::ParseError(ConjureParseError::Parse(e))
+    }
+}
