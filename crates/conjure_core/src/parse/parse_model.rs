@@ -194,16 +194,17 @@ fn parse_domain(
                 .iter()
                 .next()
                 .ok_or(Error::Parse("DomainSet is an empty object".to_owned()))?;
-            let domain = match domain_name {
-                "DomainInt" => {
-                    println!("DomainInt: {:#?}", domain.1);
-                    Ok(parse_int_domain(domain.1, symbols)?)
-                }
-                "DomainBool" => Ok(Domain::BoolDomain),
-                _ => Err(Error::Parse(
-                    "FindOrGiven[2] is an unknown object".to_owned(),
-                )),
-            }?;
+            let domain = parse_domain(domain.0.as_str(), domain.1, symbols)?;
+            // let domain = match domain.0.as_str() {
+            //     "DomainInt" => {
+            //         println!("DomainInt: {:#?}", domain.1);
+            //         Ok(parse_int_domain(domain.1, symbols)?)
+            //     }
+            //     "DomainBool" => Ok(Domain::BoolDomain),
+            //     _ => Err(Error::Parse(
+            //         "FindOrGiven[2] is an unknown object".to_owned(),
+            //     )),
+            // }?;
             print!("{:?}", domain);
             Ok(Domain::DomainSet(SetAttr::None, Box::new(domain)))
         }
@@ -390,6 +391,14 @@ type VecOp = Box<dyn Fn(Metadata, Vec<Expression>) -> Expression>;
 
 pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Option<Expression> {
     let binary_operators: HashMap<&str, BinOp> = [
+        // (
+        //     "MkOpDifference",
+        //     Box::new(Expression::Difference) as Box<dyn Fn(_, _, _) -> _>,
+        // ),
+        (
+            "MkOpUnion",
+            Box::new(Expression::Union) as Box<dyn Fn(_, _, _) -> _>,
+        ),
         (
             "MkOpUnion",
             Box::new(Expression::Union) as Box<dyn Fn(_, _, _) -> _>,
