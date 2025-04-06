@@ -134,9 +134,6 @@ pub enum Expression {
     Imply(Metadata, Box<Expression>, Box<Expression>),
 
     #[compatible(JsonInput)]
-    Union(Metadata, Box<Expression>, Box<Expression>),
-
-    #[compatible(JsonInput)]
     // Difference(Metadata, Box<Expression>, Box<Expression>),
     
     #[compatible(JsonInput)]
