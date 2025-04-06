@@ -59,21 +59,25 @@ pub fn parse_essence_with_context(
                 let mut constraint_vec: Vec<Expression> = Vec::new();
                 for constraint in named_children(&statement) {
                     if constraint.kind() != "single_line_comment" {
-                        constraint_vec.push(parse_expression(constraint, &source_code, &statement));
+                        constraint_vec.push(parse_expression(
+                            constraint,
+                            &source_code,
+                            &statement,
+                        )?);
                     }
                 }
                 model.as_submodel_mut().add_constraints(constraint_vec);
             }
             "language_label" => {}
             "letting_statement_list" => {
-                let letting_vars = parse_letting_statement(statement, &source_code);
+                let letting_vars = parse_letting_statement(statement, &source_code)?;
                 model.as_submodel_mut().symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
                 let inner = statement
                     .child(1)
                     .expect("Expected a sub-expression inside `dominanceRelation`");
-                let expr = parse_expression(inner, &source_code, &statement);
+                let expr = parse_expression(inner, &source_code, &statement)?;
                 let dominance = Expression::DominanceRelation(Metadata::new(), Box::new(expr));
                 if model.dominance.is_some() {
                     return Err(EssenceParseError::ParseError(Error::Parse(

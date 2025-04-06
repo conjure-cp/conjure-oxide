@@ -1,21 +1,18 @@
-#![allow(clippy::legacy_numeric_constants)]
+use conjure_core::ast::Expression;
+use conjure_core::metadata::Metadata;
+use conjure_essence_parser::errors::{ConjureParseError, EssenceParseError};
+use conjure_essence_parser::expression::child_expr;
+use conjure_essence_parser::util::named_children;
+use proc_macro2::TokenStream;
+use quote::quote;
 use tree_sitter::Node;
 
-use conjure_core::ast::{Atom, Expression, Literal, Name};
-use conjure_core::metadata::Metadata;
-use conjure_core::{into_matrix_expr, matrix_expr};
-
-use crate::errors::{ConjureParseError, EssenceParseError};
-
-use super::util::named_children;
-
 /// Parse an Essence expression into its Conjure AST representation.
-pub fn parse_expression(
+pub fn expand_expression(
     constraint: Node,
     source_code: &str,
     root: &Node,
 ) -> Result<Expression, EssenceParseError> {
-    // TODO (gskorokhod) - Factor this further (make match arms into separate functions, extract common logic)
     match constraint.kind() {
         "constraint" | "expression" | "boolean_expr" | "comparison_expr" | "arithmetic_expr"
         | "primary_expr" | "sub_expr" => child_expr(constraint, source_code, root),
@@ -221,7 +218,7 @@ pub fn parse_expression(
     }
 }
 
-pub fn child_expr(
+pub fn expand_child_expr(
     node: Node,
     source_code: &str,
     root: &Node,

@@ -19,19 +19,14 @@ pub fn parse_expr(src: &str) -> Result<Expression, EssenceParseError> {
 }
 
 pub fn parse_exprs(src: &str) -> Result<Vec<Expression>, EssenceParseError> {
-    let (tree, source_code) = match get_tree(src) {
-        Some(t) => t,
-        None => {
-            return Err(EssenceParseError::TreeSitterError(
-                "Failed to parse source code".to_string(),
-            ))
-        }
-    };
+    let (tree, source_code) = get_tree(src).ok_or(EssenceParseError::TreeSitterError(
+        "Failed to parse Essence source code".to_string(),
+    ))?;
 
     let root = tree.root_node();
     let mut ans = Vec::new();
     for expr in query_toplevel(&root, &|n| n.kind() == "expression") {
-        ans.push(parse_expression(expr, &source_code, &root));
+        ans.push(parse_expression(expr, &source_code, &root)?);
     }
     Ok(ans)
 }
