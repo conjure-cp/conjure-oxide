@@ -132,6 +132,10 @@ pub enum Expression {
     #[compatible(JsonInput)]
     Imply(Metadata, Box<Expression>, Box<Expression>),
 
+    /// `iff(a, b)` a <-> b
+    #[compatible(JsonInput)]
+    Iff(Metadata, Box<Expression>, Box<Expression>),
+
     #[compatible(JsonInput)]
     Eq(Metadata, Box<Expression>, Box<Expression>),
 
@@ -539,6 +543,7 @@ impl Expression {
             Expression::Not(_, _) => Some(Domain::BoolDomain),
             Expression::Or(_, _) => Some(Domain::BoolDomain),
             Expression::Imply(_, _, _) => Some(Domain::BoolDomain),
+            Expression::Iff(_, _, _) => Some(Domain::BoolDomain),
             Expression::Eq(_, _, _) => Some(Domain::BoolDomain),
             Expression::Neq(_, _, _) => Some(Domain::BoolDomain),
             Expression::Geq(_, _, _) => Some(Domain::BoolDomain),
@@ -655,6 +660,7 @@ impl Expression {
             Expression::Not(_, _) => Some(ReturnType::Bool),
             Expression::Or(_, _) => Some(ReturnType::Bool),
             Expression::Imply(_, _, _) => Some(ReturnType::Bool),
+            Expression::Iff(_, _, _) => Some(ReturnType::Bool),
             Expression::And(_, _) => Some(ReturnType::Bool),
             Expression::Eq(_, _, _) => Some(ReturnType::Bool),
             Expression::Neq(_, _, _) => Some(ReturnType::Bool),
@@ -885,6 +891,9 @@ impl Display for Expression {
             }
             Expression::Imply(_, box1, box2) => {
                 write!(f, "({}) -> ({})", box1, box2)
+            }
+            Expression::Iff(_, box1, box2) => {
+                write!(f, "({}) <-> ({})", box1, box2)
             }
             Expression::Eq(_, box1, box2) => {
                 write!(f, "({} = {})", box1.clone(), box2.clone())

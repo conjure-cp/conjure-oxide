@@ -145,6 +145,15 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 Some(Lit::Bool(true))
             }
         }
+        Expr::Iff(_, box1, box2) => {
+            let a: &Atom = (&**box1).try_into().ok()?;
+            let b: &Atom = (&**box2).try_into().ok()?;
+
+            let a: bool = a.try_into().ok()?;
+            let b: bool = b.try_into().ok()?;
+
+            Some(Lit::Bool(a == b))
+        }
 
         Expr::Sum(_, exprs) => vec_op::<i32, i32>(|e| e.iter().sum(), exprs).map(Lit::Int),
         Expr::Product(_, exprs) => vec_op::<i32, i32>(|e| e.iter().product(), exprs).map(Lit::Int),
