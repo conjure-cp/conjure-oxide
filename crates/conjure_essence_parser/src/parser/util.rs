@@ -70,7 +70,7 @@ mod test {
         let src = "such that &x = y";
         let (tree, _) = get_tree(src).unwrap();
         let root = tree.root_node();
-        let metavars = get_metavars(&root, &src).collect::<Vec<_>>();
+        let metavars = get_metavars(&root, src).collect::<Vec<_>>();
         assert_eq!(metavars, vec!["x"]);
     }
 }
