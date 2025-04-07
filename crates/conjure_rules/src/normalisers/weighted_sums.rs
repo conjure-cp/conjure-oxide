@@ -7,11 +7,12 @@ use std::collections::BTreeMap;
 
 use conjure_macros::register_rule;
 
-use crate::ast::{Atom, Expression as Expr, Literal as Lit, Name, SymbolTable};
-use crate::into_matrix_expr;
-use crate::metadata::Metadata;
-use crate::rule_engine::ApplicationError::RuleNotApplicable;
-use crate::rule_engine::{ApplicationResult, Reduction};
+use conjure_core::{
+    ast::{Atom, Expression as Expr, Literal as Lit, Name, SymbolTable},
+    into_matrix_expr,
+    metadata::Metadata,
+    rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
+};
 
 /// Collects like terms in a weighted sum.
 ///

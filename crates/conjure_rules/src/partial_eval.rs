@@ -3,13 +3,14 @@ use std::collections::HashSet;
 use conjure_macros::register_rule;
 use itertools::iproduct;
 
-use crate::ast::SymbolTable;
-use crate::into_matrix_expr;
-use crate::rule_engine::{ApplicationResult, Reduction};
-use crate::{
-    ast::{Atom, Expression as Expr, Literal as Lit, Literal::*},
+use conjure_core::{
+    ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable},
+    into_matrix_expr,
     metadata::Metadata,
+    rule_engine::{ApplicationResult, Reduction},
 };
+
+use Lit::*;
 
 #[register_rule(("Base",9000))]
 fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {

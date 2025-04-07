@@ -29,6 +29,7 @@
 //! use conjure_core::solver::{adaptors, Solver, SolverAdaptor};
 //! use conjure_core::solver::states::ModelLoaded;
 //! use conjure_core::solver::SolverFamily;
+//! use conjure_rules;
 //!
 //! // Define and rewrite a model for minion.
 //! let model = get_example_model("bool-03").unwrap();
