@@ -253,6 +253,29 @@ fn parse_domain(
 
             Ok(Domain::DomainMatrix(Box::new(value_domain), index_domains))
         }
+        "DomainTuple" => {
+            let domain_value = domain_value
+                .as_array()
+                .ok_or(error!("Domain matrix is not an array"))?;
+
+            //TODO: tuple test
+            //iterate through the array and parse each domain, should insert into the symbols table too
+            let domain = domain_value
+                .iter()
+                .map(|x| {
+                    let domain = x
+                        .as_object()
+                        .ok_or(error!("DomainTuple[0] is not an object"))?
+                        .iter()
+                        .next()
+                        .ok_or(error!("DomainTuple[0] is an empty object"))?;
+                    parse_domain(domain.0, domain.1, symbols)
+                })
+                .collect::<Result<Vec<Domain>>>()?;
+            println!("{:?}", domain);
+
+            Ok(Domain::DomainTuple(domain))
+        }
 
         _ => Err(Error::Parse(
             "FindOrGiven[2] is an unknown object".to_owned(), // consider covered

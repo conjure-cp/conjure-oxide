@@ -52,13 +52,21 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 .map(|x| x.to_literal())
                 .collect::<Option<Vec<Lit>>>()?;
 
-            let Lit::AbstractLiteral(subject @ AbstractLiteral::Matrix(_, _)) = subject else {
-                return None;
-            };
+            //TODO : tuple i think tuple needs this too or something similar
 
-            matrix::flatten_enumerate(subject)
-                .find(|(i, _)| i == &indices)
-                .map(|(_, x)| x)
+            match subject {
+                Lit::AbstractLiteral(subject @ AbstractLiteral::Matrix(_, _)) => {
+                    return matrix::flatten_enumerate(subject)
+                        .find(|(i, _)| i == &indices)
+                        .map(|(_, x)| x);
+                }
+                Lit::AbstractLiteral(subject @ AbstractLiteral::Tuple(_)) => {
+                    return matrix::flatten_enumerate(subject)
+                        .find(|(i, _)| i == &indices)
+                        .map(|(_, x)| x);
+                }
+                _ => return None,
+            }
         }
         Expr::UnsafeSlice(_, subject, indices) | Expr::SafeSlice(_, subject, indices) => {
             let subject: Lit = subject.as_ref().clone().to_literal()?;

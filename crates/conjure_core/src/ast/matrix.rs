@@ -135,6 +135,7 @@ pub fn index_domains(matrix: AbstractLiteral<Literal>) -> Vec<Domain> {
                     index_domains.extend(child_index_domains);
                     index_domains
                 }
+                AbstractLiteral::Tuple(_) => vec![], // TODO: tuple is this correct?
             }
         },
     ))

@@ -62,7 +62,7 @@ fn domain_needs_representation(domain: &Domain) -> bool {
     // very simple implementation for now
     match domain {
         Domain::BoolDomain | Domain::IntDomain(_) => false,
-        Domain::DomainSet(_, _) | Domain::DomainMatrix(_, _) => true,
+        Domain::DomainSet(_, _) | Domain::DomainMatrix(_, _) | Domain::DomainTuple(_) => true,
         Domain::DomainReference(_) => unreachable!("domain should be resolved"),
     }
 }
@@ -91,6 +91,15 @@ fn get_or_create_representation(
             }
 
             symbols.get_or_add_representation(name, &["matrix_to_atom"])
+        }
+        Domain::DomainTuple(elem_domains) => {
+            // TODO: Tuple just copy from above for now
+
+            if elem_domains.iter().any(|x| domain_needs_representation(x)) {
+                bug!("representing nested abstract domains is not implemented");
+            }
+
+            symbols.get_or_add_representation(name, &["tuple_to_atom"])
         }
         _ => unreachable!("non abstract domains should never need representations"),
     }
