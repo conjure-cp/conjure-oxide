@@ -4,7 +4,7 @@
 
 use conjure_macros::register_rule;
 
-use crate::{
+use conjure_core::{
     ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable},
     matrix_expr,
     metadata::Metadata,

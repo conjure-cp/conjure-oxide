@@ -1,9 +1,10 @@
-use conjure_core::ast::{Expression as Expr, SymbolTable};
-use conjure_core::rule_engine::{
-    register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
+use conjure_core::{
+    ast::{Expression as Expr, SymbolTable},
+    into_matrix_expr,
+    rule_engine::{
+        register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
+    },
 };
-
-use crate::into_matrix_expr;
 
 #[register_rule(("Base", 1000))]
 fn expand_comprehension(expr: &Expr, _: &SymbolTable) -> ApplicationResult {

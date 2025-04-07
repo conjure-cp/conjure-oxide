@@ -1,14 +1,11 @@
 use std::collections::VecDeque;
 
-use conjure_core::ast::Expression as Expr;
-use conjure_core::ast::SymbolTable;
+use conjure_core::ast::{Domain, Expression as Expr, Range, SymbolTable};
+use conjure_core::into_matrix_expr;
 use conjure_core::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
 };
 use uniplate::Uniplate;
-
-use crate::ast::{Domain, Range};
-use crate::into_matrix_expr;
 
 /// Converts a matrix to a list if possible.
 ///

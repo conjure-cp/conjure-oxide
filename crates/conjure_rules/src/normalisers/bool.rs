@@ -1,17 +1,15 @@
 //! Normalising rules for boolean operations (not, and, or, ->).
 
-use conjure_core::ast::Expression as Expr;
+use conjure_core::ast::{Atom, Expression as Expr, SymbolTable};
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
     register_rule, ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult,
     Reduction,
 };
+use conjure_core::{into_matrix_expr, matrix_expr};
 use uniplate::Uniplate;
 
 use Expr::*;
-
-use crate::ast::{Atom, SymbolTable};
-use crate::{into_matrix_expr, matrix_expr};
 
 /// Removes double negations
 ///

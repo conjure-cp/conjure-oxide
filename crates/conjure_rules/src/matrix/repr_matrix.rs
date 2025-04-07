@@ -1,17 +1,13 @@
-use conjure_core::ast::Expression as Expr;
-use conjure_core::ast::{matrix, SymbolTable};
+use conjure_core::ast::{
+    matrix, Atom, Domain, Expression as Expr, Literal, Name, Range, SymbolTable,
+};
+use conjure_core::into_matrix_expr;
+use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
 };
 use itertools::{chain, izip, Itertools};
 use uniplate::Uniplate;
-
-use crate::ast::Domain;
-use crate::ast::Literal;
-use crate::ast::Name;
-use crate::ast::{Atom, Range};
-use crate::into_matrix_expr;
-use crate::metadata::Metadata;
 
 /// Using the `matrix_to_atom`  representation rule, rewrite matrix indexing.
 #[register_rule(("Base", 2000))]

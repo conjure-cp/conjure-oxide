@@ -5,22 +5,27 @@
 use std::convert::TryInto;
 use std::rc::Rc;
 
-use crate::ast::Declaration;
-use crate::ast::{Atom, Domain, Expression as Expr, Literal as Lit, ReturnType, SymbolTable};
-
-use crate::matrix_expr;
-use crate::metadata::Metadata;
-use crate::rule_engine::{
-    register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
+use crate::{
+    extra_check,
+    utils::{is_flat, to_aux_var},
 };
-use crate::rules::extra_check;
+use conjure_core::{
+    ast::{
+        Atom, Declaration, Domain, Expression as Expr, Literal as Lit, Range, ReturnType,
+        SymbolTable,
+    },
+    matrix_expr,
+    metadata::Metadata,
+    rule_engine::{
+        register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
+    },
+    solver::SolverFamily,
+};
 
-use crate::solver::SolverFamily;
 use itertools::Itertools;
 use uniplate::Uniplate;
-use ApplicationError::*;
 
-use super::utils::{is_flat, to_aux_var};
+use ApplicationError::*;
 
 register_rule_set!("Minion", ("Base"), (SolverFamily::Minion));
 
@@ -706,15 +711,15 @@ fn introduce_wininterval_set_from_indomain(expr: &Expr, _: &SymbolTable) -> Appl
 
     for range in ranges {
         match range {
-            crate::ast::Range::Single(x) => {
+            Range::Single(x) => {
                 out_ranges.push(*x);
                 out_ranges.push(*x);
             }
-            crate::ast::Range::Bounded(x, y) => {
+            Range::Bounded(x, y) => {
                 out_ranges.push(*x);
                 out_ranges.push(*y);
             }
-            crate::ast::Range::UnboundedR(_) | crate::ast::Range::UnboundedL(_) => {
+            Range::UnboundedR(_) | Range::UnboundedL(_) => {
                 return Err(RuleNotApplicable);
             }
         }

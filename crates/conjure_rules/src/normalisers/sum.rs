@@ -1,10 +1,10 @@
 //! Normalising rules for `Sum`
 
-use conjure_core::ast::Expression as Expr;
-use conjure_core::rule_engine::{register_rule, ApplicationResult, Reduction};
-
-use crate::ast::SymbolTable;
-use crate::rule_engine::ApplicationError::RuleNotApplicable;
+use conjure_core::{
+    ast::{Expression as Expr, SymbolTable},
+    rule_engine::{register_rule, ApplicationError, ApplicationResult, Reduction},
+};
+use ApplicationError::RuleNotApplicable;
 
 /// Removes sums with a single argument.
 ///

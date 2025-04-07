@@ -4,10 +4,12 @@ use std::iter;
 
 use conjure_macros::register_rule;
 
-use crate::ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable};
-use crate::metadata::Metadata;
-use crate::rule_engine::ApplicationError::RuleNotApplicable;
-use crate::rule_engine::{ApplicationResult, Reduction};
+use conjure_core::{
+    ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable},
+    metadata::Metadata,
+    rule_engine::ApplicationError::RuleNotApplicable,
+    rule_engine::{ApplicationResult, Reduction},
+};
 
 /// Reorders a product expression.
 ///

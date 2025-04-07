@@ -1,13 +1,13 @@
-use conjure_core::ast::{Expression, ReturnType};
-use conjure_core::metadata::Metadata;
-use conjure_core::rule_engine::{
-    register_rule, register_rule_set, ApplicationError, ApplicationError::*, ApplicationResult,
-    Reduction,
+use conjure_core::{
+    ast::{Atom, Expression, Literal, ReturnType, SymbolTable},
+    into_matrix_expr, matrix_expr,
+    metadata::Metadata,
+    rule_engine::{
+        register_rule, register_rule_set, ApplicationError, ApplicationError::*, ApplicationResult,
+        Reduction,
+    },
 };
 use uniplate::Uniplate;
-
-use crate::ast::{Atom, Literal, SymbolTable};
-use crate::{into_matrix_expr, matrix_expr};
 
 use super::utils::is_all_constant;
 

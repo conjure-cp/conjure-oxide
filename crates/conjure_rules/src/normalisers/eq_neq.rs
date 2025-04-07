@@ -1,14 +1,12 @@
 //! Normalising rules for `Neq` and `Eq`.
 
-use conjure_core::ast::Expression as Expr;
+use conjure_core::ast::{Expression as Expr, SymbolTable};
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
 };
 
 use Expr::*;
-
-use crate::ast::SymbolTable;
 
 /// Converts a negated `Neq` to an `Eq`
 ///

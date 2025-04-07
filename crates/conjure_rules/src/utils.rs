@@ -1,13 +1,12 @@
 use std::rc::Rc;
 
-use crate::ast::{Declaration, SymbolTable};
-use tracing::instrument;
-use uniplate::{Biplate, Uniplate};
-
-use crate::{
-    ast::{Atom, Domain, Expression as Expr, Name},
+use conjure_core::{
+    ast::{Atom, Declaration, Domain, Expression as Expr, Name, SymbolTable},
     metadata::Metadata,
 };
+
+use tracing::instrument;
+use uniplate::{Biplate, Uniplate};
 
 /// True iff `expr` is an `Atom`.
 pub fn is_atom(expr: &Expr) -> bool {
@@ -63,7 +62,7 @@ pub fn expressions_to_atoms(exprs: &Vec<Expr>) -> Option<Vec<Atom>> {
 /// * `None` if `Expr` is a `Atom`, or `Expr` does not have a domain (for example, if it is a `Bubble`).
 ///
 /// * `Some(ToAuxVarOutput)` if successful, containing:
-///     
+///
 ///     + A new symbol table, modified to include the auxiliary variable.
 ///     + A new top level expression, containing the declaration of the auxiliary variable.
 ///     + A reference to the auxiliary variable to replace the existing expression with.

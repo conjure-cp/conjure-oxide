@@ -26,17 +26,17 @@
 //!    weightedsumgeq and weightedsumleq constraints. A negated number is just a number
 //!    with a coefficient of -1.
 
-use conjure_core::ast::Expression as Expr;
-use conjure_core::rule_engine::{
-    register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
+use conjure_core::{
+    ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable},
+    matrix_expr,
+    metadata::Metadata,
+    rule_engine::{
+        register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
+    },
 };
+use std::collections::VecDeque;
 use uniplate::{Biplate, Uniplate as _};
 use Expr::*;
-
-use crate::ast::{Atom, Literal as Lit, SymbolTable};
-use crate::matrix_expr;
-use crate::metadata::Metadata;
-use std::collections::VecDeque;
 
 /// Eliminates double negation
 ///

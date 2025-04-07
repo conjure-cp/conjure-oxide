@@ -210,7 +210,10 @@ pub fn get_rule_set_by_name(name: &str) -> Option<&'static RuleSet<'static>> {
 ///
 /// ```rust
 /// use conjure_core::solver::SolverFamily;
+/// use conjure_core::rule_engine::register_rule_set;
 /// use conjure_core::rule_engine::get_rule_sets_for_solver_family;
+///
+/// register_rule_set!("CNF", (), (SolverFamily::SAT));
 ///
 /// let rule_sets = get_rule_sets_for_solver_family(SolverFamily::SAT);
 /// assert_eq!(rule_sets.len(), 1);

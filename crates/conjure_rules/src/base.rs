@@ -1,19 +1,19 @@
 use std::rc::Rc;
 
-use conjure_core::ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable};
-use conjure_core::metadata::Metadata;
-use conjure_core::rule_engine::{
-    register_rule, register_rule_set, ApplicationError, ApplicationError::RuleNotApplicable,
-    ApplicationResult, Reduction,
+use conjure_core::{
+    ast::{Atom, Declaration, Expression as Expr, Literal as Lit, SymbolTable},
+    into_matrix_expr, matrix_expr,
+    metadata::Metadata,
+    rule_engine::{
+        register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
+    },
 };
 use uniplate::Uniplate;
 
+use ApplicationError::RuleNotApplicable;
 use Atom::*;
 use Expr::*;
 use Lit::Bool;
-
-use crate::ast::Declaration;
-use crate::{into_matrix_expr, matrix_expr};
 
 register_rule_set!("Base", ());
 
