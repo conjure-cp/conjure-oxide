@@ -3,13 +3,11 @@
 use std::collections::VecDeque;
 use std::mem::Discriminant;
 
-use conjure_core::ast::Expression as Expr;
+use conjure_core::ast::{Expression as Expr, SymbolTable};
 use conjure_core::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
 };
 use uniplate::Biplate;
-
-use crate::ast::SymbolTable;
 
 /// Normalises associative_commutative operations.
 ///

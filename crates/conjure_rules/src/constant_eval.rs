@@ -1,17 +1,16 @@
 #![allow(dead_code)]
 use std::collections::HashSet;
 
-use conjure_core::ast::{Atom, Expression as Expr, Literal as Lit};
-use conjure_core::metadata::Metadata;
-use conjure_core::rule_engine::{
-    register_rule, register_rule_set, ApplicationError, ApplicationError::RuleNotApplicable,
-    ApplicationResult, Reduction,
+use conjure_core::{
+    ast::{matrix, AbstractLiteral, Atom, Expression as Expr, Literal as Lit, SymbolTable},
+    into_matrix,
+    metadata::Metadata,
+    rule_engine::{
+        register_rule, register_rule_set, ApplicationError, ApplicationError::RuleNotApplicable,
+        ApplicationResult, Reduction,
+    },
 };
 use itertools::{izip, Itertools as _};
-
-use crate::ast::matrix;
-use crate::ast::{AbstractLiteral, SymbolTable};
-use crate::into_matrix;
 
 register_rule_set!("Constant", ());
 
@@ -493,7 +492,7 @@ fn unwrap_expr<T: TryFrom<Lit>>(expr: &Expr) -> Option<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::rules::eval_constant;
+    use crate::eval_constant;
     use conjure_core::ast::{Atom, Expression, Literal};
 
     #[test]

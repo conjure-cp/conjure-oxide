@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use conjure_macros::register_rule;
 
-use crate::{
+use conjure_core::{
     ast::{Atom, Expression as Expr, SymbolTable},
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
 };

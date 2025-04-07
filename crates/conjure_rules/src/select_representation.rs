@@ -1,16 +1,14 @@
-use conjure_core::ast::Expression as Expr;
-use conjure_core::ast::SymbolTable;
-use conjure_core::rule_engine::{
-    register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
+use conjure_core::{
+    ast::{Atom, Domain, Expression as Expr, Name, SymbolTable},
+    bug,
+    metadata::Metadata,
+    representation::Representation,
+    rule_engine::{
+        register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
+    },
 };
-use itertools::Itertools;
 
-use crate::ast::Atom;
-use crate::ast::Domain;
-use crate::ast::Name;
-use crate::bug;
-use crate::metadata::Metadata;
-use crate::representation::Representation;
+use itertools::Itertools;
 
 #[register_rule(("Base", 8000))]
 fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
