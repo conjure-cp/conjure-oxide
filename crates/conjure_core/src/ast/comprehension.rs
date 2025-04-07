@@ -118,7 +118,7 @@ impl Comprehension {
 
             // populate machine_name_translations, and move the declarations from child to parent
             for (name, decl) in child_symtab.into_iter_local() {
-                // skip givens for induction vars
+                // skip givens for induction vars§
                 if value_ptr.get(&name).is_some()
                     && matches!(decl.kind(), DeclarationKind::Given(_))
                 {
@@ -150,6 +150,36 @@ impl Comprehension {
         }
 
         Ok(return_expressions)
+    }
+
+    pub fn return_expression(self) -> Expression {
+        self.return_expression_submodel.as_single_expression()
+    }
+
+    pub fn replace_return_expression(&mut self, new_expr: Expression) {
+        let new_expr = match new_expr {
+            Expression::And(_, exprs) if exprs.clone().unwrap_list().is_some() => {
+                Expression::Root(Metadata::new(), exprs.unwrap_list().unwrap())
+            }
+            expr => Expression::Root(Metadata::new(), vec![expr]),
+        };
+
+        *self.return_expression_submodel.root_mut_unchecked() = new_expr;
+    }
+
+    /// Adds a guard to the comprehension. Returns false if the guard does not only reference induction variables.
+    pub fn add_induction_guard(&mut self, guard: Expression) -> bool {
+        if self.is_induction_guard(&guard) {
+            self.generator_submodel.add_constraint(guard);
+            true
+        } else {
+            false
+        }
+    }
+
+    /// True iff expr only references induction variables.
+    pub fn is_induction_guard(&self, expr: &Expression) -> bool {
+        is_induction_guard(&(self.induction_vars.clone().into_iter().collect()), expr)
     }
 }
 
