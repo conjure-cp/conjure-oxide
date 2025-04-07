@@ -1,4 +1,4 @@
-use conjure_core::error::Error as ConjureParseError;
+pub use conjure_core::error::Error as ConjureParseError;
 use thiserror::Error as ThisError;
 
 #[derive(Debug, ThisError)]
@@ -20,5 +20,17 @@ pub enum EssenceParseError {
 impl From<ConjureParseError> for EssenceParseError {
     fn from(e: ConjureParseError) -> Self {
         EssenceParseError::ParseError(e)
+    }
+}
+
+impl From<&str> for EssenceParseError {
+    fn from(e: &str) -> Self {
+        EssenceParseError::ParseError(ConjureParseError::Parse(e.to_string()))
+    }
+}
+
+impl From<String> for EssenceParseError {
+    fn from(e: String) -> Self {
+        EssenceParseError::ParseError(ConjureParseError::Parse(e))
     }
 }

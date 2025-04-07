@@ -4,15 +4,18 @@ use std::rc::Rc;
 
 use tree_sitter::Node;
 
-use conjure_core::ast::Declaration;
-use conjure_core::ast::{Name, SymbolTable};
-
 use super::domain::parse_domain;
 use super::expression::parse_expression;
 use super::util::named_children;
+use crate::errors::EssenceParseError;
+use conjure_core::ast::Declaration;
+use conjure_core::ast::{Name, SymbolTable};
 
 /// Parse a letting statement into a SymbolTable containing the declared symbols
-pub fn parse_letting_statement(letting_statement_list: Node, source_code: &str) -> SymbolTable {
+pub fn parse_letting_statement(
+    letting_statement_list: Node,
+    source_code: &str,
+) -> Result<SymbolTable, EssenceParseError> {
     let mut symbol_table = SymbolTable::new();
 
     for letting_statement in named_children(&letting_statement_list) {
@@ -32,7 +35,7 @@ pub fn parse_letting_statement(letting_statement_list: Node, source_code: &str) 
                 for name in temp_symbols {
                     symbol_table.insert(Rc::new(Declaration::new_value_letting(
                         Name::UserName(String::from(name)),
-                        parse_expression(expr_or_domain, source_code, &letting_statement_list),
+                        parse_expression(expr_or_domain, source_code, &letting_statement_list)?,
                     )));
                 }
             }
@@ -47,5 +50,5 @@ pub fn parse_letting_statement(letting_statement_list: Node, source_code: &str) 
             _ => panic!("Unrecognized node in letting statement"),
         }
     }
-    symbol_table
+    Ok(symbol_table)
 }

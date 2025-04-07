@@ -1,6 +1,6 @@
-mod errors;
+pub mod errors;
 mod parser;
-mod parser_legacy;
+pub mod parser_legacy;
 
 pub use errors::EssenceParseError;
 pub use parser::*;
