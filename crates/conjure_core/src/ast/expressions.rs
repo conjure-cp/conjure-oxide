@@ -442,20 +442,13 @@ impl Expression {
             Expression::FromSolution(_, expr) => expr.domain_of(syms),
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
-
                 match matrix.domain_of(syms)? {
-                    Domain::DomainMatrix(elem_domain,_) => {
-                        Some(*elem_domain)
-                    }
-                    Domain::DomainTuple(_) => {
-                        None
-                    }
+                    Domain::DomainMatrix(elem_domain, _) => Some(*elem_domain),
+                    Domain::DomainTuple(_) => None,
                     _ => {
                         bug!("subject of an index operation should support indexing")
                     }
-
                 }
-                
             }
             Expression::UnsafeSlice(_, matrix, indices)
             | Expression::SafeSlice(_, matrix, indices) => {

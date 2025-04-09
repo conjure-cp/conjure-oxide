@@ -93,9 +93,7 @@ fn get_or_create_representation(
             symbols.get_or_add_representation(name, &["matrix_to_atom"])
         }
         Domain::DomainTuple(elem_domains) => {
-            // TODO: Tuple just copy from above for now
-
-            if elem_domains.iter().any(|x| domain_needs_representation(x)) {
+            if elem_domains.iter().any(domain_needs_representation) {
                 bug!("representing nested abstract domains is not implemented");
             }
 

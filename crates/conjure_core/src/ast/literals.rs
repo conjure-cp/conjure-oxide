@@ -95,7 +95,6 @@ impl Hash for AbstractLiteral<Literal> {
                 elems.hash(state);
                 index_domain.hash(state);
             }
-            //TODO: Tuple is the hashing just incremental?
             AbstractLiteral::Tuple(elems) => {
                 2.hash(state);
                 elems.hash(state);

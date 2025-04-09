@@ -45,9 +45,9 @@ impl Representation for TupleToAtom {
             return None;
         };
 
-        // i assume this means like [1,2,3] up to size
+        //indices may not be needed as a field as we can always use the length of the tuple
         let indices = (1..(elem_domain.len() + 1) as i32)
-            .map(|x| Literal::Int(x))
+            .map(Literal::Int)
             .collect();
 
         Some(TupleToAtom {
@@ -87,13 +87,12 @@ impl Representation for TupleToAtom {
         &self,
         values: &std::collections::BTreeMap<Name, Literal>,
     ) -> Result<Literal, ApplicationError> {
-
         let mut tuple = Vec::new();
 
         for name in self.names() {
             let value = values
                 .get(&name)
-                .ok_or_else(|| ApplicationError::RuleNotApplicable)?;
+                .ok_or(ApplicationError::RuleNotApplicable)?;
             tuple.push(value.clone());
         }
 

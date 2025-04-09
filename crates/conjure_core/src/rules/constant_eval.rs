@@ -52,20 +52,33 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 .map(|x| x.to_literal())
                 .collect::<Option<Vec<Lit>>>()?;
 
-            //TODO : tuple i think tuple needs this too or something similar
-
             match subject {
                 Lit::AbstractLiteral(subject @ AbstractLiteral::Matrix(_, _)) => {
-                    return matrix::flatten_enumerate(subject)
+                    matrix::flatten_enumerate(subject)
                         .find(|(i, _)| i == &indices)
-                        .map(|(_, x)| x);
+                        .map(|(_, x)| x)
                 }
                 Lit::AbstractLiteral(subject @ AbstractLiteral::Tuple(_)) => {
-                    return matrix::flatten_enumerate(subject)
-                        .find(|(i, _)| i == &indices)
-                        .map(|(_, x)| x);
+                    let AbstractLiteral::Tuple(elems) = subject else {
+                        return None;
+                    };
+
+                    assert!(indices.len() == 1, "nested tuples not supported yet");
+
+                    let Lit::Int(index) = indices[0].clone() else {
+                        return None;
+                    };
+
+                    if elems.len() < index as usize || index < 1 {
+                        return None;
+                    }
+
+                    // -1 for 0-indexing vs 1-indexing
+                    let item = elems[index as usize - 1].clone();
+
+                    Some(item)
                 }
-                _ => return None,
+                _ => None,
             }
         }
         Expr::UnsafeSlice(_, subject, indices) | Expr::SafeSlice(_, subject, indices) => {

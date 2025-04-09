@@ -63,6 +63,7 @@ pub enum Domain {
     DomainSet(SetAttr, Box<Domain>),
     /// A n-dimensional matrix with a value domain and n-index domains
     DomainMatrix(Box<Domain>, Vec<Domain>),
+    // A tuple of n domains (e.g. (int, bool))
     DomainTuple(Vec<Domain>),
 }
 
@@ -127,8 +128,7 @@ impl Domain {
                 Domain::DomainTuple(elem_domains),
                 Literal::AbstractLiteral(AbstractLiteral::Tuple(literal_elems)),
             ) => {
-                println!("elem_domains: {elem_domains:?}");
-                println!("literal_elems: {literal_elems:?}");
+                // for every element in the tuple literal, check if it is in the corresponding domain
                 for (elem_domain, elem) in itertools::izip!(elem_domains, literal_elems) {
                     if !elem_domain.contains(elem)? {
                         return Some(false);
@@ -150,18 +150,10 @@ impl Domain {
             }
 
             (Domain::DomainMatrix(_, _), _) => Some(false),
-            (Domain::DomainSet(_, _), Literal::AbstractLiteral(AbstractLiteral::Set(_))) => {
-                todo!()
-            }
-            (Domain::DomainSet(_, _), _) => Some(false),
-            //(Domain::DomainTuple(_), _) => Some(false), //TODO: Tuple literals BREAKS HERE
-            (Domain::DomainTuple(x), y) => {
-                println!("Domain::DomainTuple(_), _ domains");
-                println!("x: {x:?}");
-                println!("y: {y:?}");
 
-                Some(false)
-            }
+            (Domain::DomainSet(_, _), _) => Some(false),
+
+            (Domain::DomainTuple(_), _) => Some(false),
         }
     }
 
