@@ -18,7 +18,7 @@ use conjure_core::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult,
 };
 use Expression::*;
-
+// TODO: change description
 /// Converrts x in s ~~> or([ x = i | i in s ]) where s is a set (constant)
 #[register_rule(("Base", 8600))]
 fn in_set(expr: &Expression, st: &SymbolTable) -> ApplicationResult {
@@ -26,12 +26,13 @@ fn in_set(expr: &Expression, st: &SymbolTable) -> ApplicationResult {
         In(_, a, b) => {
             let mut literals = Vec::new();
             let mut retur = true;
+
             match b.as_ref() {
                 AbstractLiteral(_, c) => match c {
                     AbstractLiteral::Set(t) => {
                         for expr in t {
                             if let Atomic(_, Atom::Literal(Literal::Int(i))) = expr {
-                                literals.push(Range::Single(*i));
+                                literals.push(*i);
                             } else {
                                 retur = false;
                                 break;
@@ -43,7 +44,7 @@ fn in_set(expr: &Expression, st: &SymbolTable) -> ApplicationResult {
                 Atomic(_, Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Set(c)))) => {
                     for number in c {
                         if let Literal::Int(n) = number {
-                            literals.push(Range::Single(*n));
+                            literals.push(*n);
                         } else {
                             retur = false;
                         }
@@ -60,54 +61,15 @@ fn in_set(expr: &Expression, st: &SymbolTable) -> ApplicationResult {
                     Atom::Literal(Literal::Bool(false)),
                 )));
             }
-            // TODO: fix the domain creation
-            // correct one
-            // let search_domain = Domain::IntDomain(literals);
-
-            // one used for testing
-            let mut min = i32::MAX;
-            let mut max = i32::MIN;
-            for number in literals.iter() {
-                if let Range::Single(value) = number {
-                    if *value < min {
-                        min = *value;
-                    }
-                    if *value > max {
-                        max = *value;
-                    }
-                } else {
-                    return Err(RuleNotApplicable);
-                }
-            }
-            let search_domain = Domain::IntDomain(vec![Range::Bounded(min, max)]);
-
-            // create the comprehension builder
-            let mut builder: ComprehensionBuilder = ComprehensionBuilder::new();
-            builder = builder.generator(Name::from("i".to_string()), search_domain);
-
-            // return expression for the comprehension
-            let ret_expr = Eq(
-                Metadata::new(),
-                a.clone(),
-                Box::new(Atomic(
+            if let Atomic(_, a) = a.as_ref() {
+                Ok(Reduction::pure(Expression::MinionWInSet(
                     Metadata::new(),
-                    Atom::Reference(Name::from("i".to_string())),
-                )),
-            );
-
-            // kind is 'or' since we are looking for only one of the elements in the set
-            let comprehension: Comprehension = builder.with_return_value(
-                ret_expr,
-                Rc::new(RefCell::new(st.clone())),
-                Some(ComprehensionKind::Or),
-            );
-            let comprehension_expr: Expression =
-                Expression::Comprehension(Metadata::new(), Box::new(comprehension));
-
-            Ok(Reduction::pure(Or(
-                Metadata::new(),
-                Box::new(comprehension_expr),
-            )))
+                    a.clone(),
+                    literals,
+                )))
+            } else {
+                return Err(RuleNotApplicable);
+            }
         }
         _ => Err(RuleNotApplicable),
     }
