@@ -15,6 +15,7 @@ mod minion;
 mod normalisers;
 mod partial_eval;
 mod subsitute_lettings;
+mod tuple;
 
 mod expand_comprehension;
 mod select_representation;

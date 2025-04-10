@@ -253,6 +253,27 @@ fn parse_domain(
 
             Ok(Domain::DomainMatrix(Box::new(value_domain), index_domains))
         }
+        "DomainTuple" => {
+            let domain_value = domain_value
+                .as_array()
+                .ok_or(error!("Domain matrix is not an array"))?;
+
+            //iterate through the array and parse each domain, should insert into the symbols table too
+            let domain = domain_value
+                .iter()
+                .map(|x| {
+                    let domain = x
+                        .as_object()
+                        .ok_or(error!("DomainTuple[0] is not an object"))?
+                        .iter()
+                        .next()
+                        .ok_or(error!("DomainTuple[0] is an empty object"))?;
+                    parse_domain(domain.0, domain.1, symbols)
+                })
+                .collect::<Result<Vec<Domain>>>()?;
+
+            Ok(Domain::DomainTuple(domain))
+        }
 
         _ => Err(Error::Parse(
             "FindOrGiven[2] is an unknown object".to_owned(), // consider covered
@@ -569,6 +590,21 @@ fn parse_abs_lit(abs_set: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Option<Ex
         AbstractLiteral::Set(expressions),
     ))
 }
+
+fn parse_abs_tuple(abs_tuple: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Option<Expression> {
+    let values = abs_tuple.as_array()?; // Ensure it's an array
+    let expressions = values
+        .iter()
+        .map(|values| parse_expression(values, scope))
+        .map(|values| values.expect("invalid subexpression")) // Ensure valid expressions
+        .collect::<Vec<Expression>>(); // Collect all expressions
+
+    Some(Expression::AbstractLiteral(
+        Metadata::new(),
+        AbstractLiteral::Tuple(expressions),
+    ))
+}
+
 fn parse_comprehension(
     comprehension: &serde_json::Map<String, Value>,
     scope: Rc<RefCell<SymbolTable>>,
@@ -900,6 +936,10 @@ fn parse_constant(
             if let Some(Value::Object(obj)) = int.get("ConstantAbstract") {
                 if let Some(arr) = obj.get("AbsLitSet") {
                     return parse_abs_lit(arr, scope);
+                } else if let Some(arr) = obj.get("AbsLitMatrix") {
+                    return parse_abstract_matrix_as_expr(arr, scope);
+                } else if let Some(arr) = obj.get("AbsLitTuple") {
+                    return parse_abs_tuple(arr, scope);
                 }
             }
             None
