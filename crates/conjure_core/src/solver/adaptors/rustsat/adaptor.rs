@@ -34,6 +34,7 @@ use rustsat::instances::{BasicVarManager, Cnf, SatInstance};
 
 use thiserror::Error;
 
+use itertools::Itertools;
 /// A [SolverAdaptor] for interacting with the SatSolver generic and the types thereof.
 pub struct SAT {
     __non_constructable: private::Internal,
@@ -136,26 +137,30 @@ impl SolverAdaptor for SAT {
                 sol.assign_var(lit.var(), inserter);
             }
             has_sol = true;
-            let solution = get_ref_sols(
+            let sol_old = get_ref_sols(
                 self.decision_refs.clone().unwrap(),
                 sol.clone(),
                 self.var_map.clone().unwrap(),
             );
 
-            if !callback(solution) {
-                // println!("callback false");
-                return Ok(SolveSuccess {
-                    stats: SolverStats {
-                        conjure_solver_wall_time_s: -1.0,
-                        solver_family: Some(self.get_family()),
-                        solver_adaptor: Some("SAT".to_string()),
-                        nodes: None,
-                        satisfiable: None,
-                        sat_vars: None,
-                        sat_clauses: None,
-                    },
-                    status: SearchStatus::Incomplete(solver::SearchIncomplete::UserTerminated),
-                });
+            let solutions = enumerate_sols(sol_old);
+
+            for solution in solutions {
+                if !callback(solution) {
+                    // println!("callback false");
+                    return Ok(SolveSuccess {
+                        stats: SolverStats {
+                            conjure_solver_wall_time_s: -1.0,
+                            solver_family: Some(self.get_family()),
+                            solver_adaptor: Some("SAT".to_string()),
+                            nodes: None,
+                            satisfiable: None,
+                            sat_vars: None,
+                            sat_clauses: None,
+                        },
+                        status: SearchStatus::Incomplete(solver::SearchIncomplete::UserTerminated),
+                    });
+                }
             }
 
             let blocking_vec: Vec<_> = sol.clone().iter().map(|lit| !lit).collect();
@@ -227,4 +232,49 @@ impl SolverAdaptor for SAT {
             ..stats
         }
     }
+}
+
+fn enumerate_sols(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal>> {
+    let mut sols = Vec::new();
+    let mut dont_cares = Vec::new();
+    let mut sol_inc = HashMap::new();
+
+    for (key, val) in solution {
+        let v = match val {
+            Literal::Int(i) => i,
+            _ => panic!("Only Int literals supported"),
+        };
+        if v == 2 {
+            dont_cares.push(key);
+        } else {
+            sol_inc.insert(key, val);
+        }
+    }
+
+    let mut tdcs = Vec::new();
+
+    for len in 1..(dont_cares.len()) {
+        for combination in dont_cares.iter().combinations(len) {
+            tdcs.push(combination);
+        }
+    }
+
+    for trues in tdcs {
+        let mut d = sol_inc.clone();
+        for key in dont_cares.clone() {
+            if trues.contains(&&key) {
+                d.insert(key, Literal::Int(1));
+            } else {
+                d.insert(key, Literal::Int(0));
+            }
+        }
+        sols.push(d);
+    }
+
+    for i in dont_cares.clone() {
+        sol_inc.insert(i, Literal::Int(1));
+    }
+
+    sols.push(sol_inc);
+    sols
 }
