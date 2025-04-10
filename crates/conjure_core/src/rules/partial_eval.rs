@@ -20,6 +20,9 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // rule infinitely!
     // This is why we always check whether we found a constant or not.
     match expr.clone() {
+        Intersect(_, _, _) => Err(RuleNotApplicable),
+        Union(_, _, _) => Err(RuleNotApplicable),
+        In(_, _, _) => Err(RuleNotApplicable),
         AbstractLiteral(_, _) => Err(RuleNotApplicable),
         Comprehension(_, _) => Err(RuleNotApplicable),
         DominanceRelation(_, _) => Err(RuleNotApplicable),
@@ -378,6 +381,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         MinionReify(_, _, _) => Err(RuleNotApplicable),
         MinionReifyImply(_, _, _) => Err(RuleNotApplicable),
         MinionWInIntervalSet(_, _, _) => Err(RuleNotApplicable),
+        MinionWInSet(_, _, _) => Err(RuleNotApplicable),
         MinionElementOne(_, _, _, _) => Err(RuleNotApplicable),
     }
 }

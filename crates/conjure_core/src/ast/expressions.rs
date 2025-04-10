@@ -39,6 +39,12 @@ use super::{Domain, Range, SubModel, Typeable};
 #[biplate(to=AbstractLiteral<Literal>,walk_into=[Atom])]
 #[biplate(to=Literal,walk_into=[Atom])]
 pub enum Expression {
+    Intersect(Metadata, Box<Expression>, Box<Expression>),
+
+    Union(Metadata, Box<Expression>, Box<Expression>),
+
+    In(Metadata, Box<Expression>, Box<Expression>),
+
     AbstractLiteral(Metadata, AbstractLiteral<Expression>),
     /// The top of the model
     Root(Metadata, Vec<Expression>),
@@ -366,6 +372,20 @@ pub enum Expression {
     #[compatible(Minion)]
     MinionWInIntervalSet(Metadata, Atom, Vec<i32>),
 
+    /// `w-inset(x, [v1, v2, … ])` ensures that the value of `x` is one of the explicitly given values `v1`, `v2`, etc.
+    ///
+    /// This constraint enforces membership in a specific set of discrete values rather than intervals.
+    ///
+    /// The list of values must be given in numerical order.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#w-inset)
+    #[compatible(Minion)]
+    MinionWInSet(Metadata, Atom, Vec<i32>),
+
     /// `element_one(vec, i, e)` specifies that `vec[i] = e`. This implies that i is
     /// in the range `[1..len(vec)]`.
     ///
@@ -436,7 +456,10 @@ impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
         let ret = match self {
-            //todo
+            // TODO: to check later
+            Expression::Intersect(_, _, _) => None,
+            Expression::Union(_, _, _) => None,
+            Expression::In(_, _, _) => None,
             Expression::AbstractLiteral(_, _) => None,
             Expression::DominanceRelation(_, _) => Some(Domain::BoolDomain),
             Expression::FromSolution(_, expr) => expr.domain_of(syms),
@@ -580,6 +603,7 @@ impl Expression {
             Expression::MinionReify(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionReifyImply(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionWInIntervalSet(_, _, _) => Some(Domain::BoolDomain),
+            Expression::MinionWInSet(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionElementOne(_, _, _, _) => Some(Domain::BoolDomain),
             Expression::Neg(_, x) => {
                 let Some(Domain::IntDomain(mut ranges)) = x.domain_of(syms) else {
@@ -656,6 +680,10 @@ impl Expression {
 
     pub fn return_type(&self) -> Option<ReturnType> {
         match self {
+            // TODO: to check later
+            Expression::Intersect(_, _, _) => None,
+            Expression::Union(_, _, _) => None,
+            Expression::In(_, _, _) => Some(ReturnType::Bool),
             Expression::AbstractLiteral(_, _) => None,
             Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
                 Some(subject.return_type()?)
@@ -701,6 +729,7 @@ impl Expression {
             Expression::MinionReify(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReifyImply(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionWInIntervalSet(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionWInSet(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionElementOne(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AuxDeclaration(_, _, _) => Some(ReturnType::Bool),
             Expression::UnsafeMod(_, _, _) => Some(ReturnType::Int),
@@ -862,6 +891,15 @@ impl From<Atom> for Expression {
 impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
+            Expression::Intersect(_, e1, e2) => {
+                write!(f, "{} intersect {}", e1, e2)
+            }
+            Expression::Union(_, e1, e2) => {
+                write!(f, "{} union {}", e1, e2)
+            }
+            Expression::In(_, e1, e2) => {
+                write!(f, "{} in {}", e1, e2)
+            }
             Expression::AbstractLiteral(_, l) => l.fmt(f),
             Expression::Comprehension(_, c) => c.fmt(f),
             Expression::UnsafeIndex(_, e1, e2) | Expression::SafeIndex(_, e1, e2) => {
@@ -992,6 +1030,10 @@ impl Display for Expression {
             Expression::MinionWInIntervalSet(_, atom, intervals) => {
                 let intervals = intervals.iter().join(",");
                 write!(f, "__minion_w_inintervalset({atom},{intervals})")
+            }
+            Expression::MinionWInSet(_, atom, values) => {
+                let values = values.iter().join(",");
+                write!(f, "__minion_w_inset({atom},{values})")
             }
             Expression::AuxDeclaration(_, n, e) => {
                 write!(f, "{} =aux {}", n, e.clone())
