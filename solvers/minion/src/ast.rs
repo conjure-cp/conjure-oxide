@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 pub type VarName = String;
-pub type Tuple = (Constant, Constant);
+pub type Tuple = Vec<Constant>;
 pub type TwoVars = (Var, Var);
 
 /// A Minion model.
