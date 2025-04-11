@@ -7,6 +7,7 @@ use std::ptr::null;
 use std::vec;
 
 use clap::error;
+use log::kv::value;
 use minion_rs::ast::{Model, Tuple};
 use rustsat::encodings::am1::Def;
 use rustsat::solvers::{Solve, SolverResult};
@@ -143,11 +144,16 @@ impl SolverAdaptor for SAT {
                 self.var_map.clone().unwrap(),
             );
 
+            tracing::info!("old solution {:#?}", sol_old);
+
             let solutions = enumerate_sols(sol_old);
+
+            tracing::info!("final solutions for run");
+            tracing::info!("{:#?}", solutions);
 
             for solution in solutions {
                 if !callback(solution) {
-                    // println!("callback false");
+                    // callback false
                     return Ok(SolveSuccess {
                         stats: SolverStats {
                             conjure_solver_wall_time_s: -1.0,
@@ -165,10 +171,10 @@ impl SolverAdaptor for SAT {
 
             let blocking_vec: Vec<_> = sol.clone().iter().map(|lit| !lit).collect();
             let mut blocking_cl = Clause::new();
+            tracing::info!("adding blocking clause with literals: {:#?}", blocking_vec);
             for lit_i in blocking_vec {
                 blocking_cl.add(lit_i);
             }
-
             solver.add_clause(blocking_cl).unwrap();
         }
     }
@@ -235,6 +241,24 @@ impl SolverAdaptor for SAT {
 }
 
 fn enumerate_sols(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal>> {
+    tracing::info!("Enumerating");
+    for (key, val) in solution.clone() {
+        match val {
+            Literal::Int(a) => {
+                if (a == 2) {
+                    return enumerate_real(solution);
+                } else {
+                    continue;
+                }
+            }
+            _ => continue,
+        }
+    }
+    vec![solution]
+}
+
+fn enumerate_real(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal>> {
+    tracing::info!("Enumerating: Real");
     let mut sols = Vec::new();
     let mut dont_cares = Vec::new();
     let mut sol_inc = HashMap::new();
@@ -253,6 +277,7 @@ fn enumerate_sols(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal
 
     let mut tdcs = Vec::new();
 
+    tdcs.push(vec![]);
     for len in 1..(dont_cares.len()) {
         for combination in dont_cares.iter().combinations(len) {
             tdcs.push(combination);
