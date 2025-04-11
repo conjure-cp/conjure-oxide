@@ -65,14 +65,14 @@ fn get_ref_sols(
     let mut solution: HashMap<Name, Literal> = HashMap::new();
 
     for reference in find_refs {
-        // lit is 'Nothing' for unconstrained - if this is actually happenning, panicking is fine
-        // we are not supposed to do anything to resolve that here.
+        // lit is `Nothing` for variables that don't exist. This should have thrown an error at parse-time.
         let lit: Lit = match var_map.get(&reference) {
             Some(a) => *a,
-            None => panic!(
+            None => bug!(
                 "There should never be a non-just literal occurring here. Something is broken upstream."
             ),
         };
+
         solution.insert(
             Name::UserName(reference),
             match sol[lit.var()] {
@@ -127,7 +127,16 @@ impl SolverAdaptor for SAT {
                 }
             };
 
-            let sol = solver.full_solution().unwrap();
+            let mut sol = solver.full_solution().unwrap();
+
+            // add DontCares into the solution
+            for (name, lit) in self.var_map.clone().unwrap() {
+                let inserter = sol.var_value(lit.var());
+                sol.assign_var(lit.var(), inserter);
+            }
+
+            sol.replace_dont_care(false);
+
             has_sol = true;
             let solution = get_ref_sols(
                 self.decision_refs.clone().unwrap(),
@@ -136,7 +145,6 @@ impl SolverAdaptor for SAT {
             );
 
             if !callback(solution) {
-                // println!("callback false");
                 return Ok(SolveSuccess {
                     stats: SolverStats {
                         conjure_solver_wall_time_s: -1.0,
@@ -174,6 +182,7 @@ impl SolverAdaptor for SAT {
         let decisions = sym_tab.into_iter();
 
         let mut finds: Vec<String> = Vec::new();
+        let mut var_map: HashMap<String, Lit> = HashMap::new();
 
         for find_ref in decisions {
             if (*find_ref.1.domain().unwrap() != BoolDomain) {
@@ -186,24 +195,13 @@ impl SolverAdaptor for SAT {
             finds.push(name.to_string());
         }
 
-        self.decision_refs = Some(finds);
+        self.decision_refs = Some(finds.clone());
 
         let m_clone = model.clone();
-        let vec_constr = m_clone.as_submodel().constraints();
 
-        let vec_cnf = vec_constr.clone();
-        // let constr = &vec_constr[0];
-        // let vec_cnf: Vec<Expression> = match constr {
-        //     Expression::And(_, vec) => vec.clone().unwrap_list().unwrap(),
+        let vec_cnf = m_clone.as_submodel().constraints().clone();
 
-        //     _ => Err(SolverError::ModelInvalid(
-        //         "Only And Constraints supported".to_string(),
-        //     ))?,
-        // };
-
-        let mut var_map: HashMap<String, Lit> = HashMap::new();
-
-        let inst: SatInstance = handle_cnf(&vec_cnf, &mut var_map);
+        let inst: SatInstance = handle_cnf(&vec_cnf, &mut var_map, finds.clone());
 
         self.var_map = Some(var_map);
         let cnf: (Cnf, BasicVarManager) = inst.clone().into_cnf();

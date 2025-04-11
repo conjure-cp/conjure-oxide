@@ -1,17 +1,22 @@
-use std::{collections::HashMap, env::Vars, io::Lines};
+use core::panic;
+use std::{
+    collections::HashMap,
+    env::{vars, Vars},
+    io::Lines,
+};
 
 use rustsat::{
     clause,
     instances::{BasicVarManager, Cnf, SatInstance},
     solvers::{Solve, SolverResult},
-    types::{Lit, TernaryVal},
+    types::{Clause, Lit, TernaryVal},
 };
 
 use rustsat_minisat::core::Minisat;
 
 use anyhow::{anyhow, Result};
 
-use crate::{ast::Expression, solver::Error};
+use crate::{ast::Expression, bug, solver::Error};
 
 pub fn handle_lit(
     l1: &Expression,
@@ -59,8 +64,6 @@ pub fn handle_atom(
             }
             conjure_core::ast::Atom::Reference(name) => match name {
                 conjure_core::ast::Name::UserName(n) => {
-                    // TODO: Temp Clone
-                    // let m = n.clone();
                     let lit_temp: Lit = fetch_lit(n, vars_added, inst);
                     if polarity {
                         lit_temp
@@ -83,7 +86,7 @@ pub fn fetch_lit(
     inst: &mut SatInstance,
 ) -> Lit {
     if !vars_added.contains_key(&symbol) {
-        vars_added.insert(symbol.to_string(), inst.new_lit());
+        bug!("All decision variables are expected to have been added to the CNF by now.");
     }
     *(vars_added.get(&symbol).unwrap())
 }
@@ -97,22 +100,33 @@ pub fn handle_disjn(
         Expression::Or(_, vec) => &vec.clone().unwrap_list().unwrap(),
         _ => panic!(),
     };
-    let l1 = &cl[0];
-    let l2 = &cl[1];
 
-    // handle literal:
-    let lit1: Lit = handle_lit(l1, vars_added, inst_in_use);
-    // also handle literal
-    let lit2: Lit = handle_lit(l2, vars_added, inst_in_use);
+    let mut clause: Clause = Clause::new();
+    for lit in cl {
+        let temp: Lit = handle_lit(lit, vars_added, inst_in_use);
+        clause.add(temp);
+    }
 
-    inst_in_use.add_binary(lit1, lit2);
+    inst_in_use.add_clause(clause);
 }
 
-pub fn handle_cnf(vec_cnf: &Vec<Expression>, vars_added: &mut HashMap<String, Lit>) -> SatInstance {
+pub fn handle_cnf(
+    vec_cnf: &Vec<Expression>,
+    vars_added: &mut HashMap<String, Lit>,
+    finds: Vec<String>,
+) -> SatInstance {
     let mut inst = SatInstance::new();
+
+    tracing::info!("{:?} are all the decision vars found.", finds);
+
+    for name in finds {
+        vars_added.insert(name, inst.new_lit());
+    }
+
     for disjn in vec_cnf {
         handle_disjn(disjn, vars_added, &mut inst);
     }
+
     inst
 }
 
