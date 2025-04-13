@@ -493,21 +493,12 @@ fn unwrap_expr<T: TryFrom<Lit>>(expr: &Expr) -> Option<T> {
 #[cfg(test)]
 mod tests {
     use crate::eval_constant;
-    use conjure_core::ast::{Atom, Expression, Literal};
+    use conjure_core::ast::Expression;
+    use conjure_essence_macros::essence_expr;
 
     #[test]
     fn div_by_zero() {
-        let expr = Expression::UnsafeDiv(
-            Default::default(),
-            Box::new(Expression::Atomic(
-                Default::default(),
-                Atom::Literal(Literal::Int(1)),
-            )),
-            Box::new(Expression::Atomic(
-                Default::default(),
-                Atom::Literal(Literal::Int(0)),
-            )),
-        );
+        let expr = essence_expr!(1 / 0);
         assert_eq!(eval_constant(&expr), None);
     }
 
@@ -515,14 +506,8 @@ mod tests {
     fn safediv_by_zero() {
         let expr = Expression::SafeDiv(
             Default::default(),
-            Box::new(Expression::Atomic(
-                Default::default(),
-                Atom::Literal(Literal::Int(1)),
-            )),
-            Box::new(Expression::Atomic(
-                Default::default(),
-                Atom::Literal(Literal::Int(0)),
-            )),
+            Box::new(essence_expr!(1)),
+            Box::new(essence_expr!(0)),
         );
         assert_eq!(eval_constant(&expr), None);
     }

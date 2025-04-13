@@ -866,6 +866,12 @@ impl From<Name> for Expression {
     }
 }
 
+impl Into<Expression> for Box<Expression> {
+    fn into(self) -> Expression {
+        self.as_ref().clone()
+    }
+}
+
 impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
