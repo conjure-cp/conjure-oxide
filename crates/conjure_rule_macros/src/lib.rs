@@ -126,8 +126,8 @@ impl Parse for RuleSetArgs {
         }
 
         input.parse::<Comma>()?;
-        let solver_families = parse_parenthesized::<Path>(input)
-            .or(input.parse::<Path>().and_then(|p| Ok(vec![p])))?;
+        let solver_families =
+            parse_parenthesized::<Path>(input).or(input.parse::<Path>().map(|p| vec![p]))?;
 
         Ok(Self {
             name,
