@@ -19,8 +19,8 @@
 //! Converting to a sum is especially helpful for converting the model to Minion as:
 //!
 //! 1. normalise_associative_commutative concatenates nested sums, reducing the
-//!     amount of flattening we need to do to convert this to Minion (reducing the number of
-//!     auxiliary variables needed).
+//!    amount of flattening we need to do to convert this to Minion (reducing the number of
+//!    auxiliary variables needed).
 //!
 //! 2. A sum of variables with constant coefficients can be trivially converted into the
 //!    weightedsumgeq and weightedsumleq constraints. A negated number is just a number
@@ -37,6 +37,8 @@ use crate::ast::{Atom, Literal as Lit, SymbolTable};
 use crate::matrix_expr;
 use crate::metadata::Metadata;
 use std::collections::VecDeque;
+
+use crate::ast::AbstractLiteral;
 
 /// Eliminates double negation
 ///
@@ -104,10 +106,55 @@ fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResu
 #[register_rule(("Base", 8400))]
 fn minus_to_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs) = match expr {
-        Minus(_, lhs, rhs) => Ok((lhs.clone(), rhs.clone())),
-        _ => Err(RuleNotApplicable),
-    }?;
-    // add if here to catch sets
+        Minus(_, lhs, rhs) => {
+            // println!("lhs:");
+            // print!("{:?}", lhs);
+            // println!("rhs:");
+            // print!("{:?}", rhs);
+            match lhs.as_ref() {
+                Expr::Atomic(_, Atom::Reference(name)) => {
+                    match rhs.as_ref() {
+                        Expr::Atomic(_, Atom::Reference(name)) => {
+                            return Err(RuleNotApplicable);
+                        }
+                        Expr::AbstractLiteral(_, c1) => {
+                            match c1 {
+                                AbstractLiteral::Set(t1) => {
+                                    return Err(RuleNotApplicable);
+                                }
+                                _ => (lhs.clone(), rhs.clone()),
+                            }
+                        }
+                        _ => (lhs.clone(), rhs.clone()),
+                    }
+                }
+                Expr::AbstractLiteral(_, c1) => {
+                    match c1 {
+                        AbstractLiteral::Set(t1) => {
+                            match rhs.as_ref() {
+                                Expr::Atomic(_, Atom::Reference(name)) => {
+                                    return Err(RuleNotApplicable);
+                                }
+                                Expr::AbstractLiteral(_, c1) => {
+                                    match c1 {
+                                        AbstractLiteral::Set(t1) => {
+                                            return Err(RuleNotApplicable);
+                                        }
+                                        _ => (lhs.clone(), rhs.clone()),
+                                    }
+                                }
+                                _ => (lhs.clone(), rhs.clone()),
+                            }
+                        }
+                        _ => (lhs.clone(), rhs.clone()),
+                    }
+                }
+                _ => (lhs.clone(), rhs.clone()),
+            }
+        }
+        _ => return Err(RuleNotApplicable),
+    };
+
     Ok(Reduction::pure(Sum(
         Metadata::new(),
         Box::new(matrix_expr![*lhs, Neg(Metadata::new(), rhs)]),

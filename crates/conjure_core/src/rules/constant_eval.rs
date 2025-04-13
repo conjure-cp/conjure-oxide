@@ -32,7 +32,7 @@ fn apply_eval_constant(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 pub fn eval_constant(expr: &Expr) -> Option<Lit> {
     match expr {
         // need to specify for subsetEq + intersection + union + difference
-        //Expr::Difference(_, _, _) => None,
+        Expr::Difference(_, _, _) => None,
         Expr::Union(_, _, _) => None,
         Expr::Intersect(_, _, _) => None,
         Expr::SubsetEq(_, _, _) => None,

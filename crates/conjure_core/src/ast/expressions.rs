@@ -134,8 +134,9 @@ pub enum Expression {
     Imply(Metadata, Box<Expression>, Box<Expression>),
 
     #[compatible(JsonInput)]
-    // Difference(Metadata, Box<Expression>, Box<Expression>),
+    Difference(Metadata, Box<Expression>, Box<Expression>),
     
+    #[compatible(JsonInput)]
     Union(Metadata, Box<Expression>, Box<Expression>),
     
     #[compatible(JsonInput)]
@@ -449,7 +450,7 @@ impl Expression {
     pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
         let ret = match self {
             // should use something better than union for difference to make it narrower
-            // Expression::Difference(_, a, b) => Some(Domain::DomainSet(SetAttr::None, Box::new(a.domain_of(syms)?.union(&b.domain_of(syms)?)?))),
+            Expression::Difference(_, a, b) => Some(Domain::DomainSet(SetAttr::None, Box::new(a.domain_of(syms)?.union(&b.domain_of(syms)?)?))),
             Expression::Union(_, a, b) => Some(Domain::DomainSet(SetAttr::None, Box::new(a.domain_of(syms)?.union(&b.domain_of(syms)?)?))),
             Expression::Intersect(_, a, b) => Some(Domain::DomainSet(SetAttr::None, Box::new(a.domain_of(syms)?.intersect(&b.domain_of(syms)?)?))),
             Expression::SubsetEq(_, _, _) => Some(Domain::BoolDomain),
@@ -675,7 +676,7 @@ impl Expression {
 
     pub fn return_type(&self) -> Option<ReturnType> {
         match self {
-            // Expression::Difference(_, subject, _) => Some(ReturnType::Set(Box::new(subject.return_type()?))),
+            Expression::Difference(_, subject, _) => Some(ReturnType::Set(Box::new(subject.return_type()?))),
             Expression::Union(_, subject, _) => Some(ReturnType::Set(Box::new(subject.return_type()?))),
             Expression::Intersect(_, subject, _) => Some(ReturnType::Set(Box::new(subject.return_type()?))),
             Expression::SubsetEq(_, _, _) => Some(ReturnType::Bool),
@@ -887,9 +888,9 @@ impl From<Atom> for Expression {
 impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
-            // Expression::Difference(_, box1, box2) => {
-            //     write!(f, "({} difference {})", box1.clone(), box2.clone())
-            // }
+            Expression::Difference(_, box1, box2) => {
+                write!(f, "({} difference {})", box1.clone(), box2.clone())
+            }
             Expression::Union(_, box1, box2) => {
                 write!(f, "({} union {})", box1.clone(), box2.clone())
             }
