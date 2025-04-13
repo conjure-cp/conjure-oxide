@@ -2,7 +2,7 @@
 
 use std::iter;
 
-use conjure_macros::register_rule;
+use conjure_rule_macros::register_rule;
 
 use conjure_core::{
     ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable},

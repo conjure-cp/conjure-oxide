@@ -9,7 +9,6 @@ pub mod error;
 pub mod metadata;
 pub mod parse;
 pub mod representation;
-mod representations;
 pub mod rule_engine;
 pub mod solver;
 pub mod stats;

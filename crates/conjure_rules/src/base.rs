@@ -8,7 +8,6 @@ use conjure_core::{
         register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
     },
 };
-use conjure_essence_macros::essence_expr;
 use uniplate::Uniplate;
 
 use ApplicationError::RuleNotApplicable;

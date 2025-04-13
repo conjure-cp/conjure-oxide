@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use conjure_macros::register_rule;
+use conjure_rule_macros::register_rule;
 use itertools::iproduct;
 
 use conjure_core::{

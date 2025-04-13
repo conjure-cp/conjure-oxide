@@ -126,7 +126,8 @@ impl Parse for RuleSetArgs {
         }
 
         input.parse::<Comma>()?;
-        let solver_families = parse_parenthesized::<Path>(input)?;
+        let solver_families = parse_parenthesized::<Path>(input)
+            .or(input.parse::<Path>().and_then(|p| Ok(vec![p])))?;
 
         Ok(Self {
             name,
@@ -141,7 +142,7 @@ impl Parse for RuleSetArgs {
 *
 * # Example
 * ```rust
- * use conjure_macros::register_rule_set;
+ * use conjure_rule_macros::register_rule_set;
  * register_rule_set!("MyRuleSet", ("DependencyRuleSet", "AnotherRuleSet"));
 * ```
  */

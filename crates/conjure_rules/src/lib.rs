@@ -10,14 +10,14 @@ mod base;
 mod bubble;
 mod cnf;
 mod constant_eval;
+mod expand_comprehension;
 mod matrix;
 mod minion;
 mod normalisers;
 mod partial_eval;
-mod subsitute_lettings;
-
-mod expand_comprehension;
+mod representation;
 mod select_representation;
+mod subsitute_lettings;
 mod utils;
 
 /// Denotes a block of code as extra, optional checks for a rule. Primarily, these are checks that

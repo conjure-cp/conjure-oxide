@@ -3,9 +3,8 @@ use std::collections::BTreeMap;
 use itertools::{izip, Itertools};
 
 use super::prelude::*;
-use crate::{ast::matrix, into_matrix};
 
-register_represention!(MatrixToAtom, "matrix_to_atom");
+register_representation!(MatrixToAtom, "matrix_to_atom");
 
 #[derive(Clone, Debug)]
 pub struct MatrixToAtom {

@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use conjure_macros::register_rule;
+use conjure_rule_macros::register_rule;
 
 use conjure_core::{
     ast::{Atom, Expression as Expr, SymbolTable},
