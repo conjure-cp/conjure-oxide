@@ -866,9 +866,9 @@ impl From<Name> for Expression {
     }
 }
 
-impl Into<Expression> for Box<Expression> {
-    fn into(self) -> Expression {
-        self.as_ref().clone()
+impl From<Box<Expression>> for Expression {
+    fn from(val: Box<Expression>) -> Self {
+        val.as_ref().clone()
     }
 }
 
