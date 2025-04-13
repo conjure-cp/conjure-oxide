@@ -141,6 +141,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             _ => None,
         },
+        // TODO: implement this
         Expr::In(_, _, _) => None,
         Expr::FromSolution(_, _) => None,
         Expr::DominanceRelation(_, _) => None,

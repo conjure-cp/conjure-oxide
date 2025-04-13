@@ -194,15 +194,15 @@ fn parse_domain(
                 .iter()
                 .next()
                 .ok_or(Error::Parse("DomainSet is an empty object".to_owned()))?;
-            let domain = match domain_name {
-                "DomainInt" => {
-                    println!("DomainInt: {:#?}", domain.1);
-                    Ok(parse_int_domain(domain.1, symbols)?)
-                }
+            let domain = match domain.0.as_str() {
+                "DomainInt" => Ok(parse_int_domain(domain.1, symbols)?),
                 "DomainBool" => Ok(Domain::BoolDomain),
-                _ => Err(Error::Parse(
-                    "FindOrGiven[2] is an unknown object".to_owned(),
-                )),
+                _ => {
+                    println!("Domain: {:#?}", domain);
+                    Err(Error::Parse(
+                        "FindOrGiven[2] is an unknown object".to_owned(),
+                    ))
+                }
             }?;
             print!("{:?}", domain);
             Ok(Domain::DomainSet(SetAttr::None, Box::new(domain)))

@@ -9,12 +9,10 @@ use conjure_core::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult,
 };
 use Expression::*;
-// TODO: change description
-/// Converrts x in s ~~> or([ x = i | i in s ]) where s is a set (constant)
 #[register_rule(("Base", 8600))]
-fn in_set(expr: &Expression, st: &SymbolTable) -> ApplicationResult {
+fn union_set(expr: &Expression, st: &SymbolTable) -> ApplicationResult {
     match expr {
-        In(_, a, b) => {
+        Union(_, a, b) => {
             let mut literals = Vec::new();
             let mut retur = true;
 
