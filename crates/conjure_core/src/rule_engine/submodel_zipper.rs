@@ -23,28 +23,34 @@ pub(super) fn submodel_ctx(
 /// A zipper that traverses over the current submodel only, and does not traverse into nested
 /// scopes.
 #[derive(Clone)]
-struct SubmodelZipper {
+#[doc(hidden)]
+pub struct SubmodelZipper {
     inner: Zipper<Expression>,
 }
 
 impl SubmodelZipper {
-    fn go_left(&mut self) -> Option<()> {
+    #[doc(hidden)]
+    pub fn go_left(&mut self) -> Option<()> {
         self.inner.go_left()
     }
 
-    fn go_right(&mut self) -> Option<()> {
+    #[doc(hidden)]
+    pub fn go_right(&mut self) -> Option<()> {
         self.inner.go_right()
     }
 
-    fn go_up(&mut self) -> Option<()> {
+    #[doc(hidden)]
+    pub fn go_up(&mut self) -> Option<()> {
         self.inner.go_up()
     }
 
-    fn rebuild_root(self) -> Expression {
+    #[doc(hidden)]
+    pub fn rebuild_root(self) -> Expression {
         self.inner.rebuild_root()
     }
 
-    fn go_down(&mut self) -> Option<()> {
+    #[doc(hidden)]
+    pub fn go_down(&mut self) -> Option<()> {
         // do not enter things that create new submodels
         if matches!(
             self.inner.focus(),
@@ -56,12 +62,26 @@ impl SubmodelZipper {
         }
     }
 
-    fn focus(&self) -> &Expression {
+    #[doc(hidden)]
+    pub fn focus(&self) -> &Expression {
         self.inner.focus()
     }
 
-    fn focus_mut(&mut self) -> &mut Expression {
+    #[doc(hidden)]
+    pub fn replace_focus(&mut self, new_focus: Expression) -> Expression {
+        self.inner.replace_focus(new_focus)
+    }
+
+    #[doc(hidden)]
+    pub fn focus_mut(&mut self) -> &mut Expression {
         self.inner.focus_mut()
+    }
+
+    #[doc(hidden)]
+    pub fn new(root_expression: Expression) -> Self {
+        SubmodelZipper {
+            inner: Zipper::new(root_expression),
+        }
     }
 }
 

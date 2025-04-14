@@ -9,15 +9,9 @@ such that
 
 --
 
-|-(x)|, 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-|x| 
-
---
-
-|-(y)|, 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-|y| 
+(Sum([|-(x)|,|-(y)|;int(1..2)]) = 10), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(Sum([|x|,|y|;int(1..2)]) = 10) 
 
 --
 
@@ -41,7 +35,7 @@ new constraints:
 and([SumLeq([__0, __1], 10),SumGeq([__0, __1], 10);int(1..)]),
 __0 =aux |x|,
 __1 =aux |y|, 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 SumLeq([__0, __1], 10),
 SumGeq([__0, __1], 10),
 __0 =aux |x|,

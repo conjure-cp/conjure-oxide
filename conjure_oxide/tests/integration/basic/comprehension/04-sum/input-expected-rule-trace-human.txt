@@ -13,28 +13,32 @@ a[i]
 
 --
 
-[given i: int(1..2)
+(Sum([given i: int(1..2)
 
 such that
 
 a[i]
- | i: int(1..2),], 
-   ~~> expand_comprehension ([("Base", 6000)]) 
-[a[1],a[2];int(1..)] 
+ | i: int(1..2),]) = 3), 
+   ~~> select_representation_matrix ([("Base", 8001)]) 
+(Sum([given i: int(1..2)
 
---
+such that
 
-a, 
-   ~~> select_representation ([("Base", 8000)]) 
-a#matrix_to_atom 
+a#matrix_to_atom[i]
+ | i: int(1..2),]) = 3) 
 new variables:
   find a#matrix_to_atom_1: int(1..2)
   find a#matrix_to_atom_2: int(1..2)
 --
 
-a, 
-   ~~> select_representation ([("Base", 8000)]) 
-a#matrix_to_atom 
+[given i: int(1..2)
+
+such that
+
+a#matrix_to_atom[i]
+ | i: int(1..2),], 
+   ~~> expand_comprehension ([("Base", 2000)]) 
+[a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)] 
 
 --
 
@@ -44,9 +48,9 @@ a#matrix_to_atom[1],
 
 --
 
-and([__inDomain(1,int(1..2));int(1..)]), 
+(Sum([{a#matrix_to_atom[1] @ and([__inDomain(1,int(1..2));int(1..)])},a#matrix_to_atom[2];int(1..)]) = 3), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(Sum([{a#matrix_to_atom[1] @ true},a#matrix_to_atom[2];int(1..)]) = 3) 
 
 --
 
@@ -56,9 +60,9 @@ true
 
 --
 
-and([true;int(1..)]), 
+(Sum({[a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)] @ and([true;int(1..)])}) = 3), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(Sum({[a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)] @ true}) = 3) 
 
 --
 
@@ -68,9 +72,9 @@ Sum({[a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)] @ true}),
 
 --
 
-and([true;int(1..)]), 
+({Sum([a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)]) @ and([true;int(1..)])} = 3), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+({Sum([a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)]) @ true} = 3) 
 
 --
 
@@ -80,9 +84,9 @@ true
 
 --
 
-and([true;int(1..)]), 
+{(Sum([a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)]) = 3) @ and([true;int(1..)])}, 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+{(Sum([a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)]) = 3) @ true} 
 
 --
 
@@ -93,15 +97,7 @@ and([(Sum([a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)]) = 3),true;int(1..)
 --
 
 and([(Sum([a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)]) = 3),true;int(1..)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-(Sum([a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)]) = 3),
-true 
-
---
-
-(Sum([a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)]) = 3),
-true, 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 (Sum([a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)]) = 3) 
 
 --
@@ -112,9 +108,9 @@ a#matrix_to_atom[2],
 
 --
 
-and([__inDomain(2,int(1..2));int(1..)]), 
+(Sum([a#matrix_to_atom[1],{a#matrix_to_atom[2] @ and([__inDomain(2,int(1..2));int(1..)])};int(1..)]) = 3), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(Sum([a#matrix_to_atom[1],{a#matrix_to_atom[2] @ true};int(1..)]) = 3) 
 
 --
 
@@ -124,9 +120,9 @@ true
 
 --
 
-and([true;int(1..)]), 
+(Sum({[a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)] @ and([true;int(1..)])}) = 3), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(Sum({[a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)] @ true}) = 3) 
 
 --
 
@@ -136,9 +132,9 @@ Sum({[a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)] @ true}),
 
 --
 
-and([true;int(1..)]), 
+({Sum([a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)]) @ and([true;int(1..)])} = 3), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+({Sum([a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)]) @ true} = 3) 
 
 --
 
@@ -148,9 +144,9 @@ true
 
 --
 
-and([true;int(1..)]), 
+{(Sum([a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)]) = 3) @ and([true;int(1..)])}, 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+{(Sum([a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)]) = 3) @ true} 
 
 --
 
@@ -161,65 +157,38 @@ and([(Sum([a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)]) = 3),true;int(1..)
 --
 
 and([(Sum([a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)]) = 3),true;int(1..)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-(Sum([a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)]) = 3),
-true 
-
---
-
-(Sum([a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)]) = 3),
-true, 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 (Sum([a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)]) = 3) 
 
 --
 
 (Sum([a#matrix_to_atom[1],a#matrix_to_atom[2];int(1..)]) = 3), 
+   ~~> index_matrix_to_atom ([("Base", 5000)]) 
+(Sum([a#matrix_to_atom_1,a#matrix_to_atom_2;int(1..)]) = 3) 
+
+--
+
+(Sum([a#matrix_to_atom_1,a#matrix_to_atom_2;int(1..)]) = 3), 
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-and([SumLeq([__0, __1], 3),SumGeq([__0, __1], 3);int(1..)]) 
-new variables:
-  find __0: int(1..2)
-  find __1: int(1..2)
-new constraints:
-  __0 =aux a#matrix_to_atom[1]
-  __1 =aux a#matrix_to_atom[2]
---
-
-and([SumLeq([__0, __1], 3),SumGeq([__0, __1], 3);int(1..)]),
-__0 =aux a#matrix_to_atom[1],
-__1 =aux a#matrix_to_atom[2], 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-SumLeq([__0, __1], 3),
-SumGeq([__0, __1], 3),
-__0 =aux a#matrix_to_atom[1],
-__1 =aux a#matrix_to_atom[2] 
+and([SumLeq([a#matrix_to_atom_1, a#matrix_to_atom_2], 3),SumGeq([a#matrix_to_atom_1, a#matrix_to_atom_2], 3);int(1..)]) 
 
 --
 
-a#matrix_to_atom[1], 
-   ~~> index_matrix_to_atom ([("Base", 2000)]) 
-a#matrix_to_atom_1 
-
---
-
-a#matrix_to_atom[2], 
-   ~~> index_matrix_to_atom ([("Base", 2000)]) 
-a#matrix_to_atom_2 
+and([SumLeq([a#matrix_to_atom_1, a#matrix_to_atom_2], 3),SumGeq([a#matrix_to_atom_1, a#matrix_to_atom_2], 3);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+SumLeq([a#matrix_to_atom_1, a#matrix_to_atom_2], 3),
+SumGeq([a#matrix_to_atom_1, a#matrix_to_atom_2], 3) 
 
 --
 
 Final model:
 
 find a: matrix indexed by [[int(1..2)]] of int(1..2)
-find __0: int(1..2)
-find __1: int(1..2)
 find a#matrix_to_atom_1: int(1..2)
 find a#matrix_to_atom_2: int(1..2)
 
 such that
 
-SumLeq([__0, __1], 3),
-SumGeq([__0, __1], 3),
-__0 =aux a#matrix_to_atom_1,
-__1 =aux a#matrix_to_atom_2
+SumLeq([a#matrix_to_atom_1, a#matrix_to_atom_2], 3),
+SumGeq([a#matrix_to_atom_1, a#matrix_to_atom_2], 3)
 

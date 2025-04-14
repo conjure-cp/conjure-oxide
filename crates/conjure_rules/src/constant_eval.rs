@@ -1,28 +1,65 @@
 #![allow(dead_code)]
-use std::collections::HashSet;
-
-use conjure_core::{
-    ast::{matrix, AbstractLiteral, Atom, Expression as Expr, Literal as Lit, SymbolTable},
-    into_matrix,
-    metadata::Metadata,
-    rule_engine::{
-        register_rule, register_rule_set,
-        ApplicationError::{self, RuleNotApplicable},
-        ApplicationResult, Reduction,
-    },
+use conjure_core::ast::{
+    matrix, AbstractLiteral, Atom, Expression as Expr, Literal as Lit, SymbolTable,
+};
+use conjure_core::into_matrix;
+use conjure_core::metadata::Metadata;
+use conjure_core::rule_engine::{
+    register_rule, register_rule_set, ApplicationError::RuleNotApplicable, ApplicationResult,
+    Reduction,
 };
 use itertools::{izip, Itertools as _};
+use std::collections::HashSet;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use uniplate::Biplate;
+
+use super::partial_eval::run_partial_evaluator;
 
 register_rule_set!("Constant", ());
 
 #[register_rule(("Constant", 9001))]
 fn constant_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    if let Expr::Atomic(_, Atom::Literal(_)) = expr {
-        return Err(ApplicationError::RuleNotApplicable);
+    // I break the rules a bit here: this is a global rule!
+    //
+    // This rule is really really hot when expanding comprehensions.. Also, at time of writing, we
+    // have the naive rewriter, which is slow on large trees....
+    //
+    // Also, constant_evaluating bottom up vs top down does things in less passes: the rewriter,
+    // however, favour doing this top-down!
+    //
+    // e.g. or([(1=1),(2=2),(3+3 = 6)])
+
+    if !matches!(expr, Expr::Root(_, _)) {
+        return Err(RuleNotApplicable);
+    };
+
+    let has_changed: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
+    let has_changed_2 = Arc::clone(&has_changed);
+
+    let new_expr = expr.transform_bi(Arc::new(move |x| {
+        if let Expr::Atomic(_, Atom::Literal(_)) = x {
+            return x;
+        }
+
+        match eval_constant(&x)
+            .map(|c| Expr::Atomic(Metadata::new(), Atom::Literal(c)))
+            .or_else(|| run_partial_evaluator(&x).ok().map(|r| r.new_expression))
+        {
+            Some(new_expr) => {
+                has_changed.store(true, Ordering::Relaxed);
+                new_expr
+            }
+
+            None => x,
+        }
+    }));
+
+    if has_changed_2.load(Ordering::Relaxed) {
+        Ok(Reduction::pure(new_expr))
+    } else {
+        Err(RuleNotApplicable)
     }
-    eval_constant(expr)
-        .map(|c| Reduction::pure(Expr::Atomic(Metadata::new(), Atom::Literal(c))))
-        .ok_or(ApplicationError::RuleNotApplicable)
 }
 
 /// Simplify an expression to a constant if possible
@@ -167,8 +204,15 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             vec_lit_op::<bool, bool>(|e| e.iter().all(|&e| e), e.as_ref()).map(Lit::Bool)
         }
         Expr::Root(_, _) => None,
-        Expr::Or(_, e) => {
-            vec_lit_op::<bool, bool>(|e| e.iter().any(|&e| e), e.as_ref()).map(Lit::Bool)
+        Expr::Or(_, es) => {
+            // possibly cheating; definitely should be in partial eval instead
+            for e in es.clone().unwrap_list()? {
+                if let Expr::Atomic(_, Atom::Literal(Lit::Bool(true))) = e {
+                    return Some(Lit::Bool(true));
+                };
+            }
+
+            vec_lit_op::<bool, bool>(|e| e.iter().any(|&e| e), es.as_ref()).map(Lit::Bool)
         }
         Expr::Imply(_, box1, box2) => {
             let a: &Atom = (&**box1).try_into().ok()?;
