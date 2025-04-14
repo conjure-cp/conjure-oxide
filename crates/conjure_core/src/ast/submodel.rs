@@ -6,13 +6,13 @@ use super::{
         pretty_value_letting_declaration, pretty_variable_declaration,
     },
     serde::RcRefCellAsInner,
-    Declaration,
+    Atom, Declaration, Literal,
 };
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use uniplate::{Biplate, Tree, Uniplate};
 
-use crate::{bug, metadata::Metadata};
+use crate::{bug, into_matrix_expr, metadata::Metadata};
 use std::{
     cell::{Ref, RefCell, RefMut},
     collections::VecDeque,
@@ -145,6 +145,21 @@ impl SubModel {
     pub fn add_symbol(&mut self, sym: Declaration) -> Option<()> {
         self.symbols_mut().insert(Rc::new(sym))
     }
+
+    /// Converts the constraints in this submodel to a single expression suitable for use inside
+    /// another expression tree.
+    ///
+    /// * If this submodel has no constraints, true is returned.
+    /// * If this submodel has a single constraint, that constraint is returned.
+    /// * If this submodel has multiple constraints, they are returned as an `and` constraint.
+    pub fn as_single_expression(self) -> Expression {
+        let constraints = self.constraints().clone();
+        match constraints.len() {
+            0 => Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
+            1 => constraints[0].clone(),
+            _ => Expression::And(Metadata::new(), Box::new(into_matrix_expr![constraints])),
+        }
+    }
 }
 
 impl Typeable for SubModel {
@@ -276,6 +291,22 @@ impl Biplate<Expression> for SubModel {
 
             *self3.symbols_mut() = symtab;
 
+            self3
+        });
+
+        (tree, ctx)
+    }
+}
+
+impl Biplate<Atom> for SubModel {
+    fn biplate(&self) -> (Tree<Atom>, Box<dyn Fn(Tree<Atom>) -> Self>) {
+        // look into expressions
+        let (tree, expr_ctx) = <Expression as Biplate<Atom>>::biplate(&self.constraints);
+
+        let self2 = self.clone();
+        let ctx = Box::new(move |x| {
+            let mut self3 = self2.clone();
+            self3.constraints = expr_ctx(x);
             self3
         });
 

@@ -89,6 +89,16 @@ impl Declaration {
         }
     }
 
+    /// Creates a new given declaration.
+    pub fn new_given(name: Name, domain: Domain) -> Declaration {
+        let id = ID_COUNTER.fetch_add(1, Ordering::Relaxed);
+        Declaration {
+            name,
+            kind: DeclarationKind::Given(domain),
+            id,
+        }
+    }
+
     /// The name of this declaration.
     pub fn name(&self) -> &Name {
         &self.name
@@ -161,6 +171,12 @@ impl Declaration {
         } else {
             None
         }
+    }
+
+    /// Returns a clone of this declaration with a new name.
+    pub fn with_new_name(mut self, name: Name) -> Declaration {
+        self.name = name;
+        self
     }
 }
 

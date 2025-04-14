@@ -222,7 +222,7 @@ where
                 }
                 AbstractLiteral::Matrix(elems, index_domain) => {
                     let index_domain = index_domain.clone();
-                    let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(elems);
+                    let (f1_tree, f1_ctx) = <Vec<U> as Biplate<To>>::biplate(elems);
                     (
                         f1_tree,
                         Box::new(move |x| AbstractLiteral::Matrix(f1_ctx(x), index_domain.clone())),
