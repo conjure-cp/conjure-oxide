@@ -13,7 +13,7 @@ use crate::rule_engine::Reduction;
 use crate::matrix_expr;
 
 #[register_rule(("Base", 8800))]
-fn eq_to_subsetEq(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+fn eq_to_subset_eq(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
    match expr {
     // check a is a set
     // check b is a set

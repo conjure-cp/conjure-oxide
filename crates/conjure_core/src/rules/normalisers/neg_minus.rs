@@ -160,3 +160,67 @@ fn minus_to_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         Box::new(matrix_expr![*lhs, Neg(Metadata::new(), rhs)]),
     )))
 }
+
+#[register_rule(("Base", 8500))]
+fn minus_sets(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let (lhs, rhs) = match expr {
+        Minus(_, lhs, rhs) => {
+            match lhs.as_ref() {
+                Expr::Atomic(_, Atom::Reference(name)) => {
+                    match rhs.as_ref() {
+                        Expr::Atomic(_, Atom::Reference(name)) => {
+                            println!("lhs expr, rhs expr");
+                            print!("{:?}", lhs);
+                            print!("{:?}", rhs);
+                            (lhs.clone(), rhs.clone())
+                        }
+                        Expr::AbstractLiteral(_, c1) => {
+                            match c1 {
+                                AbstractLiteral::Set(t1) => {
+                                    println!("lhs expr, rhs abstract lit");
+                                    print!("{:?}", lhs);
+                                    print!("{:?}", rhs);
+                                    (lhs.clone(), rhs.clone())
+                                }
+                                _ => return Err(RuleNotApplicable),
+                            }
+                        }
+                        _ => return Err(RuleNotApplicable),
+                    }
+                }
+                Expr::AbstractLiteral(_, c1) => {
+                    match c1 {
+                        AbstractLiteral::Set(t1) => {
+                            match rhs.as_ref() {
+                                Expr::Atomic(_, Atom::Reference(name)) => {
+                                    println!("lhs abstract lit, rhs expr");
+                                    print!("{:?}", lhs);
+                                    print!("{:?}", rhs);
+                                    (lhs.clone(), rhs.clone())
+                                }
+                                Expr::AbstractLiteral(_, c1) => {
+                                    match c1 {
+                                        AbstractLiteral::Set(t1) => {
+                                            println!("lhs abstract lit, rhs abstract lit");
+                                            print!("{:?}", lhs);
+                                            print!("{:?}", rhs);
+                                            (lhs.clone(), rhs.clone())
+                                        }
+                                        _ => return Err(RuleNotApplicable),
+                                    }
+                                }
+                                _ => return Err(RuleNotApplicable),
+                            }
+                        }
+                        _ => return Err(RuleNotApplicable),
+                    }
+                }
+                _ => return Err(RuleNotApplicable),
+            }
+
+        }
+        _ => return Err(RuleNotApplicable),
+    };
+
+    return Err(RuleNotApplicable)
+}
