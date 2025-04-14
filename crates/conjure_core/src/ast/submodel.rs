@@ -89,7 +89,7 @@ impl SubModel {
     ///
     /// The caller is responsible for ensuring that the root node remains an [`Expression::Root`].
     ///
-    fn root_mut_unchecked(&mut self) -> &mut Expression {
+    pub fn root_mut_unchecked(&mut self) -> &mut Expression {
         &mut self.constraints
     }
 

@@ -6,7 +6,7 @@ use conjure_core::{
     },
 };
 
-#[register_rule(("Base", 6000))]
+#[register_rule(("Base", 2000))]
 fn expand_comprehension(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Comprehension(_, comprehension) = expr else {
         return Err(RuleNotApplicable);
