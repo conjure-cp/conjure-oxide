@@ -392,10 +392,6 @@ type VecOp = Box<dyn Fn(Metadata, Vec<Expression>) -> Expression>;
 pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Option<Expression> {
     let binary_operators: HashMap<&str, BinOp> = [
         (
-            "MkOpDifference",
-            Box::new(Expression::Difference) as Box<dyn Fn(_, _, _) -> _>,
-        ),
-        (
             "MkOpUnion",
             Box::new(Expression::Union) as Box<dyn Fn(_, _, _) -> _>,
         ),

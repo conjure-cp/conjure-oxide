@@ -21,8 +21,6 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // rule infinitely!
     // This is why we always check whether we found a constant or not.
     match expr.clone() {
-        // ok?
-        Difference(_, _, _) => Err(RuleNotApplicable),
         Union(_, _, _) => Err(RuleNotApplicable),
         Intersect(_, _, _) => Err(RuleNotApplicable),
         SubsetEq(_, _, _) => Err(RuleNotApplicable),
