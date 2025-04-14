@@ -5,6 +5,7 @@ use std::sync::Arc;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
+use crate::ast::domains::SetAttr;
 use crate::ast::literals::AbstractLiteral;
 use crate::ast::literals::Literal;
 use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
@@ -18,7 +19,7 @@ use enum_compatability_macro::document_compatibility;
 use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Uniplate as _};
 
-use super::comprehension::Comprehension;
+use super::comprehension::{Comprehension, ComprehensionBuilder};
 use super::{Domain, Range, SubModel, Typeable};
 
 /// Represents different types of expressions used to define rules and constraints in the model.

@@ -1,3 +1,9 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
+use crate::ast::comprehension::Comprehension;
+use crate::ast::comprehension::ComprehensionBuilder;
+use crate::ast::comprehension::ComprehensionKind;
 use crate::ast::SymbolTable;
 use crate::metadata::Metadata;
 use crate::rule_engine::Reduction;
@@ -5,12 +11,12 @@ use conjure_core::ast::AbstractLiteral;
 use conjure_core::ast::Atom;
 use conjure_core::ast::Expression;
 use conjure_core::ast::Literal;
+use conjure_core::ast::Name;
 use conjure_core::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult,
 };
 use Expression::*;
-// TODO: change description
-/// Converrts x in s ~~> or([ x = i | i in s ]) where s is a set (constant)
+
 #[register_rule(("Base", 8600))]
 fn in_set(expr: &Expression, st: &SymbolTable) -> ApplicationResult {
     match expr {
@@ -18,7 +24,7 @@ fn in_set(expr: &Expression, st: &SymbolTable) -> ApplicationResult {
             let mut literals = Vec::new();
             let mut retur = true;
 
-            // TODO: add case where b is a variable if needed (test this first!)
+            // TODO: add case where a is a variable
             match b.as_ref() {
                 AbstractLiteral(_, c) => match c {
                     AbstractLiteral::Set(t) => {
@@ -42,23 +48,25 @@ fn in_set(expr: &Expression, st: &SymbolTable) -> ApplicationResult {
                         }
                     }
                 }
-                _ => retur = false,
+
+                _ => return Err(RuleNotApplicable),
             }
-            if retur == false {
-                return Err(RuleNotApplicable);
-            }
-            if literals.is_empty() {
-                return Ok(Reduction::pure(Atomic(
-                    Metadata::new(),
-                    Atom::Literal(Literal::Bool(false)),
-                )));
-            }
-            if let Atomic(_, a) = a.as_ref() {
-                Ok(Reduction::pure(Expression::MinionWInSet(
-                    Metadata::new(),
-                    a.clone(),
-                    literals,
-                )))
+            if retur == true {
+                if literals.is_empty() {
+                    return Ok(Reduction::pure(Atomic(
+                        Metadata::new(),
+                        Atom::Literal(Literal::Bool(false)),
+                    )));
+                }
+                if let Atomic(_, a) = a.as_ref() {
+                    Ok(Reduction::pure(Expression::MinionWInSet(
+                        Metadata::new(),
+                        a.clone(),
+                        literals,
+                    )))
+                } else {
+                    return Err(RuleNotApplicable);
+                }
             } else {
                 return Err(RuleNotApplicable);
             }
