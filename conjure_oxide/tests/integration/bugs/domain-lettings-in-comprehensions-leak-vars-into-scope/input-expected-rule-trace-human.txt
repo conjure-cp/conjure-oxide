@@ -5,13 +5,75 @@ find a: matrix indexed by [[DOM]] of DOM
 
 such that
 
-and([(a[i] = i) | i: DOM,])
+and([given i: DOM
+
+such that
+
+(a[i] = i)
+ | i: DOM,])
 
 --
 
-and([(a[i] = i) | i: DOM,]), 
+and([given i: DOM
+
+such that
+
+(a[i] = i)
+ | i: DOM,]), 
    ~~> substitute_domain_lettings ([("Base", 5000)]) 
-and([(a[i] = i) | i: DOM,]) 
+and([given i: DOM
+
+such that
+
+(a[i] = i)
+ | i: DOM,]) 
+
+--
+
+a[i], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{a[i] @ and([__inDomain(i,int(1..3));int(1..)])} 
+
+--
+
+({a[i] @ and([__inDomain(i,int(1..3));int(1..)])} = i), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(a[i] = i) @ and([and([__inDomain(i,int(1..3));int(1..)]);int(1..)])} 
+
+--
+
+{(a[i] = i) @ and([and([__inDomain(i,int(1..3));int(1..)]);int(1..)])}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+and([(a[i] = i),and([and([__inDomain(i,int(1..3));int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+and([(a[i] = i),and([and([__inDomain(i,int(1..3));int(1..)]);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(a[i] = i),
+and([and([__inDomain(i,int(1..3));int(1..)]);int(1..)]) 
+
+--
+
+(a[i] = i),
+and([and([__inDomain(i,int(1..3));int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(a[i] = i),
+and([__inDomain(i,int(1..3));int(1..)]) 
+
+--
+
+(a[i] = i),
+and([__inDomain(i,int(1..3));int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(a[i] = i),
+__inDomain(i,int(1..3)) 
+
+--
+
+__inDomain(i,int(1..3)), 
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)]) 
+__minion_w_inintervalset(i,[1,3]) 
 
 --
 
@@ -27,13 +89,63 @@ true
 
 --
 
-[(a[i] = i) | i: int(1..3),true], 
-   ~~> expand_comprehension ([("Base", 1000)]) 
-[(a[1] = 1),(a[2] = 2),(a[3] = 3);int(1..)] 
+[given i: DOM
+
+such that
+
+(a[i] = i),
+__minion_w_inintervalset(i,[1,3])
+ | i: int(1..3),true], 
+   ~~> expand_comprehension ([("Base", 6000)]) 
+[and([(a[1] = 1),__minion_w_inintervalset(1,[1,3]);int(1..)]),and([(a[2] = 2),__minion_w_inintervalset(2,[1,3]);int(1..)]),and([(a[3] = 3),__minion_w_inintervalset(3,[1,3]);int(1..)]);int(1..)] 
 
 --
 
-and([(a[1] = 1),(a[2] = 2),(a[3] = 3);int(1..)]), 
+__minion_w_inintervalset(1,[1,3]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+true 
+
+--
+
+__minion_w_inintervalset(2,[1,3]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+true 
+
+--
+
+__minion_w_inintervalset(3,[1,3]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+true 
+
+--
+
+and([and([(a[1] = 1),true;int(1..)]),and([(a[2] = 2),true;int(1..)]),and([(a[3] = 3),true;int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([(a[1] = 1),true;int(1..)]),
+and([(a[2] = 2),true;int(1..)]),
+and([(a[3] = 3),true;int(1..)]) 
+
+--
+
+and([(a[1] = 1),true;int(1..)]),
+and([(a[2] = 2),true;int(1..)]),
+and([(a[3] = 3),true;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(a[1] = 1),
+true,
+(a[2] = 2),
+true,
+(a[3] = 3),
+true 
+
+--
+
+(a[1] = 1),
+true,
+(a[2] = 2),
+true,
+(a[3] = 3),
+true, 
    ~~> partial_evaluator ([("Base", 9000)]) 
 (a[1] = 1),
 (a[2] = 2),
@@ -59,162 +171,6 @@ a#matrix_to_atom
 a, 
    ~~> select_representation ([("Base", 8000)]) 
 a#matrix_to_atom 
-
---
-
-a#matrix_to_atom[1], 
-   ~~> index_to_bubble ([("Bubble", 6000)]) 
-{a#matrix_to_atom[1] @ and([__inDomain(1,int(1..3));int(1..)])} 
-
---
-
-and([__inDomain(1,int(1..3));int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
-
---
-
-({a#matrix_to_atom[1] @ true} = 1), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{(a#matrix_to_atom[1] = 1) @ and([true;int(1..)])} 
-
---
-
-and([true;int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
-
---
-
-{(a#matrix_to_atom[1] = 1) @ true}, 
-   ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(a#matrix_to_atom[1] = 1),true;int(1..)]) 
-
---
-
-and([(a#matrix_to_atom[1] = 1),true;int(1..)]),
-(a#matrix_to_atom[2] = 2),
-(a#matrix_to_atom[3] = 3), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-(a#matrix_to_atom[1] = 1),
-true,
-(a#matrix_to_atom[2] = 2),
-(a#matrix_to_atom[3] = 3) 
-
---
-
-(a#matrix_to_atom[1] = 1),
-true,
-(a#matrix_to_atom[2] = 2),
-(a#matrix_to_atom[3] = 3), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-(a#matrix_to_atom[1] = 1),
-(a#matrix_to_atom[2] = 2),
-(a#matrix_to_atom[3] = 3) 
-
---
-
-a#matrix_to_atom[2], 
-   ~~> index_to_bubble ([("Bubble", 6000)]) 
-{a#matrix_to_atom[2] @ and([__inDomain(2,int(1..3));int(1..)])} 
-
---
-
-and([__inDomain(2,int(1..3));int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
-
---
-
-({a#matrix_to_atom[2] @ true} = 2), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{(a#matrix_to_atom[2] = 2) @ and([true;int(1..)])} 
-
---
-
-and([true;int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
-
---
-
-{(a#matrix_to_atom[2] = 2) @ true}, 
-   ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(a#matrix_to_atom[2] = 2),true;int(1..)]) 
-
---
-
-(a#matrix_to_atom[1] = 1),
-and([(a#matrix_to_atom[2] = 2),true;int(1..)]),
-(a#matrix_to_atom[3] = 3), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-(a#matrix_to_atom[1] = 1),
-(a#matrix_to_atom[2] = 2),
-true,
-(a#matrix_to_atom[3] = 3) 
-
---
-
-(a#matrix_to_atom[1] = 1),
-(a#matrix_to_atom[2] = 2),
-true,
-(a#matrix_to_atom[3] = 3), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-(a#matrix_to_atom[1] = 1),
-(a#matrix_to_atom[2] = 2),
-(a#matrix_to_atom[3] = 3) 
-
---
-
-a#matrix_to_atom[3], 
-   ~~> index_to_bubble ([("Bubble", 6000)]) 
-{a#matrix_to_atom[3] @ and([__inDomain(3,int(1..3));int(1..)])} 
-
---
-
-and([__inDomain(3,int(1..3));int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
-
---
-
-({a#matrix_to_atom[3] @ true} = 3), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{(a#matrix_to_atom[3] = 3) @ and([true;int(1..)])} 
-
---
-
-and([true;int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
-
---
-
-{(a#matrix_to_atom[3] = 3) @ true}, 
-   ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(a#matrix_to_atom[3] = 3),true;int(1..)]) 
-
---
-
-(a#matrix_to_atom[1] = 1),
-(a#matrix_to_atom[2] = 2),
-and([(a#matrix_to_atom[3] = 3),true;int(1..)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-(a#matrix_to_atom[1] = 1),
-(a#matrix_to_atom[2] = 2),
-(a#matrix_to_atom[3] = 3),
-true 
-
---
-
-(a#matrix_to_atom[1] = 1),
-(a#matrix_to_atom[2] = 2),
-(a#matrix_to_atom[3] = 3),
-true, 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-(a#matrix_to_atom[1] = 1),
-(a#matrix_to_atom[2] = 2),
-(a#matrix_to_atom[3] = 3) 
 
 --
 
