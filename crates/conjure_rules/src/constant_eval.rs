@@ -316,7 +316,32 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Bool(a ^ b == c))
         }
-        Expr::MinionWInIntervalSet(_, _, _) => None,
+        Expr::MinionWInIntervalSet(_, x, intervals) => {
+            let x_lit: &Lit = x.try_into().ok()?;
+
+            let x_lit = match x_lit.clone() {
+                Lit::Int(i) => Some(i),
+                Lit::Bool(true) => Some(1),
+                Lit::Bool(false) => Some(0),
+                _ => None,
+            }?;
+
+            let mut intervals = intervals.iter();
+            loop {
+                let Some(lower) = intervals.next() else {
+                    break;
+                };
+
+                let Some(upper) = intervals.next() else {
+                    break;
+                };
+                if &x_lit >= lower && &x_lit <= upper {
+                    return Some(Lit::Bool(true));
+                }
+            }
+
+            Some(Lit::Bool(false))
+        }
         Expr::AllDiff(_, e) => {
             let es = e.clone().unwrap_list()?;
             let mut lits: HashSet<Lit> = HashSet::new();

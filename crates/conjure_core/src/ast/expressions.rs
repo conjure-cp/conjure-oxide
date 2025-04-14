@@ -31,8 +31,8 @@ use super::{Domain, Range, SubModel, Typeable};
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
 #[uniplate(walk_into=[Atom,SubModel,AbstractLiteral<Expression>,Comprehension])]
 #[biplate(to=Metadata)]
-#[biplate(to=Atom)]
-#[biplate(to=Name,walk_into=[Atom])]
+#[biplate(to=Atom,walk_into=[Expression,AbstractLiteral<Expression>,Vec<Expression>])]
+#[biplate(to=Name,walk_into=[Expression,Atom,AbstractLiteral<Expression>,Vec<Expression>])]
 #[biplate(to=Vec<Expression>)]
 #[biplate(to=Option<Expression>)]
 #[biplate(to=SubModel,walk_into=[Comprehension])]
@@ -486,7 +486,7 @@ impl Expression {
             Expression::AbstractLiteral(_, _) => None,
             Expression::DominanceRelation(_, _) => Some(Domain::BoolDomain),
             Expression::FromSolution(_, expr) => expr.domain_of(syms),
-            Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
+            Expression::Comprehension(_, comprehension) => comprehension.domain_of(syms),
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
                 match matrix.domain_of(syms)? {
                     Domain::DomainMatrix(elem_domain, _) => Some(*elem_domain),
@@ -1008,7 +1008,7 @@ impl Display for Expression {
             }
             Expression::MinionWInIntervalSet(_, atom, intervals) => {
                 let intervals = intervals.iter().join(",");
-                write!(f, "__minion_w_inintervalset({atom},{intervals})")
+                write!(f, "__minion_w_inintervalset({atom},[{intervals}])")
             }
             Expression::AuxDeclaration(_, n, e) => {
                 write!(f, "{} =aux {}", n, e.clone())
@@ -1248,5 +1248,46 @@ mod tests {
             sum.domain_of(&vars),
             Some(Domain::IntDomain(vec![Range::Bounded(2, 4)]))
         );
+    }
+
+    #[test]
+    fn biplate_to_names() {
+        let expr = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(1)));
+        let expected_expr =
+            Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(2)));
+        let actual_expr = expr.transform_bi(Arc::new(move |x: Name| match x {
+            Name::MachineName(i) => Name::MachineName(i + 1),
+            n => n,
+        }));
+        assert_eq!(actual_expr, expected_expr);
+
+        let expr = Expression::And(
+            Metadata::new(),
+            Box::new(matrix_expr![Expression::AuxDeclaration(
+                Metadata::new(),
+                Name::MachineName(0),
+                Box::new(Expression::Atomic(
+                    Metadata::new(),
+                    Atom::Reference(Name::MachineName(1))
+                ))
+            )]),
+        );
+        let expected_expr = Expression::And(
+            Metadata::new(),
+            Box::new(matrix_expr![Expression::AuxDeclaration(
+                Metadata::new(),
+                Name::MachineName(1),
+                Box::new(Expression::Atomic(
+                    Metadata::new(),
+                    Atom::Reference(Name::MachineName(2))
+                ))
+            )]),
+        );
+
+        let actual_expr = expr.transform_bi(Arc::new(move |x: Name| match x {
+            Name::MachineName(i) => Name::MachineName(i + 1),
+            n => n,
+        }));
+        assert_eq!(actual_expr, expected_expr);
     }
 }

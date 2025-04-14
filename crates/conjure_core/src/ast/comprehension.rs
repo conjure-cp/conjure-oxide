@@ -1,6 +1,6 @@
 use std::{
     cell::RefCell,
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     fmt::Display,
     rc::Rc,
     sync::{Arc, Mutex, RwLock},
@@ -8,17 +8,18 @@ use std::{
 
 use itertools::Itertools as _;
 use serde::{Deserialize, Serialize};
-use uniplate::{derive::Uniplate, Biplate as _};
+use uniplate::{derive::Uniplate, Biplate};
 
 use crate::{
-    ast::Atom,
+    ast::{Atom, DeclarationKind},
+    bug,
     context::Context,
     into_matrix_expr, matrix_expr,
     metadata::Metadata,
     solver::{Solver, SolverError},
 };
 
-use super::{Declaration, Domain, Expression, Model, Name, Range, SubModel, SymbolTable};
+use super::{Declaration, Domain, Expression, Model, Name, SubModel, SymbolTable};
 
 pub enum ComprehensionKind {
     Sum,
@@ -28,17 +29,30 @@ pub enum ComprehensionKind {
 /// A comprehension.
 #[derive(Clone, PartialEq, Eq, Uniplate, Serialize, Deserialize, Debug)]
 #[uniplate(walk_into=[SubModel])]
-#[biplate(to=SubModel,walk_into=[Expression])]
+#[biplate(to=SubModel)]
 #[biplate(to=Expression,walk_into=[SubModel])]
 pub struct Comprehension {
-    expression: Expression,
-    submodel: SubModel,
+    return_expression_submodel: SubModel,
+    generator_submodel: SubModel,
     induction_vars: Vec<Name>,
 }
 
 impl Comprehension {
-    // Solves this comprehension using Minion, returning the resulting expressions.
-    pub fn solve_with_minion(self) -> Result<Vec<Expression>, SolverError> {
+    pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
+        self.return_expression_submodel
+            .clone()
+            .as_single_expression()
+            .domain_of(syms)
+    }
+
+    /// Solves this comprehension using Minion, returning the resulting expressions.
+    ///
+    /// If successful, this modifies the symbol table given to add aux-variables needed inside the
+    /// expanded expressions.
+    pub fn solve_with_minion(
+        self,
+        symtab: &mut SymbolTable,
+    ) -> Result<Vec<Expression>, SolverError> {
         let minion = Solver::new(crate::solver::adaptors::Minion::new());
         // FIXME: weave proper context through
         let mut model = Model::new(Arc::new(RwLock::new(Context::default())));
@@ -46,7 +60,7 @@ impl Comprehension {
         // only branch on the induction variables.
         model.search_order = Some(self.induction_vars.clone());
 
-        *model.as_submodel_mut() = self.submodel.clone();
+        *model.as_submodel_mut() = self.generator_submodel.clone();
 
         let minion = minion.load_model(model.clone())?;
 
@@ -54,7 +68,6 @@ impl Comprehension {
         let values_ptr = Arc::clone(&values);
 
         tracing::debug!(model=%model.clone(),comprehension=%self.clone(),"Minion solving comprehension");
-        let expression = self.expression;
         minion.solve(Box::new(move |sols| {
             // TODO: deal with represented names if induction variables are abslits.
             let values = &mut *values_ptr.lock().unwrap();
@@ -63,39 +76,87 @@ impl Comprehension {
         }))?;
 
         let values = values.lock().unwrap().clone();
-        Ok(values
-            .clone()
-            .into_iter()
-            .map(|sols| {
-                // substitute in values
-                expression
-                    .clone()
-                    .transform_bi(Arc::new(move |atom: Atom| match atom {
-                        Atom::Reference(name) if sols.contains_key(&name) => {
-                            Atom::Literal(sols.get(&name).unwrap().clone())
-                        }
-                        x => x,
-                    }))
-            })
-            .collect_vec())
-    }
 
-    pub fn domain_of(&self) -> Option<Domain> {
-        self.expression
-            .domain_of(&self.submodel.symbols())
-            .map(|domain| {
-                Domain::DomainMatrix(
-                    Box::new(domain),
-                    vec![Domain::IntDomain(vec![Range::UnboundedR(1)])],
-                )
-            })
+        let mut return_expressions = vec![];
+
+        for value in values {
+            // convert back to an expression
+
+            let return_expression_submodel = self.return_expression_submodel.clone();
+            let child_symtab = return_expression_submodel.symbols().clone();
+            let return_expression = return_expression_submodel.as_single_expression();
+
+            // we only want to substitute induction variables.
+            // (definitely not machine names, as they mean something different in this scope!)
+            let value: HashMap<_, _> = value
+                .into_iter()
+                .filter(|(n, _)| self.induction_vars.contains(n))
+                .collect();
+
+            let value_ptr = Arc::new(value);
+            let value_ptr_2 = Arc::clone(&value_ptr);
+
+            // substitute in the values for the induction variables
+            let return_expression = return_expression.transform_bi(Arc::new(move |x: Atom| {
+                let Atom::Reference(ref name) = x else {
+                    return x;
+                };
+
+                // is this referencing an induction var?
+                let Some(lit) = value_ptr_2.get(name) else {
+                    return x;
+                };
+
+                Atom::Literal(lit.clone())
+            }));
+
+            // merge symbol table into parent scope
+
+            // convert machine names in child_symtab to ones that we know are unused in the parent
+            // symtab
+            let mut machine_name_translations: HashMap<Name, Name> = HashMap::new();
+
+            // populate machine_name_translations, and move the declarations from child to parent
+            for (name, decl) in child_symtab.into_iter_local() {
+                // skip givens for induction vars
+                if value_ptr.get(&name).is_some()
+                    && matches!(decl.kind(), DeclarationKind::Given(_))
+                {
+                    continue;
+                }
+
+                let Name::MachineName(_) = &name else {
+                    bug!("the symbol table of the return expression of a comprehension should only contain machine names");
+                };
+
+                let new_machine_name = symtab.gensym();
+
+                let new_decl = (*decl).clone().with_new_name(new_machine_name.clone());
+                symtab.insert(Rc::new(new_decl)).unwrap();
+
+                machine_name_translations.insert(name, new_machine_name);
+            }
+
+            // rename references to aux vars in the return_expression
+            let return_expression =
+                return_expression.transform_bi(Arc::new(
+                    move |name| match machine_name_translations.get(&name) {
+                        Some(new_name) => new_name.clone(),
+                        None => name,
+                    },
+                ));
+
+            return_expressions.push(return_expression);
+        }
+
+        Ok(return_expressions)
     }
 }
 
 impl Display for Comprehension {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let generators: String = self
-            .submodel
+            .generator_submodel
             .symbols()
             .clone()
             .into_iter_local()
@@ -104,7 +165,7 @@ impl Display for Comprehension {
             .join(",");
 
         let guards = self
-            .submodel
+            .generator_submodel
             .constraints()
             .iter()
             .map(|x| format!("{x}"))
@@ -112,7 +173,7 @@ impl Display for Comprehension {
 
         let generators_and_guards = itertools::join([generators, guards], ",");
 
-        let expression = &self.expression;
+        let expression = &self.return_expression_submodel;
         write!(f, "[{expression} | {generators_and_guards}]")
     }
 }
@@ -151,7 +212,7 @@ impl ComprehensionBuilder {
         parent: Rc<RefCell<SymbolTable>>,
         comprehension_kind: Option<ComprehensionKind>,
     ) -> Comprehension {
-        let mut submodel = SubModel::new(parent);
+        let mut generator_submodel = SubModel::new(parent.clone());
 
         // TODO:also allow guards that reference lettings and givens.
 
@@ -192,16 +253,34 @@ impl ComprehensionBuilder {
             }
         }
 
-        submodel.add_constraints(induction_guards);
-        for (name, domain) in self.generators {
-            submodel
+        generator_submodel.add_constraints(induction_guards);
+        for (name, domain) in self.generators.clone() {
+            generator_submodel
                 .symbols_mut()
                 .insert(Rc::new(Declaration::new_var(name, domain)));
         }
 
+        // The return_expression is a sub-model of `parent` containing the return_expression and
+        // the induction variables as givens. This allows us to rewrite it as per usual without
+        // doing weird things to the induction vars.
+        //
+        // All the machine name declarations created by flattening the return expression will be
+        // kept inside the scope, allowing us to duplicate them during unrolling (we need a copy of
+        // each aux var for each set of assignments of induction variables).
+
+        let mut return_expression_submodel = SubModel::new(parent);
+        for (name, domain) in self.generators {
+            return_expression_submodel
+                .symbols_mut()
+                .insert(Rc::new(Declaration::new_given(name, domain)))
+                .unwrap();
+        }
+
+        return_expression_submodel.add_constraint(expression);
+
         Comprehension {
-            expression,
-            submodel,
+            return_expression_submodel,
+            generator_submodel,
             induction_vars: induction_variables.into_iter().collect_vec(),
         }
     }
