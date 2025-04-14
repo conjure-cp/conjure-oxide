@@ -2,10 +2,10 @@ use std::collections::VecDeque;
 use std::process::exit;
 use std::rc::Rc;
 
-use conjure_core::matrix_expr;
+use conjure_core::rule_engine::get_all_rules;
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_core::solver::SolverFamily;
-use conjure_core::{rule_engine::get_all_rules, rules::eval_constant};
+use conjure_core::{into_matrix_expr, matrix_expr};
 use conjure_oxide::{
     ast::*,
     get_rule_by_name,
@@ -13,6 +13,7 @@ use conjure_oxide::{
     solver::{adaptors, Solver},
     Metadata, Model, Rule,
 };
+use conjure_rules::eval_constant;
 use uniplate::{Biplate, Uniplate};
 
 fn var_name_from_atom(a: &Atom) -> Name {
@@ -29,22 +30,22 @@ fn rules_present() {
 fn sum_of_constants() {
     let valid_sum_expression = Expression::Sum(
         Metadata::new(),
-        vec![
+        Box::new(matrix_expr![
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2))),
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(3))),
-        ],
+        ]),
     );
 
     let invalid_sum_expression = Expression::Sum(
         Metadata::new(),
-        vec![
+        Box::new(matrix_expr![
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
             Expression::Atomic(
                 Metadata::new(),
                 Atom::Reference(Name::UserName(String::from("a"))),
             ),
-        ],
+        ]),
     );
 
     assert_eq!(evaluate_sum_of_constants(&valid_sum_expression), Some(6));
@@ -55,6 +56,7 @@ fn sum_of_constants() {
 fn evaluate_sum_of_constants(expr: &Expression) -> Option<i32> {
     match expr {
         Expression::Sum(_metadata, expressions) => {
+            let expressions = expressions.clone().unwrap_list()?;
             let mut sum = 0;
             for e in expressions {
                 match e {
@@ -76,21 +78,21 @@ fn recursive_sum_of_constants() {
         Metadata::new(),
         Box::new(Expression::Sum(
             Metadata::new(),
-            vec![
+            Box::new(matrix_expr![
                 Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
                 Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2))),
                 Expression::Sum(
                     Metadata::new(),
-                    vec![
+                    Box::new(matrix_expr![
                         Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
                         Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2))),
-                    ],
+                    ]),
                 ),
                 Expression::Atomic(
                     Metadata::new(),
                     Atom::Reference(Name::UserName(String::from("a"))),
                 ),
-            ],
+            ]),
         )),
         Box::new(Expression::Atomic(
             Metadata::new(),
@@ -101,7 +103,7 @@ fn recursive_sum_of_constants() {
         Metadata::new(),
         Box::new(Expression::Sum(
             Metadata::new(),
-            vec![
+            Box::new(matrix_expr![
                 Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
                 Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2))),
                 Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(3))),
@@ -109,7 +111,7 @@ fn recursive_sum_of_constants() {
                     Metadata::new(),
                     Atom::Reference(Name::UserName(String::from("a"))),
                 ),
-            ],
+            ]),
         )),
         Box::new(Expression::Atomic(
             Metadata::new(),
@@ -124,14 +126,19 @@ fn recursive_sum_of_constants() {
 fn simplify_expression(expr: Expression) -> Expression {
     match expr {
         Expression::Sum(_metadata, expressions) => {
-            if let Some(result) =
-                evaluate_sum_of_constants(&Expression::Sum(Metadata::new(), expressions.clone()))
-            {
+            let expressions = expressions.unwrap_list().unwrap();
+            if let Some(result) = evaluate_sum_of_constants(&Expression::Sum(
+                Metadata::new(),
+                Box::new(into_matrix_expr![expressions.clone()]),
+            )) {
                 Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(result)))
             } else {
                 Expression::Sum(
                     Metadata::new(),
-                    expressions.into_iter().map(simplify_expression).collect(),
+                    Box::new(into_matrix_expr![expressions
+                        .into_iter()
+                        .map(simplify_expression)
+                        .collect()]),
                 )
             }
         }
@@ -156,11 +163,11 @@ fn rule_sum_constants() {
 
     let mut expr = Expression::Sum(
         Metadata::new(),
-        vec![
+        Box::new(matrix_expr![
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2))),
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(3))),
-        ],
+        ]),
     );
 
     expr = sum_constants
@@ -186,10 +193,10 @@ fn rule_sum_geq() {
         Metadata::new(),
         Box::new(Expression::Sum(
             Metadata::new(),
-            vec![
+            Box::new(matrix_expr![
                 Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
                 Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2))),
-            ],
+            ]),
         )),
         Box::new(Expression::Atomic(
             Metadata::new(),
@@ -234,11 +241,11 @@ fn reduce_solve_xyz() {
     // 2 + 3 - 1
     let mut expr1 = Expression::Sum(
         Metadata::new(),
-        vec![
+        Box::new(matrix_expr![
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2))),
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(3))),
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(-1))),
-        ],
+        ]),
     );
 
     expr1 = sum_constants
@@ -259,7 +266,7 @@ fn reduce_solve_xyz() {
         Metadata::new(),
         Box::new(Expression::Sum(
             Metadata::new(),
-            vec![
+            Box::new(matrix_expr![
                 Expression::Atomic(
                     Metadata::new(),
                     Atom::Reference(Name::UserName(String::from("a"))),
@@ -272,7 +279,7 @@ fn reduce_solve_xyz() {
                     Metadata::new(),
                     Atom::Reference(Name::UserName(String::from("c"))),
                 ),
-            ],
+            ]),
         )),
         Box::new(expr1),
     );
@@ -639,11 +646,11 @@ fn rewrite_solve_xyz() {
                 Metadata::new(),
                 Box::new(Expression::Sum(
                     Metadata::new(),
-                    vec![
+                    Box::new(matrix_expr![
                         Expression::Atomic(Metadata::new(), variable_a.clone()),
                         Expression::Atomic(Metadata::new(), variable_b.clone()),
                         Expression::Atomic(Metadata::new(), variable_c.clone()),
-                    ],
+                    ]),
                 )),
                 Box::new(Expression::Atomic(
                     Metadata::new(),
@@ -822,7 +829,7 @@ fn eval_const_ref() {
 fn eval_const_nested_ref() {
     let expr = Expression::Sum(
         Metadata::new(),
-        vec![
+        Box::new(matrix_expr![
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
             Expression::And(
                 Metadata::new(),
@@ -834,7 +841,7 @@ fn eval_const_nested_ref() {
                     ),
                 ]),
             ),
-        ],
+        ]),
     );
     let result = eval_constant(&expr);
     assert_eq!(result, None);
@@ -895,10 +902,10 @@ fn eval_const_eq_mixed() {
 fn eval_const_sum_mixed() {
     let expr = Expression::Sum(
         Metadata::new(),
-        vec![
+        Box::new(matrix_expr![
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
-        ],
+        ]),
     );
     let result = eval_constant(&expr);
     assert_eq!(result, None);
@@ -913,7 +920,7 @@ fn eval_const_sum_xyz() {
                 Metadata::new(),
                 Box::new(Expression::Sum(
                     Metadata::new(),
-                    vec![
+                    Box::new(matrix_expr![
                         Expression::Atomic(
                             Metadata::new(),
                             Atom::Reference(Name::UserName(String::from("x"))),
@@ -926,7 +933,7 @@ fn eval_const_sum_xyz() {
                             Metadata::new(),
                             Atom::Reference(Name::UserName(String::from("z"))),
                         ),
-                    ]
+                    ])
                 )),
                 Box::new(Expression::Atomic(
                     Metadata::new(),

@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::{arg, command, Args, Parser, Subcommand};
 
 use conjure_oxide::SolverFamily;
@@ -41,8 +43,16 @@ pub struct GlobalArgs {
     pub extra_rule_sets: Vec<String>,
 
     /// Solver family to use
-    #[arg(long, value_enum, value_name = "SOLVER", short = 's', global = true)]
-    pub solver: Option<SolverFamily>,
+    /// By Default, Conjure Oxide will use the Minion solver.
+    #[arg(
+        long,
+        value_enum,
+        value_name = "SOLVER",
+        default_value = "Minion",
+        short = 's',
+        global = true
+    )]
+    pub solver: SolverFamily,
 
     /// Log verbosely
     #[arg(long, short = 'v', help = "Log verbosely to sterr", global = true)]
@@ -59,6 +69,10 @@ pub struct GlobalArgs {
         global = true
     )]
     pub check_equally_applicable_rules: bool,
+
+    /// Output file for the human readable rule trace.
+    #[arg(long, global = true)]
+    pub human_rule_trace: Option<PathBuf>,
 
     /// Do not check for multiple equally applicable rules [default].
     ///

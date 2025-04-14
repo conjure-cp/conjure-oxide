@@ -3,7 +3,7 @@ use std::process::exit;
 use std::sync::Arc;
 
 use conjure_oxide::utils::conjure::{
-    get_minion_solutions, get_solutions_from_conjure, minion_solutions_to_json,
+    get_minion_solutions, get_sat_solutions, get_solutions_from_conjure, solutions_to_json,
 };
 use conjure_oxide::utils::testing::normalize_solutions_for_comparison;
 
@@ -27,15 +27,19 @@ pub fn run_test_solve_command(global_args: GlobalArgs, local_args: Args) -> anyh
 
     // now we are stealing from the integration tester
 
-    let our_solutions = get_minion_solutions(rewritten_model, 0)?;
+    let our_solutions = match global_args.solver {
+        conjure_oxide::SolverFamily::SAT => get_sat_solutions(rewritten_model, 0),
+        conjure_oxide::SolverFamily::Minion => get_minion_solutions(rewritten_model, 0),
+    }?;
+
     let conjure_solutions =
         get_solutions_from_conjure(input_file.to_str().unwrap(), Arc::clone(&context))?;
 
     let our_solutions = normalize_solutions_for_comparison(&our_solutions);
     let conjure_solutions = normalize_solutions_for_comparison(&conjure_solutions);
 
-    let mut our_solutions_json = minion_solutions_to_json(&our_solutions);
-    let mut conjure_solutions_json = minion_solutions_to_json(&conjure_solutions);
+    let mut our_solutions_json = solutions_to_json(&our_solutions);
+    let mut conjure_solutions_json = solutions_to_json(&conjure_solutions);
 
     our_solutions_json.sort_all_objects();
     conjure_solutions_json.sort_all_objects();

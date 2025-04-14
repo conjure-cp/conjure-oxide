@@ -29,8 +29,26 @@ and([(SafePow(x, y) = z),and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int
 --
 
 and([(SafePow(x, y) = z),and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)]);int(1..)]), 
-   ~~> normalise_associative_commutative ([("Base", 8900)]) 
-and([(SafePow(x, y) = z),or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]) 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(SafePow(x, y) = z),
+and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)]) 
+
+--
+
+(SafePow(x, y) = z),
+and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(SafePow(x, y) = z),
+and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]) 
+
+--
+
+(SafePow(x, y) = z),
+and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(SafePow(x, y) = z),
+or([(x != 0),(y != 0);int(1..)]),
+(y >= 0) 
 
 --
 
@@ -54,5 +72,7 @@ find z: int(-10..-1)
 
 such that
 
-and([MinionPow(x,y,z),or([(x != 0),(y != 0);int(1..)]),Ineq(0, y, 0);int(1..)])
+MinionPow(x,y,z),
+or([(x != 0),(y != 0);int(1..)]),
+Ineq(0, y, 0)
 

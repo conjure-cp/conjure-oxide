@@ -14,6 +14,16 @@ and([(m[i] = i) | i: int(1..5),])
 
 --
 
+and([(m[1] = 1),(m[2] = 2),(m[3] = 3),(m[4] = 4),(m[5] = 5);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(m[1] = 1),
+(m[2] = 2),
+(m[3] = 3),
+(m[4] = 4),
+(m[5] = 5) 
+
+--
+
 m, 
    ~~> select_representation ([("Base", 8000)]) 
 m#matrix_to_atom 
@@ -56,7 +66,7 @@ m#matrix_to_atom[1],
 --
 
 and([__inDomain(1,int(1..5));int(1..)]), 
-   ~~> apply_eval_constant ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 true 
 
 --
@@ -68,7 +78,7 @@ true
 --
 
 and([true;int(1..)]), 
-   ~~> apply_eval_constant ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 true 
 
 --
@@ -79,15 +89,33 @@ and([(m#matrix_to_atom[1] = 1),true;int(1..)])
 
 --
 
-and([(m#matrix_to_atom[1] = 1),true;int(1..)]), 
+and([(m#matrix_to_atom[1] = 1),true;int(1..)]),
+(m#matrix_to_atom[2] = 2),
+(m#matrix_to_atom[3] = 3),
+(m#matrix_to_atom[4] = 4),
+(m#matrix_to_atom[5] = 5), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-and([(m#matrix_to_atom[1] = 1);int(1..)]) 
+(m#matrix_to_atom[1] = 1),
+true,
+(m#matrix_to_atom[2] = 2),
+(m#matrix_to_atom[3] = 3),
+(m#matrix_to_atom[4] = 4),
+(m#matrix_to_atom[5] = 5) 
 
 --
 
-and([(m#matrix_to_atom[1] = 1);int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
-(m#matrix_to_atom[1] = 1) 
+(m#matrix_to_atom[1] = 1),
+true,
+(m#matrix_to_atom[2] = 2),
+(m#matrix_to_atom[3] = 3),
+(m#matrix_to_atom[4] = 4),
+(m#matrix_to_atom[5] = 5), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(m#matrix_to_atom[1] = 1),
+(m#matrix_to_atom[2] = 2),
+(m#matrix_to_atom[3] = 3),
+(m#matrix_to_atom[4] = 4),
+(m#matrix_to_atom[5] = 5) 
 
 --
 
@@ -98,7 +126,7 @@ m#matrix_to_atom[2],
 --
 
 and([__inDomain(2,int(1..5));int(1..)]), 
-   ~~> apply_eval_constant ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 true 
 
 --
@@ -110,7 +138,7 @@ true
 --
 
 and([true;int(1..)]), 
-   ~~> apply_eval_constant ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 true 
 
 --
@@ -121,15 +149,33 @@ and([(m#matrix_to_atom[2] = 2),true;int(1..)])
 
 --
 
-and([(m#matrix_to_atom[2] = 2),true;int(1..)]), 
+(m#matrix_to_atom[1] = 1),
+and([(m#matrix_to_atom[2] = 2),true;int(1..)]),
+(m#matrix_to_atom[3] = 3),
+(m#matrix_to_atom[4] = 4),
+(m#matrix_to_atom[5] = 5), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-and([(m#matrix_to_atom[2] = 2);int(1..)]) 
+(m#matrix_to_atom[1] = 1),
+(m#matrix_to_atom[2] = 2),
+true,
+(m#matrix_to_atom[3] = 3),
+(m#matrix_to_atom[4] = 4),
+(m#matrix_to_atom[5] = 5) 
 
 --
 
-and([(m#matrix_to_atom[2] = 2);int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
-(m#matrix_to_atom[2] = 2) 
+(m#matrix_to_atom[1] = 1),
+(m#matrix_to_atom[2] = 2),
+true,
+(m#matrix_to_atom[3] = 3),
+(m#matrix_to_atom[4] = 4),
+(m#matrix_to_atom[5] = 5), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(m#matrix_to_atom[1] = 1),
+(m#matrix_to_atom[2] = 2),
+(m#matrix_to_atom[3] = 3),
+(m#matrix_to_atom[4] = 4),
+(m#matrix_to_atom[5] = 5) 
 
 --
 
@@ -140,7 +186,7 @@ m#matrix_to_atom[3],
 --
 
 and([__inDomain(3,int(1..5));int(1..)]), 
-   ~~> apply_eval_constant ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 true 
 
 --
@@ -152,7 +198,7 @@ true
 --
 
 and([true;int(1..)]), 
-   ~~> apply_eval_constant ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 true 
 
 --
@@ -163,15 +209,33 @@ and([(m#matrix_to_atom[3] = 3),true;int(1..)])
 
 --
 
-and([(m#matrix_to_atom[3] = 3),true;int(1..)]), 
+(m#matrix_to_atom[1] = 1),
+(m#matrix_to_atom[2] = 2),
+and([(m#matrix_to_atom[3] = 3),true;int(1..)]),
+(m#matrix_to_atom[4] = 4),
+(m#matrix_to_atom[5] = 5), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-and([(m#matrix_to_atom[3] = 3);int(1..)]) 
+(m#matrix_to_atom[1] = 1),
+(m#matrix_to_atom[2] = 2),
+(m#matrix_to_atom[3] = 3),
+true,
+(m#matrix_to_atom[4] = 4),
+(m#matrix_to_atom[5] = 5) 
 
 --
 
-and([(m#matrix_to_atom[3] = 3);int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
-(m#matrix_to_atom[3] = 3) 
+(m#matrix_to_atom[1] = 1),
+(m#matrix_to_atom[2] = 2),
+(m#matrix_to_atom[3] = 3),
+true,
+(m#matrix_to_atom[4] = 4),
+(m#matrix_to_atom[5] = 5), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(m#matrix_to_atom[1] = 1),
+(m#matrix_to_atom[2] = 2),
+(m#matrix_to_atom[3] = 3),
+(m#matrix_to_atom[4] = 4),
+(m#matrix_to_atom[5] = 5) 
 
 --
 
@@ -182,7 +246,7 @@ m#matrix_to_atom[4],
 --
 
 and([__inDomain(4,int(1..5));int(1..)]), 
-   ~~> apply_eval_constant ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 true 
 
 --
@@ -194,7 +258,7 @@ true
 --
 
 and([true;int(1..)]), 
-   ~~> apply_eval_constant ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 true 
 
 --
@@ -205,15 +269,33 @@ and([(m#matrix_to_atom[4] = 4),true;int(1..)])
 
 --
 
-and([(m#matrix_to_atom[4] = 4),true;int(1..)]), 
+(m#matrix_to_atom[1] = 1),
+(m#matrix_to_atom[2] = 2),
+(m#matrix_to_atom[3] = 3),
+and([(m#matrix_to_atom[4] = 4),true;int(1..)]),
+(m#matrix_to_atom[5] = 5), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-and([(m#matrix_to_atom[4] = 4);int(1..)]) 
+(m#matrix_to_atom[1] = 1),
+(m#matrix_to_atom[2] = 2),
+(m#matrix_to_atom[3] = 3),
+(m#matrix_to_atom[4] = 4),
+true,
+(m#matrix_to_atom[5] = 5) 
 
 --
 
-and([(m#matrix_to_atom[4] = 4);int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
-(m#matrix_to_atom[4] = 4) 
+(m#matrix_to_atom[1] = 1),
+(m#matrix_to_atom[2] = 2),
+(m#matrix_to_atom[3] = 3),
+(m#matrix_to_atom[4] = 4),
+true,
+(m#matrix_to_atom[5] = 5), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(m#matrix_to_atom[1] = 1),
+(m#matrix_to_atom[2] = 2),
+(m#matrix_to_atom[3] = 3),
+(m#matrix_to_atom[4] = 4),
+(m#matrix_to_atom[5] = 5) 
 
 --
 
@@ -224,7 +306,7 @@ m#matrix_to_atom[5],
 --
 
 and([__inDomain(5,int(1..5));int(1..)]), 
-   ~~> apply_eval_constant ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 true 
 
 --
@@ -236,7 +318,7 @@ true
 --
 
 and([true;int(1..)]), 
-   ~~> apply_eval_constant ([("Constant", 9001)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 true 
 
 --
@@ -247,14 +329,32 @@ and([(m#matrix_to_atom[5] = 5),true;int(1..)])
 
 --
 
+(m#matrix_to_atom[1] = 1),
+(m#matrix_to_atom[2] = 2),
+(m#matrix_to_atom[3] = 3),
+(m#matrix_to_atom[4] = 4),
 and([(m#matrix_to_atom[5] = 5),true;int(1..)]), 
    ~~> partial_evaluator ([("Base", 9000)]) 
-and([(m#matrix_to_atom[5] = 5);int(1..)]) 
+(m#matrix_to_atom[1] = 1),
+(m#matrix_to_atom[2] = 2),
+(m#matrix_to_atom[3] = 3),
+(m#matrix_to_atom[4] = 4),
+(m#matrix_to_atom[5] = 5),
+true 
 
 --
 
-and([(m#matrix_to_atom[5] = 5);int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(m#matrix_to_atom[1] = 1),
+(m#matrix_to_atom[2] = 2),
+(m#matrix_to_atom[3] = 3),
+(m#matrix_to_atom[4] = 4),
+(m#matrix_to_atom[5] = 5),
+true, 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(m#matrix_to_atom[1] = 1),
+(m#matrix_to_atom[2] = 2),
+(m#matrix_to_atom[3] = 3),
+(m#matrix_to_atom[4] = 4),
 (m#matrix_to_atom[5] = 5) 
 
 --
@@ -300,5 +400,9 @@ find m#matrix_to_atom_5: int(1..5)
 
 such that
 
-and([(m#matrix_to_atom_1 = 1),(m#matrix_to_atom_2 = 2),(m#matrix_to_atom_3 = 3),(m#matrix_to_atom_4 = 4),(m#matrix_to_atom_5 = 5);int(1..)])
+(m#matrix_to_atom_1 = 1),
+(m#matrix_to_atom_2 = 2),
+(m#matrix_to_atom_3 = 3),
+(m#matrix_to_atom_4 = 4),
+(m#matrix_to_atom_5 = 5)
 
