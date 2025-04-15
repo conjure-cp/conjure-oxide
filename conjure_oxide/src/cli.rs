@@ -2,11 +2,16 @@ use std::path::PathBuf;
 
 use clap::{arg, command, Args, Parser, Subcommand};
 
-use conjure_core::pro_trace::VerbosityLevel;
+use conjure_core::pro_trace::{Kind, VerbosityLevel};
 use conjure_oxide::SolverFamily;
 
 use crate::{solve, test_solve};
 static AFTER_HELP_TEXT: &str = include_str!("help_text.txt");
+
+// use once_cell::sync::Lazy;
+// use std::sync::Mutex;
+
+// pub static KIND_FILTER: Lazy<Mutex<Option<Kind>>> = Lazy::new(|| Mutex::new(None))
 
 /// All subcommands of conjure-oxide
 #[derive(Clone, Debug, Subcommand)]
@@ -133,4 +138,11 @@ pub struct GlobalArgs {
         help = "Save rule trace to the given JSON file (defaults to input file location)"
     )]
     pub trace_file: Option<String>,
+
+    #[arg(
+        long = "filter-kind-by",
+        global = true,
+        help = "Filter trace messages by given kind"
+    )]
+    pub kind_filter: Option<Kind>,
 }
