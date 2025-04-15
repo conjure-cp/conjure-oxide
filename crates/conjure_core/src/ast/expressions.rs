@@ -5,7 +5,6 @@ use std::sync::Arc;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-use crate::ast::SetAttr;
 use crate::ast::literals::AbstractLiteral;
 use crate::ast::literals::Literal;
 use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
@@ -13,6 +12,7 @@ use crate::ast::symbol_table::SymbolTable;
 use crate::ast::Atom;
 use crate::ast::Name;
 use crate::ast::ReturnType;
+use crate::ast::SetAttr;
 use crate::bug;
 use crate::metadata::Metadata;
 use enum_compatability_macro::document_compatibility;
@@ -135,13 +135,13 @@ pub enum Expression {
 
     #[compatible(JsonInput)]
     Union(Metadata, Box<Expression>, Box<Expression>),
-    
+
     #[compatible(JsonInput)]
     Intersect(Metadata, Box<Expression>, Box<Expression>),
 
     #[compatible(JsonInput)]
     SubsetEq(Metadata, Box<Expression>, Box<Expression>),
-    
+
     #[compatible(JsonInput)]
     Eq(Metadata, Box<Expression>, Box<Expression>),
 
@@ -446,10 +446,15 @@ impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
         let ret = match self {
-            Expression::Union(_, a, b) => Some(Domain::DomainSet(SetAttr::None, Box::new(a.domain_of(syms)?.union(&b.domain_of(syms)?)?))),
-            Expression::Intersect(_, a, b) => Some(Domain::DomainSet(SetAttr::None, Box::new(a.domain_of(syms)?.intersect(&b.domain_of(syms)?)?))),
+            Expression::Union(_, a, b) => Some(Domain::DomainSet(
+                SetAttr::None,
+                Box::new(a.domain_of(syms)?.union(&b.domain_of(syms)?)?),
+            )),
+            Expression::Intersect(_, a, b) => Some(Domain::DomainSet(
+                SetAttr::None,
+                Box::new(a.domain_of(syms)?.intersect(&b.domain_of(syms)?)?),
+            )),
             Expression::SubsetEq(_, _, _) => Some(Domain::BoolDomain),
-
 
             //todo
             Expression::AbstractLiteral(_, _) => None,
@@ -671,10 +676,13 @@ impl Expression {
 
     pub fn return_type(&self) -> Option<ReturnType> {
         match self {
-            Expression::Union(_, subject, _) => Some(ReturnType::Set(Box::new(subject.return_type()?))),
-            Expression::Intersect(_, subject, _) => Some(ReturnType::Set(Box::new(subject.return_type()?))),
+            Expression::Union(_, subject, _) => {
+                Some(ReturnType::Set(Box::new(subject.return_type()?)))
+            }
+            Expression::Intersect(_, subject, _) => {
+                Some(ReturnType::Set(Box::new(subject.return_type()?)))
+            }
             Expression::SubsetEq(_, _, _) => Some(ReturnType::Bool),
-
 
             Expression::AbstractLiteral(_, _) => None,
             Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
@@ -891,7 +899,6 @@ impl Display for Expression {
             Expression::SubsetEq(_, box1, box2) => {
                 write!(f, "({} subsetEq {})", box1.clone(), box2.clone())
             }
-
 
             Expression::AbstractLiteral(_, l) => l.fmt(f),
             Expression::Comprehension(_, c) => c.fmt(f),
