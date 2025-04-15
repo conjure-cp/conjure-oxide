@@ -34,6 +34,7 @@ use conjure_core::{
         register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
     },
 };
+use conjure_essence_macros::essence_expr;
 use std::collections::VecDeque;
 use uniplate::{Biplate, Uniplate as _};
 
@@ -71,7 +72,7 @@ fn distribute_negation_over_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResu
     }
 
     for child in child_vecs[0].iter_mut() {
-        *child = Expr::Neg(Metadata::new(), Box::new(child.clone()))
+        *child = essence_expr!(-&child);
     }
 
     Ok(Reduction::pure(inner_expr.with_children_bi(child_vecs)))
@@ -92,7 +93,7 @@ fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResu
         return Err(RuleNotApplicable);
     };
 
-    factors.push(Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(-1))));
+    factors.push(essence_expr!(-1));
 
     Ok(Reduction::pure(Expr::Product(Metadata::new(), factors)))
 }
@@ -135,10 +136,7 @@ fn minus_to_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         _ => return Err(RuleNotApplicable),
     };
 
-    Ok(Reduction::pure(Expr::Sum(
-        Metadata::new(),
-        Box::new(matrix_expr![*lhs, Expr::Neg(Metadata::new(), rhs)]),
-    )))
+    Ok(Reduction::pure(essence_expr!(&lhs + (-&rhs))))
 }
 
 #[register_rule(("Base", 8500))]

@@ -2,14 +2,12 @@
 //!
 //! For Minion, these normalise into Leq and Geq respectively.
 
-use conjure_rule_macros::register_rule;
-
 use conjure_core::{
-    ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable},
-    matrix_expr,
-    metadata::Metadata,
+    ast::{Expression as Expr, SymbolTable},
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
 };
+use conjure_essence_macros::essence_expr;
+use conjure_rule_macros::register_rule;
 
 /// Converts Lt to Leq
 ///
@@ -27,17 +25,8 @@ fn lt_to_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     };
 
     // add to rhs so that this is in the correct form for ineq ( x <= y + k)
-    Ok(Reduction::pure(Expr::Leq(
-        Metadata::new(),
-        lhs,
-        Box::new(Expr::Sum(
-            Metadata::new(),
-            Box::new(matrix_expr![
-                *rhs,
-                Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(-1))),
-            ]),
-        )),
-    )))
+    // todo (gs248) - tests expect a Sum([rhs, -1]) so we generate that; maybe just use a subtraction instead?
+    Ok(Reduction::pure(essence_expr!(&lhs <= (&rhs + (-1)))))
 }
 
 /// Converts Gt to Geq
@@ -51,19 +40,9 @@ fn lt_to_leq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// cases in the Minion conversion rules.
 #[register_rule(("Minion", 8400))]
 fn gt_to_geq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let Expr::Gt(_, lhs, total) = expr.clone() else {
+    let Expr::Gt(_, lhs, rhs) = expr.clone() else {
         return Err(RuleNotApplicable);
     };
 
-    Ok(Reduction::pure(Expr::Geq(
-        Metadata::new(),
-        Box::new(Expr::Sum(
-            Metadata::new(),
-            Box::new(matrix_expr![
-                *lhs,
-                Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(-1))),
-            ]),
-        )),
-        total,
-    )))
+    Ok(Reduction::pure(essence_expr!((&lhs + (-1)) >= &rhs)))
 }

@@ -887,6 +887,19 @@ impl From<Atom> for Expression {
         Expression::Atomic(Metadata::new(), value)
     }
 }
+
+impl From<Name> for Expression {
+    fn from(name: Name) -> Self {
+        Expression::Atomic(Metadata::new(), Atom::Reference(name))
+    }
+}
+
+impl From<Box<Expression>> for Expression {
+    fn from(val: Box<Expression>) -> Self {
+        val.as_ref().clone()
+    }
+}
+
 impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
