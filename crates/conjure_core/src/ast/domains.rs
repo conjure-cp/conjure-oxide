@@ -359,7 +359,7 @@ impl Domain {
                 } else {
                     max = max2
                 }
-                
+
                 Some(Domain::IntDomain(vec![Range::Bounded(min, max)]))
             }
             _ => None,
@@ -471,7 +471,7 @@ impl Domain {
                 } else {
                     max = max2
                 }
-                
+
                 Some(Domain::IntDomain(vec![Range::Bounded(min, max)]))
             }
             _ => None,
