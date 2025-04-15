@@ -64,6 +64,15 @@ impl Context<'static> {
             rule_sets,
         )))
     }
+
+    pub fn new_ptr_empty(target_solver_family: SolverFamily) -> Arc<RwLock<Context<'static>>> {
+        Arc::new(RwLock::new(Context::new(
+            target_solver_family,
+            vec![],
+            vec![],
+            vec![],
+        )))
+    }
 }
 
 impl Debug for Context<'_> {

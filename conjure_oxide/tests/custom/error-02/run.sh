@@ -1,1 +1,1 @@
-cargo run -- --enable-native-parser solve conjure_oxide/tests/custom/error-02/model.eprime
+conjure_oxide --solver Minion solve model.eprime

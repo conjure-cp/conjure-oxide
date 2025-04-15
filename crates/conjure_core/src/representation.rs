@@ -32,7 +32,7 @@ pub fn get_repr_rule(
 }
 
 #[macro_export]
-macro_rules! register_represention {
+macro_rules! register_representation {
     ($ruleType:ident, $ruleName:literal) => {
         paste::paste!{
         #[linkme::distributed_slice($crate::representation::REPRESENTATION_RULES)]

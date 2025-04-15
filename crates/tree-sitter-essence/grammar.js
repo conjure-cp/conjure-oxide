@@ -26,9 +26,11 @@ module.exports = grammar({
     FALSE: $ => "false",
     variable: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
 
-    SUCH_THAT: $ => "such that",
-    FIND: $ => "find",
-    LETTING: $ => "letting",
+    //meta-variable (aka template argument)
+    metavar: $ => seq("&", $.variable),
+
+    //find statements
+    find_statement_list: $ => seq("find", repeat($.find_statement)),
 
     // Find statements
     find_statement_list: $ => prec.right(seq(field("find", $.FIND), repeat(field("find_statement", $.find_statement)))),
@@ -103,18 +105,22 @@ module.exports = grammar({
 
     // Expression hierarchy
     expression: $ => choice(
-      field("boolean_expression", $.boolean_expr), 
-      field("comparison_expression", $.comparison_expr), 
-      field("arithmetic_expression", $.arithmetic_expr)
-    ),
-    
-    boolean_expr: $ => choice(
-      field("not_expression", $.not_expr),
-      field("and_expression", $.and_expr),
-      field("or_expression", $.or_expr),
-      field("implication", $.implication),
-      field("quantifier_expression", $.quantifier_expr),
-      field("from_solution", $.from_solution)
+      seq("(", $.expression, ")"),
+      $.metavar,
+      $.not_expr,
+      $.abs_value,
+      $.exponent,
+      $.negative_expr,
+      $.product_expr,
+      $.sum_expr,
+      $.comparison,
+      $.and_expr,
+      $.or_expr,
+      $.implication,
+      $.quantifier_expr,
+      $.constant,
+      $.variable,
+      $.from_solution
     ),
 
     not_expr: $ => prec(20, seq("!", field("expression", choice($.boolean_expr, $.comparison_expr, $.primary_expr)))),

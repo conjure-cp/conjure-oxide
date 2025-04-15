@@ -8,9 +8,12 @@ use walkdir::WalkDir;
 fn main() -> io::Result<()> {
     println!("cargo:rerun-if-changed=tests/integration");
     println!("cargo:rerun-if-changed=tests/custom");
+    println!("cargo:rerun-if-changed=tests/custom");
     println!("cargo:rerun-if-changed=tests/gen_test_template");
     println!("cargo:rerun-if-changed=tests/custom_test_template");
+    println!("cargo:rerun-if-changed=tests/custom_test_template");
     println!("cargo:rerun-if-changed=build.rs");
+
 
     let out_dir = var("OUT_DIR").map_err(|e| io::Error::new(io::ErrorKind::Other, e))?; // wrapping in a std::io::Error to match main's error type
 
@@ -57,7 +60,7 @@ fn main() -> io::Result<()> {
 
                 let essence_files = std::iter::zip(stems, exts).collect();
 
-                write_test(&mut f, subdir.path().display().to_string(), essence_files)?;
+                write_integration_test(&mut f, subdir.path().display().to_string(), essence_files)?;
             } else {
                 let stems: Vec<String> = read_dir(subdir.path())?
                     .filter_map(Result::ok)
@@ -120,7 +123,7 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-fn write_test(
+fn write_integration_test(
     file: &mut File,
     path: String,
     essence_files: Vec<(String, String)>,
@@ -129,7 +132,7 @@ fn write_test(
     if essence_files.len() == 1 {
         write!(
             file,
-            include_str!("./tests/gen_test_template"),
+            include_str!("./tests/integration_test_template"),
             // TODO: better sanitisation of paths to function names
             test_name = path.replace("./", "").replace(['/', '-'], "_"),
             test_dir = path,
@@ -139,6 +142,15 @@ fn write_test(
     } else {
         Ok(())
     }
+}
+
+fn write_custom_test(file: &mut File, path: String) -> io::Result<()> {
+    write!(
+        file,
+        include_str!("./tests/custom_test_template"),
+        test_name = path.replace("./", "").replace(['/', '-'], "_"),
+        test_dir = path
+    )
 }
 
 fn write_custom_test(file: &mut File, path: String) -> io::Result<()> {
