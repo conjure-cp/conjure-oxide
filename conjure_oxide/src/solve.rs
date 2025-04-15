@@ -14,7 +14,8 @@ use anyhow::{anyhow, ensure};
 use conjure_core::{
     context::Context,
     pro_trace::{
-        create_consumer, display_message, set_kind_filter, specify_trace_file, Consumer, Kind,
+        create_consumer, display_message, get_kind_filter, set_kind_filter, specify_trace_file,
+        Consumer, Kind,
     },
     rule_engine::{resolve_rule_sets, rewrite_naive},
     Model,
@@ -60,7 +61,6 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     let input_file = solve_args.input_file.clone();
 
     set_kind_filter(global_args.kind_filter.clone());
-
     // Determining the file for the output of the trace
     let file = specify_trace_file(
         input_file.to_string_lossy().into_owned(),
@@ -213,7 +213,7 @@ pub(crate) fn rewrite(
     consumer: Option<Consumer>,
 ) -> anyhow::Result<Model> {
     tracing::info!("Initial model: \n{}\n", model);
-
+    display_message(format!("Initial model: \n{}\n", model), None, Kind::Model);
     tracing::info!("Rewriting model...");
 
     let rule_sets = context.read().unwrap().rule_sets.clone();
@@ -226,6 +226,12 @@ pub(crate) fn rewrite(
     )?;
 
     tracing::info!("Rewritten model: \n{}\n", new_model);
+    display_message(
+        format!("Rewritten model: \n{}\n", new_model),
+        None,
+        Kind::Model,
+    );
+
     Ok(new_model)
 }
 
@@ -248,8 +254,11 @@ fn run_minion(cmd_args: &Args, model: Model) -> anyhow::Result<()> {
     let solutions_str = to_string_pretty(&solutions_json)?;
     match out_file {
         None => {
-            println!("Solutions:");
-            println!("{}", solutions_str);
+            display_message(
+                format!("Solutions:\n{}", solutions_str),
+                None,
+                Kind::Default,
+            );
         }
         Some(mut outf) => {
             outf.write_all(solutions_str.as_bytes())?;
@@ -281,7 +290,11 @@ fn run_sat_solver(cmd_args: &Args, model: Model) -> anyhow::Result<()> {
     let solutions_str = to_string_pretty(&solutions_json)?;
     match out_file {
         None => {
-            display_message(format!("Solutions:\n{}", solutions_str), None, Kind::Solver);
+            display_message(
+                format!("Solutions:\n{}", solutions_str),
+                None,
+                Kind::Default,
+            );
         }
         Some(mut outf) => {
             outf.write_all(solutions_str.as_bytes())?;
@@ -291,7 +304,7 @@ fn run_sat_solver(cmd_args: &Args, model: Model) -> anyhow::Result<()> {
                     &cmd_args.output.clone().unwrap().canonicalize()?
                 ),
                 None,
-                Kind::Parser,
+                Kind::Default,
             );
         }
     }

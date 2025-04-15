@@ -19,16 +19,17 @@ pub enum Kind {
     RuleSuccess,
     Error,
     Solver,
-    Other,
+    Model,
+    Default,
 }
 
-// Create kind_filter as a global variable
+/// Create kind_filter as a global variable
 pub static KIND_FILTER: Mutex<Option<Kind>> = Mutex::new(None);
 
-// Set the kind_filter
+/// Set the kind_filter. If no Kind specified, set as Default.
 pub fn set_kind_filter(kind: Option<Kind>) {
     let mut filter = KIND_FILTER.lock().unwrap();
-    *filter = kind;
+    *filter = Some(kind.unwrap_or(Kind::Default));
 }
 
 // Get the kind_filter
@@ -234,18 +235,6 @@ impl Trace for FileConsumer {
             // For non-JSON formatting, just write the formatted output
             writeln!(file, "{}", formatted_output).unwrap();
         }
-
-        // if self.formatter_type == FormatterType::Json {
-        //     if self.is_first.get() {
-        //         writeln!(file, "[").unwrap(); // Start JSON array
-        //         writeln!(file, "{}", formatted_output).unwrap();
-        //         self.is_first.set(false);
-        //     } else {
-        //         writeln!(file, ",{}", formatted_output).unwrap(); // Append comma and object
-        //     }
-        // } else {
-        //     writeln!(file, "{}", formatted_output).unwrap();
-        // }
     }
 }
 
@@ -334,14 +323,6 @@ pub fn create_consumer(
                     is_first: std::cell::Cell::new(true), // for JSON formatting
                 },
             })
-
-            // Consumer::BothConsumer(BothConsumer {
-            //     formatter,
-            //     formatter_type,
-            //     verbosity,
-            //     file_path,
-            //     is_first: std::cell::Cell::new(true), // for json formatting, trust me
-            // })
         }
         other => panic!("Unknown consumer type: {}", other),
     }
@@ -382,7 +363,7 @@ pub fn specify_trace_file(
 /// If a file is specified, the message will be written there, otherwise it will be printed out to the terminal
 pub fn display_message(message: String, file_path: Option<String>, kind: Kind) {
     if let Some(filter) = get_kind_filter() {
-        if kind != filter && kind != Kind::Solver {
+        if kind != filter {
             return;
         }
     }

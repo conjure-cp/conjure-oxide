@@ -44,7 +44,7 @@ pub fn rewrite_naive<'a>(
         rewritten_model: None,
     };
 
-    // Tracing the initial model
+    //Tracing the initial model
     if let Some(ref consumer) = consumer {
         capture_trace(consumer, TraceType::ModelTrace(&model_trace));
     }

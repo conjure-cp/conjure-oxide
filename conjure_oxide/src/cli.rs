@@ -140,7 +140,7 @@ pub struct GlobalArgs {
     pub trace_file: Option<String>,
 
     #[arg(
-        long = "filter-kind-by",
+        long = "filter-message-by-kind",
         global = true,
         help = "Filter trace messages by given kind"
     )]

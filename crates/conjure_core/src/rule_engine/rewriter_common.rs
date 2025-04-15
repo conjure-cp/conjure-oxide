@@ -88,32 +88,7 @@ pub fn log_rule_application(
         }
     };
 
-    trace!(
-        target: "rule_engine_human",
-        "{}, \n   ~~> {} ({:?}) \n{} \n{}\n{}--\n",
-        initial_expression,
-        rule.name,
-        rule.rule_sets,
-        red.new_expression,
-        new_variables_str,
-        top_level_str
-    );
-
-    trace!(
-        target: "rule_engine",
-        "{}",
-    json!({
-        "rule_name": result.rule_data.rule.name,
-        "rule_priority": result.rule_data.priority,
-        "rule_set": {
-            "name": result.rule_data.rule_set.name,
-        },
-        "initial_expression": serde_json::to_value(initial_expression).unwrap(),
-        "transformed_expression": serde_json::to_value(&red.new_expression).unwrap()
-    })
-
-    );
-
+    // logging a successful rule application
     if let Some(consumer) = consumer {
         if check_verbosity_level(&consumer) != VerbosityLevel::Low {
             let rule_trace = RuleTrace {
