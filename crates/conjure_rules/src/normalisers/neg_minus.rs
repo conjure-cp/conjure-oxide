@@ -27,8 +27,7 @@
 //!    with a coefficient of -1.
 
 use conjure_core::{
-    ast::{AbstractLiteral, Atom, Expression as Expr, Literal as Lit, SymbolTable},
-    matrix_expr,
+    ast::{AbstractLiteral, Atom, Expression as Expr, SymbolTable},
     metadata::Metadata,
     rule_engine::{
         register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
