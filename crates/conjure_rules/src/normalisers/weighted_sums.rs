@@ -5,14 +5,13 @@
 
 use std::collections::BTreeMap;
 
-use conjure_rule_macros::register_rule;
-
 use conjure_core::{
     ast::{Atom, Expression as Expr, Literal as Lit, Name, SymbolTable},
     into_matrix_expr,
-    metadata::Metadata,
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
 };
+use conjure_essence_macros::essence_expr;
+use conjure_rule_macros::register_rule;
 
 /// Collects like terms in a weighted sum.
 ///
@@ -43,6 +42,7 @@ fn collect_like_terms(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         match expr.clone() {
             Expr::Product(_, exprs2) => {
                 match exprs2.as_slice() {
+                    // todo (gs248) It would be nice to generate these destructures by macro, like `essence_expr!` but in reverse
                     // -c*v
                     [Expr::Atomic(_, Atom::Reference(name)), Expr::Neg(_, e3)] => {
                         if let Expr::Atomic(_, Atom::Literal(Lit::Int(l))) = **e3 {
@@ -81,13 +81,7 @@ fn collect_like_terms(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     let mut new_exprs = vec![];
     for (name, coefficient) in weighted_terms {
-        new_exprs.push(Expr::Product(
-            Metadata::new(),
-            vec![
-                Expr::Atomic(Metadata::new(), name.into()),
-                Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(coefficient))),
-            ],
-        ));
+        new_exprs.push(essence_expr!(&name * &coefficient));
     }
 
     new_exprs.extend(other_terms);
