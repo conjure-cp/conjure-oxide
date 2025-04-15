@@ -7,7 +7,6 @@ use conjure_core::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult,
 };
 
-use std::rc::Rc;
 use Expression::*;
 
 #[register_rule(("Base", 8800))]

@@ -257,7 +257,7 @@ impl Domain {
         match (self, other) {
             (Domain::DomainSet(_, x), Domain::DomainSet(_, y)) => Some(Domain::DomainSet(
                 SetAttr::None,
-                Box::new((*x).intersect(&*y)?),
+                Box::new((*x).intersect(y)?),
             )),
             (Domain::IntDomain(v1), Domain::IntDomain(v2)) => {
                 let mut min = 0;
@@ -290,7 +290,7 @@ impl Domain {
                             }
                         }
                         Range::UnboundedL(end) => {
-                            min1 = -1 * i32::MAX;
+                            min1 = -i32::MAX;
                             println!("{}", min1);
                             if end > &max1 {
                                 max1 = *end;
@@ -332,7 +332,7 @@ impl Domain {
                             }
                         }
                         Range::UnboundedL(end) => {
-                            min2 = -1 * i32::MAX;
+                            min2 = -i32::MAX;
                             println!("{}", min2);
                             if end > &max2 {
                                 max2 = *end;
@@ -359,8 +359,8 @@ impl Domain {
                 } else {
                     max = max2
                 }
-                let intersect_domain = Some(Domain::IntDomain(vec![Range::Bounded(min, max)]));
-                intersect_domain
+                
+                Some(Domain::IntDomain(vec![Range::Bounded(min, max)]))
             }
             _ => None,
         }
@@ -369,7 +369,7 @@ impl Domain {
     pub fn union(&self, other: &Domain) -> Option<Domain> {
         match (self, other) {
             (Domain::DomainSet(_, x), Domain::DomainSet(_, y)) => {
-                Some(Domain::DomainSet(SetAttr::None, Box::new((*x).union(&*y)?)))
+                Some(Domain::DomainSet(SetAttr::None, Box::new((*x).union(y)?)))
             }
             (Domain::IntDomain(v1), Domain::IntDomain(v2)) => {
                 let mut min = 0;
@@ -402,7 +402,7 @@ impl Domain {
                             }
                         }
                         Range::UnboundedL(end) => {
-                            min1 = -1 * i32::MAX;
+                            min1 = -i32::MAX;
                             println!("{}", min1);
                             if end > &max1 {
                                 max1 = *end;
@@ -444,7 +444,7 @@ impl Domain {
                             }
                         }
                         Range::UnboundedL(end) => {
-                            min2 = -1 * i32::MAX;
+                            min2 = -i32::MAX;
                             println!("{}", min2);
                             if end > &max2 {
                                 max2 = *end;
@@ -471,8 +471,8 @@ impl Domain {
                 } else {
                     max = max2
                 }
-                let union_domain = Some(Domain::IntDomain(vec![Range::Bounded(min, max)]));
-                union_domain
+                
+                Some(Domain::IntDomain(vec![Range::Bounded(min, max)]))
             }
             _ => None,
         }

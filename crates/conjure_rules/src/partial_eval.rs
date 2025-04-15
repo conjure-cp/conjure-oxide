@@ -12,8 +12,6 @@ use Expression::*;
 
 use conjure_core::ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable};
 
-use conjure_core::ast::{AbstractLiteral, Literal};
-
 #[register_rule(("Base",9000))]
 fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // NOTE: If nothing changes, we must return RuleNotApplicable, or the rewriter will try this
