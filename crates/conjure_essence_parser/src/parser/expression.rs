@@ -31,15 +31,15 @@ pub fn parse_expression(
             Metadata::new(),
             Box::new(child_expr(constraint, source_code, root)?),
         )),
-        "exponent" | "product_expr" | "sum_expr" | "comparison" | "and_expr" | "or_expr"
+        "exponent" | "product_expr" | "sum_expr" | "and_expr" | "or_expr"
         | "implication" => {
             let expr1 = child_expr(constraint, source_code, root)?;
-            let op = constraint.child(1).ok_or(format!(
+            let op = constraint.child_by_field_name("operator").ok_or(format!(
                 "Missing operator in expression {}",
                 constraint.kind()
             ))?;
             let op_type = &source_code[op.start_byte()..op.end_byte()];
-            let expr2_node = constraint.child(2).ok_or(format!(
+            let expr2_node = constraint.child_by_field_name("right").ok_or(format!(
                 "Missing second operand in expression {}",
                 constraint.kind()
             ))?;
@@ -128,7 +128,7 @@ pub fn parse_expression(
             for expr in named_children(&constraint) {
                 expr_list.push(parse_expression(expr, source_code, root)?);
             }
-            let quantifier = constraint.child(0).ok_or(format!(
+            let quantifier = constraint.child_by_field_name("quantifier").ok_or(format!(
                 "Missing quantifier in expression {}",
                 constraint.kind()
             ))?;
