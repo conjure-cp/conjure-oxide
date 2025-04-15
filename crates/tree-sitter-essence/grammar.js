@@ -28,7 +28,7 @@ module.exports = grammar({
 
     //meta-variable (aka template argument)
     metavar: $ => seq("&", $.variable),
-
+  
     // reserved_keyword: $ => choice(
     //   $.SUCH_THAT, $.FIND, $.LETTING
     // ),
@@ -84,7 +84,7 @@ module.exports = grammar({
     letting_statement: $ => seq(
       field("variable_list", $.variable_list), 
       "be", 
-      choice(field("expression", $.expression), seq("domain", field("domain", $.domain)))
+      field("expr_or_domain", choice($.expression, seq("domain", $.domain)))
     ),
 
     // Constraints
@@ -115,19 +115,19 @@ module.exports = grammar({
     
     and_expr: $ => prec(-1, prec.left(seq(
       field("left", choice($.boolean_expr, $.comparison_expr, $.primary_expr)), 
-      "/\\", 
+      field("operator", "/\\"),
       field("right", choice($.boolean_expr, $.comparison_expr, $.primary_expr))
     ))),
     
     or_expr: $ => prec(-2, prec.left(seq(
       field("left", choice($.boolean_expr, $.comparison_expr, $.primary_expr)), 
-      "\\/", 
+      field("operator", "\\/"),
       field("right", choice($.boolean_expr, $.comparison_expr, $.primary_expr))
     ))),
     
     implication: $ => prec(-4, prec.left(seq(
       field("left", choice($.boolean_expr, $.comparison_expr, $.primary_expr)), 
-      "->", 
+      field("operator", "->"), 
       field("right", choice($.boolean_expr, $.comparison_expr, $.primary_expr))
     ))),
 
@@ -176,9 +176,9 @@ module.exports = grammar({
     abs_value: $ => prec(20, seq("|", field("expression", $.arithmetic_expr), "|")),
     
     exponent: $ => prec(18, prec.right(seq(
-      field("base", $.arithmetic_expr), 
-      "**", 
-      field("exponent", $.arithmetic_expr)
+      field("left", $.arithmetic_expr), 
+      field("operator", "**"),
+      field("right", $.arithmetic_expr)
     ))),
 
     product_expr: $ => prec(10, prec.left(seq(
