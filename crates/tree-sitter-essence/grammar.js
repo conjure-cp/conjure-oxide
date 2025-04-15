@@ -28,7 +28,7 @@ module.exports = grammar({
 
     //meta-variable (aka template argument)
     metavar: $ => seq("&", $.variable),
-  
+    
     // reserved_keyword: $ => choice(
     //   $.SUCH_THAT, $.FIND, $.LETTING
     // ),
@@ -89,7 +89,7 @@ module.exports = grammar({
 
     // Constraints
     constraint_list: $ => prec.right(seq(
-      "such_that", 
+      "such that", 
       field("expression", $.expression), 
       optional(repeat(seq(",", field("expression", $.expression)))), 
       optional(",")
