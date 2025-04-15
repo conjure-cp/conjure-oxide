@@ -183,47 +183,48 @@ pub fn read_solutions_json(
     Ok(expected_solutions)
 }
 
-/// Reads a rule trace from a file. For the generated prefix, it appends a count message.
-/// Returns the lines of the file as a vector of strings.
+// /// Reads a rule trace from a file. For the generated prefix, it appends a count message.
+// /// Returns the lines of the file as a vector of strings.
+// pub fn read_rule_trace(
+//     path: &str,
+//     test_name: &str,
+//     prefix: &str,
+// ) -> Result<Vec<String>, std::io::Error> {
+//     let filename = format!("{path}/{test_name}-{prefix}-rule-trace.json");
+//     let mut rules_trace: Vec<String> = read_to_string(&filename)?
+//         .lines()
+//         .map(String::from)
+//         .collect();
+
+//     // If prefix is "generated", append the count message
+//     if prefix == "generated" {
+//         let rule_count = rules_trace.len();
+//         let count_message = json!({
+//             "message": "Number of rules applied",
+//             "count": rule_count
+//         });
+//         let count_message_string = serde_json::to_string(&count_message)?;
+//         rules_trace.push(count_message_string);
+
+//         // Overwrite the file with updated content (including the count message)
+//         let mut file = OpenOptions::new()
+//             .write(true)
+//             .truncate(true)
+//             .open(&filename)?;
+//         writeln!(file, "{}", rules_trace.join("\n"))?;
+//     }
+
+//     Ok(rules_trace)
+// }
+
+/// Reads a human-readable rule trace text file.
 pub fn read_rule_trace(
     path: &str,
     test_name: &str,
     prefix: &str,
+    extension: &str,
 ) -> Result<Vec<String>, std::io::Error> {
-    let filename = format!("{path}/{test_name}-{prefix}-rule-trace.json");
-    let mut rules_trace: Vec<String> = read_to_string(&filename)?
-        .lines()
-        .map(String::from)
-        .collect();
-
-    // If prefix is "generated", append the count message
-    if prefix == "generated" {
-        let rule_count = rules_trace.len();
-        let count_message = json!({
-            "message": "Number of rules applied",
-            "count": rule_count
-        });
-        let count_message_string = serde_json::to_string(&count_message)?;
-        rules_trace.push(count_message_string);
-
-        // Overwrite the file with updated content (including the count message)
-        let mut file = OpenOptions::new()
-            .write(true)
-            .truncate(true)
-            .open(&filename)?;
-        writeln!(file, "{}", rules_trace.join("\n"))?;
-    }
-
-    Ok(rules_trace)
-}
-
-/// Reads a human-readable rule trace text file.
-pub fn read_human_rule_trace(
-    path: &str,
-    test_name: &str,
-    prefix: &str,
-) -> Result<Vec<String>, std::io::Error> {
-    let filename = format!("{path}/{test_name}-{prefix}-rule-trace-human.txt");
+    let filename = format!("{path}/{test_name}.{prefix}-rules.protrace.{extension}");
     let rules_trace: Vec<String> = read_to_string(&filename)?
         .lines()
         .map(String::from)

@@ -14,8 +14,8 @@ use anyhow::{anyhow, ensure};
 use conjure_core::{
     context::Context,
     pro_trace::{
-        create_consumer, display_message, get_kind_filter, set_kind_filter, specify_trace_file,
-        Consumer, Kind,
+        create_consumer, display_message, get_kind_filter, json_trace_close, set_kind_filter,
+        specify_trace_files, Consumer, Kind,
     },
     rule_engine::{resolve_rule_sets, rewrite_naive},
     Model,
@@ -62,10 +62,12 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
 
     set_kind_filter(global_args.kind_filter.clone());
     // Determining the file for the output of the trace
-    let file = specify_trace_file(
+
+    let files = specify_trace_files(
         input_file.to_string_lossy().into_owned(),
-        global_args.trace_file.clone(),
-        global_args.formatter.as_str(),
+        global_args.trace_file.get(0).cloned(),
+        global_args.trace_file.get(1).cloned(),
+        &global_args.formatter,
     );
     // Consumer for protrace
     let consumer: Option<Consumer> = global_args.tracing.then(|| {
@@ -73,7 +75,8 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
             global_args.trace_output.as_str(),
             global_args.verbosity.clone(),
             global_args.formatter.as_str(),
-            file.clone(),
+            files.0.clone(),
+            files.1.clone(),
         )
     });
 
@@ -81,9 +84,10 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     let model = parse(&global_args, Arc::clone(&context))?;
     let rewritten_model = rewrite(model, &global_args, Arc::clone(&context), consumer)?;
 
-    if global_args.formatter == "json" {
-        let mut file = OpenOptions::new().append(true).open(file).unwrap();
-        writeln!(file, "]").unwrap();
+    if global_args.trace_output == "file"
+        && (global_args.formatter == "json" || global_args.formatter == "both")
+    {
+        json_trace_close(files.0.clone());
     }
 
     if solve_args.no_run_solver {

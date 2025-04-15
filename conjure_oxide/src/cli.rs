@@ -135,9 +135,11 @@ pub struct GlobalArgs {
         long,
         short = 'f',
         global = true,
-        help = "Save rule trace to the given JSON file (defaults to input file location)"
+        num_args = 0..=2,
+        value_names = ["JSON_TRACE", "HUMAN_TRACE"],
+        help = "Optionally save traces to specific files: first for JSON, second for human format"
     )]
-    pub trace_file: Option<String>,
+    pub trace_file: Vec<String>,
 
     #[arg(
         long = "filter-message-by-kind",

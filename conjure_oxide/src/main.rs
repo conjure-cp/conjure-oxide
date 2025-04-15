@@ -5,7 +5,6 @@ mod solve;
 mod test_solve;
 use clap::{arg, command, Parser};
 use cli::{Cli, GlobalArgs};
-use conjure_core::pro_trace::{set_kind_filter, specify_trace_file};
 use git_version::git_version;
 use print_info_schema::run_print_info_schema_command;
 use solve::run_solve_command;

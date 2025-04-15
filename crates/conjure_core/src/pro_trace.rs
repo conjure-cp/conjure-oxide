@@ -127,6 +127,7 @@ pub trait MessageFormatter: Any + Send + Sync {
 pub enum FormatterType {
     Json,
     Human,
+    Both,
 }
 
 pub struct HumanFormatter;
@@ -184,18 +185,14 @@ pub struct FileConsumer {
     pub formatter: Arc<dyn MessageFormatter>,
     pub formatter_type: FormatterType, // trust me again, it's for the json formtting
     pub verbosity: VerbosityLevel,
-    pub file_path: String, // path to file where the trace will be written
+    pub json_file_path: Option<String>, // path to file where the json trace will be written
+    pub human_file_path: Option<String>, // path to file where the human trace will be written
     pub is_first: std::cell::Cell<bool>, // for json formatting, trust me
 }
 
 pub struct BothConsumer {
     stdout_consumer: StdoutConsumer,
     file_consumer: FileConsumer,
-    // pub formatter: Box<dyn MessageFormatter>,
-    // pub formatter_type: FormatterType, // trust me again, it's for the json formtting
-    // pub verbosity: VerbosityLevel,
-    // pub file_path: String, // path to file where the trace will be written
-    // pub is_first: std::cell::Cell<bool>, // for json formatting, trust me
 }
 
 impl Trace for StdoutConsumer {
@@ -207,33 +204,84 @@ impl Trace for StdoutConsumer {
 
 impl Trace for FileConsumer {
     fn capture(&self, trace: TraceType) {
-        let formatted_output = self.formatter.format(trace.clone());
-        let mut file = OpenOptions::new()
-            .append(true)
-            .create(true)
-            .open(&self.file_path)
-            .unwrap();
+        match self.formatter_type {
+            FormatterType::Json => {
+                if let Some(ref json_path) = self.json_file_path {
+                    let formatted_output = self.formatter.format(trace.clone());
+                    let json_file = OpenOptions::new()
+                        .append(true)
+                        .create(true)
+                        .open(json_path)
+                        .unwrap();
 
-        if self.formatter_type == FormatterType::Json {
-            match trace {
-                // If the trace is a RuleTrace, handle the comma insertion
-                TraceType::RuleTrace(_) => {
-                    if self.is_first.get() {
-                        writeln!(file, "[").unwrap(); // Start JSON array
-                        writeln!(file, "{}", formatted_output).unwrap();
-                        self.is_first.set(false);
-                    } else {
-                        writeln!(file, ",{}", formatted_output).unwrap(); // Append comma and object
-                    }
-                }
-                // If it's any other type, just write the formatted output without commas
-                _ => {
-                    writeln!(file, "{}", formatted_output).unwrap();
+                    write_to_json_trace_file(self, json_file, formatted_output, trace);
                 }
             }
-        } else {
-            // For non-JSON formatting, just write the formatted output
-            writeln!(file, "{}", formatted_output).unwrap();
+            FormatterType::Human => {
+                if let Some(ref human_path) = self.human_file_path {
+                    let formatted_output = self.formatter.format(trace.clone());
+                    let mut human_file = OpenOptions::new()
+                        .append(true)
+                        .create(true)
+                        .open(human_path)
+                        .unwrap();
+
+                    writeln!(human_file, "{}", formatted_output).unwrap();
+                }
+            }
+            FormatterType::Both => {
+                // For JSON output, use a JsonFormatter explicitly
+                if let Some(ref json_path) = self.json_file_path {
+                    let json_formatter = JsonFormatter;
+                    let formatted_output = json_formatter.format(trace.clone());
+
+                    let json_file = OpenOptions::new()
+                        .append(true)
+                        .create(true)
+                        .open(json_path)
+                        .unwrap();
+
+                    write_to_json_trace_file(self, json_file, formatted_output, trace.clone());
+                }
+
+                // For human output, use a HumanFormatter explicitly
+                if let Some(ref human_path) = self.human_file_path {
+                    let human_formatter = HumanFormatter;
+                    let formatted_output = human_formatter.format(trace.clone());
+
+                    let mut human_file = OpenOptions::new()
+                        .append(true)
+                        .create(true)
+                        .open(human_path)
+                        .unwrap();
+
+                    writeln!(human_file, "{}", formatted_output).unwrap();
+                }
+            }
+        }
+    }
+}
+
+pub fn write_to_json_trace_file(
+    consumer: &FileConsumer,
+    mut json_file: File,
+    formatted_output: String,
+    trace: TraceType,
+) {
+    match trace {
+        // If the trace is a RuleTrace, handle the comma insertion
+        TraceType::RuleTrace(_) => {
+            if consumer.is_first.get() {
+                writeln!(json_file, "[").unwrap(); // Start JSON array
+                writeln!(json_file, "{}", formatted_output).unwrap();
+                consumer.is_first.set(false);
+            } else {
+                writeln!(json_file, ",{}", formatted_output).unwrap(); // Append comma and object
+            }
+        }
+        // If it's any other type, just write the formatted output without commas
+        _ => {
+            writeln!(json_file, "{}", formatted_output).unwrap();
         }
     }
 }
@@ -269,45 +317,119 @@ pub fn capture_trace(consumer: &Consumer, trace: TraceType) {
 }
 
 /// Creates a consumer for tracing functionality based on the desired type(file/stdout), format (human/json) and verbosity of the output
+// pub fn create_consumer(
+//     consumer_type: &str,
+//     verbosity: VerbosityLevel,
+//     output_format: &str,
+//     json_file_path: String,
+//     human_file_path: String,
+// ) -> Consumer {
+//     let (formatter, formatter_type): (Arc<dyn MessageFormatter>, FormatterType) =
+//         match output_format.to_lowercase().as_str() {
+//             "json" => (Arc::new(JsonFormatter), FormatterType::Json),
+//             "human" => (Arc::new(HumanFormatter), FormatterType::Human),
+//             other => panic!("Unknown format type: {}", other),
+//         };
+
+//     match consumer_type.to_lowercase().as_str() {
+//         "stdout" => Consumer::StdoutConsumer(StdoutConsumer {
+//             formatter,
+//             verbosity,
+//         }),
+//         "file" => {
+//             let path = PathBuf::from(&file_path);
+//             if path.exists() {
+//                 fs::remove_file(&path).unwrap();
+//             }
+
+//             // Create the file if it doesn't exist
+//             File::create(&path).unwrap();
+
+//             Consumer::FileConsumer(FileConsumer {
+//                 formatter,
+//                 formatter_type,
+//                 verbosity,
+//                 file_path,
+//                 is_first: std::cell::Cell::new(true), // for json formatting, trust me
+//             })
+//         }
+//         "both" => {
+//             let path = PathBuf::from(&file_path);
+//             if path.exists() {
+//                 fs::remove_file(&path).unwrap();
+//             }
+
+//             Consumer::BothConsumer(BothConsumer {
+//                 stdout_consumer: StdoutConsumer {
+//                     formatter: formatter.clone(),
+//                     verbosity: verbosity.clone(),
+//                 },
+//                 file_consumer: FileConsumer {
+//                     formatter,
+//                     formatter_type,
+//                     verbosity,
+//                     file_path,
+//                     is_first: std::cell::Cell::new(true), // for JSON formatting
+//                 },
+//             })
+//         }
+//         other => panic!("Unknown consumer type: {}", other),
+//     }
+// }
 pub fn create_consumer(
     consumer_type: &str,
     verbosity: VerbosityLevel,
     output_format: &str,
-    file_path: String,
+    json_file_path: Option<String>,
+    human_file_path: Option<String>,
 ) -> Consumer {
     let (formatter, formatter_type): (Arc<dyn MessageFormatter>, FormatterType) =
         match output_format.to_lowercase().as_str() {
             "json" => (Arc::new(JsonFormatter), FormatterType::Json),
             "human" => (Arc::new(HumanFormatter), FormatterType::Human),
+            "both" => (Arc::new(JsonFormatter), FormatterType::Both),
             other => panic!("Unknown format type: {}", other),
         };
+
+    // Helper function to clean and create a file if it exists
+    fn init_file(path_str: &String) {
+        let path = PathBuf::from(path_str);
+        if path.exists() {
+            fs::remove_file(&path).unwrap();
+        }
+        File::create(&path).unwrap();
+    }
 
     match consumer_type.to_lowercase().as_str() {
         "stdout" => Consumer::StdoutConsumer(StdoutConsumer {
             formatter,
             verbosity,
         }),
-        "file" => {
-            let path = PathBuf::from(&file_path);
-            if path.exists() {
-                fs::remove_file(&path).unwrap();
-            }
 
-            // Create the file if it doesn't exist
-            File::create(&path).unwrap();
+        "file" => {
+            if let Some(ref json_path) = json_file_path {
+                init_file(json_path);
+            }
+            if let Some(ref human_path) = human_file_path {
+                init_file(human_path);
+            }
 
             Consumer::FileConsumer(FileConsumer {
                 formatter,
                 formatter_type,
                 verbosity,
-                file_path,
-                is_first: std::cell::Cell::new(true), // for json formatting, trust me
+                json_file_path,
+                human_file_path,
+                is_first: std::cell::Cell::new(true),
             })
         }
+
         "both" => {
-            let path = PathBuf::from(&file_path);
-            if path.exists() {
-                fs::remove_file(&path).unwrap();
+            if let Some(ref json_path) = json_file_path {
+                init_file(json_path);
+            }
+            if let Some(ref human_path) = human_file_path {
+                init_file(human_path);
             }
 
             Consumer::BothConsumer(BothConsumer {
@@ -319,43 +441,70 @@ pub fn create_consumer(
                     formatter,
                     formatter_type,
                     verbosity,
-                    file_path,
-                    is_first: std::cell::Cell::new(true), // for JSON formatting
+                    json_file_path,
+                    human_file_path,
+                    is_first: std::cell::Cell::new(true),
                 },
             })
         }
+
         other => panic!("Unknown consumer type: {}", other),
     }
 }
-
-/// Creates a dedicated file name for the tracing output
-/// If the user did not specify an output file, the file name is constructed based on the input essence file path and the type of trace expected
-pub fn specify_trace_file(
+pub fn specify_trace_files(
     essence_file: String,
-    passed_file: Option<String>,
+    json_file: Option<String>,
+    human_file: Option<String>,
     output_format: &str,
-) -> String {
-    match passed_file {
-        Some(trace_file) => trace_file,
-        None => {
-            let new_extension = match output_format.to_lowercase().as_str() {
-                "json" => "json",
-                "human" => "txt",
-                _ => panic!("Unknown output format: {}", output_format),
-            };
+) -> (Option<String>, Option<String>) {
+    let path = PathBuf::from(&essence_file);
+    let base_stem = path
+        .file_stem()
+        .expect("Essence file must have a stem")
+        .to_string_lossy()
+        .into_owned();
 
-            let mut path = PathBuf::from(essence_file);
+    let default_json = {
+        let mut p = path.clone();
+        p.set_file_name(format!("{}_protrace", base_stem));
+        p.set_extension("json");
+        p.to_string_lossy().into_owned()
+    };
 
-            if let Some(stem) = path.file_stem() {
-                let mut new_name = stem.to_string_lossy().into_owned();
-                new_name.push_str("_protrace");
+    let default_human = {
+        let mut p = path.clone();
+        p.set_file_name(format!("{}_protrace", base_stem));
+        p.set_extension("txt");
+        p.to_string_lossy().into_owned()
+    };
 
-                path.set_file_name(new_name);
-                path.set_extension(new_extension);
-            }
-
-            path.to_string_lossy().into_owned()
+    match output_format.to_lowercase().as_str() {
+        "json" => {
+            let json = Some(json_file.unwrap_or(default_json));
+            (json, None)
         }
+        "human" => {
+            let human = Some(human_file.unwrap_or(default_human));
+            (None, human)
+        }
+        "both" => {
+            let json = Some(json_file.unwrap_or(default_json));
+            let human = Some(human_file.unwrap_or(default_human));
+            (json, human)
+        }
+        other => panic!("Unknown output format: {}", other),
+    }
+}
+
+pub fn json_trace_close(json_path: Option<String>) {
+    if let Some(path) = json_path {
+        let mut file = OpenOptions::new()
+            .append(true)
+            .open(path)
+            .expect("Failed to open JSON trace file");
+        writeln!(file, "]").expect("Failed to write to file");
+    } else {
+        println!("No JSON file path provided.");
     }
 }
 
@@ -389,22 +538,77 @@ mod tests {
 
     #[test]
     fn test_create_stdout_consumer() {
-        let consumer = create_consumer("stdout", VerbosityLevel::High, "human", "".into());
+        let consumer = create_consumer("stdout", VerbosityLevel::High, "human", None, None);
         assert!(matches!(consumer, Consumer::StdoutConsumer(_)));
     }
 
     #[test]
-    fn test_create_file_consumer() {
+    fn test_create_file_consumer_for_json() {
         let file_path = "test_trace_output.json".to_string();
-        let consumer = create_consumer("file", VerbosityLevel::Medium, "json", file_path.clone());
+        let consumer = create_consumer(
+            "file",
+            VerbosityLevel::Medium,
+            "json",
+            Some(file_path.clone()),
+            None,
+        );
         if let Consumer::FileConsumer(file_consumer) = &consumer {
-            assert_eq!(file_consumer.file_path, file_path);
+            assert_eq!(file_consumer.json_file_path.as_ref().unwrap(), &file_path);
         } else {
-            panic!("Expected a FileConsumer");
+            panic!("Expected a Json FileConsumer");
         }
 
         assert!(matches!(consumer, Consumer::FileConsumer(_)));
         fs::remove_file(file_path).ok();
+    }
+
+    #[test]
+    fn test_create_file_consumer_for_human() {
+        let file_path = "test_trace_output.txt".to_string();
+        let consumer = create_consumer(
+            "file",
+            VerbosityLevel::Medium,
+            "human",
+            None,
+            Some(file_path.clone()),
+        );
+        if let Consumer::FileConsumer(file_consumer) = &consumer {
+            assert_eq!(file_consumer.human_file_path.as_ref().unwrap(), &file_path);
+        } else {
+            panic!("Expected a Human FileConsumer");
+        }
+
+        assert!(matches!(consumer, Consumer::FileConsumer(_)));
+        fs::remove_file(file_path).ok();
+    }
+
+    #[test]
+    fn test_create_file_consumer_for_both() {
+        let json_file_path = "test_trace_output.json".to_string();
+        let human_file_path = "test_trace_output.txt".to_string();
+        let consumer = create_consumer(
+            "file",
+            VerbosityLevel::Medium,
+            "both",
+            Some(json_file_path.clone()),
+            Some(human_file_path.clone()),
+        );
+        if let Consumer::FileConsumer(file_consumer) = &consumer {
+            assert_eq!(
+                file_consumer.human_file_path.as_ref().unwrap(),
+                &human_file_path
+            );
+            assert_eq!(
+                file_consumer.json_file_path.as_ref().unwrap(),
+                &json_file_path
+            );
+        } else {
+            panic!("Expected a Joint FileConsumer");
+        }
+
+        assert!(matches!(consumer, Consumer::FileConsumer(_)));
+        fs::remove_file(json_file_path).ok();
+        fs::remove_file(human_file_path).ok();
     }
 
     #[test]
@@ -415,29 +619,68 @@ mod tests {
         });
         assert_eq!(check_verbosity_level(&consumer), VerbosityLevel::High);
 
-        let consumer_2 = create_consumer("stdout", VerbosityLevel::Medium, "human", "".into());
+        let consumer_2 = create_consumer("stdout", VerbosityLevel::Medium, "human", None, None);
         assert_eq!(check_verbosity_level(&consumer_2), VerbosityLevel::Medium);
     }
 
     #[test]
     fn test_specify_trace_file_json() {
-        let output_file = specify_trace_file("example.essence".into(), None, "json");
-        assert_eq!(output_file, "example_protrace.json");
+        let output_file = specify_trace_files("example.essence".into(), None, None, "json");
+        assert_eq!(output_file.0.unwrap_or_default(), "example_protrace.json");
     }
 
     #[test]
     fn test_specify_trace_file_human() {
-        let output_file = specify_trace_file("example.essence".into(), None, "human");
-        assert_eq!(output_file, "example_protrace.txt");
+        let output_file = specify_trace_files("example.essence".into(), None, None, "human");
+        assert_eq!(output_file.1.unwrap_or_default(), "example_protrace.txt");
+    }
+
+    #[test]
+    fn test_specify_trace_file_both() {
+        let output_file = specify_trace_files("example.essence".into(), None, None, "both");
+        assert_eq!(output_file.0.unwrap_or_default(), "example_protrace.json");
+        assert_eq!(output_file.1.unwrap_or_default(), "example_protrace.txt");
     }
 
     #[test]
     fn test_specify_trace_file_passed() {
-        let output_file = specify_trace_file(
+        let output_file1 = specify_trace_files(
             "example.essence".into(),
-            Some("example.essence_trace".to_string()),
+            None,
+            Some("example_essence_trace.txt".to_string()),
             "human",
         );
-        assert_eq!(output_file, "example.essence_trace");
+
+        assert_eq!(
+            output_file1.1.unwrap_or_default(),
+            "example_essence_trace.txt"
+        );
+
+        let output_file2 = specify_trace_files(
+            "example.essence".into(),
+            Some("example_essence_trace.json".to_string()),
+            None,
+            "json",
+        );
+
+        assert_eq!(
+            output_file2.0.unwrap_or_default(),
+            "example_essence_trace.json"
+        );
+
+        let output_file3 = specify_trace_files(
+            "example.essence".into(),
+            Some("example_essence_trace.json".to_string()),
+            Some("example_essence_trace.txt".to_string()),
+            "both",
+        );
+        assert_eq!(
+            output_file3.0.unwrap_or_default(),
+            "example_essence_trace.json"
+        );
+        assert_eq!(
+            output_file3.1.unwrap_or_default(),
+            "example_essence_trace.txt"
+        );
     }
 }

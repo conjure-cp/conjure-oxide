@@ -1,0 +1,45 @@
+
+Model before rewriting:
+
+find x: int(-2..3)
+find y: int(1..3)
+
+such that
+
+(Product([y, |x|]) = 2)
+
+--
+
+Successful Tranformation: 
+Product([y, |x|]), 
+~~> flatten_generic [4200; Minion]
+Product([y, __0]) new variables:
+  find __0: int(0..3) new constraints:
+  __0 =aux |x|
+
+--
+
+Successful Tranformation: 
+__0 =aux |x|, 
+~~> introduce_abseq [4400; Minion]
+AbsEq(__0,x)  
+--
+
+Successful Tranformation: 
+(Product([y, __0]) = 2), 
+~~> introduce_producteq [4200; Minion]
+FlatProductEq(__0,y,2)  
+--
+
+
+Final model:
+
+find x: int(-2..3)
+find y: int(1..3)
+find __0: int(0..3)
+
+such that
+
+FlatProductEq(__0,y,2),
+AbsEq(__0,x)
+
