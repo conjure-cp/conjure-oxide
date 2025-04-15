@@ -28,7 +28,7 @@ pub fn parse_letting_statement(
         }
 
         let expr_or_domain = letting_statement
-            .named_child(1)
+            .child_by_field_name("expr_or_domain")
             .expect("No domain or expression found for letting statement");
         match expr_or_domain.kind() {
             "expression" => {

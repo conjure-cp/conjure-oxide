@@ -27,7 +27,7 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
     } else {
         let mut ranges: Vec<Range<i32>> = Vec::new();
         let range_list = int_domain
-            .named_child(0)
+            .child_by_field_name("ranges")
             .expect("No range list found (expression ranges not supported yet");
         for int_range in named_children(&range_list) {
             match int_range.kind() {

@@ -75,7 +75,7 @@ pub fn parse_essence_with_context(
             }
             "dominance_relation" => {
                 let inner = statement
-                    .child(1)
+                    .child_by_field_name("expression")
                     .expect("Expected a sub-expression inside `dominanceRelation`");
                 let expr = parse_expression(inner, &source_code, &statement)?;
                 let dominance = Expression::DominanceRelation(Metadata::new(), Box::new(expr));
