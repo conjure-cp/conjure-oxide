@@ -1,14 +1,19 @@
+use std::collections::HashSet;
 
-use conjure_core::into_matrix_expr;
+use conjure_core::{
+    ast::Expression,
+    into_matrix_expr,
+    metadata::Metadata,
+    rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
+};
 use conjure_rule_macros::register_rule;
 use itertools::iproduct;
+use Expression::*;
 
+use conjure_core::ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable};
 
 #[register_rule(("Base",9000))]
 fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    use conjure_core::rule_engine::ApplicationError::RuleNotApplicable;
-    use Expr::*;
-
     // NOTE: If nothing changes, we must return RuleNotApplicable, or the rewriter will try this
     // rule infinitely!
     // This is why we always check whether we found a constant or not.
@@ -39,7 +44,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             let mut n_consts = 0;
             let mut new_vec: Vec<Expr> = Vec::new();
             for expr in vec {
-                if let Expr::Atomic(_, Atom::Literal(Int(x))) = expr {
+                if let Expr::Atomic(_, Atom::Literal(Lit::Int(x))) = expr {
                     acc += x;
                     n_consts += 1;
                 } else {
@@ -47,7 +52,10 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 }
             }
             if acc != 0 {
-                new_vec.push(Expr::Atomic(Default::default(), Atom::Literal(Int(acc))));
+                new_vec.push(Expr::Atomic(
+                    Default::default(),
+                    Atom::Literal(Lit::Int(acc)),
+                ));
             }
 
             if n_consts <= 1 {
@@ -65,7 +73,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             let mut n_consts = 0;
             let mut new_vec: Vec<Expr> = Vec::new();
             for expr in vec {
-                if let Expr::Atomic(_, Atom::Literal(Int(x))) = expr {
+                if let Expr::Atomic(_, Atom::Literal(Lit::Int(x))) = expr {
                     acc *= x;
                     n_consts += 1;
                 } else {
@@ -77,7 +85,10 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 return Err(RuleNotApplicable);
             }
 
-            new_vec.push(Expr::Atomic(Default::default(), Atom::Literal(Int(acc))));
+            new_vec.push(Expr::Atomic(
+                Default::default(),
+                Atom::Literal(Lit::Int(acc)),
+            ));
             let new_product = Product(m, new_vec);
 
             if acc == 0 {
@@ -86,7 +97,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 if new_product.is_safe() {
                     Ok(Reduction::pure(Expr::Atomic(
                         Default::default(),
-                        Atom::Literal(Int(0)),
+                        Atom::Literal(Lit::Int(0)),
                     )))
                 } else {
                     Ok(Reduction::pure(new_product))
@@ -108,7 +119,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             let mut n_consts = 0;
             let mut new_vec: Vec<Expr> = Vec::new();
             for expr in vec {
-                if let Expr::Atomic(_, Atom::Literal(Int(x))) = expr {
+                if let Expr::Atomic(_, Atom::Literal(Lit::Int(x))) = expr {
                     n_consts += 1;
                     acc = match acc {
                         Some(i) => {
@@ -126,7 +137,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             }
 
             if let Some(i) = acc {
-                new_vec.push(Expr::Atomic(Default::default(), Atom::Literal(Int(i))));
+                new_vec.push(Expr::Atomic(Default::default(), Atom::Literal(Lit::Int(i))));
             }
 
             if n_consts <= 1 {
@@ -148,7 +159,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             let mut n_consts = 0;
             let mut new_vec: Vec<Expr> = Vec::new();
             for expr in vec {
-                if let Expr::Atomic(_, Atom::Literal(Int(x))) = expr {
+                if let Expr::Atomic(_, Atom::Literal(Lit::Int(x))) = expr {
                     n_consts += 1;
                     acc = match acc {
                         Some(i) => {
@@ -166,7 +177,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             }
 
             if let Some(i) = acc {
-                new_vec.push(Expr::Atomic(Default::default(), Atom::Literal(Int(i))));
+                new_vec.push(Expr::Atomic(Default::default(), Atom::Literal(Lit::Int(i))));
             }
 
             if n_consts <= 1 {
@@ -189,7 +200,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             // 2. boolean literals
             let mut new_terms = vec![];
             for expr in terms {
-                if let Expr::Atomic(_, Atom::Literal(Bool(x))) = expr {
+                if let Expr::Atomic(_, Atom::Literal(Lit::Bool(x))) = expr {
                     has_changed = true;
 
                     // true ~~> entire or is true
@@ -228,12 +239,12 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             let mut new_vec: Vec<Expr> = Vec::new();
             let mut has_const: bool = false;
             for expr in vec {
-                if let Expr::Atomic(_, Atom::Literal(Bool(x))) = expr {
+                if let Expr::Atomic(_, Atom::Literal(Lit::Bool(x))) = expr {
                     has_const = true;
                     if !x {
                         return Ok(Reduction::pure(Atomic(
                             Default::default(),
-                            Atom::Literal(Bool(false)),
+                            Atom::Literal(Lit::Bool(false)),
                         )));
                     }
                 } else {
@@ -266,13 +277,13 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             let mut has_changed: bool = false;
             for expr in es {
                 match expr {
-                    Expr::Atomic(_, Atom::Literal(Bool(x))) => {
+                    Expr::Atomic(_, Atom::Literal(Lit::Bool(x))) => {
                         has_changed = true;
                         if !x {
                             // false
                             return Ok(Reduction::pure(Root(
                                 Metadata::new(),
-                                vec![Atomic(Default::default(), Atom::Literal(Bool(false)))],
+                                vec![Atomic(Default::default(), Atom::Literal(Lit::Bool(false)))],
                             )));
                         }
                         // remove trues
@@ -339,9 +350,12 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
             // check for duplicate constant values which would fail the constraint
             for expr in vec {
-                if let Expr::Atomic(_, Atom::Literal(Int(x))) = expr {
+                if let Expr::Atomic(_, Atom::Literal(Lit::Int(x))) = expr {
                     if !consts.insert(x) {
-                        return Ok(Reduction::pure(Expr::Atomic(m, Atom::Literal(Bool(false)))));
+                        return Ok(Reduction::pure(Expr::Atomic(
+                            m,
+                            Atom::Literal(Lit::Bool(false)),
+                        )));
                     }
                 }
             }

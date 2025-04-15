@@ -5,9 +5,12 @@
 
 use std::collections::BTreeMap;
 
+use conjure_core::ast::{Atom, Expression as Expr, Literal as Lit, Name, SymbolTable};
 use conjure_core::into_matrix_expr;
+use conjure_core::metadata::Metadata;
+use conjure_core::rule_engine::ApplicationError::RuleNotApplicable;
+use conjure_core::rule_engine::{ApplicationResult, Reduction};
 use conjure_rule_macros::register_rule;
-
 
 /// Collects like terms in a weighted sum.
 ///
