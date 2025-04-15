@@ -20,26 +20,28 @@ module.exports = grammar({
     language_label: $ => token(seq("language", /.*/)),
 
     // Basic components
-    constant: $ => choice(field("integer", $.integer), field("true", $.TRUE), field("false", $.FALSE)),
+    constant: $ => choice($.integer, $.TRUE, $.FALSE),
     integer: $ => /[0-9]+/,
     TRUE: $ => "true",
     FALSE: $ => "false",
     variable: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
-    FIND: $ => "find",
-    LETTING: $ => "letting",
-    SUCH_THAT: $ => "such that",
 
     //meta-variable (aka template argument)
     metavar: $ => seq("&", $.variable),
 
-    //find statements
-    find_statement_list: $ => seq("find", repeat($.find_statement)),
+    // reserved_keyword: $ => choice(
+    //   $.SUCH_THAT, $.FIND, $.LETTING
+    // ),
+    SUCH_THAT: $ => "such that",
+    FIND: $ => "find",
+    LETTING: $ => "letting",
+    COLON: $ => ":",
 
     // Find statements
-    find_statement_list: $ => prec.right(seq(field("find", $.FIND), repeat(field("find_statement", $.find_statement)))),
+    find_statement_list: $ => prec.right(seq("find", repeat1(field("find_statement", $.find_statement)))),
     find_statement: $ => seq(
       field("variables", $.variable_list),
-      field("colon", ":"),
+      ":",
       field("domain", $.domain),
       optional(",")
     ),
@@ -78,7 +80,7 @@ module.exports = grammar({
     ),
 
     // Letting statements
-    letting_statement_list: $ => prec.right(seq(field("letting", $.LETTING), repeat(field("letting_statement", $.letting_statement)))),
+    letting_statement_list: $ => prec.right(seq("letting", repeat(field("letting_statement", $.letting_statement)))),
     letting_statement: $ => seq(
       field("variable_list", $.variable_list), 
       "be", 
@@ -86,62 +88,27 @@ module.exports = grammar({
     ),
 
     // Constraints
-    // constraint_list: $ => prec.right(seq(
-      // field("such_that", $.SUCH_THAT), 
-    // constraint_list: $ => seq(
-    //   field("such_that", $.SUCH_THAT), 
-    //   field("expression", $.expression), 
-    //   optional(repeat(seq(",", field("expression", $.expression)))), 
-    //   optional(",")
-    // ),
-
-    constraint_list: $ => seq(
-      field("such_that", $.SUCH_THAT), 
-      repeat(field("constraint", $.constraint))
-    ),
-
-    constraint: $ => seq(
+    constraint_list: $ => prec.right(seq(
+      "such_that", 
       field("expression", $.expression), 
+      optional(repeat(seq(",", field("expression", $.expression)))), 
       optional(",")
-    ),
+    )),
 
     // Expression hierarchy
     expression: $ => choice(
-      $.primary_expr,
-      $.comparison_expr,
-      $.arithmetic_expr,
-      $.boolean_expr,
-      $.from_solution
+      field("boolean_expression", $.boolean_expr), 
+      field("comparison_expression", $.comparison_expr), 
+      field("arithmetic_expression", $.arithmetic_expr)
     ),
-
-    primary_expr: $ => choice(
-      field("sub_expression", $.sub_expr),
-      field("constant", $.constant),
-      field("variable", $.variable),
-      field("metvariatble", $.metavar)
-    ),
-
-    comparison_expr: $ => prec(0, prec.left(seq(
-      field("left", choice($.boolean_expr, $.arithmetic_expr)), 
-      field("operator", $.comparative_op),
-      field("right", choice($.boolean_expr, $.arithmetic_expr))
-    ))),
-
-    arithmetic_expr: $ => choice(
-      // field("primary_expression", $.primary_expr),
-      field("negative_expression", $.negative_expr),
-      field("absolute_value", $.abs_value),
-      field("exponentiation", $.exponent),
-      field("product_expression", $.product_expr),
-      field("sum_expression", $.sum_expr)
-    ),
-
+    
     boolean_expr: $ => choice(
-      $.not_expr,
-      $.and_expr,
-      $.or_expr,
-      $.implication,
-      $.quantifier_expr,
+      field("not_expression", $.not_expr),
+      field("and_expression", $.and_expr),
+      field("or_expression", $.or_expr),
+      field("implication", $.implication),
+      field("quantifier_expression", $.quantifier_expr),
+      field("from_solution", $.from_solution)
     ),
 
     not_expr: $ => prec(20, seq("!", field("expression", choice($.boolean_expr, $.comparison_expr, $.primary_expr)))),
@@ -178,7 +145,29 @@ module.exports = grammar({
       ")"
     ),
 
+    comparison_expr: $ => prec(0, prec.left(seq(
+      field("left", choice($.boolean_expr, $.arithmetic_expr)), 
+      field("operator", $.comparative_op),
+      field("right", choice($.boolean_expr, $.arithmetic_expr))
+    ))),
+
     comparative_op: $ => choice("=", "!=", "<=", ">=", "<", ">"),
+
+    arithmetic_expr: $ => choice(
+      field("primary_expression", $.primary_expr),
+      field("negative_expression", $.negative_expr),
+      field("absolute_value", $.abs_value),
+      field("exponentiation", $.exponent),
+      field("product_expression", $.product_expr),
+      field("sum_expression", $.sum_expr)
+    ),
+
+    primary_expr: $ => choice(
+      field("sub_expression", $.sub_expr),
+      field("constant", $.constant),
+      field("variable", $.variable),
+      field("metavar", $.metavar)
+    ),
 
     sub_expr: $ => seq("(", field("expression", $.expression), ")"),
 
