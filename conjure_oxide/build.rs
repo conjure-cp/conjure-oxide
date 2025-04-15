@@ -98,7 +98,7 @@ fn main() -> io::Result<()> {
 
                 let essence_files = std::iter::zip(stems, exts).collect();
 
-                write_test(&mut f, subdir.path().display().to_string(), essence_files)?;
+                write_integration_test(&mut f, subdir.path().display().to_string(), essence_files)?;
             }
         }
     }
@@ -142,15 +142,6 @@ fn write_integration_test(
     } else {
         Ok(())
     }
-}
-
-fn write_custom_test(file: &mut File, path: String) -> io::Result<()> {
-    write!(
-        file,
-        include_str!("./tests/custom_test_template"),
-        test_name = path.replace("./", "").replace(['/', '-'], "_"),
-        test_dir = path
-    )
 }
 
 fn write_custom_test(file: &mut File, path: String) -> io::Result<()> {
