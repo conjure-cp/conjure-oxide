@@ -41,7 +41,7 @@ pub use linkme::distributed_slice;
 ///   Ok(Reduction::pure(expr.clone()))
 /// }
 /// ```
-pub use conjure_macros::register_rule;
+pub use conjure_rule_macros::register_rule;
 
 /// This procedural macro registers a rule set with the global registry.
 /// It may be used in any downstream crate.
@@ -51,18 +51,35 @@ pub use conjure_macros::register_rule;
 /// This macro uses the following syntax:
 ///
 /// ```text
-/// register_rule_set!(<RuleSet name>, (<DependencyRuleSet1>, <DependencyRuleSet2>, ...));
+/// register_rule_set!(<RuleSet name>, (<DependencyRuleSet1>, <DependencyRuleSet2>, ...), <SolverFamily>);
 /// ```
 ///
 /// # Example
 ///
+/// Register a rule set with no dependencies:
+///
 /// ```rust
 /// use conjure_core::rule_engine::register_rule_set;
+/// register_rule_set!("MyRuleSet");
+/// ```
 ///
+/// Register a rule set with dependencies:
+///
+/// ```rust
+/// use conjure_core::rule_engine::register_rule_set;
 /// register_rule_set!("MyRuleSet", ("DependencyRuleSet", "AnotherRuleSet"));
 /// ```
+///
+/// Register a rule set for a specific solver family or families:
+///
+/// ```rust
+/// use conjure_core::rule_engine::register_rule_set;
+/// use conjure_core::solver::SolverFamily;
+/// register_rule_set!("MyRuleSet", (), SolverFamily::Minion);
+/// register_rule_set!("AnotherRuleSet", (), (SolverFamily::Minion, SolverFamily::SAT));
+/// ```
 #[doc(inline)]
-pub use conjure_macros::register_rule_set;
+pub use conjure_rule_macros::register_rule_set;
 pub use resolve_rules::{get_rules, get_rules_grouped, resolve_rule_sets, RuleData};
 pub use rewrite_naive::rewrite_naive;
 pub use rewriter_common::RewriteError;
@@ -209,7 +226,9 @@ pub fn get_rule_set_by_name(name: &str) -> Option<&'static RuleSet<'static>> {
 ///
 /// ```rust
 /// use conjure_core::solver::SolverFamily;
-/// use conjure_core::rule_engine::get_rule_sets_for_solver_family;
+/// use conjure_core::rule_engine::{get_rule_sets_for_solver_family, register_rule_set};
+///
+/// register_rule_set!("CNF", (), SolverFamily::SAT);
 ///
 /// let rule_sets = get_rule_sets_for_solver_family(SolverFamily::SAT);
 /// assert_eq!(rule_sets.len(), 1);

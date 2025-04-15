@@ -21,6 +21,9 @@
 //!
 //! ## A Successful Minion Model
 //!
+//! Note: this example constructs a basic Minion-compatible model instead of using the rewriter.
+//! For a full end-to-end example, see conjure_oxide/examples/solver_hello_minion.rs
+//!
 //! ```rust
 //! use std::sync::{Arc,Mutex};
 //! use conjure_core::parse::get_example_model;
@@ -28,13 +31,19 @@
 //! use conjure_core::rule_engine::rewrite_naive;
 //! use conjure_core::solver::{adaptors, Solver, SolverAdaptor};
 //! use conjure_core::solver::states::ModelLoaded;
+//! use conjure_core::Model;
+//! use conjure_core::ast::Domain;
+//! use conjure_core::ast::Declaration;
 //! use conjure_core::solver::SolverFamily;
+//! use conjure_core::context::Context;
+//! use conjure_essence_macros::essence_expr;
 //!
-//! // Define and rewrite a model for minion.
-//! let model = get_example_model("bool-03").unwrap();
-//! let rule_sets = resolve_rule_sets(SolverFamily::Minion, &vec!["Constant"]).unwrap();
-//! let model = rewrite_naive(&model, &rule_sets, true, None).unwrap();
-//!
+//! // Define a model for minion.
+//! let context = Context::<'static>::new_ptr_empty(SolverFamily::Minion);
+//! let mut model = Model::new(context);
+//! model.as_submodel_mut().add_symbol(Declaration::new_var("x".into(), Domain::BoolDomain));
+//! model.as_submodel_mut().add_symbol(Declaration::new_var("y".into(), Domain::BoolDomain));
+//! model.as_submodel_mut().add_constraint(essence_expr!{x != y});
 //!
 //! // Solve using Minion.
 //! let solver = Solver::new(adaptors::Minion::new());

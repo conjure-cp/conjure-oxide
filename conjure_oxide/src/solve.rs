@@ -22,11 +22,8 @@ use conjure_core::{
 use conjure_oxide::{
     defaults::DEFAULT_RULE_SETS,
     find_conjure::conjure_executable,
-    get_rules, model_from_json,
-    utils::{
-        conjure::{get_minion_solutions, get_sat_solutions, solutions_to_json},
-        essence_parser::parse_essence_file_native,
-    },
+    get_rules, model_from_json, parse_essence_file_native,
+    utils::conjure::{get_minion_solutions, get_sat_solutions, solutions_to_json},
     SolverFamily,
 };
 use serde_json::to_string_pretty;

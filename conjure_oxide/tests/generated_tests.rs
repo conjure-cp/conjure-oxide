@@ -8,7 +8,7 @@ use conjure_core::pro_trace::{
 };
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
-use conjure_oxide::utils::essence_parser::parse_essence_file_native;
+use conjure_oxide::parse_essence_file_native;
 use conjure_oxide::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
 use glob::glob;
 use itertools::Itertools;
@@ -33,10 +33,11 @@ use std::sync::RwLock;
 use conjure_core::ast::Atom;
 use conjure_core::ast::{Expression, Literal, Name};
 use conjure_core::context::Context;
+use conjure_oxide::parse_essence_file;
 use conjure_oxide::rule_engine::resolve_rule_sets;
 use conjure_oxide::utils::conjure::solutions_to_json;
 use conjure_oxide::utils::conjure::{
-    get_minion_solutions, get_sat_solutions, get_solutions_from_conjure, parse_essence_file,
+    get_minion_solutions, get_sat_solutions, get_solutions_from_conjure,
 };
 use conjure_oxide::utils::testing::save_stats_json;
 use conjure_oxide::utils::testing::{
@@ -254,9 +255,12 @@ fn integration_test_inner(
         todo!("Not yet implemented simultaneous testing of both solvers")
     }
 
+    // File path
+    let file_path = format!("{path}/{essence_base}.{extension}");
+
     // Stage 1a: Parse the model using the normal parser (run unless explicitly disabled)
     let parsed_model = if config.parse_model_default {
-        let parsed = parse_essence_file(path, essence_base, extension, context.clone())?;
+        let parsed = parse_essence_file(&file_path, context.clone())?;
         if verbose {
             println!("Parsed model: {:#?}", parsed);
         }
@@ -268,7 +272,6 @@ fn integration_test_inner(
 
     // Stage 1b: Run native parser (only if explicitly enabled)
     let mut model_native = None;
-    let file_path = format!("{path}/{essence_base}.{extension}");
     if config.enable_native_parser {
         let mn = parse_essence_file_native(&file_path, context.clone())?;
         save_model_json(&mn, path, essence_base, "parse")?;
