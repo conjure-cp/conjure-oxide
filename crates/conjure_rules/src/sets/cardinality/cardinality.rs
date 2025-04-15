@@ -130,6 +130,7 @@ fn card_to_attr(expr: &Expression, st: &SymbolTable) -> ApplicationResult {
                                         }
                                     };
                                 }
+                                // TODO: add other cases in the future if needed. Not that important for now.
                                 _ => {
                                     println!("Case not covered!");
                                     Domain::DomainSet(SetAttr::None, vals.clone());

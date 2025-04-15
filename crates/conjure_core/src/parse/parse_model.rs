@@ -193,6 +193,7 @@ fn parse_domain(
             let attrs = domain_value.get(1).and_then(|v| v.as_object());
             let dom = domain_value.get(2).and_then(|v| v.as_object());
             let domain_obj = dom.expect("domain object exists");
+            println!("atr{:#?}", attrs);
             let (domain_name, domain_value) = domain_obj
                 .iter()
                 .next()
