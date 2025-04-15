@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use conjure_core::{
     ast::{Atom, Declaration, Domain, Expression as Expr, Name, SymbolTable},
@@ -111,7 +111,10 @@ pub struct ToAuxVarOutput {
 impl ToAuxVarOutput {
     /// Returns the new auxiliary variable as an `Atom`.
     pub fn as_atom(&self) -> Atom {
-        Atom::Reference(self.aux_name())
+        Atom::Reference(
+            self.aux_name(),
+            Rc::new(RefCell::new(Declaration::default())),
+        )
     }
 
     /// Returns the new auxiliary variable as an `Expression`.

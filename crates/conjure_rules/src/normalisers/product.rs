@@ -39,7 +39,7 @@ fn reorder_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             Expr::Atomic(_, Atom::Literal(_)) => {
                 constant_coefficients.push(expr);
             }
-            Expr::Atomic(_, Atom::Reference(_)) => {
+            Expr::Atomic(_, Atom::Reference(_, _)) => {
                 variables.push(expr);
             }
 
@@ -49,7 +49,7 @@ fn reorder_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             }
 
             // -x === -1 * x
-            Expr::Neg(_, expr2) if matches!(*expr2, Expr::Atomic(_, Atom::Reference(_))) => {
+            Expr::Neg(_, expr2) if matches!(*expr2, Expr::Atomic(_, Atom::Reference(_, _))) => {
                 constant_coefficients
                     .push(Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(-1))));
                 variables.push(*expr2);

@@ -44,7 +44,7 @@ fn collect_like_terms(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             Expr::Product(_, exprs2) => {
                 match exprs2.as_slice() {
                     // -c*v
-                    [Expr::Atomic(_, Atom::Reference(name)), Expr::Neg(_, e3)] => {
+                    [Expr::Atomic(_, Atom::Reference(name, _)), Expr::Neg(_, e3)] => {
                         if let Expr::Atomic(_, Atom::Literal(Lit::Int(l))) = **e3 {
                             weighted_terms
                                 .insert(name.clone(), weighted_terms.get(name).unwrap_or(&0) - l);
@@ -54,7 +54,7 @@ fn collect_like_terms(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                     }
 
                     // c*v
-                    [Expr::Atomic(_, Atom::Reference(name)), Expr::Atomic(_, Atom::Literal(Lit::Int(l)))] =>
+                    [Expr::Atomic(_, Atom::Reference(name, _)), Expr::Atomic(_, Atom::Literal(Lit::Int(l)))] =>
                     {
                         weighted_terms
                             .insert(name.clone(), weighted_terms.get(name).unwrap_or(&0) + l);

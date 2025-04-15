@@ -519,9 +519,16 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
         }
         Value::Object(refe) if refe.contains_key("Reference") => {
             let name = refe["Reference"].as_array()?[0].as_object()?["Name"].as_str()?;
+            let user_name = Name::UserName(name.to_string());
+
+            let declaration: Rc<Declaration> = scope
+                .borrow()
+                .lookup(&user_name)
+                .or_else(|| bug!("Could not find reference {user_name}"))?;
+
             Some(Expression::Atomic(
                 Metadata::new(),
-                Atom::Reference(Name::UserName(name.to_string())),
+                Atom::Reference(user_name, Rc::new(RefCell::new((*declaration).clone()))),
             ))
         }
         Value::Object(abslit) if abslit.contains_key("AbstractLiteral") => {

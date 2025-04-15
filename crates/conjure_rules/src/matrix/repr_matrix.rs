@@ -19,7 +19,8 @@ fn index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 
     // ensure that we are indexing a decision variable with the representation "matrix_to_atom"
     // selected for it.
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs))) = &**subject else {
+    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs), _)) = &**subject
+    else {
         return Err(RuleNotApplicable);
     };
 
@@ -218,7 +219,8 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs))) = &**subject else {
+    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs), _)) = &**subject
+    else {
         return Err(RuleNotApplicable);
     };
 
@@ -292,7 +294,8 @@ fn matrix_ref_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     };
 
     for (child, ctx) in expr.holes() {
-        let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs))) = child else {
+        let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs), _)) = child
+        else {
             continue;
         };
 

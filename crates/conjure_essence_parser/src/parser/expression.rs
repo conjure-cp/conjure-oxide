@@ -1,7 +1,7 @@
 #![allow(clippy::legacy_numeric_constants)]
 use tree_sitter::Node;
 
-use conjure_core::ast::{Atom, Expression, Literal, Name};
+use conjure_core::ast::{Atom, Declaration, Expression, Literal, Name};
 use conjure_core::metadata::Metadata;
 use conjure_core::{into_matrix_expr, matrix_expr};
 
@@ -191,9 +191,11 @@ pub fn parse_expression(
         "variable" => {
             let variable_name =
                 String::from(&source_code[constraint.start_byte()..constraint.end_byte()]);
+            let declaration = std::rc::Rc::new(std::cell::RefCell::new(Declaration::default()));
+
             Ok(Expression::Atomic(
                 Metadata::new(),
-                Atom::Reference(Name::UserName(variable_name)),
+                Atom::Reference(Name::UserName(variable_name), declaration),
             ))
         }
         "from_solution" => match root.kind() {

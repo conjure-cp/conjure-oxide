@@ -1,5 +1,7 @@
+use std::{cell::RefCell, rc::Rc};
+
 use conjure_core::{
-    ast::{Atom, Domain, Expression as Expr, Name, SymbolTable},
+    ast::{Atom, Declaration, Domain, Expression as Expr, Name, SymbolTable},
     bug,
     metadata::Metadata,
     representation::Representation,
@@ -13,7 +15,7 @@ use itertools::Itertools;
 #[register_rule(("Base", 8000))]
 fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
-    let Expr::Atomic(_, Atom::Reference(name)) = expr else {
+    let Expr::Atomic(_, Atom::Reference(name, _)) = expr else {
         return Err(RuleNotApplicable);
     };
 
@@ -40,7 +42,10 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
     let new_name = Name::WithRepresentation(Box::new(name.clone()), representation_names);
 
     Ok(Reduction::with_symbols(
-        Expr::Atomic(Metadata::new(), Atom::Reference(new_name)),
+        Expr::Atomic(
+            Metadata::new(),
+            Atom::Reference(new_name, Rc::new(RefCell::new(Declaration::default()))),
+        ),
         symbols,
     ))
 }
@@ -57,7 +62,7 @@ fn needs_representation(name: &Name, symbols: &SymbolTable) -> bool {
 
 /// Returns whether `domain` needs representing.
 fn domain_needs_representation(domain: &Domain) -> bool {
-    // very simple implementation for now
+    // very simple implementation for nows
     match domain {
         Domain::BoolDomain | Domain::IntDomain(_) => false,
         Domain::DomainSet(_, _) | Domain::DomainMatrix(_, _) => true,

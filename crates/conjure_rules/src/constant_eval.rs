@@ -40,7 +40,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             domain.contains(lit).map(Into::into)
         }
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
-        Expr::Atomic(_, Atom::Reference(_c)) => None,
+        Expr::Atomic(_, Atom::Reference(_c, _)) => None,
         Expr::AbstractLiteral(_, _) => None,
         Expr::Comprehension(_, _) => None,
         Expr::UnsafeIndex(_, subject, indices) | Expr::SafeIndex(_, subject, indices) => {

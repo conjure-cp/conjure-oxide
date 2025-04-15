@@ -71,7 +71,7 @@ impl Comprehension {
                 expression
                     .clone()
                     .transform_bi(Arc::new(move |atom: Atom| match atom {
-                        Atom::Reference(name) if sols.contains_key(&name) => {
+                        Atom::Reference(name, _) if sols.contains_key(&name) => {
                             Atom::Literal(sols.get(&name).unwrap().clone())
                         }
                         x => x,
