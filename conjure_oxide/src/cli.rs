@@ -43,8 +43,16 @@ pub struct GlobalArgs {
     pub extra_rule_sets: Vec<String>,
 
     /// Solver family to use
-    #[arg(long, value_enum, value_name = "SOLVER", short = 's', global = true)]
-    pub solver: Option<SolverFamily>,
+    /// By Default, Conjure Oxide will use the Minion solver.
+    #[arg(
+        long,
+        value_enum,
+        value_name = "SOLVER",
+        default_value = "Minion",
+        short = 's',
+        global = true
+    )]
+    pub solver: SolverFamily,
 
     /// Log verbosely
     #[arg(long, short = 'v', help = "Log verbosely to sterr", global = true)]
