@@ -3,7 +3,6 @@ use conjure_core::ast::SymbolTable;
 use conjure_core::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
 };
-use itertools::Itertools;
 
 use crate::ast::Atom;
 use crate::ast::Domain;
@@ -31,6 +30,11 @@ fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
         return Err(RuleNotApplicable);
     }
 
+    // tuples are always one dimensional
+    if indices.len() != 1 {
+        return Err(RuleNotApplicable);
+    }
+
     let repr = symbols
         .get_representation(name, &["tuple_to_atom"])
         .unwrap()[0]
@@ -42,30 +46,24 @@ fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
         return Err(RuleNotApplicable);
     };
 
-    let mut indices_are_const = true;
-    let mut indices_as_lits: Vec<Literal> = vec![];
+    let mut indices_as_lit: Literal = Literal::Bool(false);
 
     for index in indices {
         let Some(index) = index.clone().to_literal() else {
-            indices_are_const = false;
-            break;
+            return Err(RuleNotApplicable); // we don't support non-literal indices
         };
-        indices_as_lits.push(index);
+        indices_as_lit = index;
     }
 
-    if indices_are_const {
-        let indices_as_name = Name::RepresentedName(
-            name.clone(),
-            "tuple_to_atom".into(),
-            indices_as_lits.iter().join("_"),
-        );
+    let indices_as_name = Name::RepresentedName(
+        name.clone(),
+        "tuple_to_atom".into(),
+        indices_as_lit.to_string(),
+    );
 
-        let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
+    let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
 
-        Ok(Reduction::pure(subject))
-    } else {
-        todo!("can tuples even do this?")
-    }
+    Ok(Reduction::pure(subject))
 }
 
 #[register_rule(("Bubble", 8000))]

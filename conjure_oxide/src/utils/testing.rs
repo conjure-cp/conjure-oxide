@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Debug;
 
+use conjure_core::bug;
 use itertools::Itertools as _;
 use std::fs::File;
 use std::fs::{read_to_string, OpenOptions};
@@ -302,7 +303,7 @@ pub fn normalize_solutions_for_comparison(
                             }));
                         updates.push((k, Literal::AbstractLiteral(tuple)));
                     }
-                    _ => {}
+                    e => bug!("unexpected literal type: {e:?}"),
                 }
             }
         }
