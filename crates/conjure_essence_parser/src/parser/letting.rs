@@ -43,7 +43,7 @@ pub fn parse_letting_statement(
                 for name in temp_symbols {
                     symbol_table.insert(Rc::new(Declaration::new_domain_letting(
                         Name::UserName(String::from(name)),
-                        parse_domain(expr_or_domain, source_code),
+                        parse_domain(expr_or_domain.next_sibling().expect("No domain specified in letting statement"), source_code),
                     )));
                 }
             }

@@ -14,7 +14,7 @@ pub fn parse_domain(domain: Node, source_code: &str) -> Domain {
             let variable_name = &source_code[domain.start_byte()..domain.end_byte()];
             Domain::DomainReference(Name::UserName(String::from(variable_name)))
         }
-        _ => panic!("Not bool or int domain"),
+        _ => panic!("Not a valid domain"),
     }
 }
 
