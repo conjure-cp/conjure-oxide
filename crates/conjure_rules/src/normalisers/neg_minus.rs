@@ -131,6 +131,7 @@ fn minus_to_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::pure(essence_expr!(&lhs + (-&rhs))))
 }
 
+// TODO: add set difference rule here, need comprehensions
 #[register_rule(("Base", 8500))]
 fn minus_sets(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (_lhs, _rhs) = match expr {
