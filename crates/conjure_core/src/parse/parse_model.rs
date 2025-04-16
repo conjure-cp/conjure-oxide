@@ -98,7 +98,6 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
             otherwise => bug!("Unhandled Statement {:#?}", otherwise),
         }
     }
-    // print!("{:?}", m);
     Ok(m)
 }
 
