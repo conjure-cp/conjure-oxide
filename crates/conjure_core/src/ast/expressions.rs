@@ -19,6 +19,7 @@ use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Uniplate as _};
 
 use super::comprehension::Comprehension;
+use super::records::RecordValue;
 use super::{Domain, Range, SubModel, Typeable};
 
 /// Represents different types of expressions used to define rules and constraints in the model.
@@ -37,6 +38,8 @@ use super::{Domain, Range, SubModel, Typeable};
 #[biplate(to=Comprehension)]
 #[biplate(to=AbstractLiteral<Expression>)]
 #[biplate(to=AbstractLiteral<Literal>,walk_into=[Atom])]
+#[biplate(to=RecordValue<Expression>,walk_into=[AbstractLiteral<Expression>])]
+#[biplate(to=RecordValue<Literal>,walk_into=[Atom,Literal,AbstractLiteral<Literal>,AbstractLiteral<Expression>])]
 #[biplate(to=Literal,walk_into=[Atom])]
 pub enum Expression {
     AbstractLiteral(Metadata, AbstractLiteral<Expression>),

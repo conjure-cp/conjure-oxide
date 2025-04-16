@@ -10,7 +10,7 @@ use serde_json::Value as JsonValue;
 
 use crate::ast::comprehension::{ComprehensionBuilder, ComprehensionKind};
 use crate::ast::{
-    AbstractLiteral, Atom, Domain, Expression, Literal, Name, Range, SetAttr, SymbolTable,
+    AbstractLiteral, Atom, Domain, Expression, Literal, Name, Range, RecordEntry, SetAttr, SymbolTable
 };
 use crate::ast::{Declaration, DeclarationKind};
 use crate::context::Context;
@@ -256,7 +256,7 @@ fn parse_domain(
         "DomainTuple" => {
             let domain_value = domain_value
                 .as_array()
-                .ok_or(error!("Domain matrix is not an array"))?;
+                .ok_or(error!("Domain tuple is not an array"))?;
 
             //iterate through the array and parse each domain, should insert into the symbols table too
             let domain = domain_value
@@ -273,6 +273,39 @@ fn parse_domain(
                 .collect::<Result<Vec<Domain>>>()?;
 
             Ok(Domain::DomainTuple(domain))
+        }
+        "DomainRecord" => {
+            let domain_value = domain_value
+                .as_array()
+                .ok_or(error!("Domain Record is not a json array"))?;
+
+            let mut record_entries = vec![];
+
+            for item in domain_value {
+                let name = item[0]
+                    .as_object()
+                    .ok_or(error!("FindOrGiven[1] is not an object"))?["Name"]
+                    .as_str()
+                    .ok_or(error!("FindOrGiven[1].Name is not a string"))?;
+
+                
+                let name = Name::UserName(name.to_owned());
+
+
+                let domain = item[1]
+                    .as_object()
+                    .ok_or(error!("FindOrGiven[2] is not an object"))?
+                    .iter()
+                    .next()
+                    .ok_or(error!("FindOrGiven[2] is an empty object"))?;
+
+                let domain = parse_domain(domain.0, domain.1, symbols)?;
+
+                let rec = RecordEntry{name: name, domain: domain};
+                record_entries.push(rec);
+            }
+            println!("{:?}", record_entries);
+            Ok(Domain::DomainRecord(record_entries))
         }
 
         _ => Err(Error::Parse(

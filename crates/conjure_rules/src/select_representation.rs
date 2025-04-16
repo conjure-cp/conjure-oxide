@@ -60,7 +60,10 @@ fn domain_needs_representation(domain: &Domain) -> bool {
     // very simple implementation for now
     match domain {
         Domain::BoolDomain | Domain::IntDomain(_) => false,
-        Domain::DomainSet(_, _) | Domain::DomainMatrix(_, _) | Domain::DomainTuple(_) => true,
+        Domain::DomainSet(_, _)
+        | Domain::DomainMatrix(_, _)
+        | Domain::DomainTuple(_)
+        | Domain::DomainRecord(_) => true,
         Domain::DomainReference(_) => unreachable!("domain should be resolved"),
     }
 }
