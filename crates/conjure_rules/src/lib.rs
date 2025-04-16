@@ -17,6 +17,7 @@ mod normalisers;
 mod partial_eval;
 mod representation;
 mod select_representation;
+mod sets;
 mod subsitute_lettings;
 mod tuple;
 mod utils;
