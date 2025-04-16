@@ -36,6 +36,13 @@ pub struct Comprehension {
     induction_vars: Vec<Name>,
 }
 
+pub fn contains_expression_domain(domain: &Domain) -> bool {
+    use Domain::*;
+    match domain {
+        DomainFromExpression(_) => true,
+        _ => false,
+    }
+}
 impl Comprehension {
     // Solves this comprehension using Minion, returning the resulting expressions.
     pub fn solve_with_minion(self) -> Result<Vec<Expression>, SolverError> {
@@ -52,6 +59,13 @@ impl Comprehension {
 
         let values = Arc::new(Mutex::new(Vec::new()));
         let values_ptr = Arc::clone(&values);
+        for (_, decl) in self.submodel.symbols().clone().into_iter_local() {
+            if let Some(var) = decl.as_var() {
+                if contains_expression_domain(&var.domain) {
+                    println!("one has a non-constant domain");
+                }
+            }
+        }
 
         tracing::debug!(model=%model.clone(),comprehension=%self.clone(),"Minion solving comprehension");
         let expression = self.expression;
@@ -100,7 +114,13 @@ impl Display for Comprehension {
             .clone()
             .into_iter_local()
             .map(|(name, decl)| (name, decl.domain().unwrap().clone()))
-            .map(|(name, domain)| format!("{name}: {domain}"))
+            .map(|(name, domain)| {
+                let separator = match domain {
+                    Domain::DomainFromExpression(_) => "<-",
+                    _ => ":",
+                };
+                format!("{name} {separator} {domain}")
+            })
             .join(",");
 
         let guards = self

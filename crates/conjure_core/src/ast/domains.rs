@@ -1,13 +1,14 @@
-use std::fmt::Display;
-
 use conjure_core::ast::SymbolTable;
+use conjure_core::ast::{Expression, Literal};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
+use std::hash::{Hash, Hasher};
 
 use crate::ast::pretty::pretty_vec;
 use uniplate::{derive::Uniplate, Uniplate};
 
-use super::{types::Typeable, AbstractLiteral, Literal, Name, ReturnType};
+use super::{types::Typeable, AbstractLiteral, Name, ReturnType};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Range<A>
@@ -46,7 +47,7 @@ impl<A: Ord + Display> Display for Range<A> {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize, Uniplate)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, Uniplate)]
 #[uniplate()]
 pub enum Domain {
     BoolDomain,
@@ -63,8 +64,36 @@ pub enum Domain {
     DomainSet(SetAttr, Box<Domain>),
     /// A n-dimensional matrix with a value domain and n-index domains
     DomainMatrix(Box<Domain>, Vec<Domain>),
+    // A tuple of n domains (e.g. (int, bool))
+    DomainTuple(Vec<Domain>),
+    DomainFromExpression(Box<Expression>),
 }
+unsafe impl Send for Domain {}
+unsafe impl Sync for Domain {}
+impl Hash for Domain {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        use Domain::*;
+        std::mem::discriminant(self).hash(state);
 
+        match self {
+            DomainTuple(domains) => {
+                domains.hash(state);
+            }
+            BoolDomain => {}
+            IntDomain(ranges) => ranges.hash(state),
+            DomainReference(name) => name.hash(state),
+            DomainSet(attr, dom) => {
+                attr.hash(state);
+                dom.hash(state);
+            }
+            DomainMatrix(value_dom, index_doms) => {
+                value_dom.hash(state);
+                index_doms.hash(state);
+            }
+            DomainFromExpression(_) => {}
+        }
+    }
+}
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum SetAttr {
     None,
@@ -81,6 +110,7 @@ impl Domain {
         // not adding a generic wildcard condition for all domains, so that this gives a compile
         // error when a domain is added.
         match (self, lit) {
+            (Domain::DomainFromExpression(_), _) => None,
             (Domain::IntDomain(ranges), Literal::Int(x)) => {
                 // unconstrained int domain
                 if ranges.is_empty() {
@@ -93,7 +123,6 @@ impl Domain {
             (Domain::BoolDomain, Literal::Bool(_)) => Some(true),
             (Domain::BoolDomain, _) => Some(false),
             (Domain::DomainReference(_), _) => None,
-
             (
                 Domain::DomainMatrix(elem_domain, index_domains),
                 Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx_domain)),
@@ -123,11 +152,36 @@ impl Domain {
 
                 Some(true)
             }
-            (Domain::DomainMatrix(_, _), _) => Some(false),
-            (Domain::DomainSet(_, _), Literal::AbstractLiteral(AbstractLiteral::Set(_))) => {
-                todo!()
+            (
+                Domain::DomainTuple(elem_domains),
+                Literal::AbstractLiteral(AbstractLiteral::Tuple(literal_elems)),
+            ) => {
+                // for every element in the tuple literal, check if it is in the corresponding domain
+                for (elem_domain, elem) in itertools::izip!(elem_domains, literal_elems) {
+                    if !elem_domain.contains(elem)? {
+                        return Some(false);
+                    }
+                }
+
+                Some(true)
             }
+            (
+                Domain::DomainSet(_, domain),
+                Literal::AbstractLiteral(AbstractLiteral::Set(literal_elems)),
+            ) => {
+                for elem in literal_elems {
+                    if !domain.contains(elem)? {
+                        return Some(false);
+                    }
+                }
+                Some(true)
+            }
+
+            (Domain::DomainMatrix(_, _), _) => Some(false),
+
             (Domain::DomainSet(_, _), _) => Some(false),
+
+            (Domain::DomainTuple(_), _) => Some(false),
         }
     }
 
@@ -156,6 +210,7 @@ impl Domain {
     /// finite.
     pub fn values(&self) -> Option<Vec<Literal>> {
         match self {
+            Domain::DomainFromExpression(_) => todo!(),
             Domain::BoolDomain => Some(vec![false.into(), true.into()]),
             Domain::IntDomain(_) => self
                 .values_i32()
@@ -166,6 +221,7 @@ impl Domain {
             Domain::DomainSet(_, _) => todo!(),
             Domain::DomainMatrix(_, _) => todo!(),
             Domain::DomainReference(_) => None,
+            Domain::DomainTuple(_) => todo!(), // TODO: Can this be done?
         }
     }
 
@@ -257,6 +313,9 @@ impl Domain {
 impl Display for Domain {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Domain::DomainFromExpression(expr) => {
+                write!(f, "{}", expr)
+            }
             Domain::BoolDomain => {
                 write!(f, "bool")
             }
@@ -278,6 +337,13 @@ impl Display for Domain {
                     f,
                     "matrix indexed by [{}] of {value_domain}",
                     pretty_vec(&index_domains.iter().collect_vec())
+                )
+            }
+            Domain::DomainTuple(domains) => {
+                write!(
+                    f,
+                    "tuple of ({})",
+                    pretty_vec(&domains.iter().collect_vec())
                 )
             }
         }

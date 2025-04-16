@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Debug;
 
+use conjure_core::bug;
 use itertools::Itertools as _;
 use std::fs::File;
 use std::fs::{read_to_string, OpenOptions};
@@ -280,7 +281,29 @@ pub fn normalize_solutions_for_comparison(
                             ));
                         updates.push((k, Literal::AbstractLiteral(matrix)));
                     }
-                    _ => {}
+                    Literal::AbstractLiteral(AbstractLiteral::Tuple(elems)) => {
+                        // just the same as matrix but with tuples instead
+                        // only conversion needed is to convert bools to ints
+                        let mut tuple = AbstractLiteral::Tuple(elems);
+                        tuple =
+                            tuple.transform(Arc::new(move |x: AbstractLiteral<Literal>| match x {
+                                AbstractLiteral::Tuple(items) => {
+                                    let items = items
+                                        .into_iter()
+                                        .map(|x| match x {
+                                            Literal::Bool(false) => Literal::Int(0),
+                                            Literal::Bool(true) => Literal::Int(1),
+                                            x => x,
+                                        })
+                                        .collect_vec();
+
+                                    AbstractLiteral::Tuple(items)
+                                }
+                                x => x,
+                            }));
+                        updates.push((k, Literal::AbstractLiteral(tuple)));
+                    }
+                    e => bug!("unexpected literal type: {e:?}"),
                 }
             }
         }
