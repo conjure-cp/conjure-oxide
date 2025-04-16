@@ -17,7 +17,7 @@ pub fn parse_expression(
 ) -> Result<Expression, EssenceParseError> {
     // TODO (gskorokhod) - Factor this further (make match arms into separate functions, extract common logic)
     match constraint.kind() {
-        "constraint" | "expression" | "boolean_expr" | "comparison_expr" | "arithmetic_expr"
+        "constraint" | "expression" | "boolean_expr" | "arithmetic_expr"
         | "primary_expr" | "sub_expr" => child_expr(constraint, source_code, root),
         "not_expr" => Ok(Expression::Not(
             Metadata::new(),
@@ -31,7 +31,7 @@ pub fn parse_expression(
             Metadata::new(),
             Box::new(child_expr(constraint, source_code, root)?),
         )),
-        "exponent" | "product_expr" | "sum_expr" | "and_expr" | "or_expr"
+        "exponent" | "product_expr" | "sum_expr" | "and_expr" | "or_expr"  | "comparison_expr"
         | "implication" => {
             let expr1 = child_expr(constraint, source_code, root)?;
             let op = constraint.child_by_field_name("operator").ok_or(format!(
