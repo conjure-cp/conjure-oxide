@@ -36,6 +36,7 @@ use conjure_core::{
 use conjure_essence_macros::essence_expr;
 use std::collections::VecDeque;
 use uniplate::{Biplate, Uniplate as _};
+use Expr::*;
 
 /// Eliminates double negation
 ///
@@ -45,9 +46,7 @@ use uniplate::{Biplate, Uniplate as _};
 #[register_rule(("Base", 8400))]
 fn elmininate_double_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
-        Expr::Neg(_, a) if matches!(**a, Expr::Neg(_, _)) => {
-            Ok(Reduction::pure(a.children()[0].clone()))
-        }
+        Neg(_, a) if matches!(**a, Neg(_, _)) => Ok(Reduction::pure(a.children()[0].clone())),
         _ => Err(RuleNotApplicable),
     }
 }
@@ -60,7 +59,7 @@ fn elmininate_double_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult
 #[register_rule(("Base", 8400))]
 fn distribute_negation_over_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let inner_expr = match expr {
-        Expr::Neg(_, e) if matches!(**e, Expr::Sum(_, _)) => Ok(*e.clone()),
+        Neg(_, e) if matches!(**e, Sum(_, _)) => Ok(*e.clone()),
         _ => Err(RuleNotApplicable),
     }?;
 
@@ -84,17 +83,17 @@ fn distribute_negation_over_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResu
 /// ```
 #[register_rule(("Base", 8400))]
 fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let Expr::Neg(_, expr1) = expr.clone() else {
+    let Neg(_, expr1) = expr.clone() else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Product(_, mut factors) = *expr1 else {
+    let Product(_, mut factors) = *expr1 else {
         return Err(RuleNotApplicable);
     };
 
     factors.push(essence_expr!(-1));
 
-    Ok(Reduction::pure(Expr::Product(Metadata::new(), factors)))
+    Ok(Reduction::pure(Product(Metadata::new(), factors)))
 }
 
 /// Converts a minus to a sum
@@ -105,33 +104,27 @@ fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResu
 #[register_rule(("Base", 8400))]
 fn minus_to_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs) = match expr {
-        Expr::Minus(_, lhs, rhs) => {
-            // println!("lhs:");
-            // print!("{:?}", lhs);
-            // println!("rhs:");
-            // print!("{:?}", rhs);
-            match lhs.as_ref() {
-                Expr::Atomic(_, Atom::Reference(_)) => match rhs.as_ref() {
-                    Expr::Atomic(_, Atom::Reference(_)) => {
-                        return Err(RuleNotApplicable);
-                    }
-                    Expr::AbstractLiteral(_, AbstractLiteral::Set(_)) => {
-                        return Err(RuleNotApplicable);
-                    }
-                    _ => (lhs.clone(), rhs.clone()),
-                },
-                Expr::AbstractLiteral(_, AbstractLiteral::Set(_)) => match rhs.as_ref() {
-                    Expr::Atomic(_, Atom::Reference(_)) => {
-                        return Err(RuleNotApplicable);
-                    }
-                    Expr::AbstractLiteral(_, AbstractLiteral::Set(_)) => {
-                        return Err(RuleNotApplicable);
-                    }
-                    _ => (lhs.clone(), rhs.clone()),
-                },
+        Minus(_, lhs, rhs) => match lhs.as_ref() {
+            Atomic(_, Atom::Reference(_)) => match rhs.as_ref() {
+                Atomic(_, Atom::Reference(_)) => {
+                    return Err(RuleNotApplicable);
+                }
+                AbstractLiteral(_, AbstractLiteral::Set(_)) => {
+                    return Err(RuleNotApplicable);
+                }
                 _ => (lhs.clone(), rhs.clone()),
-            }
-        }
+            },
+            AbstractLiteral(_, AbstractLiteral::Set(_)) => match rhs.as_ref() {
+                Atomic(_, Atom::Reference(_)) => {
+                    return Err(RuleNotApplicable);
+                }
+                AbstractLiteral(_, AbstractLiteral::Set(_)) => {
+                    return Err(RuleNotApplicable);
+                }
+                _ => (lhs.clone(), rhs.clone()),
+            },
+            _ => (lhs.clone(), rhs.clone()),
+        },
         _ => return Err(RuleNotApplicable),
     };
 
@@ -141,35 +134,15 @@ fn minus_to_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 #[register_rule(("Base", 8500))]
 fn minus_sets(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (_lhs, _rhs) = match expr {
-        Expr::Minus(_, lhs, rhs) => match lhs.as_ref() {
-            Expr::Atomic(_, Atom::Reference(_)) => match rhs.as_ref() {
-                Expr::Atomic(_, Atom::Reference(_)) => {
-                    println!("lhs expr, rhs expr");
-                    print!("{:?}", lhs);
-                    print!("{:?}", rhs);
-                    (lhs.clone(), rhs.clone())
-                }
-                Expr::AbstractLiteral(_, AbstractLiteral::Set(_)) => {
-                    println!("lhs expr, rhs abstract lit");
-                    print!("{:?}", lhs);
-                    print!("{:?}", rhs);
-                    (lhs.clone(), rhs.clone())
-                }
+        Minus(_, lhs, rhs) => match lhs.as_ref() {
+            Atomic(_, Atom::Reference(_)) => match rhs.as_ref() {
+                Atomic(_, Atom::Reference(_)) => (lhs.clone(), rhs.clone()),
+                AbstractLiteral(_, AbstractLiteral::Set(_)) => (lhs.clone(), rhs.clone()),
                 _ => return Err(RuleNotApplicable),
             },
-            Expr::AbstractLiteral(_, AbstractLiteral::Set(_)) => match rhs.as_ref() {
-                Expr::Atomic(_, Atom::Reference(_)) => {
-                    println!("lhs abstract lit, rhs expr");
-                    print!("{:?}", lhs);
-                    print!("{:?}", rhs);
-                    (lhs.clone(), rhs.clone())
-                }
-                Expr::AbstractLiteral(_, AbstractLiteral::Set(_)) => {
-                    println!("lhs abstract lit, rhs abstract lit");
-                    print!("{:?}", lhs);
-                    print!("{:?}", rhs);
-                    (lhs.clone(), rhs.clone())
-                }
+            AbstractLiteral(_, AbstractLiteral::Set(_)) => match rhs.as_ref() {
+                Atomic(_, Atom::Reference(_)) => (lhs.clone(), rhs.clone()),
+                AbstractLiteral(_, AbstractLiteral::Set(_)) => (lhs.clone(), rhs.clone()),
                 _ => return Err(RuleNotApplicable),
             },
             _ => return Err(RuleNotApplicable),
