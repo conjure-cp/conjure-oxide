@@ -18,6 +18,7 @@ mod partial_eval;
 mod representation;
 mod select_representation;
 mod subsitute_lettings;
+mod tuple;
 mod utils;
 
 /// Denotes a block of code as extra, optional checks for a rule. Primarily, these are checks that
