@@ -303,6 +303,7 @@ pub fn normalize_solutions_for_comparison(
                             }));
                         updates.push((k, Literal::AbstractLiteral(tuple)));
                     }
+                    Literal::Int(_) => {}
                     e => bug!("unexpected literal type: {e:?}"),
                 }
             }
