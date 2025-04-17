@@ -3,11 +3,14 @@ mod cli;
 mod print_info_schema;
 mod solve;
 mod test_solve;
-use clap::Parser as _;
+use clap::{Command, Parser as _};
+use clap::{Args, CommandFactory, Parser, Subcommand, ValueHint};
+use clap_complete::{generate, Generator, Shell};
 use cli::{Cli, GlobalArgs};
 use print_info_schema::run_print_info_schema_command;
 use solve::run_solve_command;
 use std::fs::File;
+use std::io;
 use std::process::exit;
 use std::sync::Arc;
 use test_solve::run_test_solve_command;
@@ -31,8 +34,41 @@ pub fn main() {
     }
 }
 
+fn print_completions<G: Generator>(generator: G, cmd: &mut Command) {
+    generate(
+        generator,
+        cmd,
+        cmd.get_name().to_string(),
+        &mut io::stdout(),
+    );
+}
+
+
 pub fn run() -> anyhow::Result<()> {
     let cli = Cli::parse();
+
+    // get current shell
+    let shell = std::env::var("SHELL").unwrap_or_default();
+    let shell = if shell.contains("bash") {
+        Shell::Bash
+    } else if shell.contains("zsh") {
+        Shell::Zsh
+    } else if shell.contains("fish") {
+        Shell::Fish
+    } else if shell.contains("powershell") {
+        Shell::PowerShell
+    } else {
+        eprintln!("Unsupported shell: {shell}");
+        return Ok(());
+    };
+
+        let mut cmd = Cli::command();
+        eprintln!("Generating completion file for {shell:?}...");
+        print_completions(shell, &mut cmd);
+    
+        //println!("{cli:#?}");
+    
+
 
     if cli.version {
         println!("Version: {}", git_version!());
