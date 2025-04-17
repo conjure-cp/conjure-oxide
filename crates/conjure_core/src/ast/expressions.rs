@@ -442,11 +442,13 @@ impl Expression {
             Expression::FromSolution(_, expr) => expr.domain_of(syms),
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
-                let Domain::DomainMatrix(elem_domain, _) = matrix.domain_of(syms)? else {
-                    bug!("subject of an index operation should be a matrix");
-                };
-
-                Some(*elem_domain)
+                match matrix.domain_of(syms)? {
+                    Domain::DomainMatrix(elem_domain, _) => Some(*elem_domain),
+                    Domain::DomainTuple(_) => None,
+                    _ => {
+                        bug!("subject of an index operation should support indexing")
+                    }
+                }
             }
             Expression::UnsafeSlice(_, matrix, indices)
             | Expression::SafeSlice(_, matrix, indices) => {
@@ -859,6 +861,19 @@ impl From<Atom> for Expression {
         Expression::Atomic(Metadata::new(), value)
     }
 }
+
+impl From<Name> for Expression {
+    fn from(name: Name) -> Self {
+        Expression::Atomic(Metadata::new(), Atom::Reference(name))
+    }
+}
+
+impl From<Box<Expression>> for Expression {
+    fn from(val: Box<Expression>) -> Self {
+        val.as_ref().clone()
+    }
+}
+
 impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {

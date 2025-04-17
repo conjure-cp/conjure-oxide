@@ -17,3 +17,4 @@ mod prelude {
 }
 
 mod matrix_to_atom;
+mod tuple_to_atom;
