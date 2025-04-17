@@ -77,9 +77,30 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
                     Some(item)
                 }
+                Lit::AbstractLiteral(subject @ AbstractLiteral::Record(_)) => {
+                    print!("i do things");
+                    let AbstractLiteral::Record(elems) = subject else {
+                        return None;
+                    };
+
+                    assert!(indices.len() == 1, "nested record not supported yet");
+
+                    let Lit::Int(index) = indices[0].clone() else {
+                        return None;
+                    };
+
+                    // find what numerical index in elems matches the entry name
+                    
+                    let index = indices[0].clone();
+
+                    println!("index name for const: {:?}", index);
+
+                    todo!();
+                }
                 _ => None,
             }
         }
+
         Expr::UnsafeSlice(_, subject, indices) | Expr::SafeSlice(_, subject, indices) => {
             let subject: Lit = subject.as_ref().clone().to_literal()?;
             let Lit::AbstractLiteral(subject @ AbstractLiteral::Matrix(_, _)) = subject else {

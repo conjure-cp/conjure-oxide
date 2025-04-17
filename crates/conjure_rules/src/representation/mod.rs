@@ -6,7 +6,7 @@ mod prelude {
     pub use conjure_core::{
         ast::{
             matrix, AbstractLiteral, Atom, Declaration, Domain, Expression, Literal, Name,
-            SymbolTable,
+            SymbolTable, RecordEntry, 
         },
         bug, into_matrix,
         metadata::Metadata,
@@ -18,3 +18,4 @@ mod prelude {
 
 mod matrix_to_atom;
 mod tuple_to_atom;
+mod record_to_atom;

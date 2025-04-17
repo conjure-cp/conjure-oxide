@@ -1,6 +1,8 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Debug;
+use std::vec;
 
+use conjure_core::ast::records::RecordValue;
 use conjure_core::bug;
 use itertools::Itertools as _;
 use std::fs::File;
@@ -302,6 +304,34 @@ pub fn normalize_solutions_for_comparison(
                                 x => x,
                             }));
                         updates.push((k, Literal::AbstractLiteral(tuple)));
+                    }
+                    Literal::AbstractLiteral(AbstractLiteral::Record(entries)) => {
+                        // just the same as matrix but with tuples instead
+                        // only conversion needed is to convert bools to ints
+                        let mut record = AbstractLiteral::Record(entries);
+                        record = record.transform(Arc::new(move |x: AbstractLiteral<Literal>| {
+                            match x {
+                                AbstractLiteral::Record(entries) => {
+                                    let entries = entries
+                                        .into_iter()
+                                        .map(|x| match x {
+                                            RecordValue { name, value } => {
+                                                let value = match value {
+                                                    Literal::Bool(false) => Literal::Int(0),
+                                                    Literal::Bool(true) => Literal::Int(1),
+                                                    x => x,
+                                                };
+                                                RecordValue { name, value }
+                                            }
+                                        })
+                                        .collect_vec();
+
+                                    AbstractLiteral::Record(entries)
+                                }
+                                x => x,
+                            }
+                        }));
+                        updates.push((k, Literal::AbstractLiteral(record)));
                     }
                     e => bug!("unexpected literal type: {e:?}"),
                 }

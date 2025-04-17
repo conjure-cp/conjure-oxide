@@ -5,10 +5,12 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
+use serde::de::value;
 use serde_json::Value;
 use serde_json::Value as JsonValue;
 
 use crate::ast::comprehension::{ComprehensionBuilder, ComprehensionKind};
+use crate::ast::records::RecordValue;
 use crate::ast::{
     AbstractLiteral, Atom, Domain, Expression, Literal, Name, Range, RecordEntry, SetAttr, SymbolTable
 };
@@ -16,7 +18,7 @@ use crate::ast::{Declaration, DeclarationKind};
 use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::metadata::Metadata;
-use crate::{bug, error, into_matrix_expr, throw_error, Model};
+use crate::{bug, error, into_matrix_expr, parse, throw_error, Model};
 macro_rules! parser_trace {
     ($($arg:tt)+) => {
         log::trace!(target:"jsonparser",$($arg)+)
@@ -638,6 +640,37 @@ fn parse_abs_tuple(abs_tuple: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Optio
     ))
 }
 
+fn parse_abs_record(
+    abs_record: &Value,
+    scope: &Rc<RefCell<SymbolTable>>,
+) -> Option<Expression> {
+    let entries = abs_record.as_array()?; // Ensure it's an array
+    let mut rec = vec![];
+
+    for entry in entries {
+        let entry = entry.as_array()?;
+        let name = entry[0].as_object()?["Name"].as_str()?;
+
+        let value = parse_expression(&entry[1], scope)?;
+
+
+        let name = Name::UserName(name.to_string());
+        let rec_entry = RecordValue {
+            name: name.clone(),
+            value: value,
+        };
+        rec.push(rec_entry);
+
+    }
+    println!("i should be a record: {:#?}", rec);
+    
+    Some(Expression::AbstractLiteral(
+        Metadata::new(),
+        AbstractLiteral::Record(rec),
+    ))
+   
+}
+
 fn parse_comprehension(
     comprehension: &serde_json::Map<String, Value>,
     scope: Rc<RefCell<SymbolTable>>,
@@ -973,6 +1006,9 @@ fn parse_constant(
                     return parse_abstract_matrix_as_expr(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitTuple") {
                     return parse_abs_tuple(arr, scope);
+                }
+                else if let Some(arr) = obj.get("AbsLitRecord") {
+                    return parse_abs_record(arr, scope);
                 }
             }
             None

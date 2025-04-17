@@ -10,7 +10,7 @@ mod literals;
 pub mod matrix;
 mod model;
 mod name;
-mod records;
+pub mod records;
 mod submodel;
 mod symbol_table;
 mod types;

@@ -448,6 +448,7 @@ impl Expression {
                 match matrix.domain_of(syms)? {
                     Domain::DomainMatrix(elem_domain, _) => Some(*elem_domain),
                     Domain::DomainTuple(_) => None,
+                    Domain::DomainRecord(_) => None,
                     _ => {
                         bug!("subject of an index operation should support indexing")
                     }
