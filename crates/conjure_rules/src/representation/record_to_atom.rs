@@ -9,8 +9,7 @@ register_representation!(RecordToAtom, "record_to_atom");
 pub struct RecordToAtom {
     src_var: Name,
 
-
-    entry_names : Vec<Name>,
+    entry_names: Vec<Name>,
 
     // all the possible indices in this record, in order.
     indices: Vec<Literal>,
@@ -50,21 +49,13 @@ impl Representation for RecordToAtom {
         };
 
         //indices may not be needed as a field as we can always use the length of the record
-        let indices = (1..(entries.len() + 1) as i32)
-            .map(Literal::Int)
-            .collect();
+        let indices = (1..(entries.len() + 1) as i32).map(Literal::Int).collect();
 
         Some(RecordToAtom {
             src_var: name.clone(),
-            entry_names: entries
-                .iter()
-                .map (|entry| entry.name.clone())
-                .collect(),
+            entry_names: entries.iter().map(|entry| entry.name.clone()).collect(),
             indices,
-            elem_domain: entries
-                .iter()
-                .map(|entry| entry.domain.clone())
-                .collect(),
+            elem_domain: entries.iter().map(|entry| entry.domain.clone()).collect(),
         })
     }
 
@@ -107,7 +98,9 @@ impl Representation for RecordToAtom {
             let Name::RepresentedName(_, _, idx) = name.clone() else {
                 return Err(ApplicationError::RuleNotApplicable);
             };
-            let idx: usize = idx.parse().map_err(|_| ApplicationError::RuleNotApplicable)?;
+            let idx: usize = idx
+                .parse()
+                .map_err(|_| ApplicationError::RuleNotApplicable)?;
             if idx == 0 {
                 return Err(ApplicationError::RuleNotApplicable);
             }

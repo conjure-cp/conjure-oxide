@@ -78,7 +78,6 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                     Some(item)
                 }
                 Lit::AbstractLiteral(subject @ AbstractLiteral::Record(_)) => {
-                    print!("i do things");
                     let AbstractLiteral::Record(elems) = subject else {
                         return None;
                     };
@@ -89,13 +88,13 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                         return None;
                     };
 
-                    // find what numerical index in elems matches the entry name
-                    
-                    let index = indices[0].clone();
+                    if elems.len() < index as usize || index < 1 {
+                        return None;
+                    }
 
-                    println!("index name for const: {:?}", index);
-
-                    todo!();
+                    // -1 for 0-indexing vs 1-indexing
+                    let item = elems[index as usize - 1].clone();
+                    Some(item.value)
                 }
                 _ => None,
             }

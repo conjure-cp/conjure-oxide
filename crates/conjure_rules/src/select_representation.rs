@@ -100,10 +100,11 @@ fn get_or_create_representation(
 
             symbols.get_or_add_representation(name, &["tuple_to_atom"])
         }
-        Domain::DomainRecord(entries) =>{
-            if entries.iter().any(|entry | {
-                domain_needs_representation(&entry.domain)
-            }) {
+        Domain::DomainRecord(entries) => {
+            if entries
+                .iter()
+                .any(|entry| domain_needs_representation(&entry.domain))
+            {
                 bug!("representing nested abstract domains is not implemented");
             }
 

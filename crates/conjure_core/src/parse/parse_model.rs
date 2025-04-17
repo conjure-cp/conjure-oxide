@@ -5,20 +5,20 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
-use serde::de::value;
 use serde_json::Value;
 use serde_json::Value as JsonValue;
 
 use crate::ast::comprehension::{ComprehensionBuilder, ComprehensionKind};
 use crate::ast::records::RecordValue;
 use crate::ast::{
-    AbstractLiteral, Atom, Domain, Expression, Literal, Name, Range, RecordEntry, SetAttr, SymbolTable
+    AbstractLiteral, Atom, Domain, Expression, Literal, Name, Range, RecordEntry, SetAttr,
+    SymbolTable,
 };
 use crate::ast::{Declaration, DeclarationKind};
 use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::metadata::Metadata;
-use crate::{bug, error, into_matrix_expr, parse, throw_error, Model};
+use crate::{bug, error, into_matrix_expr, throw_error, Model};
 macro_rules! parser_trace {
     ($($arg:tt)+) => {
         log::trace!(target:"jsonparser",$($arg)+)
@@ -260,7 +260,7 @@ fn parse_domain(
                 .as_array()
                 .ok_or(error!("Domain tuple is not an array"))?;
 
-            //iterate through the array and parse each domain, should insert into the symbols table too
+            //iterate through the array and parse each domain
             let domain = domain_value
                 .iter()
                 .map(|x| {
@@ -284,16 +284,15 @@ fn parse_domain(
             let mut record_entries = vec![];
 
             for item in domain_value {
+                //collect the name of the record field
                 let name = item[0]
                     .as_object()
                     .ok_or(error!("FindOrGiven[1] is not an object"))?["Name"]
                     .as_str()
                     .ok_or(error!("FindOrGiven[1].Name is not a string"))?;
 
-                
                 let name = Name::UserName(name.to_owned());
-
-
+                // then collect the domain of the record field
                 let domain = item[1]
                     .as_object()
                     .ok_or(error!("FindOrGiven[2] is not an object"))?
@@ -303,10 +302,9 @@ fn parse_domain(
 
                 let domain = parse_domain(domain.0, domain.1, symbols)?;
 
-                let rec = RecordEntry{name: name, domain: domain};
+                let rec = RecordEntry { name, domain };
                 record_entries.push(rec);
             }
-            println!("{:?}", record_entries);
             Ok(Domain::DomainRecord(record_entries))
         }
 
@@ -640,10 +638,8 @@ fn parse_abs_tuple(abs_tuple: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Optio
     ))
 }
 
-fn parse_abs_record(
-    abs_record: &Value,
-    scope: &Rc<RefCell<SymbolTable>>,
-) -> Option<Expression> {
+//parses an abstract record as an expression
+fn parse_abs_record(abs_record: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Option<Expression> {
     let entries = abs_record.as_array()?; // Ensure it's an array
     let mut rec = vec![];
 
@@ -653,22 +649,18 @@ fn parse_abs_record(
 
         let value = parse_expression(&entry[1], scope)?;
 
-
         let name = Name::UserName(name.to_string());
         let rec_entry = RecordValue {
             name: name.clone(),
-            value: value,
+            value,
         };
         rec.push(rec_entry);
-
     }
-    println!("i should be a record: {:#?}", rec);
-    
+
     Some(Expression::AbstractLiteral(
         Metadata::new(),
         AbstractLiteral::Record(rec),
     ))
-   
 }
 
 fn parse_comprehension(
@@ -1006,8 +998,7 @@ fn parse_constant(
                     return parse_abstract_matrix_as_expr(arr, scope);
                 } else if let Some(arr) = obj.get("AbsLitTuple") {
                     return parse_abs_tuple(arr, scope);
-                }
-                else if let Some(arr) = obj.get("AbsLitRecord") {
+                } else if let Some(arr) = obj.get("AbsLitRecord") {
                     return parse_abs_record(arr, scope);
                 }
             }
