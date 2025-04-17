@@ -258,6 +258,7 @@ pub fn normalize_solutions_for_comparison(
                 match v {
                     Literal::Bool(true) => updates.push((k, Literal::Int(1))),
                     Literal::Bool(false) => updates.push((k, Literal::Int(0))),
+                    Literal::Int(_) => {}
                     Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)) => {
                         // make all domains the same (this is just in the tester so the types dont
                         // actually matter)
@@ -335,7 +336,6 @@ pub fn normalize_solutions_for_comparison(
                             ));
                         updates.push((k, Literal::AbstractLiteral(record)));
                     }
-                    Literal::Int(_) => {}
                     e => bug!("unexpected literal type: {e:?}"),
                 }
             }
