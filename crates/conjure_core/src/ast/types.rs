@@ -5,6 +5,7 @@ pub enum ReturnType {
     Int,
     Bool,
     Matrix(Box<ReturnType>),
+    Set(Box<ReturnType>),
 }
 
 /// Something with a return type
