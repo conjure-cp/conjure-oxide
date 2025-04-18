@@ -451,50 +451,115 @@ pub fn create_consumer(
         other => panic!("Unknown consumer type: {}", other),
     }
 }
+
 pub fn specify_trace_files(
     essence_file: String,
-    json_file: Option<String>,
-    human_file: Option<String>,
+    files: Option<Vec<String>>,
     output_format: &str,
 ) -> (Option<String>, Option<String>) {
     let path = PathBuf::from(&essence_file);
-    let base_stem = path
+
+    // Extract the file name
+    let stem = path
         .file_stem()
         .expect("Essence file must have a stem")
-        .to_string_lossy()
-        .into_owned();
+        .to_string_lossy();
 
-    let default_json = {
+    // Generates  default trace filenames (e.g., "input_protrace.json" or "input_protrace.tzt") located in the appropriate test folder
+    let make_default = |ext: &str| {
         let mut p = path.clone();
-        p.set_file_name(format!("{}_protrace", base_stem));
-        p.set_extension("json");
+        p.set_file_name(format!("{}_protrace", stem));
+        p.set_extension(ext);
         p.to_string_lossy().into_owned()
     };
 
-    let default_human = {
-        let mut p = path.clone();
-        p.set_file_name(format!("{}_protrace", base_stem));
-        p.set_extension("txt");
-        p.to_string_lossy().into_owned()
+    // Helper to extract a file path from the `files` vector or fall back to the default
+    let get_or_default = |idx: usize, default: String| {
+        files
+            .as_ref()
+            .and_then(|f| f.get(idx).cloned())
+            .unwrap_or(default)
     };
 
+    // file paths based on output format
     match output_format.to_lowercase().as_str() {
-        "json" => {
-            let json = Some(json_file.unwrap_or(default_json));
-            (json, None)
-        }
-        "human" => {
-            let human = Some(human_file.unwrap_or(default_human));
-            (None, human)
-        }
-        "both" => {
-            let json = Some(json_file.unwrap_or(default_json));
-            let human = Some(human_file.unwrap_or(default_human));
-            (json, human)
-        }
+        "json" => (Some(get_or_default(0, make_default("json"))), None),
+        "human" => (None, Some(get_or_default(1, make_default("txt")))),
+        "both" => (
+            Some(get_or_default(0, make_default("json"))),
+            Some(get_or_default(1, make_default("txt"))),
+        ),
+        // Invalid format
         other => panic!("Unknown output format: {}", other),
     }
 }
+// pub fn specify_trace_files(
+//     essence_file: String,
+//     files: Option<Vec<String>>,
+//     output_format: &str,
+// ) -> (Option<String>, Option<String>) {
+//     let path = PathBuf::from(&essence_file);
+//     let base_stem = path
+//         .file_stem()
+//         .expect("Essence file must have a stem")
+//         .to_string_lossy()
+//         .into_owned();
+
+//     let default_json = {
+//         let mut p = path.clone();
+//         p.set_file_name(format!("{}_protrace", base_stem));
+//         p.set_extension("json");
+//         p.to_string_lossy().into_owned()
+//     };
+
+//     let default_human = {
+//         let mut p = path.clone();
+//         p.set_file_name(format!("{}_protrace", base_stem));
+//         p.set_extension("txt");
+//         p.to_string_lossy().into_owned()
+//     };
+
+//     match output_format.to_lowercase().as_str() {
+//         "json" => {
+//             let json = Some(
+//                 files
+//                     .as_ref()
+//                     .and_then(|f| f.get(0).cloned())
+//                     .unwrap_or(default_json),
+//             );
+
+//             (json, None)
+//         }
+//         "human" => {
+//             let human = Some(
+//                 files
+//                     .as_ref()
+//                     .and_then(|f| f.get(1).cloned())
+//                     .unwrap_or(default_human),
+//             );
+
+//             (None, human)
+//         }
+//         "both" => {
+//             let json = Some(
+//                 files
+//                     .as_ref()
+//                     .and_then(|f| f.get(0).cloned())
+//                     .unwrap_or(default_json),
+//             );
+
+//             let human = Some(
+//                 files
+//                     .as_ref()
+//                     .and_then(|f| f.get(1).cloned())
+//                     .unwrap_or(default_human),
+//             );
+
+//             (json, human)
+//         }
+//         other => panic!("Unknown output format: {}", other),
+//     }
+// }
 
 /// Closing the JSON array of rules for valid JSON format
 pub fn json_trace_close(json_path: Option<String>) {
@@ -638,19 +703,19 @@ mod tests {
 
     #[test]
     fn test_specify_trace_file_json() {
-        let output_file = specify_trace_files("example.essence".into(), None, None, "json");
+        let output_file = specify_trace_files("example.essence".into(), None, "json");
         assert_eq!(output_file.0.unwrap_or_default(), "example_protrace.json");
     }
 
     #[test]
     fn test_specify_trace_file_human() {
-        let output_file = specify_trace_files("example.essence".into(), None, None, "human");
+        let output_file = specify_trace_files("example.essence".into(), None, "human");
         assert_eq!(output_file.1.unwrap_or_default(), "example_protrace.txt");
     }
 
     #[test]
     fn test_specify_trace_file_both() {
-        let output_file = specify_trace_files("example.essence".into(), None, None, "both");
+        let output_file = specify_trace_files("example.essence".into(), None, "both");
         assert_eq!(output_file.0.unwrap_or_default(), "example_protrace.json");
         assert_eq!(output_file.1.unwrap_or_default(), "example_protrace.txt");
     }
@@ -659,8 +724,10 @@ mod tests {
     fn test_specify_trace_file_passed() {
         let output_file1 = specify_trace_files(
             "example.essence".into(),
-            None,
-            Some("example_essence_trace.txt".to_string()),
+            Some(vec![
+                "".to_string(),
+                "example_essence_trace.txt".to_string(),
+            ]),
             "human",
         );
 
@@ -671,8 +738,7 @@ mod tests {
 
         let output_file2 = specify_trace_files(
             "example.essence".into(),
-            Some("example_essence_trace.json".to_string()),
-            None,
+            Some(vec!["example_essence_trace.json".to_string()]),
             "json",
         );
 
@@ -683,8 +749,10 @@ mod tests {
 
         let output_file3 = specify_trace_files(
             "example.essence".into(),
-            Some("example_essence_trace.json".to_string()),
-            Some("example_essence_trace.txt".to_string()),
+            Some(vec![
+                "example_essence_trace.json".to_string(),
+                "example_essence_trace.txt".to_string(),
+            ]),
             "both",
         );
         assert_eq!(

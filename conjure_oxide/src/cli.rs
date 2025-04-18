@@ -92,9 +92,9 @@ pub struct GlobalArgs {
 
     // New logging arguments:
     // Tracing: T
-    // Output: stdout, json file
-    // Verbosity: low medium high
-    // Format: human readable, json
+    // Output: stdout, file
+    // Verbosity: low, medium, high
+    // Format: human, json, both (in case of file)
     // Optional file path
     #[arg(
         long,
@@ -131,6 +131,8 @@ pub struct GlobalArgs {
     )]
     pub formatter: String,
 
+    // Can optionally specify where the trace should be located by specifying the file path
+    // The flag accepts
     #[arg(
         long,
         short = 'f',
@@ -139,7 +141,7 @@ pub struct GlobalArgs {
         value_names = ["JSON_TRACE", "HUMAN_TRACE"],
         help = "Optionally save traces to specific files: first for JSON, second for human format"
     )]
-    pub trace_file: Vec<String>,
+    pub trace_file: Option<Vec<String>>,
 
     #[arg(
         long = "filter-message-by-kind",

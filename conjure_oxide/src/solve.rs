@@ -65,8 +65,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
 
     let files = specify_trace_files(
         input_file.to_string_lossy().into_owned(),
-        global_args.trace_file.get(0).cloned(),
-        global_args.trace_file.get(1).cloned(),
+        global_args.trace_file.clone(),
         &global_args.formatter,
     );
     // Consumer for protrace
