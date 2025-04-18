@@ -1,0 +1,90 @@
+
+Model before rewriting:
+
+find x: tuple of ([int(1..2), int(1..5)])
+find y: tuple of ([int(2..5), int(1..5)])
+
+such that
+
+(x != y)
+
+--
+
+Successful Tranformation: 
+x, 
+~~> select_representation [8000; Base]
+x#tuple_to_atom new variables:
+  find x#tuple_to_atom_1: int(1..2)
+  find x#tuple_to_atom_2: int(1..5) 
+--
+
+Successful Tranformation: 
+y, 
+~~> select_representation [8000; Base]
+y#tuple_to_atom new variables:
+  find y#tuple_to_atom_1: int(2..5)
+  find y#tuple_to_atom_2: int(1..5) 
+--
+
+Successful Tranformation: 
+(x#tuple_to_atom != y#tuple_to_atom), 
+~~> tuple_inequality [2000; Base]
+Not(and([(x#tuple_to_atom[1] = y#tuple_to_atom[1]),(x#tuple_to_atom[2] = y#tuple_to_atom[2]);int(1..)]))  
+--
+
+Successful Tranformation: 
+Not(and([(x#tuple_to_atom[1] = y#tuple_to_atom[1]),(x#tuple_to_atom[2] = y#tuple_to_atom[2]);int(1..)])), 
+~~> distribute_not_over_and [8400; Base]
+or([Not((x#tuple_to_atom[1] = y#tuple_to_atom[1])),Not((x#tuple_to_atom[2] = y#tuple_to_atom[2]));int(1..)])  
+--
+
+Successful Tranformation: 
+Not((x#tuple_to_atom[1] = y#tuple_to_atom[1])), 
+~~> negated_eq_to_neq [8800; Base]
+(x#tuple_to_atom[1] != y#tuple_to_atom[1])  
+--
+
+Successful Tranformation: 
+Not((x#tuple_to_atom[2] = y#tuple_to_atom[2])), 
+~~> negated_eq_to_neq [8800; Base]
+(x#tuple_to_atom[2] != y#tuple_to_atom[2])  
+--
+
+Successful Tranformation: 
+x#tuple_to_atom[1], 
+~~> index_tuple_to_atom [2000; Base]
+x#tuple_to_atom_1  
+--
+
+Successful Tranformation: 
+y#tuple_to_atom[1], 
+~~> index_tuple_to_atom [2000; Base]
+y#tuple_to_atom_1  
+--
+
+Successful Tranformation: 
+x#tuple_to_atom[2], 
+~~> index_tuple_to_atom [2000; Base]
+x#tuple_to_atom_2  
+--
+
+Successful Tranformation: 
+y#tuple_to_atom[2], 
+~~> index_tuple_to_atom [2000; Base]
+y#tuple_to_atom_2  
+--
+
+
+Final model:
+
+find x: tuple of ([int(1..2), int(1..5)])
+find y: tuple of ([int(2..5), int(1..5)])
+find x#tuple_to_atom_1: int(1..2)
+find x#tuple_to_atom_2: int(1..5)
+find y#tuple_to_atom_1: int(2..5)
+find y#tuple_to_atom_2: int(1..5)
+
+such that
+
+or([(x#tuple_to_atom_1 != y#tuple_to_atom_1),(x#tuple_to_atom_2 != y#tuple_to_atom_2);int(1..)])
+

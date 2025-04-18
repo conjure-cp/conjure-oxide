@@ -1,0 +1,78 @@
+
+Model before rewriting:
+
+find x: int(2..5)
+find y: int(-5..5)
+
+such that
+
+(UnsafePow(x, y) = 2)
+
+--
+
+Successful Tranformation: 
+UnsafePow(x, y), 
+~~> pow_to_bubble [6000; Bubble]
+{SafePow(x, y) @ and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)])}  
+--
+
+Successful Tranformation: 
+({SafePow(x, y) @ and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)])} = 2), 
+~~> bubble_up [8900; Bubble]
+{(SafePow(x, y) = 2) @ and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)])}  
+--
+
+Successful Tranformation: 
+{(SafePow(x, y) = 2) @ and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)])}, 
+~~> expand_bubble [8900; Bubble]
+and([(SafePow(x, y) = 2),and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)]);int(1..)])  
+--
+
+Successful Tranformation: 
+and([(SafePow(x, y) = 2),and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)]);int(1..)]), 
+~~> partial_evaluator [9000; Base]
+(SafePow(x, y) = 2),
+and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)])  
+--
+
+Successful Tranformation: 
+(SafePow(x, y) = 2),
+and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)]), 
+~~> partial_evaluator [9000; Base]
+(SafePow(x, y) = 2),
+and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)])  
+--
+
+Successful Tranformation: 
+(SafePow(x, y) = 2),
+and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]), 
+~~> partial_evaluator [9000; Base]
+(SafePow(x, y) = 2),
+or([(x != 0),(y != 0);int(1..)]),
+(y >= 0)  
+--
+
+Successful Tranformation: 
+(SafePow(x, y) = 2), 
+~~> introduce_poweq [4200; Minion]
+MinionPow(x,y,2)  
+--
+
+Successful Tranformation: 
+(y >= 0), 
+~~> geq_to_ineq [4100; Minion]
+Ineq(0, y, 0)  
+--
+
+
+Final model:
+
+find x: int(2..5)
+find y: int(-5..5)
+
+such that
+
+MinionPow(x,y,2),
+or([(x != 0),(y != 0);int(1..)]),
+Ineq(0, y, 0)
+

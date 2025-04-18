@@ -1,4 +1,8 @@
 use super::{resolve_rules::RuleData, RewriteError, RuleSet};
+use crate::pro_trace::{
+    capture_trace, check_verbosity_level, Consumer, ModelTrace, RuleTrace, TraceType,
+    VerbosityLevel,
+};
 use crate::{
     ast::{Expression as Expr, SubModel},
     bug,
@@ -13,7 +17,6 @@ use crate::{
 
 use itertools::Itertools;
 use std::{sync::Arc, time::Instant};
-use tracing::trace;
 use uniplate::Biplate;
 
 /// A naive, exhaustive rewriter for development purposes. Applies rules in priority order,
@@ -22,6 +25,7 @@ pub fn rewrite_naive<'a>(
     model: &Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
     prop_multiple_equally_applicable: bool,
+    consumer: Option<Consumer>,
 ) -> Result<Model, RewriteError> {
     let rules_grouped = get_rules_grouped(rule_sets)
         .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
@@ -35,11 +39,15 @@ pub fn rewrite_naive<'a>(
     rewriter_stats.is_optimization_enabled = Some(false);
     let run_start = Instant::now();
 
-    trace!(
-        target: "rule_engine_human",
-        "Model before rewriting:\n\n{}\n--\n",
-        model
-    );
+    let mut model_trace = ModelTrace {
+        initial_model: model.clone(),
+        rewritten_model: None,
+    };
+
+    //Tracing the initial model
+    if let Some(ref consumer) = consumer {
+        capture_trace(consumer, TraceType::ModelTrace(&model_trace));
+    }
 
     // Rewrite until there are no more rules left to apply.
     while done_something {
@@ -53,6 +61,7 @@ pub fn rewrite_naive<'a>(
                 &rules_grouped,
                 prop_multiple_equally_applicable,
                 &mut rewriter_stats,
+                &consumer,
             )
             .is_some()
             {
@@ -76,11 +85,12 @@ pub fn rewrite_naive<'a>(
         .stats
         .add_rewriter_run(rewriter_stats);
 
-    trace!(
-        target: "rule_engine_human",
-        "Final model:\n\n{}",
-        model
-    );
+    // Tracing the rewritten model
+    if let Some(ref consumer) = consumer {
+        model_trace.rewritten_model = Some(model.clone());
+        capture_trace(consumer, TraceType::ModelTrace(&model_trace));
+    }
+
     Ok(model)
 }
 
@@ -92,6 +102,7 @@ fn try_rewrite_model(
     rules_grouped: &Vec<(u16, Vec<RuleData<'_>>)>,
     prop_multiple_equally_applicable: bool,
     stats: &mut RewriterStats,
+    consumer: &Option<Consumer>,
 ) -> Option<()> {
     type CtxFn = Arc<dyn Fn(Expr) -> SubModel>;
     let mut results: Vec<(RuleResult<'_>, u16, Expr, CtxFn)> = vec![];
@@ -127,15 +138,21 @@ fn try_rewrite_model(
                         ));
                     }
                     Err(_) => {
-                        // when called a lot, this becomes very expensive!
-                        #[cfg(debug_assertions)]
-                        tracing::trace!(
-                            "Rule attempted but not applied: {} (priority {}, rule set {}), to expression: {}",
-                            rd.rule.name,
-                            priority,
-                            rd.rule_set.name,
-                            expr
-                        );
+                        if let Some(consumer) = consumer {
+                            if check_verbosity_level(&consumer) == VerbosityLevel::High {
+                                let rule_trace = RuleTrace {
+                                    initial_expression: expr.clone(),
+                                    rule_name: rd.rule.name.to_string(),
+                                    rule_set_name: rd.rule_set.name.to_string(),
+                                    rule_priority: rd.priority,
+                                    transformed_expression: None,
+                                    new_variables_str: None,
+                                    top_level_str: None,
+                                };
+
+                                capture_trace(&consumer, TraceType::RuleTrace(rule_trace));
+                            }
+                        }
                     }
                 }
             }
@@ -157,7 +174,7 @@ fn try_rewrite_model(
             }
 
             // Extract the single applicable rule and apply it
-            log_rule_application(result, expr, submodel);
+            log_rule_application(result, expr, submodel, &consumer);
 
             // Replace expr with new_expression
             *submodel = ctx(result.reduction.new_expression.clone());

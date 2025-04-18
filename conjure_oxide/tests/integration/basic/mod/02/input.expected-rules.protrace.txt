@@ -1,0 +1,32 @@
+
+Model before rewriting:
+
+find a: int(0..3)
+
+such that
+
+(a >= 4 % 2)
+
+--
+
+Successful Tranformation: 
+4 % 2, 
+~~> constant_evaluator [9001; Constant]
+0  
+--
+
+Successful Tranformation: 
+(a >= 0), 
+~~> geq_to_ineq [4100; Minion]
+Ineq(0, a, 0)  
+--
+
+
+Final model:
+
+find a: int(0..3)
+
+such that
+
+Ineq(0, a, 0)
+

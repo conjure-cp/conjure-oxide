@@ -1,12 +1,15 @@
 #![allow(clippy::expect_used)]
-use conjure_core::ast::SymbolTable;
+use conjure_core::ast::{AbstractLiteral, Domain, SymbolTable};
 use conjure_core::bug;
 use conjure_core::rule_engine::get_rules_grouped;
 
+use conjure_core::pro_trace::{create_consumer, json_trace_close, VerbosityLevel};
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::parse_essence_file_native;
-use conjure_oxide::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
+use conjure_oxide::utils::testing::{
+    normalize_solutions_for_comparison, read_human_rule_trace, read_json_rule_trace,
+};
 use glob::glob;
 use itertools::Itertools;
 use std::collections::BTreeMap;
@@ -294,8 +297,21 @@ fn integration_test_inner(
 
         let mut model = parsed_model.expect("Model must be parsed in 1a");
 
+        // setting up the consumer for protrace
+        let combined_consumer = create_consumer(
+            "file",
+            VerbosityLevel::Medium,
+            "both",
+            Some(format!(
+                "{path}/{essence_base}.generated-rules.protrace.json"
+            )),
+            Some(format!(
+                "{path}/{essence_base}.generated-rules.protrace.txt"
+            )),
+        );
+
         let rewritten = if config.enable_naive_impl {
-            rewrite_naive(&model, &rule_sets, false)?
+            rewrite_naive(&model, &rule_sets, false, Some(combined_consumer))?
         } else if config.enable_morph_impl {
             let submodel = model.as_submodel_mut();
             let rules_grouped = get_rules_grouped(&rule_sets)
@@ -317,6 +333,12 @@ fn integration_test_inner(
         } else {
             panic!("No rewriter implementation specified")
         };
+
+        // closing the json array in the trace file
+        json_trace_close(Some(format!(
+            "{path}/{essence_base}.generated-rules.protrace.json"
+        )));
+
         if verbose {
             println!("Rewritten model: {:#?}", rewritten);
         }
@@ -540,11 +562,19 @@ fn integration_test_inner(
     // We don't check rule trace when morph is enabled.
     // TODO: Implement rule trace validation for morph
     if config.validate_rule_traces && !config.enable_morph_impl {
-        let generated = read_human_rule_trace(path, essence_base, "generated")?;
-        let expected = read_human_rule_trace(path, essence_base, "expected")?;
+        let generated_human = read_human_rule_trace(path, essence_base, "generated")?;
+        let expected_human = read_human_rule_trace(path, essence_base, "expected")?;
 
         assert_eq!(
-            expected, generated,
+            expected_human, generated_human,
+            "Generated rule trace does not match the expected trace!"
+        );
+
+        let generated_json = read_json_rule_trace(path, essence_base, "generated")?;
+        let expected_json = read_json_rule_trace(path, essence_base, "expected")?;
+
+        assert_eq!(
+            expected_json, generated_json,
             "Generated rule trace does not match the expected trace!"
         );
     };

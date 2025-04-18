@@ -1,0 +1,90 @@
+
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+or([or([a,b;int(1..2)]),false;int(1..2)]),
+or([allDiff([1,2,3;int(1..3)]),true;int(1..2)]),
+and([c,true;int(1..2)])
+
+--
+
+Successful Tranformation: 
+or([or([a,b;int(1..2)]),false;int(1..2)]), 
+~~> normalise_associative_commutative [8900; Base]
+or([a,b,false;int(1..2)])  
+--
+
+Successful Tranformation: 
+or([a,b,false;int(1..2)]), 
+~~> matrix_to_list [2000; Base]
+or([a,b,false;int(1..)])  
+--
+
+Successful Tranformation: 
+or([a,b,false;int(1..)]), 
+~~> partial_evaluator [9000; Base]
+or([a,b;int(1..)])  
+--
+
+Successful Tranformation: 
+or([allDiff([1,2,3;int(1..3)]),true;int(1..2)]), 
+~~> matrix_to_list [2000; Base]
+or([allDiff([1,2,3;int(1..3)]),true;int(1..)])  
+--
+
+Successful Tranformation: 
+or([allDiff([1,2,3;int(1..3)]),true;int(1..)]), 
+~~> partial_evaluator [9000; Base]
+true  
+--
+
+Successful Tranformation: 
+or([a,b;int(1..)]),
+true,
+and([c,true;int(1..2)]), 
+~~> partial_evaluator [9000; Base]
+or([a,b;int(1..)]),
+and([c,true;int(1..2)])  
+--
+
+Successful Tranformation: 
+and([c,true;int(1..2)]), 
+~~> matrix_to_list [2000; Base]
+and([c,true;int(1..)])  
+--
+
+Successful Tranformation: 
+or([a,b;int(1..)]),
+and([c,true;int(1..)]), 
+~~> partial_evaluator [9000; Base]
+or([a,b;int(1..)]),
+c,
+true  
+--
+
+Successful Tranformation: 
+or([a,b;int(1..)]),
+c,
+true, 
+~~> partial_evaluator [9000; Base]
+or([a,b;int(1..)]),
+c  
+--
+
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+or([a,b;int(1..)]),
+c
+

@@ -1,0 +1,62 @@
+
+Model before rewriting:
+
+find a: int(0..3)
+find b: int(0..3)
+
+such that
+
+(a % b = 1)
+
+--
+
+Successful Tranformation: 
+a % b, 
+~~> mod_to_bubble [6000; Bubble]
+{SafeMod(a,b) @ (b != 0)}  
+--
+
+Successful Tranformation: 
+({SafeMod(a,b) @ (b != 0)} = 1), 
+~~> bubble_up [8900; Bubble]
+{(SafeMod(a,b) = 1) @ and([(b != 0);int(1..)])}  
+--
+
+Successful Tranformation: 
+{(SafeMod(a,b) = 1) @ and([(b != 0);int(1..)])}, 
+~~> expand_bubble [8900; Bubble]
+and([(SafeMod(a,b) = 1),and([(b != 0);int(1..)]);int(1..)])  
+--
+
+Successful Tranformation: 
+and([(SafeMod(a,b) = 1),and([(b != 0);int(1..)]);int(1..)]), 
+~~> partial_evaluator [9000; Base]
+(SafeMod(a,b) = 1),
+and([(b != 0);int(1..)])  
+--
+
+Successful Tranformation: 
+(SafeMod(a,b) = 1),
+and([(b != 0);int(1..)]), 
+~~> partial_evaluator [9000; Base]
+(SafeMod(a,b) = 1),
+(b != 0)  
+--
+
+Successful Tranformation: 
+(SafeMod(a,b) = 1), 
+~~> introduce_modeq [4200; Minion]
+ModEq(a, b, 1)  
+--
+
+
+Final model:
+
+find a: int(0..3)
+find b: int(0..3)
+
+such that
+
+ModEq(a, b, 1),
+(b != 0)
+

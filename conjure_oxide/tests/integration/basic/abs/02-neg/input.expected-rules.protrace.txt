@@ -1,0 +1,79 @@
+
+Model before rewriting:
+
+find x: int(-5..5)
+find y: int(-5..5)
+
+such that
+
+(Sum([|-(x)|,|-(y)|;int(1..2)]) = 10)
+
+--
+
+Successful Tranformation: 
+|-(x)|, 
+~~> partial_evaluator [9000; Base]
+|x|  
+--
+
+Successful Tranformation: 
+|-(y)|, 
+~~> partial_evaluator [9000; Base]
+|y|  
+--
+
+Successful Tranformation: 
+Sum([|x|,|y|;int(1..2)]), 
+~~> matrix_to_list [2000; Base]
+Sum([|x|,|y|;int(1..)])  
+--
+
+Successful Tranformation: 
+(Sum([|x|,|y|;int(1..)]) = 10), 
+~~> introduce_weighted_sumleq_sumgeq [4600; Minion]
+and([SumLeq([__0, __1], 10),SumGeq([__0, __1], 10);int(1..)]) new variables:
+  find __0: int(0..5)
+  find __1: int(0..5) new constraints:
+  __0 =aux |x|
+  __1 =aux |y|
+
+--
+
+Successful Tranformation: 
+and([SumLeq([__0, __1], 10),SumGeq([__0, __1], 10);int(1..)]),
+__0 =aux |x|,
+__1 =aux |y|, 
+~~> partial_evaluator [9000; Base]
+SumLeq([__0, __1], 10),
+SumGeq([__0, __1], 10),
+__0 =aux |x|,
+__1 =aux |y|  
+--
+
+Successful Tranformation: 
+__0 =aux |x|, 
+~~> introduce_abseq [4400; Minion]
+AbsEq(__0,x)  
+--
+
+Successful Tranformation: 
+__1 =aux |y|, 
+~~> introduce_abseq [4400; Minion]
+AbsEq(__1,y)  
+--
+
+
+Final model:
+
+find x: int(-5..5)
+find y: int(-5..5)
+find __0: int(0..5)
+find __1: int(0..5)
+
+such that
+
+SumLeq([__0, __1], 10),
+SumGeq([__0, __1], 10),
+AbsEq(__0,x),
+AbsEq(__1,y)
+

@@ -1,0 +1,780 @@
+
+Model before rewriting:
+
+find x: int(2..2)
+
+such that
+
+(-(UnsafePow(1, 1)) = -(1)),
+(-(UnsafePow(1, 2)) = -(1)),
+(-(UnsafePow(1, 3)) = -(1)),
+(-(UnsafePow(1, 4)) = -(1)),
+(-(UnsafePow(2, 1)) = -(2)),
+(-(UnsafePow(2, 2)) = -(4)),
+(-(UnsafePow(2, 3)) = -(8)),
+(-(UnsafePow(2, 4)) = -(16)),
+(-(UnsafePow(x, 1)) = -(2)),
+(-(UnsafePow(x, 2)) = -(4)),
+(-(UnsafePow(x, 3)) = -(8)),
+(-(UnsafePow(x, 4)) = -(16)),
+(UnsafePow(x, 2) = 4),
+(-(UnsafePow(2, UnsafePow(2, 3))) = -(256)),
+(UnsafePow(2, UnsafePow(2, 3)) = 256),
+true
+
+--
+
+Successful Tranformation: 
+UnsafePow(1, 1), 
+~~> constant_evaluator [9001; Constant]
+1  
+--
+
+Successful Tranformation: 
+(-(1) = -(1)), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+UnsafePow(1, 2), 
+~~> constant_evaluator [9001; Constant]
+1  
+--
+
+Successful Tranformation: 
+(-(1) = -(1)), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+UnsafePow(1, 3), 
+~~> constant_evaluator [9001; Constant]
+1  
+--
+
+Successful Tranformation: 
+(-(1) = -(1)), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+UnsafePow(1, 4), 
+~~> constant_evaluator [9001; Constant]
+1  
+--
+
+Successful Tranformation: 
+(-(1) = -(1)), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+UnsafePow(2, 1), 
+~~> constant_evaluator [9001; Constant]
+2  
+--
+
+Successful Tranformation: 
+(-(2) = -(2)), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+UnsafePow(2, 2), 
+~~> constant_evaluator [9001; Constant]
+4  
+--
+
+Successful Tranformation: 
+(-(4) = -(4)), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+UnsafePow(2, 3), 
+~~> constant_evaluator [9001; Constant]
+8  
+--
+
+Successful Tranformation: 
+(-(8) = -(8)), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+UnsafePow(2, 4), 
+~~> constant_evaluator [9001; Constant]
+16  
+--
+
+Successful Tranformation: 
+(-(16) = -(16)), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+-(2), 
+~~> constant_evaluator [9001; Constant]
+-2  
+--
+
+Successful Tranformation: 
+-(4), 
+~~> constant_evaluator [9001; Constant]
+-4  
+--
+
+Successful Tranformation: 
+-(8), 
+~~> constant_evaluator [9001; Constant]
+-8  
+--
+
+Successful Tranformation: 
+-(16), 
+~~> constant_evaluator [9001; Constant]
+-16  
+--
+
+Successful Tranformation: 
+UnsafePow(2, 3), 
+~~> constant_evaluator [9001; Constant]
+8  
+--
+
+Successful Tranformation: 
+UnsafePow(2, 8), 
+~~> constant_evaluator [9001; Constant]
+256  
+--
+
+Successful Tranformation: 
+(-(256) = -(256)), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+UnsafePow(2, 3), 
+~~> constant_evaluator [9001; Constant]
+8  
+--
+
+Successful Tranformation: 
+(UnsafePow(2, 8) = 256), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+true,
+(-(UnsafePow(x, 1)) = -2),
+(-(UnsafePow(x, 2)) = -4),
+(-(UnsafePow(x, 3)) = -8),
+(-(UnsafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4),
+true,
+true,
+true, 
+~~> partial_evaluator [9000; Base]
+(-(UnsafePow(x, 1)) = -2),
+(-(UnsafePow(x, 2)) = -4),
+(-(UnsafePow(x, 3)) = -8),
+(-(UnsafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4)  
+--
+
+Successful Tranformation: 
+UnsafePow(x, 1), 
+~~> pow_to_bubble [6000; Bubble]
+{SafePow(x, 1) @ and([or([(x != 0),(1 != 0);int(1..)]),(1 >= 0);int(1..)])}  
+--
+
+Successful Tranformation: 
+(1 != 0), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+(1 >= 0), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+and([or([(x != 0),true;int(1..)]),true;int(1..)]), 
+~~> partial_evaluator [9000; Base]
+and([or([(x != 0),true;int(1..)]);int(1..)])  
+--
+
+Successful Tranformation: 
+or([(x != 0),true;int(1..)]), 
+~~> partial_evaluator [9000; Base]
+true  
+--
+
+Successful Tranformation: 
+and([true;int(1..)]), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+-({SafePow(x, 1) @ true}), 
+~~> bubble_up [8900; Bubble]
+{-(SafePow(x, 1)) @ and([true;int(1..)])}  
+--
+
+Successful Tranformation: 
+and([true;int(1..)]), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+({-(SafePow(x, 1)) @ true} = -2), 
+~~> bubble_up [8900; Bubble]
+{(-(SafePow(x, 1)) = -2) @ and([true;int(1..)])}  
+--
+
+Successful Tranformation: 
+and([true;int(1..)]), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+{(-(SafePow(x, 1)) = -2) @ true}, 
+~~> expand_bubble [8900; Bubble]
+and([(-(SafePow(x, 1)) = -2),true;int(1..)])  
+--
+
+Successful Tranformation: 
+and([(-(SafePow(x, 1)) = -2),true;int(1..)]),
+(-(UnsafePow(x, 2)) = -4),
+(-(UnsafePow(x, 3)) = -8),
+(-(UnsafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4), 
+~~> partial_evaluator [9000; Base]
+(-(SafePow(x, 1)) = -2),
+true,
+(-(UnsafePow(x, 2)) = -4),
+(-(UnsafePow(x, 3)) = -8),
+(-(UnsafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4)  
+--
+
+Successful Tranformation: 
+(-(SafePow(x, 1)) = -2),
+true,
+(-(UnsafePow(x, 2)) = -4),
+(-(UnsafePow(x, 3)) = -8),
+(-(UnsafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4), 
+~~> partial_evaluator [9000; Base]
+(-(SafePow(x, 1)) = -2),
+(-(UnsafePow(x, 2)) = -4),
+(-(UnsafePow(x, 3)) = -8),
+(-(UnsafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4)  
+--
+
+Successful Tranformation: 
+UnsafePow(x, 2), 
+~~> pow_to_bubble [6000; Bubble]
+{SafePow(x, 2) @ and([or([(x != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])}  
+--
+
+Successful Tranformation: 
+(2 != 0), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+(2 >= 0), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+and([or([(x != 0),true;int(1..)]),true;int(1..)]), 
+~~> partial_evaluator [9000; Base]
+and([or([(x != 0),true;int(1..)]);int(1..)])  
+--
+
+Successful Tranformation: 
+or([(x != 0),true;int(1..)]), 
+~~> partial_evaluator [9000; Base]
+true  
+--
+
+Successful Tranformation: 
+and([true;int(1..)]), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+-({SafePow(x, 2) @ true}), 
+~~> bubble_up [8900; Bubble]
+{-(SafePow(x, 2)) @ and([true;int(1..)])}  
+--
+
+Successful Tranformation: 
+and([true;int(1..)]), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+({-(SafePow(x, 2)) @ true} = -4), 
+~~> bubble_up [8900; Bubble]
+{(-(SafePow(x, 2)) = -4) @ and([true;int(1..)])}  
+--
+
+Successful Tranformation: 
+and([true;int(1..)]), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+{(-(SafePow(x, 2)) = -4) @ true}, 
+~~> expand_bubble [8900; Bubble]
+and([(-(SafePow(x, 2)) = -4),true;int(1..)])  
+--
+
+Successful Tranformation: 
+(-(SafePow(x, 1)) = -2),
+and([(-(SafePow(x, 2)) = -4),true;int(1..)]),
+(-(UnsafePow(x, 3)) = -8),
+(-(UnsafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4), 
+~~> partial_evaluator [9000; Base]
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+true,
+(-(UnsafePow(x, 3)) = -8),
+(-(UnsafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4)  
+--
+
+Successful Tranformation: 
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+true,
+(-(UnsafePow(x, 3)) = -8),
+(-(UnsafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4), 
+~~> partial_evaluator [9000; Base]
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+(-(UnsafePow(x, 3)) = -8),
+(-(UnsafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4)  
+--
+
+Successful Tranformation: 
+UnsafePow(x, 3), 
+~~> pow_to_bubble [6000; Bubble]
+{SafePow(x, 3) @ and([or([(x != 0),(3 != 0);int(1..)]),(3 >= 0);int(1..)])}  
+--
+
+Successful Tranformation: 
+(3 != 0), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+(3 >= 0), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+and([or([(x != 0),true;int(1..)]),true;int(1..)]), 
+~~> partial_evaluator [9000; Base]
+and([or([(x != 0),true;int(1..)]);int(1..)])  
+--
+
+Successful Tranformation: 
+or([(x != 0),true;int(1..)]), 
+~~> partial_evaluator [9000; Base]
+true  
+--
+
+Successful Tranformation: 
+and([true;int(1..)]), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+-({SafePow(x, 3) @ true}), 
+~~> bubble_up [8900; Bubble]
+{-(SafePow(x, 3)) @ and([true;int(1..)])}  
+--
+
+Successful Tranformation: 
+and([true;int(1..)]), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+({-(SafePow(x, 3)) @ true} = -8), 
+~~> bubble_up [8900; Bubble]
+{(-(SafePow(x, 3)) = -8) @ and([true;int(1..)])}  
+--
+
+Successful Tranformation: 
+and([true;int(1..)]), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+{(-(SafePow(x, 3)) = -8) @ true}, 
+~~> expand_bubble [8900; Bubble]
+and([(-(SafePow(x, 3)) = -8),true;int(1..)])  
+--
+
+Successful Tranformation: 
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+and([(-(SafePow(x, 3)) = -8),true;int(1..)]),
+(-(UnsafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4), 
+~~> partial_evaluator [9000; Base]
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+(-(SafePow(x, 3)) = -8),
+true,
+(-(UnsafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4)  
+--
+
+Successful Tranformation: 
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+(-(SafePow(x, 3)) = -8),
+true,
+(-(UnsafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4), 
+~~> partial_evaluator [9000; Base]
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+(-(SafePow(x, 3)) = -8),
+(-(UnsafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4)  
+--
+
+Successful Tranformation: 
+UnsafePow(x, 4), 
+~~> pow_to_bubble [6000; Bubble]
+{SafePow(x, 4) @ and([or([(x != 0),(4 != 0);int(1..)]),(4 >= 0);int(1..)])}  
+--
+
+Successful Tranformation: 
+(4 != 0), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+(4 >= 0), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+and([or([(x != 0),true;int(1..)]),true;int(1..)]), 
+~~> partial_evaluator [9000; Base]
+and([or([(x != 0),true;int(1..)]);int(1..)])  
+--
+
+Successful Tranformation: 
+or([(x != 0),true;int(1..)]), 
+~~> partial_evaluator [9000; Base]
+true  
+--
+
+Successful Tranformation: 
+and([true;int(1..)]), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+-({SafePow(x, 4) @ true}), 
+~~> bubble_up [8900; Bubble]
+{-(SafePow(x, 4)) @ and([true;int(1..)])}  
+--
+
+Successful Tranformation: 
+and([true;int(1..)]), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+({-(SafePow(x, 4)) @ true} = -16), 
+~~> bubble_up [8900; Bubble]
+{(-(SafePow(x, 4)) = -16) @ and([true;int(1..)])}  
+--
+
+Successful Tranformation: 
+and([true;int(1..)]), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+{(-(SafePow(x, 4)) = -16) @ true}, 
+~~> expand_bubble [8900; Bubble]
+and([(-(SafePow(x, 4)) = -16),true;int(1..)])  
+--
+
+Successful Tranformation: 
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+(-(SafePow(x, 3)) = -8),
+and([(-(SafePow(x, 4)) = -16),true;int(1..)]),
+(UnsafePow(x, 2) = 4), 
+~~> partial_evaluator [9000; Base]
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+(-(SafePow(x, 3)) = -8),
+(-(SafePow(x, 4)) = -16),
+true,
+(UnsafePow(x, 2) = 4)  
+--
+
+Successful Tranformation: 
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+(-(SafePow(x, 3)) = -8),
+(-(SafePow(x, 4)) = -16),
+true,
+(UnsafePow(x, 2) = 4), 
+~~> partial_evaluator [9000; Base]
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+(-(SafePow(x, 3)) = -8),
+(-(SafePow(x, 4)) = -16),
+(UnsafePow(x, 2) = 4)  
+--
+
+Successful Tranformation: 
+UnsafePow(x, 2), 
+~~> pow_to_bubble [6000; Bubble]
+{SafePow(x, 2) @ and([or([(x != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])}  
+--
+
+Successful Tranformation: 
+(2 != 0), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+(2 >= 0), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+and([or([(x != 0),true;int(1..)]),true;int(1..)]), 
+~~> partial_evaluator [9000; Base]
+and([or([(x != 0),true;int(1..)]);int(1..)])  
+--
+
+Successful Tranformation: 
+or([(x != 0),true;int(1..)]), 
+~~> partial_evaluator [9000; Base]
+true  
+--
+
+Successful Tranformation: 
+and([true;int(1..)]), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+({SafePow(x, 2) @ true} = 4), 
+~~> bubble_up [8900; Bubble]
+{(SafePow(x, 2) = 4) @ and([true;int(1..)])}  
+--
+
+Successful Tranformation: 
+and([true;int(1..)]), 
+~~> constant_evaluator [9001; Constant]
+true  
+--
+
+Successful Tranformation: 
+{(SafePow(x, 2) = 4) @ true}, 
+~~> expand_bubble [8900; Bubble]
+and([(SafePow(x, 2) = 4),true;int(1..)])  
+--
+
+Successful Tranformation: 
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+(-(SafePow(x, 3)) = -8),
+(-(SafePow(x, 4)) = -16),
+and([(SafePow(x, 2) = 4),true;int(1..)]), 
+~~> partial_evaluator [9000; Base]
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+(-(SafePow(x, 3)) = -8),
+(-(SafePow(x, 4)) = -16),
+(SafePow(x, 2) = 4),
+true  
+--
+
+Successful Tranformation: 
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+(-(SafePow(x, 3)) = -8),
+(-(SafePow(x, 4)) = -16),
+(SafePow(x, 2) = 4),
+true, 
+~~> partial_evaluator [9000; Base]
+(-(SafePow(x, 1)) = -2),
+(-(SafePow(x, 2)) = -4),
+(-(SafePow(x, 3)) = -8),
+(-(SafePow(x, 4)) = -16),
+(SafePow(x, 2) = 4)  
+--
+
+Successful Tranformation: 
+-(SafePow(x, 1)), 
+~~> flatten_generic [4200; Minion]
+-(__0) new variables:
+  find __0: int(2) new constraints:
+  __0 =aux SafePow(x, 1)
+
+--
+
+Successful Tranformation: 
+(-(__0) = -2), 
+~~> introduce_minuseq_from_eq [4400; Minion]
+MinusEq(-2,__0)  
+--
+
+Successful Tranformation: 
+-(SafePow(x, 2)), 
+~~> flatten_generic [4200; Minion]
+-(__1) new variables:
+  find __1: int(4) new constraints:
+  __1 =aux SafePow(x, 2)
+
+--
+
+Successful Tranformation: 
+(-(__1) = -4), 
+~~> introduce_minuseq_from_eq [4400; Minion]
+MinusEq(-4,__1)  
+--
+
+Successful Tranformation: 
+-(SafePow(x, 3)), 
+~~> flatten_generic [4200; Minion]
+-(__2) new variables:
+  find __2: int(8) new constraints:
+  __2 =aux SafePow(x, 3)
+
+--
+
+Successful Tranformation: 
+(-(__2) = -8), 
+~~> introduce_minuseq_from_eq [4400; Minion]
+MinusEq(-8,__2)  
+--
+
+Successful Tranformation: 
+-(SafePow(x, 4)), 
+~~> flatten_generic [4200; Minion]
+-(__3) new variables:
+  find __3: int(16) new constraints:
+  __3 =aux SafePow(x, 4)
+
+--
+
+Successful Tranformation: 
+(-(__3) = -16), 
+~~> introduce_minuseq_from_eq [4400; Minion]
+MinusEq(-16,__3)  
+--
+
+Successful Tranformation: 
+(SafePow(x, 2) = 4), 
+~~> introduce_poweq [4200; Minion]
+MinionPow(x,2,4)  
+--
+
+Successful Tranformation: 
+__0 =aux SafePow(x, 1), 
+~~> introduce_poweq [4200; Minion]
+MinionPow(x,1,__0)  
+--
+
+Successful Tranformation: 
+__1 =aux SafePow(x, 2), 
+~~> introduce_poweq [4200; Minion]
+MinionPow(x,2,__1)  
+--
+
+Successful Tranformation: 
+__2 =aux SafePow(x, 3), 
+~~> introduce_poweq [4200; Minion]
+MinionPow(x,3,__2)  
+--
+
+Successful Tranformation: 
+__3 =aux SafePow(x, 4), 
+~~> introduce_poweq [4200; Minion]
+MinionPow(x,4,__3)  
+--
+
+
+Final model:
+
+find x: int(2..2)
+find __0: int(2)
+find __1: int(4)
+find __2: int(8)
+find __3: int(16)
+
+such that
+
+MinusEq(-2,__0),
+MinusEq(-4,__1),
+MinusEq(-8,__2),
+MinusEq(-16,__3),
+MinionPow(x,2,4),
+MinionPow(x,1,__0),
+MinionPow(x,2,__1),
+MinionPow(x,3,__2),
+MinionPow(x,4,__3)
+

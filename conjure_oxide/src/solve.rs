@@ -8,9 +8,15 @@ use std::{
     sync::{Arc, RwLock},
 };
 
+use std::{fs::OpenOptions, io::Write};
+
 use anyhow::{anyhow, ensure};
 use conjure_core::{
     context::Context,
+    pro_trace::{
+        create_consumer, display_message, get_kind_filter, json_trace_close, set_kind_filter,
+        specify_trace_files, Consumer, Kind,
+    },
     rule_engine::{resolve_rule_sets, rewrite_naive},
     Model,
 };
@@ -54,12 +60,34 @@ pub struct Args {
 pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::Result<()> {
     let input_file = solve_args.input_file.clone();
 
-    // each step is in its own method so that similar commands (e.g. testsolve) can reuse some of
-    // these steps.
+    set_kind_filter(global_args.kind_filter.clone());
+    // Determining the file for the output of the trace
+
+    let files = specify_trace_files(
+        input_file.to_string_lossy().into_owned(),
+        global_args.trace_file.clone(),
+        &global_args.formatter,
+    );
+    // Consumer for protrace
+    let consumer: Option<Consumer> = global_args.tracing.then(|| {
+        create_consumer(
+            global_args.trace_output.as_str(),
+            global_args.verbosity.clone(),
+            global_args.formatter.as_str(),
+            files.0.clone(),
+            files.1.clone(),
+        )
+    });
 
     let context = init_context(&global_args, input_file)?;
     let model = parse(&global_args, Arc::clone(&context))?;
-    let rewritten_model = rewrite(model, &global_args, Arc::clone(&context))?;
+    let rewritten_model = rewrite(model, &global_args, Arc::clone(&context), consumer)?;
+
+    if global_args.trace_output == "file"
+        && (global_args.formatter == "json" || global_args.formatter == "both")
+    {
+        json_trace_close(files.0.clone());
+    }
 
     if solve_args.no_run_solver {
         println!("{}", rewritten_model);
@@ -81,6 +109,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
         let pretty_json = serde_json::to_string_pretty(&generated_json)?;
         File::create(path)?.write_all(pretty_json.as_bytes())?;
     }
+
     Ok(())
 }
 
@@ -184,9 +213,10 @@ pub(crate) fn rewrite(
     model: Model,
     global_args: &GlobalArgs,
     context: Arc<RwLock<Context<'static>>>,
+    consumer: Option<Consumer>,
 ) -> anyhow::Result<Model> {
     tracing::info!("Initial model: \n{}\n", model);
-
+    display_message(format!("Initial model: \n{}\n", model), None, Kind::Model);
     tracing::info!("Rewriting model...");
 
     let rule_sets = context.read().unwrap().rule_sets.clone();
@@ -195,9 +225,16 @@ pub(crate) fn rewrite(
         &model,
         &rule_sets,
         global_args.check_equally_applicable_rules,
+        consumer,
     )?;
 
     tracing::info!("Rewritten model: \n{}\n", new_model);
+    display_message(
+        format!("Rewritten model: \n{}\n", new_model),
+        None,
+        Kind::Model,
+    );
+
     Ok(new_model)
 }
 
@@ -220,8 +257,11 @@ fn run_minion(cmd_args: &Args, model: Model) -> anyhow::Result<()> {
     let solutions_str = to_string_pretty(&solutions_json)?;
     match out_file {
         None => {
-            println!("Solutions:");
-            println!("{}", solutions_str);
+            display_message(
+                format!("Solutions:\n{}", solutions_str),
+                None,
+                Kind::Default,
+            );
         }
         Some(mut outf) => {
             outf.write_all(solutions_str.as_bytes())?;
@@ -253,15 +293,22 @@ fn run_sat_solver(cmd_args: &Args, model: Model) -> anyhow::Result<()> {
     let solutions_str = to_string_pretty(&solutions_json)?;
     match out_file {
         None => {
-            println!("Solutions:");
-            println!("{}", solutions_str);
+            display_message(
+                format!("Solutions:\n{}", solutions_str),
+                None,
+                Kind::Default,
+            );
         }
         Some(mut outf) => {
             outf.write_all(solutions_str.as_bytes())?;
-            println!(
-                "Solutions saved to {:?}",
-                &cmd_args.output.clone().unwrap().canonicalize()?
-            )
+            display_message(
+                format!(
+                    "Solution saved to {:?}",
+                    &cmd_args.output.clone().unwrap().canonicalize()?
+                ),
+                None,
+                Kind::Default,
+            );
         }
     }
     Ok(())

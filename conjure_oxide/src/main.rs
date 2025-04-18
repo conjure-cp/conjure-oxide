@@ -3,16 +3,15 @@ mod cli;
 mod print_info_schema;
 mod solve;
 mod test_solve;
-use clap::Parser as _;
+use clap::{arg, command, Parser};
 use cli::{Cli, GlobalArgs};
+use git_version::git_version;
 use print_info_schema::run_print_info_schema_command;
 use solve::run_solve_command;
 use std::fs::File;
 use std::process::exit;
 use std::sync::Arc;
 use test_solve::run_test_solve_command;
-
-use git_version::git_version;
 use tracing_subscriber::filter::{FilterFn, LevelFilter};
 use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
@@ -124,6 +123,10 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
 
     Ok(())
 }
+
+/******************************************************/
+/*        Parse essence to json using Conjure         */
+/******************************************************/
 
 /// Runs the selected subcommand
 fn run_subcommand(cli: Cli) -> anyhow::Result<()> {
