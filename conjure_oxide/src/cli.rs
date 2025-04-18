@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use clap::{arg, command, Args, Parser, Subcommand};
 
+use clap_complete::Shell;
 use conjure_oxide::SolverFamily;
 
 use crate::{solve, test_solve};
@@ -91,7 +92,7 @@ pub struct GlobalArgs {
 pub struct CompletionArgs {
     /// Shell type for which to generate the completion script
     #[arg(value_enum)]
-    pub shell: ShellTypes,
+    pub shell: Shell,
 }
 
 #[derive(Debug, Clone, Copy, clap::ValueEnum)]

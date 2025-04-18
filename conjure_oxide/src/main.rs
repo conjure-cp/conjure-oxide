@@ -4,8 +4,8 @@ mod print_info_schema;
 mod solve;
 mod test_solve;
 use clap::{CommandFactory, Parser};
-use clap_complete::{generate, Shell};
-use cli::{Cli, GlobalArgs, ShellTypes};
+use clap_complete::generate;
+use cli::{Cli, GlobalArgs};
 use print_info_schema::run_print_info_schema_command;
 use solve::run_solve_command;
 use std::fs::File;
@@ -131,14 +131,6 @@ fn run_completion_command(completion_args: cli::CompletionArgs) -> anyhow::Resul
     let mut cmd = Cli::command();
     let shell = completion_args.shell;
     let name = cmd.get_name().to_string();
-
-    let shell = match shell {
-        ShellTypes::Bash => Shell::Bash,
-        ShellTypes::Zsh => Shell::Zsh,
-        ShellTypes::Fish => Shell::Fish,
-        ShellTypes::PowerShell => Shell::PowerShell,
-        ShellTypes::Elvish => Shell::Elvish,
-    };
 
     eprintln!("Generating completion for {}...", shell);
 
