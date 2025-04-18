@@ -77,9 +77,29 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
                     Some(item)
                 }
+                Lit::AbstractLiteral(subject @ AbstractLiteral::Record(_)) => {
+                    let AbstractLiteral::Record(elems) = subject else {
+                        return None;
+                    };
+
+                    assert!(indices.len() == 1, "nested record not supported yet");
+
+                    let Lit::Int(index) = indices[0].clone() else {
+                        return None;
+                    };
+
+                    if elems.len() < index as usize || index < 1 {
+                        return None;
+                    }
+
+                    // -1 for 0-indexing vs 1-indexing
+                    let item = elems[index as usize - 1].clone();
+                    Some(item.value)
+                }
                 _ => None,
             }
         }
+
         Expr::UnsafeSlice(_, subject, indices) | Expr::SafeSlice(_, subject, indices) => {
             let subject: Lit = subject.as_ref().clone().to_literal()?;
             let Lit::AbstractLiteral(subject @ AbstractLiteral::Matrix(_, _)) = subject else {
