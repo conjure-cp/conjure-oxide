@@ -3,14 +3,13 @@ use conjure_core::ast::{AbstractLiteral, Domain, SymbolTable};
 use conjure_core::bug;
 use conjure_core::rule_engine::get_rules_grouped;
 
-use conjure_core::pro_trace::{
-    self, create_consumer, json_trace_close, Consumer, HumanFormatter, StdoutConsumer,
-    VerbosityLevel,
-};
+use conjure_core::pro_trace::{create_consumer, json_trace_close, VerbosityLevel};
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::parse_essence_file_native;
-use conjure_oxide::utils::testing::{normalize_solutions_for_comparison, read_rule_trace};
+use conjure_oxide::utils::testing::{
+    normalize_solutions_for_comparison, read_human_rule_trace, read_json_rule_trace,
+};
 use glob::glob;
 use itertools::Itertools;
 use std::collections::BTreeMap;
@@ -563,16 +562,16 @@ fn integration_test_inner(
     // We don't check rule trace when morph is enabled.
     // TODO: Implement rule trace validation for morph
     if config.validate_rule_traces && !config.enable_morph_impl {
-        let generated_human = read_rule_trace(path, essence_base, "generated", "txt")?;
-        let expected_human = read_rule_trace(path, essence_base, "expected", "txt")?;
+        let generated_human = read_human_rule_trace(path, essence_base, "generated")?;
+        let expected_human = read_human_rule_trace(path, essence_base, "expected")?;
 
         assert_eq!(
             expected_human, generated_human,
             "Generated rule trace does not match the expected trace!"
         );
 
-        let generated_json = read_rule_trace(path, essence_base, "generated", "json")?;
-        let expected_json = read_rule_trace(path, essence_base, "expected", "json")?;
+        let generated_json = read_json_rule_trace(path, essence_base, "generated")?;
+        let expected_json = read_json_rule_trace(path, essence_base, "expected")?;
 
         assert_eq!(
             expected_json, generated_json,

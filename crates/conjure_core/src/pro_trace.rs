@@ -6,7 +6,7 @@ use serde_json;
 use std::any::Any;
 use std::fmt::write;
 use std::fs::{self, File};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::{fmt, fs::OpenOptions, io::Write};
@@ -496,15 +496,18 @@ pub fn specify_trace_files(
     }
 }
 
+/// Closing the JSON array of rules for valid JSON format
 pub fn json_trace_close(json_path: Option<String>) {
     if let Some(path) = json_path {
-        let mut file = OpenOptions::new()
-            .append(true)
-            .open(path)
-            .expect("Failed to open JSON trace file");
-        writeln!(file, "]").expect("Failed to write to file");
-    } else {
-        println!("No JSON file path provided.");
+        let path_ref = Path::new(&path);
+        // Only proceed if the file exists and is not empty
+        if path_ref.exists() && path_ref.metadata().map(|m| m.len()).unwrap_or(0) > 2 {
+            let mut file = OpenOptions::new()
+                .append(true)
+                .open(path_ref)
+                .expect("Failed to open JSON trace file for closing");
+            writeln!(file, "]").expect("Failed to write closing bracket to JSON file");
+        }
     }
 }
 
@@ -544,7 +547,10 @@ mod tests {
 
     #[test]
     fn test_create_file_consumer_for_json() {
-        let file_path = "test_trace_output.json".to_string();
+        let file_path = "test_trace_output_json_only.json".to_string();
+
+        std::fs::File::create(&file_path).expect("Failed to create test file");
+
         let consumer = create_consumer(
             "file",
             VerbosityLevel::Medium,
@@ -552,6 +558,7 @@ mod tests {
             Some(file_path.clone()),
             None,
         );
+
         if let Consumer::FileConsumer(file_consumer) = &consumer {
             assert_eq!(file_consumer.json_file_path.as_ref().unwrap(), &file_path);
         } else {
@@ -559,12 +566,15 @@ mod tests {
         }
 
         assert!(matches!(consumer, Consumer::FileConsumer(_)));
+
         fs::remove_file(file_path).ok();
     }
 
     #[test]
     fn test_create_file_consumer_for_human() {
-        let file_path = "test_trace_output.txt".to_string();
+        let file_path = "test_trace_output_human_only.txt".to_string();
+
+        std::fs::File::create(&file_path).expect("Failed to create test file");
         let consumer = create_consumer(
             "file",
             VerbosityLevel::Medium,
@@ -584,8 +594,11 @@ mod tests {
 
     #[test]
     fn test_create_file_consumer_for_both() {
-        let json_file_path = "test_trace_output.json".to_string();
-        let human_file_path = "test_trace_output.txt".to_string();
+        let json_file_path = "test_trace_output_both.json".to_string();
+        let human_file_path = "test_trace_output_both.txt".to_string();
+
+        std::fs::File::create(&json_file_path).expect("Failed to create test file");
+        std::fs::File::create(&human_file_path).expect("Failed to create test file");
         let consumer = create_consumer(
             "file",
             VerbosityLevel::Medium,
