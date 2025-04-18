@@ -15,10 +15,9 @@ use conjure_core::ast::Name;
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::ApplicationError;
 
-//TODO: largely copied from the matrix rules, This should be possible to simplify
+//takes a safe index expression and converts it to an atom via the representation rules
 #[register_rule(("Base", 2000))]
-fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    // i assume the MkOpIndexing is the same as matrix indexing
+fn index_record_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::SafeIndex(_, subject, indices) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -27,7 +26,7 @@ fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
         return Err(RuleNotApplicable);
     };
 
-    if reprs.first().is_none_or(|x| x.as_str() != "tuple_to_atom") {
+    if reprs.first().is_none_or(|x| x.as_str() != "record_to_atom") {
         return Err(RuleNotApplicable);
     }
 
@@ -37,30 +36,32 @@ fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
     }
 
     let repr = symbols
-        .get_representation(name, &["tuple_to_atom"])
+        .get_representation(name, &["record_to_atom"])
         .unwrap()[0]
         .clone();
 
     let decl = symbols.lookup(name).unwrap();
 
-    let Some(Domain::DomainTuple(_)) = decl.domain().cloned().map(|x| x.resolve(symbols)) else {
+    let Some(Domain::DomainRecord(_)) = decl.domain().cloned().map(|x| x.resolve(symbols)) else {
         return Err(RuleNotApplicable);
     };
 
-    let mut indices_as_lit: Literal = Literal::Bool(false);
-
-    for index in indices {
-        let Some(index) = index.clone().to_literal() else {
-            return Err(RuleNotApplicable); // we don't support non-literal indices
-        };
-        indices_as_lit = index;
-    }
-
-    let indices_as_name = Name::RepresentedName(
-        name.clone(),
-        "tuple_to_atom".into(),
-        indices_as_lit.to_string(),
+    assert_eq!(
+        indices.len(),
+        1,
+        "record indexing is always one dimensional"
     );
+
+    let index = indices[0].clone();
+
+    // during the conversion from unsafe index to safe index in bubbling
+    // we convert the field name to a literal integer for direct access
+    let Some(index) = index.clone().to_literal() else {
+        return Err(RuleNotApplicable); // we don't support non-literal indices
+    };
+
+    let indices_as_name =
+        Name::RepresentedName(name.clone(), "record_to_atom".into(), index.to_string());
 
     let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
 
@@ -68,7 +69,7 @@ fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
 }
 
 #[register_rule(("Bubble", 8000))]
-fn tuple_index_to_bubble(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn record_index_to_bubble(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::UnsafeIndex(_, subject, indices) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -77,7 +78,7 @@ fn tuple_index_to_bubble(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
         return Err(RuleNotApplicable);
     };
 
-    if reprs.first().is_none_or(|x| x.as_str() != "tuple_to_atom") {
+    if reprs.first().is_none_or(|x| x.as_str() != "record_to_atom") {
         return Err(RuleNotApplicable);
     }
 
@@ -85,19 +86,36 @@ fn tuple_index_to_bubble(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
         .domain_of(symbols)
         .ok_or(ApplicationError::DomainError)?;
 
-    let Domain::DomainTuple(elems) = domain else {
+    let Domain::DomainRecord(elems) = domain else {
         return Err(RuleNotApplicable);
     };
 
-    assert_eq!(indices.len(), 1, "tuple indexing is always one dimensional");
+    assert_eq!(
+        indices.len(),
+        1,
+        "record indexing is always one dimensional"
+    );
+
     let index = indices[0].clone();
+
+    let Expr::Atomic(_, Atom::Reference(name)) = index.clone() else {
+        return Err(RuleNotApplicable);
+    };
+
+    // find what numerical index in elems matches the entry name
+    let Some(idx) = elems.iter().position(|x| x.name == name) else {
+        return Err(RuleNotApplicable);
+    };
+
+    // converting to an integer for direct access
+    let idx = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Int(idx as i32 + 1)));
 
     let bubble_constraint = Box::new(Expression::And(
         Metadata::new(),
         Box::new(matrix_expr![
             Expression::Leq(
                 Metadata::new(),
-                Box::new(index.clone()),
+                Box::new(idx.clone()),
                 Box::new(Expression::Atomic(
                     Metadata::new(),
                     Atom::Literal(Literal::Int(elems.len() as i32))
@@ -105,7 +123,7 @@ fn tuple_index_to_bubble(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
             ),
             Expression::Geq(
                 Metadata::new(),
-                Box::new(index.clone()),
+                Box::new(idx.clone()),
                 Box::new(Expression::Atomic(
                     Metadata::new(),
                     Atom::Literal(Literal::Int(1))
@@ -117,7 +135,7 @@ fn tuple_index_to_bubble(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
     let new_expr = Box::new(Expression::SafeIndex(
         Metadata::new(),
         subject.clone(),
-        indices.clone(),
+        Vec::from([idx]),
     ));
 
     Ok(Reduction::pure(Expression::Bubble(
@@ -127,13 +145,14 @@ fn tuple_index_to_bubble(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
     )))
 }
 
-// convert equality to tuple equality
+// dealing with equality over 2 record variables
 #[register_rule(("Base", 2000))]
-fn tuple_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn record_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, left, right) = expr else {
         return Err(RuleNotApplicable);
     };
 
+    // check if both sides are record variables
     let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs))) = &**left else {
         return Err(RuleNotApplicable);
     };
@@ -142,17 +161,22 @@ fn tuple_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    if reprs.first().is_none_or(|x| x.as_str() != "tuple_to_atom") {
+    if reprs.first().is_none_or(|x| x.as_str() != "record_to_atom") {
         return Err(RuleNotApplicable);
     }
 
-    if reprs2.first().is_none_or(|x| x.as_str() != "tuple_to_atom") {
+    if reprs2
+        .first()
+        .is_none_or(|x| x.as_str() != "record_to_atom")
+    {
         return Err(RuleNotApplicable);
     }
 
+    // grab both from the symbol table
     let decl = symbols.lookup(name).unwrap();
     let decl2 = symbols.lookup(name2).unwrap();
 
+    // check both are are record variable domains
     let domain = decl
         .domain()
         .cloned()
@@ -164,20 +188,29 @@ fn tuple_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
 
-    let Domain::DomainTuple(elems) = domain else {
+    let Domain::DomainRecord(entries) = domain else {
         return Err(RuleNotApplicable);
     };
 
-    let Domain::DomainTuple(elems2) = domain2 else {
+    let Domain::DomainRecord(entries2) = domain2 else {
         return Err(RuleNotApplicable);
     };
 
-    if elems.len() != elems2.len() {
+    // we only support equality over records of the same size
+    if entries.len() != entries2.len() {
         return Err(RuleNotApplicable);
     }
 
+    // assuming all record entry names must match for equality
+    for i in 0..entries.len() {
+        if entries[i].name != entries2[i].name {
+            return Err(RuleNotApplicable);
+        }
+    }
+
     let mut equality_constraints = vec![];
-    for i in 0..elems.len() {
+    // unroll the equality into equality constraints for each field
+    for i in 0..entries.len() {
         let left_elem = Expression::SafeIndex(
             Metadata::new(),
             Box::new(*left.clone()),
@@ -210,9 +243,9 @@ fn tuple_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::pure(new_expr))
 }
 
-//tuple equality where the left is a variable and the right is a tuple literal
+// dealing with equality where the left is a record variable, and the right is a constant record
 #[register_rule(("Base", 2000))]
-fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn record_to_const(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, left, right) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -221,11 +254,7 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::AbstractLiteral(_, AbstractLiteral::Tuple(elems2)) = &**right else {
-        return Err(RuleNotApplicable);
-    };
-
-    if reprs.first().is_none_or(|x| x.as_str() != "tuple_to_atom") {
+    if reprs.first().is_none_or(|x| x.as_str() != "record_to_atom") {
         return Err(RuleNotApplicable);
     }
 
@@ -237,16 +266,21 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
 
-    let Domain::DomainTuple(elems) = domain else {
+    let Domain::DomainRecord(entries) = domain else {
         return Err(RuleNotApplicable);
     };
 
-    if elems.len() != elems2.len() {
+    let Expr::AbstractLiteral(_, AbstractLiteral::Record(entries2)) = &**right else {
         return Err(RuleNotApplicable);
-    }
+    };
 
+    for i in 0..entries.len() {
+        if entries[i].name != entries2[i].name {
+            return Err(RuleNotApplicable);
+        }
+    }
     let mut equality_constraints = vec![];
-    for i in 0..elems.len() {
+    for i in 0..entries.len() {
         let left_elem = Expression::SafeIndex(
             Metadata::new(),
             Box::new(*left.clone()),
@@ -270,100 +304,9 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             Box::new(right_elem),
         ));
     }
-
     let new_expr = Expression::And(
         Metadata::new(),
         Box::new(into_matrix_expr!(equality_constraints)),
     );
-
-    Ok(Reduction::pure(new_expr))
-}
-
-// convert equality to tuple inequality
-#[register_rule(("Base", 2000))]
-fn tuple_inequality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let Expr::Neq(_, left, right) = expr else {
-        return Err(RuleNotApplicable);
-    };
-
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs))) = &**left else {
-        return Err(RuleNotApplicable);
-    };
-
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name2, reprs2))) = &**right else {
-        return Err(RuleNotApplicable);
-    };
-
-    if reprs.first().is_none_or(|x| x.as_str() != "tuple_to_atom") {
-        return Err(RuleNotApplicable);
-    }
-
-    if reprs2.first().is_none_or(|x| x.as_str() != "tuple_to_atom") {
-        return Err(RuleNotApplicable);
-    }
-
-    let decl = symbols.lookup(name).unwrap();
-    let decl2 = symbols.lookup(name2).unwrap();
-
-    let domain = decl
-        .domain()
-        .cloned()
-        .map(|x| x.resolve(symbols))
-        .ok_or(ApplicationError::DomainError)?;
-    let domain2 = decl2
-        .domain()
-        .cloned()
-        .map(|x| x.resolve(symbols))
-        .ok_or(ApplicationError::DomainError)?;
-
-    let Domain::DomainTuple(elems) = domain else {
-        return Err(RuleNotApplicable);
-    };
-
-    let Domain::DomainTuple(elems2) = domain2 else {
-        return Err(RuleNotApplicable);
-    };
-
-    assert_eq!(
-        elems.len(),
-        elems2.len(),
-        "tuple inequality requires same length domains"
-    );
-
-    let mut equality_constraints = vec![];
-    for i in 0..elems.len() {
-        let left_elem = Expression::SafeIndex(
-            Metadata::new(),
-            Box::new(*left.clone()),
-            vec![Expression::Atomic(
-                Metadata::new(),
-                Atom::Literal(Literal::Int((i + 1) as i32)),
-            )],
-        );
-        let right_elem = Expression::SafeIndex(
-            Metadata::new(),
-            Box::new(*right.clone()),
-            vec![Expression::Atomic(
-                Metadata::new(),
-                Atom::Literal(Literal::Int((i + 1) as i32)),
-            )],
-        );
-
-        equality_constraints.push(Expression::Eq(
-            Metadata::new(),
-            Box::new(left_elem),
-            Box::new(right_elem),
-        ));
-    }
-
-    // Just copied from Conjure, would it be better to DeMorgan this?
-    let new_expr = Expression::Not(
-        Metadata::new(),
-        Box::new(Expression::And(
-            Metadata::new(),
-            Box::new(into_matrix_expr!(equality_constraints)),
-        )),
-    );
-
     Ok(Reduction::pure(new_expr))
 }
