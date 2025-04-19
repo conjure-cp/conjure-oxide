@@ -27,7 +27,7 @@
 //!    with a coefficient of -1.
 
 use conjure_core::{
-    ast::{Expression as Expr, SymbolTable},
+    ast::{AbstractLiteral, Atom, Expression as Expr, SymbolTable},
     metadata::Metadata,
     rule_engine::{
         register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
@@ -83,17 +83,17 @@ fn distribute_negation_over_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResu
 /// ```
 #[register_rule(("Base", 8400))]
 fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let Expr::Neg(_, expr1) = expr.clone() else {
+    let Neg(_, expr1) = expr.clone() else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Product(_, mut factors) = *expr1 else {
+    let Product(_, mut factors) = *expr1 else {
         return Err(RuleNotApplicable);
     };
 
     factors.push(essence_expr!(-1));
 
-    Ok(Reduction::pure(Expr::Product(Metadata::new(), factors)))
+    Ok(Reduction::pure(Product(Metadata::new(), factors)))
 }
 
 /// Converts a minus to a sum
@@ -103,10 +103,53 @@ fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResu
 /// ```
 #[register_rule(("Base", 8400))]
 fn minus_to_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let (x, y) = match expr {
-        Minus(_, x, y) => Ok((x.clone(), y.clone())),
-        _ => Err(RuleNotApplicable),
-    }?;
+    let (lhs, rhs) = match expr {
+        Minus(_, lhs, rhs) => match lhs.as_ref() {
+            Atomic(_, Atom::Reference(_)) => match rhs.as_ref() {
+                Atomic(_, Atom::Reference(_)) => {
+                    return Err(RuleNotApplicable);
+                }
+                AbstractLiteral(_, AbstractLiteral::Set(_)) => {
+                    return Err(RuleNotApplicable);
+                }
+                _ => (lhs.clone(), rhs.clone()),
+            },
+            AbstractLiteral(_, AbstractLiteral::Set(_)) => match rhs.as_ref() {
+                Atomic(_, Atom::Reference(_)) => {
+                    return Err(RuleNotApplicable);
+                }
+                AbstractLiteral(_, AbstractLiteral::Set(_)) => {
+                    return Err(RuleNotApplicable);
+                }
+                _ => (lhs.clone(), rhs.clone()),
+            },
+            _ => (lhs.clone(), rhs.clone()),
+        },
+        _ => return Err(RuleNotApplicable),
+    };
 
-    Ok(Reduction::pure(essence_expr!(&x + (-&y))))
+    Ok(Reduction::pure(essence_expr!(&lhs + (-&rhs))))
+}
+
+// TODO: add set difference rule here, need comprehensions
+#[register_rule(("Base", 8500))]
+fn minus_sets(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let (_lhs, _rhs) = match expr {
+        Minus(_, lhs, rhs) => match lhs.as_ref() {
+            Atomic(_, Atom::Reference(_)) => match rhs.as_ref() {
+                Atomic(_, Atom::Reference(_)) => (lhs.clone(), rhs.clone()),
+                AbstractLiteral(_, AbstractLiteral::Set(_)) => (lhs.clone(), rhs.clone()),
+                _ => return Err(RuleNotApplicable),
+            },
+            AbstractLiteral(_, AbstractLiteral::Set(_)) => match rhs.as_ref() {
+                Atomic(_, Atom::Reference(_)) => (lhs.clone(), rhs.clone()),
+                AbstractLiteral(_, AbstractLiteral::Set(_)) => (lhs.clone(), rhs.clone()),
+                _ => return Err(RuleNotApplicable),
+            },
+            _ => return Err(RuleNotApplicable),
+        },
+        _ => return Err(RuleNotApplicable),
+    };
+
+    Err(RuleNotApplicable)
 }

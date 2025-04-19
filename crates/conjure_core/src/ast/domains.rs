@@ -193,6 +193,15 @@ impl Domain {
         }
     }
 
+    // turns vector of integers into a domain
+    pub fn make_int_domain_from_values_i32(&self, vector: &Vec<i32>) -> Option<Domain> {
+        let mut new_ranges = vec![];
+        for values in vector.iter() {
+            new_ranges.push(Range::Single(*values));
+        }
+        return Some(Domain::IntDomain(new_ranges));
+    }
+
     /// Gets all the values inside this domain, as a [`Literal`]. Returns `None` if the domain is not
     /// finite.
     pub fn values(&self) -> Option<Vec<Literal>> {
@@ -294,6 +303,83 @@ impl Domain {
             }
         }
         self
+    }
+
+    // simplified domain intersection function. defined for integer domains of sets
+    // TODO: does not consider unbounded domains yet
+    pub fn intersect(&self, other: &Domain) -> Option<Domain> {
+        match (self, other) {
+            (Domain::DomainSet(_, x), Domain::DomainSet(_, y)) => Some(Domain::DomainSet(
+                SetAttr::None,
+                Box::new((*x).intersect(y)?),
+            )),
+            (Domain::IntDomain(_), Domain::IntDomain(_)) => {
+                let mut v: Vec<i32> = vec![];
+                if self.is_finite()? && other.is_finite()? {
+                    if let (Some(v1), Some(v2)) = (self.values_i32(), other.values_i32()) {
+                        for values1 in v1.iter() {
+                            for values2 in v2.iter() {
+                                if values1 == values2 {
+                                    let mut found = false;
+                                    for values in v.iter() {
+                                        if values == values2 {
+                                            found = true;
+                                        }
+                                        break;
+                                    }
+                                    if !found {
+                                        v.push(*values2);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    return self.make_int_domain_from_values_i32(&v);
+                } else {
+                    println!("Unbounded domain");
+                    return None;
+                }
+            }
+            _ => None,
+        }
+    }
+
+    // simplified domain union function. defined for integer domains of sets
+    // TODO: does not consider unbounded domains yet
+    pub fn union(&self, other: &Domain) -> Option<Domain> {
+        match (self, other) {
+            (Domain::DomainSet(_, x), Domain::DomainSet(_, y)) => {
+                Some(Domain::DomainSet(SetAttr::None, Box::new((*x).union(y)?)))
+            }
+            (Domain::IntDomain(_), Domain::IntDomain(_)) => {
+                let mut v: Vec<i32> = vec![];
+                if self.is_finite()? && other.is_finite()? {
+                    if let (Some(v1), Some(v2)) = (self.values_i32(), other.values_i32()) {
+                        for values1 in v1.iter() {
+                            v.push(*values1);
+                        }
+                        for values2 in v2.iter() {
+                            let mut found = false;
+                            for values in v.iter() {
+                                if values == values2 {
+                                    found = true;
+                                }
+                                break;
+                            }
+                            if !found {
+                                v.push(*values2);
+                            }
+                        }
+                    }
+                    return self.make_int_domain_from_values_i32(&v);
+                } else {
+                    println!("Unbounded Domain");
+                    return None;
+                }
+            }
+            _ => None,
+        }
     }
 }
 
