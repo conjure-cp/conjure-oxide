@@ -18,7 +18,7 @@ module.exports = grammar({
 
     single_line_comment: $ => token(seq('$', /.*/)),
 
-    e_prime_label: $ => token("language ESSENCE' 1.0"),
+    language_label: $ => token(seq("language", /.*/)),
 
     //general
     constant: $ => choice(

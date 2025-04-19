@@ -8,12 +8,9 @@ use walkdir::WalkDir;
 fn main() -> io::Result<()> {
     println!("cargo:rerun-if-changed=tests/integration");
     println!("cargo:rerun-if-changed=tests/custom");
-    println!("cargo:rerun-if-changed=tests/custom");
     println!("cargo:rerun-if-changed=tests/gen_test_template");
     println!("cargo:rerun-if-changed=tests/custom_test_template");
-    println!("cargo:rerun-if-changed=tests/custom_test_template");
     println!("cargo:rerun-if-changed=build.rs");
-
 
     let out_dir = var("OUT_DIR").map_err(|e| io::Error::new(io::ErrorKind::Other, e))?; // wrapping in a std::io::Error to match main's error type
 
@@ -110,13 +107,13 @@ fn main() -> io::Result<()> {
 
     for subdir in WalkDir::new(test_dir) {
         let subdir = subdir?;
-        if subdir.file_type().is_dir() {
-            if read_dir(subdir.path())
+        if subdir.file_type().is_dir()
+            && read_dir(subdir.path())
                 .unwrap_or_else(|_| std::fs::read_dir(subdir.path()).unwrap())
                 .filter_map(Result::ok)
-                .any(|entry| {entry.file_name() == "run.sh" && entry.path().is_file()}) {
-                    write_custom_test(&mut f, subdir.path().display().to_string())?;
-                }
+                .any(|entry| entry.file_name() == "run.sh" && entry.path().is_file())
+        {
+            write_custom_test(&mut f, subdir.path().display().to_string())?;
         }
     }
 
