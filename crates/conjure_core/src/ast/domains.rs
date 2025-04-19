@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::ast::pretty::pretty_vec;
 use uniplate::{derive::Uniplate, Uniplate};
 
-use super::{types::Typeable, AbstractLiteral, Literal, Name, ReturnType};
+use super::{records::RecordEntry, types::Typeable, AbstractLiteral, Literal, Name, ReturnType};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Range<A>
@@ -63,6 +63,10 @@ pub enum Domain {
     DomainSet(SetAttr, Box<Domain>),
     /// A n-dimensional matrix with a value domain and n-index domains
     DomainMatrix(Box<Domain>, Vec<Domain>),
+    // A tuple of n domains (e.g. (int, bool))
+    DomainTuple(Vec<Domain>),
+
+    DomainRecord(Vec<RecordEntry>),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -93,7 +97,6 @@ impl Domain {
             (Domain::BoolDomain, Literal::Bool(_)) => Some(true),
             (Domain::BoolDomain, _) => Some(false),
             (Domain::DomainReference(_), _) => None,
-
             (
                 Domain::DomainMatrix(elem_domain, index_domains),
                 Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx_domain)),
@@ -123,11 +126,49 @@ impl Domain {
 
                 Some(true)
             }
-            (Domain::DomainMatrix(_, _), _) => Some(false),
-            (Domain::DomainSet(_, _), Literal::AbstractLiteral(AbstractLiteral::Set(_))) => {
-                todo!()
+            (
+                Domain::DomainTuple(elem_domains),
+                Literal::AbstractLiteral(AbstractLiteral::Tuple(literal_elems)),
+            ) => {
+                // for every element in the tuple literal, check if it is in the corresponding domain
+                for (elem_domain, elem) in itertools::izip!(elem_domains, literal_elems) {
+                    if !elem_domain.contains(elem)? {
+                        return Some(false);
+                    }
+                }
+
+                Some(true)
             }
+            (
+                Domain::DomainSet(_, domain),
+                Literal::AbstractLiteral(AbstractLiteral::Set(literal_elems)),
+            ) => {
+                for elem in literal_elems {
+                    if !domain.contains(elem)? {
+                        return Some(false);
+                    }
+                }
+                Some(true)
+            }
+            (
+                Domain::DomainRecord(entries),
+                Literal::AbstractLiteral(AbstractLiteral::Record(lit_entries)),
+            ) => {
+                for (entry, lit_entry) in itertools::izip!(entries, lit_entries) {
+                    if entry.name != lit_entry.name || !(entry.domain.contains(&lit_entry.value)?) {
+                        return Some(false);
+                    }
+                }
+                Some(true)
+            }
+
+            (Domain::DomainRecord(_), _) => Some(false),
+
+            (Domain::DomainMatrix(_, _), _) => Some(false),
+
             (Domain::DomainSet(_, _), _) => Some(false),
+
+            (Domain::DomainTuple(_), _) => Some(false),
         }
     }
 
@@ -166,6 +207,8 @@ impl Domain {
             Domain::DomainSet(_, _) => todo!(),
             Domain::DomainMatrix(_, _) => todo!(),
             Domain::DomainReference(_) => None,
+            Domain::DomainTuple(_) => todo!(), // TODO: Can this be done?
+            Domain::DomainRecord(_) => todo!(),
         }
     }
 
@@ -278,6 +321,25 @@ impl Display for Domain {
                     f,
                     "matrix indexed by [{}] of {value_domain}",
                     pretty_vec(&index_domains.iter().collect_vec())
+                )
+            }
+            Domain::DomainTuple(domains) => {
+                write!(
+                    f,
+                    "tuple of ({})",
+                    pretty_vec(&domains.iter().collect_vec())
+                )
+            }
+            Domain::DomainRecord(entries) => {
+                write!(
+                    f,
+                    "record of ({})",
+                    pretty_vec(
+                        &entries
+                            .iter()
+                            .map(|entry| format!("{}: {}", entry.name, entry.domain))
+                            .collect_vec()
+                    )
                 )
             }
         }

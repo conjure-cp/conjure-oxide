@@ -17,11 +17,18 @@ module.exports = grammar({
     )),
 
     single_line_comment: $ => token(seq('$', /.*/)),
-    language_label: $ => token(seq("language", /.*/)),
 
-    // Basic components
-    constant: $ => choice($.integer, $.TRUE, $.FALSE),
-    integer: $ => /[0-9]+/,
+    e_prime_label: $ => token("language ESSENCE' 1.0"),
+
+    //general
+    constant: $ => choice(
+      $.integer,
+      $.TRUE,
+      $.FALSE
+    ),
+
+    integer: $ => choice(/[0-9]+/, /-[0-9]+/),
+
     TRUE: $ => "true",
     FALSE: $ => "false",
     variable: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,

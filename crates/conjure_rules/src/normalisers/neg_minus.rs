@@ -27,13 +27,13 @@
 //!    with a coefficient of -1.
 
 use conjure_core::{
-    ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable},
-    matrix_expr,
+    ast::{Expression as Expr, SymbolTable},
     metadata::Metadata,
     rule_engine::{
         register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
     },
 };
+use conjure_essence_macros::essence_expr;
 use std::collections::VecDeque;
 use uniplate::{Biplate, Uniplate as _};
 use Expr::*;
@@ -70,7 +70,7 @@ fn distribute_negation_over_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResu
     }
 
     for child in child_vecs[0].iter_mut() {
-        *child = Neg(Metadata::new(), Box::new(child.clone()))
+        *child = essence_expr!(-&child);
     }
 
     Ok(Reduction::pure(inner_expr.with_children_bi(child_vecs)))
@@ -91,7 +91,7 @@ fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResu
         return Err(RuleNotApplicable);
     };
 
-    factors.push(Expr::Atomic(Metadata::new(), Atom::Literal(Lit::Int(-1))));
+    factors.push(essence_expr!(-1));
 
     Ok(Reduction::pure(Expr::Product(Metadata::new(), factors)))
 }
@@ -103,13 +103,10 @@ fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResu
 /// ```
 #[register_rule(("Base", 8400))]
 fn minus_to_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let (lhs, rhs) = match expr {
-        Minus(_, lhs, rhs) => Ok((lhs.clone(), rhs.clone())),
+    let (x, y) = match expr {
+        Minus(_, x, y) => Ok((x.clone(), y.clone())),
         _ => Err(RuleNotApplicable),
     }?;
 
-    Ok(Reduction::pure(Sum(
-        Metadata::new(),
-        Box::new(matrix_expr![*lhs, Neg(Metadata::new(), rhs)]),
-    )))
+    Ok(Reduction::pure(essence_expr!(&x + (-&y))))
 }

@@ -88,6 +88,26 @@ fn test_and() {
 }
 
 #[test]
+fn text_leq_meta() {
+    let meta = essence_expr!(a + 2);
+    let expr = essence_expr!(x <= &meta);
+    assert_eq!(
+        expr,
+        Expression::Leq(
+            Metadata::new(),
+            Box::new(Expression::Atomic(Metadata::new(), Atom::new_uref("x"))),
+            Box::new(Expression::Sum(
+                Metadata::new(),
+                Box::new(matrix_expr![
+                    Expression::Atomic(Metadata::new(), Atom::new_uref("a")),
+                    Expression::Atomic(Metadata::new(), Atom::new_ilit(2))
+                ])
+            )),
+        )
+    );
+}
+
+#[test]
 fn test_essence_vec_basic() {
     let exprs = essence_vec!(a + 2, b = true);
     assert_eq!(exprs.len(), 2);
