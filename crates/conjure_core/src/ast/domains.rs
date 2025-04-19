@@ -152,6 +152,15 @@ impl Domain {
         }
     }
 
+    // turns vector of integers into a domain
+    pub fn make_int_domain_from_values_i32(&self, vector: &Vec<i32>) -> Option<Domain> {
+        let mut new_ranges = vec![];
+        for values in vector.iter() {
+            new_ranges.push(Range::Single(*values));
+        }
+        return Some(Domain::IntDomain(new_ranges));
+    }
+
     /// Gets all the values inside this domain, as a [`Literal`]. Returns `None` if the domain is not
     /// finite.
     pub fn values(&self) -> Option<Vec<Literal>> {
@@ -254,196 +263,77 @@ impl Domain {
     }
 
     // simplified domain intersection function. defined for integer domains of sets
-    // uses larger minimum of the two sets, smaller maximum of the two sets
-    // TODO: does not consider holes yet
+    // TODO: does not consider unbounded domains yet
     pub fn intersect(&self, other: &Domain) -> Option<Domain> {
         match (self, other) {
             (Domain::DomainSet(_, x), Domain::DomainSet(_, y)) => Some(Domain::DomainSet(
                 SetAttr::None,
                 Box::new((*x).intersect(y)?),
             )),
-            (Domain::IntDomain(v1), Domain::IntDomain(v2)) => {
-                let mut min = 0;
-                let mut max = 0;
-                let mut min1 = 0;
-                let mut max1 = 0;
-                // Find the minimum start value of all the ranges, replace with separate (existing?) function
-                for range in v1.iter() {
-                    match range {
-                        Range::Single(value) => {
-                            if value < &min1 {
-                                min1 = *value;
+            (Domain::IntDomain(_), Domain::IntDomain(_)) => {
+                let mut v: Vec<i32> = vec![];
+                if self.is_finite()? && other.is_finite()? {
+                    if let (Some(v1), Some(v2)) = (self.values_i32(), other.values_i32()) {
+                        for values1 in v1.iter() {
+                            for values2 in v2.iter() {
+                                if values1 == values2 {
+                                    let mut found = false;
+                                    for values in v.iter() {
+                                        if values == values2 {
+                                            found = true;
+                                        }
+                                        break;
+                                    }
+                                    if !found {
+                                        v.push(*values2);
+                                    }
+                                    break;
+                                }
                             }
-                            if value > &max1 {
-                                max1 = *value;
-                            }
-                        }
-                        Range::Bounded(start, end) => {
-                            if start < &min1 {
-                                min1 = *start;
-                            }
-                            if end > &max1 {
-                                max1 = *end;
-                            }
-                        }
-                        Range::UnboundedL(end) => {
-                            min1 = -i32::MAX;
-                            if end > &max1 {
-                                max1 = *end;
-                            }
-                        }
-                        Range::UnboundedR(start) => {
-                            if start < &min1 {
-                                min1 = *start;
-                            }
-                            max1 = i32::MAX;
                         }
                     }
-                }
-                let mut min2 = 0;
-                let mut max2 = 0;
-                for range in v2.iter() {
-                    match range {
-                        Range::Single(value) => {
-                            if value < &min2 {
-                                min2 = *value;
-                            }
-                            if value > &max2 {
-                                max2 = *value;
-                            }
-                        }
-                        Range::Bounded(start, end) => {
-                            if start < &min2 {
-                                min2 = *start;
-                            }
-                            if end > &max2 {
-                                max2 = *end;
-                            }
-                        }
-                        Range::UnboundedL(end) => {
-                            min2 = -i32::MAX;
-                            if end > &max2 {
-                                max2 = *end;
-                            }
-                        }
-                        Range::UnboundedR(start) => {
-                            if start < &min2 {
-                                min2 = *start;
-                            }
-                            max2 = i32::MAX;
-                        }
-                    }
-                }
-                if min1 > min2 {
-                    min = min1;
+                    return self.make_int_domain_from_values_i32(&v);
                 } else {
-                    min = min2;
+                    println!("Unbounded domain");
+                    return None;
                 }
-                if max1 < max2 {
-                    max = max1;
-                } else {
-                    max = max2
-                }
-
-                Some(Domain::IntDomain(vec![Range::Bounded(min, max)]))
             }
             _ => None,
         }
     }
 
     // simplified domain union function. defined for integer domains of sets
-    // uses smaller minimum of the two sets, larger maximum of the two sets
-    // TODO: does not consider holes yet
+    // TODO: does not consider unbounded domains yet
     pub fn union(&self, other: &Domain) -> Option<Domain> {
         match (self, other) {
             (Domain::DomainSet(_, x), Domain::DomainSet(_, y)) => {
                 Some(Domain::DomainSet(SetAttr::None, Box::new((*x).union(y)?)))
             }
-            (Domain::IntDomain(v1), Domain::IntDomain(v2)) => {
-                let mut min = 0;
-                let mut max = 0;
-                let mut min1 = 0;
-                let mut max1 = 0;
-                // Find the minimum start value of all the ranges - again replace this with separate function
-                for range in v1.iter() {
-                    match range {
-                        Range::Single(value) => {
-                            if value < &min1 {
-                                min1 = *value;
-                            }
-                            if value > &max1 {
-                                max1 = *value;
-                            }
+            (Domain::IntDomain(_), Domain::IntDomain(_)) => {
+                let mut v: Vec<i32> = vec![];
+                if self.is_finite()? && other.is_finite()? {
+                    if let (Some(v1), Some(v2)) = (self.values_i32(), other.values_i32()) {
+                        for values1 in v1.iter() {
+                            v.push(*values1);
                         }
-                        Range::Bounded(start, end) => {
-                            if start < &min1 {
-                                min1 = *start;
+                        for values2 in v2.iter() {
+                            let mut found = false;
+                            for values in v.iter() {
+                                if values == values2 {
+                                    found = true;
+                                }
+                                break;
                             }
-                            if end > &max1 {
-                                max1 = *end;
+                            if !found {
+                                v.push(*values2);
                             }
-                        }
-                        Range::UnboundedL(end) => {
-                            min1 = -i32::MAX;
-                            println!("{}", min1);
-                            if end > &max1 {
-                                max1 = *end;
-                            }
-                        }
-                        Range::UnboundedR(start) => {
-                            if start < &min1 {
-                                min1 = *start;
-                            }
-                            max1 = i32::MAX;
                         }
                     }
-                }
-                let mut min2 = 0;
-                let mut max2 = 0;
-                for range in v2.iter() {
-                    match range {
-                        Range::Single(value) => {
-                            if value < &min2 {
-                                min2 = *value;
-                            }
-                            if value > &max2 {
-                                max2 = *value;
-                            }
-                        }
-                        Range::Bounded(start, end) => {
-                            if start < &min2 {
-                                min2 = *start;
-                            }
-                            if end > &max2 {
-                                max2 = *end;
-                            }
-                        }
-                        Range::UnboundedL(end) => {
-                            min2 = -i32::MAX;
-                            if end > &max2 {
-                                max2 = *end;
-                            }
-                        }
-                        Range::UnboundedR(start) => {
-                            if start < &min2 {
-                                min2 = *start;
-                            }
-                            max2 = i32::MAX;
-                        }
-                    }
-                }
-                if min1 < min2 {
-                    min = min1;
+                    return self.make_int_domain_from_values_i32(&v);
                 } else {
-                    min = min2;
+                    println!("Unbounded Domain");
+                    return None;
                 }
-                if max1 > max2 {
-                    max = max1;
-                } else {
-                    max = max2
-                }
-
-                Some(Domain::IntDomain(vec![Range::Bounded(min, max)]))
             }
             _ => None,
         }
