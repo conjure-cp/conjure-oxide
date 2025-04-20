@@ -16,11 +16,6 @@ use std::collections::BTreeMap;
 use std::env;
 use std::error::Error;
 use std::fs;
-use std::fs::File;
-use tracing::{span, Level, Metadata as OtherMetadata};
-use tracing_subscriber::{
-    filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
-};
 use tree_morph::{helpers::select_panic, prelude::*};
 
 use uniplate::Biplate;
@@ -129,12 +124,6 @@ impl TestConfig {
 }
 
 fn main() {
-    let _guard = create_scoped_subscriber("./logs", "test_log");
-
-    // creating a span and log a message
-    let test_span = span!(Level::TRACE, "test_span");
-    let _enter: span::Entered<'_> = test_span.enter();
-
     for entry in glob("conjure_oxide/tests/integration/*").expect("Failed to read glob pattern") {
         match entry {
             Ok(path) => println!("File: {:?}", path),
@@ -161,7 +150,6 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
 
-    let subscriber = create_scoped_subscriber(path, essence_base);
     // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
     // correctly
     //
@@ -170,15 +158,9 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     if verbose || accept {
         let _guard = GUARD.lock().unwrap_or_else(|e| e.into_inner());
 
-        // set the subscriber as default
-        tracing::subscriber::with_default(subscriber, || {
-            integration_test_inner(path, essence_base, extension)
-        })
+        integration_test_inner(path, essence_base, extension)
     } else {
-        let subscriber = create_scoped_subscriber(path, essence_base);
-        tracing::subscriber::with_default(subscriber, || {
-            integration_test_inner(path, essence_base, extension)
-        })
+        integration_test_inner(path, essence_base, extension)
     }
 }
 
@@ -656,53 +638,6 @@ fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
         "assert_vector_operators_have_partially_evaluated: expression {} is not partially evaluated",
         parent_expr
     );
-}
-
-pub fn create_scoped_subscriber(
-    path: &str,
-    test_name: &str,
-) -> (impl tracing::Subscriber + Send + Sync) {
-    let target1_layer = create_file_layer_json(path, test_name);
-    let target2_layer = create_file_layer_human(path, test_name);
-    let layered = target1_layer.and_then(target2_layer);
-
-    let subscriber = Arc::new(tracing_subscriber::registry().with(layered))
-        as Arc<dyn tracing::Subscriber + Send + Sync>;
-    // setting this subscriber as the default
-    let _default = tracing::subscriber::set_default(subscriber.clone());
-
-    subscriber
-}
-
-fn create_file_layer_json(path: &str, test_name: &str) -> impl Layer<Registry> + Send + Sync {
-    let file = File::create(format!("{path}/{test_name}-generated-rule-trace.json"))
-        .expect("Unable to create log file");
-
-    let layer1 = fmt::layer()
-        .with_writer(file)
-        .with_level(false)
-        .with_target(false)
-        .without_time()
-        .with_filter(FilterFn::new(|meta: &OtherMetadata| {
-            meta.target() == "rule_engine"
-        }));
-
-    layer1
-}
-
-fn create_file_layer_human(path: &str, test_name: &str) -> (impl Layer<Registry> + Send + Sync) {
-    let file = File::create(format!("{path}/{test_name}-generated-rule-trace-human.txt"))
-        .expect("Unable to create log file");
-
-    let layer2 = fmt::layer()
-        .with_writer(file)
-        .with_level(false)
-        .without_time()
-        .with_target(false)
-        .with_filter(EnvFilter::new("rule_engine_human=trace"))
-        .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human"));
-
-    layer2
 }
 
 #[test]

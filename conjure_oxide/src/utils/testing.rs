@@ -186,20 +186,6 @@ pub fn read_solutions_json(
     Ok(expected_solutions)
 }
 
-// pub fn read_json_rule_trace(
-//     path: &str,
-//     test_name: &str,
-//     prefix: &str,
-// ) -> Result<JsonValue, anyhow::Error> {
-//     let generated_json_rules =
-//         std::fs::read_to_string(format!("{path}/{test_name}.{prefix}-rules.protrace.json"))?;
-
-//     let generated_rules: JsonValue =
-//         sort_json_object(&serde_json::from_str(&generated_json_rules)?, true);
-
-//     Ok(generated_rules)
-// }
-
 pub fn read_json_rule_trace(
     path: &str,
     test_name: &str,
@@ -221,6 +207,7 @@ pub fn read_json_rule_trace(
 
     Ok(sorted_rules)
 }
+
 fn remove_id_fields(value: &mut JsonValue) {
     match value {
         JsonValue::Object(map) => {
