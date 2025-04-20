@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use clap::{arg, command, Args, Parser, Subcommand};
 
+use clap_complete::Shell;
 use conjure_core::pro_trace::{Kind, VerbosityLevel};
 use conjure_oxide::SolverFamily;
 
@@ -25,6 +26,8 @@ pub enum Command {
     ///
     /// Return-code will be 0 if the solutions match, 1 if they don't, and >1 on crash.
     TestSolve(test_solve::Args),
+    /// Generate a completion script for the shell provided
+    Completion(CompletionArgs),
 }
 
 /// Global command line arguments.
@@ -149,4 +152,20 @@ pub struct GlobalArgs {
         help = "Filter trace messages by given kind"
     )]
     pub kind_filter: Option<Kind>,
+}
+
+#[derive(Debug, Clone, Args)]
+pub struct CompletionArgs {
+    /// Shell type for which to generate the completion script
+    #[arg(value_enum)]
+    pub shell: Shell,
+}
+
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+pub enum ShellTypes {
+    Bash,
+    Zsh,
+    Fish,
+    PowerShell,
+    Elvish,
 }
