@@ -29,6 +29,7 @@ use conjure_oxide::{
     SolverFamily,
 };
 use serde_json::to_string_pretty;
+use tracing::enabled;
 
 use crate::cli::GlobalArgs;
 
@@ -62,6 +63,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     let input_file = solve_args.input_file.clone();
 
     set_kind_filter(global_args.kind_filter.clone());
+
     // Determining the file for the output of the trace
 
     let files = specify_trace_files(
@@ -133,7 +135,11 @@ pub(crate) fn init_context(
     let rule_sets = match resolve_rule_sets(target_family, &extra_rule_sets) {
         Ok(rs) => rs,
         Err(e) => {
-            tracing::error!("Error resolving rule sets: {}", e);
+            display_message(
+                format!("Error resolving rule sets: {}", e),
+                None,
+                Kind::Error,
+            );
             exit(1);
         }
     };
@@ -144,19 +150,45 @@ pub(crate) fn init_context(
         .collect::<Vec<_>>()
         .join(", ");
 
-    tracing::info!("Enabled rule sets: [{}]", pretty_rule_sets);
-    tracing::info!(
-        target: "file",
-        "Rule sets: {}",
-        pretty_rule_sets
+    display_message(
+        format!("Enabled rule sets: [{}]\n", pretty_rule_sets),
+        None,
+        Kind::Rules,
     );
 
-    let rules = get_rules(&rule_sets)?.into_iter().collect::<Vec<_>>();
-    tracing::info!(
-        target: "file",
-        "Rules: {}",
-        rules.iter().map(|rd| format!("{}", rd)).collect::<Vec<_>>().join("\n")
+    display_message(
+        format!("Rule sets: {}\n", pretty_rule_sets),
+        None,
+        Kind::Rules,
     );
+
+    // tracing::info!(
+    //     target: "file",
+    //     "Rule sets: {}",
+    //     pretty_rule_sets
+    // );
+
+    let rules = get_rules(&rule_sets)?.into_iter().collect::<Vec<_>>();
+
+    // tracing::info!(
+    //     target: "file",
+    //     "Rules: {}",
+    //     rules.iter().map(|rd| format!("{}", rd)).collect::<Vec<_>>().join("\n")
+    // );
+
+    display_message(
+        format!(
+            "Rules: {}\n",
+            rules
+                .iter()
+                .map(|rd| format!("{}", rd))
+                .collect::<Vec<_>>()
+                .join("\n")
+        ),
+        None,
+        Kind::Rules,
+    );
+
     let context = Context::new_ptr(
         target_family,
         extra_rule_sets.iter().map(|rs| rs.to_string()).collect(),
@@ -180,7 +212,6 @@ pub(crate) fn parse(
         .clone()
         .expect("context should contain the input file");
 
-    tracing::info!(target: "file", "Input file: {}", input_file);
     if global_args.enable_native_parser {
         parse_essence_file_native(input_file.as_str(), context.clone()).map_err(|e| anyhow!(e))
     } else {
@@ -216,12 +247,9 @@ pub(crate) fn rewrite(
     context: Arc<RwLock<Context<'static>>>,
     consumer: Option<Consumer>,
 ) -> anyhow::Result<Model> {
-    tracing::info!("Initial model: \n{}\n", model);
     display_message(format!("Initial model: \n{}\n", model), None, Kind::Model);
-    tracing::info!("Rewriting model...");
 
     let rule_sets = context.read().unwrap().rule_sets.clone();
-    tracing::info!("Rewriting model...");
     let new_model = rewrite_naive(
         &model,
         &rule_sets,
@@ -229,7 +257,6 @@ pub(crate) fn rewrite(
         consumer,
     )?;
 
-    tracing::info!("Rewritten model: \n{}\n", new_model);
     display_message(
         format!("Rewritten model: \n{}\n", new_model),
         None,
@@ -252,17 +279,12 @@ fn run_minion(cmd_args: &Args, model: Model) -> anyhow::Result<()> {
     };
 
     let solutions = get_minion_solutions(model, cmd_args.number_of_solutions)?;
-    tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
 
     let solutions_json = solutions_to_json(&solutions);
     let solutions_str = to_string_pretty(&solutions_json)?;
     match out_file {
         None => {
-            display_message(
-                format!("Solutions:\n{}", solutions_str),
-                None,
-                Kind::Default,
-            );
+            println!("Solutions:\n{}", solutions_str);
         }
         Some(mut outf) => {
             outf.write_all(solutions_str.as_bytes())?;
@@ -288,7 +310,6 @@ fn run_sat_solver(cmd_args: &Args, model: Model) -> anyhow::Result<()> {
     };
 
     let solutions = get_sat_solutions(model, cmd_args.number_of_solutions)?;
-    tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
 
     let solutions_json = solutions_to_json(&solutions);
     let solutions_str = to_string_pretty(&solutions_json)?;

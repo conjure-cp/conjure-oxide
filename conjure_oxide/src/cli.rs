@@ -147,9 +147,10 @@ pub struct GlobalArgs {
     pub trace_file: Option<Vec<String>>,
 
     #[arg(
-        long = "filter-message-by-kind",
+        long = "get-info-about",
         global = true,
-        help = "Filter trace messages by given kind"
+        value_delimiter = ' ',
+        help = "Filter messages by given kind"
     )]
     pub kind_filter: Option<Kind>,
 }

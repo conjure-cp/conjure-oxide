@@ -40,91 +40,91 @@ pub fn run() -> anyhow::Result<()> {
         return Ok(());
     }
 
-    setup_logging(&cli.global_args)?;
+    // setup_logging(&cli.global_args)?;
 
     run_subcommand(cli)
 }
 
-fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
-    // Logging:
-    //
-    // Using `tracing` framework, but this automatically reads stuff from `log`.
-    //
-    // A Subscriber is responsible for logging.
-    //
-    // It consists of composable layers, each of which logs to a different place in a different
-    // format.
-    let json_log_file = File::options()
-        .create(true)
-        .append(true)
-        .open("conjure_oxide_log.json")?;
+// fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
+//     // Logging:
+//     //
+//     // Using `tracing` framework, but this automatically reads stuff from `log`.
+//     //
+//     // A Subscriber is responsible for logging.
+//     //
+//     // It consists of composable layers, each of which logs to a different place in a different
+//     // format.
+//     let json_log_file = File::options()
+//         .create(true)
+//         .append(true)
+//         .open("conjure_oxide_log.json")?;
 
-    let log_file = File::options()
-        .create(true)
-        .append(true)
-        .open("conjure_oxide.log")?;
+//     let log_file = File::options()
+//         .create(true)
+//         .append(true)
+//         .open("conjure_oxide.log")?;
 
-    // get log level from env-var RUST_LOG
+//     // get log level from env-var RUST_LOG
 
-    let json_layer = tracing_subscriber::fmt::layer()
-        .json()
-        .with_writer(Arc::new(json_log_file))
-        .with_filter(LevelFilter::TRACE);
+//     let json_layer = tracing_subscriber::fmt::layer()
+//         .json()
+//         .with_writer(Arc::new(json_log_file))
+//         .with_filter(LevelFilter::TRACE);
 
-    let file_layer = tracing_subscriber::fmt::layer()
-        .compact()
-        .with_ansi(false)
-        .with_writer(Arc::new(log_file))
-        .with_filter(LevelFilter::TRACE);
+//     let file_layer = tracing_subscriber::fmt::layer()
+//         .compact()
+//         .with_ansi(false)
+//         .with_writer(Arc::new(log_file))
+//         .with_filter(LevelFilter::TRACE);
 
-    let default_stderr_level = if global_args.verbose {
-        LevelFilter::DEBUG
-    } else {
-        LevelFilter::WARN
-    };
+//     let default_stderr_level = if global_args.verbose {
+//         LevelFilter::DEBUG
+//     } else {
+//         LevelFilter::WARN
+//     };
 
-    let env_filter = EnvFilter::builder()
-        .with_default_directive(default_stderr_level.into())
-        .from_env_lossy();
+//     let env_filter = EnvFilter::builder()
+//         .with_default_directive(default_stderr_level.into())
+//         .from_env_lossy();
 
-    let stderr_layer = if global_args.verbose {
-        Layer::boxed(
-            tracing_subscriber::fmt::layer()
-                .pretty()
-                .with_writer(Arc::new(std::io::stderr()))
-                .with_ansi(true)
-                .with_filter(env_filter),
-        )
-    } else {
-        Layer::boxed(
-            tracing_subscriber::fmt::layer()
-                .compact()
-                .with_writer(Arc::new(std::io::stderr()))
-                .with_ansi(true)
-                .with_filter(env_filter),
-        )
-    };
+//     let stderr_layer = if global_args.verbose {
+//         Layer::boxed(
+//             tracing_subscriber::fmt::layer()
+//                 .pretty()
+//                 .with_writer(Arc::new(std::io::stderr()))
+//                 .with_ansi(true)
+//                 .with_filter(env_filter),
+//         )
+//     } else {
+//         Layer::boxed(
+//             tracing_subscriber::fmt::layer()
+//                 .compact()
+//                 .with_writer(Arc::new(std::io::stderr()))
+//                 .with_ansi(true)
+//                 .with_filter(env_filter),
+//         )
+//     };
 
-    let human_rule_trace_layer = global_args.human_rule_trace.clone().map(|x| {
-        let file = File::create(x).expect("Unable to create rule trace file");
-        fmt::layer()
-            .with_writer(file)
-            .with_level(false)
-            .without_time()
-            .with_target(false)
-            .with_filter(EnvFilter::new("rule_engine_human=trace"))
-            .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human"))
-    });
-    // load the loggers
-    tracing_subscriber::registry()
-        .with(json_layer)
-        .with(stderr_layer)
-        .with(file_layer)
-        .with(human_rule_trace_layer)
-        .init();
+//     let human_rule_trace_layer = global_args.human_rule_trace.clone().map(|x| {
+//         let file = File::create(x).expect("Unable to create rule trace file");
+//         fmt::layer()
+//             .with_writer(file)
+//             .with_level(false)
+//             .without_time()
+//             .with_target(false)
+//             .with_filter(EnvFilter::new("rule_engine_human=trace"))
+//             .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human"))
+//     });
+//     // load the loggers
+//     tracing_subscriber::registry()
+//         .with(json_layer)
+//         .with(stderr_layer)
+//         .with(file_layer)
+//         .with(human_rule_trace_layer)
+//         .init();
 
-    Ok(())
-}
+//     Ok(())
+// }
 
 fn run_completion_command(completion_args: cli::CompletionArgs) -> anyhow::Result<()> {
     let mut cmd = Cli::command();

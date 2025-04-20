@@ -1,7 +1,7 @@
 use crate::ast::Expression;
 use crate::Model;
-// use once_cell::sync::Lazy;
 use clap::ValueEnum;
+use colored::*;
 use serde_json;
 use std::any::Any;
 use std::fmt::write;
@@ -11,12 +11,11 @@ use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::{fmt, fs::OpenOptions, io::Write};
 
-// Values for different kinds of trace messages
+// Values for different kinds of messages
 #[derive(PartialEq, Clone, Debug, ValueEnum)]
 pub enum Kind {
     Parser,
-    RuleAttempt,
-    RuleSuccess,
+    Rules,
     Error,
     Solver,
     Model,
@@ -316,66 +315,6 @@ pub fn capture_trace(consumer: &Consumer, trace: TraceType) {
     }
 }
 
-/// Creates a consumer for tracing functionality based on the desired type(file/stdout), format (human/json) and verbosity of the output
-// pub fn create_consumer(
-//     consumer_type: &str,
-//     verbosity: VerbosityLevel,
-//     output_format: &str,
-//     json_file_path: String,
-//     human_file_path: String,
-// ) -> Consumer {
-//     let (formatter, formatter_type): (Arc<dyn MessageFormatter>, FormatterType) =
-//         match output_format.to_lowercase().as_str() {
-//             "json" => (Arc::new(JsonFormatter), FormatterType::Json),
-//             "human" => (Arc::new(HumanFormatter), FormatterType::Human),
-//             other => panic!("Unknown format type: {}", other),
-//         };
-
-//     match consumer_type.to_lowercase().as_str() {
-//         "stdout" => Consumer::StdoutConsumer(StdoutConsumer {
-//             formatter,
-//             verbosity,
-//         }),
-//         "file" => {
-//             let path = PathBuf::from(&file_path);
-//             if path.exists() {
-//                 fs::remove_file(&path).unwrap();
-//             }
-
-//             // Create the file if it doesn't exist
-//             File::create(&path).unwrap();
-
-//             Consumer::FileConsumer(FileConsumer {
-//                 formatter,
-//                 formatter_type,
-//                 verbosity,
-//                 file_path,
-//                 is_first: std::cell::Cell::new(true), // for json formatting, trust me
-//             })
-//         }
-//         "both" => {
-//             let path = PathBuf::from(&file_path);
-//             if path.exists() {
-//                 fs::remove_file(&path).unwrap();
-//             }
-
-//             Consumer::BothConsumer(BothConsumer {
-//                 stdout_consumer: StdoutConsumer {
-//                     formatter: formatter.clone(),
-//                     verbosity: verbosity.clone(),
-//                 },
-//                 file_consumer: FileConsumer {
-//                     formatter,
-//                     formatter_type,
-//                     verbosity,
-//                     file_path,
-//                     is_first: std::cell::Cell::new(true), // for JSON formatting
-//                 },
-//             })
-//         }
-//         other => panic!("Unknown consumer type: {}", other),
-//     }
-// }
 pub fn create_consumer(
     consumer_type: &str,
     verbosity: VerbosityLevel,
@@ -580,7 +519,7 @@ pub fn json_trace_close(json_path: Option<String>) {
 /// If a file is specified, the message will be written there, otherwise it will be printed out to the terminal
 pub fn display_message(message: String, file_path: Option<String>, kind: Kind) {
     if let Some(filter) = get_kind_filter() {
-        if kind != filter {
+        if kind != filter && kind != Kind::Default {
             return;
         }
     }
@@ -596,7 +535,11 @@ pub fn display_message(message: String, file_path: Option<String>, kind: Kind) {
             eprintln!("Error writing to file: {}", e);
         }
     } else {
-        println!("{}", message);
+        let colored_message = match kind {
+            Kind::Error => message.red(),
+            _ => message.green(),
+        };
+        println!("{}", colored_message);
     }
 }
 

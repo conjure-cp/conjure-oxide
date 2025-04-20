@@ -28,14 +28,14 @@ pub fn get_minion_solutions(
     num_sols: i32,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
     let solver = Solver::new(Minion::new());
-    display_message("Building Minion model...".to_string(), None, Kind::Default);
+    println!("Building Minion model...");
 
     // for later...
     let symbols_rc = Rc::clone(model.as_submodel().symbols_ptr_unchecked());
 
     let solver = solver.load_model(model)?;
 
-    display_message("Running Minion...".to_string(), None, Kind::Default);
+    println!("Running Minion...");
 
     let all_solutions_ref = Arc::new(Mutex::<Vec<BTreeMap<Name, Literal>>>::new(vec![]));
     let all_solutions_ref_2 = all_solutions_ref.clone();
@@ -115,10 +115,10 @@ pub fn get_sat_solutions(
     num_sols: i32,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
     let solver = Solver::new(SAT::default());
-    display_message("Building SAT model...".to_string(), None, Kind::Solver);
+    println!("Building SAT model...");
     let solver = solver.load_model(model)?;
 
-    display_message("Running SAT...".to_string(), None, Kind::Solver);
+    println!("Running SAT...");
 
     let all_solutions_ref = Arc::new(Mutex::<Vec<BTreeMap<Name, Literal>>>::new(vec![]));
     let all_solutions_ref_2 = all_solutions_ref.clone();
