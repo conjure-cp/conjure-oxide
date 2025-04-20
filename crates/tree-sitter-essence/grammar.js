@@ -35,6 +35,9 @@ module.exports = grammar ({
 
     variable: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
 
+    //meta-variable (aka template argument)
+    metavar: $ => seq("&", $.variable),
+
     //find statements
     find_statement_list: $ => seq("find", repeat($.find_statement)),
 
@@ -101,6 +104,7 @@ module.exports = grammar ({
 
     expression: $ => choice(
       seq("(", $.expression, ")"),
+      $.metavar,
       $.not_expr,
       $.abs_value,
       $.exponent,
