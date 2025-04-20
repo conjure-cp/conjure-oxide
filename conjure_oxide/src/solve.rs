@@ -232,9 +232,9 @@ pub(crate) fn parse(
         let astjson = String::from_utf8(output.stdout)?;
 
         if cfg!(feature = "extra-rule-checks") {
-            tracing::info!("extra-rule-checks: enabled");
+            display_message("extra-rule-checks: enabled".to_string(), None, Kind::Rules);
         } else {
-            tracing::info!("extra-rule-checks: disabled");
+            display_message("extra-rule-checks: disabled".to_string(), None, Kind::Rules);
         }
 
         model_from_json(&astjson, context.clone()).map_err(|e| anyhow!(e))
