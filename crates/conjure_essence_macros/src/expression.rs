@@ -236,7 +236,7 @@ pub fn parse_expr_to_ts(
                 .ok_or("Expected name for meta-variable".to_string())?;
             let name = &source_code[inner.start_byte()..inner.end_byte()];
             let ident = Ident::new(name, Span::call_site());
-            Ok(quote! {#ident.into()})
+            Ok(quote! {#ident.clone().into()})
         }
         _ => Err(format!("{} is not a recognized node kind", constraint.kind()).into()),
     }

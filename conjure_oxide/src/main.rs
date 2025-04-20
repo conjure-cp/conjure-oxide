@@ -3,11 +3,13 @@ mod cli;
 mod print_info_schema;
 mod solve;
 mod test_solve;
-use clap::Parser as _;
+use clap::{CommandFactory, Parser};
+use clap_complete::generate;
 use cli::{Cli, GlobalArgs};
 use print_info_schema::run_print_info_schema_command;
 use solve::run_solve_command;
 use std::fs::File;
+use std::io;
 use std::process::exit;
 use std::sync::Arc;
 use test_solve::run_test_solve_command;
@@ -125,6 +127,17 @@ fn setup_logging(global_args: &GlobalArgs) -> anyhow::Result<()> {
     Ok(())
 }
 
+fn run_completion_command(completion_args: cli::CompletionArgs) -> anyhow::Result<()> {
+    let mut cmd = Cli::command();
+    let shell = completion_args.shell;
+    let name = cmd.get_name().to_string();
+
+    eprintln!("Generating completion for {}...", shell);
+
+    generate(shell, &mut cmd, name, &mut io::stdout());
+    Ok(())
+}
+
 /// Runs the selected subcommand
 fn run_subcommand(cli: Cli) -> anyhow::Result<()> {
     let global_args = cli.global_args;
@@ -132,6 +145,7 @@ fn run_subcommand(cli: Cli) -> anyhow::Result<()> {
         cli::Command::Solve(solve_args) => run_solve_command(global_args, solve_args),
         cli::Command::TestSolve(local_args) => run_test_solve_command(global_args, local_args),
         cli::Command::PrintJsonSchema => run_print_info_schema_command(),
+        cli::Command::Completion(completion_args) => run_completion_command(completion_args),
     }
 }
 

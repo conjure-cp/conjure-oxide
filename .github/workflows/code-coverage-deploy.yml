@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Set shas
         id: sha
@@ -43,7 +43,7 @@ jobs:
 
 
       - name: Download artifact
-        uses: dawidd6/action-download-artifact@v6
+        uses: dawidd6/action-download-artifact@v9
         with:
           name: code-coverage-${{ steps.sha.outputs.result }}
           workflow: code-coverage.yml
@@ -63,10 +63,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Checkout the pages repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           ref: "gh-pages"
           path: "pages"
@@ -103,7 +103,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: actions/cache@v3
         with:
           path: |
@@ -137,7 +137,7 @@ jobs:
             return callee_run.head_sha;
 
       - name: Download artifact
-        uses: dawidd6/action-download-artifact@v6
+        uses: dawidd6/action-download-artifact@v9
         with:
           name: code-coverage-${{ steps.sha.outputs.result }}
           workflow: code-coverage.yml
@@ -206,14 +206,14 @@ jobs:
           echo 'EOFABC' >> $GITHUB_OUTPUT
 
       - name: Download doc coverage summary for PR
-        uses: dawidd6/action-download-artifact@v7
+        uses: dawidd6/action-download-artifact@v9
         with:
           workflow: code-coverage.yml
           pr: ${{steps.prnum.outputs.num}}
           name: pr-doc-coverage-summary
 
       - name: Download doc coverage summary for main
-        uses: dawidd6/action-download-artifact@v7
+        uses: dawidd6/action-download-artifact@v9
         with:
           workflow: code-coverage-main.yml
           branch: main
@@ -241,7 +241,7 @@ jobs:
 
 
       - name: Find coverage comment
-        uses: peter-evans/find-comment@v1
+        uses: peter-evans/find-comment@v3
         continue-on-error: true
         id: fc
         with:
@@ -328,7 +328,7 @@ jobs:
 
       - name: Create coverage comment (no previous lcov)
         if: steps.find_artifacts.outputs.result == '[]'
-        uses: peter-evans/create-or-update-comment@v1
+        uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ steps.prnum.outputs.num }}
           body: |
@@ -369,7 +369,7 @@ jobs:
 
       - name: Create coverage comment (previous lcov)
         if: steps.find_artifacts.outputs.result != '[]'
-        uses: peter-evans/create-or-update-comment@v1
+        uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ steps.prnum.outputs.num }}
           body: |
