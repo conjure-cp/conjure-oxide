@@ -2,10 +2,10 @@ use std::collections::VecDeque;
 use std::process::exit;
 use std::rc::Rc;
 
+use conjure_core::rule_engine::get_all_rules;
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_core::solver::SolverFamily;
 use conjure_core::{into_matrix_expr, matrix_expr};
-use conjure_core::{rule_engine::get_all_rules, rules::eval_constant};
 use conjure_oxide::{
     ast::*,
     get_rule_by_name,
@@ -13,6 +13,7 @@ use conjure_oxide::{
     solver::{adaptors, Solver},
     Metadata, Model, Rule,
 };
+use conjure_rules::eval_constant;
 use uniplate::{Biplate, Uniplate};
 
 fn var_name_from_atom(a: &Atom) -> Name {

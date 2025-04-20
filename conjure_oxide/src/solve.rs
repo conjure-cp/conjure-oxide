@@ -9,6 +9,7 @@ use std::{
 };
 
 use anyhow::{anyhow, ensure};
+use clap::ValueHint;
 use conjure_core::{
     context::Context,
     rule_engine::{resolve_rule_sets, rewrite_naive},
@@ -17,11 +18,8 @@ use conjure_core::{
 use conjure_oxide::{
     defaults::DEFAULT_RULE_SETS,
     find_conjure::conjure_executable,
-    get_rules, model_from_json,
-    utils::{
-        conjure::{get_minion_solutions, get_sat_solutions, solutions_to_json},
-        essence_parser::parse_essence_file_native,
-    },
+    get_rules, model_from_json, parse_essence_file_native,
+    utils::conjure::{get_minion_solutions, get_sat_solutions, solutions_to_json},
     SolverFamily,
 };
 use serde_json::to_string_pretty;
@@ -31,11 +29,11 @@ use crate::cli::GlobalArgs;
 #[derive(Clone, Debug, clap::Args)]
 pub struct Args {
     /// The input Essence file
-    #[arg(value_name = "INPUT_ESSENCE")]
+    #[arg(value_name = "INPUT_ESSENCE", value_hint = ValueHint::FilePath)]
     pub input_file: PathBuf,
 
     /// Save execution info as JSON to the given filepath.
-    #[arg(long)]
+    #[arg(long ,value_hint=ValueHint::FilePath)]
     pub info_json_path: Option<PathBuf>,
 
     /// Do not run the solver.
@@ -50,7 +48,7 @@ pub struct Args {
     pub number_of_solutions: i32,
 
     /// Save solutions to the given JSON file
-    #[arg(long, short = 'o')]
+    #[arg(long, short = 'o', value_hint = ValueHint::FilePath)]
     pub output: Option<PathBuf>,
 }
 
