@@ -13,7 +13,7 @@ for rewrite_cat in os.listdir(perform_dir):
         except OSError:
             pass
         csv = open(filename, 'a')
-        csv.write("solver,solver_time,solver_nodes,rewriter_time,total_time")
+        csv.write("test,solver,solver_time,solver_nodes,rewriter_time,total_time")
         for test_dir in os.listdir(rewrite_cat_path):
             test_dir_path = os.path.join(rewrite_cat_path, test_dir)
             if os.path.isdir(test_dir_path):
@@ -30,14 +30,15 @@ for rewrite_cat in os.listdir(perform_dir):
                         rewriter_runtime = rewrite_stats.get('rewriterRunTime',[])
                         rewriter_time = round(float((rewriter_runtime.get('secs',0)) + (rewriter_runtime.get('nanos',0)/10**9)),3)
                         total_time = round(float(rewriter_time + solver_time),3)
-                        csv.write("\n" + solver + "," + str(solver_time) + "," + str(solver_nodes) + "," + str(rewriter_time) + "," + str(total_time))
+                        csv.write("\n" + test_dir + "," + solver + "," + str(solver_time) + "," + str(solver_nodes) + "," + str(rewriter_time) + "," + str(total_time))
                 if conjure_stats:
                     with open(conjure_stats[0], 'r') as f:
                         conjure_data = json.load(f)
                         savile_row_stats = conjure_data.get('savilerowInfo', 0)
                         solver = conjure_data.get('solver', "")
                         solver_nodes = savile_row_stats.get('SolverNodes', 0)
-                        solver_time = round(float(savile_row_stats.get('SavileRowTotalTime', 0)),3)
-                        rewriter_time = round(float(savile_row_stats.get('SolverTotalTime', 0)),3)
+                        rewriter_time = round(float(savile_row_stats.get('SavileRowTotalTime', 0)),3)
+                        print(rewriter_time);
+                        solver_time = round(float(savile_row_stats.get('SolverTotalTime', 0)),3)
                         total_time = round((rewriter_time + solver_time),3)
-                        csv.write("\n" + solver + "," + str(solver_time) + "," + str(solver_nodes) + "," + str(rewriter_time) + "," + str(total_time))
+                        csv.write("\n" + test_dir + "," + solver + "," + str(solver_time) + "," + str(solver_nodes) + "," + str(rewriter_time) + "," + str(total_time))

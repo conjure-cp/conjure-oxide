@@ -21,7 +21,7 @@ mkdir $NV_DATA_DIR
 
 pushd $TEST_DIR 
 for prob in *; do #go through all tests folders in directory
-    find $prob -name *.essence | #go through all essence files for this problem, best if only 1
+    find $prob -name *.essence -o -name *.eprime | #go through all essence files for this problem, best if only 1
     while read essence
     do
         # echo "essence file name $essence" #full path to file
