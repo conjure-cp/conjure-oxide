@@ -111,7 +111,7 @@ fn main() -> io::Result<()> {
             && read_dir(subdir.path())
                 .unwrap_or_else(|_| std::fs::read_dir(subdir.path()).unwrap())
                 .filter_map(Result::ok)
-                .any(|entry| entry.file_name() == "run.sh" && entry.path().is_file()) 
+                .any(|entry| entry.file_name() == "run.sh" && entry.path().is_file())
         {
             write_custom_test(&mut f, subdir.path().display().to_string())?;
         }
