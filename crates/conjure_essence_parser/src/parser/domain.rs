@@ -14,6 +14,8 @@ pub fn parse_domain(domain: Node, source_code: &str) -> Domain {
             let variable_name = &source_code[domain.start_byte()..domain.end_byte()];
             Domain::DomainReference(Name::UserName(String::from(variable_name)))
         }
+        "tuple_domain" => parse_tuple_domain(domain, source_code),
+        "matrix_domain" => parse_matrix_domain(domain, source_code),
         _ => panic!("Not bool or int domain"),
     }
 }
@@ -86,4 +88,31 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
         }
         Domain::IntDomain(ranges)
     }
+}
+
+fn parse_tuple_domain(
+    tuple_domain: Node,
+    source_code: &str,
+) -> Domain {
+    let mut domains: Vec<Domain> = Vec::new();
+    for domain in named_children(&tuple_domain) {
+        domains.push(parse_domain(domain, source_code));
+    }
+    Domain::DomainTuple(domains)
+}
+
+fn parse_matrix_domain(
+    matrix_domain: Node,
+    source_code: &str,
+) -> Domain {
+    let mut domains: Vec<Domain> = Vec::new();
+    let mut index_domains = matrix_domain.named_child_count() - 1;
+    for domain in named_children(&matrix_domain) {
+        if (index_domains > 0) {
+            domains.push(parse_domain(domain, source_code));
+        }
+        index_domains -= 1;
+    }
+    let value_domain = parse_domain(matrix_domain.child_by_field_name("value_domain").expect("No value domain found for matrix domain"), source_code);
+    Domain::DomainMatrix(Box::new(value_domain), domains)
 }
