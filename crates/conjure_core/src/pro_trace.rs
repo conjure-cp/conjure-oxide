@@ -166,10 +166,10 @@ impl MessageFormatter for HumanFormatter {
         match trace {
             TraceType::RuleTrace(rule_trace) => {
                 let rule_filter_matches =
-                    get_rule_filter().map_or(false, |filter| rule_trace.rule_name == filter);
+                    get_rule_filter().map_or(true, |filter| rule_trace.rule_name == filter);
 
-                let rule_set_filter_matches = get_rule_set_filter()
-                    .map_or(false, |filter| rule_trace.rule_set_name == filter);
+                let rule_set_filter_matches =
+                    get_rule_set_filter().map_or(true, |filter| rule_trace.rule_set_name == filter);
 
                 if !(rule_filter_matches || rule_set_filter_matches) {
                     return String::new();
@@ -194,10 +194,10 @@ impl MessageFormatter for JsonFormatter {
         match trace {
             TraceType::RuleTrace(rule_trace) => {
                 let rule_filter_matches =
-                    get_rule_filter().map_or(false, |filter| rule_trace.rule_name == filter);
+                    get_rule_filter().map_or(true, |filter| rule_trace.rule_name == filter);
 
-                let rule_set_filter_matches = get_rule_set_filter()
-                    .map_or(false, |filter| rule_trace.rule_set_name == filter);
+                let rule_set_filter_matches =
+                    get_rule_set_filter().map_or(true, |filter| rule_trace.rule_set_name == filter);
 
                 if !(rule_filter_matches || rule_set_filter_matches) {
                     return String::new();
