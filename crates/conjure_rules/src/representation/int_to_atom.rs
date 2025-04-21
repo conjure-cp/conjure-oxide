@@ -1,33 +1,24 @@
 use itertools::Itertools;
 
-use super::prelude::*;
+//use super::prelude::*;
+// https://conjure-cp.github.io/conjure-oxide/docs/conjure_core/representation/trait.Representation.html
+use conjure_core::{
+    ast::{
+        matrix, AbstractLiteral, Atom, Declaration, Domain, Expression, Literal, Name, RecordEntry,
+        SymbolTable,
+    },
+    bug, into_matrix,
+    metadata::Metadata,
+    register_representation,
+    representation::{get_repr_rule, Representation},
+    rule_engine::{ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult},
+};
 
 register_representation!(IntToAtom, "int_to_atom");
 
 #[derive(Clone, Debug)]
 pub struct IntToAtom {
     src_var: Name,
-
-    // all the possible indices in this matrix, in order.
-    indices: Vec<Literal>
-}
-
-impl TupleToAtom {
-    /// Returns the names of the representation variable (there must be a much easier way to do this but oh well)
-    fn names(&self) -> impl Iterator<Item = Name> + '_ {
-        self.indices
-            .iter()
-            .map(move |index| self.indices_to_name(&[index.clone()]))
-    }
-
-    /// Gets the representation variable name for a specific set of indices.
-    fn indices_to_name(&self, indices: &[Literal]) -> Name {
-        Name::RepresentedName(
-            Box::new(self.src_var.clone()),
-            self.repr_name().to_string(),
-            indices.iter().join("_"),
-        )
-    }
 }
 
 impl Representation for IntToAtom {
@@ -38,19 +29,22 @@ impl Representation for IntToAtom {
             return None;
         }
 
-        let Domain::DomainTuple(elem_domain) = domain else {
+        let IntDomain(ranges) = domain else {
             return None;
         };
 
-        //indices may not be needed as a field as we can always use the length of the tuple
-        let indices = (1..(elem_domain.len() + 1) as i32)
-            .map(Literal::Int)
-            .collect();
+        // TODO: Change this to allow for all range types
+        if !ranges
+            .iter()
+            .all(|x| matches!(x, Range::Bounded(_, _)) || matches!(x, Range::Single(_)))
+        {
+            return None;
+        }
 
-        Some(TupleToAtom {
+        let indices = (0..32 as i32).map(Literal::Int).collect();
+
+        Some(IntToAtom {
             src_var: name.clone(),
-            indices,
-            elem_domain,
         })
     }
 
@@ -62,19 +56,17 @@ impl Representation for IntToAtom {
         &self,
         value: Literal,
     ) -> Result<std::collections::BTreeMap<Name, Literal>, ApplicationError> {
-        let Literal::AbstractLiteral(tuple) = value else {
-            return Err(ApplicationError::RuleNotApplicable);
-        };
-
-        let AbstractLiteral::Tuple(elems) = tuple else {
+        let Literal::Int(value_i32) = value else {
             return Err(ApplicationError::RuleNotApplicable);
         };
 
         let mut result = std::collections::BTreeMap::new();
 
-        for (i, elem) in elems.into_iter().enumerate() {
-            let name = format!("{}_{}", self.src_var, i + 1);
-            result.insert(Name::from(name), elem);
+        // name_0 is the least significant bit, name_31 is the sign bit
+        for i in 0..32 {
+            let name = format!("{}_{}", self.src_var, i);
+            result.insert(Name::from(name), Literal::Bool(value_i32 & 1));
+            value_i32 >> 1;
         }
 
         Ok(result)
@@ -84,22 +76,31 @@ impl Representation for IntToAtom {
         &self,
         values: &std::collections::BTreeMap<Name, Literal>,
     ) -> Result<Literal, ApplicationError> {
-        let mut tuple = Vec::new();
+        let mut out: i32 = 0;
+        let mut power: u32 = 1;
 
-        for name in self.names() {
-            let value = values
+        for i in 0..32 {
+            let name = format!("{}_{}", self.src_var, i);
+            let Literal::Bool(value) = values
                 .get(&name)
                 .ok_or(ApplicationError::RuleNotApplicable)?;
-            tuple.push(value.clone());
+            if (value) {
+                out += power;
+            }
+            power << 1;
         }
 
-        Ok(Literal::AbstractLiteral(AbstractLiteral::Tuple(tuple)))
+        Ok(Literal::Int(out))
     }
 
     fn expression_down(
         &self,
         _: &SymbolTable,
     ) -> Result<std::collections::BTreeMap<Name, Expression>, ApplicationError> {
+        //TODO create boolean expressions to desribe ranges for each
+        // Each variable is dependent on other variables
+        // Ranges need to be combined, work out union
+        // Account for negative values
         Ok(self
             .names()
             .map(|name| {
@@ -112,6 +113,7 @@ impl Representation for IntToAtom {
     }
 
     fn declaration_down(&self) -> Result<Vec<Declaration>, ApplicationError> {
+        // TODO: work out what these are
         Ok(self
             .names()
             .zip(self.elem_domain.iter().cloned())
