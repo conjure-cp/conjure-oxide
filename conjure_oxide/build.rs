@@ -7,12 +7,16 @@ use walkdir::WalkDir;
 
 fn main() -> io::Result<()> {
     println!("cargo:rerun-if-changed=tests/integration");
+    println!("cargo:rerun-if-changed=tests/custom");
     println!("cargo:rerun-if-changed=tests/gen_test_template");
+    println!("cargo:rerun-if-changed=tests/custom_test_template");
     println!("cargo:rerun-if-changed=build.rs");
+
     let out_dir = var("OUT_DIR").map_err(|e| io::Error::new(io::ErrorKind::Other, e))?; // wrapping in a std::io::Error to match main's error type
+
+    // Integration Tests
     let dest = Path::new(&out_dir).join("gen_tests.rs");
     let mut f = File::create(dest)?;
-
     let test_dir = "tests/integration";
 
     for subdir in WalkDir::new(test_dir) {
@@ -53,7 +57,7 @@ fn main() -> io::Result<()> {
 
                 let essence_files = std::iter::zip(stems, exts).collect();
 
-                write_test(&mut f, subdir.path().display().to_string(), essence_files)?;
+                write_integration_test(&mut f, subdir.path().display().to_string(), essence_files)?;
             } else {
                 let stems: Vec<String> = read_dir(subdir.path())?
                     .filter_map(Result::ok)
@@ -91,15 +95,32 @@ fn main() -> io::Result<()> {
 
                 let essence_files = std::iter::zip(stems, exts).collect();
 
-                write_test(&mut f, subdir.path().display().to_string(), essence_files)?;
+                write_integration_test(&mut f, subdir.path().display().to_string(), essence_files)?;
             }
+        }
+    }
+
+    // Custom Tests
+    let dest_custom = Path::new(&out_dir).join("gen_tests_custom.rs");
+    let mut f = File::create(dest_custom)?;
+    let test_dir = "tests/custom";
+
+    for subdir in WalkDir::new(test_dir) {
+        let subdir = subdir?;
+        if subdir.file_type().is_dir()
+            && read_dir(subdir.path())
+                .unwrap_or_else(|_| std::fs::read_dir(subdir.path()).unwrap())
+                .filter_map(Result::ok)
+                .any(|entry| entry.file_name() == "run.sh" && entry.path().is_file())
+        {
+            write_custom_test(&mut f, subdir.path().display().to_string())?;
         }
     }
 
     Ok(())
 }
 
-fn write_test(
+fn write_integration_test(
     file: &mut File,
     path: String,
     essence_files: Vec<(String, String)>,
@@ -108,7 +129,7 @@ fn write_test(
     if essence_files.len() == 1 {
         write!(
             file,
-            include_str!("./tests/gen_test_template"),
+            include_str!("./tests/integration_test_template"),
             // TODO: better sanitisation of paths to function names
             test_name = path.replace("./", "").replace(['/', '-'], "_"),
             test_dir = path,
@@ -118,4 +139,13 @@ fn write_test(
     } else {
         Ok(())
     }
+}
+
+fn write_custom_test(file: &mut File, path: String) -> io::Result<()> {
+    write!(
+        file,
+        include_str!("./tests/custom_test_template"),
+        test_name = path.replace("./", "").replace(['/', '-'], "_"),
+        test_dir = path
+    )
 }

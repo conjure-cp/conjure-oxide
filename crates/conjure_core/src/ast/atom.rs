@@ -1,6 +1,6 @@
 use std::borrow::Borrow;
 
-use super::{literals::AbstractLiteral, Expression, Literal, Name};
+use super::{literals::AbstractLiteral, records::RecordValue, Expression, Literal, Name};
 use serde::{Deserialize, Serialize};
 use uniplate::derive::Uniplate;
 
@@ -10,6 +10,7 @@ use uniplate::derive::Uniplate;
 #[biplate(to=Literal)]
 #[biplate(to=Expression)]
 #[biplate(to=AbstractLiteral<Literal>,walk_into=[Literal])]
+#[biplate(to=RecordValue<Literal>,walk_into=[Literal])]
 #[biplate(to=Name)]
 pub enum Atom {
     Literal(Literal),
@@ -20,6 +21,16 @@ impl Atom {
     /// Shorthand to create a reference by user name.
     pub fn new_uref(name: &str) -> Atom {
         Atom::Reference(Name::UserName(name.to_string()))
+    }
+
+    /// Shorthand to create an integer literal.
+    pub fn new_ilit(value: i32) -> Atom {
+        Atom::Literal(Literal::Int(value))
+    }
+
+    /// Shorthand to create a boolean literal.
+    pub fn new_blit(value: bool) -> Atom {
+        Atom::Literal(Literal::Bool(value))
     }
 }
 

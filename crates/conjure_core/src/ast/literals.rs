@@ -7,13 +7,15 @@ use std::hash::Hasher;
 use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Tree, Uniplate};
 
-use super::{Atom, Domain, Expression, Range};
+use super::{records::RecordValue, Atom, Domain, Expression, Range};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash)]
 #[uniplate(walk_into=[AbstractLiteral<Literal>])]
 #[biplate(to=Atom)]
 #[biplate(to=AbstractLiteral<Literal>)]
 #[biplate(to=AbstractLiteral<Expression>)]
+#[biplate(to=RecordValue<Literal>,walk_into=[AbstractLiteral<Literal>])]
+#[biplate(to=RecordValue<Expression>)]
 #[biplate(to=Expression)]
 /// A literal value, equivalent to constants in Conjure.
 pub enum Literal {
@@ -22,17 +24,30 @@ pub enum Literal {
     AbstractLiteral(AbstractLiteral<Literal>),
 }
 
+// make possible values of an AbstractLiteral a closed world to make the trait bounds more sane (particularly in Uniplate instances!!)
+pub trait AbstractLiteralValue:
+    Clone + Eq + PartialEq + Display + Uniplate + Biplate<RecordValue<Self>> + 'static
+{
+}
+impl AbstractLiteralValue for Expression {}
+impl AbstractLiteralValue for Literal {}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum AbstractLiteral<T: Uniplate + Biplate<AbstractLiteral<T>> + Biplate<T>> {
+pub enum AbstractLiteral<T: AbstractLiteralValue> {
     Set(Vec<T>),
 
     /// A 1 dimensional matrix slice with an index domain.
     Matrix(Vec<T>, Domain),
+
+    // a tuple of literals
+    Tuple(Vec<T>),
+
+    Record(Vec<RecordValue<T>>),
 }
 
 impl<T> AbstractLiteral<T>
 where
-    T: Uniplate + Biplate<AbstractLiteral<T>> + Biplate<T>,
+    T: AbstractLiteralValue,
 {
     /// Creates a matrix with elements `elems`, with domain `int(1..)`.
     ///
@@ -60,7 +75,7 @@ where
 
 impl<T> Display for AbstractLiteral<T>
 where
-    T: Uniplate + Biplate<AbstractLiteral<T>> + Biplate<T> + Display,
+    T: AbstractLiteralValue,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -71,6 +86,17 @@ where
             AbstractLiteral::Matrix(elems, index_domain) => {
                 let elems_str: String = elems.iter().map(|x| format!("{x}")).join(",");
                 write!(f, "[{elems_str};{index_domain}]")
+            }
+            AbstractLiteral::Tuple(elems) => {
+                let elems_str: String = elems.iter().map(|x| format!("{x}")).join(",");
+                write!(f, "({elems_str})")
+            }
+            AbstractLiteral::Record(entries) => {
+                let entries_str: String = entries
+                    .iter()
+                    .map(|entry| format!("{}: {}", entry.name, entry.value))
+                    .join(",");
+                write!(f, "{{{entries_str}}}")
             }
         }
     }
@@ -88,13 +114,21 @@ impl Hash for AbstractLiteral<Literal> {
                 elems.hash(state);
                 index_domain.hash(state);
             }
+            AbstractLiteral::Tuple(elems) => {
+                2.hash(state);
+                elems.hash(state);
+            }
+            AbstractLiteral::Record(entries) => {
+                3.hash(state);
+                entries.hash(state);
+            }
         }
     }
 }
 
 impl<T> Uniplate for AbstractLiteral<T>
 where
-    T: Uniplate + Biplate<AbstractLiteral<T>> + Biplate<T>,
+    T: AbstractLiteralValue + Biplate<AbstractLiteral<T>>,
 {
     fn uniplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>) {
         // walking into T
@@ -111,6 +145,20 @@ where
                     Box::new(move |x| AbstractLiteral::Matrix(f1_ctx(x), index_domain.clone())),
                 )
             }
+            AbstractLiteral::Tuple(elems) => {
+                let (f1_tree, f1_ctx) = <_ as Biplate<AbstractLiteral<T>>>::biplate(elems);
+                (
+                    f1_tree,
+                    Box::new(move |x| AbstractLiteral::Tuple(f1_ctx(x))),
+                )
+            }
+            AbstractLiteral::Record(entries) => {
+                let (f1_tree, f1_ctx) = <_ as Biplate<AbstractLiteral<T>>>::biplate(entries);
+                (
+                    f1_tree,
+                    Box::new(move |x| AbstractLiteral::Record(f1_ctx(x))),
+                )
+            }
         }
     }
 }
@@ -118,7 +166,8 @@ where
 impl<U, To> Biplate<To> for AbstractLiteral<U>
 where
     To: Uniplate,
-    U: Biplate<To> + Biplate<U> + Biplate<AbstractLiteral<U>>,
+    U: AbstractLiteralValue + Biplate<AbstractLiteral<U>> + Biplate<To>,
+    RecordValue<U>: Biplate<AbstractLiteral<U>> + Biplate<To>,
 {
     fn biplate(&self) -> (Tree<To>, Box<dyn Fn(Tree<To>) -> Self>) {
         if std::any::TypeId::of::<To>() == std::any::TypeId::of::<AbstractLiteral<U>>() {
@@ -151,6 +200,20 @@ where
                     (
                         f1_tree,
                         Box::new(move |x| AbstractLiteral::Matrix(f1_ctx(x), index_domain.clone())),
+                    )
+                }
+                AbstractLiteral::Tuple(elems) => {
+                    let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(elems);
+                    (
+                        f1_tree,
+                        Box::new(move |x| AbstractLiteral::Tuple(f1_ctx(x))),
+                    )
+                }
+                AbstractLiteral::Record(entries) => {
+                    let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(entries);
+                    (
+                        f1_tree,
+                        Box::new(move |x| AbstractLiteral::Record(f1_ctx(x))),
                     )
                 }
             }
@@ -234,6 +297,44 @@ impl AbstractLiteral<Expression> {
                 }
 
                 Some(AbstractLiteral::Matrix(literals, domain))
+            }
+            AbstractLiteral::Tuple(items) => {
+                let mut literals = vec![];
+                for item in items {
+                    let literal = match item {
+                        Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
+                        Expression::AbstractLiteral(_, abslit) => {
+                            Some(Literal::AbstractLiteral(abslit.as_literals()?))
+                        }
+                        _ => None,
+                    }?;
+                    literals.push(literal);
+                }
+
+                Some(AbstractLiteral::Tuple(literals))
+            }
+            AbstractLiteral::Record(entries) => {
+                let mut literals = vec![];
+                for entry in entries {
+                    let literal = match entry.value {
+                        Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
+                        Expression::AbstractLiteral(_, abslit) => {
+                            Some(Literal::AbstractLiteral(abslit.as_literals()?))
+                        }
+                        _ => None,
+                    }?;
+
+                    literals.push((entry.name, literal));
+                }
+                Some(AbstractLiteral::Record(
+                    literals
+                        .into_iter()
+                        .map(|(name, literal)| RecordValue {
+                            name,
+                            value: literal,
+                        })
+                        .collect(),
+                ))
             }
         }
     }

@@ -19,6 +19,7 @@ use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Uniplate as _};
 
 use super::comprehension::Comprehension;
+use super::records::RecordValue;
 use super::{Domain, Range, SubModel, Typeable};
 
 /// Represents different types of expressions used to define rules and constraints in the model.
@@ -37,6 +38,8 @@ use super::{Domain, Range, SubModel, Typeable};
 #[biplate(to=Comprehension)]
 #[biplate(to=AbstractLiteral<Expression>)]
 #[biplate(to=AbstractLiteral<Literal>,walk_into=[Atom])]
+#[biplate(to=RecordValue<Expression>,walk_into=[AbstractLiteral<Expression>])]
+#[biplate(to=RecordValue<Literal>,walk_into=[Atom,Literal,AbstractLiteral<Literal>,AbstractLiteral<Expression>])]
 #[biplate(to=Literal,walk_into=[Atom])]
 pub enum Expression {
     AbstractLiteral(Metadata, AbstractLiteral<Expression>),
@@ -442,11 +445,14 @@ impl Expression {
             Expression::FromSolution(_, expr) => expr.domain_of(syms),
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
-                let Domain::DomainMatrix(elem_domain, _) = matrix.domain_of(syms)? else {
-                    bug!("subject of an index operation should be a matrix");
-                };
-
-                Some(*elem_domain)
+                match matrix.domain_of(syms)? {
+                    Domain::DomainMatrix(elem_domain, _) => Some(*elem_domain),
+                    Domain::DomainTuple(_) => None,
+                    Domain::DomainRecord(_) => None,
+                    _ => {
+                        bug!("subject of an index operation should support indexing")
+                    }
+                }
             }
             Expression::UnsafeSlice(_, matrix, indices)
             | Expression::SafeSlice(_, matrix, indices) => {
@@ -859,6 +865,19 @@ impl From<Atom> for Expression {
         Expression::Atomic(Metadata::new(), value)
     }
 }
+
+impl From<Name> for Expression {
+    fn from(name: Name) -> Self {
+        Expression::Atomic(Metadata::new(), Atom::Reference(name))
+    }
+}
+
+impl From<Box<Expression>> for Expression {
+    fn from(val: Box<Expression>) -> Self {
+        val.as_ref().clone()
+    }
+}
+
 impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {

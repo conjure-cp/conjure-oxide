@@ -9,8 +9,10 @@ use serde_json::Value;
 use serde_json::Value as JsonValue;
 
 use crate::ast::comprehension::{ComprehensionBuilder, ComprehensionKind};
+use crate::ast::records::RecordValue;
 use crate::ast::{
-    AbstractLiteral, Atom, Domain, Expression, Literal, Name, Range, SetAttr, SymbolTable,
+    AbstractLiteral, Atom, Domain, Expression, Literal, Name, Range, RecordEntry, SetAttr,
+    SymbolTable,
 };
 use crate::ast::{Declaration, DeclarationKind};
 use crate::context::Context;
@@ -252,6 +254,58 @@ fn parse_domain(
             }
 
             Ok(Domain::DomainMatrix(Box::new(value_domain), index_domains))
+        }
+        "DomainTuple" => {
+            let domain_value = domain_value
+                .as_array()
+                .ok_or(error!("Domain tuple is not an array"))?;
+
+            //iterate through the array and parse each domain
+            let domain = domain_value
+                .iter()
+                .map(|x| {
+                    let domain = x
+                        .as_object()
+                        .ok_or(error!("DomainTuple[0] is not an object"))?
+                        .iter()
+                        .next()
+                        .ok_or(error!("DomainTuple[0] is an empty object"))?;
+                    parse_domain(domain.0, domain.1, symbols)
+                })
+                .collect::<Result<Vec<Domain>>>()?;
+
+            Ok(Domain::DomainTuple(domain))
+        }
+        "DomainRecord" => {
+            let domain_value = domain_value
+                .as_array()
+                .ok_or(error!("Domain Record is not a json array"))?;
+
+            let mut record_entries = vec![];
+
+            for item in domain_value {
+                //collect the name of the record field
+                let name = item[0]
+                    .as_object()
+                    .ok_or(error!("FindOrGiven[1] is not an object"))?["Name"]
+                    .as_str()
+                    .ok_or(error!("FindOrGiven[1].Name is not a string"))?;
+
+                let name = Name::UserName(name.to_owned());
+                // then collect the domain of the record field
+                let domain = item[1]
+                    .as_object()
+                    .ok_or(error!("FindOrGiven[2] is not an object"))?
+                    .iter()
+                    .next()
+                    .ok_or(error!("FindOrGiven[2] is an empty object"))?;
+
+                let domain = parse_domain(domain.0, domain.1, symbols)?;
+
+                let rec = RecordEntry { name, domain };
+                record_entries.push(rec);
+            }
+            Ok(Domain::DomainRecord(record_entries))
         }
 
         _ => Err(Error::Parse(
@@ -569,6 +623,46 @@ fn parse_abs_lit(abs_set: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Option<Ex
         AbstractLiteral::Set(expressions),
     ))
 }
+
+fn parse_abs_tuple(abs_tuple: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Option<Expression> {
+    let values = abs_tuple.as_array()?; // Ensure it's an array
+    let expressions = values
+        .iter()
+        .map(|values| parse_expression(values, scope))
+        .map(|values| values.expect("invalid subexpression")) // Ensure valid expressions
+        .collect::<Vec<Expression>>(); // Collect all expressions
+
+    Some(Expression::AbstractLiteral(
+        Metadata::new(),
+        AbstractLiteral::Tuple(expressions),
+    ))
+}
+
+//parses an abstract record as an expression
+fn parse_abs_record(abs_record: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Option<Expression> {
+    let entries = abs_record.as_array()?; // Ensure it's an array
+    let mut rec = vec![];
+
+    for entry in entries {
+        let entry = entry.as_array()?;
+        let name = entry[0].as_object()?["Name"].as_str()?;
+
+        let value = parse_expression(&entry[1], scope)?;
+
+        let name = Name::UserName(name.to_string());
+        let rec_entry = RecordValue {
+            name: name.clone(),
+            value,
+        };
+        rec.push(rec_entry);
+    }
+
+    Some(Expression::AbstractLiteral(
+        Metadata::new(),
+        AbstractLiteral::Record(rec),
+    ))
+}
+
 fn parse_comprehension(
     comprehension: &serde_json::Map<String, Value>,
     scope: Rc<RefCell<SymbolTable>>,
@@ -900,6 +994,12 @@ fn parse_constant(
             if let Some(Value::Object(obj)) = int.get("ConstantAbstract") {
                 if let Some(arr) = obj.get("AbsLitSet") {
                     return parse_abs_lit(arr, scope);
+                } else if let Some(arr) = obj.get("AbsLitMatrix") {
+                    return parse_abstract_matrix_as_expr(arr, scope);
+                } else if let Some(arr) = obj.get("AbsLitTuple") {
+                    return parse_abs_tuple(arr, scope);
+                } else if let Some(arr) = obj.get("AbsLitRecord") {
+                    return parse_abs_record(arr, scope);
                 }
             }
             None
