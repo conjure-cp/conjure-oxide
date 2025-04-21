@@ -105,15 +105,27 @@ fn main() -> io::Result<()> {
     let mut f = File::create(dest_custom)?;
     let test_dir = "tests/custom";
 
+    // for subdir in WalkDir::new(test_dir) {
+    //     let subdir = subdir?;
+    //     if subdir.file_type().is_dir()
+    //         && read_dir(subdir.path())
+    //             .unwrap_or_else(|_| std::fs::read_dir(subdir.path()).unwrap())
+    //             .filter_map(Result::ok)
+    //             .any(|entry| entry.file_name() == "run.sh" && entry.path().is_file())
+    //     {
+    //         write_custom_test(&mut f, subdir.path().display().to_string())?;
+    //     }
+    // }
+
     for subdir in WalkDir::new(test_dir) {
         let subdir = subdir?;
-        if subdir.file_type().is_dir()
-            && read_dir(subdir.path())
+        if subdir.file_type().is_dir() {
+            if read_dir(subdir.path())
                 .unwrap_or_else(|_| std::fs::read_dir(subdir.path()).unwrap())
                 .filter_map(Result::ok)
-                .any(|entry| entry.file_name() == "run.sh" && entry.path().is_file())
-        {
-            write_custom_test(&mut f, subdir.path().display().to_string())?;
+                .any(|entry| {entry.file_name() == "run.sh" && entry.path().is_file()}) {
+                    write_custom_test(&mut f, subdir.path().display().to_string())?;
+                }
         }
     }
 
