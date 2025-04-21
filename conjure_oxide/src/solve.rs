@@ -15,8 +15,8 @@ use clap::ValueHint;
 use conjure_core::{
     context::Context,
     pro_trace::{
-        create_consumer, display_message, get_kind_filter, json_trace_close, set_kind_filter,
-        specify_trace_files, Consumer, Kind,
+        create_consumer, display_message, json_trace_close, set_kind_filter, set_rule_filter,
+        set_rule_set_filter, specify_trace_files, Consumer, Kind,
     },
     rule_engine::{resolve_rule_sets, rewrite_naive},
     Model,
@@ -63,6 +63,8 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     let input_file = solve_args.input_file.clone();
 
     set_kind_filter(global_args.kind_filter.clone());
+    set_rule_filter(global_args.rule_name_filter.clone());
+    set_rule_set_filter(global_args.rule_set_filter.clone());
 
     // Determining the file for the output of the trace
 

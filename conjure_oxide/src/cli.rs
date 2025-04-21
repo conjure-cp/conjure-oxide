@@ -153,6 +153,20 @@ pub struct GlobalArgs {
         help = "Filter messages by given kind"
     )]
     pub kind_filter: Option<Kind>,
+
+    #[arg(
+        long = "filter-rule-name",
+        global = true,
+        help = "Filter rule trace to only show given rule name"
+    )]
+    pub rule_name_filter: Option<String>,
+
+    #[arg(
+        long = "filter-rule-set",
+        global = true,
+        help = "Filter rule trace to only show given rule set"
+    )]
+    pub rule_set_filter: Option<String>,
 }
 
 #[derive(Debug, Clone, Args)]
