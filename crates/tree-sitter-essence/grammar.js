@@ -142,7 +142,7 @@ module.exports = grammar ({
     quantifier_expr_bool: $ => prec(-10, seq(
       field("quantifier", choice("and", "or", "allDiff")),
       "(",
-      field("arg", choice($.matrix, $.tuple_or_matrix_element, $.identifier)),
+      field("arg", choice($.matrix, $.tuple_matrix_index_or_slice, $.identifier)),
       ")"
     )),
 
@@ -161,35 +161,26 @@ module.exports = grammar ({
 
     sub_bool_expr: $ => seq("(", field("expression", $.bool_expression), ")"),
 
-    atom: $ => choice(
+    atom: $ => prec(5, choice(
       field("constant", $.constant),
       field("variable", $.identifier),
       field("metavar", $.metavar),
-      field("tuple_or_matrix_element", $.tuple_or_matrix_element),
       field("tuple", $.tuple),
       field("matrix", $.matrix),
-    ),
+      field("tuple_matrix_index_or_slice", $.tuple_matrix_index_or_slice),
+      // field("matrix_slice", $.matrix_slice),
+    )),
 
-    tuple_or_matrix_element: $ => seq(
-      field("tuple_or_matrix", choice($.identifier, $.tuple, $.matrix)),
-      "[",
-      commaSep1(choice($.arithmetic_expr, "..")),
-      "]"
-    ),
-
-    tuple: $ => seq(
+    // for now, tuples are higher than sub expressions so (2) would be a tuple
+    tuple: $ => prec(10, seq(
       "(",
-      field("element", $.arithmetic_expr),
-      repeat1(seq(
-        ",",
-        field("element", $.arithmetic_expr)
-      )),
+      optional(field("element", commaSep1($.arithmetic_expr))),
       ")"
-    ),
+    )),
 
     matrix: $ => seq(
       "[",
-      commaSep1($.arithmetic_expr),
+      field("elements", commaSep1($.arithmetic_expr)),
       optional(seq(
         ";",
         choice($.int_domain, $.bool_domain) 
@@ -197,13 +188,31 @@ module.exports = grammar ({
       "]"
     ),
 
+    tuple_matrix_index_or_slice: $ => seq(
+      field("tuple_or_matrix", choice($.identifier, $.tuple, $.matrix)),
+      "[",
+      field("indices", $.indices),
+      "]"
+    ),
+
+    indices: $ => commaSep1(choice($.arithmetic_expr, field("null_index", $.null_index))),
+
+    null_index: $ => "..",
+
+    // matrix_slice: $ => prec(-1, seq(
+    //   field("matrix", choice($.identifier, $.matrix)),
+    //   "[",
+    //   commaSep1(choice($.arithmetic_expr, "..")),
+    //   "]"
+    // )),
+
     arithmetic_expr: $ => prec(0, choice(
       field("negative_expression", $.negative_expr),
       field("absolute_value", $.abs_value),
       field("exponentiation", $.exponent),
       field("product_expression", $.product_expr),
       field("sum_expression", $.sum_expr),
-      field("sub_arithmetic_expression", $.sub_arithmetic_expr),
+      field("sub_arith_expression", $.sub_arith_expr),
       field("atom", $.atom),
       field("quantifier_expression_num", $.quantifier_expr_num),
     )),
@@ -237,11 +246,11 @@ module.exports = grammar ({
     quantifier_expr_num: $ => prec(-10, seq(
       field("quantifier", choice("min", "max", "sum")),
       "(",
-      field("arg", choice($.matrix, $.tuple_or_matrix_element, $.identifier)),
+      field("arg", choice($.matrix, $.tuple_matrix_index_or_slice, $.identifier)),
       ")"
     )),
 
-    sub_arithmetic_expr: $ => seq(
+    sub_arith_expr: $ => seq(
       "(",
       field("expression", $.arithmetic_expr), 
       ")"
