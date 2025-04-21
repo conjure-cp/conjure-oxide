@@ -326,6 +326,38 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
             Err(RuleNotApplicable)
         }
+        Iff(_m, x, y) => {
+            if let Expr::Atomic(_, Atom::Literal(Lit::Bool(x))) = *x {
+                if x {
+                    // (true) <-> y ~~> y
+                    return Ok(Reduction::pure(*y));
+                } else {
+                    // (false) <-> y ~~> !y
+                    return Ok(Reduction::pure(Expr::Not(Metadata::new(), Box::new(*y))));
+                }
+            };
+            if let Expr::Atomic(_, Atom::Literal(Lit::Bool(y))) = *y {
+                if y {
+                    // x <-> (true) ~~> x
+                    return Ok(Reduction::pure(*x));
+                } else {
+                    // x <-> (false) ~~> !x
+                    return Ok(Reduction::pure(Expr::Not(Metadata::new(), Box::new(*x))));
+                }
+            };
+
+            // reflexivity: p <-> p ~> true
+
+            // instead of checking syntactic equivalence of a possibly deep expression,
+            // let identical-CSE turn them into identical variables first. Then, check if they are
+            // identical variables.
+
+            if x.identical_atom_to(y.as_ref()) {
+                return Ok(Reduction::pure(true.into()));
+            }
+
+            Err(RuleNotApplicable)
+        }
         Eq(_, _, _) => Err(RuleNotApplicable),
         Neq(_, _, _) => Err(RuleNotApplicable),
         Geq(_, _, _) => Err(RuleNotApplicable),
