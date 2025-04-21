@@ -4,21 +4,22 @@ module.exports = grammar ({
   extras: $ => [
     $.single_line_comment,
     /\s/,
-    $.e_prime_label
+    $.language_label
+
   ],
 
   rules: {
-    //top level statements
+    // Top-level statements
     program: $ => repeat(choice(
-      $.find_statement_list,
-      $.constraint_list,
-      $.letting_statement_list,
-      $.dominance_relation
+      field("find_statement_list", $.find_statement_list),
+      field("constraint_list", $.constraint_list),
+      field("letting_statement_list", $.letting_statement_list),
+      field("dominance_relation", $.dominance_relation)
     )),
 
     single_line_comment: $ => token(seq('$', /.*/)),
 
-    e_prime_label: $ => token("language ESSENCE' 1.0"),
+    language_label: $ => token(seq("language", /.*/)),
 
     //general
     constant: $ => choice(
@@ -39,134 +40,180 @@ module.exports = grammar ({
     metavar: $ => seq("&", $.variable),
 
     //find statements
-    find_statement_list: $ => seq("find", repeat($.find_statement)),
+    find_statement_list: $ => prec.right(seq("find", repeat1(field("find_statement", $.find_statement)))),
 
     find_statement: $ => seq(
-      $.variable_list,
+      field("variables", $.variable_list),
       ":",
-      $.domain,
+      field("domain", $.domain),
       optional(",")
     ),
-
     variable_list: $ => seq(
-      $.variable,
-      optional(repeat(seq(
-        ",",
-        $.variable
-      )))
+      field("variable", $.variable), 
+      optional(repeat(seq(",", field("variable", $.variable))))
     ),
-
     domain: $ => choice(
-      $.bool_domain,
-      $.int_domain,
-      $.variable
+      field("bool_domain", $.bool_domain),
+      field("int_domain", $.int_domain),
+      field("variable_domain", $.variable)
     ),
-
     bool_domain: $ => "bool",
 
     int_domain: $ => prec.left(seq(
       "int",
       optional(seq(
         "(",
-        $.range_list,
-        //TODO: eventually add in expressions here
+        field("ranges", $.range_list),
         ")"
       ))
     )),
 
     range_list: $ => prec(2, seq(
-      choice(
-        $.int_range,
-        $.integer
-      ),
+      field("range_or_value", choice($.int_range, $.integer)),
       optional(repeat(seq(
         ",",
-        choice(
-          $.int_range,
-          $.integer
-        ),
+        field("range_or_value", choice($.int_range, $.integer))
       )))
     )),
 
-    int_range: $ => seq(optional($.expression), "..", optional($.expression)),
+    int_range: $ => seq(
+      optional(field("start", $.expression)), 
+      "..", 
+      optional(field("end", $.expression))
+    ),
 
     //letting statements
-    letting_statement_list: $ => seq("letting", repeat($.letting_statement)),
-
+    letting_statement_list: $ => prec.right(seq("letting", repeat1(field("letting_statement", $.letting_statement)))),
     letting_statement: $ => seq(
-      $.variable_list,
-      "be",
-      choice($.expression, seq("domain", $.domain))
+      field("variable_list", $.variable_list), 
+      "be", 
+      field("expr_or_domain", choice($.expression, seq("domain", $.domain)))
     ),
 
     //constraints
-    constraint_list: $ => seq("such that", repeat(seq($.expression, optional(",")))),
+    constraint_list: $ => prec.right(seq(
+      "such that", 
+      field("expression", $.expression), 
+      optional(repeat1(seq(",", field("expression", $.expression)))), 
+      optional(",")
+    )),
 
+    // Expressions
     expression: $ => choice(
-      seq("(", $.expression, ")"),
-      $.metavar,
-      $.not_expr,
-      $.abs_value,
-      $.exponent,
-      $.negative_expr,
-      $.product_expr,
-      $.sum_expr,
-      $.comparison,
-      $.and_expr,
-      $.or_expr,
-      $.implication,
-      $.quantifier_expr,
-      $.constant,
-      $.variable,
-      $.from_solution
+      field("not_expression", $.not_expr),
+      field("and_expression", $.and_expr),
+      field("or_expression", $.or_expr),
+      field("implication", $.implication),
+      field("quantifier_expression_bool", $.quantifier_expr_bool),
+      field("from_solution", $.from_solution),
+      field("comparison_expression", $.comparison_expr), 
+      field("primary_expression", $.primary_expr),
+      field("sub_expression", $.sub_expr),
     ),
 
-    not_expr: $ => prec(20, seq("!", $.expression)),
+    not_expr: $ => prec(20, seq("!", field("expression", $.expression))),
+    
+    and_expr: $ => prec(-1, prec.left(seq(
+      field("left", $.expression), 
+      field("operator", "/\\"),
+      field("right", $.expression)
+    ))),
 
-    abs_value: $ => prec(20, seq("|", $.expression, "|")),
+    or_expr: $ => prec(-2, prec.left(seq(
+      field("left", $.expression),
+      field("operator", "\\/"),
+      field("right", $.expression)
+    ))),
+    
+    implication: $ => prec(-4, prec.left(seq(
+      field("left", $.expression),
+      field("operator", "->"), 
+      field("left", $.expression),
+    ))),
 
-    exponent: $ => prec(18, prec.right(seq($.expression, "**", $.expression))),
-
-    negative_expr: $ => prec(15, prec.left(seq("-", $.expression))),
-
-    product_expr: $ => prec(10, prec.left(seq($.expression, $.multiplicative_op, $.expression))),
-
-    multiplicative_op: $ => choice("*", "/", "%"),
-
-    sum_expr: $ => prec(1, prec.left(seq($.expression, $.additive_op, $.expression))),
-
-    additive_op: $ => choice("+", "-"),
-
-    comparison: $ => prec(0, prec.left(seq($.expression, $.comp_op, $.expression))),
-
-    comp_op: $ => choice("=", "!=", "<=", ">=", "<", ">"),
-
-    and_expr: $ => prec(-1, prec.left(seq($.expression, "/\\", $.expression))),
-
-    or_expr: $ => prec(-2, prec.left(seq($.expression, "\\/", $.expression))),
-
-    implication: $ => prec(-4, prec.left(seq($.expression, "->", $.expression))),
-
-    quantifier_expr: $ => prec(-10, seq(
-      choice("and", "or", "min", "max", "sum", "allDiff"),
+    quantifier_expr_bool: $ => prec(-10, seq(
+      field("quantifier", choice("and", "or", "allDiff")),
       "([",
-      repeat(seq(
-        $.expression,
-        optional(",")
-      )),
+      repeat1(seq(field("expression", $.expression, optional(",")))),
       "])"
     )),
 
     from_solution: $ => seq(
       "fromSolution",
       "(",
-      $.variable,
+      field("variable", $.variable),
       ")"
     ),
 
+    comparison_expr: $ => prec(0, prec.left(seq(
+      field("left", $.arithmetic_expr), 
+      field("operator", $.comparative_op),
+      field("right", $.arithmetic_expr)
+    ))),
+
+    comparative_op: $ => choice("=", "!=", "<=", ">=", "<", ">"),
+
+    sub_expr: $ => seq("(", field("expression", $.expression), ")"),
+
+    primary_expr: $ => choice(
+      field("constant", $.constant),
+      field("variable", $.variable),
+      field("metavar", $.metavar)
+    ),
+
+    arithmetic_expr: $ => prec(-1, choice(
+      field("negative_expression", $.negative_expr),
+      field("absolute_value", $.abs_value),
+      field("exponentiation", $.exponent),
+      field("product_expression", $.product_expr),
+      field("sum_expression", $.sum_expr),
+      field("sub_arithmetic_expression", $.sub_arithmetic_expr),
+      field("primary_expression", $.primary_expr),
+      field("quantifier_expression_num", $.quantifier_expr_num),
+    )),
+
+    negative_expr: $ => prec(15, prec.left(seq("-", field("expression", $.arithmetic_expr)))),
+    
+    abs_value: $ => prec(20, seq("|", field("expression", $.arithmetic_expr), "|")),
+    
+    exponent: $ => prec(18, prec.right(seq(
+      field("left", $.arithmetic_expr), 
+      field("operator", "**"),
+      field("right", $.arithmetic_expr)
+    ))),
+
+    product_expr: $ => prec(10, prec.left(seq(
+      field("left", $.arithmetic_expr), 
+      field("operator", $.mulitcative_op), 
+      field("right", $.arithmetic_expr)
+    ))),
+    
+    mulitcative_op: $ => choice("*", "/", "%"),
+    
+    sum_expr: $ => prec(1, prec.left(seq(
+      field("left", $.arithmetic_expr), 
+      field("operator", $.additive_op), 
+      field("right", $.arithmetic_expr)
+    ))),
+
+    quantifier_expr_num: $ => prec(-10, seq(
+      field("quantifier", choice("min", "max", "sum", "allDiff")),
+      "([",
+      repeat1(seq(field("expression", $.arithmetic_expr), optional(","))),
+      "])"
+    )),
+
+    sub_arithmetic_expr: $ => seq(
+      "(",
+      field("expression", $.arithmetic_expr), 
+      ")"
+    ),
+    
+    additive_op: $ => choice("+", "-"),
+
     dominance_relation: $ => seq(
       "dominanceRelation",
-      $.expression
+      field("expression", $.expression)
     )
   }
-})
+});

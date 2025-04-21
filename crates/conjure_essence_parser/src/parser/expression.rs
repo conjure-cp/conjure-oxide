@@ -34,12 +34,12 @@ pub fn parse_expression(
         "exponent" | "product_expr" | "sum_expr" | "and_expr" | "or_expr" | "comparison_expr"
         | "implication" => {
             let expr1 = child_expr(constraint, source_code, root)?;
-            let op = constraint.child(1).ok_or(format!(
+            let op = constraint.child_by_field_name("operator").ok_or(format!(
                 "Missing operator in expression {}",
                 constraint.kind()
             ))?;
             let op_type = &source_code[op.start_byte()..op.end_byte()];
-            let expr2_node = constraint.child(2).ok_or(format!(
+            let expr2_node = constraint.child_by_field_name("right").ok_or(format!(
                 "Missing second operand in expression {}",
                 constraint.kind()
             ))?;
