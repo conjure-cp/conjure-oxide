@@ -55,7 +55,8 @@ module.exports = grammar ({
     domain: $ => choice(
       field("bool_domain", $.bool_domain),
       field("int_domain", $.int_domain),
-      field("variable_domain", $.variable)
+      field("variable_domain", $.variable),
+      field("tuple_domain", $.tuple_domain),
     ),
     bool_domain: $ => "bool",
 
@@ -80,6 +81,17 @@ module.exports = grammar ({
       optional(field("start", $.expression)), 
       "..", 
       optional(field("end", $.expression))
+    ),
+
+    tuple_domain: $ => seq(
+      optional("tuple"),
+      "(",
+      field("domain", $.domain),
+      optional(repeat(seq(
+        ",",
+        field("domain", $.domain)
+      ))),
+      ")"
     ),
 
     //letting statements
@@ -158,8 +170,34 @@ module.exports = grammar ({
     primary_expr: $ => choice(
       field("constant", $.constant),
       field("variable", $.variable),
-      field("metavar", $.metavar)
+      field("metavar", $.metavar),
+      field("tuple_element", $.tuple_element),
+      field("tuple", $.tuple),
+      // field("matrix_element", $.matrix_element),
     ),
+
+    tuple_element: $ => seq(
+      field("tuple", choice($.variable, $.tuple)),
+      "[",
+      field("index", $.integer),
+      "]"
+    ),
+
+    tuple: $ => seq(
+      "(",
+      field("element", $.arithmetic_expr),
+      repeat1(seq(
+        ",",
+        field("element", $.arithmetic_expr)
+      )),
+      ")"
+    ),
+
+    // matrix_element: $ => seq(
+    //   field("matrix", $.variable),
+    //   "[",
+    //   field("row_index", $.integer),
+    // ),
 
     arithmetic_expr: $ => prec(-1, choice(
       field("negative_expression", $.negative_expr),
