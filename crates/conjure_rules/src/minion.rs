@@ -1131,3 +1131,22 @@ fn bool_eq_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         atom,
     )))
 }
+
+/// Converts an iff to an `Eq` constraint.
+///
+/// ```text
+/// Iff(a,b) ~> Eq(a,b)
+///
+/// ```
+#[register_rule(("Minion", 4400))]
+fn iff_to_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::Iff(_, x, y) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    Ok(Reduction::pure(Expr::Eq(
+        Metadata::new(),
+        x.clone(),
+        y.clone(),
+    )))
+}
