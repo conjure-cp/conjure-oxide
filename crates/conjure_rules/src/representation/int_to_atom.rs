@@ -4,8 +4,8 @@ use itertools::Itertools;
 // https://conjure-cp.github.io/conjure-oxide/docs/conjure_core/representation/trait.Representation.html
 use conjure_core::{
     ast::{
-        matrix, AbstractLiteral, Atom, Declaration, Domain, Expression, Literal, Name, RecordEntry,
-        SymbolTable,
+        matrix, AbstractLiteral, Atom, Declaration, Domain, Expression, Literal, Name, Range,
+        RecordEntry, SymbolTable,
     },
     bug, into_matrix,
     metadata::Metadata,
@@ -21,6 +21,12 @@ pub struct IntToAtom {
     src_var: Name,
 }
 
+impl IntToAtom {
+    fn names(&self) -> impl Iterator<Item = Name> + '_ {
+        (0..32).map(move |i| Name::from(format!("{}_{}", self.src_var, i)))
+    }
+}
+
 impl Representation for IntToAtom {
     fn init(name: &Name, symtab: &SymbolTable) -> Option<Self> {
         let domain = symtab.resolve_domain(name)?;
@@ -29,7 +35,7 @@ impl Representation for IntToAtom {
             return None;
         }
 
-        let IntDomain(ranges) = domain else {
+        let Domain::IntDomain(ranges) = domain else {
             return None;
         };
 
@@ -40,8 +46,6 @@ impl Representation for IntToAtom {
         {
             return None;
         }
-
-        let indices = (0..32 as i32).map(Literal::Int).collect();
 
         Some(IntToAtom {
             src_var: name.clone(),
@@ -65,7 +69,7 @@ impl Representation for IntToAtom {
         // name_0 is the least significant bit, name_31 is the sign bit
         for i in 0..32 {
             let name = format!("{}_{}", self.src_var, i);
-            result.insert(Name::from(name), Literal::Bool(value_i32 & 1));
+            result.insert(Name::from(name), Literal::Bool((value_i32 & 1) != 0));
             value_i32 >> 1;
         }
 
@@ -77,17 +81,23 @@ impl Representation for IntToAtom {
         values: &std::collections::BTreeMap<Name, Literal>,
     ) -> Result<Literal, ApplicationError> {
         let mut out: i32 = 0;
-        let mut power: u32 = 1;
+        let mut power: i32 = 1;
 
         for i in 0..32 {
-            let name = format!("{}_{}", self.src_var, i);
-            let Literal::Bool(value) = values
+            let name = Name::from(format!("{}_{}", self.src_var, i));
+
+            let value = values
                 .get(&name)
                 .ok_or(ApplicationError::RuleNotApplicable)?;
-            if (value) {
-                out += power;
+
+            if let Literal::Bool(value) = value {
+                if *value {
+                    out += power;
+                }
+                power << 1;
+            } else {
+                return Err(ApplicationError::RuleNotApplicable);
             }
-            power << 1;
         }
 
         Ok(Literal::Int(out))
@@ -116,8 +126,7 @@ impl Representation for IntToAtom {
         // TODO: work out what these are
         Ok(self
             .names()
-            .zip(self.elem_domain.iter().cloned())
-            .map(|(name, domain)| Declaration::new_var(name, domain))
+            .map(|name| Declaration::new_var(name, Domain::BoolDomain))
             .collect())
     }
 
