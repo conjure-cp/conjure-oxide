@@ -20,7 +20,7 @@ fn index_to_bubble(expr: &Expression, symbols: &SymbolTable) -> ApplicationResul
 
     // TODO: tuple, this is a hack right now just to avoid the rule being applied to tuples, but could we safely modify the rule to
     // handle tuples as well?
-    if matches!(domain, Domain::DomainTuple(_)) {
+    if matches!(domain, Domain::DomainTuple(_)) || matches!(domain, Domain::DomainRecord(_)) {
         return Err(RuleNotApplicable);
     }
 

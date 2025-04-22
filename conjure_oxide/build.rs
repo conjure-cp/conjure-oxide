@@ -8,7 +8,7 @@ use walkdir::WalkDir;
 fn main() -> io::Result<()> {
     println!("cargo:rerun-if-changed=tests/integration");
     println!("cargo:rerun-if-changed=tests/custom");
-    println!("cargo:rerun-if-changed=tests/gen_test_template");
+    println!("cargo:rerun-if-changed=tests/integration_test_template");
     println!("cargo:rerun-if-changed=tests/custom_test_template");
     println!("cargo:rerun-if-changed=build.rs");
 

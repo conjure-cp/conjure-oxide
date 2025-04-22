@@ -19,6 +19,7 @@ use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Uniplate as _};
 
 use super::comprehension::Comprehension;
+use super::records::RecordValue;
 use super::{Domain, Range, SubModel, Typeable};
 
 /// Represents different types of expressions used to define rules and constraints in the model.
@@ -37,6 +38,8 @@ use super::{Domain, Range, SubModel, Typeable};
 #[biplate(to=Comprehension)]
 #[biplate(to=AbstractLiteral<Expression>)]
 #[biplate(to=AbstractLiteral<Literal>,walk_into=[Atom])]
+#[biplate(to=RecordValue<Expression>,walk_into=[AbstractLiteral<Expression>])]
+#[biplate(to=RecordValue<Literal>,walk_into=[Atom,Literal,AbstractLiteral<Literal>,AbstractLiteral<Expression>])]
 #[biplate(to=Literal,walk_into=[Atom])]
 pub enum Expression {
     SubSetEq(Metadata, Box<Expression>, Box<Expression>),
@@ -139,6 +142,10 @@ pub enum Expression {
     /// Ensures that `a->b` (material implication).
     #[compatible(JsonInput)]
     Imply(Metadata, Box<Expression>, Box<Expression>),
+
+    /// `iff(a, b)` a <-> b
+    #[compatible(JsonInput)]
+    Iff(Metadata, Box<Expression>, Box<Expression>),
 
     #[compatible(JsonInput)]
     Eq(Metadata, Box<Expression>, Box<Expression>),
@@ -472,6 +479,7 @@ impl Expression {
                 match matrix.domain_of(syms)? {
                     Domain::DomainMatrix(elem_domain, _) => Some(*elem_domain),
                     Domain::DomainTuple(_) => None,
+                    Domain::DomainRecord(_) => None,
                     _ => {
                         bug!("subject of an index operation should support indexing")
                     }
@@ -592,6 +600,7 @@ impl Expression {
             Expression::Not(_, _) => Some(Domain::BoolDomain),
             Expression::Or(_, _) => Some(Domain::BoolDomain),
             Expression::Imply(_, _, _) => Some(Domain::BoolDomain),
+            Expression::Iff(_, _, _) => Some(Domain::BoolDomain),
             Expression::Eq(_, _, _) => Some(Domain::BoolDomain),
             Expression::Neq(_, _, _) => Some(Domain::BoolDomain),
             Expression::Geq(_, _, _) => Some(Domain::BoolDomain),
@@ -715,6 +724,7 @@ impl Expression {
             Expression::Not(_, _) => Some(ReturnType::Bool),
             Expression::Or(_, _) => Some(ReturnType::Bool),
             Expression::Imply(_, _, _) => Some(ReturnType::Bool),
+            Expression::Iff(_, _, _) => Some(ReturnType::Bool),
             Expression::And(_, _) => Some(ReturnType::Bool),
             Expression::Eq(_, _, _) => Some(ReturnType::Bool),
             Expression::Neq(_, _, _) => Some(ReturnType::Bool),
@@ -971,6 +981,9 @@ impl Display for Expression {
             }
             Expression::Imply(_, box1, box2) => {
                 write!(f, "({}) -> ({})", box1, box2)
+            }
+            Expression::Iff(_, box1, box2) => {
+                write!(f, "({}) <-> ({})", box1, box2)
             }
             Expression::Eq(_, box1, box2) => {
                 write!(f, "({} = {})", box1.clone(), box2.clone())
