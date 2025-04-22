@@ -11,10 +11,8 @@ use conjure_core::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
 };
 
-use Expr::*;
-
-use crate::ast::SymbolTable;
-use crate::matrix_expr;
+use conjure_core::ast::SymbolTable;
+use conjure_core::matrix_expr;
 
 register_rule_set!("CNF", ("Base"), (SolverFamily::SAT));
 
