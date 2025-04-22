@@ -37,31 +37,32 @@ pub fn get_kind_filter() -> Option<Kind> {
     filter.clone()
 }
 
-/// Create rule_filter for rule tracing as a global variable
-pub static RULE_FILTER: Mutex<Option<String>> = Mutex::new(None);
+/// Create rule_filter for rule filtering as a global variable
+pub static RULE_FILTER: Mutex<Option<Vec<String>>> = Mutex::new(None);
 
-pub static RULE_SET_FILTER: Mutex<Option<String>> = Mutex::new(None);
+/// Create rule_set_filter for rule set filtering as a global variable
+pub static RULE_SET_FILTER: Mutex<Option<Vec<String>>> = Mutex::new(None);
 
 /// Set the rule_filter
-pub fn set_rule_filter(rule_name: Option<String>) {
+pub fn set_rule_filter(rule_name: Option<Vec<String>>) {
     let mut filter = RULE_FILTER.lock().unwrap();
     *filter = rule_name;
 }
 
 // Get the rule_filter
-pub fn get_rule_filter() -> Option<String> {
+pub fn get_rule_filter() -> Option<Vec<String>> {
     let filter = RULE_FILTER.lock().unwrap();
     filter.clone()
 }
 
-/// Set the rule_filter
-pub fn set_rule_set_filter(rule_set: Option<String>) {
+/// Set the rule_set_filter
+pub fn set_rule_set_filter(rule_set: Option<Vec<String>>) {
     let mut filter = RULE_SET_FILTER.lock().unwrap();
     *filter = rule_set;
 }
 
-// Get the rule_filter
-pub fn get_rule_set_filter() -> Option<String> {
+// Get the rule_set_filter
+pub fn get_rule_set_filter() -> Option<Vec<String>> {
     let filter = RULE_SET_FILTER.lock().unwrap();
     filter.clone()
 }
@@ -165,15 +166,34 @@ impl MessageFormatter for HumanFormatter {
     fn format(&self, trace: TraceType) -> String {
         match trace {
             TraceType::RuleTrace(rule_trace) => {
-                let rule_filter_matches =
-                    get_rule_filter().map_or(true, |filter| rule_trace.rule_name == filter);
+                // println!(
+                //     "Rule filter: {:?}, Rule set filter: {:?}",
+                //     get_rule_filter(),
+                //     get_rule_set_filter()
+                // );
 
-                let rule_set_filter_matches =
-                    get_rule_set_filter().map_or(true, |filter| rule_trace.rule_set_name == filter);
+                // println!(
+                //     "Rule filter: {:?}, Rule set filter: {:?}",
+                //     get_rule_filter(),
+                //     get_rule_set_filter()
+                // );
 
-                if !(rule_filter_matches || rule_set_filter_matches) {
+                let no_filter = get_rule_filter().is_none() && get_rule_set_filter().is_none();
+
+                let rule_filter_matches = get_rule_filter()
+                    .map_or(false, |filter| filter.contains(&rule_trace.rule_name));
+
+                let rule_set_filter_matches = get_rule_set_filter()
+                    .map_or(false, |filter| filter.contains(&rule_trace.rule_set_name));
+
+                // println!(
+                //     "No filter: {}, Rule filter match: {}, rule set filter match: {}",
+                //     no_filter, rule_filter_matches, rule_set_filter_matches
+                // );
+                if !no_filter && !(rule_filter_matches || rule_set_filter_matches) {
                     return String::new();
                 }
+
                 if (rule_trace.transformed_expression.is_some()) {
                     format!("Successful Tranformation: \n{}", rule_trace)
                 } else {
@@ -193,13 +213,20 @@ impl MessageFormatter for JsonFormatter {
     fn format(&self, trace: TraceType) -> String {
         match trace {
             TraceType::RuleTrace(rule_trace) => {
-                let rule_filter_matches =
-                    get_rule_filter().map_or(true, |filter| rule_trace.rule_name == filter);
+                // println!("Rule filter: {:?}", get_rule_filter());
+                let no_filter = get_rule_filter().is_none() && get_rule_set_filter().is_none();
 
-                let rule_set_filter_matches =
-                    get_rule_set_filter().map_or(true, |filter| rule_trace.rule_set_name == filter);
+                let rule_filter_matches = get_rule_filter()
+                    .map_or(false, |filter| filter.contains(&rule_trace.rule_name));
 
-                if !(rule_filter_matches || rule_set_filter_matches) {
+                let rule_set_filter_matches = get_rule_set_filter()
+                    .map_or(false, |filter| filter.contains(&rule_trace.rule_set_name));
+
+                // println!(
+                //     "No filter: {}, Rule filter match: {}, rule set filter match: {}",
+                //     no_filter, rule_filter_matches, rule_set_filter_matches
+                // );
+                if !no_filter && !(rule_filter_matches || rule_set_filter_matches) {
                     return String::new();
                 }
 
