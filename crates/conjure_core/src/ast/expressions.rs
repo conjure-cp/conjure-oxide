@@ -201,6 +201,8 @@ pub enum Expression {
     /// Binary subtraction operator
     ///
     /// This is a parser-level construct, and is immediately normalised to `Sum([a,-b])`.
+    /// TODO: make this compatible with Set Difference calculations - need to change return type and domain for this expression and write a set comprehension rule.
+    /// have already edited minus_to_sum to prevent this from applying to sets
     #[compatible(JsonInput)]
     Minus(Metadata, Box<Expression>, Box<Expression>),
 

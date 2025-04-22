@@ -130,26 +130,3 @@ fn minus_to_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::pure(essence_expr!(&lhs + (-&rhs))))
 }
-
-// TODO: add set difference rule here, need comprehensions
-#[register_rule(("Base", 8500))]
-fn minus_sets(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let (_lhs, _rhs) = match expr {
-        Minus(_, lhs, rhs) => match lhs.as_ref() {
-            Atomic(_, Atom::Reference(_)) => match rhs.as_ref() {
-                Atomic(_, Atom::Reference(_)) => (lhs.clone(), rhs.clone()),
-                AbstractLiteral(_, AbstractLiteral::Set(_)) => (lhs.clone(), rhs.clone()),
-                _ => return Err(RuleNotApplicable),
-            },
-            AbstractLiteral(_, AbstractLiteral::Set(_)) => match rhs.as_ref() {
-                Atomic(_, Atom::Reference(_)) => (lhs.clone(), rhs.clone()),
-                AbstractLiteral(_, AbstractLiteral::Set(_)) => (lhs.clone(), rhs.clone()),
-                _ => return Err(RuleNotApplicable),
-            },
-            _ => return Err(RuleNotApplicable),
-        },
-        _ => return Err(RuleNotApplicable),
-    };
-
-    Err(RuleNotApplicable)
-}
