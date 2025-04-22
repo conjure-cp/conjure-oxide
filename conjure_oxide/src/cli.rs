@@ -153,6 +153,22 @@ pub struct GlobalArgs {
         help = "Filter messages by given kind"
     )]
     pub kind_filter: Option<Kind>,
+
+    #[arg(
+        long = "filter-rule-name",
+        global = true,
+        value_delimiter = ',',
+        help = "Filter rule trace to only show given rule name"
+    )]
+    pub rule_name_filter: Option<Vec<String>>,
+
+    #[arg(
+        long = "filter-rule-set",
+        global = true,
+        value_delimiter = ',',
+        help = "Filter rule trace to only show given rule set"
+    )]
+    pub rule_set_filter: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Args)]

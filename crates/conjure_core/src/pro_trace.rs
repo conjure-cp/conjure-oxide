@@ -20,7 +20,7 @@ pub enum Kind {
     Default,
 }
 
-/// Create kind_filter as a global variable
+/// Create kind_filter for message as a global variable
 pub static KIND_FILTER: Mutex<Option<Kind>> = Mutex::new(None);
 
 /// Set the kind_filter. If no Kind specified, set as Default.
@@ -29,9 +29,39 @@ pub fn set_kind_filter(kind: Option<Kind>) {
     *filter = Some(kind.unwrap_or(Kind::Default));
 }
 
-// Get the kind_filter
+/// Get the kind_filter
 pub fn get_kind_filter() -> Option<Kind> {
     let filter = KIND_FILTER.lock().unwrap();
+    filter.clone()
+}
+
+/// Create rule_filter for rule filtering as a global variable
+pub static RULE_FILTER: Mutex<Option<Vec<String>>> = Mutex::new(None);
+
+/// Create rule_set_filter for rule set filtering as a global variable
+pub static RULE_SET_FILTER: Mutex<Option<Vec<String>>> = Mutex::new(None);
+
+/// Set the rule_filter
+pub fn set_rule_filter(rule_name: Option<Vec<String>>) {
+    let mut filter = RULE_FILTER.lock().unwrap();
+    *filter = rule_name;
+}
+
+/// Get the rule_filter
+pub fn get_rule_filter() -> Option<Vec<String>> {
+    let filter = RULE_FILTER.lock().unwrap();
+    filter.clone()
+}
+
+/// Set the rule_set_filter
+pub fn set_rule_set_filter(rule_set: Option<Vec<String>>) {
+    let mut filter = RULE_SET_FILTER.lock().unwrap();
+    *filter = rule_set;
+}
+
+/// Get the rule_set_filter
+pub fn get_rule_set_filter() -> Option<Vec<String>> {
+    let filter = RULE_SET_FILTER.lock().unwrap();
     filter.clone()
 }
 
@@ -48,6 +78,7 @@ pub struct RuleTrace {
     pub top_level_str: Option<String>,
 }
 
+// represents the model trace of the essence file
 pub struct ModelTrace {
     pub initial_model: Model,
     pub rewritten_model: Option<Model>,
@@ -134,6 +165,18 @@ impl MessageFormatter for HumanFormatter {
     fn format(&self, trace: TraceType) -> String {
         match trace {
             TraceType::RuleTrace(rule_trace) => {
+                // check if there are any filters applied and if the rule matches the filters
+                let no_filter = get_rule_filter().is_none() && get_rule_set_filter().is_none();
+                let rule_filter_matches =
+                    get_rule_filter().is_some_and(|filter| filter.contains(&rule_trace.rule_name));
+                let rule_set_filter_matches = get_rule_set_filter()
+                    .is_some_and(|filter| filter.contains(&rule_trace.rule_set_name));
+
+                // return an empty string if the rule does not match the filters given
+                if !(no_filter || rule_filter_matches || rule_set_filter_matches) {
+                    return String::new();
+                }
+
                 if rule_trace.transformed_expression.is_some() {
                     format!("Successful Tranformation: \n{}", rule_trace)
                 } else {
@@ -153,6 +196,19 @@ impl MessageFormatter for JsonFormatter {
     fn format(&self, trace: TraceType) -> String {
         match trace {
             TraceType::RuleTrace(rule_trace) => {
+                // check if there are any filters applied and if the rule matches the filters
+                let no_filter = get_rule_filter().is_none() && get_rule_set_filter().is_none();
+                let rule_filter_matches =
+                    get_rule_filter().is_some_and(|filter| filter.contains(&rule_trace.rule_name));
+
+                let rule_set_filter_matches = get_rule_set_filter()
+                    .is_some_and(|filter| filter.contains(&rule_trace.rule_set_name));
+
+                // return an empty string if the rule does not match the filters given
+                if !(no_filter || rule_filter_matches || rule_set_filter_matches) {
+                    return String::new();
+                }
+
                 let json_str = serde_json::to_string_pretty(&rule_trace).unwrap();
 
                 json_str.to_string()
@@ -194,6 +250,9 @@ pub struct BothConsumer {
 impl Trace for StdoutConsumer {
     fn capture(&self, trace: TraceType) {
         let formatted_output = self.formatter.format(trace);
+        if formatted_output == String::new() {
+            return;
+        }
         println!("{}", formatted_output);
     }
 }
@@ -204,6 +263,12 @@ impl Trace for FileConsumer {
             FormatterType::Json => {
                 if let Some(ref json_path) = self.json_file_path {
                     let formatted_output = self.formatter.format(trace.clone());
+
+                    // if rule does not match filter, it will not be outputted
+                    if formatted_output == String::new() {
+                        return;
+                    }
+
                     let json_file = OpenOptions::new()
                         .append(true)
                         .create(true)
