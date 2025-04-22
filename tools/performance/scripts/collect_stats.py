@@ -25,11 +25,11 @@ for rewrite_cat in os.listdir(perform_dir):
                         solver_stats = oxide_data.get('stats', {}).get('solverRuns', [])[0]
                         rewrite_stats = oxide_data.get('stats', {}).get('rewriterRuns', [])[0]
                         solver = solver_stats.get('solverAdaptor', 0)
-                        solver_time = round(float(solver_stats.get('conjureSolverWallTime_s', 0)),3)
+                        solver_time = round(float(solver_stats.get('conjureSolverWallTime_s', 0)),4)
                         solver_nodes = solver_stats.get('nodes', 0)
                         rewriter_runtime = rewrite_stats.get('rewriterRunTime',[])
-                        rewriter_time = round(float((rewriter_runtime.get('secs',0)) + (rewriter_runtime.get('nanos',0)/10**9)),3)
-                        total_time = round(float(rewriter_time + solver_time),3)
+                        rewriter_time = round(float((rewriter_runtime.get('secs',0)) + (rewriter_runtime.get('nanos',0)/10**9)),4)
+                        total_time = round(float(rewriter_time + solver_time),4)
                         csv.write("\n" + test_dir + "," + solver + "," + str(solver_time) + "," + str(solver_nodes) + "," + str(rewriter_time) + "," + str(total_time))
                 if conjure_stats:
                     with open(conjure_stats[0], 'r') as f:
@@ -37,8 +37,7 @@ for rewrite_cat in os.listdir(perform_dir):
                         savile_row_stats = conjure_data.get('savilerowInfo', 0)
                         solver = conjure_data.get('solver', "")
                         solver_nodes = savile_row_stats.get('SolverNodes', 0)
-                        rewriter_time = round(float(savile_row_stats.get('SavileRowTotalTime', 0)),3)
-                        print(rewriter_time);
-                        solver_time = round(float(savile_row_stats.get('SolverTotalTime', 0)),3)
-                        total_time = round((rewriter_time + solver_time),3)
+                        rewriter_time = round(float(savile_row_stats.get('SavileRowTotalTime', 0)),4)
+                        solver_time = round(float(savile_row_stats.get('SolverTotalTime', 0)),4)
+                        total_time = round((rewriter_time + solver_time),4)
                         csv.write("\n" + test_dir + "," + solver + "," + str(solver_time) + "," + str(solver_nodes) + "," + str(rewriter_time) + "," + str(total_time))
