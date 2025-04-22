@@ -139,7 +139,7 @@ fn try_rewrite_model(
                     }
                     Err(_) => {
                         if let Some(consumer) = consumer {
-                            if check_verbosity_level(&consumer) == VerbosityLevel::High {
+                            if check_verbosity_level(consumer) == VerbosityLevel::High {
                                 let rule_trace = RuleTrace {
                                     initial_expression: expr.clone(),
                                     rule_name: rd.rule.name.to_string(),
@@ -150,7 +150,7 @@ fn try_rewrite_model(
                                     top_level_str: None,
                                 };
 
-                                capture_trace(&consumer, TraceType::RuleTrace(rule_trace));
+                                capture_trace(consumer, TraceType::RuleTrace(rule_trace));
                             }
                         }
                     }
@@ -174,7 +174,7 @@ fn try_rewrite_model(
             }
 
             // Extract the single applicable rule and apply it
-            log_rule_application(result, expr, submodel, &consumer);
+            log_rule_application(result, expr, submodel, consumer);
 
             // Replace expr with new_expression
             *submodel = ctx(result.reduction.new_expression.clone());

@@ -1,5 +1,5 @@
 #![allow(clippy::expect_used)]
-use conjure_core::ast::{AbstractLiteral, Domain, SymbolTable};
+use conjure_core::ast::SymbolTable;
 use conjure_core::bug;
 use conjure_core::rule_engine::get_rules_grouped;
 
@@ -435,7 +435,7 @@ fn integration_test_inner(
         }
 
         if config.validate_rule_traces {
-            copy_human_trace_generated_to_expected(path, essence_base)?;
+            copy_generated_to_expected(path, essence_base, "rules.protrace", extension)?;
             save_stats_json(context.clone(), path, essence_base)?;
         }
     }
@@ -576,17 +576,6 @@ fn integration_test_inner(
     }
     save_stats_json(context, path, essence_base)?;
 
-    Ok(())
-}
-
-fn copy_human_trace_generated_to_expected(
-    path: &str,
-    test_name: &str,
-) -> Result<(), std::io::Error> {
-    std::fs::copy(
-        format!("{path}/{test_name}-generated-rule-trace-human.txt"),
-        format!("{path}/{test_name}-expected-rule-trace-human.txt"),
-    )?;
     Ok(())
 }
 

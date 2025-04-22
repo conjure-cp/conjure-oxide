@@ -6,8 +6,6 @@ use std::sync::{Arc, Mutex, RwLock};
 use conjure_core::ast::{Literal, Name};
 use conjure_core::bug;
 use conjure_core::context::Context;
-use conjure_core::pro_trace::{display_message, Kind};
-
 use conjure_core::solver::adaptors::SAT;
 use serde_json::{Map, Value as JsonValue};
 

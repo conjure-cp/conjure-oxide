@@ -3,23 +3,15 @@ use super::{
     resolve_rules::{ResolveRulesError, RuleData},
     Reduction,
 };
-use crate::pro_trace::{
-    check_verbosity_level, Consumer, HumanFormatter, RuleTrace, StdoutConsumer, Trace,
-    VerbosityLevel,
-};
+use crate::pro_trace::{check_verbosity_level, Consumer, RuleTrace, VerbosityLevel};
 use crate::{
-    ast::{
-        pretty::{pretty_variable_declaration, pretty_vec},
-        Expression, SubModel,
-    },
+    ast::{pretty::pretty_variable_declaration, Expression, SubModel},
     pro_trace::{capture_trace, TraceType},
 };
 
 use itertools::Itertools;
-use serde_json::json;
 use std::fmt::Debug;
 use thiserror::Error;
-use tracing::{info, trace};
 
 // The RuleResult struct represents the
 // result of applying a rule to an expression.
@@ -38,21 +30,13 @@ pub fn log_rule_application(
     initial_model: &SubModel,
     consumer: &Option<Consumer>,
 ) {
-    /// extracts data from the RuleResult struct
-    /// red = reduction and any constraints and variables
+    // extracts data from the RuleResult struct
+    //  red = reduction and any constraints and variables
     let red = &result.reduction;
     let rule = result.rule_data.rule;
-    let new_top_string = pretty_vec(&red.new_top);
 
-    /// logs rule application to the main log
-    info!(
-        %new_top_string,
-        "Applying rule: {} ({:?}), to expression: {}, resulting in: {}",
-        rule.name,
-        rule.rule_sets,
-        initial_expression,
-        red.new_expression
-    );
+    // TODO include this in the trace
+    //let new_top_string = pretty_vec(&red.new_top);
 
     // empty if no top level constraints
     let top_level_str = if red.new_top.is_empty() {
@@ -90,7 +74,7 @@ pub fn log_rule_application(
 
     // logging a successful rule application
     if let Some(consumer) = consumer {
-        if check_verbosity_level(&consumer) != VerbosityLevel::Low {
+        if check_verbosity_level(consumer) != VerbosityLevel::Low {
             let rule_trace = RuleTrace {
                 initial_expression: initial_expression.clone(),
                 rule_name: rule.name.to_string(),
@@ -101,7 +85,7 @@ pub fn log_rule_application(
                 top_level_str: Some(top_level_str.to_string()),
             };
 
-            capture_trace(&consumer, TraceType::RuleTrace(rule_trace));
+            capture_trace(consumer, TraceType::RuleTrace(rule_trace));
         }
     }
 }

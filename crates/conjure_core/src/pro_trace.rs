@@ -1,13 +1,11 @@
 use crate::ast::Expression;
 use crate::Model;
 use clap::ValueEnum;
-use colored::*;
+use colored::Colorize;
 use serde_json;
 use std::any::Any;
-use std::fmt::write;
 use std::fs::{self, File};
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::{fmt, fs::OpenOptions, io::Write};
 
@@ -136,7 +134,7 @@ impl MessageFormatter for HumanFormatter {
     fn format(&self, trace: TraceType) -> String {
         match trace {
             TraceType::RuleTrace(rule_trace) => {
-                if (rule_trace.transformed_expression.is_some()) {
+                if rule_trace.transformed_expression.is_some() {
                     format!("Successful Tranformation: \n{}", rule_trace)
                 } else {
                     format!("Unsuccessful Tranformation: \n{}", rule_trace)
@@ -157,10 +155,9 @@ impl MessageFormatter for JsonFormatter {
             TraceType::RuleTrace(rule_trace) => {
                 let json_str = serde_json::to_string_pretty(&rule_trace).unwrap();
 
-                format!("{}", json_str)
+                json_str.to_string()
             }
             TraceType::ModelTrace(_) => String::new(),
-            _ => String::from("Unknown trace"),
         }
     }
 }

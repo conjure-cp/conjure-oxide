@@ -2,21 +2,19 @@
 #![allow(clippy::unwrap_used)]
 use std::{
     fs::File,
-    io::Write as _,
+    io::Write,
     path::PathBuf,
     process::exit,
     sync::{Arc, RwLock},
 };
-
-use std::{fs::OpenOptions, io::Write};
 
 use anyhow::{anyhow, ensure};
 use clap::ValueHint;
 use conjure_core::{
     context::Context,
     pro_trace::{
-        create_consumer, display_message, get_kind_filter, json_trace_close, set_kind_filter,
-        specify_trace_files, Consumer, Kind,
+        create_consumer, display_message, json_trace_close, set_kind_filter, specify_trace_files,
+        Consumer, Kind,
     },
     rule_engine::{resolve_rule_sets, rewrite_naive},
     Model,
@@ -29,7 +27,6 @@ use conjure_oxide::{
     SolverFamily,
 };
 use serde_json::to_string_pretty;
-use tracing::enabled;
 
 use crate::cli::GlobalArgs;
 
