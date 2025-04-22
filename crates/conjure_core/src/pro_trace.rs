@@ -31,7 +31,7 @@ pub fn set_kind_filter(kind: Option<Kind>) {
     *filter = Some(kind.unwrap_or(Kind::Default));
 }
 
-// Get the kind_filter
+/// Get the kind_filter
 pub fn get_kind_filter() -> Option<Kind> {
     let filter = KIND_FILTER.lock().unwrap();
     filter.clone()
@@ -49,7 +49,7 @@ pub fn set_rule_filter(rule_name: Option<Vec<String>>) {
     *filter = rule_name;
 }
 
-// Get the rule_filter
+/// Get the rule_filter
 pub fn get_rule_filter() -> Option<Vec<String>> {
     let filter = RULE_FILTER.lock().unwrap();
     filter.clone()
@@ -61,7 +61,7 @@ pub fn set_rule_set_filter(rule_set: Option<Vec<String>>) {
     *filter = rule_set;
 }
 
-// Get the rule_set_filter
+/// Get the rule_set_filter
 pub fn get_rule_set_filter() -> Option<Vec<String>> {
     let filter = RULE_SET_FILTER.lock().unwrap();
     filter.clone()
@@ -80,6 +80,7 @@ pub struct RuleTrace {
     pub top_level_str: Option<String>,
 }
 
+// represents the model trace of the essence file
 pub struct ModelTrace {
     pub initial_model: Model,
     pub rewritten_model: Option<Model>,
@@ -166,30 +167,14 @@ impl MessageFormatter for HumanFormatter {
     fn format(&self, trace: TraceType) -> String {
         match trace {
             TraceType::RuleTrace(rule_trace) => {
-                // println!(
-                //     "Rule filter: {:?}, Rule set filter: {:?}",
-                //     get_rule_filter(),
-                //     get_rule_set_filter()
-                // );
-
-                // println!(
-                //     "Rule filter: {:?}, Rule set filter: {:?}",
-                //     get_rule_filter(),
-                //     get_rule_set_filter()
-                // );
-
+                // check if there are any filters applied and if the rule matches the filters
                 let no_filter = get_rule_filter().is_none() && get_rule_set_filter().is_none();
-
                 let rule_filter_matches = get_rule_filter()
                     .map_or(false, |filter| filter.contains(&rule_trace.rule_name));
-
                 let rule_set_filter_matches = get_rule_set_filter()
                     .map_or(false, |filter| filter.contains(&rule_trace.rule_set_name));
 
-                // println!(
-                //     "No filter: {}, Rule filter match: {}, rule set filter match: {}",
-                //     no_filter, rule_filter_matches, rule_set_filter_matches
-                // );
+                // return an empty string if the rule does not match the filters given
                 if !no_filter && !(rule_filter_matches || rule_set_filter_matches) {
                     return String::new();
                 }
@@ -213,19 +198,14 @@ impl MessageFormatter for JsonFormatter {
     fn format(&self, trace: TraceType) -> String {
         match trace {
             TraceType::RuleTrace(rule_trace) => {
-                // println!("Rule filter: {:?}", get_rule_filter());
+                // check if there are any filters applied and if the rule matches the filters
                 let no_filter = get_rule_filter().is_none() && get_rule_set_filter().is_none();
-
                 let rule_filter_matches = get_rule_filter()
                     .map_or(false, |filter| filter.contains(&rule_trace.rule_name));
-
                 let rule_set_filter_matches = get_rule_set_filter()
                     .map_or(false, |filter| filter.contains(&rule_trace.rule_set_name));
 
-                // println!(
-                //     "No filter: {}, Rule filter match: {}, rule set filter match: {}",
-                //     no_filter, rule_filter_matches, rule_set_filter_matches
-                // );
+                // return an empty string if the rule does not match the filters given
                 if !no_filter && !(rule_filter_matches || rule_set_filter_matches) {
                     return String::new();
                 }
@@ -285,9 +265,12 @@ impl Trace for FileConsumer {
             FormatterType::Json => {
                 if let Some(ref json_path) = self.json_file_path {
                     let formatted_output = self.formatter.format(trace.clone());
+
+                    // if rule does not match filter, it will not be outputted
                     if formatted_output == String::new() {
                         return;
                     }
+
                     let json_file = OpenOptions::new()
                         .append(true)
                         .create(true)
