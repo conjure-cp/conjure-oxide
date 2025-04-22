@@ -9,7 +9,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::{fmt, fs::OpenOptions, io::Write};
 
-// Values for different kinds of messages
+/// Different kinds of messages to be registered by `display_message`.
 #[derive(PartialEq, Clone, Debug, ValueEnum)]
 pub enum Kind {
     Parser,
@@ -20,7 +20,7 @@ pub enum Kind {
     Default,
 }
 
-/// Create kind_filter for message as a global variable
+/// Create kind_filter for message as a global variable.
 pub static KIND_FILTER: Mutex<Option<Kind>> = Mutex::new(None);
 
 /// Set the kind_filter. If no Kind specified, set as Default.
@@ -29,45 +29,45 @@ pub fn set_kind_filter(kind: Option<Kind>) {
     *filter = Some(kind.unwrap_or(Kind::Default));
 }
 
-/// Get the kind_filter
+/// Get the kind_filter.
 pub fn get_kind_filter() -> Option<Kind> {
     let filter = KIND_FILTER.lock().unwrap();
     filter.clone()
 }
 
-/// Create rule_filter for rule filtering as a global variable
+/// Create rule_filter for rule filtering as a global variable.
 pub static RULE_FILTER: Mutex<Option<Vec<String>>> = Mutex::new(None);
 
-/// Create rule_set_filter for rule set filtering as a global variable
+/// Create rule_set_filter for rule set filtering as a global variable.
 pub static RULE_SET_FILTER: Mutex<Option<Vec<String>>> = Mutex::new(None);
 
-/// Set the rule_filter
+/// Set the rule_filter.
 pub fn set_rule_filter(rule_name: Option<Vec<String>>) {
     let mut filter = RULE_FILTER.lock().unwrap();
     *filter = rule_name;
 }
 
-/// Get the rule_filter
+/// Get the rule_filter.
 pub fn get_rule_filter() -> Option<Vec<String>> {
     let filter = RULE_FILTER.lock().unwrap();
     filter.clone()
 }
 
-/// Set the rule_set_filter
+/// Set the rule_set_filter.
 pub fn set_rule_set_filter(rule_set: Option<Vec<String>>) {
     let mut filter = RULE_SET_FILTER.lock().unwrap();
     *filter = rule_set;
 }
 
-/// Get the rule_set_filter
+/// Get the rule_set_filter.
 pub fn get_rule_set_filter() -> Option<Vec<String>> {
     let filter = RULE_SET_FILTER.lock().unwrap();
     filter.clone()
 }
 
-#[derive(serde::Serialize)] // added for serialisation to JSON using serde
-#[derive(Clone)]
-/// represents the trace of a rule application
+#[derive(serde::Serialize, Clone)]
+
+/// Representation of a rule trace.
 pub struct RuleTrace {
     pub initial_expression: Expression,
     pub rule_name: String,
@@ -78,20 +78,20 @@ pub struct RuleTrace {
     pub top_level_str: Option<String>,
 }
 
-// represents the model trace of the essence file
+/// Representation of the [Model] trace.
 pub struct ModelTrace {
     pub initial_model: Model,
     pub rewritten_model: Option<Model>,
 }
 
-/// Different types of traces
+/// Different types of traces.
 #[derive(Clone)]
 pub enum TraceType<'a> {
     RuleTrace(RuleTrace),
     ModelTrace(&'a ModelTrace),
 }
 
-/// Provides a human readable representation of the RuleTrace struct
+/// Provides a human readable representation of the [RuleTrace] struct.
 impl fmt::Display for RuleTrace {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -115,7 +115,7 @@ impl fmt::Display for RuleTrace {
     }
 }
 
-// Human -readable representation of ModelTrace
+/// Human-readable representation of [ModelTrace].
 impl fmt::Display for ModelTrace {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(model) = &self.rewritten_model {
@@ -132,7 +132,6 @@ impl fmt::Display for ModelTrace {
     }
 }
 
-/// represents the level of detail in the trace
 #[derive(clap::ValueEnum, serde::Serialize, Clone, PartialEq, Default, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub enum VerbosityLevel {
@@ -141,16 +140,20 @@ pub enum VerbosityLevel {
     Medium,
     High,
 }
-/// defines trait for formatting traces
+
+/// Trait for capturing traces of a specific type.
+///
+/// Implementors of this trait can define how to store or process traces
 pub trait Trace {
     fn capture(&self, trace: TraceType);
 }
 
+/// Trait for formatting trace output into a string representation.
 pub trait MessageFormatter: Any + Send + Sync {
     fn format(&self, trace: TraceType) -> String;
 }
 
-// it's here to be able to check the formatter type later on
+/// Helper enum to check the formatter type later on.
 #[derive(PartialEq)]
 pub enum FormatterType {
     Json,
@@ -160,7 +163,7 @@ pub enum FormatterType {
 
 pub struct HumanFormatter;
 
-// human-readable formatter implementing the MessageFormatter trait
+/// Human-readable formatter implementing the [MessageFormatter] trait.
 impl MessageFormatter for HumanFormatter {
     fn format(&self, trace: TraceType) -> String {
         match trace {
@@ -188,10 +191,9 @@ impl MessageFormatter for HumanFormatter {
     }
 }
 
-// add a collection of traces
 pub struct JsonFormatter;
 
-// JSON formatter implementing the MessageFormatter trait
+/// JSON formatter implementing the [MessageFormatter] trait.
 impl MessageFormatter for JsonFormatter {
     fn format(&self, trace: TraceType) -> String {
         match trace {
@@ -218,30 +220,34 @@ impl MessageFormatter for JsonFormatter {
     }
 }
 
-// represents the different types of consumers
-// one consumer writes to the console, the other writes to a file
-// a Consumer recieves a TraceStruct, processes its data
-// according to the consumer type, and sends it to the appropriate destination
+/// Different types of consumers.
+///
+/// A [Consumer] recieves a [TraceType], processes its data according to the consumer type, and sends it to the appropriate destination.
 pub enum Consumer {
     StdoutConsumer(StdoutConsumer),
     FileConsumer(FileConsumer),
     BothConsumer(BothConsumer),
 }
 
+/// A consumer that writes trace data to standard output.
 pub struct StdoutConsumer {
     pub formatter: Arc<dyn MessageFormatter>,
     pub verbosity: VerbosityLevel,
 }
 
+/// A consumer that writes trace data to file(s).
+///
+/// Supports outputting in JSON, plain text, or both formats depending on configuration.
 pub struct FileConsumer {
     pub formatter: Arc<dyn MessageFormatter>,
-    pub formatter_type: FormatterType, // trust me again, it's for the json formtting
+    pub formatter_type: FormatterType,
     pub verbosity: VerbosityLevel,
     pub json_file_path: Option<String>, // path to file where the json trace will be written
     pub human_file_path: Option<String>, // path to file where the human trace will be written
     pub is_first: std::cell::Cell<bool>, // for json formatting, trust me
 }
 
+/// A consumer that sends data to both standard output and file.
 pub struct BothConsumer {
     stdout_consumer: StdoutConsumer,
     file_consumer: FileConsumer,
@@ -323,6 +329,9 @@ impl Trace for FileConsumer {
     }
 }
 
+/// Helper function to write JSON trace data to a file.
+///
+/// This function handles inserting commas appropriately when writing to a JSON array stored in a file.
 pub fn write_to_json_trace_file(
     consumer: &FileConsumer,
     mut json_file: File,
@@ -354,7 +363,7 @@ impl Trace for BothConsumer {
     }
 }
 
-// which returns the verbosity level of the consumer
+/// Returns the [VerbosityLevel] of a [Consumer].
 pub fn check_verbosity_level(consumer: &Consumer) -> VerbosityLevel {
     match consumer {
         Consumer::StdoutConsumer(stdout_consumer) => stdout_consumer.verbosity.clone(),
@@ -363,8 +372,7 @@ pub fn check_verbosity_level(consumer: &Consumer) -> VerbosityLevel {
     }
 }
 
-// provides an implementation for the capture method, which
-// sends the trace to the appropriate consumer
+/// Provides an implementation for the `capture` method, which sends the trace to the appropriate [Consumer].
 pub fn capture_trace(consumer: &Consumer, trace: TraceType) {
     match consumer {
         Consumer::StdoutConsumer(stdout_consumer) => {
@@ -377,6 +385,7 @@ pub fn capture_trace(consumer: &Consumer, trace: TraceType) {
     }
 }
 
+/// Creates a [Consumer] instance based on the specified type, verbosity, format, and output paths.
 pub fn create_consumer(
     consumer_type: &str,
     verbosity: VerbosityLevel,
@@ -392,7 +401,7 @@ pub fn create_consumer(
             other => panic!("Unknown format type: {}", other),
         };
 
-    // Helper function to clean and create a file if it exists
+    // helper function to clean and create a file if it exists
     fn init_file(path_str: &String) {
         let path = PathBuf::from(path_str);
         if path.exists() {
@@ -453,6 +462,9 @@ pub fn create_consumer(
     }
 }
 
+/// Generates filenames for JSON format and Human-readable format.
+/// If the user passes filenames as command-line arguments, the function just returns them
+/// If not, the filenames for the trace output are generated based on the problem file.
 pub fn specify_trace_files(
     essence_file: String,
     files: Option<Vec<String>>,
@@ -482,7 +494,7 @@ pub fn specify_trace_files(
             .unwrap_or(default)
     };
 
-    // file paths based on output format
+    // File paths based on output format
     match output_format.to_lowercase().as_str() {
         "json" => (Some(get_or_default(0, make_default("json"))), None),
         "human" => (None, Some(get_or_default(1, make_default("txt")))),
@@ -490,7 +502,6 @@ pub fn specify_trace_files(
             Some(get_or_default(0, make_default("json"))),
             Some(get_or_default(1, make_default("txt"))),
         ),
-        // Invalid format
         other => panic!("Unknown output format: {}", other),
     }
 }
@@ -510,7 +521,8 @@ pub fn json_trace_close(json_path: Option<String>) {
     }
 }
 
-/// General function to capture desired messages
+/// General function to capture desired messages.
+///
 /// If a file is specified, the message will be written there, otherwise it will be printed out to the terminal
 pub fn display_message(message: String, file_path: Option<String>, kind: Kind) {
     if let Some(filter) = get_kind_filter() {
