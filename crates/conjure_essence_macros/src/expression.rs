@@ -17,8 +17,8 @@ pub fn parse_expr_to_ts(
     root: &Node,
 ) -> Result<TokenStream, EssenceParseError> {
     match constraint.kind() {
-        "constraint" | "expression" | "boolean_expr" | "comparison_expr" | "arithmetic_expr"
-        | "primary_expr" | "sub_expr" => child_expr_to_ts(constraint, source_code, root),
+        "bool_exprression" | "arithmetic_expr" | "atom"
+        | "sub_bool_expr" | "sub_arith_expr" => child_expr_to_ts(constraint, source_code, root),
         "not_expr" => {
             let child = child_expr_to_ts(constraint, source_code, root)?;
             Ok(quote! {::conjure_core::ast::Expression::Not(
@@ -41,7 +41,7 @@ pub fn parse_expr_to_ts(
                 Box::new(#child),
             )})
         }
-        "exponent" | "product_expr" | "sum_expr" | "comparison" | "and_expr" | "or_expr"
+        "exponent" | "product_expr" | "sum_expr" | "and_expr" | "or_expr" | "comparison_expr"
         | "implication" => {
             let expr1 = child_expr_to_ts(constraint, source_code, root)?;
             let op = constraint.child(1).ok_or(format!(
@@ -135,7 +135,7 @@ pub fn parse_expr_to_ts(
                 _ => Err(format!("Unsupported operator '{}'", op_type).into()),
             }
         }
-        "quantifier_expr" => {
+        "quantifier_expr_bool" | "quantifier_expr_num" => {
             let mut expr_list = Vec::new();
             for expr in named_children(&constraint) {
                 expr_list.push(parse_expr_to_ts(expr, source_code, root)?);
@@ -209,6 +209,54 @@ pub fn parse_expr_to_ts(
                 ::conjure_core::ast::Atom::Reference(::conjure_core::ast::Name::UserName(#variable_name.into())),
             )})
         }
+        // "tuple_matrix_index_or_slice" => {
+        //     let tuple_or_matrix = child_expr_to_ts(constraint, source_code, root)?;
+        //     let indices_node = constraint
+        //         .child_by_field_name("indices")
+        //         .ok_or(format!(
+        //             "Missing indices in tuple/matrix expression"
+        //         ))?;
+        //     if indices_node.child_by_field_name("null_index").is_some() {
+        //         let mut indices: Vec<Option<::conjure_core::ast::Expression>> = Vec::new();
+        //         for index in named_children(&indices_node) {
+        //             if index.kind() == "arithmetic_expr" {
+        //                 let index_expr = parse_expr_to_ts(index, source_code, root)?;
+        //                 indices.push(Some(index_expr));
+        //             } else {
+        //                 indices.push(None);
+        //             }
+        //         }
+        //         return Ok(Expression::UnsafeSlice(Metadata::new(), Box::new(tuple_or_matrix), indices))
+        //     }
+        //     let mut indices: Vec<Expression> = Vec::new();
+        //     for index in named_children(&indices_node) {
+        //         let index_expr = parse_expr_to_ts(index, source_code, root)?;
+        //         indices.push(index_expr);
+        //     }
+        //     Ok(Expression::UnsafeIndex(Metadata::new(), Box::new(tuple_or_matrix), indices))
+        // }
+        // "tuple" => {
+        //     let mut elements = vec![];
+        //     for element in named_children(&constraint) {
+        //         elements.push(parse_expr_to_ts(element, source_code, root)?);
+        //     }
+        //     Ok(Expression::AbstractLiteral(Metadata::new(), conjure_core::ast::AbstractLiteral::Tuple(elements)))
+        // }
+        // "matrix" => {
+        //     let mut elements = vec![];
+        //     let mut domain: Option<Domain> = None;
+        //     for element in named_children(&constraint) {
+        //         if element.kind() == "arithmetic_expr" {
+        //             elements.push(parse_expr_to_ts(element, source_code, root)?);
+        //         } else {
+        //             domain = Some(parse_domain(element, source_code));
+        //         }
+        //     }
+        //     if domain.is_none() {
+        //         domain = Some(Domain::IntDomain(vec![Range::Bounded(1, constraint.named_child_count() as i32)]));
+        //     }
+        //     Ok(Expression::AbstractLiteral(Metadata::new(), conjure_core::ast::AbstractLiteral::Matrix(elements, domain.unwrap())))
+        // }
         "from_solution" => match root.kind() {
             "dominance_relation" => {
                 let inner_ts = child_expr_to_ts(constraint, source_code, root)?;
