@@ -194,6 +194,8 @@ impl Domain {
     }
 
     // turns vector of integers into a domain
+    // TODO: can be done more compactly in terms of the domain we produce. e.g. instead of int(1,2,3,4,5,8,9,10) produce int(1..5, 8..10)
+    // needs to be tested with domain functions intersect() and uninon() once comprehension rules are written.
     pub fn make_int_domain_from_values_i32(&self, vector: &Vec<i32>) -> Option<Domain> {
         let mut new_ranges = vec![];
         for values in vector.iter() {
@@ -307,6 +309,7 @@ impl Domain {
 
     // simplified domain intersection function. defined for integer domains of sets
     // TODO: does not consider unbounded domains yet
+    // needs to be tested once comprehension rules are written
     pub fn intersect(&self, other: &Domain) -> Option<Domain> {
         match (self, other) {
             (Domain::DomainSet(_, x), Domain::DomainSet(_, y)) => Some(Domain::DomainSet(
@@ -317,21 +320,9 @@ impl Domain {
                 let mut v: Vec<i32> = vec![];
                 if self.is_finite()? && other.is_finite()? {
                     if let (Some(v1), Some(v2)) = (self.values_i32(), other.values_i32()) {
-                        for values1 in v1.iter() {
-                            for values2 in v2.iter() {
-                                if values1 == values2 {
-                                    let mut found = false;
-                                    for values in v.iter() {
-                                        if values == values2 {
-                                            found = true;
-                                        }
-                                        break;
-                                    }
-                                    if !found {
-                                        v.push(*values2);
-                                    }
-                                    break;
-                                }
+                        for value1 in v1.iter() {
+                            if v2.contains(value1) && !v.contains(value1) {
+                                v.push(*value1)
                             }
                         }
                     }
@@ -347,6 +338,7 @@ impl Domain {
 
     // simplified domain union function. defined for integer domains of sets
     // TODO: does not consider unbounded domains yet
+    // needs to be tested once comprehension rules are written
     pub fn union(&self, other: &Domain) -> Option<Domain> {
         match (self, other) {
             (Domain::DomainSet(_, x), Domain::DomainSet(_, y)) => {
@@ -356,19 +348,12 @@ impl Domain {
                 let mut v: Vec<i32> = vec![];
                 if self.is_finite()? && other.is_finite()? {
                     if let (Some(v1), Some(v2)) = (self.values_i32(), other.values_i32()) {
-                        for values1 in v1.iter() {
-                            v.push(*values1);
+                        for value1 in v1.iter() {
+                            v.push(*value1);
                         }
-                        for values2 in v2.iter() {
-                            let mut found = false;
-                            for values in v.iter() {
-                                if values == values2 {
-                                    found = true;
-                                }
-                                break;
-                            }
-                            if !found {
-                                v.push(*values2);
+                        for value2 in v2.iter() {
+                            if !v.contains(value2) {
+                                v.push(*value2);
                             }
                         }
                     }
