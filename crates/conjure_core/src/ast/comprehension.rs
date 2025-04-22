@@ -83,7 +83,6 @@ impl Comprehension {
             })
             .collect_vec())
     }
-
     pub fn domain_of(&self) -> Option<Domain> {
         self.expression
             .domain_of(&self.submodel.symbols())
