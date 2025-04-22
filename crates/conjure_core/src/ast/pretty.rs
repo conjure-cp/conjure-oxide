@@ -108,3 +108,9 @@ pub fn pretty_domain_letting_declaration(
     let letting = decl.as_domain_letting()?;
     Some(format!("letting {name} be domain {letting}"))
 }
+
+pub fn pretty_domain_from_expression(symbol_table: &SymbolTable, name: &Name) -> Option<String> {
+    let decl = symbol_table.lookup(name)?;
+    let expr = decl.as_domain_from_expression()?;
+    Some(format!("{name} <- {expr}"))
+}

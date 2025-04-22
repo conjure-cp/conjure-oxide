@@ -2,8 +2,9 @@ use super::{
     comprehension::Comprehension,
     declaration::DeclarationKind,
     pretty::{
-        pretty_domain_letting_declaration, pretty_expressions_as_top_level,
-        pretty_value_letting_declaration, pretty_variable_declaration,
+        pretty_domain_from_expression, pretty_domain_letting_declaration,
+        pretty_expressions_as_top_level, pretty_value_letting_declaration,
+        pretty_variable_declaration,
     },
     serde::RcRefCellAsInner,
     Declaration,
@@ -177,6 +178,13 @@ impl Display for SubModel {
                         f,
                         "{}",
                         pretty_domain_letting_declaration(&self.symbols(), &name).unwrap()
+                    )?;
+                }
+                DeclarationKind::DomainFromExpression(_) => {
+                    writeln!(
+                        f,
+                        "{}",
+                        pretty_domain_from_expression(&self.symbols(), &name).unwrap()
                     )?;
                 }
             }

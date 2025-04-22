@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use uniplate::{derive::Uniplate, Biplate as _};
 
 use crate::{
-    ast::Atom,
+    ast::{Atom, DeclarationKind},
     context::Context,
     into_matrix_expr, matrix_expr,
     metadata::Metadata,
@@ -37,6 +37,10 @@ pub struct Comprehension {
 }
 
 impl Comprehension {
+    pub fn submodel(&self) -> &SubModel {
+        &self.submodel
+    }
+
     // Solves this comprehension using Minion, returning the resulting expressions.
     pub fn solve_with_minion(self) -> Result<Vec<Expression>, SolverError> {
         let minion = Solver::new(crate::solver::adaptors::Minion::new());
@@ -94,13 +98,29 @@ impl Comprehension {
 
 impl Display for Comprehension {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // let generators: String = self
+        //     .submodel
+        //     .symbols()
+        //     .clone()
+        //     .into_iter_local()
+        //     .map(|(name, decl)| (name, decl.domain().unwrap().clone()))
+        //     .map(|(name, domain)| format!("{name}: {domain}"))
+        //     .join(",");
+
         let generators: String = self
             .submodel
             .symbols()
             .clone()
             .into_iter_local()
-            .map(|(name, decl)| (name, decl.domain().unwrap().clone()))
-            .map(|(name, domain)| format!("{name}: {domain}"))
+            .map(|(name, decl)| {
+                if let DeclarationKind::DecisionVariable(d) = decl.kind() {
+                    format!("{name}: {domain}", domain = d.domain)
+                } else if let DeclarationKind::DomainFromExpression(e) = decl.kind() {
+                    format!("{name} <- {e}")
+                } else {
+                    format!("{name}: unknown") // fallback, in case neither exist
+                }
+            })
             .join(",");
 
         let guards = self
@@ -122,6 +142,7 @@ impl Display for Comprehension {
 pub struct ComprehensionBuilder {
     guards: Vec<Expression>,
     generators: Vec<(Name, Domain)>,
+    special_generators: Vec<(Name, Expression)>,
     induction_variables: HashSet<Name>,
 }
 
@@ -138,6 +159,12 @@ impl ComprehensionBuilder {
         assert!(!self.induction_variables.contains(&name));
         self.induction_variables.insert(name.clone());
         self.generators.push((name, domain));
+        self
+    }
+    pub fn special_generator(mut self, name: Name, expr: Expression) -> Self {
+        assert!(!self.induction_variables.contains(&name));
+        self.induction_variables.insert(name.clone());
+        self.special_generators.push((name, expr));
         self
     }
 
@@ -197,6 +224,12 @@ impl ComprehensionBuilder {
             submodel
                 .symbols_mut()
                 .insert(Rc::new(Declaration::new_var(name, domain)));
+        }
+        println!("jabadahut");
+        for (name, expr) in self.special_generators {
+            submodel
+                .symbols_mut()
+                .insert(Rc::new(Declaration::new_domain_from_expression(name, expr)));
         }
 
         Comprehension {

@@ -49,6 +49,7 @@ pub enum DeclarationKind {
     DecisionVariable(DecisionVariable),
     ValueLetting(Expression),
     DomainLetting(Domain),
+    DomainFromExpression(Expression),
 }
 
 impl Declaration {
@@ -88,6 +89,15 @@ impl Declaration {
         }
     }
 
+    pub fn new_domain_from_expression(name: Name, expr: Expression) -> Declaration {
+        let id = ID_COUNTER.fetch_add(1, Ordering::Relaxed);
+        Declaration {
+            name,
+            kind: DeclarationKind::DomainFromExpression(expr),
+            id,
+        }
+    }
+
     /// The name of this declaration.
     pub fn name(&self) -> &Name {
         &self.name
@@ -105,6 +115,7 @@ impl Declaration {
             // TODO: this needs a symbol table :(
             DeclarationKind::ValueLetting(_) => None,
             DeclarationKind::DomainLetting(domain) => Some(domain),
+            DeclarationKind::DomainFromExpression(expr) => None,
         }
     }
 
@@ -161,6 +172,14 @@ impl Declaration {
             None
         }
     }
+    /// This declaration as a domain from expression, if it is one.
+    pub fn as_domain_from_expression(&self) -> Option<&Expression> {
+        if let DeclarationKind::DomainFromExpression(expr) = &self.kind {
+            Some(expr)
+        } else {
+            None
+        }
+    }
 }
 
 impl HasId for Declaration {
@@ -195,6 +214,7 @@ impl Typeable for Declaration {
             DeclarationKind::DecisionVariable(var) => var.return_type(),
             DeclarationKind::ValueLetting(expression) => expression.return_type(),
             DeclarationKind::DomainLetting(domain) => domain.return_type(),
+            DeclarationKind::DomainFromExpression(expr) => expr.return_type(),
         }
     }
 }
