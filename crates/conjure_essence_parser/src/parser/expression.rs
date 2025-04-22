@@ -3,7 +3,7 @@ use std::f32::consts::E;
 
 use tree_sitter::Node;
 
-use conjure_core::ast::{Atom, Domain, Expression, Literal, Name, Range};
+use conjure_core::ast::{Atom, Expression, Literal, Name};
 use conjure_core::metadata::Metadata;
 use conjure_core::{into_matrix_expr, matrix_expr, parse};
 
@@ -34,7 +34,7 @@ pub fn parse_expression(
             Metadata::new(),
             Box::new(child_expr(constraint, source_code, root)?),
         )),
-        "exponent" | "product_expr" | "sum_expr" | "and_expr" | "or_expr" | "comparison_expr"
+        "exponent" | "product_expr" | "sum_expr" | "comparison" | "and_expr" | "or_expr"
         | "implication" => {
             parse_expr_op_expr(constraint, source_code, root)
         }
