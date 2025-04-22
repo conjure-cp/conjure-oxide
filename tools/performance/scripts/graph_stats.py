@@ -59,7 +59,7 @@ else:
 
     ax.set_ylabel('Nodes')
     ax.set_xticks(ind+w)
-    ax.set_xticklabels(tests) #set x axis
+    ax.set_xticklabels(tests,rotation=90) #set x axis
 
 plt.title('Comparing different rewriter modes at ' + sys.argv[1])
 plt.legend()
