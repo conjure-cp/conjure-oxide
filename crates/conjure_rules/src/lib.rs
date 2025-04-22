@@ -15,9 +15,11 @@ mod matrix;
 mod minion;
 mod normalisers;
 mod partial_eval;
+mod records;
 mod representation;
 mod select_representation;
 mod subsitute_lettings;
+mod tuple;
 mod utils;
 
 mod sets;
