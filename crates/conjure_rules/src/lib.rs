@@ -9,7 +9,6 @@ pub use constant_eval::eval_constant;
 mod base;
 mod bubble;
 mod cnf;
-mod cnf_int;
 mod constant_eval;
 mod expand_comprehension;
 mod matrix;
