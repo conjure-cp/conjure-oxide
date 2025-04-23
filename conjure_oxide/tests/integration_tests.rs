@@ -284,8 +284,8 @@ fn integration_test_inner(
             "file",
             VerbosityLevel::Medium,
             "both",
-            Some(format!("{path}/{essence_base}.generated-rule-trace.json")),
-            Some(format!("{path}/{essence_base}.generated-rule-trace.txt")),
+            Some(format!("{path}/{essence_base}.expected-rule-trace.json")),
+            Some(format!("{path}/{essence_base}.expected-rule-trace.txt")),
         );
 
         let rewritten = if config.enable_naive_impl {
@@ -314,7 +314,7 @@ fn integration_test_inner(
 
         // closing the json array in the trace file
         json_trace_close(Some(format!(
-            "{path}/{essence_base}.generated-rule-trace.json"
+            "{path}/{essence_base}.expected-rule-trace.json"
         )));
 
         if verbose {
