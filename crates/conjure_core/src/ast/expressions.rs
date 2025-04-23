@@ -24,8 +24,6 @@ use super::comprehension::Comprehension;
 use super::records::RecordValue;
 use super::{Domain, Range, SubModel, Typeable};
 
-use crate::ast::ReturnType::Int;
-
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
 /// The `Expression` enum includes operations, constants, and variable references
@@ -1063,7 +1061,7 @@ impl Typeable for Expression {
             }
             Expression::SubsetEq(_, _, _) => Some(ReturnType::Bool),
 
-            // wrong
+            // handles sets and matrices, since typeable defined for abstract literals
             Expression::AbstractLiteral(_, lit) => lit.return_type(),
             Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
                 Some(subject.return_type()?)
@@ -1076,11 +1074,9 @@ impl Typeable for Expression {
             Expression::Root(_, _) => Some(ReturnType::Bool),
             Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
             Expression::FromSolution(_, expr) => expr.return_type(),
-            Expression::Atomic(_, Atom::Literal(Literal::Int(_))) => Some(ReturnType::Int),
-            Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(ReturnType::Bool),
-            // wrong
-            Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(_))) => None,
-            // wrong
+            // handles integers, booleans and abstract literals all at once, since typeable defined for literal
+            Expression::Atomic(_, Atom::Literal(lit)) => lit.return_type(),
+            // TODO - access symbol table to get return type of references - define inside Atom instead
             Expression::Atomic(_, Atom::Reference(_)) => None,
             Expression::Scope(_, scope) => scope.return_type(),
             Expression::Abs(_, _) => Some(ReturnType::Int),
