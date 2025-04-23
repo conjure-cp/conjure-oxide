@@ -14,7 +14,7 @@ use conjure_core::rule_engine::{
 use Expression::*;
 
 #[register_rule(("Base", 8600))]
-fn in_set(expr: &Expression, st: &SymbolTable) -> ApplicationResult {
+fn in_set(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     match expr {
         In(_, a, b) => {
             let mut literals = Vec::new();
@@ -47,7 +47,7 @@ fn in_set(expr: &Expression, st: &SymbolTable) -> ApplicationResult {
 
                 _ => return Err(RuleNotApplicable),
             }
-            if retur == true {
+            if retur {
                 if literals.is_empty() {
                     return Ok(Reduction::pure(Atomic(
                         Metadata::new(),
@@ -61,10 +61,10 @@ fn in_set(expr: &Expression, st: &SymbolTable) -> ApplicationResult {
                         literals,
                     )))
                 } else {
-                    return Err(RuleNotApplicable);
+                    Err(RuleNotApplicable)
                 }
             } else {
-                return Err(RuleNotApplicable);
+                Err(RuleNotApplicable)
             }
         }
         _ => Err(RuleNotApplicable),

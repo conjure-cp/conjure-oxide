@@ -97,15 +97,6 @@ impl Comprehension {
 
 impl Display for Comprehension {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // let generators: String = self
-        //     .submodel
-        //     .symbols()
-        //     .clone()
-        //     .into_iter_local()
-        //     .map(|(name, decl)| (name, decl.domain().unwrap().clone()))
-        //     .map(|(name, domain)| format!("{name}: {domain}"))
-        //     .join(",");
-
         let generators: String = self
             .submodel
             .symbols()
@@ -224,7 +215,6 @@ impl ComprehensionBuilder {
                 .symbols_mut()
                 .insert(Rc::new(Declaration::new_var(name, domain)));
         }
-        println!("jabadahut");
         for (name, expr) in self.special_generators {
             submodel
                 .symbols_mut()

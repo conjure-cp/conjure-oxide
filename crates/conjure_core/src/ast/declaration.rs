@@ -115,7 +115,7 @@ impl Declaration {
             // TODO: this needs a symbol table :(
             DeclarationKind::ValueLetting(_) => None,
             DeclarationKind::DomainLetting(domain) => Some(domain),
-            DeclarationKind::DomainFromExpression(expr) => None,
+            DeclarationKind::DomainFromExpression(_) => None,
         }
     }
 

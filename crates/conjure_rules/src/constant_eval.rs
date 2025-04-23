@@ -294,7 +294,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                         return None;
                     }
                 }
-                Some(list.eq(&list2)).map(Lit::Bool)
+                Some(Lit::Bool(list.eq(&list2)))
             }
             _ => None,
         },

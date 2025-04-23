@@ -3,15 +3,13 @@ use std::rc::Rc;
 
 use conjure_core::ast::comprehension::ComprehensionBuilder;
 use conjure_core::ast::comprehension::ComprehensionKind;
-use conjure_core::ast::Domain;
+
 use conjure_core::ast::Name;
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::Reduction;
 
-use conjure_core::ast::AbstractLiteral;
 use conjure_core::ast::Atom;
 use conjure_core::ast::Expression;
-use conjure_core::ast::Literal;
 
 use conjure_core::ast::SymbolTable;
 
@@ -24,8 +22,6 @@ use Expression::*;
 #[register_rule(("Base", 8600))]
 fn subset_eq(expr: &Expression, st: &SymbolTable) -> ApplicationResult {
     if let SubSetEq(_, a, b) = expr {
-        println!("qwertqweqweqeqweqweqweqewqewy");
-
         let mut builder: ComprehensionBuilder = ComprehensionBuilder::new();
         builder = builder.special_generator(Name::from("i".to_string()), *a.clone());
         let ret_expr = In(
@@ -48,6 +44,5 @@ fn subset_eq(expr: &Expression, st: &SymbolTable) -> ApplicationResult {
             Box::new(comprehension_expr),
         )));
     }
-
-    return Err(RuleNotApplicable);
+    Err(RuleNotApplicable)
 }

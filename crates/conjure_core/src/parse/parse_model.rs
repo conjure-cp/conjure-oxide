@@ -206,7 +206,6 @@ fn parse_domain(
                     ))
                 }
             }?;
-            print!("{:?}", domain);
             Ok(Domain::DomainSet(SetAttr::None, Box::new(domain)))
         }
 

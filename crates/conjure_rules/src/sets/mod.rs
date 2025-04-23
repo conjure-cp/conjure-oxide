@@ -1,3 +1,3 @@
 mod in_rule;
-mod subsetEq;
+mod subset_eq;
 mod union_intersection;

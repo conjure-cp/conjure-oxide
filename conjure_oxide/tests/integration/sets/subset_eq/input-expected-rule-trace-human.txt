@@ -1,0 +1,32 @@
+Model before rewriting:
+
+find A: set of (int(1..4))
+find B: set of (int(1..4))
+
+such that
+
+A subseteq B
+
+--
+
+A subseteq B, 
+   ~~> subset_eq ([("Base", 8600)]) 
+and([i in B | i <- A,]) 
+
+--
+
+, 
+   ~~> eval_root ([("Constant", 9001)]) 
+true 
+
+--
+
+Final model:
+
+find A: set of (int(1..4))
+find B: set of (int(1..4))
+
+such that
+
+and([i in B | i <- A,true])
+

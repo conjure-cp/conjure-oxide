@@ -1,0 +1,90 @@
+Model before rewriting:
+
+find A: set of (int(0..6))
+find B: set of (int(0..6))
+find C: set of (int(0..6))
+find D: set of (int(0..6))
+
+such that
+
+2 in A intersect B union C intersect D
+
+--
+
+2 in A intersect B union C intersect D, 
+   ~~> union_set ([("Base", 8601)]) 
+or([2 in A intersect B,2 in C intersect D;int(1..)]) 
+
+--
+
+2 in A intersect B, 
+   ~~> inersection_set ([("Base", 8601)]) 
+and([2 in A,2 in B;int(1..)]) 
+
+--
+
+2 in C intersect D, 
+   ~~> inersection_set ([("Base", 8601)]) 
+and([2 in C,2 in D;int(1..)]) 
+
+--
+
+or([and([2 in A,2 in B;int(1..)]),and([2 in C,2 in D;int(1..)]);int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)]) 
+and([or([and([2 in C,2 in D;int(1..)]),2 in A;int(1..)]),or([and([2 in C,2 in D;int(1..)]),2 in B;int(1..)]);int(1..)]) 
+
+--
+
+and([or([and([2 in C,2 in D;int(1..)]),2 in A;int(1..)]),or([and([2 in C,2 in D;int(1..)]),2 in B;int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+or([and([2 in C,2 in D;int(1..)]),2 in A;int(1..)]),
+or([and([2 in C,2 in D;int(1..)]),2 in B;int(1..)]) 
+
+--
+
+or([and([2 in C,2 in D;int(1..)]),2 in A;int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)]) 
+and([or([2 in A,2 in C;int(1..)]),or([2 in A,2 in D;int(1..)]);int(1..)]) 
+
+--
+
+and([or([2 in A,2 in C;int(1..)]),or([2 in A,2 in D;int(1..)]);int(1..)]),
+or([and([2 in C,2 in D;int(1..)]),2 in B;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+or([2 in A,2 in C;int(1..)]),
+or([2 in A,2 in D;int(1..)]),
+or([and([2 in C,2 in D;int(1..)]),2 in B;int(1..)]) 
+
+--
+
+or([and([2 in C,2 in D;int(1..)]),2 in B;int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)]) 
+and([or([2 in B,2 in C;int(1..)]),or([2 in B,2 in D;int(1..)]);int(1..)]) 
+
+--
+
+or([2 in A,2 in C;int(1..)]),
+or([2 in A,2 in D;int(1..)]),
+and([or([2 in B,2 in C;int(1..)]),or([2 in B,2 in D;int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+or([2 in A,2 in C;int(1..)]),
+or([2 in A,2 in D;int(1..)]),
+or([2 in B,2 in C;int(1..)]),
+or([2 in B,2 in D;int(1..)]) 
+
+--
+
+Final model:
+
+find A: set of (int(0..6))
+find B: set of (int(0..6))
+find C: set of (int(0..6))
+find D: set of (int(0..6))
+
+such that
+
+or([2 in A,2 in C;int(1..)]),
+or([2 in A,2 in D;int(1..)]),
+or([2 in B,2 in C;int(1..)]),
+or([2 in B,2 in D;int(1..)])
+
