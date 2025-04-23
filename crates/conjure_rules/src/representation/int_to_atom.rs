@@ -1,8 +1,4 @@
-use itertools::Itertools;
-
-//use super::prelude::*;
 // https://conjure-cp.github.io/conjure-oxide/docs/conjure_core/representation/trait.Representation.html
-use conjure_core::matrix_expr;
 use conjure_core::{
     ast::{Atom, Declaration, Domain, Expression, Literal, Name, Range, SymbolTable},
     metadata::Metadata,
