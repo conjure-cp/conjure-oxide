@@ -48,18 +48,13 @@ if (sys.argv[1] != 'solver_nodes'):
     plt.ylabel('Speed-up factor /log')
 else:
     tests = nativeO0['test'].values #each test, for x axis
-    w, ind = 0.3, np.arange(len(tests)) #width and index
     fig = plt.figure()
     ax = fig.add_subplot(111)
-
-    #set each bar on the barchart at given width
-    ax.bar(ind, timeCNO0, w, color = '#F67280', label = 'CNO0')
-    ax.bar(ind + w, timeCNO2, w, color = '#C06C84', label = 'CNO2')
-    ax.bar(ind + w*2, timeCONV, w, color = '#355C7D', label = 'CONV')
-
-    ax.set_ylabel('Nodes')
-    ax.set_xticks(ind+w)
-    ax.set_xticklabels(tests,rotation=90) #set x axis
+    plt.subplot()
+    ax.scatter(tests, timeCNO0, color = '#F67280', label = 'CNO0', marker = 'X')
+    ax.scatter(tests,timeCNO2, color = '#C06C84', label = 'CNO2', marker = 's')
+    ax.scatter(tests,timeCONV, color = '#355C7D', label = 'CONV', marker = 'D')
+    plt.setp(ax.get_xticklabels(), rotation = 90)
 
 plt.title('Comparing different rewriter modes at ' + sys.argv[1])
 plt.legend()
