@@ -13,9 +13,7 @@ fn supset_to_subset(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Supset(_, a, b) => {
             if let Some(Set(_)) = a.as_ref().return_type() {
-                println!("set!");
                 if let Some(Set(_)) = b.as_ref().return_type() {
-                    println!("set!");
                     Ok(Reduction::pure(Expression::Subset(
                         Metadata::new(),
                         b.clone(),

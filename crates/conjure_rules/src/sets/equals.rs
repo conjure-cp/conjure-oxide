@@ -14,9 +14,7 @@ fn eq_to_subset_eq(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Eq(_, a, b) => {
             if let Some(Set(_)) = a.as_ref().return_type() {
-                println!("set!");
                 if let Some(Set(_)) = b.as_ref().return_type() {
-                    println!("set!");
                     let expr1 = SubsetEq(Metadata::new(), a.clone(), b.clone());
                     let expr2 = SubsetEq(Metadata::new(), b.clone(), a.clone());
                     Ok(Reduction::pure(And(

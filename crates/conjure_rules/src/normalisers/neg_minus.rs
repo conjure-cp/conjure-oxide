@@ -106,11 +106,9 @@ fn minus_to_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs) = match expr {
         Minus(_, lhs, rhs) => {
             if let Some(Set(_)) = lhs.as_ref().return_type() {
-                println!("set!");
                 return Err(RuleNotApplicable);
             }
             if let Some(Set(_)) = rhs.as_ref().return_type() {
-                println!("set!");
                 return Err(RuleNotApplicable);
             }
             (lhs.clone(), rhs.clone())
