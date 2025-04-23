@@ -3,6 +3,7 @@ use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 
 use itertools::Itertools;
+use schemars::Set;
 use serde::{Deserialize, Serialize};
 
 use crate::ast::literals::AbstractLiteral;
@@ -22,6 +23,8 @@ use uniplate::{Biplate, Uniplate as _};
 use super::comprehension::Comprehension;
 use super::records::RecordValue;
 use super::{Domain, Range, SubModel, Typeable};
+
+use crate::ast::ReturnType::Int;
 
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
@@ -687,80 +690,6 @@ impl Expression {
         true
     }
 
-    pub fn return_type(&self) -> Option<ReturnType> {
-        match self {
-            Expression::Union(_, subject, _) => {
-                Some(ReturnType::Set(Box::new(subject.return_type()?)))
-            }
-            Expression::Intersect(_, subject, _) => {
-                Some(ReturnType::Set(Box::new(subject.return_type()?)))
-            }
-            Expression::SubsetEq(_, _, _) => Some(ReturnType::Bool),
-
-            Expression::AbstractLiteral(_, _) => None,
-            Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
-                Some(subject.return_type()?)
-            }
-            Expression::UnsafeSlice(_, subject, _) | Expression::SafeSlice(_, subject, _) => {
-                Some(ReturnType::Matrix(Box::new(subject.return_type()?)))
-            }
-            Expression::InDomain(_, _, _) => Some(ReturnType::Bool),
-            Expression::Comprehension(_, _) => None,
-            Expression::Root(_, _) => Some(ReturnType::Bool),
-            Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
-            Expression::FromSolution(_, expr) => expr.return_type(),
-            Expression::Atomic(_, Atom::Literal(Literal::Int(_))) => Some(ReturnType::Int),
-            Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(ReturnType::Bool),
-            Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(_))) => None,
-            Expression::Atomic(_, Atom::Reference(_)) => None,
-            Expression::Scope(_, scope) => scope.return_type(),
-            Expression::Abs(_, _) => Some(ReturnType::Int),
-            Expression::Sum(_, _) => Some(ReturnType::Int),
-            Expression::Product(_, _) => Some(ReturnType::Int),
-            Expression::Min(_, _) => Some(ReturnType::Int),
-            Expression::Max(_, _) => Some(ReturnType::Int),
-            Expression::Not(_, _) => Some(ReturnType::Bool),
-            Expression::Or(_, _) => Some(ReturnType::Bool),
-            Expression::Imply(_, _, _) => Some(ReturnType::Bool),
-            Expression::Iff(_, _, _) => Some(ReturnType::Bool),
-            Expression::And(_, _) => Some(ReturnType::Bool),
-            Expression::Eq(_, _, _) => Some(ReturnType::Bool),
-            Expression::Neq(_, _, _) => Some(ReturnType::Bool),
-            Expression::Geq(_, _, _) => Some(ReturnType::Bool),
-            Expression::Leq(_, _, _) => Some(ReturnType::Bool),
-            Expression::Gt(_, _, _) => Some(ReturnType::Bool),
-            Expression::Lt(_, _, _) => Some(ReturnType::Bool),
-            Expression::SafeDiv(_, _, _) => Some(ReturnType::Int),
-            Expression::UnsafeDiv(_, _, _) => Some(ReturnType::Int),
-            Expression::FlatAllDiff(_, _) => Some(ReturnType::Bool),
-            Expression::FlatSumGeq(_, _, _) => Some(ReturnType::Bool),
-            Expression::FlatSumLeq(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionDivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::FlatIneq(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::AllDiff(_, _) => Some(ReturnType::Bool),
-            Expression::Bubble(_, _, _) => None, // TODO: (flm8) should this be a bool?
-            Expression::FlatWatchedLiteral(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionReify(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionReifyImply(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionWInIntervalSet(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionElementOne(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::AuxDeclaration(_, _, _) => Some(ReturnType::Bool),
-            Expression::UnsafeMod(_, _, _) => Some(ReturnType::Int),
-            Expression::SafeMod(_, _, _) => Some(ReturnType::Int),
-            Expression::MinionModuloEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::Neg(_, _) => Some(ReturnType::Int),
-            Expression::UnsafePow(_, _, _) => Some(ReturnType::Int),
-            Expression::SafePow(_, _, _) => Some(ReturnType::Int),
-            Expression::Minus(_, _, _) => Some(ReturnType::Int),
-            Expression::FlatAbsEq(_, _, _) => Some(ReturnType::Bool),
-            Expression::FlatMinusEq(_, _, _) => Some(ReturnType::Bool),
-            Expression::FlatProductEq(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::FlatWeightedSumLeq(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::MinionPow(_, _, _, _) => Some(ReturnType::Bool),
-        }
-    }
-
     pub fn is_clean(&self) -> bool {
         let metadata = self.get_meta();
         metadata.clean
@@ -1119,6 +1048,85 @@ impl Display for Expression {
                 let atoms = atoms.iter().join(",");
                 write!(f, "__minion_element_one([{atoms}],{atom},{atom1})")
             }
+        }
+    }
+}
+
+impl Typeable for Expression {
+    fn return_type(&self) -> Option<ReturnType> {
+        match self {
+            Expression::Union(_, subject, _) => {
+                Some(ReturnType::Set(Box::new(subject.return_type()?)))
+            }
+            Expression::Intersect(_, subject, _) => {
+                Some(ReturnType::Set(Box::new(subject.return_type()?)))
+            }
+            Expression::SubsetEq(_, _, _) => Some(ReturnType::Bool),
+
+            // wrong
+            Expression::AbstractLiteral(_, lit) => lit.return_type(),
+            Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
+                Some(subject.return_type()?)
+            }
+            Expression::UnsafeSlice(_, subject, _) | Expression::SafeSlice(_, subject, _) => {
+                Some(ReturnType::Matrix(Box::new(subject.return_type()?)))
+            }
+            Expression::InDomain(_, _, _) => Some(ReturnType::Bool),
+            Expression::Comprehension(_, _) => None,
+            Expression::Root(_, _) => Some(ReturnType::Bool),
+            Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
+            Expression::FromSolution(_, expr) => expr.return_type(),
+            Expression::Atomic(_, Atom::Literal(Literal::Int(_))) => Some(ReturnType::Int),
+            Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(ReturnType::Bool),
+            // wrong
+            Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(_))) => None,
+            // wrong
+            Expression::Atomic(_, Atom::Reference(_)) => None,
+            Expression::Scope(_, scope) => scope.return_type(),
+            Expression::Abs(_, _) => Some(ReturnType::Int),
+            Expression::Sum(_, _) => Some(ReturnType::Int),
+            Expression::Product(_, _) => Some(ReturnType::Int),
+            Expression::Min(_, _) => Some(ReturnType::Int),
+            Expression::Max(_, _) => Some(ReturnType::Int),
+            Expression::Not(_, _) => Some(ReturnType::Bool),
+            Expression::Or(_, _) => Some(ReturnType::Bool),
+            Expression::Imply(_, _, _) => Some(ReturnType::Bool),
+            Expression::Iff(_, _, _) => Some(ReturnType::Bool),
+            Expression::And(_, _) => Some(ReturnType::Bool),
+            Expression::Eq(_, _, _) => Some(ReturnType::Bool),
+            Expression::Neq(_, _, _) => Some(ReturnType::Bool),
+            Expression::Geq(_, _, _) => Some(ReturnType::Bool),
+            Expression::Leq(_, _, _) => Some(ReturnType::Bool),
+            Expression::Gt(_, _, _) => Some(ReturnType::Bool),
+            Expression::Lt(_, _, _) => Some(ReturnType::Bool),
+            Expression::SafeDiv(_, _, _) => Some(ReturnType::Int),
+            Expression::UnsafeDiv(_, _, _) => Some(ReturnType::Int),
+            Expression::FlatAllDiff(_, _) => Some(ReturnType::Bool),
+            Expression::FlatSumGeq(_, _, _) => Some(ReturnType::Bool),
+            Expression::FlatSumLeq(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionDivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::FlatIneq(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::AllDiff(_, _) => Some(ReturnType::Bool),
+            Expression::Bubble(_, _, _) => None, // TODO: (flm8) should this be a bool?
+            Expression::FlatWatchedLiteral(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionReify(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionReifyImply(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionWInIntervalSet(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionElementOne(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::AuxDeclaration(_, _, _) => Some(ReturnType::Bool),
+            Expression::UnsafeMod(_, _, _) => Some(ReturnType::Int),
+            Expression::SafeMod(_, _, _) => Some(ReturnType::Int),
+            Expression::MinionModuloEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::Neg(_, _) => Some(ReturnType::Int),
+            Expression::UnsafePow(_, _, _) => Some(ReturnType::Int),
+            Expression::SafePow(_, _, _) => Some(ReturnType::Int),
+            Expression::Minus(_, _, _) => Some(ReturnType::Int),
+            Expression::FlatAbsEq(_, _, _) => Some(ReturnType::Bool),
+            Expression::FlatMinusEq(_, _, _) => Some(ReturnType::Bool),
+            Expression::FlatProductEq(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::FlatWeightedSumLeq(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::MinionPow(_, _, _, _) => Some(ReturnType::Bool),
         }
     }
 }
