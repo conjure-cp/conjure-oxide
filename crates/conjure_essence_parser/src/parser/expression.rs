@@ -3,7 +3,7 @@ use std::f32::consts::E;
 
 use tree_sitter::Node;
 
-use conjure_core::ast::{Atom, Expression, Literal, Name};
+use conjure_core::ast::{Atom, Expression, Literal, Name, Domain, Range};
 use conjure_core::metadata::Metadata;
 use conjure_core::{into_matrix_expr, matrix_expr, parse};
 
