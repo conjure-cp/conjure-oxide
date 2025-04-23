@@ -39,13 +39,13 @@ fn remove_implication(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// Converts an equivalence to cnf
 ///
 /// ```text
-/// x = y ~~> (x -> y) /\ (y -> x) ~~> (!x \/ y) /\ (!y \/ x)
+/// x <-> y ~~> (x -> y) /\ (y -> x) ~~> (!x \/ y) /\ (!y \/ x)
 ///
 /// This converts boolean expressions using equivalence to CNF.
 /// ```
 #[register_rule(("CNF", 4100))]
 fn remove_equivalence(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let Expr::Eq(_, x, y) = expr else {
+    let Expr::Iff(_, x, y) = expr else {
         return Err(RuleNotApplicable);
     };
 
