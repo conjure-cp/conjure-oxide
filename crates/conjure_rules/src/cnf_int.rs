@@ -8,6 +8,8 @@ use conjure_core::ast::{Atom, Domain, Literal, Range};
 use conjure_core::metadata::Metadata;
 use conjure_core::{into_matrix_expr, matrix_expr};
 
+use std::mem;
+
 #[register_rule(("CNF", 8000))]
 fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
@@ -139,24 +141,38 @@ fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
     Expr::Or(Metadata::new(), Box::new(into_matrix_expr!(output)))
 }
 
-/// Converts a < expression between two CnfInts to a singular CnfInt
+/// Converts a < expression between two CnfInts to a conjunction of boolean expressions
 ///
 /// ```text
-/// CnfInt(a) < CnfInt(b) ~> CnfInt(c)
+/// CnfInt(a) < CnfInt(b) ~> And(...)
 ///
 /// ```
-
-/* #[register_rule(("CNF", 4100))]
+#[register_rule(("CNF", 4100))]
 fn cnf_int_lt(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    match expr {
-        Expr::Lt(_, x, y) => match (x, y) {
-            (Expr::CnfInt(_), Expr::CnfInt(_)) => (),
-            _ => return Err(RuleNotApplicable),
-        },
-        _ => return Err(RuleNotApplicable),
-    }
-    Ok(None) //TODO: Logic for < between cnf ints
-} */
+    let Expr::Lt(_, x, y) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::CnfInt(_, x) = x.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::CnfInt(_, y) = y.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Some(x_bits) = x.as_ref().clone().unwrap_list() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Some(y_bits) = y.as_ref().clone().unwrap_list() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let output = inequality_boolean(y_bits, x_bits, false);
+
+    Ok(Reduction::pure(output))
+}
 
 /// Converts a = expression between two CnfInts to a conjunction of boolean expressions
 ///
@@ -202,4 +218,56 @@ fn cnf_int_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         Metadata::new(),
         Box::new(into_matrix_expr!(output)),
     )))
+}
+
+// Creates a boolean expression for > or >=
+// a > b or a >= b
+// This can also be used for < and <= by reversing the order of the inputs
+fn inequality_boolean(a: Vec<Expr>, b: Vec<Expr>, inclusive: bool) -> Expr {
+    let mut output;
+
+    if inclusive {
+        output = Expr::Imply(
+            Metadata::new(),
+            Box::new(b[0].clone()),
+            Box::new(a[0].clone()),
+        );
+    } else {
+        output = Expr::And(
+            Metadata::new(),
+            Box::new(matrix_expr![
+                a[0].clone(),
+                Expr::Not(Metadata::new(), Box::new(b[0].clone()))
+            ]),
+        );
+    }
+
+    // at the moment this causes a stack overflow
+    for n in 1..32 {
+        println!("{}\n", mem::size_of_val(&output));
+        output = Expr::Or(
+            Metadata::new(),
+            Box::new(matrix_expr![
+                Expr::And(
+                    Metadata::new(),
+                    Box::new(matrix_expr![
+                        a[n].clone(),
+                        Expr::Not(Metadata::new(), Box::new(b[n].clone()))
+                    ]),
+                ),
+                Expr::And(
+                    Metadata::new(),
+                    Box::new(matrix_expr![
+                        Expr::Iff(
+                            Metadata::new(),
+                            Box::new(a[n].clone()),
+                            Box::new(b[n].clone())
+                        ),
+                        output
+                    ])
+                )
+            ]),
+        );
+    }
+    output
 }
