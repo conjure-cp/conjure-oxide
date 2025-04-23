@@ -12,7 +12,7 @@ use crate::{
 use conjure_core::{
     ast::{
         Atom, Declaration, Domain, Expression as Expr, Literal as Lit, Range, ReturnType,
-        SymbolTable,
+        SymbolTable, Typeable,
     },
     matrix_expr,
     metadata::Metadata,
