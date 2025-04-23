@@ -1,68 +1,48 @@
-use conjure_core::ast::AbstractLiteral;
 use conjure_core::ast::Expression as Expr;
 use conjure_core::ast::SymbolTable;
-use conjure_core::into_matrix_expr;
-use conjure_core::matrix_expr;
 use conjure_core::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
 };
 
 use conjure_core::ast::Atom;
 use conjure_core::ast::Domain;
-use conjure_core::ast::Expression;
-use conjure_core::ast::Literal;
 use conjure_core::ast::Name;
 use conjure_core::metadata::Metadata;
-use conjure_core::rule_engine::ApplicationError;
 
-//TODO: largely copied from the matrix rules, This should be possible to simplify
-#[register_rule(("CNF", 2000))]
-fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    // i assume the MkOpIndexing is the same as matrix indexing
-    let Expr::SafeIndex(_, subject, indices) = expr else {
+use itertools::Itertools;
+
+#[register_rule(("CNF", 8000))]
+fn integer_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    // thing we are representing must be a reference
+    let Expr::Atomic(_, Atom::Reference(name)) = expr else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs))) = &**subject else {
+    // thing we are representing must be a variable
+    symbols
+        .lookup(name)
+        .ok_or(RuleNotApplicable)?
+        .as_var()
+        .ok_or(RuleNotApplicable)?;
+
+    let Domain::IntDomain(_) = &symbols.resolve_domain(name).unwrap() else {
         return Err(RuleNotApplicable);
     };
 
-    if reprs.first().is_none_or(|x| x.as_str() != "tuple_to_atom") {
-        return Err(RuleNotApplicable);
-    }
+    let mut symbols = symbols.clone();
+    let representation = symbols
+        .get_or_add_representation(name, &["int_to_atom"])
+        .ok_or(RuleNotApplicable)?;
 
-    // tuples are always one dimensional
-    if indices.len() != 1 {
-        return Err(RuleNotApplicable);
-    }
+    let representation_names = representation
+        .into_iter()
+        .map(|x| x.repr_name().to_string())
+        .collect_vec();
 
-    let repr = symbols
-        .get_representation(name, &["tuple_to_atom"])
-        .unwrap()[0]
-        .clone();
+    let new_name = Name::WithRepresentation(Box::new(name.clone()), representation_names);
 
-    let decl = symbols.lookup(name).unwrap();
-
-    let Some(Domain::DomainTuple(_)) = decl.domain().cloned().map(|x| x.resolve(symbols)) else {
-        return Err(RuleNotApplicable);
-    };
-
-    let mut indices_as_lit: Literal = Literal::Bool(false);
-
-    for index in indices {
-        let Some(index) = index.clone().to_literal() else {
-            return Err(RuleNotApplicable); // we don't support non-literal indices
-        };
-        indices_as_lit = index;
-    }
-
-    let indices_as_name = Name::RepresentedName(
-        name.clone(),
-        "tuple_to_atom".into(),
-        indices_as_lit.to_string(),
-    );
-
-    let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
-
-    Ok(Reduction::pure(subject))
+    Ok(Reduction::with_symbols(
+        Expr::Atomic(Metadata::new(), Atom::Reference(new_name)),
+        symbols,
+    ))
 }
