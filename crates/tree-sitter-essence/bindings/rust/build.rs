@@ -2,6 +2,8 @@ use std::path::Path;
 use tree_sitter_generate::generate_parser_in_directory;
 
 fn main() {
+    println!("cargo:rerun-if-changed=grammar.js");
+
     let src_dir = Path::new("src");
 
     generate_parser_in_directory(Path::new(""), Some("grammar.js"), 13, None, None)
@@ -15,7 +17,6 @@ fn main() {
 
     let parser_path = src_dir.join("parser.c");
     c_config.file(&parser_path);
-    println!("cargo:rerun-if-changed={}", parser_path.to_str().unwrap());
 
     c_config.compile("tree-sitter-essence");
 }

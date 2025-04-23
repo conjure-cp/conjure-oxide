@@ -11,8 +11,6 @@ use conjure_core::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
 };
 
-use Expr::*;
-
 use conjure_core::ast::SymbolTable;
 use conjure_core::matrix_expr;
 

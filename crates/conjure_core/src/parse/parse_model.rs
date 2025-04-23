@@ -493,6 +493,10 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
             Box::new(Expression::Imply) as Box<dyn Fn(_, _, _) -> _>,
         ),
         (
+            "MkOpIff",
+            Box::new(Expression::Iff) as Box<dyn Fn(_, _, _) -> _>,
+        ),
+        (
             "MkOpPow",
             Box::new(Expression::UnsafePow) as Box<dyn Fn(_, _, _) -> _>,
         ),
