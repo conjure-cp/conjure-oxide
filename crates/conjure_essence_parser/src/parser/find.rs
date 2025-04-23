@@ -19,14 +19,14 @@ pub fn parse_find_statement(
         let mut temp_symbols = BTreeSet::new();
 
         let variable_list = find_statement
-            .named_child(0)
+            .child_by_field_name("variables")
             .expect("No variable list found");
         for variable in named_children(&variable_list) {
             let variable_name = &source_code[variable.start_byte()..variable.end_byte()];
             temp_symbols.insert(variable_name);
         }
 
-        let domain = find_statement.named_child(1).expect("No domain found");
+        let domain = find_statement.child_by_field_name("domain").expect("No domain found");
         let domain = parse_domain(domain, source_code);
 
         for name in temp_symbols {
