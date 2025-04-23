@@ -3,7 +3,7 @@ use std::f32::consts::E;
 
 use tree_sitter::Node;
 
-use conjure_core::ast::{Atom, Expression, Literal, Name, Domain, Range};
+use conjure_core::ast::{Atom, Domain, Expression, Literal, Name, Range};
 use conjure_core::metadata::Metadata;
 use conjure_core::{into_matrix_expr, matrix_expr, parse};
 
@@ -20,8 +20,9 @@ pub fn parse_expression(
 ) -> Result<Expression, EssenceParseError> {
     // TODO (gskorokhod) - Factor this further (make match arms into separate functions, extract common logic)
     match constraint.kind() {
-        "bool_exprression" | "arithmetic_expr" | "atom"
-        | "sub_bool_expr" | "sub_arith_expr" => child_expr(constraint, source_code, root),
+        "bool_exprression" | "arithmetic_expr" | "atom" | "sub_bool_expr" | "sub_arith_expr" => {
+            child_expr(constraint, source_code, root)
+        }
         "not_expr" => Ok(Expression::Not(
             Metadata::new(),
             Box::new(child_expr(constraint, source_code, root)?),
@@ -35,9 +36,7 @@ pub fn parse_expression(
             Box::new(child_expr(constraint, source_code, root)?),
         )),
         "exponent" | "product_expr" | "sum_expr" | "comparison" | "and_expr" | "or_expr"
-        | "implication" => {
-            parse_expr_op_expr(constraint, source_code, root)
-        }
+        | "implication" => parse_expr_op_expr(constraint, source_code, root),
         "quantifier_expr_bool" | "quantifier_expr_num" => {
             parse_quatifier_expr(constraint, source_code, root)
         }
@@ -79,9 +78,7 @@ pub fn parse_expression(
             let tuple_or_matrix = child_expr(constraint, source_code, root)?;
             let indices_node = constraint
                 .child_by_field_name("indices")
-                .ok_or(format!(
-                    "Missing indices in tuple/matrix expression"
-                ))?;
+                .ok_or(format!("Missing indices in tuple/matrix expression"))?;
             if indices_node.child_by_field_name("null_index").is_some() {
                 let mut indices: Vec<Option<Expression>> = Vec::new();
                 for index in named_children(&indices_node) {
@@ -92,21 +89,32 @@ pub fn parse_expression(
                         indices.push(None);
                     }
                 }
-                return Ok(Expression::UnsafeSlice(Metadata::new(), Box::new(tuple_or_matrix), indices))
+                return Ok(Expression::UnsafeSlice(
+                    Metadata::new(),
+                    Box::new(tuple_or_matrix),
+                    indices,
+                ));
             }
             let mut indices: Vec<Expression> = Vec::new();
             for index in named_children(&indices_node) {
                 let index_expr = parse_expression(index, source_code, root)?;
                 indices.push(index_expr);
             }
-            Ok(Expression::UnsafeIndex(Metadata::new(), Box::new(tuple_or_matrix), indices))
+            Ok(Expression::UnsafeIndex(
+                Metadata::new(),
+                Box::new(tuple_or_matrix),
+                indices,
+            ))
         }
         "tuple" => {
             let mut elements = vec![];
             for element in named_children(&constraint) {
                 elements.push(parse_expression(element, source_code, root)?);
             }
-            Ok(Expression::AbstractLiteral(Metadata::new(), conjure_core::ast::AbstractLiteral::Tuple(elements)))
+            Ok(Expression::AbstractLiteral(
+                Metadata::new(),
+                conjure_core::ast::AbstractLiteral::Tuple(elements),
+            ))
         }
         "matrix" => {
             let mut elements = vec![];
@@ -119,9 +127,15 @@ pub fn parse_expression(
                 }
             }
             if domain.is_none() {
-                domain = Some(Domain::IntDomain(vec![Range::Bounded(1, constraint.named_child_count() as i32)]));
+                domain = Some(Domain::IntDomain(vec![Range::Bounded(
+                    1,
+                    constraint.named_child_count() as i32,
+                )]));
             }
-            Ok(Expression::AbstractLiteral(Metadata::new(), conjure_core::ast::AbstractLiteral::Matrix(elements, domain.unwrap())))
+            Ok(Expression::AbstractLiteral(
+                Metadata::new(),
+                conjure_core::ast::AbstractLiteral::Matrix(elements, domain.unwrap()),
+            ))
         }
         "from_solution" => match root.kind() {
             "dominance_relation" => {
@@ -158,7 +172,11 @@ pub fn child_expr(
     }
 }
 
-fn parse_expr_op_expr(constraint: Node, source_code: &str, root: &Node) -> Result<Expression, EssenceParseError> {
+fn parse_expr_op_expr(
+    constraint: Node,
+    source_code: &str,
+    root: &Node,
+) -> Result<Expression, EssenceParseError> {
     let expr1 = child_expr(constraint, source_code, root)?;
     let op = constraint.child_by_field_name("operator").ok_or(format!(
         "Missing operator in expression {}",
@@ -179,9 +197,7 @@ fn parse_expr_op_expr(constraint: Node, source_code: &str, root: &Node) -> Resul
         )),
         "+" => Ok(Expression::Sum(
             Metadata::new(),
-            Box::new(
-                matrix_expr![expr1, expr2;Domain::IntDomain(vec![Range::Bounded(1, 2)])],
-            ),
+            Box::new(matrix_expr![expr1, expr2;Domain::IntDomain(vec![Range::Bounded(1, 2)])]),
         )),
         "-" => Ok(Expression::Minus(
             Metadata::new(),
@@ -237,15 +253,11 @@ fn parse_expr_op_expr(constraint: Node, source_code: &str, root: &Node) -> Resul
         )),
         "/\\" => Ok(Expression::And(
             Metadata::new(),
-            Box::new(
-                matrix_expr![expr1, expr2;Domain::IntDomain(vec![Range::Bounded(1, 2)])],
-            ),
+            Box::new(matrix_expr![expr1, expr2;Domain::IntDomain(vec![Range::Bounded(1, 2)])]),
         )),
         "\\/" => Ok(Expression::Or(
             Metadata::new(),
-            Box::new(
-                matrix_expr![expr1, expr2;Domain::IntDomain(vec![Range::Bounded(1, 2)])],
-            ),
+            Box::new(matrix_expr![expr1, expr2;Domain::IntDomain(vec![Range::Bounded(1, 2)])]),
         )),
         "->" => Ok(Expression::Imply(
             Metadata::new(),
@@ -256,7 +268,11 @@ fn parse_expr_op_expr(constraint: Node, source_code: &str, root: &Node) -> Resul
     }
 }
 
-fn parse_quatifier_expr(constraint: Node, source_code: &str, root: &Node) -> Result<Expression, EssenceParseError> {
+fn parse_quatifier_expr(
+    constraint: Node,
+    source_code: &str,
+    root: &Node,
+) -> Result<Expression, EssenceParseError> {
     let mut expr_list = Vec::new();
     for expr in named_children(&constraint) {
         expr_list.push(parse_expression(expr, source_code, root)?);

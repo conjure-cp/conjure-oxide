@@ -1,18 +1,19 @@
 use std::rc::Rc;
 
 use conjure_core::{
-    ast::{Declaration, Expression as Expr, SymbolTable},
-    into_matrix_expr,
+    ast::{Atom, Declaration, Expression as Expr, Literal as Lit, SymbolTable},
+    into_matrix_expr, matrix_expr,
     metadata::Metadata,
     rule_engine::{
         register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
     },
 };
-use conjure_essence_macros::essence_expr;
 use uniplate::Uniplate;
 
 use ApplicationError::RuleNotApplicable;
+use Atom::*;
 use Expr::*;
+use Lit::Bool;
 
 register_rule_set!("Base", ());
 
@@ -20,7 +21,6 @@ register_rule_set!("Base", ());
 ///
 /// For example:
 /// - `or([])` simplifies to `false` since no disjunction exists.
-/// - `and([])` simplifies to `true` since no conjunction exists.
 ///
 /// **Applicable examples:**
 /// ```text
@@ -65,11 +65,8 @@ fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     }
 
     let new_expr = match expr {
-        Or(_, _) => essence_expr!(false),
-        And(_, _) => essence_expr!(true),
-        _ => {
-            return Err(ApplicationError::RuleNotApplicable);
-        } // _ => And(Metadata::new(), Box::new(matrix_expr![])),
+        Or(_, _) => Atomic(Metadata::new(), Literal(Bool(false))),
+        _ => And(Metadata::new(), Box::new(matrix_expr![])),
     };
 
     Ok(Reduction::pure(new_expr))
@@ -98,8 +95,16 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_top = Vec::new(); // the new variable must be less than or equal to all the other variables
     let mut disjunction = Vec::new(); // the new variable must be equal to one of the variables
     for e in exprs {
-        new_top.push(essence_expr!(&new_name <= &e));
-        disjunction.push(essence_expr!(&new_name = &e));
+        new_top.push(Leq(
+            Metadata::new(),
+            Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
+            Box::new(e.clone()),
+        ));
+        disjunction.push(Eq(
+            Metadata::new(),
+            Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
+            Box::new(e.clone()),
+        ));
     }
     // TODO: deal with explicit index domains
     new_top.push(Or(
@@ -112,7 +117,11 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         .ok_or(ApplicationError::DomainError)?;
     symbols.insert(Rc::new(Declaration::new_var(new_name.clone(), domain)));
 
-    Ok(Reduction::new(essence_expr!(&new_name), new_top, symbols))
+    Ok(Reduction::new(
+        Atomic(Metadata::new(), Reference(new_name)),
+        new_top,
+        symbols,
+    ))
 }
 
 /**
@@ -137,8 +146,16 @@ fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_top = Vec::new(); // the new variable must be more than or equal to all the other variables
     let mut disjunction = Vec::new(); // the new variable must more than or equal to one of the variables
     for e in exprs {
-        new_top.push(essence_expr!(&new_name >= &e));
-        disjunction.push(essence_expr!(&new_name = &e));
+        new_top.push(Geq(
+            Metadata::new(),
+            Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
+            Box::new(e.clone()),
+        ));
+        disjunction.push(Eq(
+            Metadata::new(),
+            Box::new(Atomic(Metadata::new(), Reference(new_name.clone()))),
+            Box::new(e.clone()),
+        ));
     }
     // FIXME: deal with explicitly given domains
     new_top.push(Or(
@@ -151,5 +168,9 @@ fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         .ok_or(ApplicationError::DomainError)?;
     symbols.insert(Rc::new(Declaration::new_var(new_name.clone(), domain)));
 
-    Ok(Reduction::new(essence_expr!(&new_name), new_top, symbols))
+    Ok(Reduction::new(
+        Atomic(Metadata::new(), Reference(new_name)),
+        new_top,
+        symbols,
+    ))
 }

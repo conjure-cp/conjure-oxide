@@ -1,12 +1,12 @@
 //! Normalising rules for boolean operations (not, and, or, ->).
 
 use conjure_core::ast::{Atom, Expression as Expr, SymbolTable};
-use conjure_core::into_matrix_expr;
+use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
     register_rule, ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult,
     Reduction,
 };
-use conjure_essence_macros::essence_expr;
+use conjure_core::{into_matrix_expr, matrix_expr};
 use uniplate::Uniplate;
 
 use Expr::*;
@@ -112,12 +112,14 @@ fn distribute_not_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
                 if exprs.len() == 1 {
                     let single_expr = exprs[0].clone();
-                    return Ok(Reduction::pure(essence_expr!(!&single_expr)));
+                    return Ok(Reduction::pure(Not(
+                        Metadata::new(),
+                        Box::new(single_expr.clone()),
+                    )));
                 }
-
                 let mut new_exprs = Vec::new();
                 for e in exprs {
-                    new_exprs.push(essence_expr!(!&e));
+                    new_exprs.push(Not(metadata.clone(), Box::new(e.clone())));
                 }
                 Ok(Reduction::pure(Or(
                     metadata.clone(),
@@ -146,13 +148,16 @@ fn distribute_not_over_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
                 if exprs.len() == 1 {
                     let single_expr = exprs[0].clone();
-                    return Ok(Reduction::pure(essence_expr!(!&single_expr)));
+                    return Ok(Reduction::pure(Not(
+                        Metadata::new(),
+                        Box::new(single_expr.clone()),
+                    )));
                 }
 
                 let mut new_exprs = Vec::new();
 
                 for e in exprs {
-                    new_exprs.push(essence_expr!(!&e));
+                    new_exprs.push(Not(metadata.clone(), Box::new(e.clone())));
                 }
 
                 Ok(Reduction::pure(And(
@@ -169,7 +174,7 @@ fn distribute_not_over_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// Removes ands with a single argument.
 ///
 /// ```text
-/// and([a]) ~> a
+/// or([a]) ~> a
 /// ```
 #[register_rule(("Base", 8800))]
 fn remove_unit_vector_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
@@ -237,7 +242,11 @@ fn normalise_implies_contrapositive(expr: &Expr, _: &SymbolTable) -> Application
         return Err(RuleNotApplicable);
     }
 
-    Ok(Reduction::pure(essence_expr!(&q -> &p)))
+    Ok(Reduction::pure(Expr::Imply(
+        Metadata::new(),
+        q.clone(),
+        p.clone(),
+    )))
 }
 
 /// Simplifies the negation of implication.
@@ -262,7 +271,13 @@ fn normalise_implies_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult
         return Err(RuleNotApplicable);
     }
 
-    Ok(Reduction::pure(essence_expr!(r"&p /\ !&q")))
+    Ok(Reduction::pure(Expr::And(
+        Metadata::new(),
+        Box::new(matrix_expr![
+            *p.clone(),
+            Expr::Not(Metadata::new(), q.clone())
+        ]),
+    )))
 }
 
 /// Applies left distributivity to implication.
@@ -300,7 +315,11 @@ fn normalise_implies_left_distributivity(expr: &Expr, _: &SymbolTable) -> Applic
         return Err(RuleNotApplicable);
     }
 
-    Ok(Reduction::pure(essence_expr!(&r1 -> (&p -> &q))))
+    Ok(Reduction::pure(Expr::Imply(
+        Metadata::new(),
+        r1.clone(),
+        Box::new(Expr::Imply(Metadata::new(), p.clone(), q.clone())),
+    )))
 }
 
 /// Applies import-export to implication, i.e. uncurrying.
@@ -339,5 +358,12 @@ fn normalise_implies_uncurry(expr: &Expr, _: &SymbolTable) -> ApplicationResult 
         return Err(RuleNotApplicable);
     };
 
-    Ok(Reduction::pure(essence_expr!(r"(&p /\ &q) -> &r")))
+    Ok(Reduction::pure(Expr::Imply(
+        Metadata::new(),
+        Box::new(Expr::And(
+            Metadata::new(),
+            Box::new(matrix_expr![*p.clone(), *q.clone()]),
+        )),
+        r.clone(),
+    )))
 }
