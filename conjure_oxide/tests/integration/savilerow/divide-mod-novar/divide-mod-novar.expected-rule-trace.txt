@@ -1,0 +1,40 @@
+
+Model before rewriting:
+
+
+such that
+
+(UnsafeDiv(3, 2) = 1),
+(UnsafeDiv(-(3), 2) = -(2)),
+(UnsafeDiv(3, -(2)) = -(2)),
+(UnsafeDiv(-(3), -(2)) = 1),
+(3 % 2 = 1),
+(3 % -(2) = -(1)),
+(-(3) % 2 = 1),
+(-(3) % -(2) = -(1)),
+true
+
+--
+
+Successful Tranformation: 
+(UnsafeDiv(3, 2) = 1),
+(UnsafeDiv(-(3), 2) = -(2)),
+(UnsafeDiv(3, -(2)) = -(2)),
+(UnsafeDiv(-(3), -(2)) = 1),
+(3 % 2 = 1),
+(3 % -(2) = -(1)),
+(-(3) % 2 = 1),
+(-(3) % -(2) = -(1)),
+true, 
+~~> eval_root [9001; Constant]
+true  
+--
+
+
+Final model:
+
+
+such that
+
+true
+

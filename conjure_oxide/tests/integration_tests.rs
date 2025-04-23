@@ -284,12 +284,8 @@ fn integration_test_inner(
             "file",
             VerbosityLevel::Medium,
             "both",
-            Some(format!(
-                "{path}/{essence_base}.generated-rules.protrace.json"
-            )),
-            Some(format!(
-                "{path}/{essence_base}.generated-rules.protrace.txt"
-            )),
+            Some(format!("{path}/{essence_base}.generated-rule-trace.json")),
+            Some(format!("{path}/{essence_base}.generated-rule-trace.txt")),
         );
 
         let rewritten = if config.enable_naive_impl {
@@ -318,7 +314,7 @@ fn integration_test_inner(
 
         // closing the json array in the trace file
         json_trace_close(Some(format!(
-            "{path}/{essence_base}.generated-rules.protrace.json"
+            "{path}/{essence_base}.generated-rule-trace.json"
         )));
 
         if verbose {
@@ -435,7 +431,7 @@ fn integration_test_inner(
         }
 
         if config.validate_rule_traces {
-            copy_generated_to_expected(path, essence_base, "rules.protrace", extension)?;
+            copy_generated_to_expected(path, essence_base, "rule-trace", extension)?;
             save_stats_json(context.clone(), path, essence_base)?;
         }
     }
