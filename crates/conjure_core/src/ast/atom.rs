@@ -1,8 +1,8 @@
 use std::borrow::Borrow;
 
 use super::{
-    literals::AbstractLiteral, records::RecordValue, symbol_table, Expression, Literal, Name,
-    ReturnType, Typeable,
+    literals::AbstractLiteral, records::RecordValue, Expression, Literal, Name, ReturnType,
+    Typeable,
 };
 use serde::{Deserialize, Serialize};
 use uniplate::derive::Uniplate;

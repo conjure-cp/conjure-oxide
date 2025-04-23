@@ -442,6 +442,18 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
             Box::new(Expression::Intersect) as Box<dyn Fn(_, _, _) -> _>,
         ),
         (
+            "MkOpSupset",
+            Box::new(Expression::Supset) as Box<dyn Fn(_, _, _) -> _>,
+        ),
+        (
+            "MkOpSupsetEq",
+            Box::new(Expression::SupsetEq) as Box<dyn Fn(_, _, _) -> _>,
+        ),
+        (
+            "MkOpSubset",
+            Box::new(Expression::Subset) as Box<dyn Fn(_, _, _) -> _>,
+        ),
+        (
             "MkOpSubsetEq",
             Box::new(Expression::SubsetEq) as Box<dyn Fn(_, _, _) -> _>,
         ),

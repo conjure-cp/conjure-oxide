@@ -3,7 +3,6 @@ use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 
 use itertools::Itertools;
-use schemars::Set;
 use serde::{Deserialize, Serialize};
 
 use crate::ast::literals::AbstractLiteral;
@@ -146,6 +145,15 @@ pub enum Expression {
 
     #[compatible(JsonInput)]
     Intersect(Metadata, Box<Expression>, Box<Expression>),
+
+    #[compatible(JsonInput)]
+    Supset(Metadata, Box<Expression>, Box<Expression>),
+
+    #[compatible(JsonInput)]
+    SupsetEq(Metadata, Box<Expression>, Box<Expression>),
+
+    #[compatible(JsonInput)]
+    Subset(Metadata, Box<Expression>, Box<Expression>),
 
     #[compatible(JsonInput)]
     SubsetEq(Metadata, Box<Expression>, Box<Expression>),
@@ -464,6 +472,9 @@ impl Expression {
                 SetAttr::None,
                 Box::new(a.domain_of(syms)?.intersect(&b.domain_of(syms)?)?),
             )),
+            Expression::Supset(_, _, _) => Some(Domain::BoolDomain),
+            Expression::SupsetEq(_, _, _) => Some(Domain::BoolDomain),
+            Expression::Subset(_, _, _) => Some(Domain::BoolDomain),
             Expression::SubsetEq(_, _, _) => Some(Domain::BoolDomain),
 
             //todo
@@ -850,6 +861,15 @@ impl Display for Expression {
             Expression::Intersect(_, box1, box2) => {
                 write!(f, "({} intersect {})", box1.clone(), box2.clone())
             }
+            Expression::Supset(_, box1, box2) => {
+                write!(f, "({} supset {})", box1.clone(), box2.clone())
+            }
+            Expression::SupsetEq(_, box1, box2) => {
+                write!(f, "({} supsetEq {})", box1.clone(), box2.clone())
+            }
+            Expression::Subset(_, box1, box2) => {
+                write!(f, "({} subset {})", box1.clone(), box2.clone())
+            }
             Expression::SubsetEq(_, box1, box2) => {
                 write!(f, "({} subsetEq {})", box1.clone(), box2.clone())
             }
@@ -1059,6 +1079,9 @@ impl Typeable for Expression {
             Expression::Intersect(_, subject, _) => {
                 Some(ReturnType::Set(Box::new(subject.return_type()?)))
             }
+            Expression::Supset(_, _, _) => Some(ReturnType::Bool),
+            Expression::SupsetEq(_, _, _) => Some(ReturnType::Bool),
+            Expression::Subset(_, _, _) => Some(ReturnType::Bool),
             Expression::SubsetEq(_, _, _) => Some(ReturnType::Bool),
 
             // handles sets and matrices, since typeable defined for abstract literals

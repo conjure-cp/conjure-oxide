@@ -20,6 +20,9 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr.clone() {
         Union(_, _, _) => Err(RuleNotApplicable),
         Intersect(_, _, _) => Err(RuleNotApplicable),
+        Supset(_, _, _) => Err(RuleNotApplicable),
+        SupsetEq(_, _, _) => Err(RuleNotApplicable),
+        Subset(_, _, _) => Err(RuleNotApplicable),
         SubsetEq(_, _, _) => Err(RuleNotApplicable),
 
         AbstractLiteral(_, _) => Err(RuleNotApplicable),
