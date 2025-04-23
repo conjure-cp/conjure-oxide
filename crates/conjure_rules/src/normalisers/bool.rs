@@ -169,7 +169,7 @@ fn distribute_not_over_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// Removes ands with a single argument.
 ///
 /// ```text
-/// or([a]) ~> a
+/// and([a]) ~> a
 /// ```
 #[register_rule(("Base", 8800))]
 fn remove_unit_vector_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {

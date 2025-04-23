@@ -26,7 +26,7 @@ fn negated_neq_to_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     }
 }
 
-/// Converts a negated `Neq` to an `Eq`
+/// Converts a negated `Eq` to an `Neq`
 ///
 /// ```text
 /// not(eq(x)) ~> neq(x)
