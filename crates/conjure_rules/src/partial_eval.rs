@@ -412,6 +412,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         MinionReifyImply(_, _, _) => Err(RuleNotApplicable),
         MinionWInIntervalSet(_, _, _) => Err(RuleNotApplicable),
         MinionElementOne(_, _, _, _) => Err(RuleNotApplicable),
+        CnfInt(_, _) => Err(RuleNotApplicable),
     }
 }
 

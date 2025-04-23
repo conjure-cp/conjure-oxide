@@ -2,6 +2,7 @@ use itertools::Itertools;
 
 //use super::prelude::*;
 // https://conjure-cp.github.io/conjure-oxide/docs/conjure_core/representation/trait.Representation.html
+use conjure_core::matrix_expr;
 use conjure_core::{
     ast::{Atom, Declaration, Domain, Expression, Literal, Name, Range, SymbolTable},
     metadata::Metadata,
@@ -18,10 +19,6 @@ pub struct IntToAtom {
 }
 
 impl IntToAtom {
-    /*fn names(&self) -> impl Iterator<Item = Name> + '_ {
-        (0..32).map(move |i| Name::from(format!("{}_{}", self.src_var, i)))
-    }*/
-
     /// Returns the names of the representation variable
     fn names(&self) -> impl Iterator<Item = Name> + '_ {
         (0..32).map(move |index| self.index_to_name(index))
@@ -32,7 +29,7 @@ impl IntToAtom {
         Name::RepresentedName(
             Box::new(self.src_var.clone()),
             self.repr_name().to_string(),
-            index.to_string(),
+            format!("{:02}", index), // stored as _00, _01, ..., _31
         )
     }
 }
@@ -114,10 +111,6 @@ impl Representation for IntToAtom {
         &self,
         _: &SymbolTable,
     ) -> Result<std::collections::BTreeMap<Name, Expression>, ApplicationError> {
-        //TODO create boolean expressions to desribe ranges for each
-        // Each variable is dependent on other variables
-        // Ranges need to be combined, work out union
-        // Account for negative values
         Ok(self
             .names()
             .map(|name| {

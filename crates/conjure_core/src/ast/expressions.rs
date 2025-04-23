@@ -389,6 +389,9 @@ pub enum Expression {
     /// As with Savile Row, we semantically distinguish this from `Eq`.
     #[compatible(Minion)]
     AuxDeclaration(Metadata, Name, Box<Expression>),
+
+    // This expression is for encoding i32 ints as a vector of boolean expressions for cnf
+    CnfInt(Metadata, Box<Expression>),
 }
 
 fn expr_vec_to_domain_i32(
@@ -621,6 +624,9 @@ impl Expression {
                 .domain_of(syms)?
                 .apply_i32(|a, _| Some(a.abs()), &a.domain_of(syms)?),
             Expression::MinionPow(_, _, _, _) => Some(Domain::BoolDomain),
+            Expression::CnfInt(_, _) => {
+                Some(Domain::IntDomain(vec![Range::Bounded(i32::MIN, i32::MAX)]))
+            } // CnfInt can represent any i32 integer
         };
         match ret {
             // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
@@ -728,6 +734,7 @@ impl Expression {
             Expression::FlatWeightedSumLeq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::MinionPow(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::CnfInt(_, _) => Some(ReturnType::Int),
         }
     }
 
@@ -1078,6 +1085,9 @@ impl Display for Expression {
             Expression::MinionElementOne(_, atoms, atom, atom1) => {
                 let atoms = atoms.iter().join(",");
                 write!(f, "__minion_element_one([{atoms}],{atom},{atom1})")
+            }
+            Expression::CnfInt(_, e) => {
+                write!(f, "Int({e})")
             }
         }
     }
