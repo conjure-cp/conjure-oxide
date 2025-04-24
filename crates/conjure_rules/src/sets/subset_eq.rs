@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use conjure_core::ast::comprehension::ComprehensionBuilder;
 use conjure_core::ast::comprehension::ComprehensionKind;
-
+use conjure_core::ast::comprehension::Generator;
 use conjure_core::ast::Name;
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::Reduction;
@@ -23,7 +23,7 @@ use Expression::*;
 fn subset_eq(expr: &Expression, st: &SymbolTable) -> ApplicationResult {
     if let SubSetEq(_, a, b) = expr {
         let mut builder: ComprehensionBuilder = ComprehensionBuilder::new();
-        builder = builder.special_generator(Name::from("i".to_string()), *a.clone());
+        builder = builder.generator(Name::from("i".to_string()), Generator::InExpr(*a.clone()));
         let ret_expr = In(
             Metadata::new(),
             Box::new(Atomic(

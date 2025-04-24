@@ -36,6 +36,12 @@ pub struct Comprehension {
     induction_vars: Vec<Name>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Generator {
+    InExpr(Expression),
+    WithDomain(Domain),
+}
+
 impl Comprehension {
     pub fn submodel(&self) -> &SubModel {
         &self.submodel
@@ -131,8 +137,7 @@ impl Display for Comprehension {
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct ComprehensionBuilder {
     guards: Vec<Expression>,
-    generators: Vec<(Name, Domain)>,
-    special_generators: Vec<(Name, Expression)>,
+    generators: Vec<(Name, Generator)>,
     induction_variables: HashSet<Name>,
 }
 
@@ -145,16 +150,10 @@ impl ComprehensionBuilder {
         self
     }
 
-    pub fn generator(mut self, name: Name, domain: Domain) -> Self {
+    pub fn generator(mut self, name: Name, generator: Generator) -> Self {
         assert!(!self.induction_variables.contains(&name));
         self.induction_variables.insert(name.clone());
-        self.generators.push((name, domain));
-        self
-    }
-    pub fn special_generator(mut self, name: Name, expr: Expression) -> Self {
-        assert!(!self.induction_variables.contains(&name));
-        self.induction_variables.insert(name.clone());
-        self.special_generators.push((name, expr));
+        self.generators.push((name, generator));
         self
     }
 
@@ -210,15 +209,19 @@ impl ComprehensionBuilder {
         }
 
         submodel.add_constraints(induction_guards);
-        for (name, domain) in self.generators {
-            submodel
-                .symbols_mut()
-                .insert(Rc::new(Declaration::new_var(name, domain)));
-        }
-        for (name, expr) in self.special_generators {
-            submodel
-                .symbols_mut()
-                .insert(Rc::new(Declaration::new_domain_from_expression(name, expr)));
+        for (name, generator) in self.generators {
+            match generator {
+                Generator::WithDomain(domain) => {
+                    submodel
+                        .symbols_mut()
+                        .insert(Rc::new(Declaration::new_var(name, domain)));
+                }
+                Generator::InExpr(expr) => {
+                    submodel
+                        .symbols_mut()
+                        .insert(Rc::new(Declaration::new_domain_from_expression(name, expr)));
+                }
+            }
         }
 
         Comprehension {
