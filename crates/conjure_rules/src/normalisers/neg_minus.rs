@@ -101,6 +101,9 @@ fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResu
 /// ```text
 /// x - y ~> x + -y
 /// ```
+/// does not apply to sets.
+/// TODO: need rule to define set difference as a special case of minus, comprehensions needed
+/// return type and domain of minus need to be altered too, see expressions.rs
 #[register_rule(("Base", 8400))]
 fn minus_to_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs) = match expr {

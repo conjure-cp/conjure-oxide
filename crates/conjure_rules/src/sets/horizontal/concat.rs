@@ -1,4 +1,5 @@
-// rules for concatenations of subset, intersect and union
+// rules for concatenations of subsetEq with intersect and union
+// analogous rules for subset, supset and supsetEq are not needed because these are converted to subsetEq first.
 use conjure_core::ast::{Expression, ReturnType::Set, SymbolTable, Typeable};
 use conjure_core::matrix_expr;
 use conjure_core::metadata::Metadata;

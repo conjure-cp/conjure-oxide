@@ -56,7 +56,7 @@ impl Typeable for Literal {
     }
 }
 
-// todo: handle tuples and records
+// TODO: handle tuples and records
 impl<T: AbstractLiteralValue + Typeable> Typeable for AbstractLiteral<T> {
     fn return_type(&self) -> Option<ReturnType> {
         match self {
