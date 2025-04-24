@@ -141,35 +141,39 @@ fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
     Expr::Or(Metadata::new(), Box::new(into_matrix_expr!(output)))
 }
 
-/// Converts a < expression between two CnfInts to a conjunction of boolean expressions
+/// Converts an inequality expression between two CnfInts to a conjunction of boolean expressions
 ///
 /// ```text
-/// CnfInt(a) < CnfInt(b) ~> And(...)
+/// CnfInt(a) </>/<=/>= CnfInt(b) ~> And(...)
 ///
 /// ```
 #[register_rule(("CNF", 4100))]
-fn cnf_int_lt(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let Expr::Lt(_, x, y) = expr else {
+fn cnf_int_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let (lhs, rhs, inclusive) = match expr {
+        Expr::Lt(_, x, y) => (y, x, false),
+        Expr::Gt(_, x, y) => (x, y, false),
+        Expr::Leq(_, x, y) => (y, x, true),
+        Expr::Geq(_, x, y) => (x, y, true),
+        _ => return Err(RuleNotApplicable),
+    };
+
+    let Expr::CnfInt(_, lhs) = lhs.as_ref() else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::CnfInt(_, x) = x.as_ref() else {
+    let Expr::CnfInt(_, rhs) = rhs.as_ref() else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::CnfInt(_, y) = y.as_ref() else {
+    let Some(lhs_bits) = lhs.as_ref().clone().unwrap_list() else {
         return Err(RuleNotApplicable);
     };
 
-    let Some(x_bits) = x.as_ref().clone().unwrap_list() else {
+    let Some(rhs_bits) = rhs.as_ref().clone().unwrap_list() else {
         return Err(RuleNotApplicable);
     };
 
-    let Some(y_bits) = y.as_ref().clone().unwrap_list() else {
-        return Err(RuleNotApplicable);
-    };
-
-    let output = inequality_boolean(y_bits, x_bits, false);
+    let output = inequality_boolean(lhs_bits, rhs_bits, inclusive);
 
     Ok(Reduction::pure(output))
 }
@@ -220,6 +224,52 @@ fn cnf_int_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
+/// Converts a != expression between two CnfInts to a disjunction of boolean expressions
+///
+/// ```text
+/// CnfInt(a) != CnfInt(b) ~> Or(...)
+///
+/// ```
+#[register_rule(("CNF", 4100))]
+fn cnf_int_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::Neq(_, x, y) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::CnfInt(_, x) = x.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::CnfInt(_, y) = y.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Some(x_bits) = x.as_ref().clone().unwrap_list() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Some(y_bits) = y.as_ref().clone().unwrap_list() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let output = x_bits
+        .iter()
+        .zip(y_bits.iter())
+        .map(|(x_i, y_i)| {Expr::Not(Metadata::new(),
+            Box::new(Expr::Iff(
+                Metadata::new(),
+                Box::new(x_i.clone()),
+                Box::new(y_i.clone()),
+            )))
+        })
+        .collect();
+
+    Ok(Reduction::pure(Expr::Or(
+        Metadata::new(),
+        Box::new(into_matrix_expr!(output)),
+    )))
+}
+
 // Creates a boolean expression for > or >=
 // a > b or a >= b
 // This can also be used for < and <= by reversing the order of the inputs
@@ -244,7 +294,7 @@ fn inequality_boolean(a: Vec<Expr>, b: Vec<Expr>, inclusive: bool) -> Expr {
 
     // at the moment this causes a stack overflow
     for n in 1..32 {
-        println!("{}\n", mem::size_of_val(&output));
+        println!("{}\n", output);
         output = Expr::Or(
             Metadata::new(),
             Box::new(matrix_expr![
@@ -270,4 +320,113 @@ fn inequality_boolean(a: Vec<Expr>, b: Vec<Expr>, inclusive: bool) -> Expr {
         );
     }
     output
+}
+
+
+/// Converts sum of CnfInts to a single CnfInt
+///
+/// ```text
+/// Sum(CnfInt(a), CnfInt(b), ...) ~> CnfInt(c)
+///
+/// ```
+#[register_rule(("CNF", 4100))]
+fn cnf_int_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    // create multiple adders
+}
+
+/// Converts product of CnfInts to a single CnfInt
+///
+/// ```text
+/// Product(CnfInt(a), CnfInt(b), ...) ~> CnfInt(c)
+///
+/// ```
+#[register_rule(("CNF", 4100))]
+fn cnf_int_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    // create multiple products
+}
+
+/// Converts negation of a CnfInt to a CnfInt
+///
+/// ```text
+/// -CnfInt(a) ~> CnfInt(b)
+///
+/// ```
+#[register_rule(("CNF", 4100))]
+fn cnf_int_neg(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    // invert then add 1
+}
+
+/// Converts min of CnfInts to a single CnfInt
+///
+/// ```text
+/// Min(CnfInt(a), CnfInt(b), ...) ~> CnfInt(c)
+///
+/// ```
+#[register_rule(("CNF", 4100))]
+fn cnf_int_min(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    // use conditionals
+}
+
+/// Converts max of CnfInts to a single CnfInt
+///
+/// ```text
+/// Max(CnfInt(a), CnfInt(b), ...) ~> CnfInt(c)
+///
+/// ```
+#[register_rule(("CNF", 4100))]
+fn cnf_int_max(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    // use conditionals
+}
+
+/// Converts Abs of a CnfInt to a CnfInt
+///
+/// ```text
+/// |CnfInt(a)| ~> CnfInt(b)
+///
+/// ```
+#[register_rule(("CNF", 4100))]
+fn cnf_int_neg(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    // negate if sign bit is 1
+}
+
+/// Converts SafeDiv of CnfInts to a single CnfInt
+///
+/// ```text
+/// SafeDiv(CnfInt(a), CnfInt(b)) ~> CnfInt(c)
+///
+/// ```
+#[register_rule(("CNF", 4100))]
+fn cnf_int_safediv(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    // binary div
+}
+
+/// Converts Minus of CnfInts to a single CnfInt
+///
+/// ```text
+/// Minus(CnfInt(a), CnfInt(b)) ~> CnfInt(c)
+///
+/// ```
+#[register_rule(("CNF", 4100))]
+fn cnf_int_minus(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    // minus circuit (support 2s complement)
+}
+
+/// Converts SafeMod of CnfInts to a single CnfInt
+///
+/// ```text
+/// SafeMod(CnfInt(a), CnfInt(b)) ~> CnfInt(c)
+///
+/// ```
+#[register_rule(("CNF", 4100))]
+fn cnf_int_safemod(expr: &Expr, _: &SymbolTable) -> ApplicationResult {}
+
+/// Converts SafePow of CnfInts to a single CnfInt
+///
+/// ```text
+/// SafePow(CnfInt(a), CnfInt(b)) ~> CnfInt(c)
+///
+/// ```
+#[register_rule(("CNF", 4100))]
+fn cnf_int_safepow(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    // use 'Exponentiation by squaring'
 }
