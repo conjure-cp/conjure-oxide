@@ -19,3 +19,4 @@ mod prelude {
 mod matrix_to_atom;
 mod record_to_atom;
 mod tuple_to_atom;
+mod int_to_atom;
