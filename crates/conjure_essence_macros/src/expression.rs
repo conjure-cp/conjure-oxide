@@ -17,8 +17,9 @@ pub fn parse_expr_to_ts(
     root: &Node,
 ) -> Result<TokenStream, EssenceParseError> {
     match constraint.kind() {
-        "bool_exprression" | "arithmetic_expr" | "atom"
-        | "sub_bool_expr" | "sub_arith_expr" => child_expr_to_ts(constraint, source_code, root),
+        "bool_exprression" | "arithmetic_expr" | "atom" | "sub_bool_expr" | "sub_arith_expr" => {
+            child_expr_to_ts(constraint, source_code, root)
+        }
         "not_expr" => {
             let child = child_expr_to_ts(constraint, source_code, root)?;
             Ok(quote! {::conjure_core::ast::Expression::Not(

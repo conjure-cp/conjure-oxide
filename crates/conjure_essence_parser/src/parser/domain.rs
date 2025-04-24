@@ -90,10 +90,7 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
     }
 }
 
-fn parse_tuple_domain(
-    tuple_domain: Node,
-    source_code: &str,
-) -> Domain {
+fn parse_tuple_domain(tuple_domain: Node, source_code: &str) -> Domain {
     let mut domains: Vec<Domain> = Vec::new();
     for domain in named_children(&tuple_domain) {
         domains.push(parse_domain(domain, source_code));
@@ -101,10 +98,7 @@ fn parse_tuple_domain(
     Domain::DomainTuple(domains)
 }
 
-fn parse_matrix_domain(
-    matrix_domain: Node,
-    source_code: &str,
-) -> Domain {
+fn parse_matrix_domain(matrix_domain: Node, source_code: &str) -> Domain {
     let mut domains: Vec<Domain> = Vec::new();
     let mut index_domains = matrix_domain.named_child_count() - 1;
     for domain in named_children(&matrix_domain) {
@@ -113,6 +107,11 @@ fn parse_matrix_domain(
         }
         index_domains -= 1;
     }
-    let value_domain = parse_domain(matrix_domain.child_by_field_name("value_domain").expect("No value domain found for matrix domain"), source_code);
+    let value_domain = parse_domain(
+        matrix_domain
+            .child_by_field_name("value_domain")
+            .expect("No value domain found for matrix domain"),
+        source_code,
+    );
     Domain::DomainMatrix(Box::new(value_domain), domains)
 }

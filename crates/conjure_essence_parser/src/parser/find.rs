@@ -26,7 +26,9 @@ pub fn parse_find_statement(
             temp_symbols.insert(variable_name);
         }
 
-        let domain = find_statement.child_by_field_name("domain").expect("No domain found");
+        let domain = find_statement
+            .child_by_field_name("domain")
+            .expect("No domain found");
         let domain = parse_domain(domain, source_code);
 
         for name in temp_symbols {
