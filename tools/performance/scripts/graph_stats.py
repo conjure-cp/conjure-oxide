@@ -9,9 +9,9 @@ if len(sys.argv) != 2:
     print("Error: Provide arguments")
     sys.exit(0)
 
-oxideNaive = pd.read_csv('./data/NV_CO/NV_CO.csv') # this is based on where it is called from ugh
-nativeO0 = pd.read_csv('./data/O0_CN/O0_CN.csv') # not optimised naive
-nativeO2 = pd.read_csv('./data/O2_CN/O2_CN.csv')
+oxideNaive = pd.read_csv('./tools/performance/data/NV_CO/NV_CO.csv') # this is based on where it is called from ugh
+nativeO0 = pd.read_csv('./tools/performance/data/O0_CN/O0_CN.csv') # not optimised naive
+nativeO2 = pd.read_csv('./tools/performance/data/O2_CN/O2_CN.csv')
 
 timeCNO0 = nativeO0[sys.argv[1]].values
 x = [0, *timeCNO0]
@@ -29,11 +29,12 @@ def findZeros(array,zeroIndex):
 def recordZeros(column,timeCNO0,timeCNO2,timeCONV,zeroIndex):
     tests = nativeO0['test'].values #each test, for x axis
     try:
-        os.remove('./data/zeroVals.csv')
+        os.remove('./tools/performance/data/zeroVals.csv')
     except OSError:
         pass
-    csv = open('./data/zeroVals.csv', 'a')
+    csv = open('./tools/performance/data/zeroVals.csv', 'a')
     csv.write("test,value_type,CNO0_value,CNO2_value,CONV_value")
+    print(zeroIndex)
     for index in zeroIndex:
         csv.write("\n" + tests[index]+ ',' + column + ',' + str(timeCNO0[index]) + ',' + str(timeCNO2[index]) + ',' + str(timeCONV[index]))
     global resultO0
@@ -47,6 +48,7 @@ zeroIndex = []
 zeroIndex = findZeros(timeCNO0,zeroIndex)
 zeroIndex = findZeros(timeCNO2,zeroIndex)
 zeroIndex = findZeros(timeCONV,zeroIndex)
+zeroIndex = list(dict.fromkeys(zeroIndex)) #remove duplicate values
 recordZeros(sys.argv[1],timeCNO0,timeCNO2,timeCONV,zeroIndex)
 timeCNO0 = resultO0.copy()
 timeCNO2 = resultO2.copy()
