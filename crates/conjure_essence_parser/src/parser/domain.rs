@@ -5,8 +5,10 @@ use super::util::named_children;
 use conjure_core::ast::{Domain, Name, Range};
 
 /// Parse an Essence variable domain into its Conjure AST representation.
-pub fn parse_domain(domain: Node, source_code: &str) -> Domain {
-    let domain = domain.child(0).expect("No domain found");
+pub fn parse_domain(mut domain: Node, source_code: &str) -> Domain {
+    if domain.kind() == "domain" {
+        domain = domain.child(0).expect("No domain found");
+    }
     match domain.kind() {
         "bool_domain" => Domain::BoolDomain,
         "int_domain" => parse_int_domain(domain, source_code),
@@ -100,12 +102,11 @@ fn parse_tuple_domain(tuple_domain: Node, source_code: &str) -> Domain {
 
 fn parse_matrix_domain(matrix_domain: Node, source_code: &str) -> Domain {
     let mut domains: Vec<Domain> = Vec::new();
-    let mut index_domains = matrix_domain.named_child_count() - 1;
-    for domain in named_children(&matrix_domain) {
-        if index_domains > 0 {
-            domains.push(parse_domain(domain, source_code));
-        }
-        index_domains -= 1;
+    let index_domain_list = matrix_domain
+        .child_by_field_name("index_domain_list")
+        .expect("No index domains found for matrix domain");
+    for domain in named_children(&index_domain_list) {
+        domains.push(parse_domain(domain, source_code));
     }
     let value_domain = parse_domain(
         matrix_domain

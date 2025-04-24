@@ -89,11 +89,13 @@ module.exports = grammar ({
       "indexed",
       "by",
       "[",
-      commaSep1(choice($.int_domain, $.bool_domain)),
+      field("index_domain_list", $.index_domain_list),
       "]",
       "of",
       field("value_domain", $.domain)
     ),
+
+    index_domain_list: $ => commaSep1(choice($.int_domain, $.bool_domain)),
 
     //letting statements
     letting_statement_list: $ => prec.right(seq("letting", commaSep1($.letting_statement))),
