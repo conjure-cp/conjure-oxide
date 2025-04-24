@@ -5,7 +5,6 @@ PROBLEM=$1
 ESSENCE=$2
 PARAM=$3
 
-# BASE_ESSENCE="${ESSENCE%.*}"
 WORKING_DIR="$(pwd)"
 FULL_ESSENCE="${WORKING_DIR}/tests/${PROBLEM}/${ESSENCE}"
 if [ $PARAM = "-O0" ]; then
@@ -21,14 +20,8 @@ rm -r -f $DATA_DIR
 mkdir $DATA_DIR
 
 conjure solve -o $DATA_DIR --number-of-solutions=all $FULL_ESSENCE #what oxide does right now
-SOLUTION=${WORKING_DIR}/tests/${PROBLEM}
-SOLUTION="${SOLUTION}/*.solution"
 
-rm $SOLUTION
+rm ${WORKING_DIR}/tests/${PROBLEM}/*.solution
 
+# keep solution files in data for validation at another point
 rm -f $DATA_DIR/*.{eprime,eprime-solution,eprime-infor,eprime-*,conjure-checksum}
-# rm -v !($DATA_DIR/*.stats.json)
-# pushd $DATA_DIR
-# rm -v !(*.stats.json)
-# popd
-# rm -v !($DATA_DIR/)

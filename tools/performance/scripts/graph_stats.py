@@ -2,33 +2,64 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
-from scipy.interpolate import interp1d
+import os
+# from scipy.interpolate import interp1d
 
 if len(sys.argv) != 2:
     print("Error: Provide arguments")
     sys.exit(0)
 
-
 oxideNaive = pd.read_csv('./data/NV_CO/NV_CO.csv') # this is based on where it is called from ugh
 nativeO0 = pd.read_csv('./data/O0_CN/O0_CN.csv') # not optimised naive
 nativeO2 = pd.read_csv('./data/O2_CN/O2_CN.csv')
 
-#sets needed values for each different measurement, depending on argument
-def setVals(column):
-    global timeCNO0
-    timeCNO0 = nativeO0[column].values #default
-    global x
-    x = [0, *timeCNO0]
-    global timeCNO2
-    timeCNO2 = nativeO2[column].values
-    global timeCONV
-    timeCONV = oxideNaive[column].values
+timeCNO0 = nativeO0[sys.argv[1]].values
+x = [0, *timeCNO0]
+timeCNO2 = nativeO2[sys.argv[1]].values
+timeCONV = oxideNaive[sys.argv[1]].values
 
-setVals(sys.argv[1])
+def findZeros(array,zeroIndex):
+    index = 0
+    for value in array:
+        if value == 0:
+            zeroIndex.append(index)
+        index = index+1
+    return zeroIndex
+
+def recordZeros(column,timeCNO0,timeCNO2,timeCONV,zeroIndex):
+    tests = nativeO0['test'].values #each test, for x axis
+    try:
+        os.remove('./data/zeroVals.csv')
+    except OSError:
+        pass
+    csv = open('./data/zeroVals.csv', 'a')
+    csv.write("test,value_type,CNO0_value,CNO2_value,CONV_value")
+    for index in zeroIndex:
+        csv.write("\n" + tests[index]+ ',' + column + ',' + str(timeCNO0[index]) + ',' + str(timeCNO2[index]) + ',' + str(timeCONV[index]))
+    global resultO0
+    resultO0 = np.delete(timeCNO0, zeroIndex)
+    global resultO2
+    resultO2 = np.delete(timeCNO2, zeroIndex)
+    global resultNV
+    resultNV = np.delete(timeCONV, zeroIndex)
+
+zeroIndex = []
+zeroIndex = findZeros(timeCNO0,zeroIndex)
+zeroIndex = findZeros(timeCNO2,zeroIndex)
+zeroIndex = findZeros(timeCONV,zeroIndex)
+recordZeros(sys.argv[1],timeCNO0,timeCNO2,timeCONV,zeroIndex)
+timeCNO0 = resultO0.copy()
+timeCNO2 = resultO2.copy()
+timeCONV = resultNV.copy()
+
+if len(timeCNO0) <= 0:
+    print(f"Exiting: All instances had a time of 0.")
+    print(f"See ./data/zeroVals.csv for details")
+    exit(1)
 
 if (sys.argv[1] != 'solver_nodes'):
     #divide by the default values (CNO0)
-    default = np.divide(timeCNO0, timeCNO0)
+    default = np.divide(timeCNO0, timeCNO0,where=(timeCNO0!=0))
     speedUpCONV = np.divide(timeCNO0, timeCONV)
     speedUpCNO2 = np.divide(timeCNO0, timeCNO2)
 
