@@ -21,7 +21,9 @@ pub fn parse_letting_statement(
     for letting_statement in named_children(&letting_statement_list) {
         let mut temp_symbols = BTreeSet::new();
 
-        let variable_list = letting_statement.child_by_field_name("variable_list").expect("No variable list found");
+        let variable_list = letting_statement
+            .child_by_field_name("variable_list")
+            .expect("No variable list found");
         for variable in named_children(&variable_list) {
             let variable_name = &source_code[variable.start_byte()..variable.end_byte()];
             temp_symbols.insert(variable_name);

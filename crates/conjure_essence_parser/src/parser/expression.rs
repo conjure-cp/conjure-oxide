@@ -3,8 +3,8 @@
 use tree_sitter::Node;
 
 use conjure_core::ast::{Atom, Domain, Expression, Literal, Name, Range};
-use conjure_core::metadata::Metadata;
 use conjure_core::matrix_expr;
+use conjure_core::metadata::Metadata;
 
 use crate::errors::EssenceParseError;
 
@@ -282,36 +282,19 @@ fn parse_quatifier_expr(
     // for expr in named_children(&constraint) {
     //     expr_list.push(parse_expression(expr, source_code, root)?);
     // }
-    
-    let contents = child_expr(constraint, source_code, root).expect("Error parsing contents of quantifier expression");
+
+    let contents = child_expr(constraint, source_code, root)
+        .expect("Error parsing contents of quantifier expression");
     // conjures json makes matricies have index domain int(1..n), where n is the number of exprs in the list
     // do that here too
     // let index_domain = Domain::IntDomain(vec![Range::Bounded(1, expr_list.len() as i32)]);
     match quantifier_type {
-        "and" => Ok(Expression::And(
-            Metadata::new(),
-            Box::new(contents),
-        )),
-        "or" => Ok(Expression::Or(
-            Metadata::new(),
-            Box::new(contents),
-        )),
-        "min" => Ok(Expression::Min(
-            Metadata::new(),
-            Box::new(contents),
-        )),
-        "max" => Ok(Expression::Max(
-            Metadata::new(),
-            Box::new(contents),
-        )),
-        "sum" => Ok(Expression::Sum(
-            Metadata::new(),
-            Box::new(contents),
-        )),
-        "allDiff" => Ok(Expression::AllDiff(
-            Metadata::new(),
-            Box::new(contents),
-        )),
+        "and" => Ok(Expression::And(Metadata::new(), Box::new(contents))),
+        "or" => Ok(Expression::Or(Metadata::new(), Box::new(contents))),
+        "min" => Ok(Expression::Min(Metadata::new(), Box::new(contents))),
+        "max" => Ok(Expression::Max(Metadata::new(), Box::new(contents))),
+        "sum" => Ok(Expression::Sum(Metadata::new(), Box::new(contents))),
+        "allDiff" => Ok(Expression::AllDiff(Metadata::new(), Box::new(contents))),
         _ => Err(format!("Unsupported quantifier {}", constraint.kind()).into()),
     }
 }
