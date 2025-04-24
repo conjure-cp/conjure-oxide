@@ -6,17 +6,17 @@ use conjure_core::ast::{Domain, Name, Range};
 
 /// Parse an Essence variable domain into its Conjure AST representation.
 pub fn parse_domain(domain: Node, source_code: &str) -> Domain {
-    let domain = domain.child(0).expect("No domain");
+    let domain = domain.child(0).expect("No domain found");
     match domain.kind() {
         "bool_domain" => Domain::BoolDomain,
         "int_domain" => parse_int_domain(domain, source_code),
-        "variable" => {
+        "identifier" => {
             let variable_name = &source_code[domain.start_byte()..domain.end_byte()];
             Domain::DomainReference(Name::UserName(String::from(variable_name)))
         }
         "tuple_domain" => parse_tuple_domain(domain, source_code),
         "matrix_domain" => parse_matrix_domain(domain, source_code),
-        _ => panic!("Not bool or int domain"),
+        _ => panic!("{} is not a supported domain type", domain.kind()),
     }
 }
 
@@ -42,7 +42,7 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
                     let upper_bound: Option<i32>;
                     let range_component = int_range.child(0).expect("Error with integer range");
                     match range_component.kind() {
-                        "expression" => {
+                        "arith_expression" => {
                             lower_bound = Some(
                                 source_code
                                     [range_component.start_byte()..range_component.end_byte()]
@@ -102,7 +102,7 @@ fn parse_matrix_domain(matrix_domain: Node, source_code: &str) -> Domain {
     let mut domains: Vec<Domain> = Vec::new();
     let mut index_domains = matrix_domain.named_child_count() - 1;
     for domain in named_children(&matrix_domain) {
-        if (index_domains > 0) {
+        if index_domains > 0 {
             domains.push(parse_domain(domain, source_code));
         }
         index_domains -= 1;

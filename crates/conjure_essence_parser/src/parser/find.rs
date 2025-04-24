@@ -20,7 +20,7 @@ pub fn parse_find_statement(
 
         let variable_list = find_statement
             .child_by_field_name("variables")
-            .expect("No variable list found");
+            .expect("No variable list found in find statement");
         for variable in named_children(&variable_list) {
             let variable_name = &source_code[variable.start_byte()..variable.end_byte()];
             temp_symbols.insert(variable_name);
@@ -28,7 +28,7 @@ pub fn parse_find_statement(
 
         let domain = find_statement
             .child_by_field_name("domain")
-            .expect("No domain found");
+            .expect("No domain found in find statement");
         let domain = parse_domain(domain, source_code);
 
         for name in temp_symbols {

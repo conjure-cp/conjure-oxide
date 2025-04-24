@@ -28,7 +28,9 @@ module.exports = grammar ({
       $.FALSE
     ),
 
-    integer: $ => choice(/[0-9]+/, /-[0-9]+/),
+    // integer: $ => choice(/[0-9]+/, /-[0-9]+/),
+    integer: $ => token(/[0-9]+/),
+
 
     TRUE: $ => "true",
 
@@ -70,9 +72,9 @@ module.exports = grammar ({
     range_list: $ => prec(2, commaSep1(choice($.int_range, $.integer))),
 
     int_range: $ => seq(
-      optional(field("start", $.arithmetic_expr)), 
+      optional(field("start", $.arith_expression)), 
       "..", 
-      optional(field("end", $.arithmetic_expr))
+      optional(field("end", $.arith_expression))
     ),
 
     tuple_domain: $ => seq(
@@ -98,7 +100,8 @@ module.exports = grammar ({
     letting_statement: $ => seq(
       field("variable_list", $.variable_list), 
       "be", 
-      field("expr_or_domain", choice($.bool_expression, $.arithmetic_expr, seq("domain", $.domain)))
+      optional("domain"),
+      field("expr_or_domain", choice($.bool_expression, $.arith_expression, $.domain))
     ),
 
     //constraints
@@ -136,7 +139,7 @@ module.exports = grammar ({
     implication: $ => prec(-4, prec.left(seq(
       field("left", choice($.bool_expression, $.atom)),
       field("operator", "->"), 
-      field("left", choice($.bool_expression, $.atom)),
+      field("right", choice($.bool_expression, $.atom)),
     ))),
 
     quantifier_expr_bool: $ => prec(-10, seq(
@@ -154,9 +157,9 @@ module.exports = grammar ({
     ),
 
     comparison_expr: $ => prec(0, prec.left(seq(
-      field("left", choice($.bool_expression, $.arithmetic_expr)), 
+      field("left", choice($.bool_expression, $.arith_expression)), 
       field("operator", choice("=", "!=", "<=", ">=", "<", ">")),
-      field("right", choice($.bool_expression, $.arithmetic_expr))
+      field("right", choice($.bool_expression, $.arith_expression))
     ))),
 
     sub_bool_expr: $ => seq("(", field("expression", $.bool_expression), ")"),
@@ -171,16 +174,16 @@ module.exports = grammar ({
       // field("matrix_slice", $.matrix_slice),
     )),
 
-    // for now, tuples are higher than sub expressions so (2) would be a tuple
-    tuple: $ => prec(10, seq(
+    // for now, tuples are lower than sub expressions so (2) would be a sub expr
+    tuple: $ => prec(-5, seq(
       "(",
-      optional(field("element", commaSep1($.arithmetic_expr))),
+      optional(field("element", commaSep1($.arith_expression))),
       ")"
     )),
 
     matrix: $ => seq(
       "[",
-      field("elements", commaSep1($.arithmetic_expr)),
+      field("elements", commaSep1($.arith_expression)),
       optional(seq(
         ";",
         choice($.int_domain, $.bool_domain) 
@@ -195,18 +198,18 @@ module.exports = grammar ({
       "]"
     ),
 
-    indices: $ => commaSep1(choice($.arithmetic_expr, field("null_index", $.null_index))),
+    indices: $ => commaSep1(choice($.arith_expression, field("null_index", $.null_index))),
 
     null_index: $ => "..",
 
     // matrix_slice: $ => prec(-1, seq(
     //   field("matrix", choice($.identifier, $.matrix)),
     //   "[",
-    //   commaSep1(choice($.arithmetic_expr, "..")),
+    //   commaSep1(choice($.arith_expression, "..")),
     //   "]"
     // )),
 
-    arithmetic_expr: $ => prec(0, choice(
+    arith_expression: $ => prec(0, choice(
       field("negative_expression", $.negative_expr),
       field("absolute_value", $.abs_value),
       field("exponentiation", $.exponent),
@@ -217,28 +220,28 @@ module.exports = grammar ({
       field("quantifier_expression_num", $.quantifier_expr_num),
     )),
 
-    negative_expr: $ => prec(15, prec.left(seq("-", field("expression", $.arithmetic_expr)))),
+    negative_expr: $ => prec(15, prec.left(seq("-", field("expression", $.arith_expression)))),
     
-    abs_value: $ => prec(20, seq("|", field("expression", $.arithmetic_expr), "|")),
+    abs_value: $ => prec(20, seq("|", field("expression", $.arith_expression), "|")),
     
     exponent: $ => prec(18, prec.right(seq(
-      field("left", $.arithmetic_expr), 
+      field("left", $.arith_expression), 
       field("operator", "**"),
-      field("right", $.arithmetic_expr)
+      field("right", $.arith_expression)
     ))),
 
     product_expr: $ => prec(10, prec.left(seq(
-      field("left", $.arithmetic_expr), 
+      field("left", $.arith_expression), 
       field("operator", $.mulitcative_op), 
-      field("right", $.arithmetic_expr)
+      field("right", $.arith_expression)
     ))),
     
     mulitcative_op: $ => choice("*", "/", "%"),
     
     sum_expr: $ => prec(1, prec.left(seq(
-      field("left", $.arithmetic_expr), 
+      field("left", $.arith_expression), 
       field("operator", $.additive_op), 
-      field("right", $.arithmetic_expr)
+      field("right", $.arith_expression)
     ))),
 
     additive_op: $ => choice("+", "-"),
@@ -252,7 +255,7 @@ module.exports = grammar ({
 
     sub_arith_expr: $ => seq(
       "(",
-      field("expression", $.arithmetic_expr), 
+      field("expression", $.arith_expression), 
       ")"
     ),
 

@@ -21,7 +21,7 @@ pub fn parse_letting_statement(
     for letting_statement in named_children(&letting_statement_list) {
         let mut temp_symbols = BTreeSet::new();
 
-        let variable_list = letting_statement.child(0).expect("No variable list found");
+        let variable_list = letting_statement.child_by_field_name("variable_list").expect("No variable list found");
         for variable in named_children(&variable_list) {
             let variable_name = &source_code[variable.start_byte()..variable.end_byte()];
             temp_symbols.insert(variable_name);
@@ -31,7 +31,7 @@ pub fn parse_letting_statement(
             .child_by_field_name("expr_or_domain")
             .expect("No domain or expression found for letting statement");
         match expr_or_domain.kind() {
-            "expression" => {
+            "bool_expression" | "arith_expression" => {
                 for name in temp_symbols {
                     symbol_table.insert(Rc::new(Declaration::new_value_letting(
                         Name::UserName(String::from(name)),
@@ -40,6 +40,7 @@ pub fn parse_letting_statement(
                 }
             }
             "domain" => {
+                // let domain = expr_or_domain.next_sibling().expect("No domain found in letting statement");
                 for name in temp_symbols {
                     symbol_table.insert(Rc::new(Declaration::new_domain_letting(
                         Name::UserName(String::from(name)),

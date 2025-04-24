@@ -1,11 +1,10 @@
 #![allow(clippy::legacy_numeric_constants)]
-use std::f32::consts::E;
 
 use tree_sitter::Node;
 
 use conjure_core::ast::{Atom, Domain, Expression, Literal, Name, Range};
 use conjure_core::metadata::Metadata;
-use conjure_core::{into_matrix_expr, matrix_expr, parse};
+use conjure_core::matrix_expr;
 
 use crate::errors::EssenceParseError;
 
@@ -20,7 +19,7 @@ pub fn parse_expression(
 ) -> Result<Expression, EssenceParseError> {
     // TODO (gskorokhod) - Factor this further (make match arms into separate functions, extract common logic)
     match constraint.kind() {
-        "bool_exprression" | "arithmetic_expr" | "atom" | "sub_bool_expr" | "sub_arith_expr" => {
+        "bool_expression" | "arith_expression" | "atom" | "sub_bool_expr" | "sub_arith_expr" => {
             child_expr(constraint, source_code, root)
         }
         "not_expr" => Ok(Expression::Not(
@@ -35,7 +34,7 @@ pub fn parse_expression(
             Metadata::new(),
             Box::new(child_expr(constraint, source_code, root)?),
         )),
-        "exponent" | "product_expr" | "sum_expr" | "comparison" | "and_expr" | "or_expr"
+        "exponent" | "product_expr" | "sum_expr" | "comparison_expr" | "and_expr" | "or_expr"
         | "implication" => parse_expr_op_expr(constraint, source_code, root),
         "quantifier_expr_bool" | "quantifier_expr_num" => {
             parse_quatifier_expr(constraint, source_code, root)
@@ -66,7 +65,7 @@ pub fn parse_expression(
                 _ => Err(format!("Unsupported constant kind: {}", child.kind()).into()),
             }
         }
-        "variable" => {
+        "identifier" => {
             let variable_name =
                 String::from(&source_code[constraint.start_byte()..constraint.end_byte()]);
             Ok(Expression::Atomic(
@@ -82,7 +81,7 @@ pub fn parse_expression(
             if indices_node.child_by_field_name("null_index").is_some() {
                 let mut indices: Vec<Option<Expression>> = Vec::new();
                 for index in named_children(&indices_node) {
-                    if index.kind() == "arithmetic_expr" {
+                    if index.kind() == "arith_expression" {
                         let index_expr = parse_expression(index, source_code, root)?;
                         indices.push(Some(index_expr));
                     } else {
@@ -120,7 +119,7 @@ pub fn parse_expression(
             let mut elements = vec![];
             let mut domain: Option<Domain> = None;
             for element in named_children(&constraint) {
-                if element.kind() == "arithmetic_expr" {
+                if element.kind() == "arith_expression" {
                     elements.push(parse_expression(element, source_code, root)?);
                 } else {
                     domain = Some(parse_domain(element, source_code));
@@ -273,43 +272,45 @@ fn parse_quatifier_expr(
     source_code: &str,
     root: &Node,
 ) -> Result<Expression, EssenceParseError> {
-    let mut expr_list = Vec::new();
-    for expr in named_children(&constraint) {
-        expr_list.push(parse_expression(expr, source_code, root)?);
-    }
     let quantifier = constraint.child_by_field_name("quantifier").ok_or(format!(
         "Missing quantifier in expression {}",
         constraint.kind()
     ))?;
     let quantifier_type = &source_code[quantifier.start_byte()..quantifier.end_byte()];
 
+    // let mut expr_list = Vec::new();
+    // for expr in named_children(&constraint) {
+    //     expr_list.push(parse_expression(expr, source_code, root)?);
+    // }
+    
+    let contents = child_expr(constraint, source_code, root).expect("Error parsing contents of quantifier expression");
     // conjures json makes matricies have index domain int(1..n), where n is the number of exprs in the list
     // do that here too
-    let index_domain = Domain::IntDomain(vec![Range::Bounded(1, expr_list.len() as i32)]);
+    // let index_domain = Domain::IntDomain(vec![Range::Bounded(1, expr_list.len() as i32)]);
     match quantifier_type {
         "and" => Ok(Expression::And(
             Metadata::new(),
-            Box::new(into_matrix_expr![expr_list;index_domain]),
+            Box::new(contents),
         )),
         "or" => Ok(Expression::Or(
             Metadata::new(),
-            Box::new(into_matrix_expr![expr_list;index_domain]),
+            Box::new(contents),
         )),
         "min" => Ok(Expression::Min(
             Metadata::new(),
-            Box::new(into_matrix_expr![expr_list;index_domain]),
+            Box::new(contents),
         )),
         "max" => Ok(Expression::Max(
             Metadata::new(),
-            Box::new(into_matrix_expr![expr_list;index_domain]),
+            Box::new(contents),
         )),
         "sum" => Ok(Expression::Sum(
             Metadata::new(),
-            Box::new(into_matrix_expr![expr_list;index_domain]),
+            Box::new(contents),
         )),
         "allDiff" => Ok(Expression::AllDiff(
             Metadata::new(),
-            Box::new(into_matrix_expr![expr_list;index_domain]),
+            Box::new(contents),
         )),
         _ => Err(format!("Unsupported quantifier {}", constraint.kind()).into()),
     }
