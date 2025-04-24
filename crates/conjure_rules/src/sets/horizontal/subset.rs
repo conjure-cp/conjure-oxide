@@ -9,7 +9,6 @@ use conjure_core::rule_engine::{
 
 use Expression::*;
 
-// TODO: Neq is not yet defined for sets
 #[register_rule(("Base", 8700))]
 fn subset_to_subset_eq_neq(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     match expr {

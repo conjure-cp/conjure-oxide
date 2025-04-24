@@ -1,3 +1,4 @@
+mod concat;
 mod equals;
 mod neq;
 mod subset;

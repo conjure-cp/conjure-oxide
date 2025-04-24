@@ -47,6 +47,21 @@ b,
 
 --
 
+(({2,3} union {1,2}) subsetEq {1,2,3}), 
+   ~~> union_subseteq ([("Base", 8700)]) 
+and([({2,3} subsetEq {1,2}),({2,3} subsetEq {1,2,3});int(1..)]) 
+
+--
+
+({1,2,3} subsetEq ({2,3} union {1,2})),
+and([({2,3} subsetEq {1,2}),({2,3} subsetEq {1,2,3});int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+({1,2,3} subsetEq ({2,3} union {1,2})),
+({2,3} subsetEq {1,2}),
+({2,3} subsetEq {1,2,3}) 
+
+--
+
 Final model:
 
 letting a be {2,3}
@@ -56,5 +71,6 @@ letting c be {1,2,3}
 such that
 
 ({1,2,3} subsetEq ({2,3} union {1,2})),
-(({2,3} union {1,2}) subsetEq {1,2,3})
+({2,3} subsetEq {1,2}),
+({2,3} subsetEq {1,2,3})
 
