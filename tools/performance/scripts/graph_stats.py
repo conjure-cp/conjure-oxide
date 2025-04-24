@@ -51,7 +51,7 @@ for item in allTimes:
 zeroIndex = list(dict.fromkeys(zeroIndex)) #remove duplicate values
 allTimes = recordZeros()
 
-if len(timeCNO0) <= 0:
+if len(allTimes[0]) <= 0:
     print(f"Exiting: All instances had a time of 0.")
     print(f"See ./data/zeroVals.csv for details")
     sys.exit(0)

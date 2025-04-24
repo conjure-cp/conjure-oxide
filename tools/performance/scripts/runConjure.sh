@@ -19,7 +19,7 @@ fi
 rm -r -f $DATA_DIR
 mkdir $DATA_DIR
 
-conjure solve -o $DATA_DIR --number-of-solutions=all $FULL_ESSENCE #what oxide does right now
+conjure solve -o $DATA_DIR --number-of-solutions=all --validate-solutions $FULL_ESSENCE #what oxide does right now
 
 rm ${WORKING_DIR}/tests/${PROBLEM}/*.solution
 
