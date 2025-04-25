@@ -35,7 +35,7 @@ pub fn parse_expression(
             Box::new(child_expr(constraint, source_code, root)?),
         )),
         "exponent" | "product_expr" | "sum_expr" | "comparison_expr" | "and_expr" | "or_expr"
-        | "implication" => parse_expr_op_expr(constraint, source_code, root),
+        | "implication" | "iff_expr" => parse_expr_op_expr(constraint, source_code, root),
         "quantifier_expr_bool" | "quantifier_expr_num" => {
             parse_quatifier_expr(constraint, source_code, root)
         }
@@ -259,6 +259,11 @@ fn parse_expr_op_expr(
             Box::new(matrix_expr![expr1, expr2;Domain::IntDomain(vec![Range::Bounded(1, 2)])]),
         )),
         "->" => Ok(Expression::Imply(
+            Metadata::new(),
+            Box::new(expr1),
+            Box::new(expr2),
+        )),
+        "<->" => Ok(Expression::Iff(
             Metadata::new(),
             Box::new(expr1),
             Box::new(expr2),
