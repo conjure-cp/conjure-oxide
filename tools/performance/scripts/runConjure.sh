@@ -4,6 +4,7 @@ echo "${1} ${2} ${3}"
 PROBLEM=$1
 ESSENCE=$2
 PARAM=$3
+VALIDATE=$4
 
 WORKING_DIR="$(pwd)"
 FULL_ESSENCE="${WORKING_DIR}/tests/${PROBLEM}/${ESSENCE}"
@@ -19,9 +20,10 @@ fi
 rm -r -f $DATA_DIR
 mkdir $DATA_DIR
 
-conjure solve -o $DATA_DIR --number-of-solutions=all --validate-solutions $FULL_ESSENCE #what oxide does right now
+if [ $VALIDATE = "validate" ]; then
+    conjure solve -o $DATA_DIR --number-of-solutions=all --validate-solutions $FULL_ESSENCE 
+else
+    conjure solve -o $DATA_DIR --number-of-solutions=all $FULL_ESSENCE 
+fi
 
-rm ${WORKING_DIR}/tests/${PROBLEM}/*.solution
-
-# keep solution files in data for validation at another point
-rm -f $DATA_DIR/*.{eprime,eprime-solution,eprime-infor,eprime-*,conjure-checksum}
+rm -f $DATA_DIR/*.{eprime,eprime-solution,eprime-infor,eprime-*,conjure-checksum,solution}

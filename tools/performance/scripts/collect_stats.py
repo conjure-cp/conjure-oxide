@@ -2,6 +2,7 @@ import json
 import os
 from glob import glob
 
+print("Running collect_stats")
 perform_dir = './tools/performance/data'
 rows=[]
 for rewrite_cat in os.listdir(perform_dir):

@@ -2,6 +2,7 @@
 
 PROBLEM=$1
 ESSENCE=$2
+VALIDATE=$3
 
 FULL_ESSENCE="$(pwd)/tests/${PROBLEM}/${ESSENCE}"
 
@@ -11,6 +12,17 @@ mkdir $DATA_DIR
 JSON_FILE="${DATA_DIR}/oxide-stats.json"
 
 # look into adding one flag 
-../../target/release/conjure_oxide solve --solver Minion --info-json-path=$JSON_FILE $FULL_ESSENCE #this means it uses precompiled oxide
+if [ $VALIDATE="validate" ]; then
+    ../../target/release/conjure_oxide test-solve --solver Minion $FULL_ESSENCE
+    SUCCESS=$?
+    if [ $SUCCESS=0 ]; then
+        ../../target/release/conjure_oxide solve --solver Minion --info-json-path=$JSON_FILE $FULL_ESSENCE #this means it uses precompiled oxide
+    else
+        echo "solution failed validation"
+    fi
+else
+    ../../target/release/conjure_oxide solve --solver Minion --info-json-path=$JSON_FILE $FULL_ESSENCE #this means it uses precompiled oxide
+fi 
 
-rm $(pwd)/*.log
+rm -f $(pwd)/*.log
+rm -f $(pwd)/conjure_oxide_log.json
