@@ -61,10 +61,10 @@ impl<T: AbstractLiteralValue + Typeable> Typeable for AbstractLiteral<T> {
     fn return_type(&self) -> Option<ReturnType> {
         match self {
             AbstractLiteral::Set(vector) => {
-                return Some(ReturnType::Set(Box::new(vector.first()?.return_type()?)));
+                Some(ReturnType::Set(Box::new(vector.first()?.return_type()?)))
             }
             AbstractLiteral::Matrix(vector, _) => {
-                return Some(ReturnType::Matrix(Box::new(vector.first()?.return_type()?)));
+                Some(ReturnType::Matrix(Box::new(vector.first()?.return_type()?)))
             }
             _ => None,
         }

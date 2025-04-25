@@ -196,12 +196,12 @@ impl Domain {
     // turns vector of integers into a domain
     // TODO: can be done more compactly in terms of the domain we produce. e.g. instead of int(1,2,3,4,5,8,9,10) produce int(1..5, 8..10)
     // needs to be tested with domain functions intersect() and uninon() once comprehension rules are written.
-    pub fn make_int_domain_from_values_i32(&self, vector: &Vec<i32>) -> Option<Domain> {
+    pub fn make_int_domain_from_values_i32(&self, vector: &[i32]) -> Option<Domain> {
         let mut new_ranges = vec![];
         for values in vector.iter() {
             new_ranges.push(Range::Single(*values));
         }
-        return Some(Domain::IntDomain(new_ranges));
+        Some(Domain::IntDomain(new_ranges))
     }
 
     /// Gets all the values inside this domain, as a [`Literal`]. Returns `None` if the domain is not
@@ -326,10 +326,10 @@ impl Domain {
                             }
                         }
                     }
-                    return self.make_int_domain_from_values_i32(&v);
+                    self.make_int_domain_from_values_i32(&v)
                 } else {
                     println!("Unbounded domain");
-                    return None;
+                    None
                 }
             }
             _ => None,
@@ -357,10 +357,10 @@ impl Domain {
                             }
                         }
                     }
-                    return self.make_int_domain_from_values_i32(&v);
+                    self.make_int_domain_from_values_i32(&v)
                 } else {
                     println!("Unbounded Domain");
-                    return None;
+                    None
                 }
             }
             _ => None,
