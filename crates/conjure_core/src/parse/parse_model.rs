@@ -100,7 +100,6 @@ pub fn model_from_json(str: &str, context: Arc<RwLock<Context<'static>>>) -> Res
             otherwise => bug!("Unhandled Statement {:#?}", otherwise),
         }
     }
-
     Ok(m)
 }
 
@@ -196,17 +195,7 @@ fn parse_domain(
                 .iter()
                 .next()
                 .ok_or(Error::Parse("DomainSet is an empty object".to_owned()))?;
-            let domain = match domain_name {
-                "DomainInt" => {
-                    println!("DomainInt: {:#?}", domain.1);
-                    Ok(parse_int_domain(domain.1, symbols)?)
-                }
-                "DomainBool" => Ok(Domain::BoolDomain),
-                _ => Err(Error::Parse(
-                    "FindOrGiven[2] is an unknown object".to_owned(),
-                )),
-            }?;
-            print!("{:?}", domain);
+            let domain = parse_domain(domain.0.as_str(), domain.1, symbols)?;
             Ok(Domain::DomainSet(SetAttr::None, Box::new(domain)))
         }
 
@@ -444,6 +433,30 @@ type VecOp = Box<dyn Fn(Metadata, Vec<Expression>) -> Expression>;
 
 pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Option<Expression> {
     let binary_operators: HashMap<&str, BinOp> = [
+        (
+            "MkOpUnion",
+            Box::new(Expression::Union) as Box<dyn Fn(_, _, _) -> _>,
+        ),
+        (
+            "MkOpIntersect",
+            Box::new(Expression::Intersect) as Box<dyn Fn(_, _, _) -> _>,
+        ),
+        (
+            "MkOpSupset",
+            Box::new(Expression::Supset) as Box<dyn Fn(_, _, _) -> _>,
+        ),
+        (
+            "MkOpSupsetEq",
+            Box::new(Expression::SupsetEq) as Box<dyn Fn(_, _, _) -> _>,
+        ),
+        (
+            "MkOpSubset",
+            Box::new(Expression::Subset) as Box<dyn Fn(_, _, _) -> _>,
+        ),
+        (
+            "MkOpSubsetEq",
+            Box::new(Expression::SubsetEq) as Box<dyn Fn(_, _, _) -> _>,
+        ),
         (
             "MkOpEq",
             Box::new(Expression::Eq) as Box<dyn Fn(_, _, _) -> _>,

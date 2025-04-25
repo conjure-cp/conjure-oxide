@@ -1,6 +1,9 @@
 use std::borrow::Borrow;
 
-use super::{literals::AbstractLiteral, records::RecordValue, Expression, Literal, Name};
+use super::{
+    literals::AbstractLiteral, records::RecordValue, Expression, Literal, Name, ReturnType,
+    Typeable,
+};
 use serde::{Deserialize, Serialize};
 use uniplate::derive::Uniplate;
 
@@ -31,6 +34,16 @@ impl Atom {
     /// Shorthand to create a boolean literal.
     pub fn new_blit(value: bool) -> Atom {
         Atom::Literal(Literal::Bool(value))
+    }
+}
+
+impl Typeable for Atom {
+    fn return_type(&self) -> Option<ReturnType> {
+        match self {
+            Atom::Literal(lit) => lit.return_type(),
+            //TODO: access symbol table to get return type of references
+            Atom::Reference(_) => None,
+        }
     }
 }
 
