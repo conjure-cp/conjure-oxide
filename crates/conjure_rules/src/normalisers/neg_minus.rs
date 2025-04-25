@@ -27,7 +27,7 @@
 //!    with a coefficient of -1.
 
 use conjure_core::{
-    ast::{Expression as Expr, SymbolTable},
+    ast::{Expression as Expr, ReturnType::Set, SymbolTable, Typeable},
     metadata::Metadata,
     rule_engine::{
         register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
@@ -83,17 +83,17 @@ fn distribute_negation_over_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResu
 /// ```
 #[register_rule(("Base", 8400))]
 fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let Expr::Neg(_, expr1) = expr.clone() else {
+    let Neg(_, expr1) = expr.clone() else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Product(_, mut factors) = *expr1 else {
+    let Product(_, mut factors) = *expr1 else {
         return Err(RuleNotApplicable);
     };
 
     factors.push(essence_expr!(-1));
 
-    Ok(Reduction::pure(Expr::Product(Metadata::new(), factors)))
+    Ok(Reduction::pure(Product(Metadata::new(), factors)))
 }
 
 /// Converts a minus to a sum
@@ -101,12 +101,23 @@ fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResu
 /// ```text
 /// x - y ~> x + -y
 /// ```
+/// does not apply to sets.
+/// TODO: need rule to define set difference as a special case of minus, comprehensions needed
+/// return type and domain of minus need to be altered too, see expressions.rs
 #[register_rule(("Base", 8400))]
 fn minus_to_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let (x, y) = match expr {
-        Minus(_, x, y) => Ok((x.clone(), y.clone())),
-        _ => Err(RuleNotApplicable),
-    }?;
+    let (lhs, rhs) = match expr {
+        Minus(_, lhs, rhs) => {
+            if let Some(Set(_)) = lhs.as_ref().return_type() {
+                return Err(RuleNotApplicable);
+            }
+            if let Some(Set(_)) = rhs.as_ref().return_type() {
+                return Err(RuleNotApplicable);
+            }
+            (lhs.clone(), rhs.clone())
+        }
+        _ => return Err(RuleNotApplicable),
+    };
 
-    Ok(Reduction::pure(essence_expr!(&x + (-&y))))
+    Ok(Reduction::pure(essence_expr!(&lhs + (-&rhs))))
 }

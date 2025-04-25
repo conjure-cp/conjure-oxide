@@ -1,10 +1,11 @@
 use conjure_core::{
-    ast::{Atom, Expression, Literal, ReturnType, SymbolTable},
+    ast::{Atom, Expression, Literal, ReturnType, SymbolTable, Typeable},
     into_matrix_expr, matrix_expr,
     metadata::Metadata,
     rule_engine::{
-        register_rule, register_rule_set, ApplicationError, ApplicationError::*, ApplicationResult,
-        Reduction,
+        register_rule, register_rule_set,
+        ApplicationError::{self, *},
+        ApplicationResult, Reduction,
     },
 };
 use uniplate::Uniplate;
