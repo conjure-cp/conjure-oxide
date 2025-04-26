@@ -16,10 +16,12 @@ nativeO2 = pd.read_csv('./tools/performance/data/O2_CN/O2_CN.csv')
 column = sys.argv[1]
 
 timeCNO0 = nativeO0[column].values
-x = [0, *timeCNO0]
 timeCNO2 = nativeO2[column].values
 timeCONV = oxideNaive[column].values
 allTimes = [timeCNO0, timeCNO2, timeCONV]
+values =  np.append(timeCNO0, timeCNO2)
+values = np.append(values,timeCONV)
+x = [0, *values]
 
 def findZeros(array,zeroIndex):
     index = 0
@@ -56,7 +58,7 @@ if len(allTimes[0]) <= 0:
     print(f"See ./data/zeroVals.csv for details")
     sys.exit(0)
 
-if (sys.argv[1] != 'solver_nodes'):
+if (column != 'solver_nodes'):
     #divide by the default values (CNO0)
     default = np.divide(allTimes[0], allTimes[0])
     speedUpCONV = np.divide(allTimes[0], allTimes[2])

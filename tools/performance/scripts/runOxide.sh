@@ -12,10 +12,10 @@ mkdir $DATA_DIR
 JSON_FILE="${DATA_DIR}/oxide-stats.json"
 
 # look into adding one flag 
-if [ $VALIDATE="validate" ]; then
+if [[ $VALIDATE="validate" ]]; then
     ../../target/release/conjure_oxide test-solve --solver Minion $FULL_ESSENCE
     SUCCESS=$?
-    if [ $SUCCESS=0 ]; then
+    if [[ $SUCCESS=0 ]]; then
         ../../target/release/conjure_oxide solve --solver Minion --info-json-path=$JSON_FILE $FULL_ESSENCE #this means it uses precompiled oxide
     else
         echo "solution failed validation"
