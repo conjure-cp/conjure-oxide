@@ -1,0 +1,30 @@
+Model before rewriting:
+
+find d: int(1..5)
+
+such that
+
+d in {0,1,2} intersect {2,3,4}
+
+--
+
+{0,1,2} intersect {2,3,4}, 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+Set([Int(2)]) 
+
+--
+
+d in Set([Int(2)]), 
+   ~~> in_set ([("Base", 8600)]) 
+__minion_w_inset(d,2) 
+
+--
+
+Final model:
+
+find d: int(1..5)
+
+such that
+
+__minion_w_inset(d,2)
+

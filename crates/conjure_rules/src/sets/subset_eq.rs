@@ -52,8 +52,7 @@ fn subset_eq(expr: &Expression, st: &SymbolTable) -> ApplicationResult {
 fn split_union_subseteq(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     if let SubSetEq(_, a, b) = expr {
         if let Union(_, c, d) = a.as_ref() {
-            let mut expr_ar = vec![];
-            expr_ar.push(Expression::SubSetEq(Metadata::new(), c.clone(), b.clone()));
+            let mut expr_ar = vec![Expression::SubSetEq(Metadata::new(), c.clone(), b.clone())];
             expr_ar.push(Expression::SubSetEq(Metadata::new(), d.clone(), b.clone()));
             return Ok(Reduction::pure(Expression::And(
                 Metadata::new(),

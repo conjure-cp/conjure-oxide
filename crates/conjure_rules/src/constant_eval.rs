@@ -33,6 +33,7 @@ fn constant_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// `Some(Const)` if the expression can be simplified to a constant
 pub fn eval_constant(expr: &Expr) -> Option<Lit> {
     match expr {
+        // TODO: implement this
         Expr::SubSetEq(_, _, _) => None,
         Expr::Intersect(_, a, b) => match (a.as_ref(), b.as_ref()) {
             (
@@ -144,8 +145,37 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             _ => None,
         },
-        // TODO: implement this
-        Expr::In(_, _, _) => None,
+
+        Expr::In(_, a, b) => match (a.as_ref(), b.as_ref()) {
+            (
+                Expr::Atomic(_, Atom::Literal(Lit::Int(c))),
+                Expr::AbstractLiteral(_, AbstractLiteral::Set(d)),
+            ) => {
+                for lit in d.iter() {
+                    if let Atomic(_, Atom::Literal(Lit::Int(x))) = lit {
+                        if c == x {
+                            return Some(Lit::Bool(true));
+                        }
+                    }
+                }
+                Some(Lit::Bool(false))
+            }
+
+            (
+                Expr::Atomic(_, Atom::Literal(Lit::Int(c))),
+                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(d)))),
+            ) => {
+                for lit in d.iter() {
+                    if let Lit::Int(x) = lit {
+                        if c == x {
+                            return Some(Lit::Bool(true));
+                        }
+                    }
+                }
+                Some(Lit::Bool(false))
+            }
+            _ => None,
+        },
         Expr::FromSolution(_, _) => None,
         Expr::DominanceRelation(_, _) => None,
         Expr::InDomain(_, e, domain) => {
