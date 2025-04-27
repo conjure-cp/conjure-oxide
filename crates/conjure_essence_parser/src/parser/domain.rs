@@ -44,8 +44,7 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
                     let upper_bound: Option<i32>;
                     if let Some(lower_bound_node) = int_range.child_by_field_name("lower") {
                         lower_bound = Some(
-                            source_code
-                                [lower_bound_node.start_byte()..lower_bound_node.end_byte()]
+                            source_code[lower_bound_node.start_byte()..lower_bound_node.end_byte()]
                                 .parse::<i32>()
                                 .unwrap(),
                         );
@@ -54,15 +53,14 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
                     }
                     if let Some(upper_bound_node) = int_range.child_by_field_name("upper") {
                         upper_bound = Some(
-                            source_code
-                                [upper_bound_node.start_byte()..upper_bound_node.end_byte()]
+                            source_code[upper_bound_node.start_byte()..upper_bound_node.end_byte()]
                                 .parse::<i32>()
                                 .unwrap(),
                         );
                     } else {
                         upper_bound = None;
                     }
-                    
+
                     match (lower_bound, upper_bound) {
                         (Some(lb), Some(ub)) => ranges.push(Range::Bounded(lb, ub)),
                         (Some(lb), None) => ranges.push(Range::Bounded(lb, std::i32::MAX)),
