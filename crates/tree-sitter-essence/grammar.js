@@ -71,9 +71,9 @@ module.exports = grammar ({
     range_list: $ => prec(2, commaSep1(choice($.int_range, $.integer))),
 
     int_range: $ => seq(
-      optional(field("start", $.arith_expression)), 
+      optional(field("lower", $.arith_expression)), 
       "..", 
-      optional(field("end", $.arith_expression))
+      optional(field("upper", $.arith_expression))
     ),
 
     tuple_domain: $ => seq(

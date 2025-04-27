@@ -42,42 +42,27 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
                 "int_range" => {
                     let lower_bound: Option<i32>;
                     let upper_bound: Option<i32>;
-                    let range_component = int_range.child(0).expect("Error with integer range");
-                    match range_component.kind() {
-                        "arith_expression" => {
-                            lower_bound = Some(
-                                source_code
-                                    [range_component.start_byte()..range_component.end_byte()]
-                                    .parse::<i32>()
-                                    .unwrap(),
-                            );
-
-                            if let Some(range_component) = range_component.next_named_sibling() {
-                                upper_bound = Some(
-                                    source_code
-                                        [range_component.start_byte()..range_component.end_byte()]
-                                        .parse::<i32>()
-                                        .unwrap(),
-                                );
-                            } else {
-                                upper_bound = None;
-                            }
-                        }
-                        ".." => {
-                            lower_bound = None;
-                            let range_component = range_component
-                                .next_sibling()
-                                .expect("Error with integer range");
-                            upper_bound = Some(
-                                source_code
-                                    [range_component.start_byte()..range_component.end_byte()]
-                                    .parse::<i32>()
-                                    .unwrap(),
-                            );
-                        }
-                        _ => panic!("unsupported int range type"),
+                    if let Some(lower_bound_node) = int_range.child_by_field_name("lower") {
+                        lower_bound = Some(
+                            source_code
+                                [lower_bound_node.start_byte()..lower_bound_node.end_byte()]
+                                .parse::<i32>()
+                                .unwrap(),
+                        );
+                    } else {
+                        lower_bound = None;
                     }
-
+                    if let Some(upper_bound_node) = int_range.child_by_field_name("upper") {
+                        upper_bound = Some(
+                            source_code
+                                [upper_bound_node.start_byte()..upper_bound_node.end_byte()]
+                                .parse::<i32>()
+                                .unwrap(),
+                        );
+                    } else {
+                        upper_bound = None;
+                    }
+                    
                     match (lower_bound, upper_bound) {
                         (Some(lb), Some(ub)) => ranges.push(Range::Bounded(lb, ub)),
                         (Some(lb), None) => ranges.push(Range::Bounded(lb, std::i32::MAX)),
