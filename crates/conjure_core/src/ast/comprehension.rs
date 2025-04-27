@@ -46,6 +46,25 @@ impl Comprehension {
     pub fn submodel(&self) -> &SubModel {
         &self.submodel
     }
+    pub fn induction_vars(&self) -> &Vec<Name> {
+        &self.induction_vars
+    }
+
+    pub fn create_compr(
+        expression: Expression,
+        submodel: SubModel,
+        induction_vars: Vec<Name>,
+    ) -> Comprehension {
+        Comprehension {
+            expression,
+            submodel,
+            induction_vars,
+        }
+    }
+
+    pub fn get_expression(&self) -> Expression {
+        self.expression.clone()
+    }
 
     // Solves this comprehension using Minion, returning the resulting expressions.
     pub fn solve_with_minion(self) -> Result<Vec<Expression>, SolverError> {
