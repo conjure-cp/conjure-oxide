@@ -397,7 +397,6 @@ pub enum Expression {
     #[compatible(Minion)]
     MinionWInIntervalSet(Metadata, Atom, Vec<i32>),
 
-
     /// `w-inset(x, [v1, v2, … ])` ensures that the value of `x` is one of the explicitly given values `v1`, `v2`, etc.
     ///
     /// This constraint enforces membership in a specific set of discrete values rather than intervals.
