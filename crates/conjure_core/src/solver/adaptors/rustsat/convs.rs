@@ -100,7 +100,8 @@ pub fn handle_disjn(
 ) {
     let cl: &Vec<Expression> = match disjn {
         Expression::Or(_, vec) => &vec.clone().unwrap_list().unwrap(),
-        _ => todo!(),
+        // Expression::F
+        _ => bug!("This should always be either a Disjunction or a Constant; Found:{cl}"),
     };
 
     let mut clause: Clause = Clause::new();
