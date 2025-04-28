@@ -478,7 +478,7 @@ pub fn specify_trace_files(
         .expect("Essence file must have a stem")
         .to_string_lossy();
 
-    // Generates  default trace filenames (e.g., "input_protrace.json" or "input_protrace.tzt") located in the appropriate test folder
+    // Generates  default trace filenames (e.g., "input_protrace.json" or "input_protrace.txt") located in the appropriate test folder
     let make_default = |ext: &str| {
         let mut p = path.clone();
         p.set_file_name(format!("{}_protrace", stem));
