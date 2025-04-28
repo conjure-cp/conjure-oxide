@@ -19,7 +19,7 @@ pub fn parse_expression(
 ) -> Result<Expression, EssenceParseError> {
     // TODO (gskorokhod) - Factor this further (make match arms into separate functions, extract common logic)
     match constraint.kind() {
-        "bool_expression" | "arith_expression" | "atom" | "sub_bool_expr" | "sub_arith_expr" => {
+        "bool_expr" | "arithmetic_expr" | "atom" | "sub_bool_expr" | "sub_arith_expr" => {
             child_expr(constraint, source_code, root)
         }
         "not_expr" => Ok(Expression::Not(
@@ -36,7 +36,7 @@ pub fn parse_expression(
         )),
         "exponent" | "product_expr" | "sum_expr" | "comparison_expr" | "and_expr" | "or_expr"
         | "implication" | "iff_expr" => parse_expr_op_expr(constraint, source_code, root),
-        "quantifier_expr_bool" | "quantifier_expr_num" => {
+        "quantifier_expr_bool" | "quantifier_expr_arith" => {
             parse_quatifier_expr(constraint, source_code, root)
         }
         "constant" => {
@@ -81,7 +81,7 @@ pub fn parse_expression(
             if indices_node.child_by_field_name("null_index").is_some() {
                 let mut indices: Vec<Option<Expression>> = Vec::new();
                 for index in named_children(&indices_node) {
-                    if index.kind() == "arith_expression" {
+                    if index.kind() == "arithmetic_expr" {
                         let index_expr = parse_expression(index, source_code, root)?;
                         indices.push(Some(index_expr));
                     } else {
@@ -119,7 +119,7 @@ pub fn parse_expression(
             let mut elements = vec![];
             let mut domain: Option<Domain> = None;
             for element in named_children(&constraint) {
-                if element.kind() == "arith_expression" {
+                if element.kind() == "arithmetic_expr" {
                     elements.push(parse_expression(element, source_code, root)?);
                 } else {
                     domain = Some(parse_domain(element, source_code));

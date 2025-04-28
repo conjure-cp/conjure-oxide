@@ -33,7 +33,7 @@ pub fn parse_letting_statement(
             .child_by_field_name("expr_or_domain")
             .expect("No domain or expression found for letting statement");
         match expr_or_domain.kind() {
-            "bool_expression" | "arith_expression" => {
+            "bool_expr" | "arithmetic_expr" => {
                 for name in temp_symbols {
                     symbol_table.insert(Rc::new(Declaration::new_value_letting(
                         Name::UserName(String::from(name)),

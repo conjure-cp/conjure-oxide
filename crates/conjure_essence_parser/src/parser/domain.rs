@@ -5,11 +5,9 @@ use super::util::named_children;
 use conjure_core::ast::{Domain, Name, Range};
 
 /// Parse an Essence variable domain into its Conjure AST representation.
-pub fn parse_domain(mut domain: Node, source_code: &str) -> Domain {
-    if domain.kind() == "domain" {
-        domain = domain.child(0).expect("No domain found");
-    }
+pub fn parse_domain(domain: Node, source_code: &str) -> Domain {
     match domain.kind() {
+        "domain" => parse_domain(domain.child(0).expect("No domain found"), source_code),
         "bool_domain" => Domain::BoolDomain,
         "int_domain" => parse_int_domain(domain, source_code),
         "identifier" => {
