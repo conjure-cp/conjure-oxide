@@ -9,11 +9,6 @@ use conjure_oxide::SolverFamily;
 use crate::{solve, test_solve};
 static AFTER_HELP_TEXT: &str = include_str!("help_text.txt");
 
-// use once_cell::sync::Lazy;
-// use std::sync::Mutex;
-
-// pub static KIND_FILTER: Lazy<Mutex<Option<Kind>>> = Lazy::new(|| Mutex::new(None))
-
 /// All subcommands of conjure-oxide
 #[derive(Clone, Debug, Subcommand)]
 pub enum Command {
@@ -93,12 +88,7 @@ pub struct GlobalArgs {
     #[arg(long, default_value_t = false, global = true)]
     pub enable_native_parser: bool,
 
-    // New logging arguments:
     // Tracing: T
-    // Output: stdout, file
-    // Verbosity: low, medium, high
-    // Format: human, json, both (in case of file)
-    // Optional file path
     #[arg(
         long,
         short = 'T',
@@ -108,6 +98,7 @@ pub struct GlobalArgs {
     )]
     pub tracing: bool,
 
+    // Output location (stdout or file)
     #[arg(
         long,
         short = 'O',
@@ -117,6 +108,7 @@ pub struct GlobalArgs {
     )]
     pub trace_output: String,
 
+    // Verbosity Leve (high, medium, low)
     #[arg(
         long,
         default_value = "medium",
@@ -125,6 +117,7 @@ pub struct GlobalArgs {
     )]
     pub verbosity: VerbosityLevel,
 
+    // Trace format (human, json)
     #[arg(
         long,
         short = 'F',
@@ -146,6 +139,8 @@ pub struct GlobalArgs {
     )]
     pub trace_file: Option<Vec<String>>,
 
+    // Displays all the information related to a specifc complenent of conjure-oxide (e.g rules, model)
+    // The information displayed is captured by the display_message function
     #[arg(
         long = "get-info-about",
         global = true,

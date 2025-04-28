@@ -1,6 +1,3 @@
-use conjure_core::pro_trace::{
-    self, create_consumer, Consumer, HumanFormatter, StdoutConsumer, VerbosityLevel,
-};
 use std::collections::VecDeque;
 use std::process::exit;
 use std::rc::Rc;

@@ -1,0 +1,78 @@
+
+Model before rewriting:
+
+letting a be {2,3}
+letting b be {1,2}
+letting c be {1,2,3}
+
+such that
+
+(c = (a union b))
+
+--
+
+Successful Tranformation: 
+c, 
+~~> substitute_value_lettings [5000; Base]
+{1,2,3}  
+--
+
+Successful Tranformation: 
+a, 
+~~> substitute_value_lettings [5000; Base]
+{2,3}  
+--
+
+Successful Tranformation: 
+({1,2,3} = ({2,3} union b)), 
+~~> eq_to_subset_eq [8800; Base]
+and([({1,2,3} subsetEq ({2,3} union b)),(({2,3} union b) subsetEq {1,2,3});int(1..)])  
+--
+
+Successful Tranformation: 
+and([({1,2,3} subsetEq ({2,3} union b)),(({2,3} union b) subsetEq {1,2,3});int(1..)]), 
+~~> partial_evaluator [9000; Base]
+({1,2,3} subsetEq ({2,3} union b)),
+(({2,3} union b) subsetEq {1,2,3})  
+--
+
+Successful Tranformation: 
+b, 
+~~> substitute_value_lettings [5000; Base]
+{1,2}  
+--
+
+Successful Tranformation: 
+b, 
+~~> substitute_value_lettings [5000; Base]
+{1,2}  
+--
+
+Successful Tranformation: 
+(({2,3} union {1,2}) subsetEq {1,2,3}), 
+~~> union_subseteq [8700; Base]
+and([({2,3} subsetEq {1,2}),({2,3} subsetEq {1,2,3});int(1..)])  
+--
+
+Successful Tranformation: 
+({1,2,3} subsetEq ({2,3} union {1,2})),
+and([({2,3} subsetEq {1,2}),({2,3} subsetEq {1,2,3});int(1..)]), 
+~~> partial_evaluator [9000; Base]
+({1,2,3} subsetEq ({2,3} union {1,2})),
+({2,3} subsetEq {1,2}),
+({2,3} subsetEq {1,2,3})  
+--
+
+
+Final model:
+
+letting a be {2,3}
+letting b be {1,2}
+letting c be {1,2,3}
+
+such that
+
+({1,2,3} subsetEq ({2,3} union {1,2})),
+({2,3} subsetEq {1,2}),
+({2,3} subsetEq {1,2,3})
+

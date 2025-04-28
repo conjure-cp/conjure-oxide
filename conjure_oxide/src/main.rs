@@ -34,8 +34,6 @@ pub fn run() -> anyhow::Result<()> {
         return Ok(());
     }
 
-    // setup_logging(&cli.global_args)?;
-
     run_subcommand(cli)
 }
 

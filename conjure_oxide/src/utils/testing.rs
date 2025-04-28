@@ -192,7 +192,7 @@ pub fn read_json_rule_trace(
     prefix: &str,
 ) -> Result<JsonValue, anyhow::Error> {
     let generated_json_rules =
-        std::fs::read_to_string(format!("{path}/{test_name}.{prefix}-rule-trace.json"))?;
+        std::fs::read_to_string(format!("{path}/{test_name}-{prefix}-rule-trace.json"))?;
 
     // taking into account empty files
     if generated_json_rules.trim().is_empty() {
@@ -231,7 +231,7 @@ pub fn read_human_rule_trace(
     test_name: &str,
     prefix: &str,
 ) -> Result<Vec<String>, std::io::Error> {
-    let filename = format!("{path}/{test_name}.{prefix}-rule-trace.txt");
+    let filename = format!("{path}/{test_name}-{prefix}-rule-trace.txt");
     let rules_trace: Vec<String> = read_to_string(&filename)?
         .lines()
         .map(String::from)

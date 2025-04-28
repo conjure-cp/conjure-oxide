@@ -1,0 +1,60 @@
+
+Model before rewriting:
+
+find x: int(1..4)
+find y: int(1..4)
+
+such that
+
+((y - 1) >= x),
+(Sum([-(1),y;int(1..2)]) >= x)
+
+--
+
+Successful Tranformation: 
+-(1), 
+~~> constant_evaluator [9001; Constant]
+-1  
+--
+
+Successful Tranformation: 
+(y - 1), 
+~~> minus_to_sum [8400; Base]
+Sum([y,-(1);int(1..)])  
+--
+
+Successful Tranformation: 
+-(1), 
+~~> constant_evaluator [9001; Constant]
+-1  
+--
+
+Successful Tranformation: 
+(Sum([y,-1;int(1..)]) >= x), 
+~~> y_plus_k_geq_x_to_ineq [4800; Minion]
+Ineq(x, y, -1)  
+--
+
+Successful Tranformation: 
+Sum([-1,y;int(1..2)]), 
+~~> matrix_to_list [2000; Base]
+Sum([-1,y;int(1..)])  
+--
+
+Successful Tranformation: 
+(Sum([-1,y;int(1..)]) >= x), 
+~~> y_plus_k_geq_x_to_ineq [4800; Minion]
+Ineq(x, y, -1)  
+--
+
+
+Final model:
+
+find x: int(1..4)
+find y: int(1..4)
+
+such that
+
+Ineq(x, y, -1),
+Ineq(x, y, -1)
+
