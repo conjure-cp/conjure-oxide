@@ -39,7 +39,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 //create hashset of the first set
                 let mut list1: HashSet<Lit> = HashSet::new();
                 for expr in a.iter() {
-                    if let Atomic(_, Atom::Literal(x)) = expr {
+                    if let Expr::Atomic(_, Atom::Literal(x)) = expr {
                         list1.insert(x.clone());
                     } else {
                         return None;
@@ -48,7 +48,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 // create hashset of the second set
                 let mut list2: HashSet<Lit> = HashSet::new();
                 for expr in b.iter() {
-                    if let Atomic(_, Atom::Literal(x)) = expr {
+                    if let Expr::Atomic(_, Atom::Literal(x)) = expr {
                         list2.insert(x.clone());
                     } else {
                         return None;
@@ -72,7 +72,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 //create hashset of the first set
                 let mut list1: HashSet<Lit> = HashSet::new();
                 for expr in a.iter() {
-                    if let Atomic(_, Atom::Literal(x)) = expr {
+                    if let Expr::Atomic(_, Atom::Literal(x)) = expr {
                         list1.insert(x.clone());
                     } else {
                         return None;
@@ -101,14 +101,17 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 //we do this to check that all elements are literals
                 let mut list: Vec<Lit> = Vec::new();
                 for expr in a.iter() {
-                    if let Atomic(_, Atom::Literal(x)) = expr {
+                    if let Expr::Atomic(_, Atom::Literal(x)) = expr {
                         list.push(x.clone());
                     } else {
                         return None;
                     }
                 }
                 for expr in b.iter() {
-                    if let Atomic(_, Atom::Literal(x)) = expr {
+                    if let Expr::Atomic(_, Atom::Literal(x)) = expr {
+                        if list.contains(&x) {
+                            continue;
+                        }
                         list.push(x.clone());
                     } else {
                         return None;
@@ -127,13 +130,16 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 //we do this to check that all elements are literals
                 let mut list: Vec<Lit> = Vec::new();
                 for expr in a.iter() {
-                    if let Atomic(_, Atom::Literal(x)) = expr {
+                    if let Expr::Atomic(_, Atom::Literal(x)) = expr {
                         list.push(x.clone());
                     } else {
                         return None;
                     }
                 }
                 for lit in b.iter() {
+                    if list.contains(&lit) {
+                        continue;
+                    }
                     list.push(lit.clone());
                 }
                 Some(Lit::AbstractLiteral(AbstractLiteral::Set(list)))
