@@ -1,0 +1,1251 @@
+Model before rewriting:
+
+find a: int(1..20)
+
+such that
+
+(a < 10)
+
+--
+
+a, 
+   ~~> integer_decision_representation ([("CNF", 8000)]) 
+Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) 
+new variables:
+  find a#int_to_atom_00: bool
+  find a#int_to_atom_01: bool
+  find a#int_to_atom_02: bool
+  find a#int_to_atom_03: bool
+  find a#int_to_atom_04: bool
+  find a#int_to_atom_05: bool
+  find a#int_to_atom_06: bool
+  find a#int_to_atom_07: bool
+new constraints:
+  or([and([(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) >= 1),(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20);int(1..)]);int(1..)])
+--
+
+or([and([(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) >= 1),(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20);int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)]) 
+and([(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) >= 1),(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20);int(1..)]) 
+
+--
+
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) < 10),
+and([(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) >= 1),(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) < 10),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) >= 1),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20) 
+
+--
+
+10, 
+   ~~> literal_cnf_int ([("CNF", 4000)]) 
+Int([false,true,false,true,false,false,false,false;int(1..)]) 
+
+--
+
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) < Int([false,true,false,true,false,false,false,false;int(1..)])), 
+   ~~> cnf_int_ineq ([("CNF", 4100)]) 
+or([and([false,Not(a#int_to_atom_07);int(1..)]),and([(false) <-> (a#int_to_atom_07),or([and([false,Not(a#int_to_atom_06);int(1..)]),and([(false) <-> (a#int_to_atom_06),or([and([false,Not(a#int_to_atom_05);int(1..)]),and([(false) <-> (a#int_to_atom_05),or([and([false,Not(a#int_to_atom_04);int(1..)]),and([(false) <-> (a#int_to_atom_04),or([and([true,Not(a#int_to_atom_03);int(1..)]),and([(true) <-> (a#int_to_atom_03),or([and([false,Not(a#int_to_atom_02);int(1..)]),and([(false) <-> (a#int_to_atom_02),or([and([true,Not(a#int_to_atom_01);int(1..)]),and([(true) <-> (a#int_to_atom_01),and([false,Not(a#int_to_atom_00);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+and([false,Not(a#int_to_atom_07);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+false 
+
+--
+
+or([false,and([(false) <-> (a#int_to_atom_07),or([and([false,Not(a#int_to_atom_06);int(1..)]),and([(false) <-> (a#int_to_atom_06),or([and([false,Not(a#int_to_atom_05);int(1..)]),and([(false) <-> (a#int_to_atom_05),or([and([false,Not(a#int_to_atom_04);int(1..)]),and([(false) <-> (a#int_to_atom_04),or([and([true,Not(a#int_to_atom_03);int(1..)]),and([(true) <-> (a#int_to_atom_03),or([and([false,Not(a#int_to_atom_02);int(1..)]),and([(false) <-> (a#int_to_atom_02),or([and([true,Not(a#int_to_atom_01);int(1..)]),and([(true) <-> (a#int_to_atom_01),and([false,Not(a#int_to_atom_00);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+or([and([(false) <-> (a#int_to_atom_07),or([and([false,Not(a#int_to_atom_06);int(1..)]),and([(false) <-> (a#int_to_atom_06),or([and([false,Not(a#int_to_atom_05);int(1..)]),and([(false) <-> (a#int_to_atom_05),or([and([false,Not(a#int_to_atom_04);int(1..)]),and([(false) <-> (a#int_to_atom_04),or([and([true,Not(a#int_to_atom_03);int(1..)]),and([(true) <-> (a#int_to_atom_03),or([and([false,Not(a#int_to_atom_02);int(1..)]),and([(false) <-> (a#int_to_atom_02),or([and([true,Not(a#int_to_atom_01);int(1..)]),and([(true) <-> (a#int_to_atom_01),and([false,Not(a#int_to_atom_00);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+(false) <-> (a#int_to_atom_07), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_07) 
+
+--
+
+and([false,Not(a#int_to_atom_06);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+false 
+
+--
+
+or([false,and([(false) <-> (a#int_to_atom_06),or([and([false,Not(a#int_to_atom_05);int(1..)]),and([(false) <-> (a#int_to_atom_05),or([and([false,Not(a#int_to_atom_04);int(1..)]),and([(false) <-> (a#int_to_atom_04),or([and([true,Not(a#int_to_atom_03);int(1..)]),and([(true) <-> (a#int_to_atom_03),or([and([false,Not(a#int_to_atom_02);int(1..)]),and([(false) <-> (a#int_to_atom_02),or([and([true,Not(a#int_to_atom_01);int(1..)]),and([(true) <-> (a#int_to_atom_01),and([false,Not(a#int_to_atom_00);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+or([and([(false) <-> (a#int_to_atom_06),or([and([false,Not(a#int_to_atom_05);int(1..)]),and([(false) <-> (a#int_to_atom_05),or([and([false,Not(a#int_to_atom_04);int(1..)]),and([(false) <-> (a#int_to_atom_04),or([and([true,Not(a#int_to_atom_03);int(1..)]),and([(true) <-> (a#int_to_atom_03),or([and([false,Not(a#int_to_atom_02);int(1..)]),and([(false) <-> (a#int_to_atom_02),or([and([true,Not(a#int_to_atom_01);int(1..)]),and([(true) <-> (a#int_to_atom_01),and([false,Not(a#int_to_atom_00);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+(false) <-> (a#int_to_atom_06), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_06) 
+
+--
+
+and([false,Not(a#int_to_atom_05);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+false 
+
+--
+
+or([false,and([(false) <-> (a#int_to_atom_05),or([and([false,Not(a#int_to_atom_04);int(1..)]),and([(false) <-> (a#int_to_atom_04),or([and([true,Not(a#int_to_atom_03);int(1..)]),and([(true) <-> (a#int_to_atom_03),or([and([false,Not(a#int_to_atom_02);int(1..)]),and([(false) <-> (a#int_to_atom_02),or([and([true,Not(a#int_to_atom_01);int(1..)]),and([(true) <-> (a#int_to_atom_01),and([false,Not(a#int_to_atom_00);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+or([and([(false) <-> (a#int_to_atom_05),or([and([false,Not(a#int_to_atom_04);int(1..)]),and([(false) <-> (a#int_to_atom_04),or([and([true,Not(a#int_to_atom_03);int(1..)]),and([(true) <-> (a#int_to_atom_03),or([and([false,Not(a#int_to_atom_02);int(1..)]),and([(false) <-> (a#int_to_atom_02),or([and([true,Not(a#int_to_atom_01);int(1..)]),and([(true) <-> (a#int_to_atom_01),and([false,Not(a#int_to_atom_00);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+(false) <-> (a#int_to_atom_05), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_05) 
+
+--
+
+and([false,Not(a#int_to_atom_04);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+false 
+
+--
+
+or([false,and([(false) <-> (a#int_to_atom_04),or([and([true,Not(a#int_to_atom_03);int(1..)]),and([(true) <-> (a#int_to_atom_03),or([and([false,Not(a#int_to_atom_02);int(1..)]),and([(false) <-> (a#int_to_atom_02),or([and([true,Not(a#int_to_atom_01);int(1..)]),and([(true) <-> (a#int_to_atom_01),and([false,Not(a#int_to_atom_00);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+or([and([(false) <-> (a#int_to_atom_04),or([and([true,Not(a#int_to_atom_03);int(1..)]),and([(true) <-> (a#int_to_atom_03),or([and([false,Not(a#int_to_atom_02);int(1..)]),and([(false) <-> (a#int_to_atom_02),or([and([true,Not(a#int_to_atom_01);int(1..)]),and([(true) <-> (a#int_to_atom_01),and([false,Not(a#int_to_atom_00);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+(false) <-> (a#int_to_atom_04), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_04) 
+
+--
+
+and([true,Not(a#int_to_atom_03);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([Not(a#int_to_atom_03);int(1..)]) 
+
+--
+
+(true) <-> (a#int_to_atom_03), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+a#int_to_atom_03 
+
+--
+
+and([false,Not(a#int_to_atom_02);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+false 
+
+--
+
+or([false,and([(false) <-> (a#int_to_atom_02),or([and([true,Not(a#int_to_atom_01);int(1..)]),and([(true) <-> (a#int_to_atom_01),and([false,Not(a#int_to_atom_00);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+or([and([(false) <-> (a#int_to_atom_02),or([and([true,Not(a#int_to_atom_01);int(1..)]),and([(true) <-> (a#int_to_atom_01),and([false,Not(a#int_to_atom_00);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+(false) <-> (a#int_to_atom_02), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_02) 
+
+--
+
+and([true,Not(a#int_to_atom_01);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([Not(a#int_to_atom_01);int(1..)]) 
+
+--
+
+(true) <-> (a#int_to_atom_01), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+a#int_to_atom_01 
+
+--
+
+and([false,Not(a#int_to_atom_00);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+false 
+
+--
+
+and([a#int_to_atom_01,false;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+false 
+
+--
+
+or([and([Not(a#int_to_atom_01);int(1..)]),false;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]) 
+
+--
+
+or([and([Not(a#int_to_atom_07),or([and([Not(a#int_to_atom_06),or([and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04),or([and([Not(a#int_to_atom_03);int(1..)]),and([a#int_to_atom_03,or([and([Not(a#int_to_atom_02),or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)]) 
+and([Not(a#int_to_atom_07),or([and([Not(a#int_to_atom_06),or([and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04),or([and([Not(a#int_to_atom_03);int(1..)]),and([a#int_to_atom_03,or([and([Not(a#int_to_atom_02),or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+and([Not(a#int_to_atom_07),or([and([Not(a#int_to_atom_06),or([and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04),or([and([Not(a#int_to_atom_03);int(1..)]),and([a#int_to_atom_03,or([and([Not(a#int_to_atom_02),or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) >= 1),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_07),
+or([and([Not(a#int_to_atom_06),or([and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04),or([and([Not(a#int_to_atom_03);int(1..)]),and([a#int_to_atom_03,or([and([Not(a#int_to_atom_02),or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) >= 1),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20) 
+
+--
+
+or([and([Not(a#int_to_atom_06),or([and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04),or([and([Not(a#int_to_atom_03);int(1..)]),and([a#int_to_atom_03,or([and([Not(a#int_to_atom_02),or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)]) 
+and([Not(a#int_to_atom_06),or([and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04),or([and([Not(a#int_to_atom_03);int(1..)]),and([a#int_to_atom_03,or([and([Not(a#int_to_atom_02),or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+Not(a#int_to_atom_07),
+and([Not(a#int_to_atom_06),or([and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04),or([and([Not(a#int_to_atom_03);int(1..)]),and([a#int_to_atom_03,or([and([Not(a#int_to_atom_02),or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) >= 1),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+or([and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04),or([and([Not(a#int_to_atom_03);int(1..)]),and([a#int_to_atom_03,or([and([Not(a#int_to_atom_02),or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) >= 1),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20) 
+
+--
+
+or([and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04),or([and([Not(a#int_to_atom_03);int(1..)]),and([a#int_to_atom_03,or([and([Not(a#int_to_atom_02),or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)]) 
+and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04),or([and([Not(a#int_to_atom_03);int(1..)]),and([a#int_to_atom_03,or([and([Not(a#int_to_atom_02),or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04),or([and([Not(a#int_to_atom_03);int(1..)]),and([a#int_to_atom_03,or([and([Not(a#int_to_atom_02),or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) >= 1),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+or([and([Not(a#int_to_atom_04),or([and([Not(a#int_to_atom_03);int(1..)]),and([a#int_to_atom_03,or([and([Not(a#int_to_atom_02),or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) >= 1),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20) 
+
+--
+
+or([and([Not(a#int_to_atom_04),or([and([Not(a#int_to_atom_03);int(1..)]),and([a#int_to_atom_03,or([and([Not(a#int_to_atom_02),or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)]) 
+and([Not(a#int_to_atom_04),or([and([Not(a#int_to_atom_03);int(1..)]),and([a#int_to_atom_03,or([and([Not(a#int_to_atom_02),or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+and([Not(a#int_to_atom_04),or([and([Not(a#int_to_atom_03);int(1..)]),and([a#int_to_atom_03,or([and([Not(a#int_to_atom_02),or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) >= 1),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([and([Not(a#int_to_atom_03);int(1..)]),and([a#int_to_atom_03,or([and([Not(a#int_to_atom_02),or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) >= 1),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20) 
+
+--
+
+and([Not(a#int_to_atom_03);int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+Not(a#int_to_atom_03) 
+
+--
+
+or([and([Not(a#int_to_atom_02),or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)]) 
+and([Not(a#int_to_atom_02),or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+and([a#int_to_atom_03,and([Not(a#int_to_atom_02),or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+and([a#int_to_atom_03,Not(a#int_to_atom_02),or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+or([and([Not(a#int_to_atom_01);int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)]) 
+and([Not(a#int_to_atom_01);int(1..)]) 
+
+--
+
+and([Not(a#int_to_atom_01);int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+Not(a#int_to_atom_01) 
+
+--
+
+or([Not(a#int_to_atom_03),and([a#int_to_atom_03,Not(a#int_to_atom_02),Not(a#int_to_atom_01);int(1..)]);int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)]) 
+and([or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]);int(1..)]) 
+
+--
+
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+and([or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) >= 1),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) >= 1),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20) 
+
+--
+
+1, 
+   ~~> literal_cnf_int ([("CNF", 4000)]) 
+Int([true,false,false,false,false,false,false,false;int(1..)]) 
+
+--
+
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) >= Int([true,false,false,false,false,false,false,false;int(1..)])), 
+   ~~> cnf_int_ineq ([("CNF", 4100)]) 
+or([and([a#int_to_atom_07,Not(false);int(1..)]),and([(a#int_to_atom_07) <-> (false),or([and([a#int_to_atom_06,Not(false);int(1..)]),and([(a#int_to_atom_06) <-> (false),or([and([a#int_to_atom_05,Not(false);int(1..)]),and([(a#int_to_atom_05) <-> (false),or([and([a#int_to_atom_04,Not(false);int(1..)]),and([(a#int_to_atom_04) <-> (false),or([and([a#int_to_atom_03,Not(false);int(1..)]),and([(a#int_to_atom_03) <-> (false),or([and([a#int_to_atom_02,Not(false);int(1..)]),and([(a#int_to_atom_02) <-> (false),or([and([a#int_to_atom_01,Not(false);int(1..)]),and([(a#int_to_atom_01) <-> (false),(true) -> (a#int_to_atom_00);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+Not(false), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+true 
+
+--
+
+Not(false), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+true 
+
+--
+
+Not(false), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+true 
+
+--
+
+Not(false), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+true 
+
+--
+
+Not(false), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+true 
+
+--
+
+Not(false), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+true 
+
+--
+
+Not(false), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+true 
+
+--
+
+and([a#int_to_atom_07,true;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([a#int_to_atom_07;int(1..)]) 
+
+--
+
+(a#int_to_atom_07) <-> (false), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_07) 
+
+--
+
+and([a#int_to_atom_06,true;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([a#int_to_atom_06;int(1..)]) 
+
+--
+
+(a#int_to_atom_06) <-> (false), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_06) 
+
+--
+
+and([a#int_to_atom_05,true;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([a#int_to_atom_05;int(1..)]) 
+
+--
+
+(a#int_to_atom_05) <-> (false), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_05) 
+
+--
+
+and([a#int_to_atom_04,true;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([a#int_to_atom_04;int(1..)]) 
+
+--
+
+(a#int_to_atom_04) <-> (false), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_04) 
+
+--
+
+and([a#int_to_atom_03,true;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([a#int_to_atom_03;int(1..)]) 
+
+--
+
+(a#int_to_atom_03) <-> (false), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_03) 
+
+--
+
+and([a#int_to_atom_02,true;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([a#int_to_atom_02;int(1..)]) 
+
+--
+
+(a#int_to_atom_02) <-> (false), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_02) 
+
+--
+
+and([a#int_to_atom_01,true;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([a#int_to_atom_01;int(1..)]) 
+
+--
+
+(a#int_to_atom_01) <-> (false), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_01) 
+
+--
+
+(true) -> (a#int_to_atom_00), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+a#int_to_atom_00 
+
+--
+
+and([a#int_to_atom_07;int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+a#int_to_atom_07 
+
+--
+
+and([a#int_to_atom_06;int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+a#int_to_atom_06 
+
+--
+
+and([a#int_to_atom_05;int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+a#int_to_atom_05 
+
+--
+
+and([a#int_to_atom_04;int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+a#int_to_atom_04 
+
+--
+
+and([a#int_to_atom_03;int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+a#int_to_atom_03 
+
+--
+
+and([a#int_to_atom_02;int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+a#int_to_atom_02 
+
+--
+
+and([a#int_to_atom_01;int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+a#int_to_atom_01 
+
+--
+
+or([a#int_to_atom_07,and([Not(a#int_to_atom_07),or([a#int_to_atom_06,and([Not(a#int_to_atom_06),or([a#int_to_atom_05,and([Not(a#int_to_atom_05),or([a#int_to_atom_04,and([Not(a#int_to_atom_04),or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)]) 
+and([or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),or([a#int_to_atom_07,or([a#int_to_atom_06,and([Not(a#int_to_atom_06),or([a#int_to_atom_05,and([Not(a#int_to_atom_05),or([a#int_to_atom_04,and([Not(a#int_to_atom_04),or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+and([or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),or([a#int_to_atom_07,or([a#int_to_atom_06,and([Not(a#int_to_atom_06),or([a#int_to_atom_05,and([Not(a#int_to_atom_05),or([a#int_to_atom_04,and([Not(a#int_to_atom_04),or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,or([a#int_to_atom_06,and([Not(a#int_to_atom_06),or([a#int_to_atom_05,and([Not(a#int_to_atom_05),or([a#int_to_atom_04,and([Not(a#int_to_atom_04),or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20) 
+
+--
+
+or([a#int_to_atom_07,or([a#int_to_atom_06,and([Not(a#int_to_atom_06),or([a#int_to_atom_05,and([Not(a#int_to_atom_05),or([a#int_to_atom_04,and([Not(a#int_to_atom_04),or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+or([a#int_to_atom_07,a#int_to_atom_06,and([Not(a#int_to_atom_06),or([a#int_to_atom_05,and([Not(a#int_to_atom_05),or([a#int_to_atom_04,and([Not(a#int_to_atom_04),or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+or([a#int_to_atom_07,a#int_to_atom_06,and([Not(a#int_to_atom_06),or([a#int_to_atom_05,and([Not(a#int_to_atom_05),or([a#int_to_atom_04,and([Not(a#int_to_atom_04),or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)]) 
+and([or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),or([a#int_to_atom_07,a#int_to_atom_06,or([a#int_to_atom_05,and([Not(a#int_to_atom_05),or([a#int_to_atom_04,and([Not(a#int_to_atom_04),or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+and([or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),or([a#int_to_atom_07,a#int_to_atom_06,or([a#int_to_atom_05,and([Not(a#int_to_atom_05),or([a#int_to_atom_04,and([Not(a#int_to_atom_04),or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,or([a#int_to_atom_05,and([Not(a#int_to_atom_05),or([a#int_to_atom_04,and([Not(a#int_to_atom_04),or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20) 
+
+--
+
+or([a#int_to_atom_07,a#int_to_atom_06,or([a#int_to_atom_05,and([Not(a#int_to_atom_05),or([a#int_to_atom_04,and([Not(a#int_to_atom_04),or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,and([Not(a#int_to_atom_05),or([a#int_to_atom_04,and([Not(a#int_to_atom_04),or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,and([Not(a#int_to_atom_05),or([a#int_to_atom_04,and([Not(a#int_to_atom_04),or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)]) 
+and([or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,or([a#int_to_atom_04,and([Not(a#int_to_atom_04),or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+and([or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,or([a#int_to_atom_04,and([Not(a#int_to_atom_04),or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,or([a#int_to_atom_04,and([Not(a#int_to_atom_04),or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20) 
+
+--
+
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,or([a#int_to_atom_04,and([Not(a#int_to_atom_04),or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,and([Not(a#int_to_atom_04),or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,and([Not(a#int_to_atom_04),or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)]) 
+and([or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,Not(a#int_to_atom_04);int(1..)]),or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),
+and([or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,Not(a#int_to_atom_04);int(1..)]),or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,Not(a#int_to_atom_04);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20) 
+
+--
+
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,or([a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,and([Not(a#int_to_atom_03),or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)]) 
+and([or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,Not(a#int_to_atom_03);int(1..)]),or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,Not(a#int_to_atom_04);int(1..)]),
+and([or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,Not(a#int_to_atom_03);int(1..)]),or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,Not(a#int_to_atom_04);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,Not(a#int_to_atom_03);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20) 
+
+--
+
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,or([a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,and([Not(a#int_to_atom_02),or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)]) 
+and([or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,Not(a#int_to_atom_02);int(1..)]),or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,Not(a#int_to_atom_04);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,Not(a#int_to_atom_03);int(1..)]),
+and([or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,Not(a#int_to_atom_02);int(1..)]),or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,Not(a#int_to_atom_04);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,Not(a#int_to_atom_03);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,Not(a#int_to_atom_02);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20) 
+
+--
+
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,or([a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]);int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]) 
+
+--
+
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,and([Not(a#int_to_atom_01),a#int_to_atom_00;int(1..)]);int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)]) 
+and([or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,Not(a#int_to_atom_01);int(1..)]),or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,a#int_to_atom_00;int(1..)]);int(1..)]) 
+
+--
+
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,Not(a#int_to_atom_04);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,Not(a#int_to_atom_03);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,Not(a#int_to_atom_02);int(1..)]),
+and([or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,Not(a#int_to_atom_01);int(1..)]),or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,a#int_to_atom_00;int(1..)]);int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,Not(a#int_to_atom_04);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,Not(a#int_to_atom_03);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,Not(a#int_to_atom_02);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,a#int_to_atom_00;int(1..)]),
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= 20) 
+
+--
+
+20, 
+   ~~> literal_cnf_int ([("CNF", 4000)]) 
+Int([false,false,true,false,true,false,false,false;int(1..)]) 
+
+--
+
+(Int([a#int_to_atom_00,a#int_to_atom_01,a#int_to_atom_02,a#int_to_atom_03,a#int_to_atom_04,a#int_to_atom_05,a#int_to_atom_06,a#int_to_atom_07;int(1..)]) <= Int([false,false,true,false,true,false,false,false;int(1..)])), 
+   ~~> cnf_int_ineq ([("CNF", 4100)]) 
+or([and([false,Not(a#int_to_atom_07);int(1..)]),and([(false) <-> (a#int_to_atom_07),or([and([false,Not(a#int_to_atom_06);int(1..)]),and([(false) <-> (a#int_to_atom_06),or([and([false,Not(a#int_to_atom_05);int(1..)]),and([(false) <-> (a#int_to_atom_05),or([and([true,Not(a#int_to_atom_04);int(1..)]),and([(true) <-> (a#int_to_atom_04),or([and([false,Not(a#int_to_atom_03);int(1..)]),and([(false) <-> (a#int_to_atom_03),or([and([true,Not(a#int_to_atom_02);int(1..)]),and([(true) <-> (a#int_to_atom_02),or([and([false,Not(a#int_to_atom_01);int(1..)]),and([(false) <-> (a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+and([false,Not(a#int_to_atom_07);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+false 
+
+--
+
+or([false,and([(false) <-> (a#int_to_atom_07),or([and([false,Not(a#int_to_atom_06);int(1..)]),and([(false) <-> (a#int_to_atom_06),or([and([false,Not(a#int_to_atom_05);int(1..)]),and([(false) <-> (a#int_to_atom_05),or([and([true,Not(a#int_to_atom_04);int(1..)]),and([(true) <-> (a#int_to_atom_04),or([and([false,Not(a#int_to_atom_03);int(1..)]),and([(false) <-> (a#int_to_atom_03),or([and([true,Not(a#int_to_atom_02);int(1..)]),and([(true) <-> (a#int_to_atom_02),or([and([false,Not(a#int_to_atom_01);int(1..)]),and([(false) <-> (a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+or([and([(false) <-> (a#int_to_atom_07),or([and([false,Not(a#int_to_atom_06);int(1..)]),and([(false) <-> (a#int_to_atom_06),or([and([false,Not(a#int_to_atom_05);int(1..)]),and([(false) <-> (a#int_to_atom_05),or([and([true,Not(a#int_to_atom_04);int(1..)]),and([(true) <-> (a#int_to_atom_04),or([and([false,Not(a#int_to_atom_03);int(1..)]),and([(false) <-> (a#int_to_atom_03),or([and([true,Not(a#int_to_atom_02);int(1..)]),and([(true) <-> (a#int_to_atom_02),or([and([false,Not(a#int_to_atom_01);int(1..)]),and([(false) <-> (a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+(false) <-> (a#int_to_atom_07), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_07) 
+
+--
+
+and([false,Not(a#int_to_atom_06);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+false 
+
+--
+
+or([false,and([(false) <-> (a#int_to_atom_06),or([and([false,Not(a#int_to_atom_05);int(1..)]),and([(false) <-> (a#int_to_atom_05),or([and([true,Not(a#int_to_atom_04);int(1..)]),and([(true) <-> (a#int_to_atom_04),or([and([false,Not(a#int_to_atom_03);int(1..)]),and([(false) <-> (a#int_to_atom_03),or([and([true,Not(a#int_to_atom_02);int(1..)]),and([(true) <-> (a#int_to_atom_02),or([and([false,Not(a#int_to_atom_01);int(1..)]),and([(false) <-> (a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+or([and([(false) <-> (a#int_to_atom_06),or([and([false,Not(a#int_to_atom_05);int(1..)]),and([(false) <-> (a#int_to_atom_05),or([and([true,Not(a#int_to_atom_04);int(1..)]),and([(true) <-> (a#int_to_atom_04),or([and([false,Not(a#int_to_atom_03);int(1..)]),and([(false) <-> (a#int_to_atom_03),or([and([true,Not(a#int_to_atom_02);int(1..)]),and([(true) <-> (a#int_to_atom_02),or([and([false,Not(a#int_to_atom_01);int(1..)]),and([(false) <-> (a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+(false) <-> (a#int_to_atom_06), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_06) 
+
+--
+
+and([false,Not(a#int_to_atom_05);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+false 
+
+--
+
+or([false,and([(false) <-> (a#int_to_atom_05),or([and([true,Not(a#int_to_atom_04);int(1..)]),and([(true) <-> (a#int_to_atom_04),or([and([false,Not(a#int_to_atom_03);int(1..)]),and([(false) <-> (a#int_to_atom_03),or([and([true,Not(a#int_to_atom_02);int(1..)]),and([(true) <-> (a#int_to_atom_02),or([and([false,Not(a#int_to_atom_01);int(1..)]),and([(false) <-> (a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+or([and([(false) <-> (a#int_to_atom_05),or([and([true,Not(a#int_to_atom_04);int(1..)]),and([(true) <-> (a#int_to_atom_04),or([and([false,Not(a#int_to_atom_03);int(1..)]),and([(false) <-> (a#int_to_atom_03),or([and([true,Not(a#int_to_atom_02);int(1..)]),and([(true) <-> (a#int_to_atom_02),or([and([false,Not(a#int_to_atom_01);int(1..)]),and([(false) <-> (a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+(false) <-> (a#int_to_atom_05), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_05) 
+
+--
+
+and([true,Not(a#int_to_atom_04);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([Not(a#int_to_atom_04);int(1..)]) 
+
+--
+
+(true) <-> (a#int_to_atom_04), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+a#int_to_atom_04 
+
+--
+
+and([false,Not(a#int_to_atom_03);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+false 
+
+--
+
+or([false,and([(false) <-> (a#int_to_atom_03),or([and([true,Not(a#int_to_atom_02);int(1..)]),and([(true) <-> (a#int_to_atom_02),or([and([false,Not(a#int_to_atom_01);int(1..)]),and([(false) <-> (a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+or([and([(false) <-> (a#int_to_atom_03),or([and([true,Not(a#int_to_atom_02);int(1..)]),and([(true) <-> (a#int_to_atom_02),or([and([false,Not(a#int_to_atom_01);int(1..)]),and([(false) <-> (a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+(false) <-> (a#int_to_atom_03), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_03) 
+
+--
+
+and([true,Not(a#int_to_atom_02);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+and([Not(a#int_to_atom_02);int(1..)]) 
+
+--
+
+(true) <-> (a#int_to_atom_02), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+a#int_to_atom_02 
+
+--
+
+and([false,Not(a#int_to_atom_01);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+false 
+
+--
+
+or([false,and([(false) <-> (a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+or([and([(false) <-> (a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]) 
+
+--
+
+(false) <-> (a#int_to_atom_01), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_01) 
+
+--
+
+or([and([Not(a#int_to_atom_07),or([and([Not(a#int_to_atom_06),or([and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04);int(1..)]),and([a#int_to_atom_04,or([and([Not(a#int_to_atom_03),or([and([Not(a#int_to_atom_02);int(1..)]),and([a#int_to_atom_02,or([and([Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)]) 
+and([Not(a#int_to_atom_07),or([and([Not(a#int_to_atom_06),or([and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04);int(1..)]),and([a#int_to_atom_04,or([and([Not(a#int_to_atom_03),or([and([Not(a#int_to_atom_02);int(1..)]),and([a#int_to_atom_02,or([and([Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,Not(a#int_to_atom_04);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,Not(a#int_to_atom_03);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,Not(a#int_to_atom_02);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,a#int_to_atom_00;int(1..)]),
+and([Not(a#int_to_atom_07),or([and([Not(a#int_to_atom_06),or([and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04);int(1..)]),and([a#int_to_atom_04,or([and([Not(a#int_to_atom_03),or([and([Not(a#int_to_atom_02);int(1..)]),and([a#int_to_atom_02,or([and([Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,Not(a#int_to_atom_04);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,Not(a#int_to_atom_03);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,Not(a#int_to_atom_02);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,a#int_to_atom_00;int(1..)]),
+Not(a#int_to_atom_07),
+or([and([Not(a#int_to_atom_06),or([and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04);int(1..)]),and([a#int_to_atom_04,or([and([Not(a#int_to_atom_03),or([and([Not(a#int_to_atom_02);int(1..)]),and([a#int_to_atom_02,or([and([Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+or([and([Not(a#int_to_atom_06),or([and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04);int(1..)]),and([a#int_to_atom_04,or([and([Not(a#int_to_atom_03),or([and([Not(a#int_to_atom_02);int(1..)]),and([a#int_to_atom_02,or([and([Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)]) 
+and([Not(a#int_to_atom_06),or([and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04);int(1..)]),and([a#int_to_atom_04,or([and([Not(a#int_to_atom_03),or([and([Not(a#int_to_atom_02);int(1..)]),and([a#int_to_atom_02,or([and([Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,Not(a#int_to_atom_04);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,Not(a#int_to_atom_03);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,Not(a#int_to_atom_02);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,a#int_to_atom_00;int(1..)]),
+Not(a#int_to_atom_07),
+and([Not(a#int_to_atom_06),or([and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04);int(1..)]),and([a#int_to_atom_04,or([and([Not(a#int_to_atom_03),or([and([Not(a#int_to_atom_02);int(1..)]),and([a#int_to_atom_02,or([and([Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,Not(a#int_to_atom_04);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,Not(a#int_to_atom_03);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,Not(a#int_to_atom_02);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,a#int_to_atom_00;int(1..)]),
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+or([and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04);int(1..)]),and([a#int_to_atom_04,or([and([Not(a#int_to_atom_03),or([and([Not(a#int_to_atom_02);int(1..)]),and([a#int_to_atom_02,or([and([Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+or([and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04);int(1..)]),and([a#int_to_atom_04,or([and([Not(a#int_to_atom_03),or([and([Not(a#int_to_atom_02);int(1..)]),and([a#int_to_atom_02,or([and([Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)]) 
+and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04);int(1..)]),and([a#int_to_atom_04,or([and([Not(a#int_to_atom_03),or([and([Not(a#int_to_atom_02);int(1..)]),and([a#int_to_atom_02,or([and([Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,Not(a#int_to_atom_04);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,Not(a#int_to_atom_03);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,Not(a#int_to_atom_02);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,a#int_to_atom_00;int(1..)]),
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+and([Not(a#int_to_atom_05),or([and([Not(a#int_to_atom_04);int(1..)]),and([a#int_to_atom_04,or([and([Not(a#int_to_atom_03),or([and([Not(a#int_to_atom_02);int(1..)]),and([a#int_to_atom_02,or([and([Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,Not(a#int_to_atom_04);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,Not(a#int_to_atom_03);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,Not(a#int_to_atom_02);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,a#int_to_atom_00;int(1..)]),
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+or([and([Not(a#int_to_atom_04);int(1..)]),and([a#int_to_atom_04,or([and([Not(a#int_to_atom_03),or([and([Not(a#int_to_atom_02);int(1..)]),and([a#int_to_atom_02,or([and([Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+and([Not(a#int_to_atom_04);int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+Not(a#int_to_atom_04) 
+
+--
+
+or([and([Not(a#int_to_atom_03),or([and([Not(a#int_to_atom_02);int(1..)]),and([a#int_to_atom_02,or([and([Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)]) 
+and([Not(a#int_to_atom_03),or([and([Not(a#int_to_atom_02);int(1..)]),and([a#int_to_atom_02,or([and([Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+and([a#int_to_atom_04,and([Not(a#int_to_atom_03),or([and([Not(a#int_to_atom_02);int(1..)]),and([a#int_to_atom_02,or([and([Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+and([a#int_to_atom_04,Not(a#int_to_atom_03),or([and([Not(a#int_to_atom_02);int(1..)]),and([a#int_to_atom_02,or([and([Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+and([Not(a#int_to_atom_02);int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+Not(a#int_to_atom_02) 
+
+--
+
+or([and([Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)]) 
+and([Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]) 
+
+--
+
+and([a#int_to_atom_02,and([Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+and([a#int_to_atom_02,Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]) 
+
+--
+
+or([Not(a#int_to_atom_04),and([a#int_to_atom_04,Not(a#int_to_atom_03),or([Not(a#int_to_atom_02),and([a#int_to_atom_02,Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)]) 
+and([or([Not(a#int_to_atom_04),a#int_to_atom_04;int(1..)]),or([Not(a#int_to_atom_04),Not(a#int_to_atom_03);int(1..)]),or([Not(a#int_to_atom_04),or([Not(a#int_to_atom_02),and([a#int_to_atom_02,Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,Not(a#int_to_atom_04);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,Not(a#int_to_atom_03);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,Not(a#int_to_atom_02);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,a#int_to_atom_00;int(1..)]),
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+and([or([Not(a#int_to_atom_04),a#int_to_atom_04;int(1..)]),or([Not(a#int_to_atom_04),Not(a#int_to_atom_03);int(1..)]),or([Not(a#int_to_atom_04),or([Not(a#int_to_atom_02),and([a#int_to_atom_02,Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,Not(a#int_to_atom_04);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,Not(a#int_to_atom_03);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,Not(a#int_to_atom_02);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,a#int_to_atom_00;int(1..)]),
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+or([Not(a#int_to_atom_04),a#int_to_atom_04;int(1..)]),
+or([Not(a#int_to_atom_04),Not(a#int_to_atom_03);int(1..)]),
+or([Not(a#int_to_atom_04),or([Not(a#int_to_atom_02),and([a#int_to_atom_02,Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]) 
+
+--
+
+or([Not(a#int_to_atom_04),or([Not(a#int_to_atom_02),and([a#int_to_atom_02,Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]);int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+or([Not(a#int_to_atom_04),Not(a#int_to_atom_02),and([a#int_to_atom_02,Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]) 
+
+--
+
+or([Not(a#int_to_atom_04),Not(a#int_to_atom_02),and([a#int_to_atom_02,Not(a#int_to_atom_01),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]), 
+   ~~> distribute_or_over_and ([("Base", 8400)]) 
+and([or([Not(a#int_to_atom_04),Not(a#int_to_atom_02),a#int_to_atom_02;int(1..)]),or([Not(a#int_to_atom_04),Not(a#int_to_atom_02),Not(a#int_to_atom_01);int(1..)]),or([Not(a#int_to_atom_04),Not(a#int_to_atom_02),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]) 
+
+--
+
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,Not(a#int_to_atom_04);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,Not(a#int_to_atom_03);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,Not(a#int_to_atom_02);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,a#int_to_atom_00;int(1..)]),
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+or([Not(a#int_to_atom_04),a#int_to_atom_04;int(1..)]),
+or([Not(a#int_to_atom_04),Not(a#int_to_atom_03);int(1..)]),
+and([or([Not(a#int_to_atom_04),Not(a#int_to_atom_02),a#int_to_atom_02;int(1..)]),or([Not(a#int_to_atom_04),Not(a#int_to_atom_02),Not(a#int_to_atom_01);int(1..)]),or([Not(a#int_to_atom_04),Not(a#int_to_atom_02),(a#int_to_atom_00) -> (false);int(1..)]);int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,Not(a#int_to_atom_04);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,Not(a#int_to_atom_03);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,Not(a#int_to_atom_02);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,a#int_to_atom_00;int(1..)]),
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+or([Not(a#int_to_atom_04),a#int_to_atom_04;int(1..)]),
+or([Not(a#int_to_atom_04),Not(a#int_to_atom_03);int(1..)]),
+or([Not(a#int_to_atom_04),Not(a#int_to_atom_02),a#int_to_atom_02;int(1..)]),
+or([Not(a#int_to_atom_04),Not(a#int_to_atom_02),Not(a#int_to_atom_01);int(1..)]),
+or([Not(a#int_to_atom_04),Not(a#int_to_atom_02),(a#int_to_atom_00) -> (false);int(1..)]) 
+
+--
+
+(a#int_to_atom_00) -> (false), 
+   ~~> remove_implication ([("CNF", 4100)]) 
+or([Not(a#int_to_atom_00),false;int(1..)]) 
+
+--
+
+or([Not(a#int_to_atom_00),false;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+or([Not(a#int_to_atom_00);int(1..)]) 
+
+--
+
+or([Not(a#int_to_atom_00);int(1..)]), 
+   ~~> remove_unit_vector_or ([("Base", 8800)]) 
+Not(a#int_to_atom_00) 
+
+--
+
+Final model:
+
+find a: int(1..20)
+find a#int_to_atom_00: bool
+find a#int_to_atom_01: bool
+find a#int_to_atom_02: bool
+find a#int_to_atom_03: bool
+find a#int_to_atom_04: bool
+find a#int_to_atom_05: bool
+find a#int_to_atom_06: bool
+find a#int_to_atom_07: bool
+
+such that
+
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+Not(a#int_to_atom_04),
+or([Not(a#int_to_atom_03),a#int_to_atom_03;int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_02);int(1..)]),
+or([Not(a#int_to_atom_03),Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,Not(a#int_to_atom_07);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,Not(a#int_to_atom_06);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,Not(a#int_to_atom_05);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,Not(a#int_to_atom_04);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,Not(a#int_to_atom_03);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,Not(a#int_to_atom_02);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,Not(a#int_to_atom_01);int(1..)]),
+or([a#int_to_atom_07,a#int_to_atom_06,a#int_to_atom_05,a#int_to_atom_04,a#int_to_atom_03,a#int_to_atom_02,a#int_to_atom_01,a#int_to_atom_00;int(1..)]),
+Not(a#int_to_atom_07),
+Not(a#int_to_atom_06),
+Not(a#int_to_atom_05),
+or([Not(a#int_to_atom_04),a#int_to_atom_04;int(1..)]),
+or([Not(a#int_to_atom_04),Not(a#int_to_atom_03);int(1..)]),
+or([Not(a#int_to_atom_04),Not(a#int_to_atom_02),a#int_to_atom_02;int(1..)]),
+or([Not(a#int_to_atom_04),Not(a#int_to_atom_02),Not(a#int_to_atom_01);int(1..)]),
+or([Not(a#int_to_atom_04),Not(a#int_to_atom_02),Not(a#int_to_atom_00);int(1..)])
+

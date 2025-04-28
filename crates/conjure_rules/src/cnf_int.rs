@@ -1,14 +1,16 @@
 use conjure_core::ast::Expression as Expr;
 use conjure_core::ast::SymbolTable;
 use conjure_core::rule_engine::{
-    register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
+    register_rule, ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult,
+    Reduction,
 };
 
+use conjure_core::ast::AbstractLiteral::Matrix;
 use conjure_core::ast::{Atom, Domain, Literal, Range};
 use conjure_core::metadata::Metadata;
 use conjure_core::{into_matrix_expr, matrix_expr};
 
-use std::mem;
+use conjure_essence_macros::{essence_expr, essence_vec};
 
 #[register_rule(("CNF", 8000))]
 fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
@@ -91,51 +93,10 @@ fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
 
     for range in ranges {
         match range {
-            Range::Single(x) => output.push(Expr::Eq(
-                Metadata::new(),
-                value.clone(),
-                Box::new(Expr::Atomic(
-                    Metadata::new(),
-                    Atom::Literal(Literal::Int(*x)),
-                )),
-            )),
-            Range::Bounded(x, y) => output.push(Expr::And(
-                Metadata::new(),
-                Box::new(matrix_expr![
-                    Expr::Geq(
-                        Metadata::new(),
-                        value.clone(),
-                        Box::new(Expr::Atomic(
-                            Metadata::new(),
-                            Atom::Literal(Literal::Int(*x))
-                        )),
-                    ),
-                    Expr::Leq(
-                        Metadata::new(),
-                        value.clone(),
-                        Box::new(Expr::Atomic(
-                            Metadata::new(),
-                            Atom::Literal(Literal::Int(*y))
-                        )),
-                    )
-                ]),
-            )),
-            Range::UnboundedR(x) => output.push(Expr::Geq(
-                Metadata::new(),
-                value.clone(),
-                Box::new(Expr::Atomic(
-                    Metadata::new(),
-                    Atom::Literal(Literal::Int(*x)),
-                )),
-            )),
-            Range::UnboundedL(x) => output.push(Expr::Leq(
-                Metadata::new(),
-                value.clone(),
-                Box::new(Expr::Atomic(
-                    Metadata::new(),
-                    Atom::Literal(Literal::Int(*x)),
-                )),
-            )),
+            Range::Single(x) => output.push(essence_expr!(&value = &x)),
+            Range::Bounded(x, y) => output.push(essence_expr!("&value >= &x /\\ &value <= &y")),
+            Range::UnboundedR(x) => output.push(essence_expr!(&value >= &x)),
+            Range::UnboundedL(x) => output.push(essence_expr!(&value <= &x)),
         }
     }
 
@@ -158,25 +119,36 @@ fn cnf_int_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         _ => return Err(RuleNotApplicable),
     };
 
-    let Expr::CnfInt(_, lhs) = lhs.as_ref() else {
+    let binding = validate_cnf_int_operands(vec![unbox(lhs), unbox(rhs)])?;
+    let [lhs_bits, rhs_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::CnfInt(_, rhs) = rhs.as_ref() else {
-        return Err(RuleNotApplicable);
-    };
-
-    let Some(lhs_bits) = lhs.as_ref().clone().unwrap_list() else {
-        return Err(RuleNotApplicable);
-    };
-
-    let Some(rhs_bits) = rhs.as_ref().clone().unwrap_list() else {
-        return Err(RuleNotApplicable);
-    };
-
-    let output = inequality_boolean(lhs_bits, rhs_bits, inclusive);
+    let output = inequality_boolean(lhs_bits.clone(), rhs_bits.clone(), inclusive);
 
     Ok(Reduction::pure(output))
+}
+
+fn unbox(expr: &Box<Expr>) -> Expr {
+    (**expr).clone()
+}
+
+fn validate_cnf_int_operands(exprs: Vec<Expr>) -> Result<Vec<Vec<Expr>>, ApplicationError> {
+    let out: Result<Vec<Vec<_>>, _> = exprs
+        .clone()
+        .into_iter()
+        .map(|expr| {
+            let Expr::CnfInt(_, inner) = expr else {
+                return Err(RuleNotApplicable);
+            };
+            let Some(bits) = inner.as_ref().clone().unwrap_list() else {
+                return Err(RuleNotApplicable);
+            };
+            Ok(bits)
+        })
+        .collect();
+
+    out
 }
 
 /// Converts a = expression between two CnfInts to a conjunction of boolean expressions
@@ -187,29 +159,18 @@ fn cnf_int_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ```
 #[register_rule(("CNF", 4100))]
 fn cnf_int_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let Expr::Eq(_, x, y) = expr else {
+    let Expr::Eq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::CnfInt(_, x) = x.as_ref() else {
+    let binding = validate_cnf_int_operands(vec![unbox(lhs), unbox(rhs)])?;
+    let [lhs_bits, rhs_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::CnfInt(_, y) = y.as_ref() else {
-        return Err(RuleNotApplicable);
-    };
-
-    let Some(x_bits) = x.as_ref().clone().unwrap_list() else {
-        return Err(RuleNotApplicable);
-    };
-
-    let Some(y_bits) = y.as_ref().clone().unwrap_list() else {
-        return Err(RuleNotApplicable);
-    };
-
-    let output = x_bits
+    let output = lhs_bits
         .iter()
-        .zip(y_bits.iter())
+        .zip(rhs_bits.iter())
         .map(|(x_i, y_i)| {
             Expr::Iff(
                 Metadata::new(),
@@ -233,29 +194,18 @@ fn cnf_int_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ```
 #[register_rule(("CNF", 4100))]
 fn cnf_int_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let Expr::Neq(_, x, y) = expr else {
+    let Expr::Neq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::CnfInt(_, x) = x.as_ref() else {
+    let binding = validate_cnf_int_operands(vec![unbox(lhs), unbox(rhs)])?;
+    let [lhs_bits, rhs_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::CnfInt(_, y) = y.as_ref() else {
-        return Err(RuleNotApplicable);
-    };
-
-    let Some(x_bits) = x.as_ref().clone().unwrap_list() else {
-        return Err(RuleNotApplicable);
-    };
-
-    let Some(y_bits) = y.as_ref().clone().unwrap_list() else {
-        return Err(RuleNotApplicable);
-    };
-
-    let output = x_bits
+    let output = lhs_bits
         .iter()
-        .zip(y_bits.iter())
+        .zip(rhs_bits.iter())
         .map(|(x_i, y_i)| {
             Expr::Not(
                 Metadata::new(),
@@ -280,12 +230,11 @@ fn cnf_int_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 fn inequality_boolean(a: Vec<Expr>, b: Vec<Expr>, inclusive: bool) -> Expr {
     let mut output;
 
+    let mut a_n = &a[0];
+    let mut b_n = &b[0];
+
     if inclusive {
-        output = Expr::Imply(
-            Metadata::new(),
-            Box::new(b[0].clone()),
-            Box::new(a[0].clone()),
-        );
+        output = essence_expr!("&b_n -> &a_n");
     } else {
         output = Expr::And(
             Metadata::new(),
@@ -299,7 +248,6 @@ fn inequality_boolean(a: Vec<Expr>, b: Vec<Expr>, inclusive: bool) -> Expr {
     // at the moment this causes a stack overflow
     // CHANGE TO 32
     for n in 1..8 {
-        println!("{}\n", output);
         output = Expr::Or(
             Metadata::new(),
             Box::new(matrix_expr![
@@ -327,7 +275,7 @@ fn inequality_boolean(a: Vec<Expr>, b: Vec<Expr>, inclusive: bool) -> Expr {
     output
 }
 
-/* /// Converts sum of CnfInts to a single CnfInt
+/// Converts sum of CnfInts to a single CnfInt
 ///
 /// ```text
 /// Sum(CnfInt(a), CnfInt(b), ...) ~> CnfInt(c)
@@ -335,9 +283,49 @@ fn inequality_boolean(a: Vec<Expr>, b: Vec<Expr>, inclusive: bool) -> Expr {
 /// ```
 #[register_rule(("CNF", 4100))]
 fn cnf_int_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    // create multiple adders
+    let Expr::Sum(_, exprs) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::AbstractLiteral(_, Matrix(exprs_list, _)) = exprs.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let exprs_bits = validate_cnf_int_operands(exprs_list.clone())?.into_iter();
+
+    let output = exprs_bits.reduce(|a, b| cnf_int_adder(a, b)).unwrap(); //TODO: Convert to log sum
+
+    Ok(Reduction::pure(Expr::CnfInt(
+        Metadata::new(),
+        Box::new(into_matrix_expr!(output)),
+    )))
 }
 
+fn cnf_int_adder(x: Vec<Expr>, y: Vec<Expr>) -> Vec<Expr> {
+    let mut x_n = x[0].clone();
+    let mut y_n = y[0].clone();
+
+    let mut output = vec![essence_expr!(r"(-&x_n /\ &y_n) \/ (-&y_n /\ &x_n)")];
+
+    let mut carry = essence_expr!(r"&x_n /\ &y_n");
+
+    for i in 1..8 {
+        x_n = x[i].clone();
+        y_n = y[i].clone();
+
+        output.push(essence_expr!(
+            r"(&x_n /\ &y_n) \/ (&carry /\ ((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n)))"
+        ));
+
+        carry = essence_expr!(
+            r"((-&carry /\ ((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n))) \/ (-((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n)) /\ &carry))"
+        )
+    }
+
+    output
+}
+
+/*
 /// Converts product of CnfInts to a single CnfInt
 ///
 /// ```text
@@ -433,4 +421,5 @@ fn cnf_int_safemod(expr: &Expr, _: &SymbolTable) -> ApplicationResult {}
 #[register_rule(("CNF", 4100))]
 fn cnf_int_safepow(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // use 'Exponentiation by squaring'
-} */
+}
+*/

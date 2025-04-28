@@ -181,7 +181,6 @@ pub fn get_sat_solutions(
 
     for sol in sols.iter_mut() {
         for (name, representation) in representations.iter() {
-            println!("{:?} {}", sol, name);
             let value = representation.value_up(sol).unwrap();
             sol.insert(name.clone(), value);
         }

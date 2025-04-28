@@ -11,7 +11,7 @@ use conjure_core::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
 };
 
-use conjure_core::ast::SymbolTable;
+use conjure_core::ast::{Domain, SymbolTable};
 use conjure_core::matrix_expr;
 
 register_rule_set!("CNF", ("Base"), (SolverFamily::SAT));
@@ -46,6 +46,48 @@ fn remove_implication(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 #[register_rule(("CNF", 4100))]
 fn remove_equivalence(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Iff(_, x, y) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    Ok(Reduction::pure(Expr::And(
+        Metadata::new(),
+        Box::new(matrix_expr![
+            Expr::Or(
+                Metadata::new(),
+                Box::new(matrix_expr![
+                    Expr::Not(Metadata::new(), x.clone()),
+                    *y.clone()
+                ]),
+            ),
+            Expr::Or(
+                Metadata::new(),
+                Box::new(matrix_expr![
+                    *x.clone(),
+                    Expr::Not(Metadata::new(), y.clone())
+                ]),
+            )
+        ]),
+    )))
+}
+
+/// Converts an equals to cnf
+///
+/// ```text
+/// x = y ~~> (x -> y) /\ (y -> x) ~~> (!x \/ y) /\ (!y \/ x)
+///
+/// This converts boolean expressions using equivalence to CNF.
+/// ```
+#[register_rule(("CNF", 4100))]
+fn remove_equals(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Eq(_, x, y) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Some(Domain::BoolDomain) = x.domain_of(symbols) else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Some(Domain::BoolDomain) = y.domain_of(symbols) else {
         return Err(RuleNotApplicable);
     };
 

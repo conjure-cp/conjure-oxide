@@ -1087,7 +1087,7 @@ impl Display for Expression {
                 write!(f, "__minion_element_one([{atoms}],{atom},{atom1})")
             }
             Expression::CnfInt(_, e) => {
-                write!(f, "Int({e})")
+                write!(f, "CnfInt({e})")
             }
         }
     }
