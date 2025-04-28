@@ -19,6 +19,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // This is why we always check whether we found a constant or not.
     match expr.clone() {
         Union(_, _, _) => Err(RuleNotApplicable),
+        In(_, _, _) => Err(RuleNotApplicable),
         Intersect(_, _, _) => Err(RuleNotApplicable),
         Supset(_, _, _) => Err(RuleNotApplicable),
         SupsetEq(_, _, _) => Err(RuleNotApplicable),

@@ -32,6 +32,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
     match expr {
         // TODO: need to specify for subsetEq etc + intersection + union
         Expr::Union(_, _, _) => None,
+        Expr::In(_,_,_) => None,
         Expr::Intersect(_, _, _) => None,
         Expr::Supset(_, _, _) => None,
         Expr::SupsetEq(_, _, _) => None,
