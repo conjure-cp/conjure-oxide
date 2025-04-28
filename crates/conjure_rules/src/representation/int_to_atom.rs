@@ -17,7 +17,7 @@ pub struct IntToAtom {
 impl IntToAtom {
     /// Returns the names of the representation variable
     fn names(&self) -> impl Iterator<Item = Name> + '_ {
-        (0..32).map(move |index| self.index_to_name(index))
+        (0..8).map(move |index| self.index_to_name(index)) // CHANGE TO 32
     }
 
     /// Gets the representation variable name for a specific index.
@@ -90,10 +90,8 @@ impl Representation for IntToAtom {
                 .get(&name)
                 .ok_or(ApplicationError::RuleNotApplicable)?;
 
-            if let Literal::Bool(value) = value {
-                if *value {
-                    out += power;
-                }
+            if let Literal::Int(value) = value {
+                out += *value * power;
                 power <<= 1;
             } else {
                 return Err(ApplicationError::RuleNotApplicable);

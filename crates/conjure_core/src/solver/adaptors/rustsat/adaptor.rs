@@ -15,7 +15,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::result::Result::Ok;
 use tracing_subscriber::filter::DynFilterFn;
 
-use crate::ast::Domain::BoolDomain;
+use crate::ast::Domain::{BoolDomain, IntDomain};
 
 use rustsat_minisat::core::Minisat;
 
@@ -39,9 +39,9 @@ use thiserror::Error;
 pub struct SAT {
     __non_constructable: private::Internal,
     model_inst: Option<SatInstance>,
-    var_map: Option<HashMap<String, Lit>>,
+    var_map: Option<HashMap<Name, Lit>>,
     solver_inst: Minisat,
-    decision_refs: Option<Vec<String>>,
+    decision_refs: Option<Vec<Name>>,
 }
 
 impl private::Sealed for SAT {}
@@ -59,23 +59,23 @@ impl Default for SAT {
 }
 
 fn get_ref_sols(
-    find_refs: Vec<String>,
+    find_refs: Vec<Name>,
     sol: Assignment,
-    var_map: HashMap<String, Lit>,
+    var_map: HashMap<Name, Lit>,
 ) -> HashMap<Name, Literal> {
     let mut solution: HashMap<Name, Literal> = HashMap::new();
 
-    for reference in find_refs {
+    for name in find_refs {
         // lit is 'Nothing' for unconstrained - if this is actually happenning, panicking is fine
         // we are not supposed to do anything to resolve that here.
-        let lit: Lit = match var_map.get(&reference) {
+        let lit: Lit = match var_map.get(&name) {
             Some(a) => *a,
             None => panic!(
                 "There should never be a non-just literal occurring here. Something is broken upstream."
             ),
         };
         solution.insert(
-            Name::UserName(reference),
+            name,
             match sol[lit.var()] {
                 TernaryVal::True => Literal::Int(1),
                 TernaryVal::False => Literal::Int(0),
@@ -172,19 +172,26 @@ impl SolverAdaptor for SAT {
 
     fn load_model(&mut self, model: ConjureModel, _: private::Internal) -> Result<(), SolverError> {
         let sym_tab = model.as_submodel().symbols().deref().clone();
-        let decisions = sym_tab.into_iter();
+        let decisions = sym_tab.clone().into_iter();
 
-        let mut finds: Vec<String> = Vec::new();
+        let mut finds: Vec<Name> = Vec::new();
 
         for find_ref in decisions {
-            if (*find_ref.1.domain().unwrap() != BoolDomain) {
+            let domain = find_ref.1.domain().unwrap();
+
+            if (*domain != BoolDomain
+                && !(sym_tab
+                    .get_representation(&find_ref.0, &["int_to_atom"])
+                    .is_some()))
+            {
                 Err(SolverError::ModelInvalid(
                     "Only Boolean Decision Variables supported".to_string(),
                 ))?;
             }
-
-            let name = find_ref.0;
-            finds.push(name.to_string());
+            if (*domain == BoolDomain) {
+                let name = find_ref.0;
+                finds.push(name);
+            }
         }
 
         self.decision_refs = Some(finds);
@@ -194,7 +201,7 @@ impl SolverAdaptor for SAT {
 
         let vec_cnf = vec_constr.clone();
 
-        let mut var_map: HashMap<String, Lit> = HashMap::new();
+        let mut var_map: HashMap<Name, Lit> = HashMap::new();
 
         let inst: SatInstance = handle_cnf(&vec_cnf, &mut var_map);
 

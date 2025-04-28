@@ -11,11 +11,14 @@ use rustsat_minisat::core::Minisat;
 
 use anyhow::{anyhow, Result};
 
-use crate::{ast::Expression, solver::Error};
+use crate::{
+    ast::{Expression, Name},
+    solver::Error,
+};
 
 pub fn handle_lit(
     l1: &Expression,
-    vars_added: &mut HashMap<String, Lit>,
+    vars_added: &mut HashMap<Name, Lit>,
     inst: &mut SatInstance,
 ) -> Lit {
     match l1 {
@@ -31,7 +34,7 @@ pub fn handle_lit(
 
 pub fn handle_not(
     expr: &Expression,
-    vars_added: &mut HashMap<String, Lit>,
+    vars_added: &mut HashMap<Name, Lit>,
     inst: &mut SatInstance,
 ) -> Lit {
     match expr {
@@ -48,7 +51,7 @@ pub fn handle_not(
 pub fn handle_atom(
     a: Expression,
     polarity: bool,
-    vars_added: &mut HashMap<String, Lit>,
+    vars_added: &mut HashMap<Name, Lit>,
     inst: &mut SatInstance,
 ) -> Lit {
     // polarity false for not
@@ -58,56 +61,63 @@ pub fn handle_atom(
                 todo!("Not Sure if we are handling Lits as-is or not..")
             }
             conjure_core::ast::Atom::Reference(name) => match name {
-                conjure_core::ast::Name::UserName(n) => {
+                conjure_core::ast::Name::UserName(_) => {
                     // TODO: Temp Clone
                     // let m = n.clone();
-                    let lit_temp: Lit = fetch_lit(n, vars_added, inst);
+                    let lit_temp: Lit = fetch_lit(name, vars_added, inst);
                     if polarity {
                         lit_temp
                     } else {
                         !lit_temp
                     }
                 }
-                _ => {
-                    todo!("Change Here for other types of vars")
+                conjure_core::ast::Name::RepresentedName(_, _, _) => {
+                    let lit_temp: Lit = fetch_lit(name, vars_added, inst);
+                    if polarity {
+                        lit_temp
+                    } else {
+                        !lit_temp
+                    }
                 }
+                _ => todo!("Not implemented yet"),
             },
         },
         _ => panic!("atomic expected"),
     }
 }
 
-pub fn fetch_lit(
-    symbol: String,
-    vars_added: &mut HashMap<String, Lit>,
-    inst: &mut SatInstance,
-) -> Lit {
-    if !vars_added.contains_key(&symbol) {
-        vars_added.insert(symbol.to_string(), inst.new_lit());
+pub fn fetch_lit(name: Name, vars_added: &mut HashMap<Name, Lit>, inst: &mut SatInstance) -> Lit {
+    if !vars_added.contains_key(&name) {
+        vars_added.insert(name.clone(), inst.new_lit());
     }
-    *(vars_added.get(&symbol).unwrap())
+    *(vars_added.get(&name).unwrap())
 }
 
 pub fn handle_disjn(
     disjn: &Expression,
-    vars_added: &mut HashMap<String, Lit>,
+    vars_added: &mut HashMap<Name, Lit>,
     inst_in_use: &mut SatInstance,
 ) {
-    let cl: &Vec<Expression> = match disjn {
-        Expression::Or(_, vec) => &vec.clone().unwrap_list().unwrap(),
-        _ => panic!("Expected an 'Or' expression!"),
-    };
-
     let mut lits = Clause::new();
-    for literal in cl {
-        let lit: Lit = handle_lit(literal, vars_added, inst_in_use);
-        lits.add(lit);
-    }
+
+    match disjn {
+        Expression::Or(_, vec) => {
+            let cl = &vec.clone().unwrap_list().unwrap();
+            for literal in cl {
+                let lit: Lit = handle_lit(literal, vars_added, inst_in_use);
+                lits.add(lit);
+            }
+        }
+        literal => {
+            let lit: Lit = handle_lit(literal, vars_added, inst_in_use);
+            lits.add(lit);
+        }
+    };
 
     inst_in_use.add_clause(lits);
 }
 
-pub fn handle_cnf(vec_cnf: &Vec<Expression>, vars_added: &mut HashMap<String, Lit>) -> SatInstance {
+pub fn handle_cnf(vec_cnf: &Vec<Expression>, vars_added: &mut HashMap<Name, Lit>) -> SatInstance {
     let mut inst = SatInstance::new();
     for disjn in vec_cnf {
         handle_disjn(disjn, vars_added, &mut inst);
