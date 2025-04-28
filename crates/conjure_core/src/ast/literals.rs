@@ -8,6 +8,7 @@ use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Tree, Uniplate};
 
 use super::{records::RecordValue, Atom, Domain, Expression, Range};
+use super::{ReturnType, Typeable};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash)]
 #[uniplate(walk_into=[AbstractLiteral<Literal>])]
@@ -43,6 +44,31 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
     Tuple(Vec<T>),
 
     Record(Vec<RecordValue<T>>),
+}
+
+impl Typeable for Literal {
+    fn return_type(&self) -> Option<ReturnType> {
+        match self {
+            Literal::Int(_) => Some(ReturnType::Int),
+            Literal::Bool(_) => Some(ReturnType::Bool),
+            Literal::AbstractLiteral(a) => a.return_type(),
+        }
+    }
+}
+
+// TODO: handle tuples and records
+impl<T: AbstractLiteralValue + Typeable> Typeable for AbstractLiteral<T> {
+    fn return_type(&self) -> Option<ReturnType> {
+        match self {
+            AbstractLiteral::Set(vector) => {
+                Some(ReturnType::Set(Box::new(vector.first()?.return_type()?)))
+            }
+            AbstractLiteral::Matrix(vector, _) => {
+                Some(ReturnType::Matrix(Box::new(vector.first()?.return_type()?)))
+            }
+            _ => None,
+        }
+    }
 }
 
 impl<T> AbstractLiteral<T>
