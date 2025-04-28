@@ -1,0 +1,88 @@
+Model before rewriting:
+
+find A: set of (int(1..4))
+find B: set of (int(1..4))
+find C: set of (int(1..4))
+
+such that
+
+A union C union C subseteq B
+
+--
+
+A union C union C subseteq B, 
+   ~~> split_union_subseteq ([("Base", 8601)]) 
+and([A union C subseteq B,C subseteq B;int(1..)]) 
+
+--
+
+and([A union C subseteq B,C subseteq B;int(1..)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+A union C subseteq B,
+C subseteq B 
+
+--
+
+A union C subseteq B, 
+   ~~> split_union_subseteq ([("Base", 8601)]) 
+and([A subseteq B,C subseteq B;int(1..)]) 
+
+--
+
+and([A subseteq B,C subseteq B;int(1..)]),
+C subseteq B, 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+A subseteq B,
+C subseteq B,
+C subseteq B 
+
+--
+
+A subseteq B, 
+   ~~> subset_eq ([("Base", 8600)]) 
+and([i in B | i <- A,]) 
+
+--
+
+C subseteq B, 
+   ~~> subset_eq ([("Base", 8600)]) 
+and([i in B | i <- C,]) 
+
+--
+
+C subseteq B, 
+   ~~> subset_eq ([("Base", 8600)]) 
+and([i in B | i <- C,]) 
+
+--
+
+, 
+   ~~> eval_root ([("Constant", 9001)]) 
+true 
+
+--
+
+, 
+   ~~> eval_root ([("Constant", 9001)]) 
+true 
+
+--
+
+, 
+   ~~> eval_root ([("Constant", 9001)]) 
+true 
+
+--
+
+Final model:
+
+find A: set of (int(1..4))
+find B: set of (int(1..4))
+find C: set of (int(1..4))
+
+such that
+
+and([i in B | i <- A,true]),
+and([i in B | i <- C,true]),
+and([i in B | i <- C,true])
+

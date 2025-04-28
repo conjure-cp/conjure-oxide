@@ -394,6 +394,21 @@ pub enum Expression {
     #[compatible(Minion)]
     MinionWInIntervalSet(Metadata, Atom, Vec<i32>),
 
+
+        /// `w-inset(x, [v1, v2, … ])` ensures that the value of `x` is one of the explicitly given values `v1`, `v2`, etc.
+    ///
+    /// This constraint enforces membership in a specific set of discrete values rather than intervals.
+    ///
+    /// The list of values must be given in numerical order.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#w-inset)
+    #[compatible(Minion)]
+    MinionWInSet(Metadata, Atom, Vec<i32>),
+
     /// `element_one(vec, i, e)` specifies that `vec[i] = e`. This implies that i is
     /// in the range `[1..len(vec)]`.
     ///
@@ -625,6 +640,7 @@ impl Expression {
             Expression::MinionReify(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionReifyImply(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionWInIntervalSet(_, _, _) => Some(Domain::BoolDomain),
+            Expression::MinionWInSet(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionElementOne(_, _, _, _) => Some(Domain::BoolDomain),
             Expression::Neg(_, x) => {
                 let Some(Domain::IntDomain(mut ranges)) = x.domain_of(syms) else {
@@ -1008,6 +1024,10 @@ impl Display for Expression {
                 let intervals = intervals.iter().join(",");
                 write!(f, "__minion_w_inintervalset({atom},{intervals})")
             }
+            Expression::MinionWInSet(_, atom, values) => {
+                let values = values.iter().join(",");
+                write!(f, "__minion_w_inset({atom},{values})")
+            }
             Expression::AuxDeclaration(_, n, e) => {
                 write!(f, "{} =aux {}", n, e.clone())
             }
@@ -1131,6 +1151,7 @@ impl Typeable for Expression {
             Expression::MinionReify(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReifyImply(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionWInIntervalSet(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionWInSet(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionElementOne(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AuxDeclaration(_, _, _) => Some(ReturnType::Bool),
             Expression::UnsafeMod(_, _, _) => Some(ReturnType::Int),

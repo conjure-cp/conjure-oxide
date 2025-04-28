@@ -46,6 +46,7 @@ fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             | MinionDivEqUndefZero(_, _, _, _)
             | MinionModuloEqUndefZero(_, _, _, _)
             | MinionWInIntervalSet(_, _, _)
+            | MinionWInSet(_, _, _)
             | MinionElementOne(_, _, _, _)
             | MinionPow(_, _, _, _)
             | MinionReify(_, _, _)

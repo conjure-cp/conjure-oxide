@@ -320,6 +320,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             Some(Lit::Bool(a ^ b == c))
         }
         Expr::MinionWInIntervalSet(_, _, _) => None,
+        Expr::MinionWInSet(_, _, _) => None,
         Expr::AllDiff(_, e) => {
             let es = e.clone().unwrap_list()?;
             let mut lits: HashSet<Lit> = HashSet::new();

@@ -1,0 +1,34 @@
+Model before rewriting:
+
+find A: set of (int(1..4))
+find B: set of (int(1..4))
+find C: set of (int(1..4))
+
+such that
+
+A intersect C intersect C subseteq B
+
+--
+
+A intersect C intersect C subseteq B, 
+   ~~> split_intersection_subseteq ([("Base", 8601)]) 
+and([(i in A intersect C) -> (i in B) | i <- C,]) 
+
+--
+
+, 
+   ~~> eval_root ([("Constant", 9001)]) 
+true 
+
+--
+
+Final model:
+
+find A: set of (int(1..4))
+find B: set of (int(1..4))
+find C: set of (int(1..4))
+
+such that
+
+and([(i in A intersect C) -> (i in B) | i <- C,true])
+
