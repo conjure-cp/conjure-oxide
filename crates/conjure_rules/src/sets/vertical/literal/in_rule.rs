@@ -12,7 +12,9 @@ use conjure_core::rule_engine::{
 };
 
 use Expression::*;
-
+// turns an in expression into a w-inset expression where x is an integer decision variable
+// and the set is a set of integers like:
+// x in {1,2,3} => w-inset(x, [1,2,3])
 #[register_rule(("Base", 8600))]
 fn in_set(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     match expr {
