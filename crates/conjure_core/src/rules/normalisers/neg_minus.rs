@@ -19,8 +19,8 @@
 //! Converting to a sum is especially helpful for converting the model to Minion as:
 //!
 //! 1. normalise_associative_commutative concatenates nested sums, reducing the
-//!     amount of flattening we need to do to convert this to Minion (reducing the number of
-//!     auxiliary variables needed).
+//!    amount of flattening we need to do to convert this to Minion (reducing the number of
+//!    auxiliary variables needed).
 //!
 //! 2. A sum of variables with constant coefficients can be trivially converted into the
 //!    weightedsumgeq and weightedsumleq constraints. A negated number is just a number

@@ -282,7 +282,7 @@ impl SymbolTable {
     /// # Returns
     ///
     /// + `None` if `name` does not exist, is not a decision variable, or cannot be given that
-    ///    representation.
+    ///   representation.
     pub fn get_or_add_representation(
         &mut self,
         name: &Name,
