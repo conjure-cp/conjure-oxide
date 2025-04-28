@@ -8,7 +8,7 @@ use walkdir::WalkDir;
 fn main() -> io::Result<()> {
     println!("cargo:rerun-if-changed=tests/integration");
     println!("cargo:rerun-if-changed=tests/custom");
-    println!("cargo:rerun-if-changed=tests/gen_test_template");
+    println!("cargo:rerun-if-changed=tests/integration_test_template");
     println!("cargo:rerun-if-changed=tests/custom_test_template");
     println!("cargo:rerun-if-changed=build.rs");
 
@@ -129,7 +129,7 @@ fn write_integration_test(
     if essence_files.len() == 1 {
         write!(
             file,
-            include_str!("./tests/gen_test_template"),
+            include_str!("./tests/integration_test_template"),
             // TODO: better sanitisation of paths to function names
             test_name = path.replace("./", "").replace(['/', '-'], "_"),
             test_dir = path,

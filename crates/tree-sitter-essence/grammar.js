@@ -27,7 +27,7 @@ module.exports = grammar ({
       $.FALSE
     ),
 
-    integer: $ => /[0-9]+/,
+    integer: $ => choice(/[0-9]+/, /-[0-9]+/),
 
     TRUE: $ => "true",
 

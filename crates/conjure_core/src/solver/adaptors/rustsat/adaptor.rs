@@ -29,6 +29,7 @@ use crate::solver::{
 };
 use crate::stats::SolverStats;
 use crate::{ast as conjure_ast, bug, Model as ConjureModel};
+use crate::{into_matrix_expr, matrix_expr};
 
 use rustsat::instances::{BasicVarManager, Cnf, SatInstance};
 
@@ -207,7 +208,6 @@ impl SolverAdaptor for SAT {
         self.decision_refs = Some(finds.clone());
 
         let m_clone = model.clone();
-
         let vec_cnf = m_clone.as_submodel().constraints().clone();
 
         let inst: SatInstance = handle_cnf(&vec_cnf, &mut var_map, finds.clone());
