@@ -57,11 +57,11 @@ pub fn handle_atom(
     inst: &mut SatInstance,
 ) -> Lit {
     // polarity false for not
+    //
+    println!("Atomic: {}", a);
     match a {
         Expression::Atomic(_, atom) => match atom {
-            conjure_core::ast::Atom::Literal(literal) => {
-                todo!("Not Sure if we are handling Lits as-is or not..")
-            }
+            conjure_core::ast::Atom::Literal(literal) => inst.new_lit(),
             conjure_core::ast::Atom::Reference(name) => match name {
                 conjure_core::ast::Name::UserName(n) => {
                     // TODO: Temp Clone
@@ -100,8 +100,12 @@ pub fn handle_disjn(
 ) {
     let cl: &Vec<Expression> = match disjn {
         Expression::Or(_, vec) => &vec.clone().unwrap_list().unwrap(),
-        // Expression::F
-        _ => bug!("This should always be either a Disjunction or a Constant; Found:{cl}"),
+        // for something like `such that true`
+        Expression::Atomic(_, literal_bool) => &vec![disjn.clone()],
+        _ => bug!(
+            "This should always be either a Disjunction or a Constant; Found {:?}",
+            disjn
+        ),
     };
 
     let mut clause: Clause = Clause::new();

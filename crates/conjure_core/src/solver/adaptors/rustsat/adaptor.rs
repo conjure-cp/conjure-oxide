@@ -7,7 +7,6 @@ use std::ptr::null;
 use std::vec;
 
 use clap::error;
-use log::kv::value;
 use minion_rs::ast::{Model, Tuple};
 use rustsat::encodings::am1::Def;
 use rustsat::solvers::{Solve, SolverResult};

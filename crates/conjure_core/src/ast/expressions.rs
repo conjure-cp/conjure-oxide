@@ -61,7 +61,7 @@ pub enum Expression {
 
     /// A matrix index.
     ///
-    /// Defined iff the indices are within their respective index domains.
+    /// Defined if the indices are within their respective index domains.
     #[compatible(JsonInput)]
     UnsafeIndex(Metadata, Box<Expression>, Vec<Expression>),
 
