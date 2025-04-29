@@ -101,7 +101,7 @@ pub struct GlobalArgs {
     // Output location (stdout or file)
     #[arg(
         long,
-        short = 'O',
+        short = 'L',
         default_value = "stdout",
         global = true,
         help = "Select output location for trace result: stdout or file"
