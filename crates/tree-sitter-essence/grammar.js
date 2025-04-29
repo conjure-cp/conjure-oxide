@@ -11,11 +11,22 @@ module.exports = grammar ({
   rules: {
     // Top-level statements
     program: $ => repeat(choice(
-      field("find_statement_list", $.find_statement_list),
-      field("constraint_list", $.constraint_list),
-      field("letting_statement_list", $.letting_statement_list),
-      field("dominance_relation", $.dominance_relation)
+      seq("find", commaSep1(field("find_statement", $.find_statement))),
+      seq(
+        "such that", 
+        commaSep1(choice(field("bool_expr", $.bool_expr), field("atom", $.atom), field("comparison_expr", $.comparison_expr))), 
+      ),
+      seq("letting", commaSep1(field("letting_statement", $.letting_statement))),
+      field("dominance_relation", $.dominance_relation),
+      field("find", $.FIND),
+      field("letting", $.LETTING),
+      field("such_that", $.SUCH_THAT),
     )),
+
+    SUCH_THAT: $ => "such that",
+    FIND: $ => "find",
+    LETTING: $ => "letting",
+    COLON: $ => ":",
 
     single_line_comment: $ => token(seq('$', /.*/)),
 
@@ -23,9 +34,9 @@ module.exports = grammar ({
 
     //general
     constant: $ => choice(
-      $.integer,
-      $.TRUE,
-      $.FALSE
+      field("integer", $.integer),
+      field("true", $.TRUE),
+      field("false", $.FALSE)
     ),
 
     // integer: $ => choice(/[0-9]+/, /-[0-9]+/),
@@ -38,15 +49,9 @@ module.exports = grammar ({
     identifier: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
 
     //meta-variable (aka template argument)
-    metavar: $ => seq("&", $.identifier),
+    metavar: $ => seq("&", field("identifier", $.identifier)),
 
-    SUCH_THAT: $ => "such that",
-    FIND: $ => "find",
-    LETTING: $ => "letting",
-    COLON: $ => ":",
-
-    // Find statements
-    find_statement_list: $ => prec.right(seq("find", commaSep1($.find_statement))),
+    //find statements
     find_statement: $ => seq(
       field("variables", $.variable_list),
       field("colon", $.COLON),
@@ -63,14 +68,14 @@ module.exports = grammar ({
     ),
     bool_domain: $ => "bool",
 
-    int_domain: $ => prec.left(seq(
+    int_domain: $ => seq(
       "int",
       optional(seq(
         "(",
         field("ranges", $.range_list),
         ")"
       ))
-    )),
+    ),
 
     range_list: $ => prec(2, commaSep1(choice($.int_range, $.integer))),
 
@@ -101,20 +106,14 @@ module.exports = grammar ({
     index_domain_list: $ => commaSep1(choice($.int_domain, $.bool_domain)),
 
     //letting statements
-    letting_statement_list: $ => prec.right(seq("letting", commaSep1($.letting_statement))),
     letting_statement: $ => seq(
       field("variable_list", $.variable_list), 
-      "be", 
-      optional("domain"),
+      field("be", "be"), 
+      optional(field ("domain", "domain")),
       field("expr_or_domain", choice($.bool_expr, $.arithmetic_expr, $.domain))
     ),
 
-    // Constraints
-    constraint_list: $ => prec.right(seq(
-      "such that", 
-      commaSep1(choice($.bool_expr, $.atom, $.comparison_expr)), 
-    )),
-    
+    // Constraints 
     bool_expr: $ => choice(
       field("not_expression", $.not_expr),
       field("and_expression", $.and_expr),

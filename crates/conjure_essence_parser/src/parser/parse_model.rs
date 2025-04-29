@@ -46,7 +46,7 @@ pub fn parse_essence_with_context(
     for statement in named_children(&root_node) {
         match statement.kind() {
             "single_line_comment" => {}
-            "find_statement_list" => {
+            "find_statement" => {
                 let var_hashmap = parse_find_statement(statement, &source_code);
                 for (name, decision_variable) in var_hashmap {
                     model
@@ -55,21 +55,15 @@ pub fn parse_essence_with_context(
                         .insert(Rc::new(Declaration::new_var(name, decision_variable)));
                 }
             }
-            "constraint_list" => {
-                let mut constraint_vec: Vec<Expression> = Vec::new();
-                for constraint in named_children(&statement) {
-                    if constraint.kind() != "single_line_comment" {
-                        constraint_vec.push(parse_expression(
-                            constraint,
-                            &source_code,
-                            &statement,
-                        )?);
-                    }
-                }
-                model.as_submodel_mut().add_constraints(constraint_vec);
+            "bool_expr" | "atom" | "comparison_expr" => {
+                model.as_submodel_mut().add_constraint(parse_expression(
+                    statement,
+                    &source_code,
+                    &statement,
+                )?);
             }
             "language_label" => {}
-            "letting_statement_list" => {
+            "letting_statement" => {
                 let letting_vars = parse_letting_statement(statement, &source_code)?;
                 model.as_submodel_mut().symbols_mut().extend(letting_vars);
             }
