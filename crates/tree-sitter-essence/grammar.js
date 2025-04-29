@@ -114,13 +114,6 @@ module.exports = grammar ({
       "such that", 
       commaSep1(choice($.bool_expr, $.atom, $.comparison_expr)), 
     )),
-
-    // Expression hierarchy
-    // expression: $ => choice(
-    //   field("boolean_expression", $.bool_expr), 
-    //   field("comparison_expression", $.comparison_expr), 
-    //   field("arithmetic_expression", $.arithmetic_expr)
-    // ),
     
     bool_expr: $ => choice(
       field("not_expression", $.not_expr),
