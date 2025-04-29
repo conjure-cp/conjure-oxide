@@ -25,11 +25,8 @@ for prob in *; do #go through all tests folders in directory
     find $prob -name *.essence -o -name *.eprime | #go through all essence files for this problem, best if only 1
     while read essence
     do
-        # echo "essence file name $essence" #full path to file
-        # echo "$prob" #current directory
-        essence="${essence#$prob}" #
-        essence="${essence#/}"        
-        # echo "$essence"
+        essence="${essence#$prob}"
+        essence="${essence#/}"
         echo "writing to command file"
         echo "./scripts/runConjure.sh ${prob} ${essence} -O0 ${VALIDATE}" >> ${CMD_FILE}
         echo "./scripts/runConjure.sh ${prob} ${essence} -O2 ${VALIDATE}" >> ${CMD_FILE}
@@ -37,8 +34,6 @@ for prob in *; do #go through all tests folders in directory
 
         #treemorph rewriter flag not yet added
         # echo "runOxide.sh ${prob} ${essence} --use-treemorph-rewriter" >>${CMD_FILE}
-
     done
 done
 popd
-#parallel \ --no-notice z -j"${nb_cores} \ --eta --results logs/gnuparallel/modelling-results \ --joblog log/gnuparallel/modelling-joblog \ :::: ${CMD_FILE} || true

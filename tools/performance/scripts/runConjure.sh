@@ -21,9 +21,10 @@ rm -r -f $DATA_DIR
 mkdir $DATA_DIR
 
 if [[ $VALIDATE = "validate" ]]; then
-    conjure solve -o $DATA_DIR --number-of-solutions=all --validate-solutions $FULL_ESSENCE 
+    conjure solve --savilerow-options $PARAM -o $DATA_DIR --number-of-solutions=all --validate-solutions $FULL_ESSENCE 
 else
-    conjure solve -o $DATA_DIR --number-of-solutions=all $FULL_ESSENCE 
+    conjure solve --savilerow-options $PARAM -o $DATA_DIR --number-of-solutions=all $FULL_ESSENCE
 fi
 
+rm -f $WORKING_DIR/tests/$PROBLEM/*.solution
 rm -f $DATA_DIR/*.{eprime,eprime-solution,eprime-infor,eprime-*,conjure-checksum,solution}

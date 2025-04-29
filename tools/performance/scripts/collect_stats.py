@@ -15,7 +15,7 @@ for rewrite_cat in os.listdir(perform_dir):
             pass
         csv = open(filename, 'a')
         csv.write("test,solver,solver_time,solver_nodes,rewriter_time,total_time")
-        for test_dir in os.listdir(rewrite_cat_path):
+        for test_dir in sorted(os.listdir(rewrite_cat_path)):
             test_dir_path = os.path.join(rewrite_cat_path, test_dir)
             if os.path.isdir(test_dir_path):
                 oxide_stats = glob(os.path.join(test_dir_path, 'oxide-stats.json'))
