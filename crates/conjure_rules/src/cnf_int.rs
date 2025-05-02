@@ -10,9 +10,9 @@ use conjure_core::ast::{Atom, Domain, Literal, Range};
 use conjure_core::metadata::Metadata;
 use conjure_core::{into_matrix_expr, matrix_expr};
 
-use conjure_essence_macros::{essence_expr, essence_vec};
+use conjure_essence_macros::essence_expr;
 
-#[register_rule(("CNF", 8000))]
+#[register_rule(("CNF", 9500))]
 fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
     let Expr::Atomic(_, Atom::Reference(name)) = expr else {
@@ -60,7 +60,7 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
     }
 }
 
-#[register_rule(("CNF", 4000))]
+#[register_rule(("CNF", 9500))]
 fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Atomic(_, Atom::Literal(Literal::Int(mut value))) = expr else {
         return Err(RuleNotApplicable);
@@ -157,7 +157,7 @@ fn validate_cnf_int_operands(exprs: Vec<Expr>) -> Result<Vec<Vec<Expr>>, Applica
 /// CnfInt(a) = CnfInt(b) ~> And(...)
 ///
 /// ```
-#[register_rule(("CNF", 4100))]
+#[register_rule(("CNF", 9100))]
 fn cnf_int_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);
@@ -247,7 +247,11 @@ fn inequality_boolean(a: Vec<Expr>, b: Vec<Expr>, inclusive: bool) -> Expr {
 
     // at the moment this causes a stack overflow
     // CHANGE TO 32
-    for n in 1..8 {
+    for n in 1..7 {
+        // a_n = &a[n];
+        // b_n = &b[n];
+        // Macro expression is commented out at the moment because it causes the program to hang for some reason
+        // output = essence_expr!(r"((&a_n /\ -&b_n) \/ (((&a_n /\ &b_n) \/ (-&a_n /\ -&b_n)) /\ &output))");
         output = Expr::Or(
             Metadata::new(),
             Box::new(matrix_expr![
@@ -272,6 +276,35 @@ fn inequality_boolean(a: Vec<Expr>, b: Vec<Expr>, inclusive: bool) -> Expr {
             ]),
         );
     }
+    // final bool is the sign bit and should be handled inversely
+    // a_n = &a[7];
+    // b_n = &b[7];
+    // output = essence_expr!(r"((-&a_n /\ &b_n) \/ (((&a_n /\ &b_n) \/ (-&a_n /\ -&b_n)) /\ &output))");
+
+    output = Expr::Or(
+        Metadata::new(),
+        Box::new(matrix_expr![
+            Expr::And(
+                Metadata::new(),
+                Box::new(matrix_expr![
+                    b[7].clone(),
+                    Expr::Not(Metadata::new(), Box::new(a[7].clone()))
+                ]),
+            ),
+            Expr::And(
+                Metadata::new(),
+                Box::new(matrix_expr![
+                    Expr::Iff(
+                        Metadata::new(),
+                        Box::new(a[7].clone()),
+                        Box::new(b[7].clone())
+                    ),
+                    output
+                ])
+            )
+        ]),
+    );
+
     output
 }
 
@@ -302,24 +335,75 @@ fn cnf_int_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 }
 
 fn cnf_int_adder(x: Vec<Expr>, y: Vec<Expr>) -> Vec<Expr> {
-    let mut x_n = x[0].clone();
-    let mut y_n = y[0].clone();
+    // let mut x_n = x[0].clone();
+    // let mut y_n = y[0].clone();
 
-    let mut output = vec![essence_expr!(r"(-&x_n /\ &y_n) \/ (-&y_n /\ &x_n)")];
+    // let mut output = vec![essence_expr!(r"(-&x_n /\ &y_n) \/ (-&y_n /\ &x_n)")];
+    let mut output = vec![Expr::Not(
+        Metadata::new(),
+        Box::new(Expr::Iff(
+            Metadata::new(),
+            Box::new(x[0].clone()),
+            Box::new(y[0].clone()),
+        )),
+    )];
 
-    let mut carry = essence_expr!(r"&x_n /\ &y_n");
+    //let mut carry = essence_expr!(r"&x_n /\ &y_n");
+    let mut carry = Expr::And(
+        Metadata::new(),
+        Box::new(matrix_expr![x[0].clone(), y[0].clone()]),
+    );
 
     for i in 1..8 {
-        x_n = x[i].clone();
-        y_n = y[i].clone();
+        // x_n = x[i].clone();
+        // y_n = y[i].clone();
 
-        output.push(essence_expr!(
-            r"(&x_n /\ &y_n) \/ (&carry /\ ((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n)))"
+        // output.push(essence_expr!(
+        //     r"(&x_n /\ &y_n) \/ (&carry /\ ((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n)))"
+        // ));
+
+        output.push(Expr::Or(
+            Metadata::new(),
+            Box::new(matrix_expr![
+                Expr::And(
+                    Metadata::new(),
+                    Box::new(matrix_expr![x[i].clone(), y[i].clone()])
+                ),
+                Expr::And(
+                    Metadata::new(),
+                    Box::new(matrix_expr![
+                        carry.clone(),
+                        Expr::Not(
+                            Metadata::new(),
+                            Box::new(Expr::Iff(
+                                Metadata::new(),
+                                Box::new(x[i].clone()),
+                                Box::new(y[i].clone())
+                            ))
+                        )
+                    ])
+                )
+            ]),
         ));
 
-        carry = essence_expr!(
-            r"((-&carry /\ ((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n))) \/ (-((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n)) /\ &carry))"
-        )
+        // carry = essence_expr!(
+        //     r"((-&carry /\ ((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n))) \/ (-((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n)) /\ &carry))"
+        // )
+        carry = Expr::Not(
+            Metadata::new(),
+            Box::new(Expr::Iff(
+                Metadata::new(),
+                Box::new(carry.clone()),
+                Box::new(Expr::Not(
+                    Metadata::new(),
+                    Box::new(Expr::Iff(
+                        Metadata::new(),
+                        Box::new(x[i].clone()),
+                        Box::new(y[i].clone()),
+                    )),
+                )),
+            )),
+        );
     }
 
     output
