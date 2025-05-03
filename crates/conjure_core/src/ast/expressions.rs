@@ -392,6 +392,9 @@ pub enum Expression {
 
     // This expression is for encoding i32 ints as a vector of boolean expressions for cnf
     CnfInt(Metadata, Box<Expression>),
+
+    // This expression represents a cnf clause in its simplest form, it should only contain atoms and should not be affected by the rule engine
+    Clause(Metadata, Box<Expression>),
 }
 
 fn expr_vec_to_domain_i32(
@@ -627,6 +630,7 @@ impl Expression {
             Expression::CnfInt(_, _) => {
                 Some(Domain::IntDomain(vec![Range::Bounded(i32::MIN, i32::MAX)]))
             } // CnfInt can represent any i32 integer
+            Expression::Clause(_, _) => Some(Domain::BoolDomain),
         };
         match ret {
             // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
@@ -735,6 +739,7 @@ impl Expression {
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::MinionPow(_, _, _, _) => Some(ReturnType::Bool),
             Expression::CnfInt(_, _) => Some(ReturnType::Int),
+            Expression::Clause(_, _) => Some(ReturnType::Bool),
         }
     }
 
@@ -1088,6 +1093,9 @@ impl Display for Expression {
             }
             Expression::CnfInt(_, e) => {
                 write!(f, "CnfInt({e})")
+            }
+            Expression::Clause(_, e) => {
+                write!(f, "Clause({e})")
             }
         }
     }

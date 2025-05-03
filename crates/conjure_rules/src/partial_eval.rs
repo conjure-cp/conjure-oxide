@@ -413,6 +413,7 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         MinionWInIntervalSet(_, _, _) => Err(RuleNotApplicable),
         MinionElementOne(_, _, _, _) => Err(RuleNotApplicable),
         CnfInt(_, _) => Err(RuleNotApplicable),
+        Clause(_, _) => Err(RuleNotApplicable),
     }
 }
 

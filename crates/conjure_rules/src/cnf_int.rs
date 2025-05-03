@@ -12,6 +12,13 @@ use conjure_core::{into_matrix_expr, matrix_expr};
 
 use conjure_essence_macros::essence_expr;
 
+use crate::cnf::tseytin_and;
+use crate::cnf::tseytin_iff;
+use crate::cnf::tseytin_imply;
+use crate::cnf::tseytin_not;
+use crate::cnf::tseytin_or;
+use crate::cnf::tseytin_xor;
+
 #[register_rule(("CNF", 9500))]
 fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
@@ -110,8 +117,8 @@ fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
 ///
 /// ```
 #[register_rule(("CNF", 4100))]
-fn cnf_int_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let (lhs, rhs, inclusive) = match expr {
+fn cnf_int_ineq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let (lhs, rhs, strict) = match expr {
         Expr::Lt(_, x, y) => (y, x, false),
         Expr::Gt(_, x, y) => (x, y, false),
         Expr::Leq(_, x, y) => (y, x, true),
@@ -124,9 +131,10 @@ fn cnf_int_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let output = inequality_boolean(lhs_bits.clone(), rhs_bits.clone(), inclusive);
+    let (output, new_symbols, new_tops) =
+        inequality_boolean(lhs_bits.clone(), rhs_bits.clone(), strict, symbols);
 
-    Ok(Reduction::pure(output))
+    Ok(Reduction::new(output, new_tops, new_symbols))
 }
 
 fn unbox(expr: &Box<Expr>) -> Expr {
@@ -227,24 +235,34 @@ fn cnf_int_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 // Creates a boolean expression for > or >=
 // a > b or a >= b
 // This can also be used for < and <= by reversing the order of the inputs
-fn inequality_boolean(a: Vec<Expr>, b: Vec<Expr>, inclusive: bool) -> Expr {
+// Returns result, new symbol table, new top level constraints
+fn inequality_boolean(
+    a: Vec<Expr>,
+    b: Vec<Expr>,
+    strict: bool,
+    symbols: &SymbolTable,
+) -> (Expr, SymbolTable, Vec<Expr>) {
     let mut output;
 
-    let mut a_n = &a[0];
-    let mut b_n = &b[0];
+    let mut new_tops = vec![];
+    let mut temp;
+    let mut new_symbols;
+    let mut notb;
 
-    if inclusive {
-        output = essence_expr!("&b_n -> &a_n");
+    if strict {
+        (output, new_symbols, temp) = tseytin_imply(a[0].clone(), b[0].clone(), symbols);
+        new_tops.extend(temp);
     } else {
-        output = Expr::And(
-            Metadata::new(),
-            Box::new(matrix_expr![
-                a[0].clone(),
-                Expr::Not(Metadata::new(), Box::new(b[0].clone()))
-            ]),
-        );
+        (notb, new_symbols, temp) = tseytin_not(b[0].clone(), symbols);
+        new_tops.extend(temp);
+
+        (output, new_symbols, temp) = tseytin_and(&vec![a[0].clone(), notb], &new_symbols);
+        new_tops.extend(temp);
     }
 
+    let mut lhs;
+    let mut rhs;
+    let mut iff;
     // at the moment this causes a stack overflow
     // CHANGE TO 32
     for n in 1..7 {
@@ -252,60 +270,43 @@ fn inequality_boolean(a: Vec<Expr>, b: Vec<Expr>, inclusive: bool) -> Expr {
         // b_n = &b[n];
         // Macro expression is commented out at the moment because it causes the program to hang for some reason
         // output = essence_expr!(r"((&a_n /\ -&b_n) \/ (((&a_n /\ &b_n) \/ (-&a_n /\ -&b_n)) /\ &output))");
-        output = Expr::Or(
-            Metadata::new(),
-            Box::new(matrix_expr![
-                Expr::And(
-                    Metadata::new(),
-                    Box::new(matrix_expr![
-                        a[n].clone(),
-                        Expr::Not(Metadata::new(), Box::new(b[n].clone()))
-                    ]),
-                ),
-                Expr::And(
-                    Metadata::new(),
-                    Box::new(matrix_expr![
-                        Expr::Iff(
-                            Metadata::new(),
-                            Box::new(a[n].clone()),
-                            Box::new(b[n].clone())
-                        ),
-                        output
-                    ])
-                )
-            ]),
-        );
+        (notb, new_symbols, temp) = tseytin_not(b[n].clone(), &new_symbols);
+        new_tops.extend(temp);
+
+        (lhs, new_symbols, temp) = tseytin_and(&vec![a[n].clone(), notb.clone()], &new_symbols);
+        new_tops.extend(temp);
+
+        (iff, new_symbols, temp) = tseytin_iff(a[n].clone(), b[n].clone(), &new_symbols);
+        new_tops.extend(temp);
+
+        (rhs, new_symbols, temp) = tseytin_and(&vec![iff.clone(), output.clone()], &new_symbols);
+        new_tops.extend(temp);
+
+        (output, new_symbols, temp) = tseytin_or(&vec![lhs.clone(), rhs.clone()], &new_symbols);
+        new_tops.extend(temp);
     }
+
     // final bool is the sign bit and should be handled inversely
     // a_n = &a[7];
     // b_n = &b[7];
     // output = essence_expr!(r"((-&a_n /\ &b_n) \/ (((&a_n /\ &b_n) \/ (-&a_n /\ -&b_n)) /\ &output))");
+    let nota;
+    (nota, new_symbols, temp) = tseytin_not(a[7].clone(), &new_symbols);
+    new_tops.extend(temp);
 
-    output = Expr::Or(
-        Metadata::new(),
-        Box::new(matrix_expr![
-            Expr::And(
-                Metadata::new(),
-                Box::new(matrix_expr![
-                    b[7].clone(),
-                    Expr::Not(Metadata::new(), Box::new(a[7].clone()))
-                ]),
-            ),
-            Expr::And(
-                Metadata::new(),
-                Box::new(matrix_expr![
-                    Expr::Iff(
-                        Metadata::new(),
-                        Box::new(a[7].clone()),
-                        Box::new(b[7].clone())
-                    ),
-                    output
-                ])
-            )
-        ]),
-    );
+    (lhs, new_symbols, temp) = tseytin_and(&vec![nota, b[7].clone()], &new_symbols);
+    new_tops.extend(temp);
 
-    output
+    (iff, new_symbols, temp) = tseytin_iff(a[7].clone(), b[7].clone(), &new_symbols);
+    new_tops.extend(temp);
+
+    (rhs, new_symbols, temp) = tseytin_and(&vec![iff.clone(), output.clone()], &new_symbols);
+    new_tops.extend(temp);
+
+    (output, new_symbols, temp) = tseytin_or(&vec![lhs.clone(), rhs.clone()], &new_symbols);
+    new_tops.extend(temp);
+
+    (output, new_symbols, new_tops)
 }
 
 /// Converts sum of CnfInts to a single CnfInt
@@ -315,7 +316,7 @@ fn inequality_boolean(a: Vec<Expr>, b: Vec<Expr>, inclusive: bool) -> Expr {
 ///
 /// ```
 #[register_rule(("CNF", 4100))]
-fn cnf_int_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Sum(_, exprs) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -324,14 +325,37 @@ fn cnf_int_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let exprs_bits = validate_cnf_int_operands(exprs_list.clone())?.into_iter();
+    let mut exprs_bits = validate_cnf_int_operands(exprs_list.clone())?;
 
-    let output = exprs_bits.reduce(|a, b| cnf_int_adder(a, b)).unwrap(); //TODO: Convert to log sum
+    let mut new_symbols = symbols.clone();
+    let mut values;
+    let mut temp;
+    let mut new_tops = vec![];
 
-    Ok(Reduction::pure(Expr::CnfInt(
-        Metadata::new(),
-        Box::new(into_matrix_expr!(output)),
-    )))
+    while exprs_bits.len() > 1 {
+        let mut next = Vec::with_capacity((exprs_bits.len() + 1) / 2);
+        let mut iter = exprs_bits.into_iter();
+
+        while let Some(a) = iter.next() {
+            if let Some(b) = iter.next() {
+                (values, new_symbols, temp) = tseytin_int_adder(a, b, &new_symbols);
+                new_tops.extend(temp);
+                next.push(values);
+            } else {
+                next.push(a);
+            }
+        }
+
+        exprs_bits = next;
+    }
+
+    let result = exprs_bits.pop().unwrap();
+
+    Ok(Reduction::new(
+        Expr::CnfInt(Metadata::new(), Box::new(into_matrix_expr!(result))),
+        new_tops,
+        new_symbols,
+    ))
 }
 
 fn cnf_int_adder(x: Vec<Expr>, y: Vec<Expr>) -> Vec<Expr> {
@@ -362,7 +386,26 @@ fn cnf_int_adder(x: Vec<Expr>, y: Vec<Expr>) -> Vec<Expr> {
         //     r"(&x_n /\ &y_n) \/ (&carry /\ ((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n)))"
         // ));
 
-        output.push(Expr::Or(
+        output.push(Expr::Not(
+            Metadata::new(),
+            Box::new(Expr::Iff(
+                Metadata::new(),
+                Box::new(carry.clone()),
+                Box::new(Expr::Not(
+                    Metadata::new(),
+                    Box::new(Expr::Iff(
+                        Metadata::new(),
+                        Box::new(x[i].clone()),
+                        Box::new(y[i].clone()),
+                    )),
+                )),
+            )),
+        ));
+
+        // carry = essence_expr!(
+        //     r"((-&carry /\ ((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n))) \/ (-((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n)) /\ &carry))"
+        // )
+        carry = Expr::Or(
             Metadata::new(),
             Box::new(matrix_expr![
                 Expr::And(
@@ -384,29 +427,65 @@ fn cnf_int_adder(x: Vec<Expr>, y: Vec<Expr>) -> Vec<Expr> {
                     ])
                 )
             ]),
-        ));
-
-        // carry = essence_expr!(
-        //     r"((-&carry /\ ((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n))) \/ (-((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n)) /\ &carry))"
-        // )
-        carry = Expr::Not(
-            Metadata::new(),
-            Box::new(Expr::Iff(
-                Metadata::new(),
-                Box::new(carry.clone()),
-                Box::new(Expr::Not(
-                    Metadata::new(),
-                    Box::new(Expr::Iff(
-                        Metadata::new(),
-                        Box::new(x[i].clone()),
-                        Box::new(y[i].clone()),
-                    )),
-                )),
-            )),
-        );
+        )
     }
 
     output
+}
+
+// Returns result, new symbol table, new top level constraints
+fn tseytin_int_adder(
+    x: Vec<Expr>,
+    y: Vec<Expr>,
+    symbols: &SymbolTable,
+) -> (Vec<Expr>, SymbolTable, Vec<Expr>) {
+    let (mut result, mut new_symbols, mut new_tops) =
+        tseytin_xor(x[0].clone(), y[0].clone(), symbols);
+    let mut output = vec![result];
+
+    let mut carry;
+    let mut temp;
+    (carry, new_symbols, temp) = tseytin_and(&vec![x[0].clone(), y[0].clone()], &new_symbols);
+    new_tops.extend(temp);
+
+    for i in 1..8 {
+        (result, carry, new_symbols, temp) =
+            tseytin_full_adder(x[i].clone(), y[i].clone(), carry.clone(), &new_symbols);
+        output.push(result);
+        new_tops.extend(temp);
+    }
+
+    (output, new_symbols, new_tops)
+}
+
+// Returns: result, carry, new symbol table, new top level constraints
+fn tseytin_full_adder(
+    a: Expr,
+    b: Expr,
+    carry: Expr,
+    symbols: &SymbolTable,
+) -> (Expr, Expr, SymbolTable, Vec<Expr>) {
+    let mut temp;
+    let axorb;
+    let result;
+    let mut new_tops = vec![];
+    let aandb;
+    let carryandaxorb;
+    let carryout;
+    let mut new_symbols;
+
+    (axorb, new_symbols, temp) = tseytin_xor(a.clone(), b.clone(), symbols);
+    new_tops.extend(temp);
+    (result, new_symbols, temp) = tseytin_xor(axorb.clone(), carry.clone(), &new_symbols);
+    new_tops.extend(temp);
+    (aandb, new_symbols, temp) = tseytin_and(&vec![a, b], &new_symbols);
+    new_tops.extend(temp);
+    (carryandaxorb, new_symbols, temp) = tseytin_and(&vec![carry, axorb], &new_symbols);
+    new_tops.extend(temp);
+    (carryout, new_symbols, temp) = tseytin_or(&vec![aandb, carryandaxorb], &new_symbols);
+    new_tops.extend(temp);
+
+    (result, carryout, new_symbols, new_tops)
 }
 
 /*

@@ -79,6 +79,14 @@ pub fn handle_atom(
                         !lit_temp
                     }
                 }
+                conjure_core::ast::Name::MachineName(_) => {
+                    let lit_temp: Lit = fetch_lit(name, vars_added, inst);
+                    if polarity {
+                        lit_temp
+                    } else {
+                        !lit_temp
+                    }
+                }
                 _ => todo!("Not implemented yet"),
             },
         },
@@ -101,7 +109,7 @@ pub fn handle_disjn(
     let mut lits = Clause::new();
 
     match disjn {
-        Expression::Or(_, vec) => {
+        Expression::Or(_, vec) | Expression::Clause(_, vec) => {
             let cl = &vec.clone().unwrap_list().unwrap();
             for literal in cl {
                 let lit: Lit = handle_lit(literal, vars_added, inst_in_use);

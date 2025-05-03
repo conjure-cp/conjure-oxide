@@ -185,11 +185,14 @@ pub fn get_sat_solutions(
             sol.insert(name.clone(), value);
         }
 
-        // remove represented variables
+        // remove represented and auxillary variables
         *sol = sol
             .clone()
             .into_iter()
-            .filter(|(name, _)| !matches!(name, Name::RepresentedName(_, _, _)))
+            .filter(|(name, _)| {
+                !matches!(name, Name::RepresentedName(_, _, _))
+                    && !matches!(name, Name::MachineName(_))
+            })
             .collect();
     }
 
