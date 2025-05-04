@@ -65,6 +65,7 @@ module.exports = grammar ({
       field("variable_domain", $.identifier),
       field("tuple_domain", $.tuple_domain),
       field("matrix_domain", $.matrix_domain),
+      field("record_domain", $.record_domain),
     ),
     bool_domain: $ => "bool",
 
@@ -101,6 +102,19 @@ module.exports = grammar ({
       "]",
       "of",
       field("value_domain", $.domain)
+    ),
+
+    record_domain: $ => seq(
+      "record",
+      "{",
+      commaSep1(field("name_domain_pair", $.name_domain_pair)),
+      "}"
+    ),
+
+    name_domain_pair: $ => seq(
+      field("name", $.identifier),
+      ":",
+      field("domain", $.domain)
     ),
 
     index_domain_list: $ => commaSep1(choice($.int_domain, $.bool_domain)),
@@ -154,7 +168,7 @@ module.exports = grammar ({
     quantifier_expr_bool: $ => prec(-10, seq(
       field("quantifier", choice("and", "or", "allDiff")),
       "(",
-      field("arg", choice($.matrix, $.tuple_matrix_index_or_slice, $.identifier)),
+      field("arg", choice($.matrix, $.tuple_matrix_record_index_or_slice, $.identifier)),
       ")"
     )),
 
@@ -190,7 +204,8 @@ module.exports = grammar ({
       field("metavar", $.metavar),
       field("tuple", $.tuple),
       field("matrix", $.matrix),
-      field("tuple_matrix_index_or_slice", $.tuple_matrix_index_or_slice),
+      field("record", $.record),
+      field("tuple_matrix_record_index_or_slice", $.tuple_matrix_record_index_or_slice),
     )),
 
     tuple: $ => prec(-5, seq(
@@ -211,7 +226,20 @@ module.exports = grammar ({
       "]"
     ),
 
-    tuple_matrix_index_or_slice: $ => seq(
+    record: $ => seq(
+      "record",
+      "{",
+      commaSep1(field("name_value_pair", $.name_value_pair)),
+      "}"
+    ),
+
+    name_value_pair: $ => seq(
+      field("name", $.identifier),
+      "=",
+      field("value", choice($.arithmetic_expr, $.bool_expr, $.comparison_expr))
+    ),
+
+    tuple_matrix_record_index_or_slice: $ => seq(
       field("tuple_or_matrix", choice($.identifier, $.tuple, $.matrix)),
       "[",
       field("indices", $.indices),
@@ -253,7 +281,7 @@ module.exports = grammar ({
     quantifier_expr_arith: $ => prec(-10, seq(
       field("quantifier", choice("min", "max", "sum")),
       "(",
-      field("arg", choice($.matrix, $.tuple_matrix_index_or_slice, $.identifier)),
+      field("arg", choice($.matrix, $.tuple_matrix_record_index_or_slice, $.identifier)),
       ")"
     )),
 

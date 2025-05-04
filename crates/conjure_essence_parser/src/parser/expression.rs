@@ -1,5 +1,6 @@
 #![allow(clippy::legacy_numeric_constants)]
 
+use conjure_core::ast::records::RecordValue;
 use tree_sitter::Node;
 
 use conjure_core::ast::{Atom, Domain, Expression, Literal, Name, Range};
@@ -73,7 +74,7 @@ pub fn parse_expression(
                 Atom::Reference(Name::UserName(variable_name)),
             ))
         }
-        "tuple_matrix_index_or_slice" => {
+        "tuple_matrix_record_index_or_slice" => {
             let tuple_or_matrix = child_expr(constraint, source_code, root)?;
             let indices_node = constraint
                 .child_by_field_name("indices")
@@ -134,6 +135,28 @@ pub fn parse_expression(
             Ok(Expression::AbstractLiteral(
                 Metadata::new(),
                 conjure_core::ast::AbstractLiteral::Matrix(elements, domain.unwrap()),
+            ))
+        }
+        "record" => {
+            let mut elements = vec![];
+            for element in named_children(&constraint) {
+                let name_node = element.child_by_field_name("name").ok_or(format!(
+                    "Missing name in record entry expression {}",
+                    element.kind()
+                ))?;
+                let name = Name::UserName(String::from(
+                    &source_code[name_node.start_byte()..name_node.end_byte()],
+                ));
+                let value_node = element.child_by_field_name("value").ok_or(format!(
+                    "Missing value in record entry expression {}",
+                    element.kind()
+                ))?;
+                let value = parse_expression(value_node, source_code, root)?;
+                elements.push(RecordValue { name, value });
+            }
+            Ok(Expression::AbstractLiteral(
+                Metadata::new(),
+                conjure_core::ast::AbstractLiteral::Record(elements),
             ))
         }
         "from_solution" => match root.kind() {

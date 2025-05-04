@@ -2,7 +2,7 @@
 use tree_sitter::Node;
 
 use super::util::named_children;
-use conjure_core::ast::{Domain, Name, Range};
+use conjure_core::ast::{Domain, Name, Range, RecordEntry};
 
 /// Parse an Essence variable domain into its Conjure AST representation.
 pub fn parse_domain(domain: Node, source_code: &str) -> Domain {
@@ -16,6 +16,7 @@ pub fn parse_domain(domain: Node, source_code: &str) -> Domain {
         }
         "tuple_domain" => parse_tuple_domain(domain, source_code),
         "matrix_domain" => parse_matrix_domain(domain, source_code),
+        "record_domain" => parse_record_domain(domain, source_code),
         _ => panic!("{} is not a supported domain type", domain.kind()),
     }
 }
@@ -96,4 +97,22 @@ fn parse_matrix_domain(matrix_domain: Node, source_code: &str) -> Domain {
         source_code,
     );
     Domain::DomainMatrix(Box::new(value_domain), domains)
+}
+
+fn parse_record_domain(record_domain: Node, source_code: &str) -> Domain {
+    let mut record_entries: Vec<RecordEntry> = Vec::new();
+    for record_entry in named_children(&record_domain) {
+        let name_node = record_entry
+            .child_by_field_name("name")
+            .expect("No name found for record entry");
+        let name = Name::UserName(String::from(
+            &source_code[name_node.start_byte()..name_node.end_byte()],
+        ));
+        let domain_node = record_entry
+            .child_by_field_name("domain")
+            .expect("No domain found for record entry");
+        let domain = parse_domain(domain_node, source_code);
+        record_entries.push(RecordEntry { name, domain });
+    }
+    Domain::DomainRecord(record_entries)
 }
