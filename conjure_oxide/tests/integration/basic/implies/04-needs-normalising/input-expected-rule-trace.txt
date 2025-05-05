@@ -24,7 +24,9 @@ Not((Not(x)) -> (Not(y))),
 Successful Tranformation: 
 Not((Not(x)) -> (Not(y))), 
 ~~> normalise_implies_negation [8800; Base]
-and([Not(x),Not(Not(y));int(1..)])  
+and([Not(x),Not(Not(y));int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -37,50 +39,66 @@ Not(x),
 Not(Not(y)),
 (Not(a)) -> (Not(b)),
 (c) -> ((d) -> (e)),
-((h) -> (f)) -> ((h) -> (g))  
+((h) -> (f)) -> ((h) -> (g))
+
+
 --
 
 Successful Tranformation: 
 (Not(a)) -> (Not(b)), 
 ~~> normalise_implies_contrapositive [8800; Base]
-(b) -> (a)  
+(b) -> (a)
+
+
 --
 
 Successful Tranformation: 
 ((h) -> (f)) -> ((h) -> (g)), 
 ~~> normalise_implies_left_distributivity [8800; Base]
-(h) -> ((f) -> (g))  
+(h) -> ((f) -> (g))
+
+
 --
 
 Successful Tranformation: 
 Not(Not(y)), 
 ~~> remove_double_negation [8400; Base]
-y  
+y
+
+
 --
 
 Successful Tranformation: 
 (c) -> ((d) -> (e)), 
 ~~> normalise_implies_uncurry [8400; Base]
-(and([c,d;int(1..)])) -> (e)  
+(and([c,d;int(1..)])) -> (e)
+
+
 --
 
 Successful Tranformation: 
 (h) -> ((f) -> (g)), 
 ~~> normalise_implies_uncurry [8400; Base]
-(and([h,f;int(1..)])) -> (g)  
+(and([h,f;int(1..)])) -> (g)
+
+
 --
 
 Successful Tranformation: 
 (b) -> (a), 
 ~~> introduce_reifyimply_ineq_from_imply [4400; Minion]
-Ineq(b, a, 0)  
+Ineq(b, a, 0)
+
+
 --
 
 Successful Tranformation: 
 (and([c,d;int(1..)])) -> (e), 
 ~~> flatten_imply [4200; Minion]
-(__0) -> (e) new variables:
-  find __0: bool new constraints:
+(__0) -> (e)
+new variables:
+  find __0: bool
+new constraints:
   __0 =aux and([c,d;int(1..)])
 
 --
@@ -88,20 +106,26 @@ Successful Tranformation:
 Successful Tranformation: 
 (__0) -> (e), 
 ~~> introduce_reifyimply_ineq_from_imply [4400; Minion]
-Ineq(__0, e, 0)  
+Ineq(__0, e, 0)
+
+
 --
 
 Successful Tranformation: 
 __0 =aux and([c,d;int(1..)]), 
 ~~> bool_eq_to_reify [4400; Minion]
-Reify(and([c,d;int(1..)]), __0)  
+Reify(and([c,d;int(1..)]), __0)
+
+
 --
 
 Successful Tranformation: 
 (and([h,f;int(1..)])) -> (g), 
 ~~> flatten_imply [4200; Minion]
-(__1) -> (g) new variables:
-  find __1: bool new constraints:
+(__1) -> (g)
+new variables:
+  find __1: bool
+new constraints:
   __1 =aux and([h,f;int(1..)])
 
 --
@@ -109,19 +133,25 @@ Successful Tranformation:
 Successful Tranformation: 
 (__1) -> (g), 
 ~~> introduce_reifyimply_ineq_from_imply [4400; Minion]
-Ineq(__1, g, 0)  
+Ineq(__1, g, 0)
+
+
 --
 
 Successful Tranformation: 
 __1 =aux and([h,f;int(1..)]), 
 ~~> bool_eq_to_reify [4400; Minion]
-Reify(and([h,f;int(1..)]), __1)  
+Reify(and([h,f;int(1..)]), __1)
+
+
 --
 
 Successful Tranformation: 
 Not(x), 
 ~~> not_literal_to_wliteral [4100; Minion]
-WatchedLiteral(x,false)  
+WatchedLiteral(x,false)
+
+
 --
 
 

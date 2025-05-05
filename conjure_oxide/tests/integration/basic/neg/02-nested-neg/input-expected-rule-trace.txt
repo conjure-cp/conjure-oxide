@@ -14,26 +14,34 @@ such that
 Successful Tranformation: 
 UnsafeDiv(-(y), z), 
 ~~> div_to_bubble [6000; Bubble]
-{SafeDiv(-(y), z) @ (z != 0)}  
+{SafeDiv(-(y), z) @ (z != 0)}
+
+
 --
 
 Successful Tranformation: 
 (x = {SafeDiv(-(y), z) @ (z != 0)}), 
 ~~> bubble_up [8900; Bubble]
-{(x = SafeDiv(-(y), z)) @ and([(z != 0);int(1..)])}  
+{(x = SafeDiv(-(y), z)) @ and([(z != 0);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 {(x = SafeDiv(-(y), z)) @ and([(z != 0);int(1..)])}, 
 ~~> expand_bubble [8900; Bubble]
-and([(x = SafeDiv(-(y), z)),and([(z != 0);int(1..)]);int(1..)])  
+and([(x = SafeDiv(-(y), z)),and([(z != 0);int(1..)]);int(1..)])
+
+
 --
 
 Successful Tranformation: 
 and([(x = SafeDiv(-(y), z)),and([(z != 0);int(1..)]);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (x = SafeDiv(-(y), z)),
-and([(z != 0);int(1..)])  
+and([(z != 0);int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -41,14 +49,18 @@ Successful Tranformation:
 and([(z != 0);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (x = SafeDiv(-(y), z)),
-(z != 0)  
+(z != 0)
+
+
 --
 
 Successful Tranformation: 
 SafeDiv(-(y), z), 
 ~~> flatten_generic [4200; Minion]
-SafeDiv(__0, z) new variables:
-  find __0: int(-1..1) new constraints:
+SafeDiv(__0, z)
+new variables:
+  find __0: int(-1..1)
+new constraints:
   __0 =aux -(y)
 
 --
@@ -56,13 +68,17 @@ SafeDiv(__0, z) new variables:
 Successful Tranformation: 
 __0 =aux -(y), 
 ~~> introduce_minuseq_from_aux_decl [4400; Minion]
-MinusEq(__0,y)  
+MinusEq(__0,y)
+
+
 --
 
 Successful Tranformation: 
 (x = SafeDiv(__0, z)), 
 ~~> introduce_diveq [4200; Minion]
-DivEq(__0, z, x)  
+DivEq(__0, z, x)
+
+
 --
 
 

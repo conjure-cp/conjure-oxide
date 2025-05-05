@@ -161,19 +161,7 @@ pub(crate) fn init_context(
         Kind::Rules,
     );
 
-    // tracing::info!(
-    //     target: "file",
-    //     "Rule sets: {}",
-    //     pretty_rule_sets
-    // );
-
     let rules = get_rules(&rule_sets)?.into_iter().collect::<Vec<_>>();
-
-    // tracing::info!(
-    //     target: "file",
-    //     "Rules: {}",
-    //     rules.iter().map(|rd| format!("{}", rd)).collect::<Vec<_>>().join("\n")
-    // );
 
     display_message(
         format!(

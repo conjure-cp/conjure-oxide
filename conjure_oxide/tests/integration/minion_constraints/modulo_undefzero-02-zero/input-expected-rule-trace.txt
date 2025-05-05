@@ -14,26 +14,34 @@ such that
 Successful Tranformation: 
 x % y, 
 ~~> mod_to_bubble [6000; Bubble]
-{SafeMod(x,y) @ (y != 0)}  
+{SafeMod(x,y) @ (y != 0)}
+
+
 --
 
 Successful Tranformation: 
 ({SafeMod(x,y) @ (y != 0)} = z), 
 ~~> bubble_up [8900; Bubble]
-{(SafeMod(x,y) = z) @ and([(y != 0);int(1..)])}  
+{(SafeMod(x,y) = z) @ and([(y != 0);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 {(SafeMod(x,y) = z) @ and([(y != 0);int(1..)])}, 
 ~~> expand_bubble [8900; Bubble]
-and([(SafeMod(x,y) = z),and([(y != 0);int(1..)]);int(1..)])  
+and([(SafeMod(x,y) = z),and([(y != 0);int(1..)]);int(1..)])
+
+
 --
 
 Successful Tranformation: 
 and([(SafeMod(x,y) = z),and([(y != 0);int(1..)]);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (SafeMod(x,y) = z),
-and([(y != 0);int(1..)])  
+and([(y != 0);int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -41,13 +49,17 @@ Successful Tranformation:
 and([(y != 0);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (SafeMod(x,y) = z),
-(y != 0)  
+(y != 0)
+
+
 --
 
 Successful Tranformation: 
 (SafeMod(x,y) = z), 
 ~~> introduce_modeq [4200; Minion]
-ModEq(x, y, z)  
+ModEq(x, y, z)
+
+
 --
 
 

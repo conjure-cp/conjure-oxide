@@ -12,26 +12,34 @@ such that
 Successful Tranformation: 
 UnsafeDiv(8, a), 
 ~~> div_to_bubble [6000; Bubble]
-{SafeDiv(8, a) @ (a != 0)}  
+{SafeDiv(8, a) @ (a != 0)}
+
+
 --
 
 Successful Tranformation: 
 (2 = {SafeDiv(8, a) @ (a != 0)}), 
 ~~> bubble_up [8900; Bubble]
-{(2 = SafeDiv(8, a)) @ and([(a != 0);int(1..)])}  
+{(2 = SafeDiv(8, a)) @ and([(a != 0);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 {(2 = SafeDiv(8, a)) @ and([(a != 0);int(1..)])}, 
 ~~> expand_bubble [8900; Bubble]
-and([(2 = SafeDiv(8, a)),and([(a != 0);int(1..)]);int(1..)])  
+and([(2 = SafeDiv(8, a)),and([(a != 0);int(1..)]);int(1..)])
+
+
 --
 
 Successful Tranformation: 
 and([(2 = SafeDiv(8, a)),and([(a != 0);int(1..)]);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (2 = SafeDiv(8, a)),
-and([(a != 0);int(1..)])  
+and([(a != 0);int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -39,13 +47,17 @@ Successful Tranformation:
 and([(a != 0);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (2 = SafeDiv(8, a)),
-(a != 0)  
+(a != 0)
+
+
 --
 
 Successful Tranformation: 
 (2 = SafeDiv(8, a)), 
 ~~> introduce_diveq [4200; Minion]
-DivEq(8, a, 2)  
+DivEq(8, a, 2)
+
+
 --
 
 

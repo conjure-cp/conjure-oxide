@@ -14,38 +14,50 @@ such that
 Successful Tranformation: 
 UnsafeDiv(y, z), 
 ~~> div_to_bubble [6000; Bubble]
-{SafeDiv(y, z) @ (z != 0)}  
+{SafeDiv(y, z) @ (z != 0)}
+
+
 --
 
 Successful Tranformation: 
 -({SafeDiv(y, z) @ (z != 0)}), 
 ~~> bubble_up [8900; Bubble]
-{-(SafeDiv(y, z)) @ and([(z != 0);int(1..)])}  
+{-(SafeDiv(y, z)) @ and([(z != 0);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 UnsafeDiv({-(SafeDiv(y, z)) @ and([(z != 0);int(1..)])}, z), 
 ~~> bubble_up [8900; Bubble]
-{UnsafeDiv(-(SafeDiv(y, z)), z) @ and([and([(z != 0);int(1..)]);int(1..)])}  
+{UnsafeDiv(-(SafeDiv(y, z)), z) @ and([and([(z != 0);int(1..)]);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 (x = {UnsafeDiv(-(SafeDiv(y, z)), z) @ and([and([(z != 0);int(1..)]);int(1..)])}), 
 ~~> bubble_up [8900; Bubble]
-{(x = UnsafeDiv(-(SafeDiv(y, z)), z)) @ and([and([and([(z != 0);int(1..)]);int(1..)]);int(1..)])}  
+{(x = UnsafeDiv(-(SafeDiv(y, z)), z)) @ and([and([and([(z != 0);int(1..)]);int(1..)]);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 {(x = UnsafeDiv(-(SafeDiv(y, z)), z)) @ and([and([and([(z != 0);int(1..)]);int(1..)]);int(1..)])}, 
 ~~> expand_bubble [8900; Bubble]
-and([(x = UnsafeDiv(-(SafeDiv(y, z)), z)),and([and([and([(z != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)])  
+and([(x = UnsafeDiv(-(SafeDiv(y, z)), z)),and([and([and([(z != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+
 --
 
 Successful Tranformation: 
 and([(x = UnsafeDiv(-(SafeDiv(y, z)), z)),and([and([and([(z != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (x = UnsafeDiv(-(SafeDiv(y, z)), z)),
-and([and([and([(z != 0);int(1..)]);int(1..)]);int(1..)])  
+and([and([and([(z != 0);int(1..)]);int(1..)]);int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -53,7 +65,9 @@ Successful Tranformation:
 and([and([and([(z != 0);int(1..)]);int(1..)]);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (x = UnsafeDiv(-(SafeDiv(y, z)), z)),
-and([and([(z != 0);int(1..)]);int(1..)])  
+and([and([(z != 0);int(1..)]);int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -61,7 +75,9 @@ Successful Tranformation:
 and([and([(z != 0);int(1..)]);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (x = UnsafeDiv(-(SafeDiv(y, z)), z)),
-and([(z != 0);int(1..)])  
+and([(z != 0);int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -69,25 +85,33 @@ Successful Tranformation:
 and([(z != 0);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (x = UnsafeDiv(-(SafeDiv(y, z)), z)),
-(z != 0)  
+(z != 0)
+
+
 --
 
 Successful Tranformation: 
 UnsafeDiv(-(SafeDiv(y, z)), z), 
 ~~> div_to_bubble [6000; Bubble]
-{SafeDiv(-(SafeDiv(y, z)), z) @ (z != 0)}  
+{SafeDiv(-(SafeDiv(y, z)), z) @ (z != 0)}
+
+
 --
 
 Successful Tranformation: 
 (x = {SafeDiv(-(SafeDiv(y, z)), z) @ (z != 0)}), 
 ~~> bubble_up [8900; Bubble]
-{(x = SafeDiv(-(SafeDiv(y, z)), z)) @ and([(z != 0);int(1..)])}  
+{(x = SafeDiv(-(SafeDiv(y, z)), z)) @ and([(z != 0);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 {(x = SafeDiv(-(SafeDiv(y, z)), z)) @ and([(z != 0);int(1..)])}, 
 ~~> expand_bubble [8900; Bubble]
-and([(x = SafeDiv(-(SafeDiv(y, z)), z)),and([(z != 0);int(1..)]);int(1..)])  
+and([(x = SafeDiv(-(SafeDiv(y, z)), z)),and([(z != 0);int(1..)]);int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -96,7 +120,9 @@ and([(x = SafeDiv(-(SafeDiv(y, z)), z)),and([(z != 0);int(1..)]);int(1..)]),
 ~~> partial_evaluator [9000; Base]
 (x = SafeDiv(-(SafeDiv(y, z)), z)),
 and([(z != 0);int(1..)]),
-(z != 0)  
+(z != 0)
+
+
 --
 
 Successful Tranformation: 
@@ -106,14 +132,18 @@ and([(z != 0);int(1..)]),
 ~~> partial_evaluator [9000; Base]
 (x = SafeDiv(-(SafeDiv(y, z)), z)),
 (z != 0),
-(z != 0)  
+(z != 0)
+
+
 --
 
 Successful Tranformation: 
 SafeDiv(-(SafeDiv(y, z)), z), 
 ~~> flatten_generic [4200; Minion]
-SafeDiv(__0, z) new variables:
-  find __0: int(-1..1) new constraints:
+SafeDiv(__0, z)
+new variables:
+  find __0: int(-1..1)
+new constraints:
   __0 =aux -(SafeDiv(y, z))
 
 --
@@ -121,14 +151,18 @@ SafeDiv(__0, z) new variables:
 Successful Tranformation: 
 (x = SafeDiv(__0, z)), 
 ~~> introduce_diveq [4200; Minion]
-DivEq(__0, z, x)  
+DivEq(__0, z, x)
+
+
 --
 
 Successful Tranformation: 
 -(SafeDiv(y, z)), 
 ~~> flatten_generic [4200; Minion]
--(__1) new variables:
-  find __1: int(-1..1) new constraints:
+-(__1)
+new variables:
+  find __1: int(-1..1)
+new constraints:
   __1 =aux SafeDiv(y, z)
 
 --
@@ -136,13 +170,17 @@ Successful Tranformation:
 Successful Tranformation: 
 __0 =aux -(__1), 
 ~~> introduce_minuseq_from_aux_decl [4400; Minion]
-MinusEq(__0,__1)  
+MinusEq(__0,__1)
+
+
 --
 
 Successful Tranformation: 
 __1 =aux SafeDiv(y, z), 
 ~~> introduce_diveq [4200; Minion]
-DivEq(y, z, __1)  
+DivEq(y, z, __1)
+
+
 --
 
 

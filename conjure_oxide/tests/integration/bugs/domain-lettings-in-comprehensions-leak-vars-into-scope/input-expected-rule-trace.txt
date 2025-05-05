@@ -13,25 +13,33 @@ and([(a[i] = i) | i: DOM,])
 Successful Tranformation: 
 and([(a[i] = i) | i: DOM,]), 
 ~~> substitute_domain_lettings [5000; Base]
-and([(a[i] = i) | i: DOM,])  
+and([(a[i] = i) | i: DOM,])
+
+
 --
 
 Successful Tranformation: 
 , 
 ~~> eval_root [9001; Constant]
-true  
+true
+
+
 --
 
 Successful Tranformation: 
 true, 
 ~~> substitute_domain_lettings [5000; Base]
-true  
+true
+
+
 --
 
 Successful Tranformation: 
 [(a[i] = i) | i: int(1..3),true], 
 ~~> expand_comprehension [1000; Base]
-[(a[1] = 1),(a[2] = 2),(a[3] = 3);int(1..)]  
+[(a[1] = 1),(a[2] = 2),(a[3] = 3);int(1..)]
+
+
 --
 
 Successful Tranformation: 
@@ -39,58 +47,76 @@ and([(a[1] = 1),(a[2] = 2),(a[3] = 3);int(1..)]),
 ~~> partial_evaluator [9000; Base]
 (a[1] = 1),
 (a[2] = 2),
-(a[3] = 3)  
+(a[3] = 3)
+
+
 --
 
 Successful Tranformation: 
 a, 
 ~~> select_representation [8000; Base]
-a#matrix_to_atom new variables:
+a#matrix_to_atom
+new variables:
   find a#matrix_to_atom_1: int(1..3)
   find a#matrix_to_atom_2: int(1..3)
-  find a#matrix_to_atom_3: int(1..3) 
+  find a#matrix_to_atom_3: int(1..3)
+
 --
 
 Successful Tranformation: 
 a, 
 ~~> select_representation [8000; Base]
-a#matrix_to_atom  
+a#matrix_to_atom
+
+
 --
 
 Successful Tranformation: 
 a, 
 ~~> select_representation [8000; Base]
-a#matrix_to_atom  
+a#matrix_to_atom
+
+
 --
 
 Successful Tranformation: 
 a#matrix_to_atom[1], 
 ~~> index_to_bubble [6000; Bubble]
-{a#matrix_to_atom[1] @ and([__inDomain(1,int(1..3));int(1..)])}  
+{a#matrix_to_atom[1] @ and([__inDomain(1,int(1..3));int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 and([__inDomain(1,int(1..3));int(1..)]), 
 ~~> constant_evaluator [9001; Constant]
-true  
+true
+
+
 --
 
 Successful Tranformation: 
 ({a#matrix_to_atom[1] @ true} = 1), 
 ~~> bubble_up [8900; Bubble]
-{(a#matrix_to_atom[1] = 1) @ and([true;int(1..)])}  
+{(a#matrix_to_atom[1] = 1) @ and([true;int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 and([true;int(1..)]), 
 ~~> constant_evaluator [9001; Constant]
-true  
+true
+
+
 --
 
 Successful Tranformation: 
 {(a#matrix_to_atom[1] = 1) @ true}, 
 ~~> expand_bubble [8900; Bubble]
-and([(a#matrix_to_atom[1] = 1),true;int(1..)])  
+and([(a#matrix_to_atom[1] = 1),true;int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -101,7 +127,9 @@ and([(a#matrix_to_atom[1] = 1),true;int(1..)]),
 (a#matrix_to_atom[1] = 1),
 true,
 (a#matrix_to_atom[2] = 2),
-(a#matrix_to_atom[3] = 3)  
+(a#matrix_to_atom[3] = 3)
+
+
 --
 
 Successful Tranformation: 
@@ -112,37 +140,49 @@ true,
 ~~> partial_evaluator [9000; Base]
 (a#matrix_to_atom[1] = 1),
 (a#matrix_to_atom[2] = 2),
-(a#matrix_to_atom[3] = 3)  
+(a#matrix_to_atom[3] = 3)
+
+
 --
 
 Successful Tranformation: 
 a#matrix_to_atom[2], 
 ~~> index_to_bubble [6000; Bubble]
-{a#matrix_to_atom[2] @ and([__inDomain(2,int(1..3));int(1..)])}  
+{a#matrix_to_atom[2] @ and([__inDomain(2,int(1..3));int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 and([__inDomain(2,int(1..3));int(1..)]), 
 ~~> constant_evaluator [9001; Constant]
-true  
+true
+
+
 --
 
 Successful Tranformation: 
 ({a#matrix_to_atom[2] @ true} = 2), 
 ~~> bubble_up [8900; Bubble]
-{(a#matrix_to_atom[2] = 2) @ and([true;int(1..)])}  
+{(a#matrix_to_atom[2] = 2) @ and([true;int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 and([true;int(1..)]), 
 ~~> constant_evaluator [9001; Constant]
-true  
+true
+
+
 --
 
 Successful Tranformation: 
 {(a#matrix_to_atom[2] = 2) @ true}, 
 ~~> expand_bubble [8900; Bubble]
-and([(a#matrix_to_atom[2] = 2),true;int(1..)])  
+and([(a#matrix_to_atom[2] = 2),true;int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -153,7 +193,9 @@ and([(a#matrix_to_atom[2] = 2),true;int(1..)]),
 (a#matrix_to_atom[1] = 1),
 (a#matrix_to_atom[2] = 2),
 true,
-(a#matrix_to_atom[3] = 3)  
+(a#matrix_to_atom[3] = 3)
+
+
 --
 
 Successful Tranformation: 
@@ -164,37 +206,49 @@ true,
 ~~> partial_evaluator [9000; Base]
 (a#matrix_to_atom[1] = 1),
 (a#matrix_to_atom[2] = 2),
-(a#matrix_to_atom[3] = 3)  
+(a#matrix_to_atom[3] = 3)
+
+
 --
 
 Successful Tranformation: 
 a#matrix_to_atom[3], 
 ~~> index_to_bubble [6000; Bubble]
-{a#matrix_to_atom[3] @ and([__inDomain(3,int(1..3));int(1..)])}  
+{a#matrix_to_atom[3] @ and([__inDomain(3,int(1..3));int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 and([__inDomain(3,int(1..3));int(1..)]), 
 ~~> constant_evaluator [9001; Constant]
-true  
+true
+
+
 --
 
 Successful Tranformation: 
 ({a#matrix_to_atom[3] @ true} = 3), 
 ~~> bubble_up [8900; Bubble]
-{(a#matrix_to_atom[3] = 3) @ and([true;int(1..)])}  
+{(a#matrix_to_atom[3] = 3) @ and([true;int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 and([true;int(1..)]), 
 ~~> constant_evaluator [9001; Constant]
-true  
+true
+
+
 --
 
 Successful Tranformation: 
 {(a#matrix_to_atom[3] = 3) @ true}, 
 ~~> expand_bubble [8900; Bubble]
-and([(a#matrix_to_atom[3] = 3),true;int(1..)])  
+and([(a#matrix_to_atom[3] = 3),true;int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -205,7 +259,9 @@ and([(a#matrix_to_atom[3] = 3),true;int(1..)]),
 (a#matrix_to_atom[1] = 1),
 (a#matrix_to_atom[2] = 2),
 (a#matrix_to_atom[3] = 3),
-true  
+true
+
+
 --
 
 Successful Tranformation: 
@@ -216,25 +272,33 @@ true,
 ~~> partial_evaluator [9000; Base]
 (a#matrix_to_atom[1] = 1),
 (a#matrix_to_atom[2] = 2),
-(a#matrix_to_atom[3] = 3)  
+(a#matrix_to_atom[3] = 3)
+
+
 --
 
 Successful Tranformation: 
 a#matrix_to_atom[1], 
 ~~> index_matrix_to_atom [2000; Base]
-a#matrix_to_atom_1  
+a#matrix_to_atom_1
+
+
 --
 
 Successful Tranformation: 
 a#matrix_to_atom[2], 
 ~~> index_matrix_to_atom [2000; Base]
-a#matrix_to_atom_2  
+a#matrix_to_atom_2
+
+
 --
 
 Successful Tranformation: 
 a#matrix_to_atom[3], 
 ~~> index_matrix_to_atom [2000; Base]
-a#matrix_to_atom_3  
+a#matrix_to_atom_3
+
+
 --
 
 

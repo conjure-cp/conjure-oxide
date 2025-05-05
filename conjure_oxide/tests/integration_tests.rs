@@ -431,7 +431,8 @@ fn integration_test_inner(
         }
 
         if config.validate_rule_traces {
-            copy_generated_to_expected(path, essence_base, "rule-trace", extension)?;
+            // first the path to rule traces has to be fixed
+            // copy_generated_to_expected_rules(path, essence_base, "rule-trace", extension)?;
             save_stats_json(context.clone(), path, essence_base)?;
         }
     }

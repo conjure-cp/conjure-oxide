@@ -16,62 +16,82 @@ such that
 Successful Tranformation: 
 Sum([Sum([-(y),-((Sum([z,1;int(1..2)]) - a));int(1..2)]),b;int(1..2)]), 
 ~~> normalise_associative_commutative [8900; Base]
-Sum([-(y),-((Sum([z,1;int(1..2)]) - a)),b;int(1..2)])  
+Sum([-(y),-((Sum([z,1;int(1..2)]) - a)),b;int(1..2)])
+
+
 --
 
 Successful Tranformation: 
 (Sum([z,1;int(1..2)]) - a), 
 ~~> minus_to_sum [8400; Base]
-Sum([Sum([z,1;int(1..2)]),-(a);int(1..)])  
+Sum([Sum([z,1;int(1..2)]),-(a);int(1..)])
+
+
 --
 
 Successful Tranformation: 
 Sum([Sum([z,1;int(1..2)]),-(a);int(1..)]), 
 ~~> normalise_associative_commutative [8900; Base]
-Sum([z,1,-(a);int(1..)])  
+Sum([z,1,-(a);int(1..)])
+
+
 --
 
 Successful Tranformation: 
 -(Sum([z,1,-(a);int(1..)])), 
 ~~> distribute_negation_over_sum [8400; Base]
-Sum([-(z),-(1),-(-(a));int(1..)])  
+Sum([-(z),-(1),-(-(a));int(1..)])
+
+
 --
 
 Successful Tranformation: 
 -(1), 
 ~~> constant_evaluator [9001; Constant]
--1  
+-1
+
+
 --
 
 Successful Tranformation: 
 Sum([-(y),Sum([-(z),-1,-(-(a));int(1..)]),b;int(1..2)]), 
 ~~> normalise_associative_commutative [8900; Base]
-Sum([-(y),-(z),-1,-(-(a)),b;int(1..2)])  
+Sum([-(y),-(z),-1,-(-(a)),b;int(1..2)])
+
+
 --
 
 Successful Tranformation: 
 -(-(a)), 
 ~~> elmininate_double_negation [8400; Base]
-a  
+a
+
+
 --
 
 Successful Tranformation: 
 Sum([-(y),-(z),-1,a,b;int(1..2)]), 
 ~~> matrix_to_list [2000; Base]
-Sum([-(y),-(z),-1,a,b;int(1..)])  
+Sum([-(y),-(z),-1,a,b;int(1..)])
+
+
 --
 
 Successful Tranformation: 
 (x = Sum([-(y),-(z),-1,a,b;int(1..)])), 
 ~~> introduce_weighted_sumleq_sumgeq [4600; Minion]
-and([FlatWeightedSumLeq([-1, -1, 1, 1, 1],[y, z, -1, a, b],x),FlatWeightedSumGeq([-1, -1, 1, 1, 1],[y, z, -1, a, b],x);int(1..)])  
+and([FlatWeightedSumLeq([-1, -1, 1, 1, 1],[y, z, -1, a, b],x),FlatWeightedSumGeq([-1, -1, 1, 1, 1],[y, z, -1, a, b],x);int(1..)])
+
+
 --
 
 Successful Tranformation: 
 and([FlatWeightedSumLeq([-1, -1, 1, 1, 1],[y, z, -1, a, b],x),FlatWeightedSumGeq([-1, -1, 1, 1, 1],[y, z, -1, a, b],x);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 FlatWeightedSumLeq([-1, -1, 1, 1, 1],[y, z, -1, a, b],x),
-FlatWeightedSumGeq([-1, -1, 1, 1, 1],[y, z, -1, a, b],x)  
+FlatWeightedSumGeq([-1, -1, 1, 1, 1],[y, z, -1, a, b],x)
+
+
 --
 
 

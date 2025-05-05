@@ -14,26 +14,34 @@ such that
 Successful Tranformation: 
 UnsafeDiv(b, c), 
 ~~> div_to_bubble [6000; Bubble]
-{SafeDiv(b, c) @ (c != 0)}  
+{SafeDiv(b, c) @ (c != 0)}
+
+
 --
 
 Successful Tranformation: 
 (a != {SafeDiv(b, c) @ (c != 0)}), 
 ~~> bubble_up [8900; Bubble]
-{(a != SafeDiv(b, c)) @ and([(c != 0);int(1..)])}  
+{(a != SafeDiv(b, c)) @ and([(c != 0);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 {(a != SafeDiv(b, c)) @ and([(c != 0);int(1..)])}, 
 ~~> expand_bubble [8900; Bubble]
-and([(a != SafeDiv(b, c)),and([(c != 0);int(1..)]);int(1..)])  
+and([(a != SafeDiv(b, c)),and([(c != 0);int(1..)]);int(1..)])
+
+
 --
 
 Successful Tranformation: 
 and([(a != SafeDiv(b, c)),and([(c != 0);int(1..)]);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (a != SafeDiv(b, c)),
-and([(c != 0);int(1..)])  
+and([(c != 0);int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -41,14 +49,18 @@ Successful Tranformation:
 and([(c != 0);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (a != SafeDiv(b, c)),
-(c != 0)  
+(c != 0)
+
+
 --
 
 Successful Tranformation: 
 (a != SafeDiv(b, c)), 
 ~~> flatten_generic [4200; Minion]
-(a != __0) new variables:
-  find __0: int(0..3) new constraints:
+(a != __0)
+new variables:
+  find __0: int(0..3)
+new constraints:
   __0 =aux SafeDiv(b, c)
 
 --
@@ -56,7 +68,9 @@ Successful Tranformation:
 Successful Tranformation: 
 __0 =aux SafeDiv(b, c), 
 ~~> introduce_diveq [4200; Minion]
-DivEq(b, c, __0)  
+DivEq(b, c, __0)
+
+
 --
 
 

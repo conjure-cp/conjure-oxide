@@ -13,39 +13,51 @@ such that
 Successful Tranformation: 
 x, 
 ~~> select_representation [8000; Base]
-x#tuple_to_atom new variables:
+x#tuple_to_atom
+new variables:
   find x#tuple_to_atom_1: bool
-  find x#tuple_to_atom_2: int(1..4) 
+  find x#tuple_to_atom_2: int(1..4)
+
 --
 
 Successful Tranformation: 
 x#tuple_to_atom[1], 
 ~~> tuple_index_to_bubble [8000; Bubble]
-{x#tuple_to_atom[1] @ and([(1 <= 2),(1 >= 1);int(1..)])}  
+{x#tuple_to_atom[1] @ and([(1 <= 2),(1 >= 1);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 and([(1 <= 2),(1 >= 1);int(1..)]), 
 ~~> constant_evaluator [9001; Constant]
-true  
+true
+
+
 --
 
 Successful Tranformation: 
 ({x#tuple_to_atom[1] @ true} = false), 
 ~~> bubble_up [8900; Bubble]
-{(x#tuple_to_atom[1] = false) @ and([true;int(1..)])}  
+{(x#tuple_to_atom[1] = false) @ and([true;int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 and([true;int(1..)]), 
 ~~> constant_evaluator [9001; Constant]
-true  
+true
+
+
 --
 
 Successful Tranformation: 
 {(x#tuple_to_atom[1] = false) @ true}, 
 ~~> expand_bubble [8900; Bubble]
-and([(x#tuple_to_atom[1] = false),true;int(1..)])  
+and([(x#tuple_to_atom[1] = false),true;int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -54,7 +66,9 @@ and([(x#tuple_to_atom[1] = false),true;int(1..)]),
 ~~> partial_evaluator [9000; Base]
 (x#tuple_to_atom[1] = false),
 true,
-(x[2] = 2)  
+(x[2] = 2)
+
+
 --
 
 Successful Tranformation: 
@@ -63,43 +77,57 @@ true,
 (x[2] = 2), 
 ~~> partial_evaluator [9000; Base]
 (x#tuple_to_atom[1] = false),
-(x[2] = 2)  
+(x[2] = 2)
+
+
 --
 
 Successful Tranformation: 
 x, 
 ~~> select_representation [8000; Base]
-x#tuple_to_atom  
+x#tuple_to_atom
+
+
 --
 
 Successful Tranformation: 
 x#tuple_to_atom[2], 
 ~~> tuple_index_to_bubble [8000; Bubble]
-{x#tuple_to_atom[2] @ and([(2 <= 2),(2 >= 1);int(1..)])}  
+{x#tuple_to_atom[2] @ and([(2 <= 2),(2 >= 1);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 and([(2 <= 2),(2 >= 1);int(1..)]), 
 ~~> constant_evaluator [9001; Constant]
-true  
+true
+
+
 --
 
 Successful Tranformation: 
 ({x#tuple_to_atom[2] @ true} = 2), 
 ~~> bubble_up [8900; Bubble]
-{(x#tuple_to_atom[2] = 2) @ and([true;int(1..)])}  
+{(x#tuple_to_atom[2] = 2) @ and([true;int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 and([true;int(1..)]), 
 ~~> constant_evaluator [9001; Constant]
-true  
+true
+
+
 --
 
 Successful Tranformation: 
 {(x#tuple_to_atom[2] = 2) @ true}, 
 ~~> expand_bubble [8900; Bubble]
-and([(x#tuple_to_atom[2] = 2),true;int(1..)])  
+and([(x#tuple_to_atom[2] = 2),true;int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -108,7 +136,9 @@ and([(x#tuple_to_atom[2] = 2),true;int(1..)]),
 ~~> partial_evaluator [9000; Base]
 (x#tuple_to_atom[1] = false),
 (x#tuple_to_atom[2] = 2),
-true  
+true
+
+
 --
 
 Successful Tranformation: 
@@ -117,25 +147,33 @@ Successful Tranformation:
 true, 
 ~~> partial_evaluator [9000; Base]
 (x#tuple_to_atom[1] = false),
-(x#tuple_to_atom[2] = 2)  
+(x#tuple_to_atom[2] = 2)
+
+
 --
 
 Successful Tranformation: 
 x#tuple_to_atom[1], 
 ~~> index_tuple_to_atom [2000; Base]
-x#tuple_to_atom_1  
+x#tuple_to_atom_1
+
+
 --
 
 Successful Tranformation: 
 (x#tuple_to_atom_1 = false), 
 ~~> bool_eq_to_reify [4400; Minion]
-Reify(false, x#tuple_to_atom_1)  
+Reify(false, x#tuple_to_atom_1)
+
+
 --
 
 Successful Tranformation: 
 x#tuple_to_atom[2], 
 ~~> index_tuple_to_atom [2000; Base]
-x#tuple_to_atom_2  
+x#tuple_to_atom_2
+
+
 --
 
 

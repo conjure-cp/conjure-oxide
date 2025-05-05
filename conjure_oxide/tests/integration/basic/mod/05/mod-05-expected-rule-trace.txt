@@ -14,26 +14,34 @@ such that
 Successful Tranformation: 
 b % c, 
 ~~> mod_to_bubble [6000; Bubble]
-{SafeMod(b,c) @ (c != 0)}  
+{SafeMod(b,c) @ (c != 0)}
+
+
 --
 
 Successful Tranformation: 
 (a != {SafeMod(b,c) @ (c != 0)}), 
 ~~> bubble_up [8900; Bubble]
-{(a != SafeMod(b,c)) @ and([(c != 0);int(1..)])}  
+{(a != SafeMod(b,c)) @ and([(c != 0);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 {(a != SafeMod(b,c)) @ and([(c != 0);int(1..)])}, 
 ~~> expand_bubble [8900; Bubble]
-and([(a != SafeMod(b,c)),and([(c != 0);int(1..)]);int(1..)])  
+and([(a != SafeMod(b,c)),and([(c != 0);int(1..)]);int(1..)])
+
+
 --
 
 Successful Tranformation: 
 and([(a != SafeMod(b,c)),and([(c != 0);int(1..)]);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (a != SafeMod(b,c)),
-and([(c != 0);int(1..)])  
+and([(c != 0);int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -41,14 +49,18 @@ Successful Tranformation:
 and([(c != 0);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (a != SafeMod(b,c)),
-(c != 0)  
+(c != 0)
+
+
 --
 
 Successful Tranformation: 
 (a != SafeMod(b,c)), 
 ~~> flatten_generic [4200; Minion]
-(a != __0) new variables:
-  find __0: int(0..2) new constraints:
+(a != __0)
+new variables:
+  find __0: int(0..2)
+new constraints:
   __0 =aux SafeMod(b,c)
 
 --
@@ -56,7 +68,9 @@ Successful Tranformation:
 Successful Tranformation: 
 __0 =aux SafeMod(b,c), 
 ~~> introduce_modeq [4200; Minion]
-ModEq(b, c, __0)  
+ModEq(b, c, __0)
+
+
 --
 
 

@@ -14,26 +14,34 @@ such that
 Successful Tranformation: 
 Product([Product([x, y]), z]), 
 ~~> normalise_associative_commutative [8900; Base]
-Product([x, y, z])  
+Product([x, y, z])
+
+
 --
 
 Successful Tranformation: 
 (Product([x, y, z]) < 15), 
 ~~> lt_to_leq [8400; Minion]
-(Product([x, y, z]) <= Sum([15,-1;int(1..)]))  
+(Product([x, y, z]) <= Sum([15,-1;int(1..)]))
+
+
 --
 
 Successful Tranformation: 
 Sum([15,-1;int(1..)]), 
 ~~> constant_evaluator [9001; Constant]
-14  
+14
+
+
 --
 
 Successful Tranformation: 
 (Product([x, y, z]) <= 14), 
 ~~> flatten_generic [4200; Minion]
-(__0 <= 14) new variables:
-  find __0: int(8..64) new constraints:
+(__0 <= 14)
+new variables:
+  find __0: int(8..64)
+new constraints:
   __0 =aux Product([x, y, z])
 
 --
@@ -41,8 +49,10 @@ Successful Tranformation:
 Successful Tranformation: 
 __0 =aux Product([x, y, z]), 
 ~~> introduce_producteq [4200; Minion]
-FlatProductEq(z,__1,__0) new variables:
-  find __1: int(4..16) new constraints:
+FlatProductEq(z,__1,__0)
+new variables:
+  find __1: int(4..16)
+new constraints:
   FlatProductEq(y,x,__1)
 
 --
@@ -50,7 +60,9 @@ FlatProductEq(z,__1,__0) new variables:
 Successful Tranformation: 
 (__0 <= 14), 
 ~~> leq_to_ineq [4100; Minion]
-Ineq(__0, 14, 0)  
+Ineq(__0, 14, 0)
+
+
 --
 
 

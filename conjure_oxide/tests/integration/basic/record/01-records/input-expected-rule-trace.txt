@@ -18,39 +18,51 @@ such that
 Successful Tranformation: 
 x, 
 ~~> select_representation [8000; Base]
-x#record_to_atom new variables:
+x#record_to_atom
+new variables:
   find x#record_to_atom_1: bool
-  find x#record_to_atom_2: int(0..9) 
+  find x#record_to_atom_2: int(0..9)
+
 --
 
 Successful Tranformation: 
 x#record_to_atom[a], 
 ~~> record_index_to_bubble [8000; Bubble]
-{x#record_to_atom[1] @ and([(1 <= 2),(1 >= 1);int(1..)])}  
+{x#record_to_atom[1] @ and([(1 <= 2),(1 >= 1);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 and([(1 <= 2),(1 >= 1);int(1..)]), 
 ~~> constant_evaluator [9001; Constant]
-true  
+true
+
+
 --
 
 Successful Tranformation: 
 ({x#record_to_atom[1] @ true} = true), 
 ~~> bubble_up [8900; Bubble]
-{(x#record_to_atom[1] = true) @ and([true;int(1..)])}  
+{(x#record_to_atom[1] = true) @ and([true;int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 and([true;int(1..)]), 
 ~~> constant_evaluator [9001; Constant]
-true  
+true
+
+
 --
 
 Successful Tranformation: 
 {(x#record_to_atom[1] = true) @ true}, 
 ~~> expand_bubble [8900; Bubble]
-and([(x#record_to_atom[1] = true),true;int(1..)])  
+and([(x#record_to_atom[1] = true),true;int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -63,7 +75,9 @@ and([(x#record_to_atom[1] = true),true;int(1..)]),
 true,
 (x[b] = 3),
 (y = {a: false,b: 4}),
-(y = z)  
+(y = z)
+
+
 --
 
 Successful Tranformation: 
@@ -76,43 +90,57 @@ true,
 (x#record_to_atom[1] = true),
 (x[b] = 3),
 (y = {a: false,b: 4}),
-(y = z)  
+(y = z)
+
+
 --
 
 Successful Tranformation: 
 x, 
 ~~> select_representation [8000; Base]
-x#record_to_atom  
+x#record_to_atom
+
+
 --
 
 Successful Tranformation: 
 x#record_to_atom[b], 
 ~~> record_index_to_bubble [8000; Bubble]
-{x#record_to_atom[2] @ and([(2 <= 2),(2 >= 1);int(1..)])}  
+{x#record_to_atom[2] @ and([(2 <= 2),(2 >= 1);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 and([(2 <= 2),(2 >= 1);int(1..)]), 
 ~~> constant_evaluator [9001; Constant]
-true  
+true
+
+
 --
 
 Successful Tranformation: 
 ({x#record_to_atom[2] @ true} = 3), 
 ~~> bubble_up [8900; Bubble]
-{(x#record_to_atom[2] = 3) @ and([true;int(1..)])}  
+{(x#record_to_atom[2] = 3) @ and([true;int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 and([true;int(1..)]), 
 ~~> constant_evaluator [9001; Constant]
-true  
+true
+
+
 --
 
 Successful Tranformation: 
 {(x#record_to_atom[2] = 3) @ true}, 
 ~~> expand_bubble [8900; Bubble]
-and([(x#record_to_atom[2] = 3),true;int(1..)])  
+and([(x#record_to_atom[2] = 3),true;int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -125,7 +153,9 @@ and([(x#record_to_atom[2] = 3),true;int(1..)]),
 (x#record_to_atom[2] = 3),
 true,
 (y = {a: false,b: 4}),
-(y = z)  
+(y = z)
+
+
 --
 
 Successful Tranformation: 
@@ -138,29 +168,37 @@ true,
 (x#record_to_atom[1] = true),
 (x#record_to_atom[2] = 3),
 (y = {a: false,b: 4}),
-(y = z)  
+(y = z)
+
+
 --
 
 Successful Tranformation: 
 y, 
 ~~> select_representation [8000; Base]
-y#record_to_atom new variables:
+y#record_to_atom
+new variables:
   find y#record_to_atom_1: bool
-  find y#record_to_atom_2: int(0..9) 
+  find y#record_to_atom_2: int(0..9)
+
 --
 
 Successful Tranformation: 
 y, 
 ~~> select_representation [8000; Base]
-y#record_to_atom  
+y#record_to_atom
+
+
 --
 
 Successful Tranformation: 
 z, 
 ~~> select_representation [8000; Base]
-z#record_to_atom new variables:
+z#record_to_atom
+new variables:
   find z#record_to_atom_1: bool
-  find z#record_to_atom_2: int(0..9) 
+  find z#record_to_atom_2: int(0..9)
+
 --
 
 Successful Tranformation: 
@@ -172,43 +210,57 @@ Successful Tranformation:
 (x#record_to_atom[1] = true),
 (x#record_to_atom[2] = 3),
 (y#record_to_atom = {a: false,b: 4}),
-(y#record_to_atom = z#record_to_atom)  
+(y#record_to_atom = z#record_to_atom)
+
+
 --
 
 Successful Tranformation: 
 x#record_to_atom[1], 
 ~~> index_record_to_atom [2000; Base]
-x#record_to_atom_1  
+x#record_to_atom_1
+
+
 --
 
 Successful Tranformation: 
 (x#record_to_atom_1 = true), 
 ~~> bool_eq_to_reify [4400; Minion]
-Reify(true, x#record_to_atom_1)  
+Reify(true, x#record_to_atom_1)
+
+
 --
 
 Successful Tranformation: 
 x#record_to_atom[2], 
 ~~> index_record_to_atom [2000; Base]
-x#record_to_atom_2  
+x#record_to_atom_2
+
+
 --
 
 Successful Tranformation: 
 (y#record_to_atom = {a: false,b: 4}), 
 ~~> record_to_const [2000; Base]
-and([(y#record_to_atom[1] = {a: false,b: 4}[1]),(y#record_to_atom[2] = {a: false,b: 4}[2]);int(1..)])  
+and([(y#record_to_atom[1] = {a: false,b: 4}[1]),(y#record_to_atom[2] = {a: false,b: 4}[2]);int(1..)])
+
+
 --
 
 Successful Tranformation: 
 {a: false,b: 4}[1], 
 ~~> constant_evaluator [9001; Constant]
-false  
+false
+
+
 --
 
 Successful Tranformation: 
 {a: false,b: 4}[2], 
 ~~> constant_evaluator [9001; Constant]
-4  
+4
+
+
 --
 
 Successful Tranformation: 
@@ -221,31 +273,41 @@ Reify(true, x#record_to_atom_1),
 (x#record_to_atom_2 = 3),
 (y#record_to_atom[1] = false),
 (y#record_to_atom[2] = 4),
-(y#record_to_atom = z#record_to_atom)  
+(y#record_to_atom = z#record_to_atom)
+
+
 --
 
 Successful Tranformation: 
 y#record_to_atom[1], 
 ~~> index_record_to_atom [2000; Base]
-y#record_to_atom_1  
+y#record_to_atom_1
+
+
 --
 
 Successful Tranformation: 
 (y#record_to_atom_1 = false), 
 ~~> bool_eq_to_reify [4400; Minion]
-Reify(false, y#record_to_atom_1)  
+Reify(false, y#record_to_atom_1)
+
+
 --
 
 Successful Tranformation: 
 y#record_to_atom[2], 
 ~~> index_record_to_atom [2000; Base]
-y#record_to_atom_2  
+y#record_to_atom_2
+
+
 --
 
 Successful Tranformation: 
 (y#record_to_atom = z#record_to_atom), 
 ~~> record_equality [2000; Base]
-and([(y#record_to_atom[1] = z#record_to_atom[1]),(y#record_to_atom[2] = z#record_to_atom[2]);int(1..)])  
+and([(y#record_to_atom[1] = z#record_to_atom[1]),(y#record_to_atom[2] = z#record_to_atom[2]);int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -260,31 +322,41 @@ Reify(true, x#record_to_atom_1),
 Reify(false, y#record_to_atom_1),
 (y#record_to_atom_2 = 4),
 (y#record_to_atom[1] = z#record_to_atom[1]),
-(y#record_to_atom[2] = z#record_to_atom[2])  
+(y#record_to_atom[2] = z#record_to_atom[2])
+
+
 --
 
 Successful Tranformation: 
 y#record_to_atom[1], 
 ~~> index_record_to_atom [2000; Base]
-y#record_to_atom_1  
+y#record_to_atom_1
+
+
 --
 
 Successful Tranformation: 
 z#record_to_atom[1], 
 ~~> index_record_to_atom [2000; Base]
-z#record_to_atom_1  
+z#record_to_atom_1
+
+
 --
 
 Successful Tranformation: 
 y#record_to_atom[2], 
 ~~> index_record_to_atom [2000; Base]
-y#record_to_atom_2  
+y#record_to_atom_2
+
+
 --
 
 Successful Tranformation: 
 z#record_to_atom[2], 
 ~~> index_record_to_atom [2000; Base]
-z#record_to_atom_2  
+z#record_to_atom_2
+
+
 --
 
 

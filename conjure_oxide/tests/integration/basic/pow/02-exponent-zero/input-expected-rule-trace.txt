@@ -13,26 +13,34 @@ such that
 Successful Tranformation: 
 UnsafePow(x, y), 
 ~~> pow_to_bubble [6000; Bubble]
-{SafePow(x, y) @ and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)])}  
+{SafePow(x, y) @ and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 ({SafePow(x, y) @ and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)])} = 4), 
 ~~> bubble_up [8900; Bubble]
-{(SafePow(x, y) = 4) @ and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)])}  
+{(SafePow(x, y) = 4) @ and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 {(SafePow(x, y) = 4) @ and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)])}, 
 ~~> expand_bubble [8900; Bubble]
-and([(SafePow(x, y) = 4),and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)]);int(1..)])  
+and([(SafePow(x, y) = 4),and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)]);int(1..)])
+
+
 --
 
 Successful Tranformation: 
 and([(SafePow(x, y) = 4),and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)]);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (SafePow(x, y) = 4),
-and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)])  
+and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -40,7 +48,9 @@ Successful Tranformation:
 and([and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (SafePow(x, y) = 4),
-and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)])  
+and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -49,19 +59,25 @@ and([or([(x != 0),(y != 0);int(1..)]),(y >= 0);int(1..)]),
 ~~> partial_evaluator [9000; Base]
 (SafePow(x, y) = 4),
 or([(x != 0),(y != 0);int(1..)]),
-(y >= 0)  
+(y >= 0)
+
+
 --
 
 Successful Tranformation: 
 (SafePow(x, y) = 4), 
 ~~> introduce_poweq [4200; Minion]
-MinionPow(x,y,4)  
+MinionPow(x,y,4)
+
+
 --
 
 Successful Tranformation: 
 (y >= 0), 
 ~~> geq_to_ineq [4100; Minion]
-Ineq(0, y, 0)  
+Ineq(0, y, 0)
+
+
 --
 
 

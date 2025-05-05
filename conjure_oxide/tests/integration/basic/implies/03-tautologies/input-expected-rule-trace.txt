@@ -19,7 +19,9 @@ or([(b) -> (c),(b) -> (Not(c));int(1..2)])
 Successful Tranformation: 
 (x) -> (x), 
 ~~> partial_evaluator [9000; Base]
-true  
+true
+
+
 --
 
 Successful Tranformation: 
@@ -28,49 +30,65 @@ or([(a) -> (z),(z) -> (a);int(1..2)]),
 or([(b) -> (c),(b) -> (Not(c));int(1..2)]), 
 ~~> partial_evaluator [9000; Base]
 or([(a) -> (z),(z) -> (a);int(1..2)]),
-or([(b) -> (c),(b) -> (Not(c));int(1..2)])  
+or([(b) -> (c),(b) -> (Not(c));int(1..2)])
+
+
 --
 
 Successful Tranformation: 
 (a) -> (z), 
 ~~> introduce_reifyimply_ineq_from_imply [4400; Minion]
-Ineq(a, z, 0)  
+Ineq(a, z, 0)
+
+
 --
 
 Successful Tranformation: 
 (z) -> (a), 
 ~~> introduce_reifyimply_ineq_from_imply [4400; Minion]
-Ineq(z, a, 0)  
+Ineq(z, a, 0)
+
+
 --
 
 Successful Tranformation: 
 (b) -> (c), 
 ~~> introduce_reifyimply_ineq_from_imply [4400; Minion]
-Ineq(b, c, 0)  
+Ineq(b, c, 0)
+
+
 --
 
 Successful Tranformation: 
 (b) -> (Not(c)), 
 ~~> introduce_reifyimply_ineq_from_imply [4400; Minion]
-ReifyImply(Not(c), b)  
+ReifyImply(Not(c), b)
+
+
 --
 
 Successful Tranformation: 
 Not(c), 
 ~~> not_literal_to_wliteral [4100; Minion]
-WatchedLiteral(c,false)  
+WatchedLiteral(c,false)
+
+
 --
 
 Successful Tranformation: 
 or([Ineq(a, z, 0),Ineq(z, a, 0);int(1..2)]), 
 ~~> matrix_to_list [2000; Base]
-or([Ineq(a, z, 0),Ineq(z, a, 0);int(1..)])  
+or([Ineq(a, z, 0),Ineq(z, a, 0);int(1..)])
+
+
 --
 
 Successful Tranformation: 
 or([Ineq(b, c, 0),ReifyImply(WatchedLiteral(c,false), b);int(1..2)]), 
 ~~> matrix_to_list [2000; Base]
-or([Ineq(b, c, 0),ReifyImply(WatchedLiteral(c,false), b);int(1..)])  
+or([Ineq(b, c, 0),ReifyImply(WatchedLiteral(c,false), b);int(1..)])
+
+
 --
 
 

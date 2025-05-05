@@ -13,26 +13,34 @@ such that
 Successful Tranformation: 
 UnsafeDiv(a, b), 
 ~~> div_to_bubble [6000; Bubble]
-{SafeDiv(a, b) @ (b != 0)}  
+{SafeDiv(a, b) @ (b != 0)}
+
+
 --
 
 Successful Tranformation: 
 ({SafeDiv(a, b) @ (b != 0)} = 2), 
 ~~> bubble_up [8900; Bubble]
-{(SafeDiv(a, b) = 2) @ and([(b != 0);int(1..)])}  
+{(SafeDiv(a, b) = 2) @ and([(b != 0);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 {(SafeDiv(a, b) = 2) @ and([(b != 0);int(1..)])}, 
 ~~> expand_bubble [8900; Bubble]
-and([(SafeDiv(a, b) = 2),and([(b != 0);int(1..)]);int(1..)])  
+and([(SafeDiv(a, b) = 2),and([(b != 0);int(1..)]);int(1..)])
+
+
 --
 
 Successful Tranformation: 
 and([(SafeDiv(a, b) = 2),and([(b != 0);int(1..)]);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (SafeDiv(a, b) = 2),
-and([(b != 0);int(1..)])  
+and([(b != 0);int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -40,13 +48,17 @@ Successful Tranformation:
 and([(b != 0);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (SafeDiv(a, b) = 2),
-(b != 0)  
+(b != 0)
+
+
 --
 
 Successful Tranformation: 
 (SafeDiv(a, b) = 2), 
 ~~> introduce_diveq [4200; Minion]
-DivEq(a, b, 2)  
+DivEq(a, b, 2)
+
+
 --
 
 

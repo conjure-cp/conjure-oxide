@@ -13,27 +13,35 @@ such that
 Successful Tranformation: 
 |-(x)|, 
 ~~> partial_evaluator [9000; Base]
-|x|  
+|x|
+
+
 --
 
 Successful Tranformation: 
 |-(y)|, 
 ~~> partial_evaluator [9000; Base]
-|y|  
+|y|
+
+
 --
 
 Successful Tranformation: 
 Sum([|x|,|y|;int(1..2)]), 
 ~~> matrix_to_list [2000; Base]
-Sum([|x|,|y|;int(1..)])  
+Sum([|x|,|y|;int(1..)])
+
+
 --
 
 Successful Tranformation: 
 (Sum([|x|,|y|;int(1..)]) = 10), 
 ~~> introduce_weighted_sumleq_sumgeq [4600; Minion]
-and([SumLeq([__0, __1], 10),SumGeq([__0, __1], 10);int(1..)]) new variables:
+and([SumLeq([__0, __1], 10),SumGeq([__0, __1], 10);int(1..)])
+new variables:
   find __0: int(0..5)
-  find __1: int(0..5) new constraints:
+  find __1: int(0..5)
+new constraints:
   __0 =aux |x|
   __1 =aux |y|
 
@@ -47,19 +55,25 @@ __1 =aux |y|,
 SumLeq([__0, __1], 10),
 SumGeq([__0, __1], 10),
 __0 =aux |x|,
-__1 =aux |y|  
+__1 =aux |y|
+
+
 --
 
 Successful Tranformation: 
 __0 =aux |x|, 
 ~~> introduce_abseq [4400; Minion]
-AbsEq(__0,x)  
+AbsEq(__0,x)
+
+
 --
 
 Successful Tranformation: 
 __1 =aux |y|, 
 ~~> introduce_abseq [4400; Minion]
-AbsEq(__1,y)  
+AbsEq(__1,y)
+
+
 --
 
 

@@ -19,50 +19,66 @@ such that
 Successful Tranformation: 
 Sum([Sum([Sum([Sum([Sum([Sum([Product([2, a]),Product([2, b]);int(1..2)]),Product([Product([3, c]), d]);int(1..2)]),UnsafeDiv(e, f);int(1..2)]),Product([6, UnsafeDiv(g, h)]);int(1..2)]),-(a);int(1..2)]),-(UnsafeDiv(g, h));int(1..2)]), 
 ~~> normalise_associative_commutative [8900; Base]
-Sum([Product([2, a]),Product([2, b]),Product([Product([3, c]), d]),UnsafeDiv(e, f),Product([6, UnsafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)])  
+Sum([Product([2, a]),Product([2, b]),Product([Product([3, c]), d]),UnsafeDiv(e, f),Product([6, UnsafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)])
+
+
 --
 
 Successful Tranformation: 
 Product([Product([3, c]), d]), 
 ~~> normalise_associative_commutative [8900; Base]
-Product([3, c, d])  
+Product([3, c, d])
+
+
 --
 
 Successful Tranformation: 
 UnsafeDiv(e, f), 
 ~~> div_to_bubble [6000; Bubble]
-{SafeDiv(e, f) @ (f != 0)}  
+{SafeDiv(e, f) @ (f != 0)}
+
+
 --
 
 Successful Tranformation: 
 [Product([2, a]),Product([2, b]),Product([3, c, d]),{SafeDiv(e, f) @ (f != 0)},Product([6, UnsafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)], 
 ~~> bubble_up [8900; Bubble]
-{[Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, UnsafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)] @ and([(f != 0);int(1..)])}  
+{[Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, UnsafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)] @ and([(f != 0);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 Sum({[Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, UnsafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)] @ and([(f != 0);int(1..)])}), 
 ~~> bubble_up [8900; Bubble]
-{Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, UnsafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) @ and([and([(f != 0);int(1..)]);int(1..)])}  
+{Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, UnsafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) @ and([and([(f != 0);int(1..)]);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 ({Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, UnsafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) @ and([and([(f != 0);int(1..)]);int(1..)])} <= 18), 
 ~~> bubble_up [8900; Bubble]
-{(Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, UnsafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18) @ and([and([and([(f != 0);int(1..)]);int(1..)]);int(1..)])}  
+{(Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, UnsafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18) @ and([and([and([(f != 0);int(1..)]);int(1..)]);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 {(Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, UnsafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18) @ and([and([and([(f != 0);int(1..)]);int(1..)]);int(1..)])}, 
 ~~> expand_bubble [8900; Bubble]
-and([(Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, UnsafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),and([and([and([(f != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)])  
+and([(Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, UnsafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),and([and([and([(f != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+
 --
 
 Successful Tranformation: 
 and([(Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, UnsafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),and([and([and([(f != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, UnsafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
-and([and([and([(f != 0);int(1..)]);int(1..)]);int(1..)])  
+and([and([and([(f != 0);int(1..)]);int(1..)]);int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -70,7 +86,9 @@ Successful Tranformation:
 and([and([and([(f != 0);int(1..)]);int(1..)]);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, UnsafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
-and([and([(f != 0);int(1..)]);int(1..)])  
+and([and([(f != 0);int(1..)]);int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -78,7 +96,9 @@ Successful Tranformation:
 and([and([(f != 0);int(1..)]);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, UnsafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
-and([(f != 0);int(1..)])  
+and([(f != 0);int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -86,43 +106,57 @@ Successful Tranformation:
 and([(f != 0);int(1..)]), 
 ~~> partial_evaluator [9000; Base]
 (Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, UnsafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
-(f != 0)  
+(f != 0)
+
+
 --
 
 Successful Tranformation: 
 UnsafeDiv(g, h), 
 ~~> div_to_bubble [6000; Bubble]
-{SafeDiv(g, h) @ (h != 0)}  
+{SafeDiv(g, h) @ (h != 0)}
+
+
 --
 
 Successful Tranformation: 
 Product([6, {SafeDiv(g, h) @ (h != 0)}]), 
 ~~> bubble_up [8900; Bubble]
-{Product([6, SafeDiv(g, h)]) @ and([(h != 0);int(1..)])}  
+{Product([6, SafeDiv(g, h)]) @ and([(h != 0);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 [Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),{Product([6, SafeDiv(g, h)]) @ and([(h != 0);int(1..)])},-(a),-(UnsafeDiv(g, h));int(1..2)], 
 ~~> bubble_up [8900; Bubble]
-{[Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)] @ and([and([(h != 0);int(1..)]);int(1..)])}  
+{[Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)] @ and([and([(h != 0);int(1..)]);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 Sum({[Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)] @ and([and([(h != 0);int(1..)]);int(1..)])}), 
 ~~> bubble_up [8900; Bubble]
-{Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) @ and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)])}  
+{Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) @ and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 ({Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) @ and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)])} <= 18), 
 ~~> bubble_up [8900; Bubble]
-{(Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18) @ and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)])}  
+{(Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18) @ and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 {(Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18) @ and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)])}, 
 ~~> expand_bubble [8900; Bubble]
-and([(Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])  
+and([(Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -131,7 +165,9 @@ and([(Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Prod
 ~~> partial_evaluator [9000; Base]
 (Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
 and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
-(f != 0)  
+(f != 0)
+
+
 --
 
 Successful Tranformation: 
@@ -141,7 +177,9 @@ and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
 ~~> partial_evaluator [9000; Base]
 (Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
 and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]),
-(f != 0)  
+(f != 0)
+
+
 --
 
 Successful Tranformation: 
@@ -151,7 +189,9 @@ and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]),
 ~~> partial_evaluator [9000; Base]
 (Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
 and([and([(h != 0);int(1..)]);int(1..)]),
-(f != 0)  
+(f != 0)
+
+
 --
 
 Successful Tranformation: 
@@ -161,7 +201,9 @@ and([and([(h != 0);int(1..)]);int(1..)]),
 ~~> partial_evaluator [9000; Base]
 (Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
 and([(h != 0);int(1..)]),
-(f != 0)  
+(f != 0)
+
+
 --
 
 Successful Tranformation: 
@@ -171,43 +213,57 @@ and([(h != 0);int(1..)]),
 ~~> partial_evaluator [9000; Base]
 (Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
 (h != 0),
-(f != 0)  
+(f != 0)
+
+
 --
 
 Successful Tranformation: 
 UnsafeDiv(g, h), 
 ~~> div_to_bubble [6000; Bubble]
-{SafeDiv(g, h) @ (h != 0)}  
+{SafeDiv(g, h) @ (h != 0)}
+
+
 --
 
 Successful Tranformation: 
 -({SafeDiv(g, h) @ (h != 0)}), 
 ~~> bubble_up [8900; Bubble]
-{-(SafeDiv(g, h)) @ and([(h != 0);int(1..)])}  
+{-(SafeDiv(g, h)) @ and([(h != 0);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 [Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),{-(SafeDiv(g, h)) @ and([(h != 0);int(1..)])};int(1..2)], 
 ~~> bubble_up [8900; Bubble]
-{[Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(SafeDiv(g, h));int(1..2)] @ and([and([(h != 0);int(1..)]);int(1..)])}  
+{[Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(SafeDiv(g, h));int(1..2)] @ and([and([(h != 0);int(1..)]);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 Sum({[Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(SafeDiv(g, h));int(1..2)] @ and([and([(h != 0);int(1..)]);int(1..)])}), 
 ~~> bubble_up [8900; Bubble]
-{Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(SafeDiv(g, h));int(1..2)]) @ and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)])}  
+{Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(SafeDiv(g, h));int(1..2)]) @ and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 ({Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(SafeDiv(g, h));int(1..2)]) @ and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)])} <= 18), 
 ~~> bubble_up [8900; Bubble]
-{(Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18) @ and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)])}  
+{(Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18) @ and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 {(Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18) @ and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)])}, 
 ~~> expand_bubble [8900; Bubble]
-and([(Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18),and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])  
+and([(Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18),and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])
+
+
 --
 
 Successful Tranformation: 
@@ -218,7 +274,9 @@ and([(Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Prod
 (Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18),
 and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
 (h != 0),
-(f != 0)  
+(f != 0)
+
+
 --
 
 Successful Tranformation: 
@@ -230,7 +288,9 @@ and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
 (Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18),
 and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]),
 (h != 0),
-(f != 0)  
+(f != 0)
+
+
 --
 
 Successful Tranformation: 
@@ -242,7 +302,9 @@ and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]),
 (Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18),
 and([and([(h != 0);int(1..)]);int(1..)]),
 (h != 0),
-(f != 0)  
+(f != 0)
+
+
 --
 
 Successful Tranformation: 
@@ -254,7 +316,9 @@ and([and([(h != 0);int(1..)]);int(1..)]),
 (Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18),
 and([(h != 0);int(1..)]),
 (h != 0),
-(f != 0)  
+(f != 0)
+
+
 --
 
 Successful Tranformation: 
@@ -266,14 +330,18 @@ and([(h != 0);int(1..)]),
 (Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, SafeDiv(g, h)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18),
 (h != 0),
 (h != 0),
-(f != 0)  
+(f != 0)
+
+
 --
 
 Successful Tranformation: 
 Product([6, SafeDiv(g, h)]), 
 ~~> flatten_generic [4200; Minion]
-Product([6, __0]) new variables:
-  find __0: int(0..5) new constraints:
+Product([6, __0])
+new variables:
+  find __0: int(0..5)
+new constraints:
   __0 =aux SafeDiv(g, h)
 
 --
@@ -281,8 +349,10 @@ Product([6, __0]) new variables:
 Successful Tranformation: 
 -(SafeDiv(g, h)), 
 ~~> flatten_generic [4200; Minion]
--(__1) new variables:
-  find __1: int(0..5) new constraints:
+-(__1)
+new variables:
+  find __1: int(0..5)
+new constraints:
   __1 =aux SafeDiv(g, h)
 
 --
@@ -290,27 +360,35 @@ Successful Tranformation:
 Successful Tranformation: 
 __0 =aux SafeDiv(g, h), 
 ~~> introduce_diveq [4200; Minion]
-DivEq(g, h, __0)  
+DivEq(g, h, __0)
+
+
 --
 
 Successful Tranformation: 
 __1 =aux SafeDiv(g, h), 
 ~~> introduce_diveq [4200; Minion]
-DivEq(g, h, __1)  
+DivEq(g, h, __1)
+
+
 --
 
 Successful Tranformation: 
 Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, __0]),-(a),-(__1);int(1..2)]), 
 ~~> matrix_to_list [2000; Base]
-Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, __0]),-(a),-(__1);int(1..)])  
+Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, __0]),-(a),-(__1);int(1..)])
+
+
 --
 
 Successful Tranformation: 
 (Sum([Product([2, a]),Product([2, b]),Product([3, c, d]),SafeDiv(e, f),Product([6, __0]),-(a),-(__1);int(1..)]) <= 18), 
 ~~> introduce_weighted_sumleq_sumgeq [4600; Minion]
-FlatWeightedSumLeq([2, 2, 3, 1, 6, -1, -1],[a, b, __2, __3, __0, a, __1],18) new variables:
+FlatWeightedSumLeq([2, 2, 3, 1, 6, -1, -1],[a, b, __2, __3, __0, a, __1],18)
+new variables:
   find __2: int(4..100)
-  find __3: int(0..5) new constraints:
+  find __3: int(0..5)
+new constraints:
   __2 =aux Product([c, d])
   __3 =aux SafeDiv(e, f)
 
@@ -319,13 +397,17 @@ FlatWeightedSumLeq([2, 2, 3, 1, 6, -1, -1],[a, b, __2, __3, __0, a, __1],18) new
 Successful Tranformation: 
 __2 =aux Product([c, d]), 
 ~~> introduce_producteq [4200; Minion]
-FlatProductEq(d,c,__2)  
+FlatProductEq(d,c,__2)
+
+
 --
 
 Successful Tranformation: 
 __3 =aux SafeDiv(e, f), 
 ~~> introduce_diveq [4200; Minion]
-DivEq(e, f, __3)  
+DivEq(e, f, __3)
+
+
 --
 
 

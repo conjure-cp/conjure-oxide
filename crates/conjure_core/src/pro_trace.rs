@@ -104,10 +104,10 @@ impl fmt::Display for RuleTrace {
             write!(f, "\n{}", expr)?;
         }
         if let Some(vars) = &self.new_variables_str {
-            write!(f, " {}", vars)?;
+            write!(f, "\n{}", vars)?;
         }
         if let Some(top) = &self.top_level_str {
-            write!(f, " {}", top)?;
+            write!(f, "\n{}", top)?;
         }
 
         write!(f, "\n--\n")?;

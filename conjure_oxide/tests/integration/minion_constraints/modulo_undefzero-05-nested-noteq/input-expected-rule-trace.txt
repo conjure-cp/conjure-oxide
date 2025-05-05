@@ -14,92 +14,122 @@ Not((x % y % z = 3))
 Successful Tranformation: 
 y % z, 
 ~~> mod_to_bubble [6000; Bubble]
-{SafeMod(y,z) @ (z != 0)}  
+{SafeMod(y,z) @ (z != 0)}
+
+
 --
 
 Successful Tranformation: 
 x % {SafeMod(y,z) @ (z != 0)}, 
 ~~> bubble_up [8900; Bubble]
-{x % SafeMod(y,z) @ and([(z != 0);int(1..)])}  
+{x % SafeMod(y,z) @ and([(z != 0);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 ({x % SafeMod(y,z) @ and([(z != 0);int(1..)])} = 3), 
 ~~> bubble_up [8900; Bubble]
-{(x % SafeMod(y,z) = 3) @ and([and([(z != 0);int(1..)]);int(1..)])}  
+{(x % SafeMod(y,z) = 3) @ and([and([(z != 0);int(1..)]);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 {(x % SafeMod(y,z) = 3) @ and([and([(z != 0);int(1..)]);int(1..)])}, 
 ~~> expand_bubble [8900; Bubble]
-and([(x % SafeMod(y,z) = 3),and([and([(z != 0);int(1..)]);int(1..)]);int(1..)])  
+and([(x % SafeMod(y,z) = 3),and([and([(z != 0);int(1..)]);int(1..)]);int(1..)])
+
+
 --
 
 Successful Tranformation: 
 and([and([(z != 0);int(1..)]);int(1..)]), 
 ~~> remove_unit_vector_and [8800; Base]
-and([(z != 0);int(1..)])  
+and([(z != 0);int(1..)])
+
+
 --
 
 Successful Tranformation: 
 and([(z != 0);int(1..)]), 
 ~~> remove_unit_vector_and [8800; Base]
-(z != 0)  
+(z != 0)
+
+
 --
 
 Successful Tranformation: 
 x % SafeMod(y,z), 
 ~~> mod_to_bubble [6000; Bubble]
-{SafeMod(x,SafeMod(y,z)) @ (SafeMod(y,z) != 0)}  
+{SafeMod(x,SafeMod(y,z)) @ (SafeMod(y,z) != 0)}
+
+
 --
 
 Successful Tranformation: 
 ({SafeMod(x,SafeMod(y,z)) @ (SafeMod(y,z) != 0)} = 3), 
 ~~> bubble_up [8900; Bubble]
-{(SafeMod(x,SafeMod(y,z)) = 3) @ and([(SafeMod(y,z) != 0);int(1..)])}  
+{(SafeMod(x,SafeMod(y,z)) = 3) @ and([(SafeMod(y,z) != 0);int(1..)])}
+
+
 --
 
 Successful Tranformation: 
 {(SafeMod(x,SafeMod(y,z)) = 3) @ and([(SafeMod(y,z) != 0);int(1..)])}, 
 ~~> expand_bubble [8900; Bubble]
-and([(SafeMod(x,SafeMod(y,z)) = 3),and([(SafeMod(y,z) != 0);int(1..)]);int(1..)])  
+and([(SafeMod(x,SafeMod(y,z)) = 3),and([(SafeMod(y,z) != 0);int(1..)]);int(1..)])
+
+
 --
 
 Successful Tranformation: 
 and([and([(SafeMod(x,SafeMod(y,z)) = 3),and([(SafeMod(y,z) != 0);int(1..)]);int(1..)]),(z != 0);int(1..)]), 
 ~~> normalise_associative_commutative [8900; Base]
-and([(SafeMod(x,SafeMod(y,z)) = 3),(SafeMod(y,z) != 0),(z != 0);int(1..)])  
+and([(SafeMod(x,SafeMod(y,z)) = 3),(SafeMod(y,z) != 0),(z != 0);int(1..)])
+
+
 --
 
 Successful Tranformation: 
 Not(and([(SafeMod(x,SafeMod(y,z)) = 3),(SafeMod(y,z) != 0),(z != 0);int(1..)])), 
 ~~> distribute_not_over_and [8400; Base]
-or([Not((SafeMod(x,SafeMod(y,z)) = 3)),Not((SafeMod(y,z) != 0)),Not((z != 0));int(1..)])  
+or([Not((SafeMod(x,SafeMod(y,z)) = 3)),Not((SafeMod(y,z) != 0)),Not((z != 0));int(1..)])
+
+
 --
 
 Successful Tranformation: 
 Not((SafeMod(x,SafeMod(y,z)) = 3)), 
 ~~> negated_eq_to_neq [8800; Base]
-(SafeMod(x,SafeMod(y,z)) != 3)  
+(SafeMod(x,SafeMod(y,z)) != 3)
+
+
 --
 
 Successful Tranformation: 
 Not((SafeMod(y,z) != 0)), 
 ~~> negated_neq_to_eq [8800; Base]
-(SafeMod(y,z) = 0)  
+(SafeMod(y,z) = 0)
+
+
 --
 
 Successful Tranformation: 
 Not((z != 0)), 
 ~~> negated_neq_to_eq [8800; Base]
-(z = 0)  
+(z = 0)
+
+
 --
 
 Successful Tranformation: 
 (SafeMod(x,SafeMod(y,z)) != 3), 
 ~~> flatten_generic [4200; Minion]
-(__0 != 3) new variables:
-  find __0: int(0..2) new constraints:
+(__0 != 3)
+new variables:
+  find __0: int(0..2)
+new constraints:
   __0 =aux SafeMod(x,SafeMod(y,z))
 
 --
@@ -107,14 +137,18 @@ Successful Tranformation:
 Successful Tranformation: 
 (SafeMod(y,z) = 0), 
 ~~> introduce_modeq [4200; Minion]
-ModEq(y, z, 0)  
+ModEq(y, z, 0)
+
+
 --
 
 Successful Tranformation: 
 SafeMod(x,SafeMod(y,z)), 
 ~~> flatten_generic [4200; Minion]
-SafeMod(x,__1) new variables:
-  find __1: int(0..3) new constraints:
+SafeMod(x,__1)
+new variables:
+  find __1: int(0..3)
+new constraints:
   __1 =aux SafeMod(y,z)
 
 --
@@ -122,13 +156,17 @@ SafeMod(x,__1) new variables:
 Successful Tranformation: 
 __0 =aux SafeMod(x,__1), 
 ~~> introduce_modeq [4200; Minion]
-ModEq(x, __1, __0)  
+ModEq(x, __1, __0)
+
+
 --
 
 Successful Tranformation: 
 __1 =aux SafeMod(y,z), 
 ~~> introduce_modeq [4200; Minion]
-ModEq(y, z, __1)  
+ModEq(y, z, __1)
+
+
 --
 
 
