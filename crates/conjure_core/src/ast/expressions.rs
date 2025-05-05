@@ -12,6 +12,7 @@ use crate::ast::symbol_table::SymbolTable;
 use crate::ast::Atom;
 use crate::ast::Name;
 use crate::ast::ReturnType;
+use crate::ast::SetAttr;
 use crate::bug;
 use crate::metadata::Metadata;
 use enum_compatability_macro::document_compatibility;
@@ -19,6 +20,7 @@ use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Uniplate as _};
 
 use super::comprehension::Comprehension;
+use super::records::RecordValue;
 use super::{Domain, Range, SubModel, Typeable};
 
 /// Represents different types of expressions used to define rules and constraints in the model.
@@ -37,6 +39,8 @@ use super::{Domain, Range, SubModel, Typeable};
 #[biplate(to=Comprehension)]
 #[biplate(to=AbstractLiteral<Expression>)]
 #[biplate(to=AbstractLiteral<Literal>,walk_into=[Atom])]
+#[biplate(to=RecordValue<Expression>,walk_into=[AbstractLiteral<Expression>])]
+#[biplate(to=RecordValue<Literal>,walk_into=[Atom,Literal,AbstractLiteral<Literal>,AbstractLiteral<Expression>])]
 #[biplate(to=Literal,walk_into=[Atom])]
 pub enum Expression {
     AbstractLiteral(Metadata, AbstractLiteral<Expression>),
@@ -132,6 +136,28 @@ pub enum Expression {
     #[compatible(JsonInput)]
     Imply(Metadata, Box<Expression>, Box<Expression>),
 
+    /// `iff(a, b)` a <-> b
+    #[compatible(JsonInput)]
+    Iff(Metadata, Box<Expression>, Box<Expression>),
+
+    #[compatible(JsonInput)]
+    Union(Metadata, Box<Expression>, Box<Expression>),
+
+    #[compatible(JsonInput)]
+    Intersect(Metadata, Box<Expression>, Box<Expression>),
+
+    #[compatible(JsonInput)]
+    Supset(Metadata, Box<Expression>, Box<Expression>),
+
+    #[compatible(JsonInput)]
+    SupsetEq(Metadata, Box<Expression>, Box<Expression>),
+
+    #[compatible(JsonInput)]
+    Subset(Metadata, Box<Expression>, Box<Expression>),
+
+    #[compatible(JsonInput)]
+    SubsetEq(Metadata, Box<Expression>, Box<Expression>),
+
     #[compatible(JsonInput)]
     Eq(Metadata, Box<Expression>, Box<Expression>),
 
@@ -184,6 +210,8 @@ pub enum Expression {
     /// Binary subtraction operator
     ///
     /// This is a parser-level construct, and is immediately normalised to `Sum([a,-b])`.
+    /// TODO: make this compatible with Set Difference calculations - need to change return type and domain for this expression and write a set comprehension rule.
+    /// have already edited minus_to_sum to prevent this from applying to sets
     #[compatible(JsonInput)]
     Minus(Metadata, Box<Expression>, Box<Expression>),
 
@@ -436,17 +464,33 @@ impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
         let ret = match self {
+            Expression::Union(_, a, b) => Some(Domain::DomainSet(
+                SetAttr::None,
+                Box::new(a.domain_of(syms)?.union(&b.domain_of(syms)?)?),
+            )),
+            Expression::Intersect(_, a, b) => Some(Domain::DomainSet(
+                SetAttr::None,
+                Box::new(a.domain_of(syms)?.intersect(&b.domain_of(syms)?)?),
+            )),
+            Expression::Supset(_, _, _) => Some(Domain::BoolDomain),
+            Expression::SupsetEq(_, _, _) => Some(Domain::BoolDomain),
+            Expression::Subset(_, _, _) => Some(Domain::BoolDomain),
+            Expression::SubsetEq(_, _, _) => Some(Domain::BoolDomain),
+
             //todo
             Expression::AbstractLiteral(_, _) => None,
             Expression::DominanceRelation(_, _) => Some(Domain::BoolDomain),
             Expression::FromSolution(_, expr) => expr.domain_of(syms),
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
-                let Domain::DomainMatrix(elem_domain, _) = matrix.domain_of(syms)? else {
-                    bug!("subject of an index operation should be a matrix");
-                };
-
-                Some(*elem_domain)
+                match matrix.domain_of(syms)? {
+                    Domain::DomainMatrix(elem_domain, _) => Some(*elem_domain),
+                    Domain::DomainTuple(_) => None,
+                    Domain::DomainRecord(_) => None,
+                    _ => {
+                        bug!("subject of an index operation should support indexing")
+                    }
+                }
             }
             Expression::UnsafeSlice(_, matrix, indices)
             | Expression::SafeSlice(_, matrix, indices) => {
@@ -563,6 +607,7 @@ impl Expression {
             Expression::Not(_, _) => Some(Domain::BoolDomain),
             Expression::Or(_, _) => Some(Domain::BoolDomain),
             Expression::Imply(_, _, _) => Some(Domain::BoolDomain),
+            Expression::Iff(_, _, _) => Some(Domain::BoolDomain),
             Expression::Eq(_, _, _) => Some(Domain::BoolDomain),
             Expression::Neq(_, _, _) => Some(Domain::BoolDomain),
             Expression::Geq(_, _, _) => Some(Domain::BoolDomain),
@@ -652,71 +697,6 @@ impl Expression {
             }
         }
         true
-    }
-
-    pub fn return_type(&self) -> Option<ReturnType> {
-        match self {
-            Expression::AbstractLiteral(_, _) => None,
-            Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
-                Some(subject.return_type()?)
-            }
-            Expression::UnsafeSlice(_, subject, _) | Expression::SafeSlice(_, subject, _) => {
-                Some(ReturnType::Matrix(Box::new(subject.return_type()?)))
-            }
-            Expression::InDomain(_, _, _) => Some(ReturnType::Bool),
-            Expression::Comprehension(_, _) => None,
-            Expression::Root(_, _) => Some(ReturnType::Bool),
-            Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
-            Expression::FromSolution(_, expr) => expr.return_type(),
-            Expression::Atomic(_, Atom::Literal(Literal::Int(_))) => Some(ReturnType::Int),
-            Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(ReturnType::Bool),
-            Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(_))) => None,
-            Expression::Atomic(_, Atom::Reference(_)) => None,
-            Expression::Scope(_, scope) => scope.return_type(),
-            Expression::Abs(_, _) => Some(ReturnType::Int),
-            Expression::Sum(_, _) => Some(ReturnType::Int),
-            Expression::Product(_, _) => Some(ReturnType::Int),
-            Expression::Min(_, _) => Some(ReturnType::Int),
-            Expression::Max(_, _) => Some(ReturnType::Int),
-            Expression::Not(_, _) => Some(ReturnType::Bool),
-            Expression::Or(_, _) => Some(ReturnType::Bool),
-            Expression::Imply(_, _, _) => Some(ReturnType::Bool),
-            Expression::And(_, _) => Some(ReturnType::Bool),
-            Expression::Eq(_, _, _) => Some(ReturnType::Bool),
-            Expression::Neq(_, _, _) => Some(ReturnType::Bool),
-            Expression::Geq(_, _, _) => Some(ReturnType::Bool),
-            Expression::Leq(_, _, _) => Some(ReturnType::Bool),
-            Expression::Gt(_, _, _) => Some(ReturnType::Bool),
-            Expression::Lt(_, _, _) => Some(ReturnType::Bool),
-            Expression::SafeDiv(_, _, _) => Some(ReturnType::Int),
-            Expression::UnsafeDiv(_, _, _) => Some(ReturnType::Int),
-            Expression::FlatAllDiff(_, _) => Some(ReturnType::Bool),
-            Expression::FlatSumGeq(_, _, _) => Some(ReturnType::Bool),
-            Expression::FlatSumLeq(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionDivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::FlatIneq(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::AllDiff(_, _) => Some(ReturnType::Bool),
-            Expression::Bubble(_, _, _) => None, // TODO: (flm8) should this be a bool?
-            Expression::FlatWatchedLiteral(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionReify(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionReifyImply(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionWInIntervalSet(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionElementOne(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::AuxDeclaration(_, _, _) => Some(ReturnType::Bool),
-            Expression::UnsafeMod(_, _, _) => Some(ReturnType::Int),
-            Expression::SafeMod(_, _, _) => Some(ReturnType::Int),
-            Expression::MinionModuloEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::Neg(_, _) => Some(ReturnType::Int),
-            Expression::UnsafePow(_, _, _) => Some(ReturnType::Int),
-            Expression::SafePow(_, _, _) => Some(ReturnType::Int),
-            Expression::Minus(_, _, _) => Some(ReturnType::Int),
-            Expression::FlatAbsEq(_, _, _) => Some(ReturnType::Bool),
-            Expression::FlatMinusEq(_, _, _) => Some(ReturnType::Bool),
-            Expression::FlatProductEq(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::FlatWeightedSumLeq(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::MinionPow(_, _, _, _) => Some(ReturnType::Bool),
-        }
     }
 
     pub fn is_clean(&self) -> bool {
@@ -859,9 +839,41 @@ impl From<Atom> for Expression {
         Expression::Atomic(Metadata::new(), value)
     }
 }
+
+impl From<Name> for Expression {
+    fn from(name: Name) -> Self {
+        Expression::Atomic(Metadata::new(), Atom::Reference(name))
+    }
+}
+
+impl From<Box<Expression>> for Expression {
+    fn from(val: Box<Expression>) -> Self {
+        val.as_ref().clone()
+    }
+}
+
 impl Display for Expression {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
+            Expression::Union(_, box1, box2) => {
+                write!(f, "({} union {})", box1.clone(), box2.clone())
+            }
+            Expression::Intersect(_, box1, box2) => {
+                write!(f, "({} intersect {})", box1.clone(), box2.clone())
+            }
+            Expression::Supset(_, box1, box2) => {
+                write!(f, "({} supset {})", box1.clone(), box2.clone())
+            }
+            Expression::SupsetEq(_, box1, box2) => {
+                write!(f, "({} supsetEq {})", box1.clone(), box2.clone())
+            }
+            Expression::Subset(_, box1, box2) => {
+                write!(f, "({} subset {})", box1.clone(), box2.clone())
+            }
+            Expression::SubsetEq(_, box1, box2) => {
+                write!(f, "({} subsetEq {})", box1.clone(), box2.clone())
+            }
+
             Expression::AbstractLiteral(_, l) => l.fmt(f),
             Expression::Comprehension(_, c) => c.fmt(f),
             Expression::UnsafeIndex(_, e1, e2) | Expression::SafeIndex(_, e1, e2) => {
@@ -912,6 +924,9 @@ impl Display for Expression {
             }
             Expression::Imply(_, box1, box2) => {
                 write!(f, "({}) -> ({})", box1, box2)
+            }
+            Expression::Iff(_, box1, box2) => {
+                write!(f, "({}) <-> ({})", box1, box2)
             }
             Expression::Eq(_, box1, box2) => {
                 write!(f, "({} = {})", box1.clone(), box2.clone())
@@ -1051,6 +1066,86 @@ impl Display for Expression {
                 let atoms = atoms.iter().join(",");
                 write!(f, "__minion_element_one([{atoms}],{atom},{atom1})")
             }
+        }
+    }
+}
+
+impl Typeable for Expression {
+    fn return_type(&self) -> Option<ReturnType> {
+        match self {
+            Expression::Union(_, subject, _) => {
+                Some(ReturnType::Set(Box::new(subject.return_type()?)))
+            }
+            Expression::Intersect(_, subject, _) => {
+                Some(ReturnType::Set(Box::new(subject.return_type()?)))
+            }
+            Expression::Supset(_, _, _) => Some(ReturnType::Bool),
+            Expression::SupsetEq(_, _, _) => Some(ReturnType::Bool),
+            Expression::Subset(_, _, _) => Some(ReturnType::Bool),
+            Expression::SubsetEq(_, _, _) => Some(ReturnType::Bool),
+
+            // handles sets and matrices, since typeable defined for abstract literals
+            Expression::AbstractLiteral(_, lit) => lit.return_type(),
+            Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
+                Some(subject.return_type()?)
+            }
+            Expression::UnsafeSlice(_, subject, _) | Expression::SafeSlice(_, subject, _) => {
+                Some(ReturnType::Matrix(Box::new(subject.return_type()?)))
+            }
+            Expression::InDomain(_, _, _) => Some(ReturnType::Bool),
+            Expression::Comprehension(_, _) => None,
+            Expression::Root(_, _) => Some(ReturnType::Bool),
+            Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
+            Expression::FromSolution(_, expr) => expr.return_type(),
+            // handles integers, booleans and abstract literals all at once, since typeable defined for literal
+            Expression::Atomic(_, Atom::Literal(lit)) => lit.return_type(),
+            // TODO - access symbol table to get return type of references - define inside Atom instead
+            Expression::Atomic(_, Atom::Reference(_)) => None,
+            Expression::Scope(_, scope) => scope.return_type(),
+            Expression::Abs(_, _) => Some(ReturnType::Int),
+            Expression::Sum(_, _) => Some(ReturnType::Int),
+            Expression::Product(_, _) => Some(ReturnType::Int),
+            Expression::Min(_, _) => Some(ReturnType::Int),
+            Expression::Max(_, _) => Some(ReturnType::Int),
+            Expression::Not(_, _) => Some(ReturnType::Bool),
+            Expression::Or(_, _) => Some(ReturnType::Bool),
+            Expression::Imply(_, _, _) => Some(ReturnType::Bool),
+            Expression::Iff(_, _, _) => Some(ReturnType::Bool),
+            Expression::And(_, _) => Some(ReturnType::Bool),
+            Expression::Eq(_, _, _) => Some(ReturnType::Bool),
+            Expression::Neq(_, _, _) => Some(ReturnType::Bool),
+            Expression::Geq(_, _, _) => Some(ReturnType::Bool),
+            Expression::Leq(_, _, _) => Some(ReturnType::Bool),
+            Expression::Gt(_, _, _) => Some(ReturnType::Bool),
+            Expression::Lt(_, _, _) => Some(ReturnType::Bool),
+            Expression::SafeDiv(_, _, _) => Some(ReturnType::Int),
+            Expression::UnsafeDiv(_, _, _) => Some(ReturnType::Int),
+            Expression::FlatAllDiff(_, _) => Some(ReturnType::Bool),
+            Expression::FlatSumGeq(_, _, _) => Some(ReturnType::Bool),
+            Expression::FlatSumLeq(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionDivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::FlatIneq(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::AllDiff(_, _) => Some(ReturnType::Bool),
+            Expression::Bubble(_, _, _) => None, // TODO: (flm8) should this be a bool?
+            Expression::FlatWatchedLiteral(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionReify(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionReifyImply(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionWInIntervalSet(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionElementOne(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::AuxDeclaration(_, _, _) => Some(ReturnType::Bool),
+            Expression::UnsafeMod(_, _, _) => Some(ReturnType::Int),
+            Expression::SafeMod(_, _, _) => Some(ReturnType::Int),
+            Expression::MinionModuloEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::Neg(_, _) => Some(ReturnType::Int),
+            Expression::UnsafePow(_, _, _) => Some(ReturnType::Int),
+            Expression::SafePow(_, _, _) => Some(ReturnType::Int),
+            Expression::Minus(_, _, _) => Some(ReturnType::Int),
+            Expression::FlatAbsEq(_, _, _) => Some(ReturnType::Bool),
+            Expression::FlatMinusEq(_, _, _) => Some(ReturnType::Bool),
+            Expression::FlatProductEq(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::FlatWeightedSumLeq(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::MinionPow(_, _, _, _) => Some(ReturnType::Bool),
         }
     }
 }

@@ -21,11 +21,11 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Set shas
         id: sha
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           result-encoding: string
           script: |
@@ -43,7 +43,7 @@ jobs:
 
 
       - name: Download artifact
-        uses: dawidd6/action-download-artifact@v6
+        uses: dawidd6/action-download-artifact@v9
         with:
           name: code-coverage-${{ steps.sha.outputs.result }}
           workflow: code-coverage.yml
@@ -63,17 +63,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Checkout the pages repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           ref: "gh-pages"
           path: "pages"
 
       - name: Set shas
         id: sha
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           result-encoding: string
           script: |
@@ -103,7 +103,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: actions/cache@v3
         with:
           path: |
@@ -120,7 +120,7 @@ jobs:
 
       - name: Set shas
         id: sha
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           result-encoding: string
           script: |
@@ -137,7 +137,7 @@ jobs:
             return callee_run.head_sha;
 
       - name: Download artifact
-        uses: dawidd6/action-download-artifact@v6
+        uses: dawidd6/action-download-artifact@v9
         with:
           name: code-coverage-${{ steps.sha.outputs.result }}
           workflow: code-coverage.yml
@@ -150,7 +150,7 @@ jobs:
 
       - name: Retrieve list of artifacts for the PR
         id: find_artifacts
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const prNum = process.env.num;
@@ -170,7 +170,7 @@ jobs:
       - name: Find previous artifact
         id: previous-artifact
         if: steps.find_artifacts.outputs.result != '[]'
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           result-encoding: string
           script: |
@@ -206,14 +206,14 @@ jobs:
           echo 'EOFABC' >> $GITHUB_OUTPUT
 
       - name: Download doc coverage summary for PR
-        uses: dawidd6/action-download-artifact@v7
+        uses: dawidd6/action-download-artifact@v9
         with:
           workflow: code-coverage.yml
           pr: ${{steps.prnum.outputs.num}}
           name: pr-doc-coverage-summary
 
       - name: Download doc coverage summary for main
-        uses: dawidd6/action-download-artifact@v7
+        uses: dawidd6/action-download-artifact@v9
         with:
           workflow: code-coverage-main.yml
           branch: main
@@ -241,7 +241,7 @@ jobs:
 
 
       - name: Find coverage comment
-        uses: peter-evans/find-comment@v1
+        uses: peter-evans/find-comment@v3
         continue-on-error: true
         id: fc
         with:
@@ -251,7 +251,7 @@ jobs:
 
       - name: Delete coverage comment if it exists
         if: steps.fc.outputs.comment-id != ''
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             github.rest.issues.deleteComment({
@@ -328,7 +328,7 @@ jobs:
 
       - name: Create coverage comment (no previous lcov)
         if: steps.find_artifacts.outputs.result == '[]'
-        uses: peter-evans/create-or-update-comment@v1
+        uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ steps.prnum.outputs.num }}
           body: |
@@ -369,7 +369,7 @@ jobs:
 
       - name: Create coverage comment (previous lcov)
         if: steps.find_artifacts.outputs.result != '[]'
-        uses: peter-evans/create-or-update-comment@v1
+        uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ steps.prnum.outputs.num }}
           body: |

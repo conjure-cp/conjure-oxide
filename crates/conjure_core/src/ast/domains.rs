@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::ast::pretty::pretty_vec;
 use uniplate::{derive::Uniplate, Uniplate};
 
-use super::{types::Typeable, AbstractLiteral, Literal, Name, ReturnType};
+use super::{records::RecordEntry, types::Typeable, AbstractLiteral, Literal, Name, ReturnType};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Range<A>
@@ -63,6 +63,10 @@ pub enum Domain {
     DomainSet(SetAttr, Box<Domain>),
     /// A n-dimensional matrix with a value domain and n-index domains
     DomainMatrix(Box<Domain>, Vec<Domain>),
+    // A tuple of n domains (e.g. (int, bool))
+    DomainTuple(Vec<Domain>),
+
+    DomainRecord(Vec<RecordEntry>),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -93,7 +97,6 @@ impl Domain {
             (Domain::BoolDomain, Literal::Bool(_)) => Some(true),
             (Domain::BoolDomain, _) => Some(false),
             (Domain::DomainReference(_), _) => None,
-
             (
                 Domain::DomainMatrix(elem_domain, index_domains),
                 Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx_domain)),
@@ -123,11 +126,49 @@ impl Domain {
 
                 Some(true)
             }
-            (Domain::DomainMatrix(_, _), _) => Some(false),
-            (Domain::DomainSet(_, _), Literal::AbstractLiteral(AbstractLiteral::Set(_))) => {
-                todo!()
+            (
+                Domain::DomainTuple(elem_domains),
+                Literal::AbstractLiteral(AbstractLiteral::Tuple(literal_elems)),
+            ) => {
+                // for every element in the tuple literal, check if it is in the corresponding domain
+                for (elem_domain, elem) in itertools::izip!(elem_domains, literal_elems) {
+                    if !elem_domain.contains(elem)? {
+                        return Some(false);
+                    }
+                }
+
+                Some(true)
             }
+            (
+                Domain::DomainSet(_, domain),
+                Literal::AbstractLiteral(AbstractLiteral::Set(literal_elems)),
+            ) => {
+                for elem in literal_elems {
+                    if !domain.contains(elem)? {
+                        return Some(false);
+                    }
+                }
+                Some(true)
+            }
+            (
+                Domain::DomainRecord(entries),
+                Literal::AbstractLiteral(AbstractLiteral::Record(lit_entries)),
+            ) => {
+                for (entry, lit_entry) in itertools::izip!(entries, lit_entries) {
+                    if entry.name != lit_entry.name || !(entry.domain.contains(&lit_entry.value)?) {
+                        return Some(false);
+                    }
+                }
+                Some(true)
+            }
+
+            (Domain::DomainRecord(_), _) => Some(false),
+
+            (Domain::DomainMatrix(_, _), _) => Some(false),
+
             (Domain::DomainSet(_, _), _) => Some(false),
+
+            (Domain::DomainTuple(_), _) => Some(false),
         }
     }
 
@@ -152,6 +193,17 @@ impl Domain {
         }
     }
 
+    // turns vector of integers into a domain
+    // TODO: can be done more compactly in terms of the domain we produce. e.g. instead of int(1,2,3,4,5,8,9,10) produce int(1..5, 8..10)
+    // needs to be tested with domain functions intersect() and uninon() once comprehension rules are written.
+    pub fn make_int_domain_from_values_i32(&self, vector: &[i32]) -> Option<Domain> {
+        let mut new_ranges = vec![];
+        for values in vector.iter() {
+            new_ranges.push(Range::Single(*values));
+        }
+        Some(Domain::IntDomain(new_ranges))
+    }
+
     /// Gets all the values inside this domain, as a [`Literal`]. Returns `None` if the domain is not
     /// finite.
     pub fn values(&self) -> Option<Vec<Literal>> {
@@ -166,6 +218,8 @@ impl Domain {
             Domain::DomainSet(_, _) => todo!(),
             Domain::DomainMatrix(_, _) => todo!(),
             Domain::DomainReference(_) => None,
+            Domain::DomainTuple(_) => todo!(), // TODO: Can this be done?
+            Domain::DomainRecord(_) => todo!(),
         }
     }
 
@@ -252,6 +306,66 @@ impl Domain {
         }
         self
     }
+
+    // simplified domain intersection function. defined for integer domains of sets
+    // TODO: does not consider unbounded domains yet
+    // needs to be tested once comprehension rules are written
+    pub fn intersect(&self, other: &Domain) -> Option<Domain> {
+        match (self, other) {
+            (Domain::DomainSet(_, x), Domain::DomainSet(_, y)) => Some(Domain::DomainSet(
+                SetAttr::None,
+                Box::new((*x).intersect(y)?),
+            )),
+            (Domain::IntDomain(_), Domain::IntDomain(_)) => {
+                let mut v: Vec<i32> = vec![];
+                if self.is_finite()? && other.is_finite()? {
+                    if let (Some(v1), Some(v2)) = (self.values_i32(), other.values_i32()) {
+                        for value1 in v1.iter() {
+                            if v2.contains(value1) && !v.contains(value1) {
+                                v.push(*value1)
+                            }
+                        }
+                    }
+                    self.make_int_domain_from_values_i32(&v)
+                } else {
+                    println!("Unbounded domain");
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
+
+    // simplified domain union function. defined for integer domains of sets
+    // TODO: does not consider unbounded domains yet
+    // needs to be tested once comprehension rules are written
+    pub fn union(&self, other: &Domain) -> Option<Domain> {
+        match (self, other) {
+            (Domain::DomainSet(_, x), Domain::DomainSet(_, y)) => {
+                Some(Domain::DomainSet(SetAttr::None, Box::new((*x).union(y)?)))
+            }
+            (Domain::IntDomain(_), Domain::IntDomain(_)) => {
+                let mut v: Vec<i32> = vec![];
+                if self.is_finite()? && other.is_finite()? {
+                    if let (Some(v1), Some(v2)) = (self.values_i32(), other.values_i32()) {
+                        for value1 in v1.iter() {
+                            v.push(*value1);
+                        }
+                        for value2 in v2.iter() {
+                            if !v.contains(value2) {
+                                v.push(*value2);
+                            }
+                        }
+                    }
+                    self.make_int_domain_from_values_i32(&v)
+                } else {
+                    println!("Unbounded Domain");
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
 }
 
 impl Display for Domain {
@@ -278,6 +392,25 @@ impl Display for Domain {
                     f,
                     "matrix indexed by [{}] of {value_domain}",
                     pretty_vec(&index_domains.iter().collect_vec())
+                )
+            }
+            Domain::DomainTuple(domains) => {
+                write!(
+                    f,
+                    "tuple of ({})",
+                    pretty_vec(&domains.iter().collect_vec())
+                )
+            }
+            Domain::DomainRecord(entries) => {
+                write!(
+                    f,
+                    "record of ({})",
+                    pretty_vec(
+                        &entries
+                            .iter()
+                            .map(|entry| format!("{}: {}", entry.name, entry.domain))
+                            .collect_vec()
+                    )
                 )
             }
         }

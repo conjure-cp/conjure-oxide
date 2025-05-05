@@ -10,11 +10,14 @@ pub use conjure_core::rule_engine::{
     get_rules, register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
     Rule, RuleSet,
 };
-pub use conjure_core::rules;
 pub use conjure_core::solver;
 pub use conjure_core::solver::SolverFamily;
 pub use conjure_core::Model;
-
+pub use conjure_essence_macros::essence_expr;
+pub use conjure_essence_parser::{
+    parse_essence_file, parse_essence_file_native, EssenceParseError,
+};
+pub use conjure_rules;
 pub mod find_conjure;
 pub mod utils;
 
