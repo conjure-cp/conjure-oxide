@@ -168,15 +168,15 @@ fn apply_tseytin_and_or(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
     }
 
     let new_expr;
-    let new_tops;
-    let new_symbols;
+    let mut new_tops = vec![];
+    let mut new_symbols = symbols.clone();
 
     match expr {
         Expr::And(_, _) => {
-            (new_expr, new_symbols, new_tops) = tseytin_and(exprs_list, &symbols);
+            new_expr = tseytin_and(exprs_list, &mut new_tops, &mut new_symbols);
         }
         Expr::Or(_, _) => {
-            (new_expr, new_symbols, new_tops) = tseytin_or(exprs_list, &symbols);
+            new_expr = tseytin_or(exprs_list, &mut new_tops, &mut new_symbols);
         }
         _ => return Err(RuleNotApplicable),
     };
@@ -184,8 +184,7 @@ fn apply_tseytin_and_or(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
     Ok(Reduction::new(new_expr, new_tops, new_symbols))
 }
 
-fn create_bool_aux(mut symbols: SymbolTable) -> (Expr, SymbolTable) {
-    symbols = symbols.clone();
+fn create_bool_aux(symbols: &mut SymbolTable) -> Expr {
     let name = symbols.gensym();
 
     symbols.insert(Rc::new(Declaration::new_var(
@@ -193,140 +192,127 @@ fn create_bool_aux(mut symbols: SymbolTable) -> (Expr, SymbolTable) {
         Domain::BoolDomain,
     )));
 
-    (
-        Expr::Atomic(Metadata::new(), Atom::Reference(name.clone())),
-        symbols,
-    )
+    Expr::Atomic(Metadata::new(), Atom::Reference(name.clone()))
 }
 
 /// Applies the Tseytin and transformation to series of variables, returns the new expression, symbol table and top level constraints
-pub fn tseytin_and(exprs: &Vec<Expr>, symbols: &SymbolTable) -> (Expr, SymbolTable, Vec<Expr>) {
-    let (new_expr, symbols) = create_bool_aux(symbols.clone());
+pub fn tseytin_and(exprs: &Vec<Expr>, tops: &mut Vec<Expr>, symbols: &mut SymbolTable) -> Expr {
+    let new_expr = create_bool_aux(&mut symbols);
 
-    let mut new_tops: Vec<Expr> = vec![];
     let mut full_conj: Vec<Expr> = vec![new_expr.clone()];
 
     for x in exprs {
-        new_tops.push(create_clause(vec![
+        tops.push(create_clause(vec![
             Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
             x.clone(),
         ]));
         full_conj.push(Expr::Not(Metadata::new(), Box::new(x.clone())));
     }
-    new_tops.push(create_clause(full_conj));
+    tops.push(create_clause(full_conj));
 
-    (new_expr, symbols, new_tops)
+    new_expr
 }
 
 /// Applies the Tseytin or transformation to series of variables, returns the new expression, symbol table and top level constraints
-pub fn tseytin_or(exprs: &Vec<Expr>, symbols: &SymbolTable) -> (Expr, SymbolTable, Vec<Expr>) {
-    let (new_expr, symbols) = create_bool_aux(symbols.clone());
+pub fn tseytin_or(exprs: &Vec<Expr>, tops: &mut Vec<Expr>, symbols: &mut SymbolTable) -> Expr {
+    let new_expr = create_bool_aux(&mut symbols);
 
-    let mut new_tops: Vec<Expr> = vec![];
     let mut full_conj: Vec<Expr> = vec![Expr::Not(Metadata::new(), Box::new(new_expr.clone()))];
 
     for x in exprs {
-        new_tops.push(create_clause(vec![
+        tops.push(create_clause(vec![
             Expr::Not(Metadata::new(), Box::new(x.clone())),
             new_expr.clone(),
         ]));
         full_conj.push(x.clone());
     }
 
-    new_tops.push(create_clause(full_conj));
+    tops.push(create_clause(full_conj));
 
-    (new_expr, symbols, new_tops)
+    new_expr
 }
 
 /// Applies the Tseytin not transformation to a variable, returns the new expression, symbol table and top level constraints
-pub fn tseytin_not(x: Expr, symbols: &SymbolTable) -> (Expr, SymbolTable, Vec<Expr>) {
-    let (new_expr, symbols) = create_bool_aux(symbols.clone());
+pub fn tseytin_not(x: Expr, tops: &mut Vec<Expr>, symbols: &mut SymbolTable) -> Expr {
+    let new_expr = create_bool_aux(&mut symbols);
 
-    let new_tops = vec![
-        create_clause(vec![
-            Expr::Not(Metadata::new(), Box::new(x.clone())),
-            Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
-        ]),
-        create_clause(vec![x.clone(), new_expr.clone()]),
-    ];
+    tops.push(create_clause(vec![
+        Expr::Not(Metadata::new(), Box::new(x.clone())),
+        Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
+    ]));
+    tops.push(create_clause(vec![x.clone(), new_expr.clone()]));
 
-    (new_expr, symbols, new_tops)
+    new_expr
 }
 
 /// Applies the Tseytin iff transformation to two variables, returns the new expression, symbol table and top level constraints
-pub fn tseytin_iff(x: Expr, y: Expr, symbols: &SymbolTable) -> (Expr, SymbolTable, Vec<Expr>) {
-    let (new_expr, symbols) = create_bool_aux(symbols.clone());
+pub fn tseytin_iff(x: Expr, y: Expr, tops: &mut Vec<Expr>, symbols: &mut SymbolTable) -> Expr {
+    let new_expr = create_bool_aux(&mut symbols);
 
-    let new_tops = vec![
-        create_clause(vec![
-            Expr::Not(Metadata::new(), Box::new(x.clone())),
-            Expr::Not(Metadata::new(), Box::new(y.clone())),
-            new_expr.clone(),
-        ]),
-        create_clause(vec![x.clone(), y.clone(), new_expr.clone()]),
-        create_clause(vec![
-            x.clone(),
-            Expr::Not(Metadata::new(), Box::new(y.clone())),
-            Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
-        ]),
-        create_clause(vec![
-            Expr::Not(Metadata::new(), Box::new(x.clone())),
-            y.clone(),
-            Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
-        ]),
-    ];
+    tops.push(create_clause(vec![
+        Expr::Not(Metadata::new(), Box::new(x.clone())),
+        Expr::Not(Metadata::new(), Box::new(y.clone())),
+        new_expr.clone(),
+    ]));
+    tops.push(create_clause(vec![x.clone(), y.clone(), new_expr.clone()]));
+    tops.push(create_clause(vec![
+        x.clone(),
+        Expr::Not(Metadata::new(), Box::new(y.clone())),
+        Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
+    ]));
+    tops.push(create_clause(vec![
+        Expr::Not(Metadata::new(), Box::new(x.clone())),
+        y.clone(),
+        Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
+    ]));
 
-    (new_expr, symbols, new_tops)
+    new_expr
 }
 
 /// Applies the Tseytin xor transformation to two variables, returns the new expression, symbol table and top level constraints
-pub fn tseytin_xor(x: Expr, y: Expr, symbols: &SymbolTable) -> (Expr, SymbolTable, Vec<Expr>) {
-    let (new_expr, symbols) = create_bool_aux(symbols.clone());
+pub fn tseytin_xor(x: Expr, y: Expr, tops: &mut Vec<Expr>, symbols: &mut SymbolTable) -> Expr {
+    let new_expr = create_bool_aux(&mut symbols);
 
-    let new_tops = vec![
-        create_clause(vec![
-            Expr::Not(Metadata::new(), Box::new(x.clone())),
-            Expr::Not(Metadata::new(), Box::new(y.clone())),
-            Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
-        ]),
-        create_clause(vec![
-            x.clone(),
-            y.clone(),
-            Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
-        ]),
-        create_clause(vec![
-            x.clone(),
-            Expr::Not(Metadata::new(), Box::new(y.clone())),
-            new_expr.clone(),
-        ]),
-        create_clause(vec![
-            Expr::Not(Metadata::new(), Box::new(x.clone())),
-            y.clone(),
-            new_expr.clone(),
-        ]),
-    ];
+    tops.push(create_clause(vec![
+        Expr::Not(Metadata::new(), Box::new(x.clone())),
+        Expr::Not(Metadata::new(), Box::new(y.clone())),
+        Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
+    ]));
+    tops.push(create_clause(vec![
+        x.clone(),
+        y.clone(),
+        Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
+    ]));
+    tops.push(create_clause(vec![
+        x.clone(),
+        Expr::Not(Metadata::new(), Box::new(y.clone())),
+        new_expr.clone(),
+    ]));
+    tops.push(create_clause(vec![
+        Expr::Not(Metadata::new(), Box::new(x.clone())),
+        y.clone(),
+        new_expr.clone(),
+    ]));
 
-    (new_expr, symbols, new_tops)
+    new_expr
 }
 
 /// Applies the Tseytin imply transformation to two variables, returns the new expression, symbol table and top level constraints
-pub fn tseytin_imply(x: Expr, y: Expr, symbols: &SymbolTable) -> (Expr, SymbolTable, Vec<Expr>) {
-    let (new_expr, symbols) = create_bool_aux(symbols.clone());
+pub fn tseytin_imply(x: Expr, y: Expr, tops: &mut Vec<Expr>, symbols: &mut SymbolTable) -> Expr {
+    let new_expr = create_bool_aux(&mut symbols);
 
-    let new_tops = vec![
-        create_clause(vec![
-            Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
-            Expr::Not(Metadata::new(), Box::new(x.clone())),
-            y.clone(),
-        ]),
-        create_clause(vec![new_expr.clone(), x.clone()]),
-        create_clause(vec![
-            new_expr.clone(),
-            Expr::Not(Metadata::new(), Box::new(y.clone())),
-        ]),
-    ];
+    tops.push(create_clause(vec![
+        Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
+        Expr::Not(Metadata::new(), Box::new(x.clone())),
+        y.clone(),
+    ]));
+    tops.push(create_clause(vec![new_expr.clone(), x.clone()]));
+    tops.push(create_clause(vec![
+        new_expr.clone(),
+        Expr::Not(Metadata::new(), Box::new(y.clone())),
+    ]));
 
-    (new_expr, symbols, new_tops)
+    new_expr
 }
 
 fn create_clause(exprs: Vec<Expr>) -> Expr {
@@ -410,7 +396,11 @@ fn apply_tseytin_iff(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let (new_expr, new_symbols, new_tops) = tseytin_iff(*x.clone(), *y.clone(), &symbols);
+    let new_expr;
+    let mut new_tops = vec![];
+    let mut new_symbols = symbols.clone();
+
+    let new_expr = tseytin_iff(*x.clone(), *y.clone(), &mut new_tops, &mut symbols);
 
     Ok(Reduction::new(new_expr, new_tops, new_symbols))
 }
@@ -440,7 +430,11 @@ fn apply_tseytin_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
         return Err(RuleNotApplicable);
     };
 
-    let (new_expr, new_symbols, new_tops) = tseytin_imply(*x.clone(), *y.clone(), &symbols);
+    let new_expr;
+    let mut new_tops = vec![];
+    let mut new_symbols = symbols.clone();
+
+    new_expr = tseytin_imply(*x.clone(), *y.clone(), &mut new_tops, &mut symbols);
 
     Ok(Reduction::new(new_expr, new_tops, new_symbols))
 }
