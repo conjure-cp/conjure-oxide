@@ -338,7 +338,7 @@ fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
         while let Some(a) = iter.next() {
             if let Some(b) = iter.next() {
-                (values, new_symbols, temp) = tseytin_int_adder(a, b, &new_symbols);
+                (values, new_symbols, temp) = tseytin_int_adder(&a, &b, &new_symbols, 8);
                 new_tops.extend(temp);
                 next.push(values);
             } else {
@@ -358,86 +358,12 @@ fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     ))
 }
 
-fn cnf_int_adder(x: Vec<Expr>, y: Vec<Expr>) -> Vec<Expr> {
-    // let mut x_n = x[0].clone();
-    // let mut y_n = y[0].clone();
-
-    // let mut output = vec![essence_expr!(r"(-&x_n /\ &y_n) \/ (-&y_n /\ &x_n)")];
-    let mut output = vec![Expr::Not(
-        Metadata::new(),
-        Box::new(Expr::Iff(
-            Metadata::new(),
-            Box::new(x[0].clone()),
-            Box::new(y[0].clone()),
-        )),
-    )];
-
-    //let mut carry = essence_expr!(r"&x_n /\ &y_n");
-    let mut carry = Expr::And(
-        Metadata::new(),
-        Box::new(matrix_expr![x[0].clone(), y[0].clone()]),
-    );
-
-    for i in 1..8 {
-        // x_n = x[i].clone();
-        // y_n = y[i].clone();
-
-        // output.push(essence_expr!(
-        //     r"(&x_n /\ &y_n) \/ (&carry /\ ((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n)))"
-        // ));
-
-        output.push(Expr::Not(
-            Metadata::new(),
-            Box::new(Expr::Iff(
-                Metadata::new(),
-                Box::new(carry.clone()),
-                Box::new(Expr::Not(
-                    Metadata::new(),
-                    Box::new(Expr::Iff(
-                        Metadata::new(),
-                        Box::new(x[i].clone()),
-                        Box::new(y[i].clone()),
-                    )),
-                )),
-            )),
-        ));
-
-        // carry = essence_expr!(
-        //     r"((-&carry /\ ((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n))) \/ (-((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n)) /\ &carry))"
-        // )
-        carry = Expr::Or(
-            Metadata::new(),
-            Box::new(matrix_expr![
-                Expr::And(
-                    Metadata::new(),
-                    Box::new(matrix_expr![x[i].clone(), y[i].clone()])
-                ),
-                Expr::And(
-                    Metadata::new(),
-                    Box::new(matrix_expr![
-                        carry.clone(),
-                        Expr::Not(
-                            Metadata::new(),
-                            Box::new(Expr::Iff(
-                                Metadata::new(),
-                                Box::new(x[i].clone()),
-                                Box::new(y[i].clone())
-                            ))
-                        )
-                    ])
-                )
-            ]),
-        )
-    }
-
-    output
-}
-
 // Returns result, new symbol table, new top level constraints
 fn tseytin_int_adder(
-    x: Vec<Expr>,
-    y: Vec<Expr>,
+    x: &Vec<Expr>,
+    y: &Vec<Expr>,
     symbols: &SymbolTable,
+    bits: usize,
 ) -> (Vec<Expr>, SymbolTable, Vec<Expr>) {
     let (mut result, mut new_symbols, mut new_tops) =
         tseytin_xor(x[0].clone(), y[0].clone(), symbols);
@@ -448,7 +374,7 @@ fn tseytin_int_adder(
     (carry, new_symbols, temp) = tseytin_and(&vec![x[0].clone(), y[0].clone()], &new_symbols);
     new_tops.extend(temp);
 
-    for i in 1..8 {
+    for i in 1..bits {
         (result, carry, new_symbols, temp) =
             tseytin_full_adder(x[i].clone(), y[i].clone(), carry.clone(), &new_symbols);
         output.push(result);
@@ -488,18 +414,119 @@ fn tseytin_full_adder(
     (result, carryout, new_symbols, new_tops)
 }
 
-/*
+// Returns result, new symbol table, new top level constraints
+fn cnf_shift_add_multiply(
+    x: &Vec<Expr>,
+    y: &Vec<Expr>,
+    symbols: &SymbolTable,
+) -> (Vec<Expr>, SymbolTable, Vec<Expr>) {
+    let mut x = x.clone();
+    let mut y = y.clone();
+
+    let bits = 8; // TODO: remove
+
+    // extend sign bits of operands to 2*`bits`
+    x.extend(std::iter::repeat(x[bits - 1].clone()).take(bits));
+    y.extend(std::iter::repeat(y[bits - 1].clone()).take(bits));
+
+    let mut s: Vec<Expr> = vec![];
+    let mut new_symbols = symbols.clone();
+    let mut new_tops = vec![];
+    let mut temp;
+    let mut x_0andy_i;
+
+    for bit in &y {
+        (x_0andy_i, new_symbols, temp) =
+            tseytin_and(&vec![x[0].clone(), bit.clone()], &new_symbols);
+        new_tops.extend(temp);
+        s.push(x_0andy_i);
+    }
+
+    let mut sum;
+    let mut if_true;
+    let mut not_x_n;
+    let mut if_false;
+    let mut selection;
+
+    for n in 1..bits {
+        println!("{}", n);
+        // y << 1
+        for i in (1..bits * 2).rev() {
+            y[i] = y[i - 1].clone();
+        }
+        y[0] = false.into();
+
+        (sum, new_symbols, temp) = tseytin_int_adder(&s, &y, &new_symbols, 16);
+        new_tops.extend(temp);
+
+        (not_x_n, new_symbols, temp) = tseytin_not(x[n].clone(), &new_symbols);
+        new_tops.extend(temp);
+
+        for i in 0..16 {
+            (if_true, new_symbols, temp) =
+                tseytin_and(&vec![x[n].clone(), sum[i].clone()], &new_symbols);
+            new_tops.extend(temp);
+
+            (if_false, new_symbols, temp) =
+                tseytin_and(&vec![not_x_n.clone(), s[i].clone()], &new_symbols);
+
+            (selection, new_symbols, temp) =
+                tseytin_or(&vec![if_true.clone(), if_false.clone()], &new_symbols);
+            new_tops.extend(temp);
+
+            s[i] = selection;
+        }
+    }
+
+    //TODO: At the moment, this doesn't account for overflows (perhaps this could use a bubble in the future?)
+    (s[..bits].to_vec(), new_symbols, new_tops)
+}
+
 /// Converts product of CnfInts to a single CnfInt
 ///
 /// ```text
 /// Product(CnfInt(a), CnfInt(b), ...) ~> CnfInt(c)
 ///
 /// ```
-#[register_rule(("CNF", 4100))]
-fn cnf_int_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    // create multiple products
-}
+#[register_rule(("CNF", 9000))]
+fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Product(_, exprs_list) = expr else {
+        return Err(RuleNotApplicable);
+    };
 
+    let mut exprs_bits = validate_cnf_int_operands(exprs_list.clone())?;
+
+    let mut new_symbols = symbols.clone();
+    let mut values;
+    let mut temp;
+    let mut new_tops = vec![];
+
+    while exprs_bits.len() > 1 {
+        let mut next = Vec::with_capacity((exprs_bits.len() + 1) / 2);
+        let mut iter = exprs_bits.into_iter();
+
+        while let Some(a) = iter.next() {
+            if let Some(b) = iter.next() {
+                (values, new_symbols, temp) = cnf_shift_add_multiply(&a, &b, &new_symbols);
+                new_tops.extend(temp);
+                next.push(values);
+            } else {
+                next.push(a);
+            }
+        }
+
+        exprs_bits = next;
+    }
+
+    let result = exprs_bits.pop().unwrap();
+
+    Ok(Reduction::new(
+        Expr::CnfInt(Metadata::new(), Box::new(into_matrix_expr!(result))),
+        new_tops,
+        new_symbols,
+    ))
+}
+/*
 /// Converts negation of a CnfInt to a CnfInt
 ///
 /// ```text
