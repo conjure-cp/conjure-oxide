@@ -217,23 +217,18 @@ impl SerdeModel {
 
         // Serde uses default when constructing references during deserialisation.
         // Here we fix them by traversing over all Atoms in the submodel and replacing the reference with a symbol table lookup
-        // TODO(Yehor): this uses a nested transform_bi, because we do not have Biplate<Atom> for Submodel at the moment.
 
-        let submodel2 = self
-            .submodel
-            .clone()
-            .transform_bi(Arc::new(move |expr: Expression| {
-                expr.transform_bi(Arc::new({
-                    let value = self.submodel.clone();
-                    move |atom: Atom| match atom {
-                        Atom::Reference(name, _) => match value.symbols().lookup(&name) {
-                            Some(name_ref) => Atom::Reference(name, name_ref),
-                            None => bug!("Not found..."),
-                        },
-                        _ => atom,
-                    }
-                }))
-            }));
+        #[allow(clippy::arc_with_non_send_sync)]
+        let submodel2 = self.submodel.clone().transform_bi(Arc::new({
+            let symbol_table_ptr = Rc::clone(self.submodel.symbols_ptr_unchecked());
+            move |atom: Atom| match atom {
+                Atom::Reference(name, _) => match symbol_table_ptr.borrow().lookup(&name) {
+                    Some(name_ref) => Atom::Reference(name, name_ref),
+                    None => bug!("Not found..."),
+                },
+                _ => atom,
+            }
+        }));
 
         Some(Model {
             submodel: submodel2,
