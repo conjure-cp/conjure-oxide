@@ -89,7 +89,7 @@ struct Meta {
 }
 
 pub fn criterion_benchmark(c: &mut Criterion) {
-    let seed = [41; 32];
+    let seed = [71; 32];
     let mut rng = StdRng::from_seed(seed);
     let rules = vec![
         rule_fns![do_nothing],
