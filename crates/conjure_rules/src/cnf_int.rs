@@ -12,6 +12,27 @@ use conjure_core::{into_matrix_expr, matrix_expr};
 
 use conjure_essence_macros::essence_expr;
 
+macro_rules! boolean_select {
+    ($condition:expr, $if_true:expr, $if_false:expr) => {
+        Expr::Or(
+            Metadata::new(),
+            Box::new(matrix_expr![
+                Expr::And(
+                    Metadata::new(),
+                    Box::new(matrix_expr![($condition).clone(), ($if_true).clone()])
+                ),
+                Expr::And(
+                    Metadata::new(),
+                    Box::new(matrix_expr![
+                        Expr::Not(Metadata::new(), Box::new(($condition).clone())),
+                        ($if_false).clone()
+                    ])
+                )
+            ]),
+        )
+    };
+}
+
 #[register_rule(("CNF", 9500))]
 fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
@@ -70,6 +91,7 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     // CHANGE TO 32
     for _ in 0..8 {
+        //BITS
         binary_encoding.push(Expr::Atomic(
             Metadata::new(),
             Atom::Literal(Literal::Bool((value & 1) != 0)),
@@ -248,6 +270,7 @@ fn inequality_boolean(a: Vec<Expr>, b: Vec<Expr>, inclusive: bool) -> Expr {
     // at the moment this causes a stack overflow
     // CHANGE TO 32
     for n in 1..7 {
+        //BITS
         // a_n = &a[n];
         // b_n = &b[n];
         // Macro expression is commented out at the moment because it causes the program to hang for some reason
@@ -287,8 +310,8 @@ fn inequality_boolean(a: Vec<Expr>, b: Vec<Expr>, inclusive: bool) -> Expr {
             Expr::And(
                 Metadata::new(),
                 Box::new(matrix_expr![
-                    b[7].clone(),
-                    Expr::Not(Metadata::new(), Box::new(a[7].clone()))
+                    b[7].clone(),                                       //BITS
+                    Expr::Not(Metadata::new(), Box::new(a[7].clone()))  //BITS
                 ]),
             ),
             Expr::And(
@@ -296,8 +319,8 @@ fn inequality_boolean(a: Vec<Expr>, b: Vec<Expr>, inclusive: bool) -> Expr {
                 Box::new(matrix_expr![
                     Expr::Iff(
                         Metadata::new(),
-                        Box::new(a[7].clone()),
-                        Box::new(b[7].clone())
+                        Box::new(a[7].clone()), //BITS
+                        Box::new(b[7].clone())  //BITS
                     ),
                     output
                 ])
@@ -326,7 +349,7 @@ fn cnf_int_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     let exprs_bits = validate_cnf_int_operands(exprs_list.clone())?.into_iter();
 
-    let output = exprs_bits.reduce(|a, b| cnf_int_adder(a, b)).unwrap(); //TODO: Convert to log sum
+    let output = exprs_bits.reduce(|a, b| cnf_int_adder(&a, &b, 8)).unwrap(); //TODO: Convert to log sum BITS
 
     Ok(Reduction::pure(Expr::CnfInt(
         Metadata::new(),
@@ -334,7 +357,7 @@ fn cnf_int_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
-fn cnf_int_adder(x: Vec<Expr>, y: Vec<Expr>) -> Vec<Expr> {
+fn cnf_int_adder(x: &Vec<Expr>, y: &Vec<Expr>, bits: usize) -> Vec<Expr> {
     // let mut x_n = x[0].clone();
     // let mut y_n = y[0].clone();
 
@@ -354,7 +377,7 @@ fn cnf_int_adder(x: Vec<Expr>, y: Vec<Expr>) -> Vec<Expr> {
         Box::new(matrix_expr![x[0].clone(), y[0].clone()]),
     );
 
-    for i in 1..8 {
+    for i in 1..bits {
         // x_n = x[i].clone();
         // y_n = y[i].clone();
 
@@ -362,7 +385,26 @@ fn cnf_int_adder(x: Vec<Expr>, y: Vec<Expr>) -> Vec<Expr> {
         //     r"(&x_n /\ &y_n) \/ (&carry /\ ((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n)))"
         // ));
 
-        output.push(Expr::Or(
+        output.push(Expr::Not(
+            Metadata::new(),
+            Box::new(Expr::Iff(
+                Metadata::new(),
+                Box::new(carry.clone()),
+                Box::new(Expr::Not(
+                    Metadata::new(),
+                    Box::new(Expr::Iff(
+                        Metadata::new(),
+                        Box::new(x[i].clone()),
+                        Box::new(y[i].clone()),
+                    )),
+                )),
+            )),
+        ));
+
+        // carry = essence_expr!(
+        //     r"((-&carry /\ ((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n))) \/ (-((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n)) /\ &carry))"
+        // )
+        carry = Expr::Or(
             Metadata::new(),
             Box::new(matrix_expr![
                 Expr::And(
@@ -384,43 +426,89 @@ fn cnf_int_adder(x: Vec<Expr>, y: Vec<Expr>) -> Vec<Expr> {
                     ])
                 )
             ]),
-        ));
-
-        // carry = essence_expr!(
-        //     r"((-&carry /\ ((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n))) \/ (-((-&x_n /\ &y_n) \/ (-&y_n /\ &x_n)) /\ &carry))"
-        // )
-        carry = Expr::Not(
-            Metadata::new(),
-            Box::new(Expr::Iff(
-                Metadata::new(),
-                Box::new(carry.clone()),
-                Box::new(Expr::Not(
-                    Metadata::new(),
-                    Box::new(Expr::Iff(
-                        Metadata::new(),
-                        Box::new(x[i].clone()),
-                        Box::new(y[i].clone()),
-                    )),
-                )),
-            )),
-        );
+        )
     }
 
     output
 }
 
-/*
+fn cnf_shift_add_multiply(x: &Vec<Expr>, y: &Vec<Expr>, bits: usize) -> Vec<Expr> {
+    let mut x = x.clone();
+    let mut y = y.clone();
+
+    // extend sign bits of operands to 2*`bits`
+    x.extend(std::iter::repeat(x[bits - 1].clone()).take(bits));
+    y.extend(std::iter::repeat(y[bits - 1].clone()).take(bits));
+
+    let mut s: Vec<Expr> = y
+        .iter()
+        .map(|y_i| boolean_select!(x[0], y_i, Into::<Expr>::into(false)))
+        .collect();
+
+    for n in 1..bits {
+        println!("{}", n);
+        // y << 1
+        for i in (1..bits * 2).rev() {
+            y[i] = y[i - 1].clone();
+        }
+        y[0] = false.into();
+
+        let sum = cnf_int_adder(&s, &y, 2 * bits);
+
+        s = s
+            .iter()
+            .zip(sum.iter())
+            .map(|(s_i, sum_i)| boolean_select!(x[n], sum_i, s_i))
+            .collect();
+    }
+
+    //TODO: At the moment, this doesn't account for overflows (perhaps this could use a bubble in the future?)
+    s[..bits].to_vec()
+}
+
 /// Converts product of CnfInts to a single CnfInt
 ///
 /// ```text
 /// Product(CnfInt(a), CnfInt(b), ...) ~> CnfInt(c)
 ///
 /// ```
-#[register_rule(("CNF", 4100))]
+#[register_rule(("CNF", 9000))]
 fn cnf_int_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    // create multiple products
-}
+    let Expr::Product(_, exprs_list) = expr else {
+        println!("fail!! {}", expr);
+        return Err(RuleNotApplicable);
+    };
+    println!("multiplying??");
 
+    let mut exprs_bits = validate_cnf_int_operands(exprs_list.clone())?;
+
+    println!("multiplying!!");
+
+    while exprs_bits.len() > 1 {
+        let mut next = Vec::with_capacity((exprs_bits.len() + 1) / 2);
+        let mut iter = exprs_bits.into_iter();
+        let mut result;
+
+        while let Some(a) = iter.next() {
+            if let Some(b) = iter.next() {
+                result = cnf_shift_add_multiply(&a, &b, 8); // BITS
+                next.push(result);
+            } else {
+                next.push(a);
+            }
+        }
+
+        exprs_bits = next;
+    }
+
+    let result = exprs_bits.pop().unwrap();
+
+    Ok(Reduction::pure(Expr::CnfInt(
+        Metadata::new(),
+        Box::new(into_matrix_expr!(result)),
+    )))
+}
+/*
 /// Converts negation of a CnfInt to a CnfInt
 ///
 /// ```text

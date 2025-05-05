@@ -17,7 +17,7 @@ pub struct IntToAtom {
 impl IntToAtom {
     /// Returns the names of the representation variable
     fn names(&self) -> impl Iterator<Item = Name> + '_ {
-        (0..8).map(move |index| self.index_to_name(index)) // CHANGE TO 32
+        (0..8).map(move |index| self.index_to_name(index)) // BITS
     }
 
     /// Gets the representation variable name for a specific index.
@@ -98,14 +98,16 @@ impl Representation for IntToAtom {
             }
         }
 
-    //TODO make the sign bit calculation work for dynamic bit count
-    // Mask to 8 bits
-    out &= 0xFF;
+        //TODO make the sign bit calculation work for dynamic bit count
+        // Mask to 8 bits
+        out &= 0xFF; // 0b00111111 BITS
 
-    // If the sign bit is set, convert to negative using two's complement
-    if out & 0x80 != 0 {
-        out -= 0x100;
-    }
+        // If the sign bit (bit 8) is set, convert to negative using two's complement
+        if out & 0x80 != 0 {
+            // 0b10000000 BITS
+            out -= 0x100;
+            // BITS
+        }
 
         Ok(Literal::Int(out.into()))
     }
