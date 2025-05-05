@@ -5,8 +5,8 @@ use std::vec;
 use conjure_core::ast::records::RecordValue;
 use conjure_core::bug;
 use itertools::Itertools as _;
+use std::fs::read_to_string;
 use std::fs::File;
-use std::fs::{read_to_string, OpenOptions};
 use std::hash::Hash;
 use std::io::Write;
 use std::sync::{Arc, RwLock};
@@ -186,38 +186,43 @@ pub fn read_solutions_json(
     Ok(expected_solutions)
 }
 
-/// Reads a rule trace from a file. For the generated prefix, it appends a count message.
-/// Returns the lines of the file as a vector of strings.
-pub fn read_rule_trace(
+pub fn read_json_rule_trace(
     path: &str,
     test_name: &str,
     prefix: &str,
-) -> Result<Vec<String>, std::io::Error> {
-    let filename = format!("{path}/{test_name}-{prefix}-rule-trace.json");
-    let mut rules_trace: Vec<String> = read_to_string(&filename)?
-        .lines()
-        .map(String::from)
-        .collect();
+) -> Result<JsonValue, anyhow::Error> {
+    let generated_json_rules =
+        std::fs::read_to_string(format!("{path}/{test_name}-{prefix}-rule-trace.json"))?;
 
-    // If prefix is "generated", append the count message
-    if prefix == "generated" {
-        let rule_count = rules_trace.len();
-        let count_message = json!({
-            "message": "Number of rules applied",
-            "count": rule_count
-        });
-        let count_message_string = serde_json::to_string(&count_message)?;
-        rules_trace.push(count_message_string);
-
-        // Overwrite the file with updated content (including the count message)
-        let mut file = OpenOptions::new()
-            .write(true)
-            .truncate(true)
-            .open(&filename)?;
-        writeln!(file, "{}", rules_trace.join("\n"))?;
+    // taking into account empty files
+    if generated_json_rules.trim().is_empty() {
+        return Ok(json!({}));
     }
 
-    Ok(rules_trace)
+    let mut generated_rules: JsonValue = serde_json::from_str(&generated_json_rules)?;
+
+    remove_id_fields(&mut generated_rules);
+
+    let sorted_rules = sort_json_object(&generated_rules, true);
+
+    Ok(sorted_rules)
+}
+
+fn remove_id_fields(value: &mut JsonValue) {
+    match value {
+        JsonValue::Object(map) => {
+            map.remove("id"); // Remove "id" key if it exists
+            for v in map.values_mut() {
+                remove_id_fields(v); // Recursively clean nested values
+            }
+        }
+        JsonValue::Array(arr) => {
+            for v in arr {
+                remove_id_fields(v);
+            }
+        }
+        _ => {}
+    }
 }
 
 /// Reads a human-readable rule trace text file.
@@ -226,7 +231,7 @@ pub fn read_human_rule_trace(
     test_name: &str,
     prefix: &str,
 ) -> Result<Vec<String>, std::io::Error> {
-    let filename = format!("{path}/{test_name}-{prefix}-rule-trace-human.txt");
+    let filename = format!("{path}/{test_name}-{prefix}-rule-trace.txt");
     let rules_trace: Vec<String> = read_to_string(&filename)?
         .lines()
         .map(String::from)
