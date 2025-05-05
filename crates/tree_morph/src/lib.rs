@@ -473,7 +473,7 @@ pub mod prelude {
 
     pub use crate::rule_fns;
     pub use commands::Commands;
-    pub use engine::morph;
+    pub use engine::{morph, morph_not_opt};
     pub use helpers::select_first;
     pub use rule::{Rule, RuleFn};
     pub use update::Update;
