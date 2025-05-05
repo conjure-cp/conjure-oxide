@@ -101,6 +101,9 @@ fn try_rewrite_model(
         // Using Biplate, rewrite both the expression tree, and any value lettings in the symbol
         // table.
         for (expr, ctx) in submodel_ctx(submodel.clone()) {
+            if matches!(expr, Expr::Clause(_, _)) {
+                continue;
+            }
             // Clone expr and ctx so they can be reused
             let expr = expr.clone();
             let ctx = ctx.clone();
