@@ -35,11 +35,11 @@ fn random_exp_tree(rng: &mut StdRng, count: &mut usize, depth: usize) -> Expr {
         _ => Expr::Val(rng.random_range(1..=10)),
     }
 }
-fn do_nothing(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -> Option<Expr> {
+fn do_nothing(_cmds: &mut Commands<Expr, Meta>, _subtree: &Expr, _meta: &Meta) -> Option<Expr> {
     None
 }
 
-fn factorial_eval(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -> Option<Expr> {
+fn factorial_eval(_cmds: &mut Commands<Expr, Meta>, subtree: &Expr, _meta: &Meta) -> Option<Expr> {
     if let Expr::Factorial(a) = subtree {
         if let Expr::Val(n) = *a.as_ref() {
             if n == 0 {
@@ -54,7 +54,7 @@ fn factorial_eval(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) 
     None
 }
 
-fn rule_eval_add(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -> Option<Expr> {
+fn rule_eval_add(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, _meta: &Meta) -> Option<Expr> {
     if let Expr::Add(a, b) = subtree {
         if let (Expr::Val(a_v), Expr::Val(b_v)) = (a.as_ref(), b.as_ref()) {
             cmds.mut_meta(Box::new(|m: &mut Meta| m.num_applications_addition += 1));
@@ -64,7 +64,7 @@ fn rule_eval_add(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -
     None
 }
 
-fn rule_eval_mul(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -> Option<Expr> {
+fn rule_eval_mul(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, _meta: &Meta) -> Option<Expr> {
     if let Expr::Mul(a, b) = subtree {
         if let (Expr::Val(a_v), Expr::Val(b_v)) = (a.as_ref(), b.as_ref()) {
             cmds.mut_meta(Box::new(|m: &mut Meta| {
