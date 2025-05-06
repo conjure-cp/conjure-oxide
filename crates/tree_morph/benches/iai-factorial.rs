@@ -84,12 +84,13 @@ struct Meta {
 
 fn generate(
     n: usize,
+    seed_number: u8,
 ) -> (
     Vec<Vec<fn(&mut Commands<Expr, Meta>, &Expr, &Meta) -> Option<Expr>>>,
     Expr,
     Meta,
 ) {
-    let seed = [41; 32];
+    let seed = [seed_number; 32];
     let mut rng = StdRng::from_seed(seed);
     let mut count = 0;
     let my_expression = random_exp_tree(&mut rng, &mut count, n);
@@ -105,8 +106,8 @@ fn generate(
 }
 
 #[library_benchmark]
-#[bench::five(generate(5))]
-#[bench::ten(generate(10))]
+#[bench::five(generate(5, 41))]
+#[bench::ten(generate(10, 41))]
 fn bench_morph(
     data: (
         Vec<Vec<fn(&mut Commands<Expr, Meta>, &Expr, &Meta) -> Option<Expr>>>,
