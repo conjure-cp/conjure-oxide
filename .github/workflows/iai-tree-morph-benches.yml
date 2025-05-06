@@ -63,4 +63,10 @@ jobs:
         run: cargo install --version 0.14.0 iai-callgrind-runner
 
       - name: Run tree-morph benchmarks with iai-callgrind
-        run: cargo bench --manifest-path crates/tree_morph/Cargo.toml --bench iai-factorial
+        run: cargo bench --manifest-path crates/tree_morph/Cargo.toml --bench iai-factorial > iai_callgrind_output.txt
+
+      - name: Upload artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iai-callgrind-results
+          path: iai_callgrind_output.txt
