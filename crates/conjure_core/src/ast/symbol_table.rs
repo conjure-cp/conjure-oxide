@@ -171,7 +171,7 @@ impl SymbolTable {
         // a lot of the domains would be the same).
 
         if let Name::WithRepresentation(name, _) = name {
-            let decl = self.lookup(name.as_ref())?;
+            let decl = self.lookup(&name)?;
             {
                 let borrowed_decl = decl.borrow();
                 borrowed_decl.domain().cloned()
@@ -314,23 +314,24 @@ impl SymbolTable {
         }
         // Representation not found
 
-        // Get a mutable borrow to modify the Declaration in place.
-        // NOTE: This will panic at runtime if another borrow is active.
+        // TODO: nested representations logic...
+        if representation.len() != 1 {
+            bug!("nested representations not implemented")
+        }
+        let repr_name_str = representation[0];
+        let repr_init_fn = get_repr_rule(repr_name_str)?;
+
+        let reprs = vec![repr_init_fn(name, self)?];
+
         let mut borrowed_mut_decl = decl_ref.borrow_mut();
 
         // Get mutable access to the variable part
         let var = borrowed_mut_decl.as_var_mut()?;
 
-        // TODO: nested representations logic...
-        if representation.len() != 1 {
-            bug!("nested representations not implemented")
-        }
-        let repr_rule = get_repr_rule(representation[0])?;
-        let reprs = vec![repr_rule(name, self)?];
-
-        for repr in &reprs {
-            repr.declaration_down()
-                .ok()? // Use ? for robustness
+        for repr_instance in &reprs {
+            repr_instance
+                .declaration_down()
+                .ok()?
                 .iter()
                 .for_each(|x| self.update_insert(Rc::new(RefCell::new(x.clone()))));
         }
