@@ -1,0 +1,66 @@
+name: "iai tree-morph Benchmarks"
+
+on:
+  push:
+    branches:
+      - main 
+      - auto-bench 
+    paths:
+      - conjure_oxide/**
+      - solvers/**
+      - crates/**
+      - Cargo.*
+      - conjure_oxide/tests/**
+      - .github/workflows/iai-tree-morph-benches.yml
+  pull_request:
+    paths:
+      - conjure_oxide/**
+      - solvers/**
+      - crates/**
+      - Cargo.*
+      - conjure_oxide/tests/**
+      - .github/workflows/iai-tree-morph-benches.yml
+  workflow_dispatch:
+
+
+
+jobs:
+  benches:
+    name: "Run iai tree-morph benchmarks"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    strategy:
+      # run all combinations of the matrix even if one combination fails.
+      fail-fast: false
+      matrix:
+        rust_release:
+          - stable
+          - nightly
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ matrix.rust_release }}
+
+      - name: "Cache Rust dependencies"
+        uses: actions/cache@v4
+        with:
+            path: |
+              ~/.cargo/registry
+              ~/.cargo/git
+              target
+            key: ${{ runner.os }}-cargo-${{ matrix.rust_release }}-${{ hashFiles('**/Cargo.lock') }}
+            restore-keys: |
+              ${{ runner.os }}-cargo-${{ matrix.rust_release }}-
+
+
+      - name: Install Valgrind
+        run: sudo apt-get update && sudo apt-get install -y valgrind
+
+      - name: Install iai-callgrind-runner
+        run: cargo binstall iai-callgrind-runner@0.14.0
+
+      - name: Run tree-morph benchmarks with iai-callgrind
+        run: cargo bench --manifest-path crates/tree_morph/Cargo.toml --bench iai_factorial
