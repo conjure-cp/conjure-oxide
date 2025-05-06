@@ -132,6 +132,7 @@ fn cnf_int_ineq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     };
 
     let mut new_symbols = symbols.clone();
+    let mut new_tops = vec![];
 
     let output = inequality_boolean(
         lhs_bits.clone(),
@@ -249,11 +250,14 @@ fn inequality_boolean(
     tops: &mut Vec<Expr>,
     symbols: &mut SymbolTable,
 ) -> Expr {
+    let mut notb;
+    let mut output;
+
     if strict {
-        let mut output = tseytin_imply(a[0].clone(), b[0].clone(), &mut tops, &mut symbols);
+        output = tseytin_imply(a[0].clone(), b[0].clone(), tops, symbols);
     } else {
-        let mut notb = tseytin_not(b[0].clone(), &mut tops, &mut symbols);
-        let mut output = tseytin_and(&vec![a[0].clone(), notb], &mut tops, &mut symbols);
+        notb = tseytin_not(b[0].clone(), tops, symbols);
+        output = tseytin_and(&vec![a[0].clone(), notb], tops, symbols);
     }
 
     let mut lhs;
@@ -266,11 +270,11 @@ fn inequality_boolean(
         // b_n = &b[n];
         // Macro expression is commented out at the moment because it causes the program to hang for some reason
         // output = essence_expr!(r"((&a_n /\ -&b_n) \/ (((&a_n /\ &b_n) \/ (-&a_n /\ -&b_n)) /\ &output))");
-        notb = tseytin_not(b[n].clone(), &mut tops, &mut symbols);
-        lhs = tseytin_and(&vec![a[n].clone(), notb.clone()], &mut tops, &mut symbols);
-        iff = tseytin_iff(a[n].clone(), b[n].clone(), &mut tops, &mut symbols);
-        rhs = tseytin_and(&vec![iff.clone(), output.clone()], &mut tops, &mut symbols);
-        output = tseytin_or(&vec![lhs.clone(), rhs.clone()], &mut tops, &mut symbols);
+        notb = tseytin_not(b[n].clone(), tops, symbols);
+        lhs = tseytin_and(&vec![a[n].clone(), notb.clone()], tops, symbols);
+        iff = tseytin_iff(a[n].clone(), b[n].clone(), tops, symbols);
+        rhs = tseytin_and(&vec![iff.clone(), output.clone()], tops, symbols);
+        output = tseytin_or(&vec![lhs.clone(), rhs.clone()], tops, symbols);
     }
 
     // final bool is the sign bit and should be handled inversely
@@ -278,11 +282,11 @@ fn inequality_boolean(
     // b_n = &b[7];
     // output = essence_expr!(r"((-&a_n /\ &b_n) \/ (((&a_n /\ &b_n) \/ (-&a_n /\ -&b_n)) /\ &output))");
     let nota;
-    nota = tseytin_not(a[7].clone(), &mut tops, &mut symbols);
-    lhs = tseytin_and(&vec![nota, b[7].clone()], &mut tops, &mut symbols);
-    iff = tseytin_iff(a[7].clone(), b[7].clone(), &mut tops, &mut symbols);
-    rhs = tseytin_and(&vec![iff.clone(), output.clone()], &mut tops, &mut symbols);
-    output = tseytin_or(&vec![lhs.clone(), rhs.clone()], &mut tops, &mut symbols);
+    nota = tseytin_not(a[7].clone(), tops, symbols);
+    lhs = tseytin_and(&vec![nota, b[7].clone()], tops, symbols);
+    iff = tseytin_iff(a[7].clone(), b[7].clone(), tops, symbols);
+    rhs = tseytin_and(&vec![iff.clone(), output.clone()], tops, symbols);
+    output = tseytin_or(&vec![lhs.clone(), rhs.clone()], tops, symbols);
 
     output
 }
@@ -343,20 +347,15 @@ fn tseytin_int_adder(
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     //TODO Optimizing for constants
-    let result = tseytin_xor(x[0].clone(), y[0].clone(), &mut tops, &mut symbols);
+    let mut result = tseytin_xor(x[0].clone(), y[0].clone(), tops, symbols);
 
     let mut output = vec![result];
     let mut carry;
 
-    carry = tseytin_and(&vec![x[0].clone(), y[0].clone()], &mut tops, &mut symbols);
+    carry = tseytin_and(&vec![x[0].clone(), y[0].clone()], tops, symbols);
     for i in 1..bits {
-        (result, carry) = tseytin_full_adder(
-            x[i].clone(),
-            y[i].clone(),
-            carry.clone(),
-            &mut tops,
-            &mut symbols,
-        );
+        (result, carry) =
+            tseytin_full_adder(x[i].clone(), y[i].clone(), carry.clone(), tops, symbols);
         output.push(result);
     }
 
@@ -371,11 +370,11 @@ fn tseytin_full_adder(
     tops: &mut Vec<Expr>,
     symbols: &mut SymbolTable,
 ) -> (Expr, Expr) {
-    let axorb = tseytin_xor(a.clone(), b.clone(), &mut tops, &mut symbols);
-    let result = tseytin_xor(axorb.clone(), carry.clone(), &mut tops, &mut symbols);
-    let aandb = tseytin_and(&vec![a, b], &mut tops, &mut symbols);
-    let carryandaxorb = tseytin_and(&vec![carry, axorb], &mut tops, &mut symbols);
-    let carryout = tseytin_or(&vec![aandb, carryandaxorb], &mut tops, &mut symbols);
+    let axorb = tseytin_xor(a.clone(), b.clone(), tops, symbols);
+    let result = tseytin_xor(axorb.clone(), carry.clone(), tops, symbols);
+    let aandb = tseytin_and(&vec![a, b], tops, symbols);
+    let carryandaxorb = tseytin_and(&vec![carry, axorb], tops, symbols);
+    let carryout = tseytin_or(&vec![aandb, carryandaxorb], tops, symbols);
 
     (result, carryout)
 }
@@ -386,8 +385,8 @@ fn tseytin_half_adder(
     tops: &mut Vec<Expr>,
     symbols: &mut SymbolTable,
 ) -> (Expr, Expr) {
-    let result = tseytin_xor(a.clone(), b.clone(), &mut tops, &mut symbols);
-    let carry = tseytin_and(&vec![a, b], &mut tops, &mut symbols);
+    let result = tseytin_xor(a.clone(), b.clone(), tops, symbols);
+    let carry = tseytin_and(&vec![a, b], tops, symbols);
 
     (result, carry)
 }
@@ -395,29 +394,22 @@ fn tseytin_half_adder(
 /// this function is for specifically adding a power of two constant to a cnf int
 fn tseytin_add_two_power(
     expr: &Vec<Expr>,
-    exponent: i32,
+    exponent: usize,
     tops: &mut Vec<Expr>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     let mut result = vec![];
-    let mut new_tops = vec![];
-    let mut new_symbols;
     let mut product = expr[exponent].clone();
 
     for i in 0..exponent {
         result.push(expr[i].clone());
     }
 
-    result.push(tseytin_not(expr[exponent].clone(), &mut tops, &mut symbols));
+    result.push(tseytin_not(expr[exponent].clone(), tops, symbols));
 
-    for i in exponent + 1..8 {
-        result.push(tseytin_xor(
-            product.clone(),
-            expr[i].clone(),
-            &mut tops,
-            &mut symbols,
-        ));
-        product = tseytin_and(&vec![product, expr[i].clone()], &mut tops, &mut symbols);
+    for i in (exponent + 1)..8 {
+        result.push(tseytin_xor(product.clone(), expr[i].clone(), tops, symbols));
+        product = tseytin_and(&vec![product, expr[i].clone()], tops, symbols);
     }
 
     result
@@ -446,7 +438,7 @@ fn cnf_shift_add_multiply(
     let mut x_0andy_i;
 
     for bit in &y {
-        x_0andy_i = tseytin_and(&vec![x[0].clone(), bit.clone()], &mut tops, &mut symbols);
+        x_0andy_i = tseytin_and(&vec![x[0].clone(), bit.clone()], tops, symbols);
         s.push(x_0andy_i);
     }
 
@@ -454,7 +446,6 @@ fn cnf_shift_add_multiply(
     let mut if_true;
     let mut not_x_n;
     let mut if_false;
-    let mut selection;
 
     for n in 1..bits {
         println!("{}", n);
@@ -464,21 +455,13 @@ fn cnf_shift_add_multiply(
         }
         y[0] = false.into();
 
-        sum = tseytin_int_adder(&s, &y, 16, &mut tops, &mut symbols);
-        not_x_n = tseytin_not(x[n].clone(), &mut tops, &mut symbols);
+        sum = tseytin_int_adder(&s, &y, 16, tops, symbols);
+        not_x_n = tseytin_not(x[n].clone(), tops, symbols);
 
         for i in 0..16 {
-            if_true = tseytin_and(&vec![x[n].clone(), sum[i].clone()], &mut tops, &mut symbols);
-            if_false = tseytin_and(
-                &vec![not_x_n.clone(), s[i].clone()],
-                &mut tops,
-                &mut symbols,
-            );
-            s[i] = tseytin_or(
-                &vec![if_true.clone(), if_false.clone()],
-                &mut tops,
-                &mut symbols,
-            );
+            if_true = tseytin_and(&vec![x[n].clone(), sum[i].clone()], tops, symbols);
+            if_false = tseytin_and(&vec![not_x_n.clone(), s[i].clone()], tops, symbols);
+            s[i] = tseytin_or(&vec![if_true.clone(), if_false.clone()], tops, symbols);
         }
     }
 
@@ -552,7 +535,7 @@ fn cnf_int_neg(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     // invert bits
     for bit in bits {
-        result.push(tseytin_not(x, &mut new_tops, &mut new_symbols));
+        result.push(tseytin_not(bit.clone(), &mut new_tops, &mut new_symbols));
     }
 
     // add one
@@ -572,7 +555,7 @@ fn cnf_int_neg(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 ///
 /// ```
 #[register_rule(("CNF", 4100))]
-fn cnf_int_min(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Min(_, exprs) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -618,6 +601,7 @@ fn tseytin_binary_min(
     tops: &mut Vec<Expr>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
+    vec![false.into()]
 }
 
 /*

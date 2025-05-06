@@ -628,7 +628,10 @@ impl Expression {
                 .apply_i32(|a, _| Some(a.abs()), &a.domain_of(syms)?),
             Expression::MinionPow(_, _, _, _) => Some(Domain::BoolDomain),
             Expression::CnfInt(_, _) => {
-                Some(Domain::IntDomain(vec![Range::Bounded(i32::MIN, i32::MAX)]))
+                Some(Domain::IntDomain(vec![Range::Bounded(
+                    i8::MIN.into(),
+                    i8::MAX.into(),
+                )])) // BITS
             } // CnfInt can represent any i32 integer
             Expression::Clause(_, _) => Some(Domain::BoolDomain),
         };
