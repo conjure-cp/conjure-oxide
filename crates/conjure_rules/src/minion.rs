@@ -1,7 +1,7 @@
 /************************************************************************/
 /*        Rules for translating to Minion-supported constraints         */
 /************************************************************************/
-use std::{cell::RefCell, convert::TryInto, rc::Rc};
+use std::convert::TryInto;
 
 use crate::{
     extra_check,
@@ -9,8 +9,7 @@ use crate::{
 };
 use conjure_core::{
     ast::{
-        Atom, Declaration, Domain, Expression as Expr, Literal as Lit, Range, ReturnType,
-        SymbolTable, Typeable,
+        Atom, Domain, Expression as Expr, Literal as Lit, Range, ReturnType, SymbolTable, Typeable,
     },
     matrix_expr,
     metadata::Metadata,

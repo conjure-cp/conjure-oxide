@@ -1,6 +1,5 @@
 use std::cell::RefCell;
 use std::fs;
-use std::ops::Deref;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 

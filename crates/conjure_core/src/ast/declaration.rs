@@ -51,6 +51,7 @@ pub enum DeclarationKind {
     DomainLetting(Domain),
 }
 
+// NOTE: To not be used anywhere else. Needed for serde de-serialization.
 impl Default for DeclarationKind {
     fn default() -> Self {
         Self::DecisionVariable(DecisionVariable::default())
