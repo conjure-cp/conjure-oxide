@@ -36,7 +36,6 @@ fn generate(
     (rules, *expression, meta)
 }
 
-#[cfg(target_os = "linux")]
 #[library_benchmark]
 #[bench::optimised(generate(50))]
 fn bench_morph_op(
@@ -50,7 +49,6 @@ fn bench_morph_op(
     black_box(morph(rules, select_first, expression, meta))
 }
 
-#[cfg(target_os = "linux")]
 #[library_benchmark]
 #[bench::unpoptimised(generate(50))]
 fn bench_morph_unop(
@@ -64,7 +62,6 @@ fn bench_morph_unop(
     black_box(morph_not_opt(rules, select_first, expression, meta))
 }
 
-#[cfg(target_os = "linux")]
 library_benchmark_group!(
     name = bench_testing_group;
     benchmarks = bench_morph_op, bench_morph_unop
