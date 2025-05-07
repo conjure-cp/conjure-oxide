@@ -119,10 +119,10 @@ fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
 #[register_rule(("CNF", 4100))]
 fn cnf_int_ineq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs, strict) = match expr {
-        Expr::Lt(_, x, y) => (y, x, false),
-        Expr::Gt(_, x, y) => (x, y, false),
-        Expr::Leq(_, x, y) => (y, x, true),
-        Expr::Geq(_, x, y) => (x, y, true),
+        Expr::Lt(_, x, y) => (y, x, true),
+        Expr::Gt(_, x, y) => (x, y, true),
+        Expr::Leq(_, x, y) => (y, x, false),
+        Expr::Geq(_, x, y) => (x, y, false),
         _ => return Err(RuleNotApplicable),
     };
 
@@ -261,11 +261,13 @@ fn inequality_boolean(
     let mut output;
 
     if strict {
-        output = tseytin_imply(a[0].clone(), b[0].clone(), clauses, symbols);
-    } else {
         notb = tseytin_not(b[0].clone(), clauses, symbols);
         output = tseytin_and(&vec![a[0].clone(), notb], clauses, symbols);
+    } else {
+        output = tseytin_imply(b[0].clone(), a[0].clone(), clauses, symbols);
     }
+
+    //TODO: There may be room for simplification, and constant optimization
 
     let mut lhs;
     let mut rhs;
@@ -588,7 +590,7 @@ fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
         while let Some(a) = iter.next() {
             if let Some(b) = iter.next() {
-                values = tseytin_binary_min(&a, &b, &mut new_clauses, &mut new_symbols);
+                values = tseytin_binary_min_max(&a, &b, true, &mut new_clauses, &mut new_symbols);
                 next.push(values);
             } else {
                 next.push(a);
@@ -607,16 +609,40 @@ fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     ))
 }
 
-fn tseytin_binary_min(
+fn tseytin_binary_min_max(
     x: &Vec<Expr>,
     y: &Vec<Expr>,
+    min: bool,
     clauses: &mut Vec<Expr>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
-    vec![false.into()]
+    let mut out = vec![];
+
+    for i in 0..8 {
+        out.push(tseytin_xor(x[i].clone(), y[i].clone(), clauses, symbols))
+    }
+
+    let mask;
+
+    if min {
+        // mask is 1 if x > y
+        mask = inequality_boolean(x.clone(), y.clone(), true, clauses, symbols);
+    } else {
+        // flip the args if getting maximum x < y -> 1
+        mask = inequality_boolean(y.clone(), x.clone(), true, clauses, symbols);
+    }
+
+    for i in 0..8 {
+        out[i] = tseytin_and(&vec![out[i].clone(), mask.clone()], clauses, symbols);
+    }
+
+    for i in 0..8 {
+        out[i] = tseytin_xor(x[i].clone(), out[i].clone(), clauses, symbols);
+    }
+
+    out
 }
 
-/*
 /// Converts max of CnfInts to a single CnfInt
 ///
 /// ```text
@@ -624,10 +650,46 @@ fn tseytin_binary_min(
 ///
 /// ```
 #[register_rule(("CNF", 4100))]
-fn cnf_int_max(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    // use conditionals
-}
+fn cnf_int_max(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Max(_, exprs) = expr else {
+        return Err(RuleNotApplicable);
+    };
 
+    let Expr::AbstractLiteral(_, Matrix(exprs_list, _)) = exprs.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut exprs_bits = validate_cnf_int_operands(exprs_list.clone())?;
+
+    let mut new_symbols = symbols.clone();
+    let mut values;
+    let mut new_clauses = vec![];
+
+    while exprs_bits.len() > 1 {
+        let mut next = Vec::with_capacity((exprs_bits.len() + 1) / 2);
+        let mut iter = exprs_bits.into_iter();
+
+        while let Some(a) = iter.next() {
+            if let Some(b) = iter.next() {
+                values = tseytin_binary_min_max(&a, &b, false, &mut new_clauses, &mut new_symbols);
+                next.push(values);
+            } else {
+                next.push(a);
+            }
+        }
+
+        exprs_bits = next;
+    }
+
+    let result = exprs_bits.pop().unwrap();
+
+    Ok(Reduction::cnf(
+        Expr::CnfInt(Metadata::new(), Box::new(into_matrix_expr!(result))),
+        new_clauses,
+        new_symbols,
+    ))
+}
+/*
 /// Converts Abs of a CnfInt to a CnfInt
 ///
 /// ```text

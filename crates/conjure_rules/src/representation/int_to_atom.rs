@@ -98,14 +98,14 @@ impl Representation for IntToAtom {
             }
         }
 
-    //TODO make the sign bit calculation work for dynamic bit count
-    // Mask to 8 bits
-    out &= 0xFF;
+        //TODO make the sign bit calculation work for dynamic bit count
+        // Mask to 8 bits
+        out &= 0xFF;
 
-    // If the sign bit is set, convert to negative using two's complement
-    if out & 0x80 != 0 {
-        out -= 0x100;
-    }
+        // If the sign bit is set, convert to negative using two's complement
+        if out & 0x80 != 0 {
+            out -= 0x100;
+        }
 
         Ok(Literal::Int(out.into()))
     }
