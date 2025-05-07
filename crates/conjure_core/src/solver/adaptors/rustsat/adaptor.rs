@@ -197,9 +197,11 @@ impl SolverAdaptor for SAT {
         self.decision_refs = Some(finds);
 
         let m_clone = model.clone();
+        let vec_clauses = m_clone.as_submodel().clauses();
         let vec_constr = m_clone.as_submodel().constraints();
 
-        let vec_cnf = vec_constr.clone();
+        let mut vec_cnf = vec_clauses.clone();
+        vec_cnf.extend(vec_constr.clone());
 
         let mut var_map: HashMap<Name, Lit> = HashMap::new();
 
