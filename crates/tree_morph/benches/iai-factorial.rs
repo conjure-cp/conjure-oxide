@@ -105,6 +105,7 @@ fn generate(
     (rules, my_expression, meta)
 }
 
+#[cfg(target_os = "linux")]
 #[library_benchmark]
 #[bench::five(generate(5, 41))]
 #[bench::ten(generate(10, 41))]
@@ -119,6 +120,7 @@ fn bench_morph_op(
     black_box(morph(rules, select_first, expression, meta))
 }
 
+#[cfg(target_os = "linux")]
 #[library_benchmark]
 #[bench::five(generate(5, 41))]
 #[bench::ten(generate(10, 41))]
@@ -133,9 +135,24 @@ fn bench_morph_unop(
     black_box(morph_not_opt(rules, select_first, expression, meta))
 }
 
+#[cfg(target_os = "linux")]
 library_benchmark_group!(
     name = bench_testing_group;
     benchmarks = bench_morph_op, bench_morph_unop
 );
 
+#[cfg(target_os = "linux")]
 main!(library_benchmark_groups = bench_testing_group);
+
+#[cfg(not(target_os = "linux"))]
+fn main() {
+    println!(
+        "\x1b[31m================================================================================"
+    );
+    println!("  >>>>> WARNING: Linux-Specific Benchmark <<<<<");
+    println!("  This benchmark relies on valgrind and is intended for Linux environments only.");
+    println!("  It will be skipped on non-Linux operating systems.");
+    println!(
+        "================================================================================\x1b[0m"
+    );
+}
