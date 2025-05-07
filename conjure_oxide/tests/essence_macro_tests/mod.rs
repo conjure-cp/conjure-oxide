@@ -1,22 +1,22 @@
-// use conjure_core::ast::{Atom, Expression};
-// use conjure_core::matrix_expr;
+use conjure_core::ast::{Atom, Expression};
+use conjure_core::matrix_expr;
 // use conjure_essence_macros::essence_vec;
-// use conjure_oxide::{essence_expr, Metadata};
+use conjure_oxide::{essence_expr, Metadata};
 
-// #[test]
-// fn test_2plus2() {
-//     let expr = essence_expr!(2 + 2);
-//     assert_eq!(
-//         expr,
-//         Expression::Sum(
-//             Metadata::new(),
-//             Box::new(matrix_expr![
-//                 Expression::Atomic(Metadata::new(), Atom::new_ilit(2)),
-//                 Expression::Atomic(Metadata::new(), Atom::new_ilit(2))
-//             ])
-//         )
-//     );
-// }
+#[test]
+fn test_2plus2() {
+    let expr = essence_expr!(2 + 2);
+    assert_eq!(
+        expr,
+        Expression::Sum(
+            Metadata::new(),
+            Box::new(matrix_expr![
+                Expression::Atomic(Metadata::new(), Atom::new_ilit(2)),
+                Expression::Atomic(Metadata::new(), Atom::new_ilit(2))
+            ])
+        )
+    );
+}
 
 // #[test]
 // fn test_metavar_const() {
