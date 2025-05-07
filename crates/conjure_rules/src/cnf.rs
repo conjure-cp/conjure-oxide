@@ -31,27 +31,27 @@ register_rule_set!("CNF", ("Base"), (SolverFamily::SAT));
 ///  new variables:
 ///  find __0: bool
 ///
-///  new constraints:
-///  or(__0, not(a), not(b), not(c), ...)
-///  or(not(__0), a)
-///  or(not(__0), b)
-///  or(not(__0), c)
+///  new clauses:
+///  clause(__0, not(a), not(b), not(c), ...)
+///  clause(not(__0), a)
+///  clause(not(__0), b)
+///  clause(not(__0), c)
 ///  ...
 ///
 ///  ---------------------------------------
 ///
-///  or(a, b, c, ...)
+///  clause(a, b, c, ...)
 ///  ~~>
 ///  __0
 ///
 ///  new variables:
 ///  find __0: bool
 ///
-///  new constraints:
-///  or(not(__0), a, b, c, ...)
-///  or(__0, not(a))
-///  or(__0, not(b))
-///  or(__0, not(c))
+///  new clauses:
+///  clause(not(__0), a, b, c, ...)
+///  clause(__0, not(a))
+///  clause(__0, not(b))
+///  clause(__0, not(c))
 ///  ...
 /// ```
 #[register_rule(("CNF", 8500))]
@@ -222,6 +222,55 @@ pub fn tseytin_imply(x: Expr, y: Expr, clauses: &mut Vec<Expr>, symbols: &mut Sy
     new_expr
 }
 
+/// Applies the Tseytin multiplex transformation
+/// cond ? b : a
+///
+/// cond = 1 => b
+/// cond = 0 => a
+pub fn tseytin_mux(
+    cond: Expr,
+    a: Expr,
+    b: Expr,
+    clauses: &mut Vec<Expr>,
+    symbols: &mut SymbolTable,
+) -> Expr {
+    let new_expr = create_bool_aux(symbols);
+
+    clauses.extend(create_clause(vec![
+        Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
+        cond.clone(),
+        a.clone(),
+    ]));
+    clauses.extend(create_clause(vec![
+        Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
+        Expr::Not(Metadata::new(), Box::new(cond.clone())),
+        b.clone(),
+    ]));
+    clauses.extend(create_clause(vec![
+        Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
+        a.clone(),
+        b.clone(),
+    ]));
+
+    clauses.extend(create_clause(vec![
+        new_expr.clone(),
+        cond.clone(),
+        Expr::Not(Metadata::new(), Box::new(a.clone())),
+    ]));
+    clauses.extend(create_clause(vec![
+        new_expr.clone(),
+        Expr::Not(Metadata::new(), Box::new(cond.clone())),
+        Expr::Not(Metadata::new(), Box::new(b.clone())),
+    ]));
+    clauses.extend(create_clause(vec![
+        new_expr.clone(),
+        Expr::Not(Metadata::new(), Box::new(a.clone())),
+        Expr::Not(Metadata::new(), Box::new(b.clone())),
+    ]));
+
+    new_expr
+}
+
 fn create_clause(exprs: Vec<Expr>) -> Option<Expr> {
     let mut new_terms = vec![];
     for expr in exprs {
@@ -261,9 +310,9 @@ fn create_clause(exprs: Vec<Expr>) -> Option<Expr> {
 ///  new variables:
 ///  find __0: bool
 ///
-///  new constraints:
-///  or(__0, a)
-///  or(not(__0), not(a))
+///  new clauses:
+///  clause(__0, a)
+///  clause(not(__0), not(a))
 /// ```
 #[register_rule(("CNF", 9005))]
 fn apply_tseytin_not(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
@@ -294,14 +343,14 @@ fn apply_tseytin_not(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 ///  ~~>
 ///  __0
 ///
-///  new variables:
+///  new clauses:
 ///  find __0: bool
 ///
-///  new constraints:
-///  or(not(a), not(b), __0)
-///  or(a, b, __0)
-///  or(a, not(b), not(__0))
-///  or(not(a), b, not(__0))
+///  new clauses:
+///  clause(not(a), not(b), __0)
+///  clause(a, b, __0)
+///  clause(a, not(b), not(__0))
+///  clause(not(a), b, not(__0))
 /// ```
 #[register_rule(("CNF", 8500))]
 fn apply_tseytin_iff(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
@@ -331,10 +380,10 @@ fn apply_tseytin_iff(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 ///  new variables:
 ///  find __0: bool
 ///
-///  new constraints:
-///  or(not(__0), not(a), b)
-///  or(__0, a)
-///  or(__0, not(b))
+///  new clauses:
+///  clause(not(__0), not(a), b)
+///  clause(__0, a)
+///  clause(__0, not(b))
 /// ```
 #[register_rule(("CNF", 8500))]
 fn apply_tseytin_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {

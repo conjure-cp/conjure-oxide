@@ -11,10 +11,12 @@ use conjure_core::into_matrix_expr;
 use conjure_core::metadata::Metadata;
 
 use conjure_essence_macros::essence_expr;
+use itertools::Itertools;
 
 use crate::cnf::tseytin_and;
 use crate::cnf::tseytin_iff;
 use crate::cnf::tseytin_imply;
+use crate::cnf::tseytin_mux;
 use crate::cnf::tseytin_not;
 use crate::cnf::tseytin_or;
 use crate::cnf::tseytin_xor;
@@ -396,6 +398,7 @@ fn tseytin_half_adder(
 fn tseytin_add_two_power(
     expr: &Vec<Expr>,
     exponent: usize,
+    bits: usize,
     clauses: &mut Vec<Expr>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
@@ -408,7 +411,7 @@ fn tseytin_add_two_power(
 
     result.push(tseytin_not(expr[exponent].clone(), clauses, symbols));
 
-    for i in (exponent + 1)..BITS {
+    for i in (exponent + 1)..bits {
         result.push(tseytin_xor(
             product.clone(),
             expr[i].clone(),
@@ -453,7 +456,6 @@ fn cnf_shift_add_multiply(
     let mut if_false;
 
     for n in 1..bits {
-        println!("{}", n);
         // y << 1
         for i in (1..bits * 2).rev() {
             y[i] = y[i - 1].clone();
@@ -536,21 +538,31 @@ fn cnf_int_neg(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_clauses = vec![];
     let mut new_symbols = symbols.clone();
 
-    let mut result = vec![];
-
-    // invert bits
-    for bit in bits {
-        result.push(tseytin_not(bit.clone(), &mut new_clauses, &mut new_symbols));
-    }
-
-    // add one
-    result = tseytin_add_two_power(&result, 0, &mut new_clauses, &mut new_symbols);
+    let result = tseytin_negate(&bits, BITS, &mut new_clauses, &mut new_symbols);
 
     Ok(Reduction::cnf(
         Expr::CnfInt(Metadata::new(), Box::new(into_matrix_expr!(result))),
         new_clauses,
         new_symbols,
     ))
+}
+
+fn tseytin_negate(
+    expr: &Vec<Expr>,
+    bits: usize,
+    clauses: &mut Vec<Expr>,
+    symbols: &mut SymbolTable,
+) -> Vec<Expr> {
+    let mut result = vec![];
+    // invert bits
+    for bit in expr {
+        result.push(tseytin_not(bit.clone(), clauses, symbols));
+    }
+
+    // add one
+    result = tseytin_add_two_power(&result, 0, bits, clauses, symbols);
+
+    result
 }
 
 /// Converts min of CnfInts to a single CnfInt
@@ -708,7 +720,7 @@ fn cnf_int_abs(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     }
 
     // add one
-    result = tseytin_add_two_power(&result, 0, &mut new_clauses, &mut new_symbols);
+    result = tseytin_add_two_power(&result, 0, BITS, &mut new_clauses, &mut new_symbols);
 
     let is_positive = tseytin_not(bits[BITS - 1].clone(), &mut new_clauses, &mut new_symbols);
     let mut if_neg;
@@ -739,7 +751,6 @@ fn cnf_int_abs(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     ))
 }
 
-/*
 /// Converts SafeDiv of CnfInts to a single CnfInt
 ///
 /// ```text
@@ -747,10 +758,73 @@ fn cnf_int_abs(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 ///
 /// ```
 #[register_rule(("CNF", 4100))]
-fn cnf_int_safediv(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    // binary div
+fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    // Using "Restoring division" algorithm
+    // https://en.wikipedia.org/wiki/Division_algorithm#Restoring_division
+    let Expr::SafeDiv(_, numer, denom) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let binding = validate_cnf_int_operands(vec![unbox(numer), unbox(denom)])?;
+    let [numer_bits, denom_bits] = binding.as_slice() else {
+        return Err(RuleNotApplicable);
+    };
+
+    // TODO: Support negatives
+
+    let mut new_symbols = symbols.clone();
+    let mut new_clauses = vec![];
+    let mut quotient = vec![false.into(); BITS];
+
+    let mut r = numer_bits.clone();
+    r.extend(std::iter::repeat(r[BITS - 1].clone()).take(BITS));
+    let mut d = std::iter::repeat(false.into()).take(BITS).collect_vec();
+    d.extend(denom_bits.clone());
+
+    let minus_d = tseytin_negate(&d.clone(), 2 * BITS, &mut new_clauses, &mut new_symbols);
+    let mut rminusd;
+
+    for i in (0..BITS).rev() {
+        // r << 1
+        for j in (1..BITS * 2).rev() {
+            r[j] = r[j - 1].clone();
+        }
+        r[0] = false.into();
+
+        rminusd = tseytin_int_adder(
+            &r.clone(),
+            &minus_d.clone(),
+            2 * BITS,
+            &mut new_clauses,
+            &mut new_symbols,
+        );
+
+        quotient[i] = tseytin_not(
+            // q[i] = inverse of sign bit - 1 if positive, 0 if negative
+            rminusd[2 * BITS - 1].clone(),
+            &mut new_clauses,
+            &mut new_symbols,
+        );
+
+        for j in 0..(2 * BITS) {
+            r[j] = tseytin_mux(
+                quotient[i].clone(),
+                r[j].clone(),       // use r if negative
+                rminusd[j].clone(), // use r-d if positive
+                &mut new_clauses,
+                &mut new_symbols,
+            );
+        }
+    }
+
+    Ok(Reduction::cnf(
+        Expr::CnfInt(Metadata::new(), Box::new(into_matrix_expr!(quotient))),
+        new_clauses,
+        new_symbols,
+    ))
 }
 
+/*
 /// Converts SafeMod of CnfInts to a single CnfInt
 ///
 /// ```text
