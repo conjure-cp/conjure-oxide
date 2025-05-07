@@ -179,6 +179,7 @@ impl SolverAdaptor for SAT {
         for find_ref in decisions {
             let domain = find_ref.1.domain().unwrap();
 
+            // only decision variables with boolean domains or representations using booleans are supported at this time
             if (*domain != BoolDomain
                 && !(sym_tab
                     .get_representation(&find_ref.0, &["int_to_atom"])
@@ -188,6 +189,7 @@ impl SolverAdaptor for SAT {
                     "Only Boolean Decision Variables supported".to_string(),
                 ))?;
             }
+            // only boolean variables should be passed to the solver
             if (*domain == BoolDomain) {
                 let name = find_ref.0;
                 finds.push(name);
@@ -197,9 +199,10 @@ impl SolverAdaptor for SAT {
         self.decision_refs = Some(finds);
 
         let m_clone = model.clone();
+
+        // combine clauses and constraints into a single vector of clauses
         let vec_clauses = m_clone.as_submodel().clauses();
         let vec_constr = m_clone.as_submodel().constraints();
-
         let mut vec_cnf = vec_clauses.clone();
         vec_cnf.extend(vec_constr.clone());
 

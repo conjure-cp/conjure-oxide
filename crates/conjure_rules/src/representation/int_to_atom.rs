@@ -9,6 +9,10 @@ use conjure_core::{
 
 register_representation!(IntToAtom, "int_to_atom");
 
+// The number of bits used to represent the integer.
+// This is a fixed value for the representation, but could be made dynamic if needed.
+const BITS: i32 = 8;
+
 #[derive(Clone, Debug)]
 pub struct IntToAtom {
     src_var: Name,
@@ -17,7 +21,7 @@ pub struct IntToAtom {
 impl IntToAtom {
     /// Returns the names of the representation variable
     fn names(&self) -> impl Iterator<Item = Name> + '_ {
-        (0..8).map(move |index| self.index_to_name(index)) // CHANGE TO 32
+        (0..BITS).map(move |index| self.index_to_name(index))
     }
 
     /// Gets the representation variable name for a specific index.
@@ -25,7 +29,7 @@ impl IntToAtom {
         Name::RepresentedName(
             Box::new(self.src_var.clone()),
             self.repr_name().to_string(),
-            format!("{:02}", index), // stored as _00, _01, ..., _31
+            format!("{:02}", index), // stored as _00, _01, ...
         )
     }
 }
@@ -69,9 +73,9 @@ impl Representation for IntToAtom {
 
         let mut result = std::collections::BTreeMap::new();
 
-        // name_0 is the least significant bit, name_31 is the sign bit
+        // name_0 is the least significant bit, name_<BITS-1> is the sign bit
         for name in self.names() {
-            result.insert(Name::from(name), Literal::Bool((value_i32 & 1) != 0));
+            result.insert(name, Literal::Bool((value_i32 & 1) != 0));
             value_i32 >>= 1;
         }
 
@@ -98,13 +102,13 @@ impl Representation for IntToAtom {
             }
         }
 
-        //TODO make the sign bit calculation work for dynamic bit count
-        // Mask to 8 bits
-        out &= 0xFF;
+        let sign_bit = 1 << (BITS - 1);
+        // Mask to `BITS` bits
+        out &= (sign_bit << 1) - 1;
 
         // If the sign bit is set, convert to negative using two's complement
-        if out & 0x80 != 0 {
-            out -= 0x100;
+        if out & sign_bit != 0 {
+            out -= sign_bit << 1;
         }
 
         Ok(Literal::Int(out.into()))

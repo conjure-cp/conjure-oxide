@@ -632,7 +632,11 @@ impl Expression {
                     i8::MIN.into(),
                     i8::MAX.into(),
                 )])) // BITS
-            } // CnfInt can represent any i32 integer
+            } // A CnfInt can represent any i8 integer at the moment
+            // The clause expression is a special case of the Or expression, but it is not
+            // a disjunction of expressions, but rather a disjunction of atoms
+            // Clauses should only be found within the `cnf_clauses` field of the model
+            // and therefore should not be affected by the rule engine
             Expression::Clause(_, _) => Some(Domain::BoolDomain),
         };
         match ret {

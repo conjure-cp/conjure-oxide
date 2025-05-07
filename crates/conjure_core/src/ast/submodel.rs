@@ -34,7 +34,7 @@ pub struct SubModel {
     constraints: Expression,
     #[serde_as(as = "RcRefCellAsInner")]
     symbols: Rc<RefCell<SymbolTable>>,
-    cnf_clauses: Vec<Expression>,
+    cnf_clauses: Vec<Expression>, // CNF clauses
 }
 
 impl SubModel {

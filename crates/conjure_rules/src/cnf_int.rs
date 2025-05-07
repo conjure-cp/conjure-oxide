@@ -7,8 +7,8 @@ use conjure_core::rule_engine::{
 
 use conjure_core::ast::AbstractLiteral::Matrix;
 use conjure_core::ast::{Atom, Domain, Literal, Range};
+use conjure_core::into_matrix_expr;
 use conjure_core::metadata::Metadata;
-use conjure_core::{into_matrix_expr, matrix_expr};
 
 use conjure_essence_macros::essence_expr;
 
@@ -18,6 +18,10 @@ use crate::cnf::tseytin_imply;
 use crate::cnf::tseytin_not;
 use crate::cnf::tseytin_or;
 use crate::cnf::tseytin_xor;
+
+// The number of bits used to represent the integer.
+// This is a fixed value for the representation, but could be made dynamic if needed.
+const BITS: usize = 8;
 
 #[register_rule(("CNF", 9500))]
 fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
@@ -75,8 +79,7 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     let mut binary_encoding = vec![];
 
-    // CHANGE TO 32
-    for _ in 0..8 {
+    for _ in 0..BITS {
         binary_encoding.push(Expr::Atomic(
             Metadata::new(),
             Atom::Literal(Literal::Bool((value & 1) != 0)),
@@ -90,9 +93,9 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     )))
 }
 
-// This function takes a target expression and a vector of ranges and creates an expression representing the ranges with the target expression as the subject
-//
-// E.g. x : int(4), int(10..20), int(30..) ~> Or(x=4, 10<=x<=20, x>=30)
+/// This function takes a target expression and a vector of ranges and creates an expression representing the ranges with the target expression as the subject
+///
+/// E.g. x : int(4), int(10..20), int(30..) ~~> Or(x=4, 10<=x<=20, x>=30)
 fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
     let mut output = vec![];
 
@@ -110,10 +113,10 @@ fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
     Expr::Or(Metadata::new(), Box::new(into_matrix_expr!(output)))
 }
 
-/// Converts an inequality expression between two CnfInts to a conjunction of boolean expressions
+/// Converts an inequality expression between two CnfInts to a boolean expression in cnf.
 ///
 /// ```text
-/// CnfInt(a) </>/<=/>= CnfInt(b) ~> And(...)
+/// CnfInt(a) </>/<=/>= CnfInt(b) ~> Bool
 ///
 /// ```
 #[register_rule(("CNF", 4100))]
@@ -166,10 +169,10 @@ fn validate_cnf_int_operands(exprs: Vec<Expr>) -> Result<Vec<Vec<Expr>>, Applica
     out
 }
 
-/// Converts a = expression between two CnfInts to a conjunction of boolean expressions
+/// Converts a `=` expression between two CnfInts to a boolean expression in cnf
 ///
 /// ```text
-/// CnfInt(a) = CnfInt(b) ~> And(...)
+/// CnfInt(a) = CnfInt(b) ~> Bool
 ///
 /// ```
 #[register_rule(("CNF", 9100))]
@@ -188,8 +191,7 @@ fn cnf_int_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_clauses = vec![];
     let mut comparison;
 
-    for i in 0..8 {
-        // BITS
+    for i in 0..BITS {
         comparison = tseytin_iff(
             lhs_bits[i].clone(),
             rhs_bits[i].clone(),
@@ -206,10 +208,10 @@ fn cnf_int_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
 }
 
-/// Converts a != expression between two CnfInts to a disjunction of boolean expressions
+/// Converts a != expression between two CnfInts to a boolean expression in cnf
 ///
 /// ```text
-/// CnfInt(a) != CnfInt(b) ~> Or(...)
+/// CnfInt(a) != CnfInt(b) ~> Bool
 ///
 /// ```
 #[register_rule(("CNF", 4100))]
@@ -228,8 +230,7 @@ fn cnf_int_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_clauses = vec![];
     let mut comparison;
 
-    for i in 0..8 {
-        // BITS
+    for i in 0..BITS {
         comparison = tseytin_xor(
             lhs_bits[i].clone(),
             rhs_bits[i].clone(),
@@ -272,13 +273,7 @@ fn inequality_boolean(
     let mut lhs;
     let mut rhs;
     let mut iff;
-    // at the moment this causes a stack overflow
-    // CHANGE TO 32
-    for n in 1..7 {
-        // a_n = &a[n];
-        // b_n = &b[n];
-        // Macro expression is commented out at the moment because it causes the program to hang for some reason
-        // output = essence_expr!(r"((&a_n /\ -&b_n) \/ (((&a_n /\ &b_n) \/ (-&a_n /\ -&b_n)) /\ &output))");
+    for n in 1..(BITS - 1) {
         notb = tseytin_not(b[n].clone(), clauses, symbols);
         lhs = tseytin_and(&vec![a[n].clone(), notb.clone()], clauses, symbols);
         iff = tseytin_iff(a[n].clone(), b[n].clone(), clauses, symbols);
@@ -287,13 +282,10 @@ fn inequality_boolean(
     }
 
     // final bool is the sign bit and should be handled inversely
-    // a_n = &a[7];
-    // b_n = &b[7];
-    // output = essence_expr!(r"((-&a_n /\ &b_n) \/ (((&a_n /\ &b_n) \/ (-&a_n /\ -&b_n)) /\ &output))");
     let nota;
-    nota = tseytin_not(a[7].clone(), clauses, symbols);
-    lhs = tseytin_and(&vec![nota, b[7].clone()], clauses, symbols);
-    iff = tseytin_iff(a[7].clone(), b[7].clone(), clauses, symbols);
+    nota = tseytin_not(a[BITS - 1].clone(), clauses, symbols);
+    lhs = tseytin_and(&vec![nota, b[BITS - 1].clone()], clauses, symbols);
+    iff = tseytin_iff(a[BITS - 1].clone(), b[BITS - 1].clone(), clauses, symbols);
     rhs = tseytin_and(&vec![iff.clone(), output.clone()], clauses, symbols);
     output = tseytin_or(&vec![lhs.clone(), rhs.clone()], clauses, symbols);
 
@@ -328,7 +320,7 @@ fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
         while let Some(a) = iter.next() {
             if let Some(b) = iter.next() {
-                values = tseytin_int_adder(&a, &b, 8, &mut new_clauses, &mut new_symbols);
+                values = tseytin_int_adder(&a, &b, BITS, &mut new_clauses, &mut new_symbols);
                 next.push(values);
             } else {
                 next.push(a);
@@ -416,7 +408,7 @@ fn tseytin_add_two_power(
 
     result.push(tseytin_not(expr[exponent].clone(), clauses, symbols));
 
-    for i in (exponent + 1)..8 {
+    for i in (exponent + 1)..BITS {
         result.push(tseytin_xor(
             product.clone(),
             expr[i].clone(),
@@ -433,13 +425,12 @@ fn tseytin_add_two_power(
 fn cnf_shift_add_multiply(
     x: &Vec<Expr>,
     y: &Vec<Expr>,
+    bits: usize,
     clauses: &mut Vec<Expr>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     let mut x = x.clone();
     let mut y = y.clone();
-
-    let bits = 8; // TODO: remove
 
     //TODO Optimizing for constants
     //TODO Optimize addition for i left shifted values - skip first i bits
@@ -469,10 +460,10 @@ fn cnf_shift_add_multiply(
         }
         y[0] = false.into();
 
-        sum = tseytin_int_adder(&s, &y, 16, clauses, symbols);
+        sum = tseytin_int_adder(&s, &y, bits * 2, clauses, symbols);
         not_x_n = tseytin_not(x[n].clone(), clauses, symbols);
 
-        for i in 0..16 {
+        for i in 0..(bits * 2) {
             if_true = tseytin_and(&vec![x[n].clone(), sum[i].clone()], clauses, symbols);
             if_false = tseytin_and(&vec![not_x_n.clone(), s[i].clone()], clauses, symbols);
             s[i] = tseytin_or(&vec![if_true.clone(), if_false.clone()], clauses, symbols);
@@ -507,7 +498,7 @@ fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
         while let Some(a) = iter.next() {
             if let Some(b) = iter.next() {
-                values = cnf_shift_add_multiply(&a, &b, &mut new_clauses, &mut new_symbols);
+                values = cnf_shift_add_multiply(&a, &b, 8, &mut new_clauses, &mut new_symbols);
                 next.push(values);
             } else {
                 next.push(a);
@@ -618,7 +609,7 @@ fn tseytin_binary_min_max(
 ) -> Vec<Expr> {
     let mut out = vec![];
 
-    for i in 0..8 {
+    for i in 0..BITS {
         out.push(tseytin_xor(x[i].clone(), y[i].clone(), clauses, symbols))
     }
 
@@ -632,11 +623,11 @@ fn tseytin_binary_min_max(
         mask = inequality_boolean(y.clone(), x.clone(), true, clauses, symbols);
     }
 
-    for i in 0..8 {
+    for i in 0..BITS {
         out[i] = tseytin_and(&vec![out[i].clone(), mask.clone()], clauses, symbols);
     }
 
-    for i in 0..8 {
+    for i in 0..BITS {
         out[i] = tseytin_xor(x[i].clone(), out[i].clone(), clauses, symbols);
     }
 
@@ -689,7 +680,7 @@ fn cnf_int_max(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         new_symbols,
     ))
 }
-/*
+
 /// Converts Abs of a CnfInt to a CnfInt
 ///
 /// ```text
@@ -697,10 +688,58 @@ fn cnf_int_max(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 ///
 /// ```
 #[register_rule(("CNF", 4100))]
-fn cnf_int_neg(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    // negate if sign bit is 1
+fn cnf_int_abs(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Abs(_, expr) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let binding = validate_cnf_int_operands(vec![unbox(expr)])?;
+    let [bits] = binding.as_slice() else {
+        return Err(RuleNotApplicable);
+    };
+    let mut new_clauses = vec![];
+    let mut new_symbols = symbols.clone();
+
+    let mut result = vec![];
+
+    // invert bits
+    for bit in bits {
+        result.push(tseytin_not(bit.clone(), &mut new_clauses, &mut new_symbols));
+    }
+
+    // add one
+    result = tseytin_add_two_power(&result, 0, &mut new_clauses, &mut new_symbols);
+
+    let is_positive = tseytin_not(bits[BITS - 1].clone(), &mut new_clauses, &mut new_symbols);
+    let mut if_neg;
+    let mut if_pos;
+
+    for i in 0..BITS {
+        if_neg = tseytin_and(
+            &vec![bits[BITS - 1].clone(), result[i].clone()],
+            &mut new_clauses,
+            &mut new_symbols,
+        );
+        if_pos = tseytin_and(
+            &vec![is_positive.clone(), bits[i].clone()],
+            &mut new_clauses,
+            &mut new_symbols,
+        );
+        result[i] = tseytin_or(
+            &vec![if_neg.clone(), if_pos.clone()],
+            &mut new_clauses,
+            &mut new_symbols,
+        );
+    }
+
+    Ok(Reduction::cnf(
+        Expr::CnfInt(Metadata::new(), Box::new(into_matrix_expr!(result))),
+        new_clauses,
+        new_symbols,
+    ))
 }
 
+/*
 /// Converts SafeDiv of CnfInts to a single CnfInt
 ///
 /// ```text
@@ -710,17 +749,6 @@ fn cnf_int_neg(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 #[register_rule(("CNF", 4100))]
 fn cnf_int_safediv(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // binary div
-}
-
-/// Converts Minus of CnfInts to a single CnfInt
-///
-/// ```text
-/// Minus(CnfInt(a), CnfInt(b)) ~> CnfInt(c)
-///
-/// ```
-#[register_rule(("CNF", 4100))]
-fn cnf_int_minus(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    // minus circuit (support 2s complement)
 }
 
 /// Converts SafeMod of CnfInts to a single CnfInt

@@ -7,28 +7,38 @@ such that
 
 (a) <-> (b)
 
+clauses:
+
+
+
 --
 
 (a) <-> (b), 
-   ~~> remove_equivalence ([("CNF", 4100)]) 
-and([or([Not(a),b;int(1..)]),or([a,Not(b);int(1..)]);int(1..)]) 
-
---
-
-and([or([Not(a),b;int(1..)]),or([a,Not(b);int(1..)]);int(1..)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-or([Not(a),b;int(1..)]),
-or([a,Not(b);int(1..)]) 
-
+   ~~> apply_tseytin_iff ([("CNF", 8500)]) 
+__0 
+new variables:
+  find __0: bool
+new clauses:
+  Clause([Not(a),Not(b),__0;int(1..)])
+  Clause([a,b,__0;int(1..)])
+  Clause([a,Not(b),Not(__0);int(1..)])
+  Clause([Not(a),b,Not(__0);int(1..)])
 --
 
 Final model:
 
 find a: bool
 find b: bool
+find __0: bool
 
 such that
 
-or([Not(a),b;int(1..)]),
-or([a,Not(b);int(1..)])
+__0
+
+clauses:
+
+Clause([Not(a),Not(b),__0;int(1..)]),
+Clause([a,b,__0;int(1..)]),
+Clause([a,Not(b),Not(__0);int(1..)]),
+Clause([Not(a),b,Not(__0);int(1..)])
 

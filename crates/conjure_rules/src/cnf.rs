@@ -15,107 +15,11 @@ use conjure_core::rule_engine::{
 
 use conjure_core::ast::AbstractLiteral::Matrix;
 use conjure_core::ast::{Domain, SymbolTable};
-use conjure_core::{into_matrix_expr, matrix_expr};
+use conjure_core::into_matrix_expr;
 
 use crate::utils::is_literal;
 
 register_rule_set!("CNF", ("Base"), (SolverFamily::SAT));
-
-/// Converts an implication to cnf
-///
-/// ```text
-/// x -> y ~~> !x \/ y
-/// ```
-#[register_rule(("CNF", 4100))]
-fn remove_implication(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let Expr::Imply(_, x, y) = expr else {
-        return Err(RuleNotApplicable);
-    };
-
-    Ok(Reduction::pure(Expr::Or(
-        Metadata::new(),
-        Box::new(matrix_expr![
-            Expr::Not(Metadata::new(), x.clone()),
-            *y.clone()
-        ]),
-    )))
-}
-
-/// Converts an equivalence to cnf
-///
-/// ```text
-/// x <-> y ~~> (x -> y) /\ (y -> x) ~~> (!x \/ y) /\ (!y \/ x)
-///
-/// This converts boolean expressions using equivalence to CNF.
-/// ```
-#[register_rule(("CNF", 4100))]
-fn remove_equivalence(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let Expr::Iff(_, x, y) = expr else {
-        return Err(RuleNotApplicable);
-    };
-
-    Ok(Reduction::pure(Expr::And(
-        Metadata::new(),
-        Box::new(matrix_expr![
-            Expr::Or(
-                Metadata::new(),
-                Box::new(matrix_expr![
-                    Expr::Not(Metadata::new(), x.clone()),
-                    *y.clone()
-                ]),
-            ),
-            Expr::Or(
-                Metadata::new(),
-                Box::new(matrix_expr![
-                    *x.clone(),
-                    Expr::Not(Metadata::new(), y.clone())
-                ]),
-            )
-        ]),
-    )))
-}
-
-/// Converts an equals to cnf
-///
-/// ```text
-/// x = y ~~> (x -> y) /\ (y -> x) ~~> (!x \/ y) /\ (!y \/ x)
-///
-/// This converts boolean expressions using equivalence to CNF.
-/// ```
-#[register_rule(("CNF", 4100))]
-fn remove_equals(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let Expr::Eq(_, x, y) = expr else {
-        return Err(RuleNotApplicable);
-    };
-
-    let Some(Domain::BoolDomain) = x.domain_of(symbols) else {
-        return Err(RuleNotApplicable);
-    };
-
-    let Some(Domain::BoolDomain) = y.domain_of(symbols) else {
-        return Err(RuleNotApplicable);
-    };
-
-    Ok(Reduction::pure(Expr::And(
-        Metadata::new(),
-        Box::new(matrix_expr![
-            Expr::Or(
-                Metadata::new(),
-                Box::new(matrix_expr![
-                    Expr::Not(Metadata::new(), x.clone()),
-                    *y.clone()
-                ]),
-            ),
-            Expr::Or(
-                Metadata::new(),
-                Box::new(matrix_expr![
-                    *x.clone(),
-                    Expr::Not(Metadata::new(), y.clone())
-                ]),
-            )
-        ]),
-    )))
-}
 
 /// Converts an and/or expression to an aux variable, using the tseytin transformation
 ///
@@ -361,20 +265,27 @@ fn create_clause(exprs: Vec<Expr>) -> Option<Expr> {
 ///  or(__0, a)
 ///  or(not(__0), not(a))
 /// ```
-// #[register_rule(("CNF", 8500))]
-// fn apply_tseytin_not(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-//     let Expr::Not(_, x) = expr else {
-//         return Err(RuleNotApplicable);
-//     };
+#[register_rule(("CNF", 9005))]
+fn apply_tseytin_not(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Not(_, x) = expr else {
+        return Err(RuleNotApplicable);
+    };
 
-//     let Expr::Atomic(_, _) = x.as_ref() else {
-//         return Err(RuleNotApplicable);
-//     };
+    let Expr::Atomic(_, _) = x.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
 
-//     let (new_expr, new_symbols, new_clauses) = tseytin_not(*x.clone(), &symbols);
+    if !is_literal(x.as_ref()) {
+        return Err(RuleNotApplicable);
+    };
 
-//     Ok(Reduction::cnf(new_expr, new_clauses, new_symbols))
-// }
+    let mut new_clauses = vec![];
+    let mut new_symbols = symbols.clone();
+
+    let new_expr = tseytin_not(*x.clone(), &mut new_clauses, &mut new_symbols);
+
+    Ok(Reduction::cnf(new_expr, new_clauses, new_symbols))
+}
 
 /// Converts an iff expression to an aux variable, using the tseytin transformation
 ///
@@ -443,46 +354,3 @@ fn apply_tseytin_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
 
     Ok(Reduction::cnf(new_expr, new_clauses, new_symbols))
 }
-
-// #[register_rule(("CNF", 9100))]
-// fn clause_partial_eval(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-//     let Expr::Clause(_, e) = expr else {
-//         return Err(RuleNotApplicable);
-//     };
-
-//     let Some(terms) = e.clone().unwrap_list() else {
-//         return Err(RuleNotApplicable);
-//     };
-
-//     let mut has_changed = false;
-
-//     // 2. boolean literals
-//     let mut new_terms = vec![];
-//     for expr in terms {
-//         if let Expr::Atomic(_, Atom::Literal(Literal::Bool(x))) = expr {
-//             has_changed = true;
-
-//             // true ~~> entire or is true
-//             // false ~~> remove false from the or
-//             if x {
-//                 return Ok(Reduction::pure(true.into()));
-//             }
-//         } else {
-//             new_terms.push(expr);
-//         }
-//     }
-
-//     // 3. empty clause ~~> false
-//     if new_terms.is_empty() {
-//         return Ok(Reduction::pure(false.into()));
-//     }
-
-//     if !has_changed {
-//         return Err(RuleNotApplicable);
-//     }
-
-//     Ok(Reduction::pure(Expr::Clause(
-//         Metadata::new(),
-//         Box::new(into_matrix_expr![new_terms]),
-//     )))
-// }

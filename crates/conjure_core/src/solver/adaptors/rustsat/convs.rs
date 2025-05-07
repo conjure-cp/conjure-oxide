@@ -61,25 +61,11 @@ pub fn handle_atom(
                 todo!("Not Sure if we are handling Lits as-is or not..")
             }
             conjure_core::ast::Atom::Reference(name) => match name {
-                conjure_core::ast::Name::UserName(_) => {
+                conjure_core::ast::Name::UserName(_)
+                | conjure_core::ast::Name::RepresentedName(_, _, _)
+                | conjure_core::ast::Name::MachineName(_) => {
                     // TODO: Temp Clone
                     // let m = n.clone();
-                    let lit_temp: Lit = fetch_lit(name, vars_added, inst);
-                    if polarity {
-                        lit_temp
-                    } else {
-                        !lit_temp
-                    }
-                }
-                conjure_core::ast::Name::RepresentedName(_, _, _) => {
-                    let lit_temp: Lit = fetch_lit(name, vars_added, inst);
-                    if polarity {
-                        lit_temp
-                    } else {
-                        !lit_temp
-                    }
-                }
-                conjure_core::ast::Name::MachineName(_) => {
                     let lit_temp: Lit = fetch_lit(name, vars_added, inst);
                     if polarity {
                         lit_temp
@@ -109,6 +95,7 @@ pub fn handle_disjn(
     let mut lits = Clause::new();
 
     match disjn {
+        // treat ors and clauses the same
         Expression::Or(_, vec) | Expression::Clause(_, vec) => {
             let cl = &vec.clone().unwrap_list().unwrap();
             for literal in cl {
@@ -116,6 +103,7 @@ pub fn handle_disjn(
                 lits.add(lit);
             }
         }
+
         literal => {
             let lit: Lit = handle_lit(literal, vars_added, inst_in_use);
             lits.add(lit);
