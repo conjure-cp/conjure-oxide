@@ -9,15 +9,9 @@ and([(x) <-> (x),(false) <-> (y);int(1..2)])
 
 --
 
-(x) <-> (x), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-true 
-
---
-
-(false) <-> (y), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-Not(y) 
+and([(x) <-> (x),(false) <-> (y);int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+and([true,Not(y);int(1..2)]) 
 
 --
 
@@ -34,15 +28,7 @@ and([true,WatchedLiteral(y,false);int(1..)])
 --
 
 and([true,WatchedLiteral(y,false);int(1..)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-true,
-WatchedLiteral(y,false) 
-
---
-
-true,
-WatchedLiteral(y,false), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 WatchedLiteral(y,false) 
 
 --

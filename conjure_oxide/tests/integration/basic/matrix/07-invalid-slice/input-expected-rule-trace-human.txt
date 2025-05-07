@@ -15,180 +15,140 @@ allDiff(a[3,..]),
 
 --
 
-a, 
-   ~~> select_representation ([("Base", 8000)]) 
-a#matrix_to_atom 
-new variables:
-  find a#matrix_to_atom_1_1: int(1..3)
-  find a#matrix_to_atom_1_2: int(1..3)
-  find a#matrix_to_atom_2_1: int(1..3)
-  find a#matrix_to_atom_2_2: int(1..3)
-  find a#matrix_to_atom_3_1: int(1..3)
-  find a#matrix_to_atom_3_2: int(1..3)
---
-
-a, 
-   ~~> select_representation ([("Base", 8000)]) 
-a#matrix_to_atom 
-
---
-
-a, 
-   ~~> select_representation ([("Base", 8000)]) 
-a#matrix_to_atom 
-
---
-
-a, 
-   ~~> select_representation ([("Base", 8000)]) 
-a#matrix_to_atom 
-
---
-
-a, 
-   ~~> select_representation ([("Base", 8000)]) 
-a#matrix_to_atom 
-
---
-
-a, 
-   ~~> select_representation ([("Base", 8000)]) 
-a#matrix_to_atom 
-
---
-
-a, 
-   ~~> select_representation ([("Base", 8000)]) 
-a#matrix_to_atom 
-
---
-
-a#matrix_to_atom[..,1], 
+a[..,1], 
    ~~> slice_to_bubble ([("Bubble", 6000)]) 
-{a#matrix_to_atom[..,1] @ and([__inDomain(1,int(1..2));int(1..)])} 
+{a[..,1] @ and([__inDomain(1,int(1..2));int(1..)])} 
 
 --
 
-and([__inDomain(1,int(1..2));int(1..)]), 
+allDiff({a[..,1] @ and([__inDomain(1,int(1..2));int(1..)])}),
+allDiff(a[..,3]),
+allDiff(a[1,..]),
+allDiff(a[2,..]),
+allDiff(a[3,..]),
+(a[1, 1] = 1),
+(a[2, 2] = 1), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+allDiff({a[..,1] @ true}),
+allDiff(a[..,3]),
+allDiff(a[1,..]),
+allDiff(a[2,..]),
+allDiff(a[3,..]),
+(a[1, 1] = 1),
+(a[2, 2] = 1) 
 
 --
 
-allDiff({a#matrix_to_atom[..,1] @ true}), 
+allDiff({a[..,1] @ true}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{allDiff(a#matrix_to_atom[..,1]) @ and([true;int(1..)])} 
+{allDiff(a[..,1]) @ and([true;int(1..)])} 
 
 --
 
-and([true;int(1..)]), 
+{allDiff(a[..,1]) @ and([true;int(1..)])},
+allDiff(a[..,3]),
+allDiff(a[1,..]),
+allDiff(a[2,..]),
+allDiff(a[3,..]),
+(a[1, 1] = 1),
+(a[2, 2] = 1), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+{allDiff(a[..,1]) @ true},
+allDiff(a[..,3]),
+allDiff(a[1,..]),
+allDiff(a[2,..]),
+allDiff(a[3,..]),
+(a[1, 1] = 1),
+(a[2, 2] = 1) 
 
 --
 
-{allDiff(a#matrix_to_atom[..,1]) @ true}, 
+{allDiff(a[..,1]) @ true}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-and([allDiff(a#matrix_to_atom[..,1]),true;int(1..)]) 
+and([allDiff(a[..,1]),true;int(1..)]) 
 
 --
 
-and([allDiff(a#matrix_to_atom[..,1]),true;int(1..)]),
-allDiff(a#matrix_to_atom[..,3]),
-allDiff(a#matrix_to_atom[1,..]),
-allDiff(a#matrix_to_atom[2,..]),
-allDiff(a#matrix_to_atom[3,..]),
-(a#matrix_to_atom[1, 1] = 1),
-(a#matrix_to_atom[2, 2] = 1), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-allDiff(a#matrix_to_atom[..,1]),
-true,
-allDiff(a#matrix_to_atom[..,3]),
-allDiff(a#matrix_to_atom[1,..]),
-allDiff(a#matrix_to_atom[2,..]),
-allDiff(a#matrix_to_atom[3,..]),
-(a#matrix_to_atom[1, 1] = 1),
-(a#matrix_to_atom[2, 2] = 1) 
+and([allDiff(a[..,1]),true;int(1..)]),
+allDiff(a[..,3]),
+allDiff(a[1,..]),
+allDiff(a[2,..]),
+allDiff(a[3,..]),
+(a[1, 1] = 1),
+(a[2, 2] = 1), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+allDiff(a[..,1]),
+allDiff(a[..,3]),
+allDiff(a[1,..]),
+allDiff(a[2,..]),
+allDiff(a[3,..]),
+(a[1, 1] = 1),
+(a[2, 2] = 1) 
 
 --
 
-allDiff(a#matrix_to_atom[..,1]),
-true,
-allDiff(a#matrix_to_atom[..,3]),
-allDiff(a#matrix_to_atom[1,..]),
-allDiff(a#matrix_to_atom[2,..]),
-allDiff(a#matrix_to_atom[3,..]),
-(a#matrix_to_atom[1, 1] = 1),
-(a#matrix_to_atom[2, 2] = 1), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-allDiff(a#matrix_to_atom[..,1]),
-allDiff(a#matrix_to_atom[..,3]),
-allDiff(a#matrix_to_atom[1,..]),
-allDiff(a#matrix_to_atom[2,..]),
-allDiff(a#matrix_to_atom[3,..]),
-(a#matrix_to_atom[1, 1] = 1),
-(a#matrix_to_atom[2, 2] = 1) 
-
---
-
-a#matrix_to_atom[..,3], 
+a[..,3], 
    ~~> slice_to_bubble ([("Bubble", 6000)]) 
-{a#matrix_to_atom[..,3] @ and([__inDomain(3,int(1..2));int(1..)])} 
+{a[..,3] @ and([__inDomain(3,int(1..2));int(1..)])} 
 
 --
 
-and([__inDomain(3,int(1..2));int(1..)]), 
+allDiff(a[..,1]),
+allDiff({a[..,3] @ and([__inDomain(3,int(1..2));int(1..)])}),
+allDiff(a[1,..]),
+allDiff(a[2,..]),
+allDiff(a[3,..]),
+(a[1, 1] = 1),
+(a[2, 2] = 1), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-false 
+allDiff(a[..,1]),
+allDiff({a[..,3] @ false}),
+allDiff(a[1,..]),
+allDiff(a[2,..]),
+allDiff(a[3,..]),
+(a[1, 1] = 1),
+(a[2, 2] = 1) 
 
 --
 
-allDiff({a#matrix_to_atom[..,3] @ false}), 
+allDiff({a[..,3] @ false}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{allDiff(a#matrix_to_atom[..,3]) @ and([false;int(1..)])} 
+{allDiff(a[..,3]) @ and([false;int(1..)])} 
 
 --
 
-and([false;int(1..)]), 
+allDiff(a[..,1]),
+{allDiff(a[..,3]) @ and([false;int(1..)])},
+allDiff(a[1,..]),
+allDiff(a[2,..]),
+allDiff(a[3,..]),
+(a[1, 1] = 1),
+(a[2, 2] = 1), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-false 
+allDiff(a[..,1]),
+{allDiff(a[..,3]) @ false},
+allDiff(a[1,..]),
+allDiff(a[2,..]),
+allDiff(a[3,..]),
+(a[1, 1] = 1),
+(a[2, 2] = 1) 
 
 --
 
-{allDiff(a#matrix_to_atom[..,3]) @ false}, 
+{allDiff(a[..,3]) @ false}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-and([allDiff(a#matrix_to_atom[..,3]),false;int(1..)]) 
+and([allDiff(a[..,3]),false;int(1..)]) 
 
 --
 
-allDiff(a#matrix_to_atom[..,1]),
-and([allDiff(a#matrix_to_atom[..,3]),false;int(1..)]),
-allDiff(a#matrix_to_atom[1,..]),
-allDiff(a#matrix_to_atom[2,..]),
-allDiff(a#matrix_to_atom[3,..]),
-(a#matrix_to_atom[1, 1] = 1),
-(a#matrix_to_atom[2, 2] = 1), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-allDiff(a#matrix_to_atom[..,1]),
-allDiff(a#matrix_to_atom[..,3]),
-false,
-allDiff(a#matrix_to_atom[1,..]),
-allDiff(a#matrix_to_atom[2,..]),
-allDiff(a#matrix_to_atom[3,..]),
-(a#matrix_to_atom[1, 1] = 1),
-(a#matrix_to_atom[2, 2] = 1) 
-
---
-
-allDiff(a#matrix_to_atom[..,1]),
-allDiff(a#matrix_to_atom[..,3]),
-false,
-allDiff(a#matrix_to_atom[1,..]),
-allDiff(a#matrix_to_atom[2,..]),
-allDiff(a#matrix_to_atom[3,..]),
-(a#matrix_to_atom[1, 1] = 1),
-(a#matrix_to_atom[2, 2] = 1), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+allDiff(a[..,1]),
+and([allDiff(a[..,3]),false;int(1..)]),
+allDiff(a[1,..]),
+allDiff(a[2,..]),
+allDiff(a[3,..]),
+(a[1, 1] = 1),
+(a[2, 2] = 1), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 false 
 
 --
@@ -197,6 +157,18 @@ false,
    ~~> substitute_domain_lettings ([("Base", 5000)]) 
 false 
 
+--
+
+false, 
+   ~~> select_representation_matrix ([("Base", 8001)]) 
+false 
+new variables:
+  find a#matrix_to_atom_1_1: int(1..3)
+  find a#matrix_to_atom_1_2: int(1..3)
+  find a#matrix_to_atom_2_1: int(1..3)
+  find a#matrix_to_atom_2_2: int(1..3)
+  find a#matrix_to_atom_3_1: int(1..3)
+  find a#matrix_to_atom_3_2: int(1..3)
 --
 
 Final model:

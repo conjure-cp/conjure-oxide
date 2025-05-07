@@ -28,9 +28,9 @@ UnsafeDiv(x, 2),
 
 --
 
-(2 != 0), 
+(Sum([|Sum([{SafeDiv(x, 2) @ (2 != 0)},y,-(z);int(1..)])|,UnsafeDiv(|y|, 2);int(1..2)]) = 10), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(Sum([|Sum([{SafeDiv(x, 2) @ true},y,-(z);int(1..)])|,UnsafeDiv(|y|, 2);int(1..2)]) = 10) 
 
 --
 
@@ -40,9 +40,9 @@ true
 
 --
 
-and([true;int(1..)]), 
+(Sum([|Sum({[SafeDiv(x, 2),y,-(z);int(1..)] @ and([true;int(1..)])})|,UnsafeDiv(|y|, 2);int(1..2)]) = 10), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(Sum([|Sum({[SafeDiv(x, 2),y,-(z);int(1..)] @ true})|,UnsafeDiv(|y|, 2);int(1..2)]) = 10) 
 
 --
 
@@ -52,9 +52,9 @@ Sum({[SafeDiv(x, 2),y,-(z);int(1..)] @ true}),
 
 --
 
-and([true;int(1..)]), 
+(Sum([|{Sum([SafeDiv(x, 2),y,-(z);int(1..)]) @ and([true;int(1..)])}|,UnsafeDiv(|y|, 2);int(1..2)]) = 10), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(Sum([|{Sum([SafeDiv(x, 2),y,-(z);int(1..)]) @ true}|,UnsafeDiv(|y|, 2);int(1..2)]) = 10) 
 
 --
 
@@ -64,9 +64,9 @@ true
 
 --
 
-and([true;int(1..)]), 
+(Sum([{|Sum([SafeDiv(x, 2),y,-(z);int(1..)])| @ and([true;int(1..)])},UnsafeDiv(|y|, 2);int(1..2)]) = 10), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(Sum([{|Sum([SafeDiv(x, 2),y,-(z);int(1..)])| @ true},UnsafeDiv(|y|, 2);int(1..2)]) = 10) 
 
 --
 
@@ -76,9 +76,9 @@ true
 
 --
 
-and([true;int(1..)]), 
+(Sum({[|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,UnsafeDiv(|y|, 2);int(1..2)] @ and([true;int(1..)])}) = 10), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(Sum({[|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,UnsafeDiv(|y|, 2);int(1..2)] @ true}) = 10) 
 
 --
 
@@ -88,9 +88,9 @@ Sum({[|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,UnsafeDiv(|y|, 2);int(1..2)] @ true
 
 --
 
-and([true;int(1..)]), 
+({Sum([|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,UnsafeDiv(|y|, 2);int(1..2)]) @ and([true;int(1..)])} = 10), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+({Sum([|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,UnsafeDiv(|y|, 2);int(1..2)]) @ true} = 10) 
 
 --
 
@@ -100,9 +100,9 @@ true
 
 --
 
-and([true;int(1..)]), 
+{(Sum([|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,UnsafeDiv(|y|, 2);int(1..2)]) = 10) @ and([true;int(1..)])}, 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+{(Sum([|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,UnsafeDiv(|y|, 2);int(1..2)]) = 10) @ true} 
 
 --
 
@@ -113,15 +113,7 @@ and([(Sum([|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,UnsafeDiv(|y|, 2);int(1..2)]) 
 --
 
 and([(Sum([|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,UnsafeDiv(|y|, 2);int(1..2)]) = 10),true;int(1..)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-(Sum([|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,UnsafeDiv(|y|, 2);int(1..2)]) = 10),
-true 
-
---
-
-(Sum([|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,UnsafeDiv(|y|, 2);int(1..2)]) = 10),
-true, 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 (Sum([|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,UnsafeDiv(|y|, 2);int(1..2)]) = 10) 
 
 --
@@ -132,9 +124,9 @@ UnsafeDiv(|y|, 2),
 
 --
 
-(2 != 0), 
+(Sum([|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,{SafeDiv(|y|, 2) @ (2 != 0)};int(1..2)]) = 10), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(Sum([|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,{SafeDiv(|y|, 2) @ true};int(1..2)]) = 10) 
 
 --
 
@@ -144,9 +136,9 @@ true
 
 --
 
-and([true;int(1..)]), 
+(Sum({[|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,SafeDiv(|y|, 2);int(1..2)] @ and([true;int(1..)])}) = 10), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(Sum({[|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,SafeDiv(|y|, 2);int(1..2)] @ true}) = 10) 
 
 --
 
@@ -156,9 +148,9 @@ Sum({[|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,SafeDiv(|y|, 2);int(1..2)] @ true})
 
 --
 
-and([true;int(1..)]), 
+({Sum([|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,SafeDiv(|y|, 2);int(1..2)]) @ and([true;int(1..)])} = 10), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+({Sum([|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,SafeDiv(|y|, 2);int(1..2)]) @ true} = 10) 
 
 --
 
@@ -168,9 +160,9 @@ true
 
 --
 
-and([true;int(1..)]), 
+{(Sum([|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,SafeDiv(|y|, 2);int(1..2)]) = 10) @ and([true;int(1..)])}, 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+{(Sum([|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,SafeDiv(|y|, 2);int(1..2)]) = 10) @ true} 
 
 --
 
@@ -181,15 +173,7 @@ and([(Sum([|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,SafeDiv(|y|, 2);int(1..2)]) = 
 --
 
 and([(Sum([|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,SafeDiv(|y|, 2);int(1..2)]) = 10),true;int(1..)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-(Sum([|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,SafeDiv(|y|, 2);int(1..2)]) = 10),
-true 
-
---
-
-(Sum([|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,SafeDiv(|y|, 2);int(1..2)]) = 10),
-true, 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 (Sum([|Sum([SafeDiv(x, 2),y,-(z);int(1..)])|,SafeDiv(|y|, 2);int(1..2)]) = 10) 
 
 --
@@ -215,7 +199,7 @@ new constraints:
 (Sum([|__0|,SafeDiv(|y|, 2);int(1..2)]) = 10),
 and([FlatWeightedSumLeq([1, 1, -1],[__1, y, z],__0),FlatWeightedSumGeq([1, 1, -1],[__1, y, z],__0);int(1..)]),
 __1 =aux SafeDiv(x, 2), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 (Sum([|__0|,SafeDiv(|y|, 2);int(1..2)]) = 10),
 FlatWeightedSumLeq([1, 1, -1],[__1, y, z],__0),
 FlatWeightedSumGeq([1, 1, -1],[__1, y, z],__0),
@@ -268,7 +252,7 @@ DivEq(x, 2, __1),
 AbsEq(__2,y),
 __3 =aux |__0|,
 __4 =aux SafeDiv(__2, 2), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 SumLeq([__3, __4], 10),
 SumGeq([__3, __4], 10),
 FlatWeightedSumLeq([1, 1, -1],[__1, y, z],__0),
