@@ -108,7 +108,7 @@ fn generate(
 #[library_benchmark]
 #[bench::five(generate(5, 41))]
 #[bench::ten(generate(10, 41))]
-fn bench_morph(
+fn bench_morph_op(
     data: (
         Vec<Vec<fn(&mut Commands<Expr, Meta>, &Expr, &Meta) -> Option<Expr>>>,
         Expr,
@@ -119,9 +119,23 @@ fn bench_morph(
     black_box(morph(rules, select_first, expression, meta))
 }
 
+#[library_benchmark]
+#[bench::five(generate(5, 41))]
+#[bench::ten(generate(10, 41))]
+fn bench_morph_unop(
+    data: (
+        Vec<Vec<fn(&mut Commands<Expr, Meta>, &Expr, &Meta) -> Option<Expr>>>,
+        Expr,
+        Meta,
+    ),
+) -> (Expr, Meta) {
+    let (rules, expression, meta) = data;
+    black_box(morph_not_opt(rules, select_first, expression, meta))
+}
+
 library_benchmark_group!(
     name = bench_testing_group;
-    benchmarks = bench_morph
+    benchmarks = bench_morph_op, bench_morph_unop
 );
 
 main!(library_benchmark_groups = bench_testing_group);

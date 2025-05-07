@@ -9,10 +9,6 @@ enum Expr {
     Branch(Box<Expr>, Box<Expr>),
     Val(i32),
 }
-struct Meta {}
-fn do_nothing(_cmds: &mut Commands<Expr, Meta>, _subtree: &Expr, _meta: &Meta) -> Option<Expr> {
-    None
-}
 
 fn construct_tree(n: i32) -> Box<Expr> {
     if n == 1 {
@@ -20,6 +16,17 @@ fn construct_tree(n: i32) -> Box<Expr> {
     } else {
         Box::new(Expr::Branch(Box::new(Expr::Val(0)), construct_tree(n - 1)))
     }
+}
+
+struct Meta {} // not relevant for this benchmark
+
+fn zero_to_one(_cmds: &mut Commands<Expr, Meta>, subtree: &Expr, _meta: &Meta) -> Option<Expr> {
+    if let Expr::Val(a) = subtree {
+        if let 0 = *a {
+            return Some(Expr::Val(1));
+        }
+    }
+    None
 }
 
 fn generate(
@@ -31,7 +38,7 @@ fn generate(
 ) {
     let expression = construct_tree(n);
     let rules: Vec<Vec<fn(&mut Commands<Expr, Meta>, &Expr, &Meta) -> Option<Expr>>> =
-        vec![rule_fns![do_nothing]];
+        vec![rule_fns![zero_to_one]];
     let meta = Meta {};
     (rules, *expression, meta)
 }
