@@ -2,19 +2,22 @@
 use tree_sitter::Node;
 
 use super::util::named_children;
-use conjure_core::ast::{Domain, Name, Range};
+use conjure_core::ast::{Domain, Name, Range, RecordEntry};
 
 /// Parse an Essence variable domain into its Conjure AST representation.
 pub fn parse_domain(domain: Node, source_code: &str) -> Domain {
-    let domain = domain.child(0).expect("No domain");
     match domain.kind() {
+        "domain" => parse_domain(domain.child(0).expect("No domain found"), source_code),
         "bool_domain" => Domain::BoolDomain,
         "int_domain" => parse_int_domain(domain, source_code),
-        "variable" => {
+        "identifier" => {
             let variable_name = &source_code[domain.start_byte()..domain.end_byte()];
             Domain::DomainReference(Name::UserName(String::from(variable_name)))
         }
-        _ => panic!("Not bool or int domain"),
+        "tuple_domain" => parse_tuple_domain(domain, source_code),
+        "matrix_domain" => parse_matrix_domain(domain, source_code),
+        "record_domain" => parse_record_domain(domain, source_code),
+        _ => panic!("{} is not a supported domain type", domain.kind()),
     }
 }
 
@@ -25,7 +28,7 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
     } else {
         let mut ranges: Vec<Range<i32>> = Vec::new();
         let range_list = int_domain
-            .named_child(0)
+            .child_by_field_name("ranges")
             .expect("No range list found (expression ranges not supported yet");
         for int_range in named_children(&range_list) {
             match int_range.kind() {
@@ -38,40 +41,23 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
                 "int_range" => {
                     let lower_bound: Option<i32>;
                     let upper_bound: Option<i32>;
-                    let range_component = int_range.child(0).expect("Error with integer range");
-                    match range_component.kind() {
-                        "expression" => {
-                            lower_bound = Some(
-                                source_code
-                                    [range_component.start_byte()..range_component.end_byte()]
-                                    .parse::<i32>()
-                                    .unwrap(),
-                            );
-
-                            if let Some(range_component) = range_component.next_named_sibling() {
-                                upper_bound = Some(
-                                    source_code
-                                        [range_component.start_byte()..range_component.end_byte()]
-                                        .parse::<i32>()
-                                        .unwrap(),
-                                );
-                            } else {
-                                upper_bound = None;
-                            }
-                        }
-                        ".." => {
-                            lower_bound = None;
-                            let range_component = range_component
-                                .next_sibling()
-                                .expect("Error with integer range");
-                            upper_bound = Some(
-                                source_code
-                                    [range_component.start_byte()..range_component.end_byte()]
-                                    .parse::<i32>()
-                                    .unwrap(),
-                            );
-                        }
-                        _ => panic!("unsupported int range type"),
+                    if let Some(lower_bound_node) = int_range.child_by_field_name("lower") {
+                        lower_bound = Some(
+                            source_code[lower_bound_node.start_byte()..lower_bound_node.end_byte()]
+                                .parse::<i32>()
+                                .unwrap(),
+                        );
+                    } else {
+                        lower_bound = None;
+                    }
+                    if let Some(upper_bound_node) = int_range.child_by_field_name("upper") {
+                        upper_bound = Some(
+                            source_code[upper_bound_node.start_byte()..upper_bound_node.end_byte()]
+                                .parse::<i32>()
+                                .unwrap(),
+                        );
+                    } else {
+                        upper_bound = None;
                     }
 
                     match (lower_bound, upper_bound) {
@@ -86,4 +72,47 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
         }
         Domain::IntDomain(ranges)
     }
+}
+
+fn parse_tuple_domain(tuple_domain: Node, source_code: &str) -> Domain {
+    let mut domains: Vec<Domain> = Vec::new();
+    for domain in named_children(&tuple_domain) {
+        domains.push(parse_domain(domain, source_code));
+    }
+    Domain::DomainTuple(domains)
+}
+
+fn parse_matrix_domain(matrix_domain: Node, source_code: &str) -> Domain {
+    let mut domains: Vec<Domain> = Vec::new();
+    let index_domain_list = matrix_domain
+        .child_by_field_name("index_domain_list")
+        .expect("No index domains found for matrix domain");
+    for domain in named_children(&index_domain_list) {
+        domains.push(parse_domain(domain, source_code));
+    }
+    let value_domain = parse_domain(
+        matrix_domain
+            .child_by_field_name("value_domain")
+            .expect("No value domain found for matrix domain"),
+        source_code,
+    );
+    Domain::DomainMatrix(Box::new(value_domain), domains)
+}
+
+fn parse_record_domain(record_domain: Node, source_code: &str) -> Domain {
+    let mut record_entries: Vec<RecordEntry> = Vec::new();
+    for record_entry in named_children(&record_domain) {
+        let name_node = record_entry
+            .child_by_field_name("name")
+            .expect("No name found for record entry");
+        let name = Name::UserName(String::from(
+            &source_code[name_node.start_byte()..name_node.end_byte()],
+        ));
+        let domain_node = record_entry
+            .child_by_field_name("domain")
+            .expect("No domain found for record entry");
+        let domain = parse_domain(domain_node, source_code);
+        record_entries.push(RecordEntry { name, domain });
+    }
+    Domain::DomainRecord(record_entries)
 }

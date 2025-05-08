@@ -6,7 +6,6 @@ use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
 };
-use conjure_essence_macros::essence_expr;
 use itertools::{chain, izip, Itertools};
 use uniplate::Uniplate;
 
@@ -156,23 +155,35 @@ fn index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
                 *state *= x;
                 Some(*state)
             })
-            .map(|x| essence_expr!(&x))
+            .map(|x| Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Int(x))))
             .collect_vec();
 
         coeffs.reverse();
 
         // [(a-lb(a)),b-lb(b),c-lb(c)]
         let terms: Vec<Expr> = izip!(indices, lower_bounds)
-            .map(|(i, lbi)| essence_expr!(&i - &lbi))
+            .map(|(i, lbi)| {
+                Expr::Minus(
+                    Metadata::new(),
+                    Box::new(i.clone()),
+                    Box::new(Expr::Atomic(
+                        Metadata::new(),
+                        Atom::Literal(Literal::Int(*lbi)),
+                    )),
+                )
+            })
             .collect_vec();
 
         // coeffs . terms
         let mut sum_terms: Vec<Expr> = izip!(coeffs, terms)
-            .map(|(coeff, term)| essence_expr!(&coeff * &term))
+            .map(|(coeff, term)| Expr::Product(Metadata::new(), vec![coeff, term]))
             .collect_vec();
 
         // (coeffs . terms) + 1
-        sum_terms.push(essence_expr!(1));
+        sum_terms.push(Expr::Atomic(
+            Metadata::new(),
+            Atom::Literal(Literal::Int(1)),
+        ));
 
         let flat_index = Expr::Sum(Metadata::new(), Box::new(into_matrix_expr![sum_terms]));
 
