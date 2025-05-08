@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "conjure oxide ${1} ${2} ${3}"
+
 PROBLEM=$1
 ESSENCE=$2
 VALIDATE=$3

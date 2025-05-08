@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.ticker import ScalarFormatter
 import numpy as np
 import sys
 import os
@@ -64,29 +65,35 @@ if (column != 'solver_nodes'):
     speedUpCONV = np.divide(allTimes[0], allTimes[2])
     speedUpCNO2 = np.divide(allTimes[0], allTimes[1])
 
-    plt.subplot(2,1,1)
+    fig, ax = plt.subplots()
     #extrapolate default line across whole graph
     z = np.polyfit(allTimes[0], default, 1)
     f = np.poly1d(z)
     #plot extrapolated line
-    plt.plot((0, max(x)), ((f(0), f(max(x)))), color = '#F67280', label = 'CNO0')
-    plt.yscale('log')
+    ax.plot((0, max(x)), ((f(0), f(max(x)))), color = '#F67280', label = 'CNO0')
+
+    ax.set_yscale('log')
+    
     #plot speed up factors on y and time on x
-    plt.scatter(allTimes[1],speedUpCNO2, color = '#C06C84', label = 'CNO2', marker = 's')
-    plt.scatter(allTimes[2],speedUpCONV, color = '#355C7D', label = 'CONV', marker = 'D')
+    ax.scatter(allTimes[1],speedUpCNO2, color = '#C06C84', label = 'CNO2', marker = 's')
+    ax.scatter(allTimes[2],speedUpCONV, color = '#355C7D', label = 'CONV', marker = 'D')
 
     #titles & labels
+    ax.yaxis.set_major_formatter(ScalarFormatter())
     plt.xlabel('Time /s')
     plt.ylabel('Speed-up factor /log')
 else:
-    tests = nativeO0['test'].values #each test, for x axis
+    testsO0 = nativeO0['test'].values #each test, for x axis
+    testsO2 = nativeO2['test'].values
+    testsNV = oxideNaive['test'].values
     fig = plt.figure()
     ax = fig.add_subplot(111)
     plt.subplot()
-    ax.scatter(tests, allTimes[0], color = '#F67280', label = 'CNO0', marker = 'X')
-    ax.scatter(tests,allTimes[1], color = '#C06C84', label = 'CNO2', marker = 's')
-    ax.scatter(tests,allTimes[2], color = '#355C7D', label = 'CONV', marker = 'D')
+    ax.scatter(testsO2,allTimes[1], color = '#C06C84', label = 'CNO2', marker = 's')
+    ax.scatter(testsNV,allTimes[2], color = '#355C7D', label = 'CONV', marker = 'D')
+    ax.scatter(testsO0, allTimes[0], color = '#F67280', label = 'CNO0', marker = 'X')
     plt.setp(ax.get_xticklabels(), rotation = 90)
+    plt.ylabel("Number of Nodes")
 
 plt.title('Comparing different rewriter modes at ' + column)
 plt.legend()

@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# ROOT_DIR=$(pwd)
 WORKING_DIR="$(pwd)/tools/performance"
 TEST_DIR="${WORKING_DIR}/tests"
 DATA_DIR="${WORKING_DIR}/data"

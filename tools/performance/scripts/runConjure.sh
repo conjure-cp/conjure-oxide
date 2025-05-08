@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "${1} ${2} ${3}"
+echo "conjure native ${1} ${2} ${3}"
 PROBLEM=$1
 ESSENCE=$2
 PARAM=$3
