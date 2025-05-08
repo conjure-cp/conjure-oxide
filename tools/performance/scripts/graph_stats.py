@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from matplotlib.ticker import ScalarFormatter
+# from matplotlib.ticker import ScalarFormatter
+import matplotlib.ticker as tick
 import numpy as np
 import sys
 import os
@@ -79,7 +80,11 @@ if (column != 'solver_nodes'):
     ax.scatter(allTimes[2],speedUpCONV, color = '#355C7D', label = 'CONV', marker = 'D')
 
     #titles & labels
-    ax.yaxis.set_major_formatter(ScalarFormatter())
+    def y_fmt(x, y):
+        return '${:2.1e}'.format(x).replace('e', '\\cdot 10^{') + '}$'
+    ax.yaxis.set_major_formatter(tick.FuncFormatter(y_fmt))
+
+
     plt.xlabel('Time /s')
     plt.ylabel('Speed-up factor /log')
 else:
