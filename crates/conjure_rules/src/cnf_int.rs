@@ -69,7 +69,7 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
             symbols,
         ))
     } else {
-        Ok(Reduction::with_symbols(cnf_int.clone(), symbols))
+        Ok(Reduction::pure(cnf_int.clone()))
     }
 }
 
@@ -78,6 +78,8 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Atomic(_, Atom::Literal(Literal::Int(mut value))) = expr else {
         return Err(RuleNotApplicable);
     };
+
+    //TODO: add support for negatives
 
     let mut binary_encoding = vec![];
 
@@ -153,6 +155,7 @@ fn unbox(expr: &Box<Expr>) -> Expr {
     (**expr).clone()
 }
 
+/// This function confirms that all of the input expressions are CnfInts, and returns vectors for each input of their bits
 fn validate_cnf_int_operands(exprs: Vec<Expr>) -> Result<Vec<Vec<Expr>>, ApplicationError> {
     let out: Result<Vec<Vec<_>>, _> = exprs
         .clone()
@@ -462,6 +465,7 @@ fn cnf_shift_add_multiply(
         }
         y[0] = false.into();
 
+        // TODO switch to multiplexer
         sum = tseytin_int_adder(&s, &y, bits * 2, clauses, symbols);
         not_x_n = tseytin_not(x[n].clone(), clauses, symbols);
 
@@ -625,6 +629,7 @@ fn tseytin_binary_min_max(
         out.push(tseytin_xor(x[i].clone(), y[i].clone(), clauses, symbols))
     }
 
+    // TODO: compare generated expression to using MUX
     let mask;
 
     if min {
@@ -722,26 +727,9 @@ fn cnf_int_abs(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // add one
     result = tseytin_add_two_power(&result, 0, BITS, &mut new_clauses, &mut new_symbols);
 
-    let is_positive = tseytin_not(bits[BITS - 1].clone(), &mut new_clauses, &mut new_symbols);
-    let mut if_neg;
-    let mut if_pos;
-
     for i in 0..BITS {
-        if_neg = tseytin_and(
-            &vec![bits[BITS - 1].clone(), result[i].clone()],
-            &mut new_clauses,
-            &mut new_symbols,
-        );
-        if_pos = tseytin_and(
-            &vec![is_positive.clone(), bits[i].clone()],
-            &mut new_clauses,
-            &mut new_symbols,
-        );
-        result[i] = tseytin_or(
-            &vec![if_neg.clone(), if_pos.clone()],
-            &mut new_clauses,
-            &mut new_symbols,
-        );
+        result[i] = tseytin_mux(bits[BITS - 1].clone(), bits[i].clone(), result[i].clone(),&mut new_clauses,
+            &mut new_symbols,)
     }
 
     Ok(Reduction::cnf(
@@ -770,6 +758,7 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
+    // TODO: Separate into division/mod function
     // TODO: Support negatives
 
     let mut new_symbols = symbols.clone();
@@ -791,6 +780,7 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         }
         r[0] = false.into();
 
+
         rminusd = tseytin_int_adder(
             &r.clone(),
             &minus_d.clone(),
@@ -799,6 +789,7 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             &mut new_symbols,
         );
 
+        // TODO: For mod don't calculate on final iter
         quotient[i] = tseytin_not(
             // q[i] = inverse of sign bit - 1 if positive, 0 if negative
             rminusd[2 * BITS - 1].clone(),
@@ -806,6 +797,7 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             &mut new_symbols,
         );
 
+        // TODO: For div don't calculate on final iter
         for j in 0..(2 * BITS) {
             r[j] = tseytin_mux(
                 quotient[i].clone(),

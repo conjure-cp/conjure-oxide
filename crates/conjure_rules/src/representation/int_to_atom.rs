@@ -46,7 +46,7 @@ impl Representation for IntToAtom {
             return None;
         };
 
-        // TODO: Change this to allow for all range types
+        // Essence only supports decision variables with finite domains
         if !ranges
             .iter()
             .all(|x| matches!(x, Range::Bounded(_, _)) || matches!(x, Range::Single(_)))
