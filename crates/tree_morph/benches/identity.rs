@@ -26,7 +26,8 @@ fn construct_tree(n: i32) -> Box<Expr> {
 pub fn criterion_benchmark(c: &mut Criterion) {
     let base: i32 = 2;
     let expr = *construct_tree(base.pow(5));
-    let rules = vec![vec![do_nothing]];
+    let rules: Vec<Vec<fn(&mut Commands<Expr, Meta>, &Expr, &Meta) -> Option<Expr>>> =
+        vec![vec![do_nothing]];
 
     c.bench_function("Identity", |b| {
         b.iter(|| {
