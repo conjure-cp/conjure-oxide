@@ -7,6 +7,7 @@ use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::parse_essence_file_native;
 use conjure_oxide::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
+use core::panic;
 use glob::glob;
 use itertools::Itertools;
 use std::collections::BTreeMap;
@@ -427,7 +428,7 @@ fn integration_test_inner(
         if config.solve_with_minion {
             copy_generated_to_expected(path, essence_base, "minion", "solutions.json")?;
         } else if config.solve_with_sat {
-            copy_generated_to_expected(path, essence_base, "SAT", "solutions.json")?;
+            copy_generated_to_expected(path, essence_base, "sat", "solutions.json")?;
         }
 
         if config.validate_rule_traces {

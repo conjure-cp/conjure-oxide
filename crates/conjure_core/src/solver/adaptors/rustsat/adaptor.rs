@@ -177,7 +177,7 @@ impl SolverAdaptor for SAT {
         let mut finds: Vec<String> = Vec::new();
 
         for find_ref in decisions {
-            if (*find_ref.1.domain().unwrap() != BoolDomain) {
+            if (*find_ref.1.borrow().domain().unwrap() != BoolDomain) {
                 Err(SolverError::ModelInvalid(
                     "Only Boolean Decision Variables supported".to_string(),
                 ))?;

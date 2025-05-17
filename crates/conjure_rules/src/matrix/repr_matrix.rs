@@ -20,7 +20,8 @@ fn index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 
     // ensure that we are indexing a decision variable with the representation "matrix_to_atom"
     // selected for it.
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs))) = &**subject else {
+    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs), decl)) = &**subject
+    else {
         return Err(RuleNotApplicable);
     };
 
@@ -34,11 +35,11 @@ fn index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         .clone();
 
     // ensure that the subject has a matrix domain.
-    let decl = symbols.lookup(name).unwrap();
+    // let decl = symbols.lookup(name).unwrap();
 
     // resolve index domains so that we can enumerate them later
     let Some(Domain::DomainMatrix(_, index_domains)) =
-        decl.domain().cloned().map(|x| x.resolve(symbols))
+        decl.borrow().domain().cloned().map(|x| x.resolve(symbols))
     else {
         return Err(RuleNotApplicable);
     };
@@ -207,7 +208,8 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs))) = &**subject else {
+    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs), _)) = &**subject
+    else {
         return Err(RuleNotApplicable);
     };
 
@@ -223,7 +225,7 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 
     // resolve index domains so that we can enumerate them later
     let Some(Domain::DomainMatrix(_, index_domains)) =
-        decl.domain().cloned().map(|x| x.resolve(symbols))
+        decl.borrow().domain().cloned().map(|x| x.resolve(symbols))
     else {
         return Err(RuleNotApplicable);
     };
@@ -281,7 +283,8 @@ fn matrix_ref_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     };
 
     for (child, ctx) in expr.holes() {
-        let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs))) = child else {
+        let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs), _)) = child
+        else {
             continue;
         };
 
@@ -297,7 +300,7 @@ fn matrix_ref_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
         // resolve index domains so that we can enumerate them later
         let Some(Domain::DomainMatrix(_, index_domains)) =
-            decl.domain().cloned().map(|x| x.resolve(symbols))
+            decl.borrow().domain().cloned().map(|x| x.resolve(symbols))
         else {
             continue;
         };

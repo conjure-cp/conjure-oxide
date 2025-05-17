@@ -1,5 +1,5 @@
 use std::{
-    cell::RefCell,
+    cell::{Ref, RefCell},
     collections::HashSet,
     fmt::Display,
     rc::Rc,
@@ -71,7 +71,7 @@ impl Comprehension {
                 expression
                     .clone()
                     .transform_bi(Arc::new(move |atom: Atom| match atom {
-                        Atom::Reference(name) if sols.contains_key(&name) => {
+                        Atom::Reference(name, _) if sols.contains_key(&name) => {
                             Atom::Literal(sols.get(&name).unwrap().clone())
                         }
                         x => x,
@@ -99,8 +99,12 @@ impl Display for Comprehension {
             .symbols()
             .clone()
             .into_iter_local()
-            .map(|(name, decl)| (name, decl.domain().unwrap().clone()))
-            .map(|(name, domain)| format!("{name}: {domain}"))
+            .map(|(name, decl_rc): (Name, Rc<RefCell<Declaration>>)| {
+                let borrowed_decl: Ref<'_, Declaration> = (*decl_rc).borrow();
+                let domain: Domain = borrowed_decl.domain().unwrap().clone();
+                (name, domain)
+            })
+            .map(|(name, domain): (Name, Domain)| format!("{name}: {domain}"))
             .join(",");
 
         let guards = self
@@ -196,7 +200,7 @@ impl ComprehensionBuilder {
         for (name, domain) in self.generators {
             submodel
                 .symbols_mut()
-                .insert(Rc::new(Declaration::new_var(name, domain)));
+                .insert(Rc::new(RefCell::new(Declaration::new_var(name, domain))));
         }
 
         Comprehension {

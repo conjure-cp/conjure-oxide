@@ -1,7 +1,5 @@
-use std::rc::Rc;
-
 use conjure_core::{
-    ast::{Declaration, Expression as Expr, SymbolTable},
+    ast::{Atom, Expression as Expr, SymbolTable},
     into_matrix_expr,
     metadata::Metadata,
     rule_engine::{
@@ -87,32 +85,39 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    // let matrix expressions / comprehensions be unrolled first before applying this rule.
     let Some(exprs) = inside_min_expr.as_ref().clone().unwrap_list() else {
         return Err(RuleNotApplicable);
     };
 
-    let mut symbols = symbols.clone();
-    let new_name = symbols.gensym();
+    let domain = expr
+        .domain_of(&symbols)
+        .ok_or(ApplicationError::DomainError)?;
 
-    let mut new_top = Vec::new(); // the new variable must be less than or equal to all the other variables
-    let mut disjunction = Vec::new(); // the new variable must be equal to one of the variables
+    let atom_inner = Atom::new_ref(&symbols.gensym(&domain));
+    let atom_expr = Expr::Atomic(Metadata::new(), atom_inner.clone());
+
+    let mut new_top = Vec::new();
+    let mut disjunction = Vec::new();
     for e in exprs {
-        new_top.push(essence_expr!(&new_name <= &e));
-        disjunction.push(essence_expr!(&new_name = &e));
+        // Use the Expr::Atomic version in constraints
+        new_top.push(essence_expr!(&atom_expr <= &e));
+        disjunction.push(essence_expr!(&atom_expr = &e));
     }
-    // TODO: deal with explicit index domains
     new_top.push(Or(
         Metadata::new(),
         Box::new(into_matrix_expr![disjunction]),
     ));
 
-    let domain = expr
-        .domain_of(&symbols)
-        .ok_or(ApplicationError::DomainError)?;
-    symbols.insert(Rc::new(Declaration::new_var(new_name.clone(), domain)));
+    let mut symbols: SymbolTable = symbols.clone();
 
-    Ok(Reduction::new(essence_expr!(&new_name), new_top, symbols))
+    symbols.insert(atom_inner.into_declaration());
+
+    Ok(Reduction::new(
+        // Return the Expr::Atomic
+        essence_expr!(&atom_expr),
+        new_top,
+        symbols.clone(),
+    ))
 }
 
 /**
@@ -131,25 +136,27 @@ fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let mut symbols = symbols.clone();
-    let new_name = symbols.gensym();
+    let domain = expr
+        .domain_of(&symbols)
+        .ok_or(ApplicationError::DomainError)?;
+
+    let atom_inner = Atom::new_ref(&symbols.gensym(&domain));
+    let atom_expr = Expr::Atomic(Metadata::new(), atom_inner.clone());
 
     let mut new_top = Vec::new(); // the new variable must be more than or equal to all the other variables
     let mut disjunction = Vec::new(); // the new variable must more than or equal to one of the variables
     for e in exprs {
-        new_top.push(essence_expr!(&new_name >= &e));
-        disjunction.push(essence_expr!(&new_name = &e));
+        new_top.push(essence_expr!(&atom_expr >= &e));
+        disjunction.push(essence_expr!(&atom_expr = &e));
     }
     // FIXME: deal with explicitly given domains
     new_top.push(Or(
         Metadata::new(),
         Box::new(into_matrix_expr![disjunction]),
     ));
+    let mut symbols: SymbolTable = symbols.clone();
 
-    let domain = expr
-        .domain_of(&symbols)
-        .ok_or(ApplicationError::DomainError)?;
-    symbols.insert(Rc::new(Declaration::new_var(new_name.clone(), domain)));
+    symbols.insert(atom_inner.into_declaration());
 
-    Ok(Reduction::new(essence_expr!(&new_name), new_top, symbols))
+    Ok(Reduction::new(essence_expr!(&atom_expr), new_top, symbols))
 }

@@ -71,7 +71,8 @@ pub fn pretty_vec<T: Display>(elems: &[T]) -> String {
 /// Returns None if the symbol is not in the symbol table, or if it is not a variable.
 pub fn pretty_variable_declaration(symbol_table: &SymbolTable, var_name: &Name) -> Option<String> {
     let decl = symbol_table.lookup(var_name)?;
-    let var = decl.as_var()?;
+    let decl_borrow = decl.borrow();
+    let var = decl_borrow.as_var()?;
     let domain = &var.domain;
     Some(format!("find {var_name}: {domain}"))
 }
@@ -87,7 +88,8 @@ pub fn pretty_variable_declaration(symbol_table: &SymbolTable, var_name: &Name) 
 /// Returns None if the symbol is not in the symbol table, or if it is not a value letting.
 pub fn pretty_value_letting_declaration(symbol_table: &SymbolTable, name: &Name) -> Option<String> {
     let decl = symbol_table.lookup(name)?;
-    let letting = decl.as_value_letting()?;
+    let decl_borrow = decl.borrow();
+    let letting = decl_borrow.as_value_letting()?;
     Some(format!("letting {name} be {letting}"))
 }
 
@@ -105,6 +107,7 @@ pub fn pretty_domain_letting_declaration(
     name: &Name,
 ) -> Option<String> {
     let decl = symbol_table.lookup(name)?;
-    let letting = decl.as_domain_letting()?;
+    let decl_borrow = decl.borrow();
+    let letting = decl_borrow.as_domain_letting()?;
     Some(format!("letting {name} be domain {letting}"))
 }

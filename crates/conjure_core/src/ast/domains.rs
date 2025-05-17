@@ -46,9 +46,10 @@ impl<A: Ord + Display> Display for Range<A> {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize, Uniplate)]
+#[derive(Default, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize, Uniplate)]
 #[uniplate()]
 pub enum Domain {
+    #[default]
     BoolDomain,
 
     /// An integer domain.

@@ -1,5 +1,3 @@
-use std::rc::Rc;
-
 use conjure_rule_macros::register_rule;
 
 use conjure_core::{
@@ -16,13 +14,13 @@ use conjure_core::{
 /// Otherwise, the letting may be put into a flat constraint, as it is a reference. At this point
 /// it ceases to be an expression, so we cannot match over it.
 #[register_rule(("Base", 5000))]
-fn substitute_value_lettings(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let Expr::Atomic(_, Atom::Reference(name)) = expr else {
+fn substitute_value_lettings(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::Atomic(_, Atom::Reference(_, decl)) = expr else {
         return Err(RuleNotApplicable);
     };
 
-    let decl = symbols.lookup(name).ok_or(RuleNotApplicable)?;
-    let value = decl.as_value_letting().ok_or(RuleNotApplicable)?;
+    let declaration = decl.borrow();
+    let value = declaration.as_value_letting().ok_or(RuleNotApplicable)?;
 
     Ok(Reduction::pure(value.clone()))
 }
@@ -37,15 +35,16 @@ fn substitute_domain_lettings(expr: &Expr, symbols: &SymbolTable) -> Application
     let mut new_symbols = symbols.clone();
     let mut has_changed = false;
 
-    for (_, mut decl) in symbols.clone().into_iter_local() {
-        let Some(mut var) = decl.as_var().cloned() else {
+    for (_, decl) in symbols.clone().into_iter_local() {
+        let Some(mut var) = decl.borrow().as_var().cloned() else {
             continue;
         };
 
         let old_domain = var.domain;
         var.domain = old_domain.clone().resolve(symbols);
         if old_domain != var.domain {
-            *(Rc::make_mut(&mut decl).as_var_mut().unwrap()) = var;
+            // *(Rc::make_mut(&mut decl).as_var_mut().unwrap()) = var;
+            decl.borrow_mut().as_var_mut().unwrap().domain = var.domain;
             has_changed = true;
             new_symbols.update_insert(decl);
         };
