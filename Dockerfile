@@ -13,13 +13,19 @@
 FROM --platform=$TARGETPLATFORM 'quay.io/pypa/manylinux_2_28' as build-environment
 ARG TARGETPLATFORM
 
+# download wget for downloading node below, and zip for our nightly build CI.
+RUN yum install -y wget zip;
+
+# llvm / clang: for C++ dependencies (Minion, SAT) and bindgen.
+# using clang not gcc as Rust's bindgen library requires libclang
+RUN yum install -y llvm-toolset;
+
 # nodejs: required to build treesitter grammar
 
 # treesitter builds fail on the version of node found in this containers
 # package manager, as it is very old. Installing node from a binary download
 # instead.
 
-RUN yum install -y wget;
 
 # FIXME: Conjure has no linux/arm64 builds yet, so neither can we! When Conjure
 # gets these, we can trivially make this container multi-platform by commenting
@@ -37,9 +43,6 @@ RUN if [ "$TARGETPLATFORM"  == "linux/amd64" ]; then ARCH="x64";\
     rm -rf node-v22.16.0*;
 
 
-# llvm / clang: for C++ dependencies (Minion, SAT) and bindgen.
-# using clang not gcc as Rust's bindgen library requires libclang
-RUN yum install -y llvm-toolset;
 
 # rustup 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y;
@@ -66,6 +69,7 @@ RUN wget https://github.com/conjure-cp/conjure/releases/download/v2.5.1/conjure-
     unzip conjure-v2.5.1-linux-with-solvers.zip &&\
     mv conjure-v2.5.1-linux-with-solvers/* . &&\
     rm -rf conjure-v2.5.1-linux-with-solvers*
+
 
 ###########################################################
 # 3) a container that contains conjure oxide and conjure.
