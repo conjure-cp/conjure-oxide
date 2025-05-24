@@ -1,0 +1,217 @@
+name: Nightly CI 
+
+# Nightly CI. 
+#
+# If the repo has changed over the last 24 hours, check that Conjure Oxide
+# clean builds on all platforms, create an updated nightly release, and run
+# some longer CI jobs.
+#
+# Nightly Releases
+# ===============
+#
+# `build_nightly` builds Conjure Oxide on all platforms, prepares release
+# archives, and uploads these as Github artifacts for later jobs to use.
+#
+# The archives made are described in the Build Artifacts section below.
+#
+# If builds pass on all platform, the nightly release and tag is updated to the
+# current HEAD by the `create_release` job; otherwise, it is left unchanged.
+# This ensures that there is always a build of Conjure Oxide for each platform
+# in the releases tab.
+#
+# Nightly Tests
+# =============
+#
+# In the future, this workflow will run long running CI jobs (e.g. performance
+# testing, more extensive language coverage checks).
+#
+# To add such a job, make a new job which depends on `build_nightly` (`need:
+# build_nightly`). Then, install Conjure Oxide and all its dependences using
+# the build artifacts (described below).
+#
+# Using the build artifacts saves each test from having to download/compile
+# Conjure Oxide and dependencies from scratch.
+#
+# Build Artifacts
+# ===============
+#
+# `build_nightly` uploads the produced releases for each platform to a Github
+# artifact of name `conjure-oxide-nightly-PLATFORM`.
+#
+# Valid values of PLATFORM are: 
+#
+#     - aarch64-linux-gnu
+#     - aarch64-darwin
+#     - x86_64-linux-gnu
+#     - x86_64-darwin
+#
+# Each artifact contains 3 zip files:
+#
+#   - conjure-oxide-nightly-PLATFORM-standalone.zip - just conjure oxide
+#   - conjure-oxide-nightly-PLATFORM-with-conjure.zip - just conjure oxide and conjure
+#   - conjure-oxide-nightly-PLATFORM-with-solvers.zip - conjure oxide,
+#   conjure, savilerow, and all solvers (as provided by conjure's with-solvers
+#   release)
+#
+# An exception to the rule is `aarch64-linux-gnu`, which only provides a
+# standalone release. This is because `conjure` does not provide a release for
+# `aarch64-linux-gnu`.
+# 
+# To download artifacts in a job, use actions/download-artifact.
+
+on: 
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write  
+
+jobs:
+
+  # check if anything has happened in the repo today
+  #
+  # https://stackoverflow.com/a/67527144
+  check_date:
+    runs-on: ubuntu-22.04
+    name: Check latest commit
+    outputs:
+      should_run: ${{ steps.should_run.outputs.should_run }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: print latest_commit
+        run: echo ${{ github.sha }}
+
+      - id: should_run
+        continue-on-error: true
+        name: check latest commit is less than a day
+        if: ${{ github.event_name == 'schedule' }}
+        run: test -z $(git rev-list  --after="24 hours" ${{ github.sha }}) && echo "::set-output name=should_run::false" &&  gh run list -b main -w Test -L 1 --json conclusion | jq '.[].conclusion == "success"'
+
+
+
+  build_nightly:
+    name: "Build Nightly (${{ matrix.arch_name }}-${{ matrix.os_name }})"
+    needs: check_date
+    if: ${{ needs.check_date.outputs.should_run != 'false' }}
+    strategy: 
+      fail-fast: false
+      matrix:
+        os: 
+          - ubuntu-24.04     # x86_64 linux
+          - ubuntu-24.04-arm # aarch64 linux 
+          - macos-13         # x86_64 mac
+          - macos-latest     # aarch64 mac
+
+        # platform and arch info for naming the binary
+        include:
+          - os: ubuntu-24.04
+            os_name: linux-gnu
+            arch_name: x86_64
+            conjure_prefix: linux
+
+          - os: ubuntu-24.04-arm
+            os_name: linux-gnu
+            arch_name: aarch64
+            conjure_prefix: linux
+
+          - os: macos-13
+            os_name: darwin
+            arch_name: x86_64
+            conjure_prefix: macos-intel
+
+          - os: macos-latest
+            os_name: darwin
+            arch_name: aarch64
+            conjure_prefix: macos-arm
+
+
+    runs-on: ${{ matrix.os }}
+    env: 
+      release_prefix: "${{ matrix.arch_name }}-${{ matrix.os_name }}-conjure-oxide-nightly"
+      conjure_version: 2.5.1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install rust
+        run: rustup update stable && rustup default stable
+
+      - name: Build release 
+        run: |
+          cargo build --release -p conjure_oxide
+          mkdir -p bin # place to store all the different stuff we want to add to the release
+          cp target/release/conjure_oxide bin
+
+      - name: Download Conjure release
+        if: ${{ !(matrix.arch_name == 'aarch64' && matrix.os_name == 'linux-gnu') }}
+        run: |
+          CONJURE_FOLDER="conjure-v${{ env.conjure_version }}-${{ matrix.conjure_prefix }}-with-solvers"
+          CONJURE_ZIP="${CONJURE_FOLDER}.zip"
+
+          wget "https://github.com/conjure-cp/conjure/releases/download/v${{ env.conjure_version }}/${CONJURE_ZIP}"
+          unzip -d bin ${CONJURE_ZIP}
+          mv bin/${CONJURE_FOLDER}/* bin/
+          rm -rf bin/${CONJURE_FOLDER}
+
+      - name: Prepare releases
+        if: ${{ !(matrix.arch_name == 'aarch64' && matrix.os_name == 'linux-gnu') }}
+        run: |
+          mkdir dist 
+
+          cd bin
+          zip "../dist/${{ env.release_prefix }}-standalone.zip" conjure_oxide
+          zip "../dist/${{ env.release_prefix }}-with-conjure.zip" conjure_oxide conjure
+          zip "../dist/${{ env.release_prefix }}-with-solvers.zip" *
+          cd ..
+
+      - name: Prepare releases (linux-aarch64)
+        if: ${{ matrix.arch_name == 'aarch64' && matrix.os_name == 'linux-gnu' }}
+        run: |
+          mkdir dist 
+
+          # no conjure version for linux-aarch64 yet
+          
+          cd bin
+          zip "../dist/${{ env.release_prefix }}-standalone.zip" conjure_oxide
+          # zip "../dist/${{ env.release_prefix }}-with-conjure.zip" conjure_oxide conjure
+          # zip "../dist/${{ env.release_prefix }}-with-solvers.zip" *
+          cd ..
+
+      - name: Save builds
+        uses: actions/upload-artifact@v4
+        with: 
+          name: ${{ env.release_prefix }}
+          path: dist/*.zip
+
+  create_release:
+    runs-on: ubuntu-latest
+    name: Create release
+    needs: build_nightly 
+    steps:
+      - uses: actions/checkout@v4
+      - run: mkdir dist
+
+      # download all artifacts made in this workflow (i.e. all the different builds)
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true # put all releases in the same folder
+          path: dist/
+      
+      - name: Publish nightly release
+        env: 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: | 
+          git config user.name "GitHub Actions"
+          git config user.email "github-actions@users.noreply.github.com"
+
+          # delete nightly tag 
+          git push --delete origin nightly  || true
+          
+          # create new nightly tag 
+          git tag nightly -am "Nightly release: $(date -I)"
+          git push origin nightly
+
+          # create release
+          gh release delete nightly || true # ensure release doesn't exist (don't fail if it doesn't, as it may not!)
+          gh release create nightly --notes-from-tag --prerelease --title "nightly ($(date -I))" --verify-tag dist/*.zip
