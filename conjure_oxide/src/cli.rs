@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use clap::{arg, command, Args, Parser, Subcommand};
 
 use clap_complete::Shell;
+use conjure_core::pro_trace::{Kind, VerbosityLevel};
 use conjure_oxide::SolverFamily;
 
 use crate::{solve, test_solve};
@@ -86,6 +87,83 @@ pub struct GlobalArgs {
     /// Use the native parser instead of Conjure's.
     #[arg(long, default_value_t = false, global = true)]
     pub enable_native_parser: bool,
+
+    // Tracing: T
+    #[arg(
+        long,
+        short = 'T',
+        default_value_t = false,
+        global = true,
+        help = "Enable rule tracing"
+    )]
+    pub tracing: bool,
+
+    // Output location (stdout or file)
+    #[arg(
+        long,
+        short = 'L',
+        default_value = "stdout",
+        global = true,
+        help = "Select output location for trace result: stdout or file"
+    )]
+    pub trace_output: String,
+
+    // Verbosity Leve (high, medium, low)
+    #[arg(
+        long,
+        default_value = "medium",
+        global = true,
+        help = "Select verbosity level for trace"
+    )]
+    pub verbosity: VerbosityLevel,
+
+    // Trace format (human, json)
+    #[arg(
+        long,
+        short = 'F',
+        default_value = "human",
+        global = true,
+        help = "Select the format of the trace output: human or json"
+    )]
+    pub formatter: String,
+
+    // Can optionally specify where the trace should be located by specifying the file path
+    // The flag accepts
+    #[arg(
+        long,
+        short = 'f',
+        global = true,
+        num_args = 0..=2,
+        value_names = ["JSON_TRACE", "HUMAN_TRACE"],
+        help = "Optionally save traces to specific files: first for JSON, second for human format"
+    )]
+    pub trace_file: Option<Vec<String>>,
+
+    // Displays all the information related to a specifc complenent of conjure-oxide (e.g rules, model)
+    // The information displayed is captured by the display_message function
+    #[arg(
+        long = "get-info-about",
+        global = true,
+        value_delimiter = ' ',
+        help = "Filter messages by given kind"
+    )]
+    pub kind_filter: Option<Kind>,
+
+    #[arg(
+        long = "filter-rule-name",
+        global = true,
+        value_delimiter = ',',
+        help = "Filter rule trace to only show given rule name"
+    )]
+    pub rule_name_filter: Option<Vec<String>>,
+
+    #[arg(
+        long = "filter-rule-set",
+        global = true,
+        value_delimiter = ',',
+        help = "Filter rule trace to only show given rule set"
+    )]
+    pub rule_set_filter: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Args)]

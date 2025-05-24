@@ -23,7 +23,7 @@ pub fn run_test_solve_command(global_args: GlobalArgs, local_args: Args) -> anyh
 
     let context = solve::init_context(&global_args, input_file.clone())?;
     let model = solve::parse(&global_args, Arc::clone(&context))?;
-    let rewritten_model = solve::rewrite(model, &global_args, Arc::clone(&context))?;
+    let rewritten_model = solve::rewrite(model, &global_args, Arc::clone(&context), None)?;
 
     // now we are stealing from the integration tester
 

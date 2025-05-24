@@ -674,9 +674,12 @@ fn rewrite_solve_xyz() {
     };
 
     // Apply rewrite function to the nested expression
+
     let mut model = Model::new(Default::default());
     *model.as_submodel_mut().constraints_mut() = vec![nested_expr];
-    model = rewrite_naive(&model, &rule_sets, true).unwrap();
+
+    //termporary
+    model = rewrite_naive(&model, &rule_sets, true, None).unwrap();
     let rewritten_expr = model.as_submodel().constraints();
 
     // Check if the expression is in its simplest form
