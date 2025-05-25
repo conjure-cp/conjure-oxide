@@ -65,4 +65,9 @@ RUN cargo build --release;
 # 3) a container that contains conjure oxide and conjure.
 
 FROM ghcr.io/conjure-cp/conjure:main
-COPY --from=builder /build/target/release/conjure_oxide /root/.local/bin
+
+# conjure should do this already, but for forwards compatibility
+RUN mkdir -p /opt/conjure;
+ENV PATH /opt/conjure:$PATH
+
+COPY --from=builder /build/target/release/conjure_oxide /opt/conjure;
