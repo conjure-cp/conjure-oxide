@@ -64,5 +64,5 @@ RUN cargo build --release;
 ###########################################################
 # 3) a container that contains conjure oxide and conjure.
 
-FROM ghcr.io/conjure-cp/conjure:v2.5.1
+FROM ghcr.io/conjure-cp/conjure:main
 COPY --from=builder /build/target/release/conjure_oxide /root/.local/bin
