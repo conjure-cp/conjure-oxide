@@ -61,35 +61,8 @@ RUN git submodule update  --init --remote --recursive;
 
 RUN cargo build --release;
 
-# install conjure from latest release
-RUN mkdir -p conjure-build;
-WORKDIR /conjure-build
-
-RUN wget https://github.com/conjure-cp/conjure/releases/download/v2.5.1/conjure-v2.5.1-linux-with-solvers.zip &&\
-    unzip conjure-v2.5.1-linux-with-solvers.zip &&\
-    mv conjure-v2.5.1-linux-with-solvers/* . &&\
-    rm -rf conjure-v2.5.1-linux-with-solvers*;
-
-
 ###########################################################
 # 3) a container that contains conjure oxide and conjure.
 
-# as we are no longer building, we can use a more modern version of Linux :)
-FROM ubuntu:latest
-
-# java for savilerow
-RUN apt-get update && apt-get install -y openjdk-21-jdk;
-
-RUN mkdir -p /opt/conjure;
-WORKDIR /opt/conjure
-
-COPY --from=builder build/target/release/conjure_oxide .
-COPY --from=builder conjure-build/ .
-
-# see https://github.com/conjure-cp/conjure/blob/main/Dockerfile
-ENV PATH /opt/conjure:$PATH
-ENV LD_LIBRARY_PATH /opt/conjure/lib:$LD_LIBRARY_PATH
-ENV MZN_STDLIB_DIR /opt/conjure/share/minizinc
-
-RUN mkdir -p /root/;
-WORKDIR /root/
+FROM ghcr.io/conjure-cp/conjure:v2.5.1
+COPY --from=builder /build/target/release/conjure_oxide /root/.local/bin
