@@ -12,7 +12,7 @@ fn main() -> io::Result<()> {
     println!("cargo:rerun-if-changed=tests/custom_test_template");
     println!("cargo:rerun-if-changed=build.rs");
 
-    let out_dir = var("OUT_DIR").map_err(|e| io::Error::new(io::ErrorKind::Other, e))?; // wrapping in a std::io::Error to match main's error type
+    let out_dir = var("OUT_DIR").map_err(io::Error::other)?; // wrapping in a std::io::Error to match main's error type
 
     // Integration Tests
     let dest = Path::new(&out_dir).join("gen_tests.rs");
