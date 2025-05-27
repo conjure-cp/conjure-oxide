@@ -213,7 +213,9 @@ impl MorphRule<Expression, SymbolTable> for Rule<'_> {
     ) -> Option<Expression> {
         let reduction = self.apply(subtree, meta).ok()?;
         commands.mut_meta(Box::new(|m: &mut SymbolTable| m.extend(reduction.symbols)));
-        commands.transform(Box::new(|m| m.extend_root(reduction.new_top)));
+        if !reduction.new_top.is_empty() {
+            commands.transform(Box::new(|m| m.extend_root(reduction.new_top)));
+        }
         Some(reduction.new_expression)
     }
 }
