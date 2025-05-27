@@ -3,21 +3,19 @@ use conjure_core::ast::SymbolTable;
 use conjure_core::bug;
 use conjure_core::rule_engine::get_rules_grouped;
 
+use conjure_core::pro_trace::{create_consumer, json_trace_close, VerbosityLevel};
 use conjure_core::rule_engine::rewrite_naive;
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::parse_essence_file_native;
-use conjure_oxide::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
+use conjure_oxide::utils::testing::{
+    normalize_solutions_for_comparison, read_human_rule_trace, read_json_rule_trace,
+};
 use glob::glob;
 use itertools::Itertools;
 use std::collections::BTreeMap;
 use std::env;
 use std::error::Error;
 use std::fs;
-use std::fs::File;
-use tracing::{span, Level, Metadata as OtherMetadata};
-use tracing_subscriber::{
-    filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
-};
 use tree_morph::{helpers::select_panic, prelude::*};
 
 use uniplate::Biplate;
@@ -126,12 +124,6 @@ impl TestConfig {
 }
 
 fn main() {
-    let _guard = create_scoped_subscriber("./logs", "test_log");
-
-    // creating a span and log a message
-    let test_span = span!(Level::TRACE, "test_span");
-    let _enter: span::Entered<'_> = test_span.enter();
-
     for entry in glob("conjure_oxide/tests/integration/*").expect("Failed to read glob pattern") {
         match entry {
             Ok(path) => println!("File: {:?}", path),
@@ -158,7 +150,6 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
 
-    let subscriber = create_scoped_subscriber(path, essence_base);
     // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
     // correctly
     //
@@ -167,15 +158,9 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     if verbose || accept {
         let _guard = GUARD.lock().unwrap_or_else(|e| e.into_inner());
 
-        // set the subscriber as default
-        tracing::subscriber::with_default(subscriber, || {
-            integration_test_inner(path, essence_base, extension)
-        })
+        integration_test_inner(path, essence_base, extension)
     } else {
-        let subscriber = create_scoped_subscriber(path, essence_base);
-        tracing::subscriber::with_default(subscriber, || {
-            integration_test_inner(path, essence_base, extension)
-        })
+        integration_test_inner(path, essence_base, extension)
     }
 }
 
@@ -294,8 +279,17 @@ fn integration_test_inner(
 
         let mut model = parsed_model.expect("Model must be parsed in 1a");
 
+        // setting up the consumer for protrace
+        let combined_consumer = create_consumer(
+            "file",
+            VerbosityLevel::Medium,
+            "both",
+            Some(format!("{path}/{essence_base}-generated-rule-trace.json")),
+            Some(format!("{path}/{essence_base}-generated-rule-trace.txt")),
+        );
+
         let rewritten = if config.enable_naive_impl {
-            rewrite_naive(&model, &rule_sets, false)?
+            rewrite_naive(&model, &rule_sets, false, Some(combined_consumer))?
         } else if config.enable_morph_impl {
             let submodel = model.as_submodel_mut();
             let rules_grouped = get_rules_grouped(&rule_sets)
@@ -317,6 +311,12 @@ fn integration_test_inner(
         } else {
             panic!("No rewriter implementation specified")
         };
+
+        // closing the json array in the trace file
+        json_trace_close(Some(format!(
+            "{path}/{essence_base}-generated-rule-trace.json"
+        )));
+
         if verbose {
             println!("Rewritten model: {:#?}", rewritten);
         }
@@ -431,7 +431,8 @@ fn integration_test_inner(
         }
 
         if config.validate_rule_traces {
-            copy_human_trace_generated_to_expected(path, essence_base)?;
+            // first the path to rule traces has to be fixed
+            // copy_generated_to_expected_rules(path, essence_base, "rule-trace", extension)?;
             save_stats_json(context.clone(), path, essence_base)?;
         }
     }
@@ -540,11 +541,19 @@ fn integration_test_inner(
     // We don't check rule trace when morph is enabled.
     // TODO: Implement rule trace validation for morph
     if config.validate_rule_traces && !config.enable_morph_impl {
-        let generated = read_human_rule_trace(path, essence_base, "generated")?;
-        let expected = read_human_rule_trace(path, essence_base, "expected")?;
+        let generated_human = read_human_rule_trace(path, essence_base, "generated")?;
+        let expected_human = read_human_rule_trace(path, essence_base, "expected")?;
 
         assert_eq!(
-            expected, generated,
+            expected_human, generated_human,
+            "Generated rule trace does not match the expected trace!"
+        );
+
+        let generated_json = read_json_rule_trace(path, essence_base, "generated")?;
+        let expected_json = read_json_rule_trace(path, essence_base, "expected")?;
+
+        assert_eq!(
+            expected_json, generated_json,
             "Generated rule trace does not match the expected trace!"
         );
     };
@@ -564,17 +573,6 @@ fn integration_test_inner(
     }
     save_stats_json(context, path, essence_base)?;
 
-    Ok(())
-}
-
-fn copy_human_trace_generated_to_expected(
-    path: &str,
-    test_name: &str,
-) -> Result<(), std::io::Error> {
-    std::fs::copy(
-        format!("{path}/{test_name}-generated-rule-trace-human.txt"),
-        format!("{path}/{test_name}-expected-rule-trace-human.txt"),
-    )?;
     Ok(())
 }
 
@@ -626,53 +624,6 @@ fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
         "assert_vector_operators_have_partially_evaluated: expression {} is not partially evaluated",
         parent_expr
     );
-}
-
-pub fn create_scoped_subscriber(
-    path: &str,
-    test_name: &str,
-) -> (impl tracing::Subscriber + Send + Sync) {
-    let target1_layer = create_file_layer_json(path, test_name);
-    let target2_layer = create_file_layer_human(path, test_name);
-    let layered = target1_layer.and_then(target2_layer);
-
-    let subscriber = Arc::new(tracing_subscriber::registry().with(layered))
-        as Arc<dyn tracing::Subscriber + Send + Sync>;
-    // setting this subscriber as the default
-    let _default = tracing::subscriber::set_default(subscriber.clone());
-
-    subscriber
-}
-
-fn create_file_layer_json(path: &str, test_name: &str) -> impl Layer<Registry> + Send + Sync {
-    let file = File::create(format!("{path}/{test_name}-generated-rule-trace.json"))
-        .expect("Unable to create log file");
-
-    let layer1 = fmt::layer()
-        .with_writer(file)
-        .with_level(false)
-        .with_target(false)
-        .without_time()
-        .with_filter(FilterFn::new(|meta: &OtherMetadata| {
-            meta.target() == "rule_engine"
-        }));
-
-    layer1
-}
-
-fn create_file_layer_human(path: &str, test_name: &str) -> (impl Layer<Registry> + Send + Sync) {
-    let file = File::create(format!("{path}/{test_name}-generated-rule-trace-human.txt"))
-        .expect("Unable to create log file");
-
-    let layer2 = fmt::layer()
-        .with_writer(file)
-        .with_level(false)
-        .without_time()
-        .with_target(false)
-        .with_filter(EnvFilter::new("rule_engine_human=trace"))
-        .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human"));
-
-    layer2
 }
 
 #[test]
