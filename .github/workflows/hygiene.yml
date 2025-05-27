@@ -32,9 +32,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
+
+      - name: 'Install rust-toolchain.toml'
+        run: rustup toolchain install
 
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.9
