@@ -70,4 +70,4 @@ FROM ghcr.io/conjure-cp/conjure:main
 RUN mkdir -p /opt/conjure;
 ENV PATH /opt/conjure:$PATH
 
-COPY --from=builder /build/target/release/conjure_oxide /opt/conjure;
+COPY --from=builder /build/target/release/conjure_oxide /opt/conjure/conjure_oxide
