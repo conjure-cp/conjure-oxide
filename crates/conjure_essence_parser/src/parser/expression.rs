@@ -216,6 +216,10 @@ pub fn parse_expression(
                     .into(),
             ),
         },
+        "toInt_expr" => Ok(Expression::ToInt(
+            Metadata::new(),
+            Box::new(child_expr(constraint, source_code, root)?),
+        )),
         _ => Err(format!("{} is not a recognized node kind", constraint.kind()).into()),
     }
 }

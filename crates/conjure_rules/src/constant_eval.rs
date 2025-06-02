@@ -6,7 +6,8 @@ use conjure_core::{
     into_matrix,
     metadata::Metadata,
     rule_engine::{
-        register_rule, register_rule_set, ApplicationError, ApplicationError::RuleNotApplicable,
+        register_rule, register_rule_set,
+        ApplicationError::{self, RuleNotApplicable},
         ApplicationResult, Reduction,
     },
 };
@@ -30,14 +31,12 @@ fn constant_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// `Some(Const)` if the expression can be simplified to a constant
 pub fn eval_constant(expr: &Expr) -> Option<Lit> {
     match expr {
-        // TODO: need to specify for subsetEq etc + intersection + union
         Expr::Union(_, _, _) => None,
         Expr::Intersect(_, _, _) => None,
         Expr::Supset(_, _, _) => None,
         Expr::SupsetEq(_, _, _) => None,
         Expr::Subset(_, _, _) => None,
         Expr::SubsetEq(_, _, _) => None,
-
         Expr::FromSolution(_, _) => None,
         Expr::DominanceRelation(_, _) => None,
         Expr::InDomain(_, e, domain) => {
@@ -107,7 +106,6 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 _ => None,
             }
         }
-
         Expr::UnsafeSlice(_, subject, indices) | Expr::SafeSlice(_, subject, indices) => {
             let subject: Lit = subject.as_ref().clone().to_literal()?;
             let Lit::AbstractLiteral(subject @ AbstractLiteral::Matrix(_, _)) = subject else {
@@ -198,7 +196,6 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         Expr::Sum(_, exprs) => vec_lit_op::<i32, i32>(|e| e.iter().sum(), exprs).map(Lit::Int),
         Expr::Product(_, exprs) => vec_op::<i32, i32>(|e| e.iter().product(), exprs).map(Lit::Int),
-
         Expr::FlatIneq(_, a, b, c) => {
             let a: i32 = a.try_into().ok()?;
             let b: i32 = b.try_into().ok()?;
@@ -438,6 +435,15 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         Expr::Scope(_, _) => None,
         Expr::MinionElementOne(_, _, _, _) => None,
+        Expr::ToInt(_, expression) => {
+            let lit = (**expression).clone().to_literal()?;
+            match lit {
+                Lit::Int(_) => Some(lit),
+                Lit::Bool(true) => Some(Lit::Int(1)),
+                Lit::Bool(false) => Some(Lit::Int(0)),
+                _ => None,
+            }
+        }
     }
 }
 
