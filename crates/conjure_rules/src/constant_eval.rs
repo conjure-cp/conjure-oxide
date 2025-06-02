@@ -271,7 +271,9 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             Some(Lit::Bool(a == b))
         }
         Expr::Sum(_, exprs) => vec_lit_op::<i32, i32>(|e| e.iter().sum(), exprs).map(Lit::Int),
-        Expr::Product(_, exprs) => vec_op::<i32, i32>(|e| e.iter().product(), exprs).map(Lit::Int),
+        Expr::Product(_, exprs) => {
+            vec_lit_op::<i32, i32>(|e| e.iter().product(), exprs).map(Lit::Int)
+        }
         Expr::FlatIneq(_, a, b, c) => {
             let a: i32 = a.try_into().ok()?;
             let b: i32 = b.try_into().ok()?;
@@ -619,7 +621,9 @@ fn vec_lit_op<T, A>(f: fn(Vec<T>) -> A, a: &Expr) -> Option<A>
 where
     T: TryFrom<Lit>,
 {
-    let a = a.clone().unwrap_list()?;
+    // we don't care about preserving indices here, as we will be getting rid of the vector
+    // anyways!
+    let a = a.clone().unwrap_matrix_unchecked()?.0;
     let a = a.iter().map(unwrap_expr).collect::<Option<Vec<T>>>()?;
     Some(f(a))
 }

@@ -6,50 +6,56 @@ find z: int(2..4)
 
 such that
 
-(Product([Product([x, y]), z]) < 15)
+(product([product([x,y;int(1..2)]),z;int(1..2)]) < 15)
 
 --
 
-Product([Product([x, y]), z]), 
+product([product([x,y;int(1..2)]),z;int(1..2)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
-Product([x, y, z]) 
+product([x,y,z;int(1..2)]) 
 
 --
 
-(Product([x, y, z]) < 15), 
+(product([x,y,z;int(1..2)]) < 15), 
    ~~> lt_to_leq ([("Minion", 8400)]) 
-(Product([x, y, z]) <= Sum([15,-1;int(1..)])) 
+(product([x,y,z;int(1..2)]) <= sum([15,-1;int(1..)])) 
 
 --
 
-(Product([x, y, z]) <= Sum([15,-1;int(1..)])), 
+(product([x,y,z;int(1..2)]) <= sum([15,-1;int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(Product([x, y, z]) <= 14) 
+(product([x,y,z;int(1..2)]) <= 14) 
 
 --
 
-(Product([x, y, z]) <= 14), 
+(product([x,y,z;int(1..2)]) <= 14), 
    ~~> flatten_generic ([("Minion", 4200)]) 
 (__0 <= 14) 
 new variables:
   find __0: int(8..64)
 new constraints:
-  __0 =aux Product([x, y, z])
---
-
-__0 =aux Product([x, y, z]), 
-   ~~> introduce_producteq ([("Minion", 4200)]) 
-FlatProductEq(z,__1,__0) 
-new variables:
-  find __1: int(4..16)
-new constraints:
-  FlatProductEq(y,x,__1)
+  __0 =aux product([x,y,z;int(1..2)])
 --
 
 (__0 <= 14), 
    ~~> leq_to_ineq ([("Minion", 4100)]) 
 Ineq(__0, 14, 0) 
 
+--
+
+product([x,y,z;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+product([x,y,z;int(1..)]) 
+
+--
+
+__0 =aux product([x,y,z;int(1..)]), 
+   ~~> introduce_producteq ([("Minion", 4200)]) 
+FlatProductEq(z,__1,__0) 
+new variables:
+  find __1: int(4..16)
+new constraints:
+  FlatProductEq(y,x,__1)
 --
 
 Final model:

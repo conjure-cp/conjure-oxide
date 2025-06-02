@@ -71,7 +71,7 @@ pub fn parse_expr_to_ts(
                     Box::new(#expr2),
                 )}),
                 "*" => Ok(
-                    quote! {::conjure_core::ast::Expression::Product(::conjure_core::metadata::Metadata::new(), vec![#expr1, #expr2])},
+                    quote! {::conjure_core::ast::Expression::Product(::conjure_core::metadata::Metadata::new(), Box::new(::conjure_core::matrix_expr![#expr1, #expr2]))},
                 ),
                 "/" => {
                     //TODO: add checks for if division is safe or not

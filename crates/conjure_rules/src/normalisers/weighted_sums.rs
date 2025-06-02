@@ -41,7 +41,7 @@ fn collect_like_terms(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     for expr in exprs.clone() {
         match expr.clone() {
             Expr::Product(_, exprs2) => {
-                match exprs2.as_slice() {
+                match exprs2.unwrap_list().ok_or(RuleNotApplicable)?.as_slice() {
                     // todo (gs248) It would be nice to generate these destructures by macro, like `essence_expr!` but in reverse
                     // -c*v
                     [Expr::Atomic(_, Atom::Reference(name)), Expr::Neg(_, e3)] => {

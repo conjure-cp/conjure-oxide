@@ -19,12 +19,15 @@ use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::metadata::Metadata;
 use crate::{bug, error, into_matrix_expr, throw_error, Model};
+
+#[allow(unused_macros)]
 macro_rules! parser_trace {
     ($($arg:tt)+) => {
         log::trace!(target:"jsonparser",$($arg)+)
     };
 }
 
+#[allow(unused_macros)]
 macro_rules! parser_debug {
     ($($arg:tt)+) => {
         log::debug!(target:"jsonparser",$($arg)+)
@@ -429,7 +432,6 @@ fn parse_domain_value_int(obj: &JsonValue, symbols: &SymbolTable) -> Option<i32>
 // this needs an explicit type signature to force the closures to have the same type
 type BinOp = Box<dyn Fn(Metadata, Box<Expression>, Box<Expression>) -> Expression>;
 type UnaryOp = Box<dyn Fn(Metadata, Box<Expression>) -> Expression>;
-type VecOp = Box<dyn Fn(Metadata, Vec<Expression>) -> Expression>;
 
 pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Option<Expression> {
     let binary_operators: HashMap<&str, BinOp> = [
@@ -542,6 +544,10 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
             "MkOpSum",
             Box::new(Expression::Sum) as Box<dyn Fn(_, _) -> _>,
         ),
+        (
+            "MkOpProduct",
+            Box::new(Expression::Product) as Box<dyn Fn(_, _) -> _>,
+        ),
         ("MkOpOr", Box::new(Expression::Or) as Box<dyn Fn(_, _) -> _>),
         (
             "MkOpMin",
@@ -563,16 +569,8 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
     .into_iter()
     .collect();
 
-    let vec_operators: HashMap<&str, VecOp> = [(
-        "MkOpProduct",
-        Box::new(Expression::Product) as Box<dyn Fn(_, _) -> _>,
-    )]
-    .into_iter()
-    .collect();
-
     let mut binary_operator_names = binary_operators.iter().map(|x| x.0);
     let mut unary_operator_names = unary_operators.iter().map(|x| x.0);
-    let mut vec_operator_names = vec_operators.iter().map(|x| x.0);
     #[allow(clippy::unwrap_used)]
     match obj {
         Value::Object(op) if op.contains_key("Op") => match &op["Op"] {
@@ -582,10 +580,6 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
             Value::Object(un_op) if unary_operator_names.any(|key| un_op.contains_key(*key)) => {
                 Some(parse_unary_op(un_op, unary_operators, scope).unwrap())
             }
-            Value::Object(vec_op) if vec_operator_names.any(|key| vec_op.contains_key(*key)) => {
-                Some(parse_vec_op(vec_op, vec_operators, scope).unwrap())
-            }
-
             Value::Object(op)
                 if op.contains_key("MkOpIndexing") || op.contains_key("MkOpSlicing") =>
             {
@@ -863,51 +857,6 @@ fn parse_unary_op(
     }?;
 
     Some(constructor(Metadata::new(), Box::new(arg)))
-}
-
-fn parse_vec_op(
-    vec_op: &serde_json::Map<String, Value>,
-    vec_operators: HashMap<&str, VecOp>,
-    scope: &Rc<RefCell<SymbolTable>>,
-) -> Option<Expression> {
-    let (key, value) = vec_op.into_iter().next()?;
-    let constructor = vec_operators.get(key.as_str())?;
-
-    parser_debug!("Trying to parse vec_op: {key} ...");
-
-    let mut args_parsed: Option<Vec<Option<Expression>>> = None;
-    if let Some(abs_lit_matrix) = value.pointer("/AbstractLiteral/AbsLitMatrix/1") {
-        parser_trace!("... containing a matrix of literals");
-        args_parsed = abs_lit_matrix.as_array().map(|x| {
-            x.iter()
-                .map(|x| parse_expression(x, scope))
-                .collect::<Vec<Option<Expression>>>()
-        });
-    }
-    // the input of this expression is constant - e.g. or([]), or([false]), min([2]), etc.
-    else if let Some(const_abs_lit_matrix) =
-        value.pointer("/Constant/ConstantAbstract/AbsLitMatrix/1")
-    {
-        parser_trace!("... containing a matrix of constants");
-        args_parsed = const_abs_lit_matrix.as_array().map(|x| {
-            x.iter()
-                .map(|x| parse_expression(x, scope))
-                .collect::<Vec<Option<Expression>>>()
-        });
-    }
-
-    let args_parsed = args_parsed?;
-
-    let number_of_args = args_parsed.len();
-    parser_debug!("... with {number_of_args} args {args_parsed:#?}");
-
-    let valid_args: Vec<Expression> = args_parsed.into_iter().flatten().collect();
-    if number_of_args != valid_args.len() {
-        None
-    } else {
-        parser_debug!("... success!");
-        Some(constructor(Metadata::new(), valid_args))
-    }
 }
 
 // Takes in { AbstractLiteral: .... }

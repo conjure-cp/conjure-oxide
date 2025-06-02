@@ -6,7 +6,7 @@ find z: int(0..4)
 
 such that
 
-Not((x % y % z = 3))
+!((x % y % z = 3))
 
 --
 
@@ -70,25 +70,25 @@ and([(SafeMod(x,SafeMod(y,z)) = 3),(SafeMod(y,z) != 0),(z != 0);int(1..)])
 
 --
 
-Not(and([(SafeMod(x,SafeMod(y,z)) = 3),(SafeMod(y,z) != 0),(z != 0);int(1..)])), 
+!(and([(SafeMod(x,SafeMod(y,z)) = 3),(SafeMod(y,z) != 0),(z != 0);int(1..)])), 
    ~~> distribute_not_over_and ([("Base", 8400)]) 
-or([Not((SafeMod(x,SafeMod(y,z)) = 3)),Not((SafeMod(y,z) != 0)),Not((z != 0));int(1..)]) 
+or([!((SafeMod(x,SafeMod(y,z)) = 3)),!((SafeMod(y,z) != 0)),!((z != 0));int(1..)]) 
 
 --
 
-Not((SafeMod(x,SafeMod(y,z)) = 3)), 
+!((SafeMod(x,SafeMod(y,z)) = 3)), 
    ~~> negated_eq_to_neq ([("Base", 8800)]) 
 (SafeMod(x,SafeMod(y,z)) != 3) 
 
 --
 
-Not((SafeMod(y,z) != 0)), 
+!((SafeMod(y,z) != 0)), 
    ~~> negated_neq_to_eq ([("Base", 8800)]) 
 (SafeMod(y,z) = 0) 
 
 --
 
-Not((z != 0)), 
+!((z != 0)), 
    ~~> negated_neq_to_eq ([("Base", 8800)]) 
 (z = 0) 
 

@@ -2,8 +2,9 @@
 /*        Rules for translating to Minion-supported constraints         */
 /************************************************************************/
 
-use std::convert::TryInto;
+use std::collections::VecDeque;
 use std::rc::Rc;
+use std::{collections::HashMap, convert::TryInto};
 
 use crate::{
     extra_check,
@@ -14,7 +15,7 @@ use conjure_core::{
         Atom, Declaration, Domain, Expression as Expr, Literal as Lit, Range, ReturnType,
         SymbolTable, Typeable,
     },
-    matrix_expr,
+    into_matrix_expr, matrix_expr,
     metadata::Metadata,
     rule_engine::{
         register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
@@ -65,11 +66,12 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
         return Err(RuleNotApplicable);
     }
 
-    let Expr::Product(_, mut factors) = product else {
+    let Expr::Product(_, factors) = product else {
         return Err(RuleNotApplicable);
     };
 
-    if factors.len() < 2 {
+    let mut factors_vec = factors.unwrap_list().ok_or(RuleNotApplicable)?;
+    if factors_vec.len() < 2 {
         return Err(RuleNotApplicable);
     }
 
@@ -80,14 +82,14 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
     // if factors is > 2 arguments, y will be an auxiliary variable
 
     #[allow(clippy::unwrap_used)] // should never panic - length is checked above
-    let x: Atom = factors
+    let x: Atom = factors_vec
         .pop()
         .unwrap()
         .try_into()
         .or(Err(RuleNotApplicable))?;
 
     #[allow(clippy::unwrap_used)] // should never panic - length is checked above
-    let mut y: Atom = factors
+    let mut y: Atom = factors_vec
         .pop()
         .unwrap()
         .try_into()
@@ -97,7 +99,7 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
     let mut new_tops: Vec<Expr> = vec![];
 
     // FIXME: add a test for this
-    while let Some(next_factor) = factors.pop() {
+    while let Some(next_factor) = factors_vec.pop() {
         // Despite adding auxvars, I still require all atoms as factors, making this rule act
         // similar to other introduction rules.
         let next_factor_atom: Atom = next_factor.clone().try_into().or(Err(RuleNotApplicable))?;
@@ -105,9 +107,12 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
         let aux_var = symbols.gensym();
         // TODO: find this domain without having to make unnecessary Expr and Metadata objects
         // Just using the domain of expr doesn't work
-        let aux_domain = Expr::Product(Metadata::new(), vec![y.clone().into(), next_factor])
-            .domain_of(&symbols)
-            .ok_or(ApplicationError::DomainError)?;
+        let aux_domain = Expr::Product(
+            Metadata::new(),
+            Box::new(matrix_expr![y.clone().into(), next_factor]),
+        )
+        .domain_of(&symbols)
+        .ok_or(ApplicationError::DomainError)?;
 
         symbols.insert(Rc::new(Declaration::new_var(aux_var.clone(), aux_domain)));
 
@@ -185,7 +190,7 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
 /// Cases 6 and 7 could potentially be a normalising rule `-e ~> -1*e`. However, I think that we
 /// should only turn negations into a product when they are inside a sum, not all the time.
 #[register_rule(("Minion", 4600))]
-fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
     // Keep track of which type of (in)equality was in the input, and use this to decide what
     // constraints to make at the end
 
@@ -281,102 +286,43 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symbols: &SymbolTable) -> Appli
     }?;
 
     let mut new_top_exprs: Vec<Expr> = vec![];
-    let mut symbols = symbols.clone();
+    let mut symtab = symtab.clone();
 
-    let mut coefficients: Vec<Lit> = vec![];
-    let mut vars: Vec<Atom> = vec![];
-
-    // if all coefficients are 1, use normal sum rule instead
-    let mut found_non_one_coeff = false;
+    let mut coefficients_and_vars: HashMap<Atom, i32> = HashMap::new();
 
     // for each sub-term, get the coefficient and the variable, flattening if necessary.
+    //
     for expr in sum_exprs {
-        let (coeff, var): (Lit, Atom) = match expr {
-            // atom: v ~> 1*v
-            Expr::Atomic(_, atom) => (Lit::Int(1), atom),
+        let (coeff, var) = flatten_weighted_sum_term(expr, &mut symtab, &mut new_top_exprs)?;
 
-            // assuming normalisation / partial eval, literal will be first term
+        if coeff == 0 {
+            continue;
+        }
 
-            // weighted sum term: c * e.
-            // e can either be an atom, the rest of the product to be flattened, or an other expression that needs
-            // flattening
-            Expr::Product(_, factors)
-                if factors.len() > 1 && matches!(factors[0], Expr::Atomic(_, Atom::Literal(_))) =>
-            {
-                match &factors[..] {
-                    // c * <atom>
-                    [Expr::Atomic(_, Atom::Literal(c)), Expr::Atomic(_, atom)] => {
-                        (c.clone(), atom.clone())
-                    }
-
-                    // c * <some non-flat expression>
-                    [Expr::Atomic(_, Atom::Literal(c)), e1] => {
-                        #[allow(clippy::unwrap_used)] // aux var failing is a bug
-                        let aux_var_info = to_aux_var(e1, &symbols).unwrap();
-
-                        symbols = aux_var_info.symbols();
-                        let var = aux_var_info.as_atom();
-                        new_top_exprs.push(aux_var_info.top_level_expr());
-                        (c.clone(), var)
-                    }
-
-                    // c * a * b * c * ...
-                    [Expr::Atomic(_, Atom::Literal(c)), ref rest @ ..] => {
-                        let e1 = Expr::Product(Metadata::new(), rest.to_vec());
-
-                        #[allow(clippy::unwrap_used)] // aux var failing is a bug
-                        let aux_var_info = to_aux_var(&e1, &symbols).unwrap();
-
-                        symbols = aux_var_info.symbols();
-                        let var = aux_var_info.as_atom();
-                        new_top_exprs.push(aux_var_info.top_level_expr());
-                        (c.clone(), var)
-                    }
-
-                    _ => unreachable!(),
-                }
-            }
-
-            // negated terms: `-e ~> -1*e`
-            //
-            // flatten e if non-atomic
-            Expr::Neg(_, e) => {
-                // needs flattening
-                let v: Atom = if let Some(aux_var_info) = to_aux_var(&e, &symbols) {
-                    symbols = aux_var_info.symbols();
-                    new_top_exprs.push(aux_var_info.top_level_expr());
-                    aux_var_info.as_atom()
-                } else {
-                    // if we can't flatten it, it must be an atom!
-                    #[allow(clippy::unwrap_used)]
-                    e.try_into().unwrap()
-                };
-
-                (Lit::Int(-1), v)
-            }
-
-            // flatten non-flat terms without coefficients: e1 ~> (1,__0)
-            //
-            // includes products without coefficients.
-            e => {
-                //
-                let aux_var_info = to_aux_var(&e, &symbols).ok_or(RuleNotApplicable)?;
-
-                symbols = aux_var_info.symbols();
-                let var = aux_var_info.as_atom();
-                new_top_exprs.push(aux_var_info.top_level_expr());
-                (Lit::Int(1), var)
-            }
-        };
-
-        let coeff_num: i32 = coeff.clone().try_into().or(Err(RuleNotApplicable))?;
-        found_non_one_coeff |= coeff_num != 1;
-        coefficients.push(coeff);
-        vars.push(var);
+        // collect coefficients for like terms, so 2*x + -1*x ~~> 1*x
+        coefficients_and_vars
+            .entry(var)
+            .and_modify(|x| *x += coeff)
+            .or_insert(coeff);
     }
 
-    let use_weighted_sum = found_non_one_coeff;
     // the expr should use a regular sum instead if the coefficients are all 1.
+    let use_weighted_sum = !coefficients_and_vars.values().all(|x| *x == 1 || *x == 0);
+
+    // This needs a consistent iteration order so that the output is deterministic. However,
+    // HashMap doesn't provide this. Can't use BTreeMap or Ord to achieve this, as not everything
+    // in the AST implements Ord. Instead, order things by their pretty printed value.
+    let (vars, coefficients): (Vec<Atom>, Vec<Lit>) = coefficients_and_vars
+        .into_iter()
+        .filter(|(_, c)| *c != 0)
+        .sorted_by(|a, b| {
+            let a_atom_str = format!("{}", a.0);
+            let b_atom_str = format!("{}", b.0);
+            a_atom_str.cmp(&b_atom_str)
+        })
+        .map(|(v, c)| (v, Lit::Int(c)))
+        .unzip();
+
     let new_expr: Expr = match (equality_kind, use_weighted_sum) {
         (EqualityKind::Eq, true) => Expr::And(
             Metadata::new(),
@@ -407,7 +353,133 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symbols: &SymbolTable) -> Appli
         (EqualityKind::Geq, false) => Expr::FlatSumGeq(Metadata::new(), vars, total),
     };
 
-    Ok(Reduction::new(new_expr, new_top_exprs, symbols))
+    Ok(Reduction::new(new_expr, new_top_exprs, symtab))
+}
+
+/// For a term inside a weighted sum, return coefficient*variable.
+///
+///
+/// If the term is in the form <coefficient> * <non flat expression>, the expression is flattened
+/// to a new auxvar, which is returned as the variable for this term.
+///
+/// New auxvars are added to `symtab`, and their top level constraints to `top_level_exprs`.
+///
+/// # Errors
+///
+/// + Returns [`ApplicationError::RuleNotApplicable`] if a non-flat expression cannot be turned
+///   into an atom. See [`flatten_expression_to_atom`].
+///
+/// + Returns [`ApplicationError::RuleNotApplicable`] if the term is a product containing a matrix
+///   literal, and that matrix literal is not a list.
+///
+///
+fn flatten_weighted_sum_term(
+    term: Expr,
+    symtab: &mut SymbolTable,
+    top_level_exprs: &mut Vec<Expr>,
+) -> Result<(i32, Atom), ApplicationError> {
+    match term {
+        // we can only see check the product for coefficients it contains a matrix literal.
+        //
+        // e.g. the input expression `product([2,x])` returns (2,x), but `product(my_matrix)`
+        // returns (1,product(my_matrix)).
+        //
+        // if the product contains a matrix literal but it is not a list, throw `RuleNotApplicable`
+        // to allow it to be changed into a list by another rule.
+        Expr::Product(_, factors) if factors.is_matrix_literal() => {
+            // this fails if factors is not a matrix literal or that matrix literal is not a list.
+            //
+            // we already check for the first case above, so this should only error when we have a
+            // non-list matrix literal.
+            let factors = factors.unwrap_list().ok_or(RuleNotApplicable)?;
+
+            match factors.as_slice() {
+                // product([]) ~~> (0,0)
+                // coefficients of 0 should be ignored by the caller.
+                [] => Ok((0, Atom::Literal(Lit::Int(0)))),
+
+                // product([4,y]) ~~> (4,y)
+                [Expr::Atomic(_, Atom::Literal(Lit::Int(coeff))), e] => Ok((
+                    *coeff,
+                    flatten_expression_to_atom(e.clone(), symtab, top_level_exprs)?,
+                )),
+
+                // product([y,4]) ~~> (y,4)
+                [e, Expr::Atomic(_, Atom::Literal(Lit::Int(coeff)))] => Ok((
+                    *coeff,
+                    flatten_expression_to_atom(e.clone(), symtab, top_level_exprs)?,
+                )),
+
+                // assume the coefficients have been placed at the front by normalisation rules
+
+                // product[1,x,y,...] ~> return (coeff,product([x,y,...]))
+                [Expr::Atomic(_, Atom::Literal(Lit::Int(coeff))), e, rest @ ..] => {
+                    let mut product_terms = Vec::from(rest);
+                    product_terms.push(e.clone());
+                    let product =
+                        Expr::Product(Metadata::new(), Box::new(into_matrix_expr!(product_terms)));
+                    Ok((
+                        *coeff,
+                        flatten_expression_to_atom(product, symtab, top_level_exprs)?,
+                    ))
+                }
+
+                // no coefficient:
+                // product([x,y,z]) ~~> (1,product([x,y,z])
+                _ => {
+                    let product =
+                        Expr::Product(Metadata::new(), Box::new(into_matrix_expr!(factors)));
+                    Ok((
+                        1,
+                        flatten_expression_to_atom(product, symtab, top_level_exprs)?,
+                    ))
+                }
+            }
+        }
+        Expr::Neg(_, inner_term) => Ok((
+            -1,
+            flatten_expression_to_atom(*inner_term, symtab, top_level_exprs)?,
+        )),
+        term => Ok((
+            1,
+            flatten_expression_to_atom(term, symtab, top_level_exprs)?,
+        )),
+    }
+}
+
+/// Converts the input expression to an atom, placing it into a new auxiliary variable if
+/// necessary.
+///
+/// The auxiliary variable will be added to the symbol table and its top-level-constraint to
+/// `top_level_exprs`.
+///
+/// If the expression is already atomic, no auxiliary variables are created, and the atom is
+/// returned as-is.
+///
+/// # Errors
+///
+///  + Returns [`ApplicationError::RuleNotApplicable`] if the expression cannot be placed into an
+///    auxiliary variable. For example, expressions that do not have domains.
+///
+///    This function supports the same expressions as [`to_aux_var`], except that this functions
+///    succeeds when the expression given is atomic.
+///
+///    See [`to_aux_var`] for more information.
+///
+fn flatten_expression_to_atom(
+    expr: Expr,
+    symtab: &mut SymbolTable,
+    top_level_exprs: &mut Vec<Expr>,
+) -> Result<Atom, ApplicationError> {
+    if let Expr::Atomic(_, atom) = expr {
+        return Ok(atom);
+    }
+
+    let aux_var_info = to_aux_var(&expr, symtab).ok_or(RuleNotApplicable)?;
+    *symtab = aux_var_info.symbols();
+    top_level_exprs.push(aux_var_info.top_level_expr());
+
+    Ok(aux_var_info.as_atom())
 }
 
 #[register_rule(("Minion", 4200))]
@@ -837,7 +909,6 @@ fn flatten_generic(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             | Expr::Leq(_, _, _)
             | Expr::Geq(_, _, _)
             | Expr::Abs(_, _)
-            | Expr::Product(_, _)
             | Expr::Neg(_, _)
             | Expr::Not(_, _)
             | Expr::SafeIndex(_, _, _)
@@ -876,18 +947,19 @@ fn flatten_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    let mut children = expr.children();
+    let children = expr.children();
     debug_assert_eq!(children.len(), 2);
 
+    let mut new_children = VecDeque::new();
     let mut symbols = symbols.clone();
     let mut num_changed = 0;
     let mut new_tops: Vec<Expr> = vec![];
 
-    for child in children.iter_mut() {
-        if let Some(aux_var_info) = to_aux_var(child, &symbols) {
+    for child in children {
+        if let Some(aux_var_info) = to_aux_var(&child, &symbols) {
             symbols = aux_var_info.symbols();
             new_tops.push(aux_var_info.top_level_expr());
-            *child = aux_var_info.as_expr();
+            new_children.push_back(aux_var_info.as_expr());
             num_changed += 1;
         }
     }
@@ -897,9 +969,68 @@ fn flatten_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    let expr = expr.with_children(children);
+    let expr = expr.with_children(new_children);
 
     Ok(Reduction::new(expr, new_tops, symbols))
+}
+
+/// Flattens products containing lists.
+///
+/// For example,
+///
+/// ```plain
+/// product([|x|,y,z]) ~~> product([aux1,y,z]), aux1=|x|
+/// ```
+#[register_rule(("Minion", 4200))]
+fn flatten_product(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
+    // product cannot use flatten_generic as we don't want to put the immediate child in an aux
+    // var, as that is the matrix literal. Instead we want to put the children of the matrix
+    // literal in an aux var.
+    //
+    // e.g.
+    //
+    // flatten_generic would do
+    //
+    // product([|x|,y,z]) ~~> product(aux1), aux1=[x,y,z]
+    //
+    // we want to do
+    //
+    // product([|x|,y,z]) ~~> product([aux1,y,z]), aux1=|x|
+    //
+    // We only want to flatten products containing matrix literals that are lists but not child terms, e.g.
+    //
+    //  product(x[1,..]) ~~> product(aux1),aux1 = x[1,..].
+    //
+    //  Instead, we let the representation and vertical rules for matrices turn x[1,..] into a
+    //  matrix literal.
+    //
+    //  product(x[1,..]) ~~ slice_matrix_to_atom ~~> product([x11,x12,x13,x14])
+
+    let Expr::Product(_, factors) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let factors = factors.clone().unwrap_list().ok_or(RuleNotApplicable)?;
+
+    let mut new_factors = vec![];
+    let mut top_level_exprs = vec![];
+    let mut symtab = symtab.clone();
+
+    for factor in factors {
+        new_factors.push(Expr::Atomic(
+            Metadata::new(),
+            flatten_expression_to_atom(factor, &mut symtab, &mut top_level_exprs)?,
+        ));
+    }
+
+    // have we done anything?
+    // if we have created any aux-vars, they will have added a top_level_declaration.
+    if top_level_exprs.is_empty() {
+        return Err(RuleNotApplicable);
+    }
+
+    let new_expr = Expr::Product(Metadata::new(), Box::new(into_matrix_expr![new_factors]));
+    Ok(Reduction::new(new_expr, top_level_exprs, symtab))
 }
 
 /// Converts a Geq to an Ineq

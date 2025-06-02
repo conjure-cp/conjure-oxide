@@ -54,7 +54,7 @@ and([(Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)])),(Set([Int(2)
 
 (Set([Int(2), Int(3)]) != Set([Int(1), Int(2), Int(3)])), 
    ~~> neq_not_eq_sets ([("Base", 8700)]) 
-Not((Set([Int(1), Int(2), Int(3)]) = Set([Int(2), Int(3)]))) 
+!((Set([Int(1), Int(2), Int(3)]) = Set([Int(2), Int(3)]))) 
 
 --
 
@@ -64,15 +64,15 @@ and([(Set([Int(1), Int(2), Int(3)]) subsetEq Set([Int(2), Int(3)])),(Set([Int(2)
 
 --
 
-Not(and([(Set([Int(1), Int(2), Int(3)]) subsetEq Set([Int(2), Int(3)])),(Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)]));int(1..)])), 
+!(and([(Set([Int(1), Int(2), Int(3)]) subsetEq Set([Int(2), Int(3)])),(Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)]));int(1..)])), 
    ~~> distribute_not_over_and ([("Base", 8400)]) 
-or([Not((Set([Int(1), Int(2), Int(3)]) subsetEq Set([Int(2), Int(3)]))),Not((Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)])));int(1..)]) 
+or([!((Set([Int(1), Int(2), Int(3)]) subsetEq Set([Int(2), Int(3)]))),!((Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)])));int(1..)]) 
 
 --
 
-Not((Set([Int(1), Int(2), Int(3)]) subsetEq Set([Int(2), Int(3)]))), 
+!((Set([Int(1), Int(2), Int(3)]) subsetEq Set([Int(2), Int(3)]))), 
    ~~> flatten_generic ([("Minion", 4200)]) 
-Not(__0) 
+!(__0) 
 new variables:
   find __0: bool
 new constraints:
@@ -85,9 +85,9 @@ Reify((Set([Int(1), Int(2), Int(3)]) subsetEq Set([Int(2), Int(3)])), __0)
 
 --
 
-Not((Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)]))), 
+!((Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)]))), 
    ~~> flatten_generic ([("Minion", 4200)]) 
-Not(__1) 
+!(__1) 
 new variables:
   find __1: bool
 new constraints:
@@ -100,13 +100,13 @@ Reify((Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)])), __1)
 
 --
 
-Not(__0), 
+!(__0), 
    ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
 WatchedLiteral(__0,false) 
 
 --
 
-Not(__1), 
+!(__1), 
    ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
 WatchedLiteral(__1,false) 
 

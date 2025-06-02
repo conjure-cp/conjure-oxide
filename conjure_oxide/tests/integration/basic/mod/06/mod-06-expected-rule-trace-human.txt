@@ -6,7 +6,7 @@ find c: int(0..3)
 
 such that
 
-Not((a = b % c))
+!((a = b % c))
 
 --
 
@@ -34,19 +34,19 @@ and([(c != 0);int(1..)]),
 
 --
 
-Not(and([(a = SafeMod(b,c)),(c != 0);int(1..)])), 
+!(and([(a = SafeMod(b,c)),(c != 0);int(1..)])), 
    ~~> distribute_not_over_and ([("Base", 8400)]) 
-or([Not((a = SafeMod(b,c))),Not((c != 0));int(1..)]) 
+or([!((a = SafeMod(b,c))),!((c != 0));int(1..)]) 
 
 --
 
-Not((a = SafeMod(b,c))), 
+!((a = SafeMod(b,c))), 
    ~~> negated_eq_to_neq ([("Base", 8800)]) 
 (a != SafeMod(b,c)) 
 
 --
 
-Not((c != 0)), 
+!((c != 0)), 
    ~~> negated_neq_to_eq ([("Base", 8800)]) 
 (c = 0) 
 
