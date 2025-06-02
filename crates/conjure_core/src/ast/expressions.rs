@@ -19,6 +19,7 @@ use enum_compatability_macro::document_compatibility;
 use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Uniplate as _};
 
+use super::ac_operators::ACOperatorKind;
 use super::comprehension::Comprehension;
 use super::records::RecordValue;
 use super::{Domain, Range, SubModel, Typeable};
@@ -789,13 +790,7 @@ impl Expression {
 
     /// True if the expression is an associative and commutative operator
     pub fn is_associative_commutative_operator(&self) -> bool {
-        matches!(
-            self,
-            Expression::Sum(_, _)
-                | Expression::Or(_, _)
-                | Expression::And(_, _)
-                | Expression::Product(_, _)
-        )
+        TryInto::<ACOperatorKind>::try_into(self).is_ok()
     }
 
     /// True if the expression is a matrix literal.
@@ -911,6 +906,11 @@ impl Expression {
 
             _ => None,
         }
+    }
+
+    /// If this expression is an associative-commutative operator, return its [ACOperatorKind].
+    pub fn to_ac_operator_kind(&self) -> Option<ACOperatorKind> {
+        TryFrom::try_from(self).ok()
     }
 }
 
