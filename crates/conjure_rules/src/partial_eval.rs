@@ -87,6 +87,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             let mut acc = 1;
             let mut n_consts = 0;
             let mut new_vec: Vec<Expr> = Vec::new();
+            let vec = vec.unwrap_list().ok_or(RuleNotApplicable)?;
             for expr in vec {
                 if let Expr::Atomic(_, Atom::Literal(Lit::Int(x))) = expr {
                     acc *= x;
@@ -104,7 +105,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                 Default::default(),
                 Atom::Literal(Lit::Int(acc)),
             ));
-            let new_product = Product(m, new_vec);
+            let new_product = Product(m, Box::new(into_matrix_expr![new_vec]));
 
             if acc == 0 {
                 // if safe, 0 * exprs ~> 0

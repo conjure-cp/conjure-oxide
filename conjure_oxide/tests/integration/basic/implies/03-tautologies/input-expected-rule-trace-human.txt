@@ -11,16 +11,16 @@ such that
 
 (x) -> (x),
 or([(a) -> (z),(z) -> (a);int(1..2)]),
-or([(b) -> (c),(b) -> (Not(c));int(1..2)])
+or([(b) -> (c),(b) -> (!(c));int(1..2)])
 
 --
 
 (x) -> (x),
 or([(a) -> (z),(z) -> (a);int(1..2)]),
-or([(b) -> (c),(b) -> (Not(c));int(1..2)]), 
+or([(b) -> (c),(b) -> (!(c));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 or([(a) -> (z),(z) -> (a);int(1..2)]),
-or([(b) -> (c),(b) -> (Not(c));int(1..2)]) 
+or([(b) -> (c),(b) -> (!(c));int(1..2)]) 
 
 --
 
@@ -42,13 +42,13 @@ Ineq(b, c, 0)
 
 --
 
-(b) -> (Not(c)), 
+(b) -> (!(c)), 
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
-ReifyImply(Not(c), b) 
+ReifyImply(!(c), b) 
 
 --
 
-Not(c), 
+!(c), 
    ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
 WatchedLiteral(c,false) 
 

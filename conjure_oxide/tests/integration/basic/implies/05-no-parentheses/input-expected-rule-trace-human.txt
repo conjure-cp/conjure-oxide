@@ -7,21 +7,21 @@ find z: int(1..5)
 such that
 
 ((x < 3)) -> ((y >= 5)),
-((Sum([y,z;int(1..2)]) = 8)) -> ((Sum([x,2;int(1..2)]) = 3))
+((sum([y,z;int(1..2)]) = 8)) -> ((sum([x,2;int(1..2)]) = 3))
 
 --
 
 (x < 3), 
    ~~> lt_to_leq ([("Minion", 8400)]) 
-(x <= Sum([3,-1;int(1..)])) 
+(x <= sum([3,-1;int(1..)])) 
 
 --
 
-((x <= Sum([3,-1;int(1..)]))) -> ((y >= 5)),
-((Sum([y,z;int(1..2)]) = 8)) -> ((Sum([x,2;int(1..2)]) = 3)), 
+((x <= sum([3,-1;int(1..)]))) -> ((y >= 5)),
+((sum([y,z;int(1..2)]) = 8)) -> ((sum([x,2;int(1..2)]) = 3)), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 ((x <= 2)) -> ((y >= 5)),
-((Sum([y,z;int(1..2)]) = 8)) -> ((Sum([x,2;int(1..2)]) = 3)) 
+((sum([y,z;int(1..2)]) = 8)) -> ((sum([x,2;int(1..2)]) = 3)) 
 
 --
 
@@ -46,24 +46,24 @@ Reify((x <= 2), __0)
 
 --
 
-((Sum([y,z;int(1..2)]) = 8)) -> ((Sum([x,2;int(1..2)]) = 3)), 
+((sum([y,z;int(1..2)]) = 8)) -> ((sum([x,2;int(1..2)]) = 3)), 
    ~~> flatten_imply ([("Minion", 4200)]) 
-(__1) -> ((Sum([x,2;int(1..2)]) = 3)) 
+(__1) -> ((sum([x,2;int(1..2)]) = 3)) 
 new variables:
   find __1: bool
 new constraints:
-  __1 =aux (Sum([y,z;int(1..2)]) = 8)
+  __1 =aux (sum([y,z;int(1..2)]) = 8)
 --
 
-(__1) -> ((Sum([x,2;int(1..2)]) = 3)), 
+(__1) -> ((sum([x,2;int(1..2)]) = 3)), 
    ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
-ReifyImply((Sum([x,2;int(1..2)]) = 3), __1) 
+ReifyImply((sum([x,2;int(1..2)]) = 3), __1) 
 
 --
 
-__1 =aux (Sum([y,z;int(1..2)]) = 8), 
+__1 =aux (sum([y,z;int(1..2)]) = 8), 
    ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify((Sum([y,z;int(1..2)]) = 8), __1) 
+Reify((sum([y,z;int(1..2)]) = 8), __1) 
 
 --
 
@@ -79,25 +79,25 @@ Ineq(x, 2, 0)
 
 --
 
-Sum([x,2;int(1..2)]), 
+sum([x,2;int(1..2)]), 
    ~~> matrix_to_list ([("Base", 2000)]) 
-Sum([x,2;int(1..)]) 
+sum([x,2;int(1..)]) 
 
 --
 
-(Sum([x,2;int(1..)]) = 3), 
+(sum([x,2;int(1..)]) = 3), 
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-and([SumLeq([x, 2], 3),SumGeq([x, 2], 3);int(1..)]) 
+and([SumLeq([2, x], 3),SumGeq([2, x], 3);int(1..)]) 
 
 --
 
-Sum([y,z;int(1..2)]), 
+sum([y,z;int(1..2)]), 
    ~~> matrix_to_list ([("Base", 2000)]) 
-Sum([y,z;int(1..)]) 
+sum([y,z;int(1..)]) 
 
 --
 
-(Sum([y,z;int(1..)]) = 8), 
+(sum([y,z;int(1..)]) = 8), 
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
 and([SumLeq([y, z], 8),SumGeq([y, z], 8);int(1..)]) 
 
@@ -114,7 +114,7 @@ find __1: bool
 such that
 
 ReifyImply(Ineq(5, y, 0), __0),
-ReifyImply(and([SumLeq([x, 2], 3),SumGeq([x, 2], 3);int(1..)]), __1),
+ReifyImply(and([SumLeq([2, x], 3),SumGeq([2, x], 3);int(1..)]), __1),
 Reify(Ineq(x, 2, 0), __0),
 Reify(and([SumLeq([y, z], 8),SumGeq([y, z], 8);int(1..)]), __1)
 

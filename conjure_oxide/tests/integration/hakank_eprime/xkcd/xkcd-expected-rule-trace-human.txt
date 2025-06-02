@@ -7,27 +7,27 @@ find x: matrix indexed by [[int(1..6)]] of int(0..100000)
 
 such that
 
-(total_ = Sum([given i: int(1..6)
+(total_ = sum([given i: int(1..6)
 
 such that
 
-Product([price[i], x[i]])
+product([price[i],x[i];int(1..2)])
  | i: int(1..6),]))
 
 --
 
-(total_ = Sum([given i: int(1..6)
+(total_ = sum([given i: int(1..6)
 
 such that
 
-Product([price[i], x[i]])
+product([price[i],x[i];int(1..2)])
  | i: int(1..6),])), 
    ~~> select_representation_matrix ([("Base", 8001)]) 
-(total_ = Sum([given i: int(1..6)
+(total_ = sum([given i: int(1..6)
 
 such that
 
-Product([price[i], x#matrix_to_atom[i]])
+product([price[i],x#matrix_to_atom[i];int(1..2)])
  | i: int(1..6),])) 
 new variables:
   find x#matrix_to_atom_1: int(0..100000)
@@ -48,10 +48,10 @@ total_,
 
 such that
 
-Product([price[i], x#matrix_to_atom[i]])
+product([price[i],x#matrix_to_atom[i];int(1..2)])
  | i: int(1..6),], 
    ~~> expand_comprehension ([("Base", 2000)]) 
-[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] 
+[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] 
 
 --
 
@@ -61,69 +61,81 @@ x#matrix_to_atom[1],
 
 --
 
-(1505 = Sum([Product([price[1], {x#matrix_to_atom[1] @ and([__inDomain(1,int(1..6));int(1..)])}]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])), 
+(1505 = sum([product([price[1],{x#matrix_to_atom[1] @ and([__inDomain(1,int(1..6));int(1..)])};int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([price[1], {x#matrix_to_atom[1] @ true}]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) 
+(1505 = sum([product([price[1],{x#matrix_to_atom[1] @ true};int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) 
 
 --
 
-Product([price[1], {x#matrix_to_atom[1] @ true}]), 
+[price[1],{x#matrix_to_atom[1] @ true};int(1..2)], 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{Product([price[1], x#matrix_to_atom[1]]) @ and([true;int(1..)])} 
+{[price[1],x#matrix_to_atom[1];int(1..2)] @ and([true;int(1..)])} 
 
 --
 
-(1505 = Sum([{Product([price[1], x#matrix_to_atom[1]]) @ and([true;int(1..)])},Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])), 
+(1505 = sum([product({[price[1],x#matrix_to_atom[1];int(1..2)] @ and([true;int(1..)])}),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([{Product([price[1], x#matrix_to_atom[1]]) @ true},Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) 
+(1505 = sum([product({[price[1],x#matrix_to_atom[1];int(1..2)] @ true}),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) 
 
 --
 
-[{Product([price[1], x#matrix_to_atom[1]]) @ true},Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)], 
+product({[price[1],x#matrix_to_atom[1];int(1..2)] @ true}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ and([true;int(1..)])} 
+{product([price[1],x#matrix_to_atom[1];int(1..2)]) @ and([true;int(1..)])} 
 
 --
 
-(1505 = Sum({[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ and([true;int(1..)])})), 
+(1505 = sum([{product([price[1],x#matrix_to_atom[1];int(1..2)]) @ and([true;int(1..)])},product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum({[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ true})) 
+(1505 = sum([{product([price[1],x#matrix_to_atom[1];int(1..2)]) @ true},product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) 
 
 --
 
-Sum({[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ true}), 
+[{product([price[1],x#matrix_to_atom[1];int(1..2)]) @ true},product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)], 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ and([true;int(1..)])} 
+{[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ and([true;int(1..)])} 
 
 --
 
-(1505 = {Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ and([true;int(1..)])}), 
+(1505 = sum({[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ and([true;int(1..)])})), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = {Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ true}) 
+(1505 = sum({[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ true})) 
 
 --
 
-(1505 = {Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ true}), 
+sum({[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ true}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ and([true;int(1..)])} 
+{sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ and([true;int(1..)])} 
 
 --
 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ and([true;int(1..)])}, 
+(1505 = {sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ and([true;int(1..)])}), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ true} 
+(1505 = {sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ true}) 
 
 --
 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ true}, 
+(1505 = {sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ true}), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ and([true;int(1..)])} 
+
+--
+
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ and([true;int(1..)])}, 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ true} 
+
+--
+
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ true}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])),true;int(1..)]) 
+and([(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])),true;int(1..)]) 
 
 --
 
-and([(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])),true;int(1..)]), 
+and([(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])),true;int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) 
 
 --
 
@@ -133,69 +145,81 @@ x#matrix_to_atom[2],
 
 --
 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], {x#matrix_to_atom[2] @ and([__inDomain(2,int(1..6));int(1..)])}]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])), 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],{x#matrix_to_atom[2] @ and([__inDomain(2,int(1..6));int(1..)])};int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], {x#matrix_to_atom[2] @ true}]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],{x#matrix_to_atom[2] @ true};int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) 
 
 --
 
-Product([price[2], {x#matrix_to_atom[2] @ true}]), 
+[price[2],{x#matrix_to_atom[2] @ true};int(1..2)], 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{Product([price[2], x#matrix_to_atom[2]]) @ and([true;int(1..)])} 
+{[price[2],x#matrix_to_atom[2];int(1..2)] @ and([true;int(1..)])} 
 
 --
 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),{Product([price[2], x#matrix_to_atom[2]]) @ and([true;int(1..)])},Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])), 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product({[price[2],x#matrix_to_atom[2];int(1..2)] @ and([true;int(1..)])}),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),{Product([price[2], x#matrix_to_atom[2]]) @ true},Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product({[price[2],x#matrix_to_atom[2];int(1..2)] @ true}),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) 
 
 --
 
-[Product([price[1], x#matrix_to_atom[1]]),{Product([price[2], x#matrix_to_atom[2]]) @ true},Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)], 
+product({[price[2],x#matrix_to_atom[2];int(1..2)] @ true}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ and([true;int(1..)])} 
+{product([price[2],x#matrix_to_atom[2];int(1..2)]) @ and([true;int(1..)])} 
 
 --
 
-(1505 = Sum({[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ and([true;int(1..)])})), 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),{product([price[2],x#matrix_to_atom[2];int(1..2)]) @ and([true;int(1..)])},product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum({[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ true})) 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),{product([price[2],x#matrix_to_atom[2];int(1..2)]) @ true},product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) 
 
 --
 
-Sum({[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ true}), 
+[product([price[1],x#matrix_to_atom[1];int(1..2)]),{product([price[2],x#matrix_to_atom[2];int(1..2)]) @ true},product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)], 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ and([true;int(1..)])} 
+{[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ and([true;int(1..)])} 
 
 --
 
-(1505 = {Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ and([true;int(1..)])}), 
+(1505 = sum({[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ and([true;int(1..)])})), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = {Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ true}) 
+(1505 = sum({[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ true})) 
 
 --
 
-(1505 = {Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ true}), 
+sum({[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ true}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ and([true;int(1..)])} 
+{sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ and([true;int(1..)])} 
 
 --
 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ and([true;int(1..)])}, 
+(1505 = {sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ and([true;int(1..)])}), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ true} 
+(1505 = {sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ true}) 
 
 --
 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ true}, 
+(1505 = {sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ true}), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ and([true;int(1..)])} 
+
+--
+
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ and([true;int(1..)])}, 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ true} 
+
+--
+
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ true}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])),true;int(1..)]) 
+and([(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])),true;int(1..)]) 
 
 --
 
-and([(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])),true;int(1..)]), 
+and([(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])),true;int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) 
 
 --
 
@@ -205,69 +229,81 @@ x#matrix_to_atom[3],
 
 --
 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], {x#matrix_to_atom[3] @ and([__inDomain(3,int(1..6));int(1..)])}]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])), 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],{x#matrix_to_atom[3] @ and([__inDomain(3,int(1..6));int(1..)])};int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], {x#matrix_to_atom[3] @ true}]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],{x#matrix_to_atom[3] @ true};int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) 
 
 --
 
-Product([price[3], {x#matrix_to_atom[3] @ true}]), 
+[price[3],{x#matrix_to_atom[3] @ true};int(1..2)], 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{Product([price[3], x#matrix_to_atom[3]]) @ and([true;int(1..)])} 
+{[price[3],x#matrix_to_atom[3];int(1..2)] @ and([true;int(1..)])} 
 
 --
 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),{Product([price[3], x#matrix_to_atom[3]]) @ and([true;int(1..)])},Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])), 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product({[price[3],x#matrix_to_atom[3];int(1..2)] @ and([true;int(1..)])}),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),{Product([price[3], x#matrix_to_atom[3]]) @ true},Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product({[price[3],x#matrix_to_atom[3];int(1..2)] @ true}),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) 
 
 --
 
-[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),{Product([price[3], x#matrix_to_atom[3]]) @ true},Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)], 
+product({[price[3],x#matrix_to_atom[3];int(1..2)] @ true}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ and([true;int(1..)])} 
+{product([price[3],x#matrix_to_atom[3];int(1..2)]) @ and([true;int(1..)])} 
 
 --
 
-(1505 = Sum({[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ and([true;int(1..)])})), 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),{product([price[3],x#matrix_to_atom[3];int(1..2)]) @ and([true;int(1..)])},product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum({[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ true})) 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),{product([price[3],x#matrix_to_atom[3];int(1..2)]) @ true},product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) 
 
 --
 
-Sum({[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ true}), 
+[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),{product([price[3],x#matrix_to_atom[3];int(1..2)]) @ true},product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)], 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ and([true;int(1..)])} 
+{[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ and([true;int(1..)])} 
 
 --
 
-(1505 = {Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ and([true;int(1..)])}), 
+(1505 = sum({[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ and([true;int(1..)])})), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = {Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ true}) 
+(1505 = sum({[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ true})) 
 
 --
 
-(1505 = {Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ true}), 
+sum({[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ true}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ and([true;int(1..)])} 
+{sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ and([true;int(1..)])} 
 
 --
 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ and([true;int(1..)])}, 
+(1505 = {sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ and([true;int(1..)])}), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ true} 
+(1505 = {sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ true}) 
 
 --
 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ true}, 
+(1505 = {sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ true}), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ and([true;int(1..)])} 
+
+--
+
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ and([true;int(1..)])}, 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ true} 
+
+--
+
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ true}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])),true;int(1..)]) 
+and([(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])),true;int(1..)]) 
 
 --
 
-and([(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])),true;int(1..)]), 
+and([(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])),true;int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) 
 
 --
 
@@ -277,69 +313,81 @@ x#matrix_to_atom[4],
 
 --
 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], {x#matrix_to_atom[4] @ and([__inDomain(4,int(1..6));int(1..)])}]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])), 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],{x#matrix_to_atom[4] @ and([__inDomain(4,int(1..6));int(1..)])};int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], {x#matrix_to_atom[4] @ true}]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],{x#matrix_to_atom[4] @ true};int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) 
 
 --
 
-Product([price[4], {x#matrix_to_atom[4] @ true}]), 
+[price[4],{x#matrix_to_atom[4] @ true};int(1..2)], 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{Product([price[4], x#matrix_to_atom[4]]) @ and([true;int(1..)])} 
+{[price[4],x#matrix_to_atom[4];int(1..2)] @ and([true;int(1..)])} 
 
 --
 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),{Product([price[4], x#matrix_to_atom[4]]) @ and([true;int(1..)])},Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])), 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product({[price[4],x#matrix_to_atom[4];int(1..2)] @ and([true;int(1..)])}),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),{Product([price[4], x#matrix_to_atom[4]]) @ true},Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product({[price[4],x#matrix_to_atom[4];int(1..2)] @ true}),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) 
 
 --
 
-[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),{Product([price[4], x#matrix_to_atom[4]]) @ true},Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)], 
+product({[price[4],x#matrix_to_atom[4];int(1..2)] @ true}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ and([true;int(1..)])} 
+{product([price[4],x#matrix_to_atom[4];int(1..2)]) @ and([true;int(1..)])} 
 
 --
 
-(1505 = Sum({[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ and([true;int(1..)])})), 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),{product([price[4],x#matrix_to_atom[4];int(1..2)]) @ and([true;int(1..)])},product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum({[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ true})) 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),{product([price[4],x#matrix_to_atom[4];int(1..2)]) @ true},product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) 
 
 --
 
-Sum({[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ true}), 
+[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),{product([price[4],x#matrix_to_atom[4];int(1..2)]) @ true},product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)], 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ and([true;int(1..)])} 
+{[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ and([true;int(1..)])} 
 
 --
 
-(1505 = {Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ and([true;int(1..)])}), 
+(1505 = sum({[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ and([true;int(1..)])})), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = {Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ true}) 
+(1505 = sum({[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ true})) 
 
 --
 
-(1505 = {Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ true}), 
+sum({[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ true}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ and([true;int(1..)])} 
+{sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ and([true;int(1..)])} 
 
 --
 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ and([true;int(1..)])}, 
+(1505 = {sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ and([true;int(1..)])}), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ true} 
+(1505 = {sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ true}) 
 
 --
 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ true}, 
+(1505 = {sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ true}), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ and([true;int(1..)])} 
+
+--
+
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ and([true;int(1..)])}, 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ true} 
+
+--
+
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ true}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])),true;int(1..)]) 
+and([(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])),true;int(1..)]) 
 
 --
 
-and([(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])),true;int(1..)]), 
+and([(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])),true;int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) 
 
 --
 
@@ -349,69 +397,81 @@ x#matrix_to_atom[5],
 
 --
 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], {x#matrix_to_atom[5] @ and([__inDomain(5,int(1..6));int(1..)])}]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])), 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],{x#matrix_to_atom[5] @ and([__inDomain(5,int(1..6));int(1..)])};int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], {x#matrix_to_atom[5] @ true}]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],{x#matrix_to_atom[5] @ true};int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) 
 
 --
 
-Product([price[5], {x#matrix_to_atom[5] @ true}]), 
+[price[5],{x#matrix_to_atom[5] @ true};int(1..2)], 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{Product([price[5], x#matrix_to_atom[5]]) @ and([true;int(1..)])} 
+{[price[5],x#matrix_to_atom[5];int(1..2)] @ and([true;int(1..)])} 
 
 --
 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),{Product([price[5], x#matrix_to_atom[5]]) @ and([true;int(1..)])},Product([price[6], x#matrix_to_atom[6]]);int(1..)])), 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product({[price[5],x#matrix_to_atom[5];int(1..2)] @ and([true;int(1..)])}),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),{Product([price[5], x#matrix_to_atom[5]]) @ true},Product([price[6], x#matrix_to_atom[6]]);int(1..)])) 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product({[price[5],x#matrix_to_atom[5];int(1..2)] @ true}),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) 
 
 --
 
-[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),{Product([price[5], x#matrix_to_atom[5]]) @ true},Product([price[6], x#matrix_to_atom[6]]);int(1..)], 
+product({[price[5],x#matrix_to_atom[5];int(1..2)] @ true}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ and([true;int(1..)])} 
+{product([price[5],x#matrix_to_atom[5];int(1..2)]) @ and([true;int(1..)])} 
 
 --
 
-(1505 = Sum({[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ and([true;int(1..)])})), 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),{product([price[5],x#matrix_to_atom[5];int(1..2)]) @ and([true;int(1..)])},product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum({[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ true})) 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),{product([price[5],x#matrix_to_atom[5];int(1..2)]) @ true},product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) 
 
 --
 
-Sum({[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ true}), 
+[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),{product([price[5],x#matrix_to_atom[5];int(1..2)]) @ true},product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)], 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ and([true;int(1..)])} 
+{[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ and([true;int(1..)])} 
 
 --
 
-(1505 = {Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ and([true;int(1..)])}), 
+(1505 = sum({[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ and([true;int(1..)])})), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = {Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ true}) 
+(1505 = sum({[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ true})) 
 
 --
 
-(1505 = {Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ true}), 
+sum({[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ true}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ and([true;int(1..)])} 
+{sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ and([true;int(1..)])} 
 
 --
 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ and([true;int(1..)])}, 
+(1505 = {sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ and([true;int(1..)])}), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ true} 
+(1505 = {sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ true}) 
 
 --
 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ true}, 
+(1505 = {sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ true}), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ and([true;int(1..)])} 
+
+--
+
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ and([true;int(1..)])}, 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ true} 
+
+--
+
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ true}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])),true;int(1..)]) 
+and([(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])),true;int(1..)]) 
 
 --
 
-and([(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])),true;int(1..)]), 
+and([(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])),true;int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) 
 
 --
 
@@ -421,111 +481,87 @@ x#matrix_to_atom[6],
 
 --
 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], {x#matrix_to_atom[6] @ and([__inDomain(6,int(1..6));int(1..)])}]);int(1..)])), 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],{x#matrix_to_atom[6] @ and([__inDomain(6,int(1..6));int(1..)])};int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], {x#matrix_to_atom[6] @ true}]);int(1..)])) 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],{x#matrix_to_atom[6] @ true};int(1..2)]);int(1..)])) 
 
 --
 
-Product([price[6], {x#matrix_to_atom[6] @ true}]), 
+[price[6],{x#matrix_to_atom[6] @ true};int(1..2)], 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{Product([price[6], x#matrix_to_atom[6]]) @ and([true;int(1..)])} 
+{[price[6],x#matrix_to_atom[6];int(1..2)] @ and([true;int(1..)])} 
 
 --
 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),{Product([price[6], x#matrix_to_atom[6]]) @ and([true;int(1..)])};int(1..)])), 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product({[price[6],x#matrix_to_atom[6];int(1..2)] @ and([true;int(1..)])});int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),{Product([price[6], x#matrix_to_atom[6]]) @ true};int(1..)])) 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product({[price[6],x#matrix_to_atom[6];int(1..2)] @ true});int(1..)])) 
 
 --
 
-[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),{Product([price[6], x#matrix_to_atom[6]]) @ true};int(1..)], 
+product({[price[6],x#matrix_to_atom[6];int(1..2)] @ true}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ and([true;int(1..)])} 
+{product([price[6],x#matrix_to_atom[6];int(1..2)]) @ and([true;int(1..)])} 
 
 --
 
-(1505 = Sum({[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ and([true;int(1..)])})), 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),{product([price[6],x#matrix_to_atom[6];int(1..2)]) @ and([true;int(1..)])};int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum({[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ true})) 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),{product([price[6],x#matrix_to_atom[6];int(1..2)]) @ true};int(1..)])) 
 
 --
 
-Sum({[Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)] @ true}), 
+[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),{product([price[6],x#matrix_to_atom[6];int(1..2)]) @ true};int(1..)], 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ and([true;int(1..)])} 
+{[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ and([true;int(1..)])} 
 
 --
 
-(1505 = {Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ and([true;int(1..)])}), 
+(1505 = sum({[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ and([true;int(1..)])})), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = {Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ true}) 
+(1505 = sum({[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ true})) 
 
 --
 
-(1505 = {Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)]) @ true}), 
+sum({[product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)] @ true}), 
    ~~> bubble_up ([("Bubble", 8900)]) 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ and([true;int(1..)])} 
+{sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ and([true;int(1..)])} 
 
 --
 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ and([true;int(1..)])}, 
+(1505 = {sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ and([true;int(1..)])}), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ true} 
+(1505 = {sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ true}) 
 
 --
 
-{(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) @ true}, 
+(1505 = {sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)]) @ true}), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ and([true;int(1..)])} 
+
+--
+
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ and([true;int(1..)])}, 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ true} 
+
+--
+
+{(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) @ true}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])),true;int(1..)]) 
+and([(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])),true;int(1..)]) 
 
 --
 
-and([(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])),true;int(1..)]), 
+and([(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])),true;int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])) 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])) 
 
 --
 
-(1505 = Sum([Product([price[1], x#matrix_to_atom[1]]),Product([price[2], x#matrix_to_atom[2]]),Product([price[3], x#matrix_to_atom[3]]),Product([price[4], x#matrix_to_atom[4]]),Product([price[5], x#matrix_to_atom[5]]),Product([price[6], x#matrix_to_atom[6]]);int(1..)])), 
+(1505 = sum([product([price[1],x#matrix_to_atom[1];int(1..2)]),product([price[2],x#matrix_to_atom[2];int(1..2)]),product([price[3],x#matrix_to_atom[3];int(1..2)]),product([price[4],x#matrix_to_atom[4];int(1..2)]),product([price[5],x#matrix_to_atom[5];int(1..2)]),product([price[6],x#matrix_to_atom[6];int(1..2)]);int(1..)])), 
    ~~> index_matrix_to_atom ([("Base", 5000)]) 
-(1505 = Sum([Product([price[1], x#matrix_to_atom_1]),Product([price[2], x#matrix_to_atom_2]),Product([price[3], x#matrix_to_atom_3]),Product([price[4], x#matrix_to_atom_4]),Product([price[5], x#matrix_to_atom_5]),Product([price[6], x#matrix_to_atom_6]);int(1..)])) 
-
---
-
-Product([price[1], x#matrix_to_atom_1]), 
-   ~~> reorder_product ([("Base", 8800)]) 
-Product([x#matrix_to_atom_1, price[1]]) 
-
---
-
-Product([price[2], x#matrix_to_atom_2]), 
-   ~~> reorder_product ([("Base", 8800)]) 
-Product([x#matrix_to_atom_2, price[2]]) 
-
---
-
-Product([price[3], x#matrix_to_atom_3]), 
-   ~~> reorder_product ([("Base", 8800)]) 
-Product([x#matrix_to_atom_3, price[3]]) 
-
---
-
-Product([price[4], x#matrix_to_atom_4]), 
-   ~~> reorder_product ([("Base", 8800)]) 
-Product([x#matrix_to_atom_4, price[4]]) 
-
---
-
-Product([price[5], x#matrix_to_atom_5]), 
-   ~~> reorder_product ([("Base", 8800)]) 
-Product([x#matrix_to_atom_5, price[5]]) 
-
---
-
-Product([price[6], x#matrix_to_atom_6]), 
-   ~~> reorder_product ([("Base", 8800)]) 
-Product([x#matrix_to_atom_6, price[6]]) 
+(1505 = sum([product([price[1],x#matrix_to_atom_1;int(1..2)]),product([price[2],x#matrix_to_atom_2;int(1..2)]),product([price[3],x#matrix_to_atom_3;int(1..2)]),product([price[4],x#matrix_to_atom_4;int(1..2)]),product([price[5],x#matrix_to_atom_5;int(1..2)]),product([price[6],x#matrix_to_atom_6;int(1..2)]);int(1..)])) 
 
 --
 
@@ -535,15 +571,9 @@ price,
 
 --
 
-(1505 = Sum([Product([x#matrix_to_atom_1, [215,275,335,355,420,580;int(1..6)][1]]),Product([x#matrix_to_atom_2, price[2]]),Product([x#matrix_to_atom_3, price[3]]),Product([x#matrix_to_atom_4, price[4]]),Product([x#matrix_to_atom_5, price[5]]),Product([x#matrix_to_atom_6, price[6]]);int(1..)])), 
+(1505 = sum([product([[215,275,335,355,420,580;int(1..6)][1],x#matrix_to_atom_1;int(1..2)]),product([price[2],x#matrix_to_atom_2;int(1..2)]),product([price[3],x#matrix_to_atom_3;int(1..2)]),product([price[4],x#matrix_to_atom_4;int(1..2)]),product([price[5],x#matrix_to_atom_5;int(1..2)]),product([price[6],x#matrix_to_atom_6;int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([x#matrix_to_atom_1, 215]),Product([x#matrix_to_atom_2, price[2]]),Product([x#matrix_to_atom_3, price[3]]),Product([x#matrix_to_atom_4, price[4]]),Product([x#matrix_to_atom_5, price[5]]),Product([x#matrix_to_atom_6, price[6]]);int(1..)])) 
-
---
-
-Product([x#matrix_to_atom_1, 215]), 
-   ~~> reorder_product ([("Base", 8800)]) 
-Product([215, x#matrix_to_atom_1]) 
+(1505 = sum([product([215,x#matrix_to_atom_1;int(1..2)]),product([price[2],x#matrix_to_atom_2;int(1..2)]),product([price[3],x#matrix_to_atom_3;int(1..2)]),product([price[4],x#matrix_to_atom_4;int(1..2)]),product([price[5],x#matrix_to_atom_5;int(1..2)]),product([price[6],x#matrix_to_atom_6;int(1..2)]);int(1..)])) 
 
 --
 
@@ -553,15 +583,9 @@ price,
 
 --
 
-(1505 = Sum([Product([215, x#matrix_to_atom_1]),Product([x#matrix_to_atom_2, [215,275,335,355,420,580;int(1..6)][2]]),Product([x#matrix_to_atom_3, price[3]]),Product([x#matrix_to_atom_4, price[4]]),Product([x#matrix_to_atom_5, price[5]]),Product([x#matrix_to_atom_6, price[6]]);int(1..)])), 
+(1505 = sum([product([215,x#matrix_to_atom_1;int(1..2)]),product([[215,275,335,355,420,580;int(1..6)][2],x#matrix_to_atom_2;int(1..2)]),product([price[3],x#matrix_to_atom_3;int(1..2)]),product([price[4],x#matrix_to_atom_4;int(1..2)]),product([price[5],x#matrix_to_atom_5;int(1..2)]),product([price[6],x#matrix_to_atom_6;int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([215, x#matrix_to_atom_1]),Product([x#matrix_to_atom_2, 275]),Product([x#matrix_to_atom_3, price[3]]),Product([x#matrix_to_atom_4, price[4]]),Product([x#matrix_to_atom_5, price[5]]),Product([x#matrix_to_atom_6, price[6]]);int(1..)])) 
-
---
-
-Product([x#matrix_to_atom_2, 275]), 
-   ~~> reorder_product ([("Base", 8800)]) 
-Product([275, x#matrix_to_atom_2]) 
+(1505 = sum([product([215,x#matrix_to_atom_1;int(1..2)]),product([275,x#matrix_to_atom_2;int(1..2)]),product([price[3],x#matrix_to_atom_3;int(1..2)]),product([price[4],x#matrix_to_atom_4;int(1..2)]),product([price[5],x#matrix_to_atom_5;int(1..2)]),product([price[6],x#matrix_to_atom_6;int(1..2)]);int(1..)])) 
 
 --
 
@@ -571,15 +595,9 @@ price,
 
 --
 
-(1505 = Sum([Product([215, x#matrix_to_atom_1]),Product([275, x#matrix_to_atom_2]),Product([x#matrix_to_atom_3, [215,275,335,355,420,580;int(1..6)][3]]),Product([x#matrix_to_atom_4, price[4]]),Product([x#matrix_to_atom_5, price[5]]),Product([x#matrix_to_atom_6, price[6]]);int(1..)])), 
+(1505 = sum([product([215,x#matrix_to_atom_1;int(1..2)]),product([275,x#matrix_to_atom_2;int(1..2)]),product([[215,275,335,355,420,580;int(1..6)][3],x#matrix_to_atom_3;int(1..2)]),product([price[4],x#matrix_to_atom_4;int(1..2)]),product([price[5],x#matrix_to_atom_5;int(1..2)]),product([price[6],x#matrix_to_atom_6;int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([215, x#matrix_to_atom_1]),Product([275, x#matrix_to_atom_2]),Product([x#matrix_to_atom_3, 335]),Product([x#matrix_to_atom_4, price[4]]),Product([x#matrix_to_atom_5, price[5]]),Product([x#matrix_to_atom_6, price[6]]);int(1..)])) 
-
---
-
-Product([x#matrix_to_atom_3, 335]), 
-   ~~> reorder_product ([("Base", 8800)]) 
-Product([335, x#matrix_to_atom_3]) 
+(1505 = sum([product([215,x#matrix_to_atom_1;int(1..2)]),product([275,x#matrix_to_atom_2;int(1..2)]),product([335,x#matrix_to_atom_3;int(1..2)]),product([price[4],x#matrix_to_atom_4;int(1..2)]),product([price[5],x#matrix_to_atom_5;int(1..2)]),product([price[6],x#matrix_to_atom_6;int(1..2)]);int(1..)])) 
 
 --
 
@@ -589,15 +607,9 @@ price,
 
 --
 
-(1505 = Sum([Product([215, x#matrix_to_atom_1]),Product([275, x#matrix_to_atom_2]),Product([335, x#matrix_to_atom_3]),Product([x#matrix_to_atom_4, [215,275,335,355,420,580;int(1..6)][4]]),Product([x#matrix_to_atom_5, price[5]]),Product([x#matrix_to_atom_6, price[6]]);int(1..)])), 
+(1505 = sum([product([215,x#matrix_to_atom_1;int(1..2)]),product([275,x#matrix_to_atom_2;int(1..2)]),product([335,x#matrix_to_atom_3;int(1..2)]),product([[215,275,335,355,420,580;int(1..6)][4],x#matrix_to_atom_4;int(1..2)]),product([price[5],x#matrix_to_atom_5;int(1..2)]),product([price[6],x#matrix_to_atom_6;int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([215, x#matrix_to_atom_1]),Product([275, x#matrix_to_atom_2]),Product([335, x#matrix_to_atom_3]),Product([x#matrix_to_atom_4, 355]),Product([x#matrix_to_atom_5, price[5]]),Product([x#matrix_to_atom_6, price[6]]);int(1..)])) 
-
---
-
-Product([x#matrix_to_atom_4, 355]), 
-   ~~> reorder_product ([("Base", 8800)]) 
-Product([355, x#matrix_to_atom_4]) 
+(1505 = sum([product([215,x#matrix_to_atom_1;int(1..2)]),product([275,x#matrix_to_atom_2;int(1..2)]),product([335,x#matrix_to_atom_3;int(1..2)]),product([355,x#matrix_to_atom_4;int(1..2)]),product([price[5],x#matrix_to_atom_5;int(1..2)]),product([price[6],x#matrix_to_atom_6;int(1..2)]);int(1..)])) 
 
 --
 
@@ -607,15 +619,9 @@ price,
 
 --
 
-(1505 = Sum([Product([215, x#matrix_to_atom_1]),Product([275, x#matrix_to_atom_2]),Product([335, x#matrix_to_atom_3]),Product([355, x#matrix_to_atom_4]),Product([x#matrix_to_atom_5, [215,275,335,355,420,580;int(1..6)][5]]),Product([x#matrix_to_atom_6, price[6]]);int(1..)])), 
+(1505 = sum([product([215,x#matrix_to_atom_1;int(1..2)]),product([275,x#matrix_to_atom_2;int(1..2)]),product([335,x#matrix_to_atom_3;int(1..2)]),product([355,x#matrix_to_atom_4;int(1..2)]),product([[215,275,335,355,420,580;int(1..6)][5],x#matrix_to_atom_5;int(1..2)]),product([price[6],x#matrix_to_atom_6;int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([215, x#matrix_to_atom_1]),Product([275, x#matrix_to_atom_2]),Product([335, x#matrix_to_atom_3]),Product([355, x#matrix_to_atom_4]),Product([x#matrix_to_atom_5, 420]),Product([x#matrix_to_atom_6, price[6]]);int(1..)])) 
-
---
-
-Product([x#matrix_to_atom_5, 420]), 
-   ~~> reorder_product ([("Base", 8800)]) 
-Product([420, x#matrix_to_atom_5]) 
+(1505 = sum([product([215,x#matrix_to_atom_1;int(1..2)]),product([275,x#matrix_to_atom_2;int(1..2)]),product([335,x#matrix_to_atom_3;int(1..2)]),product([355,x#matrix_to_atom_4;int(1..2)]),product([420,x#matrix_to_atom_5;int(1..2)]),product([price[6],x#matrix_to_atom_6;int(1..2)]);int(1..)])) 
 
 --
 
@@ -625,19 +631,49 @@ price,
 
 --
 
-(1505 = Sum([Product([215, x#matrix_to_atom_1]),Product([275, x#matrix_to_atom_2]),Product([335, x#matrix_to_atom_3]),Product([355, x#matrix_to_atom_4]),Product([420, x#matrix_to_atom_5]),Product([x#matrix_to_atom_6, [215,275,335,355,420,580;int(1..6)][6]]);int(1..)])), 
+(1505 = sum([product([215,x#matrix_to_atom_1;int(1..2)]),product([275,x#matrix_to_atom_2;int(1..2)]),product([335,x#matrix_to_atom_3;int(1..2)]),product([355,x#matrix_to_atom_4;int(1..2)]),product([420,x#matrix_to_atom_5;int(1..2)]),product([[215,275,335,355,420,580;int(1..6)][6],x#matrix_to_atom_6;int(1..2)]);int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(1505 = Sum([Product([215, x#matrix_to_atom_1]),Product([275, x#matrix_to_atom_2]),Product([335, x#matrix_to_atom_3]),Product([355, x#matrix_to_atom_4]),Product([420, x#matrix_to_atom_5]),Product([x#matrix_to_atom_6, 580]);int(1..)])) 
+(1505 = sum([product([215,x#matrix_to_atom_1;int(1..2)]),product([275,x#matrix_to_atom_2;int(1..2)]),product([335,x#matrix_to_atom_3;int(1..2)]),product([355,x#matrix_to_atom_4;int(1..2)]),product([420,x#matrix_to_atom_5;int(1..2)]),product([580,x#matrix_to_atom_6;int(1..2)]);int(1..)])) 
 
 --
 
-Product([x#matrix_to_atom_6, 580]), 
-   ~~> reorder_product ([("Base", 8800)]) 
-Product([580, x#matrix_to_atom_6]) 
+product([215,x#matrix_to_atom_1;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+product([215,x#matrix_to_atom_1;int(1..)]) 
 
 --
 
-(1505 = Sum([Product([215, x#matrix_to_atom_1]),Product([275, x#matrix_to_atom_2]),Product([335, x#matrix_to_atom_3]),Product([355, x#matrix_to_atom_4]),Product([420, x#matrix_to_atom_5]),Product([580, x#matrix_to_atom_6]);int(1..)])), 
+product([275,x#matrix_to_atom_2;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+product([275,x#matrix_to_atom_2;int(1..)]) 
+
+--
+
+product([335,x#matrix_to_atom_3;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+product([335,x#matrix_to_atom_3;int(1..)]) 
+
+--
+
+product([355,x#matrix_to_atom_4;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+product([355,x#matrix_to_atom_4;int(1..)]) 
+
+--
+
+product([420,x#matrix_to_atom_5;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+product([420,x#matrix_to_atom_5;int(1..)]) 
+
+--
+
+product([580,x#matrix_to_atom_6;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+product([580,x#matrix_to_atom_6;int(1..)]) 
+
+--
+
+(1505 = sum([product([215,x#matrix_to_atom_1;int(1..)]),product([275,x#matrix_to_atom_2;int(1..)]),product([335,x#matrix_to_atom_3;int(1..)]),product([355,x#matrix_to_atom_4;int(1..)]),product([420,x#matrix_to_atom_5;int(1..)]),product([580,x#matrix_to_atom_6;int(1..)]);int(1..)])), 
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
 and([FlatWeightedSumLeq([215, 275, 335, 355, 420, 580],[x#matrix_to_atom_1, x#matrix_to_atom_2, x#matrix_to_atom_3, x#matrix_to_atom_4, x#matrix_to_atom_5, x#matrix_to_atom_6],1505),FlatWeightedSumGeq([215, 275, 335, 355, 420, 580],[x#matrix_to_atom_1, x#matrix_to_atom_2, x#matrix_to_atom_3, x#matrix_to_atom_4, x#matrix_to_atom_5, x#matrix_to_atom_6],1505);int(1..)]) 
 

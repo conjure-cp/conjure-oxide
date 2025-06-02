@@ -1,7 +1,7 @@
 Model before rewriting:
 
 letting A be false
-letting NotA be Not(Not(Not(A)))
+letting NotA be !(!(!(A)))
 find b: int(1..20)
 
 such that
@@ -12,11 +12,11 @@ such that
 
 (b < 3), 
    ~~> lt_to_leq ([("Minion", 8400)]) 
-(b <= Sum([3,-1;int(1..)])) 
+(b <= sum([3,-1;int(1..)])) 
 
 --
 
-(NotA) -> ((b <= Sum([3,-1;int(1..)]))), 
+(NotA) -> ((b <= sum([3,-1;int(1..)]))), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 (NotA) -> ((b <= 2)) 
 
@@ -24,13 +24,13 @@ such that
 
 NotA, 
    ~~> substitute_value_lettings ([("Base", 5000)]) 
-Not(Not(Not(A))) 
+!(!(!(A))) 
 
 --
 
-Not(Not(Not(A))), 
+!(!(!(A))), 
    ~~> remove_double_negation ([("Base", 8400)]) 
-Not(A) 
+!(A) 
 
 --
 
@@ -40,7 +40,7 @@ false
 
 --
 
-(Not(false)) -> ((b <= 2)), 
+(!(false)) -> ((b <= 2)), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 (b <= 2) 
 
@@ -55,7 +55,7 @@ Ineq(b, 2, 0)
 Final model:
 
 letting A be false
-letting NotA be Not(Not(Not(A)))
+letting NotA be !(!(!(A)))
 find b: int(1..20)
 
 such that

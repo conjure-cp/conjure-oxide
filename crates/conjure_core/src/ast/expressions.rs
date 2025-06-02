@@ -117,7 +117,7 @@ pub enum Expression {
 
     /// `a * b * c * ...`
     #[compatible(JsonInput)]
-    Product(Metadata, Vec<Expression>),
+    Product(Metadata, Box<Expression>),
 
     /// `min(<vec_expr>)`
     #[compatible(JsonInput)]
@@ -436,24 +436,74 @@ pub enum Expression {
     AuxDeclaration(Metadata, Name, Box<Expression>),
 }
 
-fn expr_vec_to_domain_i32(
-    exprs: &[Expression],
-    op: fn(i32, i32) -> Option<i32>,
-    vars: &SymbolTable,
-) -> Option<Domain> {
-    let domains: Vec<Option<_>> = exprs.iter().map(|e| e.domain_of(vars)).collect();
-    domains
-        .into_iter()
-        .reduce(|a, b| a.and_then(|x| b.and_then(|y| x.apply_i32(op, &y))))
-        .flatten()
-}
-fn expr_vec_lit_to_domain_i32(
+// for the given matrix literal, return a bounded domain from the min to max of applying op to each
+// child expression.
+//
+// Op must be monotonic.
+//
+// Returns none if unbounded
+fn bounded_i32_domain_for_matrix_literal_monotonic(
     e: &Expression,
     op: fn(i32, i32) -> Option<i32>,
-    vars: &SymbolTable,
+    symtab: &SymbolTable,
 ) -> Option<Domain> {
-    let exprs = e.clone().unwrap_list()?;
-    expr_vec_to_domain_i32(&exprs, op, vars)
+    // only care about the elements, not the indices
+    let (mut exprs, _) = e.clone().unwrap_matrix_unchecked()?;
+
+    // fold each element's domain into one using op.
+    //
+    // here, I assume that op is monotone. This means that the bounds of op([a1,a2],[b1,b2])  for
+    // the ranges [a1,a2], [b1,b2] will be
+    // [min(op(a1,b1),op(a2,b1),op(a1,b2),op(a2,b2)),max(op(a1,b1),op(a2,b1),op(a1,b2),op(a2,b2))].
+    //
+    // We used to not assume this, and work out the bounds by applying op on the Cartesian product
+    // of A and B; however, this caused a combinatorial explosion and my computer to run out of
+    // memory (on the hakank_eprime_xkcd test)...
+    //
+    // For example, to find the bounds of the intervals [1,4], [1,5] combined using op, we used to do
+    //  [min(op(1,1), op(1,2),op(1,3),op(1,4),op(1,5),op(2,1)..
+    //
+    // +,-,/,* are all monotone, so this assumption should be fine for now...
+
+    let expr = exprs.pop()?;
+    let Some(Domain::IntDomain(ranges)) = expr.domain_of(symtab) else {
+        return None;
+    };
+
+    let (mut current_min, mut current_max) = range_vec_bounds_i32(&ranges)?;
+
+    for expr in exprs {
+        let Some(Domain::IntDomain(ranges)) = expr.domain_of(symtab) else {
+            return None;
+        };
+
+        let (min, max) = range_vec_bounds_i32(&ranges)?;
+
+        // all the possible new values for current_min / current_max
+        let minmax = op(min, current_max)?;
+        let minmin = op(min, current_min)?;
+        let maxmin = op(max, current_min)?;
+        let maxmax = op(max, current_max)?;
+        let vals = [minmax, minmin, maxmin, maxmax];
+
+        current_min = *vals
+            .iter()
+            .min()
+            .expect("vals iterator should not be empty, and should have a minimum.");
+        current_max = *vals
+            .iter()
+            .max()
+            .expect("vals iterator should not be empty, and should have a maximum.");
+    }
+
+    if current_min == current_max {
+        Some(Domain::IntDomain(vec![Range::Single(current_min)]))
+    } else {
+        Some(Domain::IntDomain(vec![Range::Bounded(
+            current_min,
+            current_max,
+        )]))
+    }
 }
 
 // Returns none if unbounded
@@ -542,16 +592,22 @@ impl Expression {
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(Domain::BoolDomain),
             Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(_))) => None,
             Expression::Scope(_, _) => Some(Domain::BoolDomain),
-            Expression::Sum(_, e) => expr_vec_lit_to_domain_i32(e, |x, y| Some(x + y), syms),
-            Expression::Product(_, exprs) => {
-                expr_vec_to_domain_i32(exprs, |x, y| Some(x * y), syms)
+            Expression::Sum(_, e) => {
+                bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x + y), syms)
             }
-            Expression::Min(_, e) => {
-                expr_vec_lit_to_domain_i32(e, |x, y| Some(if x < y { x } else { y }), syms)
+            Expression::Product(_, e) => {
+                bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x * y), syms)
             }
-            Expression::Max(_, e) => {
-                expr_vec_lit_to_domain_i32(e, |x, y| Some(if x > y { x } else { y }), syms)
-            }
+            Expression::Min(_, e) => bounded_i32_domain_for_matrix_literal_monotonic(
+                e,
+                |x, y| Some(if x < y { x } else { y }),
+                syms,
+            ),
+            Expression::Max(_, e) => bounded_i32_domain_for_matrix_literal_monotonic(
+                e,
+                |x, y| Some(if x > y { x } else { y }),
+                syms,
+            ),
             Expression::UnsafeDiv(_, a, b) => a.domain_of(syms)?.apply_i32(
                 // rust integer division is truncating; however, we want to always round down,
                 // including for negative numbers.
@@ -742,6 +798,21 @@ impl Expression {
         )
     }
 
+    /// True if the expression is a matrix literal.
+    ///
+    /// This is true for both forms of matrix literals: those with elements of type [`Literal`] and
+    /// [`Expression`].
+    pub fn is_matrix_literal(&self) -> bool {
+        matches!(
+            self,
+            Expression::AbstractLiteral(_, AbstractLiteral::Matrix(_, _))
+                | Expression::Atomic(
+                    _,
+                    Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(_, _))),
+                )
+        )
+    }
+
     /// True iff self and other are both atomic and identical.
     ///
     /// This method is useful to cheaply check equivalence. Assuming CSE is enabled, any unifiable
@@ -926,10 +997,10 @@ impl Display for Expression {
             Expression::Scope(_, submodel) => write!(f, "{{\n{submodel}\n}}"),
             Expression::Abs(_, a) => write!(f, "|{}|", a),
             Expression::Sum(_, e) => {
-                write!(f, "Sum({e})")
+                write!(f, "sum({e})")
             }
-            Expression::Product(_, expressions) => {
-                write!(f, "Product({})", pretty_vec(expressions))
+            Expression::Product(_, e) => {
+                write!(f, "product({e})")
             }
             Expression::Min(_, e) => {
                 write!(f, "min({e})")
@@ -938,7 +1009,7 @@ impl Display for Expression {
                 write!(f, "max({e})")
             }
             Expression::Not(_, expr_box) => {
-                write!(f, "Not({})", expr_box.clone())
+                write!(f, "!({})", expr_box.clone())
             }
             Expression::Or(_, e) => {
                 write!(f, "or({e})")

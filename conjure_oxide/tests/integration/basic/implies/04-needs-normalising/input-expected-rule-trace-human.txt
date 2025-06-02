@@ -13,33 +13,33 @@ find y: bool
 
 such that
 
-Not((Not(x)) -> (Not(y))),
-(Not(a)) -> (Not(b)),
+!((!(x)) -> (!(y))),
+(!(a)) -> (!(b)),
 (c) -> ((d) -> (e)),
 ((h) -> (f)) -> ((h) -> (g))
 
 --
 
-Not((Not(x)) -> (Not(y))), 
+!((!(x)) -> (!(y))), 
    ~~> normalise_implies_negation ([("Base", 8800)]) 
-and([Not(x),Not(Not(y));int(1..)]) 
+and([!(x),!(!(y));int(1..)]) 
 
 --
 
-and([Not(x),Not(Not(y));int(1..)]),
-(Not(a)) -> (Not(b)),
+and([!(x),!(!(y));int(1..)]),
+(!(a)) -> (!(b)),
 (c) -> ((d) -> (e)),
 ((h) -> (f)) -> ((h) -> (g)), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-Not(x),
-Not(Not(y)),
-(Not(a)) -> (Not(b)),
+!(x),
+!(!(y)),
+(!(a)) -> (!(b)),
 (c) -> ((d) -> (e)),
 ((h) -> (f)) -> ((h) -> (g)) 
 
 --
 
-(Not(a)) -> (Not(b)), 
+(!(a)) -> (!(b)), 
    ~~> normalise_implies_contrapositive ([("Base", 8800)]) 
 (b) -> (a) 
 
@@ -51,7 +51,7 @@ Not(Not(y)),
 
 --
 
-Not(Not(y)), 
+!(!(y)), 
    ~~> remove_double_negation ([("Base", 8400)]) 
 y 
 
@@ -117,7 +117,7 @@ Reify(and([h,f;int(1..)]), __1)
 
 --
 
-Not(x), 
+!(x), 
    ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
 WatchedLiteral(x,false) 
 
