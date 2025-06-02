@@ -551,6 +551,10 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
             "MkOpAllDiff",
             Box::new(Expression::AllDiff) as Box<dyn Fn(_, _) -> _>,
         ),
+        (
+            "MkOpToInt",
+            Box::new(Expression::ToInt) as Box<dyn Fn(_, _) -> _>,
+        ),
     ]
     .into_iter()
     .collect();

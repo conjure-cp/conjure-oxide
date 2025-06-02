@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use conjure_core::{
-    ast::Expression,
+    ast::{Expression, ReturnType, Typeable as _},
     into_matrix_expr,
     metadata::Metadata,
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
@@ -24,7 +24,6 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         SupsetEq(_, _, _) => Err(RuleNotApplicable),
         Subset(_, _, _) => Err(RuleNotApplicable),
         SubsetEq(_, _, _) => Err(RuleNotApplicable),
-
         AbstractLiteral(_, _) => Err(RuleNotApplicable),
         Comprehension(_, _) => Err(RuleNotApplicable),
         DominanceRelation(_, _) => Err(RuleNotApplicable),
@@ -37,6 +36,13 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         Bubble(_, _, _) => Err(RuleNotApplicable),
         Atomic(_, _) => Err(RuleNotApplicable),
         Scope(_, _) => Err(RuleNotApplicable),
+        ToInt(_, expression) => {
+            if let Some(ReturnType::Int) = expression.return_type() {
+                Ok(Reduction::pure(*expression))
+            } else {
+                Err(RuleNotApplicable)
+            }
+        }
         Abs(m, e) => match *e {
             Neg(_, inner) => Ok(Reduction::pure(Abs(m, inner))),
             _ => Err(RuleNotApplicable),

@@ -98,6 +98,13 @@ pub enum Expression {
     /// `SafeSlice` respectively.
     InDomain(Metadata, Box<Expression>, Domain),
 
+    /// `toInt(b)` casts boolean expression b to an integer.
+    ///
+    /// - If b is false, then `toInt(b) == 0`
+    ///
+    /// - If b is true, then `toInt(b) == 1`
+    ToInt(Metadata, Box<Expression>),
+
     Scope(Metadata, Box<SubModel>),
 
     /// `|x|` - absolute value of `x`
@@ -476,8 +483,6 @@ impl Expression {
             Expression::SupsetEq(_, _, _) => Some(Domain::BoolDomain),
             Expression::Subset(_, _, _) => Some(Domain::BoolDomain),
             Expression::SubsetEq(_, _, _) => Some(Domain::BoolDomain),
-
-            //todo
             Expression::AbstractLiteral(_, _) => None,
             Expression::DominanceRelation(_, _) => Some(Domain::BoolDomain),
             Expression::FromSolution(_, expr) => expr.domain_of(syms),
@@ -569,7 +574,6 @@ impl Expression {
                 |x, y| if y != 0 { Some(x % y) } else { None },
                 &b.domain_of(syms)?,
             ),
-
             Expression::SafeMod(_, a, b) => {
                 let domain = a.domain_of(syms)?.apply_i32(
                     |x, y| if y != 0 { Some(x % y) } else { None },
@@ -586,7 +590,6 @@ impl Expression {
                     _ => None,
                 }
             }
-
             Expression::SafePow(_, a, b) | Expression::UnsafePow(_, a, b) => {
                 a.domain_of(syms)?.apply_i32(
                     |x, y| {
@@ -599,7 +602,6 @@ impl Expression {
                     &b.domain_of(syms)?,
                 )
             }
-
             Expression::Root(_, _) => None,
             Expression::Bubble(_, _, _) => None,
             Expression::AuxDeclaration(_, _, _) => Some(Domain::BoolDomain),
@@ -645,7 +647,6 @@ impl Expression {
             Expression::Minus(_, a, b) => a
                 .domain_of(syms)?
                 .apply_i32(|x, y| Some(x - y), &b.domain_of(syms)?),
-
             Expression::FlatAllDiff(_, _) => Some(Domain::BoolDomain),
             Expression::FlatMinusEq(_, _, _) => Some(Domain::BoolDomain),
             Expression::FlatProductEq(_, _, _, _) => Some(Domain::BoolDomain),
@@ -655,6 +656,7 @@ impl Expression {
                 .domain_of(syms)?
                 .apply_i32(|a, _| Some(a.abs()), &a.domain_of(syms)?),
             Expression::MinionPow(_, _, _, _) => Some(Domain::BoolDomain),
+            Expression::ToInt(_, _) => Some(Domain::IntDomain(vec![Range::Bounded(0, 1)])),
         };
         match ret {
             // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
@@ -1066,6 +1068,10 @@ impl Display for Expression {
                 let atoms = atoms.iter().join(",");
                 write!(f, "__minion_element_one([{atoms}],{atom},{atom1})")
             }
+
+            Expression::ToInt(_, expr) => {
+                write!(f, "toInt({expr})")
+            }
         }
     }
 }
@@ -1083,8 +1089,6 @@ impl Typeable for Expression {
             Expression::SupsetEq(_, _, _) => Some(ReturnType::Bool),
             Expression::Subset(_, _, _) => Some(ReturnType::Bool),
             Expression::SubsetEq(_, _, _) => Some(ReturnType::Bool),
-
-            // handles sets and matrices, since typeable defined for abstract literals
             Expression::AbstractLiteral(_, lit) => lit.return_type(),
             Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
                 Some(subject.return_type()?)
@@ -1097,9 +1101,7 @@ impl Typeable for Expression {
             Expression::Root(_, _) => Some(ReturnType::Bool),
             Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
             Expression::FromSolution(_, expr) => expr.return_type(),
-            // handles integers, booleans and abstract literals all at once, since typeable defined for literal
             Expression::Atomic(_, Atom::Literal(lit)) => lit.return_type(),
-            // TODO - access symbol table to get return type of references - define inside Atom instead
             Expression::Atomic(_, Atom::Reference(_)) => None,
             Expression::Scope(_, scope) => scope.return_type(),
             Expression::Abs(_, _) => Some(ReturnType::Int),
@@ -1126,7 +1128,7 @@ impl Typeable for Expression {
             Expression::MinionDivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
             Expression::FlatIneq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AllDiff(_, _) => Some(ReturnType::Bool),
-            Expression::Bubble(_, _, _) => None, // TODO: (flm8) should this be a bool?
+            Expression::Bubble(_, _, _) => None,
             Expression::FlatWatchedLiteral(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReify(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReifyImply(_, _, _) => Some(ReturnType::Bool),
@@ -1146,6 +1148,7 @@ impl Typeable for Expression {
             Expression::FlatWeightedSumLeq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::MinionPow(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::ToInt(_, _) => Some(ReturnType::Int),
         }
     }
 }
