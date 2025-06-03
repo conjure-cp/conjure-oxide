@@ -16,9 +16,9 @@ b,
 
 --
 
-{1,2}, 
+and([(c subsetEq {1,2}),Not((c subsetEq a));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-Set([Int(1), Int(2)]) 
+and([(c subsetEq Set([Int(1), Int(2)])),Not((c subsetEq a));int(1..2)]) 
 
 --
 
@@ -28,9 +28,9 @@ a,
 
 --
 
-{2,3}, 
+and([(c subsetEq Set([Int(1), Int(2)])),Not((c subsetEq {2,3}));int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-Set([Int(2), Int(3)]) 
+and([(c subsetEq Set([Int(1), Int(2)])),Not((c subsetEq Set([Int(2), Int(3)])));int(1..2)]) 
 
 --
 
@@ -63,7 +63,7 @@ and([(c subsetEq Set([Int(1), Int(2)])),WatchedLiteral(__0,false);int(1..)])
 
 and([(c subsetEq Set([Int(1), Int(2)])),WatchedLiteral(__0,false);int(1..)]),
 Reify((c subsetEq Set([Int(2), Int(3)])), __0), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 (c subsetEq Set([Int(1), Int(2)])),
 WatchedLiteral(__0,false),
 Reify((c subsetEq Set([Int(2), Int(3)])), __0) 

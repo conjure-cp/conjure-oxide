@@ -23,9 +23,11 @@ x#tuple_to_atom[1],
 
 --
 
-and([(1 <= 2),(1 >= 1);int(1..)]), 
+({x#tuple_to_atom[1] @ and([(1 <= 2),(1 >= 1);int(1..)])} = false),
+(x[2] = 2), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+({x#tuple_to_atom[1] @ true} = false),
+(x[2] = 2) 
 
 --
 
@@ -35,9 +37,11 @@ true
 
 --
 
-and([true;int(1..)]), 
+{(x#tuple_to_atom[1] = false) @ and([true;int(1..)])},
+(x[2] = 2), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+{(x#tuple_to_atom[1] = false) @ true},
+(x[2] = 2) 
 
 --
 
@@ -49,17 +53,7 @@ and([(x#tuple_to_atom[1] = false),true;int(1..)])
 
 and([(x#tuple_to_atom[1] = false),true;int(1..)]),
 (x[2] = 2), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-(x#tuple_to_atom[1] = false),
-true,
-(x[2] = 2) 
-
---
-
-(x#tuple_to_atom[1] = false),
-true,
-(x[2] = 2), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 (x#tuple_to_atom[1] = false),
 (x[2] = 2) 
 
@@ -77,9 +71,11 @@ x#tuple_to_atom[2],
 
 --
 
-and([(2 <= 2),(2 >= 1);int(1..)]), 
+(x#tuple_to_atom[1] = false),
+({x#tuple_to_atom[2] @ and([(2 <= 2),(2 >= 1);int(1..)])} = 2), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(x#tuple_to_atom[1] = false),
+({x#tuple_to_atom[2] @ true} = 2) 
 
 --
 
@@ -89,9 +85,11 @@ true
 
 --
 
-and([true;int(1..)]), 
+(x#tuple_to_atom[1] = false),
+{(x#tuple_to_atom[2] = 2) @ and([true;int(1..)])}, 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-true 
+(x#tuple_to_atom[1] = false),
+{(x#tuple_to_atom[2] = 2) @ true} 
 
 --
 
@@ -103,17 +101,7 @@ and([(x#tuple_to_atom[2] = 2),true;int(1..)])
 
 (x#tuple_to_atom[1] = false),
 and([(x#tuple_to_atom[2] = 2),true;int(1..)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-(x#tuple_to_atom[1] = false),
-(x#tuple_to_atom[2] = 2),
-true 
-
---
-
-(x#tuple_to_atom[1] = false),
-(x#tuple_to_atom[2] = 2),
-true, 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 (x#tuple_to_atom[1] = false),
 (x#tuple_to_atom[2] = 2) 
 

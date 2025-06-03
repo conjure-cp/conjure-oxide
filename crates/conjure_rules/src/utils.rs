@@ -81,6 +81,38 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
         return None;
     }
 
+    // do not put matrix[e] in auxvar
+    //
+    // eventually this will rewrite into an indomain constraint, or a single variable.
+    //
+    // To understand why deferring this until a lower level constraint is chosen is good, consider
+    // the comprehension:
+    //
+    // and([m[i] = i + 1  | i: int(1..5)])
+    //
+    // Here, if we rewrite inside the comprehension, we will end up making the auxvar
+    // __0  = m[i].
+    //
+    // When we expand the matrix, this will expand to:
+    //
+    // __0 = m[1]
+    // __1 = m[2]
+    // __2 = m[3]
+    // __3 = m[4]
+    // __4 = m[5]
+    //
+    //
+    // These all rewrite to variable references (e.g. m[1] ~> m#matrix_to_atom_1), so these auxvars
+    // are redundant. However, we don't know this before expanding, as they are just m[i].
+    //
+    // In the future, we can do this more fine-grained using categories (e.g. only flatten matrices
+    // indexed by expressions with the decision variable category) : however, doing this for
+    // all matrix indexing is fine, as they can be rewritten into a lower-level expression, then
+    // flattened.
+    if let Expr::SafeIndex(_, _, _) = expr {
+        return None;
+    }
+
     let name = symbols.gensym();
 
     let Some(domain) = expr.domain_of(&symbols) else {

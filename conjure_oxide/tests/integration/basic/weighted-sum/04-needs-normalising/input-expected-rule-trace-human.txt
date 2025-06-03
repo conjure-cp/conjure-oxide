@@ -10,15 +10,9 @@ such that
 
 --
 
--(1), 
+(Sum([Sum([Sum([Sum([Product([5, x]),Product([Product([Product([y, 3]), 1]), 3]);int(1..2)]),-(Product([3, x]));int(1..2)]),Product([-(1), y]);int(1..2)]),Product([y, -(5)]);int(1..2)]) < 11), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
--1 
-
---
-
--(5), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
--5 
+(Sum([Sum([Sum([Sum([Product([5, x]),Product([Product([Product([y, 3]), 1]), 3]);int(1..2)]),-(Product([3, x]));int(1..2)]),Product([-1, y]);int(1..2)]),Product([y, -5]);int(1..2)]) < 11) 
 
 --
 
@@ -34,9 +28,9 @@ Product([y, 3, 1, 3])
 
 --
 
-Product([y, 3, 1, 3]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-Product([y, 9]) 
+(Sum([Product([5, x]),Product([y, 3, 1, 3]),-(Product([3, x])),Product([-1, y]),Product([y, -5]);int(1..2)]) < 11), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(Sum([Product([5, x]),Product([y, 9]),-(Product([3, x])),Product([-1, y]),Product([y, -5]);int(1..2)]) < 11) 
 
 --
 
@@ -58,9 +52,9 @@ Product([-5, y])
 
 --
 
-Sum([11,-1;int(1..)]), 
+(Sum([Product([5, x]),Product([9, y]),-(Product([3, x])),Product([-1, y]),Product([-5, y]);int(1..2)]) <= Sum([11,-1;int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-10 
+(Sum([Product([5, x]),Product([9, y]),-(Product([3, x])),Product([-1, y]),Product([-5, y]);int(1..2)]) <= 10) 
 
 --
 
@@ -70,9 +64,9 @@ Product([3, x, -1])
 
 --
 
-Product([3, x, -1]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
-Product([x, -3]) 
+(Sum([Product([5, x]),Product([9, y]),Product([3, x, -1]),Product([-1, y]),Product([-5, y]);int(1..2)]) <= 10), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(Sum([Product([5, x]),Product([9, y]),Product([x, -3]),Product([-1, y]),Product([-5, y]);int(1..2)]) <= 10) 
 
 --
 

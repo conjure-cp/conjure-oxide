@@ -7,6 +7,7 @@
 pub use constant_eval::eval_constant;
 
 mod base;
+mod bottom_up_adaptor;
 mod bubble;
 mod cnf;
 mod constant_eval;
