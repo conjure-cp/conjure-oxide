@@ -69,6 +69,24 @@ fn constant_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 pub fn eval_constant(expr: &Expr) -> Option<Lit> {
     match expr {
         Expr::Union(_, _, _) => None,
+        Expr::In(_, a, b) => {
+            if let (
+                Expr::Atomic(_, Atom::Literal(Lit::Int(c))),
+                Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(d)))),
+            ) = (a.as_ref(), b.as_ref())
+            {
+                for lit in d.iter() {
+                    if let Lit::Int(x) = lit {
+                        if c == x {
+                            return Some(Lit::Bool(true));
+                        }
+                    }
+                }
+                Some(Lit::Bool(false))
+            } else {
+                None
+            }
+        }
         Expr::Intersect(_, _, _) => None,
         Expr::Supset(_, _, _) => None,
         Expr::SupsetEq(_, _, _) => None,
@@ -85,7 +103,21 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
         Expr::Atomic(_, Atom::Reference(_c)) => None,
-        Expr::AbstractLiteral(_, _) => None,
+        Expr::AbstractLiteral(_, a) => {
+            if let AbstractLiteral::Set(s) = a {
+                let mut copy = Vec::new();
+                for expr in s.iter() {
+                    if let Expr::Atomic(_, Atom::Literal(lit)) = expr {
+                        copy.push(lit.clone());
+                    } else {
+                        return None;
+                    }
+                }
+                Some(Lit::AbstractLiteral(AbstractLiteral::Set(copy)))
+            } else {
+                None
+            }
+        }
         Expr::Comprehension(_, _) => None,
         Expr::UnsafeIndex(_, subject, indices) | Expr::SafeIndex(_, subject, indices) => {
             let subject: Lit = subject.as_ref().clone().to_literal()?;
@@ -360,6 +392,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Bool(a ^ b == c))
         }
+        Expr::MinionWInSet(_, _, _) => None,
         Expr::MinionWInIntervalSet(_, x, intervals) => {
             let x_lit: &Lit = x.try_into().ok()?;
 

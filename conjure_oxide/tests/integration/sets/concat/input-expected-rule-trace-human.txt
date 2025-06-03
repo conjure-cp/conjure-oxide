@@ -16,40 +16,52 @@ c,
 
 --
 
+({2} subset (b intersect a)), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(Set([Int(2)]) subset (b intersect a)) 
+
+--
+
 b, 
    ~~> substitute_value_lettings ([("Base", 5000)]) 
 {2,3} 
 
 --
 
-({2} subset ({2,3} intersect a)), 
+(Set([Int(2)]) subset ({2,3} intersect a)), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(Set([Int(2)]) subset (Set([Int(2), Int(3)]) intersect a)) 
+
+--
+
+(Set([Int(2)]) subset (Set([Int(2), Int(3)]) intersect a)), 
    ~~> subset_to_subset_eq_neq ([("Base", 8700)]) 
-and([({2} subsetEq ({2,3} intersect a)),({2} != ({2,3} intersect a));int(1..)]) 
+and([(Set([Int(2)]) subsetEq (Set([Int(2), Int(3)]) intersect a)),(Set([Int(2)]) != (Set([Int(2), Int(3)]) intersect a));int(1..)]) 
 
 --
 
-and([({2} subsetEq ({2,3} intersect a)),({2} != ({2,3} intersect a));int(1..)]), 
+and([(Set([Int(2)]) subsetEq (Set([Int(2), Int(3)]) intersect a)),(Set([Int(2)]) != (Set([Int(2), Int(3)]) intersect a));int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-({2} subsetEq ({2,3} intersect a)),
-({2} != ({2,3} intersect a)) 
+(Set([Int(2)]) subsetEq (Set([Int(2), Int(3)]) intersect a)),
+(Set([Int(2)]) != (Set([Int(2), Int(3)]) intersect a)) 
 
 --
 
-({2} != ({2,3} intersect a)), 
+(Set([Int(2)]) != (Set([Int(2), Int(3)]) intersect a)), 
    ~~> neq_not_eq_sets ([("Base", 8700)]) 
-Not((({2,3} intersect a) = {2})) 
+Not(((Set([Int(2), Int(3)]) intersect a) = Set([Int(2)]))) 
 
 --
 
-(({2,3} intersect a) = {2}), 
+((Set([Int(2), Int(3)]) intersect a) = Set([Int(2)])), 
    ~~> eq_to_subset_eq ([("Base", 8800)]) 
-and([(({2,3} intersect a) subsetEq {2}),({2} subsetEq ({2,3} intersect a));int(1..)]) 
+and([((Set([Int(2), Int(3)]) intersect a) subsetEq Set([Int(2)])),(Set([Int(2)]) subsetEq (Set([Int(2), Int(3)]) intersect a));int(1..)]) 
 
 --
 
-Not(and([(({2,3} intersect a) subsetEq {2}),({2} subsetEq ({2,3} intersect a));int(1..)])), 
+Not(and([((Set([Int(2), Int(3)]) intersect a) subsetEq Set([Int(2)])),(Set([Int(2)]) subsetEq (Set([Int(2), Int(3)]) intersect a));int(1..)])), 
    ~~> distribute_not_over_and ([("Base", 8400)]) 
-or([Not((({2,3} intersect a) subsetEq {2})),Not(({2} subsetEq ({2,3} intersect a)));int(1..)]) 
+or([Not(((Set([Int(2), Int(3)]) intersect a) subsetEq Set([Int(2)]))),Not((Set([Int(2)]) subsetEq (Set([Int(2), Int(3)]) intersect a)));int(1..)]) 
 
 --
 
@@ -59,93 +71,121 @@ a,
 
 --
 
-({2} subsetEq ({2,3} intersect {1,2,3})), 
-   ~~> subseteq_intersect ([("Base", 8700)]) 
-and([({2} subsetEq {2,3}),({2} subsetEq {1,2,3});int(1..)]) 
-
---
-
-and([({2} subsetEq {2,3}),({2} subsetEq {1,2,3});int(1..)]),
-or([Not((({2,3} intersect a) subsetEq {2})),Not(({2} subsetEq ({2,3} intersect a)));int(1..)]), 
+(Set([Int(2)]) subsetEq (Set([Int(2), Int(3)]) intersect {1,2,3})),
+or([Not(((Set([Int(2), Int(3)]) intersect a) subsetEq Set([Int(2)]))),Not((Set([Int(2)]) subsetEq (Set([Int(2), Int(3)]) intersect a)));int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-({2} subsetEq {2,3}),
-({2} subsetEq {1,2,3}),
-or([Not((({2,3} intersect a) subsetEq {2})),Not(({2} subsetEq ({2,3} intersect a)));int(1..)]) 
+(Set([Int(2)]) subsetEq (Set([Int(2), Int(3)]) intersect Set([Int(1), Int(2), Int(3)]))),
+or([Not(((Set([Int(2), Int(3)]) intersect a) subsetEq Set([Int(2)]))),Not((Set([Int(2)]) subsetEq (Set([Int(2), Int(3)]) intersect a)));int(1..)]) 
 
 --
 
-a, 
-   ~~> substitute_value_lettings ([("Base", 5000)]) 
-{1,2,3} 
-
---
-
-a, 
-   ~~> substitute_value_lettings ([("Base", 5000)]) 
-{1,2,3} 
-
---
-
-({2} subsetEq ({2,3} intersect {1,2,3})), 
+(Set([Int(2)]) subsetEq (Set([Int(2), Int(3)]) intersect Set([Int(1), Int(2), Int(3)]))), 
    ~~> subseteq_intersect ([("Base", 8700)]) 
-and([({2} subsetEq {2,3}),({2} subsetEq {1,2,3});int(1..)]) 
+and([(Set([Int(2)]) subsetEq Set([Int(2), Int(3)])),(Set([Int(2)]) subsetEq Set([Int(1), Int(2), Int(3)]));int(1..)]) 
 
 --
 
-Not(and([({2} subsetEq {2,3}),({2} subsetEq {1,2,3});int(1..)])), 
+and([(Set([Int(2)]) subsetEq Set([Int(2), Int(3)])),(Set([Int(2)]) subsetEq Set([Int(1), Int(2), Int(3)]));int(1..)]),
+or([Not(((Set([Int(2), Int(3)]) intersect a) subsetEq Set([Int(2)]))),Not((Set([Int(2)]) subsetEq (Set([Int(2), Int(3)]) intersect a)));int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(Set([Int(2)]) subsetEq Set([Int(2), Int(3)])),
+(Set([Int(2)]) subsetEq Set([Int(1), Int(2), Int(3)])),
+or([Not(((Set([Int(2), Int(3)]) intersect a) subsetEq Set([Int(2)]))),Not((Set([Int(2)]) subsetEq (Set([Int(2), Int(3)]) intersect a)));int(1..)]) 
+
+--
+
+a, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+{1,2,3} 
+
+--
+
+(Set([Int(2)]) subsetEq Set([Int(2), Int(3)])),
+(Set([Int(2)]) subsetEq Set([Int(1), Int(2), Int(3)])),
+or([Not(((Set([Int(2), Int(3)]) intersect {1,2,3}) subsetEq Set([Int(2)]))),Not((Set([Int(2)]) subsetEq (Set([Int(2), Int(3)]) intersect a)));int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(Set([Int(2)]) subsetEq Set([Int(2), Int(3)])),
+(Set([Int(2)]) subsetEq Set([Int(1), Int(2), Int(3)])),
+or([Not(((Set([Int(2), Int(3)]) intersect Set([Int(1), Int(2), Int(3)])) subsetEq Set([Int(2)]))),Not((Set([Int(2)]) subsetEq (Set([Int(2), Int(3)]) intersect a)));int(1..)]) 
+
+--
+
+a, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+{1,2,3} 
+
+--
+
+(Set([Int(2)]) subsetEq Set([Int(2), Int(3)])),
+(Set([Int(2)]) subsetEq Set([Int(1), Int(2), Int(3)])),
+or([Not(((Set([Int(2), Int(3)]) intersect Set([Int(1), Int(2), Int(3)])) subsetEq Set([Int(2)]))),Not((Set([Int(2)]) subsetEq (Set([Int(2), Int(3)]) intersect {1,2,3})));int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(Set([Int(2)]) subsetEq Set([Int(2), Int(3)])),
+(Set([Int(2)]) subsetEq Set([Int(1), Int(2), Int(3)])),
+or([Not(((Set([Int(2), Int(3)]) intersect Set([Int(1), Int(2), Int(3)])) subsetEq Set([Int(2)]))),Not((Set([Int(2)]) subsetEq (Set([Int(2), Int(3)]) intersect Set([Int(1), Int(2), Int(3)]))));int(1..)]) 
+
+--
+
+(Set([Int(2)]) subsetEq (Set([Int(2), Int(3)]) intersect Set([Int(1), Int(2), Int(3)]))), 
+   ~~> subseteq_intersect ([("Base", 8700)]) 
+and([(Set([Int(2)]) subsetEq Set([Int(2), Int(3)])),(Set([Int(2)]) subsetEq Set([Int(1), Int(2), Int(3)]));int(1..)]) 
+
+--
+
+Not(and([(Set([Int(2)]) subsetEq Set([Int(2), Int(3)])),(Set([Int(2)]) subsetEq Set([Int(1), Int(2), Int(3)]));int(1..)])), 
    ~~> distribute_not_over_and ([("Base", 8400)]) 
-or([Not(({2} subsetEq {2,3})),Not(({2} subsetEq {1,2,3}));int(1..)]) 
+or([Not((Set([Int(2)]) subsetEq Set([Int(2), Int(3)]))),Not((Set([Int(2)]) subsetEq Set([Int(1), Int(2), Int(3)])));int(1..)]) 
 
 --
 
-or([Not((({2,3} intersect {1,2,3}) subsetEq {2})),or([Not(({2} subsetEq {2,3})),Not(({2} subsetEq {1,2,3}));int(1..)]);int(1..)]), 
+or([Not(((Set([Int(2), Int(3)]) intersect Set([Int(1), Int(2), Int(3)])) subsetEq Set([Int(2)]))),or([Not((Set([Int(2)]) subsetEq Set([Int(2), Int(3)]))),Not((Set([Int(2)]) subsetEq Set([Int(1), Int(2), Int(3)])));int(1..)]);int(1..)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
-or([Not((({2,3} intersect {1,2,3}) subsetEq {2})),Not(({2} subsetEq {2,3})),Not(({2} subsetEq {1,2,3}));int(1..)]) 
+or([Not(((Set([Int(2), Int(3)]) intersect Set([Int(1), Int(2), Int(3)])) subsetEq Set([Int(2)]))),Not((Set([Int(2)]) subsetEq Set([Int(2), Int(3)]))),Not((Set([Int(2)]) subsetEq Set([Int(1), Int(2), Int(3)])));int(1..)]) 
 
 --
 
-Not((({2,3} intersect {1,2,3}) subsetEq {2})), 
+Not(((Set([Int(2), Int(3)]) intersect Set([Int(1), Int(2), Int(3)])) subsetEq Set([Int(2)]))), 
    ~~> flatten_generic ([("Minion", 4200)]) 
 Not(__0) 
 new variables:
   find __0: bool
 new constraints:
-  __0 =aux (({2,3} intersect {1,2,3}) subsetEq {2})
+  __0 =aux ((Set([Int(2), Int(3)]) intersect Set([Int(1), Int(2), Int(3)])) subsetEq Set([Int(2)]))
 --
 
-__0 =aux (({2,3} intersect {1,2,3}) subsetEq {2}), 
+__0 =aux ((Set([Int(2), Int(3)]) intersect Set([Int(1), Int(2), Int(3)])) subsetEq Set([Int(2)])), 
    ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify((({2,3} intersect {1,2,3}) subsetEq {2}), __0) 
+Reify(((Set([Int(2), Int(3)]) intersect Set([Int(1), Int(2), Int(3)])) subsetEq Set([Int(2)])), __0) 
 
 --
 
-Not(({2} subsetEq {2,3})), 
+Not((Set([Int(2)]) subsetEq Set([Int(2), Int(3)]))), 
    ~~> flatten_generic ([("Minion", 4200)]) 
 Not(__1) 
 new variables:
   find __1: bool
 new constraints:
-  __1 =aux ({2} subsetEq {2,3})
+  __1 =aux (Set([Int(2)]) subsetEq Set([Int(2), Int(3)]))
 --
 
-__1 =aux ({2} subsetEq {2,3}), 
+__1 =aux (Set([Int(2)]) subsetEq Set([Int(2), Int(3)])), 
    ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify(({2} subsetEq {2,3}), __1) 
+Reify((Set([Int(2)]) subsetEq Set([Int(2), Int(3)])), __1) 
 
 --
 
-Not(({2} subsetEq {1,2,3})), 
+Not((Set([Int(2)]) subsetEq Set([Int(1), Int(2), Int(3)]))), 
    ~~> flatten_generic ([("Minion", 4200)]) 
 Not(__2) 
 new variables:
   find __2: bool
 new constraints:
-  __2 =aux ({2} subsetEq {1,2,3})
+  __2 =aux (Set([Int(2)]) subsetEq Set([Int(1), Int(2), Int(3)]))
 --
 
-__2 =aux ({2} subsetEq {1,2,3}), 
+__2 =aux (Set([Int(2)]) subsetEq Set([Int(1), Int(2), Int(3)])), 
    ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify(({2} subsetEq {1,2,3}), __2) 
+Reify((Set([Int(2)]) subsetEq Set([Int(1), Int(2), Int(3)])), __2) 
 
 --
 
@@ -178,10 +218,10 @@ find __2: bool
 
 such that
 
-({2} subsetEq {2,3}),
-({2} subsetEq {1,2,3}),
+(Set([Int(2)]) subsetEq Set([Int(2), Int(3)])),
+(Set([Int(2)]) subsetEq Set([Int(1), Int(2), Int(3)])),
 or([WatchedLiteral(__0,false),WatchedLiteral(__1,false),WatchedLiteral(__2,false);int(1..)]),
-Reify((({2,3} intersect {1,2,3}) subsetEq {2}), __0),
-Reify(({2} subsetEq {2,3}), __1),
-Reify(({2} subsetEq {1,2,3}), __2)
+Reify(((Set([Int(2), Int(3)]) intersect Set([Int(1), Int(2), Int(3)])) subsetEq Set([Int(2)])), __0),
+Reify((Set([Int(2)]) subsetEq Set([Int(2), Int(3)])), __1),
+Reify((Set([Int(2)]) subsetEq Set([Int(1), Int(2), Int(3)])), __2)
 

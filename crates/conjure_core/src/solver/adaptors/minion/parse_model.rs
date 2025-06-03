@@ -298,7 +298,14 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
                     .collect_vec(),
             ))
         }
-
+        conjure_ast::Expression::MinionWInSet(_metadata, a, xs) => {
+            Ok(minion_ast::Constraint::WInset(
+                parse_atom(a)?,
+                xs.into_iter()
+                    .map(minion_ast::Constant::Integer)
+                    .collect_vec(),
+            ))
+        }
         conjure_ast::Expression::MinionElementOne(_, vec, i, e) => Ok(
             minion_ast::Constraint::ElementOne(parse_atoms(vec)?, parse_atom(i)?, parse_atom(e)?),
         ),

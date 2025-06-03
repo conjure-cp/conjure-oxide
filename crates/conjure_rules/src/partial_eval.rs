@@ -24,6 +24,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
     // This is why we always check whether we found a constant or not.
     match expr.clone() {
         Union(_, _, _) => Err(RuleNotApplicable),
+        In(_, _, _) => Err(RuleNotApplicable),
         Intersect(_, _, _) => Err(RuleNotApplicable),
         Supset(_, _, _) => Err(RuleNotApplicable),
         SupsetEq(_, _, _) => Err(RuleNotApplicable),
@@ -435,6 +436,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         MinionReify(_, _, _) => Err(RuleNotApplicable),
         MinionReifyImply(_, _, _) => Err(RuleNotApplicable),
         MinionWInIntervalSet(_, _, _) => Err(RuleNotApplicable),
+        MinionWInSet(_, _, _) => Err(RuleNotApplicable),
         MinionElementOne(_, _, _, _) => Err(RuleNotApplicable),
     }
 }
