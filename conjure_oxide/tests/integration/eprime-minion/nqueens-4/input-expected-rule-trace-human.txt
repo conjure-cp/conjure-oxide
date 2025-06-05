@@ -56,14 +56,59 @@ new variables:
   find row#matrix_to_atom_7: int(0..7)
 --
 
-[given queen: int(0..3)
+Model before rewriting:
+
+find queen: int(0..3)
+find __0: bool
+find __1: bool
+
+such that
+
+(true != and([__0,__1;int(1..2)]))
+
+--
+
+(true != and([__0,__1;int(1..2)])), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+(true != __2) 
+new variables:
+  find __2: bool
+new constraints:
+  __2 =aux and([__0,__1;int(1..2)])
+--
+
+__2 =aux and([__0,__1;int(1..2)]), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(and([__0,__1;int(1..2)]), __2) 
+
+--
+
+and([__0,__1;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+and([__0,__1;int(1..)]) 
+
+--
+
+Final model:
+
+find queen: int(0..3)
+find __0: bool
+find __1: bool
+find __2: bool
+
+such that
+
+(true != __2),
+Reify(and([__0,__1;int(1..)]), __2)
+
+and([given queen: int(0..3)
 
 such that
 
 and([(majorDiagonal#matrix_to_atom[queen] = sum([queen,row#matrix_to_atom[queen];int(1..2)])),(minorDiagonal#matrix_to_atom[queen] = (queen - row#matrix_to_atom[queen]));int(1..2)])
- | queen: int(0..3),], 
-   ~~> expand_comprehension ([("Base", 2000)]) 
-[and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..2)])),(minorDiagonal#matrix_to_atom[0] = (0 - row#matrix_to_atom[0]));int(1..2)]),and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..2)])),(minorDiagonal#matrix_to_atom[1] = (1 - row#matrix_to_atom[1]));int(1..2)]),and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..2)])),(minorDiagonal#matrix_to_atom[2] = (2 - row#matrix_to_atom[2]));int(1..2)]),and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..2)])),(minorDiagonal#matrix_to_atom[3] = (3 - row#matrix_to_atom[3]));int(1..2)]);int(1..)] 
+ | queen: int(0..3),__0: bool,__1: bool,__2: bool,]), 
+   ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
+and([and([(majorDiagonal#matrix_to_atom[0] = sum([0,row#matrix_to_atom[0];int(1..2)])),(minorDiagonal#matrix_to_atom[0] = (0 - row#matrix_to_atom[0]));int(1..2)]),and([(majorDiagonal#matrix_to_atom[1] = sum([1,row#matrix_to_atom[1];int(1..2)])),(minorDiagonal#matrix_to_atom[1] = (1 - row#matrix_to_atom[1]));int(1..2)]),and([(majorDiagonal#matrix_to_atom[2] = sum([2,row#matrix_to_atom[2];int(1..2)])),(minorDiagonal#matrix_to_atom[2] = (2 - row#matrix_to_atom[2]));int(1..2)]),and([(majorDiagonal#matrix_to_atom[3] = sum([3,row#matrix_to_atom[3];int(1..2)])),(minorDiagonal#matrix_to_atom[3] = (3 - row#matrix_to_atom[3]));int(1..2)]);int(1..)]) 
 
 --
 
