@@ -54,11 +54,13 @@ pub fn rewrite_naive_1<'a>(
     while done_something {
         let exprs: VecDeque<Expr> = model.universe_bi();
 
-        // experiment: quit and print model once the comprehension has unrolled.
+        // experiment: quit and print number of expressions once the comprehension has unrolled.
+        // the printing of elements happens in Comprehension::expand_ac and
+        // Comprehension::expand_simple.
         //
         // As comprehension unrolling itself calls the rewriter, only quit when on the "top level" run of the rewriter.
         if top_level && !exprs.iter().any(|x| matches!(*x,Expr::Comprehension(_,_))) {
-            println!("{}",model);
+            // println!("{}",model);
             exit(0);
         }
         let mut new_model = None;

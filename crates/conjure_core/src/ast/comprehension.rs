@@ -171,6 +171,7 @@ impl Comprehension {
             return_expressions.push(return_expression);
         }
 
+        println!("number of expressions returned in the expansion: {}", return_expressions.len());
         Ok(return_expressions)
     }
 
@@ -376,6 +377,7 @@ impl Comprehension {
             return_expressions.push(return_expression);
         }
 
+        println!("number of expressions returned in the expansion: {}", return_expressions.len());
         Ok(return_expressions)
     }
 
