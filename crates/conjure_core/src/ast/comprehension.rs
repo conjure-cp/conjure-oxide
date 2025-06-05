@@ -189,13 +189,6 @@ impl Comprehension {
         //
         // add the modified return expression, and these dummy variables, to the generator model.
 
-        // TODO: i am not sure how introducing z variables works when the comprehension contains
-        // integers (such as in sum and product)
-        assert!(
-            matches!(ac_operator.identity().return_type(), Some(ReturnType::Bool)),
-            "non-boolean ac operations not implemented"
-        );
-
 
         let generator_symtab_ptr1 =
             Rc::clone(generator_model.as_submodel().symbols_ptr_unchecked());

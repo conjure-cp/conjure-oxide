@@ -26,15 +26,10 @@ fn expand_comprehension_ac(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
     // FIXME: currently only support and/or, but should eventually support all ac operators
     // see Comprehension::expand_ac.
 
-    let Literal::Bool(_) = ac_operator_kind.identity() else {
-        return Err(RuleNotApplicable);
-    };
-
-    // ac operators should only have one child
     debug_assert_eq!(
         expr.children().len(),
         1,
-        "AC expressions should have a exactly one child."
+        "AC expressions should have exactly one child."
     );
 
     let Expr::Comprehension(_, ref comprehension) = expr.children()[0] else {
