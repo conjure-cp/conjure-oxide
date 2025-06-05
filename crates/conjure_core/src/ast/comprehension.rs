@@ -16,7 +16,7 @@ use crate::{
     context::Context,
     into_matrix_expr, matrix_expr,
     metadata::Metadata,
-    rule_engine::{resolve_rule_sets, rewrite_naive},
+    rule_engine::{resolve_rule_sets,rewrite_naive_1},
     solver::{Solver, SolverError},
 };
 
@@ -78,7 +78,7 @@ impl Comprehension {
 
         let rule_sets =
             resolve_rule_sets(crate::solver::SolverFamily::Minion, extra_rule_sets).unwrap();
-        let model = crate::rule_engine::rewrite_naive(&model, &rule_sets, false).unwrap();
+        let model = crate::rule_engine::rewrite_naive_1(&model, &rule_sets, false, false).unwrap();
 
         // HACK: also call the rewriter to rewrite inside the comprehension
         //
@@ -103,7 +103,7 @@ impl Comprehension {
         let mut return_expression_model = Model::new(Arc::new(RwLock::new(Context::default())));
         *return_expression_model.as_submodel_mut() = return_expression_submodel;
         return_expression_model =
-            rewrite_naive(&return_expression_model, &rule_sets, false).unwrap();
+            rewrite_naive_1(&return_expression_model, &rule_sets, false, false).unwrap();
 
         let return_expression_submodel = return_expression_model.as_submodel().clone();
 
@@ -192,6 +192,10 @@ impl Comprehension {
             return_expressions.push(return_expression);
         }
 
+        println!(
+            "number of expressions returned in the expansion: {}",
+            return_expressions.len()
+        );
         Ok(return_expressions)
     }
 
@@ -461,7 +465,8 @@ impl Comprehension {
         let rule_sets =
             resolve_rule_sets(crate::solver::SolverFamily::Minion, extra_rule_sets).unwrap();
         let generator_model =
-            crate::rule_engine::rewrite_naive(&generator_model, &rule_sets, false).unwrap();
+            crate::rule_engine::rewrite_naive_1(&generator_model, &rule_sets, false, false)
+                .unwrap();
 
         // HACK: also call the rewriter to rewrite inside the comprehension
         //
@@ -485,8 +490,7 @@ impl Comprehension {
         let return_expression_submodel = self.return_expression_submodel.clone();
         let mut return_expression_model = Model::new(Arc::new(RwLock::new(Context::default())));
         *return_expression_model.as_submodel_mut() = return_expression_submodel;
-        return_expression_model =
-            rewrite_naive(&return_expression_model, &rule_sets, false).unwrap();
+        return_expression_model = rewrite_naive_1(&return_expression_model, &rule_sets, false,false).unwrap();
 
         let return_expression_submodel = return_expression_model.as_submodel().clone();
 
@@ -578,6 +582,10 @@ impl Comprehension {
             return_expressions.push(return_expression);
         }
 
+        println!(
+            "number of expressions returned in the expansion: {}",
+            return_expressions.len()
+        );
         Ok(return_expressions)
     }
 

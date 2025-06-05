@@ -81,7 +81,7 @@ pub use conjure_rule_macros::register_rule;
 #[doc(inline)]
 pub use conjure_rule_macros::register_rule_set;
 pub use resolve_rules::{get_rules, get_rules_grouped, resolve_rule_sets, RuleData};
-pub use rewrite_naive::rewrite_naive;
+pub use rewrite_naive::{rewrite_naive, rewrite_naive_1};
 pub use rewriter_common::RewriteError;
 pub use rule::{ApplicationError, ApplicationResult, Reduction, Rule, RuleFn};
 pub use rule_set::RuleSet;

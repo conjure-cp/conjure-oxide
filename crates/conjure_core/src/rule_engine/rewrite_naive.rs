@@ -12,7 +12,7 @@ use crate::{
 };
 
 use itertools::Itertools;
-use std::{sync::Arc, time::Instant};
+use std::{collections::VecDeque, process::exit, sync::Arc, time::Instant};
 use tracing::{span, trace, Level};
 use uniplate::Biplate;
 
@@ -22,6 +22,15 @@ pub fn rewrite_naive<'a>(
     model: &Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
     prop_multiple_equally_applicable: bool,
+) -> Result<Model, RewriteError> {
+    rewrite_naive_1(model, rule_sets, prop_multiple_equally_applicable, true)
+}
+
+pub fn rewrite_naive_1<'a>(
+    model: &Model,
+    rule_sets: &Vec<&'a RuleSet<'a>>,
+    prop_multiple_equally_applicable: bool,
+    top_level: bool,
 ) -> Result<Model, RewriteError> {
     let rules_grouped = get_rules_grouped(rule_sets)
         .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
@@ -43,6 +52,21 @@ pub fn rewrite_naive<'a>(
 
     // Rewrite until there are no more rules left to apply.
     while done_something {
+        let exprs: VecDeque<Expr> = model.universe_bi();
+
+        // experiment: quit and print number of expressions once the comprehension has unrolled.
+        // the printing of elements happens in Comprehension::expand_ac and
+        // Comprehension::expand_simple.
+        //
+        // As comprehension unrolling itself calls the rewriter, only quit when on the "top level" run of the rewriter.
+        if top_level
+            && !exprs
+                .iter()
+                .any(|x| matches!(*x, Expr::Comprehension(_, _)))
+        {
+            // println!("{}",model);
+            exit(0);
+        }
         let mut new_model = None;
         done_something = false;
 
