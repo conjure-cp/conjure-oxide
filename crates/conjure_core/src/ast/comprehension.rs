@@ -68,6 +68,22 @@ impl Comprehension {
 
         *model.as_submodel_mut() = self.generator_submodel.clone();
 
+        // HACK: this is just to make this rule run at a similar time to expand_ac - 
+        //
+        // going from
+        // input model to comprehension free model guards should take the same amount of time  with
+        // simple and expand_ac if there are no dynamic guards.
+        let extra_rule_sets = &[
+            "Base",
+            "Constant",
+            "Bubble",
+        ];
+
+        let rule_sets =
+            resolve_rule_sets(crate::solver::SolverFamily::Minion, extra_rule_sets).unwrap();
+        let model =
+            crate::rule_engine::rewrite_naive_1(&model, &rule_sets, false,false).unwrap();
+
         let minion = minion.load_model(model.clone())?;
 
         let values = Arc::new(Mutex::new(Vec::new()));
@@ -269,7 +285,7 @@ impl Comprehension {
         let rule_sets =
             resolve_rule_sets(crate::solver::SolverFamily::Minion, extra_rule_sets).unwrap();
         let generator_model =
-            crate::rule_engine::rewrite_naive(&generator_model, &rule_sets, false).unwrap();
+            crate::rule_engine::rewrite_naive_1(&generator_model, &rule_sets, false,false).unwrap();
 
         let minion = minion
             .load_model(generator_model.clone())
