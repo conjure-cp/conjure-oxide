@@ -1,6 +1,6 @@
 use std::{
     cell::RefCell,
-    collections::{HashMap, HashSet},
+    collections::{HashMap, HashSet, VecDeque},
     fmt::Display,
     rc::Rc,
     sync::{Arc, Mutex, RwLock},
@@ -8,18 +8,22 @@ use std::{
 
 use itertools::Itertools as _;
 use serde::{Deserialize, Serialize};
-use uniplate::{derive::Uniplate, Biplate};
+use uniplate::{derive::Uniplate, zipper::Zipper, Biplate, Uniplate};
 
 use crate::{
-    ast::{Atom, DeclarationKind},
+    ast::{Atom, DeclarationKind, ReturnType, Typeable as _},
     bug,
     context::Context,
     into_matrix_expr, matrix_expr,
     metadata::Metadata,
+    rule_engine::{resolve_rule_sets, rewrite_naive},
     solver::{Solver, SolverError},
 };
 
-use super::{Declaration, Domain, Expression, Model, Name, SubModel, SymbolTable};
+use super::{
+    ac_operators::ACOperatorKind, Declaration, Domain, Expression, Model, Name, SubModel,
+    SymbolTable,
+};
 
 pub enum ComprehensionKind {
     Sum,
@@ -45,14 +49,16 @@ impl Comprehension {
             .domain_of(syms)
     }
 
-    /// Solves this comprehension using Minion, returning the resulting expressions.
+    /// Expands the comprehension using Minion, returning the resulting expressions.
+    ///
+    /// This method performs simple pruning of the induction variables: an expression is returned
+    /// for each assignment to the induction variables that satisfy the static guards of the
+    /// comprehension. If the comprehension is inside an associative-commutative operation, use
+    /// [`expand_ac`] instead, as this performs further pruning of "uninteresting" return values.
     ///
     /// If successful, this modifies the symbol table given to add aux-variables needed inside the
     /// expanded expressions.
-    pub fn solve_with_minion(
-        self,
-        symtab: &mut SymbolTable,
-    ) -> Result<Vec<Expression>, SolverError> {
+    pub fn expand_simple(self, symtab: &mut SymbolTable) -> Result<Vec<Expression>, SolverError> {
         let minion = Solver::new(crate::solver::adaptors::Minion::new());
         // FIXME: weave proper context through
         let mut model = Model::new(Arc::new(RwLock::new(Context::default())));
@@ -62,12 +68,51 @@ impl Comprehension {
 
         *model.as_submodel_mut() = self.generator_submodel.clone();
 
+        // call rewrite here as well as in expand_ac, just to be consistent
+        let extra_rule_sets = &[
+            "Base",
+            "Constant",
+            "Bubble",
+            "Better_AC_Comprehension_Expansion",
+        ];
+
+        let rule_sets =
+            resolve_rule_sets(crate::solver::SolverFamily::Minion, extra_rule_sets).unwrap();
+        let model = crate::rule_engine::rewrite_naive(&model, &rule_sets, false).unwrap();
+
+        // HACK: also call the rewriter to rewrite inside the comprehension
+        //
+        // The original idea was to let the top level rewriter rewrite the return expression model
+        // and the generator model. The comprehension wouldn't be expanded until the generator
+        // model is in valid minion that can be ran, at which point the return expression model
+        // should also be in valid minion.
+        //
+        // By calling the rewriter inside the rule, we no longer wait for the generator model to be
+        // valid Minion, so we don't get the simplified return model either...
+        //
+        // We need to do this as we want to modify the generator model (add the dummy Z's) then
+        // solve and return in one go.
+        //
+        // Comprehensions need a big rewrite soon, as theres lots of sharp edges such as this in
+        // my original implementation, and I don't think we can fit our new optimisation into it.
+        // If we wanted to avoid calling the rewriter, we would need to run the first half the rule
+        // up to adding the return expr to the generator model, yield, then come back later to
+        // actually solve it?
+
+        let return_expression_submodel = self.return_expression_submodel.clone();
+        let mut return_expression_model = Model::new(Arc::new(RwLock::new(Context::default())));
+        *return_expression_model.as_submodel_mut() = return_expression_submodel;
+        return_expression_model =
+            rewrite_naive(&return_expression_model, &rule_sets, false).unwrap();
+
+        let return_expression_submodel = return_expression_model.as_submodel().clone();
+
         let minion = minion.load_model(model.clone())?;
 
         let values = Arc::new(Mutex::new(Vec::new()));
         let values_ptr = Arc::clone(&values);
 
-        tracing::debug!(model=%model.clone(),comprehension=%self.clone(),"Minion solving comprehension");
+        tracing::debug!(model=%model.clone(),comprehension=%self.clone(),"Minion solving comprehension (simple mode)");
         minion.solve(Box::new(move |sols| {
             // TODO: deal with represented names if induction variables are abslits.
             let values = &mut *values_ptr.lock().unwrap();
@@ -79,12 +124,10 @@ impl Comprehension {
 
         let mut return_expressions = vec![];
 
+        let child_symtab = return_expression_submodel.symbols().clone();
+        let return_expression = return_expression_submodel.as_single_expression();
         for value in values {
             // convert back to an expression
-
-            let return_expression_submodel = self.return_expression_submodel.clone();
-            let child_symtab = return_expression_submodel.symbols().clone();
-            let return_expression = return_expression_submodel.as_single_expression();
 
             // we only want to substitute induction variables.
             // (definitely not machine names, as they mean something different in this scope!)
@@ -117,7 +160,374 @@ impl Comprehension {
             let mut machine_name_translations: HashMap<Name, Name> = HashMap::new();
 
             // populate machine_name_translations, and move the declarations from child to parent
-            for (name, decl) in child_symtab.into_iter_local() {
+            for (name, decl) in child_symtab.clone().into_iter_local() {
+                // skip givens for induction vars§
+                if value_ptr.get(&name).is_some()
+                    && matches!(decl.kind(), DeclarationKind::Given(_))
+                {
+                    continue;
+                }
+
+                let Name::MachineName(_) = &name else {
+                    bug!("the symbol table of the return expression of a comprehension should only contain machine names");
+                };
+
+                let new_machine_name = symtab.gensym();
+
+                let new_decl = (*decl).clone().with_new_name(new_machine_name.clone());
+                symtab.insert(Rc::new(new_decl)).unwrap();
+
+                machine_name_translations.insert(name, new_machine_name);
+            }
+
+            // rename references to aux vars in the return_expression
+            let return_expression =
+                return_expression.transform_bi(Arc::new(
+                    move |name| match machine_name_translations.get(&name) {
+                        Some(new_name) => new_name.clone(),
+                        None => name,
+                    },
+                ));
+
+            return_expressions.push(return_expression);
+        }
+
+        Ok(return_expressions)
+    }
+
+    /// Expands the comprehension using Minion, returning the resulting expressions.
+    ///
+    /// This method is only suitable for comprehensions inside an AC operator. The AC operator that
+    /// contains this comprehension should be passed into the `ac_operator` argument.
+    ///
+    /// This method performs additional pruning of "uninteresting" values, only possible when the
+    /// comprehension is inside an AC operator.
+    ///
+    /// TODO: more details on what this does....
+    ///
+    /// If successful, this modifies the symbol table given to add aux-variables needed inside the
+    /// expanded expressions.
+    pub fn expand_ac(
+        self,
+        symtab: &mut SymbolTable,
+        ac_operator: ACOperatorKind,
+    ) -> Result<Vec<Expression>, SolverError> {
+        // FIXME: weave proper context through
+
+        let minion = Solver::new(crate::solver::adaptors::Minion::new());
+        let mut generator_model = Model::new(Arc::new(RwLock::new(Context::default())));
+        *generator_model.as_submodel_mut() = self.generator_submodel.clone();
+
+        // only branch on the induction variables.
+        generator_model.search_order = Some(self.induction_vars.clone());
+
+        // Replace all boolean expressions referencing non-induction variables in the return
+        // expression with dummy variables.
+        //
+        // add the modified return expression, and these dummy variables, to the generator model.
+
+        // the bottom up version
+
+        let generator_symtab_ptr = Rc::clone(generator_model.as_submodel().symbols_ptr_unchecked());
+
+        //
+        // #[allow(clippy::arc_with_non_send_sync)]
+        // let new_return_expr = self
+        //     .clone()
+        //     .return_expression()
+        //     .transform(Arc::new(move |expr| {
+        //         let mut symtab = generator_symtab_ptr2.borrow_mut();
+
+        //         // need to put this expression in a dummy variable if it contains references variables that are
+        //         // not induction variables or existing dummy variables, and if it is boolean.
+        //         let names_referenced: VecDeque<Name> = expr.universe_bi();
+        //         let right_type = matches!(expr.return_type(), Some(ReturnType::Bool));
+        //         let has_non_induction_vars =
+        //             !names_referenced.iter().all(|x| symtab.lookup_local(x).is_some());
+        //         let replace_with_dummy_var = right_type && has_non_induction_vars;
+
+        //         if replace_with_dummy_var {
+        //             let dummy_name = symtab.gensym();
+        //             symtab.insert(Rc::new(Declaration::new_var(
+        //                 dummy_name.clone(),
+        //                 Domain::BoolDomain,
+        //             )));
+        //             Expression::Atomic(Metadata::new(), Atom::Reference(dummy_name))
+        //         } else {
+        //             expr
+        //         }
+        //     }));
+
+        // Eliminate all references to non induction variables by introducing dummy variables.
+        //
+        // Dummy variables must be the same type as the AC operators identity value.
+        //
+        // To reduce the number of dummy variables, we turn the largest expression containing only
+        // non induction variables and of the correct type into a dummy variable.
+        //
+        // If there is no such expression, (e.g. and[(a<i) | i: int(1..10)]) , we use the smallest
+        // expression of the correct type that contains a non induction variable. This ensures that
+        // we lose as few references to induction variables as possible.
+        let mut zipper = Zipper::new(self.clone().return_expression());
+
+        {
+            let mut generator_symtab = generator_symtab_ptr.borrow_mut();
+            'outer: loop {
+                let focus: &mut Expression = zipper.focus_mut();
+                let names_referenced: VecDeque<Name> = focus.universe_bi();
+                let has_non_induction_vars = names_referenced
+                    .iter()
+                    .any(|x| generator_symtab.lookup_local(x).is_none());
+                let has_induction_vars = names_referenced
+                    .iter()
+                    .any(|x| generator_symtab.lookup_local(x).is_some());
+
+                // cannot remove root expression or things go wrong
+                let is_right_type = focus
+                    .return_type()
+                    .is_some_and(|x| matches!(x, ReturnType::Bool))
+                    && !matches!(focus, Expression::Root(_, _));
+
+                if !has_non_induction_vars {
+                    // doesn't need a dummy variable - continue
+
+                    // go to next node or quit
+                    while zipper.go_right().is_none() {
+                        let Some(()) = zipper.go_up() else {
+                            // visited all nodes
+                            break 'outer;
+                        };
+                    }
+                } else if !has_induction_vars {
+                    // have non-induction vars but no induction vars
+
+                    // introduce a dummy variable if we can, otherwise find a child that can.
+                    if is_right_type {
+                        // introduce dummy var and continue
+                        let dummy_name = generator_symtab.gensym();
+                        generator_symtab.insert(Rc::new(Declaration::new_var(
+                            dummy_name.clone(),
+                            Domain::BoolDomain,
+                        )));
+                        *focus = Expression::Atomic(Metadata::new(), Atom::Reference(dummy_name));
+
+                        // go to next node
+                        while zipper.go_right().is_none() {
+                            let Some(()) = zipper.go_up() else {
+                                // visited all nodes
+                                break 'outer;
+                            };
+                        }
+                    } else {
+                        // skip self
+                        let has_eligible_descendant = focus.universe().iter().skip(1).any(|expr| {
+                            let names_referenced: VecDeque<Name> = expr.universe_bi();
+                            let has_non_induction_vars = names_referenced
+                                .iter()
+                                .any(|name| generator_symtab.lookup_local(name).is_none());
+                            let is_right_type = expr
+                                .return_type()
+                                .is_some_and(|ty| matches!(ty, ReturnType::Bool))
+                                && !matches!(expr, Expression::Root(_, _));
+                            is_right_type && has_non_induction_vars
+                        });
+
+                        assert!(
+                            has_eligible_descendant,
+                            "An expression containing an non-induction variable \
+                        should either be able to be turned into a dummy variable, or should \
+                        have a descendant that can be turned into a dummy variable. (Has traversal \
+                        gone too deep and gone into an expression that is turnable into a dummy \
+                        variable?"
+                        );
+
+                        zipper.go_down().expect(
+                            "we know the focus has a child, so zipper.go_down() should succeed",
+                        );
+                    }
+                } else {
+                    // have both induction and non induction vars.
+
+                    // Ideally, we want our dummy variables to contain only non-induction variables -
+                    // if we have a child that contains non-induction vars and is of the right type,
+                    // use that as the dummy variable instead.
+
+                    // skip self
+                    let has_eligible_descendant = focus.universe().iter().skip(1).any(|expr| {
+                        let names_referenced: VecDeque<Name> = expr.universe_bi();
+                        let has_non_induction_vars = names_referenced
+                            .iter()
+                            .any(|name| generator_symtab.lookup_local(name).is_none());
+                        let is_right_type = expr
+                            .return_type()
+                            .is_some_and(|ty| matches!(ty, ReturnType::Bool))
+                            && !matches!(expr, Expression::Root(_, _));
+                        is_right_type && has_non_induction_vars
+                    });
+
+                    if has_eligible_descendant {
+                        zipper.go_down().expect(
+                            "we know the focus has a child, so zipper.go_down() should succeed",
+                        );
+                    } else {
+                        // no better expression...
+
+                        assert!(
+                            is_right_type,
+                            "This expression must be put in a dummy variable as \
+                            none of its descendants can be.\nTherefore, it should be of the right \
+                            type.\n\
+                            Expression: {}\n\
+                            Expected Type: {:#?}, Actual Type: {:#?} ",
+                            focus,
+                            ReturnType::Bool,
+                            focus.return_type()
+                        );
+
+                        // introduce dummy variable
+                        let dummy_name = generator_symtab.gensym();
+                        generator_symtab.insert(Rc::new(Declaration::new_var(
+                            dummy_name.clone(),
+                            Domain::BoolDomain,
+                        )));
+                        *focus = Expression::Atomic(Metadata::new(), Atom::Reference(dummy_name));
+
+                        // go to next node
+                        while zipper.go_right().is_none() {
+                            let Some(()) = zipper.go_up() else {
+                                // visited all nodes
+                                break 'outer;
+                            };
+                        }
+                    }
+                }
+            }
+        }
+        let new_return_expr = zipper.rebuild_root();
+
+        // double check that the above transformation didn't miss any stray non induction vars
+        assert!(
+            Biplate::<Name>::universe_bi(&new_return_expr)
+                .iter()
+                .all(|x| (*generator_symtab_ptr).borrow().lookup_local(x).is_some()),
+            "generator model should only contain references to variables in its symbol table."
+        );
+
+        let return_expr_constraint = Expression::Neq(
+            Metadata::new(),
+            Box::new(Expression::Atomic(
+                Metadata::new(),
+                ac_operator.identity().into(),
+            )),
+            Box::new(new_return_expr),
+        );
+
+        generator_model
+            .as_submodel_mut()
+            .add_constraint(return_expr_constraint);
+
+        // rest is same as expand_simple (at time of writing)
+
+        // TODO: move the common code below and in expand_simple into the same function so that we
+        // can keep them in sync.
+
+        // FIXME: some less hacky way to rewrite the modified generator model!
+        let extra_rule_sets = &[
+            "Base",
+            "Constant",
+            "Bubble",
+            "Better_AC_Comprehension_Expansion",
+        ];
+
+        let rule_sets =
+            resolve_rule_sets(crate::solver::SolverFamily::Minion, extra_rule_sets).unwrap();
+        let generator_model =
+            crate::rule_engine::rewrite_naive(&generator_model, &rule_sets, false).unwrap();
+
+        // HACK: also call the rewriter to rewrite inside the comprehension
+        //
+        // The original idea was to let the top level rewriter rewrite the return expression model
+        // and the generator model. The comprehension wouldn't be expanded until the generator
+        // model is in valid minion that can be ran, at which point the return expression model
+        // should also be in valid minion.
+        //
+        // By calling the rewriter inside the rule, we no longer wait for the generator model to be
+        // valid Minion, so we don't get the simplified return model either...
+        //
+        // We need to do this as we want to modify the generator model (add the dummy Z's) then
+        // solve and return in one go.
+        //
+        // Comprehensions need a big rewrite soon, as theres lots of sharp edges such as this in
+        // my original implementation, and I don't think we can fit our new optimisation into it.
+        // If we wanted to avoid calling the rewriter, we would need to run the first half the rule
+        // up to adding the return expr to the generator model, yield, then come back later to
+        // actually solve it?
+
+        let return_expression_submodel = self.return_expression_submodel.clone();
+        let mut return_expression_model = Model::new(Arc::new(RwLock::new(Context::default())));
+        *return_expression_model.as_submodel_mut() = return_expression_submodel;
+        return_expression_model =
+            rewrite_naive(&return_expression_model, &rule_sets, false).unwrap();
+
+        let return_expression_submodel = return_expression_model.as_submodel().clone();
+
+        let minion = minion
+            .load_model(generator_model.clone())
+            .expect("generator model to be valid");
+
+        let values = Arc::new(Mutex::new(Vec::new()));
+        let values_ptr = Arc::clone(&values);
+
+        tracing::debug!(model=%generator_model.clone(),comprehension=%self.clone(),"Minion solving comprehnesion (ac mode)");
+        minion.solve(Box::new(move |sols| {
+            // TODO: deal with represented names if induction variables are abslits.
+            let values = &mut *values_ptr.lock().unwrap();
+            values.push(sols);
+            true
+        }))?;
+
+        let values = values.lock().unwrap().clone();
+
+        let mut return_expressions = vec![];
+
+        let child_symtab = return_expression_submodel.symbols().clone();
+        let return_expression = return_expression_submodel.as_single_expression();
+
+        for value in values {
+            // convert back to an expression
+
+            // we only want to substitute induction variables.
+            // (definitely not machine names, as they mean something different in this scope!)
+            let value: HashMap<_, _> = value
+                .into_iter()
+                .filter(|(n, _)| self.induction_vars.contains(n))
+                .collect();
+
+            let value_ptr = Arc::new(value);
+            let value_ptr_2 = Arc::clone(&value_ptr);
+
+            // substitute in the values for the induction variables
+            let return_expression = return_expression.transform_bi(Arc::new(move |x: Atom| {
+                let Atom::Reference(ref name) = x else {
+                    return x;
+                };
+
+                // is this referencing an induction var?
+                let Some(lit) = value_ptr_2.get(name) else {
+                    return x;
+                };
+
+                Atom::Literal(lit.clone())
+            }));
+
+            // merge symbol table into parent scope
+
+            // convert machine names in child_symtab to ones that we know are unused in the parent
+            // symtab
+            let mut machine_name_translations: HashMap<Name, Name> = HashMap::new();
+
+            // populate machine_name_translations, and move the declarations from child to parent
+            for (name, decl) in child_symtab.clone().into_iter_local() {
                 // skip givens for induction vars§
                 if value_ptr.get(&name).is_some()
                     && matches!(decl.kind(), DeclarationKind::Given(_))

@@ -10,6 +10,7 @@ use crate::{
     extra_check,
     utils::{is_flat, to_aux_var},
 };
+use conjure_core::ast::{DeclarationKind, Name};
 use conjure_core::{
     ast::{
         Atom, Declaration, Domain, Expression as Expr, Literal as Lit, Range, ReturnType,
@@ -22,6 +23,7 @@ use conjure_core::{
     },
     solver::SolverFamily,
 };
+use uniplate::Biplate;
 
 use itertools::Itertools;
 use uniplate::Uniplate;
@@ -914,6 +916,18 @@ fn flatten_generic(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             | Expr::SafeIndex(_, _, _)
             | Expr::InDomain(_, _, _)
     ) {
+        return Err(RuleNotApplicable);
+    }
+
+    // until we have categories, do not generically flatten anything containing givens.
+    // (at time of writing, quantified variables are modelled as givens...)
+
+    // TODO: use categories
+    if expr.universe_bi().iter().any(|x: &Name| {
+        symbols
+            .lookup(x)
+            .is_some_and(|x| matches!(x.kind(), DeclarationKind::Given(_)))
+    }) {
         return Err(RuleNotApplicable);
     }
 

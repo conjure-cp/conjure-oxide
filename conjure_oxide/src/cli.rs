@@ -86,6 +86,9 @@ pub struct GlobalArgs {
     /// Use the native parser instead of Conjure's.
     #[arg(long, default_value_t = false, global = true)]
     pub enable_native_parser: bool,
+
+    #[arg(long, default_value_t = false)]
+    pub no_use_expand_ac: bool,
 }
 
 #[derive(Debug, Clone, Args)]

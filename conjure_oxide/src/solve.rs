@@ -96,6 +96,10 @@ pub(crate) fn init_context(
         extra_rule_sets.push(rs.as_str());
     }
 
+    if global_args.no_use_expand_ac {
+        extra_rule_sets.pop_if(|x| x == &"Better_AC_Comprehension_Expansion");
+    }
+
     ensure!(
         target_family == SolverFamily::Minion || target_family == SolverFamily::SAT,
         "Only the Minion and SAT solvers is currently supported!"

@@ -172,7 +172,8 @@ fn distribute_not_over_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// and([a]) ~> a
 /// ```
 #[register_rule(("Base", 8800))]
-fn remove_unit_vector_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+
+fn remove_unit_vector_and_1(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         And(_, e) => {
             let Some(exprs) = e.as_ref().clone().unwrap_list() else {
