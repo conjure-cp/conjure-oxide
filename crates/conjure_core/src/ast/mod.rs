@@ -1,7 +1,6 @@
 pub mod pretty;
 pub mod serde;
 
-pub mod ac_operators;
 mod atom;
 pub mod comprehension;
 mod declaration;
