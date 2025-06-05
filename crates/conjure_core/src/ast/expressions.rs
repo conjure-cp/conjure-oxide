@@ -808,6 +808,21 @@ impl Expression {
         )
     }
 
+    /// True if the expression is a matrix literal.
+    ///
+    /// This is true for both forms of matrix literals: those with elements of type [`Literal`] and
+    /// [`Expression`].
+    pub fn is_matrix_literal(&self) -> bool {
+        matches!(
+            self,
+            Expression::AbstractLiteral(_, AbstractLiteral::Matrix(_, _))
+                | Expression::Atomic(
+                    _,
+                    Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(_, _))),
+                )
+        )
+    }
+
     /// True iff self and other are both atomic and identical.
     ///
     /// This method is useful to cheaply check equivalence. Assuming CSE is enabled, any unifiable

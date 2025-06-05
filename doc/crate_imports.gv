@@ -1,0 +1,75 @@
+digraph G {
+    overlap = false;
+    rankdir = TB; // top to bottom (try also LR - left to right)
+    beautify = true;
+    concentrate = true;
+    splines = true; // try also: polyline, ortho
+    nodesep = 0.6;   // node separation
+    ranksep = 0.8;   // rank (i.e. nodes on same level of the tree) separation
+
+    // Global node attributes
+    node [shape=box, style="rounded,filled", fillcolor=lightgrey];
+
+    subgraph cluster_0 {
+        label = "conjure-oxide";
+        style="filled";
+        fillcolor="lightblue"; // Color for the main cluster
+        cluster = true; // Ensure this is treated as a cluster
+
+        conjure_oxide [fillcolor=white]; // Highlight the main node
+
+        subgraph cluster_1 {
+            label = "crates";
+            style="filled";
+            fillcolor="lightyellow"; // Color for crates cluster
+            cluster = true;
+
+            conjure_core;
+            conjure_rules;
+            conjure_rule_macros;
+            conjure_essence_macros;
+            conjure_essence_parser;
+            "tree-sitter-essence";
+            tree_morph;
+            randicheck;
+            enum_compatability_macro;
+        }
+
+        subgraph cluster_2 {
+            label = "solvers";
+            style="filled";
+            fillcolor="#90EE90"; // Color for solvers cluster
+            cluster = true;
+
+            minion_rs;
+        }
+    }
+
+    uniplate [fillcolor=aliceblue];
+    "minion (original C++)" [fillcolor=mistyrose];
+
+    // Edges
+    conjure_oxide -> conjure_core;
+    conjure_oxide -> conjure_rules;
+    conjure_oxide -> minion_rs;
+    conjure_oxide -> conjure_essence_parser;
+    conjure_oxide -> conjure_essence_macros;
+
+    conjure_core -> uniplate;
+    conjure_core -> minion_rs;
+    conjure_core -> enum_compatability_macro;
+    conjure_core -> conjure_rule_macros;
+
+    conjure_essence_macros -> conjure_core;
+    conjure_essence_macros -> conjure_essence_parser;
+
+    conjure_rules -> conjure_core;
+    conjure_rules -> conjure_rule_macros;
+    conjure_rules -> conjure_essence_macros;
+
+    conjure_essence_parser -> conjure_core;
+    conjure_essence_parser -> "tree-sitter-essence";
+
+    tree_morph -> uniplate;
+    minion_rs -> "minion (original C++)";
+}
