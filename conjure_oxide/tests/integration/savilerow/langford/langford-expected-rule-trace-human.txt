@@ -59,14 +59,34 @@ new variables:
   find position#matrix_to_atom_6: int(1..6)
 --
 
-[given i: int(1..3)
+Model before rewriting:
+
+find i: int(1..3)
+find __0: bool
+
+such that
+
+(true != __0)
+
+--
+
+Final model:
+
+find i: int(1..3)
+find __0: bool
+
+such that
+
+(true != __0)
+
+and([given i: int(1..3)
 
 such that
 
 (position#matrix_to_atom[sum([i,k;int(1..2)])] = sum([sum([position#matrix_to_atom[i],i;int(1..2)]),1;int(1..2)]))
- | i: int(1..3),], 
-   ~~> expand_comprehension ([("Base", 2000)]) 
-[(position#matrix_to_atom[sum([1,k;int(1..2)])] = sum([sum([position#matrix_to_atom[1],1;int(1..2)]),1;int(1..2)])),(position#matrix_to_atom[sum([2,k;int(1..2)])] = sum([sum([position#matrix_to_atom[2],2;int(1..2)]),1;int(1..2)])),(position#matrix_to_atom[sum([3,k;int(1..2)])] = sum([sum([position#matrix_to_atom[3],3;int(1..2)]),1;int(1..2)]));int(1..)] 
+ | i: int(1..3),__0: bool,]), 
+   ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
+and([(position#matrix_to_atom[sum([1,k;int(1..2)])] = sum([sum([position#matrix_to_atom[1],1;int(1..2)]),1;int(1..2)])),(position#matrix_to_atom[sum([2,k;int(1..2)])] = sum([sum([position#matrix_to_atom[2],2;int(1..2)]),1;int(1..2)])),(position#matrix_to_atom[sum([3,k;int(1..2)])] = sum([sum([position#matrix_to_atom[3],3;int(1..2)]),1;int(1..2)]));int(1..)]) 
 
 --
 

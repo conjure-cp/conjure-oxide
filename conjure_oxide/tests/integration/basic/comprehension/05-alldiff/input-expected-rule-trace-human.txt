@@ -1,0 +1,128 @@
+Model before rewriting:
+
+find x: bool
+
+such that
+
+(x = allDiff([given x: int(1..10)
+
+such that
+
+x
+ | x: int(1..10),(x % 2 = 0)]))
+
+--
+
+(x = allDiff([given x: int(1..10)
+
+such that
+
+x
+ | x: int(1..10),(x % 2 = 0)])), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(allDiff([given x: int(1..10)
+
+such that
+
+x
+ | x: int(1..10),(x % 2 = 0)]), x) 
+
+--
+
+x % 2, 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(x,2) @ (2 != 0)} 
+
+--
+
+Reify(allDiff([given x: int(1..10)
+
+such that
+
+x
+ | x: int(1..10),({SafeMod(x,2) @ (2 != 0)} = 0)]), x), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+Reify(allDiff([given x: int(1..10)
+
+such that
+
+x
+ | x: int(1..10),({SafeMod(x,2) @ true} = 0)]), x) 
+
+--
+
+({SafeMod(x,2) @ true} = 0), 
+   ~~> bubble_up ([("Bubble", 8900)]) 
+{(SafeMod(x,2) = 0) @ and([true;int(1..)])} 
+
+--
+
+Reify(allDiff([given x: int(1..10)
+
+such that
+
+x
+ | x: int(1..10),{(SafeMod(x,2) = 0) @ and([true;int(1..)])}]), x), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+Reify(allDiff([given x: int(1..10)
+
+such that
+
+x
+ | x: int(1..10),{(SafeMod(x,2) = 0) @ true}]), x) 
+
+--
+
+{(SafeMod(x,2) = 0) @ true}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+and([(SafeMod(x,2) = 0),true;int(1..)]) 
+
+--
+
+Reify(allDiff([given x: int(1..10)
+
+such that
+
+x
+ | x: int(1..10),and([(SafeMod(x,2) = 0),true;int(1..)])]), x), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+Reify(allDiff([given x: int(1..10)
+
+such that
+
+x
+ | x: int(1..10),(SafeMod(x,2) = 0)]), x) 
+
+--
+
+(SafeMod(x,2) = 0), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(x, 2, 0) 
+
+--
+
+[given x: int(1..10)
+
+such that
+
+x
+ | x: int(1..10),ModEq(x, 2, 0)], 
+   ~~> expand_comprehension ([("Base", 2000)]) 
+[2,4,6,8,10;int(1..)] 
+
+--
+
+Reify(allDiff([2,4,6,8,10;int(1..)]), x), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+Reify(true, x) 
+
+--
+
+Final model:
+
+find x: bool
+
+such that
+
+Reify(true, x)
+
