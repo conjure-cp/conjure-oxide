@@ -16,7 +16,7 @@ use crate::{
     context::Context,
     into_matrix_expr, matrix_expr,
     metadata::Metadata,
-    rule_engine::resolve_rule_sets,
+    rule_engine::{resolve_rule_sets, rewrite_naive},
     solver::{Solver, SolverError},
 };
 
@@ -81,6 +81,32 @@ impl Comprehension {
         let model=
             crate::rule_engine::rewrite_naive(&model, &rule_sets, false).unwrap();
 
+        // HACK: also call the rewriter to rewrite inside the comprehension 
+        //
+        // The original idea was to let the top level rewriter rewrite the return expression model
+        // and the generator model. The comprehension wouldn't be expanded until the generator
+        // model is in valid minion that can be ran, at which point the return expression model
+        // should also be in valid minion.
+        //
+        // By calling the rewriter inside the rule, we no longer wait for the generator model to be
+        // valid Minion, so we don't get the simplified return model either...
+        //
+        // We need to do this as we want to modify the generator model (add the dummy Z's) then
+        // solve and return in one go.
+        // 
+        // Comprehensions need a big rewrite soon, as theres lots of sharp edges such as this in
+        // my original implementation, and I don't think we can fit our new optimisation into it.
+        // If we wanted to avoid calling the rewriter, we would need to run the first half the rule
+        // up to adding the return expr to the generator model, yield, then come back later to
+        // actually solve it?
+
+        let return_expression_submodel = self.return_expression_submodel.clone();
+        let mut return_expression_model = Model::new(Arc::new(RwLock::new(Context::default())));
+        *return_expression_model.as_submodel_mut() = return_expression_submodel;
+        return_expression_model = rewrite_naive(&return_expression_model,&rule_sets,false).unwrap();
+
+        let return_expression_submodel = return_expression_model.as_submodel().clone();
+
         let minion = minion.load_model(model.clone())?;
 
         let values = Arc::new(Mutex::new(Vec::new()));
@@ -98,12 +124,11 @@ impl Comprehension {
 
         let mut return_expressions = vec![];
 
+        let child_symtab = return_expression_submodel.symbols().clone();
+        let return_expression = return_expression_submodel.as_single_expression();
         for value in values {
             // convert back to an expression
 
-            let return_expression_submodel = self.return_expression_submodel.clone();
-            let child_symtab = return_expression_submodel.symbols().clone();
-            let return_expression = return_expression_submodel.as_single_expression();
 
             // we only want to substitute induction variables.
             // (definitely not machine names, as they mean something different in this scope!)
@@ -136,7 +161,7 @@ impl Comprehension {
             let mut machine_name_translations: HashMap<Name, Name> = HashMap::new();
 
             // populate machine_name_translations, and move the declarations from child to parent
-            for (name, decl) in child_symtab.into_iter_local() {
+            for (name, decl) in child_symtab.clone().into_iter_local() {
                 // skip givens for induction vars§
                 if value_ptr.get(&name).is_some()
                     && matches!(decl.kind(), DeclarationKind::Given(_))
@@ -277,6 +302,32 @@ impl Comprehension {
         let generator_model =
             crate::rule_engine::rewrite_naive(&generator_model, &rule_sets, false).unwrap();
 
+        // HACK: also call the rewriter to rewrite inside the comprehension 
+        //
+        // The original idea was to let the top level rewriter rewrite the return expression model
+        // and the generator model. The comprehension wouldn't be expanded until the generator
+        // model is in valid minion that can be ran, at which point the return expression model
+        // should also be in valid minion.
+        //
+        // By calling the rewriter inside the rule, we no longer wait for the generator model to be
+        // valid Minion, so we don't get the simplified return model either...
+        //
+        // We need to do this as we want to modify the generator model (add the dummy Z's) then
+        // solve and return in one go.
+        // 
+        // Comprehensions need a big rewrite soon, as theres lots of sharp edges such as this in
+        // my original implementation, and I don't think we can fit our new optimisation into it.
+        // If we wanted to avoid calling the rewriter, we would need to run the first half the rule
+        // up to adding the return expr to the generator model, yield, then come back later to
+        // actually solve it?
+
+        let return_expression_submodel = self.return_expression_submodel.clone();
+        let mut return_expression_model = Model::new(Arc::new(RwLock::new(Context::default())));
+        *return_expression_model.as_submodel_mut() = return_expression_submodel;
+        return_expression_model = rewrite_naive(&return_expression_model,&rule_sets,false).unwrap();
+
+        let return_expression_submodel = return_expression_model.as_submodel().clone();
+
         let minion = minion
             .load_model(generator_model.clone())
             .expect("generator model to be valid");
@@ -296,12 +347,11 @@ impl Comprehension {
 
         let mut return_expressions = vec![];
 
+        let child_symtab = return_expression_submodel.symbols().clone();
+        let return_expression = return_expression_submodel.as_single_expression();
+
         for value in values {
             // convert back to an expression
-
-            let return_expression_submodel = self.return_expression_submodel.clone();
-            let child_symtab = return_expression_submodel.symbols().clone();
-            let return_expression = return_expression_submodel.as_single_expression();
 
             // we only want to substitute induction variables.
             // (definitely not machine names, as they mean something different in this scope!)
@@ -334,7 +384,7 @@ impl Comprehension {
             let mut machine_name_translations: HashMap<Name, Name> = HashMap::new();
 
             // populate machine_name_translations, and move the declarations from child to parent
-            for (name, decl) in child_symtab.into_iter_local() {
+            for (name, decl) in child_symtab.clone().into_iter_local() {
                 // skip givens for induction vars§
                 if value_ptr.get(&name).is_some()
                     && matches!(decl.kind(), DeclarationKind::Given(_))
