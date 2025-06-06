@@ -17,42 +17,6 @@ UnsafeDiv(y, 2),
 
 (UnsafePow(sum([x,2;int(1..2)]), {SafeDiv(y, 2) @ (2 != 0)}) = 4), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(UnsafePow(sum([x,2;int(1..2)]), {SafeDiv(y, 2) @ true}) = 4) 
-
---
-
-UnsafePow(sum([x,2;int(1..2)]), {SafeDiv(y, 2) @ true}), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{UnsafePow(sum([x,2;int(1..2)]), SafeDiv(y, 2)) @ and([true;int(1..)])} 
-
---
-
-({UnsafePow(sum([x,2;int(1..2)]), SafeDiv(y, 2)) @ and([true;int(1..)])} = 4), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-({UnsafePow(sum([x,2;int(1..2)]), SafeDiv(y, 2)) @ true} = 4) 
-
---
-
-({UnsafePow(sum([x,2;int(1..2)]), SafeDiv(y, 2)) @ true} = 4), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{(UnsafePow(sum([x,2;int(1..2)]), SafeDiv(y, 2)) = 4) @ and([true;int(1..)])} 
-
---
-
-{(UnsafePow(sum([x,2;int(1..2)]), SafeDiv(y, 2)) = 4) @ and([true;int(1..)])}, 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-{(UnsafePow(sum([x,2;int(1..2)]), SafeDiv(y, 2)) = 4) @ true} 
-
---
-
-{(UnsafePow(sum([x,2;int(1..2)]), SafeDiv(y, 2)) = 4) @ true}, 
-   ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(UnsafePow(sum([x,2;int(1..2)]), SafeDiv(y, 2)) = 4),true;int(1..)]) 
-
---
-
-and([(UnsafePow(sum([x,2;int(1..2)]), SafeDiv(y, 2)) = 4),true;int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
 (UnsafePow(sum([x,2;int(1..2)]), SafeDiv(y, 2)) = 4) 
 
 --

@@ -39,7 +39,16 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         SafeIndex(_, _, _) => Err(RuleNotApplicable),
         SafeSlice(_, _, _) => Err(RuleNotApplicable),
         InDomain(_, _, _) => Err(RuleNotApplicable),
-        Bubble(_, _, _) => Err(RuleNotApplicable),
+        Bubble(_, expr, cond) => {
+            // definition of bubble is "expr is valid as long as cond is true"
+            //
+            // check if cond is true and pop the bubble!
+            if let Expr::Atomic(_, Atom::Literal(Lit::Bool(true))) = *cond {
+                Ok(Reduction::pure(*expr))
+            } else {
+                Err(RuleNotApplicable)
+            }
+        }
         Atomic(_, _) => Err(RuleNotApplicable),
         Scope(_, _) => Err(RuleNotApplicable),
         ToInt(_, expression) => {

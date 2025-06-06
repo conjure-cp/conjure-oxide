@@ -26,34 +26,6 @@ x#tuple_to_atom[1],
 ({x#tuple_to_atom[1] @ and([(1 <= 2),(1 >= 1);int(1..)])} = false),
 (x[2] = 2), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-({x#tuple_to_atom[1] @ true} = false),
-(x[2] = 2) 
-
---
-
-({x#tuple_to_atom[1] @ true} = false), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{(x#tuple_to_atom[1] = false) @ and([true;int(1..)])} 
-
---
-
-{(x#tuple_to_atom[1] = false) @ and([true;int(1..)])},
-(x[2] = 2), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-{(x#tuple_to_atom[1] = false) @ true},
-(x[2] = 2) 
-
---
-
-{(x#tuple_to_atom[1] = false) @ true}, 
-   ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(x#tuple_to_atom[1] = false),true;int(1..)]) 
-
---
-
-and([(x#tuple_to_atom[1] = false),true;int(1..)]),
-(x[2] = 2), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
 (x#tuple_to_atom[1] = false),
 (x[2] = 2) 
 
@@ -73,34 +45,6 @@ x#tuple_to_atom[2],
 
 (x#tuple_to_atom[1] = false),
 ({x#tuple_to_atom[2] @ and([(2 <= 2),(2 >= 1);int(1..)])} = 2), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(x#tuple_to_atom[1] = false),
-({x#tuple_to_atom[2] @ true} = 2) 
-
---
-
-({x#tuple_to_atom[2] @ true} = 2), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{(x#tuple_to_atom[2] = 2) @ and([true;int(1..)])} 
-
---
-
-(x#tuple_to_atom[1] = false),
-{(x#tuple_to_atom[2] = 2) @ and([true;int(1..)])}, 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(x#tuple_to_atom[1] = false),
-{(x#tuple_to_atom[2] = 2) @ true} 
-
---
-
-{(x#tuple_to_atom[2] = 2) @ true}, 
-   ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(x#tuple_to_atom[2] = 2),true;int(1..)]) 
-
---
-
-(x#tuple_to_atom[1] = false),
-and([(x#tuple_to_atom[2] = 2),true;int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 (x#tuple_to_atom[1] = false),
 (x#tuple_to_atom[2] = 2) 

@@ -29,54 +29,6 @@ allDiff(a[3,..]),
 (a[1, 1] = 1),
 (a[2, 2] = 1), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-allDiff({a[..,1] @ true}),
-allDiff(a[..,3]),
-allDiff(a[1,..]),
-allDiff(a[2,..]),
-allDiff(a[3,..]),
-(a[1, 1] = 1),
-(a[2, 2] = 1) 
-
---
-
-allDiff({a[..,1] @ true}), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{allDiff(a[..,1]) @ and([true;int(1..)])} 
-
---
-
-{allDiff(a[..,1]) @ and([true;int(1..)])},
-allDiff(a[..,3]),
-allDiff(a[1,..]),
-allDiff(a[2,..]),
-allDiff(a[3,..]),
-(a[1, 1] = 1),
-(a[2, 2] = 1), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-{allDiff(a[..,1]) @ true},
-allDiff(a[..,3]),
-allDiff(a[1,..]),
-allDiff(a[2,..]),
-allDiff(a[3,..]),
-(a[1, 1] = 1),
-(a[2, 2] = 1) 
-
---
-
-{allDiff(a[..,1]) @ true}, 
-   ~~> expand_bubble ([("Bubble", 8900)]) 
-and([allDiff(a[..,1]),true;int(1..)]) 
-
---
-
-and([allDiff(a[..,1]),true;int(1..)]),
-allDiff(a[..,3]),
-allDiff(a[1,..]),
-allDiff(a[2,..]),
-allDiff(a[3,..]),
-(a[1, 1] = 1),
-(a[2, 2] = 1), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
 allDiff(a[..,1]),
 allDiff(a[..,3]),
 allDiff(a[1,..]),
