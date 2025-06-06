@@ -31,11 +31,14 @@ env:
 jobs:
   build-and-test:
     name: "Test"
-    timeout-minutes: 10
+    timeout-minutes: 15
     strategy:
       # run all combinations of the matrix even if one combination fails.
       fail-fast: false
       matrix:
+        compiler_profile:
+          - release
+          - debug
         rust_release:
           - stable
           - nightly
@@ -72,6 +75,10 @@ jobs:
       - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
 
       - run: cargo build -vv --workspace
+        if: matrix.compiler_profile == 'debug'
+
+      - run: cargo build -vv --release --workspace
+        if: matrix.compiler_profile == 'release'
 
       - uses: ./.github/actions/install-conjure
         with:
@@ -79,11 +86,14 @@ jobs:
           version: ${{ matrix.conjure_version }}
 
       - run: cargo test --workspace
+        if: matrix.compiler_profile == 'debug'
+
       - run: cargo test --workspace --release
+        if: matrix.compiler_profile == 'release'
 
   examples:
     name: "Examples"
-    timeout-minutes: 10
+    timeout-minutes: 15
     strategy:
       # run all combinations of the matrix even if one combination fails.
       fail-fast: false
