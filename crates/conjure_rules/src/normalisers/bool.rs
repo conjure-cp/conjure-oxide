@@ -11,6 +11,8 @@ use uniplate::Uniplate;
 
 use Expr::*;
 
+use crate::bottom_up_adaptor::as_bottom_up;
+
 /// Removes double negations
 ///
 /// ```text
@@ -172,7 +174,11 @@ fn distribute_not_over_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// and([a]) ~> a
 /// ```
 #[register_rule(("Base", 8800))]
-fn remove_unit_vector_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+fn remove_unit_vector_and(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
+    as_bottom_up(remove_unit_vector_and_1)(expr,symtab)
+}
+
+fn remove_unit_vector_and_1(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         And(_, e) => {
             let Some(exprs) = e.as_ref().clone().unwrap_list() else {
