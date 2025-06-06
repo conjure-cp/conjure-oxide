@@ -44,8 +44,9 @@ use conjure_oxide::SolverFamily;
 use pretty_assertions::assert_eq;
 use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 #[serde(default)]
+#[serde(deny_unknown_fields)]
 struct TestConfig {
     extra_rewriter_asserts: Vec<String>,
 
@@ -239,7 +240,7 @@ fn integration_test_inner(
 
     let file_config: TestConfig =
         if let Ok(config_contents) = fs::read_to_string(format!("{}/config.toml", path)) {
-            toml::from_str(&config_contents).unwrap_or_default()
+            toml::from_str(&config_contents).unwrap()
         } else {
             Default::default()
         };
