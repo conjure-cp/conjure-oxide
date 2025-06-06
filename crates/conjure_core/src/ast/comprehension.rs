@@ -68,6 +68,19 @@ impl Comprehension {
 
         *model.as_submodel_mut() = self.generator_submodel.clone();
 
+        // call rewrite here as well as in expand_ac, just to be consistent
+        let extra_rule_sets = &[
+            "Base",
+            "Constant",
+            "Bubble",
+            "Better_AC_Comprehension_Expansion",
+        ];
+
+        let rule_sets =
+            resolve_rule_sets(crate::solver::SolverFamily::Minion, extra_rule_sets).unwrap();
+        let model=
+            crate::rule_engine::rewrite_naive(&model, &rule_sets, false).unwrap();
+
         let minion = minion.load_model(model.clone())?;
 
         let values = Arc::new(Mutex::new(Vec::new()));
