@@ -130,28 +130,33 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             (
                 Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),
                 Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => Some(Lit::AbstractLiteral(AbstractLiteral::Set(
-                a.iter()
-                    .cloned()
-                    .collect::<HashSet<Lit>>()
-                    .intersection(&b.iter().cloned().collect::<HashSet<Lit>>())
-                    .cloned()
-                    .collect(),
-            ))),
+            ) => {
+                let mut res: Vec<Lit> = Vec::new();
+                for lit in a.iter() {
+                    if b.contains(lit) && !res.contains(lit) {
+                        res.push(lit.clone());
+                    }
+                }
+                Some(Lit::AbstractLiteral(AbstractLiteral::Set(res)))
+            }
             _ => None,
         },
         Expr::Union(_, a, b) => match (a.as_ref(), b.as_ref()) {
             (
                 Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(a)))),
                 Expr::Atomic(_, Atom::Literal(Lit::AbstractLiteral(AbstractLiteral::Set(b)))),
-            ) => Some(Lit::AbstractLiteral(AbstractLiteral::Set(
-                a.iter()
-                    .cloned()
-                    .collect::<HashSet<Lit>>()
-                    .union(&b.iter().cloned().collect::<HashSet<Lit>>())
-                    .cloned()
-                    .collect(),
-            ))),
+            ) => {
+                let mut res: Vec<Lit> = Vec::new();
+                for lit in a.iter() {
+                    res.push(lit.clone());
+                }
+                for lit in b.iter() {
+                    if !res.contains(lit) {
+                        res.push(lit.clone());
+                    }
+                }
+                Some(Lit::AbstractLiteral(AbstractLiteral::Set(res)))
+            }
             _ => None,
         },
         Expr::In(_, a, b) => {
