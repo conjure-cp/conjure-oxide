@@ -297,29 +297,85 @@ impl SymbolTable {
             .cloned()
             .clone()
             .or_else(|| {
-                let mut decl: Declaration = Rc::unwrap_or_clone(decl);
-                let var = decl.as_var_mut()?;
+                // add represented name declaration to the same scope as the name they are
+                // representing
+                if let Some(decl) = self.lookup_local(name) {
+                    let mut decl: Declaration = Rc::unwrap_or_clone(decl);
+                    let var = decl.as_var_mut()?;
 
-                // TODO: no idea how to deal with initialising representations for nested things..
+                    // TODO: no idea how to deal with initialising representations for nested things..
 
-                if representation.len() != 1 {
-                    bug!("nested representations not implemented")
+                    if representation.len() != 1 {
+                        bug!("nested representations not implemented")
+                    }
+
+                    let repr_rule = get_repr_rule(representation[0])?;
+
+                    let reprs = vec![repr_rule(name, self)?];
+                    for repr in &reprs {
+                        repr.declaration_down()
+                            .ok()
+                            .unwrap()
+                            .iter()
+                            .for_each(|x| self.update_insert(Rc::new(x.clone())));
+                    }
+                    var.representations.push(reprs.clone());
+
+                    self.update_insert(Rc::new(decl));
+                    Some(reprs)
+                } else {
+                    None
+
+                    // declaration is in some parent table
+                    //
+                    // FIXME: this is broken. for now, just add representations for variables in
+                    // our scope. This is slower, in particular, when we want to represent a
+                    // decision variable referenced inside a comprehension, but it is correct
+                    // nonetheless.
+                    //
+                    //
+                    // let mut parent_table = self.parent.clone();
+                    // let mut decl = None;
+                    // while let Some(table) = parent_table.clone() {
+                    //     let table_ref= (*table).borrow();
+                    //     if let Some(d) = table_ref.lookup_local(name) {
+                    //         decl = Some(d);
+                    //         break;
+                    //     }
+                    //     parent_table = table_ref.parent.clone();
+                    // }
+
+                    // let mut decl: Declaration = Rc::unwrap_or_clone(
+                    //     decl.expect("declaration should exist: we used it earlier!"),
+                    // );
+
+                    // let parent_table = parent_table.unwrap();
+                    // let mut table = parent_table.borrow_mut();
+
+                    // let var = decl.as_var_mut()?;
+
+                    // // TODO: no idea how to deal with initialising representations for nested things..
+
+                    // if representation.len() != 1 {
+                    //     bug!("nested representations not implemented")
+                    // }
+
+                    // let repr_rule = get_repr_rule(representation[0])?;
+
+                    // let reprs = vec![repr_rule(name, &table)?];
+                    // for repr in &reprs {
+                    //     repr.declaration_down()
+                    //         .ok()
+                    //         .unwrap()
+                    //         .iter()
+                    //         .for_each(|x| table.update_insert(Rc::new(x.clone())));
+                    // }
+                    // var.representations.push(reprs.clone());
+
+                    // table.update_insert(Rc::new(decl));
+                    // dbg!(table);
+                    // Some(reprs)
                 }
-
-                let repr_rule = get_repr_rule(representation[0])?;
-
-                let reprs = vec![repr_rule(name, self)?];
-                for repr in &reprs {
-                    repr.declaration_down()
-                        .ok()
-                        .unwrap()
-                        .iter()
-                        .for_each(|x| self.update_insert(Rc::new(x.clone())));
-                }
-                var.representations.push(reprs.clone());
-
-                self.update_insert(Rc::new(decl));
-                Some(reprs)
             })
     }
 }

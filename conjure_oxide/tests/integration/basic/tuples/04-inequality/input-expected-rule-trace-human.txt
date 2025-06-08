@@ -27,23 +27,23 @@ new variables:
 
 (x#tuple_to_atom != y#tuple_to_atom), 
    ~~> tuple_inequality ([("Base", 2000)]) 
-Not(and([(x#tuple_to_atom[1] = y#tuple_to_atom[1]),(x#tuple_to_atom[2] = y#tuple_to_atom[2]);int(1..)])) 
+!(and([(x#tuple_to_atom[1] = y#tuple_to_atom[1]),(x#tuple_to_atom[2] = y#tuple_to_atom[2]);int(1..)])) 
 
 --
 
-Not(and([(x#tuple_to_atom[1] = y#tuple_to_atom[1]),(x#tuple_to_atom[2] = y#tuple_to_atom[2]);int(1..)])), 
+!(and([(x#tuple_to_atom[1] = y#tuple_to_atom[1]),(x#tuple_to_atom[2] = y#tuple_to_atom[2]);int(1..)])), 
    ~~> distribute_not_over_and ([("Base", 8400)]) 
-or([Not((x#tuple_to_atom[1] = y#tuple_to_atom[1])),Not((x#tuple_to_atom[2] = y#tuple_to_atom[2]));int(1..)]) 
+or([!((x#tuple_to_atom[1] = y#tuple_to_atom[1])),!((x#tuple_to_atom[2] = y#tuple_to_atom[2]));int(1..)]) 
 
 --
 
-Not((x#tuple_to_atom[1] = y#tuple_to_atom[1])), 
+!((x#tuple_to_atom[1] = y#tuple_to_atom[1])), 
    ~~> negated_eq_to_neq ([("Base", 8800)]) 
 (x#tuple_to_atom[1] != y#tuple_to_atom[1]) 
 
 --
 
-Not((x#tuple_to_atom[2] = y#tuple_to_atom[2])), 
+!((x#tuple_to_atom[2] = y#tuple_to_atom[2])), 
    ~~> negated_eq_to_neq ([("Base", 8800)]) 
 (x#tuple_to_atom[2] != y#tuple_to_atom[2]) 
 

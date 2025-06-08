@@ -25,7 +25,7 @@ jobs:
 
       - name: Set shas
         id: sha
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           result-encoding: string
           script: |
@@ -43,7 +43,7 @@ jobs:
 
 
       - name: Download artifact
-        uses: dawidd6/action-download-artifact@v9
+        uses: dawidd6/action-download-artifact@v10
         with:
           name: code-coverage-${{ steps.sha.outputs.result }}
           workflow: code-coverage.yml
@@ -73,7 +73,7 @@ jobs:
 
       - name: Set shas
         id: sha
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           result-encoding: string
           script: |
@@ -120,7 +120,7 @@ jobs:
 
       - name: Set shas
         id: sha
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           result-encoding: string
           script: |
@@ -137,7 +137,7 @@ jobs:
             return callee_run.head_sha;
 
       - name: Download artifact
-        uses: dawidd6/action-download-artifact@v9
+        uses: dawidd6/action-download-artifact@v10
         with:
           name: code-coverage-${{ steps.sha.outputs.result }}
           workflow: code-coverage.yml
@@ -150,7 +150,7 @@ jobs:
 
       - name: Retrieve list of artifacts for the PR
         id: find_artifacts
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             const prNum = process.env.num;
@@ -170,7 +170,7 @@ jobs:
       - name: Find previous artifact
         id: previous-artifact
         if: steps.find_artifacts.outputs.result != '[]'
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           result-encoding: string
           script: |
@@ -206,14 +206,14 @@ jobs:
           echo 'EOFABC' >> $GITHUB_OUTPUT
 
       - name: Download doc coverage summary for PR
-        uses: dawidd6/action-download-artifact@v9
+        uses: dawidd6/action-download-artifact@v10
         with:
           workflow: code-coverage.yml
           pr: ${{steps.prnum.outputs.num}}
           name: pr-doc-coverage-summary
 
       - name: Download doc coverage summary for main
-        uses: dawidd6/action-download-artifact@v9
+        uses: dawidd6/action-download-artifact@v10
         with:
           workflow: code-coverage-main.yml
           branch: main
@@ -251,7 +251,7 @@ jobs:
 
       - name: Delete coverage comment if it exists
         if: steps.fc.outputs.comment-id != ''
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             github.rest.issues.deleteComment({

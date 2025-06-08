@@ -60,7 +60,10 @@ pub fn parse_expression(
                     Box::new(expr1),
                     Box::new(expr2),
                 )),
-                "*" => Ok(Expression::Product(Metadata::new(), vec![expr1, expr2])),
+                "*" => Ok(Expression::Product(
+                    Metadata::new(),
+                    Box::new(matrix_expr![expr1, expr2]),
+                )),
                 "/" => {
                     //TODO: add checks for if division is safe or not
                     Ok(Expression::UnsafeDiv(
@@ -216,6 +219,10 @@ pub fn parse_expression(
                     .into(),
             ),
         },
+        "toInt_expr" => Ok(Expression::ToInt(
+            Metadata::new(),
+            Box::new(child_expr(constraint, source_code, root)?),
+        )),
         _ => Err(format!("{} is not a recognized node kind", constraint.kind()).into()),
     }
 }

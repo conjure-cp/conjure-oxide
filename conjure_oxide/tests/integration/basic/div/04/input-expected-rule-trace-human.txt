@@ -6,7 +6,7 @@ find c: int(0..3)
 
 such that
 
-Not((a = UnsafeDiv(b, c)))
+!((a = UnsafeDiv(b, c)))
 
 --
 
@@ -34,19 +34,19 @@ and([(c != 0);int(1..)]),
 
 --
 
-Not(and([(a = SafeDiv(b, c)),(c != 0);int(1..)])), 
+!(and([(a = SafeDiv(b, c)),(c != 0);int(1..)])), 
    ~~> distribute_not_over_and ([("Base", 8400)]) 
-or([Not((a = SafeDiv(b, c))),Not((c != 0));int(1..)]) 
+or([!((a = SafeDiv(b, c))),!((c != 0));int(1..)]) 
 
 --
 
-Not((a = SafeDiv(b, c))), 
+!((a = SafeDiv(b, c))), 
    ~~> negated_eq_to_neq ([("Base", 8800)]) 
 (a != SafeDiv(b, c)) 
 
 --
 
-Not((c != 0)), 
+!((c != 0)), 
    ~~> negated_neq_to_eq ([("Base", 8800)]) 
 (c = 0) 
 

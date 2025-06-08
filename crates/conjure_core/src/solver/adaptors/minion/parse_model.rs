@@ -259,6 +259,10 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             parse_atom(atom)?,
             minion_ast::Constant::Integer(1),
         )),
+
+        // The Minion adaptor currently treats bools as integers anyways, so this is a no-op
+        conjure_ast::Expression::ToInt(_metadata, inner_expr) => parse_expr(*inner_expr),
+
         conjure_ast::Expression::FlatAllDiff(_metadata, atoms) => {
             Ok(minion_ast::Constraint::AllDiff(parse_atoms(atoms)?))
         }
@@ -294,7 +298,14 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
                     .collect_vec(),
             ))
         }
-
+        conjure_ast::Expression::MinionWInSet(_metadata, a, xs) => {
+            Ok(minion_ast::Constraint::WInset(
+                parse_atom(a)?,
+                xs.into_iter()
+                    .map(minion_ast::Constant::Integer)
+                    .collect_vec(),
+            ))
+        }
         conjure_ast::Expression::MinionElementOne(_, vec, i, e) => Ok(
             minion_ast::Constraint::ElementOne(parse_atoms(vec)?, parse_atom(i)?, parse_atom(e)?),
         ),
@@ -377,14 +388,15 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
 }
 
 fn parse_atomic_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Var, SolverError> {
-    let conjure_ast::Expression::Atomic(_, atom) = expr else {
-        return Err(ModelInvalid(format!(
+    match expr {
+        // Minion treats bools as ints anyways, so this is a no-op at this stage
+        conjure_ast::Expression::ToInt(_metadata, inner_expr) => parse_atomic_expr(*inner_expr),
+        conjure_ast::Expression::Atomic(_, atom) => parse_atom(atom),
+        _ => Err(ModelInvalid(format!(
             "expected atomic expression, got {:?}",
             expr
-        )));
-    };
-
-    parse_atom(atom)
+        ))),
+    }
 }
 
 fn parse_atoms(exprs: Vec<conjure_ast::Atom>) -> Result<Vec<minion_ast::Var>, SolverError> {

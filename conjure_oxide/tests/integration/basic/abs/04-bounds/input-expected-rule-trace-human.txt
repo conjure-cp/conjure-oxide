@@ -5,13 +5,19 @@ find y: int(1..3)
 
 such that
 
-(Product([y, |x|]) = 2)
+(product([y,|x|;int(1..2)]) = 2)
 
 --
 
-Product([y, |x|]), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-Product([y, __0]) 
+product([y,|x|;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+product([y,|x|;int(1..)]) 
+
+--
+
+product([y,|x|;int(1..)]), 
+   ~~> flatten_product ([("Minion", 4200)]) 
+product([y,__0;int(1..)]) 
 new variables:
   find __0: int(0..3)
 new constraints:
@@ -24,7 +30,7 @@ AbsEq(__0,x)
 
 --
 
-(Product([y, __0]) = 2), 
+(product([y,__0;int(1..)]) = 2), 
    ~~> introduce_producteq ([("Minion", 4200)]) 
 FlatProductEq(__0,y,2) 
 

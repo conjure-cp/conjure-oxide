@@ -19,6 +19,7 @@ use enum_compatability_macro::document_compatibility;
 use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Uniplate as _};
 
+use super::ac_operators::ACOperatorKind;
 use super::comprehension::Comprehension;
 use super::records::RecordValue;
 use super::{Domain, Range, SubModel, Typeable};
@@ -31,8 +32,8 @@ use super::{Domain, Range, SubModel, Typeable};
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
 #[uniplate(walk_into=[Atom,SubModel,AbstractLiteral<Expression>,Comprehension])]
 #[biplate(to=Metadata)]
-#[biplate(to=Atom)]
-#[biplate(to=Name,walk_into=[Atom])]
+#[biplate(to=Atom,walk_into=[Expression,AbstractLiteral<Expression>,Vec<Expression>])]
+#[biplate(to=Name,walk_into=[Expression,Atom,AbstractLiteral<Expression>,Vec<Expression>])]
 #[biplate(to=Vec<Expression>)]
 #[biplate(to=Option<Expression>)]
 #[biplate(to=SubModel,walk_into=[Comprehension])]
@@ -98,6 +99,13 @@ pub enum Expression {
     /// `SafeSlice` respectively.
     InDomain(Metadata, Box<Expression>, Domain),
 
+    /// `toInt(b)` casts boolean expression b to an integer.
+    ///
+    /// - If b is false, then `toInt(b) == 0`
+    ///
+    /// - If b is true, then `toInt(b) == 1`
+    ToInt(Metadata, Box<Expression>),
+
     Scope(Metadata, Box<SubModel>),
 
     /// `|x|` - absolute value of `x`
@@ -110,7 +118,7 @@ pub enum Expression {
 
     /// `a * b * c * ...`
     #[compatible(JsonInput)]
-    Product(Metadata, Vec<Expression>),
+    Product(Metadata, Box<Expression>),
 
     /// `min(<vec_expr>)`
     #[compatible(JsonInput)]
@@ -142,6 +150,9 @@ pub enum Expression {
 
     #[compatible(JsonInput)]
     Union(Metadata, Box<Expression>, Box<Expression>),
+
+    #[compatible(JsonInput)]
+    In(Metadata, Box<Expression>, Box<Expression>),
 
     #[compatible(JsonInput)]
     Intersect(Metadata, Box<Expression>, Box<Expression>),
@@ -394,6 +405,20 @@ pub enum Expression {
     #[compatible(Minion)]
     MinionWInIntervalSet(Metadata, Atom, Vec<i32>),
 
+    /// `w-inset(x, [v1, v2, … ])` ensures that the value of `x` is one of the explicitly given values `v1`, `v2`, etc.
+    ///
+    /// This constraint enforces membership in a specific set of discrete values rather than intervals.
+    ///
+    /// The list of values must be given in numerical order.
+    ///
+    /// Low-level Minion constraint.
+    ///
+    /// # See also
+    ///
+    ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#w-inset)
+    #[compatible(Minion)]
+    MinionWInSet(Metadata, Atom, Vec<i32>),
+
     /// `element_one(vec, i, e)` specifies that `vec[i] = e`. This implies that i is
     /// in the range `[1..len(vec)]`.
     ///
@@ -412,24 +437,74 @@ pub enum Expression {
     AuxDeclaration(Metadata, Name, Box<Expression>),
 }
 
-fn expr_vec_to_domain_i32(
-    exprs: &[Expression],
-    op: fn(i32, i32) -> Option<i32>,
-    vars: &SymbolTable,
-) -> Option<Domain> {
-    let domains: Vec<Option<_>> = exprs.iter().map(|e| e.domain_of(vars)).collect();
-    domains
-        .into_iter()
-        .reduce(|a, b| a.and_then(|x| b.and_then(|y| x.apply_i32(op, &y))))
-        .flatten()
-}
-fn expr_vec_lit_to_domain_i32(
+// for the given matrix literal, return a bounded domain from the min to max of applying op to each
+// child expression.
+//
+// Op must be monotonic.
+//
+// Returns none if unbounded
+fn bounded_i32_domain_for_matrix_literal_monotonic(
     e: &Expression,
     op: fn(i32, i32) -> Option<i32>,
-    vars: &SymbolTable,
+    symtab: &SymbolTable,
 ) -> Option<Domain> {
-    let exprs = e.clone().unwrap_list()?;
-    expr_vec_to_domain_i32(&exprs, op, vars)
+    // only care about the elements, not the indices
+    let (mut exprs, _) = e.clone().unwrap_matrix_unchecked()?;
+
+    // fold each element's domain into one using op.
+    //
+    // here, I assume that op is monotone. This means that the bounds of op([a1,a2],[b1,b2])  for
+    // the ranges [a1,a2], [b1,b2] will be
+    // [min(op(a1,b1),op(a2,b1),op(a1,b2),op(a2,b2)),max(op(a1,b1),op(a2,b1),op(a1,b2),op(a2,b2))].
+    //
+    // We used to not assume this, and work out the bounds by applying op on the Cartesian product
+    // of A and B; however, this caused a combinatorial explosion and my computer to run out of
+    // memory (on the hakank_eprime_xkcd test)...
+    //
+    // For example, to find the bounds of the intervals [1,4], [1,5] combined using op, we used to do
+    //  [min(op(1,1), op(1,2),op(1,3),op(1,4),op(1,5),op(2,1)..
+    //
+    // +,-,/,* are all monotone, so this assumption should be fine for now...
+
+    let expr = exprs.pop()?;
+    let Some(Domain::IntDomain(ranges)) = expr.domain_of(symtab) else {
+        return None;
+    };
+
+    let (mut current_min, mut current_max) = range_vec_bounds_i32(&ranges)?;
+
+    for expr in exprs {
+        let Some(Domain::IntDomain(ranges)) = expr.domain_of(symtab) else {
+            return None;
+        };
+
+        let (min, max) = range_vec_bounds_i32(&ranges)?;
+
+        // all the possible new values for current_min / current_max
+        let minmax = op(min, current_max)?;
+        let minmin = op(min, current_min)?;
+        let maxmin = op(max, current_min)?;
+        let maxmax = op(max, current_max)?;
+        let vals = [minmax, minmin, maxmin, maxmax];
+
+        current_min = *vals
+            .iter()
+            .min()
+            .expect("vals iterator should not be empty, and should have a minimum.");
+        current_max = *vals
+            .iter()
+            .max()
+            .expect("vals iterator should not be empty, and should have a maximum.");
+    }
+
+    if current_min == current_max {
+        Some(Domain::IntDomain(vec![Range::Single(current_min)]))
+    } else {
+        Some(Domain::IntDomain(vec![Range::Bounded(
+            current_min,
+            current_max,
+        )]))
+    }
 }
 
 // Returns none if unbounded
@@ -472,16 +547,15 @@ impl Expression {
                 SetAttr::None,
                 Box::new(a.domain_of(syms)?.intersect(&b.domain_of(syms)?)?),
             )),
+            Expression::In(_, _, _) => Some(Domain::BoolDomain),
             Expression::Supset(_, _, _) => Some(Domain::BoolDomain),
             Expression::SupsetEq(_, _, _) => Some(Domain::BoolDomain),
             Expression::Subset(_, _, _) => Some(Domain::BoolDomain),
             Expression::SubsetEq(_, _, _) => Some(Domain::BoolDomain),
-
-            //todo
             Expression::AbstractLiteral(_, _) => None,
             Expression::DominanceRelation(_, _) => Some(Domain::BoolDomain),
             Expression::FromSolution(_, expr) => expr.domain_of(syms),
-            Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
+            Expression::Comprehension(_, comprehension) => comprehension.domain_of(syms),
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
                 match matrix.domain_of(syms)? {
                     Domain::DomainMatrix(elem_domain, _) => Some(*elem_domain),
@@ -519,16 +593,22 @@ impl Expression {
             Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(Domain::BoolDomain),
             Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(_))) => None,
             Expression::Scope(_, _) => Some(Domain::BoolDomain),
-            Expression::Sum(_, e) => expr_vec_lit_to_domain_i32(e, |x, y| Some(x + y), syms),
-            Expression::Product(_, exprs) => {
-                expr_vec_to_domain_i32(exprs, |x, y| Some(x * y), syms)
+            Expression::Sum(_, e) => {
+                bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x + y), syms)
             }
-            Expression::Min(_, e) => {
-                expr_vec_lit_to_domain_i32(e, |x, y| Some(if x < y { x } else { y }), syms)
+            Expression::Product(_, e) => {
+                bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x * y), syms)
             }
-            Expression::Max(_, e) => {
-                expr_vec_lit_to_domain_i32(e, |x, y| Some(if x > y { x } else { y }), syms)
-            }
+            Expression::Min(_, e) => bounded_i32_domain_for_matrix_literal_monotonic(
+                e,
+                |x, y| Some(if x < y { x } else { y }),
+                syms,
+            ),
+            Expression::Max(_, e) => bounded_i32_domain_for_matrix_literal_monotonic(
+                e,
+                |x, y| Some(if x > y { x } else { y }),
+                syms,
+            ),
             Expression::UnsafeDiv(_, a, b) => a.domain_of(syms)?.apply_i32(
                 // rust integer division is truncating; however, we want to always round down,
                 // including for negative numbers.
@@ -569,7 +649,6 @@ impl Expression {
                 |x, y| if y != 0 { Some(x % y) } else { None },
                 &b.domain_of(syms)?,
             ),
-
             Expression::SafeMod(_, a, b) => {
                 let domain = a.domain_of(syms)?.apply_i32(
                     |x, y| if y != 0 { Some(x % y) } else { None },
@@ -586,7 +665,6 @@ impl Expression {
                     _ => None,
                 }
             }
-
             Expression::SafePow(_, a, b) | Expression::UnsafePow(_, a, b) => {
                 a.domain_of(syms)?.apply_i32(
                     |x, y| {
@@ -599,7 +677,6 @@ impl Expression {
                     &b.domain_of(syms)?,
                 )
             }
-
             Expression::Root(_, _) => None,
             Expression::Bubble(_, _, _) => None,
             Expression::AuxDeclaration(_, _, _) => Some(Domain::BoolDomain),
@@ -625,6 +702,7 @@ impl Expression {
             Expression::MinionReify(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionReifyImply(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionWInIntervalSet(_, _, _) => Some(Domain::BoolDomain),
+            Expression::MinionWInSet(_, _, _) => Some(Domain::BoolDomain),
             Expression::MinionElementOne(_, _, _, _) => Some(Domain::BoolDomain),
             Expression::Neg(_, x) => {
                 let Some(Domain::IntDomain(mut ranges)) = x.domain_of(syms) else {
@@ -645,7 +723,6 @@ impl Expression {
             Expression::Minus(_, a, b) => a
                 .domain_of(syms)?
                 .apply_i32(|x, y| Some(x - y), &b.domain_of(syms)?),
-
             Expression::FlatAllDiff(_, _) => Some(Domain::BoolDomain),
             Expression::FlatMinusEq(_, _, _) => Some(Domain::BoolDomain),
             Expression::FlatProductEq(_, _, _, _) => Some(Domain::BoolDomain),
@@ -655,6 +732,7 @@ impl Expression {
                 .domain_of(syms)?
                 .apply_i32(|a, _| Some(a.abs()), &a.domain_of(syms)?),
             Expression::MinionPow(_, _, _, _) => Some(Domain::BoolDomain),
+            Expression::ToInt(_, _) => Some(Domain::IntDomain(vec![Range::Bounded(0, 1)])),
         };
         match ret {
             // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
@@ -712,12 +790,21 @@ impl Expression {
 
     /// True if the expression is an associative and commutative operator
     pub fn is_associative_commutative_operator(&self) -> bool {
+        TryInto::<ACOperatorKind>::try_into(self).is_ok()
+    }
+
+    /// True if the expression is a matrix literal.
+    ///
+    /// This is true for both forms of matrix literals: those with elements of type [`Literal`] and
+    /// [`Expression`].
+    pub fn is_matrix_literal(&self) -> bool {
         matches!(
             self,
-            Expression::Sum(_, _)
-                | Expression::Or(_, _)
-                | Expression::And(_, _)
-                | Expression::Product(_, _)
+            Expression::AbstractLiteral(_, AbstractLiteral::Matrix(_, _))
+                | Expression::Atomic(
+                    _,
+                    Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(_, _))),
+                )
         )
     }
 
@@ -820,6 +907,11 @@ impl Expression {
             _ => None,
         }
     }
+
+    /// If this expression is an associative-commutative operator, return its [ACOperatorKind].
+    pub fn to_ac_operator_kind(&self) -> Option<ACOperatorKind> {
+        TryFrom::try_from(self).ok()
+    }
 }
 
 impl From<i32> for Expression {
@@ -857,6 +949,9 @@ impl Display for Expression {
         match &self {
             Expression::Union(_, box1, box2) => {
                 write!(f, "({} union {})", box1.clone(), box2.clone())
+            }
+            Expression::In(_, e1, e2) => {
+                write!(f, "{} in {}", e1, e2)
             }
             Expression::Intersect(_, box1, box2) => {
                 write!(f, "({} intersect {})", box1.clone(), box2.clone())
@@ -902,10 +997,10 @@ impl Display for Expression {
             Expression::Scope(_, submodel) => write!(f, "{{\n{submodel}\n}}"),
             Expression::Abs(_, a) => write!(f, "|{}|", a),
             Expression::Sum(_, e) => {
-                write!(f, "Sum({e})")
+                write!(f, "sum({e})")
             }
-            Expression::Product(_, expressions) => {
-                write!(f, "Product({})", pretty_vec(expressions))
+            Expression::Product(_, e) => {
+                write!(f, "product({e})")
             }
             Expression::Min(_, e) => {
                 write!(f, "min({e})")
@@ -914,7 +1009,7 @@ impl Display for Expression {
                 write!(f, "max({e})")
             }
             Expression::Not(_, expr_box) => {
-                write!(f, "Not({})", expr_box.clone())
+                write!(f, "!({})", expr_box.clone())
             }
             Expression::Or(_, e) => {
                 write!(f, "or({e})")
@@ -1006,7 +1101,11 @@ impl Display for Expression {
             }
             Expression::MinionWInIntervalSet(_, atom, intervals) => {
                 let intervals = intervals.iter().join(",");
-                write!(f, "__minion_w_inintervalset({atom},{intervals})")
+                write!(f, "__minion_w_inintervalset({atom},[{intervals}])")
+            }
+            Expression::MinionWInSet(_, atom, values) => {
+                let values = values.iter().join(",");
+                write!(f, "__minion_w_inset({atom},{values})")
             }
             Expression::AuxDeclaration(_, n, e) => {
                 write!(f, "{} =aux {}", n, e.clone())
@@ -1066,6 +1165,10 @@ impl Display for Expression {
                 let atoms = atoms.iter().join(",");
                 write!(f, "__minion_element_one([{atoms}],{atom},{atom1})")
             }
+
+            Expression::ToInt(_, expr) => {
+                write!(f, "toInt({expr})")
+            }
         }
     }
 }
@@ -1079,12 +1182,11 @@ impl Typeable for Expression {
             Expression::Intersect(_, subject, _) => {
                 Some(ReturnType::Set(Box::new(subject.return_type()?)))
             }
+            Expression::In(_, _, _) => Some(ReturnType::Bool),
             Expression::Supset(_, _, _) => Some(ReturnType::Bool),
             Expression::SupsetEq(_, _, _) => Some(ReturnType::Bool),
             Expression::Subset(_, _, _) => Some(ReturnType::Bool),
             Expression::SubsetEq(_, _, _) => Some(ReturnType::Bool),
-
-            // handles sets and matrices, since typeable defined for abstract literals
             Expression::AbstractLiteral(_, lit) => lit.return_type(),
             Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
                 Some(subject.return_type()?)
@@ -1097,9 +1199,7 @@ impl Typeable for Expression {
             Expression::Root(_, _) => Some(ReturnType::Bool),
             Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
             Expression::FromSolution(_, expr) => expr.return_type(),
-            // handles integers, booleans and abstract literals all at once, since typeable defined for literal
             Expression::Atomic(_, Atom::Literal(lit)) => lit.return_type(),
-            // TODO - access symbol table to get return type of references - define inside Atom instead
             Expression::Atomic(_, Atom::Reference(_)) => None,
             Expression::Scope(_, scope) => scope.return_type(),
             Expression::Abs(_, _) => Some(ReturnType::Int),
@@ -1126,11 +1226,12 @@ impl Typeable for Expression {
             Expression::MinionDivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
             Expression::FlatIneq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AllDiff(_, _) => Some(ReturnType::Bool),
-            Expression::Bubble(_, _, _) => None, // TODO: (flm8) should this be a bool?
+            Expression::Bubble(_, _, _) => None,
             Expression::FlatWatchedLiteral(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReify(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReifyImply(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionWInIntervalSet(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionWInSet(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionElementOne(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AuxDeclaration(_, _, _) => Some(ReturnType::Bool),
             Expression::UnsafeMod(_, _, _) => Some(ReturnType::Int),
@@ -1146,6 +1247,7 @@ impl Typeable for Expression {
             Expression::FlatWeightedSumLeq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::MinionPow(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::ToInt(_, _) => Some(ReturnType::Int),
         }
     }
 }
@@ -1245,5 +1347,46 @@ mod tests {
             sum.domain_of(&vars),
             Some(Domain::IntDomain(vec![Range::Bounded(2, 4)]))
         );
+    }
+
+    #[test]
+    fn biplate_to_names() {
+        let expr = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(1)));
+        let expected_expr =
+            Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(2)));
+        let actual_expr = expr.transform_bi(Arc::new(move |x: Name| match x {
+            Name::MachineName(i) => Name::MachineName(i + 1),
+            n => n,
+        }));
+        assert_eq!(actual_expr, expected_expr);
+
+        let expr = Expression::And(
+            Metadata::new(),
+            Box::new(matrix_expr![Expression::AuxDeclaration(
+                Metadata::new(),
+                Name::MachineName(0),
+                Box::new(Expression::Atomic(
+                    Metadata::new(),
+                    Atom::Reference(Name::MachineName(1))
+                ))
+            )]),
+        );
+        let expected_expr = Expression::And(
+            Metadata::new(),
+            Box::new(matrix_expr![Expression::AuxDeclaration(
+                Metadata::new(),
+                Name::MachineName(1),
+                Box::new(Expression::Atomic(
+                    Metadata::new(),
+                    Atom::Reference(Name::MachineName(2))
+                ))
+            )]),
+        );
+
+        let actual_expr = expr.transform_bi(Arc::new(move |x: Name| match x {
+            Name::MachineName(i) => Name::MachineName(i + 1),
+            n => n,
+        }));
+        assert_eq!(actual_expr, expected_expr);
     }
 }

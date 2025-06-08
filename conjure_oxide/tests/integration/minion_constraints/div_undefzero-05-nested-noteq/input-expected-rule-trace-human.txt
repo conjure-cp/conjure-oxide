@@ -6,7 +6,7 @@ find z: int(0..6)
 
 such that
 
-Not((UnsafeDiv(x, UnsafeDiv(y, z)) = 10))
+!((UnsafeDiv(x, UnsafeDiv(y, z)) = 10))
 
 --
 
@@ -70,25 +70,25 @@ and([(SafeDiv(x, SafeDiv(y, z)) = 10),(SafeDiv(y, z) != 0),(z != 0);int(1..)])
 
 --
 
-Not(and([(SafeDiv(x, SafeDiv(y, z)) = 10),(SafeDiv(y, z) != 0),(z != 0);int(1..)])), 
+!(and([(SafeDiv(x, SafeDiv(y, z)) = 10),(SafeDiv(y, z) != 0),(z != 0);int(1..)])), 
    ~~> distribute_not_over_and ([("Base", 8400)]) 
-or([Not((SafeDiv(x, SafeDiv(y, z)) = 10)),Not((SafeDiv(y, z) != 0)),Not((z != 0));int(1..)]) 
+or([!((SafeDiv(x, SafeDiv(y, z)) = 10)),!((SafeDiv(y, z) != 0)),!((z != 0));int(1..)]) 
 
 --
 
-Not((SafeDiv(x, SafeDiv(y, z)) = 10)), 
+!((SafeDiv(x, SafeDiv(y, z)) = 10)), 
    ~~> negated_eq_to_neq ([("Base", 8800)]) 
 (SafeDiv(x, SafeDiv(y, z)) != 10) 
 
 --
 
-Not((SafeDiv(y, z) != 0)), 
+!((SafeDiv(y, z) != 0)), 
    ~~> negated_neq_to_eq ([("Base", 8800)]) 
 (SafeDiv(y, z) = 0) 
 
 --
 
-Not((z != 0)), 
+!((z != 0)), 
    ~~> negated_neq_to_eq ([("Base", 8800)]) 
 (z = 0) 
 

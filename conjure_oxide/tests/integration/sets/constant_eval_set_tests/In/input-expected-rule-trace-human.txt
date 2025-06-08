@@ -1,0 +1,32 @@
+Model before rewriting:
+
+find a: int(1..4)
+letting b be {1,2,3}
+
+such that
+
+3 in b
+
+--
+
+b, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+{1,2,3} 
+
+--
+
+3 in {1,2,3}, 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+true 
+
+--
+
+Final model:
+
+find a: int(1..4)
+letting b be {1,2,3}
+
+such that
+
+true
+

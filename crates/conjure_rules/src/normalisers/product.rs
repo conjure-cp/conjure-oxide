@@ -6,9 +6,9 @@ use conjure_rule_macros::register_rule;
 
 use conjure_core::{
     ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable},
+    into_matrix_expr,
     metadata::Metadata,
-    rule_engine::ApplicationError::RuleNotApplicable,
-    rule_engine::{ApplicationResult, Reduction},
+    rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
 };
 
 /// Reorders a product expression.
@@ -26,7 +26,7 @@ use conjure_core::{
 /// Having a canonical ordering here is helpful in identifying weighted sums: 2x + 3y + 4d + ....
 #[register_rule(("Base", 8800))]
 fn reorder_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let Expr::Product(meta, exprs) = expr.clone() else {
+    let Expr::Product(meta, factors) = expr.clone() else {
         return Err(RuleNotApplicable);
     };
 
@@ -34,7 +34,9 @@ fn reorder_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let mut variables: Vec<Expr> = vec![];
     let mut compound_exprs: Vec<Expr> = vec![];
 
-    for expr in exprs.clone() {
+    let factors = factors.unwrap_list().ok_or(RuleNotApplicable)?;
+
+    for expr in factors.clone() {
         match expr {
             Expr::Atomic(_, Atom::Literal(_)) => {
                 constant_coefficients.push(expr);
@@ -67,7 +69,7 @@ fn reorder_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // check if we have actually done anything
     // TODO: check order before doing all this
     let mut changed: bool = false;
-    for (e1, e2) in iter::zip(exprs, constant_coefficients.clone()) {
+    for (e1, e2) in iter::zip(factors, constant_coefficients.clone()) {
         if e1 != e2 {
             changed = true;
             break;
@@ -78,7 +80,10 @@ fn reorder_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    Ok(Reduction::pure(Expr::Product(meta, constant_coefficients)))
+    Ok(Reduction::pure(Expr::Product(
+        meta,
+        Box::new(into_matrix_expr!(constant_coefficients)),
+    )))
 }
 
 /// Removes products with a single argument.
@@ -90,9 +95,10 @@ fn reorder_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 #[register_rule(("Base", 8800))]
 fn remove_unit_vector_products(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
-        Expr::Product(_, exprs) => {
-            if exprs.len() == 1 {
-                return Ok(Reduction::pure(exprs[0].clone()));
+        Expr::Product(_, mat) => {
+            let list = mat.clone().unwrap_list().ok_or(RuleNotApplicable)?;
+            if list.len() == 1 {
+                return Ok(Reduction::pure(list[0].clone()));
             }
             Err(RuleNotApplicable)
         }

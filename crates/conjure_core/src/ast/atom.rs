@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use uniplate::derive::Uniplate;
 
 /// An `Atom` is an indivisible expression, such as a literal or a reference.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate)]
 #[uniplate()]
 #[biplate(to=Literal)]
 #[biplate(to=Expression)]

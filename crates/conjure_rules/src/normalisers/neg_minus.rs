@@ -28,6 +28,7 @@
 
 use conjure_core::{
     ast::{Expression as Expr, ReturnType::Set, SymbolTable, Typeable},
+    into_matrix_expr,
     metadata::Metadata,
     rule_engine::{
         register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
@@ -87,13 +88,18 @@ fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResu
         return Err(RuleNotApplicable);
     };
 
-    let Product(_, mut factors) = *expr1 else {
+    let Product(_, factors) = *expr1 else {
         return Err(RuleNotApplicable);
     };
 
+    let mut factors = factors.unwrap_list().ok_or(RuleNotApplicable)?;
+
     factors.push(essence_expr!(-1));
 
-    Ok(Reduction::pure(Product(Metadata::new(), factors)))
+    Ok(Reduction::pure(Product(
+        Metadata::new(),
+        Box::new(into_matrix_expr!(factors)),
+    )))
 }
 
 /// Converts a minus to a sum
