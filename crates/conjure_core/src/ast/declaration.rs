@@ -8,7 +8,7 @@ use uniplate::{Biplate, Tree};
 use super::name::Name;
 use super::serde::{DefaultWithId, HasId, ObjId};
 use super::types::Typeable;
-use super::{DecisionVariable, Domain, Expression, ReturnType};
+use super::{DecisionVariable, Domain, Expression, ReturnType, SymbolTable};
 
 static ID_COUNTER: AtomicU32 = AtomicU32::new(0);
 
@@ -110,12 +110,12 @@ impl Declaration {
     }
 
     /// The domain of this declaration, if it is known.
-    pub fn domain(&self) -> Option<&Domain> {
+    pub fn domain(&self,symtab: &SymbolTable) -> Option<Domain> {
         match self.kind() {
-            DeclarationKind::DecisionVariable(var) => Some(&var.domain),
-            DeclarationKind::ValueLetting(_) => None,
-            DeclarationKind::DomainLetting(domain) => Some(domain),
-            DeclarationKind::Given(domain) => Some(domain),
+            DeclarationKind::DecisionVariable(var) => Some(var.domain.clone()),
+            DeclarationKind::ValueLetting(v) => v.domain_of(&symtab),
+            DeclarationKind::DomainLetting(domain) => Some(domain.clone()),
+            DeclarationKind::Given(domain) => Some(domain.clone()),
         }
     }
 

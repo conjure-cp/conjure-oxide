@@ -44,7 +44,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
 
     // resolve index domains so that we can enumerate them later
     let Some(Domain::DomainMatrix(_, index_domains)) =
-        decl.domain().cloned().map(|x| x.resolve(symbols))
+        decl.domain(&symbols).map(|x| x.resolve(symbols))
     else {
         return Err(RuleNotApplicable);
     };
@@ -229,7 +229,7 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 
     // resolve index domains so that we can enumerate them later
     let Some(Domain::DomainMatrix(_, index_domains)) =
-        decl.domain().cloned().map(|x| x.resolve(symbols))
+        decl.domain(&symbols).map(|x| x.resolve(symbols))
     else {
         return Err(RuleNotApplicable);
     };
@@ -303,7 +303,7 @@ fn matrix_ref_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
         // resolve index domains so that we can enumerate them later
         let Some(Domain::DomainMatrix(_, index_domains)) =
-            decl.domain().cloned().map(|x| x.resolve(symbols))
+            decl.domain(symbols).map(|x| x.resolve(symbols))
         else {
             continue;
         };

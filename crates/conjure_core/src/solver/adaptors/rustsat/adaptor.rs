@@ -172,12 +172,12 @@ impl SolverAdaptor for SAT {
 
     fn load_model(&mut self, model: ConjureModel, _: private::Internal) -> Result<(), SolverError> {
         let sym_tab = model.as_submodel().symbols().deref().clone();
-        let decisions = sym_tab.into_iter();
+        let decisions = sym_tab.clone().into_iter();
 
         let mut finds: Vec<String> = Vec::new();
 
         for find_ref in decisions {
-            if (*find_ref.1.domain().unwrap() != BoolDomain) {
+            if (find_ref.1.domain(&sym_tab).unwrap() != BoolDomain) {
                 Err(SolverError::ModelInvalid(
                     "Only Boolean Decision Variables supported".to_string(),
                 ))?;

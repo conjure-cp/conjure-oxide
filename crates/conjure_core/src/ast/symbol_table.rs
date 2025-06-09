@@ -171,10 +171,10 @@ impl SymbolTable {
 
         if let Name::WithRepresentation(name, _) = name {
             let decl = self.lookup(name.as_ref())?;
-            decl.domain().cloned()
+            decl.domain(&self)
         } else {
             let decl = self.lookup(name)?;
-            decl.domain().cloned()
+            decl.domain(&self)
         }
     }
 

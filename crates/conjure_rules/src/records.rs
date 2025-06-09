@@ -42,7 +42,7 @@ fn index_record_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 
     let decl = symbols.lookup(name).unwrap();
 
-    let Some(Domain::DomainRecord(_)) = decl.domain().cloned().map(|x| x.resolve(symbols)) else {
+    let Some(Domain::DomainRecord(_)) = decl.domain(&symbols).map(|x| x.resolve(symbols)) else {
         return Err(RuleNotApplicable);
     };
 
@@ -178,13 +178,11 @@ fn record_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     // check both are are record variable domains
     let domain = decl
-        .domain()
-        .cloned()
+        .domain(&symbols)
         .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
     let domain2 = decl2
-        .domain()
-        .cloned()
+        .domain(&symbols)
         .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
 
@@ -261,8 +259,7 @@ fn record_to_const(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let decl = symbols.lookup(name).unwrap();
 
     let domain = decl
-        .domain()
-        .cloned()
+        .domain(&symbols)
         .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
 

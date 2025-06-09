@@ -43,7 +43,7 @@ fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
 
     let decl = symbols.lookup(name).unwrap();
 
-    let Some(Domain::DomainTuple(_)) = decl.domain().cloned().map(|x| x.resolve(symbols)) else {
+    let Some(Domain::DomainTuple(_)) = decl.domain(&symbols).map(|x| x.resolve(symbols)) else {
         return Err(RuleNotApplicable);
     };
 
@@ -154,13 +154,11 @@ fn tuple_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let decl2 = symbols.lookup(name2).unwrap();
 
     let domain = decl
-        .domain()
-        .cloned()
+        .domain(&symbols)
         .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
     let domain2 = decl2
-        .domain()
-        .cloned()
+        .domain(&symbols)
         .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
 
@@ -232,8 +230,7 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let decl = symbols.lookup(name).unwrap();
 
     let domain = decl
-        .domain()
-        .cloned()
+        .domain(&symbols)
         .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
 
@@ -306,13 +303,11 @@ fn tuple_inequality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let decl2 = symbols.lookup(name2).unwrap();
 
     let domain = decl
-        .domain()
-        .cloned()
+        .domain(&symbols)
         .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
     let domain2 = decl2
-        .domain()
-        .cloned()
+        .domain(&symbols)
         .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
 
