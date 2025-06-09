@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use uniplate::{derive::Uniplate, zipper::Zipper, Biplate, Uniplate};
 
 use crate::{
-    ast::{Atom, DeclarationKind, ReturnType, Typeable as _},
+    ast::{Atom, DeclarationKind, Typeable as _},
     bug,
     context::Context,
     into_matrix_expr, matrix_expr,
@@ -230,6 +230,13 @@ impl Comprehension {
 
         let generator_symtab_ptr = Rc::clone(generator_model.as_submodel().symbols_ptr_unchecked());
 
+        // for sum/product we want to put integer expressions into dummy variables,
+        // for and/or we want to put boolean expressions into dummy variables.
+        let dummy_var_type = ac_operator
+            .identity()
+            .return_type()
+            .expect("identity value of an ACOpKind should always have a ReturnType");
+
         //
         // #[allow(clippy::arc_with_non_send_sync)]
         // let new_return_expr = self
@@ -241,7 +248,7 @@ impl Comprehension {
         //         // need to put this expression in a dummy variable if it contains references variables that are
         //         // not induction variables or existing dummy variables, and if it is boolean.
         //         let names_referenced: VecDeque<Name> = expr.universe_bi();
-        //         let right_type = matches!(expr.return_type(), Some(ReturnType::Bool));
+        //         let right_type = expr.return_type().is_some_and(|x| x == dummy_var_type);
         //         let has_non_induction_vars =
         //             !names_referenced.iter().all(|x| symtab.lookup_local(x).is_some());
         //         let replace_with_dummy_var = right_type && has_non_induction_vars;
@@ -278,14 +285,22 @@ impl Comprehension {
                 let has_non_induction_vars = names_referenced
                     .iter()
                     .any(|x| generator_symtab.lookup_local(x).is_none());
-                let has_induction_vars = names_referenced
-                    .iter()
-                    .any(|x| generator_symtab.lookup_local(x).is_some());
+
+                // dont care about lettings, as they will be substituted
+                let has_induction_vars = names_referenced.iter().any(|x| {
+                    generator_symtab.lookup_local(x).is_some_and(|x| {
+                        !matches!(
+                            x.kind(),
+                            DeclarationKind::ValueLetting(_) | DeclarationKind::DomainLetting(_)
+                        )
+                    })
+                });
 
                 // cannot remove root expression or things go wrong
                 let is_right_type = focus
                     .return_type()
-                    .is_some_and(|x| matches!(x, ReturnType::Bool))
+                    .map(|x| x.resolve(&generator_symtab))
+                    .is_some_and(|x| x == dummy_var_type)
                     && !matches!(focus, Expression::Root(_, _));
 
                 if !has_non_induction_vars {
@@ -305,9 +320,10 @@ impl Comprehension {
                     if is_right_type {
                         // introduce dummy var and continue
                         let dummy_name = generator_symtab.gensym();
+                        let dummy_domain = focus.domain_of(&generator_symtab).unwrap();
                         generator_symtab.insert(Rc::new(Declaration::new_var(
                             dummy_name.clone(),
-                            Domain::BoolDomain,
+                            dummy_domain,
                         )));
                         *focus = Expression::Atomic(Metadata::new(), Atom::Reference(dummy_name));
 
@@ -327,7 +343,8 @@ impl Comprehension {
                                 .any(|name| generator_symtab.lookup_local(name).is_none());
                             let is_right_type = expr
                                 .return_type()
-                                .is_some_and(|ty| matches!(ty, ReturnType::Bool))
+                                .map(|x| x.resolve(&generator_symtab))
+                                .is_some_and(|ty| ty == dummy_var_type)
                                 && !matches!(expr, Expression::Root(_, _));
                             is_right_type && has_non_induction_vars
                         });
@@ -360,7 +377,8 @@ impl Comprehension {
                             .any(|name| generator_symtab.lookup_local(name).is_none());
                         let is_right_type = expr
                             .return_type()
-                            .is_some_and(|ty| matches!(ty, ReturnType::Bool))
+                            .map(|x| x.resolve(&generator_symtab))
+                            .is_some_and(|ty| ty == dummy_var_type)
                             && !matches!(expr, Expression::Root(_, _));
                         is_right_type && has_non_induction_vars
                     });
@@ -380,15 +398,16 @@ impl Comprehension {
                             Expression: {}\n\
                             Expected Type: {:#?}, Actual Type: {:#?} ",
                             focus,
-                            ReturnType::Bool,
-                            focus.return_type()
+                            dummy_var_type,
+                            focus.return_type().map(|x| x.resolve(&generator_symtab))
                         );
 
                         // introduce dummy variable
                         let dummy_name = generator_symtab.gensym();
+                        let dummy_domain = focus.domain_of(&generator_symtab).unwrap();
                         generator_symtab.insert(Rc::new(Declaration::new_var(
                             dummy_name.clone(),
-                            Domain::BoolDomain,
+                            dummy_domain,
                         )));
                         *focus = Expression::Atomic(Metadata::new(), Atom::Reference(dummy_name));
 
@@ -600,7 +619,14 @@ impl Display for Comprehension {
             .symbols()
             .clone()
             .into_iter_local()
-            .map(|(name, decl)| (name, decl.domain().unwrap().clone()))
+            .map(|(name, decl)| {
+                (
+                    name,
+                    decl.domain(&self.generator_submodel.symbols())
+                        .unwrap()
+                        .clone(),
+                )
+            })
             .map(|(name, domain)| format!("{name}: {domain}"))
             .join(",");
 

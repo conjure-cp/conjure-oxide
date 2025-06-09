@@ -110,10 +110,10 @@ impl Declaration {
     }
 
     /// The domain of this declaration, if it is known.
-    pub fn domain(&self,symtab: &SymbolTable) -> Option<Domain> {
+    pub fn domain(&self, symtab: &SymbolTable) -> Option<Domain> {
         match self.kind() {
             DeclarationKind::DecisionVariable(var) => Some(var.domain.clone()),
-            DeclarationKind::ValueLetting(v) => v.domain_of(&symtab),
+            DeclarationKind::ValueLetting(v) => v.domain_of(symtab),
             DeclarationKind::DomainLetting(domain) => Some(domain.clone()),
             DeclarationKind::Given(domain) => Some(domain.clone()),
         }

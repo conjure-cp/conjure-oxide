@@ -1,5 +1,5 @@
 use conjure_core::{
-    ast::{Atom, Expression, Literal, ReturnType, SymbolTable, Typeable},
+    ast::{Atom, DeclarationKind, Expression, Literal, Name, ReturnType, SymbolTable, Typeable},
     into_matrix_expr, matrix_expr,
     metadata::Metadata,
     rule_engine::{
@@ -8,7 +8,7 @@ use conjure_core::{
         ApplicationResult, Reduction,
     },
 };
-use uniplate::Uniplate;
+use uniplate::{Biplate, Uniplate};
 
 use super::utils::is_all_constant;
 
@@ -40,11 +40,19 @@ fn expand_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     E.g. ((a / b) @ (b != 0)) = c => (a / b = c) @ (b != 0)
 */
 #[register_rule(("Bubble", 8900))]
-fn bubble_up(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
     // do not put root inside a bubble
     if matches!(expr, Expression::Root(_, _)) {
         return Err(RuleNotApplicable);
     }
+
+    // do not bubble things containing lettings
+    if expr.universe_bi().iter().any(|x: &Name| {
+        syms.lookup(x)
+            .is_some_and(|x| matches!(x.kind(), DeclarationKind::ValueLetting(_)))
+    }) {
+        return Err(RuleNotApplicable);
+    };
 
     let mut sub = expr.children();
     let mut bubbled_conditions = vec![];

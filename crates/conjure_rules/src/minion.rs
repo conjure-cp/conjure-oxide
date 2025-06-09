@@ -6,6 +6,7 @@ use std::collections::VecDeque;
 use std::rc::Rc;
 use std::{collections::HashMap, convert::TryInto};
 
+use crate::utils::is_atom;
 use crate::{
     extra_check,
     utils::{is_flat, to_aux_var},
@@ -913,21 +914,8 @@ fn flatten_generic(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             | Expr::Abs(_, _)
             | Expr::Neg(_, _)
             | Expr::Not(_, _)
-            | Expr::SafeIndex(_, _, _)
             | Expr::InDomain(_, _, _)
     ) {
-        return Err(RuleNotApplicable);
-    }
-
-    // until we have categories, do not generically flatten anything containing givens.
-    // (at time of writing, quantified variables are modelled as givens...)
-
-    // TODO: use categories
-    if expr.universe_bi().iter().any(|x: &Name| {
-        symbols
-            .lookup(x)
-            .is_some_and(|x| matches!(x.kind(), DeclarationKind::Given(_)))
-    }) {
         return Err(RuleNotApplicable);
     }
 
@@ -953,6 +941,66 @@ fn flatten_generic(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let expr = expr.with_children(children);
 
     Ok(Reduction::new(expr, new_tops, symbols))
+}
+
+#[register_rule(("Minion", 4200))]
+fn flatten_index(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    // until we have categories, do not generically flatten anything containing givens.
+    // (at time of writing, quantified variables are modelled as givens...)
+
+    // e.g. a[i+k] should not be rewritten to a[__0] if i and k are both givens.
+
+    // TODO: use categories
+    if expr.universe_bi().iter().any(|x: &Name| {
+        symbols
+            .lookup(x)
+            .is_some_and(|x| matches!(x.kind(), DeclarationKind::Given(_)))
+    }) {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::SafeIndex(_, subject, index) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let mut symbols = symbols.clone();
+    let mut subject = *subject.clone();
+    let mut index = index.clone();
+    let mut new_tops = vec![];
+
+    // do not flatten subject of indexing if it is a matrix list.
+
+    // e.g. if we have a represented matrix, [a#matrix_to_atom_1_1,a#matrix_to_atom_1_2,a#matrix_to_atom_1_3,a#matrix_to_atom_1_4][x+1],
+    // only flatten the index
+    if !subject
+        .clone()
+        .unwrap_matrix_unchecked()
+        .ok_or(RuleNotApplicable)
+        .map(|(x, _)| x.iter().all(|x| is_atom(x)))?
+    {
+        if let Some(aux_var_info) = to_aux_var(&subject, &symbols) {
+            symbols = aux_var_info.symbols();
+            new_tops.push(aux_var_info.top_level_expr());
+            subject = aux_var_info.as_expr();
+        }
+    }
+
+    for index in index.iter_mut() {
+        if let Some(aux_var_info) = to_aux_var(&index, &symbols) {
+            symbols = aux_var_info.symbols();
+            new_tops.push(aux_var_info.top_level_expr());
+            *index = aux_var_info.as_expr();
+        }
+    }
+
+    // done nothing
+    if new_tops.is_empty() {
+        return Err(RuleNotApplicable);
+    };
+
+    let new_expression = Expr::SafeIndex(Metadata::new(), Box::new(subject), index);
+
+    Ok(Reduction::new(new_expression, new_tops, symbols))
 }
 
 #[register_rule(("Minion", 4200))]

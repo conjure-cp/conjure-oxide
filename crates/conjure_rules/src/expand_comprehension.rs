@@ -24,16 +24,6 @@ fn expand_comprehension_ac(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
     // Is this an ac expression?
     let ac_operator_kind = expr.to_ac_operator_kind().ok_or(RuleNotApplicable)?;
 
-    // FIXME: currently only support and/or, but should eventually support all ac operators
-    // see Comprehension::expand_ac.
-
-    if matches!(
-        ac_operator_kind,
-        ACOperatorKind::Sum | ACOperatorKind::Product
-    ) {
-        return Err(RuleNotApplicable);
-    };
-
     debug_assert_eq!(
         expr.children().len(),
         1,

@@ -34,26 +34,22 @@ new variables:
 Model before rewriting:
 
 find i: int(1..2)
+find __0: int(1..2)
 
 such that
 
-
-
---
-
-, 
-   ~~> eval_root ([("Constant", 9001)]) 
-true 
+(0 != __0)
 
 --
 
 Final model:
 
 find i: int(1..2)
+find __0: int(1..2)
 
 such that
 
-true
+(0 != __0)
 
 Model before rewriting:
 
@@ -91,14 +87,14 @@ such that
 
 {a#matrix_to_atom[i] @ __minion_w_inintervalset(i,[1,2])}
 
-[given i: int(1..2)
+sum([given i: int(1..2)
 
 such that
 
 a#matrix_to_atom[i]
- | i: int(1..2),], 
-   ~~> expand_comprehension ([("Base", 2000)]) 
-[{a#matrix_to_atom[1] @ __minion_w_inintervalset(1,[1,2])},{a#matrix_to_atom[2] @ __minion_w_inintervalset(2,[1,2])};int(1..)] 
+ | i: int(1..2),__0: int(1..2),]), 
+   ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
+sum([{a#matrix_to_atom[1] @ __minion_w_inintervalset(1,[1,2])},{a#matrix_to_atom[2] @ __minion_w_inintervalset(2,[1,2])};int(1..)]) 
 
 --
 

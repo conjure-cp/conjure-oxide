@@ -552,6 +552,34 @@ impl Expression {
             Expression::SupsetEq(_, _, _) => Some(Domain::BoolDomain),
             Expression::Subset(_, _, _) => Some(Domain::BoolDomain),
             Expression::SubsetEq(_, _, _) => Some(Domain::BoolDomain),
+            Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, index_domain)) => {
+                // only ints and bools for now
+                let elem_domain = match elems[0].return_type().map(|x| x.resolve(syms))? {
+                    ReturnType::Bool => Some(Domain::BoolDomain),
+                    ReturnType::Int => {
+                        let (min, max) = match elems
+                            .iter()
+                            .flat_map(|x| x.domain_of(syms))
+                            .flat_map(|x| x.values_i32())
+                            .flatten()
+                            .minmax()
+                        {
+                            itertools::MinMaxResult::NoElements => None,
+                            itertools::MinMaxResult::OneElement(n) => Some((n, n)),
+                            itertools::MinMaxResult::MinMax(x, y) => Some((x, y)),
+                        }?;
+
+                        Some(Domain::IntDomain(vec![Range::Bounded(min, max)]))
+                    }
+                    _ => None,
+                }?;
+
+                Some(Domain::DomainMatrix(
+                    Box::new(elem_domain),
+                    vec![index_domain.clone()],
+                ))
+            }
+
             Expression::AbstractLiteral(_, _) => None,
             Expression::DominanceRelation(_, _) => Some(Domain::BoolDomain),
             Expression::FromSolution(_, expr) => expr.domain_of(syms),
