@@ -69,9 +69,11 @@ UnsafeDiv(x, SafeDiv(y, z)),
 
 --
 
-{(SafeDiv(x, SafeDiv(y, z)) = 10) @ and([(SafeDiv(y, z) != 0);int(1..)])}, 
+{(SafeDiv(x, SafeDiv(y, z)) = 10) @ and([(SafeDiv(y, z) != 0);int(1..)])},
+(z != 0), 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(SafeDiv(x, SafeDiv(y, z)) = 10),and([(SafeDiv(y, z) != 0);int(1..)]);int(1..)]) 
+and([(SafeDiv(x, SafeDiv(y, z)) = 10),and([(SafeDiv(y, z) != 0);int(1..)]);int(1..)]),
+(z != 0) 
 
 --
 

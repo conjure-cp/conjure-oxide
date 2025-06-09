@@ -30,6 +30,27 @@ fn expand_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
                 Box::new(matrix_expr![*a.clone(), *b.clone()]),
             )))
         }
+
+        // expand root level bubbles
+        Expression::Root(_, exprs) => {
+            let mut exprs = exprs.clone();
+            let mut changed = false;
+            for expr in exprs.iter_mut() {
+                if let Expression::Bubble(_, a, b) = expr {
+                    *expr = Expression::And(
+                        Metadata::new(),
+                        Box::new(matrix_expr![*a.clone(), *b.clone()]),
+                    );
+                    changed = true;
+                }
+            }
+
+            if changed {
+                Ok(Reduction::pure(Expression::Root(Metadata::new(), exprs)))
+            } else {
+                Err(RuleNotApplicable)
+            }
+        }
         _ => Err(ApplicationError::RuleNotApplicable),
     }
 }
@@ -41,6 +62,9 @@ fn expand_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 */
 #[register_rule(("Bubble", 8900))]
 fn bubble_up(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+    if matches!(expr, Expression::Root(_, _)) {
+        return Err(RuleNotApplicable);
+    };
     let mut sub = expr.children();
     let mut bubbled_conditions = vec![];
     for e in sub.iter_mut() {
