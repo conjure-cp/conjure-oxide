@@ -46,6 +46,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 #[serde(default)]
+#[serde(deny_unknown_fields)]
 struct TestConfig {
     extra_rewriter_asserts: Vec<String>,
 
