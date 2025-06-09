@@ -1189,10 +1189,10 @@ impl Typeable for Expression {
             Expression::SubsetEq(_, _, _) => Some(ReturnType::Bool),
             Expression::AbstractLiteral(_, lit) => lit.return_type(),
             Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
-                Some(subject.return_type()?)
+                Some(ReturnType::ElementTypeOf(Box::new(subject.return_type()?)))
             }
             Expression::UnsafeSlice(_, subject, _) | Expression::SafeSlice(_, subject, _) => {
-                Some(ReturnType::Matrix(Box::new(subject.return_type()?)))
+                Some(subject.return_type()?)
             }
             Expression::InDomain(_, _, _) => Some(ReturnType::Bool),
             Expression::Comprehension(_, _) => None,
@@ -1200,7 +1200,7 @@ impl Typeable for Expression {
             Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
             Expression::FromSolution(_, expr) => expr.return_type(),
             Expression::Atomic(_, Atom::Literal(lit)) => lit.return_type(),
-            Expression::Atomic(_, Atom::Reference(_)) => None,
+            Expression::Atomic(_, Atom::Reference(n)) => Some(ReturnType::TypeOf(n.clone())),
             Expression::Scope(_, scope) => scope.return_type(),
             Expression::Abs(_, _) => Some(ReturnType::Int),
             Expression::Sum(_, _) => Some(ReturnType::Int),
@@ -1226,7 +1226,7 @@ impl Typeable for Expression {
             Expression::MinionDivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
             Expression::FlatIneq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AllDiff(_, _) => Some(ReturnType::Bool),
-            Expression::Bubble(_, _, _) => None,
+            Expression::Bubble(_, a, _) => a.return_type(),
             Expression::FlatWatchedLiteral(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReify(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReifyImply(_, _, _) => Some(ReturnType::Bool),

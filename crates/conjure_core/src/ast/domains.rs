@@ -419,7 +419,17 @@ impl Display for Domain {
 
 impl Typeable for Domain {
     fn return_type(&self) -> Option<ReturnType> {
-        todo!()
+        match self {
+            Domain::BoolDomain => Some(ReturnType::Bool),
+            Domain::IntDomain(_) => Some(ReturnType::Int),
+            Domain::DomainReference(name) => Some(ReturnType::TypeOf(name.clone())),
+            Domain::DomainSet(_, domain) => Some(ReturnType::Set(Box::new(domain.return_type()?))),
+            Domain::DomainMatrix(domain, _) => {
+                Some(ReturnType::Matrix(Box::new(domain.return_type()?)))
+            }
+            Domain::DomainTuple(_) => todo!(),
+            Domain::DomainRecord(_) => todo!(),
+        }
     }
 }
 #[cfg(test)]

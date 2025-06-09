@@ -52,7 +52,7 @@ impl DecisionVariable {
 
 impl Typeable for DecisionVariable {
     fn return_type(&self) -> Option<ReturnType> {
-        todo!()
+        self.domain.return_type()
     }
 }
 
