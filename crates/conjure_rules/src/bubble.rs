@@ -41,6 +41,11 @@ fn expand_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 */
 #[register_rule(("Bubble", 8900))]
 fn bubble_up(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+    // do not put root inside a bubble
+    if matches!(expr, Expression::Root(_, _)) {
+        return Err(RuleNotApplicable);
+    }
+
     let mut sub = expr.children();
     let mut bubbled_conditions = vec![];
     for e in sub.iter_mut() {
