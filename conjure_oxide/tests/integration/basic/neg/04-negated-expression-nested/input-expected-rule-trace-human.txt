@@ -17,54 +17,30 @@ UnsafeDiv(y, z),
 --
 
 -({SafeDiv(y, z) @ (z != 0)}), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{-(SafeDiv(y, z)) @ and([(z != 0);int(1..)])} 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{-(SafeDiv(y, z)) @ (z != 0)} 
 
 --
 
-UnsafeDiv({-(SafeDiv(y, z)) @ and([(z != 0);int(1..)])}, z), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{UnsafeDiv(-(SafeDiv(y, z)), z) @ and([and([(z != 0);int(1..)]);int(1..)])} 
+UnsafeDiv({-(SafeDiv(y, z)) @ (z != 0)}, z), 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{UnsafeDiv(-(SafeDiv(y, z)), z) @ (z != 0)} 
 
 --
 
-(x = {UnsafeDiv(-(SafeDiv(y, z)), z) @ and([and([(z != 0);int(1..)]);int(1..)])}), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{(x = UnsafeDiv(-(SafeDiv(y, z)), z)) @ and([and([and([(z != 0);int(1..)]);int(1..)]);int(1..)])} 
+(x = {UnsafeDiv(-(SafeDiv(y, z)), z) @ (z != 0)}), 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{(x = UnsafeDiv(-(SafeDiv(y, z)), z)) @ (z != 0)} 
 
 --
 
-{(x = UnsafeDiv(-(SafeDiv(y, z)), z)) @ and([and([and([(z != 0);int(1..)]);int(1..)]);int(1..)])}, 
+{(x = UnsafeDiv(-(SafeDiv(y, z)), z)) @ (z != 0)}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(x = UnsafeDiv(-(SafeDiv(y, z)), z)),and([and([and([(z != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+and([(x = UnsafeDiv(-(SafeDiv(y, z)), z)),(z != 0);int(1..)]) 
 
 --
 
-and([(x = UnsafeDiv(-(SafeDiv(y, z)), z)),and([and([and([(z != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(x = UnsafeDiv(-(SafeDiv(y, z)), z)),
-and([and([and([(z != 0);int(1..)]);int(1..)]);int(1..)]) 
-
---
-
-(x = UnsafeDiv(-(SafeDiv(y, z)), z)),
-and([and([and([(z != 0);int(1..)]);int(1..)]);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(x = UnsafeDiv(-(SafeDiv(y, z)), z)),
-and([and([(z != 0);int(1..)]);int(1..)]) 
-
---
-
-(x = UnsafeDiv(-(SafeDiv(y, z)), z)),
-and([and([(z != 0);int(1..)]);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(x = UnsafeDiv(-(SafeDiv(y, z)), z)),
-and([(z != 0);int(1..)]) 
-
---
-
-(x = UnsafeDiv(-(SafeDiv(y, z)), z)),
-and([(z != 0);int(1..)]), 
+and([(x = UnsafeDiv(-(SafeDiv(y, z)), z)),(z != 0);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 (x = UnsafeDiv(-(SafeDiv(y, z)), z)),
 (z != 0) 
@@ -78,28 +54,18 @@ UnsafeDiv(-(SafeDiv(y, z)), z),
 --
 
 (x = {SafeDiv(-(SafeDiv(y, z)), z) @ (z != 0)}), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{(x = SafeDiv(-(SafeDiv(y, z)), z)) @ and([(z != 0);int(1..)])} 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{(x = SafeDiv(-(SafeDiv(y, z)), z)) @ (z != 0)} 
 
 --
 
-{(x = SafeDiv(-(SafeDiv(y, z)), z)) @ and([(z != 0);int(1..)])}, 
+{(x = SafeDiv(-(SafeDiv(y, z)), z)) @ (z != 0)}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(x = SafeDiv(-(SafeDiv(y, z)), z)),and([(z != 0);int(1..)]);int(1..)]) 
+and([(x = SafeDiv(-(SafeDiv(y, z)), z)),(z != 0);int(1..)]) 
 
 --
 
-and([(x = SafeDiv(-(SafeDiv(y, z)), z)),and([(z != 0);int(1..)]);int(1..)]),
-(z != 0), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(x = SafeDiv(-(SafeDiv(y, z)), z)),
-and([(z != 0);int(1..)]),
-(z != 0) 
-
---
-
-(x = SafeDiv(-(SafeDiv(y, z)), z)),
-and([(z != 0);int(1..)]),
+and([(x = SafeDiv(-(SafeDiv(y, z)), z)),(z != 0);int(1..)]),
 (z != 0), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 (x = SafeDiv(-(SafeDiv(y, z)), z)),

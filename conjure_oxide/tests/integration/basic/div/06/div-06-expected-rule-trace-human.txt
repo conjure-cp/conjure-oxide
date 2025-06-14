@@ -17,20 +17,14 @@ UnsafeDiv(b, c),
 --
 
 (a = {SafeDiv(b, c) @ (c != 0)}), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{(a = SafeDiv(b, c)) @ and([(c != 0);int(1..)])} 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{(a = SafeDiv(b, c)) @ (c != 0)} 
 
 --
 
-{(a = SafeDiv(b, c)) @ and([(c != 0);int(1..)])}, 
+{(a = SafeDiv(b, c)) @ (c != 0)}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(a = SafeDiv(b, c)),and([(c != 0);int(1..)]);int(1..)]) 
-
---
-
-and([(c != 0);int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
-(c != 0) 
+and([(a = SafeDiv(b, c)),(c != 0);int(1..)]) 
 
 --
 
