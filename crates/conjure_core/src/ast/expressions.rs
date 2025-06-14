@@ -796,6 +796,7 @@ impl Expression {
                 | Expression::UnsafeMod(_, _, _)
                 | Expression::UnsafePow(_, _, _)
                 | Expression::UnsafeIndex(_, _, _)
+                | Expression::Bubble(_, _, _)
                 | Expression::UnsafeSlice(_, _, _) => {
                     return false;
                 }

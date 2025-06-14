@@ -392,7 +392,7 @@ fn rule_remove_double_negation() {
 
 #[test]
 fn remove_trivial_and_or() {
-    let remove_trivial_and = get_rule_by_name("remove_unit_vector_and").unwrap();
+    let remove_trivial_and = get_rule_by_name("remove_unit_vector_and_1").unwrap();
     let remove_trivial_or = get_rule_by_name("remove_unit_vector_or").unwrap();
 
     let mut expr_and = Expression::And(

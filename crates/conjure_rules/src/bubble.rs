@@ -39,10 +39,13 @@ fn expand_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 
     E.g. ((a / b) @ (b != 0)) = c => (a / b = c) @ (b != 0)
 */
-#[register_rule(("Bubble", 8900))]
+#[register_rule(("Bubble", 8800))]
 fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
     // do not put root inside a bubble
-    if matches!(expr, Expression::Root(_, _)) {
+    //
+    // also do not bubble bubbles inside bubbles, as this does nothing productive it just shuffles
+    // the conditions around, shuffles them back, then gets stuck in a loop doing this adfinitum
+    if matches!(expr, Expression::Root(_, _) | Expression::Bubble(_, _, _)) {
         return Err(RuleNotApplicable);
     }
 
@@ -65,16 +68,25 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
         }
     }
     if bubbled_conditions.is_empty() {
-        return Err(ApplicationError::RuleNotApplicable);
-    }
-    Ok(Reduction::pure(Expression::Bubble(
-        Metadata::new(),
-        Box::new(expr.with_children(sub)),
-        Box::new(Expression::And(
+        Err(ApplicationError::RuleNotApplicable)
+    } else if bubbled_conditions.len() == 1 {
+        let new_expr = Expression::Bubble(
             Metadata::new(),
-            Box::new(into_matrix_expr![bubbled_conditions]),
-        )),
-    )))
+            Box::new(expr.with_children(sub)),
+            Box::new(bubbled_conditions[0].clone()),
+        );
+
+        Ok(Reduction::pure(new_expr))
+    } else {
+        Ok(Reduction::pure(Expression::Bubble(
+            Metadata::new(),
+            Box::new(expr.with_children(sub)),
+            Box::new(Expression::And(
+                Metadata::new(),
+                Box::new(into_matrix_expr![bubbled_conditions]),
+            )),
+        )))
+    }
 }
 
 // Bubble applications

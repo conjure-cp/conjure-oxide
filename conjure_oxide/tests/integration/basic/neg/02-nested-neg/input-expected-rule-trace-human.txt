@@ -17,26 +17,18 @@ UnsafeDiv(-(y), z),
 --
 
 (x = {SafeDiv(-(y), z) @ (z != 0)}), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{(x = SafeDiv(-(y), z)) @ and([(z != 0);int(1..)])} 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{(x = SafeDiv(-(y), z)) @ (z != 0)} 
 
 --
 
-{(x = SafeDiv(-(y), z)) @ and([(z != 0);int(1..)])}, 
+{(x = SafeDiv(-(y), z)) @ (z != 0)}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(x = SafeDiv(-(y), z)),and([(z != 0);int(1..)]);int(1..)]) 
+and([(x = SafeDiv(-(y), z)),(z != 0);int(1..)]) 
 
 --
 
-and([(x = SafeDiv(-(y), z)),and([(z != 0);int(1..)]);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(x = SafeDiv(-(y), z)),
-and([(z != 0);int(1..)]) 
-
---
-
-(x = SafeDiv(-(y), z)),
-and([(z != 0);int(1..)]), 
+and([(x = SafeDiv(-(y), z)),(z != 0);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 (x = SafeDiv(-(y), z)),
 (z != 0) 

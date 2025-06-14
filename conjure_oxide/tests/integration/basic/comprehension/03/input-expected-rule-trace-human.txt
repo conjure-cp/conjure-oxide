@@ -135,20 +135,20 @@ m#matrix_to_atom[x],
 --
 
 ({m#matrix_to_atom[x] @ and([__inDomain(x,int(1..5));int(1..)])} = x), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{(m#matrix_to_atom[x] = x) @ and([and([__inDomain(x,int(1..5));int(1..)]);int(1..)])} 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{(m#matrix_to_atom[x] = x) @ and([__inDomain(x,int(1..5));int(1..)])} 
 
 --
 
-{(m#matrix_to_atom[x] = x) @ and([and([__inDomain(x,int(1..5));int(1..)]);int(1..)])}, 
+{(m#matrix_to_atom[x] = x) @ and([__inDomain(x,int(1..5));int(1..)])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(m#matrix_to_atom[x] = x),and([and([__inDomain(x,int(1..5));int(1..)]);int(1..)]);int(1..)]) 
+and([(m#matrix_to_atom[x] = x),and([__inDomain(x,int(1..5));int(1..)]);int(1..)]) 
 
 --
 
-((y <= 4)) -> (and([(m#matrix_to_atom[x] = x),and([and([__inDomain(x,int(1..5));int(1..)]);int(1..)]);int(1..)])), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
-((y <= 4)) -> (and([(m#matrix_to_atom[x] = x),__inDomain(x,int(1..5));int(1..)])) 
+and([__inDomain(x,int(1..5));int(1..)]), 
+   ~~> remove_unit_vector_and_1 ([("Base", 8800)]) 
+__inDomain(x,int(1..5)) 
 
 --
 
@@ -235,21 +235,21 @@ Reify(Ineq(y, 4, 0), __2)
 
 --
 
-(x = 1),
-ReifyImply(and([(m#matrix_to_atom[1] = 1);int(1..)]), __0),
-Reify(Ineq(y, 4, 0), __0),
-ReifyImply(and([(m#matrix_to_atom[2] = 2);int(1..)]), __1),
-Reify(Ineq(y, 4, 0), __1),
-ReifyImply(and([(m#matrix_to_atom[3] = 3);int(1..)]), __2),
-Reify(Ineq(y, 4, 0), __2), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
-(x = 1),
-ReifyImply((m#matrix_to_atom[1] = 1), __0),
-Reify(Ineq(y, 4, 0), __0),
-ReifyImply((m#matrix_to_atom[2] = 2), __1),
-Reify(Ineq(y, 4, 0), __1),
-ReifyImply((m#matrix_to_atom[3] = 3), __2),
-Reify(Ineq(y, 4, 0), __2) 
+and([(m#matrix_to_atom[1] = 1);int(1..)]), 
+   ~~> remove_unit_vector_and_1 ([("Base", 8800)]) 
+(m#matrix_to_atom[1] = 1) 
+
+--
+
+and([(m#matrix_to_atom[2] = 2);int(1..)]), 
+   ~~> remove_unit_vector_and_1 ([("Base", 8800)]) 
+(m#matrix_to_atom[2] = 2) 
+
+--
+
+and([(m#matrix_to_atom[3] = 3);int(1..)]), 
+   ~~> remove_unit_vector_and_1 ([("Base", 8800)]) 
+(m#matrix_to_atom[3] = 3) 
 
 --
 
