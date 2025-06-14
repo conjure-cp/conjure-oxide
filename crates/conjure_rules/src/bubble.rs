@@ -1,5 +1,5 @@
 use conjure_core::{
-    ast::{Atom, Expression, Literal, ReturnType, SymbolTable, Typeable},
+    ast::{Atom, DeclarationKind, Expression, Literal, Name, ReturnType, SymbolTable, Typeable},
     into_matrix_expr, matrix_expr,
     metadata::Metadata,
     rule_engine::{
@@ -8,7 +8,7 @@ use conjure_core::{
         ApplicationResult, Reduction,
     },
 };
-use uniplate::Uniplate;
+use uniplate::{Biplate, Uniplate};
 
 use super::utils::is_all_constant;
 
@@ -39,8 +39,24 @@ fn expand_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 
     E.g. ((a / b) @ (b != 0)) = c => (a / b = c) @ (b != 0)
 */
-#[register_rule(("Bubble", 8900))]
-fn bubble_up(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+#[register_rule(("Bubble", 8800))]
+fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
+    // do not put root inside a bubble
+    //
+    // also do not bubble bubbles inside bubbles, as this does nothing productive it just shuffles
+    // the conditions around, shuffles them back, then gets stuck in a loop doing this adfinitum
+    if matches!(expr, Expression::Root(_, _) | Expression::Bubble(_, _, _)) {
+        return Err(RuleNotApplicable);
+    }
+
+    // do not bubble things containing lettings
+    if expr.universe_bi().iter().any(|x: &Name| {
+        syms.lookup(x)
+            .is_some_and(|x| matches!(x.kind(), DeclarationKind::ValueLetting(_)))
+    }) {
+        return Err(RuleNotApplicable);
+    };
+
     let mut sub = expr.children();
     let mut bubbled_conditions = vec![];
     for e in sub.iter_mut() {
@@ -52,16 +68,25 @@ fn bubble_up(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
         }
     }
     if bubbled_conditions.is_empty() {
-        return Err(ApplicationError::RuleNotApplicable);
-    }
-    Ok(Reduction::pure(Expression::Bubble(
-        Metadata::new(),
-        Box::new(expr.with_children(sub)),
-        Box::new(Expression::And(
+        Err(ApplicationError::RuleNotApplicable)
+    } else if bubbled_conditions.len() == 1 {
+        let new_expr = Expression::Bubble(
             Metadata::new(),
-            Box::new(into_matrix_expr![bubbled_conditions]),
-        )),
-    )))
+            Box::new(expr.with_children(sub)),
+            Box::new(bubbled_conditions[0].clone()),
+        );
+
+        Ok(Reduction::pure(new_expr))
+    } else {
+        Ok(Reduction::pure(Expression::Bubble(
+            Metadata::new(),
+            Box::new(expr.with_children(sub)),
+            Box::new(Expression::And(
+                Metadata::new(),
+                Box::new(into_matrix_expr![bubbled_conditions]),
+            )),
+        )))
+    }
 }
 
 // Bubble applications

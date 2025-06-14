@@ -24,26 +24,18 @@ UnsafeDiv(sum([x,y,z;int(1..2)]), a),
 --
 
 ({SafeDiv(sum([x,y,z;int(1..2)]), a) @ (a != 0)} = 3), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{(SafeDiv(sum([x,y,z;int(1..2)]), a) = 3) @ and([(a != 0);int(1..)])} 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{(SafeDiv(sum([x,y,z;int(1..2)]), a) = 3) @ (a != 0)} 
 
 --
 
-{(SafeDiv(sum([x,y,z;int(1..2)]), a) = 3) @ and([(a != 0);int(1..)])}, 
+{(SafeDiv(sum([x,y,z;int(1..2)]), a) = 3) @ (a != 0)}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(SafeDiv(sum([x,y,z;int(1..2)]), a) = 3),and([(a != 0);int(1..)]);int(1..)]) 
+and([(SafeDiv(sum([x,y,z;int(1..2)]), a) = 3),(a != 0);int(1..)]) 
 
 --
 
-and([(SafeDiv(sum([x,y,z;int(1..2)]), a) = 3),and([(a != 0);int(1..)]);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(SafeDiv(sum([x,y,z;int(1..2)]), a) = 3),
-and([(a != 0);int(1..)]) 
-
---
-
-(SafeDiv(sum([x,y,z;int(1..2)]), a) = 3),
-and([(a != 0);int(1..)]), 
+and([(SafeDiv(sum([x,y,z;int(1..2)]), a) = 3),(a != 0);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 (SafeDiv(sum([x,y,z;int(1..2)]), a) = 3),
 (a != 0) 
