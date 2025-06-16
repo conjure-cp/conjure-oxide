@@ -34,54 +34,30 @@ UnsafeDiv(e, f),
 --
 
 [product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),{SafeDiv(e, f) @ (f != 0)},product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)], 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{[product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)] @ and([(f != 0);int(1..)])} 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{[product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)] @ (f != 0)} 
 
 --
 
-sum({[product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)] @ and([(f != 0);int(1..)])}), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) @ and([and([(f != 0);int(1..)]);int(1..)])} 
+sum({[product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)] @ (f != 0)}), 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) @ (f != 0)} 
 
 --
 
-({sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) @ and([and([(f != 0);int(1..)]);int(1..)])} <= 18), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18) @ and([and([and([(f != 0);int(1..)]);int(1..)]);int(1..)])} 
+({sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) @ (f != 0)} <= 18), 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18) @ (f != 0)} 
 
 --
 
-{(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18) @ and([and([and([(f != 0);int(1..)]);int(1..)]);int(1..)])}, 
+{(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18) @ (f != 0)}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),and([and([and([(f != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+and([(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),(f != 0);int(1..)]) 
 
 --
 
-and([(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),and([and([and([(f != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
-and([and([and([(f != 0);int(1..)]);int(1..)]);int(1..)]) 
-
---
-
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
-and([and([and([(f != 0);int(1..)]);int(1..)]);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
-and([and([(f != 0);int(1..)]);int(1..)]) 
-
---
-
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
-and([and([(f != 0);int(1..)]);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
-and([(f != 0);int(1..)]) 
-
---
-
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
-and([(f != 0);int(1..)]), 
+and([(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),(f != 0);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 (sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,UnsafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
 (f != 0) 
@@ -95,92 +71,42 @@ UnsafeDiv(g, h),
 --
 
 [6,{SafeDiv(g, h) @ (h != 0)};int(1..2)], 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{[6,SafeDiv(g, h);int(1..2)] @ and([(h != 0);int(1..)])} 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{[6,SafeDiv(g, h);int(1..2)] @ (h != 0)} 
 
 --
 
-product({[6,SafeDiv(g, h);int(1..2)] @ and([(h != 0);int(1..)])}), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{product([6,SafeDiv(g, h);int(1..2)]) @ and([and([(h != 0);int(1..)]);int(1..)])} 
+product({[6,SafeDiv(g, h);int(1..2)] @ (h != 0)}), 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{product([6,SafeDiv(g, h);int(1..2)]) @ (h != 0)} 
 
 --
 
-[product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),{product([6,SafeDiv(g, h);int(1..2)]) @ and([and([(h != 0);int(1..)]);int(1..)])},-(a),-(UnsafeDiv(g, h));int(1..2)], 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{[product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)] @ and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)])} 
+[product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),{product([6,SafeDiv(g, h);int(1..2)]) @ (h != 0)},-(a),-(UnsafeDiv(g, h));int(1..2)], 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{[product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)] @ (h != 0)} 
 
 --
 
-sum({[product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)] @ and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)])}), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) @ and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)])} 
+sum({[product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)] @ (h != 0)}), 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) @ (h != 0)} 
 
 --
 
-({sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) @ and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)])} <= 18), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18) @ and([and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])} 
+({sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) @ (h != 0)} <= 18), 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18) @ (h != 0)} 
 
 --
 
-{(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18) @ and([and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)])}, 
+{(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18) @ (h != 0)}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),and([and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+and([(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),(h != 0);int(1..)]) 
 
 --
 
-and([(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),and([and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
-(f != 0), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
-and([and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
-(f != 0) 
-
---
-
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
-and([and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
-(f != 0), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
-and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
-(f != 0) 
-
---
-
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
-and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
-(f != 0), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
-and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]),
-(f != 0) 
-
---
-
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
-and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]),
-(f != 0), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
-and([and([(h != 0);int(1..)]);int(1..)]),
-(f != 0) 
-
---
-
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
-and([and([(h != 0);int(1..)]);int(1..)]),
-(f != 0), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
-and([(h != 0);int(1..)]),
-(f != 0) 
-
---
-
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
-and([(h != 0);int(1..)]),
+and([(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),(h != 0);int(1..)]),
 (f != 0), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 (sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(UnsafeDiv(g, h));int(1..2)]) <= 18),
@@ -196,84 +122,36 @@ UnsafeDiv(g, h),
 --
 
 -({SafeDiv(g, h) @ (h != 0)}), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{-(SafeDiv(g, h)) @ and([(h != 0);int(1..)])} 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{-(SafeDiv(g, h)) @ (h != 0)} 
 
 --
 
-[product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),{-(SafeDiv(g, h)) @ and([(h != 0);int(1..)])};int(1..2)], 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{[product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)] @ and([and([(h != 0);int(1..)]);int(1..)])} 
+[product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),{-(SafeDiv(g, h)) @ (h != 0)};int(1..2)], 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{[product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)] @ (h != 0)} 
 
 --
 
-sum({[product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)] @ and([and([(h != 0);int(1..)]);int(1..)])}), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)]) @ and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)])} 
+sum({[product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)] @ (h != 0)}), 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)]) @ (h != 0)} 
 
 --
 
-({sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)]) @ and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)])} <= 18), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18) @ and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)])} 
+({sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)]) @ (h != 0)} <= 18), 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18) @ (h != 0)} 
 
 --
 
-{(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18) @ and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)])}, 
+{(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18) @ (h != 0)}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18),and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]) 
+and([(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18),(h != 0);int(1..)]) 
 
 --
 
-and([(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18),and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
-(h != 0),
-(f != 0), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18),
-and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
-(h != 0),
-(f != 0) 
-
---
-
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18),
-and([and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]);int(1..)]),
-(h != 0),
-(f != 0), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18),
-and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]),
-(h != 0),
-(f != 0) 
-
---
-
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18),
-and([and([and([(h != 0);int(1..)]);int(1..)]);int(1..)]),
-(h != 0),
-(f != 0), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18),
-and([and([(h != 0);int(1..)]);int(1..)]),
-(h != 0),
-(f != 0) 
-
---
-
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18),
-and([and([(h != 0);int(1..)]);int(1..)]),
-(h != 0),
-(f != 0), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18),
-and([(h != 0);int(1..)]),
-(h != 0),
-(f != 0) 
-
---
-
-(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18),
-and([(h != 0);int(1..)]),
+and([(sum([product([2,a;int(1..2)]),product([2,b;int(1..2)]),product([3,c,d;int(1..2)]),SafeDiv(e, f),product([6,SafeDiv(g, h);int(1..2)]),-(a),-(SafeDiv(g, h));int(1..2)]) <= 18),(h != 0);int(1..)]),
 (h != 0),
 (f != 0), 
    ~~> constant_evaluator ([("Constant", 9001)]) 

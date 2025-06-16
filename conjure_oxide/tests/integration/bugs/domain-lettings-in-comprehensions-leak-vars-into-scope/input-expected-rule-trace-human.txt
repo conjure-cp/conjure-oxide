@@ -56,14 +56,14 @@ a#matrix_to_atom[i],
 --
 
 ({a#matrix_to_atom[i] @ and([__inDomain(i,int(1..3));int(1..)])} = i), 
-   ~~> bubble_up ([("Bubble", 8900)]) 
-{(a#matrix_to_atom[i] = i) @ and([and([__inDomain(i,int(1..3));int(1..)]);int(1..)])} 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{(a#matrix_to_atom[i] = i) @ and([__inDomain(i,int(1..3));int(1..)])} 
 
 --
 
-{(a#matrix_to_atom[i] = i) @ and([and([__inDomain(i,int(1..3));int(1..)]);int(1..)])}, 
+{(a#matrix_to_atom[i] = i) @ and([__inDomain(i,int(1..3));int(1..)])}, 
    ~~> expand_bubble ([("Bubble", 8900)]) 
-and([(a#matrix_to_atom[i] = i),and([and([__inDomain(i,int(1..3));int(1..)]);int(1..)]);int(1..)]) 
+and([(a#matrix_to_atom[i] = i),and([__inDomain(i,int(1..3));int(1..)]);int(1..)]) 
 
 --
 
@@ -71,25 +71,7 @@ and([given i: DOM
 
 such that
 
-and([(a#matrix_to_atom[i] = i),and([and([__inDomain(i,int(1..3));int(1..)]);int(1..)]);int(1..)])
- | i: DOM,]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-and([given i: DOM
-
-such that
-
-(a#matrix_to_atom[i] = i),
-and([and([__inDomain(i,int(1..3));int(1..)]);int(1..)])
- | i: DOM,]) 
-
---
-
-and([given i: DOM
-
-such that
-
-(a#matrix_to_atom[i] = i),
-and([and([__inDomain(i,int(1..3));int(1..)]);int(1..)])
+and([(a#matrix_to_atom[i] = i),and([__inDomain(i,int(1..3));int(1..)]);int(1..)])
  | i: DOM,]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 and([given i: DOM
