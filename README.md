@@ -1,4 +1,4 @@
-[#](#) Conjure Oxide
+# Conjure Oxide
 
 This repository contains the in-progress Conjure Oxide constraints modelling
 tool and its dependencies. 
