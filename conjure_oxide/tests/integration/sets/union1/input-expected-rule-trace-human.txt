@@ -56,7 +56,6 @@ b,
 (Set([Int(1), Int(2), Int(3)]) subsetEq (Set([Int(2), Int(3)]) union {1,2})),
 ((Set([Int(2), Int(3)]) union b) subsetEq Set([Int(1), Int(2), Int(3)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(Set([Int(1), Int(2), Int(3)]) subsetEq (Set([Int(2), Int(3)]) union Set([Int(1), Int(2)]))),
 ((Set([Int(2), Int(3)]) union b) subsetEq Set([Int(1), Int(2), Int(3)])) 
 
 --
@@ -67,26 +66,9 @@ b,
 
 --
 
-(Set([Int(1), Int(2), Int(3)]) subsetEq (Set([Int(2), Int(3)]) union Set([Int(1), Int(2)]))),
 ((Set([Int(2), Int(3)]) union {1,2}) subsetEq Set([Int(1), Int(2), Int(3)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(Set([Int(1), Int(2), Int(3)]) subsetEq (Set([Int(2), Int(3)]) union Set([Int(1), Int(2)]))),
-((Set([Int(2), Int(3)]) union Set([Int(1), Int(2)])) subsetEq Set([Int(1), Int(2), Int(3)])) 
-
---
-
-((Set([Int(2), Int(3)]) union Set([Int(1), Int(2)])) subsetEq Set([Int(1), Int(2), Int(3)])), 
-   ~~> union_subseteq ([("Base", 8700)]) 
-and([(Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2)])),(Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)]));int(1..)]) 
-
---
-
-(Set([Int(1), Int(2), Int(3)]) subsetEq (Set([Int(2), Int(3)]) union Set([Int(1), Int(2)]))),
-and([(Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2)])),(Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)]));int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(Set([Int(1), Int(2), Int(3)]) subsetEq (Set([Int(2), Int(3)]) union Set([Int(1), Int(2)]))),
-(Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2)])),
-(Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)])) 
+true 
 
 --
 
@@ -98,7 +80,5 @@ letting c be {1,2,3}
 
 such that
 
-(Set([Int(1), Int(2), Int(3)]) subsetEq (Set([Int(2), Int(3)]) union Set([Int(1), Int(2)]))),
-(Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2)])),
-(Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)]))
+true
 

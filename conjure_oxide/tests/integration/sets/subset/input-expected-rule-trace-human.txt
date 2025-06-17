@@ -29,80 +29,7 @@ a,
 
 (Set([Int(2), Int(3)]) subset {1,2,3}), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(Set([Int(2), Int(3)]) subset Set([Int(1), Int(2), Int(3)])) 
-
---
-
-(Set([Int(2), Int(3)]) subset Set([Int(1), Int(2), Int(3)])), 
-   ~~> subset_to_subset_eq_neq ([("Base", 8700)]) 
-and([(Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)])),(Set([Int(2), Int(3)]) != Set([Int(1), Int(2), Int(3)]));int(1..)]) 
-
---
-
-and([(Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)])),(Set([Int(2), Int(3)]) != Set([Int(1), Int(2), Int(3)]));int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)])),
-(Set([Int(2), Int(3)]) != Set([Int(1), Int(2), Int(3)])) 
-
---
-
-(Set([Int(2), Int(3)]) != Set([Int(1), Int(2), Int(3)])), 
-   ~~> neq_not_eq_sets ([("Base", 8700)]) 
-!((Set([Int(1), Int(2), Int(3)]) = Set([Int(2), Int(3)]))) 
-
---
-
-(Set([Int(1), Int(2), Int(3)]) = Set([Int(2), Int(3)])), 
-   ~~> eq_to_subset_eq ([("Base", 8800)]) 
-and([(Set([Int(1), Int(2), Int(3)]) subsetEq Set([Int(2), Int(3)])),(Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)]));int(1..)]) 
-
---
-
-!(and([(Set([Int(1), Int(2), Int(3)]) subsetEq Set([Int(2), Int(3)])),(Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)]));int(1..)])), 
-   ~~> distribute_not_over_and ([("Base", 8400)]) 
-or([!((Set([Int(1), Int(2), Int(3)]) subsetEq Set([Int(2), Int(3)]))),!((Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)])));int(1..)]) 
-
---
-
-!((Set([Int(1), Int(2), Int(3)]) subsetEq Set([Int(2), Int(3)]))), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-!(__0) 
-new variables:
-  find __0: bool
-new constraints:
-  __0 =aux (Set([Int(1), Int(2), Int(3)]) subsetEq Set([Int(2), Int(3)]))
---
-
-__0 =aux (Set([Int(1), Int(2), Int(3)]) subsetEq Set([Int(2), Int(3)])), 
-   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify((Set([Int(1), Int(2), Int(3)]) subsetEq Set([Int(2), Int(3)])), __0) 
-
---
-
-!((Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)]))), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-!(__1) 
-new variables:
-  find __1: bool
-new constraints:
-  __1 =aux (Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)]))
---
-
-__1 =aux (Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)])), 
-   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify((Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)])), __1) 
-
---
-
-!(__0), 
-   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
-WatchedLiteral(__0,false) 
-
---
-
-!(__1), 
-   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
-WatchedLiteral(__1,false) 
+true 
 
 --
 
@@ -110,13 +37,8 @@ Final model:
 
 letting a be {1,2,3}
 letting b be {2,3}
-find __0: bool
-find __1: bool
 
 such that
 
-(Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)])),
-or([WatchedLiteral(__0,false),WatchedLiteral(__1,false);int(1..)]),
-Reify((Set([Int(1), Int(2), Int(3)]) subsetEq Set([Int(2), Int(3)])), __0),
-Reify((Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)])), __1)
+true
 
