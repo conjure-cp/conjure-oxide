@@ -66,11 +66,6 @@ jobs:
         if: matrix.rust_release == 'nightly'
         run: echo "RUSTUP_TOOLCHAIN=nightly" >> $GITHUB_ENV
 
-      - name: Disable rust-lld (to fix linkme)
-        run: |
-          echo RUSTFLAGS=${RUSTFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
-          echo RUSTDOCFLAGS=${RUSTDOCFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
-        if: matrix.rust_release == 'nightly'
 
       - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
 
@@ -117,12 +112,6 @@ jobs:
       - name: Set RUSTUP_TOOLCHAIN
         if: matrix.rust_release == 'nightly'
         run: echo "RUSTUP_TOOLCHAIN=nightly" >> $GITHUB_ENV
-
-      - name: Disable rust-lld (to fix linkme)
-        run: |
-          echo RUSTFLAGS=${RUSTFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
-          echo RUSTDOCFLAGS=${RUSTDOCFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
-        if: matrix.rust_release == 'nightly'
 
       - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
 
