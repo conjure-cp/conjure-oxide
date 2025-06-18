@@ -263,7 +263,8 @@ pub fn normalize_solutions_for_comparison(
                         // make all domains the same (this is just in the tester so the types dont
                         // actually matter)
 
-                        let mut matrix = AbstractLiteral::Matrix(elems, Domain::IntDomain(vec![]));
+                        let mut matrix =
+                            AbstractLiteral::Matrix(elems, Box::new(Domain::IntDomain(vec![])));
                         matrix =
                             matrix.transform(Arc::new(
                                 move |x: AbstractLiteral<Literal>| match x {
@@ -277,7 +278,10 @@ pub fn normalize_solutions_for_comparison(
                                             })
                                             .collect_vec();
 
-                                        AbstractLiteral::Matrix(items, Domain::IntDomain(vec![]))
+                                        AbstractLiteral::Matrix(
+                                            items,
+                                            Box::new(Domain::IntDomain(vec![])),
+                                        )
                                     }
                                     x => x,
                                 },

@@ -12,12 +12,16 @@ pub enum Name {
 
     /// A representation variable.
     RepresentedName(
-        /// The source variable
-        Box<Name>,
-        /// The representation rule used
-        String,
-        /// Additional, rule dependent, information
-        String,
+        // box these fields to make the size of name smaller
+        // this in turn makes the size of atom, expression, domain, ... smaller
+        Box<(
+            // The source variable
+            Name,
+            // The representation rule used
+            String,
+            // Additional, rule dependent, information
+            String,
+        )>,
     ),
 
     WithRepresentation(
@@ -34,7 +38,8 @@ impl Display for Name {
         match self {
             Name::UserName(s) => write!(f, "{}", s),
             Name::MachineName(i) => write!(f, "__{}", i),
-            Name::RepresentedName(name, rule_string, suffix) => {
+            Name::RepresentedName(fields) => {
+                let (name, rule_string, suffix) = fields.as_ref();
                 write!(f, "{name}#{rule_string}_{suffix}")
             }
             Name::WithRepresentation(name, items) => {

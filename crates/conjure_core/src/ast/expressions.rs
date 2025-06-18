@@ -858,7 +858,7 @@ impl Expression {
     pub fn unwrap_matrix_unchecked(self) -> Option<(Vec<Expression>, Domain)> {
         match self {
             Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, domain)) => {
-                Some((elems.clone(), domain))
+                Some((elems.clone(), *domain))
             }
             Expression::Atomic(
                 _,
@@ -869,7 +869,7 @@ impl Expression {
                     .into_iter()
                     .map(|x: Literal| Expression::Atomic(Metadata::new(), Atom::Literal(x)))
                     .collect_vec(),
-                domain,
+                *domain,
             )),
 
             _ => None,

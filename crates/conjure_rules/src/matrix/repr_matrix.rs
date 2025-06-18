@@ -69,11 +69,11 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
     if indices_are_const {
         // indices are constant -> find the element being indexed and only return that variable.
         //
-        let indices_as_name = Name::RepresentedName(
-            name.clone(),
+        let indices_as_name = Name::RepresentedName(Box::new((
+            name.as_ref().clone(),
             "matrix_to_atom".into(),
             indices_as_lits.iter().join("_"),
-        );
+        )));
 
         let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
 
@@ -187,11 +187,11 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
         let repr_exprs = repr.expression_down(symbols)?;
         let flat_elems = matrix::enumerate_indices(index_domains.clone())
             .map(|xs| {
-                Name::RepresentedName(
-                    name.clone(),
+                Name::RepresentedName(Box::new((
+                    name.as_ref().clone(),
                     "matrix_to_atom".into(),
                     xs.into_iter().join("_"),
-                )
+                )))
             })
             .map(|x| repr_exprs[&x].clone())
             .collect_vec();
@@ -261,11 +261,11 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         .map(|i| {
             let mut indices_as_lits = indices_as_lits.clone();
             indices_as_lits[hole_dim as usize] = Some(i);
-            let name = Name::RepresentedName(
-                name.clone(),
+            let name = Name::RepresentedName(Box::new((
+                name.as_ref().clone(),
                 "matrix_to_atom".into(),
                 indices_as_lits.into_iter().map(|x| x.unwrap()).join("_"),
-            );
+            )));
             repr_values[&name].clone()
         })
         .collect_vec();
@@ -318,11 +318,11 @@ fn matrix_ref_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
         let flat_values = matrix::enumerate_indices(index_domains)
             .map(|i| {
-                matrix_values[&Name::RepresentedName(
-                    name.clone(),
+                matrix_values[&Name::RepresentedName(Box::new((
+                    name.as_ref().clone(),
                     "matrix_to_atom".into(),
                     i.iter().join("_"),
-                )]
+                )))]
                     .clone()
             })
             .collect_vec();

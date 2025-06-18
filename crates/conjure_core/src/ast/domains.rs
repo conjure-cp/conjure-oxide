@@ -105,7 +105,7 @@ impl Domain {
                 if index_domains
                     .pop()
                     .expect("a matrix should have atleast one index domain")
-                    != *idx_domain
+                    != **idx_domain
                 {
                     return Some(false);
                 };

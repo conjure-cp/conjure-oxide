@@ -28,11 +28,11 @@ impl RecordToAtom {
 
     /// Gets the representation variable name for a specific set of indices.
     fn indices_to_name(&self, indices: &[Literal]) -> Name {
-        Name::RepresentedName(
-            Box::new(self.src_var.clone()),
+        Name::RepresentedName(Box::new((
+            self.src_var.clone(),
             self.repr_name().to_string(),
             indices.iter().join("_"),
-        )
+        )))
     }
 }
 
@@ -95,9 +95,12 @@ impl Representation for RecordToAtom {
             let value = values
                 .get(&name)
                 .ok_or(ApplicationError::RuleNotApplicable)?;
-            let Name::RepresentedName(_, _, idx) = name.clone() else {
+            let Name::RepresentedName(fields) = name.clone() else {
                 return Err(ApplicationError::RuleNotApplicable);
             };
+
+            let (_, _, idx) = *fields;
+
             let idx: usize = idx
                 .parse()
                 .map_err(|_| ApplicationError::RuleNotApplicable)?;

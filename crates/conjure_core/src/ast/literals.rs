@@ -38,7 +38,7 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
     Set(Vec<T>),
 
     /// A 1 dimensional matrix slice with an index domain.
-    Matrix(Vec<T>, Domain),
+    Matrix(Vec<T>, Box<Domain>),
 
     // a tuple of literals
     Tuple(Vec<T>),
@@ -79,7 +79,10 @@ where
     ///
     /// This acts as a variable sized list.
     pub fn matrix_implied_indices(elems: Vec<T>) -> Self {
-        AbstractLiteral::Matrix(elems, Domain::IntDomain(vec![Range::UnboundedR(1)]))
+        AbstractLiteral::Matrix(
+            elems,
+            Box::new(Domain::IntDomain(vec![Range::UnboundedR(1)])),
+        )
     }
 
     /// If the AbstractLiteral is a list, returns its elements.
@@ -87,7 +90,11 @@ where
     /// A list is any a matrix with the domain `int(1..)`. This includes matrix literals without
     /// any explicitly specified domain.
     pub fn unwrap_list(&self) -> Option<&Vec<T>> {
-        let AbstractLiteral::Matrix(elems, Domain::IntDomain(ranges)) = self else {
+        let AbstractLiteral::Matrix(elems, domain) = self else {
+            return None;
+        };
+
+        let Domain::IntDomain(ranges) = domain.as_ref() else {
             return None;
         };
 
@@ -398,7 +405,7 @@ mod tests {
             let mut res = vec![];
             res.extend(children.into_iter().flatten());
             if let AbstractLiteral::Matrix(_, index_domain) = elem {
-                res.push(index_domain);
+                res.push(*index_domain);
             }
 
             res
