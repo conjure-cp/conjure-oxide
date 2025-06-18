@@ -1,0 +1,55 @@
+language ESSENCE' 1.0
+letting English be 1
+letting Spanish be 2
+letting Ukrainian be 3
+letting Norwegian be 4
+letting Japanese be 5
+letting Red be 1
+letting Green be 2
+letting Ivory be 3
+letting Yellow be 4
+letting Blue be 5
+letting Dog be 1
+letting Fox be 2
+letting Horse be 3
+letting Zebra be 4
+letting Snails be 5
+letting Coffee be 1
+letting Tea be 2
+letting Milk be 3
+letting Orange_Juice be 4
+letting Water be 5
+letting OldGold be 1
+letting Kools be 2
+letting Chesterfields be 3
+letting LuckyStrike be 4
+letting Parliaments be 5
+find animal : matrix indexed by [int(1..5)] of int(1..5)
+find colour : matrix indexed by [int(1..5)] of int(1..5)
+find drink : matrix indexed by [int(1..5)] of int(1..5)
+find nation : matrix indexed by [int(1..5)] of int(1..5)
+find smoke : matrix indexed by [int(1..5)] of int(1..5)
+find owns_zebra : int(1..5)
+find drinks_water : int(1..5)
+such that
+allDiff(animal),
+allDiff(colour),
+allDiff(drink),
+allDiff(nation),
+allDiff(smoke),
+(nation[English]=colour[Red]),
+(nation[Spanish]=animal[Dog]),
+(drink[Coffee]=colour[Green]),
+(nation[Ukrainian]=drink[Tea]),
+(colour[Green]=(colour[Ivory] + 1)),
+(smoke[OldGold]=animal[Snails]),
+(smoke[Kools]=colour[Yellow]),
+(drink[Milk]=3),
+(nation[Norwegian]=1),
+(|(smoke[Chesterfields] - animal[Fox])|=1),
+(|(smoke[Kools] - animal[Horse])|=1),
+(smoke[LuckyStrike]=drink[Orange_Juice]),
+(nation[Japanese]=smoke[Parliaments]),
+(|(nation[Norwegian] - colour[Blue])|=1),
+(owns_zebra=animal[Zebra]),
+(drinks_water=drink[Water])
