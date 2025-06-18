@@ -48,11 +48,11 @@ fn parse_name(minion_name: &str) -> Name {
     if let Some(caps) = MACHINE_NAME_RE.captures(minion_name) {
         conjure_ast::Name::MachineName(caps[1].parse::<i32>().unwrap())
     } else if let Some(caps) = REPRESENTED_NAME_RE.captures(minion_name) {
-        conjure_ast::Name::RepresentedName(
-            Box::new(parse_name(&caps[1])),
+        conjure_ast::Name::RepresentedName(Box::new((
+            parse_name(&caps[1]),
             caps[2].to_string(),
             caps[3].to_string(),
-        )
+        )))
     } else {
         conjure_ast::Name::UserName(minion_name.to_string())
     }

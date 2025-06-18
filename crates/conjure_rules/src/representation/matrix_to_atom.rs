@@ -28,22 +28,24 @@ impl MatrixToAtom {
 
     /// Gets the representation variable name for a specific set of indices.
     fn indices_to_name(&self, indices: &[Literal]) -> Name {
-        Name::RepresentedName(
-            Box::new(self.src_var.clone()),
+        Name::RepresentedName(Box::new((
+            self.src_var.clone(),
             self.repr_name().to_string(),
             indices.iter().join("_"),
-        )
+        )))
     }
 
     /// Panics if name is invalid.
     #[allow(dead_code)]
     fn name_to_indices(&self, name: &Name) -> Vec<Literal> {
-        let Name::RepresentedName(src_var, rule_string, suffix) = name else {
+        let Name::RepresentedName(fields) = name else {
             bug!("representation name should be Name::RepresentationOf");
         };
 
+        let (src_var, rule_string, suffix) = fields.as_ref();
+
         assert_eq!(
-            src_var.as_ref(),
+            src_var,
             self.variable_name(),
             "name should have the same source var as self"
         );
@@ -125,7 +127,7 @@ impl Representation for MatrixToAtom {
             return Err(RuleNotApplicable);
         };
 
-        if index_domain != &self.index_domains[0] {
+        if index_domain.as_ref() != &self.index_domains[0] {
             return Err(RuleNotApplicable);
         }
 

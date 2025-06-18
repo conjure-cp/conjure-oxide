@@ -25,11 +25,11 @@ impl TupleToAtom {
 
     /// Gets the representation variable name for a specific set of indices.
     fn indices_to_name(&self, indices: &[Literal]) -> Name {
-        Name::RepresentedName(
-            Box::new(self.src_var.clone()),
+        Name::RepresentedName(Box::new((
+            self.src_var.clone(),
             self.repr_name().to_string(),
             indices.iter().join("_"),
-        )
+        )))
     }
 }
 

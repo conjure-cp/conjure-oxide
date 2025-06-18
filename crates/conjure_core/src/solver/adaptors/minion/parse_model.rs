@@ -204,8 +204,9 @@ fn name_to_string(name: conjure_ast::Name) -> String {
     match name {
         // print machine names in a custom, easier to regex, way.
         conjure_ast::Name::MachineName(x) => format!("__conjure_machine_name_{}", x),
-        conjure_ast::Name::RepresentedName(name, rule, suffix) => {
-            let name = name_to_string(*name);
+        conjure_ast::Name::RepresentedName(fields) => {
+            let (name, rule, suffix) = *fields;
+            let name = name_to_string(name);
             format!("__conjure_represented_name##{name}##{rule}___{suffix}")
         }
         x => format!("{x}"),
