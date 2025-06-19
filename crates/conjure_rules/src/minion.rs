@@ -116,15 +116,19 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
 
         symbols.insert(Rc::new(Declaration::new_var(aux_var.clone(), aux_domain)));
 
-        let new_top_expr =
-            Expr::FlatProductEq(Metadata::new(), y, next_factor_atom, aux_var.clone().into());
+        let new_top_expr = Expr::FlatProductEq(
+            Metadata::new(),
+            Box::new(y),
+            Box::new(next_factor_atom),
+            Box::new(aux_var.clone().into()),
+        );
 
         new_tops.push(new_top_expr);
         y = aux_var.into();
     }
 
     Ok(Reduction::new(
-        Expr::FlatProductEq(Metadata::new(), x, y, val),
+        Expr::FlatProductEq(Metadata::new(), Box::new(x), Box::new(y), Box::new(val)),
         new_tops,
         symbols,
     ))
@@ -331,9 +335,9 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symtab: &SymbolTable) -> Applic
                     Metadata::new(),
                     coefficients.clone(),
                     vars.clone(),
-                    total.clone(),
+                    Box::new(total.clone()),
                 ),
-                Expr::FlatWeightedSumGeq(Metadata::new(), coefficients, vars, total),
+                Expr::FlatWeightedSumGeq(Metadata::new(), coefficients, vars, Box::new(total)),
             ]),
         ),
         (EqualityKind::Eq, false) => Expr::And(
@@ -344,11 +348,11 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symtab: &SymbolTable) -> Applic
             ]),
         ),
         (EqualityKind::Leq, true) => {
-            Expr::FlatWeightedSumLeq(Metadata::new(), coefficients, vars, total)
+            Expr::FlatWeightedSumLeq(Metadata::new(), coefficients, vars, Box::new(total))
         }
         (EqualityKind::Leq, false) => Expr::FlatSumLeq(Metadata::new(), vars, total),
         (EqualityKind::Geq, true) => {
-            Expr::FlatWeightedSumGeq(Metadata::new(), coefficients, vars, total)
+            Expr::FlatWeightedSumGeq(Metadata::new(), coefficients, vars, Box::new(total))
         }
         (EqualityKind::Geq, false) => Expr::FlatSumGeq(Metadata::new(), vars, total),
     };
@@ -528,9 +532,9 @@ fn introduce_diveq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::pure(Expr::MinionDivEqUndefZero(
         meta.clone_dirty(),
-        a.clone(),
-        b.clone(),
-        val,
+        Box::new(a.clone()),
+        Box::new(b.clone()),
+        Box::new(val),
     )))
 }
 
@@ -579,9 +583,9 @@ fn introduce_modeq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::pure(Expr::MinionModuloEqUndefZero(
         meta.clone_dirty(),
-        a.clone(),
-        b.clone(),
-        val,
+        Box::new(a.clone()),
+        Box::new(b.clone()),
+        Box::new(val),
     )))
 }
 
@@ -612,7 +616,11 @@ fn introduce_abseq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     let y: Atom = (*y).try_into().or(Err(RuleNotApplicable))?;
 
-    Ok(Reduction::pure(Expr::FlatAbsEq(Metadata::new(), x, y)))
+    Ok(Reduction::pure(Expr::FlatAbsEq(
+        Metadata::new(),
+        Box::new(x),
+        Box::new(y),
+    )))
 }
 
 /// Introduces a `MinionPowEq` constraint from a `SafePow`
@@ -637,9 +645,9 @@ fn introduce_poweq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::pure(Expr::MinionPow(
         Metadata::new(),
-        a,
-        b,
-        total,
+        Box::new(a),
+        Box::new(b),
+        Box::new(total),
     )))
 }
 
@@ -695,7 +703,11 @@ fn introduce_minuseq_from_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult 
         return Err(RuleNotApplicable);
     };
 
-    Ok(Reduction::pure(Expr::FlatMinusEq(Metadata::new(), x, y)))
+    Ok(Reduction::pure(Expr::FlatMinusEq(
+        Metadata::new(),
+        Box::new(x),
+        Box::new(y),
+    )))
 }
 
 /// Introduces a Minion `MinusEq` constraint from `x =aux -y`, where x and y are atoms.
@@ -723,7 +735,11 @@ fn introduce_minuseq_from_aux_decl(expr: &Expr, _: &SymbolTable) -> ApplicationR
         return Err(RuleNotApplicable);
     };
 
-    Ok(Reduction::pure(Expr::FlatMinusEq(Metadata::new(), a, b)))
+    Ok(Reduction::pure(Expr::FlatMinusEq(
+        Metadata::new(),
+        Box::new(a),
+        Box::new(b),
+    )))
 }
 
 /// Converts an implication to either `ineq` or `reifyimply`
@@ -749,9 +765,9 @@ fn introduce_reifyimply_ineq_from_imply(expr: &Expr, _: &SymbolTable) -> Applica
     if let Ok(y_atom) = TryInto::<&Atom>::try_into(y.as_ref()) {
         Ok(Reduction::pure(Expr::FlatIneq(
             Metadata::new(),
-            x_atom.clone(),
-            y_atom.clone(),
-            0.into(),
+            Box::new(x_atom.clone()),
+            Box::new(y_atom.clone()),
+            Box::new(0.into()),
         )))
     } else {
         Ok(Reduction::pure(Expr::MinionReifyImply(
@@ -852,8 +868,8 @@ fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResu
     Ok(Reduction::pure(Expr::MinionElementOne(
         Metadata::new(),
         atom_list,
-        index,
-        equalto,
+        Box::new(index),
+        Box::new(equalto),
     )))
 }
 
@@ -1054,9 +1070,9 @@ fn geq_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::pure(Expr::FlatIneq(
         meta.clone_dirty(),
-        y,
-        x,
-        Lit::Int(0),
+        Box::new(y),
+        Box::new(x),
+        Box::new(Lit::Int(0)),
     )))
 }
 
@@ -1081,9 +1097,9 @@ fn leq_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::pure(Expr::FlatIneq(
         meta.clone_dirty(),
-        x,
-        y,
-        Lit::Int(0),
+        Box::new(x),
+        Box::new(y),
+        Box::new(Lit::Int(0)),
     )))
 }
 
@@ -1117,9 +1133,9 @@ fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::pure(Expr::FlatIneq(
         meta.clone_dirty(),
-        x,
-        y.clone(),
-        k.clone(),
+        Box::new(x),
+        Box::new(y.clone()),
+        Box::new(k.clone()),
     )))
 }
 
@@ -1152,9 +1168,9 @@ fn y_plus_k_geq_x_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::pure(Expr::FlatIneq(
         meta.clone_dirty(),
-        x,
-        y.clone(),
-        k.clone(),
+        Box::new(x),
+        Box::new(y.clone()),
+        Box::new(k.clone()),
     )))
 }
 

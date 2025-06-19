@@ -43,7 +43,7 @@ done
 
 for model in $models_slow; do
 	echo "=======[ $model ]======="
-	hyperfine --warmup 1 --runs 3 \
+	hyperfine --warmup 1 --runs 5 \
 		--command-name main "$before_bin solve --no-run-solver $model" \
 		--command-name current "$after_bin solve --no-run-solver $model"
 	echo ""

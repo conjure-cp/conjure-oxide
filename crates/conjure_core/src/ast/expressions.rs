@@ -24,6 +24,23 @@ use super::comprehension::Comprehension;
 use super::records::RecordValue;
 use super::{Domain, Range, SubModel, Typeable};
 
+// Ensure that this type doesn't get too big
+//
+// If you triggered this assertion, you either made a variant of this enum that is too big, or you
+// made Name,Literal,AbstractLiteral,Atom bigger, which made this bigger! To fix this, put some
+// stuff in boxes.
+//
+// Enums take the size of their largest variant, so an enum with mostly small variants and a few
+// large ones wastes memory... A larger Expression type also slows down Oxide.
+//
+// For more information, and more details on type sizes and how to measure them, see the commit
+// message for 6012de809 (perf: reduce size of AST types, 2025-06-18).
+//
+// https://github.com/conjure-cp/conjure-oxide/commit/6012de8096ca491ded91ecec61352fdf4e994f2e
+
+// expect size of Expression to be 96 bytes
+static_assertions::assert_eq_size!([u8; 96], Expression);
+
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
 /// The `Expression` enum includes operations, constants, and variable references
@@ -234,7 +251,7 @@ pub enum Expression {
     ///
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#abs)
     #[compatible(Minion)]
-    FlatAbsEq(Metadata, Atom, Atom),
+    FlatAbsEq(Metadata, Box<Atom>, Box<Atom>),
 
     /// Ensures that `alldiff([a,b,...])`.
     ///
@@ -274,7 +291,7 @@ pub enum Expression {
     ///
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#ineq)
     #[compatible(Minion)]
-    FlatIneq(Metadata, Atom, Atom, Literal),
+    FlatIneq(Metadata, Box<Atom>, Box<Atom>, Box<Literal>),
 
     /// `w-literal(x,k)` ensures that x == k, where x is a variable and k a constant.
     ///
@@ -302,7 +319,7 @@ pub enum Expression {
     ///
     /// + [Minion
     /// documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#weightedsumleq)
-    FlatWeightedSumLeq(Metadata, Vec<Literal>, Vec<Atom>, Atom),
+    FlatWeightedSumLeq(Metadata, Vec<Literal>, Vec<Atom>, Box<Atom>),
 
     /// `weightedsumgeq(cs,xs,total)` ensures that cs.xs >= total, where cs.xs is the scalar dot
     /// product of cs and xs.
@@ -315,7 +332,7 @@ pub enum Expression {
     ///
     /// + [Minion
     /// documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#weightedsumleq)
-    FlatWeightedSumGeq(Metadata, Vec<Literal>, Vec<Atom>, Atom),
+    FlatWeightedSumGeq(Metadata, Vec<Literal>, Vec<Atom>, Box<Atom>),
 
     /// Ensures that x =-y, where x and y are atoms.
     ///
@@ -325,7 +342,7 @@ pub enum Expression {
     ///
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#minuseq)
     #[compatible(Minion)]
-    FlatMinusEq(Metadata, Atom, Atom),
+    FlatMinusEq(Metadata, Box<Atom>, Box<Atom>),
 
     /// Ensures that x*y=z.
     ///
@@ -335,7 +352,7 @@ pub enum Expression {
     ///
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#product)
     #[compatible(Minion)]
-    FlatProductEq(Metadata, Atom, Atom, Atom),
+    FlatProductEq(Metadata, Box<Atom>, Box<Atom>, Box<Atom>),
 
     /// Ensures that floor(x/y)=z. Always true when y=0.
     ///
@@ -345,7 +362,7 @@ pub enum Expression {
     ///
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#div_undefzero)
     #[compatible(Minion)]
-    MinionDivEqUndefZero(Metadata, Atom, Atom, Atom),
+    MinionDivEqUndefZero(Metadata, Box<Atom>, Box<Atom>, Box<Atom>),
 
     /// Ensures that x%y=z. Always true when y=0.
     ///
@@ -355,7 +372,7 @@ pub enum Expression {
     ///
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#mod_undefzero)
     #[compatible(Minion)]
-    MinionModuloEqUndefZero(Metadata, Atom, Atom, Atom),
+    MinionModuloEqUndefZero(Metadata, Box<Atom>, Box<Atom>, Box<Atom>),
 
     /// Ensures that `x**y = z`.
     ///
@@ -368,7 +385,7 @@ pub enum Expression {
     ///
     /// + [Github comment about `pow` semantics](https://github.com/minion/minion/issues/40#issuecomment-2595914891)
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#pow)
-    MinionPow(Metadata, Atom, Atom, Atom),
+    MinionPow(Metadata, Box<Atom>, Box<Atom>, Box<Atom>),
 
     /// `reify(constraint,r)` ensures that r=1 iff `constraint` is satisfied, where r is a 0/1
     /// variable.
@@ -400,7 +417,7 @@ pub enum Expression {
     /// Low-level Minion constraint.
     ///
     /// # See also
-    ///
+    ///>
     ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#w-inintervalset)
     #[compatible(Minion)]
     MinionWInIntervalSet(Metadata, Atom, Vec<i32>),
@@ -428,7 +445,7 @@ pub enum Expression {
     ///
     ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#element_one)
     #[compatible(Minion)]
-    MinionElementOne(Metadata, Vec<Atom>, Atom, Atom),
+    MinionElementOne(Metadata, Vec<Atom>, Box<Atom>, Box<Atom>),
 
     /// Declaration of an auxiliary variable.
     ///
