@@ -172,6 +172,23 @@ impl TryFrom<Atom> for i32 {
     }
 }
 
+impl TryFrom<&Box<Atom>> for i32 {
+    type Error = &'static str;
+
+    fn try_from(value: &Box<Atom>) -> Result<Self, Self::Error> {
+        TryFrom::<&Atom>::try_from(value.as_ref())
+    }
+}
+
+impl TryFrom<Box<Atom>> for i32 {
+    type Error = &'static str;
+
+    fn try_from(value: Box<Atom>) -> Result<Self, Self::Error> {
+        let lit: Literal = (*value).try_into()?;
+        lit.try_into()
+    }
+}
+
 impl TryFrom<&Atom> for i32 {
     type Error = &'static str;
 
