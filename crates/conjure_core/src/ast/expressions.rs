@@ -24,6 +24,23 @@ use super::comprehension::Comprehension;
 use super::records::RecordValue;
 use super::{Domain, Range, SubModel, Typeable};
 
+// Ensure that this type doesn't get too big
+//
+// If you triggered this assertion, you either made a variant of this enum that is too big, or you
+// made Name,Literal,AbstractLiteral,Atom bigger, which made this bigger! To fix this, put some
+// stuff in boxes.
+//
+// Enums take the size of their largest variant, so an enum with mostly small variants and a few
+// large ones wastes memory... A larger Expression type also slows down Oxide.
+//
+// For more information, and more details on type sizes and how to measure them, see the commit
+// message for 6012de809 (perf: reduce size of AST types, 2025-06-18).
+//
+// https://github.com/conjure-cp/conjure-oxide/commit/6012de8096ca491ded91ecec61352fdf4e994f2e
+
+// expect size of Expression to be 96 bytes
+static_assertions::assert_eq_size!([u8; 96], Expression);
+
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
 /// The `Expression` enum includes operations, constants, and variable references
