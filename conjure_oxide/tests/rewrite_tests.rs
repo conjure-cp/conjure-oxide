@@ -321,15 +321,16 @@ fn reduce_solve_xyz() {
         .apply(&expr2, &SymbolTable::new())
         .unwrap()
         .new_expression;
-    assert_eq!(
-        expr2,
-        Expression::FlatIneq(
-            Metadata::new(),
-            Atom::Reference(Name::UserName(String::from("a"))),
-            Atom::Reference(Name::UserName(String::from("b"))),
-            Literal::Int(-1),
-        )
-    );
+
+    assert!(matches!(expr2, Expression::FlatIneq(_, _, _, _)));
+
+    let Expression::FlatIneq(_, a, b, v) = expr2.clone() else {
+        unreachable!();
+    };
+
+    assert_eq!(*a, Atom::Reference(Name::UserName(String::from("a"))));
+    assert_eq!(*b, Atom::Reference(Name::UserName(String::from("b"))));
+    assert_eq!(*v, Literal::Int(-1));
 
     let mut model = Model::new(Default::default());
     *model.as_submodel_mut().constraints_mut() = vec![expr1, expr2];

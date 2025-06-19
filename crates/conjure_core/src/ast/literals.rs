@@ -265,6 +265,22 @@ impl TryFrom<Literal> for i32 {
     }
 }
 
+impl TryFrom<Box<Literal>> for i32 {
+    type Error = &'static str;
+
+    fn try_from(value: Box<Literal>) -> Result<Self, Self::Error> {
+        (*value).try_into()
+    }
+}
+
+impl TryFrom<&Box<Literal>> for i32 {
+    type Error = &'static str;
+
+    fn try_from(value: &Box<Literal>) -> Result<Self, Self::Error> {
+        TryFrom::<&Literal>::try_from(value.as_ref())
+    }
+}
+
 impl TryFrom<&Literal> for i32 {
     type Error = &'static str;
 
