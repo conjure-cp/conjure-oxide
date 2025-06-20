@@ -106,6 +106,7 @@ use std::cell::OnceCell;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt::{Debug, Display};
+use std::io::Write;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
@@ -247,6 +248,23 @@ pub trait SolverAdaptor: private::Sealed + Any {
             ..stats
         }
     }
+
+    /// Writes a solver input file to the given writer.
+    ///
+    /// This method is for debugging use only, and there are no plans to make the solutions
+    /// obtained by running this file through the solver translatable back into high-level Essence.
+    ///
+    /// This file is runnable using the solvers command line interface. E.g. for Minion, this
+    /// outputs a valid .minion file.
+    ///
+    ///
+    /// # Implementation
+    /// + It can be helpful for this file to contain comments linking constraints and variables to
+    ///   their original essence, but this is not required.
+    ///
+    /// + This function is ran after model loading but before solving - therefore, it is safe for
+    ///   solving to mutate the model object.
+    fn write_solver_input_file(&self, writer: &mut impl Write) -> Result<(), std::io::Error>;
 }
 
 /// An abstract representation of a constraints solver.
@@ -362,6 +380,20 @@ impl<A: SolverAdaptor> Solver<A, ModelLoaded> {
             }
             Err(x) => Err(x),
         }
+    }
+
+    /// Writes a solver input file to the given writer.
+    ///
+    /// This method is for debugging use only, and there are no plans to make the solutions
+    /// obtained by running this file through the solver translatable back into high-level Essence.
+    ///
+    /// This file is runnable using the solvers command line interface. E.g. for Minion, this
+    /// outputs a valid .minion file.
+    ///
+    /// This function is only available in the `ModelLoaded` state as solvers are allowed to edit
+    /// the model in place.
+    pub fn write_solver_input_file(&self, writer: &mut impl Write) -> Result<(), std::io::Error> {
+        self.adaptor.write_solver_input_file(writer)
     }
 }
 
