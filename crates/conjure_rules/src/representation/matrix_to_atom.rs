@@ -28,7 +28,7 @@ impl MatrixToAtom {
 
     /// Gets the representation variable name for a specific set of indices.
     fn indices_to_name(&self, indices: &[Literal]) -> Name {
-        Name::RepresentedName(Box::new((
+        Name::Represented(Box::new((
             self.src_var.clone(),
             self.repr_name().to_string(),
             indices.iter().join("_"),
@@ -38,7 +38,7 @@ impl MatrixToAtom {
     /// Panics if name is invalid.
     #[allow(dead_code)]
     fn name_to_indices(&self, name: &Name) -> Vec<Literal> {
-        let Name::RepresentedName(fields) = name else {
+        let Name::Represented(fields) = name else {
             bug!("representation name should be Name::RepresentationOf");
         };
 

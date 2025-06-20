@@ -43,7 +43,7 @@ fn sum_of_constants() {
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
             Expression::Atomic(
                 Metadata::new(),
-                Atom::Reference(Name::UserName(String::from("a"))),
+                Atom::Reference(Name::User(String::from("a"))),
             ),
         ]),
     );
@@ -90,7 +90,7 @@ fn recursive_sum_of_constants() {
                 ),
                 Expression::Atomic(
                     Metadata::new(),
-                    Atom::Reference(Name::UserName(String::from("a"))),
+                    Atom::Reference(Name::User(String::from("a"))),
                 ),
             ]),
         )),
@@ -109,7 +109,7 @@ fn recursive_sum_of_constants() {
                 Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(3))),
                 Expression::Atomic(
                     Metadata::new(),
-                    Atom::Reference(Name::UserName(String::from("a"))),
+                    Atom::Reference(Name::User(String::from("a"))),
                 ),
             ]),
         )),
@@ -269,15 +269,15 @@ fn reduce_solve_xyz() {
             Box::new(matrix_expr![
                 Expression::Atomic(
                     Metadata::new(),
-                    Atom::Reference(Name::UserName(String::from("a"))),
+                    Atom::Reference(Name::User(String::from("a"))),
                 ),
                 Expression::Atomic(
                     Metadata::new(),
-                    Atom::Reference(Name::UserName(String::from("b"))),
+                    Atom::Reference(Name::User(String::from("b"))),
                 ),
                 Expression::Atomic(
                     Metadata::new(),
-                    Atom::Reference(Name::UserName(String::from("c"))),
+                    Atom::Reference(Name::User(String::from("c"))),
                 ),
             ]),
         )),
@@ -292,9 +292,9 @@ fn reduce_solve_xyz() {
         Expression::FlatSumLeq(
             Metadata::new(),
             vec![
-                Atom::Reference(Name::UserName(String::from("a"))),
-                Atom::Reference(Name::UserName(String::from("b"))),
-                Atom::Reference(Name::UserName(String::from("c"))),
+                Atom::Reference(Name::User(String::from("a"))),
+                Atom::Reference(Name::User(String::from("b"))),
+                Atom::Reference(Name::User(String::from("c"))),
             ],
             Atom::Literal(Literal::Int(4))
         )
@@ -305,11 +305,11 @@ fn reduce_solve_xyz() {
         Metadata::new(),
         Box::new(Expression::Atomic(
             Metadata::new(),
-            Atom::Reference(Name::UserName(String::from("a"))),
+            Atom::Reference(Name::User(String::from("a"))),
         )),
         Box::new(Expression::Atomic(
             Metadata::new(),
-            Atom::Reference(Name::UserName(String::from("b"))),
+            Atom::Reference(Name::User(String::from("b"))),
         )),
     );
     expr2 = lt_to_leq
@@ -325,8 +325,8 @@ fn reduce_solve_xyz() {
         expr2,
         Expression::FlatIneq(
             Metadata::new(),
-            Atom::Reference(Name::UserName(String::from("a"))),
-            Atom::Reference(Name::UserName(String::from("b"))),
+            Atom::Reference(Name::User(String::from("a"))),
+            Atom::Reference(Name::User(String::from("b"))),
             Literal::Int(-1),
         )
     );
@@ -338,7 +338,7 @@ fn reduce_solve_xyz() {
         .as_submodel_mut()
         .symbols_mut()
         .insert(Rc::new(Declaration::new_var(
-            Name::UserName(String::from("a")),
+            Name::User(String::from("a")),
             Domain::Int(vec![Range::Bounded(1, 3)]),
         )))
         .unwrap();
@@ -346,7 +346,7 @@ fn reduce_solve_xyz() {
         .as_submodel_mut()
         .symbols_mut()
         .insert(Rc::new(Declaration::new_var(
-            Name::UserName(String::from("b")),
+            Name::User(String::from("b")),
             Domain::Int(vec![Range::Bounded(1, 3)]),
         )))
         .unwrap();
@@ -354,7 +354,7 @@ fn reduce_solve_xyz() {
         .as_submodel_mut()
         .symbols_mut()
         .insert(Rc::new(Declaration::new_var(
-            Name::UserName(String::from("c")),
+            Name::User(String::from("c")),
             Domain::Int(vec![Range::Bounded(1, 3)]),
         )))
         .unwrap();
@@ -440,11 +440,11 @@ fn rule_distribute_not_over_and() {
             Box::new(matrix_expr![
                 Expression::Atomic(
                     Metadata::new(),
-                    Atom::Reference(Name::UserName(String::from("a"))),
+                    Atom::Reference(Name::User(String::from("a"))),
                 ),
                 Expression::Atomic(
                     Metadata::new(),
-                    Atom::Reference(Name::UserName(String::from("b"))),
+                    Atom::Reference(Name::User(String::from("b"))),
                 ),
             ]),
         )),
@@ -464,14 +464,14 @@ fn rule_distribute_not_over_and() {
                     Metadata::new(),
                     Box::new(Expression::Atomic(
                         Metadata::new(),
-                        Atom::Reference(Name::UserName(String::from("a")))
+                        Atom::Reference(Name::User(String::from("a")))
                     ))
                 ),
                 Expression::Not(
                     Metadata::new(),
                     Box::new(Expression::Atomic(
                         Metadata::new(),
-                        Atom::Reference(Name::UserName(String::from("b")))
+                        Atom::Reference(Name::User(String::from("b")))
                     ))
                 ),
             ])
@@ -490,11 +490,11 @@ fn rule_distribute_not_over_or() {
             Box::new(matrix_expr![
                 Expression::Atomic(
                     Metadata::new(),
-                    Atom::Reference(Name::UserName(String::from("a"))),
+                    Atom::Reference(Name::User(String::from("a"))),
                 ),
                 Expression::Atomic(
                     Metadata::new(),
-                    Atom::Reference(Name::UserName(String::from("b"))),
+                    Atom::Reference(Name::User(String::from("b"))),
                 ),
             ]),
         )),
@@ -514,14 +514,14 @@ fn rule_distribute_not_over_or() {
                     Metadata::new(),
                     Box::new(Expression::Atomic(
                         Metadata::new(),
-                        Atom::Reference(Name::UserName(String::from("a")))
+                        Atom::Reference(Name::User(String::from("a")))
                     ))
                 ),
                 Expression::Not(
                     Metadata::new(),
                     Box::new(Expression::Atomic(
                         Metadata::new(),
-                        Atom::Reference(Name::UserName(String::from("b")))
+                        Atom::Reference(Name::User(String::from("b")))
                     ))
                 ),
             ])
@@ -537,7 +537,7 @@ fn rule_distribute_not_over_and_not_changed() {
         Metadata::new(),
         Box::new(Expression::Atomic(
             Metadata::new(),
-            Atom::Reference(Name::UserName(String::from("a"))),
+            Atom::Reference(Name::User(String::from("a"))),
         )),
     );
 
@@ -554,7 +554,7 @@ fn rule_distribute_not_over_or_not_changed() {
         Metadata::new(),
         Box::new(Expression::Atomic(
             Metadata::new(),
-            Atom::Reference(Name::UserName(String::from("a"))),
+            Atom::Reference(Name::User(String::from("a"))),
         )),
     );
 
@@ -573,11 +573,11 @@ fn rule_distribute_or_over_and() {
             Expression::And(
                 Metadata::new(),
                 Box::new(matrix_expr![
-                    Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(1))),
-                    Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(2))),
+                    Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(1))),
+                    Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(2))),
                 ]),
             ),
-            Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(3))),
+            Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(3))),
         ]),
     );
 
@@ -593,15 +593,15 @@ fn rule_distribute_or_over_and() {
                 Expression::Or(
                     Metadata::new(),
                     Box::new(matrix_expr![
-                        Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(3))),
-                        Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(1))),
+                        Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(3))),
+                        Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(1))),
                     ])
                 ),
                 Expression::Or(
                     Metadata::new(),
                     Box::new(matrix_expr![
-                        Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(3))),
-                        Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(2))),
+                        Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(3))),
+                        Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(2))),
                     ])
                 ),
             ])
@@ -633,9 +633,9 @@ fn rewrite_solve_xyz() {
     println!("Rule sets: {:?}", rule_sets);
 
     // Create variables and domains
-    let variable_a = Atom::Reference(Name::UserName(String::from("a")));
-    let variable_b = Atom::Reference(Name::UserName(String::from("b")));
-    let variable_c = Atom::Reference(Name::UserName(String::from("c")));
+    let variable_a = Atom::Reference(Name::User(String::from("a")));
+    let variable_b = Atom::Reference(Name::User(String::from("b")));
+    let variable_c = Atom::Reference(Name::User(String::from("c")));
     let domain = Domain::Int(vec![Range::Bounded(1, 3)]);
 
     // Construct nested expression
@@ -819,7 +819,7 @@ fn eval_const_and() {
 fn eval_const_ref() {
     let expr = Expression::Atomic(
         Metadata::new(),
-        Atom::Reference(Name::UserName(String::from("a"))),
+        Atom::Reference(Name::User(String::from("a"))),
     );
     let result = eval_constant(&expr);
     assert_eq!(result, None);
@@ -837,7 +837,7 @@ fn eval_const_nested_ref() {
                     Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
                     Expression::Atomic(
                         Metadata::new(),
-                        Atom::Reference(Name::UserName(String::from("a"))),
+                        Atom::Reference(Name::User(String::from("a"))),
                     ),
                 ]),
             ),
@@ -923,15 +923,15 @@ fn eval_const_sum_xyz() {
                     Box::new(matrix_expr![
                         Expression::Atomic(
                             Metadata::new(),
-                            Atom::Reference(Name::UserName(String::from("x"))),
+                            Atom::Reference(Name::User(String::from("x"))),
                         ),
                         Expression::Atomic(
                             Metadata::new(),
-                            Atom::Reference(Name::UserName(String::from("y"))),
+                            Atom::Reference(Name::User(String::from("y"))),
                         ),
                         Expression::Atomic(
                             Metadata::new(),
-                            Atom::Reference(Name::UserName(String::from("z"))),
+                            Atom::Reference(Name::User(String::from("z"))),
                         ),
                     ])
                 )),
@@ -944,11 +944,11 @@ fn eval_const_sum_xyz() {
                 Metadata::new(),
                 Box::new(Expression::Atomic(
                     Metadata::new(),
-                    Atom::Reference(Name::UserName(String::from("x"))),
+                    Atom::Reference(Name::User(String::from("x"))),
                 )),
                 Box::new(Expression::Atomic(
                     Metadata::new(),
-                    Atom::Reference(Name::UserName(String::from("y"))),
+                    Atom::Reference(Name::User(String::from("y"))),
                 )),
             ),
         ]),

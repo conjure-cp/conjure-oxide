@@ -196,7 +196,7 @@ pub fn parse_expression(
                 String::from(&source_code[constraint.start_byte()..constraint.end_byte()]);
             Ok(Expression::Atomic(
                 Metadata::new(),
-                Atom::Reference(Name::UserName(variable_name)),
+                Atom::Reference(Name::User(variable_name)),
             ))
         }
         "from_solution" => match root.kind() {

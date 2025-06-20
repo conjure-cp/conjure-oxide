@@ -1290,10 +1290,10 @@ mod tests {
 
     #[test]
     fn test_domain_of_reference() {
-        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
+        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(0)));
         let mut vars = SymbolTable::new();
         vars.insert(Rc::new(Declaration::new_var(
-            Name::MachineName(0),
+            Name::Machine(0),
             Domain::Int(vec![Range::Single(1)]),
         )))
         .unwrap();
@@ -1305,16 +1305,16 @@ mod tests {
 
     #[test]
     fn test_domain_of_reference_not_found() {
-        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
+        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(0)));
         assert_eq!(reference.domain_of(&SymbolTable::new()), None);
     }
 
     #[test]
     fn test_domain_of_reference_sum_single() {
-        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
+        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(0)));
         let mut vars = SymbolTable::new();
         vars.insert(Rc::new(Declaration::new_var(
-            Name::MachineName(0),
+            Name::Machine(0),
             Domain::Int(vec![Range::Single(1)]),
         )))
         .unwrap();
@@ -1330,10 +1330,10 @@ mod tests {
 
     #[test]
     fn test_domain_of_reference_sum_bounded() {
-        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
+        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(0)));
         let mut vars = SymbolTable::new();
         vars.insert(Rc::new(Declaration::new_var(
-            Name::MachineName(0),
+            Name::Machine(0),
             Domain::Int(vec![Range::Bounded(1, 2)]),
         )));
         let sum = Expression::Sum(
@@ -1348,11 +1348,10 @@ mod tests {
 
     #[test]
     fn biplate_to_names() {
-        let expr = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(1)));
-        let expected_expr =
-            Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(2)));
+        let expr = Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(1)));
+        let expected_expr = Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(2)));
         let actual_expr = expr.transform_bi(Arc::new(move |x: Name| match x {
-            Name::MachineName(i) => Name::MachineName(i + 1),
+            Name::Machine(i) => Name::Machine(i + 1),
             n => n,
         }));
         assert_eq!(actual_expr, expected_expr);
@@ -1361,10 +1360,10 @@ mod tests {
             Metadata::new(),
             Box::new(matrix_expr![Expression::AuxDeclaration(
                 Metadata::new(),
-                Name::MachineName(0),
+                Name::Machine(0),
                 Box::new(Expression::Atomic(
                     Metadata::new(),
-                    Atom::Reference(Name::MachineName(1))
+                    Atom::Reference(Name::Machine(1))
                 ))
             )]),
         );
@@ -1372,16 +1371,16 @@ mod tests {
             Metadata::new(),
             Box::new(matrix_expr![Expression::AuxDeclaration(
                 Metadata::new(),
-                Name::MachineName(1),
+                Name::Machine(1),
                 Box::new(Expression::Atomic(
                     Metadata::new(),
-                    Atom::Reference(Name::MachineName(2))
+                    Atom::Reference(Name::Machine(2))
                 ))
             )]),
         );
 
         let actual_expr = expr.transform_bi(Arc::new(move |x: Name| match x {
-            Name::MachineName(i) => Name::MachineName(i + 1),
+            Name::Machine(i) => Name::Machine(i + 1),
             n => n,
         }));
         assert_eq!(actual_expr, expected_expr);

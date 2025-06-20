@@ -60,7 +60,7 @@ fn index_record_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         return Err(RuleNotApplicable); // we don't support non-literal indices
     };
 
-    let indices_as_name = Name::RepresentedName(Box::new((
+    let indices_as_name = Name::Represented(Box::new((
         name.as_ref().clone(),
         "record_to_atom".into(),
         index.to_string(),
