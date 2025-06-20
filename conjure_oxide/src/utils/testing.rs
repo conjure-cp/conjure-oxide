@@ -155,7 +155,7 @@ pub fn save_solutions_json(
     let generated_json_str = serde_json::to_string_pretty(&json_solutions)?;
 
     let solver_name = match solver {
-        SolverFamily::SAT => "sat",
+        SolverFamily::Sat => "sat",
         SolverFamily::Minion => "minion",
     };
 
@@ -172,7 +172,7 @@ pub fn read_solutions_json(
     solver: SolverFamily,
 ) -> Result<JsonValue, anyhow::Error> {
     let solver_name = match solver {
-        SolverFamily::SAT => "sat",
+        SolverFamily::Sat => "sat",
         SolverFamily::Minion => "minion",
     };
 
