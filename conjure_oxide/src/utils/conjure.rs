@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::path::PathBuf;
 use std::rc::Rc;
 use std::string::ToString;
 use std::sync::{Arc, Mutex, RwLock};
@@ -25,16 +26,26 @@ use glob::glob;
 pub fn get_minion_solutions(
     model: Model,
     num_sols: i32,
+    solver_input_file: &Option<PathBuf>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
     let solver = Solver::new(Minion::new());
-    println!("Building Minion model...");
+    eprintln!("Building Minion model...");
 
     // for later...
     let symbols_rc = Rc::clone(model.as_submodel().symbols_ptr_unchecked());
 
     let solver = solver.load_model(model)?;
 
-    println!("Running Minion...");
+    if let Some(solver_input_file) = solver_input_file {
+        eprintln!(
+            "Writing solver input file to {}",
+            solver_input_file.display()
+        );
+        let mut file = std::fs::File::create(solver_input_file)?;
+        solver.write_solver_input_file(&mut file)?;
+    }
+
+    eprintln!("Running Minion...");
 
     let all_solutions_ref = Arc::new(Mutex::<Vec<BTreeMap<Name, Literal>>>::new(vec![]));
     let all_solutions_ref_2 = all_solutions_ref.clone();
@@ -112,12 +123,23 @@ pub fn get_minion_solutions(
 pub fn get_sat_solutions(
     model: Model,
     num_sols: i32,
+    solver_input_file: &Option<PathBuf>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
     let solver = Solver::new(SAT::default());
-    println!("Building SAT model...");
+
+    eprintln!("Building SAT model...");
     let solver = solver.load_model(model)?;
 
-    println!("Running SAT...");
+    if let Some(solver_input_file) = solver_input_file {
+        eprintln!(
+            "Writing solver input file to {}",
+            solver_input_file.display()
+        );
+        let mut file = std::fs::File::create(solver_input_file)?;
+        solver.write_solver_input_file(&mut file)?;
+    }
+
+    eprintln!("Running SAT...");
 
     let all_solutions_ref = Arc::new(Mutex::<Vec<BTreeMap<Name, Literal>>>::new(vec![]));
     let all_solutions_ref_2 = all_solutions_ref.clone();

@@ -31,7 +31,7 @@ use crate::stats::SolverStats;
 use crate::{ast as conjure_ast, bug, Model as ConjureModel};
 use crate::{into_matrix_expr, matrix_expr};
 
-use rustsat::instances::{BasicVarManager, Cnf, SatInstance};
+use rustsat::instances::{BasicVarManager, Cnf, ManageVars, SatInstance};
 
 use thiserror::Error;
 
@@ -206,11 +206,11 @@ impl SolverAdaptor for SAT {
         Ok(())
     }
 
+    fn init_solver(&mut self, _: private::Internal) {}
+
     fn get_family(&self) -> SolverFamily {
         SolverFamily::SAT
     }
-
-    fn init_solver(&mut self, _: private::Internal) {}
 
     fn get_name(&self) -> Option<String> {
         Some("SAT".to_string())
@@ -222,5 +222,23 @@ impl SolverAdaptor for SAT {
             solver_family: Some(self.get_family()),
             ..stats
         }
+    }
+
+    fn write_solver_input_file(
+        &self,
+        writer: &mut impl std::io::Write,
+    ) -> Result<(), std::io::Error> {
+        // TODO: add comments saying what conjure oxide variables each clause has
+        // e.g.
+        //      c y x z
+        //        1 2 3
+        //      c x -y
+        //        1 -1
+        // This will require handwriting a dimacs writer, but that should be easy. For now, just
+        // let rustsat write the dimacs.
+
+        let model = self.model_inst.clone().expect("model should exist when we write the solver input file, as we should be in the LoadedModel state");
+        let (cnf, var_manager): (Cnf, BasicVarManager) = model.into_cnf();
+        cnf.write_dimacs(writer, var_manager.n_used())
     }
 }
