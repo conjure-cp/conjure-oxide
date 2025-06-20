@@ -13,6 +13,7 @@ use clap::ValueHint;
 use conjure_core::{
     context::Context,
     rule_engine::{resolve_rule_sets, rewrite_naive},
+    solver::{adaptors, Solver},
     Model,
 };
 use conjure_oxide::{
@@ -38,8 +39,8 @@ pub struct Args {
 
     /// Do not run the solver.
     ///
-    /// The rewritten model is printed to stdout in an Essence-style syntax (but is not necessarily
-    /// valid Essence).
+    /// The rewritten model is printed to stdout in an Essence-style syntax
+    /// (but is not necessarily valid Essence).
     #[arg(long, default_value_t = false)]
     pub no_run_solver: bool,
 
@@ -55,22 +56,42 @@ pub struct Args {
 pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::Result<()> {
     let input_file = solve_args.input_file.clone();
 
-    // each step is in its own method so that similar commands (e.g. testsolve) can reuse some of
-    // these steps.
+    // each step is in its own method so that similar commands
+    // (e.g. testsolve) can reuse some of these steps.
 
     let context = init_context(&global_args, input_file)?;
     let model = parse(&global_args, Arc::clone(&context))?;
     let rewritten_model = rewrite(model, &global_args, Arc::clone(&context))?;
 
     if solve_args.no_run_solver {
-        println!("{}", rewritten_model);
+        println!("{}", &rewritten_model);
+
+        // TODO: we want to be able to do let solver = match family {....}, but something weird is
+        // happening in the types..
+        if let Some(path) = global_args.save_solver_input_file {
+            eprintln!("Writing solver input file to {}", path.display());
+            let mut file = File::create(path).unwrap();
+
+            match global_args.solver {
+                SolverFamily::SAT => {
+                    let solver = Solver::new(adaptors::SAT::default());
+                    let solver = solver.load_model(rewritten_model)?;
+                    solver.write_solver_input_file(&mut file)?;
+                }
+                SolverFamily::Minion => {
+                    let solver = Solver::new(adaptors::Minion::default());
+                    let solver = solver.load_model(rewritten_model)?;
+                    solver.write_solver_input_file(&mut file)?;
+                }
+            };
+        }
     } else {
         match global_args.solver {
             SolverFamily::SAT => {
-                run_sat_solver(&solve_args, rewritten_model)?;
+                run_sat_solver(&global_args, &solve_args, rewritten_model)?;
             }
             SolverFamily::Minion => {
-                run_minion(&solve_args, rewritten_model)?;
+                run_minion(&global_args, &solve_args, rewritten_model)?;
             }
         }
     }
@@ -202,7 +223,7 @@ pub(crate) fn rewrite(
     Ok(new_model)
 }
 
-fn run_minion(cmd_args: &Args, model: Model) -> anyhow::Result<()> {
+fn run_minion(global_args: &GlobalArgs, cmd_args: &Args, model: Model) -> anyhow::Result<()> {
     let out_file: Option<File> = match &cmd_args.output {
         None => None,
         Some(pth) => Some(
@@ -214,7 +235,11 @@ fn run_minion(cmd_args: &Args, model: Model) -> anyhow::Result<()> {
         ),
     };
 
-    let solutions = get_minion_solutions(model, cmd_args.number_of_solutions)?;
+    let solutions = get_minion_solutions(
+        model,
+        cmd_args.number_of_solutions,
+        &global_args.save_solver_input_file,
+    )?;
     tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
 
     let solutions_json = solutions_to_json(&solutions);
@@ -235,7 +260,7 @@ fn run_minion(cmd_args: &Args, model: Model) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn run_sat_solver(cmd_args: &Args, model: Model) -> anyhow::Result<()> {
+fn run_sat_solver(global_args: &GlobalArgs, cmd_args: &Args, model: Model) -> anyhow::Result<()> {
     let out_file: Option<File> = match &cmd_args.output {
         None => None,
         Some(pth) => Some(
@@ -247,7 +272,11 @@ fn run_sat_solver(cmd_args: &Args, model: Model) -> anyhow::Result<()> {
         ),
     };
 
-    let solutions = get_sat_solutions(model, cmd_args.number_of_solutions)?;
+    let solutions = get_sat_solutions(
+        model,
+        cmd_args.number_of_solutions,
+        &global_args.save_solver_input_file,
+    )?;
     tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
 
     let solutions_json = solutions_to_json(&solutions);

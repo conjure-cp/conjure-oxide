@@ -14,6 +14,8 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
+use std::path::PathBuf;
+use std::str::FromStr;
 use tracing::{span, Level, Metadata as OtherMetadata};
 use tracing_subscriber::{
     filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
@@ -351,6 +353,7 @@ fn integration_test_inner(
                 .expect("Rewritten model must be present in 2a")
                 .clone(),
             0,
+            &None,
         )?;
         let solutions_json =
             save_solutions_json(&solved, path, essence_base, SolverFamily::Minion)?;
@@ -365,6 +368,7 @@ fn integration_test_inner(
                 .expect("Rewritten model must be present in 2a")
                 .clone(),
             0,
+            &None,
         )?;
         let solutions_json = save_solutions_json(&solved, path, essence_base, SolverFamily::SAT)?;
         if verbose {

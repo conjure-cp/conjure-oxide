@@ -86,6 +86,17 @@ pub struct GlobalArgs {
     /// Use the native parser instead of Conjure's.
     #[arg(long, default_value_t = false, global = true)]
     pub enable_native_parser: bool,
+
+    /// Save a solver input file to <filename>.
+    ///
+    /// This input file will be in a format compatible by the command-line
+    /// interface of the selected solver. For example, when the solver is Minion,
+    /// a valid .minion file will be output.
+    ///
+    /// This file is for informational purposes only; the results of running
+    /// this file cannot be used by Conjure Oxide in any way.
+    #[arg(long,global=true, value_names=["filename"], next_line_help=true)]
+    pub save_solver_input_file: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, Args)]
