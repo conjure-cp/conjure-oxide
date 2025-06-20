@@ -11,7 +11,7 @@ fn modify_domain() {
 
     let mut symbols = m.as_submodel_mut().symbols_mut();
 
-    let a = Name::UserName(String::from("a"));
+    let a = Name::User(String::from("a"));
 
     let d1 = Domain::Int(vec![Range::Bounded(1, 3)]);
     let d2 = Domain::Int(vec![Range::Bounded(1, 2)]);

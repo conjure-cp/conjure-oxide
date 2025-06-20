@@ -12,7 +12,7 @@ pub fn parse_domain(domain: Node, source_code: &str) -> Domain {
         "int_domain" => parse_int_domain(domain, source_code),
         "variable" => {
             let variable_name = &source_code[domain.start_byte()..domain.end_byte()];
-            Domain::Reference(Name::UserName(String::from(variable_name)))
+            Domain::Reference(Name::User(String::from(variable_name)))
         }
         _ => panic!("Not bool or int domain"),
     }

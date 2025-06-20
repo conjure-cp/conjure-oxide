@@ -189,7 +189,7 @@ impl HasId for Declaration {
 impl DefaultWithId for Declaration {
     fn default_with_id(id: ObjId) -> Self {
         Self {
-            name: Name::UserName("_UNKNOWN".into()),
+            name: Name::User("_UNKNOWN".into()),
             kind: DeclarationKind::ValueLetting(false.into()),
             id,
         }

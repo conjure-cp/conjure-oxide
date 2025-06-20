@@ -75,7 +75,7 @@ fn get_ref_sols(
             ),
         };
         solution.insert(
-            Name::UserName(reference),
+            Name::User(reference),
             match sol[lit.var()] {
                 TernaryVal::True => Literal::Int(1),
                 TernaryVal::False => Literal::Int(0),
