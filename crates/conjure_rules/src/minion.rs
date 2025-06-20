@@ -26,7 +26,7 @@ use conjure_core::{
 use itertools::Itertools;
 use uniplate::Uniplate;
 
-use ApplicationError::*;
+use ApplicationError::RuleNotApplicable;
 
 register_rule_set!("Minion", ("Base"), (SolverFamily::Minion));
 

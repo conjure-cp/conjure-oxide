@@ -7,7 +7,7 @@ use conjure_core::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult,
 };
 
-use Expression::*;
+use Expression::{And, Eq, SubsetEq};
 
 #[register_rule(("Base", 8800))]
 fn eq_to_subset_eq(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
