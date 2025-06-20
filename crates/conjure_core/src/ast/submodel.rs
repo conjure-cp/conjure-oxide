@@ -152,7 +152,7 @@ impl SubModel {
     /// * If this submodel has no constraints, true is returned.
     /// * If this submodel has a single constraint, that constraint is returned.
     /// * If this submodel has multiple constraints, they are returned as an `and` constraint.
-    pub fn as_single_expression(self) -> Expression {
+    pub fn into_single_expression(self) -> Expression {
         let constraints = self.constraints().clone();
         match constraints.len() {
             0 => Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),

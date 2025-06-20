@@ -58,7 +58,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
     let mut indices_as_lits: Vec<Literal> = vec![];
 
     for index in indices {
-        let Some(index) = index.clone().to_literal() else {
+        let Some(index) = index.clone().into_literal() else {
             indices_are_const = false;
             break;
         };
@@ -237,7 +237,7 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
     for (i, index) in indices.iter().enumerate() {
         match index {
             Some(e) => {
-                let lit = e.clone().to_literal().ok_or(RuleNotApplicable)?;
+                let lit = e.clone().into_literal().ok_or(RuleNotApplicable)?;
                 indices_as_lits.push(Some(lit.clone()));
             }
             None => {

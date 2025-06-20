@@ -21,7 +21,7 @@ impl ACOperatorKind {
     /// Creates a new [Expression] of this AC operator kind with the given child expression.
     ///
     /// The child expression given should be of type matrix.
-    pub fn to_expression(&self, child_expr: Expression) -> Expression {
+    pub fn as_expression(&self, child_expr: Expression) -> Expression {
         assert!(
             matches!(child_expr.return_type(), Some(ReturnType::Matrix(_))),
             "The child expression given to ACOperatorKind::to_expression should be of type matrix."

@@ -50,7 +50,7 @@ fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
     let mut indices_as_lit: Literal = Literal::Bool(false);
 
     for index in indices {
-        let Some(index) = index.clone().to_literal() else {
+        let Some(index) = index.clone().into_literal() else {
             return Err(RuleNotApplicable); // we don't support non-literal indices
         };
         indices_as_lit = index;
