@@ -147,7 +147,7 @@ pub mod states;
     JsonSchema,
 )]
 pub enum SolverFamily {
-    SAT,
+    Sat,
     Minion,
 }
 
