@@ -206,7 +206,7 @@ pub fn parse_expr_to_ts(
                 String::from(&source_code[constraint.start_byte()..constraint.end_byte()]);
             Ok(quote! {::conjure_core::ast::Expression::Atomic(
                 ::conjure_core::metadata::Metadata::new(),
-                ::conjure_core::ast::Atom::Reference(::conjure_core::ast::Name::UserName(#variable_name.into())),
+                ::conjure_core::ast::Atom::Reference(::conjure_core::ast::Name::User(#variable_name.into())),
             )})
         }
         "from_solution" => match root.kind() {

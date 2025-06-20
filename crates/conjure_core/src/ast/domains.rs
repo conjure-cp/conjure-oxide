@@ -49,7 +49,7 @@ impl<A: Ord + Display> Display for Range<A> {
 #[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize, Uniplate)]
 #[uniplate()]
 pub enum Domain {
-    BoolDomain,
+    Bool,
 
     /// An integer domain.
     ///
@@ -58,15 +58,15 @@ pub enum Domain {
     ///
     /// + If no ranges are given, the int domain is considered unconstrained, and can take any
     ///   integer value.
-    IntDomain(Vec<Range<i32>>),
-    DomainReference(Name),
-    DomainSet(SetAttr, Box<Domain>),
+    Int(Vec<Range<i32>>),
+    Reference(Name),
+    Set(SetAttr, Box<Domain>),
     /// A n-dimensional matrix with a value domain and n-index domains
-    DomainMatrix(Box<Domain>, Vec<Domain>),
+    Matrix(Box<Domain>, Vec<Domain>),
     // A tuple of n domains (e.g. (int, bool))
-    DomainTuple(Vec<Domain>),
+    Tuple(Vec<Domain>),
 
-    DomainRecord(Vec<RecordEntry>),
+    Record(Vec<RecordEntry>),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -85,7 +85,7 @@ impl Domain {
         // not adding a generic wildcard condition for all domains, so that this gives a compile
         // error when a domain is added.
         match (self, lit) {
-            (Domain::IntDomain(ranges), Literal::Int(x)) => {
+            (Domain::Int(ranges), Literal::Int(x)) => {
                 // unconstrained int domain
                 if ranges.is_empty() {
                     return Some(true);
@@ -93,12 +93,12 @@ impl Domain {
 
                 Some(ranges.iter().any(|range| range.contains(x)))
             }
-            (Domain::IntDomain(_), _) => Some(false),
-            (Domain::BoolDomain, Literal::Bool(_)) => Some(true),
-            (Domain::BoolDomain, _) => Some(false),
-            (Domain::DomainReference(_), _) => None,
+            (Domain::Int(_), _) => Some(false),
+            (Domain::Bool, Literal::Bool(_)) => Some(true),
+            (Domain::Bool, _) => Some(false),
+            (Domain::Reference(_), _) => None,
             (
-                Domain::DomainMatrix(elem_domain, index_domains),
+                Domain::Matrix(elem_domain, index_domains),
                 Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx_domain)),
             ) => {
                 let mut index_domains = index_domains.clone();
@@ -115,7 +115,7 @@ impl Domain {
                 let next_elem_domain = if index_domains.is_empty() {
                     elem_domain.as_ref().clone()
                 } else {
-                    Domain::DomainMatrix(elem_domain.clone(), index_domains)
+                    Domain::Matrix(elem_domain.clone(), index_domains)
                 };
 
                 for elem in elems {
@@ -127,7 +127,7 @@ impl Domain {
                 Some(true)
             }
             (
-                Domain::DomainTuple(elem_domains),
+                Domain::Tuple(elem_domains),
                 Literal::AbstractLiteral(AbstractLiteral::Tuple(literal_elems)),
             ) => {
                 // for every element in the tuple literal, check if it is in the corresponding domain
@@ -140,7 +140,7 @@ impl Domain {
                 Some(true)
             }
             (
-                Domain::DomainSet(_, domain),
+                Domain::Set(_, domain),
                 Literal::AbstractLiteral(AbstractLiteral::Set(literal_elems)),
             ) => {
                 for elem in literal_elems {
@@ -151,7 +151,7 @@ impl Domain {
                 Some(true)
             }
             (
-                Domain::DomainRecord(entries),
+                Domain::Record(entries),
                 Literal::AbstractLiteral(AbstractLiteral::Record(lit_entries)),
             ) => {
                 for (entry, lit_entry) in itertools::izip!(entries, lit_entries) {
@@ -162,13 +162,13 @@ impl Domain {
                 Some(true)
             }
 
-            (Domain::DomainRecord(_), _) => Some(false),
+            (Domain::Record(_), _) => Some(false),
 
-            (Domain::DomainMatrix(_, _), _) => Some(false),
+            (Domain::Matrix(_, _), _) => Some(false),
 
-            (Domain::DomainSet(_, _), _) => Some(false),
+            (Domain::Set(_, _), _) => Some(false),
 
-            (Domain::DomainTuple(_), _) => Some(false),
+            (Domain::Tuple(_), _) => Some(false),
         }
     }
 
@@ -176,7 +176,7 @@ impl Domain {
     /// bounded.
     pub fn values_i32(&self) -> Option<Vec<i32>> {
         match self {
-            Domain::IntDomain(ranges) => Some(
+            Domain::Int(ranges) => Some(
                 ranges
                     .iter()
                     .map(|r| match r {
@@ -201,25 +201,25 @@ impl Domain {
         for values in vector.iter() {
             new_ranges.push(Range::Single(*values));
         }
-        Some(Domain::IntDomain(new_ranges))
+        Some(Domain::Int(new_ranges))
     }
 
     /// Gets all the values inside this domain, as a [`Literal`]. Returns `None` if the domain is not
     /// finite.
     pub fn values(&self) -> Option<Vec<Literal>> {
         match self {
-            Domain::BoolDomain => Some(vec![false.into(), true.into()]),
-            Domain::IntDomain(_) => self
+            Domain::Bool => Some(vec![false.into(), true.into()]),
+            Domain::Int(_) => self
                 .values_i32()
                 .map(|xs| xs.iter().map(|x| Literal::Int(*x)).collect_vec()),
 
             // ~niklasdewally: don't know how to define this for collections, so leaving it for
             // now... However, it definitely can be done, as matrices can be indexed by matrices.
-            Domain::DomainSet(_, _) => todo!(),
-            Domain::DomainMatrix(_, _) => todo!(),
-            Domain::DomainReference(_) => None,
-            Domain::DomainTuple(_) => todo!(), // TODO: Can this be done?
-            Domain::DomainRecord(_) => todo!(),
+            Domain::Set(_, _) => todo!(),
+            Domain::Matrix(_, _) => todo!(),
+            Domain::Reference(_) => None,
+            Domain::Tuple(_) => todo!(), // TODO: Can this be done?
+            Domain::Record(_) => todo!(),
         }
     }
 
@@ -245,7 +245,7 @@ impl Domain {
                     new_ranges.push(Range::Single(v))
                 }
             }
-            return Some(Domain::IntDomain(new_ranges));
+            return Some(Domain::Int(new_ranges));
         }
         None
     }
@@ -255,7 +255,7 @@ impl Domain {
     /// Returns `None` if this cannot be determined, e.g. if `self` is a domain reference.
     pub fn is_finite(&self) -> Option<bool> {
         for domain in self.universe() {
-            if let Domain::IntDomain(ranges) = domain {
+            if let Domain::Int(ranges) = domain {
                 if ranges.is_empty() {
                     return Some(false);
                 }
@@ -266,7 +266,7 @@ impl Domain {
                 {
                     return Some(false);
                 }
-            } else if let Domain::DomainReference(_) = domain {
+            } else if let Domain::Reference(_) = domain {
                 return None;
             }
         }
@@ -295,7 +295,7 @@ impl Domain {
         while done_something {
             done_something = false;
             for (domain, ctx) in self.clone().contexts() {
-                if let Domain::DomainReference(name) = domain {
+                if let Domain::Reference(name) = domain {
                     self = ctx(symbols
                         .resolve_domain(&name)
                         .expect("domain reference should exist in the symbol table")
@@ -312,11 +312,10 @@ impl Domain {
     // needs to be tested once comprehension rules are written
     pub fn intersect(&self, other: &Domain) -> Option<Domain> {
         match (self, other) {
-            (Domain::DomainSet(_, x), Domain::DomainSet(_, y)) => Some(Domain::DomainSet(
-                SetAttr::None,
-                Box::new((*x).intersect(y)?),
-            )),
-            (Domain::IntDomain(_), Domain::IntDomain(_)) => {
+            (Domain::Set(_, x), Domain::Set(_, y)) => {
+                Some(Domain::Set(SetAttr::None, Box::new((*x).intersect(y)?)))
+            }
+            (Domain::Int(_), Domain::Int(_)) => {
                 let mut v: Vec<i32> = vec![];
                 if self.is_finite()? && other.is_finite()? {
                     if let (Some(v1), Some(v2)) = (self.values_i32(), other.values_i32()) {
@@ -341,10 +340,10 @@ impl Domain {
     // needs to be tested once comprehension rules are written
     pub fn union(&self, other: &Domain) -> Option<Domain> {
         match (self, other) {
-            (Domain::DomainSet(_, x), Domain::DomainSet(_, y)) => {
-                Some(Domain::DomainSet(SetAttr::None, Box::new((*x).union(y)?)))
+            (Domain::Set(_, x), Domain::Set(_, y)) => {
+                Some(Domain::Set(SetAttr::None, Box::new((*x).union(y)?)))
             }
-            (Domain::IntDomain(_), Domain::IntDomain(_)) => {
+            (Domain::Int(_), Domain::Int(_)) => {
                 let mut v: Vec<i32> = vec![];
                 if self.is_finite()? && other.is_finite()? {
                     if let (Some(v1), Some(v2)) = (self.values_i32(), other.values_i32()) {
@@ -371,10 +370,10 @@ impl Domain {
 impl Display for Domain {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Domain::BoolDomain => {
+            Domain::Bool => {
                 write!(f, "bool")
             }
-            Domain::IntDomain(vec) => {
+            Domain::Int(vec) => {
                 let domain_ranges: String = vec.iter().map(|x| format!("{x}")).join(",");
 
                 if domain_ranges.is_empty() {
@@ -383,25 +382,25 @@ impl Display for Domain {
                     write!(f, "int({domain_ranges})")
                 }
             }
-            Domain::DomainReference(name) => write!(f, "{}", name),
-            Domain::DomainSet(_, domain) => {
+            Domain::Reference(name) => write!(f, "{}", name),
+            Domain::Set(_, domain) => {
                 write!(f, "set of ({})", domain)
             }
-            Domain::DomainMatrix(value_domain, index_domains) => {
+            Domain::Matrix(value_domain, index_domains) => {
                 write!(
                     f,
                     "matrix indexed by [{}] of {value_domain}",
                     pretty_vec(&index_domains.iter().collect_vec())
                 )
             }
-            Domain::DomainTuple(domains) => {
+            Domain::Tuple(domains) => {
                 write!(
                     f,
                     "tuple of ({})",
                     pretty_vec(&domains.iter().collect_vec())
                 )
             }
-            Domain::DomainRecord(entries) => {
+            Domain::Record(entries) => {
                 write!(
                     f,
                     "record of ({})",
@@ -428,12 +427,12 @@ mod tests {
 
     #[test]
     fn test_negative_product() {
-        let d1 = Domain::IntDomain(vec![Range::Bounded(-2, 1)]);
-        let d2 = Domain::IntDomain(vec![Range::Bounded(-2, 1)]);
+        let d1 = Domain::Int(vec![Range::Bounded(-2, 1)]);
+        let d2 = Domain::Int(vec![Range::Bounded(-2, 1)]);
         let res = d1.apply_i32(|a, b| Some(a * b), &d2).unwrap();
 
-        assert!(matches!(res, Domain::IntDomain(_)));
-        if let Domain::IntDomain(ranges) = res {
+        assert!(matches!(res, Domain::Int(_)));
+        if let Domain::Int(ranges) = res {
             assert!(!ranges.contains(&Range::Single(-4)));
             assert!(!ranges.contains(&Range::Single(-3)));
             assert!(ranges.contains(&Range::Single(-2)));
@@ -448,14 +447,14 @@ mod tests {
 
     #[test]
     fn test_negative_div() {
-        let d1 = Domain::IntDomain(vec![Range::Bounded(-2, 1)]);
-        let d2 = Domain::IntDomain(vec![Range::Bounded(-2, 1)]);
+        let d1 = Domain::Int(vec![Range::Bounded(-2, 1)]);
+        let d2 = Domain::Int(vec![Range::Bounded(-2, 1)]);
         let res = d1
             .apply_i32(|a, b| if b != 0 { Some(a / b) } else { None }, &d2)
             .unwrap();
 
-        assert!(matches!(res, Domain::IntDomain(_)));
-        if let Domain::IntDomain(ranges) = res {
+        assert!(matches!(res, Domain::Int(_)));
+        if let Domain::Int(ranges) = res {
             assert!(!ranges.contains(&Range::Single(-4)));
             assert!(!ranges.contains(&Range::Single(-3)));
             assert!(ranges.contains(&Range::Single(-2)));

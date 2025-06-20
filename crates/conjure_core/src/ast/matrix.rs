@@ -25,7 +25,7 @@ use super::{AbstractLiteral, Literal};
 ///
 /// ```
 /// use conjure_core::ast::{Domain,Range,Literal,matrix};
-/// let index_domains = vec![Domain::BoolDomain,Domain::IntDomain(vec![Range::Bounded(1,2)])];
+/// let index_domains = vec![Domain::Bool,Domain::Int(vec![Range::Bounded(1,2)])];
 ///
 /// let expected_indices = vec![
 ///   vec![Literal::Bool(false),Literal::Int(1)],
@@ -95,7 +95,7 @@ pub fn flatten_enumerate(
         .into_iter()
         .map(|mut x| match x {
             // give unboundedr index domains an end
-            Domain::IntDomain(ref mut ranges) if ranges.len() == 1 && !elems.is_empty() => {
+            Domain::Int(ref mut ranges) if ranges.len() == 1 && !elems.is_empty() => {
                 if let Range::UnboundedR(start) = ranges[0] {
                     ranges[0] = Range::Bounded(start, start + (elems.len() as i32 - 1));
                 };

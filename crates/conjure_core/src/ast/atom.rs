@@ -23,7 +23,7 @@ pub enum Atom {
 impl Atom {
     /// Shorthand to create a reference by user name.
     pub fn new_uref(name: &str) -> Atom {
-        Atom::Reference(Name::UserName(name.to_string()))
+        Atom::Reference(Name::User(name.to_string()))
     }
 
     /// Shorthand to create an integer literal.

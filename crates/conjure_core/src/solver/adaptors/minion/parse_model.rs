@@ -10,7 +10,9 @@ use minion_rs::{get_from_table, run_minion};
 
 use crate::ast as conjure_ast;
 use crate::ast::Declaration;
-use crate::solver::SolverError::*;
+use crate::solver::SolverError::{
+    ModelFeatureNotImplemented, ModelFeatureNotSupported, ModelInvalid,
+};
 use crate::solver::SolverFamily;
 use crate::solver::SolverMutCallback;
 use crate::solver::{SolverCallback, SolverError};
@@ -94,7 +96,7 @@ fn load_symbol_table(
                 continue;
             };
 
-            let is_search_var = !matches!(name, conjure_ast::Name::MachineName(_));
+            let is_search_var = !matches!(name, conjure_ast::Name::Machine(_));
 
             load_var(&name, var, is_search_var, minion_model)?;
         }
@@ -110,10 +112,10 @@ fn load_var(
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     match &var.domain {
-        conjure_ast::Domain::IntDomain(ranges) => {
+        conjure_ast::Domain::Int(ranges) => {
             load_intdomain_var(name, ranges, search_var, minion_model)
         }
-        conjure_ast::Domain::BoolDomain => load_booldomain_var(name, search_var, minion_model),
+        conjure_ast::Domain::Bool => load_booldomain_var(name, search_var, minion_model),
         x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
     }
 }
@@ -203,8 +205,8 @@ fn _try_add_aux_var(
 fn name_to_string(name: conjure_ast::Name) -> String {
     match name {
         // print machine names in a custom, easier to regex, way.
-        conjure_ast::Name::MachineName(x) => format!("__conjure_machine_name_{}", x),
-        conjure_ast::Name::RepresentedName(fields) => {
+        conjure_ast::Name::Machine(x) => format!("__conjure_machine_name_{}", x),
+        conjure_ast::Name::Represented(fields) => {
             let (name, rule, suffix) = *fields;
             let name = name_to_string(name);
             format!("__conjure_represented_name##{name}##{rule}___{suffix}")
@@ -224,15 +226,15 @@ fn load_constraints(
         use crate::metadata::Metadata;
         use conjure_ast::Atom;
         use conjure_ast::Expression as Expr;
-        use conjure_ast::Literal::*;
+        use conjure_ast::Literal;
 
         match expr {
             // top level false
-            Expr::Atomic(_, Atom::Literal(Bool(false))) => {
+            Expr::Atomic(_, Atom::Literal(Literal::Bool(false))) => {
                 minion_model.constraints.push(minion_ast::Constraint::False);
             }
             // top level true
-            Expr::Atomic(_, Atom::Literal(Bool(true))) => {
+            Expr::Atomic(_, Atom::Literal(Literal::Bool(true))) => {
                 minion_model.constraints.push(minion_ast::Constraint::True);
             }
 

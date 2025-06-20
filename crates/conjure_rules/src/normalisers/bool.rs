@@ -9,8 +9,6 @@ use conjure_core::rule_engine::{
 use conjure_essence_macros::essence_expr;
 use uniplate::Uniplate;
 
-use Expr::*;
-
 /// Removes double negations
 ///
 /// ```text
@@ -19,8 +17,8 @@ use Expr::*;
 #[register_rule(("Base", 8400))]
 fn remove_double_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
-        Not(_, contents) => match contents.as_ref() {
-            Not(_, expr_box) => Ok(Reduction::pure(*expr_box.clone())),
+        Expr::Not(_, contents) => match contents.as_ref() {
+            Expr::Not(_, expr_box) => Ok(Reduction::pure(*expr_box.clone())),
             _ => Err(ApplicationError::RuleNotApplicable),
         },
         _ => Err(ApplicationError::RuleNotApplicable),
@@ -37,7 +35,7 @@ fn distribute_or_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     fn find_and(exprs: &[Expr]) -> Option<usize> {
         // ToDo: may be better to move this to some kind of utils module?
         for (i, e) in exprs.iter().enumerate() {
-            if let And(_, _) = e {
+            if let Expr::And(_, _) = e {
                 return Some(i);
             }
         }
@@ -45,7 +43,7 @@ fn distribute_or_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     }
 
     match expr {
-        Or(_, e) => {
+        Expr::Or(_, e) => {
             let Some(exprs) = e.as_ref().clone().unwrap_list() else {
                 return Err(RuleNotApplicable);
             };
@@ -56,7 +54,7 @@ fn distribute_or_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                     let and_expr = rest.remove(idx);
 
                     match and_expr {
-                        And(metadata, e) => {
+                        Expr::And(metadata, e) => {
                             let Some(and_exprs) = e.as_ref().clone().unwrap_list() else {
                                 return Err(RuleNotApplicable);
                             };
@@ -67,13 +65,13 @@ fn distribute_or_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                                 // ToDo: Cloning everything may be a bit inefficient - discuss
                                 let mut new_or_contents = rest.clone();
                                 new_or_contents.push(e.clone());
-                                new_and_contents.push(Or(
+                                new_and_contents.push(Expr::Or(
                                     metadata.clone_dirty(),
                                     Box::new(into_matrix_expr![new_or_contents]),
                                 ))
                             }
 
-                            Ok(Reduction::pure(And(
+                            Ok(Reduction::pure(Expr::And(
                                 metadata.clone_dirty(),
                                 Box::new(into_matrix_expr![new_and_contents]),
                             )))
@@ -104,8 +102,8 @@ fn distribute_not_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
     }
     match expr {
-        Not(_, contents) => match contents.as_ref() {
-            And(metadata, e) => {
+        Expr::Not(_, contents) => match contents.as_ref() {
+            Expr::And(metadata, e) => {
                 let Some(exprs) = e.as_ref().clone().unwrap_list() else {
                     return Err(RuleNotApplicable);
                 };
@@ -119,7 +117,7 @@ fn distribute_not_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 for e in exprs {
                     new_exprs.push(essence_expr!(!&e));
                 }
-                Ok(Reduction::pure(Or(
+                Ok(Reduction::pure(Expr::Or(
                     metadata.clone(),
                     Box::new(into_matrix_expr![new_exprs]),
                 )))
@@ -138,8 +136,8 @@ fn distribute_not_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 #[register_rule(("Base", 8400))]
 fn distribute_not_over_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
-        Not(_, contents) => match contents.as_ref() {
-            Or(metadata, e) => {
+        Expr::Not(_, contents) => match contents.as_ref() {
+            Expr::Or(metadata, e) => {
                 let Some(exprs) = e.as_ref().clone().unwrap_list() else {
                     return Err(RuleNotApplicable);
                 };
@@ -155,7 +153,7 @@ fn distribute_not_over_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                     new_exprs.push(essence_expr!(!&e));
                 }
 
-                Ok(Reduction::pure(And(
+                Ok(Reduction::pure(Expr::And(
                     metadata.clone(),
                     Box::new(into_matrix_expr![new_exprs]),
                 )))
@@ -174,7 +172,7 @@ fn distribute_not_over_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 #[register_rule(("Base", 8800))]
 fn remove_unit_vector_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
-        And(_, e) => {
+        Expr::And(_, e) => {
             let Some(exprs) = e.as_ref().clone().unwrap_list() else {
                 return Err(RuleNotApplicable);
             };

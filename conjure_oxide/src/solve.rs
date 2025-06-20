@@ -66,7 +66,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
         println!("{}", rewritten_model);
     } else {
         match global_args.solver {
-            SolverFamily::SAT => {
+            SolverFamily::Sat => {
                 run_sat_solver(&solve_args, rewritten_model)?;
             }
             SolverFamily::Minion => {
@@ -97,7 +97,7 @@ pub(crate) fn init_context(
     }
 
     ensure!(
-        target_family == SolverFamily::Minion || target_family == SolverFamily::SAT,
+        target_family == SolverFamily::Minion || target_family == SolverFamily::Sat,
         "Only the Minion and SAT solvers is currently supported!"
     );
 

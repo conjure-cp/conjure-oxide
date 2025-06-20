@@ -18,28 +18,27 @@ fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
 pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
     use conjure_core::rule_engine::ApplicationError::RuleNotApplicable;
-    use Expr::*;
     // NOTE: If nothing changes, we must return RuleNotApplicable, or the rewriter will try this
     // rule infinitely!
     // This is why we always check whether we found a constant or not.
     match expr.clone() {
-        Union(_, _, _) => Err(RuleNotApplicable),
-        In(_, _, _) => Err(RuleNotApplicable),
-        Intersect(_, _, _) => Err(RuleNotApplicable),
-        Supset(_, _, _) => Err(RuleNotApplicable),
-        SupsetEq(_, _, _) => Err(RuleNotApplicable),
-        Subset(_, _, _) => Err(RuleNotApplicable),
-        SubsetEq(_, _, _) => Err(RuleNotApplicable),
-        AbstractLiteral(_, _) => Err(RuleNotApplicable),
-        Comprehension(_, _) => Err(RuleNotApplicable),
-        DominanceRelation(_, _) => Err(RuleNotApplicable),
-        FromSolution(_, _) => Err(RuleNotApplicable),
-        UnsafeIndex(_, _, _) => Err(RuleNotApplicable),
-        UnsafeSlice(_, _, _) => Err(RuleNotApplicable),
-        SafeIndex(_, _, _) => Err(RuleNotApplicable),
-        SafeSlice(_, _, _) => Err(RuleNotApplicable),
-        InDomain(_, _, _) => Err(RuleNotApplicable),
-        Bubble(_, expr, cond) => {
+        Expr::Union(_, _, _) => Err(RuleNotApplicable),
+        Expr::In(_, _, _) => Err(RuleNotApplicable),
+        Expr::Intersect(_, _, _) => Err(RuleNotApplicable),
+        Expr::Supset(_, _, _) => Err(RuleNotApplicable),
+        Expr::SupsetEq(_, _, _) => Err(RuleNotApplicable),
+        Expr::Subset(_, _, _) => Err(RuleNotApplicable),
+        Expr::SubsetEq(_, _, _) => Err(RuleNotApplicable),
+        Expr::AbstractLiteral(_, _) => Err(RuleNotApplicable),
+        Expr::Comprehension(_, _) => Err(RuleNotApplicable),
+        Expr::DominanceRelation(_, _) => Err(RuleNotApplicable),
+        Expr::FromSolution(_, _) => Err(RuleNotApplicable),
+        Expr::UnsafeIndex(_, _, _) => Err(RuleNotApplicable),
+        Expr::UnsafeSlice(_, _, _) => Err(RuleNotApplicable),
+        Expr::SafeIndex(_, _, _) => Err(RuleNotApplicable),
+        Expr::SafeSlice(_, _, _) => Err(RuleNotApplicable),
+        Expr::InDomain(_, _, _) => Err(RuleNotApplicable),
+        Expr::Bubble(_, expr, cond) => {
             // definition of bubble is "expr is valid as long as cond is true"
             //
             // check if cond is true and pop the bubble!
@@ -49,20 +48,20 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                 Err(RuleNotApplicable)
             }
         }
-        Atomic(_, _) => Err(RuleNotApplicable),
-        Scope(_, _) => Err(RuleNotApplicable),
-        ToInt(_, expression) => {
+        Expr::Atomic(_, _) => Err(RuleNotApplicable),
+        Expr::Scope(_, _) => Err(RuleNotApplicable),
+        Expr::ToInt(_, expression) => {
             if let Some(ReturnType::Int) = expression.return_type() {
                 Ok(Reduction::pure(*expression))
             } else {
                 Err(RuleNotApplicable)
             }
         }
-        Abs(m, e) => match *e {
-            Neg(_, inner) => Ok(Reduction::pure(Abs(m, inner))),
+        Expr::Abs(m, e) => match *e {
+            Expr::Neg(_, inner) => Ok(Reduction::pure(Expr::Abs(m, inner))),
             _ => Err(RuleNotApplicable),
         },
-        Sum(m, vec) => {
+        Expr::Sum(m, vec) => {
             let vec = vec.unwrap_list().ok_or(RuleNotApplicable)?;
             let mut acc = 0;
             let mut n_consts = 0;
@@ -85,14 +84,14 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             if n_consts <= 1 {
                 Err(RuleNotApplicable)
             } else {
-                Ok(Reduction::pure(Sum(
+                Ok(Reduction::pure(Expr::Sum(
                     m,
                     Box::new(into_matrix_expr![new_vec]),
                 )))
             }
         }
 
-        Product(m, vec) => {
+        Expr::Product(m, vec) => {
             let mut acc = 1;
             let mut n_consts = 0;
             let mut new_vec: Vec<Expr> = Vec::new();
@@ -114,7 +113,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                 Default::default(),
                 Atom::Literal(Lit::Int(acc)),
             ));
-            let new_product = Product(m, Box::new(into_matrix_expr![new_vec]));
+            let new_product = Expr::Product(m, Box::new(into_matrix_expr![new_vec]));
 
             if acc == 0 {
                 // if safe, 0 * exprs ~> 0
@@ -136,7 +135,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             }
         }
 
-        Min(m, e) => {
+        Expr::Min(m, e) => {
             let Some(vec) = e.unwrap_list() else {
                 return Err(RuleNotApplicable);
             };
@@ -168,14 +167,14 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             if n_consts <= 1 {
                 Err(RuleNotApplicable)
             } else {
-                Ok(Reduction::pure(Min(
+                Ok(Reduction::pure(Expr::Min(
                     m,
                     Box::new(into_matrix_expr![new_vec]),
                 )))
             }
         }
 
-        Max(m, e) => {
+        Expr::Max(m, e) => {
             let Some(vec) = e.unwrap_list() else {
                 return Err(RuleNotApplicable);
             };
@@ -208,14 +207,14 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             if n_consts <= 1 {
                 Err(RuleNotApplicable)
             } else {
-                Ok(Reduction::pure(Max(
+                Ok(Reduction::pure(Expr::Max(
                     m,
                     Box::new(into_matrix_expr![new_vec]),
                 )))
             }
         }
-        Not(_, _) => Err(RuleNotApplicable),
-        Or(m, e) => {
+        Expr::Not(_, _) => Err(RuleNotApplicable),
+        Expr::Or(m, e) => {
             let Some(terms) = e.unwrap_list() else {
                 return Err(RuleNotApplicable);
             };
@@ -252,12 +251,12 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                 return Err(RuleNotApplicable);
             }
 
-            Ok(Reduction::pure(Or(
+            Ok(Reduction::pure(Expr::Or(
                 m,
                 Box::new(into_matrix_expr![new_terms]),
             )))
         }
-        And(_, e) => {
+        Expr::And(_, e) => {
             let Some(vec) = e.unwrap_list() else {
                 return Err(RuleNotApplicable);
             };
@@ -267,7 +266,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                 if let Expr::Atomic(_, Atom::Literal(Lit::Bool(x))) = expr {
                     has_const = true;
                     if !x {
-                        return Ok(Reduction::pure(Atomic(
+                        return Ok(Reduction::pure(Expr::Atomic(
                             Default::default(),
                             Atom::Literal(Lit::Bool(false)),
                         )));
@@ -288,7 +287,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         }
 
         // similar to And, but booleans are returned wrapped in Root.
-        Root(_, es) => {
+        Expr::Root(_, es) => {
             match es.as_slice() {
                 [] => Err(RuleNotApplicable),
                 // want to unwrap nested ands
@@ -306,9 +305,12 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                         has_changed = true;
                         if !x {
                             // false
-                            return Ok(Reduction::pure(Root(
+                            return Ok(Reduction::pure(Expr::Root(
                                 Metadata::new(),
-                                vec![Atomic(Default::default(), Atom::Literal(Lit::Bool(false)))],
+                                vec![Expr::Atomic(
+                                    Default::default(),
+                                    Atom::Literal(Lit::Bool(false)),
+                                )],
                             )));
                         }
                         // remove trues
@@ -335,7 +337,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                 Ok(Reduction::pure(Expr::Root(Metadata::new(), new_vec)))
             }
         }
-        Imply(_m, x, y) => {
+        Expr::Imply(_m, x, y) => {
             if let Expr::Atomic(_, Atom::Literal(Lit::Bool(x))) = *x {
                 if x {
                     // (true) -> y ~~> y
@@ -358,7 +360,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
 
             Err(RuleNotApplicable)
         }
-        Iff(_m, x, y) => {
+        Expr::Iff(_m, x, y) => {
             if let Expr::Atomic(_, Atom::Literal(Lit::Bool(x))) = *x {
                 if x {
                     // (true) <-> y ~~> y
@@ -390,15 +392,15 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
 
             Err(RuleNotApplicable)
         }
-        Eq(_, _, _) => Err(RuleNotApplicable),
-        Neq(_, _, _) => Err(RuleNotApplicable),
-        Geq(_, _, _) => Err(RuleNotApplicable),
-        Leq(_, _, _) => Err(RuleNotApplicable),
-        Gt(_, _, _) => Err(RuleNotApplicable),
-        Lt(_, _, _) => Err(RuleNotApplicable),
-        SafeDiv(_, _, _) => Err(RuleNotApplicable),
-        UnsafeDiv(_, _, _) => Err(RuleNotApplicable),
-        AllDiff(m, e) => {
+        Expr::Eq(_, _, _) => Err(RuleNotApplicable),
+        Expr::Neq(_, _, _) => Err(RuleNotApplicable),
+        Expr::Geq(_, _, _) => Err(RuleNotApplicable),
+        Expr::Leq(_, _, _) => Err(RuleNotApplicable),
+        Expr::Gt(_, _, _) => Err(RuleNotApplicable),
+        Expr::Lt(_, _, _) => Err(RuleNotApplicable),
+        Expr::SafeDiv(_, _, _) => Err(RuleNotApplicable),
+        Expr::UnsafeDiv(_, _, _) => Err(RuleNotApplicable),
+        Expr::AllDiff(m, e) => {
             let Some(vec) = e.unwrap_list() else {
                 return Err(RuleNotApplicable);
             };
@@ -420,34 +422,34 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
             // nothing has changed
             Err(RuleNotApplicable)
         }
-        Neg(_, _) => Err(RuleNotApplicable),
-        AuxDeclaration(_, _, _) => Err(RuleNotApplicable),
-        UnsafeMod(_, _, _) => Err(RuleNotApplicable),
-        SafeMod(_, _, _) => Err(RuleNotApplicable),
-        UnsafePow(_, _, _) => Err(RuleNotApplicable),
-        SafePow(_, _, _) => Err(RuleNotApplicable),
-        Minus(_, _, _) => Err(RuleNotApplicable),
+        Expr::Neg(_, _) => Err(RuleNotApplicable),
+        Expr::AuxDeclaration(_, _, _) => Err(RuleNotApplicable),
+        Expr::UnsafeMod(_, _, _) => Err(RuleNotApplicable),
+        Expr::SafeMod(_, _, _) => Err(RuleNotApplicable),
+        Expr::UnsafePow(_, _, _) => Err(RuleNotApplicable),
+        Expr::SafePow(_, _, _) => Err(RuleNotApplicable),
+        Expr::Minus(_, _, _) => Err(RuleNotApplicable),
 
         // As these are in a low level solver form, I'm assuming that these have already been
         // simplified and partially evaluated.
-        FlatAllDiff(_, _) => Err(RuleNotApplicable),
-        FlatAbsEq(_, _, _) => Err(RuleNotApplicable),
-        FlatIneq(_, _, _, _) => Err(RuleNotApplicable),
-        FlatMinusEq(_, _, _) => Err(RuleNotApplicable),
-        FlatProductEq(_, _, _, _) => Err(RuleNotApplicable),
-        FlatSumLeq(_, _, _) => Err(RuleNotApplicable),
-        FlatSumGeq(_, _, _) => Err(RuleNotApplicable),
-        FlatWatchedLiteral(_, _, _) => Err(RuleNotApplicable),
-        FlatWeightedSumLeq(_, _, _, _) => Err(RuleNotApplicable),
-        FlatWeightedSumGeq(_, _, _, _) => Err(RuleNotApplicable),
-        MinionDivEqUndefZero(_, _, _, _) => Err(RuleNotApplicable),
-        MinionModuloEqUndefZero(_, _, _, _) => Err(RuleNotApplicable),
-        MinionPow(_, _, _, _) => Err(RuleNotApplicable),
-        MinionReify(_, _, _) => Err(RuleNotApplicable),
-        MinionReifyImply(_, _, _) => Err(RuleNotApplicable),
-        MinionWInIntervalSet(_, _, _) => Err(RuleNotApplicable),
-        MinionWInSet(_, _, _) => Err(RuleNotApplicable),
-        MinionElementOne(_, _, _, _) => Err(RuleNotApplicable),
+        Expr::FlatAllDiff(_, _) => Err(RuleNotApplicable),
+        Expr::FlatAbsEq(_, _, _) => Err(RuleNotApplicable),
+        Expr::FlatIneq(_, _, _, _) => Err(RuleNotApplicable),
+        Expr::FlatMinusEq(_, _, _) => Err(RuleNotApplicable),
+        Expr::FlatProductEq(_, _, _, _) => Err(RuleNotApplicable),
+        Expr::FlatSumLeq(_, _, _) => Err(RuleNotApplicable),
+        Expr::FlatSumGeq(_, _, _) => Err(RuleNotApplicable),
+        Expr::FlatWatchedLiteral(_, _, _) => Err(RuleNotApplicable),
+        Expr::FlatWeightedSumLeq(_, _, _, _) => Err(RuleNotApplicable),
+        Expr::FlatWeightedSumGeq(_, _, _, _) => Err(RuleNotApplicable),
+        Expr::MinionDivEqUndefZero(_, _, _, _) => Err(RuleNotApplicable),
+        Expr::MinionModuloEqUndefZero(_, _, _, _) => Err(RuleNotApplicable),
+        Expr::MinionPow(_, _, _, _) => Err(RuleNotApplicable),
+        Expr::MinionReify(_, _, _) => Err(RuleNotApplicable),
+        Expr::MinionReifyImply(_, _, _) => Err(RuleNotApplicable),
+        Expr::MinionWInIntervalSet(_, _, _) => Err(RuleNotApplicable),
+        Expr::MinionWInSet(_, _, _) => Err(RuleNotApplicable),
+        Expr::MinionElementOne(_, _, _, _) => Err(RuleNotApplicable),
     }
 }
 

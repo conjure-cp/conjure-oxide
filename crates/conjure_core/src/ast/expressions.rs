@@ -467,14 +467,14 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
     // +,-,/,* are all monotone, so this assumption should be fine for now...
 
     let expr = exprs.pop()?;
-    let Some(Domain::IntDomain(ranges)) = expr.domain_of(symtab) else {
+    let Some(Domain::Int(ranges)) = expr.domain_of(symtab) else {
         return None;
     };
 
     let (mut current_min, mut current_max) = range_vec_bounds_i32(&ranges)?;
 
     for expr in exprs {
-        let Some(Domain::IntDomain(ranges)) = expr.domain_of(symtab) else {
+        let Some(Domain::Int(ranges)) = expr.domain_of(symtab) else {
             return None;
         };
 
@@ -498,12 +498,9 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
     }
 
     if current_min == current_max {
-        Some(Domain::IntDomain(vec![Range::Single(current_min)]))
+        Some(Domain::Int(vec![Range::Single(current_min)]))
     } else {
-        Some(Domain::IntDomain(vec![Range::Bounded(
-            current_min,
-            current_max,
-        )]))
+        Some(Domain::Int(vec![Range::Bounded(current_min, current_max)]))
     }
 }
 
@@ -539,28 +536,28 @@ impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
     pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
         let ret = match self {
-            Expression::Union(_, a, b) => Some(Domain::DomainSet(
+            Expression::Union(_, a, b) => Some(Domain::Set(
                 SetAttr::None,
                 Box::new(a.domain_of(syms)?.union(&b.domain_of(syms)?)?),
             )),
-            Expression::Intersect(_, a, b) => Some(Domain::DomainSet(
+            Expression::Intersect(_, a, b) => Some(Domain::Set(
                 SetAttr::None,
                 Box::new(a.domain_of(syms)?.intersect(&b.domain_of(syms)?)?),
             )),
-            Expression::In(_, _, _) => Some(Domain::BoolDomain),
-            Expression::Supset(_, _, _) => Some(Domain::BoolDomain),
-            Expression::SupsetEq(_, _, _) => Some(Domain::BoolDomain),
-            Expression::Subset(_, _, _) => Some(Domain::BoolDomain),
-            Expression::SubsetEq(_, _, _) => Some(Domain::BoolDomain),
+            Expression::In(_, _, _) => Some(Domain::Bool),
+            Expression::Supset(_, _, _) => Some(Domain::Bool),
+            Expression::SupsetEq(_, _, _) => Some(Domain::Bool),
+            Expression::Subset(_, _, _) => Some(Domain::Bool),
+            Expression::SubsetEq(_, _, _) => Some(Domain::Bool),
             Expression::AbstractLiteral(_, _) => None,
-            Expression::DominanceRelation(_, _) => Some(Domain::BoolDomain),
+            Expression::DominanceRelation(_, _) => Some(Domain::Bool),
             Expression::FromSolution(_, expr) => expr.domain_of(syms),
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(syms),
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
                 match matrix.domain_of(syms)? {
-                    Domain::DomainMatrix(elem_domain, _) => Some(*elem_domain),
-                    Domain::DomainTuple(_) => None,
-                    Domain::DomainRecord(_) => None,
+                    Domain::Matrix(elem_domain, _) => Some(*elem_domain),
+                    Domain::Tuple(_) => None,
+                    Domain::Record(_) => None,
                     _ => {
                         bug!("subject of an index operation should support indexing")
                     }
@@ -570,13 +567,12 @@ impl Expression {
             | Expression::SafeSlice(_, matrix, indices) => {
                 let sliced_dimension = indices.iter().position(Option::is_none);
 
-                let Domain::DomainMatrix(elem_domain, index_domains) = matrix.domain_of(syms)?
-                else {
+                let Domain::Matrix(elem_domain, index_domains) = matrix.domain_of(syms)? else {
                     bug!("subject of an index operation should be a matrix");
                 };
 
                 match sliced_dimension {
-                    Some(dimension) => Some(Domain::DomainMatrix(
+                    Some(dimension) => Some(Domain::Matrix(
                         elem_domain,
                         vec![index_domains[dimension].clone()],
                     )),
@@ -585,14 +581,14 @@ impl Expression {
                     None => Some(*elem_domain),
                 }
             }
-            Expression::InDomain(_, _, _) => Some(Domain::BoolDomain),
+            Expression::InDomain(_, _, _) => Some(Domain::Bool),
             Expression::Atomic(_, Atom::Reference(name)) => Some(syms.resolve_domain(name)?),
             Expression::Atomic(_, Atom::Literal(Literal::Int(n))) => {
-                Some(Domain::IntDomain(vec![Range::Single(*n)]))
+                Some(Domain::Int(vec![Range::Single(*n)]))
             }
-            Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(Domain::BoolDomain),
+            Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(Domain::Bool),
             Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(_))) => None,
-            Expression::Scope(_, _) => Some(Domain::BoolDomain),
+            Expression::Scope(_, _) => Some(Domain::Bool),
             Expression::Sum(_, e) => {
                 bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x + y), syms)
             }
@@ -636,12 +632,12 @@ impl Expression {
                 );
 
                 match domain {
-                    Some(Domain::IntDomain(ranges)) => {
+                    Some(Domain::Int(ranges)) => {
                         let mut ranges = ranges;
                         ranges.push(Range::Single(0));
-                        Some(Domain::IntDomain(ranges))
+                        Some(Domain::Int(ranges))
                     }
-                    None => Some(Domain::IntDomain(vec![Range::Single(0)])),
+                    None => Some(Domain::Int(vec![Range::Single(0)])),
                     _ => None,
                 }
             }
@@ -656,12 +652,12 @@ impl Expression {
                 );
 
                 match domain {
-                    Some(Domain::IntDomain(ranges)) => {
+                    Some(Domain::Int(ranges)) => {
                         let mut ranges = ranges;
                         ranges.push(Range::Single(0));
-                        Some(Domain::IntDomain(ranges))
+                        Some(Domain::Int(ranges))
                     }
-                    None => Some(Domain::IntDomain(vec![Range::Single(0)])),
+                    None => Some(Domain::Int(vec![Range::Single(0)])),
                     _ => None,
                 }
             }
@@ -679,33 +675,33 @@ impl Expression {
             }
             Expression::Root(_, _) => None,
             Expression::Bubble(_, _, _) => None,
-            Expression::AuxDeclaration(_, _, _) => Some(Domain::BoolDomain),
-            Expression::And(_, _) => Some(Domain::BoolDomain),
-            Expression::Not(_, _) => Some(Domain::BoolDomain),
-            Expression::Or(_, _) => Some(Domain::BoolDomain),
-            Expression::Imply(_, _, _) => Some(Domain::BoolDomain),
-            Expression::Iff(_, _, _) => Some(Domain::BoolDomain),
-            Expression::Eq(_, _, _) => Some(Domain::BoolDomain),
-            Expression::Neq(_, _, _) => Some(Domain::BoolDomain),
-            Expression::Geq(_, _, _) => Some(Domain::BoolDomain),
-            Expression::Leq(_, _, _) => Some(Domain::BoolDomain),
-            Expression::Gt(_, _, _) => Some(Domain::BoolDomain),
-            Expression::Lt(_, _, _) => Some(Domain::BoolDomain),
-            Expression::FlatAbsEq(_, _, _) => Some(Domain::BoolDomain),
-            Expression::FlatSumGeq(_, _, _) => Some(Domain::BoolDomain),
-            Expression::FlatSumLeq(_, _, _) => Some(Domain::BoolDomain),
-            Expression::MinionDivEqUndefZero(_, _, _, _) => Some(Domain::BoolDomain),
-            Expression::MinionModuloEqUndefZero(_, _, _, _) => Some(Domain::BoolDomain),
-            Expression::FlatIneq(_, _, _, _) => Some(Domain::BoolDomain),
-            Expression::AllDiff(_, _) => Some(Domain::BoolDomain),
-            Expression::FlatWatchedLiteral(_, _, _) => Some(Domain::BoolDomain),
-            Expression::MinionReify(_, _, _) => Some(Domain::BoolDomain),
-            Expression::MinionReifyImply(_, _, _) => Some(Domain::BoolDomain),
-            Expression::MinionWInIntervalSet(_, _, _) => Some(Domain::BoolDomain),
-            Expression::MinionWInSet(_, _, _) => Some(Domain::BoolDomain),
-            Expression::MinionElementOne(_, _, _, _) => Some(Domain::BoolDomain),
+            Expression::AuxDeclaration(_, _, _) => Some(Domain::Bool),
+            Expression::And(_, _) => Some(Domain::Bool),
+            Expression::Not(_, _) => Some(Domain::Bool),
+            Expression::Or(_, _) => Some(Domain::Bool),
+            Expression::Imply(_, _, _) => Some(Domain::Bool),
+            Expression::Iff(_, _, _) => Some(Domain::Bool),
+            Expression::Eq(_, _, _) => Some(Domain::Bool),
+            Expression::Neq(_, _, _) => Some(Domain::Bool),
+            Expression::Geq(_, _, _) => Some(Domain::Bool),
+            Expression::Leq(_, _, _) => Some(Domain::Bool),
+            Expression::Gt(_, _, _) => Some(Domain::Bool),
+            Expression::Lt(_, _, _) => Some(Domain::Bool),
+            Expression::FlatAbsEq(_, _, _) => Some(Domain::Bool),
+            Expression::FlatSumGeq(_, _, _) => Some(Domain::Bool),
+            Expression::FlatSumLeq(_, _, _) => Some(Domain::Bool),
+            Expression::MinionDivEqUndefZero(_, _, _, _) => Some(Domain::Bool),
+            Expression::MinionModuloEqUndefZero(_, _, _, _) => Some(Domain::Bool),
+            Expression::FlatIneq(_, _, _, _) => Some(Domain::Bool),
+            Expression::AllDiff(_, _) => Some(Domain::Bool),
+            Expression::FlatWatchedLiteral(_, _, _) => Some(Domain::Bool),
+            Expression::MinionReify(_, _, _) => Some(Domain::Bool),
+            Expression::MinionReifyImply(_, _, _) => Some(Domain::Bool),
+            Expression::MinionWInIntervalSet(_, _, _) => Some(Domain::Bool),
+            Expression::MinionWInSet(_, _, _) => Some(Domain::Bool),
+            Expression::MinionElementOne(_, _, _, _) => Some(Domain::Bool),
             Expression::Neg(_, x) => {
-                let Some(Domain::IntDomain(mut ranges)) = x.domain_of(syms) else {
+                let Some(Domain::Int(mut ranges)) = x.domain_of(syms) else {
                     return None;
                 };
 
@@ -718,28 +714,28 @@ impl Expression {
                     };
                 }
 
-                Some(Domain::IntDomain(ranges))
+                Some(Domain::Int(ranges))
             }
             Expression::Minus(_, a, b) => a
                 .domain_of(syms)?
                 .apply_i32(|x, y| Some(x - y), &b.domain_of(syms)?),
-            Expression::FlatAllDiff(_, _) => Some(Domain::BoolDomain),
-            Expression::FlatMinusEq(_, _, _) => Some(Domain::BoolDomain),
-            Expression::FlatProductEq(_, _, _, _) => Some(Domain::BoolDomain),
-            Expression::FlatWeightedSumLeq(_, _, _, _) => Some(Domain::BoolDomain),
-            Expression::FlatWeightedSumGeq(_, _, _, _) => Some(Domain::BoolDomain),
+            Expression::FlatAllDiff(_, _) => Some(Domain::Bool),
+            Expression::FlatMinusEq(_, _, _) => Some(Domain::Bool),
+            Expression::FlatProductEq(_, _, _, _) => Some(Domain::Bool),
+            Expression::FlatWeightedSumLeq(_, _, _, _) => Some(Domain::Bool),
+            Expression::FlatWeightedSumGeq(_, _, _, _) => Some(Domain::Bool),
             Expression::Abs(_, a) => a
                 .domain_of(syms)?
                 .apply_i32(|a, _| Some(a.abs()), &a.domain_of(syms)?),
-            Expression::MinionPow(_, _, _, _) => Some(Domain::BoolDomain),
-            Expression::ToInt(_, _) => Some(Domain::IntDomain(vec![Range::Bounded(0, 1)])),
+            Expression::MinionPow(_, _, _, _) => Some(Domain::Bool),
+            Expression::ToInt(_, _) => Some(Domain::Int(vec![Range::Bounded(0, 1)])),
         };
         match ret {
             // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
             // Once they support a full domain as we define it, we can remove this conversion
-            Some(Domain::IntDomain(ranges)) if ranges.len() > 1 => {
+            Some(Domain::Int(ranges)) if ranges.len() > 1 => {
                 let (min, max) = range_vec_bounds_i32(&ranges)?;
-                Some(Domain::IntDomain(vec![Range::Bounded(min, max)]))
+                Some(Domain::Int(vec![Range::Bounded(min, max)]))
             }
             _ => ret,
         }
@@ -891,14 +887,14 @@ impl Expression {
     }
 
     /// Converts the expression to a literal, if possible.
-    pub fn to_literal(self) -> Option<Literal> {
+    pub fn into_literal(self) -> Option<Literal> {
         match self {
             Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
             Expression::AbstractLiteral(_, abslit) => {
-                Some(Literal::AbstractLiteral(abslit.clone().as_literals()?))
+                Some(Literal::AbstractLiteral(abslit.clone().into_literals()?))
             }
             Expression::Neg(_, e) => {
-                let Literal::Int(i) = e.to_literal()? else {
+                let Literal::Int(i) = e.into_literal()? else {
                     bug!("negated literal should be an int");
                 };
 
@@ -1271,7 +1267,7 @@ mod tests {
         );
         assert_eq!(
             sum.domain_of(&SymbolTable::new()),
-            Some(Domain::IntDomain(vec![Range::Single(3)]))
+            Some(Domain::Int(vec![Range::Single(3)]))
         );
     }
 
@@ -1294,32 +1290,32 @@ mod tests {
 
     #[test]
     fn test_domain_of_reference() {
-        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
+        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(0)));
         let mut vars = SymbolTable::new();
         vars.insert(Rc::new(Declaration::new_var(
-            Name::MachineName(0),
-            Domain::IntDomain(vec![Range::Single(1)]),
+            Name::Machine(0),
+            Domain::Int(vec![Range::Single(1)]),
         )))
         .unwrap();
         assert_eq!(
             reference.domain_of(&vars),
-            Some(Domain::IntDomain(vec![Range::Single(1)]))
+            Some(Domain::Int(vec![Range::Single(1)]))
         );
     }
 
     #[test]
     fn test_domain_of_reference_not_found() {
-        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
+        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(0)));
         assert_eq!(reference.domain_of(&SymbolTable::new()), None);
     }
 
     #[test]
     fn test_domain_of_reference_sum_single() {
-        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
+        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(0)));
         let mut vars = SymbolTable::new();
         vars.insert(Rc::new(Declaration::new_var(
-            Name::MachineName(0),
-            Domain::IntDomain(vec![Range::Single(1)]),
+            Name::Machine(0),
+            Domain::Int(vec![Range::Single(1)]),
         )))
         .unwrap();
         let sum = Expression::Sum(
@@ -1328,17 +1324,17 @@ mod tests {
         );
         assert_eq!(
             sum.domain_of(&vars),
-            Some(Domain::IntDomain(vec![Range::Single(2)]))
+            Some(Domain::Int(vec![Range::Single(2)]))
         );
     }
 
     #[test]
     fn test_domain_of_reference_sum_bounded() {
-        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(0)));
+        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(0)));
         let mut vars = SymbolTable::new();
         vars.insert(Rc::new(Declaration::new_var(
-            Name::MachineName(0),
-            Domain::IntDomain(vec![Range::Bounded(1, 2)]),
+            Name::Machine(0),
+            Domain::Int(vec![Range::Bounded(1, 2)]),
         )));
         let sum = Expression::Sum(
             Metadata::new(),
@@ -1346,17 +1342,16 @@ mod tests {
         );
         assert_eq!(
             sum.domain_of(&vars),
-            Some(Domain::IntDomain(vec![Range::Bounded(2, 4)]))
+            Some(Domain::Int(vec![Range::Bounded(2, 4)]))
         );
     }
 
     #[test]
     fn biplate_to_names() {
-        let expr = Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(1)));
-        let expected_expr =
-            Expression::Atomic(Metadata::new(), Atom::Reference(Name::MachineName(2)));
+        let expr = Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(1)));
+        let expected_expr = Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(2)));
         let actual_expr = expr.transform_bi(Arc::new(move |x: Name| match x {
-            Name::MachineName(i) => Name::MachineName(i + 1),
+            Name::Machine(i) => Name::Machine(i + 1),
             n => n,
         }));
         assert_eq!(actual_expr, expected_expr);
@@ -1365,10 +1360,10 @@ mod tests {
             Metadata::new(),
             Box::new(matrix_expr![Expression::AuxDeclaration(
                 Metadata::new(),
-                Name::MachineName(0),
+                Name::Machine(0),
                 Box::new(Expression::Atomic(
                     Metadata::new(),
-                    Atom::Reference(Name::MachineName(1))
+                    Atom::Reference(Name::Machine(1))
                 ))
             )]),
         );
@@ -1376,16 +1371,16 @@ mod tests {
             Metadata::new(),
             Box::new(matrix_expr![Expression::AuxDeclaration(
                 Metadata::new(),
-                Name::MachineName(1),
+                Name::Machine(1),
                 Box::new(Expression::Atomic(
                     Metadata::new(),
-                    Atom::Reference(Name::MachineName(2))
+                    Atom::Reference(Name::Machine(2))
                 ))
             )]),
         );
 
         let actual_expr = expr.transform_bi(Arc::new(move |x: Name| match x {
-            Name::MachineName(i) => Name::MachineName(i + 1),
+            Name::Machine(i) => Name::Machine(i + 1),
             n => n,
         }));
         assert_eq!(actual_expr, expected_expr);
