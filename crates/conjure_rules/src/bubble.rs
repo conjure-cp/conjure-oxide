@@ -4,7 +4,7 @@ use conjure_core::{
     metadata::Metadata,
     rule_engine::{
         register_rule, register_rule_set,
-        ApplicationError::{self, *},
+        ApplicationError::{self, RuleNotApplicable},
         ApplicationResult, Reduction,
     },
 };

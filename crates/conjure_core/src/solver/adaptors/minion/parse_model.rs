@@ -10,7 +10,9 @@ use minion_rs::{get_from_table, run_minion};
 
 use crate::ast as conjure_ast;
 use crate::ast::Declaration;
-use crate::solver::SolverError::*;
+use crate::solver::SolverError::{
+    ModelFeatureNotImplemented, ModelFeatureNotSupported, ModelInvalid,
+};
 use crate::solver::SolverFamily;
 use crate::solver::SolverMutCallback;
 use crate::solver::{SolverCallback, SolverError};
@@ -224,15 +226,15 @@ fn load_constraints(
         use crate::metadata::Metadata;
         use conjure_ast::Atom;
         use conjure_ast::Expression as Expr;
-        use conjure_ast::Literal::*;
+        use conjure_ast::Literal;
 
         match expr {
             // top level false
-            Expr::Atomic(_, Atom::Literal(Bool(false))) => {
+            Expr::Atomic(_, Atom::Literal(Literal::Bool(false))) => {
                 minion_model.constraints.push(minion_ast::Constraint::False);
             }
             // top level true
-            Expr::Atomic(_, Atom::Literal(Bool(true))) => {
+            Expr::Atomic(_, Atom::Literal(Literal::Bool(true))) => {
                 minion_model.constraints.push(minion_ast::Constraint::True);
             }
 
