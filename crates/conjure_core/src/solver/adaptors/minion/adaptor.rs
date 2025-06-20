@@ -16,13 +16,13 @@ use crate::Model as ConjureModel;
 
 use crate::solver::model_modifier::NotModifiable;
 use crate::solver::private;
-use crate::solver::SearchComplete::*;
-use crate::solver::SearchIncomplete::*;
-use crate::solver::SearchStatus::*;
+use crate::solver::SearchComplete::{HasSolutions, NoSolutions};
+use crate::solver::SearchIncomplete::UserTerminated;
+use crate::solver::SearchStatus::{Complete, Incomplete};
 use crate::solver::SolveSuccess;
 use crate::solver::SolverAdaptor;
 use crate::solver::SolverError;
-use crate::solver::SolverError::*;
+use crate::solver::SolverError::{OpNotImplemented, Runtime, RuntimeNotImplemented};
 
 use super::parse_model::model_to_minion;
 

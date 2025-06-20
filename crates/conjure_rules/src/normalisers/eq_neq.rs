@@ -7,7 +7,6 @@ use conjure_core::rule_engine::{
 
 use conjure_core::ast::ReturnType::Set;
 use conjure_essence_macros::essence_expr;
-use Expr::*;
 
 /// Converts a negated `Neq` to an `Eq`
 ///
@@ -17,8 +16,8 @@ use Expr::*;
 #[register_rule(("Base", 8800))]
 fn negated_neq_to_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
-        Not(_, a) => match a.as_ref() {
-            Neq(_, b, c) if (b.is_safe() && c.is_safe()) => {
+        Expr::Not(_, a) => match a.as_ref() {
+            Expr::Neq(_, b, c) if (b.is_safe() && c.is_safe()) => {
                 Ok(Reduction::pure(essence_expr!(&b = &c)))
             }
             _ => Err(RuleNotApplicable),
@@ -36,8 +35,8 @@ fn negated_neq_to_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 #[register_rule(("Base", 8800))]
 fn negated_eq_to_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
-        Not(_, a) => match a.as_ref() {
-            Eq(_, b, c) if (b.is_safe() && c.is_safe()) => {
+        Expr::Not(_, a) => match a.as_ref() {
+            Expr::Eq(_, b, c) if (b.is_safe() && c.is_safe()) => {
                 if let Some(Set(_)) = b.as_ref().return_type() {
                     return Err(RuleNotApplicable);
                 }

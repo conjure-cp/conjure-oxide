@@ -1,20 +1,18 @@
 // Supset rule for sets
-use conjure_core::ast::{Expression, ReturnType::Set, SymbolTable, Typeable};
+use conjure_core::ast::{Expression as Expr, ReturnType, SymbolTable, Typeable};
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::Reduction;
 use conjure_core::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult,
 };
 
-use Expression::*;
-
 #[register_rule(("Base", 8700))]
-fn supset_to_subset(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+fn supset_to_subset(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
-        Supset(_, a, b) => {
-            if let Some(Set(_)) = a.as_ref().return_type() {
-                if let Some(Set(_)) = b.as_ref().return_type() {
-                    Ok(Reduction::pure(Expression::Subset(
+        Expr::Supset(_, a, b) => {
+            if let Some(ReturnType::Set(_)) = a.as_ref().return_type() {
+                if let Some(ReturnType::Set(_)) = b.as_ref().return_type() {
+                    Ok(Reduction::pure(Expr::Subset(
                         Metadata::new(),
                         b.clone(),
                         a.clone(),
