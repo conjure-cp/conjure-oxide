@@ -13,8 +13,8 @@ fn modify_domain() {
 
     let a = Name::UserName(String::from("a"));
 
-    let d1 = Domain::IntDomain(vec![Range::Bounded(1, 3)]);
-    let d2 = Domain::IntDomain(vec![Range::Bounded(1, 2)]);
+    let d1 = Domain::Int(vec![Range::Bounded(1, 3)]);
+    let d2 = Domain::Int(vec![Range::Bounded(1, 2)]);
 
     symbols
         .insert(Rc::new(Declaration::new_var(a.clone(), d1.clone())))

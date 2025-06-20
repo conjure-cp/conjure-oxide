@@ -339,7 +339,7 @@ fn reduce_solve_xyz() {
         .symbols_mut()
         .insert(Rc::new(Declaration::new_var(
             Name::UserName(String::from("a")),
-            Domain::IntDomain(vec![Range::Bounded(1, 3)]),
+            Domain::Int(vec![Range::Bounded(1, 3)]),
         )))
         .unwrap();
     model
@@ -347,7 +347,7 @@ fn reduce_solve_xyz() {
         .symbols_mut()
         .insert(Rc::new(Declaration::new_var(
             Name::UserName(String::from("b")),
-            Domain::IntDomain(vec![Range::Bounded(1, 3)]),
+            Domain::Int(vec![Range::Bounded(1, 3)]),
         )))
         .unwrap();
     model
@@ -355,7 +355,7 @@ fn reduce_solve_xyz() {
         .symbols_mut()
         .insert(Rc::new(Declaration::new_var(
             Name::UserName(String::from("c")),
-            Domain::IntDomain(vec![Range::Bounded(1, 3)]),
+            Domain::Int(vec![Range::Bounded(1, 3)]),
         )))
         .unwrap();
 
@@ -636,7 +636,7 @@ fn rewrite_solve_xyz() {
     let variable_a = Atom::Reference(Name::UserName(String::from("a")));
     let variable_b = Atom::Reference(Name::UserName(String::from("b")));
     let variable_c = Atom::Reference(Name::UserName(String::from("c")));
-    let domain = Domain::IntDomain(vec![Range::Bounded(1, 3)]);
+    let domain = Domain::Int(vec![Range::Bounded(1, 3)]);
 
     // Construct nested expression
     let nested_expr = Expression::And(

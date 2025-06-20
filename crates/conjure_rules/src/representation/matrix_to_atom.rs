@@ -100,7 +100,7 @@ impl Representation for MatrixToAtom {
             return None;
         }
 
-        let Domain::DomainMatrix(elem_domain, index_domains) = domain else {
+        let Domain::Matrix(elem_domain, index_domains) = domain else {
             return None;
         };
 

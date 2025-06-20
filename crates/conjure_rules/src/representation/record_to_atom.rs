@@ -44,7 +44,7 @@ impl Representation for RecordToAtom {
             return None;
         }
 
-        let Domain::DomainRecord(entries) = domain else {
+        let Domain::Record(entries) = domain else {
             return None;
         };
 

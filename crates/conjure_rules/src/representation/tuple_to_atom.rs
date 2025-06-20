@@ -41,7 +41,7 @@ impl Representation for TupleToAtom {
             return None;
         }
 
-        let Domain::DomainTuple(elem_domain) = domain else {
+        let Domain::Tuple(elem_domain) = domain else {
             return None;
         };
 
