@@ -94,7 +94,7 @@ fn load_symbol_table(
                 continue;
             };
 
-            let is_search_var = !matches!(name, conjure_ast::Name::MachineName(_));
+            let is_search_var = !matches!(name, conjure_ast::Name::Machine(_));
 
             load_var(&name, var, is_search_var, minion_model)?;
         }
@@ -203,8 +203,8 @@ fn _try_add_aux_var(
 fn name_to_string(name: conjure_ast::Name) -> String {
     match name {
         // print machine names in a custom, easier to regex, way.
-        conjure_ast::Name::MachineName(x) => format!("__conjure_machine_name_{}", x),
-        conjure_ast::Name::RepresentedName(fields) => {
+        conjure_ast::Name::Machine(x) => format!("__conjure_machine_name_{}", x),
+        conjure_ast::Name::Represented(fields) => {
             let (name, rule, suffix) = *fields;
             let name = name_to_string(name);
             format!("__conjure_represented_name__{name}__{rule}___{suffix}")

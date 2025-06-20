@@ -22,6 +22,8 @@ use super::{ReturnType, Typeable};
 pub enum Literal {
     Int(i32),
     Bool(bool),
+    //abstract literal variant ends in Literal, but that's ok
+    #[allow(clippy::enum_variant_names)]
     AbstractLiteral(AbstractLiteral<Literal>),
 }
 

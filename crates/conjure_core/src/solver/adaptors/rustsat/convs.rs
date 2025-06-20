@@ -58,7 +58,7 @@ pub fn handle_atom(
                 todo!("Not Sure if we are handling Lits as-is or not..")
             }
             conjure_core::ast::Atom::Reference(name) => match name {
-                conjure_core::ast::Name::UserName(n) => {
+                conjure_core::ast::Name::User(n) => {
                     // TODO: Temp Clone
                     // let m = n.clone();
                     let lit_temp: Lit = fetch_lit(n, vars_added, inst);

@@ -125,7 +125,7 @@ impl Comprehension {
                     continue;
                 }
 
-                let Name::MachineName(_) = &name else {
+                let Name::Machine(_) = &name else {
                     bug!("the symbol table of the return expression of a comprehension should only contain machine names");
                 };
 

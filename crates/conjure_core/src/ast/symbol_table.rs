@@ -201,7 +201,7 @@ impl SymbolTable {
 
             for added_var in new_vars.difference(&old_vars) {
                 let mut next_var = self.next_machine_name.borrow_mut();
-                if let Name::MachineName(m) = *added_var {
+                if let Name::Machine(m) = *added_var {
                     if *m >= *next_var {
                         *next_var = *m + 1;
                     }
@@ -216,7 +216,7 @@ impl SymbolTable {
     pub fn gensym(&self) -> Name {
         let num = *self.next_machine_name.borrow();
         *(self.next_machine_name.borrow_mut()) += 1;
-        Name::MachineName(num) // incremented when inserted
+        Name::Machine(num) // incremented when inserted
     }
 
     /// Gets the parent of this symbol table as a mutable reference.

@@ -113,7 +113,7 @@ pub fn get_minion_solutions(
         *sol = sol
             .clone()
             .into_iter()
-            .filter(|(name, _)| !matches!(name, Name::RepresentedName(_)))
+            .filter(|(name, _)| !matches!(name, Name::Represented(_)))
             .collect();
     }
 

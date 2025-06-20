@@ -14,8 +14,6 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use std::path::PathBuf;
-use std::str::FromStr;
 use tracing::{span, Level, Metadata as OtherMetadata};
 use tracing_subscriber::{
     filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
