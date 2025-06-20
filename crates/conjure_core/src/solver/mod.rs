@@ -41,8 +41,8 @@
 //! // Define a model for minion.
 //! let context = Context::<'static>::new_ptr_empty(SolverFamily::Minion);
 //! let mut model = Model::new(context);
-//! model.as_submodel_mut().add_symbol(Declaration::new_var("x".into(), Domain::BoolDomain));
-//! model.as_submodel_mut().add_symbol(Declaration::new_var("y".into(), Domain::BoolDomain));
+//! model.as_submodel_mut().add_symbol(Declaration::new_var("x".into(), Domain::Bool));
+//! model.as_submodel_mut().add_symbol(Declaration::new_var("y".into(), Domain::Bool));
 //! model.as_submodel_mut().add_constraint(essence_expr!{x != y});
 //!
 //! // Solve using Minion.

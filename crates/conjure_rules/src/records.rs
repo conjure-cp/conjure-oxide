@@ -42,7 +42,7 @@ fn index_record_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 
     let decl = symbols.lookup(name).unwrap();
 
-    let Some(Domain::DomainRecord(_)) = decl.domain().cloned().map(|x| x.resolve(symbols)) else {
+    let Some(Domain::Record(_)) = decl.domain().cloned().map(|x| x.resolve(symbols)) else {
         return Err(RuleNotApplicable);
     };
 
@@ -89,7 +89,7 @@ fn record_index_to_bubble(expr: &Expr, symbols: &SymbolTable) -> ApplicationResu
         .domain_of(symbols)
         .ok_or(ApplicationError::DomainError)?;
 
-    let Domain::DomainRecord(elems) = domain else {
+    let Domain::Record(elems) = domain else {
         return Err(RuleNotApplicable);
     };
 
@@ -191,11 +191,11 @@ fn record_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
 
-    let Domain::DomainRecord(entries) = domain else {
+    let Domain::Record(entries) = domain else {
         return Err(RuleNotApplicable);
     };
 
-    let Domain::DomainRecord(entries2) = domain2 else {
+    let Domain::Record(entries2) = domain2 else {
         return Err(RuleNotApplicable);
     };
 
@@ -269,7 +269,7 @@ fn record_to_const(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
 
-    let Domain::DomainRecord(entries) = domain else {
+    let Domain::Record(entries) = domain else {
         return Err(RuleNotApplicable);
     };
 

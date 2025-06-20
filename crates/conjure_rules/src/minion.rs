@@ -791,7 +791,7 @@ fn introduce_wininterval_set_from_indomain(expr: &Expr, _: &SymbolTable) -> Appl
         return Err(RuleNotApplicable);
     };
 
-    let Domain::IntDomain(ranges) = domain else {
+    let Domain::Int(ranges) = domain else {
         return Err(RuleNotApplicable);
     };
 
@@ -1192,14 +1192,11 @@ fn y_plus_k_geq_x_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
 #[register_rule(("Minion", 4100))]
 fn not_literal_to_wliteral(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    use Domain::BoolDomain;
+    use Domain::Bool;
     match expr {
         Expr::Not(m, expr) => {
             if let Expr::Atomic(_, Atom::Reference(name)) = (**expr).clone() {
-                if symbols
-                    .domain(&name)
-                    .is_some_and(|x| matches!(x, BoolDomain))
-                {
+                if symbols.domain(&name).is_some_and(|x| matches!(x, Bool)) {
                     return Ok(Reduction::pure(Expr::FlatWatchedLiteral(
                         m.clone_dirty(),
                         name.clone(),

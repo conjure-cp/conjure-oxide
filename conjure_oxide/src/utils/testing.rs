@@ -264,7 +264,7 @@ pub fn normalize_solutions_for_comparison(
                         // actually matter)
 
                         let mut matrix =
-                            AbstractLiteral::Matrix(elems, Box::new(Domain::IntDomain(vec![])));
+                            AbstractLiteral::Matrix(elems, Box::new(Domain::Int(vec![])));
                         matrix =
                             matrix.transform(Arc::new(
                                 move |x: AbstractLiteral<Literal>| match x {
@@ -280,7 +280,7 @@ pub fn normalize_solutions_for_comparison(
 
                                         AbstractLiteral::Matrix(
                                             items,
-                                            Box::new(Domain::IntDomain(vec![])),
+                                            Box::new(Domain::Int(vec![])),
                                         )
                                     }
                                     x => x,

@@ -30,18 +30,18 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
             decl.as_var().cloned().map(|x| (n, id, x))
         })
         .filter(|(_, _, var)| {
-            let Domain::DomainMatrix(valdom, indexdoms) = &var.domain else {
+            let Domain::Matrix(valdom, indexdoms) = &var.domain else {
                 return false;
             };
 
             // TODO: loosen these requirements once we are able to
-            if !matches!(valdom.as_ref(), Domain::BoolDomain | Domain::IntDomain(_)) {
+            if !matches!(valdom.as_ref(), Domain::Bool | Domain::Int(_)) {
                 return false;
             }
 
             if indexdoms
                 .iter()
-                .any(|x| !matches!(x, Domain::BoolDomain | Domain::IntDomain(_)))
+                .any(|x| !matches!(x, Domain::Bool | Domain::Int(_)))
             {
                 return false;
             }
@@ -172,10 +172,10 @@ fn needs_representation(name: &Name, symbols: &SymbolTable) -> bool {
 fn domain_needs_representation(domain: &Domain) -> bool {
     // very simple implementation for now
     match domain {
-        Domain::BoolDomain | Domain::IntDomain(_) => false,
-        Domain::DomainMatrix(_, _) => false, // we special case these elsewhere
-        Domain::DomainSet(_, _) | Domain::DomainTuple(_) | Domain::DomainRecord(_) => true,
-        Domain::DomainReference(_) => unreachable!("domain should be resolved"),
+        Domain::Bool | Domain::Int(_) => false,
+        Domain::Matrix(_, _) => false, // we special case these elsewhere
+        Domain::Set(_, _) | Domain::Tuple(_) | Domain::Record(_) => true,
+        Domain::Reference(_) => unreachable!("domain should be resolved"),
         // _ => false,
     }
 }
@@ -195,15 +195,15 @@ fn get_or_create_representation(
     // TODO: pick representations recursively for nested abstract domains: e.g. sets in sets.
 
     match symbols.resolve_domain(name).unwrap() {
-        Domain::DomainSet(_, _) => None, // has no representations yet!
-        Domain::DomainTuple(elem_domains) => {
+        Domain::Set(_, _) => None, // has no representations yet!
+        Domain::Tuple(elem_domains) => {
             if elem_domains.iter().any(domain_needs_representation) {
                 bug!("representing nested abstract domains is not implemented");
             }
 
             symbols.get_or_add_representation(name, &["tuple_to_atom"])
         }
-        Domain::DomainRecord(entries) => {
+        Domain::Record(entries) => {
             if entries
                 .iter()
                 .any(|entry| domain_needs_representation(&entry.domain))

@@ -63,7 +63,7 @@ fn matrix_to_list(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             continue;
         };
 
-        let Domain::IntDomain(ranges) = &domain else {
+        let Domain::Int(ranges) = &domain else {
             new_children.push_back(child);
             continue;
         };
@@ -75,8 +75,7 @@ fn matrix_to_list(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         };
 
         any_changes = true;
-        new_children
-            .push_back(into_matrix_expr![elems;Domain::IntDomain(vec![Range::UnboundedR(1)])]);
+        new_children.push_back(into_matrix_expr![elems;Domain::Int(vec![Range::UnboundedR(1)])]);
     }
 
     let new_expr = expr.with_children(new_children);
