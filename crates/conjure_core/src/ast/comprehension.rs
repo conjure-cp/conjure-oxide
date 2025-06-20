@@ -41,7 +41,7 @@ impl Comprehension {
     pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
         self.return_expression_submodel
             .clone()
-            .as_single_expression()
+            .into_single_expression()
             .domain_of(syms)
     }
 
@@ -84,7 +84,7 @@ impl Comprehension {
 
             let return_expression_submodel = self.return_expression_submodel.clone();
             let child_symtab = return_expression_submodel.symbols().clone();
-            let return_expression = return_expression_submodel.as_single_expression();
+            let return_expression = return_expression_submodel.into_single_expression();
 
             // we only want to substitute induction variables.
             // (definitely not machine names, as they mean something different in this scope!)
@@ -153,7 +153,7 @@ impl Comprehension {
     }
 
     pub fn return_expression(self) -> Expression {
-        self.return_expression_submodel.as_single_expression()
+        self.return_expression_submodel.into_single_expression()
     }
 
     pub fn replace_return_expression(&mut self, new_expr: Expression) {

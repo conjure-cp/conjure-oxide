@@ -216,7 +216,7 @@ pub fn get_solutions_from_conjure(
                 conjure_core::ast::DeclarationKind::ValueLetting(expression) => {
                     let literal = expression
                         .clone()
-                        .to_literal()
+                        .into_literal()
                         .expect("lettings in a solution should only contain literals");
                     solutions.insert(name, literal);
                 }

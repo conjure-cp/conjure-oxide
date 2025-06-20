@@ -904,14 +904,14 @@ impl Expression {
     }
 
     /// Converts the expression to a literal, if possible.
-    pub fn to_literal(self) -> Option<Literal> {
+    pub fn into_literal(self) -> Option<Literal> {
         match self {
             Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
             Expression::AbstractLiteral(_, abslit) => {
-                Some(Literal::AbstractLiteral(abslit.clone().as_literals()?))
+                Some(Literal::AbstractLiteral(abslit.clone().into_literals()?))
             }
             Expression::Neg(_, e) => {
-                let Literal::Int(i) = e.to_literal()? else {
+                let Literal::Int(i) = e.into_literal()? else {
                     bug!("negated literal should be an int");
                 };
 

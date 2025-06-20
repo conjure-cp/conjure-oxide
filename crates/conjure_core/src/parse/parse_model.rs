@@ -416,7 +416,7 @@ fn parse_domain_value_int(obj: &JsonValue, symbols: &SymbolTable) -> Option<i32>
             return None;
         };
 
-        let a = d.clone().to_literal()?;
+        let a = d.clone().into_literal()?;
         let Literal::Int(a) = a else {
             return None;
         };

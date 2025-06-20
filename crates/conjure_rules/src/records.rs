@@ -56,7 +56,7 @@ fn index_record_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 
     // during the conversion from unsafe index to safe index in bubbling
     // we convert the field name to a literal integer for direct access
-    let Some(index) = index.clone().to_literal() else {
+    let Some(index) = index.clone().into_literal() else {
         return Err(RuleNotApplicable); // we don't support non-literal indices
     };
 

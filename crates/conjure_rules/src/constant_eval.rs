@@ -205,11 +205,11 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         Expr::Comprehension(_, _) => None,
         Expr::UnsafeIndex(_, subject, indices) | Expr::SafeIndex(_, subject, indices) => {
-            let subject: Lit = subject.as_ref().clone().to_literal()?;
+            let subject: Lit = subject.as_ref().clone().into_literal()?;
             let indices: Vec<Lit> = indices
                 .iter()
                 .cloned()
-                .map(|x| x.to_literal())
+                .map(|x| x.into_literal())
                 .collect::<Option<Vec<Lit>>>()?;
 
             match subject {
@@ -261,7 +261,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             }
         }
         Expr::UnsafeSlice(_, subject, indices) | Expr::SafeSlice(_, subject, indices) => {
-            let subject: Lit = subject.as_ref().clone().to_literal()?;
+            let subject: Lit = subject.as_ref().clone().into_literal()?;
             let Lit::AbstractLiteral(subject @ AbstractLiteral::Matrix(_, _)) = subject else {
                 return None;
             };
@@ -281,7 +281,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                     // the outer option represents success of this iterator, the inner the index
                     // slice.
                     match x {
-                        Some(x) => x.to_literal().map(Some),
+                        Some(x) => x.into_literal().map(Some),
                         None => Some(None),
                     }
                 })
@@ -625,7 +625,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::Scope(_, _) => None,
         Expr::MinionElementOne(_, _, _, _) => None,
         Expr::ToInt(_, expression) => {
-            let lit = (**expression).clone().to_literal()?;
+            let lit = (**expression).clone().into_literal()?;
             match lit {
                 Lit::Int(_) => Some(lit),
                 Lit::Bool(true) => Some(Lit::Int(1)),
