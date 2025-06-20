@@ -328,7 +328,7 @@ impl From<bool> for Literal {
 impl AbstractLiteral<Expression> {
     /// If all the elements are literals, returns this as an AbstractLiteral<Literal>.
     /// Otherwise, returns `None`.
-    pub fn as_literals(self) -> Option<AbstractLiteral<Literal>> {
+    pub fn into_literals(self) -> Option<AbstractLiteral<Literal>> {
         match self {
             AbstractLiteral::Set(_) => todo!(),
             AbstractLiteral::Matrix(items, domain) => {
@@ -337,7 +337,7 @@ impl AbstractLiteral<Expression> {
                     let literal = match item {
                         Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
                         Expression::AbstractLiteral(_, abslit) => {
-                            Some(Literal::AbstractLiteral(abslit.as_literals()?))
+                            Some(Literal::AbstractLiteral(abslit.into_literals()?))
                         }
                         _ => None,
                     }?;
@@ -352,7 +352,7 @@ impl AbstractLiteral<Expression> {
                     let literal = match item {
                         Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
                         Expression::AbstractLiteral(_, abslit) => {
-                            Some(Literal::AbstractLiteral(abslit.as_literals()?))
+                            Some(Literal::AbstractLiteral(abslit.into_literals()?))
                         }
                         _ => None,
                     }?;
@@ -367,7 +367,7 @@ impl AbstractLiteral<Expression> {
                     let literal = match entry.value {
                         Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
                         Expression::AbstractLiteral(_, abslit) => {
-                            Some(Literal::AbstractLiteral(abslit.as_literals()?))
+                            Some(Literal::AbstractLiteral(abslit.into_literals()?))
                         }
                         _ => None,
                     }?;
