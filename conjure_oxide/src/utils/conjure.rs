@@ -8,7 +8,7 @@ use conjure_core::ast::{Literal, Name};
 use conjure_core::bug;
 use conjure_core::context::Context;
 
-use conjure_core::solver::adaptors::SAT;
+use conjure_core::solver::adaptors::Sat;
 use serde_json::{Map, Value as JsonValue};
 
 use itertools::Itertools as _;
@@ -125,8 +125,7 @@ pub fn get_sat_solutions(
     num_sols: i32,
     solver_input_file: &Option<PathBuf>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
-    let solver = Solver::new(SAT::default());
-
+    let solver = Solver::new(Sat::default());
     eprintln!("Building SAT model...");
     let solver = solver.load_model(model)?;
 

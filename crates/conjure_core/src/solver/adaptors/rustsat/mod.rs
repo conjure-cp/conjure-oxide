@@ -1,4 +1,4 @@
 mod adaptor;
 mod convs;
 
-pub use adaptor::SAT;
+pub use adaptor::Sat;

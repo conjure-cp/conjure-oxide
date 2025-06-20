@@ -36,7 +36,7 @@ use rustsat::instances::{BasicVarManager, Cnf, ManageVars, SatInstance};
 use thiserror::Error;
 
 /// A [SolverAdaptor] for interacting with the SatSolver generic and the types thereof.
-pub struct SAT {
+pub struct Sat {
     __non_constructable: private::Internal,
     model_inst: Option<SatInstance>,
     var_map: Option<HashMap<String, Lit>>,
@@ -44,11 +44,11 @@ pub struct SAT {
     decision_refs: Option<Vec<String>>,
 }
 
-impl private::Sealed for SAT {}
+impl private::Sealed for Sat {}
 
-impl Default for SAT {
+impl Default for Sat {
     fn default() -> Self {
-        SAT {
+        Sat {
             __non_constructable: private::Internal,
             solver_inst: Minisat::default(),
             var_map: None,
@@ -87,7 +87,7 @@ fn get_ref_sols(
     solution
 }
 
-impl SolverAdaptor for SAT {
+impl SolverAdaptor for Sat {
     fn solve(
         &mut self,
         callback: SolverCallback,
@@ -209,7 +209,7 @@ impl SolverAdaptor for SAT {
     fn init_solver(&mut self, _: private::Internal) {}
 
     fn get_family(&self) -> SolverFamily {
-        SolverFamily::SAT
+        SolverFamily::Sat
     }
 
     fn get_name(&self) -> Option<String> {

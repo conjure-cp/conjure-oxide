@@ -73,8 +73,8 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
             let mut file = File::create(path).unwrap();
 
             match global_args.solver {
-                SolverFamily::SAT => {
-                    let solver = Solver::new(adaptors::SAT::default());
+                SolverFamily::Sat => {
+                    let solver = Solver::new(adaptors::Sat::default());
                     let solver = solver.load_model(rewritten_model)?;
                     solver.write_solver_input_file(&mut file)?;
                 }
@@ -87,7 +87,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
         }
     } else {
         match global_args.solver {
-            SolverFamily::SAT => {
+            SolverFamily::Sat => {
                 run_sat_solver(&global_args, &solve_args, rewritten_model)?;
             }
             SolverFamily::Minion => {
@@ -118,7 +118,7 @@ pub(crate) fn init_context(
     }
 
     ensure!(
-        target_family == SolverFamily::Minion || target_family == SolverFamily::SAT,
+        target_family == SolverFamily::Minion || target_family == SolverFamily::Sat,
         "Only the Minion and SAT solvers is currently supported!"
     );
 

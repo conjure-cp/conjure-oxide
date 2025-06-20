@@ -286,7 +286,7 @@ fn integration_test_inner(
         // rule set selection based on solver
 
         let solver_fam = if config.solve_with_sat {
-            SolverFamily::SAT
+            SolverFamily::Sat
         } else {
             SolverFamily::Minion
         };
@@ -368,7 +368,7 @@ fn integration_test_inner(
             0,
             &None,
         )?;
-        let solutions_json = save_solutions_json(&solved, path, essence_base, SolverFamily::SAT)?;
+        let solutions_json = save_solutions_json(&solved, path, essence_base, SolverFamily::Sat)?;
         if verbose {
             println!("Minion solutions: {:#?}", solutions_json);
         }
@@ -534,7 +534,7 @@ fn integration_test_inner(
         assert_eq!(username_solutions_json, expected_solutions_json);
     } else if config.solve_with_sat {
         let expected_solutions_json =
-            read_solutions_json(path, essence_base, "expected", SolverFamily::SAT)?;
+            read_solutions_json(path, essence_base, "expected", SolverFamily::Sat)?;
         let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
         assert_eq!(username_solutions_json, expected_solutions_json);
     }
