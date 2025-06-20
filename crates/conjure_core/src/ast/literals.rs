@@ -79,10 +79,7 @@ where
     ///
     /// This acts as a variable sized list.
     pub fn matrix_implied_indices(elems: Vec<T>) -> Self {
-        AbstractLiteral::Matrix(
-            elems,
-            Box::new(Domain::IntDomain(vec![Range::UnboundedR(1)])),
-        )
+        AbstractLiteral::Matrix(elems, Box::new(Domain::Int(vec![Range::UnboundedR(1)])))
     }
 
     /// If the AbstractLiteral is a list, returns its elements.
@@ -94,7 +91,7 @@ where
             return None;
         };
 
-        let Domain::IntDomain(ranges) = domain.as_ref() else {
+        let Domain::Int(ranges) = domain.as_ref() else {
             return None;
         };
 
@@ -412,11 +409,11 @@ mod tests {
     fn matrix_uniplate_universe() {
         // Can we traverse through matrices with uniplate?
         let my_matrix: AbstractLiteral<Literal> = into_matrix![
-            vec![Literal::AbstractLiteral(matrix![Literal::Bool(true);Domain::BoolDomain]); 5];
-            Domain::BoolDomain
+            vec![Literal::AbstractLiteral(matrix![Literal::Bool(true);Domain::Bool]); 5];
+            Domain::Bool
         ];
 
-        let expected_index_domains = vec![Domain::BoolDomain; 6];
+        let expected_index_domains = vec![Domain::Bool; 6];
         let actual_index_domains: Vec<Domain> = my_matrix.cata(Arc::new(move |elem, children| {
             let mut res = vec![];
             res.extend(children.into_iter().flatten());

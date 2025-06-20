@@ -110,10 +110,10 @@ fn load_var(
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     match &var.domain {
-        conjure_ast::Domain::IntDomain(ranges) => {
+        conjure_ast::Domain::Int(ranges) => {
             load_intdomain_var(name, ranges, search_var, minion_model)
         }
-        conjure_ast::Domain::BoolDomain => load_booldomain_var(name, search_var, minion_model),
+        conjure_ast::Domain::Bool => load_booldomain_var(name, search_var, minion_model),
         x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
     }
 }

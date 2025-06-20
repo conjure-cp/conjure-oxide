@@ -115,7 +115,7 @@ impl ACOperatorKind {
                 Expression::UnsafeIndex(
                     Metadata::new(),
                     Box::new(
-                        matrix_expr![Expression::Atomic(Metadata::new(),1.into()),tail_expr;Domain::IntDomain(vec![Range::Bounded(0,1)])],
+                        matrix_expr![Expression::Atomic(Metadata::new(),1.into()),tail_expr;Domain::Int(vec![Range::Bounded(0,1)])],
                     ),
                     vec![Expression::ToInt(Metadata::new(), guard_expr_boxed)],
                 )

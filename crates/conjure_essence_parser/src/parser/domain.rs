@@ -8,11 +8,11 @@ use conjure_core::ast::{Domain, Name, Range};
 pub fn parse_domain(domain: Node, source_code: &str) -> Domain {
     let domain = domain.child(0).expect("No domain");
     match domain.kind() {
-        "bool_domain" => Domain::BoolDomain,
+        "bool_domain" => Domain::Bool,
         "int_domain" => parse_int_domain(domain, source_code),
         "variable" => {
             let variable_name = &source_code[domain.start_byte()..domain.end_byte()];
-            Domain::DomainReference(Name::UserName(String::from(variable_name)))
+            Domain::Reference(Name::UserName(String::from(variable_name)))
         }
         _ => panic!("Not bool or int domain"),
     }
@@ -21,7 +21,7 @@ pub fn parse_domain(domain: Node, source_code: &str) -> Domain {
 /// Parse an integer domain. Can be a single integer or a range.
 fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
     if int_domain.child_count() == 1 {
-        Domain::IntDomain(vec![Range::Bounded(std::i32::MIN, std::i32::MAX)])
+        Domain::Int(vec![Range::Bounded(std::i32::MIN, std::i32::MAX)])
     } else {
         let mut ranges: Vec<Range<i32>> = Vec::new();
         let range_list = int_domain
@@ -84,6 +84,6 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
                 _ => panic!("unsupported int range type"),
             }
         }
-        Domain::IntDomain(ranges)
+        Domain::Int(ranges)
     }
 }

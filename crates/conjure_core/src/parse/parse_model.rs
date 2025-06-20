@@ -180,8 +180,8 @@ fn parse_domain(
 ) -> Result<Domain> {
     match domain_name {
         "DomainInt" => Ok(parse_int_domain(domain_value, symbols)?),
-        "DomainBool" => Ok(Domain::BoolDomain),
-        "DomainReference" => Ok(Domain::DomainReference(Name::UserName(
+        "DomainBool" => Ok(Domain::Bool),
+        "DomainReference" => Ok(Domain::Reference(Name::UserName(
             domain_value
                 .as_array()
                 .ok_or(error!("DomainReference is not an array"))?[0]
@@ -199,7 +199,7 @@ fn parse_domain(
                 .next()
                 .ok_or(Error::Parse("DomainSet is an empty object".to_owned()))?;
             let domain = parse_domain(domain.0.as_str(), domain.1, symbols)?;
-            Ok(Domain::DomainSet(SetAttr::None, Box::new(domain)))
+            Ok(Domain::Set(SetAttr::None, Box::new(domain)))
         }
 
         "DomainMatrix" => {
@@ -240,12 +240,12 @@ fn parse_domain(
             // Walk through the value domain until it is not a DomainMatrix, adding the index to
             // our list of indices.
             let mut value_domain = parse_domain(value_domain_name, value_domain_value, symbols)?;
-            while let Domain::DomainMatrix(new_value_domain, mut indices) = value_domain {
+            while let Domain::Matrix(new_value_domain, mut indices) = value_domain {
                 index_domains.append(&mut indices);
                 value_domain = *new_value_domain.clone()
             }
 
-            Ok(Domain::DomainMatrix(Box::new(value_domain), index_domains))
+            Ok(Domain::Matrix(Box::new(value_domain), index_domains))
         }
         "DomainTuple" => {
             let domain_value = domain_value
@@ -266,7 +266,7 @@ fn parse_domain(
                 })
                 .collect::<Result<Vec<Domain>>>()?;
 
-            Ok(Domain::DomainTuple(domain))
+            Ok(Domain::Tuple(domain))
         }
         "DomainRecord" => {
             let domain_value = domain_value
@@ -297,7 +297,7 @@ fn parse_domain(
                 let rec = RecordEntry { name, domain };
                 record_entries.push(rec);
             }
-            Ok(Domain::DomainRecord(record_entries))
+            Ok(Domain::Record(record_entries))
         }
 
         _ => Err(Error::Parse(
@@ -342,7 +342,7 @@ fn parse_int_domain(v: &JsonValue, symbols: &SymbolTable) -> Result<Domain> {
             _ => return throw_error!("DomainInt[1] contains an unknown object"),
         }
     }
-    Ok(Domain::IntDomain(ranges))
+    Ok(Domain::Int(ranges))
 }
 
 /// Parses a (possibly) integer value inside the range of a domain

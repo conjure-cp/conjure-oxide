@@ -15,7 +15,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::result::Result::Ok;
 use tracing_subscriber::filter::DynFilterFn;
 
-use crate::ast::Domain::BoolDomain;
+use crate::ast::Domain::Bool;
 
 use rustsat_minisat::core::Minisat;
 
@@ -177,7 +177,7 @@ impl SolverAdaptor for SAT {
         let mut finds: Vec<String> = Vec::new();
 
         for find_ref in decisions {
-            if (*find_ref.1.domain().unwrap() != BoolDomain) {
+            if (*find_ref.1.domain().unwrap() != Bool) {
                 Err(SolverError::ModelInvalid(
                     "Only Boolean Decision Variables supported".to_string(),
                 ))?;
