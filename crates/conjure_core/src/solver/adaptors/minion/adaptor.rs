@@ -43,7 +43,7 @@ fn parse_name(minion_name: &str) -> Name {
     static MACHINE_NAME_RE: LazyLock<Regex> =
         LazyLock::new(|| Regex::new(r"__conjure_machine_name_([0-9]+)").unwrap());
     static REPRESENTED_NAME_RE: LazyLock<Regex> =
-        LazyLock::new(|| Regex::new(r"__conjure_represented_name##(.*)##(.*)___(.*)").unwrap());
+        LazyLock::new(|| Regex::new(r"__conjure_represented_name__(.*)__(.*)___(.*)").unwrap());
 
     if let Some(caps) = MACHINE_NAME_RE.captures(minion_name) {
         conjure_ast::Name::MachineName(caps[1].parse::<i32>().unwrap())
@@ -166,6 +166,14 @@ impl SolverAdaptor for Minion {
 
     fn get_name(&self) -> Option<String> {
         Some("Minion".to_owned())
+    }
+
+    fn write_solver_input_file(
+        &self,
+        writer: &mut impl std::io::Write,
+    ) -> Result<(), std::io::Error> {
+        let model = self.model.as_ref().expect("Minion solver adaptor should have a model as write_solver_input_file should only be called in the LoadedModel state.");
+        minion_rs::print::write_minion_file(writer, model)
     }
 }
 

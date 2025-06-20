@@ -207,7 +207,7 @@ fn name_to_string(name: conjure_ast::Name) -> String {
         conjure_ast::Name::RepresentedName(fields) => {
             let (name, rule, suffix) = *fields;
             let name = name_to_string(name);
-            format!("__conjure_represented_name##{name}##{rule}___{suffix}")
+            format!("__conjure_represented_name__{name}__{rule}___{suffix}")
         }
         x => format!("{x}"),
     }
