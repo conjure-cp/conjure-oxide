@@ -20,6 +20,7 @@ mod variables;
 pub use atom::Atom;
 pub use declaration::*;
 pub use domains::Domain;
+pub use domains::DomainOpError;
 pub use domains::Range;
 pub use domains::SetAttr;
 pub use expressions::Expression;

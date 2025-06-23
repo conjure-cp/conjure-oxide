@@ -184,7 +184,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 return None;
             };
 
-            domain.contains(lit).map(Into::into)
+            domain.contains(lit).ok().map(Into::into)
         }
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
         Expr::Atomic(_, Atom::Reference(_c)) => None,
@@ -288,7 +288,8 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 .collect::<Option<Vec<Option<Lit>>>>()?;
 
             let indices_in_slice: Vec<Vec<Lit>> = missing_domain
-                .values()?
+                .values()
+                .ok()?
                 .into_iter()
                 .map(|i| {
                     let mut indices = indices.clone();
