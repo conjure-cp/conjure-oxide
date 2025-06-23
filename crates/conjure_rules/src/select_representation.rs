@@ -176,7 +176,7 @@ fn domain_needs_representation(domain: &Domain) -> bool {
         Domain::Matrix(_, _) => false, // we special case these elsewhere
         Domain::Set(_, _) | Domain::Tuple(_) | Domain::Record(_) => true,
         Domain::Reference(_) => unreachable!("domain should be resolved"),
-        // _ => false,
+        Domain::Empty(_) => false, // _ => false,
     }
 }
 

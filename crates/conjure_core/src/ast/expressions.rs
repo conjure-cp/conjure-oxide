@@ -555,11 +555,11 @@ impl Expression {
         let ret = match self {
             Expression::Union(_, a, b) => Some(Domain::Set(
                 SetAttr::None,
-                Box::new(a.domain_of(syms)?.union(&b.domain_of(syms)?)?),
+                Box::new(a.domain_of(syms)?.union(&b.domain_of(syms)?).ok()?),
             )),
             Expression::Intersect(_, a, b) => Some(Domain::Set(
                 SetAttr::None,
-                Box::new(a.domain_of(syms)?.intersect(&b.domain_of(syms)?)?),
+                Box::new(a.domain_of(syms)?.intersect(&b.domain_of(syms)?).ok()?),
             )),
             Expression::In(_, _, _) => Some(Domain::Bool),
             Expression::Supset(_, _, _) => Some(Domain::Bool),
@@ -622,18 +622,21 @@ impl Expression {
                 |x, y| Some(if x > y { x } else { y }),
                 syms,
             ),
-            Expression::UnsafeDiv(_, a, b) => a.domain_of(syms)?.apply_i32(
-                // rust integer division is truncating; however, we want to always round down,
-                // including for negative numbers.
-                |x, y| {
-                    if y != 0 {
-                        Some((x as f32 / y as f32).floor() as i32)
-                    } else {
-                        None
-                    }
-                },
-                &b.domain_of(syms)?,
-            ),
+            Expression::UnsafeDiv(_, a, b) => a
+                .domain_of(syms)?
+                .apply_i32(
+                    // rust integer division is truncating; however, we want to always round down,
+                    // including for negative numbers.
+                    |x, y| {
+                        if y != 0 {
+                            Some((x as f32 / y as f32).floor() as i32)
+                        } else {
+                            None
+                        }
+                    },
+                    &b.domain_of(syms)?,
+                )
+                .ok(),
             Expression::SafeDiv(_, a, b) => {
                 // rust integer division is truncating; however, we want to always round down
                 // including for negative numbers.
@@ -649,19 +652,22 @@ impl Expression {
                 );
 
                 match domain {
-                    Some(Domain::Int(ranges)) => {
+                    Ok(Domain::Int(ranges)) => {
                         let mut ranges = ranges;
                         ranges.push(Range::Single(0));
                         Some(Domain::Int(ranges))
                     }
-                    None => Some(Domain::Int(vec![Range::Single(0)])),
-                    _ => None,
+                    Err(_) => todo!(),
+                    _ => unreachable!(),
                 }
             }
-            Expression::UnsafeMod(_, a, b) => a.domain_of(syms)?.apply_i32(
-                |x, y| if y != 0 { Some(x % y) } else { None },
-                &b.domain_of(syms)?,
-            ),
+            Expression::UnsafeMod(_, a, b) => a
+                .domain_of(syms)?
+                .apply_i32(
+                    |x, y| if y != 0 { Some(x % y) } else { None },
+                    &b.domain_of(syms)?,
+                )
+                .ok(),
             Expression::SafeMod(_, a, b) => {
                 let domain = a.domain_of(syms)?.apply_i32(
                     |x, y| if y != 0 { Some(x % y) } else { None },
@@ -669,17 +675,18 @@ impl Expression {
                 );
 
                 match domain {
-                    Some(Domain::Int(ranges)) => {
+                    Ok(Domain::Int(ranges)) => {
                         let mut ranges = ranges;
                         ranges.push(Range::Single(0));
                         Some(Domain::Int(ranges))
                     }
-                    None => Some(Domain::Int(vec![Range::Single(0)])),
-                    _ => None,
+                    Err(_) => todo!(),
+                    _ => unreachable!(),
                 }
             }
-            Expression::SafePow(_, a, b) | Expression::UnsafePow(_, a, b) => {
-                a.domain_of(syms)?.apply_i32(
+            Expression::SafePow(_, a, b) | Expression::UnsafePow(_, a, b) => a
+                .domain_of(syms)?
+                .apply_i32(
                     |x, y| {
                         if (x != 0 || y != 0) && y >= 0 {
                             Some(x.pow(y as u32))
@@ -689,7 +696,7 @@ impl Expression {
                     },
                     &b.domain_of(syms)?,
                 )
-            }
+                .ok(),
             Expression::Root(_, _) => None,
             Expression::Bubble(_, _, _) => None,
             Expression::AuxDeclaration(_, _, _) => Some(Domain::Bool),
@@ -735,7 +742,8 @@ impl Expression {
             }
             Expression::Minus(_, a, b) => a
                 .domain_of(syms)?
-                .apply_i32(|x, y| Some(x - y), &b.domain_of(syms)?),
+                .apply_i32(|x, y| Some(x - y), &b.domain_of(syms)?)
+                .ok(),
             Expression::FlatAllDiff(_, _) => Some(Domain::Bool),
             Expression::FlatMinusEq(_, _, _) => Some(Domain::Bool),
             Expression::FlatProductEq(_, _, _, _) => Some(Domain::Bool),
@@ -743,7 +751,8 @@ impl Expression {
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(Domain::Bool),
             Expression::Abs(_, a) => a
                 .domain_of(syms)?
-                .apply_i32(|a, _| Some(a.abs()), &a.domain_of(syms)?),
+                .apply_i32(|a, _| Some(a.abs()), &a.domain_of(syms)?)
+                .ok(),
             Expression::MinionPow(_, _, _, _) => Some(Domain::Bool),
             Expression::ToInt(_, _) => Some(Domain::Int(vec![Range::Bounded(0, 1)])),
         };
