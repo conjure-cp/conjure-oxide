@@ -671,8 +671,20 @@ impl Typeable for Domain {
             Domain::Matrix(_, _) => {
                 todo!("fix ReturnType::Matrix type to support multi-dimensional matrices")
             }
-            Domain::Tuple(_) => todo!("add ReturnType for Domain::Tuple"),
-            Domain::Record(_) => todo!("add ReturnType for Domain::Record"),
+            Domain::Tuple(items) => {
+                let mut item_types = vec![];
+                for item in items {
+                    item_types.push(item.return_type()?);
+                }
+                Some(ReturnType::Tuple(item_types))
+            }
+            Domain::Record(items) => {
+                let mut item_types = vec![];
+                for item in items {
+                    item_types.push(item.domain.return_type()?);
+                }
+                Some(ReturnType::Record(item_types))
+            }
         }
     }
 }

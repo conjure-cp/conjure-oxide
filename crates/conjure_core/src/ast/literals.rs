@@ -58,7 +58,6 @@ impl Typeable for Literal {
     }
 }
 
-// TODO: handle tuples and records
 impl<T: AbstractLiteralValue + Typeable> Typeable for AbstractLiteral<T> {
     fn return_type(&self) -> Option<ReturnType> {
         match self {
@@ -77,7 +76,6 @@ impl<T: AbstractLiteralValue + Typeable> Typeable for AbstractLiteral<T> {
 
                 Some(ReturnType::Set(Box::new(item_type)))
             }
-
             AbstractLiteral::Matrix(items, _) if items.is_empty() => {
                 Some(ReturnType::Matrix(Box::new(ReturnType::Unknown)))
             }
@@ -93,7 +91,20 @@ impl<T: AbstractLiteralValue + Typeable> Typeable for AbstractLiteral<T> {
 
                 Some(ReturnType::Matrix(Box::new(item_type)))
             }
-            _ => None,
+            AbstractLiteral::Tuple(items) => {
+                let mut item_types = vec![];
+                for item in items {
+                    item_types.push(item.return_type()?);
+                }
+                Some(ReturnType::Tuple(item_types))
+            }
+            AbstractLiteral::Record(items) => {
+                let mut item_types = vec![];
+                for item in items {
+                    item_types.push(item.value.return_type()?);
+                }
+                Some(ReturnType::Record(item_types))
+            }
         }
     }
 }
