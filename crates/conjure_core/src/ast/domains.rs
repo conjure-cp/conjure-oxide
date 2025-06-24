@@ -668,8 +668,18 @@ impl Typeable for Domain {
             Domain::Empty(return_type) => Some(return_type.clone()),
             Domain::Set(_, domain) => Some(ReturnType::Set(Box::new(domain.return_type()?))),
             Domain::Reference(_) => None, // todo!("add ReturnType for Domain::Reference"),
-            Domain::Matrix(_, _) => {
-                todo!("fix ReturnType::Matrix type to support multi-dimensional matrices")
+            Domain::Matrix(item_domain, index_domains) => {
+                assert!(
+                    !index_domains.is_empty(),
+                    "a matrix should have atleast one dimension"
+                );
+                let mut return_type = ReturnType::Matrix(Box::new(item_domain.return_type()?));
+
+                for _ in 0..(index_domains.len() - 1) {
+                    return_type = ReturnType::Matrix(Box::new(return_type));
+                }
+
+                Some(return_type)
             }
             Domain::Tuple(items) => {
                 let mut item_types = vec![];
