@@ -6,6 +6,8 @@ pub enum ReturnType {
     Bool,
     Matrix(Box<ReturnType>),
     Set(Box<ReturnType>),
+    Tuple(Vec<ReturnType>),
+    Record(Vec<ReturnType>),
 
     /// An unknown type
     ///

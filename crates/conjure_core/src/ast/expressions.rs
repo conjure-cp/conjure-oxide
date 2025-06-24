@@ -40,8 +40,13 @@ use super::{Domain, Range, SubModel, Typeable};
 //
 // https://github.com/conjure-cp/conjure-oxide/commit/6012de8096ca491ded91ecec61352fdf4e994f2e
 
-// expect size of Expression to be 96 bytes
-static_assertions::assert_eq_size!([u8; 96], Expression);
+// TODO: box all usages of Metadata to bring this down a bit more - I have added variants to
+// ReturnType, and Metadata contains ReturnType, so Metadata has got bigger. Metadata will get a
+// lot bigger still when we start using it for memoisation, so it should really be
+// boxed ~niklasdewally
+
+// expect size of Expression to be 112 bytes
+static_assertions::assert_eq_size!([u8; 112], Expression);
 
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
