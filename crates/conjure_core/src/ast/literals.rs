@@ -62,11 +62,36 @@ impl Typeable for Literal {
 impl<T: AbstractLiteralValue + Typeable> Typeable for AbstractLiteral<T> {
     fn return_type(&self) -> Option<ReturnType> {
         match self {
-            AbstractLiteral::Set(vector) => {
-                Some(ReturnType::Set(Box::new(vector.first()?.return_type()?)))
+            AbstractLiteral::Set(items) if items.is_empty() => {
+                Some(ReturnType::Set(Box::new(ReturnType::Unknown)))
             }
-            AbstractLiteral::Matrix(vector, _) => {
-                Some(ReturnType::Matrix(Box::new(vector.first()?.return_type()?)))
+            AbstractLiteral::Set(items) => {
+                let item_type = items[0].return_type()?;
+
+                assert!(
+                    items
+                        .iter()
+                        .all(|x| x.return_type().is_some_and(|x| x == item_type)),
+                    "all items in a set should have the same type"
+                );
+
+                Some(ReturnType::Set(Box::new(item_type)))
+            }
+
+            AbstractLiteral::Matrix(items, _) if items.is_empty() => {
+                Some(ReturnType::Matrix(Box::new(ReturnType::Unknown)))
+            }
+            AbstractLiteral::Matrix(items, _) => {
+                let item_type = items[0].return_type()?;
+
+                assert!(
+                    items
+                        .iter()
+                        .all(|x| x.return_type().is_some_and(|x| x == item_type)),
+                    "all items in a matrix should have the same type"
+                );
+
+                Some(ReturnType::Matrix(Box::new(item_type)))
             }
             _ => None,
         }
