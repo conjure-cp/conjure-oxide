@@ -662,7 +662,18 @@ impl Display for Domain {
 
 impl Typeable for Domain {
     fn return_type(&self) -> Option<ReturnType> {
-        todo!()
+        match self {
+            Domain::Bool => Some(ReturnType::Bool),
+            Domain::Int(_) => Some(ReturnType::Int),
+            Domain::Empty(return_type) => Some(return_type.clone()),
+            Domain::Set(_, domain) => Some(ReturnType::Set(Box::new(domain.return_type()?))),
+            Domain::Reference(_) => None, // todo!("add ReturnType for Domain::Reference"),
+            Domain::Matrix(_, _) => {
+                todo!("fix ReturnType::Matrix type to support multi-dimensional matrices")
+            }
+            Domain::Tuple(_) => todo!("add ReturnType for Domain::Tuple"),
+            Domain::Record(_) => todo!("add ReturnType for Domain::Record"),
+        }
     }
 }
 
@@ -689,6 +700,27 @@ pub enum DomainOpError {
     /// The operation failed as the input domain contained a reference.
     #[error("The operation failed as the input domain contained a reference")]
     InputContainsReference,
+}
+
+/// Types that have a [`Domain`].
+pub trait HasDomain {
+    /// Gets the [`Domain`] of `self`.
+    fn domain_of(&self) -> Domain;
+
+    /// Gets the [`Domain`] of `self`, replacing any references with their domains stored in from the symbol table.
+    ///
+    /// # Panics
+    ///
+    /// - If a symbol referenced in `self` does not exist in the symbol table.
+    fn resolved_domain_of(&self, symbol_table: &SymbolTable) -> Domain {
+        self.domain_of().resolve(symbol_table)
+    }
+}
+
+impl<T: HasDomain> Typeable for T {
+    fn return_type(&self) -> Option<ReturnType> {
+        self.domain_of().return_type()
+    }
 }
 
 #[cfg(test)]
