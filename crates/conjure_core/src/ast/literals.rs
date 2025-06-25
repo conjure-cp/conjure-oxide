@@ -7,6 +7,7 @@ use std::hash::Hasher;
 use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Tree, Uniplate};
 
+use super::domains::HasDomain;
 use super::{Atom, Domain, Expression, Range, records::RecordValue};
 use super::{ReturnType, Typeable};
 
@@ -25,6 +26,16 @@ pub enum Literal {
     //abstract literal variant ends in Literal, but that's ok
     #[allow(clippy::enum_variant_names)]
     AbstractLiteral(AbstractLiteral<Literal>),
+}
+
+impl HasDomain for Literal {
+    fn domain_of(&self) -> Domain {
+        match self {
+            Literal::Int(i) => Domain::Int(vec![Range::Single(*i)]),
+            Literal::Bool(_) => Domain::Bool,
+            Literal::AbstractLiteral(abstract_literal) => abstract_literal.domain_of(),
+        }
+    }
 }
 
 // make possible values of an AbstractLiteral a closed world to make the trait bounds more sane (particularly in Uniplate instances!!)
@@ -48,17 +59,14 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
     Record(Vec<RecordValue<T>>),
 }
 
-impl Typeable for Literal {
-    fn return_type(&self) -> Option<ReturnType> {
-        match self {
-            Literal::Int(_) => Some(ReturnType::Int),
-            Literal::Bool(_) => Some(ReturnType::Bool),
-            Literal::AbstractLiteral(a) => a.return_type(),
-        }
+impl HasDomain for AbstractLiteral<Literal> {
+    fn domain_of(&self) -> Domain {
+        Domain::from_literal_vec(vec![Literal::AbstractLiteral(self.clone())])
+            .expect("abstract literals should be correctly typed")
     }
 }
 
-impl<T: AbstractLiteralValue + Typeable> Typeable for AbstractLiteral<T> {
+impl Typeable for AbstractLiteral<Expression> {
     fn return_type(&self) -> Option<ReturnType> {
         match self {
             AbstractLiteral::Set(items) if items.is_empty() => {

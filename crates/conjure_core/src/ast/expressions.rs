@@ -21,6 +21,7 @@ use uniplate::{Biplate, Uniplate as _};
 
 use super::ac_operators::ACOperatorKind;
 use super::comprehension::Comprehension;
+use super::domains::HasDomain as _;
 use super::records::RecordValue;
 use super::{Domain, Range, SubModel, Typeable};
 
@@ -606,12 +607,8 @@ impl Expression {
                 }
             }
             Expression::InDomain(_, _, _) => Some(Domain::Bool),
-            Expression::Atomic(_, Atom::Reference(name)) => Some(syms.resolve_domain(name)?),
-            Expression::Atomic(_, Atom::Literal(Literal::Int(n))) => {
-                Some(Domain::Int(vec![Range::Single(*n)]))
-            }
-            Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(Domain::Bool),
-            Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(_))) => None,
+            Expression::Atomic(_, Atom::Reference(name)) => syms.resolve_domain(name),
+            Expression::Atomic(_, atom) => Some(atom.domain_of().resolve(syms)),
             Expression::Scope(_, _) => Some(Domain::Bool),
             Expression::Sum(_, e) => {
                 bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x + y), syms)
