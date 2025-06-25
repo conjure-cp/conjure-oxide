@@ -3,7 +3,7 @@
 use std::{collections::BTreeSet, fmt::Display};
 
 use conjure_core::ast::SymbolTable;
-use itertools::Itertools;
+use itertools::{Itertools, izip};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -368,6 +368,257 @@ impl Domain {
         }
 
         Domain::Int(ranges)
+    }
+
+    /// For a vector of literals, creates a domain that contains all the elements.
+    ///
+    /// The literals must all be of the same type.
+    ///
+    /// For abstract literals, this method merges the element domains of the literals, but not the
+    /// index domains. Thus, for fixed-sized abstract literals (matrices, tuples, records, etc.),
+    /// all literals in the vector must also have the same size / index domain:
+    ///
+    /// + Matrices: all literals must have the same index domain.
+    /// + Tuples: all literals must have the same number of elements.
+    /// + Records: all literals must have the same fields.
+    ///
+    /// # Errors
+    ///
+    /// - [DomainOpError::InputWrongType] if the input literals are of a different type to
+    ///   each-other, as described above.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use conjure_core::ast::{Domain,Range,Literal,ReturnType};
+    ///
+    /// let domain = Domain::from_literal_vec(vec![]);
+    /// assert_eq!(domain,Ok(Domain::Empty(ReturnType::Unknown)));
+    /// ```
+    ///
+    /// ```
+    /// use conjure_core::ast::{Domain,Range,Literal, AbstractLiteral};
+    /// use conjure_core::matrix;
+    ///
+    /// // `[1,2;int(2..3)], [4,5; int(2..3)]` has domain
+    /// // `matrix indexed by [int(2..3)] of int(1..2,4..5)`
+    ///
+    /// let matrix_1 = Literal::AbstractLiteral(matrix![Literal::Int(1),Literal::Int(2);Domain::Int(vec![Range::Bounded(2,3)])]);
+    /// let matrix_2 = Literal::AbstractLiteral(matrix![Literal::Int(4),Literal::Int(5);Domain::Int(vec![Range::Bounded(2,3)])]);
+    ///
+    /// let domain = Domain::from_literal_vec(vec![matrix_1,matrix_2]);
+    ///
+    /// let expected_domain = Ok(Domain::Matrix(
+    ///     Box::new(Domain::Int(vec![Range::Bounded(1,2), Range::Bounded(4,5)])),
+    ///     vec![Domain::Int(vec![Range::Bounded(2,3)])]));
+    ///
+    /// assert_eq!(domain,expected_domain);
+    /// ```
+    ///
+    /// ```
+    /// use conjure_core::ast::{Domain,Range,Literal, AbstractLiteral,DomainOpError};
+    /// use conjure_core::matrix;
+    ///
+    /// // `[1,2;int(2..3)], [4,5; int(1..2)]` cannot be combined
+    /// // `matrix indexed by [int(2..3)] of int(1..2,4..5)`
+    ///
+    /// let matrix_1 = Literal::AbstractLiteral(matrix![Literal::Int(1),Literal::Int(2);Domain::Int(vec![Range::Bounded(2,3)])]);
+    /// let matrix_2 = Literal::AbstractLiteral(matrix![Literal::Int(4),Literal::Int(5);Domain::Int(vec![Range::Bounded(1,2)])]);
+    ///
+    /// let domain = Domain::from_literal_vec(vec![matrix_1,matrix_2]);
+    ///
+    /// assert_eq!(domain,Err(DomainOpError::InputWrongType));
+    /// ```
+    ///
+    /// ```
+    /// use conjure_core::ast::{Domain,Range,Literal, AbstractLiteral};
+    /// use conjure_core::matrix;
+    ///
+    /// // `[[1,2; int(1..2)];int(2)], [[4,5; int(1..2)]; int(2)]` has domain
+    /// // `matrix indexed by [int(2),int(1..2)] of int(1..2,4..5)`
+    ///
+    ///
+    /// // int(2).
+    /// let idx_domain_1 = Domain::Int(vec![Range::Single(2)]);
+    ///
+    /// // int(1..2).
+    /// let idx_domain_2 = Domain::Int(vec![Range::Bounded(1,2)]);
+    ///
+    /// let matrix_1 = Literal::AbstractLiteral(matrix![Literal::AbstractLiteral(matrix![Literal::Int(1),Literal::Int(2);idx_domain_2.clone()]); idx_domain_1.clone()]);
+    /// let matrix_2 = Literal::AbstractLiteral(matrix![Literal::AbstractLiteral(matrix![Literal::Int(4),Literal::Int(5);idx_domain_2.clone()]); idx_domain_1.clone()]);
+    ///
+    /// let domain = Domain::from_literal_vec(vec![matrix_1,matrix_2]);
+    ///
+    /// let expected_domain = Ok(Domain::Matrix(
+    ///     Box::new(Domain::Int(vec![Range::Bounded(1,2), Range::Bounded(4,5)])),
+    ///     vec![idx_domain_1,idx_domain_2]));
+    ///
+    /// assert_eq!(domain,expected_domain);
+    /// ```
+    ///
+    ///
+    pub fn from_literal_vec(literals: Vec<Literal>) -> Result<Domain, DomainOpError> {
+        // TODO: use proptest to test this better?
+
+        if literals.is_empty() {
+            return Ok(Domain::Empty(ReturnType::Unknown));
+        }
+
+        let first_literal = literals.first().unwrap();
+
+        match first_literal {
+            Literal::Int(_) => {
+                // check all literals are ints, then pass this to Domain::from_set_i32.
+                let mut ints = BTreeSet::new();
+                for lit in literals {
+                    let Literal::Int(i) = lit else {
+                        return Err(DomainOpError::InputWrongType);
+                    };
+
+                    ints.insert(i);
+                }
+
+                Ok(Domain::from_set_i32(&ints))
+            }
+            Literal::Bool(_) => {
+                // check all literals are bools
+                if literals.iter().any(|x| !matches!(x, Literal::Bool(_))) {
+                    Err(DomainOpError::InputWrongType)
+                } else {
+                    Ok(Domain::Bool)
+                }
+            }
+            Literal::AbstractLiteral(AbstractLiteral::Set(_)) => {
+                let mut all_elems = vec![];
+
+                for lit in literals {
+                    let Literal::AbstractLiteral(AbstractLiteral::Set(elems)) = lit else {
+                        return Err(DomainOpError::InputWrongType);
+                    };
+
+                    all_elems.extend(elems);
+                }
+                let elem_domain = Domain::from_literal_vec(all_elems)?;
+
+                Ok(Domain::Set(SetAttr::None, Box::new(elem_domain)))
+            }
+
+            l @ Literal::AbstractLiteral(AbstractLiteral::Matrix(_, _)) => {
+                let mut first_index_domain = vec![];
+                // flatten index domains of n-d matrix into list
+                let mut l = l.clone();
+                while let Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx)) = l {
+                    assert!(
+                        !matches!(idx.as_ref(), Domain::Matrix(_, _)),
+                        "n-dimensional matrix literals should be represented as a matrix inside a matrix"
+                    );
+                    first_index_domain.push(idx.as_ref().clone());
+                    l = elems[0].clone();
+                }
+
+                let mut all_elems: Vec<Literal> = vec![];
+
+                // check types and index domains
+                for lit in &literals {
+                    let Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx)) = lit else {
+                        return Err(DomainOpError::InputContainsReference);
+                    };
+
+                    all_elems.extend(elems.clone());
+
+                    let mut index_domain = vec![idx.as_ref().clone()];
+                    let mut l = elems[0].clone();
+                    while let Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx)) = l {
+                        assert!(
+                            !matches!(idx.as_ref(), Domain::Matrix(_, _)),
+                            "n-dimensional matrix literals should be represented as a matrix inside a matrix"
+                        );
+                        index_domain.push(idx.as_ref().clone());
+                        l = elems[0].clone();
+                    }
+
+                    if index_domain != first_index_domain {
+                        return Err(DomainOpError::InputWrongType);
+                    }
+                }
+
+                // extract all the terminal elements (those that are not nested matrix literals) from the matrix literal.
+                let mut terminal_elements: Vec<Literal> = vec![];
+                while let Some(elem) = all_elems.pop() {
+                    if let Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)) = elem {
+                        all_elems.extend(elems);
+                    } else {
+                        terminal_elements.push(elem);
+                    }
+                }
+
+                let element_domain = Domain::from_literal_vec(terminal_elements)?;
+
+                Ok(Domain::Matrix(Box::new(element_domain), first_index_domain))
+            }
+
+            Literal::AbstractLiteral(AbstractLiteral::Tuple(first_elems)) => {
+                let n_fields = first_elems.len();
+
+                // for each field, calculate the element domain and add it to this list
+                let mut elem_domains = vec![];
+
+                for i in 0..n_fields {
+                    let mut all_elems = vec![];
+                    for lit in &literals {
+                        let Literal::AbstractLiteral(AbstractLiteral::Tuple(elems)) = lit else {
+                            return Err(DomainOpError::InputContainsReference);
+                        };
+
+                        if elems.len() != n_fields {
+                            return Err(DomainOpError::InputContainsReference);
+                        }
+
+                        all_elems.push(elems[i].clone());
+                    }
+
+                    elem_domains.push(Domain::from_literal_vec(all_elems)?);
+                }
+
+                Ok(Domain::Tuple(elem_domains))
+            }
+
+            Literal::AbstractLiteral(AbstractLiteral::Record(first_elems)) => {
+                let n_fields = first_elems.len();
+                let field_names = first_elems.iter().map(|x| x.name.clone()).collect_vec();
+
+                // for each field, calculate the element domain and add it to this list
+                let mut elem_domains = vec![];
+
+                for i in 0..n_fields {
+                    let mut all_elems = vec![];
+                    for lit in &literals {
+                        let Literal::AbstractLiteral(AbstractLiteral::Record(elems)) = lit else {
+                            return Err(DomainOpError::InputContainsReference);
+                        };
+
+                        if elems.len() != n_fields {
+                            return Err(DomainOpError::InputContainsReference);
+                        }
+
+                        let elem = elems[i].clone();
+                        if elem.name != field_names[i] {
+                            return Err(DomainOpError::InputContainsReference);
+                        }
+
+                        all_elems.push(elem.value);
+                    }
+
+                    elem_domains.push(Domain::from_literal_vec(all_elems)?);
+                }
+
+                Ok(Domain::Record(
+                    izip!(field_names, elem_domains)
+                        .map(|(name, domain)| RecordEntry { name, domain })
+                        .collect(),
+                ))
+            }
+        }
     }
 
     /// Gets all the [`Literal`] values inside this domain.
