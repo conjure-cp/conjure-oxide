@@ -1,8 +1,8 @@
 use std::borrow::Borrow;
 
 use super::{
-    literals::AbstractLiteral, records::RecordValue, Expression, Literal, Name, ReturnType,
-    Typeable,
+    domains::HasDomain, literals::AbstractLiteral, records::RecordValue, Domain, Expression,
+    Literal, Name,
 };
 use serde::{Deserialize, Serialize};
 use uniplate::derive::Uniplate;
@@ -37,12 +37,11 @@ impl Atom {
     }
 }
 
-impl Typeable for Atom {
-    fn return_type(&self) -> Option<ReturnType> {
+impl HasDomain for Atom {
+    fn domain_of(&self) -> super::Domain {
         match self {
-            Atom::Literal(lit) => lit.return_type(),
-            //TODO: access symbol table to get return type of references
-            Atom::Reference(_) => None,
+            Atom::Literal(literal) => literal.domain_of(),
+            Atom::Reference(name) => Domain::Reference(name.clone()),
         }
     }
 }

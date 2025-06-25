@@ -1,9 +1,6 @@
 #![warn(clippy::missing_errors_doc)]
 
-use std::{
-    collections::BTreeSet,
-    fmt::Display,
-};
+use std::{collections::BTreeSet, fmt::Display};
 
 use conjure_core::ast::SymbolTable;
 use itertools::{izip, Itertools};
@@ -13,11 +10,7 @@ use thiserror::Error;
 use crate::ast::pretty::pretty_vec;
 use uniplate::{derive::Uniplate, Uniplate};
 
-use super::{
-    records::RecordEntry,
-    types::Typeable,
-    AbstractLiteral, Literal, Name, ReturnType,
-};
+use super::{records::RecordEntry, types::Typeable, AbstractLiteral, Literal, Name, ReturnType};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Range<A>
