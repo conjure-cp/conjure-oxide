@@ -41,8 +41,9 @@ macro_rules! domain_int {
 /// use conjure_core::{range,ast::Range};
 ///
 /// let a = 2*10;
-/// assert_eq!(range!(..a),Range::UnboundedR(a));
-/// assert_eq!(range!(2*5..),Range::UnboundedL(10));
+/// assert_eq!(range!(..a),Range::UnboundedL(a));
+/// assert_eq!(range!(2*5..),Range::UnboundedR(10));
+/// assert_eq!(range!(..10),Range::UnboundedL(10));
 /// assert_eq!(range!(1..5),Range::Bounded(1,5));
 /// assert_eq!(range!(Some(10).unwrap()),Range::Single(10));
 /// ```
@@ -51,13 +52,13 @@ macro_rules! range {
     // decl macros have no lookahead, hence this nonsense with pushdown automata.
 
     // @hasLowerbound: have atleast one token of the lower bound on the stack
-    (@hasLowerBound [$($lower:tt)+] -> ..) => {$crate::ast::Range::UnboundedL($crate::as_expr!($($lower)+))};
+    (@hasLowerBound [$($lower:tt)+] -> ..) => {$crate::ast::Range::UnboundedR($crate::as_expr!($($lower)+))};
     (@hasLowerBound [$($lower:tt)+] -> .. $($tail:tt)+) => {$crate::ast::Range::Bounded($crate::as_expr!($($lower)+),$crate::as_expr!($($tail)+))};
     (@hasLowerBound [$($lower:tt)+] -> $b:tt $($tail:tt)*) => {range!(@hasLowerBound [$($lower)+ $b] -> $($tail)*)};
     (@hasLowerBound [$($lower:tt)+] ->) => {$crate::ast::Range::Single($crate::as_expr!($($lower)+))};
 
     // initial tokens
-    (.. $($a:tt)+) => {$crate::ast::Range::UnboundedR($crate::as_expr!($($a)+))};
+    (.. $($a:tt)+) => {$crate::ast::Range::UnboundedL($crate::as_expr!($($a)+))};
 
     ($a:tt $($tail:tt)*) => {range!(@hasLowerBound [$a] -> $($tail)*)};
 
