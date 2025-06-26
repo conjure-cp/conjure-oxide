@@ -35,6 +35,7 @@ use rustsat::instances::{BasicVarManager, Cnf, ManageVars, SatInstance};
 
 use thiserror::Error;
 
+use itertools::Itertools;
 /// A [SolverAdaptor] for interacting with the SatSolver generic and the types thereof.
 pub struct Sat {
     __non_constructable: private::Internal,
@@ -66,14 +67,15 @@ fn get_ref_sols(
     let mut solution: HashMap<Name, Literal> = HashMap::new();
 
     for reference in find_refs {
-        // lit is 'Nothing' for unconstrained - if this is actually happenning, panicking is fine
-        // we are not supposed to do anything to resolve that here.
+        // lit is `Nothing` for variables that don't exist. This should have trhown an error at parse-time.
         let lit: Lit = match var_map.get(&reference) {
             Some(a) => *a,
             None => panic!(
                 "There should never be a non-just literal occurring here. Something is broken upstream."
             ),
         };
+
+        // TODO: solution assignment
         solution.insert(
             Name::User(reference),
             match sol[lit.var()] {
@@ -128,36 +130,51 @@ impl SolverAdaptor for Sat {
                 }
             };
 
-            let sol = solver.full_solution().unwrap();
+            let mut sol = solver.full_solution().unwrap();
+
+            // add DontCares into the solution
+            for (name, lit) in self.var_map.clone().unwrap() {
+                let inserter = sol.var_value(lit.var());
+                sol.assign_var(lit.var(), inserter);
+            }
             has_sol = true;
-            let solution = get_ref_sols(
+            let sol_old = get_ref_sols(
                 self.decision_refs.clone().unwrap(),
                 sol.clone(),
                 self.var_map.clone().unwrap(),
             );
 
-            if !callback(solution) {
-                // println!("callback false");
-                return Ok(SolveSuccess {
-                    stats: SolverStats {
-                        conjure_solver_wall_time_s: -1.0,
-                        solver_family: Some(self.get_family()),
-                        solver_adaptor: Some("SAT".to_string()),
-                        nodes: None,
-                        satisfiable: None,
-                        sat_vars: None,
-                        sat_clauses: None,
-                    },
-                    status: SearchStatus::Incomplete(solver::SearchIncomplete::UserTerminated),
-                });
+            tracing::info!("old solution {:#?}", sol_old);
+
+            let solutions = enumerate_sols(sol_old);
+
+            tracing::info!("final solutions for run");
+            tracing::info!("{:#?}", solutions);
+
+            for solution in solutions {
+                if !callback(solution) {
+                    // callback false
+                    return Ok(SolveSuccess {
+                        stats: SolverStats {
+                            conjure_solver_wall_time_s: -1.0,
+                            solver_family: Some(self.get_family()),
+                            solver_adaptor: Some("SAT".to_string()),
+                            nodes: None,
+                            satisfiable: None,
+                            sat_vars: None,
+                            sat_clauses: None,
+                        },
+                        status: SearchStatus::Incomplete(solver::SearchIncomplete::UserTerminated),
+                    });
+                }
             }
 
             let blocking_vec: Vec<_> = sol.clone().iter().map(|lit| !lit).collect();
             let mut blocking_cl = Clause::new();
+            tracing::info!("adding blocking clause with literals: {:#?}", blocking_vec);
             for lit_i in blocking_vec {
                 blocking_cl.add(lit_i);
             }
-
             solver.add_clause(blocking_cl).unwrap();
         }
     }
@@ -175,6 +192,7 @@ impl SolverAdaptor for Sat {
         let decisions = sym_tab.into_iter();
 
         let mut finds: Vec<String> = Vec::new();
+        let mut var_map: HashMap<String, Lit> = HashMap::new();
 
         for find_ref in decisions {
             if (*find_ref.1.domain().unwrap() != Bool) {
@@ -187,16 +205,12 @@ impl SolverAdaptor for Sat {
             finds.push(name.to_string());
         }
 
-        self.decision_refs = Some(finds);
+        self.decision_refs = Some(finds.clone());
 
         let m_clone = model.clone();
-        let vec_constr = m_clone.as_submodel().constraints();
+        let vec_cnf = m_clone.as_submodel().constraints().clone();
 
-        let vec_cnf = vec_constr.clone();
-
-        let mut var_map: HashMap<String, Lit> = HashMap::new();
-
-        let inst: SatInstance = handle_cnf(&vec_cnf, &mut var_map);
+        let inst: SatInstance = handle_cnf(&vec_cnf, &mut var_map, finds.clone());
 
         self.var_map = Some(var_map);
         let cnf: (Cnf, BasicVarManager) = inst.clone().into_cnf();
@@ -241,4 +255,68 @@ impl SolverAdaptor for Sat {
         let (cnf, var_manager): (Cnf, BasicVarManager) = model.into_cnf();
         cnf.write_dimacs(writer, var_manager.n_used())
     }
+}
+
+fn enumerate_sols(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal>> {
+    tracing::info!("Enumerating");
+    for (key, val) in solution.clone() {
+        match val {
+            Literal::Int(a) => {
+                if (a == 2) {
+                    return enumerate_real(solution);
+                } else {
+                    continue;
+                }
+            }
+            _ => continue,
+        }
+    }
+    vec![solution]
+}
+
+fn enumerate_real(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal>> {
+    tracing::info!("Enumerating: Real");
+    let mut sols = Vec::new();
+    let mut dont_cares = Vec::new();
+    let mut sol_inc = HashMap::new();
+
+    for (key, val) in solution {
+        let v = match val {
+            Literal::Int(i) => i,
+            _ => panic!("Only Int literals supported"),
+        };
+        if v == 2 {
+            dont_cares.push(key);
+        } else {
+            sol_inc.insert(key, val);
+        }
+    }
+
+    let mut tdcs = Vec::new();
+
+    tdcs.push(vec![]);
+    for len in 1..(dont_cares.len()) {
+        for combination in dont_cares.iter().combinations(len) {
+            tdcs.push(combination);
+        }
+    }
+
+    for trues in tdcs {
+        let mut d = sol_inc.clone();
+        for key in dont_cares.clone() {
+            if trues.contains(&&key) {
+                d.insert(key, Literal::Int(1));
+            } else {
+                d.insert(key, Literal::Int(0));
+            }
+        }
+        sols.push(d);
+    }
+
+    for i in dont_cares.clone() {
+        sol_inc.insert(i, Literal::Int(1));
+    }
+
+    sols.push(sol_inc);
+    sols
 }

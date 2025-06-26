@@ -1,4 +1,9 @@
-use std::{collections::HashMap, env::Vars, io::Lines};
+use core::panic;
+use std::{
+    collections::HashMap,
+    env::{vars, Vars},
+    io::Lines,
+};
 
 use rustsat::{
     clause,
@@ -11,7 +16,7 @@ use rustsat_minisat::core::Minisat;
 
 use anyhow::{anyhow, Result};
 
-use crate::{ast::Expression, solver::Error};
+use crate::{ast::Expression, bug, solver::Error};
 
 pub fn handle_lit(
     l1: &Expression,
@@ -25,7 +30,7 @@ pub fn handle_lit(
         // not literal
         Expression::Not(_, _) => handle_not(l1, vars_added, inst),
 
-        _ => panic!("Literal expected"),
+        _ => todo!("Literal expected"),
     }
 }
 
@@ -41,7 +46,7 @@ pub fn handle_not(
             // and then unbox
             handle_atom(*a, false, vars_added, inst)
         }
-        _ => panic!("Not Expected"),
+        _ => todo!("Not Expression Expected"),
     }
 }
 
@@ -52,11 +57,11 @@ pub fn handle_atom(
     inst: &mut SatInstance,
 ) -> Lit {
     // polarity false for not
+    //
+    println!("Atomic: {}", a);
     match a {
         Expression::Atomic(_, atom) => match atom {
-            conjure_core::ast::Atom::Literal(literal) => {
-                todo!("Not Sure if we are handling Lits as-is or not..")
-            }
+            conjure_core::ast::Atom::Literal(literal) => inst.new_lit(),
             conjure_core::ast::Atom::Reference(name) => match name {
                 conjure_core::ast::Name::User(n) => {
                     // TODO: Temp Clone
@@ -83,7 +88,7 @@ pub fn fetch_lit(
     inst: &mut SatInstance,
 ) -> Lit {
     if !vars_added.contains_key(&symbol) {
-        vars_added.insert(symbol.to_string(), inst.new_lit());
+        bug!("The code should never reach this point.");
     }
     *(vars_added.get(&symbol).unwrap())
 }
@@ -95,23 +100,40 @@ pub fn handle_disjn(
 ) {
     let cl: &Vec<Expression> = match disjn {
         Expression::Or(_, vec) => &vec.clone().unwrap_list().unwrap(),
-        _ => panic!("Expected an 'Or' expression!"),
+        // for something like `such that true`
+        Expression::Atomic(_, literal_bool) => &vec![disjn.clone()],
+        _ => bug!(
+            "This should always be either a Disjunction or a Constant; Found {:?}",
+            disjn
+        ),
     };
 
-    let mut lits = Clause::new();
-    for literal in cl {
-        let lit: Lit = handle_lit(literal, vars_added, inst_in_use);
-        lits.add(lit);
+    let mut clause: Clause = Clause::new();
+    for lit in cl {
+        let temp: Lit = handle_lit(lit, vars_added, inst_in_use);
+        clause.add(temp);
     }
 
-    inst_in_use.add_clause(lits);
+    inst_in_use.add_clause(clause);
 }
 
-pub fn handle_cnf(vec_cnf: &Vec<Expression>, vars_added: &mut HashMap<String, Lit>) -> SatInstance {
+pub fn handle_cnf(
+    vec_cnf: &Vec<Expression>,
+    vars_added: &mut HashMap<String, Lit>,
+    finds: Vec<String>,
+) -> SatInstance {
     let mut inst = SatInstance::new();
+
+    tracing::info!("{:?} are all the decision vars found.", finds);
+
+    for name in finds {
+        vars_added.insert(name, inst.new_lit());
+    }
+
     for disjn in vec_cnf {
         handle_disjn(disjn, vars_added, &mut inst);
     }
+
     inst
 }
 
