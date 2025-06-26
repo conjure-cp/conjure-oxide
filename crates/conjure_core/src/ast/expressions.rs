@@ -21,6 +21,7 @@ use uniplate::{Biplate, Uniplate as _};
 
 use super::ac_operators::ACOperatorKind;
 use super::comprehension::Comprehension;
+use super::domains::HasDomain as _;
 use super::records::RecordValue;
 use super::{Domain, Range, SubModel, Typeable};
 
@@ -40,8 +41,13 @@ use super::{Domain, Range, SubModel, Typeable};
 //
 // https://github.com/conjure-cp/conjure-oxide/commit/6012de8096ca491ded91ecec61352fdf4e994f2e
 
-// expect size of Expression to be 96 bytes
-static_assertions::assert_eq_size!([u8; 96], Expression);
+// TODO: box all usages of Metadata to bring this down a bit more - I have added variants to
+// ReturnType, and Metadata contains ReturnType, so Metadata has got bigger. Metadata will get a
+// lot bigger still when we start using it for memoisation, so it should really be
+// boxed ~niklasdewally
+
+// expect size of Expression to be 112 bytes
+static_assertions::assert_eq_size!([u8; 112], Expression);
 
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
@@ -601,12 +607,8 @@ impl Expression {
                 }
             }
             Expression::InDomain(_, _, _) => Some(Domain::Bool),
-            Expression::Atomic(_, Atom::Reference(name)) => Some(syms.resolve_domain(name)?),
-            Expression::Atomic(_, Atom::Literal(Literal::Int(n))) => {
-                Some(Domain::Int(vec![Range::Single(*n)]))
-            }
-            Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(Domain::Bool),
-            Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(_))) => None,
+            Expression::Atomic(_, Atom::Reference(name)) => syms.resolve_domain(name),
+            Expression::Atomic(_, atom) => Some(atom.domain_of().resolve(syms)),
             Expression::Scope(_, _) => Some(Domain::Bool),
             Expression::Sum(_, e) => {
                 bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x + y), syms)
