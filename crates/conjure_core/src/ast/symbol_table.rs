@@ -219,11 +219,17 @@ impl SymbolTable {
         self.table.extend(other.table);
     }
 
-    /// Returns an arbitrary variable name that is not in the symbol table.
-    pub fn gensym(&self, domain: &Domain) -> Declaration {
+    /// Creates a new variable in this symbol table with a unique name, and returns its
+    /// declaration.
+    pub fn gensym(&mut self, domain: &Domain) -> Rc<RefCell<Declaration>> {
         let num = *self.next_machine_name.borrow();
         *(self.next_machine_name.borrow_mut()) += 1;
-        Declaration::new_var(Name::Machine(num), domain.clone())
+        let decl = Rc::new(RefCell::new(Declaration::new_var(
+            Name::Machine(num),
+            domain.clone(),
+        )));
+        self.insert(Rc::clone(&decl));
+        decl
     }
 
     /// Gets the parent of this symbol table as a mutable reference.

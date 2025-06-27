@@ -44,13 +44,13 @@ fn test_parse_dominance() {
                             Metadata::new(),
                             Box::new(Expression::Atomic(
                                 Metadata::new(),
-                                Atom::new_ref(&cost_decl.borrow())
+                                Atom::new_ref(&cost_decl)
                             )),
                             Box::new(Expression::FromSolution(
                                 Metadata::new(),
                                 Box::new(Expression::Atomic(
                                     Metadata::new(),
-                                    Atom::new_ref(&cost_decl.borrow())
+                                    Atom::new_ref(&cost_decl)
                                 )),
                             )),
                         ),
@@ -58,13 +58,13 @@ fn test_parse_dominance() {
                             Metadata::new(),
                             Box::new(Expression::Atomic(
                                 Metadata::new(),
-                                Atom::new_ref(&carbon_decl.borrow())
+                                Atom::new_ref(&carbon_decl)
                             )),
                             Box::new(Expression::FromSolution(
                                 Metadata::new(),
                                 Box::new(Expression::Atomic(
                                     Metadata::new(),
-                                    Atom::new_ref(&carbon_decl.borrow())
+                                    Atom::new_ref(&carbon_decl)
                                 )),
                             )),
                         ),
@@ -77,13 +77,13 @@ fn test_parse_dominance() {
                             Metadata::new(),
                             Box::new(Expression::Atomic(
                                 Metadata::new(),
-                                Atom::new_ref(&cost_decl.borrow())
+                                Atom::new_ref(&cost_decl)
                             )),
                             Box::new(Expression::FromSolution(
                                 Metadata::new(),
                                 Box::new(Expression::Atomic(
                                     Metadata::new(),
-                                    Atom::new_ref(&cost_decl.borrow())
+                                    Atom::new_ref(&cost_decl)
                                 )),
                             )),
                         ),
@@ -91,13 +91,13 @@ fn test_parse_dominance() {
                             Metadata::new(),
                             Box::new(Expression::Atomic(
                                 Metadata::new(),
-                                Atom::new_ref(&carbon_decl.borrow())
+                                Atom::new_ref(&carbon_decl)
                             )),
                             Box::new(Expression::FromSolution(
                                 Metadata::new(),
                                 Box::new(Expression::Atomic(
                                     Metadata::new(),
-                                    Atom::new_ref(&carbon_decl.borrow())
+                                    Atom::new_ref(&carbon_decl)
                                 )),
                             )),
                         ),

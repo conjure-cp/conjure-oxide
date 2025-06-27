@@ -600,7 +600,9 @@ impl Expression {
                 }
             }
             Expression::InDomain(_, _, _) => Some(Domain::Bool),
-            Expression::Atomic(_, Atom::Reference(_, ptr)) => (**ptr).borrow().domain().cloned(),
+            Expression::Atomic(_, Atom::Reference(_, ptr)) => {
+                (**ptr).borrow().domain().cloned().map(|x| x.resolve(syms))
+            }
             Expression::Atomic(_, Atom::Literal(Literal::Int(n))) => {
                 Some(Domain::Int(vec![Range::Single(*n)]))
             }
@@ -1273,10 +1275,8 @@ impl Typeable for Expression {
 
 #[cfg(test)]
 mod tests {
-    use std::cell::RefCell;
-    use std::rc::Rc;
 
-    use crate::{ast::declaration::Declaration, matrix_expr};
+    use crate::matrix_expr;
 
     use super::*;
 

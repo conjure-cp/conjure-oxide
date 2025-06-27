@@ -1,3 +1,4 @@
+#![allow(clippy::type_complexity)] // FIXME: remove me once DeclarationPtr exists
 use std::cell::RefCell;
 use std::collections::BTreeSet;
 use std::fmt::{self, Display, Formatter};

@@ -54,18 +54,18 @@ mod test {
         let src = "x >= 5, y = a / 2";
         let mut symbols = SymbolTable::new();
         let x: Rc<RefCell<Declaration>> = Rc::new(RefCell::new(Declaration::new_var(
-            Name::UserName("x".into()),
-            Domain::IntDomain(vec![conjure_core::ast::Range::Bounded(0, 10)]),
+            Name::User("x".into()),
+            Domain::Int(vec![conjure_core::ast::Range::Bounded(0, 10)]),
         )));
 
         let y: Rc<RefCell<Declaration>> = Rc::new(RefCell::new(Declaration::new_var(
-            Name::UserName("y".into()),
-            Domain::IntDomain(vec![conjure_core::ast::Range::Bounded(0, 10)]),
+            Name::User("y".into()),
+            Domain::Int(vec![conjure_core::ast::Range::Bounded(0, 10)]),
         )));
 
         let a: Rc<RefCell<Declaration>> = Rc::new(RefCell::new(Declaration::new_var(
-            Name::UserName("a".into()),
-            Domain::IntDomain(vec![conjure_core::ast::Range::Bounded(0, 10)]),
+            Name::User("a".into()),
+            Domain::Int(vec![conjure_core::ast::Range::Bounded(0, 10)]),
         )));
 
         // Clone the Rc when inserting!
@@ -88,10 +88,7 @@ mod test {
             exprs[0],
             Expression::Geq(
                 Metadata::new(),
-                Box::new(Expression::Atomic(
-                    Metadata::new(),
-                    Atom::new_ref(&*x.borrow())
-                )),
+                Box::new(Expression::Atomic(Metadata::new(), Atom::new_ref(&x))),
                 Box::new(Expression::Atomic(Metadata::new(), 5.into()))
             )
         );
@@ -100,16 +97,10 @@ mod test {
             exprs[1],
             Expression::Eq(
                 Metadata::new(),
-                Box::new(Expression::Atomic(
-                    Metadata::new(),
-                    Atom::new_ref(&*y.borrow())
-                )),
+                Box::new(Expression::Atomic(Metadata::new(), Atom::new_ref(&y))),
                 Box::new(Expression::UnsafeDiv(
                     Metadata::new(),
-                    Box::new(Expression::Atomic(
-                        Metadata::new(),
-                        Atom::new_ref(&*a.borrow())
-                    )),
+                    Box::new(Expression::Atomic(Metadata::new(), Atom::new_ref(&a))),
                     Box::new(Expression::Atomic(Metadata::new(), 2.into()))
                 ))
             )

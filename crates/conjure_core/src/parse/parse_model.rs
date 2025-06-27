@@ -702,8 +702,8 @@ fn parse_comprehension(
     comprehension_kind: Option<ComprehensionKind>,
 ) -> Option<Expression> {
     let value = &comprehension["Comprehension"];
-    let mut comprehension = ComprehensionBuilder::new();
-    let expr = parse_expression(value.pointer("/0")?, &scope)?;
+    let mut comprehension = ComprehensionBuilder::new(Rc::clone(&scope));
+    let inner_scope = comprehension.symbol_table();
 
     let generators_and_guards = value.pointer("/1")?.as_array()?.iter();
 
@@ -719,17 +719,22 @@ fn parse_comprehension(
                     .as_object()?
                     .iter()
                     .next()?;
-                let domain = parse_domain(domain_name, domain_value, &scope.borrow()).ok()?;
-                comprehension.generator(Name::User(name.to_string()), domain)
+                let domain = parse_domain(domain_name, domain_value, &inner_scope.borrow()).ok()?;
+                comprehension.generator(Rc::new(RefCell::new(Declaration::new_var(
+                    Name::User(name.to_string()),
+                    domain,
+                ))))
             }
 
-            "Condition" => comprehension.guard(parse_expression(value, &scope)?),
+            "Condition" => comprehension.guard(parse_expression(value, &inner_scope)?),
 
             x => {
                 bug!("unknown field inside comprehension {x}");
             }
         }
     }
+
+    let expr = parse_expression(value.pointer("/0")?, &inner_scope)?;
 
     Some(Expression::Comprehension(
         Metadata::new(),

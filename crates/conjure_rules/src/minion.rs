@@ -114,21 +114,19 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
         .domain_of(&symbols)
         .ok_or(ApplicationError::DomainError)?;
 
-        let aux_decl = Rc::new(RefCell::new(symbols.gensym(&aux_domain)));
+        let aux_decl = symbols.gensym(&aux_domain);
         let aux_name = (*aux_decl).borrow().name().clone();
         let aux_var = Atom::Reference(aux_name, Rc::clone(&aux_decl));
-
-        symbols.insert(aux_decl);
 
         let new_top_expr = Expr::FlatProductEq(
             Metadata::new(),
             Box::new(y),
             Box::new(next_factor_atom),
-            Box::new(aux_var.clone().into()),
+            Box::new(aux_var.clone()),
         );
 
         new_tops.push(new_top_expr);
-        y = aux_var.into();
+        y = aux_var;
     }
 
     Ok(Reduction::new(
@@ -741,7 +739,7 @@ fn introduce_minuseq_from_aux_decl(expr: &Expr, symbol_table: &SymbolTable) -> A
         return Err(RuleNotApplicable);
     };
 
-    let decl = symbol_table.lookup(&a).ok_or(RuleNotApplicable)?;
+    let decl = symbol_table.lookup(a).ok_or(RuleNotApplicable)?;
     let a = Atom::Reference(a.clone(), decl.clone());
 
     let Expr::Neg(_, b) = (**b).clone() else {
@@ -1274,7 +1272,7 @@ fn not_constraint_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 fn bool_eq_to_reify(expr: &Expr, symbol_table: &SymbolTable) -> ApplicationResult {
     let (atom, e): (Atom, Box<Expr>) = match expr {
         Expr::AuxDeclaration(_, name, e) => {
-            let decl = symbol_table.lookup(&name).ok_or(RuleNotApplicable)?;
+            let decl = symbol_table.lookup(name).ok_or(RuleNotApplicable)?;
             Ok((Atom::from((name.clone(), decl.clone())), e.clone()))
         }
         Expr::Eq(_, a, b) => match (a.as_ref(), b.as_ref()) {

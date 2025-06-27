@@ -81,6 +81,7 @@ fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
  */
 #[register_rule(("Base", 6000))]
 fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let mut symbols = symbols.clone();
     let Expr::Min(_, inside_min_expr) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -109,10 +110,6 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         Box::new(into_matrix_expr![disjunction]),
     ));
 
-    let mut symbols: SymbolTable = symbols.clone();
-
-    symbols.insert(atom_inner.into_declaration());
-
     Ok(Reduction::new(
         // Return the Expr::Atomic
         essence_expr!(&atom_expr),
@@ -129,6 +126,7 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
  */
 #[register_rule(("Base", 6000))]
 fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let mut symbols: SymbolTable = symbols.clone();
     let Expr::Max(_, inside_max_expr) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -155,9 +153,6 @@ fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         Metadata::new(),
         Box::new(into_matrix_expr![disjunction]),
     ));
-    let mut symbols: SymbolTable = symbols.clone();
-
-    symbols.insert(atom_inner.into_declaration());
 
     Ok(Reduction::new(essence_expr!(&atom_expr), new_top, symbols))
 }

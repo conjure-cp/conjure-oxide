@@ -119,15 +119,11 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
     };
 
     let decl = symbols.gensym(&domain);
+    let name = (*decl).borrow().name().clone();
 
-    symbols.insert(Rc::new(RefCell::new(decl.clone())))?;
     Some(ToAuxVarOutput {
-        aux_name: decl.name().clone(),
-        aux_decl: Expr::AuxDeclaration(
-            Metadata::new(),
-            decl.name().clone(),
-            Box::new(expr.clone()),
-        ),
+        aux_name: name.clone(),
+        aux_decl: Expr::AuxDeclaration(Metadata::new(), name, Box::new(expr.clone())),
         aux_domain: domain,
         symbols,
         _unconstructable: (),

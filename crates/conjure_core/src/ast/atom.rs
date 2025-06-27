@@ -31,8 +31,9 @@ pub enum Atom {
 }
 
 impl Atom {
-    pub fn new_ref(decl: &Declaration) -> Atom {
-        Atom::Reference(decl.name().clone(), Rc::new(RefCell::new(decl.clone())))
+    pub fn new_ref(decl: &Rc<RefCell<Declaration>>) -> Atom {
+        let name = (**decl).borrow().name().clone();
+        Atom::Reference(name, Rc::clone(decl))
     }
 
     pub fn into_declaration(self) -> Rc<RefCell<Declaration>> {
