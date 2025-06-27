@@ -3,7 +3,7 @@ use conjure_core::{
     into_matrix_expr,
     metadata::Metadata,
     rule_engine::{
-        register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
+        ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
     },
 };
 

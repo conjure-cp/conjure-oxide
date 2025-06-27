@@ -5,7 +5,7 @@ use conjure_core::matrix_expr;
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::Reduction;
 use conjure_core::rule_engine::{
-    register_rule, ApplicationError::RuleNotApplicable, ApplicationResult,
+    ApplicationError::RuleNotApplicable, ApplicationResult, register_rule,
 };
 
 // A subsetEq (B intersect C) -> A subsetEq B /\ A subsetEq C

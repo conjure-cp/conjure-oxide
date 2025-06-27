@@ -1,7 +1,7 @@
 ///This is a simple benchmark that tests how long it takes tree-morph to evaluate (1+(1+...)).
 ///This benchmark is designed to be compared with right_add.
 ///
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use tree_morph::prelude::*;
 use uniplate::derive::Uniplate;
 

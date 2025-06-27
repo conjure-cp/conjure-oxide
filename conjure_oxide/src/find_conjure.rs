@@ -1,4 +1,4 @@
-use anyhow::{anyhow, bail, Result};
+use anyhow::{Result, anyhow, bail};
 use versions::Versioning;
 
 const CONJURE_MIN_VERSION: &str = "2.5.1";

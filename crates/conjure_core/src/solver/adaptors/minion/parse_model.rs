@@ -8,6 +8,7 @@ use minion_rs::ast as minion_ast;
 use minion_rs::error::MinionError;
 use minion_rs::{get_from_table, run_minion};
 
+use crate::Model as ConjureModel;
 use crate::ast as conjure_ast;
 use crate::ast::Declaration;
 use crate::solver::SolverError::{
@@ -17,7 +18,6 @@ use crate::solver::SolverFamily;
 use crate::solver::SolverMutCallback;
 use crate::solver::{SolverCallback, SolverError};
 use crate::stats::SolverStats;
-use crate::Model as ConjureModel;
 
 /// Converts a conjure-oxide model to a `minion_rs` model.
 pub fn model_to_minion(model: ConjureModel) -> Result<MinionModel, SolverError> {
@@ -60,7 +60,7 @@ fn load_symbol_table(
             let Some(var) = decl.as_var() else {
                 continue;
             }; // ignore lettings, etc.
-               //
+            //
 
             // this variable has representations, so ignore it
             if !conjure_model
@@ -84,7 +84,7 @@ fn load_symbol_table(
             let Some(var) = decl.as_var() else {
                 continue;
             }; // ignore lettings, etc.
-               //
+            //
 
             // this variable has representations, so ignore it
             if !conjure_model
@@ -116,7 +116,7 @@ fn load_var(
             load_intdomain_var(name, ranges, search_var, minion_model)
         }
         conjure_ast::Domain::Bool => load_booldomain_var(name, search_var, minion_model),
-        x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
+        x => Err(ModelFeatureNotSupported(format!("{x:?}"))),
     }
 }
 
@@ -137,16 +137,15 @@ fn load_intdomain_var(
         )));
     }
 
-    let range = ranges.first().ok_or(ModelInvalid(format!(
-        "variable {:?} has no range",
-        str_name
-    )))?;
+    let range = ranges
+        .first()
+        .ok_or(ModelInvalid(format!("variable {str_name:?} has no range")))?;
 
     let (low, high) = match range {
         conjure_ast::Range::Bounded(x, y) => Ok((x.to_owned(), y.to_owned())),
         conjure_ast::Range::Single(x) => Ok((x.to_owned(), x.to_owned())),
         #[allow(unreachable_patterns)]
-        x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
+        x => Err(ModelFeatureNotSupported(format!("{x:?}"))),
     }?;
 
     let domain = minion_ast::VarDomain::Bound(low, high);
@@ -182,10 +181,7 @@ fn _try_add_var(
     minion_model
         .named_variables
         .add_var(name.clone(), domain)
-        .ok_or(ModelInvalid(format!(
-            "variable {:?} is defined twice",
-            name
-        )))
+        .ok_or(ModelInvalid(format!("variable {name:?} is defined twice")))
 }
 
 fn _try_add_aux_var(
@@ -196,16 +192,13 @@ fn _try_add_aux_var(
     minion_model
         .named_variables
         .add_aux_var(name.clone(), domain)
-        .ok_or(ModelInvalid(format!(
-            "variable {:?} is defined twice",
-            name
-        )))
+        .ok_or(ModelInvalid(format!("variable {name:?} is defined twice")))
 }
 
 fn name_to_string(name: conjure_ast::Name) -> String {
     match name {
         // print machine names in a custom, easier to regex, way.
-        conjure_ast::Name::Machine(x) => format!("__conjure_machine_name_{}", x),
+        conjure_ast::Name::Machine(x) => format!("__conjure_machine_name_{x}"),
         conjure_ast::Name::Represented(fields) => {
             let (name, rule, suffix) = *fields;
             let name = name_to_string(name);
@@ -390,7 +383,7 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             (parse_atom(*x)?, parse_atom(*y)?),
             parse_atom(*z)?,
         )),
-        x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
+        x => Err(ModelFeatureNotSupported(format!("{x:?}"))),
     }
 }
 
@@ -400,8 +393,7 @@ fn parse_atomic_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Var, S
         conjure_ast::Expression::ToInt(_metadata, inner_expr) => parse_atomic_expr(*inner_expr),
         conjure_ast::Expression::Atomic(_, atom) => parse_atom(atom),
         _ => Err(ModelInvalid(format!(
-            "expected atomic expression, got {:?}",
-            expr
+            "expected atomic expression, got {expr:?}"
         ))),
     }
 }
@@ -423,8 +415,7 @@ fn parse_atom(atom: conjure_ast::Atom) -> Result<minion_ast::Var, SolverError> {
         conjure_ast::Atom::Reference(name) => Ok(parse_name(name))?,
 
         x => Err(ModelFeatureNotSupported(format!(
-            "expected a literal or a reference but got `{0}`",
-            x
+            "expected a literal or a reference but got `{x}`"
         ))),
     }
 }
@@ -434,10 +425,7 @@ fn parse_literal_as_int(k: conjure_ast::Literal) -> Result<i32, SolverError> {
         conjure_ast::Literal::Int(n) => Ok(n),
         conjure_ast::Literal::Bool(true) => Ok(1),
         conjure_ast::Literal::Bool(false) => Ok(0),
-        x => Err(ModelInvalid(format!(
-            "expected a literal but got `{0:?}`",
-            x
-        ))),
+        x => Err(ModelInvalid(format!("expected a literal but got `{x:?}`"))),
     }
 }
 

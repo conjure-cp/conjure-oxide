@@ -54,8 +54,10 @@ fn collect_like_terms(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                     }
 
                     // c*v
-                    [Expr::Atomic(_, Atom::Reference(name)), Expr::Atomic(_, Atom::Literal(Lit::Int(l)))] =>
-                    {
+                    [
+                        Expr::Atomic(_, Atom::Reference(name)),
+                        Expr::Atomic(_, Atom::Literal(Lit::Int(l))),
+                    ] => {
                         weighted_terms
                             .insert(name.clone(), weighted_terms.get(name).unwrap_or(&0) + l);
                     }

@@ -132,7 +132,7 @@ pub fn parse_expr_to_ts(
                     Box::new(#expr1),
                     Box::new(#expr2),
                 )}),
-                _ => Err(format!("Unsupported operator '{}'", op_type).into()),
+                _ => Err(format!("Unsupported operator '{op_type}'").into()),
             }
         }
         "quantifier_expr" => {

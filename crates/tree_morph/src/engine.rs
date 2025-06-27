@@ -2,8 +2,8 @@
 #![allow(missing_docs)]
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{helpers::one_or_select, Commands, Rule, Update};
-use uniplate::{zipper::Zipper, Uniplate};
+use crate::{Commands, Rule, Update, helpers::one_or_select};
+use uniplate::{Uniplate, zipper::Zipper};
 /// Exhaustively rewrites a tree using a set of transformation rules.
 ///
 /// Rewriting is complete when all rules have been attempted with no change. Rules may be organised

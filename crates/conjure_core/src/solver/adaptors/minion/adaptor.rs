@@ -7,15 +7,13 @@ use minion_rs::ast as minion_ast;
 use minion_rs::error::MinionError;
 use minion_rs::{get_from_table, run_minion};
 
+use crate::Model as ConjureModel;
 use crate::ast::{self as conjure_ast, Name};
 use crate::solver::SolverCallback;
 use crate::solver::SolverFamily;
 use crate::solver::SolverMutCallback;
 use crate::stats::SolverStats;
-use crate::Model as ConjureModel;
 
-use crate::solver::model_modifier::NotModifiable;
-use crate::solver::private;
 use crate::solver::SearchComplete::{HasSolutions, NoSolutions};
 use crate::solver::SearchIncomplete::UserTerminated;
 use crate::solver::SearchStatus::{Complete, Incomplete};
@@ -23,6 +21,8 @@ use crate::solver::SolveSuccess;
 use crate::solver::SolverAdaptor;
 use crate::solver::SolverError;
 use crate::solver::SolverError::{OpNotImplemented, Runtime, RuntimeNotImplemented};
+use crate::solver::model_modifier::NotModifiable;
+use crate::solver::private;
 
 use super::parse_model::model_to_minion;
 
@@ -122,17 +122,17 @@ impl SolverAdaptor for Minion {
             .unwrap();
         *user_callback = callback;
         drop(user_callback); // release mutex. REQUIRED so that run_minion can use the
-                             // user callback and not deadlock.
+        // user callback and not deadlock.
 
         run_minion(
             self.model.clone().expect("STATE MACHINE ERR"),
             minion_rs_callback,
         )
         .map_err(|err| match err {
-            MinionError::RuntimeError(x) => Runtime(format!("{:#?}", x)),
-            MinionError::Other(x) => Runtime(format!("{:#?}", x)),
+            MinionError::RuntimeError(x) => Runtime(format!("{x:#?}")),
+            MinionError::Other(x) => Runtime(format!("{x:#?}")),
             MinionError::NotImplemented(x) => RuntimeNotImplemented(x),
-            x => Runtime(format!("unknown minion_rs error: {:#?}", x)),
+            x => Runtime(format!("unknown minion_rs error: {x:#?}")),
         })?;
 
         let mut status = Complete(HasSolutions);

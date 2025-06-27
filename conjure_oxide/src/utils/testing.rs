@@ -6,7 +6,7 @@ use conjure_core::ast::records::RecordValue;
 use conjure_core::bug;
 use itertools::Itertools as _;
 use std::fs::File;
-use std::fs::{read_to_string, OpenOptions};
+use std::fs::{OpenOptions, read_to_string};
 use std::hash::Hash;
 use std::io::Write;
 use std::sync::{Arc, RwLock};
@@ -14,17 +14,17 @@ use uniplate::Uniplate;
 
 use conjure_core::ast::{AbstractLiteral, Domain, SerdeModel};
 use conjure_core::context::Context;
-use serde_json::{json, Error as JsonError, Value as JsonValue};
+use serde_json::{Error as JsonError, Value as JsonValue, json};
 
 use conjure_core::error::Error;
 
+use crate::Model as ConjureModel;
+use crate::SolverFamily;
 use crate::ast::Name::User;
 use crate::ast::{Literal, Name};
 use crate::utils::conjure::solutions_to_json;
 use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
-use crate::Model as ConjureModel;
-use crate::SolverFamily;
 
 pub fn assert_eq_any_order<T: Eq + Hash + Debug + Clone>(a: &Vec<Vec<T>>, b: &Vec<Vec<T>>) {
     assert_eq!(a.len(), b.len());
@@ -41,7 +41,7 @@ pub fn assert_eq_any_order<T: Eq + Hash + Debug + Clone>(a: &Vec<Vec<T>>, b: &Ve
         b_rows.push(hash_row);
     }
 
-    println!("{:?},{:?}", a_rows, b_rows);
+    println!("{a_rows:?},{b_rows:?}");
     for row in a_rows {
         assert!(b_rows.contains(&row));
     }

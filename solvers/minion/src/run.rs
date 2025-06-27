@@ -1,4 +1,5 @@
 #![allow(unreachable_patterns)]
+#![allow(unsafe_op_in_unsafe_fn)]
 
 use std::{
     collections::HashMap,
@@ -119,7 +120,7 @@ static PRINT_VARS: Mutex<Option<Vec<VarName>>> = Mutex::new(None);
 
 static LOCK: (Mutex<bool>, Condvar) = (Mutex::new(false), Condvar::new());
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 unsafe extern "C" fn run_callback() -> bool {
     // get printvars from static PRINT_VARS if they exist.
     // if not, return true and continue search.
@@ -245,7 +246,7 @@ unsafe fn convert_model_to_raw(
         let (vartype_raw, domain_low, domain_high) = match vartype {
             VarDomain::Bound(a, b) => Ok((ffi::VariableType_VAR_BOUND, a, b)),
             VarDomain::Bool => Ok((ffi::VariableType_VAR_BOOL, 0, 1)), // TODO: will this work?
-            x => Err(MinionError::NotImplemented(format!("{:?}", x))),
+            x => Err(MinionError::NotImplemented(format!("{x:?}"))),
         }?;
 
         ffi::newVar_ffi(
@@ -391,8 +392,7 @@ unsafe fn get_constraint_type(constraint: &Constraint) -> Result<u32, MinionErro
 
         #[allow(unreachable_patterns)]
         x => Err(MinionError::NotImplemented(format!(
-            "Constraint not implemented {:?}",
-            x,
+            "Constraint not implemented {x:?}",
         ))),
     }
 }
@@ -629,7 +629,7 @@ unsafe fn constraint_add_args(
         Constraint::True => Ok(()),
         Constraint::False => Ok(()),
         #[allow(unreachable_patterns)]
-        x => Err(MinionError::NotImplemented(format!("{:?}", x))),
+        x => Err(MinionError::NotImplemented(format!("{x:?}"))),
     }
 }
 
@@ -733,7 +733,7 @@ unsafe fn read_constant(
         Constant::Integer(n) => Ok(*n),
         Constant::Bool(true) => Ok(1),
         Constant::Bool(false) => Ok(0),
-        x => Err(MinionError::NotImplemented(format!("{:?}", x))),
+        x => Err(MinionError::NotImplemented(format!("{x:?}"))),
     }?;
 
     ffi::constraint_addConstant(raw_constraint, val);
@@ -753,7 +753,7 @@ unsafe fn read_constant_list(
             Constant::Bool(true) => Ok(1),
             Constant::Bool(false) => Ok(0),
             #[allow(unreachable_patterns)] // TODO: can there be other types?
-            x => Err(MinionError::NotImplemented(format!("{:?}", x))),
+            x => Err(MinionError::NotImplemented(format!("{x:?}"))),
         }?;
 
         ffi::vec_int_push_back(raw_consts.ptr, val);

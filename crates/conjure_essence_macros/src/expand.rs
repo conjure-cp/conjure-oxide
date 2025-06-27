@@ -1,7 +1,7 @@
 use super::expression::parse_expr_to_ts;
 use conjure_essence_parser::util::{get_tree, query_toplevel};
 use proc_macro2::{TokenStream, TokenTree};
-use quote::{quote, ToTokens};
+use quote::{ToTokens, quote};
 use syn::{Error, LitStr, Result};
 use tree_sitter::Node;
 
@@ -20,7 +20,12 @@ pub fn expand_expr(essence: &TokenTree) -> Result<TokenStream> {
     // We only expect one expression, error if that's not the case
     if let Some(expr) = query.next() {
         let tokens = &source_code[expr.start_byte()..expr.end_byte()];
-        return Err(Error::new(essence.span(), format!("Unexpected tokens: `{}`. Expected a single Essence expression. Perhaps you meant `essence_vec!`?", tokens)));
+        return Err(Error::new(
+            essence.span(),
+            format!(
+                "Unexpected tokens: `{tokens}`. Expected a single Essence expression. Perhaps you meant `essence_vec!`?"
+            ),
+        ));
     }
 
     // Parse expression and build the token stream
@@ -48,7 +53,7 @@ fn mk_expr(node: Node, src: &str, root: &Node, tt: &TokenTree) -> Result<TokenSt
     match parse_expr_to_ts(node, src, root) {
         Ok(expr) => Ok(expr),
         Err(err) => {
-            let msg = format!("Error parsing Essence expression: {}", err);
+            let msg = format!("Error parsing Essence expression: {err}");
             Err(Error::new(tt.span(), msg))
         }
     }

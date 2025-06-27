@@ -116,10 +116,10 @@ use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumIter, EnumString};
 use thiserror::Error;
 
+use crate::Model;
 use crate::ast::{Literal, Name};
 use crate::context::Context;
 use crate::stats::SolverStats;
-use crate::Model;
 
 use self::model_modifier::ModelModifier;
 use self::states::{ExecutionSuccess, Init, ModelLoaded, SolverState};

@@ -1,16 +1,16 @@
 use conjure_core::{
-    ast::{serde::HasId, Atom, Domain, Expression as Expr, Name, SubModel, SymbolTable},
+    ast::{Atom, Domain, Expression as Expr, Name, SubModel, SymbolTable, serde::HasId},
     bug,
     metadata::Metadata,
     representation::Representation,
     rule_engine::{
-        register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
+        ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
     },
 };
 use itertools::Itertools;
+use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
-use std::sync::Arc;
 use uniplate::Biplate;
 // special case rule to select representations for matrices in one go.
 //

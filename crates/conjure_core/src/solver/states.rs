@@ -3,11 +3,11 @@ use std::fmt::Display;
 
 use crate::stats::SolverStats;
 
-use super::private::Internal;
-use super::private::Sealed;
 use super::SearchStatus;
 use super::Solver;
 use super::SolverError;
+use super::private::Internal;
+use super::private::Sealed;
 
 pub trait SolverState: Sealed {}
 

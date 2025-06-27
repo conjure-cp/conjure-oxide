@@ -13,16 +13,14 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
     let test_path = PathBuf::from(test_dir);
     assert!(
         test_path.exists(),
-        "Test directory not found: {:?}",
-        test_path
+        "Test directory not found: {test_path:?}"
     );
 
     // Get paths
     let script_path = test_path.join("run.sh");
     assert!(
         script_path.exists(),
-        "Test script not found: {:?}",
-        script_path
+        "Test script not found: {script_path:?}"
     );
     let expected_output_path = test_path.join("stdout.expected");
     let expected_error_path = test_path.join("stderr.expected");
@@ -38,7 +36,7 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
     // Modify PATH so run.sh can find conjure_oxide
     let mut path_var = env::var("PATH").unwrap_or_else(|_| "".to_string());
     let conjure_dir = conjure_oxide_path.parent().unwrap().to_str().unwrap();
-    path_var = format!("{}:{}", conjure_dir, path_var);
+    path_var = format!("{conjure_dir}:{path_var}");
 
     // Execute the test script in the correct directory
     let output: Output = Command::new("sh")

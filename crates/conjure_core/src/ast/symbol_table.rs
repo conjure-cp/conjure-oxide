@@ -3,13 +3,13 @@
 //! See the item documentation for [`SymbolTable`] for more details.
 
 use crate::bug;
-use crate::representation::{get_repr_rule, Representation};
+use crate::representation::{Representation, get_repr_rule};
 
 use super::comprehension::Comprehension;
 use super::serde::{RcRefCellAsId, RcRefCellAsInner};
 use std::cell::RefCell;
-use std::collections::btree_map::Entry;
 use std::collections::BTreeSet;
+use std::collections::btree_map::Entry;
 use std::collections::{BTreeMap, VecDeque};
 use std::rc::Rc;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -17,7 +17,7 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use super::declaration::Declaration;
 use super::serde::{DefaultWithId, HasId, ObjId};
 use super::types::Typeable;
-use itertools::{izip, Itertools as _};
+use itertools::{Itertools as _, izip};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use uniplate::Tree;

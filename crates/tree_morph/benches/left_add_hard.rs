@@ -1,6 +1,6 @@
 ///Added 4 extra rules (that never apply) to left_add, showing a performance cost of > +400%
 ///Good optimisations will meant that this cost is vastly reduced (I am not sure by how much, but I think < +100% makes sense)
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use tree_morph::prelude::*;
 use uniplate::derive::Uniplate;
 

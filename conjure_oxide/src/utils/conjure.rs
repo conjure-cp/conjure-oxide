@@ -14,12 +14,12 @@ use serde_json::{Map, Value as JsonValue};
 use itertools::Itertools as _;
 use tempfile::tempdir;
 
-use crate::parse_essence_file;
-use crate::solver::adaptors::Minion;
-use crate::solver::Solver;
-use crate::utils::json::sort_json_object;
 use crate::EssenceParseError;
 use crate::Model;
+use crate::parse_essence_file;
+use crate::solver::Solver;
+use crate::solver::adaptors::Minion;
+use crate::utils::json::sort_json_object;
 
 use glob::glob;
 

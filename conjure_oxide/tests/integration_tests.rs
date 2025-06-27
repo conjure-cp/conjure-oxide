@@ -14,9 +14,9 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::fs::File;
-use tracing::{span, Level, Metadata as OtherMetadata};
+use tracing::{Level, Metadata as OtherMetadata, span};
 use tracing_subscriber::{
-    filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt, Layer, Registry,
+    Layer, Registry, filter::EnvFilter, filter::FilterFn, fmt, layer::SubscriberExt,
 };
 use tree_morph::{helpers::select_panic, prelude::*};
 
@@ -30,6 +30,7 @@ use std::sync::RwLock;
 use conjure_core::ast::Atom;
 use conjure_core::ast::{Expression, Literal, Name};
 use conjure_core::context::Context;
+use conjure_oxide::SolverFamily;
 use conjure_oxide::parse_essence_file;
 use conjure_oxide::rule_engine::resolve_rule_sets;
 use conjure_oxide::utils::conjure::solutions_to_json;
@@ -40,7 +41,6 @@ use conjure_oxide::utils::testing::save_stats_json;
 use conjure_oxide::utils::testing::{
     read_model_json, read_solutions_json, save_model_json, save_solutions_json,
 };
-use conjure_oxide::SolverFamily;
 use pretty_assertions::assert_eq;
 use serde::Deserialize;
 
@@ -135,8 +135,8 @@ fn main() {
 
     for entry in glob("conjure_oxide/tests/integration/*").expect("Failed to read glob pattern") {
         match entry {
-            Ok(path) => println!("File: {:?}", path),
-            Err(e) => println!("Error: {:?}", e),
+            Ok(path) => println!("File: {path:?}"),
+            Err(e) => println!("Error: {e:?}"),
         }
     }
 
@@ -145,7 +145,7 @@ fn main() {
     let base_name = file_path.file_stem().and_then(|stem| stem.to_str());
 
     match base_name {
-        Some(name) => println!("Base name: {}", name),
+        Some(name) => println!("Base name: {name}"),
         None => println!("Could not extract the base name"),
     }
 }
@@ -232,14 +232,11 @@ fn integration_test_inner(
     let mut rewritten_model_dirty = false;
 
     if verbose {
-        println!(
-            "Running integration test for {}/{}, ACCEPT={}",
-            path, essence_base, accept
-        );
+        println!("Running integration test for {path}/{essence_base}, ACCEPT={accept}");
     }
 
     let file_config: TestConfig =
-        if let Ok(config_contents) = fs::read_to_string(format!("{}/config.toml", path)) {
+        if let Ok(config_contents) = fs::read_to_string(format!("{path}/config.toml")) {
             toml::from_str(&config_contents).unwrap()
         } else {
             Default::default()
@@ -260,7 +257,7 @@ fn integration_test_inner(
     let parsed_model = if config.parse_model_default {
         let parsed = parse_essence_file(&file_path, context.clone())?;
         if verbose {
-            println!("Parsed model: {:#?}", parsed);
+            println!("Parsed model: {parsed:#?}");
         }
         save_model_json(&parsed, path, essence_base, "parse")?;
         Some(parsed)
@@ -319,7 +316,7 @@ fn integration_test_inner(
             panic!("No rewriter implementation specified")
         };
         if verbose {
-            println!("Rewritten model: {:#?}", rewritten);
+            println!("Rewritten model: {rewritten:#?}");
         }
 
         save_model_json(&rewritten, path, essence_base, "rewrite")?;
@@ -338,7 +335,7 @@ fn integration_test_inner(
                         rewritten_model.as_ref().expect("Rewritten model required"),
                     );
                 }
-                x => println!("Unrecognised extra assert: {}", x),
+                x => println!("Unrecognised extra assert: {x}"),
             };
         }
     }
@@ -356,7 +353,7 @@ fn integration_test_inner(
         let solutions_json =
             save_solutions_json(&solved, path, essence_base, SolverFamily::Minion)?;
         if verbose {
-            println!("Minion solutions: {:#?}", solutions_json);
+            println!("Minion solutions: {solutions_json:#?}");
         }
         Some(solved)
     } else if config.solve_with_sat {
@@ -370,7 +367,7 @@ fn integration_test_inner(
         )?;
         let solutions_json = save_solutions_json(&solved, path, essence_base, SolverFamily::Sat)?;
         if verbose {
-            println!("Minion solutions: {:#?}", solutions_json);
+            println!("Minion solutions: {solutions_json:#?}");
         }
         Some(solved)
     } else {
@@ -382,7 +379,7 @@ fn integration_test_inner(
         || accept && (config.solve_with_minion || config.solve_with_sat)
     {
         let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
-            &format!("{}/{}.{}", path, essence_base, extension),
+            &format!("{path}/{essence_base}.{extension}"),
             Arc::clone(&context),
         )?;
 
@@ -626,8 +623,7 @@ fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
 
     assert!(
         count <= 1,
-        "assert_vector_operators_have_partially_evaluated: expression {} is not partially evaluated",
-        parent_expr
+        "assert_vector_operators_have_partially_evaluated: expression {parent_expr} is not partially evaluated"
     );
 }
 
@@ -651,31 +647,27 @@ fn create_file_layer_json(path: &str, test_name: &str) -> impl Layer<Registry> +
     let file = File::create(format!("{path}/{test_name}-generated-rule-trace.json"))
         .expect("Unable to create log file");
 
-    let layer1 = fmt::layer()
+    fmt::layer()
         .with_writer(file)
         .with_level(false)
         .with_target(false)
         .without_time()
         .with_filter(FilterFn::new(|meta: &OtherMetadata| {
             meta.target() == "rule_engine"
-        }));
-
-    layer1
+        }))
 }
 
 fn create_file_layer_human(path: &str, test_name: &str) -> (impl Layer<Registry> + Send + Sync) {
     let file = File::create(format!("{path}/{test_name}-generated-rule-trace-human.txt"))
         .expect("Unable to create log file");
 
-    let layer2 = fmt::layer()
+    fmt::layer()
         .with_writer(file)
         .with_level(false)
         .without_time()
         .with_target(false)
         .with_filter(EnvFilter::new("rule_engine_human=trace"))
-        .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human"));
-
-    layer2
+        .with_filter(FilterFn::new(|meta| meta.target() == "rule_engine_human"))
 }
 
 #[test]

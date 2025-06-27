@@ -3,7 +3,7 @@ use conjure_core::{
     context::Context,
     matrix_expr,
 };
-use conjure_oxide::{parse_essence_file_native, Metadata};
+use conjure_oxide::{Metadata, parse_essence_file_native};
 use pretty_assertions::assert_eq;
 use project_root::get_project_root;
 use std::sync::{Arc, RwLock};

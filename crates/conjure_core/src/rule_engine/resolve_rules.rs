@@ -4,7 +4,7 @@ use std::collections::{BTreeSet, HashSet};
 use std::fmt::Display;
 use thiserror::Error;
 
-use crate::rule_engine::{get_rule_set_by_name, get_rule_sets_for_solver_family, Rule, RuleSet};
+use crate::rule_engine::{Rule, RuleSet, get_rule_set_by_name, get_rule_sets_for_solver_family};
 use crate::solver::SolverFamily;
 
 /// Holds a rule and its priority, along with the rule set it came from.

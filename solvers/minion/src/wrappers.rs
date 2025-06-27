@@ -1,6 +1,6 @@
 //! Small wrapper functions over FFI things.
 
-use std::ffi::{c_char, CStr, CString};
+use std::ffi::{CStr, CString, c_char};
 
 use crate::ffi;
 use libc::free;

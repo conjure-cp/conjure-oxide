@@ -1,11 +1,11 @@
 //! Common utilities and types for rewriters.
 use super::{
-    resolve_rules::{ResolveRulesError, RuleData},
     Reduction,
+    resolve_rules::{ResolveRulesError, RuleData},
 };
 use crate::ast::{
-    pretty::{pretty_variable_declaration, pretty_vec},
     Expression, SubModel,
+    pretty::{pretty_variable_declaration, pretty_vec},
 };
 
 use itertools::Itertools;
@@ -47,12 +47,12 @@ pub fn log_rule_application(
         let mut exprs: Vec<String> = vec![];
 
         for expr in &red.new_top {
-            exprs.push(format!("  {}", expr));
+            exprs.push(format!("  {expr}"));
         }
 
         let exprs = exprs.iter().join("\n");
 
-        format!("new constraints:\n{}\n", exprs)
+        format!("new constraints:\n{exprs}\n")
     };
 
     // empty if no new variables

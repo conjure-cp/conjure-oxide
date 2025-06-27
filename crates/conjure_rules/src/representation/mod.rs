@@ -5,13 +5,13 @@ mod prelude {
     #![allow(unused_imports)]
     pub use conjure_core::{
         ast::{
-            matrix, AbstractLiteral, Atom, Declaration, Domain, Expression, Literal, Name,
-            RecordEntry, SymbolTable,
+            AbstractLiteral, Atom, Declaration, Domain, Expression, Literal, Name, RecordEntry,
+            SymbolTable, matrix,
         },
         bug, into_matrix,
         metadata::Metadata,
         register_representation,
-        representation::{get_repr_rule, Representation},
+        representation::{Representation, get_repr_rule},
         rule_engine::{ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult},
     };
 }

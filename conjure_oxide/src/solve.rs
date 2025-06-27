@@ -11,17 +11,17 @@ use std::{
 use anyhow::{anyhow, ensure};
 use clap::ValueHint;
 use conjure_core::{
+    Model,
     context::Context,
     rule_engine::{resolve_rule_sets, rewrite_naive},
-    solver::{adaptors, Solver},
-    Model,
+    solver::{Solver, adaptors},
 };
 use conjure_oxide::{
+    SolverFamily,
     defaults::DEFAULT_RULE_SETS,
     find_conjure::conjure_executable,
     get_rules, model_from_json, parse_essence_file_native,
     utils::conjure::{get_minion_solutions, get_sat_solutions, solutions_to_json},
-    SolverFamily,
 };
 use serde_json::to_string_pretty;
 
@@ -147,7 +147,7 @@ pub(crate) fn init_context(
     tracing::info!(
         target: "file",
         "Rules: {}",
-        rules.iter().map(|rd| format!("{}", rd)).collect::<Vec<_>>().join("\n")
+        rules.iter().map(|rd| format!("{rd}")).collect::<Vec<_>>().join("\n")
     );
     let context = Context::new_ptr(
         target_family,
@@ -247,7 +247,7 @@ fn run_minion(global_args: &GlobalArgs, cmd_args: &Args, model: Model) -> anyhow
     match out_file {
         None => {
             println!("Solutions:");
-            println!("{}", solutions_str);
+            println!("{solutions_str}");
         }
         Some(mut outf) => {
             outf.write_all(solutions_str.as_bytes())?;
@@ -284,7 +284,7 @@ fn run_sat_solver(global_args: &GlobalArgs, cmd_args: &Args, model: Model) -> an
     match out_file {
         None => {
             println!("Solutions:");
-            println!("{}", solutions_str);
+            println!("{solutions_str}");
         }
         Some(mut outf) => {
             outf.write_all(solutions_str.as_bytes())?;

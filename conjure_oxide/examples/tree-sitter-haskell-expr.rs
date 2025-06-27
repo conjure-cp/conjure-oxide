@@ -91,7 +91,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                     // Parse expr_node to our Expr type
                     let expr = parse_expr(expr_node, source_code);
-                    println!("{} is parsed as {:?}", name_text, expr);
+                    println!("{name_text} is parsed as {expr:?}");
                 }
             }
         }

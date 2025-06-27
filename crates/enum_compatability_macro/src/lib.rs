@@ -26,8 +26,8 @@ use std::collections::HashMap;
 use itertools::Itertools;
 use quote::quote;
 use syn::{
-    parse_macro_input, parse_quote, punctuated::Punctuated, visit_mut::VisitMut, Attribute,
-    ItemEnum, Meta, Token, Variant,
+    Attribute, ItemEnum, Meta, Token, Variant, parse_macro_input, parse_quote,
+    punctuated::Punctuated, visit_mut::VisitMut,
 };
 
 // A nice S.O answer that helped write the syn code :)
@@ -58,7 +58,7 @@ impl VisitMut for RemoveCompatibleAttrs {
 
         if !solvers.is_empty() {
             let solver_list: String = solvers.into_iter().intersperse(", ".into()).collect();
-            let doc_string: String = format!("**Supported by:** {}.\n", solver_list);
+            let doc_string: String = format!("**Supported by:** {solver_list}.\n");
             let doc_attr: Attribute = parse_quote!(#[doc = #doc_string]);
             i.attrs.push(doc_attr);
         }
@@ -171,7 +171,7 @@ pub fn document_compatibility(_attr: TokenStream, input: TokenStream) -> TokenSt
     let mut doc_msg: String = "# Compatability\n".into();
     for solver in nodes_supported_by_solver.keys() {
         // a nice title
-        doc_msg.push_str(&format!("## {}\n", solver));
+        doc_msg.push_str(&format!("## {solver}\n"));
 
         // list all the ast nodes for this solver
         for node in nodes_supported_by_solver
@@ -181,7 +181,7 @@ pub fn document_compatibility(_attr: TokenStream, input: TokenStream) -> TokenSt
             .map(|x| x.to_string())
             .sorted()
         {
-            doc_msg.push_str(&format!("* [`{}`]({}::{})\n", node, input.ident, node));
+            doc_msg.push_str(&format!("* [`{node}`]({}::{node})\n", input.ident));
         }
 
         // end list

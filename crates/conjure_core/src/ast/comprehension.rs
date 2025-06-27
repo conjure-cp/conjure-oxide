@@ -8,7 +8,7 @@ use std::{
 
 use itertools::Itertools as _;
 use serde::{Deserialize, Serialize};
-use uniplate::{derive::Uniplate, Biplate};
+use uniplate::{Biplate, derive::Uniplate};
 
 use crate::{
     ast::{Atom, DeclarationKind},
@@ -126,7 +126,9 @@ impl Comprehension {
                 }
 
                 let Name::Machine(_) = &name else {
-                    bug!("the symbol table of the return expression of a comprehension should only contain machine names");
+                    bug!(
+                        "the symbol table of the return expression of a comprehension should only contain machine names"
+                    );
                 };
 
                 let new_machine_name = symtab.gensym();

@@ -1,7 +1,7 @@
 use conjure_core::ast::{Atom, Expression};
 use conjure_core::matrix_expr;
 use conjure_essence_macros::essence_vec;
-use conjure_oxide::{essence_expr, Metadata};
+use conjure_oxide::{Metadata, essence_expr};
 
 #[test]
 fn test_2plus2() {

@@ -1,19 +1,19 @@
-use super::{resolve_rules::RuleData, RewriteError, RuleSet};
+use super::{RewriteError, RuleSet, resolve_rules::RuleData};
 use crate::{
+    Model,
     ast::{Expression as Expr, SubModel},
     bug,
     rule_engine::{
         get_rules_grouped,
-        rewriter_common::{log_rule_application, RuleResult},
+        rewriter_common::{RuleResult, log_rule_application},
         submodel_zipper::submodel_ctx,
     },
     stats::RewriterStats,
-    Model,
 };
 
 use itertools::Itertools;
 use std::{sync::Arc, time::Instant};
-use tracing::{span, trace, Level};
+use tracing::{Level, span, trace};
 use uniplate::Biplate;
 
 /// A naive, exhaustive rewriter for development purposes. Applies rules in priority order,
@@ -200,7 +200,7 @@ fn assert_no_multiple_equally_applicable_rules<CtxFnType>(
     let mut rules_by_priority_string = String::new();
     rules_by_priority_string.push_str("Rules grouped by priority:\n");
     for (priority, rules) in rules_grouped.iter() {
-        rules_by_priority_string.push_str(&format!("Priority {}:\n", priority));
+        rules_by_priority_string.push_str(&format!("Priority {priority}:\n"));
         for rd in rules {
             rules_by_priority_string.push_str(&format!(
                 "  - {} (from {})\n",

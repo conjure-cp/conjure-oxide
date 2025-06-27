@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use itertools::{izip, Itertools};
+use itertools::{Itertools, izip};
 
 use super::prelude::*;
 
@@ -146,16 +146,18 @@ impl Representation for MatrixToAtom {
             n_dims: usize,
         ) -> Literal {
             if current_dim < n_dims {
-                Literal::AbstractLiteral(into_matrix![self1.index_domains[current_dim]
-                    .values()
-                    .unwrap()
-                    .into_iter()
-                    .map(|i| {
-                        let mut current_index_1 = current_index.clone();
-                        current_index_1.push(i);
-                        inner(current_index_1, current_dim + 1, self1, values, n_dims)
-                    })
-                    .collect_vec()])
+                Literal::AbstractLiteral(into_matrix![
+                    self1.index_domains[current_dim]
+                        .values()
+                        .unwrap()
+                        .into_iter()
+                        .map(|i| {
+                            let mut current_index_1 = current_index.clone();
+                            current_index_1.push(i);
+                            inner(current_index_1, current_dim + 1, self1, values, n_dims)
+                        })
+                        .collect_vec()
+                ])
             } else {
                 values
                     .get(&self1.indices_to_name(&current_index))

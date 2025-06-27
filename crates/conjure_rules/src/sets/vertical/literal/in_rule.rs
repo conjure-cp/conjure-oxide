@@ -8,7 +8,7 @@ use conjure_core::ast::Literal;
 
 use conjure_core::ast::SymbolTable;
 use conjure_core::rule_engine::{
-    register_rule, ApplicationError::RuleNotApplicable, ApplicationResult,
+    ApplicationError::RuleNotApplicable, ApplicationResult, register_rule,
 };
 
 // turns an in expression into a w-inset expression where x is an integer decision variable

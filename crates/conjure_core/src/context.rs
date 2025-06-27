@@ -85,12 +85,11 @@ impl Debug for Context<'_> {
         write!(
             f,
             "Context {{\n\
-            \ttarget_solver_family: {:?}\n\
-            \textra_rule_set_names: {:?}\n\
-            \trules: {:?}\n\
-            \trule_sets: {:?}\n\
-        }}",
-            target_solver_family, extra_rule_set_names, rules, rule_sets
+            \ttarget_solver_family: {target_solver_family:?}\n\
+            \textra_rule_set_names: {extra_rule_set_names:?}\n\
+            \trules: {rules:?}\n\
+            \trule_sets: {rule_sets:?}\n\
+        }}"
         )
     }
 }
