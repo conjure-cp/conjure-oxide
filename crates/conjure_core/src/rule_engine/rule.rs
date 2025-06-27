@@ -1,3 +1,5 @@
+#![allow(clippy::type_complexity)] // FIXME: remove me once DeclarationPtr exists
+use std::cell::RefCell;
 use std::collections::BTreeSet;
 use std::fmt::{self, Display, Formatter};
 use std::hash::Hash;
@@ -132,8 +134,8 @@ impl Reduction {
     pub fn changed_symbols(
         &self,
         initial_symbols: &SymbolTable,
-    ) -> Vec<(Name, Rc<Declaration>, Rc<Declaration>)> {
-        let mut changes: Vec<(Name, Rc<Declaration>, Rc<Declaration>)> = vec![];
+    ) -> Vec<(Name, Rc<RefCell<Declaration>>, Rc<RefCell<Declaration>>)> {
+        let mut changes: Vec<(Name, Rc<RefCell<Declaration>>, Rc<RefCell<Declaration>>)> = vec![];
 
         for (var_name, initial_value) in initial_symbols.clone().into_iter_local() {
             let Some(new_value) = self.symbols.lookup(&var_name) else {

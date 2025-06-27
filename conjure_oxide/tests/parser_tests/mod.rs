@@ -1,5 +1,5 @@
 use conjure_core::{
-    ast::{Atom, Expression},
+    ast::{Atom, Expression, Name},
     context::Context,
     matrix_expr,
 };
@@ -14,6 +14,24 @@ fn test_parse_dominance() {
     let path = root.join("conjure_oxide/tests/parser_tests");
     let file = "dominance_simple";
 
+    let ctx = Arc::new(RwLock::new(Context::default()));
+    let pth = path.to_str().unwrap();
+    let filepath = format!("{pth}/{file}.essence");
+
+    let res = parse_essence_file_native(&filepath, ctx);
+
+    assert!(res.is_ok());
+
+    let model = res.unwrap();
+
+    let symbols = model.as_submodel().symbols().clone();
+    let cost_decl = symbols
+        .lookup(&Name::User("cost".into()))
+        .expect("Declaration for 'cost' not found in parsed model");
+    let carbon_decl = symbols
+        .lookup(&Name::User("carbon".into()))
+        .expect("Declaration for 'carbon' not found in parsed model");
+
     let expected_dominance = Some(Expression::DominanceRelation(
         Metadata::new(),
         Box::new(Expression::And(
@@ -24,12 +42,15 @@ fn test_parse_dominance() {
                     Box::new(matrix_expr![
                         Expression::Leq(
                             Metadata::new(),
-                            Box::new(Expression::Atomic(Metadata::new(), Atom::new_uref("cost"))),
+                            Box::new(Expression::Atomic(
+                                Metadata::new(),
+                                Atom::new_ref(&cost_decl)
+                            )),
                             Box::new(Expression::FromSolution(
                                 Metadata::new(),
                                 Box::new(Expression::Atomic(
                                     Metadata::new(),
-                                    Atom::new_uref("cost"),
+                                    Atom::new_ref(&cost_decl)
                                 )),
                             )),
                         ),
@@ -37,13 +58,13 @@ fn test_parse_dominance() {
                             Metadata::new(),
                             Box::new(Expression::Atomic(
                                 Metadata::new(),
-                                Atom::new_uref("carbon"),
+                                Atom::new_ref(&carbon_decl)
                             )),
                             Box::new(Expression::FromSolution(
                                 Metadata::new(),
                                 Box::new(Expression::Atomic(
                                     Metadata::new(),
-                                    Atom::new_uref("carbon"),
+                                    Atom::new_ref(&carbon_decl)
                                 )),
                             )),
                         ),
@@ -54,12 +75,15 @@ fn test_parse_dominance() {
                     Box::new(matrix_expr![
                         Expression::Lt(
                             Metadata::new(),
-                            Box::new(Expression::Atomic(Metadata::new(), Atom::new_uref("cost"))),
+                            Box::new(Expression::Atomic(
+                                Metadata::new(),
+                                Atom::new_ref(&cost_decl)
+                            )),
                             Box::new(Expression::FromSolution(
                                 Metadata::new(),
                                 Box::new(Expression::Atomic(
                                     Metadata::new(),
-                                    Atom::new_uref("cost"),
+                                    Atom::new_ref(&cost_decl)
                                 )),
                             )),
                         ),
@@ -67,13 +91,13 @@ fn test_parse_dominance() {
                             Metadata::new(),
                             Box::new(Expression::Atomic(
                                 Metadata::new(),
-                                Atom::new_uref("carbon"),
+                                Atom::new_ref(&carbon_decl)
                             )),
                             Box::new(Expression::FromSolution(
                                 Metadata::new(),
                                 Box::new(Expression::Atomic(
                                     Metadata::new(),
-                                    Atom::new_uref("carbon"),
+                                    Atom::new_ref(&carbon_decl)
                                 )),
                             )),
                         ),
@@ -83,14 +107,6 @@ fn test_parse_dominance() {
         )),
     ));
 
-    let ctx = Arc::new(RwLock::new(Context::default()));
-    let pth = path.to_str().unwrap();
-    let filepath = format!("{pth}/{file}.essence");
-
-    let res = parse_essence_file_native(&filepath, ctx);
-    assert!(res.is_ok());
-
-    let model = res.unwrap();
     assert_eq!(model.dominance, expected_dominance);
 }
 

@@ -126,7 +126,10 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
     let domain = parse_domain(domain.0, domain.1, symtab)?;
 
     symtab
-        .insert(Rc::new(Declaration::new_var(name.clone(), domain)))
+        .insert(Rc::new(RefCell::new(Declaration::new_var(
+            name.clone(),
+            domain,
+        ))))
         .ok_or(Error::Parse(format!(
             "Could not add {name} to symbol table as it already exists"
         )))
@@ -144,7 +147,10 @@ fn parse_letting(v: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Result<()> 
     if let Some(value) = parse_expression(&arr[1], scope) {
         let mut symtab = scope.borrow_mut();
         symtab
-            .insert(Rc::new(Declaration::new_value_letting(name.clone(), value)))
+            .insert(Rc::new(RefCell::new(Declaration::new_value_letting(
+                name.clone(),
+                value,
+            ))))
             .ok_or(Error::Parse(format!(
                 "Could not add {name} to symbol table as it already exists"
             )))
@@ -163,10 +169,10 @@ fn parse_letting(v: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Result<()> 
         let domain = parse_domain(domain.0, domain.1, &symtab)?;
 
         symtab
-            .insert(Rc::new(Declaration::new_domain_letting(
+            .insert(Rc::new(RefCell::new(Declaration::new_domain_letting(
                 name.clone(),
                 domain,
-            )))
+            ))))
             .ok_or(Error::Parse(format!(
                 "Could not add {name} to symbol table as it already exists"
             )))
@@ -411,7 +417,8 @@ fn parse_domain_value_int(obj: &JsonValue, symbols: &SymbolTable) -> Option<i32>
         );
         let name = Name::User(inner_name.to_string());
         let decl = symbols.lookup(&name)?;
-        let DeclarationKind::ValueLetting(d) = decl.kind() else {
+        let decl_borrow = decl.borrow();
+        let DeclarationKind::ValueLetting(d) = decl_borrow.kind() else {
             parser_trace!(".. name exists but is not a value letting!");
             return None;
         };
@@ -592,9 +599,16 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
         }
         Value::Object(refe) if refe.contains_key("Reference") => {
             let name = refe["Reference"].as_array()?[0].as_object()?["Name"].as_str()?;
+            let user_name = Name::User(name.to_string());
+
+            let declaration: Rc<RefCell<Declaration>> = scope
+                .borrow()
+                .lookup(&user_name)
+                .or_else(|| bug!("Could not find reference {user_name}"))?;
+
             Some(Expression::Atomic(
                 Metadata::new(),
-                Atom::Reference(Name::User(name.to_string())),
+                Atom::Reference(user_name, declaration),
             ))
         }
         Value::Object(abslit) if abslit.contains_key("AbstractLiteral") => {
@@ -688,8 +702,8 @@ fn parse_comprehension(
     comprehension_kind: Option<ComprehensionKind>,
 ) -> Option<Expression> {
     let value = &comprehension["Comprehension"];
-    let mut comprehension = ComprehensionBuilder::new();
-    let expr = parse_expression(value.pointer("/0")?, &scope)?;
+    let mut comprehension = ComprehensionBuilder::new(Rc::clone(&scope));
+    let inner_scope = comprehension.symbol_table();
 
     let generators_and_guards = value.pointer("/1")?.as_array()?.iter();
 
@@ -705,17 +719,22 @@ fn parse_comprehension(
                     .as_object()?
                     .iter()
                     .next()?;
-                let domain = parse_domain(domain_name, domain_value, &scope.borrow()).ok()?;
-                comprehension.generator(Name::User(name.to_string()), domain)
+                let domain = parse_domain(domain_name, domain_value, &inner_scope.borrow()).ok()?;
+                comprehension.generator(Rc::new(RefCell::new(Declaration::new_var(
+                    Name::User(name.to_string()),
+                    domain,
+                ))))
             }
 
-            "Condition" => comprehension.guard(parse_expression(value, &scope)?),
+            "Condition" => comprehension.guard(parse_expression(value, &inner_scope)?),
 
             x => {
                 bug!("unknown field inside comprehension {x}");
             }
         }
     }
+
+    let expr = parse_expression(value.pointer("/0")?, &inner_scope)?;
 
     Some(Expression::Comprehension(
         Metadata::new(),

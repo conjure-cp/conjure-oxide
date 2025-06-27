@@ -12,7 +12,7 @@ use super::{DecisionVariable, Domain, Expression, ReturnType};
 
 static ID_COUNTER: AtomicU32 = AtomicU32::new(0);
 
-#[derive(Derivative)]
+#[derive(Derivative, Default)]
 #[derivative(PartialEq)]
 #[derive(Debug, Serialize, Deserialize, Eq, Uniplate)]
 #[biplate(to=Expression)]
@@ -50,6 +50,14 @@ pub enum DeclarationKind {
     ValueLetting(Expression),
     DomainLetting(Domain),
     Given(Domain),
+}
+
+// FIXME: remove
+impl Default for DeclarationKind {
+    fn default() -> Self {
+        DeclarationKind::Given(Domain::Empty(ReturnType::Int))
+        // todo!("remove default declarationkind");
+    }
 }
 
 impl Declaration {

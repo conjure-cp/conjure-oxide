@@ -57,7 +57,7 @@ pub fn handle_atom(
             conjure_core::ast::Atom::Literal(literal) => {
                 todo!("Not Sure if we are handling Lits as-is or not..")
             }
-            conjure_core::ast::Atom::Reference(name) => match name {
+            conjure_core::ast::Atom::Reference(name, _) => match name {
                 conjure_core::ast::Name::User(n) => {
                     // TODO: Temp Clone
                     // let m = n.clone();

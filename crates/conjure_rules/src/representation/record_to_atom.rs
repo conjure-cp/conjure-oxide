@@ -119,14 +119,15 @@ impl Representation for RecordToAtom {
 
     fn expression_down(
         &self,
-        _: &SymbolTable,
+        st: &SymbolTable,
     ) -> Result<std::collections::BTreeMap<Name, Expression>, ApplicationError> {
         Ok(self
             .names()
             .map(|name| {
+                let decl = st.lookup(&name).unwrap();
                 (
                     name.clone(),
-                    Expression::Atomic(Metadata::new(), Atom::Reference(name)),
+                    Expression::Atomic(Metadata::new(), Atom::Reference(name, decl)),
                 )
             })
             .collect())

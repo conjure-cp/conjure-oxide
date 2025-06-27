@@ -1,5 +1,5 @@
 use std::{
-    cell::RefCell,
+    cell::{Ref, RefCell},
     collections::{HashMap, HashSet},
     fmt::Display,
     rc::Rc,
@@ -98,7 +98,7 @@ impl Comprehension {
 
             // substitute in the values for the induction variables
             let return_expression = return_expression.transform_bi(Arc::new(move |x: Atom| {
-                let Atom::Reference(ref name) = x else {
+                let Atom::Reference(ref name, _) = x else {
                     return x;
                 };
 
@@ -120,7 +120,7 @@ impl Comprehension {
             for (name, decl) in child_symtab.into_iter_local() {
                 // skip givens for induction vars§
                 if value_ptr.get(&name).is_some()
-                    && matches!(decl.kind(), DeclarationKind::Given(_))
+                    && matches!((*decl).borrow().kind(), DeclarationKind::Given(_))
                 {
                     continue;
                 }
@@ -129,12 +129,9 @@ impl Comprehension {
                     bug!("the symbol table of the return expression of a comprehension should only contain machine names");
                 };
 
-                let new_machine_name = symtab.gensym();
+                let new_decl = symtab.gensym((*decl).borrow().domain().unwrap());
 
-                let new_decl = (*decl).clone().with_new_name(new_machine_name.clone());
-                symtab.insert(Rc::new(new_decl)).unwrap();
-
-                machine_name_translations.insert(name, new_machine_name);
+                machine_name_translations.insert(name, (*new_decl).borrow().name().clone());
             }
 
             // rename references to aux vars in the return_expression
@@ -190,8 +187,12 @@ impl Display for Comprehension {
             .symbols()
             .clone()
             .into_iter_local()
-            .map(|(name, decl)| (name, decl.domain().unwrap().clone()))
-            .map(|(name, domain)| format!("{name}: {domain}"))
+            .map(|(name, decl_rc): (Name, Rc<RefCell<Declaration>>)| {
+                let borrowed_decl: Ref<'_, Declaration> = (*decl_rc).borrow();
+                let domain: Domain = borrowed_decl.domain().unwrap().clone();
+                (name, domain)
+            })
+            .map(|(name, domain): (Name, Domain)| format!("{name}: {domain}"))
             .join(",");
 
         let guards = self
@@ -209,26 +210,43 @@ impl Display for Comprehension {
 }
 
 /// A builder for a comprehension.
-#[derive(Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ComprehensionBuilder {
     guards: Vec<Expression>,
-    generators: Vec<(Name, Domain)>,
+    // symbol table containing all the generators
+    // for now, this is just used during parsing - a new symbol table is created using this when we initialise the comprehension
+    // this is not ideal, but i am chucking all this code very soon anyways...
+    generator_symboltable: Rc<RefCell<SymbolTable>>,
     induction_variables: HashSet<Name>,
 }
 
 impl ComprehensionBuilder {
-    pub fn new() -> Self {
-        Default::default()
+    pub fn new(symbol_table_ptr: Rc<RefCell<SymbolTable>>) -> Self {
+        ComprehensionBuilder {
+            guards: vec![],
+            generator_symboltable: Rc::new(RefCell::new(SymbolTable::with_parent(
+                symbol_table_ptr,
+            ))),
+            induction_variables: HashSet::new(),
+        }
+    }
+
+    /// the symbol table for inside the comprehension for use during parsing
+    pub fn symbol_table(&mut self) -> Rc<RefCell<SymbolTable>> {
+        Rc::clone(&self.generator_symboltable)
     }
     pub fn guard(mut self, guard: Expression) -> Self {
         self.guards.push(guard);
         self
     }
 
-    pub fn generator(mut self, name: Name, domain: Domain) -> Self {
+    pub fn generator(mut self, declaration: Rc<RefCell<Declaration>>) -> Self {
+        let name = (*declaration).borrow().name().clone();
         assert!(!self.induction_variables.contains(&name));
         self.induction_variables.insert(name.clone());
-        self.generators.push((name, domain));
+        (*self.generator_symboltable)
+            .borrow_mut()
+            .insert(declaration);
         self
     }
 
@@ -242,6 +260,8 @@ impl ComprehensionBuilder {
         parent: Rc<RefCell<SymbolTable>>,
         comprehension_kind: Option<ComprehensionKind>,
     ) -> Comprehension {
+        let generator_symboltable = (*self.generator_symboltable).borrow();
+
         let mut generator_submodel = SubModel::new(parent.clone());
 
         // TODO:also allow guards that reference lettings and givens.
@@ -284,10 +304,14 @@ impl ComprehensionBuilder {
         }
 
         generator_submodel.add_constraints(induction_guards);
-        for (name, domain) in self.generators.clone() {
+        for decl in generator_symboltable.clone().into_iter_local().map(|x| x.1) {
+            let decl = (*decl).borrow();
+            let name = decl.name().clone();
+            let domain = decl.domain().cloned().unwrap();
+
             generator_submodel
                 .symbols_mut()
-                .insert(Rc::new(Declaration::new_var(name, domain)));
+                .insert(Rc::new(RefCell::new(Declaration::new_var(name, domain))));
         }
 
         // The return_expression is a sub-model of `parent` containing the return_expression and
@@ -299,10 +323,14 @@ impl ComprehensionBuilder {
         // each aux var for each set of assignments of induction variables).
 
         let mut return_expression_submodel = SubModel::new(parent);
-        for (name, domain) in self.generators {
+        for (name, domain) in generator_symboltable
+            .clone()
+            .into_iter_local()
+            .map(|(n, decl)| (n, (*decl).borrow().domain().unwrap().clone()))
+        {
             return_expression_submodel
                 .symbols_mut()
-                .insert(Rc::new(Declaration::new_given(name, domain)))
+                .insert(Rc::new(RefCell::new(Declaration::new_given(name, domain))))
                 .unwrap();
         }
 

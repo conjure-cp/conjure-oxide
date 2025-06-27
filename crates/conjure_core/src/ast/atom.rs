@@ -1,14 +1,18 @@
 use std::borrow::Borrow;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use super::{
-    literals::AbstractLiteral, records::RecordValue, Expression, Literal, Name, ReturnType,
-    Typeable,
+    literals::AbstractLiteral, records::RecordValue, Declaration, Expression, Literal, Name,
+    ReturnType, Typeable,
 };
+use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use uniplate::derive::Uniplate;
 
 /// An `Atom` is an indivisible expression, such as a literal or a reference.
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Derivative)]
+#[derivative(Hash)]
 #[uniplate()]
 #[biplate(to=Literal)]
 #[biplate(to=Expression)]
@@ -17,13 +21,26 @@ use uniplate::derive::Uniplate;
 #[biplate(to=Name)]
 pub enum Atom {
     Literal(Literal),
-    Reference(Name),
+    // FIXME: check if these are the hashing semantics we want.
+    Reference(
+        Name,
+        #[derivative(Hash = "ignore")]
+        #[serde(skip)]
+        Rc<RefCell<Declaration>>,
+    ),
 }
 
 impl Atom {
-    /// Shorthand to create a reference by user name.
-    pub fn new_uref(name: &str) -> Atom {
-        Atom::Reference(Name::User(name.to_string()))
+    pub fn new_ref(decl: &Rc<RefCell<Declaration>>) -> Atom {
+        let name = (**decl).borrow().name().clone();
+        Atom::Reference(name, Rc::clone(decl))
+    }
+
+    pub fn into_declaration(self) -> Rc<RefCell<Declaration>> {
+        match self {
+            Atom::Reference(_, decl) => decl.clone(),
+            _ => panic!("Called into_declaration on a non-reference Atom"),
+        }
     }
 
     /// Shorthand to create an integer literal.
@@ -42,7 +59,7 @@ impl Typeable for Atom {
         match self {
             Atom::Literal(lit) => lit.return_type(),
             //TODO: access symbol table to get return type of references
-            Atom::Reference(_) => None,
+            Atom::Reference(_, _) => None,
         }
     }
 }
@@ -51,7 +68,7 @@ impl std::fmt::Display for Atom {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Atom::Literal(x) => x.fmt(f),
-            Atom::Reference(x) => x.fmt(f),
+            Atom::Reference(x, _) => x.fmt(f),
         }
     }
 }
@@ -62,9 +79,9 @@ impl From<Literal> for Atom {
     }
 }
 
-impl From<Name> for Atom {
-    fn from(value: Name) -> Self {
-        Atom::Reference(value)
+impl From<(Name, Rc<RefCell<Declaration>>)> for Atom {
+    fn from((name, decl): (Name, Rc<RefCell<Declaration>>)) -> Self {
+        Atom::Reference(name, decl)
     }
 }
 
@@ -77,6 +94,17 @@ impl From<i32> for Atom {
 impl From<bool> for Atom {
     fn from(value: bool) -> Self {
         Atom::Literal(value.into())
+    }
+}
+
+impl From<Declaration> for Atom {
+    fn from(decl: Declaration) -> Self {
+        // Clone the name from the declaration
+        let name = decl.name().clone();
+        // Wrap the declaration in Rc<RefCell<>>
+        let decl_rc = Rc::new(RefCell::new(decl));
+        // Create the Atom::Reference
+        Atom::Reference(name, decl_rc)
     }
 }
 
@@ -146,7 +174,7 @@ impl TryFrom<Atom> for Name {
 
     fn try_from(value: Atom) -> Result<Self, Self::Error> {
         match value {
-            Atom::Reference(n) => Ok(n),
+            Atom::Reference(n, _) => Ok(n),
             _ => Err("Cannot convert non-reference atom to Name"),
         }
     }
@@ -157,7 +185,7 @@ impl<'a> TryFrom<&'a Atom> for &'a Name {
 
     fn try_from(value: &'a Atom) -> Result<Self, Self::Error> {
         match value {
-            Atom::Reference(n) => Ok(n),
+            Atom::Reference(n, _) => Ok(n),
             _ => Err("Cannot convert non-reference atom to Name"),
         }
     }
