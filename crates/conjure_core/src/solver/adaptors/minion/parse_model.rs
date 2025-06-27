@@ -11,7 +11,9 @@ use std::rc::Rc;
 
 use crate::ast as conjure_ast;
 use crate::ast::Declaration;
-use crate::solver::SolverError::*;
+use crate::solver::SolverError::{
+    ModelFeatureNotImplemented, ModelFeatureNotSupported, ModelInvalid,
+};
 use crate::solver::SolverFamily;
 use crate::solver::SolverMutCallback;
 use crate::solver::{SolverCallback, SolverError};
@@ -98,7 +100,7 @@ fn load_symbol_table(
                 continue;
             };
 
-            let is_search_var = !matches!(name, conjure_ast::Name::MachineName(_));
+            let is_search_var = !matches!(name, conjure_ast::Name::Machine(_));
 
             load_var(&name, var, is_search_var, minion_model)?;
         }
@@ -114,10 +116,10 @@ fn load_var(
     minion_model: &mut MinionModel,
 ) -> Result<(), SolverError> {
     match &var.domain {
-        conjure_ast::Domain::IntDomain(ranges) => {
+        conjure_ast::Domain::Int(ranges) => {
             load_intdomain_var(name, ranges, search_var, minion_model)
         }
-        conjure_ast::Domain::BoolDomain => load_booldomain_var(name, search_var, minion_model),
+        conjure_ast::Domain::Bool => load_booldomain_var(name, search_var, minion_model),
         x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
     }
 }
@@ -207,10 +209,11 @@ fn _try_add_aux_var(
 fn name_to_string(name: conjure_ast::Name) -> String {
     match name {
         // print machine names in a custom, easier to regex, way.
-        conjure_ast::Name::MachineName(x) => format!("__conjure_machine_name_{}", x),
-        conjure_ast::Name::RepresentedName(name, rule, suffix) => {
-            let name = name_to_string(*name);
-            format!("__conjure_represented_name##{name}##{rule}___{suffix}")
+        conjure_ast::Name::Machine(x) => format!("__conjure_machine_name_{}", x),
+        conjure_ast::Name::Represented(fields) => {
+            let (name, rule, suffix) = *fields;
+            let name = name_to_string(name);
+            format!("__conjure_represented_name__{name}__{rule}___{suffix}")
         }
         x => format!("{x}"),
     }
@@ -227,15 +230,15 @@ fn load_constraints(
         use crate::metadata::Metadata;
         use conjure_ast::Atom;
         use conjure_ast::Expression as Expr;
-        use conjure_ast::Literal::*;
+        use conjure_ast::Literal;
 
         match expr {
             // top level false
-            Expr::Atomic(_, Atom::Literal(Bool(false))) => {
+            Expr::Atomic(_, Atom::Literal(Literal::Bool(false))) => {
                 minion_model.constraints.push(minion_ast::Constraint::False);
             }
             // top level true
-            Expr::Atomic(_, Atom::Literal(Bool(true))) => {
+            Expr::Atomic(_, Atom::Literal(Literal::Bool(true))) => {
                 minion_model.constraints.push(minion_ast::Constraint::True);
             }
 
@@ -263,6 +266,10 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             parse_atom(atom)?,
             minion_ast::Constant::Integer(1),
         )),
+
+        // The Minion adaptor currently treats bools as integers anyways, so this is a no-op
+        conjure_ast::Expression::ToInt(_metadata, inner_expr) => parse_expr(*inner_expr),
+
         conjure_ast::Expression::FlatAllDiff(_metadata, atoms) => {
             Ok(minion_ast::Constraint::AllDiff(parse_atoms(atoms)?))
         }
@@ -273,21 +280,24 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             minion_ast::Constraint::SumGeq(parse_atoms(lhs)?, parse_atom(rhs)?),
         ),
         conjure_ast::Expression::FlatIneq(_metadata, a, b, c) => Ok(minion_ast::Constraint::Ineq(
-            parse_atom(a)?,
-            parse_atom(b)?,
-            parse_literal(c)?,
+            parse_atom(*a)?,
+            parse_atom(*b)?,
+            parse_literal(*c)?,
         )),
         conjure_ast::Expression::Neq(_metadata, a, b) => Ok(minion_ast::Constraint::DisEq(
             parse_atomic_expr(*a)?,
             parse_atomic_expr(*b)?,
         )),
-        conjure_ast::Expression::MinionDivEqUndefZero(_metadata, a, b, c) => Ok(
-            minion_ast::Constraint::DivUndefZero((parse_atom(a)?, parse_atom(b)?), parse_atom(c)?),
-        ),
+        conjure_ast::Expression::MinionDivEqUndefZero(_metadata, a, b, c) => {
+            Ok(minion_ast::Constraint::DivUndefZero(
+                (parse_atom(*a)?, parse_atom(*b)?),
+                parse_atom(*c)?,
+            ))
+        }
         conjure_ast::Expression::MinionModuloEqUndefZero(_metadata, a, b, c) => {
             Ok(minion_ast::Constraint::ModuloUndefZero(
-                (parse_atom(a)?, parse_atom(b)?),
-                parse_atom(c)?,
+                (parse_atom(*a)?, parse_atom(*b)?),
+                parse_atom(*c)?,
             ))
         }
         conjure_ast::Expression::MinionWInIntervalSet(_metadata, a, xs) => {
@@ -298,9 +308,16 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
                     .collect_vec(),
             ))
         }
-
+        conjure_ast::Expression::MinionWInSet(_metadata, a, xs) => {
+            Ok(minion_ast::Constraint::WInset(
+                parse_atom(a)?,
+                xs.into_iter()
+                    .map(minion_ast::Constant::Integer)
+                    .collect_vec(),
+            ))
+        }
         conjure_ast::Expression::MinionElementOne(_, vec, i, e) => Ok(
-            minion_ast::Constraint::ElementOne(parse_atoms(vec)?, parse_atom(i)?, parse_atom(e)?),
+            minion_ast::Constraint::ElementOne(parse_atoms(vec)?, parse_atom(*i)?, parse_atom(*e)?),
         ),
 
         conjure_ast::Expression::Or(_metadata, e) => Ok(minion_ast::Constraint::WatchedOr(
@@ -349,46 +366,48 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
         ),
 
         conjure_ast::Expression::FlatMinusEq(_metadata, a, b) => Ok(
-            minion_ast::Constraint::MinusEq(parse_atom(a)?, parse_atom(b)?),
+            minion_ast::Constraint::MinusEq(parse_atom(*a)?, parse_atom(*b)?),
         ),
 
         conjure_ast::Expression::FlatProductEq(_metadata, a, b, c) => Ok(
-            minion_ast::Constraint::Product((parse_atom(a)?, parse_atom(b)?), parse_atom(c)?),
+            minion_ast::Constraint::Product((parse_atom(*a)?, parse_atom(*b)?), parse_atom(*c)?),
         ),
         conjure_ast::Expression::FlatWeightedSumLeq(_metadata, coeffs, vars, total) => {
             Ok(minion_ast::Constraint::WeightedSumLeq(
                 parse_literals(coeffs)?,
                 parse_atoms(vars)?,
-                parse_atom(total)?,
+                parse_atom(*total)?,
             ))
         }
         conjure_ast::Expression::FlatWeightedSumGeq(_metadata, coeffs, vars, total) => {
             Ok(minion_ast::Constraint::WeightedSumGeq(
                 parse_literals(coeffs)?,
                 parse_atoms(vars)?,
-                parse_atom(total)?,
+                parse_atom(*total)?,
             ))
         }
-        conjure_ast::Expression::FlatAbsEq(_metadata, x, y) => {
-            Ok(minion_ast::Constraint::Abs(parse_atom(x)?, parse_atom(y)?))
-        }
+        conjure_ast::Expression::FlatAbsEq(_metadata, x, y) => Ok(minion_ast::Constraint::Abs(
+            parse_atom(*x)?,
+            parse_atom(*y)?,
+        )),
         conjure_ast::Expression::MinionPow(_, x, y, z) => Ok(minion_ast::Constraint::Pow(
-            (parse_atom(x)?, parse_atom(y)?),
-            parse_atom(z)?,
+            (parse_atom(*x)?, parse_atom(*y)?),
+            parse_atom(*z)?,
         )),
         x => Err(ModelFeatureNotSupported(format!("{:?}", x))),
     }
 }
 
 fn parse_atomic_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Var, SolverError> {
-    let conjure_ast::Expression::Atomic(_, atom) = expr else {
-        return Err(ModelInvalid(format!(
+    match expr {
+        // Minion treats bools as ints anyways, so this is a no-op at this stage
+        conjure_ast::Expression::ToInt(_metadata, inner_expr) => parse_atomic_expr(*inner_expr),
+        conjure_ast::Expression::Atomic(_, atom) => parse_atom(atom),
+        _ => Err(ModelInvalid(format!(
             "expected atomic expression, got {:?}",
             expr
-        )));
-    };
-
-    parse_atom(atom)
+        ))),
+    }
 }
 
 fn parse_atoms(exprs: Vec<conjure_ast::Atom>) -> Result<Vec<minion_ast::Var>, SolverError> {

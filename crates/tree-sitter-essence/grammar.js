@@ -147,6 +147,8 @@ module.exports = grammar ({
 
     implication: $ => prec(-4, prec.left(seq($.expression, "->", $.expression))),
 
+    toInt_expr: $ => seq("toInt","(",$.expression,")"),
+
     quantifier_expr: $ => prec(-10, seq(
       choice("and", "or", "min", "max", "sum", "allDiff"),
       "([",

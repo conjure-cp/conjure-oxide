@@ -25,11 +25,11 @@ impl TupleToAtom {
 
     /// Gets the representation variable name for a specific set of indices.
     fn indices_to_name(&self, indices: &[Literal]) -> Name {
-        Name::RepresentedName(
-            Box::new(self.src_var.clone()),
+        Name::Represented(Box::new((
+            self.src_var.clone(),
             self.repr_name().to_string(),
             indices.iter().join("_"),
-        )
+        )))
     }
 }
 
@@ -41,7 +41,7 @@ impl Representation for TupleToAtom {
             return None;
         }
 
-        let Domain::DomainTuple(elem_domain) = domain else {
+        let Domain::Tuple(elem_domain) = domain else {
             return None;
         };
 

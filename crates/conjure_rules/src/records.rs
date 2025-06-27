@@ -43,7 +43,7 @@ fn index_record_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 
     // let decl = symbols.lookup(name).unwrap();
 
-    let Some(Domain::DomainRecord(_)) = decl.borrow().domain().cloned().map(|x| x.resolve(symbols))
+    let Some(Domain::Record(_)) = decl.borrow().domain().cloned().map(|x| x.resolve(symbols))
     else {
         return Err(RuleNotApplicable);
     };
@@ -58,12 +58,15 @@ fn index_record_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 
     // during the conversion from unsafe index to safe index in bubbling
     // we convert the field name to a literal integer for direct access
-    let Some(index) = index.clone().to_literal() else {
+    let Some(index) = index.clone().into_literal() else {
         return Err(RuleNotApplicable); // we don't support non-literal indices
     };
 
-    let indices_as_name =
-        Name::RepresentedName(name.clone(), "record_to_atom".into(), index.to_string());
+    let indices_as_name = Name::Represented(Box::new((
+        name.as_ref().clone(),
+        "record_to_atom".into(),
+        index.to_string(),
+    )));
 
     let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
 
@@ -89,7 +92,7 @@ fn record_index_to_bubble(expr: &Expr, symbols: &SymbolTable) -> ApplicationResu
         .domain_of(symbols)
         .ok_or(ApplicationError::DomainError)?;
 
-    let Domain::DomainRecord(elems) = domain else {
+    let Domain::Record(elems) = domain else {
         return Err(RuleNotApplicable);
     };
 
@@ -194,11 +197,11 @@ fn record_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
 
-    let Domain::DomainRecord(entries) = domain else {
+    let Domain::Record(entries) = domain else {
         return Err(RuleNotApplicable);
     };
 
-    let Domain::DomainRecord(entries2) = domain2 else {
+    let Domain::Record(entries2) = domain2 else {
         return Err(RuleNotApplicable);
     };
 
@@ -273,7 +276,7 @@ fn record_to_const(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
 
-    let Domain::DomainRecord(entries) = domain else {
+    let Domain::Record(entries) = domain else {
         return Err(RuleNotApplicable);
     };
 

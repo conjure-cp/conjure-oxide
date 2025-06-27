@@ -35,7 +35,7 @@ pub fn parse_letting_statement(
             "expression" => {
                 for name in temp_symbols {
                     symbol_table.insert(Rc::new(RefCell::new(Declaration::new_value_letting(
-                        Name::UserName(String::from(name)),
+                        Name::User(String::from(name)),
                         parse_expression(
                             expr_or_domain,
                             source_code,
@@ -48,7 +48,7 @@ pub fn parse_letting_statement(
             "domain" => {
                 for name in temp_symbols {
                     symbol_table.insert(Rc::new(RefCell::new(Declaration::new_domain_letting(
-                        Name::UserName(String::from(name)),
+                        Name::User(String::from(name)),
                         parse_domain(expr_or_domain, source_code),
                     ))));
                 }

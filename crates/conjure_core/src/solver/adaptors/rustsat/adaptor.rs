@@ -15,7 +15,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::result::Result::Ok;
 use tracing_subscriber::filter::DynFilterFn;
 
-use crate::ast::Domain::BoolDomain;
+use crate::ast::Domain::Bool;
 
 use rustsat_minisat::core::Minisat;
 
@@ -31,12 +31,12 @@ use crate::stats::SolverStats;
 use crate::{ast as conjure_ast, bug, Model as ConjureModel};
 use crate::{into_matrix_expr, matrix_expr};
 
-use rustsat::instances::{BasicVarManager, Cnf, SatInstance};
+use rustsat::instances::{BasicVarManager, Cnf, ManageVars, SatInstance};
 
 use thiserror::Error;
 
 /// A [SolverAdaptor] for interacting with the SatSolver generic and the types thereof.
-pub struct SAT {
+pub struct Sat {
     __non_constructable: private::Internal,
     model_inst: Option<SatInstance>,
     var_map: Option<HashMap<String, Lit>>,
@@ -44,11 +44,11 @@ pub struct SAT {
     decision_refs: Option<Vec<String>>,
 }
 
-impl private::Sealed for SAT {}
+impl private::Sealed for Sat {}
 
-impl Default for SAT {
+impl Default for Sat {
     fn default() -> Self {
-        SAT {
+        Sat {
             __non_constructable: private::Internal,
             solver_inst: Minisat::default(),
             var_map: None,
@@ -75,7 +75,7 @@ fn get_ref_sols(
             ),
         };
         solution.insert(
-            Name::UserName(reference),
+            Name::User(reference),
             match sol[lit.var()] {
                 TernaryVal::True => Literal::Int(1),
                 TernaryVal::False => Literal::Int(0),
@@ -87,7 +87,7 @@ fn get_ref_sols(
     solution
 }
 
-impl SolverAdaptor for SAT {
+impl SolverAdaptor for Sat {
     fn solve(
         &mut self,
         callback: SolverCallback,
@@ -177,7 +177,7 @@ impl SolverAdaptor for SAT {
         let mut finds: Vec<String> = Vec::new();
 
         for find_ref in decisions {
-            if (*find_ref.1.borrow().domain().unwrap() != BoolDomain) {
+            if (*find_ref.1.borrow().domain().unwrap() != Bool) {
                 Err(SolverError::ModelInvalid(
                     "Only Boolean Decision Variables supported".to_string(),
                 ))?;
@@ -206,11 +206,11 @@ impl SolverAdaptor for SAT {
         Ok(())
     }
 
-    fn get_family(&self) -> SolverFamily {
-        SolverFamily::SAT
-    }
-
     fn init_solver(&mut self, _: private::Internal) {}
+
+    fn get_family(&self) -> SolverFamily {
+        SolverFamily::Sat
+    }
 
     fn get_name(&self) -> Option<String> {
         Some("SAT".to_string())
@@ -222,5 +222,23 @@ impl SolverAdaptor for SAT {
             solver_family: Some(self.get_family()),
             ..stats
         }
+    }
+
+    fn write_solver_input_file(
+        &self,
+        writer: &mut impl std::io::Write,
+    ) -> Result<(), std::io::Error> {
+        // TODO: add comments saying what conjure oxide variables each clause has
+        // e.g.
+        //      c y x z
+        //        1 2 3
+        //      c x -y
+        //        1 -1
+        // This will require handwriting a dimacs writer, but that should be easy. For now, just
+        // let rustsat write the dimacs.
+
+        let model = self.model_inst.clone().expect("model should exist when we write the solver input file, as we should be in the LoadedModel state");
+        let (cnf, var_manager): (Cnf, BasicVarManager) = model.into_cnf();
+        cnf.write_dimacs(writer, var_manager.n_used())
     }
 }

@@ -44,25 +44,24 @@ fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
 
     // let decl = symbols.lookup(name).unwrap();
 
-    let Some(Domain::DomainTuple(_)) = decl.borrow().domain().cloned().map(|x| x.resolve(symbols))
-    else {
+    let Some(Domain::Tuple(_)) = decl.borrow().domain().cloned().map(|x| x.resolve(symbols)) else {
         return Err(RuleNotApplicable);
     };
 
     let mut indices_as_lit: Literal = Literal::Bool(false);
 
     for index in indices {
-        let Some(index) = index.clone().to_literal() else {
+        let Some(index) = index.clone().into_literal() else {
             return Err(RuleNotApplicable); // we don't support non-literal indices
         };
         indices_as_lit = index;
     }
 
-    let indices_as_name = Name::RepresentedName(
-        name.clone(),
+    let indices_as_name = Name::Represented(Box::new((
+        name.as_ref().clone(),
         "tuple_to_atom".into(),
         indices_as_lit.to_string(),
-    );
+    )));
 
     let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
 
@@ -88,7 +87,7 @@ fn tuple_index_to_bubble(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
         .domain_of(symbols)
         .ok_or(ApplicationError::DomainError)?;
 
-    let Domain::DomainTuple(elems) = domain else {
+    let Domain::Tuple(elems) = domain else {
         return Err(RuleNotApplicable);
     };
 
@@ -170,11 +169,11 @@ fn tuple_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
 
-    let Domain::DomainTuple(elems) = domain else {
+    let Domain::Tuple(elems) = domain else {
         return Err(RuleNotApplicable);
     };
 
-    let Domain::DomainTuple(elems2) = domain2 else {
+    let Domain::Tuple(elems2) = domain2 else {
         return Err(RuleNotApplicable);
     };
 
@@ -245,7 +244,7 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
 
-    let Domain::DomainTuple(elems) = domain else {
+    let Domain::Tuple(elems) = domain else {
         return Err(RuleNotApplicable);
     };
 
@@ -324,11 +323,11 @@ fn tuple_inequality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
 
-    let Domain::DomainTuple(elems) = domain else {
+    let Domain::Tuple(elems) = domain else {
         return Err(RuleNotApplicable);
     };
 
-    let Domain::DomainTuple(elems2) = domain2 else {
+    let Domain::Tuple(elems2) = domain2 else {
         return Err(RuleNotApplicable);
     };
 

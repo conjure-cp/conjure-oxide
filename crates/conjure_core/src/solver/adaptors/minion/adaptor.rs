@@ -16,13 +16,13 @@ use crate::Model as ConjureModel;
 
 use crate::solver::model_modifier::NotModifiable;
 use crate::solver::private;
-use crate::solver::SearchComplete::*;
-use crate::solver::SearchIncomplete::*;
-use crate::solver::SearchStatus::*;
+use crate::solver::SearchComplete::{HasSolutions, NoSolutions};
+use crate::solver::SearchIncomplete::UserTerminated;
+use crate::solver::SearchStatus::{Complete, Incomplete};
 use crate::solver::SolveSuccess;
 use crate::solver::SolverAdaptor;
 use crate::solver::SolverError;
-use crate::solver::SolverError::*;
+use crate::solver::SolverError::{OpNotImplemented, Runtime, RuntimeNotImplemented};
 
 use super::parse_model::model_to_minion;
 
@@ -43,18 +43,18 @@ fn parse_name(minion_name: &str) -> Name {
     static MACHINE_NAME_RE: LazyLock<Regex> =
         LazyLock::new(|| Regex::new(r"__conjure_machine_name_([0-9]+)").unwrap());
     static REPRESENTED_NAME_RE: LazyLock<Regex> =
-        LazyLock::new(|| Regex::new(r"__conjure_represented_name##(.*)##(.*)___(.*)").unwrap());
+        LazyLock::new(|| Regex::new(r"__conjure_represented_name__(.*)__(.*)___(.*)").unwrap());
 
     if let Some(caps) = MACHINE_NAME_RE.captures(minion_name) {
-        conjure_ast::Name::MachineName(caps[1].parse::<i32>().unwrap())
+        conjure_ast::Name::Machine(caps[1].parse::<i32>().unwrap())
     } else if let Some(caps) = REPRESENTED_NAME_RE.captures(minion_name) {
-        conjure_ast::Name::RepresentedName(
-            Box::new(parse_name(&caps[1])),
+        conjure_ast::Name::Represented(Box::new((
+            parse_name(&caps[1]),
             caps[2].to_string(),
             caps[3].to_string(),
-        )
+        )))
     } else {
-        conjure_ast::Name::UserName(minion_name.to_string())
+        conjure_ast::Name::User(minion_name.to_string())
     }
 }
 
@@ -166,6 +166,14 @@ impl SolverAdaptor for Minion {
 
     fn get_name(&self) -> Option<String> {
         Some("Minion".to_owned())
+    }
+
+    fn write_solver_input_file(
+        &self,
+        writer: &mut impl std::io::Write,
+    ) -> Result<(), std::io::Error> {
+        let model = self.model.as_ref().expect("Minion solver adaptor should have a model as write_solver_input_file should only be called in the LoadedModel state.");
+        minion_rs::print::write_minion_file(writer, model)
     }
 }
 

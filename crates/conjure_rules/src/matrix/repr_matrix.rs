@@ -10,9 +10,15 @@ use conjure_essence_macros::essence_expr;
 use itertools::{chain, izip, Itertools};
 use uniplate::Uniplate;
 
+use crate::bottom_up_adaptor::as_bottom_up;
+
 /// Using the `matrix_to_atom`  representation rule, rewrite matrix indexing.
-#[register_rule(("Base", 2000))]
+#[register_rule(("Base", 5000))]
 fn index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    (as_bottom_up(index_matrix_to_atom_impl))(expr, symbols)
+}
+
+fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // is this an indexing operation?
     let Expr::SafeIndex(_, subject, indices) = expr else {
         return Err(RuleNotApplicable);
@@ -38,7 +44,7 @@ fn index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
     // let decl = symbols.lookup(name).unwrap();
 
     // resolve index domains so that we can enumerate them later
-    let Some(Domain::DomainMatrix(_, index_domains)) =
+    let Some(Domain::Matrix(_, index_domains)) =
         decl.borrow().domain().cloned().map(|x| x.resolve(symbols))
     else {
         return Err(RuleNotApplicable);
@@ -54,7 +60,7 @@ fn index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
     let mut indices_as_lits: Vec<Literal> = vec![];
 
     for index in indices {
-        let Some(index) = index.clone().to_literal() else {
+        let Some(index) = index.clone().into_literal() else {
             indices_are_const = false;
             break;
         };
@@ -64,11 +70,11 @@ fn index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
     if indices_are_const {
         // indices are constant -> find the element being indexed and only return that variable.
         //
-        let indices_as_name = Name::RepresentedName(
-            name.clone(),
+        let indices_as_name = Name::Represented(Box::new((
+            name.as_ref().clone(),
             "matrix_to_atom".into(),
             indices_as_lits.iter().join("_"),
-        );
+        )));
 
         let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
 
@@ -101,7 +107,7 @@ fn index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         let bounds = index_domains
             .iter()
             .map(|dom| {
-                let Domain::IntDomain(ranges) = dom else {
+                let Domain::Int(ranges) = dom else {
                     return Err(RuleNotApplicable);
                 };
 
@@ -182,11 +188,11 @@ fn index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         let repr_exprs = repr.expression_down(symbols)?;
         let flat_elems = matrix::enumerate_indices(index_domains.clone())
             .map(|xs| {
-                Name::RepresentedName(
-                    name.clone(),
+                Name::Represented(Box::new((
+                    name.as_ref().clone(),
                     "matrix_to_atom".into(),
                     xs.into_iter().join("_"),
-                )
+                )))
             })
             .map(|x| repr_exprs[&x].clone())
             .collect_vec();
@@ -224,7 +230,7 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         .clone();
 
     // resolve index domains so that we can enumerate them later
-    let Some(Domain::DomainMatrix(_, index_domains)) =
+    let Some(Domain::Matrix(_, index_domains)) =
         decl.borrow().domain().cloned().map(|x| x.resolve(symbols))
     else {
         return Err(RuleNotApplicable);
@@ -235,7 +241,7 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
     for (i, index) in indices.iter().enumerate() {
         match index {
             Some(e) => {
-                let lit = e.clone().to_literal().ok_or(RuleNotApplicable)?;
+                let lit = e.clone().into_literal().ok_or(RuleNotApplicable)?;
                 indices_as_lits.push(Some(lit.clone()));
             }
             None => {
@@ -257,11 +263,11 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         .map(|i| {
             let mut indices_as_lits = indices_as_lits.clone();
             indices_as_lits[hole_dim as usize] = Some(i);
-            let name = Name::RepresentedName(
-                name.clone(),
+            let name = Name::Represented(Box::new((
+                name.as_ref().clone(),
                 "matrix_to_atom".into(),
                 indices_as_lits.into_iter().map(|x| x.unwrap()).join("_"),
-            );
+            )));
             repr_values[&name].clone()
         })
         .collect_vec();
@@ -299,7 +305,7 @@ fn matrix_ref_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             .clone();
 
         // resolve index domains so that we can enumerate them later
-        let Some(Domain::DomainMatrix(_, index_domains)) =
+        let Some(Domain::Matrix(_, index_domains)) =
             decl.borrow().domain().cloned().map(|x| x.resolve(symbols))
         else {
             continue;
@@ -315,11 +321,11 @@ fn matrix_ref_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
         let flat_values = matrix::enumerate_indices(index_domains)
             .map(|i| {
-                matrix_values[&Name::RepresentedName(
-                    name.clone(),
+                matrix_values[&Name::Represented(Box::new((
+                    name.as_ref().clone(),
                     "matrix_to_atom".into(),
                     i.iter().join("_"),
-                )]
+                )))]
                     .clone()
             })
             .collect_vec();

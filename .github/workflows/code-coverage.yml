@@ -32,12 +32,6 @@ jobs:
       - name: Install rust ${{ env.rust_release }}
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
-      - name: Disable rust-lld (to fix linkme)
-        run: |
-          echo RUSTFLAGS=${RUSTFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
-          echo RUSTDOCFLAGS=${RUSTDOCFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
-        if: env.rust_release == 'nightly'
-
       - name: Install pandoc
         uses: pandoc/actions/setup@v1
 

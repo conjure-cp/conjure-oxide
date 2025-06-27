@@ -14,7 +14,7 @@ use conjure_core::rule_engine::{
 use conjure_core::ast::SymbolTable;
 use conjure_core::matrix_expr;
 
-register_rule_set!("CNF", ("Base"), (SolverFamily::SAT));
+register_rule_set!("CNF", ("Base"), (SolverFamily::Sat));
 
 /// Converts an implication to cnf
 ///

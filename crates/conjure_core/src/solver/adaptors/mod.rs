@@ -7,4 +7,4 @@ pub mod rustsat;
 pub use minion::Minion;
 
 #[doc(inline)]
-pub use rustsat::SAT;
+pub use rustsat::Sat;

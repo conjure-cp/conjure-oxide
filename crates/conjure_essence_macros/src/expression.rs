@@ -70,7 +70,7 @@ pub fn parse_expr_to_ts(
                     Box::new(#expr2),
                 )}),
                 "*" => Ok(
-                    quote! {::conjure_core::ast::Expression::Product(::conjure_core::metadata::Metadata::new(), vec![#expr1, #expr2])},
+                    quote! {::conjure_core::ast::Expression::Product(::conjure_core::metadata::Metadata::new(), Box::new(::conjure_core::matrix_expr![#expr1, #expr2]))},
                 ),
                 "/" => {
                     //TODO: add checks for if division is safe or not
@@ -205,7 +205,7 @@ pub fn parse_expr_to_ts(
                 String::from(&source_code[constraint.start_byte()..constraint.end_byte()]);
             Ok(quote! {::conjure_core::ast::Expression::Atomic(
                 ::conjure_core::metadata::Metadata::new(),
-                ::conjure_core::ast::Atom::new_uref(#variable_name),
+                ::conjure_core::ast::Atom::new_ref(#variable_name),
             )})
         }
         "from_solution" => match root.kind() {

@@ -171,7 +171,7 @@ impl SymbolTable {
         // a lot of the domains would be the same).
 
         if let Name::WithRepresentation(name, _) = name {
-            let decl = self.lookup(&name)?;
+            let decl = self.lookup(name)?;
             {
                 let borrowed_decl = decl.borrow();
                 borrowed_decl.domain().cloned()
@@ -208,7 +208,7 @@ impl SymbolTable {
 
             for added_var in new_vars.difference(&old_vars) {
                 let mut next_var = self.next_machine_name.borrow_mut();
-                if let Name::MachineName(m) = *added_var {
+                if let Name::Machine(m) = *added_var {
                     if *m >= *next_var {
                         *next_var = *m + 1;
                     }
@@ -223,7 +223,7 @@ impl SymbolTable {
     pub fn gensym(&self, domain: &Domain) -> Declaration {
         let num = *self.next_machine_name.borrow();
         *(self.next_machine_name.borrow_mut()) += 1;
-        Declaration::new_var(Name::MachineName(num), domain.clone())
+        Declaration::new_var(Name::Machine(num), domain.clone())
     }
 
     /// Gets the parent of this symbol table as a mutable reference.

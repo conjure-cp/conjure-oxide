@@ -6,11 +6,13 @@ use super::{
     literals::AbstractLiteral, records::RecordValue, Declaration, Expression, Literal, Name,
     ReturnType, Typeable,
 };
+use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use uniplate::derive::Uniplate;
 
 /// An `Atom` is an indivisible expression, such as a literal or a reference.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Derivative)]
+#[derivative(Hash)]
 #[uniplate()]
 #[biplate(to=Literal)]
 #[biplate(to=Expression)]
@@ -19,7 +21,13 @@ use uniplate::derive::Uniplate;
 #[biplate(to=Name)]
 pub enum Atom {
     Literal(Literal),
-    Reference(Name, #[serde(skip)] Rc<RefCell<Declaration>>),
+    // FIXME: check if these are the hashing semantics we want.
+    Reference(
+        Name,
+        #[derivative(Hash = "ignore")]
+        #[serde(skip)]
+        Rc<RefCell<Declaration>>,
+    ),
 }
 
 impl Atom {
@@ -187,6 +195,23 @@ impl TryFrom<Atom> for i32 {
 
     fn try_from(value: Atom) -> Result<Self, Self::Error> {
         let lit: Literal = value.try_into()?;
+        lit.try_into()
+    }
+}
+
+impl TryFrom<&Box<Atom>> for i32 {
+    type Error = &'static str;
+
+    fn try_from(value: &Box<Atom>) -> Result<Self, Self::Error> {
+        TryFrom::<&Atom>::try_from(value.as_ref())
+    }
+}
+
+impl TryFrom<Box<Atom>> for i32 {
+    type Error = &'static str;
+
+    fn try_from(value: Box<Atom>) -> Result<Self, Self::Error> {
+        let lit: Literal = (*value).try_into()?;
         lit.try_into()
     }
 }

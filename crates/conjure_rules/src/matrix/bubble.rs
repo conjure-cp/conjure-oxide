@@ -20,11 +20,11 @@ fn index_to_bubble(expr: &Expression, symbols: &SymbolTable) -> ApplicationResul
 
     // TODO: tuple, this is a hack right now just to avoid the rule being applied to tuples, but could we safely modify the rule to
     // handle tuples as well?
-    if matches!(domain, Domain::DomainTuple(_)) || matches!(domain, Domain::DomainRecord(_)) {
+    if matches!(domain, Domain::Tuple(_)) || matches!(domain, Domain::Record(_)) {
         return Err(RuleNotApplicable);
     }
 
-    let Domain::DomainMatrix(_, index_domains) = domain else {
+    let Domain::Matrix(_, index_domains) = domain else {
         bug!("subject of an index expression should have a matrix domain. subject: {:?}, with domain: {:?}", subject, domain);
     };
 
@@ -60,7 +60,7 @@ fn slice_to_bubble(expr: &Expression, symbols: &SymbolTable) -> ApplicationResul
         .domain_of(symbols)
         .ok_or(ApplicationError::DomainError)?;
 
-    let Domain::DomainMatrix(_, index_domains) = domain else {
+    let Domain::Matrix(_, index_domains) = domain else {
         bug!("subject of a slice expression should have a matrix domain. subject: {:?}, with domain: {:?}", subject, domain);
     };
 

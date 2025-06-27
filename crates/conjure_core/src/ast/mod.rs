@@ -1,6 +1,7 @@
 pub mod pretty;
 pub mod serde;
 
+pub mod ac_operators;
 mod atom;
 pub mod comprehension;
 mod declaration;
@@ -19,6 +20,7 @@ mod variables;
 pub use atom::Atom;
 pub use declaration::*;
 pub use domains::Domain;
+pub use domains::DomainOpError;
 pub use domains::Range;
 pub use domains::SetAttr;
 pub use expressions::Expression;
@@ -93,7 +95,7 @@ macro_rules! into_matrix {
         $crate::ast::AbstractLiteral::matrix_implied_indices($x)
     );
     ($x:expr;$domain:expr) => (
-        $crate::ast::AbstractLiteral::Matrix($x,$domain)
+        $crate::ast::AbstractLiteral::Matrix($x,::std::boxed::Box::new($domain))
     );
 }
 

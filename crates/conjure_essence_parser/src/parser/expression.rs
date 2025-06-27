@@ -61,7 +61,10 @@ pub fn parse_expression(
                     Box::new(expr1),
                     Box::new(expr2),
                 )),
-                "*" => Ok(Expression::Product(Metadata::new(), vec![expr1, expr2])),
+                "*" => Ok(Expression::Product(
+                    Metadata::new(),
+                    Box::new(matrix_expr![expr1, expr2]),
+                )),
                 "/" => {
                     //TODO: add checks for if division is safe or not
                     Ok(Expression::UnsafeDiv(
@@ -192,7 +195,7 @@ pub fn parse_expression(
         "variable" => {
             let variable_name =
                 String::from(&source_code[constraint.start_byte()..constraint.end_byte()]);
-            let name = Name::UserName(variable_name.to_string());
+            let name = Name::User(variable_name.to_string());
 
             // Look up the declaration in the symbol table
             let declaration_rc = symbols.lookup(&name).ok_or_else(|| {
@@ -201,7 +204,7 @@ pub fn parse_expression(
 
             Ok(Expression::Atomic(
                 Metadata::new(),
-                Atom::Reference(Name::UserName(variable_name), declaration_rc),
+                Atom::Reference(Name::User(variable_name), declaration_rc),
             ))
         }
         "from_solution" => match root.kind() {
@@ -224,6 +227,10 @@ pub fn parse_expression(
                     .into(),
             ),
         },
+        "toInt_expr" => Ok(Expression::ToInt(
+            Metadata::new(),
+            Box::new(child_expr(constraint, source_code, root, symbols)?),
+        )),
         _ => Err(format!("{} is not a recognized node kind", constraint.kind()).into()),
     }
 }

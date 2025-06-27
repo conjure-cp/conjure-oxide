@@ -43,7 +43,7 @@ fn sum_of_constants() {
             Expression::Atomic(
                 Metadata::new(),
                 Atom::Reference(
-                    Name::UserName(String::from("a")),
+                    Name::User(String::from("a")),
                     Rc::new(RefCell::new(Declaration::default()))
                 ),
             ),
@@ -93,7 +93,7 @@ fn recursive_sum_of_constants() {
                 Expression::Atomic(
                     Metadata::new(),
                     Atom::Reference(
-                        Name::UserName(String::from("a")),
+                        Name::User(String::from("a")),
                         Rc::new(RefCell::new(Declaration::default()))
                     ),
                 ),
@@ -115,7 +115,7 @@ fn recursive_sum_of_constants() {
                 Expression::Atomic(
                     Metadata::new(),
                     Atom::Reference(
-                        Name::UserName(String::from("a")),
+                        Name::User(String::from("a")),
                         Rc::new(RefCell::new(Declaration::default()))
                     ),
                 ),
@@ -278,21 +278,21 @@ fn reduce_solve_xyz() {
                 Expression::Atomic(
                     Metadata::new(),
                     Atom::Reference(
-                        Name::UserName(String::from("a")),
+                        Name::User(String::from("a")),
                         Rc::new(RefCell::new(Declaration::default()))
                     ),
                 ),
                 Expression::Atomic(
                     Metadata::new(),
                     Atom::Reference(
-                        Name::UserName(String::from("b")),
+                        Name::User(String::from("b")),
                         Rc::new(RefCell::new(Declaration::default()))
                     ),
                 ),
                 Expression::Atomic(
                     Metadata::new(),
                     Atom::Reference(
-                        Name::UserName(String::from("c")),
+                        Name::User(String::from("c")),
                         Rc::new(RefCell::new(Declaration::default()))
                     ),
                 ),
@@ -310,15 +310,15 @@ fn reduce_solve_xyz() {
             Metadata::new(),
             vec![
                 Atom::Reference(
-                    Name::UserName(String::from("a")),
+                    Name::User(String::from("a")),
                     Rc::new(RefCell::new(Declaration::default()))
                 ),
                 Atom::Reference(
-                    Name::UserName(String::from("b")),
+                    Name::User(String::from("b")),
                     Rc::new(RefCell::new(Declaration::default()))
                 ),
                 Atom::Reference(
-                    Name::UserName(String::from("c")),
+                    Name::User(String::from("c")),
                     Rc::new(RefCell::new(Declaration::default()))
                 ),
             ],
@@ -332,14 +332,14 @@ fn reduce_solve_xyz() {
         Box::new(Expression::Atomic(
             Metadata::new(),
             Atom::Reference(
-                Name::UserName(String::from("a")),
+                Name::User(String::from("a")),
                 Rc::new(RefCell::new(Declaration::default())),
             ),
         )),
         Box::new(Expression::Atomic(
             Metadata::new(),
             Atom::Reference(
-                Name::UserName(String::from("b")),
+                Name::User(String::from("b")),
                 Rc::new(RefCell::new(Declaration::default())),
             ),
         )),
@@ -357,15 +357,15 @@ fn reduce_solve_xyz() {
         expr2,
         Expression::FlatIneq(
             Metadata::new(),
-            Atom::Reference(
-                Name::UserName(String::from("a")),
+            Box::new(Atom::Reference(
+                Name::User(String::from("a")),
                 Rc::new(RefCell::new(Declaration::default()))
-            ),
-            Atom::Reference(
-                Name::UserName(String::from("b")),
+            )),
+            Box::new(Atom::Reference(
+                Name::User(String::from("b")),
                 Rc::new(RefCell::new(Declaration::default()))
-            ),
-            Literal::Int(-1),
+            )),
+            Box::new(Literal::Int(-1)),
         )
     );
 
@@ -376,24 +376,24 @@ fn reduce_solve_xyz() {
         .as_submodel_mut()
         .symbols_mut()
         .insert(Rc::new(RefCell::new(Declaration::new_var(
-            Name::UserName(String::from("a")),
-            Domain::IntDomain(vec![Range::Bounded(1, 3)]),
+            Name::User(String::from("a")),
+            Domain::Int(vec![Range::Bounded(1, 3)]),
         ))))
         .unwrap();
     model
         .as_submodel_mut()
         .symbols_mut()
         .insert(Rc::new(RefCell::new(Declaration::new_var(
-            Name::UserName(String::from("b")),
-            Domain::IntDomain(vec![Range::Bounded(1, 3)]),
+            Name::User(String::from("b")),
+            Domain::Int(vec![Range::Bounded(1, 3)]),
         ))))
         .unwrap();
     model
         .as_submodel_mut()
         .symbols_mut()
         .insert(Rc::new(RefCell::new(Declaration::new_var(
-            Name::UserName(String::from("c")),
-            Domain::IntDomain(vec![Range::Bounded(1, 3)]),
+            Name::User(String::from("c")),
+            Domain::Int(vec![Range::Bounded(1, 3)]),
         ))))
         .unwrap();
 
@@ -479,14 +479,14 @@ fn rule_distribute_not_over_and() {
                 Expression::Atomic(
                     Metadata::new(),
                     Atom::Reference(
-                        Name::UserName(String::from("a")),
+                        Name::User(String::from("a")),
                         Rc::new(RefCell::new(Declaration::default()))
                     ),
                 ),
                 Expression::Atomic(
                     Metadata::new(),
                     Atom::Reference(
-                        Name::UserName(String::from("b")),
+                        Name::User(String::from("b")),
                         Rc::new(RefCell::new(Declaration::default()))
                     ),
                 ),
@@ -509,7 +509,7 @@ fn rule_distribute_not_over_and() {
                     Box::new(Expression::Atomic(
                         Metadata::new(),
                         Atom::Reference(
-                            Name::UserName(String::from("a")),
+                            Name::User(String::from("a")),
                             Rc::new(RefCell::new(Declaration::default()))
                         )
                     ))
@@ -519,7 +519,7 @@ fn rule_distribute_not_over_and() {
                     Box::new(Expression::Atomic(
                         Metadata::new(),
                         Atom::Reference(
-                            Name::UserName(String::from("b")),
+                            Name::User(String::from("b")),
                             Rc::new(RefCell::new(Declaration::default()))
                         )
                     ))
@@ -541,14 +541,14 @@ fn rule_distribute_not_over_or() {
                 Expression::Atomic(
                     Metadata::new(),
                     Atom::Reference(
-                        Name::UserName(String::from("a")),
+                        Name::User(String::from("a")),
                         Rc::new(RefCell::new(Declaration::default()))
                     ),
                 ),
                 Expression::Atomic(
                     Metadata::new(),
                     Atom::Reference(
-                        Name::UserName(String::from("b")),
+                        Name::User(String::from("b")),
                         Rc::new(RefCell::new(Declaration::default()))
                     ),
                 ),
@@ -571,7 +571,7 @@ fn rule_distribute_not_over_or() {
                     Box::new(Expression::Atomic(
                         Metadata::new(),
                         Atom::Reference(
-                            Name::UserName(String::from("a")),
+                            Name::User(String::from("a")),
                             Rc::new(RefCell::new(Declaration::default()))
                         )
                     ))
@@ -581,7 +581,7 @@ fn rule_distribute_not_over_or() {
                     Box::new(Expression::Atomic(
                         Metadata::new(),
                         Atom::Reference(
-                            Name::UserName(String::from("b")),
+                            Name::User(String::from("b")),
                             Rc::new(RefCell::new(Declaration::default()))
                         )
                     ))
@@ -600,7 +600,7 @@ fn rule_distribute_not_over_and_not_changed() {
         Box::new(Expression::Atomic(
             Metadata::new(),
             Atom::Reference(
-                Name::UserName(String::from("a")),
+                Name::User(String::from("a")),
                 Rc::new(RefCell::new(Declaration::default())),
             ),
         )),
@@ -620,7 +620,7 @@ fn rule_distribute_not_over_or_not_changed() {
         Box::new(Expression::Atomic(
             Metadata::new(),
             Atom::Reference(
-                Name::UserName(String::from("a")),
+                Name::User(String::from("a")),
                 Rc::new(RefCell::new(Declaration::default())),
             ),
         )),
@@ -644,14 +644,14 @@ fn rule_distribute_or_over_and() {
                     Expression::Atomic(
                         Metadata::new(),
                         Atom::Reference(
-                            Name::MachineName(1),
+                            Name::Machine(1),
                             Rc::new(RefCell::new(Declaration::default()))
                         )
                     ),
                     Expression::Atomic(
                         Metadata::new(),
                         Atom::Reference(
-                            Name::MachineName(2),
+                            Name::Machine(2),
                             Rc::new(RefCell::new(Declaration::default()))
                         )
                     ),
@@ -660,7 +660,7 @@ fn rule_distribute_or_over_and() {
             Expression::Atomic(
                 Metadata::new(),
                 Atom::Reference(
-                    Name::MachineName(3),
+                    Name::Machine(3),
                     Rc::new(RefCell::new(Declaration::default()))
                 )
             ),
@@ -682,14 +682,14 @@ fn rule_distribute_or_over_and() {
                         Expression::Atomic(
                             Metadata::new(),
                             Atom::Reference(
-                                Name::MachineName(3),
+                                Name::Machine(3),
                                 Rc::new(RefCell::new(Declaration::default()))
                             )
                         ),
                         Expression::Atomic(
                             Metadata::new(),
                             Atom::Reference(
-                                Name::MachineName(1),
+                                Name::Machine(1),
                                 Rc::new(RefCell::new(Declaration::default()))
                             )
                         ),
@@ -701,14 +701,14 @@ fn rule_distribute_or_over_and() {
                         Expression::Atomic(
                             Metadata::new(),
                             Atom::Reference(
-                                Name::MachineName(3),
+                                Name::Machine(3),
                                 Rc::new(RefCell::new(Declaration::default()))
                             )
                         ),
                         Expression::Atomic(
                             Metadata::new(),
                             Atom::Reference(
-                                Name::MachineName(2),
+                                Name::Machine(2),
                                 Rc::new(RefCell::new(Declaration::default()))
                             )
                         ),
@@ -744,18 +744,18 @@ fn rewrite_solve_xyz() {
 
     // Create variables and domains
     let variable_a = Atom::Reference(
-        Name::UserName(String::from("a")),
+        Name::User(String::from("a")),
         Rc::new(RefCell::new(Declaration::default())),
     );
     let variable_b = Atom::Reference(
-        Name::UserName(String::from("b")),
+        Name::User(String::from("b")),
         Rc::new(RefCell::new(Declaration::default())),
     );
     let variable_c = Atom::Reference(
-        Name::UserName(String::from("c")),
+        Name::User(String::from("c")),
         Rc::new(RefCell::new(Declaration::default())),
     );
-    let domain = Domain::IntDomain(vec![Range::Bounded(1, 3)]);
+    let domain = Domain::Int(vec![Range::Bounded(1, 3)]);
 
     // Construct nested expression
     let nested_expr = Expression::And(
@@ -939,7 +939,7 @@ fn eval_const_ref() {
     let expr = Expression::Atomic(
         Metadata::new(),
         Atom::Reference(
-            Name::UserName(String::from("a")),
+            Name::User(String::from("a")),
             Rc::new(RefCell::new(Declaration::default())),
         ),
     );
@@ -960,7 +960,7 @@ fn eval_const_nested_ref() {
                     Expression::Atomic(
                         Metadata::new(),
                         Atom::Reference(
-                            Name::UserName(String::from("a")),
+                            Name::User(String::from("a")),
                             Rc::new(RefCell::new(Declaration::default()))
                         ),
                     ),
@@ -1049,21 +1049,21 @@ fn eval_const_sum_xyz() {
                         Expression::Atomic(
                             Metadata::new(),
                             Atom::Reference(
-                                Name::UserName(String::from("x")),
+                                Name::User(String::from("x")),
                                 Rc::new(RefCell::new(Declaration::default()))
                             ),
                         ),
                         Expression::Atomic(
                             Metadata::new(),
                             Atom::Reference(
-                                Name::UserName(String::from("y")),
+                                Name::User(String::from("y")),
                                 Rc::new(RefCell::new(Declaration::default()))
                             ),
                         ),
                         Expression::Atomic(
                             Metadata::new(),
                             Atom::Reference(
-                                Name::UserName(String::from("z")),
+                                Name::User(String::from("z")),
                                 Rc::new(RefCell::new(Declaration::default()))
                             ),
                         ),
@@ -1079,14 +1079,14 @@ fn eval_const_sum_xyz() {
                 Box::new(Expression::Atomic(
                     Metadata::new(),
                     Atom::Reference(
-                        Name::UserName(String::from("x")),
+                        Name::User(String::from("x")),
                         Rc::new(RefCell::new(Declaration::default()))
                     ),
                 )),
                 Box::new(Expression::Atomic(
                     Metadata::new(),
                     Atom::Reference(
-                        Name::UserName(String::from("y")),
+                        Name::User(String::from("y")),
                         Rc::new(RefCell::new(Declaration::default()))
                     ),
                 )),

@@ -6,14 +6,14 @@ use super::{
         pretty_value_letting_declaration, pretty_variable_declaration,
     },
     serde::RcRefCellAsInner,
-    Atom, Declaration,
+    Atom, Declaration, Literal,
 };
 use itertools::izip;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use uniplate::{Biplate, Tree, Uniplate};
 
-use crate::{bug, metadata::Metadata};
+use crate::{bug, into_matrix_expr, metadata::Metadata};
 use std::{
     cell::{Ref, RefCell, RefMut},
     collections::VecDeque,
@@ -90,7 +90,7 @@ impl SubModel {
     ///
     /// The caller is responsible for ensuring that the root node remains an [`Expression::Root`].
     ///
-    fn root_mut_unchecked(&mut self) -> &mut Expression {
+    pub fn root_mut_unchecked(&mut self) -> &mut Expression {
         &mut self.constraints
     }
 
@@ -146,6 +146,21 @@ impl SubModel {
     pub fn add_symbol(&mut self, sym: Declaration) -> Option<()> {
         self.symbols_mut().insert(Rc::new(RefCell::new(sym)))
     }
+
+    /// Converts the constraints in this submodel to a single expression suitable for use inside
+    /// another expression tree.
+    ///
+    /// * If this submodel has no constraints, true is returned.
+    /// * If this submodel has a single constraint, that constraint is returned.
+    /// * If this submodel has multiple constraints, they are returned as an `and` constraint.
+    pub fn into_single_expression(self) -> Expression {
+        let constraints = self.constraints().clone();
+        match constraints.len() {
+            0 => Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
+            1 => constraints[0].clone(),
+            _ => Expression::And(Metadata::new(), Box::new(into_matrix_expr![constraints])),
+        }
+    }
 }
 
 impl Typeable for SubModel {
@@ -179,6 +194,9 @@ impl Display for SubModel {
                         "{}",
                         pretty_domain_letting_declaration(&self.symbols(), &name).unwrap()
                     )?;
+                }
+                DeclarationKind::Given(d) => {
+                    writeln!(f, "given {name}: {d}")?;
                 }
             }
         }

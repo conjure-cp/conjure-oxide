@@ -10,7 +10,6 @@ use conjure_essence_macros::essence_expr;
 use uniplate::Uniplate;
 
 use ApplicationError::RuleNotApplicable;
-use Expr::*;
 
 register_rule_set!("Base", ());
 
@@ -30,30 +29,31 @@ fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // excluded expressions
     if matches!(
         expr,
-        Atomic(_, _)
-            | Root(_, _)
-            | Comprehension(_, _)
-            | FlatIneq(_, _, _, _)
-            | FlatMinusEq(_, _, _)
-            | FlatSumGeq(_, _, _)
-            | FlatSumLeq(_, _, _)
-            | FlatProductEq(_, _, _, _)
-            | FlatWatchedLiteral(_, _, _)
-            | FlatWeightedSumGeq(_, _, _, _)
-            | FlatWeightedSumLeq(_, _, _, _)
-            | MinionDivEqUndefZero(_, _, _, _)
-            | MinionModuloEqUndefZero(_, _, _, _)
-            | MinionWInIntervalSet(_, _, _)
-            | MinionElementOne(_, _, _, _)
-            | MinionPow(_, _, _, _)
-            | MinionReify(_, _, _)
-            | MinionReifyImply(_, _, _)
-            | FlatAbsEq(_, _, _)
-            | Min(_, _)
-            | Max(_, _)
-            | AllDiff(_, _)
-            | FlatAllDiff(_, _)
-            | AbstractLiteral(_, _)
+        Expr::Atomic(_, _)
+            | Expr::Root(_, _)
+            | Expr::Comprehension(_, _)
+            | Expr::FlatIneq(_, _, _, _)
+            | Expr::FlatMinusEq(_, _, _)
+            | Expr::FlatSumGeq(_, _, _)
+            | Expr::FlatSumLeq(_, _, _)
+            | Expr::FlatProductEq(_, _, _, _)
+            | Expr::FlatWatchedLiteral(_, _, _)
+            | Expr::FlatWeightedSumGeq(_, _, _, _)
+            | Expr::FlatWeightedSumLeq(_, _, _, _)
+            | Expr::MinionDivEqUndefZero(_, _, _, _)
+            | Expr::MinionModuloEqUndefZero(_, _, _, _)
+            | Expr::MinionWInIntervalSet(_, _, _)
+            | Expr::MinionWInSet(_, _, _)
+            | Expr::MinionElementOne(_, _, _, _)
+            | Expr::MinionPow(_, _, _, _)
+            | Expr::MinionReify(_, _, _)
+            | Expr::MinionReifyImply(_, _, _)
+            | Expr::FlatAbsEq(_, _, _)
+            | Expr::Min(_, _)
+            | Expr::Max(_, _)
+            | Expr::AllDiff(_, _)
+            | Expr::FlatAllDiff(_, _)
+            | Expr::AbstractLiteral(_, _)
     ) {
         return Err(ApplicationError::RuleNotApplicable);
     }
@@ -63,8 +63,8 @@ fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     }
 
     let new_expr = match expr {
-        Or(_, _) => essence_expr!(false),
-        And(_, _) => essence_expr!(true),
+        Expr::Or(_, _) => essence_expr!(false),
+        Expr::And(_, _) => essence_expr!(true),
         _ => {
             return Err(ApplicationError::RuleNotApplicable);
         } // _ => And(Metadata::new(), Box::new(matrix_expr![])),
@@ -103,7 +103,8 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         new_top.push(essence_expr!(&atom_expr <= &e));
         disjunction.push(essence_expr!(&atom_expr = &e));
     }
-    new_top.push(Or(
+    // TODO: deal with explicit index domains
+    new_top.push(Expr::Or(
         Metadata::new(),
         Box::new(into_matrix_expr![disjunction]),
     ));
@@ -150,7 +151,7 @@ fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         disjunction.push(essence_expr!(&atom_expr = &e));
     }
     // FIXME: deal with explicitly given domains
-    new_top.push(Or(
+    new_top.push(Expr::Or(
         Metadata::new(),
         Box::new(into_matrix_expr![disjunction]),
     ));

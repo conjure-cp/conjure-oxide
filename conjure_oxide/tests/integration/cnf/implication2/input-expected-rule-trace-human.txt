@@ -18,19 +18,19 @@ such that
 
 (and([a,b;int(1..)])) -> (c), 
    ~~> remove_implication ([("CNF", 4100)]) 
-or([Not(and([a,b;int(1..)])),c;int(1..)]) 
+or([!(and([a,b;int(1..)])),c;int(1..)]) 
 
 --
 
-Not(and([a,b;int(1..)])), 
+!(and([a,b;int(1..)])), 
    ~~> distribute_not_over_and ([("Base", 8400)]) 
-or([Not(a),Not(b);int(1..)]) 
+or([!(a),!(b);int(1..)]) 
 
 --
 
-or([or([Not(a),Not(b);int(1..)]),c;int(1..)]), 
+or([or([!(a),!(b);int(1..)]),c;int(1..)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
-or([Not(a),Not(b),c;int(1..)]) 
+or([!(a),!(b),c;int(1..)]) 
 
 --
 
@@ -42,5 +42,5 @@ find c: bool
 
 such that
 
-or([Not(a),Not(b),c;int(1..)])
+or([!(a),!(b),c;int(1..)])
 

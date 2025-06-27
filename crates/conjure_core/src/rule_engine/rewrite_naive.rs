@@ -13,7 +13,7 @@ use crate::{
 
 use itertools::Itertools;
 use std::{sync::Arc, time::Instant};
-use tracing::trace;
+use tracing::{span, trace, Level};
 use uniplate::Biplate;
 
 /// A naive, exhaustive rewriter for development purposes. Applies rules in priority order,
@@ -108,6 +108,15 @@ fn try_rewrite_model(
                 // Count rule application attempts
                 stats.rewriter_rule_application_attempts =
                     Some(stats.rewriter_rule_application_attempts.unwrap_or(0) + 1);
+
+                #[cfg(debug_assertions)]
+                let span = span!(Level::TRACE,"trying_rule_application",rule_name=rd.rule.name,rule_target_expression=%expr);
+
+                #[cfg(debug_assertions)]
+                let _guard = span.enter();
+
+                #[cfg(debug_assertions)]
+                tracing::trace!(rule_name = rd.rule.name, "Trying rule");
 
                 match (rd.rule.application)(&expr, &submodel.symbols()) {
                     Ok(red) => {

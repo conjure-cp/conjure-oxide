@@ -45,8 +45,9 @@ use conjure_oxide::SolverFamily;
 use pretty_assertions::assert_eq;
 use serde::Deserialize;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 #[serde(default)]
+#[serde(deny_unknown_fields)]
 struct TestConfig {
     extra_rewriter_asserts: Vec<String>,
 
@@ -240,7 +241,7 @@ fn integration_test_inner(
 
     let file_config: TestConfig =
         if let Ok(config_contents) = fs::read_to_string(format!("{}/config.toml", path)) {
-            toml::from_str(&config_contents).unwrap_or_default()
+            toml::from_str(&config_contents).unwrap()
         } else {
             Default::default()
         };
@@ -286,7 +287,7 @@ fn integration_test_inner(
         // rule set selection based on solver
 
         let solver_fam = if config.solve_with_sat {
-            SolverFamily::SAT
+            SolverFamily::Sat
         } else {
             SolverFamily::Minion
         };
@@ -351,6 +352,7 @@ fn integration_test_inner(
                 .expect("Rewritten model must be present in 2a")
                 .clone(),
             0,
+            &None,
         )?;
         let solutions_json =
             save_solutions_json(&solved, path, essence_base, SolverFamily::Minion)?;
@@ -365,8 +367,9 @@ fn integration_test_inner(
                 .expect("Rewritten model must be present in 2a")
                 .clone(),
             0,
+            &None,
         )?;
-        let solutions_json = save_solutions_json(&solved, path, essence_base, SolverFamily::SAT)?;
+        let solutions_json = save_solutions_json(&solved, path, essence_base, SolverFamily::Sat)?;
         if verbose {
             println!("Minion solutions: {:#?}", solutions_json);
         }
@@ -532,7 +535,7 @@ fn integration_test_inner(
         assert_eq!(username_solutions_json, expected_solutions_json);
     } else if config.solve_with_sat {
         let expected_solutions_json =
-            read_solutions_json(path, essence_base, "expected", SolverFamily::SAT)?;
+            read_solutions_json(path, essence_base, "expected", SolverFamily::Sat)?;
         let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
         assert_eq!(username_solutions_json, expected_solutions_json);
     }

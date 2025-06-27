@@ -18,7 +18,7 @@ use serde_json::{json, Error as JsonError, Value as JsonValue};
 
 use conjure_core::error::Error;
 
-use crate::ast::Name::UserName;
+use crate::ast::Name::User;
 use crate::ast::{Literal, Name};
 use crate::utils::conjure::solutions_to_json;
 use crate::utils::json::sort_json_object;
@@ -135,7 +135,7 @@ pub fn minion_solutions_from_json(
                 _ => return Err(Error::Parse("Invalid constant".to_owned()).into()),
             };
 
-            sol.insert(UserName(var_name.into()), constant);
+            sol.insert(User(var_name.into()), constant);
         }
 
         solutions.push(sol);
@@ -155,7 +155,7 @@ pub fn save_solutions_json(
     let generated_json_str = serde_json::to_string_pretty(&json_solutions)?;
 
     let solver_name = match solver {
-        SolverFamily::SAT => "sat",
+        SolverFamily::Sat => "sat",
         SolverFamily::Minion => "minion",
     };
 
@@ -172,7 +172,7 @@ pub fn read_solutions_json(
     solver: SolverFamily,
 ) -> Result<JsonValue, anyhow::Error> {
     let solver_name = match solver {
-        SolverFamily::SAT => "sat",
+        SolverFamily::Sat => "sat",
         SolverFamily::Minion => "minion",
     };
 
@@ -245,7 +245,7 @@ pub fn normalize_solutions_for_comparison(
         // remove machine names
         let keys_to_remove: Vec<Name> = solset
             .keys()
-            .filter(|k| matches!(k, Name::MachineName(_)))
+            .filter(|k| matches!(k, Name::Machine(_)))
             .cloned()
             .collect();
         for k in keys_to_remove {
@@ -254,7 +254,7 @@ pub fn normalize_solutions_for_comparison(
 
         let mut updates = vec![];
         for (k, v) in solset.clone() {
-            if let Name::UserName(_) = k {
+            if let Name::User(_) = k {
                 match v {
                     Literal::Bool(true) => updates.push((k, Literal::Int(1))),
                     Literal::Bool(false) => updates.push((k, Literal::Int(0))),
@@ -263,7 +263,8 @@ pub fn normalize_solutions_for_comparison(
                         // make all domains the same (this is just in the tester so the types dont
                         // actually matter)
 
-                        let mut matrix = AbstractLiteral::Matrix(elems, Domain::IntDomain(vec![]));
+                        let mut matrix =
+                            AbstractLiteral::Matrix(elems, Box::new(Domain::Int(vec![])));
                         matrix =
                             matrix.transform(Arc::new(
                                 move |x: AbstractLiteral<Literal>| match x {
@@ -277,7 +278,10 @@ pub fn normalize_solutions_for_comparison(
                                             })
                                             .collect_vec();
 
-                                        AbstractLiteral::Matrix(items, Domain::IntDomain(vec![]))
+                                        AbstractLiteral::Matrix(
+                                            items,
+                                            Box::new(Domain::Int(vec![])),
+                                        )
                                     }
                                     x => x,
                                 },

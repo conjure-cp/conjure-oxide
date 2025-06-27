@@ -19,12 +19,15 @@ use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::metadata::Metadata;
 use crate::{bug, error, into_matrix_expr, throw_error, Model};
+
+#[allow(unused_macros)]
 macro_rules! parser_trace {
     ($($arg:tt)+) => {
         log::trace!(target:"jsonparser",$($arg)+)
     };
 }
 
+#[allow(unused_macros)]
 macro_rules! parser_debug {
     ($($arg:tt)+) => {
         log::debug!(target:"jsonparser",$($arg)+)
@@ -111,7 +114,7 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
         .as_str()
         .ok_or(error!("FindOrGiven[1].Name is not a string"))?;
 
-    let name = Name::UserName(name.to_owned());
+    let name = Name::User(name.to_owned());
 
     let domain = arr[2]
         .as_object()
@@ -139,7 +142,7 @@ fn parse_letting(v: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Result<()> 
         .ok_or(error!("Letting[0] is not an object"))?["Name"]
         .as_str()
         .ok_or(error!("Letting[0].Name is not a string"))?;
-    let name = Name::UserName(name.to_owned());
+    let name = Name::User(name.to_owned());
     // value letting
     if let Some(value) = parse_expression(&arr[1], scope) {
         let mut symtab = scope.borrow_mut();
@@ -183,8 +186,8 @@ fn parse_domain(
 ) -> Result<Domain> {
     match domain_name {
         "DomainInt" => Ok(parse_int_domain(domain_value, symbols)?),
-        "DomainBool" => Ok(Domain::BoolDomain),
-        "DomainReference" => Ok(Domain::DomainReference(Name::UserName(
+        "DomainBool" => Ok(Domain::Bool),
+        "DomainReference" => Ok(Domain::Reference(Name::User(
             domain_value
                 .as_array()
                 .ok_or(error!("DomainReference is not an array"))?[0]
@@ -202,7 +205,7 @@ fn parse_domain(
                 .next()
                 .ok_or(Error::Parse("DomainSet is an empty object".to_owned()))?;
             let domain = parse_domain(domain.0.as_str(), domain.1, symbols)?;
-            Ok(Domain::DomainSet(SetAttr::None, Box::new(domain)))
+            Ok(Domain::Set(SetAttr::None, Box::new(domain)))
         }
 
         "DomainMatrix" => {
@@ -243,12 +246,12 @@ fn parse_domain(
             // Walk through the value domain until it is not a DomainMatrix, adding the index to
             // our list of indices.
             let mut value_domain = parse_domain(value_domain_name, value_domain_value, symbols)?;
-            while let Domain::DomainMatrix(new_value_domain, mut indices) = value_domain {
+            while let Domain::Matrix(new_value_domain, mut indices) = value_domain {
                 index_domains.append(&mut indices);
                 value_domain = *new_value_domain.clone()
             }
 
-            Ok(Domain::DomainMatrix(Box::new(value_domain), index_domains))
+            Ok(Domain::Matrix(Box::new(value_domain), index_domains))
         }
         "DomainTuple" => {
             let domain_value = domain_value
@@ -269,7 +272,7 @@ fn parse_domain(
                 })
                 .collect::<Result<Vec<Domain>>>()?;
 
-            Ok(Domain::DomainTuple(domain))
+            Ok(Domain::Tuple(domain))
         }
         "DomainRecord" => {
             let domain_value = domain_value
@@ -286,7 +289,7 @@ fn parse_domain(
                     .as_str()
                     .ok_or(error!("FindOrGiven[1].Name is not a string"))?;
 
-                let name = Name::UserName(name.to_owned());
+                let name = Name::User(name.to_owned());
                 // then collect the domain of the record field
                 let domain = item[1]
                     .as_object()
@@ -300,7 +303,7 @@ fn parse_domain(
                 let rec = RecordEntry { name, domain };
                 record_entries.push(rec);
             }
-            Ok(Domain::DomainRecord(record_entries))
+            Ok(Domain::Record(record_entries))
         }
 
         _ => Err(Error::Parse(
@@ -345,7 +348,7 @@ fn parse_int_domain(v: &JsonValue, symbols: &SymbolTable) -> Result<Domain> {
             _ => return throw_error!("DomainInt[1] contains an unknown object"),
         }
     }
-    Ok(Domain::IntDomain(ranges))
+    Ok(Domain::Int(ranges))
 }
 
 /// Parses a (possibly) integer value inside the range of a domain
@@ -412,7 +415,7 @@ fn parse_domain_value_int(obj: &JsonValue, symbols: &SymbolTable) -> Option<i32>
             ".. found domain reference to {}, trying to resolve it",
             inner_name
         );
-        let name = Name::UserName(inner_name.to_string());
+        let name = Name::User(inner_name.to_string());
         let decl = symbols.lookup(&name)?;
         let decl_borrow = decl.borrow();
         let DeclarationKind::ValueLetting(d) = decl_borrow.kind() else {
@@ -420,7 +423,7 @@ fn parse_domain_value_int(obj: &JsonValue, symbols: &SymbolTable) -> Option<i32>
             return None;
         };
 
-        let a = d.clone().to_literal()?;
+        let a = d.clone().into_literal()?;
         let Literal::Int(a) = a else {
             return None;
         };
@@ -436,10 +439,13 @@ fn parse_domain_value_int(obj: &JsonValue, symbols: &SymbolTable) -> Option<i32>
 // this needs an explicit type signature to force the closures to have the same type
 type BinOp = Box<dyn Fn(Metadata, Box<Expression>, Box<Expression>) -> Expression>;
 type UnaryOp = Box<dyn Fn(Metadata, Box<Expression>) -> Expression>;
-type VecOp = Box<dyn Fn(Metadata, Vec<Expression>) -> Expression>;
 
 pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Option<Expression> {
     let binary_operators: HashMap<&str, BinOp> = [
+        (
+            "MkOpIn",
+            Box::new(Expression::In) as Box<dyn Fn(_, _, _) -> _>,
+        ),
         (
             "MkOpUnion",
             Box::new(Expression::Union) as Box<dyn Fn(_, _, _) -> _>,
@@ -545,6 +551,10 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
             "MkOpSum",
             Box::new(Expression::Sum) as Box<dyn Fn(_, _) -> _>,
         ),
+        (
+            "MkOpProduct",
+            Box::new(Expression::Product) as Box<dyn Fn(_, _) -> _>,
+        ),
         ("MkOpOr", Box::new(Expression::Or) as Box<dyn Fn(_, _) -> _>),
         (
             "MkOpMin",
@@ -558,20 +568,16 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
             "MkOpAllDiff",
             Box::new(Expression::AllDiff) as Box<dyn Fn(_, _) -> _>,
         ),
+        (
+            "MkOpToInt",
+            Box::new(Expression::ToInt) as Box<dyn Fn(_, _) -> _>,
+        ),
     ]
-    .into_iter()
-    .collect();
-
-    let vec_operators: HashMap<&str, VecOp> = [(
-        "MkOpProduct",
-        Box::new(Expression::Product) as Box<dyn Fn(_, _) -> _>,
-    )]
     .into_iter()
     .collect();
 
     let mut binary_operator_names = binary_operators.iter().map(|x| x.0);
     let mut unary_operator_names = unary_operators.iter().map(|x| x.0);
-    let mut vec_operator_names = vec_operators.iter().map(|x| x.0);
     #[allow(clippy::unwrap_used)]
     match obj {
         Value::Object(op) if op.contains_key("Op") => match &op["Op"] {
@@ -581,10 +587,6 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
             Value::Object(un_op) if unary_operator_names.any(|key| un_op.contains_key(*key)) => {
                 Some(parse_unary_op(un_op, unary_operators, scope).unwrap())
             }
-            Value::Object(vec_op) if vec_operator_names.any(|key| vec_op.contains_key(*key)) => {
-                Some(parse_vec_op(vec_op, vec_operators, scope).unwrap())
-            }
-
             Value::Object(op)
                 if op.contains_key("MkOpIndexing") || op.contains_key("MkOpSlicing") =>
             {
@@ -597,7 +599,7 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
         }
         Value::Object(refe) if refe.contains_key("Reference") => {
             let name = refe["Reference"].as_array()?[0].as_object()?["Name"].as_str()?;
-            let user_name = Name::UserName(name.to_string());
+            let user_name = Name::User(name.to_string());
 
             let declaration: Rc<RefCell<Declaration>> = scope
                 .borrow()
@@ -680,7 +682,7 @@ fn parse_abs_record(abs_record: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Opt
 
         let value = parse_expression(&entry[1], scope)?;
 
-        let name = Name::UserName(name.to_string());
+        let name = Name::User(name.to_string());
         let rec_entry = RecordValue {
             name: name.clone(),
             value,
@@ -718,7 +720,7 @@ fn parse_comprehension(
                     .iter()
                     .next()?;
                 let domain = parse_domain(domain_name, domain_value, &scope.borrow()).ok()?;
-                comprehension.generator(Name::UserName(name.to_string()), domain)
+                comprehension.generator(Name::User(name.to_string()), domain)
             }
 
             "Condition" => comprehension.guard(parse_expression(value, &scope)?),
@@ -869,51 +871,6 @@ fn parse_unary_op(
     }?;
 
     Some(constructor(Metadata::new(), Box::new(arg)))
-}
-
-fn parse_vec_op(
-    vec_op: &serde_json::Map<String, Value>,
-    vec_operators: HashMap<&str, VecOp>,
-    scope: &Rc<RefCell<SymbolTable>>,
-) -> Option<Expression> {
-    let (key, value) = vec_op.into_iter().next()?;
-    let constructor = vec_operators.get(key.as_str())?;
-
-    parser_debug!("Trying to parse vec_op: {key} ...");
-
-    let mut args_parsed: Option<Vec<Option<Expression>>> = None;
-    if let Some(abs_lit_matrix) = value.pointer("/AbstractLiteral/AbsLitMatrix/1") {
-        parser_trace!("... containing a matrix of literals");
-        args_parsed = abs_lit_matrix.as_array().map(|x| {
-            x.iter()
-                .map(|x| parse_expression(x, scope))
-                .collect::<Vec<Option<Expression>>>()
-        });
-    }
-    // the input of this expression is constant - e.g. or([]), or([false]), min([2]), etc.
-    else if let Some(const_abs_lit_matrix) =
-        value.pointer("/Constant/ConstantAbstract/AbsLitMatrix/1")
-    {
-        parser_trace!("... containing a matrix of constants");
-        args_parsed = const_abs_lit_matrix.as_array().map(|x| {
-            x.iter()
-                .map(|x| parse_expression(x, scope))
-                .collect::<Vec<Option<Expression>>>()
-        });
-    }
-
-    let args_parsed = args_parsed?;
-
-    let number_of_args = args_parsed.len();
-    parser_debug!("... with {number_of_args} args {args_parsed:#?}");
-
-    let valid_args: Vec<Expression> = args_parsed.into_iter().flatten().collect();
-    if number_of_args != valid_args.len() {
-        None
-    } else {
-        parser_debug!("... success!");
-        Some(constructor(Metadata::new(), valid_args))
-    }
 }
 
 // Takes in { AbstractLiteral: .... }

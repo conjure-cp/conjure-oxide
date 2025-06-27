@@ -8,21 +8,13 @@ such that
 
 --
 
-max([2,a;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-max([2,a;int(1..)]) 
-
---
-
-max([2,a;int(1..)]), 
-   ~~> max_to_var ([("Base", 6000)]) 
-__0 
+(max([2,a;int(1..2)]) <= 2), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+(__0 <= 2) 
 new variables:
   find __0: int(2..3)
 new constraints:
-  (__0 >= 2)
-  (__0 >= a)
-  or([(__0 = 2),(__0 = a);int(1..)])
+  __0 =aux max([2,a;int(1..2)])
 --
 
 (__0 <= 2), 
@@ -31,15 +23,32 @@ Ineq(__0, 2, 0)
 
 --
 
-(__0 >= 2), 
-   ~~> geq_to_ineq ([("Minion", 4100)]) 
-Ineq(2, __0, 0) 
+max([2,a;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+max([2,a;int(1..)]) 
 
 --
 
-(__0 >= a), 
+max([2,a;int(1..)]), 
+   ~~> max_to_var ([("Base", 6000)]) 
+__1 
+new variables:
+  find __1: int(2..3)
+new constraints:
+  (__1 >= 2)
+  (__1 >= a)
+  or([(__1 = 2),(__1 = a);int(1..)])
+--
+
+(__1 >= 2), 
    ~~> geq_to_ineq ([("Minion", 4100)]) 
-Ineq(a, __0, 0) 
+Ineq(2, __1, 0) 
+
+--
+
+(__1 >= a), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(a, __1, 0) 
 
 --
 
@@ -47,11 +56,13 @@ Final model:
 
 find a: int(0..3)
 find __0: int(2..3)
+find __1: int(2..3)
 
 such that
 
 Ineq(__0, 2, 0),
-Ineq(2, __0, 0),
-Ineq(a, __0, 0),
-or([(__0 = 2),(__0 = a);int(1..)])
+__0 =aux __1,
+Ineq(2, __1, 0),
+Ineq(a, __1, 0),
+or([(__1 = 2),(__1 = a);int(1..)])
 

@@ -28,6 +28,7 @@
 
 use conjure_core::{
     ast::{Expression as Expr, ReturnType::Set, SymbolTable, Typeable},
+    into_matrix_expr,
     metadata::Metadata,
     rule_engine::{
         register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
@@ -36,7 +37,6 @@ use conjure_core::{
 use conjure_essence_macros::essence_expr;
 use std::collections::VecDeque;
 use uniplate::{Biplate, Uniplate as _};
-use Expr::*;
 
 /// Eliminates double negation
 ///
@@ -46,7 +46,9 @@ use Expr::*;
 #[register_rule(("Base", 8400))]
 fn elmininate_double_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
-        Neg(_, a) if matches!(**a, Neg(_, _)) => Ok(Reduction::pure(a.children()[0].clone())),
+        Expr::Neg(_, a) if matches!(**a, Expr::Neg(_, _)) => {
+            Ok(Reduction::pure(a.children()[0].clone()))
+        }
         _ => Err(RuleNotApplicable),
     }
 }
@@ -59,7 +61,7 @@ fn elmininate_double_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult
 #[register_rule(("Base", 8400))]
 fn distribute_negation_over_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let inner_expr = match expr {
-        Neg(_, e) if matches!(**e, Sum(_, _)) => Ok(*e.clone()),
+        Expr::Neg(_, e) if matches!(**e, Expr::Sum(_, _)) => Ok(*e.clone()),
         _ => Err(RuleNotApplicable),
     }?;
 
@@ -83,17 +85,22 @@ fn distribute_negation_over_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResu
 /// ```
 #[register_rule(("Base", 8400))]
 fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let Neg(_, expr1) = expr.clone() else {
+    let Expr::Neg(_, expr1) = expr.clone() else {
         return Err(RuleNotApplicable);
     };
 
-    let Product(_, mut factors) = *expr1 else {
+    let Expr::Product(_, factors) = *expr1 else {
         return Err(RuleNotApplicable);
     };
+
+    let mut factors = factors.unwrap_list().ok_or(RuleNotApplicable)?;
 
     factors.push(essence_expr!(-1));
 
-    Ok(Reduction::pure(Product(Metadata::new(), factors)))
+    Ok(Reduction::pure(Expr::Product(
+        Metadata::new(),
+        Box::new(into_matrix_expr!(factors)),
+    )))
 }
 
 /// Converts a minus to a sum
@@ -107,7 +114,7 @@ fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResu
 #[register_rule(("Base", 8400))]
 fn minus_to_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs) = match expr {
-        Minus(_, lhs, rhs) => {
+        Expr::Minus(_, lhs, rhs) => {
             if let Some(Set(_)) = lhs.as_ref().return_type() {
                 return Err(RuleNotApplicable);
             }

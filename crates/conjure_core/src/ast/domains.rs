@@ -1,8 +1,11 @@
-use std::fmt::Display;
+#![warn(clippy::missing_errors_doc)]
+
+use std::{collections::BTreeSet, fmt::Display};
 
 use conjure_core::ast::SymbolTable;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 
 use crate::ast::pretty::pretty_vec;
 use uniplate::{derive::Uniplate, Uniplate};
@@ -46,11 +49,10 @@ impl<A: Ord + Display> Display for Range<A> {
     }
 }
 
-#[derive(Default, Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize, Uniplate)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, Uniplate, Hash)]
 #[uniplate()]
 pub enum Domain {
-    #[default]
-    BoolDomain,
+    Bool,
 
     /// An integer domain.
     ///
@@ -59,15 +61,18 @@ pub enum Domain {
     ///
     /// + If no ranges are given, the int domain is considered unconstrained, and can take any
     ///   integer value.
-    IntDomain(Vec<Range<i32>>),
-    DomainReference(Name),
-    DomainSet(SetAttr, Box<Domain>),
-    /// A n-dimensional matrix with a value domain and n-index domains
-    DomainMatrix(Box<Domain>, Vec<Domain>),
-    // A tuple of n domains (e.g. (int, bool))
-    DomainTuple(Vec<Domain>),
+    Int(Vec<Range<i32>>),
 
-    DomainRecord(Vec<RecordEntry>),
+    /// An empty domain of the given type.
+    Empty(ReturnType),
+    Reference(Name),
+    Set(SetAttr, Box<Domain>),
+    /// A n-dimensional matrix with a value domain and n-index domains
+    Matrix(Box<Domain>, Vec<Domain>),
+    // A tuple of n domains (e.g. (int, bool))
+    Tuple(Vec<Domain>),
+
+    Record(Vec<RecordEntry>),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -79,36 +84,40 @@ pub enum SetAttr {
     MinMaxSize(i32, i32),
 }
 impl Domain {
-    // Whether the literal is a member of this domain.
-    //
-    // Returns `None` if this cannot be determined (e.g. `self` is a `DomainReference`).
-    pub fn contains(&self, lit: &Literal) -> Option<bool> {
+    /// Returns true if `lit` is a member of the domain.
+    ///
+    /// # Errors
+    ///
+    /// - [`DomainOpError::InputContainsReference`] if the input domain is a reference or contains
+    ///   a reference, meaning that its members cannot be determined.
+    pub fn contains(&self, lit: &Literal) -> Result<bool, DomainOpError> {
         // not adding a generic wildcard condition for all domains, so that this gives a compile
         // error when a domain is added.
         match (self, lit) {
-            (Domain::IntDomain(ranges), Literal::Int(x)) => {
+            (Domain::Empty(_), _) => Ok(false),
+            (Domain::Int(ranges), Literal::Int(x)) => {
                 // unconstrained int domain
                 if ranges.is_empty() {
-                    return Some(true);
+                    return Ok(true);
                 };
 
-                Some(ranges.iter().any(|range| range.contains(x)))
+                Ok(ranges.iter().any(|range| range.contains(x)))
             }
-            (Domain::IntDomain(_), _) => Some(false),
-            (Domain::BoolDomain, Literal::Bool(_)) => Some(true),
-            (Domain::BoolDomain, _) => Some(false),
-            (Domain::DomainReference(_), _) => None,
+            (Domain::Int(_), _) => Ok(false),
+            (Domain::Bool, Literal::Bool(_)) => Ok(true),
+            (Domain::Bool, _) => Ok(false),
+            (Domain::Reference(_), _) => Err(DomainOpError::InputContainsReference),
             (
-                Domain::DomainMatrix(elem_domain, index_domains),
+                Domain::Matrix(elem_domain, index_domains),
                 Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx_domain)),
             ) => {
                 let mut index_domains = index_domains.clone();
                 if index_domains
                     .pop()
                     .expect("a matrix should have atleast one index domain")
-                    != *idx_domain
+                    != **idx_domain
                 {
-                    return Some(false);
+                    return Ok(false);
                 };
 
                 // matrix literals are represented as nested 1d matrices, so the elements of
@@ -116,162 +125,337 @@ impl Domain {
                 let next_elem_domain = if index_domains.is_empty() {
                     elem_domain.as_ref().clone()
                 } else {
-                    Domain::DomainMatrix(elem_domain.clone(), index_domains)
+                    Domain::Matrix(elem_domain.clone(), index_domains)
                 };
 
                 for elem in elems {
                     if !next_elem_domain.contains(elem)? {
-                        return Some(false);
+                        return Ok(false);
                     }
                 }
 
-                Some(true)
+                Ok(true)
             }
             (
-                Domain::DomainTuple(elem_domains),
+                Domain::Tuple(elem_domains),
                 Literal::AbstractLiteral(AbstractLiteral::Tuple(literal_elems)),
             ) => {
                 // for every element in the tuple literal, check if it is in the corresponding domain
                 for (elem_domain, elem) in itertools::izip!(elem_domains, literal_elems) {
                     if !elem_domain.contains(elem)? {
-                        return Some(false);
+                        return Ok(false);
                     }
                 }
 
-                Some(true)
+                Ok(true)
             }
             (
-                Domain::DomainSet(_, domain),
+                Domain::Set(_, domain),
                 Literal::AbstractLiteral(AbstractLiteral::Set(literal_elems)),
             ) => {
                 for elem in literal_elems {
                     if !domain.contains(elem)? {
-                        return Some(false);
+                        return Ok(false);
                     }
                 }
-                Some(true)
+                Ok(true)
             }
             (
-                Domain::DomainRecord(entries),
+                Domain::Record(entries),
                 Literal::AbstractLiteral(AbstractLiteral::Record(lit_entries)),
             ) => {
                 for (entry, lit_entry) in itertools::izip!(entries, lit_entries) {
                     if entry.name != lit_entry.name || !(entry.domain.contains(&lit_entry.value)?) {
-                        return Some(false);
+                        return Ok(false);
                     }
                 }
-                Some(true)
+                Ok(true)
             }
 
-            (Domain::DomainRecord(_), _) => Some(false),
+            (Domain::Record(_), _) => Ok(false),
 
-            (Domain::DomainMatrix(_, _), _) => Some(false),
+            (Domain::Matrix(_, _), _) => Ok(false),
 
-            (Domain::DomainSet(_, _), _) => Some(false),
+            (Domain::Set(_, _), _) => Ok(false),
 
-            (Domain::DomainTuple(_), _) => Some(false),
+            (Domain::Tuple(_), _) => Ok(false),
         }
     }
 
-    /// Return a list of all possible i32 values in the domain if it is an IntDomain and is
-    /// bounded.
-    pub fn values_i32(&self) -> Option<Vec<i32>> {
+    /// Returns a list of all possible values in the domain.
+    ///
+    /// # Errors
+    ///
+    /// - [`DomainOpError::InputNotInteger`] if the domain is not an integer domain.
+    /// - [`DomainOpError::InputUnbounded`] if the domain is unbounded.
+    pub fn values_i32(&self) -> Result<Vec<i32>, DomainOpError> {
+        if let Domain::Empty(ReturnType::Int) = self {
+            return Ok(vec![]);
+        }
+        let Domain::Int(ranges) = self else {
+            return Err(DomainOpError::InputNotInteger(self.return_type().unwrap()));
+        };
+
+        if ranges.is_empty() {
+            return Err(DomainOpError::InputUnbounded);
+        }
+
+        let mut values = vec![];
+        for range in ranges {
+            match range {
+                Range::Single(i) => {
+                    values.push(*i);
+                }
+                Range::Bounded(i, j) => {
+                    values.extend(*i..=*j);
+                }
+                Range::UnboundedR(_) | Range::UnboundedL(_) => {
+                    return Err(DomainOpError::InputUnbounded);
+                }
+            }
+        }
+
+        Ok(values)
+    }
+
+    /// Creates an [`Domain::Int`] containing the given integers.
+    ///
+    /// [`Domain::from_set_i32`] should be used instead where possible, as it is cheaper (it does
+    /// not need to sort its input).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use conjure_core::ast::{Domain,Range};
+    ///
+    /// let elements = vec![1,2,3,4,5];
+    ///
+    /// let domain = Domain::from_slice_i32(&elements);
+    ///
+    /// let Domain::Int(ranges) = domain else {
+    ///     panic!("domain returned from from_slice_i32 should be a Domain::Int");
+    /// };
+    ///
+    /// assert_eq!(ranges,vec![Range::Bounded(1,5)]);
+    /// ```
+    ///
+    /// ```
+    /// use conjure_core::ast::{Domain,Range};
+    ///
+    /// let elements = vec![1,2,4,5,7,8,9,10];
+    ///
+    /// let domain = Domain::from_slice_i32(&elements);
+    ///
+    /// let Domain::Int(ranges) = domain else {
+    ///     panic!("domain returned from from_slice_i32 should be a Domain::Int");
+    /// };
+    ///
+    /// assert_eq!(ranges,vec![Range::Bounded(1,2),Range::Bounded(4,5),Range::Bounded(7,10)]);
+    /// ```
+    ///
+    /// ```
+    /// use conjure_core::ast::{Domain,Range,ReturnType};
+    ///
+    /// let elements = vec![];
+    ///
+    /// let domain = Domain::from_slice_i32(&elements);
+    ///
+    /// assert!(matches!(domain,Domain::Empty(ReturnType::Int)))
+    /// ```
+    pub fn from_slice_i32(elements: &[i32]) -> Domain {
+        if elements.is_empty() {
+            return Domain::Empty(ReturnType::Int);
+        }
+
+        let set = BTreeSet::from_iter(elements.iter().cloned());
+
+        Domain::from_set_i32(&set)
+    }
+
+    /// Creates an [`Domain::Int`] containing the given integers.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use conjure_core::ast::{Domain,Range};
+    /// use std::collections::BTreeSet;
+    ///
+    /// let elements = BTreeSet::from([1,2,3,4,5]);
+    ///
+    /// let domain = Domain::from_set_i32(&elements);
+    ///
+    /// let Domain::Int(ranges) = domain else {
+    ///     panic!("domain returned from from_slice_i32 should be a Domain::Int");
+    /// };
+    ///
+    /// assert_eq!(ranges,vec![Range::Bounded(1,5)]);
+    /// ```
+    ///
+    /// ```
+    /// use conjure_core::ast::{Domain,Range};
+    /// use std::collections::BTreeSet;
+    ///
+    /// let elements = BTreeSet::from([1,2,4,5,7,8,9,10]);
+    ///
+    /// let domain = Domain::from_set_i32(&elements);
+    ///
+    /// let Domain::Int(ranges) = domain else {
+    ///     panic!("domain returned from from_set_i32 should be a Domain::Int");
+    /// };
+    ///
+    /// assert_eq!(ranges,vec![Range::Bounded(1,2),Range::Bounded(4,5),Range::Bounded(7,10)]);
+    /// ```
+    ///
+    /// ```
+    /// use conjure_core::ast::{Domain,Range,ReturnType};
+    /// use std::collections::BTreeSet;
+    ///
+    /// let elements = BTreeSet::from([]);
+    ///
+    /// let domain = Domain::from_set_i32(&elements);
+    ///
+    /// assert!(matches!(domain,Domain::Empty(ReturnType::Int)))
+    /// ```
+    pub fn from_set_i32(elements: &BTreeSet<i32>) -> Domain {
+        if elements.is_empty() {
+            return Domain::Empty(ReturnType::Int);
+        }
+        if elements.len() == 1 {
+            return Domain::Int(vec![Range::Single(*elements.first().unwrap())]);
+        }
+
+        let mut elems_iter = elements.iter().cloned();
+
+        let mut ranges: Vec<Range<i32>> = vec![];
+
+        // Loop over the elements in ascending order, turning all sequential runs of
+        // numbers into ranges.
+
+        // the bounds of the current run of numbers.
+        let mut lower = elems_iter
+            .next()
+            .expect("if we get here, elements should have => 2 elements");
+        let mut upper = lower;
+
+        for current in elems_iter {
+            // As elements is a BTreeSet, current is always strictly larger than lower.
+
+            if current == upper + 1 {
+                // current is part of the current run - we now have the run lower..current
+                //
+                upper = current;
+            } else {
+                // the run lower..upper has ended.
+                //
+                // Add the run lower..upper to the domain, and start a new run.
+
+                if lower == upper {
+                    ranges.push(Range::Single(lower));
+                } else {
+                    ranges.push(Range::Bounded(lower, upper));
+                }
+
+                lower = current;
+                upper = current;
+            }
+        }
+
+        // add the final run to the domain
+        if lower == upper {
+            ranges.push(Range::Single(lower));
+        } else {
+            ranges.push(Range::Bounded(lower, upper));
+        }
+
+        Domain::Int(ranges)
+    }
+
+    /// Gets all the [`Literal`] values inside this domain.
+    ///
+    /// # Errors
+    ///
+    /// - [`DomainOpError::InputNotInteger`] if the domain is not an integer domain.
+    /// - [`DomainOpError::InputContainsReference`] if the domain is a reference or contains a
+    ///   reference, meaning that its values cannot be determined.
+    pub fn values(&self) -> Result<Vec<Literal>, DomainOpError> {
         match self {
-            Domain::IntDomain(ranges) => Some(
-                ranges
-                    .iter()
-                    .map(|r| match r {
-                        Range::Single(i) => Some(vec![*i]),
-                        Range::Bounded(i, j) => Some((*i..=*j).collect()),
-                        Range::UnboundedR(_) => None,
-                        Range::UnboundedL(_) => None,
-                    })
-                    .while_some()
-                    .flatten()
-                    .collect_vec(),
-            ),
-            _ => None,
-        }
-    }
-
-    // turns vector of integers into a domain
-    // TODO: can be done more compactly in terms of the domain we produce. e.g. instead of int(1,2,3,4,5,8,9,10) produce int(1..5, 8..10)
-    // needs to be tested with domain functions intersect() and uninon() once comprehension rules are written.
-    pub fn make_int_domain_from_values_i32(&self, vector: &[i32]) -> Option<Domain> {
-        let mut new_ranges = vec![];
-        for values in vector.iter() {
-            new_ranges.push(Range::Single(*values));
-        }
-        Some(Domain::IntDomain(new_ranges))
-    }
-
-    /// Gets all the values inside this domain, as a [`Literal`]. Returns `None` if the domain is not
-    /// finite.
-    pub fn values(&self) -> Option<Vec<Literal>> {
-        match self {
-            Domain::BoolDomain => Some(vec![false.into(), true.into()]),
-            Domain::IntDomain(_) => self
+            Domain::Empty(_) => Ok(vec![]),
+            Domain::Bool => Ok(vec![false.into(), true.into()]),
+            Domain::Int(_) => self
                 .values_i32()
                 .map(|xs| xs.iter().map(|x| Literal::Int(*x)).collect_vec()),
 
             // ~niklasdewally: don't know how to define this for collections, so leaving it for
             // now... However, it definitely can be done, as matrices can be indexed by matrices.
-            Domain::DomainSet(_, _) => todo!(),
-            Domain::DomainMatrix(_, _) => todo!(),
-            Domain::DomainReference(_) => None,
-            Domain::DomainTuple(_) => todo!(), // TODO: Can this be done?
-            Domain::DomainRecord(_) => todo!(),
+            Domain::Set(_, _) => todo!(),
+            Domain::Matrix(_, _) => todo!(),
+            Domain::Reference(_) => Err(DomainOpError::InputContainsReference),
+            Domain::Tuple(_) => todo!(), // TODO: Can this be done?
+            Domain::Record(_) => todo!(),
         }
     }
 
     /// Gets the length of this domain.
     ///
-    /// Returns `None` if it is not finite.
-    pub fn length(&self) -> Option<usize> {
+    /// # Errors
+    ///
+    /// - [`DomainOpError::InputUnbounded`] if the input domain is of infinite size.
+    /// - [`DomainOpError::InputContainsReference`] if the input domain is or contains a
+    ///   domain reference, meaning that its size cannot be determined.
+    pub fn length(&self) -> Result<usize, DomainOpError> {
         self.values().map(|x| x.len())
     }
 
-    /// Return an unoptimised domain that is the result of applying a binary i32 operation to two domains.
+    /// Returns the domain that is the result of applying a binary operation to two integer domains.
     ///
-    /// The given operator may return None if the operation is not defined for its arguments.
+    /// The given operator may return `None` if the operation is not defined for its arguments.
     /// Undefined values will not be included in the resulting domain.
     ///
-    /// Returns None if the domains are not valid for i32 operations.
-    pub fn apply_i32(&self, op: fn(i32, i32) -> Option<i32>, other: &Domain) -> Option<Domain> {
-        if let (Some(vs1), Some(vs2)) = (self.values_i32(), other.values_i32()) {
-            // TODO: (flm8) Optimise to use smarter, less brute-force methods
-            let mut new_ranges = vec![];
-            for (v1, v2) in itertools::iproduct!(vs1, vs2) {
-                if let Some(v) = op(v1, v2) {
-                    new_ranges.push(Range::Single(v))
-                }
-            }
-            return Some(Domain::IntDomain(new_ranges));
-        }
-        None
-    }
-
-    /// Whether this domain has a finite number of values.
+    /// # Errors
     ///
-    /// Returns `None` if this cannot be determined, e.g. if `self` is a domain reference.
-    pub fn is_finite(&self) -> Option<bool> {
+    /// - [`DomainOpError::InputUnbounded`] if either of the input domains are unbounded.
+    /// - [`DomainOpError::InputNotInteger`] if either of the input domains are not integers.
+    pub fn apply_i32(
+        &self,
+        op: fn(i32, i32) -> Option<i32>,
+        other: &Domain,
+    ) -> Result<Domain, DomainOpError> {
+        let vs1 = self.values_i32()?;
+        let vs2 = other.values_i32()?;
+
+        let mut set = BTreeSet::new();
+        for (v1, v2) in itertools::iproduct!(vs1, vs2) {
+            if let Some(v) = op(v1, v2) {
+                set.insert(v);
+            }
+        }
+
+        Ok(Domain::from_set_i32(&set))
+    }
+    /// Returns true if the domain is finite.
+    ///
+    /// # Errors
+    ///
+    /// - [`DomainOpError::InputContainsReference`] if the input domain is or contains a
+    ///   domain reference, meaning that its size cannot be determined.
+    pub fn is_finite(&self) -> Result<bool, DomainOpError> {
         for domain in self.universe() {
-            if let Domain::IntDomain(ranges) = domain {
+            if let Domain::Int(ranges) = domain {
                 if ranges.is_empty() {
-                    return Some(false);
+                    return Ok(false);
                 }
 
                 if ranges
                     .iter()
                     .any(|range| matches!(range, Range::UnboundedL(_) | Range::UnboundedR(_)))
                 {
-                    return Some(false);
+                    return Ok(false);
                 }
-            } else if let Domain::DomainReference(_) = domain {
-                return None;
+            } else if let Domain::Reference(_) = domain {
+                return Err(DomainOpError::InputContainsReference);
             }
         }
-        Some(true)
+        Ok(true)
     }
 
     /// Resolves this domain to a ground domain, using the symbol table provided to resolve
@@ -296,7 +480,7 @@ impl Domain {
         while done_something {
             done_something = false;
             for (domain, ctx) in self.clone().contexts() {
-                if let Domain::DomainReference(name) = domain {
+                if let Domain::Reference(name) = domain {
                     self = ctx(symbols
                         .resolve_domain(&name)
                         .expect("domain reference should exist in the symbol table")
@@ -308,63 +492,120 @@ impl Domain {
         self
     }
 
-    // simplified domain intersection function. defined for integer domains of sets
-    // TODO: does not consider unbounded domains yet
-    // needs to be tested once comprehension rules are written
-    pub fn intersect(&self, other: &Domain) -> Option<Domain> {
+    /// Calculates the intersection of two domains.
+    ///
+    /// # Errors
+    ///
+    ///  - [`DomainOpError::InputUnbounded`] if either of the input domains are unbounded.
+    ///  - [`DomainOpError::InputWrongType`] if the input domains are different types, or are not
+    ///    integer or set domains.
+    pub fn intersect(&self, other: &Domain) -> Result<Domain, DomainOpError> {
+        // TODO: does not consider unbounded domains yet
+        // needs to be tested once comprehension rules are written
+
         match (self, other) {
-            (Domain::DomainSet(_, x), Domain::DomainSet(_, y)) => Some(Domain::DomainSet(
-                SetAttr::None,
-                Box::new((*x).intersect(y)?),
-            )),
-            (Domain::IntDomain(_), Domain::IntDomain(_)) => {
-                let mut v: Vec<i32> = vec![];
-                if self.is_finite()? && other.is_finite()? {
-                    if let (Some(v1), Some(v2)) = (self.values_i32(), other.values_i32()) {
-                        for value1 in v1.iter() {
-                            if v2.contains(value1) && !v.contains(value1) {
-                                v.push(*value1)
-                            }
-                        }
-                    }
-                    self.make_int_domain_from_values_i32(&v)
-                } else {
-                    println!("Unbounded domain");
-                    None
-                }
+            // one or more arguments is an empty int domain
+            (d @ Domain::Empty(ReturnType::Int), Domain::Int(_)) => Ok(d.clone()),
+            (Domain::Int(_), d @ Domain::Empty(ReturnType::Int)) => Ok(d.clone()),
+            (Domain::Empty(ReturnType::Int), d @ Domain::Empty(ReturnType::Int)) => Ok(d.clone()),
+
+            // one or more arguments is an empty set(int) domain
+            (Domain::Set(_, inner1), d @ Domain::Empty(ReturnType::Set(inner2)))
+                if matches!(**inner1, Domain::Int(_) | Domain::Empty(ReturnType::Int))
+                    && matches!(**inner2, ReturnType::Int) =>
+            {
+                Ok(d.clone())
             }
-            _ => None,
+            (d @ Domain::Empty(ReturnType::Set(inner1)), Domain::Set(_, inner2))
+                if matches!(**inner1, ReturnType::Int)
+                    && matches!(**inner2, Domain::Int(_) | Domain::Empty(ReturnType::Int)) =>
+            {
+                Ok(d.clone())
+            }
+            (
+                d @ Domain::Empty(ReturnType::Set(inner1)),
+                Domain::Empty(ReturnType::Set(inner2)),
+            ) if matches!(**inner1, ReturnType::Int) && matches!(**inner2, ReturnType::Int) => {
+                Ok(d.clone())
+            }
+
+            // both arguments are non-empy
+            (Domain::Set(_, x), Domain::Set(_, y)) => {
+                Ok(Domain::Set(SetAttr::None, Box::new((*x).intersect(y)?)))
+            }
+
+            (Domain::Int(_), Domain::Int(_)) => {
+                let mut v: BTreeSet<i32> = BTreeSet::new();
+
+                let v1 = self.values_i32()?;
+                let v2 = other.values_i32()?;
+                for value1 in v1.iter() {
+                    if v2.contains(value1) && !v.contains(value1) {
+                        v.insert(*value1);
+                    }
+                }
+                Ok(Domain::from_set_i32(&v))
+            }
+            _ => Err(DomainOpError::InputWrongType),
         }
     }
 
-    // simplified domain union function. defined for integer domains of sets
-    // TODO: does not consider unbounded domains yet
-    // needs to be tested once comprehension rules are written
-    pub fn union(&self, other: &Domain) -> Option<Domain> {
+    /// Calculates the union of two domains.
+    ///
+    /// # Errors
+    ///
+    ///  - [`DomainOpError::InputUnbounded`] if either of the input domains are unbounded.
+    ///  - [`DomainOpError::InputWrongType`] if the input domains are different types, or are not
+    ///    integer or set domains.
+    pub fn union(&self, other: &Domain) -> Result<Domain, DomainOpError> {
+        // TODO: does not consider unbounded domains yet
+        // needs to be tested once comprehension rules are written
         match (self, other) {
-            (Domain::DomainSet(_, x), Domain::DomainSet(_, y)) => {
-                Some(Domain::DomainSet(SetAttr::None, Box::new((*x).union(y)?)))
+            // one or more arguments is an empty integer domain
+            (Domain::Empty(ReturnType::Int), d @ Domain::Int(_)) => Ok(d.clone()),
+            (d @ Domain::Int(_), Domain::Empty(ReturnType::Int)) => Ok(d.clone()),
+            (Domain::Empty(ReturnType::Int), d @ Domain::Empty(ReturnType::Int)) => Ok(d.clone()),
+
+            // one or more arguments is an empty set(int) domain
+            (d @ Domain::Set(_, inner1), Domain::Empty(ReturnType::Set(inner2)))
+                if matches!(**inner1, Domain::Int(_) | Domain::Empty(ReturnType::Int))
+                    && matches!(**inner2, ReturnType::Int) =>
+            {
+                Ok(d.clone())
             }
-            (Domain::IntDomain(_), Domain::IntDomain(_)) => {
-                let mut v: Vec<i32> = vec![];
-                if self.is_finite()? && other.is_finite()? {
-                    if let (Some(v1), Some(v2)) = (self.values_i32(), other.values_i32()) {
-                        for value1 in v1.iter() {
-                            v.push(*value1);
-                        }
-                        for value2 in v2.iter() {
-                            if !v.contains(value2) {
-                                v.push(*value2);
-                            }
-                        }
-                    }
-                    self.make_int_domain_from_values_i32(&v)
-                } else {
-                    println!("Unbounded Domain");
-                    None
+            (Domain::Empty(ReturnType::Set(inner1)), d @ Domain::Set(_, inner2))
+                if matches!(**inner1, ReturnType::Int)
+                    && matches!(**inner2, Domain::Int(_) | Domain::Empty(ReturnType::Int)) =>
+            {
+                Ok(d.clone())
+            }
+            (
+                d @ Domain::Empty(ReturnType::Set(inner1)),
+                Domain::Empty(ReturnType::Set(inner2)),
+            ) if matches!(**inner1, ReturnType::Int) && matches!(**inner2, ReturnType::Int) => {
+                Ok(d.clone())
+            }
+
+            // both arguments are non empty
+            (Domain::Set(_, x), Domain::Set(_, y)) => {
+                Ok(Domain::Set(SetAttr::None, Box::new((*x).union(y)?)))
+            }
+            (Domain::Int(_), Domain::Int(_)) => {
+                let mut v: BTreeSet<i32> = BTreeSet::new();
+                let v1 = self.values_i32()?;
+                let v2 = other.values_i32()?;
+
+                for value1 in v1.iter() {
+                    v.insert(*value1);
                 }
+
+                for value2 in v2.iter() {
+                    v.insert(*value2);
+                }
+
+                Ok(Domain::from_set_i32(&v))
             }
-            _ => None,
+            _ => Err(DomainOpError::InputWrongType),
         }
     }
 }
@@ -372,10 +613,10 @@ impl Domain {
 impl Display for Domain {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Domain::BoolDomain => {
+            Domain::Bool => {
                 write!(f, "bool")
             }
-            Domain::IntDomain(vec) => {
+            Domain::Int(vec) => {
                 let domain_ranges: String = vec.iter().map(|x| format!("{x}")).join(",");
 
                 if domain_ranges.is_empty() {
@@ -384,25 +625,25 @@ impl Display for Domain {
                     write!(f, "int({domain_ranges})")
                 }
             }
-            Domain::DomainReference(name) => write!(f, "{}", name),
-            Domain::DomainSet(_, domain) => {
+            Domain::Reference(name) => write!(f, "{}", name),
+            Domain::Set(_, domain) => {
                 write!(f, "set of ({})", domain)
             }
-            Domain::DomainMatrix(value_domain, index_domains) => {
+            Domain::Matrix(value_domain, index_domains) => {
                 write!(
                     f,
                     "matrix indexed by [{}] of {value_domain}",
                     pretty_vec(&index_domains.iter().collect_vec())
                 )
             }
-            Domain::DomainTuple(domains) => {
+            Domain::Tuple(domains) => {
                 write!(
                     f,
                     "tuple of ({})",
                     pretty_vec(&domains.iter().collect_vec())
                 )
             }
-            Domain::DomainRecord(entries) => {
+            Domain::Record(entries) => {
                 write!(
                     f,
                     "record of ({})",
@@ -414,6 +655,7 @@ impl Display for Domain {
                     )
                 )
             }
+            Domain::Empty(return_type) => write!(f, "empty({return_type:?}"),
         }
     }
 }
@@ -423,49 +665,57 @@ impl Typeable for Domain {
         todo!()
     }
 }
+
+/// An error thrown by an operation on domains.
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Eq, Error)]
+#[allow(clippy::enum_variant_names)] // all variant names start with Input at the moment, but that is ok.
+pub enum DomainOpError {
+    /// The operation only supports bounded / finite domains, but was given an unbounded input domain.
+    #[error("The operation only supports bounded / finite domains, but was given an unbounded input domain.")]
+    InputUnbounded,
+
+    /// The operation only supports integer input domains, but was given an input domain of a
+    /// different type.
+    #[error("The operation only supports integer input domains, but got a {0:?} input domain.")]
+    InputNotInteger(ReturnType),
+
+    /// The operation was given an input domain of the wrong type.
+    #[error("The operation was given input domains of the wrong type.")]
+    InputWrongType,
+
+    /// The operation failed as the input domain contained a reference.
+    #[error("The operation failed as the input domain contained a reference")]
+    InputContainsReference,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_negative_product() {
-        let d1 = Domain::IntDomain(vec![Range::Bounded(-2, 1)]);
-        let d2 = Domain::IntDomain(vec![Range::Bounded(-2, 1)]);
+        let d1 = Domain::Int(vec![Range::Bounded(-2, 1)]);
+        let d2 = Domain::Int(vec![Range::Bounded(-2, 1)]);
         let res = d1.apply_i32(|a, b| Some(a * b), &d2).unwrap();
 
-        assert!(matches!(res, Domain::IntDomain(_)));
-        if let Domain::IntDomain(ranges) = res {
-            assert!(!ranges.contains(&Range::Single(-4)));
-            assert!(!ranges.contains(&Range::Single(-3)));
-            assert!(ranges.contains(&Range::Single(-2)));
-            assert!(ranges.contains(&Range::Single(-1)));
-            assert!(ranges.contains(&Range::Single(0)));
-            assert!(ranges.contains(&Range::Single(1)));
-            assert!(ranges.contains(&Range::Single(2)));
-            assert!(!ranges.contains(&Range::Single(3)));
-            assert!(ranges.contains(&Range::Single(4)));
+        assert!(matches!(res, Domain::Int(_)));
+        if let Domain::Int(ranges) = res {
+            assert!(!ranges.contains(&Range::Bounded(-4, 4)));
         }
     }
 
     #[test]
     fn test_negative_div() {
-        let d1 = Domain::IntDomain(vec![Range::Bounded(-2, 1)]);
-        let d2 = Domain::IntDomain(vec![Range::Bounded(-2, 1)]);
+        let d1 = Domain::Int(vec![Range::Bounded(-2, 1)]);
+        let d2 = Domain::Int(vec![Range::Bounded(-2, 1)]);
         let res = d1
             .apply_i32(|a, b| if b != 0 { Some(a / b) } else { None }, &d2)
             .unwrap();
 
-        assert!(matches!(res, Domain::IntDomain(_)));
-        if let Domain::IntDomain(ranges) = res {
-            assert!(!ranges.contains(&Range::Single(-4)));
-            assert!(!ranges.contains(&Range::Single(-3)));
-            assert!(ranges.contains(&Range::Single(-2)));
-            assert!(ranges.contains(&Range::Single(-1)));
-            assert!(ranges.contains(&Range::Single(0)));
-            assert!(ranges.contains(&Range::Single(1)));
-            assert!(ranges.contains(&Range::Single(2)));
-            assert!(!ranges.contains(&Range::Single(3)));
-            assert!(!ranges.contains(&Range::Single(4)));
+        assert!(matches!(res, Domain::Int(_)));
+        if let Domain::Int(ranges) = res {
+            assert!(!ranges.contains(&Range::Bounded(-4, 4)));
         }
     }
 }

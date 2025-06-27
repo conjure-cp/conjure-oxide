@@ -22,6 +22,8 @@ use super::{ReturnType, Typeable};
 pub enum Literal {
     Int(i32),
     Bool(bool),
+    //abstract literal variant ends in Literal, but that's ok
+    #[allow(clippy::enum_variant_names)]
     AbstractLiteral(AbstractLiteral<Literal>),
 }
 
@@ -38,7 +40,7 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
     Set(Vec<T>),
 
     /// A 1 dimensional matrix slice with an index domain.
-    Matrix(Vec<T>, Domain),
+    Matrix(Vec<T>, Box<Domain>),
 
     // a tuple of literals
     Tuple(Vec<T>),
@@ -79,7 +81,7 @@ where
     ///
     /// This acts as a variable sized list.
     pub fn matrix_implied_indices(elems: Vec<T>) -> Self {
-        AbstractLiteral::Matrix(elems, Domain::IntDomain(vec![Range::UnboundedR(1)]))
+        AbstractLiteral::Matrix(elems, Box::new(Domain::Int(vec![Range::UnboundedR(1)])))
     }
 
     /// If the AbstractLiteral is a list, returns its elements.
@@ -87,7 +89,11 @@ where
     /// A list is any a matrix with the domain `int(1..)`. This includes matrix literals without
     /// any explicitly specified domain.
     pub fn unwrap_list(&self) -> Option<&Vec<T>> {
-        let AbstractLiteral::Matrix(elems, Domain::IntDomain(ranges)) = self else {
+        let AbstractLiteral::Matrix(elems, domain) = self else {
+            return None;
+        };
+
+        let Domain::Int(ranges) = domain.as_ref() else {
             return None;
         };
 
@@ -222,7 +228,7 @@ where
                 }
                 AbstractLiteral::Matrix(elems, index_domain) => {
                     let index_domain = index_domain.clone();
-                    let (f1_tree, f1_ctx) = <_ as Biplate<To>>::biplate(elems);
+                    let (f1_tree, f1_ctx) = <Vec<U> as Biplate<To>>::biplate(elems);
                     (
                         f1_tree,
                         Box::new(move |x| AbstractLiteral::Matrix(f1_ctx(x), index_domain.clone())),
@@ -255,6 +261,22 @@ impl TryFrom<Literal> for i32 {
             Literal::Int(i) => Ok(i),
             _ => Err("Cannot convert non-i32 literal to i32"),
         }
+    }
+}
+
+impl TryFrom<Box<Literal>> for i32 {
+    type Error = &'static str;
+
+    fn try_from(value: Box<Literal>) -> Result<Self, Self::Error> {
+        (*value).try_into()
+    }
+}
+
+impl TryFrom<&Box<Literal>> for i32 {
+    type Error = &'static str;
+
+    fn try_from(value: &Box<Literal>) -> Result<Self, Self::Error> {
+        TryFrom::<&Literal>::try_from(value.as_ref())
     }
 }
 
@@ -306,7 +328,7 @@ impl From<bool> for Literal {
 impl AbstractLiteral<Expression> {
     /// If all the elements are literals, returns this as an AbstractLiteral<Literal>.
     /// Otherwise, returns `None`.
-    pub fn as_literals(self) -> Option<AbstractLiteral<Literal>> {
+    pub fn into_literals(self) -> Option<AbstractLiteral<Literal>> {
         match self {
             AbstractLiteral::Set(_) => todo!(),
             AbstractLiteral::Matrix(items, domain) => {
@@ -315,7 +337,7 @@ impl AbstractLiteral<Expression> {
                     let literal = match item {
                         Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
                         Expression::AbstractLiteral(_, abslit) => {
-                            Some(Literal::AbstractLiteral(abslit.as_literals()?))
+                            Some(Literal::AbstractLiteral(abslit.into_literals()?))
                         }
                         _ => None,
                     }?;
@@ -330,7 +352,7 @@ impl AbstractLiteral<Expression> {
                     let literal = match item {
                         Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
                         Expression::AbstractLiteral(_, abslit) => {
-                            Some(Literal::AbstractLiteral(abslit.as_literals()?))
+                            Some(Literal::AbstractLiteral(abslit.into_literals()?))
                         }
                         _ => None,
                     }?;
@@ -345,7 +367,7 @@ impl AbstractLiteral<Expression> {
                     let literal = match entry.value {
                         Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
                         Expression::AbstractLiteral(_, abslit) => {
-                            Some(Literal::AbstractLiteral(abslit.as_literals()?))
+                            Some(Literal::AbstractLiteral(abslit.into_literals()?))
                         }
                         _ => None,
                     }?;
@@ -389,16 +411,16 @@ mod tests {
     fn matrix_uniplate_universe() {
         // Can we traverse through matrices with uniplate?
         let my_matrix: AbstractLiteral<Literal> = into_matrix![
-            vec![Literal::AbstractLiteral(matrix![Literal::Bool(true);Domain::BoolDomain]); 5];
-            Domain::BoolDomain
+            vec![Literal::AbstractLiteral(matrix![Literal::Bool(true);Domain::Bool]); 5];
+            Domain::Bool
         ];
 
-        let expected_index_domains = vec![Domain::BoolDomain; 6];
+        let expected_index_domains = vec![Domain::Bool; 6];
         let actual_index_domains: Vec<Domain> = my_matrix.cata(Arc::new(move |elem, children| {
             let mut res = vec![];
             res.extend(children.into_iter().flatten());
             if let AbstractLiteral::Matrix(_, index_domain) = elem {
-                res.push(index_domain);
+                res.push(*index_domain);
             }
 
             res

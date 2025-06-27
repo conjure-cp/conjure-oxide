@@ -8,13 +8,13 @@ find d: bool
 such that
 
 or([a,b;int(1..2)]),
-or([Not(c),and([b,d;int(1..2)]);int(1..2)]),
+or([!(c),and([b,d;int(1..2)]);int(1..2)]),
 b,
 or([d,c;int(1..2)])
 
 --
 
-Not(c), 
+!(c), 
    ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
 WatchedLiteral(c,false) 
 
@@ -48,7 +48,7 @@ or([a,b;int(1..)]),
 and([or([WatchedLiteral(c,false),b;int(1..)]),or([WatchedLiteral(c,false),d;int(1..)]);int(1..)]),
 b,
 or([d,c;int(1..2)]), 
-   ~~> partial_evaluator ([("Base", 9000)]) 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
 or([a,b;int(1..)]),
 or([WatchedLiteral(c,false),b;int(1..)]),
 or([WatchedLiteral(c,false),d;int(1..)]),
