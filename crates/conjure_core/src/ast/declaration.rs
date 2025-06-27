@@ -52,10 +52,11 @@ pub enum DeclarationKind {
     Given(Domain),
 }
 
-// NOTE: To not be used anywhere else. Needed for serde de-serialization.
+// FIXME: remove
 impl Default for DeclarationKind {
     fn default() -> Self {
-        todo!("remove default declarationkind");
+        DeclarationKind::Given(Domain::Empty(ReturnType::Int))
+        // todo!("remove default declarationkind");
     }
 }
 
