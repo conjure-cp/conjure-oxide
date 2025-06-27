@@ -1,17 +1,17 @@
 #![allow(dead_code)]
 use conjure_core::ast::{
-    matrix, AbstractLiteral, Atom, Expression as Expr, Literal as Lit, SymbolTable,
+    AbstractLiteral, Atom, Expression as Expr, Literal as Lit, SymbolTable, matrix,
 };
 use conjure_core::into_matrix;
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
-    register_rule, register_rule_set, ApplicationError::RuleNotApplicable, ApplicationResult,
-    Reduction,
+    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+    register_rule_set,
 };
-use itertools::{izip, Itertools as _};
+use itertools::{Itertools as _, izip};
 use std::collections::HashSet;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use uniplate::Biplate;
 
 use super::partial_eval::run_partial_evaluator;
@@ -76,12 +76,11 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 let a_set: HashSet<Lit> = a.iter().cloned().collect();
                 let b_set: HashSet<Lit> = b.iter().cloned().collect();
 
-                let result = if a_set.difference(&b_set).count() > 0 {
+                if a_set.difference(&b_set).count() > 0 {
                     Some(Lit::Bool(a_set.is_superset(&b_set)))
                 } else {
                     Some(Lit::Bool(false))
-                };
-                result
+                }
             }
             _ => None,
         },
@@ -105,12 +104,11 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 let a_set: HashSet<Lit> = a.iter().cloned().collect();
                 let b_set: HashSet<Lit> = b.iter().cloned().collect();
 
-                let result = if b_set.difference(&a_set).count() > 0 {
+                if b_set.difference(&a_set).count() > 0 {
                     Some(Lit::Bool(a_set.is_subset(&b_set)))
                 } else {
                     Some(Lit::Bool(false))
-                };
-                result
+                }
             }
             _ => None,
         },

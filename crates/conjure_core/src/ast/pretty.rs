@@ -22,7 +22,7 @@ use super::{Expression, Name, SymbolTable};
 ///
 /// Each `Expression` is printed using its underlying `Display` implementation.
 pub fn pretty_expressions_as_top_level(expressions: &[Expression]) -> String {
-    expressions.iter().map(|x| format!("{}", x)).join(",\n")
+    expressions.iter().map(|x| format!("{x}")).join(",\n")
 }
 
 /// Pretty prints a `Vec<Expression>` as if it were a conjunction.
@@ -35,7 +35,7 @@ pub fn pretty_expressions_as_top_level(expressions: &[Expression]) -> String {
 ///
 /// Each `Expression` is printed using its underlying `Display` implementation.
 pub fn pretty_expressions_as_conjunction(expressions: &[Expression]) -> String {
-    let mut str = expressions.iter().map(|x| format!("{}", x)).join(" /\\ ");
+    let mut str = expressions.iter().map(|x| format!("{x}")).join(" /\\ ");
 
     str.insert(0, '(');
     str.push(')');
@@ -53,7 +53,7 @@ pub fn pretty_expressions_as_conjunction(expressions: &[Expression]) -> String {
 ///
 /// Each element is printed using its underlying `Display` implementation.
 pub fn pretty_vec<T: Display>(elems: &[T]) -> String {
-    let mut str = elems.iter().map(|x| format!("{}", x)).join(", ");
+    let mut str = elems.iter().map(|x| format!("{x}")).join(", ");
     str.insert(0, '[');
     str.push(']');
 

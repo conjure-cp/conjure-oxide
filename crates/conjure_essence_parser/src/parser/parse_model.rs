@@ -2,12 +2,12 @@ use std::fs;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
+use conjure_core::Model;
 use conjure_core::ast::Declaration;
 use conjure_core::ast::Expression;
 use conjure_core::context::Context;
 use conjure_core::error::Error;
 use conjure_core::metadata::Metadata;
-use conjure_core::Model;
 #[allow(unused)]
 use uniplate::Uniplate;
 
@@ -24,7 +24,7 @@ pub fn parse_essence_file_native(
     context: Arc<RwLock<Context<'static>>>,
 ) -> Result<Model, EssenceParseError> {
     let source_code = fs::read_to_string(path)
-        .unwrap_or_else(|_| panic!("Failed to read the source code file {}", path));
+        .unwrap_or_else(|_| panic!("Failed to read the source code file {path}"));
     parse_essence_with_context(&source_code, context)
 }
 
@@ -37,7 +37,7 @@ pub fn parse_essence_with_context(
         None => {
             return Err(EssenceParseError::TreeSitterError(
                 "Failed to parse source code".to_string(),
-            ))
+            ));
         }
     };
 

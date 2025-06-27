@@ -18,7 +18,7 @@ use conjure_core::{
     into_matrix_expr, matrix_expr,
     metadata::Metadata,
     rule_engine::{
-        register_rule, register_rule_set, ApplicationError, ApplicationResult, Reduction,
+        ApplicationError, ApplicationResult, Reduction, register_rule, register_rule_set,
     },
     solver::SolverFamily,
 };
@@ -417,7 +417,11 @@ fn flatten_weighted_sum_term(
                 // assume the coefficients have been placed at the front by normalisation rules
 
                 // product[1,x,y,...] ~> return (coeff,product([x,y,...]))
-                [Expr::Atomic(_, Atom::Literal(Lit::Int(coeff))), e, rest @ ..] => {
+                [
+                    Expr::Atomic(_, Atom::Literal(Lit::Int(coeff))),
+                    e,
+                    rest @ ..,
+                ] => {
                     let mut product_terms = Vec::from(rest);
                     product_terms.push(e.clone());
                     let product =

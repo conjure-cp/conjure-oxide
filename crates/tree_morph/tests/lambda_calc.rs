@@ -93,7 +93,7 @@ fn subst(expr: &Expr, x: u32, f: &Expr) -> Expr {
 fn beta_reduce(expr: &Expr) -> Option<Expr> {
     if let Expr::App(m, n) = expr {
         if let Expr::Abs(x, g) = m.as_ref() {
-            return Some(subst(&g, *x, n));
+            return Some(subst(g, *x, n));
         }
     }
     None

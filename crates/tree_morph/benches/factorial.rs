@@ -2,7 +2,7 @@
 ///Note that addition and multiplication are performed modulo 10, to avoid having large numbers
 /// in the factorial. I also add in a dummy "do_nothing" rule. This gives another area where
 /// an optimiser can shine.
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use tree_morph::prelude::*;

@@ -1,4 +1,5 @@
 use super::{
+    Atom, Declaration, Literal,
     comprehension::Comprehension,
     declaration::DeclarationKind,
     pretty::{
@@ -6,7 +7,6 @@ use super::{
         pretty_value_letting_declaration, pretty_variable_declaration,
     },
     serde::RcRefCellAsInner,
-    Atom, Declaration, Literal,
 };
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
@@ -20,7 +20,7 @@ use std::{
     rc::Rc,
 };
 
-use super::{types::Typeable, Expression, ReturnType, SymbolTable};
+use super::{Expression, ReturnType, SymbolTable, types::Typeable};
 
 /// A sub-model, representing a lexical scope in the model.
 ///

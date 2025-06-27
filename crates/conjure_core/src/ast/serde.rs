@@ -6,9 +6,9 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use serde::Serialize;
 use serde::de::Deserialize;
 use serde::de::Error;
-use serde::Serialize;
 use serde_with::{DeserializeAs, SerializeAs};
 
 /// A unique id, used to distinguish between objects of the same type.

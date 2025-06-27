@@ -9,7 +9,7 @@ use rustsat::{
 
 use rustsat_minisat::core::Minisat;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
 use crate::{ast::Expression, solver::Error};
 
@@ -62,11 +62,7 @@ pub fn handle_atom(
                     // TODO: Temp Clone
                     // let m = n.clone();
                     let lit_temp: Lit = fetch_lit(n, vars_added, inst);
-                    if polarity {
-                        lit_temp
-                    } else {
-                        !lit_temp
-                    }
+                    if polarity { lit_temp } else { !lit_temp }
                 }
                 _ => {
                     todo!("Change Here for other types of vars")

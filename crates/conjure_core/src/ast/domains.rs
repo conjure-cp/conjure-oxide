@@ -8,9 +8,9 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 use crate::ast::pretty::pretty_vec;
-use uniplate::{derive::Uniplate, Uniplate};
+use uniplate::{Uniplate, derive::Uniplate};
 
-use super::{records::RecordEntry, types::Typeable, AbstractLiteral, Literal, Name, ReturnType};
+use super::{AbstractLiteral, Literal, Name, ReturnType, records::RecordEntry, types::Typeable};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Range<A>
@@ -625,9 +625,9 @@ impl Display for Domain {
                     write!(f, "int({domain_ranges})")
                 }
             }
-            Domain::Reference(name) => write!(f, "{}", name),
+            Domain::Reference(name) => write!(f, "{name}"),
             Domain::Set(_, domain) => {
-                write!(f, "set of ({})", domain)
+                write!(f, "set of ({domain})")
             }
             Domain::Matrix(value_domain, index_domains) => {
                 write!(
@@ -672,7 +672,9 @@ impl Typeable for Domain {
 #[allow(clippy::enum_variant_names)] // all variant names start with Input at the moment, but that is ok.
 pub enum DomainOpError {
     /// The operation only supports bounded / finite domains, but was given an unbounded input domain.
-    #[error("The operation only supports bounded / finite domains, but was given an unbounded input domain.")]
+    #[error(
+        "The operation only supports bounded / finite domains, but was given an unbounded input domain."
+    )]
     InputUnbounded,
 
     /// The operation only supports integer input domains, but was given an input domain of a

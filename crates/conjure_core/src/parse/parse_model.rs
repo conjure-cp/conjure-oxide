@@ -18,7 +18,7 @@ use crate::ast::{Declaration, DeclarationKind};
 use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::metadata::Metadata;
-use crate::{bug, error, into_matrix_expr, throw_error, Model};
+use crate::{Model, bug, error, into_matrix_expr, throw_error};
 
 #[allow(unused_macros)]
 macro_rules! parser_trace {
@@ -372,10 +372,7 @@ fn parse_domain_value_int(obj: &JsonValue, symbols: &SymbolTable) -> Option<i32>
                 Some(x)
             }
             Err(_) => {
-                println!(
-                    "Could not convert integer constant to i32: {:#?}",
-                    leaf_node
-                );
+                println!("Could not convert integer constant to i32: {leaf_node:#?}");
                 None
             }
         }

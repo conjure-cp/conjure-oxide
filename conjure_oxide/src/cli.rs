@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::{arg, command, Args, Parser, Subcommand};
+use clap::{Args, Parser, Subcommand, arg, command};
 
 use clap_complete::Shell;
 use conjure_oxide::SolverFamily;

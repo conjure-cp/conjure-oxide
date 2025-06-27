@@ -1,9 +1,10 @@
-use std::cell::Cell;
+use std::sync::atomic::Ordering;
 
+use std::sync::atomic::AtomicUsize;
 use tree_morph::prelude::*;
 use uniplate::derive::Uniplate;
 
-static mut GLOBAL_RULE_CHECKS: Cell<usize> = Cell::new(0);
+static GLOBAL_RULE_CHECKS: AtomicUsize = AtomicUsize::new(0);
 
 #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 #[uniplate()]
@@ -46,11 +47,9 @@ struct Meta {
 impl Rule<Expr, Meta> for MyRule {
     fn apply(&self, cmd: &mut Commands<Expr, Meta>, expr: &Expr, meta: &Meta) -> Option<Expr> {
         cmd.mut_meta(Box::new(|m: &mut Meta| m.num_applications += 1)); // Only applied if successful
-                                                                        // THIS IS FOR TESTING ONLY
-                                                                        // Not meant to integrated into the main code.
-        unsafe {
-            GLOBAL_RULE_CHECKS.set(GLOBAL_RULE_CHECKS.get() + 1);
-        }
+        // THIS IS FOR TESTING ONLY
+        // Not meant to integrated into the main code.
+        GLOBAL_RULE_CHECKS.fetch_add(1, Ordering::Relaxed);
         match self {
             MyRule::EvalAdd => rule_eval_add(cmd, expr, meta),
             MyRule::EvalMul => rule_eval_mul(cmd, expr, meta),
@@ -87,11 +86,9 @@ fn left_branch_clean() {
 
     println!("RAN TESTS");
     println!("Number of applications: {}", meta.num_applications);
-    unsafe {
-        println!(
-            "Number of Rule Application Checks {}",
-            GLOBAL_RULE_CHECKS.get()
-        );
-    }
+    println!(
+        "Number of Rule Application Checks {}",
+        GLOBAL_RULE_CHECKS.load(Ordering::Relaxed)
+    );
     dbg!(expr);
 }

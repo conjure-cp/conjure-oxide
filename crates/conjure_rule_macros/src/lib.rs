@@ -5,8 +5,8 @@ use quote::quote;
 use syn::punctuated::Punctuated;
 use syn::token::Comma;
 use syn::{
-    parenthesized, parse::Parse, parse::ParseStream, parse_macro_input, Ident, ItemFn, LitInt,
-    LitStr, Path, Result,
+    Ident, ItemFn, LitInt, LitStr, Path, Result, parenthesized, parse::Parse, parse::ParseStream,
+    parse_macro_input,
 };
 
 #[derive(Debug)]
@@ -47,7 +47,7 @@ impl Parse for RegisterRuleArgs {
 pub fn register_rule(arg_tokens: TokenStream, item: TokenStream) -> TokenStream {
     let func = parse_macro_input!(item as ItemFn);
     let rule_ident = &func.sig.ident;
-    let static_name = format!("CONJURE_GEN_RULE_{}", rule_ident).to_uppercase();
+    let static_name = format!("CONJURE_GEN_RULE_{rule_ident}").to_uppercase();
     let static_ident = Ident::new(&static_name, rule_ident.span());
 
     let args = parse_macro_input!(arg_tokens as RegisterRuleArgs);

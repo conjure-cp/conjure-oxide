@@ -36,8 +36,8 @@ uniplate::derive_unplateable!(Name);
 impl Display for Name {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Name::User(s) => write!(f, "{}", s),
-            Name::Machine(i) => write!(f, "__{}", i),
+            Name::User(s) => write!(f, "{s}"),
+            Name::Machine(i) => write!(f, "__{i}"),
             Name::Represented(fields) => {
                 let (name, rule_string, suffix) = fields.as_ref();
                 write!(f, "{name}#{rule_string}_{suffix}")

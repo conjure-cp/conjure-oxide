@@ -7,11 +7,11 @@ use conjure_core::rule_engine::rewrite_naive;
 use conjure_core::{into_matrix_expr, matrix_expr};
 use conjure_oxide::SolverFamily;
 use conjure_oxide::{
+    Metadata, Model, Rule,
     ast::*,
     get_rule_by_name,
     rule_engine::resolve_rule_sets,
-    solver::{adaptors, Solver},
-    Metadata, Model, Rule,
+    solver::{Solver, adaptors},
 };
 use conjure_rules::eval_constant;
 use uniplate::{Biplate, Uniplate};
@@ -135,10 +135,9 @@ fn simplify_expression(expr: Expression) -> Expression {
             } else {
                 Expression::Sum(
                     Metadata::new(),
-                    Box::new(into_matrix_expr![expressions
-                        .into_iter()
-                        .map(simplify_expression)
-                        .collect()]),
+                    Box::new(into_matrix_expr![
+                        expressions.into_iter().map(simplify_expression).collect()
+                    ]),
                 )
             }
         }
@@ -627,11 +626,11 @@ fn rewrite_solve_xyz() {
     let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &["Constant"]) {
         Ok(rs) => rs,
         Err(e) => {
-            eprintln!("Error resolving rule sets: {}", e);
+            eprintln!("Error resolving rule sets: {e}");
             exit(1);
         }
     };
-    println!("Rule sets: {:?}", rule_sets);
+    println!("Rule sets: {rule_sets:?}");
 
     // Create variables and domains
     let variable_a = Atom::Reference(Name::User(String::from("a")));
@@ -669,7 +668,7 @@ fn rewrite_solve_xyz() {
     let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &["Constant"]) {
         Ok(rs) => rs,
         Err(e) => {
-            eprintln!("Error resolving rule sets: {}", e);
+            eprintln!("Error resolving rule sets: {e}");
             exit(1);
         }
     };
