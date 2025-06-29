@@ -9,6 +9,7 @@ use super::name::Name;
 use super::serde::{DefaultWithId, HasId, ObjId};
 use super::types::Typeable;
 use super::{DecisionVariable, Domain, Expression, ReturnType};
+use crate::ast::comprehension::Generator;
 
 static ID_COUNTER: AtomicU32 = AtomicU32::new(0);
 
@@ -50,6 +51,7 @@ pub enum DeclarationKind {
     ValueLetting(Expression),
     DomainLetting(Domain),
     Given(Domain),
+    Quantified(Generator),
 }
 
 impl Declaration {
@@ -99,6 +101,15 @@ impl Declaration {
         }
     }
 
+    pub fn new_quantified(name: Name, generator: Generator) -> Declaration {
+        let id = ID_COUNTER.fetch_add(1, Ordering::Relaxed);
+        Declaration {
+            name,
+            kind: DeclarationKind::Quantified(generator),
+            id,
+        }
+    }
+
     /// The name of this declaration.
     pub fn name(&self) -> &Name {
         &self.name
@@ -116,6 +127,10 @@ impl Declaration {
             DeclarationKind::ValueLetting(_) => None,
             DeclarationKind::DomainLetting(domain) => Some(domain),
             DeclarationKind::Given(domain) => Some(domain),
+            DeclarationKind::Quantified(generator) => match generator {
+                Generator::WithDomain(domain) => Some(domain),
+                Generator::InExpr(_) => None,
+            },
         }
     }
 
@@ -213,6 +228,10 @@ impl Typeable for Declaration {
             DeclarationKind::ValueLetting(expression) => expression.return_type(),
             DeclarationKind::DomainLetting(domain) => domain.return_type(),
             DeclarationKind::Given(domain) => domain.return_type(),
+            DeclarationKind::Quantified(generator) => match generator {
+                Generator::WithDomain(domain) => domain.return_type(),
+                Generator::InExpr(expr) => expr.return_type(),
+            },
         }
     }
 }

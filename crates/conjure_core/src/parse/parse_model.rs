@@ -8,7 +8,7 @@ use std::sync::{Arc, RwLock};
 use serde_json::Value;
 use serde_json::Value as JsonValue;
 
-use crate::ast::comprehension::{ComprehensionBuilder, ComprehensionKind};
+use crate::ast::comprehension::{ComprehensionBuilder, ComprehensionKind, Generator};
 use crate::ast::records::RecordValue;
 use crate::ast::{
     AbstractLiteral, Atom, Domain, Expression, Literal, Name, Range, RecordEntry, SetAttr,
@@ -706,7 +706,8 @@ fn parse_comprehension(
                     .iter()
                     .next()?;
                 let domain = parse_domain(domain_name, domain_value, &scope.borrow()).ok()?;
-                comprehension.generator(Name::User(name.to_string()), domain)
+                // comprehension.generator(Name::User(name.to_string()), domain)
+                comprehension.generator(Name::User(name.to_string()), Generator::WithDomain(domain))
             }
 
             "Condition" => comprehension.guard(parse_expression(value, &scope)?),

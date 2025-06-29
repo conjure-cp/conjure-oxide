@@ -37,6 +37,21 @@ pub struct Comprehension {
     induction_vars: Vec<Name>,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Generator {
+    InExpr(Expression),
+    WithDomain(Domain),
+}
+
+impl Display for Generator {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Generator::InExpr(expr) => write!(f, "in {expr}"),
+            Generator::WithDomain(domain) => write!(f, "with domain {domain}"),
+        }
+    }
+}
+
 impl Comprehension {
     pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
         self.return_expression_submodel
@@ -212,7 +227,8 @@ impl Display for Comprehension {
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub struct ComprehensionBuilder {
     guards: Vec<Expression>,
-    generators: Vec<(Name, Domain)>,
+    generators: Vec<(Name, Generator)>,
+    // generators: Vec<(Name, Domain)>,
     induction_variables: HashSet<Name>,
 }
 
@@ -225,10 +241,10 @@ impl ComprehensionBuilder {
         self
     }
 
-    pub fn generator(mut self, name: Name, domain: Domain) -> Self {
+    pub fn generator(mut self, name: Name, generator: Generator) -> Self {
         assert!(!self.induction_variables.contains(&name));
         self.induction_variables.insert(name.clone());
-        self.generators.push((name, domain));
+        self.generators.push((name, generator));
         self
     }
 
@@ -284,10 +300,21 @@ impl ComprehensionBuilder {
         }
 
         generator_submodel.add_constraints(induction_guards);
-        for (name, domain) in self.generators.clone() {
-            generator_submodel
-                .symbols_mut()
-                .insert(Rc::new(Declaration::new_var(name, domain)));
+
+        for (name, generator) in self.generators.clone() {
+            let generator = generator.clone();
+            match generator {
+                Generator::WithDomain(domain) => {
+                    generator_submodel
+                        .symbols_mut()
+                        .insert(Rc::new(Declaration::new_var(name, domain)));
+                }
+                Generator::InExpr(_) => {
+                    generator_submodel
+                        .symbols_mut()
+                        .insert(Rc::new(Declaration::new_quantified(name, generator)));
+                }
+            }
         }
 
         // The return_expression is a sub-model of `parent` containing the return_expression and
@@ -299,11 +326,20 @@ impl ComprehensionBuilder {
         // each aux var for each set of assignments of induction variables).
 
         let mut return_expression_submodel = SubModel::new(parent);
-        for (name, domain) in self.generators {
-            return_expression_submodel
-                .symbols_mut()
-                .insert(Rc::new(Declaration::new_given(name, domain)))
-                .unwrap();
+        for (name, generator) in self.generators.clone() {
+            let generator = generator.clone();
+            match generator {
+                Generator::WithDomain(domain) => {
+                    return_expression_submodel
+                        .symbols_mut()
+                        .insert(Rc::new(Declaration::new_given(name, domain)));
+                }
+                Generator::InExpr(_) => {
+                    return_expression_submodel
+                        .symbols_mut()
+                        .insert(Rc::new(Declaration::new_quantified(name, generator)));
+                }
+            }
         }
 
         return_expression_submodel.add_constraint(expression);
