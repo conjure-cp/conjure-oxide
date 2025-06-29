@@ -706,7 +706,6 @@ fn parse_comprehension(
                     .iter()
                     .next()?;
                 let domain = parse_domain(domain_name, domain_value, &scope.borrow()).ok()?;
-                // comprehension.generator(Name::User(name.to_string()), domain)
                 comprehension.generator(Name::User(name.to_string()), Generator::WithDomain(domain))
             }
 
