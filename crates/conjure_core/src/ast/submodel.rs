@@ -197,6 +197,9 @@ impl Display for SubModel {
                 DeclarationKind::Given(d) => {
                     writeln!(f, "given {name}: {d}")?;
                 }
+                DeclarationKind::Quantified(generator) => {
+                    writeln!(f, "quantified {name}: {generator}")?;
+                }
             }
         }
 
