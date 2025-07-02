@@ -3,9 +3,8 @@ use conjure_core::{
     into_matrix_expr, matrix_expr,
     metadata::Metadata,
     rule_engine::{
-        register_rule, register_rule_set,
         ApplicationError::{self, RuleNotApplicable},
-        ApplicationResult, Reduction,
+        ApplicationResult, Reduction, register_rule, register_rule_set,
     },
 };
 use uniplate::{Biplate, Uniplate};

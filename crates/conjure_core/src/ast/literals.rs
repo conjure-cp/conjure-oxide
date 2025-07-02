@@ -7,7 +7,7 @@ use std::hash::Hasher;
 use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Tree, Uniplate};
 
-use super::{records::RecordValue, Atom, Domain, Expression, Range};
+use super::{Atom, Domain, Expression, Range, records::RecordValue};
 use super::{ReturnType, Typeable};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash)]
@@ -392,9 +392,9 @@ impl AbstractLiteral<Expression> {
 impl Display for Literal {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self {
-            Literal::Int(i) => write!(f, "{}", i),
-            Literal::Bool(b) => write!(f, "{}", b),
-            Literal::AbstractLiteral(l) => write!(f, "{:?}", l),
+            Literal::Int(i) => write!(f, "{i}"),
+            Literal::Bool(b) => write!(f, "{b}"),
+            Literal::AbstractLiteral(l) => write!(f, "{l:?}"),
         }
     }
 }

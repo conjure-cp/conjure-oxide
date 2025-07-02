@@ -53,9 +53,9 @@ pub fn run_test_solve_command(global_args: GlobalArgs, local_args: Args) -> anyh
         exit(0);
     } else {
         eprintln!("=== our solutions:");
-        eprintln!("{}", our_solutions_json);
+        eprintln!("{our_solutions_json}");
         eprintln!("=== conjure's solutions:");
-        eprintln!("{}", conjure_solutions_json);
+        eprintln!("{conjure_solutions_json}");
         eprintln!("Failure: solutions do not match!");
         exit(1);
     }

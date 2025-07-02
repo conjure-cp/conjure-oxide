@@ -21,14 +21,14 @@ use rustsat_minisat::core::Minisat;
 
 use crate::ast::{Atom, Expression, Literal, Name};
 use crate::metadata::Metadata;
-use crate::solver::adaptors::rustsat::convs::handle_cnf;
 use crate::solver::SearchComplete::NoSolutions;
+use crate::solver::adaptors::rustsat::convs::handle_cnf;
 use crate::solver::{
-    self, private, SearchStatus, SolveSuccess, SolverAdaptor, SolverCallback, SolverError,
-    SolverFamily, SolverMutCallback,
+    self, SearchStatus, SolveSuccess, SolverAdaptor, SolverCallback, SolverError, SolverFamily,
+    SolverMutCallback, private,
 };
 use crate::stats::SolverStats;
-use crate::{ast as conjure_ast, bug, Model as ConjureModel};
+use crate::{Model as ConjureModel, ast as conjure_ast, bug};
 use crate::{into_matrix_expr, matrix_expr};
 
 use rustsat::instances::{BasicVarManager, Cnf, ManageVars, SatInstance};
@@ -124,7 +124,7 @@ impl SolverAdaptor for Sat {
                     });
                 }
                 SolverResult::Interrupted => {
-                    return Err(SolverError::Runtime("!!Interrupted Solution!!".to_string()))
+                    return Err(SolverError::Runtime("!!Interrupted Solution!!".to_string()));
                 }
             };
 

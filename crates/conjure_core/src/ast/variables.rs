@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{ast::domains::Domain, representation::Representation};
 
-use super::{types::Typeable, ReturnType};
+use super::{ReturnType, types::Typeable};
 
 /// Represents a decision variable within a computational model.
 ///

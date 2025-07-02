@@ -13,7 +13,7 @@ use std::process::Command;
 fn main() {
     let out_dir = env::var("OUT_DIR").unwrap();
 
-    println!("cargo:rustc-link-search=all={}/build", out_dir);
+    println!("cargo:rustc-link-search=all={out_dir}/build");
     println!("cargo:rustc-link-lib=static=minion");
     println!("cargo:rerun-if-changed=vendor");
     println!("cargo:rerun-if-changed=build.rs");
@@ -111,7 +111,7 @@ fn bind() {
         .allowlist_function("vec_vec_int_push_back")
         .allowlist_function("vec_vec_int_free")
         .allowlist_function("TableOut_get")
-        .clang_arg(format!("-I{}/build/src/", out_dir)) // generated from configure.py
+        .clang_arg(format!("-I{out_dir}/build/src/")) // generated from configure.py
         .clang_arg("-Ivendor/minion/")
         .clang_arg("-DLIBMINION")
         .clang_arg(r"--std=gnu++11")

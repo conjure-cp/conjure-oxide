@@ -1,7 +1,7 @@
 ///This benchmark aims to assess how compute-heavy modifying all the nodes is.
 ///A tree of depth n with n children will be created, with the only rule being a modification 0->1.
 ///This benchmark will assess how efficient tree-updating (which is not done in place) is.
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use tree_morph::prelude::*;
 use uniplate::derive::Uniplate;
 

@@ -1,6 +1,6 @@
 ///The following test is designed to test how long tree traversal takes.
 ///There is one rule, that does nothing. We create trees of a variable depth.
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use tree_morph::prelude::*;
 use uniplate::derive::Uniplate;
 

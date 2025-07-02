@@ -4,7 +4,7 @@
 
 use std::{collections::VecDeque, sync::Arc};
 
-use itertools::{izip, Itertools};
+use itertools::{Itertools, izip};
 use uniplate::Uniplate as _;
 
 use crate::ast::{Domain, Range};

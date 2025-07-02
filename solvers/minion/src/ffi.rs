@@ -1,4 +1,7 @@
 #![allow(warnings)]
+
+use std::ffi::CString;
+use std::sync::atomic::{AtomicI32, Ordering};
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
 #[cfg(test)]
@@ -8,16 +11,16 @@ mod tests {
     use super::*;
 
     // solutions
-    static mut X_VAL: i32 = 0;
-    static mut Y_VAL: i32 = 0;
-    static mut Z_VAL: i32 = 0;
+    static X_VAL: AtomicI32 = AtomicI32::new(0);
+    static Y_VAL: AtomicI32 = AtomicI32::new(0);
+    static Z_VAL: AtomicI32 = AtomicI32::new(0);
 
-    #[no_mangle]
+    #[unsafe(no_mangle)]
     pub extern "C" fn hello_from_rust() -> bool {
         unsafe {
-            X_VAL = printMatrix_getValue(0) as _;
-            Y_VAL = printMatrix_getValue(1) as _;
-            Z_VAL = printMatrix_getValue(2) as _;
+            X_VAL.store(printMatrix_getValue(0) as _, Ordering::Relaxed);
+            Y_VAL.store(printMatrix_getValue(1) as _, Ordering::Relaxed);
+            Z_VAL.store(printMatrix_getValue(2) as _, Ordering::Relaxed);
             return true;
         }
     }
@@ -97,9 +100,9 @@ mod tests {
             assert_eq!(res, 0);
 
             // test if solutions are correct
-            assert_eq!(X_VAL, 1);
-            assert_eq!(Y_VAL, 2);
-            assert_eq!(Z_VAL, 1);
+            assert_eq!(X_VAL.load(Ordering::Relaxed), 1);
+            assert_eq!(Y_VAL.load(Ordering::Relaxed), 2);
+            assert_eq!(Z_VAL.load(Ordering::Relaxed), 1);
         }
     }
 }

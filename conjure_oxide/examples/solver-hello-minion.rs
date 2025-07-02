@@ -14,7 +14,7 @@ use std::collections::HashMap;
 #[allow(clippy::unwrap_used)]
 pub fn main() {
     use conjure_core::solver::SolverFamily;
-    use conjure_core::solver::{adaptors, Solver};
+    use conjure_core::solver::{Solver, adaptors};
     use conjure_core::{parse::get_example_model, rule_engine::resolve_rule_sets};
     use std::sync::{Arc, Mutex};
 
@@ -105,13 +105,13 @@ pub fn main() {
     let solver: Solver<Minion, ExecutionSuccess> = match result {
         Ok(s) => s,
         Err(e) => {
-            panic!("Error! {:?}", e);
+            panic!("Error! {e:?}");
         }
     };
 
     // Read our counter.
     let counter = (*counter_ptr).lock().unwrap();
-    println!("Num solutions: {}\n", counter);
+    println!("Num solutions: {counter}\n");
 
     // Read solutions, print 3
     let all_sols = (*all_solutions_ptr).lock().unwrap();
@@ -122,7 +122,7 @@ pub fn main() {
         }
         println!("Solution {}:", i + 1);
         for (k, v) in sols.iter().sorted_by_key(|x| x.0) {
-            println!("  {} = {}", k, v);
+            println!("  {k} = {v}");
         }
         println!()
     }
@@ -134,5 +134,5 @@ pub fn main() {
     //
     // TRY: what happens if we call solver.stats() when we haven't run the solver yet?
     let stats_json = serde_json::to_string_pretty(&solver.stats()).unwrap();
-    println!("Solver stats: \n{}", stats_json);
+    println!("Solver stats: \n{stats_json}");
 }

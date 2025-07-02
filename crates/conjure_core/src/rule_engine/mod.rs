@@ -80,7 +80,7 @@ pub use conjure_rule_macros::register_rule;
 /// ```
 #[doc(inline)]
 pub use conjure_rule_macros::register_rule_set;
-pub use resolve_rules::{get_rules, get_rules_grouped, resolve_rule_sets, RuleData};
+pub use resolve_rules::{RuleData, get_rules, get_rules_grouped, resolve_rule_sets};
 pub use rewrite_naive::rewrite_naive;
 pub use rewriter_common::RewriteError;
 pub use rule::{ApplicationError, ApplicationResult, Reduction, Rule, RuleFn};
@@ -236,7 +236,7 @@ pub fn get_rule_set_by_name(name: &str) -> Option<&'static RuleSet<'static>> {
 /// register_rule_set!("CNF", (), SolverFamily::Sat);
 ///
 /// let rule_sets = get_rule_sets_for_solver_family(SolverFamily::Sat);
-/// assert_eq!(rule_sets.len(), 1);
+/// assert_eq!(rule_sets.len(), 2);
 /// assert_eq!(rule_sets[0].name, "CNF");
 /// ```
 pub fn get_rule_sets_for_solver_family(

@@ -2,7 +2,7 @@
 
 use conjure_core::ast::{Expression as Expr, SymbolTable, Typeable};
 use conjure_core::rule_engine::{
-    register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
+    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
 
 use conjure_core::ast::ReturnType::Set;

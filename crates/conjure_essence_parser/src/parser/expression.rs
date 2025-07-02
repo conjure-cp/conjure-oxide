@@ -123,7 +123,7 @@ pub fn parse_expression(
                     Box::new(expr1),
                     Box::new(expr2),
                 )),
-                _ => Err(format!("Unsupported operator '{}'", op_type).into()),
+                _ => Err(format!("Unsupported operator '{op_type}'").into()),
             }
         }
         "quantifier_expr" => {

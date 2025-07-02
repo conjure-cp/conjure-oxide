@@ -1,6 +1,6 @@
 use crate::errors::EssenceParseError;
 use conjure_core::parse::model_from_json;
-use conjure_core::{context::Context, Model};
+use conjure_core::{Model, context::Context};
 use std::sync::{Arc, RwLock};
 
 pub fn parse_essence_file(
@@ -28,9 +28,8 @@ pub fn parse_essence_file(
         Ok(astjson) => astjson,
         Err(e) => {
             return Err(EssenceParseError::ConjurePrettyError(format!(
-                "Error parsing output from conjure: {:#?}",
-                e
-            )))
+                "Error parsing output from conjure: {e:#?}"
+            )));
         }
     };
 

@@ -7,8 +7,8 @@
 
 use crate::ast::{Domain, Expression, Name};
 
-use super::private;
 use super::Solver;
+use super::private;
 
 /// A ModelModifier provides an interface to modify a model during solving.
 ///

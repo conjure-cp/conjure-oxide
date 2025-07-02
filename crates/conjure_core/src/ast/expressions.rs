@@ -5,14 +5,14 @@ use std::sync::Arc;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-use crate::ast::literals::AbstractLiteral;
-use crate::ast::literals::Literal;
-use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
-use crate::ast::symbol_table::SymbolTable;
 use crate::ast::Atom;
 use crate::ast::Name;
 use crate::ast::ReturnType;
 use crate::ast::SetAttr;
+use crate::ast::literals::AbstractLiteral;
+use crate::ast::literals::Literal;
+use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
+use crate::ast::symbol_table::SymbolTable;
 use crate::bug;
 use crate::metadata::Metadata;
 use enum_compatability_macro::document_compatibility;
@@ -976,7 +976,7 @@ impl Display for Expression {
                 write!(f, "({} union {})", box1.clone(), box2.clone())
             }
             Expression::In(_, e1, e2) => {
-                write!(f, "{} in {}", e1, e2)
+                write!(f, "{e1} in {e2}")
             }
             Expression::Intersect(_, box1, box2) => {
                 write!(f, "({} intersect {})", box1.clone(), box2.clone())
@@ -1003,7 +1003,7 @@ impl Display for Expression {
                 let args = es
                     .iter()
                     .map(|x| match x {
-                        Some(x) => format!("{}", x),
+                        Some(x) => format!("{x}"),
                         None => "..".into(),
                     })
                     .join(",");
@@ -1016,11 +1016,11 @@ impl Display for Expression {
             Expression::Root(_, exprs) => {
                 write!(f, "{}", pretty_expressions_as_top_level(exprs))
             }
-            Expression::DominanceRelation(_, expr) => write!(f, "DominanceRelation({})", expr),
-            Expression::FromSolution(_, expr) => write!(f, "FromSolution({})", expr),
+            Expression::DominanceRelation(_, expr) => write!(f, "DominanceRelation({expr})"),
+            Expression::FromSolution(_, expr) => write!(f, "FromSolution({expr})"),
             Expression::Atomic(_, atom) => atom.fmt(f),
             Expression::Scope(_, submodel) => write!(f, "{{\n{submodel}\n}}"),
-            Expression::Abs(_, a) => write!(f, "|{}|", a),
+            Expression::Abs(_, a) => write!(f, "|{a}|"),
             Expression::Sum(_, e) => {
                 write!(f, "sum({e})")
             }
@@ -1043,10 +1043,10 @@ impl Display for Expression {
                 write!(f, "and({e})")
             }
             Expression::Imply(_, box1, box2) => {
-                write!(f, "({}) -> ({})", box1, box2)
+                write!(f, "({box1}) -> ({box2})")
             }
             Expression::Iff(_, box1, box2) => {
-                write!(f, "({}) <-> ({})", box1, box2)
+                write!(f, "({box1}) <-> ({box2})")
             }
             Expression::Eq(_, box1, box2) => {
                 write!(f, "({} = {})", box1.clone(), box2.clone())
@@ -1116,7 +1116,7 @@ impl Display for Expression {
                 )
             }
             Expression::FlatWatchedLiteral(_, x, l) => {
-                write!(f, "WatchedLiteral({},{})", x, l)
+                write!(f, "WatchedLiteral({x},{l})")
             }
             Expression::MinionReify(_, box1, box2) => {
                 write!(f, "Reify({}, {})", box1.clone(), box2.clone())
@@ -1184,7 +1184,7 @@ impl Display for Expression {
                 )
             }
             Expression::MinionPow(_, atom, atom1, atom2) => {
-                write!(f, "MinionPow({},{},{})", atom, atom1, atom2)
+                write!(f, "MinionPow({atom},{atom1},{atom2})")
             }
             Expression::MinionElementOne(_, atoms, atom, atom1) => {
                 let atoms = atoms.iter().join(",");

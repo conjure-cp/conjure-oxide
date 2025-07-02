@@ -18,7 +18,7 @@ use git_version::git_version;
 use tracing_subscriber::filter::{FilterFn, LevelFilter};
 use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
-use tracing_subscriber::{fmt, EnvFilter, Layer};
+use tracing_subscriber::{EnvFilter, Layer, fmt};
 
 pub fn main() {
     // exit with 2 instead of 1 on failure,like grep
@@ -27,7 +27,7 @@ pub fn main() {
             exit(0);
         }
         Err(e) => {
-            eprintln!("{:?}", e);
+            eprintln!("{e:?}");
             exit(2);
         }
     }
@@ -132,7 +132,7 @@ fn run_completion_command(completion_args: cli::CompletionArgs) -> anyhow::Resul
     let shell = completion_args.shell;
     let name = cmd.get_name().to_string();
 
-    eprintln!("Generating completion for {}...", shell);
+    eprintln!("Generating completion for {shell}...");
 
     generate(shell, &mut cmd, name, &mut io::stdout());
     Ok(())

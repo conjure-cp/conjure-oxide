@@ -67,10 +67,7 @@ where
     let rules = rs.map(|(r, _)| r).collect::<Vec<_>>();
     // Since `one_or_select` only calls the selector if there is more than one rule,
     // at this point there is guaranteed to be more than one rule.
-    panic!(
-        "Multiple rules applicable to expression {:?}\n{:?}",
-        t, rules
-    );
+    panic!("Multiple rules applicable to expression {t:?}\n{rules:?}",);
 }
 
 /// Selects an [`Update`] based on user input through stdin.
@@ -115,17 +112,16 @@ where
     loop {
         print!(
             "--- Current Expression ---
-{}
+{t}
 
 --- Rules ---
-{}
+{rules}
 
 ---
 q   No change
 <n> Apply rule n
 
 :",
-            t, rules
         );
         std::io::stdout().flush().unwrap(); // Print the : on same line
 

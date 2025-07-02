@@ -31,7 +31,7 @@ pub fn get_tree(src: &str) -> Option<(Tree, String)> {
             if src.starts_with("such that") {
                 None
             } else {
-                get_tree(&format!("such that {}", src))
+                get_tree(&format!("such that {src}"))
             }
         } else {
             Some((tree, src.to_string()))
