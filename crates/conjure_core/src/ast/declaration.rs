@@ -6,8 +6,8 @@ use std::fmt::{Debug, Display};
 use std::rc::Rc;
 use std::sync::atomic::{AtomicU32, Ordering};
 
+use ::serde::{Deserialize, Serialize};
 use derivative::Derivative;
-use serde::{Deserialize, Serialize};
 use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Tree, Uniplate};
 
@@ -36,6 +36,14 @@ static DECLARATION_PTR_ID_COUNTER: AtomicU32 = AtomicU32::new(0);
 ///    allows declarations to be updated by replacing them with a newer version of themselves.
 ///
 /// `Ord`, `Hash`, and `Eq` use id for comparisons.
+/// # Serde
+///
+/// Declaration pointers can be serialised using the following serializers:
+///
+/// + [`DeclarationPtrFull`](serde::DeclarationPtrFull)
+/// + [`DeclarationPtrAsId`](serde::DeclarationPtrAsId)
+///
+/// See their documentation for more information.
 #[derive(Clone, Debug)]
 pub struct DeclarationPtr {
     // the shared bits of the pointer
@@ -515,7 +523,7 @@ impl Display for DeclarationPtr {
     }
 }
 
-#[derive(Derivative, Default)]
+#[derive(Derivative)]
 #[derivative(PartialEq)]
 #[derive(Debug, Serialize, Deserialize, Eq, Uniplate)]
 #[biplate(to=Expression,walk_into=[DeclarationKind])]
@@ -735,6 +743,16 @@ impl DefaultWithId for Declaration {
     }
 }
 
+impl Default for Declaration {
+    fn default() -> Self {
+        Self {
+            name: Name::User("_UNKNOWN".into()),
+            kind: DeclarationKind::ValueLetting(false.into()),
+            id: ID_COUNTER.fetch_add(1, Ordering::Relaxed),
+        }
+    }
+}
+
 impl Clone for Declaration {
     fn clone(&self) -> Self {
         Self {
@@ -753,6 +771,332 @@ impl Typeable for Declaration {
             DeclarationKind::DomainLetting(domain) => domain.return_type(),
             DeclarationKind::Given(domain) => domain.return_type(),
             DeclarationKind::RecordField(domain) => domain.return_type(),
+        }
+    }
+}
+
+pub mod serde {
+    use std::cell::RefCell;
+
+    use crate::ast::{Name, serde::HasId};
+    use ::serde::Deserialize;
+    use ::serde::Serialize;
+    use serde_with::{DeserializeAs, SerializeAs};
+
+    use super::{Declaration, DeclarationKind, DeclarationPtr, DeclarationPtrInner};
+
+    /// (De)serializes a [`DeclarationPtr`] as its id.
+    ///
+    /// On deserialization, each declaration is re-created with default dummy values, except for the
+    /// id, which will be the same as the original declaration.
+    ///
+    /// It is left to the user to fix these values before use. Before serialization, each object in
+    /// memory has a unique id; using this information, re-constructing the shared pointers should be
+    /// possible, as long as the contents of each object were also stored, e.g. with [`DeclarationPtrFull`].
+    ///
+    /// # Examples
+    ///
+    /// Serialisation:
+    ///
+    /// ```
+    /// use serde::Serialize;
+    /// use serde_json::json;
+    /// use serde_with::serde_as;
+    /// use conjure_core::ast::{declaration::serde::DeclarationPtrAsId,Name,Declaration,DeclarationPtr,Domain,Range};
+    ///
+    /// // some struct containing a DeclarationPtr.
+    /// #[serde_as]
+    /// #[derive(Clone,PartialEq,Eq,Serialize)]
+    /// struct Foo {
+    ///     #[serde_as(as = "DeclarationPtrAsId")]
+    ///     declaration: DeclarationPtr,
+    ///
+    ///     // serde as also supports nesting
+    ///     #[serde_as(as = "Vec<(_,DeclarationPtrAsId)>")]
+    ///     declarations: Vec<(i32,DeclarationPtr)>,
+    ///
+    ///     c: i32
+    /// }
+    ///
+    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
+    /// let mut declarations: Vec<(i32,DeclarationPtr)>  = vec![];
+    /// for i in (1..=2) {
+    ///     declarations.push((i,DeclarationPtr::new_var(Name::User(format!("{i}").into()),Domain::Int(vec![Range::Bounded(1,5)]))));
+    /// }
+    ///
+    /// let foo = Foo {
+    ///     declaration,
+    ///     declarations,
+    ///     c: 3
+    /// };
+    ///
+    /// let json = serde_json::to_value(foo).unwrap();
+    ///
+    /// let expected_json = json!({
+    ///     "declaration": 0,
+    ///     "declarations": [(1,1),(2,2)],
+    ///     "c": 3
+    /// });
+    ///
+    /// assert_eq!(json,expected_json);
+    /// ```
+    ///
+    /// Deserialisation:
+    ///
+    /// ```
+    /// use serde::Deserialize;
+    /// use serde_json::json;
+    /// use serde_with::serde_as;
+    /// use conjure_core::ast::{serde::{HasId},declaration::serde::DeclarationPtrAsId,Name,Declaration,DeclarationKind, DeclarationPtr,Domain,Range, ReturnType};
+    ///
+    /// // some struct containing a DeclarationPtr.
+    /// #[serde_as]
+    /// #[derive(Clone,PartialEq,Eq,Deserialize)]
+    /// struct Foo {
+    ///     #[serde_as(as = "DeclarationPtrAsId")]
+    ///     declaration: DeclarationPtr,
+    ///
+    ///     // serde as also supports nesting
+    ///     #[serde_as(as = "Vec<(_,DeclarationPtrAsId)>")]
+    ///     declarations: Vec<(i32,DeclarationPtr)>,
+    ///     c: i32
+    /// }
+    ///
+    /// let input_json = json!({
+    ///     "declaration": 10,
+    ///     "declarations": [(11,11),(12,12)],
+    ///     "c": 3
+    /// });
+    ///
+    ///
+    /// let foo: Foo = serde_json::from_value(input_json).unwrap();
+    ///
+    ///
+    /// // all declarations should have the dummy values: name: User("_UNKNOWN"), kind: value_letting;
+    /// assert_eq!(&foo.declaration.name() as &Name,&Name::User("_UNKNOWN".into()));
+    /// assert_eq!(&foo.declarations[0].1.name() as &Name,&Name::User("_UNKNOWN".into()));
+    /// assert_eq!(&foo.declarations[1].1.name() as &Name,&Name::User("_UNKNOWN".into()));
+    ///
+    /// assert!(matches!(&foo.declaration.kind() as &DeclarationKind,&DeclarationKind::ValueLetting(_)));
+    /// assert!(matches!(&foo.declarations[0].1.kind() as &DeclarationKind,&DeclarationKind::ValueLetting(_)));
+    /// assert!(matches!(&foo.declarations[1].1.kind() as &DeclarationKind,&DeclarationKind::ValueLetting(_)));
+    ///
+    /// // but ids should be the same
+    ///
+    /// assert_eq!(*&foo.declaration.id(),10);
+    /// assert_eq!(*&foo.declarations[0].1.id(),11);
+    /// assert_eq!(*&foo.declarations[1].1.id(),12);
+    /// ```
+    ///
+    pub struct DeclarationPtrAsId;
+
+    impl SerializeAs<DeclarationPtr> for DeclarationPtrAsId {
+        fn serialize_as<S>(source: &DeclarationPtr, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: serde::Serializer,
+        {
+            let id = source.id();
+            serializer.serialize_u32(id)
+        }
+    }
+
+    impl<'de> DeserializeAs<'de, DeclarationPtr> for DeclarationPtrAsId {
+        fn deserialize_as<D>(deserializer: D) -> Result<DeclarationPtr, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+        {
+            let id = u32::deserialize(deserializer)?;
+            Ok(DeclarationPtr {
+                inner: DeclarationPtrInner::new_with_id_unchecked(
+                    RefCell::new(Declaration::default()),
+                    id,
+                ),
+            })
+        }
+    }
+
+    /// (De)serializes a [`DeclarationPtr`] as the declaration it references.
+    ///
+    /// This makes no attempt to restore the pointers - each value is deserialized into a new
+    /// `DeclarationPtr` with a reference count of one.
+    ///
+    /// The shared references can be reconstructed using the ids stored, as before serialization these
+    /// were unique for each separate instance of `T` in memory. See [`DeclarationPtrAsId`].
+    ///
+    /// # Examples
+    ///
+    /// Serialisation:
+    ///
+    /// ```
+    /// use serde::Serialize;
+    /// use serde_json::json;
+    /// use serde_with::serde_as;
+    /// use conjure_core::ast::{declaration::serde::DeclarationPtrFull,Name,Declaration,DeclarationPtr,Domain,Range};
+    ///
+    /// // some struct containing a DeclarationPtr.
+    /// #[serde_as]
+    /// #[derive(Clone,PartialEq,Eq,Serialize)]
+    /// struct Foo {
+    ///     #[serde_as(as = "DeclarationPtrFull")]
+    ///     declaration: DeclarationPtr,
+    ///
+    ///     // serde as also supports nesting
+    ///     #[serde_as(as = "Vec<(_,DeclarationPtrFull)>")]
+    ///     declarations: Vec<(i32,DeclarationPtr)>,
+    ///
+    ///     c: i32
+    /// }
+    ///
+    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
+    /// let mut declarations = vec![];
+    ///
+    /// for i in (1..=2) {
+    ///     let d = DeclarationPtr::new_var(Name::User(format!("{i}").into()),Domain::Int(vec![Range::Bounded(1,5)]));
+    ///     declarations.push((i,d));
+    /// }
+    ///
+    /// let foo = Foo {
+    ///     declaration,
+    ///     declarations,
+    ///     c: 3
+    /// };
+    ///
+    /// let json = serde_json::to_value(foo).unwrap();
+    ///
+    /// let expected_json = json!({
+    ///     "declaration": {
+    ///         "name": { "User": "a"},
+    ///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [1,5]}]}}},
+    ///         "id": 0
+    ///     },
+    ///
+    ///     "declarations": [
+    ///         [1,{
+    ///         "name": { "User": "1"},
+    ///         "id": 1,
+    ///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [1,5]}]}}},
+    ///         }],
+    ///         [2,{
+    ///         "name": { "User": "2"},
+    ///         "id": 2,
+    ///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [1,5]}]}}},
+    ///         }]
+    ///     ],
+    ///         
+    ///     "c": 3
+    /// });
+    ///
+    /// assert_eq!(json,expected_json);
+    /// ```
+    ///
+    /// Deserialisation:
+    ///
+    /// ```
+    /// use serde::Deserialize;
+    /// use serde_json::json;
+    /// use serde_with::serde_as;
+    /// use conjure_core::ast::{serde::{HasId},declaration::serde::DeclarationPtrFull,Name,Declaration,DeclarationKind, DeclarationPtr,Domain,Range, ReturnType};
+    ///
+    /// // some struct containing a DeclarationPtr.
+    /// #[serde_as]
+    /// #[derive(Clone,PartialEq,Eq,Deserialize)]
+    /// struct Foo {
+    ///     #[serde_as(as = "DeclarationPtrFull")]
+    ///     declaration: DeclarationPtr,
+    ///
+    ///     // serde as also supports nesting
+    ///     #[serde_as(as = "Vec<(_,DeclarationPtrFull)>")]
+    ///     declarations: Vec<(i32,DeclarationPtr)>,
+    ///     c: i32
+    /// }
+    ///
+    /// let input_json = json!({
+    ///     "declaration": {
+    ///         "name": { "User": "a"},
+    ///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [0,5]}]}}},
+    ///         "id": 10,
+    ///     },
+    ///
+    ///     "declarations": [
+    ///         [1,{
+    ///         "name": { "User": "1"},
+    ///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [0,5]}]}}},
+    ///         "id": 11,
+    ///         }],
+    ///         [2,{
+    ///         "name": { "User": "2"},
+    ///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [0,5]}]}}},
+    ///         "id": 12,
+    ///         }]
+    ///     ],
+    ///     "c": 3
+    /// });
+    ///
+    ///
+    /// let foo: Foo = serde_json::from_value(input_json).unwrap();
+    ///
+    /// assert_eq!(&foo.declaration.name() as &Name,&Name::User("a".into()));
+    /// assert_eq!(&foo.declarations[0].1.name() as &Name,&Name::User("1".into()));
+    /// assert_eq!(&foo.declarations[1].1.name() as &Name,&Name::User("2".into()));
+    ///
+    /// assert!(matches!(&foo.declaration.kind() as &DeclarationKind,&DeclarationKind::DecisionVariable(_)));
+    /// assert!(matches!(&foo.declarations[0].1.kind() as &DeclarationKind,&DeclarationKind::DecisionVariable(_)));
+    /// assert!(matches!(&foo.declarations[1].1.kind() as &DeclarationKind,&DeclarationKind::DecisionVariable(_)));
+    ///
+    /// // ids should be the same as in the json
+    /// assert_eq!(*&foo.declaration.id(),10);
+    /// assert_eq!(*&foo.declarations[0].1.id(),11);
+    /// assert_eq!(*&foo.declarations[1].1.id(),12);
+    /// ```
+    pub struct DeclarationPtrFull;
+
+    // temporary structs to put things in the right format befo:re we (de)serialize
+    //
+    // this is a bit of a hack to get around the nested types in declarationPtr, and to hide fact
+    // that we currently have an id in both declarationptr and declaration and thats confusing...
+    #[derive(Serialize)]
+    struct DeclarationSe<'a> {
+        name: &'a Name,
+        kind: &'a DeclarationKind,
+        id: u32,
+    }
+
+    #[derive(Deserialize)]
+    struct DeclarationDe {
+        name: Name,
+        kind: DeclarationKind,
+        id: u32,
+    }
+
+    impl SerializeAs<DeclarationPtr> for DeclarationPtrFull {
+        fn serialize_as<S>(source: &DeclarationPtr, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: serde::Serializer,
+        {
+            let id = source.id();
+            let decl: &Declaration = &source.borrow();
+            let x = DeclarationSe {
+                name: &decl.name,
+                kind: &decl.kind,
+                id,
+            };
+
+            x.serialize(serializer)
+        }
+    }
+
+    impl<'de> DeserializeAs<'de, DeclarationPtr> for DeclarationPtrFull {
+        fn deserialize_as<D>(deserializer: D) -> Result<DeclarationPtr, D::Error>
+        where
+            D: serde::Deserializer<'de>,
+        {
+            let x = DeclarationDe::deserialize(deserializer)?;
+            Ok(DeclarationPtr {
+                inner: DeclarationPtrInner::new_with_id_unchecked(
+                    RefCell::new(Declaration::new(x.name, x.kind)),
+                    x.id,
+                ),
+            })
         }
     }
 }
