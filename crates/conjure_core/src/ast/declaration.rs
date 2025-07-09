@@ -1,4 +1,6 @@
-#![allow(deprecated)] // allow use of Declaration in this file, and nowhere else
+#![allow(deprecated)]
+use std::any::TypeId;
+// allow use of Declaration in this file, and nowhere else
 use std::cell::{Ref, RefCell, RefMut};
 use std::fmt::{Debug, Display};
 use std::rc::Rc;
@@ -7,7 +9,7 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use uniplate::derive::Uniplate;
-use uniplate::{Biplate, Tree};
+use uniplate::{Biplate, Tree, Uniplate};
 
 use super::name::Name;
 use super::serde::{DefaultWithId, HasId, ObjId};
@@ -428,6 +430,52 @@ impl DefaultWithId for DeclarationPtr {
     }
 }
 
+impl Uniplate for DeclarationPtr {
+    fn uniplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>) {
+        let decl = self.borrow();
+        let (tree, recons) = Biplate::<DeclarationPtr>::biplate(&decl as &Declaration);
+
+        let self2 = self.clone();
+        (
+            tree,
+            Box::new(move |x| {
+                let mut self3 = self2.clone();
+                let inner = recons(x);
+                *(&mut self3.borrow_mut() as &mut Declaration) = inner;
+                self3
+            }),
+        )
+    }
+}
+
+impl<To> Biplate<To> for DeclarationPtr
+where
+    Declaration: Biplate<To>,
+    To: Uniplate,
+{
+    fn biplate(&self) -> (Tree<To>, Box<dyn Fn(Tree<To>) -> Self>) {
+        if TypeId::of::<To>() == TypeId::of::<Self>() {
+            let self2 = self.clone();
+            (Tree::Zero, Box::new(move |_| self2.clone()))
+        } else {
+            // call biplate on the enclosed declaration
+            let decl = self.borrow();
+            let (tree, recons) = Biplate::<To>::biplate(&decl as &Declaration);
+
+            let self2 = self.clone();
+            (
+                tree,
+                Box::new(move |x| {
+                    let mut self3 = self2.clone();
+                    let inner = recons(x);
+                    *(&mut self3.borrow_mut() as &mut Declaration) = inner;
+                    self3
+                }),
+            )
+        }
+    }
+}
+
 impl Ord for DeclarationPtr {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.inner.id.cmp(&other.inner.id)
@@ -465,6 +513,7 @@ impl Display for DeclarationPtr {
 #[derivative(PartialEq)]
 #[derive(Debug, Serialize, Deserialize, Eq, Uniplate)]
 #[biplate(to=Expression,walk_into=[DeclarationKind])]
+#[biplate(to=DeclarationPtr,walk_into=[DeclarationKind])]
 #[uniplate(walk_into=[DeclarationKind])]
 #[deprecated = "use DeclarationPtr instead."]
 pub struct Declaration {
@@ -495,6 +544,7 @@ impl Biplate<Declaration> for DeclarationKind {
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
 #[biplate(to=Expression)]
+#[biplate(to=DeclarationPtr)]
 pub enum DeclarationKind {
     DecisionVariable(DecisionVariable),
     ValueLetting(Expression),
