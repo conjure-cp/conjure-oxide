@@ -430,6 +430,12 @@ impl DefaultWithId for DeclarationPtr {
     }
 }
 
+impl Typeable for DeclarationPtr {
+    fn return_type(&self) -> Option<ReturnType> {
+        self.borrow().return_type()
+    }
+}
+
 impl Uniplate for DeclarationPtr {
     fn uniplate(&self) -> (Tree<Self>, Box<dyn Fn(Tree<Self>) -> Self>) {
         let decl = self.borrow();
