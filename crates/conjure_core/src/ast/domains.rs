@@ -1,13 +1,12 @@
 #![warn(clippy::missing_errors_doc)]
 
-use std::{collections::BTreeSet, fmt::Display};
-
 use conjure_core::ast::SymbolTable;
 use itertools::{Itertools, izip};
 use serde::{Deserialize, Serialize};
+use std::{collections::BTreeSet, fmt::Display};
 use thiserror::Error;
 
-use crate::ast::pretty::pretty_vec;
+use crate::{ast::pretty::pretty_vec, domain_int, range};
 use uniplate::{Uniplate, derive::Uniplate};
 
 use super::{AbstractLiteral, Literal, Name, ReturnType, records::RecordEntry, types::Typeable};
@@ -227,30 +226,25 @@ impl Domain {
     ///
     /// ```
     /// use conjure_core::ast::{Domain,Range};
+    /// use conjure_core::{domain_int,range};
     ///
     /// let elements = vec![1,2,3,4,5];
     ///
     /// let domain = Domain::from_slice_i32(&elements);
     ///
-    /// let Domain::Int(ranges) = domain else {
-    ///     panic!("domain returned from from_slice_i32 should be a Domain::Int");
-    /// };
-    ///
-    /// assert_eq!(ranges,vec![Range::Bounded(1,5)]);
+    /// assert_eq!(domain,domain_int!(1..5));
     /// ```
     ///
     /// ```
     /// use conjure_core::ast::{Domain,Range};
+    /// use conjure_core::{domain_int,range};
     ///
     /// let elements = vec![1,2,4,5,7,8,9,10];
     ///
     /// let domain = Domain::from_slice_i32(&elements);
     ///
-    /// let Domain::Int(ranges) = domain else {
-    ///     panic!("domain returned from from_slice_i32 should be a Domain::Int");
-    /// };
     ///
-    /// assert_eq!(ranges,vec![Range::Bounded(1,2),Range::Bounded(4,5),Range::Bounded(7,10)]);
+    /// assert_eq!(domain,domain_int!(1..2,4..5,7..10));
     /// ```
     ///
     /// ```
@@ -278,32 +272,26 @@ impl Domain {
     ///
     /// ```
     /// use conjure_core::ast::{Domain,Range};
+    /// use conjure_core::{domain_int,range};
     /// use std::collections::BTreeSet;
     ///
     /// let elements = BTreeSet::from([1,2,3,4,5]);
     ///
     /// let domain = Domain::from_set_i32(&elements);
     ///
-    /// let Domain::Int(ranges) = domain else {
-    ///     panic!("domain returned from from_slice_i32 should be a Domain::Int");
-    /// };
-    ///
-    /// assert_eq!(ranges,vec![Range::Bounded(1,5)]);
+    /// assert_eq!(domain,domain_int!(1..5));
     /// ```
     ///
     /// ```
     /// use conjure_core::ast::{Domain,Range};
+    /// use conjure_core::{domain_int,range};
     /// use std::collections::BTreeSet;
     ///
     /// let elements = BTreeSet::from([1,2,4,5,7,8,9,10]);
     ///
     /// let domain = Domain::from_set_i32(&elements);
     ///
-    /// let Domain::Int(ranges) = domain else {
-    ///     panic!("domain returned from from_set_i32 should be a Domain::Int");
-    /// };
-    ///
-    /// assert_eq!(ranges,vec![Range::Bounded(1,2),Range::Bounded(4,5),Range::Bounded(7,10)]);
+    /// assert_eq!(domain,domain_int!(1..2,4..5,7..10));
     /// ```
     ///
     /// ```
@@ -321,7 +309,7 @@ impl Domain {
             return Domain::Empty(ReturnType::Int);
         }
         if elements.len() == 1 {
-            return Domain::Int(vec![Range::Single(*elements.first().unwrap())]);
+            return domain_int!(*elements.first().unwrap());
         }
 
         let mut elems_iter = elements.iter().cloned();
@@ -350,9 +338,9 @@ impl Domain {
                 // Add the run lower..upper to the domain, and start a new run.
 
                 if lower == upper {
-                    ranges.push(Range::Single(lower));
+                    ranges.push(range!(lower));
                 } else {
-                    ranges.push(Range::Bounded(lower, upper));
+                    ranges.push(range!(lower..upper));
                 }
 
                 lower = current;
@@ -362,9 +350,9 @@ impl Domain {
 
         // add the final run to the domain
         if lower == upper {
-            ranges.push(Range::Single(lower));
+            ranges.push(range!(lower));
         } else {
-            ranges.push(Range::Bounded(lower, upper));
+            ranges.push(range!(lower..upper));
         }
 
         Domain::Int(ranges)
@@ -398,32 +386,31 @@ impl Domain {
     ///
     /// ```
     /// use conjure_core::ast::{Domain,Range,Literal, AbstractLiteral};
-    /// use conjure_core::matrix;
+    /// use conjure_core::{domain_int, range, matrix};
     ///
     /// // `[1,2;int(2..3)], [4,5; int(2..3)]` has domain
     /// // `matrix indexed by [int(2..3)] of int(1..2,4..5)`
     ///
-    /// let matrix_1 = Literal::AbstractLiteral(matrix![Literal::Int(1),Literal::Int(2);Domain::Int(vec![Range::Bounded(2,3)])]);
-    /// let matrix_2 = Literal::AbstractLiteral(matrix![Literal::Int(4),Literal::Int(5);Domain::Int(vec![Range::Bounded(2,3)])]);
+    /// let matrix_1 = Literal::AbstractLiteral(matrix![Literal::Int(1),Literal::Int(2);domain_int!(2..3)]);
+    /// let matrix_2 = Literal::AbstractLiteral(matrix![Literal::Int(4),Literal::Int(5);domain_int!(2..3)]);
     ///
     /// let domain = Domain::from_literal_vec(vec![matrix_1,matrix_2]);
     ///
     /// let expected_domain = Ok(Domain::Matrix(
-    ///     Box::new(Domain::Int(vec![Range::Bounded(1,2), Range::Bounded(4,5)])),
-    ///     vec![Domain::Int(vec![Range::Bounded(2,3)])]));
+    ///     Box::new(domain_int!(1..2,4..5)),vec![domain_int!(2..3)]));
     ///
     /// assert_eq!(domain,expected_domain);
     /// ```
     ///
     /// ```
     /// use conjure_core::ast::{Domain,Range,Literal, AbstractLiteral,DomainOpError};
-    /// use conjure_core::matrix;
+    /// use conjure_core::{domain_int, range, matrix};
     ///
     /// // `[1,2;int(2..3)], [4,5; int(1..2)]` cannot be combined
     /// // `matrix indexed by [int(2..3)] of int(1..2,4..5)`
     ///
-    /// let matrix_1 = Literal::AbstractLiteral(matrix![Literal::Int(1),Literal::Int(2);Domain::Int(vec![Range::Bounded(2,3)])]);
-    /// let matrix_2 = Literal::AbstractLiteral(matrix![Literal::Int(4),Literal::Int(5);Domain::Int(vec![Range::Bounded(1,2)])]);
+    /// let matrix_1 = Literal::AbstractLiteral(matrix![Literal::Int(1),Literal::Int(2);domain_int!(2..3)]);
+    /// let matrix_2 = Literal::AbstractLiteral(matrix![Literal::Int(4),Literal::Int(5);domain_int!(1..2)]);
     ///
     /// let domain = Domain::from_literal_vec(vec![matrix_1,matrix_2]);
     ///
@@ -432,26 +419,20 @@ impl Domain {
     ///
     /// ```
     /// use conjure_core::ast::{Domain,Range,Literal, AbstractLiteral};
-    /// use conjure_core::matrix;
+    /// use conjure_core::{domain_int,range, matrix};
     ///
     /// // `[[1,2; int(1..2)];int(2)], [[4,5; int(1..2)]; int(2)]` has domain
     /// // `matrix indexed by [int(2),int(1..2)] of int(1..2,4..5)`
     ///
     ///
-    /// // int(2).
-    /// let idx_domain_1 = Domain::Int(vec![Range::Single(2)]);
-    ///
-    /// // int(1..2).
-    /// let idx_domain_2 = Domain::Int(vec![Range::Bounded(1,2)]);
-    ///
-    /// let matrix_1 = Literal::AbstractLiteral(matrix![Literal::AbstractLiteral(matrix![Literal::Int(1),Literal::Int(2);idx_domain_2.clone()]); idx_domain_1.clone()]);
-    /// let matrix_2 = Literal::AbstractLiteral(matrix![Literal::AbstractLiteral(matrix![Literal::Int(4),Literal::Int(5);idx_domain_2.clone()]); idx_domain_1.clone()]);
+    /// let matrix_1 = Literal::AbstractLiteral(matrix![Literal::AbstractLiteral(matrix![Literal::Int(1),Literal::Int(2);domain_int!(1..2)]); domain_int!(2)]);
+    /// let matrix_2 = Literal::AbstractLiteral(matrix![Literal::AbstractLiteral(matrix![Literal::Int(4),Literal::Int(5);domain_int!(1..2)]); domain_int!(2)]);
     ///
     /// let domain = Domain::from_literal_vec(vec![matrix_1,matrix_2]);
     ///
     /// let expected_domain = Ok(Domain::Matrix(
-    ///     Box::new(Domain::Int(vec![Range::Bounded(1,2), Range::Bounded(4,5)])),
-    ///     vec![idx_domain_1,idx_domain_2]));
+    ///     Box::new(domain_int!(1..2,4..5)),
+    ///     vec![domain_int!(2),domain_int!(1..2)]));
     ///
     /// assert_eq!(domain,expected_domain);
     /// ```
