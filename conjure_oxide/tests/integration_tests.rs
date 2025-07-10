@@ -427,7 +427,7 @@ fn integration_test_inner(
         if config.solve_with_minion {
             copy_generated_to_expected(path, essence_base, "minion", "solutions.json")?;
         } else if config.solve_with_sat {
-            copy_generated_to_expected(path, essence_base, "SAT", "solutions.json")?;
+            copy_generated_to_expected(path, essence_base, "sat", "solutions.json")?;
         }
 
         if config.validate_rule_traces {
