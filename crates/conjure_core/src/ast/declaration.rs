@@ -455,7 +455,13 @@ impl DefaultWithId for DeclarationPtr {
 
 impl Typeable for DeclarationPtr {
     fn return_type(&self) -> Option<ReturnType> {
-        self.borrow().return_type()
+        match &self.kind() as &DeclarationKind {
+            DeclarationKind::DecisionVariable(var) => var.return_type(),
+            DeclarationKind::ValueLetting(expression) => expression.return_type(),
+            DeclarationKind::DomainLetting(domain) => domain.return_type(),
+            DeclarationKind::Given(domain) => domain.return_type(),
+            DeclarationKind::RecordField(domain) => domain.return_type(),
+        }
     }
 }
 
@@ -711,18 +717,6 @@ impl Declaration {
     pub fn with_new_name(mut self, name: Name) -> Declaration {
         self.name = name;
         self
-    }
-}
-
-impl Typeable for Declaration {
-    fn return_type(&self) -> Option<ReturnType> {
-        match self.kind() {
-            DeclarationKind::DecisionVariable(var) => var.return_type(),
-            DeclarationKind::ValueLetting(expression) => expression.return_type(),
-            DeclarationKind::DomainLetting(domain) => domain.return_type(),
-            DeclarationKind::Given(domain) => domain.return_type(),
-            DeclarationKind::RecordField(domain) => domain.return_type(),
-        }
     }
 }
 
