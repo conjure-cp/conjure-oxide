@@ -18,7 +18,7 @@ mod types;
 mod variables;
 
 pub use atom::Atom;
-pub use declaration::*;
+pub use declaration::{Declaration, DeclarationKind, DeclarationPtr};
 pub use domains::Domain;
 pub use domains::DomainOpError;
 pub use domains::Range;
