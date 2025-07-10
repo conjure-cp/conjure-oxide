@@ -8,6 +8,7 @@ use std::collections::BTreeMap;
 use conjure_core::{
     ast::{Atom, Expression as Expr, Literal as Lit, Name, SymbolTable},
     into_matrix_expr,
+    metadata::Metadata,
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
 };
 use conjure_essence_macros::essence_expr;
@@ -21,7 +22,7 @@ use conjure_rule_macros::register_rule;
 /// (c1 * v)  + .. + (c2 * v) + ... ~> ((c1 + c2) * v) + ...
 /// ```
 #[register_rule(("Base", 8400))]
-fn collect_like_terms(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+fn collect_like_terms(expr: &Expr, st: &SymbolTable) -> ApplicationResult {
     let Expr::Sum(meta, exprs) = expr.clone() else {
         return Err(RuleNotApplicable);
     };
@@ -44,7 +45,7 @@ fn collect_like_terms(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 match exprs2.unwrap_list().ok_or(RuleNotApplicable)?.as_slice() {
                     // todo (gs248) It would be nice to generate these destructures by macro, like `essence_expr!` but in reverse
                     // -c*v
-                    [Expr::Atomic(_, Atom::Reference(name)), Expr::Neg(_, e3)] => {
+                    [Expr::Atomic(_, Atom::Reference(name, _)), Expr::Neg(_, e3)] => {
                         if let Expr::Atomic(_, Atom::Literal(Lit::Int(l))) = **e3 {
                             weighted_terms
                                 .insert(name.clone(), weighted_terms.get(name).unwrap_or(&0) - l);
@@ -55,7 +56,7 @@ fn collect_like_terms(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
                     // c*v
                     [
-                        Expr::Atomic(_, Atom::Reference(name)),
+                        Expr::Atomic(_, Atom::Reference(name, _)),
                         Expr::Atomic(_, Atom::Literal(Lit::Int(l))),
                     ] => {
                         weighted_terms
@@ -83,7 +84,9 @@ fn collect_like_terms(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     let mut new_exprs = vec![];
     for (name, coefficient) in weighted_terms {
-        new_exprs.push(essence_expr!(&name * &coefficient));
+        let decl = st.lookup(&name).ok_or(RuleNotApplicable)?;
+        let atom = Expr::Atomic(Metadata::new(), Atom::Reference(name, decl));
+        new_exprs.push(essence_expr!(&atom * &coefficient));
     }
 
     new_exprs.extend(other_terms);

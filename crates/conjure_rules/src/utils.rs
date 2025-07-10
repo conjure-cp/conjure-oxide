@@ -1,7 +1,5 @@
-use std::rc::Rc;
-
 use conjure_core::{
-    ast::{Atom, Declaration, Domain, Expression as Expr, Name, SymbolTable},
+    ast::{Atom, Domain, Expression as Expr, Name, SymbolTable},
     metadata::Metadata,
 };
 
@@ -113,14 +111,14 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
         return None;
     }
 
-    let name = symbols.gensym();
-
     let Some(domain) = expr.domain_of(&symbols) else {
         tracing::trace!("could not find domain of {}", expr);
         return None;
     };
 
-    symbols.insert(Rc::new(Declaration::new_var(name.clone(), domain.clone())))?;
+    let decl = symbols.gensym(&domain);
+    let name = (*decl).borrow().name().clone();
+
     Some(ToAuxVarOutput {
         aux_name: name.clone(),
         aux_decl: Expr::AuxDeclaration(Metadata::new(), name, Box::new(expr.clone())),
@@ -142,15 +140,16 @@ pub struct ToAuxVarOutput {
 
 impl ToAuxVarOutput {
     /// Returns the new auxiliary variable as an `Atom`.
-    pub fn as_atom(&self) -> Atom {
-        Atom::Reference(self.aux_name())
+    pub fn as_atom(&self, symbols: &SymbolTable) -> Atom {
+        let decl = symbols.lookup(&self.aux_name).unwrap();
+        Atom::Reference(self.aux_name(), decl)
     }
 
     /// Returns the new auxiliary variable as an `Expression`.
     ///
     /// This expression will have default `Metadata`.
-    pub fn as_expr(&self) -> Expr {
-        Expr::Atomic(Metadata::new(), self.as_atom())
+    pub fn as_expr(&self, symbols: &SymbolTable) -> Expr {
+        Expr::Atomic(Metadata::new(), self.as_atom(symbols))
     }
 
     /// Returns the top level `Expression` to add to the model.

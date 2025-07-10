@@ -212,7 +212,7 @@ pub fn get_solutions_from_conjure(
 
         let mut solutions = BTreeMap::new();
         for (name, decl) in model.as_submodel().symbols().clone().into_iter() {
-            match decl.kind() {
+            match decl.borrow().kind() {
                 conjure_core::ast::DeclarationKind::ValueLetting(expression) => {
                     let literal = expression
                         .clone()

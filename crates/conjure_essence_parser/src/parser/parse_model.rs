@@ -1,3 +1,4 @@
+use std::cell::RefCell;
 use std::fs;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
@@ -42,6 +43,7 @@ pub fn parse_essence_with_context(
     };
 
     let mut model = Model::new(context);
+    // let symbols = model.as_submodel().symbols().clone();
     let root_node = tree.root_node();
     for statement in named_children(&root_node) {
         match statement.kind() {
@@ -52,17 +54,23 @@ pub fn parse_essence_with_context(
                     model
                         .as_submodel_mut()
                         .symbols_mut()
-                        .insert(Rc::new(Declaration::new_var(name, decision_variable)));
+                        .insert(Rc::new(RefCell::new(Declaration::new_var(
+                            name,
+                            decision_variable,
+                        ))));
                 }
             }
             "constraint_list" => {
                 let mut constraint_vec: Vec<Expression> = Vec::new();
                 for constraint in named_children(&statement) {
+                    let current_symbols = model.as_submodel().symbols().clone();
+
                     if constraint.kind() != "single_line_comment" {
                         constraint_vec.push(parse_expression(
                             constraint,
                             &source_code,
                             &statement,
+                            &current_symbols,
                         )?);
                     }
                 }
@@ -77,7 +85,8 @@ pub fn parse_essence_with_context(
                 let inner = statement
                     .child(1)
                     .expect("Expected a sub-expression inside `dominanceRelation`");
-                let expr = parse_expression(inner, &source_code, &statement)?;
+                let current_symbols = model.as_submodel().symbols().clone();
+                let expr = parse_expression(inner, &source_code, &statement, &current_symbols)?;
                 let dominance = Expression::DominanceRelation(Metadata::new(), Box::new(expr));
                 if model.dominance.is_some() {
                     return Err(EssenceParseError::ParseError(Error::Parse(

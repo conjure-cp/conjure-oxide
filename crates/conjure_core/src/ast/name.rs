@@ -31,6 +31,12 @@ pub enum Name {
     ),
 }
 
+impl Default for Name {
+    fn default() -> Self {
+        Name::User("".to_string())
+    }
+}
+
 uniplate::derive_unplateable!(Name);
 
 impl Display for Name {

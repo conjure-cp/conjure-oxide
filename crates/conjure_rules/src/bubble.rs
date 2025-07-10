@@ -51,7 +51,7 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
     // do not bubble things containing lettings
     if expr.universe_bi().iter().any(|x: &Name| {
         syms.lookup(x)
-            .is_some_and(|x| matches!(x.kind(), DeclarationKind::ValueLetting(_)))
+            .is_some_and(|x| matches!((*x).borrow().kind(), DeclarationKind::ValueLetting(_)))
     }) {
         return Err(RuleNotApplicable);
     };

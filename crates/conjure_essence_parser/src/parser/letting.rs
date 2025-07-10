@@ -1,4 +1,5 @@
 #![allow(clippy::legacy_numeric_constants)]
+use std::cell::RefCell;
 use std::collections::BTreeSet;
 use std::rc::Rc;
 
@@ -33,18 +34,23 @@ pub fn parse_letting_statement(
         match expr_or_domain.kind() {
             "expression" => {
                 for name in temp_symbols {
-                    symbol_table.insert(Rc::new(Declaration::new_value_letting(
+                    symbol_table.insert(Rc::new(RefCell::new(Declaration::new_value_letting(
                         Name::User(String::from(name)),
-                        parse_expression(expr_or_domain, source_code, &letting_statement_list)?,
-                    )));
+                        parse_expression(
+                            expr_or_domain,
+                            source_code,
+                            &letting_statement_list,
+                            &symbol_table,
+                        )?,
+                    ))));
                 }
             }
             "domain" => {
                 for name in temp_symbols {
-                    symbol_table.insert(Rc::new(Declaration::new_domain_letting(
+                    symbol_table.insert(Rc::new(RefCell::new(Declaration::new_domain_letting(
                         Name::User(String::from(name)),
                         parse_domain(expr_or_domain, source_code),
-                    )));
+                    ))));
                 }
             }
             _ => panic!("Unrecognized node in letting statement"),

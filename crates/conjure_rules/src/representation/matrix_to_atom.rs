@@ -1,6 +1,5 @@
-use std::collections::BTreeMap;
-
 use itertools::{Itertools, izip};
+use std::collections::BTreeMap;
 
 use super::prelude::*;
 
@@ -171,14 +170,20 @@ impl Representation for MatrixToAtom {
 
     fn expression_down(
         &self,
-        _: &SymbolTable,
+        symtab: &SymbolTable,
     ) -> Result<BTreeMap<Name, Expression>, ApplicationError> {
         Ok(self
             .names()
             .map(|name| {
+                let declaration = symtab.lookup(&name).expect(
+                    "declarations of the representation variables should exist in the symbol table before expression_down is called",
+                );
+                (name, declaration)
+            })
+            .map(|(name, decl)| {
                 (
                     name.clone(),
-                    Expression::Atomic(Metadata::new(), Atom::Reference(name)),
+                    Expression::Atomic(Metadata::new(), Atom::Reference(name, decl)),
                 )
             })
             .collect())

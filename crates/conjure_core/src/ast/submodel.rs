@@ -8,6 +8,7 @@ use super::{
     },
     serde::RcRefCellAsInner,
 };
+use itertools::izip;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use uniplate::{Biplate, Tree, Uniplate};
@@ -143,7 +144,7 @@ impl SubModel {
     /// Adds a new symbol to the symbol table
     /// (Wrapper over `SymbolTable.insert`)
     pub fn add_symbol(&mut self, sym: Declaration) -> Option<()> {
-        self.symbols_mut().insert(Rc::new(sym))
+        self.symbols_mut().insert(Rc::new(RefCell::new(sym)))
     }
 
     /// Converts the constraints in this submodel to a single expression suitable for use inside
@@ -172,7 +173,7 @@ impl Display for SubModel {
     #[allow(clippy::unwrap_used)] // [rustdocs]: should only fail iff the formatter fails
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for (name, decl) in self.symbols().clone().into_iter_local() {
-            match decl.kind() {
+            match decl.borrow().kind() {
                 DeclarationKind::DecisionVariable(_) => {
                     writeln!(
                         f,
@@ -196,6 +197,12 @@ impl Display for SubModel {
                 }
                 DeclarationKind::Given(d) => {
                     writeln!(f, "given {name}: {d}")?;
+                }
+
+                DeclarationKind::RecordField(_) => {
+                    // Do not print a record field as it is an internal type
+                    writeln!(f)?;
+                    // TODO: is this correct?
                 }
             }
         }
@@ -298,22 +305,6 @@ impl Biplate<Expression> for SubModel {
     }
 }
 
-impl Biplate<Atom> for SubModel {
-    fn biplate(&self) -> (Tree<Atom>, Box<dyn Fn(Tree<Atom>) -> Self>) {
-        // look into expressions
-        let (tree, expr_ctx) = <Expression as Biplate<Atom>>::biplate(&self.constraints);
-
-        let self2 = self.clone();
-        let ctx = Box::new(move |x| {
-            let mut self3 = self2.clone();
-            self3.constraints = expr_ctx(x);
-            self3
-        });
-
-        (tree, ctx)
-    }
-}
-
 impl Biplate<SubModel> for SubModel {
     fn biplate(&self) -> (Tree<SubModel>, Box<dyn Fn(Tree<SubModel>) -> Self>) {
         (
@@ -325,6 +316,54 @@ impl Biplate<SubModel> for SubModel {
                 x
             }),
         )
+    }
+}
+
+impl Biplate<Atom> for SubModel {
+    fn biplate(&self) -> (Tree<Atom>, Box<dyn Fn(Tree<Atom>) -> Self>) {
+        // As atoms are only found in expressions, create a tree of atoms by
+        //
+        //  1. getting the expression tree
+        //  2. Turning that into a list
+        //  3. For each expression in the list, use Biplate<Atom> to turn it into an atom
+        //
+        //  Reconstruction works in reverse.
+
+        let (expression_tree, rebuild_self) = <SubModel as Biplate<Expression>>::biplate(self);
+        let (expression_list, rebuild_expression_tree) = expression_tree.list();
+
+        // Let the atom tree be a Tree::Many where each element is the result of running Biplate<Atom>::biplate on an expression in the expression list.
+        let (atom_trees, reconstruct_exprs): (VecDeque<_>, VecDeque<_>) = expression_list
+            .iter()
+            .map(|e| <Expression as Biplate<Atom>>::biplate(e))
+            .unzip();
+
+        let tree = Tree::Many(atom_trees);
+        let ctx = Box::new(move |atom_tree: Tree<Atom>| {
+            // 1. reconstruct expression_list from the atom tree
+
+            let Tree::Many(atoms) = atom_tree else {
+                panic!();
+            };
+
+            assert_eq!(
+                atoms.len(),
+                reconstruct_exprs.len(),
+                "the number of children should not change when using Biplate"
+            );
+
+            let expression_list: VecDeque<Expression> = izip!(atoms, &reconstruct_exprs)
+                .map(|(atom, recons)| recons(atom))
+                .collect();
+
+            // 2. reconstruct expression_tree from expression_list
+            let expression_tree = rebuild_expression_tree(expression_list);
+
+            // 3. reconstruct submodel from expression_tree
+            rebuild_self(expression_tree)
+        });
+
+        (tree, ctx)
     }
 }
 
