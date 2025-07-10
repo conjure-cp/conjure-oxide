@@ -80,7 +80,7 @@ static ID_COUNTER: AtomicU32 = const { AtomicU32::new(0) };
 #[derive(Serialize, Deserialize)]
 pub struct SymbolTable {
     #[serde_as(as = "Vec<(_,RcRefCellAsInner)>")]
-    table: BTreeMap<Name, Rc<Declaration>>,
+    table: BTreeMap<Name, Rc<RefCell<Declaration>>>,
 
     /// A unique id for this symbol table, for serialisation and debugging.
     #[derivative(PartialEq = "ignore")] // eq by value not id.
@@ -116,14 +116,14 @@ impl SymbolTable {
     /// Looks up the declaration with the given name in the current scope only.
     ///
     /// Returns `None` if there is no declaration with that name in the current scope.
-    pub fn lookup_local(&self, name: &Name) -> Option<Rc<Declaration>> {
+    pub fn lookup_local(&self, name: &Name) -> Option<Rc<RefCell<Declaration>>> {
         self.table.get(name).cloned()
     }
 
     /// Looks up the declaration with the given name, checking all enclosing scopes.
     ///
     /// Returns `None` if there is no declaration with that name in scope.
-    pub fn lookup(&self, name: &Name) -> Option<Rc<Declaration>> {
+    pub fn lookup(&self, name: &Name) -> Option<Rc<RefCell<Declaration>>> {
         self.lookup_local(name).or_else(|| {
             self.parent
                 .as_ref()
@@ -134,8 +134,8 @@ impl SymbolTable {
     /// Inserts a declaration into the symbol table.
     ///
     /// Returns `None` if there is already a symbol with this name in the local scope.
-    pub fn insert(&mut self, declaration: Rc<Declaration>) -> Option<()> {
-        let name = declaration.name().clone();
+    pub fn insert(&mut self, declaration: Rc<RefCell<Declaration>>) -> Option<()> {
+        let name = declaration.borrow().name().clone();
         if let Entry::Vacant(e) = self.table.entry(name) {
             e.insert(declaration);
             Some(())
@@ -145,19 +145,20 @@ impl SymbolTable {
     }
 
     /// Updates or adds a declaration in the immediate local scope.
-    pub fn update_insert(&mut self, declaration: Rc<Declaration>) {
-        let name = declaration.name().clone();
+    pub fn update_insert(&mut self, declaration: Rc<RefCell<Declaration>>) {
+        let name = declaration.borrow().name().clone();
         self.table.insert(name, declaration);
     }
 
     /// Looks up the return type for name if it has one and is in scope.
     pub fn return_type(&self, name: &Name) -> Option<ReturnType> {
-        self.lookup(name).and_then(|x| x.return_type())
+        self.lookup(name).and_then(|x| x.borrow().return_type())
     }
 
     /// Looks up the return type for name if has one and is in the local scope.
     pub fn return_type_local(&self, name: &Name) -> Option<ReturnType> {
-        self.lookup_local(name).and_then(|x| x.return_type())
+        self.lookup_local(name)
+            .and_then(|x| x.borrow().return_type())
     }
 
     /// Looks up the domain of name if it has one and is in scope.
@@ -170,11 +171,17 @@ impl SymbolTable {
         // a lot of the domains would be the same).
 
         if let Name::WithRepresentation(name, _) = name {
-            let decl = self.lookup(name.as_ref())?;
-            decl.domain().cloned()
+            let decl = self.lookup(name)?;
+            {
+                let borrowed_decl = decl.borrow();
+                borrowed_decl.domain().cloned()
+            }
         } else {
             let decl = self.lookup(name)?;
-            decl.domain().cloned()
+            {
+                let borrowed_decl = decl.borrow();
+                borrowed_decl.domain().cloned()
+            }
         }
     }
 
@@ -212,11 +219,17 @@ impl SymbolTable {
         self.table.extend(other.table);
     }
 
-    /// Returns an arbitrary variable name that is not in the symbol table.
-    pub fn gensym(&self) -> Name {
+    /// Creates a new variable in this symbol table with a unique name, and returns its
+    /// declaration.
+    pub fn gensym(&mut self, domain: &Domain) -> Rc<RefCell<Declaration>> {
         let num = *self.next_machine_name.borrow();
         *(self.next_machine_name.borrow_mut()) += 1;
-        Name::Machine(num) // incremented when inserted
+        let decl = Rc::new(RefCell::new(Declaration::new_var(
+            Name::Machine(num),
+            domain.clone(),
+        )));
+        self.insert(Rc::clone(&decl));
+        decl
     }
 
     /// Gets the parent of this symbol table as a mutable reference.
@@ -247,14 +260,13 @@ impl SymbolTable {
         // requires us to mutably borrow both the symbol table, and the variable inside the symbol
         // table..
 
-        let decl = self.lookup(name)?;
+        let decl = self.lookup(name)?.borrow().clone();
         let var = decl.as_var()?;
 
         var.representations
             .iter()
             .find(|x| &x.iter().map(|r| r.repr_name()).collect_vec()[..] == representation)
             .cloned()
-            .clone()
     }
 
     /// Gets all initialised representations for `name`.
@@ -263,7 +275,7 @@ impl SymbolTable {
     ///
     /// + `None` if `name` does not exist, or is not a decision variable.
     pub fn representations_for(&self, name: &Name) -> Option<Vec<Vec<Box<dyn Representation>>>> {
-        let decl = self.lookup(name)?;
+        let decl = self.lookup(name)?.borrow().clone();
         decl.as_var().map(|x| x.representations.clone())
     }
 
@@ -288,100 +300,56 @@ impl SymbolTable {
         name: &Name,
         representation: &[&str],
     ) -> Option<Vec<Box<dyn Representation>>> {
-        let decl = self.lookup(name)?;
-        let var = decl.as_var()?;
+        // Lookup the declaration reference
+        let decl_ref = self.lookup(name)?; // Rc<RefCell<Declaration>>
 
-        var.representations
-            .iter()
-            .find(|x| &x.iter().map(|r| r.repr_name()).collect_vec()[..] == representation)
-            .cloned()
-            .clone()
-            .or_else(|| {
-                // add represented name declaration to the same scope as the name they are
-                // representing
-                if let Some(decl) = self.lookup_local(name) {
-                    let mut decl: Declaration = Rc::unwrap_or_clone(decl);
-                    let var = decl.as_var_mut()?;
-
-                    // TODO: no idea how to deal with initialising representations for nested things..
-
-                    if representation.len() != 1 {
-                        bug!("nested representations not implemented")
-                    }
-
-                    let repr_rule = get_repr_rule(representation[0])?;
-
-                    let reprs = vec![repr_rule(name, self)?];
-                    for repr in &reprs {
-                        repr.declaration_down()
-                            .ok()
-                            .unwrap()
-                            .iter()
-                            .for_each(|x| self.update_insert(Rc::new(x.clone())));
-                    }
-                    var.representations.push(reprs.clone());
-
-                    self.update_insert(Rc::new(decl));
-                    Some(reprs)
-                } else {
-                    None
-
-                    // declaration is in some parent table
-                    //
-                    // FIXME: this is broken. for now, just add representations for variables in
-                    // our scope. This is slower, in particular, when we want to represent a
-                    // decision variable referenced inside a comprehension, but it is correct
-                    // nonetheless.
-                    //
-                    //
-                    // let mut parent_table = self.parent.clone();
-                    // let mut decl = None;
-                    // while let Some(table) = parent_table.clone() {
-                    //     let table_ref= (*table).borrow();
-                    //     if let Some(d) = table_ref.lookup_local(name) {
-                    //         decl = Some(d);
-                    //         break;
-                    //     }
-                    //     parent_table = table_ref.parent.clone();
-                    // }
-
-                    // let mut decl: Declaration = Rc::unwrap_or_clone(
-                    //     decl.expect("declaration should exist: we used it earlier!"),
-                    // );
-
-                    // let parent_table = parent_table.unwrap();
-                    // let mut table = parent_table.borrow_mut();
-
-                    // let var = decl.as_var_mut()?;
-
-                    // // TODO: no idea how to deal with initialising representations for nested things..
-
-                    // if representation.len() != 1 {
-                    //     bug!("nested representations not implemented")
-                    // }
-
-                    // let repr_rule = get_repr_rule(representation[0])?;
-
-                    // let reprs = vec![repr_rule(name, &table)?];
-                    // for repr in &reprs {
-                    //     repr.declaration_down()
-                    //         .ok()
-                    //         .unwrap()
-                    //         .iter()
-                    //         .for_each(|x| table.update_insert(Rc::new(x.clone())));
-                    // }
-                    // var.representations.push(reprs.clone());
-
-                    // table.update_insert(Rc::new(decl));
-                    // dbg!(table);
-                    // Some(reprs)
+        // Try an immutable borrow first to check if the representation already exists
+        {
+            let borrowed_decl = decl_ref.borrow();
+            if let Some(var) = borrowed_decl.as_var() {
+                if let Some(existing_reprs) = var
+                    .representations
+                    .iter()
+                    .find(|x| &x.iter().map(|r| r.repr_name()).collect_vec()[..] == representation)
+                    .cloned()
+                {
+                    return Some(existing_reprs); // Found: return early
                 }
-            })
+            }
+            // Immutable borrow drops here
+        }
+        // Representation not found
+
+        // TODO: nested representations logic...
+        if representation.len() != 1 {
+            bug!("nested representations not implemented")
+        }
+        let repr_name_str = representation[0];
+        let repr_init_fn = get_repr_rule(repr_name_str)?;
+
+        let reprs = vec![repr_init_fn(name, self)?];
+
+        let mut borrowed_mut_decl = decl_ref.borrow_mut();
+
+        // Get mutable access to the variable part
+        let var = borrowed_mut_decl.as_var_mut()?;
+
+        for repr_instance in &reprs {
+            repr_instance
+                .declaration_down()
+                .ok()?
+                .iter()
+                .for_each(|x| self.update_insert(Rc::new(RefCell::new(x.clone()))));
+        }
+
+        var.representations.push(reprs.clone());
+
+        Some(reprs)
     }
 }
 
 impl IntoIterator for SymbolTable {
-    type Item = (Name, Rc<Declaration>);
+    type Item = (Name, Rc<RefCell<Declaration>>);
 
     type IntoIter = IntoIter;
 
@@ -397,11 +365,11 @@ impl IntoIterator for SymbolTable {
 /// Iterator over symbol table entries in the current scope only.
 pub struct LocalIntoIter {
     // iterator over the btreemap
-    inner: std::collections::btree_map::IntoIter<Name, Rc<Declaration>>,
+    inner: std::collections::btree_map::IntoIter<Name, Rc<RefCell<Declaration>>>,
 }
 
 impl Iterator for LocalIntoIter {
-    type Item = (Name, Rc<Declaration>);
+    type Item = (Name, Rc<RefCell<Declaration>>);
 
     fn next(&mut self) -> Option<Self::Item> {
         self.inner.next()
@@ -411,14 +379,14 @@ impl Iterator for LocalIntoIter {
 /// Iterator over all symbol table entries in scope.
 pub struct IntoIter {
     // iterator over the current scopes' btreemap
-    inner: std::collections::btree_map::IntoIter<Name, Rc<Declaration>>,
+    inner: std::collections::btree_map::IntoIter<Name, Rc<RefCell<Declaration>>>,
 
     // the parent scope
     parent: Option<Rc<RefCell<SymbolTable>>>,
 }
 
 impl Iterator for IntoIter {
-    type Item = (Name, Rc<Declaration>);
+    type Item = (Name, Rc<RefCell<Declaration>>);
 
     fn next(&mut self) -> Option<Self::Item> {
         let mut val = self.inner.next();
@@ -486,7 +454,7 @@ impl Biplate<Expression> for SymbolTable {
         let (child_trees, ctxs): (VecDeque<_>, Vec<_>) = self
             .table
             .values()
-            .map(|decl| <Declaration as Biplate<Expression>>::biplate(decl.as_ref()))
+            .map(|decl| <Declaration as Biplate<Expression>>::biplate(&*decl.borrow()))
             .unzip();
 
         let tree = Tree::Many(child_trees);
@@ -502,7 +470,7 @@ impl Biplate<Expression> for SymbolTable {
             for (ctx, tree, (_, decl)) in izip!(&ctxs, exprs, self3_iter) {
                 // update declaration inside the pointer instead of creating a new one, so all
                 // things referencing this keep referencing this.
-                *decl = Rc::new(ctx(tree));
+                *decl = Rc::new(RefCell::new(ctx(tree)));
             }
 
             self3

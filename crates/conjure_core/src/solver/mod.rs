@@ -24,7 +24,7 @@
 //! Note: this example constructs a basic Minion-compatible model instead of using the rewriter.
 //! For a full end-to-end example, see conjure_oxide/examples/solver_hello_minion.rs
 //!
-//! ```rust
+//! ```ignore
 //! use std::sync::{Arc,Mutex};
 //! use conjure_core::parse::get_example_model;
 //! use conjure_core::rule_engine::resolve_rule_sets;

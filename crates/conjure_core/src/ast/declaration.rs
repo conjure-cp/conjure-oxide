@@ -12,10 +12,10 @@ use super::{DecisionVariable, Domain, Expression, ReturnType};
 
 static ID_COUNTER: AtomicU32 = AtomicU32::new(0);
 
-#[derive(Derivative)]
+#[derive(Derivative, Default)]
 #[derivative(PartialEq)]
 #[derive(Debug, Serialize, Deserialize, Eq, Uniplate)]
-#[biplate(to=Expression)]
+#[biplate(to=Expression,walk_into=[DeclarationKind])]
 #[uniplate(walk_into=[DeclarationKind])]
 pub struct Declaration {
     /// The name of the declared symbol.
@@ -50,6 +50,18 @@ pub enum DeclarationKind {
     ValueLetting(Expression),
     DomainLetting(Domain),
     Given(Domain),
+
+    /// A named field inside a record type.
+    /// e.g. A, B in record{A: int(0..1), B: int(0..2)}
+    RecordField(Domain),
+}
+
+// FIXME: remove
+impl Default for DeclarationKind {
+    fn default() -> Self {
+        DeclarationKind::Given(Domain::Empty(ReturnType::Int))
+        // todo!("remove default declarationkind");
+    }
 }
 
 impl Declaration {
@@ -116,6 +128,7 @@ impl Declaration {
             DeclarationKind::ValueLetting(_) => None,
             DeclarationKind::DomainLetting(domain) => Some(domain),
             DeclarationKind::Given(domain) => Some(domain),
+            DeclarationKind::RecordField(domain) => Some(domain),
         }
     }
 
@@ -213,6 +226,7 @@ impl Typeable for Declaration {
             DeclarationKind::ValueLetting(expression) => expression.return_type(),
             DeclarationKind::DomainLetting(domain) => domain.return_type(),
             DeclarationKind::Given(domain) => domain.return_type(),
+            DeclarationKind::RecordField(domain) => domain.return_type(),
         }
     }
 }

@@ -26,6 +26,7 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
         .clone()
         .into_iter_local()
         .filter_map(|(n, decl)| {
+            let decl = (*decl).borrow();
             let id = decl.id();
             decl.as_var().cloned().map(|x| (n, id, x))
         })
@@ -100,7 +101,7 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
             // only do things if this inscope and not shadowed..
             if x.symbols()
                 .lookup(&old_name)
-                .is_none_or(|x| x.as_ref().id() == id)
+                .is_none_or(|x| (*x).borrow().id() == id)
             {
                 let root = x.root_mut_unchecked();
                 *root = root.transform_bi(Arc::new(move |n: Name| {
@@ -126,7 +127,7 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
 #[register_rule(("Base", 8000))]
 fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
-    let Expr::Atomic(_, Atom::Reference(name)) = expr else {
+    let Expr::Atomic(_, Atom::Reference(name, _)) = expr else {
         return Err(RuleNotApplicable);
     };
 
@@ -134,6 +135,7 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
     symbols
         .lookup(name)
         .ok_or(RuleNotApplicable)?
+        .borrow()
         .as_var()
         .ok_or(RuleNotApplicable)?;
 
@@ -152,8 +154,9 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
 
     let new_name = Name::WithRepresentation(Box::new(name.clone()), representation_names);
 
+    let decl = symbols.lookup(name).unwrap();
     Ok(Reduction::with_symbols(
-        Expr::Atomic(Metadata::new(), Atom::Reference(new_name)),
+        Expr::Atomic(Metadata::new(), Atom::Reference(new_name, decl.clone())),
         symbols,
     ))
 }
@@ -170,7 +173,7 @@ fn needs_representation(name: &Name, symbols: &SymbolTable) -> bool {
 
 /// Returns whether `domain` needs representing.
 fn domain_needs_representation(domain: &Domain) -> bool {
-    // very simple implementation for now
+    // very simple implementation for nows
     match domain {
         Domain::Bool | Domain::Int(_) => false,
         Domain::Matrix(_, _) => false, // we special case these elsewhere

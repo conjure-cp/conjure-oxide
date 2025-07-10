@@ -23,7 +23,8 @@ fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs))) = &**subject else {
+    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs), decl)) = &**subject
+    else {
         return Err(RuleNotApplicable);
     };
 
@@ -41,9 +42,9 @@ fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
         .unwrap()[0]
         .clone();
 
-    let decl = symbols.lookup(name).unwrap();
+    // let decl = symbols.lookup(name).unwrap();
 
-    let Some(Domain::Tuple(_)) = decl.domain().cloned().map(|x| x.resolve(symbols)) else {
+    let Some(Domain::Tuple(_)) = decl.borrow().domain().cloned().map(|x| x.resolve(symbols)) else {
         return Err(RuleNotApplicable);
     };
 
@@ -73,7 +74,8 @@ fn tuple_index_to_bubble(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(_, reprs))) = &**subject else {
+    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(_, reprs), _decl)) = &**subject
+    else {
         return Err(RuleNotApplicable);
     };
 
@@ -134,11 +136,12 @@ fn tuple_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs))) = &**left else {
+    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(_, reprs), decl)) = &**left else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name2, reprs2))) = &**right else {
+    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(_, reprs2), decl2)) = &**right
+    else {
         return Err(RuleNotApplicable);
     };
 
@@ -150,15 +153,17 @@ fn tuple_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    let decl = symbols.lookup(name).unwrap();
-    let decl2 = symbols.lookup(name2).unwrap();
+    // let decl = symbols.lookup(name).unwrap();
+    // let decl2 = symbols.lookup(name2).unwrap();
 
     let domain = decl
+        .borrow()
         .domain()
         .cloned()
         .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
     let domain2 = decl2
+        .borrow()
         .domain()
         .cloned()
         .map(|x| x.resolve(symbols))
@@ -217,7 +222,8 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs))) = &**left else {
+    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs), _decl)) = &**left
+    else {
         return Err(RuleNotApplicable);
     };
 
@@ -232,6 +238,7 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let decl = symbols.lookup(name).unwrap();
 
     let domain = decl
+        .borrow()
         .domain()
         .cloned()
         .map(|x| x.resolve(symbols))
@@ -286,11 +293,12 @@ fn tuple_inequality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs))) = &**left else {
+    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(_, reprs), decl)) = &**left else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name2, reprs2))) = &**right else {
+    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(_, reprs2), decl2)) = &**right
+    else {
         return Err(RuleNotApplicable);
     };
 
@@ -302,15 +310,14 @@ fn tuple_inequality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    let decl = symbols.lookup(name).unwrap();
-    let decl2 = symbols.lookup(name2).unwrap();
-
     let domain = decl
+        .borrow()
         .domain()
         .cloned()
         .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
     let domain2 = decl2
+        .borrow()
         .domain()
         .cloned()
         .map(|x| x.resolve(symbols))

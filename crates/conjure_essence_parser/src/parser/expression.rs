@@ -1,7 +1,7 @@
 #![allow(clippy::legacy_numeric_constants)]
 use tree_sitter::Node;
 
-use conjure_core::ast::{Atom, Expression, Literal, Name};
+use conjure_core::ast::{Atom, Expression, Literal, Name, SymbolTable};
 use conjure_core::metadata::Metadata;
 use conjure_core::{into_matrix_expr, matrix_expr};
 
@@ -14,26 +14,27 @@ pub fn parse_expression(
     constraint: Node,
     source_code: &str,
     root: &Node,
+    symbols: &SymbolTable,
 ) -> Result<Expression, EssenceParseError> {
     // TODO (gskorokhod) - Factor this further (make match arms into separate functions, extract common logic)
     match constraint.kind() {
         "constraint" | "expression" | "boolean_expr" | "comparison_expr" | "arithmetic_expr"
-        | "primary_expr" | "sub_expr" => child_expr(constraint, source_code, root),
+        | "primary_expr" | "sub_expr" => child_expr(constraint, source_code, root, symbols),
         "not_expr" => Ok(Expression::Not(
             Metadata::new(),
-            Box::new(child_expr(constraint, source_code, root)?),
+            Box::new(child_expr(constraint, source_code, root, symbols)?),
         )),
         "abs_value" => Ok(Expression::Abs(
             Metadata::new(),
-            Box::new(child_expr(constraint, source_code, root)?),
+            Box::new(child_expr(constraint, source_code, root, symbols)?),
         )),
         "negative_expr" => Ok(Expression::Neg(
             Metadata::new(),
-            Box::new(child_expr(constraint, source_code, root)?),
+            Box::new(child_expr(constraint, source_code, root, symbols)?),
         )),
         "exponent" | "product_expr" | "sum_expr" | "comparison" | "and_expr" | "or_expr"
         | "implication" => {
-            let expr1 = child_expr(constraint, source_code, root)?;
+            let expr1 = child_expr(constraint, source_code, root, symbols)?;
             let op = constraint.child(1).ok_or(format!(
                 "Missing operator in expression {}",
                 constraint.kind()
@@ -43,7 +44,7 @@ pub fn parse_expression(
                 "Missing second operand in expression {}",
                 constraint.kind()
             ))?;
-            let expr2 = parse_expression(expr2_node, source_code, root)?;
+            let expr2 = parse_expression(expr2_node, source_code, root, symbols)?;
 
             match op_type {
                 "**" => Ok(Expression::UnsafePow(
@@ -129,7 +130,7 @@ pub fn parse_expression(
         "quantifier_expr" => {
             let mut expr_list = Vec::new();
             for expr in named_children(&constraint) {
-                expr_list.push(parse_expression(expr, source_code, root)?);
+                expr_list.push(parse_expression(expr, source_code, root, symbols)?);
             }
             let quantifier = constraint.child(0).ok_or(format!(
                 "Missing quantifier in expression {}",
@@ -194,14 +195,21 @@ pub fn parse_expression(
         "variable" => {
             let variable_name =
                 String::from(&source_code[constraint.start_byte()..constraint.end_byte()]);
+            let name = Name::User(variable_name.to_string());
+
+            // Look up the declaration in the symbol table
+            let declaration_rc = symbols.lookup(&name).ok_or_else(|| {
+                EssenceParseError::from(format!("Variable '{variable_name}' not found in scope"))
+            })?;
+
             Ok(Expression::Atomic(
                 Metadata::new(),
-                Atom::Reference(Name::User(variable_name)),
+                Atom::Reference(Name::User(variable_name), declaration_rc),
             ))
         }
         "from_solution" => match root.kind() {
             "dominance_relation" => {
-                let inner = child_expr(constraint, source_code, root)?;
+                let inner = child_expr(constraint, source_code, root, symbols)?;
                 match inner {
                     Expression::Atomic(_, _) => {
                         Ok(Expression::FromSolution(Metadata::new(), Box::new(inner)))
@@ -221,7 +229,7 @@ pub fn parse_expression(
         },
         "toInt_expr" => Ok(Expression::ToInt(
             Metadata::new(),
-            Box::new(child_expr(constraint, source_code, root)?),
+            Box::new(child_expr(constraint, source_code, root, symbols)?),
         )),
         _ => Err(format!("{} is not a recognized node kind", constraint.kind()).into()),
     }
@@ -231,9 +239,10 @@ pub fn child_expr(
     node: Node,
     source_code: &str,
     root: &Node,
+    symbols: &SymbolTable,
 ) -> Result<Expression, EssenceParseError> {
     match node.named_child(0) {
-        Some(child) => parse_expression(child, source_code, root),
+        Some(child) => parse_expression(child, source_code, root, symbols),
         None => Err(format!("Missing node in expression of kind {}", node.kind()).into()),
     }
 }

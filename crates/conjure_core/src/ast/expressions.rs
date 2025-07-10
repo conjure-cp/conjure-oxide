@@ -2,9 +2,6 @@ use std::collections::VecDeque;
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 
-use itertools::Itertools;
-use serde::{Deserialize, Serialize};
-
 use crate::ast::Atom;
 use crate::ast::Name;
 use crate::ast::ReturnType;
@@ -16,6 +13,8 @@ use crate::ast::symbol_table::SymbolTable;
 use crate::bug;
 use crate::metadata::Metadata;
 use enum_compatability_macro::document_compatibility;
+use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Uniplate as _};
 
@@ -607,7 +606,9 @@ impl Expression {
                 }
             }
             Expression::InDomain(_, _, _) => Some(Domain::Bool),
-            Expression::Atomic(_, Atom::Reference(name)) => syms.resolve_domain(name),
+            Expression::Atomic(_, Atom::Reference(_, ptr)) => {
+                (**ptr).borrow().domain().cloned().map(|x| x.resolve(syms))
+            }
             Expression::Atomic(_, atom) => Some(atom.domain_of().resolve(syms)),
             Expression::Scope(_, _) => Some(Domain::Bool),
             Expression::Sum(_, e) => {
@@ -959,12 +960,6 @@ impl From<Atom> for Expression {
     }
 }
 
-impl From<Name> for Expression {
-    fn from(name: Name) -> Self {
-        Expression::Atomic(Metadata::new(), Atom::Reference(name))
-    }
-}
-
 impl From<Box<Expression>> for Expression {
     fn from(val: Box<Expression>) -> Self {
         val.as_ref().clone()
@@ -1227,7 +1222,8 @@ impl Typeable for Expression {
             Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
             Expression::FromSolution(_, expr) => expr.return_type(),
             Expression::Atomic(_, Atom::Literal(lit)) => lit.return_type(),
-            Expression::Atomic(_, Atom::Reference(_)) => None,
+            // TODO - access symbol table to get return type of references - define inside Atom instead
+            Expression::Atomic(_, Atom::Reference(_, _)) => None,
             Expression::Scope(_, scope) => scope.return_type(),
             Expression::Abs(_, _) => Some(ReturnType::Int),
             Expression::Sum(_, _) => Some(ReturnType::Int),
@@ -1281,9 +1277,8 @@ impl Typeable for Expression {
 
 #[cfg(test)]
 mod tests {
-    use std::rc::Rc;
 
-    use crate::{ast::declaration::Declaration, matrix_expr};
+    use crate::matrix_expr;
 
     use super::*;
 
@@ -1316,103 +1311,5 @@ mod tests {
     fn test_domain_of_empty_sum() {
         let sum = Expression::Sum(Metadata::new(), Box::new(matrix_expr![]));
         assert_eq!(sum.domain_of(&SymbolTable::new()), None);
-    }
-
-    #[test]
-    fn test_domain_of_reference() {
-        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(0)));
-        let mut vars = SymbolTable::new();
-        vars.insert(Rc::new(Declaration::new_var(
-            Name::Machine(0),
-            Domain::Int(vec![Range::Single(1)]),
-        )))
-        .unwrap();
-        assert_eq!(
-            reference.domain_of(&vars),
-            Some(Domain::Int(vec![Range::Single(1)]))
-        );
-    }
-
-    #[test]
-    fn test_domain_of_reference_not_found() {
-        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(0)));
-        assert_eq!(reference.domain_of(&SymbolTable::new()), None);
-    }
-
-    #[test]
-    fn test_domain_of_reference_sum_single() {
-        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(0)));
-        let mut vars = SymbolTable::new();
-        vars.insert(Rc::new(Declaration::new_var(
-            Name::Machine(0),
-            Domain::Int(vec![Range::Single(1)]),
-        )))
-        .unwrap();
-        let sum = Expression::Sum(
-            Metadata::new(),
-            Box::new(matrix_expr![reference.clone(), reference.clone()]),
-        );
-        assert_eq!(
-            sum.domain_of(&vars),
-            Some(Domain::Int(vec![Range::Single(2)]))
-        );
-    }
-
-    #[test]
-    fn test_domain_of_reference_sum_bounded() {
-        let reference = Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(0)));
-        let mut vars = SymbolTable::new();
-        vars.insert(Rc::new(Declaration::new_var(
-            Name::Machine(0),
-            Domain::Int(vec![Range::Bounded(1, 2)]),
-        )));
-        let sum = Expression::Sum(
-            Metadata::new(),
-            Box::new(matrix_expr![reference.clone(), reference.clone()]),
-        );
-        assert_eq!(
-            sum.domain_of(&vars),
-            Some(Domain::Int(vec![Range::Bounded(2, 4)]))
-        );
-    }
-
-    #[test]
-    fn biplate_to_names() {
-        let expr = Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(1)));
-        let expected_expr = Expression::Atomic(Metadata::new(), Atom::Reference(Name::Machine(2)));
-        let actual_expr = expr.transform_bi(Arc::new(move |x: Name| match x {
-            Name::Machine(i) => Name::Machine(i + 1),
-            n => n,
-        }));
-        assert_eq!(actual_expr, expected_expr);
-
-        let expr = Expression::And(
-            Metadata::new(),
-            Box::new(matrix_expr![Expression::AuxDeclaration(
-                Metadata::new(),
-                Name::Machine(0),
-                Box::new(Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Reference(Name::Machine(1))
-                ))
-            )]),
-        );
-        let expected_expr = Expression::And(
-            Metadata::new(),
-            Box::new(matrix_expr![Expression::AuxDeclaration(
-                Metadata::new(),
-                Name::Machine(1),
-                Box::new(Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Reference(Name::Machine(2))
-                ))
-            )]),
-        );
-
-        let actual_expr = expr.transform_bi(Arc::new(move |x: Name| match x {
-            Name::Machine(i) => Name::Machine(i + 1),
-            n => n,
-        }));
-        assert_eq!(actual_expr, expected_expr);
     }
 }

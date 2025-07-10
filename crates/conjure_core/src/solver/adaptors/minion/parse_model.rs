@@ -1,12 +1,13 @@
 //! Parse / `load_model` step of running Minion.
 
-use std::cell::Ref;
-
 use itertools::Itertools as _;
 use minion_ast::Model as MinionModel;
 use minion_rs::ast as minion_ast;
 use minion_rs::error::MinionError;
 use minion_rs::{get_from_table, run_minion};
+use std::cell::Ref;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use crate::Model as ConjureModel;
 use crate::ast as conjure_ast;
@@ -40,7 +41,8 @@ fn load_symbol_table(
                 .symbols()
                 .lookup(name)
                 .expect("search var should exist");
-            let var = decl.as_var().expect("search var should be a var");
+            let decl_borrow = decl.borrow();
+            let var = decl_borrow.as_var().expect("search var should be a var");
 
             load_var(name, var, true, minion_model)?;
         }
@@ -57,7 +59,8 @@ fn load_symbol_table(
                 continue;
             };
 
-            let Some(var) = decl.as_var() else {
+            let decl_borrow = decl.borrow();
+            let Some(var) = decl_borrow.as_var() else {
                 continue;
             }; // ignore lettings, etc.
             //
@@ -81,7 +84,8 @@ fn load_symbol_table(
             .clone()
             .into_iter_local()
         {
-            let Some(var) = decl.as_var() else {
+            let decl_borrow = decl.borrow();
+            let Some(var) = decl_borrow.as_var() else {
                 continue;
             }; // ignore lettings, etc.
             //
@@ -412,7 +416,7 @@ fn parse_atom(atom: conjure_ast::Atom) -> Result<minion_ast::Var, SolverError> {
         conjure_ast::Atom::Literal(l) => {
             Ok(minion_ast::Var::ConstantAsVar(parse_literal_as_int(l)?))
         }
-        conjure_ast::Atom::Reference(name) => Ok(parse_name(name))?,
+        conjure_ast::Atom::Reference(name, _) => Ok(parse_name(name))?,
 
         x => Err(ModelFeatureNotSupported(format!(
             "expected a literal or a reference but got `{x}`"

@@ -1,5 +1,5 @@
 use std::{
-    cell::RefCell,
+    cell::{Ref, RefCell},
     collections::{HashMap, HashSet},
     fmt::Display,
     rc::Rc,
@@ -11,7 +11,10 @@ use serde::{Deserialize, Serialize};
 use uniplate::{Biplate, derive::Uniplate};
 
 use crate::{
-    ast::{Atom, DeclarationKind},
+    ast::{
+        Atom, DeclarationKind,
+        serde::{HasId as _, ObjId},
+    },
     bug,
     context::Context,
     into_matrix_expr, matrix_expr,
@@ -98,7 +101,7 @@ impl Comprehension {
 
             // substitute in the values for the induction variables
             let return_expression = return_expression.transform_bi(Arc::new(move |x: Atom| {
-                let Atom::Reference(ref name) = x else {
+                let Atom::Reference(ref name, _) = x else {
                     return x;
                 };
 
@@ -110,17 +113,23 @@ impl Comprehension {
                 Atom::Literal(lit.clone())
             }));
 
-            // merge symbol table into parent scope
+            // Copy the return expression's symbols into parent scope.
 
-            // convert machine names in child_symtab to ones that we know are unused in the parent
-            // symtab
-            let mut machine_name_translations: HashMap<Name, Name> = HashMap::new();
+            // For variables in the return expression with machine names, create new declarations
+            // for them in the parent symbol table, so that the machine names used are unique.
+            //
+            // Store the declaration translations in `machine_name_translations`.
+            // These are stored as a map of (old declaration id) -> (new declaration ptr), as
+            // declaration pointers do not implement hash.
+            //
+            let mut machine_name_translations: HashMap<ObjId, Rc<RefCell<Declaration>>> =
+                HashMap::new();
 
-            // populate machine_name_translations, and move the declarations from child to parent
+            // Populate `machine_name_translations`
             for (name, decl) in child_symtab.into_iter_local() {
-                // skip givens for induction vars§
+                // do not add givens for induction vars to the parent symbol table.
                 if value_ptr.get(&name).is_some()
-                    && matches!(decl.kind(), DeclarationKind::Given(_))
+                    && matches!((*decl).borrow().kind(), DeclarationKind::Given(_))
                 {
                     continue;
                 }
@@ -131,26 +140,29 @@ impl Comprehension {
                     );
                 };
 
-                let new_machine_name = symtab.gensym();
+                let decl_ref = (*decl).borrow();
+                let id = decl_ref.id();
+                let new_decl = symtab.gensym(decl_ref.domain().unwrap());
 
-                let new_decl = (*decl).clone().with_new_name(new_machine_name.clone());
-                symtab.insert(Rc::new(new_decl)).unwrap();
-
-                machine_name_translations.insert(name, new_machine_name);
+                machine_name_translations.insert(id, new_decl);
             }
 
-            // rename references to aux vars in the return_expression
-            let return_expression =
-                return_expression.transform_bi(Arc::new(
-                    move |name| match machine_name_translations.get(&name) {
-                        Some(new_name) => new_name.clone(),
-                        None => name,
-                    },
-                ));
+            // Update references to use the new delcarations.
+            #[allow(clippy::arc_with_non_send_sync)]
+            let return_expression = return_expression.transform_bi(Arc::new(move |atom: Atom| {
+                if let Atom::Reference(_, ref decl) = atom
+                    && let id = decl.as_ref().borrow().id()
+                    && let Some(new_decl) = machine_name_translations.get(&id)
+                {
+                    let new_name = new_decl.as_ref().borrow().name().clone();
+                    Atom::Reference(new_name, Rc::clone(new_decl))
+                } else {
+                    atom
+                }
+            }));
 
             return_expressions.push(return_expression);
         }
-
         Ok(return_expressions)
     }
 
@@ -192,8 +204,12 @@ impl Display for Comprehension {
             .symbols()
             .clone()
             .into_iter_local()
-            .map(|(name, decl)| (name, decl.domain().unwrap().clone()))
-            .map(|(name, domain)| format!("{name}: {domain}"))
+            .map(|(name, decl_rc): (Name, Rc<RefCell<Declaration>>)| {
+                let borrowed_decl: Ref<'_, Declaration> = (*decl_rc).borrow();
+                let domain: Domain = borrowed_decl.domain().unwrap().clone();
+                (name, domain)
+            })
+            .map(|(name, domain): (Name, Domain)| format!("{name}: {domain}"))
             .join(",");
 
         let guards = self
@@ -211,26 +227,43 @@ impl Display for Comprehension {
 }
 
 /// A builder for a comprehension.
-#[derive(Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ComprehensionBuilder {
     guards: Vec<Expression>,
-    generators: Vec<(Name, Domain)>,
+    // symbol table containing all the generators
+    // for now, this is just used during parsing - a new symbol table is created using this when we initialise the comprehension
+    // this is not ideal, but i am chucking all this code very soon anyways...
+    generator_symboltable: Rc<RefCell<SymbolTable>>,
     induction_variables: HashSet<Name>,
 }
 
 impl ComprehensionBuilder {
-    pub fn new() -> Self {
-        Default::default()
+    pub fn new(symbol_table_ptr: Rc<RefCell<SymbolTable>>) -> Self {
+        ComprehensionBuilder {
+            guards: vec![],
+            generator_symboltable: Rc::new(RefCell::new(SymbolTable::with_parent(
+                symbol_table_ptr,
+            ))),
+            induction_variables: HashSet::new(),
+        }
+    }
+
+    /// the symbol table for inside the comprehension for use during parsing
+    pub fn symbol_table(&mut self) -> Rc<RefCell<SymbolTable>> {
+        Rc::clone(&self.generator_symboltable)
     }
     pub fn guard(mut self, guard: Expression) -> Self {
         self.guards.push(guard);
         self
     }
 
-    pub fn generator(mut self, name: Name, domain: Domain) -> Self {
+    pub fn generator(mut self, declaration: Rc<RefCell<Declaration>>) -> Self {
+        let name = (*declaration).borrow().name().clone();
         assert!(!self.induction_variables.contains(&name));
         self.induction_variables.insert(name.clone());
-        self.generators.push((name, domain));
+        (*self.generator_symboltable)
+            .borrow_mut()
+            .insert(declaration);
         self
     }
 
@@ -244,6 +277,8 @@ impl ComprehensionBuilder {
         parent: Rc<RefCell<SymbolTable>>,
         comprehension_kind: Option<ComprehensionKind>,
     ) -> Comprehension {
+        let generator_symboltable = (*self.generator_symboltable).borrow();
+
         let mut generator_submodel = SubModel::new(parent.clone());
 
         // TODO:also allow guards that reference lettings and givens.
@@ -286,10 +321,14 @@ impl ComprehensionBuilder {
         }
 
         generator_submodel.add_constraints(induction_guards);
-        for (name, domain) in self.generators.clone() {
+        for decl in generator_symboltable.clone().into_iter_local().map(|x| x.1) {
+            let decl = (*decl).borrow();
+            let name = decl.name().clone();
+            let domain = decl.domain().cloned().unwrap();
+
             generator_submodel
                 .symbols_mut()
-                .insert(Rc::new(Declaration::new_var(name, domain)));
+                .insert(Rc::new(RefCell::new(Declaration::new_var(name, domain))));
         }
 
         // The return_expression is a sub-model of `parent` containing the return_expression and
@@ -301,10 +340,14 @@ impl ComprehensionBuilder {
         // each aux var for each set of assignments of induction variables).
 
         let mut return_expression_submodel = SubModel::new(parent);
-        for (name, domain) in self.generators {
+        for (name, domain) in generator_symboltable
+            .clone()
+            .into_iter_local()
+            .map(|(n, decl)| (n, (*decl).borrow().domain().unwrap().clone()))
+        {
             return_expression_submodel
                 .symbols_mut()
-                .insert(Rc::new(Declaration::new_given(name, domain)))
+                .insert(Rc::new(RefCell::new(Declaration::new_given(name, domain))))
                 .unwrap();
         }
 

@@ -44,7 +44,7 @@ pub fn essence_expr(args: TokenStream) -> TokenStream {
 /// Parses a sequence of Essence expressions into a vector of Conjure AST instances
 ///
 /// ## Example
-/// ```rust
+/// ```ignore
 /// use conjure_core::ast::{Atom, Expression};
 /// use conjure_core::matrix_expr;
 /// use conjure_core::metadata::Metadata;

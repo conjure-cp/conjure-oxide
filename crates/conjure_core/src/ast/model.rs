@@ -8,12 +8,12 @@ use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use uniplate::{Biplate, Tree, Uniplate};
 
-use crate::ast::Expression;
+use crate::ast::{Atom, Expression};
 use crate::context::Context;
 
 use super::serde::{HasId, ObjId};
 use super::types::Typeable;
-use super::{Name, SubModel};
+use super::{Declaration, Name, SubModel};
 use super::{ReturnType, SymbolTable};
 
 /// An Essence model.
@@ -179,6 +179,8 @@ pub struct SerdeModel {
 
 impl SerdeModel {
     /// Initialises the model for rewriting.
+    ///
+    /// This swizzles the pointers to symbol tables and declarations using the stored ids.
     pub fn initialise(self, context: Arc<RwLock<Context<'static>>>) -> Option<Model> {
         // The definitive versions of each symbol table are stored in the submodels. Parent
         // pointers store dummy values with the correct ids, but nothing else. We need to replace
@@ -214,8 +216,38 @@ impl SerdeModel {
             }
         }
 
+        // The definitive versions of declarations are stored in the symbol table. References store
+        // dummy values with the correct ids, but nothing else.
+
+        // Store the definitive version of all declarations by id.
+        let mut all_declarations: HashMap<ObjId, Rc<RefCell<Declaration>>> = HashMap::new();
+        for table in tables.values() {
+            for (_, decl) in table.as_ref().borrow().clone().into_iter_local() {
+                let id = decl.as_ref().borrow().id();
+                all_declarations.insert(id, decl);
+            }
+        }
+
+        // Swizzle declaration pointers in references using their ids and `all_declarations`.
+        #[allow(clippy::arc_with_non_send_sync, reason = "uniplate call")]
+        let submodel = self.submodel.transform_bi(Arc::new(move |atom: Atom| {
+            if let Atom::Reference(name, decl) = atom {
+                let id = decl.as_ref().borrow().id();
+                Atom::Reference(
+                    name,
+                    Rc::clone(
+                        all_declarations
+                            .get(&id)
+                            .unwrap_or_else(|| panic!("A declaration used in a reference should exist in the symbol table. The missing declaration has id {id}.")),
+                    ),
+                )
+            } else {
+                atom
+            }
+        }));
+
         Some(Model {
-            submodel: self.submodel,
+            submodel,
             dominance: self.dominance,
             context,
             search_order: self.search_order,
