@@ -23,8 +23,11 @@ fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs), decl)) = &**subject
-    else {
+    let Expr::Atomic(_, Atom::Reference(decl)) = &**subject else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Name::WithRepresentation(name, reprs) = &decl.name() as &Name else {
         return Err(RuleNotApplicable);
     };
 
@@ -44,7 +47,7 @@ fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
 
     // let decl = symbols.lookup(name).unwrap();
 
-    let Some(Domain::Tuple(_)) = decl.borrow().domain().cloned().map(|x| x.resolve(symbols)) else {
+    let Some(Domain::Tuple(_)) = decl.domain().map(|x| x.clone().resolve(symbols)) else {
         return Err(RuleNotApplicable);
     };
 
@@ -74,8 +77,11 @@ fn tuple_index_to_bubble(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(_, reprs), _decl)) = &**subject
-    else {
+    let Expr::Atomic(_, Atom::Reference(decl)) = &**subject else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Name::WithRepresentation(_, reprs) = &decl.name() as &Name else {
         return Err(RuleNotApplicable);
     };
 
@@ -136,12 +142,19 @@ fn tuple_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(_, reprs), decl)) = &**left else {
+    let Expr::Atomic(_, Atom::Reference(decl)) = &**left else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(_, reprs2), decl2)) = &**right
-    else {
+    let Name::WithRepresentation(_, reprs) = &decl.name() as &Name else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::Atomic(_, Atom::Reference(decl2)) = &**right else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Name::WithRepresentation(_, reprs2) = &decl2.name() as &Name else {
         return Err(RuleNotApplicable);
     };
 
@@ -157,16 +170,12 @@ fn tuple_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // let decl2 = symbols.lookup(name2).unwrap();
 
     let domain = decl
-        .borrow()
         .domain()
-        .cloned()
-        .map(|x| x.resolve(symbols))
+        .map(|x| x.clone().resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
     let domain2 = decl2
-        .borrow()
         .domain()
-        .cloned()
-        .map(|x| x.resolve(symbols))
+        .map(|x| x.clone().resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
 
     let Domain::Tuple(elems) = domain else {
@@ -222,8 +231,11 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs), _decl)) = &**left
-    else {
+    let Expr::Atomic(_, Atom::Reference(decl)) = &**left else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Name::WithRepresentation(name, reprs) = &decl.name() as &Name else {
         return Err(RuleNotApplicable);
     };
 
@@ -238,10 +250,8 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let decl = symbols.lookup(name).unwrap();
 
     let domain = decl
-        .borrow()
         .domain()
-        .cloned()
-        .map(|x| x.resolve(symbols))
+        .map(|x| x.clone().resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
 
     let Domain::Tuple(elems) = domain else {
@@ -293,12 +303,19 @@ fn tuple_inequality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(_, reprs), decl)) = &**left else {
+    let Expr::Atomic(_, Atom::Reference(decl)) = &**left else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(_, reprs2), decl2)) = &**right
-    else {
+    let Name::WithRepresentation(_, reprs) = &decl.name() as &Name else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::Atomic(_, Atom::Reference(decl2)) = &**right else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Name::WithRepresentation(_, reprs2) = &decl2.name() as &Name else {
         return Err(RuleNotApplicable);
     };
 
@@ -311,16 +328,13 @@ fn tuple_inequality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     }
 
     let domain = decl
-        .borrow()
         .domain()
-        .cloned()
-        .map(|x| x.resolve(symbols))
+        .map(|x| x.clone().resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
+
     let domain2 = decl2
-        .borrow()
         .domain()
-        .cloned()
-        .map(|x| x.resolve(symbols))
+        .map(|x| x.clone().resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
 
     let Domain::Tuple(elems) = domain else {

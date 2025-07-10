@@ -26,9 +26,8 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
         .clone()
         .into_iter_local()
         .filter_map(|(n, decl)| {
-            let decl = (*decl).borrow();
             let id = decl.id();
-            decl.as_var().cloned().map(|x| (n, id, x))
+            decl.as_var().map(|x| (n, id, x.clone()))
         })
         .filter(|(_, _, var)| {
             let Domain::Matrix(valdom, indexdoms) = &var.domain else {
@@ -99,10 +98,7 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
             let has_changed_ptr = Arc::clone(&has_changed_ptr);
 
             // only do things if this inscope and not shadowed..
-            if x.symbols()
-                .lookup(&old_name)
-                .is_none_or(|x| (*x).borrow().id() == id)
-            {
+            if x.symbols().lookup(&old_name).is_none_or(|x| x.id() == id) {
                 let root = x.root_mut_unchecked();
                 *root = root.transform_bi(Arc::new(move |n: Name| {
                     if n == old_name {
@@ -127,25 +123,24 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
 #[register_rule(("Base", 8000))]
 fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
-    let Expr::Atomic(_, Atom::Reference(name, _)) = expr else {
+    let Expr::Atomic(_, Atom::Reference(decl)) = expr else {
         return Err(RuleNotApplicable);
     };
 
-    // thing we are representing must be a variable
-    symbols
-        .lookup(name)
-        .ok_or(RuleNotApplicable)?
-        .borrow()
-        .as_var()
-        .ok_or(RuleNotApplicable)?;
+    let name: Name = decl.name().clone();
 
-    if !needs_representation(name, symbols) {
+    // thing we are representing must be a variable
+    {
+        decl.as_var().ok_or(RuleNotApplicable)?;
+    }
+
+    if !needs_representation(&name, symbols) {
         return Err(RuleNotApplicable);
     }
 
     let mut symbols = symbols.clone();
     let representation =
-        get_or_create_representation(name, &mut symbols).ok_or(RuleNotApplicable)?;
+        get_or_create_representation(&name, &mut symbols).ok_or(RuleNotApplicable)?;
 
     let representation_names = representation
         .into_iter()
@@ -154,9 +149,22 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
 
     let new_name = Name::WithRepresentation(Box::new(name.clone()), representation_names);
 
-    let decl = symbols.lookup(name).unwrap();
+    // HACK: this is suspicious, but hopefully will work until we clean up representations
+    // properly...
+    //
+    // In general, we should not use names atall anymore, including for representations /
+    // represented variables.
+    //
+    // * instead of storing the link from a variable that has a representation to the variable it
+    // is representing in the name as WithRepresentation, we should use declaration pointers instead.
+    //
+    //
+    // see: issue #932
+    let mut decl = decl.clone().detach();
+    decl.replace_name(new_name);
+
     Ok(Reduction::with_symbols(
-        Expr::Atomic(Metadata::new(), Atom::Reference(new_name, decl.clone())),
+        Expr::Atomic(Metadata::new(), Atom::Reference(decl)),
         symbols,
     ))
 }

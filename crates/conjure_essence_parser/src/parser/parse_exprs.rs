@@ -37,7 +37,7 @@ mod test {
     #[allow(unused)]
     use super::{parse_expr, parse_exprs};
     #[allow(unused)]
-    use conjure_core::ast::{Declaration, Domain, Name, SymbolTable};
+    use conjure_core::ast::{DeclarationPtr, Domain, Name, SymbolTable};
     #[allow(unused)]
     use conjure_core::{ast::Atom, ast::Expression, metadata::Metadata};
     #[allow(unused)]
@@ -53,20 +53,20 @@ mod test {
     pub fn test_parse_expressions() {
         let src = "x >= 5, y = a / 2";
         let mut symbols = SymbolTable::new();
-        let x: Rc<RefCell<Declaration>> = Rc::new(RefCell::new(Declaration::new_var(
+        let x = DeclarationPtr::new_var(
             Name::User("x".into()),
             Domain::Int(vec![conjure_core::ast::Range::Bounded(0, 10)]),
-        )));
+        );
 
-        let y: Rc<RefCell<Declaration>> = Rc::new(RefCell::new(Declaration::new_var(
+        let y = DeclarationPtr::new_var(
             Name::User("y".into()),
             Domain::Int(vec![conjure_core::ast::Range::Bounded(0, 10)]),
-        )));
+        );
 
-        let a: Rc<RefCell<Declaration>> = Rc::new(RefCell::new(Declaration::new_var(
+        let a = DeclarationPtr::new_var(
             Name::User("a".into()),
             Domain::Int(vec![conjure_core::ast::Range::Bounded(0, 10)]),
-        )));
+        );
 
         // Clone the Rc when inserting!
         symbols
@@ -88,7 +88,7 @@ mod test {
             exprs[0],
             Expression::Geq(
                 Metadata::new(),
-                Box::new(Expression::Atomic(Metadata::new(), Atom::new_ref(&x))),
+                Box::new(Expression::Atomic(Metadata::new(), Atom::new_ref(x))),
                 Box::new(Expression::Atomic(Metadata::new(), 5.into()))
             )
         );
@@ -97,10 +97,10 @@ mod test {
             exprs[1],
             Expression::Eq(
                 Metadata::new(),
-                Box::new(Expression::Atomic(Metadata::new(), Atom::new_ref(&y))),
+                Box::new(Expression::Atomic(Metadata::new(), Atom::new_ref(y))),
                 Box::new(Expression::UnsafeDiv(
                     Metadata::new(),
-                    Box::new(Expression::Atomic(Metadata::new(), Atom::new_ref(&a))),
+                    Box::new(Expression::Atomic(Metadata::new(), Atom::new_ref(a))),
                     Box::new(Expression::Atomic(Metadata::new(), 2.into()))
                 ))
             )

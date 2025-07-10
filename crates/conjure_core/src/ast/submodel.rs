@@ -1,5 +1,5 @@
 use super::{
-    Atom, Declaration, Literal,
+    Atom, DeclarationPtr, Literal,
     comprehension::Comprehension,
     declaration::DeclarationKind,
     pretty::{
@@ -143,8 +143,8 @@ impl SubModel {
 
     /// Adds a new symbol to the symbol table
     /// (Wrapper over `SymbolTable.insert`)
-    pub fn add_symbol(&mut self, sym: Declaration) -> Option<()> {
-        self.symbols_mut().insert(Rc::new(RefCell::new(sym)))
+    pub fn add_symbol(&mut self, decl: DeclarationPtr) -> Option<()> {
+        self.symbols_mut().insert(decl)
     }
 
     /// Converts the constraints in this submodel to a single expression suitable for use inside
@@ -173,7 +173,7 @@ impl Display for SubModel {
     #[allow(clippy::unwrap_used)] // [rustdocs]: should only fail iff the formatter fails
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for (name, decl) in self.symbols().clone().into_iter_local() {
-            match decl.borrow().kind() {
+            match &decl.kind() as &DeclarationKind {
                 DeclarationKind::DecisionVariable(_) => {
                     writeln!(
                         f,

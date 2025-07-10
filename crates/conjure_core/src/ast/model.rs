@@ -1,3 +1,4 @@
+#![allow(clippy::arc_with_non_send_sync)] // uniplate needs this
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
 use std::fmt::{Debug, Display};
@@ -8,12 +9,12 @@ use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use uniplate::{Biplate, Tree, Uniplate};
 
-use crate::ast::{Atom, Expression};
+use crate::ast::Expression;
 use crate::context::Context;
 
 use super::serde::{HasId, ObjId};
 use super::types::Typeable;
-use super::{Declaration, Name, SubModel};
+use super::{DeclarationPtr, Name, SubModel};
 use super::{ReturnType, SymbolTable};
 
 /// An Essence model.
@@ -181,7 +182,7 @@ impl SerdeModel {
     /// Initialises the model for rewriting.
     ///
     /// This swizzles the pointers to symbol tables and declarations using the stored ids.
-    pub fn initialise(self, context: Arc<RwLock<Context<'static>>>) -> Option<Model> {
+    pub fn initialise(mut self, context: Arc<RwLock<Context<'static>>>) -> Option<Model> {
         // The definitive versions of each symbol table are stored in the submodels. Parent
         // pointers store dummy values with the correct ids, but nothing else. We need to replace
         // these dummy values with pointers to the actual parent symbol tables, using the ids to
@@ -220,34 +221,25 @@ impl SerdeModel {
         // dummy values with the correct ids, but nothing else.
 
         // Store the definitive version of all declarations by id.
-        let mut all_declarations: HashMap<ObjId, Rc<RefCell<Declaration>>> = HashMap::new();
+        let mut all_declarations: HashMap<ObjId, DeclarationPtr> = HashMap::new();
         for table in tables.values() {
             for (_, decl) in table.as_ref().borrow().clone().into_iter_local() {
-                let id = decl.as_ref().borrow().id();
+                let id = decl.id();
                 all_declarations.insert(id, decl);
             }
         }
 
-        // Swizzle declaration pointers in references using their ids and `all_declarations`.
-        #[allow(clippy::arc_with_non_send_sync, reason = "uniplate call")]
-        let submodel = self.submodel.transform_bi(Arc::new(move |atom: Atom| {
-            if let Atom::Reference(name, decl) = atom {
-                let id = decl.as_ref().borrow().id();
-                Atom::Reference(
-                    name,
-                    Rc::clone(
+        // Swizzle declaration pointers in expressions (references, auxdecls) using their ids and `all_declarations`.
+        *self.submodel.constraints_mut() = self.submodel.constraints().transform_bi(Arc::new(move |decl: DeclarationPtr| {
+                let id = decl.id();
                         all_declarations
                             .get(&id)
-                            .unwrap_or_else(|| panic!("A declaration used in a reference should exist in the symbol table. The missing declaration has id {id}.")),
-                    ),
-                )
-            } else {
-                atom
-            }
+                            .unwrap_or_else(|| panic!("A declaration used in the expression tree should exist in the symbol table. The missing declaration has id {id}."))
+                            .clone()
         }));
 
         Some(Model {
-            submodel,
+            submodel: self.submodel,
             dominance: self.dominance,
             context,
             search_order: self.search_order,
