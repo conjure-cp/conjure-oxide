@@ -1,8 +1,5 @@
 // Tests for various functionalities of the Model
 
-use std::cell::RefCell;
-use std::rc::Rc;
-
 use conjure_core::ast::Model;
 use conjure_oxide::ast::*;
 
@@ -12,26 +9,18 @@ fn modify_domain() {
 
     let mut symbols = m.as_submodel_mut().symbols_mut();
 
-    let a = Name::User(String::from("a"));
+    let name_a = Name::User(String::from("a"));
 
     let d1 = Domain::Int(vec![Range::Bounded(1, 3)]);
     let d2 = Domain::Int(vec![Range::Bounded(1, 2)]);
 
-    symbols
-        .insert(Rc::new(RefCell::new(Declaration::new_var(
-            a.clone(),
-            d1.clone(),
-        ))))
-        .unwrap();
+    let mut decl_a = DeclarationPtr::new_var(name_a.clone(), d1.clone());
 
-    assert_eq!(symbols.domain(&a).unwrap(), d1);
+    symbols.insert(decl_a.clone()).unwrap();
 
-    let decl_a = symbols.lookup(&a).unwrap();
+    assert_eq!(&decl_a.domain().unwrap() as &Domain, &d1);
 
-    // Rc::make_mut(&mut decl_a).as_var_mut().unwrap().domain = d2.clone();
-    decl_a.borrow_mut().as_var_mut().unwrap().domain = d2.clone();
+    decl_a.as_var_mut().unwrap().domain = d2.clone();
 
-    symbols.update_insert(decl_a);
-
-    assert_eq!(symbols.domain(&a).unwrap(), d2);
+    assert_eq!(&decl_a.domain().unwrap() as &Domain, &d2);
 }

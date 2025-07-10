@@ -1,7 +1,5 @@
 #![allow(clippy::legacy_numeric_constants)]
-use std::cell::RefCell;
 use std::collections::BTreeSet;
-use std::rc::Rc;
 
 use tree_sitter::Node;
 
@@ -9,7 +7,7 @@ use super::domain::parse_domain;
 use super::expression::parse_expression;
 use super::util::named_children;
 use crate::errors::EssenceParseError;
-use conjure_core::ast::Declaration;
+use conjure_core::ast::DeclarationPtr;
 use conjure_core::ast::{Name, SymbolTable};
 
 /// Parse a letting statement into a SymbolTable containing the declared symbols
@@ -34,7 +32,7 @@ pub fn parse_letting_statement(
         match expr_or_domain.kind() {
             "expression" => {
                 for name in temp_symbols {
-                    symbol_table.insert(Rc::new(RefCell::new(Declaration::new_value_letting(
+                    symbol_table.insert(DeclarationPtr::new_value_letting(
                         Name::User(String::from(name)),
                         parse_expression(
                             expr_or_domain,
@@ -42,15 +40,15 @@ pub fn parse_letting_statement(
                             &letting_statement_list,
                             &symbol_table,
                         )?,
-                    ))));
+                    ));
                 }
             }
             "domain" => {
                 for name in temp_symbols {
-                    symbol_table.insert(Rc::new(RefCell::new(Declaration::new_domain_letting(
+                    symbol_table.insert(DeclarationPtr::new_domain_letting(
                         Name::User(String::from(name)),
                         parse_domain(expr_or_domain, source_code),
-                    ))));
+                    ));
                 }
             }
             _ => panic!("Unrecognized node in letting statement"),

@@ -11,7 +11,6 @@ use std::rc::Rc;
 
 use crate::Model as ConjureModel;
 use crate::ast as conjure_ast;
-use crate::ast::Declaration;
 use crate::solver::SolverError::{
     ModelFeatureNotImplemented, ModelFeatureNotSupported, ModelInvalid,
 };
@@ -41,10 +40,9 @@ fn load_symbol_table(
                 .symbols()
                 .lookup(name)
                 .expect("search var should exist");
-            let decl_borrow = decl.borrow();
-            let var = decl_borrow.as_var().expect("search var should be a var");
+            let var = decl.as_var().expect("search var should be a var");
 
-            load_var(name, var, true, minion_model)?;
+            load_var(name, &var, true, minion_model)?;
         }
 
         // then add the rest as non-search vars
@@ -59,8 +57,7 @@ fn load_symbol_table(
                 continue;
             };
 
-            let decl_borrow = decl.borrow();
-            let Some(var) = decl_borrow.as_var() else {
+            let Some(var) = decl.as_var() else {
                 continue;
             }; // ignore lettings, etc.
             //
@@ -75,7 +72,7 @@ fn load_symbol_table(
                 continue;
             };
 
-            load_var(&name, var, false, minion_model)?;
+            load_var(&name, &var, false, minion_model)?;
         }
     } else {
         for (name, decl) in conjure_model
@@ -84,8 +81,7 @@ fn load_symbol_table(
             .clone()
             .into_iter_local()
         {
-            let decl_borrow = decl.borrow();
-            let Some(var) = decl_borrow.as_var() else {
+            let Some(var) = decl.as_var() else {
                 continue;
             }; // ignore lettings, etc.
             //
@@ -102,7 +98,7 @@ fn load_symbol_table(
 
             let is_search_var = !matches!(name, conjure_ast::Name::Machine(_));
 
-            load_var(&name, var, is_search_var, minion_model)?;
+            load_var(&name, &var, is_search_var, minion_model)?;
         }
     }
     Ok(())
@@ -354,8 +350,8 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             minion_ast::Constraint::ReifyImply(Box::new(parse_expr(*e)?), parse_atom(v)?),
         ),
 
-        conjure_ast::Expression::AuxDeclaration(_metadata, name, expr) => Ok(
-            minion_ast::Constraint::Eq(parse_name(name)?, parse_atomic_expr(*expr)?),
+        conjure_ast::Expression::AuxDeclaration(_metadata, decl, expr) => Ok(
+            minion_ast::Constraint::Eq(parse_name(decl.name().clone())?, parse_atomic_expr(*expr)?),
         ),
 
         conjure_ast::Expression::FlatMinusEq(_metadata, a, b) => Ok(
@@ -416,7 +412,7 @@ fn parse_atom(atom: conjure_ast::Atom) -> Result<minion_ast::Var, SolverError> {
         conjure_ast::Atom::Literal(l) => {
             Ok(minion_ast::Var::ConstantAsVar(parse_literal_as_int(l)?))
         }
-        conjure_ast::Atom::Reference(name, _) => Ok(parse_name(name))?,
+        conjure_ast::Atom::Reference(declaration) => Ok(parse_name(declaration.name().clone()))?,
 
         x => Err(ModelFeatureNotSupported(format!(
             "expected a literal or a reference but got `{x}`"

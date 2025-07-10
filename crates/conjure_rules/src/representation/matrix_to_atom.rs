@@ -1,3 +1,4 @@
+use conjure_core::ast::{DeclarationPtr, Domain};
 use itertools::{Itertools, izip};
 use std::collections::BTreeMap;
 
@@ -175,24 +176,17 @@ impl Representation for MatrixToAtom {
         Ok(self
             .names()
             .map(|name| {
-                let declaration = symtab.lookup(&name).expect(
-                    "declarations of the representation variables should exist in the symbol table before expression_down is called",
-                );
+                let declaration = symtab.lookup(&name).expect("declarations of the representation variables should exist in the symbol table before expression_down is called");
                 (name, declaration)
             })
-            .map(|(name, decl)| {
-                (
-                    name.clone(),
-                    Expression::Atomic(Metadata::new(), Atom::Reference(name, decl)),
-                )
-            })
+            .map(|(name, decl)| (name.clone(), Expression::Atomic(Metadata::new(), Atom::Reference(decl))))
             .collect())
     }
 
-    fn declaration_down(&self) -> Result<Vec<Declaration>, ApplicationError> {
+    fn declaration_down(&self) -> Result<Vec<DeclarationPtr>, ApplicationError> {
         Ok(self
             .names()
-            .map(|name| Declaration::new_var(name, self.elem_domain.clone()))
+            .map(|name| DeclarationPtr::new_var(name, self.elem_domain.clone()))
             .collect_vec())
     }
 

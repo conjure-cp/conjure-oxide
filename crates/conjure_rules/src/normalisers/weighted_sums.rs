@@ -45,7 +45,8 @@ fn collect_like_terms(expr: &Expr, st: &SymbolTable) -> ApplicationResult {
                 match exprs2.unwrap_list().ok_or(RuleNotApplicable)?.as_slice() {
                     // todo (gs248) It would be nice to generate these destructures by macro, like `essence_expr!` but in reverse
                     // -c*v
-                    [Expr::Atomic(_, Atom::Reference(name, _)), Expr::Neg(_, e3)] => {
+                    [Expr::Atomic(_, Atom::Reference(decl)), Expr::Neg(_, e3)] => {
+                        let name: &Name = &decl.name();
                         if let Expr::Atomic(_, Atom::Literal(Lit::Int(l))) = **e3 {
                             weighted_terms
                                 .insert(name.clone(), weighted_terms.get(name).unwrap_or(&0) - l);
@@ -56,9 +57,10 @@ fn collect_like_terms(expr: &Expr, st: &SymbolTable) -> ApplicationResult {
 
                     // c*v
                     [
-                        Expr::Atomic(_, Atom::Reference(name, _)),
+                        Expr::Atomic(_, Atom::Reference(decl)),
                         Expr::Atomic(_, Atom::Literal(Lit::Int(l))),
                     ] => {
+                        let name: &Name = &decl.name();
                         weighted_terms
                             .insert(name.clone(), weighted_terms.get(name).unwrap_or(&0) + l);
                     }
@@ -85,7 +87,7 @@ fn collect_like_terms(expr: &Expr, st: &SymbolTable) -> ApplicationResult {
     let mut new_exprs = vec![];
     for (name, coefficient) in weighted_terms {
         let decl = st.lookup(&name).ok_or(RuleNotApplicable)?;
-        let atom = Expr::Atomic(Metadata::new(), Atom::Reference(name, decl));
+        let atom = Expr::Atomic(Metadata::new(), Atom::Reference(decl));
         new_exprs.push(essence_expr!(&atom * &coefficient));
     }
 

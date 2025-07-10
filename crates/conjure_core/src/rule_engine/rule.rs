@@ -1,14 +1,10 @@
-#![allow(clippy::type_complexity)] // FIXME: remove me once DeclarationPtr exists
-use std::cell::RefCell;
 use std::collections::BTreeSet;
 use std::fmt::{self, Display, Formatter};
 use std::hash::Hash;
-use std::rc::Rc;
 
 use thiserror::Error;
 
-use crate::ast::Declaration;
-use crate::ast::{Expression, Name, SubModel, SymbolTable};
+use crate::ast::{DeclarationPtr, Expression, Name, SubModel, SymbolTable};
 use tree_morph::Rule as MorphRule;
 
 #[derive(Debug, Error)]
@@ -134,8 +130,8 @@ impl Reduction {
     pub fn changed_symbols(
         &self,
         initial_symbols: &SymbolTable,
-    ) -> Vec<(Name, Rc<RefCell<Declaration>>, Rc<RefCell<Declaration>>)> {
-        let mut changes: Vec<(Name, Rc<RefCell<Declaration>>, Rc<RefCell<Declaration>>)> = vec![];
+    ) -> Vec<(Name, DeclarationPtr, DeclarationPtr)> {
+        let mut changes: Vec<(Name, DeclarationPtr, DeclarationPtr)> = vec![];
 
         for (var_name, initial_value) in initial_symbols.clone().into_iter_local() {
             let Some(new_value) = self.symbols.lookup(&var_name) else {

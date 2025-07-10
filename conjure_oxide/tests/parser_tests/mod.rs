@@ -1,5 +1,5 @@
 use conjure_core::{
-    ast::{Atom, Expression, Name},
+    ast::{Atom, Expression, Name, declaration},
     context::Context,
     matrix_expr,
 };
@@ -44,13 +44,13 @@ fn test_parse_dominance() {
                             Metadata::new(),
                             Box::new(Expression::Atomic(
                                 Metadata::new(),
-                                Atom::new_ref(&cost_decl)
+                                Atom::new_ref(cost_decl.clone())
                             )),
                             Box::new(Expression::FromSolution(
                                 Metadata::new(),
                                 Box::new(Expression::Atomic(
                                     Metadata::new(),
-                                    Atom::new_ref(&cost_decl)
+                                    Atom::new_ref(cost_decl.clone())
                                 )),
                             )),
                         ),
@@ -58,13 +58,13 @@ fn test_parse_dominance() {
                             Metadata::new(),
                             Box::new(Expression::Atomic(
                                 Metadata::new(),
-                                Atom::new_ref(&carbon_decl)
+                                Atom::new_ref(carbon_decl.clone())
                             )),
                             Box::new(Expression::FromSolution(
                                 Metadata::new(),
                                 Box::new(Expression::Atomic(
                                     Metadata::new(),
-                                    Atom::new_ref(&carbon_decl)
+                                    Atom::new_ref(carbon_decl.clone())
                                 )),
                             )),
                         ),
@@ -77,13 +77,13 @@ fn test_parse_dominance() {
                             Metadata::new(),
                             Box::new(Expression::Atomic(
                                 Metadata::new(),
-                                Atom::new_ref(&cost_decl)
+                                Atom::new_ref(cost_decl.clone())
                             )),
                             Box::new(Expression::FromSolution(
                                 Metadata::new(),
                                 Box::new(Expression::Atomic(
                                     Metadata::new(),
-                                    Atom::new_ref(&cost_decl)
+                                    Atom::new_ref(cost_decl)
                                 )),
                             )),
                         ),
@@ -91,13 +91,13 @@ fn test_parse_dominance() {
                             Metadata::new(),
                             Box::new(Expression::Atomic(
                                 Metadata::new(),
-                                Atom::new_ref(&carbon_decl)
+                                Atom::new_ref(carbon_decl.clone())
                             )),
                             Box::new(Expression::FromSolution(
                                 Metadata::new(),
                                 Box::new(Expression::Atomic(
                                     Metadata::new(),
-                                    Atom::new_ref(&carbon_decl)
+                                    Atom::new_ref(carbon_decl)
                                 )),
                             )),
                         ),
@@ -132,6 +132,10 @@ fn test_no_dominance() {
     let pth = path.to_str().unwrap();
     let filepath = format!("{pth}/no_dominance.essence");
     let res_nodom = parse_essence_file_native(&filepath, Arc::new(RwLock::new(Context::default())));
+
+    // HACK: reset id so that the declarations in the two models can be compared...
+    // this is a bad idea, but should be fine here...
+    declaration::reset_declaration_id_unchecked();
 
     let filepath = format!("{pth}/dominance_simple.essence");
     let res_dom = parse_essence_file_native(&filepath, Arc::new(RwLock::new(Context::default())));
