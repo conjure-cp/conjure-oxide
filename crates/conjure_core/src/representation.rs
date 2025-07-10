@@ -6,7 +6,7 @@ use linkme::distributed_slice;
 //TODO: write good documentation on this! ~niklasdewally
 
 use crate::{
-    ast::{Declaration, Expression, Literal, Name, SymbolTable},
+    ast::{DeclarationPtr, Expression, Literal, Name, SymbolTable},
     rule_engine::ApplicationError,
 };
 
@@ -78,8 +78,8 @@ pub trait Representation: Send + Sync + Debug {
         symtab: &SymbolTable,
     ) -> Result<BTreeMap<Name, Expression>, ApplicationError>;
 
-    /// Creates [`Declaration`]s for the representation variables of `self`.
-    fn declaration_down(&self) -> Result<Vec<Declaration>, ApplicationError>;
+    /// Creates declarations for the representation variables of `self`.
+    fn declaration_down(&self) -> Result<Vec<DeclarationPtr>, ApplicationError>;
 
     /// The rule name for this representaion.
     fn repr_name(&self) -> &str;

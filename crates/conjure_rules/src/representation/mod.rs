@@ -5,7 +5,7 @@ mod prelude {
     #![allow(unused_imports)]
     pub use conjure_core::{
         ast::{
-            AbstractLiteral, Atom, Declaration, Domain, Expression, Literal, Name, RecordEntry,
+            AbstractLiteral, Atom, DeclarationPtr, Expression, Literal, Name, RecordEntry,
             SymbolTable, matrix,
         },
         bug, into_matrix,

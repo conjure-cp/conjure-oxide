@@ -1,3 +1,5 @@
+use crate::ast::declaration::serde::DeclarationPtrAsId;
+use serde_with::serde_as;
 use std::collections::VecDeque;
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
@@ -22,7 +24,7 @@ use super::ac_operators::ACOperatorKind;
 use super::comprehension::Comprehension;
 use super::domains::HasDomain as _;
 use super::records::RecordValue;
-use super::{Domain, Range, SubModel, Typeable};
+use super::{DeclarationPtr, Domain, Range, SubModel, Typeable};
 
 // Ensure that this type doesn't get too big
 //
@@ -46,18 +48,20 @@ use super::{Domain, Range, SubModel, Typeable};
 // boxed ~niklasdewally
 
 // expect size of Expression to be 112 bytes
-static_assertions::assert_eq_size!([u8; 112], Expression);
+static_assertions::assert_eq_size!([u8; 104], Expression);
 
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
 /// The `Expression` enum includes operations, constants, and variable references
 /// used to build rules and conditions for the model.
 #[document_compatibility]
+#[serde_as]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
 #[uniplate(walk_into=[Atom,SubModel,AbstractLiteral<Expression>,Comprehension])]
 #[biplate(to=Metadata)]
 #[biplate(to=Atom,walk_into=[Expression,AbstractLiteral<Expression>,Vec<Expression>])]
-#[biplate(to=Name,walk_into=[Expression,Atom,AbstractLiteral<Expression>,Vec<Expression>])]
+#[biplate(to=DeclarationPtr,walk_into=[Expression,Atom,AbstractLiteral<Expression>,Vec<Expression>])]
+#[biplate(to=Name,walk_into=[DeclarationPtr,Expression,Atom,AbstractLiteral<Expression>,Vec<Expression>])]
 #[biplate(to=Vec<Expression>)]
 #[biplate(to=Option<Expression>)]
 #[biplate(to=SubModel,walk_into=[Comprehension])]
@@ -458,7 +462,11 @@ pub enum Expression {
     ///
     /// As with Savile Row, we semantically distinguish this from `Eq`.
     #[compatible(Minion)]
-    AuxDeclaration(Metadata, Name, Box<Expression>),
+    AuxDeclaration(
+        Metadata,
+        #[serde_as(as = "DeclarationPtrAsId")] DeclarationPtr,
+        Box<Expression>,
+    ),
 }
 
 // for the given matrix literal, return a bounded domain from the min to max of applying op to each
@@ -606,8 +614,8 @@ impl Expression {
                 }
             }
             Expression::InDomain(_, _, _) => Some(Domain::Bool),
-            Expression::Atomic(_, Atom::Reference(_, ptr)) => {
-                (**ptr).borrow().domain().cloned().map(|x| x.resolve(syms))
+            Expression::Atomic(_, Atom::Reference(ptr)) => {
+                ptr.domain().map(|x| x.clone()).map(|x| x.resolve(syms))
             }
             Expression::Atomic(_, atom) => Some(atom.domain_of().resolve(syms)),
             Expression::Scope(_, _) => Some(Domain::Bool),
@@ -1129,8 +1137,8 @@ impl Display for Expression {
                 let values = values.iter().join(",");
                 write!(f, "__minion_w_inset({atom},{values})")
             }
-            Expression::AuxDeclaration(_, n, e) => {
-                write!(f, "{} =aux {}", n, e.clone())
+            Expression::AuxDeclaration(_, decl, e) => {
+                write!(f, "{} =aux {}", &decl.name() as &Name, e.clone())
             }
             Expression::UnsafeMod(_, a, b) => {
                 write!(f, "{} % {}", a.clone(), b.clone())
@@ -1221,9 +1229,7 @@ impl Typeable for Expression {
             Expression::Root(_, _) => Some(ReturnType::Bool),
             Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
             Expression::FromSolution(_, expr) => expr.return_type(),
-            Expression::Atomic(_, Atom::Literal(lit)) => lit.return_type(),
-            // TODO - access symbol table to get return type of references - define inside Atom instead
-            Expression::Atomic(_, Atom::Reference(_, _)) => None,
+            Expression::Atomic(_, atom) => atom.return_type(),
             Expression::Scope(_, scope) => scope.return_type(),
             Expression::Abs(_, _) => Some(ReturnType::Int),
             Expression::Sum(_, _) => Some(ReturnType::Int),

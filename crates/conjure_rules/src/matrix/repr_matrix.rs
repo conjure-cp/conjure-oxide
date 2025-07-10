@@ -20,190 +20,187 @@ fn index_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 
 fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // is this an indexing operation?
-    let Expr::SafeIndex(_, subject, indices) = expr else {
-        return Err(RuleNotApplicable);
-    };
+    if let Expr::SafeIndex(_, subject, indices) = expr
 
     // ensure that we are indexing a decision variable with the representation "matrix_to_atom"
     // selected for it.
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs), decl)) = &**subject
-    else {
-        return Err(RuleNotApplicable);
-    };
+    //
+    && let Expr::Atomic(_, Atom::Reference(decl)) = &**subject
+    && let Name::WithRepresentation(name, reprs) =  &decl.name() as &Name
+    && reprs.first().is_none_or(|x| x.as_str() == "matrix_to_atom")
+    {
+        let repr = symbols
+            .get_representation(name, &["matrix_to_atom"])
+            .unwrap()[0]
+            .clone();
 
-    if reprs.first().is_none_or(|x| x.as_str() != "matrix_to_atom") {
-        return Err(RuleNotApplicable);
-    }
+        // ensure that the subject has a matrix domain.
+        // let decl = symbols.lookup(name).unwrap();
 
-    let repr = symbols
-        .get_representation(name, &["matrix_to_atom"])
-        .unwrap()[0]
-        .clone();
-
-    // ensure that the subject has a matrix domain.
-    // let decl = symbols.lookup(name).unwrap();
-
-    // resolve index domains so that we can enumerate them later
-    let Some(Domain::Matrix(_, index_domains)) =
-        decl.borrow().domain().cloned().map(|x| x.resolve(symbols))
-    else {
-        return Err(RuleNotApplicable);
-    };
-
-    // checks are all ok: do the actual rewrite!
-
-    // 1. indices are constant -> find the element being indexed and only return that variable.
-    // 2. indices are not constant -> flatten matrix and return [flattened_matrix][flattened_index_expr]
-
-    // are the indices constant?
-    let mut indices_are_const = true;
-    let mut indices_as_lits: Vec<Literal> = vec![];
-
-    for index in indices {
-        let Some(index) = index.clone().into_literal() else {
-            indices_are_const = false;
-            break;
-        };
-        indices_as_lits.push(index);
-    }
-
-    if indices_are_const {
-        // indices are constant -> find the element being indexed and only return that variable.
-        //
-        let indices_as_name = Name::Represented(Box::new((
-            name.as_ref().clone(),
-            "matrix_to_atom".into(),
-            indices_as_lits.iter().join("_"),
-        )));
-
-        let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
-
-        Ok(Reduction::pure(subject))
-    } else {
-        // indices are not constant -> flatten matrix and return [flattened_matrix][flattened_index_expr]
-
-        // For now, only supports matrices with index domains in the form int(n..m).
-        //
-        // Assuming this, to turn some x[a,b] and x[a,b,c] into x'[z]:
-        //
-        // z =                               + size(b) * (a-lb(a)) + 1 * (b-lb(b))  + 1 [2d matrix]
-        // z = (size(b)*size(c))*(a−lb(a))   + size(c) * (b−lb(b)) + 1 * (c−lb(c))  + 1 [3d matrix]
-        //
-        // where lb(a) is the lower bound for a.
-        //
-        //
-        // TODO: For other cases, we should generate table constraints that map the flat indices to
-        // the real ones.
-
-        // only need to do this for >1d matrices.
-        let n_dims = index_domains.len();
-        if n_dims <= 1 {
+        // resolve index domains so that we can enumerate them later
+        let Some(Domain::Matrix(_, index_domains)) =
+            decl.domain().map(|x| x.clone().resolve(symbols))
+        else {
             return Err(RuleNotApplicable);
         };
 
-        // some intermediate values we need to do the above..
+        // checks are all ok: do the actual rewrite!
 
-        // [(lb(a),ub(a)),(lb(b),ub(b)),(lb(c),ub(c),...]
-        let bounds = index_domains
-            .iter()
-            .map(|dom| {
-                let Domain::Int(ranges) = dom else {
-                    return Err(RuleNotApplicable);
-                };
+        // 1. indices are constant -> find the element being indexed and only return that variable.
+        // 2. indices are not constant -> flatten matrix and return [flattened_matrix][flattened_index_expr]
 
-                let &[Range::Bounded(from, to)] = &ranges[..] else {
-                    return Err(RuleNotApplicable);
-                };
+        // are the indices constant?
+        let mut indices_are_const = true;
+        let mut indices_as_lits: Vec<Literal> = vec![];
 
-                Ok((from, to))
-            })
-            .process_results(|it| it.collect_vec())?;
+        for index in indices {
+            let Some(index) = index.clone().into_literal() else {
+                indices_are_const = false;
+                break;
+            };
+            indices_as_lits.push(index);
+        }
 
-        // [size(a),size(b),size(c),..]
-        let sizes = bounds
-            .iter()
-            .map(|(from, to)| (to - from) + 1)
-            .collect_vec();
+        if indices_are_const {
+            // indices are constant -> find the element being indexed and only return that variable.
+            //
+            let indices_as_name = Name::Represented(Box::new((
+                name.as_ref().clone(),
+                "matrix_to_atom".into(),
+                indices_as_lits.iter().join("_"),
+            )));
 
-        // [lb(a),lb(b),lb(c),..]
-        let lower_bounds = bounds.iter().map(|(from, _)| from).collect_vec();
+            let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
 
-        // from the examples above:
-        //
-        // index = (coefficients . terms) + 1
-        //
-        // where coefficients = [size(b)*size(c), size(c), 1      ]
-        //       terms =        [a-lb(a)        , b-lb(b), c-lb(c)]
+            Ok(Reduction::pure(subject))
+        } else {
+            // indices are not constant -> flatten matrix and return [flattened_matrix][flattened_index_expr]
 
-        // building coefficients.
-        //
-        // starting with sizes==[size(a),size(b),size(c)]
-        //
-        // ~~ skip(1) ~~>
-        //
-        // [size(b),size(c)]
-        //
-        // ~~ rev ~~>
-        //
-        // [size(c),size(b)]
-        //
-        // ~~ chain!(std::iter::once(&1),...) ~~>
-        //
-        // [1,size(c),size(b)]
-        //
-        // ~~ scan * ~~>
-        //
-        // [1,1*size(c),1*size(c)*size(b)]
-        //
-        // ~~ reverse ~~>
-        //
-        // [size(b)*size(c),size(c),1]
-        let mut coeffs: Vec<Expr> = chain!(std::iter::once(&1), sizes.iter().skip(1).rev())
-            .scan(1, |state, &x| {
-                *state *= x;
-                Some(*state)
-            })
-            .map(|x| essence_expr!(&x))
-            .collect_vec();
+            // For now, only supports matrices with index domains in the form int(n..m).
+            //
+            // Assuming this, to turn some x[a,b] and x[a,b,c] into x'[z]:
+            //
+            // z =                               + size(b) * (a-lb(a)) + 1 * (b-lb(b))  + 1 [2d matrix]
+            // z = (size(b)*size(c))*(a−lb(a))   + size(c) * (b−lb(b)) + 1 * (c−lb(c))  + 1 [3d matrix]
+            //
+            // where lb(a) is the lower bound for a.
+            //
+            //
+            // TODO: For other cases, we should generate table constraints that map the flat indices to
+            // the real ones.
 
-        coeffs.reverse();
+            // only need to do this for >1d matrices.
+            let n_dims = index_domains.len();
+            if n_dims <= 1 {
+                return Err(RuleNotApplicable);
+            };
 
-        // [(a-lb(a)),b-lb(b),c-lb(c)]
-        let terms: Vec<Expr> = izip!(indices, lower_bounds)
-            .map(|(i, lbi)| essence_expr!(&i - &lbi))
-            .collect_vec();
+            // some intermediate values we need to do the above..
 
-        // coeffs . terms
-        let mut sum_terms: Vec<Expr> = izip!(coeffs, terms)
-            .map(|(coeff, term)| essence_expr!(&coeff * &term))
-            .collect_vec();
+            // [(lb(a),ub(a)),(lb(b),ub(b)),(lb(c),ub(c),...]
+            let bounds = index_domains
+                .iter()
+                .map(|dom| {
+                    let Domain::Int(ranges) = dom else {
+                        return Err(RuleNotApplicable);
+                    };
 
-        // (coeffs . terms) + 1
-        sum_terms.push(essence_expr!(1));
+                    let &[Range::Bounded(from, to)] = &ranges[..] else {
+                        return Err(RuleNotApplicable);
+                    };
 
-        let flat_index = Expr::Sum(Metadata::new(), Box::new(into_matrix_expr![sum_terms]));
+                    Ok((from, to))
+                })
+                .process_results(|it| it.collect_vec())?;
 
-        // now lets get the flat matrix.
+            // [size(a),size(b),size(c),..]
+            let sizes = bounds
+                .iter()
+                .map(|(from, to)| (to - from) + 1)
+                .collect_vec();
 
-        let repr_exprs = repr.expression_down(symbols)?;
-        let flat_elems = matrix::enumerate_indices(index_domains.clone())
-            .map(|xs| {
-                Name::Represented(Box::new((
-                    name.as_ref().clone(),
-                    "matrix_to_atom".into(),
-                    xs.into_iter().join("_"),
-                )))
-            })
-            .map(|x| repr_exprs[&x].clone())
-            .collect_vec();
+            // [lb(a),lb(b),lb(c),..]
+            let lower_bounds = bounds.iter().map(|(from, _)| from).collect_vec();
 
-        let flat_matrix = into_matrix_expr![flat_elems];
+            // from the examples above:
+            //
+            // index = (coefficients . terms) + 1
+            //
+            // where coefficients = [size(b)*size(c), size(c), 1      ]
+            //       terms =        [a-lb(a)        , b-lb(b), c-lb(c)]
 
-        Ok(Reduction::pure(Expr::SafeIndex(
-            Metadata::new(),
-            Box::new(flat_matrix),
-            vec![flat_index],
-        )))
+            // building coefficients.
+            //
+            // starting with sizes==[size(a),size(b),size(c)]
+            //
+            // ~~ skip(1) ~~>
+            //
+            // [size(b),size(c)]
+            //
+            // ~~ rev ~~>
+            //
+            // [size(c),size(b)]
+            //
+            // ~~ chain!(std::iter::once(&1),...) ~~>
+            //
+            // [1,size(c),size(b)]
+            //
+            // ~~ scan * ~~>
+            //
+            // [1,1*size(c),1*size(c)*size(b)]
+            //
+            // ~~ reverse ~~>
+            //
+            // [size(b)*size(c),size(c),1]
+            let mut coeffs: Vec<Expr> = chain!(std::iter::once(&1), sizes.iter().skip(1).rev())
+                .scan(1, |state, &x| {
+                    *state *= x;
+                    Some(*state)
+                })
+                .map(|x| essence_expr!(&x))
+                .collect_vec();
+
+            coeffs.reverse();
+
+            // [(a-lb(a)),b-lb(b),c-lb(c)]
+            let terms: Vec<Expr> = izip!(indices, lower_bounds)
+                .map(|(i, lbi)| essence_expr!(&i - &lbi))
+                .collect_vec();
+
+            // coeffs . terms
+            let mut sum_terms: Vec<Expr> = izip!(coeffs, terms)
+                .map(|(coeff, term)| essence_expr!(&coeff * &term))
+                .collect_vec();
+
+            // (coeffs . terms) + 1
+            sum_terms.push(essence_expr!(1));
+
+            let flat_index = Expr::Sum(Metadata::new(), Box::new(into_matrix_expr![sum_terms]));
+
+            // now lets get the flat matrix.
+
+            let repr_exprs = repr.expression_down(symbols)?;
+            let flat_elems = matrix::enumerate_indices(index_domains.clone())
+                .map(|xs| {
+                    Name::Represented(Box::new((
+                        name.as_ref().clone(),
+                        "matrix_to_atom".into(),
+                        xs.into_iter().join("_"),
+                    )))
+                })
+                .map(|x| repr_exprs[&x].clone())
+                .collect_vec();
+
+            let flat_matrix = into_matrix_expr![flat_elems];
+
+            Ok(Reduction::pure(Expr::SafeIndex(
+                Metadata::new(),
+                Box::new(flat_matrix),
+                vec![flat_index],
+            )))
+        }
+    } else {
+        Err(RuleNotApplicable)
     }
 }
 
@@ -214,11 +211,13 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs), _)) = &**subject
-    else {
+    let Expr::Atomic(_, Atom::Reference(decl)) = &**subject else {
         return Err(RuleNotApplicable);
     };
 
+    let Name::WithRepresentation(name, reprs) = &decl.name() as &Name else {
+        return Err(RuleNotApplicable);
+    };
     if reprs.first().is_none_or(|x| x.as_str() != "matrix_to_atom") {
         return Err(RuleNotApplicable);
     }
@@ -230,8 +229,7 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         .clone();
 
     // resolve index domains so that we can enumerate them later
-    let Some(Domain::Matrix(_, index_domains)) =
-        decl.borrow().domain().cloned().map(|x| x.resolve(symbols))
+    let Some(Domain::Matrix(_, index_domains)) = decl.domain().map(|x| x.clone().resolve(symbols))
     else {
         return Err(RuleNotApplicable);
     };
@@ -289,8 +287,11 @@ fn matrix_ref_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     };
 
     for (child, ctx) in expr.holes() {
-        let Expr::Atomic(_, Atom::Reference(Name::WithRepresentation(name, reprs), _)) = child
-        else {
+        let Expr::Atomic(_, Atom::Reference(decl)) = child else {
+            continue;
+        };
+
+        let Name::WithRepresentation(name, reprs) = &decl.name() as &Name else {
             continue;
         };
 
@@ -306,7 +307,7 @@ fn matrix_ref_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
         // resolve index domains so that we can enumerate them later
         let Some(Domain::Matrix(_, index_domains)) =
-            decl.borrow().domain().cloned().map(|x| x.resolve(symbols))
+            decl.domain().map(|x| x.clone().resolve(symbols))
         else {
             continue;
         };

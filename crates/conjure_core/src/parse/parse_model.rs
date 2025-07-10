@@ -8,13 +8,13 @@ use std::sync::{Arc, RwLock};
 use serde_json::Value;
 use serde_json::Value as JsonValue;
 
+use crate::ast::DeclarationKind;
 use crate::ast::comprehension::{ComprehensionBuilder, ComprehensionKind};
 use crate::ast::records::RecordValue;
 use crate::ast::{
-    AbstractLiteral, Atom, Domain, Expression, Literal, Name, Range, RecordEntry, SetAttr,
-    SymbolTable,
+    AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, Literal, Name, Range, RecordEntry,
+    SetAttr, SymbolTable,
 };
-use crate::ast::{Declaration, DeclarationKind};
 use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::metadata::Metadata;
@@ -126,10 +126,7 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
     let domain = parse_domain(domain.0, domain.1, symtab)?;
 
     symtab
-        .insert(Rc::new(RefCell::new(Declaration::new_var(
-            name.clone(),
-            domain,
-        ))))
+        .insert(DeclarationPtr::new_var(name.clone(), domain))
         .ok_or(Error::Parse(format!(
             "Could not add {name} to symbol table as it already exists"
         )))
@@ -147,10 +144,7 @@ fn parse_letting(v: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Result<()> 
     if let Some(value) = parse_expression(&arr[1], scope) {
         let mut symtab = scope.borrow_mut();
         symtab
-            .insert(Rc::new(RefCell::new(Declaration::new_value_letting(
-                name.clone(),
-                value,
-            ))))
+            .insert(DeclarationPtr::new_value_letting(name.clone(), value))
             .ok_or(Error::Parse(format!(
                 "Could not add {name} to symbol table as it already exists"
             )))
@@ -169,10 +163,7 @@ fn parse_letting(v: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Result<()> 
         let domain = parse_domain(domain.0, domain.1, &mut symtab)?;
 
         symtab
-            .insert(Rc::new(RefCell::new(Declaration::new_domain_letting(
-                name.clone(),
-                domain,
-            ))))
+            .insert(DeclarationPtr::new_domain_letting(name.clone(), domain))
             .ok_or(Error::Parse(format!(
                 "Could not add {name} to symbol table as it already exists"
             )))
@@ -309,13 +300,7 @@ fn parse_domain(
             record_entries
                 .iter()
                 .cloned()
-                .map(|entry| (entry.name, entry.domain))
-                .map(|(n, d)| {
-                    Rc::new(RefCell::new(Declaration::new(
-                        n,
-                        DeclarationKind::RecordField(d),
-                    )))
-                })
+                .map(DeclarationPtr::new_record_field)
                 .for_each(|decl| {
                     symbols
                         .insert(decl)
@@ -433,8 +418,7 @@ fn parse_domain_value_int(obj: &JsonValue, symbols: &SymbolTable) -> Option<i32>
         );
         let name = Name::User(inner_name.to_string());
         let decl = symbols.lookup(&name)?;
-        let decl_borrow = decl.borrow();
-        let DeclarationKind::ValueLetting(d) = decl_borrow.kind() else {
+        let DeclarationKind::ValueLetting(d) = &decl.kind() as &DeclarationKind else {
             parser_trace!(".. name exists but is not a value letting!");
             return None;
         };
@@ -617,14 +601,14 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
             let name = refe["Reference"].as_array()?[0].as_object()?["Name"].as_str()?;
             let user_name = Name::User(name.to_string());
 
-            let declaration: Rc<RefCell<Declaration>> = scope
+            let declaration: DeclarationPtr = scope
                 .borrow()
                 .lookup(&user_name)
                 .or_else(|| bug!("Could not find reference {user_name}"))?;
 
             Some(Expression::Atomic(
                 Metadata::new(),
-                Atom::Reference(user_name, declaration),
+                Atom::Reference(declaration),
             ))
         }
         Value::Object(abslit) if abslit.contains_key("AbstractLiteral") => {
@@ -737,10 +721,10 @@ fn parse_comprehension(
                     .next()?;
                 let domain =
                     parse_domain(domain_name, domain_value, &mut inner_scope.borrow_mut()).ok()?;
-                comprehension.generator(Rc::new(RefCell::new(Declaration::new_var(
+                comprehension.generator(DeclarationPtr::new_var(
                     Name::User(name.to_string()),
                     domain,
-                ))))
+                ))
             }
 
             "Condition" => comprehension.guard(parse_expression(value, &inner_scope)?),

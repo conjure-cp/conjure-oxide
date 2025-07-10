@@ -198,13 +198,13 @@ pub fn parse_expression(
             let name = Name::User(variable_name.to_string());
 
             // Look up the declaration in the symbol table
-            let declaration_rc = symbols.lookup(&name).ok_or_else(|| {
+            let declaration = symbols.lookup(&name).ok_or_else(|| {
                 EssenceParseError::from(format!("Variable '{variable_name}' not found in scope"))
             })?;
 
             Ok(Expression::Atomic(
                 Metadata::new(),
-                Atom::Reference(Name::User(variable_name), declaration_rc),
+                Atom::Reference(declaration),
             ))
         }
         "from_solution" => match root.kind() {
