@@ -1,7 +1,7 @@
 #![allow(deprecated)]
 use std::any::TypeId;
 // allow use of Declaration in this file, and nowhere else
-use std::cell::{Ref, RefCell, RefMut};
+use std::cell::{Cell, Ref, RefCell, RefMut};
 use std::fmt::{Debug, Display};
 use std::rc::Rc;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -17,7 +17,22 @@ use super::types::Typeable;
 use super::{DecisionVariable, Domain, Expression, RecordEntry, ReturnType};
 
 static ID_COUNTER: AtomicU32 = AtomicU32::new(0);
-static DECLARATION_PTR_ID_COUNTER: AtomicU32 = AtomicU32::new(0);
+thread_local! {
+    // make each thread have its own id counter.
+    static DECLARATION_PTR_ID_COUNTER: Cell<u32> = const { Cell::new(0) };
+
+    // We run integration tests in parallel threads - making this thread local ensures that
+    // declarations in a test always have the same id, instead of the ids depending on how many
+    // threads are running, how they are scheduled, etc.
+}
+
+#[doc(hidden)]
+/// Resets the id counter of `DeclarationPtr` to 0.
+///
+/// This is probably always a bad idea.
+pub fn reset_declaration_id_unchecked() {
+    DECLARATION_PTR_ID_COUNTER.set(0);
+}
 
 /// A shared pointer to a [`Declaration`].
 ///
@@ -66,7 +81,7 @@ struct DeclarationPtrInner {
 impl DeclarationPtrInner {
     fn new(value: RefCell<Declaration>) -> Rc<DeclarationPtrInner> {
         Rc::new(DeclarationPtrInner {
-            id: DECLARATION_PTR_ID_COUNTER.fetch_add(1, Ordering::Relaxed),
+            id: DECLARATION_PTR_ID_COUNTER.replace(DECLARATION_PTR_ID_COUNTER.get() + 1),
             value,
         })
     }
@@ -519,7 +534,8 @@ impl std::hash::Hash for DeclarationPtr {
 
 impl Display for DeclarationPtr {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.inner.value.fmt(f)
+        let value: &Declaration = &self.borrow();
+        value.fmt(f)
     }
 }
 
@@ -528,6 +544,7 @@ impl Display for DeclarationPtr {
 #[derive(Debug, Serialize, Deserialize, Eq, Uniplate)]
 #[biplate(to=Expression,walk_into=[DeclarationKind])]
 #[biplate(to=DeclarationPtr,walk_into=[DeclarationKind])]
+#[biplate(to=Name)]
 #[uniplate(walk_into=[DeclarationKind])]
 #[deprecated = "use DeclarationPtr instead."]
 pub struct Declaration {

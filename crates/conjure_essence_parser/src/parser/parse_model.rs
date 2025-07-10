@@ -1,10 +1,8 @@
-use std::cell::RefCell;
 use std::fs;
-use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 
 use conjure_core::Model;
-use conjure_core::ast::Declaration;
+use conjure_core::ast::DeclarationPtr;
 use conjure_core::ast::Expression;
 use conjure_core::context::Context;
 use conjure_core::error::Error;
@@ -50,14 +48,11 @@ pub fn parse_essence_with_context(
             "single_line_comment" => {}
             "find_statement_list" => {
                 let var_hashmap = parse_find_statement(statement, &source_code);
-                for (name, decision_variable) in var_hashmap {
+                for (name, domain) in var_hashmap {
                     model
                         .as_submodel_mut()
                         .symbols_mut()
-                        .insert(Rc::new(RefCell::new(Declaration::new_var(
-                            name,
-                            decision_variable,
-                        ))));
+                        .insert(DeclarationPtr::new_var(name, domain));
                 }
             }
             "constraint_list" => {

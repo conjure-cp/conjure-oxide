@@ -185,7 +185,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             domain.contains(lit).ok().map(Into::into)
         }
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
-        Expr::Atomic(_, Atom::Reference(_, _)) => None,
+        Expr::Atomic(_, Atom::Reference(_)) => None,
         Expr::AbstractLiteral(_, a) => {
             if let AbstractLiteral::Set(s) = a {
                 let mut copy = Vec::new();

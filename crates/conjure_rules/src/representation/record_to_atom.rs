@@ -1,4 +1,4 @@
-use conjure_core::ast::records::RecordValue;
+use conjure_core::ast::{DeclarationPtr, Domain, records::RecordValue};
 use itertools::Itertools;
 
 use super::prelude::*;
@@ -127,17 +127,17 @@ impl Representation for RecordToAtom {
                 let decl = st.lookup(&name).unwrap();
                 (
                     name.clone(),
-                    Expression::Atomic(Metadata::new(), Atom::Reference(name, decl)),
+                    Expression::Atomic(Metadata::new(), Atom::Reference(decl)),
                 )
             })
             .collect())
     }
 
-    fn declaration_down(&self) -> Result<Vec<Declaration>, ApplicationError> {
+    fn declaration_down(&self) -> Result<Vec<DeclarationPtr>, ApplicationError> {
         Ok(self
             .names()
             .zip(self.elem_domain.iter().cloned())
-            .map(|(name, domain)| Declaration::new_var(name, domain))
+            .map(|(name, domain)| DeclarationPtr::new_var(name, domain))
             .collect())
     }
 

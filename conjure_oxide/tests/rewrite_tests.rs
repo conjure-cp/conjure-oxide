@@ -10,16 +10,10 @@ use conjure_oxide::{
     solver::{Solver, adaptors},
 };
 use conjure_rules::eval_constant;
-use std::cell::RefCell;
-use std::collections::VecDeque;
+use pretty_assertions::assert_eq;
 use std::process::exit;
-use std::rc::Rc;
-use uniplate::{Biplate, Uniplate};
+use uniplate::Uniplate;
 
-fn var_name_from_atom(a: &Atom) -> Name {
-    let names: VecDeque<Name> = a.universe_bi();
-    names[0].clone()
-}
 #[test]
 fn rules_present() {
     let rules = get_all_rules();
@@ -43,10 +37,10 @@ fn sum_of_constants() {
             Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
             Expression::Atomic(
                 Metadata::new(),
-                Atom::Reference(
+                Atom::Reference(DeclarationPtr::new_var(
                     Name::User(String::from("a")),
-                    Rc::new(RefCell::new(Declaration::default()))
-                ),
+                    Domain::Bool
+                )),
             ),
         ]),
     );
@@ -77,6 +71,10 @@ fn evaluate_sum_of_constants(expr: &Expression) -> Option<i32> {
 
 #[test]
 fn recursive_sum_of_constants() {
+    let a = Atom::Reference(DeclarationPtr::new_var(
+        Name::User(String::from("a")),
+        Domain::Int(vec![Range::Bounded(1, 5)]),
+    ));
     let complex_expression = Expression::Eq(
         Metadata::new(),
         Box::new(Expression::Sum(
@@ -91,13 +89,7 @@ fn recursive_sum_of_constants() {
                         Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2))),
                     ]),
                 ),
-                Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Reference(
-                        Name::User(String::from("a")),
-                        Rc::new(RefCell::new(Declaration::default()))
-                    ),
-                ),
+                Expression::Atomic(Metadata::new(), a.clone()),
             ]),
         )),
         Box::new(Expression::Atomic(
@@ -113,13 +105,7 @@ fn recursive_sum_of_constants() {
                 Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1))),
                 Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2))),
                 Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(3))),
-                Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Reference(
-                        Name::User(String::from("a")),
-                        Rc::new(RefCell::new(Declaration::default()))
-                    ),
-                ),
+                Expression::Atomic(Metadata::new(), a),
             ]),
         )),
         Box::new(Expression::Atomic(
@@ -269,33 +255,28 @@ fn reduce_solve_xyz() {
         Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(4)))
     );
 
+    let a = Atom::Reference(DeclarationPtr::new_var(
+        Name::User(String::from("a")),
+        Domain::Int(vec![Range::Bounded(1, 5)]),
+    ));
+    let b = Atom::Reference(DeclarationPtr::new_var(
+        Name::User(String::from("b")),
+        Domain::Int(vec![Range::Bounded(1, 5)]),
+    ));
+    let c = Atom::Reference(DeclarationPtr::new_var(
+        Name::User(String::from("c")),
+        Domain::Int(vec![Range::Bounded(1, 5)]),
+    ));
+
     // a + b + c = 4
     expr1 = Expression::Leq(
         Metadata::new(),
         Box::new(Expression::Sum(
             Metadata::new(),
             Box::new(matrix_expr![
-                Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Reference(
-                        Name::User(String::from("a")),
-                        Rc::new(RefCell::new(Declaration::default()))
-                    ),
-                ),
-                Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Reference(
-                        Name::User(String::from("b")),
-                        Rc::new(RefCell::new(Declaration::default()))
-                    ),
-                ),
-                Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Reference(
-                        Name::User(String::from("c")),
-                        Rc::new(RefCell::new(Declaration::default()))
-                    ),
-                ),
+                Expression::Atomic(Metadata::new(), a.clone()),
+                Expression::Atomic(Metadata::new(), b.clone()),
+                Expression::Atomic(Metadata::new(), c.clone()),
             ]),
         )),
         Box::new(expr1),
@@ -308,20 +289,7 @@ fn reduce_solve_xyz() {
         expr1,
         Expression::FlatSumLeq(
             Metadata::new(),
-            vec![
-                Atom::Reference(
-                    Name::User(String::from("a")),
-                    Rc::new(RefCell::new(Declaration::default()))
-                ),
-                Atom::Reference(
-                    Name::User(String::from("b")),
-                    Rc::new(RefCell::new(Declaration::default()))
-                ),
-                Atom::Reference(
-                    Name::User(String::from("c")),
-                    Rc::new(RefCell::new(Declaration::default()))
-                ),
-            ],
+            vec![a.clone(), b.clone(), c.clone()],
             Atom::Literal(Literal::Int(4))
         )
     );
@@ -329,20 +297,8 @@ fn reduce_solve_xyz() {
     // a < b
     let mut expr2 = Expression::Lt(
         Metadata::new(),
-        Box::new(Expression::Atomic(
-            Metadata::new(),
-            Atom::Reference(
-                Name::User(String::from("a")),
-                Rc::new(RefCell::new(Declaration::default())),
-            ),
-        )),
-        Box::new(Expression::Atomic(
-            Metadata::new(),
-            Atom::Reference(
-                Name::User(String::from("b")),
-                Rc::new(RefCell::new(Declaration::default())),
-            ),
-        )),
+        Box::new(Expression::Atomic(Metadata::new(), a.clone())),
+        Box::new(Expression::Atomic(Metadata::new(), b.clone())),
     );
     expr2 = lt_to_leq
         .apply(&expr2, &SymbolTable::new())
@@ -357,14 +313,8 @@ fn reduce_solve_xyz() {
         expr2,
         Expression::FlatIneq(
             Metadata::new(),
-            Box::new(Atom::Reference(
-                Name::User(String::from("a")),
-                Rc::new(RefCell::new(Declaration::default()))
-            )),
-            Box::new(Atom::Reference(
-                Name::User(String::from("b")),
-                Rc::new(RefCell::new(Declaration::default()))
-            )),
+            Box::new(a.clone()),
+            Box::new(b.clone()),
             Box::new(Literal::Int(-1)),
         )
     );
@@ -375,26 +325,26 @@ fn reduce_solve_xyz() {
     model
         .as_submodel_mut()
         .symbols_mut()
-        .insert(Rc::new(RefCell::new(Declaration::new_var(
+        .insert(DeclarationPtr::new_var(
             Name::User(String::from("a")),
             Domain::Int(vec![Range::Bounded(1, 3)]),
-        ))))
+        ))
         .unwrap();
     model
         .as_submodel_mut()
         .symbols_mut()
-        .insert(Rc::new(RefCell::new(Declaration::new_var(
+        .insert(DeclarationPtr::new_var(
             Name::User(String::from("b")),
             Domain::Int(vec![Range::Bounded(1, 3)]),
-        ))))
+        ))
         .unwrap();
     model
         .as_submodel_mut()
         .symbols_mut()
-        .insert(Rc::new(RefCell::new(Declaration::new_var(
+        .insert(DeclarationPtr::new_var(
             Name::User(String::from("c")),
             Domain::Int(vec![Range::Bounded(1, 3)]),
-        ))))
+        ))
         .unwrap();
 
     let solver: Solver<adaptors::Minion> = Solver::new(adaptors::Minion::new());
@@ -471,25 +421,23 @@ fn remove_trivial_and_or() {
 fn rule_distribute_not_over_and() {
     let distribute_not_over_and = get_rule_by_name("distribute_not_over_and").unwrap();
 
+    let a = Atom::Reference(DeclarationPtr::new_var(
+        Name::User(String::from("a")),
+        Domain::Bool,
+    ));
+
+    let b = Atom::Reference(DeclarationPtr::new_var(
+        Name::User(String::from("b")),
+        Domain::Bool,
+    ));
+
     let mut expr = Expression::Not(
         Metadata::new(),
         Box::new(Expression::And(
             Metadata::new(),
             Box::new(matrix_expr![
-                Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Reference(
-                        Name::User(String::from("a")),
-                        Rc::new(RefCell::new(Declaration::default()))
-                    ),
-                ),
-                Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Reference(
-                        Name::User(String::from("b")),
-                        Rc::new(RefCell::new(Declaration::default()))
-                    ),
-                ),
+                Expression::Atomic(Metadata::new(), a.clone()),
+                Expression::Atomic(Metadata::new(), b.clone()),
             ]),
         )),
     );
@@ -506,23 +454,11 @@ fn rule_distribute_not_over_and() {
             Box::new(matrix_expr![
                 Expression::Not(
                     Metadata::new(),
-                    Box::new(Expression::Atomic(
-                        Metadata::new(),
-                        Atom::Reference(
-                            Name::User(String::from("a")),
-                            Rc::new(RefCell::new(Declaration::default()))
-                        )
-                    ))
+                    Box::new(Expression::Atomic(Metadata::new(), a.clone()))
                 ),
                 Expression::Not(
                     Metadata::new(),
-                    Box::new(Expression::Atomic(
-                        Metadata::new(),
-                        Atom::Reference(
-                            Name::User(String::from("b")),
-                            Rc::new(RefCell::new(Declaration::default()))
-                        )
-                    ))
+                    Box::new(Expression::Atomic(Metadata::new(), b.clone()))
                 ),
             ])
         )
@@ -533,25 +469,23 @@ fn rule_distribute_not_over_and() {
 fn rule_distribute_not_over_or() {
     let distribute_not_over_or = get_rule_by_name("distribute_not_over_or").unwrap();
 
+    let a = Atom::Reference(DeclarationPtr::new_var(
+        Name::User(String::from("a")),
+        Domain::Bool,
+    ));
+
+    let b = Atom::Reference(DeclarationPtr::new_var(
+        Name::User(String::from("b")),
+        Domain::Bool,
+    ));
+
     let mut expr = Expression::Not(
         Metadata::new(),
         Box::new(Expression::Or(
             Metadata::new(),
             Box::new(matrix_expr![
-                Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Reference(
-                        Name::User(String::from("a")),
-                        Rc::new(RefCell::new(Declaration::default()))
-                    ),
-                ),
-                Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Reference(
-                        Name::User(String::from("b")),
-                        Rc::new(RefCell::new(Declaration::default()))
-                    ),
-                ),
+                Expression::Atomic(Metadata::new(), a.clone()),
+                Expression::Atomic(Metadata::new(), b.clone()),
             ]),
         )),
     );
@@ -568,23 +502,11 @@ fn rule_distribute_not_over_or() {
             Box::new(matrix_expr![
                 Expression::Not(
                     Metadata::new(),
-                    Box::new(Expression::Atomic(
-                        Metadata::new(),
-                        Atom::Reference(
-                            Name::User(String::from("a")),
-                            Rc::new(RefCell::new(Declaration::default()))
-                        )
-                    ))
+                    Box::new(Expression::Atomic(Metadata::new(), a.clone()))
                 ),
                 Expression::Not(
                     Metadata::new(),
-                    Box::new(Expression::Atomic(
-                        Metadata::new(),
-                        Atom::Reference(
-                            Name::User(String::from("b")),
-                            Rc::new(RefCell::new(Declaration::default()))
-                        )
-                    ))
+                    Box::new(Expression::Atomic(Metadata::new(), b.clone()))
                 ),
             ])
         )
@@ -599,10 +521,10 @@ fn rule_distribute_not_over_and_not_changed() {
         Metadata::new(),
         Box::new(Expression::Atomic(
             Metadata::new(),
-            Atom::Reference(
+            Atom::Reference(DeclarationPtr::new_var(
                 Name::User(String::from("a")),
-                Rc::new(RefCell::new(Declaration::default())),
-            ),
+                Domain::Int(vec![Range::Bounded(1, 5)]),
+            )),
         )),
     );
 
@@ -619,10 +541,10 @@ fn rule_distribute_not_over_or_not_changed() {
         Metadata::new(),
         Box::new(Expression::Atomic(
             Metadata::new(),
-            Atom::Reference(
+            Atom::Reference(DeclarationPtr::new_var(
                 Name::User(String::from("a")),
-                Rc::new(RefCell::new(Declaration::default())),
-            ),
+                Domain::Int(vec![Range::Bounded(1, 5)]),
+            )),
         )),
     );
 
@@ -635,35 +557,21 @@ fn rule_distribute_not_over_or_not_changed() {
 fn rule_distribute_or_over_and() {
     let distribute_or_over_and = get_rule_by_name("distribute_or_over_and").unwrap();
 
+    let d1 = Atom::Reference(DeclarationPtr::new_var(Name::Machine(1), Domain::Bool));
+
+    let d2 = Atom::Reference(DeclarationPtr::new_var(Name::Machine(2), Domain::Bool));
+
     let expr = Expression::Or(
         Metadata::new(),
         Box::new(matrix_expr![
             Expression::And(
                 Metadata::new(),
                 Box::new(matrix_expr![
-                    Expression::Atomic(
-                        Metadata::new(),
-                        Atom::Reference(
-                            Name::Machine(1),
-                            Rc::new(RefCell::new(Declaration::default()))
-                        )
-                    ),
-                    Expression::Atomic(
-                        Metadata::new(),
-                        Atom::Reference(
-                            Name::Machine(2),
-                            Rc::new(RefCell::new(Declaration::default()))
-                        )
-                    ),
+                    Expression::Atomic(Metadata::new(), d1.clone()),
+                    Expression::Atomic(Metadata::new(), d2.clone()),
                 ]),
             ),
-            Expression::Atomic(
-                Metadata::new(),
-                Atom::Reference(
-                    Name::Machine(3),
-                    Rc::new(RefCell::new(Declaration::default()))
-                )
-            ),
+            Expression::Atomic(Metadata::new(), d2.clone()),
         ]),
     );
 
@@ -679,39 +587,15 @@ fn rule_distribute_or_over_and() {
                 Expression::Or(
                     Metadata::new(),
                     Box::new(matrix_expr![
-                        Expression::Atomic(
-                            Metadata::new(),
-                            Atom::Reference(
-                                Name::Machine(3),
-                                Rc::new(RefCell::new(Declaration::default()))
-                            )
-                        ),
-                        Expression::Atomic(
-                            Metadata::new(),
-                            Atom::Reference(
-                                Name::Machine(1),
-                                Rc::new(RefCell::new(Declaration::default()))
-                            )
-                        ),
+                        Expression::Atomic(Metadata::new(), d2.clone()),
+                        Expression::Atomic(Metadata::new(), d1.clone()),
                     ])
                 ),
                 Expression::Or(
                     Metadata::new(),
                     Box::new(matrix_expr![
-                        Expression::Atomic(
-                            Metadata::new(),
-                            Atom::Reference(
-                                Name::Machine(3),
-                                Rc::new(RefCell::new(Declaration::default()))
-                            )
-                        ),
-                        Expression::Atomic(
-                            Metadata::new(),
-                            Atom::Reference(
-                                Name::Machine(2),
-                                Rc::new(RefCell::new(Declaration::default()))
-                            )
-                        ),
+                        Expression::Atomic(Metadata::new(), d2.clone()),
+                        Expression::Atomic(Metadata::new(), d2.clone()),
                     ])
                 ),
             ])
@@ -743,19 +627,24 @@ fn rewrite_solve_xyz() {
     println!("Rule sets: {rule_sets:?}");
 
     // Create variables and domains
-    let variable_a = Atom::Reference(
-        Name::User(String::from("a")),
-        Rc::new(RefCell::new(Declaration::default())),
+    let decl_a = DeclarationPtr::new_var(
+        Name::User("a".to_string()),
+        Domain::Int(vec![Range::Bounded(1, 5)]),
     );
-    let variable_b = Atom::Reference(
-        Name::User(String::from("b")),
-        Rc::new(RefCell::new(Declaration::default())),
+
+    let decl_b = DeclarationPtr::new_var(
+        Name::User("b".to_string()),
+        Domain::Int(vec![Range::Bounded(1, 5)]),
     );
-    let variable_c = Atom::Reference(
-        Name::User(String::from("c")),
-        Rc::new(RefCell::new(Declaration::default())),
+
+    let decl_c = DeclarationPtr::new_var(
+        Name::User("c".to_string()),
+        Domain::Int(vec![Range::Bounded(1, 5)]),
     );
-    let domain = Domain::Int(vec![Range::Bounded(1, 3)]);
+
+    let a = Atom::Reference(decl_a.clone());
+    let b = Atom::Reference(decl_b.clone());
+    let c = Atom::Reference(decl_c.clone());
 
     // Construct nested expression
     let nested_expr = Expression::And(
@@ -766,9 +655,9 @@ fn rewrite_solve_xyz() {
                 Box::new(Expression::Sum(
                     Metadata::new(),
                     Box::new(matrix_expr![
-                        Expression::Atomic(Metadata::new(), variable_a.clone()),
-                        Expression::Atomic(Metadata::new(), variable_b.clone()),
-                        Expression::Atomic(Metadata::new(), variable_c.clone()),
+                        Expression::Atomic(Metadata::new(), a.clone()),
+                        Expression::Atomic(Metadata::new(), b.clone()),
+                        Expression::Atomic(Metadata::new(), c.clone()),
                     ]),
                 )),
                 Box::new(Expression::Atomic(
@@ -778,8 +667,8 @@ fn rewrite_solve_xyz() {
             ),
             Expression::Lt(
                 Metadata::new(),
-                Box::new(Expression::Atomic(Metadata::new(), variable_a.clone())),
-                Box::new(Expression::Atomic(Metadata::new(), variable_b.clone())),
+                Box::new(Expression::Atomic(Metadata::new(), a.clone())),
+                Box::new(Expression::Atomic(Metadata::new(), b.clone())),
             ),
         ]),
     );
@@ -794,39 +683,32 @@ fn rewrite_solve_xyz() {
 
     // Apply rewrite function to the nested expression
     let mut model = Model::new(Default::default());
+
+    // Insert variables and domains
+    model
+        .as_submodel_mut()
+        .symbols_mut()
+        .insert(decl_a)
+        .unwrap();
+    model
+        .as_submodel_mut()
+        .symbols_mut()
+        .insert(decl_b)
+        .unwrap();
+    model
+        .as_submodel_mut()
+        .symbols_mut()
+        .insert(decl_c)
+        .unwrap();
+
     *model.as_submodel_mut().constraints_mut() = vec![nested_expr];
+
     model = rewrite_naive(&model, &rule_sets, true).unwrap();
     let rewritten_expr = model.as_submodel().constraints();
 
     // Check if the expression is in its simplest form
 
     assert!(rewritten_expr.iter().all(is_simple));
-
-    // Insert variables and domains
-    model
-        .as_submodel_mut()
-        .symbols_mut()
-        .insert(Rc::new(RefCell::new(Declaration::new_var(
-            var_name_from_atom(&variable_a.clone()),
-            domain.clone(),
-        ))))
-        .unwrap();
-    model
-        .as_submodel_mut()
-        .symbols_mut()
-        .insert(Rc::new(RefCell::new(Declaration::new_var(
-            var_name_from_atom(&variable_b.clone()),
-            domain.clone(),
-        ))))
-        .unwrap();
-    model
-        .as_submodel_mut()
-        .symbols_mut()
-        .insert(Rc::new(RefCell::new(Declaration::new_var(
-            var_name_from_atom(&variable_c.clone()),
-            domain.clone(),
-        ))))
-        .unwrap();
 
     let solver: Solver<adaptors::Minion> = Solver::new(adaptors::Minion::new());
     let solver = solver.load_model(model).unwrap();
@@ -938,10 +820,10 @@ fn eval_const_and() {
 fn eval_const_ref() {
     let expr = Expression::Atomic(
         Metadata::new(),
-        Atom::Reference(
+        Atom::Reference(DeclarationPtr::new_var(
             Name::User(String::from("a")),
-            Rc::new(RefCell::new(Declaration::default())),
-        ),
+            Domain::Int(vec![Range::Bounded(1, 5)]),
+        )),
     );
     let result = eval_constant(&expr);
     assert_eq!(result, None);
@@ -959,10 +841,10 @@ fn eval_const_nested_ref() {
                     Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
                     Expression::Atomic(
                         Metadata::new(),
-                        Atom::Reference(
+                        Atom::Reference(DeclarationPtr::new_var(
                             Name::User(String::from("a")),
-                            Rc::new(RefCell::new(Declaration::default()))
-                        ),
+                            Domain::Int(vec![Range::Bounded(1, 5)])
+                        ))
                     ),
                 ]),
             ),
@@ -1048,24 +930,24 @@ fn eval_const_sum_xyz() {
                     Box::new(matrix_expr![
                         Expression::Atomic(
                             Metadata::new(),
-                            Atom::Reference(
+                            Atom::Reference(DeclarationPtr::new_var(
                                 Name::User(String::from("x")),
-                                Rc::new(RefCell::new(Declaration::default()))
-                            ),
+                                Domain::Int(vec![Range::Bounded(1, 5)])
+                            ))
                         ),
                         Expression::Atomic(
                             Metadata::new(),
-                            Atom::Reference(
+                            Atom::Reference(DeclarationPtr::new_var(
                                 Name::User(String::from("y")),
-                                Rc::new(RefCell::new(Declaration::default()))
-                            ),
+                                Domain::Int(vec![Range::Bounded(1, 5)])
+                            ))
                         ),
                         Expression::Atomic(
                             Metadata::new(),
-                            Atom::Reference(
+                            Atom::Reference(DeclarationPtr::new_var(
                                 Name::User(String::from("z")),
-                                Rc::new(RefCell::new(Declaration::default()))
-                            ),
+                                Domain::Int(vec![Range::Bounded(1, 5)])
+                            ))
                         ),
                     ])
                 )),
@@ -1078,17 +960,17 @@ fn eval_const_sum_xyz() {
                 Metadata::new(),
                 Box::new(Expression::Atomic(
                     Metadata::new(),
-                    Atom::Reference(
+                    Atom::Reference(DeclarationPtr::new_var(
                         Name::User(String::from("x")),
-                        Rc::new(RefCell::new(Declaration::default()))
-                    ),
+                        Domain::Int(vec![Range::Bounded(1, 5)])
+                    ))
                 )),
                 Box::new(Expression::Atomic(
                     Metadata::new(),
-                    Atom::Reference(
+                    Atom::Reference(DeclarationPtr::new_var(
                         Name::User(String::from("y")),
-                        Rc::new(RefCell::new(Declaration::default()))
-                    ),
+                        Domain::Int(vec![Range::Bounded(1, 5)])
+                    ))
                 )),
             ),
         ]),

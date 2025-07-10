@@ -1,5 +1,5 @@
 use conjure_core::{
-    ast::{Atom, Domain, Expression as Expr, Name, SymbolTable},
+    ast::{Atom, DeclarationPtr, Expression as Expr, SymbolTable},
     metadata::Metadata,
 };
 
@@ -117,12 +117,10 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
     };
 
     let decl = symbols.gensym(&domain);
-    let name = (*decl).borrow().name().clone();
 
     Some(ToAuxVarOutput {
-        aux_name: name.clone(),
-        aux_decl: Expr::AuxDeclaration(Metadata::new(), name, Box::new(expr.clone())),
-        aux_domain: domain,
+        aux_declaration: decl.clone(),
+        aux_expression: Expr::AuxDeclaration(Metadata::new(), decl, Box::new(expr.clone())),
         symbols,
         _unconstructable: (),
     })
@@ -130,40 +128,32 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
 
 /// Output data of `to_aux_var`.
 pub struct ToAuxVarOutput {
-    aux_name: Name,
-    aux_decl: Expr,
-    #[allow(dead_code)] // TODO: aux_domain should be used soon, try removing this pragma
-    aux_domain: Domain,
+    aux_declaration: DeclarationPtr,
+    aux_expression: Expr,
     symbols: SymbolTable,
     _unconstructable: (),
 }
 
 impl ToAuxVarOutput {
     /// Returns the new auxiliary variable as an `Atom`.
-    pub fn as_atom(&self, symbols: &SymbolTable) -> Atom {
-        let decl = symbols.lookup(&self.aux_name).unwrap();
-        Atom::Reference(self.aux_name(), decl)
+    pub fn as_atom(&self) -> Atom {
+        Atom::Reference(self.aux_declaration.clone())
     }
 
     /// Returns the new auxiliary variable as an `Expression`.
     ///
     /// This expression will have default `Metadata`.
-    pub fn as_expr(&self, symbols: &SymbolTable) -> Expr {
-        Expr::Atomic(Metadata::new(), self.as_atom(symbols))
+    pub fn as_expr(&self) -> Expr {
+        Expr::Atomic(Metadata::new(), self.as_atom())
     }
 
     /// Returns the top level `Expression` to add to the model.
     pub fn top_level_expr(&self) -> Expr {
-        self.aux_decl.clone()
+        self.aux_expression.clone()
     }
 
     /// Returns the new `SymbolTable`, modified to contain this auxiliary variable in the symbol table.
     pub fn symbols(&self) -> SymbolTable {
         self.symbols.clone()
-    }
-
-    /// Returns the name of the auxiliary variable.
-    pub fn aux_name(&self) -> Name {
-        self.aux_name.clone()
     }
 }

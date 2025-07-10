@@ -1,5 +1,5 @@
 use std::{
-    cell::{Ref, RefCell},
+    cell::RefCell,
     collections::{HashMap, HashSet},
     fmt::Display,
     rc::Rc,
@@ -22,7 +22,15 @@ use crate::{
     solver::{Solver, SolverError},
 };
 
-use super::{Declaration, Domain, Expression, Model, Name, SubModel, SymbolTable};
+use super::{DeclarationPtr, Domain, Expression, Model, Name, SubModel, SymbolTable};
+
+// TODO: do not use Names to compare variables, use DeclarationPtr and ids instead
+// see issue #930
+//
+// this will simplify *a lot* of the knarly stuff here, but can only be done once everything else
+// uses DeclarationPtr.
+//
+// ~ nikdewally, 10/06/25
 
 pub enum ComprehensionKind {
     Sum,
@@ -101,12 +109,12 @@ impl Comprehension {
 
             // substitute in the values for the induction variables
             let return_expression = return_expression.transform_bi(Arc::new(move |x: Atom| {
-                let Atom::Reference(ref name, _) = x else {
+                let Atom::Reference(ref ptr) = x else {
                     return x;
                 };
 
                 // is this referencing an induction var?
-                let Some(lit) = value_ptr_2.get(name) else {
+                let Some(lit) = value_ptr_2.get(&ptr.name()) else {
                     return x;
                 };
 
@@ -122,14 +130,13 @@ impl Comprehension {
             // These are stored as a map of (old declaration id) -> (new declaration ptr), as
             // declaration pointers do not implement hash.
             //
-            let mut machine_name_translations: HashMap<ObjId, Rc<RefCell<Declaration>>> =
-                HashMap::new();
+            let mut machine_name_translations: HashMap<ObjId, DeclarationPtr> = HashMap::new();
 
             // Populate `machine_name_translations`
             for (name, decl) in child_symtab.into_iter_local() {
                 // do not add givens for induction vars to the parent symbol table.
                 if value_ptr.get(&name).is_some()
-                    && matches!((*decl).borrow().kind(), DeclarationKind::Given(_))
+                    && matches!(&decl.kind() as &DeclarationKind, DeclarationKind::Given(_))
                 {
                     continue;
                 }
@@ -140,9 +147,8 @@ impl Comprehension {
                     );
                 };
 
-                let decl_ref = (*decl).borrow();
-                let id = decl_ref.id();
-                let new_decl = symtab.gensym(decl_ref.domain().unwrap());
+                let id = decl.id();
+                let new_decl = symtab.gensym(&decl.domain().unwrap());
 
                 machine_name_translations.insert(id, new_decl);
             }
@@ -150,12 +156,11 @@ impl Comprehension {
             // Update references to use the new delcarations.
             #[allow(clippy::arc_with_non_send_sync)]
             let return_expression = return_expression.transform_bi(Arc::new(move |atom: Atom| {
-                if let Atom::Reference(_, ref decl) = atom
-                    && let id = decl.as_ref().borrow().id()
+                if let Atom::Reference(ref decl) = atom
+                    && let id = decl.id()
                     && let Some(new_decl) = machine_name_translations.get(&id)
                 {
-                    let new_name = new_decl.as_ref().borrow().name().clone();
-                    Atom::Reference(new_name, Rc::clone(new_decl))
+                    Atom::Reference(new_decl.clone())
                 } else {
                     atom
                 }
@@ -204,9 +209,8 @@ impl Display for Comprehension {
             .symbols()
             .clone()
             .into_iter_local()
-            .map(|(name, decl_rc): (Name, Rc<RefCell<Declaration>>)| {
-                let borrowed_decl: Ref<'_, Declaration> = (*decl_rc).borrow();
-                let domain: Domain = borrowed_decl.domain().unwrap().clone();
+            .map(|(name, decl): (Name, DeclarationPtr)| {
+                let domain: Domain = decl.domain().unwrap().clone();
                 (name, domain)
             })
             .map(|(name, domain): (Name, Domain)| format!("{name}: {domain}"))
@@ -257,8 +261,8 @@ impl ComprehensionBuilder {
         self
     }
 
-    pub fn generator(mut self, declaration: Rc<RefCell<Declaration>>) -> Self {
-        let name = (*declaration).borrow().name().clone();
+    pub fn generator(mut self, declaration: DeclarationPtr) -> Self {
+        let name = declaration.name().clone();
         assert!(!self.induction_variables.contains(&name));
         self.induction_variables.insert(name.clone());
         (*self.generator_symboltable)
@@ -322,13 +326,12 @@ impl ComprehensionBuilder {
 
         generator_submodel.add_constraints(induction_guards);
         for decl in generator_symboltable.clone().into_iter_local().map(|x| x.1) {
-            let decl = (*decl).borrow();
             let name = decl.name().clone();
-            let domain = decl.domain().cloned().unwrap();
+            let domain = decl.domain().map(|x| x.clone()).unwrap();
 
             generator_submodel
                 .symbols_mut()
-                .insert(Rc::new(RefCell::new(Declaration::new_var(name, domain))));
+                .insert(DeclarationPtr::new_var(name, domain));
         }
 
         // The return_expression is a sub-model of `parent` containing the return_expression and
@@ -343,11 +346,11 @@ impl ComprehensionBuilder {
         for (name, domain) in generator_symboltable
             .clone()
             .into_iter_local()
-            .map(|(n, decl)| (n, (*decl).borrow().domain().unwrap().clone()))
+            .map(|(n, decl)| (n, decl.domain().unwrap().clone()))
         {
             return_expression_submodel
                 .symbols_mut()
-                .insert(Rc::new(RefCell::new(Declaration::new_given(name, domain))))
+                .insert(DeclarationPtr::new_given(name, domain))
                 .unwrap();
         }
 

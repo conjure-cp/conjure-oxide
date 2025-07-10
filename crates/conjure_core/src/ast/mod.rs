@@ -18,6 +18,7 @@ mod types;
 mod variables;
 
 pub use atom::Atom;
+#[allow(deprecated)]
 pub use declaration::{Declaration, DeclarationKind, DeclarationPtr};
 pub use domains::Domain;
 pub use domains::DomainOpError;
