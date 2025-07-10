@@ -4,10 +4,8 @@ use std::any::TypeId;
 use std::cell::{Cell, Ref, RefCell, RefMut};
 use std::fmt::{Debug, Display};
 use std::rc::Rc;
-use std::sync::atomic::{AtomicU32, Ordering};
 
 use ::serde::{Deserialize, Serialize};
-use derivative::Derivative;
 use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Tree, Uniplate};
 
@@ -16,7 +14,6 @@ use super::serde::{DefaultWithId, HasId, ObjId};
 use super::types::Typeable;
 use super::{DecisionVariable, Domain, Expression, RecordEntry, ReturnType};
 
-static ID_COUNTER: AtomicU32 = AtomicU32::new(0);
 thread_local! {
     // make each thread have its own id counter.
     static DECLARATION_PTR_ID_COUNTER: Cell<u32> = const { Cell::new(0) };
@@ -449,7 +446,6 @@ impl DefaultWithId for DeclarationPtr {
                 RefCell::new(Declaration {
                     name: Name::User("_UNKNOWN".into()),
                     kind: DeclarationKind::ValueLetting(false.into()),
-                    id: ID_COUNTER.fetch_add(1, Ordering::Relaxed),
                 }),
                 id,
             ),
@@ -543,9 +539,7 @@ impl Display for DeclarationPtr {
     }
 }
 
-#[derive(Derivative)]
-#[derivative(PartialEq)]
-#[derive(Debug, Serialize, Deserialize, Eq, Uniplate)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Eq, Uniplate)]
 #[biplate(to=Expression,walk_into=[DeclarationKind])]
 #[biplate(to=DeclarationPtr,walk_into=[DeclarationKind])]
 #[biplate(to=Name)]
@@ -557,12 +551,6 @@ pub struct Declaration {
 
     /// The kind of the declaration.
     kind: DeclarationKind,
-
-    /// A unique id for this declaration.
-    ///
-    /// This is mainly used for serialisation and debugging.
-    #[derivative(PartialEq = "ignore")] // eq by value not id.
-    id: ObjId,
 }
 
 // I don't know why I need this one -- nd
@@ -606,51 +594,42 @@ impl Declaration {
     /// Creates a new declaration.
     #[deprecated = "use DeclarationPtr::new instead."]
     pub fn new(name: Name, kind: DeclarationKind) -> Declaration {
-        let id = ID_COUNTER.fetch_add(1, Ordering::Relaxed);
-        Declaration { name, kind, id }
+        Declaration { name, kind }
     }
 
     /// Creates a new decision variable declaration.
     #[deprecated = "use DeclarationPtr::new_var instead."]
     pub fn new_var(name: Name, domain: Domain) -> Declaration {
-        let id = ID_COUNTER.fetch_add(1, Ordering::Relaxed);
         Declaration {
             name,
             kind: DeclarationKind::DecisionVariable(DecisionVariable::new(domain)),
-            id,
         }
     }
 
     /// Creates a new domain letting declaration.
     #[deprecated = "use DeclarationPtr::new_domain_letting instead."]
     pub fn new_domain_letting(name: Name, domain: Domain) -> Declaration {
-        let id = ID_COUNTER.fetch_add(1, Ordering::Relaxed);
         Declaration {
             name,
             kind: DeclarationKind::DomainLetting(domain),
-            id,
         }
     }
 
     /// Creates a new value letting declaration.
     #[deprecated = "use DeclarationPtr::new_value_letting instead."]
     pub fn new_value_letting(name: Name, value: Expression) -> Declaration {
-        let id = ID_COUNTER.fetch_add(1, Ordering::Relaxed);
         Declaration {
             name,
             kind: DeclarationKind::ValueLetting(value),
-            id,
         }
     }
 
     /// Creates a new given declaration.
     #[deprecated = "use DeclarationPtr::new_given instead."]
     pub fn new_given(name: Name, domain: Domain) -> Declaration {
-        let id = ID_COUNTER.fetch_add(1, Ordering::Relaxed);
         Declaration {
             name,
             kind: DeclarationKind::Given(domain),
-            id,
         }
     }
 
@@ -743,23 +722,6 @@ impl Declaration {
     pub fn with_new_name(mut self, name: Name) -> Declaration {
         self.name = name;
         self
-    }
-}
-
-// FIXME: REMOVE ME Use Declaration::HasId instead, as it has clearer semantics.
-impl HasId for Declaration {
-    fn id(&self) -> ObjId {
-        self.id
-    }
-}
-
-impl Clone for Declaration {
-    fn clone(&self) -> Self {
-        Self {
-            name: self.name.clone(),
-            kind: self.kind.clone(),
-            id: ID_COUNTER.fetch_add(1, Ordering::Relaxed),
-        }
     }
 }
 
@@ -1048,8 +1010,7 @@ pub mod serde {
 
     // temporary structs to put things in the right format befo:re we (de)serialize
     //
-    // this is a bit of a hack to get around the nested types in declarationPtr, and to hide fact
-    // that we currently have an id in both declarationptr and declaration and thats confusing...
+    // this is a bit of a hack to get around the nested types in declarationPtr.
     #[derive(Serialize)]
     struct DeclarationSe<'a> {
         name: &'a Name,
