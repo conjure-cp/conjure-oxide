@@ -1,4 +1,3 @@
-#![allow(deprecated)]
 use std::any::TypeId;
 // allow use of Declaration in this file, and nowhere else
 use std::cell::{Cell, Ref, RefCell, RefMut};
@@ -235,7 +234,14 @@ impl DeclarationPtr {
     ///
     /// ```
     pub fn domain(&self) -> Option<Ref<Domain>> {
-        Ref::filter_map(self.borrow(), Declaration::domain).ok()
+        Ref::filter_map(self.borrow(), |x| match &x.kind {
+            DeclarationKind::DecisionVariable(var) => Some(&var.domain),
+            DeclarationKind::ValueLetting(_) => None,
+            DeclarationKind::DomainLetting(domain) => Some(domain),
+            DeclarationKind::Given(domain) => Some(domain),
+            DeclarationKind::RecordField(domain) => Some(domain),
+        })
+        .ok()
     }
 
     /// Gets the kind of the declaration.
@@ -250,7 +256,7 @@ impl DeclarationPtr {
     /// assert!(matches!(&declaration.kind() as &DeclarationKind, DeclarationKind::DecisionVariable(_)))
     /// ```
     pub fn kind(&self) -> Ref<DeclarationKind> {
-        self.map(Declaration::kind)
+        self.map(|x| &x.kind)
     }
 
     /// Gets the name of the declaration.
@@ -266,7 +272,7 @@ impl DeclarationPtr {
     /// assert_eq!(&declaration.name() as &Name, &Name::User("a".into()))
     /// ```
     pub fn name(&self) -> Ref<Name> {
-        self.map(Declaration::name)
+        self.map(|x| &x.name)
     }
 
     /// This declaration as a decision variable, if it is one.
@@ -387,7 +393,7 @@ impl DeclarationPtr {
     /// # Examples
     ///
     /// ```
-    /// use conjure_core::ast::{DeclarationPtr,Declaration,Name,Domain,Range};
+    /// use conjure_core::ast::{DeclarationPtr,Name,Domain,Range};
     ///
     /// // find a: int(1..5)
     /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
@@ -550,13 +556,20 @@ impl Display for DeclarationPtr {
 #[biplate(to=DeclarationPtr,walk_into=[DeclarationKind])]
 #[biplate(to=Name)]
 #[uniplate(walk_into=[DeclarationKind])]
-#[deprecated = "use DeclarationPtr instead."]
-pub struct Declaration {
+/// The contents of a declaration
+struct Declaration {
     /// The name of the declared symbol.
     name: Name,
 
     /// The kind of the declaration.
     kind: DeclarationKind,
+}
+
+impl Declaration {
+    /// Creates a new declaration.
+    fn new(name: Name, kind: DeclarationKind) -> Declaration {
+        Declaration { name, kind }
+    }
 }
 
 /// A specific kind of declaration.
@@ -574,141 +587,6 @@ pub enum DeclarationKind {
     /// A named field inside a record type.
     /// e.g. A, B in record{A: int(0..1), B: int(0..2)}
     RecordField(Domain),
-}
-
-impl Declaration {
-    /// Creates a new declaration.
-    #[deprecated = "use DeclarationPtr::new instead."]
-    pub fn new(name: Name, kind: DeclarationKind) -> Declaration {
-        Declaration { name, kind }
-    }
-
-    /// Creates a new decision variable declaration.
-    #[deprecated = "use DeclarationPtr::new_var instead."]
-    pub fn new_var(name: Name, domain: Domain) -> Declaration {
-        Declaration {
-            name,
-            kind: DeclarationKind::DecisionVariable(DecisionVariable::new(domain)),
-        }
-    }
-
-    /// Creates a new domain letting declaration.
-    #[deprecated = "use DeclarationPtr::new_domain_letting instead."]
-    pub fn new_domain_letting(name: Name, domain: Domain) -> Declaration {
-        Declaration {
-            name,
-            kind: DeclarationKind::DomainLetting(domain),
-        }
-    }
-
-    /// Creates a new value letting declaration.
-    #[deprecated = "use DeclarationPtr::new_value_letting instead."]
-    pub fn new_value_letting(name: Name, value: Expression) -> Declaration {
-        Declaration {
-            name,
-            kind: DeclarationKind::ValueLetting(value),
-        }
-    }
-
-    /// Creates a new given declaration.
-    #[deprecated = "use DeclarationPtr::new_given instead."]
-    pub fn new_given(name: Name, domain: Domain) -> Declaration {
-        Declaration {
-            name,
-            kind: DeclarationKind::Given(domain),
-        }
-    }
-
-    /// The name of this declaration.
-    #[deprecated = "use DeclarationPtr::name instead."]
-    pub fn name(&self) -> &Name {
-        &self.name
-    }
-
-    /// The kind of this declaration.
-    #[deprecated = "use DeclarationPtr::kind instead."]
-    pub fn kind(&self) -> &DeclarationKind {
-        &self.kind
-    }
-
-    /// The domain of this declaration, if it is known.
-    #[deprecated = "use DeclarationPtr::domain instead."]
-    pub fn domain(&self) -> Option<&Domain> {
-        match self.kind() {
-            DeclarationKind::DecisionVariable(var) => Some(&var.domain),
-            DeclarationKind::ValueLetting(_) => None,
-            DeclarationKind::DomainLetting(domain) => Some(domain),
-            DeclarationKind::Given(domain) => Some(domain),
-            DeclarationKind::RecordField(domain) => Some(domain),
-        }
-    }
-
-    /// This declaration as a decision variable, if it is one.
-    #[deprecated = "use DeclarationPtr::as_var instead."]
-    pub fn as_var(&self) -> Option<&DecisionVariable> {
-        if let DeclarationKind::DecisionVariable(var) = self.kind() {
-            Some(var)
-        } else {
-            None
-        }
-    }
-
-    /// This declaration as a mutable decision variable, if it is one.
-    #[deprecated = "use DeclarationPtr::as_var_mut instead."]
-    pub fn as_var_mut(&mut self) -> Option<&mut DecisionVariable> {
-        if let DeclarationKind::DecisionVariable(var) = &mut self.kind {
-            Some(var)
-        } else {
-            None
-        }
-    }
-
-    /// This declaration as a domain letting, if it is one.
-    #[deprecated = "use DeclarationPtr::as_domain_letting instead."]
-    pub fn as_domain_letting(&self) -> Option<&Domain> {
-        if let DeclarationKind::DomainLetting(domain) = self.kind() {
-            Some(domain)
-        } else {
-            None
-        }
-    }
-
-    /// This declaration as a mutable domain letting, if it is one.
-    #[deprecated = "use DeclarationPtr::as_domain_letting_mut instead."]
-    pub fn as_domain_letting_mut(&mut self) -> Option<&mut Domain> {
-        if let DeclarationKind::DomainLetting(domain) = &mut self.kind {
-            Some(domain)
-        } else {
-            None
-        }
-    }
-
-    /// This declaration as a value letting, if it is one.
-    #[deprecated = "use DeclarationPtr::as_value_letting instead."]
-    pub fn as_value_letting(&self) -> Option<&Expression> {
-        if let DeclarationKind::ValueLetting(expr) = &self.kind {
-            Some(expr)
-        } else {
-            None
-        }
-    }
-
-    /// This declaration as a mutable value letting, if it is one.
-    #[deprecated = "use DeclarationPtr::as_value_letting_mut instead."]
-    pub fn as_value_letting_mut(&mut self) -> Option<&mut Expression> {
-        if let DeclarationKind::ValueLetting(expr) = &mut self.kind {
-            Some(expr)
-        } else {
-            None
-        }
-    }
-
-    /// Returns a clone of this declaration with a new name.
-    #[deprecated = "use DeclarationPtr::replace_name instead."]
-    pub fn with_new_name(mut self, name: Name) -> Declaration {
-        self.name = name;
-        self
-    }
 }
 
 pub mod serde {
@@ -739,7 +617,7 @@ pub mod serde {
     /// use serde::Serialize;
     /// use serde_json::json;
     /// use serde_with::serde_as;
-    /// use conjure_core::ast::{declaration::serde::DeclarationPtrAsId,Name,Declaration,DeclarationPtr,Domain,Range};
+    /// use conjure_core::ast::{declaration::serde::DeclarationPtrAsId,Name,DeclarationPtr,Domain,Range};
     ///
     /// // some struct containing a DeclarationPtr.
     /// #[serde_as]
@@ -784,7 +662,7 @@ pub mod serde {
     /// use serde::Deserialize;
     /// use serde_json::json;
     /// use serde_with::serde_as;
-    /// use conjure_core::ast::{serde::{HasId},declaration::serde::DeclarationPtrAsId,Name,Declaration,DeclarationKind, DeclarationPtr,Domain,Range, ReturnType};
+    /// use conjure_core::ast::{serde::{HasId},declaration::serde::DeclarationPtrAsId,Name,DeclarationKind, DeclarationPtr,Domain,Range, ReturnType};
     ///
     /// // some struct containing a DeclarationPtr.
     /// #[serde_as]
@@ -863,7 +741,7 @@ pub mod serde {
     /// use serde::Serialize;
     /// use serde_json::json;
     /// use serde_with::serde_as;
-    /// use conjure_core::ast::{declaration::serde::DeclarationPtrFull,Name,Declaration,DeclarationPtr,Domain,Range};
+    /// use conjure_core::ast::{declaration::serde::DeclarationPtrFull,Name,DeclarationPtr,Domain,Range};
     ///
     /// // some struct containing a DeclarationPtr.
     /// #[serde_as]
@@ -927,7 +805,7 @@ pub mod serde {
     /// use serde::Deserialize;
     /// use serde_json::json;
     /// use serde_with::serde_as;
-    /// use conjure_core::ast::{serde::{HasId},declaration::serde::DeclarationPtrFull,Name,Declaration,DeclarationKind, DeclarationPtr,Domain,Range, ReturnType};
+    /// use conjure_core::ast::{serde::{HasId},declaration::serde::DeclarationPtrFull,Name,DeclarationKind, DeclarationPtr,Domain,Range, ReturnType};
     ///
     /// // some struct containing a DeclarationPtr.
     /// #[serde_as]
