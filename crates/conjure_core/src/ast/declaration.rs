@@ -446,7 +446,11 @@ impl DefaultWithId for DeclarationPtr {
     fn default_with_id(id: ObjId) -> Self {
         DeclarationPtr {
             inner: DeclarationPtrInner::new_with_id_unchecked(
-                RefCell::new(Declaration::default()),
+                RefCell::new(Declaration {
+                    name: Name::User("_UNKNOWN".into()),
+                    kind: DeclarationKind::ValueLetting(false.into()),
+                    id: ID_COUNTER.fetch_add(1, Ordering::Relaxed),
+                }),
                 id,
             ),
         }
@@ -749,27 +753,6 @@ impl HasId for Declaration {
     }
 }
 
-// FIXME: REMOVE ME Use Declaration::DefaultWithId instead, as it has clearer semantics.
-impl DefaultWithId for Declaration {
-    fn default_with_id(id: ObjId) -> Self {
-        Self {
-            name: Name::User("_UNKNOWN".into()),
-            kind: DeclarationKind::ValueLetting(false.into()),
-            id,
-        }
-    }
-}
-
-impl Default for Declaration {
-    fn default() -> Self {
-        Self {
-            name: Name::User("_UNKNOWN".into()),
-            kind: DeclarationKind::ValueLetting(false.into()),
-            id: ID_COUNTER.fetch_add(1, Ordering::Relaxed),
-        }
-    }
-}
-
 impl Clone for Declaration {
     fn clone(&self) -> Self {
         Self {
@@ -795,6 +778,7 @@ impl Typeable for Declaration {
 pub mod serde {
     use std::cell::RefCell;
 
+    use crate::ast::serde::DefaultWithId;
     use crate::ast::{Name, serde::HasId};
     use ::serde::Deserialize;
     use ::serde::Serialize;
@@ -923,12 +907,7 @@ pub mod serde {
             D: serde::Deserializer<'de>,
         {
             let id = u32::deserialize(deserializer)?;
-            Ok(DeclarationPtr {
-                inner: DeclarationPtrInner::new_with_id_unchecked(
-                    RefCell::new(Declaration::default()),
-                    id,
-                ),
-            })
+            Ok(DeclarationPtr::default_with_id(id))
         }
     }
 
