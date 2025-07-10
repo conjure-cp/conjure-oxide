@@ -317,7 +317,11 @@ pub enum Expression {
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#minuseq)
     /// + `rules::minion::boolean_literal_to_wliteral`.
     #[compatible(Minion)]
-    FlatWatchedLiteral(Metadata, Name, Literal),
+    FlatWatchedLiteral(
+        Metadata,
+        #[serde_as(as = "DeclarationPtrAsId")] DeclarationPtr,
+        Literal,
+    ),
 
     /// `weightedsumleq(cs,xs,total)` ensures that cs.xs <= total, where cs.xs is the scalar dot
     /// product of cs and xs.
@@ -1121,7 +1125,7 @@ impl Display for Expression {
                 )
             }
             Expression::FlatWatchedLiteral(_, x, l) => {
-                write!(f, "WatchedLiteral({x},{l})")
+                write!(f, "WatchedLiteral({x},{l})", x = &x.name() as &Name)
             }
             Expression::MinionReify(_, box1, box2) => {
                 write!(f, "Reify({}, {})", box1.clone(), box2.clone())
