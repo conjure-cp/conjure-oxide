@@ -338,8 +338,8 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             parse_atomic_expr(*b)?,
         )),
 
-        conjure_ast::Expression::FlatWatchedLiteral(_metadata, name, k) => Ok(
-            minion_ast::Constraint::WLiteral(parse_name(name)?, parse_literal(k)?),
+        conjure_ast::Expression::FlatWatchedLiteral(_metadata, decl, k) => Ok(
+            minion_ast::Constraint::WLiteral(parse_name(decl.name().clone())?, parse_literal(k)?),
         ),
         conjure_ast::Expression::MinionReify(_metadata, e, v) => Ok(minion_ast::Constraint::Reify(
             Box::new(parse_expr(*e)?),
