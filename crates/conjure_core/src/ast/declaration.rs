@@ -579,17 +579,6 @@ pub enum DeclarationKind {
     RecordField(Domain),
 }
 
-// FIXME: remove
-// Do not use defaults, to prevent broken declaration pointers in references. If absolutely
-// necessary, eg. for (de)serialization, use Declaration::default_with() or
-// DeclarationPtr::default_with().
-impl Default for DeclarationKind {
-    fn default() -> Self {
-        DeclarationKind::Given(Domain::Empty(ReturnType::Int))
-        // todo!("remove default declarationkind");
-    }
-}
-
 impl Declaration {
     /// Creates a new declaration.
     #[deprecated = "use DeclarationPtr::new instead."]
