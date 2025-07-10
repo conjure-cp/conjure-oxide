@@ -559,21 +559,12 @@ pub struct Declaration {
     kind: DeclarationKind,
 }
 
-// I don't know why I need this one -- nd
-//
-// Without it, the derive macro for Declaration errors...
-impl Biplate<Declaration> for DeclarationKind {
-    fn biplate(&self) -> (Tree<Declaration>, Box<dyn Fn(Tree<Declaration>) -> Self>) {
-        let self2 = self.clone();
-        (Tree::Zero, Box::new(move |_| self2.clone()))
-    }
-}
-
 /// A specific kind of declaration.
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
 #[biplate(to=Expression)]
 #[biplate(to=DeclarationPtr)]
+#[biplate(to=Declaration)]
 pub enum DeclarationKind {
     DecisionVariable(DecisionVariable),
     ValueLetting(Expression),
