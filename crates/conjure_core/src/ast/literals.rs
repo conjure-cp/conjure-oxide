@@ -7,6 +7,7 @@ use std::hash::Hasher;
 use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Tree, Uniplate};
 
+use crate::ast::pretty::pretty_vec;
 use crate::metadata::Metadata;
 
 use super::domains::HasDomain;
@@ -138,10 +139,14 @@ impl Typeable for AbstractLiteral<Expression> {
             AbstractLiteral::Set(items) => {
                 let item_type = items[0].return_type()?;
 
+                // if any items do not have a type, return none.
+                let item_types: Option<Vec<ReturnType>> =
+                    items.iter().map(|x| x.return_type()).collect();
+
+                let item_types = item_types?;
+
                 assert!(
-                    items
-                        .iter()
-                        .all(|x| x.return_type().is_some_and(|x| x == item_type)),
+                    item_types.iter().all(|x| x == &item_type),
                     "all items in a set should have the same type"
                 );
 
@@ -153,11 +158,20 @@ impl Typeable for AbstractLiteral<Expression> {
             AbstractLiteral::Matrix(items, _) => {
                 let item_type = items[0].return_type()?;
 
+                // if any items do not have a type, return none.
+                let item_types: Option<Vec<ReturnType>> =
+                    items.iter().map(|x| x.return_type()).collect();
+
+                let item_types = item_types?;
+
                 assert!(
-                    items
+                    item_types.iter().all(|x| x == &item_type),
+                    "all items in a matrix should have the same type. items: {items} types: {types:#?}",
+                    items = pretty_vec(items),
+                    types = items
                         .iter()
-                        .all(|x| x.return_type().is_some_and(|x| x == item_type)),
-                    "all items in a matrix should have the same type"
+                        .map(|x| x.return_type())
+                        .collect::<Vec<Option<ReturnType>>>()
                 );
 
                 Some(ReturnType::Matrix(Box::new(item_type)))
