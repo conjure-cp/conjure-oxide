@@ -7,9 +7,11 @@ use std::hash::Hasher;
 use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Tree, Uniplate};
 
+use crate::metadata::Metadata;
+
 use super::domains::HasDomain;
 use super::{Atom, Domain, Expression, Range, records::RecordValue};
-use super::{ReturnType, Typeable};
+use super::{ReturnType, SetAttr, Typeable};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash)]
 #[uniplate(walk_into=[AbstractLiteral<Literal>])]
@@ -57,6 +59,67 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
     Tuple(Vec<T>),
 
     Record(Vec<RecordValue<T>>),
+}
+
+// TODO: use HasDomain instead once Expression::domain_of returns Domain not Option<Domain>
+impl AbstractLiteral<Expression> {
+    pub fn domain_of(&self) -> Option<Domain> {
+        match self {
+            AbstractLiteral::Set(items) => {
+                // ensure that all items have a domain, or return None
+                let item_domains: Vec<Domain> = items
+                    .iter()
+                    .map(|x| x.domain_of())
+                    .collect::<Option<Vec<Domain>>>()?;
+
+                // union all item domains together
+                let mut item_domain_iter = item_domains.iter().cloned();
+                let first_item = item_domain_iter.next()?;
+                let item_domain = item_domains
+                    .iter()
+                    .try_fold(first_item, |x: Domain, y| x.union(y))
+                    .expect("taking the union of all item domains of a set literal should succeed");
+
+                Some(Domain::Set(SetAttr::None, Box::new(item_domain)))
+            }
+
+            AbstractLiteral::Matrix(items, _) => {
+                // ensure that all items have a domain, or return None
+                let item_domains: Vec<Domain> = items
+                    .iter()
+                    .map(|x| x.domain_of())
+                    .collect::<Option<Vec<Domain>>>()?;
+
+                // union all item domains together
+                let mut item_domain_iter = item_domains.iter().cloned();
+
+                let first_item = item_domain_iter.next()?;
+
+                let item_domain = item_domains
+                    .iter()
+                    .try_fold(first_item, |x: Domain, y| x.union(y))
+                    .expect(
+                        "taking the union of all item domains of a matrix literal should succeed",
+                    );
+
+                let mut new_index_domain = vec![];
+
+                // flatten index domains of n-d matrix into list
+                let mut e = Expression::AbstractLiteral(Metadata::new(), self.clone());
+                while let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, idx)) = e {
+                    assert!(
+                        !matches!(idx.as_ref(), Domain::Matrix(_, _)),
+                        "n-dimensional matrix literals should be represented as a matrix inside a matrix"
+                    );
+                    new_index_domain.push(idx.as_ref().clone());
+                    e = elems[0].clone();
+                }
+                Some(Domain::Matrix(Box::new(item_domain), new_index_domain))
+            }
+            AbstractLiteral::Tuple(_) => None,
+            AbstractLiteral::Record(_) => None,
+        }
+    }
 }
 
 impl HasDomain for AbstractLiteral<Literal> {
