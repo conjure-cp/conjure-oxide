@@ -1223,7 +1223,14 @@ impl Typeable for Expression {
             Expression::SubsetEq(_, _, _) => Some(ReturnType::Bool),
             Expression::AbstractLiteral(_, lit) => lit.return_type(),
             Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
-                Some(subject.return_type()?)
+                match subject.return_type()? {
+                    ReturnType::Matrix(element_type) => Some(*element_type),
+                    ReturnType::Tuple(_) => None, //todo
+                    ReturnType::Record(_) => None,
+                    t => bug!(
+                        "{t:#?} cannot be the subject of an indexing expression. expression: {self}"
+                    ),
+                }
             }
             Expression::UnsafeSlice(_, subject, _) | Expression::SafeSlice(_, subject, _) => {
                 Some(ReturnType::Matrix(Box::new(subject.return_type()?)))
