@@ -232,10 +232,10 @@ impl DeclarationPtr {
     /// // find a: int(1..5)
     /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
     ///
-    /// assert!(declaration.domain().is_some_and(|x| (&x as &Domain) == &Domain::Int(vec![Range::Bounded(1,5)])))
+    /// assert!(declaration.domain().is_some_and(|x| x == Domain::Int(vec![Range::Bounded(1,5)])))
     ///
     /// ```
-    pub fn domain(&self) -> Option<Ref<Domain>> {
+    pub fn domain(&self) -> Option<Domain> {
         Ref::filter_map(self.borrow(), |x| match &x.kind {
             DeclarationKind::DecisionVariable(var) => Some(&var.domain),
             DeclarationKind::ValueLetting(_) => None,
@@ -244,6 +244,7 @@ impl DeclarationPtr {
             DeclarationKind::RecordField(domain) => Some(domain),
         })
         .ok()
+        .map(|x| x.clone())
     }
 
     /// Gets the kind of the declaration.

@@ -170,9 +170,9 @@ impl SymbolTable {
         // a lot of the domains would be the same).
 
         if let Name::WithRepresentation(name, _) = name {
-            self.lookup(name)?.domain().map(|x| x.clone())
+            self.lookup(name)?.domain()
         } else {
-            self.lookup(name)?.domain().map(|x| x.clone())
+            self.lookup(name)?.domain()
         }
     }
 
