@@ -618,9 +618,7 @@ impl Expression {
                 }
             }
             Expression::InDomain(_, _, _) => Some(Domain::Bool),
-            Expression::Atomic(_, Atom::Reference(ptr)) => {
-                ptr.domain().map(|x| x.clone()).map(|x| x.resolve(syms))
-            }
+            Expression::Atomic(_, Atom::Reference(ptr)) => ptr.domain().map(|x| x.resolve(syms)),
             Expression::Atomic(_, atom) => Some(atom.domain_of().resolve(syms)),
             Expression::Scope(_, _) => Some(Domain::Bool),
             Expression::Sum(_, e) => {
