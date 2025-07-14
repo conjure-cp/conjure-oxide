@@ -150,7 +150,6 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
 ///   ~~> flatten_vecop
 /// __0 + __1 + __2 + d <= 10
 ///
-/// with new top level constraints
 ///
 /// __0 =aux 1*a
 /// __1 =aux 2*b
@@ -1058,6 +1057,98 @@ fn flatten_product(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
 
     let new_expr = Expr::Product(Metadata::new(), Box::new(into_matrix_expr![new_factors]));
     Ok(Reduction::new(new_expr, top_level_exprs, symtab))
+}
+
+/// Flattens a matrix literal that contains expressions.
+///
+/// For example,
+///
+/// ```plain
+/// [1,e/2,f*5] ~~> [1,__0,__1],
+///
+/// where
+/// __0 =aux e/2,
+/// __1 =aux f*5
+/// ```
+#[register_rule(("Minion", 1000))] // this should be a lower priority than matrix to list
+fn flatten_matrix_literal(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
+    // do not flatten matrix literals inside sum, or, and, product as these expressions either do
+    // their own flattening, or do not need flat expressions.
+    if matches!(
+        expr,
+        Expr::And(_, _) | Expr::Or(_, _) | Expr::Sum(_, _) | Expr::Product(_, _)
+    ) {
+        return Err(RuleNotApplicable);
+    }
+
+    // flatten any children that are matrix literals
+    let mut children = expr.children();
+
+    let mut has_changed = false;
+    let mut symbols = symtab.clone();
+    let mut top_level_exprs = vec![];
+
+    for child in children.iter_mut() {
+        // is this a matrix literal?
+        //
+        // as we arn't changing the number of arguments in the matrix, we can apply this to all
+        // matrices, not just those that are lists.
+        //
+        // this also means that this rule works with n-d matrices -- the inner dimensions of n-d
+        // matrices cant be turned into lists, as described the docstring for matrix_to_list.
+        let Some((mut es, index_domain)) = child.clone().unwrap_matrix_unchecked() else {
+            continue;
+        };
+
+        // flatten expressions
+        for e in es.iter_mut() {
+            if let Some(aux_info) = to_aux_var(e, &symbols) {
+                *e = aux_info.as_expr();
+                top_level_exprs.push(aux_info.top_level_expr());
+                symbols = aux_info.symbols();
+                has_changed = true;
+            } else if let Expr::SafeIndex(_, subject, _) = e
+                && !matches!(**subject, Expr::Atomic(_, Atom::Reference(_)))
+            {
+                // we dont normally flatten indexing expressions, but we want to do it if they are
+                // inside a matrix list.
+                //
+                // remove_dimension_from_matrix_indexing turns [[1,2,3],[4,5,6]][i,j]
+                // into [[1,2,3][j],[4,5,6][j],[7,8,9][j]][i].
+                //
+                // we want to flatten this to
+                // [__0,__1,__2][i]
+
+                let Some(domain) = e.domain_of() else {
+                    continue;
+                };
+
+                let decl = symbols.gensym(&domain);
+
+                top_level_exprs.push(Expr::AuxDeclaration(
+                    Metadata::new(),
+                    decl.clone(),
+                    Box::new(e.clone()),
+                ));
+
+                *e = Expr::Atomic(Metadata::new(), Atom::Reference(decl));
+
+                has_changed = true;
+            }
+        }
+
+        *child = into_matrix_expr!(es;index_domain);
+    }
+
+    if has_changed {
+        Ok(Reduction::new(
+            expr.with_children(children),
+            top_level_exprs,
+            symbols,
+        ))
+    } else {
+        Err(RuleNotApplicable)
+    }
 }
 
 /// Converts a Geq to an Ineq
