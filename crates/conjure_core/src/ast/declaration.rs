@@ -236,15 +236,13 @@ impl DeclarationPtr {
     ///
     /// ```
     pub fn domain(&self) -> Option<Domain> {
-        Ref::filter_map(self.borrow(), |x| match &x.kind {
-            DeclarationKind::DecisionVariable(var) => Some(&var.domain),
-            DeclarationKind::ValueLetting(_) => None,
-            DeclarationKind::DomainLetting(domain) => Some(domain),
-            DeclarationKind::Given(domain) => Some(domain),
-            DeclarationKind::RecordField(domain) => Some(domain),
-        })
-        .ok()
-        .map(|x| x.clone())
+        match &self.kind() as &DeclarationKind {
+            DeclarationKind::DecisionVariable(var) => Some(var.domain.clone()),
+            DeclarationKind::ValueLetting(e) => e.domain_of(),
+            DeclarationKind::DomainLetting(domain) => Some(domain.clone()),
+            DeclarationKind::Given(domain) => Some(domain.clone()),
+            DeclarationKind::RecordField(domain) => Some(domain.clone()),
+        }
     }
 
     /// Gets the kind of the declaration.
