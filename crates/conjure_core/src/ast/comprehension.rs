@@ -50,12 +50,12 @@ pub struct Comprehension {
 }
 
 impl Comprehension {
-    pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
+    pub fn domain_of(&self) -> Option<Domain> {
         let return_expr_domain = self
             .return_expression_submodel
             .clone()
             .into_single_expression()
-            .domain_of(syms)?;
+            .domain_of()?;
 
         // return a list (matrix with index domain int(1..)) of return_expr elements
         Some(Domain::Matrix(

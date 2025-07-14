@@ -9,14 +9,15 @@ use itertools::{Itertools as _, izip};
 
 /// Converts an unsafe index to a safe index using a bubble expression.
 #[register_rule(("Bubble", 6000))]
-fn index_to_bubble(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
+fn index_to_bubble(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult {
     let Expression::UnsafeIndex(_, subject, indices) = expr else {
         return Err(RuleNotApplicable);
     };
 
     let domain = subject
-        .domain_of(symbols)
-        .ok_or(ApplicationError::DomainError)?;
+        .domain_of()
+        .ok_or(ApplicationError::DomainError)?
+        .resolve(symtab);
 
     // TODO: tuple, this is a hack right now just to avoid the rule being applied to tuples, but could we safely modify the rule to
     // handle tuples as well?
@@ -61,16 +62,14 @@ fn index_to_bubble(expr: &Expression, symbols: &SymbolTable) -> ApplicationResul
 
 /// Converts an unsafe slice to a safe slice using a bubble expression.
 #[register_rule(("Bubble", 6000))]
-fn slice_to_bubble(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
+fn slice_to_bubble(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult {
     let Expression::UnsafeSlice(_, subject, indices) = expr else {
         return Err(RuleNotApplicable);
     };
 
-    let domain = subject
-        .domain_of(symbols)
-        .ok_or(ApplicationError::DomainError)?;
+    let domain = subject.domain_of().ok_or(ApplicationError::DomainError)?;
 
-    let Domain::Matrix(_, index_domains) = domain else {
+    let Domain::Matrix(_, index_domains) = domain.clone().resolve(symtab) else {
         bug!(
             "subject of a slice expression should have a matrix domain. subject: {:?}, with domain: {:?}",
             subject,

@@ -108,7 +108,7 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
             Metadata::new(),
             Box::new(matrix_expr![y.clone().into(), next_factor]),
         )
-        .domain_of(&symbols)
+        .domain_of()
         .ok_or(ApplicationError::DomainError)?;
 
         let aux_decl = symbols.gensym(&aux_domain);

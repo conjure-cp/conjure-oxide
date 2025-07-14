@@ -90,9 +90,7 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let domain = expr
-        .domain_of(&symbols)
-        .ok_or(ApplicationError::DomainError)?;
+    let domain = expr.domain_of().ok_or(ApplicationError::DomainError)?;
 
     let atom_inner = Atom::new_ref(symbols.gensym(&domain));
     let atom_expr = Expr::Atomic(Metadata::new(), atom_inner.clone());
@@ -135,9 +133,7 @@ fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let domain = expr
-        .domain_of(&symbols)
-        .ok_or(ApplicationError::DomainError)?;
+    let domain = expr.domain_of().ok_or(ApplicationError::DomainError)?;
 
     let atom_inner = Atom::new_ref(symbols.gensym(&domain));
     let atom_expr = Expr::Atomic(Metadata::new(), atom_inner.clone());

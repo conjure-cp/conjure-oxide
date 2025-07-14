@@ -74,7 +74,7 @@ fn index_record_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 }
 
 #[register_rule(("Bubble", 8000))]
-fn record_index_to_bubble(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn record_index_to_bubble(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
     // annoyingly, let chaining only works in if-lets, not let-elses,otherwise I could avoid the
     // indentation here!
     if let Expr::UnsafeIndex(_, subject, indices) = expr
@@ -86,8 +86,9 @@ fn record_index_to_bubble(expr: &Expr, symbols: &SymbolTable) -> ApplicationResu
         }
 
         let domain = subject
-            .domain_of(symbols)
-            .ok_or(ApplicationError::DomainError)?;
+            .domain_of()
+            .ok_or(ApplicationError::DomainError)?
+            .resolve(symtab);
 
         let Domain::Record(elems) = domain else {
             return Err(RuleNotApplicable);
