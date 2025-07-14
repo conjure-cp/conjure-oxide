@@ -111,6 +111,18 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
         return None;
     }
 
+    // Do not put abstract literals containing expressions into aux vars.
+    //
+    // e.g. for `[1,2,3,f/2,e][e]`, the lhs should not be put in an aux var.
+    //
+    // instead, we should flatten the elements inside this abstract literal, or wait for it to be
+    // turned into an atom, or an abstract literal containing only literals - e.g. through an index
+    // or slice operation.
+    //
+    if let Expr::AbstractLiteral(_, _) = expr {
+        return None;
+    }
+
     let Some(domain) = expr.domain_of() else {
         tracing::trace!("could not find domain of {}", expr);
         return None;

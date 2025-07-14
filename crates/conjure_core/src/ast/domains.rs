@@ -788,7 +788,9 @@ impl Domain {
     ///
     ///  - [`DomainOpError::InputUnbounded`] if either of the input domains are unbounded.
     ///  - [`DomainOpError::InputWrongType`] if the input domains are different types, or are not
-    ///    integer or set domains.
+    ///    integer set, or matrix domains. This is also thrown if the matrix domains that have
+    ///    different index domains.
+    ///    
     pub fn union(&self, other: &Domain) -> Result<Domain, DomainOpError> {
         // TODO: does not consider unbounded domains yet
         // needs to be tested once comprehension rules are written
@@ -822,6 +824,12 @@ impl Domain {
             (Domain::Set(_, x), Domain::Set(_, y)) => {
                 Ok(Domain::Set(SetAttr::None, Box::new((*x).union(y)?)))
             }
+
+            // union matrices only if they have the same index domain.
+            (Domain::Matrix(d1, idx1), Domain::Matrix(d2, idx2)) if idx1 == idx2 => Ok(
+                Domain::Matrix(Box::new(d1.union(d2.as_ref())?), idx1.clone()),
+            ),
+
             (Domain::Int(_), Domain::Int(_)) => {
                 let mut v: BTreeSet<i32> = BTreeSet::new();
                 let v1 = self.values_i32()?;

@@ -583,7 +583,7 @@ impl Expression {
             Expression::SupsetEq(_, _, _) => Some(Domain::Bool),
             Expression::Subset(_, _, _) => Some(Domain::Bool),
             Expression::SubsetEq(_, _, _) => Some(Domain::Bool),
-            Expression::AbstractLiteral(_, _) => None,
+            Expression::AbstractLiteral(_, abslit) => abslit.domain_of(),
             Expression::DominanceRelation(_, _) => Some(Domain::Bool),
             Expression::FromSolution(_, expr) => expr.domain_of(),
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
