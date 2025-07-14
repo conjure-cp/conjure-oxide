@@ -72,7 +72,7 @@ fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
 }
 
 #[register_rule(("Bubble", 8000))]
-fn tuple_index_to_bubble(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn tuple_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::UnsafeIndex(_, subject, indices) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -89,9 +89,7 @@ fn tuple_index_to_bubble(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
         return Err(RuleNotApplicable);
     }
 
-    let domain = subject
-        .domain_of(symbols)
-        .ok_or(ApplicationError::DomainError)?;
+    let domain = subject.domain_of().ok_or(ApplicationError::DomainError)?;
 
     let Domain::Tuple(elems) = domain else {
         return Err(RuleNotApplicable);

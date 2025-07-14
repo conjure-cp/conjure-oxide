@@ -111,7 +111,7 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
         return None;
     }
 
-    let Some(domain) = expr.domain_of(&symbols) else {
+    let Some(domain) = expr.domain_of() else {
         tracing::trace!("could not find domain of {}", expr);
         return None;
     };

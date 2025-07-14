@@ -11,7 +11,6 @@ use crate::ast::SetAttr;
 use crate::ast::literals::AbstractLiteral;
 use crate::ast::literals::Literal;
 use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
-use crate::ast::symbol_table::SymbolTable;
 use crate::bug;
 use crate::metadata::Metadata;
 use enum_compatability_macro::document_compatibility;
@@ -482,7 +481,6 @@ pub enum Expression {
 fn bounded_i32_domain_for_matrix_literal_monotonic(
     e: &Expression,
     op: fn(i32, i32) -> Option<i32>,
-    symtab: &SymbolTable,
 ) -> Option<Domain> {
     // only care about the elements, not the indices
     let (mut exprs, _) = e.clone().unwrap_matrix_unchecked()?;
@@ -503,14 +501,14 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
     // +,-,/,* are all monotone, so this assumption should be fine for now...
 
     let expr = exprs.pop()?;
-    let Some(Domain::Int(ranges)) = expr.domain_of(symtab) else {
+    let Some(Domain::Int(ranges)) = expr.domain_of() else {
         return None;
     };
 
     let (mut current_min, mut current_max) = range_vec_bounds_i32(&ranges)?;
 
     for expr in exprs {
-        let Some(Domain::Int(ranges)) = expr.domain_of(symtab) else {
+        let Some(Domain::Int(ranges)) = expr.domain_of() else {
             return None;
         };
 
@@ -570,15 +568,15 @@ fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> Option<(i32, i32)> {
 
 impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
-    pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
+    pub fn domain_of(&self) -> Option<Domain> {
         let ret = match self {
             Expression::Union(_, a, b) => Some(Domain::Set(
                 SetAttr::None,
-                Box::new(a.domain_of(syms)?.union(&b.domain_of(syms)?).ok()?),
+                Box::new(a.domain_of()?.union(&b.domain_of()?).ok()?),
             )),
             Expression::Intersect(_, a, b) => Some(Domain::Set(
                 SetAttr::None,
-                Box::new(a.domain_of(syms)?.intersect(&b.domain_of(syms)?).ok()?),
+                Box::new(a.domain_of()?.intersect(&b.domain_of()?).ok()?),
             )),
             Expression::In(_, _, _) => Some(Domain::Bool),
             Expression::Supset(_, _, _) => Some(Domain::Bool),
@@ -587,10 +585,10 @@ impl Expression {
             Expression::SubsetEq(_, _, _) => Some(Domain::Bool),
             Expression::AbstractLiteral(_, _) => None,
             Expression::DominanceRelation(_, _) => Some(Domain::Bool),
-            Expression::FromSolution(_, expr) => expr.domain_of(syms),
-            Expression::Comprehension(_, comprehension) => comprehension.domain_of(syms),
+            Expression::FromSolution(_, expr) => expr.domain_of(),
+            Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
-                match matrix.domain_of(syms)? {
+                match matrix.domain_of()? {
                     Domain::Matrix(elem_domain, _) => Some(*elem_domain),
                     Domain::Tuple(_) => None,
                     Domain::Record(_) => None,
@@ -603,7 +601,7 @@ impl Expression {
             | Expression::SafeSlice(_, matrix, indices) => {
                 let sliced_dimension = indices.iter().position(Option::is_none);
 
-                let Domain::Matrix(elem_domain, index_domains) = matrix.domain_of(syms)? else {
+                let Domain::Matrix(elem_domain, index_domains) = matrix.domain_of()? else {
                     bug!("subject of an index operation should be a matrix");
                 };
 
@@ -618,27 +616,23 @@ impl Expression {
                 }
             }
             Expression::InDomain(_, _, _) => Some(Domain::Bool),
-            Expression::Atomic(_, Atom::Reference(ptr)) => ptr.domain().map(|x| x.resolve(syms)),
-            Expression::Atomic(_, atom) => Some(atom.domain_of().resolve(syms)),
+            Expression::Atomic(_, Atom::Reference(ptr)) => ptr.domain(),
+            Expression::Atomic(_, atom) => Some(atom.domain_of()),
             Expression::Scope(_, _) => Some(Domain::Bool),
             Expression::Sum(_, e) => {
-                bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x + y), syms)
+                bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x + y))
             }
             Expression::Product(_, e) => {
-                bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x * y), syms)
+                bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x * y))
             }
-            Expression::Min(_, e) => bounded_i32_domain_for_matrix_literal_monotonic(
-                e,
-                |x, y| Some(if x < y { x } else { y }),
-                syms,
-            ),
-            Expression::Max(_, e) => bounded_i32_domain_for_matrix_literal_monotonic(
-                e,
-                |x, y| Some(if x > y { x } else { y }),
-                syms,
-            ),
+            Expression::Min(_, e) => bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| {
+                Some(if x < y { x } else { y })
+            }),
+            Expression::Max(_, e) => bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| {
+                Some(if x > y { x } else { y })
+            }),
             Expression::UnsafeDiv(_, a, b) => a
-                .domain_of(syms)?
+                .domain_of()?
                 .apply_i32(
                     // rust integer division is truncating; however, we want to always round down,
                     // including for negative numbers.
@@ -649,13 +643,13 @@ impl Expression {
                             None
                         }
                     },
-                    &b.domain_of(syms)?,
+                    &b.domain_of()?,
                 )
                 .ok(),
             Expression::SafeDiv(_, a, b) => {
                 // rust integer division is truncating; however, we want to always round down
                 // including for negative numbers.
-                let domain = a.domain_of(syms)?.apply_i32(
+                let domain = a.domain_of()?.apply_i32(
                     |x, y| {
                         if y != 0 {
                             Some((x as f32 / y as f32).floor() as i32)
@@ -663,7 +657,7 @@ impl Expression {
                             None
                         }
                     },
-                    &b.domain_of(syms)?,
+                    &b.domain_of()?,
                 );
 
                 match domain {
@@ -677,16 +671,16 @@ impl Expression {
                 }
             }
             Expression::UnsafeMod(_, a, b) => a
-                .domain_of(syms)?
+                .domain_of()?
                 .apply_i32(
                     |x, y| if y != 0 { Some(x % y) } else { None },
-                    &b.domain_of(syms)?,
+                    &b.domain_of()?,
                 )
                 .ok(),
             Expression::SafeMod(_, a, b) => {
-                let domain = a.domain_of(syms)?.apply_i32(
+                let domain = a.domain_of()?.apply_i32(
                     |x, y| if y != 0 { Some(x % y) } else { None },
-                    &b.domain_of(syms)?,
+                    &b.domain_of()?,
                 );
 
                 match domain {
@@ -700,7 +694,7 @@ impl Expression {
                 }
             }
             Expression::SafePow(_, a, b) | Expression::UnsafePow(_, a, b) => a
-                .domain_of(syms)?
+                .domain_of()?
                 .apply_i32(
                     |x, y| {
                         if (x != 0 || y != 0) && y >= 0 {
@@ -709,7 +703,7 @@ impl Expression {
                             None
                         }
                     },
-                    &b.domain_of(syms)?,
+                    &b.domain_of()?,
                 )
                 .ok(),
             Expression::Root(_, _) => None,
@@ -740,7 +734,7 @@ impl Expression {
             Expression::MinionWInSet(_, _, _) => Some(Domain::Bool),
             Expression::MinionElementOne(_, _, _, _) => Some(Domain::Bool),
             Expression::Neg(_, x) => {
-                let Some(Domain::Int(mut ranges)) = x.domain_of(syms) else {
+                let Some(Domain::Int(mut ranges)) = x.domain_of() else {
                     return None;
                 };
 
@@ -756,8 +750,8 @@ impl Expression {
                 Some(Domain::Int(ranges))
             }
             Expression::Minus(_, a, b) => a
-                .domain_of(syms)?
-                .apply_i32(|x, y| Some(x - y), &b.domain_of(syms)?)
+                .domain_of()?
+                .apply_i32(|x, y| Some(x - y), &b.domain_of()?)
                 .ok(),
             Expression::FlatAllDiff(_, _) => Some(Domain::Bool),
             Expression::FlatMinusEq(_, _, _) => Some(Domain::Bool),
@@ -765,8 +759,8 @@ impl Expression {
             Expression::FlatWeightedSumLeq(_, _, _, _) => Some(Domain::Bool),
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(Domain::Bool),
             Expression::Abs(_, a) => a
-                .domain_of(syms)?
-                .apply_i32(|a, _| Some(a.abs()), &a.domain_of(syms)?)
+                .domain_of()?
+                .apply_i32(|a, _| Some(a.abs()), &a.domain_of()?)
                 .ok(),
             Expression::MinionPow(_, _, _, _) => Some(Domain::Bool),
             Expression::ToInt(_, _) => Some(Domain::Int(vec![Range::Bounded(0, 1)])),
@@ -1305,10 +1299,7 @@ mod tests {
             Metadata::new(),
             Box::new(matrix_expr![c1.clone(), c2.clone()]),
         );
-        assert_eq!(
-            sum.domain_of(&SymbolTable::new()),
-            Some(Domain::Int(vec![Range::Single(3)]))
-        );
+        assert_eq!(sum.domain_of(), Some(Domain::Int(vec![Range::Single(3)])));
     }
 
     #[test]
@@ -1319,12 +1310,12 @@ mod tests {
             Metadata::new(),
             Box::new(matrix_expr![c1.clone(), c2.clone()]),
         );
-        assert_eq!(sum.domain_of(&SymbolTable::new()), None);
+        assert_eq!(sum.domain_of(), None);
     }
 
     #[test]
     fn test_domain_of_empty_sum() {
         let sum = Expression::Sum(Metadata::new(), Box::new(matrix_expr![]));
-        assert_eq!(sum.domain_of(&SymbolTable::new()), None);
+        assert_eq!(sum.domain_of(), None);
     }
 }
