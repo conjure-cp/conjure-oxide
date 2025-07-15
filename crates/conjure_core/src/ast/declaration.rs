@@ -10,6 +10,7 @@ use ::serde::{Deserialize, Serialize};
 use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Tree, Uniplate};
 
+use super::categories::{Category, CategoryOf};
 use super::name::Name;
 use super::serde::{DefaultWithId, HasId, ObjId};
 use super::types::Typeable;
@@ -121,7 +122,7 @@ impl DeclarationPtr {
         DeclarationPtr::from_declaration(Declaration::new(name, kind))
     }
 
-    /// Creates a new decision variable declaration.
+    /// Creates a new decision variable declaration with the decision category.
     ///
     /// # Examples
     ///
@@ -135,7 +136,18 @@ impl DeclarationPtr {
     ///
     /// ```
     pub fn new_var(name: Name, domain: Domain) -> DeclarationPtr {
-        let kind = DeclarationKind::DecisionVariable(DecisionVariable::new(domain));
+        let kind =
+            DeclarationKind::DecisionVariable(DecisionVariable::new(domain, Category::Decision));
+        DeclarationPtr::new(name, kind)
+    }
+
+    /// Creates a new decision variable with the quantified category.
+    ///
+    /// This is useful to represent a quantified / induction variable in a comprehension.
+    pub fn new_var_quantified(name: Name, domain: Domain) -> DeclarationPtr {
+        let kind =
+            DeclarationKind::DecisionVariable(DecisionVariable::new(domain, Category::Quantified));
+
         DeclarationPtr::new(name, kind)
     }
 
@@ -440,6 +452,17 @@ impl DeclarationPtr {
     }
 }
 
+impl CategoryOf for DeclarationPtr {
+    fn category_of(&self) -> Category {
+        match &self.kind() as &DeclarationKind {
+            DeclarationKind::DecisionVariable(decision_variable) => decision_variable.category_of(),
+            DeclarationKind::ValueLetting(expression) => expression.category_of(),
+            DeclarationKind::DomainLetting(_) => Category::Constant,
+            DeclarationKind::Given(_) => Category::Parameter,
+            DeclarationKind::RecordField(_) => Category::Bottom,
+        }
+    }
+}
 impl HasId for DeclarationPtr {
     fn id(&self) -> ObjId {
         self.inner.id

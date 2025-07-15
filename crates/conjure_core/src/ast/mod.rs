@@ -1,3 +1,4 @@
+pub mod categories;
 pub mod pretty;
 pub mod serde;
 

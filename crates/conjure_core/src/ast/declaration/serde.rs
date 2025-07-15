@@ -184,7 +184,8 @@ impl<'de> DeserializeAs<'de, DeclarationPtr> for DeclarationPtrAsId {
 /// let expected_json = json!({
 ///     "declaration": {
 ///         "name": { "User": "a"},
-///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [1,5]}]}}},
+///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [1,5]}]}, "category":
+///         "Decision"}},
 ///         "id": 0
 ///     },
 ///
@@ -192,12 +193,14 @@ impl<'de> DeserializeAs<'de, DeclarationPtr> for DeclarationPtrAsId {
 ///         [1,{
 ///         "name": { "User": "1"},
 ///         "id": 1,
-///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [1,5]}]}}},
+///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [1,5]}]},
+///         "category":"Decision"}},
 ///         }],
 ///         [2,{
 ///         "name": { "User": "2"},
 ///         "id": 2,
-///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [1,5]}]}}},
+///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [1,5]}]},"category":
+///         "Decision"}},
 ///         }]
 ///     ],
 ///         
@@ -231,19 +234,22 @@ impl<'de> DeserializeAs<'de, DeclarationPtr> for DeclarationPtrAsId {
 /// let input_json = json!({
 ///     "declaration": {
 ///         "name": { "User": "a"},
-///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [0,5]}]}}},
+///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [0,5]}]}, "category":
+///         "Decision"}},
 ///         "id": 10,
 ///     },
 ///
 ///     "declarations": [
 ///         [1,{
 ///         "name": { "User": "1"},
-///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [0,5]}]}}},
+///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [0,5]}]}, "category":
+///         "Decision"}},
 ///         "id": 11,
 ///         }],
 ///         [2,{
 ///         "name": { "User": "2"},
-///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [0,5]}]}}},
+///         "kind": {"DecisionVariable": {"domain": {"Int": [{"Bounded": [0,5]}]}, "category":
+///         "Decision"}},
 ///         "id": 12,
 ///         }]
 ///     ],
