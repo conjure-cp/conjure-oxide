@@ -109,6 +109,7 @@ impl SubModel {
     /// - If `new_root` is not an [`Expression::Root`].
     pub fn replace_root(&mut self, new_root: Expression) -> Expression {
         let Expression::Root(_, _) = new_root else {
+            tracing::error!(new_root=?new_root,"new_root is not an Expression::root");
             panic!("new_root is not an Expression::Root");
         };
 

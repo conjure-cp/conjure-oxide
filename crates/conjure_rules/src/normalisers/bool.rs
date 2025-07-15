@@ -170,6 +170,7 @@ fn distribute_not_over_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// and([a]) ~> a
 /// ```
 #[register_rule(("Base", 8800))]
+
 fn remove_unit_vector_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::And(_, e) => {
