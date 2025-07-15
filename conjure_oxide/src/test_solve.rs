@@ -2,6 +2,7 @@ use std::path::PathBuf;
 use std::process::exit;
 use std::sync::Arc;
 
+use clap::ValueHint;
 use conjure_oxide::utils::conjure::{
     get_minion_solutions, get_sat_solutions, get_solutions_from_conjure, solutions_to_json,
 };
@@ -13,7 +14,7 @@ use crate::solve;
 #[derive(Clone, Debug, clap::Args)]
 pub struct Args {
     /// The input Essence file
-    #[arg(value_name = "INPUT_ESSENCE")]
+    #[arg(value_name = "INPUT_ESSENCE",value_hint=ValueHint::FilePath)]
     pub input_file: PathBuf,
 }
 
