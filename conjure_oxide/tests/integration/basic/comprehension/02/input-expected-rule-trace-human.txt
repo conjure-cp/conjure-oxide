@@ -369,27 +369,6 @@ __minion_w_inintervalset(i,[1,5])
 
 --
 
-(and([(n#matrix_to_atom[i] <= 4),__minion_w_inintervalset(i,[1,5]);int(1..)])) -> (and([(m#matrix_to_atom[i] = i),__minion_w_inintervalset(i,[1,5]);int(1..)])), 
-   ~~> flatten_imply ([("Minion", 4200)]) 
-(__0) -> (and([(m#matrix_to_atom[i] = i),__minion_w_inintervalset(i,[1,5]);int(1..)])) 
-new variables:
-  find __0: bool
-new constraints:
-  __0 =aux and([(n#matrix_to_atom[i] <= 4),__minion_w_inintervalset(i,[1,5]);int(1..)])
---
-
-(__0) -> (and([(m#matrix_to_atom[i] = i),__minion_w_inintervalset(i,[1,5]);int(1..)])), 
-   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
-ReifyImply(and([(m#matrix_to_atom[i] = i),__minion_w_inintervalset(i,[1,5]);int(1..)]), __0) 
-
---
-
-__0 =aux and([(n#matrix_to_atom[i] <= 4),__minion_w_inintervalset(i,[1,5]);int(1..)]), 
-   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify(and([(n#matrix_to_atom[i] <= 4),__minion_w_inintervalset(i,[1,5]);int(1..)]), __0) 
-
---
-
 (i < 4), 
    ~~> lt_to_leq ([("Minion", 8400)]) 
 (i <= sum([4,-1;int(1..)])) 
@@ -402,12 +381,10 @@ Reify(and([(n#matrix_to_atom[i] <= 4),__minion_w_inintervalset(i,[1,5]);int(1..)
 (n#matrix_to_atom_4 = 2),
 (n#matrix_to_atom_5 = 1),
 and([given i: int(1..5)
-find __0: bool
 
 such that
 
-ReifyImply(and([(m#matrix_to_atom[i] = i),__minion_w_inintervalset(i,[1,5]);int(1..)]), __0),
-Reify(and([(n#matrix_to_atom[i] <= 4),__minion_w_inintervalset(i,[1,5]);int(1..)]), __0)
+(and([(n#matrix_to_atom[i] <= 4),__minion_w_inintervalset(i,[1,5]);int(1..)])) -> (and([(m#matrix_to_atom[i] = i),__minion_w_inintervalset(i,[1,5]);int(1..)]))
  | i: int(1..5),(i <= sum([4,-1;int(1..)]))]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 (n#matrix_to_atom_1 = 5),
@@ -416,12 +393,10 @@ Reify(and([(n#matrix_to_atom[i] <= 4),__minion_w_inintervalset(i,[1,5]);int(1..)
 (n#matrix_to_atom_4 = 2),
 (n#matrix_to_atom_5 = 1),
 and([given i: int(1..5)
-find __0: bool
 
 such that
 
-ReifyImply(and([(m#matrix_to_atom[i] = i),__minion_w_inintervalset(i,[1,5]);int(1..)]), __0),
-Reify(and([(n#matrix_to_atom[i] <= 4),__minion_w_inintervalset(i,[1,5]);int(1..)]), __0)
+(and([(n#matrix_to_atom[i] <= 4),__minion_w_inintervalset(i,[1,5]);int(1..)])) -> (and([(m#matrix_to_atom[i] = i),__minion_w_inintervalset(i,[1,5]);int(1..)]))
  | i: int(1..5),(i <= 3)]) 
 
 --
@@ -433,19 +408,14 @@ Ineq(i, 3, 0)
 --
 
 [given i: int(1..5)
-find __0: bool
 
 such that
 
-ReifyImply(and([(m#matrix_to_atom[i] = i),__minion_w_inintervalset(i,[1,5]);int(1..)]), __0),
-Reify(and([(n#matrix_to_atom[i] <= 4),__minion_w_inintervalset(i,[1,5]);int(1..)]), __0)
+(and([(n#matrix_to_atom[i] <= 4),__minion_w_inintervalset(i,[1,5]);int(1..)])) -> (and([(m#matrix_to_atom[i] = i),__minion_w_inintervalset(i,[1,5]);int(1..)]))
  | i: int(1..5),Ineq(i, 3, 0)], 
    ~~> expand_comprehension ([("Base", 2000)]) 
-[and([ReifyImply(and([(m#matrix_to_atom[1] = 1),__minion_w_inintervalset(1,[1,5]);int(1..)]), __0),Reify(and([(n#matrix_to_atom[1] <= 4),__minion_w_inintervalset(1,[1,5]);int(1..)]), __0);int(1..)]),and([ReifyImply(and([(m#matrix_to_atom[2] = 2),__minion_w_inintervalset(2,[1,5]);int(1..)]), __1),Reify(and([(n#matrix_to_atom[2] <= 4),__minion_w_inintervalset(2,[1,5]);int(1..)]), __1);int(1..)]),and([ReifyImply(and([(m#matrix_to_atom[3] = 3),__minion_w_inintervalset(3,[1,5]);int(1..)]), __2),Reify(and([(n#matrix_to_atom[3] <= 4),__minion_w_inintervalset(3,[1,5]);int(1..)]), __2);int(1..)]);int(1..)] 
-new variables:
-  find __0: bool
-  find __1: bool
-  find __2: bool
+[(and([(n#matrix_to_atom[1] <= 4),__minion_w_inintervalset(1,[1,5]);int(1..)])) -> (and([(m#matrix_to_atom[1] = 1),__minion_w_inintervalset(1,[1,5]);int(1..)])),(and([(n#matrix_to_atom[2] <= 4),__minion_w_inintervalset(2,[1,5]);int(1..)])) -> (and([(m#matrix_to_atom[2] = 2),__minion_w_inintervalset(2,[1,5]);int(1..)])),(and([(n#matrix_to_atom[3] <= 4),__minion_w_inintervalset(3,[1,5]);int(1..)])) -> (and([(m#matrix_to_atom[3] = 3),__minion_w_inintervalset(3,[1,5]);int(1..)]));int(1..)] 
+
 --
 
 (n#matrix_to_atom_1 = 5),
@@ -453,45 +423,16 @@ new variables:
 (n#matrix_to_atom_3 = 3),
 (n#matrix_to_atom_4 = 2),
 (n#matrix_to_atom_5 = 1),
-and([and([ReifyImply(and([(m#matrix_to_atom[1] = 1),__minion_w_inintervalset(1,[1,5]);int(1..)]), __0),Reify(and([(n#matrix_to_atom[1] <= 4),__minion_w_inintervalset(1,[1,5]);int(1..)]), __0);int(1..)]),and([ReifyImply(and([(m#matrix_to_atom[2] = 2),__minion_w_inintervalset(2,[1,5]);int(1..)]), __1),Reify(and([(n#matrix_to_atom[2] <= 4),__minion_w_inintervalset(2,[1,5]);int(1..)]), __1);int(1..)]),and([ReifyImply(and([(m#matrix_to_atom[3] = 3),__minion_w_inintervalset(3,[1,5]);int(1..)]), __2),Reify(and([(n#matrix_to_atom[3] <= 4),__minion_w_inintervalset(3,[1,5]);int(1..)]), __2);int(1..)]);int(1..)]), 
+and([(and([(n#matrix_to_atom[1] <= 4),__minion_w_inintervalset(1,[1,5]);int(1..)])) -> (and([(m#matrix_to_atom[1] = 1),__minion_w_inintervalset(1,[1,5]);int(1..)])),(and([(n#matrix_to_atom[2] <= 4),__minion_w_inintervalset(2,[1,5]);int(1..)])) -> (and([(m#matrix_to_atom[2] = 2),__minion_w_inintervalset(2,[1,5]);int(1..)])),(and([(n#matrix_to_atom[3] <= 4),__minion_w_inintervalset(3,[1,5]);int(1..)])) -> (and([(m#matrix_to_atom[3] = 3),__minion_w_inintervalset(3,[1,5]);int(1..)]));int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 (n#matrix_to_atom_1 = 5),
 (n#matrix_to_atom_2 = 4),
 (n#matrix_to_atom_3 = 3),
 (n#matrix_to_atom_4 = 2),
 (n#matrix_to_atom_5 = 1),
-and([ReifyImply(and([(m#matrix_to_atom[1] = 1);int(1..)]), __0),Reify(and([(n#matrix_to_atom[1] <= 4);int(1..)]), __0);int(1..)]),
-and([ReifyImply(and([(m#matrix_to_atom[2] = 2);int(1..)]), __1),Reify(and([(n#matrix_to_atom[2] <= 4);int(1..)]), __1);int(1..)]),
-and([ReifyImply(and([(m#matrix_to_atom[3] = 3);int(1..)]), __2),Reify(and([(n#matrix_to_atom[3] <= 4);int(1..)]), __2);int(1..)]) 
-
---
-
-(n#matrix_to_atom_1 = 5),
-(n#matrix_to_atom_2 = 4),
-(n#matrix_to_atom_3 = 3),
-(n#matrix_to_atom_4 = 2),
-(n#matrix_to_atom_5 = 1),
-and([ReifyImply(and([(m#matrix_to_atom[1] = 1);int(1..)]), __0),Reify(and([(n#matrix_to_atom[1] <= 4);int(1..)]), __0);int(1..)]),
-and([ReifyImply(and([(m#matrix_to_atom[2] = 2);int(1..)]), __1),Reify(and([(n#matrix_to_atom[2] <= 4);int(1..)]), __1);int(1..)]),
-and([ReifyImply(and([(m#matrix_to_atom[3] = 3);int(1..)]), __2),Reify(and([(n#matrix_to_atom[3] <= 4);int(1..)]), __2);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(n#matrix_to_atom_1 = 5),
-(n#matrix_to_atom_2 = 4),
-(n#matrix_to_atom_3 = 3),
-(n#matrix_to_atom_4 = 2),
-(n#matrix_to_atom_5 = 1),
-ReifyImply(and([(m#matrix_to_atom[1] = 1);int(1..)]), __0),
-Reify(and([(n#matrix_to_atom[1] <= 4);int(1..)]), __0),
-ReifyImply(and([(m#matrix_to_atom[2] = 2);int(1..)]), __1),
-Reify(and([(n#matrix_to_atom[2] <= 4);int(1..)]), __1),
-ReifyImply(and([(m#matrix_to_atom[3] = 3);int(1..)]), __2),
-Reify(and([(n#matrix_to_atom[3] <= 4);int(1..)]), __2) 
-
---
-
-and([(m#matrix_to_atom[1] = 1);int(1..)]), 
-   ~~> remove_unit_vector_and ([("Base", 8800)]) 
-(m#matrix_to_atom[1] = 1) 
+(and([(n#matrix_to_atom[1] <= 4);int(1..)])) -> (and([(m#matrix_to_atom[1] = 1);int(1..)])),
+(and([(n#matrix_to_atom[2] <= 4);int(1..)])) -> (and([(m#matrix_to_atom[2] = 2);int(1..)])),
+(and([(n#matrix_to_atom[3] <= 4);int(1..)])) -> (and([(m#matrix_to_atom[3] = 3);int(1..)])) 
 
 --
 
@@ -501,9 +442,9 @@ and([(n#matrix_to_atom[1] <= 4);int(1..)]),
 
 --
 
-and([(m#matrix_to_atom[2] = 2);int(1..)]), 
+and([(m#matrix_to_atom[1] = 1);int(1..)]), 
    ~~> remove_unit_vector_and ([("Base", 8800)]) 
-(m#matrix_to_atom[2] = 2) 
+(m#matrix_to_atom[1] = 1) 
 
 --
 
@@ -513,9 +454,9 @@ and([(n#matrix_to_atom[2] <= 4);int(1..)]),
 
 --
 
-and([(m#matrix_to_atom[3] = 3);int(1..)]), 
+and([(m#matrix_to_atom[2] = 2);int(1..)]), 
    ~~> remove_unit_vector_and ([("Base", 8800)]) 
-(m#matrix_to_atom[3] = 3) 
+(m#matrix_to_atom[2] = 2) 
 
 --
 
@@ -525,28 +466,91 @@ and([(n#matrix_to_atom[3] <= 4);int(1..)]),
 
 --
 
+and([(m#matrix_to_atom[3] = 3);int(1..)]), 
+   ~~> remove_unit_vector_and ([("Base", 8800)]) 
+(m#matrix_to_atom[3] = 3) 
+
+--
+
 (n#matrix_to_atom_1 = 5),
 (n#matrix_to_atom_2 = 4),
 (n#matrix_to_atom_3 = 3),
 (n#matrix_to_atom_4 = 2),
 (n#matrix_to_atom_5 = 1),
-ReifyImply((m#matrix_to_atom[1] = 1), __0),
-Reify((n#matrix_to_atom[1] <= 4), __0),
-ReifyImply((m#matrix_to_atom[2] = 2), __1),
-Reify((n#matrix_to_atom[2] <= 4), __1),
-ReifyImply((m#matrix_to_atom[3] = 3), __2),
-Reify((n#matrix_to_atom[3] <= 4), __2), 
+((n#matrix_to_atom[1] <= 4)) -> ((m#matrix_to_atom[1] = 1)),
+((n#matrix_to_atom[2] <= 4)) -> ((m#matrix_to_atom[2] = 2)),
+((n#matrix_to_atom[3] <= 4)) -> ((m#matrix_to_atom[3] = 3)), 
    ~~> index_matrix_to_atom ([("Base", 5000)]) 
 (n#matrix_to_atom_1 = 5),
 (n#matrix_to_atom_2 = 4),
 (n#matrix_to_atom_3 = 3),
 (n#matrix_to_atom_4 = 2),
 (n#matrix_to_atom_5 = 1),
-ReifyImply((m#matrix_to_atom_1 = 1), __0),
-Reify((n#matrix_to_atom_1 <= 4), __0),
-ReifyImply((m#matrix_to_atom_2 = 2), __1),
-Reify((n#matrix_to_atom_2 <= 4), __1),
-ReifyImply((m#matrix_to_atom_3 = 3), __2),
+((n#matrix_to_atom_1 <= 4)) -> ((m#matrix_to_atom_1 = 1)),
+((n#matrix_to_atom_2 <= 4)) -> ((m#matrix_to_atom_2 = 2)),
+((n#matrix_to_atom_3 <= 4)) -> ((m#matrix_to_atom_3 = 3)) 
+
+--
+
+((n#matrix_to_atom_1 <= 4)) -> ((m#matrix_to_atom_1 = 1)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__0) -> ((m#matrix_to_atom_1 = 1)) 
+new variables:
+  find __0: bool
+new constraints:
+  __0 =aux (n#matrix_to_atom_1 <= 4)
+--
+
+(__0) -> ((m#matrix_to_atom_1 = 1)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((m#matrix_to_atom_1 = 1), __0) 
+
+--
+
+__0 =aux (n#matrix_to_atom_1 <= 4), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((n#matrix_to_atom_1 <= 4), __0) 
+
+--
+
+((n#matrix_to_atom_2 <= 4)) -> ((m#matrix_to_atom_2 = 2)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__1) -> ((m#matrix_to_atom_2 = 2)) 
+new variables:
+  find __1: bool
+new constraints:
+  __1 =aux (n#matrix_to_atom_2 <= 4)
+--
+
+(__1) -> ((m#matrix_to_atom_2 = 2)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((m#matrix_to_atom_2 = 2), __1) 
+
+--
+
+__1 =aux (n#matrix_to_atom_2 <= 4), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((n#matrix_to_atom_2 <= 4), __1) 
+
+--
+
+((n#matrix_to_atom_3 <= 4)) -> ((m#matrix_to_atom_3 = 3)), 
+   ~~> flatten_imply ([("Minion", 4200)]) 
+(__2) -> ((m#matrix_to_atom_3 = 3)) 
+new variables:
+  find __2: bool
+new constraints:
+  __2 =aux (n#matrix_to_atom_3 <= 4)
+--
+
+(__2) -> ((m#matrix_to_atom_3 = 3)), 
+   ~~> introduce_reifyimply_ineq_from_imply ([("Minion", 4400)]) 
+ReifyImply((m#matrix_to_atom_3 = 3), __2) 
+
+--
+
+__2 =aux (n#matrix_to_atom_3 <= 4), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
 Reify((n#matrix_to_atom_3 <= 4), __2) 
 
 --
@@ -595,9 +599,9 @@ such that
 (n#matrix_to_atom_4 = 2),
 (n#matrix_to_atom_5 = 1),
 ReifyImply((m#matrix_to_atom_1 = 1), __0),
-Reify(Ineq(n#matrix_to_atom_1, 4, 0), __0),
 ReifyImply((m#matrix_to_atom_2 = 2), __1),
-Reify(Ineq(n#matrix_to_atom_2, 4, 0), __1),
 ReifyImply((m#matrix_to_atom_3 = 3), __2),
+Reify(Ineq(n#matrix_to_atom_1, 4, 0), __0),
+Reify(Ineq(n#matrix_to_atom_2, 4, 0), __1),
 Reify(Ineq(n#matrix_to_atom_3, 4, 0), __2)
 
