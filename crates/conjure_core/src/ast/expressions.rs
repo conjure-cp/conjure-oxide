@@ -1,8 +1,9 @@
 use crate::ast::declaration::serde::DeclarationPtrAsId;
 use serde_with::serde_as;
-use std::collections::VecDeque;
+use std::collections::{HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
+use tracing::trace;
 
 use crate::ast::Atom;
 use crate::ast::Name;
@@ -945,6 +946,14 @@ impl Expression {
     pub fn to_ac_operator_kind(&self) -> Option<ACOperatorKind> {
         TryFrom::try_from(self).ok()
     }
+
+    /// Returns the categories of all sub-expressions of self.
+    pub fn universe_categories(&self) -> HashSet<Category> {
+        self.universe()
+            .into_iter()
+            .map(|x| x.category_of())
+            .collect()
+    }
 }
 
 impl From<i32> for Expression {
@@ -974,7 +983,8 @@ impl From<Box<Expression>> for Expression {
 impl CategoryOf for Expression {
     fn category_of(&self) -> Category {
         // take highest category of all the expressions children
-        self.cata(Arc::new(move |x,children| {
+        let category = self.cata(Arc::new(move |x,children| {
+
             if let Some(max_category) = children.iter().max() {
                 // if this expression contains subexpressions, return the maximum category of the
                 // subexpressions
@@ -1012,7 +1022,16 @@ impl CategoryOf for Expression {
                 max_category
 
             }
-        }))
+        }));
+
+        if cfg!(debug_assertions) {
+            trace!(
+                category= %category,
+                expression= %self,
+                "Called Expression::category_of()"
+            );
+        };
+        category
     }
 }
 

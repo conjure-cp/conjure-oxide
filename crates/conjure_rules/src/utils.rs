@@ -1,9 +1,9 @@
 use conjure_core::{
-    ast::{Atom, DeclarationPtr, Expression as Expr, SymbolTable},
+    ast::{Atom, DeclarationPtr, Expression as Expr, SymbolTable, categories::Category},
     metadata::Metadata,
 };
 
-use tracing::instrument;
+use tracing::{instrument, trace};
 use uniplate::{Biplate, Uniplate};
 
 /// True iff `expr` is an `Atom`.
@@ -65,20 +65,68 @@ pub fn expressions_to_atoms(exprs: &Vec<Expr>) -> Option<Vec<Atom>> {
 ///     + A new top level expression, containing the declaration of the auxiliary variable.
 ///     + A reference to the auxiliary variable to replace the existing expression with.
 ///
-#[instrument]
+#[instrument(skip_all, fields(expr = %expr))]
 pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> {
     let mut symbols = symbols.clone();
 
     // No need to put an atom in an aux_var
     if is_atom(expr) {
+        if cfg!(debug_assertions) {
+            trace!(why = "expression is an atom", "to_aux_var() failed");
+        }
         return None;
     }
 
     // Anything that should be bubbled, bubble
     if !expr.is_safe() {
+        if cfg!(debug_assertions) {
+            trace!(why = "expression is unsafe", "to_aux_var() failed");
+        }
         return None;
     }
 
+    // Do not put abstract literals containing expressions into aux vars.
+    //
+    // e.g. for `[1,2,3,f/2,e][e]`, the lhs should not be put in an aux var.
+    //
+    // instead, we should flatten the elements inside this abstract literal, or wait for it to be
+    // turned into an atom, or an abstract literal containing only literals - e.g. through an index
+    // or slice operation.
+    //
+    if let Expr::AbstractLiteral(_, _) = expr {
+        if cfg!(debug_assertions) {
+            trace!(
+                why = "expression is an abstract literal",
+                "to_aux_var() failed"
+            );
+        }
+        return None;
+    }
+
+    // Only flatten an expression if it contains decision variables or decision variables with some
+    // constants.
+    //
+    // i.e. dont flatten things containing givens, quantified variables, just constants, etc.
+    let categories = expr.universe_categories();
+
+    assert!(!categories.is_empty());
+
+    if !(categories.len() == 1 && categories.contains(&Category::Decision)
+        || categories.len() == 2
+            && categories.contains(&Category::Decision)
+            && categories.contains(&Category::Constant))
+    {
+        if cfg!(debug_assertions) {
+            trace!(
+                why = "expression has sub-expressions that are not in the decision category",
+                "to_aux_var() failed"
+            );
+        }
+        return None;
+    }
+
+    // FIXME: why does removing this make tests fail!
+    //
     // do not put matrix[e] in auxvar
     //
     // eventually this will rewrite into an indomain constraint, or a single variable.
@@ -108,27 +156,24 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
     // all matrix indexing is fine, as they can be rewritten into a lower-level expression, then
     // flattened.
     if let Expr::SafeIndex(_, _, _) = expr {
-        return None;
-    }
-
-    // Do not put abstract literals containing expressions into aux vars.
-    //
-    // e.g. for `[1,2,3,f/2,e][e]`, the lhs should not be put in an aux var.
-    //
-    // instead, we should flatten the elements inside this abstract literal, or wait for it to be
-    // turned into an atom, or an abstract literal containing only literals - e.g. through an index
-    // or slice operation.
-    //
-    if let Expr::AbstractLiteral(_, _) = expr {
+        if cfg!(debug_assertions) {
+            trace!(expr=%expr, why = "expression is an matrix indexing operation", "to_aux_var() failed");
+        }
         return None;
     }
 
     let Some(domain) = expr.domain_of() else {
-        tracing::trace!("could not find domain of {}", expr);
+        if cfg!(debug_assertions) {
+            trace!(expr=%expr, why = "could not find the domain of the expression", "to_aux_var() failed");
+        }
         return None;
     };
 
     let decl = symbols.gensym(&domain);
+
+    if cfg!(debug_assertions) {
+        trace!(expr=%expr, "to_auxvar() succeeded in putting expr into an auxvar");
+    }
 
     Some(ToAuxVarOutput {
         aux_declaration: decl.clone(),

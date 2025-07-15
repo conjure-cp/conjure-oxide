@@ -9,6 +9,7 @@ use crate::{
     extra_check,
     utils::{is_flat, to_aux_var},
 };
+use conjure_core::ast::categories::Category;
 use conjure_core::{
     ast::{
         Atom, Domain, Expression as Expr, Literal as Lit, Range, ReturnType, SymbolTable, Typeable,
@@ -1122,6 +1123,20 @@ fn flatten_matrix_literal(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
                 let Some(domain) = e.domain_of() else {
                     continue;
                 };
+
+                let categories = e.universe_categories();
+
+                // must contain a decision variable
+                if !categories.contains(&Category::Decision) {
+                    continue;
+                }
+
+                // must not contain givens or quantified variables
+                if categories.contains(&Category::Parameter)
+                    || categories.contains(&Category::Quantified)
+                {
+                    continue;
+                }
 
                 let decl = symbols.gensym(&domain);
 
