@@ -49,6 +49,42 @@ new variables:
   find a#matrix_to_atom_3: int(1..3)
 --
 
+Model before rewriting:
+
+find i: DOM
+find __0: bool
+
+such that
+
+(true != __0)
+
+--
+
+(true != __0), 
+   ~~> substitute_domain_lettings ([("Base", 5000)]) 
+(true != __0) 
+
+--
+
+Final model:
+
+find i: int(1..3)
+find __0: bool
+
+such that
+
+(true != __0)
+
+Model before rewriting:
+
+given i: DOM
+
+such that
+
+(a#matrix_to_atom[i] = i)
+
+--
+
 a#matrix_to_atom[i], 
    ~~> index_to_bubble ([("Bubble", 6000)]) 
 {a#matrix_to_atom[i] @ and([__inDomain(i,int(1..3));int(1..)])} 
@@ -61,26 +97,22 @@ a#matrix_to_atom[i],
 
 --
 
-, 
-   ~~> eval_root ([("Constant", 9001)]) 
-true 
+Final model:
 
---
-
-true, 
-   ~~> substitute_domain_lettings ([("Base", 5000)]) 
-true 
-
---
-
-[given i: DOM
+given i: DOM
 
 such that
 
 (a#matrix_to_atom[i] = i)
- | i: int(1..3),true], 
-   ~~> expand_comprehension ([("Base", 2000)]) 
-[(a#matrix_to_atom[1] = 1),(a#matrix_to_atom[2] = 2),(a#matrix_to_atom[3] = 3);int(1..)] 
+
+and([given i: DOM
+
+such that
+
+(a#matrix_to_atom[i] = i)
+ | i: int(1..3),__0: bool,]), 
+   ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
+and([(a#matrix_to_atom[1] = 1),(a#matrix_to_atom[2] = 2),(a#matrix_to_atom[3] = 3);int(1..)]) 
 
 --
 
