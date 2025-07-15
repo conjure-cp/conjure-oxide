@@ -1,0 +1,14 @@
+$ A small instance of the pythagorean triples problem, as used in our modref
+$ 2025 paper: "Solver Aided Expansion of Loops to Avoid Generate and Test"
+
+language ESSENCE' 1.0
+
+$ Partition the set {1..N} into two classes
+
+letting n be 10
+
+find class : matrix indexed by [int(1..n)] of int(1..2)
+ 
+such that
+
+and([(a**2 + b**2 = c**2 /\ a<=b /\ b<=c) -> or([class[a] != class[b],class[b] != class[c],class[c] != class[a]]) | a: int(1..n), b: int(1..n), c: int(1..n)])

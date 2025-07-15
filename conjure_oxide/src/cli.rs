@@ -87,6 +87,9 @@ pub struct GlobalArgs {
     #[arg(long, default_value_t = false, global = true)]
     pub enable_native_parser: bool,
 
+    #[arg(long, default_value_t = false)]
+    pub no_use_expand_ac: bool,
+
     /// Save a solver input file to <filename>.
     ///
     /// This input file will be in a format compatible by the command-line
