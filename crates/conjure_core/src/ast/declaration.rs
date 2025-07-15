@@ -496,8 +496,18 @@ where
 {
     fn biplate(&self) -> (Tree<To>, Box<dyn Fn(Tree<To>) -> Self>) {
         if TypeId::of::<To>() == TypeId::of::<Self>() {
-            let self2 = self.clone();
-            (Tree::Zero, Box::new(move |_| self2.clone()))
+            unsafe {
+                let self_as_to = std::mem::transmute::<&Self, &To>(self).clone();
+                (
+                    Tree::One(self_as_to),
+                    Box::new(move |x| {
+                        let Tree::One(x) = x else { panic!() };
+
+                        let x_as_self = std::mem::transmute::<&To, &Self>(&x);
+                        x_as_self.clone()
+                    }),
+                )
+            }
         } else {
             // call biplate on the enclosed declaration
             let decl = self.borrow();
