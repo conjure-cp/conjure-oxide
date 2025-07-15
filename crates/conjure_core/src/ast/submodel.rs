@@ -68,6 +68,14 @@ impl SubModel {
         &self.symbols
     }
 
+    /// The symbol table for this sub-model as a mutable pointer.
+    ///
+    /// The caller should only mutate the returned symbol table if this method was called on a
+    /// mutable model.
+    pub fn symbols_ptr_unchecked_mut(&mut self) -> &mut Rc<RefCell<SymbolTable>> {
+        &mut self.symbols
+    }
+
     /// The symbol table for this sub-model as a reference.
     pub fn symbols(&self) -> Ref<SymbolTable> {
         (*self.symbols).borrow()

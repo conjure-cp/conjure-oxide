@@ -1,3 +1,4 @@
+#![allow(clippy::arc_with_non_send_sync)]
 use std::{
     cell::RefCell,
     collections::{HashMap, HashSet},
@@ -238,6 +239,7 @@ pub struct ComprehensionBuilder {
     // for now, this is just used during parsing - a new symbol table is created using this when we initialise the comprehension
     // this is not ideal, but i am chucking all this code very soon anyways...
     generator_symboltable: Rc<RefCell<SymbolTable>>,
+    return_expr_symboltable: Rc<RefCell<SymbolTable>>,
     induction_variables: HashSet<Name>,
 }
 
@@ -246,16 +248,25 @@ impl ComprehensionBuilder {
         ComprehensionBuilder {
             guards: vec![],
             generator_symboltable: Rc::new(RefCell::new(SymbolTable::with_parent(
+                symbol_table_ptr.clone(),
+            ))),
+            return_expr_symboltable: Rc::new(RefCell::new(SymbolTable::with_parent(
                 symbol_table_ptr,
             ))),
             induction_variables: HashSet::new(),
         }
     }
 
-    /// the symbol table for inside the comprehension for use during parsing
-    pub fn symbol_table(&mut self) -> Rc<RefCell<SymbolTable>> {
+    /// The symbol table for the comprehension generators
+    pub fn generator_symboltable(&mut self) -> Rc<RefCell<SymbolTable>> {
         Rc::clone(&self.generator_symboltable)
     }
+
+    /// The symbol table for the comprehension return expression
+    pub fn return_expr_symboltable(&mut self) -> Rc<RefCell<SymbolTable>> {
+        Rc::clone(&self.return_expr_symboltable)
+    }
+
     pub fn guard(mut self, guard: Expression) -> Self {
         self.guards.push(guard);
         self
@@ -263,11 +274,21 @@ impl ComprehensionBuilder {
 
     pub fn generator(mut self, declaration: DeclarationPtr) -> Self {
         let name = declaration.name().clone();
+        let domain = declaration.domain().unwrap().clone();
         assert!(!self.induction_variables.contains(&name));
+
         self.induction_variables.insert(name.clone());
+
+        // insert into generator symbol table as a variable
         (*self.generator_symboltable)
             .borrow_mut()
-            .insert(declaration);
+            .insert(declaration.clone());
+
+        // insert into return expression symbol table as a given
+        (*self.return_expr_symboltable)
+            .borrow_mut()
+            .insert(DeclarationPtr::new_given(name, domain));
+
         self
     }
 
@@ -278,22 +299,71 @@ impl ComprehensionBuilder {
     pub fn with_return_value(
         self,
         mut expression: Expression,
-        parent: Rc<RefCell<SymbolTable>>,
         comprehension_kind: Option<ComprehensionKind>,
     ) -> Comprehension {
-        let generator_symboltable = (*self.generator_symboltable).borrow();
+        let parent_symboltable = self
+            .generator_symboltable
+            .as_ref()
+            .borrow_mut()
+            .parent_mut_unchecked()
+            .clone()
+            .unwrap();
+        let mut generator_submodel = SubModel::new(parent_symboltable.clone());
+        let mut return_expression_submodel = SubModel::new(parent_symboltable.clone());
 
-        let mut generator_submodel = SubModel::new(parent.clone());
+        *generator_submodel.symbols_ptr_unchecked_mut() = self.generator_symboltable;
+        *return_expression_submodel.symbols_ptr_unchecked_mut() = self.return_expr_symboltable;
 
         // TODO:also allow guards that reference lettings and givens.
 
         let induction_variables = self.induction_variables;
 
         // only guards referencing induction variables can go inside the comprehension
-        let (induction_guards, other_guards): (Vec<_>, Vec<_>) = self
+        let (mut induction_guards, mut other_guards): (Vec<_>, Vec<_>) = self
             .guards
             .into_iter()
             .partition(|x| is_induction_guard(&induction_variables, x));
+
+        let induction_variables_2 = induction_variables.clone();
+        let generator_symboltable_ptr = generator_submodel.symbols_ptr_unchecked().clone();
+
+        // fix induction guard pointers so that they all point to variables in the generator model
+        induction_guards = Biplate::<DeclarationPtr>::transform_bi(
+            &induction_guards,
+            Arc::new(move |decl| {
+                if induction_variables_2.contains(&decl.name()) {
+                    (*generator_symboltable_ptr)
+                        .borrow()
+                        .lookup_local(&decl.name())
+                        .unwrap()
+                } else {
+                    decl
+                }
+            }),
+        )
+        .into_iter()
+        .collect_vec();
+
+        let induction_variables_2 = induction_variables.clone();
+        let return_expr_symboltable_ptr =
+            return_expression_submodel.symbols_ptr_unchecked().clone();
+
+        // fix other guard pointers so that they all point to variables in the return expr model
+        other_guards = Biplate::<DeclarationPtr>::transform_bi(
+            &other_guards,
+            Arc::new(move |decl| {
+                if induction_variables_2.contains(&decl.name()) {
+                    (*return_expr_symboltable_ptr)
+                        .borrow()
+                        .lookup_local(&decl.name())
+                        .unwrap()
+                } else {
+                    decl
+                }
+            }),
+        )
+        .into_iter()
+        .collect_vec();
 
         // handle guards that reference non-induction variables
         if !other_guards.is_empty() {
@@ -325,34 +395,6 @@ impl ComprehensionBuilder {
         }
 
         generator_submodel.add_constraints(induction_guards);
-        for decl in generator_symboltable.clone().into_iter_local().map(|x| x.1) {
-            let name = decl.name().clone();
-            let domain = decl.domain().map(|x| x.clone()).unwrap();
-
-            generator_submodel
-                .symbols_mut()
-                .insert(DeclarationPtr::new_var(name, domain));
-        }
-
-        // The return_expression is a sub-model of `parent` containing the return_expression and
-        // the induction variables as givens. This allows us to rewrite it as per usual without
-        // doing weird things to the induction vars.
-        //
-        // All the machine name declarations created by flattening the return expression will be
-        // kept inside the scope, allowing us to duplicate them during unrolling (we need a copy of
-        // each aux var for each set of assignments of induction variables).
-
-        let mut return_expression_submodel = SubModel::new(parent);
-        for (name, domain) in generator_symboltable
-            .clone()
-            .into_iter_local()
-            .map(|(n, decl)| (n, decl.domain().unwrap().clone()))
-        {
-            return_expression_submodel
-                .symbols_mut()
-                .insert(DeclarationPtr::new_given(name, domain))
-                .unwrap();
-        }
 
         return_expression_submodel.add_constraint(expression);
 

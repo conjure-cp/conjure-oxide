@@ -703,7 +703,8 @@ fn parse_comprehension(
 ) -> Option<Expression> {
     let value = &comprehension["Comprehension"];
     let mut comprehension = ComprehensionBuilder::new(Rc::clone(&scope));
-    let inner_scope = comprehension.symbol_table();
+    let generator_symboltable = comprehension.generator_symboltable();
+    let return_expr_symboltable = comprehension.return_expr_symboltable();
 
     let generators_and_guards = value.pointer("/1")?.as_array()?.iter();
 
@@ -719,15 +720,19 @@ fn parse_comprehension(
                     .as_object()?
                     .iter()
                     .next()?;
-                let domain =
-                    parse_domain(domain_name, domain_value, &mut inner_scope.borrow_mut()).ok()?;
+                let domain = parse_domain(
+                    domain_name,
+                    domain_value,
+                    &mut generator_symboltable.borrow_mut(),
+                )
+                .ok()?;
                 comprehension.generator(DeclarationPtr::new_var(
                     Name::User(name.to_string()),
                     domain,
                 ))
             }
 
-            "Condition" => comprehension.guard(parse_expression(value, &inner_scope)?),
+            "Condition" => comprehension.guard(parse_expression(value, &generator_symboltable)?),
 
             x => {
                 bug!("unknown field inside comprehension {x}");
@@ -735,11 +740,11 @@ fn parse_comprehension(
         }
     }
 
-    let expr = parse_expression(value.pointer("/0")?, &inner_scope)?;
+    let expr = parse_expression(value.pointer("/0")?, &return_expr_symboltable)?;
 
     Some(Expression::Comprehension(
         Metadata::new(),
-        Box::new(comprehension.with_return_value(expr, scope, comprehension_kind)),
+        Box::new(comprehension.with_return_value(expr, comprehension_kind)),
     ))
 }
 
