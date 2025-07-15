@@ -5,7 +5,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::{ast::domains::Domain, representation::Representation};
 
-use super::{ReturnType, types::Typeable};
+use super::{
+    ReturnType,
+    categories::{Category, CategoryOf},
+    types::Typeable,
+};
 
 /// Represents a decision variable within a computational model.
 ///
@@ -39,14 +43,28 @@ pub struct DecisionVariable {
     #[serde(skip)]
     #[derivative(Hash = "ignore", PartialEq = "ignore")]
     pub(super) representations: Vec<Vec<Box<dyn Representation>>>,
+
+    /// Category - should be quantified or decision variable
+    pub(super) category: Category,
 }
 
 impl DecisionVariable {
-    pub fn new(domain: Domain) -> DecisionVariable {
+    pub fn new(domain: Domain, category: Category) -> DecisionVariable {
+        assert!(
+            category >= Category::Quantified,
+            "category of a DecisionVariable should be quantified or decision"
+        );
         DecisionVariable {
             domain,
             representations: vec![],
+            category,
         }
+    }
+}
+
+impl CategoryOf for DecisionVariable {
+    fn category_of(&self) -> Category {
+        self.category
     }
 }
 

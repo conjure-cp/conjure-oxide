@@ -20,6 +20,7 @@ use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Uniplate as _};
 
 use super::ac_operators::ACOperatorKind;
+use super::categories::{Category, CategoryOf};
 use super::comprehension::Comprehension;
 use super::domains::HasDomain as _;
 use super::records::RecordValue;
@@ -967,6 +968,51 @@ impl From<Atom> for Expression {
 impl From<Box<Expression>> for Expression {
     fn from(val: Box<Expression>) -> Self {
         val.as_ref().clone()
+    }
+}
+
+impl CategoryOf for Expression {
+    fn category_of(&self) -> Category {
+        // take highest category of all the expressions children
+        self.cata(Arc::new(move |x,children| {
+            if let Some(max_category) = children.iter().max() {
+                // if this expression contains subexpressions, return the maximum category of the
+                // subexpressions
+                *max_category
+            } else {
+                // this expression has no children
+                let mut max_category = Category::Bottom;
+
+                // calculate the category by looking at all atoms, submodels, comprehensions, and
+                // declarationptrs inside this expression
+
+                // this should generically cover all leaf types we currently have in oxide.
+
+                // if x contains submodels (including comprehensions)
+                if !Biplate::<SubModel>::universe_bi(&x).is_empty() {
+                    // assume that the category is decision
+                    return Category::Decision;
+                }
+
+                // if x contains atoms
+                if let Some(max_atom_category) = Biplate::<Atom>::universe_bi(&x).iter().map(|x| x.category_of()).max()
+                // and those atoms have a higher category than we already know about
+                && max_atom_category > max_category{
+                    // update category 
+                    max_category = max_atom_category;
+                }
+
+                // if x contains declarationPtrs
+                if let Some(max_declaration_category) = Biplate::<DeclarationPtr>::universe_bi(&x).iter().map(|x| x.category_of()).max()
+                // and those pointers have a higher category than we already know about
+                && max_declaration_category > max_category{
+                    // update category 
+                    max_category = max_declaration_category;
+                }
+                max_category
+
+            }
+        }))
     }
 }
 

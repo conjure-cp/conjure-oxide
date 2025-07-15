@@ -2,7 +2,9 @@ use crate::{ast::declaration::serde::DeclarationPtrAsId, bug};
 use std::{borrow::Borrow, cell::Ref};
 
 use super::{
-    AbstractLiteral, DeclarationPtr, Domain, Expression, Literal, Name, domains::HasDomain,
+    AbstractLiteral, DeclarationPtr, Domain, Expression, Literal, Name,
+    categories::{Category, CategoryOf},
+    domains::HasDomain,
     records::RecordValue,
 };
 use derivative::Derivative;
@@ -47,6 +49,15 @@ impl Atom {
     /// Shorthand to create a boolean literal.
     pub fn new_blit(value: bool) -> Atom {
         Atom::Literal(Literal::Bool(value))
+    }
+}
+
+impl CategoryOf for Atom {
+    fn category_of(&self) -> Category {
+        match self {
+            Atom::Literal(_) => Category::Constant,
+            Atom::Reference(declaration_ptr) => declaration_ptr.category_of(),
+        }
     }
 }
 
