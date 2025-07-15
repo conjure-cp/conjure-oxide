@@ -12,6 +12,7 @@ use anyhow::{anyhow, ensure};
 use clap::ValueHint;
 use conjure_core::{
     Model,
+    ast::comprehension::USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS,
     context::Context,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     solver::{Solver, adaptors},
@@ -117,6 +118,10 @@ pub(crate) fn init_context(
         extra_rule_sets.push(rs.as_str());
     }
 
+    if global_args.no_use_expand_ac {
+        extra_rule_sets.pop_if(|x| x == &"Better_AC_Comprehension_Expansion");
+    }
+
     ensure!(
         target_family == SolverFamily::Minion || target_family == SolverFamily::Sat,
         "Only the Minion and SAT solvers is currently supported!"
@@ -212,6 +217,7 @@ pub(crate) fn rewrite(
     let rule_sets = context.read().unwrap().rule_sets.clone();
 
     let new_model = if global_args.use_optimised_rewriter {
+        USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS.store(true, std::sync::atomic::Ordering::Relaxed);
         tracing::info!("Rewriting the model using the optimising rewriter");
         rewrite_morph(
             model,
