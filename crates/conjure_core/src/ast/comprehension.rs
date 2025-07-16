@@ -23,7 +23,7 @@ use crate::{
     solver::{Solver, SolverError},
 };
 
-use super::{DeclarationPtr, Domain, Expression, Model, Name, SubModel, SymbolTable};
+use super::{DeclarationPtr, Domain, Expression, Model, Name, Range, SubModel, SymbolTable};
 
 // TODO: do not use Names to compare variables, use DeclarationPtr and ids instead
 // see issue #930
@@ -51,10 +51,17 @@ pub struct Comprehension {
 
 impl Comprehension {
     pub fn domain_of(&self, syms: &SymbolTable) -> Option<Domain> {
-        self.return_expression_submodel
+        let return_expr_domain = self
+            .return_expression_submodel
             .clone()
             .into_single_expression()
-            .domain_of(syms)
+            .domain_of(syms)?;
+
+        // return a list (matrix with index domain int(1..)) of return_expr elements
+        Some(Domain::Matrix(
+            Box::new(return_expr_domain),
+            vec![Domain::Int(vec![Range::UnboundedR(1)])],
+        ))
     }
 
     /// Solves this comprehension using Minion, returning the resulting expressions.
