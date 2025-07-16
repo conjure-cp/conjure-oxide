@@ -1,3 +1,4 @@
+use conjure_core::ast::categories::{Category, CategoryOf};
 use conjure_core::ast::{
     Atom, Domain, Expression as Expr, Literal, Name, Range, SymbolTable, matrix,
 };
@@ -91,9 +92,53 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
 
             // only need to do this for >1d matrices.
             let n_dims = index_domains.len();
-            if n_dims <= 1 {
-                return Err(RuleNotApplicable);
-            };
+            assert_ne!(
+                n_dims, 0,
+                "a matrix indexing operation should have atleast one index"
+            );
+            if n_dims == 1 {
+                // only apply this rule if the index is a decision variable
+                if indices[0].category_of() != Category::Decision {
+                    return Err(RuleNotApplicable);
+                }
+                let represented_expressions = repr
+                    .expression_down(symbols)
+                    .map_err(|_| RuleNotApplicable)?;
+                // for some m[x], return [m1,m2,m3...mn][x]
+                let new_subject = into_matrix_expr!(
+                    matrix::enumerate_indices(index_domains.clone())
+                        // for each index in the matrix, create the name that that index will have as
+                        // an atom
+                        .map(|xs| {
+                            Name::Represented(Box::new((
+                                name.as_ref().clone(),
+                                "matrix_to_atom".into(),
+                                xs.into_iter().join("_"),
+                            )))
+                        })
+                        .map(|x| represented_expressions[&x].clone())
+                        .collect_vec()
+                );
+
+                let old_index_domain = &index_domains.clone()[0];
+
+                let Domain::Int(ranges) = old_index_domain else {
+                    return Err(RuleNotApplicable);
+                };
+
+                let &[Range::Bounded(from, _)] = &ranges[..] else {
+                    return Err(RuleNotApplicable);
+                };
+
+                let offset = Expr::Atomic(Metadata::new(), Literal::Int(from - 1).into());
+                let old_index = &indices[0].clone();
+
+                return Ok(Reduction::pure(Expr::SafeIndex(
+                    Metadata::new(),
+                    Box::new(new_subject),
+                    vec![essence_expr!(&old_index - &offset)],
+                )));
+            }
 
             // some intermediate values we need to do the above..
 
