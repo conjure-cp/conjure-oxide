@@ -707,7 +707,7 @@ impl Expression {
                 )
                 .ok(),
             Expression::Root(_, _) => None,
-            Expression::Bubble(_, _, _) => None,
+            Expression::Bubble(_, inner, _) => inner.domain_of(),
             Expression::AuxDeclaration(_, _, _) => Some(Domain::Bool),
             Expression::And(_, _) => Some(Domain::Bool),
             Expression::Not(_, _) => Some(Domain::Bool),
@@ -1258,7 +1258,7 @@ impl Typeable for Expression {
             Expression::MinionDivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
             Expression::FlatIneq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AllDiff(_, _) => Some(ReturnType::Bool),
-            Expression::Bubble(_, _, _) => None,
+            Expression::Bubble(_, inner, _) => inner.return_type(),
             Expression::FlatWatchedLiteral(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReify(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReifyImply(_, _, _) => Some(ReturnType::Bool),
