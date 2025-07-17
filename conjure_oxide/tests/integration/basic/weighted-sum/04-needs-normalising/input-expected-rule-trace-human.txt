@@ -28,25 +28,37 @@ product([y,3,1,3;int(1..2)])
 
 --
 
-(sum([product([5,x;int(1..2)]),product([y,3,1,3;int(1..2)]),-(product([3,x;int(1..2)])),product([-1,y;int(1..2)]),product([y,-5;int(1..2)]);int(1..2)]) < 11), 
+product([y,3,1,3;int(1..2)]), 
+   ~~> reorder_product ([("Base", 8800)]) 
+product([3,1,3,y;int(1..2)]) 
+
+--
+
+product([y,-5;int(1..2)]), 
+   ~~> reorder_product ([("Base", 8800)]) 
+product([-5,y;int(1..2)]) 
+
+--
+
+(sum([product([5,x;int(1..2)]),product([3,1,3,y;int(1..2)]),-(product([3,x;int(1..2)])),product([-1,y;int(1..2)]),product([-5,y;int(1..2)]);int(1..2)]) < 11), 
    ~~> lt_to_leq ([("Minion", 8400)]) 
-(sum([product([5,x;int(1..2)]),product([y,3,1,3;int(1..2)]),-(product([3,x;int(1..2)])),product([-1,y;int(1..2)]),product([y,-5;int(1..2)]);int(1..2)]) <= sum([11,-1;int(1..)])) 
+(sum([product([5,x;int(1..2)]),product([3,1,3,y;int(1..2)]),-(product([3,x;int(1..2)])),product([-1,y;int(1..2)]),product([-5,y;int(1..2)]);int(1..2)]) <= sum([11,-1;int(1..)])) 
 
 --
 
-(sum([product([5,x;int(1..2)]),product([y,3,1,3;int(1..2)]),-(product([3,x;int(1..2)])),product([-1,y;int(1..2)]),product([y,-5;int(1..2)]);int(1..2)]) <= sum([11,-1;int(1..)])), 
+(sum([product([5,x;int(1..2)]),product([3,1,3,y;int(1..2)]),-(product([3,x;int(1..2)])),product([-1,y;int(1..2)]),product([-5,y;int(1..2)]);int(1..2)]) <= sum([11,-1;int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(sum([product([5,x;int(1..2)]),product([y,3,1,3;int(1..2)]),-(product([3,x;int(1..2)])),product([-1,y;int(1..2)]),product([y,-5;int(1..2)]);int(1..2)]) <= 10) 
+(sum([product([5,x;int(1..2)]),product([3,1,3,y;int(1..2)]),-(product([3,x;int(1..2)])),product([-1,y;int(1..2)]),product([-5,y;int(1..2)]);int(1..2)]) <= 10) 
 
 --
 
-(sum([product([5,x;int(1..2)]),product([y,3,1,3;int(1..2)]),-(product([3,x;int(1..2)])),product([-1,y;int(1..2)]),product([y,-5;int(1..2)]);int(1..2)]) <= 10), 
+(sum([product([5,x;int(1..2)]),product([3,1,3,y;int(1..2)]),-(product([3,x;int(1..2)])),product([-1,y;int(1..2)]),product([-5,y;int(1..2)]);int(1..2)]) <= 10), 
    ~~> flatten_generic ([("Minion", 4200)]) 
 (__0 <= 10) 
 new variables:
   find __0: int(-17..52)
 new constraints:
-  __0 =aux sum([product([5,x;int(1..2)]),product([y,3,1,3;int(1..2)]),-(product([3,x;int(1..2)])),product([-1,y;int(1..2)]),product([y,-5;int(1..2)]);int(1..2)])
+  __0 =aux sum([product([5,x;int(1..2)]),product([3,1,3,y;int(1..2)]),-(product([3,x;int(1..2)])),product([-1,y;int(1..2)]),product([-5,y;int(1..2)]);int(1..2)])
 --
 
 -(product([3,x;int(1..2)])), 
@@ -64,9 +76,9 @@ Ineq(__0, 10, 0)
 
 --
 
-sum([product([5,x;int(1..2)]),product([y,3,1,3;int(1..2)]),-(__1),product([-1,y;int(1..2)]),product([y,-5;int(1..2)]);int(1..2)]), 
+sum([product([5,x;int(1..2)]),product([3,1,3,y;int(1..2)]),-(__1),product([-1,y;int(1..2)]),product([-5,y;int(1..2)]);int(1..2)]), 
    ~~> matrix_to_list ([("Base", 2000)]) 
-sum([product([5,x;int(1..2)]),product([y,3,1,3;int(1..2)]),-(__1),product([-1,y;int(1..2)]),product([y,-5;int(1..2)]);int(1..)]) 
+sum([product([5,x;int(1..2)]),product([3,1,3,y;int(1..2)]),-(__1),product([-1,y;int(1..2)]),product([-5,y;int(1..2)]);int(1..)]) 
 
 --
 
@@ -76,18 +88,18 @@ product([5,x;int(1..)])
 
 --
 
-product([y,3,1,3;int(1..2)]), 
+product([3,1,3,y;int(1..2)]), 
    ~~> matrix_to_list ([("Base", 2000)]) 
-product([y,3,1,3;int(1..)]) 
+product([3,1,3,y;int(1..)]) 
 
 --
 
 Ineq(__0, 10, 0),
-__0 =aux sum([product([5,x;int(1..)]),product([y,3,1,3;int(1..)]),-(__1),product([-1,y;int(1..2)]),product([y,-5;int(1..2)]);int(1..)]),
+__0 =aux sum([product([5,x;int(1..)]),product([3,1,3,y;int(1..)]),-(__1),product([-1,y;int(1..2)]),product([-5,y;int(1..2)]);int(1..)]),
 __1 =aux product([3,x;int(1..2)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 Ineq(__0, 10, 0),
-__0 =aux sum([product([5,x;int(1..)]),product([y,9;int(1..)]),-(__1),product([-1,y;int(1..2)]),product([y,-5;int(1..2)]);int(1..)]),
+__0 =aux sum([product([5,x;int(1..)]),product([y,9;int(1..)]),-(__1),product([-1,y;int(1..2)]),product([-5,y;int(1..2)]);int(1..)]),
 __1 =aux product([3,x;int(1..2)]) 
 
 --
@@ -104,14 +116,8 @@ product([-1,y;int(1..)])
 
 --
 
-product([y,-5;int(1..2)]), 
+product([-5,y;int(1..2)]), 
    ~~> matrix_to_list ([("Base", 2000)]) 
-product([y,-5;int(1..)]) 
-
---
-
-product([y,-5;int(1..)]), 
-   ~~> reorder_product ([("Base", 8800)]) 
 product([-5,y;int(1..)]) 
 
 --
