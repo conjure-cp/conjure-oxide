@@ -1,7 +1,9 @@
+use std::collections::VecDeque;
+
 use conjure_core::{
     ast::{
         Expression as Expr, Literal, ReturnType, SymbolTable, Typeable as _,
-        ac_operators::ACOperatorKind,
+        ac_operators::ACOperatorKind, comprehension::Comprehension,
     },
     into_matrix_expr,
     metadata::Metadata,
@@ -9,6 +11,7 @@ use conjure_core::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
     },
 };
+use uniplate::Biplate;
 
 use uniplate::Uniplate;
 
@@ -31,6 +34,14 @@ fn expand_comprehension_ac(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
     );
 
     let Expr::Comprehension(_, ref comprehension) = expr.children()[0] else {
+        return Err(RuleNotApplicable);
+    };
+
+    // unwrap comprehensions inside out. This reduces calls to minion when rewriting nested
+    // comprehensions.
+    let nested_comprehensions: VecDeque<Comprehension> =
+        comprehension.clone().return_expression().universe_bi();
+    if !nested_comprehensions.is_empty() {
         return Err(RuleNotApplicable);
     };
 
