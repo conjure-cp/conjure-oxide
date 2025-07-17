@@ -23,6 +23,8 @@ use crate::utils::json::sort_json_object;
 
 use glob::glob;
 
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+
 pub fn get_minion_solutions(
     model: Model,
     num_sols: i32,
@@ -204,29 +206,31 @@ pub fn get_solutions_from_conjure(
         .unwrap()
         .collect();
 
-    let mut solutions_set = vec![];
-    for solutions_file in solutions_files {
-        let solutions_file = solutions_file.unwrap();
-        let model = parse_essence_file(solutions_file.to_str().unwrap(), Arc::clone(&context))
-            .expect("conjure solutions files to be parsable");
+    let solutions_set: Vec<_> = solutions_files
+        .par_iter()
+        .map(|solutions_file| {
+            let solutions_file = solutions_file.as_ref().unwrap();
+            let model = parse_essence_file(solutions_file.to_str().unwrap(), Arc::clone(&context))
+                .expect("conjure solutions files to be parsable");
 
-        let mut solutions = BTreeMap::new();
-        for (name, decl) in model.as_submodel().symbols().clone().into_iter() {
-            match &decl.kind() as &DeclarationKind {
-                conjure_core::ast::DeclarationKind::ValueLetting(expression) => {
-                    let literal = expression
-                        .clone()
-                        .into_literal()
-                        .expect("lettings in a solution should only contain literals");
-                    solutions.insert(name, literal);
-                }
-                _ => {
-                    bug!("only expect value letting declarations in solutions")
+            let mut solutions = BTreeMap::new();
+            for (name, decl) in model.as_submodel().symbols().clone().into_iter() {
+                match &decl.kind() as &DeclarationKind {
+                    conjure_core::ast::DeclarationKind::ValueLetting(expression) => {
+                        let literal = expression
+                            .clone()
+                            .into_literal()
+                            .expect("lettings in a solution should only contain literals");
+                        solutions.insert(name, literal);
+                    }
+                    _ => {
+                        bug!("only expect value letting declarations in solutions")
+                    }
                 }
             }
-        }
-        solutions_set.push(solutions);
-    }
+            solutions
+        })
+        .collect();
 
     Ok(solutions_set
         .into_iter()
