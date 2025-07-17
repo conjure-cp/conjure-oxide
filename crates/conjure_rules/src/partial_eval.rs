@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use conjure_core::{
-    ast::{ReturnType, Typeable as _},
+    ast::{Domain, ReturnType, Typeable as _},
     into_matrix_expr,
     metadata::Metadata,
     rule_engine::{ApplicationResult, Reduction},
@@ -12,11 +12,11 @@ use itertools::iproduct;
 use conjure_core::ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable};
 
 #[register_rule(("Base",9000))]
-fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    run_partial_evaluator(expr)
+fn partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
+    run_partial_evaluator(expr, symtab)
 }
 
-pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
+pub(super) fn run_partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     use conjure_core::rule_engine::ApplicationError::RuleNotApplicable;
     // NOTE: If nothing changes, we must return RuleNotApplicable, or the rewriter will try this
     // rule infinitely!
@@ -35,7 +35,34 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::FromSolution(_, _) => Err(RuleNotApplicable),
         Expr::UnsafeIndex(_, _, _) => Err(RuleNotApplicable),
         Expr::UnsafeSlice(_, _, _) => Err(RuleNotApplicable),
-        Expr::SafeIndex(_, _, _) => Err(RuleNotApplicable),
+        Expr::SafeIndex(_, subject, indices) => {
+            // partially evaluate matrix literals indexed by a constant.
+
+            // subject must be a matrix literal
+            let (es, index_domain) = subject.unwrap_matrix_unchecked().ok_or(RuleNotApplicable)?;
+
+            // must be indexing a 1d matrix.
+            //
+            // for n-d matrices, wait for the `remove_dimension_from_matrix_indexing` rule to run
+            // first. This reduces n-d indexing operations to 1d.
+            if indices.len() != 1 {
+                return Err(RuleNotApplicable);
+            }
+
+            // the index must be a number
+            let index: i32 = (&indices[0]).try_into().map_err(|_| RuleNotApplicable)?;
+
+            // index domain must be a single integer range with a lower bound
+            if let Domain::Int(ranges) = index_domain
+                && ranges.len() == 1
+                && let Some(from) = ranges[0].lower_bound()
+            {
+                let zero_indexed_index = index - from;
+                Ok(Reduction::pure(es[zero_indexed_index as usize].clone()))
+            } else {
+                Err(RuleNotApplicable)
+            }
+        }
         Expr::SafeSlice(_, _, _) => Err(RuleNotApplicable),
         Expr::InDomain(_, _, _) => Err(RuleNotApplicable),
         Expr::Bubble(_, expr, cond) => {
