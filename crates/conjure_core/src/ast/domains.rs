@@ -31,8 +31,8 @@ impl<A: Ord> Range<A> {
         match self {
             Range::Single(x) => x == val,
             Range::Bounded(x, y) => x <= val && val <= y,
-            Range::UnboundedR(x) => x <= val,
-            Range::UnboundedL(x) => x >= val,
+            Range::UnboundedR(x) => x >= val,
+            Range::UnboundedL(x) => x <= val,
         }
     }
 }
