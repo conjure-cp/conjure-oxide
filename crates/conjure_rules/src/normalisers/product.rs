@@ -34,7 +34,7 @@ fn reorder_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let mut variables: Vec<Expr> = vec![];
     let mut compound_exprs: Vec<Expr> = vec![];
 
-    let factors = factors.unwrap_list().ok_or(RuleNotApplicable)?;
+    let (factors, index_domain) = factors.unwrap_matrix_unchecked().ok_or(RuleNotApplicable)?;
 
     for expr in factors.clone() {
         match expr {
@@ -82,7 +82,7 @@ fn reorder_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::pure(Expr::Product(
         meta,
-        Box::new(into_matrix_expr!(constant_coefficients)),
+        Box::new(into_matrix_expr!(constant_coefficients;index_domain)),
     )))
 }
 
