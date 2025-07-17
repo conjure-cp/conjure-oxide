@@ -5,11 +5,12 @@ use std::iter;
 use conjure_rule_macros::register_rule;
 
 use conjure_core::{
-    ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable},
+    ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable, categories::CategoryOf},
     into_matrix_expr,
     metadata::Metadata,
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
 };
+use itertools::Itertools;
 
 /// Reorders a product expression.
 ///
@@ -63,7 +64,14 @@ fn reorder_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
     }
 
-    constant_coefficients.extend(variables);
+    // order variables by category.
+    // This ensures that variables that will become constants later on in rewriting are in front of
+    // decision variables, preventing this rule from needing to be ran again.
+    constant_coefficients.extend(
+        variables
+            .into_iter()
+            .sorted_by(|x, y| x.category_of().cmp(&y.category_of())),
+    );
     constant_coefficients.extend(compound_exprs);
 
     // check if we have actually done anything
