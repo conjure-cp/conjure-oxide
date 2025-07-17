@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use conjure_core::{
-    ast::{Domain, Range, ReturnType, Typeable as _, categories::CategoryOf},
+    ast::{Domain, ReturnType, Typeable as _},
     into_matrix_expr,
     metadata::Metadata,
     rule_engine::{ApplicationResult, Reduction},
@@ -64,7 +64,46 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
             }
         }
         Expr::SafeSlice(_, _, _) => Err(RuleNotApplicable),
-        Expr::InDomain(_, _, _) => Err(RuleNotApplicable),
+        Expr::InDomain(_, x, domain) => {
+            if let Expr::Atomic(_, Atom::Reference(decl)) = *x {
+                let decl_domain = decl.domain().ok_or(RuleNotApplicable)?.resolve(symtab);
+
+                let intersection = decl_domain
+                    .intersect(&domain.resolve(symtab))
+                    .map_err(|_| RuleNotApplicable)?;
+
+                // if the declaration's domain is a subset of domain, expr is always true.
+                if intersection == decl_domain {
+                    Ok(Reduction::pure(Expr::Atomic(Metadata::new(), true.into())))
+                }
+                // if no elements of declaration's domain are in the domain (i.e. they have no
+                // intersection), expr is always false.
+                //
+                // Only check this when the intersection is a finite integer domain, as we
+                // currently don't have a way to check whether other domain kinds are empty or not.
+                //
+                // we should expand this to cover more domain types in the future.
+                else if let Ok(values_in_domain) = intersection.values_i32()
+                    && values_in_domain.is_empty()
+                {
+                    Ok(Reduction::pure(Expr::Atomic(Metadata::new(), false.into())))
+                } else {
+                    return Err(RuleNotApplicable);
+                }
+            } else if let Expr::Atomic(_, Atom::Literal(lit)) = *x {
+                if domain
+                    .resolve(symtab)
+                    .contains(&lit)
+                    .map_err(|_| RuleNotApplicable)?
+                {
+                    Ok(Reduction::pure(Expr::Atomic(Metadata::new(), true.into())))
+                } else {
+                    Ok(Reduction::pure(Expr::Atomic(Metadata::new(), false.into())))
+                }
+            } else {
+                Err(RuleNotApplicable)
+            }
+        }
         Expr::Bubble(_, expr, cond) => {
             // definition of bubble is "expr is valid as long as cond is true"
             //
