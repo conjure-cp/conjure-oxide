@@ -19,7 +19,7 @@ use super::partial_eval::run_partial_evaluator;
 register_rule_set!("Constant", ());
 
 #[register_rule(("Constant", 9001))]
-fn constant_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+fn constant_evaluator(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
     // I break the rules a bit here: this is a global rule!
     //
     // This rule is really really hot when expanding comprehensions.. Also, at time of writing, we
@@ -37,6 +37,7 @@ fn constant_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let has_changed: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
     let has_changed_2 = Arc::clone(&has_changed);
 
+    let symtab = symtab.clone();
     let new_expr = expr.transform_bi(&move |x| {
         if let Expr::Atomic(_, Atom::Literal(_)) = x {
             return x;
@@ -44,8 +45,11 @@ fn constant_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
         match eval_constant(&x)
             .map(|c| Expr::Atomic(Metadata::new(), Atom::Literal(c)))
-            .or_else(|| run_partial_evaluator(&x).ok().map(|r| r.new_expression))
-        {
+            .or_else(|| {
+                run_partial_evaluator(&x, &symtab)
+                    .ok()
+                    .map(|r| r.new_expression)
+            }) {
             Some(new_expr) => {
                 has_changed.store(true, Ordering::Relaxed);
                 new_expr

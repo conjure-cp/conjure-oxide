@@ -954,6 +954,33 @@ impl Expression {
     }
 }
 
+impl TryFrom<&Expression> for i32 {
+    type Error = ();
+
+    fn try_from(value: &Expression) -> Result<Self, Self::Error> {
+        let Expression::Atomic(_, atom) = value else {
+            return Err(());
+        };
+
+        let Atom::Literal(lit) = atom else {
+            return Err(());
+        };
+
+        let Literal::Int(i) = lit else {
+            return Err(());
+        };
+
+        Ok(*i)
+    }
+}
+
+impl TryFrom<Expression> for i32 {
+    type Error = ();
+
+    fn try_from(value: Expression) -> Result<Self, Self::Error> {
+        TryFrom::<&Expression>::try_from(&value)
+    }
+}
 impl From<i32> for Expression {
     fn from(i: i32) -> Self {
         Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(i)))
