@@ -1278,14 +1278,17 @@ impl Typeable for Expression {
             Expression::SubsetEq(_, _, _) => Some(ReturnType::Bool),
             Expression::AbstractLiteral(_, lit) => lit.return_type(),
             Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
-                match subject.return_type()? {
-                    ReturnType::Matrix(element_type) => Some(*element_type),
-                    ReturnType::Tuple(_) => None, //todo
-                    ReturnType::Record(_) => None,
-                    t => bug!(
-                        "{t:#?} cannot be the subject of an indexing expression. expression: {self}"
-                    ),
+                let mut elem_typ = subject.return_type()?;
+                let ReturnType::Matrix(_) = elem_typ else {
+                    return None;
+                };
+
+                // unwrap the return types of n-d matrices to get to the real element typetype.
+                while let ReturnType::Matrix(new_elem_typ) = elem_typ {
+                    elem_typ = *new_elem_typ;
                 }
+
+                Some(elem_typ)
             }
             Expression::UnsafeSlice(_, subject, _) | Expression::SafeSlice(_, subject, _) => {
                 Some(ReturnType::Matrix(Box::new(subject.return_type()?)))
