@@ -104,6 +104,10 @@ pub struct GlobalArgs {
     /// this file cannot be used by Conjure Oxide in any way.
     #[arg(long,global=true, value_names=["filename"], next_line_help=true, help_heading=LOGGING_HELP_HEADING)]
     pub save_solver_input_file: Option<PathBuf>,
+
+    /// Use the experimental optimized / dirty-clean rewriter, instead of the default rewriter
+    #[arg(long, default_value_t = false, global = true, help_heading = EXPERIMENTAL_HELP_HEADING)]
+    pub use_optimised_rewriter: bool,
 }
 
 #[derive(Debug, Clone, Args)]
