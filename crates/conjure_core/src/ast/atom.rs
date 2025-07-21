@@ -1,5 +1,6 @@
 use crate::{ast::declaration::serde::DeclarationPtrAsId, bug};
 use std::{borrow::Borrow, cell::Ref};
+use uniplate::Uniplate;
 
 use super::{
     AbstractLiteral, DeclarationPtr, Domain, Expression, Literal, Name,
@@ -10,7 +11,6 @@ use super::{
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
-use uniplate::derive::Uniplate;
 
 /// An `Atom` is an indivisible expression, such as a literal or a reference.
 #[serde_as]

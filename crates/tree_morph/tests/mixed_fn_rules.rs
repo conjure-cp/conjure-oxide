@@ -1,5 +1,5 @@
 use tree_morph::prelude::*;
-use uniplate::derive::Uniplate;
+use uniplate::Uniplate;
 
 #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 #[uniplate()]

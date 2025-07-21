@@ -1,7 +1,7 @@
 //! These tests use a simple constant expression tree to demonstrate the use of the `gen_reduce` crate.
 
 use tree_morph::prelude::*;
-use uniplate::derive::Uniplate;
+use uniplate::Uniplate;
 
 #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 #[uniplate()]

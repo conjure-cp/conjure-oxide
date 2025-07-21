@@ -8,7 +8,8 @@ In this simple example, we use tree-morph to calculate mathematical expressions 
 
 ```rust
 use tree_morph::prelude::*;
-use uniplate::derive::Uniplate;
+use uniplate::Uniplate;
+
 
 #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 #[uniplate()]

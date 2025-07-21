@@ -2,7 +2,7 @@
 //! Rules in a higher-index group will be applied first, even if they apply to lower nodes in the tree.
 
 use tree_morph::prelude::*;
-use uniplate::derive::Uniplate;
+use uniplate::Uniplate;
 
 /// A simple language of two literals and a wrapper
 #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]

@@ -37,7 +37,8 @@ use uniplate::Uniplate;
 /// # Example
 /// ```rust
 /// use tree_morph::prelude::*;
-/// use uniplate::derive::Uniplate;
+/// use uniplate::Uniplate;
+///
 ///
 /// #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 /// #[uniplate()]
@@ -110,7 +111,8 @@ pub type RuleFn<T, M> = fn(&mut Commands<T, M>, &T, &M) -> Option<T>;
 /// # Example
 /// ```rust
 /// use tree_morph::prelude::*;
-/// use uniplate::derive::Uniplate;
+/// use uniplate::Uniplate;
+///
 ///
 /// #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 /// #[uniplate()]

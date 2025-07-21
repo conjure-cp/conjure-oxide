@@ -2,7 +2,7 @@ use std::sync::atomic::Ordering;
 
 use std::sync::atomic::AtomicUsize;
 use tree_morph::prelude::*;
-use uniplate::derive::Uniplate;
+use uniplate::Uniplate;
 
 static GLOBAL_RULE_CHECKS: AtomicUsize = AtomicUsize::new(0);
 

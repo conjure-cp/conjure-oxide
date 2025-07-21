@@ -40,7 +40,8 @@ use uniplate::{Uniplate, zipper::Zipper};
 /// # Example
 /// ```rust
 /// use tree_morph::{prelude::*, helpers::select_panic};
-/// use uniplate::derive::Uniplate;
+/// use uniplate::Uniplate;
+///
 ///
 /// // A simple language of multiplied and squared constant expressions
 /// #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]

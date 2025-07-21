@@ -1,7 +1,7 @@
 // Example case from the 05/02/2025 Conjure VIP meeting
 
 use tree_morph::prelude::*;
-use uniplate::derive::Uniplate;
+use uniplate::Uniplate;
 
 #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 #[uniplate()]

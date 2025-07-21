@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use super::literals::AbstractLiteralValue;
 use super::{Domain, Name};
 use serde::{Deserialize, Serialize};
-use uniplate::derive::Uniplate;
+
 use uniplate::{Biplate, Uniplate};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate)]
