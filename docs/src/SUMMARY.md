@@ -7,7 +7,7 @@
   - [Downloading a Nightly Release]()
   - [Building from Source]()
 - [Command Line Guide]()
-  - [Logging and Tracing]()
+  - [Logging](./user-guide/logging.md)
 - [Tutorials]()
 
 - [Developer Documentation](./developer_docs/index.md)
