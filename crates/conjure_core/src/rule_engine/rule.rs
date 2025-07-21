@@ -5,7 +5,8 @@ use std::hash::Hash;
 use thiserror::Error;
 
 use crate::ast::{DeclarationPtr, Expression, Name, SubModel, SymbolTable};
-use tree_morph::Rule as MorphRule;
+use tree_morph::prelude::Commands;
+use tree_morph::prelude::Rule as MorphRule;
 
 #[derive(Debug, Error)]
 pub enum ApplicationError {
@@ -205,7 +206,7 @@ impl Hash for Rule<'_> {
 impl MorphRule<Expression, SymbolTable> for Rule<'_> {
     fn apply(
         &self,
-        commands: &mut tree_morph::Commands<Expression, SymbolTable>,
+        commands: &mut Commands<Expression, SymbolTable>,
         subtree: &Expression,
         meta: &SymbolTable,
     ) -> Option<Expression> {
@@ -221,7 +222,7 @@ impl MorphRule<Expression, SymbolTable> for Rule<'_> {
 impl MorphRule<Expression, SymbolTable> for &Rule<'_> {
     fn apply(
         &self,
-        commands: &mut tree_morph::Commands<Expression, SymbolTable>,
+        commands: &mut Commands<Expression, SymbolTable>,
         subtree: &Expression,
         meta: &SymbolTable,
     ) -> Option<Expression> {

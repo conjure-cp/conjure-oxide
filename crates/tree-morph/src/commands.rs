@@ -1,3 +1,12 @@
+//! Commands encode side-effects that will take place after a successful rule application.
+//!
+//! A rule may require some changes to the whole tree as part of its transformations, or a
+//! change to some associated data. These changes are applied after the node changed by the rule
+//! is updated.
+//!
+//! It may use [`Commands::transform`] to arbitrarily change entire tree after the rule has been
+//! applied. To change the global metadata in-place, it may use [`Commands::mut_meta`].
+
 use std::collections::VecDeque;
 use uniplate::Uniplate;
 
