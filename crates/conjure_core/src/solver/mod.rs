@@ -111,6 +111,7 @@ use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 use std::time::Instant;
 
+use clap::ValueEnum;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumIter, EnumString};
@@ -145,6 +146,7 @@ pub mod states;
     Serialize,
     Deserialize,
     JsonSchema,
+    ValueEnum,
 )]
 pub enum SolverFamily {
     Sat,
