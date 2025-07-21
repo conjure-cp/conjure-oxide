@@ -7,7 +7,7 @@ use std::{collections::BTreeSet, fmt::Display};
 use thiserror::Error;
 
 use crate::{ast::pretty::pretty_vec, domain_int, range};
-use uniplate::{Uniplate, derive::Uniplate};
+use uniplate::Uniplate;
 
 use super::{AbstractLiteral, Literal, Name, ReturnType, records::RecordEntry, types::Typeable};
 

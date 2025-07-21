@@ -4,7 +4,6 @@ use std::fmt::{Display, Formatter};
 use std::hash::Hash;
 use std::hash::Hasher;
 
-use uniplate::derive::Uniplate;
 use uniplate::{Biplate, Tree, Uniplate};
 
 use crate::ast::pretty::pretty_vec;

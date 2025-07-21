@@ -9,7 +9,7 @@ use std::{
 
 use itertools::Itertools as _;
 use serde::{Deserialize, Serialize};
-use uniplate::{Biplate, derive::Uniplate};
+use uniplate::{Biplate, Uniplate};
 
 use crate::{
     ast::{

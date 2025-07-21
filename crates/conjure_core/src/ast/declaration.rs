@@ -7,7 +7,7 @@ use std::fmt::{Debug, Display};
 use std::rc::Rc;
 
 use ::serde::{Deserialize, Serialize};
-use uniplate::derive::Uniplate;
+
 use uniplate::{Biplate, Tree, Uniplate};
 
 use super::categories::{Category, CategoryOf};

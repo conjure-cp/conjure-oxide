@@ -17,8 +17,8 @@ use crate::metadata::Metadata;
 use enum_compatability_macro::document_compatibility;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use uniplate::derive::Uniplate;
-use uniplate::{Biplate, Uniplate as _};
+
+use uniplate::{Biplate, Uniplate};
 
 use super::ac_operators::ACOperatorKind;
 use super::categories::{Category, CategoryOf};

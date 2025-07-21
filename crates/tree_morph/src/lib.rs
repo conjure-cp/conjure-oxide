@@ -8,7 +8,8 @@
 //!
 //! ```rust
 //! use tree_morph::prelude::*;
-//! use uniplate::derive::Uniplate;
+//! use uniplate::Uniplate;
+//!
 //!
 //! #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 //! #[uniplate()]
@@ -23,7 +24,8 @@
 //!
 //! ```rust
 //! # use tree_morph::prelude::*;
-//! # use uniplate::derive::Uniplate;
+//! # use uniplate::Uniplate;
+//! #
 //! #
 //! # #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 //! # #[uniplate()]
@@ -43,7 +45,7 @@
 //! Now we know how to create expressions, we have to also create rules that transform expressions. The following functions provide addition and multiplication rules for our tree.
 //!```rust
 //! # use tree_morph::prelude::*;
-//! # use uniplate::derive::Uniplate;
+//! # use uniplate::Uniplate;
 //! #
 //! # #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 //! # #[uniplate()]
@@ -76,7 +78,7 @@
 //!We can defining the squaring rule in a similar way.
 //!```rust
 //! # use tree_morph::prelude::*;
-//! # use uniplate::derive::Uniplate;
+//! # use uniplate::Uniplate;
 //! #
 //! # #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 //! # #[uniplate()]
@@ -100,7 +102,7 @@
 //!
 //!```rust
 //! # use tree_morph::prelude::*;
-//! # use uniplate::derive::Uniplate;
+//! # use uniplate::Uniplate;
 //! #
 //! # #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 //! # #[uniplate()]
@@ -167,7 +169,7 @@
 //!Also, until now the ``Commands`` object has held types ``<Expr, i32>``; in general, a commands object holds types ``<T, M>``, where `T` is the tree type, and `M` is the metadata type. To include our new struct ``Meta``, we need to adjust the types accordingly.
 //! ```rust
 //! # use tree_morph::prelude::*;
-//! # use uniplate::derive::Uniplate;
+//! # use uniplate::Uniplate;
 //! #
 //! # #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 //! # #[uniplate()]
@@ -199,7 +201,7 @@
 //!
 //! ```rust
 //! # use tree_morph::prelude::*;
-//! # use uniplate::derive::Uniplate;
+//! # use uniplate::Uniplate;
 //! #
 //! # #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 //! # #[uniplate()]
@@ -228,7 +230,7 @@
 //!
 //! ```rust
 //! # use tree_morph::prelude::*;
-//! # use uniplate::derive::Uniplate;
+//! # use uniplate::Uniplate;
 //! #
 //! # #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 //! # #[uniplate()]
@@ -254,7 +256,7 @@
 //! The following test block verifies that two addition operations take place.
 //! ```rust
 //! # use tree_morph::prelude::*;
-//! # use uniplate::derive::Uniplate;
+//! # use uniplate::Uniplate;
 //! #
 //! # #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 //! # #[uniplate()]
@@ -323,7 +325,7 @@
 //! It is now clear why ``assert_eq!(metaresult.num_applications_addition, 2);`` holds above. Because rule ``rule_expand_sqr`` was in the same grouping as all the other rules, tree-morph applied the rule before the addition node was ever reached. To increase the efficiency the solving algorithm, we can assign the ``rule_expand_sqr`` with a lower priority.
 //! ```rust
 //! # use tree_morph::prelude::*;
-//! # use uniplate::derive::Uniplate;
+//! # use uniplate::Uniplate;
 //! #
 //! # #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 //! # #[uniplate()]
@@ -388,7 +390,7 @@
 //! Now that ``rule_expand_sqr`` has a lower priority, the addition operation will be applied first, and hence ``metaresult.num_applications_addition`` should equal 1. If we make the following change to the test, we can verify this directly.
 //! ```rust
 //! # use tree_morph::prelude::*;
-//! # use uniplate::derive::Uniplate;
+//! # use uniplate::Uniplate;
 //! #
 //! # #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 //! # #[uniplate()]

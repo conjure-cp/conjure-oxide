@@ -2,7 +2,6 @@
 ///There is one rule, that does nothing. We create trees of a variable depth.
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use tree_morph::prelude::*;
-use uniplate::derive::Uniplate;
 
 #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 #[uniplate()]
