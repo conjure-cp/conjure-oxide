@@ -25,7 +25,7 @@ use conjure_oxide::{
 };
 use serde_json::to_string_pretty;
 
-use crate::cli::GlobalArgs;
+use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
 
 #[derive(Clone, Debug, clap::Args)]
 pub struct Args {
@@ -34,7 +34,7 @@ pub struct Args {
     pub input_file: PathBuf,
 
     /// Save execution info as JSON to the given filepath.
-    #[arg(long ,value_hint=ValueHint::FilePath)]
+    #[arg(long ,value_hint=ValueHint::FilePath,help_heading=LOGGING_HELP_HEADING)]
     pub info_json_path: Option<PathBuf>,
 
     /// Do not run the solver.
@@ -49,7 +49,7 @@ pub struct Args {
     pub number_of_solutions: i32,
 
     /// Save solutions to the given JSON file
-    #[arg(long, short = 'o', value_hint = ValueHint::FilePath)]
+    #[arg(long, short = 'o', value_hint = ValueHint::FilePath,help_heading=LOGGING_HELP_HEADING)]
     pub output: Option<PathBuf>,
 }
 
