@@ -6,7 +6,11 @@ use clap_complete::Shell;
 use conjure_oxide::SolverFamily;
 
 use crate::{solve, test_solve};
-static AFTER_HELP_TEXT: &str = include_str!("help_text.txt");
+
+pub(crate) const AFTER_HELP_TEXT: &str = include_str!("help_text.txt");
+pub(crate) const DEBUG_HELP_HEADING: Option<&str> = Some("Debug");
+pub(crate) const LOGGING_HELP_HEADING: Option<&str> = Some("Logging & Output");
+pub(crate) const EXPERIMENTAL_HELP_HEADING: Option<&str> = Some("Experimental");
 
 /// All subcommands of conjure-oxide
 #[derive(Clone, Debug, Subcommand)]
@@ -58,7 +62,7 @@ pub struct GlobalArgs {
     pub solver: SolverFamily,
 
     /// Log verbosely
-    #[arg(long, short = 'v', help = "Log verbosely to sterr", global = true)]
+    #[arg(long, short = 'v', help = "Log verbosely to sterr", global = true, help_heading = LOGGING_HELP_HEADING)]
     pub verbose: bool,
 
     // --no-x flag disables --x flag : https://jwodder.github.io/kbits/posts/clap-bool-negate/
@@ -69,22 +73,23 @@ pub struct GlobalArgs {
         long,
         overrides_with = "_no_check_equally_applicable_rules",
         default_value_t = false,
-        global = true
+        global = true,
+        help_heading= DEBUG_HELP_HEADING
     )]
     pub check_equally_applicable_rules: bool,
 
     /// Output file for the human readable rule trace.
-    #[arg(long, global = true)]
+    #[arg(long, global = true, help_heading=LOGGING_HELP_HEADING)]
     pub human_rule_trace: Option<PathBuf>,
 
     /// Do not check for multiple equally applicable rules [default].
     ///
     /// Only compatible with the default rewriter.
-    #[arg(long, global = true)]
+    #[arg(long, global = true, help_heading = DEBUG_HELP_HEADING)]
     pub _no_check_equally_applicable_rules: bool,
 
     /// Use the native parser instead of Conjure's.
-    #[arg(long, default_value_t = false, global = true)]
+    #[arg(long, default_value_t = false, global = true, help_heading = EXPERIMENTAL_HELP_HEADING)]
     pub enable_native_parser: bool,
 
     /// Save a solver input file to <filename>.
@@ -95,7 +100,7 @@ pub struct GlobalArgs {
     ///
     /// This file is for informational purposes only; the results of running
     /// this file cannot be used by Conjure Oxide in any way.
-    #[arg(long,global=true, value_names=["filename"], next_line_help=true)]
+    #[arg(long,global=true, value_names=["filename"], next_line_help=true, help_heading=LOGGING_HELP_HEADING)]
     pub save_solver_input_file: Option<PathBuf>,
 }
 
