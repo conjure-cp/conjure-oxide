@@ -54,7 +54,7 @@ pub struct GlobalArgs {
         long,
         value_enum,
         value_name = "SOLVER",
-        default_value = "Minion",
+        default_value_t = SolverFamily::Minion,
         short = 's',
         global = true
     )]
