@@ -50,7 +50,6 @@ pub struct GlobalArgs {
     pub extra_rule_sets: Vec<String>,
 
     /// Solver family to use
-    /// By Default, Conjure Oxide will use the Minion solver.
     #[arg(
         long,
         value_enum,
