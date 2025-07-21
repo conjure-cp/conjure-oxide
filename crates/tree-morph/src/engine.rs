@@ -1,9 +1,13 @@
-#![allow(dead_code)]
-#![allow(missing_docs)]
+//! Perform gradual rule-based transformations on trees.
+//!
+//! See [`morph`] for more info.
+
 use std::{cell::RefCell, rc::Rc};
 
-use crate::{Commands, Rule, Update, helpers::one_or_select};
+use crate::helpers::one_or_select;
+use crate::prelude::{Rule, Update};
 use uniplate::{Uniplate, zipper::Zipper};
+
 /// Exhaustively rewrites a tree using a set of transformation rules.
 ///
 /// Rewriting is complete when all rules have been attempted with no change. Rules may be organised
@@ -122,15 +126,8 @@ where
         .map(|group| {
             |subtree: &T, meta: &M| {
                 let applicable = &mut group.iter().filter_map(|rule| {
-                    let mut commands = Commands::new();
-                    let new_tree = rule.apply(&mut commands, subtree, meta)?;
-                    Some((
-                        rule,
-                        Update {
-                            new_subtree: new_tree,
-                            commands,
-                        },
-                    ))
+                    let update = rule.apply_into_update(subtree, meta)?;
+                    Some((rule, update))
                 });
                 one_or_select(&select, subtree, applicable)
             }
@@ -141,7 +138,7 @@ where
 
 ///Used for the skeleton tree in the dirty/clean optimization. Only has one field and is used for
 /// purposes of clarity.
-pub struct State {
+pub(crate) struct State {
     pub node: Rc<RefCell<NodeState>>,
 }
 

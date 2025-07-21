@@ -1,5 +1,8 @@
 use itertools::Itertools;
-use tree_morph::{helpers::select_panic, morph, prelude::select_first};
+use tree_morph::{
+    helpers::select_panic,
+    prelude::{morph, select_first},
+};
 
 use crate::{
     Model,

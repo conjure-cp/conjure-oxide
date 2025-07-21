@@ -9,7 +9,7 @@
 
 use std::{collections::VecDeque, fmt::Display, io::Write};
 
-use crate::{Rule, Update};
+use crate::prelude::{Rule, Update};
 use multipeek::multipeek;
 use uniplate::Uniplate;
 

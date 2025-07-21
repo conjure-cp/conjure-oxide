@@ -1,4 +1,4 @@
-use crate::commands::Commands;
+use crate::prelude::Commands;
 use uniplate::Uniplate;
 
 /// Represents the effects of a successful rule application.
@@ -13,8 +13,18 @@ where
     pub(crate) commands: Commands<T, M>,
 }
 
-impl<T: Uniplate, M> Update<T, M> {
-    /// The new subtree to be inserted as a result of applying this [`Update`]
+impl<T, M> Update<T, M>
+where
+    T: Uniplate,
+{
+    pub(crate) fn new(new_subtree: T, commands: Commands<T, M>) -> Self {
+        Update {
+            new_subtree,
+            commands,
+        }
+    }
+
+    /// The new subtree to be inserted as a result of applying this [`Update`].
     pub fn new_subtree(&self) -> &T {
         &self.new_subtree
     }

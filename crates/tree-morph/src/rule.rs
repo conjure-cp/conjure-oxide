@@ -1,4 +1,8 @@
-use crate::commands::Commands;
+//! Traits and types representing a transformation rule to a tree.
+//!
+//! See the [`Rule`] trait for more information.
+
+use crate::{prelude::Commands, prelude::Update};
 use uniplate::Uniplate;
 
 /// Trait implemented by rules to transform parts of a tree.
@@ -26,8 +30,8 @@ use uniplate::Uniplate;
 /// the tree they are applied. This user-defined value can be used to store information
 /// such as a symbol table, or the number of times a specific rule has been applied.
 ///
-/// The global metadata may be mutated as a side-effect of applying a rule, using the `mut_meta`
-/// method of the passed [`Commands`] instance.
+/// The global metadata may be mutated as a side-effect of applying a rule, using the
+/// [`Commands::mut_meta`] method.
 ///
 /// # Provided Implementations
 /// This trait is automatically implemented by all types which implement
@@ -76,12 +80,19 @@ use uniplate::Uniplate;
 /// let (result, _) = morph(vec![vec![CustomRule(true)]], select_first, Term::A, ());
 /// assert_eq!(result, Term::B);
 /// ```
-///
 pub trait Rule<T: Uniplate, M> {
     /// Applies the rule to the given subtree and returns the result if applicable.
     ///
     /// See the [Rule] trait documentation for more information.
     fn apply(&self, commands: &mut Commands<T, M>, subtree: &T, meta: &M) -> Option<T>;
+
+    /// A helper method to get an [`Update`] directly from a rule.
+    #[doc(hidden)]
+    fn apply_into_update(&self, subtree: &T, meta: &M) -> Option<Update<T, M>> {
+        let mut commands = Commands::new();
+        let new_subtree = self.apply(&mut commands, subtree, meta)?;
+        Some(Update::new(new_subtree, commands))
+    }
 }
 
 // Allows the user to pass closures and function pointers directly as rules
@@ -97,16 +108,18 @@ where
 
 /// A uniform type for `fn` pointers and closures, which implements the [Rule] trait.
 ///
-/// Casting an `fn` pointer or closure to this type allows it to be passed directly to the engine.
+/// Casting an `fn` pointer or closure to this type allows it to be passed to the engine alongside
+/// other such types. This is necessary since no two `fn` pointers or closures have the same
+/// type, and thus cannot be stored in a single collection without casting.
+///
 /// See the [rule_fns!](crate::rule_fns) macro for a convenient way to do this.
 pub type RuleFn<T, M> = fn(&mut Commands<T, M>, &T, &M) -> Option<T>;
 
-/// A convenience macro to cast a list of `fn` pointers or closures to a uniform type which
-/// implements [`Rule`], to allow these to be passed directly to the engine instead of defining a
-/// custom type.
+/// A convenience macro to cast a list of `fn` pointers or closures to a uniform type.
 ///
-/// This makes simple cases less verbose. For more complex use cases with many rules it may better
-/// to define your own type which implements [`Rule`] directly.
+/// Casting an `fn` pointer or closure to this type allows it to be passed to the engine alongside
+/// other such types. This is necessary since no two `fn` pointers or closures have the same
+/// type, and thus cannot be stored in a single collection without casting.
 ///
 /// # Example
 /// ```rust
@@ -129,7 +142,6 @@ pub type RuleFn<T, M> = fn(&mut Commands<T, M>, &T, &M) -> Option<T>;
 /// let rules = vec![
 ///     rule_fns![rule_a],
 ///     vec![rule_a as RuleFn<_, _>], // Same as above
-///
 ///     rule_fns![rule_b, |_, _, _| None], // Closures and fn pointers can be mixed
 /// ];
 ///
@@ -138,6 +150,6 @@ pub type RuleFn<T, M> = fn(&mut Commands<T, M>, &T, &M) -> Option<T>;
 #[macro_export]
 macro_rules! rule_fns {
     [$($x:expr),+ $(,)?] => {
-        vec![$( $x as ::tree_morph::RuleFn<_, _>, )*]
+        vec![$( $x as ::tree_morph::prelude::RuleFn<_, _>, )*]
     };
 }
