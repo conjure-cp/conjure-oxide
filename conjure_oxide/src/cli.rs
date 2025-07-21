@@ -7,7 +7,6 @@ use conjure_oxide::SolverFamily;
 
 use crate::{solve, test_solve};
 
-pub(crate) const AFTER_HELP_TEXT: &str = include_str!("help_text.txt");
 pub(crate) const DEBUG_HELP_HEADING: Option<&str> = Some("Debug");
 pub(crate) const LOGGING_HELP_HEADING: Option<&str> = Some("Logging & Output");
 pub(crate) const EXPERIMENTAL_HELP_HEADING: Option<&str> = Some("Experimental");
@@ -30,7 +29,11 @@ pub enum Command {
 
 /// Global command line arguments.
 #[derive(Clone, Debug, Parser)]
-#[command(author, about, long_about = None, after_long_help=AFTER_HELP_TEXT)]
+#[command(
+    author,
+    about = "Conjure Oxide: Automated Constraints Modelling Toolkit",
+    before_help = "Full documentation can be found online at: https://conjure-cp.github.io/conjure-oxide"
+)]
 pub struct Cli {
     #[command(subcommand)]
     pub subcommand: Command,
