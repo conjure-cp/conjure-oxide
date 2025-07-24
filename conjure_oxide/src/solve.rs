@@ -177,7 +177,7 @@ pub(crate) fn parse(
         .expect("context should contain the input file");
 
     tracing::info!(target: "file", "Input file: {}", input_file);
-    if global_args.enable_native_parser {
+    if global_args.use_native_parser {
         parse_essence_file_native(input_file.as_str(), context.clone()).map_err(|e| anyhow!(e))
     } else {
         conjure_executable()
