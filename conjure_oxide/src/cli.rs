@@ -92,7 +92,7 @@ pub struct GlobalArgs {
 
     /// Use the native parser instead of Conjure's.
     #[arg(long, default_value_t = false, global = true, help_heading = EXPERIMENTAL_HELP_HEADING)]
-    pub enable_native_parser: bool,
+    pub use_native_parser: bool,
 
     /// Save a solver input file to <filename>.
     ///
