@@ -2,7 +2,6 @@ use crate::ast::declaration::serde::DeclarationPtrAsId;
 use serde_with::serde_as;
 use std::collections::{HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
-use std::sync::Arc;
 use tracing::trace;
 
 use crate::ast::Atom;
@@ -58,20 +57,19 @@ static_assertions::assert_eq_size!([u8; 104], Expression);
 #[document_compatibility]
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
-#[uniplate(walk_into=[Atom,SubModel,AbstractLiteral<Expression>,Comprehension])]
 #[biplate(to=Metadata)]
-#[biplate(to=Atom,walk_into=[Expression,AbstractLiteral<Expression>,Vec<Expression>])]
-#[biplate(to=DeclarationPtr,walk_into=[Expression,Atom,AbstractLiteral<Expression>,Vec<Expression>])]
-#[biplate(to=Name,walk_into=[DeclarationPtr,Expression,Atom,AbstractLiteral<Expression>,Vec<Expression>])]
+#[biplate(to=Atom)]
+#[biplate(to=DeclarationPtr)]
+#[biplate(to=Name)]
 #[biplate(to=Vec<Expression>)]
 #[biplate(to=Option<Expression>)]
-#[biplate(to=SubModel,walk_into=[Comprehension])]
+#[biplate(to=SubModel)]
 #[biplate(to=Comprehension)]
 #[biplate(to=AbstractLiteral<Expression>)]
-#[biplate(to=AbstractLiteral<Literal>,walk_into=[Atom])]
-#[biplate(to=RecordValue<Expression>,walk_into=[AbstractLiteral<Expression>])]
-#[biplate(to=RecordValue<Literal>,walk_into=[Atom,Literal,AbstractLiteral<Literal>,AbstractLiteral<Expression>])]
-#[biplate(to=Literal,walk_into=[Atom])]
+#[biplate(to=AbstractLiteral<Literal>)]
+#[biplate(to=RecordValue<Expression>)]
+#[biplate(to=RecordValue<Literal>)]
+#[biplate(to=Literal)]
 pub enum Expression {
     AbstractLiteral(Metadata, AbstractLiteral<Expression>),
     /// The top of the model
@@ -784,7 +782,7 @@ impl Expression {
     }
 
     pub fn set_meta(&self, meta: Metadata) {
-        self.transform_bi(Arc::new(move |_| meta.clone()));
+        self.transform_bi(&|_| meta.clone());
     }
 
     /// Checks whether this expression is safe.
@@ -983,7 +981,7 @@ impl From<Box<Expression>> for Expression {
 impl CategoryOf for Expression {
     fn category_of(&self) -> Category {
         // take highest category of all the expressions children
-        let category = self.cata(Arc::new(move |x,children| {
+        let category = self.cata(&move |x,children| {
 
             if let Some(max_category) = children.iter().max() {
                 // if this expression contains subexpressions, return the maximum category of the
@@ -1022,7 +1020,7 @@ impl CategoryOf for Expression {
                 max_category
 
             }
-        }));
+        });
 
         if cfg!(debug_assertions) {
             trace!(

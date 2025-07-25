@@ -40,9 +40,8 @@ pub enum ComprehensionKind {
 }
 /// A comprehension.
 #[derive(Clone, PartialEq, Eq, Uniplate, Serialize, Deserialize, Debug)]
-#[uniplate(walk_into=[SubModel])]
 #[biplate(to=SubModel)]
-#[biplate(to=Expression,walk_into=[SubModel])]
+#[biplate(to=Expression)]
 pub struct Comprehension {
     return_expression_submodel: SubModel,
     generator_submodel: SubModel,
@@ -116,7 +115,7 @@ impl Comprehension {
             let value_ptr_2 = Arc::clone(&value_ptr);
 
             // substitute in the values for the induction variables
-            let return_expression = return_expression.transform_bi(Arc::new(move |x: Atom| {
+            let return_expression = return_expression.transform_bi(&move |x: Atom| {
                 let Atom::Reference(ref ptr) = x else {
                     return x;
                 };
@@ -127,7 +126,7 @@ impl Comprehension {
                 };
 
                 Atom::Literal(lit.clone())
-            }));
+            });
 
             // Copy the return expression's symbols into parent scope.
 
@@ -163,7 +162,7 @@ impl Comprehension {
 
             // Update references to use the new delcarations.
             #[allow(clippy::arc_with_non_send_sync)]
-            let return_expression = return_expression.transform_bi(Arc::new(move |atom: Atom| {
+            let return_expression = return_expression.transform_bi(&move |atom: Atom| {
                 if let Atom::Reference(ref decl) = atom
                     && let id = decl.id()
                     && let Some(new_decl) = machine_name_translations.get(&id)
@@ -172,7 +171,7 @@ impl Comprehension {
                 } else {
                     atom
                 }
-            }));
+            });
 
             return_expressions.push(return_expression);
         }
@@ -335,9 +334,8 @@ impl ComprehensionBuilder {
         let generator_symboltable_ptr = generator_submodel.symbols_ptr_unchecked().clone();
 
         // fix induction guard pointers so that they all point to variables in the generator model
-        induction_guards = Biplate::<DeclarationPtr>::transform_bi(
-            &induction_guards,
-            Arc::new(move |decl| {
+        induction_guards =
+            Biplate::<DeclarationPtr>::transform_bi(&induction_guards, &move |decl| {
                 if induction_variables_2.contains(&decl.name()) {
                     (*generator_symboltable_ptr)
                         .borrow()
@@ -346,29 +344,25 @@ impl ComprehensionBuilder {
                 } else {
                     decl
                 }
-            }),
-        )
-        .into_iter()
-        .collect_vec();
+            })
+            .into_iter()
+            .collect_vec();
 
         let induction_variables_2 = induction_variables.clone();
         let return_expr_symboltable_ptr =
             return_expression_submodel.symbols_ptr_unchecked().clone();
 
         // fix other guard pointers so that they all point to variables in the return expr model
-        other_guards = Biplate::<DeclarationPtr>::transform_bi(
-            &other_guards,
-            Arc::new(move |decl| {
-                if induction_variables_2.contains(&decl.name()) {
-                    (*return_expr_symboltable_ptr)
-                        .borrow()
-                        .lookup_local(&decl.name())
-                        .unwrap()
-                } else {
-                    decl
-                }
-            }),
-        )
+        other_guards = Biplate::<DeclarationPtr>::transform_bi(&other_guards, &move |decl| {
+            if induction_variables_2.contains(&decl.name()) {
+                (*return_expr_symboltable_ptr)
+                    .borrow()
+                    .lookup_local(&decl.name())
+                    .unwrap()
+            } else {
+                decl
+            }
+        })
         .into_iter()
         .collect_vec();
 

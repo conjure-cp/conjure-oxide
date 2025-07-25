@@ -10,6 +10,12 @@ such that
 --
 
 (b = a), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(b = a) 
+
+--
+
+(b = a), 
    ~~> eq_to_subset_eq ([("Base", 8800)]) 
 and([(b subsetEq a),(a subsetEq b);int(1..)]) 
 
@@ -24,35 +30,19 @@ and([(b subsetEq a),(a subsetEq b);int(1..)]),
 
 a, 
    ~~> substitute_value_lettings ([("Base", 5000)]) 
-{2,3} 
-
---
-
-(b subsetEq {2,3}),
-(a subsetEq b), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(b subsetEq Set([Int(2), Int(3)])),
-(a subsetEq b) 
+Set([Int(2), Int(3)]) 
 
 --
 
 a, 
    ~~> substitute_value_lettings ([("Base", 5000)]) 
-{2,3} 
-
---
-
-(b subsetEq Set([Int(2), Int(3)])),
-({2,3} subsetEq b), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(b subsetEq Set([Int(2), Int(3)])),
-(Set([Int(2), Int(3)]) subsetEq b) 
+Set([Int(2), Int(3)]) 
 
 --
 
 Final model:
 
-letting a be {2,3}
+letting a be Set([Int(2), Int(3)])
 find b: set of (int(1..3))
 
 such that

@@ -586,10 +586,9 @@ impl Display for DeclarationPtr {
 }
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize, Eq, Uniplate)]
-#[biplate(to=Expression,walk_into=[DeclarationKind])]
-#[biplate(to=DeclarationPtr,walk_into=[DeclarationKind])]
+#[biplate(to=Expression)]
+#[biplate(to=DeclarationPtr)]
 #[biplate(to=Name)]
-#[uniplate(walk_into=[DeclarationKind])]
 /// The contents of a declaration
 struct Declaration {
     /// The name of the declared symbol.

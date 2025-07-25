@@ -265,35 +265,29 @@ pub fn normalize_solutions_for_comparison(
 
                         let mut matrix =
                             AbstractLiteral::Matrix(elems, Box::new(Domain::Int(vec![])));
-                        matrix =
-                            matrix.transform(Arc::new(
-                                move |x: AbstractLiteral<Literal>| match x {
-                                    AbstractLiteral::Matrix(items, _) => {
-                                        let items = items
-                                            .into_iter()
-                                            .map(|x| match x {
-                                                Literal::Bool(false) => Literal::Int(0),
-                                                Literal::Bool(true) => Literal::Int(1),
-                                                x => x,
-                                            })
-                                            .collect_vec();
+                        matrix = matrix.transform(&move |x: AbstractLiteral<Literal>| match x {
+                            AbstractLiteral::Matrix(items, _) => {
+                                let items = items
+                                    .into_iter()
+                                    .map(|x| match x {
+                                        Literal::Bool(false) => Literal::Int(0),
+                                        Literal::Bool(true) => Literal::Int(1),
+                                        x => x,
+                                    })
+                                    .collect_vec();
 
-                                        AbstractLiteral::Matrix(
-                                            items,
-                                            Box::new(Domain::Int(vec![])),
-                                        )
-                                    }
-                                    x => x,
-                                },
-                            ));
+                                AbstractLiteral::Matrix(items, Box::new(Domain::Int(vec![])))
+                            }
+                            x => x,
+                        });
                         updates.push((k, Literal::AbstractLiteral(matrix)));
                     }
                     Literal::AbstractLiteral(AbstractLiteral::Tuple(elems)) => {
                         // just the same as matrix but with tuples instead
                         // only conversion needed is to convert bools to ints
                         let mut tuple = AbstractLiteral::Tuple(elems);
-                        tuple =
-                            tuple.transform(Arc::new(move |x: AbstractLiteral<Literal>| match x {
+                        tuple = tuple.transform(
+                            &(move |x: AbstractLiteral<Literal>| match x {
                                 AbstractLiteral::Tuple(items) => {
                                     let items = items
                                         .into_iter()
@@ -307,37 +301,35 @@ pub fn normalize_solutions_for_comparison(
                                     AbstractLiteral::Tuple(items)
                                 }
                                 x => x,
-                            }));
+                            }),
+                        );
                         updates.push((k, Literal::AbstractLiteral(tuple)));
                     }
                     Literal::AbstractLiteral(AbstractLiteral::Record(entries)) => {
                         // just the same as matrix but with tuples instead
                         // only conversion needed is to convert bools to ints
                         let mut record = AbstractLiteral::Record(entries);
-                        record =
-                            record.transform(Arc::new(
-                                move |x: AbstractLiteral<Literal>| match x {
-                                    AbstractLiteral::Record(entries) => {
-                                        let entries = entries
-                                            .into_iter()
-                                            .map(|x| {
-                                                let RecordValue { name, value } = x;
-                                                {
-                                                    let value = match value {
-                                                        Literal::Bool(false) => Literal::Int(0),
-                                                        Literal::Bool(true) => Literal::Int(1),
-                                                        x => x,
-                                                    };
-                                                    RecordValue { name, value }
-                                                }
-                                            })
-                                            .collect_vec();
+                        record = record.transform(&move |x: AbstractLiteral<Literal>| match x {
+                            AbstractLiteral::Record(entries) => {
+                                let entries = entries
+                                    .into_iter()
+                                    .map(|x| {
+                                        let RecordValue { name, value } = x;
+                                        {
+                                            let value = match value {
+                                                Literal::Bool(false) => Literal::Int(0),
+                                                Literal::Bool(true) => Literal::Int(1),
+                                                x => x,
+                                            };
+                                            RecordValue { name, value }
+                                        }
+                                    })
+                                    .collect_vec();
 
-                                        AbstractLiteral::Record(entries)
-                                    }
-                                    x => x,
-                                },
-                            ));
+                                AbstractLiteral::Record(entries)
+                            }
+                            x => x,
+                        });
                         updates.push((k, Literal::AbstractLiteral(record)));
                     }
                     e => bug!("unexpected literal type: {e:?}"),

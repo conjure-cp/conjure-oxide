@@ -19,10 +19,10 @@ use serde_with::serde_as;
 #[uniplate()]
 #[biplate(to=Literal)]
 #[biplate(to=Expression)]
-#[biplate(to=AbstractLiteral<Literal>,walk_into=[Literal])]
-#[biplate(to=RecordValue<Literal>,walk_into=[Literal])]
+#[biplate(to=AbstractLiteral<Literal>)]
+#[biplate(to=RecordValue<Literal>)]
 #[biplate(to=DeclarationPtr)]
-#[biplate(to=Name,walk_into=[DeclarationPtr])]
+#[biplate(to=Name)]
 pub enum Atom {
     Literal(Literal),
     // FIXME: check if these are the hashing semantics we want.
