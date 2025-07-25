@@ -80,19 +80,19 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
         let old_name_2 = old_name.clone();
         let new_name_2 = new_name.clone();
         let has_changed_ptr = Arc::clone(&has_changed);
-        expr = expr.transform_bi(Arc::new(move |n: Name| {
+        expr = expr.transform_bi(&move |n: Name| {
             if n == old_name_2 {
                 has_changed_ptr.store(true, Ordering::SeqCst);
                 new_name_2.clone()
             } else {
                 n
             }
-        }));
+        });
 
         let has_changed_ptr = Arc::clone(&has_changed);
         let old_name = old_name.clone();
         let new_name = new_name.clone();
-        expr = expr.transform_bi(Arc::new(move |mut x: SubModel| {
+        expr = expr.transform_bi(&move |mut x: SubModel| {
             let old_name = old_name.clone();
             let new_name = new_name.clone();
             let has_changed_ptr = Arc::clone(&has_changed_ptr);
@@ -100,17 +100,17 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
             // only do things if this inscope and not shadowed..
             if x.symbols().lookup(&old_name).is_none_or(|x| x.id() == id) {
                 let root = x.root_mut_unchecked();
-                *root = root.transform_bi(Arc::new(move |n: Name| {
+                *root = root.transform_bi(&move |n: Name| {
                     if n == old_name {
                         has_changed_ptr.store(true, Ordering::SeqCst);
                         new_name.clone()
                     } else {
                         n
                     }
-                }));
+                });
             }
             x
-        }));
+        });
     }
 
     if has_changed.load(Ordering::Relaxed) {

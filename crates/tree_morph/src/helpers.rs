@@ -7,7 +7,7 @@
 //! which rule to apply. That is, when more than one rule from the same group returns [`Some(...)`]
 //! for a given sub-tree.
 
-use std::{collections::VecDeque, fmt::Display, io::Write, sync::Arc};
+use std::{collections::VecDeque, fmt::Display, io::Write};
 
 use crate::{Rule, Update};
 use multipeek::multipeek;
@@ -173,10 +173,10 @@ where
     R: Rule<T, M>,
 {
     rs.min_by_key(|(_, u)| {
-        u.new_subtree.cata(Arc::new(|_, cs: VecDeque<i32>| {
+        u.new_subtree.cata(&|_, cs: VecDeque<i32>| {
             // Max subtree height + 1
             cs.iter().max().unwrap_or(&0) + 1
-        }))
+        })
     })
     .map(|(_, u)| u)
 }

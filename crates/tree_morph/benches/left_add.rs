@@ -3,6 +3,7 @@
 ///
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use tree_morph::prelude::*;
+use uniplate::Uniplate;
 
 #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 #[uniplate()]

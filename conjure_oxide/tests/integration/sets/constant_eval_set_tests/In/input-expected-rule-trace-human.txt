@@ -9,13 +9,19 @@ such that
 
 --
 
-b, 
-   ~~> substitute_value_lettings ([("Base", 5000)]) 
-{1,2,3} 
+3 in b, 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+3 in b 
 
 --
 
-3 in {1,2,3}, 
+b, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+Set([Int(1), Int(2), Int(3)]) 
+
+--
+
+3 in Set([Int(1), Int(2), Int(3)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 true 
 
@@ -24,7 +30,7 @@ true
 Final model:
 
 find a: int(1..4)
-letting b be {1,2,3}
+letting b be Set([Int(1), Int(2), Int(3)])
 
 such that
 

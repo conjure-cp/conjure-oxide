@@ -2,7 +2,7 @@
 
 // TODO: Georgiis essence macro would look really nice in these examples!
 
-use std::{collections::VecDeque, sync::Arc};
+use std::collections::VecDeque;
 
 use itertools::{Itertools, izip};
 use uniplate::Uniplate as _;
@@ -120,24 +120,23 @@ pub fn index_domains(matrix: AbstractLiteral<Literal>) -> Vec<Domain> {
         panic!("matrix should be a matrix");
     };
 
-    matrix.cata(Arc::new(
-        move |element: AbstractLiteral<Literal>, child_index_domains: VecDeque<Vec<Domain>>| {
-            assert!(
-                child_index_domains.iter().all_equal(),
-                "each child of a matrix should have the same index domain"
-            );
+    matrix.cata(&move |element: AbstractLiteral<Literal>,
+                       child_index_domains: VecDeque<Vec<Domain>>| {
+        assert!(
+            child_index_domains.iter().all_equal(),
+            "each child of a matrix should have the same index domain"
+        );
 
-            let child_index_domains = child_index_domains.front().cloned().unwrap_or(vec![]);
-            match element {
-                AbstractLiteral::Set(_) => vec![],
-                AbstractLiteral::Matrix(_, domain) => {
-                    let mut index_domains = vec![*domain];
-                    index_domains.extend(child_index_domains);
-                    index_domains
-                }
-                AbstractLiteral::Tuple(_) => vec![],
-                AbstractLiteral::Record(_) => vec![],
+        let child_index_domains = child_index_domains.front().cloned().unwrap_or(vec![]);
+        match element {
+            AbstractLiteral::Set(_) => vec![],
+            AbstractLiteral::Matrix(_, domain) => {
+                let mut index_domains = vec![*domain];
+                index_domains.extend(child_index_domains);
+                index_domains
             }
-        },
-    ))
+            AbstractLiteral::Tuple(_) => vec![],
+            AbstractLiteral::Record(_) => vec![],
+        }
+    })
 }

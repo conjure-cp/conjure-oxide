@@ -18,7 +18,7 @@ use super::{ReturnType, SetAttr, Typeable};
 #[biplate(to=Atom)]
 #[biplate(to=AbstractLiteral<Literal>)]
 #[biplate(to=AbstractLiteral<Expression>)]
-#[biplate(to=RecordValue<Literal>,walk_into=[AbstractLiteral<Literal>])]
+#[biplate(to=RecordValue<Literal>)]
 #[biplate(to=RecordValue<Expression>)]
 #[biplate(to=Expression)]
 /// A literal value, equivalent to constants in Conjure.
@@ -521,7 +521,6 @@ impl Display for Literal {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
 
     use super::*;
     use crate::{into_matrix, matrix};
@@ -536,7 +535,7 @@ mod tests {
         ];
 
         let expected_index_domains = vec![Domain::Bool; 6];
-        let actual_index_domains: Vec<Domain> = my_matrix.cata(Arc::new(move |elem, children| {
+        let actual_index_domains: Vec<Domain> = my_matrix.cata(&move |elem, children| {
             let mut res = vec![];
             res.extend(children.into_iter().flatten());
             if let AbstractLiteral::Matrix(_, index_domain) = elem {
@@ -544,7 +543,7 @@ mod tests {
             }
 
             res
-        }));
+        });
 
         assert_eq!(actual_index_domains, expected_index_domains);
     }

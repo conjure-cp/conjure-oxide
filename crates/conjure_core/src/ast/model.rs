@@ -230,13 +230,13 @@ impl SerdeModel {
         }
 
         // Swizzle declaration pointers in expressions (references, auxdecls) using their ids and `all_declarations`.
-        *self.submodel.constraints_mut() = self.submodel.constraints().transform_bi(Arc::new(move |decl: DeclarationPtr| {
+        *self.submodel.constraints_mut() = self.submodel.constraints().transform_bi(&move |decl: DeclarationPtr| {
                 let id = decl.id();
                         all_declarations
                             .get(&id)
                             .unwrap_or_else(|| panic!("A declaration used in the expression tree should exist in the symbol table. The missing declaration has id {id}."))
                             .clone()
-        }));
+        });
 
         Some(Model {
             submodel: self.submodel,
