@@ -703,7 +703,7 @@ fn rewrite_solve_xyz() {
 
     *model.as_submodel_mut().constraints_mut() = vec![nested_expr];
 
-    model = rewrite_naive(&model, &rule_sets, true).unwrap();
+    model = rewrite_naive(&model, &rule_sets, true, false).unwrap();
     let rewritten_expr = model.as_submodel().constraints();
 
     // Check if the expression is in its simplest form

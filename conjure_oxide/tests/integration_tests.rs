@@ -293,7 +293,7 @@ fn integration_test_inner(
         let mut model = parsed_model.expect("Model must be parsed in 1a");
 
         let rewritten = if config.enable_naive_impl {
-            rewrite_naive(&model, &rule_sets, false)?
+            rewrite_naive(&model, &rule_sets, false, false)?
         } else if config.enable_morph_impl {
             let submodel = model.as_submodel_mut();
             let rules_grouped = get_rules_grouped(&rule_sets)

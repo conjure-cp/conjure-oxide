@@ -226,10 +226,14 @@ pub(crate) fn rewrite(
         )
     } else {
         tracing::info!("Rewriting the model using the default / naive rewriter");
+        if global_args.exit_after_unrolling {
+            tracing::info!("Exiting after unrolling");
+        }
         rewrite_naive(
             &model,
             &rule_sets,
             global_args.check_equally_applicable_rules,
+            global_args.exit_after_unrolling,
         )?
     };
 
