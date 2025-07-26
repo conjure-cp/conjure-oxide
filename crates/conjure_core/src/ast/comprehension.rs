@@ -1,7 +1,7 @@
 #![allow(clippy::arc_with_non_send_sync)]
 use std::{
     cell::RefCell,
-    collections::{HashMap, HashSet},
+    collections::{BTreeSet, HashMap},
     fmt::Display,
     rc::Rc,
     sync::{Arc, Mutex, RwLock},
@@ -245,7 +245,7 @@ pub struct ComprehensionBuilder {
     // this is not ideal, but i am chucking all this code very soon anyways...
     generator_symboltable: Rc<RefCell<SymbolTable>>,
     return_expr_symboltable: Rc<RefCell<SymbolTable>>,
-    induction_variables: HashSet<Name>,
+    induction_variables: BTreeSet<Name>,
 }
 
 impl ComprehensionBuilder {
@@ -258,7 +258,7 @@ impl ComprehensionBuilder {
             return_expr_symboltable: Rc::new(RefCell::new(SymbolTable::with_parent(
                 symbol_table_ptr,
             ))),
-            induction_variables: HashSet::new(),
+            induction_variables: BTreeSet::new(),
         }
     }
 
@@ -407,7 +407,7 @@ impl ComprehensionBuilder {
 }
 
 /// True iff the guard only references induction variables.
-fn is_induction_guard(induction_variables: &HashSet<Name>, guard: &Expression) -> bool {
+fn is_induction_guard(induction_variables: &BTreeSet<Name>, guard: &Expression) -> bool {
     guard
         .universe_bi()
         .iter()
