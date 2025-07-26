@@ -41,7 +41,6 @@ pub enum ComprehensionKind {
 /// A comprehension.
 #[derive(Clone, PartialEq, Eq, Uniplate, Serialize, Deserialize, Debug)]
 #[biplate(to=SubModel)]
-#[biplate(to=Expression)]
 pub struct Comprehension {
     return_expression_submodel: SubModel,
     generator_submodel: SubModel,
