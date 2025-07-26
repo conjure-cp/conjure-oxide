@@ -823,13 +823,13 @@ fn parse_indexing_slicing_op(
     loop {
         match &mut target {
             Expression::UnsafeIndex(_, new_target, new_indices) => {
-                indices.extend(new_indices.iter().cloned().map(Some));
+                indices.extend(new_indices.iter().cloned().rev().map(Some));
                 target = *new_target.clone();
             }
 
             Expression::UnsafeSlice(_, new_target, new_indices) => {
                 all_known = false;
-                indices.append(new_indices);
+                indices.extend(new_indices.iter().cloned().rev());
                 target = *new_target.clone();
             }
 
