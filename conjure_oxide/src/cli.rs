@@ -113,6 +113,15 @@ pub struct GlobalArgs {
     /// Use the experimental optimized / dirty-clean rewriter, instead of the default rewriter
     #[arg(long, default_value_t = false, global = true, help_heading = EXPERIMENTAL_HELP_HEADING)]
     pub use_optimised_rewriter: bool,
+
+    /// Exit after all comprehensions have been unrolled, printing the number of expressions at that point.
+    ///
+    /// This is only compatible with the default rewriter.
+    ///
+    /// This flag is useful to compare how comprehension optimisations, such as expand-ac, effect
+    /// rewriting.
+    #[arg(long, default_value_t = false, global = true, help_heading = DEBUG_HELP_HEADING)]
+    pub exit_after_unrolling: bool,
 }
 
 #[derive(Debug, Clone, Args)]
