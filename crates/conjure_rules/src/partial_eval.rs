@@ -67,9 +67,10 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
         Expr::InDomain(_, x, domain) => {
             if let Expr::Atomic(_, Atom::Reference(decl)) = *x {
                 let decl_domain = decl.domain().ok_or(RuleNotApplicable)?.resolve(symtab);
+                let domain = domain.resolve(symtab);
 
                 let intersection = decl_domain
-                    .intersect(&domain.resolve(symtab))
+                    .intersect(&domain)
                     .map_err(|_| RuleNotApplicable)?;
 
                 // if the declaration's domain is a subset of domain, expr is always true.
