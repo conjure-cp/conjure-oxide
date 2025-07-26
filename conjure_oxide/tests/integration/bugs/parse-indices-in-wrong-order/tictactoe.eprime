@@ -1,0 +1,64 @@
+$ A small extract from savile row test "tictactoe.eprime"
+
+$ Our JSON parser was parsing tickTackToe[step,row,col] as tickTackToe[row,step,col], causing the whole model to evaluate to 'false'.
+
+$ * * * * * * * * * * * 
+
+$ The Game Tic Tac Toe
+$
+$   o| o| x 
+$  -------- 
+$    | x|
+$  --------
+$   x| o| 
+$
+$ Two player game where each player consecutevly
+$ marks a space with a circle o  or and x.
+$
+$ The black player starts and we want black to win.
+$
+$ modelled by Andrea Rendl
+
+language ESSENCE' 1.0
+
+
+letting steps be 4
+letting WINNER be 1 $  0:black
+                    $  1:white
+letting EMPTY be 2
+letting WHITE be 1
+letting BLACK be 0
+
+letting LOOSER be 0 $ the opposite of WINNER
+
+letting STEPS0 be domain int(0..4)
+letting STEPS1 be domain int(1..4)
+letting LENGTH be domain int(1..3)
+$ either empty, white or black
+letting FIELD_STATUS be domain int(0..2)
+
+
+find tickTackToe : matrix indexed by [STEPS0, LENGTH, LENGTH] of FIELD_STATUS
+
+
+such that 
+
+$ initial state
+forAll i,j : LENGTH . 
+  tickTackToe[0,i,j] = EMPTY,
+
+
+$ $ either nothing changes
+$ (forAll step : STEPS1 .
+$    ( sum row, col : LENGTH . tickTackToe[step-1,row,col] ) 
+$   =
+$    ( sum row, col : LENGTH . tickTackToe[step,row,col] )
+$ )
+$ \/
+$ or there is just one change
+( forAll step : STEPS1 .
+   ( sum row, col : LENGTH . tickTackToe[step-1,row,col] ) 
+     - ((step % 2) + 1 ) 
+ =
+   ( sum row, col : LENGTH . tickTackToe[step,row,col] )
+)
