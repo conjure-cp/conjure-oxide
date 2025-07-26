@@ -31,8 +31,18 @@ impl<A: Ord> Range<A> {
         match self {
             Range::Single(x) => x == val,
             Range::Bounded(x, y) => x <= val && val <= y,
-            Range::UnboundedR(x) => x <= val,
-            Range::UnboundedL(x) => x >= val,
+            Range::UnboundedR(x) => x >= val,
+            Range::UnboundedL(x) => x <= val,
+        }
+    }
+
+    /// Returns the lower bound of the range, if it has one
+    pub fn lower_bound(&self) -> Option<&A> {
+        match self {
+            Range::Single(a) => Some(a),
+            Range::Bounded(a, _) => Some(a),
+            Range::UnboundedR(a) => Some(a),
+            Range::UnboundedL(_) => None,
         }
     }
 }

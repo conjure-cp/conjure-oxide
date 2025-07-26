@@ -9,15 +9,21 @@ allDiff([(product([j,2;int(1..2)]) - 1),2,3,UnsafeDiv(i, 2),6;int(1..5)])
 
 --
 
-(product([j,2;int(1..2)]) - 1), 
-   ~~> minus_to_sum ([("Base", 8400)]) 
-sum([product([j,2;int(1..2)]),-(1);int(1..)]) 
+product([j,2;int(1..2)]), 
+   ~~> reorder_product ([("Base", 8800)]) 
+product([2,j;int(1..2)]) 
 
 --
 
-allDiff([sum([product([j,2;int(1..2)]),-(1);int(1..)]),2,3,UnsafeDiv(i, 2),6;int(1..5)]), 
+(product([2,j;int(1..2)]) - 1), 
+   ~~> minus_to_sum ([("Base", 8400)]) 
+sum([product([2,j;int(1..2)]),-(1);int(1..)]) 
+
+--
+
+allDiff([sum([product([2,j;int(1..2)]),-(1);int(1..)]),2,3,UnsafeDiv(i, 2),6;int(1..5)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-allDiff([sum([product([j,2;int(1..2)]),-1;int(1..)]),2,3,UnsafeDiv(i, 2),6;int(1..5)]) 
+allDiff([sum([product([2,j;int(1..2)]),-1;int(1..)]),2,3,UnsafeDiv(i, 2),6;int(1..5)]) 
 
 --
 
@@ -27,26 +33,20 @@ UnsafeDiv(i, 2),
 
 --
 
-allDiff([sum([product([j,2;int(1..2)]),-1;int(1..)]),2,3,{SafeDiv(i, 2) @ (2 != 0)},6;int(1..5)]), 
+allDiff([sum([product([2,j;int(1..2)]),-1;int(1..)]),2,3,{SafeDiv(i, 2) @ (2 != 0)},6;int(1..5)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-allDiff([sum([product([j,2;int(1..2)]),-1;int(1..)]),2,3,SafeDiv(i, 2),6;int(1..5)]) 
+allDiff([sum([product([2,j;int(1..2)]),-1;int(1..)]),2,3,SafeDiv(i, 2),6;int(1..5)]) 
 
 --
 
-allDiff([sum([product([j,2;int(1..2)]),-1;int(1..)]),2,3,SafeDiv(i, 2),6;int(1..5)]), 
+allDiff([sum([product([2,j;int(1..2)]),-1;int(1..)]),2,3,SafeDiv(i, 2),6;int(1..5)]), 
    ~~> matrix_to_list ([("Base", 2000)]) 
-allDiff([sum([product([j,2;int(1..2)]),-1;int(1..)]),2,3,SafeDiv(i, 2),6;int(1..)]) 
+allDiff([sum([product([2,j;int(1..2)]),-1;int(1..)]),2,3,SafeDiv(i, 2),6;int(1..)]) 
 
 --
 
-product([j,2;int(1..2)]), 
+product([2,j;int(1..2)]), 
    ~~> matrix_to_list ([("Base", 2000)]) 
-product([j,2;int(1..)]) 
-
---
-
-product([j,2;int(1..)]), 
-   ~~> reorder_product ([("Base", 8800)]) 
 product([2,j;int(1..)]) 
 
 --
