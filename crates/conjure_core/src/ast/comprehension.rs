@@ -111,7 +111,7 @@ impl Comprehension {
         let model = if USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS.load(Ordering::Relaxed) {
             rewrite_morph(model, &rule_sets, false)
         } else {
-            rewrite_naive(&model, &rule_sets, false).unwrap()
+            rewrite_naive(&model, &rule_sets, false, false).unwrap()
         };
 
         // HACK: also call the rewriter to rewrite inside the comprehension
@@ -141,7 +141,7 @@ impl Comprehension {
             if USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS.load(Ordering::Relaxed) {
                 rewrite_morph(return_expression_model, &rule_sets, false)
             } else {
-                rewrite_naive(&return_expression_model, &rule_sets, false).unwrap()
+                rewrite_naive(&return_expression_model, &rule_sets, false, false).unwrap()
             };
 
         let minion = minion.load_model(model.clone())?;
@@ -319,7 +319,7 @@ impl Comprehension {
         let generator_model = if USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS.load(Ordering::Relaxed) {
             rewrite_morph(generator_model, &rule_sets, false)
         } else {
-            rewrite_naive(&generator_model, &rule_sets, false).unwrap()
+            rewrite_naive(&generator_model, &rule_sets, false, false).unwrap()
         };
 
         let minion = Solver::new(crate::solver::adaptors::Minion::new());
@@ -344,7 +344,7 @@ impl Comprehension {
             if USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS.load(Ordering::Relaxed) {
                 rewrite_morph(return_expression_model, &rule_sets, false)
             } else {
-                rewrite_naive(&return_expression_model, &rule_sets, false).unwrap()
+                rewrite_naive(&return_expression_model, &rule_sets, false, false).unwrap()
             };
 
         let values = Arc::new(Mutex::new(Vec::new()));
