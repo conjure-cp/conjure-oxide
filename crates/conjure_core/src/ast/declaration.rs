@@ -198,16 +198,16 @@ impl DeclarationPtr {
     /// # Examples
     ///
     /// ```
-    /// use conjure_core::ast::{DeclarationPtr, Name, DeclarationKind, Expression, Metadata};
+    /// use conjure_core::ast::{DeclarationPtr, Name, DeclarationKind, Expression, Atom, Literal};
+    /// use conjure_core::{metadata::Metadata};
     ///
-    /// // for-comprehension that returns a constant expression
-    /// let expression = Expression::Constant(Metadata::new(), 42.into());
+    /// // for-comprehension that returns an Atomic expression
+    /// let expression = Expression::Atomic(Metadata::new(),Atom::Literal(Literal::Int(2)));
     /// let declaration = DeclarationPtr::new_for_comprehension(
     ///     Name::User("MyComprehension".into()),
-    ///     expression,
-    /// );
-    /// ```
+    ///     expression);
     ///
+    /// ```
     /// The created declaration will be of kind `DeclarationKind::ForComprehension`.
     pub fn new_for_comprehension(name: Name, expression: Expression) -> DeclarationPtr {
         let kind = DeclarationKind::ForComprehension(expression);
@@ -277,7 +277,7 @@ impl DeclarationPtr {
             DeclarationKind::DomainLetting(domain) => Some(domain.clone()),
             DeclarationKind::Given(domain) => Some(domain.clone()),
             DeclarationKind::RecordField(domain) => Some(domain.clone()),
-            DeclarationKind::ForComprehension(_) => None,
+            DeclarationKind::ForComprehension(e) => e.domain_of(),
         }
     }
 

@@ -313,8 +313,12 @@ impl ComprehensionBuilder {
         // insert into return expression symbol table as a given
         (*self.return_expr_symboltable)
             .borrow_mut()
-            .insert(declaration.clone());
-
+            .insert(DeclarationPtr::new_given(
+                name,
+                expression
+                    .domain_of()
+                    .expect("expression must have a domain"),
+            ));
         self
     }
 
