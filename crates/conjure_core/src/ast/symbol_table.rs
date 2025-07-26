@@ -469,15 +469,21 @@ impl Biplate<Comprehension> for SymbolTable {
         Box<dyn Fn(Tree<Comprehension>) -> Self>,
     ) {
         let (expr_tree, expr_ctx) = <SymbolTable as Biplate<Expression>>::biplate(self);
+
+        let (exprs, recons_expr_tree) = expr_tree.list();
+
         let (comprehension_tree, comprehension_ctx) =
-            <VecDeque<Expression> as Biplate<Comprehension>>::biplate(
-                &expr_tree.into_iter().collect(),
-            );
+            <VecDeque<Expression> as Biplate<Comprehension>>::biplate(&exprs);
 
         let ctx = Box::new(move |x| {
-            expr_ctx(Tree::Many(
-                comprehension_ctx(x).into_iter().map(Tree::One).collect(),
-            ))
+            // 1. turn comprehension tree into a list of expressions
+            let exprs = comprehension_ctx(x);
+
+            // 2. turn list of expressions into an expression tree
+            let expr_tree = recons_expr_tree(exprs);
+
+            // 3. turn expression tree into a symbol table
+            expr_ctx(expr_tree)
         });
 
         (comprehension_tree, ctx)
@@ -487,14 +493,22 @@ impl Biplate<Comprehension> for SymbolTable {
 impl Biplate<SubModel> for SymbolTable {
     // walk into expressions
     fn biplate(&self) -> (Tree<SubModel>, Box<dyn Fn(Tree<SubModel>) -> Self>) {
-        let (exprs, exprs_ctx) = <SymbolTable as Biplate<Expression>>::biplate(self);
+        let (expr_tree, expr_ctx) = <SymbolTable as Biplate<Expression>>::biplate(self);
+
+        let (exprs, recons_expr_tree) = expr_tree.list();
+
         let (submodel_tree, submodel_ctx) =
-            <VecDeque<Expression> as Biplate<SubModel>>::biplate(&exprs.into_iter().collect());
+            <VecDeque<Expression> as Biplate<SubModel>>::biplate(&exprs);
 
         let ctx = Box::new(move |x| {
-            exprs_ctx(Tree::Many(
-                submodel_ctx(x).into_iter().map(Tree::One).collect(),
-            ))
+            // 1. turn submodel tree into a list of expressions
+            let exprs = submodel_ctx(x);
+
+            // 2. turn list of expressions into an expression tree
+            let expr_tree = recons_expr_tree(exprs);
+
+            // 3. turn expression tree into a symbol table
+            expr_ctx(expr_tree)
         });
         (submodel_tree, ctx)
     }
