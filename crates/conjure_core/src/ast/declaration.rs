@@ -191,6 +191,29 @@ impl DeclarationPtr {
         DeclarationPtr::new(name, kind)
     }
 
+    /// Creates a new `for`-comprehension declaration.
+    ///
+    /// This represents a named declaration that returns an expression.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use conjure_core::ast::{DeclarationPtr, Name, DeclarationKind, Expression, Atom, Literal};
+    /// use conjure_core::{metadata::Metadata};
+    ///
+    /// // for-comprehension that returns an Atomic expression
+    /// let expression = Expression::Atomic(Metadata::new(),Atom::Literal(Literal::Int(2)));
+    /// let declaration = DeclarationPtr::new_for_comprehension(
+    ///     Name::User("MyComprehension".into()),
+    ///     expression);
+    ///
+    /// ```
+    /// The created declaration will be of kind `DeclarationKind::ForComprehension`.
+    pub fn new_for_comprehension(name: Name, expression: Expression) -> DeclarationPtr {
+        let kind = DeclarationKind::ForComprehension(expression);
+        DeclarationPtr::new(name, kind)
+    }
+
     /// Creates a new given declaration.
     ///
     /// # Examples
@@ -254,6 +277,7 @@ impl DeclarationPtr {
             DeclarationKind::DomainLetting(domain) => Some(domain.clone()),
             DeclarationKind::Given(domain) => Some(domain.clone()),
             DeclarationKind::RecordField(domain) => Some(domain.clone()),
+            DeclarationKind::ForComprehension(e) => e.domain_of(),
         }
     }
 
@@ -460,6 +484,7 @@ impl CategoryOf for DeclarationPtr {
             DeclarationKind::DomainLetting(_) => Category::Constant,
             DeclarationKind::Given(_) => Category::Parameter,
             DeclarationKind::RecordField(_) => Category::Bottom,
+            DeclarationKind::ForComprehension(expressions) => expressions.category_of(),
         }
     }
 }
@@ -491,6 +516,7 @@ impl Typeable for DeclarationPtr {
             DeclarationKind::DomainLetting(domain) => domain.return_type(),
             DeclarationKind::Given(domain) => domain.return_type(),
             DeclarationKind::RecordField(domain) => domain.return_type(),
+            DeclarationKind::ForComprehension(expression) => expression.return_type(),
         }
     }
 }
@@ -620,4 +646,5 @@ pub enum DeclarationKind {
     /// A named field inside a record type.
     /// e.g. A, B in record{A: int(0..1), B: int(0..2)}
     RecordField(Domain),
+    ForComprehension(Expression),
 }
