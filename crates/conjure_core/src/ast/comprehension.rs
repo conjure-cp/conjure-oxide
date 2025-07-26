@@ -298,6 +298,26 @@ impl ComprehensionBuilder {
         self
     }
 
+    pub fn generator_from_expr(mut self, name: Name, expression: Expression) -> Self {
+        assert!(!self.induction_variables.contains(&name));
+
+        self.induction_variables.insert(name.clone());
+
+        let declaration = DeclarationPtr::new_for_comprehension(name.clone(), expression.clone());
+
+        // insert into generator symbol table as a variable
+        (*self.generator_symboltable)
+            .borrow_mut()
+            .insert(declaration.clone());
+
+        // insert into return expression symbol table as a given
+        (*self.return_expr_symboltable)
+            .borrow_mut()
+            .insert(declaration.clone());
+
+        self
+    }
+
     /// Creates a comprehension with the given return expression.
     ///
     /// If a comprehension kind is not given, comprehension guards containing decision variables
