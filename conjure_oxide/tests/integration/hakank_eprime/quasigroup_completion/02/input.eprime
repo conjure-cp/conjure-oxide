@@ -1,0 +1,22 @@
+$$ param file: hakank/quasigroup_completion2.param
+
+$ Example from Gomes & Shmoys, page 7
+$ Two solutions.
+language ESSENCE' 1.0
+letting n be 4
+letting mat be 
+    [
+      [0, 1, 0, 0],
+      [0, 0, 2, 0],
+      [0, 3, 0, 0],
+      [0, 0, 0, 4]
+    ]
+
+$$ model file: hakank/quasigroup_completion.eprime
+
+$ given n : int(..)
+$ given mat : matrix indexed by [int(1..n),int(1..n)] of int(0..n)
+find x : matrix indexed by [int(1..n),int(1..n)] of int(1..n)
+such that
+(forAll i,j : int(1..n) . (0<mat[i, j]) -> (x[i, j]=mat[i, j])),
+(forAll i : int(1..n) . (allDiff(x[i,..]) /\ allDiff(x[..,i])))
