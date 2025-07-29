@@ -71,7 +71,7 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
         let old_name = name.clone();
         let new_name = Name::WithRepresentation(
             Box::new(old_name.clone()),
-            vec!["matrix_to_atom".to_owned()],
+            vec!["matrix_to_atom".into()],
         );
         // give all references to this matrix this representation
         // also do this inside subscopes, as long as they dont define their own variable that shadows this
@@ -144,7 +144,7 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
 
     let representation_names = representation
         .into_iter()
-        .map(|x| x.repr_name().to_string())
+        .map(|x| x.repr_name().into())
         .collect_vec();
 
     let new_name = Name::WithRepresentation(Box::new(name.clone()), representation_names);

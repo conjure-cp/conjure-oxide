@@ -28,8 +28,8 @@ impl TupleToAtom {
     fn indices_to_name(&self, indices: &[Literal]) -> Name {
         Name::Represented(Box::new((
             self.src_var.clone(),
-            self.repr_name().to_string(),
-            indices.iter().join("_"),
+            self.repr_name().into(),
+            indices.iter().join("_").into(),
         )))
     }
 }

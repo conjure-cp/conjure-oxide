@@ -11,6 +11,7 @@ use minion_rs::ast::{Model, Tuple};
 use rustsat::encodings::am1::Def;
 use rustsat::solvers::{Solve, SolverResult};
 use rustsat::types::{Assignment, Clause, Lit, TernaryVal, Var as satVar};
+use smol_str::SmolStr;
 use std::collections::{BTreeMap, HashMap};
 use std::result::Result::Ok;
 use tracing_subscriber::filter::DynFilterFn;
@@ -75,7 +76,7 @@ fn get_ref_sols(
             ),
         };
         solution.insert(
-            Name::User(reference),
+            Name::User(SmolStr::new(&reference)),
             match sol[lit.var()] {
                 TernaryVal::True => Literal::Int(1),
                 TernaryVal::False => Literal::Int(0),

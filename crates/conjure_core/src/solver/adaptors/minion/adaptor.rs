@@ -50,11 +50,11 @@ fn parse_name(minion_name: &str) -> Name {
     } else if let Some(caps) = REPRESENTED_NAME_RE.captures(minion_name) {
         conjure_ast::Name::Represented(Box::new((
             parse_name(&caps[1]),
-            caps[2].to_string(),
-            caps[3].to_string(),
+            caps[2].into(),
+            caps[3].into(),
         )))
     } else {
-        conjure_ast::Name::User(minion_name.to_string())
+        conjure_ast::Name::User(minion_name.into())
     }
 }
 

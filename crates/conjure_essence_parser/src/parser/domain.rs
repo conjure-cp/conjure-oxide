@@ -1,4 +1,5 @@
 #![allow(clippy::legacy_numeric_constants)]
+use smol_str::SmolStr;
 use tree_sitter::Node;
 
 use super::util::named_children;
@@ -12,7 +13,7 @@ pub fn parse_domain(domain: Node, source_code: &str) -> Domain {
         "int_domain" => parse_int_domain(domain, source_code),
         "variable" => {
             let variable_name = &source_code[domain.start_byte()..domain.end_byte()];
-            Domain::Reference(Name::User(String::from(variable_name)))
+            Domain::Reference(Name::User(SmolStr::from(variable_name)))
         }
         _ => panic!("Not bool or int domain"),
     }

@@ -1,6 +1,7 @@
 #![allow(clippy::legacy_numeric_constants)]
 use std::collections::{BTreeMap, BTreeSet};
 
+use smol_str::SmolStr;
 use tree_sitter::Node;
 
 use conjure_core::ast::{Domain, Name};
@@ -30,7 +31,7 @@ pub fn parse_find_statement(
         let domain = parse_domain(domain, source_code);
 
         for name in temp_symbols {
-            vars.insert(Name::User(String::from(name)), domain.clone());
+            vars.insert(Name::User(SmolStr::new(name)), domain.clone());
         }
     }
     vars
