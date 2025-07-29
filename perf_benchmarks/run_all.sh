@@ -8,6 +8,8 @@
 #   + COMPARISON_BRANCH: git branch to compare to. Must exist on the github.com:conjure-cp/conjure-oxide repo
 #         (default: main)
 #
+#   + EXTRA_FLAGS: extra flags to pass to conjure_oxide
+#
 # Author: niklasdewally
 # Date: 2025/06/18 (updated 2025/07/29)
 
@@ -42,15 +44,15 @@ models_slow="$(find models/slow -iname '*.eprime' | sort)"
 for model in $models_fast; do
 	echo "=======[ $model ]======="
 	hyperfine --warmup 2 \
-		--command-name "$comparison_branch" "$before_bin solve --no-run-solver $model" \
-		--command-name current "$after_bin solve --no-run-solver $model"
+		--command-name "$comparison_branch" "$before_bin solve ${EXTRA_FLAGS} --no-run-solver $model" \
+		--command-name current "$after_bin solve ${EXTRA_FLAGS} --no-run-solver $model"
 	echo ""
 done
 
 for model in $models_slow; do
 	echo "=======[ $model ]======="
 	hyperfine --warmup 1 --runs 5 \
-		--command-name "$comparison_branch" "$before_bin solve --no-run-solver $model" \
-		--command-name current "$after_bin solve --no-run-solver $model"
+		--command-name "$comparison_branch" "$before_bin solve ${EXTRA_FLAGS} --no-run-solver $model" \
+		--command-name current "$after_bin solve ${EXTRA_FLAGS} --no-run-solver $model"
 	echo ""
 done
