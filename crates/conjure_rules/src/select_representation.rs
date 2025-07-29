@@ -175,6 +175,10 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
 ///
 ///   + If `name` is not in `symbols`.
 fn needs_representation(name: &Name, symbols: &SymbolTable) -> bool {
+    // if name already has a representation, false
+    if let Name::Represented(_) = name {
+        return false;
+    }
     // might be more logic here in the future?
     domain_needs_representation(&symbols.resolve_domain(name).unwrap())
 }
