@@ -2,7 +2,7 @@
 //!
 //! See the [`Rule`] trait for more information.
 
-use crate::{prelude::Commands, prelude::Update};
+use crate::prelude::{Commands, Update};
 use uniplate::Uniplate;
 
 /// Trait implemented by rules to transform parts of a tree.
