@@ -2,11 +2,104 @@
 //!
 //! See [`morph`] for more info.
 
-use std::{cell::RefCell, rc::Rc};
-
 use crate::helpers::one_or_select;
 use crate::prelude::{Rule, Update};
-use uniplate::{Uniplate, zipper::Zipper};
+use uniplate::{Uniplate, tagged_zipper::TaggedZipper};
+
+#[derive(Debug, Clone)]
+struct EngineNodeState {
+    /// Rule groups with lower indices have already been applied without change.
+    /// For a level `n`, a state is 'dirty' if and only if `n >= dirty_from`.
+    dirty_from: usize,
+}
+
+impl EngineNodeState {
+    /// Marks the state as dirty for anything >= `level`.
+    fn set_dirty_from(&mut self, level: usize) {
+        self.dirty_from = level;
+    }
+
+    /// For a level `n`, a state is "dirty" if and only if `n >= dirty_from`.
+    /// That is, all rules groups before `n` have been applied without change.
+    fn is_dirty(&self, level: usize) -> bool {
+        level >= self.dirty_from
+    }
+}
+
+impl EngineNodeState {
+    fn new<T: Uniplate>(_: &T) -> Self {
+        Self { dirty_from: 0 }
+    }
+}
+
+/// A Zipper with optimisations for tree transformation.
+#[derive(Clone)]
+struct EngineZipper<T: Uniplate> {
+    inner: TaggedZipper<T, EngineNodeState, fn(&T) -> EngineNodeState>,
+}
+
+impl<T: Uniplate> EngineZipper<T> {
+    pub fn new(tree: T) -> Self {
+        Self {
+            inner: TaggedZipper::new(tree, EngineNodeState::new),
+        }
+    }
+
+    /// Go to the next node in the tree which is dirty for the given level.
+    /// That node may be the current one if it is dirty.
+    /// If no such node exists, go to the root and return `None`.
+    pub fn go_next_dirty(&mut self, level: usize) -> Option<()> {
+        if self.inner.tag().is_dirty(level) {
+            return Some(());
+        }
+
+        self.inner
+            .go_down()
+            .and_then(|_| {
+                // go right until we find a dirty child, if it exists.
+                loop {
+                    if self.inner.tag().is_dirty(level) {
+                        return Some(());
+                    } else if self.inner.go_right().is_none() {
+                        // all children are clean
+                        self.inner.go_up();
+                        return None;
+                    }
+                }
+            })
+            .or_else(|| {
+                // Neither this node, nor any of its children are dirty
+                // Go right then up until we find a dirty node or reach the root
+                loop {
+                    if self.inner.go_right().is_some() {
+                        if self.inner.tag().is_dirty(level) {
+                            return Some(());
+                        }
+                    } else if self.inner.go_up().is_none() {
+                        // Reached the root without finding a dirty node
+                        return None;
+                    }
+                }
+            })
+    }
+
+    /// Mark the current focus as visited at the given level.
+    /// Calling `go_next_dirty` with the same level will no longer yield this node.
+    pub fn set_dirty_from(&mut self, level: usize) {
+        self.inner.tag_mut().set_dirty_from(level);
+    }
+
+    /// Mark ancestors as dirty for all levels, and return to the root
+    pub fn mark_dirty_to_root(&mut self) {
+        while self.inner.go_up().is_some() {
+            self.set_dirty_from(0);
+        }
+    }
+
+    pub fn rebuild_root(self) -> T {
+        self.inner.rebuild_root()
+    }
+}
 
 /// Exhaustively rewrites a tree using a set of transformation rules.
 ///
@@ -115,270 +208,57 @@ pub fn morph<T, M, R>(
     groups: Vec<Vec<R>>,
     select: impl Fn(&T, &mut dyn Iterator<Item = (&R, Update<T, M>)>) -> Option<Update<T, M>>,
     tree: T,
-    meta: M,
+    mut meta: M,
 ) -> (T, M)
 where
     T: Uniplate,
     R: Rule<T, M>,
 {
-    let transforms: Vec<_> = groups
-        .iter()
-        .map(|group| {
-            |subtree: &T, meta: &M| {
-                let applicable = &mut group.iter().filter_map(|rule| {
-                    let update = rule.apply_into_update(subtree, meta)?;
+    let mut zipper = EngineZipper::new(tree);
+
+    'main: loop {
+        // Return here after every successful rule application
+
+        for (level, rules) in groups.iter().enumerate() {
+            // Try each rule group in the whole tree
+
+            while zipper.go_next_dirty(level).is_some() {
+                let subtree = zipper.inner.focus();
+
+                // Choose one transformation from all applicable rules at this level
+                let applicable = &mut rules.iter().filter_map(|rule| {
+                    let update = rule.apply_into_update(subtree, &meta)?;
                     Some((rule, update))
                 });
-                one_or_select(&select, subtree, applicable)
-            }
-        })
-        .collect();
-    morph_impl(transforms, tree, meta)
-}
+                let selected = one_or_select(&select, subtree, applicable);
 
-///Used for the skeleton tree in the dirty/clean optimization. Only has one field and is used for
-/// purposes of clarity.
-pub(crate) struct State {
-    pub node: Rc<RefCell<NodeState>>,
-}
+                if let Some(mut update) = selected {
+                    // Replace the current subtree, invalidating subtree node states
+                    zipper.inner.replace_focus(update.new_subtree);
 
-impl State {
-    ///Creates a new state object with one dirty node. Used to create root nodes.
-    pub fn new() -> Self {
-        let node = Rc::new(RefCell::new(NodeState::new_dirty()));
-        Self { node }
-    }
+                    // Mark all ancestors as dirty and move back to the root
+                    zipper.mark_dirty_to_root();
 
-    ///Changes the current cleanliness level of a node. It then also sets the current_child_index to 0, to
-    /// ensure that the user-given tree and the skeleton tree do not get out of sync.
-    pub fn mark_cleanliness(&mut self, cleanliness: usize) {
-        self.node.borrow_mut().cleanliness = cleanliness;
-        self.node.borrow_mut().current_child_index = 0;
-    }
+                    let (new_tree, new_meta, root_transformed) =
+                        update.commands.apply(zipper.inner.focus().clone(), meta);
 
-    ///Retrieve current cleanliness level.
-    pub fn get_cleanliness(&self) -> usize {
-        self.node.borrow().cleanliness
-    }
-
-    ///Clear all the children of a node. This occurs as when a rule is transformed to a node, the skeleton
-    /// tree no longer knows anything about the structure of
-    /// its children, so will have to rebuilt the children from scratch.
-    pub fn clear_children(&mut self) {
-        let mut node_state = self.node.borrow_mut();
-        node_state.children.clear();
-        node_state.current_child_index = 0;
-    }
-
-    ///Go to the next child, or create one if needed. Will only ever run upon the zipper being able to go down,
-    ///so there will never be an error whereby the children list is empty.
-    pub fn go_down(&mut self) {
-        let node = Rc::clone(&self.node);
-        let mut node_state = node.borrow_mut();
-
-        if node_state.current_child_index < node_state.children.len() {
-            self.node = Rc::clone(&node_state.children[node_state.current_child_index]);
-            return;
-        }
-        let mut new_node = NodeState::new_dirty();
-        new_node.parent = Some(Rc::clone(&self.node));
-        node_state.children.push(Rc::new(RefCell::new(new_node)));
-        // Left most outer most
-        self.node = Rc::clone(&node_state.children[0]);
-    }
-
-    ///Go to the right sibling of a node. Will only be called if zipper can go right.
-    pub fn go_right(&mut self) {
-        let left_sibling = Rc::clone(&self.node);
-        let left_sibling_state = left_sibling.borrow();
-
-        let parent = left_sibling_state.parent.as_ref().unwrap();
-        let mut parent_state = parent.borrow_mut();
-        parent_state.current_child_index += 1;
-
-        if parent_state.current_child_index < parent_state.children.len() {
-            self.node = Rc::clone(&parent_state.children[parent_state.current_child_index]);
-            return;
-        }
-
-        let mut new_node = NodeState::new_dirty();
-        new_node.parent = Some(Rc::clone(parent));
-        parent_state.children.push(Rc::new(RefCell::new(new_node)));
-        self.node = Rc::clone(&parent_state.children[parent_state.current_child_index]);
-    }
-
-    ///Go up. Will only be called if zipper can go up.
-    pub fn go_up(&mut self) {
-        let node = Rc::clone(&self.node);
-        let node_state = node.borrow();
-
-        self.node = Rc::clone(node_state.parent.as_ref().unwrap());
-    }
-}
-
-impl Default for State {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-use std::fmt;
-
-/// Contains the core information for the the skeleton tree. The recursive tree structure is captured using `<Rc<RefCell<NodeState>>>`, which allows for
-/// multiple owners of a value, as well as mutable access to data even if a reference is immutable.
-pub struct NodeState {
-    ///Holds the parents of a node. It is wrapped in an `Option<>` as a node may have no parents (i.e. it may be a root node)
-    pub parent: Option<Rc<RefCell<NodeState>>>,
-    ///C`Vec` containing all children of a node. It is empty by default.
-    pub children: Vec<Rc<RefCell<NodeState>>>,
-    ///Keeps track of which child is currently active in the tree traversal process.
-    pub current_child_index: usize,
-    ///Integer that marks up to which rule level a certain node has been checked. By default nodes start off with a cleanliness of 0.
-    pub cleanliness: usize,
-}
-
-impl NodeState {
-    ///Creates a new root node
-    pub fn new_dirty() -> Self {
-        Self {
-            current_child_index: 0,
-            cleanliness: 0,
-            parent: None,
-            children: Vec::new(),
-        }
-    }
-
-    fn fmt_children(&self, f: &mut fmt::Formatter<'_>, indent: usize) -> fmt::Result {
-        for (i, child) in self.children.iter().enumerate() {
-            writeln!(f, "{}Child {}: {{", " ".repeat(indent), i)?;
-            let child = child.borrow();
-            writeln!(f, "{}  dirty: {},", " ".repeat(indent), child.cleanliness)?;
-            writeln!(
-                f,
-                "{}  current_child_index: {},",
-                " ".repeat(indent),
-                child.current_child_index
-            )?;
-            writeln!(f, "{}  children: [", " ".repeat(indent))?;
-            child.fmt_children(f, indent + 4)?;
-            writeln!(f, "{}  ]", " ".repeat(indent))?;
-            writeln!(f, "{}}}", " ".repeat(indent))?;
-        }
-        Ok(())
-    }
-}
-
-impl fmt::Debug for NodeState {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        writeln!(f, "NodeState {{")?;
-        writeln!(f, "  cleanliness: {},", self.cleanliness)?;
-        writeln!(f, "  current_child_index: {},", self.current_child_index)?;
-        writeln!(f, "  parent: {},", self.parent.is_some())?;
-        writeln!(f, "  children: [")?;
-        self.fmt_children(f, 4)?;
-        writeln!(f, "  ]")?;
-        write!(f, "}}")
-    }
-}
-
-///Contains two fields which correspond to the position in the user-given tree, and the skeleton tree.
-///At any point in time these should be in sync, meaning that where zipper is in the user-given tree
-/// should correspond to the position in the skeleton tree.
-pub struct DirtyZipper<T: Uniplate> {
-    ///Allows for efficient traversal of the user-given tree.
-    pub zipper: Zipper<T>,
-    ///Skeleton tree for cleanliness data
-    pub state: State,
-}
-
-impl<T: Uniplate> DirtyZipper<T> {
-    ///Given a zipper, create a root node initialised to the current location of the zipper
-    pub fn new(zipper: Zipper<T>) -> Self {
-        Self {
-            zipper,
-            state: State::new(),
-        }
-    }
-
-    /// Marks all ancetors of a subtree as dirty and moves the zipper at the start of the tree,
-    /// ready for new rule applications.
-    pub fn mark_dirty(&mut self) {
-        self.state.mark_cleanliness(0);
-        self.state.clear_children();
-
-        // Effectively the same as rebuild_root
-        while self.zipper.go_up().is_some() {
-            self.state.go_up();
-            self.state.mark_cleanliness(0);
-        }
-    }
-
-    /// Finds the next dirty node. If the current state is dirty, it will return that position of state,
-    /// and otherwise will go to the first child. If the first child is not dirty, it will go to the right sibling.
-    /// Once the siblings are exhausted, a next dirt state is searched for by going up and right. If
-    /// this process is exhausted, then the tree is clean up to a certain level and hence `None` is returned.
-    pub fn get_next_dirty(&mut self, level: usize) -> Option<&T> {
-        if self.state.get_cleanliness() <= level {
-            return Some(self.zipper.focus());
-        }
-
-        if self.zipper.go_down().is_some() {
-            self.state.go_down();
-            if self.state.get_cleanliness() <= level {
-                return Some(self.zipper.focus());
-            }
-        }
-        while self.zipper.go_right().is_some() {
-            self.state.go_right();
-            if self.state.get_cleanliness() <= level {
-                return Some(self.zipper.focus());
-            }
-        }
-
-        while self.zipper.go_up().is_some() {
-            self.state.go_up();
-            while self.zipper.go_right().is_some() {
-                self.state.go_right();
-                if self.state.get_cleanliness() <= level {
-                    return Some(self.zipper.focus());
-                }
-            }
-        }
-        None
-    }
-}
-/// Applies a series of transformation functions to a tree structure and its associated metadata.
-pub fn morph_impl<T: Uniplate, M>(
-    transforms: Vec<impl Fn(&T, &M) -> Option<Update<T, M>>>,
-    tree: T,
-    mut meta: M,
-) -> (T, M) {
-    let zipper = Zipper::new(tree);
-    let mut dirty_zipper = DirtyZipper::new(zipper);
-    'main: loop {
-        for (level, transform) in transforms.iter().enumerate() {
-            while let Some(node) = dirty_zipper.get_next_dirty(level) {
-                if let Some(mut update) = transform(node, &meta) {
-                    dirty_zipper.zipper.replace_focus(update.new_subtree);
-                    dirty_zipper.mark_dirty();
-                    let (new_tree, new_meta, transformed) = update
-                        .commands
-                        .apply(dirty_zipper.zipper.focus().clone(), meta);
                     meta = new_meta;
-
-                    // Transformations are defined as fn(T) -> T, so sadly we must throw the state
-                    // away
-                    if transformed {
-                        dirty_zipper.state = State::new();
-                        dirty_zipper.zipper = Zipper::new(new_tree);
+                    if root_transformed {
+                        // This must unfortunately throw all node states away,
+                        // since the `transform` command may redefine the whole tree
+                        zipper.inner.replace_focus(new_tree);
                     }
+
                     continue 'main;
                 } else {
-                    dirty_zipper.state.mark_cleanliness(level + 1);
+                    zipper.set_dirty_from(level + 1);
                 }
             }
         }
+
+        // All rules have been tried with no more changes
         break;
     }
-    (dirty_zipper.zipper.rebuild_root(), meta)
+
+    (zipper.rebuild_root(), meta)
 }
