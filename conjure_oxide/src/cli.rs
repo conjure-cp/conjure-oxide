@@ -10,6 +10,7 @@ use crate::{solve, test_solve};
 pub(crate) const DEBUG_HELP_HEADING: Option<&str> = Some("Debug");
 pub(crate) const LOGGING_HELP_HEADING: Option<&str> = Some("Logging & Output");
 pub(crate) const EXPERIMENTAL_HELP_HEADING: Option<&str> = Some("Experimental");
+pub(crate) const OPTIMISATIONS_HELP_HEADING: Option<&str> = Some("Optimisations");
 
 /// All subcommands of conjure-oxide
 #[derive(Clone, Debug, Subcommand)]
@@ -94,6 +95,10 @@ pub struct GlobalArgs {
     #[arg(long, default_value_t = false, global = true, help_heading = EXPERIMENTAL_HELP_HEADING)]
     pub use_native_parser: bool,
 
+    /// Do not use better comprehension expanding for ac operators (and,or,sum,product).
+    #[arg(long, default_value_t = false, global=true, help_heading = OPTIMISATIONS_HELP_HEADING)]
+    pub no_use_expand_ac: bool,
+
     /// Save a solver input file to <filename>.
     ///
     /// This input file will be in a format compatible by the command-line
@@ -108,6 +113,15 @@ pub struct GlobalArgs {
     /// Use the experimental optimized / dirty-clean rewriter, instead of the default rewriter
     #[arg(long, default_value_t = false, global = true, help_heading = EXPERIMENTAL_HELP_HEADING)]
     pub use_optimised_rewriter: bool,
+
+    /// Exit after all comprehensions have been unrolled, printing the number of expressions at that point.
+    ///
+    /// This is only compatible with the default rewriter.
+    ///
+    /// This flag is useful to compare how comprehension optimisations, such as expand-ac, effect
+    /// rewriting.
+    #[arg(long, default_value_t = false, global = true, help_heading = DEBUG_HELP_HEADING)]
+    pub exit_after_unrolling: bool,
 }
 
 #[derive(Debug, Clone, Args)]

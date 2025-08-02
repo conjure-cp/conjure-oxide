@@ -136,6 +136,14 @@ impl ACOperatorKind {
             }
         }
     }
+
+    /// Gives the return type of the operator, and the return types its elements should be.
+    pub fn return_type(&self) -> ReturnType {
+        match self {
+            ACOperatorKind::And | ACOperatorKind::Or => ReturnType::Bool,
+            ACOperatorKind::Product | ACOperatorKind::Sum => ReturnType::Int,
+        }
+    }
 }
 
 impl TryFrom<&Expression> for ACOperatorKind {

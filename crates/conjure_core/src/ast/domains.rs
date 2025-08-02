@@ -35,6 +35,16 @@ impl<A: Ord> Range<A> {
             Range::UnboundedL(x) => x <= val,
         }
     }
+
+    /// Returns the lower bound of the range, if it has one
+    pub fn lower_bound(&self) -> Option<&A> {
+        match self {
+            Range::Single(a) => Some(a),
+            Range::Bounded(a, _) => Some(a),
+            Range::UnboundedR(a) => Some(a),
+            Range::UnboundedL(_) => None,
+        }
+    }
 }
 
 impl<A: Ord + Display> Display for Range<A> {

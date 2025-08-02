@@ -11,6 +11,24 @@ This repository hosts the following projects:
 This project is being produced by staff and students of University of St
 Andrews, and is licenced under the [MPL 2.0](./LICENCE).
 
+## Installation
+
+### Building from Source
+
+The following dependencies are required:
+
+* Conjure (including solvers)
+* Clang 
+* Libclang
+* Rust, installed using rustup
+
+**Ensure that Conjure is placed early in your PATH to avoid conflicts with
+ImageMagick's conjure command!**
+
+Run `cargo install --path conjure_oxide` to install `conjure_oxide`.
+
+
+
 ## Documentation
 
 API documentation can be found [here](https://conjure-cp.github.io/conjure-oxide/docs/).

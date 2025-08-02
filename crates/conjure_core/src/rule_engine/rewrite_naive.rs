@@ -1,7 +1,7 @@
 use super::{RewriteError, RuleSet, resolve_rules::RuleData};
 use crate::{
     Model,
-    ast::{Expression as Expr, SubModel},
+    ast::{Expression as Expr, SubModel, comprehension::Comprehension},
     bug,
     rule_engine::{
         get_rules_grouped,
@@ -12,9 +12,9 @@ use crate::{
 };
 
 use itertools::Itertools;
-use std::{sync::Arc, time::Instant};
+use std::{process::exit, sync::Arc, time::Instant};
 use tracing::{Level, span, trace};
-use uniplate::Biplate;
+use uniplate::{Biplate, Uniplate};
 
 /// A naive, exhaustive rewriter for development purposes. Applies rules in priority order,
 /// favouring expressions found earlier during preorder traversal of the tree.
@@ -22,6 +22,7 @@ pub fn rewrite_naive<'a>(
     model: &Model,
     rule_sets: &Vec<&'a RuleSet<'a>>,
     prop_multiple_equally_applicable: bool,
+    exit_after_unrolling: bool,
 ) -> Result<Model, RewriteError> {
     let rules_grouped = get_rules_grouped(rule_sets)
         .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
@@ -63,6 +64,13 @@ pub fn rewrite_naive<'a>(
         }
         if let Some(new_model) = new_model {
             model = new_model;
+        }
+
+        if Biplate::<Comprehension>::universe_bi(model.as_submodel()).is_empty()
+            && exit_after_unrolling
+        {
+            println!("{}", model.as_submodel().root().universe().len());
+            exit(0);
         }
     }
 
