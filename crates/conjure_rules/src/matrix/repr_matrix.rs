@@ -68,7 +68,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
             let indices_as_name = Name::Represented(Box::new((
                 name.as_ref().clone(),
                 "matrix_to_atom".into(),
-                indices_as_lits.iter().join("_"),
+                indices_as_lits.iter().join("_").into(),
             )));
 
             let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
@@ -113,7 +113,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
                             Name::Represented(Box::new((
                                 name.as_ref().clone(),
                                 "matrix_to_atom".into(),
-                                xs.into_iter().join("_"),
+                                xs.into_iter().join("_").into(),
                             )))
                         })
                         .map(|x| represented_expressions[&x].clone())
@@ -230,7 +230,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
                     Name::Represented(Box::new((
                         name.as_ref().clone(),
                         "matrix_to_atom".into(),
-                        xs.into_iter().join("_"),
+                        xs.into_iter().join("_").into(),
                     )))
                 })
                 .map(|x| repr_exprs[&x].clone())
@@ -309,7 +309,11 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
             let name = Name::Represented(Box::new((
                 name.as_ref().clone(),
                 "matrix_to_atom".into(),
-                indices_as_lits.into_iter().map(|x| x.unwrap()).join("_"),
+                indices_as_lits
+                    .into_iter()
+                    .map(|x| x.unwrap())
+                    .join("_")
+                    .into(),
             )));
             repr_values[&name].clone()
         })
@@ -370,7 +374,7 @@ fn matrix_ref_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
                 matrix_values[&Name::Represented(Box::new((
                     name.as_ref().clone(),
                     "matrix_to_atom".into(),
-                    i.iter().join("_"),
+                    i.iter().join("_").into(),
                 )))]
                     .clone()
             })
