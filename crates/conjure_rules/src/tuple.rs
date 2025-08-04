@@ -63,7 +63,7 @@ fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
     let indices_as_name = Name::Represented(Box::new((
         name.as_ref().clone(),
         "tuple_to_atom".into(),
-        indices_as_lit.to_string(),
+        indices_as_lit.into(),
     )));
 
     let subject = repr.expression_down(symbols)?[&indices_as_name].clone();
