@@ -43,7 +43,7 @@ models_slow="$(find models/slow -iname '*.eprime' | sort)"
 
 for model in $models_fast; do
 	echo "=======[ $model ]======="
-	hyperfine --warmup 2 \
+	hyperfine --warmup 4 \
 		--command-name "$comparison_branch" "$before_bin solve ${EXTRA_FLAGS} --no-run-solver $model" \
 		--command-name current "$after_bin solve ${EXTRA_FLAGS} --no-run-solver $model"
 	echo ""

@@ -47,8 +47,8 @@ use super::{DeclarationPtr, Domain, Range, SubModel, Typeable};
 // lot bigger still when we start using it for memoisation, so it should really be
 // boxed ~niklasdewally
 
-// expect size of Expression to be 112 bytes
-static_assertions::assert_eq_size!([u8; 104], Expression);
+// expect size of Expression to be 80 bytes
+static_assertions::assert_eq_size!([u8; 80], Expression);
 
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
