@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
 use std::hash::Hasher;
+use ustr::Ustr;
 
 use uniplate::{Biplate, Tree, Uniplate};
 
@@ -442,6 +443,13 @@ impl From<i32> for Literal {
 impl From<bool> for Literal {
     fn from(b: bool) -> Self {
         Literal::Bool(b)
+    }
+}
+
+impl From<Literal> for Ustr {
+    fn from(value: Literal) -> Self {
+        // TODO: avoid the temporary-allocation of a string by format! here?
+        Ustr::from(&format!("{value}"))
     }
 }
 
