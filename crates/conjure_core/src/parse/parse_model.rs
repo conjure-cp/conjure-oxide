@@ -4,6 +4,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
+use ustr::Ustr;
 
 use serde_json::Value;
 use serde_json::Value as JsonValue;
@@ -114,7 +115,7 @@ fn parse_variable(v: &JsonValue, symtab: &mut SymbolTable) -> Result<()> {
         .as_str()
         .ok_or(error!("FindOrGiven[1].Name is not a string"))?;
 
-    let name = Name::User(name.to_owned());
+    let name = Name::User(Ustr::from(name));
 
     let domain = arr[2]
         .as_object()
@@ -139,7 +140,7 @@ fn parse_letting(v: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Result<()> 
         .ok_or(error!("Letting[0] is not an object"))?["Name"]
         .as_str()
         .ok_or(error!("Letting[0].Name is not a string"))?;
-    let name = Name::User(name.to_owned());
+    let name = Name::User(Ustr::from(name));
     // value letting
     if let Some(value) = parse_expression(&arr[1], scope) {
         let mut symtab = scope.borrow_mut();
@@ -280,7 +281,7 @@ fn parse_domain(
                     .as_str()
                     .ok_or(error!("FindOrGiven[1].Name is not a string"))?;
 
-                let name = Name::User(name.to_owned());
+                let name = Name::User(Ustr::from(name));
                 // then collect the domain of the record field
                 let domain = item[1]
                     .as_object()
@@ -416,7 +417,7 @@ fn parse_domain_value_int(obj: &JsonValue, symbols: &SymbolTable) -> Option<i32>
             ".. found domain reference to {}, trying to resolve it",
             inner_name
         );
-        let name = Name::User(inner_name.to_string());
+        let name = Name::User(Ustr::from(inner_name));
         let decl = symbols.lookup(&name)?;
         let DeclarationKind::ValueLetting(d) = &decl.kind() as &DeclarationKind else {
             parser_trace!(".. name exists but is not a value letting!");
@@ -599,7 +600,7 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
         }
         Value::Object(refe) if refe.contains_key("Reference") => {
             let name = refe["Reference"].as_array()?[0].as_object()?["Name"].as_str()?;
-            let user_name = Name::User(name.to_string());
+            let user_name = Name::User(Ustr::from(name));
 
             let declaration: DeclarationPtr = scope
                 .borrow()
@@ -682,7 +683,7 @@ fn parse_abs_record(abs_record: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Opt
 
         let value = parse_expression(&entry[1], scope)?;
 
-        let name = Name::User(name.to_string());
+        let name = Name::User(Ustr::from(name));
         let rec_entry = RecordValue {
             name: name.clone(),
             value,
@@ -727,7 +728,7 @@ fn parse_comprehension(
                 )
                 .ok()?;
                 comprehension.generator(DeclarationPtr::new_var(
-                    Name::User(name.to_string()),
+                    Name::User(Ustr::from(name)),
                     domain,
                 ))
             }

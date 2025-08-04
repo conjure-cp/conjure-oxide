@@ -30,8 +30,8 @@ impl RecordToAtom {
     fn indices_to_name(&self, indices: &[Literal]) -> Name {
         Name::Represented(Box::new((
             self.src_var.clone(),
-            self.repr_name().to_string(),
-            indices.iter().join("_"),
+            self.repr_name().into(),
+            indices.iter().join("_").into(),
         )))
     }
 }
@@ -79,7 +79,7 @@ impl Representation for RecordToAtom {
 
         for (i, elem) in entries.into_iter().enumerate() {
             let name = format!("{}_{}", self.src_var, i + 1);
-            result.insert(Name::from(name), elem);
+            result.insert(Name::user(&name), elem);
         }
 
         Ok(result)
