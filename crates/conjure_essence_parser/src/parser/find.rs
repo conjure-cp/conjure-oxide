@@ -30,7 +30,7 @@ pub fn parse_find_statement(
         let domain = parse_domain(domain, source_code);
 
         for name in temp_symbols {
-            vars.insert(Name::User(String::from(name)), domain.clone());
+            vars.insert(Name::user(name), domain.clone());
         }
     }
     vars

@@ -14,6 +14,7 @@ use rustsat::types::{Assignment, Clause, Lit, TernaryVal, Var as satVar};
 use std::collections::{BTreeMap, HashMap};
 use std::result::Result::Ok;
 use tracing_subscriber::filter::DynFilterFn;
+use ustr::Ustr;
 
 use crate::ast::Domain::Bool;
 
@@ -75,7 +76,7 @@ fn get_ref_sols(
             ),
         };
         solution.insert(
-            Name::User(reference),
+            Name::User(Ustr::from(&reference)),
             match sol[lit.var()] {
                 TernaryVal::True => Literal::Int(1),
                 TernaryVal::False => Literal::Int(0),

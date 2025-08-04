@@ -193,9 +193,8 @@ pub fn parse_expression(
             }
         }
         "variable" => {
-            let variable_name =
-                String::from(&source_code[constraint.start_byte()..constraint.end_byte()]);
-            let name = Name::User(variable_name.to_string());
+            let variable_name = &source_code[constraint.start_byte()..constraint.end_byte()];
+            let name = Name::user(variable_name);
 
             // Look up the declaration in the symbol table
             let declaration = symbols.lookup(&name).ok_or_else(|| {
