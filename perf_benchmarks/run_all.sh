@@ -26,7 +26,7 @@ echo "======= COMPILING CONJURE_OXIDE (${comparison_branch}) =======" >/dev/stde
 # build binary for main
 pushd "$main_dir" >/dev/null
 { git clone https://github.com/conjure-cp/conjure-oxide . --single-branch --branch "$comparison_branch" >/dev/null 2>/dev/null && git submodule update --init --remote >/dev/null 2>/dev/null; } || git pull >/dev/null 2>/dev/null
-cargo build -q --release
+cargo build -q --release --features=mimalloc
 before_bin=$(realpath target/release/conjure_oxide)
 popd >/dev/null
 
@@ -34,7 +34,7 @@ echo "======= COMPILING CONJURE_OXIDE (CURRENT) =======" >/dev/stderr
 
 # build binary on current branch
 pushd $conjure_oxide_dir >/dev/null
-cargo build -q --release
+cargo build -q --release --features=mimalloc
 after_bin=$(realpath target/release/conjure_oxide)
 popd >/dev/null
 

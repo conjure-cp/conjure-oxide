@@ -369,7 +369,8 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Bool(a <= b + c))
         }
-        Expr::FlatSumGeq(_, exprs, a) => {
+        Expr::FlatSumGeq(_, inner) => {
+            let (exprs,a) = &**inner;
             let sum = exprs.iter().try_fold(0, |acc, atom: &Atom| {
                 let n: i32 = atom.try_into().ok()?;
                 let acc = acc + n;
@@ -378,7 +379,8 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Bool(sum >= a.try_into().ok()?))
         }
-        Expr::FlatSumLeq(_, exprs, a) => {
+        Expr::FlatSumLeq(_, inner) => {
+            let (exprs,a) = &**inner;
             let sum = exprs.iter().try_fold(0, |acc, atom: &Atom| {
                 let n: i32 = atom.try_into().ok()?;
                 let acc = acc + n;
@@ -482,8 +484,9 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Bool(a ^ b == c))
         }
-        Expr::MinionWInSet(_, _, _) => None,
-        Expr::MinionWInIntervalSet(_, x, intervals) => {
+        Expr::MinionWInSet(_, _) => None,
+        Expr::MinionWInIntervalSet(_, inner) => {
+            let (x,intervals) = &**inner;
             let x_lit: &Lit = x.try_into().ok()?;
 
             let x_lit = match x_lit.clone() {
@@ -576,7 +579,8 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             let c: i32 = c.try_into().ok()?;
             Some(Lit::Bool(a * b == c))
         }
-        Expr::FlatWeightedSumLeq(_, cs, vs, total) => {
+        Expr::FlatWeightedSumLeq(_, inner) => {
+            let (cs,vs,total) = &**inner;
             let cs: Vec<i32> = cs
                 .iter()
                 .map(|x| TryInto::<i32>::try_into(x).ok())
@@ -591,7 +595,8 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
 
             Some(Lit::Bool(sum <= total))
         }
-        Expr::FlatWeightedSumGeq(_, cs, vs, total) => {
+        Expr::FlatWeightedSumGeq(_, inner) => {
+            let (cs,vs,total) = &**inner;
             let cs: Vec<i32> = cs
                 .iter()
                 .map(|x| TryInto::<i32>::try_into(x).ok())

@@ -36,9 +36,10 @@ fn in_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             if let Expr::Atomic(_, a) = a.as_ref() {
                 Ok(Reduction::pure(Expr::MinionWInSet(
                     Metadata::new(),
+                    Box::new((
                     a.clone(),
                     literals,
-                )))
+                )))))
             } else {
                 Err(RuleNotApplicable)
             }

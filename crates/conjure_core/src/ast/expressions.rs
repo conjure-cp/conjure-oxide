@@ -47,8 +47,8 @@ use super::{DeclarationPtr, Domain, Range, SubModel, Typeable};
 // lot bigger still when we start using it for memoisation, so it should really be
 // boxed ~niklasdewally
 
-// expect size of Expression to be 80 bytes
-static_assertions::assert_eq_size!([u8; 80], Expression);
+// expect size of Expression to be 64 bytes
+static_assertions::assert_eq_size!([u8; 64], Expression);
 
 /// Represents different types of expressions used to define rules and constraints in the model.
 ///
@@ -281,7 +281,7 @@ pub enum Expression {
     ///
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#sumgeq)
     #[compatible(Minion)]
-    FlatSumGeq(Metadata, Vec<Atom>, Atom),
+    FlatSumGeq(Metadata, Box<(Vec<Atom>, Atom)>),
 
     /// Ensures that sum(vec) <= x.
     ///
@@ -291,7 +291,7 @@ pub enum Expression {
     ///
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#sumleq)
     #[compatible(Minion)]
-    FlatSumLeq(Metadata, Vec<Atom>, Atom),
+    FlatSumLeq(Metadata, Box<(Vec<Atom>, Atom)>),
 
     /// `ineq(x,y,k)` ensures that x <= y + k.
     ///
@@ -333,7 +333,7 @@ pub enum Expression {
     ///
     /// + [Minion
     /// documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#weightedsumleq)
-    FlatWeightedSumLeq(Metadata, Vec<Literal>, Vec<Atom>, Box<Atom>),
+    FlatWeightedSumLeq(Metadata, Box<(Vec<Literal>, Vec<Atom>, Atom)>),
 
     /// `weightedsumgeq(cs,xs,total)` ensures that cs.xs >= total, where cs.xs is the scalar dot
     /// product of cs and xs.
@@ -346,7 +346,7 @@ pub enum Expression {
     ///
     /// + [Minion
     /// documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#weightedsumleq)
-    FlatWeightedSumGeq(Metadata, Vec<Literal>, Vec<Atom>, Box<Atom>),
+    FlatWeightedSumGeq(Metadata, Box<(Vec<Literal>, Vec<Atom>, Atom)>),
 
     /// Ensures that x =-y, where x and y are atoms.
     ///
@@ -434,7 +434,7 @@ pub enum Expression {
     ///>
     ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#w-inintervalset)
     #[compatible(Minion)]
-    MinionWInIntervalSet(Metadata, Atom, Vec<i32>),
+    MinionWInIntervalSet(Metadata, Box<(Atom, Vec<i32>)>),
 
     /// `w-inset(x, [v1, v2, … ])` ensures that the value of `x` is one of the explicitly given values `v1`, `v2`, etc.
     ///
@@ -448,7 +448,7 @@ pub enum Expression {
     ///
     ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#w-inset)
     #[compatible(Minion)]
-    MinionWInSet(Metadata, Atom, Vec<i32>),
+    MinionWInSet(Metadata, Box<(Atom, Vec<i32>)>),
 
     /// `element_one(vec, i, e)` specifies that `vec[i] = e`. This implies that i is
     /// in the range `[1..len(vec)]`.
@@ -615,7 +615,7 @@ impl Expression {
                     None => Some(*elem_domain),
                 }
             }
-            Expression::InDomain(_, _, _) => Some(Domain::Bool),
+            Expression::InDomain(_, _,_) => Some(Domain::Bool),
             Expression::Atomic(_, Atom::Reference(ptr)) => ptr.domain(),
             Expression::Atomic(_, atom) => Some(atom.domain_of()),
             Expression::Scope(_, _) => Some(Domain::Bool),
@@ -721,8 +721,8 @@ impl Expression {
             Expression::Gt(_, _, _) => Some(Domain::Bool),
             Expression::Lt(_, _, _) => Some(Domain::Bool),
             Expression::FlatAbsEq(_, _, _) => Some(Domain::Bool),
-            Expression::FlatSumGeq(_, _, _) => Some(Domain::Bool),
-            Expression::FlatSumLeq(_, _, _) => Some(Domain::Bool),
+            Expression::FlatSumGeq( _, _) => Some(Domain::Bool),
+            Expression::FlatSumLeq( _, _) => Some(Domain::Bool),
             Expression::MinionDivEqUndefZero(_, _, _, _) => Some(Domain::Bool),
             Expression::MinionModuloEqUndefZero(_, _, _, _) => Some(Domain::Bool),
             Expression::FlatIneq(_, _, _, _) => Some(Domain::Bool),
@@ -730,8 +730,8 @@ impl Expression {
             Expression::FlatWatchedLiteral(_, _, _) => Some(Domain::Bool),
             Expression::MinionReify(_, _, _) => Some(Domain::Bool),
             Expression::MinionReifyImply(_, _, _) => Some(Domain::Bool),
-            Expression::MinionWInIntervalSet(_, _, _) => Some(Domain::Bool),
-            Expression::MinionWInSet(_, _, _) => Some(Domain::Bool),
+            Expression::MinionWInIntervalSet(_, _) => Some(Domain::Bool),
+            Expression::MinionWInSet(_, _) => Some(Domain::Bool),
             Expression::MinionElementOne(_, _, _, _) => Some(Domain::Bool),
             Expression::Neg(_, x) => {
                 let Some(Domain::Int(mut ranges)) = x.domain_of() else {
@@ -756,8 +756,8 @@ impl Expression {
             Expression::FlatAllDiff(_, _) => Some(Domain::Bool),
             Expression::FlatMinusEq(_, _, _) => Some(Domain::Bool),
             Expression::FlatProductEq(_, _, _, _) => Some(Domain::Bool),
-            Expression::FlatWeightedSumLeq(_, _, _, _) => Some(Domain::Bool),
-            Expression::FlatWeightedSumGeq(_, _, _, _) => Some(Domain::Bool),
+            Expression::FlatWeightedSumLeq(_, _) => Some(Domain::Bool),
+            Expression::FlatWeightedSumGeq(_, _) => Some(Domain::Bool),
             Expression::Abs(_, a) => a
                 .domain_of()?
                 .apply_i32(|a, _| Some(a.abs()), &a.domain_of()?)
@@ -1101,7 +1101,7 @@ impl Display for Expression {
 
                 write!(f, "{e1}[{args}]")
             }
-            Expression::InDomain(_, e, domain) => {
+            Expression::InDomain(_, e,domain) => {
                 write!(f, "__inDomain({e},{domain})")
             }
             Expression::Root(_, exprs) => {
@@ -1157,11 +1157,13 @@ impl Display for Expression {
             Expression::Lt(_, box1, box2) => {
                 write!(f, "({} < {})", box1.clone(), box2.clone())
             }
-            Expression::FlatSumGeq(_, box1, box2) => {
-                write!(f, "SumGeq({}, {})", pretty_vec(box1), box2.clone())
+            Expression::FlatSumGeq(_, inner) => {
+                let (box1,box2) = &**inner;
+                write!(f, "SumGeq({}, {})", pretty_vec(&box1), box2.clone())
             }
-            Expression::FlatSumLeq(_, box1, box2) => {
-                write!(f, "SumLeq({}, {})", pretty_vec(box1), box2.clone())
+            Expression::FlatSumLeq(_, inner) => {
+                let (box1,box2) = &**inner;
+                write!(f, "SumLeq({}, {})", pretty_vec(&box1), box2.clone())
             }
             Expression::FlatIneq(_, box1, box2, box3) => write!(
                 f,
@@ -1215,11 +1217,13 @@ impl Display for Expression {
             Expression::MinionReifyImply(_, box1, box2) => {
                 write!(f, "ReifyImply({}, {})", box1.clone(), box2.clone())
             }
-            Expression::MinionWInIntervalSet(_, atom, intervals) => {
+            Expression::MinionWInIntervalSet(_, inner) => {
+                let (atom,intervals) = &**inner;
                 let intervals = intervals.iter().join(",");
                 write!(f, "__minion_w_inintervalset({atom},[{intervals}])")
             }
-            Expression::MinionWInSet(_, atom, values) => {
+            Expression::MinionWInSet(_, inner) => {
+                let (atom,values) = &**inner;
                 let values = values.iter().join(",");
                 write!(f, "__minion_w_inset({atom},{values})")
             }
@@ -1256,7 +1260,8 @@ impl Display for Expression {
                     c.clone()
                 )
             }
-            Expression::FlatWeightedSumLeq(_, cs, vs, total) => {
+            Expression::FlatWeightedSumLeq(_, inner) => {
+                let (cs,vs,total) = &**inner;
                 write!(
                     f,
                     "FlatWeightedSumLeq({},{},{})",
@@ -1265,7 +1270,8 @@ impl Display for Expression {
                     total.clone()
                 )
             }
-            Expression::FlatWeightedSumGeq(_, cs, vs, total) => {
+            Expression::FlatWeightedSumGeq(_, inner) => {
+                let (cs,vs,total) = &**inner;
                 write!(
                     f,
                     "FlatWeightedSumGeq({},{},{})",
@@ -1320,7 +1326,7 @@ impl Typeable for Expression {
             Expression::UnsafeSlice(_, subject, _) | Expression::SafeSlice(_, subject, _) => {
                 Some(ReturnType::Matrix(Box::new(subject.return_type()?)))
             }
-            Expression::InDomain(_, _, _) => Some(ReturnType::Bool),
+            Expression::InDomain(_,_, _) => Some(ReturnType::Bool),
             Expression::Comprehension(_, _) => None,
             Expression::Root(_, _) => Some(ReturnType::Bool),
             Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
@@ -1346,8 +1352,8 @@ impl Typeable for Expression {
             Expression::SafeDiv(_, _, _) => Some(ReturnType::Int),
             Expression::UnsafeDiv(_, _, _) => Some(ReturnType::Int),
             Expression::FlatAllDiff(_, _) => Some(ReturnType::Bool),
-            Expression::FlatSumGeq(_, _, _) => Some(ReturnType::Bool),
-            Expression::FlatSumLeq(_, _, _) => Some(ReturnType::Bool),
+            Expression::FlatSumGeq(_, _) => Some(ReturnType::Bool),
+            Expression::FlatSumLeq(_, _) => Some(ReturnType::Bool),
             Expression::MinionDivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
             Expression::FlatIneq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AllDiff(_, _) => Some(ReturnType::Bool),
@@ -1355,8 +1361,8 @@ impl Typeable for Expression {
             Expression::FlatWatchedLiteral(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReify(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReifyImply(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionWInIntervalSet(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionWInSet(_, _, _) => Some(ReturnType::Bool),
+            Expression::MinionWInIntervalSet(_, _) => Some(ReturnType::Bool),
+            Expression::MinionWInSet(_, _) => Some(ReturnType::Bool),
             Expression::MinionElementOne(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AuxDeclaration(_, _, _) => Some(ReturnType::Bool),
             Expression::UnsafeMod(_, _, _) => Some(ReturnType::Int),
@@ -1369,8 +1375,8 @@ impl Typeable for Expression {
             Expression::FlatAbsEq(_, _, _) => Some(ReturnType::Bool),
             Expression::FlatMinusEq(_, _, _) => Some(ReturnType::Bool),
             Expression::FlatProductEq(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::FlatWeightedSumLeq(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::FlatWeightedSumLeq(_, _) => Some(ReturnType::Bool),
+            Expression::FlatWeightedSumGeq(_, _) => Some(ReturnType::Bool),
             Expression::MinionPow(_, _, _, _) => Some(ReturnType::Bool),
             Expression::ToInt(_, _) => Some(ReturnType::Int),
         }
