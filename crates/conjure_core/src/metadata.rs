@@ -8,7 +8,7 @@ derive_unplateable!(Metadata);
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Default)]
 pub struct Metadata {
     pub clean: bool,
-    pub etype: Option<ReturnType>,
+    pub etype: Option<Box<ReturnType>>,
 }
 
 impl Metadata {

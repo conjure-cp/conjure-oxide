@@ -204,11 +204,11 @@ fn rule_sum_geq() {
         expr,
         Expression::FlatSumGeq(
             Metadata::new(),
-            vec![
+            Box::new((vec![
                 Atom::Literal(Literal::Int(1)),
                 Atom::Literal(Literal::Int(2)),
             ],
-            Atom::Literal(Literal::Int(3))
+            Atom::Literal(Literal::Int(3))))
         )
     );
 }
@@ -286,8 +286,8 @@ fn reduce_solve_xyz() {
         expr1,
         Expression::FlatSumLeq(
             Metadata::new(),
-            vec![a.clone(), b.clone(), c.clone()],
-            Atom::Literal(Literal::Int(4))
+            Box::new((vec![a.clone(), b.clone(), c.clone()],
+            Atom::Literal(Literal::Int(4))))
         )
     );
 

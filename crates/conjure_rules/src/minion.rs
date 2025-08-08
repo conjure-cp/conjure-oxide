@@ -332,28 +332,29 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symtab: &SymbolTable) -> Applic
             Box::new(matrix_expr![
                 Expr::FlatWeightedSumLeq(
                     Metadata::new(),
+                    Box::new((
                     coefficients.clone(),
                     vars.clone(),
-                    Box::new(total.clone()),
-                ),
-                Expr::FlatWeightedSumGeq(Metadata::new(), coefficients, vars, Box::new(total)),
+                    total.clone(),
+                ))),
+                Expr::FlatWeightedSumGeq(Metadata::new(), Box::new((coefficients, vars, total))),
             ]),
         ),
         (EqualityKind::Eq, false) => Expr::And(
             Metadata::new(),
             Box::new(matrix_expr![
-                Expr::FlatSumLeq(Metadata::new(), vars.clone(), total.clone()),
-                Expr::FlatSumGeq(Metadata::new(), vars, total),
+                Expr::FlatSumLeq(Metadata::new(), Box::new((vars.clone(), total.clone()))),
+                Expr::FlatSumGeq(Metadata::new(), Box::new((vars, total))),
             ]),
         ),
         (EqualityKind::Leq, true) => {
-            Expr::FlatWeightedSumLeq(Metadata::new(), coefficients, vars, Box::new(total))
+            Expr::FlatWeightedSumLeq(Metadata::new(), Box::new((coefficients, vars, total)))
         }
-        (EqualityKind::Leq, false) => Expr::FlatSumLeq(Metadata::new(), vars, total),
+        (EqualityKind::Leq, false) => Expr::FlatSumLeq(Metadata::new(), Box::new((vars, total))),
         (EqualityKind::Geq, true) => {
-            Expr::FlatWeightedSumGeq(Metadata::new(), coefficients, vars, Box::new(total))
+            Expr::FlatWeightedSumGeq(Metadata::new(), Box::new((coefficients, vars, total)))
         }
-        (EqualityKind::Geq, false) => Expr::FlatSumGeq(Metadata::new(), vars, total),
+        (EqualityKind::Geq, false) => Expr::FlatSumGeq(Metadata::new(), Box::new((vars, total))),
     };
 
     Ok(Reduction::new(new_expr, new_top_exprs, symtab))
@@ -800,7 +801,7 @@ fn introduce_wininterval_set_from_indomain(expr: &Expr, _: &SymbolTable) -> Appl
         return Err(RuleNotApplicable);
     };
 
-    let Domain::Int(ranges) = domain else {
+    let Domain::Int(ref ranges) = *domain else {
         return Err(RuleNotApplicable);
     };
 
@@ -824,8 +825,10 @@ fn introduce_wininterval_set_from_indomain(expr: &Expr, _: &SymbolTable) -> Appl
 
     Ok(Reduction::pure(Expr::MinionWInIntervalSet(
         Metadata::new(),
+        Box::new((
         atom.clone(),
         out_ranges,
+        ))
     )))
 }
 

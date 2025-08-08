@@ -262,12 +262,22 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
         conjure_ast::Expression::FlatAllDiff(_metadata, atoms) => {
             Ok(minion_ast::Constraint::AllDiff(parse_atoms(atoms)?))
         }
-        conjure_ast::Expression::FlatSumLeq(_metadata, lhs, rhs) => Ok(
-            minion_ast::Constraint::SumLeq(parse_atoms(lhs)?, parse_atom(rhs)?),
-        ),
-        conjure_ast::Expression::FlatSumGeq(_metadata, lhs, rhs) => Ok(
-            minion_ast::Constraint::SumGeq(parse_atoms(lhs)?, parse_atom(rhs)?),
-        ),
+        conjure_ast::Expression::FlatSumLeq(_metadata, inner) => {
+            let (lhs, rhs) = *inner;
+
+            Ok(minion_ast::Constraint::SumLeq(
+                parse_atoms(lhs)?,
+                parse_atom(rhs)?,
+            ))
+        }
+        conjure_ast::Expression::FlatSumGeq(_metadata, inner) => {
+            let (lhs, rhs) = *inner;
+
+            Ok(minion_ast::Constraint::SumGeq(
+                parse_atoms(lhs)?,
+                parse_atom(rhs)?,
+            ))
+        }
         conjure_ast::Expression::FlatIneq(_metadata, a, b, c) => Ok(minion_ast::Constraint::Ineq(
             parse_atom(*a)?,
             parse_atom(*b)?,
@@ -289,7 +299,8 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
                 parse_atom(*c)?,
             ))
         }
-        conjure_ast::Expression::MinionWInIntervalSet(_metadata, a, xs) => {
+        conjure_ast::Expression::MinionWInIntervalSet(_metadata, inner) => {
+            let (a,xs) = *inner;
             Ok(minion_ast::Constraint::WInIntervalSet(
                 parse_atom(a)?,
                 xs.into_iter()
@@ -297,7 +308,8 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
                     .collect_vec(),
             ))
         }
-        conjure_ast::Expression::MinionWInSet(_metadata, a, xs) => {
+        conjure_ast::Expression::MinionWInSet(_metadata, inner) => {
+            let (a,xs) = *inner;
             Ok(minion_ast::Constraint::WInset(
                 parse_atom(a)?,
                 xs.into_iter()
@@ -361,18 +373,20 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
         conjure_ast::Expression::FlatProductEq(_metadata, a, b, c) => Ok(
             minion_ast::Constraint::Product((parse_atom(*a)?, parse_atom(*b)?), parse_atom(*c)?),
         ),
-        conjure_ast::Expression::FlatWeightedSumLeq(_metadata, coeffs, vars, total) => {
+        conjure_ast::Expression::FlatWeightedSumLeq(_metadata, inner) => {
+            let (coeffs,vars,total) = *inner;
             Ok(minion_ast::Constraint::WeightedSumLeq(
                 parse_literals(coeffs)?,
                 parse_atoms(vars)?,
-                parse_atom(*total)?,
+                parse_atom(total)?,
             ))
         }
-        conjure_ast::Expression::FlatWeightedSumGeq(_metadata, coeffs, vars, total) => {
+        conjure_ast::Expression::FlatWeightedSumGeq(_metadata, inner) => {
+            let (coeffs,vars,total) = *inner;
             Ok(minion_ast::Constraint::WeightedSumGeq(
                 parse_literals(coeffs)?,
                 parse_atoms(vars)?,
-                parse_atom(*total)?,
+                parse_atom(total)?,
             ))
         }
         conjure_ast::Expression::FlatAbsEq(_metadata, x, y) => Ok(minion_ast::Constraint::Abs(
