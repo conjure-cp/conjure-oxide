@@ -1,6 +1,7 @@
 use regex::Regex;
 use std::collections::HashMap;
 use std::sync::{LazyLock, Mutex, OnceLock};
+use ustr::Ustr;
 
 use minion_ast::Model as MinionModel;
 use minion_rs::ast as minion_ast;
@@ -50,11 +51,11 @@ fn parse_name(minion_name: &str) -> Name {
     } else if let Some(caps) = REPRESENTED_NAME_RE.captures(minion_name) {
         conjure_ast::Name::Represented(Box::new((
             parse_name(&caps[1]),
-            caps[2].to_string(),
-            caps[3].to_string(),
+            Ustr::from(&caps[2]),
+            Ustr::from(&caps[3]),
         )))
     } else {
-        conjure_ast::Name::User(minion_name.to_string())
+        conjure_ast::Name::User(Ustr::from(minion_name))
     }
 }
 

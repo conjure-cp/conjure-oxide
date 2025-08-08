@@ -12,10 +12,9 @@ use anyhow::{anyhow, ensure};
 use clap::ValueHint;
 use conjure_core::{
     Model,
-    ast::{Expression, SymbolTable},
-    bug,
+    ast::comprehension::USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS,
     context::Context,
-    rule_engine::{get_rules_grouped, resolve_rule_sets, rewrite_naive},
+    rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     solver::{Solver, adaptors},
 };
 use conjure_oxide::{
@@ -25,9 +24,7 @@ use conjure_oxide::{
     get_rules, model_from_json, parse_essence_file_native,
     utils::conjure::{get_minion_solutions, get_sat_solutions, solutions_to_json},
 };
-use itertools::Itertools;
 use serde_json::to_string_pretty;
-use tree_morph::{helpers::select_panic, morph, prelude::select_first};
 
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
 
@@ -121,6 +118,10 @@ pub(crate) fn init_context(
         extra_rule_sets.push(rs.as_str());
     }
 
+    if global_args.no_use_expand_ac {
+        extra_rule_sets.pop_if(|x| x == &"Better_AC_Comprehension_Expansion");
+    }
+
     ensure!(
         target_family == SolverFamily::Minion || target_family == SolverFamily::Sat,
         "Only the Minion and SAT solvers is currently supported!"
@@ -207,7 +208,7 @@ pub(crate) fn parse(
 }
 
 pub(crate) fn rewrite(
-    mut model: Model,
+    model: Model,
     global_args: &GlobalArgs,
     context: Arc<RwLock<Context<'static>>>,
 ) -> anyhow::Result<Model> {
@@ -216,36 +217,23 @@ pub(crate) fn rewrite(
     let rule_sets = context.read().unwrap().rule_sets.clone();
 
     let new_model = if global_args.use_optimised_rewriter {
+        USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS.store(true, std::sync::atomic::Ordering::Relaxed);
         tracing::info!("Rewriting the model using the optimising rewriter");
-        let submodel = model.as_submodel_mut();
-        let rules_grouped = get_rules_grouped(&rule_sets)
-            .unwrap_or_else(|_| bug!("get_rule_priorities() failed!"))
-            .into_iter()
-            .map(|(_, rule)| rule.into_iter().map(|f| f.rule).collect_vec())
-            .collect_vec();
-
-        let selector = if global_args.check_equally_applicable_rules {
-            select_panic
-        } else {
-            select_first
-        };
-
-        let (expr, symbol_table): (Expression, SymbolTable) = morph(
-            rules_grouped,
-            selector,
-            submodel.root().clone(),
-            submodel.symbols().clone(),
-        );
-
-        *submodel.symbols_mut() = symbol_table;
-        submodel.replace_root(expr);
-        model.clone()
+        rewrite_morph(
+            model,
+            &rule_sets,
+            global_args.check_equally_applicable_rules,
+        )
     } else {
         tracing::info!("Rewriting the model using the default / naive rewriter");
+        if global_args.exit_after_unrolling {
+            tracing::info!("Exiting after unrolling");
+        }
         rewrite_naive(
             &model,
             &rule_sets,
             global_args.check_equally_applicable_rules,
+            global_args.exit_after_unrolling,
         )?
     };
 

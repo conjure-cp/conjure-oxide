@@ -69,10 +69,8 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
             .unwrap();
 
         let old_name = name.clone();
-        let new_name = Name::WithRepresentation(
-            Box::new(old_name.clone()),
-            vec!["matrix_to_atom".to_owned()],
-        );
+        let new_name =
+            Name::WithRepresentation(Box::new(old_name.clone()), vec!["matrix_to_atom".into()]);
         // give all references to this matrix this representation
         // also do this inside subscopes, as long as they dont define their own variable that shadows this
         // one.
@@ -144,7 +142,7 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
 
     let representation_names = representation
         .into_iter()
-        .map(|x| x.repr_name().to_string())
+        .map(|x| x.repr_name().into())
         .collect_vec();
 
     let new_name = Name::WithRepresentation(Box::new(name.clone()), representation_names);
@@ -175,6 +173,10 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
 ///
 ///   + If `name` is not in `symbols`.
 fn needs_representation(name: &Name, symbols: &SymbolTable) -> bool {
+    // if name already has a representation, false
+    if let Name::Represented(_) = name {
+        return false;
+    }
     // might be more logic here in the future?
     domain_needs_representation(&symbols.resolve_domain(name).unwrap())
 }

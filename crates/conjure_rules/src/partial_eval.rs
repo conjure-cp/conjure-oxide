@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use conjure_core::{
-    ast::{ReturnType, Typeable as _},
+    ast::{Domain, ReturnType, Typeable as _},
     into_matrix_expr,
     metadata::Metadata,
     rule_engine::{ApplicationResult, Reduction},
@@ -12,11 +12,11 @@ use itertools::iproduct;
 use conjure_core::ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable};
 
 #[register_rule(("Base",9000))]
-fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    run_partial_evaluator(expr)
+fn partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
+    run_partial_evaluator(expr, symtab)
 }
 
-pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
+pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
     use conjure_core::rule_engine::ApplicationError::RuleNotApplicable;
     // NOTE: If nothing changes, we must return RuleNotApplicable, or the rewriter will try this
     // rule infinitely!
@@ -35,9 +35,76 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
         Expr::FromSolution(_, _) => Err(RuleNotApplicable),
         Expr::UnsafeIndex(_, _, _) => Err(RuleNotApplicable),
         Expr::UnsafeSlice(_, _, _) => Err(RuleNotApplicable),
-        Expr::SafeIndex(_, _, _) => Err(RuleNotApplicable),
+        Expr::SafeIndex(_, subject, indices) => {
+            // partially evaluate matrix literals indexed by a constant.
+
+            // subject must be a matrix literal
+            let (es, index_domain) = subject.unwrap_matrix_unchecked().ok_or(RuleNotApplicable)?;
+
+            // must be indexing a 1d matrix.
+            //
+            // for n-d matrices, wait for the `remove_dimension_from_matrix_indexing` rule to run
+            // first. This reduces n-d indexing operations to 1d.
+            if indices.len() != 1 {
+                return Err(RuleNotApplicable);
+            }
+
+            // the index must be a number
+            let index: i32 = (&indices[0]).try_into().map_err(|_| RuleNotApplicable)?;
+
+            // index domain must be a single integer range with a lower bound
+            if let Domain::Int(ranges) = index_domain
+                && ranges.len() == 1
+                && let Some(from) = ranges[0].lower_bound()
+            {
+                let zero_indexed_index = index - from;
+                Ok(Reduction::pure(es[zero_indexed_index as usize].clone()))
+            } else {
+                Err(RuleNotApplicable)
+            }
+        }
         Expr::SafeSlice(_, _, _) => Err(RuleNotApplicable),
-        Expr::InDomain(_, _, _) => Err(RuleNotApplicable),
+        Expr::InDomain(_, x, domain) => {
+            if let Expr::Atomic(_, Atom::Reference(decl)) = *x {
+                let decl_domain = decl.domain().ok_or(RuleNotApplicable)?.resolve(symtab);
+                let domain = domain.resolve(symtab);
+
+                let intersection = decl_domain
+                    .intersect(&domain)
+                    .map_err(|_| RuleNotApplicable)?;
+
+                // if the declaration's domain is a subset of domain, expr is always true.
+                if intersection == decl_domain {
+                    Ok(Reduction::pure(Expr::Atomic(Metadata::new(), true.into())))
+                }
+                // if no elements of declaration's domain are in the domain (i.e. they have no
+                // intersection), expr is always false.
+                //
+                // Only check this when the intersection is a finite integer domain, as we
+                // currently don't have a way to check whether other domain kinds are empty or not.
+                //
+                // we should expand this to cover more domain types in the future.
+                else if let Ok(values_in_domain) = intersection.values_i32()
+                    && values_in_domain.is_empty()
+                {
+                    Ok(Reduction::pure(Expr::Atomic(Metadata::new(), false.into())))
+                } else {
+                    return Err(RuleNotApplicable);
+                }
+            } else if let Expr::Atomic(_, Atom::Literal(lit)) = *x {
+                if domain
+                    .resolve(symtab)
+                    .contains(&lit)
+                    .map_err(|_| RuleNotApplicable)?
+                {
+                    Ok(Reduction::pure(Expr::Atomic(Metadata::new(), true.into())))
+                } else {
+                    Ok(Reduction::pure(Expr::Atomic(Metadata::new(), false.into())))
+                }
+            } else {
+                Err(RuleNotApplicable)
+            }
+        }
         Expr::Bubble(_, expr, cond) => {
             // definition of bubble is "expr is valid as long as cond is true"
             //
