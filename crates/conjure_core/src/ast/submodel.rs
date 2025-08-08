@@ -213,6 +213,10 @@ impl Display for SubModel {
                     writeln!(f)?;
                     // TODO: is this correct?
                 }
+
+                DeclarationKind::ForComprehension(e) => {
+                    writeln!(f, "for {name} in {e}")?;
+                }
             }
         }
 
