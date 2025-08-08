@@ -1,7 +1,7 @@
 use iai_callgrind::{library_benchmark, library_benchmark_group, main};
 use std::hint::black_box;
 use tree_morph::prelude::*;
-use uniplate::derive::Uniplate;
+use uniplate::Uniplate;
 
 #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 #[uniplate()]

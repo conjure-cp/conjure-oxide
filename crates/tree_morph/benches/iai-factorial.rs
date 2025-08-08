@@ -3,7 +3,7 @@ use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use std::hint::black_box;
 use tree_morph::prelude::*;
-use uniplate::derive::Uniplate;
+use uniplate::Uniplate;
 
 #[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
 #[uniplate()]
