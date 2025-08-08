@@ -282,7 +282,7 @@ jobs:
       - name: Save builds
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.release_prefix }}
+          name: artifact-${{ env.release_prefix }}
           path: dist/*.zip
 
   build_nightly_linux:
@@ -333,7 +333,7 @@ jobs:
       - name: Save builds
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.release_prefix }}
+          name: artifact-${{ env.release_prefix }}
           path: dist/*.zip
 
   create_release:
@@ -347,11 +347,13 @@ jobs:
       - run: mkdir dist
 
       # download all artifacts made in this workflow (i.e. all the different builds)
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           merge-multiple: true # put all releases in the same folder
           path: dist/
-
+          pattern: artifact-*
+  
+          
       - name: Publish nightly release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
