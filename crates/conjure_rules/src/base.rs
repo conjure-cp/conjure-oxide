@@ -81,7 +81,6 @@ fn remove_empty_expression(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
  */
 #[register_rule(("Base", 6000))]
 fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let mut symbols = symbols.clone();
     let Expr::Min(_, inside_min_expr) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -91,6 +90,7 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     };
 
     let domain = expr.domain_of().ok_or(ApplicationError::DomainError)?;
+    let mut symbols = symbols.clone();
 
     let atom_inner = Atom::new_ref(symbols.gensym(&domain));
     let atom_expr = Expr::Atomic(Metadata::new(), atom_inner.clone());
@@ -124,7 +124,6 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
  */
 #[register_rule(("Base", 6000))]
 fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let mut symbols: SymbolTable = symbols.clone();
     let Expr::Max(_, inside_max_expr) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -134,6 +133,7 @@ fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     };
 
     let domain = expr.domain_of().ok_or(ApplicationError::DomainError)?;
+    let mut symbols: SymbolTable = symbols.clone();
 
     let atom_inner = Atom::new_ref(symbols.gensym(&domain));
     let atom_expr = Expr::Atomic(Metadata::new(), atom_inner.clone());
