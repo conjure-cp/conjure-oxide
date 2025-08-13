@@ -32,7 +32,7 @@ use super::{Expression, ReturnType, SymbolTable, types::Typeable};
 #[serde_as]
 #[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct SubModel {
-    constraints: Expression,
+    constraints: Moo<Expression>,
     #[serde_as(as = "RcRefCellAsInner")]
     symbols: Rc<RefCell<SymbolTable>>,
 }
@@ -45,7 +45,7 @@ impl SubModel {
     #[doc(hidden)]
     pub(super) fn new_top_level() -> SubModel {
         SubModel {
-            constraints: Expression::Root(Metadata::new(), vec![]),
+            constraints: Moo::new(Expression::Root(Metadata::new(), vec![])),
             symbols: Rc::new(RefCell::new(SymbolTable::new())),
         }
     }
@@ -55,7 +55,7 @@ impl SubModel {
     /// `parent` should be the symbol table of the containing scope of this sub-model.
     pub fn new(parent: Rc<RefCell<SymbolTable>>) -> SubModel {
         SubModel {
-            constraints: Expression::Root(Metadata::new(), vec![]),
+            constraints: Moo::new(Expression::Root(Metadata::new(), vec![])),
             symbols: Rc::new(RefCell::new(SymbolTable::with_parent(parent))),
         }
     }
@@ -99,7 +99,7 @@ impl SubModel {
     /// The caller is responsible for ensuring that the root node remains an [`Expression::Root`].
     ///
     pub fn root_mut_unchecked(&mut self) -> &mut Expression {
-        &mut self.constraints
+        Moo::make_mut(&mut self.constraints)
     }
 
     /// Replaces the root node with `new_root`, returning the old root node.
@@ -119,7 +119,7 @@ impl SubModel {
 
     /// The top-level constraints in this sub-model.
     pub fn constraints(&self) -> &Vec<Expression> {
-        let Expression::Root(_, constraints) = &self.constraints else {
+        let Expression::Root(_, constraints) = self.constraints.as_ref() else {
             bug!("The top level expression in a submodel should be Expr::Root");
         };
 
@@ -128,7 +128,7 @@ impl SubModel {
 
     /// The top-level constraints in this sub-model as a mutable vector.
     pub fn constraints_mut(&mut self) -> &mut Vec<Expression> {
-        let Expression::Root(_, constraints) = &mut self.constraints else {
+        let Expression::Root(_, constraints) = Moo::make_mut(&mut self.constraints) else {
             bug!("The top level expression in a submodel should be Expr::Root");
         };
 
@@ -399,12 +399,12 @@ impl Biplate<Comprehension> for SubModel {
 
             let mut self3 = self2.clone();
 
-            let Expression::Root(_, _) = root else {
+            let Expression::Root(_, _) = &*root else {
                 bug!("root expression not root");
             };
 
             *self3.symbols_mut() = symtab;
-            *self3.root_mut_unchecked() = root;
+            self3.constraints = root;
 
             self3
         });
