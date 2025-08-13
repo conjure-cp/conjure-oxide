@@ -36,14 +36,14 @@ fn expand_comprehension_ac(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
     // unwrap comprehensions inside out. This reduces calls to minion when rewriting nested
     // comprehensions.
     let nested_comprehensions: VecDeque<Comprehension> =
-        comprehension.clone().return_expression().universe_bi();
+        (**comprehension).clone().return_expression().universe_bi();
     if !nested_comprehensions.is_empty() {
         return Err(RuleNotApplicable);
     };
 
     // TODO: check what kind of error this throws and maybe panic
     let mut symbols = symbols.clone();
-    let results = comprehension
+    let results = (**comprehension)
         .clone()
         .expand_ac(&mut symbols, ac_operator_kind)
         .or(Err(RuleNotApplicable))?;
@@ -61,7 +61,7 @@ fn expand_comprehension(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
     // unwrap comprehensions inside out. This reduces calls to minion when rewriting nested
     // comprehensions.
     let nested_comprehensions: VecDeque<Comprehension> =
-        comprehension.clone().return_expression().universe_bi();
+        (**comprehension).clone().return_expression().universe_bi();
     if !nested_comprehensions.is_empty() {
         return Err(RuleNotApplicable);
     };

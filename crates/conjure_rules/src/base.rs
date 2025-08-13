@@ -1,5 +1,5 @@
 use conjure_core::{
-    ast::{Atom, Expression as Expr, SymbolTable},
+    ast::{Atom, Expression as Expr, Moo, SymbolTable},
     into_matrix_expr,
     metadata::Metadata,
     rule_engine::{
@@ -105,7 +105,7 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // TODO: deal with explicit index domains
     new_top.push(Expr::Or(
         Metadata::new(),
-        Box::new(into_matrix_expr![disjunction]),
+        Moo::new(into_matrix_expr![disjunction]),
     ));
 
     Ok(Reduction::new(
@@ -147,7 +147,7 @@ fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // FIXME: deal with explicitly given domains
     new_top.push(Expr::Or(
         Metadata::new(),
-        Box::new(into_matrix_expr![disjunction]),
+        Moo::new(into_matrix_expr![disjunction]),
     ));
 
     Ok(Reduction::new(essence_expr!(&atom_expr), new_top, symbols))

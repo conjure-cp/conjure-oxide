@@ -1,6 +1,6 @@
 // rules for concatenations of subsetEq with intersect and union
 // analogous rules for subset, supset and supsetEq are not needed because these are converted to subsetEq first.
-use conjure_core::ast::{Expression as Expr, ReturnType, SymbolTable, Typeable};
+use conjure_core::ast::{Expression as Expr, Moo, ReturnType, SymbolTable, Typeable};
 use conjure_core::matrix_expr;
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::Reduction;
@@ -22,7 +22,7 @@ fn subseteq_intersect(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                                 let expr2 = Expr::SubsetEq(Metadata::new(), a.clone(), c.clone());
                                 Ok(Reduction::pure(Expr::And(
                                     Metadata::new(),
-                                    Box::new(matrix_expr![expr1.clone(), expr2.clone()]),
+                                    Moo::new(matrix_expr![expr1.clone(), expr2.clone()]),
                                 )))
                             } else {
                                 Err(RuleNotApplicable)
@@ -55,7 +55,7 @@ fn union_subseteq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                                 let expr2 = Expr::SubsetEq(Metadata::new(), a.clone(), c.clone());
                                 Ok(Reduction::pure(Expr::And(
                                     Metadata::new(),
-                                    Box::new(matrix_expr![expr1.clone(), expr2.clone()]),
+                                    Moo::new(matrix_expr![expr1.clone(), expr2.clone()]),
                                 )))
                             } else {
                                 Err(RuleNotApplicable)

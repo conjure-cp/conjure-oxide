@@ -326,7 +326,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         Expr::Root(_, _) => None,
         Expr::Or(_, es) => {
             // possibly cheating; definitely should be in partial eval instead
-            for e in es.clone().unwrap_list()? {
+            for e in (**es).clone().unwrap_list()? {
                 if let Expr::Atomic(_, Atom::Literal(Lit::Bool(true))) = e {
                     return Some(Lit::Bool(true));
                 };
@@ -510,7 +510,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             Some(Lit::Bool(false))
         }
         Expr::AllDiff(_, e) => {
-            let es = e.clone().unwrap_list()?;
+            let es = (**e).clone().unwrap_list()?;
             let mut lits: HashSet<Lit> = HashSet::new();
             for expr in es {
                 let Expr::Atomic(_, Atom::Literal(x)) = expr else {
@@ -752,7 +752,7 @@ fn unwrap_expr<T: TryFrom<Lit>>(expr: &Expr) -> Option<T> {
 #[cfg(test)]
 mod tests {
     use crate::eval_constant;
-    use conjure_core::ast::Expression;
+    use conjure_core::ast::{Expression, Moo};
     use conjure_essence_macros::essence_expr;
 
     #[test]
@@ -765,8 +765,8 @@ mod tests {
     fn safediv_by_zero() {
         let expr = Expression::SafeDiv(
             Default::default(),
-            Box::new(essence_expr!(1)),
-            Box::new(essence_expr!(0)),
+            Moo::new(essence_expr!(1)),
+            Moo::new(essence_expr!(0)),
         );
         assert_eq!(eval_constant(&expr), None);
     }

@@ -33,7 +33,7 @@ use crate::{
 };
 
 use super::{
-    DeclarationPtr, Domain, Expression, Model, Name, Range, SubModel, SymbolTable,
+    DeclarationPtr, Domain, Expression, Model, Moo, Name, Range, SubModel, SymbolTable,
     ac_operators::ACOperatorKind,
 };
 
@@ -454,8 +454,8 @@ impl Comprehension {
 
     pub fn replace_return_expression(&mut self, new_expr: Expression) {
         let new_expr = match new_expr {
-            Expression::And(_, exprs) if exprs.clone().unwrap_list().is_some() => {
-                Expression::Root(Metadata::new(), exprs.unwrap_list().unwrap())
+            Expression::And(_, exprs) if (*exprs).clone().unwrap_list().is_some() => {
+                Expression::Root(Metadata::new(), (*exprs).clone().unwrap_list().unwrap())
             }
             expr => Expression::Root(Metadata::new(), vec![expr]),
         };
@@ -644,18 +644,18 @@ impl ComprehensionBuilder {
 
             let guard_expr = match other_guards.as_slice() {
                 [x] => x.clone(),
-                xs => Expression::And(Metadata::new(), Box::new(into_matrix_expr!(xs.to_vec()))),
+                xs => Expression::And(Metadata::new(), Moo::new(into_matrix_expr!(xs.to_vec()))),
             };
 
             expression = match comprehension_kind {
                 ComprehensionKind::And => {
-                    Expression::Imply(Metadata::new(), Box::new(guard_expr), Box::new(expression))
+                    Expression::Imply(Metadata::new(), Moo::new(guard_expr), Moo::new(expression))
                 }
                 ComprehensionKind::Or => Expression::And(
                     Metadata::new(),
-                    Box::new(Expression::And(
+                    Moo::new(Expression::And(
                         Metadata::new(),
-                        Box::new(matrix_expr![guard_expr, expression]),
+                        Moo::new(matrix_expr![guard_expr, expression]),
                     )),
                 ),
 

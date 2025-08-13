@@ -1,4 +1,4 @@
-use conjure_core::ast::{Domain, Expression, SymbolTable};
+use conjure_core::ast::{Domain, Expression, Moo, SymbolTable};
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
     ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
@@ -39,15 +39,15 @@ fn index_to_bubble(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
         "in an index expression, there should be the same number of indices as the subject has index domains"
     );
 
-    let bubble_constraints = Box::new(into_matrix_expr![
+    let bubble_constraints = Moo::new(into_matrix_expr![
         izip!(index_domains, indices)
             .map(|(domain, index)| {
-                Expression::InDomain(Metadata::new(), Box::new(index.clone()), domain)
+                Expression::InDomain(Metadata::new(), Moo::new(index.clone()), domain)
             })
             .collect_vec()
     ]);
 
-    let new_expr = Box::new(Expression::SafeIndex(
+    let new_expr = Moo::new(Expression::SafeIndex(
         Metadata::new(),
         subject.clone(),
         indices.clone(),
@@ -56,7 +56,7 @@ fn index_to_bubble(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
     Ok(Reduction::pure(Expression::Bubble(
         Metadata::new(),
         new_expr,
-        Box::new(Expression::And(Metadata::new(), bubble_constraints)),
+        Moo::new(Expression::And(Metadata::new(), bubble_constraints)),
     )))
 }
 
@@ -84,17 +84,17 @@ fn slice_to_bubble(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
     );
 
     // the wildcard dimension doesn't need a constraint.
-    let bubble_constraints = Box::new(into_matrix_expr![
+    let bubble_constraints = Moo::new(into_matrix_expr![
         izip!(index_domains, indices)
             .filter_map(|(domain, index)| {
                 index.clone().map(|index| {
-                    Expression::InDomain(Metadata::new(), Box::new(index.clone()), domain)
+                    Expression::InDomain(Metadata::new(), Moo::new(index.clone()), domain)
                 })
             })
             .collect_vec()
     ]);
 
-    let new_expr = Box::new(Expression::SafeSlice(
+    let new_expr = Moo::new(Expression::SafeSlice(
         Metadata::new(),
         subject.clone(),
         indices.clone(),
@@ -103,6 +103,6 @@ fn slice_to_bubble(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
     Ok(Reduction::pure(Expression::Bubble(
         Metadata::new(),
         new_expr,
-        Box::new(Expression::And(Metadata::new(), bubble_constraints)),
+        Moo::new(Expression::And(Metadata::new(), bubble_constraints)),
     )))
 }

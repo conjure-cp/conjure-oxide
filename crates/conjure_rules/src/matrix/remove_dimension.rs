@@ -1,4 +1,4 @@
-use conjure_core::ast::{Expression as Expr, SymbolTable};
+use conjure_core::ast::{Expression as Expr, Moo, SymbolTable};
 use conjure_core::into_matrix_expr;
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::{
@@ -27,15 +27,17 @@ fn remove_dimension_from_matrix_indexing(expr: &Expr, _: &SymbolTable) -> Applic
     // the indicies to use in the inner expressions.
     let inner_indices = indices;
 
-    let (mut es, index_domain) = subject.unwrap_matrix_unchecked().ok_or(RuleNotApplicable)?;
+    let (mut es, index_domain) = Moo::unwrap_or_clone(subject)
+        .unwrap_matrix_unchecked()
+        .ok_or(RuleNotApplicable)?;
 
     for e in es.iter_mut() {
-        *e = Expr::SafeIndex(Metadata::new(), Box::new(e.clone()), inner_indices.clone());
+        *e = Expr::SafeIndex(Metadata::new(), Moo::new(e.clone()), inner_indices.clone());
     }
 
     Ok(Reduction::pure(Expr::SafeIndex(
         Metadata::new(),
-        Box::new(into_matrix_expr![es;index_domain]),
+        Moo::new(into_matrix_expr![es;index_domain]),
         outer_indices,
     )))
 }

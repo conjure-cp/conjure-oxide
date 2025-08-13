@@ -12,7 +12,7 @@ use crate::metadata::Metadata;
 
 use super::domains::HasDomain;
 use super::{Atom, Domain, Expression, Range, records::RecordValue};
-use super::{ReturnType, SetAttr, Typeable};
+use super::{Moo, ReturnType, SetAttr, Typeable};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash)]
 #[uniplate(walk_into=[AbstractLiteral<Literal>])]
@@ -397,6 +397,14 @@ impl TryFrom<&Box<Literal>> for i32 {
     type Error = &'static str;
 
     fn try_from(value: &Box<Literal>) -> Result<Self, Self::Error> {
+        TryFrom::<&Literal>::try_from(value.as_ref())
+    }
+}
+
+impl TryFrom<&Moo<Literal>> for i32 {
+    type Error = &'static str;
+
+    fn try_from(value: &Moo<Literal>) -> Result<Self, Self::Error> {
         TryFrom::<&Literal>::try_from(value.as_ref())
     }
 }

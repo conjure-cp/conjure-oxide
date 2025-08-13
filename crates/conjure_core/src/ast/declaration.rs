@@ -175,12 +175,12 @@ impl DeclarationPtr {
     ///
     /// ```
     /// use conjure_core::ast::{DeclarationPtr,Name,DeclarationKind,Domain,Range, Expression,
-    /// Literal,Atom};
+    /// Literal,Atom,Moo};
     /// use conjure_core::{matrix_expr,metadata::Metadata};
     ///
     /// // letting n be 10 + 10
     /// let ten = Expression::Atomic(Metadata::new(),Atom::Literal(Literal::Int(10)));
-    /// let expression = Expression::Sum(Metadata::new(),Box::new(matrix_expr![ten.clone(),ten]));
+    /// let expression = Expression::Sum(Metadata::new(),Moo::new(matrix_expr![ten.clone(),ten]));
     /// let declaration = DeclarationPtr::new_value_letting(
     ///     Name::User("n".into()),
     ///     expression);

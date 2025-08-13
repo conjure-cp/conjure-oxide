@@ -6,7 +6,7 @@
 use std::collections::BTreeMap;
 
 use conjure_core::{
-    ast::{Atom, Expression as Expr, Literal as Lit, Name, SymbolTable},
+    ast::{Atom, Expression as Expr, Literal as Lit, Moo, Name, SymbolTable},
     into_matrix_expr,
     metadata::Metadata,
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
@@ -27,7 +27,9 @@ fn collect_like_terms(expr: &Expr, st: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let exprs = exprs.unwrap_list().ok_or(RuleNotApplicable)?;
+    let exprs = Moo::unwrap_or_clone(exprs)
+        .unwrap_list()
+        .ok_or(RuleNotApplicable)?;
 
     // Store:
     //  * map variable -> coefficient for weighted sum terms
@@ -42,7 +44,11 @@ fn collect_like_terms(expr: &Expr, st: &SymbolTable) -> ApplicationResult {
     for expr in exprs.clone() {
         match expr.clone() {
             Expr::Product(_, exprs2) => {
-                match exprs2.unwrap_list().ok_or(RuleNotApplicable)?.as_slice() {
+                match Moo::unwrap_or_clone(exprs2)
+                    .unwrap_list()
+                    .ok_or(RuleNotApplicable)?
+                    .as_slice()
+                {
                     // todo (gs248) It would be nice to generate these destructures by macro, like `essence_expr!` but in reverse
                     // -c*v
                     [Expr::Atomic(_, Atom::Reference(decl)), Expr::Neg(_, e3)] => {
@@ -100,6 +106,6 @@ fn collect_like_terms(expr: &Expr, st: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::pure(Expr::Sum(
         meta,
-        Box::new(into_matrix_expr![new_exprs]),
+        Moo::new(into_matrix_expr![new_exprs]),
     )))
 }

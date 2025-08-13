@@ -1,5 +1,5 @@
 use super::{
-    Atom, DeclarationPtr, Literal,
+    Atom, DeclarationPtr, Literal, Moo,
     comprehension::Comprehension,
     declaration::DeclarationKind,
     pretty::{
@@ -167,7 +167,7 @@ impl SubModel {
         match constraints.len() {
             0 => Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true))),
             1 => constraints[0].clone(),
-            _ => Expression::And(Metadata::new(), Box::new(into_matrix_expr![constraints])),
+            _ => Expression::And(Metadata::new(), Moo::new(into_matrix_expr![constraints])),
         }
     }
 }

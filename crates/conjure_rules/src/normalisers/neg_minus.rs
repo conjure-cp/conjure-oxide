@@ -27,7 +27,7 @@
 //!    with a coefficient of -1.
 
 use conjure_core::{
-    ast::{Expression as Expr, ReturnType::Set, SymbolTable, Typeable},
+    ast::{Expression as Expr, Moo, ReturnType::Set, SymbolTable, Typeable},
     into_matrix_expr,
     metadata::Metadata,
     rule_engine::{
@@ -47,7 +47,8 @@ use uniplate::{Biplate, Uniplate as _};
 fn elmininate_double_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Neg(_, a) if matches!(**a, Expr::Neg(_, _)) => {
-            Ok(Reduction::pure(a.children()[0].clone()))
+            let first_child: Expr = a.as_ref().children()[0].clone();
+            Ok(Reduction::pure(first_child))
         }
         _ => Err(RuleNotApplicable),
     }
@@ -61,7 +62,7 @@ fn elmininate_double_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult
 #[register_rule(("Base", 8400))]
 fn distribute_negation_over_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let inner_expr = match expr {
-        Expr::Neg(_, e) if matches!(**e, Expr::Sum(_, _)) => Ok(*e.clone()),
+        Expr::Neg(_, e) if matches!(**e, Expr::Sum(_, _)) => Ok(e),
         _ => Err(RuleNotApplicable),
     }?;
 
@@ -75,7 +76,9 @@ fn distribute_negation_over_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResu
         *child = essence_expr!(-&child);
     }
 
-    Ok(Reduction::pure(inner_expr.with_children_bi(child_vecs)))
+    Ok(Reduction::pure(Moo::unwrap_or_clone(
+        inner_expr.with_children_bi(child_vecs),
+    )))
 }
 
 /// Simplifies the negation of a product
@@ -89,17 +92,19 @@ fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResu
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Product(_, factors) = *expr1 else {
+    let Expr::Product(_, factors) = Moo::unwrap_or_clone(expr1) else {
         return Err(RuleNotApplicable);
     };
 
-    let mut factors = factors.unwrap_list().ok_or(RuleNotApplicable)?;
+    let mut factors = Moo::unwrap_or_clone(factors)
+        .unwrap_list()
+        .ok_or(RuleNotApplicable)?;
 
     factors.push(essence_expr!(-1));
 
     Ok(Reduction::pure(Expr::Product(
         Metadata::new(),
-        Box::new(into_matrix_expr!(factors)),
+        Moo::new(into_matrix_expr!(factors)),
     )))
 }
 

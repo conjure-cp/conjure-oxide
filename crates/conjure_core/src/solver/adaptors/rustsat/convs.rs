@@ -11,7 +11,10 @@ use rustsat_minisat::core::Minisat;
 
 use anyhow::{Result, anyhow};
 
-use crate::{ast::Expression, solver::Error};
+use crate::{
+    ast::{Expression, Moo},
+    solver::Error,
+};
 
 pub fn handle_lit(
     l1: &Expression,
@@ -35,11 +38,10 @@ pub fn handle_not(
     inst: &mut SatInstance,
 ) -> Lit {
     match expr {
-        Expression::Not(_, ref_heap_a) => {
-            // TODO (ss504) check what can be done to avoid cloning
-            let a = ref_heap_a.clone();
-            // and then unbox
-            handle_atom(*a, false, vars_added, inst)
+        Expression::Not(_, ref_a) => {
+            let ref_a = Moo::clone(ref_a);
+            let a = Moo::unwrap_or_clone(ref_a);
+            handle_atom(a, false, vars_added, inst)
         }
         _ => panic!("Not Expected"),
     }
@@ -89,14 +91,14 @@ pub fn handle_disjn(
     vars_added: &mut HashMap<String, Lit>,
     inst_in_use: &mut SatInstance,
 ) {
-    let cl: &Vec<Expression> = match disjn {
-        Expression::Or(_, vec) => &vec.clone().unwrap_list().unwrap(),
+    let cl: Vec<Expression> = match disjn {
+        Expression::Or(_, vec) => Moo::unwrap_or_clone(Moo::clone(vec)).unwrap_list().unwrap(),
         _ => panic!("Expected an 'Or' expression!"),
     };
 
     let mut lits = Clause::new();
     for literal in cl {
-        let lit: Lit = handle_lit(literal, vars_added, inst_in_use);
+        let lit: Lit = handle_lit(&literal, vars_added, inst_in_use);
         lits.add(lit);
     }
 

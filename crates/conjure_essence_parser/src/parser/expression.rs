@@ -1,7 +1,7 @@
 #![allow(clippy::legacy_numeric_constants)]
 use tree_sitter::Node;
 
-use conjure_core::ast::{Atom, Expression, Literal, Name, SymbolTable};
+use conjure_core::ast::{Atom, Expression, Literal, Moo, Name, SymbolTable};
 use conjure_core::metadata::Metadata;
 use conjure_core::{into_matrix_expr, matrix_expr};
 
@@ -22,15 +22,15 @@ pub fn parse_expression(
         | "primary_expr" | "sub_expr" => child_expr(constraint, source_code, root, symbols),
         "not_expr" => Ok(Expression::Not(
             Metadata::new(),
-            Box::new(child_expr(constraint, source_code, root, symbols)?),
+            Moo::new(child_expr(constraint, source_code, root, symbols)?),
         )),
         "abs_value" => Ok(Expression::Abs(
             Metadata::new(),
-            Box::new(child_expr(constraint, source_code, root, symbols)?),
+            Moo::new(child_expr(constraint, source_code, root, symbols)?),
         )),
         "negative_expr" => Ok(Expression::Neg(
             Metadata::new(),
-            Box::new(child_expr(constraint, source_code, root, symbols)?),
+            Moo::new(child_expr(constraint, source_code, root, symbols)?),
         )),
         "exponent" | "product_expr" | "sum_expr" | "comparison" | "and_expr" | "or_expr"
         | "implication" => {
@@ -49,80 +49,80 @@ pub fn parse_expression(
             match op_type {
                 "**" => Ok(Expression::UnsafePow(
                     Metadata::new(),
-                    Box::new(expr1),
-                    Box::new(expr2),
+                    Moo::new(expr1),
+                    Moo::new(expr2),
                 )),
                 "+" => Ok(Expression::Sum(
                     Metadata::new(),
-                    Box::new(matrix_expr![expr1, expr2]),
+                    Moo::new(matrix_expr![expr1, expr2]),
                 )),
                 "-" => Ok(Expression::Minus(
                     Metadata::new(),
-                    Box::new(expr1),
-                    Box::new(expr2),
+                    Moo::new(expr1),
+                    Moo::new(expr2),
                 )),
                 "*" => Ok(Expression::Product(
                     Metadata::new(),
-                    Box::new(matrix_expr![expr1, expr2]),
+                    Moo::new(matrix_expr![expr1, expr2]),
                 )),
                 "/" => {
                     //TODO: add checks for if division is safe or not
                     Ok(Expression::UnsafeDiv(
                         Metadata::new(),
-                        Box::new(expr1),
-                        Box::new(expr2),
+                        Moo::new(expr1),
+                        Moo::new(expr2),
                     ))
                 }
                 "%" => {
                     //TODO: add checks for if mod is safe or not
                     Ok(Expression::UnsafeMod(
                         Metadata::new(),
-                        Box::new(expr1),
-                        Box::new(expr2),
+                        Moo::new(expr1),
+                        Moo::new(expr2),
                     ))
                 }
                 "=" => Ok(Expression::Eq(
                     Metadata::new(),
-                    Box::new(expr1),
-                    Box::new(expr2),
+                    Moo::new(expr1),
+                    Moo::new(expr2),
                 )),
                 "!=" => Ok(Expression::Neq(
                     Metadata::new(),
-                    Box::new(expr1),
-                    Box::new(expr2),
+                    Moo::new(expr1),
+                    Moo::new(expr2),
                 )),
                 "<=" => Ok(Expression::Leq(
                     Metadata::new(),
-                    Box::new(expr1),
-                    Box::new(expr2),
+                    Moo::new(expr1),
+                    Moo::new(expr2),
                 )),
                 ">=" => Ok(Expression::Geq(
                     Metadata::new(),
-                    Box::new(expr1),
-                    Box::new(expr2),
+                    Moo::new(expr1),
+                    Moo::new(expr2),
                 )),
                 "<" => Ok(Expression::Lt(
                     Metadata::new(),
-                    Box::new(expr1),
-                    Box::new(expr2),
+                    Moo::new(expr1),
+                    Moo::new(expr2),
                 )),
                 ">" => Ok(Expression::Gt(
                     Metadata::new(),
-                    Box::new(expr1),
-                    Box::new(expr2),
+                    Moo::new(expr1),
+                    Moo::new(expr2),
                 )),
                 "/\\" => Ok(Expression::And(
                     Metadata::new(),
-                    Box::new(matrix_expr![expr1, expr2]),
+                    Moo::new(matrix_expr![expr1, expr2]),
                 )),
                 "\\/" => Ok(Expression::Or(
                     Metadata::new(),
-                    Box::new(matrix_expr![expr1, expr2]),
+                    Moo::new(matrix_expr![expr1, expr2]),
                 )),
                 "->" => Ok(Expression::Imply(
                     Metadata::new(),
-                    Box::new(expr1),
-                    Box::new(expr2),
+                    Moo::new(expr1),
+                    Moo::new(expr2),
                 )),
                 _ => Err(format!("Unsupported operator '{op_type}'").into()),
             }
@@ -141,27 +141,27 @@ pub fn parse_expression(
             match quantifier_type {
                 "and" => Ok(Expression::And(
                     Metadata::new(),
-                    Box::new(into_matrix_expr![expr_list]),
+                    Moo::new(into_matrix_expr![expr_list]),
                 )),
                 "or" => Ok(Expression::Or(
                     Metadata::new(),
-                    Box::new(into_matrix_expr![expr_list]),
+                    Moo::new(into_matrix_expr![expr_list]),
                 )),
                 "min" => Ok(Expression::Min(
                     Metadata::new(),
-                    Box::new(into_matrix_expr![expr_list]),
+                    Moo::new(into_matrix_expr![expr_list]),
                 )),
                 "max" => Ok(Expression::Max(
                     Metadata::new(),
-                    Box::new(into_matrix_expr![expr_list]),
+                    Moo::new(into_matrix_expr![expr_list]),
                 )),
                 "sum" => Ok(Expression::Sum(
                     Metadata::new(),
-                    Box::new(into_matrix_expr![expr_list]),
+                    Moo::new(into_matrix_expr![expr_list]),
                 )),
                 "allDiff" => Ok(Expression::AllDiff(
                     Metadata::new(),
-                    Box::new(into_matrix_expr![expr_list]),
+                    Moo::new(into_matrix_expr![expr_list]),
                 )),
                 _ => Err(format!("Unsupported quantifier {}", constraint.kind()).into()),
             }
@@ -211,7 +211,7 @@ pub fn parse_expression(
                 let inner = child_expr(constraint, source_code, root, symbols)?;
                 match inner {
                     Expression::Atomic(_, _) => {
-                        Ok(Expression::FromSolution(Metadata::new(), Box::new(inner)))
+                        Ok(Expression::FromSolution(Metadata::new(), Moo::new(inner)))
                     }
                     _ => Err(
                         "Expression inside a `fromSolution()` must be a variable name"
@@ -228,7 +228,7 @@ pub fn parse_expression(
         },
         "toInt_expr" => Ok(Expression::ToInt(
             Metadata::new(),
-            Box::new(child_expr(constraint, source_code, root, symbols)?),
+            Moo::new(child_expr(constraint, source_code, root, symbols)?),
         )),
         _ => Err(format!("{} is not a recognized node kind", constraint.kind()).into()),
     }

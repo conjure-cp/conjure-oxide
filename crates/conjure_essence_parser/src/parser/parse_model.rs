@@ -2,8 +2,8 @@ use std::fs;
 use std::sync::{Arc, RwLock};
 
 use conjure_core::Model;
-use conjure_core::ast::DeclarationPtr;
 use conjure_core::ast::Expression;
+use conjure_core::ast::{DeclarationPtr, Moo};
 use conjure_core::context::Context;
 use conjure_core::error::Error;
 use conjure_core::metadata::Metadata;
@@ -82,7 +82,7 @@ pub fn parse_essence_with_context(
                     .expect("Expected a sub-expression inside `dominanceRelation`");
                 let current_symbols = model.as_submodel().symbols().clone();
                 let expr = parse_expression(inner, &source_code, &statement, &current_symbols)?;
-                let dominance = Expression::DominanceRelation(Metadata::new(), Box::new(expr));
+                let dominance = Expression::DominanceRelation(Metadata::new(), Moo::new(expr));
                 if model.dominance.is_some() {
                     return Err(EssenceParseError::ParseError(Error::Parse(
                         "Duplicate dominance relation".to_owned(),

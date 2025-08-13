@@ -3,7 +3,7 @@ use std::{borrow::Borrow, cell::Ref};
 use uniplate::Uniplate;
 
 use super::{
-    AbstractLiteral, DeclarationPtr, Domain, Expression, Literal, Name,
+    AbstractLiteral, DeclarationPtr, Domain, Expression, Literal, Moo, Name,
     categories::{Category, CategoryOf},
     domains::HasDomain,
     records::RecordValue,
@@ -124,6 +124,13 @@ impl TryFrom<Box<Expression>> for Atom {
     }
 }
 
+impl TryFrom<Moo<Expression>> for Atom {
+    type Error = &'static str;
+
+    fn try_from(value: Moo<Expression>) -> Result<Self, Self::Error> {
+        TryFrom::try_from(Moo::unwrap_or_clone(value))
+    }
+}
 impl<'a> TryFrom<&'a Expression> for &'a Atom {
     type Error = &'static str;
 
@@ -139,6 +146,15 @@ impl<'a> TryFrom<&'a Box<Expression>> for &'a Atom {
     type Error = &'static str;
 
     fn try_from(value: &'a Box<Expression>) -> Result<Self, Self::Error> {
+        let expr: &'a Expression = value.borrow();
+        expr.try_into()
+    }
+}
+
+impl<'a> TryFrom<&'a Moo<Expression>> for &'a Atom {
+    type Error = &'static str;
+
+    fn try_from(value: &'a Moo<Expression>) -> Result<Self, Self::Error> {
         let expr: &'a Expression = value.borrow();
         expr.try_into()
     }
@@ -211,6 +227,22 @@ impl TryFrom<Box<Atom>> for i32 {
     fn try_from(value: Box<Atom>) -> Result<Self, Self::Error> {
         let lit: Literal = (*value).try_into()?;
         lit.try_into()
+    }
+}
+
+impl TryFrom<&Moo<Atom>> for i32 {
+    type Error = &'static str;
+
+    fn try_from(value: &Moo<Atom>) -> Result<Self, Self::Error> {
+        TryFrom::<&Atom>::try_from(value.as_ref())
+    }
+}
+
+impl TryFrom<Moo<Atom>> for i32 {
+    type Error = &'static str;
+
+    fn try_from(value: Moo<Atom>) -> Result<Self, Self::Error> {
+        TryFrom::<&Atom>::try_from(value.as_ref())
     }
 }
 

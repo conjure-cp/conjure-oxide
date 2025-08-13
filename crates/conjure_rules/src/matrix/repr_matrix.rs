@@ -1,6 +1,6 @@
 use conjure_core::ast::categories::{Category, CategoryOf};
 use conjure_core::ast::{
-    Atom, Domain, Expression as Expr, Literal, Name, Range, SymbolTable, matrix,
+    Atom, Domain, Expression as Expr, Literal, Moo, Name, Range, SymbolTable, matrix,
 };
 use conjure_core::into_matrix_expr;
 use conjure_core::metadata::Metadata;
@@ -135,7 +135,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
 
                 return Ok(Reduction::pure(Expr::SafeIndex(
                     Metadata::new(),
-                    Box::new(new_subject),
+                    Moo::new(new_subject),
                     vec![essence_expr!(&old_index - &offset)],
                 )));
             }
@@ -220,7 +220,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
             // (coeffs . terms) + 1
             sum_terms.push(essence_expr!(1));
 
-            let flat_index = Expr::Sum(Metadata::new(), Box::new(into_matrix_expr![sum_terms]));
+            let flat_index = Expr::Sum(Metadata::new(), Moo::new(into_matrix_expr![sum_terms]));
 
             // now lets get the flat matrix.
 
@@ -240,7 +240,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
 
             Ok(Reduction::pure(Expr::SafeIndex(
                 Metadata::new(),
-                Box::new(flat_matrix),
+                Moo::new(flat_matrix),
                 vec![flat_index],
             )))
         }
