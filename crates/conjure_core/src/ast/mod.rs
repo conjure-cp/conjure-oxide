@@ -18,6 +18,9 @@ mod symbol_table;
 mod types;
 mod variables;
 
+mod moo;
+pub use moo::Moo;
+
 pub use atom::Atom;
 pub use declaration::{DeclarationKind, DeclarationPtr};
 pub use domains::Domain;
