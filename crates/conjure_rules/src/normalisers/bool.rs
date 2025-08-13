@@ -1,6 +1,6 @@
 //! Normalising rules for boolean operations (not, and, or, ->).
 
-use conjure_core::ast::{Atom, Expression as Expr, SymbolTable};
+use conjure_core::ast::{Atom, Expression as Expr, Moo, SymbolTable};
 use conjure_core::into_matrix_expr;
 use conjure_core::rule_engine::{
     ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
@@ -18,7 +18,7 @@ use uniplate::Uniplate;
 fn remove_double_negation(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Not(_, contents) => match contents.as_ref() {
-            Expr::Not(_, expr_box) => Ok(Reduction::pure(*expr_box.clone())),
+            Expr::Not(_, expr_box) => Ok(Reduction::pure(Moo::unwrap_or_clone(expr_box.clone()))),
             _ => Err(ApplicationError::RuleNotApplicable),
         },
         _ => Err(ApplicationError::RuleNotApplicable),
@@ -67,13 +67,13 @@ fn distribute_or_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                                 new_or_contents.push(e.clone());
                                 new_and_contents.push(Expr::Or(
                                     metadata.clone_dirty(),
-                                    Box::new(into_matrix_expr![new_or_contents]),
+                                    Moo::new(into_matrix_expr![new_or_contents]),
                                 ))
                             }
 
                             Ok(Reduction::pure(Expr::And(
                                 metadata.clone_dirty(),
-                                Box::new(into_matrix_expr![new_and_contents]),
+                                Moo::new(into_matrix_expr![new_and_contents]),
                             )))
                         }
                         _ => Err(ApplicationError::RuleNotApplicable),
@@ -119,7 +119,7 @@ fn distribute_not_over_and(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 }
                 Ok(Reduction::pure(Expr::Or(
                     metadata.clone(),
-                    Box::new(into_matrix_expr![new_exprs]),
+                    Moo::new(into_matrix_expr![new_exprs]),
                 )))
             }
             _ => Err(ApplicationError::RuleNotApplicable),
@@ -155,7 +155,7 @@ fn distribute_not_over_or(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
                 Ok(Reduction::pure(Expr::And(
                     metadata.clone(),
-                    Box::new(into_matrix_expr![new_exprs]),
+                    Moo::new(into_matrix_expr![new_exprs]),
                 )))
             }
             _ => Err(ApplicationError::RuleNotApplicable),

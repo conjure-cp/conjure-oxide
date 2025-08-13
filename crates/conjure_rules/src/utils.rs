@@ -1,5 +1,5 @@
 use conjure_core::{
-    ast::{Atom, DeclarationPtr, Expression as Expr, SymbolTable, categories::Category},
+    ast::{Atom, DeclarationPtr, Expression as Expr, Moo, SymbolTable, categories::Category},
     metadata::Metadata,
 };
 
@@ -177,7 +177,7 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
 
     Some(ToAuxVarOutput {
         aux_declaration: decl.clone(),
-        aux_expression: Expr::AuxDeclaration(Metadata::new(), decl, Box::new(expr.clone())),
+        aux_expression: Expr::AuxDeclaration(Metadata::new(), decl, Moo::new(expr.clone())),
         symbols,
         _unconstructable: (),
     })

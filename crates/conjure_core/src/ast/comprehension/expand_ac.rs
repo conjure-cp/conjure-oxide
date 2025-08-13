@@ -6,8 +6,8 @@ use uniplate::{Biplate, Uniplate as _, zipper::Zipper};
 
 use crate::{
     ast::{
-        Atom, DeclarationPtr, Expression, Name, ReturnType, SubModel, SymbolTable, Typeable as _,
-        ac_operators::ACOperatorKind,
+        Atom, DeclarationPtr, Expression, Moo, Name, ReturnType, SubModel, SymbolTable,
+        Typeable as _, ac_operators::ACOperatorKind,
     },
     metadata::Metadata,
 };
@@ -156,11 +156,11 @@ pub(super) fn add_return_expression_to_generator_model(
 
     let new_return_expression = Expression::Neq(
         Metadata::new(),
-        Box::new(Expression::Atomic(
+        Moo::new(Expression::Atomic(
             Metadata::new(),
             ac_operator.identity().into(),
         )),
-        Box::new(zipper.rebuild_root()),
+        Moo::new(zipper.rebuild_root()),
     );
 
     // double check that the above transformation didn't miss any stray non induction vars

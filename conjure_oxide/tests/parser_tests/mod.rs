@@ -1,5 +1,5 @@
 use conjure_core::{
-    ast::{Atom, Expression, Name, declaration},
+    ast::{Atom, Expression, Moo, Name, declaration},
     context::Context,
     matrix_expr,
 };
@@ -34,21 +34,21 @@ fn test_parse_dominance() {
 
     let expected_dominance = Some(Expression::DominanceRelation(
         Metadata::new(),
-        Box::new(Expression::And(
+        Moo::new(Expression::And(
             Metadata::new(),
-            Box::new(matrix_expr![
+            Moo::new(matrix_expr![
                 Expression::And(
                     Metadata::new(),
-                    Box::new(matrix_expr![
+                    Moo::new(matrix_expr![
                         Expression::Leq(
                             Metadata::new(),
-                            Box::new(Expression::Atomic(
+                            Moo::new(Expression::Atomic(
                                 Metadata::new(),
                                 Atom::new_ref(cost_decl.clone())
                             )),
-                            Box::new(Expression::FromSolution(
+                            Moo::new(Expression::FromSolution(
                                 Metadata::new(),
-                                Box::new(Expression::Atomic(
+                                Moo::new(Expression::Atomic(
                                     Metadata::new(),
                                     Atom::new_ref(cost_decl.clone())
                                 )),
@@ -56,13 +56,13 @@ fn test_parse_dominance() {
                         ),
                         Expression::Leq(
                             Metadata::new(),
-                            Box::new(Expression::Atomic(
+                            Moo::new(Expression::Atomic(
                                 Metadata::new(),
                                 Atom::new_ref(carbon_decl.clone())
                             )),
-                            Box::new(Expression::FromSolution(
+                            Moo::new(Expression::FromSolution(
                                 Metadata::new(),
-                                Box::new(Expression::Atomic(
+                                Moo::new(Expression::Atomic(
                                     Metadata::new(),
                                     Atom::new_ref(carbon_decl.clone())
                                 )),
@@ -72,16 +72,16 @@ fn test_parse_dominance() {
                 ),
                 Expression::Or(
                     Metadata::new(),
-                    Box::new(matrix_expr![
+                    Moo::new(matrix_expr![
                         Expression::Lt(
                             Metadata::new(),
-                            Box::new(Expression::Atomic(
+                            Moo::new(Expression::Atomic(
                                 Metadata::new(),
                                 Atom::new_ref(cost_decl.clone())
                             )),
-                            Box::new(Expression::FromSolution(
+                            Moo::new(Expression::FromSolution(
                                 Metadata::new(),
-                                Box::new(Expression::Atomic(
+                                Moo::new(Expression::Atomic(
                                     Metadata::new(),
                                     Atom::new_ref(cost_decl)
                                 )),
@@ -89,13 +89,13 @@ fn test_parse_dominance() {
                         ),
                         Expression::Lt(
                             Metadata::new(),
-                            Box::new(Expression::Atomic(
+                            Moo::new(Expression::Atomic(
                                 Metadata::new(),
                                 Atom::new_ref(carbon_decl.clone())
                             )),
-                            Box::new(Expression::FromSolution(
+                            Moo::new(Expression::FromSolution(
                                 Metadata::new(),
-                                Box::new(Expression::Atomic(
+                                Moo::new(Expression::Atomic(
                                     Metadata::new(),
                                     Atom::new_ref(carbon_decl)
                                 )),

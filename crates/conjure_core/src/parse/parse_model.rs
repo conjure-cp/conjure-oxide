@@ -9,13 +9,13 @@ use ustr::Ustr;
 use serde_json::Value;
 use serde_json::Value as JsonValue;
 
-use crate::ast::DeclarationKind;
 use crate::ast::comprehension::{ComprehensionBuilder, ComprehensionKind};
 use crate::ast::records::RecordValue;
 use crate::ast::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, Literal, Name, Range, RecordEntry,
     SetAttr, SymbolTable,
 };
+use crate::ast::{DeclarationKind, Moo};
 use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::metadata::Metadata;
@@ -438,8 +438,8 @@ fn parse_domain_value_int(obj: &JsonValue, symbols: &SymbolTable) -> Option<i32>
 }
 
 // this needs an explicit type signature to force the closures to have the same type
-type BinOp = Box<dyn Fn(Metadata, Box<Expression>, Box<Expression>) -> Expression>;
-type UnaryOp = Box<dyn Fn(Metadata, Box<Expression>) -> Expression>;
+type BinOp = Box<dyn Fn(Metadata, Moo<Expression>, Moo<Expression>) -> Expression>;
+type UnaryOp = Box<dyn Fn(Metadata, Moo<Expression>) -> Expression>;
 
 pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Option<Expression> {
     let binary_operators: HashMap<&str, BinOp> = [
@@ -745,7 +745,7 @@ fn parse_comprehension(
 
     Some(Expression::Comprehension(
         Metadata::new(),
-        Box::new(comprehension.with_return_value(expr, comprehension_kind)),
+        Moo::new(comprehension.with_return_value(expr, comprehension_kind)),
     ))
 }
 
@@ -764,7 +764,7 @@ fn parse_bin_op(
         Value::Array(bin_op_args) if bin_op_args.len() == 2 => {
             let arg1 = parse_expression(&bin_op_args[0], scope)?;
             let arg2 = parse_expression(&bin_op_args[1], scope)?;
-            Some(constructor(Metadata::new(), Box::new(arg1), Box::new(arg2)))
+            Some(constructor(Metadata::new(), Moo::new(arg1), Moo::new(arg2)))
         }
         otherwise => bug!("Unhandled parse_bin_op {:#?}", otherwise),
     }
@@ -825,13 +825,13 @@ fn parse_indexing_slicing_op(
         match &mut target {
             Expression::UnsafeIndex(_, new_target, new_indices) => {
                 indices.extend(new_indices.iter().cloned().rev().map(Some));
-                target = *new_target.clone();
+                target = Moo::unwrap_or_clone(new_target.clone());
             }
 
             Expression::UnsafeSlice(_, new_target, new_indices) => {
                 all_known = false;
                 indices.extend(new_indices.iter().cloned().rev());
-                target = *new_target.clone();
+                target = Moo::unwrap_or_clone(new_target.clone());
             }
 
             _ => {
@@ -846,13 +846,13 @@ fn parse_indexing_slicing_op(
     if all_known {
         Some(Expression::UnsafeIndex(
             Metadata::new(),
-            Box::new(target),
+            Moo::new(target),
             indices.into_iter().map(|x| x.unwrap()).collect(),
         ))
     } else {
         Some(Expression::UnsafeSlice(
             Metadata::new(),
-            Box::new(target),
+            Moo::new(target),
             indices,
         ))
     }
@@ -882,7 +882,7 @@ fn parse_unary_op(
         _ => parse_expression(value, scope),
     }?;
 
-    Some(constructor(Metadata::new(), Box::new(arg)))
+    Some(constructor(Metadata::new(), Moo::new(arg)))
 }
 
 // Takes in { AbstractLiteral: .... }

@@ -1,4 +1,4 @@
-use conjure_core::ast::{Atom, Expression};
+use conjure_core::ast::{Atom, Expression, Moo};
 use conjure_core::matrix_expr;
 use conjure_oxide::{Metadata, essence_expr};
 
@@ -9,7 +9,7 @@ fn test_2plus2() {
         expr,
         Expression::Sum(
             Metadata::new(),
-            Box::new(matrix_expr![
+            Moo::new(matrix_expr![
                 Expression::Atomic(Metadata::new(), Atom::new_ilit(2)),
                 Expression::Atomic(Metadata::new(), Atom::new_ilit(2))
             ])

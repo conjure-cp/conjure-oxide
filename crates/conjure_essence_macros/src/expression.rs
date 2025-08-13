@@ -22,7 +22,7 @@ pub fn parse_expr_to_ts(
             let child = child_expr_to_ts(constraint, source_code, root)?;
             Ok(quote! {::conjure_core::ast::Expression::Not(
                 ::conjure_core::metadata::Metadata::new(),
-                Box::new(#child),
+                ::conjure_core::ast::Moo::new(#child),
             )})
         }
         "abs_value" => {
@@ -30,14 +30,14 @@ pub fn parse_expr_to_ts(
             Ok(quote! {
                 ::conjure_core::ast::Expression::Abs(
                 ::conjure_core::metadata::Metadata::new(),
-                Box::new(#child),
+                ::conjure_core::ast::Moo::new(#child),
             )})
         }
         "negative_expr" => {
             let child = child_expr_to_ts(constraint, source_code, root)?;
             Ok(quote! {::conjure_core::ast::Expression::Neg(
                 ::conjure_core::metadata::Metadata::new(),
-                Box::new(#child),
+                ::conjure_core::ast::Moo::new(#child),
             )})
         }
         "exponent" | "product_expr" | "sum_expr" | "comparison" | "and_expr" | "or_expr"
@@ -57,79 +57,79 @@ pub fn parse_expr_to_ts(
             match op_type {
                 "**" => Ok(quote! {::conjure_core::ast::Expression::UnsafePow(
                     ::conjure_core::metadata::Metadata::new(),
-                    Box::new(#expr1),
-                    Box::new(#expr2),
+                    ::conjure_core::ast::Moo::new(#expr1),
+                    ::conjure_core::ast::Moo::new(#expr2),
                 )}),
                 "+" => Ok(quote! {::conjure_core::ast::Expression::Sum(
                     ::conjure_core::metadata::Metadata::new(),
-                    Box::new(::conjure_core::matrix_expr![#expr1, #expr2]),
+                    ::conjure_core::ast::Moo::new(::conjure_core::matrix_expr![#expr1, #expr2]),
                 )}),
                 "-" => Ok(quote! {::conjure_core::ast::Expression::Minus(
                     ::conjure_core::metadata::Metadata::new(),
-                    Box::new(#expr1),
-                    Box::new(#expr2),
+                    ::conjure_core::ast::Moo::new(#expr1),
+                    ::conjure_core::ast::Moo::new(#expr2),
                 )}),
                 "*" => Ok(
-                    quote! {::conjure_core::ast::Expression::Product(::conjure_core::metadata::Metadata::new(), Box::new(::conjure_core::matrix_expr![#expr1, #expr2]))},
+                    quote! {::conjure_core::ast::Expression::Product(::conjure_core::metadata::Metadata::new(), ::conjure_core::ast::Moo::new(::conjure_core::matrix_expr![#expr1, #expr2]))},
                 ),
                 "/" => {
                     //TODO: add checks for if division is safe or not
                     Ok(quote! {::conjure_core::ast::Expression::UnsafeDiv(
                         ::conjure_core::metadata::Metadata::new(),
-                        Box::new(#expr1),
-                        Box::new(#expr2),
+                        ::conjure_core::ast::Moo::new(#expr1),
+                        ::conjure_core::ast::Moo::new(#expr2),
                     )})
                 }
                 "%" => {
                     //TODO: add checks for if mod is safe or not
                     Ok(quote! {::conjure_core::ast::Expression::UnsafeMod(
                         ::conjure_core::metadata::Metadata::new(),
-                        Box::new(#expr1),
-                        Box::new(#expr2),
+                        ::conjure_core::ast::Moo::new(#expr1),
+                        ::conjure_core::ast::Moo::new(#expr2),
                     )})
                 }
                 "=" => Ok(quote! {::conjure_core::ast::Expression::Eq(
                     ::conjure_core::metadata::Metadata::new(),
-                    Box::new(#expr1),
-                    Box::new(#expr2),
+                    ::conjure_core::ast::Moo::new(#expr1),
+                    ::conjure_core::ast::Moo::new(#expr2),
                 )}),
                 "!=" => Ok(quote! {::conjure_core::ast::Expression::Neq(
                     ::conjure_core::metadata::Metadata::new(),
-                    Box::new(#expr1),
-                    Box::new(#expr2),
+                    ::conjure_core::ast::Moo::new(#expr1),
+                    ::conjure_core::ast::Moo::new(#expr2),
                 )}),
                 "<=" => Ok(quote! {::conjure_core::ast::Expression::Leq(
                     ::conjure_core::metadata::Metadata::new(),
-                    Box::new(#expr1),
-                    Box::new(#expr2),
+                    ::conjure_core::ast::Moo::new(#expr1),
+                    ::conjure_core::ast::Moo::new(#expr2),
                 )}),
                 ">=" => Ok(quote! {::conjure_core::ast::Expression::Geq(
                     ::conjure_core::metadata::Metadata::new(),
-                    Box::new(#expr1),
-                    Box::new(#expr2),
+                    ::conjure_core::ast::Moo::new(#expr1),
+                    ::conjure_core::ast::Moo::new(#expr2),
                 )}),
                 "<" => Ok(quote! {::conjure_core::ast::Expression::Lt(
                     ::conjure_core::metadata::Metadata::new(),
-                    Box::new(#expr1),
-                    Box::new(#expr2),
+                    ::conjure_core::ast::Moo::new(#expr1),
+                    ::conjure_core::ast::Moo::new(#expr2),
                 )}),
                 ">" => Ok(quote! {::conjure_core::ast::Expression::Gt(
                     ::conjure_core::metadata::Metadata::new(),
-                    Box::new(#expr1),
-                    Box::new(#expr2),
+                    ::conjure_core::ast::Moo::new(#expr1),
+                    ::conjure_core::ast::Moo::new(#expr2),
                 )}),
                 "/\\" => Ok(quote! {::conjure_core::ast::Expression::And(
                     ::conjure_core::metadata::Metadata::new(),
-                    Box::new(::conjure_core::matrix_expr![#expr1, #expr2]),
+                    ::conjure_core::ast::Moo::new(::conjure_core::matrix_expr![#expr1, #expr2]),
                 )}),
                 "\\/" => Ok(quote! {::conjure_core::ast::Expression::Or(
                     ::conjure_core::metadata::Metadata::new(),
-                    Box::new(::conjure_core::matrix_expr![#expr1, #expr2]),
+                    ::conjure_core::ast::Moo::new(::conjure_core::matrix_expr![#expr1, #expr2]),
                 )}),
                 "->" => Ok(quote! {::conjure_core::ast::Expression::Imply(
                     ::conjure_core::metadata::Metadata::new(),
-                    Box::new(#expr1),
-                    Box::new(#expr2),
+                    ::conjure_core::ast::Moo::new(#expr1),
+                    ::conjure_core::ast::Moo::new(#expr2),
                 )}),
                 _ => Err(format!("Unsupported operator '{op_type}'").into()),
             }
@@ -149,27 +149,27 @@ pub fn parse_expr_to_ts(
             match quantifier_type {
                 "and" => Ok(quote! {::conjure_core::ast::Expression::And(
                     ::conjure_core::metadata::Metadata::new(),
-                    Box::new(::conjure_core::matrix_expr![#(#expr_list),*]),
+                    ::conjure_core::ast::Moo::new(::conjure_core::matrix_expr![#(#expr_list),*]),
                 )}),
                 "or" => Ok(quote! {::conjure_core::ast::Expression::Or(
                     ::conjure_core::metadata::Metadata::new(),
-                    Box::new(::conjure_core::matrix_expr![#(#expr_list),*]),
+                    ::conjure_core::ast::Moo::new(::conjure_core::matrix_expr![#(#expr_list),*]),
                 )}),
                 "min" => Ok(quote! {::conjure_core::ast::Expression::Min(
                     ::conjure_core::metadata::Metadata::new(),
-                    Box::new(::conjure_core::matrix_expr![#(#expr_list),*]),
+                    ::conjure_core::ast::Moo::new(::conjure_core::matrix_expr![#(#expr_list),*]),
                 )}),
                 "max" => Ok(quote! {::conjure_core::ast::Expression::Max(
                     ::conjure_core::metadata::Metadata::new(),
-                    Box::new(::conjure_core::matrix_expr![#(#expr_list),*]),
+                    ::conjure_core::ast::Moo::new(::conjure_core::matrix_expr![#(#expr_list),*]),
                 )}),
                 "sum" => Ok(quote! {::conjure_core::ast::Expression::Sum(
                     ::conjure_core::metadata::Metadata::new(),
-                    Box::new(::conjure_core::matrix_expr![#(#expr_list),*]),
+                    ::conjure_core::ast::Moo::new(::conjure_core::matrix_expr![#(#expr_list),*]),
                 )}),
                 "allDiff" => Ok(quote! {::conjure_core::ast::Expression::AllDiff(
                     ::conjure_core::metadata::Metadata::new(),
-                    Box::new(::conjure_core::matrix_expr![#(#expr_list),*]),
+                    ::conjure_core::ast::Moo::new(::conjure_core::matrix_expr![#(#expr_list),*]),
                 )}),
                 _ => Err(format!("Unsupported quantifier {}", constraint.kind()).into()),
             }
@@ -217,7 +217,7 @@ pub fn parse_expr_to_ts(
                 // match inner { ... }
                 // Just generate the FromSolution structure. Runtime validation must happen later.
                 Ok(quote! {
-                    ::conjure_core::ast::Expression::FromSolution(::conjure_core::metadata::Metadata::new(), Box::new(#inner_ts))
+                    ::conjure_core::ast::Expression::FromSolution(::conjure_core::metadata::Metadata::new(), ::conjure_core::ast::Moo::new(#inner_ts))
                 })
                 // The original code had a check here to ensure inner was Atomic.
                 // This check cannot be performed at compile time by the macro.

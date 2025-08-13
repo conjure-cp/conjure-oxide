@@ -1,5 +1,7 @@
 use conjure_core::{
-    ast::{Atom, DeclarationKind, Expression, Literal, Name, ReturnType, SymbolTable, Typeable},
+    ast::{
+        Atom, DeclarationKind, Expression, Literal, Moo, Name, ReturnType, SymbolTable, Typeable,
+    },
     into_matrix_expr, matrix_expr,
     metadata::Metadata,
     rule_engine::{
@@ -24,9 +26,11 @@ register_rule_set!("Bubble", ("Base"));
 fn expand_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expression::Bubble(_, a, b) if a.return_type() == Some(ReturnType::Bool) => {
+            let a = Moo::unwrap_or_clone(Moo::clone(a));
+            let b = Moo::unwrap_or_clone(Moo::clone(b));
             Ok(Reduction::pure(Expression::And(
                 Metadata::new(),
-                Box::new(matrix_expr![*a.clone(), *b.clone()]),
+                Moo::new(matrix_expr![a, b]),
             )))
         }
         _ => Err(ApplicationError::RuleNotApplicable),
@@ -65,8 +69,10 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
     for e in sub.iter_mut() {
         if let Expression::Bubble(_, a, b) = e {
             if a.return_type() != Some(ReturnType::Bool) {
-                bubbled_conditions.push(*b.clone());
-                *e = *a.clone();
+                let a = Moo::unwrap_or_clone(Moo::clone(a));
+                let b = Moo::unwrap_or_clone(Moo::clone(b));
+                bubbled_conditions.push(b);
+                *e = a;
             }
         }
     }
@@ -75,18 +81,18 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
     } else if bubbled_conditions.len() == 1 {
         let new_expr = Expression::Bubble(
             Metadata::new(),
-            Box::new(expr.with_children(sub)),
-            Box::new(bubbled_conditions[0].clone()),
+            Moo::new(expr.with_children(sub)),
+            Moo::new(bubbled_conditions[0].clone()),
         );
 
         Ok(Reduction::pure(new_expr))
     } else {
         Ok(Reduction::pure(Expression::Bubble(
             Metadata::new(),
-            Box::new(expr.with_children(sub)),
-            Box::new(Expression::And(
+            Moo::new(expr.with_children(sub)),
+            Moo::new(Expression::And(
                 Metadata::new(),
-                Box::new(into_matrix_expr![bubbled_conditions]),
+                Moo::new(into_matrix_expr![bubbled_conditions]),
             )),
         )))
     }
@@ -117,11 +123,11 @@ fn div_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 
         return Ok(Reduction::pure(Expression::Bubble(
             Metadata::new(),
-            Box::new(Expression::SafeDiv(Metadata::new(), a.clone(), b.clone())),
-            Box::new(Expression::Neq(
+            Moo::new(Expression::SafeDiv(Metadata::new(), a.clone(), b.clone())),
+            Moo::new(Expression::Neq(
                 Metadata::new(),
                 b.clone(),
-                Box::new(Expression::from(0)),
+                Moo::new(Expression::from(0)),
             )),
         )));
     }
@@ -151,11 +157,11 @@ fn mod_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 
         return Ok(Reduction::pure(Expression::Bubble(
             Metadata::new(),
-            Box::new(Expression::SafeMod(Metadata::new(), a.clone(), b.clone())),
-            Box::new(Expression::Neq(
+            Moo::new(Expression::SafeMod(Metadata::new(), a.clone(), b.clone())),
+            Moo::new(Expression::Neq(
                 Metadata::new(),
                 b.clone(),
-                Box::new(Expression::from(0)),
+                Moo::new(Expression::from(0)),
             )),
         )));
     }
@@ -185,29 +191,29 @@ fn pow_to_bubble(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 
         return Ok(Reduction::pure(Expression::Bubble(
             Metadata::new(),
-            Box::new(Expression::SafePow(Metadata::new(), a.clone(), b.clone())),
-            Box::new(Expression::And(
+            Moo::new(Expression::SafePow(Metadata::new(), a.clone(), b.clone())),
+            Moo::new(Expression::And(
                 Metadata::new(),
-                Box::new(matrix_expr![
+                Moo::new(matrix_expr![
                     Expression::Or(
                         Metadata::new(),
-                        Box::new(matrix_expr![
+                        Moo::new(matrix_expr![
                             Expression::Neq(
                                 Metadata::new(),
                                 a,
-                                Box::new(Atom::Literal(Literal::Int(0)).into()),
+                                Moo::new(Atom::Literal(Literal::Int(0)).into()),
                             ),
                             Expression::Neq(
                                 Metadata::new(),
                                 b.clone(),
-                                Box::new(Atom::Literal(Literal::Int(0)).into()),
+                                Moo::new(Atom::Literal(Literal::Int(0)).into()),
                             ),
                         ]),
                     ),
                     Expression::Geq(
                         Metadata::new(),
                         b,
-                        Box::new(Atom::Literal(Literal::Int(0)).into()),
+                        Moo::new(Atom::Literal(Literal::Int(0)).into()),
                     ),
                 ]),
             )),

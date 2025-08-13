@@ -1,5 +1,6 @@
 use conjure_core::ast::AbstractLiteral;
 use conjure_core::ast::Expression as Expr;
+use conjure_core::ast::Moo;
 use conjure_core::ast::SymbolTable;
 use conjure_core::into_matrix_expr;
 use conjure_core::matrix_expr;
@@ -116,21 +117,21 @@ fn record_index_to_bubble(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
         // converting to an integer for direct access
         let idx = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Int(idx as i32 + 1)));
 
-        let bubble_constraint = Box::new(Expression::And(
+        let bubble_constraint = Moo::new(Expression::And(
             Metadata::new(),
-            Box::new(matrix_expr![
+            Moo::new(matrix_expr![
                 Expression::Leq(
                     Metadata::new(),
-                    Box::new(idx.clone()),
-                    Box::new(Expression::Atomic(
+                    Moo::new(idx.clone()),
+                    Moo::new(Expression::Atomic(
                         Metadata::new(),
                         Atom::Literal(Literal::Int(elems.len() as i32))
                     ))
                 ),
                 Expression::Geq(
                     Metadata::new(),
-                    Box::new(idx.clone()),
-                    Box::new(Expression::Atomic(
+                    Moo::new(idx.clone()),
+                    Moo::new(Expression::Atomic(
                         Metadata::new(),
                         Atom::Literal(Literal::Int(1))
                     ))
@@ -138,7 +139,7 @@ fn record_index_to_bubble(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
             ]),
         ));
 
-        let new_expr = Box::new(Expression::SafeIndex(
+        let new_expr = Moo::new(Expression::SafeIndex(
             Metadata::new(),
             subject.clone(),
             Vec::from([idx]),
@@ -188,7 +189,7 @@ fn record_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         for i in 0..entries.len() {
             let left_elem = Expression::SafeIndex(
                 Metadata::new(),
-                Box::new(*left.clone()),
+                Moo::clone(left),
                 vec![Expression::Atomic(
                     Metadata::new(),
                     Atom::Literal(Literal::Int((i + 1) as i32)),
@@ -196,7 +197,7 @@ fn record_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             );
             let right_elem = Expression::SafeIndex(
                 Metadata::new(),
-                Box::new(*right.clone()),
+                Moo::clone(right),
                 vec![Expression::Atomic(
                     Metadata::new(),
                     Atom::Literal(Literal::Int((i + 1) as i32)),
@@ -205,14 +206,14 @@ fn record_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
             equality_constraints.push(Expression::Eq(
                 Metadata::new(),
-                Box::new(left_elem),
-                Box::new(right_elem),
+                Moo::new(left_elem),
+                Moo::new(right_elem),
             ));
         }
 
         let new_expr = Expression::And(
             Metadata::new(),
-            Box::new(into_matrix_expr!(equality_constraints)),
+            Moo::new(into_matrix_expr!(equality_constraints)),
         );
 
         Ok(Reduction::pure(new_expr))
@@ -251,7 +252,7 @@ fn record_to_const(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         for i in 0..entries.len() {
             let left_elem = Expression::SafeIndex(
                 Metadata::new(),
-                Box::new(*left.clone()),
+                Moo::clone(left),
                 vec![Expression::Atomic(
                     Metadata::new(),
                     Atom::Literal(Literal::Int((i + 1) as i32)),
@@ -259,7 +260,7 @@ fn record_to_const(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             );
             let right_elem = Expression::SafeIndex(
                 Metadata::new(),
-                Box::new(*right.clone()),
+                Moo::clone(right),
                 vec![Expression::Atomic(
                     Metadata::new(),
                     Atom::Literal(Literal::Int((i + 1) as i32)),
@@ -268,13 +269,13 @@ fn record_to_const(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
             equality_constraints.push(Expression::Eq(
                 Metadata::new(),
-                Box::new(left_elem),
-                Box::new(right_elem),
+                Moo::new(left_elem),
+                Moo::new(right_elem),
             ));
         }
         let new_expr = Expression::And(
             Metadata::new(),
-            Box::new(into_matrix_expr!(equality_constraints)),
+            Moo::new(into_matrix_expr!(equality_constraints)),
         );
         Ok(Reduction::pure(new_expr))
     } else {

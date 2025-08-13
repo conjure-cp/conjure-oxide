@@ -45,7 +45,7 @@ pub fn essence_expr(args: TokenStream) -> TokenStream {
 ///
 /// ## Example
 /// ```ignore
-/// use conjure_core::ast::{Atom, Expression};
+/// use conjure_core::ast::{Atom, Expression, Moo};
 /// use conjure_core::matrix_expr;
 /// use conjure_core::metadata::Metadata;
 /// use conjure_essence_macros::essence_vec;
@@ -55,7 +55,7 @@ pub fn essence_expr(args: TokenStream) -> TokenStream {
 /// assert_eq!(exprs.len(), 2);
 /// assert_eq!(
 ///     exprs[0],
-///     Expression::Sum(Metadata::new(), Box::new(matrix_expr![
+///     Expression::Sum(Metadata::new(), Moo::new(matrix_expr![
 ///         Expression::Atomic(Metadata::new(), Atom::new_uref("a")),
 ///         Expression::Atomic(Metadata::new(), Atom::new_ilit(2))
 ///     ]))
@@ -63,8 +63,8 @@ pub fn essence_expr(args: TokenStream) -> TokenStream {
 /// assert_eq!(
 ///    exprs[1],
 ///     Expression::Eq(Metadata::new(),
-///         Box::new(Expression::Atomic(Metadata::new(), Atom::new_uref("b"))),
-///         Box::new(Expression::Atomic(Metadata::new(), Atom::new_blit(true)))
+///         Moo::new(Expression::Atomic(Metadata::new(), Atom::new_uref("b"))),
+///         Moo::new(Expression::Atomic(Metadata::new(), Atom::new_blit(true)))
 ///     )
 /// );
 /// ```

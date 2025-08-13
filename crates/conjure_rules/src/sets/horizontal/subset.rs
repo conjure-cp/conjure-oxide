@@ -1,5 +1,5 @@
 // Subset rule for sets
-use conjure_core::ast::{Expression as Expr, ReturnType, SymbolTable, Typeable};
+use conjure_core::ast::{Expression as Expr, Moo, ReturnType, SymbolTable, Typeable};
 use conjure_core::matrix_expr;
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::Reduction;
@@ -17,7 +17,7 @@ fn subset_to_subset_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                     let expr2 = Expr::Neq(Metadata::new(), a.clone(), b.clone());
                     Ok(Reduction::pure(Expr::And(
                         Metadata::new(),
-                        Box::new(matrix_expr![expr1.clone(), expr2.clone()]),
+                        Moo::new(matrix_expr![expr1.clone(), expr2.clone()]),
                     )))
                 } else {
                     Err(RuleNotApplicable)

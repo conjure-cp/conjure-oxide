@@ -1,5 +1,6 @@
 use conjure_core::ast::AbstractLiteral;
 use conjure_core::ast::Expression as Expr;
+use conjure_core::ast::Moo;
 use conjure_core::ast::SymbolTable;
 use conjure_core::into_matrix_expr;
 use conjure_core::matrix_expr;
@@ -98,21 +99,21 @@ fn tuple_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     assert_eq!(indices.len(), 1, "tuple indexing is always one dimensional");
     let index = indices[0].clone();
 
-    let bubble_constraint = Box::new(Expression::And(
+    let bubble_constraint = Moo::new(Expression::And(
         Metadata::new(),
-        Box::new(matrix_expr![
+        Moo::new(matrix_expr![
             Expression::Leq(
                 Metadata::new(),
-                Box::new(index.clone()),
-                Box::new(Expression::Atomic(
+                Moo::new(index.clone()),
+                Moo::new(Expression::Atomic(
                     Metadata::new(),
                     Atom::Literal(Literal::Int(elems.len() as i32))
                 ))
             ),
             Expression::Geq(
                 Metadata::new(),
-                Box::new(index.clone()),
-                Box::new(Expression::Atomic(
+                Moo::new(index.clone()),
+                Moo::new(Expression::Atomic(
                     Metadata::new(),
                     Atom::Literal(Literal::Int(1))
                 ))
@@ -120,7 +121,7 @@ fn tuple_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         ]),
     ));
 
-    let new_expr = Box::new(Expression::SafeIndex(
+    let new_expr = Moo::new(Expression::SafeIndex(
         Metadata::new(),
         subject.clone(),
         indices.clone(),
@@ -192,7 +193,7 @@ fn tuple_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     for i in 0..elems.len() {
         let left_elem = Expression::SafeIndex(
             Metadata::new(),
-            Box::new(*left.clone()),
+            Moo::clone(left),
             vec![Expression::Atomic(
                 Metadata::new(),
                 Atom::Literal(Literal::Int((i + 1) as i32)),
@@ -200,7 +201,7 @@ fn tuple_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         );
         let right_elem = Expression::SafeIndex(
             Metadata::new(),
-            Box::new(*right.clone()),
+            Moo::clone(right),
             vec![Expression::Atomic(
                 Metadata::new(),
                 Atom::Literal(Literal::Int((i + 1) as i32)),
@@ -209,14 +210,14 @@ fn tuple_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
         equality_constraints.push(Expression::Eq(
             Metadata::new(),
-            Box::new(left_elem),
-            Box::new(right_elem),
+            Moo::new(left_elem),
+            Moo::new(right_elem),
         ));
     }
 
     let new_expr = Expression::And(
         Metadata::new(),
-        Box::new(into_matrix_expr!(equality_constraints)),
+        Moo::new(into_matrix_expr!(equality_constraints)),
     );
 
     Ok(Reduction::pure(new_expr))
@@ -264,7 +265,7 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     for i in 0..elems.len() {
         let left_elem = Expression::SafeIndex(
             Metadata::new(),
-            Box::new(*left.clone()),
+            Moo::clone(left),
             vec![Expression::Atomic(
                 Metadata::new(),
                 Atom::Literal(Literal::Int((i + 1) as i32)),
@@ -272,7 +273,7 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         );
         let right_elem = Expression::SafeIndex(
             Metadata::new(),
-            Box::new(*right.clone()),
+            Moo::clone(right),
             vec![Expression::Atomic(
                 Metadata::new(),
                 Atom::Literal(Literal::Int((i + 1) as i32)),
@@ -281,14 +282,14 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
         equality_constraints.push(Expression::Eq(
             Metadata::new(),
-            Box::new(left_elem),
-            Box::new(right_elem),
+            Moo::new(left_elem),
+            Moo::new(right_elem),
         ));
     }
 
     let new_expr = Expression::And(
         Metadata::new(),
-        Box::new(into_matrix_expr!(equality_constraints)),
+        Moo::new(into_matrix_expr!(equality_constraints)),
     );
 
     Ok(Reduction::pure(new_expr))
@@ -353,7 +354,7 @@ fn tuple_inequality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     for i in 0..elems.len() {
         let left_elem = Expression::SafeIndex(
             Metadata::new(),
-            Box::new(*left.clone()),
+            Moo::clone(left),
             vec![Expression::Atomic(
                 Metadata::new(),
                 Atom::Literal(Literal::Int((i + 1) as i32)),
@@ -361,7 +362,7 @@ fn tuple_inequality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         );
         let right_elem = Expression::SafeIndex(
             Metadata::new(),
-            Box::new(*right.clone()),
+            Moo::clone(right),
             vec![Expression::Atomic(
                 Metadata::new(),
                 Atom::Literal(Literal::Int((i + 1) as i32)),
@@ -370,17 +371,17 @@ fn tuple_inequality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
         equality_constraints.push(Expression::Eq(
             Metadata::new(),
-            Box::new(left_elem),
-            Box::new(right_elem),
+            Moo::new(left_elem),
+            Moo::new(right_elem),
         ));
     }
 
     // Just copied from Conjure, would it be better to DeMorgan this?
     let new_expr = Expression::Not(
         Metadata::new(),
-        Box::new(Expression::And(
+        Moo::new(Expression::And(
             Metadata::new(),
-            Box::new(into_matrix_expr!(equality_constraints)),
+            Moo::new(into_matrix_expr!(equality_constraints)),
         )),
     );
 

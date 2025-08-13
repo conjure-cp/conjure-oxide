@@ -9,6 +9,7 @@ use crate::{
     extra_check,
     utils::{is_flat, to_aux_var},
 };
+use conjure_core::ast::Moo;
 use conjure_core::ast::categories::Category;
 use conjure_core::{
     ast::{
@@ -33,7 +34,7 @@ register_rule_set!("Minion", ("Base"), (SolverFamily::Minion));
 fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // product = val
     let val: Atom;
-    let product: Expr;
+    let product: Moo<Expr>;
 
     match expr.clone() {
         Expr::Eq(_m, a, b) => {
@@ -43,33 +44,33 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
             if let Some(f) = a_atom {
                 // val = product
                 val = f.clone();
-                product = *b;
+                product = b;
             } else if let Some(f) = b_atom {
                 // product = val
                 val = f.clone();
-                product = *a;
+                product = a;
             } else {
                 return Err(RuleNotApplicable);
             }
         }
         Expr::AuxDeclaration(_m, decl, e) => {
             val = Atom::Reference(decl);
-            product = *e;
+            product = e;
         }
         _ => {
             return Err(RuleNotApplicable);
         }
     }
 
-    if !(matches!(product, Expr::Product(_, _,))) {
+    if !(matches!(&*product, Expr::Product(_, _,))) {
         return Err(RuleNotApplicable);
     }
 
-    let Expr::Product(_, factors) = product else {
+    let Expr::Product(_, factors) = &*product else {
         return Err(RuleNotApplicable);
     };
 
-    let mut factors_vec = factors.unwrap_list().ok_or(RuleNotApplicable)?;
+    let mut factors_vec = (**factors).clone().unwrap_list().ok_or(RuleNotApplicable)?;
     if factors_vec.len() < 2 {
         return Err(RuleNotApplicable);
     }
@@ -107,7 +108,7 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
         // Just using the domain of expr doesn't work
         let aux_domain = Expr::Product(
             Metadata::new(),
-            Box::new(matrix_expr![y.clone().into(), next_factor]),
+            Moo::new(matrix_expr![y.clone().into(), next_factor]),
         )
         .domain_of()
         .ok_or(ApplicationError::DomainError)?;
@@ -117,9 +118,9 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
 
         let new_top_expr = Expr::FlatProductEq(
             Metadata::new(),
-            Box::new(y),
-            Box::new(next_factor_atom),
-            Box::new(aux_var.clone()),
+            Moo::new(y),
+            Moo::new(next_factor_atom),
+            Moo::new(aux_var.clone()),
         );
 
         new_tops.push(new_top_expr);
@@ -127,7 +128,7 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
     }
 
     Ok(Reduction::new(
-        Expr::FlatProductEq(Metadata::new(), Box::new(x), Box::new(y), Box::new(val)),
+        Expr::FlatProductEq(Metadata::new(), Moo::new(x), Moo::new(y), Moo::new(val)),
         new_tops,
         symbols,
     ))
@@ -238,33 +239,49 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symtab: &SymbolTable) -> Applic
     //
     // For example, `1 <= a + b` will result in ([a,b],1,Geq).
     fn match_sum_total(
-        a: Expr,
-        b: Expr,
+        a: Moo<Expr>,
+        b: Moo<Expr>,
         equality_kind: EqualityKind,
     ) -> Result<(Vec<Expr>, Atom, EqualityKind), ApplicationError> {
-        match (a, b, equality_kind) {
+        match (
+            Moo::unwrap_or_clone(a),
+            Moo::unwrap_or_clone(b),
+            equality_kind,
+        ) {
             (Expr::Sum(_, sum_terms), Expr::Atomic(_, total), EqualityKind::Leq) => {
-                let sum_terms = sum_terms.unwrap_list().ok_or(RuleNotApplicable)?;
+                let sum_terms = Moo::unwrap_or_clone(sum_terms)
+                    .unwrap_list()
+                    .ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Leq))
             }
             (Expr::Atomic(_, total), Expr::Sum(_, sum_terms), EqualityKind::Leq) => {
-                let sum_terms = sum_terms.unwrap_list().ok_or(RuleNotApplicable)?;
+                let sum_terms = Moo::unwrap_or_clone(sum_terms)
+                    .unwrap_list()
+                    .ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Geq))
             }
             (Expr::Sum(_, sum_terms), Expr::Atomic(_, total), EqualityKind::Geq) => {
-                let sum_terms = sum_terms.unwrap_list().ok_or(RuleNotApplicable)?;
+                let sum_terms = Moo::unwrap_or_clone(sum_terms)
+                    .unwrap_list()
+                    .ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Geq))
             }
             (Expr::Atomic(_, total), Expr::Sum(_, sum_terms), EqualityKind::Geq) => {
-                let sum_terms = sum_terms.unwrap_list().ok_or(RuleNotApplicable)?;
+                let sum_terms = Moo::unwrap_or_clone(sum_terms)
+                    .unwrap_list()
+                    .ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Leq))
             }
             (Expr::Sum(_, sum_terms), Expr::Atomic(_, total), EqualityKind::Eq) => {
-                let sum_terms = sum_terms.unwrap_list().ok_or(RuleNotApplicable)?;
+                let sum_terms = Moo::unwrap_or_clone(sum_terms)
+                    .unwrap_list()
+                    .ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Eq))
             }
             (Expr::Atomic(_, total), Expr::Sum(_, sum_terms), EqualityKind::Eq) => {
-                let sum_terms = sum_terms.unwrap_list().ok_or(RuleNotApplicable)?;
+                let sum_terms = Moo::unwrap_or_clone(sum_terms)
+                    .unwrap_list()
+                    .ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Eq))
             }
             _ => Err(RuleNotApplicable),
@@ -272,13 +289,15 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symtab: &SymbolTable) -> Applic
     }
 
     let (sum_exprs, total, equality_kind) = match expr.clone() {
-        Expr::Leq(_, a, b) => Ok(match_sum_total(*a, *b, EqualityKind::Leq)?),
-        Expr::Geq(_, a, b) => Ok(match_sum_total(*a, *b, EqualityKind::Geq)?),
-        Expr::Eq(_, a, b) => Ok(match_sum_total(*a, *b, EqualityKind::Eq)?),
+        Expr::Leq(_, a, b) => Ok(match_sum_total(a, b, EqualityKind::Leq)?),
+        Expr::Geq(_, a, b) => Ok(match_sum_total(a, b, EqualityKind::Geq)?),
+        Expr::Eq(_, a, b) => Ok(match_sum_total(a, b, EqualityKind::Eq)?),
         Expr::AuxDeclaration(_, decl, a) => {
             let total: Atom = Atom::Reference(decl);
-            if let Expr::Sum(_, sum_terms) = *a {
-                let sum_terms = sum_terms.unwrap_list().ok_or(RuleNotApplicable)?;
+            if let Expr::Sum(_, sum_terms) = Moo::unwrap_or_clone(a) {
+                let sum_terms = Moo::unwrap_or_clone(sum_terms)
+                    .unwrap_list()
+                    .ok_or(RuleNotApplicable)?;
                 Ok((sum_terms, total, EqualityKind::Eq))
             } else {
                 Err(RuleNotApplicable)
@@ -329,29 +348,29 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symtab: &SymbolTable) -> Applic
     let new_expr: Expr = match (equality_kind, use_weighted_sum) {
         (EqualityKind::Eq, true) => Expr::And(
             Metadata::new(),
-            Box::new(matrix_expr![
+            Moo::new(matrix_expr![
                 Expr::FlatWeightedSumLeq(
                     Metadata::new(),
                     coefficients.clone(),
                     vars.clone(),
-                    Box::new(total.clone()),
+                    Moo::new(total.clone()),
                 ),
-                Expr::FlatWeightedSumGeq(Metadata::new(), coefficients, vars, Box::new(total)),
+                Expr::FlatWeightedSumGeq(Metadata::new(), coefficients, vars, Moo::new(total)),
             ]),
         ),
         (EqualityKind::Eq, false) => Expr::And(
             Metadata::new(),
-            Box::new(matrix_expr![
+            Moo::new(matrix_expr![
                 Expr::FlatSumLeq(Metadata::new(), vars.clone(), total.clone()),
                 Expr::FlatSumGeq(Metadata::new(), vars, total),
             ]),
         ),
         (EqualityKind::Leq, true) => {
-            Expr::FlatWeightedSumLeq(Metadata::new(), coefficients, vars, Box::new(total))
+            Expr::FlatWeightedSumLeq(Metadata::new(), coefficients, vars, Moo::new(total))
         }
         (EqualityKind::Leq, false) => Expr::FlatSumLeq(Metadata::new(), vars, total),
         (EqualityKind::Geq, true) => {
-            Expr::FlatWeightedSumGeq(Metadata::new(), coefficients, vars, Box::new(total))
+            Expr::FlatWeightedSumGeq(Metadata::new(), coefficients, vars, Moo::new(total))
         }
         (EqualityKind::Geq, false) => Expr::FlatSumGeq(Metadata::new(), vars, total),
     };
@@ -394,7 +413,9 @@ fn flatten_weighted_sum_term(
             //
             // we already check for the first case above, so this should only error when we have a
             // non-list matrix literal.
-            let factors = factors.unwrap_list().ok_or(RuleNotApplicable)?;
+            let factors = Moo::unwrap_or_clone(factors)
+                .unwrap_list()
+                .ok_or(RuleNotApplicable)?;
 
             match factors.as_slice() {
                 // product([]) ~~> (0,0)
@@ -424,7 +445,7 @@ fn flatten_weighted_sum_term(
                     let mut product_terms = Vec::from(rest);
                     product_terms.push(e.clone());
                     let product =
-                        Expr::Product(Metadata::new(), Box::new(into_matrix_expr!(product_terms)));
+                        Expr::Product(Metadata::new(), Moo::new(into_matrix_expr!(product_terms)));
                     Ok((
                         *coeff,
                         flatten_expression_to_atom(product, symtab, top_level_exprs)?,
@@ -435,7 +456,7 @@ fn flatten_weighted_sum_term(
                 // product([x,y,z]) ~~> (1,product([x,y,z])
                 _ => {
                     let product =
-                        Expr::Product(Metadata::new(), Box::new(into_matrix_expr!(factors)));
+                        Expr::Product(Metadata::new(), Moo::new(into_matrix_expr!(factors)));
                     Ok((
                         1,
                         flatten_expression_to_atom(product, symtab, top_level_exprs)?,
@@ -445,7 +466,7 @@ fn flatten_weighted_sum_term(
         }
         Expr::Neg(_, inner_term) => Ok((
             -1,
-            flatten_expression_to_atom(*inner_term, symtab, top_level_exprs)?,
+            flatten_expression_to_atom(Moo::unwrap_or_clone(inner_term), symtab, top_level_exprs)?,
         )),
         term => Ok((
             1,
@@ -493,7 +514,7 @@ fn flatten_expression_to_atom(
 fn introduce_diveq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // div = val
     let val: Atom;
-    let div: Expr;
+    let div: Moo<Expr>;
     let meta: Metadata;
 
     match expr.clone() {
@@ -506,11 +527,11 @@ fn introduce_diveq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             if let Some(f) = a_atom {
                 // val = div
                 val = f.clone();
-                div = *b;
+                div = b;
             } else if let Some(f) = b_atom {
                 // div = val
                 val = f.clone();
-                div = *a;
+                div = a;
             } else {
                 return Err(RuleNotApplicable);
             }
@@ -518,26 +539,26 @@ fn introduce_diveq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         Expr::AuxDeclaration(m, decl, e) => {
             meta = m;
             val = Atom::Reference(decl);
-            div = *e;
+            div = e;
         }
         _ => {
             return Err(RuleNotApplicable);
         }
     }
 
-    if !(matches!(div, Expr::SafeDiv(_, _, _))) {
+    if !(matches!(&*div, Expr::SafeDiv(_, _, _))) {
         return Err(RuleNotApplicable);
     }
 
-    let children = div.children();
+    let children: VecDeque<Expr> = div.as_ref().children();
     let a: &Atom = (&children[0]).try_into().or(Err(RuleNotApplicable))?;
     let b: &Atom = (&children[1]).try_into().or(Err(RuleNotApplicable))?;
 
     Ok(Reduction::pure(Expr::MinionDivEqUndefZero(
         meta.clone_dirty(),
-        Box::new(a.clone()),
-        Box::new(b.clone()),
-        Box::new(val),
+        Moo::new(a.clone()),
+        Moo::new(b.clone()),
+        Moo::new(val),
     )))
 }
 
@@ -545,7 +566,7 @@ fn introduce_diveq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 fn introduce_modeq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // div = val
     let val: Atom;
-    let div: Expr;
+    let div: Moo<Expr>;
     let meta: Metadata;
 
     match expr.clone() {
@@ -557,11 +578,11 @@ fn introduce_modeq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             if let Some(f) = a_atom {
                 // val = div
                 val = f.clone();
-                div = *b;
+                div = b;
             } else if let Some(f) = b_atom {
                 // div = val
                 val = f.clone();
-                div = *a;
+                div = a;
             } else {
                 return Err(RuleNotApplicable);
             }
@@ -569,26 +590,26 @@ fn introduce_modeq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         Expr::AuxDeclaration(m, decl, e) => {
             meta = m;
             val = Atom::Reference(decl);
-            div = *e;
+            div = e;
         }
         _ => {
             return Err(RuleNotApplicable);
         }
     }
 
-    if !(matches!(div, Expr::SafeMod(_, _, _))) {
+    if !(matches!(&*div, Expr::SafeMod(_, _, _))) {
         return Err(RuleNotApplicable);
     }
 
-    let children = div.children();
+    let children: VecDeque<Expr> = div.as_ref().children();
     let a: &Atom = (&children[0]).try_into().or(Err(RuleNotApplicable))?;
     let b: &Atom = (&children[1]).try_into().or(Err(RuleNotApplicable))?;
 
     Ok(Reduction::pure(Expr::MinionModuloEqUndefZero(
         meta.clone_dirty(),
-        Box::new(a.clone()),
-        Box::new(b.clone()),
-        Box::new(val),
+        Moo::new(a.clone()),
+        Moo::new(b.clone()),
+        Moo::new(val),
     )))
 }
 
@@ -596,13 +617,15 @@ fn introduce_modeq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 fn introduce_abseq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (x, abs_y): (Atom, Expr) = match expr.clone() {
         Expr::Eq(_, a, b) => {
-            let a_atom: Option<&Atom> = (&*a).try_into().ok();
-            let b_atom: Option<&Atom> = (&*b).try_into().ok();
+            let a: Expr = Moo::unwrap_or_clone(a);
+            let b: Expr = Moo::unwrap_or_clone(b);
+            let a_atom: Option<&Atom> = (&a).try_into().ok();
+            let b_atom: Option<&Atom> = (&b).try_into().ok();
 
             if let Some(a_atom) = a_atom {
-                Ok((a_atom.clone(), *b))
+                Ok((a_atom.clone(), b))
             } else if let Some(b_atom) = b_atom {
-                Ok((b_atom.clone(), *a))
+                Ok((b_atom.clone(), a))
             } else {
                 Err(RuleNotApplicable)
             }
@@ -610,7 +633,8 @@ fn introduce_abseq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
         Expr::AuxDeclaration(_, decl, expr) => {
             let a = Atom::Reference(decl);
-            Ok((a, *expr))
+            let expr = Moo::unwrap_or_clone(expr);
+            Ok((a, expr))
         }
 
         _ => Err(RuleNotApplicable),
@@ -620,12 +644,13 @@ fn introduce_abseq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let y: Atom = (*y).try_into().or(Err(RuleNotApplicable))?;
+    let y = Moo::unwrap_or_clone(y);
+    let y: Atom = y.try_into().or(Err(RuleNotApplicable))?;
 
     Ok(Reduction::pure(Expr::FlatAbsEq(
         Metadata::new(),
-        Box::new(x),
-        Box::new(y),
+        Moo::new(x),
+        Moo::new(y),
     )))
 }
 
@@ -633,13 +658,13 @@ fn introduce_abseq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 #[register_rule(("Minion", 4200))]
 fn introduce_poweq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (a, b, total) = match expr.clone() {
-        Expr::Eq(_, e1, e2) => match (*e1, *e2) {
+        Expr::Eq(_, e1, e2) => match (Moo::unwrap_or_clone(e1), Moo::unwrap_or_clone(e2)) {
             (Expr::Atomic(_, total), Expr::SafePow(_, a, b)) => Ok((a, b, total)),
             (Expr::SafePow(_, a, b), Expr::Atomic(_, total)) => Ok((a, b, total)),
             _ => Err(RuleNotApplicable),
         },
 
-        Expr::AuxDeclaration(_, total_decl, e) => match *e {
+        Expr::AuxDeclaration(_, total_decl, e) => match Moo::unwrap_or_clone(e) {
             Expr::SafePow(_, a, b) => {
                 let total_ref_atom = Atom::Reference(total_decl);
                 Ok((a, b, total_ref_atom))
@@ -649,14 +674,18 @@ fn introduce_poweq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         _ => Err(RuleNotApplicable),
     }?;
 
-    let a: Atom = (*a).try_into().or(Err(RuleNotApplicable))?;
-    let b: Atom = (*b).try_into().or(Err(RuleNotApplicable))?;
+    let a: Atom = Moo::unwrap_or_clone(a)
+        .try_into()
+        .or(Err(RuleNotApplicable))?;
+    let b: Atom = Moo::unwrap_or_clone(b)
+        .try_into()
+        .or(Err(RuleNotApplicable))?;
 
     Ok(Reduction::pure(Expr::MinionPow(
         Metadata::new(),
-        Box::new(a),
-        Box::new(b),
-        Box::new(total),
+        Moo::new(a),
+        Moo::new(b),
+        Moo::new(total),
     )))
 }
 
@@ -667,7 +696,7 @@ fn introduce_flat_alldiff(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let es = es.clone().unwrap_list().ok_or(RuleNotApplicable)?;
+    let es = (**es).clone().unwrap_list().ok_or(RuleNotApplicable)?;
 
     let atoms = es
         .into_iter()
@@ -693,9 +722,9 @@ fn introduce_minuseq_from_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult 
         return Err(RuleNotApplicable);
     };
 
-    fn try_get_atoms(a: &Expr, b: &Expr) -> Option<(Atom, Atom)> {
-        let a: &Atom = a.try_into().ok()?;
-        let Expr::Neg(_, b) = b else {
+    fn try_get_atoms(a: &Moo<Expr>, b: &Moo<Expr>) -> Option<(Atom, Atom)> {
+        let a: &Atom = (&**a).try_into().ok()?;
+        let Expr::Neg(_, b) = &**b else {
             return None;
         };
 
@@ -704,18 +733,15 @@ fn introduce_minuseq_from_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult 
         Some((a.clone(), b.clone()))
     }
 
-    let a = *a.clone();
-    let b = *b.clone();
-
     // x = - y. Find this symmetrically (a = - b or b = -a)
-    let Some((x, y)) = try_get_atoms(&a, &b).or_else(|| try_get_atoms(&b, &a)) else {
+    let Some((x, y)) = try_get_atoms(a, b).or_else(|| try_get_atoms(b, a)) else {
         return Err(RuleNotApplicable);
     };
 
     Ok(Reduction::pure(Expr::FlatMinusEq(
         Metadata::new(),
-        Box::new(x),
-        Box::new(y),
+        Moo::new(x),
+        Moo::new(y),
     )))
 }
 
@@ -746,8 +772,8 @@ fn introduce_minuseq_from_aux_decl(expr: &Expr, _: &SymbolTable) -> ApplicationR
 
     Ok(Reduction::pure(Expr::FlatMinusEq(
         Metadata::new(),
-        Box::new(a),
-        Box::new(b),
+        Moo::new(a),
+        Moo::new(b),
     )))
 }
 
@@ -774,8 +800,8 @@ fn introduce_reifyimply_ineq_from_imply(expr: &Expr, _: &SymbolTable) -> Applica
     if let Ok(y_atom) = TryInto::<&Atom>::try_into(y.as_ref()) {
         Ok(Reduction::pure(Expr::FlatIneq(
             Metadata::new(),
-            Box::new(x_atom.clone()),
-            Box::new(y_atom.clone()),
+            Moo::new(x_atom.clone()),
+            Moo::new(y_atom.clone()),
             Box::new(0.into()),
         )))
     } else {
@@ -836,7 +862,7 @@ fn introduce_wininterval_set_from_indomain(expr: &Expr, _: &SymbolTable) -> Appl
 #[register_rule(("Minion", 4400))]
 fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (equalto, subject, indices) = match expr.clone() {
-        Expr::Eq(_, e1, e2) => match (*e1, *e2) {
+        Expr::Eq(_, e1, e2) => match (Moo::unwrap_or_clone(e1), Moo::unwrap_or_clone(e2)) {
             (Expr::Atomic(_, eq), Expr::SafeIndex(_, subject, indices)) => {
                 Ok((eq, subject, indices))
             }
@@ -845,9 +871,9 @@ fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResu
             }
             _ => Err(RuleNotApplicable),
         },
-        Expr::AuxDeclaration(_, decl, expr) => match *expr {
+        Expr::AuxDeclaration(_, decl, expr) => match Moo::unwrap_or_clone(expr) {
             Expr::SafeIndex(_, subject, indices) => {
-                Ok((Atom::Reference(decl.clone()), subject, indices))
+                Ok((Atom::Reference(decl.clone()), subject, indices.clone()))
             }
             _ => Err(RuleNotApplicable),
         },
@@ -858,7 +884,7 @@ fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResu
         return Err(RuleNotApplicable);
     }
 
-    let Some(list) = subject.unwrap_list() else {
+    let Some(list) = Moo::unwrap_or_clone(subject).unwrap_list() else {
         return Err(RuleNotApplicable);
     };
 
@@ -879,8 +905,8 @@ fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResu
     Ok(Reduction::pure(Expr::MinionElementOne(
         Metadata::new(),
         atom_list,
-        Box::new(index),
-        Box::new(equalto),
+        Moo::new(index),
+        Moo::new(equalto),
     )))
 }
 
@@ -919,7 +945,7 @@ fn flatten_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let new_x = aux_var_info.as_expr();
 
     Ok(Reduction::new(
-        Expr::Imply(meta.clone(), Box::new(new_x), y.clone()),
+        Expr::Imply(meta.clone(), Moo::new(new_x), y.clone()),
         vec![aux_var_info.top_level_expr()],
         symbols,
     ))
@@ -1037,7 +1063,7 @@ fn flatten_product(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let factors = factors.clone().unwrap_list().ok_or(RuleNotApplicable)?;
+    let factors = (**factors).clone().unwrap_list().ok_or(RuleNotApplicable)?;
 
     let mut new_factors = vec![];
     let mut top_level_exprs = vec![];
@@ -1056,7 +1082,7 @@ fn flatten_product(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     }
 
-    let new_expr = Expr::Product(Metadata::new(), Box::new(into_matrix_expr![new_factors]));
+    let new_expr = Expr::Product(Metadata::new(), Moo::new(into_matrix_expr![new_factors]));
     Ok(Reduction::new(new_expr, top_level_exprs, symtab))
 }
 
@@ -1143,7 +1169,7 @@ fn flatten_matrix_literal(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
                 top_level_exprs.push(Expr::AuxDeclaration(
                     Metadata::new(),
                     decl.clone(),
-                    Box::new(e.clone()),
+                    Moo::new(e.clone()),
                 ));
 
                 *e = Expr::Atomic(Metadata::new(), Atom::Reference(decl));
@@ -1177,18 +1203,18 @@ fn geq_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, x) = *e1 else {
+    let Expr::Atomic(_, x) = Moo::unwrap_or_clone(e1) else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, y) = *e2 else {
+    let Expr::Atomic(_, y) = Moo::unwrap_or_clone(e2) else {
         return Err(RuleNotApplicable);
     };
 
     Ok(Reduction::pure(Expr::FlatIneq(
         meta.clone_dirty(),
-        Box::new(y),
-        Box::new(x),
+        Moo::new(y),
+        Moo::new(x),
         Box::new(Lit::Int(0)),
     )))
 }
@@ -1204,18 +1230,18 @@ fn leq_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, x) = *e1 else {
+    let Expr::Atomic(_, x) = Moo::unwrap_or_clone(e1) else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, y) = *e2 else {
+    let Expr::Atomic(_, y) = Moo::unwrap_or_clone(e2) else {
         return Err(RuleNotApplicable);
     };
 
     Ok(Reduction::pure(Expr::FlatIneq(
         meta.clone_dirty(),
-        Box::new(x),
-        Box::new(y),
+        Moo::new(x),
+        Moo::new(y),
         Box::new(Lit::Int(0)),
     )))
 }
@@ -1231,15 +1257,18 @@ fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, x) = *e1 else {
+    let Expr::Atomic(_, x) = Moo::unwrap_or_clone(e1) else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Sum(_, sum_exprs) = *e2 else {
+    let Expr::Sum(_, sum_exprs) = Moo::unwrap_or_clone(e2) else {
         return Err(RuleNotApplicable);
     };
 
-    let sum_exprs = sum_exprs.unwrap_list().ok_or(RuleNotApplicable)?;
+    let sum_exprs = (*sum_exprs)
+        .clone()
+        .unwrap_list()
+        .ok_or(RuleNotApplicable)?;
     let (y, k) = match sum_exprs.as_slice() {
         [Expr::Atomic(_, y), Expr::Atomic(_, Atom::Literal(k))] => (y, k),
         [Expr::Atomic(_, Atom::Literal(k)), Expr::Atomic(_, y)] => (y, k),
@@ -1250,8 +1279,8 @@ fn x_leq_y_plus_k_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::pure(Expr::FlatIneq(
         meta.clone_dirty(),
-        Box::new(x),
-        Box::new(y.clone()),
+        Moo::new(x),
+        Moo::new(y.clone()),
         Box::new(k.clone()),
     )))
 }
@@ -1266,15 +1295,17 @@ fn y_plus_k_geq_x_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Atomic(_, x) = *e1 else {
+    let Expr::Atomic(_, x) = Moo::unwrap_or_clone(e1) else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::Sum(_, sum_exprs) = *e2 else {
+    let Expr::Sum(_, sum_exprs) = Moo::unwrap_or_clone(e2) else {
         return Err(RuleNotApplicable);
     };
 
-    let sum_exprs = sum_exprs.unwrap_list().ok_or(RuleNotApplicable)?;
+    let sum_exprs = Moo::unwrap_or_clone(sum_exprs)
+        .unwrap_list()
+        .ok_or(RuleNotApplicable)?;
     let (y, k) = match sum_exprs.as_slice() {
         [Expr::Atomic(_, y), Expr::Atomic(_, Atom::Literal(k))] => (y, k),
         [Expr::Atomic(_, Atom::Literal(k)), Expr::Atomic(_, y)] => (y, k),
@@ -1285,8 +1316,8 @@ fn y_plus_k_geq_x_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::pure(Expr::FlatIneq(
         meta.clone_dirty(),
-        Box::new(x),
-        Box::new(y.clone()),
+        Moo::new(x),
+        Moo::new(y.clone()),
         Box::new(k.clone()),
     )))
 }
@@ -1369,7 +1400,7 @@ fn not_constraint_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// ```
 #[register_rule(("Minion", 4400))]
 fn bool_eq_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let (atom, e): (Atom, Box<Expr>) = match expr {
+    let (atom, e): (Atom, Moo<Expr>) = match expr {
         Expr::AuxDeclaration(_, decl, e) => Ok((Atom::from(decl.clone()), e.clone())),
         Expr::Eq(_, a, b) => match (a.as_ref(), b.as_ref()) {
             (Expr::Atomic(_, atom), _) => Ok((atom.clone(), b.clone())),

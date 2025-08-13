@@ -10,7 +10,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use crate::Model as ConjureModel;
-use crate::ast as conjure_ast;
+use crate::ast::{self as conjure_ast, Moo};
 use crate::solver::SolverError::{
     ModelFeatureNotImplemented, ModelFeatureNotSupported, ModelInvalid,
 };
@@ -257,7 +257,9 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
         )),
 
         // The Minion adaptor currently treats bools as integers anyways, so this is a no-op
-        conjure_ast::Expression::ToInt(_metadata, inner_expr) => parse_expr(*inner_expr),
+        conjure_ast::Expression::ToInt(_metadata, inner_expr) => {
+            parse_expr(Moo::unwrap_or_clone(inner_expr))
+        }
 
         conjure_ast::Expression::FlatAllDiff(_metadata, atoms) => {
             Ok(minion_ast::Constraint::AllDiff(parse_atoms(atoms)?))
@@ -269,24 +271,30 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             minion_ast::Constraint::SumGeq(parse_atoms(lhs)?, parse_atom(rhs)?),
         ),
         conjure_ast::Expression::FlatIneq(_metadata, a, b, c) => Ok(minion_ast::Constraint::Ineq(
-            parse_atom(*a)?,
-            parse_atom(*b)?,
+            parse_atom(Moo::unwrap_or_clone(a))?,
+            parse_atom(Moo::unwrap_or_clone(b))?,
             parse_literal(*c)?,
         )),
         conjure_ast::Expression::Neq(_metadata, a, b) => Ok(minion_ast::Constraint::DisEq(
-            parse_atomic_expr(*a)?,
-            parse_atomic_expr(*b)?,
+            parse_atomic_expr(Moo::unwrap_or_clone(a))?,
+            parse_atomic_expr(Moo::unwrap_or_clone(b))?,
         )),
         conjure_ast::Expression::MinionDivEqUndefZero(_metadata, a, b, c) => {
             Ok(minion_ast::Constraint::DivUndefZero(
-                (parse_atom(*a)?, parse_atom(*b)?),
-                parse_atom(*c)?,
+                (
+                    parse_atom(Moo::unwrap_or_clone(a))?,
+                    parse_atom(Moo::unwrap_or_clone(b))?,
+                ),
+                parse_atom(Moo::unwrap_or_clone(c))?,
             ))
         }
         conjure_ast::Expression::MinionModuloEqUndefZero(_metadata, a, b, c) => {
             Ok(minion_ast::Constraint::ModuloUndefZero(
-                (parse_atom(*a)?, parse_atom(*b)?),
-                parse_atom(*c)?,
+                (
+                    parse_atom(Moo::unwrap_or_clone(a))?,
+                    parse_atom(Moo::unwrap_or_clone(b))?,
+                ),
+                parse_atom(Moo::unwrap_or_clone(c))?,
             ))
         }
         conjure_ast::Expression::MinionWInIntervalSet(_metadata, a, xs) => {
@@ -305,12 +313,17 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
                     .collect_vec(),
             ))
         }
-        conjure_ast::Expression::MinionElementOne(_, vec, i, e) => Ok(
-            minion_ast::Constraint::ElementOne(parse_atoms(vec)?, parse_atom(*i)?, parse_atom(*e)?),
-        ),
+        conjure_ast::Expression::MinionElementOne(_, vec, i, e) => {
+            Ok(minion_ast::Constraint::ElementOne(
+                parse_atoms(vec)?,
+                parse_atom(Moo::unwrap_or_clone(i))?,
+                parse_atom(Moo::unwrap_or_clone(e))?,
+            ))
+        }
 
         conjure_ast::Expression::Or(_metadata, e) => Ok(minion_ast::Constraint::WatchedOr(
-            e.unwrap_matrix_unchecked()
+            Moo::unwrap_or_clone(e)
+                .unwrap_matrix_unchecked()
                 .ok_or_else(|| {
                     SolverError::ModelFeatureNotSupported(
                         "The inside of an or expression is not a matrix.".to_string(),
@@ -322,7 +335,8 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
                 .collect::<Result<Vec<minion_ast::Constraint>, SolverError>>()?,
         )),
         conjure_ast::Expression::And(_metadata, e) => Ok(minion_ast::Constraint::WatchedAnd(
-            e.unwrap_matrix_unchecked()
+            Moo::unwrap_or_clone(e)
+                .unwrap_matrix_unchecked()
                 .ok_or_else(|| {
                     SolverError::ModelFeatureNotSupported(
                         "The inside of an and expression is not a matrix.".to_string(),
@@ -334,54 +348,72 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
                 .collect::<Result<Vec<minion_ast::Constraint>, SolverError>>()?,
         )),
         conjure_ast::Expression::Eq(_metadata, a, b) => Ok(minion_ast::Constraint::Eq(
-            parse_atomic_expr(*a)?,
-            parse_atomic_expr(*b)?,
+            parse_atomic_expr(Moo::unwrap_or_clone(a))?,
+            parse_atomic_expr(Moo::unwrap_or_clone(b))?,
         )),
 
         conjure_ast::Expression::FlatWatchedLiteral(_metadata, decl, k) => Ok(
             minion_ast::Constraint::WLiteral(parse_name(decl.name().clone())?, parse_literal(k)?),
         ),
         conjure_ast::Expression::MinionReify(_metadata, e, v) => Ok(minion_ast::Constraint::Reify(
-            Box::new(parse_expr(*e)?),
+            Box::new(parse_expr(Moo::unwrap_or_clone(e))?),
             parse_atom(v)?,
         )),
 
-        conjure_ast::Expression::MinionReifyImply(_metadata, e, v) => Ok(
-            minion_ast::Constraint::ReifyImply(Box::new(parse_expr(*e)?), parse_atom(v)?),
-        ),
+        conjure_ast::Expression::MinionReifyImply(_metadata, e, v) => {
+            Ok(minion_ast::Constraint::ReifyImply(
+                Box::new(parse_expr(Moo::unwrap_or_clone(e))?),
+                parse_atom(v)?,
+            ))
+        }
 
-        conjure_ast::Expression::AuxDeclaration(_metadata, decl, expr) => Ok(
-            minion_ast::Constraint::Eq(parse_name(decl.name().clone())?, parse_atomic_expr(*expr)?),
-        ),
+        conjure_ast::Expression::AuxDeclaration(_metadata, decl, expr) => {
+            Ok(minion_ast::Constraint::Eq(
+                parse_name(decl.name().clone())?,
+                parse_atomic_expr(Moo::unwrap_or_clone(expr))?,
+            ))
+        }
 
-        conjure_ast::Expression::FlatMinusEq(_metadata, a, b) => Ok(
-            minion_ast::Constraint::MinusEq(parse_atom(*a)?, parse_atom(*b)?),
-        ),
+        conjure_ast::Expression::FlatMinusEq(_metadata, a, b) => {
+            Ok(minion_ast::Constraint::MinusEq(
+                parse_atom(Moo::unwrap_or_clone(a))?,
+                parse_atom(Moo::unwrap_or_clone(b))?,
+            ))
+        }
 
-        conjure_ast::Expression::FlatProductEq(_metadata, a, b, c) => Ok(
-            minion_ast::Constraint::Product((parse_atom(*a)?, parse_atom(*b)?), parse_atom(*c)?),
-        ),
+        conjure_ast::Expression::FlatProductEq(_metadata, a, b, c) => {
+            Ok(minion_ast::Constraint::Product(
+                (
+                    parse_atom(Moo::unwrap_or_clone(a))?,
+                    parse_atom(Moo::unwrap_or_clone(b))?,
+                ),
+                parse_atom(Moo::unwrap_or_clone(c))?,
+            ))
+        }
         conjure_ast::Expression::FlatWeightedSumLeq(_metadata, coeffs, vars, total) => {
             Ok(minion_ast::Constraint::WeightedSumLeq(
                 parse_literals(coeffs)?,
                 parse_atoms(vars)?,
-                parse_atom(*total)?,
+                parse_atom(Moo::unwrap_or_clone(total))?,
             ))
         }
         conjure_ast::Expression::FlatWeightedSumGeq(_metadata, coeffs, vars, total) => {
             Ok(minion_ast::Constraint::WeightedSumGeq(
                 parse_literals(coeffs)?,
                 parse_atoms(vars)?,
-                parse_atom(*total)?,
+                parse_atom(Moo::unwrap_or_clone(total))?,
             ))
         }
         conjure_ast::Expression::FlatAbsEq(_metadata, x, y) => Ok(minion_ast::Constraint::Abs(
-            parse_atom(*x)?,
-            parse_atom(*y)?,
+            parse_atom(Moo::unwrap_or_clone(x))?,
+            parse_atom(Moo::unwrap_or_clone(y))?,
         )),
         conjure_ast::Expression::MinionPow(_, x, y, z) => Ok(minion_ast::Constraint::Pow(
-            (parse_atom(*x)?, parse_atom(*y)?),
-            parse_atom(*z)?,
+            (
+                parse_atom(Moo::unwrap_or_clone(x))?,
+                parse_atom(Moo::unwrap_or_clone(y))?,
+            ),
+            parse_atom(Moo::unwrap_or_clone(z))?,
         )),
         x => Err(ModelFeatureNotSupported(format!("{x:?}"))),
     }
@@ -390,7 +422,9 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
 fn parse_atomic_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Var, SolverError> {
     match expr {
         // Minion treats bools as ints anyways, so this is a no-op at this stage
-        conjure_ast::Expression::ToInt(_metadata, inner_expr) => parse_atomic_expr(*inner_expr),
+        conjure_ast::Expression::ToInt(_metadata, inner_expr) => {
+            parse_atomic_expr(Moo::unwrap_or_clone(inner_expr))
+        }
         conjure_ast::Expression::Atomic(_, atom) => parse_atom(atom),
         _ => Err(ModelInvalid(format!(
             "expected atomic expression, got {expr:?}"

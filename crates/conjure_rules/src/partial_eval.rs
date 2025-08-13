@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use conjure_core::{
-    ast::{Domain, ReturnType, Typeable as _},
+    ast::{Domain, Moo, ReturnType, Typeable as _},
     into_matrix_expr,
     metadata::Metadata,
     rule_engine::{ApplicationResult, Reduction},
@@ -39,7 +39,9 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
             // partially evaluate matrix literals indexed by a constant.
 
             // subject must be a matrix literal
-            let (es, index_domain) = subject.unwrap_matrix_unchecked().ok_or(RuleNotApplicable)?;
+            let (es, index_domain) = Moo::unwrap_or_clone(subject)
+                .unwrap_matrix_unchecked()
+                .ok_or(RuleNotApplicable)?;
 
             // must be indexing a 1d matrix.
             //
@@ -65,7 +67,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
         }
         Expr::SafeSlice(_, _, _) => Err(RuleNotApplicable),
         Expr::InDomain(_, x, domain) => {
-            if let Expr::Atomic(_, Atom::Reference(decl)) = *x {
+            if let Expr::Atomic(_, Atom::Reference(decl)) = &*x {
                 let decl_domain = decl.domain().ok_or(RuleNotApplicable)?.resolve(symtab);
                 let domain = domain.resolve(symtab);
 
@@ -91,10 +93,10 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
                 } else {
                     return Err(RuleNotApplicable);
                 }
-            } else if let Expr::Atomic(_, Atom::Literal(lit)) = *x {
+            } else if let Expr::Atomic(_, Atom::Literal(lit)) = &*x {
                 if domain
                     .resolve(symtab)
-                    .contains(&lit)
+                    .contains(lit)
                     .map_err(|_| RuleNotApplicable)?
                 {
                     Ok(Reduction::pure(Expr::Atomic(Metadata::new(), true.into())))
@@ -110,7 +112,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
             //
             // check if cond is true and pop the bubble!
             if let Expr::Atomic(_, Atom::Literal(Lit::Bool(true))) = *cond {
-                Ok(Reduction::pure(*expr))
+                Ok(Reduction::pure(Moo::unwrap_or_clone(expr)))
             } else {
                 Err(RuleNotApplicable)
             }
@@ -119,17 +121,19 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
         Expr::Scope(_, _) => Err(RuleNotApplicable),
         Expr::ToInt(_, expression) => {
             if let Some(ReturnType::Int) = expression.return_type() {
-                Ok(Reduction::pure(*expression))
+                Ok(Reduction::pure(Moo::unwrap_or_clone(expression)))
             } else {
                 Err(RuleNotApplicable)
             }
         }
-        Expr::Abs(m, e) => match *e {
+        Expr::Abs(m, e) => match Moo::unwrap_or_clone(e) {
             Expr::Neg(_, inner) => Ok(Reduction::pure(Expr::Abs(m, inner))),
             _ => Err(RuleNotApplicable),
         },
         Expr::Sum(m, vec) => {
-            let vec = vec.unwrap_list().ok_or(RuleNotApplicable)?;
+            let vec = Moo::unwrap_or_clone(vec)
+                .unwrap_list()
+                .ok_or(RuleNotApplicable)?;
             let mut acc = 0;
             let mut n_consts = 0;
             let mut new_vec: Vec<Expr> = Vec::new();
@@ -153,7 +157,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
             } else {
                 Ok(Reduction::pure(Expr::Sum(
                     m,
-                    Box::new(into_matrix_expr![new_vec]),
+                    Moo::new(into_matrix_expr![new_vec]),
                 )))
             }
         }
@@ -162,7 +166,9 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
             let mut acc = 1;
             let mut n_consts = 0;
             let mut new_vec: Vec<Expr> = Vec::new();
-            let vec = vec.unwrap_list().ok_or(RuleNotApplicable)?;
+            let vec = Moo::unwrap_or_clone(vec)
+                .unwrap_list()
+                .ok_or(RuleNotApplicable)?;
             for expr in vec {
                 if let Expr::Atomic(_, Atom::Literal(Lit::Int(x))) = expr {
                     acc *= x;
@@ -180,7 +186,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
                 Default::default(),
                 Atom::Literal(Lit::Int(acc)),
             ));
-            let new_product = Expr::Product(m, Box::new(into_matrix_expr![new_vec]));
+            let new_product = Expr::Product(m, Moo::new(into_matrix_expr![new_vec]));
 
             if acc == 0 {
                 // if safe, 0 * exprs ~> 0
@@ -203,7 +209,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
         }
 
         Expr::Min(m, e) => {
-            let Some(vec) = e.unwrap_list() else {
+            let Some(vec) = Moo::unwrap_or_clone(e).unwrap_list() else {
                 return Err(RuleNotApplicable);
             };
             let mut acc: Option<i32> = None;
@@ -236,13 +242,13 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
             } else {
                 Ok(Reduction::pure(Expr::Min(
                     m,
-                    Box::new(into_matrix_expr![new_vec]),
+                    Moo::new(into_matrix_expr![new_vec]),
                 )))
             }
         }
 
         Expr::Max(m, e) => {
-            let Some(vec) = e.unwrap_list() else {
+            let Some(vec) = Moo::unwrap_or_clone(e).unwrap_list() else {
                 return Err(RuleNotApplicable);
             };
 
@@ -276,13 +282,13 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
             } else {
                 Ok(Reduction::pure(Expr::Max(
                     m,
-                    Box::new(into_matrix_expr![new_vec]),
+                    Moo::new(into_matrix_expr![new_vec]),
                 )))
             }
         }
         Expr::Not(_, _) => Err(RuleNotApplicable),
         Expr::Or(m, e) => {
-            let Some(terms) = e.unwrap_list() else {
+            let Some(terms) = Moo::unwrap_or_clone(e).unwrap_list() else {
                 return Err(RuleNotApplicable);
             };
 
@@ -320,11 +326,11 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
 
             Ok(Reduction::pure(Expr::Or(
                 m,
-                Box::new(into_matrix_expr![new_terms]),
+                Moo::new(into_matrix_expr![new_terms]),
             )))
         }
         Expr::And(_, e) => {
-            let Some(vec) = e.unwrap_list() else {
+            let Some(vec) = Moo::unwrap_or_clone(e).unwrap_list() else {
                 return Err(RuleNotApplicable);
             };
             let mut new_vec: Vec<Expr> = Vec::new();
@@ -348,7 +354,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
             } else {
                 Ok(Reduction::pure(Expr::And(
                     Metadata::new(),
-                    Box::new(into_matrix_expr![new_vec]),
+                    Moo::new(into_matrix_expr![new_vec]),
                 )))
             }
         }
@@ -384,7 +390,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
                     }
 
                     // flatten ands in root
-                    Expr::And(_, ref vecs) => match vecs.clone().unwrap_list() {
+                    Expr::And(_, ref vecs) => match (**vecs).clone().unwrap_list() {
                         Some(mut list) => {
                             has_changed = true;
                             new_vec.append(&mut list);
@@ -408,7 +414,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
             if let Expr::Atomic(_, Atom::Literal(Lit::Bool(x))) = *x {
                 if x {
                     // (true) -> y ~~> y
-                    return Ok(Reduction::pure(*y));
+                    return Ok(Reduction::pure(Moo::unwrap_or_clone(y)));
                 } else {
                     // (false) -> y ~~> true
                     return Ok(Reduction::pure(Expr::Atomic(Metadata::new(), true.into())));
@@ -431,19 +437,19 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
             if let Expr::Atomic(_, Atom::Literal(Lit::Bool(x))) = *x {
                 if x {
                     // (true) <-> y ~~> y
-                    return Ok(Reduction::pure(*y));
+                    return Ok(Reduction::pure(Moo::unwrap_or_clone(y)));
                 } else {
                     // (false) <-> y ~~> !y
-                    return Ok(Reduction::pure(Expr::Not(Metadata::new(), Box::new(*y))));
+                    return Ok(Reduction::pure(Expr::Not(Metadata::new(), y)));
                 }
             };
             if let Expr::Atomic(_, Atom::Literal(Lit::Bool(y))) = *y {
                 if y {
                     // x <-> (true) ~~> x
-                    return Ok(Reduction::pure(*x));
+                    return Ok(Reduction::pure(Moo::unwrap_or_clone(x)));
                 } else {
                     // x <-> (false) ~~> !x
-                    return Ok(Reduction::pure(Expr::Not(Metadata::new(), Box::new(*x))));
+                    return Ok(Reduction::pure(Expr::Not(Metadata::new(), x)));
                 }
             };
 
@@ -468,7 +474,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
         Expr::SafeDiv(_, _, _) => Err(RuleNotApplicable),
         Expr::UnsafeDiv(_, _, _) => Err(RuleNotApplicable),
         Expr::AllDiff(m, e) => {
-            let Some(vec) = e.unwrap_list() else {
+            let Some(vec) = Moo::unwrap_or_clone(e).unwrap_list() else {
                 return Err(RuleNotApplicable);
             };
 

@@ -36,6 +36,8 @@ pub fn parse_exprs(
 mod test {
     #[allow(unused)]
     use super::{parse_expr, parse_exprs};
+    #[allow(unused_imports)]
+    use conjure_core::ast::Moo;
     #[allow(unused)]
     use conjure_core::ast::{DeclarationPtr, Domain, Name, SymbolTable};
     #[allow(unused)]
@@ -88,8 +90,8 @@ mod test {
             exprs[0],
             Expression::Geq(
                 Metadata::new(),
-                Box::new(Expression::Atomic(Metadata::new(), Atom::new_ref(x))),
-                Box::new(Expression::Atomic(Metadata::new(), 5.into()))
+                Moo::new(Expression::Atomic(Metadata::new(), Atom::new_ref(x))),
+                Moo::new(Expression::Atomic(Metadata::new(), 5.into()))
             )
         );
 
@@ -97,11 +99,11 @@ mod test {
             exprs[1],
             Expression::Eq(
                 Metadata::new(),
-                Box::new(Expression::Atomic(Metadata::new(), Atom::new_ref(y))),
-                Box::new(Expression::UnsafeDiv(
+                Moo::new(Expression::Atomic(Metadata::new(), Atom::new_ref(y))),
+                Moo::new(Expression::UnsafeDiv(
                     Metadata::new(),
-                    Box::new(Expression::Atomic(Metadata::new(), Atom::new_ref(a))),
-                    Box::new(Expression::Atomic(Metadata::new(), 2.into()))
+                    Moo::new(Expression::Atomic(Metadata::new(), Atom::new_ref(a))),
+                    Moo::new(Expression::Atomic(Metadata::new(), 2.into()))
                 ))
             )
         );

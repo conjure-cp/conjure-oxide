@@ -1,5 +1,5 @@
 // Supset rule for sets
-use conjure_core::ast::{Expression as Expr, ReturnType, SymbolTable, Typeable};
+use conjure_core::ast::{Expression as Expr, Moo, ReturnType, SymbolTable, Typeable};
 use conjure_core::metadata::Metadata;
 use conjure_core::rule_engine::Reduction;
 use conjure_core::rule_engine::{
@@ -14,7 +14,7 @@ fn neq_not_eq_sets(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 if let Some(ReturnType::Set(_)) = b.as_ref().return_type() {
                     Ok(Reduction::pure(Expr::Not(
                         Metadata::new(),
-                        Box::new(Expr::Eq(Metadata::new(), b.clone(), a.clone())),
+                        Moo::new(Expr::Eq(Metadata::new(), b.clone(), a.clone())),
                     )))
                 } else {
                     Err(RuleNotApplicable)

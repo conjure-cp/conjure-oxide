@@ -1,11 +1,9 @@
 //! Normalising rules for `Product`
 
-use std::borrow::Borrow;
-
 use conjure_rule_macros::register_rule;
 
 use conjure_core::{
-    ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable, categories::CategoryOf},
+    ast::{Atom, Expression as Expr, Literal as Lit, Moo, SymbolTable, categories::CategoryOf},
     bug, into_matrix_expr,
     metadata::Metadata,
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
@@ -33,7 +31,9 @@ fn reorder_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let (factors, index_domain) = factors.unwrap_matrix_unchecked().ok_or(RuleNotApplicable)?;
+    let (factors, index_domain) = Moo::unwrap_or_clone(factors)
+        .unwrap_matrix_unchecked()
+        .ok_or(RuleNotApplicable)?;
     let factors_copy = factors.clone();
 
     // Order variables by category.
@@ -92,7 +92,7 @@ fn reorder_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     if factors_copy != factors {
         Ok(Reduction::pure(Expr::Product(
             meta,
-            Box::new(into_matrix_expr!(factors;index_domain)),
+            Moo::new(into_matrix_expr!(factors;index_domain)),
         )))
     } else {
         Err(RuleNotApplicable)
@@ -127,7 +127,7 @@ fn order_by_complexity(factors: Vec<Expr>) -> (i32, Vec<Expr>) {
 
             // -1 * literal
             Expr::Neg(_, expr2) if matches!(*expr2, Expr::Atomic(_, Atom::Literal(_))) => {
-                let Expr::Atomic(_, Atom::Literal(lit)) = *expr2 else {
+                let Expr::Atomic(_, Atom::Literal(lit)) = &*expr2 else {
                     unreachable!()
                 };
 
@@ -139,17 +139,15 @@ fn order_by_complexity(factors: Vec<Expr>) -> (i32, Vec<Expr>) {
             }
 
             // -1 * x
-            Expr::Neg(_, expr2)
-                if matches!(expr2.borrow(), Expr::Atomic(_, Atom::Reference(_))) =>
-            {
+            Expr::Neg(_, expr2) if matches!(&*expr2, Expr::Atomic(_, Atom::Reference(_))) => {
                 literal *= -1;
-                variables.push(*expr2);
+                variables.push(Moo::unwrap_or_clone(expr2));
             }
 
             // -1 * <expression>
             Expr::Neg(_, expr2) => {
                 literal *= -1;
-                compound_exprs.push(*expr2);
+                compound_exprs.push(Moo::unwrap_or_clone(expr2));
             }
             _ => {
                 compound_exprs.push(expr);
@@ -171,7 +169,7 @@ fn order_by_complexity(factors: Vec<Expr>) -> (i32, Vec<Expr>) {
 fn remove_unit_vector_products(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Product(_, mat) => {
-            let list = mat.clone().unwrap_list().ok_or(RuleNotApplicable)?;
+            let list = (**mat).clone().unwrap_list().ok_or(RuleNotApplicable)?;
             if list.len() == 1 {
                 return Ok(Reduction::pure(list[0].clone()));
             }
