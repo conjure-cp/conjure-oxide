@@ -1,6 +1,6 @@
 ///Added 4 extra rules (that never apply) to left_add, showing a performance cost of > +400%
 ///Good optimisations will meant that this cost is vastly reduced (I am not sure by how much, but I think < +100% makes sense)
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use criterion::{Criterion, criterion_group, criterion_main};
 use tree_morph::prelude::*;
 use uniplate::Uniplate;
 
@@ -80,7 +80,12 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             let meta = Meta {
                 num_applications: 0,
             };
-            morph(rules.clone(), select_first, black_box(expr.clone()), meta)
+            morph(
+                rules.clone(),
+                select_first,
+                std::hint::black_box(expr.clone()),
+                meta,
+            )
         })
     });
 }
