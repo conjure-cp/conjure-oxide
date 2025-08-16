@@ -175,5 +175,5 @@ pub fn resolve_rule_sets(
     }
 
     ans.extend(rule_sets_by_names(extra_rs_names)?);
-    Ok(ans.iter().cloned().collect())
+    Ok(ans.iter().copied().collect())
 }

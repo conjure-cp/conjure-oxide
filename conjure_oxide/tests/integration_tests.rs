@@ -552,7 +552,7 @@ fn integration_test_inner(
     if accept {
         // Overwrite expected parse and rewrite models if needed
         if config.enable_native_parser && parsed_native_model_dirty {
-            model_native.clone().expect("model_native should exist");
+            model_native.expect("model_native should exist");
             copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
         }
         if config.parse_model_default && parsed_model_dirty {

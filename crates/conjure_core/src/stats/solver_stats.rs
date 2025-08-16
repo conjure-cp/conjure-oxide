@@ -33,7 +33,7 @@ impl SolverStats {
     pub fn with_timings(self, wall_time_s: f64) -> SolverStats {
         SolverStats {
             conjure_solver_wall_time_s: wall_time_s,
-            ..self.clone()
+            ..self
         }
     }
 }

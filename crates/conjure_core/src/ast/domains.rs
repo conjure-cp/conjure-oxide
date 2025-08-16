@@ -271,7 +271,7 @@ impl Domain {
             return Domain::Empty(ReturnType::Int);
         }
 
-        let set = BTreeSet::from_iter(elements.iter().cloned());
+        let set = BTreeSet::from_iter(elements.iter().copied());
 
         Domain::from_set_i32(&set)
     }
@@ -322,7 +322,7 @@ impl Domain {
             return domain_int!(*elements.first().unwrap());
         }
 
-        let mut elems_iter = elements.iter().cloned();
+        let mut elems_iter = elements.iter().copied();
 
         let mut ranges: Vec<Range<i32>> = vec![];
 

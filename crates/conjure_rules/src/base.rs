@@ -93,7 +93,7 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut symbols = symbols.clone();
 
     let atom_inner = Atom::new_ref(symbols.gensym(&domain));
-    let atom_expr = Expr::Atomic(Metadata::new(), atom_inner.clone());
+    let atom_expr = Expr::Atomic(Metadata::new(), atom_inner);
 
     let mut new_top = Vec::new();
     let mut disjunction = Vec::new();
@@ -136,7 +136,7 @@ fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut symbols: SymbolTable = symbols.clone();
 
     let atom_inner = Atom::new_ref(symbols.gensym(&domain));
-    let atom_expr = Expr::Atomic(Metadata::new(), atom_inner.clone());
+    let atom_expr = Expr::Atomic(Metadata::new(), atom_inner);
 
     let mut new_top = Vec::new(); // the new variable must be more than or equal to all the other variables
     let mut disjunction = Vec::new(); // the new variable must more than or equal to one of the variables

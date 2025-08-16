@@ -20,7 +20,7 @@ fn eq_to_subset_eq(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
                     let expr2 = SubsetEq(Metadata::new(), b.clone(), a.clone());
                     Ok(Reduction::pure(And(
                         Metadata::new(),
-                        Moo::new(matrix_expr![expr1.clone(), expr2.clone()]),
+                        Moo::new(matrix_expr![expr1, expr2]),
                     )))
                 } else {
                     Err(RuleNotApplicable)

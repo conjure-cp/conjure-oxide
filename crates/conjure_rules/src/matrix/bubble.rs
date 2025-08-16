@@ -87,9 +87,9 @@ fn slice_to_bubble(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
     let bubble_constraints = Moo::new(into_matrix_expr![
         izip!(index_domains, indices)
             .filter_map(|(domain, index)| {
-                index.clone().map(|index| {
-                    Expression::InDomain(Metadata::new(), Moo::new(index.clone()), domain)
-                })
+                index
+                    .clone()
+                    .map(|index| Expression::InDomain(Metadata::new(), Moo::new(index), domain))
             })
             .collect_vec()
     ]);

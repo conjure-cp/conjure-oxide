@@ -81,7 +81,7 @@ fn subst(expr: &Expr, x: u32, f: &Expr) -> Expr {
             } else if !f.free_vars().contains(y) {
                 Expr::Abs(*y, Box::new(subst(g, x, f))) // substitution is safe
             } else {
-                let z = fresh(&f.vars().union(&f.vars()).cloned().collect());
+                let z = fresh(&f.vars().union(&f.vars()).copied().collect());
                 let new_g = subst(g, *y, &Expr::Var(z));
                 Expr::Abs(z, Box::new(subst(&new_g, x, f))) // capture avoidance
             }

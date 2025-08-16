@@ -72,8 +72,8 @@ fn remove_equivalence(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             Expr::Or(
                 Metadata::new(),
                 Moo::new(matrix_expr![
-                    Moo::unwrap_or_clone(x.clone()),
-                    Expr::Not(Metadata::new(), y.clone())
+                    Moo::unwrap_or_clone(x),
+                    Expr::Not(Metadata::new(), y)
                 ]),
             )
         ]),
