@@ -1,7 +1,7 @@
 ///This benchmark aims to assess how compute-heavy modifying all the nodes is.
 ///A tree of depth n with n children will be created, with the only rule being a modification 0->1.
 ///This benchmark will assess how efficient tree-updating (which is not done in place) is.
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use criterion::{Criterion, criterion_group, criterion_main};
 use tree_morph::prelude::*;
 use uniplate::Uniplate;
 
@@ -13,7 +13,7 @@ enum Expr {
 
 struct Meta {} // not relevant for this benchmark
 
-fn zero_to_one(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -> Option<Expr> {
+fn zero_to_one(_: &mut Commands<Expr, Meta>, subtree: &Expr, _: &Meta) -> Option<Expr> {
     if let Expr::Val(a) = subtree {
         if let 0 = *a {
             return Some(Expr::Val(1));
@@ -38,9 +38,9 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("Modify_leafs", |b| {
         b.iter(|| {
             morph(
-                black_box(rules.clone()),
+                std::hint::black_box(rules.clone()),
                 select_first,
-                black_box(expr.clone()),
+                std::hint::black_box(expr.clone()),
                 Meta {},
             )
         })

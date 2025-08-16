@@ -2,7 +2,7 @@
 ///Note that addition and multiplication are performed modulo 10, to avoid having large numbers
 /// in the factorial. I also add in a dummy "do_nothing" rule. This gives another area where
 /// an optimiser can shine.
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use criterion::{Criterion, criterion_group, criterion_main};
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use tree_morph::prelude::*;
@@ -37,11 +37,11 @@ fn random_exp_tree(rng: &mut StdRng, count: &mut usize, depth: usize) -> Expr {
         _ => Expr::Val(rng.random_range(1..=10)),
     }
 }
-fn do_nothing(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -> Option<Expr> {
+fn do_nothing(_: &mut Commands<Expr, Meta>, _: &Expr, _: &Meta) -> Option<Expr> {
     None
 }
 
-fn factorial_eval(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -> Option<Expr> {
+fn factorial_eval(_: &mut Commands<Expr, Meta>, subtree: &Expr, _: &Meta) -> Option<Expr> {
     if let Expr::Factorial(a) = subtree {
         if let Expr::Val(n) = *a.as_ref() {
             if n == 0 {
@@ -56,7 +56,7 @@ fn factorial_eval(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) 
     None
 }
 
-fn rule_eval_add(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -> Option<Expr> {
+fn rule_eval_add(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, _: &Meta) -> Option<Expr> {
     if let Expr::Add(a, b) = subtree {
         if let (Expr::Val(a_v), Expr::Val(b_v)) = (a.as_ref(), b.as_ref()) {
             cmds.mut_meta(Box::new(|m: &mut Meta| m.num_applications_addition += 1));
@@ -66,7 +66,7 @@ fn rule_eval_add(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -
     None
 }
 
-fn rule_eval_mul(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -> Option<Expr> {
+fn rule_eval_mul(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, _: &Meta) -> Option<Expr> {
     if let Expr::Mul(a, b) = subtree {
         if let (Expr::Val(a_v), Expr::Val(b_v)) = (a.as_ref(), b.as_ref()) {
             cmds.mut_meta(Box::new(|m: &mut Meta| {
@@ -102,10 +102,10 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 num_applications_multiplication: 0,
             };
             morph(
-                black_box(rules.clone()),
+                std::hint::black_box(rules.clone()),
                 select_first,
-                black_box(my_expression.clone()),
-                black_box(meta),
+                std::hint::black_box(my_expression.clone()),
+                std::hint::black_box(meta),
             )
         })
     });

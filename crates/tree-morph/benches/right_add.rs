@@ -1,7 +1,7 @@
 ///This is a simple benchmark that tests how long it takes tree-morph to evaluate (()...+1)+1).
 ///This benchmark is designed to be compared with left_add.
 ///
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use criterion::{Criterion, criterion_group, criterion_main};
 use tree_morph::prelude::*;
 use uniplate::Uniplate;
 
@@ -66,7 +66,12 @@ pub fn criterion_benchmark(c: &mut Criterion) {
             let meta = Meta {
                 num_applications: 0,
             };
-            morph(rules.clone(), select_first, black_box(expr.clone()), meta)
+            morph(
+                rules.clone(),
+                select_first,
+                std::hint::black_box(expr.clone()),
+                meta,
+            )
         })
     });
 }

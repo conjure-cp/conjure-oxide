@@ -1,6 +1,6 @@
 ///The following test is designed to test how long tree traversal takes.
 ///There is one rule, that does nothing. We create trees of a variable depth.
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use criterion::{Criterion, criterion_group, criterion_main};
 use tree_morph::prelude::*;
 use uniplate::Uniplate;
 
@@ -11,7 +11,7 @@ enum Expr {
     Val(i32),
 }
 struct Meta {}
-fn do_nothing(cmds: &mut Commands<Expr, Meta>, subtree: &Expr, meta: &Meta) -> Option<Expr> {
+fn do_nothing(_: &mut Commands<Expr, Meta>, _: &Expr, _: &Meta) -> Option<Expr> {
     None
 }
 
@@ -31,9 +31,9 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("Identity", |b| {
         b.iter(|| {
             morph(
-                black_box(rules.clone()),
+                std::hint::black_box(rules.clone()),
                 select_first,
-                black_box(expr.clone()),
+                std::hint::black_box(expr.clone()),
                 Meta {},
             )
         })
