@@ -126,7 +126,7 @@ impl Representation for RecordToAtom {
             .map(|name| {
                 let decl = st.lookup(&name).unwrap();
                 (
-                    name.clone(),
+                    name,
                     Expression::Atomic(Metadata::new(), Atom::Reference(decl)),
                 )
             })

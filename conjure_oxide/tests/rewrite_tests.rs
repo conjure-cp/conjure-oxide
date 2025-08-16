@@ -111,7 +111,7 @@ fn recursive_sum_of_constants() {
         )),
     );
 
-    let simplified_expression = simplify_expression(complex_expression.clone());
+    let simplified_expression = simplify_expression(complex_expression);
     assert_eq!(simplified_expression, correct_simplified_expression);
 }
 
@@ -286,7 +286,7 @@ fn reduce_solve_xyz() {
         expr1,
         Expression::FlatSumLeq(
             Metadata::new(),
-            vec![a.clone(), b.clone(), c.clone()],
+            vec![a.clone(), b.clone(), c],
             Atom::Literal(Literal::Int(4))
         )
     );
@@ -310,8 +310,8 @@ fn reduce_solve_xyz() {
         expr2,
         Expression::FlatIneq(
             Metadata::new(),
-            Moo::new(a.clone()),
-            Moo::new(b.clone()),
+            Moo::new(a),
+            Moo::new(b),
             Box::new(Literal::Int(-1)),
         )
     );
@@ -445,11 +445,11 @@ fn rule_distribute_not_over_and() {
             Moo::new(matrix_expr![
                 Expression::Not(
                     Metadata::new(),
-                    Moo::new(Expression::Atomic(Metadata::new(), a.clone()))
+                    Moo::new(Expression::Atomic(Metadata::new(), a))
                 ),
                 Expression::Not(
                     Metadata::new(),
-                    Moo::new(Expression::Atomic(Metadata::new(), b.clone()))
+                    Moo::new(Expression::Atomic(Metadata::new(), b))
                 ),
             ])
         )
@@ -487,11 +487,11 @@ fn rule_distribute_not_over_or() {
             Moo::new(matrix_expr![
                 Expression::Not(
                     Metadata::new(),
-                    Moo::new(Expression::Atomic(Metadata::new(), a.clone()))
+                    Moo::new(Expression::Atomic(Metadata::new(), a))
                 ),
                 Expression::Not(
                     Metadata::new(),
-                    Moo::new(Expression::Atomic(Metadata::new(), b.clone()))
+                    Moo::new(Expression::Atomic(Metadata::new(), b))
                 ),
             ])
         )
@@ -573,14 +573,14 @@ fn rule_distribute_or_over_and() {
                     Metadata::new(),
                     Moo::new(matrix_expr![
                         Expression::Atomic(Metadata::new(), d2.clone()),
-                        Expression::Atomic(Metadata::new(), d1.clone()),
+                        Expression::Atomic(Metadata::new(), d1),
                     ])
                 ),
                 Expression::Or(
                     Metadata::new(),
                     Moo::new(matrix_expr![
                         Expression::Atomic(Metadata::new(), d2.clone()),
-                        Expression::Atomic(Metadata::new(), d2.clone()),
+                        Expression::Atomic(Metadata::new(), d2),
                     ])
                 ),
             ])
@@ -633,7 +633,7 @@ fn rewrite_solve_xyz() {
                     Moo::new(matrix_expr![
                         Expression::Atomic(Metadata::new(), a.clone()),
                         Expression::Atomic(Metadata::new(), b.clone()),
-                        Expression::Atomic(Metadata::new(), c.clone()),
+                        Expression::Atomic(Metadata::new(), c),
                     ]),
                 )),
                 Moo::new(Expression::Atomic(
@@ -643,8 +643,8 @@ fn rewrite_solve_xyz() {
             ),
             Expression::Lt(
                 Metadata::new(),
-                Moo::new(Expression::Atomic(Metadata::new(), a.clone())),
-                Moo::new(Expression::Atomic(Metadata::new(), b.clone())),
+                Moo::new(Expression::Atomic(Metadata::new(), a)),
+                Moo::new(Expression::Atomic(Metadata::new(), b)),
             ),
         ]),
     );

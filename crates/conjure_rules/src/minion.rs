@@ -872,9 +872,7 @@ fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResu
             _ => Err(RuleNotApplicable),
         },
         Expr::AuxDeclaration(_, decl, expr) => match Moo::unwrap_or_clone(expr) {
-            Expr::SafeIndex(_, subject, indices) => {
-                Ok((Atom::Reference(decl.clone()), subject, indices.clone()))
-            }
+            Expr::SafeIndex(_, subject, indices) => Ok((Atom::Reference(decl), subject, indices)),
             _ => Err(RuleNotApplicable),
         },
         _ => Err(RuleNotApplicable),
@@ -1417,11 +1415,7 @@ fn bool_eq_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    Ok(Reduction::pure(Expr::MinionReify(
-        Metadata::new(),
-        e.clone(),
-        atom,
-    )))
+    Ok(Reduction::pure(Expr::MinionReify(Metadata::new(), e, atom)))
 }
 
 /// Converts an iff to an `Eq` constraint.

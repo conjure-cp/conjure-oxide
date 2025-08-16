@@ -48,7 +48,7 @@ fn index_tuple_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
 
     // let decl = symbols.lookup(name).unwrap();
 
-    let Some(Domain::Tuple(_)) = decl.domain().map(|x| x.clone().resolve(symbols)) else {
+    let Some(Domain::Tuple(_)) = decl.domain().map(|x| x.resolve(symbols)) else {
         return Err(RuleNotApplicable);
     };
 
@@ -112,7 +112,7 @@ fn tuple_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             ),
             Expression::Geq(
                 Metadata::new(),
-                Moo::new(index.clone()),
+                Moo::new(index),
                 Moo::new(Expression::Atomic(
                     Metadata::new(),
                     Atom::Literal(Literal::Int(1))
@@ -170,11 +170,11 @@ fn tuple_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let domain = decl
         .domain()
-        .map(|x| x.clone().resolve(symbols))
+        .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
     let domain2 = decl2
         .domain()
-        .map(|x| x.clone().resolve(symbols))
+        .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
 
     let Domain::Tuple(elems) = domain else {
@@ -250,7 +250,7 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let domain = decl
         .domain()
-        .map(|x| x.clone().resolve(symbols))
+        .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
 
     let Domain::Tuple(elems) = domain else {
@@ -328,12 +328,12 @@ fn tuple_inequality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let domain = decl
         .domain()
-        .map(|x| x.clone().resolve(symbols))
+        .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
 
     let domain2 = decl2
         .domain()
-        .map(|x| x.clone().resolve(symbols))
+        .map(|x| x.resolve(symbols))
         .ok_or(ApplicationError::DomainError)?;
 
     let Domain::Tuple(elems) = domain else {

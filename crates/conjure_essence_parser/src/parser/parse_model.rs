@@ -92,9 +92,9 @@ pub fn parse_essence_with_context(
             }
             _ => {
                 let kind = statement.kind();
-                return Err(EssenceParseError::ParseError(Error::Parse(
-                    format!("Unrecognized top level statement kind: {kind}").to_owned(),
-                )));
+                return Err(EssenceParseError::ParseError(Error::Parse(format!(
+                    "Unrecognized top level statement kind: {kind}"
+                ))));
             }
         }
     }

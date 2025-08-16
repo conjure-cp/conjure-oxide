@@ -173,7 +173,7 @@ pub fn get_rule_by_name(name: &str) -> Option<&'static Rule<'static>> {
     get_all_rules()
         .iter()
         .find(|rule| rule.name == name)
-        .cloned()
+        .copied()
 }
 
 /// Get all rule sets
@@ -224,7 +224,7 @@ pub fn get_rule_set_by_name(name: &str) -> Option<&'static RuleSet<'static>> {
     get_all_rule_sets()
         .iter()
         .find(|rule_set| rule_set.name == name)
-        .cloned()
+        .copied()
 }
 
 /// Get all rule sets for a given solver family.
@@ -253,6 +253,6 @@ pub fn get_rule_sets_for_solver_family(
                 .iter()
                 .any(|family| family.eq(&solver_family))
         })
-        .cloned()
+        .copied()
         .collect()
 }

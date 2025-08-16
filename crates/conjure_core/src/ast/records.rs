@@ -69,7 +69,7 @@ where
             unsafe {
                 // SAFETY: asserted the type equality above
                 let self_to = std::mem::transmute::<&RecordValue<U>, &To>(self).clone();
-                let tree = Tree::One(self_to.clone());
+                let tree = Tree::One(self_to);
                 let ctx = Box::new(move |x| {
                     let Tree::One(x) = x else {
                         panic!();

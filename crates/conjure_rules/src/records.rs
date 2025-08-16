@@ -42,7 +42,7 @@ fn index_record_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 
         // let decl = symbols.lookup(name).unwrap();
 
-        let Some(Domain::Record(_)) = decl.domain().map(|x| x.clone().resolve(symbols)) else {
+        let Some(Domain::Record(_)) = decl.domain().map(|x| x.resolve(symbols)) else {
             return Err(RuleNotApplicable);
         };
 
@@ -56,7 +56,7 @@ fn index_record_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 
         // during the conversion from unsafe index to safe index in bubbling
         // we convert the field name to a literal integer for direct access
-        let Some(index) = index.clone().into_literal() else {
+        let Some(index) = index.into_literal() else {
             return Err(RuleNotApplicable); // we don't support non-literal indices
         };
 
@@ -103,7 +103,7 @@ fn record_index_to_bubble(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
 
         let index = indices[0].clone();
 
-        let Expr::Atomic(_, Atom::Reference(decl)) = index.clone() else {
+        let Expr::Atomic(_, Atom::Reference(decl)) = index else {
             return Err(RuleNotApplicable);
         };
 
@@ -171,8 +171,8 @@ fn record_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         // .. that have been represented with record_to_atom
         && reprs.first().is_none_or(|x| x.as_str() == "record_to_atom")
         && reprs2.first().is_none_or(|x| x.as_str() == "record_to_atom")
-        && let Some(domain) = decl.domain().map(|x| x.clone().resolve(symbols))
-        && let Some(domain2) = decl2.domain().map(|x| x.clone().resolve(symbols))
+        && let Some(domain) = decl.domain().map(|x| x.resolve(symbols))
+        && let Some(domain2) = decl2.domain().map(|x| x.resolve(symbols))
 
         // .. and have record variable domains
         && let Domain::Record(entries) = domain
@@ -232,7 +232,7 @@ fn record_to_const(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     {
         let domain = decl
             .domain()
-            .map(|x| x.clone().resolve(symbols))
+            .map(|x| x.resolve(symbols))
             .ok_or(ApplicationError::DomainError)?;
 
         let Domain::Record(entries) = domain else {

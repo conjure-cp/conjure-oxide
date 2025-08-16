@@ -14,7 +14,7 @@ fn modify_domain() {
     let d1 = Domain::Int(vec![Range::Bounded(1, 3)]);
     let d2 = Domain::Int(vec![Range::Bounded(1, 2)]);
 
-    let mut decl_a = DeclarationPtr::new_var(name_a.clone(), d1.clone());
+    let mut decl_a = DeclarationPtr::new_var(name_a, d1.clone());
 
     symbols.insert(decl_a.clone()).unwrap();
 

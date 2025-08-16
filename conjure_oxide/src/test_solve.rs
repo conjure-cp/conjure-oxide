@@ -20,7 +20,7 @@ pub struct Args {
 
 pub fn run_test_solve_command(global_args: GlobalArgs, local_args: Args) -> anyhow::Result<()> {
     // stealing most of the steps of the solve command, except the solver stuff.
-    let input_file = local_args.input_file.clone();
+    let input_file = local_args.input_file;
 
     let context = solve::init_context(&global_args, input_file.clone())?;
     let model = solve::parse(&global_args, Arc::clone(&context))?;

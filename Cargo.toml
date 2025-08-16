@@ -19,10 +19,14 @@ members = [
 [workspace.lints.clippy]
 unwrap_used = "allow"
 expect_used = "allow"
-wildcard_imports = "warn"
 
-# do not allow `use Enum::*`
-enum_glob_use = "warn"
+
+assigning_clones = "warn"         # use clone_from where possible
+cloned_instead_of_copied = "warn" # use copy instead of clone where possible
+collection_is_never_read = "warn"
+enum_glob_use = "warn"            # do not allow `use Enum::*`
+implicit_clone = "warn"           # use .clone() instead of .to_owned()
+redundant_clone = "warn"          # this is a nursery lint, so might give false-negatives.
 
 [profile.profiling] 
 inherits = "release"

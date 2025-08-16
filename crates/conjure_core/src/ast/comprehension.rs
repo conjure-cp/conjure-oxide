@@ -149,7 +149,7 @@ impl Comprehension {
         let values = Arc::new(Mutex::new(Vec::new()));
         let values_ptr = Arc::clone(&values);
 
-        tracing::debug!(model=%model.clone(),comprehension=%self.clone(),"Minion solving comprehension (simple mode)");
+        tracing::debug!(model=%model,comprehension=%self,"Minion solving comprehension (simple mode)");
         minion.solve(Box::new(move |sols| {
             // TODO: deal with represented names if induction variables are abslits.
             let values = &mut *values_ptr.lock().unwrap();
@@ -353,7 +353,7 @@ impl Comprehension {
         // SOLVE FOR THE INDUCTION VARIABLES, AND SUBSTITUTE INTO THE REWRITTEN RETURN EXPRESSION
         // ======================================================================================
 
-        tracing::debug!(model=%generator_model.clone(),comprehension=%self.clone(),"Minion solving comprehnesion (ac mode)");
+        tracing::debug!(model=%generator_model,comprehension=%self,"Minion solving comprehnesion (ac mode)");
 
         minion.solve(Box::new(move |sols| {
             // TODO: deal with represented names if induction variables are abslits.
@@ -487,7 +487,7 @@ impl Display for Comprehension {
             .clone()
             .into_iter_local()
             .map(|(name, decl): (Name, DeclarationPtr)| {
-                let domain: Domain = decl.domain().unwrap().clone();
+                let domain: Domain = decl.domain().unwrap();
                 (name, domain)
             })
             .map(|(name, domain): (Name, Domain)| format!("{name}: {domain}"))
@@ -550,7 +550,7 @@ impl ComprehensionBuilder {
 
     pub fn generator(mut self, declaration: DeclarationPtr) -> Self {
         let name = declaration.name().clone();
-        let domain = declaration.domain().unwrap().clone();
+        let domain = declaration.domain().unwrap();
         assert!(!self.induction_variables.contains(&name));
 
         self.induction_variables.insert(name.clone());
@@ -558,7 +558,7 @@ impl ComprehensionBuilder {
         // insert into generator symbol table as a variable
         (*self.generator_symboltable)
             .borrow_mut()
-            .insert(declaration.clone());
+            .insert(declaration);
 
         // insert into return expression symbol table as a given
         (*self.return_expr_symboltable)
@@ -585,7 +585,7 @@ impl ComprehensionBuilder {
             .clone()
             .unwrap();
         let mut generator_submodel = SubModel::new(parent_symboltable.clone());
-        let mut return_expression_submodel = SubModel::new(parent_symboltable.clone());
+        let mut return_expression_submodel = SubModel::new(parent_symboltable);
 
         *generator_submodel.symbols_ptr_unchecked_mut() = self.generator_symboltable;
         *return_expression_submodel.symbols_ptr_unchecked_mut() = self.return_expr_symboltable;

@@ -890,14 +890,13 @@ impl Expression {
     pub fn unwrap_matrix_unchecked(self) -> Option<(Vec<Expression>, Domain)> {
         match self {
             Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, domain)) => {
-                Some((elems.clone(), *domain))
+                Some((elems, *domain))
             }
             Expression::Atomic(
                 _,
                 Atom::Literal(Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, domain))),
             ) => Some((
                 elems
-                    .clone()
                     .into_iter()
                     .map(|x: Literal| Expression::Atomic(Metadata::new(), Atom::Literal(x)))
                     .collect_vec(),
@@ -927,7 +926,7 @@ impl Expression {
         match self {
             Expression::Atomic(_, Atom::Literal(lit)) => Some(lit),
             Expression::AbstractLiteral(_, abslit) => {
-                Some(Literal::AbstractLiteral(abslit.clone().into_literals()?))
+                Some(Literal::AbstractLiteral(abslit.into_literals()?))
             }
             Expression::Neg(_, e) => {
                 let Literal::Int(i) = Moo::unwrap_or_clone(e).into_literal()? else {
@@ -1389,10 +1388,7 @@ mod tests {
     fn test_domain_of_constant_sum() {
         let c1 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1)));
         let c2 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2)));
-        let sum = Expression::Sum(
-            Metadata::new(),
-            Moo::new(matrix_expr![c1.clone(), c2.clone()]),
-        );
+        let sum = Expression::Sum(Metadata::new(), Moo::new(matrix_expr![c1, c2]));
         assert_eq!(sum.domain_of(), Some(Domain::Int(vec![Range::Single(3)])));
     }
 
@@ -1400,10 +1396,7 @@ mod tests {
     fn test_domain_of_constant_invalid_type() {
         let c1 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1)));
         let c2 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)));
-        let sum = Expression::Sum(
-            Metadata::new(),
-            Moo::new(matrix_expr![c1.clone(), c2.clone()]),
-        );
+        let sum = Expression::Sum(Metadata::new(), Moo::new(matrix_expr![c1, c2]));
         assert_eq!(sum.domain_of(), None);
     }
 

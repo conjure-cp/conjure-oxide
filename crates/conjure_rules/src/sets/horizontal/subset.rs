@@ -17,7 +17,7 @@ fn subset_to_subset_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                     let expr2 = Expr::Neq(Metadata::new(), a.clone(), b.clone());
                     Ok(Reduction::pure(Expr::And(
                         Metadata::new(),
-                        Moo::new(matrix_expr![expr1.clone(), expr2.clone()]),
+                        Moo::new(matrix_expr![expr1, expr2]),
                     )))
                 } else {
                     Err(RuleNotApplicable)

@@ -179,7 +179,7 @@ impl Representation for MatrixToAtom {
                 let declaration = symtab.lookup(&name).expect("declarations of the representation variables should exist in the symbol table before expression_down is called");
                 (name, declaration)
             })
-            .map(|(name, decl)| (name.clone(), Expression::Atomic(Metadata::new(), Atom::Reference(decl))))
+            .map(|(name, decl)| (name, Expression::Atomic(Metadata::new(), Atom::Reference(decl))))
             .collect())
     }
 

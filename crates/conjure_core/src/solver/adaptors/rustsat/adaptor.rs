@@ -190,7 +190,7 @@ impl SolverAdaptor for Sat {
 
         self.decision_refs = Some(finds);
 
-        let m_clone = model.clone();
+        let m_clone = model;
         let vec_constr = m_clone.as_submodel().constraints();
 
         let vec_cnf = vec_constr.clone();

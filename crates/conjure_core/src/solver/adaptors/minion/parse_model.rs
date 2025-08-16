@@ -149,7 +149,6 @@ fn load_intdomain_var(
     }?;
 
     let domain = minion_ast::VarDomain::Bound(low, high);
-    let str_name = str_name.to_owned();
 
     if search_var {
         _try_add_var(str_name, domain, minion_model)

@@ -378,7 +378,7 @@ impl Iterator for IntoIter {
         while val.is_none() {
             let parent = self.parent.clone()?;
             let parent_ref = (*parent).borrow();
-            self.parent = parent_ref.parent.clone();
+            self.parent.clone_from(&parent_ref.parent);
             self.inner = parent_ref.table.clone().into_iter();
 
             val = self.inner.next();

@@ -39,8 +39,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
         // let decl = symbols.lookup(name).unwrap();
 
         // resolve index domains so that we can enumerate them later
-        let Some(Domain::Matrix(_, index_domains)) =
-            decl.domain().map(|x| x.clone().resolve(symbols))
+        let Some(Domain::Matrix(_, index_domains)) = decl.domain().map(|x| x.resolve(symbols))
         else {
             return Err(RuleNotApplicable);
         };
@@ -120,7 +119,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
                         .collect_vec()
                 );
 
-                let old_index_domain = &index_domains.clone()[0];
+                let old_index_domain = &index_domains[0];
 
                 let Domain::Int(ranges) = old_index_domain else {
                     return Err(RuleNotApplicable);
@@ -225,7 +224,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
             // now lets get the flat matrix.
 
             let repr_exprs = repr.expression_down(symbols)?;
-            let flat_elems = matrix::enumerate_indices(index_domains.clone())
+            let flat_elems = matrix::enumerate_indices(index_domains)
                 .map(|xs| {
                     Name::Represented(Box::new((
                         name.as_ref().clone(),
@@ -274,8 +273,7 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         .clone();
 
     // resolve index domains so that we can enumerate them later
-    let Some(Domain::Matrix(_, index_domains)) = decl.domain().map(|x| x.clone().resolve(symbols))
-    else {
+    let Some(Domain::Matrix(_, index_domains)) = decl.domain().map(|x| x.resolve(symbols)) else {
         return Err(RuleNotApplicable);
     };
 
@@ -355,8 +353,7 @@ fn matrix_ref_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             .clone();
 
         // resolve index domains so that we can enumerate them later
-        let Some(Domain::Matrix(_, index_domains)) =
-            decl.domain().map(|x| x.clone().resolve(symbols))
+        let Some(Domain::Matrix(_, index_domains)) = decl.domain().map(|x| x.resolve(symbols))
         else {
             continue;
         };
