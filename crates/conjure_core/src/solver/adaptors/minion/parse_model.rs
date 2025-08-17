@@ -2,9 +2,9 @@
 
 use itertools::Itertools as _;
 use minion_ast::Model as MinionModel;
-use minion_rs::ast as minion_ast;
-use minion_rs::error::MinionError;
-use minion_rs::{get_from_table, run_minion};
+use minion_sys::ast as minion_ast;
+use minion_sys::error::MinionError;
+use minion_sys::{get_from_table, run_minion};
 use std::cell::Ref;
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -19,7 +19,7 @@ use crate::solver::SolverMutCallback;
 use crate::solver::{SolverCallback, SolverError};
 use crate::stats::SolverStats;
 
-/// Converts a conjure-oxide model to a `minion_rs` model.
+/// Converts a conjure-oxide model to a `minion_sys` model.
 pub fn model_to_minion(model: ConjureModel) -> Result<MinionModel, SolverError> {
     let mut minion_model = MinionModel::new();
     load_symbol_table(&model, &mut minion_model)?;
@@ -248,7 +248,7 @@ fn load_expr(
     Ok(())
 }
 
-/// Parses a Conjure Oxide expression into a `minion_rs` constraint.
+/// Parses a Conjure Oxide expression into a `minion_sys` constraint.
 fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, SolverError> {
     match expr {
         conjure_ast::Expression::Atomic(_metadata, atom) => Ok(minion_ast::Constraint::WLiteral(

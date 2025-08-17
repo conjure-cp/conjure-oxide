@@ -13,7 +13,7 @@ documentation for each crate for developer reference:
  + [conjure_essence_parser](https://conjure-cp.github.io/conjure-oxide/docs/conjure_essence_parser)
  + [conjure_rule_macros](https://conjure-cp.github.io/conjure-oxide/docs/conjure_rule_macros)
  + [enum_compatability_macro](https://conjure-cp.github.io/conjure-oxide/docs/enum_compatability_macro)
- + [minion_rs](https://conjure-cp.github.io/conjure-oxide/docs/minion_rs/index.html)
+ + [minion-sys](https://conjure-cp.github.io/conjure-oxide/docs/minion-sys/index.html)
 
 ## Code Coverage
 Code coverage reports can be found [here](https://conjure-cp.github.io/conjure-oxide/coverage/main/).

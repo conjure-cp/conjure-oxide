@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use crate::ffi;
 
-/// Wraps all error types returned by `minion_rs`.
+/// Wraps all error types returned by `minion-sys`.
 #[derive(Debug, Error)]
 #[non_exhaustive]
 pub enum MinionError {

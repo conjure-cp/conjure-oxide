@@ -7,7 +7,7 @@ use std::ptr::null;
 use std::vec;
 
 use clap::error;
-use minion_rs::ast::{Model, Tuple};
+use minion_sys::ast::{Model, Tuple};
 use rustsat::encodings::am1::Def;
 use rustsat::solvers::{Solve, SolverResult};
 use rustsat::types::{Assignment, Clause, Lit, TernaryVal, Var as satVar};

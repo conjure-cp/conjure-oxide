@@ -26,8 +26,8 @@
 //! This can be solved in Rust like so:
 //!
 //! ```
-//! use minion_rs::ast::*;
-//! use minion_rs::run_minion;
+//! use minion_sys::ast::*;
+//! use minion_sys::run_minion;
 //! use std::collections::HashMap;
 //! use std::sync::Mutex;
 //!
