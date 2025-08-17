@@ -21,9 +21,9 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
 
-use minion_rs::ast::{Constant, Constraint, Model, Var, VarDomain, VarName};
-use minion_rs::error::MinionError;
-use minion_rs::get_from_table;
+use minion_sys::ast::{Constant, Constraint, Model, Var, VarDomain, VarName};
+use minion_sys::error::MinionError;
+use minion_sys::get_from_table;
 #[test]
 #[allow(clippy::panic_in_result_fn)]
 fn test_watchedor_reifyimply_1() -> Result<(), MinionError> {
@@ -46,7 +46,7 @@ fn test_watchedor_reifyimply_1() -> Result<(), MinionError> {
         Var::NameRef(String::from("c")),
     ));
 
-    minion_rs::run_minion(model, callback)?;
+    minion_sys::run_minion(model, callback)?;
 
     let guard = SOLS_COUNTER.lock().unwrap();
     assert_eq!(*guard, 7);

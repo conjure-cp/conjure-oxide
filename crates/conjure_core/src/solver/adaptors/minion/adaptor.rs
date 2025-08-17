@@ -4,9 +4,9 @@ use std::sync::{LazyLock, Mutex, OnceLock};
 use ustr::Ustr;
 
 use minion_ast::Model as MinionModel;
-use minion_rs::ast as minion_ast;
-use minion_rs::error::MinionError;
-use minion_rs::{get_from_table, run_minion};
+use minion_sys::ast as minion_ast;
+use minion_sys::error::MinionError;
+use minion_sys::{get_from_table, run_minion};
 
 use crate::Model as ConjureModel;
 use crate::ast::{self as conjure_ast, Name};
@@ -29,7 +29,7 @@ use super::parse_model::model_to_minion;
 
 /// A [SolverAdaptor] for interacting with Minion.
 ///
-/// This adaptor uses the `minion_rs` crate to talk to Minion over FFI.
+/// This adaptor uses the `minion_sys` crate to talk to Minion over FFI.
 pub struct Minion {
     __non_constructable: private::Internal,
     model: Option<MinionModel>,
@@ -60,7 +60,7 @@ fn parse_name(minion_name: &str) -> Name {
 }
 
 #[allow(clippy::unwrap_used)]
-fn minion_rs_callback(solutions: HashMap<minion_ast::VarName, minion_ast::Constant>) -> bool {
+fn minion_sys_callback(solutions: HashMap<minion_ast::VarName, minion_ast::Constant>) -> bool {
     *(ANY_SOLUTIONS.lock().unwrap()) = true;
     let callback = USER_CALLBACK
         .get_or_init(|| Mutex::new(Box::new(|x| true)))
@@ -127,13 +127,13 @@ impl SolverAdaptor for Minion {
 
         run_minion(
             self.model.clone().expect("STATE MACHINE ERR"),
-            minion_rs_callback,
+            minion_sys_callback,
         )
         .map_err(|err| match err {
             MinionError::RuntimeError(x) => Runtime(format!("{x:#?}")),
             MinionError::Other(x) => Runtime(format!("{x:#?}")),
             MinionError::NotImplemented(x) => RuntimeNotImplemented(x),
-            x => Runtime(format!("unknown minion_rs error: {x:#?}")),
+            x => Runtime(format!("unknown minion_sys error: {x:#?}")),
         })?;
 
         let mut status = Complete(HasSolutions);
@@ -174,7 +174,7 @@ impl SolverAdaptor for Minion {
         writer: &mut impl std::io::Write,
     ) -> Result<(), std::io::Error> {
         let model = self.model.as_ref().expect("Minion solver adaptor should have a model as write_solver_input_file should only be called in the LoadedModel state.");
-        minion_rs::print::write_minion_file(writer, model)
+        minion_sys::print::write_minion_file(writer, model)
     }
 }
 
