@@ -134,3 +134,20 @@ jobs:
       - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
       - run: cargo install cargo-audit
       - run: cargo audit
+
+  shear:
+    name: "No unused dependencies (cargo shear)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Install cargo-shear
+        run: cargo +nightly install cargo-shear
+
+      - name: Run cargo shear
+        run: cargo +nightly shear --expand
+
+
