@@ -1,5 +1,5 @@
 use super::expression::parse_expr_to_ts;
-use conjure_essence_parser::util::{get_tree, query_toplevel};
+use conjure_cp_essence_parser::util::{get_tree, query_toplevel};
 use proc_macro2::{TokenStream, TokenTree};
 use quote::{ToTokens, quote};
 use syn::{Error, LitStr, Result};

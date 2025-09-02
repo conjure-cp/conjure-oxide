@@ -10,7 +10,7 @@ documentation for each crate for developer reference:
  + [conjure-oxide](https://conjure-cp.github.io/conjure-oxide/docs/conjure_oxide/index.html)
  + [conjure-cp-core](https://conjure-cp.github.io/conjure-oxide/docs/conjure-cp-core/index.html)
  + [conjure_essence_macros](https://conjure-cp.github.io/conjure-oxide/docs/conjure_essence_macros/)
- + [conjure_essence_parser](https://conjure-cp.github.io/conjure-oxide/docs/conjure_essence_parser)
+ + [conjure-cp-essence-parser](https://conjure-cp.github.io/conjure-oxide/docs/conjure-cp-essence-parser)
  + [conjure_rule_macros](https://conjure-cp.github.io/conjure-oxide/docs/conjure_rule_macros)
  + [enum_compatability_macro](https://conjure-cp.github.io/conjure-oxide/docs/enum_compatability_macro)
  + [minion-sys](https://conjure-cp.github.io/conjure-oxide/docs/minion-sys/index.html)
