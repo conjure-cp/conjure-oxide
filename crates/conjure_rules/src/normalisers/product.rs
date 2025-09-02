@@ -2,7 +2,7 @@
 
 use conjure_rule_macros::register_rule;
 
-use conjure_core::{
+use conjure_cp_core::{
     ast::{Atom, Expression as Expr, Literal as Lit, Moo, SymbolTable, categories::CategoryOf},
     bug, into_matrix_expr,
     metadata::Metadata,
@@ -48,11 +48,11 @@ fn reorder_product(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     for expr in factors {
         match expr.category_of() {
-            conjure_core::ast::categories::Category::Bottom => bottom_exprs.push(expr),
-            conjure_core::ast::categories::Category::Constant => constant_exprs.push(expr),
-            conjure_core::ast::categories::Category::Parameter => parameter_exprs.push(expr),
-            conjure_core::ast::categories::Category::Quantified => quantified_exprs.push(expr),
-            conjure_core::ast::categories::Category::Decision => decision_exprs.push(expr),
+            conjure_cp_core::ast::categories::Category::Bottom => bottom_exprs.push(expr),
+            conjure_cp_core::ast::categories::Category::Constant => constant_exprs.push(expr),
+            conjure_cp_core::ast::categories::Category::Parameter => parameter_exprs.push(expr),
+            conjure_cp_core::ast::categories::Category::Quantified => quantified_exprs.push(expr),
+            conjure_cp_core::ast::categories::Category::Decision => decision_exprs.push(expr),
         }
     }
 

@@ -1,9 +1,9 @@
 #![allow(clippy::legacy_numeric_constants)]
 use tree_sitter::Node;
 
-use conjure_core::ast::{Atom, Expression, Literal, Moo, Name, SymbolTable};
-use conjure_core::metadata::Metadata;
-use conjure_core::{into_matrix_expr, matrix_expr};
+use conjure_cp_core::ast::{Atom, Expression, Literal, Moo, Name, SymbolTable};
+use conjure_cp_core::metadata::Metadata;
+use conjure_cp_core::{into_matrix_expr, matrix_expr};
 
 use crate::errors::EssenceParseError;
 

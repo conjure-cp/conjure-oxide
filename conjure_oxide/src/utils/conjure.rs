@@ -4,11 +4,11 @@ use std::rc::Rc;
 use std::string::ToString;
 use std::sync::{Arc, Mutex, RwLock};
 
-use conjure_core::ast::{DeclarationKind, Literal, Name};
-use conjure_core::bug;
-use conjure_core::context::Context;
+use conjure_cp_core::ast::{DeclarationKind, Literal, Name};
+use conjure_cp_core::bug;
+use conjure_cp_core::context::Context;
 
-use conjure_core::solver::adaptors::Sat;
+use conjure_cp_core::solver::adaptors::Sat;
 use serde_json::{Map, Value as JsonValue};
 
 use itertools::Itertools as _;
@@ -216,7 +216,7 @@ pub fn get_solutions_from_conjure(
             let mut solutions = BTreeMap::new();
             for (name, decl) in model.as_submodel().symbols().clone().into_iter() {
                 match &decl.kind() as &DeclarationKind {
-                    conjure_core::ast::DeclarationKind::ValueLetting(expression) => {
+                    conjure_cp_core::ast::DeclarationKind::ValueLetting(expression) => {
                         let literal = expression
                             .clone()
                             .into_literal()

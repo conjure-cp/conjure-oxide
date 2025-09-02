@@ -34,10 +34,10 @@ pub use rewrite_morph::rewrite_morph;
 ///
 /// For example:
 /// ```rust
-/// use conjure_core::ast::Expression;
-/// use conjure_core::ast::SymbolTable;
-/// use conjure_core::rule_engine::{ApplicationError, ApplicationResult, Reduction};
-/// use conjure_core::rule_engine::register_rule;
+/// use conjure_cp_core::ast::Expression;
+/// use conjure_cp_core::ast::SymbolTable;
+/// use conjure_cp_core::rule_engine::{ApplicationError, ApplicationResult, Reduction};
+/// use conjure_cp_core::rule_engine::register_rule;
 ///
 /// #[register_rule(("RuleSetName", 10))]
 /// fn identity(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
@@ -62,22 +62,22 @@ pub use conjure_rule_macros::register_rule;
 /// Register a rule set with no dependencies:
 ///
 /// ```rust
-/// use conjure_core::rule_engine::register_rule_set;
+/// use conjure_cp_core::rule_engine::register_rule_set;
 /// register_rule_set!("MyRuleSet");
 /// ```
 ///
 /// Register a rule set with dependencies:
 ///
 /// ```rust
-/// use conjure_core::rule_engine::register_rule_set;
+/// use conjure_cp_core::rule_engine::register_rule_set;
 /// register_rule_set!("MyRuleSet", ("DependencyRuleSet", "AnotherRuleSet"));
 /// ```
 ///
 /// Register a rule set for a specific solver family or families:
 ///
 /// ```rust
-/// use conjure_core::rule_engine::register_rule_set;
-/// use conjure_core::solver::SolverFamily;
+/// use conjure_cp_core::rule_engine::register_rule_set;
+/// use conjure_cp_core::solver::SolverFamily;
 /// register_rule_set!("MyRuleSet", (), SolverFamily::Minion);
 /// register_rule_set!("AnotherRuleSet", (), (SolverFamily::Minion, SolverFamily::Sat));
 /// ```
@@ -121,10 +121,10 @@ pub mod _dependencies {
 ///
 /// # Example
 /// ```rust
-/// # use conjure_core::rule_engine::{ApplicationResult, Reduction, get_all_rules};
-/// # use conjure_core::ast::Expression;
-/// # use conjure_core::ast::SymbolTable;
-/// # use conjure_core::rule_engine::register_rule;
+/// # use conjure_cp_core::rule_engine::{ApplicationResult, Reduction, get_all_rules};
+/// # use conjure_cp_core::ast::Expression;
+/// # use conjure_cp_core::ast::SymbolTable;
+/// # use conjure_cp_core::rule_engine::register_rule;
 ///
 /// #[register_rule]
 /// fn identity(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
@@ -150,10 +150,10 @@ pub fn get_all_rules() -> Vec<&'static Rule<'static>> {
 ///
 /// # Example
 /// ```rust
-/// use conjure_core::rule_engine::register_rule;
-/// use conjure_core::rule_engine::{Rule, ApplicationResult, Reduction, get_rule_by_name};
-/// use conjure_core::ast::Expression;
-/// use conjure_core::ast::SymbolTable;
+/// use conjure_cp_core::rule_engine::register_rule;
+/// use conjure_cp_core::rule_engine::{Rule, ApplicationResult, Reduction, get_rule_by_name};
+/// use conjure_cp_core::ast::Expression;
+/// use conjure_cp_core::ast::SymbolTable;
 ///
 /// #[register_rule]
 /// fn identity(expr: &Expression, symbols: &SymbolTable) -> ApplicationResult {
@@ -182,8 +182,8 @@ pub fn get_rule_by_name(name: &str) -> Option<&'static Rule<'static>> {
 ///
 /// # Example
 /// ```rust
-/// use conjure_core::rule_engine::register_rule_set;
-/// use conjure_core::rule_engine::get_all_rule_sets;
+/// use conjure_cp_core::rule_engine::register_rule_set;
+/// use conjure_cp_core::rule_engine::get_all_rule_sets;
 ///
 /// register_rule_set!("MyRuleSet", ("AnotherRuleSet"));
 /// register_rule_set!("AnotherRuleSet", ());
@@ -208,8 +208,8 @@ pub fn get_all_rule_sets() -> Vec<&'static RuleSet<'static>> {
 ///
 /// # Example
 /// ```rust
-/// use conjure_core::rule_engine::register_rule_set;
-/// use conjure_core::rule_engine::get_rule_set_by_name;
+/// use conjure_cp_core::rule_engine::register_rule_set;
+/// use conjure_cp_core::rule_engine::get_rule_set_by_name;
 ///
 /// register_rule_set!("MyRuleSet", ("DependencyRuleSet", "AnotherRuleSet"));
 ///
@@ -233,8 +233,8 @@ pub fn get_rule_set_by_name(name: &str) -> Option<&'static RuleSet<'static>> {
 /// # Example
 ///
 /// ```rust
-/// use conjure_core::solver::SolverFamily;
-/// use conjure_core::rule_engine::{get_rule_sets_for_solver_family, register_rule_set};
+/// use conjure_cp_core::solver::SolverFamily;
+/// use conjure_cp_core::rule_engine::{get_rule_sets_for_solver_family, register_rule_set};
 ///
 /// register_rule_set!("CNF", (), SolverFamily::Sat);
 ///

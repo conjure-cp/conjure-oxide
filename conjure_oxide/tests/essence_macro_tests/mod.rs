@@ -1,5 +1,5 @@
-use conjure_core::ast::{Atom, Expression, Moo};
-use conjure_core::matrix_expr;
+use conjure_cp_core::ast::{Atom, Expression, Moo};
+use conjure_cp_core::matrix_expr;
 use conjure_oxide::{Metadata, essence_expr};
 
 #[test]

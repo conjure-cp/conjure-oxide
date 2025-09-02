@@ -1,12 +1,12 @@
 use std::fs;
 use std::sync::{Arc, RwLock};
 
-use conjure_core::Model;
-use conjure_core::ast::Expression;
-use conjure_core::ast::{DeclarationPtr, Moo};
-use conjure_core::context::Context;
-use conjure_core::error::Error;
-use conjure_core::metadata::Metadata;
+use conjure_cp_core::Model;
+use conjure_cp_core::ast::Expression;
+use conjure_cp_core::ast::{DeclarationPtr, Moo};
+use conjure_cp_core::context::Context;
+use conjure_cp_core::error::Error;
+use conjure_cp_core::metadata::Metadata;
 #[allow(unused)]
 use uniplate::Uniplate;
 

@@ -45,9 +45,9 @@ pub fn essence_expr(args: TokenStream) -> TokenStream {
 ///
 /// ## Example
 /// ```ignore
-/// use conjure_core::ast::{Atom, Expression, Moo};
-/// use conjure_core::matrix_expr;
-/// use conjure_core::metadata::Metadata;
+/// use conjure_cp_core::ast::{Atom, Expression, Moo};
+/// use conjure_cp_core::matrix_expr;
+/// use conjure_cp_core::metadata::Metadata;
 /// use conjure_essence_macros::essence_vec;
 ///
 /// let exprs = essence_vec!(a + 2, b = true);

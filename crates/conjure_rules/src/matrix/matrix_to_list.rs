@@ -1,8 +1,8 @@
 use std::collections::VecDeque;
 
-use conjure_core::ast::{Domain, Expression as Expr, Range, SymbolTable};
-use conjure_core::into_matrix_expr;
-use conjure_core::rule_engine::{
+use conjure_cp_core::ast::{Domain, Expression as Expr, Range, SymbolTable};
+use conjure_cp_core::into_matrix_expr;
+use conjure_cp_core::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
 use uniplate::Uniplate;

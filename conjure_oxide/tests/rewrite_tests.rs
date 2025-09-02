@@ -1,7 +1,7 @@
-use conjure_core::rule_engine::get_all_rules;
-use conjure_core::rule_engine::rewrite_naive;
-use conjure_core::solver::SolverFamily;
-use conjure_core::{into_matrix_expr, matrix_expr};
+use conjure_cp_core::rule_engine::get_all_rules;
+use conjure_cp_core::rule_engine::rewrite_naive;
+use conjure_cp_core::solver::SolverFamily;
+use conjure_cp_core::{into_matrix_expr, matrix_expr};
 use conjure_oxide::{
     Metadata, Model, Rule,
     ast::*,

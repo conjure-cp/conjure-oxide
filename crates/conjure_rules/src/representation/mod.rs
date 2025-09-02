@@ -3,7 +3,7 @@
 /// Prelude for representation rule writing.
 mod prelude {
     #![allow(unused_imports)]
-    pub use conjure_core::{
+    pub use conjure_cp_core::{
         ast::{
             AbstractLiteral, Atom, DeclarationPtr, Expression, Literal, Name, RecordEntry,
             SymbolTable, matrix,

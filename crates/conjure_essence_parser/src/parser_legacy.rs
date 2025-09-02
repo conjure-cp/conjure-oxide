@@ -1,6 +1,6 @@
 use crate::errors::EssenceParseError;
-use conjure_core::parse::model_from_json;
-use conjure_core::{Model, context::Context};
+use conjure_cp_core::parse::model_from_json;
+use conjure_cp_core::{Model, context::Context};
 use std::sync::{Arc, RwLock};
 
 pub fn parse_essence_file(

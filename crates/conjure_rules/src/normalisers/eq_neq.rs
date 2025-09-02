@@ -1,11 +1,11 @@
 //! Normalising rules for `Neq` and `Eq`.
 
-use conjure_core::ast::{Expression as Expr, SymbolTable, Typeable};
-use conjure_core::rule_engine::{
+use conjure_cp_core::ast::{Expression as Expr, SymbolTable, Typeable};
+use conjure_cp_core::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
 
-use conjure_core::ast::ReturnType::Set;
+use conjure_cp_core::ast::ReturnType::Set;
 use conjure_essence_macros::essence_expr;
 
 /// Converts a negated `Neq` to an `Eq`

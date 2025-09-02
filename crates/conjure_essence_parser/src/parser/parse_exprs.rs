@@ -1,6 +1,6 @@
 use crate::errors::EssenceParseError;
-use conjure_core::ast::{Expression, SymbolTable};
-use conjure_core::error::Error;
+use conjure_cp_core::ast::{Expression, SymbolTable};
+use conjure_cp_core::error::Error;
 #[allow(unused)]
 use uniplate::Uniplate;
 
@@ -37,11 +37,11 @@ mod test {
     #[allow(unused)]
     use super::{parse_expr, parse_exprs};
     #[allow(unused_imports)]
-    use conjure_core::ast::Moo;
+    use conjure_cp_core::ast::Moo;
     #[allow(unused)]
-    use conjure_core::ast::{DeclarationPtr, Domain, Name, SymbolTable};
+    use conjure_cp_core::ast::{DeclarationPtr, Domain, Name, SymbolTable};
     #[allow(unused)]
-    use conjure_core::{ast::Atom, ast::Expression, metadata::Metadata};
+    use conjure_cp_core::{ast::Atom, ast::Expression, metadata::Metadata};
     #[allow(unused)]
     use std::collections::HashMap;
     #[allow(unused)]
@@ -57,17 +57,17 @@ mod test {
         let mut symbols = SymbolTable::new();
         let x = DeclarationPtr::new_var(
             Name::User("x".into()),
-            Domain::Int(vec![conjure_core::ast::Range::Bounded(0, 10)]),
+            Domain::Int(vec![conjure_cp_core::ast::Range::Bounded(0, 10)]),
         );
 
         let y = DeclarationPtr::new_var(
             Name::User("y".into()),
-            Domain::Int(vec![conjure_core::ast::Range::Bounded(0, 10)]),
+            Domain::Int(vec![conjure_cp_core::ast::Range::Bounded(0, 10)]),
         );
 
         let a = DeclarationPtr::new_var(
             Name::User("a".into()),
-            Domain::Int(vec![conjure_core::ast::Range::Bounded(0, 10)]),
+            Domain::Int(vec![conjure_cp_core::ast::Range::Bounded(0, 10)]),
         );
 
         // Clone the Rc when inserting!

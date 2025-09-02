@@ -2,17 +2,17 @@
 /*        This file contains rules for converting logic expressions to CNF         */
 /***********************************************************************************/
 
-use conjure_core::rule_engine::register_rule_set;
-use conjure_core::solver::SolverFamily;
+use conjure_cp_core::rule_engine::register_rule_set;
+use conjure_cp_core::solver::SolverFamily;
 
-use conjure_core::ast::{Expression as Expr, Moo};
-use conjure_core::metadata::Metadata;
-use conjure_core::rule_engine::{
+use conjure_cp_core::ast::{Expression as Expr, Moo};
+use conjure_cp_core::metadata::Metadata;
+use conjure_cp_core::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
 
-use conjure_core::ast::SymbolTable;
-use conjure_core::matrix_expr;
+use conjure_cp_core::ast::SymbolTable;
+use conjure_cp_core::matrix_expr;
 
 register_rule_set!("CNF", ("Base"), (SolverFamily::Sat));
 

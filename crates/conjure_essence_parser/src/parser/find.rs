@@ -3,7 +3,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use tree_sitter::Node;
 
-use conjure_core::ast::{Domain, Name};
+use conjure_cp_core::ast::{Domain, Name};
 
 use super::domain::parse_domain;
 use super::util::named_children;

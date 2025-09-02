@@ -24,7 +24,7 @@ use super::{AbstractLiteral, Literal};
 /// # Example
 ///
 /// ```
-/// use conjure_core::ast::{Domain,Range,Literal,matrix};
+/// use conjure_cp_core::ast::{Domain,Range,Literal,matrix};
 /// let index_domains = vec![Domain::Bool,Domain::Int(vec![Range::Bounded(1,2)])];
 ///
 /// let expected_indices = vec![

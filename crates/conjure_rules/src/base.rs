@@ -1,4 +1,4 @@
-use conjure_core::{
+use conjure_cp_core::{
     ast::{Atom, Expression as Expr, Moo, SymbolTable},
     into_matrix_expr,
     metadata::Metadata,

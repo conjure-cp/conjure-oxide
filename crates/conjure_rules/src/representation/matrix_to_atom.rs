@@ -1,4 +1,4 @@
-use conjure_core::ast::{DeclarationPtr, Domain};
+use conjure_cp_core::ast::{DeclarationPtr, Domain};
 use itertools::{Itertools, izip};
 use std::collections::BTreeMap;
 
