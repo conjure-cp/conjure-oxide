@@ -1,6 +1,6 @@
 //! Normalising rules for `Product`
 
-use conjure_rule_macros::register_rule;
+use conjure_cp_rule_macros::register_rule;
 
 use conjure_cp_core::{
     ast::{Atom, Expression as Expr, Literal as Lit, Moo, SymbolTable, categories::CategoryOf},

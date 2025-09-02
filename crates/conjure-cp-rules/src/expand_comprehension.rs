@@ -11,7 +11,7 @@ use uniplate::Biplate;
 
 use uniplate::Uniplate;
 
-use conjure_rule_macros::register_rule_set;
+use conjure_cp_rule_macros::register_rule_set;
 
 // optimised comprehension expansion for associative-commutative operators
 register_rule_set!("Better_AC_Comprehension_Expansion", ("Base"));
