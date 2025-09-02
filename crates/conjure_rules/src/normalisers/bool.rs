@@ -1,8 +1,8 @@
 //! Normalising rules for boolean operations (not, and, or, ->).
 
-use conjure_core::ast::{Atom, Expression as Expr, Moo, SymbolTable};
-use conjure_core::into_matrix_expr;
-use conjure_core::rule_engine::{
+use conjure_cp_core::ast::{Atom, Expression as Expr, Moo, SymbolTable};
+use conjure_cp_core::into_matrix_expr;
+use conjure_cp_core::rule_engine::{
     ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
     register_rule,
 };

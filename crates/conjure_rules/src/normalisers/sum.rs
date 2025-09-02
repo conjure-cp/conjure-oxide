@@ -1,7 +1,7 @@
 //! Normalising rules for `Sum`
 
 use ApplicationError::RuleNotApplicable;
-use conjure_core::{
+use conjure_cp_core::{
     ast::{Expression as Expr, SymbolTable},
     rule_engine::{ApplicationError, ApplicationResult, Reduction, register_rule},
 };

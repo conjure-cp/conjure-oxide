@@ -2,7 +2,7 @@
 use tree_sitter::Node;
 
 use super::util::named_children;
-use conjure_core::ast::{Domain, Name, Range};
+use conjure_cp_core::ast::{Domain, Name, Range};
 
 /// Parse an Essence variable domain into its Conjure AST representation.
 pub fn parse_domain(domain: Node, source_code: &str) -> Domain {

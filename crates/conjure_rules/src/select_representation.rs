@@ -1,4 +1,4 @@
-use conjure_core::{
+use conjure_cp_core::{
     ast::{Atom, Domain, Expression as Expr, Name, SubModel, SymbolTable, serde::HasId},
     bug,
     metadata::Metadata,

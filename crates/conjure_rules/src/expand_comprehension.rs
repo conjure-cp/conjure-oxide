@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use conjure_core::{
+use conjure_cp_core::{
     ast::{Expression as Expr, SymbolTable, comprehension::Comprehension},
     into_matrix_expr,
     rule_engine::{

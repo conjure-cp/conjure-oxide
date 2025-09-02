@@ -1,4 +1,4 @@
-use conjure_core::{
+use conjure_cp_core::{
     ast::{
         Atom, DeclarationKind, Expression, Literal, Moo, Name, ReturnType, SymbolTable, Typeable,
     },

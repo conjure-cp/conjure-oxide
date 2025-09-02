@@ -1,6 +1,6 @@
 #![warn(clippy::missing_errors_doc)]
 
-use conjure_core::ast::SymbolTable;
+use conjure_cp_core::ast::SymbolTable;
 use itertools::{Itertools, izip};
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeSet, fmt::Display};
@@ -235,8 +235,8 @@ impl Domain {
     /// # Examples
     ///
     /// ```
-    /// use conjure_core::ast::{Domain,Range};
-    /// use conjure_core::{domain_int,range};
+    /// use conjure_cp_core::ast::{Domain,Range};
+    /// use conjure_cp_core::{domain_int,range};
     ///
     /// let elements = vec![1,2,3,4,5];
     ///
@@ -246,8 +246,8 @@ impl Domain {
     /// ```
     ///
     /// ```
-    /// use conjure_core::ast::{Domain,Range};
-    /// use conjure_core::{domain_int,range};
+    /// use conjure_cp_core::ast::{Domain,Range};
+    /// use conjure_cp_core::{domain_int,range};
     ///
     /// let elements = vec![1,2,4,5,7,8,9,10];
     ///
@@ -258,7 +258,7 @@ impl Domain {
     /// ```
     ///
     /// ```
-    /// use conjure_core::ast::{Domain,Range,ReturnType};
+    /// use conjure_cp_core::ast::{Domain,Range,ReturnType};
     ///
     /// let elements = vec![];
     ///
@@ -281,8 +281,8 @@ impl Domain {
     /// # Examples
     ///
     /// ```
-    /// use conjure_core::ast::{Domain,Range};
-    /// use conjure_core::{domain_int,range};
+    /// use conjure_cp_core::ast::{Domain,Range};
+    /// use conjure_cp_core::{domain_int,range};
     /// use std::collections::BTreeSet;
     ///
     /// let elements = BTreeSet::from([1,2,3,4,5]);
@@ -293,8 +293,8 @@ impl Domain {
     /// ```
     ///
     /// ```
-    /// use conjure_core::ast::{Domain,Range};
-    /// use conjure_core::{domain_int,range};
+    /// use conjure_cp_core::ast::{Domain,Range};
+    /// use conjure_cp_core::{domain_int,range};
     /// use std::collections::BTreeSet;
     ///
     /// let elements = BTreeSet::from([1,2,4,5,7,8,9,10]);
@@ -305,7 +305,7 @@ impl Domain {
     /// ```
     ///
     /// ```
-    /// use conjure_core::ast::{Domain,Range,ReturnType};
+    /// use conjure_cp_core::ast::{Domain,Range,ReturnType};
     /// use std::collections::BTreeSet;
     ///
     /// let elements = BTreeSet::from([]);
@@ -388,15 +388,15 @@ impl Domain {
     /// # Examples
     ///
     /// ```
-    /// use conjure_core::ast::{Domain,Range,Literal,ReturnType};
+    /// use conjure_cp_core::ast::{Domain,Range,Literal,ReturnType};
     ///
     /// let domain = Domain::from_literal_vec(vec![]);
     /// assert_eq!(domain,Ok(Domain::Empty(ReturnType::Unknown)));
     /// ```
     ///
     /// ```
-    /// use conjure_core::ast::{Domain,Range,Literal, AbstractLiteral};
-    /// use conjure_core::{domain_int, range, matrix};
+    /// use conjure_cp_core::ast::{Domain,Range,Literal, AbstractLiteral};
+    /// use conjure_cp_core::{domain_int, range, matrix};
     ///
     /// // `[1,2;int(2..3)], [4,5; int(2..3)]` has domain
     /// // `matrix indexed by [int(2..3)] of int(1..2,4..5)`
@@ -413,8 +413,8 @@ impl Domain {
     /// ```
     ///
     /// ```
-    /// use conjure_core::ast::{Domain,Range,Literal, AbstractLiteral,DomainOpError};
-    /// use conjure_core::{domain_int, range, matrix};
+    /// use conjure_cp_core::ast::{Domain,Range,Literal, AbstractLiteral,DomainOpError};
+    /// use conjure_cp_core::{domain_int, range, matrix};
     ///
     /// // `[1,2;int(2..3)], [4,5; int(1..2)]` cannot be combined
     /// // `matrix indexed by [int(2..3)] of int(1..2,4..5)`
@@ -428,8 +428,8 @@ impl Domain {
     /// ```
     ///
     /// ```
-    /// use conjure_core::ast::{Domain,Range,Literal, AbstractLiteral};
-    /// use conjure_core::{domain_int,range, matrix};
+    /// use conjure_cp_core::ast::{Domain,Range,Literal, AbstractLiteral};
+    /// use conjure_cp_core::{domain_int,range, matrix};
     ///
     /// // `[[1,2; int(1..2)];int(2)], [[4,5; int(1..2)]; int(2)]` has domain
     /// // `matrix indexed by [int(2),int(1..2)] of int(1..2,4..5)`

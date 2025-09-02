@@ -26,16 +26,16 @@
 //!
 //! ```ignore
 //! use std::sync::{Arc,Mutex};
-//! use conjure_core::parse::get_example_model;
-//! use conjure_core::rule_engine::resolve_rule_sets;
-//! use conjure_core::rule_engine::rewrite_naive;
-//! use conjure_core::solver::{adaptors, Solver, SolverAdaptor};
-//! use conjure_core::solver::states::ModelLoaded;
-//! use conjure_core::Model;
-//! use conjure_core::ast::Domain;
-//! use conjure_core::ast::Declaration;
-//! use conjure_core::solver::SolverFamily;
-//! use conjure_core::context::Context;
+//! use conjure_cp_core::parse::get_example_model;
+//! use conjure_cp_core::rule_engine::resolve_rule_sets;
+//! use conjure_cp_core::rule_engine::rewrite_naive;
+//! use conjure_cp_core::solver::{adaptors, Solver, SolverAdaptor};
+//! use conjure_cp_core::solver::states::ModelLoaded;
+//! use conjure_cp_core::Model;
+//! use conjure_cp_core::ast::Domain;
+//! use conjure_cp_core::ast::Declaration;
+//! use conjure_cp_core::solver::SolverFamily;
+//! use conjure_cp_core::context::Context;
 //! use conjure_essence_macros::essence_expr;
 //!
 //! // Define a model for minion.
@@ -272,12 +272,12 @@ pub trait SolverAdaptor: private::Sealed + Any {
 /// An abstract representation of a constraints solver.
 ///
 /// [Solver] provides a common interface for interacting with a constraint solver. It also
-/// abstracts over solver-specific datatypes, handling the translation to/from [conjure_core::ast]
+/// abstracts over solver-specific datatypes, handling the translation to/from [conjure_cp_core::ast]
 /// types for a model and its solutions.
 ///
 /// Details of how a model is solved is specified by the [SolverAdaptor]. This includes: the
 /// underlying solver used, the translation of the model to a solver compatible form, how solutions
-/// are translated back to [conjure_core::ast] types, and how incremental solving is implemented.
+/// are translated back to [conjure_cp_core::ast] types, and how incremental solving is implemented.
 /// As such, there may be multiple [SolverAdaptor] implementations for a single underlying solver:
 /// e.g. one adaptor may give solutions in a representation close to the solvers, while another may
 /// attempt to rewrite it back into Essence.

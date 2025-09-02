@@ -1,4 +1,4 @@
-pub use conjure_core::error::Error as ConjureParseError;
+pub use conjure_cp_core::error::Error as ConjureParseError;
 use thiserror::Error as ThisError;
 
 #[derive(Debug, ThisError)]

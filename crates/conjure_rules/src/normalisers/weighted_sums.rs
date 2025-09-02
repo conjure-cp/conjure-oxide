@@ -5,7 +5,7 @@
 
 use std::collections::BTreeMap;
 
-use conjure_core::{
+use conjure_cp_core::{
     ast::{Atom, Expression as Expr, Literal as Lit, Moo, Name, SymbolTable},
     into_matrix_expr,
     metadata::Metadata,

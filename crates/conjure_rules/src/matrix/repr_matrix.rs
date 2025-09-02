@@ -1,10 +1,10 @@
-use conjure_core::ast::categories::{Category, CategoryOf};
-use conjure_core::ast::{
+use conjure_cp_core::ast::categories::{Category, CategoryOf};
+use conjure_cp_core::ast::{
     Atom, Domain, Expression as Expr, Literal, Moo, Name, Range, SymbolTable, matrix,
 };
-use conjure_core::into_matrix_expr;
-use conjure_core::metadata::Metadata;
-use conjure_core::rule_engine::{
+use conjure_cp_core::into_matrix_expr;
+use conjure_cp_core::metadata::Metadata;
+use conjure_cp_core::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
 use conjure_essence_macros::essence_expr;

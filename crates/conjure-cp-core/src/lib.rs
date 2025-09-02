@@ -1,4 +1,4 @@
-pub extern crate self as conjure_core;
+pub extern crate self as conjure_cp_core;
 
 pub use ast::Model;
 
@@ -17,7 +17,7 @@ pub mod stats;
 ///
 /// # Examples
 /// ```
-/// use conjure_core::{domain_int,range,ast::Domain};
+/// use conjure_cp_core::{domain_int,range,ast::Domain};
 ///
 /// let a = 2*10;
 /// assert_eq!(domain_int!(1..5,a+2,), Domain::Int(vec![range!(1..5),range!(a+2)]));
@@ -38,7 +38,7 @@ macro_rules! domain_int {
 /// # Examples
 ///
 /// ```
-/// use conjure_core::{range,ast::Range};
+/// use conjure_cp_core::{range,ast::Range};
 ///
 /// let a = 2*10;
 /// assert_eq!(range!(..a),Range::UnboundedL(a));

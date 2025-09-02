@@ -40,7 +40,7 @@ impl ACOperatorKind {
     /// # Example
     ///
     /// ```
-    /// use conjure_core::ast::{ac_operators::ACOperatorKind,Literal};
+    /// use conjure_cp_core::ast::{ac_operators::ACOperatorKind,Literal};
     ///
     /// let identity = ACOperatorKind::And.identity();
     /// assert_eq!(identity,Literal::Bool(true));

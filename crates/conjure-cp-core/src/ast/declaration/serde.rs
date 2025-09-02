@@ -25,7 +25,7 @@ use super::{Declaration, DeclarationKind, DeclarationPtr, DeclarationPtrInner};
 /// use serde::Serialize;
 /// use serde_json::json;
 /// use serde_with::serde_as;
-/// use conjure_core::ast::{declaration::serde::DeclarationPtrAsId,Name,DeclarationPtr,Domain,Range};
+/// use conjure_cp_core::ast::{declaration::serde::DeclarationPtrAsId,Name,DeclarationPtr,Domain,Range};
 ///
 /// // some struct containing a DeclarationPtr.
 /// #[serde_as]
@@ -70,7 +70,7 @@ use super::{Declaration, DeclarationKind, DeclarationPtr, DeclarationPtrInner};
 /// use serde::Deserialize;
 /// use serde_json::json;
 /// use serde_with::serde_as;
-/// use conjure_core::ast::{serde::{HasId},declaration::serde::DeclarationPtrAsId,Name,DeclarationKind, DeclarationPtr,Domain,Range, ReturnType};
+/// use conjure_cp_core::ast::{serde::{HasId},declaration::serde::DeclarationPtrAsId,Name,DeclarationKind, DeclarationPtr,Domain,Range, ReturnType};
 ///
 /// // some struct containing a DeclarationPtr.
 /// #[serde_as]
@@ -149,7 +149,7 @@ impl<'de> DeserializeAs<'de, DeclarationPtr> for DeclarationPtrAsId {
 /// use serde::Serialize;
 /// use serde_json::json;
 /// use serde_with::serde_as;
-/// use conjure_core::ast::{declaration::serde::DeclarationPtrFull,Name,DeclarationPtr,Domain,Range};
+/// use conjure_cp_core::ast::{declaration::serde::DeclarationPtrFull,Name,DeclarationPtr,Domain,Range};
 ///
 /// // some struct containing a DeclarationPtr.
 /// #[serde_as]
@@ -216,7 +216,7 @@ impl<'de> DeserializeAs<'de, DeclarationPtr> for DeclarationPtrAsId {
 /// use serde::Deserialize;
 /// use serde_json::json;
 /// use serde_with::serde_as;
-/// use conjure_core::ast::{serde::{HasId},declaration::serde::DeclarationPtrFull,Name,DeclarationKind, DeclarationPtr,Domain,Range, ReturnType};
+/// use conjure_cp_core::ast::{serde::{HasId},declaration::serde::DeclarationPtrFull,Name,DeclarationKind, DeclarationPtr,Domain,Range, ReturnType};
 ///
 /// // some struct containing a DeclarationPtr.
 /// #[serde_as]

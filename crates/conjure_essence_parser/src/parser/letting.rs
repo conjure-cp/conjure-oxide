@@ -7,8 +7,8 @@ use super::domain::parse_domain;
 use super::expression::parse_expression;
 use super::util::named_children;
 use crate::errors::EssenceParseError;
-use conjure_core::ast::DeclarationPtr;
-use conjure_core::ast::{Name, SymbolTable};
+use conjure_cp_core::ast::DeclarationPtr;
+use conjure_cp_core::ast::{Name, SymbolTable};
 
 /// Parse a letting statement into a SymbolTable containing the declared symbols
 pub fn parse_letting_statement(

@@ -1,4 +1,4 @@
-use conjure_core::{
+use conjure_cp_core::{
     ast::{Atom, DeclarationPtr, Expression as Expr, Moo, SymbolTable, categories::Category},
     metadata::Metadata,
 };

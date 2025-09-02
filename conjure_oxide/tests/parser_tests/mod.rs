@@ -1,4 +1,4 @@
-use conjure_core::{
+use conjure_cp_core::{
     ast::{Atom, Expression, Moo, Name, declaration},
     context::Context,
     matrix_expr,

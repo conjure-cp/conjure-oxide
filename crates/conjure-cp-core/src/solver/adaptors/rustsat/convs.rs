@@ -56,11 +56,11 @@ pub fn handle_atom(
     // polarity false for not
     match a {
         Expression::Atomic(_, atom) => match atom {
-            conjure_core::ast::Atom::Literal(literal) => {
+            conjure_cp_core::ast::Atom::Literal(literal) => {
                 todo!("Not Sure if we are handling Lits as-is or not..")
             }
-            conjure_core::ast::Atom::Reference(decl) => match &*(decl.name()) {
-                conjure_core::ast::Name::User(n) => {
+            conjure_cp_core::ast::Atom::Reference(decl) => match &*(decl.name()) {
+                conjure_cp_core::ast::Name::User(n) => {
                     // TODO: Temp Clone
                     // let m = n.clone();
                     let lit_temp: Lit = fetch_lit(n.to_string(), vars_added, inst);

@@ -110,7 +110,7 @@ impl DeclarationPtr {
     /// # Examples
     ///
     /// ```
-    /// use conjure_core::ast::{DeclarationPtr,Name,DeclarationKind,Domain,Range};
+    /// use conjure_cp_core::ast::{DeclarationPtr,Name,DeclarationKind,Domain,Range};
     ///
     /// // letting MyDomain be int(1..5)
     /// let declaration = DeclarationPtr::new(
@@ -127,7 +127,7 @@ impl DeclarationPtr {
     /// # Examples
     ///
     /// ```
-    /// use conjure_core::ast::{DeclarationPtr,Name,DeclarationKind,Domain,Range};
+    /// use conjure_cp_core::ast::{DeclarationPtr,Name,DeclarationKind,Domain,Range};
     ///
     /// // find x: int(1..5)
     /// let declaration = DeclarationPtr::new_var(
@@ -156,7 +156,7 @@ impl DeclarationPtr {
     /// # Examples
     ///
     /// ```
-    /// use conjure_core::ast::{DeclarationPtr,Name,DeclarationKind,Domain,Range};
+    /// use conjure_cp_core::ast::{DeclarationPtr,Name,DeclarationKind,Domain,Range};
     ///
     /// // letting MyDomain be int(1..5)
     /// let declaration = DeclarationPtr::new_domain_letting(
@@ -174,9 +174,9 @@ impl DeclarationPtr {
     /// # Examples
     ///
     /// ```
-    /// use conjure_core::ast::{DeclarationPtr,Name,DeclarationKind,Domain,Range, Expression,
+    /// use conjure_cp_core::ast::{DeclarationPtr,Name,DeclarationKind,Domain,Range, Expression,
     /// Literal,Atom,Moo};
-    /// use conjure_core::{matrix_expr,metadata::Metadata};
+    /// use conjure_cp_core::{matrix_expr,metadata::Metadata};
     ///
     /// // letting n be 10 + 10
     /// let ten = Expression::Atomic(Metadata::new(),Atom::Literal(Literal::Int(10)));
@@ -196,7 +196,7 @@ impl DeclarationPtr {
     /// # Examples
     ///
     /// ```
-    /// use conjure_core::ast::{DeclarationPtr,Name,DeclarationKind,Domain,Range};
+    /// use conjure_cp_core::ast::{DeclarationPtr,Name,DeclarationKind,Domain,Range};
     ///
     /// // given n: int(1..5)
     /// let declaration = DeclarationPtr::new_given(
@@ -214,7 +214,7 @@ impl DeclarationPtr {
     /// # Examples
     ///
     /// ```
-    /// use conjure_core::ast::{DeclarationPtr,Name,records::RecordEntry,Domain,Range};
+    /// use conjure_cp_core::ast::{DeclarationPtr,Name,records::RecordEntry,Domain,Range};
     ///
     /// // create declaration for field A in `find rec: record {A: int(0..1), B: int(0..2)}`
     ///
@@ -239,7 +239,7 @@ impl DeclarationPtr {
     /// # Examples
     ///
     /// ```
-    /// use conjure_core::ast::{DeclarationPtr,Name,Domain,Range};
+    /// use conjure_cp_core::ast::{DeclarationPtr,Name,Domain,Range};
     ///
     /// // find a: int(1..5)
     /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
@@ -262,7 +262,7 @@ impl DeclarationPtr {
     /// # Examples
     ///
     /// ```
-    /// use conjure_core::ast::{DeclarationPtr,DeclarationKind,Name,Domain,Range};
+    /// use conjure_cp_core::ast::{DeclarationPtr,DeclarationKind,Name,Domain,Range};
     ///
     /// // find a: int(1..5)
     /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
@@ -277,7 +277,7 @@ impl DeclarationPtr {
     /// # Examples
     ///
     /// ```
-    /// use conjure_core::ast::{DeclarationPtr,Name,Domain,Range};
+    /// use conjure_cp_core::ast::{DeclarationPtr,Name,Domain,Range};
     ///
     /// // find a: int(1..5)
     /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
@@ -365,7 +365,7 @@ impl DeclarationPtr {
     /// # Examples
     ///
     /// ```
-    /// use conjure_core::ast::{DeclarationPtr, Domain, Range, Name};
+    /// use conjure_cp_core::ast::{DeclarationPtr, Domain, Range, Name};
     ///
     /// // find a: int(1..5)
     /// let mut declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
@@ -406,7 +406,7 @@ impl DeclarationPtr {
     /// # Examples
     ///
     /// ```
-    /// use conjure_core::ast::{DeclarationPtr,Name,Domain,Range};
+    /// use conjure_cp_core::ast::{DeclarationPtr,Name,Domain,Range};
     ///
     /// // find a: int(1..5)
     /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));

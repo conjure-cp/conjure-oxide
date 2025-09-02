@@ -26,7 +26,7 @@
 //!    weightedsumgeq and weightedsumleq constraints. A negated number is just a number
 //!    with a coefficient of -1.
 
-use conjure_core::{
+use conjure_cp_core::{
     ast::{Expression as Expr, Moo, ReturnType::Set, SymbolTable, Typeable},
     into_matrix_expr,
     metadata::Metadata,

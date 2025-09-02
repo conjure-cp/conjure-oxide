@@ -2,7 +2,7 @@
 //!
 //! For Minion, these normalise into Leq and Geq respectively.
 
-use conjure_core::{
+use conjure_cp_core::{
     ast::{Expression as Expr, SymbolTable},
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
 };

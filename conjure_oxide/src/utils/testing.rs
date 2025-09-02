@@ -2,8 +2,8 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Debug;
 use std::vec;
 
-use conjure_core::ast::records::RecordValue;
-use conjure_core::bug;
+use conjure_cp_core::ast::records::RecordValue;
+use conjure_cp_core::bug;
 use itertools::Itertools as _;
 use std::fs::File;
 use std::fs::{OpenOptions, read_to_string};
@@ -12,11 +12,11 @@ use std::io::Write;
 use std::sync::{Arc, RwLock};
 use uniplate::Uniplate;
 
-use conjure_core::ast::{AbstractLiteral, Domain, SerdeModel};
-use conjure_core::context::Context;
+use conjure_cp_core::ast::{AbstractLiteral, Domain, SerdeModel};
+use conjure_cp_core::context::Context;
 use serde_json::{Error as JsonError, Value as JsonValue, json};
 
-use conjure_core::error::Error;
+use conjure_cp_core::error::Error;
 
 use crate::Model as ConjureModel;
 use crate::SolverFamily;
