@@ -6,7 +6,7 @@ use conjure_cp_core::{
     metadata::Metadata,
     rule_engine::{ApplicationResult, Reduction},
 };
-use conjure_rule_macros::register_rule;
+use conjure_cp_rule_macros::register_rule;
 use itertools::iproduct;
 
 use conjure_cp_core::ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable};

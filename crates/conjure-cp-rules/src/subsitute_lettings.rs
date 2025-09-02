@@ -1,4 +1,4 @@
-use conjure_rule_macros::register_rule;
+use conjure_cp_rule_macros::register_rule;
 
 use conjure_cp_core::{
     ast::{Atom, Expression as Expr, SymbolTable},

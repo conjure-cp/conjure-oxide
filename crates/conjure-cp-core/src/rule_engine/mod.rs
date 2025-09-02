@@ -44,7 +44,7 @@ pub use rewrite_morph::rewrite_morph;
 ///   Ok(Reduction::pure(expr.clone()))
 /// }
 /// ```
-pub use conjure_rule_macros::register_rule;
+pub use conjure_cp_rule_macros::register_rule;
 
 /// This procedural macro registers a rule set with the global registry.
 /// It may be used in any downstream crate.
@@ -82,7 +82,7 @@ pub use conjure_rule_macros::register_rule;
 /// register_rule_set!("AnotherRuleSet", (), (SolverFamily::Minion, SolverFamily::Sat));
 /// ```
 #[doc(inline)]
-pub use conjure_rule_macros::register_rule_set;
+pub use conjure_cp_rule_macros::register_rule_set;
 pub use resolve_rules::{RuleData, get_rules, get_rules_grouped, resolve_rule_sets};
 pub use rewrite_naive::rewrite_naive;
 pub use rewriter_common::RewriteError;
