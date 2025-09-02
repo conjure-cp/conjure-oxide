@@ -17,10 +17,11 @@ Andrews, and is licenced under the [MPL 2.0](./LICENCE).
 
 The following dependencies are required:
 
-* Conjure (including solvers)
+* [Conjure](https://github.com/conjure-cp/conjure) (including solvers)
 * Clang 
 * Libclang
-* Rust, installed using rustup
+* Cmake
+* Rust, installed using [rustup](https://rustup.rs/)
 
 **Ensure that Conjure is placed early in your PATH to avoid conflicts with
 ImageMagick's conjure command!**
