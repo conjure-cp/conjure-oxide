@@ -36,7 +36,7 @@
 //! use conjure_cp_core::ast::Declaration;
 //! use conjure_cp_core::solver::SolverFamily;
 //! use conjure_cp_core::context::Context;
-//! use conjure_essence_macros::essence_expr;
+//! use conjure_cp_essence_macros::essence_expr;
 //!
 //! // Define a model for minion.
 //! let context = Context::<'static>::new_ptr_empty(SolverFamily::Minion);

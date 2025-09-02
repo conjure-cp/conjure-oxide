@@ -6,7 +6,7 @@ use conjure_cp_core::rule_engine::{
     ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
     register_rule,
 };
-use conjure_essence_macros::essence_expr;
+use conjure_cp_essence_macros::essence_expr;
 use uniplate::Uniplate;
 
 /// Removes double negations

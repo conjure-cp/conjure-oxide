@@ -34,7 +34,7 @@ use conjure_cp_core::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
     },
 };
-use conjure_essence_macros::essence_expr;
+use conjure_cp_essence_macros::essence_expr;
 use std::collections::VecDeque;
 use uniplate::{Biplate, Uniplate as _};
 

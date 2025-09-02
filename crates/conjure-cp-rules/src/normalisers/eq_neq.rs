@@ -6,7 +6,7 @@ use conjure_cp_core::rule_engine::{
 };
 
 use conjure_cp_core::ast::ReturnType::Set;
-use conjure_essence_macros::essence_expr;
+use conjure_cp_essence_macros::essence_expr;
 
 /// Converts a negated `Neq` to an `Eq`
 ///

@@ -11,8 +11,8 @@ use conjure_cp_core::{
     metadata::Metadata,
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
 };
+use conjure_cp_essence_macros::essence_expr;
 use conjure_cp_rule_macros::register_rule;
-use conjure_essence_macros::essence_expr;
 
 /// Collects like terms in a weighted sum.
 ///
