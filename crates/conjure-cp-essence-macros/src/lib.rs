@@ -16,7 +16,7 @@ use expand::{expand_expr, expand_expr_vec};
 /// The macro may reference variables in the current scope (called "metavars")
 /// using the syntax `&<name>`. For example:
 /// ```
-/// use conjure_essence_macros::essence_expr;
+/// use conjure_cp_essence_macros::essence_expr;
 /// let x = 42;
 /// essence_expr!(2 + &x);
 /// ```
@@ -48,7 +48,7 @@ pub fn essence_expr(args: TokenStream) -> TokenStream {
 /// use conjure_cp_core::ast::{Atom, Expression, Moo};
 /// use conjure_cp_core::matrix_expr;
 /// use conjure_cp_core::metadata::Metadata;
-/// use conjure_essence_macros::essence_vec;
+/// use conjure_cp_essence_macros::essence_vec;
 ///
 /// let exprs = essence_vec!(a + 2, b = true);
 /// println!("{:?}", exprs);

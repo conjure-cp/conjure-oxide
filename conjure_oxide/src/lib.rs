@@ -13,11 +13,11 @@ pub use conjure_cp_core::rule_engine::{
 };
 pub use conjure_cp_core::solver;
 pub use conjure_cp_core::solver::SolverFamily;
+pub use conjure_cp_essence_macros::essence_expr;
 pub use conjure_cp_essence_parser::{
     EssenceParseError, parse_essence_file, parse_essence_file_native,
 };
 pub use conjure_cp_rules;
-pub use conjure_essence_macros::essence_expr;
 pub mod find_conjure;
 pub mod utils;
 

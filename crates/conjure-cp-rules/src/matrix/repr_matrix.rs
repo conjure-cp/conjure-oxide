@@ -7,7 +7,7 @@ use conjure_cp_core::metadata::Metadata;
 use conjure_cp_core::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
-use conjure_essence_macros::essence_expr;
+use conjure_cp_essence_macros::essence_expr;
 use itertools::{Itertools, chain, izip};
 use uniplate::Uniplate;
 

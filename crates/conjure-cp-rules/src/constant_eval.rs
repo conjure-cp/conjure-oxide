@@ -753,7 +753,7 @@ fn unwrap_expr<T: TryFrom<Lit>>(expr: &Expr) -> Option<T> {
 mod tests {
     use crate::eval_constant;
     use conjure_cp_core::ast::{Expression, Moo};
-    use conjure_essence_macros::essence_expr;
+    use conjure_cp_essence_macros::essence_expr;
 
     #[test]
     fn div_by_zero() {
