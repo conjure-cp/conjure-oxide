@@ -14,7 +14,7 @@ use crate::ast::literals::Literal;
 use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use crate::bug;
 use crate::metadata::Metadata;
-use enum_compatability_macro::document_compatibility;
+use conjure_cp_enum_compatibility_macro::document_compatibility;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
