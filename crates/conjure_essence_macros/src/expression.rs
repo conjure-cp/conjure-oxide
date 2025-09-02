@@ -1,5 +1,5 @@
-use conjure_essence_parser::errors::EssenceParseError;
-use conjure_essence_parser::util::named_children;
+use conjure_cp_essence_parser::errors::EssenceParseError;
+use conjure_cp_essence_parser::util::named_children;
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use syn::Ident;
@@ -7,7 +7,7 @@ use tree_sitter::Node;
 
 // TODO (gskorokhod) - This is a lot of code duplication, but I don't see an easy way to avoid it short of a ~visitor pattern~ of some sort.
 
-/// "Sister function" to conjure_essence_parser::::conjure_cp_core::ast::Expression::parse_::conjure_cp_core::ast::Expression.
+/// "Sister function" to conjure_cp_essence_parser::::conjure_cp_core::ast::Expression::parse_::conjure_cp_core::ast::Expression.
 /// Instead of actually constructing the AST, this returns its constructor as a TokenStream.
 /// Intended for compile-time parsing inside macros.
 pub fn parse_expr_to_ts(

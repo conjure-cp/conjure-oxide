@@ -3,7 +3,7 @@ pub use linkme::distributed_slice;
 mod rewrite_morph;
 pub use rewrite_morph::rewrite_morph;
 
-/// This procedural macro registers a decorated function with `conjure_rules`' global registry, and
+/// This procedural macro registers a decorated function with `conjure_cp_rules`' global registry, and
 /// adds the rule to one or more `RuleSet`'s.
 ///
 /// It may be used in any downstream crate.
