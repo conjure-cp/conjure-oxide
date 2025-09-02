@@ -72,7 +72,7 @@ impl VisitMut for RemoveCompatibleAttrs {
 /// # Examples
 ///
 /// ```
-/// use enum_compatability_macro::document_compatibility;
+/// use conjure_cp_enum_compatibility_macro::document_compatibility;
 ///
 /// #[document_compatibility]
 /// pub enum Expression {
@@ -101,7 +101,7 @@ impl VisitMut for RemoveCompatibleAttrs {
 /// Two equivalent syntaxes exist for specifying supported solvers:
 ///
 /// ```
-///# use enum_compatability_macro::document_compatibility;
+///# use conjure_cp_enum_compatibility_macro::document_compatibility;
 ///#
 ///# #[document_compatibility]
 ///# pub enum Expression {
@@ -115,7 +115,7 @@ impl VisitMut for RemoveCompatibleAttrs {
 /// ```
 ///
 /// ```
-///# use enum_compatability_macro::document_compatibility;
+///# use conjure_cp_enum_compatibility_macro::document_compatibility;
 ///#
 ///# #[document_compatibility]
 ///# pub enum Expression {
