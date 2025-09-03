@@ -27,9 +27,9 @@
 //!    with a coefficient of -1.
 
 use conjure_cp_core::{
+    ast::Metadata,
     ast::{Expression as Expr, Moo, ReturnType::Set, SymbolTable, Typeable},
     into_matrix_expr,
-    metadata::Metadata,
     rule_engine::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
     },

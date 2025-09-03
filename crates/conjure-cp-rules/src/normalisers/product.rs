@@ -3,9 +3,9 @@
 use conjure_cp_rule_macros::register_rule;
 
 use conjure_cp_core::{
+    ast::Metadata,
     ast::{Atom, Expression as Expr, Literal as Lit, Moo, SymbolTable, categories::CategoryOf},
     bug, into_matrix_expr,
-    metadata::Metadata,
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
 };
 

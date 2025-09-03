@@ -1,9 +1,9 @@
 #![allow(dead_code)]
+use conjure_cp_core::ast::Metadata;
 use conjure_cp_core::ast::{
     AbstractLiteral, Atom, Expression as Expr, Literal as Lit, SymbolTable, matrix,
 };
 use conjure_cp_core::into_matrix;
-use conjure_cp_core::metadata::Metadata;
 use conjure_cp_core::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
     register_rule_set,

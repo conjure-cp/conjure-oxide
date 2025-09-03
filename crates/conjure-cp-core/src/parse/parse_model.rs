@@ -9,6 +9,7 @@ use ustr::Ustr;
 use serde_json::Value;
 use serde_json::Value as JsonValue;
 
+use crate::ast::Metadata;
 use crate::ast::comprehension::{ComprehensionBuilder, ComprehensionKind};
 use crate::ast::records::RecordValue;
 use crate::ast::{
@@ -18,7 +19,6 @@ use crate::ast::{
 use crate::ast::{DeclarationKind, Moo};
 use crate::context::Context;
 use crate::error::{Error, Result};
-use crate::metadata::Metadata;
 use crate::{Model, bug, error, into_matrix_expr, throw_error};
 
 #[allow(unused_macros)]

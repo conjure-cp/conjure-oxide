@@ -5,11 +5,11 @@ use std::collections::VecDeque;
 use uniplate::{Biplate, Uniplate as _, zipper::Zipper};
 
 use crate::{
+    ast::Metadata,
     ast::{
         Atom, DeclarationPtr, Expression, Moo, Name, ReturnType, SubModel, SymbolTable,
         Typeable as _, ac_operators::ACOperatorKind,
     },
-    metadata::Metadata,
 };
 
 /// Eliminate all references to non induction variables by introducing dummy variables to the

@@ -20,6 +20,7 @@ use tracing::warn;
 use uniplate::{Biplate, Uniplate};
 
 use crate::{
+    ast::Metadata,
     ast::{
         Atom, DeclarationKind,
         serde::{HasId as _, ObjId},
@@ -27,7 +28,6 @@ use crate::{
     bug,
     context::Context,
     into_matrix_expr, matrix_expr,
-    metadata::Metadata,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     solver::{Solver, SolverError},
 };

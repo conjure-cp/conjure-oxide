@@ -12,11 +12,11 @@ use crate::{
 use conjure_cp_core::ast::Moo;
 use conjure_cp_core::ast::categories::Category;
 use conjure_cp_core::{
+    ast::Metadata,
     ast::{
         Atom, Domain, Expression as Expr, Literal as Lit, Range, ReturnType, SymbolTable, Typeable,
     },
     into_matrix_expr, matrix_expr,
-    metadata::Metadata,
     rule_engine::{
         ApplicationError, ApplicationResult, Reduction, register_rule, register_rule_set,
     },

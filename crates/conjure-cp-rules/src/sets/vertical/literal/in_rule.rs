@@ -1,4 +1,4 @@
-use conjure_cp_core::metadata::Metadata;
+use conjure_cp_core::ast::Metadata;
 use conjure_cp_core::rule_engine::Reduction;
 
 use conjure_cp_core::ast::AbstractLiteral;

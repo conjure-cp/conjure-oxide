@@ -20,8 +20,8 @@ use crate::ast::Domain::Bool;
 
 use rustsat_minisat::core::Minisat;
 
+use crate::ast::Metadata;
 use crate::ast::{Atom, Expression, Literal, Name};
-use crate::metadata::Metadata;
 use crate::solver::SearchComplete::NoSolutions;
 use crate::solver::adaptors::rustsat::convs::handle_cnf;
 use crate::solver::{

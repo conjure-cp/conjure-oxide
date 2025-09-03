@@ -1,9 +1,9 @@
 use conjure_cp_core::{
+    ast::Metadata,
     ast::{
         Atom, DeclarationKind, Expression, Literal, Moo, Name, ReturnType, SymbolTable, Typeable,
     },
     into_matrix_expr, matrix_expr,
-    metadata::Metadata,
     rule_engine::{
         ApplicationError::{self, RuleNotApplicable},
         ApplicationResult, Reduction, register_rule, register_rule_set,
