@@ -3,6 +3,7 @@
 
 pub mod commands;
 pub mod engine;
+pub mod events;
 pub mod helpers;
 pub mod rule;
 mod update;
@@ -10,7 +11,7 @@ mod update;
 /// Re-exported functions and types for convenience.
 pub mod prelude {
     pub use crate::commands::Commands;
-    pub use crate::engine::morph;
+    pub use crate::engine::Engine;
     pub use crate::helpers::select_first;
     pub use crate::rule::{Rule, RuleFn};
     pub use crate::rule_fns;
