@@ -1,4 +1,5 @@
 use conjure_cp_core::ast::{DeclarationPtr, Domain};
+use conjure_cp_essence_parser::parse_literal;
 use itertools::{Itertools, izip};
 use std::collections::BTreeMap;
 
@@ -66,17 +67,9 @@ impl MatrixToAtom {
 
         let parsed_indices = indices
             .into_iter()
-            .map(|x| match x {
-                "true" => Literal::Bool(true),
-                "false" => Literal::Bool(false),
-                x if x.parse::<i32>().is_ok() => {
-                    let i: i32 = x
-                        .parse()
-                        .expect("already checked whether this parses into an int");
-                    Literal::Int(i)
-                }
-
-                x => bug!("{x} should be a string that can parse into a valid Literal"),
+            .map(|x| match parse_literal(x) {
+                Ok(literal) => literal,
+                Err(_) => bug!("{x} should be a string that can parse into a valid Literal"),
             })
             .collect_vec();
 
