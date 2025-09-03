@@ -60,7 +60,10 @@ enum Command<T: Uniplate, M> {
 /// }
 ///
 /// // Start with the expression 'A' and a metadata value of 'false'
-/// let (result, meta) = morph(vec![rule_fns![rule]], select_first, Expr::A, false);
+/// let engine = EngineBuilder::new()
+///     .add_rule_group(rule_fns![rule])
+///     .build();
+/// let (result, meta) = engine.morph(Expr::A, false);
 ///
 /// // After applying the rule itself, the commands are applied in order
 /// assert_eq!(result, Expr::C);
@@ -101,7 +104,7 @@ impl<T: Uniplate, M> Commands<T, M> {
     }
 
     /// Consumes and apply the side-effects currently in the queue.
-    pub(crate) fn apply(&mut self, mut tree: T, mut meta: M) -> (T, M, bool) {
+    pub(crate) fn apply(&mut self, mut tree: T, meta: &mut M) -> (T, bool) {
         let mut transformed = false;
         while let Some(cmd) = self.commands.pop_front() {
             match cmd {
@@ -109,9 +112,9 @@ impl<T: Uniplate, M> Commands<T, M> {
                     transformed = true;
                     tree = f(tree);
                 }
-                Command::MutMeta(f) => f(&mut meta),
+                Command::MutMeta(f) => f(meta),
             }
         }
-        (tree, meta, transformed)
+        (tree, transformed)
     }
 }

@@ -37,11 +37,12 @@ pub fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("Modify_leafs", |b| {
         b.iter(|| {
-            morph(
-                std::hint::black_box(rules.clone()),
-                select_first,
+            let engine = EngineBuilder::new()
+                .append_rule_groups(rules.clone())
+                .build();
+            engine.morph(
                 std::hint::black_box(expr.clone()),
-                Meta {},
+                std::hint::black_box(Meta {}),
             )
         })
     });
