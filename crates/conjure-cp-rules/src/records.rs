@@ -12,8 +12,8 @@ use conjure_cp_core::ast::Atom;
 use conjure_cp_core::ast::Domain;
 use conjure_cp_core::ast::Expression;
 use conjure_cp_core::ast::Literal;
+use conjure_cp_core::ast::Metadata;
 use conjure_cp_core::ast::Name;
-use conjure_cp_core::metadata::Metadata;
 use conjure_cp_core::rule_engine::ApplicationError;
 use itertools::izip;
 

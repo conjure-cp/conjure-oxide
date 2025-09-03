@@ -1,7 +1,7 @@
 // Subset rule for sets
+use conjure_cp_core::ast::Metadata;
 use conjure_cp_core::ast::{Expression as Expr, Moo, ReturnType, SymbolTable, Typeable};
 use conjure_cp_core::matrix_expr;
-use conjure_cp_core::metadata::Metadata;
 use conjure_cp_core::rule_engine::Reduction;
 use conjure_cp_core::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, register_rule,

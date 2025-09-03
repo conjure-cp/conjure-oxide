@@ -4,13 +4,12 @@
 mod prelude {
     #![allow(unused_imports)]
     pub use conjure_cp_core::{
+        ast::Metadata,
         ast::{
             AbstractLiteral, Atom, DeclarationPtr, Expression, Literal, Name, RecordEntry,
             SymbolTable, matrix,
         },
-        bug, into_matrix,
-        metadata::Metadata,
-        register_representation,
+        bug, into_matrix, register_representation,
         representation::{Representation, get_repr_rule},
         rule_engine::{ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult},
     };

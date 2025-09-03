@@ -1,7 +1,7 @@
 use conjure_cp_core::{
+    ast::Metadata,
     ast::{Atom, Domain, Expression as Expr, Name, SubModel, SymbolTable, serde::HasId},
     bug,
-    metadata::Metadata,
     representation::Representation,
     rule_engine::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,

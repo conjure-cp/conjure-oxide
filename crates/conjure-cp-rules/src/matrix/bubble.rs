@@ -1,5 +1,5 @@
+use conjure_cp_core::ast::Metadata;
 use conjure_cp_core::ast::{Domain, Expression, Moo, SymbolTable};
-use conjure_cp_core::metadata::Metadata;
 use conjure_cp_core::rule_engine::{
     ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
     register_rule,

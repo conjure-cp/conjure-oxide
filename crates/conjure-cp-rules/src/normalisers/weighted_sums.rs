@@ -6,9 +6,9 @@
 use std::collections::BTreeMap;
 
 use conjure_cp_core::{
+    ast::Metadata,
     ast::{Atom, Expression as Expr, Literal as Lit, Moo, Name, SymbolTable},
     into_matrix_expr,
-    metadata::Metadata,
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
 };
 use conjure_cp_essence_macros::essence_expr;

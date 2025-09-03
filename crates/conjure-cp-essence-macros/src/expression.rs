@@ -21,7 +21,7 @@ pub fn parse_expr_to_ts(
         "not_expr" => {
             let child = child_expr_to_ts(constraint, source_code, root)?;
             Ok(quote! {::conjure_cp_core::ast::Expression::Not(
-                ::conjure_cp_core::metadata::Metadata::new(),
+                ::conjure_cp_core::ast::Metadata::new(),
                 ::conjure_cp_core::ast::Moo::new(#child),
             )})
         }
@@ -29,14 +29,14 @@ pub fn parse_expr_to_ts(
             let child = child_expr_to_ts(constraint, source_code, root)?;
             Ok(quote! {
                 ::conjure_cp_core::ast::Expression::Abs(
-                ::conjure_cp_core::metadata::Metadata::new(),
+                ::conjure_cp_core::ast::Metadata::new(),
                 ::conjure_cp_core::ast::Moo::new(#child),
             )})
         }
         "negative_expr" => {
             let child = child_expr_to_ts(constraint, source_code, root)?;
             Ok(quote! {::conjure_cp_core::ast::Expression::Neg(
-                ::conjure_cp_core::metadata::Metadata::new(),
+                ::conjure_cp_core::ast::Metadata::new(),
                 ::conjure_cp_core::ast::Moo::new(#child),
             )})
         }
@@ -56,26 +56,26 @@ pub fn parse_expr_to_ts(
 
             match op_type {
                 "**" => Ok(quote! {::conjure_cp_core::ast::Expression::UnsafePow(
-                    ::conjure_cp_core::metadata::Metadata::new(),
+                    ::conjure_cp_core::ast::Metadata::new(),
                     ::conjure_cp_core::ast::Moo::new(#expr1),
                     ::conjure_cp_core::ast::Moo::new(#expr2),
                 )}),
                 "+" => Ok(quote! {::conjure_cp_core::ast::Expression::Sum(
-                    ::conjure_cp_core::metadata::Metadata::new(),
+                    ::conjure_cp_core::ast::Metadata::new(),
                     ::conjure_cp_core::ast::Moo::new(::conjure_cp_core::matrix_expr![#expr1, #expr2]),
                 )}),
                 "-" => Ok(quote! {::conjure_cp_core::ast::Expression::Minus(
-                    ::conjure_cp_core::metadata::Metadata::new(),
+                    ::conjure_cp_core::ast::Metadata::new(),
                     ::conjure_cp_core::ast::Moo::new(#expr1),
                     ::conjure_cp_core::ast::Moo::new(#expr2),
                 )}),
                 "*" => Ok(
-                    quote! {::conjure_cp_core::ast::Expression::Product(::conjure_cp_core::metadata::Metadata::new(), ::conjure_cp_core::ast::Moo::new(::conjure_cp_core::matrix_expr![#expr1, #expr2]))},
+                    quote! {::conjure_cp_core::ast::Expression::Product(::conjure_cp_core::ast::Metadata::new(), ::conjure_cp_core::ast::Moo::new(::conjure_cp_core::matrix_expr![#expr1, #expr2]))},
                 ),
                 "/" => {
                     //TODO: add checks for if division is safe or not
                     Ok(quote! {::conjure_cp_core::ast::Expression::UnsafeDiv(
-                        ::conjure_cp_core::metadata::Metadata::new(),
+                        ::conjure_cp_core::ast::Metadata::new(),
                         ::conjure_cp_core::ast::Moo::new(#expr1),
                         ::conjure_cp_core::ast::Moo::new(#expr2),
                     )})
@@ -83,51 +83,51 @@ pub fn parse_expr_to_ts(
                 "%" => {
                     //TODO: add checks for if mod is safe or not
                     Ok(quote! {::conjure_cp_core::ast::Expression::UnsafeMod(
-                        ::conjure_cp_core::metadata::Metadata::new(),
+                        ::conjure_cp_core::ast::Metadata::new(),
                         ::conjure_cp_core::ast::Moo::new(#expr1),
                         ::conjure_cp_core::ast::Moo::new(#expr2),
                     )})
                 }
                 "=" => Ok(quote! {::conjure_cp_core::ast::Expression::Eq(
-                    ::conjure_cp_core::metadata::Metadata::new(),
+                    ::conjure_cp_core::ast::Metadata::new(),
                     ::conjure_cp_core::ast::Moo::new(#expr1),
                     ::conjure_cp_core::ast::Moo::new(#expr2),
                 )}),
                 "!=" => Ok(quote! {::conjure_cp_core::ast::Expression::Neq(
-                    ::conjure_cp_core::metadata::Metadata::new(),
+                    ::conjure_cp_core::ast::Metadata::new(),
                     ::conjure_cp_core::ast::Moo::new(#expr1),
                     ::conjure_cp_core::ast::Moo::new(#expr2),
                 )}),
                 "<=" => Ok(quote! {::conjure_cp_core::ast::Expression::Leq(
-                    ::conjure_cp_core::metadata::Metadata::new(),
+                    ::conjure_cp_core::ast::Metadata::new(),
                     ::conjure_cp_core::ast::Moo::new(#expr1),
                     ::conjure_cp_core::ast::Moo::new(#expr2),
                 )}),
                 ">=" => Ok(quote! {::conjure_cp_core::ast::Expression::Geq(
-                    ::conjure_cp_core::metadata::Metadata::new(),
+                    ::conjure_cp_core::ast::Metadata::new(),
                     ::conjure_cp_core::ast::Moo::new(#expr1),
                     ::conjure_cp_core::ast::Moo::new(#expr2),
                 )}),
                 "<" => Ok(quote! {::conjure_cp_core::ast::Expression::Lt(
-                    ::conjure_cp_core::metadata::Metadata::new(),
+                    ::conjure_cp_core::ast::Metadata::new(),
                     ::conjure_cp_core::ast::Moo::new(#expr1),
                     ::conjure_cp_core::ast::Moo::new(#expr2),
                 )}),
                 ">" => Ok(quote! {::conjure_cp_core::ast::Expression::Gt(
-                    ::conjure_cp_core::metadata::Metadata::new(),
+                    ::conjure_cp_core::ast::Metadata::new(),
                     ::conjure_cp_core::ast::Moo::new(#expr1),
                     ::conjure_cp_core::ast::Moo::new(#expr2),
                 )}),
                 "/\\" => Ok(quote! {::conjure_cp_core::ast::Expression::And(
-                    ::conjure_cp_core::metadata::Metadata::new(),
+                    ::conjure_cp_core::ast::Metadata::new(),
                     ::conjure_cp_core::ast::Moo::new(::conjure_cp_core::matrix_expr![#expr1, #expr2]),
                 )}),
                 "\\/" => Ok(quote! {::conjure_cp_core::ast::Expression::Or(
-                    ::conjure_cp_core::metadata::Metadata::new(),
+                    ::conjure_cp_core::ast::Metadata::new(),
                     ::conjure_cp_core::ast::Moo::new(::conjure_cp_core::matrix_expr![#expr1, #expr2]),
                 )}),
                 "->" => Ok(quote! {::conjure_cp_core::ast::Expression::Imply(
-                    ::conjure_cp_core::metadata::Metadata::new(),
+                    ::conjure_cp_core::ast::Metadata::new(),
                     ::conjure_cp_core::ast::Moo::new(#expr1),
                     ::conjure_cp_core::ast::Moo::new(#expr2),
                 )}),
@@ -148,27 +148,27 @@ pub fn parse_expr_to_ts(
 
             match quantifier_type {
                 "and" => Ok(quote! {::conjure_cp_core::ast::Expression::And(
-                    ::conjure_cp_core::metadata::Metadata::new(),
+                    ::conjure_cp_core::ast::Metadata::new(),
                     ::conjure_cp_core::ast::Moo::new(::conjure_cp_core::matrix_expr![#(#expr_list),*]),
                 )}),
                 "or" => Ok(quote! {::conjure_cp_core::ast::Expression::Or(
-                    ::conjure_cp_core::metadata::Metadata::new(),
+                    ::conjure_cp_core::ast::Metadata::new(),
                     ::conjure_cp_core::ast::Moo::new(::conjure_cp_core::matrix_expr![#(#expr_list),*]),
                 )}),
                 "min" => Ok(quote! {::conjure_cp_core::ast::Expression::Min(
-                    ::conjure_cp_core::metadata::Metadata::new(),
+                    ::conjure_cp_core::ast::Metadata::new(),
                     ::conjure_cp_core::ast::Moo::new(::conjure_cp_core::matrix_expr![#(#expr_list),*]),
                 )}),
                 "max" => Ok(quote! {::conjure_cp_core::ast::Expression::Max(
-                    ::conjure_cp_core::metadata::Metadata::new(),
+                    ::conjure_cp_core::ast::Metadata::new(),
                     ::conjure_cp_core::ast::Moo::new(::conjure_cp_core::matrix_expr![#(#expr_list),*]),
                 )}),
                 "sum" => Ok(quote! {::conjure_cp_core::ast::Expression::Sum(
-                    ::conjure_cp_core::metadata::Metadata::new(),
+                    ::conjure_cp_core::ast::Metadata::new(),
                     ::conjure_cp_core::ast::Moo::new(::conjure_cp_core::matrix_expr![#(#expr_list),*]),
                 )}),
                 "allDiff" => Ok(quote! {::conjure_cp_core::ast::Expression::AllDiff(
-                    ::conjure_cp_core::metadata::Metadata::new(),
+                    ::conjure_cp_core::ast::Metadata::new(),
                     ::conjure_cp_core::ast::Moo::new(::conjure_cp_core::matrix_expr![#(#expr_list),*]),
                 )}),
                 _ => Err(format!("Unsupported quantifier {}", constraint.kind()).into()),
@@ -185,16 +185,16 @@ pub fn parse_expr_to_ts(
                         .parse::<i32>()
                         .unwrap();
                     Ok(quote! {::conjure_cp_core::ast::Expression::Atomic(
-                        ::conjure_cp_core::metadata::Metadata::new(),
+                        ::conjure_cp_core::ast::Metadata::new(),
                         ::conjure_cp_core::ast::Atom::Literal(::conjure_cp_core::ast::Literal::Int(#constant_value)),
                     )})
                 }
                 "TRUE" => Ok(quote! {::conjure_cp_core::ast::Expression::Atomic(
-                    ::conjure_cp_core::metadata::Metadata::new(),
+                    ::conjure_cp_core::ast::Metadata::new(),
                     ::conjure_cp_core::ast::Atom::Literal(::conjure_cp_core::ast::Literal::Bool(true)),
                 )}),
                 "FALSE" => Ok(quote! {::conjure_cp_core::ast::Expression::Atomic(
-                    ::conjure_cp_core::metadata::Metadata::new(),
+                    ::conjure_cp_core::ast::Metadata::new(),
                     ::conjure_cp_core::ast::Atom::Literal(::conjure_cp_core::ast::Literal::Bool(false)),
                 )}),
                 _ => Err(format!("Unsupported constant kind: {}", child.kind()).into()),
@@ -204,7 +204,7 @@ pub fn parse_expr_to_ts(
             let variable_name =
                 String::from(&source_code[constraint.start_byte()..constraint.end_byte()]);
             Ok(quote! {::conjure_cp_core::ast::Expression::Atomic(
-                ::conjure_cp_core::metadata::Metadata::new(),
+                ::conjure_cp_core::ast::Metadata::new(),
                 ::conjure_cp_core::ast::Atom::new_ref(#variable_name),
             )})
         }
@@ -217,7 +217,7 @@ pub fn parse_expr_to_ts(
                 // match inner { ... }
                 // Just generate the FromSolution structure. Runtime validation must happen later.
                 Ok(quote! {
-                    ::conjure_cp_core::ast::Expression::FromSolution(::conjure_cp_core::metadata::Metadata::new(), ::conjure_cp_core::ast::Moo::new(#inner_ts))
+                    ::conjure_cp_core::ast::Expression::FromSolution(::conjure_cp_core::ast::Metadata::new(), ::conjure_cp_core::ast::Moo::new(#inner_ts))
                 })
                 // The original code had a check here to ensure inner was Atomic.
                 // This check cannot be performed at compile time by the macro.

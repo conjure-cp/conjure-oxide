@@ -5,8 +5,8 @@
 use conjure_cp_core::rule_engine::register_rule_set;
 use conjure_cp_core::solver::SolverFamily;
 
+use conjure_cp_core::ast::Metadata;
 use conjure_cp_core::ast::{Expression as Expr, Moo};
-use conjure_cp_core::metadata::Metadata;
 use conjure_cp_core::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };

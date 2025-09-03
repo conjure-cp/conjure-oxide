@@ -41,7 +41,7 @@ mod test {
     #[allow(unused)]
     use conjure_cp_core::ast::{DeclarationPtr, Domain, Name, SymbolTable};
     #[allow(unused)]
-    use conjure_cp_core::{ast::Atom, ast::Expression, metadata::Metadata};
+    use conjure_cp_core::{ast::Atom, ast::Expression, ast::Metadata};
     #[allow(unused)]
     use std::collections::HashMap;
     #[allow(unused)]

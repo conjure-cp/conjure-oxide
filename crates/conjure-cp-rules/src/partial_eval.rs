@@ -1,9 +1,9 @@
 use std::collections::HashSet;
 
 use conjure_cp_core::{
+    ast::Metadata,
     ast::{Domain, Moo, ReturnType, Typeable as _},
     into_matrix_expr,
-    metadata::Metadata,
     rule_engine::{ApplicationResult, Reduction},
 };
 use conjure_cp_rule_macros::register_rule;

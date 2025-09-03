@@ -7,8 +7,8 @@ use ustr::Ustr;
 
 use uniplate::{Biplate, Tree, Uniplate};
 
+use crate::ast::Metadata;
 use crate::ast::pretty::pretty_vec;
-use crate::metadata::Metadata;
 
 use super::domains::HasDomain;
 use super::{Atom, Domain, Expression, Range, records::RecordValue};

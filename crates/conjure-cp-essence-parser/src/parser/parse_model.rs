@@ -3,10 +3,10 @@ use std::sync::{Arc, RwLock};
 
 use conjure_cp_core::Model;
 use conjure_cp_core::ast::Expression;
+use conjure_cp_core::ast::Metadata;
 use conjure_cp_core::ast::{DeclarationPtr, Moo};
 use conjure_cp_core::context::Context;
 use conjure_cp_core::error::Error;
-use conjure_cp_core::metadata::Metadata;
 #[allow(unused)]
 use uniplate::Uniplate;
 

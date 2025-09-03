@@ -215,7 +215,7 @@ fn load_constraints(
     for expr in conjure_model.as_submodel().constraints().iter() {
         // TODO: top level false / trues should not go to the solver to begin with
         // ... but changing this at this stage would require rewriting the tester
-        use crate::metadata::Metadata;
+        use crate::ast::Metadata;
         use conjure_ast::Atom;
         use conjure_ast::Expression as Expr;
         use conjure_ast::Literal;

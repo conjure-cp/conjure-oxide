@@ -1,7 +1,7 @@
 use conjure_cp_core::{
+    ast::Metadata,
     ast::{Atom, Expression as Expr, Moo, SymbolTable},
     into_matrix_expr,
-    metadata::Metadata,
     rule_engine::{
         ApplicationError, ApplicationResult, Reduction, register_rule, register_rule_set,
     },
