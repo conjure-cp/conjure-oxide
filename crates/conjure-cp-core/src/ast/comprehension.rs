@@ -8,7 +8,10 @@ use uniplate::{Biplate, Uniplate};
 
 use crate::{ast::Metadata, into_matrix_expr, matrix_expr};
 
-use super::{DeclarationPtr, Domain, Expression, Moo, Name, Range, SubModel, SymbolTable};
+use super::{
+    DeclarationPtr, Domain, Expression, Moo, Name, Range, SubModel, SymbolTable,
+    ac_operators::ACOperatorKind,
+};
 
 // TODO: move this global setting somewhere better?
 
@@ -17,8 +20,6 @@ use super::{DeclarationPtr, Domain, Expression, Moo, Name, Range, SubModel, Symb
 /// True for optimised, false for naive
 pub static USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS: AtomicBool = AtomicBool::new(false);
 
-// TODO: remove ComprehensionKind, replace with ACOperatorKind
-
 // TODO: do not use Names to compare variables, use DeclarationPtr and ids instead
 // see issue #930
 //
@@ -26,12 +27,6 @@ pub static USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS: AtomicBool = AtomicBool::n
 // uses DeclarationPtr.
 //
 // ~ nikdewally, 10/06/25
-
-pub enum ComprehensionKind {
-    Sum,
-    And,
-    Or,
-}
 
 /// A comprehension.
 #[derive(Clone, PartialEq, Eq, Uniplate, Serialize, Deserialize, Debug)]
@@ -184,12 +179,15 @@ impl ComprehensionBuilder {
 
     /// Creates a comprehension with the given return expression.
     ///
+    /// If this comprehension is inside an AC-operator, the kind of this operator should be passed
+    /// in the `comprehension_kind` field.
+    ///
     /// If a comprehension kind is not given, comprehension guards containing decision variables
     /// are invalid, and will cause a panic.
     pub fn with_return_value(
         self,
         mut expression: Expression,
-        comprehension_kind: Option<ComprehensionKind>,
+        comprehension_kind: Option<ACOperatorKind>,
     ) -> Comprehension {
         let parent_symboltable = self
             .generator_symboltable
@@ -262,10 +260,10 @@ impl ComprehensionBuilder {
             };
 
             expression = match comprehension_kind {
-                ComprehensionKind::And => {
+                ACOperatorKind::And => {
                     Expression::Imply(Metadata::new(), Moo::new(guard_expr), Moo::new(expression))
                 }
-                ComprehensionKind::Or => Expression::And(
+                ACOperatorKind::Or => Expression::And(
                     Metadata::new(),
                     Moo::new(Expression::And(
                         Metadata::new(),
@@ -273,8 +271,14 @@ impl ComprehensionBuilder {
                     )),
                 ),
 
-                ComprehensionKind::Sum => {
+                ACOperatorKind::Sum => {
                     panic!("guards that reference decision variables not yet implemented for sum");
+                }
+
+                ACOperatorKind::Product => {
+                    panic!(
+                        "guards that reference decision variables not yet implemented for product"
+                    );
                 }
             }
         }
