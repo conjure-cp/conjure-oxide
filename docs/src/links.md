@@ -7,6 +7,7 @@ As well as Conjure Oxide, this repository contains various dependent crates
 (such as solver bindings), and related projects. Below are links to the API
 documentation for each crate for developer reference:
 
+ + [conjure-cp](https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp/index.html)
  + [conjure-oxide](https://conjure-cp.github.io/conjure-oxide/docs/conjure_oxide/index.html)
  + [conjure-cp-core](https://conjure-cp.github.io/conjure-oxide/docs/conjure-cp-core/index.html)
  + [conjure-cp-essence-macros](https://conjure-cp.github.io/conjure-oxide/docs/conjure-cp-essence-macros/)

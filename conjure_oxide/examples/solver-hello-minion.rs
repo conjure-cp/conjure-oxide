@@ -2,7 +2,7 @@
 /// demonstrating how the solver interface works.
 ///
 /// The model is `conjure_oxide/tests/integration/basic/div/05/div-05.essence`
-use conjure_cp_core::{
+use conjure_cp::{
     ast::{Literal, Name},
     rule_engine::rewrite_naive,
     solver::{adaptors::Minion, states::ExecutionSuccess},
@@ -13,9 +13,9 @@ use std::collections::HashMap;
 
 #[allow(clippy::unwrap_used)]
 pub fn main() {
-    use conjure_cp_core::solver::SolverFamily;
-    use conjure_cp_core::solver::{Solver, adaptors};
-    use conjure_cp_core::{parse::get_example_model, rule_engine::resolve_rule_sets};
+    use conjure_cp::solver::SolverFamily;
+    use conjure_cp::solver::{Solver, adaptors};
+    use conjure_cp::{parse::conjure_json::get_example_model, rule_engine::resolve_rule_sets};
     use std::sync::{Arc, Mutex};
 
     // Load an example model and rewrite it with conjure oxide.
@@ -51,7 +51,7 @@ pub fn main() {
     // representation. If it sees features it doesn't support, it will fail!.
     //
     // TRY: deleting this line! What compiler errors appear?
-    // TRY: this takes the same `conjure_cp_core::ast::Model` type as the rest of the program.
+    // TRY: this takes the same `conjure_cp::ast::Model` type as the rest of the program.
     //      what happens if we pass it a non re-written model?
 
     let solver = solver.load_model(model).unwrap();

@@ -1,10 +1,10 @@
-use conjure_cp_core::ast::Metadata;
-use conjure_cp_core::ast::{Domain, Expression, Moo, SymbolTable};
-use conjure_cp_core::rule_engine::{
+use conjure_cp::ast::Metadata;
+use conjure_cp::ast::{Domain, Expression, Moo, SymbolTable};
+use conjure_cp::rule_engine::{
     ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
     register_rule,
 };
-use conjure_cp_core::{bug, into_matrix_expr};
+use conjure_cp::{bug, into_matrix_expr};
 use itertools::{Itertools as _, izip};
 
 /// Converts an unsafe index to a safe index using a bubble expression.

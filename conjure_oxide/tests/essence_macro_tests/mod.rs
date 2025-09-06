@@ -1,6 +1,7 @@
-use conjure_cp_core::ast::{Expression, Moo};
-use conjure_cp_core::matrix_expr;
-use conjure_oxide::{Metadata, essence_expr};
+use conjure_cp::ast::Metadata;
+use conjure_cp::ast::{Atom, Expression, Moo};
+use conjure_cp::essence_expr;
+use conjure_cp::matrix_expr;
 
 #[test]
 fn test_2plus2() {

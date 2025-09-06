@@ -1,7 +1,7 @@
-use conjure_cp_core::ast::Metadata;
-use conjure_cp_core::ast::{Expression as Expr, Moo, SymbolTable};
-use conjure_cp_core::into_matrix_expr;
-use conjure_cp_core::rule_engine::{
+use conjure_cp::ast::Metadata;
+use conjure_cp::ast::{Expression as Expr, Moo, SymbolTable};
+use conjure_cp::into_matrix_expr;
+use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
 

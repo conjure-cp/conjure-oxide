@@ -1,13 +1,13 @@
-use conjure_cp_core::ast::Metadata;
-use conjure_cp_core::rule_engine::Reduction;
+use conjure_cp::ast::Metadata;
+use conjure_cp::rule_engine::Reduction;
 
-use conjure_cp_core::ast::AbstractLiteral;
-use conjure_cp_core::ast::Atom;
-use conjure_cp_core::ast::Expression as Expr;
-use conjure_cp_core::ast::Literal;
+use conjure_cp::ast::AbstractLiteral;
+use conjure_cp::ast::Atom;
+use conjure_cp::ast::Expression as Expr;
+use conjure_cp::ast::Literal;
 
-use conjure_cp_core::ast::SymbolTable;
-use conjure_cp_core::rule_engine::{
+use conjure_cp::ast::SymbolTable;
+use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, register_rule,
 };
 

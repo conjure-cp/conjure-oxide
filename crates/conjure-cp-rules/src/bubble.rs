@@ -1,4 +1,4 @@
-use conjure_cp_core::{
+use conjure_cp::{
     ast::Metadata,
     ast::{
         Atom, DeclarationKind, Expression, Literal, Moo, Name, ReturnType, SymbolTable, Typeable,

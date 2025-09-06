@@ -1,5 +1,5 @@
-use conjure_cp_core::ast::{DeclarationPtr, Domain};
-use conjure_cp_essence_parser::parse_literal;
+use conjure_cp::ast::{DeclarationPtr, Domain};
+use conjure_cp::parse::tree_sitter::parse_literal;
 use itertools::{Itertools, izip};
 use std::collections::BTreeMap;
 

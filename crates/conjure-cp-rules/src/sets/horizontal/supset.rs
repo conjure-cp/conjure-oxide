@@ -1,8 +1,8 @@
 // Supset rule for sets
-use conjure_cp_core::ast::Metadata;
-use conjure_cp_core::ast::{Expression as Expr, ReturnType, SymbolTable, Typeable};
-use conjure_cp_core::rule_engine::Reduction;
-use conjure_cp_core::rule_engine::{
+use conjure_cp::ast::Metadata;
+use conjure_cp::ast::{Expression as Expr, ReturnType, SymbolTable, Typeable};
+use conjure_cp::rule_engine::Reduction;
+use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, register_rule,
 };
 

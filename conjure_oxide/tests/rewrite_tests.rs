@@ -1,15 +1,17 @@
-use conjure_cp_core::rule_engine::get_all_rules;
-use conjure_cp_core::rule_engine::rewrite_naive;
-use conjure_cp_core::solver::SolverFamily;
-use conjure_cp_core::{into_matrix_expr, matrix_expr};
-use conjure_cp_rules::eval_constant;
-use conjure_oxide::{
-    Metadata, Model, Rule,
+use conjure_cp::rule_engine::get_all_rules;
+use conjure_cp::rule_engine::rewrite_naive;
+use conjure_cp::solver::SolverFamily;
+use conjure_cp::{
+    Model,
+    ast::Metadata,
     ast::*,
-    get_rule_by_name,
+    rule_engine::Rule,
+    rule_engine::get_rule_by_name,
     rule_engine::resolve_rule_sets,
     solver::{Solver, adaptors},
 };
+use conjure_cp::{into_matrix_expr, matrix_expr};
+use conjure_cp_rules::eval_constant;
 use pretty_assertions::assert_eq;
 use std::process::exit;
 use uniplate::Uniplate;

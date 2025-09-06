@@ -1,20 +1,20 @@
-use conjure_cp_core::ast::AbstractLiteral;
-use conjure_cp_core::ast::Expression as Expr;
-use conjure_cp_core::ast::Moo;
-use conjure_cp_core::ast::SymbolTable;
-use conjure_cp_core::into_matrix_expr;
-use conjure_cp_core::matrix_expr;
-use conjure_cp_core::rule_engine::{
+use conjure_cp::ast::AbstractLiteral;
+use conjure_cp::ast::Expression as Expr;
+use conjure_cp::ast::Moo;
+use conjure_cp::ast::SymbolTable;
+use conjure_cp::into_matrix_expr;
+use conjure_cp::matrix_expr;
+use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
 
-use conjure_cp_core::ast::Atom;
-use conjure_cp_core::ast::Domain;
-use conjure_cp_core::ast::Expression;
-use conjure_cp_core::ast::Literal;
-use conjure_cp_core::ast::Metadata;
-use conjure_cp_core::ast::Name;
-use conjure_cp_core::rule_engine::ApplicationError;
+use conjure_cp::ast::Atom;
+use conjure_cp::ast::Domain;
+use conjure_cp::ast::Expression;
+use conjure_cp::ast::Literal;
+use conjure_cp::ast::Metadata;
+use conjure_cp::ast::Name;
+use conjure_cp::rule_engine::ApplicationError;
 use itertools::izip;
 
 //takes a safe index expression and converts it to an atom via the representation rules

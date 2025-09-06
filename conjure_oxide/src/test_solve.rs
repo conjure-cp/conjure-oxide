@@ -29,10 +29,10 @@ pub fn run_test_solve_command(global_args: GlobalArgs, local_args: Args) -> anyh
     // now we are stealing from the integration tester
 
     let our_solutions = match global_args.solver {
-        conjure_oxide::SolverFamily::Sat => {
+        conjure_cp::solver::SolverFamily::Sat => {
             get_sat_solutions(rewritten_model, 0, &global_args.save_solver_input_file)
         }
-        conjure_oxide::SolverFamily::Minion => {
+        conjure_cp::solver::SolverFamily::Minion => {
             get_minion_solutions(rewritten_model, 0, &global_args.save_solver_input_file)
         }
     }?;

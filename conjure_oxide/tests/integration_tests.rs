@@ -1,11 +1,11 @@
 #![allow(clippy::expect_used)]
-use conjure_cp_core::ast::SymbolTable;
-use conjure_cp_core::bug;
-use conjure_cp_core::rule_engine::get_rules_grouped;
+use conjure_cp::ast::SymbolTable;
+use conjure_cp::bug;
+use conjure_cp::rule_engine::get_rules_grouped;
 
-use conjure_cp_core::rule_engine::rewrite_naive;
+use conjure_cp::parse::tree_sitter::parse_essence_file_native;
+use conjure_cp::rule_engine::rewrite_naive;
 use conjure_oxide::defaults::DEFAULT_RULE_SETS;
-use conjure_oxide::parse_essence_file_native;
 use conjure_oxide::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
 use glob::glob;
 use itertools::Itertools;
@@ -27,12 +27,12 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::RwLock;
 
-use conjure_cp_core::ast::Atom;
-use conjure_cp_core::ast::{Expression, Literal, Name};
-use conjure_cp_core::context::Context;
-use conjure_oxide::SolverFamily;
-use conjure_oxide::parse_essence_file;
-use conjure_oxide::rule_engine::resolve_rule_sets;
+use conjure_cp::ast::Atom;
+use conjure_cp::ast::{Expression, Literal, Name};
+use conjure_cp::context::Context;
+use conjure_cp::parse::tree_sitter::parse_essence_file;
+use conjure_cp::rule_engine::resolve_rule_sets;
+use conjure_cp::solver::SolverFamily;
 use conjure_oxide::utils::conjure::solutions_to_json;
 use conjure_oxide::utils::conjure::{
     get_minion_solutions, get_sat_solutions, get_solutions_from_conjure,
@@ -595,9 +595,9 @@ fn expected_exists_for(path: &str, test_name: &str, stage: &str, extension: &str
     Path::new(&format!("{path}/{test_name}.expected-{stage}.{extension}")).exists()
 }
 
-fn assert_vector_operators_have_partially_evaluated(model: &conjure_cp_core::Model) {
+fn assert_vector_operators_have_partially_evaluated(model: &conjure_cp::Model) {
     for node in model.universe_bi() {
-        use conjure_cp_core::ast::Expression::*;
+        use conjure_cp::ast::Expression::*;
         match node {
             Sum(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),
             Min(_, ref vec) => assert_constants_leq_one_vec_lit(&node, vec),

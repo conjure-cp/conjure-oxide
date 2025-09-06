@@ -5,14 +5,14 @@
 
 use std::collections::BTreeMap;
 
-use conjure_cp_core::{
+use conjure_cp::essence_expr;
+use conjure_cp::rule_engine::register_rule;
+use conjure_cp::{
     ast::Metadata,
     ast::{Atom, Expression as Expr, Literal as Lit, Moo, Name, SymbolTable},
     into_matrix_expr,
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
 };
-use conjure_cp_essence_macros::essence_expr;
-use conjure_cp_rule_macros::register_rule;
 
 /// Collects like terms in a weighted sum.
 ///
