@@ -1,3 +1,11 @@
+//! Comprehension expansion rules
+
+mod expand_ac;
+mod expand_simple;
+
+pub use expand_ac::expand_ac;
+pub use expand_simple::expand_simple;
+
 use std::collections::VecDeque;
 
 use conjure_cp_core::{
@@ -16,8 +24,7 @@ use conjure_cp_rule_macros::register_rule_set;
 // optimised comprehension expansion for associative-commutative operators
 register_rule_set!("Better_AC_Comprehension_Expansion", ("Base"));
 
-/// expand compatible comprehensions using ac optimisations / Comprehension::expand_ac.
-
+/// Expand compatible comprehensions using ac optimisations / Comprehension::expand_ac.
 #[register_rule(("Better_AC_Comprehension_Expansion", 2001))]
 fn expand_comprehension_ac(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // Is this an ac expression?
@@ -43,9 +50,7 @@ fn expand_comprehension_ac(expr: &Expr, symbols: &SymbolTable) -> ApplicationRes
 
     // TODO: check what kind of error this throws and maybe panic
     let mut symbols = symbols.clone();
-    let results = (**comprehension)
-        .clone()
-        .expand_ac(&mut symbols, ac_operator_kind)
+    let results = expand_ac((**comprehension).clone(), &mut symbols, ac_operator_kind)
         .or(Err(RuleNotApplicable))?;
 
     let new_expr = ac_operator_kind.as_expression(into_matrix_expr!(results));
@@ -69,36 +74,8 @@ fn expand_comprehension(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
     // TODO: check what kind of error this throws and maybe panic
 
     let mut symbols = symbols.clone();
-    let results = comprehension
-        .as_ref()
-        .clone()
-        .expand_simple(&mut symbols)
-        .or(Err(RuleNotApplicable))?;
+    let results =
+        expand_simple(comprehension.as_ref().clone(), &mut symbols).or(Err(RuleNotApplicable))?;
 
     Ok(Reduction::with_symbols(into_matrix_expr!(results), symbols))
 }
-
-// #[register_rule(("Base", 8000))]
-// fn comprehension_move_static_guard_into_generators(
-//     expr: &Expr,
-//     _: &SymbolTable,
-// ) -> ApplicationResult {
-//     let Expr::Comprehension(_, comprehension) = expr else {
-//         return Err(RuleNotApplicable);
-//     };
-
-//     let mut comprehension = comprehension.clone();
-//     let Expr::Imply(_, guard, expr) = comprehension.clone().return_expression() else {
-//         return Err(RuleNotApplicable);
-//     };
-
-//     if comprehension.add_induction_guard(*guard) {
-//         comprehension.replace_return_expression(*expr);
-//         Ok(Reduction::pure(Expr::Comprehension(
-//             Metadata::new(),
-//             comprehension,
-//         )))
-//     } else {
-//         Err(RuleNotApplicable)
-//     }
-// }
