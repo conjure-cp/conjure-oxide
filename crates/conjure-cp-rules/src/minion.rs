@@ -9,9 +9,9 @@ use crate::{
     extra_check,
     utils::{is_flat, to_aux_var},
 };
-use conjure_cp_core::ast::Moo;
-use conjure_cp_core::ast::categories::Category;
-use conjure_cp_core::{
+use conjure_cp::ast::Moo;
+use conjure_cp::ast::categories::Category;
+use conjure_cp::{
     ast::Metadata,
     ast::{
         Atom, Domain, Expression as Expr, Literal as Lit, Range, ReturnType, SymbolTable, Typeable,

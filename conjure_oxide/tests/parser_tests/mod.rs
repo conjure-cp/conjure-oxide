@@ -1,9 +1,10 @@
-use conjure_cp_core::{
+use conjure_cp::ast::Metadata;
+use conjure_cp::parse::tree_sitter::parse_essence_file_native;
+use conjure_cp::{
     ast::{Atom, Expression, Moo, Name, declaration},
     context::Context,
     matrix_expr,
 };
-use conjure_oxide::{Metadata, parse_essence_file_native};
 use pretty_assertions::assert_eq;
 use project_root::get_project_root;
 use std::sync::{Arc, RwLock};

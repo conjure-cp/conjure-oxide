@@ -8,7 +8,7 @@ pub use expand_simple::expand_simple;
 
 use std::collections::VecDeque;
 
-use conjure_cp_core::{
+use conjure_cp::{
     ast::{Expression as Expr, SymbolTable, comprehension::Comprehension},
     into_matrix_expr,
     rule_engine::{
@@ -19,7 +19,7 @@ use uniplate::Biplate;
 
 use uniplate::Uniplate;
 
-use conjure_cp_rule_macros::register_rule_set;
+use conjure_cp::rule_engine::register_rule_set;
 
 // optimised comprehension expansion for associative-commutative operators
 register_rule_set!("Better_AC_Comprehension_Expansion", ("Base"));

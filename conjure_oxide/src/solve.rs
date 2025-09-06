@@ -10,20 +10,20 @@ use std::{
 
 use anyhow::{anyhow, ensure};
 use clap::ValueHint;
-use conjure_cp_core::{
+use conjure_cp::parse::tree_sitter::parse_essence_file_native;
+use conjure_cp::{
     Model,
     ast::comprehension::USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS,
     context::Context,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     solver::{Solver, adaptors},
 };
-use conjure_oxide::{
-    SolverFamily,
-    defaults::DEFAULT_RULE_SETS,
-    find_conjure::conjure_executable,
-    get_rules, model_from_json, parse_essence_file_native,
-    utils::conjure::{get_minion_solutions, get_sat_solutions, solutions_to_json},
+use conjure_cp::{
+    parse::conjure_json::model_from_json, rule_engine::get_rules, solver::SolverFamily,
 };
+use conjure_oxide::defaults::DEFAULT_RULE_SETS;
+use conjure_oxide::find_conjure::conjure_executable;
+use conjure_oxide::utils::conjure::{get_minion_solutions, get_sat_solutions, solutions_to_json};
 use serde_json::to_string_pretty;
 
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};

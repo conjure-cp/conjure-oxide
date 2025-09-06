@@ -1,7 +1,7 @@
 // Tests for various functionalities of the Model
 
-use conjure_cp_core::ast::Model;
-use conjure_oxide::ast::*;
+use conjure_cp::ast::Model;
+use conjure_cp::ast::*;
 
 #[test]
 fn modify_domain() {

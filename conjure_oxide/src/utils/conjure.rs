@@ -4,22 +4,22 @@ use std::rc::Rc;
 use std::string::ToString;
 use std::sync::{Arc, Mutex, RwLock};
 
-use conjure_cp_core::ast::{DeclarationKind, Literal, Name};
-use conjure_cp_core::bug;
-use conjure_cp_core::context::Context;
+use conjure_cp::ast::{DeclarationKind, Literal, Name};
+use conjure_cp::bug;
+use conjure_cp::context::Context;
 
-use conjure_cp_core::solver::adaptors::Sat;
+use conjure_cp::solver::adaptors::Sat;
 use serde_json::{Map, Value as JsonValue};
 
 use itertools::Itertools as _;
 use tempfile::tempdir;
 
-use crate::EssenceParseError;
-use crate::Model;
-use crate::parse_essence_file;
-use crate::solver::Solver;
-use crate::solver::adaptors::Minion;
 use crate::utils::json::sort_json_object;
+use conjure_cp::Model;
+use conjure_cp::parse::tree_sitter::EssenceParseError;
+use conjure_cp::parse::tree_sitter::parse_essence_file;
+use conjure_cp::solver::Solver;
+use conjure_cp::solver::adaptors::Minion;
 
 use glob::glob;
 
@@ -216,7 +216,7 @@ pub fn get_solutions_from_conjure(
             let mut solutions = BTreeMap::new();
             for (name, decl) in model.as_submodel().symbols().clone().into_iter() {
                 match &decl.kind() as &DeclarationKind {
-                    conjure_cp_core::ast::DeclarationKind::ValueLetting(expression) => {
+                    conjure_cp::ast::DeclarationKind::ValueLetting(expression) => {
                         let literal = expression
                             .clone()
                             .into_literal()

@@ -1,10 +1,10 @@
-use conjure_cp_core::ast::Moo;
+use conjure_cp::ast::Moo;
 // Equals rule for sets
-use conjure_cp_core::ast::Metadata;
-use conjure_cp_core::ast::{Expression, ReturnType::Set, SymbolTable, Typeable};
-use conjure_cp_core::matrix_expr;
-use conjure_cp_core::rule_engine::Reduction;
-use conjure_cp_core::rule_engine::{
+use conjure_cp::ast::Metadata;
+use conjure_cp::ast::{Expression, ReturnType::Set, SymbolTable, Typeable};
+use conjure_cp::matrix_expr;
+use conjure_cp::rule_engine::Reduction;
+use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, register_rule,
 };
 

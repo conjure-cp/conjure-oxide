@@ -1,13 +1,13 @@
-use conjure_cp_core::ast::Metadata;
-use conjure_cp_core::ast::categories::{Category, CategoryOf};
-use conjure_cp_core::ast::{
+use conjure_cp::ast::Metadata;
+use conjure_cp::ast::categories::{Category, CategoryOf};
+use conjure_cp::ast::{
     Atom, Domain, Expression as Expr, Literal, Moo, Name, Range, SymbolTable, matrix,
 };
-use conjure_cp_core::into_matrix_expr;
-use conjure_cp_core::rule_engine::{
+use conjure_cp::essence_expr;
+use conjure_cp::into_matrix_expr;
+use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
-use conjure_cp_essence_macros::essence_expr;
 use itertools::{Itertools, chain, izip};
 use uniplate::Uniplate;
 

@@ -1,15 +1,15 @@
 use std::collections::HashSet;
 
-use conjure_cp_core::{
+use conjure_cp::rule_engine::register_rule;
+use conjure_cp::{
     ast::Metadata,
     ast::{Domain, Moo, ReturnType, Typeable as _},
     into_matrix_expr,
     rule_engine::{ApplicationResult, Reduction},
 };
-use conjure_cp_rule_macros::register_rule;
 use itertools::iproduct;
 
-use conjure_cp_core::ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable};
+use conjure_cp::ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable};
 
 #[register_rule(("Base",9000))]
 fn partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
@@ -17,7 +17,7 @@ fn partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
 }
 
 pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
-    use conjure_cp_core::rule_engine::ApplicationError::RuleNotApplicable;
+    use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
     // NOTE: If nothing changes, we must return RuleNotApplicable, or the rewriter will try this
     // rule infinitely!
     // This is why we always check whether we found a constant or not.

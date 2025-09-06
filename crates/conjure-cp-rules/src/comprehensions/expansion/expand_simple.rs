@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, Mutex, RwLock, atomic::Ordering},
 };
 
-use conjure_cp_core::{
+use conjure_cp::{
     ast::{
         Atom, DeclarationKind, DeclarationPtr, Expression, Model, Name, SymbolTable,
         comprehension::{Comprehension, USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS},

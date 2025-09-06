@@ -1,4 +1,5 @@
-use conjure_cp_core::{
+use conjure_cp::essence_expr;
+use conjure_cp::{
     ast::Metadata,
     ast::{Atom, Expression as Expr, Moo, SymbolTable},
     into_matrix_expr,
@@ -6,7 +7,6 @@ use conjure_cp_core::{
         ApplicationError, ApplicationResult, Reduction, register_rule, register_rule_set,
     },
 };
-use conjure_cp_essence_macros::essence_expr;
 use uniplate::Uniplate;
 
 use ApplicationError::RuleNotApplicable;

@@ -2,8 +2,8 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Debug;
 use std::vec;
 
-use conjure_cp_core::ast::records::RecordValue;
-use conjure_cp_core::bug;
+use conjure_cp::ast::records::RecordValue;
+use conjure_cp::bug;
 use itertools::Itertools as _;
 use std::fs::File;
 use std::fs::{OpenOptions, read_to_string};
@@ -12,19 +12,19 @@ use std::io::Write;
 use std::sync::{Arc, RwLock};
 use uniplate::Uniplate;
 
-use conjure_cp_core::ast::{AbstractLiteral, Domain, SerdeModel};
-use conjure_cp_core::context::Context;
+use conjure_cp::ast::{AbstractLiteral, Domain, SerdeModel};
+use conjure_cp::context::Context;
 use serde_json::{Error as JsonError, Value as JsonValue, json};
 
-use conjure_cp_core::error::Error;
+use conjure_cp::error::Error;
 
-use crate::Model as ConjureModel;
-use crate::SolverFamily;
-use crate::ast::Name::User;
-use crate::ast::{Literal, Name};
 use crate::utils::conjure::solutions_to_json;
 use crate::utils::json::sort_json_object;
 use crate::utils::misc::to_set;
+use conjure_cp::Model as ConjureModel;
+use conjure_cp::ast::Name::User;
+use conjure_cp::ast::{Literal, Name};
+use conjure_cp::solver::SolverFamily;
 
 pub fn assert_eq_any_order<T: Eq + Hash + Debug + Clone>(a: &Vec<Vec<T>>, b: &Vec<Vec<T>>) {
     assert_eq!(a.len(), b.len());

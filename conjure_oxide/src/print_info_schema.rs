@@ -1,6 +1,6 @@
 //! conjure-oxide print-info-schema subcommand
 
-use conjure_cp_core::context::Context;
+use conjure_cp::context::Context;
 use schemars::schema_for;
 
 /// Prints the schema for the JSON info file.

@@ -4,7 +4,7 @@ use std::{
     sync::{Arc, Mutex, RwLock, atomic::Ordering},
 };
 
-use conjure_cp_core::{
+use conjure_cp::{
     ast::{
         Atom, DeclarationKind, DeclarationPtr, Expression, Metadata, Model, Moo, Name, ReturnType,
         SubModel, SymbolTable, Typeable as _,

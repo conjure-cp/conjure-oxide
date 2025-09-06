@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use clap::{Args, Parser, Subcommand, arg, command};
 
 use clap_complete::Shell;
-use conjure_oxide::SolverFamily;
+use conjure_cp::solver::SolverFamily;
 
 use crate::{solve, test_solve};
 

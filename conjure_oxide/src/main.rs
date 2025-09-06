@@ -151,7 +151,7 @@ fn run_subcommand(cli: Cli) -> anyhow::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use conjure_oxide::{get_example_model, get_example_model_by_path};
+    use conjure_cp::parse::conjure_json::{get_example_model, get_example_model_by_path};
 
     #[test]
     fn test_get_example_model_success() {
