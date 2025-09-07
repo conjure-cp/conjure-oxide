@@ -1,0 +1,44 @@
+Model before rewriting:
+
+letting A be 3
+find b: int(1..20)
+
+such that
+
+(b < A)
+
+--
+
+(b < A), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(b <= sum([A,-1;int(1..)])) 
+
+--
+
+A, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+3 
+
+--
+
+(b <= sum([3,-1;int(1..)])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(b <= 2) 
+
+--
+
+(b <= 2), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(b, 2, 0) 
+
+--
+
+Final model:
+
+letting A be 3
+find b: int(1..20)
+
+such that
+
+Ineq(b, 2, 0)
+

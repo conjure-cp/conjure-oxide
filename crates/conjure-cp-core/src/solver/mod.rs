@@ -22,7 +22,7 @@
 //! ## A Successful Minion Model
 //!
 //! Note: this example constructs a basic Minion-compatible model instead of using the rewriter.
-//! For a full end-to-end example, see conjure_oxide/examples/solver_hello_minion.rs
+//! For a full end-to-end example, see crates/conjure-cp/examples/solver_hello_minion.rs
 //!
 //! ```ignore
 //! use std::sync::{Arc,Mutex};

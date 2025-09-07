@@ -1,0 +1,44 @@
+Model before rewriting:
+
+find x: bool
+find y: bool
+
+such that
+
+and([(x) <-> (x),(false) <-> (y);int(1..2)])
+
+--
+
+and([(x) <-> (x),(false) <-> (y);int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+and([true,!(y);int(1..2)]) 
+
+--
+
+!(y), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
+WatchedLiteral(y,false) 
+
+--
+
+and([true,WatchedLiteral(y,false);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+and([true,WatchedLiteral(y,false);int(1..)]) 
+
+--
+
+and([true,WatchedLiteral(y,false);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+WatchedLiteral(y,false) 
+
+--
+
+Final model:
+
+find x: bool
+find y: bool
+
+such that
+
+WatchedLiteral(y,false)
+

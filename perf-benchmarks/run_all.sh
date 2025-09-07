@@ -12,7 +12,7 @@
 #   + BENCHMARK_GIT_REF: git reference to compare to.
 #       (default: main)
 #
-#   + EXTRA_FLAGS: extra flags to pass to conjure_oxide
+#   + EXTRA_FLAGS: extra flags to pass to conjure-oxide
 #
 # Author: niklasdewally
 # Date: 2025/06/18 (updated 2025/08/14)
@@ -63,7 +63,7 @@ pushd "$baseline_dir" >/dev/null
 
 # build binary for baseline
 cargo build -q --release
-baseline_bin=$(realpath target/release/conjure_oxide)
+baseline_bin=$(realpath target/release/conjure-oxide)
 popd >/dev/null
 
 echo "======= COMPILING CONJURE_OXIDE (CURRENT) =======" >/dev/stderr
@@ -71,7 +71,7 @@ echo "======= COMPILING CONJURE_OXIDE (CURRENT) =======" >/dev/stderr
 # build binary on current branch
 pushd "$conjure_oxide_dir" >/dev/null
 cargo build -q --release
-after_bin=$(realpath target/release/conjure_oxide)
+after_bin=$(realpath target/release/conjure-oxide)
 popd >/dev/null
 
 models_fast="$(find models/fast -iname '*.eprime' | sort)"

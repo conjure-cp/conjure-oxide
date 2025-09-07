@@ -1,0 +1,52 @@
+Model before rewriting:
+
+find a: int(0..4)
+find b: int(0..4)
+
+such that
+
+(UnsafeDiv(a, b) = 2)
+
+--
+
+UnsafeDiv(a, b), 
+   ~~> div_to_bubble ([("Bubble", 6000)]) 
+{SafeDiv(a, b) @ (b != 0)} 
+
+--
+
+({SafeDiv(a, b) @ (b != 0)} = 2), 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{(SafeDiv(a, b) = 2) @ (b != 0)} 
+
+--
+
+{(SafeDiv(a, b) = 2) @ (b != 0)}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+and([(SafeDiv(a, b) = 2),(b != 0);int(1..)]) 
+
+--
+
+and([(SafeDiv(a, b) = 2),(b != 0);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(SafeDiv(a, b) = 2),
+(b != 0) 
+
+--
+
+(SafeDiv(a, b) = 2), 
+   ~~> introduce_diveq ([("Minion", 4200)]) 
+DivEq(a, b, 2) 
+
+--
+
+Final model:
+
+find a: int(0..4)
+find b: int(0..4)
+
+such that
+
+DivEq(a, b, 2),
+(b != 0)
+

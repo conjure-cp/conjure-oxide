@@ -8,7 +8,7 @@ As well as Conjure Oxide, this repository contains various dependent crates
 documentation for each crate for developer reference:
 
  + [conjure-cp](https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp/index.html)
- + [conjure-oxide](https://conjure-cp.github.io/conjure-oxide/docs/conjure_oxide/index.html)
+ + [conjure-cp-cli](https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp_cli/index.html)
  + [conjure-cp-core](https://conjure-cp.github.io/conjure-oxide/docs/conjure-cp-core/index.html)
  + [conjure-cp-essence-macros](https://conjure-cp.github.io/conjure-oxide/docs/conjure-cp-essence-macros/)
  + [conjure-cp-essence-parser](https://conjure-cp.github.io/conjure-oxide/docs/conjure-cp-essence-parser)

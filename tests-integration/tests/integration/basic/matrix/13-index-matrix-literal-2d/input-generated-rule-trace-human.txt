@@ -1,0 +1,157 @@
+Model before rewriting:
+
+find i: int(1..2)
+find j: int(1..3)
+
+such that
+
+([[j,2,3;int(1..3)],[4,UnsafeDiv(j, 2),6;int(1..3)],[j,8,product([9,j;int(1..2)]);int(1..3)];int(1..3)][i, i] = i)
+
+--
+
+[[j,2,3;int(1..3)],[4,UnsafeDiv(j, 2),6;int(1..3)],[j,8,product([9,j;int(1..2)]);int(1..3)];int(1..3)][i, i], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{[[j,2,3;int(1..3)],[4,UnsafeDiv(j, 2),6;int(1..3)],[j,8,product([9,j;int(1..2)]);int(1..3)];int(1..3)][i, i] @ and([__inDomain(i,int(1..3)),__inDomain(i,int(1..3));int(1..)])} 
+
+--
+
+({[[j,2,3;int(1..3)],[4,UnsafeDiv(j, 2),6;int(1..3)],[j,8,product([9,j;int(1..2)]);int(1..3)];int(1..3)][i, i] @ and([__inDomain(i,int(1..3)),__inDomain(i,int(1..3));int(1..)])} = i), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+([[j,2,3;int(1..3)],[4,UnsafeDiv(j, 2),6;int(1..3)],[j,8,product([9,j;int(1..2)]);int(1..3)];int(1..3)][i, i] = i) 
+
+--
+
+UnsafeDiv(j, 2), 
+   ~~> div_to_bubble ([("Bubble", 6000)]) 
+{SafeDiv(j, 2) @ (2 != 0)} 
+
+--
+
+([[j,2,3;int(1..3)],[4,{SafeDiv(j, 2) @ (2 != 0)},6;int(1..3)],[j,8,product([9,j;int(1..2)]);int(1..3)];int(1..3)][i, i] = i), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+([[j,2,3;int(1..3)],[4,SafeDiv(j, 2),6;int(1..3)],[j,8,product([9,j;int(1..2)]);int(1..3)];int(1..3)][i, i] = i) 
+
+--
+
+[[j,2,3;int(1..3)],[4,SafeDiv(j, 2),6;int(1..3)],[j,8,product([9,j;int(1..2)]);int(1..3)];int(1..3)][i, i], 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+[[j,2,3;int(1..3)],[4,SafeDiv(j, 2),6;int(1..3)],[j,8,product([9,j;int(1..2)]);int(1..3)];int(1..)][i, i] 
+
+--
+
+[[j,2,3;int(1..3)],[4,SafeDiv(j, 2),6;int(1..3)],[j,8,product([9,j;int(1..2)]);int(1..3)];int(1..)][i, i], 
+   ~~> remove_dimension_from_matrix_indexing ([("Base", 2000)]) 
+[[j,2,3;int(1..3)][i],[4,SafeDiv(j, 2),6;int(1..3)][i],[j,8,product([9,j;int(1..2)]);int(1..3)][i];int(1..)][i] 
+
+--
+
+[j,2,3;int(1..3)][i], 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+[j,2,3;int(1..)][i] 
+
+--
+
+[4,SafeDiv(j, 2),6;int(1..3)][i], 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+[4,SafeDiv(j, 2),6;int(1..)][i] 
+
+--
+
+[j,8,product([9,j;int(1..2)]);int(1..3)][i], 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+[j,8,product([9,j;int(1..2)]);int(1..)][i] 
+
+--
+
+product([9,j;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+product([9,j;int(1..)]) 
+
+--
+
+[[j,2,3;int(1..)][i],[4,SafeDiv(j, 2),6;int(1..)][i],[j,8,product([9,j;int(1..)]);int(1..)][i];int(1..)][i], 
+   ~~> flatten_matrix_literal ([("Minion", 1000)]) 
+[__0,__1,__2;int(1..)][i] 
+new variables:
+  find __0: int(1..3)
+  find __1: int(0..6)
+  find __2: int(1..27)
+new constraints:
+  __0 =aux [j,2,3;int(1..)][i]
+  __1 =aux [4,SafeDiv(j, 2),6;int(1..)][i]
+  __2 =aux [j,8,product([9,j;int(1..)]);int(1..)][i]
+--
+
+([__0,__1,__2;int(1..)][i] = i), 
+   ~~> introduce_element_from_index ([("Minion", 4400)]) 
+__minion_element_one([__0,__1,__2],i,i) 
+
+--
+
+__0 =aux [j,2,3;int(1..)][i], 
+   ~~> introduce_element_from_index ([("Minion", 4400)]) 
+__minion_element_one([j,2,3],i,__0) 
+
+--
+
+[4,SafeDiv(j, 2),6;int(1..)][i], 
+   ~~> flatten_matrix_literal ([("Minion", 1000)]) 
+[4,__3,6;int(1..)][i] 
+new variables:
+  find __3: int(0..1)
+new constraints:
+  __3 =aux SafeDiv(j, 2)
+--
+
+__1 =aux [4,__3,6;int(1..)][i], 
+   ~~> introduce_element_from_index ([("Minion", 4400)]) 
+__minion_element_one([4,__3,6],i,__1) 
+
+--
+
+__3 =aux SafeDiv(j, 2), 
+   ~~> introduce_diveq ([("Minion", 4200)]) 
+DivEq(j, 2, __3) 
+
+--
+
+[j,8,product([9,j;int(1..)]);int(1..)][i], 
+   ~~> flatten_matrix_literal ([("Minion", 1000)]) 
+[j,8,__4;int(1..)][i] 
+new variables:
+  find __4: int(9..27)
+new constraints:
+  __4 =aux product([9,j;int(1..)])
+--
+
+__2 =aux [j,8,__4;int(1..)][i], 
+   ~~> introduce_element_from_index ([("Minion", 4400)]) 
+__minion_element_one([j,8,__4],i,__2) 
+
+--
+
+__4 =aux product([9,j;int(1..)]), 
+   ~~> introduce_producteq ([("Minion", 4200)]) 
+FlatProductEq(j,9,__4) 
+
+--
+
+Final model:
+
+find i: int(1..2)
+find j: int(1..3)
+find __0: int(1..3)
+find __1: int(0..6)
+find __2: int(1..27)
+find __3: int(0..1)
+find __4: int(9..27)
+
+such that
+
+__minion_element_one([__0,__1,__2],i,i),
+__minion_element_one([j,2,3],i,__0),
+__minion_element_one([4,__3,6],i,__1),
+__minion_element_one([j,8,__4],i,__2),
+DivEq(j, 2, __3),
+FlatProductEq(j,9,__4)
+

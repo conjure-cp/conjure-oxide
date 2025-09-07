@@ -1,0 +1,126 @@
+Model before rewriting:
+
+letting a be {2,3}
+letting b be {1,2}
+letting c be {2}
+
+such that
+
+(c = (a intersect b))
+
+--
+
+(c = (a intersect b)), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(c = (a intersect b)) 
+
+--
+
+(c = (a intersect b)), 
+   ~~> eq_to_subset_eq ([("Base", 8800)]) 
+and([(c subsetEq (a intersect b)),((a intersect b) subsetEq c);int(1..)]) 
+
+--
+
+and([(c subsetEq (a intersect b)),((a intersect b) subsetEq c);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(c subsetEq (a intersect b)),
+((a intersect b) subsetEq c) 
+
+--
+
+(c subsetEq (a intersect b)), 
+   ~~> subseteq_intersect ([("Base", 8700)]) 
+and([(c subsetEq a),(c subsetEq b);int(1..)]) 
+
+--
+
+and([(c subsetEq a),(c subsetEq b);int(1..)]),
+((a intersect b) subsetEq c), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(c subsetEq a),
+(c subsetEq b),
+((a intersect b) subsetEq c) 
+
+--
+
+c, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+Set([Int(2)]) 
+
+--
+
+a, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+Set([Int(2), Int(3)]) 
+
+--
+
+(Set([Int(2)]) subsetEq Set([Int(2), Int(3)])),
+(c subsetEq b),
+((a intersect b) subsetEq c), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(c subsetEq b),
+((a intersect b) subsetEq c) 
+
+--
+
+c, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+Set([Int(2)]) 
+
+--
+
+b, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+Set([Int(1), Int(2)]) 
+
+--
+
+(Set([Int(2)]) subsetEq Set([Int(1), Int(2)])),
+((a intersect b) subsetEq c), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+((a intersect b) subsetEq c) 
+
+--
+
+a, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+Set([Int(2), Int(3)]) 
+
+--
+
+b, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+Set([Int(1), Int(2)]) 
+
+--
+
+((Set([Int(2), Int(3)]) intersect Set([Int(1), Int(2)])) subsetEq c), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(Set([Int(2)]) subsetEq c) 
+
+--
+
+c, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+Set([Int(2)]) 
+
+--
+
+(Set([Int(2)]) subsetEq Set([Int(2)])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+true 
+
+--
+
+Final model:
+
+letting a be Set([Int(2), Int(3)])
+letting b be Set([Int(1), Int(2)])
+letting c be Set([Int(2)])
+
+such that
+
+true
+
