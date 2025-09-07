@@ -203,10 +203,9 @@ pub fn parse_expr_to_ts(
         "variable" => {
             let variable_name =
                 String::from(&source_code[constraint.start_byte()..constraint.end_byte()]);
-            Ok(quote! {::conjure_cp_core::ast::Expression::Atomic(
-                ::conjure_cp_core::metadata::Metadata::new(),
-                ::conjure_cp_core::ast::Atom::new_ref(#variable_name),
-            )})
+            Err(format!(
+                "Found variable: '{variable_name}'. Currently, referencing variables by name is not supported. Consider passing a metavar instead."
+            ).into())
         }
         "from_solution" => match root.kind() {
             "dominance_relation" => {
