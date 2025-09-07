@@ -40,16 +40,6 @@ impl Atom {
             _ => panic!("Called into_declaration on a non-reference Atom"),
         }
     }
-
-    /// Shorthand to create an integer literal.
-    pub fn new_ilit(value: i32) -> Atom {
-        Atom::Literal(Literal::Int(value))
-    }
-
-    /// Shorthand to create a boolean literal.
-    pub fn new_blit(value: bool) -> Atom {
-        Atom::Literal(Literal::Bool(value))
-    }
 }
 
 impl CategoryOf for Atom {
