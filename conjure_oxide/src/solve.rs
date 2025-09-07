@@ -10,6 +10,7 @@ use std::{
 
 use anyhow::{anyhow, ensure};
 use clap::ValueHint;
+use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::{
     Model,
@@ -21,7 +22,6 @@ use conjure_cp::{
 use conjure_cp::{
     parse::conjure_json::model_from_json, rule_engine::get_rules, solver::SolverFamily,
 };
-use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::find_conjure::conjure_executable;
 use conjure_oxide::utils::conjure::{get_minion_solutions, get_sat_solutions, solutions_to_json};
 use serde_json::to_string_pretty;

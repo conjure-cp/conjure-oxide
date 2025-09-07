@@ -9,3 +9,5 @@ pub mod parse {
     #[doc(inline)]
     pub use conjure_cp_essence_parser as tree_sitter;
 }
+
+pub mod defaults;
