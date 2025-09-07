@@ -226,10 +226,16 @@ pub fn parse_expr_to_ts(
         "variable" => {
             let variable_name =
                 String::from(&source_code[constraint.start_byte()..constraint.end_byte()]);
-            Ok(quote! {::conjure_cp::ast::Expression::Atomic(
-                ::conjure_cp::ast::Metadata::new(),
-                ::conjure_cp::ast::Atom::new_ref(#variable_name),
-            )})
+            Err(EssenceParseError::syntax_error(
+                format!(
+                    "Found variable: '{variable_name}'. \
+                 Did you mean to pass a meta-variable: '&{variable_name}'? \
+                 Referencing variables by name is not supported because \
+                 all references must point to a Declaration, which may not \
+                 exist in the current context."
+                ),
+                Some(constraint.range()),
+            ))
         }
         "from_solution" => match root.kind() {
             "dominance_relation" => {
