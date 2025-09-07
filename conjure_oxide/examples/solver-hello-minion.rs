@@ -1,3 +1,4 @@
+use conjure_cp::defaults::DEFAULT_RULE_SETS;
 /// This example shows how to run a basic model top to bottom with Minion, with a focus on
 /// demonstrating how the solver interface works.
 ///
@@ -7,7 +8,6 @@ use conjure_cp::{
     rule_engine::rewrite_naive,
     solver::{adaptors::Minion, states::ExecutionSuccess},
 };
-use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use itertools::Itertools;
 use std::collections::HashMap;
 

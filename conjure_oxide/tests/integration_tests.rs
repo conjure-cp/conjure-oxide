@@ -3,9 +3,9 @@ use conjure_cp::ast::SymbolTable;
 use conjure_cp::bug;
 use conjure_cp::rule_engine::get_rules_grouped;
 
+use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::rule_engine::rewrite_naive;
-use conjure_oxide::defaults::DEFAULT_RULE_SETS;
 use conjure_oxide::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
 use glob::glob;
 use itertools::Itertools;
