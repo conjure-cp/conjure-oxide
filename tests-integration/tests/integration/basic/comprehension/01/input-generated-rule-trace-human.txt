@@ -1,0 +1,138 @@
+Model before rewriting:
+
+find m: matrix indexed by [[int(1..5)]] of int(1..5)
+
+such that
+
+and([given i: int(1..5)
+
+such that
+
+(m[i] = i)
+ | i: int(1..5),])
+
+--
+
+and([given i: int(1..5)
+
+such that
+
+(m#matrix_to_atom[i] = i)
+ | i: int(1..5),]), 
+   ~~> select_representation_matrix ([("Base", 8001)]) 
+and([given i: int(1..5)
+
+such that
+
+(m#matrix_to_atom[i] = i)
+ | i: int(1..5),]) 
+new variables:
+  find m#matrix_to_atom_1: int(1..5)
+  find m#matrix_to_atom_2: int(1..5)
+  find m#matrix_to_atom_3: int(1..5)
+  find m#matrix_to_atom_4: int(1..5)
+  find m#matrix_to_atom_5: int(1..5)
+--
+
+Model before rewriting:
+
+find i: int(1..5)
+find __0: bool
+
+such that
+
+(true != __0)
+
+--
+
+Final model:
+
+find i: int(1..5)
+find __0: bool
+
+such that
+
+(true != __0)
+
+Model before rewriting:
+
+given i: int(1..5)
+
+such that
+
+(m#matrix_to_atom[i] = i)
+
+--
+
+m#matrix_to_atom[i], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{m#matrix_to_atom[i] @ and([__inDomain(i,int(1..5));int(1..)])} 
+
+--
+
+({m#matrix_to_atom[i] @ and([__inDomain(i,int(1..5));int(1..)])} = i), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(m#matrix_to_atom[i] = i) 
+
+--
+
+Final model:
+
+given i: int(1..5)
+
+such that
+
+(m#matrix_to_atom[i] = i)
+
+and([given i: int(1..5)
+
+such that
+
+(m#matrix_to_atom[i] = i)
+ | i: int(1..5),__0: bool,]), 
+   ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
+and([(m#matrix_to_atom[1] = 1),(m#matrix_to_atom[2] = 2),(m#matrix_to_atom[3] = 3),(m#matrix_to_atom[4] = 4),(m#matrix_to_atom[5] = 5);int(1..)]) 
+
+--
+
+and([(m#matrix_to_atom[1] = 1),(m#matrix_to_atom[2] = 2),(m#matrix_to_atom[3] = 3),(m#matrix_to_atom[4] = 4),(m#matrix_to_atom[5] = 5);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(m#matrix_to_atom[1] = 1),
+(m#matrix_to_atom[2] = 2),
+(m#matrix_to_atom[3] = 3),
+(m#matrix_to_atom[4] = 4),
+(m#matrix_to_atom[5] = 5) 
+
+--
+
+(m#matrix_to_atom[1] = 1),
+(m#matrix_to_atom[2] = 2),
+(m#matrix_to_atom[3] = 3),
+(m#matrix_to_atom[4] = 4),
+(m#matrix_to_atom[5] = 5), 
+   ~~> index_matrix_to_atom ([("Base", 5000)]) 
+(m#matrix_to_atom_1 = 1),
+(m#matrix_to_atom_2 = 2),
+(m#matrix_to_atom_3 = 3),
+(m#matrix_to_atom_4 = 4),
+(m#matrix_to_atom_5 = 5) 
+
+--
+
+Final model:
+
+find m: matrix indexed by [[int(1..5)]] of int(1..5)
+find m#matrix_to_atom_1: int(1..5)
+find m#matrix_to_atom_2: int(1..5)
+find m#matrix_to_atom_3: int(1..5)
+find m#matrix_to_atom_4: int(1..5)
+find m#matrix_to_atom_5: int(1..5)
+
+such that
+
+(m#matrix_to_atom_1 = 1),
+(m#matrix_to_atom_2 = 2),
+(m#matrix_to_atom_3 = 3),
+(m#matrix_to_atom_4 = 4),
+(m#matrix_to_atom_5 = 5)
+

@@ -10,6 +10,7 @@ mod domains;
 mod expressions;
 mod literals;
 pub mod matrix;
+mod metadata;
 mod model;
 mod name;
 pub mod records;
@@ -30,6 +31,7 @@ pub use domains::SetAttr;
 pub use expressions::Expression;
 pub use literals::AbstractLiteral;
 pub use literals::Literal;
+pub use metadata::Metadata;
 pub use model::*;
 pub use name::Name;
 pub use records::RecordEntry;
@@ -111,35 +113,35 @@ macro_rules! into_matrix {
 #[macro_export]
 macro_rules! matrix_expr {
     () => (
-        $crate::ast::Expression::AbstractLiteral($crate::metadata::Metadata::new(),$crate::matrix![])
+        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::matrix![])
     );
 
     (;$domain:expr) => (
-        $crate::ast::Expression::AbstractLiteral($crate::metadata::Metadata::new(),$crate::matrix![;$domain])
+        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::matrix![;$domain])
     );
 
 
     ($x:expr) => (
-        $crate::ast::Expression::AbstractLiteral($crate::metadata::Metadata::new(),$crate::matrix![$x])
+        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::matrix![$x])
     );
     ($x:expr;$domain:expr) => (
-        $crate::ast::Expression::AbstractLiteral($crate::metadata::Metadata::new(),$crate::matrix![;$domain])
+        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::matrix![;$domain])
     );
 
     ($($x:expr),+) => (
-        $crate::ast::Expression::AbstractLiteral($crate::metadata::Metadata::new(),$crate::matrix![$($x),+])
+        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::matrix![$($x),+])
     );
 
     ($($x:expr),+;$domain:expr) => (
-        $crate::ast::Expression::AbstractLiteral($crate::metadata::Metadata::new(),$crate::matrix![$($x),+;$domain])
+        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::matrix![$($x),+;$domain])
     );
 
     ($($x:expr,)+) => (
-        $crate::ast::Expression::AbstractLiteral($crate::metadata::Metadata::new(),$crate::matrix![$($x),+])
+        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::matrix![$($x),+])
     );
 
     ($($x:expr,)+;$domain:expr) => (
-        $crate::ast::Expression::AbstractLiteral($crate::metadata::Metadata::new(),$crate::matrix![$($x),+;$domain])
+        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::matrix![$($x),+;$domain])
     )
 }
 
@@ -152,16 +154,16 @@ macro_rules! matrix_expr {
 #[macro_export]
 macro_rules! into_matrix_expr {
     () => (
-        $crate::ast::Expression::AbstractLiteral($crate::metadata::Metadata::new(),$crate::into_matrix![])
+        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::into_matrix![])
     );
 
     (;$domain:expr) => (
-        $crate::ast::Expression::AbstractLiteral($crate::metadata::Metadata::new(),$crate::into_matrix![;$domain])
+        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::into_matrix![;$domain])
     );
     ($x:expr) => (
-        $crate::ast::Expression::AbstractLiteral($crate::metadata::Metadata::new(),$crate::into_matrix![$x])
+        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::into_matrix![$x])
     );
     ($x:expr;$domain:expr) => (
-        $crate::ast::Expression::AbstractLiteral($crate::metadata::Metadata::new(),$crate::into_matrix![$x;$domain])
+        $crate::ast::Expression::AbstractLiteral($crate::ast::Metadata::new(),$crate::into_matrix![$x;$domain])
     );
 }

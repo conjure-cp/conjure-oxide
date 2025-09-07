@@ -1,0 +1,50 @@
+Model before rewriting:
+
+letting a be {1,2,3}
+letting b be {2,3}
+
+such that
+
+(a supsetEq b)
+
+--
+
+(a supsetEq b), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(a supsetEq b) 
+
+--
+
+(a supsetEq b), 
+   ~~> supset_eq_to_subset_eq ([("Base", 8700)]) 
+(b subsetEq a) 
+
+--
+
+b, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+Set([Int(2), Int(3)]) 
+
+--
+
+a, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+Set([Int(1), Int(2), Int(3)]) 
+
+--
+
+(Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+true 
+
+--
+
+Final model:
+
+letting a be Set([Int(1), Int(2), Int(3)])
+letting b be Set([Int(2), Int(3)])
+
+such that
+
+true
+

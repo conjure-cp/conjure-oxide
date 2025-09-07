@@ -1,0 +1,220 @@
+Model before rewriting:
+
+find a: matrix indexed by [[int(1..5)]] of bool
+
+such that
+
+(a[1] = true),
+(a[2] = true),
+(a[3] = true),
+(a[4] = true),
+(a[5] = !(a[4]))
+
+--
+
+(a#matrix_to_atom[1] = true),
+(a#matrix_to_atom[2] = true),
+(a#matrix_to_atom[3] = true),
+(a#matrix_to_atom[4] = true),
+(a#matrix_to_atom[5] = !(a#matrix_to_atom[4])), 
+   ~~> select_representation_matrix ([("Base", 8001)]) 
+(a#matrix_to_atom[1] = true),
+(a#matrix_to_atom[2] = true),
+(a#matrix_to_atom[3] = true),
+(a#matrix_to_atom[4] = true),
+(a#matrix_to_atom[5] = !(a#matrix_to_atom[4])) 
+new variables:
+  find a#matrix_to_atom_1: bool
+  find a#matrix_to_atom_2: bool
+  find a#matrix_to_atom_3: bool
+  find a#matrix_to_atom_4: bool
+  find a#matrix_to_atom_5: bool
+--
+
+a#matrix_to_atom[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{a#matrix_to_atom[1] @ and([__inDomain(1,int(1..5));int(1..)])} 
+
+--
+
+({a#matrix_to_atom[1] @ and([__inDomain(1,int(1..5));int(1..)])} = true),
+(a#matrix_to_atom[2] = true),
+(a#matrix_to_atom[3] = true),
+(a#matrix_to_atom[4] = true),
+(a#matrix_to_atom[5] = !(a#matrix_to_atom[4])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(a#matrix_to_atom[1] = true),
+(a#matrix_to_atom[2] = true),
+(a#matrix_to_atom[3] = true),
+(a#matrix_to_atom[4] = true),
+(a#matrix_to_atom[5] = !(a#matrix_to_atom[4])) 
+
+--
+
+a#matrix_to_atom[2], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{a#matrix_to_atom[2] @ and([__inDomain(2,int(1..5));int(1..)])} 
+
+--
+
+(a#matrix_to_atom[1] = true),
+({a#matrix_to_atom[2] @ and([__inDomain(2,int(1..5));int(1..)])} = true),
+(a#matrix_to_atom[3] = true),
+(a#matrix_to_atom[4] = true),
+(a#matrix_to_atom[5] = !(a#matrix_to_atom[4])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(a#matrix_to_atom[1] = true),
+(a#matrix_to_atom[2] = true),
+(a#matrix_to_atom[3] = true),
+(a#matrix_to_atom[4] = true),
+(a#matrix_to_atom[5] = !(a#matrix_to_atom[4])) 
+
+--
+
+a#matrix_to_atom[3], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{a#matrix_to_atom[3] @ and([__inDomain(3,int(1..5));int(1..)])} 
+
+--
+
+(a#matrix_to_atom[1] = true),
+(a#matrix_to_atom[2] = true),
+({a#matrix_to_atom[3] @ and([__inDomain(3,int(1..5));int(1..)])} = true),
+(a#matrix_to_atom[4] = true),
+(a#matrix_to_atom[5] = !(a#matrix_to_atom[4])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(a#matrix_to_atom[1] = true),
+(a#matrix_to_atom[2] = true),
+(a#matrix_to_atom[3] = true),
+(a#matrix_to_atom[4] = true),
+(a#matrix_to_atom[5] = !(a#matrix_to_atom[4])) 
+
+--
+
+a#matrix_to_atom[4], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{a#matrix_to_atom[4] @ and([__inDomain(4,int(1..5));int(1..)])} 
+
+--
+
+(a#matrix_to_atom[1] = true),
+(a#matrix_to_atom[2] = true),
+(a#matrix_to_atom[3] = true),
+({a#matrix_to_atom[4] @ and([__inDomain(4,int(1..5));int(1..)])} = true),
+(a#matrix_to_atom[5] = !(a#matrix_to_atom[4])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(a#matrix_to_atom[1] = true),
+(a#matrix_to_atom[2] = true),
+(a#matrix_to_atom[3] = true),
+(a#matrix_to_atom[4] = true),
+(a#matrix_to_atom[5] = !(a#matrix_to_atom[4])) 
+
+--
+
+a#matrix_to_atom[5], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{a#matrix_to_atom[5] @ and([__inDomain(5,int(1..5));int(1..)])} 
+
+--
+
+(a#matrix_to_atom[1] = true),
+(a#matrix_to_atom[2] = true),
+(a#matrix_to_atom[3] = true),
+(a#matrix_to_atom[4] = true),
+({a#matrix_to_atom[5] @ and([__inDomain(5,int(1..5));int(1..)])} = !(a#matrix_to_atom[4])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(a#matrix_to_atom[1] = true),
+(a#matrix_to_atom[2] = true),
+(a#matrix_to_atom[3] = true),
+(a#matrix_to_atom[4] = true),
+(a#matrix_to_atom[5] = !(a#matrix_to_atom[4])) 
+
+--
+
+a#matrix_to_atom[4], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{a#matrix_to_atom[4] @ and([__inDomain(4,int(1..5));int(1..)])} 
+
+--
+
+(a#matrix_to_atom[1] = true),
+(a#matrix_to_atom[2] = true),
+(a#matrix_to_atom[3] = true),
+(a#matrix_to_atom[4] = true),
+(a#matrix_to_atom[5] = !({a#matrix_to_atom[4] @ and([__inDomain(4,int(1..5));int(1..)])})), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(a#matrix_to_atom[1] = true),
+(a#matrix_to_atom[2] = true),
+(a#matrix_to_atom[3] = true),
+(a#matrix_to_atom[4] = true),
+(a#matrix_to_atom[5] = !(a#matrix_to_atom[4])) 
+
+--
+
+(a#matrix_to_atom[1] = true),
+(a#matrix_to_atom[2] = true),
+(a#matrix_to_atom[3] = true),
+(a#matrix_to_atom[4] = true),
+(a#matrix_to_atom[5] = !(a#matrix_to_atom[4])), 
+   ~~> index_matrix_to_atom ([("Base", 5000)]) 
+(a#matrix_to_atom_1 = true),
+(a#matrix_to_atom_2 = true),
+(a#matrix_to_atom_3 = true),
+(a#matrix_to_atom_4 = true),
+(a#matrix_to_atom_5 = !(a#matrix_to_atom_4)) 
+
+--
+
+(a#matrix_to_atom_1 = true), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(true, a#matrix_to_atom_1) 
+
+--
+
+(a#matrix_to_atom_2 = true), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(true, a#matrix_to_atom_2) 
+
+--
+
+(a#matrix_to_atom_3 = true), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(true, a#matrix_to_atom_3) 
+
+--
+
+(a#matrix_to_atom_4 = true), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(true, a#matrix_to_atom_4) 
+
+--
+
+(a#matrix_to_atom_5 = !(a#matrix_to_atom_4)), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(!(a#matrix_to_atom_4), a#matrix_to_atom_5) 
+
+--
+
+!(a#matrix_to_atom_4), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
+WatchedLiteral(a#matrix_to_atom_4,false) 
+
+--
+
+Final model:
+
+find a: matrix indexed by [[int(1..5)]] of bool
+find a#matrix_to_atom_1: bool
+find a#matrix_to_atom_2: bool
+find a#matrix_to_atom_3: bool
+find a#matrix_to_atom_4: bool
+find a#matrix_to_atom_5: bool
+
+such that
+
+Reify(true, a#matrix_to_atom_1),
+Reify(true, a#matrix_to_atom_2),
+Reify(true, a#matrix_to_atom_3),
+Reify(true, a#matrix_to_atom_4),
+Reify(WatchedLiteral(a#matrix_to_atom_4,false), a#matrix_to_atom_5)
+

@@ -1,0 +1,94 @@
+Model before rewriting:
+
+letting a be {1,2,3}
+letting b be {2,3}
+
+such that
+
+(b subset a)
+
+--
+
+(b subset a), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(b subset a) 
+
+--
+
+(b subset a), 
+   ~~> subset_to_subset_eq_neq ([("Base", 8700)]) 
+and([(b subsetEq a),(b != a);int(1..)]) 
+
+--
+
+and([(b subsetEq a),(b != a);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(b subsetEq a),
+(b != a) 
+
+--
+
+(b != a), 
+   ~~> neq_not_eq_sets ([("Base", 8700)]) 
+!((a = b)) 
+
+--
+
+(a = b), 
+   ~~> eq_to_subset_eq ([("Base", 8800)]) 
+and([(a subsetEq b),(b subsetEq a);int(1..)]) 
+
+--
+
+!(and([(a subsetEq b),(b subsetEq a);int(1..)])), 
+   ~~> distribute_not_over_and ([("Base", 8400)]) 
+or([!((a subsetEq b)),!((b subsetEq a));int(1..)]) 
+
+--
+
+b, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+Set([Int(2), Int(3)]) 
+
+--
+
+a, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+Set([Int(1), Int(2), Int(3)]) 
+
+--
+
+(Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)])),
+or([!((a subsetEq b)),!((b subsetEq a));int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([!((a subsetEq b)),!((b subsetEq a));int(1..)]) 
+
+--
+
+a, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+Set([Int(1), Int(2), Int(3)]) 
+
+--
+
+b, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+Set([Int(2), Int(3)]) 
+
+--
+
+or([!((Set([Int(1), Int(2), Int(3)]) subsetEq Set([Int(2), Int(3)]))),!((b subsetEq a));int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+true 
+
+--
+
+Final model:
+
+letting a be Set([Int(1), Int(2), Int(3)])
+letting b be Set([Int(2), Int(3)])
+
+such that
+
+true
+

@@ -1,0 +1,61 @@
+Model before rewriting:
+
+find x: int(1..3)
+find y: int(1..3)
+find z: int(1..5)
+
+such that
+
+(sum([x,y;int(1..2)]) <= z)
+
+--
+
+(sum([x,y;int(1..2)]) <= z), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+(__0 <= z) 
+new variables:
+  find __0: int(2..6)
+new constraints:
+  __0 =aux sum([x,y;int(1..2)])
+--
+
+(__0 <= z), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(__0, z, 0) 
+
+--
+
+sum([x,y;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+sum([x,y;int(1..)]) 
+
+--
+
+__0 =aux sum([x,y;int(1..)]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+and([SumLeq([x, y], __0),SumGeq([x, y], __0);int(1..)]) 
+
+--
+
+Ineq(__0, z, 0),
+and([SumLeq([x, y], __0),SumGeq([x, y], __0);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+Ineq(__0, z, 0),
+SumLeq([x, y], __0),
+SumGeq([x, y], __0) 
+
+--
+
+Final model:
+
+find x: int(1..3)
+find y: int(1..3)
+find z: int(1..5)
+find __0: int(2..6)
+
+such that
+
+Ineq(__0, z, 0),
+SumLeq([x, y], __0),
+SumGeq([x, y], __0)
+

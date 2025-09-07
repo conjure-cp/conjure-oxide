@@ -1,0 +1,128 @@
+Model before rewriting:
+
+find a: int(1..75)
+find b: int(1..75)
+find c: int(1..5)
+
+such that
+
+(UnsafePow(c, 2) = sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..2)]))
+
+--
+
+UnsafePow(c, 2), 
+   ~~> pow_to_bubble ([("Bubble", 6000)]) 
+{SafePow(c, 2) @ and([or([(c != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])} 
+
+--
+
+({SafePow(c, 2) @ and([or([(c != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])} = sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..2)])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(SafePow(c, 2) = sum([UnsafePow(a, 2),UnsafePow(b, 2);int(1..2)])) 
+
+--
+
+UnsafePow(a, 2), 
+   ~~> pow_to_bubble ([("Bubble", 6000)]) 
+{SafePow(a, 2) @ and([or([(a != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])} 
+
+--
+
+(SafePow(c, 2) = sum([{SafePow(a, 2) @ and([or([(a != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])},UnsafePow(b, 2);int(1..2)])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(SafePow(c, 2) = sum([SafePow(a, 2),UnsafePow(b, 2);int(1..2)])) 
+
+--
+
+UnsafePow(b, 2), 
+   ~~> pow_to_bubble ([("Bubble", 6000)]) 
+{SafePow(b, 2) @ and([or([(b != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])} 
+
+--
+
+(SafePow(c, 2) = sum([SafePow(a, 2),{SafePow(b, 2) @ and([or([(b != 0),(2 != 0);int(1..)]),(2 >= 0);int(1..)])};int(1..2)])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(SafePow(c, 2) = sum([SafePow(a, 2),SafePow(b, 2);int(1..2)])) 
+
+--
+
+(SafePow(c, 2) = sum([SafePow(a, 2),SafePow(b, 2);int(1..2)])), 
+   ~~> flatten_eq ([("Minion", 4200)]) 
+(__0 = __1) 
+new variables:
+  find __0: int(1..25)
+  find __1: int(2..11250)
+new constraints:
+  __0 =aux SafePow(c, 2)
+  __1 =aux sum([SafePow(a, 2),SafePow(b, 2);int(1..2)])
+--
+
+__0 =aux SafePow(c, 2), 
+   ~~> introduce_poweq ([("Minion", 4200)]) 
+MinionPow(c,2,__0) 
+
+--
+
+sum([SafePow(a, 2),SafePow(b, 2);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+sum([SafePow(a, 2),SafePow(b, 2);int(1..)]) 
+
+--
+
+__1 =aux sum([SafePow(a, 2),SafePow(b, 2);int(1..)]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+and([SumLeq([__2, __3], __1),SumGeq([__2, __3], __1);int(1..)]) 
+new variables:
+  find __2: int(1..5625)
+  find __3: int(1..5625)
+new constraints:
+  __2 =aux SafePow(a, 2)
+  __3 =aux SafePow(b, 2)
+--
+
+(__0 = __1),
+MinionPow(c,2,__0),
+and([SumLeq([__2, __3], __1),SumGeq([__2, __3], __1);int(1..)]),
+__2 =aux SafePow(a, 2),
+__3 =aux SafePow(b, 2), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(__0 = __1),
+MinionPow(c,2,__0),
+SumLeq([__2, __3], __1),
+SumGeq([__2, __3], __1),
+__2 =aux SafePow(a, 2),
+__3 =aux SafePow(b, 2) 
+
+--
+
+__2 =aux SafePow(a, 2), 
+   ~~> introduce_poweq ([("Minion", 4200)]) 
+MinionPow(a,2,__2) 
+
+--
+
+__3 =aux SafePow(b, 2), 
+   ~~> introduce_poweq ([("Minion", 4200)]) 
+MinionPow(b,2,__3) 
+
+--
+
+Final model:
+
+find a: int(1..75)
+find b: int(1..75)
+find c: int(1..5)
+find __0: int(1..25)
+find __1: int(2..11250)
+find __2: int(1..5625)
+find __3: int(1..5625)
+
+such that
+
+(__0 = __1),
+MinionPow(c,2,__0),
+SumLeq([__2, __3], __1),
+SumGeq([__2, __3], __1),
+MinionPow(a,2,__2),
+MinionPow(b,2,__3)
+

@@ -1,7 +1,7 @@
 use crate::{
+    ast::Metadata,
     ast::{Domain, Moo, Range, ReturnType},
     matrix_expr,
-    metadata::Metadata,
 };
 
 use super::{Expression, Literal, Typeable};

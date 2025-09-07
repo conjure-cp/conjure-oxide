@@ -176,7 +176,7 @@ impl DeclarationPtr {
     /// ```
     /// use conjure_cp_core::ast::{DeclarationPtr,Name,DeclarationKind,Domain,Range, Expression,
     /// Literal,Atom,Moo};
-    /// use conjure_cp_core::{matrix_expr,metadata::Metadata};
+    /// use conjure_cp_core::{matrix_expr,ast::Metadata};
     ///
     /// // letting n be 10 + 10
     /// let ten = Expression::Atomic(Metadata::new(),Atom::Literal(Literal::Int(10)));

@@ -1,10 +1,10 @@
 #![allow(dead_code)]
-use conjure_cp_core::ast::{
+use conjure_cp::ast::Metadata;
+use conjure_cp::ast::{
     AbstractLiteral, Atom, Expression as Expr, Literal as Lit, SymbolTable, matrix,
 };
-use conjure_cp_core::into_matrix;
-use conjure_cp_core::metadata::Metadata;
-use conjure_cp_core::rule_engine::{
+use conjure_cp::into_matrix;
+use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
     register_rule_set,
 };
@@ -752,8 +752,8 @@ fn unwrap_expr<T: TryFrom<Lit>>(expr: &Expr) -> Option<T> {
 #[cfg(test)]
 mod tests {
     use crate::eval_constant;
-    use conjure_cp_core::ast::{Expression, Moo};
-    use conjure_cp_essence_macros::essence_expr;
+    use conjure_cp::ast::{Expression, Moo};
+    use conjure_cp::essence_expr;
 
     #[test]
     fn div_by_zero() {

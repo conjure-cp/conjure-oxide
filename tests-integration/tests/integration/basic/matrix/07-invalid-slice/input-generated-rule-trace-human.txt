@@ -1,0 +1,122 @@
+Model before rewriting:
+
+letting MATRIX be domain matrix indexed by [[int(1..3), int(1..2)]] of int(1..3)
+find a: MATRIX
+
+such that
+
+allDiff(a[..,1]),
+allDiff(a[..,3]),
+allDiff(a[1,..]),
+allDiff(a[2,..]),
+allDiff(a[3,..]),
+(a[1, 1] = 1),
+(a[2, 2] = 1)
+
+--
+
+a[..,1], 
+   ~~> slice_to_bubble ([("Bubble", 6000)]) 
+{a[..,1] @ and([__inDomain(1,int(1..2));int(1..)])} 
+
+--
+
+allDiff({a[..,1] @ and([__inDomain(1,int(1..2));int(1..)])}),
+allDiff(a[..,3]),
+allDiff(a[1,..]),
+allDiff(a[2,..]),
+allDiff(a[3,..]),
+(a[1, 1] = 1),
+(a[2, 2] = 1), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+allDiff(a[..,1]),
+allDiff(a[..,3]),
+allDiff(a[1,..]),
+allDiff(a[2,..]),
+allDiff(a[3,..]),
+(a[1, 1] = 1),
+(a[2, 2] = 1) 
+
+--
+
+a[..,3], 
+   ~~> slice_to_bubble ([("Bubble", 6000)]) 
+{a[..,3] @ and([__inDomain(3,int(1..2));int(1..)])} 
+
+--
+
+allDiff(a[..,1]),
+allDiff({a[..,3] @ and([__inDomain(3,int(1..2));int(1..)])}),
+allDiff(a[1,..]),
+allDiff(a[2,..]),
+allDiff(a[3,..]),
+(a[1, 1] = 1),
+(a[2, 2] = 1), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+allDiff(a[..,1]),
+allDiff({a[..,3] @ false}),
+allDiff(a[1,..]),
+allDiff(a[2,..]),
+allDiff(a[3,..]),
+(a[1, 1] = 1),
+(a[2, 2] = 1) 
+
+--
+
+allDiff({a[..,3] @ false}), 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{allDiff(a[..,3]) @ false} 
+
+--
+
+{allDiff(a[..,3]) @ false}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+and([allDiff(a[..,3]),false;int(1..)]) 
+
+--
+
+allDiff(a[..,1]),
+and([allDiff(a[..,3]),false;int(1..)]),
+allDiff(a[1,..]),
+allDiff(a[2,..]),
+allDiff(a[3,..]),
+(a[1, 1] = 1),
+(a[2, 2] = 1), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+false 
+
+--
+
+false, 
+   ~~> substitute_domain_lettings ([("Base", 5000)]) 
+false 
+
+--
+
+false, 
+   ~~> select_representation_matrix ([("Base", 8001)]) 
+false 
+new variables:
+  find a#matrix_to_atom_1_1: int(1..3)
+  find a#matrix_to_atom_1_2: int(1..3)
+  find a#matrix_to_atom_2_1: int(1..3)
+  find a#matrix_to_atom_2_2: int(1..3)
+  find a#matrix_to_atom_3_1: int(1..3)
+  find a#matrix_to_atom_3_2: int(1..3)
+--
+
+Final model:
+
+letting MATRIX be domain matrix indexed by [[int(1..3), int(1..2)]] of int(1..3)
+find a: matrix indexed by [[int(1..3), int(1..2)]] of int(1..3)
+find a#matrix_to_atom_1_1: int(1..3)
+find a#matrix_to_atom_1_2: int(1..3)
+find a#matrix_to_atom_2_1: int(1..3)
+find a#matrix_to_atom_2_2: int(1..3)
+find a#matrix_to_atom_3_1: int(1..3)
+find a#matrix_to_atom_3_2: int(1..3)
+
+such that
+
+false
+

@@ -21,11 +21,11 @@ mod test {
     #[allow(unused)]
     use super::parse_literal;
     #[allow(unused)]
+    use conjure_cp_core::ast::Metadata;
+    #[allow(unused)]
     use conjure_cp_core::ast::{
         Atom, DeclarationPtr, Domain, Expression, Literal, Moo, Name, SymbolTable,
     };
-    #[allow(unused)]
-    use conjure_cp_core::metadata::Metadata;
     #[allow(unused)]
     use std::collections::HashMap;
     #[allow(unused)]

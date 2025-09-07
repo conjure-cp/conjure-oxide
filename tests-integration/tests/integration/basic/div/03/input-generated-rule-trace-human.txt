@@ -1,0 +1,50 @@
+Model before rewriting:
+
+find a: int(0..9)
+
+such that
+
+(2 = UnsafeDiv(8, a))
+
+--
+
+UnsafeDiv(8, a), 
+   ~~> div_to_bubble ([("Bubble", 6000)]) 
+{SafeDiv(8, a) @ (a != 0)} 
+
+--
+
+(2 = {SafeDiv(8, a) @ (a != 0)}), 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{(2 = SafeDiv(8, a)) @ (a != 0)} 
+
+--
+
+{(2 = SafeDiv(8, a)) @ (a != 0)}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+and([(2 = SafeDiv(8, a)),(a != 0);int(1..)]) 
+
+--
+
+and([(2 = SafeDiv(8, a)),(a != 0);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(2 = SafeDiv(8, a)),
+(a != 0) 
+
+--
+
+(2 = SafeDiv(8, a)), 
+   ~~> introduce_diveq ([("Minion", 4200)]) 
+DivEq(8, a, 2) 
+
+--
+
+Final model:
+
+find a: int(0..9)
+
+such that
+
+DivEq(8, a, 2),
+(a != 0)
+

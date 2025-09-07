@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use uniplate::{Biplate, Tree, Uniplate};
 
-use crate::{bug, into_matrix_expr, metadata::Metadata};
+use crate::{ast::Metadata, bug, into_matrix_expr};
 use std::{
     cell::{Ref, RefCell, RefMut},
     collections::VecDeque,
