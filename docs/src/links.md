@@ -3,18 +3,21 @@
 
 ## API Documentation
 
-As well as Conjure Oxide, this repository contains various dependent crates
-(such as solver bindings), and related projects. Below are links to the API
-documentation for each crate for developer reference:
-
  + [conjure-cp](https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp/index.html)
+ + [tree-morph](https://conjure-cp.github.io/conjure-oxide/docs/tree_morph/index.html)
+ + [minion-sys](https://conjure-cp.github.io/conjure-oxide/docs/minion_sys/index.html)
+
+### Internal crates
+
+The following crates are internal, and are re-exported by `conjure-cp`:
+
  + [conjure-cp-cli](https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp_cli/index.html)
- + [conjure-cp-core](https://conjure-cp.github.io/conjure-oxide/docs/conjure-cp-core/index.html)
- + [conjure-cp-essence-macros](https://conjure-cp.github.io/conjure-oxide/docs/conjure-cp-essence-macros/)
- + [conjure-cp-essence-parser](https://conjure-cp.github.io/conjure-oxide/docs/conjure-cp-essence-parser)
- + [conjure-cp-rule-macros](https://conjure-cp.github.io/conjure-oxide/docs/conjure-cp-rule-macros)
- + [conjure-cp-enum-compatibility-macro](https://conjure-cp.github.io/conjure-oxide/docs/conjure-cp-enum-compatibility-macro)
- + [minion-sys](https://conjure-cp.github.io/conjure-oxide/docs/minion-sys/index.html)
+ + [conjure-cp-core](https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp_core/index.html)
+ + [conjure-cp-essence-macros](https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp_essence_macros/)
+ + [conjure-cp-essence-parser](https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp_essence_parser)
+ + [conjure-cp-rule-macros](https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp_rule_macros)
+ + [conjure-cp-enum-compatibility-macro](https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp_enum_compatibility_macro)
+
 
 ## Code Coverage
 Code coverage reports can be found [here](https://conjure-cp.github.io/conjure-oxide/coverage/main/).
