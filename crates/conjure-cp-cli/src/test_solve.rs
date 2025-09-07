@@ -3,10 +3,10 @@ use std::process::exit;
 use std::sync::Arc;
 
 use clap::ValueHint;
-use conjure_oxide::utils::conjure::{
+use conjure_cp_cli::utils::conjure::{
     get_minion_solutions, get_sat_solutions, get_solutions_from_conjure, solutions_to_json,
 };
-use conjure_oxide::utils::testing::normalize_solutions_for_comparison;
+use conjure_cp_cli::utils::testing::normalize_solutions_for_comparison;
 
 use crate::cli::GlobalArgs;
 use crate::solve;

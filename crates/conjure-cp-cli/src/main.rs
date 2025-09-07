@@ -14,6 +14,8 @@ use std::process::exit;
 use std::sync::Arc;
 use test_solve::run_test_solve_command;
 
+use conjure_cp_rules as _;
+
 use git_version::git_version;
 use tracing_subscriber::filter::{FilterFn, LevelFilter};
 use tracing_subscriber::layer::SubscriberExt as _;
@@ -161,7 +163,7 @@ mod tests {
 
     #[test]
     fn test_get_example_model_by_filepath() {
-        let filepath = "tests/integration/xyz/input.essence";
+        let filepath = "../../tests-integration/tests/integration/xyz/input.essence";
         get_example_model_by_path(filepath).unwrap();
     }
 

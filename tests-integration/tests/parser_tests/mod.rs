@@ -12,7 +12,7 @@ use std::sync::{Arc, RwLock};
 #[test]
 fn test_parse_dominance() {
     let root = get_project_root().unwrap().canonicalize().unwrap();
-    let path = root.join("conjure_oxide/tests/parser_tests");
+    let path = root.join("tests-integration/tests/parser_tests");
     let file = "dominance_simple";
 
     let ctx = Arc::new(RwLock::new(Context::default()));
@@ -114,7 +114,7 @@ fn test_parse_dominance() {
 #[test]
 fn test_dominance_twice() {
     let root = get_project_root().unwrap().canonicalize().unwrap();
-    let path = root.join("conjure_oxide/tests/parser_tests");
+    let path = root.join("tests-integration/tests/parser_tests");
     let file = "dominance_twice";
 
     let ctx = Arc::new(RwLock::new(Context::default()));
@@ -128,7 +128,7 @@ fn test_dominance_twice() {
 #[test]
 fn test_no_dominance() {
     let root = get_project_root().unwrap().canonicalize().unwrap();
-    let path = root.join("conjure_oxide/tests/parser_tests");
+    let path = root.join("tests-integration/tests/parser_tests");
 
     let pth = path.to_str().unwrap();
     let filepath = format!("{pth}/no_dominance.essence");

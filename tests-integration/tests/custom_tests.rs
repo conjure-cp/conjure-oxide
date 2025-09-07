@@ -26,12 +26,12 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
     let expected_error_path = test_path.join("stderr.expected");
 
     // Get conjure_oxide binary path from test binary path:
-    // The test binary is at target/XX/deps/TESTPROGNAME and conjure_oxide is at target/XX/conjure_oxide
-    // so from test binary, need to go up two directories and add 'conjure_oxide'
+    // The test binary is at target/XX/deps/TESTPROGNAME and conjure_oxide is at target/XX/conjure-oxide
+    // so from test binary, need to go up two directories and add 'conjure-oxide'
     let mut conjure_oxide_path = env::current_exe().unwrap();
     conjure_oxide_path.pop();
     conjure_oxide_path.pop();
-    conjure_oxide_path.push("conjure_oxide");
+    conjure_oxide_path.push("conjure-oxide");
 
     // Modify PATH so run.sh can find conjure_oxide
     let mut path_var = env::var("PATH").unwrap_or_else(|_| "".to_string());
@@ -89,7 +89,7 @@ fn update_file(
 
 #[test]
 fn assert_conjure_present() {
-    conjure_oxide::find_conjure::conjure_executable().unwrap();
+    conjure_cp_cli::find_conjure::conjure_executable().unwrap();
 }
 
 include!(concat!(env!("OUT_DIR"), "/gen_tests_custom.rs"));

@@ -6,7 +6,7 @@ use conjure_cp::rule_engine::get_rules_grouped;
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::rule_engine::rewrite_naive;
-use conjure_oxide::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
+use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
 use glob::glob;
 use itertools::Itertools;
 use std::collections::BTreeMap;
@@ -33,14 +33,16 @@ use conjure_cp::context::Context;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::rule_engine::resolve_rule_sets;
 use conjure_cp::solver::SolverFamily;
-use conjure_oxide::utils::conjure::solutions_to_json;
-use conjure_oxide::utils::conjure::{
+use conjure_cp_cli::utils::conjure::solutions_to_json;
+use conjure_cp_cli::utils::conjure::{
     get_minion_solutions, get_sat_solutions, get_solutions_from_conjure,
 };
-use conjure_oxide::utils::testing::save_stats_json;
-use conjure_oxide::utils::testing::{
+use conjure_cp_cli::utils::testing::save_stats_json;
+use conjure_cp_cli::utils::testing::{
     read_model_json, read_solutions_json, save_model_json, save_solutions_json,
 };
+#[allow(unused_imports)]
+use conjure_cp_rules;
 use pretty_assertions::assert_eq;
 use serde::Deserialize;
 
@@ -133,14 +135,14 @@ fn main() {
     let test_span = span!(Level::TRACE, "test_span");
     let _enter: span::Entered<'_> = test_span.enter();
 
-    for entry in glob("conjure_oxide/tests/integration/*").expect("Failed to read glob pattern") {
+    for entry in glob("conjure_cp_cli/tests/integration/*").expect("Failed to read glob pattern") {
         match entry {
             Ok(path) => println!("File: {path:?}"),
             Err(e) => println!("Error: {e:?}"),
         }
     }
 
-    let file_path = Path::new("conjure_oxide/tests/integration/*"); // using relative path
+    let file_path = Path::new("conjure_cp_cli/tests/integration/*"); // using relative path
 
     let base_name = file_path.file_stem().and_then(|stem| stem.to_str());
 
@@ -672,7 +674,7 @@ fn create_file_layer_human(path: &str, test_name: &str) -> (impl Layer<Registry>
 
 #[test]
 fn assert_conjure_present() {
-    conjure_oxide::find_conjure::conjure_executable().unwrap();
+    conjure_cp_cli::find_conjure::conjure_executable().unwrap();
 }
 
 include!(concat!(env!("OUT_DIR"), "/gen_tests.rs"));
