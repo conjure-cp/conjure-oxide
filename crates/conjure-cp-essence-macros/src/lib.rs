@@ -50,21 +50,21 @@ pub fn essence_expr(args: TokenStream) -> TokenStream {
 /// use conjure_cp_core::metadata::Metadata;
 /// use conjure_cp_essence_macros::essence_vec;
 ///
-/// let exprs = essence_vec!(a + 2, b = true);
+/// let exprs = essence_vec!(2 + 2, false = true);
 /// println!("{:?}", exprs);
 /// assert_eq!(exprs.len(), 2);
 /// assert_eq!(
 ///     exprs[0],
 ///     Expression::Sum(Metadata::new(), Moo::new(matrix_expr![
-///         Expression::Atomic(Metadata::new(), Atom::new_uref("a")),
-///         Expression::Atomic(Metadata::new(), Atom::new_ilit(2))
+///         Expression::Atomic(Metadata::new(), 2.into()),
+///         Expression::Atomic(Metadata::new(), 2.into())
 ///     ]))
 /// );
 /// assert_eq!(
 ///    exprs[1],
 ///     Expression::Eq(Metadata::new(),
-///         Moo::new(Expression::Atomic(Metadata::new(), Atom::new_uref("b"))),
-///         Moo::new(Expression::Atomic(Metadata::new(), Atom::new_blit(true)))
+///         Moo::new(Expression::Atomic(Metadata::new(), false.into())),
+///         Moo::new(Expression::Atomic(Metadata::new(), true.into()))
 ///     )
 /// );
 /// ```
