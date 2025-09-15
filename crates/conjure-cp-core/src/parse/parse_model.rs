@@ -9,7 +9,9 @@ use ustr::Ustr;
 use serde_json::Value;
 use serde_json::Value as JsonValue;
 
-use crate::ast::comprehension::{ComprehensionBuilder, ComprehensionKind};
+use crate::ast::Metadata;
+use crate::ast::ac_operators::ACOperatorKind;
+use crate::ast::comprehension::ComprehensionBuilder;
 use crate::ast::records::RecordValue;
 use crate::ast::{
     AbstractLiteral, Atom, DeclarationPtr, Domain, Expression, Literal, Name, Range, RecordEntry,
@@ -18,7 +20,6 @@ use crate::ast::{
 use crate::ast::{DeclarationKind, Moo};
 use crate::context::Context;
 use crate::error::{Error, Result};
-use crate::metadata::Metadata;
 use crate::{Model, bug, error, into_matrix_expr, throw_error};
 
 #[allow(unused_macros)]
@@ -700,7 +701,7 @@ fn parse_abs_record(abs_record: &Value, scope: &Rc<RefCell<SymbolTable>>) -> Opt
 fn parse_comprehension(
     comprehension: &serde_json::Map<String, Value>,
     scope: Rc<RefCell<SymbolTable>>,
-    comprehension_kind: Option<ComprehensionKind>,
+    comprehension_kind: Option<ACOperatorKind>,
 ) -> Option<Expression> {
     let value = &comprehension["Comprehension"];
     let mut comprehension = ComprehensionBuilder::new(Rc::clone(&scope));
@@ -872,9 +873,10 @@ fn parse_unary_op(
     let arg = match value {
         Value::Object(comprehension) if comprehension.contains_key("Comprehension") => {
             let comprehension_kind = match key.as_str() {
-                "MkOpOr" => Some(ComprehensionKind::Or),
-                "MkOpAnd" => Some(ComprehensionKind::And),
-                "MkOpSum" => Some(ComprehensionKind::Sum),
+                "MkOpOr" => Some(ACOperatorKind::Or),
+                "MkOpAnd" => Some(ACOperatorKind::And),
+                "MkOpSum" => Some(ACOperatorKind::Sum),
+                "MkOpProduct" => Some(ACOperatorKind::Product),
                 _ => None,
             };
             Some(parse_comprehension(comprehension, Rc::clone(scope), comprehension_kind).unwrap())

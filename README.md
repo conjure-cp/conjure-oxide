@@ -3,13 +3,7 @@
 This repository contains the in-progress Conjure Oxide constraints modelling
 tool and its dependencies. 
 
-This repository hosts the following projects:
-
-* [Conjure Oxide](https://github.com/conjure-cp/conjure-oxide/tree/main/conjure_oxide)
-* [`minion-sys` - Rust bindings to Minion](https://github.com/conjure-cp/conjure-oxide/tree/main/crates/minion-sys)
-
-This project is being produced by staff and students of University of St
-Andrews, and is licenced under the [MPL 2.0](./LICENCE).
+<https://conjure-cp.github.io/conjure-oxide/>
 
 ## Installation
 
@@ -26,16 +20,60 @@ The following dependencies are required:
 **Ensure that Conjure is placed early in your PATH to avoid conflicts with
 ImageMagick's conjure command!**
 
-Run `cargo install --path conjure_oxide` to install `conjure_oxide`.
+Run `cargo install --path crates/conjure-cp-cli` to install `conjure-oxide`.
+
+## Repository Structure
+
+This repository holds the source-code for both `conjure-oxide` itself, and
+various related projects.
+
+### `conjure-oxide` crates
+
+The following crates define the `conjure-oxide` system:
+
+- [`conjure-cp`](./crates/conjure-cp) defines `conjure-oxide` as a library. It
+  re-exports symbols from the following internal crates:
+
+  + [`conjure-cp-core`](./crates/conjure-cp-core)
+  + [`conjure-cp-enum-compatibility-macro`](./crates/conjure-cp-enum-compatibility-macro)
+  + [`conjure-cp-essence-macros`](./crates/conjure-cp-essence-macros)
+  + [`conjure-cp-essence-parser`](./crates/conjure-cp-essence-parser)
+  + [`conjure-cp-rule-macros`](./crates/conjure-cp-rule-macros)
 
 
+- [`conjure-cp-cli`](./crates/conjure-cp-cli) implements the `conjure-oxide`
+  command line interface, and exports various CLI related utilities for use by
+  the integration tester.
+- [`conjure-cp-rules`](./crates/conjure-cp-rules) defines the default rewrite
+  rules used by `conjure-oxide`.
+- [`tests-integration`](./tests-integration) is an internal crate containing
+  integration tests for `conjure-oxide`.
 
-## Documentation
+### Ecosystem crates
 
-API documentation can be found [here](https://conjure-cp.github.io/conjure-oxide/docs/).
+The following crates are related to, or used by, `conjure-oxide`, but can be
+used in isolation from it:
 
-## Contributing
+- [`minion-sys`](./crates/minion-sys) defines FFI bindings for the [Minion CP solver](https://github.com/minion/minion).
+- [`tree-morph`](./crates/tree-morph) provides a framework for implementing
+  term-rewriting systems. 
+- [`tree-sitter-essence`](./crates/tree-sitter-essence) defines a tree-sitter
+  grammar for Essence.
+- [`randicheck`](./crates/randicheck)
 
-See the [project wiki](https://github.com/conjure-cp/conjure-oxide/wiki)
+### Related Projects 
+
+The following projects are used by, and developed alongside, `conjure-oxide`,
+but are kept in their own repositories:
+
+- [`uniplate`](https://github.com/conjure-cp/uniplate)
+
+
+## Licence
+
+This project is being produced by staff and students of University of St
+Andrews, and is licenced under the [Mozilla Public Licence 2.0](./LICENCE).
+
 <!-- vim: cc=80
 -->
+

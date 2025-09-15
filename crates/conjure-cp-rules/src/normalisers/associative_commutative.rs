@@ -3,8 +3,8 @@
 use std::collections::VecDeque;
 use std::mem::Discriminant;
 
-use conjure_cp_core::ast::{Expression as Expr, SymbolTable};
-use conjure_cp_core::rule_engine::{
+use conjure_cp::ast::{Expression as Expr, SymbolTable};
+use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
 use uniplate::Biplate;

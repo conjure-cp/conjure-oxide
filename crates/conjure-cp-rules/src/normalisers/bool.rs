@@ -1,12 +1,12 @@
 //! Normalising rules for boolean operations (not, and, or, ->).
 
-use conjure_cp_core::ast::{Atom, Expression as Expr, Moo, SymbolTable};
-use conjure_cp_core::into_matrix_expr;
-use conjure_cp_core::rule_engine::{
+use conjure_cp::ast::{Atom, Expression as Expr, Moo, SymbolTable};
+use conjure_cp::essence_expr;
+use conjure_cp::into_matrix_expr;
+use conjure_cp::rule_engine::{
     ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
     register_rule,
 };
-use conjure_cp_essence_macros::essence_expr;
 use uniplate::Uniplate;
 
 /// Removes double negations

@@ -1,5 +1,5 @@
-use conjure_cp_core::rule_engine::SubmodelZipper;
-use conjure_cp_core::{
+use conjure_cp::rule_engine::SubmodelZipper;
+use conjure_cp::{
     ast::{Expression, SymbolTable},
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
 };

@@ -5,7 +5,7 @@
 # Author: niklasdewally
 # Date: 2024/12/04
 
-CRATES="conjure-cp-core conjure_oxide minion-sys tree-morph"
+CRATES="conjure-cp minion-sys tree-morph"
 JQ_SCRIPT=$(cat <<- 'EOF'
 # add percentages to each file
 

@@ -87,7 +87,7 @@ GRCOV_IGNORE_FLAGS=(
   '--ignore'
   '**/build.rs'
   '--ignore'
-  'conjure_oxide/tests/generated_tests.rs'
+  'tests-integration/tests/generated_tests.rs'
 )
 
 

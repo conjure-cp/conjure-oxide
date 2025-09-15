@@ -2,12 +2,12 @@
 //!
 //! For Minion, these normalise into Leq and Geq respectively.
 
-use conjure_cp_core::{
+use conjure_cp::essence_expr;
+use conjure_cp::rule_engine::register_rule;
+use conjure_cp::{
     ast::{Expression as Expr, SymbolTable},
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
 };
-use conjure_cp_essence_macros::essence_expr;
-use conjure_cp_rule_macros::register_rule;
 
 /// Converts Lt to Leq
 ///

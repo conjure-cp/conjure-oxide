@@ -1,6 +1,6 @@
-use conjure_cp_rule_macros::register_rule;
+use conjure_cp::rule_engine::register_rule;
 
-use conjure_cp_core::{
+use conjure_cp::{
     ast::{Atom, Expression as Expr, SymbolTable},
     rule_engine::{ApplicationError::RuleNotApplicable, ApplicationResult, Reduction},
 };

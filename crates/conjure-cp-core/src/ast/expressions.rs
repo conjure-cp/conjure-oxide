@@ -5,6 +5,7 @@ use std::fmt::{Display, Formatter};
 use tracing::trace;
 
 use crate::ast::Atom;
+use crate::ast::Metadata;
 use crate::ast::Moo;
 use crate::ast::Name;
 use crate::ast::ReturnType;
@@ -13,7 +14,6 @@ use crate::ast::literals::AbstractLiteral;
 use crate::ast::literals::Literal;
 use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use crate::bug;
-use crate::metadata::Metadata;
 use conjure_cp_enum_compatibility_macro::document_compatibility;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
