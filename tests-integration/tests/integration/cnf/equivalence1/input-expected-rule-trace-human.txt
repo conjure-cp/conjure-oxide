@@ -1,0 +1,34 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+
+such that
+
+(a = b)
+
+--
+
+(a = b), 
+   ~~> remove_equivalence ([("CNF", 4100)]) 
+and([or([!(a),b;int(1..)]),or([a,!(b);int(1..)]);int(1..)]) 
+
+--
+
+and([or([!(a),b;int(1..)]),or([a,!(b);int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([!(a),b;int(1..)]),
+or([a,!(b);int(1..)]) 
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+
+such that
+
+or([!(a),b;int(1..)]),
+or([a,!(b);int(1..)])
+

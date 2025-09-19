@@ -2,54 +2,46 @@ name: "Documentation"
 
 on:
   push:
-    branches:
-      - main # run for pushes to the main branch
+    branches: 
+      - main
+    paths:
+      - docs/**
   workflow_dispatch:
-
-env:
-  rust_release: nightly
-  SCCACHE_GHA_ENABLED: "true"
-  RUSTC_WRAPPER: "sccache"
-  SCCACHE_GHA_VERSION: 5
 
 permissions:
   contents: write
 
 jobs:
-  coverage:
-    name: "Generate Documentation"
-    timeout-minutes: 10
+  generate_docs:
+    name: "Generate documentation site"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.8
-
-      - name: Get Sha
-        id: sha
+      - name: Install mdbook 
         run: |
-          echo -e "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
-          echo -e "sha=${{ github.sha }}"
+          rustup install stable 
+          cargo install mdbook
 
-      - name: Install rust ${{ env.rust_release }}
-        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
-
-      - name: Generate documentation
-        working-directory: .
+      - name: Build docs 
+        working-directory: docs
         run: |
-          ./tools/gen_docs.sh
-
-      - name: Move all html to correct folders for deployment
-        run: |
-          mkdir deploy
-          cp -r target/doc/* deploy
+          mdbook build
 
       - name: Deploy to Github Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: ./deploy
-          target-folder: "docs"
-          branch: gh-pages
-          commit-message: "Actions: Documentation for ${{ steps.sha.outputs.result }}"
+          commit-message: "Actions: Deploy the documentation site 🚀"
+          folder: docs/book
+          target-folder: ""
+          # remove all pages that dont exist anymore, except in these dirs
+          clean-exclude: | 
+            docs/**
+            coverage/**
+            tools/**
+
+          # do not overwrite previous deployments, such as those made by other
+          # actions
+          force: false
+

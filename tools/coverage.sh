@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # coverage.sh
 echo_err () {
   echo "$@" 1>&2
@@ -44,17 +46,11 @@ TARGET_DIR=$(cargo metadata 2> /dev/null | jq -r .target_directory 2>/dev/null)
 
 cd "$PROJECT_ROOT"
 
-export RUSTUP_TOOLCHAIN="nightly" # fixes https://github.com/mozilla/grcov/issues/677
-
-# Install required tools
-echo_err "info: installing nightly rust"
-rustup install nightly
-
 echo_err "info: installing llvm-tools-preview"
 rustup component add llvm-tools-preview
 
 echo_err "info: installing grcov"
-rustup run nightly cargo install grcov
+cargo install grcov
 
 
 # Uses rust's source code instrument-based coverage, processed by grcov.
@@ -65,8 +61,8 @@ rustup run nightly cargo install grcov
 rm -rf target/debug/coverage
 
 export CARGO_INCREMENTAL=0 
-export RUSTFLAGS="$RUSTFLAGS -Z unstable-options -Cinstrument-coverage -Zlinker-features=-lld"
-export RUSTDOCFLAGS="$RUSTDOCFLAGS -C instrument-coverage -Z unstable-options --persist-doctests target/debug/doctestbins -Zlinker-features=-lld"
+export RUSTFLAGS="$RUSTFLAGS -Cinstrument-coverage"
+export RUSTDOCFLAGS="$RUSTDOCFLAGS -C instrument-coverage -Zunstable-options --persist-doctests target/debug/doctestbins"
 export LLVM_PROFILE_FILE='conjure-oxide-%p-%m.profraw' 
 
 # regex patterns to ignore
@@ -91,12 +87,12 @@ GRCOV_IGNORE_FLAGS=(
   '--ignore'
   '**/build.rs'
   '--ignore'
-  'conjure_oxide/tests/generated_tests.rs'
+  'tests-integration/tests/generated_tests.rs'
 )
 
 
 
-echo_err "info: building with nightly"
+echo_err "info: building"
 cargo +nightly build --workspace
 
 echo_err "info: running tests"

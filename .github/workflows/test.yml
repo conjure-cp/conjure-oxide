@@ -31,11 +31,14 @@ env:
 jobs:
   build-and-test:
     name: "Test"
-    timeout-minutes: 10
+    timeout-minutes: 15
     strategy:
       # run all combinations of the matrix even if one combination fails.
       fail-fast: false
       matrix:
+        compiler_profile:
+          - release
+          - debug
         rust_release:
           - stable
           - nightly
@@ -53,9 +56,9 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.8
+        uses: mozilla-actions/sccache-action@v0.0.9
 
       # Override RUSTUP_TOOLCHAIN to nightly when we are testing with nightly
       # This value is read from the rust-toolchain.toml file otherwise
@@ -63,15 +66,14 @@ jobs:
         if: matrix.rust_release == 'nightly'
         run: echo "RUSTUP_TOOLCHAIN=nightly" >> $GITHUB_ENV
 
-      - name: Disable rust-lld (to fix linkme)
-        run: |
-          echo RUSTFLAGS=${RUSTFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
-          echo RUSTDOCFLAGS=${RUSTDOCFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
-        if: matrix.rust_release == 'nightly'
 
       - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
 
       - run: cargo build -vv --workspace
+        if: matrix.compiler_profile == 'debug'
+
+      - run: cargo build -vv --release --workspace
+        if: matrix.compiler_profile == 'release'
 
       - uses: ./.github/actions/install-conjure
         with:
@@ -79,10 +81,14 @@ jobs:
           version: ${{ matrix.conjure_version }}
 
       - run: cargo test --workspace
+        if: matrix.compiler_profile == 'debug'
+
+      - run: cargo test --workspace --release
+        if: matrix.compiler_profile == 'release'
 
   examples:
     name: "Examples"
-    timeout-minutes: 10
+    timeout-minutes: 15
     strategy:
       # run all combinations of the matrix even if one combination fails.
       fail-fast: false
@@ -97,21 +103,15 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.8
+        uses: mozilla-actions/sccache-action@v0.0.9
 
       # Override RUSTUP_TOOLCHAIN to nightly when we are testing with nightly
       # This value is read from the rust-toolchain.toml file otherwise
       - name: Set RUSTUP_TOOLCHAIN
         if: matrix.rust_release == 'nightly'
         run: echo "RUSTUP_TOOLCHAIN=nightly" >> $GITHUB_ENV
-
-      - name: Disable rust-lld (to fix linkme)
-        run: |
-          echo RUSTFLAGS=${RUSTFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
-          echo RUSTDOCFLAGS=${RUSTDOCFLAGS}\ -Zlinker-features=-lld >> $GITHUB_ENV
-        if: matrix.rust_release == 'nightly'
 
       - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
 
@@ -128,9 +128,26 @@ jobs:
           - stable
           - nightly
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.8
+        uses: mozilla-actions/sccache-action@v0.0.9
       - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
       - run: cargo install cargo-audit
       - run: cargo audit
+
+  shear:
+    name: "No unused dependencies (cargo shear)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Install cargo-shear
+        run: cargo +nightly install cargo-shear
+
+      - name: Run cargo shear
+        run: cargo +nightly shear --expand
+
+

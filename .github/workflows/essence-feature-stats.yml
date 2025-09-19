@@ -43,7 +43,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -74,4 +74,7 @@ jobs:
           folder: ./tools/essence-feature-usage-stats/web/static
           target-folder: tools/essence-feature-usage-stats
           commit-message: "Actions: Deploy the essence features usage table 🚀"
+          # do not overwrite previous deployments, such as those made by other
+          # actions
+          force: false
 

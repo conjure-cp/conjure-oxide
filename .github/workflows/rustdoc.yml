@@ -1,0 +1,58 @@
+name: "Rustdoc"
+
+on:
+  push:
+    branches:
+      - main # run for pushes to the main branch
+  workflow_dispatch:
+
+env:
+  rust_release: nightly
+  SCCACHE_GHA_ENABLED: "true"
+  RUSTC_WRAPPER: "sccache"
+  SCCACHE_GHA_VERSION: 5
+
+permissions:
+  contents: write
+
+jobs:
+  rustdoc:
+    name: "Generate Rustdoc documentation"
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v5
+
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Get Sha
+        id: sha
+        run: |
+          echo -e "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          echo -e "sha=${{ github.sha }}"
+
+      - name: Install rust ${{ env.rust_release }}
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
+
+      - name: Generate documentation
+        working-directory: .
+        run: |
+          ./tools/gen_docs.sh
+
+      - name: Move all html to correct folders for deployment
+        run: |
+          mkdir deploy
+          cp -r target/doc/* deploy
+
+      - name: Deploy to Github Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: ./deploy
+          target-folder: "docs"
+          branch: gh-pages
+          commit-message: "Actions: Rustdoc documentation for ${{ steps.sha.outputs.result }}"
+          # do not overwrite previous deployments, such as those made by other
+          # actions
+          force: false

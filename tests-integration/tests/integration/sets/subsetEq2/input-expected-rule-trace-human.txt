@@ -1,0 +1,79 @@
+Model before rewriting:
+
+letting a be {2,3}
+letting b be {1,2}
+find c: set of (int(1..3))
+
+such that
+
+and([(c subsetEq b),!((c subsetEq a));int(1..2)])
+
+--
+
+and([(c subsetEq b),!((c subsetEq a));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+and([(c subsetEq b),!((c subsetEq a));int(1..2)]) 
+
+--
+
+b, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+Set([Int(1), Int(2)]) 
+
+--
+
+a, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+Set([Int(2), Int(3)]) 
+
+--
+
+!((c subsetEq Set([Int(2), Int(3)]))), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+!(__0) 
+new variables:
+  find __0: bool
+new constraints:
+  __0 =aux (c subsetEq Set([Int(2), Int(3)]))
+--
+
+__0 =aux (c subsetEq Set([Int(2), Int(3)])), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify((c subsetEq Set([Int(2), Int(3)])), __0) 
+
+--
+
+!(__0), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
+WatchedLiteral(__0,false) 
+
+--
+
+and([(c subsetEq Set([Int(1), Int(2)])),WatchedLiteral(__0,false);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+and([(c subsetEq Set([Int(1), Int(2)])),WatchedLiteral(__0,false);int(1..)]) 
+
+--
+
+and([(c subsetEq Set([Int(1), Int(2)])),WatchedLiteral(__0,false);int(1..)]),
+Reify((c subsetEq Set([Int(2), Int(3)])), __0), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(c subsetEq Set([Int(1), Int(2)])),
+WatchedLiteral(__0,false),
+Reify((c subsetEq Set([Int(2), Int(3)])), __0) 
+
+--
+
+Final model:
+
+letting a be Set([Int(2), Int(3)])
+letting b be Set([Int(1), Int(2)])
+find c: set of (int(1..3))
+find __0: bool
+
+such that
+
+(c subsetEq Set([Int(1), Int(2)])),
+WatchedLiteral(__0,false),
+Reify((c subsetEq Set([Int(2), Int(3)])), __0)
+
