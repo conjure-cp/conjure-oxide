@@ -24,6 +24,29 @@ use glob::glob;
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
+
+
+pub fn get_minion_solutions_dominance(
+    model: Model,
+    num_sols: i32,
+    solver_input_file: &Option<PathBuf>,
+) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
+
+    match model.clone().dominance {
+    Some(value) => {
+        let mut res: Vec<BTreeMap<Name,Literal>> = Vec::new();
+        for i in 0..12 {
+            let solution = get_minion_solutions(model.clone(), 1, solver_input_file)?;
+            res.extend(solution);
+        }
+        
+        return Ok(res);
+    },
+    None => get_minion_solutions(model.clone(),num_sols,solver_input_file),
+    }
+}
+
+
 pub fn get_minion_solutions(
     model: Model,
     num_sols: i32,
