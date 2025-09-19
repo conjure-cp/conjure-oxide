@@ -12,6 +12,8 @@
 
 use std::{collections::VecDeque, fmt::Display, ops::Deref, sync::Arc};
 
+use polyquine::Quine;
+use proc_macro2::TokenStream;
 use serde::{Deserialize, Serialize};
 use uniplate::{
     Biplate, Tree, Uniplate,
@@ -35,6 +37,13 @@ use uniplate::{
 #[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Moo<T> {
     inner: Arc<T>,
+}
+
+impl<T: Quine> Quine for Moo<T> {
+    fn ctor_tokens(&self) -> TokenStream {
+        let inner = self.inner.as_ref().ctor_tokens();
+        quote::quote! { ::conjure_cp::ast::Moo::new(#inner) }
+    }
 }
 
 impl<T> Moo<T> {

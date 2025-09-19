@@ -4,15 +4,18 @@ use super::literals::AbstractLiteralValue;
 use super::{Domain, Name};
 use serde::{Deserialize, Serialize};
 
+use polyquine::Quine;
 use uniplate::{Biplate, Uniplate};
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
+#[path_prefix(conjure_cp::ast)]
 pub struct RecordEntry {
     pub name: Name,
     pub domain: Domain,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Hash, Quine)]
+#[path_prefix(conjure_cp::ast)]
 pub struct RecordValue<T: AbstractLiteralValue> {
     pub name: Name,
     pub value: T,

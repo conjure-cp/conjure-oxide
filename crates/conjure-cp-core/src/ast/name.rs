@@ -1,11 +1,13 @@
 use std::fmt::Display;
 
 use itertools::Itertools as _;
+use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use ustr::Ustr;
 
 /// A reference to an object stored in the [`SymbolTable`].
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize, Quine)]
+#[path_prefix(conjure_cp::ast)]
 pub enum Name {
     /// A name given in the input model.
     User(Ustr),

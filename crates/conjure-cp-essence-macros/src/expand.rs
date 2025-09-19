@@ -1,8 +1,9 @@
-use super::expression::parse_expr_to_ts;
 use conjure_cp_essence_parser::{
     EssenceParseError,
+    expression::parse_expression,
     util::{get_tree, query_toplevel},
 };
+use polyquine::Quine;
 use proc_macro2::{TokenStream, TokenTree};
 use quote::{ToTokens, quote};
 use syn::{Error, LitStr, Result};
@@ -53,8 +54,8 @@ pub fn expand_expr_vec(tt: &TokenTree) -> Result<TokenStream> {
 
 /// Parse a single expression or make a compile time error
 fn mk_expr(node: Node, src: &str, root: &Node, tt: &TokenTree) -> Result<TokenStream> {
-    match parse_expr_to_ts(node, src, root) {
-        Ok(expr) => Ok(expr),
+    match parse_expression(node, src, root, None) {
+        Ok(expr) => Ok(expr.ctor_tokens()),
         Err(err) => {
             let error_message = match err {
                 EssenceParseError::SyntaxError {

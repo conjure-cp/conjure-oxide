@@ -5,6 +5,7 @@ use std::hash::Hash;
 use std::hash::Hasher;
 use ustr::Ustr;
 
+use polyquine::Quine;
 use uniplate::{Biplate, Tree, Uniplate};
 
 use crate::ast::Metadata;
@@ -14,7 +15,7 @@ use super::domains::HasDomain;
 use super::{Atom, Domain, Expression, Range, records::RecordValue};
 use super::{Moo, ReturnType, SetAttr, Typeable};
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash, Quine)]
 #[uniplate(walk_into=[AbstractLiteral<Literal>])]
 #[biplate(to=Atom)]
 #[biplate(to=AbstractLiteral<Literal>)]
@@ -22,6 +23,7 @@ use super::{Moo, ReturnType, SetAttr, Typeable};
 #[biplate(to=RecordValue<Literal>)]
 #[biplate(to=RecordValue<Expression>)]
 #[biplate(to=Expression)]
+#[path_prefix(conjure_cp::ast)]
 /// A literal value, equivalent to constants in Conjure.
 pub enum Literal {
     Int(i32),
@@ -49,7 +51,8 @@ pub trait AbstractLiteralValue:
 impl AbstractLiteralValue for Expression {}
 impl AbstractLiteralValue for Literal {}
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Quine)]
+#[path_prefix(conjure_cp::ast)]
 pub enum AbstractLiteral<T: AbstractLiteralValue> {
     Set(Vec<T>),
 

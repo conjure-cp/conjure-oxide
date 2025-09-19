@@ -17,7 +17,9 @@ use crate::bug;
 use conjure_cp_enum_compatibility_macro::document_compatibility;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
+use ustr::Ustr;
 
+use polyquine::Quine;
 use uniplate::{Biplate, Uniplate};
 
 use super::ac_operators::ACOperatorKind;
@@ -57,7 +59,7 @@ static_assertions::assert_eq_size!([u8; 104], Expression);
 /// used to build rules and conditions for the model.
 #[document_compatibility]
 #[serde_as]
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Quine)]
 #[biplate(to=Metadata)]
 #[biplate(to=Atom)]
 #[biplate(to=DeclarationPtr)]
@@ -71,6 +73,7 @@ static_assertions::assert_eq_size!([u8; 104], Expression);
 #[biplate(to=RecordValue<Expression>)]
 #[biplate(to=RecordValue<Literal>)]
 #[biplate(to=Literal)]
+#[path_prefix(conjure_cp::ast)]
 pub enum Expression {
     AbstractLiteral(Metadata, AbstractLiteral<Expression>),
     /// The top of the model
@@ -83,12 +86,21 @@ pub enum Expression {
     /// A comprehension.
     ///
     /// The inside of the comprehension opens a new scope.
+    // todo (gskorokhod): Comprehension contains a SubModel which contains a bunch of Rc pointers.
+    // This makes implementing Quine tricky (it doesnt support Rc, by design). Skip it for now.
+    #[polyquine_skip]
     Comprehension(Metadata, Moo<Comprehension>),
 
     /// Defines dominance ("Solution A is preferred over Solution B")
     DominanceRelation(Metadata, Moo<Expression>),
     /// `fromSolution(name)` - Used in dominance relation definitions
     FromSolution(Metadata, Moo<Expression>),
+
+    #[polyquine_with(arm = (_, name) => {
+        let ident = proc_macro2::Ident::new(name.as_str(), proc_macro2::Span::call_site());
+        quote::quote! { #ident.clone().into() }
+    })]
+    Metavar(Metadata, Ustr),
 
     Atomic(Metadata, Atom),
 
@@ -134,6 +146,8 @@ pub enum Expression {
     /// - If b is true, then `toInt(b) == 1`
     ToInt(Metadata, Moo<Expression>),
 
+    // todo (gskorokhod): Same reason as for Comprehension
+    #[polyquine_skip]
     Scope(Metadata, Moo<SubModel>),
 
     /// `|x|` - absolute value of `x`
@@ -316,7 +330,9 @@ pub enum Expression {
     ///
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#minuseq)
     /// + `rules::minion::boolean_literal_to_wliteral`.
+    // todo (gskorokhod): Skip because of DeclarationPtr
     #[compatible(Minion)]
+    #[polyquine_skip]
     FlatWatchedLiteral(
         Metadata,
         #[serde_as(as = "DeclarationPtrAsId")] DeclarationPtr,
@@ -465,7 +481,9 @@ pub enum Expression {
     /// Declaration of an auxiliary variable.
     ///
     /// As with Savile Row, we semantically distinguish this from `Eq`.
+    // todo (gskorokhod): Skip because of DeclarationPtr
     #[compatible(Minion)]
+    #[polyquine_skip]
     AuxDeclaration(
         Metadata,
         #[serde_as(as = "DeclarationPtrAsId")] DeclarationPtr,
@@ -587,6 +605,7 @@ impl Expression {
             Expression::AbstractLiteral(_, abslit) => abslit.domain_of(),
             Expression::DominanceRelation(_, _) => Some(Domain::Bool),
             Expression::FromSolution(_, expr) => expr.domain_of(),
+            Expression::Metavar(_, _) => None,
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
                 match matrix.domain_of()? {
@@ -1109,6 +1128,7 @@ impl Display for Expression {
             }
             Expression::DominanceRelation(_, expr) => write!(f, "DominanceRelation({expr})"),
             Expression::FromSolution(_, expr) => write!(f, "FromSolution({expr})"),
+            Expression::Metavar(_, name) => write!(f, "&{name}"),
             Expression::Atomic(_, atom) => atom.fmt(f),
             Expression::Scope(_, submodel) => write!(f, "{{\n{submodel}\n}}"),
             Expression::Abs(_, a) => write!(f, "|{a}|"),
@@ -1325,6 +1345,7 @@ impl Typeable for Expression {
             Expression::Root(_, _) => Some(ReturnType::Bool),
             Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
             Expression::FromSolution(_, expr) => expr.return_type(),
+            Expression::Metavar(_, _) => None,
             Expression::Atomic(_, atom) => atom.return_type(),
             Expression::Scope(_, scope) => scope.return_type(),
             Expression::Abs(_, _) => Some(ReturnType::Int),
