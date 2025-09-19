@@ -6,53 +6,105 @@ find c: bool
 
 such that
 
-and([and([and([or([a,b;int(1..2)]),or([!(a),b;int(1..2)]);int(1..2)]),or([a,!(b);int(1..2)]);int(1..2)]),or([!(c),c;int(1..2)]);int(1..2)])
+and([and([and([or([a,b;int(1..2)]),or([Not(a),b;int(1..2)]);int(1..2)]),or([a,Not(b);int(1..2)]);int(1..2)]),or([Not(c),c;int(1..2)]);int(1..2)])
+
+clauses:
+
+
 
 --
 
-and([and([and([or([a,b;int(1..2)]),or([!(a),b;int(1..2)]);int(1..2)]),or([a,!(b);int(1..2)]);int(1..2)]),or([!(c),c;int(1..2)]);int(1..2)]), 
+Not(a), 
+   ~~> apply_tseytin_not ([("CNF", 9005)]) 
+__0 
+new variables:
+  find __0: bool
+new clauses:
+  Clause([Not(a),Not(__0);int(1..)])
+  Clause([a,__0;int(1..)])
+--
+
+Not(b), 
+   ~~> apply_tseytin_not ([("CNF", 9005)]) 
+__1 
+new variables:
+  find __1: bool
+new clauses:
+  Clause([Not(b),Not(__1);int(1..)])
+  Clause([b,__1;int(1..)])
+--
+
+Not(c), 
+   ~~> apply_tseytin_not ([("CNF", 9005)]) 
+__2 
+new variables:
+  find __2: bool
+new clauses:
+  Clause([Not(c),Not(__2);int(1..)])
+  Clause([c,__2;int(1..)])
+--
+
+and([and([and([or([a,b;int(1..2)]),or([__0,b;int(1..2)]);int(1..2)]),or([a,__1;int(1..2)]);int(1..2)]),or([__2,c;int(1..2)]);int(1..2)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
-and([or([a,b;int(1..2)]),or([!(a),b;int(1..2)]),or([a,!(b);int(1..2)]),or([!(c),c;int(1..2)]);int(1..2)]) 
-
---
-
-and([or([a,b;int(1..2)]),or([!(a),b;int(1..2)]),or([a,!(b);int(1..2)]),or([!(c),c;int(1..2)]);int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-and([or([a,b;int(1..2)]),or([!(a),b;int(1..2)]),or([a,!(b);int(1..2)]),or([!(c),c;int(1..2)]);int(1..)]) 
-
---
-
-and([or([a,b;int(1..2)]),or([!(a),b;int(1..2)]),or([a,!(b);int(1..2)]),or([!(c),c;int(1..2)]);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-or([a,b;int(1..2)]),
-or([!(a),b;int(1..2)]),
-or([a,!(b);int(1..2)]),
-or([!(c),c;int(1..2)]) 
+and([or([a,b;int(1..2)]),or([__0,b;int(1..2)]),or([a,__1;int(1..2)]),or([__2,c;int(1..2)]);int(1..2)]) 
 
 --
 
 or([a,b;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-or([a,b;int(1..)]) 
-
+   ~~> apply_tseytin_and_or ([("CNF", 8500)]) 
+__3 
+new variables:
+  find __3: bool
+new clauses:
+  Clause([Not(a),__3;int(1..)])
+  Clause([Not(b),__3;int(1..)])
+  Clause([Not(__3),a,b;int(1..)])
 --
 
-or([!(a),b;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-or([!(a),b;int(1..)]) 
-
+or([__0,b;int(1..2)]), 
+   ~~> apply_tseytin_and_or ([("CNF", 8500)]) 
+__4 
+new variables:
+  find __4: bool
+new clauses:
+  Clause([Not(__0),__4;int(1..)])
+  Clause([Not(b),__4;int(1..)])
+  Clause([Not(__4),__0,b;int(1..)])
 --
 
-or([a,!(b);int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-or([a,!(b);int(1..)]) 
-
+or([a,__1;int(1..2)]), 
+   ~~> apply_tseytin_and_or ([("CNF", 8500)]) 
+__5 
+new variables:
+  find __5: bool
+new clauses:
+  Clause([Not(a),__5;int(1..)])
+  Clause([Not(__1),__5;int(1..)])
+  Clause([Not(__5),a,__1;int(1..)])
 --
 
-or([!(c),c;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-or([!(c),c;int(1..)]) 
+or([__2,c;int(1..2)]), 
+   ~~> apply_tseytin_and_or ([("CNF", 8500)]) 
+__6 
+new variables:
+  find __6: bool
+new clauses:
+  Clause([Not(__2),__6;int(1..)])
+  Clause([Not(c),__6;int(1..)])
+  Clause([Not(__6),__2,c;int(1..)])
+--
 
+and([__3,__4,__5,__6;int(1..2)]), 
+   ~~> apply_tseytin_and_or ([("CNF", 8500)]) 
+__7 
+new variables:
+  find __7: bool
+new clauses:
+  Clause([Not(__7),__3;int(1..)])
+  Clause([Not(__7),__4;int(1..)])
+  Clause([Not(__7),__5;int(1..)])
+  Clause([Not(__7),__6;int(1..)])
+  Clause([__7,Not(__3),Not(__4),Not(__5),Not(__6);int(1..)])
 --
 
 Final model:
@@ -60,11 +112,42 @@ Final model:
 find a: bool
 find b: bool
 find c: bool
+find __0: bool
+find __1: bool
+find __2: bool
+find __3: bool
+find __4: bool
+find __5: bool
+find __6: bool
+find __7: bool
 
 such that
 
-or([a,b;int(1..)]),
-or([!(a),b;int(1..)]),
-or([a,!(b);int(1..)]),
-or([!(c),c;int(1..)])
+__7
+
+clauses:
+
+Clause([Not(a),Not(__0);int(1..)]),
+Clause([a,__0;int(1..)]),
+Clause([Not(b),Not(__1);int(1..)]),
+Clause([b,__1;int(1..)]),
+Clause([Not(c),Not(__2);int(1..)]),
+Clause([c,__2;int(1..)]),
+Clause([Not(a),__3;int(1..)]),
+Clause([Not(b),__3;int(1..)]),
+Clause([Not(__3),a,b;int(1..)]),
+Clause([Not(__0),__4;int(1..)]),
+Clause([Not(b),__4;int(1..)]),
+Clause([Not(__4),__0,b;int(1..)]),
+Clause([Not(a),__5;int(1..)]),
+Clause([Not(__1),__5;int(1..)]),
+Clause([Not(__5),a,__1;int(1..)]),
+Clause([Not(__2),__6;int(1..)]),
+Clause([Not(c),__6;int(1..)]),
+Clause([Not(__6),__2,c;int(1..)]),
+Clause([Not(__7),__3;int(1..)]),
+Clause([Not(__7),__4;int(1..)]),
+Clause([Not(__7),__5;int(1..)]),
+Clause([Not(__7),__6;int(1..)]),
+Clause([__7,Not(__3),Not(__4),Not(__5),Not(__6);int(1..)])
 
