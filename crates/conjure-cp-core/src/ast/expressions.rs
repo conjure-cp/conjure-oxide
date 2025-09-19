@@ -766,8 +766,8 @@ impl Expression {
             Expression::FlatWeightedSumLeq(_, _, _, _) => Some(Domain::Bool),
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(Domain::Bool),
             Expression::Abs(_, a) => a
-                .domain_of(syms)?
-                .apply_i32(|a, _| Some(a.abs()), &a.domain_of(syms)?),
+                .domain_of()?
+                .apply_i32(|a, _| Some(a.abs()), &a.domain_of()?),
             Expression::MinionPow(_, _, _, _) => Some(Domain::BoolDomain),
             Expression::CnfInt(_, _) => {
                 Some(Domain::IntDomain(vec![Range::Bounded(

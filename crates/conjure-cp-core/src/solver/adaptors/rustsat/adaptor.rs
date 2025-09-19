@@ -66,10 +66,10 @@ fn get_ref_sols(
 ) -> HashMap<Name, Literal> {
     let mut solution: HashMap<Name, Literal> = HashMap::new();
 
-    for name in find_refs {
+    for reference in find_refs {
         // lit is 'Nothing' for unconstrained - if this is actually happenning, panicking is fine
         // we are not supposed to do anything to resolve that here.
-        let lit: Lit = match var_map.get(&name) {
+        let lit: Lit = match var_map.get(&reference) {
             Some(a) => *a,
             None => panic!(
                 "There should never be a non-just literal occurring here. Something is broken upstream."

@@ -59,10 +59,10 @@ pub fn handle_atom(
             conjure_cp_core::ast::Atom::Literal(literal) => {
                 todo!("Not Sure if we are handling Lits as-is or not..")
             }
-            conjure_core::ast::Atom::Reference(name) => match name {
-                conjure_core::ast::Name::UserName(_)
-                | conjure_core::ast::Name::RepresentedName(_, _, _)
-                | conjure_core::ast::Name::MachineName(_) => {
+            conjure_cp_core::ast::Atom::Reference(name) => match name {
+                conjure_cp_core::ast::Name::UserName(_)
+                | conjure_cp_core::ast::Name::RepresentedName(_, _, _)
+                | conjure_cp_core::ast::Name::MachineName(_) => {
                     // TODO: Temp Clone
                     // let m = n.clone();
                     let lit_temp: Lit = fetch_lit(name, vars_added, inst);
