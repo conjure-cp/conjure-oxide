@@ -43,6 +43,16 @@ where
         self.add_rule_group(vec![rule], select_first)
     }
 
+    pub fn append_rule_groups(
+        mut self,
+        groups: Vec<Vec<R>>,
+        selector: SelectorFn<T, R, M>,
+    ) -> Self {
+        let groups = groups.into_iter().map(|group| (group, selector));
+        self.rule_groups.extend(groups);
+        self
+    }
+
     pub fn add_on_enter(mut self, on_enter_fn: fn(&T, &mut M)) -> Self {
         self.event_handlers.add_on_enter(on_enter_fn);
         self
