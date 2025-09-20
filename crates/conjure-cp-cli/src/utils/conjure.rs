@@ -16,7 +16,6 @@ use tempfile::tempdir;
 
 use crate::utils::json::sort_json_object;
 use conjure_cp::Model;
-use conjure_cp::parse::tree_sitter::EssenceParseError;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::solver::Solver;
 use conjure_cp::solver::adaptors::Minion;
@@ -181,8 +180,8 @@ pub fn get_sat_solutions(
 pub fn get_solutions_from_conjure(
     essence_file: &str,
     context: Arc<RwLock<Context<'static>>>,
-) -> Result<Vec<BTreeMap<Name, Literal>>, EssenceParseError> {
-    let tmp_dir = tempdir().unwrap();
+) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
+    let tmp_dir = tempdir()?;
 
     let mut cmd = std::process::Command::new("conjure");
     let output = cmd
@@ -192,19 +191,19 @@ pub fn get_solutions_from_conjure(
         .arg("-o")
         .arg(tmp_dir.path())
         .arg(essence_file)
-        .output()
-        .map_err(|e| EssenceParseError::ConjureSolveError(e.to_string()))?;
+        .output()?;
 
     if !output.status.success() {
-        return Err(EssenceParseError::ConjureSolveError(format!(
-            "conjure solve exited with failure: {}",
-            String::from_utf8(output.stderr).unwrap()
+        let stderr =
+            String::from_utf8(output.stderr).unwrap_or_else(|e| e.utf8_error().to_string());
+        return Err(anyhow::Error::msg(format!(
+            "Error: `conjure solve` exited with code {}; stderr: {}",
+            output.status, stderr
         )));
     }
 
-    let solutions_files: Vec<_> = glob(&format!("{}/*.solution", tmp_dir.path().display()))
-        .unwrap()
-        .collect();
+    let solutions_files: Vec<_> =
+        glob(&format!("{}/*.solution", tmp_dir.path().display()))?.collect();
 
     let solutions_set: Vec<_> = solutions_files
         .par_iter()

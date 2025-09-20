@@ -43,14 +43,14 @@ pub fn parse_expr_to_ts(
         "exponent" | "product_expr" | "sum_expr" | "comparison" | "and_expr" | "or_expr"
         | "implication" => {
             let expr1 = child_expr_to_ts(constraint, source_code, root)?;
-            let op = constraint.child(1).ok_or(format!(
-                "Missing operator in expression {}",
-                constraint.kind()
+            let op = constraint.child(1).ok_or(EssenceParseError::syntax_error(
+                format!("Missing operator in expression {}", constraint.kind()),
+                Some(constraint.range()),
             ))?;
             let op_type = &source_code[op.start_byte()..op.end_byte()];
-            let expr2_node = constraint.child(2).ok_or(format!(
-                "Missing second operand in expression {}",
-                constraint.kind()
+            let expr2_node = constraint.child(2).ok_or(EssenceParseError::syntax_error(
+                format!("Missing second operand in expression {}", constraint.kind()),
+                Some(constraint.range()),
             ))?;
             let expr2 = parse_expr_to_ts(expr2_node, source_code, root)?;
 
@@ -131,7 +131,10 @@ pub fn parse_expr_to_ts(
                     ::conjure_cp::ast::Moo::new(#expr1),
                     ::conjure_cp::ast::Moo::new(#expr2),
                 )}),
-                _ => Err(format!("Unsupported operator '{op_type}'").into()),
+                _ => Err(EssenceParseError::syntax_error(
+                    format!("Unsupported operator '{op_type}'"),
+                    Some(op.range()),
+                )),
             }
         }
         "quantifier_expr" => {
@@ -140,9 +143,9 @@ pub fn parse_expr_to_ts(
                 expr_list.push(parse_expr_to_ts(expr, source_code, root)?);
             }
 
-            let quantifier = constraint.child(0).ok_or(format!(
-                "Missing quantifier in expression {}",
-                constraint.kind()
+            let quantifier = constraint.child(0).ok_or(EssenceParseError::syntax_error(
+                format!("Missing quantifier in expression {}", constraint.kind()),
+                Some(constraint.range()),
             ))?;
             let quantifier_type = &source_code[quantifier.start_byte()..quantifier.end_byte()];
 
@@ -171,19 +174,36 @@ pub fn parse_expr_to_ts(
                     ::conjure_cp::ast::Metadata::new(),
                     ::conjure_cp::ast::Moo::new(::conjure_cp::matrix_expr![#(#expr_list),*]),
                 )}),
-                _ => Err(format!("Unsupported quantifier {}", constraint.kind()).into()),
+                _ => Err(EssenceParseError::syntax_error(
+                    format!("Unsupported quantifier {}", constraint.kind()),
+                    Some(quantifier.range()),
+                )),
             }
         }
         "constant" => {
-            let child = constraint.child(0).ok_or(format!(
-                "Missing value for constant expression {}",
-                constraint.kind()
+            let child = constraint.child(0).ok_or(EssenceParseError::syntax_error(
+                format!(
+                    "Missing value for constant expression {}",
+                    constraint.kind()
+                ),
+                Some(constraint.range()),
             ))?;
             match child.kind() {
                 "integer" => {
-                    let constant_value = &source_code[child.start_byte()..child.end_byte()]
-                        .parse::<i32>()
-                        .unwrap();
+                    let raw_value = &source_code[child.start_byte()..child.end_byte()];
+                    let constant_value = raw_value.parse::<i32>().map_err(|_e| {
+                        if raw_value.is_empty() {
+                            EssenceParseError::syntax_error(
+                                "expected an integer here".to_string(),
+                                Some(child.range()),
+                            )
+                        } else {
+                            EssenceParseError::syntax_error(
+                                format!("'{raw_value}' is not a valid integer"),
+                                Some(child.range()),
+                            )
+                        }
+                    })?;
                     Ok(quote! {::conjure_cp::ast::Expression::Atomic(
                         ::conjure_cp::ast::Metadata::new(),
                         ::conjure_cp::ast::Atom::Literal(::conjure_cp::ast::Literal::Int(#constant_value)),
@@ -197,7 +217,10 @@ pub fn parse_expr_to_ts(
                     ::conjure_cp::ast::Metadata::new(),
                     ::conjure_cp::ast::Atom::Literal(::conjure_cp::ast::Literal::Bool(false)),
                 )}),
-                _ => Err(format!("Unsupported constant kind: {}", child.kind()).into()),
+                _ => Err(EssenceParseError::syntax_error(
+                    format!("Unsupported constant kind: {}", child.kind()),
+                    Some(child.range()),
+                )),
             }
         }
         "variable" => {
@@ -210,34 +233,39 @@ pub fn parse_expr_to_ts(
         }
         "from_solution" => match root.kind() {
             "dominance_relation" => {
-                // Generate the code for the inner expression using the macro's own parser
                 let inner_ts = child_expr_to_ts(constraint, source_code, root)?;
-                // Remove the runtime check:
-                // let inner = child_expr(constraint, source_code, root)?;
-                // match inner { ... }
-                // Just generate the FromSolution structure. Runtime validation must happen later.
                 Ok(quote! {
                     ::conjure_cp::ast::Expression::FromSolution(::conjure_cp::ast::Metadata::new(), ::conjure_cp::ast::Moo::new(#inner_ts))
                 })
-                // The original code had a check here to ensure inner was Atomic.
-                // This check cannot be performed at compile time by the macro.
-                // It must be deferred to a runtime semantic analysis pass after the AST is built.
             }
-            _ => Err(
+            _ => Err(EssenceParseError::syntax_error(
                 "`fromSolution()` is only allowed inside dominance relation definitions"
-                    .to_string()
-                    .into(),
-            ),
+                    .to_string(),
+                Some(constraint.range()),
+            )),
         },
         "metavar" => {
             let inner = constraint
                 .named_child(0)
-                .ok_or("Expected name for meta-variable".to_string())?;
+                .ok_or(EssenceParseError::syntax_error(
+                    "Expected name for meta-variable".to_string(),
+                    Some(constraint.range()),
+                ))?;
             let name = &source_code[inner.start_byte()..inner.end_byte()];
             let ident = Ident::new(name, Span::call_site());
             Ok(quote! {#ident.clone().into()})
         }
-        _ => Err(format!("{} is not a recognized node kind", constraint.kind()).into()),
+        "ERROR" => {
+            let expr = &source_code[constraint.start_byte()..constraint.end_byte()];
+            Err(EssenceParseError::syntax_error(
+                format!("`{expr}` is not a valid expression"),
+                Some(constraint.range()),
+            ))
+        }
+        _ => Err(EssenceParseError::syntax_error(
+            format!("{} is not a recognized node kind", constraint.kind()),
+            Some(constraint.range()),
+        )),
     }
 }
 
@@ -248,6 +276,9 @@ fn child_expr_to_ts(
 ) -> Result<TokenStream, EssenceParseError> {
     match node.named_child(0) {
         Some(child) => parse_expr_to_ts(child, source_code, root),
-        None => Err(format!("Missing node in expression of kind {}", node.kind()).into()),
+        None => Err(EssenceParseError::syntax_error(
+            format!("Missing node in expression of kind {}", node.kind()),
+            Some(node.range()),
+        )),
     }
 }

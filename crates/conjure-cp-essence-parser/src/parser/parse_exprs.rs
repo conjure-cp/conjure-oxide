@@ -1,6 +1,5 @@
 use crate::errors::EssenceParseError;
 use conjure_cp_core::ast::{Expression, SymbolTable};
-use conjure_cp_core::error::Error;
 #[allow(unused)]
 use uniplate::Uniplate;
 
@@ -10,9 +9,10 @@ use super::util::{get_tree, query_toplevel};
 pub fn parse_expr(src: &str, symbol_table: &SymbolTable) -> Result<Expression, EssenceParseError> {
     let exprs = parse_exprs(src, symbol_table)?;
     if exprs.len() != 1 {
-        return Err(EssenceParseError::ParseError(Error::Parse(
-            "Expected exactly one expression".into(),
-        )));
+        return Err(EssenceParseError::syntax_error(
+            "Expected a single expression".to_string(),
+            None,
+        ));
     }
     Ok(exprs[0].clone())
 }
