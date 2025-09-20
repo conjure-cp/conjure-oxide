@@ -6,7 +6,6 @@ use conjure_cp_core::ast::Expression;
 use conjure_cp_core::ast::Metadata;
 use conjure_cp_core::ast::{DeclarationPtr, Moo};
 use conjure_cp_core::context::Context;
-use conjure_cp_core::error::Error;
 #[allow(unused)]
 use uniplate::Uniplate;
 
@@ -84,17 +83,19 @@ pub fn parse_essence_with_context(
                 let expr = parse_expression(inner, &source_code, &statement, &current_symbols)?;
                 let dominance = Expression::DominanceRelation(Metadata::new(), Moo::new(expr));
                 if model.dominance.is_some() {
-                    return Err(EssenceParseError::ParseError(Error::Parse(
-                        "Duplicate dominance relation".to_owned(),
-                    )));
+                    return Err(EssenceParseError::syntax_error(
+                        "Duplicate dominance relation".to_string(),
+                        None,
+                    ));
                 }
                 model.dominance = Some(dominance);
             }
             _ => {
                 let kind = statement.kind();
-                return Err(EssenceParseError::ParseError(Error::Parse(format!(
-                    "Unrecognized top level statement kind: {kind}"
-                ))));
+                return Err(EssenceParseError::syntax_error(
+                    format!("Unrecognized top level statement kind: {kind}"),
+                    None,
+                ));
             }
         }
     }

@@ -35,14 +35,14 @@ pub fn parse_expression(
         "exponent" | "product_expr" | "sum_expr" | "comparison" | "and_expr" | "or_expr"
         | "implication" => {
             let expr1 = child_expr(constraint, source_code, root, symbols)?;
-            let op = constraint.child(1).ok_or(format!(
-                "Missing operator in expression {}",
-                constraint.kind()
+            let op = constraint.child(1).ok_or(EssenceParseError::syntax_error(
+                format!("Missing operator in expression {}", constraint.kind()),
+                Some(constraint.range()),
             ))?;
             let op_type = &source_code[op.start_byte()..op.end_byte()];
-            let expr2_node = constraint.child(2).ok_or(format!(
-                "Missing second operand in expression {}",
-                constraint.kind()
+            let expr2_node = constraint.child(2).ok_or(EssenceParseError::syntax_error(
+                format!("Missing second operand in expression {}", constraint.kind()),
+                Some(constraint.range()),
             ))?;
             let expr2 = parse_expression(expr2_node, source_code, root, symbols)?;
 
@@ -124,7 +124,10 @@ pub fn parse_expression(
                     Moo::new(expr1),
                     Moo::new(expr2),
                 )),
-                _ => Err(format!("Unsupported operator '{op_type}'").into()),
+                _ => Err(EssenceParseError::syntax_error(
+                    format!("Unsupported operator '{op_type}'"),
+                    Some(op.range()),
+                )),
             }
         }
         "quantifier_expr" => {
@@ -132,9 +135,9 @@ pub fn parse_expression(
             for expr in named_children(&constraint) {
                 expr_list.push(parse_expression(expr, source_code, root, symbols)?);
             }
-            let quantifier = constraint.child(0).ok_or(format!(
-                "Missing quantifier in expression {}",
-                constraint.kind()
+            let quantifier = constraint.child(0).ok_or(EssenceParseError::syntax_error(
+                format!("Missing quantifier in expression {}", constraint.kind()),
+                Some(constraint.range()),
             ))?;
             let quantifier_type = &source_code[quantifier.start_byte()..quantifier.end_byte()];
 
@@ -163,22 +166,39 @@ pub fn parse_expression(
                     Metadata::new(),
                     Moo::new(into_matrix_expr![expr_list]),
                 )),
-                _ => Err(format!("Unsupported quantifier {}", constraint.kind()).into()),
+                _ => Err(EssenceParseError::syntax_error(
+                    format!("Unsupported quantifier {}", constraint.kind()),
+                    Some(quantifier.range()),
+                )),
             }
         }
         "constant" => {
-            let child = constraint.child(0).ok_or(format!(
-                "Missing value for constant expression {}",
-                constraint.kind()
+            let child = constraint.child(0).ok_or(EssenceParseError::syntax_error(
+                format!(
+                    "Missing value for constant expression {}",
+                    constraint.kind()
+                ),
+                None,
             ))?;
             match child.kind() {
                 "integer" => {
-                    let constant_value = &source_code[child.start_byte()..child.end_byte()]
-                        .parse::<i32>()
-                        .unwrap();
+                    let raw_value = &source_code[child.start_byte()..child.end_byte()];
+                    let constant_value = raw_value.parse::<i32>().map_err(|_e| {
+                        if raw_value.is_empty() {
+                            EssenceParseError::syntax_error(
+                                "Expected an integer here".to_string(),
+                                Some(child.range()),
+                            )
+                        } else {
+                            EssenceParseError::syntax_error(
+                                format!("'{raw_value}' is not a valid integer"),
+                                Some(child.range()),
+                            )
+                        }
+                    })?;
                     Ok(Expression::Atomic(
                         Metadata::new(),
-                        Atom::Literal(Literal::Int(*constant_value)),
+                        Atom::Literal(Literal::Int(constant_value)),
                     ))
                 }
                 "TRUE" => Ok(Expression::Atomic(
@@ -189,7 +209,10 @@ pub fn parse_expression(
                     Metadata::new(),
                     Atom::Literal(Literal::Bool(false)),
                 )),
-                _ => Err(format!("Unsupported constant kind: {}", child.kind()).into()),
+                _ => Err(EssenceParseError::syntax_error(
+                    format!("Unsupported constant kind: {}", child.kind()),
+                    Some(child.range()),
+                )),
             }
         }
         "variable" => {
@@ -198,7 +221,10 @@ pub fn parse_expression(
 
             // Look up the declaration in the symbol table
             let declaration = symbols.lookup(&name).ok_or_else(|| {
-                EssenceParseError::from(format!("Variable '{variable_name}' not found in scope"))
+                EssenceParseError::syntax_error(
+                    format!("Variable '{variable_name}' not found in scope"),
+                    Some(constraint.range()),
+                )
             })?;
 
             Ok(Expression::Atomic(
@@ -213,24 +239,26 @@ pub fn parse_expression(
                     Expression::Atomic(_, _) => {
                         Ok(Expression::FromSolution(Metadata::new(), Moo::new(inner)))
                     }
-                    _ => Err(
-                        "Expression inside a `fromSolution()` must be a variable name"
-                            .to_string()
-                            .into(),
-                    ),
+                    _ => Err(EssenceParseError::syntax_error(
+                        "Expression inside a `fromSolution()` must be a variable name".to_string(),
+                        Some(constraint.range()),
+                    )),
                 }
             }
-            _ => Err(
+            _ => Err(EssenceParseError::syntax_error(
                 "`fromSolution()` is only allowed inside dominance relation definitions"
-                    .to_string()
-                    .into(),
-            ),
+                    .to_string(),
+                Some(constraint.range()),
+            )),
         },
         "toInt_expr" => Ok(Expression::ToInt(
             Metadata::new(),
             Moo::new(child_expr(constraint, source_code, root, symbols)?),
         )),
-        _ => Err(format!("{} is not a recognized node kind", constraint.kind()).into()),
+        _ => Err(EssenceParseError::syntax_error(
+            format!("{} is not a recognized node kind", constraint.kind()),
+            Some(constraint.range()),
+        )),
     }
 }
 
@@ -242,6 +270,9 @@ pub fn child_expr(
 ) -> Result<Expression, EssenceParseError> {
     match node.named_child(0) {
         Some(child) => parse_expression(child, source_code, root, symbols),
-        None => Err(format!("Missing node in expression of kind {}", node.kind()).into()),
+        None => Err(EssenceParseError::syntax_error(
+            format!("Missing node in expression of kind {}", node.kind()),
+            Some(node.range()),
+        )),
     }
 }
