@@ -35,6 +35,19 @@ pub struct Model {
 }
 
 impl Model {
+
+    pub fn get_var(&mut self, name: &Name) -> Option<DeclarationPtr>
+    {
+        let submodel = self.as_submodel_mut();
+        return submodel.symbols().lookup(name);
+    }
+
+    pub fn add_constraint(&mut self, constraint: Expression) 
+    {
+        let submodel = self.as_submodel_mut();
+        submodel.add_constraint(constraint);
+    }
+
     pub fn from_submodel(submodel: SubModel) -> Model {
         Model {
             submodel,

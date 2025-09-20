@@ -19,7 +19,7 @@ use conjure_cp::Model;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::solver::Solver;
 use conjure_cp::solver::adaptors::Minion;
-
+use conjure_cp::ast::{Atom, Expression, Metadata, Moo};
 use glob::glob;
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
@@ -27,15 +27,35 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
 
 pub fn get_minion_solutions_dominance(
-    model: Model,
+    mut model: Model,
     num_sols: i32,
     solver_input_file: &Option<PathBuf>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
 
     match model.clone().dominance {
-    Some(value) => {
+    Some(_) => {
         let mut res: Vec<BTreeMap<Name,Literal>> = Vec::new();
-        for i in 0..12 {
+
+        let atomic1 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2)));
+        let variabke = model.get_var(&Name::user("cost"));
+        let variabke_decl = match variabke {
+            Some(decl) => decl,
+            None => {
+                // Handle the error or panic
+                panic!("Variable 'cost' not found in symbol table");
+            }   
+        };
+
+        let dummy_expr = Expression::Eq(
+            Metadata::new(),
+            Moo::new(Expression::Atomic(Metadata::new(), Atom::new_ref(variabke_decl))),
+            Moo::new(atomic1)
+        );
+
+        let subModel = model.add_constraint(dummy_expr);
+        
+        println!("{}",model);
+        for _i in 0..12 {
             let solution = get_minion_solutions(model.clone(), 1, solver_input_file)?;
             res.extend(solution);
         }
