@@ -32,6 +32,9 @@ where
     select(t, &mut rs)
 }
 
+pub type SelectorFn<T, R, M> =
+    fn(&T, &mut dyn Iterator<Item = (&R, Update<T, M>)>) -> Option<Update<T, M>>;
+
 /// Returns the first available [`Update`] if there is one, otherwise returns `None`.
 ///
 /// This is a good default selection strategy, especially when you expect only one possible

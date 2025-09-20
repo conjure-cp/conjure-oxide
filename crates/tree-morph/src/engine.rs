@@ -2,9 +2,12 @@
 //!
 //! See [`morph`] for more info.
 
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use crate::events::{self, EventHandlers};
-use crate::helpers::one_or_select;
-use crate::prelude::{Rule, Update};
+use crate::helpers::{SelectorFn, one_or_select, select_first};
+use crate::prelude::Rule;
 use uniplate::{Uniplate, tagged_zipper::TaggedZipper};
 
 pub struct Engine<T, M, R>
@@ -15,10 +18,7 @@ where
     event_handlers: events::EventHandlers<T, M>,
 
     /// Groups of rules, each with a selector function.
-    rule_groups: Vec<(
-        Vec<R>,
-        fn(&T, &mut dyn Iterator<Item = (&R, Update<T, M>)>) -> Option<Update<T, M>>,
-    )>,
+    rule_groups: Vec<(Vec<R>, SelectorFn<T, R, M>)>,
 }
 
 impl<T, M, R> Engine<T, M, R>
@@ -31,6 +31,14 @@ where
             event_handlers: EventHandlers::new(),
             rule_groups: vec![],
         }
+    }
+
+    pub fn add_rule_group(&mut self, rules: Vec<R>, selector: SelectorFn<T, R, M>) {
+        self.rule_groups.push((rules, selector));
+    }
+
+    pub fn add_rule(&mut self, rule: R) {
+        self.add_rule_group(vec![rule], select_first);
     }
 
     /// Exhaustively rewrites a tree using a set of transformation rules.
@@ -136,58 +144,78 @@ where
     /// assert_eq!(result, Expr::Val(4));
     /// assert_eq!(num_applications, 3); // Now the sub-expression (1 * 2) is evaluated first
     /// ```
-    pub fn morph(&self, tree: T, mut meta: M) -> (T, M)
+    pub fn morph(&self, tree: T, meta: M) -> (T, M)
     where
         T: Uniplate,
         R: Rule<T, M>,
     {
-        let mut zipper = EngineZipper::new(tree, &self.event_handlers);
+        // The engine zipper and this scope must both have mutable access to the metadata
+        let meta_rc = Rc::new(RefCell::new(meta));
+        let final_tree;
 
-        'main: loop {
-            // Return here after every successful rule application
+        {
+            // Holds the other mutable reference to the metadata
+            let mut zipper = EngineZipper::new(tree, meta_rc.clone(), &self.event_handlers);
 
-            for (level, (rules, select)) in self.rule_groups.iter().enumerate() {
-                // Try each rule group in the whole tree
+            'main: loop {
+                // Return here after every successful rule application
 
-                while zipper.go_next_dirty(level).is_some() {
-                    let subtree = zipper.inner.focus();
+                for (level, (rules, select)) in self.rule_groups.iter().enumerate() {
+                    // Try each rule group in the whole tree
 
-                    // Choose one transformation from all applicable rules at this level
-                    let applicable = &mut rules.iter().filter_map(|rule| {
-                        let update = rule.apply_into_update(subtree, &meta)?;
-                        Some((rule, update))
-                    });
-                    let selected = one_or_select(&select, subtree, applicable);
+                    while zipper.go_next_dirty(level).is_some() {
+                        let subtree = zipper.inner.focus();
 
-                    if let Some(mut update) = selected {
-                        // Replace the current subtree, invalidating subtree node states
-                        zipper.inner.replace_focus(update.new_subtree);
-
-                        // Mark all ancestors as dirty and move back to the root
-                        zipper.mark_dirty_to_root();
-
-                        let (new_tree, new_meta, root_transformed) =
-                            update.commands.apply(zipper.inner.focus().clone(), meta);
-
-                        meta = new_meta;
-                        if root_transformed {
-                            // This must unfortunately throw all node states away,
-                            // since the `transform` command may redefine the whole tree
-                            zipper.inner.replace_focus(new_tree);
+                        // Choose one transformation from all applicable rules at this level
+                        let selected;
+                        {
+                            let meta_ref = meta_rc.borrow();
+                            let applicable = &mut rules.iter().filter_map(|rule| {
+                                let update = rule.apply_into_update(subtree, &meta_ref)?;
+                                Some((rule, update))
+                            });
+                            selected = one_or_select(&select, subtree, applicable);
                         }
 
-                        continue 'main;
-                    } else {
-                        zipper.set_dirty_from(level + 1);
+                        if let Some(mut update) = selected {
+                            // Replace the current subtree, invalidating subtree node states
+                            zipper.inner.replace_focus(update.new_subtree);
+
+                            // Mark all ancestors as dirty and move back to the root
+                            zipper.mark_dirty_to_root();
+
+                            let new_tree;
+                            let root_transformed;
+                            {
+                                let mut meta_ref = meta_rc.borrow_mut();
+                                (new_tree, root_transformed) = update
+                                    .commands
+                                    .apply(zipper.inner.focus().clone(), &mut *meta_ref);
+                            }
+
+                            if root_transformed {
+                                // This must unfortunately throw all node states away,
+                                // since the `transform` command may redefine the whole tree
+                                zipper.inner.replace_focus(new_tree);
+                            }
+
+                            continue 'main;
+                        } else {
+                            zipper.set_dirty_from(level + 1);
+                        }
                     }
                 }
+
+                // All rules have been tried with no more changes
+                break;
             }
 
-            // All rules have been tried with no more changes
-            break;
+            // Get the resulting tree & drop the zipper so that only 1 ref to metadata exists.
+            final_tree = zipper.rebuild_root();
         }
 
-        (zipper.rebuild_root(), meta)
+        let final_meta = Rc::try_unwrap(meta_rc).ok().unwrap().into_inner();
+        (final_tree, final_meta)
     }
 }
 
@@ -219,16 +247,18 @@ impl EngineNodeState {
 
 /// A Zipper with optimisations for tree transformation.
 #[derive(Clone)]
-struct EngineZipper<'e, T: Uniplate, M> {
+struct EngineZipper<'brw, T: Uniplate, M> {
     inner: TaggedZipper<T, EngineNodeState, fn(&T) -> EngineNodeState>,
-    event_handlers: &'e EventHandlers<T, M>,
+    event_handlers: &'brw EventHandlers<T, M>,
+    meta_rc: Rc<RefCell<M>>,
 }
 
-impl<'e, T: Uniplate, M> EngineZipper<'e, T, M> {
-    pub fn new(tree: T, event_handlers: &'e EventHandlers<T, M>) -> Self {
+impl<'brw, T: Uniplate, M> EngineZipper<'brw, T, M> {
+    pub fn new(tree: T, meta: Rc<RefCell<M>>, event_handlers: &'brw EventHandlers<T, M>) -> Self {
         EngineZipper {
             inner: TaggedZipper::new(tree, EngineNodeState::new),
             event_handlers: &event_handlers,
+            meta_rc: meta,
         }
     }
 
@@ -270,13 +300,20 @@ impl<'e, T: Uniplate, M> EngineZipper<'e, T, M> {
     }
 
     fn go_up(&mut self) -> Option<()> {
-        self.event_handlers
-            .trigger_on_exit(self.inner.focus(), meta);
-        // TODO: zipper somehow needs access to the metadata
+        {
+            let mut meta = self.meta_rc.borrow_mut();
+            self.event_handlers
+                .trigger_on_exit(self.inner.focus(), &mut *meta);
+        }
         self.inner.go_up()
     }
 
     fn go_down(&mut self) -> Option<()> {
+        {
+            let mut meta = self.meta_rc.borrow_mut();
+            self.event_handlers
+                .trigger_on_enter(self.inner.focus(), &mut *meta);
+        }
         self.inner.go_down()
     }
 
