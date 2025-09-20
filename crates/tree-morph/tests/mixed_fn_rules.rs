@@ -21,14 +21,15 @@ fn rule_b_to_c(_: &mut Commands<Expr, ()>, expr: &Expr, _: &()) -> Option<Expr> 
 fn closure_rules() {
     let expr = Expr::A;
 
-    let (result, _) = morph(
-        vec![
-            vec![
-                (|_, t, _| match t {
-                    Expr::A => Some(Expr::B),
-                    _ => None,
-                }) as RuleFn<_, _>, // Same as macro expansion
-            ],
+    let engine = EngineBuilder::new()
+        .add_rule(
+            // Same as macro expansion
+            (|_, t, _| match t {
+                Expr::A => Some(Expr::B),
+                _ => None,
+            }) as RuleFn<_, _>,
+        )
+        .add_rule_group(
             rule_fns![
                 |_, t, _| match t {
                     Expr::C => Some(Expr::D),
@@ -36,11 +37,11 @@ fn closure_rules() {
                 },
                 rule_b_to_c,
             ],
-        ],
-        select_first,
-        expr,
-        (),
-    );
+            select_first,
+        )
+        .build();
+
+    let (result, _) = engine.morph(expr, ());
 
     assert_eq!(result, Expr::D);
 }

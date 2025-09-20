@@ -38,12 +38,11 @@ fn same_group() {
     // [a]
     let expr = Expr::Wrap(Box::new(Expr::A));
 
-    let (result, _) = morph(
-        vec![rule_fns![rule_unwrap_a], rule_fns![rule_a_to_b]],
-        select_first,
-        expr,
-        (),
-    );
+    let engine = EngineBuilder::new()
+        .add_rule(rule_unwrap_a as RuleFn<_, _>)
+        .add_rule(rule_a_to_b as RuleFn<_, _>)
+        .build();
+    let (result, _) = engine.morph(expr, ());
 
     // [a] ~> a ~> b
     assert_eq!(result, Expr::B);
@@ -56,12 +55,11 @@ fn a_to_b_first() {
     // [a]
     let expr = Expr::Wrap(Box::new(Expr::A));
 
-    let (result, _) = morph(
-        vec![rule_fns![rule_a_to_b], rule_fns![rule_unwrap_a]],
-        select_first,
-        expr,
-        (),
-    );
+    let engine = EngineBuilder::new()
+        .add_rule(rule_a_to_b as RuleFn<_, _>)
+        .add_rule(rule_unwrap_a as RuleFn<_, _>)
+        .build();
+    let (result, _) = engine.morph(expr, ());
 
     // [a] ~> [b]
     assert_eq!(result, Expr::Wrap(Box::new(Expr::B)));
