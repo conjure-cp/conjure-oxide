@@ -5,9 +5,10 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use crate::events::{self, EventHandlers};
-use crate::helpers::{SelectorFn, one_or_select, select_first};
+use crate::events::EventHandlers;
+use crate::helpers::{SelectorFn, one_or_select};
 use crate::prelude::Rule;
+
 use uniplate::{Uniplate, tagged_zipper::TaggedZipper};
 
 pub struct Engine<T, M, R>
@@ -15,10 +16,10 @@ where
     T: Uniplate,
     R: Rule<T, M>,
 {
-    event_handlers: events::EventHandlers<T, M>,
+    pub(crate) event_handlers: EventHandlers<T, M>,
 
     /// Groups of rules, each with a selector function.
-    rule_groups: Vec<(Vec<R>, SelectorFn<T, R, M>)>,
+    pub(crate) rule_groups: Vec<(Vec<R>, SelectorFn<T, R, M>)>,
 }
 
 impl<T, M, R> Engine<T, M, R>
@@ -29,16 +30,8 @@ where
     pub fn new() -> Self {
         Engine {
             event_handlers: EventHandlers::new(),
-            rule_groups: vec![],
+            rule_groups: Vec::new(),
         }
-    }
-
-    pub fn add_rule_group(&mut self, rules: Vec<R>, selector: SelectorFn<T, R, M>) {
-        self.rule_groups.push((rules, selector));
-    }
-
-    pub fn add_rule(&mut self, rule: R) {
-        self.add_rule_group(vec![rule], select_first);
     }
 
     /// Exhaustively rewrites a tree using a set of transformation rules.
