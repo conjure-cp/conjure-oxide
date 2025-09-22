@@ -25,149 +25,123 @@ use glob::glob;
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-
-
 pub fn get_minion_solutions_dominance(
     mut model: Model,
     num_sols: i32,
     solver_input_file: &Option<PathBuf>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
+    // If no dominance relation, run normally
+    let Some(Expression::DominanceRelation(_, ref inner_expr)) = model.dominance.clone() else {
+        return get_minion_solutions(model, num_sols, solver_input_file);
+    };
 
-    match model.clone().dominance {
-    Some(d) => {
-        
-        // Vector which stores all non-dominated solutions
-        let mut res: Vec<BTreeMap<Name,Literal>> = Vec::new();
-        let mut i = 1;
+    // All non-dominated solutions
+    let mut results = Vec::new();
 
-        // Keep looking for non-dominated solutions
-        loop {
-            // Find first solution
-            let solution = get_minion_solutions(model.clone(), 1, solver_input_file)?;
-            
-            // If we don't have any left then exit
-            if solution.len()==0
-            {
-                break;
-            }
+    loop {
+        // Get the next solution
+        let solutions = get_minion_solutions(model.clone(), 1, solver_input_file)?;
 
-            // Add solution to the list
-            res.extend(solution.clone());
-
-            if let Expression::DominanceRelation(_, inner_expr) = d {
-
-                let new_blocking_constraint = crate_blocking_constraint_from_solution(&inner_expr, solution[0].clone());
-
-                println!("{:?}", new_blocking_constraint);
-            }
-
+        // No more solutions
+        let Some(solution) = solutions.first() else {
             break;
+        };
 
-            // Create new blocking constraint
-            let atomic1 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(i)));i+=1;
-            let variabke = model.get_var(&Name::user("cost"));
-            let variabke_decl = match variabke {
-                Some(decl) => decl,
-                None => {
-                    // Handle the error or panic
-                    panic!("Variable 'cost' not found in symbol table");
-                }   
-            };
-            let dummy_expr = Expression::Gt(
-                Metadata::new(),
-                Moo::new(Expression::Atomic(Metadata::new(), Atom::new_ref(variabke_decl))),
-                Moo::new(atomic1)
-            );
-            
-            // Add the new blocking constraint
-            model.add_constraint(dummy_expr);
-            let rule_sets = model.context.read().unwrap().rule_sets.clone();
-            // TODO: not sure of the bools
-            model = rewrite_naive(
-                &model,
-                &rule_sets,
-                false,
-                false,
-            )?;
-            println!("{}",model);
+        // Add to results
+        results.extend(solutions.clone());
+
+        // Create and apply new blocking constraint
+        if let Some(blocking_constraint) = crate_blocking_constraint_from_solution(inner_expr, solution.clone()) {
+            model.add_constraint(blocking_constraint);
         }
-        return Ok(res);
-    },
-    None => get_minion_solutions(model.clone(),num_sols,solver_input_file),
+
+        // Rewrite model (TODO: optimize to avoid full rewrite?)
+        let rule_sets = model.context.read().unwrap().rule_sets.clone();
+        model = rewrite_naive(&model, &rule_sets, false, false)?;
+
+        // For debugging
+        println!("{}", model);
     }
+
+    Ok(results)
 }
 
 pub fn crate_blocking_constraint_from_solution(
     expr: &Expression,
     solution: BTreeMap<Name, Literal>,
-    // TODO: change from option
 ) -> Option<Expression> {
-println!("cou");
+    use Expression::*;
+    use conjure_cp::ast::AbstractLiteral;
 
-    // TODO: could also change FromSolution to take a name and not an expression
     match expr {
-        Expression::FromSolution(_, name) => {
-            if let Expression::Atomic(_, Atom::Reference(ptr)) = &**name {
-            let var_name = ptr.name();
-
-            return solution.get(&var_name).map(|value| {
-                Expression::Atomic(Metadata::new(), Atom::Literal(value.clone()))
-            });
+        FromSolution(_, name_expr) => {
+            if let Atomic(_, Atom::Reference(ptr)) = &**name_expr {
+                let var_name = ptr.name();
+                solution.get(&var_name).map(|value| {
+                    Atomic(Metadata::new(), Atom::Literal(value.clone()))
+                })
+            } else {
+                None
             }
-        
-            return None;
         }
-        Expression::Eq(_, expr1, expr2) |
-        Expression::Lt(_, expr1, expr2) |
-        Expression::Leq(_, expr1, expr2) |
-        Expression::Geq(_, expr1, expr2) |
-        Expression::Gt(_, expr1, expr2) 
-        => {
-            if let (Some(left), Some(right)) = (
-                crate_blocking_constraint_from_solution(expr1, solution.clone()),
-                crate_blocking_constraint_from_solution(expr2, solution.clone()),
-            ) {
-                let left_expr = Moo::new(left);
-                let right_expr = Moo::new(right);
-                let meta = Metadata::new();
 
-                Some(match expr {
-                    Expression::Eq(_, _, _) => Expression::Eq(meta, left_expr, right_expr),
-                    Expression::Lt(_, _, _) => Expression::Lt(meta, left_expr, right_expr),
-                    Expression::Leq(_, _, _) => Expression::Leq(meta, left_expr, right_expr),
-                    Expression::Geq(_, _, _) => Expression::Geq(meta, left_expr, right_expr),
-                    Expression::Gt(_, _, _) => Expression::Gt(meta, left_expr, right_expr),
-                _ => return None,
-        })
-            } else {
-                return None;
-            }
-        }   
+        Eq(meta, lhs, rhs)
+        | Lt(meta, lhs, rhs)
+        | Leq(meta, lhs, rhs)
+        | Geq(meta, lhs, rhs)
+        | Gt(meta, lhs, rhs) => {
+            let left = crate_blocking_constraint_from_solution(lhs, solution.clone())?;
+            let right = crate_blocking_constraint_from_solution(rhs, solution)?;
+            let left_expr = Moo::new(left);
+            let right_expr = Moo::new(right);
 
-        Expression::And(_, expr1) |
-        Expression::Or(_, expr1) 
-        => {
-            if let Some(expression) = crate_blocking_constraint_from_solution(expr1, solution.clone())
-            {
-                let new_expr = Moo::new(expression);
-                let meta = Metadata::new();
+            let new_expr = match expr {
+                Eq(_, _, _) => Eq(meta.clone(), left_expr, right_expr),
+                Lt(_, _, _) => Lt(meta.clone(), left_expr, right_expr),
+                Leq(_, _, _) => Leq(meta.clone(), left_expr, right_expr),
+                Geq(_, _, _) => Geq(meta.clone(), left_expr, right_expr),
+                Gt(_, _, _) => Gt(meta.clone(), left_expr, right_expr),
+                _ => unreachable!(),
+            };
 
-                Some(match expr {
-                    Expression::And(_, _) => Expression::And(meta, new_expr),
-                     Expression::Or(_, _) => Expression::Or(meta, new_expr),
-                    
-                _ => return None,
+            Some(new_expr)
+        }
+
+        And(meta, inner) | Or(meta, inner) => {
+            let transformed = crate_blocking_constraint_from_solution(inner, solution)?;
+            let new_expr = Moo::new(transformed);
+
+            Some(match expr {
+                And(_, _) => And(meta.clone(), new_expr),
+                Or(_, _) => Or(meta.clone(), new_expr),
+                _ => unreachable!(),
             })
-            } else {
-                return None;
-            }
-        }   
+        }
 
+        AbstractLiteral(meta, inner) => {
+
+            if let AbstractLiteral::Matrix(items, dom) = inner {
+                let transformed_items: Option<Vec<Expression>> = items.iter()
+                    .map(|item| crate_blocking_constraint_from_solution(item, solution.clone()))
+                    .collect();
+
+                transformed_items.map(|results| {
+                    Expression::AbstractLiteral(
+                        meta.clone(),
+                        AbstractLiteral::Matrix(results, dom.clone()),
+                    )
+                })
+            } else {
+                None
+            }
+        }
+
+
+        // TODO: add other expressions
         _ => Some(expr.clone()),
     }
-
-
 }
+
 
 
 
