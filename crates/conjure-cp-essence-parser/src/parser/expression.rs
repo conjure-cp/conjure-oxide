@@ -247,7 +247,7 @@ pub fn parse_expression(
                 None => Err(EssenceParseError::syntax_error(
                     format!(
                         "Found variable: '{variable_name}'. \
-                 Did you mean to pass a meta-variable: '&{variable_name}'? \
+                 Did you mean to pass a meta-variable: '&{variable_name}'?\n\
                  Referencing variables by name is not supported because \
                  all references must point to a Declaration, which may not \
                  exist in the current context."
@@ -289,6 +289,13 @@ pub fn parse_expression(
                 ))?;
             Ok(Expression::Metavar(Metadata::new(), Ustr::from(text)))
         }
+        "ERROR" => Err(EssenceParseError::syntax_error(
+            format!(
+                "'{}' is not a valid expression",
+                &source_code[constraint.start_byte()..constraint.end_byte()]
+            ),
+            Some(constraint.range()),
+        )),
         _ => Err(EssenceParseError::syntax_error(
             format!("{} is not a recognized expression kind", constraint.kind()),
             Some(constraint.range()),

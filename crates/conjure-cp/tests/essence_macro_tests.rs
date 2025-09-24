@@ -33,3 +33,9 @@ fn test_metavar_const() {
         )
     );
 }
+
+#[test]
+fn ui() {
+    let t = trybuild::TestCases::new();
+    t.compile_fail("tests/ui/fail/test*.rs");
+}
