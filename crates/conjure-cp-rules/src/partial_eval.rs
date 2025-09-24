@@ -33,6 +33,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
         Expr::Comprehension(_, _) => Err(RuleNotApplicable),
         Expr::DominanceRelation(_, _) => Err(RuleNotApplicable),
         Expr::FromSolution(_, _) => Err(RuleNotApplicable),
+        Expr::Metavar(_, _) => Err(RuleNotApplicable),
         Expr::UnsafeIndex(_, _, _) => Err(RuleNotApplicable),
         Expr::UnsafeSlice(_, _, _) => Err(RuleNotApplicable),
         Expr::SafeIndex(_, subject, indices) => {

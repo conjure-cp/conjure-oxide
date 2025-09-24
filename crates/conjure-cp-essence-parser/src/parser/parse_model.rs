@@ -9,12 +9,11 @@ use conjure_cp_core::context::Context;
 #[allow(unused)]
 use uniplate::Uniplate;
 
-use crate::errors::EssenceParseError;
-
-use super::expression::parse_expression;
 use super::find::parse_find_statement;
 use super::letting::parse_letting_statement;
 use super::util::{get_tree, named_children};
+use crate::errors::EssenceParseError;
+use crate::expression::parse_expression;
 
 /// Parse an Essence file into a Model using the tree-sitter parser.
 pub fn parse_essence_file_native(
@@ -64,7 +63,7 @@ pub fn parse_essence_with_context(
                             constraint,
                             &source_code,
                             &statement,
-                            &current_symbols,
+                            Some(&current_symbols),
                         )?);
                     }
                 }
@@ -80,7 +79,8 @@ pub fn parse_essence_with_context(
                     .child(1)
                     .expect("Expected a sub-expression inside `dominanceRelation`");
                 let current_symbols = model.as_submodel().symbols().clone();
-                let expr = parse_expression(inner, &source_code, &statement, &current_symbols)?;
+                let expr =
+                    parse_expression(inner, &source_code, &statement, Some(&current_symbols))?;
                 let dominance = Expression::DominanceRelation(Metadata::new(), Moo::new(expr));
                 if model.dominance.is_some() {
                     return Err(EssenceParseError::syntax_error(

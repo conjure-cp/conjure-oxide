@@ -7,11 +7,13 @@ use std::{collections::BTreeSet, fmt::Display};
 use thiserror::Error;
 
 use crate::{ast::pretty::pretty_vec, domain_int, range};
+use polyquine::Quine;
 use uniplate::Uniplate;
 
 use super::{AbstractLiteral, Literal, Name, ReturnType, records::RecordEntry, types::Typeable};
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+#[path_prefix(conjure_cp::ast)]
 pub enum Range<A>
 where
     A: Ord,
@@ -58,8 +60,9 @@ impl<A: Ord + Display> Display for Range<A> {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, Uniplate, Hash)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize, Uniplate, Hash, Quine)]
 #[uniplate()]
+#[path_prefix(conjure_cp::ast)]
 pub enum Domain {
     Bool,
 
@@ -84,7 +87,7 @@ pub enum Domain {
     Record(Vec<RecordEntry>),
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 pub enum SetAttr {
     None,
     Size(i32),
@@ -800,7 +803,7 @@ impl Domain {
     ///  - [`DomainOpError::InputWrongType`] if the input domains are different types, or are not
     ///    integer set, or matrix domains. This is also thrown if the matrix domains that have
     ///    different index domains.
-    ///    
+    ///
     pub fn union(&self, other: &Domain) -> Result<Domain, DomainOpError> {
         // TODO: does not consider unbounded domains yet
         // needs to be tested once comprehension rules are written

@@ -1,8 +1,6 @@
-#![allow(clippy::legacy_numeric_constants)]
-use tree_sitter::Node;
-
 use super::util::named_children;
 use conjure_cp_core::ast::{Domain, Name, Range};
+use tree_sitter::Node;
 
 /// Parse an Essence variable domain into its Conjure AST representation.
 pub fn parse_domain(domain: Node, source_code: &str) -> Domain {
@@ -21,7 +19,7 @@ pub fn parse_domain(domain: Node, source_code: &str) -> Domain {
 /// Parse an integer domain. Can be a single integer or a range.
 fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
     if int_domain.child_count() == 1 {
-        Domain::Int(vec![Range::Bounded(std::i32::MIN, std::i32::MAX)])
+        Domain::Int(vec![Range::Bounded(i32::MIN, i32::MAX)])
     } else {
         let mut ranges: Vec<Range<i32>> = Vec::new();
         let range_list = int_domain
@@ -76,8 +74,8 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
 
                     match (lower_bound, upper_bound) {
                         (Some(lb), Some(ub)) => ranges.push(Range::Bounded(lb, ub)),
-                        (Some(lb), None) => ranges.push(Range::Bounded(lb, std::i32::MAX)),
-                        (None, Some(ub)) => ranges.push(Range::Bounded(std::i32::MIN, ub)),
+                        (Some(lb), None) => ranges.push(Range::Bounded(lb, i32::MAX)),
+                        (None, Some(ub)) => ranges.push(Range::Bounded(i32::MIN, ub)),
                         _ => panic!("Unsupported int range type"),
                     }
                 }
