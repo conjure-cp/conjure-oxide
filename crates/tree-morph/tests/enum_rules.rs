@@ -57,7 +57,7 @@ fn single_var() {
     };
 
     let engine = EngineBuilder::new()
-        .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul], select_first)
+        .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul])
         .build();
     let (expr, meta) = engine.morph(expr, meta);
 
@@ -73,7 +73,7 @@ fn add_zero() {
     };
 
     let engine = EngineBuilder::new()
-        .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul], select_first)
+        .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul])
         .build();
     let (expr, meta) = engine.morph(expr, meta);
 
@@ -89,7 +89,7 @@ fn mul_one() {
     };
 
     let engine = EngineBuilder::new()
-        .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul], select_first)
+        .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul])
         .build();
     let (expr, meta) = engine.morph(expr, meta);
 
@@ -105,7 +105,7 @@ fn eval_add() {
     };
 
     let engine = EngineBuilder::new()
-        .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul], select_first)
+        .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul])
         .build();
     let (expr, meta) = engine.morph(expr, meta);
 
@@ -124,7 +124,7 @@ fn eval_nested() {
     };
 
     let engine = EngineBuilder::new()
-        .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul], select_first)
+        .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul])
         .build();
     let (expr, meta) = engine.morph(expr, meta);
 

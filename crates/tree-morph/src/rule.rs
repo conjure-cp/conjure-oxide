@@ -56,7 +56,7 @@ use uniplate::Uniplate;
 ///     None // Never applicable
 /// }
 ///
-/// let (result, _) = morph(vec![rule_fns![my_rule_fn]], select_first, Term::A, ());
+/// let (result, _) = morph(vec![rule_fns![my_rule_fn]], Term::A, ());
 /// assert_eq!(result, Term::A);
 ///
 ///
@@ -74,10 +74,10 @@ use uniplate::Uniplate;
 ///     }
 /// }
 ///
-/// let (result, _) = morph(vec![vec![CustomRule(false)]], select_first, Term::A, ());
+/// let (result, _) = morph(vec![vec![CustomRule(false)]], Term::A, ());
 /// assert_eq!(result, Term::A);
 ///
-/// let (result, _) = morph(vec![vec![CustomRule(true)]], select_first, Term::A, ());
+/// let (result, _) = morph(vec![vec![CustomRule(true)]], Term::A, ());
 /// assert_eq!(result, Term::B);
 /// ```
 pub trait Rule<T: Uniplate, M> {
@@ -145,7 +145,7 @@ pub type RuleFn<T, M> = fn(&mut Commands<T, M>, &T, &M) -> Option<T>;
 ///     rule_fns![rule_b, |_, _, _| None], // Closures and fn pointers can be mixed
 /// ];
 ///
-/// morph(rules, select_first, Foo, ());
+/// morph(rules, Foo, ());
 /// ```
 #[macro_export]
 macro_rules! rule_fns {

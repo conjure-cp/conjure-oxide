@@ -67,7 +67,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 num_applications: 0,
             };
             let engine = EngineBuilder::new()
-                .append_rule_groups(rules.clone(), select_first)
+                .append_rule_groups(rules.clone())
                 .build();
             engine.morph(
                 std::hint::black_box(expr.clone()),

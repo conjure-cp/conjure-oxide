@@ -12,7 +12,9 @@ where
     event_handlers: EventHandlers<T, M>,
 
     /// Groups of rules, each with a selector function.
-    rule_groups: Vec<(Vec<R>, SelectorFn<T, R, M>)>,
+    rule_groups: Vec<Vec<R>>,
+
+    selector: SelectorFn<T, M, R>,
 }
 
 impl<T, M, R> EngineBuilder<T, M, R>
@@ -24,6 +26,7 @@ where
         EngineBuilder {
             event_handlers: EventHandlers::new(),
             rule_groups: Vec::new(),
+            selector: select_first,
         }
     }
 
@@ -31,25 +34,21 @@ where
         Engine {
             event_handlers: self.event_handlers,
             rule_groups: self.rule_groups,
+            selector: self.selector,
         }
     }
 
-    pub fn add_rule_group(mut self, rules: Vec<R>, selector: SelectorFn<T, R, M>) -> Self {
-        self.rule_groups.push((rules, selector));
+    pub fn add_rule_group(mut self, rules: Vec<R>) -> Self {
+        self.rule_groups.push(rules);
         self
     }
 
     pub fn add_rule(self, rule: R) -> Self {
-        self.add_rule_group(vec![rule], select_first)
+        self.add_rule_group(vec![rule])
     }
 
-    pub fn append_rule_groups(
-        mut self,
-        groups: Vec<Vec<R>>,
-        selector: SelectorFn<T, R, M>,
-    ) -> Self {
-        let groups = groups.into_iter().map(|group| (group, selector));
-        self.rule_groups.extend(groups);
+    pub fn append_rule_groups(mut self, groups: Vec<Vec<R>>) -> Self {
+        self.rule_groups.extend(groups.into_iter());
         self
     }
 
@@ -60,6 +59,11 @@ where
 
     pub fn add_on_exit(mut self, on_exit_fn: fn(&T, &mut M)) -> Self {
         self.event_handlers.add_on_exit(on_exit_fn);
+        self
+    }
+
+    pub fn set_selector(mut self, selector: SelectorFn<T, M, R>) -> Self {
+        self.selector = selector;
         self
     }
 }

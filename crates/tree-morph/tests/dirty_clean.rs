@@ -78,7 +78,7 @@ fn left_branch_clean() {
     };
 
     let engine = EngineBuilder::new()
-        .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul], select_first)
+        .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul])
         .build();
     let (expr, meta) = engine.morph(expr, meta);
 

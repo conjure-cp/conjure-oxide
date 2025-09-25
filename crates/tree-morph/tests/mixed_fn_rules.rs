@@ -29,16 +29,13 @@ fn closure_rules() {
                 _ => None,
             }) as RuleFn<_, _>,
         )
-        .add_rule_group(
-            rule_fns![
-                |_, t, _| match t {
-                    Expr::C => Some(Expr::D),
-                    _ => None,
-                },
-                rule_b_to_c,
-            ],
-            select_first,
-        )
+        .add_rule_group(rule_fns![
+            |_, t, _| match t {
+                Expr::C => Some(Expr::D),
+                _ => None,
+            },
+            rule_b_to_c,
+        ])
         .build();
 
     let (result, _) = engine.morph(expr, ());

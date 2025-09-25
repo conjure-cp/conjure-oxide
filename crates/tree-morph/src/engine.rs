@@ -18,8 +18,10 @@ where
 {
     pub(crate) event_handlers: EventHandlers<T, M>,
 
-    /// Groups of rules, each with a selector function.
-    pub(crate) rule_groups: Vec<(Vec<R>, SelectorFn<T, R, M>)>,
+    /// A collection of groups of equally-prioritised rules.
+    pub(crate) rule_groups: Vec<Vec<R>>,
+
+    pub(crate) selector: SelectorFn<T, M, R>,
 }
 
 impl<T, M, R> Engine<T, M, R>
@@ -27,13 +29,6 @@ where
     T: Uniplate,
     R: Rule<T, M>,
 {
-    pub fn new() -> Self {
-        Engine {
-            event_handlers: EventHandlers::new(),
-            rule_groups: Vec::new(),
-        }
-    }
-
     /// Exhaustively rewrites a tree using a set of transformation rules.
     ///
     /// Rewriting is complete when all rules have been attempted with no change. Rules may be organised
@@ -142,73 +137,56 @@ where
         T: Uniplate,
         R: Rule<T, M>,
     {
-        // The engine zipper and this scope must both have mutable access to the metadata
-        let meta_rc = Rc::new(RefCell::new(meta));
-        let final_tree;
+        // Holds the other mutable reference to the metadata
+        let mut zipper = EngineZipper::new(tree, meta, &self.event_handlers);
 
-        {
-            // Holds the other mutable reference to the metadata
-            let mut zipper = EngineZipper::new(tree, meta_rc.clone(), &self.event_handlers);
+        'main: loop {
+            // Return here after every successful rule application
 
-            'main: loop {
-                // Return here after every successful rule application
+            for (level, rules) in self.rule_groups.iter().enumerate() {
+                // Try each rule group in the whole tree
 
-                for (level, (rules, select)) in self.rule_groups.iter().enumerate() {
-                    // Try each rule group in the whole tree
+                while zipper.go_next_dirty(level).is_some() {
+                    let subtree = zipper.inner.focus();
 
-                    while zipper.go_next_dirty(level).is_some() {
-                        let subtree = zipper.inner.focus();
+                    // Choose one transformation from all applicable rules at this level
+                    let selected = {
+                        let applicable = &mut rules.iter().filter_map(|rule| {
+                            let update = rule.apply_into_update(subtree, &zipper.meta)?;
+                            Some((rule, update))
+                        });
+                        one_or_select(&self.selector, subtree, applicable)
+                    };
 
-                        // Choose one transformation from all applicable rules at this level
-                        let selected;
-                        {
-                            let meta_ref = meta_rc.borrow();
-                            let applicable = &mut rules.iter().filter_map(|rule| {
-                                let update = rule.apply_into_update(subtree, &meta_ref)?;
-                                Some((rule, update))
-                            });
-                            selected = one_or_select(&select, subtree, applicable);
+                    if let Some(mut update) = selected {
+                        // Replace the current subtree, invalidating subtree node states
+                        zipper.inner.replace_focus(update.new_subtree);
+
+                        // Mark all ancestors as dirty and move back to the root
+                        zipper.mark_dirty_to_root();
+
+                        let (new_tree, root_transformed) = update
+                            .commands
+                            .apply(zipper.inner.focus().clone(), &mut zipper.meta);
+
+                        if root_transformed {
+                            // This must unfortunately throw all node states away,
+                            // since the `transform` command may redefine the whole tree
+                            zipper.inner.replace_focus(new_tree);
                         }
 
-                        if let Some(mut update) = selected {
-                            // Replace the current subtree, invalidating subtree node states
-                            zipper.inner.replace_focus(update.new_subtree);
-
-                            // Mark all ancestors as dirty and move back to the root
-                            zipper.mark_dirty_to_root();
-
-                            let new_tree;
-                            let root_transformed;
-                            {
-                                let mut meta_ref = meta_rc.borrow_mut();
-                                (new_tree, root_transformed) = update
-                                    .commands
-                                    .apply(zipper.inner.focus().clone(), &mut *meta_ref);
-                            }
-
-                            if root_transformed {
-                                // This must unfortunately throw all node states away,
-                                // since the `transform` command may redefine the whole tree
-                                zipper.inner.replace_focus(new_tree);
-                            }
-
-                            continue 'main;
-                        } else {
-                            zipper.set_dirty_from(level + 1);
-                        }
+                        continue 'main;
+                    } else {
+                        zipper.set_dirty_from(level + 1);
                     }
                 }
-
-                // All rules have been tried with no more changes
-                break;
             }
 
-            // Get the resulting tree & drop the zipper so that only 1 ref to metadata exists.
-            final_tree = zipper.rebuild_root();
+            // All rules have been tried with no more changes
+            break;
         }
 
-        let final_meta = Rc::try_unwrap(meta_rc).ok().unwrap().into_inner();
-        (final_tree, final_meta)
+        zipper.into()
     }
 }
 
@@ -239,19 +217,18 @@ impl EngineNodeState {
 }
 
 /// A Zipper with optimisations for tree transformation.
-#[derive(Clone)]
-struct EngineZipper<'brw, T: Uniplate, M> {
+struct EngineZipper<'events, T: Uniplate, M> {
     inner: TaggedZipper<T, EngineNodeState, fn(&T) -> EngineNodeState>,
-    event_handlers: &'brw EventHandlers<T, M>,
-    meta_rc: Rc<RefCell<M>>,
+    event_handlers: &'events EventHandlers<T, M>,
+    meta: M,
 }
 
-impl<'brw, T: Uniplate, M> EngineZipper<'brw, T, M> {
-    pub fn new(tree: T, meta: Rc<RefCell<M>>, event_handlers: &'brw EventHandlers<T, M>) -> Self {
+impl<'events, T: Uniplate, M> EngineZipper<'events, T, M> {
+    pub fn new(tree: T, meta: M, event_handlers: &'events EventHandlers<T, M>) -> Self {
         EngineZipper {
             inner: TaggedZipper::new(tree, EngineNodeState::new),
-            event_handlers: &event_handlers,
-            meta_rc: meta,
+            event_handlers: event_handlers,
+            meta: meta,
         }
     }
 
@@ -294,18 +271,16 @@ impl<'brw, T: Uniplate, M> EngineZipper<'brw, T, M> {
 
     fn go_up(&mut self) -> Option<()> {
         {
-            let mut meta = self.meta_rc.borrow_mut();
             self.event_handlers
-                .trigger_on_exit(self.inner.focus(), &mut *meta);
+                .trigger_on_exit(self.inner.focus(), &mut self.meta);
         }
         self.inner.go_up()
     }
 
     fn go_down(&mut self) -> Option<()> {
         {
-            let mut meta = self.meta_rc.borrow_mut();
             self.event_handlers
-                .trigger_on_enter(self.inner.focus(), &mut *meta);
+                .trigger_on_enter(self.inner.focus(), &mut self.meta);
         }
         self.inner.go_down()
     }
@@ -326,8 +301,12 @@ impl<'brw, T: Uniplate, M> EngineZipper<'brw, T, M> {
             self.set_dirty_from(0);
         }
     }
+}
 
-    pub fn rebuild_root(self) -> T {
-        self.inner.rebuild_root()
+impl<T: Uniplate, M> Into<(T, M)> for EngineZipper<'_, T, M> {
+    fn into(self) -> (T, M) {
+        let meta = self.meta;
+        let tree = self.inner.rebuild_root();
+        (tree, meta)
     }
 }

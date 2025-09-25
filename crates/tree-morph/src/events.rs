@@ -1,12 +1,12 @@
 use uniplate::Uniplate;
 
-pub struct EventHandlers<T: Uniplate, M> {
+pub(crate) struct EventHandlers<T: Uniplate, M> {
     on_enter: Vec<fn(&T, &mut M)>,
     on_exit: Vec<fn(&T, &mut M)>,
 }
 
 impl<T: Uniplate, M> EventHandlers<T, M> {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         EventHandlers {
             on_enter: vec![],
             on_exit: vec![],

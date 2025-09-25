@@ -54,10 +54,7 @@ fn circ_circ_tri() {
 
     // Same priority group - 2nd rule applies first as it applies higher in the tree
     let engine = EngineBuilder::new()
-        .add_rule_group(
-            rule_fns![circ_tri_to_tri, circ_circ_tri_to_sqr],
-            select_first,
-        )
+        .add_rule_group(rule_fns![circ_tri_to_tri, circ_circ_tri_to_sqr])
         .build();
     let (result, _) = engine.morph(expr, ());
 
@@ -88,7 +85,8 @@ fn shape_multiple_rules_panic() {
 
     // Same rule twice, applicable at the same time
     let engine = EngineBuilder::new()
-        .add_rule_group(rule_fns![circ_tri_to_tri, circ_tri_to_tri], select_panic)
+        .set_selector(select_panic)
+        .add_rule_group(rule_fns![circ_tri_to_tri, circ_tri_to_tri])
         .build();
     engine.morph(expr, ());
 }
