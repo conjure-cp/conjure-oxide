@@ -113,22 +113,21 @@ where
     /// );
     ///
     /// // Try with both rules in the same group, keeping track of the number of rule applications
-    /// let (result, num_applications) = morph(
-    ///     vec![rule_fns![rule_eval_mul, rule_expand_sqr]],
-    ///     select_panic,
-    ///     expr.clone(),
-    ///     0
-    /// );
+    /// let engine = EngineBuilder::new()
+    ///     .set_selector(select_panic)
+    ///     .add_rule_group(rule_fns![rule_eval_mul, rule_expand_sqr])
+    ///     .build();
+    /// let (result, num_applications) = engine.morph(expr.clone(), 0);
     /// assert_eq!(result, Expr::Val(4));
     /// assert_eq!(num_applications, 4); // The `Sqr` is expanded first, causing duplicate work
     ///
     /// // Move the evaluation rule to an earlier group
-    /// let (result, num_applications) = morph(
-    ///     vec![rule_fns![rule_eval_mul], rule_fns![rule_expand_sqr]],
-    ///     select_panic,
-    ///     expr.clone(),
-    ///     0
-    /// );
+    /// let engine = EngineBuilder::new()
+    ///     .set_selector(select_panic)
+    ///     .add_rule_group(rule_fns![rule_eval_mul])
+    ///     .add_rule_group(rule_fns![rule_expand_sqr])
+    ///     .build();
+    /// let (result, num_applications) = engine.morph(expr.clone(), 0);
     /// assert_eq!(result, Expr::Val(4));
     /// assert_eq!(num_applications, 3); // Now the sub-expression (1 * 2) is evaluated first
     /// ```

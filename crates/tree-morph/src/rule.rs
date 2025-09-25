@@ -56,7 +56,10 @@ use uniplate::Uniplate;
 ///     None // Never applicable
 /// }
 ///
-/// let (result, _) = morph(vec![rule_fns![my_rule_fn]], Term::A, ());
+/// let engine = EngineBuilder::new()
+///     .add_rule_group(rule_fns![my_rule_fn])
+///     .build();
+/// let (result, _) = engine.morph(Term::A, ());
 /// assert_eq!(result, Term::A);
 ///
 ///
@@ -74,10 +77,16 @@ use uniplate::Uniplate;
 ///     }
 /// }
 ///
-/// let (result, _) = morph(vec![vec![CustomRule(false)]], Term::A, ());
+/// let engine = EngineBuilder::new()
+///     .add_rule(CustomRule(false))
+///     .build();
+/// let (result, _) = engine.morph(Term::A, ());
 /// assert_eq!(result, Term::A);
 ///
-/// let (result, _) = morph(vec![vec![CustomRule(true)]], Term::A, ());
+/// let engine = EngineBuilder::new()
+///     .add_rule(CustomRule(true))
+///     .build();
+/// let (result, _) = engine.morph(Term::A, ());
 /// assert_eq!(result, Term::B);
 /// ```
 pub trait Rule<T: Uniplate, M> {
@@ -144,8 +153,6 @@ pub type RuleFn<T, M> = fn(&mut Commands<T, M>, &T, &M) -> Option<T>;
 ///     vec![rule_a as RuleFn<_, _>], // Same as above
 ///     rule_fns![rule_b, |_, _, _| None], // Closures and fn pointers can be mixed
 /// ];
-///
-/// morph(rules, Foo, ());
 /// ```
 #[macro_export]
 macro_rules! rule_fns {

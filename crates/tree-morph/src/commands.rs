@@ -60,7 +60,10 @@ enum Command<T: Uniplate, M> {
 /// }
 ///
 /// // Start with the expression 'A' and a metadata value of 'false'
-/// let (result, meta) = morph(vec![rule_fns![rule]], Expr::A, false);
+/// let engine = EngineBuilder::new()
+///     .add_rule_group(rule_fns![rule])
+///     .build();
+/// let (result, meta) = engine.morph(Expr::A, false);
 ///
 /// // After applying the rule itself, the commands are applied in order
 /// assert_eq!(result, Expr::C);
