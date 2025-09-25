@@ -1,12 +1,11 @@
 use itertools::Itertools;
 use tree_morph::{
     helpers::select_panic,
-    prelude::{morph, select_first},
+    prelude::*,
 };
 
 use crate::{
     Model,
-    ast::{Expression, SymbolTable},
     bug,
 };
 
@@ -30,9 +29,11 @@ pub fn rewrite_morph<'a>(
         select_first
     };
 
-    let (expr, symbol_table): (Expression, SymbolTable) = morph(
-        rules_grouped,
-        selector,
+    let engine = EngineBuilder::new()
+        .set_selector(selector)
+        .append_rule_groups(rules_grouped)
+        .build();
+    let (expr, symbol_table) = engine.morph(
         submodel.root().clone(),
         submodel.symbols().clone(),
     );

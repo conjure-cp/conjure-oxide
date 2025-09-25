@@ -304,9 +304,11 @@ fn integration_test_inner(
                 .map(|(_, rule)| rule.into_iter().map(|f| f.rule).collect_vec())
                 .collect_vec();
 
-            let (expr, symbol_table): (Expression, SymbolTable) = morph(
-                rules_grouped,
-                select_panic,
+            let engine = EngineBuilder::new()
+                .set_selector(select_panic)
+                .append_rule_groups(rules_grouped)
+                .build();
+            let (expr, symbol_table) = engine.morph(
                 submodel.root().clone(),
                 submodel.symbols().clone(),
             );
