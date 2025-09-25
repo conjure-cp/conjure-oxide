@@ -1,9 +1,6 @@
 //! Perform gradual rule-based transformations on trees.
 //!
-//! See [`morph`] for more info.
-
-use std::cell::RefCell;
-use std::rc::Rc;
+//! See the [`morph`](Engine::morph) for more information.
 
 use crate::events::EventHandlers;
 use crate::helpers::{SelectorFn, one_or_select};
@@ -11,6 +8,9 @@ use crate::prelude::Rule;
 
 use uniplate::{Uniplate, tagged_zipper::TaggedZipper};
 
+/// An engine for exhaustively transforming trees with user-defined rules.
+///
+/// See the [`morph`](Engine::morph) method for more information.
 pub struct Engine<T, M, R>
 where
     T: Uniplate,
@@ -29,7 +29,7 @@ where
     T: Uniplate,
     R: Rule<T, M>,
 {
-    /// Exhaustively rewrites a tree using a set of transformation rules.
+    /// Exhaustively rewrites a tree using user-defined rule groups.
     ///
     /// Rewriting is complete when all rules have been attempted with no change. Rules may be organised
     /// into groups to control the order in which they are attempted.
@@ -41,7 +41,7 @@ where
     /// This can cause problems if a rule which should ideally be applied early (e.g. evaluating
     /// constant expressions) is left until later.
     ///
-    /// To solve this, rules can be organised into different collections in the `groups` argument.
+    /// To solve this, rules are organised into different collections or "groups".
     /// The engine will apply rules in an earlier group to the entire tree before trying later groups.
     /// That is, no rule is attempted if a rule in an earlier group is applicable to any part of the
     /// tree.
@@ -56,12 +56,36 @@ where
     /// common function is [`select_first`](crate::helpers::select_first), which simply returns the
     /// first applicable rule.
     ///
+    /// # Event Handlers
+    ///
+    /// The engine provides events for more fine-tuned control over rewriting behaviour. Events have mutable
+    /// access to the current metadata.
+    ///
+    /// The engine will call the provided handlers for the "enter" and
+    /// "exits" events as it enters and exits subtrees while traversing, respectively.
+    ///
+    /// The "enter" event is triggered when the engine moves down into a subtree.
+    /// As a result, when a node is passed to rules, all nodes above it will have
+    /// been passed to handlers for this event, in ascending order of their proximity to the root.
+    ///
+    /// The "exit" event is triggered when the engine leaves a subtree.
+    /// All nodes passed to "enter" event handlers will also be passed to "exit"
+    /// event handlers in reverse order.
+    ///
+    /// In effect, before a node is passed to rules, all nodes in the path from the root (including the
+    /// current node) will have been passed to the "enter" event in order. No nodes are skipped.
+    ///
+    /// Event handling is useful when, for example, using a symbol table to keep track of variable definitions.
+    /// When entering a scope where a variable is defined, one can place the variable and its value into the table.
+    /// That stack can then be used for quick value lookup while inside the scope. When leaving the scope the
+    /// variable can be removed from the table.
+    ///
     /// # Optimizations
     ///
     /// To optimize the morph function, we use a dirty/clean approach. Since whether a rule applies
     /// is purely a function of a node and its children, rules should only be checked once unless a node
-    /// or one of its children has been changed. To enforce this we use a skeleton tree approach, which
-    /// keeps track of the current level of which a node has had a rule check applied.
+    /// or one of its children has been changed.
+    ///
     /// # Example
     /// ```rust
     /// use tree_morph::{prelude::*, helpers::select_panic};
@@ -269,23 +293,33 @@ impl<'events, T: Uniplate, M> EngineZipper<'events, T, M> {
     }
 
     fn go_up(&mut self) -> Option<()> {
-        {
+        // Call the exit event on the node which will be exited
+        // TODO: the clone here is very expensive since it's done constantly.
+        let node_clone = self.inner.focus().clone();
+        self.inner.go_up().inspect(|_| {
             self.event_handlers
-                .trigger_on_exit(self.inner.focus(), &mut self.meta);
-        }
-        self.inner.go_up()
+                .trigger_on_exit(&node_clone, &mut self.meta);
+        })
     }
 
     fn go_down(&mut self) -> Option<()> {
-        {
+        self.inner.go_down().inspect(|_| {
+            // Call the enter event on the node which has been entered.
             self.event_handlers
                 .trigger_on_enter(self.inner.focus(), &mut self.meta);
-        }
-        self.inner.go_down()
+        })
     }
 
     fn go_right(&mut self) -> Option<()> {
-        self.inner.go_right()
+        // Call relevant events on the previous and next nodes
+        // TODO: the clone here is very expensive since it's done constantly.
+        let node_clone = self.inner.focus().clone();
+        self.inner.go_right().inspect(|_| {
+            self.event_handlers
+                .trigger_on_exit(&node_clone, &mut self.meta);
+            self.event_handlers
+                .trigger_on_enter(self.inner.focus(), &mut self.meta);
+        })
     }
 
     /// Mark the current focus as visited at the given level.

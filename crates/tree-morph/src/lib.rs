@@ -4,7 +4,7 @@
 pub mod commands;
 pub mod engine;
 pub mod engine_builder;
-pub mod events;
+mod events;
 pub mod helpers;
 pub mod rule;
 mod update;
