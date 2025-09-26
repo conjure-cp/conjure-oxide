@@ -1,16 +1,16 @@
-use conjure_core::ast::Expression as Expr;
-use conjure_core::ast::SymbolTable;
-use conjure_core::rule_engine::{
-    register_rule, ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult,
-    Reduction,
+use conjure_cp::ast::Expression as Expr;
+use conjure_cp::ast::SymbolTable;
+use conjure_cp::rule_engine::{
+    ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
+    register_rule,
 };
 
-use conjure_core::ast::AbstractLiteral::Matrix;
-use conjure_core::ast::{Atom, Domain, Literal, Range};
-use conjure_core::into_matrix_expr;
-use conjure_core::metadata::Metadata;
+use conjure_cp::ast::AbstractLiteral::Matrix;
+use conjure_cp::ast::Metadata;
+use conjure_cp::ast::{Atom, Domain, Literal, Moo, Range};
+use conjure_cp::into_matrix_expr;
 
-use conjure_essence_macros::essence_expr;
+use conjure_cp::essence_expr;
 use itertools::Itertools;
 
 use crate::cnf::tseytin_and;
@@ -33,23 +33,27 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
     };
 
     // thing we are representing must be a variable
-    symbols
-        .lookup(name)
-        .ok_or(RuleNotApplicable)?
-        .as_var()
-        .ok_or(RuleNotApplicable)?;
+    // symbols
+    //     .lookup(name)
+    //     .ok_or(RuleNotApplicable)?
+    //     .as_var()
+    //     .ok_or(RuleNotApplicable)?;
 
     // thing we are representing must be an integer
-    let Domain::Int(ranges) = &symbols.resolve_domain(name).unwrap() else {
+    let Domain::Int(ranges) = name.domain().unwrap() else {
         return Err(RuleNotApplicable);
     };
 
     let mut symbols = symbols.clone();
 
-    let repr_exists = symbols.get_representation(name, &["int_to_atom"]).is_some();
+    let new_name = &name.name().to_owned();
+
+    let repr_exists = symbols
+        .get_representation(new_name, &["int_to_atom"])
+        .is_some();
 
     let representation = symbols
-        .get_or_add_representation(name, &["int_to_atom"])
+        .get_or_add_representation(new_name, &["int_to_atom"])
         .ok_or(RuleNotApplicable)?;
 
     let bits = representation[0]
@@ -59,13 +63,13 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
         .map(|(_, expr)| expr.clone())
         .collect();
 
-    let cnf_int = Expr::CnfInt(Metadata::new(), Box::new(into_matrix_expr!(bits)));
+    let cnf_int = Expr::CnfInt(Metadata::new(), Moo::new(into_matrix_expr!(bits)));
 
     if !repr_exists {
         // add domain ranges as constraints if this is the first time the representation is added
         Ok(Reduction::new(
             cnf_int.clone(),
-            vec![int_domain_to_expr(cnf_int.clone(), ranges)], // contains domain rules
+            vec![int_domain_to_expr(cnf_int.clone(), &ranges)], // contains domain rules
             symbols,
         ))
     } else {
@@ -75,8 +79,12 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
 
 #[register_rule(("CNF", 9500))]
 fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let Expr::Atomic(_, Atom::Literal(Literal::Int(mut value))) = expr else {
-        return Err(RuleNotApplicable);
+    let mut value = {
+        if let Expr::Atomic(_, Atom::Literal(Literal::Int(v))) = expr {
+            *v
+        } else {
+            return Err(RuleNotApplicable);
+        }
     };
 
     //TODO: add support for negatives
@@ -93,7 +101,7 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::pure(Expr::CnfInt(
         Metadata::new(),
-        Box::new(into_matrix_expr!(binary_encoding)),
+        Moo::new(into_matrix_expr!(binary_encoding)),
     )))
 }
 
@@ -103,7 +111,7 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
     let mut output = vec![];
 
-    let value = Box::new(subject);
+    let value = Moo::new(subject);
 
     for range in ranges {
         match range {
@@ -114,7 +122,7 @@ fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
         }
     }
 
-    Expr::Or(Metadata::new(), Box::new(into_matrix_expr!(output)))
+    Expr::Or(Metadata::new(), Moo::new(into_matrix_expr!(output)))
 }
 
 /// Converts an inequality expression between two CnfInts to a boolean expression in cnf.
@@ -133,7 +141,7 @@ fn cnf_int_ineq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         _ => return Err(RuleNotApplicable),
     };
 
-    let binding = validate_cnf_int_operands(vec![unbox(lhs), unbox(rhs)])?;
+    let binding = validate_cnf_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
     let [lhs_bits, rhs_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -186,7 +194,7 @@ fn cnf_int_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let binding = validate_cnf_int_operands(vec![unbox(lhs), unbox(rhs)])?;
+    let binding = validate_cnf_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
     let [lhs_bits, rhs_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -225,7 +233,7 @@ fn cnf_int_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let binding = validate_cnf_int_operands(vec![unbox(lhs), unbox(rhs)])?;
+    let binding = validate_cnf_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
     let [lhs_bits, rhs_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -338,7 +346,7 @@ fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let result = exprs_bits.pop().unwrap();
 
     Ok(Reduction::cnf(
-        Expr::CnfInt(Metadata::new(), Box::new(into_matrix_expr!(result))),
+        Expr::CnfInt(Metadata::new(), Moo::new(into_matrix_expr!(result))),
         new_clauses,
         new_symbols,
     ))
@@ -488,7 +496,11 @@ fn cnf_shift_add_multiply(
 /// ```
 #[register_rule(("CNF", 9000))]
 fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let Expr::Product(_, exprs_list) = expr else {
+    let Expr::Product(_, exprs) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Expr::AbstractLiteral(_, Matrix(exprs_list, _)) = exprs.as_ref() else {
         return Err(RuleNotApplicable);
     };
 
@@ -517,7 +529,7 @@ fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let result = exprs_bits.pop().unwrap();
 
     Ok(Reduction::cnf(
-        Expr::CnfInt(Metadata::new(), Box::new(into_matrix_expr!(result))),
+        Expr::CnfInt(Metadata::new(), Moo::new(into_matrix_expr!(result))),
         new_clauses,
         new_symbols,
     ))
@@ -535,7 +547,7 @@ fn cnf_int_neg(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let binding = validate_cnf_int_operands(vec![unbox(expr)])?;
+    let binding = validate_cnf_int_operands(vec![expr.as_ref().clone()])?;
     let [bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -545,7 +557,7 @@ fn cnf_int_neg(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let result = tseytin_negate(&bits, BITS, &mut new_clauses, &mut new_symbols);
 
     Ok(Reduction::cnf(
-        Expr::CnfInt(Metadata::new(), Box::new(into_matrix_expr!(result))),
+        Expr::CnfInt(Metadata::new(), Moo::new(into_matrix_expr!(result))),
         new_clauses,
         new_symbols,
     ))
@@ -610,7 +622,7 @@ fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let result = exprs_bits.pop().unwrap();
 
     Ok(Reduction::cnf(
-        Expr::CnfInt(Metadata::new(), Box::new(into_matrix_expr!(result))),
+        Expr::CnfInt(Metadata::new(), Moo::new(into_matrix_expr!(result))),
         new_clauses,
         new_symbols,
     ))
@@ -692,7 +704,7 @@ fn cnf_int_max(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let result = exprs_bits.pop().unwrap();
 
     Ok(Reduction::cnf(
-        Expr::CnfInt(Metadata::new(), Box::new(into_matrix_expr!(result))),
+        Expr::CnfInt(Metadata::new(), Moo::new(into_matrix_expr!(result))),
         new_clauses,
         new_symbols,
     ))
@@ -710,7 +722,7 @@ fn cnf_int_abs(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let binding = validate_cnf_int_operands(vec![unbox(expr)])?;
+    let binding = validate_cnf_int_operands(vec![expr.as_ref().clone()])?;
     let [bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -728,12 +740,17 @@ fn cnf_int_abs(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     result = tseytin_add_two_power(&result, 0, BITS, &mut new_clauses, &mut new_symbols);
 
     for i in 0..BITS {
-        result[i] = tseytin_mux(bits[BITS - 1].clone(), bits[i].clone(), result[i].clone(),&mut new_clauses,
-            &mut new_symbols,)
+        result[i] = tseytin_mux(
+            bits[BITS - 1].clone(),
+            bits[i].clone(),
+            result[i].clone(),
+            &mut new_clauses,
+            &mut new_symbols,
+        )
     }
 
     Ok(Reduction::cnf(
-        Expr::CnfInt(Metadata::new(), Box::new(into_matrix_expr!(result))),
+        Expr::CnfInt(Metadata::new(), Moo::new(into_matrix_expr!(result))),
         new_clauses,
         new_symbols,
     ))
@@ -753,7 +770,7 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let binding = validate_cnf_int_operands(vec![unbox(numer), unbox(denom)])?;
+    let binding = validate_cnf_int_operands(vec![numer.as_ref().clone(), denom.as_ref().clone()])?;
     let [numer_bits, denom_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -779,7 +796,6 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             r[j] = r[j - 1].clone();
         }
         r[0] = false.into();
-
 
         rminusd = tseytin_int_adder(
             &r.clone(),
@@ -810,7 +826,7 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     }
 
     Ok(Reduction::cnf(
-        Expr::CnfInt(Metadata::new(), Box::new(into_matrix_expr!(quotient))),
+        Expr::CnfInt(Metadata::new(), Moo::new(into_matrix_expr!(quotient))),
         new_clauses,
         new_symbols,
     ))

@@ -1,6 +1,6 @@
 use conjure_cp::{
     ast::Metadata,
-    ast::{Atom, DeclarationPtr, Expression as Expr, Moo, SymbolTable, categories::Category},
+    ast::{Atom, DeclarationPtr, Expression as Expr, Moo, SymbolTable, categories::Category, Name},
 };
 
 use tracing::{instrument, trace};
@@ -225,6 +225,6 @@ impl ToAuxVarOutput {
 
     /// Returns the name of the auxiliary variable.
     pub fn aux_name(&self) -> Name {
-        self.aux_name.clone()
+        self.aux_declaration.name().clone()
     }
 }

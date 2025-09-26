@@ -4,18 +4,18 @@
 
 use std::rc::Rc;
 
-use conjure_core::solver::SolverFamily;
-use conjure_core::{ast::Declaration, rule_engine::register_rule_set};
+use conjure_cp::solver::SolverFamily;
+use conjure_cp::{rule_engine::register_rule_set};
 
-use conjure_core::ast::{Atom, Expression as Expr, Literal, Moo};
-use conjure_core::metadata::Metadata;
-use conjure_core::rule_engine::{
+use conjure_cp::ast::{Atom, Expression as Expr, Literal, Moo};
+use conjure_cp::ast::Metadata;
+use conjure_cp::rule_engine::{
     register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
 };
 
-use conjure_core::ast::AbstractLiteral::Matrix;
-use conjure_core::ast::{Domain, SymbolTable};
-use conjure_core::into_matrix_expr;
+use conjure_cp::ast::AbstractLiteral::Matrix;
+use conjure_cp::ast::{Domain, SymbolTable, DeclarationPtr};
+use conjure_cp::into_matrix_expr;
 
 use crate::utils::is_literal;
 
@@ -89,14 +89,11 @@ fn apply_tseytin_and_or(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 }
 
 fn create_bool_aux(symbols: &mut SymbolTable) -> Expr {
-    let name = symbols.gensym();
+    let name = symbols.gensym(&Domain::Bool);
 
-    symbols.insert(Rc::new(Declaration::new_var(
-        name.clone(),
-        Domain::BoolDomain,
-    )));
+    symbols.insert(name.clone());
 
-    Expr::Atomic(Metadata::new(), Atom::Reference(name.clone()))
+    Expr::Atomic(Metadata::new(), Atom::Reference(name))
 }
 
 // TODO: Optimize all logic operators for constants
@@ -110,10 +107,10 @@ pub fn tseytin_and(exprs: &Vec<Expr>, clauses: &mut Vec<Expr>, symbols: &mut Sym
 
     for x in exprs {
         clauses.extend(create_clause(vec![
-            Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
+            Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
             x.clone(),
         ]));
-        full_conj.push(Expr::Not(Metadata::new(), Box::new(x.clone())));
+        full_conj.push(Expr::Not(Metadata::new(), Moo::new(x.clone())));
     }
     clauses.extend(create_clause(full_conj));
 
@@ -124,11 +121,11 @@ pub fn tseytin_and(exprs: &Vec<Expr>, clauses: &mut Vec<Expr>, symbols: &mut Sym
 pub fn tseytin_or(exprs: &Vec<Expr>, clauses: &mut Vec<Expr>, symbols: &mut SymbolTable) -> Expr {
     let new_expr = create_bool_aux(symbols);
 
-    let mut full_conj: Vec<Expr> = vec![Expr::Not(Metadata::new(), Box::new(new_expr.clone()))];
+    let mut full_conj: Vec<Expr> = vec![Expr::Not(Metadata::new(), Moo::new(new_expr.clone()))];
 
     for x in exprs {
         clauses.extend(create_clause(vec![
-            Expr::Not(Metadata::new(), Box::new(x.clone())),
+            Expr::Not(Metadata::new(), Moo::new(x.clone())),
             new_expr.clone(),
         ]));
         full_conj.push(x.clone());
@@ -144,8 +141,8 @@ pub fn tseytin_not(x: Expr, clauses: &mut Vec<Expr>, symbols: &mut SymbolTable) 
     let new_expr = create_bool_aux(symbols);
 
     clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Box::new(x.clone())),
-        Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
+        Expr::Not(Metadata::new(), Moo::new(x.clone())),
+        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
     ]));
     clauses.extend(create_clause(vec![x.clone(), new_expr.clone()]));
 
@@ -157,20 +154,20 @@ pub fn tseytin_iff(x: Expr, y: Expr, clauses: &mut Vec<Expr>, symbols: &mut Symb
     let new_expr = create_bool_aux(symbols);
 
     clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Box::new(x.clone())),
-        Expr::Not(Metadata::new(), Box::new(y.clone())),
+        Expr::Not(Metadata::new(), Moo::new(x.clone())),
+        Expr::Not(Metadata::new(), Moo::new(y.clone())),
         new_expr.clone(),
     ]));
     clauses.extend(create_clause(vec![x.clone(), y.clone(), new_expr.clone()]));
     clauses.extend(create_clause(vec![
         x.clone(),
-        Expr::Not(Metadata::new(), Box::new(y.clone())),
-        Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
+        Expr::Not(Metadata::new(), Moo::new(y.clone())),
+        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
     ]));
     clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Box::new(x.clone())),
+        Expr::Not(Metadata::new(), Moo::new(x.clone())),
         y.clone(),
-        Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
+        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
     ]));
 
     new_expr
@@ -181,22 +178,22 @@ pub fn tseytin_xor(x: Expr, y: Expr, clauses: &mut Vec<Expr>, symbols: &mut Symb
     let new_expr = create_bool_aux(symbols);
 
     clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Box::new(x.clone())),
-        Expr::Not(Metadata::new(), Box::new(y.clone())),
-        Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
+        Expr::Not(Metadata::new(), Moo::new(x.clone())),
+        Expr::Not(Metadata::new(), Moo::new(y.clone())),
+        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
     ]));
     clauses.extend(create_clause(vec![
         x.clone(),
         y.clone(),
-        Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
+        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
     ]));
     clauses.extend(create_clause(vec![
         x.clone(),
-        Expr::Not(Metadata::new(), Box::new(y.clone())),
+        Expr::Not(Metadata::new(), Moo::new(y.clone())),
         new_expr.clone(),
     ]));
     clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Box::new(x.clone())),
+        Expr::Not(Metadata::new(), Moo::new(x.clone())),
         y.clone(),
         new_expr.clone(),
     ]));
@@ -209,14 +206,14 @@ pub fn tseytin_imply(x: Expr, y: Expr, clauses: &mut Vec<Expr>, symbols: &mut Sy
     let new_expr = create_bool_aux(symbols);
 
     clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
-        Expr::Not(Metadata::new(), Box::new(x.clone())),
+        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
+        Expr::Not(Metadata::new(), Moo::new(x.clone())),
         y.clone(),
     ]));
     clauses.extend(create_clause(vec![new_expr.clone(), x.clone()]));
     clauses.extend(create_clause(vec![
         new_expr.clone(),
-        Expr::Not(Metadata::new(), Box::new(y.clone())),
+        Expr::Not(Metadata::new(), Moo::new(y.clone())),
     ]));
 
     new_expr
@@ -237,17 +234,17 @@ pub fn tseytin_mux(
     let new_expr = create_bool_aux(symbols);
 
     clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
+        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
         cond.clone(),
         a.clone(),
     ]));
     clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
-        Expr::Not(Metadata::new(), Box::new(cond.clone())),
+        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
+        Expr::Not(Metadata::new(), Moo::new(cond.clone())),
         b.clone(),
     ]));
     clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Box::new(new_expr.clone())),
+        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
         a.clone(),
         b.clone(),
     ]));
@@ -255,17 +252,17 @@ pub fn tseytin_mux(
     clauses.extend(create_clause(vec![
         new_expr.clone(),
         cond.clone(),
-        Expr::Not(Metadata::new(), Box::new(a.clone())),
+        Expr::Not(Metadata::new(), Moo::new(a.clone())),
     ]));
     clauses.extend(create_clause(vec![
         new_expr.clone(),
-        Expr::Not(Metadata::new(), Box::new(cond.clone())),
-        Expr::Not(Metadata::new(), Box::new(b.clone())),
+        Expr::Not(Metadata::new(), Moo::new(cond.clone())),
+        Expr::Not(Metadata::new(), Moo::new(b.clone())),
     ]));
     clauses.extend(create_clause(vec![
         new_expr.clone(),
-        Expr::Not(Metadata::new(), Box::new(a.clone())),
-        Expr::Not(Metadata::new(), Box::new(b.clone())),
+        Expr::Not(Metadata::new(), Moo::new(a.clone())),
+        Expr::Not(Metadata::new(), Moo::new(b.clone())),
     ]));
 
     new_expr
@@ -296,7 +293,7 @@ fn create_clause(exprs: Vec<Expr>) -> Option<Expr> {
 
     Some(Expr::Clause(
         Metadata::new(),
-        Box::new(into_matrix_expr![new_terms]),
+        Moo::new(into_matrix_expr![new_terms]),
     ))
 }
 
@@ -331,7 +328,7 @@ fn apply_tseytin_not(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_clauses = vec![];
     let mut new_symbols = symbols.clone();
 
-    let new_expr = tseytin_not(*x.clone(), &mut new_clauses, &mut new_symbols);
+    let new_expr = tseytin_not(x.as_ref().clone(), &mut new_clauses, &mut new_symbols);
 
     Ok(Reduction::cnf(new_expr, new_clauses, new_symbols))
 }
@@ -365,7 +362,7 @@ fn apply_tseytin_iff(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_clauses = vec![];
     let mut new_symbols = symbols.clone();
 
-    let new_expr = tseytin_iff(*x.clone(), *y.clone(), &mut new_clauses, &mut new_symbols);
+    let new_expr = tseytin_iff(x.as_ref().clone(), y.as_ref().clone(), &mut new_clauses, &mut new_symbols);
 
     Ok(Reduction::cnf(new_expr, new_clauses, new_symbols))
 }
@@ -399,7 +396,7 @@ fn apply_tseytin_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
     let mut new_clauses = vec![];
     let mut new_symbols = symbols.clone();
 
-    new_expr = tseytin_imply(*x.clone(), *y.clone(), &mut new_clauses, &mut new_symbols);
+    new_expr = tseytin_imply(x.as_ref().clone(), y.as_ref().clone(), &mut new_clauses, &mut new_symbols);
 
     Ok(Reduction::cnf(new_expr, new_clauses, new_symbols))
 }

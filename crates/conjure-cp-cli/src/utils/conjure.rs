@@ -127,7 +127,7 @@ pub fn get_sat_solutions(
     num_sols: i32,
     solver_input_file: &Option<PathBuf>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
-    let solver = Solver::new(SAT::default());
+    let solver = Solver::new(Sat::default());
     println!("Building SAT model...");
 
     let symbols_rc = Rc::clone(model.as_submodel().symbols_ptr_unchecked());
@@ -213,8 +213,8 @@ pub fn get_sat_solutions(
             .clone()
             .into_iter()
             .filter(|(name, _)| {
-                !matches!(name, Name::RepresentedName(_, _, _))
-                    && !matches!(name, Name::MachineName(_))
+                !matches!(name, Name::Represented(_))
+                    && !matches!(name, Name::Machine(_))
             })
             .collect();
     }

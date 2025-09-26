@@ -59,13 +59,13 @@ pub fn handle_atom(
             conjure_cp_core::ast::Atom::Literal(literal) => {
                 todo!("Not Sure if we are handling Lits as-is or not..")
             }
-            conjure_cp_core::ast::Atom::Reference(name) => match name {
-                conjure_cp_core::ast::Name::UserName(_)
-                | conjure_cp_core::ast::Name::RepresentedName(_, _, _)
-                | conjure_cp_core::ast::Name::MachineName(_) => {
+            conjure_cp_core::ast::Atom::Reference(decl) => match &*(decl.name()) {
+                conjure_cp_core::ast::Name::User(_)
+                | conjure_cp_core::ast::Name::Represented(_)
+                | conjure_cp_core::ast::Name::Machine(_) => {
                     // TODO: Temp Clone
                     // let m = n.clone();
-                    let lit_temp: Lit = fetch_lit(name, vars_added, inst);
+                    let lit_temp: Lit = fetch_lit(decl.name().clone(), vars_added, inst);
                     if polarity {
                         lit_temp
                     } else {
@@ -96,9 +96,9 @@ pub fn handle_disjn(
     match disjn {
         // treat ors and clauses the same
         Expression::Or(_, vec) | Expression::Clause(_, vec) => {
-            let cl = &vec.clone().unwrap_list().unwrap();
+            let cl = Moo::unwrap_or_clone(vec.clone()).unwrap_list().unwrap();
             for literal in cl {
-                let lit: Lit = handle_lit(literal, vars_added, inst_in_use);
+                let lit: Lit = handle_lit(&literal, vars_added, inst_in_use);
                 lits.add(lit);
             }
         }

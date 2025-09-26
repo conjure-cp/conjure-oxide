@@ -473,10 +473,10 @@ pub enum Expression {
     ),
 
     // This expression is for encoding i32 ints as a vector of boolean expressions for cnf
-    CnfInt(Metadata, Box<Expression>),
+    CnfInt(Metadata, Moo<Expression>),
 
     // This expression represents a cnf clause in its simplest form, it should only contain atoms and should not be affected by the rule engine
-    Clause(Metadata, Box<Expression>),
+    Clause(Metadata, Moo<Expression>),
 }
 
 // for the given matrix literal, return a bounded domain from the min to max of applying op to each
@@ -767,10 +767,11 @@ impl Expression {
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(Domain::Bool),
             Expression::Abs(_, a) => a
                 .domain_of()?
-                .apply_i32(|a, _| Some(a.abs()), &a.domain_of()?),
-            Expression::MinionPow(_, _, _, _) => Some(Domain::BoolDomain),
+                .apply_i32(|a, _| Some(a.abs()), &a.domain_of()?)
+                .ok(),
+            Expression::MinionPow(_, _, _, _) => Some(Domain::Bool),
             Expression::CnfInt(_, _) => {
-                Some(Domain::IntDomain(vec![Range::Bounded(
+                Some(Domain::Int(vec![Range::Bounded(
                     i8::MIN.into(),
                     i8::MAX.into(),
                 )])) // BITS
@@ -779,8 +780,7 @@ impl Expression {
             // a disjunction of expressions, but rather a disjunction of atoms
             // Clauses should only be found within the `cnf_clauses` field of the model
             // and therefore should not be affected by the rule engine
-            Expression::Clause(_, _) => Some(Domain::BoolDomain),
-            Expression::MinionPow(_, _, _, _) => Some(Domain::Bool),
+            Expression::Clause(_, _) => Some(Domain::Bool),
             Expression::ToInt(_, _) => Some(Domain::Int(vec![Range::Bounded(0, 1)])),
         };
         match ret {
@@ -825,74 +825,6 @@ impl Expression {
             }
         }
         true
-    }
-
-    pub fn return_type(&self) -> Option<ReturnType> {
-        match self {
-            Expression::AbstractLiteral(_, _) => None,
-            Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
-                Some(subject.return_type()?)
-            }
-            Expression::UnsafeSlice(_, subject, _) | Expression::SafeSlice(_, subject, _) => {
-                Some(ReturnType::Matrix(Box::new(subject.return_type()?)))
-            }
-            Expression::InDomain(_, _, _) => Some(ReturnType::Bool),
-            Expression::Comprehension(_, _) => None,
-            Expression::Root(_, _) => Some(ReturnType::Bool),
-            Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
-            Expression::FromSolution(_, expr) => expr.return_type(),
-            Expression::Atomic(_, Atom::Literal(Literal::Int(_))) => Some(ReturnType::Int),
-            Expression::Atomic(_, Atom::Literal(Literal::Bool(_))) => Some(ReturnType::Bool),
-            Expression::Atomic(_, Atom::Literal(Literal::AbstractLiteral(_))) => None,
-            Expression::Atomic(_, Atom::Reference(_)) => None,
-            Expression::Scope(_, scope) => scope.return_type(),
-            Expression::Abs(_, _) => Some(ReturnType::Int),
-            Expression::Sum(_, _) => Some(ReturnType::Int),
-            Expression::Product(_, _) => Some(ReturnType::Int),
-            Expression::Min(_, _) => Some(ReturnType::Int),
-            Expression::Max(_, _) => Some(ReturnType::Int),
-            Expression::Not(_, _) => Some(ReturnType::Bool),
-            Expression::Or(_, _) => Some(ReturnType::Bool),
-            Expression::Imply(_, _, _) => Some(ReturnType::Bool),
-            Expression::Iff(_, _, _) => Some(ReturnType::Bool),
-            Expression::And(_, _) => Some(ReturnType::Bool),
-            Expression::Eq(_, _, _) => Some(ReturnType::Bool),
-            Expression::Neq(_, _, _) => Some(ReturnType::Bool),
-            Expression::Geq(_, _, _) => Some(ReturnType::Bool),
-            Expression::Leq(_, _, _) => Some(ReturnType::Bool),
-            Expression::Gt(_, _, _) => Some(ReturnType::Bool),
-            Expression::Lt(_, _, _) => Some(ReturnType::Bool),
-            Expression::SafeDiv(_, _, _) => Some(ReturnType::Int),
-            Expression::UnsafeDiv(_, _, _) => Some(ReturnType::Int),
-            Expression::FlatAllDiff(_, _) => Some(ReturnType::Bool),
-            Expression::FlatSumGeq(_, _, _) => Some(ReturnType::Bool),
-            Expression::FlatSumLeq(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionDivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::FlatIneq(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::AllDiff(_, _) => Some(ReturnType::Bool),
-            Expression::Bubble(_, _, _) => None, // TODO: (flm8) should this be a bool?
-            Expression::FlatWatchedLiteral(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionReify(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionReifyImply(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionWInIntervalSet(_, _, _) => Some(ReturnType::Bool),
-            Expression::MinionElementOne(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::AuxDeclaration(_, _, _) => Some(ReturnType::Bool),
-            Expression::UnsafeMod(_, _, _) => Some(ReturnType::Int),
-            Expression::SafeMod(_, _, _) => Some(ReturnType::Int),
-            Expression::MinionModuloEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::Neg(_, _) => Some(ReturnType::Int),
-            Expression::UnsafePow(_, _, _) => Some(ReturnType::Int),
-            Expression::SafePow(_, _, _) => Some(ReturnType::Int),
-            Expression::Minus(_, _, _) => Some(ReturnType::Int),
-            Expression::FlatAbsEq(_, _, _) => Some(ReturnType::Bool),
-            Expression::FlatMinusEq(_, _, _) => Some(ReturnType::Bool),
-            Expression::FlatProductEq(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::FlatWeightedSumLeq(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::MinionPow(_, _, _, _) => Some(ReturnType::Bool),
-            Expression::CnfInt(_, _) => Some(ReturnType::Int),
-            Expression::Clause(_, _) => Some(ReturnType::Bool),
-        }
     }
 
     pub fn is_clean(&self) -> bool {
@@ -1464,6 +1396,8 @@ impl Typeable for Expression {
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::MinionPow(_, _, _, _) => Some(ReturnType::Bool),
             Expression::ToInt(_, _) => Some(ReturnType::Int),
+            Expression::CnfInt(_, _) => Some(ReturnType::Int),
+            Expression::Clause(_, _) => Some(ReturnType::Bool),
         }
     }
 }

@@ -1,7 +1,6 @@
 // https://conjure-cp.github.io/conjure-oxide/docs/conjure_core/representation/trait.Representation.html
-use conjure_core::{
-    ast::{Atom, Declaration, Domain, Expression, Literal, Name, Range, SymbolTable},
-    metadata::Metadata,
+use conjure_cp::{
+    ast::{Atom, DeclarationPtr, Domain, Expression, Literal, Name, Range, SymbolTable, Metadata},
     register_representation,
     representation::Representation,
     rule_engine::ApplicationError,
@@ -26,11 +25,11 @@ impl IntToAtom {
 
     /// Gets the representation variable name for a specific index.
     fn index_to_name(&self, index: i32) -> Name {
-        Name::RepresentedName(
-            Box::new(self.src_var.clone()),
-            self.repr_name().to_string(),
-            format!("{:02}", index), // stored as _00, _01, ...
-        )
+        Name::Represented(
+            Box::new((self.src_var.clone(),
+            self.repr_name().into(),
+            format!("{:02}", index).into(), // stored as _00, _01, ...
+        )))
     }
 }
 
@@ -116,23 +115,24 @@ impl Representation for IntToAtom {
 
     fn expression_down(
         &self,
-        _: &SymbolTable,
+        st: &SymbolTable,
     ) -> Result<std::collections::BTreeMap<Name, Expression>, ApplicationError> {
         Ok(self
             .names()
             .map(|name| {
+                let decl = st.lookup(&name).unwrap();
                 (
                     name.clone(),
-                    Expression::Atomic(Metadata::new(), Atom::Reference(name)),
+                    Expression::Atomic(Metadata::new(), Atom::Reference(decl)),
                 )
             })
             .collect())
     }
 
-    fn declaration_down(&self) -> Result<Vec<Declaration>, ApplicationError> {
+    fn declaration_down(&self) -> Result<Vec<DeclarationPtr>, ApplicationError> {
         Ok(self
             .names()
-            .map(|name| Declaration::new_var(name, Domain::BoolDomain))
+            .map(|name| DeclarationPtr::new_var(name, Domain::Bool))
             .collect())
     }
 

@@ -66,17 +66,17 @@ fn get_ref_sols(
 ) -> HashMap<Name, Literal> {
     let mut solution: HashMap<Name, Literal> = HashMap::new();
 
-    for reference in find_refs {
+    for name in find_refs {
         // lit is 'Nothing' for unconstrained - if this is actually happenning, panicking is fine
         // we are not supposed to do anything to resolve that here.
-        let lit: Lit = match var_map.get(&reference) {
+        let lit: Lit = match var_map.get(&name) {
             Some(a) => *a,
             None => panic!(
                 "There should never be a non-just literal occurring here. Something is broken upstream."
             ),
         };
         solution.insert(
-            Name::User(Ustr::from(&reference)),
+            name,
             match sol[lit.var()] {
                 TernaryVal::True => Literal::Int(1),
                 TernaryVal::False => Literal::Int(0),
@@ -181,7 +181,7 @@ impl SolverAdaptor for Sat {
             let domain = find_ref.1.domain().unwrap();
 
             // only decision variables with boolean domains or representations using booleans are supported at this time
-            if (*domain != Bool
+            if (domain != Bool
                 && !(sym_tab
                     .get_representation(&find_ref.0, &["int_to_atom"])
                     .is_some()))
@@ -191,7 +191,7 @@ impl SolverAdaptor for Sat {
                 ))?;
             }
             // only boolean variables should be passed to the solver
-            if (*domain == Bool) {
+            if (domain == Bool) {
                 let name = find_ref.0;
                 finds.push(name);
             }
