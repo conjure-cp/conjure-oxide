@@ -62,7 +62,7 @@ where
     ///
     /// Rule groups maintain the same order and will be lower priority than existing groups.
     pub fn append_rule_groups(mut self, groups: Vec<Vec<R>>) -> Self {
-        self.rule_groups.extend(groups.into_iter());
+        self.rule_groups.extend(groups);
         self
     }
 
@@ -97,12 +97,22 @@ where
     }
 }
 
-impl<T, M, R> Into<Engine<T, M, R>> for EngineBuilder<T, M, R>
+impl<T, M, R> Default for EngineBuilder<T, M, R>
 where
     T: Uniplate,
     R: Rule<T, M>,
 {
-    fn into(self) -> Engine<T, M, R> {
-        self.build()
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<T, M, R> From<EngineBuilder<T, M, R>> for Engine<T, M, R>
+where
+    T: Uniplate,
+    R: Rule<T, M>,
+{
+    fn from(val: EngineBuilder<T, M, R>) -> Self {
+        val.build()
     }
 }

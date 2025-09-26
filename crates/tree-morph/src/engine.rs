@@ -178,7 +178,7 @@ where
                             let update = rule.apply_into_update(subtree, &zipper.meta)?;
                             Some((rule, update))
                         });
-                        one_or_select(&self.selector, subtree, applicable)
+                        one_or_select(self.selector, subtree, applicable)
                     };
 
                     if let Some(mut update) = selected {
@@ -250,8 +250,8 @@ impl<'events, T: Uniplate, M> EngineZipper<'events, T, M> {
     pub fn new(tree: T, meta: M, event_handlers: &'events EventHandlers<T, M>) -> Self {
         EngineZipper {
             inner: TaggedZipper::new(tree, EngineNodeState::new),
-            event_handlers: event_handlers,
-            meta: meta,
+            event_handlers,
+            meta,
         }
     }
 
@@ -336,10 +336,10 @@ impl<'events, T: Uniplate, M> EngineZipper<'events, T, M> {
     }
 }
 
-impl<T: Uniplate, M> Into<(T, M)> for EngineZipper<'_, T, M> {
-    fn into(self) -> (T, M) {
-        let meta = self.meta;
-        let tree = self.inner.rebuild_root();
+impl<T: Uniplate, M> From<EngineZipper<'_, T, M>> for (T, M) {
+    fn from(val: EngineZipper<'_, T, M>) -> Self {
+        let meta = val.meta;
+        let tree = val.inner.rebuild_root();
         (tree, meta)
     }
 }
