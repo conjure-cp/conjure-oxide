@@ -357,12 +357,9 @@ fn tseytin_int_adder(
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     //TODO Optimizing for constants
-    let mut result = tseytin_xor(x[0].clone(), y[0].clone(), clauses, symbols);
+    let (mut result, mut carry) = tseytin_half_adder(x[0].clone(), y[0].clone(), clauses, symbols);
 
     let mut output = vec![result];
-    let mut carry;
-
-    carry = tseytin_and(&vec![x[0].clone(), y[0].clone()], clauses, symbols);
     for i in 1..bits {
         (result, carry) =
             tseytin_full_adder(x[i].clone(), y[i].clone(), carry.clone(), clauses, symbols);

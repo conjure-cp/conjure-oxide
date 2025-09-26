@@ -1,6 +1,6 @@
 use conjure_cp::{
     ast::Metadata,
-    ast::{Atom, DeclarationPtr, Expression as Expr, Moo, SymbolTable, categories::Category, Name},
+    ast::{Atom, DeclarationPtr, Expression as Expr, Moo, SymbolTable, categories::Category},
 };
 
 use tracing::{instrument, trace};
