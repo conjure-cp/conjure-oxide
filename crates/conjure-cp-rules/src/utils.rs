@@ -222,9 +222,4 @@ impl ToAuxVarOutput {
     pub fn symbols(&self) -> SymbolTable {
         self.symbols.clone()
     }
-
-    /// Returns the name of the auxiliary variable.
-    pub fn aux_name(&self) -> Name {
-        self.aux_declaration.name().clone()
-    }
 }

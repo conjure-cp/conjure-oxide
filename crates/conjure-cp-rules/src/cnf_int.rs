@@ -159,10 +159,6 @@ fn cnf_int_ineq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
 }
 
-fn unbox(expr: &Box<Expr>) -> Expr {
-    (**expr).clone()
-}
-
 /// This function confirms that all of the input expressions are CnfInts, and returns vectors for each input of their bits
 fn validate_cnf_int_operands(exprs: Vec<Expr>) -> Result<Vec<Vec<Expr>>, ApplicationError> {
     let out: Result<Vec<Vec<_>>, _> = exprs

@@ -1,0 +1,42 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+
+such that
+
+or([a,b;int(1..2)])
+
+clauses:
+
+
+
+--
+
+or([a,b;int(1..2)]), 
+   ~~> apply_tseytin_and_or ([("CNF", 8500)]) 
+__0 
+new variables:
+  find __0: bool
+new clauses:
+  Clause([Not(a),__0;int(1..)])
+  Clause([Not(b),__0;int(1..)])
+  Clause([Not(__0),a,b;int(1..)])
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find __0: bool
+
+such that
+
+__0
+
+clauses:
+
+Clause([Not(a),__0;int(1..)]),
+Clause([Not(b),__0;int(1..)]),
+Clause([Not(__0),a,b;int(1..)])
+

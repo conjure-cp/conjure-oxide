@@ -12,7 +12,15 @@ and([given x: int(1..5)
 such that
 
 ((y < 5)) -> ((m[x] = x))
+
+clauses:
+
+
  | x: int(1..5),(x < 4)])
+
+clauses:
+
+
 
 --
 
@@ -22,6 +30,10 @@ and([given x: int(1..5)
 such that
 
 ((y < 5)) -> ((m#matrix_to_atom[x] = x))
+
+clauses:
+
+
  | x: int(1..5),(x < 4)]), 
    ~~> select_representation_matrix ([("Base", 8001)]) 
 (x = 1),
@@ -30,6 +42,10 @@ and([given x: int(1..5)
 such that
 
 ((y < 5)) -> ((m#matrix_to_atom[x] = x))
+
+clauses:
+
+
  | x: int(1..5),(x < 4)]) 
 new variables:
   find m#matrix_to_atom_1: int(1..5)
@@ -49,6 +65,10 @@ such that
 
 (x < 4),
 (true != (__0) -> (__1))
+
+clauses:
+
+
 
 --
 
@@ -106,6 +126,10 @@ Ineq(x, 3, 0),
 (true != __2),
 Reify(Ineq(__0, __1, 0), __2)
 
+clauses:
+
+
+
 Model before rewriting:
 
 given x: int(1..5)
@@ -113,6 +137,10 @@ given x: int(1..5)
 such that
 
 ((y < 5)) -> ((m#matrix_to_atom[x] = x))
+
+clauses:
+
+
 
 --
 
@@ -177,12 +205,20 @@ such that
 ReifyImply((m#matrix_to_atom[x] = x), __0),
 Reify(Ineq(y, 4, 0), __0)
 
+clauses:
+
+
+
 and([given x: int(1..5)
 find __0: bool
 
 such that
 
 ((y < 5)) -> ((m#matrix_to_atom[x] = x))
+
+clauses:
+
+
  | x: int(1..5),__0: bool,__1: bool,__2: bool,(x < 4)]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 and([and([ReifyImply((m#matrix_to_atom[1] = 1), __0),Reify(Ineq(y, 4, 0), __0);int(1..)]),and([ReifyImply((m#matrix_to_atom[2] = 2), __1),Reify(Ineq(y, 4, 0), __1);int(1..)]),and([ReifyImply((m#matrix_to_atom[3] = 3), __2),Reify(Ineq(y, 4, 0), __2);int(1..)]);int(1..)]) 
@@ -258,4 +294,8 @@ ReifyImply((m#matrix_to_atom_2 = 2), __1),
 Reify(Ineq(y, 4, 0), __1),
 ReifyImply((m#matrix_to_atom_3 = 3), __2),
 Reify(Ineq(y, 4, 0), __2)
+
+clauses:
+
+
 

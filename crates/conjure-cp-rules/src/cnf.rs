@@ -2,8 +2,6 @@
 /*        This file contains rules for converting logic expressions to CNF         */
 /***********************************************************************************/
 
-use std::rc::Rc;
-
 use conjure_cp::solver::SolverFamily;
 use conjure_cp::{rule_engine::register_rule_set};
 
@@ -14,7 +12,7 @@ use conjure_cp::rule_engine::{
 };
 
 use conjure_cp::ast::AbstractLiteral::Matrix;
-use conjure_cp::ast::{Domain, SymbolTable, DeclarationPtr};
+use conjure_cp::ast::{Domain, SymbolTable};
 use conjure_cp::into_matrix_expr;
 
 use crate::utils::is_literal;
