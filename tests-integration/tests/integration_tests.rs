@@ -41,7 +41,7 @@ use conjure_cp_cli::utils::testing::save_stats_json;
 use conjure_cp_cli::utils::testing::{
     read_model_json, read_solutions_json, save_model_json, save_solutions_json,
 };
-#[allow(unused_imports)]
+#[allow(clippy::single_component_path_imports, unused_imports)]
 use conjure_cp_rules;
 use pretty_assertions::assert_eq;
 use serde::Deserialize;

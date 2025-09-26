@@ -4,9 +4,9 @@ use std::collections::BTreeSet;
 use tree_sitter::Node;
 
 use super::domain::parse_domain;
-use super::expression::parse_expression;
 use super::util::named_children;
 use crate::errors::EssenceParseError;
+use crate::expression::parse_expression;
 use conjure_cp_core::ast::DeclarationPtr;
 use conjure_cp_core::ast::{Name, SymbolTable};
 
@@ -38,7 +38,7 @@ pub fn parse_letting_statement(
                             expr_or_domain,
                             source_code,
                             &letting_statement_list,
-                            &symbol_table,
+                            Some(&symbol_table),
                         )?,
                     ));
                 }

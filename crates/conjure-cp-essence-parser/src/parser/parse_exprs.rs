@@ -1,18 +1,17 @@
+use super::util::{get_tree, query_toplevel};
 use crate::errors::EssenceParseError;
+use crate::expression::parse_expression;
 use conjure_cp_core::ast::{Expression, SymbolTable};
-use conjure_cp_core::error::Error;
 #[allow(unused)]
 use uniplate::Uniplate;
-
-use super::expression::parse_expression;
-use super::util::{get_tree, query_toplevel};
 
 pub fn parse_expr(src: &str, symbol_table: &SymbolTable) -> Result<Expression, EssenceParseError> {
     let exprs = parse_exprs(src, symbol_table)?;
     if exprs.len() != 1 {
-        return Err(EssenceParseError::ParseError(Error::Parse(
-            "Expected exactly one expression".into(),
-        )));
+        return Err(EssenceParseError::syntax_error(
+            "Expected a single expression".to_string(),
+            None,
+        ));
     }
     Ok(exprs[0].clone())
 }
@@ -28,7 +27,12 @@ pub fn parse_exprs(
     let root = tree.root_node();
     let mut ans = Vec::new();
     for expr in query_toplevel(&root, &|n| n.kind() == "expression") {
-        ans.push(parse_expression(expr, &source_code, &root, symbol_table)?);
+        ans.push(parse_expression(
+            expr,
+            &source_code,
+            &root,
+            Some(symbol_table),
+        )?);
     }
     Ok(ans)
 }
