@@ -1,6 +1,6 @@
 // https://conjure-cp.github.io/conjure-oxide/docs/conjure_core/representation/trait.Representation.html
 use conjure_cp::{
-    ast::{Atom, DeclarationPtr, Domain, Expression, Literal, Name, Range, SymbolTable, Metadata},
+    ast::{Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Name, Range, SymbolTable},
     register_representation,
     representation::Representation,
     rule_engine::ApplicationError,
@@ -25,10 +25,10 @@ impl IntToAtom {
 
     /// Gets the representation variable name for a specific index.
     fn index_to_name(&self, index: i32) -> Name {
-        Name::Represented(
-            Box::new((self.src_var.clone(),
+        Name::Represented(Box::new((
+            self.src_var.clone(),
             self.repr_name().into(),
-            format!("{:02}", index).into(), // stored as _00, _01, ...
+            format!("{index:02}").into(), // stored as _00, _01, ...
         )))
     }
 }
@@ -110,7 +110,7 @@ impl Representation for IntToAtom {
             out -= sign_bit << 1;
         }
 
-        Ok(Literal::Int(out.into()))
+        Ok(Literal::Int(out))
     }
 
     fn expression_down(
@@ -122,7 +122,7 @@ impl Representation for IntToAtom {
             .map(|name| {
                 let decl = st.lookup(&name).unwrap();
                 (
-                    name.clone(),
+                    name,
                     Expression::Atomic(Metadata::new(), Atom::Reference(decl)),
                 )
             })

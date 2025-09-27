@@ -123,7 +123,7 @@ impl Reduction {
     pub fn apply(self, model: &mut SubModel) {
         model.symbols_mut().extend(self.symbols); // Add new assignments to the symbol table
         model.add_constraints(self.new_top.clone());
-        model.add_clauses(self.new_clauses.clone());
+        model.add_clauses(self.new_clauses);
     }
 
     /// Gets symbols added by this reduction

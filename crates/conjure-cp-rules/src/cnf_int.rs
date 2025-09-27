@@ -59,8 +59,7 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
     let bits = representation[0]
         .clone()
         .expression_down(&symbols)?
-        .into_iter()
-        .map(|(_, expr)| expr.clone())
+        .into_values()
         .collect();
 
     let cnf_int = Expr::CnfInt(Metadata::new(), Moo::new(into_matrix_expr!(bits)));
@@ -69,11 +68,11 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
         // add domain ranges as constraints if this is the first time the representation is added
         Ok(Reduction::new(
             cnf_int.clone(),
-            vec![int_domain_to_expr(cnf_int.clone(), &ranges)], // contains domain rules
+            vec![int_domain_to_expr(cnf_int, &ranges)], // contains domain rules
             symbols,
         ))
     } else {
-        Ok(Reduction::pure(cnf_int.clone()))
+        Ok(Reduction::pure(cnf_int))
     }
 }
 
@@ -162,7 +161,6 @@ fn cnf_int_ineq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 /// This function confirms that all of the input expressions are CnfInts, and returns vectors for each input of their bits
 fn validate_cnf_int_operands(exprs: Vec<Expr>) -> Result<Vec<Vec<Expr>>, ApplicationError> {
     let out: Result<Vec<Vec<_>>, _> = exprs
-        .clone()
         .into_iter()
         .map(|expr| {
             let Expr::CnfInt(_, inner) = expr else {
@@ -291,12 +289,11 @@ fn inequality_boolean(
     }
 
     // final bool is the sign bit and should be handled inversely
-    let nota;
-    nota = tseytin_not(a[BITS - 1].clone(), clauses, symbols);
+    let nota = tseytin_not(a[BITS - 1].clone(), clauses, symbols);
     lhs = tseytin_and(&vec![nota, b[BITS - 1].clone()], clauses, symbols);
     iff = tseytin_iff(a[BITS - 1].clone(), b[BITS - 1].clone(), clauses, symbols);
-    rhs = tseytin_and(&vec![iff.clone(), output.clone()], clauses, symbols);
-    output = tseytin_or(&vec![lhs.clone(), rhs.clone()], clauses, symbols);
+    rhs = tseytin_and(&vec![iff, output.clone()], clauses, symbols);
+    output = tseytin_or(&vec![lhs, rhs], clauses, symbols);
 
     output
 }
@@ -324,7 +321,7 @@ fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_clauses = vec![];
 
     while exprs_bits.len() > 1 {
-        let mut next = Vec::with_capacity((exprs_bits.len() + 1) / 2);
+        let mut next = Vec::with_capacity(exprs_bits.len().div_ceil(2));
         let mut iter = exprs_bits.into_iter();
 
         while let Some(a) = iter.next() {
@@ -350,8 +347,8 @@ fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
 // Returns result, new symbol table, new clauses
 fn tseytin_int_adder(
-    x: &Vec<Expr>,
-    y: &Vec<Expr>,
+    x: &[Expr],
+    y: &[Expr],
     bits: usize,
     clauses: &mut Vec<Expr>,
     symbols: &mut SymbolTable,
@@ -400,7 +397,7 @@ fn tseytin_half_adder(
 
 /// this function is for specifically adding a power of two constant to a cnf int
 fn tseytin_add_two_power(
-    expr: &Vec<Expr>,
+    expr: &[Expr],
     exponent: usize,
     bits: usize,
     clauses: &mut Vec<Expr>,
@@ -409,20 +406,15 @@ fn tseytin_add_two_power(
     let mut result = vec![];
     let mut product = expr[exponent].clone();
 
-    for i in 0..exponent {
-        result.push(expr[i].clone());
+    for item in expr.iter().take(exponent) {
+        result.push(item.clone());
     }
 
     result.push(tseytin_not(expr[exponent].clone(), clauses, symbols));
 
-    for i in (exponent + 1)..bits {
-        result.push(tseytin_xor(
-            product.clone(),
-            expr[i].clone(),
-            clauses,
-            symbols,
-        ));
-        product = tseytin_and(&vec![product, expr[i].clone()], clauses, symbols);
+    for item in expr.iter().take(bits).skip(exponent + 1) {
+        result.push(tseytin_xor(product.clone(), item.clone(), clauses, symbols));
+        product = tseytin_and(&vec![product, item.clone()], clauses, symbols);
     }
 
     result
@@ -430,21 +422,21 @@ fn tseytin_add_two_power(
 
 // Returns result, new symbol table, new clauses
 fn cnf_shift_add_multiply(
-    x: &Vec<Expr>,
-    y: &Vec<Expr>,
+    x: &[Expr],
+    y: &[Expr],
     bits: usize,
     clauses: &mut Vec<Expr>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
-    let mut x = x.clone();
-    let mut y = y.clone();
+    let mut x = x.to_owned();
+    let mut y = y.to_owned();
 
     //TODO Optimizing for constants
     //TODO Optimize addition for i left shifted values - skip first i bits
 
     // extend sign bits of operands to 2*`bits`
-    x.extend(std::iter::repeat(x[bits - 1].clone()).take(bits));
-    y.extend(std::iter::repeat(y[bits - 1].clone()).take(bits));
+    x.extend(std::iter::repeat_n(x[bits - 1].clone(), bits));
+    y.extend(std::iter::repeat_n(y[bits - 1].clone(), bits));
 
     let mut s: Vec<Expr> = vec![];
     let mut x_0andy_i;
@@ -459,7 +451,7 @@ fn cnf_shift_add_multiply(
     let mut not_x_n;
     let mut if_false;
 
-    for n in 1..bits {
+    for item in x.iter().take(bits).skip(1) {
         // y << 1
         for i in (1..bits * 2).rev() {
             y[i] = y[i - 1].clone();
@@ -468,10 +460,10 @@ fn cnf_shift_add_multiply(
 
         // TODO switch to multiplexer
         sum = tseytin_int_adder(&s, &y, bits * 2, clauses, symbols);
-        not_x_n = tseytin_not(x[n].clone(), clauses, symbols);
+        not_x_n = tseytin_not(item.clone(), clauses, symbols);
 
         for i in 0..(bits * 2) {
-            if_true = tseytin_and(&vec![x[n].clone(), sum[i].clone()], clauses, symbols);
+            if_true = tseytin_and(&vec![item.clone(), sum[i].clone()], clauses, symbols);
             if_false = tseytin_and(&vec![not_x_n.clone(), s[i].clone()], clauses, symbols);
             s[i] = tseytin_or(&vec![if_true.clone(), if_false.clone()], clauses, symbols);
         }
@@ -504,7 +496,7 @@ fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_clauses = vec![];
 
     while exprs_bits.len() > 1 {
-        let mut next = Vec::with_capacity((exprs_bits.len() + 1) / 2);
+        let mut next = Vec::with_capacity(exprs_bits.len().div_ceil(2));
         let mut iter = exprs_bits.into_iter();
 
         while let Some(a) = iter.next() {
@@ -547,7 +539,7 @@ fn cnf_int_neg(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_clauses = vec![];
     let mut new_symbols = symbols.clone();
 
-    let result = tseytin_negate(&bits, BITS, &mut new_clauses, &mut new_symbols);
+    let result = tseytin_negate(bits, BITS, &mut new_clauses, &mut new_symbols);
 
     Ok(Reduction::cnf(
         Expr::CnfInt(Metadata::new(), Moo::new(into_matrix_expr!(result))),
@@ -597,7 +589,7 @@ fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_clauses = vec![];
 
     while exprs_bits.len() > 1 {
-        let mut next = Vec::with_capacity((exprs_bits.len() + 1) / 2);
+        let mut next = Vec::with_capacity(exprs_bits.len().div_ceil(2));
         let mut iter = exprs_bits.into_iter();
 
         while let Some(a) = iter.next() {
@@ -622,8 +614,8 @@ fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 }
 
 fn tseytin_binary_min_max(
-    x: &Vec<Expr>,
-    y: &Vec<Expr>,
+    x: &[Expr],
+    y: &[Expr],
     min: bool,
     clauses: &mut Vec<Expr>,
     symbols: &mut SymbolTable,
@@ -635,18 +627,17 @@ fn tseytin_binary_min_max(
     }
 
     // TODO: compare generated expression to using MUX
-    let mask;
 
-    if min {
+    let mask = if min {
         // mask is 1 if x > y
-        mask = inequality_boolean(x.clone(), y.clone(), true, clauses, symbols);
+        inequality_boolean(x.to_owned(), y.to_owned(), true, clauses, symbols)
     } else {
         // flip the args if getting maximum x < y -> 1
-        mask = inequality_boolean(y.clone(), x.clone(), true, clauses, symbols);
-    }
+        inequality_boolean(y.to_owned(), x.to_owned(), true, clauses, symbols)
+    };
 
-    for i in 0..BITS {
-        out[i] = tseytin_and(&vec![out[i].clone(), mask.clone()], clauses, symbols);
+    for item in out.iter_mut().take(BITS) {
+        *item = tseytin_and(&vec![item.clone(), mask.clone()], clauses, symbols);
     }
 
     for i in 0..BITS {
@@ -679,7 +670,7 @@ fn cnf_int_max(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_clauses = vec![];
 
     while exprs_bits.len() > 1 {
-        let mut next = Vec::with_capacity((exprs_bits.len() + 1) / 2);
+        let mut next = Vec::with_capacity(exprs_bits.len().div_ceil(2));
         let mut iter = exprs_bits.into_iter();
 
         while let Some(a) = iter.next() {
@@ -776,8 +767,8 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut quotient = vec![false.into(); BITS];
 
     let mut r = numer_bits.clone();
-    r.extend(std::iter::repeat(r[BITS - 1].clone()).take(BITS));
-    let mut d = std::iter::repeat(false.into()).take(BITS).collect_vec();
+    r.extend(std::iter::repeat_n(r[BITS - 1].clone(), BITS));
+    let mut d = std::iter::repeat_n(false.into(), BITS).collect_vec();
     d.extend(denom_bits.clone());
 
     let minus_d = tseytin_negate(&d.clone(), 2 * BITS, &mut new_clauses, &mut new_symbols);

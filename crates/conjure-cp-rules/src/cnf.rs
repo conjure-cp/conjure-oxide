@@ -2,13 +2,13 @@
 /*        This file contains rules for converting logic expressions to CNF         */
 /***********************************************************************************/
 
+use conjure_cp::rule_engine::register_rule_set;
 use conjure_cp::solver::SolverFamily;
-use conjure_cp::{rule_engine::register_rule_set};
 
-use conjure_cp::ast::{Atom, Expression as Expr, Literal, Moo};
 use conjure_cp::ast::Metadata;
+use conjure_cp::ast::{Atom, Expression as Expr, Literal, Moo};
 use conjure_cp::rule_engine::{
-    register_rule, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
+    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
 
 use conjure_cp::ast::AbstractLiteral::Matrix;
@@ -142,7 +142,7 @@ pub fn tseytin_not(x: Expr, clauses: &mut Vec<Expr>, symbols: &mut SymbolTable) 
         Expr::Not(Metadata::new(), Moo::new(x.clone())),
         Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
     ]));
-    clauses.extend(create_clause(vec![x.clone(), new_expr.clone()]));
+    clauses.extend(create_clause(vec![x, new_expr.clone()]));
 
     new_expr
 }
@@ -163,8 +163,8 @@ pub fn tseytin_iff(x: Expr, y: Expr, clauses: &mut Vec<Expr>, symbols: &mut Symb
         Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
     ]));
     clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Moo::new(x.clone())),
-        y.clone(),
+        Expr::Not(Metadata::new(), Moo::new(x)),
+        y,
         Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
     ]));
 
@@ -191,8 +191,8 @@ pub fn tseytin_xor(x: Expr, y: Expr, clauses: &mut Vec<Expr>, symbols: &mut Symb
         new_expr.clone(),
     ]));
     clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Moo::new(x.clone())),
-        y.clone(),
+        Expr::Not(Metadata::new(), Moo::new(x)),
+        y,
         new_expr.clone(),
     ]));
 
@@ -208,10 +208,10 @@ pub fn tseytin_imply(x: Expr, y: Expr, clauses: &mut Vec<Expr>, symbols: &mut Sy
         Expr::Not(Metadata::new(), Moo::new(x.clone())),
         y.clone(),
     ]));
-    clauses.extend(create_clause(vec![new_expr.clone(), x.clone()]));
+    clauses.extend(create_clause(vec![new_expr.clone(), x]));
     clauses.extend(create_clause(vec![
         new_expr.clone(),
-        Expr::Not(Metadata::new(), Moo::new(y.clone())),
+        Expr::Not(Metadata::new(), Moo::new(y)),
     ]));
 
     new_expr
@@ -254,13 +254,13 @@ pub fn tseytin_mux(
     ]));
     clauses.extend(create_clause(vec![
         new_expr.clone(),
-        Expr::Not(Metadata::new(), Moo::new(cond.clone())),
+        Expr::Not(Metadata::new(), Moo::new(cond)),
         Expr::Not(Metadata::new(), Moo::new(b.clone())),
     ]));
     clauses.extend(create_clause(vec![
         new_expr.clone(),
-        Expr::Not(Metadata::new(), Moo::new(a.clone())),
-        Expr::Not(Metadata::new(), Moo::new(b.clone())),
+        Expr::Not(Metadata::new(), Moo::new(a)),
+        Expr::Not(Metadata::new(), Moo::new(b)),
     ]));
 
     new_expr
@@ -360,7 +360,12 @@ fn apply_tseytin_iff(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut new_clauses = vec![];
     let mut new_symbols = symbols.clone();
 
-    let new_expr = tseytin_iff(x.as_ref().clone(), y.as_ref().clone(), &mut new_clauses, &mut new_symbols);
+    let new_expr = tseytin_iff(
+        x.as_ref().clone(),
+        y.as_ref().clone(),
+        &mut new_clauses,
+        &mut new_symbols,
+    );
 
     Ok(Reduction::cnf(new_expr, new_clauses, new_symbols))
 }
@@ -394,7 +399,12 @@ fn apply_tseytin_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
     let mut new_clauses = vec![];
     let mut new_symbols = symbols.clone();
 
-    new_expr = tseytin_imply(x.as_ref().clone(), y.as_ref().clone(), &mut new_clauses, &mut new_symbols);
+    new_expr = tseytin_imply(
+        x.as_ref().clone(),
+        y.as_ref().clone(),
+        &mut new_clauses,
+        &mut new_symbols,
+    );
 
     Ok(Reduction::cnf(new_expr, new_clauses, new_symbols))
 }

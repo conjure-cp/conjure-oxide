@@ -54,17 +54,17 @@ pub fn log_rule_application(
 
         let exprs = exprs.iter().join("\n");
 
-        format!("new constraints:\n{}\n", exprs)
+        format!("new constraints:\n{exprs}\n")
     } else if !red.new_clauses.is_empty() {
         let mut exprs: Vec<String> = vec![];
 
         for expr in &red.new_clauses {
-            exprs.push(format!("  {}", expr));
+            exprs.push(format!("  {expr}"));
         }
 
         let exprs = exprs.iter().join("\n");
 
-        format!("new clauses:\n{}\n", exprs)
+        format!("new clauses:\n{exprs}\n")
     } else {
         String::new()
     };

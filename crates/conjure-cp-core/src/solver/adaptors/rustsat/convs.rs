@@ -66,11 +66,7 @@ pub fn handle_atom(
                     // TODO: Temp Clone
                     // let m = n.clone();
                     let lit_temp: Lit = fetch_lit(decl.name().clone(), vars_added, inst);
-                    if polarity {
-                        lit_temp
-                    } else {
-                        !lit_temp
-                    }
+                    if polarity { lit_temp } else { !lit_temp }
                 }
                 _ => todo!("Not implemented yet"),
             },

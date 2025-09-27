@@ -182,9 +182,9 @@ impl SolverAdaptor for Sat {
 
             // only decision variables with boolean domains or representations using booleans are supported at this time
             if (domain != Bool
-                && !(sym_tab
+                && (sym_tab
                     .get_representation(&find_ref.0, &["int_to_atom"])
-                    .is_some()))
+                    .is_none()))
             {
                 Err(SolverError::ModelInvalid(
                     "Only Boolean Decision Variables supported".to_string(),
@@ -199,7 +199,7 @@ impl SolverAdaptor for Sat {
 
         self.decision_refs = Some(finds);
 
-        let m_clone = model.clone();
+        let m_clone = model;
 
         // combine clauses and constraints into a single vector of clauses
         let vec_clauses = m_clone.as_submodel().clauses();

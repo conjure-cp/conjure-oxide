@@ -132,7 +132,7 @@ pub fn get_sat_solutions(
 
     let symbols_rc = Rc::clone(model.as_submodel().symbols_ptr_unchecked());
 
-    let solver = solver.load_model(model.clone())?;
+    let solver = solver.load_model(model)?;
 
     if let Some(solver_input_file) = solver_input_file {
         eprintln!(
@@ -213,8 +213,7 @@ pub fn get_sat_solutions(
             .clone()
             .into_iter()
             .filter(|(name, _)| {
-                !matches!(name, Name::Represented(_))
-                    && !matches!(name, Name::Machine(_))
+                !matches!(name, Name::Represented(_)) && !matches!(name, Name::Machine(_))
             })
             .collect();
     }
