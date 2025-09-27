@@ -287,7 +287,10 @@ pub fn parse_expression(
                     "Meta-variable must start with '&'".to_string(),
                     Some(constraint.range()),
                 ))?;
-            Ok(Expression::Metavar(Metadata::new(), Ustr::from(text)))
+            Ok(Expression::Metavar(
+                Metadata::new(),
+                Ustr::from(text.trim()),
+            ))
         }
         "ERROR" => Err(EssenceParseError::syntax_error(
             format!(
