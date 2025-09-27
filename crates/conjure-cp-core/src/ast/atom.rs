@@ -9,12 +9,13 @@ use super::{
     records::RecordValue,
 };
 use derivative::Derivative;
+use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 
 /// An `Atom` is an indivisible expression, such as a literal or a reference.
 #[serde_as]
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Derivative)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Derivative, Quine)]
 #[derivative(Hash)]
 #[uniplate()]
 #[biplate(to=Literal)]
@@ -23,9 +24,11 @@ use serde_with::serde_as;
 #[biplate(to=RecordValue<Literal>)]
 #[biplate(to=DeclarationPtr)]
 #[biplate(to=Name)]
+#[path_prefix(conjure_cp::ast)]
 pub enum Atom {
     Literal(Literal),
     // FIXME: check if these are the hashing semantics we want.
+    #[polyquine_skip]
     Reference(#[serde_as(as = "DeclarationPtrAsId")] DeclarationPtr),
 }
 

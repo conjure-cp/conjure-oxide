@@ -1,6 +1,7 @@
+use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Hash, Quine)]
 pub enum ReturnType {
     Int,
     Bool,

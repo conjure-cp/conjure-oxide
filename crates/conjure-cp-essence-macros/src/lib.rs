@@ -2,7 +2,6 @@ use proc_macro::TokenStream;
 use proc_macro2::{Delimiter, Group, TokenStream as TokenStream2, TokenTree};
 
 mod expand;
-mod expression;
 
 use expand::{expand_expr, expand_expr_vec};
 
@@ -15,11 +14,12 @@ use expand::{expand_expr, expand_expr_vec};
 ///
 /// The macro may reference variables in the current scope (called "metavars")
 /// using the syntax `&<name>`. For example:
-/// ```
+/// ```rust
 /// use conjure_cp_essence_macros::essence_expr;
 /// let x = 42;
-/// essence_expr!(2 + &x);
+/// let expr = essence_expr!(2 + &x);
 /// ```
+///
 ///
 /// ## Expansion
 /// If the input is valid Essence, expands to a valid AST constructor
@@ -31,6 +31,23 @@ use expand::{expand_expr, expand_expr_vec};
 /// > rustc: unknown start of token: \
 ///
 /// The workaround is to wrap the Essence code in a string literal (e.g. `r"a /\ b"`).
+///
+/// ## Example
+///
+/// ```rust
+/// use conjure_cp::ast::{Atom, Expression, Moo, Metadata};
+/// use conjure_cp::matrix_expr;
+/// use conjure_cp_essence_macros::essence_expr;
+/// let x = 42;
+/// let expr = essence_expr!(2 + &x);
+/// assert_eq!(
+///     expr,
+///     Expression::Sum(Metadata::new(), Moo::new(matrix_expr![
+///         Expression::Atomic(Metadata::new(), 2.into()),
+///         Expression::Atomic(Metadata::new(), 42.into())
+///     ]))
+/// );
+/// ```
 #[proc_macro]
 pub fn essence_expr(args: TokenStream) -> TokenStream {
     let ts = TokenStream2::from(args);
@@ -44,10 +61,9 @@ pub fn essence_expr(args: TokenStream) -> TokenStream {
 /// Parses a sequence of Essence expressions into a vector of Conjure AST instances
 ///
 /// ## Example
-/// ```ignore
-/// use conjure_cp_core::ast::{Atom, Expression, Moo};
-/// use conjure_cp_core::matrix_expr;
-/// use conjure_cp_core::ast::Metadata;
+/// ```rust
+/// use conjure_cp::ast::{Atom, Expression, Moo, Metadata};
+/// use conjure_cp::matrix_expr;
 /// use conjure_cp_essence_macros::essence_vec;
 ///
 /// let exprs = essence_vec!(2 + 2, false = true);

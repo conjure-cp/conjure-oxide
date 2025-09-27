@@ -6,16 +6,14 @@ use conjure_cp_core::ast::Expression;
 use conjure_cp_core::ast::Metadata;
 use conjure_cp_core::ast::{DeclarationPtr, Moo};
 use conjure_cp_core::context::Context;
-use conjure_cp_core::error::Error;
 #[allow(unused)]
 use uniplate::Uniplate;
 
-use crate::errors::EssenceParseError;
-
-use super::expression::parse_expression;
 use super::find::parse_find_statement;
 use super::letting::parse_letting_statement;
 use super::util::{get_tree, named_children};
+use crate::errors::EssenceParseError;
+use crate::expression::parse_expression;
 
 /// Parse an Essence file into a Model using the tree-sitter parser.
 pub fn parse_essence_file_native(
@@ -65,7 +63,7 @@ pub fn parse_essence_with_context(
                             constraint,
                             &source_code,
                             &statement,
-                            &current_symbols,
+                            Some(&current_symbols),
                         )?);
                     }
                 }
@@ -81,20 +79,23 @@ pub fn parse_essence_with_context(
                     .child(1)
                     .expect("Expected a sub-expression inside `dominanceRelation`");
                 let current_symbols = model.as_submodel().symbols().clone();
-                let expr = parse_expression(inner, &source_code, &statement, &current_symbols)?;
+                let expr =
+                    parse_expression(inner, &source_code, &statement, Some(&current_symbols))?;
                 let dominance = Expression::DominanceRelation(Metadata::new(), Moo::new(expr));
                 if model.dominance.is_some() {
-                    return Err(EssenceParseError::ParseError(Error::Parse(
-                        "Duplicate dominance relation".to_owned(),
-                    )));
+                    return Err(EssenceParseError::syntax_error(
+                        "Duplicate dominance relation".to_string(),
+                        None,
+                    ));
                 }
                 model.dominance = Some(dominance);
             }
             _ => {
                 let kind = statement.kind();
-                return Err(EssenceParseError::ParseError(Error::Parse(format!(
-                    "Unrecognized top level statement kind: {kind}"
-                ))));
+                return Err(EssenceParseError::syntax_error(
+                    format!("Unrecognized top level statement kind: {kind}"),
+                    None,
+                ));
             }
         }
     }
