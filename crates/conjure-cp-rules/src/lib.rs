@@ -10,6 +10,7 @@ mod base;
 mod bottom_up_adaptor;
 mod bubble;
 mod cnf;
+mod cnf_int;
 mod comprehensions;
 mod constant_eval;
 mod matrix;

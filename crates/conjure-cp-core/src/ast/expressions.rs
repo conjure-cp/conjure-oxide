@@ -489,6 +489,12 @@ pub enum Expression {
         #[serde_as(as = "DeclarationPtrAsId")] DeclarationPtr,
         Moo<Expression>,
     ),
+
+    // This expression is for encoding i32 ints as a vector of boolean expressions for cnf
+    CnfInt(Metadata, Moo<Expression>),
+
+    // This expression represents a cnf clause in its simplest form, it should only contain atoms and should not be affected by the rule engine
+    Clause(Metadata, Moo<Expression>),
 }
 
 // for the given matrix literal, return a bounded domain from the min to max of applying op to each
@@ -783,6 +789,17 @@ impl Expression {
                 .apply_i32(|a, _| Some(a.abs()), &a.domain_of()?)
                 .ok(),
             Expression::MinionPow(_, _, _, _) => Some(Domain::Bool),
+            Expression::CnfInt(_, _) => {
+                Some(Domain::Int(vec![Range::Bounded(
+                    i8::MIN.into(),
+                    i8::MAX.into(),
+                )])) // BITS
+            } // A CnfInt can represent any i8 integer at the moment
+            // The clause expression is a special case of the Or expression, but it is not
+            // a disjunction of expressions, but rather a disjunction of atoms
+            // Clauses should only be found within the `cnf_clauses` field of the model
+            // and therefore should not be affected by the rule engine
+            Expression::Clause(_, _) => Some(Domain::Bool),
             Expression::ToInt(_, _) => Some(Domain::Int(vec![Range::Bounded(0, 1)])),
         };
         match ret {
@@ -1301,6 +1318,12 @@ impl Display for Expression {
                 let atoms = atoms.iter().join(",");
                 write!(f, "__minion_element_one([{atoms}],{atom},{atom1})")
             }
+            Expression::CnfInt(_, e) => {
+                write!(f, "CnfInt({e})")
+            }
+            Expression::Clause(_, e) => {
+                write!(f, "Clause({e})")
+            }
 
             Expression::ToInt(_, expr) => {
                 write!(f, "toInt({expr})")
@@ -1394,6 +1417,8 @@ impl Typeable for Expression {
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::MinionPow(_, _, _, _) => Some(ReturnType::Bool),
             Expression::ToInt(_, _) => Some(ReturnType::Int),
+            Expression::CnfInt(_, _) => Some(ReturnType::Int),
+            Expression::Clause(_, _) => Some(ReturnType::Bool),
         }
     }
 }

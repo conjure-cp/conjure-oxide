@@ -11,6 +11,15 @@ pub fn is_atom(expr: &Expr) -> bool {
     matches!(expr, Expr::Atomic(_, _))
 }
 
+/// True iff `expr` is an `Atom` or `Not(Atom)`.
+pub fn is_literal(expr: &Expr) -> bool {
+    match expr {
+        Expr::Atomic(_, _) => true,
+        Expr::Not(_, inner) => matches!(**inner, Expr::Atomic(_, _)),
+        _ => false,
+    }
+}
+
 /// True if `expr` is flat; i.e. it only contains atoms.
 pub fn is_flat(expr: &Expr) -> bool {
     for e in expr.children() {
