@@ -2,15 +2,16 @@
 
 use conjure_cp_core::ast::SymbolTable;
 use itertools::{Itertools, izip};
+use num_traits::Num;
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeSet, fmt::Display};
 use thiserror::Error;
 
+use super::{AbstractLiteral, Literal, Name, ReturnType, records::RecordEntry, types::Typeable};
+use crate::utils::count_combinations;
 use crate::{ast::pretty::pretty_vec, domain_int, range};
 use polyquine::Quine;
 use uniplate::Uniplate;
-
-use super::{AbstractLiteral, Literal, Name, ReturnType, records::RecordEntry, types::Typeable};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 #[path_prefix(conjure_cp::ast)]
@@ -45,6 +46,16 @@ impl<A: Ord> Range<A> {
             Range::Bounded(a, _) => Some(a),
             Range::UnboundedR(a) => Some(a),
             Range::UnboundedL(_) => None,
+        }
+    }
+}
+
+impl<A: Num + Ord + Clone> Range<A> {
+    fn length(&self) -> Option<A> {
+        match self {
+            Range::Single(_) => Some(A::one()),
+            Range::Bounded(i, j) => Some(j.clone() - i.clone() + A::one()),
+            Range::UnboundedR(_) | Range::UnboundedL(_) => None,
         }
     }
 }
@@ -658,6 +669,7 @@ impl Domain {
     ///   reference, meaning that its values cannot be determined.
     pub fn values(&self) -> Result<Vec<Literal>, DomainOpError> {
         match self {
+            Domain::Reference(_) => Err(DomainOpError::InputContainsReference),
             Domain::Empty(_) => Ok(vec![]),
             Domain::Bool => Ok(vec![false.into(), true.into()]),
             Domain::Int(_) => self
@@ -667,9 +679,8 @@ impl Domain {
             // ~niklasdewally: don't know how to define this for collections, so leaving it for
             // now... However, it definitely can be done, as matrices can be indexed by matrices.
             Domain::Set(_, _) => todo!(),
-            Domain::Matrix(_, _) => todo!(),
-            Domain::Reference(_) => Err(DomainOpError::InputContainsReference),
             Domain::Tuple(_) => todo!(), // TODO: Can this be done?
+            Domain::Matrix(_, _) => todo!(),
             Domain::Record(_) => todo!(),
         }
     }
@@ -681,8 +692,51 @@ impl Domain {
     /// - [`DomainOpError::InputUnbounded`] if the input domain is of infinite size.
     /// - [`DomainOpError::InputContainsReference`] if the input domain is or contains a
     ///   domain reference, meaning that its size cannot be determined.
-    pub fn length(&self) -> Result<usize, DomainOpError> {
-        self.values().map(|x| x.len())
+    pub fn length(&self) -> Result<u64, DomainOpError> {
+        match self {
+            Domain::Reference(_) => Err(DomainOpError::InputContainsReference),
+            Domain::Empty(_) => Ok(0),
+            Domain::Bool => Ok(2),
+            Domain::Int(ranges) => {
+                if ranges.is_empty() {
+                    return Err(DomainOpError::InputUnbounded);
+                }
+
+                let mut length = 0;
+                for range in ranges {
+                    if let Some(range_length) = range.length() {
+                        length += range_length;
+                    } else {
+                        return Err(DomainOpError::InputUnbounded);
+                    }
+                }
+                Ok(length as u64)
+            }
+            Domain::Set(set_attr, inner_domain) => {
+                let inner_len = inner_domain.length()?;
+                let (min_sz, max_sz) = match set_attr {
+                    SetAttr::None => (0, inner_len),
+                    SetAttr::Size(n) => (*n as u64, *n as u64),
+                    SetAttr::MinSize(n) => (*n as u64, inner_len),
+                    SetAttr::MaxSize(n) => (0, *n as u64),
+                    SetAttr::MinMaxSize(min, max) => (*min as u64, *max as u64),
+                };
+                let mut ans = 0u64;
+                for sz in min_sz..=max_sz {
+                    ans += count_combinations(inner_len, sz);
+                }
+                Ok(ans)
+            }
+            Domain::Tuple(domains) => {
+                let mut ans = 1u64;
+                for domain in domains {
+                    ans *= domain.length()?;
+                }
+                Ok(ans)
+            }
+            Domain::Matrix(_, _) => todo!(),
+            Domain::Record(_) => todo!(),
+        }
     }
 
     /// Returns the domain that is the result of applying a binary operation to two integer domains.
@@ -1060,5 +1114,59 @@ mod tests {
         if let Domain::Int(ranges) = res {
             assert!(!ranges.contains(&Range::Bounded(-4, 4)));
         }
+    }
+
+    #[test]
+    fn test_length_basic() {
+        assert_eq!(Domain::Empty(ReturnType::Int).length(), Ok(0));
+        assert_eq!(Domain::Bool.length(), Ok(2));
+        assert_eq!(domain_int!(1..3, 5, 7..9).length(), Ok(7));
+        assert_eq!(
+            domain_int!(1..2, 5..).length(),
+            Err(DomainOpError::InputUnbounded)
+        );
+    }
+    #[test]
+    fn test_length_set() {
+        // {∅, {1}, {2}, {3}, {1,2}, {1,3}, {2,3}, {1,2,3}}
+        let s = Domain::Set(SetAttr::None, Box::new(domain_int!(1..3)));
+        assert_eq!(s.length(), Ok(8));
+
+        // {{1,2}, {1,3}, {2,3}}
+        let s = Domain::Set(SetAttr::Size(2), Box::new(domain_int!(1..3)));
+        assert_eq!(s.length(), Ok(3));
+
+        // {{1}, {2}, {3}, {1,2}, {1,3}, {2,3}}
+        let s = Domain::Set(SetAttr::MinMaxSize(1, 2), Box::new(domain_int!(1..3)));
+        assert_eq!(s.length(), Ok(6));
+
+        // {
+        // ∅,                                          -- all size 0
+        // {∅}, {{1}}, {{2}}, {{1, 2}},                -- all size 1
+        // {∅, {1}}, {∅, {2}}, {∅, {1, 2}},            -- all size 2
+        // {{1}, {2}}, {{1}, {1, 2}}, {{2}, {1, 2}}
+        // }
+        let s2 = Domain::Set(
+            SetAttr::MaxSize(2),
+            Box::new(
+                // {∅, {1}, {2}, {1,2}}
+                Domain::Set(SetAttr::None, Box::new(domain_int!(1..2))),
+            ),
+        );
+        assert_eq!(s2.length(), Ok(11));
+
+        // leaf domain is unbounded
+        let s2_bad = Domain::Set(
+            SetAttr::MaxSize(2),
+            Box::new(Domain::Set(SetAttr::None, Box::new(domain_int!(1..)))),
+        );
+        assert_eq!(s2_bad.length(), Err(DomainOpError::InputUnbounded));
+    }
+
+    #[test]
+    fn test_length_tuple() {
+        // 3 ways to pick first element, 2 ways to pick second element
+        let t = Domain::Tuple(vec![domain_int!(1..3), Domain::Bool]);
+        assert_eq!(t.length(), Ok(6));
     }
 }

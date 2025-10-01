@@ -17,6 +17,7 @@ pub mod representation;
 pub mod rule_engine;
 pub mod solver;
 pub mod stats;
+mod utils;
 
 /// Creates a [`Domain::Int`](ast::Domain::Int).
 ///
