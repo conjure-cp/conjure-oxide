@@ -38,6 +38,12 @@ install-cargo-extensions: .installed-cargo-extensions.checkpoint
 	cargo install cargo-shear
 	touch .installed-cargo-extensions.checkpoint
 
+coverage:
+	@grcov --version >/dev/null 2>&1 || cargo install grcov
+	cargo test --workspace
+	export LLVM_PROFILE_FILE="conjure_oxide-%p-%m.profraw"
+	grcov . -s . --binary-path ./target/debug/ -t html --branch --ignore-not-existing -o ./target/debug/coverage/
+	open ./target/debug/coverage/html/index.html
 
 .PHONY: help
 ## Shows this help text
