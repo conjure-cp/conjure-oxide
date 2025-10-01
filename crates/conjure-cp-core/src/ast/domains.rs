@@ -95,106 +95,140 @@ pub enum SetAttr {
     MaxSize(i32),
     MinMaxSize(i32, i32),
 }
+
+impl SetAttr {
+    pub fn allows_size(&self, size: usize) -> bool {
+        match self {
+            SetAttr::None => true,
+            SetAttr::Size(n) => *n as usize == size,
+            SetAttr::MinSize(n) => size >= *n as usize,
+            SetAttr::MaxSize(n) => size <= *n as usize,
+            SetAttr::MinMaxSize(min, max) => size >= *min as usize && size <= *max as usize,
+        }
+    }
+}
+
 impl Domain {
     /// Returns true if `lit` is a member of the domain.
     ///
     /// # Errors
     ///
     /// - [`DomainOpError::InputContainsReference`] if the input domain is a reference or contains
-    ///   a reference, meaning that its members cannot be determined.
+    ///   a reference, meaning its members cannot be determined.
     pub fn contains(&self, lit: &Literal) -> Result<bool, DomainOpError> {
         // not adding a generic wildcard condition for all domains, so that this gives a compile
         // error when a domain is added.
-        match (self, lit) {
-            (Domain::Empty(_), _) => Ok(false),
-            (Domain::Int(ranges), Literal::Int(x)) => {
-                // unconstrained int domain
-                if ranges.is_empty() {
-                    return Ok(true);
-                };
+        match self {
+            // empty domain can't contain anything
+            Domain::Empty(_) => Ok(false),
+            // references need to be resolved first
+            Domain::Reference(_) => Err(DomainOpError::InputContainsReference),
+            Domain::Bool => match lit {
+                Literal::Bool(_) => Ok(true),
+                _ => Ok(false),
+            },
+            Domain::Int(ranges) => match lit {
+                Literal::Int(x) => {
+                    // unconstrained int domain - contains all integers
+                    if ranges.is_empty() {
+                        return Ok(true);
+                    };
 
-                Ok(ranges.iter().any(|range| range.contains(x)))
-            }
-            (Domain::Int(_), _) => Ok(false),
-            (Domain::Bool, Literal::Bool(_)) => Ok(true),
-            (Domain::Bool, _) => Ok(false),
-            (Domain::Reference(_), _) => Err(DomainOpError::InputContainsReference),
-            (
-                Domain::Matrix(elem_domain, index_domains),
-                Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx_domain)),
-            ) => {
-                let mut index_domains = index_domains.clone();
-                if index_domains
-                    .pop()
-                    .expect("a matrix should have atleast one index domain")
-                    != **idx_domain
-                {
-                    return Ok(false);
-                };
-
-                // matrix literals are represented as nested 1d matrices, so the elements of
-                // the matrix literal will be the inner dimensions of the matrix.
-                let next_elem_domain = if index_domains.is_empty() {
-                    elem_domain.as_ref().clone()
-                } else {
-                    Domain::Matrix(elem_domain.clone(), index_domains)
-                };
-
-                for elem in elems {
-                    if !next_elem_domain.contains(elem)? {
+                    Ok(ranges.iter().any(|range| range.contains(x)))
+                }
+                _ => Ok(false),
+            },
+            Domain::Set(set_attr, inner_domain) => match lit {
+                Literal::AbstractLiteral(AbstractLiteral::Set(lit_elems)) => {
+                    // check if the literal's size is allowed by the set attribute
+                    if !set_attr.allows_size(lit_elems.len()) {
                         return Ok(false);
                     }
-                }
 
-                Ok(true)
+                    for elem in lit_elems {
+                        if !inner_domain.contains(elem)? {
+                            return Ok(false);
+                        }
+                    }
+                    Ok(true)
+                }
+                _ => Ok(false),
+            },
+            Domain::Matrix(elem_domain, index_domains) => {
+                match lit {
+                    Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx_domain)) => {
+                        // Matrix literals are represented as nested 1d matrices, so the elements of
+                        // the matrix literal will be the inner dimensions of the matrix.
+
+                        let mut index_domains = index_domains.clone();
+                        if index_domains
+                            .pop()
+                            .expect("a matrix should have at least one index domain")
+                            != **idx_domain
+                        {
+                            return Ok(false);
+                        };
+
+                        let next_elem_domain = if index_domains.is_empty() {
+                            // Base case - we have a 1D row. Now check if all elements in the
+                            // literal are in this row's element domain.
+                            elem_domain.as_ref().clone()
+                        } else {
+                            // Otherwise, go down a dimension (e.g. 2D matrix inside a 3D tensor)
+                            Domain::Matrix(elem_domain.clone(), index_domains)
+                        };
+
+                        for elem in elems {
+                            if !next_elem_domain.contains(elem)? {
+                                return Ok(false);
+                            }
+                        }
+
+                        Ok(true)
+                    }
+                    _ => Ok(false),
+                }
             }
-            (
-                Domain::Tuple(elem_domains),
-                Literal::AbstractLiteral(AbstractLiteral::Tuple(literal_elems)),
-            ) => {
-                // for every element in the tuple literal, check if it is in the corresponding domain
-                for (elem_domain, elem) in itertools::izip!(elem_domains, literal_elems) {
-                    if !elem_domain.contains(elem)? {
+            Domain::Tuple(elem_domains) => {
+                match lit {
+                    Literal::AbstractLiteral(AbstractLiteral::Tuple(literal_elems)) => {
+                        if elem_domains.len() != literal_elems.len() {
+                            return Ok(false);
+                        }
+
+                        // for every element in the tuple literal, check if it is in the corresponding domain
+                        for (elem_domain, elem) in itertools::izip!(elem_domains, literal_elems) {
+                            if !elem_domain.contains(elem)? {
+                                return Ok(false);
+                            }
+                        }
+
+                        Ok(true)
+                    }
+                    _ => Ok(false),
+                }
+            }
+            Domain::Record(entries) => match lit {
+                Literal::AbstractLiteral(AbstractLiteral::Record(lit_entries)) => {
+                    if entries.len() != lit_entries.len() {
                         return Ok(false);
                     }
-                }
 
-                Ok(true)
-            }
-            (
-                Domain::Set(_, domain),
-                Literal::AbstractLiteral(AbstractLiteral::Set(literal_elems)),
-            ) => {
-                for elem in literal_elems {
-                    if !domain.contains(elem)? {
-                        return Ok(false);
+                    for (entry, lit_entry) in itertools::izip!(entries, lit_entries) {
+                        if entry.name != lit_entry.name
+                            || !(entry.domain.contains(&lit_entry.value)?)
+                        {
+                            return Ok(false);
+                        }
                     }
+                    Ok(true)
                 }
-                Ok(true)
-            }
-            (
-                Domain::Record(entries),
-                Literal::AbstractLiteral(AbstractLiteral::Record(lit_entries)),
-            ) => {
-                for (entry, lit_entry) in itertools::izip!(entries, lit_entries) {
-                    if entry.name != lit_entry.name || !(entry.domain.contains(&lit_entry.value)?) {
-                        return Ok(false);
-                    }
-                }
-                Ok(true)
-            }
-
-            (Domain::Record(_), _) => Ok(false),
-
-            (Domain::Matrix(_, _), _) => Ok(false),
-
-            (Domain::Set(_, _), _) => Ok(false),
-
-            (Domain::Tuple(_), _) => Ok(false),
+                _ => Ok(false),
+            },
         }
     }
 
-    /// Returns a list of all possible values in the domain.
+    /// Returns a list of all possible values in an integer domain.
     ///
     /// # Errors
     ///
