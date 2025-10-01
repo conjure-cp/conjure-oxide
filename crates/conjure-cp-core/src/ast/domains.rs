@@ -2,7 +2,10 @@
 
 use conjure_cp_core::ast::SymbolTable;
 use itertools::{Itertools, izip};
-use num_traits::Num;
+use num_traits::{
+    Num,
+    sign::{Signed, abs},
+};
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeSet, fmt::Display};
 use thiserror::Error;
@@ -50,11 +53,11 @@ impl<A: Ord> Range<A> {
     }
 }
 
-impl<A: Num + Ord + Clone> Range<A> {
+impl<A: Num + Ord + Clone + Signed> Range<A> {
     fn length(&self) -> Option<A> {
         match self {
             Range::Single(_) => Some(A::one()),
-            Range::Bounded(i, j) => Some(j.clone() - i.clone() + A::one()),
+            Range::Bounded(i, j) => Some(abs(j.clone() - i.clone()) + A::one()),
             Range::UnboundedR(_) | Range::UnboundedL(_) => None,
         }
     }
@@ -702,15 +705,15 @@ impl Domain {
                     return Err(DomainOpError::InputUnbounded);
                 }
 
-                let mut length = 0;
+                let mut length = 0u64;
                 for range in ranges {
                     if let Some(range_length) = range.length() {
-                        length += range_length;
+                        length += range_length as u64;
                     } else {
                         return Err(DomainOpError::InputUnbounded);
                     }
                 }
-                Ok(length as u64)
+                Ok(length)
             }
             Domain::Set(set_attr, inner_domain) => {
                 let inner_len = inner_domain.length()?;
@@ -723,7 +726,9 @@ impl Domain {
                 };
                 let mut ans = 0u64;
                 for sz in min_sz..=max_sz {
-                    ans += count_combinations(inner_len, sz);
+                    let c = count_combinations(inner_len, sz).ok_or(DomainOpError::TooLarge)?;
+                    assert!(c > 0, "are arguments in the right order?");
+                    ans = ans.checked_add(c).ok_or(DomainOpError::TooLarge)?;
                 }
                 Ok(ans)
             }
@@ -1063,6 +1068,9 @@ pub enum DomainOpError {
     /// The operation failed as the input domain contained a reference.
     #[error("The operation failed as the input domain contained a reference")]
     InputContainsReference,
+
+    #[error("Could not enumerate the domain as it is too large")]
+    TooLarge,
 }
 
 /// Types that have a [`Domain`].
@@ -1161,6 +1169,13 @@ mod tests {
             Box::new(Domain::Set(SetAttr::None, Box::new(domain_int!(1..)))),
         );
         assert_eq!(s2_bad.length(), Err(DomainOpError::InputUnbounded));
+
+        let s = Domain::Set(SetAttr::None, Box::new(domain_int!(1..20)));
+        assert!(s.length().is_ok());
+
+        // current way of calculating the formula overflows for anything larger than this
+        let s = Domain::Set(SetAttr::None, Box::new(domain_int!(1..63)));
+        assert_eq!(s.length(), Err(DomainOpError::TooLarge));
     }
 
     #[test]
