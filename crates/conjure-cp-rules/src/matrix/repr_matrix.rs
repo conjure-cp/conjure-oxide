@@ -1,8 +1,8 @@
-use conjure_cp::ast::Metadata;
 use conjure_cp::ast::categories::{Category, CategoryOf};
 use conjure_cp::ast::{
     Atom, Domain, Expression as Expr, Literal, Moo, Name, Range, SymbolTable, matrix,
 };
+use conjure_cp::ast::{HasDomain, Metadata};
 use conjure_cp::essence_expr;
 use conjure_cp::into_matrix_expr;
 use conjure_cp::rule_engine::{
@@ -39,8 +39,7 @@ fn index_matrix_to_atom_impl(expr: &Expr, symbols: &SymbolTable) -> ApplicationR
         // let decl = symbols.lookup(name).unwrap();
 
         // resolve index domains so that we can enumerate them later
-        let Some(Domain::Matrix(_, index_domains)) = decl.domain().map(|x| x.resolve(symbols))
-        else {
+        let Domain::Matrix(_, index_domains) = decl.resolved_domain_of(symbols) else {
             return Err(RuleNotApplicable);
         };
 
@@ -273,7 +272,7 @@ fn slice_matrix_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
         .clone();
 
     // resolve index domains so that we can enumerate them later
-    let Some(Domain::Matrix(_, index_domains)) = decl.domain().map(|x| x.resolve(symbols)) else {
+    let Domain::Matrix(_, index_domains) = decl.resolved_domain_of(symbols) else {
         return Err(RuleNotApplicable);
     };
 
@@ -353,8 +352,7 @@ fn matrix_ref_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             .clone();
 
         // resolve index domains so that we can enumerate them later
-        let Some(Domain::Matrix(_, index_domains)) = decl.domain().map(|x| x.resolve(symbols))
-        else {
+        let Domain::Matrix(_, index_domains) = decl.resolved_domain_of(symbols) else {
             continue;
         };
 

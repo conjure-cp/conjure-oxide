@@ -10,6 +10,7 @@ use conjure_cp::{
 use uniplate::Uniplate;
 
 use ApplicationError::RuleNotApplicable;
+use conjure_cp::ast::HasDomain;
 
 register_rule_set!("Base", ());
 
@@ -89,7 +90,7 @@ fn min_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let domain = expr.domain_of().ok_or(ApplicationError::DomainError)?;
+    let domain = expr.domain_of();
     let mut symbols = symbols.clone();
 
     let atom_inner = Atom::new_ref(symbols.gensym(&domain));
@@ -132,7 +133,7 @@ fn max_to_var(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let domain = expr.domain_of().ok_or(ApplicationError::DomainError)?;
+    let domain = expr.domain_of();
     let mut symbols: SymbolTable = symbols.clone();
 
     let atom_inner = Atom::new_ref(symbols.gensym(&domain));

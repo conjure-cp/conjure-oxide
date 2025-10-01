@@ -1,4 +1,4 @@
-use crate::{ast::declaration::serde::DeclarationPtrAsId, bug};
+use crate::ast::declaration::serde::DeclarationPtrAsId;
 use std::{borrow::Borrow, cell::Ref};
 use uniplate::Uniplate;
 
@@ -58,9 +58,7 @@ impl HasDomain for Atom {
     fn domain_of(&self) -> Domain {
         match self {
             Atom::Literal(literal) => literal.domain_of(),
-            Atom::Reference(ptr) => ptr.domain().unwrap_or_else(|| {
-                bug!("reference ({name}) should have a domain", name = ptr.name())
-            }),
+            Atom::Reference(ptr) => ptr.domain_of(),
         }
     }
 }
