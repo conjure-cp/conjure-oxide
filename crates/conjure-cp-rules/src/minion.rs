@@ -9,8 +9,8 @@ use crate::{
     extra_check,
     utils::{is_flat, to_aux_var},
 };
-use conjure_cp::ast::Moo;
 use conjure_cp::ast::categories::Category;
+use conjure_cp::ast::{HasDomain, Moo};
 use conjure_cp::{
     ast::Metadata,
     ast::{
@@ -110,8 +110,7 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
             Metadata::new(),
             Moo::new(matrix_expr![y.clone().into(), next_factor]),
         )
-        .domain_of()
-        .ok_or(ApplicationError::DomainError)?;
+        .domain_of();
 
         let aux_decl = symbols.gensym(&aux_domain);
         let aux_var = Atom::Reference(aux_decl);
@@ -1144,10 +1143,7 @@ fn flatten_matrix_literal(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
                 // we want to flatten this to
                 // [__0,__1,__2][i]
 
-                let Some(domain) = e.domain_of() else {
-                    continue;
-                };
-
+                let domain = e.domain_of();
                 let categories = e.universe_categories();
 
                 // must contain a decision variable
@@ -1338,11 +1334,10 @@ fn y_plus_k_geq_x_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
 #[register_rule(("Minion", 4100))]
 fn not_literal_to_wliteral(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    use Domain::Bool;
     match expr {
         Expr::Not(m, expr) => {
             if let Expr::Atomic(_, Atom::Reference(decl)) = (**expr).clone() {
-                if decl.domain().is_some_and(|x| matches!(&x as &Domain, Bool)) {
+                if matches!(decl.domain_of(), Domain::Bool) {
                     return Ok(Reduction::pure(Expr::FlatWatchedLiteral(
                         m.clone_dirty(),
                         decl,

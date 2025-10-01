@@ -3,6 +3,7 @@ use std::{
     sync::{Arc, Mutex, RwLock, atomic::Ordering},
 };
 
+use conjure_cp::ast::HasDomain;
 use conjure_cp::{
     ast::{
         Atom, DeclarationKind, DeclarationPtr, Expression, Model, Name, SymbolTable,
@@ -155,7 +156,7 @@ pub fn expand_simple(
             };
 
             let id = decl.id();
-            let new_decl = symtab.gensym(&decl.domain().unwrap());
+            let new_decl = symtab.gensym(&decl.domain_of());
 
             machine_name_translations.insert(id, new_decl);
         }

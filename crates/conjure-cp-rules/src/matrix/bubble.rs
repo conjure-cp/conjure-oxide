@@ -1,8 +1,7 @@
-use conjure_cp::ast::Metadata;
 use conjure_cp::ast::{Domain, Expression, Moo, SymbolTable};
+use conjure_cp::ast::{HasDomain, Metadata};
 use conjure_cp::rule_engine::{
-    ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
-    register_rule,
+    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
 use conjure_cp::{bug, into_matrix_expr};
 use itertools::{Itertools as _, izip};
@@ -14,10 +13,7 @@ fn index_to_bubble(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
         return Err(RuleNotApplicable);
     };
 
-    let domain = subject
-        .domain_of()
-        .ok_or(ApplicationError::DomainError)?
-        .resolve(symtab);
+    let domain = subject.resolved_domain_of(symtab);
 
     // TODO: tuple, this is a hack right now just to avoid the rule being applied to tuples, but could we safely modify the rule to
     // handle tuples as well?
@@ -67,7 +63,7 @@ fn slice_to_bubble(expr: &Expression, symtab: &SymbolTable) -> ApplicationResult
         return Err(RuleNotApplicable);
     };
 
-    let domain = subject.domain_of().ok_or(ApplicationError::DomainError)?;
+    let domain = subject.domain_of();
 
     let Domain::Matrix(_, index_domains) = domain.clone().resolve(symtab) else {
         bug!(

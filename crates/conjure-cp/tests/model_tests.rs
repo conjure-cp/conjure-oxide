@@ -18,9 +18,9 @@ fn modify_domain() {
 
     symbols.insert(decl_a.clone()).unwrap();
 
-    assert_eq!(&decl_a.domain().unwrap() as &Domain, &d1);
+    assert_eq!(&decl_a.domain_of() as &Domain, &d1);
 
     decl_a.as_var_mut().unwrap().domain = d2.clone();
 
-    assert_eq!(&decl_a.domain().unwrap() as &Domain, &d2);
+    assert_eq!(&decl_a.domain_of() as &Domain, &d2);
 }

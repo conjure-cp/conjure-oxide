@@ -26,6 +26,7 @@ pub use atom::Atom;
 pub use declaration::{DeclarationKind, DeclarationPtr};
 pub use domains::Domain;
 pub use domains::DomainOpError;
+pub use domains::HasDomain;
 pub use domains::Range;
 pub use domains::SetAttr;
 pub use expressions::Expression;

@@ -71,10 +71,7 @@ impl AbstractLiteral<Expression> {
         match self {
             AbstractLiteral::Set(items) => {
                 // ensure that all items have a domain, or return None
-                let item_domains: Vec<Domain> = items
-                    .iter()
-                    .map(|x| x.domain_of())
-                    .collect::<Option<Vec<Domain>>>()?;
+                let item_domains: Vec<Domain> = items.iter().map(|x| x.domain_of()).collect();
 
                 // union all item domains together
                 let mut item_domain_iter = item_domains.iter().cloned();
@@ -89,10 +86,7 @@ impl AbstractLiteral<Expression> {
 
             AbstractLiteral::Matrix(items, _) => {
                 // ensure that all items have a domain, or return None
-                let item_domains: Vec<Domain> = items
-                    .iter()
-                    .map(|x| x.domain_of())
-                    .collect::<Option<Vec<Domain>>>()?;
+                let item_domains: Vec<Domain> = items.iter().map(|x| x.domain_of()).collect();
 
                 // union all item domains together
                 let mut item_domain_iter = item_domains.iter().cloned();

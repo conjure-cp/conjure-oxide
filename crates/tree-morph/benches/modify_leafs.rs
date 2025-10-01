@@ -14,10 +14,10 @@ enum Expr {
 struct Meta {} // not relevant for this benchmark
 
 fn zero_to_one(_: &mut Commands<Expr, Meta>, subtree: &Expr, _: &Meta) -> Option<Expr> {
-    if let Expr::Val(a) = subtree {
-        if let 0 = *a {
-            return Some(Expr::Val(1));
-        }
+    if let Expr::Val(a) = subtree
+        && *a == 0
+    {
+        return Some(Expr::Val(1));
     }
     None
 }

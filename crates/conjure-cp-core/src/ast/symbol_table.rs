@@ -25,6 +25,7 @@ use uniplate::{Biplate, Uniplate};
 
 use super::name::Name;
 use super::{Domain, Expression, ReturnType, SubModel};
+use conjure_cp_core::ast::domains::HasDomain;
 use derivative::Derivative;
 
 // Count symbol tables per thread / model.
@@ -170,9 +171,9 @@ impl SymbolTable {
         // a lot of the domains would be the same).
 
         if let Name::WithRepresentation(name, _) = name {
-            self.lookup(name)?.domain()
+            self.lookup(name).map(|d| d.domain_of())
         } else {
-            self.lookup(name)?.domain()
+            self.lookup(name).map(|d| d.domain_of())
         }
     }
 

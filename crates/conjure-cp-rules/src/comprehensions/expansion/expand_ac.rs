@@ -4,6 +4,7 @@ use std::{
     sync::{Arc, Mutex, RwLock, atomic::Ordering},
 };
 
+use conjure_cp::ast::HasDomain;
 use conjure_cp::{
     ast::{
         Atom, DeclarationKind, DeclarationPtr, Expression, Metadata, Model, Moo, Name, ReturnType,
@@ -201,7 +202,7 @@ pub fn expand_ac(
             };
 
             let id = decl.id();
-            let new_decl = symtab.gensym(&decl.domain().unwrap());
+            let new_decl = symtab.gensym(&decl.domain_of());
 
             machine_name_translations.insert(id, new_decl);
         }
@@ -294,7 +295,7 @@ fn add_return_expression_to_generator_model(
         // be a dummy variable => turn it into a dummy variable and continue.
         if !has_eligible_child && can_be_dummy_var {
             // introduce dummy var and continue
-            let dummy_domain = focus.domain_of().unwrap();
+            let dummy_domain = focus.domain_of();
             let dummy_decl = symtab.gensym(&dummy_domain);
             *focus = Expression::Atomic(Metadata::new(), Atom::Reference(dummy_decl));
 
@@ -323,7 +324,7 @@ fn add_return_expression_to_generator_model(
                     // ones!
                     //
                     // introduce dummy var and continue
-                    let dummy_domain = focus.domain_of().unwrap();
+                    let dummy_domain = focus.domain_of();
                     let dummy_decl = symtab.gensym(&dummy_domain);
                     *focus = Expression::Atomic(Metadata::new(), Atom::Reference(dummy_decl));
 
@@ -351,7 +352,7 @@ fn add_return_expression_to_generator_model(
         // child into a dummy variable.
         else if has_eligible_child && !has_induction_vars {
             // introduce dummy var and continue
-            let dummy_domain = focus.domain_of().unwrap();
+            let dummy_domain = focus.domain_of();
             let dummy_decl = symtab.gensym(&dummy_domain);
             *focus = Expression::Atomic(Metadata::new(), Atom::Reference(dummy_decl));
 
