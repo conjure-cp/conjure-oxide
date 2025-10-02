@@ -174,7 +174,6 @@ pub fn get_sat_solutions(
     solver.save_stats_to_context();
 
     #[allow(clippy::unwrap_used)]
-    #[allow(clippy::unwrap_used)]
     let mut sols_guard = (*all_solutions_ref).lock().unwrap();
     let sols = &mut *sols_guard;
     let symbols = symbols_rc.borrow();
