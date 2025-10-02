@@ -1,0 +1,38 @@
+[package]
+name = "conjure-cp-cli"
+version = "0.0.1"
+edition = "2024"
+default-run = "conjure-oxide"
+
+
+[[bin]]
+name = 'conjure-oxide'
+path = "src/main.rs"
+
+[dependencies]
+conjure-cp = { path = "../conjure-cp" }
+conjure-cp-rules = { path = "../conjure-cp-rules" }
+
+
+uniplate = { workspace = true }
+serde_json = {workspace = true}
+anyhow = {workspace = true}
+clap = {workspace = true}
+versions = {workspace = true}
+schemars = {workspace = true}
+glob = {workspace = true}
+tracing-subscriber = { workspace = true }
+tracing = {workspace = true}
+git-version = {workspace = true}
+tempfile = {workspace = true}
+itertools = {workspace = true}
+clap_complete = {workspace = true}
+rayon = {workspace = true}
+
+[features]
+
+default = ["extra-rule-checks"]
+extra-rule-checks = ["conjure-cp/extra-rule-checks"]
+
+[lints]
+workspace = true

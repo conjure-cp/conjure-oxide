@@ -1,0 +1,49 @@
+Model before rewriting:
+
+find x: int(-2..3)
+find y: int(1..3)
+
+such that
+
+(product([y,|x|;int(1..2)]) = 2)
+
+--
+
+product([y,|x|;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+product([y,|x|;int(1..)]) 
+
+--
+
+product([y,|x|;int(1..)]), 
+   ~~> flatten_product ([("Minion", 4200)]) 
+product([y,__0;int(1..)]) 
+new variables:
+  find __0: int(0..3)
+new constraints:
+  __0 =aux |x|
+--
+
+__0 =aux |x|, 
+   ~~> introduce_abseq ([("Minion", 4400)]) 
+AbsEq(__0,x) 
+
+--
+
+(product([y,__0;int(1..)]) = 2), 
+   ~~> introduce_producteq ([("Minion", 4200)]) 
+FlatProductEq(__0,y,2) 
+
+--
+
+Final model:
+
+find x: int(-2..3)
+find y: int(1..3)
+find __0: int(0..3)
+
+such that
+
+FlatProductEq(__0,y,2),
+AbsEq(__0,x)
+

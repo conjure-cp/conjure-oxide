@@ -1,0 +1,52 @@
+Model before rewriting:
+
+find x: int(1..10)
+find y: int(2..4)
+
+such that
+
+(x % y = 3)
+
+--
+
+x % y, 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(x,y) @ (y != 0)} 
+
+--
+
+({SafeMod(x,y) @ (y != 0)} = 3), 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{(SafeMod(x,y) = 3) @ (y != 0)} 
+
+--
+
+{(SafeMod(x,y) = 3) @ (y != 0)}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+and([(SafeMod(x,y) = 3),(y != 0);int(1..)]) 
+
+--
+
+and([(SafeMod(x,y) = 3),(y != 0);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(SafeMod(x,y) = 3),
+(y != 0) 
+
+--
+
+(SafeMod(x,y) = 3), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(x, y, 3) 
+
+--
+
+Final model:
+
+find x: int(1..10)
+find y: int(2..4)
+
+such that
+
+ModEq(x, y, 3),
+(y != 0)
+

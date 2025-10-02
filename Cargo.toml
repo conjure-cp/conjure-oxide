@@ -1,28 +1,83 @@
 [workspace]
 resolver = "2"
 
-default-members = ["conjure_oxide", "crates/conjure_core", "solvers/minion"]
+default-members = ["crates/conjure-cp", "tests-integration", "crates/conjure-cp-cli"]
 
 members = [
-    "conjure_oxide",
-    "crates/conjure_core",
-    "crates/conjure_rules",
-    "crates/conjure_essence_parser",
-    "crates/conjure_essence_macros",
-    "crates/enum_compatability_macro",
-    "crates/conjure_rule_macros",
-    "solvers/minion",
+    "crates/conjure-cp-cli",
+    "crates/conjure-cp",
+    "crates/conjure-cp-core",
+    "crates/conjure-cp-rules",
+    "crates/conjure-cp-essence-parser",
+    "crates/conjure-cp-essence-macros",
+    "crates/conjure-cp-enum-compatibility-macro",
+    "crates/conjure-cp-rule-macros",
+    "crates/minion-sys",
     "crates/tree-sitter-essence",
-    "crates/tree_morph",
+    "crates/tree-morph",
+
+  # internal crates, not to be pushed to crates io
+  "tests-integration"
 ]
+
+[workspace.dependencies]
+
+
+anyhow = "1.0.98"
+clap = { version = "4.5.42", features = ["derive"] }
+clap_complete = "4.5.55"
+defile = "0.2.1"
+derivative = "2.2.0"
+git-version = "0.3.9"
+glob = "0.3.2"
+itertools = "0.14"
+linkme = "0.3.33"
+log = "0.4.27"
+paste = "1.0.15"
+pretty_assertions = "1.4.1"
+proc-macro2 = "1.0.95"
+project-root = "0.2.2"
+quote = "1.0.40"
+rayon = "1.8.0"
+regex = "1.11.1"
+rustsat = "0.7.2"
+rustsat-minisat = "0.7.2"
+schemars = "1.0.4"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.142"
+serde_with = "3.14.0"
+static_assertions = "1.1.0"
+strum = "0.27.2"
+strum_macros = "0.27.2"
+syn = { version = "2.0.104", features = ["parsing","visit-mut","full"] }
+tempfile = "3.20.0"
+thiserror = "2.0.12"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["ansi","env-filter","json",] }
+tree-sitter = "0.25.8"
+tree-sitter-haskell = "0.23.0"
+trybuild = "1.0.111"
+uniplate = "0.4.2"
+ustr = { version = "1.1.0", features = ["serde"] }
+versions = "7.0.0"
+walkdir = "2.5.0"
+polyquine = "0.0.7"
 
 [workspace.lints.clippy]
 unwrap_used = "allow"
 expect_used = "allow"
-wildcard_imports = "warn"
 
-[profile.dev]
-codegen-units = 1
 
-[profile.release]
-codegen-units = 1
+assigning_clones = "warn"         # use clone_from where possible
+cloned_instead_of_copied = "warn" # use copy instead of clone where possible
+collection_is_never_read = "warn"
+enum_glob_use = "warn"            # do not allow `use Enum::*`
+implicit_clone = "warn"           # use .clone() instead of .to_owned()
+redundant_clone = "warn"          # this is a nursery lint, so might give false-negatives.
+
+[profile.profiling]
+inherits = "release"
+debug = true
+
+[workspace.metadata.cargo-shear]
+ignored = ["paste", "git-version", "linkme", "defile", "conjure-cp"]

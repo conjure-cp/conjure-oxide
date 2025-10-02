@@ -1,0 +1,50 @@
+Model before rewriting:
+
+find a: int(0..9)
+
+such that
+
+(2 = 8 % a)
+
+--
+
+8 % a, 
+   ~~> mod_to_bubble ([("Bubble", 6000)]) 
+{SafeMod(8,a) @ (a != 0)} 
+
+--
+
+(2 = {SafeMod(8,a) @ (a != 0)}), 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{(2 = SafeMod(8,a)) @ (a != 0)} 
+
+--
+
+{(2 = SafeMod(8,a)) @ (a != 0)}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+and([(2 = SafeMod(8,a)),(a != 0);int(1..)]) 
+
+--
+
+and([(2 = SafeMod(8,a)),(a != 0);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(2 = SafeMod(8,a)),
+(a != 0) 
+
+--
+
+(2 = SafeMod(8,a)), 
+   ~~> introduce_modeq ([("Minion", 4200)]) 
+ModEq(8, a, 2) 
+
+--
+
+Final model:
+
+find a: int(0..9)
+
+such that
+
+ModEq(8, a, 2),
+(a != 0)
+

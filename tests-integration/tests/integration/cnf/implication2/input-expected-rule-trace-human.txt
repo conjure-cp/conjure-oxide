@@ -1,0 +1,46 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+(a) -> ((b) -> (c))
+
+--
+
+(a) -> ((b) -> (c)), 
+   ~~> normalise_implies_uncurry ([("Base", 8400)]) 
+(and([a,b;int(1..)])) -> (c) 
+
+--
+
+(and([a,b;int(1..)])) -> (c), 
+   ~~> remove_implication ([("CNF", 4100)]) 
+or([!(and([a,b;int(1..)])),c;int(1..)]) 
+
+--
+
+!(and([a,b;int(1..)])), 
+   ~~> distribute_not_over_and ([("Base", 8400)]) 
+or([!(a),!(b);int(1..)]) 
+
+--
+
+or([or([!(a),!(b);int(1..)]),c;int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+or([!(a),!(b),c;int(1..)]) 
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+or([!(a),!(b),c;int(1..)])
+

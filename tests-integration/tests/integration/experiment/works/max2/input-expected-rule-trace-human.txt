@@ -1,0 +1,138 @@
+Model before rewriting:
+
+find a: int(1..4)
+find b: int(1..4)
+find x: int(1..4)
+
+such that
+
+(max([a,b;int(1..2)]) >= 2),
+(x = sum([max([a,b;int(1..2)]),1;int(1..2)]))
+
+--
+
+(max([a,b;int(1..2)]) >= 2), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+(__0 >= 2) 
+new variables:
+  find __0: int(1..4)
+new constraints:
+  __0 =aux max([a,b;int(1..2)])
+--
+
+(__0 >= 2), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(2, __0, 0) 
+
+--
+
+sum([max([a,b;int(1..2)]),1;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+sum([max([a,b;int(1..2)]),1;int(1..)]) 
+
+--
+
+(x = sum([max([a,b;int(1..2)]),1;int(1..)])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+and([SumLeq([1, __1], x),SumGeq([1, __1], x);int(1..)]) 
+new variables:
+  find __1: int(1..4)
+new constraints:
+  __1 =aux max([a,b;int(1..2)])
+--
+
+Ineq(2, __0, 0),
+and([SumLeq([1, __1], x),SumGeq([1, __1], x);int(1..)]),
+__0 =aux max([a,b;int(1..2)]),
+__1 =aux max([a,b;int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+Ineq(2, __0, 0),
+SumLeq([1, __1], x),
+SumGeq([1, __1], x),
+__0 =aux max([a,b;int(1..2)]),
+__1 =aux max([a,b;int(1..2)]) 
+
+--
+
+max([a,b;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+max([a,b;int(1..)]) 
+
+--
+
+max([a,b;int(1..)]), 
+   ~~> max_to_var ([("Base", 6000)]) 
+__2 
+new variables:
+  find __2: int(1..4)
+new constraints:
+  (__2 >= a)
+  (__2 >= b)
+  or([(__2 = a),(__2 = b);int(1..)])
+--
+
+(__2 >= a), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(a, __2, 0) 
+
+--
+
+(__2 >= b), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(b, __2, 0) 
+
+--
+
+max([a,b;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+max([a,b;int(1..)]) 
+
+--
+
+max([a,b;int(1..)]), 
+   ~~> max_to_var ([("Base", 6000)]) 
+__3 
+new variables:
+  find __3: int(1..4)
+new constraints:
+  (__3 >= a)
+  (__3 >= b)
+  or([(__3 = a),(__3 = b);int(1..)])
+--
+
+(__3 >= a), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(a, __3, 0) 
+
+--
+
+(__3 >= b), 
+   ~~> geq_to_ineq ([("Minion", 4100)]) 
+Ineq(b, __3, 0) 
+
+--
+
+Final model:
+
+find a: int(1..4)
+find b: int(1..4)
+find x: int(1..4)
+find __0: int(1..4)
+find __1: int(1..4)
+find __2: int(1..4)
+find __3: int(1..4)
+
+such that
+
+Ineq(2, __0, 0),
+SumLeq([1, __1], x),
+SumGeq([1, __1], x),
+__0 =aux __2,
+__1 =aux __3,
+Ineq(a, __2, 0),
+Ineq(b, __2, 0),
+or([(__2 = a),(__2 = b);int(1..)]),
+Ineq(a, __3, 0),
+Ineq(b, __3, 0),
+or([(__3 = a),(__3 = b);int(1..)])
+
