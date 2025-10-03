@@ -23,7 +23,7 @@ use conjure_cp::{
     parse::conjure_json::model_from_json, rule_engine::get_rules, solver::SolverFamily,
 };
 use conjure_cp_cli::find_conjure::conjure_executable;
-use conjure_cp_cli::utils::conjure::{get_sat_solutions, solutions_to_json, get_minion_solutions_dominance};
+use conjure_cp_cli::utils::conjure::{get_sat_solutions, solutions_to_json, get_minion_solutions};
 use serde_json::to_string_pretty;
 
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
@@ -253,7 +253,7 @@ fn run_minion(global_args: &GlobalArgs, cmd_args: &Args, model: Model) -> anyhow
         ),
     };
 
-    let solutions = get_minion_solutions_dominance(
+    let solutions = get_minion_solutions(
         model,
         cmd_args.number_of_solutions,
         &global_args.save_solver_input_file,

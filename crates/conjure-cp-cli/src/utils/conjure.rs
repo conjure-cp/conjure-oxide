@@ -25,22 +25,38 @@ use glob::glob;
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-pub fn get_minion_solutions_dominance(
-    mut model: Model,
+
+
+pub fn get_minion_solutions(
+    model: Model,
     num_sols: i32,
     solver_input_file: &Option<PathBuf>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
-    // If no dominance relation, run normally
-    let Some(Expression::DominanceRelation(_, ref inner_expr)) = model.dominance.clone() else {
-        return get_minion_solutions(model, num_sols, solver_input_file);
-    };
+
+    if let Some(Expression::DominanceRelation(_, inner_expr)) = model.dominance.clone()  
+    {
+        return get_minion_solutions_dominance(model, num_sols, solver_input_file, (*inner_expr).clone());
+    }
+    else
+    {
+        return get_minion_solutions_no_dominance(model, num_sols, solver_input_file);
+    }
+}
+
+pub fn get_minion_solutions_dominance(
+    mut model: Model,
+    // TODO: after filtering only keep `num_sols` solutions
+    _num_sols: i32,
+    solver_input_file: &Option<PathBuf>,
+    dominance_expression: Expression
+) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
 
     // All non-dominated solutions
     let mut results = Vec::new();
 
     loop {
         // Get the next solution
-        let solutions = get_minion_solutions(model.clone(), 1, solver_input_file)?;
+        let solutions = get_minion_solutions_no_dominance(model.clone(), 1, solver_input_file)?;
 
         // No more solutions
         let Some(solution) = solutions.first() else {
@@ -51,7 +67,7 @@ pub fn get_minion_solutions_dominance(
         results.extend(solutions.clone());
 
         // Create and apply new blocking constraint
-        if let Some(blocking_constraint) = crate_blocking_constraint_from_solution(inner_expr, solution.clone()) {
+        if let Some(blocking_constraint) = crate_blocking_constraint_from_solution(&dominance_expression, &solution) {
             model.add_constraint(blocking_constraint);
         }
 
@@ -68,8 +84,15 @@ pub fn get_minion_solutions_dominance(
 
 pub fn crate_blocking_constraint_from_solution(
     expr: &Expression,
-    solution: BTreeMap<Name, Literal>,
+    solution: &BTreeMap<Name, Literal>,
 ) -> Option<Expression> {
+
+    use uniplate::Uniplate;
+    Some(expr.rewrite(&|e| { sub_solution_in_dominance_expr(&e, solution) }))
+}
+
+pub fn sub_solution_in_dominance_expr(expr: &Expression, solution: &BTreeMap<Name, Literal>) -> Option<Expression>
+{
     use Expression::*;
     use conjure_cp::ast::AbstractLiteral;
 
@@ -85,67 +108,11 @@ pub fn crate_blocking_constraint_from_solution(
             }
         }
 
-        Eq(meta, lhs, rhs)
-        | Lt(meta, lhs, rhs)
-        | Leq(meta, lhs, rhs)
-        | Geq(meta, lhs, rhs)
-        | Gt(meta, lhs, rhs) => {
-            let left = crate_blocking_constraint_from_solution(lhs, solution.clone())?;
-            let right = crate_blocking_constraint_from_solution(rhs, solution)?;
-            let left_expr = Moo::new(left);
-            let right_expr = Moo::new(right);
-
-            let new_expr = match expr {
-                Eq(_, _, _) => Eq(meta.clone(), left_expr, right_expr),
-                Lt(_, _, _) => Lt(meta.clone(), left_expr, right_expr),
-                Leq(_, _, _) => Leq(meta.clone(), left_expr, right_expr),
-                Geq(_, _, _) => Geq(meta.clone(), left_expr, right_expr),
-                Gt(_, _, _) => Gt(meta.clone(), left_expr, right_expr),
-                _ => unreachable!(),
-            };
-
-            Some(new_expr)
-        }
-
-        And(meta, inner) | Or(meta, inner) => {
-            let transformed = crate_blocking_constraint_from_solution(inner, solution)?;
-            let new_expr = Moo::new(transformed);
-
-            Some(match expr {
-                And(_, _) => And(meta.clone(), new_expr),
-                Or(_, _) => Or(meta.clone(), new_expr),
-                _ => unreachable!(),
-            })
-        }
-
-        AbstractLiteral(meta, inner) => {
-
-            if let AbstractLiteral::Matrix(items, dom) = inner {
-                let transformed_items: Option<Vec<Expression>> = items.iter()
-                    .map(|item| crate_blocking_constraint_from_solution(item, solution.clone()))
-                    .collect();
-
-                transformed_items.map(|results| {
-                    Expression::AbstractLiteral(
-                        meta.clone(),
-                        AbstractLiteral::Matrix(results, dom.clone()),
-                    )
-                })
-            } else {
-                None
-            }
-        }
-
-
-        // TODO: add other expressions
         _ => Some(expr.clone()),
     }
 }
 
-
-
-
-pub fn get_minion_solutions(
+pub fn get_minion_solutions_no_dominance(
     model: Model,
     num_sols: i32,
     solver_input_file: &Option<PathBuf>,
