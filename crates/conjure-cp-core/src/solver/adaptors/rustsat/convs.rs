@@ -90,7 +90,6 @@ pub fn handle_disjn(
     let mut lits = Clause::new();
 
     match disjn {
-        // treat ors and clauses the same
         Expression::Clause(_, vec) => {
             let cl = Moo::unwrap_or_clone(vec.clone()).unwrap_list().unwrap();
             for literal in cl {
