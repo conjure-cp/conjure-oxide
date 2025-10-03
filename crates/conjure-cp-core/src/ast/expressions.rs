@@ -795,6 +795,10 @@ impl Expression {
                     i8::MAX.into(),
                 )])) // BITS
             } // A CnfInt can represent any i8 integer at the moment
+            // A CnfInt contains multiple boolean expressions and represents the integer
+            // formed when these booleans are treated as the bits in an integer encoding.
+            // So the 'domain of' should be an integer 
+
             // The clause expression is a special case of the Or expression, but it is not
             // a disjunction of expressions, but rather a disjunction of atoms
             // Clauses should only be found within the `cnf_clauses` field of the model
