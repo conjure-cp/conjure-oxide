@@ -1,7 +1,7 @@
 use core::panic;
 use std::{
     collections::HashMap,
-    env::{vars, Vars},
+    env::{Vars, vars},
     io::Lines,
 };
 
@@ -17,7 +17,9 @@ use rustsat_minisat::core::Minisat;
 use anyhow::{Result, anyhow};
 
 use crate::{
-    ast::{Expression, Moo}, bug, solver::Error
+    ast::{Expression, Moo},
+    bug,
+    solver::Error,
 };
 
 pub fn handle_lit(
@@ -58,8 +60,6 @@ pub fn handle_atom(
     inst: &mut SatInstance,
 ) -> Lit {
     // polarity false for not
-    //
-    println!("Atomic: {}", a);
     match a {
         Expression::Atomic(_, atom) => match atom {
             conjure_cp_core::ast::Atom::Literal(literal) => {

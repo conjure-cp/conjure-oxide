@@ -211,7 +211,7 @@ impl SolverAdaptor for Sat {
         let m_clone = model;
         let vec_constr = m_clone.as_submodel().constraints();
 
-        let inst: SatInstance = handle_cnf(&vec_cnf, &mut var_map, finds.clone());
+        let inst: SatInstance = handle_cnf(vec_constr, &mut var_map, finds.clone());
 
         self.var_map = Some(var_map);
         let cnf: (Cnf, BasicVarManager) = inst.clone().into_cnf();
