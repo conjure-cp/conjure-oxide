@@ -44,7 +44,7 @@ pub fn parse_essence_with_context(
     for statement in named_children(&root_node) {
         match statement.kind() {
             "single_line_comment" => {}
-            "find_statement_list" => {
+            "find_statement" => {
                 let var_hashmap = parse_find_statement(statement, &source_code);
                 for (name, domain) in var_hashmap {
                     model
@@ -70,13 +70,13 @@ pub fn parse_essence_with_context(
                 model.as_submodel_mut().add_constraints(constraint_vec);
             }
             "language_label" => {}
-            "letting_statement_list" => {
+            "letting_statement" => {
                 let letting_vars = parse_letting_statement(statement, &source_code)?;
                 model.as_submodel_mut().symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
                 let inner = statement
-                    .child(1)
+                    .child_by_field_name("expression")
                     .expect("Expected a sub-expression inside `dominanceRelation`");
                 let current_symbols = model.as_submodel().symbols().clone();
                 let expr =

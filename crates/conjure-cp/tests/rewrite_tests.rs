@@ -299,11 +299,13 @@ fn reduce_solve_xyz() {
         Moo::new(Expression::Atomic(Metadata::new(), a.clone())),
         Moo::new(Expression::Atomic(Metadata::new(), b.clone())),
     );
+    println!("lt_to_leq to {expr2}");
     expr2 = lt_to_leq
         .apply(&expr2, &SymbolTable::new())
         .unwrap()
         .new_expression;
 
+    println!("leq_to_ineq to {expr2}");
     expr2 = leq_to_ineq
         .apply(&expr2, &SymbolTable::new())
         .unwrap()
