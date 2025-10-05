@@ -1,3 +1,24 @@
+// Central keyword list used to exclude from identifiers
+const KEYWORDS = [
+  'find',
+  'letting',
+  'be',
+  'domain',
+  'true',
+  'false',
+  'bool',
+  'int',
+  'and',
+  'or',
+  'min',
+  'max',
+  'sum',
+  'allDiff',
+  'toInt',
+  'fromSolution',
+  'dominanceRelation',
+];
+
 module.exports = grammar ({
   name: 'essence',
 
@@ -33,13 +54,22 @@ module.exports = grammar ({
 
     FALSE: $ => "false",
 
-    variable: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
+    find_kw: $ => "find",
+
+  
+
+    // Disallow reserved keywords from being recognized as variables anywhere
+    // Keep precedence low so true keywords still win where both could match
+    variable: $ => token(prec(
+      -1,
+      new RegExp(`(?!\\b(?:${KEYWORDS.join('|')})\\b)[a-zA-Z_][a-zA-Z0-9_]*`)
+    )),
 
     //meta-variable (aka template argument)
     metavar: $ => seq("&", $.variable),
 
     //find statements
-    find_statement_list: $ => seq("find", repeat($.find_statement)),
+    find_statement_list: $ => seq($.find_kw, repeat($.find_statement)),
 
     find_statement: $ => seq(
       $.variable_list,

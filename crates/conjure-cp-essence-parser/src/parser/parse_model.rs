@@ -14,6 +14,7 @@ use super::letting::parse_letting_statement;
 use super::util::{get_tree, named_children};
 use crate::errors::EssenceParseError;
 use crate::expression::parse_expression;
+use tree_sitter::Node;
 
 /// Parse an Essence file into a Model using the tree-sitter parser.
 pub fn parse_essence_file_native(
@@ -41,6 +42,23 @@ pub fn parse_essence_with_context(
     let mut model = Model::new(context);
     // let symbols = model.as_submodel().symbols().clone();
     let root_node = tree.root_node();
+
+    // Early syntax gate: if the parse contains errors or missing nodes, return a helpful error.
+    if root_node.has_error() {
+        if let Some(bad) = first_syntax_issue(root_node) {
+            let pos = bad.start_position();
+            return Err(EssenceParseError::syntax_error(
+                format!(
+                    "Syntax error near '{}' at line {}, column {}",
+                    bad.kind(),
+                    pos.row + 1,
+                    pos.column + 1
+                ),
+                None,
+            ));
+        }
+        return Err(EssenceParseError::syntax_error("Syntax error".to_string(), None));
+    }
     for statement in named_children(&root_node) {
         match statement.kind() {
             "single_line_comment" => {}
@@ -100,4 +118,21 @@ pub fn parse_essence_with_context(
         }
     }
     Ok(model)
+}
+
+/// Find the first error or missing node in a subtree (preorder DFS)
+fn first_syntax_issue(root: Node) -> Option<Node> {
+    let mut stack = vec![root];
+    while let Some(node) = stack.pop() {
+        if node.is_error() || node.is_missing() {
+            return Some(node);
+        }
+        let count = node.child_count();
+        for i in (0..count).rev() {
+            if let Some(child) = node.child(i) {
+                stack.push(child);
+            }
+        }
+    }
+    None
 }
