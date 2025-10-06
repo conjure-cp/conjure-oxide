@@ -524,6 +524,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
         Expr::MinionWInIntervalSet(_, _, _) => Err(RuleNotApplicable),
         Expr::MinionWInSet(_, _, _) => Err(RuleNotApplicable),
         Expr::MinionElementOne(_, _, _, _) => Err(RuleNotApplicable),
+        Expr::Clause(_, _) => Err(RuleNotApplicable),
     }
 }
 
