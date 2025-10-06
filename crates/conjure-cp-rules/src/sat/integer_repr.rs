@@ -5,13 +5,12 @@ use conjure_cp::rule_engine::{
     register_rule,
 };
 
-use conjure_cp::ast::AbstractLiteral::Matrix;
 use conjure_cp::ast::Metadata;
 use conjure_cp::ast::{Atom, Domain, Literal, Moo, Range};
 use conjure_cp::into_matrix_expr;
 
 use conjure_cp::essence_expr;
-use itertools::Itertools;
+
 
 // The number of bits used to represent the integer.
 // This is a fixed value for the representation, but could be made dynamic if needed.

@@ -5,9 +5,13 @@ use conjure_cp::rule_engine::{
     register_rule,
 };
 
+
+use conjure_cp::ast::AbstractLiteral::Matrix;
 use conjure_cp::ast::Metadata;
 use conjure_cp::ast::Moo;
 use conjure_cp::into_matrix_expr;
+
+use itertools::Itertools;
 
 use super::integer_repr::{validate_sat_int_operands, BITS};
 use super::boolean::{tseytin_and,
