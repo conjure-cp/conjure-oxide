@@ -638,6 +638,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             }
         }
         Expr::Clause(_, _) => None,
+        Expr::SATInt(_, _) => None,
     }
 }
 
