@@ -224,8 +224,6 @@ pub fn tseytin_xor(x: Expr, y: Expr, clauses: &mut Vec<Expr>, symbols: &mut Symb
     new_expr
 }
 
-
-
 // BOOLEAN SAT ENCODING RULES:
 
 register_rule_set!("SAT", ("Base"), (SolverFamily::Sat));
