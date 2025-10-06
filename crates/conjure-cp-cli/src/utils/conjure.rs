@@ -128,6 +128,9 @@ pub fn get_sat_solutions(
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
     let solver = Solver::new(Sat::default());
     eprintln!("Building SAT model...");
+
+    let symbols_rc = Rc::clone(model.as_submodel().symbols_ptr_unchecked());
+
     let solver = solver.load_model(model)?;
 
     if let Some(solver_input_file) = solver_input_file {
@@ -171,9 +174,49 @@ pub fn get_sat_solutions(
     solver.save_stats_to_context();
 
     #[allow(clippy::unwrap_used)]
-    let sols = (*all_solutions_ref).lock().unwrap();
+    let mut sols_guard = (*all_solutions_ref).lock().unwrap();
+    let sols = &mut *sols_guard;
+    let symbols = symbols_rc.borrow();
 
-    Ok((*sols).clone())
+    let names = symbols.clone().into_iter().map(|x| x.0).collect_vec();
+    let representations = names
+        .into_iter()
+        .filter_map(|x| symbols.representations_for(&x).map(|repr| (x, repr)))
+        .filter_map(|(name, reprs)| {
+            if reprs.is_empty() {
+                return None;
+            }
+            assert!(
+                reprs.len() <= 1,
+                "multiple representations for a variable is not yet implemented"
+            );
+
+            assert_eq!(
+                reprs[0].len(),
+                1,
+                "nested representations are not yet implemented"
+            );
+            Some((name, reprs[0][0].clone()))
+        })
+        .collect_vec();
+
+    for sol in sols.iter_mut() {
+        for (name, representation) in representations.iter() {
+            let value = representation.value_up(sol).unwrap();
+            sol.insert(name.clone(), value);
+        }
+
+        // remove represented and auxillary variables
+        *sol = sol
+            .clone()
+            .into_iter()
+            .filter(|(name, _)| {
+                !matches!(name, Name::Represented(_)) && !matches!(name, Name::Machine(_))
+            })
+            .collect();
+    }
+
+    Ok(sols.clone().into_iter().filter(|x| !x.is_empty()).collect())
 }
 
 #[allow(clippy::unwrap_used)]
