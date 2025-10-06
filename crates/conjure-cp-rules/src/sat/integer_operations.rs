@@ -1,17 +1,13 @@
 use conjure_cp::ast::Expression as Expr;
 use conjure_cp::ast::SymbolTable;
 use conjure_cp::rule_engine::{
-    ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
+    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
     register_rule,
 };
 
-use conjure_cp::ast::AbstractLiteral::Matrix;
 use conjure_cp::ast::Metadata;
-use conjure_cp::ast::{Atom, Domain, Literal, Moo, Range};
+use conjure_cp::ast::Moo;
 use conjure_cp::into_matrix_expr;
-
-use conjure_cp::essence_expr;
-use itertools::Itertools;
 
 use super::integer_repr::{validate_sat_int_operands, BITS};
 use super::boolean::{tseytin_and,
