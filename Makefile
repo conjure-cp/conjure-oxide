@@ -38,6 +38,11 @@ install-cargo-extensions: .installed-cargo-extensions.checkpoint
 	cargo install cargo-shear
 	touch .installed-cargo-extensions.checkpoint
 
+coverage:
+	@grcov --version >/dev/null 2>&1 || cargo install grcov && rustup component add llvm-tools
+	mkdir -p target/coverage && RUSTFLAGS="-C instrument-coverage" LLVM_PROFILE_FILE="target/coverage/conjure_oxide-%p-%m.profraw" cargo test --workspace
+	grcov target/coverage -s . --binary-path ./target/debug/ -t html --branch --ignore-not-existing -o ./target/debug/coverage/
+	open ./target/debug/coverage/index.html
 
 .PHONY: help
 ## Shows this help text
