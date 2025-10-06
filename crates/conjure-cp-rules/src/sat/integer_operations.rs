@@ -13,124 +13,22 @@ use conjure_cp::into_matrix_expr;
 use conjure_cp::essence_expr;
 use itertools::Itertools;
 
-use crate::cnf::tseytin_and;
-use crate::cnf::tseytin_iff;
-use crate::cnf::tseytin_imply;
-use crate::cnf::tseytin_mux;
-use crate::cnf::tseytin_not;
-use crate::cnf::tseytin_or;
-use crate::cnf::tseytin_xor;
+use super::integer_repr::{validate_sat_int_operands, BITS};
+use super::boolean::{tseytin_and,
+tseytin_iff,
+tseytin_imply,
+tseytin_mux,
+tseytin_not,
+tseytin_or,
+tseytin_xor};
 
-// The number of bits used to represent the integer.
-// This is a fixed value for the representation, but could be made dynamic if needed.
-const BITS: usize = 8;
-
-#[register_rule(("CNF", 9500))]
-fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    // thing we are representing must be a reference
-    let Expr::Atomic(_, Atom::Reference(name)) = expr else {
-        return Err(RuleNotApplicable);
-    };
-
-    // thing we are representing must be a variable
-    // symbols
-    //     .lookup(name)
-    //     .ok_or(RuleNotApplicable)?
-    //     .as_var()
-    //     .ok_or(RuleNotApplicable)?;
-
-    // thing we are representing must be an integer
-    let Domain::Int(ranges) = name.domain().unwrap() else {
-        return Err(RuleNotApplicable);
-    };
-
-    let mut symbols = symbols.clone();
-
-    let new_name = &name.name().to_owned();
-
-    let repr_exists = symbols
-        .get_representation(new_name, &["int_to_atom"])
-        .is_some();
-
-    let representation = symbols
-        .get_or_add_representation(new_name, &["int_to_atom"])
-        .ok_or(RuleNotApplicable)?;
-
-    let bits = representation[0]
-        .clone()
-        .expression_down(&symbols)?
-        .into_values()
-        .collect();
-
-    let cnf_int = Expr::CnfInt(Metadata::new(), Moo::new(into_matrix_expr!(bits)));
-
-    if !repr_exists {
-        // add domain ranges as constraints if this is the first time the representation is added
-        Ok(Reduction::new(
-            cnf_int.clone(),
-            vec![int_domain_to_expr(cnf_int, &ranges)], // contains domain rules
-            symbols,
-        ))
-    } else {
-        Ok(Reduction::pure(cnf_int))
-    }
-}
-
-#[register_rule(("CNF", 9500))]
-fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let mut value = {
-        if let Expr::Atomic(_, Atom::Literal(Literal::Int(v))) = expr {
-            *v
-        } else {
-            return Err(RuleNotApplicable);
-        }
-    };
-
-    //TODO: add support for negatives
-
-    let mut binary_encoding = vec![];
-
-    for _ in 0..BITS {
-        binary_encoding.push(Expr::Atomic(
-            Metadata::new(),
-            Atom::Literal(Literal::Bool((value & 1) != 0)),
-        ));
-        value >>= 1;
-    }
-
-    Ok(Reduction::pure(Expr::CnfInt(
-        Metadata::new(),
-        Moo::new(into_matrix_expr!(binary_encoding)),
-    )))
-}
-
-/// This function takes a target expression and a vector of ranges and creates an expression representing the ranges with the target expression as the subject
-///
-/// E.g. x : int(4), int(10..20), int(30..) ~~> Or(x=4, 10<=x<=20, x>=30)
-fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
-    let mut output = vec![];
-
-    let value = Moo::new(subject);
-
-    for range in ranges {
-        match range {
-            Range::Single(x) => output.push(essence_expr!(&value = &x)),
-            Range::Bounded(x, y) => output.push(essence_expr!("&value >= &x /\\ &value <= &y")),
-            Range::UnboundedR(x) => output.push(essence_expr!(&value >= &x)),
-            Range::UnboundedL(x) => output.push(essence_expr!(&value <= &x)),
-        }
-    }
-
-    Expr::Or(Metadata::new(), Moo::new(into_matrix_expr!(output)))
-}
-
-/// Converts an inequality expression between two CnfInts to a boolean expression in cnf.
+/// Converts an inequality expression between two SATInts to a boolean expression in cnf.
 ///
 /// ```text
-/// CnfInt(a) </>/<=/>= CnfInt(b) ~> Bool
+/// SATInt(a) </>/<=/>= SATInt(b) ~> Bool
 ///
 /// ```
-#[register_rule(("CNF", 4100))]
+#[register_rule(("SAT", 4100))]
 fn cnf_int_ineq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs, strict) = match expr {
         Expr::Lt(_, x, y) => (y, x, true),
@@ -140,7 +38,7 @@ fn cnf_int_ineq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         _ => return Err(RuleNotApplicable),
     };
 
-    let binding = validate_cnf_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
+    let binding = validate_sat_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
     let [lhs_bits, rhs_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -158,37 +56,21 @@ fn cnf_int_ineq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
 }
 
-/// This function confirms that all of the input expressions are CnfInts, and returns vectors for each input of their bits
-fn validate_cnf_int_operands(exprs: Vec<Expr>) -> Result<Vec<Vec<Expr>>, ApplicationError> {
-    let out: Result<Vec<Vec<_>>, _> = exprs
-        .into_iter()
-        .map(|expr| {
-            let Expr::CnfInt(_, inner) = expr else {
-                return Err(RuleNotApplicable);
-            };
-            let Some(bits) = inner.as_ref().clone().unwrap_list() else {
-                return Err(RuleNotApplicable);
-            };
-            Ok(bits)
-        })
-        .collect();
 
-    out
-}
 
-/// Converts a `=` expression between two CnfInts to a boolean expression in cnf
+/// Converts a = expression between two SATInts to a boolean expression in cnf
 ///
 /// ```text
-/// CnfInt(a) = CnfInt(b) ~> Bool
+/// SATInt(a) = SATInt(b) ~> Bool
 ///
 /// ```
-#[register_rule(("CNF", 9100))]
+#[register_rule(("SAT", 9100))]
 fn cnf_int_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);
     };
 
-    let binding = validate_cnf_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
+    let binding = validate_sat_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
     let [lhs_bits, rhs_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -215,19 +97,19 @@ fn cnf_int_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
 }
 
-/// Converts a != expression between two CnfInts to a boolean expression in cnf
+/// Converts a != expression between two SATInts to a boolean expression in cnf
 ///
 /// ```text
-/// CnfInt(a) != CnfInt(b) ~> Bool
+/// SATInt(a) != SATInt(b) ~> Bool
 ///
 /// ```
-#[register_rule(("CNF", 4100))]
+#[register_rule(("SAT", 4100))]
 fn cnf_int_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Neq(_, lhs, rhs) = expr else {
         return Err(RuleNotApplicable);
     };
 
-    let binding = validate_cnf_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
+    let binding = validate_sat_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()])?;
     let [lhs_bits, rhs_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -298,13 +180,13 @@ fn inequality_boolean(
     output
 }
 
-/// Converts sum of CnfInts to a single CnfInt
+/// Converts sum of SATInts to a single SATInt
 ///
 /// ```text
-/// Sum(CnfInt(a), CnfInt(b), ...) ~> CnfInt(c)
+/// Sum(SATInt(a), SATInt(b), ...) ~> SATInt(c)
 ///
 /// ```
-#[register_rule(("CNF", 4100))]
+#[register_rule(("SAT", 4100))]
 fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Sum(_, exprs) = expr else {
         return Err(RuleNotApplicable);
@@ -314,7 +196,7 @@ fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let mut exprs_bits = validate_cnf_int_operands(exprs_list.clone())?;
+    let mut exprs_bits = validate_sat_int_operands(exprs_list.clone())?;
 
     let mut new_symbols = symbols.clone();
     let mut values;
@@ -339,7 +221,7 @@ fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let result = exprs_bits.pop().unwrap();
 
     Ok(Reduction::cnf(
-        Expr::CnfInt(Metadata::new(), Moo::new(into_matrix_expr!(result))),
+        Expr::SATInt(Metadata::new(), Moo::new(into_matrix_expr!(result))),
         new_clauses,
         new_symbols,
     ))
@@ -473,13 +355,13 @@ fn cnf_shift_add_multiply(
     s[..bits].to_vec()
 }
 
-/// Converts product of CnfInts to a single CnfInt
+/// Converts product of SATInts to a single SATInt
 ///
 /// ```text
-/// Product(CnfInt(a), CnfInt(b), ...) ~> CnfInt(c)
+/// Product(SATInt(a), SATInt(b), ...) ~> SATInt(c)
 ///
 /// ```
-#[register_rule(("CNF", 9000))]
+#[register_rule(("SAT", 9000))]
 fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Product(_, exprs) = expr else {
         return Err(RuleNotApplicable);
@@ -489,7 +371,7 @@ fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let mut exprs_bits = validate_cnf_int_operands(exprs_list.clone())?;
+    let mut exprs_bits = validate_sat_int_operands(exprs_list.clone())?;
 
     let mut new_symbols = symbols.clone();
     let mut values;
@@ -514,25 +396,25 @@ fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let result = exprs_bits.pop().unwrap();
 
     Ok(Reduction::cnf(
-        Expr::CnfInt(Metadata::new(), Moo::new(into_matrix_expr!(result))),
+        Expr::SATInt(Metadata::new(), Moo::new(into_matrix_expr!(result))),
         new_clauses,
         new_symbols,
     ))
 }
 
-/// Converts negation of a CnfInt to a CnfInt
+/// Converts negation of a SATInt to a SATInt
 ///
 /// ```text
-/// -CnfInt(a) ~> CnfInt(b)
+/// -SATInt(a) ~> SATInt(b)
 ///
 /// ```
-#[register_rule(("CNF", 4100))]
+#[register_rule(("SAT", 4100))]
 fn cnf_int_neg(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Neg(_, expr) = expr else {
         return Err(RuleNotApplicable);
     };
 
-    let binding = validate_cnf_int_operands(vec![expr.as_ref().clone()])?;
+    let binding = validate_sat_int_operands(vec![expr.as_ref().clone()])?;
     let [bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -542,7 +424,7 @@ fn cnf_int_neg(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let result = tseytin_negate(bits, BITS, &mut new_clauses, &mut new_symbols);
 
     Ok(Reduction::cnf(
-        Expr::CnfInt(Metadata::new(), Moo::new(into_matrix_expr!(result))),
+        Expr::SATInt(Metadata::new(), Moo::new(into_matrix_expr!(result))),
         new_clauses,
         new_symbols,
     ))
@@ -566,13 +448,13 @@ fn tseytin_negate(
     result
 }
 
-/// Converts min of CnfInts to a single CnfInt
+/// Converts min of SATInts to a single SATInt
 ///
 /// ```text
-/// Min(CnfInt(a), CnfInt(b), ...) ~> CnfInt(c)
+/// Min(SATInt(a), SATInt(b), ...) ~> SATInt(c)
 ///
 /// ```
-#[register_rule(("CNF", 4100))]
+#[register_rule(("SAT", 4100))]
 fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Min(_, exprs) = expr else {
         return Err(RuleNotApplicable);
@@ -582,7 +464,7 @@ fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let mut exprs_bits = validate_cnf_int_operands(exprs_list.clone())?;
+    let mut exprs_bits = validate_sat_int_operands(exprs_list.clone())?;
 
     let mut new_symbols = symbols.clone();
     let mut values;
@@ -607,7 +489,7 @@ fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let result = exprs_bits.pop().unwrap();
 
     Ok(Reduction::cnf(
-        Expr::CnfInt(Metadata::new(), Moo::new(into_matrix_expr!(result))),
+        Expr::SATInt(Metadata::new(), Moo::new(into_matrix_expr!(result))),
         new_clauses,
         new_symbols,
     ))
@@ -647,13 +529,13 @@ fn tseytin_binary_min_max(
     out
 }
 
-/// Converts max of CnfInts to a single CnfInt
+/// Converts max of SATInts to a single SATInt
 ///
 /// ```text
-/// Max(CnfInt(a), CnfInt(b), ...) ~> CnfInt(c)
+/// Max(SATInt(a), SATInt(b), ...) ~> SATInt(c)
 ///
 /// ```
-#[register_rule(("CNF", 4100))]
+#[register_rule(("SAT", 4100))]
 fn cnf_int_max(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Max(_, exprs) = expr else {
         return Err(RuleNotApplicable);
@@ -663,7 +545,7 @@ fn cnf_int_max(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let mut exprs_bits = validate_cnf_int_operands(exprs_list.clone())?;
+    let mut exprs_bits = validate_sat_int_operands(exprs_list.clone())?;
 
     let mut new_symbols = symbols.clone();
     let mut values;
@@ -688,25 +570,25 @@ fn cnf_int_max(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let result = exprs_bits.pop().unwrap();
 
     Ok(Reduction::cnf(
-        Expr::CnfInt(Metadata::new(), Moo::new(into_matrix_expr!(result))),
+        Expr::SATInt(Metadata::new(), Moo::new(into_matrix_expr!(result))),
         new_clauses,
         new_symbols,
     ))
 }
 
-/// Converts Abs of a CnfInt to a CnfInt
+/// Converts Abs of a SATInt to a SATInt
 ///
 /// ```text
-/// |CnfInt(a)| ~> CnfInt(b)
+/// |SATInt(a)| ~> SATInt(b)
 ///
 /// ```
-#[register_rule(("CNF", 4100))]
+#[register_rule(("SAT", 4100))]
 fn cnf_int_abs(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Abs(_, expr) = expr else {
         return Err(RuleNotApplicable);
     };
 
-    let binding = validate_cnf_int_operands(vec![expr.as_ref().clone()])?;
+    let binding = validate_sat_int_operands(vec![expr.as_ref().clone()])?;
     let [bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -734,19 +616,19 @@ fn cnf_int_abs(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     }
 
     Ok(Reduction::cnf(
-        Expr::CnfInt(Metadata::new(), Moo::new(into_matrix_expr!(result))),
+        Expr::SATInt(Metadata::new(), Moo::new(into_matrix_expr!(result))),
         new_clauses,
         new_symbols,
     ))
 }
 
-/// Converts SafeDiv of CnfInts to a single CnfInt
+/// Converts SafeDiv of SATInts to a single SATInt
 ///
 /// ```text
-/// SafeDiv(CnfInt(a), CnfInt(b)) ~> CnfInt(c)
+/// SafeDiv(SATInt(a), SATInt(b)) ~> SATInt(c)
 ///
 /// ```
-#[register_rule(("CNF", 4100))]
+#[register_rule(("SAT", 4100))]
 fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // Using "Restoring division" algorithm
     // https://en.wikipedia.org/wiki/Division_algorithm#Restoring_division
@@ -754,7 +636,7 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let binding = validate_cnf_int_operands(vec![numer.as_ref().clone(), denom.as_ref().clone()])?;
+    let binding = validate_sat_int_operands(vec![numer.as_ref().clone(), denom.as_ref().clone()])?;
     let [numer_bits, denom_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -810,29 +692,29 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     }
 
     Ok(Reduction::cnf(
-        Expr::CnfInt(Metadata::new(), Moo::new(into_matrix_expr!(quotient))),
+        Expr::SATInt(Metadata::new(), Moo::new(into_matrix_expr!(quotient))),
         new_clauses,
         new_symbols,
     ))
 }
 
 /*
-/// Converts SafeMod of CnfInts to a single CnfInt
+/// Converts SafeMod of SATInts to a single SATInt
 ///
 /// ```text
-/// SafeMod(CnfInt(a), CnfInt(b)) ~> CnfInt(c)
+/// SafeMod(SATInt(a), SATInt(b)) ~> SATInt(c)
 ///
 /// ```
-#[register_rule(("CNF", 4100))]
+#[register_rule(("SAT", 4100))]
 fn cnf_int_safemod(expr: &Expr, _: &SymbolTable) -> ApplicationResult {}
 
-/// Converts SafePow of CnfInts to a single CnfInt
+/// Converts SafePow of SATInts to a single SATInt
 ///
 /// ```text
-/// SafePow(CnfInt(a), CnfInt(b)) ~> CnfInt(c)
+/// SafePow(SATInt(a), SATInt(b)) ~> SATInt(c)
 ///
 /// ```
-#[register_rule(("CNF", 4100))]
+#[register_rule(("SAT", 4100))]
 fn cnf_int_safepow(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // use 'Exponentiation by squaring'
 }

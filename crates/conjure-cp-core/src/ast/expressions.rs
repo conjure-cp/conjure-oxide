@@ -491,7 +491,7 @@ pub enum Expression {
     ),
 
     // This expression is for encoding i32 ints as a vector of boolean expressions for cnf
-    CnfInt(Metadata, Moo<Expression>),
+    SATInt(Metadata, Moo<Expression>),
 
     // This expression represents a cnf clause in its simplest form, it should only contain atoms and should not be affected by the rule engine
     Clause(Metadata, Moo<Expression>),
@@ -789,7 +789,7 @@ impl Expression {
                 .apply_i32(|a, _| Some(a.abs()), &a.domain_of()?)
                 .ok(),
             Expression::MinionPow(_, _, _, _) => Some(Domain::Bool),
-            Expression::CnfInt(_, _) => {
+            Expression::SATInt(_, _) => {
                 Some(Domain::Int(vec![Range::Bounded(
                     i8::MIN.into(),
                     i8::MAX.into(),
@@ -1322,8 +1322,8 @@ impl Display for Expression {
                 let atoms = atoms.iter().join(",");
                 write!(f, "__minion_element_one([{atoms}],{atom},{atom1})")
             }
-            Expression::CnfInt(_, e) => {
-                write!(f, "CnfInt({e})")
+            Expression::SATInt(_, e) => {
+                write!(f, "SATInt({e})")
             }
             Expression::Clause(_, e) => {
                 write!(f, "Clause({e})")
@@ -1421,7 +1421,7 @@ impl Typeable for Expression {
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::MinionPow(_, _, _, _) => Some(ReturnType::Bool),
             Expression::ToInt(_, _) => Some(ReturnType::Int),
-            Expression::CnfInt(_, _) => Some(ReturnType::Int),
+            Expression::SATInt(_, _) => Some(ReturnType::Int),
             Expression::Clause(_, _) => Some(ReturnType::Bool),
         }
     }

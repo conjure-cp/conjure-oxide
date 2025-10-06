@@ -1,7 +1,3 @@
-/***********************************************************************************/
-/*        This file contains rules for converting logic expressions to CNF         */
-/***********************************************************************************/
-
 use conjure_cp::rule_engine::register_rule_set;
 use conjure_cp::solver::SolverFamily;
 
@@ -17,75 +13,6 @@ use conjure_cp::into_matrix_expr;
 
 use crate::utils::is_literal;
 
-register_rule_set!("CNF", ("Base"), (SolverFamily::Sat));
-
-/// Converts an and/or expression to an aux variable, using the tseytin transformation
-///
-/// ```text
-///  and(a, b, c, ...)
-///  ~~>
-///  __0
-///
-///  new variables:
-///  find __0: bool
-///
-///  new clauses:
-///  clause(__0, not(a), not(b), not(c), ...)
-///  clause(not(__0), a)
-///  clause(not(__0), b)
-///  clause(not(__0), c)
-///  ...
-///
-///  ---------------------------------------
-///
-///  clause(a, b, c, ...)
-///  ~~>
-///  __0
-///
-///  new variables:
-///  find __0: bool
-///
-///  new clauses:
-///  clause(not(__0), a, b, c, ...)
-///  clause(__0, not(a))
-///  clause(__0, not(b))
-///  clause(__0, not(c))
-///  ...
-/// ```
-#[register_rule(("CNF", 8500))]
-fn apply_tseytin_and_or(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
-    let exprs = match expr {
-        Expr::And(_, exprs) | Expr::Or(_, exprs) => exprs,
-        _ => return Err(RuleNotApplicable),
-    };
-
-    let Expr::AbstractLiteral(_, Matrix(exprs_list, _)) = exprs.as_ref() else {
-        return Err(RuleNotApplicable);
-    };
-
-    for x in exprs_list {
-        if !is_literal(x) {
-            return Err(RuleNotApplicable);
-        };
-    }
-
-    let new_expr;
-    let mut new_clauses = vec![];
-    let mut new_symbols = symbols.clone();
-
-    match expr {
-        Expr::And(_, _) => {
-            new_expr = tseytin_and(exprs_list, &mut new_clauses, &mut new_symbols);
-        }
-        Expr::Or(_, _) => {
-            new_expr = tseytin_or(exprs_list, &mut new_clauses, &mut new_symbols);
-        }
-        _ => return Err(RuleNotApplicable),
-    };
-
-    Ok(Reduction::cnf(new_expr, new_clauses, new_symbols))
-}
-
 fn create_bool_aux(symbols: &mut SymbolTable) -> Expr {
     let name = symbols.gensym(&Domain::Bool);
 
@@ -94,8 +21,37 @@ fn create_bool_aux(symbols: &mut SymbolTable) -> Expr {
     Expr::Atomic(Metadata::new(), Atom::Reference(name))
 }
 
+fn create_clause(exprs: Vec<Expr>) -> Option<Expr> {
+    let mut new_terms = vec![];
+    for expr in exprs {
+        if let Expr::Atomic(_, Atom::Literal(Literal::Bool(x))) = expr {
+            // true ~~> entire or is true
+            // false ~~> remove false from the or
+            if x {
+                return None;
+            }
+        } else if let Expr::Not(_, ref inner) = expr {
+            if let Expr::Atomic(_, Atom::Literal(Literal::Bool(x))) = inner.as_ref() {
+                // check for nested literal
+                if !x {
+                    return None;
+                }
+            } else {
+                new_terms.push(expr);
+            }
+        } else {
+            new_terms.push(expr);
+        }
+    }
+
+    Some(Expr::Clause(
+        Metadata::new(),
+        Moo::new(into_matrix_expr![new_terms]),
+    ))
+}
+
 // TODO: Optimize all logic operators for constants
-//TODO: If a clause simplifies to false, it should skip the solver and give no solutions
+// TODO: If a clause simplifies to false, it should skip the solver and give no solutions
 
 /// Applies the Tseytin and transformation to series of variables, returns the new expression, symbol table and clauses
 pub fn tseytin_and(exprs: &Vec<Expr>, clauses: &mut Vec<Expr>, symbols: &mut SymbolTable) -> Expr {
@@ -111,6 +67,19 @@ pub fn tseytin_and(exprs: &Vec<Expr>, clauses: &mut Vec<Expr>, symbols: &mut Sym
         full_conj.push(Expr::Not(Metadata::new(), Moo::new(x.clone())));
     }
     clauses.extend(create_clause(full_conj));
+
+    new_expr
+}
+
+/// Applies the Tseytin not transformation to a variable, returns the new expression, symbol table and clauses
+pub fn tseytin_not(x: Expr, clauses: &mut Vec<Expr>, symbols: &mut SymbolTable) -> Expr {
+    let new_expr = create_bool_aux(symbols);
+
+    clauses.extend(create_clause(vec![
+        Expr::Not(Metadata::new(), Moo::new(x.clone())),
+        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
+    ]));
+    clauses.extend(create_clause(vec![x, new_expr.clone()]));
 
     new_expr
 }
@@ -134,19 +103,6 @@ pub fn tseytin_or(exprs: &Vec<Expr>, clauses: &mut Vec<Expr>, symbols: &mut Symb
     new_expr
 }
 
-/// Applies the Tseytin not transformation to a variable, returns the new expression, symbol table and clauses
-pub fn tseytin_not(x: Expr, clauses: &mut Vec<Expr>, symbols: &mut SymbolTable) -> Expr {
-    let new_expr = create_bool_aux(symbols);
-
-    clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Moo::new(x.clone())),
-        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
-    ]));
-    clauses.extend(create_clause(vec![x, new_expr.clone()]));
-
-    new_expr
-}
-
 /// Applies the Tseytin iff transformation to two variables, returns the new expression, symbol table and clauses
 pub fn tseytin_iff(x: Expr, y: Expr, clauses: &mut Vec<Expr>, symbols: &mut SymbolTable) -> Expr {
     let new_expr = create_bool_aux(symbols);
@@ -166,34 +122,6 @@ pub fn tseytin_iff(x: Expr, y: Expr, clauses: &mut Vec<Expr>, symbols: &mut Symb
         Expr::Not(Metadata::new(), Moo::new(x)),
         y,
         Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
-    ]));
-
-    new_expr
-}
-
-/// Applies the Tseytin xor transformation to two variables, returns the new expression, symbol table and clauses
-pub fn tseytin_xor(x: Expr, y: Expr, clauses: &mut Vec<Expr>, symbols: &mut SymbolTable) -> Expr {
-    let new_expr = create_bool_aux(symbols);
-
-    clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Moo::new(x.clone())),
-        Expr::Not(Metadata::new(), Moo::new(y.clone())),
-        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
-    ]));
-    clauses.extend(create_clause(vec![
-        x.clone(),
-        y.clone(),
-        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
-    ]));
-    clauses.extend(create_clause(vec![
-        x.clone(),
-        Expr::Not(Metadata::new(), Moo::new(y.clone())),
-        new_expr.clone(),
-    ]));
-    clauses.extend(create_clause(vec![
-        Expr::Not(Metadata::new(), Moo::new(x)),
-        y,
-        new_expr.clone(),
     ]));
 
     new_expr
@@ -266,33 +194,105 @@ pub fn tseytin_mux(
     new_expr
 }
 
-fn create_clause(exprs: Vec<Expr>) -> Option<Expr> {
-    let mut new_terms = vec![];
-    for expr in exprs {
-        if let Expr::Atomic(_, Atom::Literal(Literal::Bool(x))) = expr {
-            // true ~~> entire or is true
-            // false ~~> remove false from the or
-            if x {
-                return None;
-            }
-        } else if let Expr::Not(_, ref inner) = expr {
-            if let Expr::Atomic(_, Atom::Literal(Literal::Bool(x))) = inner.as_ref() {
-                // check for nested literal
-                if !x {
-                    return None;
-                }
-            } else {
-                new_terms.push(expr);
-            }
-        } else {
-            new_terms.push(expr);
-        }
+/// Applies the Tseytin xor transformation to two variables, returns the new expression, symbol table and clauses
+pub fn tseytin_xor(x: Expr, y: Expr, clauses: &mut Vec<Expr>, symbols: &mut SymbolTable) -> Expr {
+    let new_expr = create_bool_aux(symbols);
+
+    clauses.extend(create_clause(vec![
+        Expr::Not(Metadata::new(), Moo::new(x.clone())),
+        Expr::Not(Metadata::new(), Moo::new(y.clone())),
+        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
+    ]));
+    clauses.extend(create_clause(vec![
+        x.clone(),
+        y.clone(),
+        Expr::Not(Metadata::new(), Moo::new(new_expr.clone())),
+    ]));
+    clauses.extend(create_clause(vec![
+        x.clone(),
+        Expr::Not(Metadata::new(), Moo::new(y.clone())),
+        new_expr.clone(),
+    ]));
+    clauses.extend(create_clause(vec![
+        Expr::Not(Metadata::new(), Moo::new(x)),
+        y,
+        new_expr.clone(),
+    ]));
+
+    new_expr
+}
+
+
+
+// BOOLEAN SAT ENCODING RULES:
+
+register_rule_set!("SAT", ("Base"), (SolverFamily::Sat));
+
+/// Converts an and/or expression to an aux variable, using the tseytin transformation
+///
+/// ```text
+///  and(a, b, c, ...)
+///  ~~>
+///  __0
+///
+///  new variables:
+///  find __0: bool
+///
+///  new clauses:
+///  clause(__0, not(a), not(b), not(c), ...)
+///  clause(not(__0), a)
+///  clause(not(__0), b)
+///  clause(not(__0), c)
+///  ...
+///
+///  ---------------------------------------
+///
+///  clause(a, b, c, ...)
+///  ~~>
+///  __0
+///
+///  new variables:
+///  find __0: bool
+///
+///  new clauses:
+///  clause(not(__0), a, b, c, ...)
+///  clause(__0, not(a))
+///  clause(__0, not(b))
+///  clause(__0, not(c))
+///  ...
+/// ```
+#[register_rule(("SAT", 8500))]
+fn apply_tseytin_and_or(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let exprs = match expr {
+        Expr::And(_, exprs) | Expr::Or(_, exprs) => exprs,
+        _ => return Err(RuleNotApplicable),
+    };
+
+    let Expr::AbstractLiteral(_, Matrix(exprs_list, _)) = exprs.as_ref() else {
+        return Err(RuleNotApplicable);
+    };
+
+    for x in exprs_list {
+        if !is_literal(x) {
+            return Err(RuleNotApplicable);
+        };
     }
 
-    Some(Expr::Clause(
-        Metadata::new(),
-        Moo::new(into_matrix_expr![new_terms]),
-    ))
+    let new_expr;
+    let mut new_clauses = vec![];
+    let mut new_symbols = symbols.clone();
+
+    match expr {
+        Expr::And(_, _) => {
+            new_expr = tseytin_and(exprs_list, &mut new_clauses, &mut new_symbols);
+        }
+        Expr::Or(_, _) => {
+            new_expr = tseytin_or(exprs_list, &mut new_clauses, &mut new_symbols);
+        }
+        _ => return Err(RuleNotApplicable),
+    };
+
+    Ok(Reduction::cnf(new_expr, new_clauses, new_symbols))
 }
 
 /// Converts a not expression to an aux variable, using the tseytin transformation
@@ -309,7 +309,7 @@ fn create_clause(exprs: Vec<Expr>) -> Option<Expr> {
 ///  clause(__0, a)
 ///  clause(not(__0), not(a))
 /// ```
-#[register_rule(("CNF", 9005))]
+#[register_rule(("SAT", 9005))]
 fn apply_tseytin_not(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Not(_, x) = expr else {
         return Err(RuleNotApplicable);
@@ -347,7 +347,7 @@ fn apply_tseytin_not(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 ///  clause(a, not(b), not(__0))
 ///  clause(not(a), b, not(__0))
 /// ```
-#[register_rule(("CNF", 8500))]
+#[register_rule(("SAT", 8500))]
 fn apply_tseytin_iff(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Iff(_, x, y) = expr else {
         return Err(RuleNotApplicable);
@@ -385,7 +385,7 @@ fn apply_tseytin_iff(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 ///  clause(__0, a)
 ///  clause(__0, not(b))
 /// ```
-#[register_rule(("CNF", 8500))]
+#[register_rule(("SAT", 8500))]
 fn apply_tseytin_imply(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Imply(_, x, y) = expr else {
         return Err(RuleNotApplicable);

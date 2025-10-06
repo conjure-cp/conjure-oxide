@@ -9,8 +9,6 @@ pub use constant_eval::eval_constant;
 mod base;
 mod bottom_up_adaptor;
 mod bubble;
-mod cnf;
-mod cnf_int;
 mod comprehensions;
 mod constant_eval;
 mod matrix;
@@ -24,6 +22,7 @@ mod subsitute_lettings;
 mod tuple;
 mod utils;
 
+mod sat;
 mod sets;
 
 /// Denotes a block of code as extra, optional checks for a rule. Primarily, these are checks that
