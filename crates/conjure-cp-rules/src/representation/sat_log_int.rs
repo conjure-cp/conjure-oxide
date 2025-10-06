@@ -6,18 +6,18 @@ use conjure_cp::{
     rule_engine::ApplicationError,
 };
 
-register_representation!(IntToAtom, "int_to_atom");
+register_representation!(SATLogInt, "sat_log_int");
 
 // The number of bits used to represent the integer.
 // This is a fixed value for the representation, but could be made dynamic if needed.
 const BITS: i32 = 8;
 
 #[derive(Clone, Debug)]
-pub struct IntToAtom {
+pub struct SATLogInt {
     src_var: Name,
 }
 
-impl IntToAtom {
+impl SATLogInt {
     /// Returns the names of the representation variable
     fn names(&self) -> impl Iterator<Item = Name> + '_ {
         (0..BITS).map(move |index| self.index_to_name(index))
@@ -33,7 +33,7 @@ impl IntToAtom {
     }
 }
 
-impl Representation for IntToAtom {
+impl Representation for SATLogInt {
     fn init(name: &Name, symtab: &SymbolTable) -> Option<Self> {
         let domain = symtab.resolve_domain(name)?;
 
@@ -53,7 +53,7 @@ impl Representation for IntToAtom {
             return None;
         }
 
-        Some(IntToAtom {
+        Some(SATLogInt {
             src_var: name.clone(),
         })
     }
@@ -137,7 +137,7 @@ impl Representation for IntToAtom {
     }
 
     fn repr_name(&self) -> &str {
-        "int_to_atom"
+        "sat_log_int"
     }
 
     fn box_clone(&self) -> Box<dyn Representation> {

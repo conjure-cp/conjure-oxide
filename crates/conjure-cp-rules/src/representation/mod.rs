@@ -15,7 +15,7 @@ mod prelude {
     };
 }
 
-mod int_to_atom;
+mod sat_log_int;
 mod matrix_to_atom;
 mod record_to_atom;
 mod tuple_to_atom;

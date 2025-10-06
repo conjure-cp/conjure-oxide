@@ -183,7 +183,7 @@ impl SolverAdaptor for Sat {
             // only decision variables with boolean domains or representations using booleans are supported at this time
             if (domain != Bool
                 && (sym_tab
-                    .get_representation(&find_ref.0, &["int_to_atom"])
+                    .get_representation(&find_ref.0, &["sat_log_int"])
                     .is_none()))
             {
                 Err(SolverError::ModelInvalid(

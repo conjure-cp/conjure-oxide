@@ -93,11 +93,11 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
     let new_name = &name.name().to_owned();
 
     let repr_exists = symbols
-        .get_representation(new_name, &["int_to_atom"])
+        .get_representation(new_name, &["sat_log_int"])
         .is_some();
 
     let representation = symbols
-        .get_or_add_representation(new_name, &["int_to_atom"])
+        .get_or_add_representation(new_name, &["sat_log_int"])
         .ok_or(RuleNotApplicable)?;
 
     let bits = representation[0]
