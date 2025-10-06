@@ -150,6 +150,7 @@ pub fn tseytin_imply(x: Expr, y: Expr, clauses: &mut Vec<Expr>, symbols: &mut Sy
 ///
 /// cond = 1 => b
 /// cond = 0 => a
+#[allow(dead_code)]
 pub fn tseytin_mux(
     cond: Expr,
     a: Expr,
@@ -195,6 +196,7 @@ pub fn tseytin_mux(
 }
 
 /// Applies the Tseytin xor transformation to two variables, returns the new expression, symbol table and clauses
+#[allow(dead_code)]
 pub fn tseytin_xor(x: Expr, y: Expr, clauses: &mut Vec<Expr>, symbols: &mut SymbolTable) -> Expr {
     let new_expr = create_bool_aux(symbols);
 
