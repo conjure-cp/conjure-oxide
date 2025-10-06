@@ -5,13 +5,11 @@ use conjure_cp::rule_engine::{
     register_rule,
 };
 
-use conjure_cp::ast::AbstractLiteral::Matrix;
 use conjure_cp::ast::Metadata;
 use conjure_cp::ast::{Atom, Domain, Literal, Moo, Range};
 use conjure_cp::into_matrix_expr;
 
 use conjure_cp::essence_expr;
-use itertools::Itertools;
 
 // The number of bits used to represent the integer.
 // This is a fixed value for the representation, but could be made dynamic if needed.
@@ -38,6 +36,7 @@ fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
 }
 
 /// This function confirms that all of the input expressions are SATInts, and returns vectors for each input of their bits
+#[allow(dead_code)]
 pub fn validate_sat_int_operands(exprs: Vec<Expr>) -> Result<Vec<Vec<Expr>>, ApplicationError> {
     let out: Result<Vec<Vec<_>>, _> = exprs
         .into_iter()
