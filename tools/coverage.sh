@@ -46,11 +46,14 @@ TARGET_DIR=$(cargo metadata 2> /dev/null | jq -r .target_directory 2>/dev/null)
 
 cd "$PROJECT_ROOT"
 
-echo_err "info: installing llvm-tools-preview"
-rustup component add llvm-tools-preview
+if ! rustup component list --installed | grep -Eq 'llvm-tools-preview|llvm-tools'; then
+  rustup component add llvm-tools-preview
+fi
 
-echo_err "info: installing grcov"
-cargo install grcov
+if ! command -v grcov &> /dev/null; then
+  echo_err "info: installing grcov"
+  cargo install grcov
+fi
 
 
 # Uses rust's source code instrument-based coverage, processed by grcov.
@@ -63,7 +66,8 @@ rm -rf target/debug/coverage
 export CARGO_INCREMENTAL=0 
 export RUSTFLAGS="$RUSTFLAGS -Cinstrument-coverage"
 export RUSTDOCFLAGS="$RUSTDOCFLAGS -C instrument-coverage -Zunstable-options --persist-doctests target/debug/doctestbins"
-export LLVM_PROFILE_FILE='conjure-oxide-%p-%m.profraw' 
+export LLVM_PROFILE_FILE='target/coverage/conjure-oxide-%p-%m.profraw'
+mkdir -p target/coverage
 
 # regex patterns to ignore
 GRCOV_EXCLUDE_LINES=(
@@ -90,8 +94,6 @@ GRCOV_IGNORE_FLAGS=(
   'tests-integration/tests/generated_tests.rs'
 )
 
-
-
 echo_err "info: building"
 cargo +nightly build --workspace
 
@@ -110,6 +112,7 @@ grcov . -s . --binary-path ./target/debug -t lcov\
   -o ./target/debug/lcov.info || { echo_err "fatal: lcov coverage generation failed" ; exit 1; }
 
 echo_err "info: lcov coverage report generated to target/debug/lcov.info"
+open ./target/debug/coverage/index.html
 
-rm -rf **/*.profraw *.profraw
+rm -rf ./target/coverage/*.profraw
 
