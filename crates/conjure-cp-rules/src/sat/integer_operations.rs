@@ -1,10 +1,8 @@
 use conjure_cp::ast::Expression as Expr;
 use conjure_cp::ast::SymbolTable;
 use conjure_cp::rule_engine::{
-    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
-    register_rule,
+    ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
-
 
 use conjure_cp::ast::AbstractLiteral::Matrix;
 use conjure_cp::ast::Metadata;
@@ -13,14 +11,10 @@ use conjure_cp::into_matrix_expr;
 
 use itertools::Itertools;
 
-use super::integer_repr::{validate_sat_int_operands, BITS};
-use super::boolean::{tseytin_and,
-tseytin_iff,
-tseytin_imply,
-tseytin_mux,
-tseytin_not,
-tseytin_or,
-tseytin_xor};
+use super::boolean::{
+    tseytin_and, tseytin_iff, tseytin_imply, tseytin_mux, tseytin_not, tseytin_or, tseytin_xor,
+};
+use super::integer_repr::{BITS, validate_sat_int_operands};
 
 /// Converts an inequality expression between two SATInts to a boolean expression in cnf.
 ///
@@ -55,8 +49,6 @@ fn cnf_int_ineq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     );
     Ok(Reduction::cnf(output, new_clauses, new_symbols))
 }
-
-
 
 /// Converts a = expression between two SATInts to a boolean expression in cnf
 ///

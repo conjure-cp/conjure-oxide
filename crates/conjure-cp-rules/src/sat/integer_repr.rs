@@ -11,7 +11,6 @@ use conjure_cp::into_matrix_expr;
 
 use conjure_cp::essence_expr;
 
-
 // The number of bits used to represent the integer.
 // This is a fixed value for the representation, but could be made dynamic if needed.
 pub const BITS: usize = 8;
@@ -54,7 +53,7 @@ pub fn validate_sat_int_operands(exprs: Vec<Expr>) -> Result<Vec<Vec<Expr>>, App
     out
 }
 
-/// Converts an integer decision variable to SATInt form, creating a new representation of boolean variables if 
+/// Converts an integer decision variable to SATInt form, creating a new representation of boolean variables if
 /// one does not yet exist
 ///
 /// ```text
@@ -119,12 +118,12 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
     }
 }
 
-/// Converts an integer literal to SATInt form 
+/// Converts an integer literal to SATInt form
 ///
 /// ```text
 ///  3
 ///  ~~>
-///  SATInt([true,true,false,false,false,false,false,false;int(1..)]) 
+///  SATInt([true,true,false,false,false,false,false,false;int(1..)])
 ///
 /// ```
 #[register_rule(("SAT", 9500))]
