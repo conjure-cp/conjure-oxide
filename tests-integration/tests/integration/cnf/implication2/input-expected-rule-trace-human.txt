@@ -1,0 +1,59 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+(a) -> ((b) -> (c))
+
+clauses:
+
+
+
+--
+
+(b) -> (c), 
+   ~~> apply_tseytin_imply ([("SAT", 8500)]) 
+__0 
+new variables:
+  find __0: bool
+new clauses:
+  Clause([!(__0),!(b),c;int(1..)])
+  Clause([__0,b;int(1..)])
+  Clause([__0,!(c);int(1..)])
+--
+
+(a) -> (__0), 
+   ~~> apply_tseytin_imply ([("SAT", 8500)]) 
+__1 
+new variables:
+  find __1: bool
+new clauses:
+  Clause([!(__1),!(a),__0;int(1..)])
+  Clause([__1,a;int(1..)])
+  Clause([__1,!(__0);int(1..)])
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find __0: bool
+find __1: bool
+
+such that
+
+__1
+
+clauses:
+
+Clause([!(__0),!(b),c;int(1..)]),
+Clause([__0,b;int(1..)]),
+Clause([__0,!(c);int(1..)]),
+Clause([!(__1),!(a),__0;int(1..)]),
+Clause([__1,a;int(1..)]),
+Clause([__1,!(__0);int(1..)])
+
