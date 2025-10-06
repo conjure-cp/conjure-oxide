@@ -1,0 +1,44 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+
+such that
+
+(a) <-> (b)
+
+clauses:
+
+
+
+--
+
+(a) <-> (b), 
+   ~~> apply_tseytin_iff ([("SAT", 8500)]) 
+__0 
+new variables:
+  find __0: bool
+new clauses:
+  Clause([!(a),!(b),__0;int(1..)])
+  Clause([a,b,__0;int(1..)])
+  Clause([a,!(b),!(__0);int(1..)])
+  Clause([!(a),b,!(__0);int(1..)])
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find __0: bool
+
+such that
+
+__0
+
+clauses:
+
+Clause([!(a),!(b),__0;int(1..)]),
+Clause([a,b,__0;int(1..)]),
+Clause([a,!(b),!(__0);int(1..)]),
+Clause([!(a),b,!(__0);int(1..)])
+
