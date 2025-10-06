@@ -54,7 +54,7 @@ pub fn validate_sat_int_operands(exprs: Vec<Expr>) -> Result<Vec<Vec<Expr>>, App
     out
 }
 
-/// Converts an integer decision variable to SATInt form, creating a new representation of boolean variables if 
+/// Converts an integer decision variable to SATInt form, creating a new representation of boolean variables if
 /// one does not yet exist
 ///
 /// ```text
@@ -119,12 +119,12 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
     }
 }
 
-/// Converts an integer literal to SATInt form 
+/// Converts an integer literal to SATInt form
 ///
 /// ```text
 ///  3
 ///  ~~>
-///  SATInt([true,true,false,false,false,false,false,false;int(1..)]) 
+///  SATInt([true,true,false,false,false,false,false,false;int(1..)])
 ///
 /// ```
 #[register_rule(("SAT", 9500))]

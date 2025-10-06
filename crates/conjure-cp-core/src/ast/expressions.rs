@@ -801,9 +801,9 @@ impl Expression {
                     i8::MAX.into(),
                 )])) // BITS
             } // A CnfInt can represent any i8 integer at the moment
-            // A CnfInt contains multiple boolean expressions and represents the integer
-            // formed when these booleans are treated as the bits in an integer encoding.
-            // So the 'domain of' should be an integer 
+              // A CnfInt contains multiple boolean expressions and represents the integer
+              // formed when these booleans are treated as the bits in an integer encoding.
+              // So the 'domain of' should be an integer
         };
         match ret {
             // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
