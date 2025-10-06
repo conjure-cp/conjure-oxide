@@ -112,7 +112,10 @@ grcov . -s . --binary-path ./target/debug -t lcov\
   -o ./target/debug/lcov.info || { echo_err "fatal: lcov coverage generation failed" ; exit 1; }
 
 echo_err "info: lcov coverage report generated to target/debug/lcov.info"
-open ./target/debug/coverage/index.html
+
+if ! open ./target/debug/coverage/index.html; then
+  echo_err "error: failed to open the HTML coverage report"
+fi
 
 rm -rf ./target/coverage/*.profraw
 
