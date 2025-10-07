@@ -36,9 +36,8 @@ impl SolverAdaptor for Smt {
     ) -> Result<SolveSuccess, SolverError> {
         let solutions = self
             .solver_inst
-            // TODO: what is model_completion?
             .solutions(&self.store, true)
-            .take_while(|store| (callback)(store.literals_map()));
+            .take_while(|store| (callback)(store.literals_map().unwrap()));
 
         // Consume iterator and get whether there are solutions
         let search_complete = match solutions.count() {
@@ -63,13 +62,13 @@ impl SolverAdaptor for Smt {
 
     fn load_model(&mut self, model: Model, _: private::Internal) -> Result<(), SolverError> {
         let submodel = model.as_submodel();
-        load_store(&mut self.store, &submodel.symbols());
+        load_store(&mut self.store, &submodel.symbols())?;
         load_assertions(
             &self.store,
             submodel.constraints().as_slice(),
             &mut self.solver_inst,
-        );
-        Ok(()) // TODO: return errors
+        )?;
+        Ok(())
     }
 
     fn get_family(&self) -> SolverFamily {

@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use z3::{Solvable, SortKind, Symbol, ast::*};
 
-use crate::ast::{Literal, Name};
+use crate::{
+    ast::{Literal, Name},
+    solver::SolverError,
+};
 
 #[derive(Clone)]
 pub struct Store {
@@ -20,13 +23,13 @@ impl Store {
     }
 
     /// Return this store as a mapping of CO names to literals
-    pub fn literals_map(&self) -> HashMap<Name, Literal> {
+    pub fn literals_map(&self) -> Result<HashMap<Name, Literal>, SolverError> {
         let mut literals = HashMap::new();
         for (name, ast) in self.map.iter() {
-            let lit = dynamic_to_literal(ast.clone());
+            let lit = dynamic_to_literal(ast.clone())?;
             literals.insert(name.clone(), lit);
         }
-        literals
+        Ok(literals)
     }
 
     pub fn insert(&mut self, name: Name, ast: Dynamic) -> Option<Dynamic> {
@@ -49,9 +52,7 @@ impl Solvable for Store {
         let mut new_store = Store::new();
         for (name, ast) in self.map.iter() {
             // Get the interpretation of each constant
-            let val = model
-                .eval(ast, model_completion)
-                .expect("constant could not be evaluated");
+            let val = model.eval(ast, model_completion).unwrap();
             new_store.map.insert(name.clone(), val);
         }
         Some(new_store)
@@ -62,10 +63,7 @@ impl Solvable for Store {
             .map
             .iter()
             .map(|(name, ast)| {
-                let other = model
-                    .map
-                    .get(name)
-                    .expect("value stores must have equal key sets");
+                let other = model.map.get(name).unwrap();
                 ast.ne(other)
             })
             .collect();
@@ -73,15 +71,20 @@ impl Solvable for Store {
     }
 }
 
-// TODO: return Result<Literal, SolverError>
-fn dynamic_to_literal(ast: Dynamic) -> Literal {
+fn dynamic_to_literal(ast: Dynamic) -> Result<Literal, SolverError> {
     match &ast.sort_kind() {
-        SortKind::Bool => Literal::Bool(
+        SortKind::Bool => Ok(Literal::Bool(
             ast.as_bool()
-                .unwrap()
+                .ok_or(SolverError::Runtime(
+                    "AST with bool sort not actually bool".into(),
+                ))?
                 .as_bool()
-                .expect("Bool AST is not a literal value"),
-        ),
-        _ => unimplemented!(),
+                .ok_or(SolverError::Runtime(
+                    "Bool AST is not a literal value".into(),
+                ))?,
+        )),
+        _ => Err(SolverError::RuntimeNotImplemented(format!(
+            "conversion from AST to literal not implemented: {ast}"
+        ))),
     }
 }
