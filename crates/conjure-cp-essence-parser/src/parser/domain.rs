@@ -5,8 +5,8 @@ use tree_sitter::Node;
 
 /// Parse an Essence variable domain into its Conjure AST representation.
 pub fn parse_domain(domain: Node, source_code: &str) -> Result<Domain, EssenceParseError> {
-    let domain = named_child!(domain);
     match domain.kind() {
+        "domain" => parse_domain(domain.child(0).expect("No domain found"), source_code),
         "bool_domain" => Ok(Domain::Bool),
         "int_domain" => Ok(parse_int_domain(domain, source_code)),
         "identifier" => {

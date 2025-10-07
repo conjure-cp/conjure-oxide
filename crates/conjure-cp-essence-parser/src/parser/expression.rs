@@ -70,7 +70,7 @@ fn parse_arithmetic_expression(
         "exponent" | "product_expr" | "sum_expr" => {
             parse_binary_expression(&inner, source_code, root, symbols)
         }
-        "quantifier_expression_arith" => {
+        "quantifier_expr_arith" => {
             parse_quantifier_expression(&inner, source_code, root, symbols)
         }
         _ => Err(EssenceParseError::syntax_error(
@@ -93,7 +93,7 @@ fn parse_boolean_expression(
         "and_expr" | "or_expr" | "implication" | "iff_expr" => {
             parse_binary_expression(&inner, source_code, root, symbols)
         }
-        "quantifier_expression_bool" => {
+        "quantifier_expr_bool" => {
             parse_quantifier_expression(&inner, source_code, root, symbols)
         }
         _ => Err(EssenceParseError::syntax_error(
