@@ -18,11 +18,13 @@ use crate::utils::json::sort_json_object;
 use conjure_cp::Model;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::solver::Solver;
-use conjure_cp::solver::adaptors::Minion;
+use conjure_cp::solver::adaptors::*;
 
 use glob::glob;
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+
+// TODO: Combine get_*_solutions fns into one which accepts an adaptor
 
 pub fn get_minion_solutions(
     model: Model,
@@ -32,7 +34,7 @@ pub fn get_minion_solutions(
     let solver = Solver::new(Minion::new());
     eprintln!("Building Minion model...");
 
-    // for later...
+    // Create for later since we consume the model when loading it
     let symbols_rc = Rc::clone(model.as_submodel().symbols_ptr_unchecked());
 
     let solver = solver.load_model(model)?;
@@ -48,8 +50,10 @@ pub fn get_minion_solutions(
 
     eprintln!("Running Minion...");
 
+    // Create two arcs, one to pass into the solver callback, one to get solutions out later
     let all_solutions_ref = Arc::new(Mutex::<Vec<BTreeMap<Name, Literal>>>::new(vec![]));
     let all_solutions_ref_2 = all_solutions_ref.clone();
+
     let solver = if num_sols > 0 {
         let sols_left = Mutex::new(num_sols);
 
@@ -65,6 +69,7 @@ pub fn get_minion_solutions(
             }))
             .unwrap()
     } else {
+        // TODO: This special case can be avoided by setting num_sols >= 1
         #[allow(clippy::unwrap_used)]
         solver
             .solve(Box::new(move |sols| {
@@ -77,11 +82,14 @@ pub fn get_minion_solutions(
 
     solver.save_stats_to_context();
 
+    // Get the collections of solutions and model symbols
     #[allow(clippy::unwrap_used)]
     let mut sols_guard = (*all_solutions_ref).lock().unwrap();
     let sols = &mut *sols_guard;
     let symbols = symbols_rc.borrow();
 
+    // Get the representations for each variable by name, since some variables are
+    // divided into multiple auxiliary variables(see crate::representation::Representation)
     let names = symbols.clone().into_iter().map(|x| x.0).collect_vec();
     let representations = names
         .into_iter()
@@ -105,12 +113,14 @@ pub fn get_minion_solutions(
         .collect_vec();
 
     for sol in sols.iter_mut() {
+        // Get the value of complex variables using their auxiliary variables
         for (name, representation) in representations.iter() {
             let value = representation.value_up(sol).unwrap();
             sol.insert(name.clone(), value);
         }
 
-        // remove represented variables
+        // Remove auxiliary variables since we've found the value of the
+        // variable they represent
         *sol = sol
             .clone()
             .into_iter()
@@ -118,7 +128,8 @@ pub fn get_minion_solutions(
             .collect();
     }
 
-    Ok(sols.clone().into_iter().filter(|x| !x.is_empty()).collect())
+    sols.retain(|x| !x.is_empty());
+    Ok(sols.clone())
 }
 
 pub fn get_sat_solutions(
