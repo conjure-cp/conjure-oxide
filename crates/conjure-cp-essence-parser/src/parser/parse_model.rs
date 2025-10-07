@@ -26,6 +26,13 @@ pub fn parse_essence_file_native(
     parse_essence_with_context(&source_code, context)
 }
 
+// reserved keywords list for the 'keyword as var' error
+const RESERVED_KEYWORDS: &[&str] = &[
+    "find", "letting", "be", "domain", "true", "false", "bool", "int",
+    "and", "or", "min", "max", "sum", "allDiff", "toInt", "fromSolution",
+    "dominanceRelation",
+];
+
 pub fn parse_essence_with_context(
     src: &str,
     context: Arc<RwLock<Context<'static>>>,
@@ -42,6 +49,29 @@ pub fn parse_essence_with_context(
     let mut model = Model::new(context);
     // let symbols = model.as_submodel().symbols().clone();
     let root_node = tree.root_node();
+
+    // the keyword as var check
+    if let Some((node, ident)) = find_keyword_as_variable(root_node, &source_code) {
+        let pos = node.start_position();
+
+        // eprintln!(
+        //     "keyword-as-var detected: '{}' at line {}, column {} (bytes {}..{})",
+        //     ident,
+        //     pos.row + 1,
+        //     pos.column + 1,
+        //     node.start_byte(),
+        //     node.end_byte()
+        // );
+
+        // better error message later on?
+        return Err(EssenceParseError::syntax_error(
+            format!(
+                "'{}' is a keyword and cannot be used as variable at line {}",
+                ident,
+                pos.row + 1,
+            ), Some(node.range()),
+        ));
+    }
 
     // Early syntax gate: if the parse contains errors or missing nodes, return a helpful error.
     if root_node.has_error() {
@@ -129,6 +159,47 @@ fn first_syntax_issue(root: Node) -> Option<Node> {
         }
         let count = node.child_count();
         for i in (0..count).rev() {
+            if let Some(child) = node.child(i) {
+                stack.push(child);
+            }
+        }
+    }
+    None
+}
+
+// keyword as var check: walk the tree and find vars as keywords
+fn find_keyword_as_variable<'a>(root: Node<'a>, src: &str) -> Option<(Node<'a>, String)> {
+    let mut stack = vec![root];
+    while let Some(node) = stack.pop() {
+        // we first check variable nodes whose text is a key word
+        if node.kind() == "variable" {
+            if let Ok(text) = node.utf8_text(src.as_bytes()) {
+                let ident = text.trim();
+                if RESERVED_KEYWORDS.iter().any(|&k| k == ident) {
+                    return Some((node, ident.to_string()));
+                }
+            }
+        }
+
+        // some keywords, as defined by the grammar, can be parsed keyword token (ends with _kw) immediately followed by an ERROR node
+        // This catches cases like "find find,..." where the second "find" causes a parse error. because this rule has precedence over the variable rule
+        if node.kind().ends_with("_kw") {
+            if let Some(next) = node.next_sibling() {
+                if next.is_error() {
+                    // now the keyword that caused the problem is the current node
+                    // if the next one is an error node
+                    if let Ok(kw_text) = node.utf8_text(src.as_bytes()) {
+                        let kw = kw_text.trim();
+                        if RESERVED_KEYWORDS.iter().any(|&k| k == kw) {
+                            return Some((next, kw.to_string()));
+                        }
+                    }
+                }
+            }
+        }
+
+        // push children
+        for i in (0..node.child_count()).rev() {
             if let Some(child) = node.child(i) {
                 stack.push(child);
             }
