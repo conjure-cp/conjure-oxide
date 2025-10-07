@@ -42,22 +42,16 @@ pub fn conjure_executable() -> Result<()> {
         None => match version_line.strip_prefix("Conjure v") {
             // New format: Conjure v2.5.1 (Repository version ...)
             Some(v) => v.split_whitespace().next().ok_or(anyhow!(
-                "Could not read Conjure's version from: {}",
-                version_line
+                "Could not read Conjure's version from: {version_line}"
             )),
             None => Err(anyhow!(
-                "Could not read Conjure's version from: {}",
-                version_line
+                "Could not read Conjure's version from: {version_line}"
             )),
         },
     }?;
 
     if Versioning::new(version) < Versioning::new(CONJURE_MIN_VERSION) {
-        bail!(
-            "Conjure version is too old (< {}): {}",
-            CONJURE_MIN_VERSION,
-            version
-        );
+        bail!("Conjure version is too old (< {CONJURE_MIN_VERSION}): {version}");
     }
     Ok(())
 }
