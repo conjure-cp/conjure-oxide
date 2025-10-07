@@ -175,7 +175,7 @@ fn find_keyword_as_variable<'a>(root: Node<'a>, src: &str) -> Option<(Node<'a>, 
         if node.kind() == "variable" {
             if let Ok(text) = node.utf8_text(src.as_bytes()) {
                 let ident = text.trim();
-                if RESERVED_KEYWORDS.iter().any(|&k| k == ident) {
+                if RESERVED_KEYWORDS.contains(&ident) {
                     return Some((node, ident.to_string()));
                 }
             }
@@ -190,7 +190,7 @@ fn find_keyword_as_variable<'a>(root: Node<'a>, src: &str) -> Option<(Node<'a>, 
                     // if the next one is an error node
                     if let Ok(kw_text) = node.utf8_text(src.as_bytes()) {
                         let kw = kw_text.trim();
-                        if RESERVED_KEYWORDS.iter().any(|&k| k == kw) {
+                        if RESERVED_KEYWORDS.contains(&kw) {
                             return Some((next, kw.to_string()));
                         }
                     }
