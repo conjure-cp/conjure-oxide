@@ -60,10 +60,7 @@ module.exports = grammar ({
 
     // Disallow reserved keywords from being recognized as variables anywhere
     // Keep precedence low so true keywords still win where both could match
-    variable: $ => token(prec(
-      -1,
-      new RegExp(`(?!\\b(?:${KEYWORDS.join('|')})\\b)[a-zA-Z_][a-zA-Z0-9_]*`)
-    )),
+    variable: $ =>(/[a-zA-Z_][a-zA-Z0-9_]*/),
 
     //meta-variable (aka template argument)
     metavar: $ => seq("&", $.variable),
