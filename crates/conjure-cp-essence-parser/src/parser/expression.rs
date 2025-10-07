@@ -18,6 +18,13 @@ pub fn parse_expression(
         "arithmetic_expr" => parse_arithmetic_expression(&node, source_code, root, symbols),
         "comparison_expr" => parse_binary_expression(&node, source_code, root, symbols),
         "dominance_relation" => parse_dominance_relation(&node, source_code, root, symbols),
+        "ERROR" => Err(EssenceParseError::syntax_error(
+            format!(
+                "'{}' is not a valid expression",
+                &source_code[node.start_byte()..node.end_byte()]
+            ),
+            Some(node.range()),
+        )),
         _ => Err(EssenceParseError::syntax_error(
             format!("Unknown expression kind: '{}'", node.kind()),
             Some(node.range()),

@@ -182,7 +182,7 @@ pub(crate) fn parse(
         parse_essence_file_native(input_file.as_str(), context.clone()).map_err(|e| e.into())
     } else {
         conjure_executable()
-            .map_err(|e| anyhow!("Could not find correct conjure executable: {}", e))?;
+            .map_err(|e| anyhow!("Could not find correct conjure executable: {e}"))?;
 
         let mut cmd = std::process::Command::new("conjure");
         let output = cmd
