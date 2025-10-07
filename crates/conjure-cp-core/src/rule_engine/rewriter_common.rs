@@ -29,6 +29,8 @@ pub fn log_rule_application(
 ) {
     let red = &result.reduction;
     let rule = result.rule_data.rule;
+
+    // A rule cannot alter both the clauses and the top level constraints
     let new_top_string = if !red.new_top.is_empty() {
         pretty_vec(&red.new_top)
     } else {
