@@ -53,21 +53,15 @@ pub fn parse_essence_with_context(
                         .insert(DeclarationPtr::new_var(name, domain));
                 }
             }
-            "constraint_list" => {
-                let mut constraint_vec: Vec<Expression> = Vec::new();
-                for constraint in named_children(&statement) {
-                    let current_symbols = model.as_submodel().symbols().clone();
-
-                    if constraint.kind() != "single_line_comment" {
-                        constraint_vec.push(parse_expression(
-                            constraint,
-                            &source_code,
-                            &statement,
-                            Some(&current_symbols),
-                        )?);
-                    }
-                }
-                model.as_submodel_mut().add_constraints(constraint_vec);
+            "bool_expr" | "atom" | "comparison_expr" => {
+                let current_symbols = model.as_submodel().symbols().clone();
+                
+                model.as_submodel_mut().add_constraint(parse_expression(
+                    statement,
+                    &source_code,
+                    &statement,
+                    Some(&current_symbols)
+                )?);
             }
             "language_label" => {}
             "letting_statement" => {
