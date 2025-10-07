@@ -1,5 +1,4 @@
 use super::{
-    Atom, DeclarationPtr, Literal, Moo,
     comprehension::Comprehension,
     declaration::DeclarationKind,
     pretty::{
@@ -7,6 +6,7 @@ use super::{
         pretty_value_letting_declaration, pretty_variable_declaration,
     },
     serde::RcRefCellAsInner,
+    Atom, DeclarationPtr, Literal, Moo,
 };
 use itertools::izip;
 use serde::{Deserialize, Serialize};
@@ -21,7 +21,7 @@ use std::{
     rc::Rc,
 };
 
-use super::{Expression, ReturnType, SymbolTable, types::Typeable};
+use super::{types::Typeable, Expression, ReturnType, SymbolTable};
 
 /// A sub-model, representing a lexical scope in the model.
 ///
@@ -248,9 +248,12 @@ impl Display for SubModel {
 
         writeln!(f, "{}", pretty_expressions_as_top_level(self.constraints()))?;
 
-        writeln!(f, "\nclauses:\n")?;
+        if !self.clauses().is_empty() {
+            println!("{:?}", self.clauses());
+            writeln!(f, "\nclauses:\n")?;
 
-        writeln!(f, "{}", pretty_expressions_as_top_level(self.clauses()))?;
+            writeln!(f, "{}", pretty_expressions_as_top_level(self.clauses()))?;
+        }
 
         Ok(())
     }
