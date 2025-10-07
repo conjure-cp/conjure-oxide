@@ -183,7 +183,7 @@ fn find_keyword_as_variable<'a>(root: Node<'a>, src: &str) -> Option<(Node<'a>, 
 
         // some keywords, as defined by the grammar, can be parsed keyword token (ends with _kw) immediately followed by an ERROR node
         // This catches cases like "find find,..." where the second "find" causes a parse error. because this rule has precedence over the variable rule
-        if node.kind().ends_with("_kw") {
+        if node.kind().ends_with("_kw") || node.kind().ends_with("_statement_list") {
             if let Some(next) = node.next_sibling() {
                 if next.is_error() {
                     // now the keyword that caused the problem is the current node
