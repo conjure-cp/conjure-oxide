@@ -13,9 +13,6 @@ fn keyword_as_var_tests(src: &str, key: &str) {
         "error did not mention keyword: {}",
         err
     );
-
-    // print the thing
-    // eprintln!("error: {}", err);
 }
 
 #[test]

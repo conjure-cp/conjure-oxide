@@ -1,24 +1,3 @@
-// Central keyword list used to exclude from identifiers
-const KEYWORDS = [
-  'find',
-  'letting',
-  'be',
-  'domain',
-  'true',
-  'false',
-  'bool',
-  'int',
-  'and',
-  'or',
-  'min',
-  'max',
-  'sum',
-  'allDiff',
-  'toInt',
-  'fromSolution',
-  'dominanceRelation',
-];
-
 module.exports = grammar ({
   name: 'essence',
 
@@ -56,7 +35,6 @@ module.exports = grammar ({
 
     find_kw: $ => "find",
 
-  
 
     // Disallow reserved keywords from being recognized as variables anywhere
     // Keep precedence low so true keywords still win where both could match

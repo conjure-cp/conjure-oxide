@@ -16,7 +16,9 @@ pub fn parse_find_statement(
     let mut vars = BTreeMap::new();
 
     // Process `find_statement` children, skipping over the `find_kw` node.
-    for find_statement in named_children(&find_statement_list).filter(|n| n.kind() == "find_statement") {
+    for find_statement in
+        named_children(&find_statement_list).filter(|n| n.kind() == "find_statement")
+    {
         let mut temp_symbols = BTreeSet::new();
 
         let variable_list = find_statement

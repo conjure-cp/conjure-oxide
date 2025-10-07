@@ -28,8 +28,22 @@ pub fn parse_essence_file_native(
 
 // reserved keywords list for the 'keyword as var' error
 const RESERVED_KEYWORDS: &[&str] = &[
-    "find", "letting", "be", "domain", "true", "false", "bool", "int",
-    "and", "or", "min", "max", "sum", "allDiff", "toInt", "fromSolution",
+    "find",
+    "letting",
+    "be",
+    "domain",
+    "true",
+    "false",
+    "bool",
+    "int",
+    "and",
+    "or",
+    "min",
+    "max",
+    "sum",
+    "allDiff",
+    "toInt",
+    "fromSolution",
     "dominanceRelation",
 ];
 
@@ -54,22 +68,14 @@ pub fn parse_essence_with_context(
     if let Some((node, ident)) = find_keyword_as_variable(root_node, &source_code) {
         let pos = node.start_position();
 
-        // eprintln!(
-        //     "keyword-as-var detected: '{}' at line {}, column {} (bytes {}..{})",
-        //     ident,
-        //     pos.row + 1,
-        //     pos.column + 1,
-        //     node.start_byte(),
-        //     node.end_byte()
-        // );
-
         // better error message later on?
         return Err(EssenceParseError::syntax_error(
             format!(
                 "'{}' is a keyword and cannot be used as variable at line {}",
                 ident,
                 pos.row + 1,
-            ), Some(node.range()),
+            ),
+            Some(node.range()),
         ));
     }
 
@@ -87,7 +93,10 @@ pub fn parse_essence_with_context(
                 None,
             ));
         }
-        return Err(EssenceParseError::syntax_error("Syntax error".to_string(), None));
+        return Err(EssenceParseError::syntax_error(
+            "Syntax error".to_string(),
+            None,
+        ));
     }
     for statement in named_children(&root_node) {
         match statement.kind() {
