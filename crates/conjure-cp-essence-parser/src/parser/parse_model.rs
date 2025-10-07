@@ -45,7 +45,7 @@ pub fn parse_essence_with_context(
         match statement.kind() {
             "single_line_comment" => {}
             "find_statement" => {
-                let var_hashmap = parse_find_statement(statement, &source_code);
+                let var_hashmap = parse_find_statement(statement, &source_code)?;
                 for (name, domain) in var_hashmap {
                     model
                         .as_submodel_mut()

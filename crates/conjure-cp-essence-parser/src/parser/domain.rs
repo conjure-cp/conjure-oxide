@@ -1,15 +1,17 @@
 use super::util::named_children;
+use crate::{EssenceParseError, named_child};
 use conjure_cp_core::ast::{Domain, Name, Range, RecordEntry};
 use tree_sitter::Node;
 
 /// Parse an Essence variable domain into its Conjure AST representation.
-pub fn parse_domain(domain: Node, source_code: &str) -> Domain {
+pub fn parse_domain(domain: Node, source_code: &str) -> Result<Domain, EssenceParseError> {
+    let domain = named_child!(domain);
     match domain.kind() {
-        "bool_domain" => Domain::Bool,
-        "int_domain" => parse_int_domain(domain, source_code),
+        "bool_domain" => Ok(Domain::Bool),
+        "int_domain" => Ok(parse_int_domain(domain, source_code)),
         "identifier" => {
             let variable_name = &source_code[domain.start_byte()..domain.end_byte()];
-            Domain::Reference(Name::user(variable_name))
+            Ok(Domain::Reference(Name::user(variable_name)))
         }
         "tuple_domain" => parse_tuple_domain(domain, source_code),
         "matrix_domain" => parse_matrix_domain(domain, source_code),
@@ -71,32 +73,41 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
     }
 }
 
-fn parse_tuple_domain(tuple_domain: Node, source_code: &str) -> Domain {
+fn parse_tuple_domain(tuple_domain: Node, source_code: &str) -> Result<Domain, EssenceParseError> {
     let mut domains: Vec<Domain> = Vec::new();
     for domain in named_children(&tuple_domain) {
-        domains.push(parse_domain(domain, source_code));
+        domains.push(parse_domain(domain, source_code)?);
     }
-    Domain::Tuple(domains)
+    Ok(Domain::Tuple(domains))
 }
 
-fn parse_matrix_domain(matrix_domain: Node, source_code: &str) -> Domain {
+fn parse_matrix_domain(
+    matrix_domain: Node,
+    source_code: &str,
+) -> Result<Domain, EssenceParseError> {
     let mut domains: Vec<Domain> = Vec::new();
     let index_domain_list = matrix_domain
         .child_by_field_name("index_domain_list")
         .expect("No index domains found for matrix domain");
     for domain in named_children(&index_domain_list) {
-        domains.push(parse_domain(domain, source_code));
+        domains.push(parse_domain(domain, source_code)?);
     }
     let value_domain = parse_domain(
-        matrix_domain
-            .child_by_field_name("value_domain")
-            .expect("No value domain found for matrix domain"),
+        matrix_domain.child_by_field_name("value_domain").ok_or(
+            EssenceParseError::syntax_error(
+                "Expected a value domain".to_string(),
+                Some(matrix_domain.range()),
+            ),
+        )?,
         source_code,
-    );
-    Domain::Matrix(Box::new(value_domain), domains)
+    )?;
+    Ok(Domain::Matrix(Box::new(value_domain), domains))
 }
 
-fn parse_record_domain(record_domain: Node, source_code: &str) -> Domain {
+fn parse_record_domain(
+    record_domain: Node,
+    source_code: &str,
+) -> Result<Domain, EssenceParseError> {
     let mut record_entries: Vec<RecordEntry> = Vec::new();
     for record_entry in named_children(&record_domain) {
         let name_node = record_entry
@@ -106,8 +117,8 @@ fn parse_record_domain(record_domain: Node, source_code: &str) -> Domain {
         let domain_node = record_entry
             .child_by_field_name("domain")
             .expect("No domain found for record entry");
-        let domain = parse_domain(domain_node, source_code);
+        let domain = parse_domain(domain_node, source_code)?;
         record_entries.push(RecordEntry { name, domain });
     }
-    Domain::Record(record_entries)
+    Ok(Domain::Record(record_entries))
 }

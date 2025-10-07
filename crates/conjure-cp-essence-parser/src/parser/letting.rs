@@ -49,11 +49,19 @@ pub fn parse_letting_statement(
             for name in temp_symbols {
                 symbol_table.insert(DeclarationPtr::new_domain_letting(
                     Name::user(name),
-                    parse_domain(expr_or_domain, source_code),
+                    parse_domain(expr_or_domain, source_code)?,
                 ));
             }
         }
-        _ => panic!("Unrecognized node in letting statement"),
+        _ => {
+            return Err(EssenceParseError::syntax_error(
+                format!(
+                    "Expected letting expression, got '{}'",
+                    expr_or_domain.kind()
+                ),
+                Some(expr_or_domain.range()),
+            ));
+        }
     }
 
     Ok(symbol_table)
