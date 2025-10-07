@@ -249,7 +249,6 @@ impl Display for SubModel {
         writeln!(f, "{}", pretty_expressions_as_top_level(self.constraints()))?;
 
         if !self.clauses().is_empty() {
-            println!("{:?}", self.clauses());
             writeln!(f, "\nclauses:\n")?;
 
             writeln!(f, "{}", pretty_expressions_as_top_level(self.clauses()))?;
