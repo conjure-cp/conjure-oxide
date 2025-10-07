@@ -67,18 +67,19 @@ pub fn get_minion_solutions_dominance(
         results.extend(solutions.clone());
 
         // Create and apply new blocking constraint
+        let mut model_copy = model.clone();
+        model_copy.remove_constraints(model_copy.as_submodel().constraints().clone());
         if let Some(blocking_constraint) = crate_blocking_constraint_from_solution(&dominance_expression, &solution) {
-            model.add_constraint(blocking_constraint);
+            model_copy.add_constraint(blocking_constraint);
         }
 
-        // Rewrite model (TODO: optimize to avoid full rewrite?)
+        // Rewrite model
         let rule_sets = model.context.read().unwrap().rule_sets.clone();
-        model = rewrite_naive(&model, &rule_sets, false, false)?;
-
-        // For debugging
-        println!("{}", model);
+        let rewritten = rewrite_naive(&model_copy, &rule_sets, false, false)?;
+        model.add_constraints(rewritten.as_submodel().constraints().clone());
     }
 
+    // TODO: post filtering
     Ok(results)
 }
 

@@ -55,6 +55,24 @@ impl Model {
         }
     }
 
+    pub fn add_constraints(&mut self, constraint: Vec<Expression>) 
+    {
+        let submodel = self.as_submodel_mut();
+        submodel.add_constraints(constraint);
+    }
+
+    pub fn remove_constraint(&mut self, constraint: Expression) 
+    {
+        let submodel = self.as_submodel_mut();
+        submodel.remove_constraint(constraint);
+    }
+
+    pub fn remove_constraints(&mut self, constraint: Vec<Expression>) 
+    {
+        let submodel = self.as_submodel_mut();
+        submodel.remove_constraints(constraint);
+    }
+
     /// Creates a new model from the given context.
     pub fn new(context: Arc<RwLock<Context<'static>>>) -> Model {
         Model {

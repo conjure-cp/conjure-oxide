@@ -150,6 +150,16 @@ impl SubModel {
         self.constraints_mut().extend(constraints);
     }
 
+    /// Removes a top-level constraint.
+    pub fn remove_constraint(&mut self, constraint: Expression) {
+        self.constraints_mut().retain(|x| *x != constraint);
+    }
+
+    /// Removes top-level constraints.
+    pub fn remove_constraints(&mut self, constraints: Vec<Expression>) {
+        self.constraints_mut().retain(|x| !constraints.contains(x));
+    }
+
     /// Adds a new symbol to the symbol table
     /// (Wrapper over `SymbolTable.insert`)
     pub fn add_symbol(&mut self, decl: DeclarationPtr) -> Option<()> {
