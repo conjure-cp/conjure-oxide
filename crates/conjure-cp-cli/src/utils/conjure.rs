@@ -4,7 +4,7 @@ use std::rc::Rc;
 use std::string::ToString;
 use std::sync::{Arc, Mutex, RwLock};
 
-use conjure_cp::ast::{DeclarationKind, Literal, Name};
+use conjure_cp::ast::{DeclarationKind, DeclarationPtr, Literal, Name};
 use conjure_cp::bug;
 use conjure_cp::context::Context;
 
@@ -33,9 +33,9 @@ pub fn get_minion_solutions(
     solver_input_file: &Option<PathBuf>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
 
-    if let Some(Expression::DominanceRelation(_, inner_expr)) = model.dominance.clone()  
+    if let Some(Expression::DominanceRelation(_,dom_rel)) = model.dominance.clone()  
     {
-        return get_minion_solutions_dominance(model, num_sols, solver_input_file, (*inner_expr).clone());
+        return get_minion_solutions_dominance(model, num_sols, solver_input_file, &dom_rel);
     }
     else
     {
@@ -48,7 +48,7 @@ pub fn get_minion_solutions_dominance(
     // TODO: after filtering only keep `num_sols` solutions
     _num_sols: i32,
     solver_input_file: &Option<PathBuf>,
-    dominance_expression: Expression
+    dom_rel: &Expression,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
 
     // All non-dominated solutions
@@ -65,37 +65,77 @@ pub fn get_minion_solutions_dominance(
 
         // Add to results
         results.extend(solutions.clone());
+        
 
-        // Create and apply new blocking constraint
-        let mut model_copy = model.clone();
-        model_copy.remove_constraints(model_copy.as_submodel().constraints().clone());
-        if let Some(blocking_constraint) = crate_blocking_constraint_from_solution(&dominance_expression, &solution) {
-            model_copy.add_constraint(blocking_constraint);
-        }
-
-        // Rewrite model
-        let rule_sets = model.context.read().unwrap().rule_sets.clone();
-        let rewritten = rewrite_naive(&model_copy, &rule_sets, false, false)?;
-        model.add_constraints(rewritten.as_submodel().constraints().clone());
+        // Create and apply new blocking constraints
+        model.add_constraints(crate_blocking_constraint_from_solution(&model, &solution, dom_rel));
+         
     }
 
-    // TODO: post filtering
-    Ok(results)
+    // Vector constaining non-dominated solutions
+    let mut final_results = Vec::new();
+
+    // Iterate over all found solutions and filter out those that are dominated by others
+    for sol in results.iter() {
+        let mut model_copy = model.clone();
+
+        // remove current blocking constraint (blocking constraint created by the current solution)
+        model_copy.remove_constraints(crate_blocking_constraint_from_solution(&model_copy, &sol, dom_rel));
+
+        // add constraints for current solution
+        for (name, value) in sol.iter() {
+            let expr = Expression::Atomic(
+                Metadata::new(),
+                Atom::Reference(DeclarationPtr::new(
+                    name.clone(),
+                    DeclarationKind::ValueLetting(Expression::Atomic(Metadata::new(), Atom::Literal(value.clone()))),
+                )),
+            );
+            let val = Expression::Atomic(Metadata::new(), Atom::Literal(value.clone()));
+            let eq = Expression::Eq(Metadata::new(), Moo::new(expr), Moo::new(val));
+            
+            model_copy.add_constraint(eq.clone());
+        }
+
+        // check if the solution is still valid
+        let sols = get_minion_solutions_no_dominance(model_copy, 1, solver_input_file)?;
+
+        if !sols.is_empty() {
+            final_results.push(sol.clone());
+        }
+    }
+
+    Ok(final_results)
+    
 }
 
 pub fn crate_blocking_constraint_from_solution(
-    expr: &Expression,
+    model: &Model,
     solution: &BTreeMap<Name, Literal>,
-) -> Option<Expression> {
+    dom_rel: &Expression
+) -> Vec<Expression> {
 
     use uniplate::Uniplate;
-    Some(expr.rewrite(&|e| { sub_solution_in_dominance_expr(&e, solution) }))
+
+    // get blocking constraint expression
+    let raw_blocking_constraint = dom_rel.rewrite(&|e| { sub_in_solution_into_dominance_expr(&e, solution) });
+
+    let mut model_copy = model.clone();
+    model_copy.remove_constraints(model_copy.as_submodel().constraints().clone());
+        
+    model_copy.add_constraint(raw_blocking_constraint.clone());
+
+
+    // Rewrite model
+    let rule_sets = model.context.read().unwrap().rule_sets.clone();
+    let rewritten = rewrite_naive(&model_copy, &rule_sets, false, false);
+
+    return rewritten.expect("Should be able to rewrite the model").as_submodel().constraints().to_vec();
 }
 
-pub fn sub_solution_in_dominance_expr(expr: &Expression, solution: &BTreeMap<Name, Literal>) -> Option<Expression>
+pub fn sub_in_solution_into_dominance_expr(expr: &Expression, solution: &BTreeMap<Name, Literal>) -> Option<Expression>
 {
     use Expression::*;
-    use conjure_cp::ast::AbstractLiteral;
 
     match expr {
         FromSolution(_, name_expr) => {
