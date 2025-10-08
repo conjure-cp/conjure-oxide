@@ -33,13 +33,18 @@ module.exports = grammar ({
 
     FALSE: $ => "false",
 
-    variable: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
+    find_kw: $ => "find",
+
+
+    // Disallow reserved keywords from being recognized as variables anywhere
+    // Keep precedence low so true keywords still win where both could match
+    variable: $ =>(/[a-zA-Z_][a-zA-Z0-9_]*/),
 
     //meta-variable (aka template argument)
     metavar: $ => seq("&", $.variable),
 
     //find statements
-    find_statement_list: $ => seq("find", repeat($.find_statement)),
+    find_statement_list: $ => seq($.find_kw, repeat($.find_statement)),
 
     find_statement: $ => seq(
       $.variable_list,
