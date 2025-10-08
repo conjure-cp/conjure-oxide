@@ -54,13 +54,12 @@ mod test {
         assert_eq!(literal_int, Literal::Int(42));
     }
 
-    // TODO: We now parse -42 as Neg(Int(42)) not Int(-42)
-    // #[test]
-    // pub fn test_parse_neg_int() {
-    //     let src_int = "-42";
-    //     let literal_int = parse_literal(src_int).unwrap();
-    //     assert_eq!(literal_int, Literal::Int(-42));
-    // }
+    #[test]
+    pub fn test_parse_neg_int() {
+        let src_int = "-42";
+        let literal_int = parse_literal(src_int).unwrap();
+        assert_eq!(literal_int, Literal::Int(-42));
+    }
 
     #[test]
     pub fn test_bad() {
