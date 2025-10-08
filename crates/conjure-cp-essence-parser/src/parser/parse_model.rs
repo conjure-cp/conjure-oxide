@@ -109,6 +109,8 @@ mod test {
     use conjure_cp_core::ast::{Atom, Expression, Metadata, Moo, Name};
     #[allow(unused_imports)]
     use conjure_cp_core::{domain_int, matrix_expr, range};
+    #[allow(unused_imports)]
+    use std::ops::Deref;
 
     #[test]
     pub fn test_parse_xyz() {
@@ -158,5 +160,30 @@ mod test {
             c2,
             Expression::Geq(Metadata::new(), Moo::new(x_e), Moo::new(y_e))
         );
+    }
+
+    #[test]
+    pub fn test_parse_letting_index() {
+        let src = "
+        letting a be [ [ 1,2,3 ; int(1,2,4) ], [ 1,3,2 ; int(1,2,4) ], [ 3,2,1 ; int(1,2,4) ] ; int(-2..0) ]
+        find b: int(1..5)
+        such that
+        b < a[-2,2],
+        allDiff(a[-2,..])
+        ";
+
+        let model = parse_essence(src).unwrap();
+        let st = model.as_submodel().symbols();
+        let a_decl = st.lookup(&Name::user("a")).unwrap();
+        let a = a_decl.as_value_letting().unwrap().deref().clone();
+        assert_eq!(
+            a,
+            matrix_expr!(
+                matrix_expr!(1.into(), 2.into(), 3.into() ; domain_int!(1, 2, 4)),
+                matrix_expr!(1.into(), 3.into(), 2.into() ; domain_int!(1, 2, 4)),
+                matrix_expr!(3.into(), 2.into(), 1.into() ; domain_int!(1, 2, 4));
+                domain_int!(-2..0)
+            )
+        )
     }
 }
