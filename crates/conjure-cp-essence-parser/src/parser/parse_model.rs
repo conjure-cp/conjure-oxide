@@ -2,9 +2,7 @@ use std::fs;
 use std::sync::{Arc, RwLock};
 
 use conjure_cp_core::Model;
-use conjure_cp_core::ast::Expression;
-use conjure_cp_core::ast::Metadata;
-use conjure_cp_core::ast::{DeclarationPtr, Moo};
+use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo};
 use conjure_cp_core::context::Context;
 #[allow(unused)]
 use uniplate::Uniplate;
@@ -97,4 +95,66 @@ pub fn parse_essence_with_context(
         }
     }
     Ok(model)
+}
+
+pub fn parse_essence(src: &str) -> Result<Model, EssenceParseError> {
+    let context = Arc::new(RwLock::new(Context::default()));
+    parse_essence_with_context(src, context)
+}
+
+mod test {
+    use crate::parse_essence;
+    use conjure_cp_core::ast::Atom::Literal;
+    use conjure_cp_core::ast::{Atom, Expression, Metadata, Moo, Name};
+    use conjure_cp_core::{domain_int, matrix_expr, range};
+
+    #[test]
+    pub fn test_parse_xyz() {
+        let src = "
+        find x, y, z : int(1..4)
+        such that x + y + z = 4
+        such that x >= y
+        ";
+
+        let model = parse_essence(src).unwrap();
+
+        let st = model.as_submodel().symbols();
+        let x = st.lookup(&Name::user("x")).unwrap();
+        let y = st.lookup(&Name::user("y")).unwrap();
+        let z = st.lookup(&Name::user("z")).unwrap();
+        assert_eq!(x.domain(), Some(domain_int!(1..4)));
+        assert_eq!(y.domain(), Some(domain_int!(1..4)));
+        assert_eq!(z.domain(), Some(domain_int!(1..4)));
+
+        let constraints = model.as_submodel().constraints();
+        assert_eq!(constraints.len(), 2);
+
+        let c1 = constraints[0].clone();
+        let x_e = Expression::Atomic(Metadata::new(), Atom::new_ref(x));
+        let y_e = Expression::Atomic(Metadata::new(), Atom::new_ref(y));
+        let z_e = Expression::Atomic(Metadata::new(), Atom::new_ref(z));
+        assert_eq!(
+            c1,
+            Expression::Eq(
+                Metadata::new(),
+                Moo::new(Expression::Sum(
+                    Metadata::new(),
+                    Moo::new(matrix_expr!(
+                        Expression::Sum(
+                            Metadata::new(),
+                            Moo::new(matrix_expr!(x_e.clone(), y_e.clone()))
+                        ),
+                        z_e
+                    ))
+                )),
+                Moo::new(Expression::Atomic(Metadata::new(), 4.into()))
+            )
+        );
+
+        let c2 = constraints[1].clone();
+        assert_eq!(
+            c2,
+            Expression::Geq(Metadata::new(), Moo::new(x_e), Moo::new(y_e))
+        );
+    }
 }
