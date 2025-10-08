@@ -59,7 +59,7 @@ fn parse_matrix(
 ) -> Result<AbstractLiteral<Expression>, EssenceParseError> {
     let mut elements = vec![];
     let mut domain: Option<Domain> = None;
-    for child in named_children(&node) {
+    for child in named_children(node) {
         if child.kind() == "arithmetic_expr" {
             elements.push(parse_expression(child, source_code, node, symbols)?);
         } else {

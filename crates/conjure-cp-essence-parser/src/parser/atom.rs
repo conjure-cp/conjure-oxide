@@ -19,7 +19,7 @@ pub fn parse_atom(
             let name_str = &source_code[ident.start_byte()..ident.end_byte()];
             Ok(Expression::Metavar(Metadata::new(), Ustr::from(name_str)))
         }
-        "identifier" => parse_variable(&node, source_code, symbols)
+        "identifier" => parse_variable(node, source_code, symbols)
             .map(|var| Expression::Atomic(Metadata::new(), var)),
         "from_solution" => {
             if root.kind() != "dominance_relation" {
@@ -33,13 +33,13 @@ pub fn parse_atom(
             Ok(Expression::FromSolution(Metadata::new(), Moo::new(inner)))
         }
         "constant" => {
-            let lit = parse_constant(&node, source_code)?;
+            let lit = parse_constant(node, source_code)?;
             Ok(Expression::Atomic(Metadata::new(), Atom::Literal(lit)))
         }
-        "matrix" | "record" | "tuple" => parse_abstract(&node, source_code, symbols)
+        "matrix" | "record" | "tuple" => parse_abstract(node, source_code, symbols)
             .map(|l| Expression::AbstractLiteral(Metadata::new(), l)),
         "tuple_matrix_record_index_or_slice" => {
-            parse_index_or_slice(&node, source_code, root, symbols)
+            parse_index_or_slice(node, source_code, root, symbols)
         }
         _ => Err(EssenceParseError::syntax_error(
             format!("Expected atom, got: {}", node.kind()),
