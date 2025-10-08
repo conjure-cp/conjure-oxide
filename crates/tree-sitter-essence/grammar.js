@@ -4,8 +4,7 @@ module.exports = grammar ({
   extras: $ => [
     $.single_line_comment,
     /\s/,
-    $.language_label
-
+    $.language_declaration
   ],
 
   rules: {
@@ -41,7 +40,7 @@ module.exports = grammar ({
 
     single_line_comment: $ => token(seq('$', /.*/)),
 
-    language_label: $ => token(seq("language", /.*/)),
+    language_declaration: $ => token(seq("language", /.*/)),
 
     //general
     constant: $ => choice(
