@@ -14,6 +14,7 @@ use conjure_cp_core::ast::{Name, SymbolTable};
 pub fn parse_letting_statement(
     letting_statement: Node,
     source_code: &str,
+    existing_symbols: Option<&SymbolTable>,
 ) -> Result<SymbolTable, EssenceParseError> {
     let mut symbol_table = SymbolTable::new();
 
@@ -39,7 +40,7 @@ pub fn parse_letting_statement(
                         expr_or_domain,
                         source_code,
                         &letting_statement,
-                        Some(&symbol_table),
+                        existing_symbols,
                     )?,
                 ));
             }
