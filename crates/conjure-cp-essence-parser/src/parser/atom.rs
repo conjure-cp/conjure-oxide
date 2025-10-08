@@ -12,34 +12,34 @@ pub fn parse_atom(
     root: &Node,
     symbols: Option<&SymbolTable>,
 ) -> Result<Expression, EssenceParseError> {
-    let child = named_child!(node);
-    match child.kind() {
+    match node.kind() {
+        "atom" => parse_atom(&named_child!(node), source_code, root, symbols),
         "metavar" => {
-            let ident = field!(child, "identifier");
+            let ident = field!(node, "identifier");
             let name_str = &source_code[ident.start_byte()..ident.end_byte()];
             Ok(Expression::Metavar(Metadata::new(), Ustr::from(name_str)))
         }
-        "identifier" => parse_variable(&child, source_code, symbols)
+        "identifier" => parse_variable(&node, source_code, symbols)
             .map(|var| Expression::Atomic(Metadata::new(), var)),
         "from_solution" => {
             if root.kind() != "dominance_relation" {
                 return Err(EssenceParseError::syntax_error(
                     "fromSolution only allowed inside dominance relations".to_string(),
-                    Some(child.range()),
+                    Some(node.range()),
                 ));
             }
 
-            let inner = parse_variable(&field!(child, "variable"), source_code, symbols)?;
+            let inner = parse_variable(&field!(node, "variable"), source_code, symbols)?;
             Ok(Expression::FromSolution(Metadata::new(), Moo::new(inner)))
         }
         "constant" => {
-            let lit = parse_constant(&child, source_code)?;
+            let lit = parse_constant(&node, source_code)?;
             Ok(Expression::Atomic(Metadata::new(), Atom::Literal(lit)))
         }
-        "matrix" | "record" | "tuple" => parse_abstract(&child, source_code, symbols)
+        "matrix" | "record" | "tuple" => parse_abstract(&node, source_code, symbols)
             .map(|l| Expression::AbstractLiteral(Metadata::new(), l)),
         "tuple_matrix_record_index_or_slice" => {
-            parse_index_or_slice(&child, source_code, root, symbols)
+            parse_index_or_slice(&node, source_code, root, symbols)
         }
         _ => Err(EssenceParseError::syntax_error(
             format!("Expected atom, got: {}", node.kind()),
@@ -86,8 +86,8 @@ fn parse_index(
     symbols: Option<&SymbolTable>,
 ) -> Result<Option<Expression>, EssenceParseError> {
     match node.kind() {
-        "index" => Ok(Some(parse_expression(
-            named_child!(node),
+        "arithmetic_expr" => Ok(Some(parse_expression(
+            *node,
             source_code,
             node,
             symbols,
