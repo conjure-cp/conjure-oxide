@@ -116,7 +116,7 @@ fn parse_quantifier_expression(
     let quantifier_node = field!(node, "quantifier");
     let quantifier_str = &source_code[quantifier_node.start_byte()..quantifier_node.end_byte()];
 
-    let inner = parse_expression(field!(node, "arg"), source_code, root, symbols)?;
+    let inner = parse_atom(&field!(node, "arg"), source_code, root, symbols)?;
 
     match quantifier_str {
         "and" => Ok(Expression::And(Metadata::new(), Moo::new(inner))),
