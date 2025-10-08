@@ -107,7 +107,7 @@ fn parse_variable(
             Ok(Atom::Reference(decl))
         } else {
             Err(EssenceParseError::syntax_error(
-                format!("Undefined variable: '{}'", raw_name),
+                format!("Undefined variable: '{raw_name}'"),
                 Some(node.range()),
             ))
         }
@@ -134,8 +134,7 @@ fn parse_constant(node: &Node, source_code: &str) -> Result<Literal, EssencePars
         "FALSE" => Ok(Literal::Bool(false)),
         _ => Err(EssenceParseError::syntax_error(
             format!(
-                "'{}' (kind: '{}') is not a valid constant",
-                raw_value,
+                "'{raw_value}' (kind: '{}') is not a valid constant",
                 inner.kind()
             ),
             Some(inner.range()),

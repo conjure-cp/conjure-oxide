@@ -103,9 +103,11 @@ pub fn parse_essence(src: &str) -> Result<Model, EssenceParseError> {
 }
 
 mod test {
+    #[allow(unused_imports)]
     use crate::parse_essence;
-    use conjure_cp_core::ast::Atom::Literal;
+    #[allow(unused_imports)]
     use conjure_cp_core::ast::{Atom, Expression, Metadata, Moo, Name};
+    #[allow(unused_imports)]
     use conjure_cp_core::{domain_int, matrix_expr, range};
 
     #[test]

@@ -123,7 +123,7 @@ fn parse_quantifier_expression(
         "max" => Ok(Expression::Max(Metadata::new(), Moo::new(inner))),
         "allDiff" => Ok(Expression::AllDiff(Metadata::new(), Moo::new(inner))),
         _ => Err(EssenceParseError::syntax_error(
-            format!("Invalid quantifier: '{}'", quantifier_str),
+            format!("Invalid quantifier: '{quantifier_str}'"),
             Some(quantifier_node.range()),
         )),
     }
@@ -251,7 +251,7 @@ fn parse_binary_expression(
             Moo::new(right),
         )),
         _ => Err(EssenceParseError::syntax_error(
-            format!("Invalid operator: '{}'", op_str),
+            format!("Invalid operator: '{op_str}'"),
             Some(op_node.range()),
         )),
     }
