@@ -86,12 +86,7 @@ fn parse_index(
     symbols: Option<&SymbolTable>,
 ) -> Result<Option<Expression>, EssenceParseError> {
     match node.kind() {
-        "arithmetic_expr" => Ok(Some(parse_expression(
-            *node,
-            source_code,
-            node,
-            symbols,
-        )?)),
+        "arithmetic_expr" => Ok(Some(parse_expression(*node, source_code, node, symbols)?)),
         "null_index" => Ok(None),
         _ => Err(EssenceParseError::syntax_error(
             format!("Expected an index, got: '{}'", node.kind()),

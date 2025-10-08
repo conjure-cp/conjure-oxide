@@ -56,18 +56,19 @@ pub fn parse_essence_with_context(
             }
             "bool_expr" | "atom" | "comparison_expr" => {
                 let current_symbols = model.as_submodel().symbols().clone();
-                
+
                 model.as_submodel_mut().add_constraint(parse_expression(
                     statement,
                     &source_code,
                     &statement,
-                    Some(&current_symbols)
+                    Some(&current_symbols),
                 )?);
             }
             "language_label" => {}
             "letting_statement" => {
                 let current_symbols = model.as_submodel().symbols().clone();
-                let letting_vars = parse_letting_statement(statement, &source_code, Some(&current_symbols))?;
+                let letting_vars =
+                    parse_letting_statement(statement, &source_code, Some(&current_symbols))?;
                 model.as_submodel_mut().symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {

@@ -1,5 +1,5 @@
 use super::util::named_children;
-use crate::{EssenceParseError};
+use crate::EssenceParseError;
 use conjure_cp_core::ast::{Domain, Name, Range, RecordEntry};
 use tree_sitter::Node;
 

@@ -48,7 +48,7 @@ pub fn parse_letting_statement(
         "domain" => {
             for name in temp_symbols {
                 let domain = parse_domain(expr_or_domain, source_code)?;
-                
+
                 // If it's a record domain, add the field names to the symbol table
                 if let conjure_cp_core::ast::Domain::Record(ref entries) = domain {
                     for entry in entries {
@@ -56,11 +56,8 @@ pub fn parse_letting_statement(
                         symbol_table.insert(DeclarationPtr::new_record_field(entry.clone()));
                     }
                 }
-                
-                symbol_table.insert(DeclarationPtr::new_domain_letting(
-                    Name::user(name),
-                    domain,
-                ));
+
+                symbol_table.insert(DeclarationPtr::new_domain_letting(Name::user(name), domain));
             }
         }
         _ => {

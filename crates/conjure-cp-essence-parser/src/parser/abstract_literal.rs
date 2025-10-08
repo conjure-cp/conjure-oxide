@@ -2,7 +2,7 @@ use crate::expression::parse_expression;
 use crate::parser::domain::parse_domain;
 use crate::util::named_children;
 use crate::{EssenceParseError, field};
-use conjure_cp_core::ast::{AbstractLiteral, Expression, SymbolTable, Domain};
+use conjure_cp_core::ast::{AbstractLiteral, Domain, Expression, SymbolTable};
 use tree_sitter::Node;
 
 pub fn parse_abstract(
@@ -68,10 +68,7 @@ fn parse_matrix(
         domain = Some(Domain::from_slice_i32(&indices));
     }
 
-    Ok(AbstractLiteral::Matrix(
-        elements,
-        Box::new(domain.unwrap())),
-    )
+    Ok(AbstractLiteral::Matrix(elements, Box::new(domain.unwrap())))
 }
 
 fn parse_child_exprs(
