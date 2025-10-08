@@ -36,8 +36,7 @@ module.exports = grammar ({
     find_kw: $ => "find",
 
 
-    // Disallow reserved keywords from being recognized as variables anywhere
-    // Keep precedence low so true keywords still win where both could match
+    // variables 
     variable: $ =>(/[a-zA-Z_][a-zA-Z0-9_]*/),
 
     //meta-variable (aka template argument)
