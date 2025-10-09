@@ -6,9 +6,11 @@ use conjure_cp::rule_engine::get_rules_grouped;
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::rule_engine::rewrite_naive;
+use conjure_cp::Model;
 use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
 use glob::glob;
 use itertools::Itertools;
+use core::panic;
 use std::collections::BTreeMap;
 use std::env;
 use std::error::Error;
@@ -221,6 +223,7 @@ fn integration_test_inner(
     extension: &str,
 ) -> Result<(), Box<dyn Error>> {
     let context: Arc<RwLock<Context<'static>>> = Default::default();
+    // accept and verbose are env vars, so immutable
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
 
@@ -229,9 +232,10 @@ fn integration_test_inner(
     //
     // This reduces unnecessary git diffs when only the id of items in a model changes. These
     // change every run of the tester, but do not change the correctness of the model.
-    let mut parsed_model_dirty = false;
-    let mut parsed_native_model_dirty = false;
-    let mut rewritten_model_dirty = false;
+
+    // let mut parsed_model_dirty = false;
+    // let mut parsed_native_model_dirty = false;
+    // let mut rewritten_model_dirty = false;
 
     if verbose {
         println!("Running integration test for {path}/{essence_base}, ACCEPT={accept}");
@@ -245,12 +249,6 @@ fn integration_test_inner(
         };
 
     let config = file_config.merge_env();
-
-    // TODO: allow either Minion or SAT but not both; eventually allow both sovlers to be tested
-
-    if config.solve_with_sat && config.solve_with_minion {
-        todo!("Not yet implemented simultaneous testing of both solvers")
-    }
 
     // File path
     let file_path = format!("{path}/{essence_base}.{extension}");
@@ -280,15 +278,61 @@ fn integration_test_inner(
         }
     }
 
+    if config.solve_with_minion {
+        eprintln!("Testing: Minion");
+        test_with_solver(
+            path,
+            essence_base,
+            extension,
+            parsed_model.clone(),
+            &config,
+            SolverFamily::Minion,
+            accept,
+            verbose,
+            context.clone(),
+            model_native.clone()
+        )?;
+    }
+    
+    if config.solve_with_sat {
+        eprintln!("Testing: Sat");
+        test_with_solver(
+            path,
+            essence_base,
+            extension,
+            parsed_model.clone(),
+            &config,
+            SolverFamily::Sat,
+            accept,
+            verbose,
+            context.clone(),
+            model_native.clone()
+        )?;
+    } 
+
+    Ok(())
+}
+
+fn test_with_solver(
+    path: &str,
+    essence_base: &str,
+    extension: &str,
+    parsed_model: Option<Model>,
+    config: &TestConfig,
+    solver_fam: SolverFamily,
+    accept: bool,
+    verbose: bool,
+    context: Arc<RwLock<Context<'static>>>,
+    model_native: Option<Model>
+) -> Result<(), Box<dyn Error>> {
+
+    let mut parsed_model_dirty = false;
+    let mut parsed_native_model_dirty = false;
+    let mut rewritten_model_dirty = false;
+
     // Stage 2a: Rewrite the model using the rule engine (run unless explicitly disabled)
     let rewritten_model = if config.apply_rewrite_rules {
         // rule set selection based on solver
-
-        let solver_fam = if config.solve_with_sat {
-            SolverFamily::Sat
-        } else {
-            SolverFamily::Minion
-        };
 
         let rule_sets = resolve_rule_sets(solver_fam, DEFAULT_RULE_SETS)?;
 
@@ -342,39 +386,38 @@ fn integration_test_inner(
         }
     }
 
-    // Stage 3a: Run the model through the Minion solver (run unless explicitly disabled)
-    let solutions = if config.solve_with_minion {
-        let solved = get_minion_solutions(
+    let solved= if solver_fam == SolverFamily::Sat {
+        println!("calling sat sols");
+        get_sat_solutions(
             rewritten_model
                 .as_ref()
                 .expect("Rewritten model must be present in 2a")
                 .clone(),
             0,
             &None,
-        )?;
-        let solutions_json =
-            save_solutions_json(&solved, path, essence_base, SolverFamily::Minion)?;
-        if verbose {
-            println!("Minion solutions: {solutions_json:#?}");
-        }
-        Some(solved)
-    } else if config.solve_with_sat {
-        let solved = get_sat_solutions(
+        )?
+    } else if solver_fam == SolverFamily::Minion {
+        println!("calling minion sols");
+        get_minion_solutions(
             rewritten_model
                 .as_ref()
                 .expect("Rewritten model must be present in 2a")
                 .clone(),
             0,
             &None,
-        )?;
-        let solutions_json = save_solutions_json(&solved, path, essence_base, SolverFamily::Sat)?;
-        if verbose {
-            println!("Minion solutions: {solutions_json:#?}");
-        }
-        Some(solved)
+        )?
     } else {
-        None
+        panic!("Unsupported solver family");
     };
+
+    let solutions_json =
+        save_solutions_json(&solved, path, essence_base, solver_fam)?;
+    if verbose {
+        println!("Minion solutions: {solutions_json:#?}");
+    }
+
+    let solutions = Some(solved);
+
 
     // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
     if config.compare_solver_solutions
@@ -524,16 +567,15 @@ fn integration_test_inner(
             }
         }
     }
-
+    
     // Check Stage 3a (solutions)
-    if config.solve_with_minion {
+    if solver_fam == SolverFamily::Minion {
         let expected_solutions_json =
-            read_solutions_json(path, essence_base, "expected", SolverFamily::Minion)?;
+        read_solutions_json(path, essence_base, "expected", SolverFamily::Minion)?;
         let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
         assert_eq!(username_solutions_json, expected_solutions_json);
-    } else if config.solve_with_sat {
-        let expected_solutions_json =
-            read_solutions_json(path, essence_base, "expected", SolverFamily::Sat)?;
+    } else if solver_fam == SolverFamily::Sat {
+        let expected_solutions_json = read_solutions_json(path, essence_base, "expected", SolverFamily::Sat)?;
         let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
         assert_eq!(username_solutions_json, expected_solutions_json);
     }

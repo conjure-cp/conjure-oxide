@@ -175,7 +175,7 @@ pub fn read_solutions_json(
         SolverFamily::Sat => "sat",
         SolverFamily::Minion => "minion",
     };
-
+    
     let expected_json_str = std::fs::read_to_string(format!(
         "{path}/{test_name}.{prefix}-{solver_name}.solutions.json"
     ))?;
