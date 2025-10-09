@@ -45,7 +45,6 @@ pub fn get_minion_solutions(
 
 pub fn get_minion_solutions_dominance(
     mut model: Model,
-    // TODO: after filtering only keep `num_sols` solutions
     _num_sols: i32,
     solver_input_file: &Option<PathBuf>,
     dom_rel: &Expression,
@@ -65,11 +64,9 @@ pub fn get_minion_solutions_dominance(
 
         // Add to results
         results.extend(solutions.clone());
-        
 
         // Create and apply new blocking constraints
         model.add_constraints(crate_blocking_constraint_from_solution(&model, &solution, dom_rel));
-         
     }
 
     // Vector constaining non-dominated solutions
