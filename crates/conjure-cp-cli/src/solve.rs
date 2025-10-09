@@ -1,6 +1,7 @@
 //! conjure_oxide solve sub-command
 #![allow(clippy::unwrap_used)]
 use std::{
+    collections::BTreeMap,
     fs::File,
     io::Write as _,
     path::PathBuf,
@@ -10,7 +11,6 @@ use std::{
 
 use anyhow::{anyhow, ensure};
 use clap::ValueHint;
-use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::{
     Model,
@@ -18,6 +18,10 @@ use conjure_cp::{
     context::Context,
     rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
     solver::{Solver, adaptors},
+};
+use conjure_cp::{
+    ast::{Literal, Name},
+    defaults::DEFAULT_RULE_SETS,
 };
 use conjure_cp::{
     parse::conjure_json::model_from_json, rule_engine::get_rules, solver::SolverFamily,
@@ -87,14 +91,11 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
             };
         }
     } else {
-        match global_args.solver {
-            SolverFamily::Sat => {
-                run_sat_solver(&global_args, &solve_args, rewritten_model)?;
-            }
-            SolverFamily::Minion => {
-                run_minion(&global_args, &solve_args, rewritten_model)?;
-            }
-        }
+        let get_solutions = match global_args.solver {
+            SolverFamily::Sat => get_sat_solutions,
+            SolverFamily::Minion => get_minion_solutions,
+        };
+        run_solver(&global_args, &solve_args, rewritten_model, get_solutions)?;
     }
 
     // still do postamble even if we didn't run the solver
@@ -241,7 +242,16 @@ pub(crate) fn rewrite(
     Ok(new_model)
 }
 
-fn run_minion(global_args: &GlobalArgs, cmd_args: &Args, model: Model) -> anyhow::Result<()> {
+fn run_solver(
+    global_args: &GlobalArgs,
+    cmd_args: &Args,
+    model: Model,
+    get_solutions: impl Fn(
+        Model,
+        i32,
+        &Option<PathBuf>,
+    ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error>,
+) -> anyhow::Result<()> {
     let out_file: Option<File> = match &cmd_args.output {
         None => None,
         Some(pth) => Some(
@@ -253,44 +263,7 @@ fn run_minion(global_args: &GlobalArgs, cmd_args: &Args, model: Model) -> anyhow
         ),
     };
 
-    let solutions = get_minion_solutions(
-        model,
-        cmd_args.number_of_solutions,
-        &global_args.save_solver_input_file,
-    )?;
-    tracing::info!(target: "file", "Solutions: {}", solutions_to_json(&solutions));
-
-    let solutions_json = solutions_to_json(&solutions);
-    let solutions_str = to_string_pretty(&solutions_json)?;
-    match out_file {
-        None => {
-            println!("Solutions:");
-            println!("{solutions_str}");
-        }
-        Some(mut outf) => {
-            outf.write_all(solutions_str.as_bytes())?;
-            println!(
-                "Solutions saved to {:?}",
-                &cmd_args.output.clone().unwrap().canonicalize()?
-            )
-        }
-    }
-    Ok(())
-}
-
-fn run_sat_solver(global_args: &GlobalArgs, cmd_args: &Args, model: Model) -> anyhow::Result<()> {
-    let out_file: Option<File> = match &cmd_args.output {
-        None => None,
-        Some(pth) => Some(
-            File::options()
-                .create(true)
-                .truncate(true)
-                .write(true)
-                .open(pth)?,
-        ),
-    };
-
-    let solutions = get_sat_solutions(
+    let solutions = get_solutions(
         model,
         cmd_args.number_of_solutions,
         &global_args.save_solver_input_file,
