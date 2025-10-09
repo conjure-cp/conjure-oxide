@@ -16,30 +16,25 @@ use tempfile::tempdir;
 
 use crate::utils::json::sort_json_object;
 use conjure_cp::Model;
-use conjure_cp::parse::tree_sitter::parse_essence_file;
-use conjure_cp::solver::Solver;
-use conjure_cp::rule_engine::rewrite_naive;
-use conjure_cp::solver::adaptors::Minion;
 use conjure_cp::ast::{Atom, Expression, Metadata, Moo};
+use conjure_cp::parse::tree_sitter::parse_essence_file;
+use conjure_cp::rule_engine::rewrite_naive;
+use conjure_cp::solver::Solver;
+use conjure_cp::solver::adaptors::Minion;
+
 use glob::glob;
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-
-
 
 pub fn get_minion_solutions(
     model: Model,
     num_sols: i32,
     solver_input_file: &Option<PathBuf>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
-
-    if let Some(Expression::DominanceRelation(_,dom_rel)) = model.dominance.clone()  
-    {
-        return get_minion_solutions_dominance(model, num_sols, solver_input_file, &dom_rel);
-    }
-    else
-    {
-        return get_minion_solutions_no_dominance(model, num_sols, solver_input_file);
+    if let Some(Expression::DominanceRelation(_, dom_rel)) = model.dominance.clone() {
+        get_minion_solutions_dominance(model, num_sols, solver_input_file, &dom_rel)
+    } else {
+        get_minion_solutions_no_dominance(model, num_sols, solver_input_file)
     }
 }
 
@@ -49,48 +44,55 @@ pub fn get_minion_solutions_dominance(
     solver_input_file: &Option<PathBuf>,
     dom_rel: &Expression,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
-
-    // All non-dominated solutions
+    // all non-dominated solutions
     let mut results = Vec::new();
 
     loop {
-        // Get the next solution
+        // get the next solution
         let solutions = get_minion_solutions_no_dominance(model.clone(), 1, solver_input_file)?;
 
-        // No more solutions
+        // no more solutions
         let Some(solution) = solutions.first() else {
             break;
         };
 
-        // Add to results
+        // add to results
         results.extend(solutions.clone());
 
-        // Create and apply new blocking constraints
-        model.add_constraints(crate_blocking_constraint_from_solution(&model, &solution, dom_rel));
+        // create and apply new blocking constraints
+        model.add_constraints(crate_blocking_constraint_from_solution(
+            &model, solution, dom_rel,
+        ));
     }
 
-    // Vector constaining non-dominated solutions
+    // vector constaining non-dominated solutions
     let mut final_results = Vec::new();
 
-    // Iterate over all found solutions and filter out those that are dominated by others
+    // iterate over all found solutions and filter out those that are dominated by others
     for sol in results.iter() {
         let mut model_copy = model.clone();
 
-        // remove current blocking constraint (blocking constraint created by the current solution)
-        model_copy.remove_constraints(crate_blocking_constraint_from_solution(&model_copy, &sol, dom_rel));
+        // remove blocking constraint created by the current solution
+        model_copy.remove_constraints(crate_blocking_constraint_from_solution(
+            &model_copy,
+            sol,
+            dom_rel,
+        ));
 
-        // add constraints for current solution
+        // add constraints for current solution (gives the variables fixed values)
         for (name, value) in sol.iter() {
             let expr = Expression::Atomic(
                 Metadata::new(),
                 Atom::Reference(DeclarationPtr::new(
                     name.clone(),
-                    DeclarationKind::ValueLetting(Expression::Atomic(Metadata::new(), Atom::Literal(value.clone()))),
+                    DeclarationKind::ValueLetting(Expression::Atomic(
+                        Metadata::new(),
+                        Atom::Literal(value.clone()),
+                    )),
                 )),
             );
             let val = Expression::Atomic(Metadata::new(), Atom::Literal(value.clone()));
             let eq = Expression::Eq(Metadata::new(), Moo::new(expr), Moo::new(val));
-            
             model_copy.add_constraint(eq.clone());
         }
 
@@ -101,46 +103,48 @@ pub fn get_minion_solutions_dominance(
             final_results.push(sol.clone());
         }
     }
-
     Ok(final_results)
-    
 }
 
 pub fn crate_blocking_constraint_from_solution(
     model: &Model,
     solution: &BTreeMap<Name, Literal>,
-    dom_rel: &Expression
+    dom_rel: &Expression,
 ) -> Vec<Expression> {
-
     use uniplate::Uniplate;
 
     // get blocking constraint expression
-    let raw_blocking_constraint = dom_rel.rewrite(&|e| { sub_in_solution_into_dominance_expr(&e, solution) });
+    let raw_blocking_constraint =
+        dom_rel.rewrite(&|e| sub_in_solution_into_dominance_expr(&e, solution));
 
     let mut model_copy = model.clone();
     model_copy.remove_constraints(model_copy.as_submodel().constraints().clone());
-        
-    model_copy.add_constraint(raw_blocking_constraint.clone());
+    model_copy.add_constraint(raw_blocking_constraint);
 
-
-    // Rewrite model
+    // rewrite model
     let rule_sets = model.context.read().unwrap().rule_sets.clone();
     let rewritten = rewrite_naive(&model_copy, &rule_sets, false, false);
 
-    return rewritten.expect("Should be able to rewrite the model").as_submodel().constraints().to_vec();
+    rewritten
+        .expect("Should be able to rewrite the model")
+        .as_submodel()
+        .constraints()
+        .clone()
 }
 
-pub fn sub_in_solution_into_dominance_expr(expr: &Expression, solution: &BTreeMap<Name, Literal>) -> Option<Expression>
-{
-    use Expression::*;
+pub fn sub_in_solution_into_dominance_expr(
+    expr: &Expression,
+    solution: &BTreeMap<Name, Literal>,
+) -> Option<Expression> {
+    use Expression::{Atomic, FromSolution};
 
     match expr {
         FromSolution(_, name_expr) => {
             if let Atomic(_, Atom::Reference(ptr)) = &**name_expr {
                 let var_name = ptr.name();
-                solution.get(&var_name).map(|value| {
-                    Atomic(Metadata::new(), Atom::Literal(value.clone()))
-                })
+                solution
+                    .get(&var_name)
+                    .map(|value| Atomic(Metadata::new(), Atom::Literal(value.clone())))
             } else {
                 None
             }

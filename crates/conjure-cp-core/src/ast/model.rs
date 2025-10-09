@@ -35,15 +35,12 @@ pub struct Model {
 }
 
 impl Model {
-
-    pub fn get_var(&mut self, name: &Name) -> Option<DeclarationPtr>
-    {
+    pub fn get_var(&mut self, name: &Name) -> Option<DeclarationPtr> {
         let submodel = self.as_submodel_mut();
         return submodel.symbols().lookup(name);
     }
 
-    pub fn add_constraint(&mut self, constraint: Expression) 
-    {
+    pub fn add_constraint(&mut self, constraint: Expression) {
         let submodel = self.as_submodel_mut();
         submodel.add_constraint(constraint);
     }
@@ -55,20 +52,17 @@ impl Model {
         }
     }
 
-    pub fn add_constraints(&mut self, constraint: Vec<Expression>) 
-    {
+    pub fn add_constraints(&mut self, constraint: Vec<Expression>) {
         let submodel = self.as_submodel_mut();
         submodel.add_constraints(constraint);
     }
 
-    pub fn remove_constraint(&mut self, constraint: Expression) 
-    {
+    pub fn remove_constraint(&mut self, constraint: Expression) {
         let submodel = self.as_submodel_mut();
         submodel.remove_constraint(constraint);
     }
 
-    pub fn remove_constraints(&mut self, constraint: Vec<Expression>) 
-    {
+    pub fn remove_constraints(&mut self, constraint: Vec<Expression>) {
         let submodel = self.as_submodel_mut();
         submodel.remove_constraints(constraint);
     }

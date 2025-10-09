@@ -23,7 +23,7 @@ use conjure_cp::{
     parse::conjure_json::model_from_json, rule_engine::get_rules, solver::SolverFamily,
 };
 use conjure_cp_cli::find_conjure::conjure_executable;
-use conjure_cp_cli::utils::conjure::{get_sat_solutions, solutions_to_json, get_minion_solutions};
+use conjure_cp_cli::utils::conjure::{get_minion_solutions, get_sat_solutions, solutions_to_json};
 use serde_json::to_string_pretty;
 
 use crate::cli::{GlobalArgs, LOGGING_HELP_HEADING};
