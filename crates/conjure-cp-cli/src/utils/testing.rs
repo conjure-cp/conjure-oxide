@@ -96,11 +96,19 @@ pub fn read_model_json(
     test_name: &str,
     prefix: &str,
     test_stage: &str,
+    solver_fam: Option<SolverFamily>,
 ) -> Result<ConjureModel, std::io::Error> {
+
+    let solver_name = match solver_fam {
+        Some(SolverFamily::Sat) => "sat",
+        Some(SolverFamily::Minion) => "minion",
+        None => "agnostic",
+    };
+
     let expected_json_str = std::fs::read_to_string(format!(
-        "{path}/{test_name}.{prefix}-{test_stage}.serialised.json"
+        "{path}/{test_name}.{prefix}-{test_stage}-{solver_name}.serialised.json"
     ))?;
-    println!("{path}/{test_name}.{prefix}-{test_stage}.serialised.json");
+    println!("reading model at: {path}/{test_name}.{prefix}-{test_stage}-{solver_name}.serialised.json");
     let expected_model: SerdeModel = serde_json::from_str(&expected_json_str)?;
 
     Ok(expected_model.initialise(ctx.clone()).unwrap())

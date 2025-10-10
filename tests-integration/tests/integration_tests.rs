@@ -418,7 +418,6 @@ fn test_with_solver(
 
     let solutions = Some(solved);
 
-
     // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
     if config.compare_solver_solutions
         || accept && (config.solve_with_minion || config.solve_with_sat)
@@ -483,7 +482,7 @@ fn test_with_solver(
 
     // Check Stage 1b (native parser)
     if config.enable_native_parser {
-        let expected_model = read_model_json(&context, path, essence_base, "expected", "parse");
+        let expected_model = read_model_json(&context, path, essence_base, "expected", "parse", None);
 
         // A JSON reading error could just mean that the ast has changed since the file was
         // generated.
@@ -511,8 +510,8 @@ fn test_with_solver(
 
     // Check Stage 1a (parsed model)
     if config.parse_model_default {
-        let expected_model = read_model_json(&context, path, essence_base, "expected", "parse");
-        let model_from_file = read_model_json(&context, path, essence_base, "generated", "parse");
+        let expected_model = read_model_json(&context, path, essence_base, "expected", "parse", Some(solver_fam));
+        let model_from_file = read_model_json(&context, path, essence_base, "generated", "parse", Some(solver_fam));
 
         // A JSON reading error could just mean that the ast has changed since the file was
         // generated.
@@ -543,7 +542,7 @@ fn test_with_solver(
 
     // Check Stage 2a (rewritten model)
     if config.apply_rewrite_rules {
-        let expected_model = read_model_json(&context, path, essence_base, "expected", "rewrite");
+        let expected_model = read_model_json(&context, path, essence_base, "expected", "rewrite", Some(solver_fam));
         // A JSON reading error could just mean that the ast has changed since the file was
         // generated.
         //
