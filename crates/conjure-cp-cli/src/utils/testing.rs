@@ -65,9 +65,17 @@ pub fn save_model_json(
     path: &str,
     test_name: &str,
     test_stage: &str,
+    solver_fam: Option<SolverFamily>,
 ) -> Result<(), std::io::Error> {
+    let solver_name = match solver_fam {
+        Some(SolverFamily::Sat) => "sat",
+        Some(SolverFamily::Minion) => "minion",
+        None => "agnostic",
+    };
+
     let generated_json_str = serialise_model(model)?;
-    let filename = format!("{path}/{test_name}.generated-{test_stage}.serialised.json");
+    let filename =
+        format!("{path}/{test_name}.generated-{test_stage}-{solver_name}.serialised.json");
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
     Ok(())
 }
@@ -98,17 +106,23 @@ pub fn read_model_json(
     test_stage: &str,
     solver_fam: Option<SolverFamily>,
 ) -> Result<ConjureModel, std::io::Error> {
-
     let solver_name = match solver_fam {
         Some(SolverFamily::Sat) => "sat",
         Some(SolverFamily::Minion) => "minion",
         None => "agnostic",
     };
 
+    eprintln!(
+        "reading model at: {path}/{test_name}.{prefix}-{test_stage}-{solver_name}.serialised.json"
+    );
     let expected_json_str = std::fs::read_to_string(format!(
         "{path}/{test_name}.{prefix}-{test_stage}-{solver_name}.serialised.json"
     ))?;
-    println!("reading model at: {path}/{test_name}.{prefix}-{test_stage}-{solver_name}.serialised.json");
+
+    eprintln!(
+        "read model at: {path}/{test_name}.{prefix}-{test_stage}-{solver_name}.serialised.json"
+    );
+
     let expected_model: SerdeModel = serde_json::from_str(&expected_json_str)?;
 
     Ok(expected_model.initialise(ctx.clone()).unwrap())
@@ -183,7 +197,7 @@ pub fn read_solutions_json(
         SolverFamily::Sat => "sat",
         SolverFamily::Minion => "minion",
     };
-    
+
     let expected_json_str = std::fs::read_to_string(format!(
         "{path}/{test_name}.{prefix}-{solver_name}.solutions.json"
     ))?;
@@ -200,8 +214,16 @@ pub fn read_rule_trace(
     path: &str,
     test_name: &str,
     prefix: &str,
+    solver_fam: Option<SolverFamily>,
 ) -> Result<Vec<String>, std::io::Error> {
-    let filename = format!("{path}/{test_name}-{prefix}-rule-trace.json");
+
+    let solver_name = match solver_fam {
+        Some(SolverFamily::Sat) => "sat",
+        Some(SolverFamily::Minion) => "minion",
+        None => "agnostic",
+    };
+
+    let filename = format!("{path}/{test_name}-{prefix}-{solver_name}-rule-trace.json");
     let mut rules_trace: Vec<String> = read_to_string(&filename)?
         .lines()
         .map(String::from)
@@ -233,8 +255,16 @@ pub fn read_human_rule_trace(
     path: &str,
     test_name: &str,
     prefix: &str,
+    solver_fam: Option<SolverFamily>
 ) -> Result<Vec<String>, std::io::Error> {
-    let filename = format!("{path}/{test_name}-{prefix}-rule-trace-human.txt");
+
+    let solver_name = match solver_fam {
+        Some(SolverFamily::Sat) => "sat",
+        Some(SolverFamily::Minion) => "minion",
+        None => "agnostic",
+    };
+
+    let filename = format!("{path}/{test_name}-{prefix}-{solver_name}-rule-trace-human.txt");
     let rules_trace: Vec<String> = read_to_string(&filename)?
         .lines()
         .map(String::from)

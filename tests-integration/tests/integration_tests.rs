@@ -225,6 +225,7 @@ fn integration_test_inner(
     let context: Arc<RwLock<Context<'static>>> = Default::default();
     // accept and verbose are env vars, so immutable
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
+    eprintln!("ACCEPT={accept}");
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
 
     // When running accept=true, only regenerate the expected files for these tests if the test
@@ -259,7 +260,7 @@ fn integration_test_inner(
         if verbose {
             println!("Parsed model: {parsed:#?}");
         }
-        save_model_json(&parsed, path, essence_base, "parse")?;
+        save_model_json(&parsed, path, essence_base, "parse", None)?;
         Some(parsed)
     } else {
         None
@@ -269,7 +270,7 @@ fn integration_test_inner(
     let mut model_native = None;
     if config.enable_native_parser {
         let mn = parse_essence_file_native(&file_path, context.clone())?;
-        save_model_json(&mn, path, essence_base, "parse")?;
+        save_model_json(&mn, path, essence_base, "parse", None)?;
         model_native = Some(mn);
 
         {
@@ -365,7 +366,7 @@ fn test_with_solver(
             println!("Rewritten model: {rewritten:#?}");
         }
 
-        save_model_json(&rewritten, path, essence_base, "rewrite")?;
+        save_model_json(&rewritten, path, essence_base, "rewrite", Some(solver_fam))?;
         Some(rewritten)
     } else {
         None
@@ -450,35 +451,35 @@ fn test_with_solver(
     if accept {
         // Overwrite expected parse and rewrite models if enabled
         if config.enable_native_parser
-            && !expected_exists_for(path, essence_base, "parse", "serialised.json")
+            && !expected_exists_for(path, essence_base, "parse", "serialised.json", None)
         {
             model_native.clone().expect("model_native should exist");
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
+            copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
         }
         if config.parse_model_default
-            && !expected_exists_for(path, essence_base, "parse", "serialised.json")
+            && !expected_exists_for(path, essence_base, "parse", "serialised.json", None)
         {
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
+            copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
         }
         if config.apply_rewrite_rules
-            && !expected_exists_for(path, essence_base, "rewrite", "serialised.json")
+            && !expected_exists_for(path, essence_base, "rewrite", "serialised.json", Some(solver_fam))
         {
-            copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json")?;
+            copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json", Some(solver_fam))?;
         }
 
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
         // based on the test results, so they don't get done later.
         if config.solve_with_minion {
-            copy_generated_to_expected(path, essence_base, "minion", "solutions.json")?;
+            copy_generated_to_expected(path, essence_base, "solution", "json", Some(solver_fam))?;
         } else if config.solve_with_sat {
-            copy_generated_to_expected(path, essence_base, "sat", "solutions.json")?;
+            copy_generated_to_expected(path, essence_base, "solution", "json", Some(solver_fam))?;
         }
 
         if config.validate_rule_traces {
-            copy_human_trace_generated_to_expected(path, essence_base)?;
+            copy_human_trace_generated_to_expected(path, essence_base, Some(solver_fam))?;
             save_stats_json(context.clone(), path, essence_base)?;
         }
-    }
+        }
 
     // Check Stage 1b (native parser)
     if config.enable_native_parser {
@@ -507,12 +508,12 @@ fn test_with_solver(
             }
         }
     }
-
+    
     // Check Stage 1a (parsed model)
     if config.parse_model_default {
-        let expected_model = read_model_json(&context, path, essence_base, "expected", "parse", Some(solver_fam));
-        let model_from_file = read_model_json(&context, path, essence_base, "generated", "parse", Some(solver_fam));
-
+        let expected_model = read_model_json(&context, path, essence_base, "expected", "parse", None);
+        let model_from_file = read_model_json(&context, path, essence_base, "generated", "parse", None);
+        
         // A JSON reading error could just mean that the ast has changed since the file was
         // generated.
         //
@@ -521,25 +522,26 @@ fn test_with_solver(
             (Err(_), _) | (_, Err(_)) if accept => {
                 parsed_model_dirty = true;
             }
-
+            
             (Err(e), _) => {
                 return Err(Box::new(e));
             }
-
+            
             (_, Err(e)) => {
                 return Err(Box::new(e));
             }
-
+            
             (Ok(expected_model), Ok(model_from_file)) if accept => {
                 parsed_model_dirty = model_from_file != expected_model;
             }
-
+            
             (Ok(expected_model), Ok(model_from_file)) => {
                 assert_eq!(model_from_file, expected_model);
             }
         }
+        // eprintln!("TEMP: HEEREEEEEE'S JOHNNNNYY  2");
     }
-
+    
     // Check Stage 2a (rewritten model)
     if config.apply_rewrite_rules {
         let expected_model = read_model_json(&context, path, essence_base, "expected", "rewrite", Some(solver_fam));
@@ -583,8 +585,8 @@ fn test_with_solver(
     // We don't check rule trace when morph is enabled.
     // TODO: Implement rule trace validation for morph
     if config.validate_rule_traces && !config.enable_morph_impl {
-        let generated = read_human_rule_trace(path, essence_base, "generated")?;
-        let expected = read_human_rule_trace(path, essence_base, "expected")?;
+        let generated = read_human_rule_trace(path, essence_base, "generated", Some(solver_fam))?;
+        let expected = read_human_rule_trace(path, essence_base, "expected", Some(solver_fam))?;
 
         assert_eq!(
             expected, generated,
@@ -596,13 +598,13 @@ fn test_with_solver(
         // Overwrite expected parse and rewrite models if needed
         if config.enable_native_parser && parsed_native_model_dirty {
             model_native.expect("model_native should exist");
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
+            copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
         }
         if config.parse_model_default && parsed_model_dirty {
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
+            copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
         }
         if config.apply_rewrite_rules && rewritten_model_dirty {
-            copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json")?;
+            copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json", Some(solver_fam))?;
         }
     }
     save_stats_json(context, path, essence_base)?;
@@ -613,10 +615,16 @@ fn test_with_solver(
 fn copy_human_trace_generated_to_expected(
     path: &str,
     test_name: &str,
+    solver_fam: Option<SolverFamily>
 ) -> Result<(), std::io::Error> {
+    let solver_name = match solver_fam {
+        Some(SolverFamily::Sat) => "sat",
+        Some(SolverFamily::Minion) => "minion",
+        None => "agnostic",
+    };
     std::fs::copy(
-        format!("{path}/{test_name}-generated-rule-trace-human.txt"),
-        format!("{path}/{test_name}-expected-rule-trace-human.txt"),
+        format!("{path}/{test_name}-generated-{solver_name}-rule-trace-human.txt"),
+        format!("{path}/{test_name}-expected-{solver_name}-rule-trace-human.txt"),
     )?;
     Ok(())
 }
@@ -626,16 +634,27 @@ fn copy_generated_to_expected(
     test_name: &str,
     stage: &str,
     extension: &str,
+    solver_fam: Option<SolverFamily>
 ) -> Result<(), std::io::Error> {
+    let solver_name = match solver_fam {
+        Some(SolverFamily::Sat) => "sat",
+        Some(SolverFamily::Minion) => "minion",
+        None => "agnostic",
+    };
     std::fs::copy(
-        format!("{path}/{test_name}.generated-{stage}.{extension}"),
-        format!("{path}/{test_name}.expected-{stage}.{extension}"),
+        format!("{path}/{test_name}.generated-{stage}-{solver_name}.{extension}"),
+        format!("{path}/{test_name}.expected-{stage}-{solver_name}.{extension}"),
     )?;
     Ok(())
 }
 
-fn expected_exists_for(path: &str, test_name: &str, stage: &str, extension: &str) -> bool {
-    Path::new(&format!("{path}/{test_name}.expected-{stage}.{extension}")).exists()
+fn expected_exists_for(path: &str, test_name: &str, stage: &str, extension: &str, solver_fam: Option<SolverFamily>) -> bool {
+    let solver_name = match solver_fam {
+        Some(SolverFamily::Sat) => "sat",
+        Some(SolverFamily::Minion) => "minion",
+        None => "agnostic",
+    };
+    Path::new(&format!("{path}/{test_name}.expected-{stage}-{solver_name}.{extension}")).exists()
 }
 
 fn assert_vector_operators_have_partially_evaluated(model: &conjure_cp::Model) {
@@ -687,6 +706,11 @@ pub fn create_scoped_subscriber(
 }
 
 fn create_file_layer_json(path: &str, test_name: &str) -> impl Layer<Registry> + Send + Sync {
+    // let solver_name = match solver_fam {
+    //     Some(SolverFamily::Sat) => "sat",
+    //     Some(SolverFamily::Minion) => "minion",
+    //     None => "agnostic",
+    // };
     let file = File::create(format!("{path}/{test_name}-generated-rule-trace.json"))
         .expect("Unable to create log file");
 
@@ -701,6 +725,11 @@ fn create_file_layer_json(path: &str, test_name: &str) -> impl Layer<Registry> +
 }
 
 fn create_file_layer_human(path: &str, test_name: &str) -> (impl Layer<Registry> + Send + Sync) {
+    // let solver_name = match solver_fam {
+    //     Some(SolverFamily::Sat) => "sat",
+    //     Some(SolverFamily::Minion) => "minion",
+    //     None => "agnostic",
+    // };
     let file = File::create(format!("{path}/{test_name}-generated-rule-trace-human.txt"))
         .expect("Unable to create log file");
 
