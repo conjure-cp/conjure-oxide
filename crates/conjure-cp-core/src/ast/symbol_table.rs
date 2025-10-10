@@ -303,6 +303,7 @@ impl SymbolTable {
         }
         // Representation not found
 
+        
         // TODO: nested representations logic...
         if representation.len() != 1 {
             bug!("nested representations not implemented")
