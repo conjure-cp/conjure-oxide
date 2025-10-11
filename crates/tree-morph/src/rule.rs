@@ -56,7 +56,10 @@ use uniplate::Uniplate;
 ///     None // Never applicable
 /// }
 ///
-/// let (result, _) = morph(vec![rule_fns![my_rule_fn]], select_first, Term::A, ());
+/// let engine = EngineBuilder::new()
+///     .add_rule_group(rule_fns![my_rule_fn])
+///     .build();
+/// let (result, _) = engine.morph(Term::A, ());
 /// assert_eq!(result, Term::A);
 ///
 ///
@@ -74,10 +77,16 @@ use uniplate::Uniplate;
 ///     }
 /// }
 ///
-/// let (result, _) = morph(vec![vec![CustomRule(false)]], select_first, Term::A, ());
+/// let engine = EngineBuilder::new()
+///     .add_rule(CustomRule(false))
+///     .build();
+/// let (result, _) = engine.morph(Term::A, ());
 /// assert_eq!(result, Term::A);
 ///
-/// let (result, _) = morph(vec![vec![CustomRule(true)]], select_first, Term::A, ());
+/// let engine = EngineBuilder::new()
+///     .add_rule(CustomRule(true))
+///     .build();
+/// let (result, _) = engine.morph(Term::A, ());
 /// assert_eq!(result, Term::B);
 /// ```
 pub trait Rule<T: Uniplate, M> {
@@ -85,14 +94,6 @@ pub trait Rule<T: Uniplate, M> {
     ///
     /// See the [Rule] trait documentation for more information.
     fn apply(&self, commands: &mut Commands<T, M>, subtree: &T, meta: &M) -> Option<T>;
-
-    /// A helper method to get an [`Update`] directly from a rule.
-    #[doc(hidden)]
-    fn apply_into_update(&self, subtree: &T, meta: &M) -> Option<Update<T, M>> {
-        let mut commands = Commands::new();
-        let new_subtree = self.apply(&mut commands, subtree, meta)?;
-        Some(Update::new(new_subtree, commands))
-    }
 }
 
 // Allows the user to pass closures and function pointers directly as rules
@@ -104,6 +105,17 @@ where
     fn apply(&self, commands: &mut Commands<T, M>, subtree: &T, meta: &M) -> Option<T> {
         (self)(commands, subtree, meta)
     }
+}
+
+/// A helper method to get an [`Update`] directly from a rule.
+pub(crate) fn apply_into_update<T, M, R>(rule: &R, subtree: &T, meta: &M) -> Option<Update<T, M>>
+where
+    T: Uniplate,
+    R: Rule<T, M>,
+{
+    let mut commands = Commands::new();
+    let new_subtree = rule.apply(&mut commands, subtree, meta)?;
+    Some(Update::new(new_subtree, commands))
 }
 
 /// A uniform type for `fn` pointers and closures, which implements the [Rule] trait.
@@ -144,8 +156,6 @@ pub type RuleFn<T, M> = fn(&mut Commands<T, M>, &T, &M) -> Option<T>;
 ///     vec![rule_a as RuleFn<_, _>], // Same as above
 ///     rule_fns![rule_b, |_, _, _| None], // Closures and fn pointers can be mixed
 /// ];
-///
-/// morph(rules, select_first, Foo, ());
 /// ```
 #[macro_export]
 macro_rules! rule_fns {
