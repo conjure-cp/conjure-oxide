@@ -74,7 +74,7 @@ impl Default for TestConfig {
             enable_morph_impl: false,
             enable_rewriter_impl: true,
             parse_model_default: true,
-            enable_native_parser: false,
+            enable_native_parser: true,
             apply_rewrite_rules: true,
             enable_extra_validation: false,
             solve_with_minion: true,
