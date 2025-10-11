@@ -1,4 +1,9 @@
-use std::{collections::HashMap, env::Vars, io::Lines};
+use core::panic;
+use std::{
+    collections::HashMap,
+    env::{Vars, vars},
+    io::Lines,
+};
 
 use rustsat::{
     clause,
@@ -13,6 +18,7 @@ use anyhow::{Result, anyhow};
 
 use crate::{
     ast::{Expression, Moo},
+    bug,
     solver::Error,
 };
 
@@ -28,7 +34,7 @@ pub fn handle_lit(
         // not literal
         Expression::Not(_, _) => handle_not(l1, vars_added, inst),
 
-        _ => panic!("Literal expected"),
+        _ => todo!("Literal expected"),
     }
 }
 
@@ -43,7 +49,7 @@ pub fn handle_not(
             let a = Moo::unwrap_or_clone(ref_a);
             handle_atom(a, false, vars_added, inst)
         }
-        _ => panic!("Not Expected"),
+        _ => todo!("Not Expression Expected"),
     }
 }
 
@@ -81,7 +87,7 @@ pub fn fetch_lit(
     inst: &mut SatInstance,
 ) -> Lit {
     if !vars_added.contains_key(&symbol) {
-        vars_added.insert(symbol.to_string(), inst.new_lit());
+        bug!("The code should never reach this point.");
     }
     *(vars_added.get(&symbol).unwrap())
 }
@@ -105,11 +111,23 @@ pub fn handle_disjn(
     inst_in_use.add_clause(lits);
 }
 
-pub fn handle_cnf(vec_cnf: &Vec<Expression>, vars_added: &mut HashMap<String, Lit>) -> SatInstance {
+pub fn handle_cnf(
+    vec_cnf: &Vec<Expression>,
+    vars_added: &mut HashMap<String, Lit>,
+    finds: Vec<String>,
+) -> SatInstance {
     let mut inst = SatInstance::new();
+
+    tracing::info!("{:?} are all the decision vars found.", finds);
+
+    for name in finds {
+        vars_added.insert(name, inst.new_lit());
+    }
+
     for disjn in vec_cnf {
         handle_disjn(disjn, vars_added, &mut inst);
     }
+
     inst
 }
 
