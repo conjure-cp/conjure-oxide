@@ -11,8 +11,8 @@ use std::{collections::BTreeSet, fmt::Display};
 use thiserror::Error;
 
 use super::{AbstractLiteral, Literal, Name, ReturnType, records::RecordEntry, types::Typeable};
-use crate::utils::count_combinations;
-use crate::{ast::pretty::pretty_vec, domain_int, range};
+use crate::{ast::pretty::pretty_vec, bug, domain_int, range};
+use conjure_cp_core::utils::{CombinatoricsError, count_combinations};
 use polyquine::Quine;
 use uniplate::Uniplate;
 
@@ -726,8 +726,7 @@ impl Domain {
                 };
                 let mut ans = 0u64;
                 for sz in min_sz..=max_sz {
-                    let c = count_combinations(inner_len, sz).ok_or(DomainOpError::TooLarge)?;
-                    assert!(c > 0, "are arguments in the right order?");
+                    let c = count_combinations(inner_len, sz)?;
                     ans = ans.checked_add(c).ok_or(DomainOpError::TooLarge)?;
                 }
                 Ok(ans)
@@ -1073,6 +1072,17 @@ pub enum DomainOpError {
     TooLarge,
 }
 
+impl From<CombinatoricsError> for DomainOpError {
+    fn from(value: CombinatoricsError) -> Self {
+        match value {
+            CombinatoricsError::Overflow => Self::TooLarge,
+            CombinatoricsError::NotDefined(msg) => {
+                bug!("Are we passing the right arguments here? ({})", msg)
+            }
+        }
+    }
+}
+
 /// Types that have a [`Domain`].
 pub trait HasDomain {
     /// Gets the [`Domain`] of `self`.
@@ -1135,7 +1145,7 @@ mod tests {
         );
     }
     #[test]
-    fn test_length_set() {
+    fn test_length_set_basic() {
         // {∅, {1}, {2}, {3}, {1,2}, {1,3}, {2,3}, {1,2,3}}
         let s = Domain::Set(SetAttr::None, Box::new(domain_int!(1..3)));
         assert_eq!(s.length(), Ok(8));
@@ -1148,6 +1158,17 @@ mod tests {
         let s = Domain::Set(SetAttr::MinMaxSize(1, 2), Box::new(domain_int!(1..3)));
         assert_eq!(s.length(), Ok(6));
 
+        // {{1}, {2}, {3}, {1,2}, {1,3}, {2,3}, {1,2,3}}
+        let s = Domain::Set(SetAttr::MinSize(1), Box::new(domain_int!(1..3)));
+        assert_eq!(s.length(), Ok(7));
+
+        // {∅, {1}, {2}, {3}, {1,2}, {1,3}, {2,3}}
+        let s = Domain::Set(SetAttr::MaxSize(2), Box::new(domain_int!(1..3)));
+        assert_eq!(s.length(), Ok(7));
+    }
+
+    #[test]
+    fn test_length_set_nested() {
         // {
         // ∅,                                          -- all size 0
         // {∅}, {{1}}, {{2}}, {{1, 2}},                -- all size 1
@@ -1162,14 +1183,20 @@ mod tests {
             ),
         );
         assert_eq!(s2.length(), Ok(11));
+    }
 
+    #[test]
+    fn test_length_set_unbounded_inner() {
         // leaf domain is unbounded
         let s2_bad = Domain::Set(
             SetAttr::MaxSize(2),
             Box::new(Domain::Set(SetAttr::None, Box::new(domain_int!(1..)))),
         );
         assert_eq!(s2_bad.length(), Err(DomainOpError::InputUnbounded));
+    }
 
+    #[test]
+    fn test_length_set_overflow() {
         let s = Domain::Set(SetAttr::None, Box::new(domain_int!(1..20)));
         assert!(s.length().is_ok());
 
