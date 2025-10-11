@@ -3,7 +3,7 @@ use super::{
     comprehension::Comprehension,
     declaration::DeclarationKind,
     pretty::{
-        pretty_domain_letting_declaration, pretty_expressions_as_top_level,
+        pretty_clauses, pretty_domain_letting_declaration, pretty_expressions_as_top_level,
         pretty_value_letting_declaration, pretty_variable_declaration,
     },
     serde::RcRefCellAsInner,
@@ -21,7 +21,7 @@ use std::{
     rc::Rc,
 };
 
-use super::{Expression, ReturnType, SymbolTable, types::Typeable};
+use super::{CnfClause, Expression, ReturnType, SymbolTable, types::Typeable};
 
 /// A sub-model, representing a lexical scope in the model.
 ///
@@ -35,6 +35,7 @@ pub struct SubModel {
     constraints: Moo<Expression>,
     #[serde_as(as = "RcRefCellAsInner")]
     symbols: Rc<RefCell<SymbolTable>>,
+    cnf_clauses: Vec<CnfClause>, // CNF clauses
 }
 
 impl SubModel {
@@ -47,6 +48,7 @@ impl SubModel {
         SubModel {
             constraints: Moo::new(Expression::Root(Metadata::new(), vec![])),
             symbols: Rc::new(RefCell::new(SymbolTable::new())),
+            cnf_clauses: Vec::new(),
         }
     }
 
@@ -57,6 +59,7 @@ impl SubModel {
         SubModel {
             constraints: Moo::new(Expression::Root(Metadata::new(), vec![])),
             symbols: Rc::new(RefCell::new(SymbolTable::with_parent(parent))),
+            cnf_clauses: Vec::new(),
         }
     }
 
@@ -126,6 +129,11 @@ impl SubModel {
         constraints
     }
 
+    /// The cnf clauses in this sub-model.
+    pub fn clauses(&self) -> &Vec<CnfClause> {
+        &self.cnf_clauses
+    }
+
     /// The top-level constraints in this sub-model as a mutable vector.
     pub fn constraints_mut(&mut self) -> &mut Vec<Expression> {
         let Expression::Root(_, constraints) = Moo::make_mut(&mut self.constraints) else {
@@ -133,6 +141,11 @@ impl SubModel {
         };
 
         constraints
+    }
+
+    /// The cnf clauses in this sub-model as a mutable vector.
+    pub fn clauses_mut(&mut self) -> &mut Vec<CnfClause> {
+        &mut self.cnf_clauses
     }
 
     /// Replaces the top-level constraints with `new_constraints`, returning the old ones.
@@ -145,9 +158,19 @@ impl SubModel {
         self.constraints_mut().push(constraint);
     }
 
+    /// Adds a cnf clause.
+    pub fn add_clause(&mut self, clause: CnfClause) {
+        self.clauses_mut().push(clause);
+    }
+
     /// Adds top-level constraints.
     pub fn add_constraints(&mut self, constraints: Vec<Expression>) {
         self.constraints_mut().extend(constraints);
+    }
+
+    /// Adds cnf clauses.
+    pub fn add_clauses(&mut self, clauses: Vec<CnfClause>) {
+        self.clauses_mut().extend(clauses);
     }
 
     /// Adds a new symbol to the symbol table
@@ -220,6 +243,11 @@ impl Display for SubModel {
 
         writeln!(f, "{}", pretty_expressions_as_top_level(self.constraints()))?;
 
+        if !self.clauses().is_empty() {
+            writeln!(f, "\nclauses:\n")?;
+
+            writeln!(f, "{}", pretty_clauses(self.clauses()))?;
+        }
         Ok(())
     }
 }
