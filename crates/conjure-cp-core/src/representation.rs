@@ -57,6 +57,12 @@ impl Clone for Box<dyn Representation> {
     }
 }
 
+/// Encodes the two-way relationship between a non-atomic variable and multiple auxiliary variables.
+///
+/// For example, a 2x2 matrix X might be represented by a variable for each element X1_1 X1_2 X2_1 X2_2.
+/// The [`Representation`] for X then allows us to set the value of the matrix, and takes care of
+/// assigning the individual variables accordingly. Conversly, we can set the values of the elements, and
+/// the [`Representation`] will return an assignment for the matrix as a whole.
 pub trait Representation: Send + Sync + Debug {
     /// Creates a representation object for the given name.
     fn init(name: &Name, symtab: &SymbolTable) -> Option<Self>
