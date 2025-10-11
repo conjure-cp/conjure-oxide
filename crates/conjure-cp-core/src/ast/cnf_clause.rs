@@ -7,7 +7,7 @@ use uniplate::Uniplate;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Quine)]
 pub struct CnfClause {
-    // This expression represents a cnf clause in its simplest form, it should only contain literals
+    // This represents a cnf clause in its simplest form, it should only contain literals
     literals: Vec<Expression>,
 }
 
