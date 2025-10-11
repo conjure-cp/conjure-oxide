@@ -29,6 +29,9 @@ pub fn log_rule_application(
 ) {
     let red = &result.reduction;
     let rule = result.rule_data.rule;
+
+    // A reduction can only modify either constraints or clauses, not both. So the the same
+    // variable is used to hold changes in both (or empty if neither are changed).
     let new_top_string = if !red.new_top.is_empty() {
         pretty_vec(&red.new_top)
     } else {
