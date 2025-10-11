@@ -153,11 +153,6 @@ impl SubModel {
         std::mem::replace(self.constraints_mut(), new_constraints)
     }
 
-    /// Replaces the cnf clauses with `new_clauses`, returning the old ones.
-    pub fn replace_clauses(&mut self, new_clauses: Vec<Expression>) -> Vec<Expression> {
-        std::mem::replace(self.clauses_mut(), new_clauses)
-    }
-
     /// Adds a top-level constraint.
     pub fn add_constraint(&mut self, constraint: Expression) {
         self.constraints_mut().push(constraint);
