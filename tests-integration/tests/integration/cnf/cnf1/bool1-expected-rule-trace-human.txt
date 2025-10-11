@@ -19,8 +19,8 @@ __0
 new variables:
   find __0: bool
 new clauses:
-  Clause([!(a),!(__0);int(1..)])
-  Clause([a,__0;int(1..)])
+  (¬a \/ ¬__0)
+  (a \/ __0)
 --
 
 or([a,b;int(1..2)]), 
@@ -29,9 +29,9 @@ __1
 new variables:
   find __1: bool
 new clauses:
-  Clause([!(a),__1;int(1..)])
-  Clause([!(b),__1;int(1..)])
-  Clause([!(__1),a,b;int(1..)])
+  (¬a \/ __1)
+  (¬b \/ __1)
+  (¬__1 \/ a \/ b)
 --
 
 or([__0,b;int(1..2)]), 
@@ -40,9 +40,9 @@ __2
 new variables:
   find __2: bool
 new clauses:
-  Clause([!(__0),__2;int(1..)])
-  Clause([!(b),__2;int(1..)])
-  Clause([!(__2),__0,b;int(1..)])
+  (¬__0 \/ __2)
+  (¬b \/ __2)
+  (¬__2 \/ __0 \/ b)
 --
 
 and([__1,__2;int(1..2)]), 
@@ -51,9 +51,17 @@ __3
 new variables:
   find __3: bool
 new clauses:
-  Clause([!(__3),__1;int(1..)])
-  Clause([!(__3),__2;int(1..)])
-  Clause([__3,!(__1),!(__2);int(1..)])
+  (¬__3 \/ __1)
+  (¬__3 \/ __2)
+  (__3 \/ ¬__1 \/ ¬__2)
+--
+
+__3, 
+   ~~> remove_single_atom ([("SAT", 8400)]) 
+true 
+
+new clauses:
+  (__3)
 --
 
 Final model:
@@ -67,19 +75,20 @@ find __3: bool
 
 such that
 
-__3
+true
 
 clauses:
 
-Clause([!(a),!(__0);int(1..)]),
-Clause([a,__0;int(1..)]),
-Clause([!(a),__1;int(1..)]),
-Clause([!(b),__1;int(1..)]),
-Clause([!(__1),a,b;int(1..)]),
-Clause([!(__0),__2;int(1..)]),
-Clause([!(b),__2;int(1..)]),
-Clause([!(__2),__0,b;int(1..)]),
-Clause([!(__3),__1;int(1..)]),
-Clause([!(__3),__2;int(1..)]),
-Clause([__3,!(__1),!(__2);int(1..)])
+(¬a \/ ¬__0),
+(a \/ __0),
+(¬a \/ __1),
+(¬b \/ __1),
+(¬__1 \/ a \/ b),
+(¬__0 \/ __2),
+(¬b \/ __2),
+(¬__2 \/ __0 \/ b),
+(¬__3 \/ __1),
+(¬__3 \/ __2),
+(__3 \/ ¬__1 \/ ¬__2),
+(__3)
 

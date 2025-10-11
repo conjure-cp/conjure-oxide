@@ -19,10 +19,18 @@ __0
 new variables:
   find __0: bool
 new clauses:
-  Clause([!(a),!(b),__0;int(1..)])
-  Clause([a,b,__0;int(1..)])
-  Clause([a,!(b),!(__0);int(1..)])
-  Clause([!(a),b,!(__0);int(1..)])
+  (¬a \/ ¬b \/ __0)
+  (a \/ b \/ __0)
+  (a \/ ¬b \/ ¬__0)
+  (¬a \/ b \/ ¬__0)
+--
+
+__0, 
+   ~~> remove_single_atom ([("SAT", 8400)]) 
+true 
+
+new clauses:
+  (__0)
 --
 
 Final model:
@@ -33,12 +41,13 @@ find __0: bool
 
 such that
 
-__0
+true
 
 clauses:
 
-Clause([!(a),!(b),__0;int(1..)]),
-Clause([a,b,__0;int(1..)]),
-Clause([a,!(b),!(__0);int(1..)]),
-Clause([!(a),b,!(__0);int(1..)])
+(¬a \/ ¬b \/ __0),
+(a \/ b \/ __0),
+(a \/ ¬b \/ ¬__0),
+(¬a \/ b \/ ¬__0),
+(__0)
 
