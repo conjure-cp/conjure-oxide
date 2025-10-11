@@ -15,7 +15,15 @@ and([given i: AMOUNT_QUEENS
 such that
 
 and([(q2[i] = (q1[i] - i)),(q3[i] = sum([q1[i],i;int(1..2)]));int(1..2)])
+
+clauses:
+
+
  | i: AMOUNT_QUEENS,])
+
+clauses:
+
+
 
 --
 
@@ -27,6 +35,10 @@ and([given i: AMOUNT_QUEENS
 such that
 
 and([(q2[i] = (q1[i] - i)),(q3[i] = sum([q1[i],i;int(1..2)]));int(1..2)])
+
+clauses:
+
+
  | i: AMOUNT_QUEENS,]), 
    ~~> substitute_domain_lettings ([("Base", 5000)]) 
 allDiff(q1),
@@ -37,6 +49,10 @@ and([given i: AMOUNT_QUEENS
 such that
 
 and([(q2[i] = (q1[i] - i)),(q3[i] = sum([q1[i],i;int(1..2)]));int(1..2)])
+
+clauses:
+
+
  | i: AMOUNT_QUEENS,]) 
 
 --
@@ -49,6 +65,10 @@ and([given i: AMOUNT_QUEENS
 such that
 
 and([(q2#matrix_to_atom[i] = (q1#matrix_to_atom[i] - i)),(q3#matrix_to_atom[i] = sum([q1#matrix_to_atom[i],i;int(1..2)]));int(1..2)])
+
+clauses:
+
+
  | i: AMOUNT_QUEENS,]), 
    ~~> select_representation_matrix ([("Base", 8001)]) 
 allDiff(q1#matrix_to_atom),
@@ -59,6 +79,10 @@ and([given i: AMOUNT_QUEENS
 such that
 
 and([(q2#matrix_to_atom[i] = (q1#matrix_to_atom[i] - i)),(q3#matrix_to_atom[i] = sum([q1#matrix_to_atom[i],i;int(1..2)]));int(1..2)])
+
+clauses:
+
+
  | i: AMOUNT_QUEENS,]) 
 new variables:
   find q1#matrix_to_atom_0: int(0..7)
@@ -96,6 +120,10 @@ find __1: bool
 such that
 
 (true != and([__0,__1;int(1..2)]))
+
+clauses:
+
+
 
 --
 
@@ -138,6 +166,10 @@ such that
 (true != __2),
 Reify(and([__0,__1;int(1..)]), __2)
 
+clauses:
+
+
+
 Model before rewriting:
 
 given i: AMOUNT_QUEENS
@@ -145,6 +177,10 @@ given i: AMOUNT_QUEENS
 such that
 
 and([(q2#matrix_to_atom[i] = (q1#matrix_to_atom[i] - i)),(q3#matrix_to_atom[i] = sum([q1#matrix_to_atom[i],i;int(1..2)]));int(1..2)])
+
+clauses:
+
+
 
 --
 
@@ -230,11 +266,19 @@ such that
 (q2#matrix_to_atom[i] = sum([q1#matrix_to_atom[i],-(i);int(1..)])),
 (q3#matrix_to_atom[i] = sum([q1#matrix_to_atom[i],i;int(1..)]))
 
+clauses:
+
+
+
 and([given i: AMOUNT_QUEENS
 
 such that
 
 and([(q2#matrix_to_atom[i] = (q1#matrix_to_atom[i] - i)),(q3#matrix_to_atom[i] = sum([q1#matrix_to_atom[i],i;int(1..2)]));int(1..2)])
+
+clauses:
+
+
  | i: int(0..7),__0: bool,__1: bool,__2: bool,]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 and([and([(q2#matrix_to_atom[0] = sum([q1#matrix_to_atom[0],-(0);int(1..)])),(q3#matrix_to_atom[0] = sum([q1#matrix_to_atom[0],0;int(1..)]));int(1..)]),and([(q2#matrix_to_atom[1] = sum([q1#matrix_to_atom[1],-(1);int(1..)])),(q3#matrix_to_atom[1] = sum([q1#matrix_to_atom[1],1;int(1..)]));int(1..)]),and([(q2#matrix_to_atom[2] = sum([q1#matrix_to_atom[2],-(2);int(1..)])),(q3#matrix_to_atom[2] = sum([q1#matrix_to_atom[2],2;int(1..)]));int(1..)]),and([(q2#matrix_to_atom[3] = sum([q1#matrix_to_atom[3],-(3);int(1..)])),(q3#matrix_to_atom[3] = sum([q1#matrix_to_atom[3],3;int(1..)]));int(1..)]),and([(q2#matrix_to_atom[4] = sum([q1#matrix_to_atom[4],-(4);int(1..)])),(q3#matrix_to_atom[4] = sum([q1#matrix_to_atom[4],4;int(1..)]));int(1..)]),and([(q2#matrix_to_atom[5] = sum([q1#matrix_to_atom[5],-(5);int(1..)])),(q3#matrix_to_atom[5] = sum([q1#matrix_to_atom[5],5;int(1..)]));int(1..)]),and([(q2#matrix_to_atom[6] = sum([q1#matrix_to_atom[6],-(6);int(1..)])),(q3#matrix_to_atom[6] = sum([q1#matrix_to_atom[6],6;int(1..)]));int(1..)]),and([(q2#matrix_to_atom[7] = sum([q1#matrix_to_atom[7],-(7);int(1..)])),(q3#matrix_to_atom[7] = sum([q1#matrix_to_atom[7],7;int(1..)]));int(1..)]);int(1..)]) 
@@ -1464,4 +1508,8 @@ SumLeq([-7, q1#matrix_to_atom_7], q2#matrix_to_atom_7),
 SumGeq([-7, q1#matrix_to_atom_7], q2#matrix_to_atom_7),
 SumLeq([7, q1#matrix_to_atom_7], q3#matrix_to_atom_7),
 SumGeq([7, q1#matrix_to_atom_7], q3#matrix_to_atom_7)
+
+clauses:
+
+
 

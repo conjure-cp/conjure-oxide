@@ -29,7 +29,11 @@ pub fn log_rule_application(
 ) {
     let red = &result.reduction;
     let rule = result.rule_data.rule;
-    let new_top_string = pretty_vec(&red.new_top);
+    let new_top_string = if !red.new_top.is_empty() {
+        pretty_vec(&red.new_top)
+    } else {
+        pretty_vec(&red.new_clauses)
+    };
 
     info!(
         %new_top_string,
@@ -41,9 +45,7 @@ pub fn log_rule_application(
     );
 
     // empty if no top level constraints
-    let top_level_str = if red.new_top.is_empty() {
-        String::new()
-    } else {
+    let top_level_str = if !red.new_top.is_empty() {
         let mut exprs: Vec<String> = vec![];
 
         for expr in &red.new_top {
@@ -53,6 +55,18 @@ pub fn log_rule_application(
         let exprs = exprs.iter().join("\n");
 
         format!("new constraints:\n{exprs}\n")
+    } else if !red.new_clauses.is_empty() {
+        let mut exprs: Vec<String> = vec![];
+
+        for expr in &red.new_clauses {
+            exprs.push(format!("  {expr}"));
+        }
+
+        let exprs = exprs.iter().join("\n");
+
+        format!("new clauses:\n{exprs}\n")
+    } else {
+        String::new()
     };
 
     // empty if no new variables
