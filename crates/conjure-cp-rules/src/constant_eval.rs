@@ -637,6 +637,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 _ => None,
             }
         }
+        Expr::Clause(_, _) => None,
     }
 }
 
