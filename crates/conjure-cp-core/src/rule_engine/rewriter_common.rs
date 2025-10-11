@@ -61,8 +61,8 @@ pub fn log_rule_application(
     } else if !red.new_clauses.is_empty() {
         let mut exprs: Vec<String> = vec![];
 
-        for expr in &red.new_clauses {
-            exprs.push(format!("  {expr}"));
+        for clause in &red.new_clauses {
+            exprs.push(format!("  {clause}"));
         }
 
         let exprs = exprs.iter().join("\n");

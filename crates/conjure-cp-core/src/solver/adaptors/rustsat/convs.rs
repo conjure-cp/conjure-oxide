@@ -12,7 +12,7 @@ use rustsat_minisat::core::Minisat;
 use anyhow::{Result, anyhow};
 
 use crate::{
-    ast::{Expression, Moo, Name},
+    ast::{CnfClause, Expression, Moo, Name},
     solver::Error,
 };
 
@@ -83,31 +83,25 @@ pub fn fetch_lit(name: Name, vars_added: &mut HashMap<Name, Lit>, inst: &mut Sat
 }
 
 pub fn handle_disjn(
-    disjn: &Expression,
+    disjn: &CnfClause,
     vars_added: &mut HashMap<Name, Lit>,
     inst_in_use: &mut SatInstance,
 ) {
     let mut lits = Clause::new();
 
-    match disjn {
-        Expression::Clause(_, vec) => {
-            let cl = Moo::unwrap_or_clone(vec.clone()).unwrap_list().unwrap();
-            for literal in cl {
-                let lit: Lit = handle_lit(&literal, vars_added, inst_in_use);
-                lits.add(lit);
-            }
-        }
+    for literal in disjn.iter() {
+        let lit: Lit = handle_lit(&literal, vars_added, inst_in_use);
+        lits.add(lit);
+    }
 
-        literal => {
-            let lit: Lit = handle_lit(literal, vars_added, inst_in_use);
-            lits.add(lit);
-        }
-    };
+    // literal => {
+    // let lit: Lit = handle_lit(literal, vars_added, inst_in_use);
+    // lits.add(lit);
 
     inst_in_use.add_clause(lits);
 }
 
-pub fn handle_cnf(vec_cnf: &Vec<Expression>, vars_added: &mut HashMap<Name, Lit>) -> SatInstance {
+pub fn handle_cnf(vec_cnf: &Vec<CnfClause>, vars_added: &mut HashMap<Name, Lit>) -> SatInstance {
     let mut inst = SatInstance::new();
     for disjn in vec_cnf {
         handle_disjn(disjn, vars_added, &mut inst);
