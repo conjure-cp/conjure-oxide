@@ -207,13 +207,7 @@ impl SolverAdaptor for Sat {
             .clauses()
             .clone()
             .into_iter()
-            .chain(
-                m_clone
-                    .as_submodel()
-                    .constraints()
-                    .iter()
-                    .cloned(),
-            )
+            .chain(m_clone.as_submodel().constraints().iter().cloned())
             .collect();
 
         let mut var_map: HashMap<Name, Lit> = HashMap::new();
