@@ -212,7 +212,7 @@ impl SolverAdaptor for Sat {
                     .as_submodel()
                     .constraints()
                     .into_iter()
-                    .map(|e| e.clone()),
+                    .cloned(),
             )
             .collect();
 
