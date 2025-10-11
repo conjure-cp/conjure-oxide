@@ -202,10 +202,19 @@ impl SolverAdaptor for Sat {
         let m_clone = model;
 
         // combine clauses and constraints into a single vector of clauses
-        let vec_clauses = m_clone.as_submodel().clauses();
-        let vec_constr = m_clone.as_submodel().constraints();
-        let mut vec_cnf = vec_clauses.clone();
-        vec_cnf.extend(vec_constr.clone());
+        let vec_cnf: Vec<_> = m_clone
+            .as_submodel()
+            .clauses()
+            .clone()
+            .into_iter()
+            .chain(
+                m_clone
+                    .as_submodel()
+                    .constraints()
+                    .into_iter()
+                    .map(|e| e.clone()),
+            )
+            .collect();
 
         let mut var_map: HashMap<Name, Lit> = HashMap::new();
 
