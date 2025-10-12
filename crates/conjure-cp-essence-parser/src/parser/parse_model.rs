@@ -91,6 +91,32 @@ pub fn parse_essence_with_context(
                 }
                 model.dominance = Some(dominance);
             }
+            "objective" => {
+                let obj_type_str = statement
+                    .child(1)
+                    .expect("Expected 'minimising' or 'maximising'");
+
+                let inner = statement
+                    .child(2)
+                    .expect("Expected an expression inside the objective");
+
+                let current_symbols = model.as_submodel().symbols().clone();
+                let expr =
+                    parse_expression(inner, &source_code, &statement, Some(&current_symbols))?;
+                if model.objective.is_some() {
+                    return Err(EssenceParseError::syntax_error(
+                        "Can only have one objective".to_string(),
+                        None,
+                    ));
+                }
+                let obj_type = ObjectiveType::from_str(&obj_type_str)
+                    .map_err(|e| EssenceParseError::syntax_error(
+                        e,
+                        None,
+                    ))?;
+                let objective = Expression::Objective(Metadata::new(), obj_type, Moo::new(expr));
+                model.objective = Some(objective);
+            }
             _ => {
                 let kind = statement.kind();
                 return Err(EssenceParseError::syntax_error(

@@ -12,6 +12,7 @@ use crate::ast::ReturnType;
 use crate::ast::SetAttr;
 use crate::ast::literals::AbstractLiteral;
 use crate::ast::literals::Literal;
+use crate::ast::model::ObjectiveType;
 use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use crate::bug;
 use conjure_cp_enum_compatibility_macro::document_compatibility;
@@ -95,6 +96,9 @@ pub enum Expression {
     DominanceRelation(Metadata, Moo<Expression>),
     /// `fromSolution(name)` - Used in dominance relation definitions
     FromSolution(Metadata, Moo<Expression>),
+
+    /// Defines the objective of a model
+    Objective(Metadata, ObjectiveType, Moo<Expression>),
 
     #[polyquine_with(arm = (_, name) => {
         let ident = proc_macro2::Ident::new(name.as_str(), proc_macro2::Span::call_site());
@@ -605,6 +609,7 @@ impl Expression {
             Expression::AbstractLiteral(_, abslit) => abslit.domain_of(),
             Expression::DominanceRelation(_, _) => Some(Domain::Bool),
             Expression::FromSolution(_, expr) => expr.domain_of(),
+            Expression::Objective(_, _, expr) => expr.domain_of(),
             Expression::Metavar(_, _) => None,
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
@@ -1128,6 +1133,7 @@ impl Display for Expression {
             }
             Expression::DominanceRelation(_, expr) => write!(f, "DominanceRelation({expr})"),
             Expression::FromSolution(_, expr) => write!(f, "FromSolution({expr})"),
+            Expression::Objective(_, obj_type, expr) => write!(f, "Objective(Type={obj_type},Expr={expr})"),
             Expression::Metavar(_, name) => write!(f, "&{name}"),
             Expression::Atomic(_, atom) => atom.fmt(f),
             Expression::Scope(_, submodel) => write!(f, "{{\n{submodel}\n}}"),
@@ -1345,6 +1351,7 @@ impl Typeable for Expression {
             Expression::Root(_, _) => Some(ReturnType::Bool),
             Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
             Expression::FromSolution(_, expr) => expr.return_type(),
+            Expression::Objective(_, _, expr) => None,
             Expression::Metavar(_, _) => None,
             Expression::Atomic(_, atom) => atom.return_type(),
             Expression::Scope(_, scope) => scope.return_type(),

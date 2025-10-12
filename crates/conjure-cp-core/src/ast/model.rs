@@ -1,10 +1,10 @@
 #![allow(clippy::arc_with_non_send_sync)] // uniplate needs this
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
-use std::fmt::{Debug, Display};
+use std::fmt::{Debug, Display, Formatter};
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
-
+use polyquine::Quine;
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
 use uniplate::{Biplate, Tree, Uniplate};
@@ -30,6 +30,7 @@ pub struct Model {
     submodel: SubModel,
     pub search_order: Option<Vec<Name>>,
     pub dominance: Option<Expression>,
+    pub objective: Option<Expression>,
     #[derivative(PartialEq = "ignore")]
     pub context: Arc<RwLock<Context<'static>>>,
 }
@@ -47,6 +48,7 @@ impl Model {
         Model {
             submodel: SubModel::new_top_level(),
             dominance: None,
+            objective: None,
             context,
             search_order: None,
         }
@@ -73,6 +75,7 @@ impl Default for Model {
         Model {
             submodel: SubModel::new_top_level(),
             dominance: None,
+            objective: None,
             context: Arc::new(RwLock::new(Context::default())),
             search_order: None,
         }
@@ -106,16 +109,24 @@ impl Biplate<Expression> for Model {
             Some(expr) => Tree::One(expr.clone()),
             None => Tree::Zero,
         };
-        let tree = Tree::<Expression>::Many(VecDeque::from([expr_tree, dom_tree]));
+
+        // walk into objective if it exists
+        let obj_tree = match &self.objective {
+            Some(objective) => Tree::One(objective.clone()),
+            None => Tree::Zero,
+        };
+
+        let tree = Tree::<Expression>::Many(VecDeque::from([expr_tree, dom_tree, obj_tree]));
 
         let self2 = self.clone();
         let ctx = Box::new(move |x| match x {
             Tree::Many(xs) => {
-                if xs.len() != 2 {
-                    panic!("Expected a tree with two children");
+                if xs.len() != 3 {
+                    panic!("Expected a tree with three children");
                 }
                 let submodel_tree = xs[0].clone();
                 let dom_tree = xs[1].clone();
+                let obj_tree = xs[2].clone();
 
                 // reconstruct the submodel
                 let submodel = expr_ctx(submodel_tree);
@@ -123,16 +134,23 @@ impl Biplate<Expression> for Model {
                 let dominance = match dom_tree {
                     Tree::One(expr) => Some(expr),
                     Tree::Zero => None,
-                    _ => panic!("Expected a tree with two children"),
+                    _ => panic!("Expected a tree with three children"),
+                };
+                // reconstruct the objective
+                let objective = match obj_tree {
+                    Tree::One(obj) => Some(obj),
+                    Tree::Zero => None,
+                    _ => panic!("Expected a tree with three children"),
                 };
 
                 let mut self3 = self2.clone();
                 self3.replace_submodel(submodel);
                 self3.dominance = dominance;
+                self3.objective = objective;
                 self3
             }
             _ => {
-                panic!("Expected a tree with two children");
+                panic!("Expected a tree with three children");
             }
         });
 
@@ -176,6 +194,7 @@ pub struct SerdeModel {
     submodel: SubModel,
     search_order: Option<Vec<Name>>, // TODO: make this a [expressions]
     dominance: Option<Expression>,
+    objective: Option<Expression>,
 }
 
 impl SerdeModel {
@@ -241,6 +260,7 @@ impl SerdeModel {
         Some(Model {
             submodel: self.submodel,
             dominance: self.dominance,
+            objective: self.objective,
             context,
             search_order: self.search_order,
         })
@@ -252,6 +272,7 @@ impl From<Model> for SerdeModel {
         SerdeModel {
             submodel: val.submodel,
             dominance: val.dominance,
+            objective: val.objective,
             search_order: val.search_order,
         }
     }
@@ -260,5 +281,31 @@ impl From<Model> for SerdeModel {
 impl Display for SerdeModel {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         std::fmt::Display::fmt(&self.submodel, f)
+    }
+}
+#[derive(Clone, Debug, Derivative, Serialize, Deserialize, Quine)]
+#[derivative(PartialEq, Eq)]
+pub enum ObjectiveType {
+    Minimize,
+    Maximize,
+}
+
+impl ObjectiveType {
+    pub fn from_str(s: &str) -> Result<Self, String> {
+        match s {
+            "minimising" => Ok(ObjectiveType::Minimize),
+            "maximising" => Ok(ObjectiveType::Maximize),
+            _ => Err(format!("Unknown objective type: {}", s)),
+        }
+    }
+}
+
+impl Display for ObjectiveType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let s = match self {
+            ObjectiveType::Minimize => "minimising",
+            ObjectiveType::Maximize => "maximising",
+        };
+        write!(f, "{}", s)
     }
 }

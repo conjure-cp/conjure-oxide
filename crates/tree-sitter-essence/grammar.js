@@ -13,7 +13,8 @@ module.exports = grammar ({
       $.find_statement_list,
       $.constraint_list,
       $.letting_statement_list,
-      $.dominance_relation
+      $.dominance_relation,
+      $.objective
     )),
 
     single_line_comment: $ => token(seq('$', /.*/)),
@@ -168,6 +169,11 @@ module.exports = grammar ({
 
     dominance_relation: $ => seq(
       "dominanceRelation",
+      $.expression
+    ),
+    
+    objective: $ => seq(
+      choice("minimising", "maximising"),
       $.expression
     )
   }
