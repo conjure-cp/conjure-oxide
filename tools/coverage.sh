@@ -66,8 +66,11 @@ rm -rf target/debug/coverage
 export CARGO_INCREMENTAL=0 
 export RUSTFLAGS="$RUSTFLAGS -Cinstrument-coverage"
 export RUSTDOCFLAGS="$RUSTDOCFLAGS -C instrument-coverage -Zunstable-options --persist-doctests target/debug/doctestbins"
+# According to https://doc.rust-lang.org/beta/rustc/instrument-coverage.html#running-the-instrumented-binary-to-generate-raw-coverage-profiling-data
+# If give a path to the LLVM_PROFILE_FILE envvar, you can ensure that the passed directory
+# is created automatically to place all profiling files there. 
+# This was done to avoid the presence of 80+ files in the project's root directory.
 export LLVM_PROFILE_FILE='target/coverage/conjure-oxide-%p-%m.profraw'
-mkdir -p target/coverage
 
 # regex patterns to ignore
 GRCOV_EXCLUDE_LINES=(
