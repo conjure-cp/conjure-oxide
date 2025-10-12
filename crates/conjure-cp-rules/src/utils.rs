@@ -3,6 +3,7 @@ use conjure_cp::{
     ast::{Atom, DeclarationPtr, Expression as Expr, Moo, SymbolTable, categories::Category},
 };
 
+use conjure_cp::ast::HasDomain;
 use tracing::{instrument, trace};
 use uniplate::{Biplate, Uniplate};
 
@@ -162,13 +163,7 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
         return None;
     }
 
-    let Some(domain) = expr.domain_of() else {
-        if cfg!(debug_assertions) {
-            trace!(expr=%expr, why = "could not find the domain of the expression", "to_aux_var() failed");
-        }
-        return None;
-    };
-
+    let domain = expr.domain_of();
     let decl = symbols.gensym(&domain);
 
     if cfg!(debug_assertions) {

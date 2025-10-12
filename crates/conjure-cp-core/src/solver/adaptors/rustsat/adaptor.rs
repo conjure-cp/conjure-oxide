@@ -1,3 +1,4 @@
+use conjure_ast::HasDomain;
 use std::any::type_name;
 use std::fmt::format;
 use std::hash::Hash;
@@ -178,7 +179,7 @@ impl SolverAdaptor for Sat {
         let mut finds: Vec<String> = Vec::new();
 
         for find_ref in decisions {
-            if (find_ref.1.domain().unwrap() != Bool) {
+            if (find_ref.1.domain_of() != Bool) {
                 Err(SolverError::ModelInvalid(
                     "Only Boolean Decision Variables supported".to_string(),
                 ))?;

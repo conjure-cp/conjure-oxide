@@ -2,11 +2,11 @@
 
 use std::{cell::RefCell, collections::BTreeSet, fmt::Display, rc::Rc, sync::atomic::AtomicBool};
 
+use crate::{ast::Metadata, into_matrix_expr, matrix_expr};
+use conjure_cp_core::ast::domains::HasDomain;
 use itertools::Itertools as _;
 use serde::{Deserialize, Serialize};
 use uniplate::{Biplate, Uniplate};
-
-use crate::{ast::Metadata, into_matrix_expr, matrix_expr};
 
 use super::{
     DeclarationPtr, Domain, Expression, Moo, Name, Range, SubModel, SymbolTable,
@@ -43,20 +43,6 @@ pub struct Comprehension {
 }
 
 impl Comprehension {
-    pub fn domain_of(&self) -> Option<Domain> {
-        let return_expr_domain = self
-            .return_expression_submodel
-            .clone()
-            .into_single_expression()
-            .domain_of()?;
-
-        // return a list (matrix with index domain int(1..)) of return_expr elements
-        Some(Domain::Matrix(
-            Box::new(return_expr_domain),
-            vec![Domain::Int(vec![Range::UnboundedR(1)])],
-        ))
-    }
-
     pub fn return_expression(self) -> Expression {
         self.return_expression_submodel.into_single_expression()
     }
@@ -88,6 +74,22 @@ impl Comprehension {
     }
 }
 
+impl HasDomain for Comprehension {
+    fn domain_of(&self) -> Domain {
+        let return_expr_domain = self
+            .return_expression_submodel
+            .clone()
+            .into_single_expression()
+            .domain_of();
+
+        // return a list (matrix with index domain int(1..)) of return_expr elements
+        Domain::Matrix(
+            Box::new(return_expr_domain),
+            vec![Domain::Int(vec![Range::UnboundedR(1)])],
+        )
+    }
+}
+
 impl Display for Comprehension {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let generators: String = self
@@ -96,7 +98,7 @@ impl Display for Comprehension {
             .clone()
             .into_iter_local()
             .map(|(name, decl): (Name, DeclarationPtr)| {
-                let domain: Domain = decl.domain().unwrap();
+                let domain: Domain = decl.domain_of();
                 (name, domain)
             })
             .map(|(name, domain): (Name, Domain)| format!("{name}: {domain}"))
@@ -159,7 +161,7 @@ impl ComprehensionBuilder {
 
     pub fn generator(mut self, declaration: DeclarationPtr) -> Self {
         let name = declaration.name().clone();
-        let domain = declaration.domain().unwrap();
+        let domain = declaration.domain_of();
         assert!(!self.induction_variables.contains(&name));
 
         self.induction_variables.insert(name.clone());

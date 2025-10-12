@@ -1,7 +1,7 @@
-use conjure_cp::ast::AbstractLiteral;
 use conjure_cp::ast::Expression as Expr;
 use conjure_cp::ast::Moo;
 use conjure_cp::ast::SymbolTable;
+use conjure_cp::ast::{AbstractLiteral, HasDomain};
 use conjure_cp::into_matrix_expr;
 use conjure_cp::matrix_expr;
 use conjure_cp::rule_engine::{
@@ -14,7 +14,6 @@ use conjure_cp::ast::Expression;
 use conjure_cp::ast::Literal;
 use conjure_cp::ast::Metadata;
 use conjure_cp::ast::Name;
-use conjure_cp::rule_engine::ApplicationError;
 use itertools::izip;
 
 //takes a safe index expression and converts it to an atom via the representation rules
@@ -42,7 +41,7 @@ fn index_record_to_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult
 
         // let decl = symbols.lookup(name).unwrap();
 
-        let Some(Domain::Record(_)) = decl.domain().map(|x| x.resolve(symbols)) else {
+        let Domain::Record(_) = decl.resolved_domain_of(symbols) else {
             return Err(RuleNotApplicable);
         };
 
@@ -86,10 +85,7 @@ fn record_index_to_bubble(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
             return Err(RuleNotApplicable);
         }
 
-        let domain = subject
-            .domain_of()
-            .ok_or(ApplicationError::DomainError)?
-            .resolve(symtab);
+        let domain = subject.resolved_domain_of(symtab);
 
         let Domain::Record(elems) = domain else {
             return Err(RuleNotApplicable);
@@ -171,8 +167,8 @@ fn record_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         // .. that have been represented with record_to_atom
         && reprs.first().is_none_or(|x| x.as_str() == "record_to_atom")
         && reprs2.first().is_none_or(|x| x.as_str() == "record_to_atom")
-        && let Some(domain) = decl.domain().map(|x| x.resolve(symbols))
-        && let Some(domain2) = decl2.domain().map(|x| x.resolve(symbols))
+        && let domain = decl.resolved_domain_of(symbols)
+        && let domain2 = decl2.resolved_domain_of(symbols)
 
         // .. and have record variable domains
         && let Domain::Record(entries) = domain
@@ -230,10 +226,7 @@ fn record_to_const(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         && let Name::WithRepresentation(_, reprs) = &decl.name() as &Name
         && reprs.first().is_none_or(|x| x.as_str() == "record_to_atom")
     {
-        let domain = decl
-            .domain()
-            .map(|x| x.resolve(symbols))
-            .ok_or(ApplicationError::DomainError)?;
+        let domain = decl.resolved_domain_of(symbols);
 
         let Domain::Record(entries) = domain else {
             return Err(RuleNotApplicable);

@@ -9,7 +9,7 @@ use conjure_cp::{
 };
 use itertools::iproduct;
 
-use conjure_cp::ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable};
+use conjure_cp::ast::{Atom, Expression as Expr, HasDomain, Literal as Lit, SymbolTable};
 
 #[register_rule(("Base",9000))]
 fn partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
@@ -69,7 +69,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
         Expr::SafeSlice(_, _, _) => Err(RuleNotApplicable),
         Expr::InDomain(_, x, domain) => {
             if let Expr::Atomic(_, Atom::Reference(decl)) = &*x {
-                let decl_domain = decl.domain().ok_or(RuleNotApplicable)?.resolve(symtab);
+                let decl_domain = decl.resolved_domain_of(symtab);
                 let domain = domain.resolve(symtab);
 
                 let intersection = decl_domain

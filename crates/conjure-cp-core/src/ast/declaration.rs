@@ -8,13 +8,12 @@ use std::rc::Rc;
 
 use ::serde::{Deserialize, Serialize};
 
-use uniplate::{Biplate, Tree, Uniplate};
-
 use super::categories::{Category, CategoryOf};
 use super::name::Name;
 use super::serde::{DefaultWithId, HasId, ObjId};
-use super::types::Typeable;
-use super::{DecisionVariable, Domain, Expression, RecordEntry, ReturnType};
+use super::{DecisionVariable, Domain, Expression, RecordEntry};
+use conjure_cp_core::ast::domains::HasDomain;
+use uniplate::{Biplate, Tree, Uniplate};
 
 thread_local! {
     // make each thread have its own id counter.
@@ -234,29 +233,6 @@ impl DeclarationPtr {
     /*        Declaration accessor methods        */
     /**********************************************/
 
-    /// Gets the domain of the declaration, if it has one.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use conjure_cp_core::ast::{DeclarationPtr,Name,Domain,Range};
-    ///
-    /// // find a: int(1..5)
-    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
-    ///
-    /// assert!(declaration.domain().is_some_and(|x| x == Domain::Int(vec![Range::Bounded(1,5)])))
-    ///
-    /// ```
-    pub fn domain(&self) -> Option<Domain> {
-        match &self.kind() as &DeclarationKind {
-            DeclarationKind::DecisionVariable(var) => Some(var.domain.clone()),
-            DeclarationKind::ValueLetting(e) => e.domain_of(),
-            DeclarationKind::DomainLetting(domain) => Some(domain.clone()),
-            DeclarationKind::Given(domain) => Some(domain.clone()),
-            DeclarationKind::RecordField(domain) => Some(domain.clone()),
-        }
-    }
-
     /// Gets the kind of the declaration.
     ///
     /// # Examples
@@ -452,6 +428,31 @@ impl DeclarationPtr {
     }
 }
 
+impl HasDomain for DeclarationPtr {
+    /// Gets the domain of the declaration, if it has one.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use conjure_cp_core::ast::{DeclarationPtr,Name,Domain,Range};
+    ///
+    /// // find a: int(1..5)
+    /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
+    ///
+    /// assert!(declaration.domain().is_some_and(|x| x == Domain::Int(vec![Range::Bounded(1,5)])))
+    ///
+    /// ```
+    fn domain_of(&self) -> Domain {
+        match &self.kind() as &DeclarationKind {
+            DeclarationKind::DecisionVariable(var) => var.domain.clone(),
+            DeclarationKind::ValueLetting(e) => e.domain_of(),
+            DeclarationKind::DomainLetting(domain) => domain.clone(),
+            DeclarationKind::Given(domain) => domain.clone(),
+            DeclarationKind::RecordField(domain) => domain.clone(),
+        }
+    }
+}
+
 impl CategoryOf for DeclarationPtr {
     fn category_of(&self) -> Category {
         match &self.kind() as &DeclarationKind {
@@ -479,18 +480,6 @@ impl DefaultWithId for DeclarationPtr {
                 }),
                 id,
             ),
-        }
-    }
-}
-
-impl Typeable for DeclarationPtr {
-    fn return_type(&self) -> Option<ReturnType> {
-        match &self.kind() as &DeclarationKind {
-            DeclarationKind::DecisionVariable(var) => var.return_type(),
-            DeclarationKind::ValueLetting(expression) => expression.return_type(),
-            DeclarationKind::DomainLetting(domain) => domain.return_type(),
-            DeclarationKind::Given(domain) => domain.return_type(),
-            DeclarationKind::RecordField(domain) => domain.return_type(),
         }
     }
 }
