@@ -734,12 +734,29 @@ impl Domain {
             Domain::Tuple(domains) => {
                 let mut ans = 1u64;
                 for domain in domains {
-                    ans *= domain.length()?;
+                    ans = ans
+                        .checked_mul(domain.length()?)
+                        .ok_or(DomainOpError::TooLarge)?;
                 }
                 Ok(ans)
             }
-            Domain::Matrix(_, _) => todo!(),
-            Domain::Record(_) => todo!(),
+            Domain::Record(entries) => {
+                // A record is just a named tuple
+                let mut ans = 1u64;
+                for entry in entries {
+                    let sz = entry.domain.length()?;
+                    ans = ans.checked_mul(sz).ok_or(DomainOpError::TooLarge)?;
+                }
+                Ok(ans)
+            }
+            Domain::Matrix(inner_domain, idx_domains) => {
+                let inner_sz = inner_domain.length()?;
+                let exp = idx_domains.iter().try_fold(1u32, |acc, val| {
+                    let len = val.length()? as u32;
+                    acc.checked_mul(len).ok_or(DomainOpError::TooLarge)
+                })?;
+                inner_sz.checked_pow(exp).ok_or(DomainOpError::TooLarge)
+            }
         }
     }
 
@@ -1210,5 +1227,52 @@ mod tests {
         // 3 ways to pick first element, 2 ways to pick second element
         let t = Domain::Tuple(vec![domain_int!(1..3), Domain::Bool]);
         assert_eq!(t.length(), Ok(6));
+    }
+
+    #[test]
+    fn test_length_record() {
+        // 3 ways to pick rec.a, 2 ways to pick rec.b
+        let t = Domain::Record(vec![
+            RecordEntry {
+                name: Name::user("a"),
+                domain: domain_int!(1..3),
+            },
+            RecordEntry {
+                name: Name::user("b"),
+                domain: Domain::Bool,
+            },
+        ]);
+        assert_eq!(t.length(), Ok(6));
+    }
+
+    #[test]
+    fn test_length_matrix_basic() {
+        // 3 booleans -> [T, T, T], [T, T, F], ..., [F, F, F]
+        let m = Domain::Matrix(Box::new(Domain::Bool), vec![domain_int!(1..3)]);
+        assert_eq!(m.length(), Ok(8));
+
+        // 2 numbers, each 1..3 -> 3*3 options
+        let m = Domain::Matrix(Box::new(domain_int!(1..3)), vec![domain_int!(1..2)]);
+        assert_eq!(m.length(), Ok(9));
+    }
+
+    #[test]
+    fn test_length_matrix_2d() {
+        // 2x3 matrix of booleans -> (2**2)**3 = 64 options
+        let m = Domain::Matrix(
+            Box::new(Domain::Bool),
+            vec![domain_int!(1..2), domain_int!(1..3)],
+        );
+        assert_eq!(m.length(), Ok(64));
+    }
+
+    #[test]
+    fn test_length_matrix_of_sets() {
+        // 3 sets drawn from 1..2; 4**3 = 64 total options
+        let m = Domain::Matrix(
+            Box::new(Domain::Set(SetAttr::None, Box::new(domain_int!(1..2)))),
+            vec![domain_int!(1..3)],
+        );
+        assert_eq!(m.length(), Ok(64));
     }
 }
