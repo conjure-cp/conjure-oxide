@@ -489,6 +489,12 @@ pub enum Expression {
         #[serde_as(as = "DeclarationPtrAsId")] DeclarationPtr,
         Moo<Expression>,
     ),
+
+    // This expression represents a cnf clause in its simplest form, it should only contain atoms and should not be affected by the rule engine
+    Clause(Metadata, Moo<Expression>),
+
+    // This expression is for encoding i32 ints as a vector of boolean expressions for cnf - using 2s complement
+    SATInt(Metadata, Moo<Expression>),
 }
 
 // for the given matrix literal, return a bounded domain from the min to max of applying op to each
@@ -784,6 +790,20 @@ impl Expression {
                 .ok(),
             Expression::MinionPow(_, _, _, _) => Some(Domain::Bool),
             Expression::ToInt(_, _) => Some(Domain::Int(vec![Range::Bounded(0, 1)])),
+            // The clause expression is a special case of the Or expression, but it is not
+            // a disjunction of expressions, but rather a disjunction of atoms
+            // Clauses should only be found within the `cnf_clauses` field of the model
+            // and therefore should not be affected by the rule engine
+            Expression::Clause(_, _) => Some(Domain::Bool),
+            Expression::SATInt(_, _) => {
+                Some(Domain::Int(vec![Range::Bounded(
+                    i8::MIN.into(),
+                    i8::MAX.into(),
+                )])) // BITS
+            } // A CnfInt can represent any i8 integer at the moment
+              // A CnfInt contains multiple boolean expressions and represents the integer
+              // formed when these booleans are treated as the bits in an integer encoding.
+              // So the 'domain of' should be an integer
         };
         match ret {
             // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
@@ -1305,6 +1325,14 @@ impl Display for Expression {
             Expression::ToInt(_, expr) => {
                 write!(f, "toInt({expr})")
             }
+
+            Expression::Clause(_, e) => {
+                write!(f, "Clause({e})")
+            }
+
+            Expression::SATInt(_, e) => {
+                write!(f, "SATInt({e})")
+            }
         }
     }
 }
@@ -1394,6 +1422,8 @@ impl Typeable for Expression {
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::MinionPow(_, _, _, _) => Some(ReturnType::Bool),
             Expression::ToInt(_, _) => Some(ReturnType::Int),
+            Expression::Clause(_, _) => Some(ReturnType::Bool),
+            Expression::SATInt(_, _) => Some(ReturnType::Int),
         }
     }
 }
