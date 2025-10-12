@@ -71,6 +71,7 @@ export RUSTDOCFLAGS="$RUSTDOCFLAGS -C instrument-coverage -Zunstable-options --p
 # is created automatically to place all profiling files there. 
 # This was done to avoid the presence of 80+ files in the project's root directory.
 export LLVM_PROFILE_FILE='target/coverage/conjure-oxide-%p-%m.profraw'
+mkdir -p target/coverage
 
 # regex patterns to ignore
 GRCOV_EXCLUDE_LINES=(
