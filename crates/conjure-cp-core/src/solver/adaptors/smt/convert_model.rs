@@ -5,6 +5,7 @@ use z3::ast::*;
 use super::store::Store;
 
 use crate::Model;
+use crate::ast::AbstractLiteral;
 use crate::ast::{
     Atom, DecisionVariable, DeclarationPtr, Domain, Expression, Literal, Name, SymbolTable,
 };
@@ -67,8 +68,35 @@ fn expr_to_ast(store: &Store, expr: &Expression) -> Result<Dynamic, SolverError>
         // Since equality is part of the core SMT theory, any two dynamic ASTs
         // of the same type can be compared with it.
         // We simply convert back into a Dynamic with `.into()`
-        Expression::Neq(_, a, b) => binop(store, a, b, |a, b| a.ne(b).into()),
-        Expression::Eq(_, a, b) => binop(store, a, b, |a, b| a.eq(b).into()),
+        Expression::Neq(_, a, b) => binop(store, a, b, ast_id, ast_id, |a, b| a.ne(b)),
+        Expression::Eq(_, a, b) => binop(store, a, b, ast_id, ast_id, |a, b| a.eq(b)),
+
+        Expression::Not(_, a) => unop(store, a, Dynamic::as_bool, |a| a.not()),
+
+        Expression::Imply(_, a, b) => {
+            binop(store, a, b, Dynamic::as_bool, Dynamic::as_bool, |a, b| {
+                a.implies(b)
+            })
+        }
+        Expression::Iff(_, a, b) => {
+            binop(store, a, b, Dynamic::as_bool, Dynamic::as_bool, |a, b| {
+                a.iff(b)
+            })
+        }
+
+        // TODO: support AND once it's relevant, currently they are bubbled up
+        Expression::Or(_, a) => {
+            let exprs =
+                a.as_ref()
+                    .clone()
+                    .unwrap_list()
+                    .ok_or(SolverError::ModelFeatureNotImplemented(format!(
+                        "inner expression must be a list: {expr}"
+                    )))?;
+            manyop(store, exprs.as_slice(), Dynamic::as_bool, |asts| {
+                Bool::or(asts)
+            })
+        }
 
         _ => Err(SolverError::ModelFeatureNotImplemented(format!(
             "expression type not yet implemented: {expr}"
@@ -98,13 +126,63 @@ fn literal_to_ast(lit: &Literal) -> Result<Dynamic, SolverError> {
     }
 }
 
-fn binop(
+fn conv_ast<From>(
+    ast: Dynamic,
+    conv: impl Fn(&Dynamic) -> Option<From>,
+) -> Result<From, SolverError> {
+    conv(&ast).ok_or(SolverError::ModelInvalid(format!(
+        "conversion failed on: {ast}"
+    )))
+}
+
+fn ast_id(ast: &Dynamic) -> Option<Dynamic> {
+    Some(ast.clone())
+}
+
+fn unop<FromA, Out>(
+    store: &Store,
+    a: &Expression,
+    conv_a: impl Fn(&Dynamic) -> Option<FromA>,
+    op: impl Fn(FromA) -> Out,
+) -> Result<Dynamic, SolverError>
+where
+    Out: Into<Dynamic>,
+{
+    let a_ast = conv_ast(expr_to_ast(store, a)?, &conv_a)?;
+    Ok((op)(a_ast).into())
+}
+
+fn binop<FromA, FromB, Out>(
     store: &Store,
     a: &Expression,
     b: &Expression,
-    op: impl Fn(Dynamic, Dynamic) -> Dynamic,
-) -> Result<Dynamic, SolverError> {
-    let a_ast = expr_to_ast(store, a)?;
-    let b_ast = expr_to_ast(store, b)?;
-    Ok((op)(a_ast, b_ast))
+    conv_a: impl Fn(&Dynamic) -> Option<FromA>,
+    conv_b: impl Fn(&Dynamic) -> Option<FromB>,
+    op: impl Fn(FromA, FromB) -> Out,
+) -> Result<Dynamic, SolverError>
+where
+    Out: Into<Dynamic>,
+{
+    let a_ast = conv_ast(expr_to_ast(store, a)?, conv_a)?;
+    let b_ast = conv_ast(expr_to_ast(store, b)?, conv_b)?;
+    Ok((op)(a_ast, b_ast).into())
+}
+
+fn manyop<From, Out>(
+    store: &Store,
+    exprs: &[Expression],
+    conv: impl Fn(&Dynamic) -> Option<From>,
+    op: impl Fn(&[From]) -> Out,
+) -> Result<Dynamic, SolverError>
+where
+    Out: Into<Dynamic>,
+{
+    // Result implements FromIter, collecting into either the full collection or an error
+    let asts: Result<Vec<_>, SolverError> = exprs
+        .iter()
+        .map(|e| expr_to_ast(store, e).and_then(|ast| conv_ast(ast, &conv)))
+        .collect();
+    let asts = asts?;
+
+    Ok((op)(asts.as_slice()).into())
 }
