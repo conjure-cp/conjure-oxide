@@ -84,7 +84,6 @@ fn expr_to_ast(store: &Store, expr: &Expression) -> Result<Dynamic, SolverError>
             })
         }
 
-        // TODO: support AND once it's relevant, currently they are bubbled up
         Expression::Or(_, a) => {
             let exprs =
                 a.as_ref()
@@ -95,6 +94,18 @@ fn expr_to_ast(store: &Store, expr: &Expression) -> Result<Dynamic, SolverError>
                     )))?;
             manyop(store, exprs.as_slice(), Dynamic::as_bool, |asts| {
                 Bool::or(asts)
+            })
+        }
+        Expression::And(_, a) => {
+            let exprs =
+                a.as_ref()
+                    .clone()
+                    .unwrap_list()
+                    .ok_or(SolverError::ModelFeatureNotImplemented(format!(
+                        "inner expression must be a list: {expr}"
+                    )))?;
+            manyop(store, exprs.as_slice(), Dynamic::as_bool, |asts| {
+                Bool::and(asts)
             })
         }
 
