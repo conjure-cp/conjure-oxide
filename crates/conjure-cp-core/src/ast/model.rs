@@ -293,12 +293,12 @@ pub enum ObjectiveType {
 
 impl FromStr for ObjectiveType {
      type Err = String;
-     
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "minimising" => Ok(ObjectiveType::Minimise),
             "maximising" => Ok(ObjectiveType::Maximise),
-            _ => Err(format!("Unknown objective type: {}", s)),
+            _ => Err(format!("Unknown objective type: {s}")),
         }
     }
 }
