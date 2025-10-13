@@ -99,8 +99,8 @@ pub fn parse_essence_with_context(
                     .utf8_text(source_code.as_bytes())
                     .expect("Failed to extract text from node");
 
-                let objective_type_as_obj = ObjectiveType::from_str(&objective_type)
-                    .map_err(|e| EssenceParseError::syntax_error(e.to_string(),None))?;     
+                let objective_type_as_obj = ObjectiveType::from_str(objective_type)
+                    .map_err(|e| EssenceParseError::syntax_error(e,None))?;     
 
                 let inner = statement
                     .child(1)
