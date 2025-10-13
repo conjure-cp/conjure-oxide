@@ -100,7 +100,7 @@ pub fn parse_essence_with_context(
                     .expect("Failed to extract text from node");
 
                 let objective_type_as_obj = ObjectiveType::from_str(objective_type)
-                    .map_err(|e| EssenceParseError::syntax_error(e,None))?;     
+                    .map_err(|e| EssenceParseError::syntax_error(e, None))?;     
 
                 let inner = statement
                     .child(1)
@@ -116,9 +116,9 @@ pub fn parse_essence_with_context(
                         None,
                     ));
                 }
-                let objective = Expression::Objective(Metadata::new(), objective_type_as_obj, Moo::new(expr));
+                let objective =
+                    Expression::Objective(Metadata::new(), objective_type_as_obj, Moo::new(expr));
                 model.objective = Some(objective);
-                println!("{:?}",model.objective);
             }
             _ => {
                 let kind = statement.kind();

@@ -292,7 +292,7 @@ pub enum ObjectiveType {
 }
 
 impl FromStr for ObjectiveType {
-     type Err = String;
+    type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
