@@ -1,7 +1,7 @@
 #![allow(clippy::arc_with_non_send_sync)] // uniplate needs this
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
-use std::fmt::{Display, Formatter};
+use std::fmt::Display;
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 use polyquine::Quine;

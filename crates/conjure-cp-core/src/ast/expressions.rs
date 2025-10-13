@@ -1351,7 +1351,7 @@ impl Typeable for Expression {
             Expression::Root(_, _) => Some(ReturnType::Bool),
             Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
             Expression::FromSolution(_, expr) => expr.return_type(),
-            Expression::Objective(_, _, expr) => None,
+            Expression::Objective(_, _, expr) => expr.return_type(),
             Expression::Metavar(_, _) => None,
             Expression::Atomic(_, atom) => atom.return_type(),
             Expression::Scope(_, scope) => scope.return_type(),
