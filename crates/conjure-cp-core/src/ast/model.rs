@@ -3,6 +3,7 @@ use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
 use std::fmt::Display;
 use std::rc::Rc;
+use std::str::FromStr;
 use std::sync::{Arc, RwLock};
 use polyquine::Quine;
 use derivative::Derivative;
@@ -290,8 +291,10 @@ pub enum ObjectiveType {
     Maximise,
 }
 
-impl ObjectiveType {
-    pub fn from_str(s: &str) -> Result<Self, String> {
+impl FromStr for ObjectiveType {
+     type Err = String;
+     
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "minimising" => Ok(ObjectiveType::Minimise),
             "maximising" => Ok(ObjectiveType::Maximise),
@@ -306,6 +309,6 @@ impl Display for ObjectiveType {
             ObjectiveType::Minimise => "minimising",
             ObjectiveType::Maximise => "maximising",
         };
-        write!(f, "{}", s)
+        write!(f, "{s}")
     }
 }
