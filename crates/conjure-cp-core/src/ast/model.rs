@@ -1,7 +1,7 @@
 #![allow(clippy::arc_with_non_send_sync)] // uniplate needs this
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::{Display, Formatter};
 use std::rc::Rc;
 use std::sync::{Arc, RwLock};
 use polyquine::Quine;
@@ -286,25 +286,25 @@ impl Display for SerdeModel {
 #[derive(Clone, Debug, Derivative, Serialize, Deserialize, Quine)]
 #[derivative(PartialEq, Eq)]
 pub enum ObjectiveType {
-    Minimize,
-    Maximize,
+    Minimise,
+    Maximise,
 }
 
 impl ObjectiveType {
     pub fn from_str(s: &str) -> Result<Self, String> {
         match s {
-            "minimising" => Ok(ObjectiveType::Minimize),
-            "maximising" => Ok(ObjectiveType::Maximize),
+            "minimising" => Ok(ObjectiveType::Minimise),
+            "maximising" => Ok(ObjectiveType::Maximise),
             _ => Err(format!("Unknown objective type: {}", s)),
         }
     }
 }
 
 impl Display for ObjectiveType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
-            ObjectiveType::Minimize => "minimising",
-            ObjectiveType::Maximize => "maximising",
+            ObjectiveType::Minimise => "minimising",
+            ObjectiveType::Maximise => "maximising",
         };
         write!(f, "{}", s)
     }
