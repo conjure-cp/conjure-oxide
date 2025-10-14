@@ -36,7 +36,7 @@ impl fmt::Display for CnfClause {
             }
             match lit {
                 Expression::Not(_, var) => write!(f, "¬{}", var.as_ref())?,
-                Expression::Atomic(_, _) => write!(f, "{}", lit)?,
+                Expression::Atomic(_, _) => write!(f, "{lit}")?,
                 _ => panic!("This expression type should not appear in a CnfClause"),
             }
         }
