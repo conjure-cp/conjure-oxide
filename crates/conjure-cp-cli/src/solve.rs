@@ -87,7 +87,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
             };
         }
     } else {
-        run_solver(global_args.solver, &global_args, &solve_args, rewritten_model);
+        run_solver(global_args.solver, &global_args, &solve_args, rewritten_model)?
     }
 
     // still do postamble even if we didn't run the solver

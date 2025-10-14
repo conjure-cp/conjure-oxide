@@ -114,7 +114,6 @@ pub fn get_solutions_with_dominance(
             final_results.push(sol.clone());
         }
     }
-    println!("{:?}", final_results);
     Ok(final_results)
 }
 
