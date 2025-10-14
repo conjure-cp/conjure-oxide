@@ -14,9 +14,9 @@ use itertools::Itertools as _;
 use tempfile::tempdir;
 
 use crate::utils::json::sort_json_object;
-use conjure_cp::Model;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::solver::{Solver, SolverAdaptor};
+use conjure_cp::Model;
 
 use glob::glob;
 
@@ -124,7 +124,9 @@ pub fn get_solutions(
         *sol = sol
             .clone()
             .into_iter()
-            .filter(|(name, _)| !matches!(name, Name::Represented(_)))
+            .filter(|(name, _)| {
+                !matches!(name, Name::Represented(_)) && !matches!(name, Name::Machine(_))
+            })
             .collect();
     }
 
