@@ -65,9 +65,18 @@ pub fn save_model_json(
     path: &str,
     test_name: &str,
     test_stage: &str,
+    solver: Option<SolverFamily>
 ) -> Result<(), std::io::Error> {
+
+    let marker: &str = match solver {
+        Some(SolverFamily::Minion) => "minion",
+        Some(SolverFamily::Sat) => "sat",
+        None => "agnostic",
+    };
+
     let generated_json_str = serialise_model(model)?;
-    let filename = format!("{path}/{test_name}.generated-{test_stage}.serialised.json");
+    let filename = format!("{path}/{marker}-{test_name}.generated-{test_stage}.serialised.json");
+    println!("saving: {filename}");
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
     Ok(())
 }
@@ -96,11 +105,20 @@ pub fn read_model_json(
     test_name: &str,
     prefix: &str,
     test_stage: &str,
+    solver: Option<SolverFamily>
 ) -> Result<ConjureModel, std::io::Error> {
-    let expected_json_str = std::fs::read_to_string(format!(
-        "{path}/{test_name}.{prefix}-{test_stage}.serialised.json"
-    ))?;
-    println!("{path}/{test_name}.{prefix}-{test_stage}.serialised.json");
+    let marker: &str = match solver {
+        Some(SolverFamily::Minion) => "minion",
+        Some(SolverFamily::Sat) => "sat",
+        None => "agnostic",
+    };
+    
+    let filepath= format!(
+        "{path}/{marker}-{test_name}.{prefix}-{test_stage}.serialised.json"
+    );
+    println!("reading: {filepath}");
+
+    let expected_json_str = std::fs::read_to_string(filepath)?;
     let expected_model: SerdeModel = serde_json::from_str(&expected_json_str)?;
 
     Ok(expected_model.initialise(ctx.clone()).unwrap())
