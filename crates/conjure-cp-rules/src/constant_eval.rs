@@ -181,6 +181,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
         }
         Expr::FromSolution(_, _) => None,
         Expr::DominanceRelation(_, _) => None,
+        Expr::Objective(_, _, _) => None,
         Expr::InDomain(_, e, domain) => {
             let Expr::Atomic(_, Atom::Literal(lit)) = e.as_ref() else {
                 return None;
