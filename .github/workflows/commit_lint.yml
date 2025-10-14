@@ -1,0 +1,44 @@
+name: Commit Message Check
+
+on:
+    pull_request:
+        types: [opened, synchronize, reopened]
+
+jobs:
+    check-commits:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+              with:
+                  fetch-depth: 0
+
+            - name: Validate Commit Messages
+              run: |
+                  echo "Checking commits in this PR..."
+                  # Use git directly: base (merge base) -> head; only subject (%s) so multiline bodies ignored
+                  subjects=$(git log --format=%s ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }})
+
+                  regex='^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .+'
+                  invalid=false
+
+                  while IFS= read -r subject; do
+                    [ -z "$subject" ] && continue
+                    # Allow merge commits
+                    if [[ "$subject" =~ ^Merge ]]; then
+                      echo "- Valid (Merge Commit): '$subject'"
+                      continue
+                    fi
+                    if [[ ! "$subject" =~ $regex ]]; then
+                      echo "- Invalid: '$subject'"
+                      invalid=true
+                    else
+                      echo "- Valid: '$subject'"
+                    fi
+                  done <<< "$subjects"
+
+                  if [ "$invalid" = true ]; then
+                    echo "Error: One or more commit messages do not follow the conventional format."
+                    echo "Expected: <type>(<scope>): <description>"
+                    echo "Allowed types: feat, fix, docs, style, refactor, test, chore"
+                    exit 1
+                  fi
