@@ -248,8 +248,6 @@ fn integration_test_inner(
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
 
-    // let verbose = true; 
-
     // When running accept=true, only regenerate the expected files for these tests if the test
     // fails.
     //
@@ -260,7 +258,7 @@ fn integration_test_inner(
     let mut rewritten_model_dirty = false;
 
     if verbose {
-        eprintln!("Running integration test for {path}/{essence_base}, ACCEPT={accept}");
+        println!("Running integration test for {path}/{essence_base}, ACCEPT={accept}");
     }
 
     // File path
@@ -417,30 +415,29 @@ fn integration_test_inner(
     if accept {
         // Overwrite expected parse and rewrite models if enabled
         if config.enable_native_parser
-            && !expected_exists_for(path, essence_base, "parse", "serialised.json", None)
+            && !expected_exists_for(path, essence_base, "parse", "serialised.json")
         {
             model_native.clone().expect("model_native should exist");
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
+            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
         }
         if config.parse_model_default
-            && !expected_exists_for(path, essence_base, "parse", "serialised.json", None)
+            && !expected_exists_for(path, essence_base, "parse", "serialised.json")
         {
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
+            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
         }
         if config.apply_rewrite_rules
-            && !expected_exists_for(path, essence_base, "rewrite", "serialised.json", Some(solver))
+            && !expected_exists_for(path, essence_base, "rewrite", "serialised.json")
         {
-            copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json", Some(solver))?;
+            copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json")?;
         }
 
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
         // based on the test results, so they don't get done later.
         // TODO Fix
-        copy_generated_to_expected(path, essence_base, "minion", "solutions.json", Some(solver))?;
-        // copy_generated_to_expected(path, essence_base, "sat", "solutions.json")?;
-
+        copy_generated_to_expected(path, essence_base, "minion", "solutions.json")?;
+        
         if config.validate_rule_traces {
-            copy_human_trace_generated_to_expected(path, essence_base, solver)?;
+            copy_human_trace_generated_to_expected(path, essence_base)?;
             save_stats_json(context.clone(), path, essence_base)?;
         }
     }
@@ -555,13 +552,13 @@ fn integration_test_inner(
         // Overwrite expected parse and rewrite models if needed
         if config.enable_native_parser && parsed_native_model_dirty {
             model_native.expect("model_native should exist");
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
+            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
         }
         if config.parse_model_default && parsed_model_dirty {
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
+            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
         }
         if config.apply_rewrite_rules && rewritten_model_dirty {
-            copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json", None)?;
+            copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json")?;
         }
     }
     save_stats_json(context, path, essence_base)?;
@@ -572,15 +569,10 @@ fn integration_test_inner(
 fn copy_human_trace_generated_to_expected(
     path: &str,
     test_name: &str,
-    solver: SolverFamily
 ) -> Result<(), std::io::Error> {
-    let marker = match solver {
-        SolverFamily::Minion => "minion",
-        SolverFamily::Sat => "sat"
-    };
     std::fs::copy(
-        format!("{path}/{marker}-{test_name}-generated-rule-trace-human.txt"),
-        format!("{path}/{marker}-{test_name}-expected-rule-trace-human.txt"),
+        format!("{path}/{test_name}-generated-rule-trace-human.txt"),
+        format!("{path}/{test_name}-expected-rule-trace-human.txt"),
     )?;
     Ok(())
 }
@@ -590,27 +582,16 @@ fn copy_generated_to_expected(
     test_name: &str,
     stage: &str,
     extension: &str,
-    solver: Option<SolverFamily>
 ) -> Result<(), std::io::Error> {
-    let marker = match solver {
-        Some(SolverFamily::Minion) => "minion",
-        Some(SolverFamily::Sat) => "sat",
-        None => "agnostic",
-    };
     std::fs::copy(
-        format!("{path}/{marker}-{test_name}.generated-{stage}.{extension}"),
-        format!("{path}/{marker}-{test_name}.expected-{stage}.{extension}"),
+        format!("{path}/{test_name}.generated-{stage}.{extension}"),
+        format!("{path}/{test_name}.expected-{stage}.{extension}"),
     )?;
     Ok(())
 }
 
-fn expected_exists_for(path: &str, test_name: &str, stage: &str, extension: &str, solver: Option<SolverFamily>) -> bool {
-    let marker = match solver {
-        Some(SolverFamily::Minion) => "minion",
-        Some(SolverFamily::Sat) => "sat",
-        None => "agnostic",
-    };
-    Path::new(&format!("{path}/{marker}-{test_name}.expected-{stage}.{extension}")).exists()
+fn expected_exists_for(path: &str, test_name: &str, stage: &str, extension: &str) -> bool {
+    Path::new(&format!("{path}/{test_name}.expected-{stage}.{extension}")).exists()
 }
 
 fn assert_vector_operators_have_partially_evaluated(model: &conjure_cp::Model) {
