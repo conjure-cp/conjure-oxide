@@ -1,0 +1,70 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+and([and([and([or([a,b;int(1..2)]),or([!(a),b;int(1..2)]);int(1..2)]),or([a,!(b);int(1..2)]);int(1..2)]),or([!(c),c;int(1..2)]);int(1..2)])
+
+--
+
+and([and([and([or([a,b;int(1..2)]),or([!(a),b;int(1..2)]);int(1..2)]),or([a,!(b);int(1..2)]);int(1..2)]),or([!(c),c;int(1..2)]);int(1..2)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+and([or([a,b;int(1..2)]),or([!(a),b;int(1..2)]),or([a,!(b);int(1..2)]),or([!(c),c;int(1..2)]);int(1..2)]) 
+
+--
+
+and([or([a,b;int(1..2)]),or([!(a),b;int(1..2)]),or([a,!(b);int(1..2)]),or([!(c),c;int(1..2)]);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+and([or([a,b;int(1..2)]),or([!(a),b;int(1..2)]),or([a,!(b);int(1..2)]),or([!(c),c;int(1..2)]);int(1..)]) 
+
+--
+
+and([or([a,b;int(1..2)]),or([!(a),b;int(1..2)]),or([a,!(b);int(1..2)]),or([!(c),c;int(1..2)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([a,b;int(1..2)]),
+or([!(a),b;int(1..2)]),
+or([a,!(b);int(1..2)]),
+or([!(c),c;int(1..2)]) 
+
+--
+
+or([a,b;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([a,b;int(1..)]) 
+
+--
+
+or([!(a),b;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([!(a),b;int(1..)]) 
+
+--
+
+or([a,!(b);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([a,!(b);int(1..)]) 
+
+--
+
+or([!(c),c;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+or([!(c),c;int(1..)]) 
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+or([a,b;int(1..)]),
+or([!(a),b;int(1..)]),
+or([a,!(b);int(1..)]),
+or([!(c),c;int(1..)])
+

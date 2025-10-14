@@ -570,6 +570,7 @@ fn copy_human_trace_generated_to_expected(
     path: &str,
     test_name: &str,
 ) -> Result<(), std::io::Error> {
+    //  WBHYn NO GENERTE
     std::fs::copy(
         format!("{path}/{test_name}-generated-rule-trace-human.txt"),
         format!("{path}/{test_name}-expected-rule-trace-human.txt"),
