@@ -158,13 +158,24 @@ static GUARD: Mutex<()> = Mutex::new(());
 
 // wrapper to conditionally enforce sequential execution
 fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
+
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
+
+    let file_config: TestConfig =
+        if let Ok(config_contents) = fs::read_to_string(format!("{path}/config.toml")) {
+            toml::from_str(&config_contents).unwrap()
+        } else {
+            Default::default()
+        };
+
+    let config = file_config.merge_env();
+
 
     let subscriber = create_scoped_subscriber(path, essence_base);
     // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
     // correctly
-    //
+
     // also with ACCEPT=true, as the conjure checking seems to get confused when ran too much at
     // once.
     if verbose || accept {
@@ -172,12 +183,12 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
 
         // set the subscriber as default
         tracing::subscriber::with_default(subscriber, || {
-            integration_test_inner(path, essence_base, extension)
+            integration_test_inner(path, essence_base, extension, &config)
         })
     } else {
         let subscriber = create_scoped_subscriber(path, essence_base);
         tracing::subscriber::with_default(subscriber, || {
-            integration_test_inner(path, essence_base, extension)
+            integration_test_inner(path, essence_base, extension, &config)
         })
     }
 }
@@ -219,6 +230,7 @@ fn integration_test_inner(
     path: &str,
     essence_base: &str,
     extension: &str,
+    config: &TestConfig
 ) -> Result<(), Box<dyn Error>> {
     let context: Arc<RwLock<Context<'static>>> = Default::default();
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
@@ -236,15 +248,6 @@ fn integration_test_inner(
     if verbose {
         println!("Running integration test for {path}/{essence_base}, ACCEPT={accept}");
     }
-
-    let file_config: TestConfig =
-        if let Ok(config_contents) = fs::read_to_string(format!("{path}/config.toml")) {
-            toml::from_str(&config_contents).unwrap()
-        } else {
-            Default::default()
-        };
-
-    let config = file_config.merge_env();
 
     // TODO: allow either Minion or SAT but not both; eventually allow both sovlers to be tested
 
