@@ -37,7 +37,6 @@ pub fn get_solutions(
         match solver {
             SolverFamily::Sat => get_solutions_no_dominance(Sat::default(), model, num_sols, solver_input_file),
             SolverFamily::Minion => get_solutions_no_dominance(Minion::default(), model, num_sols, solver_input_file),
-            _ => Err(anyhow::anyhow!("Unsupported solver family: {:?}", solver)),
         }
     }
 }
