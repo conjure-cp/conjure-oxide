@@ -2,15 +2,19 @@
 
 use conjure_cp_core::ast::SymbolTable;
 use itertools::{Itertools, izip};
+use num_traits::{
+    Num,
+    sign::{Signed, abs},
+};
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeSet, fmt::Display};
 use thiserror::Error;
 
-use crate::{ast::pretty::pretty_vec, domain_int, range};
+use super::{AbstractLiteral, Literal, Name, ReturnType, records::RecordEntry, types::Typeable};
+use crate::{ast::pretty::pretty_vec, bug, domain_int, range};
+use conjure_cp_core::utils::{CombinatoricsError, count_combinations};
 use polyquine::Quine;
 use uniplate::Uniplate;
-
-use super::{AbstractLiteral, Literal, Name, ReturnType, records::RecordEntry, types::Typeable};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 #[path_prefix(conjure_cp::ast)]
@@ -45,6 +49,16 @@ impl<A: Ord> Range<A> {
             Range::Bounded(a, _) => Some(a),
             Range::UnboundedR(a) => Some(a),
             Range::UnboundedL(_) => None,
+        }
+    }
+}
+
+impl<A: Num + Ord + Clone + Signed> Range<A> {
+    fn length(&self) -> Option<A> {
+        match self {
+            Range::Single(_) => Some(A::one()),
+            Range::Bounded(i, j) => Some(abs(j.clone() - i.clone()) + A::one()),
+            Range::UnboundedR(_) | Range::UnboundedL(_) => None,
         }
     }
 }
@@ -95,106 +109,140 @@ pub enum SetAttr {
     MaxSize(i32),
     MinMaxSize(i32, i32),
 }
+
+impl SetAttr {
+    pub fn allows_size(&self, size: usize) -> bool {
+        match self {
+            SetAttr::None => true,
+            SetAttr::Size(n) => *n as usize == size,
+            SetAttr::MinSize(n) => size >= *n as usize,
+            SetAttr::MaxSize(n) => size <= *n as usize,
+            SetAttr::MinMaxSize(min, max) => size >= *min as usize && size <= *max as usize,
+        }
+    }
+}
+
 impl Domain {
     /// Returns true if `lit` is a member of the domain.
     ///
     /// # Errors
     ///
     /// - [`DomainOpError::InputContainsReference`] if the input domain is a reference or contains
-    ///   a reference, meaning that its members cannot be determined.
+    ///   a reference, meaning its members cannot be determined.
     pub fn contains(&self, lit: &Literal) -> Result<bool, DomainOpError> {
         // not adding a generic wildcard condition for all domains, so that this gives a compile
         // error when a domain is added.
-        match (self, lit) {
-            (Domain::Empty(_), _) => Ok(false),
-            (Domain::Int(ranges), Literal::Int(x)) => {
-                // unconstrained int domain
-                if ranges.is_empty() {
-                    return Ok(true);
-                };
+        match self {
+            // empty domain can't contain anything
+            Domain::Empty(_) => Ok(false),
+            // references need to be resolved first
+            Domain::Reference(_) => Err(DomainOpError::InputContainsReference),
+            Domain::Bool => match lit {
+                Literal::Bool(_) => Ok(true),
+                _ => Ok(false),
+            },
+            Domain::Int(ranges) => match lit {
+                Literal::Int(x) => {
+                    // unconstrained int domain - contains all integers
+                    if ranges.is_empty() {
+                        return Ok(true);
+                    };
 
-                Ok(ranges.iter().any(|range| range.contains(x)))
-            }
-            (Domain::Int(_), _) => Ok(false),
-            (Domain::Bool, Literal::Bool(_)) => Ok(true),
-            (Domain::Bool, _) => Ok(false),
-            (Domain::Reference(_), _) => Err(DomainOpError::InputContainsReference),
-            (
-                Domain::Matrix(elem_domain, index_domains),
-                Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx_domain)),
-            ) => {
-                let mut index_domains = index_domains.clone();
-                if index_domains
-                    .pop()
-                    .expect("a matrix should have atleast one index domain")
-                    != **idx_domain
-                {
-                    return Ok(false);
-                };
-
-                // matrix literals are represented as nested 1d matrices, so the elements of
-                // the matrix literal will be the inner dimensions of the matrix.
-                let next_elem_domain = if index_domains.is_empty() {
-                    elem_domain.as_ref().clone()
-                } else {
-                    Domain::Matrix(elem_domain.clone(), index_domains)
-                };
-
-                for elem in elems {
-                    if !next_elem_domain.contains(elem)? {
+                    Ok(ranges.iter().any(|range| range.contains(x)))
+                }
+                _ => Ok(false),
+            },
+            Domain::Set(set_attr, inner_domain) => match lit {
+                Literal::AbstractLiteral(AbstractLiteral::Set(lit_elems)) => {
+                    // check if the literal's size is allowed by the set attribute
+                    if !set_attr.allows_size(lit_elems.len()) {
                         return Ok(false);
                     }
-                }
 
-                Ok(true)
+                    for elem in lit_elems {
+                        if !inner_domain.contains(elem)? {
+                            return Ok(false);
+                        }
+                    }
+                    Ok(true)
+                }
+                _ => Ok(false),
+            },
+            Domain::Matrix(elem_domain, index_domains) => {
+                match lit {
+                    Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx_domain)) => {
+                        // Matrix literals are represented as nested 1d matrices, so the elements of
+                        // the matrix literal will be the inner dimensions of the matrix.
+
+                        let mut index_domains = index_domains.clone();
+                        if index_domains
+                            .pop()
+                            .expect("a matrix should have at least one index domain")
+                            != **idx_domain
+                        {
+                            return Ok(false);
+                        };
+
+                        let next_elem_domain = if index_domains.is_empty() {
+                            // Base case - we have a 1D row. Now check if all elements in the
+                            // literal are in this row's element domain.
+                            elem_domain.as_ref().clone()
+                        } else {
+                            // Otherwise, go down a dimension (e.g. 2D matrix inside a 3D tensor)
+                            Domain::Matrix(elem_domain.clone(), index_domains)
+                        };
+
+                        for elem in elems {
+                            if !next_elem_domain.contains(elem)? {
+                                return Ok(false);
+                            }
+                        }
+
+                        Ok(true)
+                    }
+                    _ => Ok(false),
+                }
             }
-            (
-                Domain::Tuple(elem_domains),
-                Literal::AbstractLiteral(AbstractLiteral::Tuple(literal_elems)),
-            ) => {
-                // for every element in the tuple literal, check if it is in the corresponding domain
-                for (elem_domain, elem) in itertools::izip!(elem_domains, literal_elems) {
-                    if !elem_domain.contains(elem)? {
+            Domain::Tuple(elem_domains) => {
+                match lit {
+                    Literal::AbstractLiteral(AbstractLiteral::Tuple(literal_elems)) => {
+                        if elem_domains.len() != literal_elems.len() {
+                            return Ok(false);
+                        }
+
+                        // for every element in the tuple literal, check if it is in the corresponding domain
+                        for (elem_domain, elem) in itertools::izip!(elem_domains, literal_elems) {
+                            if !elem_domain.contains(elem)? {
+                                return Ok(false);
+                            }
+                        }
+
+                        Ok(true)
+                    }
+                    _ => Ok(false),
+                }
+            }
+            Domain::Record(entries) => match lit {
+                Literal::AbstractLiteral(AbstractLiteral::Record(lit_entries)) => {
+                    if entries.len() != lit_entries.len() {
                         return Ok(false);
                     }
-                }
 
-                Ok(true)
-            }
-            (
-                Domain::Set(_, domain),
-                Literal::AbstractLiteral(AbstractLiteral::Set(literal_elems)),
-            ) => {
-                for elem in literal_elems {
-                    if !domain.contains(elem)? {
-                        return Ok(false);
+                    for (entry, lit_entry) in itertools::izip!(entries, lit_entries) {
+                        if entry.name != lit_entry.name
+                            || !(entry.domain.contains(&lit_entry.value)?)
+                        {
+                            return Ok(false);
+                        }
                     }
+                    Ok(true)
                 }
-                Ok(true)
-            }
-            (
-                Domain::Record(entries),
-                Literal::AbstractLiteral(AbstractLiteral::Record(lit_entries)),
-            ) => {
-                for (entry, lit_entry) in itertools::izip!(entries, lit_entries) {
-                    if entry.name != lit_entry.name || !(entry.domain.contains(&lit_entry.value)?) {
-                        return Ok(false);
-                    }
-                }
-                Ok(true)
-            }
-
-            (Domain::Record(_), _) => Ok(false),
-
-            (Domain::Matrix(_, _), _) => Ok(false),
-
-            (Domain::Set(_, _), _) => Ok(false),
-
-            (Domain::Tuple(_), _) => Ok(false),
+                _ => Ok(false),
+            },
         }
     }
 
-    /// Returns a list of all possible values in the domain.
+    /// Returns a list of all possible values in an integer domain.
     ///
     /// # Errors
     ///
@@ -624,6 +672,7 @@ impl Domain {
     ///   reference, meaning that its values cannot be determined.
     pub fn values(&self) -> Result<Vec<Literal>, DomainOpError> {
         match self {
+            Domain::Reference(_) => Err(DomainOpError::InputContainsReference),
             Domain::Empty(_) => Ok(vec![]),
             Domain::Bool => Ok(vec![false.into(), true.into()]),
             Domain::Int(_) => self
@@ -633,9 +682,8 @@ impl Domain {
             // ~niklasdewally: don't know how to define this for collections, so leaving it for
             // now... However, it definitely can be done, as matrices can be indexed by matrices.
             Domain::Set(_, _) => todo!(),
-            Domain::Matrix(_, _) => todo!(),
-            Domain::Reference(_) => Err(DomainOpError::InputContainsReference),
             Domain::Tuple(_) => todo!(), // TODO: Can this be done?
+            Domain::Matrix(_, _) => todo!(),
             Domain::Record(_) => todo!(),
         }
     }
@@ -647,8 +695,69 @@ impl Domain {
     /// - [`DomainOpError::InputUnbounded`] if the input domain is of infinite size.
     /// - [`DomainOpError::InputContainsReference`] if the input domain is or contains a
     ///   domain reference, meaning that its size cannot be determined.
-    pub fn length(&self) -> Result<usize, DomainOpError> {
-        self.values().map(|x| x.len())
+    pub fn length(&self) -> Result<u64, DomainOpError> {
+        match self {
+            Domain::Reference(_) => Err(DomainOpError::InputContainsReference),
+            Domain::Empty(_) => Ok(0),
+            Domain::Bool => Ok(2),
+            Domain::Int(ranges) => {
+                if ranges.is_empty() {
+                    return Err(DomainOpError::InputUnbounded);
+                }
+
+                let mut length = 0u64;
+                for range in ranges {
+                    if let Some(range_length) = range.length() {
+                        length += range_length as u64;
+                    } else {
+                        return Err(DomainOpError::InputUnbounded);
+                    }
+                }
+                Ok(length)
+            }
+            Domain::Set(set_attr, inner_domain) => {
+                let inner_len = inner_domain.length()?;
+                let (min_sz, max_sz) = match set_attr {
+                    SetAttr::None => (0, inner_len),
+                    SetAttr::Size(n) => (*n as u64, *n as u64),
+                    SetAttr::MinSize(n) => (*n as u64, inner_len),
+                    SetAttr::MaxSize(n) => (0, *n as u64),
+                    SetAttr::MinMaxSize(min, max) => (*min as u64, *max as u64),
+                };
+                let mut ans = 0u64;
+                for sz in min_sz..=max_sz {
+                    let c = count_combinations(inner_len, sz)?;
+                    ans = ans.checked_add(c).ok_or(DomainOpError::TooLarge)?;
+                }
+                Ok(ans)
+            }
+            Domain::Tuple(domains) => {
+                let mut ans = 1u64;
+                for domain in domains {
+                    ans = ans
+                        .checked_mul(domain.length()?)
+                        .ok_or(DomainOpError::TooLarge)?;
+                }
+                Ok(ans)
+            }
+            Domain::Record(entries) => {
+                // A record is just a named tuple
+                let mut ans = 1u64;
+                for entry in entries {
+                    let sz = entry.domain.length()?;
+                    ans = ans.checked_mul(sz).ok_or(DomainOpError::TooLarge)?;
+                }
+                Ok(ans)
+            }
+            Domain::Matrix(inner_domain, idx_domains) => {
+                let inner_sz = inner_domain.length()?;
+                let exp = idx_domains.iter().try_fold(1u32, |acc, val| {
+                    let len = val.length()? as u32;
+                    acc.checked_mul(len).ok_or(DomainOpError::TooLarge)
+                })?;
+                inner_sz.checked_pow(exp).ok_or(DomainOpError::TooLarge)
+            }
+        }
     }
 
     /// Returns the domain that is the result of applying a binary operation to two integer domains.
@@ -975,6 +1084,20 @@ pub enum DomainOpError {
     /// The operation failed as the input domain contained a reference.
     #[error("The operation failed as the input domain contained a reference")]
     InputContainsReference,
+
+    #[error("Could not enumerate the domain as it is too large")]
+    TooLarge,
+}
+
+impl From<CombinatoricsError> for DomainOpError {
+    fn from(value: CombinatoricsError) -> Self {
+        match value {
+            CombinatoricsError::Overflow => Self::TooLarge,
+            CombinatoricsError::NotDefined(msg) => {
+                bug!("Are we passing the right arguments here? ({})", msg)
+            }
+        }
+    }
 }
 
 /// Types that have a [`Domain`].
@@ -1026,5 +1149,130 @@ mod tests {
         if let Domain::Int(ranges) = res {
             assert!(!ranges.contains(&Range::Bounded(-4, 4)));
         }
+    }
+
+    #[test]
+    fn test_length_basic() {
+        assert_eq!(Domain::Empty(ReturnType::Int).length(), Ok(0));
+        assert_eq!(Domain::Bool.length(), Ok(2));
+        assert_eq!(domain_int!(1..3, 5, 7..9).length(), Ok(7));
+        assert_eq!(
+            domain_int!(1..2, 5..).length(),
+            Err(DomainOpError::InputUnbounded)
+        );
+    }
+    #[test]
+    fn test_length_set_basic() {
+        // {∅, {1}, {2}, {3}, {1,2}, {1,3}, {2,3}, {1,2,3}}
+        let s = Domain::Set(SetAttr::None, Box::new(domain_int!(1..3)));
+        assert_eq!(s.length(), Ok(8));
+
+        // {{1,2}, {1,3}, {2,3}}
+        let s = Domain::Set(SetAttr::Size(2), Box::new(domain_int!(1..3)));
+        assert_eq!(s.length(), Ok(3));
+
+        // {{1}, {2}, {3}, {1,2}, {1,3}, {2,3}}
+        let s = Domain::Set(SetAttr::MinMaxSize(1, 2), Box::new(domain_int!(1..3)));
+        assert_eq!(s.length(), Ok(6));
+
+        // {{1}, {2}, {3}, {1,2}, {1,3}, {2,3}, {1,2,3}}
+        let s = Domain::Set(SetAttr::MinSize(1), Box::new(domain_int!(1..3)));
+        assert_eq!(s.length(), Ok(7));
+
+        // {∅, {1}, {2}, {3}, {1,2}, {1,3}, {2,3}}
+        let s = Domain::Set(SetAttr::MaxSize(2), Box::new(domain_int!(1..3)));
+        assert_eq!(s.length(), Ok(7));
+    }
+
+    #[test]
+    fn test_length_set_nested() {
+        // {
+        // ∅,                                          -- all size 0
+        // {∅}, {{1}}, {{2}}, {{1, 2}},                -- all size 1
+        // {∅, {1}}, {∅, {2}}, {∅, {1, 2}},            -- all size 2
+        // {{1}, {2}}, {{1}, {1, 2}}, {{2}, {1, 2}}
+        // }
+        let s2 = Domain::Set(
+            SetAttr::MaxSize(2),
+            Box::new(
+                // {∅, {1}, {2}, {1,2}}
+                Domain::Set(SetAttr::None, Box::new(domain_int!(1..2))),
+            ),
+        );
+        assert_eq!(s2.length(), Ok(11));
+    }
+
+    #[test]
+    fn test_length_set_unbounded_inner() {
+        // leaf domain is unbounded
+        let s2_bad = Domain::Set(
+            SetAttr::MaxSize(2),
+            Box::new(Domain::Set(SetAttr::None, Box::new(domain_int!(1..)))),
+        );
+        assert_eq!(s2_bad.length(), Err(DomainOpError::InputUnbounded));
+    }
+
+    #[test]
+    fn test_length_set_overflow() {
+        let s = Domain::Set(SetAttr::None, Box::new(domain_int!(1..20)));
+        assert!(s.length().is_ok());
+
+        // current way of calculating the formula overflows for anything larger than this
+        let s = Domain::Set(SetAttr::None, Box::new(domain_int!(1..63)));
+        assert_eq!(s.length(), Err(DomainOpError::TooLarge));
+    }
+
+    #[test]
+    fn test_length_tuple() {
+        // 3 ways to pick first element, 2 ways to pick second element
+        let t = Domain::Tuple(vec![domain_int!(1..3), Domain::Bool]);
+        assert_eq!(t.length(), Ok(6));
+    }
+
+    #[test]
+    fn test_length_record() {
+        // 3 ways to pick rec.a, 2 ways to pick rec.b
+        let t = Domain::Record(vec![
+            RecordEntry {
+                name: Name::user("a"),
+                domain: domain_int!(1..3),
+            },
+            RecordEntry {
+                name: Name::user("b"),
+                domain: Domain::Bool,
+            },
+        ]);
+        assert_eq!(t.length(), Ok(6));
+    }
+
+    #[test]
+    fn test_length_matrix_basic() {
+        // 3 booleans -> [T, T, T], [T, T, F], ..., [F, F, F]
+        let m = Domain::Matrix(Box::new(Domain::Bool), vec![domain_int!(1..3)]);
+        assert_eq!(m.length(), Ok(8));
+
+        // 2 numbers, each 1..3 -> 3*3 options
+        let m = Domain::Matrix(Box::new(domain_int!(1..3)), vec![domain_int!(1..2)]);
+        assert_eq!(m.length(), Ok(9));
+    }
+
+    #[test]
+    fn test_length_matrix_2d() {
+        // 2x3 matrix of booleans -> (2**2)**3 = 64 options
+        let m = Domain::Matrix(
+            Box::new(Domain::Bool),
+            vec![domain_int!(1..2), domain_int!(1..3)],
+        );
+        assert_eq!(m.length(), Ok(64));
+    }
+
+    #[test]
+    fn test_length_matrix_of_sets() {
+        // 3 sets drawn from 1..2; 4**3 = 64 total options
+        let m = Domain::Matrix(
+            Box::new(Domain::Set(SetAttr::None, Box::new(domain_int!(1..2)))),
+            vec![domain_int!(1..3)],
+        );
+        assert_eq!(m.length(), Ok(64));
     }
 }
