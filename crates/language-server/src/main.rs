@@ -1,9 +1,10 @@
 use std::fmt::format;
 
 use serde::{Deserialize, Serialize};
-use tokio::stream;
-use tower_lsp::{async_trait, jsonrpc::Error, lsp_types::{notification::Notification, ExecuteCommandOptions, ExecuteCommandParams, InitializeParams, InitializeResult, InitializedParams, MessageType, ServerCapabilities}, LanguageServer, LspService};
+use serde_json::Value;
 
+use tokio::stream;
+use tower_lsp::{async_trait, Client, Server, jsonrpc::{Result,Error}, lsp_types::{notification::Notification, ExecuteCommandOptions, ExecuteCommandParams, InitializeParams, InitializeResult, InitializedParams, MessageType, ServerCapabilities}, LanguageServer, LspService};
 
 
 #[derive(Debug, Serialize, Deserialize)] 
@@ -26,21 +27,21 @@ struct Backend {
     client: Client,
 }
 
-#[async_trait]
+#[tower_lsp::async_trait]
 impl LanguageServer for Backend { //this is the server implementation and manages the server response to client requests
     async fn initialize(&self, _: InitializeParams) -> Result<InitializeResult> { //first request of client to server
         Ok(
             InitializeResult {
-                 capabilities: Null, 
-                 server_info: ServerCapabilities { //
-                    execute_command_provider = Some(ExecuteCommandOptions{
+                 server_info: None, 
+                 capabilities: ServerCapabilities { //
+                    execute_command_provider : Some(ExecuteCommandOptions{
                         commands: vec![String::from("custom.notification")],
                         work_done_progress_options: Default::default()
                     }),
                     ..ServerCapabilities::default()
                 },
                 ..Default::default()
-            }
+            },
         )
     }
     async fn initialized(&self, _: InitializedParams) { //request after recieving result of initialise() and before anything else
@@ -99,7 +100,7 @@ async fn main() {
 
     let (service, socket) = LspService::new(|client|Backend{ client });
 
-    Server::new(read,write).serve(service).await;
+    Server::new(read,write,socket).serve(service).await;
 
 
 }
