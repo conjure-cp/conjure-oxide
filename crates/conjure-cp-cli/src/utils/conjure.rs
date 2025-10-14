@@ -3,14 +3,14 @@ use std::path::PathBuf;
 use std::rc::Rc;
 use std::string::ToString;
 use std::sync::{Arc, Mutex, RwLock};
-
+use conjure_cp::solver::adaptors::Sat;
 use conjure_cp::ast::{DeclarationKind, DeclarationPtr, Literal, Name};
 use conjure_cp::bug;
 use conjure_cp::context::Context;
+use conjure_cp::solver::adaptors::Minion;
 
-use conjure_cp::solver::adaptors::Sat;
 use serde_json::{Map, Value as JsonValue};
-
+use conjure_cp::solver::SolverFamily;
 use itertools::Itertools as _;
 use tempfile::tempdir;
 
@@ -19,26 +19,35 @@ use conjure_cp::Model;
 use conjure_cp::ast::{Atom, Expression, Metadata, Moo};
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::rule_engine::rewrite_naive;
-use conjure_cp::solver::Solver;
-use conjure_cp::solver::adaptors::Minion;
+use conjure_cp::solver::{Solver, SolverAdaptor};
 
 use glob::glob;
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-pub fn get_minion_solutions(
+pub fn get_solutions(
+    solver: SolverFamily,
     model: Model,
     num_sols: i32,
     solver_input_file: &Option<PathBuf>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
     if let Some(Expression::DominanceRelation(_, dom_rel)) = model.dominance.clone() {
-        get_minion_solutions_dominance(model, num_sols, solver_input_file, &dom_rel)
+        get_solutions_with_dominance(solver, model, num_sols, solver_input_file, &dom_rel)
     } else {
-        get_minion_solutions_no_dominance(model, num_sols, solver_input_file)
-    }
+        match solver {
+            SolverFamily::Sat => {
+                get_solutions_no_dominance(Sat::default(), model, num_sols, solver_input_file)
+            }
+            SolverFamily::Minion => {
+                get_solutions_no_dominance(Minion::default(), model, num_sols, solver_input_file)
+            }
+        }
+    };
+    Err(anyhow::anyhow!("Unsupported solver family: {:?}", solver))
 }
 
-pub fn get_minion_solutions_dominance(
+pub fn get_solutions_with_dominance(
+    solver: SolverFamily,
     mut model: Model,
     _num_sols: i32,
     solver_input_file: &Option<PathBuf>,
@@ -46,11 +55,13 @@ pub fn get_minion_solutions_dominance(
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
     // all non-dominated solutions
     let mut results = Vec::new();
-
     loop {
         // get the next solution
-        let solutions = get_minion_solutions_no_dominance(model.clone(), 1, solver_input_file)?;
-
+        let solutions = match solver {
+            SolverFamily::Sat => get_solutions_no_dominance(Sat::default(), model.clone(), 1, solver_input_file)?,
+            SolverFamily::Minion => get_solutions_no_dominance(Minion::default(), model.clone(), 1, solver_input_file)?,
+        };
+    
         // no more solutions
         let Some(solution) = solutions.first() else {
             break;
@@ -97,12 +108,17 @@ pub fn get_minion_solutions_dominance(
         }
 
         // check if the solution is still valid
-        let sols = get_minion_solutions_no_dominance(model_copy, 1, solver_input_file)?;
+        let sols = match solver {
+            SolverFamily::Sat => get_solutions_no_dominance(Sat::default(), model_copy, -1, solver_input_file)?,
+            SolverFamily::Minion => get_solutions_no_dominance(Minion::default(), model_copy, -1, solver_input_file)?,
+        };
+
 
         if !sols.is_empty() {
             final_results.push(sol.clone());
         }
     }
+    println!("{:?}", final_results);
     Ok(final_results)
 }
 
@@ -154,15 +170,18 @@ pub fn sub_in_solution_into_dominance_expr(
     }
 }
 
-pub fn get_minion_solutions_no_dominance(
+pub fn get_solutions_no_dominance(
+    solver_adaptor: impl SolverAdaptor,
     model: Model,
     num_sols: i32,
     solver_input_file: &Option<PathBuf>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
-    let solver = Solver::new(Minion::new());
-    eprintln!("Building Minion model...");
+    let adaptor_name = solver_adaptor.get_name().unwrap_or("UNKNOWN".into());
+    let solver = Solver::new(solver_adaptor);
 
-    // for later...
+    eprintln!("Building {adaptor_name} model...");
+
+    // Create for later since we consume the model when loading it
     let symbols_rc = Rc::clone(model.as_submodel().symbols_ptr_unchecked());
 
     let solver = solver.load_model(model)?;
@@ -176,11 +195,14 @@ pub fn get_minion_solutions_no_dominance(
         solver.write_solver_input_file(&mut file)?;
     }
 
-    eprintln!("Running Minion...");
+    eprintln!("Running {adaptor_name}...");
 
+    // Create two arcs, one to pass into the solver callback, one to get solutions out later
     let all_solutions_ref = Arc::new(Mutex::<Vec<BTreeMap<Name, Literal>>>::new(vec![]));
     let all_solutions_ref_2 = all_solutions_ref.clone();
+
     let solver = if num_sols > 0 {
+        // Get num_sols solutions
         let sols_left = Mutex::new(num_sols);
 
         #[allow(clippy::unwrap_used)]
@@ -195,6 +217,7 @@ pub fn get_minion_solutions_no_dominance(
             }))
             .unwrap()
     } else {
+        // Get all solutions
         #[allow(clippy::unwrap_used)]
         solver
             .solve(Box::new(move |sols| {
@@ -207,11 +230,14 @@ pub fn get_minion_solutions_no_dominance(
 
     solver.save_stats_to_context();
 
+    // Get the collections of solutions and model symbols
     #[allow(clippy::unwrap_used)]
     let mut sols_guard = (*all_solutions_ref).lock().unwrap();
     let sols = &mut *sols_guard;
     let symbols = symbols_rc.borrow();
 
+    // Get the representations for each variable by name, since some variables are
+    // divided into multiple auxiliary variables(see crate::representation::Representation)
     let names = symbols.clone().into_iter().map(|x| x.0).collect_vec();
     let representations = names
         .into_iter()
@@ -235,12 +261,14 @@ pub fn get_minion_solutions_no_dominance(
         .collect_vec();
 
     for sol in sols.iter_mut() {
+        // Get the value of complex variables using their auxiliary variables
         for (name, representation) in representations.iter() {
             let value = representation.value_up(sol).unwrap();
             sol.insert(name.clone(), value);
         }
 
-        // remove represented variables
+        // Remove auxiliary variables since we've found the value of the
+        // variable they represent
         *sol = sol
             .clone()
             .into_iter()
@@ -248,105 +276,8 @@ pub fn get_minion_solutions_no_dominance(
             .collect();
     }
 
-    Ok(sols.clone().into_iter().filter(|x| !x.is_empty()).collect())
-}
-
-pub fn get_sat_solutions(
-    model: Model,
-    num_sols: i32,
-    solver_input_file: &Option<PathBuf>,
-) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
-    let solver = Solver::new(Sat::default());
-    eprintln!("Building SAT model...");
-
-    let symbols_rc = Rc::clone(model.as_submodel().symbols_ptr_unchecked());
-
-    let solver = solver.load_model(model)?;
-
-    if let Some(solver_input_file) = solver_input_file {
-        eprintln!(
-            "Writing solver input file to {}",
-            solver_input_file.display()
-        );
-        let mut file = std::fs::File::create(solver_input_file)?;
-        solver.write_solver_input_file(&mut file)?;
-    }
-
-    eprintln!("Running SAT...");
-
-    let all_solutions_ref = Arc::new(Mutex::<Vec<BTreeMap<Name, Literal>>>::new(vec![]));
-    let all_solutions_ref_2 = all_solutions_ref.clone();
-    let solver = if num_sols > 0 {
-        let sols_left = Mutex::new(num_sols);
-
-        #[allow(clippy::unwrap_used)]
-        solver
-            .solve(Box::new(move |sols| {
-                let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
-                (*all_solutions).push(sols.into_iter().collect());
-                let mut sols_left = sols_left.lock().unwrap();
-                *sols_left -= 1;
-
-                *sols_left != 0
-            }))
-            .unwrap()
-    } else {
-        #[allow(clippy::unwrap_used)]
-        solver
-            .solve(Box::new(move |sols| {
-                let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
-                (*all_solutions).push(sols.into_iter().collect());
-                true
-            }))
-            .unwrap()
-    };
-
-    solver.save_stats_to_context();
-
-    #[allow(clippy::unwrap_used)]
-    let mut sols_guard = (*all_solutions_ref).lock().unwrap();
-    let sols = &mut *sols_guard;
-    let symbols = symbols_rc.borrow();
-
-    let names = symbols.clone().into_iter().map(|x| x.0).collect_vec();
-    let representations = names
-        .into_iter()
-        .filter_map(|x| symbols.representations_for(&x).map(|repr| (x, repr)))
-        .filter_map(|(name, reprs)| {
-            if reprs.is_empty() {
-                return None;
-            }
-            assert!(
-                reprs.len() <= 1,
-                "multiple representations for a variable is not yet implemented"
-            );
-
-            assert_eq!(
-                reprs[0].len(),
-                1,
-                "nested representations are not yet implemented"
-            );
-            Some((name, reprs[0][0].clone()))
-        })
-        .collect_vec();
-
-    for sol in sols.iter_mut() {
-        for (name, representation) in representations.iter() {
-            let value = representation.value_up(sol).unwrap();
-            sol.insert(name.clone(), value);
-        }
-
-        // remove represented and auxillary variables
-        *sol = sol
-            .clone()
-            .into_iter()
-            .filter(|(name, _)| {
-                !matches!(name, Name::Represented(_)) && !matches!(name, Name::Machine(_))
-            })
-            .collect();
-    }
-
-    Ok(sols.clone().into_iter().filter(|x| !x.is_empty()).collect())
+    sols.retain(|x| !x.is_empty());
+    Ok(sols.clone())
 }
 
 #[allow(clippy::unwrap_used)]
