@@ -120,9 +120,11 @@ fn find_essence_files_recursive_helper(dir: &PathBuf, essence_files: &mut Vec<Pa
     Ok(())
 }
 
-fn id_ignore_check(
-    parsed_model: Model, 
-    expected_model: Model
-) {
-    for line in parsed_model {}
-}
+// TODO: check if id is the only thing wrong with the models
+
+// fn id_ignore_check(
+//     parsed_model: Model, 
+//     expected_model: Model
+// ) {
+//     for line in parsed_model {}
+// }
