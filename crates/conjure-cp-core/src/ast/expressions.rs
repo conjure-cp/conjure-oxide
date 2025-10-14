@@ -182,6 +182,10 @@ pub enum Expression {
     #[compatible(JsonInput, SAT)]
     And(Metadata, Moo<Expression>),
 
+    /// `xor(<vec_expr>)`
+    #[compatible(JsonInput, SAT)]
+    Xor(Metadata, Moo<Expression>),
+
     /// Ensures that `a->b` (material implication).
     #[compatible(JsonInput)]
     Imply(Metadata, Moo<Expression>, Moo<Expression>),
@@ -730,6 +734,7 @@ impl Expression {
             Expression::Bubble(_, inner, _) => inner.domain_of(),
             Expression::AuxDeclaration(_, _, _) => Some(Domain::Bool),
             Expression::And(_, _) => Some(Domain::Bool),
+            Expression::Xor(_, _) => Some(Domain::Bool),
             Expression::Not(_, _) => Some(Domain::Bool),
             Expression::Or(_, _) => Some(Domain::Bool),
             Expression::Imply(_, _, _) => Some(Domain::Bool),
@@ -1153,6 +1158,9 @@ impl Display for Expression {
             Expression::And(_, e) => {
                 write!(f, "and({e})")
             }
+            Expression::Xor(_, e) => {
+                write!(f, "xor({e})")
+            }
             Expression::Imply(_, box1, box2) => {
                 write!(f, "({box1}) -> ({box2})")
             }
@@ -1358,6 +1366,7 @@ impl Typeable for Expression {
             Expression::Imply(_, _, _) => Some(ReturnType::Bool),
             Expression::Iff(_, _, _) => Some(ReturnType::Bool),
             Expression::And(_, _) => Some(ReturnType::Bool),
+            Expression::Xor(_, _) => Some(ReturnType::Bool),
             Expression::Eq(_, _, _) => Some(ReturnType::Bool),
             Expression::Neq(_, _, _) => Some(ReturnType::Bool),
             Expression::Geq(_, _, _) => Some(ReturnType::Bool),

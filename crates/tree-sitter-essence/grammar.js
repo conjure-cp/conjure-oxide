@@ -150,7 +150,7 @@ module.exports = grammar ({
     toInt_expr: $ => seq("toInt","(",$.expression,")"),
 
     quantifier_expr: $ => prec(-10, seq(
-      choice("and", "or", "min", "max", "sum", "allDiff"),
+      choice("and", "or", "min", "max", "sum", "allDiff", "xor"),
       "([",
       repeat(seq(
         $.expression,
