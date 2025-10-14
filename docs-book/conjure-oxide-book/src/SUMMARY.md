@@ -20,4 +20,4 @@
 
 -----------------
 
-- [Contributors](misc/contributors.md)
+[Contributors](misc/contributors.md)
