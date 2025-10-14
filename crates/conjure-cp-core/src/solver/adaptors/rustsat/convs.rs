@@ -67,8 +67,6 @@ pub fn handle_atom(
             }
             conjure_cp_core::ast::Atom::Reference(decl) => match &*(decl.name()) {
                 conjure_cp_core::ast::Name::User(n) => {
-                    // TODO: Temp Clone
-                    // let m = n.clone();
                     let lit_temp: Lit = fetch_lit(n.to_string(), vars_added, inst);
                     if polarity { lit_temp } else { !lit_temp }
                 }

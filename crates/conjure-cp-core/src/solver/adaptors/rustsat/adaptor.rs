@@ -68,7 +68,7 @@ fn get_ref_sols(
     let mut solution: HashMap<Name, Literal> = HashMap::new();
 
     for reference in find_refs {
-        // lit is `Nothing` for variables that don't exist. This should have trhown an error at parse-time.
+        // lit is `Nothing` for variables that don't exist. This should have thrown an error at parse-time.
         let lit: Lit = match var_map.get(&reference) {
             Some(a) => *a,
             None => panic!(
