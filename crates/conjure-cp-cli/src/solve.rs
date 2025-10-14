@@ -11,6 +11,7 @@ use std::{
 use anyhow::{anyhow, ensure};
 use clap::ValueHint;
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
+use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::{
     Model,
     ast::comprehension::USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS,
@@ -21,7 +22,6 @@ use conjure_cp::{
 use conjure_cp::{
     parse::conjure_json::model_from_json, rule_engine::get_rules, solver::SolverFamily,
 };
-use conjure_cp::{parse::tree_sitter::parse_essence_file_native};
 use conjure_cp_cli::find_conjure::conjure_executable;
 use conjure_cp_cli::utils::conjure::{get_solutions, solutions_to_json};
 use serde_json::to_string_pretty;
@@ -87,7 +87,12 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
             };
         }
     } else {
-        run_solver(global_args.solver, &global_args, &solve_args, rewritten_model);
+        run_solver(
+            global_args.solver,
+            &global_args,
+            &solve_args,
+            rewritten_model,
+        )?
     }
 
     // still do postamble even if we didn't run the solver

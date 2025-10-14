@@ -1,17 +1,18 @@
+use conjure_cp::ast::{DeclarationKind, DeclarationPtr, Literal, Name};
+use conjure_cp::bug;
+use conjure_cp::context::Context;
+use conjure_cp::solver::adaptors::Minion;
+use conjure_cp::solver::adaptors::Sat;
+
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 use std::rc::Rc;
 use std::string::ToString;
 use std::sync::{Arc, Mutex, RwLock};
-use conjure_cp::solver::adaptors::Sat;
-use conjure_cp::ast::{DeclarationKind, DeclarationPtr, Literal, Name};
-use conjure_cp::bug;
-use conjure_cp::context::Context;
-use conjure_cp::solver::adaptors::Minion;
 
-use serde_json::{Map, Value as JsonValue};
 use conjure_cp::solver::SolverFamily;
 use itertools::Itertools as _;
+use serde_json::{Map, Value as JsonValue};
 use tempfile::tempdir;
 
 use crate::utils::json::sort_json_object;
@@ -42,8 +43,7 @@ pub fn get_solutions(
                 get_solutions_no_dominance(Minion::default(), model, num_sols, solver_input_file)
             }
         }
-    };
-    Err(anyhow::anyhow!("Unsupported solver family: {:?}", solver))
+    }
 }
 
 pub fn get_solutions_with_dominance(
@@ -58,10 +58,14 @@ pub fn get_solutions_with_dominance(
     loop {
         // get the next solution
         let solutions = match solver {
-            SolverFamily::Sat => get_solutions_no_dominance(Sat::default(), model.clone(), 1, solver_input_file)?,
-            SolverFamily::Minion => get_solutions_no_dominance(Minion::default(), model.clone(), 1, solver_input_file)?,
+            SolverFamily::Sat => {
+                get_solutions_no_dominance(Sat::default(), model.clone(), 1, solver_input_file)?
+            }
+            SolverFamily::Minion => {
+                get_solutions_no_dominance(Minion::default(), model.clone(), 1, solver_input_file)?
+            }
         };
-    
+
         // no more solutions
         let Some(solution) = solutions.first() else {
             break;
@@ -109,16 +113,18 @@ pub fn get_solutions_with_dominance(
 
         // check if the solution is still valid
         let sols = match solver {
-            SolverFamily::Sat => get_solutions_no_dominance(Sat::default(), model_copy, -1, solver_input_file)?,
-            SolverFamily::Minion => get_solutions_no_dominance(Minion::default(), model_copy, -1, solver_input_file)?,
+            SolverFamily::Sat => {
+                get_solutions_no_dominance(Sat::default(), model_copy, -1, solver_input_file)?
+            }
+            SolverFamily::Minion => {
+                get_solutions_no_dominance(Minion::default(), model_copy, -1, solver_input_file)?
+            }
         };
-
 
         if !sols.is_empty() {
             final_results.push(sol.clone());
         }
     }
-    println!("{:?}", final_results);
     Ok(final_results)
 }
 
