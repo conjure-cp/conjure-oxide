@@ -35,15 +35,11 @@ pub fn get_solutions(
         get_solutions_with_dominance(solver, model, num_sols, solver_input_file, &dom_rel)
     } else {
         match solver {
-            SolverFamily::Sat => {
-                get_solutions_no_dominance(Sat::default(), model, num_sols, solver_input_file)
-            }
-            SolverFamily::Minion => {
-                get_solutions_no_dominance(Minion::default(), model, num_sols, solver_input_file)
-            }
+            SolverFamily::Sat => get_solutions_no_dominance(Sat::default(), model, num_sols, solver_input_file),
+            SolverFamily::Minion => get_solutions_no_dominance(Minion::default(), model, num_sols, solver_input_file),
+            _ => Err(anyhow::anyhow!("Unsupported solver family: {:?}", solver)),
         }
-    };
-    Err(anyhow::anyhow!("Unsupported solver family: {:?}", solver))
+    }
 }
 
 pub fn get_solutions_with_dominance(
