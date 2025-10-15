@@ -73,6 +73,8 @@ pub fn get_diagnostics(source: &str) -> Vec<Diagnostic> {
         let root = tree.root_node();
         if root.has_error() {
             // if the root node is an error node
+            // that just uses tree-sitter's built-in error detection
+            // error detection te be improved later
             diagnostics.push(Diagnostic {
                 range: Range {
                     start: Position {line: 0, character: 0},
@@ -83,8 +85,24 @@ pub fn get_diagnostics(source: &str) -> Vec<Diagnostic> {
                 source: "essence-lsp-api",
             });
         }
-        // add more error detection below
 
+        // semantic error detection using logic from parse_model.rs
+        let context = Arc::new(RwLock::new(Context::default()));
+        match parse_essence_with_context(source, context) {
+            Ok(_) => {},
+            Err(e) {
+                diagnostics.push(Diagnostic {
+                    range: Range {
+                        start: Position {line: 0, character: 0},
+                        end: Position {line: 0, character: 1},
+                    },
+                    severity: severity::Error,
+                    message: format!("Semantic error: {}", e),
+                    source: "essence-lsp-api",
+                });
+            }
+        }  
+        // add more error detection below
 
     }
     diagnostics
