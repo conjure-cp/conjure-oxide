@@ -1,8 +1,8 @@
 //! Functions for converting from a Conjure Model to assertions in Z3.
 //!
 //! Conversions are mostly 1-to-1 since any rewriting was done previously using rules.
-//! We transform the AST bottom-up, each recursion returning a dynamic value, and the one above
-//! interpreting it as the type it expects or failing.
+//! We recursively transform the AST bottom-up, returning the requested AST type (e.g. Bool, Int)
+//! or an error.
 //!
 //! "Dynamic" or "AST" is used to describe generic Z3 AST values. "Expression" means
 //! a Conjure Oxide [`Expression`] type.
@@ -36,11 +36,7 @@ pub fn load_assertions(
     solver: &mut Solver,
 ) -> Result<(), SolverError> {
     for expr in model.iter() {
-        let bool = expr_to_ast(store, expr)?
-            .as_bool()
-            .ok_or(SolverError::ModelInvalid(format!(
-                "top-level expression must be boolean type: {expr}",
-            )))?;
+        let bool: Bool = expr_to_ast(store, expr)?;
         solver.assert(bool);
     }
     Ok(())
@@ -68,47 +64,41 @@ fn name_to_symbol(name: &Name) -> Result<Symbol, SolverError> {
     }
 }
 
-/// Converts a Conjure Oxide Expression to a dynamic AST node for Z3.
-fn expr_to_ast(store: &Store, expr: &Expression) -> Result<Dynamic, SolverError> {
-    match expr {
+/// Converts a Conjure Oxide Expression to an AST node for Z3.
+///
+/// The generic type parameter lets us cast the result to a specific return type.
+fn expr_to_ast<Out>(store: &Store, expr: &Expression) -> Result<Out, SolverError>
+where
+    Out: TryFrom<Dynamic, Error: std::fmt::Display>,
+{
+    let ast = match expr {
         Expression::Atomic(_, atom) => atom_to_ast(store, atom),
 
         // Since equality is part of the core SMT theory, any two dynamic ASTs
         // of the same type can be compared with it.
-        // Since we don't need to convert to a specific type we use a conversion function
-        // which just clones the AST input.
-        Expression::Neq(_, a, b) => binary_op(store, a, b, ast_id, ast_id, |a, b| a.ne(b)),
-        Expression::Eq(_, a, b) => binary_op(store, a, b, ast_id, ast_id, |a, b| a.eq(b)),
+        Expression::Neq(_, a, b) => binary_op(store, a, b, |a: Dynamic, b: Dynamic| a.ne(b)),
+        Expression::Eq(_, a, b) => binary_op(store, a, b, |a: Dynamic, b: Dynamic| a.eq(b)),
 
         // === Boolean Expressions ===
-        Expression::Not(_, a) => unary_op(store, a, Dynamic::as_bool, |a| a.not()),
-        Expression::Imply(_, a, b) => {
-            binary_op(store, a, b, Dynamic::as_bool, Dynamic::as_bool, |a, b| {
-                a.implies(b)
-            })
-        }
-        Expression::Iff(_, a, b) => {
-            binary_op(store, a, b, Dynamic::as_bool, Dynamic::as_bool, |a, b| {
-                a.iff(b)
-            })
-        }
+        Expression::Not(_, a) => unary_op(store, a, |a: Bool| a.not()),
+        Expression::Imply(_, a, b) => binary_op(store, a, b, |a: Bool, b: Bool| a.implies(b)),
+        Expression::Iff(_, a, b) => binary_op(store, a, b, |a: Bool, b: Bool| a.iff(b)),
         Expression::Or(_, a) => {
             let exprs = list_to_vec(a)?;
-            vec_op(store, exprs.as_slice(), Dynamic::as_bool, |asts| {
-                Bool::or(asts)
-            })
+            many_op(store, exprs.as_slice(), |asts: &[Bool]| Bool::or(asts))
         }
         Expression::And(_, a) => {
             let exprs = list_to_vec(a)?;
-            vec_op(store, exprs.as_slice(), Dynamic::as_bool, |asts| {
-                Bool::and(asts)
-            })
+            many_op(store, exprs.as_slice(), |asts: &[Bool]| Bool::and(asts))
         }
 
         _ => Err(SolverError::ModelFeatureNotImplemented(format!(
             "expression type not yet implemented: {expr}"
         ))),
-    }
+    }?;
+
+    ast.try_into()
+        .map_err(|err| SolverError::ModelInvalid(format!("conversion failed: {err}")))
 }
 
 /// Converts an atom (literal or reference) into an AST node.
@@ -145,82 +135,51 @@ fn list_to_vec(expr: &Expression) -> Result<Vec<Expression>, SolverError> {
         )))
 }
 
-/// Applies a conversion to a Dynamic, usually to some other AST type.
-/// Transforms the resulting Option into a Result possibly containing an error.
-fn conv_ast<From>(
-    ast: Dynamic,
-    conv: impl Fn(&Dynamic) -> Option<From>,
-) -> Result<From, SolverError> {
-    conv(&ast).ok_or(SolverError::ModelInvalid(format!(
-        "conversion failed on: {ast}"
-    )))
-}
-
-fn ast_id(ast: &Dynamic) -> Option<Dynamic> {
-    Some(ast.clone())
-}
-
-/// Interprets an expression as an AST, converts it using the given conversion,
-/// and passes the result to the given unary operator closure.
-///
-/// Since [`expr_to_ast`] returns a dynamic AST value, conversions are a convenient
-/// way to make the input type to the operators correct. For example, in the case of
-/// the `implies` operator the conversion lets us convert the returned dynamic values
-/// to booleans.
-fn unary_op<FromA, Out>(
+/// Interprets an expression as an AST and returns the result of the given operation over it.
+fn unary_op<A, Out>(
     store: &Store,
     a: &Expression,
-    conv_a: impl Fn(&Dynamic) -> Option<FromA>,
-    op: impl Fn(FromA) -> Out,
+    op: impl Fn(A) -> Out,
 ) -> Result<Dynamic, SolverError>
 where
+    A: TryFrom<Dynamic, Error: std::fmt::Display>,
     Out: Into<Dynamic>,
 {
-    let a_ast = conv_ast(expr_to_ast(store, a)?, &conv_a)?;
+    let a_ast: A = expr_to_ast(store, a)?;
     Ok((op)(a_ast).into())
 }
 
-/// Interprets two expressions as ASTs, converts them using the given conversion
-/// closures, and passes the results to the given unary operator closure.
-///
-/// And example of this is logical implication, where the conversion for both operands
-/// is to `Bool` and the operator returns `Bool::implies(a, b)`.
-fn binary_op<FromA, FromB, Out>(
+/// Interprets two expressions as ASTs and returns the result of the given operation over them.
+fn binary_op<A, B, Out>(
     store: &Store,
     a: &Expression,
     b: &Expression,
-    conv_a: impl Fn(&Dynamic) -> Option<FromA>,
-    conv_b: impl Fn(&Dynamic) -> Option<FromB>,
-    op: impl Fn(FromA, FromB) -> Out,
+    op: impl Fn(A, B) -> Out,
 ) -> Result<Dynamic, SolverError>
 where
+    A: TryFrom<Dynamic, Error: std::fmt::Display>,
+    B: TryFrom<Dynamic, Error: std::fmt::Display>,
     Out: Into<Dynamic>,
 {
-    let a_ast = conv_ast(expr_to_ast(store, a)?, conv_a)?;
-    let b_ast = conv_ast(expr_to_ast(store, b)?, conv_b)?;
+    let a_ast: A = expr_to_ast(store, a)?;
+    let b_ast: B = expr_to_ast(store, b)?;
     Ok((op)(a_ast, b_ast).into())
 }
 
-/// Transforms a slice of expressions into ASTs, converts them using the same conversion
-/// closure, and passes the resulting slice to the operator closure.
-///
-/// An example of this is a conjunction, where the conversion is to `Bool` and the operator
-/// returns `Bool::and(slice)`.
-fn vec_op<From, Out>(
+/// Transforms a slice of expressions into ASTs and returns the result of the given operation over it.
+fn many_op<A, Out>(
     store: &Store,
     exprs: &[Expression],
-    conv: impl Fn(&Dynamic) -> Option<From>,
-    op: impl Fn(&[From]) -> Out,
+    op: impl Fn(&[A]) -> Out,
 ) -> Result<Dynamic, SolverError>
 where
+    A: TryFrom<Dynamic, Error: std::fmt::Display>,
     Out: Into<Dynamic>,
 {
     // Result implements FromIter, collecting into either the full collection or an error
-    let asts: Result<Vec<_>, SolverError> = exprs
-        .iter()
-        .map(|e| expr_to_ast(store, e).and_then(|ast| conv_ast(ast, &conv)))
-        .collect();
-    let asts = asts?;
+    let asts_res: Result<Vec<_>, SolverError> =
+        exprs.iter().map(|e| expr_to_ast(store, e)).collect();
+    let asts = asts_res?;
 
     Ok((op)(asts.as_slice()).into())
 }
