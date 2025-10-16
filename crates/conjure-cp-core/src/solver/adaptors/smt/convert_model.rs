@@ -46,7 +46,8 @@ pub fn load_assertions(
 fn var_to_ast(name: &Name, decl: &DecisionVariable) -> Result<Dynamic, SolverError> {
     let sym = name_to_symbol(name)?;
     match decl.domain {
-        Domain::Bool => Ok(Dynamic::from_ast(&Bool::new_const(sym))),
+        Domain::Bool => Ok(Bool::new_const(sym).into()),
+        Domain::Int(_) => Ok(Int::new_const(sym).into()),
         _ => Err(SolverError::ModelFeatureNotImplemented(format!(
             "domain kind for '{name}' not implemented: {}",
             decl.domain
@@ -74,15 +75,23 @@ where
     let ast = match expr {
         Expression::Atomic(_, atom) => atom_to_ast(store, atom),
 
-        // Since equality is part of the core SMT theory, any two dynamic ASTs
-        // of the same type can be compared with it.
+        // Equality is part of the SMT core theory (anything can be compared)
+        // TODO: use safe eq
         Expression::Neq(_, a, b) => binary_op(store, a, b, |a: Dynamic, b: Dynamic| a.ne(b)),
         Expression::Eq(_, a, b) => binary_op(store, a, b, |a: Dynamic, b: Dynamic| a.eq(b)),
 
+        // The below operations are grouped by return type and then by arity
+
         // === Boolean Expressions ===
         Expression::Not(_, a) => unary_op(store, a, |a: Bool| a.not()),
+
         Expression::Imply(_, a, b) => binary_op(store, a, b, |a: Bool, b: Bool| a.implies(b)),
         Expression::Iff(_, a, b) => binary_op(store, a, b, |a: Bool, b: Bool| a.iff(b)),
+        Expression::Gt(_, a, b) => binary_op(store, a, b, |a: Int, b: Int| a.gt(b)),
+        Expression::Lt(_, a, b) => binary_op(store, a, b, |a: Int, b: Int| a.lt(b)),
+        Expression::Geq(_, a, b) => binary_op(store, a, b, |a: Int, b: Int| a.ge(b)),
+        Expression::Leq(_, a, b) => binary_op(store, a, b, |a: Int, b: Int| a.le(b)),
+
         Expression::Or(_, a) => {
             let exprs = list_to_vec(a)?;
             many_op(store, exprs.as_slice(), |asts: &[Bool]| Bool::or(asts))
@@ -92,13 +101,38 @@ where
             many_op(store, exprs.as_slice(), |asts: &[Bool]| Bool::and(asts))
         }
 
+        // === Integer Expressions ===
+        Expression::Neg(_, a) => unary_op(store, a, |a: Int| a.unary_minus()),
+        Expression::ToInt(_, a) => {
+            unary_op(store, a, |a: Bool| a.ite(&Int::from(1), &Int::from(0)))
+        }
+        Expression::Abs(_, a) => unary_op(store, a, |a: Int| {
+            a.lt(Int::from(0)).ite(&a.unary_minus(), &a)
+        }),
+
+        Expression::SafeDiv(_, a, b) => binary_op(store, a, b, |a: Int, b: Int| a.div(b)),
+        Expression::SafeMod(_, a, b) => binary_op(store, a, b, |a: Int, b: Int| a.modulo(b)),
+        Expression::SafePow(_, a, b) => binary_op(store, a, b, |a: Int, b: Int| a.power(b)),
+
+        Expression::Product(_, a) => {
+            let exprs = list_to_vec(a)?;
+            many_op(store, exprs.as_slice(), |asts: &[Int]| Int::mul(asts))
+        }
+        Expression::Sum(_, a) => {
+            let exprs = list_to_vec(a)?;
+            many_op(store, exprs.as_slice(), |asts: &[Int]| Int::add(asts))
+        }
+
         _ => Err(SolverError::ModelFeatureNotImplemented(format!(
-            "expression type not yet implemented: {expr}"
+            "expression type not implemented: {expr}"
         ))),
     }?;
 
-    ast.try_into()
-        .map_err(|err| SolverError::ModelInvalid(format!("conversion failed: {err}")))
+    ast.try_into().map_err(|err| {
+        SolverError::ModelInvalid(format!(
+            "expression has incorrect type for conversion: {err}"
+        ))
+    })
 }
 
 /// Converts an atom (literal or reference) into an AST node.
@@ -119,6 +153,7 @@ fn atom_to_ast(store: &Store, atom: &Atom) -> Result<Dynamic, SolverError> {
 fn literal_to_ast(lit: &Literal) -> Result<Dynamic, SolverError> {
     match lit {
         Literal::Bool(b) => Ok(Bool::from_bool(*b).into()),
+        Literal::Int(n) => Ok(Int::from(*n).into()),
         _ => Err(SolverError::ModelFeatureNotImplemented(format!(
             "literal type not implemented: {lit}"
         ))),
@@ -139,7 +174,7 @@ fn list_to_vec(expr: &Expression) -> Result<Vec<Expression>, SolverError> {
 fn unary_op<A, Out>(
     store: &Store,
     a: &Expression,
-    op: impl Fn(A) -> Out,
+    op: impl FnOnce(A) -> Out,
 ) -> Result<Dynamic, SolverError>
 where
     A: TryFrom<Dynamic, Error: std::fmt::Display>,
@@ -154,7 +189,7 @@ fn binary_op<A, B, Out>(
     store: &Store,
     a: &Expression,
     b: &Expression,
-    op: impl Fn(A, B) -> Out,
+    op: impl FnOnce(A, B) -> Out,
 ) -> Result<Dynamic, SolverError>
 where
     A: TryFrom<Dynamic, Error: std::fmt::Display>,
@@ -170,7 +205,7 @@ where
 fn many_op<A, Out>(
     store: &Store,
     exprs: &[Expression],
-    op: impl Fn(&[A]) -> Out,
+    op: impl FnOnce(&[A]) -> Out,
 ) -> Result<Dynamic, SolverError>
 where
     A: TryFrom<Dynamic, Error: std::fmt::Display>,
