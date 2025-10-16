@@ -85,15 +85,22 @@ pub fn save_stats_json(
     context: Arc<RwLock<Context<'static>>>,
     path: &str,
     test_name: &str,
+    solver: SolverFamily
 ) -> Result<(), std::io::Error> {
     #[allow(clippy::unwrap_used)]
+
+    let solver_name = match solver {
+        SolverFamily::Sat => "sat",
+        SolverFamily::Minion => "minion",
+    };
+
     let stats = context.read().unwrap().clone();
     let generated_json = sort_json_object(&serde_json::to_value(stats)?, false);
 
     // serialise to string
     let generated_json_str = serde_json::to_string_pretty(&generated_json)?;
 
-    File::create(format!("{path}/{test_name}-stats.json"))?
+    File::create(format!("{path}/{solver_name}-{test_name}-stats.json"))?
         .write_all(generated_json_str.as_bytes())?;
 
     Ok(())
@@ -118,8 +125,11 @@ pub fn read_model_json(
     );
     println!("reading: {filepath}");
 
+    println!("{test_stage} HERE 1");
     let expected_json_str = std::fs::read_to_string(filepath)?;
+    println!("{test_stage} HERE 2");
     let expected_model: SerdeModel = serde_json::from_str(&expected_json_str)?;
+    println!("{test_stage} HERE 3");
 
     Ok(expected_model.initialise(ctx.clone()).unwrap())
 }
@@ -194,6 +204,7 @@ pub fn read_solutions_json(
         SolverFamily::Minion => "minion",
     };
 
+    println!("{path}/{test_name}.{prefix}-{solver_name}.solutions.json");  
     let expected_json_str = std::fs::read_to_string(format!(
         "{path}/{test_name}.{prefix}-{solver_name}.solutions.json"
     ))?;

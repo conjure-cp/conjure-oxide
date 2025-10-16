@@ -6,6 +6,7 @@ use conjure_cp::rule_engine::get_rules_grouped;
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::rule_engine::rewrite_naive;
+use conjure_cp::solver;
 use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
 use glob::glob;
 use itertools::Itertools;
@@ -129,7 +130,8 @@ impl TestConfig {
 }
 
 fn main() {
-    let _guard = create_scoped_subscriber("./logs", "test_log");
+    // maybe wonky, check
+    let _guard = create_scoped_subscriber("./logs", "test_log", "none_solver");
 
     // creating a span and log a message
     let test_span = span!(Level::TRACE, "test_span");
@@ -183,7 +185,14 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
 }
 
 fn solver_specific_integration_test(path: &str, essence_base: &str, extension: &str, config: &TestConfig, solver: SolverFamily, verbose: bool, accept: bool) -> Result<(), Box<dyn Error>>{
-    let subscriber = create_scoped_subscriber(path, essence_base);
+    
+    let solver_name = match solver {
+        SolverFamily::Sat => "sat",
+        SolverFamily::Minion => "minion",
+    };
+
+    let subscriber = create_scoped_subscriber(path, essence_base, solver_name);
+
     // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
     // correctly
 
@@ -197,7 +206,7 @@ fn solver_specific_integration_test(path: &str, essence_base: &str, extension: &
             integration_test_inner(path, essence_base, extension, config, solver)
         })
     } else {
-        let subscriber = create_scoped_subscriber(path, essence_base);
+        let subscriber = create_scoped_subscriber(path, essence_base, solver_name);
         tracing::subscriber::with_default(subscriber, || {
             integration_test_inner(path, essence_base, extension, config, solver)
         })
@@ -415,30 +424,30 @@ fn integration_test_inner(
     if accept {
         // Overwrite expected parse and rewrite models if enabled
         if config.enable_native_parser
-            && !expected_exists_for(path, essence_base, "parse", "serialised.json")
+            && !expected_exists_for(path, essence_base, "parse", "serialised.json", None)
         {
             model_native.clone().expect("model_native should exist");
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
+            copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
         }
         if config.parse_model_default
-            && !expected_exists_for(path, essence_base, "parse", "serialised.json")
+            && !expected_exists_for(path, essence_base, "parse", "serialised.json", None)
         {
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
+            copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
         }
         if config.apply_rewrite_rules
-            && !expected_exists_for(path, essence_base, "rewrite", "serialised.json")
+            && !expected_exists_for(path, essence_base, "rewrite", "serialised.json", Some(solver))
         {
-            copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json")?;
+            copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json", Some(solver))?;
         }
 
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
         // based on the test results, so they don't get done later.
         // TODO Fix
-        copy_generated_to_expected(path, essence_base, "minion", "solutions.json")?;
+        copy_generated_to_expected(path, essence_base, "minion", "solutions.json", Some(solver))?;
         
         if config.validate_rule_traces {
-            copy_human_trace_generated_to_expected(path, essence_base)?;
-            save_stats_json(context.clone(), path, essence_base)?;
+            copy_human_trace_generated_to_expected(path, essence_base, solver)?;
+            save_stats_json(context.clone(), path, essence_base, solver)?;
         }
     }
 
@@ -505,6 +514,7 @@ fn integration_test_inner(
     // Check Stage 2a (rewritten model)
     if config.apply_rewrite_rules {
         let expected_model = read_model_json(&context, path, essence_base, "expected", "rewrite", Some(solver));
+        println!("MEOW 1");
         // A JSON reading error could just mean that the ast has changed since the file was
         // generated.
         //
@@ -552,16 +562,16 @@ fn integration_test_inner(
         // Overwrite expected parse and rewrite models if needed
         if config.enable_native_parser && parsed_native_model_dirty {
             model_native.expect("model_native should exist");
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
+            copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
         }
         if config.parse_model_default && parsed_model_dirty {
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
+            copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
         }
         if config.apply_rewrite_rules && rewritten_model_dirty {
-            copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json")?;
+            copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json", None)?;
         }
     }
-    save_stats_json(context, path, essence_base)?;
+    save_stats_json(context, path, essence_base, solver)?;
 
     Ok(())
 }
@@ -569,11 +579,16 @@ fn integration_test_inner(
 fn copy_human_trace_generated_to_expected(
     path: &str,
     test_name: &str,
+    solver: SolverFamily
 ) -> Result<(), std::io::Error> {
     //  WBHYn NO GENERTE
+    let solver_name = match solver {
+        SolverFamily::Sat => "sat",
+        SolverFamily::Minion => "minion",
+    };
     std::fs::copy(
-        format!("{path}/{test_name}-generated-rule-trace-human.txt"),
-        format!("{path}/{test_name}-expected-rule-trace-human.txt"),
+        format!("{path}/{solver_name}-{test_name}-generated-rule-trace-human.txt"),
+        format!("{path}/{solver_name}-{test_name}-expected-rule-trace-human.txt"),
     )?;
     Ok(())
 }
@@ -582,17 +597,27 @@ fn copy_generated_to_expected(
     path: &str,
     test_name: &str,
     stage: &str,
-    extension: &str,
+    extension: &str, solver: Option<SolverFamily>,
 ) -> Result<(), std::io::Error> {
+    let marker = match solver {
+        Some(SolverFamily::Sat) => "sat",
+        Some(SolverFamily::Minion)=> "minion",
+        None => "agnostic"
+    };
     std::fs::copy(
-        format!("{path}/{test_name}.generated-{stage}.{extension}"),
-        format!("{path}/{test_name}.expected-{stage}.{extension}"),
+        format!("{path}/{marker}-{test_name}.generated-{stage}.{extension}"),
+        format!("{path}/{marker}-{test_name}.expected-{stage}.{extension}"),
     )?;
     Ok(())
 }
 
-fn expected_exists_for(path: &str, test_name: &str, stage: &str, extension: &str) -> bool {
-    Path::new(&format!("{path}/{test_name}.expected-{stage}.{extension}")).exists()
+fn expected_exists_for(path: &str, test_name: &str, stage: &str, extension: &str, solver: Option<SolverFamily>) -> bool {
+    let marker = match solver {
+        Some(SolverFamily::Sat) => "sat",
+        Some(SolverFamily::Minion)=> "minion",
+        None => "agnostic"
+    };
+    Path::new(&format!("{path}/{marker}-{test_name}.expected-{stage}.{extension}")).exists()
 }
 
 fn assert_vector_operators_have_partially_evaluated(model: &conjure_cp::Model) {
@@ -630,9 +655,10 @@ fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
 pub fn create_scoped_subscriber(
     path: &str,
     test_name: &str,
+    solver_name: &str
 ) -> (impl tracing::Subscriber + Send + Sync) {
-    let target1_layer = create_file_layer_json(path, test_name);
-    let target2_layer = create_file_layer_human(path, test_name);
+    let target1_layer = create_file_layer_json(path, test_name, solver_name);
+    let target2_layer = create_file_layer_human(path, test_name, solver_name);
     let layered = target1_layer.and_then(target2_layer);
 
     let subscriber = Arc::new(tracing_subscriber::registry().with(layered))
@@ -643,8 +669,8 @@ pub fn create_scoped_subscriber(
     subscriber
 }
 
-fn create_file_layer_json(path: &str, test_name: &str) -> impl Layer<Registry> + Send + Sync {
-    let file = File::create(format!("{path}/{test_name}-generated-rule-trace.json"))
+fn create_file_layer_json(path: &str, test_name: &str, solver_name: &str) -> impl Layer<Registry> + Send + Sync {
+    let file = File::create(format!("{path}/{solver_name}-{test_name}-generated-rule-trace.json"))
         .expect("Unable to create log file");
 
     fmt::layer()
@@ -657,8 +683,8 @@ fn create_file_layer_json(path: &str, test_name: &str) -> impl Layer<Registry> +
         }))
 }
 
-fn create_file_layer_human(path: &str, test_name: &str) -> (impl Layer<Registry> + Send + Sync) {
-    let file = File::create(format!("{path}/{test_name}-generated-rule-trace-human.txt"))
+fn create_file_layer_human(path: &str, test_name: &str, solver_name: &str) -> (impl Layer<Registry> + Send + Sync) {
+    let file = File::create(format!("{path}/{solver_name}-{test_name}-generated-rule-trace-human.txt"))
         .expect("Unable to create log file");
 
     fmt::layer()
