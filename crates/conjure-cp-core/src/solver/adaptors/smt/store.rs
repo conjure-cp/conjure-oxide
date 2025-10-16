@@ -73,15 +73,16 @@ impl Solvable for Store {
 
 fn dynamic_to_literal(ast: Dynamic) -> Result<Literal, SolverError> {
     match &ast.sort_kind() {
-        SortKind::Bool => Ok(Literal::Bool(
-            ast.as_bool()
-                .ok_or(SolverError::Runtime(
-                    "AST with bool sort not actually bool".into(),
-                ))?
-                .as_bool()
-                .ok_or(SolverError::Runtime(
-                    "Bool AST is not a literal value".into(),
-                ))?,
+        SortKind::Bool => Ok(Literal::Bool(ast.as_bool().unwrap().as_bool().ok_or(
+            SolverError::Runtime("Bool AST is not a literal value".into()),
+        )?)),
+        SortKind::Int => Ok(Literal::Int(
+            ast.as_int()
+                .unwrap()
+                .as_i64()
+                .ok_or(SolverError::Runtime("could not retrieve as i64".into()))?
+                .try_into()
+                .map_err(|err| SolverError::Runtime(format!("integer conversion failed: {err}")))?,
         )),
         _ => Err(SolverError::RuntimeNotImplemented(format!(
             "conversion from AST to literal not implemented: {ast}"
