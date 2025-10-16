@@ -76,9 +76,16 @@ where
         Expression::Atomic(_, atom) => atom_to_ast(store, atom),
 
         // Equality is part of the SMT core theory (anything can be compared)
-        // TODO: use safe eq
-        Expression::Neq(_, a, b) => binary_op(store, a, b, |a: Dynamic, b: Dynamic| a.ne(b)),
-        Expression::Eq(_, a, b) => binary_op(store, a, b, |a: Dynamic, b: Dynamic| a.eq(b)),
+        // We do some extra work to return a clean error if the types are different
+        Expression::Eq(_, a, b) => checked_binary_op(store, a, b, |a: Dynamic, b: Dynamic| {
+            a.safe_eq(b)
+                .map_err(|err| SolverError::ModelInvalid(err.to_string()))
+        })?,
+        Expression::Neq(_, a, b) => checked_binary_op(store, a, b, |a: Dynamic, b: Dynamic| {
+            a.safe_eq(b)
+                .map(|eq| eq.not())
+                .map_err(|err| SolverError::ModelInvalid(err.to_string()))
+        })?,
 
         // The below operations are grouped by return type and then by arity
 
@@ -199,6 +206,24 @@ where
     let a_ast: A = expr_to_ast(store, a)?;
     let b_ast: B = expr_to_ast(store, b)?;
     Ok((op)(a_ast, b_ast).into())
+}
+
+/// Interprets two expressions as ASTs and returns the result of the given operation over
+/// them (which may be an error).
+fn checked_binary_op<A, B, Error, Out>(
+    store: &Store,
+    a: &Expression,
+    b: &Expression,
+    op: impl FnOnce(A, B) -> Result<Out, Error>,
+) -> Result<Result<Dynamic, Error>, SolverError>
+where
+    A: TryFrom<Dynamic, Error: std::fmt::Display>,
+    B: TryFrom<Dynamic, Error: std::fmt::Display>,
+    Out: Into<Dynamic>,
+{
+    let a_ast: A = expr_to_ast(store, a)?;
+    let b_ast: B = expr_to_ast(store, b)?;
+    Ok((op)(a_ast, b_ast).map(Into::into))
 }
 
 /// Transforms a slice of expressions into ASTs and returns the result of the given operation over it.
