@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Initialising pull request to work on code coverage with Calum
+
 set -e
 
 # coverage.sh
