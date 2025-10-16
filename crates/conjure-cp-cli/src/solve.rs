@@ -63,7 +63,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     let context = init_context(&global_args, input_file)?;
     let model = parse(&global_args, Arc::clone(&context))?;
     let rewritten_model = rewrite(model, &global_args, Arc::clone(&context))?;
-
+    
     if solve_args.no_run_solver {
         println!("{}", &rewritten_model);
 
