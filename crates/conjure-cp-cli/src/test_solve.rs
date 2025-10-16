@@ -3,7 +3,6 @@ use std::process::exit;
 use std::sync::Arc;
 
 use clap::ValueHint;
-use conjure_cp::solver::{SolverFamily, adaptors::*};
 use conjure_cp_cli::utils::conjure::{
     get_solutions, get_solutions_from_conjure, solutions_to_json,
 };
