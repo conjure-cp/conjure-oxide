@@ -117,9 +117,6 @@ where
             a.lt(Int::from(0)).ite(&a.unary_minus(), &a)
         }),
 
-        Expression::Minus(_, a, b) => binary_op(store, a, b, |a: Int, b: Int| {
-            Int::add(&[a, b.unary_minus()])
-        }),
         Expression::SafeDiv(_, a, b) => binary_op(store, a, b, |a: Int, b: Int| a.div(b)),
         Expression::SafeMod(_, a, b) => binary_op(store, a, b, |a: Int, b: Int| a.modulo(b)),
         Expression::SafePow(_, a, b) => binary_op(store, a, b, |a: Int, b: Int| a.power(b)),
