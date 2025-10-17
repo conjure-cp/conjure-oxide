@@ -121,8 +121,6 @@ where
         Expression::SafeMod(_, a, b) => binary_op(store, a, b, |a: Int, b: Int| a.modulo(b)),
         Expression::SafePow(_, a, b) => binary_op(store, a, b, |a: Int, b: Int| a.power(b)),
 
-        // Expression::Max(_, a) => todo!(),
-        // Expression::Min(_, a) => todo!(),
         Expression::Product(_, a) => {
             let exprs = list_to_vec(a)?;
             many_op(store, exprs.as_slice(), |asts: &[Int]| Int::mul(asts))
