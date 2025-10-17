@@ -8,7 +8,7 @@ use conjure_cp::ast::{DeclarationKind, DeclarationPtr, Literal, Name};
 use conjure_cp::bug;
 use conjure_cp::context::Context;
 use conjure_cp::solver::adaptors::Minion;
-
+use std::collections::HashMap;
 use serde_json::{Map, Value as JsonValue};
 use conjure_cp::solver::SolverFamily;
 use itertools::Itertools as _;
@@ -50,6 +50,7 @@ pub fn get_solutions_with_dominance(
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
     // all non-dominated solutions
     let mut results = Vec::new();
+    let mut sols_to_constraints = HashMap::new();
     loop {
         // get the next solution
         let solutions = match solver {
@@ -65,10 +66,14 @@ pub fn get_solutions_with_dominance(
         // add to results
         results.extend(solutions.clone());
 
-        // create and apply new blocking constraints
-        model.add_constraints(crate_blocking_constraint_from_solution(
+        let blocking_constraints = crate_blocking_constraint_from_solution(
             &model, solution, dom_rel,
-        ));
+        );
+
+        sols_to_constraints.insert(solution.clone(), blocking_constraints.clone());
+
+        // create and apply new blocking constraints
+        model.add_constraints(blocking_constraints);
     }
 
     // vector constaining non-dominated solutions
@@ -79,11 +84,12 @@ pub fn get_solutions_with_dominance(
         let mut model_copy = model.clone();
 
         // remove blocking constraint created by the current solution
-        model_copy.remove_constraints(crate_blocking_constraint_from_solution(
-            &model_copy,
-            sol,
-            dom_rel,
-        ));
+        model_copy.remove_constraints(
+            sols_to_constraints
+            .get(sol)
+            .expect("Each solutions should have a blocking constraint")
+            .clone()
+        );
 
         // add constraints for current solution (gives the variables fixed values)
         for (name, value) in sol.iter() {
