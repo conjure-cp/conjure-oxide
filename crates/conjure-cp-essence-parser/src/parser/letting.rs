@@ -12,47 +12,64 @@ use conjure_cp_core::ast::{Name, SymbolTable};
 
 /// Parse a letting statement into a SymbolTable containing the declared symbols
 pub fn parse_letting_statement(
-    letting_statement_list: Node,
+    letting_statement: Node,
     source_code: &str,
+    existing_symbols: Option<&SymbolTable>,
 ) -> Result<SymbolTable, EssenceParseError> {
     let mut symbol_table = SymbolTable::new();
 
-    for letting_statement in named_children(&letting_statement_list) {
-        let mut temp_symbols = BTreeSet::new();
+    let mut temp_symbols = BTreeSet::new();
 
-        let variable_list = letting_statement.child(0).expect("No variable list found");
-        for variable in named_children(&variable_list) {
-            let variable_name = &source_code[variable.start_byte()..variable.end_byte()];
-            temp_symbols.insert(variable_name);
+    let variable_list = letting_statement
+        .child_by_field_name("variable_list")
+        .expect("No variable list found");
+    for variable in named_children(&variable_list) {
+        let variable_name = &source_code[variable.start_byte()..variable.end_byte()];
+        temp_symbols.insert(variable_name);
+    }
+
+    let expr_or_domain = letting_statement
+        .child_by_field_name("expr_or_domain")
+        .expect("No domain or expression found for letting statement");
+    match expr_or_domain.kind() {
+        "bool_expr" | "arithmetic_expr" => {
+            for name in temp_symbols {
+                symbol_table.insert(DeclarationPtr::new_value_letting(
+                    Name::user(name),
+                    parse_expression(
+                        expr_or_domain,
+                        source_code,
+                        &letting_statement,
+                        existing_symbols,
+                    )?,
+                ));
+            }
         }
+        "domain" => {
+            for name in temp_symbols {
+                let domain = parse_domain(expr_or_domain, source_code)?;
 
-        let expr_or_domain = letting_statement
-            .named_child(1)
-            .expect("No domain or expression found for letting statement");
-        match expr_or_domain.kind() {
-            "expression" => {
-                for name in temp_symbols {
-                    symbol_table.insert(DeclarationPtr::new_value_letting(
-                        Name::user(name),
-                        parse_expression(
-                            expr_or_domain,
-                            source_code,
-                            &letting_statement_list,
-                            Some(&symbol_table),
-                        )?,
-                    ));
+                // If it's a record domain, add the field names to the symbol table
+                if let conjure_cp_core::ast::Domain::Record(ref entries) = domain {
+                    for entry in entries {
+                        // Add each field name as a record field declaration
+                        symbol_table.insert(DeclarationPtr::new_record_field(entry.clone()));
+                    }
                 }
+
+                symbol_table.insert(DeclarationPtr::new_domain_letting(Name::user(name), domain));
             }
-            "domain" => {
-                for name in temp_symbols {
-                    symbol_table.insert(DeclarationPtr::new_domain_letting(
-                        Name::user(name),
-                        parse_domain(expr_or_domain, source_code),
-                    ));
-                }
-            }
-            _ => panic!("Unrecognized node in letting statement"),
+        }
+        _ => {
+            return Err(EssenceParseError::syntax_error(
+                format!(
+                    "Expected letting expression, got '{}'",
+                    expr_or_domain.kind()
+                ),
+                Some(expr_or_domain.range()),
+            ));
         }
     }
+
     Ok(symbol_table)
 }
