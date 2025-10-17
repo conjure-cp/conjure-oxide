@@ -1,5 +1,21 @@
 # Short title
 
+(Tags will either be up here, or above the 'Short title')
+
+## Breif overview
+
+Including project scope.
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+## Related projects
+
+Projects that effect/are linked to the one you're talking about.
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+## Explanation
+
 Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
 
 Code block:
@@ -13,11 +29,12 @@ fn main() {
 }
 ```
 
-This only works with rust code blocks. There are [different ways to include code](https://books.irust.net/read/mdbook-guide/en-us/guide/reading.html).
+This only works with rust code blocks. There are [different ways to include code](https://books.irust.net/read/mdbook-guide/en-us/guide/reading.html), and the blocks can be runable, or not (as it currently is).
 
-this will be filled with other random format bits, tho honestly people could just look at the md docs, and this template could just have the tags or something
+We will look at syntax highlighting needed to include Conjure-Oxide.  
 
-## Sub Title
+(This will be filled with other random format bits, though people could just look at the md docs, and this template could just have the tags or something)
 
-In here will be info on the tags and other stuff- will be ironed out more once we figure out what we're doing! 
-:)
+## Extra/related reading
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
