@@ -344,7 +344,7 @@ fn integration_test_inner(
     // Stage 3a: Run the model through the Minion solver (run unless explicitly disabled)
     let solutions = if config.solve_with_minion {
         let solved = get_solutions(
-            Minion::default(),
+            SolverFamily::Minion,
             rewritten_model
                 .as_ref()
                 .expect("Rewritten model must be present in 2a")
@@ -360,7 +360,7 @@ fn integration_test_inner(
         Some(solved)
     } else if config.solve_with_sat {
         let solved = get_solutions(
-            Sat::default(),
+            SolverFamily::Sat,
             rewritten_model
                 .as_ref()
                 .expect("Rewritten model must be present in 2a")

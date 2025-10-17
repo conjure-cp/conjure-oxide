@@ -37,7 +37,7 @@ pub struct Model {
 impl Model {
     pub fn get_constraints(&mut self) -> &Vec<Expression> {
         let submodel = self.as_submodel_mut();
-        return submodel.constraints();
+        submodel.constraints()
     }
 
     pub fn get_var(&mut self, name: &Name) -> Option<DeclarationPtr> {
