@@ -3,7 +3,7 @@ use super::{
     comprehension::Comprehension,
     declaration::DeclarationKind,
     pretty::{
-        pretty_domain_letting_declaration, pretty_expressions_as_top_level,
+        pretty_clauses, pretty_domain_letting_declaration, pretty_expressions_as_top_level,
         pretty_value_letting_declaration, pretty_variable_declaration,
     },
     serde::RcRefCellAsInner,
@@ -21,7 +21,7 @@ use std::{
     rc::Rc,
 };
 
-use super::{Expression, ReturnType, SymbolTable, types::Typeable};
+use super::{CnfClause, Expression, ReturnType, SymbolTable, types::Typeable};
 
 /// A sub-model, representing a lexical scope in the model.
 ///
@@ -35,7 +35,7 @@ pub struct SubModel {
     constraints: Moo<Expression>,
     #[serde_as(as = "RcRefCellAsInner")]
     symbols: Rc<RefCell<SymbolTable>>,
-    cnf_clauses: Vec<Expression>, // CNF clauses
+    cnf_clauses: Vec<CnfClause>, // CNF clauses
 }
 
 impl SubModel {
@@ -130,7 +130,7 @@ impl SubModel {
     }
 
     /// The cnf clauses in this sub-model.
-    pub fn clauses(&self) -> &Vec<Expression> {
+    pub fn clauses(&self) -> &Vec<CnfClause> {
         &self.cnf_clauses
     }
 
@@ -144,7 +144,7 @@ impl SubModel {
     }
 
     /// The cnf clauses in this sub-model as a mutable vector.
-    pub fn clauses_mut(&mut self) -> &mut Vec<Expression> {
+    pub fn clauses_mut(&mut self) -> &mut Vec<CnfClause> {
         &mut self.cnf_clauses
     }
 
@@ -153,18 +153,13 @@ impl SubModel {
         std::mem::replace(self.constraints_mut(), new_constraints)
     }
 
-    /// Replaces the cnf clauses with `new_clauses`, returning the old ones.
-    pub fn replace_clauses(&mut self, new_clauses: Vec<Expression>) -> Vec<Expression> {
-        std::mem::replace(self.clauses_mut(), new_clauses)
-    }
-
     /// Adds a top-level constraint.
     pub fn add_constraint(&mut self, constraint: Expression) {
         self.constraints_mut().push(constraint);
     }
 
     /// Adds a cnf clause.
-    pub fn add_clause(&mut self, clause: Expression) {
+    pub fn add_clause(&mut self, clause: CnfClause) {
         self.clauses_mut().push(clause);
     }
 
@@ -174,7 +169,7 @@ impl SubModel {
     }
 
     /// Adds cnf clauses.
-    pub fn add_clauses(&mut self, clauses: Vec<Expression>) {
+    pub fn add_clauses(&mut self, clauses: Vec<CnfClause>) {
         self.clauses_mut().extend(clauses);
     }
 
@@ -248,10 +243,11 @@ impl Display for SubModel {
 
         writeln!(f, "{}", pretty_expressions_as_top_level(self.constraints()))?;
 
-        writeln!(f, "\nclauses:\n")?;
+        if !self.clauses().is_empty() {
+            writeln!(f, "\nclauses:\n")?;
 
-        writeln!(f, "{}", pretty_expressions_as_top_level(self.clauses()))?;
-
+            writeln!(f, "{}", pretty_clauses(self.clauses()))?;
+        }
         Ok(())
     }
 }
