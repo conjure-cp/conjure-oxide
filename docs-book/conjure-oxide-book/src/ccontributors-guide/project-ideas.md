@@ -1,0 +1,1 @@
+# Beginner Projects Ideas
