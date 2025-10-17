@@ -69,6 +69,7 @@ export LLVM_PROFILE_FILE='conjure-oxide-%p-%m.profraw'
 GRCOV_EXCLUDE_LINES=(
   'consider covered'
   'bug!'
+  '#\[derive'
   '#\[register_rule'
   'register_rule_set!'
 )
