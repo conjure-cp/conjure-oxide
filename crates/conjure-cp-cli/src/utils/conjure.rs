@@ -17,11 +17,14 @@ use crate::utils::json::sort_json_object;
 use conjure_cp::Model;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::solver::{Solver, SolverAdaptor};
+use conjure_cp::solver::{Solver, SolverAdaptor};
 
 use glob::glob;
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
+pub fn get_solutions(
+    solver_adaptor: impl SolverAdaptor,
 pub fn get_solutions(
     solver_adaptor: impl SolverAdaptor,
     model: Model,
@@ -32,7 +35,12 @@ pub fn get_solutions(
     let solver = Solver::new(solver_adaptor);
 
     eprintln!("Building {adaptor_name} model...");
+    let adaptor_name = solver_adaptor.get_name().unwrap_or("UNKNOWN".into());
+    let solver = Solver::new(solver_adaptor);
 
+    eprintln!("Building {adaptor_name} model...");
+
+    // Create for later since we consume the model when loading it
     // Create for later since we consume the model when loading it
     let symbols_rc = Rc::clone(model.as_submodel().symbols_ptr_unchecked());
 
@@ -48,7 +56,9 @@ pub fn get_solutions(
     }
 
     eprintln!("Running {adaptor_name}...");
+    eprintln!("Running {adaptor_name}...");
 
+    // Create two arcs, one to pass into the solver callback, one to get solutions out later
     // Create two arcs, one to pass into the solver callback, one to get solutions out later
     let all_solutions_ref = Arc::new(Mutex::<Vec<BTreeMap<Name, Literal>>>::new(vec![]));
     let all_solutions_ref_2 = all_solutions_ref.clone();
