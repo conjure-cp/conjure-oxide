@@ -51,8 +51,7 @@ use serde::Deserialize;
 struct TestConfig {
     extra_rewriter_asserts: Vec<String>,
 
-    parse_model_default: bool, // Stage 1a: Reads and verifies the Essence model file
-    enable_native_parser: bool, // Stage 1b: Runs the native parser if enabled
+    enable_native_parser: bool, // Stage 1a: Use the native parser instead of the legacy parser
     apply_rewrite_rules: bool, // Stage 2a: Applies predefined rules to the model
     enable_extra_validation: bool, // Stage 2b: Runs additional validation checks
     solve_with_minion: bool,   // Stage 3a: Solves the model using Minion
@@ -73,7 +72,6 @@ impl Default for TestConfig {
             solve_with_sat: false,
             enable_morph_impl: false,
             enable_rewriter_impl: true,
-            parse_model_default: true,
             enable_native_parser: true,
             apply_rewrite_rules: true,
             enable_extra_validation: false,
@@ -90,10 +88,6 @@ fn env_var_override_bool(key: &str, default: bool) -> bool {
 impl TestConfig {
     fn merge_env(self) -> Self {
         Self {
-            parse_model_default: env_var_override_bool(
-                "PARSE_MODEL_DEFAULT",
-                self.parse_model_default,
-            ),
             enable_morph_impl: env_var_override_bool("ENABLE_MORPH_IMPL", self.enable_morph_impl),
             enable_naive_impl: env_var_override_bool("ENABLE_NAIVE_IMPL", self.enable_naive_impl),
             enable_native_parser: env_var_override_bool(
@@ -190,8 +184,8 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
 /// This function operates in multiple stages:
 ///
 /// - **Parsing Stage**
-///   - **Stage 1a (Default)**: Reads the Essence model file and verifies that it parses correctly.
-///   - **Stage 1b (Optional)**: Runs the native parser if explicitly enabled.
+///   - **Stage 1a (Default)**: Reads the Essence model file and verifies that it parses correctly using the native parser.
+///   - **Stage 1b (Optional)**: Reads the Essence model file and verifies that it parses correctly using the legacy parser.
 ///
 /// - **Rewrite Stage**
 ///   - **Stage 2a (Default)**: Applies a set of rules to the parsed model and validates the result.
@@ -229,7 +223,6 @@ fn integration_test_inner(
     // This reduces unnecessary git diffs when only the id of items in a model changes. These
     // change every run of the tester, but do not change the correctness of the model.
     let mut parsed_model_dirty = false;
-    let mut parsed_native_model_dirty = false;
     let mut rewritten_model_dirty = false;
 
     if verbose {
@@ -254,30 +247,29 @@ fn integration_test_inner(
     // File path
     let file_path = format!("{path}/{essence_base}.{extension}");
 
-    // Stage 1a: Parse the model using the normal parser (run unless explicitly disabled)
-    let parsed_model = if config.parse_model_default {
-        let parsed = parse_essence_file(&file_path, context.clone())?;
+    // Stage 1a: Parse the model using the selected parser
+    let parsed_model = if config.enable_native_parser {
+        let model = parse_essence_file_native(&file_path, context.clone())?;
         if verbose {
-            println!("Parsed model: {parsed:#?}");
+            println!("Parsed model (native): {model:#?}");
         }
-        save_model_json(&parsed, path, essence_base, "parse")?;
-        Some(parsed)
-    } else {
-        None
-    };
-
-    // Stage 1b: Run native parser (only if explicitly enabled)
-    let mut model_native = None;
-    if config.enable_native_parser {
-        let mn = parse_essence_file_native(&file_path, context.clone())?;
-        save_model_json(&mn, path, essence_base, "parse")?;
-        model_native = Some(mn);
-
+        save_model_json(&model, path, essence_base, "parse")?;
+        
         {
             let mut ctx = context.as_ref().write().unwrap();
             ctx.file_name = Some(format!("{path}/{essence_base}.{extension}"));
         }
-    }
+        
+        model
+    // Stage 1b: Parse the model using the legacy parser
+    } else {
+        let model = parse_essence_file(&file_path, context.clone())?;
+        if verbose {
+            println!("Parsed model (legacy): {model:#?}");
+        }
+        save_model_json(&model, path, essence_base, "parse")?;
+        model
+    };
 
     // Stage 2a: Rewrite the model using the rule engine (run unless explicitly disabled)
     let rewritten_model = if config.apply_rewrite_rules {
@@ -291,7 +283,7 @@ fn integration_test_inner(
 
         let rule_sets = resolve_rule_sets(solver_fam, DEFAULT_RULE_SETS)?;
 
-        let mut model = parsed_model.expect("Model must be parsed in 1a");
+        let mut model = parsed_model;
 
         let rewritten = if config.enable_naive_impl {
             rewrite_naive(&model, &rule_sets, false, false)?
@@ -408,15 +400,7 @@ fn integration_test_inner(
     // We rewrite out-of-date tests (if necessary) after testing them.
     if accept {
         // Overwrite expected parse and rewrite models if enabled
-        if config.enable_native_parser
-            && !expected_exists_for(path, essence_base, "parse", "serialised.json")
-        {
-            model_native.clone().expect("model_native should exist");
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
-        }
-        if config.parse_model_default
-            && !expected_exists_for(path, essence_base, "parse", "serialised.json")
-        {
+        if !expected_exists_for(path, essence_base, "parse", "serialised.json") {
             copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
         }
         if config.apply_rewrite_rules
@@ -439,63 +423,33 @@ fn integration_test_inner(
         }
     }
 
-    // Check Stage 1b (native parser)
-    if config.enable_native_parser {
-        let expected_model = read_model_json(&context, path, essence_base, "expected", "parse");
+    // Check Stage 1: Compare parsed model with expected
+    let expected_model = read_model_json(&context, path, essence_base, "expected", "parse");
+    let model_from_file = read_model_json(&context, path, essence_base, "generated", "parse");
 
-        // A JSON reading error could just mean that the ast has changed since the file was
-        // generated.
-        //
-        // When ACCEPT=true, regenerate the json instead of failing the test.
-        match expected_model {
-            Err(_) if accept => {
-                parsed_native_model_dirty = true;
-            }
-            Err(e) => {
-                return Err(Box::new(e));
-            }
-            Ok(expected_model) => {
-                let model_native = model_native
-                    .clone()
-                    .expect("model_native should exist here");
-                if accept {
-                    parsed_native_model_dirty = model_native != expected_model;
-                } else {
-                    assert_eq!(model_native, expected_model);
-                }
-            }
+    // A JSON reading error could just mean that the ast has changed since the file was
+    // generated.
+    //
+    // When ACCEPT=true, regenerate the json instead of failing the test.
+    match (expected_model, model_from_file) {
+        (Err(_), _) | (_, Err(_)) if accept => {
+            parsed_model_dirty = true;
         }
-    }
 
-    // Check Stage 1a (parsed model)
-    if config.parse_model_default {
-        let expected_model = read_model_json(&context, path, essence_base, "expected", "parse");
-        let model_from_file = read_model_json(&context, path, essence_base, "generated", "parse");
+        (Err(e), _) => {
+            return Err(Box::new(e));
+        }
 
-        // A JSON reading error could just mean that the ast has changed since the file was
-        // generated.
-        //
-        // When ACCEPT=true, regenerate the json instead of failing the test.
-        match (expected_model, model_from_file) {
-            (Err(_), _) | (_, Err(_)) if accept => {
-                parsed_model_dirty = true;
-            }
+        (_, Err(e)) => {
+            return Err(Box::new(e));
+        }
 
-            (Err(e), _) => {
-                return Err(Box::new(e));
-            }
+        (Ok(expected_model), Ok(model_from_file)) if accept => {
+            parsed_model_dirty = model_from_file != expected_model;
+        }
 
-            (_, Err(e)) => {
-                return Err(Box::new(e));
-            }
-
-            (Ok(expected_model), Ok(model_from_file)) if accept => {
-                parsed_model_dirty = model_from_file != expected_model;
-            }
-
-            (Ok(expected_model), Ok(model_from_file)) => {
-                assert_eq!(model_from_file, expected_model);
-            }
+        (Ok(expected_model), Ok(model_from_file)) => {
+            assert_eq!(model_from_file, expected_model);
         }
     }
 
@@ -554,11 +508,7 @@ fn integration_test_inner(
 
     if accept {
         // Overwrite expected parse and rewrite models if needed
-        if config.enable_native_parser && parsed_native_model_dirty {
-            model_native.expect("model_native should exist");
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
-        }
-        if config.parse_model_default && parsed_model_dirty {
+        if parsed_model_dirty {
             copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
         }
         if config.apply_rewrite_rules && rewritten_model_dirty {
