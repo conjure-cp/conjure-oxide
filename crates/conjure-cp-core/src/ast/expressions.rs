@@ -490,9 +490,6 @@ pub enum Expression {
         Moo<Expression>,
     ),
 
-    // This expression represents a cnf clause in its simplest form, it should only contain atoms and should not be affected by the rule engine
-    Clause(Metadata, Moo<Expression>),
-
     // This expression is for encoding i32 ints as a vector of boolean expressions for cnf - using 2s complement
     SATInt(Metadata, Moo<Expression>),
 }
@@ -790,11 +787,6 @@ impl Expression {
                 .ok(),
             Expression::MinionPow(_, _, _, _) => Some(Domain::Bool),
             Expression::ToInt(_, _) => Some(Domain::Int(vec![Range::Bounded(0, 1)])),
-            // The clause expression is a special case of the Or expression, but it is not
-            // a disjunction of expressions, but rather a disjunction of atoms
-            // Clauses should only be found within the `cnf_clauses` field of the model
-            // and therefore should not be affected by the rule engine
-            Expression::Clause(_, _) => Some(Domain::Bool),
             Expression::SATInt(_, _) => {
                 Some(Domain::Int(vec![Range::Bounded(
                     i8::MIN.into(),
@@ -1326,10 +1318,6 @@ impl Display for Expression {
                 write!(f, "toInt({expr})")
             }
 
-            Expression::Clause(_, e) => {
-                write!(f, "Clause({e})")
-            }
-
             Expression::SATInt(_, e) => {
                 write!(f, "SATInt({e})")
             }
@@ -1422,7 +1410,6 @@ impl Typeable for Expression {
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::MinionPow(_, _, _, _) => Some(ReturnType::Bool),
             Expression::ToInt(_, _) => Some(ReturnType::Int),
-            Expression::Clause(_, _) => Some(ReturnType::Bool),
             Expression::SATInt(_, _) => Some(ReturnType::Int),
         }
     }
