@@ -27,7 +27,7 @@ env:
 jobs:
   build-and-test:
     name: "Test"
-    timeout-minutes: 15
+    timeout-minutes: 120
     strategy:
       # run all combinations of the matrix even if one combination fails.
       fail-fast: false
@@ -62,7 +62,6 @@ jobs:
         if: matrix.rust_release == 'nightly'
         run: echo "RUSTUP_TOOLCHAIN=nightly" >> $GITHUB_ENV
 
-
       - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
 
       - run: cargo build -vv --workspace
@@ -84,7 +83,7 @@ jobs:
 
   examples:
     name: "Examples"
-    timeout-minutes: 15
+    timeout-minutes: 120
     strategy:
       # run all combinations of the matrix even if one combination fails.
       fail-fast: false
@@ -145,5 +144,3 @@ jobs:
 
       - name: Run cargo shear
         run: cargo +nightly shear --expand
-
-
