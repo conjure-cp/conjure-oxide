@@ -89,13 +89,12 @@ fn name_to_symbol(name: &Name) -> Result<Symbol, SolverError> {
         Name::User(ustr) => Ok(Symbol::String((*ustr).into())),
         Name::Machine(num) => Ok(Symbol::Int(*num as u32)),
         _ => Err(SolverError::ModelFeatureNotImplemented(format!(
-            "variable '{name}' is part of a representation"
+            "variable '{name}' name is unsupported"
         ))),
     }
 }
 
 /// Converts a Conjure Oxide Expression to an AST node for Z3.
-///
 /// The generic type parameter lets us cast the result to a specific return type.
 fn expr_to_ast<Out>(store: &Store, expr: &Expression) -> Result<Out, SolverError>
 where
@@ -182,6 +181,9 @@ fn atom_to_ast(store: &Store, atom: &Atom) -> Result<Dynamic, SolverError> {
             )))
             .cloned(),
         Atom::Literal(lit) => literal_to_ast(lit),
+        _ => Err(SolverError::ModelFeatureNotImplemented(format!(
+            "atom sort not implemented: {atom}"
+        ))),
     }
 }
 
