@@ -52,10 +52,10 @@ struct TestConfig {
     extra_rewriter_asserts: Vec<String>,
 
     enable_native_parser: bool, // Stage 1a: Use the native parser instead of the legacy parser
-    apply_rewrite_rules: bool, // Stage 2a: Applies predefined rules to the model
+    apply_rewrite_rules: bool,  // Stage 2a: Applies predefined rules to the model
     enable_extra_validation: bool, // Stage 2b: Runs additional validation checks
-    solve_with_minion: bool,   // Stage 3a: Solves the model using Minion
-    solve_with_sat: bool,      // TODO - add stage mark
+    solve_with_minion: bool,    // Stage 3a: Solves the model using Minion
+    solve_with_sat: bool,       // TODO - add stage mark
     compare_solver_solutions: bool, // Stage 3b: Compares Minion and Conjure solutions
     validate_rule_traces: bool, // Stage 4a: Checks rule traces against expected outputs
 
@@ -254,12 +254,12 @@ fn integration_test_inner(
             println!("Parsed model (native): {model:#?}");
         }
         save_model_json(&model, path, essence_base, "parse")?;
-        
+
         {
             let mut ctx = context.as_ref().write().unwrap();
             ctx.file_name = Some(format!("{path}/{essence_base}.{extension}"));
         }
-        
+
         model
     // Stage 1b: Parse the model using the legacy parser
     } else {
