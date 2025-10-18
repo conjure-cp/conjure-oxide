@@ -17,24 +17,25 @@ use crate::Model;
 use crate::ast::*;
 use crate::solver::SolverError;
 
-/// Adds variables from the symbol table to the store to be referenced when adding constraints.
-pub fn load_store(store: &mut Store, symbols: &SymbolTable) -> Result<(), SolverError> {
+/// Converts the given variables and constraints to assertions by mutating the given model.
+///
+/// SMT does not use bounded domains the same way Conjure Oxide does; for example integers
+/// domains are unbounded. For this reason, additional assertions are made to keep these
+/// variables within their domains.
+pub fn load_model_impl(
+    store: &mut Store,
+    solver: &mut Solver,
+    symbols: &SymbolTable,
+    model: &[Expression],
+) -> Result<(), SolverError> {
     for (name, decl) in symbols.clone().into_iter_local() {
         let Some(var) = decl.as_var() else {
             continue;
         };
-        let ast = var_to_ast(&name, &var)?;
+        let (ast, restriction) = var_to_ast(&name, &var)?;
         store.insert(name, ast);
+        solver.assert(restriction);
     }
-    Ok(())
-}
-
-/// Converts top-level expressions into assertions on the model.
-pub fn load_assertions(
-    store: &Store,
-    model: &[Expression],
-    solver: &mut Solver,
-) -> Result<(), SolverError> {
     for expr in model.iter() {
         let bool: Bool = expr_to_ast(store, expr)?;
         solver.assert(bool);
@@ -42,15 +43,43 @@ pub fn load_assertions(
     Ok(())
 }
 
-/// Creates an AST of the relevant type for a given decision variable.
-fn var_to_ast(name: &Name, decl: &DecisionVariable) -> Result<Dynamic, SolverError> {
+/// Returns the AST representation of the variable as well as a boolean assertion to restrict
+/// it to the input variable's domain (e.g. integers have unbounded domains in SMT).
+fn var_to_ast(name: &Name, var: &DecisionVariable) -> Result<(Dynamic, Bool), SolverError> {
     let sym = name_to_symbol(name)?;
-    match decl.domain {
-        Domain::Bool => Ok(Bool::new_const(sym).into()),
-        Domain::Int(_) => Ok(Int::new_const(sym).into()),
+    match &var.domain {
+        // Booleans of course have the same domain in SMT, so no restriction required
+        Domain::Bool => Ok((Bool::new_const(sym).into(), Bool::from_bool(true))),
+
+        // Return a disjunction of the restrictions each range of the domain enforces
+        // I.e. `x: int(1, 3..5)` -> `or([x = 1, x >= 3 /\ x <= 5])`
+        Domain::Int(ranges) => {
+            let sym_const = Int::new_const(sym);
+            let restrictions_res: Result<Vec<_>, SolverError> = ranges
+                .iter()
+                .map(|range| int_range_to_bool(&sym_const, range))
+                .collect();
+            let restrictions = restrictions_res?;
+            Ok((sym_const.into(), Bool::or(restrictions.as_slice())))
+        }
+
         _ => Err(SolverError::ModelFeatureNotImplemented(format!(
             "domain kind for '{name}' not implemented: {}",
-            decl.domain
+            var.domain
+        ))),
+    }
+}
+
+fn int_range_to_bool(sym_const: &Int, range: &Range<i32>) -> Result<Bool, SolverError> {
+    match range {
+        Range::Single(n) => Ok(sym_const.eq(Int::from(*n))),
+        Range::UnboundedL(r) => Ok(sym_const.le(Int::from(*r))),
+        Range::UnboundedR(l) => Ok(sym_const.ge(Int::from(*l))),
+        Range::Bounded(l, r) => {
+            Ok({ Bool::and(&[sym_const.ge(Int::from(*l)), sym_const.le(Int::from(*r))]) })
+        }
+        _ => Err(SolverError::ModelFeatureNotImplemented(format!(
+            "range type not implemented: {range}"
         ))),
     }
 }
@@ -60,13 +89,12 @@ fn name_to_symbol(name: &Name) -> Result<Symbol, SolverError> {
         Name::User(ustr) => Ok(Symbol::String((*ustr).into())),
         Name::Machine(num) => Ok(Symbol::Int(*num as u32)),
         _ => Err(SolverError::ModelFeatureNotImplemented(format!(
-            "variable '{name}' is part of a representation"
+            "variable '{name}' name is unsupported"
         ))),
     }
 }
 
 /// Converts a Conjure Oxide Expression to an AST node for Z3.
-///
 /// The generic type parameter lets us cast the result to a specific return type.
 fn expr_to_ast<Out>(store: &Store, expr: &Expression) -> Result<Out, SolverError>
 where
@@ -153,6 +181,9 @@ fn atom_to_ast(store: &Store, atom: &Atom) -> Result<Dynamic, SolverError> {
             )))
             .cloned(),
         Atom::Literal(lit) => literal_to_ast(lit),
+        _ => Err(SolverError::ModelFeatureNotImplemented(format!(
+            "atom sort not implemented: {atom}"
+        ))),
     }
 }
 
