@@ -171,23 +171,23 @@ pub enum Expression {
     Max(Metadata, Moo<Expression>),
 
     /// `not(a)`
-    #[compatible(JsonInput, SAT)]
+    #[compatible(JsonInput, SAT, SMT)]
     Not(Metadata, Moo<Expression>),
 
     /// `or(<vec_expr>)`
-    #[compatible(JsonInput, SAT)]
+    #[compatible(JsonInput, SAT, SMT)]
     Or(Metadata, Moo<Expression>),
 
     /// `and(<vec_expr>)`
-    #[compatible(JsonInput, SAT)]
+    #[compatible(JsonInput, SAT, SMT)]
     And(Metadata, Moo<Expression>),
 
     /// Ensures that `a->b` (material implication).
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Imply(Metadata, Moo<Expression>, Moo<Expression>),
 
     /// `iff(a, b)` a <-> b
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Iff(Metadata, Moo<Expression>, Moo<Expression>),
 
     #[compatible(JsonInput)]
@@ -211,10 +211,10 @@ pub enum Expression {
     #[compatible(JsonInput)]
     SubsetEq(Metadata, Moo<Expression>, Moo<Expression>),
 
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Eq(Metadata, Moo<Expression>, Moo<Expression>),
 
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Neq(Metadata, Moo<Expression>, Moo<Expression>),
 
     #[compatible(JsonInput)]
