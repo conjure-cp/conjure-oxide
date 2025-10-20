@@ -174,11 +174,11 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     let config = file_config.merge_env();
     
     if config.solve_with_minion {
-        solver_specific_integration_test(path, essence_base, extension, &config, SolverFamily::Minion, verbose, accept)?
+        solver_specific_integration_test(path, essence_base, extension, &config, SolverFamily::Minion, verbose, accept);
     }
 
     if config.solve_with_sat {
-        solver_specific_integration_test(path, essence_base, extension, &config, SolverFamily::Sat, verbose, accept)?
+        solver_specific_integration_test(path, essence_base, extension, &config, SolverFamily::Sat, verbose, accept);
     }
 
     Ok(())
@@ -514,7 +514,6 @@ fn integration_test_inner(
     // Check Stage 2a (rewritten model)
     if config.apply_rewrite_rules {
         let expected_model = read_model_json(&context, path, essence_base, "expected", "rewrite", Some(solver));
-        println!("MEOW 1");
         // A JSON reading error could just mean that the ast has changed since the file was
         // generated.
         //

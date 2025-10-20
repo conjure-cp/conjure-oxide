@@ -125,11 +125,8 @@ pub fn read_model_json(
     );
     println!("reading: {filepath}");
 
-    println!("{test_stage} HERE 1");
     let expected_json_str = std::fs::read_to_string(filepath)?;
-    println!("{test_stage} HERE 2");
     let expected_model: SerdeModel = serde_json::from_str(&expected_json_str)?;
-    println!("{test_stage} HERE 3");
 
     Ok(expected_model.initialise(ctx.clone()).unwrap())
 }
