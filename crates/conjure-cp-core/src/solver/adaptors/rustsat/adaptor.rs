@@ -258,6 +258,8 @@ impl SolverAdaptor for Sat {
     }
 }
 
+// Function that takes in solutions and returns updated solutions
+// update consists of checking each assignment and calling enumerate_real if dont-care types exist
 fn enumerate_sols(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal>> {
     tracing::info!("Enumerating");
     for (key, val) in solution.clone() {
@@ -275,25 +277,34 @@ fn enumerate_sols(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal
     vec![solution]
 }
 
+// Function that takes in a solution and
+// unfolding dont-care type ternaries into booleans
 fn enumerate_real(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal>> {
     tracing::info!("Enumerating: Real");
     let mut sols = Vec::new();
     let mut dont_cares = Vec::new();
-    let mut sol_inc = HashMap::new();
+    let mut solutions_inclusive = HashMap::new();
 
     for (key, val) in solution {
         let v = match val {
             Literal::Int(i) => i,
-            _ => panic!("Only Int literals supported"),
+            _ => bug!("Only Integers exected at this time"),
         };
         if v == 2 {
+            // anytime the value is 2 (dont-care in the ternary system used by rustsat), add the
+            // key to a vector of dontcare values
             dont_cares.push(key);
         } else {
-            sol_inc.insert(key, val);
+            // if the value is not a dont-care, then this (k, v) pair is usable in the final
+            // solution, so just add it to the inclusive solution (another HashMap)
+            solutions_inclusive.insert(key, val);
         }
     }
 
+    // a vector of the 'true' dont-cares. That is, the actual enumerated vval
     let mut tdcs = Vec::new();
+
+    println!("HERE 1: {:?}", tdcs);
 
     tdcs.push(vec![]);
     for len in 1..(dont_cares.len()) {
@@ -302,8 +313,10 @@ fn enumerate_real(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal
         }
     }
 
+    println!("HERE 2: {:?}", tdcs);
+
     for trues in tdcs {
-        let mut d = sol_inc.clone();
+        let mut d = solutions_inclusive.clone();
         for key in dont_cares.clone() {
             if trues.contains(&&key) {
                 d.insert(key, Literal::Int(1));
@@ -315,9 +328,9 @@ fn enumerate_real(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal
     }
 
     for i in dont_cares.clone() {
-        sol_inc.insert(i, Literal::Int(1));
+        solutions_inclusive.insert(i, Literal::Int(1));
     }
 
-    sols.push(sol_inc);
+    sols.push(solutions_inclusive);
     sols
 }
