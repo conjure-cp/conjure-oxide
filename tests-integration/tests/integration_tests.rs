@@ -6,7 +6,7 @@ use conjure_cp::rule_engine::get_rules_grouped;
 use conjure_cp::defaults::DEFAULT_RULE_SETS;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::rule_engine::rewrite_naive;
-use conjure_cp::solver;
+use conjure_cp::solver::adaptors::*;
 use conjure_cp_cli::utils::testing::{normalize_solutions_for_comparison, read_human_rule_trace};
 use glob::glob;
 use itertools::Itertools;
@@ -35,9 +35,7 @@ use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::rule_engine::resolve_rule_sets;
 use conjure_cp::solver::SolverFamily;
 use conjure_cp_cli::utils::conjure::solutions_to_json;
-use conjure_cp_cli::utils::conjure::{
-    get_minion_solutions, get_sat_solutions, get_solutions_from_conjure,
-};
+use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
 use conjure_cp_cli::utils::testing::save_stats_json;
 use conjure_cp_cli::utils::testing::{
     read_model_json, read_solutions_json, save_model_json, save_solutions_json,
@@ -76,7 +74,7 @@ impl Default for TestConfig {
             enable_morph_impl: false,
             enable_rewriter_impl: true,
             parse_model_default: true,
-            enable_native_parser: false,
+            enable_native_parser: true,
             apply_rewrite_rules: true,
             enable_extra_validation: false,
             solve_with_minion: true,
@@ -174,11 +172,11 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     let config = file_config.merge_env();
     
     if config.solve_with_minion {
-        solver_specific_integration_test(path, essence_base, extension, &config, SolverFamily::Minion, verbose, accept);
+        solver_specific_integration_test(path, essence_base, extension, &config, SolverFamily::Minion, verbose, accept); // FIXME: This would be fixed in a sec...
     }
 
     if config.solve_with_sat {
-        solver_specific_integration_test(path, essence_base, extension, &config, SolverFamily::Sat, verbose, accept);
+        solver_specific_integration_test(path, essence_base, extension, &config, SolverFamily::Sat, verbose, accept); // FIXME: This would be fixed in a sec...
     }
 
     Ok(())
@@ -355,11 +353,10 @@ fn integration_test_inner(
     }
 
     // Stage 3a: Run the model through the Minion solver (run unless explicitly disabled)
-    // NOTE: This will need to be changed in light of the PR changing the get_solutions function
-
     let solutions = match solver {
         SolverFamily::Sat => {
-            let solved = get_sat_solutions(
+            let solved = get_solutions(
+                Sat::default(),
                 rewritten_model
                     .as_ref()
                     .expect("Rewritten model must be present in 2a")
@@ -375,7 +372,7 @@ fn integration_test_inner(
             Some(solved)
         },
         SolverFamily::Minion => {
-            let solved = get_minion_solutions(
+            let solved = get_solutions(Minion::default(),
                 rewritten_model
                     .as_ref()
                     .expect("Rewritten model must be present in 2a")

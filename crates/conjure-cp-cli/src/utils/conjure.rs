@@ -8,7 +8,6 @@ use conjure_cp::ast::{DeclarationKind, Literal, Name};
 use conjure_cp::bug;
 use conjure_cp::context::Context;
 
-use conjure_cp::solver::adaptors::Sat;
 use serde_json::{Map, Value as JsonValue};
 
 use itertools::Itertools as _;
@@ -17,22 +16,24 @@ use tempfile::tempdir;
 use crate::utils::json::sort_json_object;
 use conjure_cp::Model;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
-use conjure_cp::solver::Solver;
-use conjure_cp::solver::adaptors::Minion;
+use conjure_cp::solver::{Solver, SolverAdaptor};
 
 use glob::glob;
 
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 
-pub fn get_minion_solutions(
+pub fn get_solutions(
+    solver_adaptor: impl SolverAdaptor,
     model: Model,
     num_sols: i32,
     solver_input_file: &Option<PathBuf>,
 ) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
-    let solver = Solver::new(Minion::new());
-    eprintln!("Building Minion model...");
+    let adaptor_name = solver_adaptor.get_name().unwrap_or("UNKNOWN".into());
+    let solver = Solver::new(solver_adaptor);
 
-    // for later...
+    eprintln!("Building {adaptor_name} model...");
+
+    // Create for later since we consume the model when loading it
     let symbols_rc = Rc::clone(model.as_submodel().symbols_ptr_unchecked());
 
     let solver = solver.load_model(model)?;
@@ -46,11 +47,14 @@ pub fn get_minion_solutions(
         solver.write_solver_input_file(&mut file)?;
     }
 
-    eprintln!("Running Minion...");
+    eprintln!("Running {adaptor_name}...");
 
+    // Create two arcs, one to pass into the solver callback, one to get solutions out later
     let all_solutions_ref = Arc::new(Mutex::<Vec<BTreeMap<Name, Literal>>>::new(vec![]));
     let all_solutions_ref_2 = all_solutions_ref.clone();
+
     let solver = if num_sols > 0 {
+        // Get num_sols solutions
         let sols_left = Mutex::new(num_sols);
 
         #[allow(clippy::unwrap_used)]
@@ -65,6 +69,7 @@ pub fn get_minion_solutions(
             }))
             .unwrap()
     } else {
+        // Get all solutions
         #[allow(clippy::unwrap_used)]
         solver
             .solve(Box::new(move |sols| {
@@ -77,11 +82,14 @@ pub fn get_minion_solutions(
 
     solver.save_stats_to_context();
 
+    // Get the collections of solutions and model symbols
     #[allow(clippy::unwrap_used)]
     let mut sols_guard = (*all_solutions_ref).lock().unwrap();
     let sols = &mut *sols_guard;
     let symbols = symbols_rc.borrow();
 
+    // Get the representations for each variable by name, since some variables are
+    // divided into multiple auxiliary variables(see crate::representation::Representation)
     let names = symbols.clone().into_iter().map(|x| x.0).collect_vec();
     let representations = names
         .into_iter()
@@ -105,12 +113,14 @@ pub fn get_minion_solutions(
         .collect_vec();
 
     for sol in sols.iter_mut() {
+        // Get the value of complex variables using their auxiliary variables
         for (name, representation) in representations.iter() {
             let value = representation.value_up(sol).unwrap();
             sol.insert(name.clone(), value);
         }
 
-        // remove represented variables
+        // Remove auxiliary variables since we've found the value of the
+        // variable they represent
         *sol = sol
             .clone()
             .into_iter()
@@ -118,62 +128,8 @@ pub fn get_minion_solutions(
             .collect();
     }
 
-    Ok(sols.clone().into_iter().filter(|x| !x.is_empty()).collect())
-}
-
-pub fn get_sat_solutions(
-    model: Model,
-    num_sols: i32,
-    solver_input_file: &Option<PathBuf>,
-) -> Result<Vec<BTreeMap<Name, Literal>>, anyhow::Error> {
-    let solver = Solver::new(Sat::default());
-    eprintln!("Building SAT model...");
-    let solver = solver.load_model(model)?;
-
-    if let Some(solver_input_file) = solver_input_file {
-        eprintln!(
-            "Writing solver input file to {}",
-            solver_input_file.display()
-        );
-        let mut file = std::fs::File::create(solver_input_file)?;
-        solver.write_solver_input_file(&mut file)?;
-    }
-
-    eprintln!("Running SAT...");
-
-    let all_solutions_ref = Arc::new(Mutex::<Vec<BTreeMap<Name, Literal>>>::new(vec![]));
-    let all_solutions_ref_2 = all_solutions_ref.clone();
-    let solver = if num_sols > 0 {
-        let sols_left = Mutex::new(num_sols);
-
-        #[allow(clippy::unwrap_used)]
-        solver
-            .solve(Box::new(move |sols| {
-                let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
-                (*all_solutions).push(sols.into_iter().collect());
-                let mut sols_left = sols_left.lock().unwrap();
-                *sols_left -= 1;
-
-                *sols_left != 0
-            }))
-            .unwrap()
-    } else {
-        #[allow(clippy::unwrap_used)]
-        solver
-            .solve(Box::new(move |sols| {
-                let mut all_solutions = (*all_solutions_ref_2).lock().unwrap();
-                (*all_solutions).push(sols.into_iter().collect());
-                true
-            }))
-            .unwrap()
-    };
-
-    solver.save_stats_to_context();
-
-    #[allow(clippy::unwrap_used)]
-    let sols = (*all_solutions_ref).lock().unwrap();
-
-    Ok((*sols).clone())
+    sols.retain(|x| !x.is_empty());
+    Ok(sols.clone())
 }
 
 #[allow(clippy::unwrap_used)]
