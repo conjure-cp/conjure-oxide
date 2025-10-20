@@ -172,11 +172,11 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
     let config = file_config.merge_env();
     
     if config.solve_with_minion {
-        solver_specific_integration_test(path, essence_base, extension, &config, SolverFamily::Minion, verbose, accept); // FIXME: This would be fixed in a sec...
+        solver_specific_integration_test(path, essence_base, extension, &config, SolverFamily::Minion, verbose, accept)?;
     }
 
     if config.solve_with_sat {
-        solver_specific_integration_test(path, essence_base, extension, &config, SolverFamily::Sat, verbose, accept); // FIXME: This would be fixed in a sec...
+        solver_specific_integration_test(path, essence_base, extension, &config, SolverFamily::Sat, verbose, accept)?;
     }
 
     Ok(())
@@ -353,6 +353,8 @@ fn integration_test_inner(
     }
 
     // Stage 3a: Run the model through the Minion solver (run unless explicitly disabled)
+    
+    // FIXME: Reduce boilerplate
     let solutions = match solver {
         SolverFamily::Sat => {
             let solved = get_solutions(
