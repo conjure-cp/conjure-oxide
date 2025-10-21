@@ -1,6 +1,7 @@
 use super::util::{get_tree, query_toplevel};
 use crate::errors::EssenceParseError;
 use crate::expression::parse_expression;
+use crate::util::node_is_expression;
 use conjure_cp_core::ast::{Expression, SymbolTable};
 #[allow(unused)]
 use uniplate::Uniplate;
@@ -26,7 +27,7 @@ pub fn parse_exprs(
 
     let root = tree.root_node();
     let mut ans = Vec::new();
-    for expr in query_toplevel(&root, &|n| n.kind() == "expression") {
+    for expr in query_toplevel(&root, &node_is_expression) {
         ans.push(parse_expression(
             expr,
             &source_code,
@@ -40,12 +41,10 @@ pub fn parse_exprs(
 mod test {
     #[allow(unused)]
     use super::{parse_expr, parse_exprs};
-    #[allow(unused_imports)]
-    use conjure_cp_core::ast::Moo;
     #[allow(unused)]
-    use conjure_cp_core::ast::{DeclarationPtr, Domain, Name, SymbolTable};
-    #[allow(unused)]
-    use conjure_cp_core::{ast::Atom, ast::Expression, ast::Metadata};
+    use conjure_cp_core::ast::{
+        Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Moo, Name, SymbolTable,
+    };
     #[allow(unused)]
     use std::collections::HashMap;
     #[allow(unused)]
@@ -54,6 +53,24 @@ mod test {
     use std::{cell::RefCell, rc::Rc};
     #[allow(unused)]
     use tree_sitter::Range;
+
+    #[test]
+    pub fn test_parse_constant() {
+        let symbols = SymbolTable::new();
+
+        assert_eq!(
+            parse_expr("42", &symbols).unwrap(),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(42)))
+        );
+        assert_eq!(
+            parse_expr("true", &symbols).unwrap(),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(true)))
+        );
+        assert_eq!(
+            parse_expr("false", &symbols).unwrap(),
+            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Bool(false)))
+        )
+    }
 
     #[test]
     pub fn test_parse_expressions() {
