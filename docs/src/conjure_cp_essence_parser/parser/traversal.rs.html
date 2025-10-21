@@ -97,41 +97,43 @@
 <a href=#97 id=97 data-nosnippet>97</a>
 <a href=#98 id=98 data-nosnippet>98</a>    <span class="attr">#[test]
 <a href=#99 id=99 data-nosnippet>99</a>    </span><span class="kw">pub fn </span>test_bfs() {
-<a href=#100 id=100 data-nosnippet>100</a>        <span class="kw">let </span>(tree, <span class="kw">_</span>) = get_tree(<span class="string">"such that x, 5"</span>).unwrap();
+<a href=#100 id=100 data-nosnippet>100</a>        <span class="kw">let </span>(tree, <span class="kw">_</span>) = get_tree(<span class="string">"such that x, true"</span>).unwrap();
 <a href=#101 id=101 data-nosnippet>101</a>        <span class="kw">let </span>root = tree.root_node();
 <a href=#102 id=102 data-nosnippet>102</a>        <span class="kw">let </span><span class="kw-2">mut </span>iter = WalkBFS::new(<span class="kw-2">&amp;</span>root).filter(|n| n.is_named());
-<a href=#103 id=103 data-nosnippet>103</a>        <span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"program"</span>); <span class="comment">//         depth = 0
-<a href=#104 id=104 data-nosnippet>104</a>        </span><span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"constraint_list"</span>); <span class="comment">// depth = 1
-<a href=#105 id=105 data-nosnippet>105</a>        </span><span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"expression"</span>); <span class="comment">//      depth = 2
-<a href=#106 id=106 data-nosnippet>106</a>        </span><span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"expression"</span>);
-<a href=#107 id=107 data-nosnippet>107</a>        <span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"variable"</span>); <span class="comment">//        depth = 3
-<a href=#108 id=108 data-nosnippet>108</a>        </span><span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"constant"</span>);
-<a href=#109 id=109 data-nosnippet>109</a>        <span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"integer"</span>); <span class="comment">//         depth = 4
-<a href=#110 id=110 data-nosnippet>110</a>    </span>}
-<a href=#111 id=111 data-nosnippet>111</a>
-<a href=#112 id=112 data-nosnippet>112</a>    <span class="attr">#[test]
-<a href=#113 id=113 data-nosnippet>113</a>    </span><span class="kw">pub fn </span>test_dfs() {
-<a href=#114 id=114 data-nosnippet>114</a>        <span class="kw">let </span>(tree, <span class="kw">_</span>) = get_tree(<span class="string">"such that x, 5"</span>).unwrap();
-<a href=#115 id=115 data-nosnippet>115</a>        <span class="kw">let </span>root = tree.root_node();
-<a href=#116 id=116 data-nosnippet>116</a>        <span class="kw">let </span><span class="kw-2">mut </span>iter = WalkDFS::new(<span class="kw-2">&amp;</span>root).filter(|n| n.is_named());
-<a href=#117 id=117 data-nosnippet>117</a>        <span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"program"</span>); <span class="comment">//         top level
-<a href=#118 id=118 data-nosnippet>118</a>        </span><span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"constraint_list"</span>);
-<a href=#119 id=119 data-nosnippet>119</a>        <span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"expression"</span>); <span class="comment">//      first branch ("x")
-<a href=#120 id=120 data-nosnippet>120</a>        </span><span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"variable"</span>);
-<a href=#121 id=121 data-nosnippet>121</a>        <span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"expression"</span>); <span class="comment">//      second branch ("5")
-<a href=#122 id=122 data-nosnippet>122</a>        </span><span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"constant"</span>);
-<a href=#123 id=123 data-nosnippet>123</a>        <span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"integer"</span>);
-<a href=#124 id=124 data-nosnippet>124</a>    }
-<a href=#125 id=125 data-nosnippet>125</a>
-<a href=#126 id=126 data-nosnippet>126</a>    <span class="attr">#[test]
-<a href=#127 id=127 data-nosnippet>127</a>    </span><span class="kw">pub fn </span>test_dfs_retract() {
-<a href=#128 id=128 data-nosnippet>128</a>        <span class="kw">let </span>(tree, <span class="kw">_</span>) = get_tree(<span class="string">"such that x / 42, 5 + y"</span>).unwrap();
-<a href=#129 id=129 data-nosnippet>129</a>        <span class="kw">let </span>root = tree.root_node();
-<a href=#130 id=130 data-nosnippet>130</a>        <span class="kw">let </span><span class="kw-2">mut </span>iter = WalkDFS::with_retract(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>|n: <span class="kw-2">&amp;</span>Node&lt;<span class="lifetime">'_</span>&gt;| n.kind() == <span class="string">"expression"</span>)
-<a href=#131 id=131 data-nosnippet>131</a>            .filter(|n| n.is_named());
-<a href=#132 id=132 data-nosnippet>132</a>        <span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"program"</span>); <span class="comment">//         top level
-<a href=#133 id=133 data-nosnippet>133</a>        </span><span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"constraint_list"</span>);
-<a href=#134 id=134 data-nosnippet>134</a>        <span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"expression"</span>); <span class="comment">//      first branch ("x / 42"). Don't descend into subexpressions.
-<a href=#135 id=135 data-nosnippet>135</a>        </span><span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"expression"</span>); <span class="comment">//      second branch ("5 + y"). Don't descend into subexpressions.
-<a href=#136 id=136 data-nosnippet>136</a>    </span>}
-<a href=#137 id=137 data-nosnippet>137</a>}</code></pre></div></section></main></body></html>
+<a href=#103 id=103 data-nosnippet>103</a>        <span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"program"</span>); <span class="comment">// depth = 0
+<a href=#104 id=104 data-nosnippet>104</a>        </span><span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"bool_expr"</span>); <span class="comment">// depth = 1
+<a href=#105 id=105 data-nosnippet>105</a>        </span><span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"bool_expr"</span>); <span class="comment">// depth = 1
+<a href=#106 id=106 data-nosnippet>106</a>        </span><span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"atom"</span>); <span class="comment">// depth = 2
+<a href=#107 id=107 data-nosnippet>107</a>        </span><span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"atom"</span>); <span class="comment">// depth = 2
+<a href=#108 id=108 data-nosnippet>108</a>        </span><span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"identifier"</span>); <span class="comment">// depth = 3
+<a href=#109 id=109 data-nosnippet>109</a>        </span><span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"constant"</span>); <span class="comment">// depth = 3
+<a href=#110 id=110 data-nosnippet>110</a>        </span><span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"TRUE"</span>); <span class="comment">// depth = 4
+<a href=#111 id=111 data-nosnippet>111</a>    </span>}
+<a href=#112 id=112 data-nosnippet>112</a>
+<a href=#113 id=113 data-nosnippet>113</a>    <span class="attr">#[test]
+<a href=#114 id=114 data-nosnippet>114</a>    </span><span class="kw">pub fn </span>test_dfs() {
+<a href=#115 id=115 data-nosnippet>115</a>        <span class="kw">let </span>(tree, <span class="kw">_</span>) = get_tree(<span class="string">"such that x, true"</span>).unwrap();
+<a href=#116 id=116 data-nosnippet>116</a>        <span class="kw">let </span>root = tree.root_node();
+<a href=#117 id=117 data-nosnippet>117</a>        <span class="kw">let </span><span class="kw-2">mut </span>iter = WalkDFS::new(<span class="kw-2">&amp;</span>root).filter(|n| n.is_named());
+<a href=#118 id=118 data-nosnippet>118</a>        <span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"program"</span>); <span class="comment">// top level
+<a href=#119 id=119 data-nosnippet>119</a>        </span><span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"bool_expr"</span>); <span class="comment">// first branch ("x")
+<a href=#120 id=120 data-nosnippet>120</a>        </span><span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"atom"</span>);
+<a href=#121 id=121 data-nosnippet>121</a>        <span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"identifier"</span>);
+<a href=#122 id=122 data-nosnippet>122</a>        <span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"bool_expr"</span>); <span class="comment">// second branch ("true")
+<a href=#123 id=123 data-nosnippet>123</a>        </span><span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"atom"</span>);
+<a href=#124 id=124 data-nosnippet>124</a>        <span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"constant"</span>);
+<a href=#125 id=125 data-nosnippet>125</a>        <span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"TRUE"</span>);
+<a href=#126 id=126 data-nosnippet>126</a>    }
+<a href=#127 id=127 data-nosnippet>127</a>
+<a href=#128 id=128 data-nosnippet>128</a>    <span class="attr">#[test]
+<a href=#129 id=129 data-nosnippet>129</a>    </span><span class="kw">pub fn </span>test_dfs_retract() {
+<a href=#130 id=130 data-nosnippet>130</a>        <span class="kw">let </span>(tree, <span class="kw">_</span>) = get_tree(<span class="string">"(x / 42) &gt; (5 + y)"</span>).unwrap();
+<a href=#131 id=131 data-nosnippet>131</a>        <span class="kw">let </span>root = tree.root_node();
+<a href=#132 id=132 data-nosnippet>132</a>        <span class="kw">let </span><span class="kw-2">mut </span>iter = WalkDFS::with_retract(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>|n: <span class="kw-2">&amp;</span>Node&lt;<span class="lifetime">'_</span>&gt;| n.kind() == <span class="string">"arithmetic_expr"</span>)
+<a href=#133 id=133 data-nosnippet>133</a>            .filter(|n| n.is_named());
+<a href=#134 id=134 data-nosnippet>134</a>        <span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"program"</span>);
+<a href=#135 id=135 data-nosnippet>135</a>        <span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"comparison_expr"</span>);
+<a href=#136 id=136 data-nosnippet>136</a>        <span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"arithmetic_expr"</span>); <span class="comment">// first branch ("x / 42"). Don't descend into subexpressions.
+<a href=#137 id=137 data-nosnippet>137</a>        </span><span class="macro">assert_eq!</span>(iter.next().unwrap().kind(), <span class="string">"arithmetic_expr"</span>); <span class="comment">// second branch ("5 + y"). Don't descend into subexpressions.
+<a href=#138 id=138 data-nosnippet>138</a>    </span>}
+<a href=#139 id=139 data-nosnippet>139</a>}</code></pre></div></section></main></body></html>

@@ -94,7 +94,7 @@
 <a href=#94 id=94 data-nosnippet>94</a>    <span class="doccomment">/// Defines dominance ("Solution A is preferred over Solution B")
 <a href=#95 id=95 data-nosnippet>95</a>    </span>DominanceRelation(Metadata, Moo&lt;Expression&gt;),
 <a href=#96 id=96 data-nosnippet>96</a>    <span class="doccomment">/// `fromSolution(name)` - Used in dominance relation definitions
-<a href=#97 id=97 data-nosnippet>97</a>    </span>FromSolution(Metadata, Moo&lt;Expression&gt;),
+<a href=#97 id=97 data-nosnippet>97</a>    </span>FromSolution(Metadata, Moo&lt;Atom&gt;),
 <a href=#98 id=98 data-nosnippet>98</a>
 <a href=#99 id=99 data-nosnippet>99</a>    <span class="attr">#[polyquine_with(arm = (<span class="kw">_</span>, name) =&gt; {
 <a href=#100 id=100 data-nosnippet>100</a>        <span class="kw">let </span>ident = proc_macro2::Ident::new(name.as_str(), proc_macro2::Span::call_site());
@@ -604,7 +604,7 @@
 <a href=#604 id=604 data-nosnippet>604</a>            Expression::SubsetEq(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="prelude-val">Some</span>(Domain::Bool),
 <a href=#605 id=605 data-nosnippet>605</a>            Expression::AbstractLiteral(<span class="kw">_</span>, abslit) =&gt; abslit.domain_of(),
 <a href=#606 id=606 data-nosnippet>606</a>            Expression::DominanceRelation(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="prelude-val">Some</span>(Domain::Bool),
-<a href=#607 id=607 data-nosnippet>607</a>            Expression::FromSolution(<span class="kw">_</span>, expr) =&gt; expr.domain_of(),
+<a href=#607 id=607 data-nosnippet>607</a>            Expression::FromSolution(<span class="kw">_</span>, expr) =&gt; <span class="prelude-val">Some</span>(expr.domain_of()),
 <a href=#608 id=608 data-nosnippet>608</a>            Expression::Metavar(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
 <a href=#609 id=609 data-nosnippet>609</a>            Expression::Comprehension(<span class="kw">_</span>, comprehension) =&gt; comprehension.domain_of(),
 <a href=#610 id=610 data-nosnippet>610</a>            Expression::UnsafeIndex(<span class="kw">_</span>, matrix, <span class="kw">_</span>) | Expression::SafeIndex(<span class="kw">_</span>, matrix, <span class="kw">_</span>) =&gt; {
