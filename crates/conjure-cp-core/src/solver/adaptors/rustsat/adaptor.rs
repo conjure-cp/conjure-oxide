@@ -147,7 +147,7 @@ impl SolverAdaptor for Sat {
 
             tracing::info!("old solution {:#?}", sol_old);
 
-            let solutions = enumerate_sols(sol_old);
+            let solutions = enumerate_all_solutions(sol_old);
 
             tracing::info!("final solutions for run");
             tracing::info!("{:#?}", solutions);
@@ -260,13 +260,13 @@ impl SolverAdaptor for Sat {
 
 // Function that takes in solutions and returns updated solutions
 // update consists of checking each assignment and calling enumerate_real if dont-care types exist
-fn enumerate_sols(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal>> {
+fn enumerate_all_solutions(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal>> {
     tracing::info!("Enumerating");
     for (key, val) in solution.clone() {
         match val {
             Literal::Int(a) => {
                 if (a == 2) {
-                    return enumerate_real(solution);
+                    return enumerate_solution(solution);
                 } else {
                     continue;
                 }
@@ -277,9 +277,11 @@ fn enumerate_sols(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal
     vec![solution]
 }
 
-// Function that takes in a solution and
-// unfolding dont-care type ternaries into booleans
-fn enumerate_real(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal>> {
+// Function that takes in ONE solution and
+// unfolds dont-care type ternaries into each possible type
+// spits out all possible solutions for this solution
+fn enumerate_solution(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal>> {
+
     tracing::info!("Enumerating: Real");
     let mut sols = Vec::new();
     let mut dont_cares = Vec::new();
@@ -288,7 +290,7 @@ fn enumerate_real(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal
     for (key, val) in solution {
         let v = match val {
             Literal::Int(i) => i,
-            _ => bug!("Only Integers exected at this time"),
+            _ => bug!("Only Integers expected at this time"),
         };
         if v == 2 {
             // anytime the value is 2 (dont-care in the ternary system used by rustsat), add the
@@ -301,10 +303,7 @@ fn enumerate_real(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal
         }
     }
 
-    // a vector of the 'true' dont-cares. That is, the actual enumerated vval
     let mut tdcs = Vec::new();
-
-    println!("HERE 1: {:?}", tdcs);
 
     tdcs.push(vec![]);
     for len in 1..(dont_cares.len()) {
@@ -313,9 +312,8 @@ fn enumerate_real(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal
         }
     }
 
-    println!("HERE 2: {:?}", tdcs);
-
     for trues in tdcs {
+        println!("trues: {:?}", trues);
         let mut d = solutions_inclusive.clone();
         for key in dont_cares.clone() {
             if trues.contains(&&key) {
@@ -327,10 +325,13 @@ fn enumerate_real(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal
         sols.push(d);
     }
 
-    for i in dont_cares.clone() {
+    for i in dont_cares {
         solutions_inclusive.insert(i, Literal::Int(1));
     }
 
     sols.push(solutions_inclusive);
+
+    println!("{:?}", sols);
+
     sols
 }
