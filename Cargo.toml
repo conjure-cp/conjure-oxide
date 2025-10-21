@@ -64,6 +64,25 @@ walkdir = "2.5.0"
 polyquine = "0.0.7"
 num-traits = "0.2.19"
 
+z3 = { git = "https://github.com/prove-rs/z3.rs", rev = "z3-v0.19.1", default-features = false, features = ["bundled"] }
+
+# Always use release profile options for z3 crate to minimise size
+[profile.dev.package.z3-sys]
+opt-level = 3
+debug = false
+strip = "none"
+debug-assertions = false
+overflow-checks = false
+incremental = false
+
+[profile.release.package.z3-sys]
+opt-level = 3
+debug = false
+strip = "none"
+debug-assertions = false
+overflow-checks = false
+incremental = false
+
 [workspace.lints.clippy]
 unwrap_used = "allow"
 expect_used = "allow"

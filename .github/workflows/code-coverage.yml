@@ -18,7 +18,7 @@ env:
 jobs:
   doc-coverage:
     name: "Documentation"
-    timeout-minutes: 20 
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
@@ -45,19 +45,19 @@ jobs:
           ./tools/ci/generate-doc-coverage-report-md.bash >> $GITHUB_STEP_SUMMARY
 
       - name: Generate summary
-        run: | 
+        run: |
           ./tools/ci/generate-doc-coverage-summary-md.bash > pr-doc-coverage-summary.txt
 
       - name: Upload summary as artifact (for later use)
         uses: actions/upload-artifact@v4
-        with: 
+        with:
           name: pr-doc-coverage-summary
           path: pr-doc-coverage-summary.txt
-          overwrite: false 
+          overwrite: false
 
   coverage:
     name: "Code"
-    timeout-minutes: 20 
+    timeout-minutes: 120
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
@@ -101,4 +101,3 @@ jobs:
         with:
           name: code-coverage-${{ steps.sha.outputs.sha }}
           path: deploy/**
-
