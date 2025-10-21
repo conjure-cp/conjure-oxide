@@ -1,10 +1,11 @@
 use std::fs;
+use std::str::FromStr;
 use std::sync::{Arc, RwLock};
 
 use conjure_cp_core::Model;
 use conjure_cp_core::ast::Expression;
 use conjure_cp_core::ast::Metadata;
-use conjure_cp_core::ast::{DeclarationPtr, Moo};
+use conjure_cp_core::ast::{DeclarationPtr, Moo, ObjectiveType};
 use conjure_cp_core::context::Context;
 #[allow(unused)]
 use uniplate::Uniplate;
@@ -90,6 +91,34 @@ pub fn parse_essence_with_context(
                     ));
                 }
                 model.dominance = Some(dominance);
+            }
+            "objective" => {
+                let objective_type = statement
+                    .child(0)
+                    .expect("Expected `minimising` or `maximising`")
+                    .utf8_text(source_code.as_bytes())
+                    .expect("Failed to extract text from node");
+
+                let objective_type_as_obj = ObjectiveType::from_str(objective_type)
+                    .map_err(|e| EssenceParseError::syntax_error(e, None))?;     
+
+                let inner = statement
+                    .child(1)
+                    .expect("Expected a sub-expression inside the objective");
+
+                let current_symbols = model.as_submodel().symbols().clone();
+
+                let expr =
+                    parse_expression(inner, &source_code, &statement, Some(&current_symbols))?;
+                if model.objective.is_some() {
+                    return Err(EssenceParseError::syntax_error(
+                        "Can only have one objective".to_string(),
+                        None,
+                    ));
+                }
+                let objective =
+                    Expression::Objective(Metadata::new(), objective_type_as_obj, Moo::new(expr));
+                model.objective = Some(objective);
             }
             _ => {
                 let kind = statement.kind();
