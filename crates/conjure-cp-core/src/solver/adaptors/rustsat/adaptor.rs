@@ -279,7 +279,8 @@ fn enumerate_all_solutions(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name
 
 // Function that takes in ONE solution and
 // unfolds dont-care type ternaries into each possible type
-// spits out all possible solutions for this solution
+// returns all possible 'real' solutions for this 'generated' solution
+// a real solution is one with no variable assigned to Ternary::DontCare
 fn enumerate_solution(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal>> {
 
     tracing::info!("Enumerating: Real");
