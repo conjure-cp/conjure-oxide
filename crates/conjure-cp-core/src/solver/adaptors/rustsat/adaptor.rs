@@ -78,7 +78,7 @@ fn get_ref_sols(
 
         // TODO: solution assignment
         solution.insert(
-            name,
+            reference,
             match sol[lit.var()] {
                 TernaryVal::True => Literal::Int(1),
                 TernaryVal::False => Literal::Int(0),
@@ -192,8 +192,8 @@ impl SolverAdaptor for Sat {
         let sym_tab = model.as_submodel().symbols().deref().clone();
         let decisions = sym_tab.clone().into_iter();
 
-        let mut finds: Vec<String> = Vec::new();
-        let mut var_map: HashMap<String, Lit> = HashMap::new();
+        let mut finds: Vec<Name> = Vec::new();
+        let mut var_map: HashMap<Name, Lit> = HashMap::new();
 
         for find_ref in decisions {
             let domain = find_ref.1.domain().unwrap();
@@ -218,6 +218,8 @@ impl SolverAdaptor for Sat {
         self.decision_refs = Some(finds.clone());
 
         let m_clone = model;
+
+        let vec_constr = m_clone.as_submodel().clauses();
 
         let inst: SatInstance = handle_cnf(vec_constr, &mut var_map, finds.clone());
 
