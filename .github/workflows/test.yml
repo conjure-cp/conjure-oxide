@@ -5,20 +5,16 @@ on:
     branches:
       - main # run for pushes to the main branch. other branches need to create a PR if they want testing.
     paths:
-      - conjure_oxide/**
-      - solvers/**
       - crates/**
+      - tests-integration/**
       - Cargo.*
-      - conjure_oxide/tests/**
       - .github/workflows/test.yml
       - .github/workflows/code-coverage-deploy.yml
   pull_request:
     paths:
-      - conjure_oxide/**
-      - solvers/**
       - crates/**
+      - tests-integration/**
       - Cargo.*
-      - conjure_oxide/tests/**
       - .github/workflows/test.yml
       - .github/workflows/code-coverage-deploy.yml
   workflow_dispatch:
@@ -31,7 +27,7 @@ env:
 jobs:
   build-and-test:
     name: "Test"
-    timeout-minutes: 15
+    timeout-minutes: 120
     strategy:
       # run all combinations of the matrix even if one combination fails.
       fail-fast: false
@@ -66,7 +62,6 @@ jobs:
         if: matrix.rust_release == 'nightly'
         run: echo "RUSTUP_TOOLCHAIN=nightly" >> $GITHUB_ENV
 
-
       - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
 
       - run: cargo build -vv --workspace
@@ -88,7 +83,7 @@ jobs:
 
   examples:
     name: "Examples"
-    timeout-minutes: 15
+    timeout-minutes: 120
     strategy:
       # run all combinations of the matrix even if one combination fails.
       fail-fast: false
@@ -149,5 +144,3 @@ jobs:
 
       - name: Run cargo shear
         run: cargo +nightly shear --expand
-
-

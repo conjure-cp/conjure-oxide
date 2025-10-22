@@ -25,13 +25,14 @@ pub fn get_tree(src: &str) -> Option<(Tree, String)> {
 
         // HACK: Tree-sitter can only parse a complete program from top to bottom, not an individual bit of syntax.
         // See: https://github.com/tree-sitter/tree-sitter/issues/711 and linked issues.
-        // However, we can catch the case where the top node is an error, and wrap it in a "such that" node.
+        // However, we can use a dummy _FRAGMENT_EXPRESSION prefix (which we insert as necessary)
+        // to trick the parser into accepting an isolated expression.
         // This way we can parse an isolated expression and it is only slightly cursed :)
         if first_child.is_error() {
-            if src.starts_with("such that") {
+            if src.starts_with("_FRAGMENT_EXPRESSION") {
                 None
             } else {
-                get_tree(&format!("such that {src}"))
+                get_tree(&format!("_FRAGMENT_EXPRESSION {src}"))
             }
         } else {
             Some((tree, src.to_string()))
@@ -42,6 +43,13 @@ pub fn get_tree(src: &str) -> Option<(Tree, String)> {
 /// Get the named children of a node
 pub fn named_children<'a>(node: &'a Node<'a>) -> impl Iterator<Item = Node<'a>> + 'a {
     (0..node.named_child_count()).filter_map(|i| node.named_child(i))
+}
+
+pub fn node_is_expression(node: &Node) -> bool {
+    matches!(
+        node.kind(),
+        "bool_expr" | "arithmetic_expr" | "comparison_expr" | "atom"
+    )
 }
 
 /// Get all top-level nodes that match the given predicate
