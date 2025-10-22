@@ -314,7 +314,6 @@ fn enumerate_solution(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Lit
     }
 
     for trues in tdcs {
-        println!("trues: {:?}", trues);
         let mut d = solutions_inclusive.clone();
         for key in dont_cares.clone() {
             if trues.contains(&&key) {
@@ -331,8 +330,5 @@ fn enumerate_solution(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Lit
     }
 
     sols.push(solutions_inclusive);
-
-    println!("{:?}", sols);
-
     sols
 }
