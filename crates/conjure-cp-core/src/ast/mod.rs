@@ -4,6 +4,7 @@ pub mod serde;
 
 pub mod ac_operators;
 mod atom;
+mod cnf_clause;
 pub mod comprehension;
 pub mod declaration;
 mod domains;
@@ -23,6 +24,7 @@ mod moo;
 pub use moo::Moo;
 
 pub use atom::Atom;
+pub use cnf_clause::CnfClause;
 pub use declaration::{DeclarationKind, DeclarationPtr};
 pub use domains::Domain;
 pub use domains::DomainOpError;

@@ -4,7 +4,7 @@ use std::hash::Hash;
 
 use thiserror::Error;
 
-use crate::ast::{DeclarationPtr, Expression, Name, SubModel, SymbolTable};
+use crate::ast::{CnfClause, DeclarationPtr, Expression, Name, SubModel, SymbolTable};
 use tree_morph::prelude::Commands;
 use tree_morph::prelude::Rule as MorphRule;
 
@@ -40,6 +40,7 @@ pub enum ApplicationError {
 /// - [`Reduction::pure`]: Creates a reduction with only a new expression and no side-effects on the symbol table or constraints.
 /// - [`Reduction::with_symbols`]: Creates a reduction with a new expression and symbol table modifications, but no top-level constraint.
 /// - [`Reduction::with_top`]: Creates a reduction with a new expression and a top-level constraint, but no symbol table modifications.
+/// - [`Reduction::cnf`]: Creates a reduction with a new expression, cnf clauses and symbol modifications, but no no top-level constraints.
 ///
 /// The `apply` method allows for applying the changes represented by the `Reduction` to a [`Model`].
 ///
@@ -57,6 +58,7 @@ pub struct Reduction {
     pub new_expression: Expression,
     pub new_top: Vec<Expression>,
     pub symbols: SymbolTable,
+    pub new_clauses: Vec<CnfClause>,
 }
 
 /// The result of applying a rule to an expression.
@@ -69,6 +71,7 @@ impl Reduction {
             new_expression,
             new_top,
             symbols,
+            new_clauses: Vec::new(),
         }
     }
 
@@ -78,6 +81,7 @@ impl Reduction {
             new_expression,
             new_top: Vec::new(),
             symbols: SymbolTable::new(),
+            new_clauses: Vec::new(),
         }
     }
 
@@ -87,6 +91,7 @@ impl Reduction {
             new_expression,
             new_top: Vec::new(),
             symbols,
+            new_clauses: Vec::new(),
         }
     }
 
@@ -96,13 +101,29 @@ impl Reduction {
             new_expression,
             new_top,
             symbols: SymbolTable::new(),
+            new_clauses: Vec::new(),
+        }
+    }
+
+    /// Represents a reduction that also adds clauses to the model.
+    pub fn cnf(
+        new_expression: Expression,
+        new_clauses: Vec<CnfClause>,
+        symbols: SymbolTable,
+    ) -> Self {
+        Self {
+            new_expression,
+            new_top: Vec::new(),
+            symbols,
+            new_clauses,
         }
     }
 
     /// Applies side-effects (e.g. symbol table updates)
     pub fn apply(self, model: &mut SubModel) {
         model.symbols_mut().extend(self.symbols); // Add new assignments to the symbol table
-        model.add_constraints(self.new_top);
+        model.add_constraints(self.new_top.clone());
+        model.add_clauses(self.new_clauses);
     }
 
     /// Gets symbols added by this reduction

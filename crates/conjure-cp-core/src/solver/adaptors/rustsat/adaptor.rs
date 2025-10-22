@@ -16,7 +16,7 @@ use std::result::Result::Ok;
 use tracing_subscriber::filter::DynFilterFn;
 use ustr::Ustr;
 
-use crate::ast::Domain::Bool;
+use crate::ast::Domain::{Bool, Int};
 
 use rustsat_minisat::core::Minisat;
 
@@ -41,9 +41,9 @@ use itertools::Itertools;
 pub struct Sat {
     __non_constructable: private::Internal,
     model_inst: Option<SatInstance>,
-    var_map: Option<HashMap<String, Lit>>,
+    var_map: Option<HashMap<Name, Lit>>,
     solver_inst: Minisat,
-    decision_refs: Option<Vec<String>>,
+    decision_refs: Option<Vec<Name>>,
 }
 
 impl private::Sealed for Sat {}
@@ -61,9 +61,9 @@ impl Default for Sat {
 }
 
 fn get_ref_sols(
-    find_refs: Vec<String>,
+    find_refs: Vec<Name>,
     sol: Assignment,
-    var_map: HashMap<String, Lit>,
+    var_map: HashMap<Name, Lit>,
 ) -> HashMap<Name, Literal> {
     let mut solution: HashMap<Name, Literal> = HashMap::new();
 
@@ -78,7 +78,7 @@ fn get_ref_sols(
 
         // TODO: solution assignment
         solution.insert(
-            Name::User(Ustr::from(&reference)),
+            name,
             match sol[lit.var()] {
                 TernaryVal::True => Literal::Int(1),
                 TernaryVal::False => Literal::Int(0),
@@ -190,26 +190,34 @@ impl SolverAdaptor for Sat {
 
     fn load_model(&mut self, model: ConjureModel, _: private::Internal) -> Result<(), SolverError> {
         let sym_tab = model.as_submodel().symbols().deref().clone();
-        let decisions = sym_tab.into_iter();
+        let decisions = sym_tab.clone().into_iter();
 
         let mut finds: Vec<String> = Vec::new();
         let mut var_map: HashMap<String, Lit> = HashMap::new();
 
         for find_ref in decisions {
-            if (find_ref.1.domain().unwrap() != Bool) {
+            let domain = find_ref.1.domain().unwrap();
+
+            // only decision variables with boolean domains or representations using booleans are supported at this time
+            if (domain != Bool
+                && (sym_tab
+                    .get_representation(&find_ref.0, &["sat_log_int"])
+                    .is_none()))
+            {
                 Err(SolverError::ModelInvalid(
                     "Only Boolean Decision Variables supported".to_string(),
                 ))?;
             }
-
-            let name = find_ref.0;
-            finds.push(name.to_string());
+            // only boolean variables should be passed to the solver
+            if (domain == Bool) {
+                let name = find_ref.0;
+                finds.push(name);
+            }
         }
 
         self.decision_refs = Some(finds.clone());
 
         let m_clone = model;
-        let vec_constr = m_clone.as_submodel().constraints();
 
         let inst: SatInstance = handle_cnf(vec_constr, &mut var_map, finds.clone());
 
