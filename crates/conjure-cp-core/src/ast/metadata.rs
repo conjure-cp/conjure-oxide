@@ -1,11 +1,13 @@
 use crate::ast::ReturnType;
+use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display};
 use uniplate::derive_unplateable;
 
 derive_unplateable!(Metadata);
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize, Default, Quine)]
+#[path_prefix(conjure_cp::ast)]
 pub struct Metadata {
     pub clean: bool,
     pub etype: Option<ReturnType>,

@@ -1,278 +1,258 @@
-#![allow(clippy::legacy_numeric_constants)]
-use tree_sitter::Node;
-
-use conjure_cp_core::ast::Metadata;
-use conjure_cp_core::ast::{Atom, Expression, Literal, Moo, Name, SymbolTable};
-use conjure_cp_core::{into_matrix_expr, matrix_expr};
-
 use crate::errors::EssenceParseError;
-
-use super::util::named_children;
+use crate::parser::atom::parse_atom;
+use crate::{field, named_child};
+use conjure_cp_core::ast::{Expression, Metadata, Moo, SymbolTable};
+use conjure_cp_core::{domain_int, matrix_expr, range};
+use tree_sitter::Node;
 
 /// Parse an Essence expression into its Conjure AST representation.
 pub fn parse_expression(
-    constraint: Node,
+    node: Node,
     source_code: &str,
     root: &Node,
-    symbols: &SymbolTable,
+    symbols: Option<&SymbolTable>,
 ) -> Result<Expression, EssenceParseError> {
-    // TODO (gskorokhod) - Factor this further (make match arms into separate functions, extract common logic)
-    match constraint.kind() {
-        "constraint" | "expression" | "boolean_expr" | "comparison_expr" | "arithmetic_expr"
-        | "primary_expr" | "sub_expr" => child_expr(constraint, source_code, root, symbols),
-        "not_expr" => Ok(Expression::Not(
-            Metadata::new(),
-            Moo::new(child_expr(constraint, source_code, root, symbols)?),
-        )),
-        "abs_value" => Ok(Expression::Abs(
-            Metadata::new(),
-            Moo::new(child_expr(constraint, source_code, root, symbols)?),
-        )),
-        "negative_expr" => Ok(Expression::Neg(
-            Metadata::new(),
-            Moo::new(child_expr(constraint, source_code, root, symbols)?),
-        )),
-        "exponent" | "product_expr" | "sum_expr" | "comparison" | "and_expr" | "or_expr"
-        | "implication" => {
-            let expr1 = child_expr(constraint, source_code, root, symbols)?;
-            let op = constraint.child(1).ok_or(EssenceParseError::syntax_error(
-                format!("Missing operator in expression {}", constraint.kind()),
-                Some(constraint.range()),
-            ))?;
-            let op_type = &source_code[op.start_byte()..op.end_byte()];
-            let expr2_node = constraint.child(2).ok_or(EssenceParseError::syntax_error(
-                format!("Missing second operand in expression {}", constraint.kind()),
-                Some(constraint.range()),
-            ))?;
-            let expr2 = parse_expression(expr2_node, source_code, root, symbols)?;
-
-            match op_type {
-                "**" => Ok(Expression::UnsafePow(
-                    Metadata::new(),
-                    Moo::new(expr1),
-                    Moo::new(expr2),
-                )),
-                "+" => Ok(Expression::Sum(
-                    Metadata::new(),
-                    Moo::new(matrix_expr![expr1, expr2]),
-                )),
-                "-" => Ok(Expression::Minus(
-                    Metadata::new(),
-                    Moo::new(expr1),
-                    Moo::new(expr2),
-                )),
-                "*" => Ok(Expression::Product(
-                    Metadata::new(),
-                    Moo::new(matrix_expr![expr1, expr2]),
-                )),
-                "/" => {
-                    //TODO: add checks for if division is safe or not
-                    Ok(Expression::UnsafeDiv(
-                        Metadata::new(),
-                        Moo::new(expr1),
-                        Moo::new(expr2),
-                    ))
-                }
-                "%" => {
-                    //TODO: add checks for if mod is safe or not
-                    Ok(Expression::UnsafeMod(
-                        Metadata::new(),
-                        Moo::new(expr1),
-                        Moo::new(expr2),
-                    ))
-                }
-                "=" => Ok(Expression::Eq(
-                    Metadata::new(),
-                    Moo::new(expr1),
-                    Moo::new(expr2),
-                )),
-                "!=" => Ok(Expression::Neq(
-                    Metadata::new(),
-                    Moo::new(expr1),
-                    Moo::new(expr2),
-                )),
-                "<=" => Ok(Expression::Leq(
-                    Metadata::new(),
-                    Moo::new(expr1),
-                    Moo::new(expr2),
-                )),
-                ">=" => Ok(Expression::Geq(
-                    Metadata::new(),
-                    Moo::new(expr1),
-                    Moo::new(expr2),
-                )),
-                "<" => Ok(Expression::Lt(
-                    Metadata::new(),
-                    Moo::new(expr1),
-                    Moo::new(expr2),
-                )),
-                ">" => Ok(Expression::Gt(
-                    Metadata::new(),
-                    Moo::new(expr1),
-                    Moo::new(expr2),
-                )),
-                "/\\" => Ok(Expression::And(
-                    Metadata::new(),
-                    Moo::new(matrix_expr![expr1, expr2]),
-                )),
-                "\\/" => Ok(Expression::Or(
-                    Metadata::new(),
-                    Moo::new(matrix_expr![expr1, expr2]),
-                )),
-                "->" => Ok(Expression::Imply(
-                    Metadata::new(),
-                    Moo::new(expr1),
-                    Moo::new(expr2),
-                )),
-                _ => Err(EssenceParseError::syntax_error(
-                    format!("Unsupported operator '{op_type}'"),
-                    Some(op.range()),
-                )),
-            }
-        }
-        "quantifier_expr" => {
-            let mut expr_list = Vec::new();
-            for expr in named_children(&constraint) {
-                expr_list.push(parse_expression(expr, source_code, root, symbols)?);
-            }
-            let quantifier = constraint.child(0).ok_or(EssenceParseError::syntax_error(
-                format!("Missing quantifier in expression {}", constraint.kind()),
-                Some(constraint.range()),
-            ))?;
-            let quantifier_type = &source_code[quantifier.start_byte()..quantifier.end_byte()];
-
-            match quantifier_type {
-                "and" => Ok(Expression::And(
-                    Metadata::new(),
-                    Moo::new(into_matrix_expr![expr_list]),
-                )),
-                "or" => Ok(Expression::Or(
-                    Metadata::new(),
-                    Moo::new(into_matrix_expr![expr_list]),
-                )),
-                "min" => Ok(Expression::Min(
-                    Metadata::new(),
-                    Moo::new(into_matrix_expr![expr_list]),
-                )),
-                "max" => Ok(Expression::Max(
-                    Metadata::new(),
-                    Moo::new(into_matrix_expr![expr_list]),
-                )),
-                "sum" => Ok(Expression::Sum(
-                    Metadata::new(),
-                    Moo::new(into_matrix_expr![expr_list]),
-                )),
-                "allDiff" => Ok(Expression::AllDiff(
-                    Metadata::new(),
-                    Moo::new(into_matrix_expr![expr_list]),
-                )),
-                _ => Err(EssenceParseError::syntax_error(
-                    format!("Unsupported quantifier {}", constraint.kind()),
-                    Some(quantifier.range()),
-                )),
-            }
-        }
-        "constant" => {
-            let child = constraint.child(0).ok_or(EssenceParseError::syntax_error(
-                format!(
-                    "Missing value for constant expression {}",
-                    constraint.kind()
-                ),
-                None,
-            ))?;
-            match child.kind() {
-                "integer" => {
-                    let raw_value = &source_code[child.start_byte()..child.end_byte()];
-                    let constant_value = raw_value.parse::<i32>().map_err(|_e| {
-                        if raw_value.is_empty() {
-                            EssenceParseError::syntax_error(
-                                "Expected an integer here".to_string(),
-                                Some(child.range()),
-                            )
-                        } else {
-                            EssenceParseError::syntax_error(
-                                format!("'{raw_value}' is not a valid integer"),
-                                Some(child.range()),
-                            )
-                        }
-                    })?;
-                    Ok(Expression::Atomic(
-                        Metadata::new(),
-                        Atom::Literal(Literal::Int(constant_value)),
-                    ))
-                }
-                "TRUE" => Ok(Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Literal(Literal::Bool(true)),
-                )),
-                "FALSE" => Ok(Expression::Atomic(
-                    Metadata::new(),
-                    Atom::Literal(Literal::Bool(false)),
-                )),
-                _ => Err(EssenceParseError::syntax_error(
-                    format!("Unsupported constant kind: {}", child.kind()),
-                    Some(child.range()),
-                )),
-            }
-        }
-        "variable" => {
-            let variable_name = &source_code[constraint.start_byte()..constraint.end_byte()];
-            let name = Name::user(variable_name);
-
-            // Look up the declaration in the symbol table
-            let declaration = symbols.lookup(&name).ok_or_else(|| {
-                EssenceParseError::syntax_error(
-                    format!("Variable '{variable_name}' not found in scope"),
-                    Some(constraint.range()),
-                )
-            })?;
-
-            Ok(Expression::Atomic(
-                Metadata::new(),
-                Atom::Reference(declaration),
-            ))
-        }
-        "from_solution" => match root.kind() {
-            "dominance_relation" => {
-                let inner = child_expr(constraint, source_code, root, symbols)?;
-                match inner {
-                    Expression::Atomic(_, _) => {
-                        Ok(Expression::FromSolution(Metadata::new(), Moo::new(inner)))
-                    }
-                    _ => Err(EssenceParseError::syntax_error(
-                        "Expression inside a `fromSolution()` must be a variable name".to_string(),
-                        Some(constraint.range()),
-                    )),
-                }
-            }
-            _ => Err(EssenceParseError::syntax_error(
-                "`fromSolution()` is only allowed inside dominance relation definitions"
-                    .to_string(),
-                Some(constraint.range()),
-            )),
-        },
-        "toInt_expr" => Ok(Expression::ToInt(
-            Metadata::new(),
-            Moo::new(child_expr(constraint, source_code, root, symbols)?),
+    match node.kind() {
+        "atom" => parse_atom(&node, source_code, root, symbols),
+        "bool_expr" => parse_boolean_expression(&node, source_code, root, symbols),
+        "arithmetic_expr" => parse_arithmetic_expression(&node, source_code, root, symbols),
+        "comparison_expr" => parse_binary_expression(&node, source_code, root, symbols),
+        "dominance_relation" => parse_dominance_relation(&node, source_code, root, symbols),
+        "ERROR" => Err(EssenceParseError::syntax_error(
+            format!(
+                "'{}' is not a valid expression",
+                &source_code[node.start_byte()..node.end_byte()]
+            ),
+            Some(node.range()),
         )),
         _ => Err(EssenceParseError::syntax_error(
-            format!("{} is not a recognized node kind", constraint.kind()),
-            Some(constraint.range()),
+            format!("Unknown expression kind: '{}'", node.kind()),
+            Some(node.range()),
         )),
     }
 }
 
-pub fn child_expr(
-    node: Node,
+fn parse_dominance_relation(
+    node: &Node,
     source_code: &str,
     root: &Node,
-    symbols: &SymbolTable,
+    symbols: Option<&SymbolTable>,
 ) -> Result<Expression, EssenceParseError> {
-    match node.named_child(0) {
-        Some(child) => parse_expression(child, source_code, root, symbols),
-        None => Err(EssenceParseError::syntax_error(
-            format!("Missing node in expression of kind {}", node.kind()),
+    if root.kind() == "dominance_relation" {
+        return Err(EssenceParseError::syntax_error(
+            "Nested dominance relations are not allowed".to_string(),
             Some(node.range()),
+        ));
+    }
+
+    // NB: In all other cases, we keep the root the same;
+    // However, here we set the new root to `node` so downstream functions
+    // know we are inside a dominance relation
+    let inner = parse_expression(field!(node, "expression"), source_code, node, symbols)?;
+    Ok(Expression::DominanceRelation(
+        Metadata::new(),
+        Moo::new(inner),
+    ))
+}
+
+fn parse_arithmetic_expression(
+    node: &Node,
+    source_code: &str,
+    root: &Node,
+    symbols: Option<&SymbolTable>,
+) -> Result<Expression, EssenceParseError> {
+    let inner = named_child!(node);
+    match inner.kind() {
+        "atom" => parse_atom(&inner, source_code, root, symbols),
+        "negative_expr" | "abs_value" | "sub_arith_expr" | "toInt_expr" => {
+            parse_unary_expression(&inner, source_code, root, symbols)
+        }
+        "exponent" | "product_expr" | "sum_expr" => {
+            parse_binary_expression(&inner, source_code, root, symbols)
+        }
+        "quantifier_expr_arith" => parse_quantifier_expression(&inner, source_code, root, symbols),
+        _ => Err(EssenceParseError::syntax_error(
+            format!("Expected arithmetic expression, found: {}", inner.kind()),
+            Some(inner.range()),
+        )),
+    }
+}
+
+fn parse_boolean_expression(
+    node: &Node,
+    source_code: &str,
+    root: &Node,
+    symbols: Option<&SymbolTable>,
+) -> Result<Expression, EssenceParseError> {
+    let inner = named_child!(node);
+    match inner.kind() {
+        "atom" => parse_atom(&inner, source_code, root, symbols),
+        "not_expr" | "sub_bool_expr" => parse_unary_expression(&inner, source_code, root, symbols),
+        "and_expr" | "or_expr" | "implication" | "iff_expr" => {
+            parse_binary_expression(&inner, source_code, root, symbols)
+        }
+        "quantifier_expr_bool" => parse_quantifier_expression(&inner, source_code, root, symbols),
+        _ => Err(EssenceParseError::syntax_error(
+            format!("Expected boolean expression, found '{}'", inner.kind()),
+            Some(inner.range()),
+        )),
+    }
+}
+
+fn parse_quantifier_expression(
+    node: &Node,
+    source_code: &str,
+    root: &Node,
+    symbols: Option<&SymbolTable>,
+) -> Result<Expression, EssenceParseError> {
+    // TODO (terminology) - this is not really a quantifier, just a list operation.
+    // Quantifiers are things like:
+    // forAll <name> : <domain> . <expr>
+
+    let quantifier_node = field!(node, "quantifier");
+    let quantifier_str = &source_code[quantifier_node.start_byte()..quantifier_node.end_byte()];
+
+    let inner = parse_atom(&field!(node, "arg"), source_code, root, symbols)?;
+
+    match quantifier_str {
+        "and" => Ok(Expression::And(Metadata::new(), Moo::new(inner))),
+        "or" => Ok(Expression::Or(Metadata::new(), Moo::new(inner))),
+        "sum" => Ok(Expression::Sum(Metadata::new(), Moo::new(inner))),
+        "product" => Ok(Expression::Product(Metadata::new(), Moo::new(inner))),
+        "min" => Ok(Expression::Min(Metadata::new(), Moo::new(inner))),
+        "max" => Ok(Expression::Max(Metadata::new(), Moo::new(inner))),
+        "allDiff" => Ok(Expression::AllDiff(Metadata::new(), Moo::new(inner))),
+        _ => Err(EssenceParseError::syntax_error(
+            format!("Invalid quantifier: '{quantifier_str}'"),
+            Some(quantifier_node.range()),
+        )),
+    }
+}
+
+fn parse_unary_expression(
+    node: &Node,
+    source_code: &str,
+    root: &Node,
+    symbols: Option<&SymbolTable>,
+) -> Result<Expression, EssenceParseError> {
+    let inner = parse_expression(field!(node, "expression"), source_code, root, symbols)?;
+    match node.kind() {
+        "negative_expr" => Ok(Expression::Neg(Metadata::new(), Moo::new(inner))),
+        "abs_value" => Ok(Expression::Abs(Metadata::new(), Moo::new(inner))),
+        "not_expr" => Ok(Expression::Not(Metadata::new(), Moo::new(inner))),
+        "toInt_expr" => Ok(Expression::ToInt(Metadata::new(), Moo::new(inner))),
+        "sub_bool_expr" | "sub_arith_expr" => Ok(inner),
+        _ => Err(EssenceParseError::syntax_error(
+            format!("Unrecognised unary operation: '{}'", node.kind()),
+            Some(node.range()),
+        )),
+    }
+}
+
+fn parse_binary_expression(
+    node: &Node,
+    source_code: &str,
+    root: &Node,
+    symbols: Option<&SymbolTable>,
+) -> Result<Expression, EssenceParseError> {
+    let parse_subexpr = |expr: Node| parse_expression(expr, source_code, root, symbols);
+
+    let left = parse_subexpr(field!(node, "left"))?;
+    let right = parse_subexpr(field!(node, "right"))?;
+
+    let op_node = field!(node, "operator");
+    let op_str = &source_code[op_node.start_byte()..op_node.end_byte()];
+
+    match op_str {
+        // NB: We are deliberately setting the index domain to 1.., not 1..2.
+        // Semantically, this means "a list that can grow/shrink arbitrarily".
+        // This is expected by rules which will modify the terms of the sum expression
+        // (e.g. by partially evaluating them).
+        "+" => Ok(Expression::Sum(
+            Metadata::new(),
+            Moo::new(matrix_expr![left, right; domain_int!(1..)]),
+        )),
+        "-" => Ok(Expression::Minus(
+            Metadata::new(),
+            Moo::new(left),
+            Moo::new(right),
+        )),
+        "*" => Ok(Expression::Product(
+            Metadata::new(),
+            Moo::new(matrix_expr![left, right; domain_int!(1..)]),
+        )),
+        "/\\" => Ok(Expression::And(
+            Metadata::new(),
+            Moo::new(matrix_expr![left, right; domain_int!(1..)]),
+        )),
+        "\\/" => Ok(Expression::Or(
+            Metadata::new(),
+            Moo::new(matrix_expr![left, right; domain_int!(1..)]),
+        )),
+        "**" => Ok(Expression::UnsafePow(
+            Metadata::new(),
+            Moo::new(left),
+            Moo::new(right),
+        )),
+        "/" => {
+            //TODO: add checks for if division is safe or not
+            Ok(Expression::UnsafeDiv(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            ))
+        }
+        "%" => {
+            //TODO: add checks for if mod is safe or not
+            Ok(Expression::UnsafeMod(
+                Metadata::new(),
+                Moo::new(left),
+                Moo::new(right),
+            ))
+        }
+        "=" => Ok(Expression::Eq(
+            Metadata::new(),
+            Moo::new(left),
+            Moo::new(right),
+        )),
+        "!=" => Ok(Expression::Neq(
+            Metadata::new(),
+            Moo::new(left),
+            Moo::new(right),
+        )),
+        "<=" => Ok(Expression::Leq(
+            Metadata::new(),
+            Moo::new(left),
+            Moo::new(right),
+        )),
+        ">=" => Ok(Expression::Geq(
+            Metadata::new(),
+            Moo::new(left),
+            Moo::new(right),
+        )),
+        "<" => Ok(Expression::Lt(
+            Metadata::new(),
+            Moo::new(left),
+            Moo::new(right),
+        )),
+        ">" => Ok(Expression::Gt(
+            Metadata::new(),
+            Moo::new(left),
+            Moo::new(right),
+        )),
+        "->" => Ok(Expression::Imply(
+            Metadata::new(),
+            Moo::new(left),
+            Moo::new(right),
+        )),
+        "<->" => Ok(Expression::Iff(
+            Metadata::new(),
+            Moo::new(left),
+            Moo::new(right),
+        )),
+        _ => Err(EssenceParseError::syntax_error(
+            format!("Invalid operator: '{op_str}'"),
+            Some(op_node.range()),
         )),
     }
 }
