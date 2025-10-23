@@ -71,12 +71,11 @@ fn get_ref_sols(
         // lit is `Nothing` for variables that don't exist. This should have thrown an error at parse-time.
         let lit: Lit = match var_map.get(&reference) {
             Some(a) => *a,
-            None => panic!(
+            None => bug!(
                 "There should never be a non-just literal occurring here. Something is broken upstream."
             ),
         };
 
-        // TODO: solution assignment
         solution.insert(
             reference,
             match sol[lit.var()] {
@@ -292,7 +291,6 @@ fn enumerate_all_solutions(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name
 // returns all possible 'real' solutions for this 'generated' solution
 // a real solution is one with no variable assigned to Ternary::DontCare
 fn enumerate_solution(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Literal>> {
-
     tracing::info!("Enumerating: Real");
     let mut sols = Vec::new();
     let mut dont_cares = Vec::new();
