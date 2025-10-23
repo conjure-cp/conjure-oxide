@@ -158,7 +158,6 @@ static GUARD: Mutex<()> = Mutex::new(());
 
 // wrapper to conditionally enforce sequential execution
 fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
-
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
 
@@ -170,20 +169,43 @@ fn integration_test(path: &str, essence_base: &str, extension: &str) -> Result<(
         };
 
     let config = file_config.merge_env();
-    
+
     if config.solve_with_minion {
-        solver_specific_integration_test(path, essence_base, extension, &config, SolverFamily::Minion, verbose, accept)?;
+        solver_specific_integration_test(
+            path,
+            essence_base,
+            extension,
+            &config,
+            SolverFamily::Minion,
+            verbose,
+            accept,
+        )?;
     }
 
     if config.solve_with_sat {
-        solver_specific_integration_test(path, essence_base, extension, &config, SolverFamily::Sat, verbose, accept)?;
+        solver_specific_integration_test(
+            path,
+            essence_base,
+            extension,
+            &config,
+            SolverFamily::Sat,
+            verbose,
+            accept,
+        )?;
     }
 
     Ok(())
 }
 
-fn solver_specific_integration_test(path: &str, essence_base: &str, extension: &str, config: &TestConfig, solver: SolverFamily, verbose: bool, accept: bool) -> Result<(), Box<dyn Error>>{
-    
+fn solver_specific_integration_test(
+    path: &str,
+    essence_base: &str,
+    extension: &str,
+    config: &TestConfig,
+    solver: SolverFamily,
+    verbose: bool,
+    accept: bool,
+) -> Result<(), Box<dyn Error>> {
     let solver_name = match solver {
         SolverFamily::Sat => "sat",
         SolverFamily::Minion => "minion",
@@ -249,7 +271,7 @@ fn integration_test_inner(
     essence_base: &str,
     extension: &str,
     config: &TestConfig,
-    solver: SolverFamily
+    solver: SolverFamily,
 ) -> Result<(), Box<dyn Error>> {
     let context: Arc<RwLock<Context<'static>>> = Default::default();
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
@@ -353,7 +375,7 @@ fn integration_test_inner(
     }
 
     // Stage 3a: Run the model through the Minion solver (run unless explicitly disabled)
-    
+
     // FIXME: Reduce boilerplate
     let solutions = match solver {
         SolverFamily::Sat => {
@@ -366,15 +388,15 @@ fn integration_test_inner(
                 0,
                 &None,
             )?;
-            let solutions_json =
-                save_solutions_json(&solved, path, essence_base, solver)?;
+            let solutions_json = save_solutions_json(&solved, path, essence_base, solver)?;
             if verbose {
                 println!("Minion solutions: {solutions_json:#?}");
             }
             Some(solved)
-        },
+        }
         SolverFamily::Minion => {
-            let solved = get_solutions(Minion::default(),
+            let solved = get_solutions(
+                Minion::default(),
                 rewritten_model
                     .as_ref()
                     .expect("Rewritten model must be present in 2a")
@@ -382,19 +404,16 @@ fn integration_test_inner(
                 0,
                 &None,
             )?;
-            let solutions_json =
-                save_solutions_json(&solved, path, essence_base, solver)?;
+            let solutions_json = save_solutions_json(&solved, path, essence_base, solver)?;
             if verbose {
                 println!("Minion solutions: {solutions_json:#?}");
             }
             Some(solved)
         }
     };
-    
+
     // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
-    if config.compare_solver_solutions
-        || accept
-    {
+    if config.compare_solver_solutions || accept {
         let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
             &format!("{path}/{essence_base}.{extension}"),
             Arc::clone(&context),
@@ -434,16 +453,28 @@ fn integration_test_inner(
             copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
         }
         if config.apply_rewrite_rules
-            && !expected_exists_for(path, essence_base, "rewrite", "serialised.json", Some(solver))
+            && !expected_exists_for(
+                path,
+                essence_base,
+                "rewrite",
+                "serialised.json",
+                Some(solver),
+            )
         {
-            copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json", Some(solver))?;
+            copy_generated_to_expected(
+                path,
+                essence_base,
+                "rewrite",
+                "serialised.json",
+                Some(solver),
+            )?;
         }
 
         // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
         // based on the test results, so they don't get done later.
         // TODO Fix
         copy_generated_to_expected(path, essence_base, "minion", "solutions.json", Some(solver))?;
-        
+
         if config.validate_rule_traces {
             copy_human_trace_generated_to_expected(path, essence_base, solver)?;
             save_stats_json(context.clone(), path, essence_base, solver)?;
@@ -452,7 +483,8 @@ fn integration_test_inner(
 
     // Check Stage 1b (native parser)
     if config.enable_native_parser {
-        let expected_model = read_model_json(&context, path, essence_base, "expected", "parse", None);
+        let expected_model =
+            read_model_json(&context, path, essence_base, "expected", "parse", None);
 
         // A JSON reading error could just mean that the ast has changed since the file was
         // generated.
@@ -480,8 +512,10 @@ fn integration_test_inner(
 
     // Check Stage 1a (parsed model)
     if config.parse_model_default {
-        let expected_model = read_model_json(&context, path, essence_base, "expected", "parse", None);
-        let model_from_file = read_model_json(&context, path, essence_base, "generated", "parse", None);
+        let expected_model =
+            read_model_json(&context, path, essence_base, "expected", "parse", None);
+        let model_from_file =
+            read_model_json(&context, path, essence_base, "generated", "parse", None);
 
         // A JSON reading error could just mean that the ast has changed since the file was
         // generated.
@@ -512,7 +546,14 @@ fn integration_test_inner(
 
     // Check Stage 2a (rewritten model)
     if config.apply_rewrite_rules {
-        let expected_model = read_model_json(&context, path, essence_base, "expected", "rewrite", Some(solver));
+        let expected_model = read_model_json(
+            &context,
+            path,
+            essence_base,
+            "expected",
+            "rewrite",
+            Some(solver),
+        );
         // A JSON reading error could just mean that the ast has changed since the file was
         // generated.
         //
@@ -538,8 +579,7 @@ fn integration_test_inner(
     }
 
     // Check Stage 3a (solutions)
-    let expected_solutions_json =
-        read_solutions_json(path, essence_base, "expected", solver)?;
+    let expected_solutions_json = read_solutions_json(path, essence_base, "expected", solver)?;
     let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
     assert_eq!(username_solutions_json, expected_solutions_json);
 
@@ -577,7 +617,7 @@ fn integration_test_inner(
 fn copy_human_trace_generated_to_expected(
     path: &str,
     test_name: &str,
-    solver: SolverFamily
+    solver: SolverFamily,
 ) -> Result<(), std::io::Error> {
     //  WBHYn NO GENERTE
     let solver_name = match solver {
@@ -595,12 +635,13 @@ fn copy_generated_to_expected(
     path: &str,
     test_name: &str,
     stage: &str,
-    extension: &str, solver: Option<SolverFamily>,
+    extension: &str,
+    solver: Option<SolverFamily>,
 ) -> Result<(), std::io::Error> {
     let marker = match solver {
         Some(SolverFamily::Sat) => "sat",
-        Some(SolverFamily::Minion)=> "minion",
-        None => "agnostic"
+        Some(SolverFamily::Minion) => "minion",
+        None => "agnostic",
     };
     std::fs::copy(
         format!("{path}/{marker}-{test_name}.generated-{stage}.{extension}"),
@@ -609,13 +650,22 @@ fn copy_generated_to_expected(
     Ok(())
 }
 
-fn expected_exists_for(path: &str, test_name: &str, stage: &str, extension: &str, solver: Option<SolverFamily>) -> bool {
+fn expected_exists_for(
+    path: &str,
+    test_name: &str,
+    stage: &str,
+    extension: &str,
+    solver: Option<SolverFamily>,
+) -> bool {
     let marker = match solver {
         Some(SolverFamily::Sat) => "sat",
-        Some(SolverFamily::Minion)=> "minion",
-        None => "agnostic"
+        Some(SolverFamily::Minion) => "minion",
+        None => "agnostic",
     };
-    Path::new(&format!("{path}/{marker}-{test_name}.expected-{stage}.{extension}")).exists()
+    Path::new(&format!(
+        "{path}/{marker}-{test_name}.expected-{stage}.{extension}"
+    ))
+    .exists()
 }
 
 fn assert_vector_operators_have_partially_evaluated(model: &conjure_cp::Model) {
@@ -653,7 +703,7 @@ fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
 pub fn create_scoped_subscriber(
     path: &str,
     test_name: &str,
-    solver_name: &str
+    solver_name: &str,
 ) -> (impl tracing::Subscriber + Send + Sync) {
     let target1_layer = create_file_layer_json(path, test_name, solver_name);
     let target2_layer = create_file_layer_human(path, test_name, solver_name);
@@ -667,9 +717,15 @@ pub fn create_scoped_subscriber(
     subscriber
 }
 
-fn create_file_layer_json(path: &str, test_name: &str, solver_name: &str) -> impl Layer<Registry> + Send + Sync {
-    let file = File::create(format!("{path}/{solver_name}-{test_name}-generated-rule-trace.json"))
-        .expect("Unable to create log file");
+fn create_file_layer_json(
+    path: &str,
+    test_name: &str,
+    solver_name: &str,
+) -> impl Layer<Registry> + Send + Sync {
+    let file = File::create(format!(
+        "{path}/{solver_name}-{test_name}-generated-rule-trace.json"
+    ))
+    .expect("Unable to create log file");
 
     fmt::layer()
         .with_writer(file)
@@ -681,9 +737,15 @@ fn create_file_layer_json(path: &str, test_name: &str, solver_name: &str) -> imp
         }))
 }
 
-fn create_file_layer_human(path: &str, test_name: &str, solver_name: &str) -> (impl Layer<Registry> + Send + Sync) {
-    let file = File::create(format!("{path}/{solver_name}-{test_name}-generated-rule-trace-human.txt"))
-        .expect("Unable to create log file");
+fn create_file_layer_human(
+    path: &str,
+    test_name: &str,
+    solver_name: &str,
+) -> (impl Layer<Registry> + Send + Sync) {
+    let file = File::create(format!(
+        "{path}/{solver_name}-{test_name}-generated-rule-trace-human.txt"
+    ))
+    .expect("Unable to create log file");
 
     fmt::layer()
         .with_writer(file)

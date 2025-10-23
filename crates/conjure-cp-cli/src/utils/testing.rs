@@ -65,9 +65,8 @@ pub fn save_model_json(
     path: &str,
     test_name: &str,
     test_stage: &str,
-    solver: Option<SolverFamily>
+    solver: Option<SolverFamily>,
 ) -> Result<(), std::io::Error> {
-
     let marker: &str = match solver {
         Some(SolverFamily::Minion) => "minion",
         Some(SolverFamily::Sat) => "sat",
@@ -85,10 +84,9 @@ pub fn save_stats_json(
     context: Arc<RwLock<Context<'static>>>,
     path: &str,
     test_name: &str,
-    solver: SolverFamily
+    solver: SolverFamily,
 ) -> Result<(), std::io::Error> {
     #[allow(clippy::unwrap_used)]
-
     let solver_name = match solver {
         SolverFamily::Sat => "sat",
         SolverFamily::Minion => "minion",
@@ -112,17 +110,15 @@ pub fn read_model_json(
     test_name: &str,
     prefix: &str,
     test_stage: &str,
-    solver: Option<SolverFamily>
+    solver: Option<SolverFamily>,
 ) -> Result<ConjureModel, std::io::Error> {
     let marker: &str = match solver {
         Some(SolverFamily::Minion) => "minion",
         Some(SolverFamily::Sat) => "sat",
         None => "agnostic",
     };
-    
-    let filepath= format!(
-        "{path}/{marker}-{test_name}.{prefix}-{test_stage}.serialised.json"
-    );
+
+    let filepath = format!("{path}/{marker}-{test_name}.{prefix}-{test_stage}.serialised.json");
     println!("reading: {filepath}");
 
     let expected_json_str = std::fs::read_to_string(filepath)?;
@@ -201,7 +197,7 @@ pub fn read_solutions_json(
         SolverFamily::Minion => "minion",
     };
 
-    println!("{path}/{test_name}.{prefix}-{solver_name}.solutions.json");  
+    println!("{path}/{test_name}.{prefix}-{solver_name}.solutions.json");
     let expected_json_str = std::fs::read_to_string(format!(
         "{path}/{test_name}.{prefix}-{solver_name}.solutions.json"
     ))?;
