@@ -150,6 +150,7 @@ pub mod states;
 )]
 pub enum SolverFamily {
     Sat,
+    Smt,
     Minion,
 }
 
