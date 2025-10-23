@@ -79,6 +79,11 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
                     let solver = solver.load_model(rewritten_model)?;
                     solver.write_solver_input_file(&mut file)?;
                 }
+                SolverFamily::Smt => {
+                    let solver = Solver::new(adaptors::Smt::default());
+                    let solver = solver.load_model(rewritten_model)?;
+                    solver.write_solver_input_file(&mut file)?;
+                }
                 SolverFamily::Minion => {
                     let solver = Solver::new(adaptors::Minion::default());
                     let solver = solver.load_model(rewritten_model)?;
@@ -90,6 +95,10 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
         match global_args.solver {
             SolverFamily::Sat => {
                 let adaptor = Sat::default();
+                run_solver(adaptor, &global_args, &solve_args, rewritten_model)
+            }
+            SolverFamily::Smt => {
+                let adaptor = Smt::default();
                 run_solver(adaptor, &global_args, &solve_args, rewritten_model)
             }
             SolverFamily::Minion => {
@@ -123,11 +132,6 @@ pub(crate) fn init_context(
     if global_args.no_use_expand_ac {
         extra_rule_sets.pop_if(|x| x == &"Better_AC_Comprehension_Expansion");
     }
-
-    ensure!(
-        target_family == SolverFamily::Minion || target_family == SolverFamily::Sat,
-        "Only the Minion and SAT solvers is currently supported!"
-    );
 
     let rule_sets = match resolve_rule_sets(target_family, &extra_rule_sets) {
         Ok(rs) => rs,

@@ -8,13 +8,35 @@ module.exports = grammar ({
   ],
 
   rules: {
-    //top level statements
+    // Top-level statements
     program: $ => repeat(choice(
-      $.find_statement_list,
-      $.constraint_list,
-      $.letting_statement_list,
-      $.dominance_relation
+      seq(
+        // Single Essence expression.
+        // Not part of Essence syntax but used to parse Essence fragments outside a full Essence file.
+        "_FRAGMENT_EXPRESSION",
+        commaSep1(choice(
+          field("atom", $.atom),
+          field("bool_expr", $.bool_expr),
+          field("comparison_expr", $.comparison_expr),
+          field("arithmetic_expr", $.arithmetic_expr)
+        ))
+      ),
+      seq("find", commaSep1(field("find_statement", $.find_statement))),
+      seq(
+        "such that", 
+        commaSep1(choice(field("bool_expr", $.bool_expr), field("atom", $.atom), field("comparison_expr", $.comparison_expr))), 
+      ),
+      seq("letting", commaSep1(field("letting_statement", $.letting_statement))),
+      field("dominance_relation", $.dominance_relation),
+      // field("find", $.FIND),
+      // field("letting", $.LETTING),
+      // field("such_that", $.SUCH_THAT),
     )),
+
+    SUCH_THAT: $ => "such that",
+    FIND: $ => "find",
+    LETTING: $ => "letting",
+    COLON: $ => ":",
 
     single_line_comment: $ => token(seq('$', /.*/)),
 
@@ -22,153 +44,268 @@ module.exports = grammar ({
 
     //general
     constant: $ => choice(
-      $.integer,
-      $.TRUE,
-      $.FALSE
+      field("integer", $.integer),
+      field("true", $.TRUE),
+      field("false", $.FALSE)
     ),
 
     integer: $ => choice(/[0-9]+/, /-[0-9]+/),
+    //integer: $ => token(/[0-9]+/),
 
-    TRUE: $ => "true",
+    TRUE: $ => choice("true", "TRUE"),
 
-    FALSE: $ => "false",
+    FALSE: $ => choice("false", "FALSE"),
 
-    variable: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
+    identifier: $ => /[a-zA-Z_][a-zA-Z0-9_]*/,
 
     //meta-variable (aka template argument)
-    metavar: $ => seq("&", $.variable),
+    metavar: $ => seq("&", field("identifier", $.identifier)),
 
     //find statements
-    find_statement_list: $ => seq("find", repeat($.find_statement)),
-
     find_statement: $ => seq(
-      $.variable_list,
-      ":",
-      $.domain,
-      optional(",")
+      field("variables", $.variable_list),
+      field("colon", $.COLON),
+      field("domain", $.domain),
     ),
-
-    variable_list: $ => seq(
-      $.variable,
-      optional(repeat(seq(
-        ",",
-        $.variable
-      )))
-    ),
+    variable_list: $ => commaSep1($.identifier),
 
     domain: $ => choice(
-      $.bool_domain,
-      $.int_domain,
-      $.variable
+      field("bool_domain", $.bool_domain),
+      field("int_domain", $.int_domain),
+      field("variable_domain", $.identifier),
+      field("tuple_domain", $.tuple_domain),
+      field("matrix_domain", $.matrix_domain),
+      field("record_domain", $.record_domain),
     ),
-
     bool_domain: $ => "bool",
 
-    int_domain: $ => prec.left(seq(
+    int_domain: $ => seq(
       "int",
       optional(seq(
         "(",
-        $.range_list,
-        //TODO: eventually add in expressions here
+        field("ranges", $.range_list),
         ")"
       ))
-    )),
+    ),
 
-    range_list: $ => prec(2, seq(
-      choice(
-        $.int_range,
-        $.integer
-      ),
-      optional(repeat(seq(
-        ",",
-        choice(
-          $.int_range,
-          $.integer
-        ),
-      )))
-    )),
+    range_list: $ => prec(2, commaSep1(choice($.int_range, $.integer))),
 
-    int_range: $ => seq(optional($.expression), "..", optional($.expression)),
+    int_range: $ => seq(
+      optional(field("lower", $.arithmetic_expr)), 
+      "..", 
+      optional(field("upper", $.arithmetic_expr))
+    ),
+
+    tuple_domain: $ => seq(
+      optional("tuple"),
+      "(",
+      commaSep1($.domain),
+      ")"
+    ),
+
+    matrix_domain: $ => seq(
+      "matrix",
+      "indexed",
+      "by",
+      "[",
+      field("index_domain_list", $.index_domain_list),
+      "]",
+      "of",
+      field("value_domain", $.domain)
+    ),
+
+    record_domain: $ => seq(
+      "record",
+      "{",
+      commaSep1(field("name_domain_pair", $.name_domain_pair)),
+      "}"
+    ),
+
+    name_domain_pair: $ => seq(
+      field("name", $.identifier),
+      ":",
+      field("domain", $.domain)
+    ),
+
+    index_domain_list: $ => commaSep1(choice($.int_domain, $.bool_domain)),
 
     //letting statements
-    letting_statement_list: $ => seq("letting", repeat($.letting_statement)),
-
     letting_statement: $ => seq(
-      $.variable_list,
-      "be",
-      choice($.expression, seq("domain", $.domain))
+      field("variable_list", $.variable_list), 
+      field("be", "be"), 
+      optional(field ("domain", "domain")),
+      field("expr_or_domain", choice($.bool_expr, $.arithmetic_expr, $.domain))
     ),
 
-    //constraints
-    constraint_list: $ => seq("such that", repeat(seq($.expression, optional(",")))),
+    // Constraints 
+    bool_expr: $ => prec(2, choice(
+      field("atom", $.atom),
+      field("not_expression", $.not_expr),
+      field("and_expression", $.and_expr),
+      field("or_expression", $.or_expr),
+      field("implication", $.implication),
+      field("iff_expr", $.iff_expr),
+      field("quantifier_expression_bool", $.quantifier_expr_bool),
+      field("sub_bool_expression", $.sub_bool_expr),
+    )),
 
-    expression: $ => choice(
-      seq("(", $.expression, ")"),
-      $.metavar,
-      $.not_expr,
-      $.abs_value,
-      $.exponent,
-      $.negative_expr,
-      $.product_expr,
-      $.sum_expr,
-      $.comparison,
-      $.and_expr,
-      $.or_expr,
-      $.implication,
-      $.quantifier_expr,
-      $.constant,
-      $.variable,
-      $.from_solution
-    ),
+    not_expr: $ => prec(20, seq("!", field("expression", choice($.bool_expr, $.comparison_expr, $.atom)))),
+    
+    and_expr: $ => prec(-1, prec.left(seq(
+      field("left", choice($.bool_expr, $.comparison_expr, $.atom)), 
+      field("operator", "/\\"),
+      field("right", choice($.bool_expr, $.comparison_expr, $.atom))
+    ))),
+    
+    or_expr: $ => prec(-2, prec.left(seq(
+      field("left", choice($.bool_expr, $.comparison_expr, $.atom)), 
+      field("operator", "\\/"),
+      field("right", choice($.bool_expr, $.comparison_expr, $.atom))
+    ))),
+    
+    implication: $ => prec(-4, prec.left(seq(
+      field("left", choice($.bool_expr, $.comparison_expr, $.atom)), 
+      field("operator", "->"), 
+      field("right", choice($.bool_expr, $.comparison_expr, $.atom))
+    ))),
 
-    not_expr: $ => prec(20, seq("!", $.expression)),
+    iff_expr: $ => prec(-4, prec.left(seq(
+      field("left", choice($.bool_expr, $.comparison_expr, $.atom)), 
+      field("operator", "<->"), 
+      field("right", choice($.bool_expr, $.comparison_expr, $.atom))
+    ))),
 
-    abs_value: $ => prec(20, seq("|", $.expression, "|")),
+    toInt_expr: $ => seq("toInt","(", field("expression", $.bool_expr), ")"),
 
-    exponent: $ => prec(18, prec.right(seq($.expression, "**", $.expression))),
-
-    negative_expr: $ => prec(15, prec.left(seq("-", $.expression))),
-
-    product_expr: $ => prec(10, prec.left(seq($.expression, $.multiplicative_op, $.expression))),
-
-    multiplicative_op: $ => choice("*", "/", "%"),
-
-    sum_expr: $ => prec(1, prec.left(seq($.expression, $.additive_op, $.expression))),
-
-    additive_op: $ => choice("+", "-"),
-
-    comparison: $ => prec(0, prec.left(seq($.expression, $.comp_op, $.expression))),
-
-    comp_op: $ => choice("=", "!=", "<=", ">=", "<", ">"),
-
-    and_expr: $ => prec(-1, prec.left(seq($.expression, "/\\", $.expression))),
-
-    or_expr: $ => prec(-2, prec.left(seq($.expression, "\\/", $.expression))),
-
-    implication: $ => prec(-4, prec.left(seq($.expression, "->", $.expression))),
-
-    toInt_expr: $ => seq("toInt","(",$.expression,")"),
-
-    quantifier_expr: $ => prec(-10, seq(
-      choice("and", "or", "min", "max", "sum", "allDiff"),
-      "([",
-      repeat(seq(
-        $.expression,
-        optional(",")
-      )),
-      "])"
+    quantifier_expr_bool: $ => prec(-10, seq(
+      field("quantifier", choice("and", "or", "allDiff")),
+      "(",
+      field("arg", choice($.matrix, $.tuple_matrix_record_index_or_slice, $.identifier)),
+      ")"
     )),
 
     from_solution: $ => seq(
       "fromSolution",
       "(",
-      $.variable,
+      field("variable", $.identifier),
       ")"
     ),
 
+    comparison_expr: $ => prec(5, prec.left(seq(
+      field("left", choice($.bool_expr, $.arithmetic_expr)), 
+      field("operator", choice("=", "!=", "<=", ">=", "<", ">")),
+      field("right", choice($.bool_expr, $.arithmetic_expr))
+    ))),
+
+    sub_bool_expr: $ => prec(1, seq("(", field("expression", choice($.bool_expr, $.comparison_expr)), ")")),
+    
+    arithmetic_expr: $ => prec(3, choice(
+      field("atom", $.atom),
+      field("toInt_expr", $.toInt_expr),
+      field("negative_expression", $.negative_expr),
+      field("absolute_value", $.abs_value),
+      field("exponentiation", $.exponent),
+      field("product_expression", $.product_expr),
+      field("sum_expression", $.sum_expr),
+      field("sub_arith_expression", $.sub_arith_expr),
+      field("quantifier_expression_arith", $.quantifier_expr_arith),
+    )),
+
+    atom: $ => prec(-1, choice(
+      field("constant", $.constant),
+      field("variable", $.identifier),
+      field("metavar", $.metavar),
+      field("tuple", $.tuple),
+      field("matrix", $.matrix),
+      field("record", $.record),
+      field("from_solution", $.from_solution),
+      field("tuple_matrix_record_index_or_slice", $.tuple_matrix_record_index_or_slice),
+    )),
+
+    tuple: $ => prec(-5, seq(
+      "(",
+      field("element", $.arithmetic_expr),
+      ",",
+      field("element", commaSep1($.arithmetic_expr)),
+      ")"
+    )),
+
+    matrix: $ => seq(
+      "[",
+      optional(field("elements", commaSep1($.arithmetic_expr))),
+      optional(seq(
+        ";",
+        field("domain", choice($.int_domain, $.bool_domain))
+      )),
+      "]"
+    ),
+
+    record: $ => seq(
+      "record",
+      "{",
+      commaSep1(field("name_value_pair", $.name_value_pair)),
+      "}"
+    ),
+
+    name_value_pair: $ => seq(
+      field("name", $.identifier),
+      "=",
+      field("value", choice($.arithmetic_expr, $.bool_expr, $.comparison_expr))
+    ),
+
+    tuple_matrix_record_index_or_slice: $ => seq(
+      field("tuple_or_matrix", choice($.identifier, $.tuple, $.matrix)),
+      "[",
+      field("indices", $.indices),
+      "]"
+    ),
+
+    indices: $ => commaSep1(choice(field("index", $.arithmetic_expr), field("null_index", $.null_index))),
+
+    null_index: $ => "..",
+
+    sub_arith_expr: $ => seq("(", field("expression", $.arithmetic_expr), ")"),
+
+    negative_expr: $ => prec(15, prec.left(seq("-", field("expression", $.arithmetic_expr)))),
+    
+    abs_value: $ => prec(20, seq("|", field("expression", $.arithmetic_expr), "|")),
+    
+    exponent: $ => prec(18, prec.right(seq(
+      field("left", $.arithmetic_expr), 
+      field("operator", "**"),
+      field("right", $.arithmetic_expr)
+    ))),
+
+    product_expr: $ => prec(10, prec.left(seq(
+      field("left", $.arithmetic_expr), 
+      field("operator", $.mulitcative_op), 
+      field("right", $.arithmetic_expr)
+    ))),
+    
+    mulitcative_op: $ => choice("*", "/", "%"),
+    
+    sum_expr: $ => prec(1, prec.left(seq(
+      field("left", $.arithmetic_expr), 
+      field("operator", $.additive_op), 
+      field("right", $.arithmetic_expr)
+    ))),
+
+    additive_op: $ => choice("+", "-"),
+
+    quantifier_expr_arith: $ => prec(-10, seq(
+      field("quantifier", choice("min", "max", "sum")),
+      "(",
+      field("arg", choice($.matrix, $.tuple_matrix_record_index_or_slice, $.identifier)),
+      ")"
+    )),
+
     dominance_relation: $ => seq(
       "dominanceRelation",
-      $.expression
+      field("expression", choice($.bool_expr, $.comparison_expr, $.arithmetic_expr)),
     )
   }
-})
+});
+
+function commaSep1(rule) {
+  return seq(rule, optional(repeat(seq(",", rule))), optional(","));
+}
