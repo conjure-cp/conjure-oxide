@@ -9,8 +9,8 @@ This section is dedicated to individuals who are interested in **contributing** 
 This project is entirely open-source, with all code released under the [MPL 2.0](https://www.mozilla.org/en-US/MPL/2.0/) license, unless stated otherwise. Currently, Conjure Oxide has been mainly developed by students and staff at the [University of St Andrews](https://www.st-andrews.ac.uk/). However, we welcome and encourage contributions from individuals outside the University. 
 
 Over the course of this section, we will discuss the following:
-- How to set up your development environment.
-- How to begin contributing.
+- [How to set up your development environment](./set-dev-env.md).
+- [How to begin contributing](./contributing-process.md).
 - General guidelines you should follow when contributing.
 - Conventions that we use in our development process.
 - Common issues, with potential fixes.
