@@ -17,7 +17,7 @@
 
 <!-- From the wiki -->
 - [Contributor's Guide](./developers_guide/contributors-guide/index.md)
-  - [Setting up your development environment]()
+  - [Setting up your development environment](./developers_guide/contributors-guide/set-dev-env.md)
   - [Contributing Process]()
   - [Git Flow]()
   - [Running and writing integration tests]()

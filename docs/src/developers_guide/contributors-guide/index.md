@@ -17,6 +17,6 @@ Over the course of this section, we will discuss the following:
 
 For those new to conjure, and rust, we have also provided links to useful resources that will develop your understanding which you can view [here](). 
 
-<br> 
+---
 
-*This section had been adapted from the home page of the [conjure-oxide wiki](https://github.com/conjure-cp/conjure-oxide/wiki)*
+*This section had been adapted from the 'home' page of the [conjure-oxide wiki](https://github.com/conjure-cp/conjure-oxide/wiki)*
