@@ -206,12 +206,9 @@ fn solver_specific_integration_test(
     verbose: bool,
     accept: bool,
 ) -> Result<(), Box<dyn Error>> {
-    let solver_name = match solver {
-        SolverFamily::Sat => "sat",
-        SolverFamily::Minion => "minion",
-    };
+    let solver_name = solver.id_str();
 
-    let subscriber = create_scoped_subscriber(path, essence_base, solver_name);
+    let subscriber = create_scoped_subscriber(path, essence_base, &solver_name);
 
     // run tests in sequence not parallel when verbose logging, to ensure the logs are ordered
     // correctly
@@ -226,7 +223,7 @@ fn solver_specific_integration_test(
             integration_test_inner(path, essence_base, extension, config, solver)
         })
     } else {
-        let subscriber = create_scoped_subscriber(path, essence_base, solver_name);
+        let subscriber = create_scoped_subscriber(path, essence_base, &solver_name);
         tracing::subscriber::with_default(subscriber, || {
             integration_test_inner(path, essence_base, extension, config, solver)
         })
@@ -587,8 +584,8 @@ fn integration_test_inner(
     // We don't check rule trace when morph is enabled.
     // TODO: Implement rule trace validation for morph
     if config.validate_rule_traces && !config.enable_morph_impl {
-        let generated = read_human_rule_trace(path, essence_base, "generated")?;
-        let expected = read_human_rule_trace(path, essence_base, "expected")?;
+        let generated = read_human_rule_trace(path, essence_base, "generated", &solver)?;
+        let expected = read_human_rule_trace(path, essence_base, "expected", &solver)?;
 
         assert_eq!(
             expected, generated,
@@ -606,7 +603,13 @@ fn integration_test_inner(
             copy_generated_to_expected(path, essence_base, "parse", "serialised.json", None)?;
         }
         if config.apply_rewrite_rules && rewritten_model_dirty {
-            copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json", None)?;
+            copy_generated_to_expected(
+                path,
+                essence_base,
+                "rewrite",
+                "serialised.json",
+                Some(solver),
+            )?;
         }
     }
     save_stats_json(context, path, essence_base, solver)?;
@@ -620,10 +623,7 @@ fn copy_human_trace_generated_to_expected(
     solver: SolverFamily,
 ) -> Result<(), std::io::Error> {
     //  WBHYn NO GENERTE
-    let solver_name = match solver {
-        SolverFamily::Sat => "sat",
-        SolverFamily::Minion => "minion",
-    };
+    let solver_name = solver.id_str();
     std::fs::copy(
         format!("{path}/{solver_name}-{test_name}-generated-rule-trace-human.txt"),
         format!("{path}/{solver_name}-{test_name}-expected-rule-trace-human.txt"),
@@ -638,11 +638,7 @@ fn copy_generated_to_expected(
     extension: &str,
     solver: Option<SolverFamily>,
 ) -> Result<(), std::io::Error> {
-    let marker = match solver {
-        Some(SolverFamily::Sat) => "sat",
-        Some(SolverFamily::Minion) => "minion",
-        None => "agnostic",
-    };
+    let marker = solver.map_or("agnostic".into(), |s| s.id_str());
     std::fs::copy(
         format!("{path}/{marker}-{test_name}.generated-{stage}.{extension}"),
         format!("{path}/{marker}-{test_name}.expected-{stage}.{extension}"),
@@ -657,11 +653,7 @@ fn expected_exists_for(
     extension: &str,
     solver: Option<SolverFamily>,
 ) -> bool {
-    let marker = match solver {
-        Some(SolverFamily::Sat) => "sat",
-        Some(SolverFamily::Minion) => "minion",
-        None => "agnostic",
-    };
+    let marker = solver.map_or("agnostic".into(), |s| s.id_str());
     Path::new(&format!(
         "{path}/{marker}-{test_name}.expected-{stage}.{extension}"
     ))

@@ -153,6 +153,16 @@ pub enum SolverFamily {
     Minion,
 }
 
+impl SolverFamily {
+    pub fn id_str(&self) -> String {
+        match self {
+            SolverFamily::Sat => "sat",
+            SolverFamily::Minion => "minion",
+        }
+        .into()
+    }
+}
+
 /// The type for user-defined callbacks for use with [Solver].
 ///
 /// Note that this enforces thread safety

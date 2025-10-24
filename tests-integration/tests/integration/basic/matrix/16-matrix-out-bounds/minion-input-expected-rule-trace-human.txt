@@ -1,0 +1,176 @@
+Model before rewriting:
+
+find a: int(-1..2)
+find b: int(-1..2)
+find c: int(1..2)
+find m: matrix indexed by [[int(1..2)]] of int(1..2)
+
+such that
+
+(m[sum([a,b;int(1..2)])] = c)
+
+--
+
+(m#matrix_to_atom[sum([a,b;int(1..2)])] = c), 
+   ~~> select_representation_matrix ([("Base", 8001)]) 
+(m#matrix_to_atom[sum([a,b;int(1..2)])] = c) 
+new variables:
+  find m#matrix_to_atom_1: int(1..2)
+  find m#matrix_to_atom_2: int(1..2)
+--
+
+m#matrix_to_atom[sum([a,b;int(1..2)])], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{m#matrix_to_atom[sum([a,b;int(1..2)])] @ and([__inDomain(sum([a,b;int(1..2)]),int(1..2));int(1..)])} 
+
+--
+
+({m#matrix_to_atom[sum([a,b;int(1..2)])] @ and([__inDomain(sum([a,b;int(1..2)]),int(1..2));int(1..)])} = c), 
+   ~~> bubble_up ([("Bubble", 8800)]) 
+{(m#matrix_to_atom[sum([a,b;int(1..2)])] = c) @ and([__inDomain(sum([a,b;int(1..2)]),int(1..2));int(1..)])} 
+
+--
+
+{(m#matrix_to_atom[sum([a,b;int(1..2)])] = c) @ and([__inDomain(sum([a,b;int(1..2)]),int(1..2));int(1..)])}, 
+   ~~> expand_bubble ([("Bubble", 8900)]) 
+and([(m#matrix_to_atom[sum([a,b;int(1..2)])] = c),and([__inDomain(sum([a,b;int(1..2)]),int(1..2));int(1..)]);int(1..)]) 
+
+--
+
+and([(m#matrix_to_atom[sum([a,b;int(1..2)])] = c),and([__inDomain(sum([a,b;int(1..2)]),int(1..2));int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(m#matrix_to_atom[sum([a,b;int(1..2)])] = c),
+and([__inDomain(sum([a,b;int(1..2)]),int(1..2));int(1..)]) 
+
+--
+
+(m#matrix_to_atom[sum([a,b;int(1..2)])] = c),
+and([__inDomain(sum([a,b;int(1..2)]),int(1..2));int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(m#matrix_to_atom[sum([a,b;int(1..2)])] = c),
+__inDomain(sum([a,b;int(1..2)]),int(1..2)) 
+
+--
+
+(m#matrix_to_atom[sum([a,b;int(1..2)])] = c),
+__inDomain(sum([a,b;int(1..2)]),int(1..2)), 
+   ~~> index_matrix_to_atom ([("Base", 5000)]) 
+([m#matrix_to_atom_1,m#matrix_to_atom_2;int(1..)][(sum([a,b;int(1..2)]) - 0)] = c),
+__inDomain(sum([a,b;int(1..2)]),int(1..2)) 
+
+--
+
+(sum([a,b;int(1..2)]) - 0), 
+   ~~> minus_to_sum ([("Base", 8400)]) 
+sum([sum([a,b;int(1..2)]),-(0);int(1..)]) 
+
+--
+
+([m#matrix_to_atom_1,m#matrix_to_atom_2;int(1..)][sum([sum([a,b;int(1..2)]),-(0);int(1..)])] = c),
+__inDomain(sum([a,b;int(1..2)]),int(1..2)), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+([m#matrix_to_atom_1,m#matrix_to_atom_2;int(1..)][sum([sum([a,b;int(1..2)]),0;int(1..)])] = c),
+__inDomain(sum([a,b;int(1..2)]),int(1..2)) 
+
+--
+
+sum([sum([a,b;int(1..2)]),0;int(1..)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+sum([a,b,0;int(1..)]) 
+
+--
+
+[m#matrix_to_atom_1,m#matrix_to_atom_2;int(1..)][sum([a,b,0;int(1..)])], 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+[m#matrix_to_atom_1,m#matrix_to_atom_2;int(1..)][__0] 
+new variables:
+  find __0: int(-2..4)
+new constraints:
+  __0 =aux sum([a,b,0;int(1..)])
+--
+
+__0 =aux sum([a,b,0;int(1..)]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+and([SumLeq([0, a, b], __0),SumGeq([0, a, b], __0);int(1..)]) 
+
+--
+
+([m#matrix_to_atom_1,m#matrix_to_atom_2;int(1..)][__0] = c),
+__inDomain(sum([a,b;int(1..2)]),int(1..2)),
+and([SumLeq([0, a, b], __0),SumGeq([0, a, b], __0);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+([m#matrix_to_atom_1,m#matrix_to_atom_2;int(1..)][__0] = c),
+__inDomain(sum([a,b;int(1..2)]),int(1..2)),
+SumLeq([0, a, b], __0),
+SumGeq([0, a, b], __0) 
+
+--
+
+([m#matrix_to_atom_1,m#matrix_to_atom_2;int(1..)][__0] = c), 
+   ~~> introduce_element_from_index ([("Minion", 4400)]) 
+__minion_element_one([m#matrix_to_atom_1,m#matrix_to_atom_2],__0,c) 
+
+--
+
+__inDomain(sum([a,b;int(1..2)]),int(1..2)), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+__inDomain(__1,int(1..2)) 
+new variables:
+  find __1: int(-2..4)
+new constraints:
+  __1 =aux sum([a,b;int(1..2)])
+--
+
+__inDomain(__1,int(1..2)), 
+   ~~> introduce_wininterval_set_from_indomain ([("Minion", 4400)]) 
+__minion_w_inintervalset(__1,[1,2]) 
+
+--
+
+sum([a,b;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+sum([a,b;int(1..)]) 
+
+--
+
+__1 =aux sum([a,b;int(1..)]), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+and([SumLeq([a, b], __1),SumGeq([a, b], __1);int(1..)]) 
+
+--
+
+__minion_element_one([m#matrix_to_atom_1,m#matrix_to_atom_2],__0,c),
+__minion_w_inintervalset(__1,[1,2]),
+SumLeq([0, a, b], __0),
+SumGeq([0, a, b], __0),
+and([SumLeq([a, b], __1),SumGeq([a, b], __1);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+__minion_element_one([m#matrix_to_atom_1,m#matrix_to_atom_2],__0,c),
+__minion_w_inintervalset(__1,[1,2]),
+SumLeq([0, a, b], __0),
+SumGeq([0, a, b], __0),
+SumLeq([a, b], __1),
+SumGeq([a, b], __1) 
+
+--
+
+Final model:
+
+find a: int(-1..2)
+find b: int(-1..2)
+find c: int(1..2)
+find m: matrix indexed by [[int(1..2)]] of int(1..2)
+find __0: int(-2..4)
+find __1: int(-2..4)
+find m#matrix_to_atom_1: int(1..2)
+find m#matrix_to_atom_2: int(1..2)
+
+such that
+
+__minion_element_one([m#matrix_to_atom_1,m#matrix_to_atom_2],__0,c),
+__minion_w_inintervalset(__1,[1,2]),
+SumLeq([0, a, b], __0),
+SumGeq([0, a, b], __0),
+SumLeq([a, b], __1),
+SumGeq([a, b], __1)
+
