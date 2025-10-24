@@ -150,14 +150,16 @@ pub mod states;
 )]
 pub enum SolverFamily {
     Sat,
+    Smt,
     Minion,
 }
 
 impl SolverFamily {
     pub fn id_str(&self) -> String {
         match self {
-            SolverFamily::Sat => "sat",
             SolverFamily::Minion => "minion",
+            SolverFamily::Sat => "sat",
+            SolverFamily::Smt => "smt",
         }
         .into()
     }
