@@ -15,11 +15,26 @@
 
 # Developers Guide
 
-- [Reading the docs]()
-- [Contributing guidelines]()
-- [Contributing to docs]()
-  - [Template](./developer_guide/contribute_to_docs/template.md)
+<!-- From the wiki -->
+- [Contributor's Guide](./developers_guide/contributors-guide/index.md)
+  - [Setting up your development environment]()
+  - [Contributing Process]()
+  - [Git Flow]()
+  - [Running and writing integration tests]()
+  - [What we didn't do]()
+  - [How we work]()
+
+- [Coding Resources and Conventions]()
+  - [Documentation Style]()
+  - [Crate Structure]()
+
 <!-- TODO: do we need this? -->
+- [CI/CD]()
+  - [Coverage]()
+  - [Github Actions: Cookbook]()
+
+<!-- New additions -->
+- [Reading the docs]()
 - [Useful Resources]()
 
 # Documentation
