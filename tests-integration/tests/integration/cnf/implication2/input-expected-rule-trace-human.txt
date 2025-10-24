@@ -1,0 +1,64 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+
+such that
+
+(a) -> ((b) -> (c))
+
+--
+
+(b) -> (c), 
+   ~~> apply_tseytin_imply ([("SAT", 8500)]) 
+__0 
+new variables:
+  find __0: bool
+new clauses:
+  (¬__0 \/ ¬b \/ c)
+  (__0 \/ b)
+  (__0 \/ ¬c)
+--
+
+(a) -> (__0), 
+   ~~> apply_tseytin_imply ([("SAT", 8500)]) 
+__1 
+new variables:
+  find __1: bool
+new clauses:
+  (¬__1 \/ ¬a \/ __0)
+  (__1 \/ a)
+  (__1 \/ ¬__0)
+--
+
+__1, 
+   ~~> remove_single_atom ([("SAT", 8400)]) 
+true 
+
+new clauses:
+  (__1)
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find __0: bool
+find __1: bool
+
+such that
+
+true
+
+clauses:
+
+(¬__0 \/ ¬b \/ c),
+(__0 \/ b),
+(__0 \/ ¬c),
+(¬__1 \/ ¬a \/ __0),
+(__1 \/ a),
+(__1 \/ ¬__0),
+(__1)
+
