@@ -49,7 +49,7 @@ jobs:
           ./tools/ci/generate-doc-coverage-summary-md.bash > pr-doc-coverage-summary.txt
 
       - name: Upload summary as artifact (for later use)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: pr-doc-coverage-summary
           path: pr-doc-coverage-summary.txt
@@ -97,7 +97,7 @@ jobs:
           echo "${{github.event.pull_request.number}}" > deploy/prnumber
 
       - name: Archive code coverage results for deployment
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: code-coverage-${{ steps.sha.outputs.sha }}
           path: deploy/**

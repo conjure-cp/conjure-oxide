@@ -13,8 +13,8 @@ We use github to host code, to track issues and feature requests, as well as acc
 ## Setting up your Development Environment
 For information on how to set up your environment, go to the [Contributor's Guide](https://github.com/conjure-cp/conjure-oxide/wiki/Setting-up-your-development-environment)
 
-## We Use [Github Flow](https://guides.github.com/introduction/flow/index.html), so All Code Changes Happen Through Pull Requests
-Pull requests are the best way to propose changes to the codebase (we use [Github Flow](https://guides.github.com/introduction/flow/index.html)). We actively welcome your pull requests:
+## We Use [Github Flow](https://docs.github.com/en/get-started/using-github/github-flow), so All Code Changes Happen Through Pull Requests
+Pull requests are the best way to propose changes to the codebase (we use [Github Flow](https://docs.github.com/en/get-started/using-github/github-flow)). We actively welcome your pull requests:
 
 1. Make a fork.
 2. Create a branch on your fork, do not develop on main.
@@ -47,7 +47,7 @@ Once your PR is ready to merge (i.e. approved by Oz), you should cleanup and
 rebase your PR and force push. 
 
 The recommended way to update PRs is to use gits [built-in support for
-fixups](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt---fixupamendrewordltcommitgt).
+fixups](http://git-scm.com/docs/git-commit#Documentation/git-commit.txt---fixupamendrewordcommit).
 
 To make a change to a commit (e.g. addressing a code review comment):
 
@@ -83,14 +83,14 @@ In short, when you submit code changes, your submissions will be understood to b
 We use GitHub issues to track public bugs. Report a bug by [opening a new issue](https://github.com/conjure-cp/conjure-oxide/issues/new); it's that easy!
 
 ## Write bug reports with detail, background, and sample code
-Take a look at [this advice from Simon Tatham](https://www.chiark.greenend.org.uk/~sgtatham/bugs.html) for how to effectively report Bugs. [This is an example](http://stackoverflow.com/q/12488905/180626) of a well written bug report. 
+Take a look at [this advice from Simon Tatham](https://www.chiark.greenend.org.uk/~sgtatham/bugs.html) for how to effectively report Bugs. [This is an example](https://stackoverflow.com/q/12488905/180626) of a well written bug report. 
 
 **Great Bug Reports** tend to have:
 
 - A quick summary and/or background
 - Steps to reproduce
   - Be specific!
-  - Give sample code if you can. [My stackoverflow question](http://stackoverflow.com/q/12488905/180626) includes sample code that *anyone* with a base R setup can run to reproduce what I was seeing
+  - Give sample code if you can. [My StackOverflow question](https://stackoverflow.com/q/12488905/180626) includes sample code that *anyone* with a base R setup can run to reproduce what I was seeing
 - What you expected would happen
 - What actually happens
 - Notes (possibly including why you think this might be happening, or stuff you tried that didn't work)
