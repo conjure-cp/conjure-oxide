@@ -22,12 +22,14 @@ check-unused-deps: .installed-cargo-extensions.checkpoint
 ## Fixes will not be applied if there are uncommitted changes: to always apply fixes, use `make fix-dirty`.
 fix: 
 	cargo fmt --all
+	cargo fix
 	cargo clippy -q --fix
 
 .PHONY: fix-dirty
 ## fix, but applies fixes even when there are uncommitted changes.
 fix-dirty:
-	cargo fmt --all 
+	cargo fmt --all
+	cargo fix --allow-dirty --allow-staged
 	cargo clippy -q --fix --allow-dirty --allow-staged
 
 ## install cargo extensions used in this Makefile (cargo-shear)
