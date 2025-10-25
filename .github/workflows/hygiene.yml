@@ -34,6 +34,13 @@ jobs:
       - name: "Install rust-toolchain.toml"
         run: rustup toolchain install
 
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          # Refer to the correct cache:
+          shared-key: ubuntu-latest-stable-debug
+
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.9
 

@@ -24,6 +24,14 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v5
 
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: conjure-oxide
+          cache-on-failure: true
+          # Share caches across the build matrix sensibly:
+          shared-key: ubuntu-latest-${{ env.rust_release }}-debug
+
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.9
 

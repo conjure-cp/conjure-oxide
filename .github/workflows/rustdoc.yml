@@ -24,6 +24,13 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v5
 
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          # Refer to the correct cache:
+          shared-key: ubuntu-latest-stable-debug
+
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.9
 

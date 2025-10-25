@@ -55,6 +55,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          # Share caches across the build matrix:
+          shared-key: ${{ matrix.os }}-${{ matrix.rust_release }}-${{ matrix.compiler_profile }}
+
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.9
 
@@ -101,6 +109,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          # Share caches across the build matrix:
+          shared-key: ${{ matrix.os }}-${{ matrix.rust_release }}-debug
+
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.9
 
@@ -126,10 +142,21 @@ jobs:
           - nightly
     steps:
       - uses: actions/checkout@v5
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          # Share caches across the build matrix:
+          shared-key: ubuntu-latest-${{ matrix.rust_release }}-debug
+
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.9
+
       - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
+
       - run: cargo install cargo-audit
+
       - run: cargo audit
 
   shear:
@@ -137,6 +164,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          # Refer to the correct cache:
+          shared-key: ubuntu-latest-stable-debug
 
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.9
