@@ -11,9 +11,11 @@ pub fn parse_literal(src: &str) -> Result<Literal, EssenceParseError> {
     match expr {
         Expression::Atomic(_metadata, atom) => match atom {
             Atom::Literal(lit) => Ok(lit),
-            _ => Err(ConjureParseError::Parse(format!("Expected a literal, got '{atom}'")).into()),
+            _ => {
+                Err(ConjureParseError::Parse(format!("Expected a literal, got '{atom:?}'")).into())
+            }
         },
-        _ => Err(ConjureParseError::Parse(format!("Expected a literal, got '{expr}'")).into()),
+        _ => Err(ConjureParseError::Parse(format!("Expected a literal, got '{expr:?}'")).into()),
     }
 }
 
