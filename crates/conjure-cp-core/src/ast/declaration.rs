@@ -268,7 +268,7 @@ impl DeclarationPtr {
     /// let declaration = DeclarationPtr::new_var(Name::User("a".into()),Domain::Int(vec![Range::Bounded(1,5)]));
     /// assert!(matches!(&declaration.kind() as &DeclarationKind, DeclarationKind::DecisionVariable(_)))
     /// ```
-    pub fn kind(&self) -> Ref<DeclarationKind> {
+    pub fn kind(&self) -> Ref<'_, DeclarationKind> {
         self.map(|x| &x.kind)
     }
 
@@ -284,12 +284,12 @@ impl DeclarationPtr {
     ///
     /// assert_eq!(&declaration.name() as &Name, &Name::User("a".into()))
     /// ```
-    pub fn name(&self) -> Ref<Name> {
+    pub fn name(&self) -> Ref<'_, Name> {
         self.map(|x| &x.name)
     }
 
     /// This declaration as a decision variable, if it is one.
-    pub fn as_var(&self) -> Option<Ref<DecisionVariable>> {
+    pub fn as_var(&self) -> Option<Ref<'_, DecisionVariable>> {
         Ref::filter_map(self.borrow(), |x| {
             if let DeclarationKind::DecisionVariable(var) = &x.kind {
                 Some(var)
@@ -301,7 +301,7 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a mutable decision variable, if it is one.
-    pub fn as_var_mut(&mut self) -> Option<RefMut<DecisionVariable>> {
+    pub fn as_var_mut(&mut self) -> Option<RefMut<'_, DecisionVariable>> {
         RefMut::filter_map(self.borrow_mut(), |x| {
             if let DeclarationKind::DecisionVariable(var) = &mut x.kind {
                 Some(var)
@@ -313,7 +313,7 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a domain letting, if it is one.
-    pub fn as_domain_letting(&self) -> Option<Ref<Domain>> {
+    pub fn as_domain_letting(&self) -> Option<Ref<'_, Domain>> {
         Ref::filter_map(self.borrow(), |x| {
             if let DeclarationKind::DomainLetting(domain) = &x.kind {
                 Some(domain)
@@ -325,7 +325,7 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a mutable domain letting, if it is one.
-    pub fn as_domain_letting_mut(&mut self) -> Option<RefMut<Domain>> {
+    pub fn as_domain_letting_mut(&mut self) -> Option<RefMut<'_, Domain>> {
         RefMut::filter_map(self.borrow_mut(), |x| {
             if let DeclarationKind::DomainLetting(domain) = &mut x.kind {
                 Some(domain)
@@ -337,7 +337,7 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a value letting, if it is one.
-    pub fn as_value_letting(&self) -> Option<Ref<Expression>> {
+    pub fn as_value_letting(&self) -> Option<Ref<'_, Expression>> {
         Ref::filter_map(self.borrow(), |x| {
             if let DeclarationKind::ValueLetting(e) = &x.kind {
                 Some(e)
@@ -349,7 +349,7 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a mutable value letting, if it is one.
-    pub fn as_value_letting_mut(&mut self) -> Option<RefMut<Expression>> {
+    pub fn as_value_letting_mut(&mut self) -> Option<RefMut<'_, Expression>> {
         RefMut::filter_map(self.borrow_mut(), |x| {
             if let DeclarationKind::ValueLetting(e) = &mut x.kind {
                 Some(e)
@@ -387,13 +387,13 @@ impl DeclarationPtr {
     // convenience.
 
     /// Immutably borrows the declaration.
-    fn borrow(&self) -> Ref<Declaration> {
+    fn borrow(&self) -> Ref<'_, Declaration> {
         // unlike refcell.borrow(), this never panics
         self.inner.value.borrow()
     }
 
     /// Mutably borrows the declaration.
-    fn borrow_mut(&mut self) -> RefMut<Declaration> {
+    fn borrow_mut(&mut self) -> RefMut<'_, Declaration> {
         // unlike refcell.borrow_mut(), this never panics
         self.inner.value.borrow_mut()
     }
@@ -436,12 +436,12 @@ impl DeclarationPtr {
     }
 
     /// Applies `f` to the declaration, returning the result as a reference.
-    fn map<U>(&self, f: impl FnOnce(&Declaration) -> &U) -> Ref<U> {
+    fn map<U>(&self, f: impl FnOnce(&Declaration) -> &U) -> Ref<'_, U> {
         Ref::map(self.borrow(), f)
     }
 
     /// Applies mutable function `f` to the declaration, returning the result as a mutable reference.
-    fn map_mut<U>(&mut self, f: impl FnOnce(&mut Declaration) -> &mut U) -> RefMut<U> {
+    fn map_mut<U>(&mut self, f: impl FnOnce(&mut Declaration) -> &mut U) -> RefMut<'_, U> {
         RefMut::map(self.borrow_mut(), f)
     }
 
