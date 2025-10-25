@@ -69,6 +69,16 @@ but are kept in their own repositories:
 - [`uniplate`](https://github.com/conjure-cp/uniplate)
 - [`polyquine`](https://github.com/gskorokhod/polyquine)
 
+#### Local Git Setup (For developers)
+
+This repository enforces a conventional commit message format taken from [this gist](https://gist.github.com/joshbuchea/6f47e86d2510bce28f8e7f42ae84c716) (+ we allow for commits starting with "Merge"). This is enforced automatically for all pull requests using a GitHub Action.
+
+To get immediate feedback on your local machine before you even push, you can install the local git hook by running this one-time command:
+
+```bash
+git config core.hooksPath ./git-config/hooks/
+```
+
 ## Licence
 
 This project is being produced by staff and students of University of St
