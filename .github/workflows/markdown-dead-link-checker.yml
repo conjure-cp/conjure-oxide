@@ -9,6 +9,7 @@ on:
     schedule:
         - cron: "23 0 * * 6" # Runs every Sunday at midnight BST (23:00 UTC Saturday)
     pull_request:
+    push:
 jobs:
     md-dead-link-check:
         runs-on: ubuntu-latest
@@ -25,4 +26,4 @@ jobs:
               run: pip install --root-user-action=ignore md-dead-link-check
             
             - name: Run md-dead-link-check
-              run: md-dead-link-check **/*.md
+              run: md-dead-link-check --all 
