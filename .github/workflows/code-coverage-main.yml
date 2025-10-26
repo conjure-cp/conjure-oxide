@@ -15,7 +15,7 @@ env:
 jobs:
   doc-coverage:
     name: "Documentation Coverage"
-    timeout-minutes: 20 
+    timeout-minutes: 120
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
@@ -45,7 +45,7 @@ jobs:
           ./tools/ci/generate-doc-coverage-summary-md.bash > main-doc-coverage-summary.txt
 
       - name: Upload summary as artifact (for later use)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with: 
           name: main-doc-coverage-summary
           path: main-doc-coverage-summary.txt
@@ -55,7 +55,7 @@ jobs:
 
   coverage:
     name: "Generate Code Coverage Reports"
-    timeout-minutes: 20
+    timeout-minutes: 120
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository

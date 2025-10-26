@@ -67,13 +67,13 @@ fn bubble_up(expr: &Expression, syms: &SymbolTable) -> ApplicationResult {
     let mut sub = expr.children();
     let mut bubbled_conditions = vec![];
     for e in sub.iter_mut() {
-        if let Expression::Bubble(_, a, b) = e {
-            if a.return_type() != Some(ReturnType::Bool) {
-                let a = Moo::unwrap_or_clone(Moo::clone(a));
-                let b = Moo::unwrap_or_clone(Moo::clone(b));
-                bubbled_conditions.push(b);
-                *e = a;
-            }
+        if let Expression::Bubble(_, a, b) = e
+            && a.return_type() != Some(ReturnType::Bool)
+        {
+            let a = Moo::unwrap_or_clone(Moo::clone(a));
+            let b = Moo::unwrap_or_clone(Moo::clone(b));
+            bubbled_conditions.push(b);
+            *e = a;
         }
     }
     if bubbled_conditions.is_empty() {
