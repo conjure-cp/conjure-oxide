@@ -55,10 +55,14 @@ struct TestConfig {
     enable_native_parser: bool, // Stage 1b: Runs the native parser if enabled
     apply_rewrite_rules: bool, // Stage 2a: Applies predefined rules to the model
     enable_extra_validation: bool, // Stage 2b: Runs additional validation checks
-    solve_with_minion: bool,   // Stage 3a: Solves the model using Minion
-    solve_with_sat: bool,      // TODO - add stage mark
+
+    // NOTE: when adding a new solver config, make sure to update num_solvers_enabled!
+    solve_with_minion: bool, // Stage 3a: Solves the model using Minion
+    solve_with_sat: bool,    // TODO - add stage mark
+    solve_with_smt: bool,    // TODO - add stage mark
+
     compare_solver_solutions: bool, // Stage 3b: Compares Minion and Conjure solutions
-    validate_rule_traces: bool, // Stage 4a: Checks rule traces against expected outputs
+    validate_rule_traces: bool,     // Stage 4a: Checks rule traces against expected outputs
 
     enable_morph_impl: bool,
     enable_naive_impl: bool,
@@ -71,6 +75,7 @@ impl Default for TestConfig {
             extra_rewriter_asserts: vec!["vector_operators_have_partially_evaluated".into()],
             enable_naive_impl: true,
             solve_with_sat: false,
+            solve_with_smt: false,
             enable_morph_impl: false,
             enable_rewriter_impl: true,
             parse_model_default: true,
@@ -110,6 +115,7 @@ impl TestConfig {
             ),
             solve_with_minion: env_var_override_bool("SOLVE_WITH_MINION", self.solve_with_minion),
             solve_with_sat: env_var_override_bool("SOLVE_WITH_SAT", self.solve_with_sat),
+            solve_with_smt: env_var_override_bool("SOLVE_WITH_SMT", self.solve_with_smt),
             compare_solver_solutions: env_var_override_bool(
                 "COMPARE_SOLVER_SOLUTIONS",
                 self.compare_solver_solutions,
@@ -124,6 +130,14 @@ impl TestConfig {
             ),
             extra_rewriter_asserts: self.extra_rewriter_asserts, // Not overridden by env vars
         }
+    }
+
+    fn num_solvers_enabled(&self) -> usize {
+        let mut num = 0;
+        num += self.solve_with_minion as usize;
+        num += self.solve_with_sat as usize;
+        num += self.solve_with_smt as usize;
+        num
     }
 }
 
@@ -247,8 +261,8 @@ fn integration_test_inner(
 
     // TODO: allow either Minion or SAT but not both; eventually allow both sovlers to be tested
 
-    if config.solve_with_sat && config.solve_with_minion {
-        todo!("Not yet implemented simultaneous testing of both solvers")
+    if config.num_solvers_enabled() > 1 {
+        todo!("Not yet implemented simultaneous testing of multiple solvers")
     }
 
     // File path
@@ -285,6 +299,8 @@ fn integration_test_inner(
 
         let solver_fam = if config.solve_with_sat {
             SolverFamily::Sat
+        } else if config.solve_with_smt {
+            SolverFamily::Smt
         } else {
             SolverFamily::Minion
         };
@@ -370,7 +386,22 @@ fn integration_test_inner(
         )?;
         let solutions_json = save_solutions_json(&solved, path, essence_base, SolverFamily::Sat)?;
         if verbose {
-            println!("Minion solutions: {solutions_json:#?}");
+            println!("SAT solutions: {solutions_json:#?}");
+        }
+        Some(solved)
+    } else if config.solve_with_smt {
+        let solved = get_solutions(
+            Smt::default(),
+            rewritten_model
+                .as_ref()
+                .expect("Rewritten model must be present in 2a")
+                .clone(),
+            0,
+            &None,
+        )?;
+        let solutions_json = save_solutions_json(&solved, path, essence_base, SolverFamily::Smt)?;
+        if verbose {
+            println!("SMT solutions: {solutions_json:#?}");
         }
         Some(solved)
     } else {
@@ -378,17 +409,14 @@ fn integration_test_inner(
     };
 
     // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
-    if config.compare_solver_solutions
-        || accept && (config.solve_with_minion || config.solve_with_sat)
-    {
+    if config.compare_solver_solutions || accept && config.num_solvers_enabled() > 0 {
         let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
             &format!("{path}/{essence_base}.{extension}"),
             Arc::clone(&context),
         )?;
 
-        let username_solutions = normalize_solutions_for_comparison(
-            solutions.as_ref().expect("Minion solutions required"),
-        );
+        let username_solutions =
+            normalize_solutions_for_comparison(solutions.as_ref().expect("Solutions required"));
         let conjure_solutions = normalize_solutions_for_comparison(&conjure_solutions);
 
         let mut conjure_solutions_json = solutions_to_json(&conjure_solutions);
@@ -431,6 +459,8 @@ fn integration_test_inner(
             copy_generated_to_expected(path, essence_base, "minion", "solutions.json")?;
         } else if config.solve_with_sat {
             copy_generated_to_expected(path, essence_base, "sat", "solutions.json")?;
+        } else if config.solve_with_smt {
+            copy_generated_to_expected(path, essence_base, "smt", "solutions.json")?;
         }
 
         if config.validate_rule_traces {
@@ -535,6 +565,11 @@ fn integration_test_inner(
     } else if config.solve_with_sat {
         let expected_solutions_json =
             read_solutions_json(path, essence_base, "expected", SolverFamily::Sat)?;
+        let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
+        assert_eq!(username_solutions_json, expected_solutions_json);
+    } else if config.solve_with_smt {
+        let expected_solutions_json =
+            read_solutions_json(path, essence_base, "expected", SolverFamily::Smt)?;
         let username_solutions_json = solutions_to_json(solutions.as_ref().unwrap_or(&vec![]));
         assert_eq!(username_solutions_json, expected_solutions_json);
     }

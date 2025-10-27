@@ -1341,14 +1341,14 @@ fn not_literal_to_wliteral(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     use Domain::Bool;
     match expr {
         Expr::Not(m, expr) => {
-            if let Expr::Atomic(_, Atom::Reference(decl)) = (**expr).clone() {
-                if decl.domain().is_some_and(|x| matches!(&x as &Domain, Bool)) {
-                    return Ok(Reduction::pure(Expr::FlatWatchedLiteral(
-                        m.clone_dirty(),
-                        decl,
-                        Lit::Bool(false),
-                    )));
-                }
+            if let Expr::Atomic(_, Atom::Reference(decl)) = (**expr).clone()
+                && decl.domain().is_some_and(|x| matches!(&x as &Domain, Bool))
+            {
+                return Ok(Reduction::pure(Expr::FlatWatchedLiteral(
+                    m.clone_dirty(),
+                    decl,
+                    Lit::Bool(false),
+                )));
             }
             Err(RuleNotApplicable)
         }
