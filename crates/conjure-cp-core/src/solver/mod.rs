@@ -155,13 +155,12 @@ pub enum SolverFamily {
 }
 
 impl SolverFamily {
-    pub fn id_str(&self) -> String {
+    pub const fn as_str(&self) -> &'static str {
         match self {
             SolverFamily::Minion => "minion",
             SolverFamily::Sat => "sat",
             SolverFamily::Smt => "smt",
         }
-        .into()
     }
 }
 

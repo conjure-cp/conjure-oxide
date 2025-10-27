@@ -67,7 +67,7 @@ pub fn save_model_json(
     test_stage: &str,
     solver: Option<SolverFamily>,
 ) -> Result<(), std::io::Error> {
-    let marker = solver.map_or("agnostic".into(), |s| s.id_str());
+    let marker = solver.map_or("agnostic".into(), |s| s.as_str());
 
     let generated_json_str = serialise_model(model)?;
     let filename = format!("{path}/{marker}-{test_name}.generated-{test_stage}.serialised.json");
@@ -83,7 +83,7 @@ pub fn save_stats_json(
     solver: SolverFamily,
 ) -> Result<(), std::io::Error> {
     #[allow(clippy::unwrap_used)]
-    let solver_name = solver.id_str();
+    let solver_name = solver.as_str();
 
     let stats = context.read().unwrap().clone();
     let generated_json = sort_json_object(&serde_json::to_value(stats)?, false);
@@ -105,7 +105,7 @@ pub fn read_model_json(
     test_stage: &str,
     solver: Option<SolverFamily>,
 ) -> Result<ConjureModel, std::io::Error> {
-    let marker = solver.map_or("agnostic".into(), |s| s.id_str());
+    let marker = solver.map_or("agnostic".into(), |s| s.as_str());
 
     let filepath = format!("{path}/{marker}-{test_name}.{prefix}-{test_stage}.serialised.json");
     println!("reading: {filepath}");
@@ -164,7 +164,7 @@ pub fn save_solutions_json(
     let json_solutions = solutions_to_json(solutions);
     let generated_json_str = serde_json::to_string_pretty(&json_solutions)?;
 
-    let solver_name = solver.id_str();
+    let solver_name = solver.as_str();
     let filename =
         format!("{path}/{solver_name}-{test_name}.generated-{solver_name}.solutions.json");
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
@@ -178,7 +178,7 @@ pub fn read_solutions_json(
     prefix: &str,
     solver: SolverFamily,
 ) -> Result<JsonValue, anyhow::Error> {
-    let solver_name = solver.id_str();
+    let solver_name = solver.as_str();
 
     let filename =
         format!("{path}/{solver_name}-{test_name}.{prefix}-{solver_name}.solutions.json");
@@ -231,7 +231,7 @@ pub fn read_human_rule_trace(
     prefix: &str,
     solver: &SolverFamily,
 ) -> Result<Vec<String>, std::io::Error> {
-    let solver_name = solver.id_str();
+    let solver_name = solver.as_str();
     let filename = format!("{path}/{solver_name}-{test_name}-{prefix}-rule-trace-human.txt");
     let rules_trace: Vec<String> = read_to_string(&filename)?
         .lines()

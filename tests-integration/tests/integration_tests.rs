@@ -212,7 +212,7 @@ fn solver_specific_integration_test(
     verbose: bool,
     accept: bool,
 ) -> Result<(), Box<dyn Error>> {
-    let solver_name = solver.id_str();
+    let solver_name = solver.as_str();
 
     let subscriber = create_scoped_subscriber(path, essence_base, &solver_name);
 
@@ -605,7 +605,7 @@ fn copy_human_trace_generated_to_expected(
     solver: SolverFamily,
 ) -> Result<(), std::io::Error> {
     //  WBHYn NO GENERTE
-    let solver_name = solver.id_str();
+    let solver_name = solver.as_str();
     std::fs::copy(
         format!("{path}/{solver_name}-{test_name}-generated-rule-trace-human.txt"),
         format!("{path}/{solver_name}-{test_name}-expected-rule-trace-human.txt"),
@@ -620,7 +620,7 @@ fn copy_generated_to_expected(
     extension: &str,
     solver: Option<SolverFamily>,
 ) -> Result<(), std::io::Error> {
-    let marker = solver.map_or("agnostic".into(), |s| s.id_str());
+    let marker = solver.map_or("agnostic".into(), |s| s.as_str());
     std::fs::copy(
         format!("{path}/{marker}-{test_name}.generated-{stage}.{extension}"),
         format!("{path}/{marker}-{test_name}.expected-{stage}.{extension}"),
@@ -635,7 +635,7 @@ fn expected_exists_for(
     extension: &str,
     solver: Option<SolverFamily>,
 ) -> bool {
-    let marker = solver.map_or("agnostic".into(), |s| s.id_str());
+    let marker = solver.map_or("agnostic".into(), |s| s.as_str());
     Path::new(&format!(
         "{path}/{marker}-{test_name}.expected-{stage}.{extension}"
     ))
