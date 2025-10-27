@@ -12,9 +12,6 @@ on:
 permissions:
   contents: write
 
-env:
-  rust_release: nightly
-
 jobs:
   deploy-coverage:
     name: "Info: Code Coverage"
@@ -104,19 +101,6 @@ jobs:
     continue-on-error: true
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cargo/bin
-            ~/.cargo/registry/index
-            ~/.cargo/registry/cache
-            ~/.cargo/git/db
-            target
-            solvers/minion/vendor
-            solvers/chuffed/vendor
-
-          key: ${{ runner.os }}-${{ env.rust_release }}-${{ github.event.repository.updated_at }}
-          restore-keys: ${{ runner.os }}-${{ env.rust_release }}
 
       - name: Set shas
         id: sha
@@ -185,9 +169,6 @@ jobs:
 
       - run: |
           echo "previous_artifact_id=${{steps.previous-artifact.outputs.result}}" >> $GITHUB_ENV
-
-      - name: Install rust ${{ env.rust_release }}
-        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - name: Generate lcov summary for main and pr
         continue-on-error: true
