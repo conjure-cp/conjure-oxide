@@ -117,9 +117,7 @@ grcov . -s . --binary-path ./target/debug -t lcov\
 
 echo_err "info: lcov coverage report generated to target/debug/lcov.info"
 
-if ! open ./target/debug/coverage/index.html; then
-  echo_err "error: failed to open the HTML coverage report"
-fi
+echo "info: coverage HTML report path: $(realpath ./target/debug/coverage/index.html)"
 
 rm -rf ./target/coverage/*.profraw
 
