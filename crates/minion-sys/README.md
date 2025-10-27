@@ -2,7 +2,7 @@
 
 This crate contains (in progress) Rust bindings for the [Minion](https://github.com/minion/minion) constraint solver.
 
-Read the documentation [here](https://conjure-cp.github.io/conjure-oxide/docs/minion_sys/index.html).
+Read the documentation [here](https://conjure-cp.github.io/conjure-oxide/docs/minion_sys/).
 
 ## Licence
 
