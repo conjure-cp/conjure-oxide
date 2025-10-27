@@ -7,11 +7,15 @@ on:
   workflow_dispatch:
 
 env:
-  rust_release: nightly
   SCCACHE_GHA_ENABLED: "true"
   RUSTC_WRAPPER: "sccache"
   SCCACHE_GHA_VERSION: 2
   CARGO_INCREMENTAL: "0"
+  # we define the following 3 values as the defaults here, matrix jobs may overwrite their values.
+  os: ubuntu-latest
+  rust_release: nightly
+  compiler_profile: debug
+
 
 jobs:
   doc-coverage:
@@ -26,8 +30,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-          # Refer to the correct cache:
-          shared-key: ubuntu-latest-${{env.rust_release}}-debug
+          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
 
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.9
@@ -58,7 +61,6 @@ jobs:
           name: main-doc-coverage-summary
           path: main-doc-coverage-summary.txt
           overwrite: true
-        
 
 
   coverage:
@@ -73,8 +75,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-          # Refer to the correct cache:
-          shared-key: ubuntu-latest-${{env.rust_release}}-debug
+          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
 
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.9
