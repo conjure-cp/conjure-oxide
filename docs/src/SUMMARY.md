@@ -19,19 +19,19 @@
 - [Contributor's Guide](./developers_guide/contributors-guide/index.md)
   - [Setting up your development environment](./developers_guide/contributors-guide/set-dev-env.md)
   - [Contributing Process](./developers_guide/contributors-guide/contributing-process.md)
-  - [Git Flow]()
+  - [Git Flow](./developers_guide/contributors-guide/gitflow.md)
   - [Running and writing integration tests]()
   - [What we didn't do]()
-  - [How we work]()
+  - [How we work](./developers_guide/contributors-guide/how_we_work.md)
 
-- [Coding Resources and Conventions]()
-  - [Documentation Style]()
-  - [Crate Structure]()
+- [Coding Resources and Conventions](./developers_guide/coding_resources/index.md)
+  - [Documentation Style](./developers_guide/coding_resources/documentation_style.md)
+  - [Crate Structure](./developers_guide/coding_resources/crate_structure.md)
 
 <!-- TODO: do we need this? -->
-- [CI/CD]()
-  - [Coverage]()
-  - [Github Actions: Cookbook]()
+- [CI/CD](./developers_guide/ci_cd/index.md)
+  - [Coverage](./developers_guide/ci_cd/coverage.md)
+  - [Github Actions: Cookbook](./developers_guide/ci_cd/github_actions.md)
 
 <!-- New additions -->
 - [Reading the docs]()

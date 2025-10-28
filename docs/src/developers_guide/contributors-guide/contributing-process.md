@@ -1,9 +1,15 @@
 <!-- maturity: draft
-authors: Niklas Dewally, Georgii Skorokhod
+authors: Niklas Dewally, Georgii Skorokhod, Jamie Melton
 last-updated: 08-02-25
 ---- -->
 
+<!-- TODO: Edit this -->
+
 # Contributing Process 
+
+## Beginning your Conjure Oxide contributing journey
+
+We use github 
 
 - Make a fork of this repository. 
   (Use the "fork" button in the top right corner)
