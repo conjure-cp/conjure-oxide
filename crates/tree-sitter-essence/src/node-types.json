@@ -237,6 +237,26 @@
           }
         ]
       },
+      "set_literal": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "set_literal",
+            "named": true
+          }
+        ]
+      },
+      "set_operation": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "set_operation",
+            "named": true
+          }
+        ]
+      },
       "tuple": {
         "multiple": false,
         "required": false,
@@ -263,6 +283,32 @@
         "types": [
           {
             "type": "identifier",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "binary_set_operation",
+    "named": true,
+    "fields": {
+      "left": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "atom",
+            "named": true
+          }
+        ]
+      },
+      "right": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "atom",
             "named": true
           }
         ]
@@ -339,6 +385,16 @@
         "types": [
           {
             "type": "quantifier_expr_bool",
+            "named": true
+          }
+        ]
+      },
+      "set_operator_bool": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "set_operator_bool",
             "named": true
           }
         ]
@@ -495,6 +551,16 @@
         "types": [
           {
             "type": "record_domain",
+            "named": true
+          }
+        ]
+      },
+      "set_domain": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "set_domain",
             "named": true
           }
         ]
@@ -1370,6 +1436,161 @@
     }
   },
   {
+    "type": "set_attribute",
+    "named": true,
+    "fields": {
+      "attribute": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "maxSize",
+            "named": false
+          },
+          {
+            "type": "minSize",
+            "named": false
+          },
+          {
+            "type": "size",
+            "named": false
+          }
+        ]
+      },
+      "attribute_value": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "set_domain",
+    "named": true,
+    "fields": {
+      "value_domain": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "domain",
+            "named": true
+          }
+        ]
+      }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "set_attribute",
+          "named": true
+        },
+        {
+          "type": "set_literal",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "set_literal",
+    "named": true,
+    "fields": {
+      "element": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": ",",
+            "named": false
+          },
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "set_operation",
+    "named": true,
+    "fields": {},
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "binary_set_operation",
+          "named": true
+        },
+        {
+          "type": "unary_set_operation",
+          "named": true
+        }
+      ]
+    }
+  },
+  {
+    "type": "set_operator_bool",
+    "named": true,
+    "fields": {
+      "left": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "atom",
+            "named": true
+          }
+        ]
+      },
+      "operator": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "in",
+            "named": false
+          },
+          {
+            "type": "subset",
+            "named": false
+          },
+          {
+            "type": "subsetEq",
+            "named": false
+          },
+          {
+            "type": "supset",
+            "named": false
+          },
+          {
+            "type": "supsetEq",
+            "named": false
+          }
+        ]
+      },
+      "right": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "atom",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "sub_arith_expr",
     "named": true,
     "fields": {
@@ -1520,6 +1741,22 @@
           },
           {
             "type": "tuple",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "unary_set_operation",
+    "named": true,
+    "fields": {
+      "argument": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "atom",
             "named": true
           }
         ]
@@ -1702,6 +1939,10 @@
     "named": true
   },
   {
+    "type": "in",
+    "named": false
+  },
+  {
     "type": "indexed",
     "named": false
   },
@@ -1710,8 +1951,13 @@
     "named": false
   },
   {
+    "type": "intersect",
+    "named": false
+  },
+  {
     "type": "language_declaration",
-    "named": true
+    "named": true,
+    "extra": true
   },
   {
     "type": "letting",
@@ -1726,7 +1972,15 @@
     "named": false
   },
   {
+    "type": "maxSize",
+    "named": false
+  },
+  {
     "type": "min",
+    "named": false
+  },
+  {
+    "type": "minSize",
     "named": false
   },
   {
@@ -1738,12 +1992,33 @@
     "named": false
   },
   {
+    "type": "powerSet",
+    "named": false
+  },
+  {
     "type": "record",
     "named": false
   },
   {
+    "type": "set",
+    "named": false
+  },
+  {
     "type": "single_line_comment",
-    "named": true
+    "named": true,
+    "extra": true
+  },
+  {
+    "type": "size",
+    "named": false
+  },
+  {
+    "type": "subset",
+    "named": false
+  },
+  {
+    "type": "subsetEq",
+    "named": false
   },
   {
     "type": "such that",
@@ -1751,6 +2026,14 @@
   },
   {
     "type": "sum",
+    "named": false
+  },
+  {
+    "type": "supset",
+    "named": false
+  },
+  {
+    "type": "supsetEq",
     "named": false
   },
   {
@@ -1763,6 +2046,10 @@
   },
   {
     "type": "tuple",
+    "named": false
+  },
+  {
+    "type": "union",
     "named": false
   },
   {
