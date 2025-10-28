@@ -171,7 +171,7 @@ module.exports = grammar ({
       field("iff_expr", $.iff_expr),
       field("quantifier_expression_bool", $.quantifier_expr_bool),
       field("sub_bool_expression", $.sub_bool_expr),
-      field("set_operation_bool", $.set_operator_bool)
+      field("set_operation_bool", $.set_operation_bool)
     )),
 
     not_expr: $ => prec(20, seq("!", field("expression", choice($.bool_expr, $.comparison_expr, $.atom)))),
