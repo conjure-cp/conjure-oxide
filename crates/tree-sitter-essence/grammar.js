@@ -140,7 +140,7 @@ module.exports = grammar ({
 
     set_literal: $ => seq(
       "{",
-      field("element", commaSep1($.arithmetic_expr)),
+      field("element", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr))),
       "}"
     ),
 
