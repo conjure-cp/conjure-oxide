@@ -3,28 +3,37 @@ name: "Coverage (PR)"
 on:
   pull_request:
     paths:
-      - conjure_oxide/**
-      - solvers/**
       - crates/**
-      - conjure_oxide/tests/**
+      - tests-integration/**
       - tools/coverage.sh
       - .github/workflows/code-coverage.yml
   workflow_dispatch:
 
 env:
-  rust_release: nightly
   SCCACHE_GHA_ENABLED: "true"
   RUSTC_WRAPPER: "sccache"
   SCCACHE_GHA_VERSION: 5
+  CARGO_INCREMENTAL: "0"
+  # we define the following 3 values as the defaults here, matrix jobs may overwrite their values.
+  os: ubuntu-latest
+  rust_release: nightly
+  compiler_profile: debug
 
 jobs:
   doc-coverage:
     name: "Documentation"
-    timeout-minutes: 20 
+    timeout-minutes: 120
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v5
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: conjure-oxide
+          cache-on-failure: true
+          shared-key: ${{ matrix.os }}--${{ matrix.rust_release }}--${{ matrix.compiler_profile }}
 
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.9
@@ -47,19 +56,19 @@ jobs:
           ./tools/ci/generate-doc-coverage-report-md.bash >> $GITHUB_STEP_SUMMARY
 
       - name: Generate summary
-        run: | 
+        run: |
           ./tools/ci/generate-doc-coverage-summary-md.bash > pr-doc-coverage-summary.txt
 
       - name: Upload summary as artifact (for later use)
-        uses: actions/upload-artifact@v4
-        with: 
+        uses: actions/upload-artifact@v5
+        with:
           name: pr-doc-coverage-summary
           path: pr-doc-coverage-summary.txt
-          overwrite: false 
+          overwrite: false
 
   coverage:
     name: "Code"
-    timeout-minutes: 20 
+    timeout-minutes: 120
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
@@ -99,8 +108,7 @@ jobs:
           echo "${{github.event.pull_request.number}}" > deploy/prnumber
 
       - name: Archive code coverage results for deployment
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: code-coverage-${{ steps.sha.outputs.sha }}
           path: deploy/**
-

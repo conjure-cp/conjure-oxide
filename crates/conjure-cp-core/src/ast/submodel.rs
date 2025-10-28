@@ -80,12 +80,12 @@ impl SubModel {
     }
 
     /// The symbol table for this sub-model as a reference.
-    pub fn symbols(&self) -> Ref<SymbolTable> {
+    pub fn symbols(&self) -> Ref<'_, SymbolTable> {
         (*self.symbols).borrow()
     }
 
     /// The symbol table for this sub-model as a mutable reference.
-    pub fn symbols_mut(&mut self) -> RefMut<SymbolTable> {
+    pub fn symbols_mut(&mut self) -> RefMut<'_, SymbolTable> {
         (*self.symbols).borrow_mut()
     }
 

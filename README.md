@@ -67,7 +67,7 @@ The following projects are used by, and developed alongside, `conjure-oxide`,
 but are kept in their own repositories:
 
 - [`uniplate`](https://github.com/conjure-cp/uniplate)
-
+- [`polyquine`](https://github.com/gskorokhod/polyquine)
 
 ## Licence
 

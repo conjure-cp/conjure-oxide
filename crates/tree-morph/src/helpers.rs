@@ -131,11 +131,12 @@ q   No change
         match line.trim() {
             "q" => return None,
             n => {
-                if let Ok(n) = n.parse::<usize>() {
-                    if n > 0 && n <= choices.len() {
-                        let ret = choices.swap_remove(n - 1).1;
-                        return Some(ret);
-                    }
+                if let Ok(n) = n.parse::<usize>()
+                    && n > 0
+                    && n <= choices.len()
+                {
+                    let ret = choices.swap_remove(n - 1).1;
+                    return Some(ret);
                 }
             }
         }

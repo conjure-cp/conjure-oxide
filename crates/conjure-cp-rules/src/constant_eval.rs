@@ -168,10 +168,10 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             ) = (a.as_ref(), b.as_ref())
             {
                 for lit in d.iter() {
-                    if let Lit::Int(x) = lit {
-                        if c == x {
-                            return Some(Lit::Bool(true));
-                        }
+                    if let Lit::Int(x) = lit
+                        && c == x
+                    {
+                        return Some(Lit::Bool(true));
                     }
                 }
                 Some(Lit::Bool(false))
