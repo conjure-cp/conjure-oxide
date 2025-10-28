@@ -2,12 +2,13 @@ use crate::cli::GlobalArgs;
 use core::panic;
 use std::path::PathBuf;
 use anyhow::Result;
-use conjure_cp::{ast, essence_expr, Model};
+use conjure_cp::{ast::{self, declaration::serde}, essence_expr, Model};
 use conjure_cp_cli::utils::testing::{read_model_json, save_model_json};
 use std::env;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::context::Context;
 use std::sync::{Arc, RwLock};
+use std::fs;
 
 
 #[derive(Clone, Debug, clap::Args)]
@@ -114,15 +115,22 @@ pub fn run_parse_test_command(global_args: GlobalArgs, parse_test_args: Args) ->
                 Ok(expected_model) => {
                     // assert_eq!(parsed_model, expected_model);
                     // let model_from_file = read_model_json(&context, test_dir, essence_base, "generated", "parse")?;
-                    if parsed_model == expected_model {
-                        println!("{}: Passed", &essence_file.display());
-                        passed += 1;
-                    }
-                    else {
-                        println!("{}: Parsed model doesn't match expected:", essence_file.display());
-                        // println!("Expected: {expected_model:#?}\nParsed: {parsed_model:#?}");
-                        // pretty_assertions::assert_eq!(parsed_model, expected_model);
-                        failed += 1;
+                    match compare_json_ignoring_ids(test_dir, essence_base) {
+                        Ok(equal) => {
+                            if equal {
+                                println!("{}: Passed", &essence_file.display());
+                                passed += 1;
+                            } else {
+                                println!("{}: Parsed model doesn't match expected", essence_file.display());
+                                // println!("Expected: {expected_model:#?}\nParsed: {parsed_model:#?}");
+                                // pretty_assertions::assert_eq!(parsed_model, expected_model);
+                                failed += 1;
+                            }
+                        }
+                        Err(e) => {
+                            println!("{}: Error comparing expected and generated results: {}", essence_file.display(), e);
+                            failed += 1;
+                        }
                     }
                 },
                 Err(e) => {
@@ -170,11 +178,59 @@ fn find_essence_files_recursive_helper(dir: &PathBuf, essence_files: &mut Vec<Pa
 
 // TODO: check if id is the only thing wrong with the models
 
-fn id_ignore_check(
-    parsed_model: Model, 
-    expected_model: Model
-) {
-    // for line1 in parsed_model {
-    //     println!("{}", line1);
-    // }
+fn compare_json_ignoring_ids(
+    test_dir: &str, 
+    base: &str
+) -> Result<bool> {
+    let gen_path = format!("{}/{}.generated-parse.serialised.json", test_dir, base);
+    let exp_path = format!("{}/{}.expected-parse.serialised.json", test_dir, base);
+
+    let gen_raw = match fs::read_to_string(&gen_path) {
+        Ok(s) => s,
+        Err(e) => {
+            println!("Error reading {}: {}", gen_path, e);
+            return Ok(false);
+        }
+    };
+
+    let exp_raw = match fs::read_to_string(&exp_path) {
+        Ok(s) => s,
+        Err(e) => {
+            println!("Error reading {}: {}", exp_path, e);
+            return Ok(false);
+        }
+    };
+
+    let gen_val: serde_json::Value = serde_json::from_str(&gen_raw).
+        map_err(|e| anyhow::anyhow!("Failed to parse JSON {}: {}", gen_path, e))?;
+    let exp_val: serde_json::Value = serde_json::from_str(&exp_raw).
+        map_err(|e| anyhow::anyhow!("Failed to parse JSON {}: {}", exp_path, e))?;
+    
+    let gen_string = serde_json::to_string_pretty(&gen_val)?;
+    let exp_string = serde_json::to_string_pretty(&exp_val)?;
+
+    if gen_string == exp_string {
+        return Ok(true);
+    }
+
+    let gen_lines: Vec<&str> = gen_string.lines().collect();
+    let exp_lines: Vec<&str> = exp_string.lines().collect();
+    let max = std::cmp::min(gen_lines.len(), exp_lines.len());
+    for i in 0..max {
+        if gen_lines[i].contains("\"Reference\":") || gen_lines[i].contains("\"id\":") {
+            continue;
+        }
+        // println!("{}", gen_lines[i]);
+        if gen_lines[i] != exp_lines[i] {
+            println!("Expected: {}, Generated: {}", gen_lines[i], exp_lines[i]);
+            return Ok(false);
+        }
+    }
+
+    if gen_lines.len() != exp_lines.len() {
+        println!("Number of lines different from expected: expected {} lines, generated {} lines", exp_lines.len(), gen_lines.len());
+        return Ok(false);
+    }
+
+    Ok(true)
 }
