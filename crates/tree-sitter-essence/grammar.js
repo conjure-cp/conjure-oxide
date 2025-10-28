@@ -128,8 +128,7 @@ module.exports = grammar ({
         optional(commaSep1($.set_attribute)),
         "of",
         field("value_domain", $.domain)
-      ),
-      $.set_literal
+      )
     ),
 
     set_attribute: $ => seq(
@@ -293,18 +292,23 @@ module.exports = grammar ({
       "]"
     ),
 
-    set_operation: $ => choice($.binary_set_operation, $.unary_set_operation),
-
-    binary_set_operation: $ => prec.left(seq(
+    // TODO: add unary set operation support (powerSet)
+    set_operation: $ => prec.left(seq(
       field("left", $.atom),
-      choice("union", "intersect"),
+      field("operator", choice("union", "intersect")),
       field("right", $.atom)
     )),
 
-    unary_set_operation: $ => prec(1,seq(
-      "powerSet",
-      field("argument", $.atom)
-    )),
+    // binary_set_operation: $ => prec.left(seq(
+    //   field("left", $.atom),
+    //   choice("union", "intersect"),
+    //   field("right", $.atom)
+    // )),
+
+    // unary_set_operation: $ => prec(1,seq(
+    //   "powerSet",
+    //   field("argument", $.atom)
+    // )),
 
     indices: $ => commaSep1(choice(field("index", $.arithmetic_expr), field("null_index", $.null_index))),
 

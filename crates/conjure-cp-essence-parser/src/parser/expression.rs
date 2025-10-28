@@ -149,7 +149,7 @@ fn parse_unary_expression(
     }
 }
 
-fn parse_binary_expression(
+pub fn parse_binary_expression(
     node: &Node,
     source_code: &str,
     root: &Node,
@@ -271,6 +271,16 @@ fn parse_binary_expression(
             Moo::new(right),
         )),
         "supsetEq" => Ok(Expression::SupsetEq(
+            Metadata::new(),
+            Moo::new(left),
+            Moo::new(right),
+        )),
+        "union" => Ok(Expression::Union(
+            Metadata::new(),
+            Moo::new(left),
+            Moo::new(right),
+        )),
+        "intersect" => Ok(Expression::Intersect(
             Metadata::new(),
             Moo::new(left),
             Moo::new(right),

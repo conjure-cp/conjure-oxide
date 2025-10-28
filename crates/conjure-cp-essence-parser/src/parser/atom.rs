@@ -1,4 +1,4 @@
-use crate::expression::parse_expression;
+use crate::expression::{parse_expression, parse_binary_expression};
 use crate::parser::abstract_literal::parse_abstract;
 use crate::util::named_children;
 use crate::{EssenceParseError, field, named_child};
@@ -43,7 +43,7 @@ pub fn parse_atom(
         }
         // for now, assume is binary since powerset isn't implemented
         // TODO: add powerset support under "set_operation"
-        "set_operation" => parse_expression(*node, source_code, root, symbols),
+        "set_operation" => parse_binary_expression(node, source_code, root, symbols),
         _ => Err(EssenceParseError::syntax_error(
             format!("Expected atom, got: {}", node.kind()),
             Some(node.range()),

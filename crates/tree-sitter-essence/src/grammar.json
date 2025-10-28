@@ -1049,10 +1049,6 @@
               }
             }
           ]
-        },
-        {
-          "type": "SYMBOL",
-          "name": "set_literal"
         }
       ]
     },
@@ -2449,19 +2445,6 @@
       ]
     },
     "set_operation": {
-      "type": "CHOICE",
-      "members": [
-        {
-          "type": "SYMBOL",
-          "name": "binary_set_operation"
-        },
-        {
-          "type": "SYMBOL",
-          "name": "unary_set_operation"
-        }
-      ]
-    },
-    "binary_set_operation": {
       "type": "PREC_LEFT",
       "value": 0,
       "content": {
@@ -2476,42 +2459,25 @@
             }
           },
           {
-            "type": "CHOICE",
-            "members": [
-              {
-                "type": "STRING",
-                "value": "union"
-              },
-              {
-                "type": "STRING",
-                "value": "intersect"
-              }
-            ]
+            "type": "FIELD",
+            "name": "operator",
+            "content": {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": "union"
+                },
+                {
+                  "type": "STRING",
+                  "value": "intersect"
+                }
+              ]
+            }
           },
           {
             "type": "FIELD",
             "name": "right",
-            "content": {
-              "type": "SYMBOL",
-              "name": "atom"
-            }
-          }
-        ]
-      }
-    },
-    "unary_set_operation": {
-      "type": "PREC",
-      "value": 1,
-      "content": {
-        "type": "SEQ",
-        "members": [
-          {
-            "type": "STRING",
-            "value": "powerSet"
-          },
-          {
-            "type": "FIELD",
-            "name": "argument",
             "content": {
               "type": "SYMBOL",
               "name": "atom"
