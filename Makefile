@@ -40,6 +40,8 @@ install-cargo-extensions: .installed-cargo-extensions.checkpoint
 	cargo install cargo-shear
 	touch .installed-cargo-extensions.checkpoint
 
+coverage:
+	./tools/coverage.sh
 
 .PHONY: help
 ## Shows this help text
