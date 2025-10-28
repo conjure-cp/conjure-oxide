@@ -170,9 +170,9 @@ module.exports = grammar ({
     ))),
 
     iff_expr: $ => prec(-4, prec.left(seq(
-      field("left", choice($.bool_expr, $.comparison_expr, $.atom)), 
+      field("left", choice($.bool_expr, $.comparison_expr, $.sub_bool_expr, $.atom)), 
       field("operator", "<->"), 
-      field("right", choice($.bool_expr, $.comparison_expr, $.atom))
+      field("right", choice($.bool_expr, $.comparison_expr, $.sub_bool_expr, $.atom))
     ))),
 
     toInt_expr: $ => seq("toInt","(", field("expression", $.bool_expr), ")"),
@@ -197,7 +197,7 @@ module.exports = grammar ({
       field("right", choice($.bool_expr, $.arithmetic_expr))
     ))),
 
-    sub_bool_expr: $ => prec(1, seq("(", field("expression", choice($.bool_expr, $.comparison_expr)), ")")),
+    sub_bool_expr: $ => prec(10, seq("(", field("expression", choice($.bool_expr, $.comparison_expr, $.atom)), ")")),
     
     arithmetic_expr: $ => prec(3, choice(
       field("atom", $.atom),
