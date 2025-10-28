@@ -187,6 +187,16 @@
     "type": "atom",
     "named": true,
     "fields": {
+      "comprehension": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "comprehension",
+            "named": true
+          }
+        ]
+      },
       "constant": {
         "multiple": false,
         "required": false,
@@ -450,6 +460,72 @@
     }
   },
   {
+    "type": "comprehension",
+    "named": true,
+    "fields": {
+      "expression": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "bool_expr",
+            "named": true
+          },
+          {
+            "type": "comparison_expr",
+            "named": true
+          }
+        ]
+      },
+      "generators_and_conditions": {
+        "multiple": true,
+        "required": true,
+        "types": [
+          {
+            "type": ",",
+            "named": false
+          },
+          {
+            "type": "condition",
+            "named": true
+          },
+          {
+            "type": "generator",
+            "named": true
+          },
+          {
+            "type": "letting_statement",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "condition",
+    "named": true,
+    "fields": {
+      "expression": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "bool_expr",
+            "named": true
+          },
+          {
+            "type": "comparison_expr",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "constant",
     "named": true,
     "fields": {
@@ -667,6 +743,54 @@
         "types": [
           {
             "type": "identifier",
+            "named": true
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "generator",
+    "named": true,
+    "fields": {
+      "collection": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "arithmetic_expr",
+            "named": true
+          },
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "matrix",
+            "named": true
+          }
+        ]
+      },
+      "domain": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "domain",
+            "named": true
+          }
+        ]
+      },
+      "variable": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "tuple",
             "named": true
           }
         ]
@@ -1283,6 +1407,10 @@
         "required": true,
         "types": [
           {
+            "type": "comprehension",
+            "named": true
+          },
+          {
             "type": "identifier",
             "named": true
           },
@@ -1309,6 +1437,10 @@
             "named": false
           },
           {
+            "type": "product",
+            "named": false
+          },
+          {
             "type": "sum",
             "named": false
           }
@@ -1324,6 +1456,10 @@
         "multiple": false,
         "required": true,
         "types": [
+          {
+            "type": "comprehension",
+            "named": true
+          },
           {
             "type": "identifier",
             "named": true
@@ -1834,6 +1970,10 @@
     "named": false
   },
   {
+    "type": "<-",
+    "named": false
+  },
+  {
     "type": "<->",
     "named": false
   },
@@ -1971,6 +2111,10 @@
   },
   {
     "type": "or",
+    "named": false
+  },
+  {
+    "type": "product",
     "named": false
   },
   {

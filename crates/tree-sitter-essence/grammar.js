@@ -204,7 +204,7 @@ module.exports = grammar ({
     quantifier_expr_bool: $ => prec(-10, seq(
       field("quantifier", choice("and", "or", "allDiff")),
       "(",
-      field("arg", choice($.matrix, $.tuple_matrix_record_index_or_slice, $.identifier)),
+      field("arg", choice($.comprehension, $.matrix, $.tuple_matrix_record_index_or_slice, $.identifier)),
       ")"
     )),
 
@@ -247,6 +247,7 @@ module.exports = grammar ({
       field("metavar", $.metavar),
       field("tuple", $.tuple),
       field("matrix", $.matrix),
+      field("comprehension", $.comprehension),
       field("record", $.record),
       field("from_solution", $.from_solution),
       field("tuple_matrix_record_index_or_slice", $.tuple_matrix_record_index_or_slice),
@@ -271,6 +272,35 @@ module.exports = grammar ({
       )),
       "]"
     ),
+
+    comprehension: $ => prec(1, seq(
+      "[",
+      field("expression", choice($.arithmetic_expr, $.bool_expr, $.comparison_expr)),
+      "|",
+      field("generato_or_condition", commaSep1(choice(
+        $.generator,
+        $.condition,
+        $.letting_statement
+      ))),
+      "]"
+    )),
+
+    generator: $ => choice(
+      // i : int(1..5)
+      seq(
+        field("variable", choice($.identifier, $.tuple)),
+        ":",
+        field("domain", $.domain)
+      ),
+      // i <- [1,2,3]
+      seq(
+        field("variable", choice($.identifier, $.tuple)),
+        "<-",
+        field("collection", choice($.arithmetic_expr, $.identifier, $.matrix))
+      )
+    ),
+
+    condition: $ => field("expression", choice($.bool_expr, $.comparison_expr)),
 
     record: $ => seq(
       "record",
@@ -343,9 +373,9 @@ module.exports = grammar ({
     additive_op: $ => choice("+", "-"),
 
     quantifier_expr_arith: $ => prec(-10, seq(
-      field("quantifier", choice("min", "max", "sum")),
+      field("quantifier", choice("min", "max", "sum", "product")),
       "(",
-      field("arg", choice($.matrix, $.tuple_matrix_record_index_or_slice, $.identifier)),
+      field("arg", choice($.comprehension, $.matrix, $.tuple_matrix_record_index_or_slice, $.identifier)),
       ")"
     )),
 

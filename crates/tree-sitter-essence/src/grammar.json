@@ -1759,6 +1759,10 @@
               "members": [
                 {
                   "type": "SYMBOL",
+                  "name": "comprehension"
+                },
+                {
+                  "type": "SYMBOL",
                   "name": "matrix"
                 },
                 {
@@ -2097,6 +2101,14 @@
           },
           {
             "type": "FIELD",
+            "name": "comprehension",
+            "content": {
+              "type": "SYMBOL",
+              "name": "comprehension"
+            }
+          },
+          {
+            "type": "FIELD",
             "name": "record",
             "content": {
               "type": "SYMBOL",
@@ -2319,6 +2331,226 @@
           "value": "]"
         }
       ]
+    },
+    "comprehension": {
+      "type": "PREC",
+      "value": 1,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "STRING",
+            "value": "["
+          },
+          {
+            "type": "FIELD",
+            "name": "expression",
+            "content": {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "arithmetic_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "bool_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "comparison_expr"
+                }
+              ]
+            }
+          },
+          {
+            "type": "STRING",
+            "value": "|"
+          },
+          {
+            "type": "FIELD",
+            "name": "generators_and_conditions",
+            "content": {
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "SYMBOL",
+                      "name": "generator"
+                    },
+                    {
+                      "type": "SYMBOL",
+                      "name": "condition"
+                    },
+                    {
+                      "type": "SYMBOL",
+                      "name": "letting_statement"
+                    }
+                  ]
+                },
+                {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "REPEAT",
+                      "content": {
+                        "type": "SEQ",
+                        "members": [
+                          {
+                            "type": "STRING",
+                            "value": ","
+                          },
+                          {
+                            "type": "CHOICE",
+                            "members": [
+                              {
+                                "type": "SYMBOL",
+                                "name": "generator"
+                              },
+                              {
+                                "type": "SYMBOL",
+                                "name": "condition"
+                              },
+                              {
+                                "type": "SYMBOL",
+                                "name": "letting_statement"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "type": "BLANK"
+                    }
+                  ]
+                },
+                {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "STRING",
+                      "value": ","
+                    },
+                    {
+                      "type": "BLANK"
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "type": "STRING",
+            "value": "]"
+          }
+        ]
+      }
+    },
+    "generator": {
+      "type": "CHOICE",
+      "members": [
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "variable",
+              "content": {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "identifier"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "tuple"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "STRING",
+              "value": ":"
+            },
+            {
+              "type": "FIELD",
+              "name": "domain",
+              "content": {
+                "type": "SYMBOL",
+                "name": "domain"
+              }
+            }
+          ]
+        },
+        {
+          "type": "SEQ",
+          "members": [
+            {
+              "type": "FIELD",
+              "name": "variable",
+              "content": {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "identifier"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "tuple"
+                  }
+                ]
+              }
+            },
+            {
+              "type": "STRING",
+              "value": "<-"
+            },
+            {
+              "type": "FIELD",
+              "name": "collection",
+              "content": {
+                "type": "CHOICE",
+                "members": [
+                  {
+                    "type": "SYMBOL",
+                    "name": "arithmetic_expr"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "identifier"
+                  },
+                  {
+                    "type": "SYMBOL",
+                    "name": "matrix"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "condition": {
+      "type": "FIELD",
+      "name": "expression",
+      "content": {
+        "type": "CHOICE",
+        "members": [
+          {
+            "type": "SYMBOL",
+            "name": "bool_expr"
+          },
+          {
+            "type": "SYMBOL",
+            "name": "comparison_expr"
+          }
+        ]
+      }
     },
     "record": {
       "type": "SEQ",
@@ -2830,6 +3062,10 @@
                 {
                   "type": "STRING",
                   "value": "sum"
+                },
+                {
+                  "type": "STRING",
+                  "value": "product"
                 }
               ]
             }
@@ -2844,6 +3080,10 @@
             "content": {
               "type": "CHOICE",
               "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "comprehension"
+                },
                 {
                   "type": "SYMBOL",
                   "name": "matrix"
