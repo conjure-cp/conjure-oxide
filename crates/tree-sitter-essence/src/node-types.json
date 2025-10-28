@@ -121,6 +121,16 @@
           }
         ]
       },
+      "list_combining_expression_arith": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "list_combining_expr_arith",
+            "named": true
+          }
+        ]
+      },
       "negative_expression": {
         "multiple": false,
         "required": false,
@@ -137,16 +147,6 @@
         "types": [
           {
             "type": "product_expr",
-            "named": true
-          }
-        ]
-      },
-      "quantifier_expression_arith": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "quantifier_expr_arith",
             "named": true
           }
         ]
@@ -313,6 +313,16 @@
           }
         ]
       },
+      "list_combining_expression_bool": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "list_combining_expr_bool",
+            "named": true
+          }
+        ]
+      },
       "not_expression": {
         "multiple": false,
         "required": false,
@@ -329,16 +339,6 @@
         "types": [
           {
             "type": "or_expr",
-            "named": true
-          }
-        ]
-      },
-      "quantifier_expression_bool": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "quantifier_expr_bool",
             "named": true
           }
         ]
@@ -884,6 +884,90 @@
     }
   },
   {
+    "type": "list_combining_expr_arith",
+    "named": true,
+    "fields": {
+      "arg": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "matrix",
+            "named": true
+          },
+          {
+            "type": "tuple_matrix_record_index_or_slice",
+            "named": true
+          }
+        ]
+      },
+      "operator": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "max",
+            "named": false
+          },
+          {
+            "type": "min",
+            "named": false
+          },
+          {
+            "type": "sum",
+            "named": false
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "list_combining_expr_bool",
+    "named": true,
+    "fields": {
+      "arg": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "identifier",
+            "named": true
+          },
+          {
+            "type": "matrix",
+            "named": true
+          },
+          {
+            "type": "tuple_matrix_record_index_or_slice",
+            "named": true
+          }
+        ]
+      },
+      "operator": {
+        "multiple": false,
+        "required": true,
+        "types": [
+          {
+            "type": "allDiff",
+            "named": false
+          },
+          {
+            "type": "and",
+            "named": false
+          },
+          {
+            "type": "or",
+            "named": false
+          }
+        ]
+      }
+    }
+  },
+  {
     "type": "matrix",
     "named": true,
     "fields": {
@@ -1229,90 +1313,6 @@
           {
             "type": "letting_statement",
             "named": true
-          }
-        ]
-      }
-    }
-  },
-  {
-    "type": "quantifier_expr_arith",
-    "named": true,
-    "fields": {
-      "arg": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "identifier",
-            "named": true
-          },
-          {
-            "type": "matrix",
-            "named": true
-          },
-          {
-            "type": "tuple_matrix_record_index_or_slice",
-            "named": true
-          }
-        ]
-      },
-      "quantifier": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "max",
-            "named": false
-          },
-          {
-            "type": "min",
-            "named": false
-          },
-          {
-            "type": "sum",
-            "named": false
-          }
-        ]
-      }
-    }
-  },
-  {
-    "type": "quantifier_expr_bool",
-    "named": true,
-    "fields": {
-      "arg": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "identifier",
-            "named": true
-          },
-          {
-            "type": "matrix",
-            "named": true
-          },
-          {
-            "type": "tuple_matrix_record_index_or_slice",
-            "named": true
-          }
-        ]
-      },
-      "quantifier": {
-        "multiple": false,
-        "required": true,
-        "types": [
-          {
-            "type": "allDiff",
-            "named": false
-          },
-          {
-            "type": "and",
-            "named": false
-          },
-          {
-            "type": "or",
-            "named": false
           }
         ]
       }

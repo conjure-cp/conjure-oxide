@@ -70,7 +70,7 @@ fn parse_arithmetic_expression(
         "exponent" | "product_expr" | "sum_expr" => {
             parse_binary_expression(&inner, source_code, root, symbols)
         }
-        "quantifier_expr_arith" => parse_quantifier_expression(&inner, source_code, root, symbols),
+        "list_combining_expr_arith" => parse_list_combining_expression(&inner, source_code, root, symbols),
         _ => Err(EssenceParseError::syntax_error(
             format!("Expected arithmetic expression, found: {}", inner.kind()),
             Some(inner.range()),
@@ -91,7 +91,7 @@ fn parse_boolean_expression(
         "and_expr" | "or_expr" | "implication" | "iff_expr" => {
             parse_binary_expression(&inner, source_code, root, symbols)
         }
-        "quantifier_expr_bool" => parse_quantifier_expression(&inner, source_code, root, symbols),
+        "list_combining_expr_bool" => parse_list_combining_expression(&inner, source_code, root, symbols),
         _ => Err(EssenceParseError::syntax_error(
             format!("Expected boolean expression, found '{}'", inner.kind()),
             Some(inner.range()),
@@ -99,22 +99,19 @@ fn parse_boolean_expression(
     }
 }
 
-fn parse_quantifier_expression(
+fn parse_list_combining_expression(
     node: &Node,
     source_code: &str,
     root: &Node,
     symbols: Option<&SymbolTable>,
 ) -> Result<Expression, EssenceParseError> {
-    // TODO (terminology) - this is not really a quantifier, just a list operation.
-    // Quantifiers are things like:
-    // forAll <name> : <domain> . <expr>
 
-    let quantifier_node = field!(node, "quantifier");
-    let quantifier_str = &source_code[quantifier_node.start_byte()..quantifier_node.end_byte()];
+    let operator_node = field!(node, "operator");
+    let operator_str = &source_code[operator_node.start_byte()..operator_node.end_byte()];
 
     let inner = parse_atom(&field!(node, "arg"), source_code, root, symbols)?;
 
-    match quantifier_str {
+    match operator_str {
         "and" => Ok(Expression::And(Metadata::new(), Moo::new(inner))),
         "or" => Ok(Expression::Or(Metadata::new(), Moo::new(inner))),
         "sum" => Ok(Expression::Sum(Metadata::new(), Moo::new(inner))),
@@ -123,8 +120,8 @@ fn parse_quantifier_expression(
         "max" => Ok(Expression::Max(Metadata::new(), Moo::new(inner))),
         "allDiff" => Ok(Expression::AllDiff(Metadata::new(), Moo::new(inner))),
         _ => Err(EssenceParseError::syntax_error(
-            format!("Invalid quantifier: '{quantifier_str}'"),
-            Some(quantifier_node.range()),
+            format!("Invalid operator: '{operator_str}'"),
+            Some(operator_node.range()),
         )),
     }
 }
