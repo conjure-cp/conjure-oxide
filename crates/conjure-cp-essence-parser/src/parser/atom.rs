@@ -36,11 +36,14 @@ pub fn parse_atom(
             let lit = parse_constant(node, source_code)?;
             Ok(Expression::Atomic(Metadata::new(), Atom::Literal(lit)))
         }
-        "matrix" | "record" | "tuple" => parse_abstract(node, source_code, symbols)
+        "matrix" | "record" | "tuple" | "set_literal" => parse_abstract(node, source_code, symbols)
             .map(|l| Expression::AbstractLiteral(Metadata::new(), l)),
         "tuple_matrix_record_index_or_slice" => {
             parse_index_or_slice(node, source_code, root, symbols)
         }
+        // for now, assumeis binary since powerset isn't mplemented
+        // TODO: add powerset support under "set_operation"
+        "set_operation" => parse_binary_expression(node, source_code, root, symbols),
         _ => Err(EssenceParseError::syntax_error(
             format!("Expected atom, got: {}", node.kind()),
             Some(node.range()),
@@ -157,4 +160,16 @@ fn parse_int(node: &Node, source_code: &str) -> Result<i32, EssenceParseError> {
             )
         }
     })
+}
+
+fn parse_set_operation(
+    node: &Node,
+    source_code: &str,
+    root: &Node,
+    symbols: Option<&SymbolTable>,
+) -> Result<Expression, EssenceParseError> {
+    // for now, assumeis binary since powerset isn't mplemented
+    // TODO: add powerset support
+
+
 }

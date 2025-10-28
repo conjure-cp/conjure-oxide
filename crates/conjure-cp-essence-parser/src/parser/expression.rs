@@ -88,7 +88,7 @@ fn parse_boolean_expression(
     match inner.kind() {
         "atom" => parse_atom(&inner, source_code, root, symbols),
         "not_expr" | "sub_bool_expr" => parse_unary_expression(&inner, source_code, root, symbols),
-        "and_expr" | "or_expr" | "implication" | "iff_expr" => {
+        "and_expr" | "or_expr" | "implication" | "iff_expr" | "set_operation_bool" => {
             parse_binary_expression(&inner, source_code, root, symbols)
         }
         "quantifier_expr_bool" => parse_quantifier_expression(&inner, source_code, root, symbols),
@@ -246,6 +246,31 @@ fn parse_binary_expression(
             Moo::new(right),
         )),
         "<->" => Ok(Expression::Iff(
+            Metadata::new(),
+            Moo::new(left),
+            Moo::new(right),
+        )),
+        "in" => Ok(Expression::In(
+            Metadata::new(),
+            Moo::new(left),
+            Moo::new(right),
+        )),
+        "subset" => Ok(Expression::Subset(
+            Metadata::new(),
+            Moo::new(left),
+            Moo::new(right),
+        )),
+        "subsetEq" => Ok(Expression::SubsetEq(
+            Metadata::new(),
+            Moo::new(left),
+            Moo::new(right),
+        )),
+        "supset" => Ok(Expression::Supset(
+            Metadata::new(),
+            Moo::new(left),
+            Moo::new(right),
+        )),
+        "supsetEq" => Ok(Expression::SupsetEq(
             Metadata::new(),
             Moo::new(left),
             Moo::new(right),

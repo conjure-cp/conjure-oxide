@@ -16,6 +16,7 @@ pub fn parse_domain(domain: Node, source_code: &str) -> Result<Domain, EssencePa
         "tuple_domain" => parse_tuple_domain(domain, source_code),
         "matrix_domain" => parse_matrix_domain(domain, source_code),
         "record_domain" => parse_record_domain(domain, source_code),
+        "set_domain" => parse_set_domain(domain, source_code),
         _ => panic!("{} is not a supported domain type", domain.kind()),
     }
 }
@@ -121,4 +122,38 @@ fn parse_record_domain(
         record_entries.push(RecordEntry { name, domain });
     }
     Ok(Domain::Record(record_entries))
+}
+
+fn parse_set_domain(
+    set_domain: Node,
+    source_code: &str,
+) -> Result<Domain, EssenceParseError> {
+    let set_attribute = None;
+    
+    for attribute_or_domain in named_children(&set_domain) {
+        if attribute_or_domain.kind() == "set_attribute" {
+            let attribute = attribute_or_domain.child_by_field_name("attribute").ok_or(
+                EssenceParseError::syntax_error(
+                    "Expected attribute for set attribute".to_string(),
+                    Some(attribute_or_domain.range()),
+                ),
+            )?;
+            let attribute_str = &source_code[attribute.start_byte()..attribute.end_byte()];
+            let attribute_value_node = attribute_or_domain.child_by_field_name("attribute_value").ok_or(
+                EssenceParseError::syntax_error(
+                    "Expected attribute_value for set attribute".to_string(),
+                    Some(attribute_or_domain.range()),
+                ),
+            )?;
+            let attribute_value = &source_code[attribute_value_node.start_byte()..attribute_value_node.end_byte()];
+            switch attribute_str {
+                "size" => set_attribute = SetAttr::Size(i32::from_str(attribute_value))?,
+                "minSize" => set_attribute = SetAttr::MinSize(i32::from_str(attribute_value))?,
+                "maxSize" => set_attribute = SetAttr::MaxSize(i32::from_str(attribute_value))?,
+            }
+        } else {
+            let domain = parse_domain(attribute_or_domain, source_code)?;
+            return Ok(Domain::Set(set_attribute, Box::new(domain)));
+        }
+    }
 }
