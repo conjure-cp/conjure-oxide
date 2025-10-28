@@ -204,7 +204,7 @@ module.exports = grammar ({
     quantifier_expr_bool: $ => prec(-10, seq(
       field("quantifier", choice("and", "or", "allDiff")),
       "(",
-      field("arg", choice($.comprehension, $.matrix, $.tuple_matrix_record_index_or_slice, $.identifier)),
+      field("arg", $.atom),
       ")"
     )),
 
@@ -277,7 +277,7 @@ module.exports = grammar ({
       "[",
       field("expression", choice($.arithmetic_expr, $.bool_expr, $.comparison_expr)),
       "|",
-      field("generato_or_condition", commaSep1(choice(
+      field("generator_or_condition", commaSep1(choice(
         $.generator,
         $.condition,
         $.letting_statement
@@ -373,9 +373,9 @@ module.exports = grammar ({
     additive_op: $ => choice("+", "-"),
 
     quantifier_expr_arith: $ => prec(-10, seq(
-      field("quantifier", choice("min", "max", "sum", "product")),
+      field("quantifier", choice("min", "max", "sum")),
       "(",
-      field("arg", choice($.comprehension, $.matrix, $.tuple_matrix_record_index_or_slice, $.identifier)),
+      field("arg", $.atom),
       ")"
     )),
 
