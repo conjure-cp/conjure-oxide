@@ -75,7 +75,7 @@ impl<'a> RuleSet<'a> {
     /// Get the dependencies of this rule set, evaluating them lazily if necessary
     /// Returns a `&HashSet<&RuleSet>` of the rule sets that this rule set depends on.
     #[allow(clippy::mutable_key_type)] // RuleSet is 'static so it's fine
-    pub fn get_dependencies(&self) -> &HashSet<&'static RuleSet> {
+    pub fn get_dependencies(&self) -> &HashSet<&'static RuleSet<'_>> {
         match self.dependencies.get() {
             None => {
                 let dependencies = self.resolve_dependencies();
@@ -92,7 +92,7 @@ impl<'a> RuleSet<'a> {
 
     /// Get the dependencies of this rule set, including itself
     #[allow(clippy::mutable_key_type)] // RuleSet is 'static so it's fine
-    pub fn with_dependencies(&self) -> HashSet<&'static RuleSet> {
+    pub fn with_dependencies(&self) -> HashSet<&'static RuleSet<'_>> {
         let mut deps = self.get_dependencies().clone();
         deps.insert(self);
         deps
@@ -124,7 +124,7 @@ impl<'a> RuleSet<'a> {
 
     /// Recursively resolve the dependencies of this rule set.
     #[allow(clippy::mutable_key_type)] // RuleSet is 'static so it's fine
-    fn resolve_dependencies(&self) -> HashSet<&'static RuleSet> {
+    fn resolve_dependencies(&self) -> HashSet<&'static RuleSet<'_>> {
         let mut dependencies = HashSet::new();
 
         for dep in self.dependency_rs_names {

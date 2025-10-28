@@ -5,20 +5,18 @@ on:
     branches:
       - main # run for pushes to the main branch. other branches need to create a PR if they want testing.
     paths:
-      - conjure_oxide/**
-      - solvers/**
       - crates/**
+      - tests-integration/**
       - Cargo.*
-      - conjure_oxide/tests/**
+      - rust-toolchain.toml
       - .github/workflows/test.yml
       - .github/workflows/code-coverage-deploy.yml
   pull_request:
     paths:
-      - conjure_oxide/**
-      - solvers/**
       - crates/**
+      - tests-integration/**
       - Cargo.*
-      - conjure_oxide/tests/**
+      - rust-toolchain.toml
       - .github/workflows/test.yml
       - .github/workflows/code-coverage-deploy.yml
   workflow_dispatch:
@@ -27,11 +25,16 @@ env:
   SCCACHE_GHA_ENABLED: "true"
   RUSTC_WRAPPER: "sccache"
   SCCACHE_GHA_VERSION: 5
+  CARGO_INCREMENTAL: "0"
+  # we define the following 3 values as the defaults here, matrix jobs may overwrite their values.
+  os: ubuntu-latest
+  rust_release: stable
+  compiler_profile: debug
 
 jobs:
   build-and-test:
     name: "Test"
-    timeout-minutes: 15
+    timeout-minutes: 120
     strategy:
       # run all combinations of the matrix even if one combination fails.
       fail-fast: false
@@ -57,6 +60,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          shared-key: ${{ matrix.os }}--${{ matrix.rust_release }}--${{ matrix.compiler_profile }}
+
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.9
 
@@ -65,7 +75,6 @@ jobs:
       - name: Set RUSTUP_TOOLCHAIN
         if: matrix.rust_release == 'nightly'
         run: echo "RUSTUP_TOOLCHAIN=nightly" >> $GITHUB_ENV
-
 
       - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
 
@@ -88,7 +97,7 @@ jobs:
 
   examples:
     name: "Examples"
-    timeout-minutes: 15
+    timeout-minutes: 120
     strategy:
       # run all combinations of the matrix even if one combination fails.
       fail-fast: false
@@ -104,6 +113,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          shared-key: ${{ matrix.os }}--${{ matrix.rust_release }}--${{ env.compiler_profile }}
+
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.9
 
@@ -129,10 +145,20 @@ jobs:
           - nightly
     steps:
       - uses: actions/checkout@v5
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          shared-key: ${{ env.os }}--${{ matrix.rust_release }}--${{ env.compiler_profile }}
+
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.9
+
       - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
+
       - run: cargo install cargo-audit
+
       - run: cargo audit
 
   shear:
@@ -141,6 +167,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
+
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.9
 
@@ -148,6 +180,4 @@ jobs:
         run: cargo +nightly install cargo-shear
 
       - name: Run cargo shear
-        run: cargo +nightly shear --expand
-
-
+        run: RUSTC_WRAPPER="" cargo +nightly shear --expand
