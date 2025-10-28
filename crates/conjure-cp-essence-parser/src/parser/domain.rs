@@ -168,15 +168,18 @@ fn parse_set_domain(set_domain: Node, source_code: &str) -> Result<Domain, Essen
                     return Err(EssenceParseError::syntax_error(
                         format!("Unknown set attribute: {}", attribute_str),
                         Some(attribute.range()),
-                    ))
+                    ));
                 }
             });
         } else {
             let domain = parse_domain(attribute_or_domain, source_code)?;
-            return Ok(Domain::Set(set_attribute.unwrap_or(SetAttr::None), Box::new(domain)));
+            return Ok(Domain::Set(
+                set_attribute.unwrap_or(SetAttr::None),
+                Box::new(domain),
+            ));
         }
     }
-    
+
     Err(EssenceParseError::syntax_error(
         "Set domain must have a value domain".to_string(),
         Some(set_domain.range()),

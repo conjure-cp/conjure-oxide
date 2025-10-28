@@ -1,4 +1,4 @@
-use crate::expression::{parse_expression, parse_binary_expression};
+use crate::expression::{parse_binary_expression, parse_expression};
 use crate::parser::abstract_literal::parse_abstract;
 use crate::util::named_children;
 use crate::{EssenceParseError, field, named_child};
@@ -162,4 +162,3 @@ fn parse_int(node: &Node, source_code: &str) -> Result<i32, EssenceParseError> {
         }
     })
 }
-
