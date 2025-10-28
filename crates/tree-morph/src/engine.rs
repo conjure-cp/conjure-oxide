@@ -299,12 +299,11 @@ impl<'events, T: Uniplate, M> EngineZipper<'events, T, M> {
 
     fn go_up(&mut self) -> Option<()> {
         // Call the exit event on the node which will be exited
-        // TODO: the clone here is very expensive since it's done constantly.
-        let node_clone = self.inner.focus().clone();
-        self.inner.go_up().inspect(|_| {
+        if self.inner.zipper().has_up() {
             self.event_handlers
-                .trigger_on_exit(&node_clone, &mut self.meta);
-        })
+                .trigger_on_exit(self.inner.focus(), &mut self.meta);
+        }
+        self.inner.go_up()
     }
 
     fn go_down(&mut self) -> Option<()> {
@@ -317,14 +316,14 @@ impl<'events, T: Uniplate, M> EngineZipper<'events, T, M> {
 
     fn go_right(&mut self) -> Option<()> {
         // Call relevant events on the previous and next nodes
-        // TODO: the clone here is very expensive since it's done constantly.
-        let node_clone = self.inner.focus().clone();
-        self.inner.go_right().inspect(|_| {
+        if self.inner.zipper().has_right() {
             self.event_handlers
-                .trigger_on_exit(&node_clone, &mut self.meta);
-            self.event_handlers
-                .trigger_on_enter(self.inner.focus(), &mut self.meta);
-        })
+                .trigger_on_exit(self.inner.focus(), &mut self.meta);
+        }
+        self.inner.go_right();
+        self.event_handlers
+            .trigger_on_enter(self.inner.focus(), &mut self.meta);
+        Some(())
     }
 
     /// Mark the current focus as visited at the given level.
