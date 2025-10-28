@@ -1,6 +1,7 @@
 use super::util::named_children;
 use crate::EssenceParseError;
-use conjure_cp_core::ast::{Domain, Name, Range, RecordEntry};
+use conjure_cp_core::ast::{Domain, Name, Range, RecordEntry, SetAttr};
+use std::str::FromStr;
 use tree_sitter::Node;
 
 /// Parse an Essence variable domain into its Conjure AST representation.
@@ -16,6 +17,7 @@ pub fn parse_domain(domain: Node, source_code: &str) -> Result<Domain, EssencePa
         "tuple_domain" => parse_tuple_domain(domain, source_code),
         "matrix_domain" => parse_matrix_domain(domain, source_code),
         "record_domain" => parse_record_domain(domain, source_code),
+        "set_domain" => parse_set_domain(domain, source_code),
         _ => panic!("{} is not a supported domain type", domain.kind()),
     }
 }
@@ -121,4 +123,65 @@ fn parse_record_domain(
         record_entries.push(RecordEntry { name, domain });
     }
     Ok(Domain::Record(record_entries))
+}
+
+fn parse_set_domain(set_domain: Node, source_code: &str) -> Result<Domain, EssenceParseError> {
+    let mut set_attribute: Option<SetAttr> = None;
+
+    for attribute_or_domain in named_children(&set_domain) {
+        if attribute_or_domain.kind() == "set_attribute" {
+            let attribute = attribute_or_domain.child_by_field_name("attribute").ok_or(
+                EssenceParseError::syntax_error(
+                    "Expected attribute for set attribute".to_string(),
+                    Some(attribute_or_domain.range()),
+                ),
+            )?;
+            let attribute_str = &source_code[attribute.start_byte()..attribute.end_byte()];
+            let attribute_value_node = attribute_or_domain
+                .child_by_field_name("attribute_value")
+                .ok_or(EssenceParseError::syntax_error(
+                "Expected attribute_value for set attribute".to_string(),
+                Some(attribute_or_domain.range()),
+            ))?;
+            let attribute_value =
+                &source_code[attribute_value_node.start_byte()..attribute_value_node.end_byte()];
+            set_attribute = Some(match attribute_str {
+                "size" => SetAttr::Size(i32::from_str(attribute_value).map_err(|_| {
+                    EssenceParseError::syntax_error(
+                        format!("Invalid integer value for size: {}", attribute_value),
+                        Some(attribute_value_node.range()),
+                    )
+                })?),
+                "minSize" => SetAttr::MinSize(i32::from_str(attribute_value).map_err(|_| {
+                    EssenceParseError::syntax_error(
+                        format!("Invalid integer value for minSize: {}", attribute_value),
+                        Some(attribute_value_node.range()),
+                    )
+                })?),
+                "maxSize" => SetAttr::MaxSize(i32::from_str(attribute_value).map_err(|_| {
+                    EssenceParseError::syntax_error(
+                        format!("Invalid integer value for maxSize: {}", attribute_value),
+                        Some(attribute_value_node.range()),
+                    )
+                })?),
+                _ => {
+                    return Err(EssenceParseError::syntax_error(
+                        format!("Unknown set attribute: {}", attribute_str),
+                        Some(attribute.range()),
+                    ));
+                }
+            });
+        } else {
+            let domain = parse_domain(attribute_or_domain, source_code)?;
+            return Ok(Domain::Set(
+                set_attribute.unwrap_or(SetAttr::None),
+                Box::new(domain),
+            ));
+        }
+    }
+
+    Err(EssenceParseError::syntax_error(
+        "Set domain must have a value domain".to_string(),
+        Some(set_domain.range()),
+    ))
 }
