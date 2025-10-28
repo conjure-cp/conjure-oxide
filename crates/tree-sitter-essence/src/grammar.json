@@ -1405,6 +1405,14 @@
               "type": "SYMBOL",
               "name": "set_operation_bool"
             }
+          },
+          {
+            "type": "FIELD",
+            "name": "quantifier_expression",
+            "content": {
+              "type": "SYMBOL",
+              "name": "quantifier_expr"
+            }
           }
         ]
       }
@@ -1775,6 +1783,100 @@
           {
             "type": "STRING",
             "value": ")"
+          }
+        ]
+      }
+    },
+    "quantifier_expr": {
+      "type": "PREC",
+      "value": -5,
+      "content": {
+        "type": "SEQ",
+        "members": [
+          {
+            "type": "FIELD",
+            "name": "quantifier",
+            "content": {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "STRING",
+                  "value": "forAll"
+                },
+                {
+                  "type": "STRING",
+                  "value": "exists"
+                }
+              ]
+            }
+          },
+          {
+            "type": "FIELD",
+            "name": "variable",
+            "content": {
+              "type": "SYMBOL",
+              "name": "identifier"
+            }
+          },
+          {
+            "type": "CHOICE",
+            "members": [
+              {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": "in"
+                  },
+                  {
+                    "type": "FIELD",
+                    "name": "set",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "arithmetic_expr"
+                    }
+                  }
+                ]
+              },
+              {
+                "type": "SEQ",
+                "members": [
+                  {
+                    "type": "STRING",
+                    "value": ":"
+                  },
+                  {
+                    "type": "FIELD",
+                    "name": "domain",
+                    "content": {
+                      "type": "SYMBOL",
+                      "name": "domain"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "STRING",
+            "value": "."
+          },
+          {
+            "type": "FIELD",
+            "name": "expression",
+            "content": {
+              "type": "CHOICE",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "bool_expr"
+                },
+                {
+                  "type": "SYMBOL",
+                  "name": "comparison_expr"
+                }
+              ]
+            }
           }
         ]
       }

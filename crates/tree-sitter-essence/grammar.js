@@ -170,7 +170,8 @@ module.exports = grammar ({
       field("iff_expr", $.iff_expr),
       field("list_combining_expression_bool", $.list_combining_expr_bool),
       field("sub_bool_expression", $.sub_bool_expr),
-      field("set_operation_bool", $.set_operation_bool)
+      field("set_operation_bool", $.set_operation_bool),
+      field("quantifier_expression", $.quantifier_expr),
     )),
 
     not_expr: $ => prec(20, seq("!", field("expression", choice($.bool_expr, $.comparison_expr, $.atom)))),
@@ -206,6 +207,17 @@ module.exports = grammar ({
       "(",
       field("arg", choice($.matrix, $.tuple_matrix_record_index_or_slice, $.identifier)),
       ")"
+    )),
+
+    quantifier_expr: $ => prec(-5, seq(
+      field("quantifier", choice("forAll", "exists")),
+      field("variable", $.identifier),
+      choice(
+        seq("in", field("set", $.arithmetic_expr)),
+        seq(":", field("domain", $.domain))
+      ),
+      ".",
+      field("expression", choice($.bool_expr, $.comparison_expr))
     )),
 
     from_solution: $ => seq(
