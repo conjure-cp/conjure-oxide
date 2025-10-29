@@ -69,22 +69,6 @@ pub struct DocumentSymbol {
 // getting the actual diagnostic
 pub fn get_diagnostics(source: &str) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
-    if let Some((tree, _src)) = get_tree(source) {
-        let root = tree.root_node();
-        if root.has_error() {
-            // if the root node is an error node
-            // that just uses tree-sitter's built-in error detection
-            // error detection te be improved later
-            diagnostics.push(Diagnostic {
-                range: Range {
-                    start: Position {line: 0, character: 0},
-                    end: Position {line: 0, character: 1},
-                },
-                severity: severity::Error,
-                message: "Syntax error in file".to_string(),
-                source: "essence-lsp-api",
-            });
-        }
 
         // semantic error detection from error-detection/semantic-errors.rs
         diagnostics.extend(detect_semantic_errors(source)); // not implemented yet
