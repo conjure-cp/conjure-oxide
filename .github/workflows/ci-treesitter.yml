@@ -13,6 +13,11 @@ env:
   SCCACHE_GHA_ENABLED: "true"
   RUSTC_WRAPPER: "sccache"
   SCCACHE_GHA_VERSION: 5
+  CARGO_INCREMENTAL: "0"
+  # we define the following 3 values as the defaults here, matrix jobs may overwrite their values.
+  # os: ubuntu-latest # commented out here as it is always defined in matrix jobs
+  rust_release: stable
+  compiler_profile: debug
 
 # see: https://github.com/tree-sitter/workflows
 jobs:
@@ -35,6 +40,12 @@ jobs:
         # the tree-sitter actions expect this!
       - name: Make tree-sitter-essence the root directory
         run: cp -r repo/crates/tree-sitter-essence/* .
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          shared-key: ${{ matrix.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
 
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.9
