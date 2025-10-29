@@ -80,7 +80,7 @@ pub fn get_diagnostics(source: &str) -> Vec<Diagnostic> {
                     start: Position {line: 0, character: 0},
                     end: Position {line: 0, character: 1},
                 },
-                1severity: severity::Error,
+                severity: severity::Error,
                 message: "Syntax error in file".to_string(),
                 source: "essence-lsp-api",
             });
