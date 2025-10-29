@@ -55,12 +55,8 @@ pub fn parse_comprehension(
                 let expr_node = field!(child, "expression");
                 let generator_symboltable = builder.generator_symboltable();
 
-                let guard_expr = parse_expression(
-                    expr_node,
-                    source_code,
-                    root,
-                    Some(&generator_symboltable),
-                )?;
+                let guard_expr =
+                    parse_expression(expr_node, source_code, root, Some(&generator_symboltable))?;
 
                 // Add the condition as a guard
                 builder = builder.guard(guard_expr);
