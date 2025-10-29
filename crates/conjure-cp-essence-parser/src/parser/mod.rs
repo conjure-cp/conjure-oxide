@@ -1,5 +1,6 @@
 mod abstract_literal;
 mod atom;
+mod comprehension;
 pub mod domain;
 pub mod expression;
 pub mod find;

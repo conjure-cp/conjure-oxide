@@ -280,7 +280,7 @@ module.exports = grammar ({
       field("generator_or_condition", commaSep1(choice(
         $.generator,
         $.condition,
-        $.letting_statement
+        // TODO: add letting statement support
       ))),
       "]"
     )),
