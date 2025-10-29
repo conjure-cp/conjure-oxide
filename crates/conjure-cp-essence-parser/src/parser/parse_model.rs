@@ -39,6 +39,7 @@ pub fn parse_essence_with_context(
     let mut model = Model::new(context);
     // let symbols = model.as_submodel().symbols().clone();
     let root_node = tree.root_node();
+    let symbols_ptr = model.as_submodel().symbols_ptr_unchecked().clone();
     for statement in named_children(&root_node) {
         match statement.kind() {
             "single_line_comment" => {}
@@ -53,29 +54,24 @@ pub fn parse_essence_with_context(
                 }
             }
             "bool_expr" | "atom" | "comparison_expr" => {
-                let current_symbols = model.as_submodel().symbols().clone();
-
                 model.as_submodel_mut().add_constraint(parse_expression(
                     statement,
                     &source_code,
                     &statement,
-                    Some(&current_symbols),
+                    Some(&symbols_ptr),
                 )?);
             }
             "language_label" => {}
             "letting_statement" => {
-                let current_symbols = model.as_submodel().symbols().clone();
                 let letting_vars =
-                    parse_letting_statement(statement, &source_code, Some(&current_symbols))?;
+                    parse_letting_statement(statement, &source_code, Some(&symbols_ptr))?;
                 model.as_submodel_mut().symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
                 let inner = statement
                     .child_by_field_name("expression")
                     .expect("Expected a sub-expression inside `dominanceRelation`");
-                let current_symbols = model.as_submodel().symbols().clone();
-                let expr =
-                    parse_expression(inner, &source_code, &statement, Some(&current_symbols))?;
+                let expr = parse_expression(inner, &source_code, &statement, Some(&symbols_ptr))?;
                 let dominance = Expression::DominanceRelation(Metadata::new(), Moo::new(expr));
                 if model.dominance.is_some() {
                     return Err(EssenceParseError::syntax_error(
