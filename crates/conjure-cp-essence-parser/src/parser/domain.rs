@@ -136,26 +136,26 @@ fn parse_set_domain(set_domain: Node, source_code: &str) -> Result<Domain, Essen
                 let min_value_node = child.child_by_field_name("min_value");
                 let max_value_node = child.child_by_field_name("max_value");
                 let size_value_node = child.child_by_field_name("size_value");
-                
+
                 if let (Some(min_node), Some(max_node)) = (min_value_node, max_value_node) {
                     // MinMax case
                     let min_str = &source_code[min_node.start_byte()..min_node.end_byte()];
                     let max_str = &source_code[max_node.start_byte()..max_node.end_byte()];
-                    
+
                     let min_val = i32::from_str(min_str).map_err(|_| {
                         EssenceParseError::syntax_error(
                             format!("Invalid integer value for minSize: {}", min_str),
                             Some(min_node.range()),
                         )
                     })?;
-                    
+
                     let max_val = i32::from_str(max_str).map_err(|_| {
                         EssenceParseError::syntax_error(
                             format!("Invalid integer value for maxSize: {}", max_str),
                             Some(max_node.range()),
                         )
                     })?;
-                    
+
                     set_attribute = Some(SetAttr::MinMaxSize(min_val, max_val));
                 } else if let Some(size_node) = size_value_node {
                     // Size case
