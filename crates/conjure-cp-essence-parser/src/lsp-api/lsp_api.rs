@@ -87,24 +87,10 @@ pub fn get_diagnostics(source: &str) -> Vec<Diagnostic> {
         }
 
         // semantic error detection from error-detection/semantic-errors.rs
-        let context = Arc::new(RwLock::new(Context::default()));
-        match parse_essence_with_context(source, context) {
-            Ok(_) => {},
-            Err(e) {
-                diagnostics.push(Diagnostic {
-                    range: Range {
-                        start: Position {line: 0, character: 0},
-                        end: Position {line: 0, character: 1},
-                    },
-                    severity: severity::Error,
-                    message: format!("Semantic error: {}", e),
-                    source: "essence-lsp-api",
-                });
-            }
-        }
+        diagnostics.extend(detect_semantic_errors(source)); // not implemented yet
 
         // syntactic error detection from error-detection/syntactic-errors.rs
-        // add more error detection below
+        diagnostics.extend(detect_syntactic_errors(source)); // not implemented yet
 
     }
     diagnostics
