@@ -1,0 +1,289 @@
+Model before rewriting:
+
+letting A be [[1,2,3;int(1..3)],[1,2,4;int(1..3)],[1,3,4;int(1..3)],[2,3,4;int(1..3)];int(1..4)]
+find score: int(1..100)
+
+such that
+
+(score = sum([given q8: int(1..4)
+
+such that
+
+sum([given q9: int(1..3)
+
+such that
+
+A[q8, q9]
+ | q9: int(1..3),])
+ | q8: int(1..4),]))
+
+--
+
+Model before rewriting:
+
+find q9: int(1..3)
+find __0: matrix indexed by [[int(1..3)]] of int(1..4)
+
+such that
+
+(0 != __0)
+
+--
+
+(0 != __0#matrix_to_atom), 
+   ~~> select_representation_matrix ([("Base", 8001)]) 
+(0 != __0#matrix_to_atom) 
+new variables:
+  find __0#matrix_to_atom_1: int(1..4)
+  find __0#matrix_to_atom_2: int(1..4)
+  find __0#matrix_to_atom_3: int(1..4)
+--
+
+(0 != __0#matrix_to_atom), 
+   ~~> matrix_ref_to_atom ([("Base", 2000)]) 
+(0 != [__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3;int(1..)]) 
+
+--
+
+Final model:
+
+find q9: int(1..3)
+find __0: matrix indexed by [[int(1..3)]] of int(1..4)
+find __0#matrix_to_atom_1: int(1..4)
+find __0#matrix_to_atom_2: int(1..4)
+find __0#matrix_to_atom_3: int(1..4)
+
+such that
+
+(0 != [__0#matrix_to_atom_1,__0#matrix_to_atom_2,__0#matrix_to_atom_3;int(1..)])
+
+Model before rewriting:
+
+find q9: int(1..3)
+find __0: matrix indexed by [[int(1..3)]] of int(1..4)
+find __0#matrix_to_atom_1: int(1..4)
+find __0#matrix_to_atom_2: int(1..4)
+find __0#matrix_to_atom_3: int(1..4)
+
+such that
+
+
+
+--
+
+, 
+   ~~> eval_root ([("Constant", 9001)]) 
+true 
+
+--
+
+Final model:
+
+find q9: int(1..3)
+find __0: matrix indexed by [[int(1..3)]] of int(1..4)
+find __0#matrix_to_atom_1: int(1..4)
+find __0#matrix_to_atom_2: int(1..4)
+find __0#matrix_to_atom_3: int(1..4)
+
+such that
+
+true
+
+Model before rewriting:
+
+given q9: int(1..3)
+
+such that
+
+A[q8, q9]
+
+--
+
+A[q8, q9], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{A[q8, q9] @ and([__inDomain(q8,int(1..4)),__inDomain(q9,int(1..3));int(1..)])} 
+
+--
+
+{A[q8, q9] @ and([__inDomain(q8,int(1..4)),__inDomain(q9,int(1..3));int(1..)])}, 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+A[q8, q9] 
+
+--
+
+A, 
+   ~~> substitute_value_lettings ([("Base", 5000)]) 
+[[1,2,3;int(1..3)],[1,2,4;int(1..3)],[1,3,4;int(1..3)],[2,3,4;int(1..3)];int(1..4)] 
+
+--
+
+[[1,2,3;int(1..3)],[1,2,4;int(1..3)],[1,3,4;int(1..3)],[2,3,4;int(1..3)];int(1..4)][q8, q9], 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+[[1,2,3;int(1..3)],[1,2,4;int(1..3)],[1,3,4;int(1..3)],[2,3,4;int(1..3)];int(1..)][q8, q9] 
+
+--
+
+[[1,2,3;int(1..3)],[1,2,4;int(1..3)],[1,3,4;int(1..3)],[2,3,4;int(1..3)];int(1..)][q8, q9], 
+   ~~> remove_dimension_from_matrix_indexing ([("Base", 2000)]) 
+[[1,2,3;int(1..3)][q9],[1,2,4;int(1..3)][q9],[1,3,4;int(1..3)][q9],[2,3,4;int(1..3)][q9];int(1..)][q8] 
+
+--
+
+[1,2,3;int(1..3)][q9], 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+[1,2,3;int(1..)][q9] 
+
+--
+
+[1,2,4;int(1..3)][q9], 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+[1,2,4;int(1..)][q9] 
+
+--
+
+[1,3,4;int(1..3)][q9], 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+[1,3,4;int(1..)][q9] 
+
+--
+
+[2,3,4;int(1..3)][q9], 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+[2,3,4;int(1..)][q9] 
+
+--
+
+Final model:
+
+given q9: int(1..3)
+
+such that
+
+[[1,2,3;int(1..)][q9],[1,2,4;int(1..)][q9],[1,3,4;int(1..)][q9],[2,3,4;int(1..)][q9];int(1..)][q8]
+
+[given q9: int(1..3)
+
+such that
+
+A[q8, q9]
+ | q9: int(1..3),__0: matrix indexed by [[int(1..3)]] of int(1..4),__0#matrix_to_atom_1: int(1..4),__0#matrix_to_atom_2: int(1..4),__0#matrix_to_atom_3: int(1..4),], 
+   ~~> expand_comprehension ([("Base", 2000)]) 
+[[[1,2,3;int(1..)][1],[1,2,4;int(1..)][1],[1,3,4;int(1..)][1],[2,3,4;int(1..)][1];int(1..)][q8],[[1,2,3;int(1..)][2],[1,2,4;int(1..)][2],[1,3,4;int(1..)][2],[2,3,4;int(1..)][2];int(1..)][q8],[[1,2,3;int(1..)][3],[1,2,4;int(1..)][3],[1,3,4;int(1..)][3],[2,3,4;int(1..)][3];int(1..)][q8];int(1..)] 
+
+--
+
+(score = sum([given q8: int(1..4)
+
+such that
+
+sum([[[1,2,3;int(1..)][1],[1,2,4;int(1..)][1],[1,3,4;int(1..)][1],[2,3,4;int(1..)][1];int(1..)][q8],[[1,2,3;int(1..)][2],[1,2,4;int(1..)][2],[1,3,4;int(1..)][2],[2,3,4;int(1..)][2];int(1..)][q8],[[1,2,3;int(1..)][3],[1,2,4;int(1..)][3],[1,3,4;int(1..)][3],[2,3,4;int(1..)][3];int(1..)][q8];int(1..)])
+ | q8: int(1..4),])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(score = sum([given q8: int(1..4)
+
+such that
+
+sum([[1,1,1,2;int(1..)][q8],[2,2,3,3;int(1..)][q8],[3,4,4,4;int(1..)][q8];int(1..)])
+ | q8: int(1..4),])) 
+
+--
+
+Model before rewriting:
+
+find q8: int(1..4)
+
+such that
+
+(0 != sum([[1,1,1,2;int(1..)][q8],[2,2,3,3;int(1..)][q8],[3,4,4,4;int(1..)][q8];int(1..)]))
+
+--
+
+(0 != sum([[1,1,1,2;int(1..)][q8],[2,2,3,3;int(1..)][q8],[3,4,4,4;int(1..)][q8];int(1..)])), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+(0 != __0) 
+new variables:
+  find __0: int(6..9)
+new constraints:
+  __0 =aux sum([[1,1,1,2;int(1..)][q8],[2,2,3,3;int(1..)][q8],[3,4,4,4;int(1..)][q8];int(1..)])
+--
+
+Final model:
+
+find q8: int(1..4)
+find __0: int(6..9)
+
+such that
+
+(0 != __0),
+__0 =aux sum([[1,1,1,2;int(1..)][q8],[2,2,3,3;int(1..)][q8],[3,4,4,4;int(1..)][q8];int(1..)])
+
+Model before rewriting:
+
+find q8: int(1..4)
+find __0: int(6..9)
+
+such that
+
+
+
+--
+
+, 
+   ~~> eval_root ([("Constant", 9001)]) 
+true 
+
+--
+
+Final model:
+
+find q8: int(1..4)
+find __0: int(6..9)
+
+such that
+
+true
+
+Model before rewriting:
+
+given q8: int(1..4)
+
+such that
+
+sum([[1,1,1,2;int(1..)][q8],[2,2,3,3;int(1..)][q8],[3,4,4,4;int(1..)][q8];int(1..)])
+
+--
+
+Final model:
+
+given q8: int(1..4)
+
+such that
+
+sum([[1,1,1,2;int(1..)][q8],[2,2,3,3;int(1..)][q8],[3,4,4,4;int(1..)][q8];int(1..)])
+
+[given q8: int(1..4)
+
+such that
+
+sum([[1,1,1,2;int(1..)][q8],[2,2,3,3;int(1..)][q8],[3,4,4,4;int(1..)][q8];int(1..)])
+ | q8: int(1..4),__0: int(6..9),], 
+   ~~> expand_comprehension ([("Base", 2000)]) 
+[sum([[1,1,1,2;int(1..)][1],[2,2,3,3;int(1..)][1],[3,4,4,4;int(1..)][1];int(1..)]),sum([[1,1,1,2;int(1..)][2],[2,2,3,3;int(1..)][2],[3,4,4,4;int(1..)][2];int(1..)]),sum([[1,1,1,2;int(1..)][3],[2,2,3,3;int(1..)][3],[3,4,4,4;int(1..)][3];int(1..)]),sum([[1,1,1,2;int(1..)][4],[2,2,3,3;int(1..)][4],[3,4,4,4;int(1..)][4];int(1..)]);int(1..)] 
+
+--
+
+(score = sum([sum([[1,1,1,2;int(1..)][1],[2,2,3,3;int(1..)][1],[3,4,4,4;int(1..)][1];int(1..)]),sum([[1,1,1,2;int(1..)][2],[2,2,3,3;int(1..)][2],[3,4,4,4;int(1..)][2];int(1..)]),sum([[1,1,1,2;int(1..)][3],[2,2,3,3;int(1..)][3],[3,4,4,4;int(1..)][3];int(1..)]),sum([[1,1,1,2;int(1..)][4],[2,2,3,3;int(1..)][4],[3,4,4,4;int(1..)][4];int(1..)]);int(1..)])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(score = 30) 
+
+--
+
+Final model:
+
+letting A be [[1,2,3;int(1..3)],[1,2,4;int(1..3)],[1,3,4;int(1..3)],[2,3,4;int(1..3)];int(1..4)]
+find score: int(1..100)
+
+such that
+
+(score = 30)
+

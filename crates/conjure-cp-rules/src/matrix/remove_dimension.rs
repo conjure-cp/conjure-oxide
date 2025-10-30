@@ -22,7 +22,7 @@ fn remove_dimension_from_matrix_indexing(expr: &Expr, _: &SymbolTable) -> Applic
     };
 
     // the indicies to use in the inner expressions.
-    let inner_indices= vec![indices.pop().unwrap()];
+    let inner_indices = vec![indices.pop().unwrap()];
 
     // the indicies to use in the replacement expression.
     let outer_indices = indices;
