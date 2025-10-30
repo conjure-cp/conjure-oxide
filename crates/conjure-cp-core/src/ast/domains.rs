@@ -544,7 +544,7 @@ impl Domain {
 
                 Ok(Domain::Set(SetAttr::None, Box::new(elem_domain)))
             }
-
+            Literal::TernaryBool(ternary_val) => todo!(),
             l @ Literal::AbstractLiteral(AbstractLiteral::Matrix(_, _)) => {
                 let mut first_index_domain = vec![];
                 // flatten index domains of n-d matrix into list
@@ -598,7 +598,6 @@ impl Domain {
 
                 Ok(Domain::Matrix(Box::new(element_domain), first_index_domain))
             }
-
             Literal::AbstractLiteral(AbstractLiteral::Tuple(first_elems)) => {
                 let n_fields = first_elems.len();
 
@@ -624,7 +623,6 @@ impl Domain {
 
                 Ok(Domain::Tuple(elem_domains))
             }
-
             Literal::AbstractLiteral(AbstractLiteral::Record(first_elems)) => {
                 let n_fields = first_elems.len();
                 let field_names = first_elems.iter().map(|x| x.name.clone()).collect_vec();

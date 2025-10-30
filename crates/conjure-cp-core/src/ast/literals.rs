@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use rustsat::types::TernaryVal;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
@@ -31,6 +32,7 @@ pub enum Literal {
     //abstract literal variant ends in Literal, but that's ok
     #[allow(clippy::enum_variant_names)]
     AbstractLiteral(AbstractLiteral<Literal>),
+    TernaryBool(TernaryVal),
 }
 
 impl HasDomain for Literal {
@@ -39,6 +41,7 @@ impl HasDomain for Literal {
             Literal::Int(i) => Domain::Int(vec![Range::Single(*i)]),
             Literal::Bool(_) => Domain::Bool,
             Literal::AbstractLiteral(abstract_literal) => abstract_literal.domain_of(),
+            Literal::TernaryBool(_) => Domain::TernaryVal,
         }
     }
 }
@@ -534,6 +537,7 @@ impl Display for Literal {
             Literal::Int(i) => write!(f, "{i}"),
             Literal::Bool(b) => write!(f, "{b}"),
             Literal::AbstractLiteral(l) => write!(f, "{l:?}"),
+            Literal::TernaryBool(_) => todo!(),
         }
     }
 }
