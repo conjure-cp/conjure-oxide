@@ -99,4 +99,11 @@ impl SolverAdaptor for Smt {
         let smt2 = self.solver_inst.to_smt2();
         writer.write(smt2.as_bytes()).map(|_| ())
     }
+
+    fn extra_rule_sets(&self) -> Option<Vec<String>> {
+        match self.int_theory {
+            IntTheory::Lia => Some(Vec::new()),
+            IntTheory::Bv => Some(vec!["SmtBvInts".into()]),
+        }
+    }
 }

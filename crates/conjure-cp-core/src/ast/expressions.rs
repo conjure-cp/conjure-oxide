@@ -489,6 +489,12 @@ pub enum Expression {
         #[serde_as(as = "DeclarationPtrAsId")] DeclarationPtr,
         Moo<Expression>,
     ),
+
+    #[compatible(SMT)]
+    PairwiseSum(Metadata, Moo<Expression>, Moo<Expression>),
+
+    #[compatible(SMT)]
+    PairwiseProduct(Metadata, Moo<Expression>, Moo<Expression>),
 }
 
 // for the given matrix literal, return a bounded domain from the min to max of applying op to each
@@ -784,6 +790,14 @@ impl Expression {
                 .ok(),
             Expression::MinionPow(_, _, _, _) => Some(Domain::Bool),
             Expression::ToInt(_, _) => Some(Domain::Int(vec![Range::Bounded(0, 1)])),
+            Expression::PairwiseSum(_, a, b) => a
+                .domain_of()?
+                .apply_i32(|a, b| Some(a + b), &b.domain_of()?)
+                .ok(),
+            Expression::PairwiseProduct(_, a, b) => a
+                .domain_of()?
+                .apply_i32(|a, b| Some(a * b), &b.domain_of()?)
+                .ok(),
         };
         match ret {
             // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
@@ -1305,6 +1319,9 @@ impl Display for Expression {
             Expression::ToInt(_, expr) => {
                 write!(f, "toInt({expr})")
             }
+
+            Expression::PairwiseSum(_, a, b) => write!(f, "PairwiseSum({a}, {b})"),
+            Expression::PairwiseProduct(_, a, b) => write!(f, "PairwiseProduct({a}, {b})"),
         }
     }
 }
@@ -1394,6 +1411,8 @@ impl Typeable for Expression {
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::MinionPow(_, _, _, _) => Some(ReturnType::Bool),
             Expression::ToInt(_, _) => Some(ReturnType::Int),
+            Expression::PairwiseSum(_, _, _) => Some(ReturnType::Int),
+            Expression::PairwiseProduct(_, _, _) => Some(ReturnType::Int),
         }
     }
 }
