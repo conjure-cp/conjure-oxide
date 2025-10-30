@@ -32,7 +32,7 @@ pub enum Literal {
     //abstract literal variant ends in Literal, but that's ok
     #[allow(clippy::enum_variant_names)]
     AbstractLiteral(AbstractLiteral<Literal>),
-    TernaryBool(TernaryVal),
+    Ternary(TernaryVal),
 }
 
 impl HasDomain for Literal {
@@ -41,7 +41,7 @@ impl HasDomain for Literal {
             Literal::Int(i) => Domain::Int(vec![Range::Single(*i)]),
             Literal::Bool(_) => Domain::Bool,
             Literal::AbstractLiteral(abstract_literal) => abstract_literal.domain_of(),
-            Literal::TernaryBool(_) => Domain::TernaryVal,
+            Literal::Ternary(_) => Domain::TernaryVal,
         }
     }
 }
@@ -537,7 +537,11 @@ impl Display for Literal {
             Literal::Int(i) => write!(f, "{i}"),
             Literal::Bool(b) => write!(f, "{b}"),
             Literal::AbstractLiteral(l) => write!(f, "{l:?}"),
-            Literal::TernaryBool(_) => todo!(),
+            Literal::Ternary(t) => match t {
+                TernaryVal::True => write!(f, "true"),
+                TernaryVal::False => write!(f, "false"),
+                TernaryVal::DontCare => write!(f, "dontcare"),
+            },
         }
     }
 }

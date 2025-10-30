@@ -544,7 +544,7 @@ impl Domain {
 
                 Ok(Domain::Set(SetAttr::None, Box::new(elem_domain)))
             }
-            Literal::TernaryBool(ternary_val) => todo!(),
+            Literal::Ternary(ternary_val) => todo!(),
             l @ Literal::AbstractLiteral(AbstractLiteral::Matrix(_, _)) => {
                 let mut first_index_domain = vec![];
                 // flatten index domains of n-d matrix into list
