@@ -21,11 +21,11 @@ fn remove_dimension_from_matrix_indexing(expr: &Expr, _: &SymbolTable) -> Applic
         return Err(RuleNotApplicable);
     };
 
-    // the indicies to use in the replacement expression.
-    let outer_indices = vec![indices.pop().unwrap()];
-
     // the indicies to use in the inner expressions.
-    let inner_indices = indices;
+    let inner_indices= vec![indices.pop().unwrap()];
+
+    // the indicies to use in the replacement expression.
+    let outer_indices = indices;
 
     let (mut es, index_domain) = Moo::unwrap_or_clone(subject)
         .unwrap_matrix_unchecked()
