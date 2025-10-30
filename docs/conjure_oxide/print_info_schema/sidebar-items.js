@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["run_print_info_schema_command"]};
