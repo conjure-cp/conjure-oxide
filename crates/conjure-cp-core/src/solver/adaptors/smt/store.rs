@@ -2,10 +2,8 @@ use std::collections::HashMap;
 
 use z3::{Solvable, SortKind, Symbol, ast::*};
 
-use crate::{
-    ast::{Literal, Name},
-    solver::SolverError,
-};
+use crate::ast::{Literal, Name};
+use crate::solver::SolverError;
 
 #[derive(Clone)]
 pub struct Store {
@@ -80,9 +78,21 @@ fn dynamic_to_literal(ast: Dynamic) -> Result<Literal, SolverError> {
             ast.as_int()
                 .unwrap()
                 .as_i64()
-                .ok_or(SolverError::Runtime("could not retrieve as i64".into()))?
+                .ok_or(SolverError::Runtime(format!(
+                    "could not cast to i64: {ast}"
+                )))?
                 .try_into()
-                .map_err(|err| SolverError::Runtime(format!("integer conversion failed: {err}")))?,
+                .map_err(|err| SolverError::Runtime(format!("value {ast} out of range: {err}")))?,
+        )),
+        SortKind::BV => Ok(Literal::Int(
+            ast.as_bv()
+                .unwrap()
+                .as_i64()
+                .ok_or(SolverError::Runtime(format!(
+                    "could not cast to i64: {ast}"
+                )))?
+                .try_into()
+                .map_err(|err| SolverError::Runtime(format!("value {ast} out of range: {err}")))?,
         )),
         _ => Err(SolverError::RuntimeNotImplemented(format!(
             "conversion from AST to literal not implemented: {ast}"

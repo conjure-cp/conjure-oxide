@@ -3,6 +3,11 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumIter, EnumString};
 
+#[derive(Debug, Default)]
+pub struct TheoryConfig {
+    pub ints: IntTheory,
+}
+
 #[derive(
     Debug,
     EnumString,

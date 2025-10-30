@@ -4,4 +4,4 @@ mod store;
 mod theories;
 
 pub use adaptor::Smt;
-pub use theories::IntTheory;
+pub use theories::*;
