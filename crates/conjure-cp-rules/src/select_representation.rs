@@ -129,7 +129,7 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
 
     // thing we are representing must be a variable
     {
-        decl.as_var().ok_or(RuleNotApplicable)?;
+        decl.ptr().as_var().ok_or(RuleNotApplicable)?;
     }
 
     if !needs_representation(&name, symbols) {
@@ -158,11 +158,14 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
     //
     //
     // see: issue #932
-    let mut decl = decl.clone().detach();
-    decl.replace_name(new_name);
+    let mut decl_ptr = decl.clone().into_ptr().detach();
+    decl_ptr.replace_name(new_name);
 
     Ok(Reduction::with_symbols(
-        Expr::Atomic(Metadata::new(), Atom::Reference(decl)),
+        Expr::Atomic(
+            Metadata::new(),
+            Atom::Reference(conjure_cp::ast::Reference::new(decl_ptr)),
+        ),
         symbols,
     ))
 }

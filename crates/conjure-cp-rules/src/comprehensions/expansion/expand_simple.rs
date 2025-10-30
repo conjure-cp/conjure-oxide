@@ -167,7 +167,7 @@ pub fn expand_simple(
                 && let id = decl.id()
                 && let Some(new_decl) = machine_name_translations.get(&id)
             {
-                Atom::Reference(new_decl.clone())
+                Atom::Reference(conjure_cp::ast::Reference::new(new_decl.clone()))
             } else {
                 atom
             }

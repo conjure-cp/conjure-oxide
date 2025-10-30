@@ -351,9 +351,12 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             parse_atomic_expr(Moo::unwrap_or_clone(b))?,
         )),
 
-        conjure_ast::Expression::FlatWatchedLiteral(_metadata, decl, k) => Ok(
-            minion_ast::Constraint::WLiteral(parse_name(decl.name().clone())?, parse_literal(k)?),
-        ),
+        conjure_ast::Expression::FlatWatchedLiteral(_metadata, reference, k) => {
+            Ok(minion_ast::Constraint::WLiteral(
+                parse_name(reference.ptr().name().clone())?,
+                parse_literal(k)?,
+            ))
+        }
         conjure_ast::Expression::MinionReify(_metadata, e, v) => Ok(minion_ast::Constraint::Reify(
             Box::new(parse_expr(Moo::unwrap_or_clone(e))?),
             parse_atom(v)?,
@@ -366,9 +369,9 @@ fn parse_expr(expr: conjure_ast::Expression) -> Result<minion_ast::Constraint, S
             ))
         }
 
-        conjure_ast::Expression::AuxDeclaration(_metadata, decl, expr) => {
+        conjure_ast::Expression::AuxDeclaration(_metadata, reference, expr) => {
             Ok(minion_ast::Constraint::Eq(
-                parse_name(decl.name().clone())?,
+                parse_name(reference.ptr().name().clone())?,
                 parse_atomic_expr(Moo::unwrap_or_clone(expr))?,
             ))
         }
@@ -445,7 +448,7 @@ fn parse_atom(atom: conjure_ast::Atom) -> Result<minion_ast::Var, SolverError> {
         conjure_ast::Atom::Literal(l) => {
             Ok(minion_ast::Var::ConstantAsVar(parse_literal_as_int(l)?))
         }
-        conjure_ast::Atom::Reference(declaration) => Ok(parse_name(declaration.name().clone()))?,
+        conjure_ast::Atom::Reference(reference) => Ok(parse_name(reference.name().clone()))?,
 
         x => Err(ModelFeatureNotSupported(format!(
             "expected a literal or a reference but got `{x}`"

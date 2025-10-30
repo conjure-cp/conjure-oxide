@@ -10,12 +10,6 @@ such that
 --
 
 (a = b), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(a = b) 
-
---
-
-(a = b), 
    ~~> eq_to_subset_eq ([("Base", 8800)]) 
 and([(a subsetEq b),(b subsetEq a);int(1..)]) 
 
@@ -30,17 +24,25 @@ and([(a subsetEq b),(b subsetEq a);int(1..)]),
 
 a, 
    ~~> substitute_value_lettings ([("Base", 5000)]) 
-Set([Int(1), Int(2), Int(3)]) 
+{1,2,3} 
+
+--
+
+({1,2,3} subsetEq b),
+(b subsetEq a), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(Set([Int(1), Int(2), Int(3)]) subsetEq b),
+(b subsetEq a) 
 
 --
 
 b, 
    ~~> substitute_value_lettings ([("Base", 5000)]) 
-Set([Int(1), Int(2), Int(3)]) 
+{1,2,3} 
 
 --
 
-(Set([Int(1), Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)])),
+(Set([Int(1), Int(2), Int(3)]) subsetEq {1,2,3}),
 (b subsetEq a), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 (b subsetEq a) 
@@ -49,17 +51,23 @@ Set([Int(1), Int(2), Int(3)])
 
 b, 
    ~~> substitute_value_lettings ([("Base", 5000)]) 
-Set([Int(1), Int(2), Int(3)]) 
+{1,2,3} 
+
+--
+
+({1,2,3} subsetEq a), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(Set([Int(1), Int(2), Int(3)]) subsetEq a) 
 
 --
 
 a, 
    ~~> substitute_value_lettings ([("Base", 5000)]) 
-Set([Int(1), Int(2), Int(3)]) 
+{1,2,3} 
 
 --
 
-(Set([Int(1), Int(2), Int(3)]) subsetEq Set([Int(1), Int(2), Int(3)])), 
+(Set([Int(1), Int(2), Int(3)]) subsetEq {1,2,3}), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 true 
 
@@ -67,8 +75,8 @@ true
 
 Final model:
 
-letting a be Set([Int(1), Int(2), Int(3)])
-letting b be Set([Int(1), Int(2), Int(3)])
+letting a be {1,2,3}
+letting b be {1,2,3}
 
 such that
 

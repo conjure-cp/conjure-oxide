@@ -14,7 +14,8 @@ use conjure_cp::ast::categories::Category;
 use conjure_cp::{
     ast::Metadata,
     ast::{
-        Atom, Domain, Expression as Expr, Literal as Lit, Range, ReturnType, SymbolTable, Typeable,
+        Atom, Domain, Expression as Expr, Literal as Lit, Range, Reference, ReturnType,
+        SymbolTable, Typeable,
     },
     into_matrix_expr, matrix_expr,
     rule_engine::{
@@ -53,8 +54,8 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
                 return Err(RuleNotApplicable);
             }
         }
-        Expr::AuxDeclaration(_m, decl, e) => {
-            val = Atom::Reference(decl);
+        Expr::AuxDeclaration(_m, reference, e) => {
+            val = Atom::Reference(reference);
             product = e;
         }
         _ => {
@@ -114,7 +115,7 @@ fn introduce_producteq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult 
         .ok_or(ApplicationError::DomainError)?;
 
         let aux_decl = symbols.gensym(&aux_domain);
-        let aux_var = Atom::Reference(aux_decl);
+        let aux_var = Atom::Reference(Reference::new(aux_decl));
 
         let new_top_expr = Expr::FlatProductEq(
             Metadata::new(),
@@ -292,8 +293,8 @@ fn introduce_weighted_sumleq_sumgeq(expr: &Expr, symtab: &SymbolTable) -> Applic
         Expr::Leq(_, a, b) => Ok(match_sum_total(a, b, EqualityKind::Leq)?),
         Expr::Geq(_, a, b) => Ok(match_sum_total(a, b, EqualityKind::Geq)?),
         Expr::Eq(_, a, b) => Ok(match_sum_total(a, b, EqualityKind::Eq)?),
-        Expr::AuxDeclaration(_, decl, a) => {
-            let total: Atom = Atom::Reference(decl);
+        Expr::AuxDeclaration(_, reference, a) => {
+            let total: Atom = Atom::Reference(reference);
             if let Expr::Sum(_, sum_terms) = Moo::unwrap_or_clone(a) {
                 let sum_terms = Moo::unwrap_or_clone(sum_terms)
                     .unwrap_list()
@@ -536,9 +537,9 @@ fn introduce_diveq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 return Err(RuleNotApplicable);
             }
         }
-        Expr::AuxDeclaration(m, decl, e) => {
+        Expr::AuxDeclaration(m, reference, e) => {
             meta = m;
-            val = Atom::Reference(decl);
+            val = Atom::Reference(reference);
             div = e;
         }
         _ => {
@@ -587,9 +588,9 @@ fn introduce_modeq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 return Err(RuleNotApplicable);
             }
         }
-        Expr::AuxDeclaration(m, decl, e) => {
+        Expr::AuxDeclaration(m, reference, e) => {
             meta = m;
-            val = Atom::Reference(decl);
+            val = Atom::Reference(reference);
             div = e;
         }
         _ => {
@@ -631,8 +632,8 @@ fn introduce_abseq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             }
         }
 
-        Expr::AuxDeclaration(_, decl, expr) => {
-            let a = Atom::Reference(decl);
+        Expr::AuxDeclaration(_, reference, expr) => {
+            let a = Atom::Reference(reference);
             let expr = Moo::unwrap_or_clone(expr);
             Ok((a, expr))
         }
@@ -664,9 +665,9 @@ fn introduce_poweq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
             _ => Err(RuleNotApplicable),
         },
 
-        Expr::AuxDeclaration(_, total_decl, e) => match Moo::unwrap_or_clone(e) {
+        Expr::AuxDeclaration(_, total_reference, e) => match Moo::unwrap_or_clone(e) {
             Expr::SafePow(_, a, b) => {
-                let total_ref_atom = Atom::Reference(total_decl);
+                let total_ref_atom = Atom::Reference(total_reference);
                 Ok((a, b, total_ref_atom))
             }
             _ => Err(RuleNotApplicable),
@@ -756,11 +757,11 @@ fn introduce_minuseq_from_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult 
 fn introduce_minuseq_from_aux_decl(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     // a =aux -b
     //
-    let Expr::AuxDeclaration(_, decl, b) = expr else {
+    let Expr::AuxDeclaration(_, reference, b) = expr else {
         return Err(RuleNotApplicable);
     };
 
-    let a = Atom::Reference(decl.clone());
+    let a = Atom::Reference(reference.clone());
 
     let Expr::Neg(_, b) = (**b).clone() else {
         return Err(RuleNotApplicable);
@@ -871,8 +872,10 @@ fn introduce_element_from_index(expr: &Expr, _: &SymbolTable) -> ApplicationResu
             }
             _ => Err(RuleNotApplicable),
         },
-        Expr::AuxDeclaration(_, decl, expr) => match Moo::unwrap_or_clone(expr) {
-            Expr::SafeIndex(_, subject, indices) => Ok((Atom::Reference(decl), subject, indices)),
+        Expr::AuxDeclaration(_, reference, expr) => match Moo::unwrap_or_clone(expr) {
+            Expr::SafeIndex(_, subject, indices) => {
+                Ok((Atom::Reference(reference), subject, indices))
+            }
             _ => Err(RuleNotApplicable),
         },
         _ => Err(RuleNotApplicable),
@@ -1167,11 +1170,11 @@ fn flatten_matrix_literal(expr: &Expr, symtab: &SymbolTable) -> ApplicationResul
 
                 top_level_exprs.push(Expr::AuxDeclaration(
                     Metadata::new(),
-                    decl.clone(),
+                    Reference::new(decl.clone()),
                     Moo::new(e.clone()),
                 ));
 
-                *e = Expr::Atomic(Metadata::new(), Atom::Reference(decl));
+                *e = Expr::Atomic(Metadata::new(), Atom::Reference(Reference::new(decl)));
 
                 has_changed = true;
             }
@@ -1342,12 +1345,15 @@ fn not_literal_to_wliteral(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     use Domain::Bool;
     match expr {
         Expr::Not(m, expr) => {
-            if let Expr::Atomic(_, Atom::Reference(decl)) = (**expr).clone()
-                && decl.domain().is_some_and(|x| matches!(&x as &Domain, Bool))
+            if let Expr::Atomic(_, Atom::Reference(reference)) = (**expr).clone()
+                && reference
+                    .ptr()
+                    .domain()
+                    .is_some_and(|x| matches!(&x as &Domain, Bool))
             {
                 return Ok(Reduction::pure(Expr::FlatWatchedLiteral(
                     m.clone_dirty(),
-                    decl,
+                    reference,
                     Lit::Bool(false),
                 )));
             }
@@ -1400,7 +1406,7 @@ fn not_constraint_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 #[register_rule(("Minion", 4400))]
 fn bool_eq_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (atom, e): (Atom, Moo<Expr>) = match expr {
-        Expr::AuxDeclaration(_, decl, e) => Ok((Atom::from(decl.clone()), e.clone())),
+        Expr::AuxDeclaration(_, reference, e) => Ok((Atom::from(reference.clone()), e.clone())),
         Expr::Eq(_, a, b) => match (a.as_ref(), b.as_ref()) {
             (Expr::Atomic(_, atom), _) => Ok((atom.clone(), b.clone())),
             (_, Expr::Atomic(_, atom)) => Ok((atom.clone(), a.clone())),

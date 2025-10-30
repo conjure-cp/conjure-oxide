@@ -1,5 +1,3 @@
-use crate::ast::declaration::serde::DeclarationPtrAsId;
-use serde_with::serde_as;
 use std::collections::{HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
 use tracing::trace;
@@ -27,7 +25,7 @@ use super::categories::{Category, CategoryOf};
 use super::comprehension::Comprehension;
 use super::domains::HasDomain as _;
 use super::records::RecordValue;
-use super::{DeclarationPtr, Domain, Range, SubModel, Typeable};
+use super::{DeclarationPtr, Domain, Range, Reference, SubModel, Typeable};
 
 // Ensure that this type doesn't get too big
 //
@@ -58,12 +56,12 @@ static_assertions::assert_eq_size!([u8; 104], Expression);
 /// The `Expression` enum includes operations, constants, and variable references
 /// used to build rules and conditions for the model.
 #[document_compatibility]
-#[serde_as]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Quine)]
 #[biplate(to=Metadata)]
 #[biplate(to=Atom)]
 #[biplate(to=DeclarationPtr)]
 #[biplate(to=Name)]
+#[biplate(to=Reference)]
 #[biplate(to=Vec<Expression>)]
 #[biplate(to=Option<Expression>)]
 #[biplate(to=SubModel)]
@@ -330,14 +328,9 @@ pub enum Expression {
     ///
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#minuseq)
     /// + `rules::minion::boolean_literal_to_wliteral`.
-    // todo (gskorokhod): Skip because of DeclarationPtr
     #[compatible(Minion)]
     #[polyquine_skip]
-    FlatWatchedLiteral(
-        Metadata,
-        #[serde_as(as = "DeclarationPtrAsId")] DeclarationPtr,
-        Literal,
-    ),
+    FlatWatchedLiteral(Metadata, Reference, Literal),
 
     /// `weightedsumleq(cs,xs,total)` ensures that cs.xs <= total, where cs.xs is the scalar dot
     /// product of cs and xs.
@@ -481,14 +474,9 @@ pub enum Expression {
     /// Declaration of an auxiliary variable.
     ///
     /// As with Savile Row, we semantically distinguish this from `Eq`.
-    // todo (gskorokhod): Skip because of DeclarationPtr
     #[compatible(Minion)]
     #[polyquine_skip]
-    AuxDeclaration(
-        Metadata,
-        #[serde_as(as = "DeclarationPtrAsId")] DeclarationPtr,
-        Moo<Expression>,
-    ),
+    AuxDeclaration(Metadata, Reference, Moo<Expression>),
 }
 
 // for the given matrix literal, return a bounded domain from the min to max of applying op to each
@@ -636,7 +624,6 @@ impl Expression {
                 }
             }
             Expression::InDomain(_, _, _) => Some(Domain::Bool),
-            Expression::Atomic(_, Atom::Reference(ptr)) => ptr.domain(),
             Expression::Atomic(_, atom) => Some(atom.domain_of()),
             Expression::Scope(_, _) => Some(Domain::Bool),
             Expression::Sum(_, e) => {
@@ -1227,7 +1214,7 @@ impl Display for Expression {
                 )
             }
             Expression::FlatWatchedLiteral(_, x, l) => {
-                write!(f, "WatchedLiteral({x},{l})", x = &x.name() as &Name)
+                write!(f, "WatchedLiteral({x},{l})")
             }
             Expression::MinionReify(_, box1, box2) => {
                 write!(f, "Reify({}, {})", box1.clone(), box2.clone())
@@ -1243,8 +1230,8 @@ impl Display for Expression {
                 let values = values.iter().join(",");
                 write!(f, "__minion_w_inset({atom},{values})")
             }
-            Expression::AuxDeclaration(_, decl, e) => {
-                write!(f, "{} =aux {}", &decl.name() as &Name, e.clone())
+            Expression::AuxDeclaration(_, reference, e) => {
+                write!(f, "{} =aux {}", reference, e.clone())
             }
             Expression::UnsafeMod(_, a, b) => {
                 write!(f, "{} % {}", a.clone(), b.clone())

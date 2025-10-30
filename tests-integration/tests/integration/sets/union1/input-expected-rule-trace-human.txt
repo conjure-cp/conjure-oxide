@@ -11,12 +11,6 @@ such that
 --
 
 (c = (a union b)), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-(c = (a union b)) 
-
---
-
-(c = (a union b)), 
    ~~> eq_to_subset_eq ([("Base", 8800)]) 
 and([(c subsetEq (a union b)),((a union b) subsetEq c);int(1..)]) 
 
@@ -46,23 +40,43 @@ and([(a subsetEq b),(a subsetEq c);int(1..)]),
 
 c, 
    ~~> substitute_value_lettings ([("Base", 5000)]) 
-Set([Int(1), Int(2), Int(3)]) 
+{1,2,3} 
+
+--
+
+({1,2,3} subsetEq (a union b)),
+(a subsetEq b),
+(a subsetEq c), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(Set([Int(1), Int(2), Int(3)]) subsetEq (a union b)),
+(a subsetEq b),
+(a subsetEq c) 
 
 --
 
 a, 
    ~~> substitute_value_lettings ([("Base", 5000)]) 
-Set([Int(2), Int(3)]) 
+{2,3} 
+
+--
+
+(Set([Int(1), Int(2), Int(3)]) subsetEq ({2,3} union b)),
+(a subsetEq b),
+(a subsetEq c), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(Set([Int(1), Int(2), Int(3)]) subsetEq (Set([Int(2), Int(3)]) union b)),
+(a subsetEq b),
+(a subsetEq c) 
 
 --
 
 b, 
    ~~> substitute_value_lettings ([("Base", 5000)]) 
-Set([Int(1), Int(2)]) 
+{1,2} 
 
 --
 
-(Set([Int(1), Int(2), Int(3)]) subsetEq (Set([Int(2), Int(3)]) union Set([Int(1), Int(2)]))),
+(Set([Int(1), Int(2), Int(3)]) subsetEq (Set([Int(2), Int(3)]) union {1,2})),
 (a subsetEq b),
 (a subsetEq c), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
@@ -73,17 +87,25 @@ Set([Int(1), Int(2)])
 
 a, 
    ~~> substitute_value_lettings ([("Base", 5000)]) 
-Set([Int(2), Int(3)]) 
+{2,3} 
+
+--
+
+({2,3} subsetEq b),
+(a subsetEq c), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(Set([Int(2), Int(3)]) subsetEq b),
+(a subsetEq c) 
 
 --
 
 b, 
    ~~> substitute_value_lettings ([("Base", 5000)]) 
-Set([Int(1), Int(2)]) 
+{1,2} 
 
 --
 
-(Set([Int(2), Int(3)]) subsetEq Set([Int(1), Int(2)])),
+(Set([Int(2), Int(3)]) subsetEq {1,2}),
 (a subsetEq c), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 false 
@@ -92,9 +114,9 @@ false
 
 Final model:
 
-letting a be Set([Int(2), Int(3)])
-letting b be Set([Int(1), Int(2)])
-letting c be Set([Int(1), Int(2), Int(3)])
+letting a be {2,3}
+letting b be {1,2}
+letting c be {1,2,3}
 
 such that
 

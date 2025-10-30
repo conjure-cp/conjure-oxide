@@ -213,7 +213,7 @@ pub fn expand_ac(
                 && let id = decl.id()
                 && let Some(new_decl) = machine_name_translations.get(&id)
             {
-                Atom::Reference(new_decl.clone())
+                Atom::Reference(conjure_cp::ast::Reference::new(new_decl.clone()))
             } else {
                 atom
             }
@@ -296,7 +296,10 @@ fn add_return_expression_to_generator_model(
             // introduce dummy var and continue
             let dummy_domain = focus.domain_of().unwrap();
             let dummy_decl = symtab.gensym(&dummy_domain);
-            *focus = Expression::Atomic(Metadata::new(), Atom::Reference(dummy_decl));
+            *focus = Expression::Atomic(
+                Metadata::new(),
+                Atom::Reference(conjure_cp::ast::Reference::new(dummy_decl)),
+            );
 
             // go to next node
             while zipper.go_right().is_none() {
@@ -325,7 +328,10 @@ fn add_return_expression_to_generator_model(
                     // introduce dummy var and continue
                     let dummy_domain = focus.domain_of().unwrap();
                     let dummy_decl = symtab.gensym(&dummy_domain);
-                    *focus = Expression::Atomic(Metadata::new(), Atom::Reference(dummy_decl));
+                    *focus = Expression::Atomic(
+                        Metadata::new(),
+                        Atom::Reference(conjure_cp::ast::Reference::new(dummy_decl)),
+                    );
 
                     // go to next node
                     while zipper.go_right().is_none() {
@@ -353,7 +359,10 @@ fn add_return_expression_to_generator_model(
             // introduce dummy var and continue
             let dummy_domain = focus.domain_of().unwrap();
             let dummy_decl = symtab.gensym(&dummy_domain);
-            *focus = Expression::Atomic(Metadata::new(), Atom::Reference(dummy_decl));
+            *focus = Expression::Atomic(
+                Metadata::new(),
+                Atom::Reference(conjure_cp::ast::Reference::new(dummy_decl)),
+            );
 
             // go to next node
             while zipper.go_right().is_none() {
