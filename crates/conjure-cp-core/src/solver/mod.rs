@@ -120,6 +120,7 @@ use thiserror::Error;
 use crate::Model;
 use crate::ast::{Literal, Name};
 use crate::context::Context;
+use crate::solver::adaptors::smt::IntTheory;
 use crate::stats::SolverStats;
 
 use self::model_modifier::ModelModifier;
@@ -268,6 +269,13 @@ pub trait SolverAdaptor: private::Sealed + Any {
     /// + This function is ran after model loading but before solving - therefore, it is safe for
     ///   solving to mutate the model object.
     fn write_solver_input_file(&self, writer: &mut impl Write) -> Result<(), std::io::Error>;
+
+    /// Returns rule sets that may be enabled, depending on internal adaptor configuration.
+    ///
+    /// For example, SMT uses this to enable the SmtBvInts ruleset when using the bitvector theory.
+    fn extra_rule_sets(&self) -> Option<Vec<String>> {
+        None
+    }
 }
 
 /// An abstract representation of a constraints solver.

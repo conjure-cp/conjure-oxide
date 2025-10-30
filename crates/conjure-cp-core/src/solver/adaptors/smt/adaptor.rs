@@ -2,6 +2,7 @@ use z3::Solver;
 
 use super::convert_model::*;
 use super::store::*;
+use super::theories::*;
 
 use crate::{Model, solver::*};
 
@@ -14,6 +15,8 @@ pub struct Smt {
 
     /// Assertions are added to this solver instance when loading the model.
     solver_inst: Solver,
+
+    int_theory: IntTheory,
 }
 
 impl private::Sealed for Smt {}
@@ -24,6 +27,16 @@ impl Default for Smt {
             __non_constructable: private::Internal,
             store: Store::new(),
             solver_inst: Solver::new(),
+            int_theory: Default::default(),
+        }
+    }
+}
+
+impl Smt {
+    pub fn new(int_theory: IntTheory) -> Self {
+        Smt {
+            int_theory,
+            ..Default::default()
         }
     }
 }
