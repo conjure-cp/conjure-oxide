@@ -1,0 +1,48 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+
+such that
+
+Or([a, b]),
+Or([Not(c), And([b, d])]),
+b,
+Or([d, c])
+
+--
+
+Or([Not(c), And([b, d])]), 
+   ~~> distribute_or_over_and ([("Base", 8400)]) 
+And([Or([Not(c), b]), Or([Not(c), d])]) 
+
+--
+
+Not(c), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
+WatchedLiteral(c,false) 
+
+--
+
+Not(c), 
+   ~~> not_literal_to_wliteral ([("Minion", 4100)]) 
+WatchedLiteral(c,false) 
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find d: bool
+
+such that
+
+Or([a, b]),
+And([Or([WatchedLiteral(c,false), b]), Or([WatchedLiteral(c,false), d])]),
+b,
+Or([d, c])
+

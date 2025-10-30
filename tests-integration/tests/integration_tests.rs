@@ -1,5 +1,4 @@
 #![allow(clippy::expect_used)]
-use conjure_cp::ast::SymbolTable;
 use conjure_cp::bug;
 use conjure_cp::rule_engine::get_rules_grouped;
 
@@ -323,10 +322,8 @@ fn integration_test_inner(
                 .set_selector(select_panic)
                 .append_rule_groups(rules_grouped)
                 .build();
-            let (expr, symbol_table) = engine.morph(
-                submodel.root().clone(),
-                submodel.symbols().clone(),
-            );
+            let (expr, symbol_table) =
+                engine.morph(submodel.root().clone(), submodel.symbols().clone());
 
             *submodel.symbols_mut() = symbol_table;
             submodel.replace_root(expr);

@@ -1,0 +1,74 @@
+Model before rewriting:
+
+find a: int(-1..1)
+find b: int(-1..1)
+find x: int(1..3)
+find y: int(-1..1)
+find z: int(-1..1)
+
+such that
+
+(x = Sum([Sum([-(y), -((Sum([z, 1]) - a))]), b]))
+
+--
+
+Sum([Sum([-(y), -((Sum([z, 1]) - a))]), b]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([-(y), -((Sum([z, 1]) - a)), b]) 
+
+--
+
+(Sum([z, 1]) - a), 
+   ~~> minus_to_sum ([("Base", 8400)]) 
+Sum([Sum([z, 1]), -(a)]) 
+
+--
+
+Sum([Sum([z, 1]), -(a)]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([z, 1, -(a)]) 
+
+--
+
+-(Sum([z, 1, -(a)])), 
+   ~~> distribute_negation_over_sum ([("Base", 8400)]) 
+Sum([-(z), -(1), -(-(a))]) 
+
+--
+
+-(1), 
+   ~~> apply_eval_constant ([("Constant", 9001)]) 
+-1 
+
+--
+
+Sum([-(y), Sum([-(z), -1, -(-(a))]), b]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([-(y), -(z), -1, -(-(a)), b]) 
+
+--
+
+-(-(a)), 
+   ~~> elmininate_double_negation ([("Base", 8400)]) 
+a 
+
+--
+
+(x = Sum([-(y), -(z), -1, a, b])), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([FlatWeightedSumLeq([-1, -1, 1, 1, 1],[y, z, -1, a, b],x), FlatWeightedSumGeq([-1, -1, 1, 1, 1],[y, z, -1, a, b],x)]) 
+
+--
+
+Final model:
+
+find a: int(-1..1)
+find b: int(-1..1)
+find x: int(1..3)
+find y: int(-1..1)
+find z: int(-1..1)
+
+such that
+
+And([FlatWeightedSumLeq([-1, -1, 1, 1, 1],[y, z, -1, a, b],x), FlatWeightedSumGeq([-1, -1, 1, 1, 1],[y, z, -1, a, b],x)])
+

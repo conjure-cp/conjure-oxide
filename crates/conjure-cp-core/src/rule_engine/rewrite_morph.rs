@@ -1,13 +1,7 @@
 use itertools::Itertools;
-use tree_morph::{
-    helpers::select_panic,
-    prelude::*,
-};
+use tree_morph::{helpers::select_panic, prelude::*};
 
-use crate::{
-    Model,
-    bug,
-};
+use crate::{Model, bug};
 
 use super::{RuleSet, get_rules_grouped};
 
@@ -33,10 +27,7 @@ pub fn rewrite_morph<'a>(
         .set_selector(selector)
         .append_rule_groups(rules_grouped)
         .build();
-    let (expr, symbol_table) = engine.morph(
-        submodel.root().clone(),
-        submodel.symbols().clone(),
-    );
+    let (expr, symbol_table) = engine.morph(submodel.root().clone(), submodel.symbols().clone());
 
     *submodel.symbols_mut() = symbol_table;
     submodel.replace_root(expr);

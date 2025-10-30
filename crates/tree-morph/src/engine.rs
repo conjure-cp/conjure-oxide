@@ -5,6 +5,7 @@
 use crate::events::EventHandlers;
 use crate::helpers::{SelectorFn, one_or_select};
 use crate::prelude::Rule;
+use crate::rule::apply_into_update;
 
 use uniplate::{Uniplate, tagged_zipper::TaggedZipper};
 
@@ -64,12 +65,12 @@ where
     /// The engine will call the provided handlers for the "enter" and
     /// "exits" events as it enters and exits subtrees while traversing, respectively.
     ///
-    /// The "enter" event is triggered when the engine moves down into a subtree.
-    /// As a result, when a node is passed to rules, all nodes above it will have
+    /// The "enter" event is triggered first on the root, and then whenever the engine moves down
+    /// into a subtree. As a result, when a node is passed to rules, all nodes above it will have
     /// been passed to handlers for this event, in ascending order of their proximity to the root.
     ///
     /// The "exit" event is triggered when the engine leaves a subtree.
-    /// All nodes passed to "enter" event handlers will also be passed to "exit"
+    /// All nodes passed to "enter" event handlers (except the root) will also be passed to "exit"
     /// event handlers in reverse order.
     ///
     /// In effect, before a node is passed to rules, all nodes in the path from the root (including the
@@ -155,12 +156,16 @@ where
     /// assert_eq!(result, Expr::Val(4));
     /// assert_eq!(num_applications, 3); // Now the sub-expression (1 * 2) is evaluated first
     /// ```
-    pub fn morph(&self, tree: T, meta: M) -> (T, M)
+    pub fn morph(&self, tree: T, mut meta: M) -> (T, M)
     where
         T: Uniplate,
         R: Rule<T, M>,
     {
-        // Holds the other mutable reference to the metadata
+        // Starting on the root node counts as entering its subtree
+        // Otherwise the root could be some scope and would never be seen
+        self.event_handlers.trigger_on_enter(&tree, &mut meta);
+
+        // Owns the tree/meta and is consumed to get them back at the end
         let mut zipper = EngineZipper::new(tree, meta, &self.event_handlers);
 
         'main: loop {
@@ -175,7 +180,7 @@ where
                     // Choose one transformation from all applicable rules at this level
                     let selected = {
                         let applicable = &mut rules.iter().filter_map(|rule| {
-                            let update = rule.apply_into_update(subtree, &zipper.meta)?;
+                            let update = apply_into_update(rule, subtree, &zipper.meta)?;
                             Some((rule, update))
                         });
                         one_or_select(self.selector, subtree, applicable)
@@ -294,12 +299,11 @@ impl<'events, T: Uniplate, M> EngineZipper<'events, T, M> {
 
     fn go_up(&mut self) -> Option<()> {
         // Call the exit event on the node which will be exited
-        // TODO: the clone here is very expensive since it's done constantly.
-        let node_clone = self.inner.focus().clone();
-        self.inner.go_up().inspect(|_| {
+        if self.inner.zipper().has_up() {
             self.event_handlers
-                .trigger_on_exit(&node_clone, &mut self.meta);
-        })
+                .trigger_on_exit(self.inner.focus(), &mut self.meta);
+        }
+        self.inner.go_up()
     }
 
     fn go_down(&mut self) -> Option<()> {
@@ -312,14 +316,14 @@ impl<'events, T: Uniplate, M> EngineZipper<'events, T, M> {
 
     fn go_right(&mut self) -> Option<()> {
         // Call relevant events on the previous and next nodes
-        // TODO: the clone here is very expensive since it's done constantly.
-        let node_clone = self.inner.focus().clone();
-        self.inner.go_right().inspect(|_| {
+        if self.inner.zipper().has_right() {
             self.event_handlers
-                .trigger_on_exit(&node_clone, &mut self.meta);
-            self.event_handlers
-                .trigger_on_enter(self.inner.focus(), &mut self.meta);
-        })
+                .trigger_on_exit(self.inner.focus(), &mut self.meta);
+        }
+        self.inner.go_right();
+        self.event_handlers
+            .trigger_on_enter(self.inner.focus(), &mut self.meta);
+        Some(())
     }
 
     /// Mark the current focus as visited at the given level.

@@ -1,0 +1,38 @@
+Model before rewriting:
+
+find a: int(1)
+find b: int(1)
+find c: int(1)
+find d: int(1)
+find e: int(1)
+
+such that
+
+(Sum([a, Sum([b, Sum([c, d])]), e]) = 5)
+
+--
+
+Sum([a, Sum([b, Sum([c, d])]), e]), 
+   ~~> normalise_associative_commutative ([("Base", 8900)]) 
+Sum([a, b, c, d, e]) 
+
+--
+
+(Sum([a, b, c, d, e]) = 5), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+And([SumLeq([a, b, c, d, e], 5), SumGeq([a, b, c, d, e], 5)]) 
+
+--
+
+Final model:
+
+find a: int(1)
+find b: int(1)
+find c: int(1)
+find d: int(1)
+find e: int(1)
+
+such that
+
+And([SumLeq([a, b, c, d, e], 5), SumGeq([a, b, c, d, e], 5)])
+

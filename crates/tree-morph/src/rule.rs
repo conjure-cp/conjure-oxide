@@ -94,14 +94,6 @@ pub trait Rule<T: Uniplate, M> {
     ///
     /// See the [Rule] trait documentation for more information.
     fn apply(&self, commands: &mut Commands<T, M>, subtree: &T, meta: &M) -> Option<T>;
-
-    /// A helper method to get an [`Update`] directly from a rule.
-    #[doc(hidden)]
-    fn apply_into_update(&self, subtree: &T, meta: &M) -> Option<Update<T, M>> {
-        let mut commands = Commands::new();
-        let new_subtree = self.apply(&mut commands, subtree, meta)?;
-        Some(Update::new(new_subtree, commands))
-    }
 }
 
 // Allows the user to pass closures and function pointers directly as rules
@@ -113,6 +105,17 @@ where
     fn apply(&self, commands: &mut Commands<T, M>, subtree: &T, meta: &M) -> Option<T> {
         (self)(commands, subtree, meta)
     }
+}
+
+/// A helper method to get an [`Update`] directly from a rule.
+pub(crate) fn apply_into_update<T, M, R>(rule: &R, subtree: &T, meta: &M) -> Option<Update<T, M>>
+where
+    T: Uniplate,
+    R: Rule<T, M>,
+{
+    let mut commands = Commands::new();
+    let new_subtree = rule.apply(&mut commands, subtree, meta)?;
+    Some(Update::new(new_subtree, commands))
 }
 
 /// A uniform type for `fn` pointers and closures, which implements the [Rule] trait.

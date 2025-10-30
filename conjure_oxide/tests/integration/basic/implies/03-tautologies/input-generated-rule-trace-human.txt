@@ -1,0 +1,64 @@
+Model before rewriting:
+
+find a: bool
+find b: bool
+find c: bool
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+(x) -> (x),
+Or([(a) -> (z), (z) -> (a)]),
+Or([(b) -> (c), (b) -> (Not(c))])
+
+--
+
+(x) -> (x), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+true 
+
+--
+
+true,
+Or([(a) -> (z), (z) -> (a)]),
+Or([(b) -> (c), (b) -> (Not(c))]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Or([(a) -> (z), (z) -> (a)]),
+Or([(b) -> (c), (b) -> (Not(c))]) 
+
+--
+
+Or([(a) -> (z), (z) -> (a)]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+true 
+
+--
+
+true,
+Or([(b) -> (c), (b) -> (Not(c))]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+Or([(b) -> (c), (b) -> (Not(c))]) 
+
+--
+
+Or([(b) -> (c), (b) -> (Not(c))]), 
+   ~~> partial_evaluator ([("Base", 9000)]) 
+true 
+
+--
+
+Final model:
+
+find a: bool
+find b: bool
+find c: bool
+find x: bool
+find y: bool
+find z: bool
+
+such that
+
+true
+

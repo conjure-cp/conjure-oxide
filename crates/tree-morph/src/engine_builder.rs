@@ -68,11 +68,9 @@ where
 
     /// Register an event handler for the "enter" event.
     ///
-    /// This event is triggered when the engine moves down into a subtree.
-    /// As a result, when a node is passed to rules, all nodes above it will have
+    /// This event is triggered first on the root, and then whenever the engine moves down
+    /// into a subtree. As a result, when a node is passed to rules, all nodes above it will have
     /// been passed to handlers for this event, in ascending order of their proximity to the root.
-    ///
-    /// The root is not passed to the handlers, since the engine never leaves its subtree.
     pub fn add_on_enter(mut self, on_enter_fn: fn(&T, &mut M)) -> Self {
         self.event_handlers.add_on_enter(on_enter_fn);
         self
@@ -83,6 +81,8 @@ where
     /// This event is triggered when the engine leaves a subtree.
     /// All nodes passed to "enter" event handlers will also be passed to "exit"
     /// event handlers in reverse order.
+    ///
+    /// This event is never triggered on the root node, since the engine never leaves its subtree.
     pub fn add_on_exit(mut self, on_exit_fn: fn(&T, &mut M)) -> Self {
         self.event_handlers.add_on_exit(on_exit_fn);
         self
