@@ -206,5 +206,5 @@ pub fn solutions_to_json(solutions: &Vec<BTreeMap<Name, Literal>>) -> JsonValue 
         json_solutions.push(JsonValue::Object(json_solution));
     }
     let ans = JsonValue::Array(json_solutions);
-    sort_json_object(&ans, true)
+    sort_json_object(&ans, false)
 }
