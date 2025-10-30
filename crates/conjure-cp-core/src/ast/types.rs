@@ -9,7 +9,7 @@ pub enum ReturnType {
     Set(Box<ReturnType>),
     Tuple(Vec<ReturnType>),
     Record(Vec<ReturnType>),
-
+    TernaryVal,
     /// An unknown type
     ///
     /// This can be found inside the types of empty abstract literals.
