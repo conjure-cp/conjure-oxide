@@ -72,7 +72,7 @@ but are kept in their own repositories:
 ## Licence
 
 This project is being produced by staff and students of University of St
-Andrews, and is licenced under the [Mozilla Public Licence 2.0](./LICENCE).
+Andrews, and is licenced under the [Mozilla Public Licence 2.0](./LICENSE).
 
 <!-- vim: cc=80
 -->

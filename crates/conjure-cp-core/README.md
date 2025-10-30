@@ -4,7 +4,7 @@ Core datatypes for `conjure-oxide`.
 
 **This crate is internal, and should not be treated as a stable API. Relevant
 types are re-exported by
-[`conjure-cp`](https://github.com/conjure-cp/conjure-oxide/crates/conjure-cp).**
+[`conjure-cp`](https://github.com/conjure-cp/conjure-oxide/tree/main/crates/conjure-cp).**
 
 ### Usage
 
