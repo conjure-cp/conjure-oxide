@@ -6,6 +6,7 @@ use super::theories::*;
 
 use crate::{Model, solver::*};
 
+/// A [SolverAdaptor] for interacting with SMT solvers, specifically Z3.
 pub struct Smt {
     __non_constructable: private::Internal,
 
@@ -16,7 +17,7 @@ pub struct Smt {
     /// Assertions are added to this solver instance when loading the model.
     solver_inst: Solver,
 
-    int_theory: IntTheory,
+    theory_config: TheoryConfig,
 }
 
 impl private::Sealed for Smt {}
@@ -27,15 +28,16 @@ impl Default for Smt {
             __non_constructable: private::Internal,
             store: Store::new(),
             solver_inst: Solver::new(),
-            int_theory: Default::default(),
+            theory_config: Default::default(),
         }
     }
 }
 
 impl Smt {
+    /// Constructs a new adaptor using the given theories for representing the relevant constructs.
     pub fn new(int_theory: IntTheory) -> Self {
         Smt {
-            int_theory,
+            theory_config: TheoryConfig { ints: int_theory },
             ..Default::default()
         }
     }
@@ -78,6 +80,7 @@ impl SolverAdaptor for Smt {
         load_model_impl(
             &mut self.store,
             &mut self.solver_inst,
+            &self.theory_config,
             &submodel.symbols(),
             submodel.constraints().as_slice(),
         )?;
