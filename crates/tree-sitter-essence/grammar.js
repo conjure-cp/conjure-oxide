@@ -199,7 +199,7 @@ module.exports = grammar ({
       field("right", choice($.bool_expr, $.comparison_expr, $.atom))
     ))),
 
-    toInt_expr: $ => seq("toInt","(", field("expression", $.bool_expr), ")"),
+    toInt_expr: $ => seq("toInt","(", field("expression", choice($.bool_expr, $.comparison_expr)), ")"),
 
     quantifier_expr_bool: $ => prec(-10, seq(
       field("quantifier", choice("and", "or", "allDiff")),

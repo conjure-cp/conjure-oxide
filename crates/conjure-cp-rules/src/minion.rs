@@ -964,6 +964,7 @@ fn flatten_generic(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
             | Expr::Not(_, _)
             | Expr::SafeIndex(_, _, _)
             | Expr::InDomain(_, _, _)
+            | Expr::ToInt(_, _)
     ) {
         return Err(RuleNotApplicable);
     }
