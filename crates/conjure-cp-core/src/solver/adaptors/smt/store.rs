@@ -84,16 +84,22 @@ fn dynamic_to_literal(ast: Dynamic) -> Result<Literal, SolverError> {
                 .try_into()
                 .map_err(|err| SolverError::Runtime(format!("value {ast} out of range: {err}")))?,
         )),
-        SortKind::BV => Ok(Literal::Int(
-            ast.as_bv()
+        SortKind::BV => {
+            /// BVs do not sign-extend when returning u64s (if they are < 64 bits)
+            /// To correctly retrieve negative numbers, we cast to a u32 and then bit-wise interpret
+            /// it as an i32, rather than casting.
+            /// See https://github.com/prove-rs/z3.rs/issues/458
+            let unsigned: u32 = ast
+                .as_bv()
                 .unwrap()
-                .as_i64()
+                .as_u64()
                 .ok_or(SolverError::Runtime(format!(
-                    "could not cast to i64: {ast}"
+                    "could not retrieve u64: {ast}"
                 )))?
                 .try_into()
-                .map_err(|err| SolverError::Runtime(format!("value {ast} out of range: {err}")))?,
-        )),
+                .map_err(|err| SolverError::Runtime(format!("value {ast} out of range: {err}")))?;
+            Ok(Literal::Int(i32::from_ne_bytes(unsigned.to_ne_bytes())))
+        }
         _ => Err(SolverError::RuntimeNotImplemented(format!(
             "conversion from AST to literal not implemented: {ast}"
         ))),
