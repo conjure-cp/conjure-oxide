@@ -291,7 +291,9 @@ impl SolverAdaptor for Sat {
         // This will require handwriting a dimacs writer, but that should be easy. For now, just
         // let rustsat write the dimacs.
 
-        let model = self.model_inst.clone().expect("model should exist when we write the solver input file, as we should be in the LoadedModel state");
+        let model = self.model_inst.clone().unwrap_or_else(|| {
+            bug!("model should exist when we write the solver input file, as we should be in the LoadedModel state");
+        });
         let (cnf, var_manager): (Cnf, BasicVarManager) = model.into_cnf();
         cnf.write_dimacs(writer, var_manager.n_used())
     }
