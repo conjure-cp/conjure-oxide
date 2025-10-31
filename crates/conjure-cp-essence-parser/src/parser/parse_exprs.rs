@@ -3,6 +3,8 @@ use crate::errors::EssenceParseError;
 use crate::expression::parse_expression;
 use crate::util::node_is_expression;
 use conjure_cp_core::ast::{Expression, SymbolTable};
+use std::cell::RefCell;
+use std::rc::Rc;
 #[allow(unused)]
 use uniplate::Uniplate;
 
@@ -27,12 +29,13 @@ pub fn parse_exprs(
 
     let root = tree.root_node();
     let mut ans = Vec::new();
+    let symbols_ptr = Rc::new(RefCell::new(symbol_table.clone()));
     for expr in query_toplevel(&root, &node_is_expression) {
         ans.push(parse_expression(
             expr,
             &source_code,
             &root,
-            Some(symbol_table),
+            Some(&symbols_ptr),
         )?);
     }
     Ok(ans)
