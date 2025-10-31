@@ -1,4 +1,4 @@
-use crate::expression::parse_expression;
+use crate::expression::{parse_binary_expression, parse_expression};
 use crate::parser::abstract_literal::parse_abstract;
 use crate::util::named_children;
 use crate::{EssenceParseError, field, named_child};
@@ -36,11 +36,14 @@ pub fn parse_atom(
             let lit = parse_constant(node, source_code)?;
             Ok(Expression::Atomic(Metadata::new(), Atom::Literal(lit)))
         }
-        "matrix" | "record" | "tuple" => parse_abstract(node, source_code, symbols)
+        "matrix" | "record" | "tuple" | "set_literal" => parse_abstract(node, source_code, symbols)
             .map(|l| Expression::AbstractLiteral(Metadata::new(), l)),
         "tuple_matrix_record_index_or_slice" => {
             parse_index_or_slice(node, source_code, root, symbols)
         }
+        // for now, assume is binary since powerset isn't implemented
+        // TODO: add powerset support under "set_operation"
+        "set_operation" => parse_binary_expression(node, source_code, root, symbols),
         _ => Err(EssenceParseError::syntax_error(
             format!("Expected atom, got: {}", node.kind()),
             Some(node.range()),
@@ -107,7 +110,7 @@ fn parse_variable(
             Ok(Atom::Reference(decl))
         } else {
             Err(EssenceParseError::syntax_error(
-                format!("Undefined variable: '{raw_name}'"),
+                format!("Undefined variable: '{}'", raw_name),
                 Some(node.range()),
             ))
         }
@@ -134,7 +137,8 @@ fn parse_constant(node: &Node, source_code: &str) -> Result<Literal, EssencePars
         "FALSE" => Ok(Literal::Bool(false)),
         _ => Err(EssenceParseError::syntax_error(
             format!(
-                "'{raw_value}' (kind: '{}') is not a valid constant",
+                "'{}' (kind: '{}') is not a valid constant",
+                raw_value,
                 inner.kind()
             ),
             Some(inner.range()),
