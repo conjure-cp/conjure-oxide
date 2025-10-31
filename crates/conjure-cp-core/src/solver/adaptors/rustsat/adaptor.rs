@@ -97,13 +97,25 @@ impl SolverAdaptor for Sat {
     ) -> Result<SolveSuccess, SolverError> {
         let mut solver = &mut self.solver_inst;
 
-        let cnf: (Cnf, BasicVarManager) = self.model_inst.clone().unwrap().into_cnf();
+        let cnf: (Cnf, BasicVarManager) = self
+            .model_inst
+            .clone()
+            .ok_or_else(|| SolverError::Runtime("Model instance is missing".to_string()))?
+            .into_cnf();
 
         (*(solver)).add_cnf(cnf.0);
 
         let mut has_sol = false;
         loop {
-            let res = solver.solve().unwrap();
+            let res = match solver.solve() {
+                Ok(r) => r,
+                Err(e) => {
+                    return Err(SolverError::Runtime(format!(
+                        "Solver encountered an error during solving: {}",
+                        e
+                    )));
+                }
+            };
 
             match res {
                 SolverResult::Sat => {}
@@ -130,19 +142,34 @@ impl SolverAdaptor for Sat {
                 }
             };
 
-            let mut sol = solver.full_solution().unwrap();
+            let mut sol: Assignment = match solver.full_solution() {
+                Ok(s) => s,
+                Err(e) => {
+                    return Err(SolverError::Runtime(format!(
+                        "Solver encountered an error when retrieving solution: {}",
+                        e
+                    )));
+                }
+            };
 
-            // add DontCares into the solution
-            for (name, lit) in self.var_map.clone().unwrap() {
+            let var_map = self.var_map.clone().ok_or_else(|| {
+                SolverError::Runtime("Variable map is missing when retrieving solution".to_string())
+            })?;
+
+            let find_refs = self.decision_refs.clone().ok_or_else(|| {
+                SolverError::Runtime(
+                    "Decision references are missing when retrieving solution".to_string(),
+                )
+            })?;
+
+            let mut has_sol = false;
+            for (name, lit) in &var_map {
                 let inserter = sol.var_value(lit.var());
                 sol.assign_var(lit.var(), inserter);
             }
+
             has_sol = true;
-            let sol_old = get_ref_sols(
-                self.decision_refs.clone().unwrap(),
-                sol.clone(),
-                self.var_map.clone().unwrap(),
-            );
+            let sol_old = get_ref_sols(find_refs.clone(), sol.clone(), var_map.clone());
 
             tracing::info!("old solution {:#?}", sol_old);
 
@@ -175,7 +202,7 @@ impl SolverAdaptor for Sat {
             for lit_i in blocking_vec {
                 blocking_cl.add(lit_i);
             }
-            solver.add_clause(blocking_cl).unwrap();
+            solver.add_clause(blocking_cl);
         }
     }
 
@@ -195,7 +222,10 @@ impl SolverAdaptor for Sat {
         let mut var_map: HashMap<Name, Lit> = HashMap::new();
 
         for find_ref in decisions {
-            let domain = find_ref.1.domain().unwrap();
+            let domain = find_ref.1.domain().unwrap_or_else(|| {
+                // Not sure what should happen here, but I'm assuming you can't call a solver without a domain
+                bug!("All decision variables should have domains at this time");
+            });
 
             // only decision variables with boolean domains or representations using booleans are supported at this time
             if (domain != Bool
