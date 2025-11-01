@@ -95,15 +95,10 @@ pub fn handle_disjn(
 ) {
     let mut lits = Clause::new();
 
-    // literal => {
-    // let lit: Lit = handle_lit(literal, vars_added, inst_in_use);
-    // lits.add(lit);
-    
     for literal in disjn.iter() {
         let lit: Lit = handle_lit(literal, vars_added, inst_in_use);
         lits.add(lit);
     }
-
 
     inst_in_use.add_clause(lits);
 }
