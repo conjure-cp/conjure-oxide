@@ -120,6 +120,7 @@ use thiserror::Error;
 use crate::Model;
 use crate::ast::{Literal, Name};
 use crate::context::Context;
+use crate::solver::adaptors::smt::IntTheory;
 use crate::stats::SolverStats;
 
 use self::model_modifier::ModelModifier;
