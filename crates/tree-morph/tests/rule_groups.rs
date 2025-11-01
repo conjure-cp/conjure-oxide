@@ -15,10 +15,10 @@ enum Expr {
 
 /// [a] ~> a
 fn rule_unwrap_a(_: &mut Commands<Expr, ()>, expr: &Expr, _: &()) -> Option<Expr> {
-    if let Expr::Wrap(inner) = expr {
-        if let Expr::A = **inner {
-            return Some(Expr::A);
-        }
+    if let Expr::Wrap(inner) = expr
+        && let Expr::A = **inner
+    {
+        return Some(Expr::A);
     }
     None
 }
