@@ -7,6 +7,7 @@ use crate::helpers::{SelectorFn, one_or_select};
 use crate::prelude::Rule;
 use crate::rule::apply_into_update;
 
+use paste::paste;
 use uniplate::{Uniplate, tagged_zipper::TaggedZipper};
 
 /// An engine for exhaustively transforming trees with user-defined rules.
@@ -156,15 +157,11 @@ where
     /// assert_eq!(result, Expr::Val(4));
     /// assert_eq!(num_applications, 3); // Now the sub-expression (1 * 2) is evaluated first
     /// ```
-    pub fn morph(&self, tree: T, mut meta: M) -> (T, M)
+    pub fn morph(&self, tree: T, meta: M) -> (T, M)
     where
         T: Uniplate,
         R: Rule<T, M>,
     {
-        // Starting on the root node counts as entering its subtree
-        // Otherwise the root could be some scope and would never be seen
-        self.event_handlers.trigger_on_enter(&tree, &mut meta);
-
         // Owns the tree/meta and is consumed to get them back at the end
         let mut zipper = EngineZipper::new(tree, meta, &self.event_handlers);
 
@@ -244,6 +241,24 @@ impl EngineNodeState {
     }
 }
 
+macro_rules! movement_fns {
+    (
+        directions: [$($dir:ident),*]
+    ) => {
+        paste! {
+            $(fn [<go_ $dir>](&mut self) -> Option<()> {
+                self.inner.zipper().[<has_ $dir>]().then(|| {
+                    self.event_handlers
+                        .[<trigger_before_ $dir>](self.inner.focus(), &mut self.meta);
+                    self.inner.[<go_ $dir>]().expect("zipper movement failed despite check");
+                    self.event_handlers
+                        .[<trigger_after_ $dir>](self.inner.focus(), &mut self.meta);
+                })
+            })*
+        }
+    };
+}
+
 /// A Zipper with optimisations for tree transformation.
 struct EngineZipper<'events, T: Uniplate, M> {
     inner: TaggedZipper<T, EngineNodeState, fn(&T) -> EngineNodeState>,
@@ -297,35 +312,8 @@ impl<'events, T: Uniplate, M> EngineZipper<'events, T, M> {
             })
     }
 
-    fn go_up(&mut self) -> Option<()> {
-        // Call the exit event on the node which will be exited
-        // TODO: the clone here is very expensive since it's done constantly.
-        let node_clone = self.inner.focus().clone();
-        self.inner.go_up().inspect(|_| {
-            self.event_handlers
-                .trigger_on_exit(&node_clone, &mut self.meta);
-        })
-    }
-
-    fn go_down(&mut self) -> Option<()> {
-        self.inner.go_down().inspect(|_| {
-            // Call the enter event on the node which has been entered.
-            self.event_handlers
-                .trigger_on_enter(self.inner.focus(), &mut self.meta);
-        })
-    }
-
-    fn go_right(&mut self) -> Option<()> {
-        // Call relevant events on the previous and next nodes
-        // TODO: the clone here is very expensive since it's done constantly.
-        let node_clone = self.inner.focus().clone();
-        self.inner.go_right().inspect(|_| {
-            self.event_handlers
-                .trigger_on_exit(&node_clone, &mut self.meta);
-            self.event_handlers
-                .trigger_on_enter(self.inner.focus(), &mut self.meta);
-        })
-    }
+    // We never move left in the tree
+    movement_fns! { directions: [up, down, right] }
 
     /// Mark the current focus as visited at the given level.
     /// Calling `go_next_dirty` with the same level will no longer yield this node.

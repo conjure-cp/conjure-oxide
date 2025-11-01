@@ -4,6 +4,8 @@ use crate::engine::Engine;
 use crate::events::EventHandlers;
 use crate::helpers::{SelectorFn, select_first};
 use crate::prelude::Rule;
+
+use paste::paste;
 use uniplate::Uniplate;
 
 /// A builder type for constructing and configuring [`Engine`] instances.
@@ -18,6 +20,26 @@ where
     rule_groups: Vec<Vec<R>>,
 
     selector: SelectorFn<T, M, R>,
+}
+
+macro_rules! add_handler_fns {
+    (
+        directions: [$($dir:ident),*]
+    ) => {
+        paste! {$(
+            /// Register an event handler to be called before moving $dir in the tree.
+            pub fn [<add_before_ $dir>](mut self, handler: fn(&T, &mut M)) -> Self {
+                self.event_handlers.[<add_before_ $dir>](handler);
+                self
+            }
+
+            /// Register an event handler to be called after moving $dir one node in the tree.
+            pub fn [<add_after_ $dir>](mut self, handler: fn(&T, &mut M)) -> Self {
+                self.event_handlers.[<add_after_ $dir>](handler);
+                self
+            }
+        )*}
+    };
 }
 
 impl<T, M, R> EngineBuilder<T, M, R>
@@ -66,26 +88,8 @@ where
         self
     }
 
-    /// Register an event handler for the "enter" event.
-    ///
-    /// This event is triggered first on the root, and then whenever the engine moves down
-    /// into a subtree. As a result, when a node is passed to rules, all nodes above it will have
-    /// been passed to handlers for this event, in ascending order of their proximity to the root.
-    pub fn add_on_enter(mut self, on_enter_fn: fn(&T, &mut M)) -> Self {
-        self.event_handlers.add_on_enter(on_enter_fn);
-        self
-    }
-
-    /// Register an event handler for the "exit" event.
-    ///
-    /// This event is triggered when the engine leaves a subtree.
-    /// All nodes passed to "enter" event handlers will also be passed to "exit"
-    /// event handlers in reverse order.
-    ///
-    /// This event is never triggered on the root node, since the engine never leaves its subtree.
-    pub fn add_on_exit(mut self, on_exit_fn: fn(&T, &mut M)) -> Self {
-        self.event_handlers.add_on_exit(on_exit_fn);
-        self
+    add_handler_fns! {
+        directions: [up, down, right]
     }
 
     /// Sets the selector function to be used when multiple rules are applicable to the same node.
