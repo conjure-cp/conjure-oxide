@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use quote::quote;
 use rustsat::types::TernaryVal;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
@@ -16,7 +17,7 @@ use super::domains::HasDomain;
 use super::{Atom, Domain, Expression, Range, records::RecordValue};
 use super::{Moo, ReturnType, SetAttr, Typeable};
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash, Quine)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash)]
 #[uniplate(walk_into=[AbstractLiteral<Literal>])]
 #[biplate(to=Atom)]
 #[biplate(to=AbstractLiteral<Literal>)]
@@ -24,7 +25,6 @@ use super::{Moo, ReturnType, SetAttr, Typeable};
 #[biplate(to=RecordValue<Literal>)]
 #[biplate(to=RecordValue<Expression>)]
 #[biplate(to=Expression)]
-#[path_prefix(conjure_cp::ast)]
 /// A literal value, equivalent to constants in Conjure.
 pub enum Literal {
     Int(i32),
@@ -322,6 +322,42 @@ where
     }
 }
 
+// Helper enum for implementing Quine for TernaryVal
+#[derive(Clone, Debug, PartialEq, Eq, Quine)]
+#[path_prefix(conjure_cp::ast)]
+enum LiteralNoTernary {
+    Int(i32),
+    Bool(bool),
+    AbstractLiteral(AbstractLiteral<Literal>),
+}
+
+impl Quine for Literal {
+    fn ctor_tokens(&self) -> proc_macro2::TokenStream {
+        match self { 
+            Literal::Int(i) => {
+                LiteralNoTernary::Int(*i).ctor_tokens()
+            }
+            Literal::Bool(b) => {
+                LiteralNoTernary::Bool(*b).ctor_tokens()
+            }
+            Literal::AbstractLiteral(abs) => {
+                LiteralNoTernary::AbstractLiteral(abs.clone()).ctor_tokens()
+            }
+            Literal::Ternary(tv) => {
+                let inner_tokens = match tv {
+                    TernaryVal::True => quote! { rustsat::types::TernaryVal::True },
+                    TernaryVal::False => quote! { rustsat::types::TernaryVal::False },
+                    TernaryVal::DontCare => quote! { rustsat::types::TernaryVal::DontCare },
+                };
+
+                quote! {
+                    conjure_cp::ast::Literal::Ternary(#inner_tokens)
+                }
+            }
+        }
+    }
+}
+
 impl<U, To> Biplate<To> for AbstractLiteral<U>
 where
     To: Uniplate,
@@ -573,5 +609,62 @@ mod tests {
         });
 
         assert_eq!(actual_index_domains, expected_index_domains);
+    }
+}
+
+#[cfg(test)]
+mod quine_ternary_tests {
+    use super::*; // brings in Literal, TernaryVal, Quine
+    use polyquine::Quine;
+    use quote::quote;
+
+    // helper: normalise TokenStream formatting for comparison
+    fn norm(ts: proc_macro2::TokenStream) -> String {
+        ts.to_string()
+    }
+
+    #[test]
+    fn ternary_true_ctor_tokens() {
+        let lit = Literal::Ternary(rustsat::types::TernaryVal::True);
+
+        let got = lit.ctor_tokens();
+
+        let expected = quote! {
+            conjure_cp::ast::Literal::Ternary(
+                rustsat::types::TernaryVal::True
+            )
+        };
+
+        assert_eq!(norm(got), norm(expected));
+    }
+
+    #[test]
+    fn ternary_false_ctor_tokens() {
+        let lit = Literal::Ternary(rustsat::types::TernaryVal::False);
+
+        let got = lit.ctor_tokens();
+
+        let expected = quote! {
+            conjure_cp::ast::Literal::Ternary(
+                rustsat::types::TernaryVal::False
+            )
+        };
+
+        assert_eq!(norm(got), norm(expected));
+    }
+
+    #[test]
+    fn ternary_dc_ctor_tokens() {
+        let lit = Literal::Ternary(rustsat::types::TernaryVal::DontCare);
+
+        let got = lit.ctor_tokens();
+
+        let expected = quote! {
+            conjure_cp::ast::Literal::Ternary(
+                rustsat::types::TernaryVal::DontCare
+            )
+        };
+
+        assert_eq!(norm(got), norm(expected));
     }
 }
