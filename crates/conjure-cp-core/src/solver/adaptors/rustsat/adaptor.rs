@@ -78,9 +78,9 @@ fn get_ref_sols(
         solution.insert(
             name,
             match sol[lit.var()] {
-                TernaryVal::True => Literal::Int(1),
-                TernaryVal::False => Literal::Int(0),
-                TernaryVal::DontCare => Literal::Int(2),
+                TernaryVal::True => Literal::Ternary(TernaryVal::True),
+                TernaryVal::False => Literal::Ternary(TernaryVal::False),
+                TernaryVal::DontCare => Literal::Ternary(TernaryVal::DontCare),
             },
         );
     }

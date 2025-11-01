@@ -6,6 +6,7 @@ use num_traits::{
     Num,
     sign::{Signed, abs},
 };
+use rustsat::types::TernaryVal;
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeSet, fmt::Display};
 use thiserror::Error;
@@ -99,6 +100,7 @@ pub enum Domain {
     Tuple(Vec<Domain>),
 
     Record(Vec<RecordEntry>),
+    TernaryVal,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
@@ -237,6 +239,10 @@ impl Domain {
                     }
                     Ok(true)
                 }
+                _ => Ok(false),
+            },
+            Domain::TernaryVal => match lit {
+                Literal::Ternary(_) => Ok(true),
                 _ => Ok(false),
             },
         }
@@ -544,7 +550,7 @@ impl Domain {
 
                 Ok(Domain::Set(SetAttr::None, Box::new(elem_domain)))
             }
-
+            Literal::Ternary(_) => todo!(), // TODO
             l @ Literal::AbstractLiteral(AbstractLiteral::Matrix(_, _)) => {
                 let mut first_index_domain = vec![];
                 // flatten index domains of n-d matrix into list
@@ -598,7 +604,6 @@ impl Domain {
 
                 Ok(Domain::Matrix(Box::new(element_domain), first_index_domain))
             }
-
             Literal::AbstractLiteral(AbstractLiteral::Tuple(first_elems)) => {
                 let n_fields = first_elems.len();
 
@@ -624,7 +629,6 @@ impl Domain {
 
                 Ok(Domain::Tuple(elem_domains))
             }
-
             Literal::AbstractLiteral(AbstractLiteral::Record(first_elems)) => {
                 let n_fields = first_elems.len();
                 let field_names = first_elems.iter().map(|x| x.name.clone()).collect_vec();
@@ -685,6 +689,11 @@ impl Domain {
             Domain::Tuple(_) => todo!(), // TODO: Can this be done?
             Domain::Matrix(_, _) => todo!(),
             Domain::Record(_) => todo!(),
+            Domain::TernaryVal => Ok(vec![
+                Literal::Ternary(TernaryVal::True), 
+                Literal::Ternary(TernaryVal::False), 
+                Literal::Ternary(TernaryVal::DontCare)
+            ]),
         }
     }
 
@@ -757,6 +766,7 @@ impl Domain {
                 })?;
                 inner_sz.checked_pow(exp).ok_or(DomainOpError::TooLarge)
             }
+            Domain::TernaryVal => Ok(3),
         }
     }
 
@@ -1018,6 +1028,7 @@ impl Display for Domain {
                 )
             }
             Domain::Empty(return_type) => write!(f, "empty({return_type:?}"),
+            Domain::TernaryVal => write!(f, "ternary value"),
         }
     }
 }
@@ -1057,6 +1068,7 @@ impl Typeable for Domain {
                 }
                 Some(ReturnType::Record(item_types))
             }
+            Domain::TernaryVal => Some(ReturnType::TernaryVal),
         }
     }
 }
