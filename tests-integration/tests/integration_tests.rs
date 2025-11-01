@@ -668,7 +668,7 @@ fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
 pub fn create_scoped_subscriber(
     path: &str,
     test_name: &str,
-) -> (impl tracing::Subscriber + Send + Sync) {
+) -> impl tracing::Subscriber + Send + Sync {
     let target1_layer = create_file_layer_json(path, test_name);
     let target2_layer = create_file_layer_human(path, test_name);
     let layered = target1_layer.and_then(target2_layer);
@@ -695,7 +695,7 @@ fn create_file_layer_json(path: &str, test_name: &str) -> impl Layer<Registry> +
         }))
 }
 
-fn create_file_layer_human(path: &str, test_name: &str) -> (impl Layer<Registry> + Send + Sync) {
+fn create_file_layer_human(path: &str, test_name: &str) -> impl Layer<Registry> + Send + Sync {
     let file = File::create(format!("{path}/{test_name}-generated-rule-trace-human.txt"))
         .expect("Unable to create log file");
 

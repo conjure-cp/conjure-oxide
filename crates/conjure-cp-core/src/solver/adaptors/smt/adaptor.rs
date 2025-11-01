@@ -62,11 +62,11 @@ impl SolverAdaptor for Smt {
 
     fn load_model(&mut self, model: Model, _: private::Internal) -> Result<(), SolverError> {
         let submodel = model.as_submodel();
-        load_store(&mut self.store, &submodel.symbols())?;
-        load_assertions(
-            &self.store,
-            submodel.constraints().as_slice(),
+        load_model_impl(
+            &mut self.store,
             &mut self.solver_inst,
+            &submodel.symbols(),
+            submodel.constraints().as_slice(),
         )?;
         Ok(())
     }
