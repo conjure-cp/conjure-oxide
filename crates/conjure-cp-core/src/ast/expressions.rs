@@ -94,7 +94,7 @@ pub enum Expression {
     /// Defines dominance ("Solution A is preferred over Solution B")
     DominanceRelation(Metadata, Moo<Expression>),
     /// `fromSolution(name)` - Used in dominance relation definitions
-    FromSolution(Metadata, Moo<Expression>),
+    FromSolution(Metadata, Moo<Atom>),
 
     #[polyquine_with(arm = (_, name) => {
         let ident = proc_macro2::Ident::new(name.as_str(), proc_macro2::Span::call_site());
@@ -171,23 +171,23 @@ pub enum Expression {
     Max(Metadata, Moo<Expression>),
 
     /// `not(a)`
-    #[compatible(JsonInput, SAT)]
+    #[compatible(JsonInput, SAT, SMT)]
     Not(Metadata, Moo<Expression>),
 
     /// `or(<vec_expr>)`
-    #[compatible(JsonInput, SAT)]
+    #[compatible(JsonInput, SAT, SMT)]
     Or(Metadata, Moo<Expression>),
 
     /// `and(<vec_expr>)`
-    #[compatible(JsonInput, SAT)]
+    #[compatible(JsonInput, SAT, SMT)]
     And(Metadata, Moo<Expression>),
 
     /// Ensures that `a->b` (material implication).
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Imply(Metadata, Moo<Expression>, Moo<Expression>),
 
     /// `iff(a, b)` a <-> b
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Iff(Metadata, Moo<Expression>, Moo<Expression>),
 
     #[compatible(JsonInput)]
@@ -211,10 +211,10 @@ pub enum Expression {
     #[compatible(JsonInput)]
     SubsetEq(Metadata, Moo<Expression>, Moo<Expression>),
 
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Eq(Metadata, Moo<Expression>, Moo<Expression>),
 
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Neq(Metadata, Moo<Expression>, Moo<Expression>),
 
     #[compatible(JsonInput)]
@@ -489,6 +489,9 @@ pub enum Expression {
         #[serde_as(as = "DeclarationPtrAsId")] DeclarationPtr,
         Moo<Expression>,
     ),
+
+    // This expression is for encoding i32 ints as a vector of boolean expressions for cnf - using 2s complement
+    SATInt(Metadata, Moo<Expression>),
 }
 
 // for the given matrix literal, return a bounded domain from the min to max of applying op to each
@@ -604,7 +607,7 @@ impl Expression {
             Expression::SubsetEq(_, _, _) => Some(Domain::Bool),
             Expression::AbstractLiteral(_, abslit) => abslit.domain_of(),
             Expression::DominanceRelation(_, _) => Some(Domain::Bool),
-            Expression::FromSolution(_, expr) => expr.domain_of(),
+            Expression::FromSolution(_, expr) => Some(expr.domain_of()),
             Expression::Metavar(_, _) => None,
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
@@ -784,6 +787,15 @@ impl Expression {
                 .ok(),
             Expression::MinionPow(_, _, _, _) => Some(Domain::Bool),
             Expression::ToInt(_, _) => Some(Domain::Int(vec![Range::Bounded(0, 1)])),
+            Expression::SATInt(_, _) => {
+                Some(Domain::Int(vec![Range::Bounded(
+                    i8::MIN.into(),
+                    i8::MAX.into(),
+                )])) // BITS
+            } // A CnfInt can represent any i8 integer at the moment
+              // A CnfInt contains multiple boolean expressions and represents the integer
+              // formed when these booleans are treated as the bits in an integer encoding.
+              // So the 'domain of' should be an integer
         };
         match ret {
             // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
@@ -1305,6 +1317,10 @@ impl Display for Expression {
             Expression::ToInt(_, expr) => {
                 write!(f, "toInt({expr})")
             }
+
+            Expression::SATInt(_, e) => {
+                write!(f, "SATInt({e})")
+            }
         }
     }
 }
@@ -1394,6 +1410,7 @@ impl Typeable for Expression {
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::MinionPow(_, _, _, _) => Some(ReturnType::Bool),
             Expression::ToInt(_, _) => Some(ReturnType::Int),
+            Expression::SATInt(_, _) => Some(ReturnType::Int),
         }
     }
 }
