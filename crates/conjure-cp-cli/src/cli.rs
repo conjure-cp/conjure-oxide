@@ -26,6 +26,8 @@ pub enum Command {
     TestSolve(test_solve::Args),
     /// Generate a completion script for the shell provided
     Completion(CompletionArgs),
+    // Run the language server
+    ServerLSP,
 }
 
 /// Global command line arguments.

@@ -22,6 +22,8 @@ use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
 use tracing_subscriber::{EnvFilter, Layer, fmt};
 
+use language_server::server;
+
 pub fn main() {
     // exit with 2 instead of 1 on failure,like grep
     match run() {
@@ -140,6 +142,11 @@ fn run_completion_command(completion_args: cli::CompletionArgs) -> anyhow::Resul
     Ok(())
 }
 
+fn run_lsp_server() -> anyhow::Result<()> {
+    server::main();
+    Ok(())
+}
+
 /// Runs the selected subcommand
 fn run_subcommand(cli: Cli) -> anyhow::Result<()> {
     let global_args = cli.global_args;
@@ -148,6 +155,7 @@ fn run_subcommand(cli: Cli) -> anyhow::Result<()> {
         cli::Command::TestSolve(local_args) => run_test_solve_command(global_args, local_args),
         cli::Command::PrintJsonSchema => run_print_info_schema_command(),
         cli::Command::Completion(completion_args) => run_completion_command(completion_args),
+        cli::Command::ServerLSP => run_lsp_server(),
     }
 }
 
