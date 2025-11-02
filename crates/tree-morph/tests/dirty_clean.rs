@@ -1,10 +1,10 @@
 use std::sync::atomic::Ordering;
 
 use std::sync::atomic::AtomicUsize;
+use tracing_subscriber;
 use tree_morph::prelude::*;
 use tree_morph_macros::named_rule;
 use uniplate::Uniplate;
-use tracing_subscriber;
 
 static GLOBAL_RULE_CHECKS: AtomicUsize = AtomicUsize::new(0);
 
@@ -28,7 +28,7 @@ fn rule_eval_add(cmd: &mut Commands<Expr, Meta>, expr: &Expr, _: &Meta) -> Optio
             (Expr::Val(x), Expr::Val(y)) => {
                 cmd.mut_meta(Box::new(|m: &mut Meta| m.num_applications += 1));
                 Some(Expr::Val(x + y))
-            },
+            }
             _ => None,
         },
         _ => None,
@@ -46,7 +46,7 @@ fn rule_eval_mul(cmd: &mut Commands<Expr, Meta>, expr: &Expr, _: &Meta) -> Optio
             (Expr::Val(x), Expr::Val(y)) => {
                 cmd.mut_meta(Box::new(|m: &mut Meta| m.num_applications += 1));
                 Some(Expr::Val(x * y))
-            },
+            }
             _ => None,
         },
         _ => None,

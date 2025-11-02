@@ -1,49 +1,58 @@
-use std::fmt;
-
+use core::fmt;
+use paste::paste;
 use uniplate::Uniplate;
 
-pub(crate) struct EventHandlers<T: Uniplate, M> {
-    on_enter: Vec<fn(&T, &mut M)>,
-    on_exit: Vec<fn(&T, &mut M)>,
-}
+macro_rules! event_handlers {
+    (
+        directions: [$($dir:ident),*]
+    ) => {
 
-impl<T: Uniplate, M> EventHandlers<T, M> {
-    pub(crate) fn new() -> Self {
-        EventHandlers {
-            on_enter: vec![],
-            on_exit: vec![],
+        paste! {
+        pub(crate) struct EventHandlers<T, M> {
+            $(
+                [<before_ $dir>]: Vec<fn(&T, &mut M)>,
+                [<after_ $dir>]: Vec<fn(&T, &mut M)>,
+            )*
         }
-    }
 
-    pub(crate) fn trigger_on_enter(&self, node: &T, meta: &mut M) {
-        for f in self.on_enter.iter() {
-            f(node, meta)
+        impl<T: Uniplate, M> EventHandlers<T, M> {
+            pub(crate) fn new() -> Self {
+                Self {
+                    $(
+                        [<before_ $dir>]: vec![],
+                        [<after_ $dir>]: vec![],
+                    )*
+                }
+            }
+
+            $(
+                pub(crate) fn [<trigger_before_ $dir>](&self, node: &T, meta: &mut M) {
+                    for f in &self.[<before_ $dir>] {
+                        f(node, meta)
+                    }
+                }
+                pub(crate) fn [<trigger_after_ $dir>](&self, node: &T, meta: &mut M) {
+                    for f in &self.[<after_ $dir>] {
+                        f(node, meta)
+                    }
+                }
+                pub(crate) fn [<add_before_ $dir>](&mut self, handler: fn(&T, &mut M)) {
+                    self.[<before_ $dir>].push(handler);
+                }
+                pub(crate) fn [<add_after_ $dir>](&mut self, handler: fn(&T, &mut M)) {
+                    self.[<after_ $dir>].push(handler);
+                }
+            )*
         }
-    }
-
-    pub(crate) fn trigger_on_exit(&self, node: &T, meta: &mut M) {
-        for f in self.on_exit.iter() {
-            f(node, meta)
-        }
-    }
-
-    pub(crate) fn add_on_enter(&mut self, on_enter_fn: fn(&T, &mut M)) {
-        self.on_enter.push(on_enter_fn);
-    }
-
-    pub(crate) fn add_on_exit(&mut self, on_exit_fn: fn(&T, &mut M)) {
-        self.on_exit.push(on_exit_fn);
-    }
+    }};
 }
 
 impl<T: Uniplate, M> fmt::Debug for EventHandlers<T, M> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("EventHandlers")
-            .field(
-                "on_enter",
-                &format_args!("{} callbacks", self.on_enter.len()),
-            )
-            .field("on_exit", &format_args!("{} callbacks", self.on_exit.len()))
-            .finish()
+        f.debug_struct("EventHandlers TODO: Add Counters").finish()
     }
+}
+// We don't need event handlers for "left" since we never move left
+event_handlers! {
+    directions: [up, down, right]
 }

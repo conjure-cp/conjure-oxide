@@ -13,22 +13,21 @@ enum Shape {
 
 // O(/\) ~> /\
 fn circ_tri_to_tri(_: &mut Commands<Shape, ()>, expr: &Shape, _: &()) -> Option<Shape> {
-    if let Shape::Circle(inner) = expr {
-        if let Shape::Triangle = **inner {
-            return Some(Shape::Triangle);
-        }
+    if let Shape::Circle(inner) = expr
+        && let Shape::Triangle = **inner
+    {
+        return Some(Shape::Triangle);
     }
     None
 }
 
 // O(O(/\)) ~> []
 fn circ_circ_tri_to_sqr(_: &mut Commands<Shape, ()>, expr: &Shape, _: &()) -> Option<Shape> {
-    if let Shape::Circle(inner) = expr {
-        if let Shape::Circle(inner_inner) = inner.as_ref() {
-            if let Shape::Triangle = **inner_inner {
-                return Some(Shape::Square);
-            }
-        }
+    if let Shape::Circle(inner) = expr
+        && let Shape::Circle(inner_inner) = inner.as_ref()
+        && let Shape::Triangle = **inner_inner
+    {
+        return Some(Shape::Square);
     }
     None
 }

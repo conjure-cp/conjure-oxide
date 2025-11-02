@@ -7,6 +7,7 @@ use crate::helpers::{SelectorFn, one_or_select};
 use crate::prelude::Rule;
 use crate::rule::apply_into_update;
 
+use paste::paste;
 use std::fmt;
 use tracing::{Level, event, instrument};
 use uniplate::{Uniplate, tagged_zipper::TaggedZipper};
@@ -82,7 +83,7 @@ where
     ///
     /// # Selector Functions
     ///
-    /// If multiple rules (skip(self))in the same group are applicable to an expression, the user-defined
+    /// If multiple rules in the same group are applicable to an expression, the user-defined
     /// selector function is used to choose one. This function is given an iterator over pairs of
     /// rules and the engine-created [`Update`] values which contain their modifications to the tree.
     ///
@@ -190,15 +191,11 @@ where
     /// assert_eq!(num_applications, 3); // Now the sub-expression (1 * 2) is evaluated first
     /// ```
     #[instrument(skip(self, tree, meta))]
-    pub fn morph(&self, tree: T, mut meta: M) -> (T, M)
+    pub fn morph(&self, tree: T, meta: M) -> (T, M)
     where
         T: Uniplate,
         R: Rule<T, M>,
     {
-        // Starting on the root node counts as entering its subtree
-        // Otherwise the root could be some scope and would never be seen
-        self.event_handlers.trigger_on_enter(&tree, &mut meta);
-
         // Owns the tree/meta and is consumed to get them back at the end
         let mut zipper = EngineZipper::new(tree, meta, &self.event_handlers);
 
@@ -217,17 +214,17 @@ where
                         let applicable = &mut rules.iter().filter_map(|rule| {
                             let update =
                                 apply_into_update(rule, subtree, &zipper.meta).or_else(|| {
-                                    event!(Level::TRACE, "Rule Attempt: {}", rule.name());
+                                    event!(Level::TRACE, "Rule Attempt Fail: {}", rule.name());
                                     None
                                 })?;
-                            event!(Level::TRACE, "Rule Attempt Successful: {}", rule.name());
+                            event!(Level::TRACE, "Rule Attempt Success: {}", rule.name());
                             Some((rule, update))
                         });
                         one_or_select(self.selector, subtree, applicable)
                     };
 
                     if let Some(mut update) = selected {
-                        event!(Level::TRACE,"Rule Application");
+                        event!(Level::TRACE, "Rule Application");
                         // Replace the current subtree, invalidating subtree node states
                         zipper.inner.replace_focus(update.new_subtree);
 
@@ -283,6 +280,26 @@ impl EngineNodeState {
     fn new<T: Uniplate>(_: &T) -> Self {
         Self { dirty_from: 0 }
     }
+}
+
+macro_rules! movement_fns {
+    (
+        directions: [$($dir:ident),*]
+    ) => {
+        paste! {
+            $(#[instrument(skip(self))]
+            fn [<go_ $dir>](&mut self) -> Option<()> {
+                self.inner.zipper().[<has_ $dir>]().then(|| {
+                    self.event_handlers
+                        .[<trigger_before_ $dir>](self.inner.focus(), &mut self.meta);
+                    self.inner.[<go_ $dir>]().expect("zipper movement failed despite check");
+                    event!(Level::TRACE, concat!("go_", stringify!($dir)));
+                    self.event_handlers
+                        .[<trigger_after_ $dir>](self.inner.focus(), &mut self.meta);
+                })
+            })*
+        }
+    };
 }
 
 /// A Zipper with optimisations for tree transformation.
@@ -349,40 +366,8 @@ impl<'events, T: Uniplate, M: fmt::Debug> EngineZipper<'events, T, M> {
             })
     }
 
-    #[instrument(skip(self))]
-    fn go_up(&mut self) -> Option<()> {
-        // Call the exit event on the node which will be exited
-        if self.inner.zipper().has_up() {
-            self.event_handlers
-                .trigger_on_exit(self.inner.focus(), &mut self.meta);
-        }
-        event!(Level::TRACE, "Go Up");
-        self.inner.go_up()
-    }
-
-    #[instrument(skip(self))]
-    fn go_down(&mut self) -> Option<()> {
-        self.inner.go_down().inspect(|_| {
-            event!(Level::TRACE, "Go Down");
-            // Call the enter event on the node which has been entered.
-            self.event_handlers
-                .trigger_on_enter(self.inner.focus(), &mut self.meta);
-        })
-    }
-
-    #[instrument(skip(self))]
-    fn go_right(&mut self) -> Option<()> {
-        // Call relevant events on the previous and next nodes
-        if self.inner.zipper().has_right() {
-            self.event_handlers
-                .trigger_on_exit(self.inner.focus(), &mut self.meta);
-        }
-        self.inner.go_right().inspect(|_| {
-        self.event_handlers
-            .trigger_on_enter(self.inner.focus(), &mut self.meta);
-        event!(Level::TRACE, "Go Right");
-        })
-    }
+    // We never move left in the tree
+    movement_fns! { directions: [up, down, right] }
 
     /// Mark the current focus as visited at the given level.
     /// Calling `go_next_dirty` with the same level will no longer yield this node.
