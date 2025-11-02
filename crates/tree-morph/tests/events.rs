@@ -8,6 +8,7 @@ enum Expr {
     Neg(Box<Expr>),
 }
 
+#[derive(Debug)]
 struct Meta {
     on_enters: i32,
     on_exits: i32,

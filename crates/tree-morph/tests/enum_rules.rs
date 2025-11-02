@@ -45,6 +45,8 @@ impl Rule<Expr, Meta> for MyRule {
         }
     }
 }
+
+#[derive(Debug)]
 struct Meta {
     num_applications: u32,
 }

@@ -94,6 +94,11 @@ pub trait Rule<T: Uniplate, M> {
     ///
     /// See the [Rule] trait documentation for more information.
     fn apply(&self, commands: &mut Commands<T, M>, subtree: &T, meta: &M) -> Option<T>;
+
+    /// Return the name of the rule, will default to anonymous if not specified.
+    fn name(&self) -> &str {
+        "Anonymous Rule"
+    }
 }
 
 // Allows the user to pass closures and function pointers directly as rules
@@ -162,4 +167,30 @@ macro_rules! rule_fns {
     [$($x:expr),+ $(,)?] => {
         vec![$( $x as ::tree_morph::prelude::RuleFn<_, _>, )*]
     };
+}
+
+pub struct NamedRule<F> {
+    name: &'static str,
+    function: F,
+}
+
+impl<F> NamedRule<F> {
+    /// TODO: Document
+    pub fn new(name: &'static str, function: F) -> Self {
+        Self { name, function }
+    }
+}
+
+impl<T, M, F> Rule<T, M> for NamedRule<F>
+where
+    T: Uniplate,
+    F: Fn(&mut Commands<T, M>, &T, &M) -> Option<T>,
+{
+    fn apply(&self, commands: &mut Commands<T, M>, subtree: &T, meta: &M) -> Option<T> {
+        (self.function)(commands, subtree, meta)
+    }
+
+    fn name(&self) -> &str {
+        self.name
+    }
 }

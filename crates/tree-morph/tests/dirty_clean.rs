@@ -2,7 +2,9 @@ use std::sync::atomic::Ordering;
 
 use std::sync::atomic::AtomicUsize;
 use tree_morph::prelude::*;
+use tree_morph_macros::named_rule;
 use uniplate::Uniplate;
+use tracing_subscriber;
 
 static GLOBAL_RULE_CHECKS: AtomicUsize = AtomicUsize::new(0);
 
@@ -15,50 +17,54 @@ enum Expr {
     Val(i32),
 }
 
-fn rule_eval_add(_: &mut Commands<Expr, Meta>, expr: &Expr, _: &Meta) -> Option<Expr> {
+#[named_rule("Eval Add")]
+fn rule_eval_add(cmd: &mut Commands<Expr, Meta>, expr: &Expr, _: &Meta) -> Option<Expr> {
+    // THIS IS FOR TESTING ONLY
+    // Not meant to integrated into the main code.
+    GLOBAL_RULE_CHECKS.fetch_add(1, Ordering::Relaxed);
+
     match expr {
         Expr::Add(a, b) => match (a.as_ref(), b.as_ref()) {
-            (Expr::Val(x), Expr::Val(y)) => Some(Expr::Val(x + y)),
+            (Expr::Val(x), Expr::Val(y)) => {
+                cmd.mut_meta(Box::new(|m: &mut Meta| m.num_applications += 1));
+                Some(Expr::Val(x + y))
+            },
             _ => None,
         },
         _ => None,
     }
 }
 
-fn rule_eval_mul(_: &mut Commands<Expr, Meta>, expr: &Expr, _: &Meta) -> Option<Expr> {
+#[named_rule("Eval Mul")]
+fn rule_eval_mul(cmd: &mut Commands<Expr, Meta>, expr: &Expr, _: &Meta) -> Option<Expr> {
+    // THIS IS FOR TESTING ONLY
+    // Not meant to integrated into the main code.
+    GLOBAL_RULE_CHECKS.fetch_add(1, Ordering::Relaxed);
+
     match expr {
         Expr::Mul(a, b) => match (a.as_ref(), b.as_ref()) {
-            (Expr::Val(x), Expr::Val(y)) => Some(Expr::Val(x * y)),
+            (Expr::Val(x), Expr::Val(y)) => {
+                cmd.mut_meta(Box::new(|m: &mut Meta| m.num_applications += 1));
+                Some(Expr::Val(x * y))
+            },
             _ => None,
         },
         _ => None,
     }
 }
 
-enum MyRule {
-    EvalAdd,
-    EvalMul,
-}
-
+#[derive(Debug)]
 struct Meta {
     num_applications: u32,
 }
 
-impl Rule<Expr, Meta> for MyRule {
-    fn apply(&self, cmd: &mut Commands<Expr, Meta>, expr: &Expr, meta: &Meta) -> Option<Expr> {
-        cmd.mut_meta(Box::new(|m: &mut Meta| m.num_applications += 1)); // Only applied if successful
-        // THIS IS FOR TESTING ONLY
-        // Not meant to integrated into the main code.
-        GLOBAL_RULE_CHECKS.fetch_add(1, Ordering::Relaxed);
-        match self {
-            MyRule::EvalAdd => rule_eval_add(cmd, expr, meta),
-            MyRule::EvalMul => rule_eval_mul(cmd, expr, meta),
-        }
-    }
-}
-
 #[test]
 fn left_branch_clean() {
+    // Initialize tracing subscriber to see trace output
+    let _ = tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::TRACE)
+        .try_init();
+
     // Top Level is +
     // Left Branch has two Nested Subtractions which do not have any rules
     // So atoms
@@ -78,7 +84,7 @@ fn left_branch_clean() {
     };
 
     let engine = EngineBuilder::new()
-        .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul])
+        .add_rule_group(vec![rule_eval_add(), rule_eval_mul()])
         .build();
     let (expr, meta) = engine.morph(expr, meta);
 

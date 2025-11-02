@@ -1,3 +1,5 @@
+use std::fmt;
+
 use uniplate::Uniplate;
 
 pub(crate) struct EventHandlers<T: Uniplate, M> {
@@ -31,5 +33,17 @@ impl<T: Uniplate, M> EventHandlers<T, M> {
 
     pub(crate) fn add_on_exit(&mut self, on_exit_fn: fn(&T, &mut M)) {
         self.on_exit.push(on_exit_fn);
+    }
+}
+
+impl<T: Uniplate, M> fmt::Debug for EventHandlers<T, M> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("EventHandlers")
+            .field(
+                "on_enter",
+                &format_args!("{} callbacks", self.on_enter.len()),
+            )
+            .field("on_exit", &format_args!("{} callbacks", self.on_exit.len()))
+            .finish()
     }
 }
