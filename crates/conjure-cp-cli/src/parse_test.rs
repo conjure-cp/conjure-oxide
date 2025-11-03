@@ -90,7 +90,7 @@ pub fn run_parse_test_command(global_args: GlobalArgs, parse_test_args: Args) ->
                 } else if let Some(s) = payload.downcast_ref::<String>() {
                     s.clone()
                 } else {
-                    "parser panicked: non-string payload".to_string() 
+                    "Parser panicked: non-string payload".to_string() 
                 };
                 println!("{}: Parser panicked: {}", essence_file.display(), panic_msg);
                 failed += 1;
@@ -118,7 +118,7 @@ pub fn run_parse_test_command(global_args: GlobalArgs, parse_test_args: Args) ->
                     match compare_json_ignoring_ids(test_dir, essence_base) {
                         Ok(equal) => {
                             if equal {
-                                println!("{}: Passed", &essence_file.display());
+                                // println!("{}: Passed", &essence_file.display());
                                 passed += 1;
                             } else {
                                 println!("{}: Parsed model doesn't match expected", essence_file.display());
