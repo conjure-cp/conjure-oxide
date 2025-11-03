@@ -15,6 +15,7 @@ pub fn parse_abstract(
         "record" => parse_record(node, source_code, symbols),
         "tuple" => parse_tuple(node, source_code, symbols),
         "matrix" => parse_matrix(node, source_code, symbols),
+        "set_literal" => parse_set_literal(node, source_code, symbols),
         _ => Err(EssenceParseError::syntax_error(
             format!("Expected abstract literal, got: '{}'", node.kind()),
             Some(node.range()),
@@ -72,4 +73,16 @@ fn parse_matrix(
     }
 
     Ok(AbstractLiteral::Matrix(elements, Box::new(domain.unwrap())))
+}
+
+fn parse_set_literal(
+    node: &Node,
+    source_code: &str,
+    symbols: Option<&SymbolTable>,
+) -> Result<AbstractLiteral<Expression>, EssenceParseError> {
+    let mut elements = Vec::new();
+    for child in named_children(node) {
+        elements.push(parse_expression(child, source_code, node, symbols)?);
+    }
+    Ok(AbstractLiteral::Set(elements))
 }
