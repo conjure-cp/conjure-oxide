@@ -4,7 +4,7 @@ use std::hash::Hash;
 
 use thiserror::Error;
 
-use crate::ast::{DeclarationPtr, Expression, Name, SubModel, SymbolTable};
+use crate::ast::{CnfClause, DeclarationPtr, Expression, Name, SubModel, SymbolTable};
 use tree_morph::prelude::Commands;
 use tree_morph::prelude::Rule as MorphRule;
 
@@ -58,7 +58,7 @@ pub struct Reduction {
     pub new_expression: Expression,
     pub new_top: Vec<Expression>,
     pub symbols: SymbolTable,
-    pub new_clauses: Vec<Expression>,
+    pub new_clauses: Vec<CnfClause>,
 }
 
 /// The result of applying a rule to an expression.
@@ -108,7 +108,7 @@ impl Reduction {
     /// Represents a reduction that also adds clauses to the model.
     pub fn cnf(
         new_expression: Expression,
-        new_clauses: Vec<Expression>,
+        new_clauses: Vec<CnfClause>,
         symbols: SymbolTable,
     ) -> Self {
         Self {

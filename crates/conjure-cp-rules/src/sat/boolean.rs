@@ -1,15 +1,15 @@
+use conjure_cp::essence_expr;
 use conjure_cp::rule_engine::register_rule_set;
 use conjure_cp::solver::SolverFamily;
 
 use conjure_cp::ast::Metadata;
-use conjure_cp::ast::{Atom, Expression as Expr, Literal, Moo};
+use conjure_cp::ast::{Atom, CnfClause, Expression as Expr, Literal, Moo};
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
 
 use conjure_cp::ast::AbstractLiteral::Matrix;
 use conjure_cp::ast::{Domain, SymbolTable};
-use conjure_cp::into_matrix_expr;
 
 use crate::utils::is_literal;
 
@@ -21,7 +21,7 @@ fn create_bool_aux(symbols: &mut SymbolTable) -> Expr {
     Expr::Atomic(Metadata::new(), Atom::Reference(name))
 }
 
-fn create_clause(exprs: Vec<Expr>) -> Option<Expr> {
+fn create_clause(exprs: Vec<Expr>) -> Option<CnfClause> {
     let mut new_terms = vec![];
     for expr in exprs {
         if let Expr::Atomic(_, Atom::Literal(Literal::Bool(x))) = expr {
@@ -44,17 +44,18 @@ fn create_clause(exprs: Vec<Expr>) -> Option<Expr> {
         }
     }
 
-    Some(Expr::Clause(
-        Metadata::new(),
-        Moo::new(into_matrix_expr![new_terms]),
-    ))
+    Some(CnfClause::new(new_terms))
 }
 
 // TODO: Optimize all logic operators for constants
 // TODO: If a clause simplifies to false, it should skip the solver and give no solutions
 
 /// Applies the Tseytin and transformation to series of variables, returns the new expression, symbol table and clauses
-pub fn tseytin_and(exprs: &Vec<Expr>, clauses: &mut Vec<Expr>, symbols: &mut SymbolTable) -> Expr {
+pub fn tseytin_and(
+    exprs: &Vec<Expr>,
+    clauses: &mut Vec<CnfClause>,
+    symbols: &mut SymbolTable,
+) -> Expr {
     let new_expr = create_bool_aux(symbols);
 
     let mut full_conj: Vec<Expr> = vec![new_expr.clone()];
@@ -72,7 +73,7 @@ pub fn tseytin_and(exprs: &Vec<Expr>, clauses: &mut Vec<Expr>, symbols: &mut Sym
 }
 
 /// Applies the Tseytin not transformation to a variable, returns the new expression, symbol table and clauses
-pub fn tseytin_not(x: Expr, clauses: &mut Vec<Expr>, symbols: &mut SymbolTable) -> Expr {
+pub fn tseytin_not(x: Expr, clauses: &mut Vec<CnfClause>, symbols: &mut SymbolTable) -> Expr {
     let new_expr = create_bool_aux(symbols);
 
     clauses.extend(create_clause(vec![
@@ -85,7 +86,11 @@ pub fn tseytin_not(x: Expr, clauses: &mut Vec<Expr>, symbols: &mut SymbolTable) 
 }
 
 /// Applies the Tseytin or transformation to series of variables, returns the new expression, symbol table and clauses
-pub fn tseytin_or(exprs: &Vec<Expr>, clauses: &mut Vec<Expr>, symbols: &mut SymbolTable) -> Expr {
+pub fn tseytin_or(
+    exprs: &Vec<Expr>,
+    clauses: &mut Vec<CnfClause>,
+    symbols: &mut SymbolTable,
+) -> Expr {
     let new_expr = create_bool_aux(symbols);
 
     let mut full_conj: Vec<Expr> = vec![Expr::Not(Metadata::new(), Moo::new(new_expr.clone()))];
@@ -104,7 +109,12 @@ pub fn tseytin_or(exprs: &Vec<Expr>, clauses: &mut Vec<Expr>, symbols: &mut Symb
 }
 
 /// Applies the Tseytin iff transformation to two variables, returns the new expression, symbol table and clauses
-pub fn tseytin_iff(x: Expr, y: Expr, clauses: &mut Vec<Expr>, symbols: &mut SymbolTable) -> Expr {
+pub fn tseytin_iff(
+    x: Expr,
+    y: Expr,
+    clauses: &mut Vec<CnfClause>,
+    symbols: &mut SymbolTable,
+) -> Expr {
     let new_expr = create_bool_aux(symbols);
 
     clauses.extend(create_clause(vec![
@@ -128,7 +138,12 @@ pub fn tseytin_iff(x: Expr, y: Expr, clauses: &mut Vec<Expr>, symbols: &mut Symb
 }
 
 /// Applies the Tseytin imply transformation to two variables, returns the new expression, symbol table and clauses
-pub fn tseytin_imply(x: Expr, y: Expr, clauses: &mut Vec<Expr>, symbols: &mut SymbolTable) -> Expr {
+pub fn tseytin_imply(
+    x: Expr,
+    y: Expr,
+    clauses: &mut Vec<CnfClause>,
+    symbols: &mut SymbolTable,
+) -> Expr {
     let new_expr = create_bool_aux(symbols);
 
     clauses.extend(create_clause(vec![
@@ -150,11 +165,12 @@ pub fn tseytin_imply(x: Expr, y: Expr, clauses: &mut Vec<Expr>, symbols: &mut Sy
 ///
 /// cond = 1 => b
 /// cond = 0 => a
+#[allow(dead_code)]
 pub fn tseytin_mux(
     cond: Expr,
     a: Expr,
     b: Expr,
-    clauses: &mut Vec<Expr>,
+    clauses: &mut Vec<CnfClause>,
     symbols: &mut SymbolTable,
 ) -> Expr {
     let new_expr = create_bool_aux(symbols);
@@ -195,7 +211,13 @@ pub fn tseytin_mux(
 }
 
 /// Applies the Tseytin xor transformation to two variables, returns the new expression, symbol table and clauses
-pub fn tseytin_xor(x: Expr, y: Expr, clauses: &mut Vec<Expr>, symbols: &mut SymbolTable) -> Expr {
+#[allow(dead_code)]
+pub fn tseytin_xor(
+    x: Expr,
+    y: Expr,
+    clauses: &mut Vec<CnfClause>,
+    symbols: &mut SymbolTable,
+) -> Expr {
     let new_expr = create_bool_aux(symbols);
 
     clauses.extend(create_clause(vec![
@@ -225,6 +247,31 @@ pub fn tseytin_xor(x: Expr, y: Expr, clauses: &mut Vec<Expr>, symbols: &mut Symb
 // BOOLEAN SAT ENCODING RULES:
 
 register_rule_set!("SAT", ("Base"), (SolverFamily::Sat));
+
+/// Converts a single boolean atom to a clause
+///
+/// ```text
+///  a
+///  ~~>
+///  
+///  new clauses:
+///  clause(a)
+/// ```
+#[register_rule(("SAT", 8400))]
+fn remove_single_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    let Expr::Atomic(_, atom) = expr else {
+        return Err(RuleNotApplicable);
+    };
+
+    let Atom::Reference(_) = atom else {
+        return Err(RuleNotApplicable);
+    };
+
+    let new_clauses = vec![CnfClause::new(vec![expr.clone()])];
+    let new_expr = essence_expr!(true);
+
+    Ok(Reduction::cnf(new_expr, new_clauses, symbols.clone()))
+}
 
 /// Converts an and/or expression to an aux variable, using the tseytin transformation
 ///

@@ -94,7 +94,7 @@ pub enum Expression {
     /// Defines dominance ("Solution A is preferred over Solution B")
     DominanceRelation(Metadata, Moo<Expression>),
     /// `fromSolution(name)` - Used in dominance relation definitions
-    FromSolution(Metadata, Moo<Expression>),
+    FromSolution(Metadata, Moo<Atom>),
 
     #[polyquine_with(arm = (_, name) => {
         let ident = proc_macro2::Ident::new(name.as_str(), proc_macro2::Span::call_site());
@@ -171,23 +171,23 @@ pub enum Expression {
     Max(Metadata, Moo<Expression>),
 
     /// `not(a)`
-    #[compatible(JsonInput, SAT)]
+    #[compatible(JsonInput, SAT, SMT)]
     Not(Metadata, Moo<Expression>),
 
     /// `or(<vec_expr>)`
-    #[compatible(JsonInput, SAT)]
+    #[compatible(JsonInput, SAT, SMT)]
     Or(Metadata, Moo<Expression>),
 
     /// `and(<vec_expr>)`
-    #[compatible(JsonInput, SAT)]
+    #[compatible(JsonInput, SAT, SMT)]
     And(Metadata, Moo<Expression>),
 
     /// Ensures that `a->b` (material implication).
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Imply(Metadata, Moo<Expression>, Moo<Expression>),
 
     /// `iff(a, b)` a <-> b
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Iff(Metadata, Moo<Expression>, Moo<Expression>),
 
     #[compatible(JsonInput)]
@@ -211,10 +211,10 @@ pub enum Expression {
     #[compatible(JsonInput)]
     SubsetEq(Metadata, Moo<Expression>, Moo<Expression>),
 
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Eq(Metadata, Moo<Expression>, Moo<Expression>),
 
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Neq(Metadata, Moo<Expression>, Moo<Expression>),
 
     #[compatible(JsonInput)]
@@ -490,9 +490,6 @@ pub enum Expression {
         Moo<Expression>,
     ),
 
-    // This expression represents a cnf clause in its simplest form, it should only contain atoms and should not be affected by the rule engine
-    Clause(Metadata, Moo<Expression>),
-
     // This expression is for encoding i32 ints as a vector of boolean expressions for cnf - using 2s complement
     SATInt(Metadata, Moo<Expression>),
 }
@@ -610,7 +607,7 @@ impl Expression {
             Expression::SubsetEq(_, _, _) => Some(Domain::Bool),
             Expression::AbstractLiteral(_, abslit) => abslit.domain_of(),
             Expression::DominanceRelation(_, _) => Some(Domain::Bool),
-            Expression::FromSolution(_, expr) => expr.domain_of(),
+            Expression::FromSolution(_, expr) => Some(expr.domain_of()),
             Expression::Metavar(_, _) => None,
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
@@ -790,11 +787,6 @@ impl Expression {
                 .ok(),
             Expression::MinionPow(_, _, _, _) => Some(Domain::Bool),
             Expression::ToInt(_, _) => Some(Domain::Int(vec![Range::Bounded(0, 1)])),
-            // The clause expression is a special case of the Or expression, but it is not
-            // a disjunction of expressions, but rather a disjunction of atoms
-            // Clauses should only be found within the `cnf_clauses` field of the model
-            // and therefore should not be affected by the rule engine
-            Expression::Clause(_, _) => Some(Domain::Bool),
             Expression::SATInt(_, _) => {
                 Some(Domain::Int(vec![Range::Bounded(
                     i8::MIN.into(),
@@ -1326,10 +1318,6 @@ impl Display for Expression {
                 write!(f, "toInt({expr})")
             }
 
-            Expression::Clause(_, e) => {
-                write!(f, "Clause({e})")
-            }
-
             Expression::SATInt(_, e) => {
                 write!(f, "SATInt({e})")
             }
@@ -1422,7 +1410,6 @@ impl Typeable for Expression {
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::MinionPow(_, _, _, _) => Some(ReturnType::Bool),
             Expression::ToInt(_, _) => Some(ReturnType::Int),
-            Expression::Clause(_, _) => Some(ReturnType::Bool),
             Expression::SATInt(_, _) => Some(ReturnType::Int),
         }
     }

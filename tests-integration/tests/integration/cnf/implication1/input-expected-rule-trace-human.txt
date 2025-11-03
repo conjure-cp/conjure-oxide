@@ -7,10 +7,6 @@ such that
 
 (a) -> (b)
 
-clauses:
-
-
-
 --
 
 (a) -> (b), 
@@ -19,9 +15,17 @@ __0
 new variables:
   find __0: bool
 new clauses:
-  Clause([!(__0),!(a),b;int(1..)])
-  Clause([__0,a;int(1..)])
-  Clause([__0,!(b);int(1..)])
+  (¬__0 \/ ¬a \/ b)
+  (__0 \/ a)
+  (__0 \/ ¬b)
+--
+
+__0, 
+   ~~> remove_single_atom ([("SAT", 8400)]) 
+true 
+
+new clauses:
+  (__0)
 --
 
 Final model:
@@ -32,11 +36,12 @@ find __0: bool
 
 such that
 
-__0
+true
 
 clauses:
 
-Clause([!(__0),!(a),b;int(1..)]),
-Clause([__0,a;int(1..)]),
-Clause([__0,!(b);int(1..)])
+(¬__0 \/ ¬a \/ b),
+(__0 \/ a),
+(__0 \/ ¬b),
+(__0)
 

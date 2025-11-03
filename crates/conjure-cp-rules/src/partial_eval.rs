@@ -92,7 +92,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
                 {
                     Ok(Reduction::pure(Expr::Atomic(Metadata::new(), false.into())))
                 } else {
-                    return Err(RuleNotApplicable);
+                    Err(RuleNotApplicable)
                 }
             } else if let Expr::Atomic(_, Atom::Literal(lit)) = &*x {
                 if domain
@@ -483,13 +483,13 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
 
             // check for duplicate constant values which would fail the constraint
             for expr in vec {
-                if let Expr::Atomic(_, Atom::Literal(Lit::Int(x))) = expr {
-                    if !consts.insert(x) {
-                        return Ok(Reduction::pure(Expr::Atomic(
-                            m,
-                            Atom::Literal(Lit::Bool(false)),
-                        )));
-                    }
+                if let Expr::Atomic(_, Atom::Literal(Lit::Int(x))) = expr
+                    && !consts.insert(x)
+                {
+                    return Ok(Reduction::pure(Expr::Atomic(
+                        m,
+                        Atom::Literal(Lit::Bool(false)),
+                    )));
                 }
             }
 
@@ -524,7 +524,6 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
         Expr::MinionWInIntervalSet(_, _, _) => Err(RuleNotApplicable),
         Expr::MinionWInSet(_, _, _) => Err(RuleNotApplicable),
         Expr::MinionElementOne(_, _, _, _) => Err(RuleNotApplicable),
-        Expr::Clause(_, _) => Err(RuleNotApplicable),
         Expr::SATInt(_, _) => Err(RuleNotApplicable),
     }
 }
