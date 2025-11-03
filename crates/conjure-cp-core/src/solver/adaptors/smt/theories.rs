@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use strum_macros::{Display, EnumIter, EnumString};
 
 /// A collection of theories to use for encoding various CO AST constructs.
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct TheoryConfig {
     pub ints: IntTheory,
 }
