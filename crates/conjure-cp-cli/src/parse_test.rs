@@ -1,8 +1,5 @@
-use crate::cli::GlobalArgs;
-use core::panic;
 use std::path::PathBuf;
 use anyhow::Result;
-use conjure_cp::{ast::{self, declaration::serde}, essence_expr, Model};
 use conjure_cp_cli::utils::testing::{read_model_json, save_model_json};
 use std::env;
 use conjure_cp::parse::tree_sitter::parse_essence_file_native;
@@ -46,7 +43,7 @@ pub struct Args {
 //     }
 // }
 
-pub fn run_parse_test_command(global_args: GlobalArgs, parse_test_args: Args) -> Result<()> {
+pub fn run_parse_test_command(parse_test_args: Args) -> Result<()> {
 
     let test_path = &parse_test_args.test_directory;
     let accept = parse_test_args.accept || env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
@@ -112,13 +109,13 @@ pub fn run_parse_test_command(global_args: GlobalArgs, parse_test_args: Args) ->
             // Create expected file path
             // let expected_file = essence_file.with_extension("expected-parse.serialised.json");
             match read_model_json(&context, test_dir, essence_base, "expected", "parse") {
-                Ok(expected_model) => {
+                Ok(_) => {
                     // assert_eq!(parsed_model, expected_model);
                     // let model_from_file = read_model_json(&context, test_dir, essence_base, "generated", "parse")?;
                     match compare_json_ignoring_ids(test_dir, essence_base) {
                         Ok(equal) => {
                             if equal {
-                                // println!("{}: Passed", &essence_file.display());
+                                println!("{}: Passed", &essence_file.display());
                                 passed += 1;
                             } else {
                                 println!("{}: Parsed model doesn't match expected", essence_file.display());
@@ -189,7 +186,7 @@ fn compare_json_ignoring_ids(
         Ok(s) => s,
         Err(e) => {
             println!("Error reading {}: {}", gen_path, e);
-            return Ok(false);
+            return Err(anyhow::anyhow!("Error reading {}: {}", gen_path, e));
         }
     };
 
@@ -197,7 +194,7 @@ fn compare_json_ignoring_ids(
         Ok(s) => s,
         Err(e) => {
             println!("Error reading {}: {}", exp_path, e);
-            return Ok(false);
+            return Err(anyhow::anyhow!("Error reading {}: {}", exp_path, e));
         }
     };
 
@@ -222,7 +219,9 @@ fn compare_json_ignoring_ids(
         }
         // println!("{}", gen_lines[i]);
         if gen_lines[i] != exp_lines[i] {
-            println!("Expected: {}, Generated: {}", gen_lines[i], exp_lines[i]);
+            println!("\nFirst difference found at line {}", i);
+            println!("Expected: {}", exp_lines[i]);
+            println!("Generated: {}\n", gen_lines[i]);
             return Ok(false);
         }
     }
