@@ -28,6 +28,9 @@
   - [Documentation Style](./developers_guide/coding_resources/documentation_style.md)
   - [Crate Structure](./developers_guide/coding_resources/crate_structure.md)
 
+- [Design Documents](./developers_guide/design_documents/index.md)
+  - [2023‐11: High Level Plan](./developers_guide/design_documents/2023_11.md)
+
 <!-- TODO: do we need this? -->
 - [CI/CD](./developers_guide/ci_cd/index.md)
   - [Coverage](./developers_guide/ci_cd/coverage.md)
