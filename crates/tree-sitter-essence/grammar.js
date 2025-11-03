@@ -77,6 +77,7 @@ module.exports = grammar ({
       field("matrix_domain", $.matrix_domain),
       field("record_domain", $.record_domain),
       field("set_domain", $.set_domain),
+      field("set_domain", $.set_domain),
     ),
     bool_domain: $ => "bool",
 
@@ -125,17 +126,32 @@ module.exports = grammar ({
     set_domain: $ => choice(
       seq(
         "set",
-        optional(commaSep1($.set_attribute)),
+        optional(seq("(", $.set_attributes, ")")),
         "of",
         field("value_domain", $.domain)
       )
     ),
 
-    set_attribute: $ => seq(
-      "(",
-      field("attribute", choice("size", "minSize", "maxSize")),
-      field("attribute_value", $.integer),
-      ")"
+    set_attributes: $ => choice(
+      seq(
+        field("attribute", "size"),
+        field("size_value", $.integer)
+      ),
+      seq(
+        field("attribute", "minSize"),
+        field("min_value", $.integer)
+      ),
+      seq(
+        field("attribute", "maxSize"),
+        field("max_value", $.integer)
+      ),
+      seq(
+        field("attribute", "minSize"),
+        field("min_value", $.integer),
+        ",",
+        field("attribute", "maxSize"),
+        field("max_value", $.integer)
+      )
     ),
 
     set_literal: $ => seq(
