@@ -76,6 +76,7 @@ module.exports = grammar ({
       field("tuple_domain", $.tuple_domain),
       field("matrix_domain", $.matrix_domain),
       field("record_domain", $.record_domain),
+      field("set_domain", $.set_domain),
     ),
     bool_domain: $ => "bool",
 
@@ -121,6 +122,43 @@ module.exports = grammar ({
       "}"
     ),
 
+    set_domain: $ => choice(
+      seq(
+        "set",
+        optional(seq("(", $.set_attributes, ")")),
+        "of",
+        field("value_domain", $.domain)
+      )
+    ),
+
+    set_attributes: $ => choice(
+      seq(
+        field("attribute", "size"),
+        field("size_value", $.integer)
+      ),
+      seq(
+        field("attribute", "minSize"),
+        field("min_value", $.integer)
+      ),
+      seq(
+        field("attribute", "maxSize"),
+        field("max_value", $.integer)
+      ),
+      seq(
+        field("attribute", "minSize"),
+        field("min_value", $.integer),
+        ",",
+        field("attribute", "maxSize"),
+        field("max_value", $.integer)
+      )
+    ),
+
+    set_literal: $ => seq(
+      "{",
+      field("element", commaSep1(choice($.bool_expr, $.arithmetic_expr, $.comparison_expr))),
+      "}"
+    ),
+
     name_domain_pair: $ => seq(
       field("name", $.identifier),
       ":",
@@ -147,6 +185,7 @@ module.exports = grammar ({
       field("iff_expr", $.iff_expr),
       field("quantifier_expression_bool", $.quantifier_expr_bool),
       field("sub_bool_expression", $.sub_bool_expr),
+      field("set_operation_bool", $.set_operation_bool)
     )),
 
     not_expr: $ => prec(20, seq("!", field("expression", choice($.bool_expr, $.comparison_expr, $.atom)))),
@@ -198,6 +237,12 @@ module.exports = grammar ({
     ))),
 
     sub_bool_expr: $ => prec(1, seq("(", field("expression", choice($.bool_expr, $.comparison_expr)), ")")),
+
+    set_operation_bool: $ => seq(
+      field("left", $.atom),
+      field("operator", choice("in", "subset", "subsetEq", "supset", "supsetEq")),
+      field("right", $.atom)
+    ),
     
     arithmetic_expr: $ => prec(3, choice(
       field("atom", $.atom),
@@ -220,6 +265,8 @@ module.exports = grammar ({
       field("record", $.record),
       field("from_solution", $.from_solution),
       field("tuple_matrix_record_index_or_slice", $.tuple_matrix_record_index_or_slice),
+      field("set_literal", $.set_literal),
+      field("set_operation", $.set_operation),
     )),
 
     tuple: $ => prec(-5, seq(
@@ -259,6 +306,24 @@ module.exports = grammar ({
       field("indices", $.indices),
       "]"
     ),
+
+    // TODO: add unary set operation support (powerSet)
+    set_operation: $ => prec.left(seq(
+      field("left", $.atom),
+      field("operator", choice("union", "intersect")),
+      field("right", $.atom)
+    )),
+
+    // binary_set_operation: $ => prec.left(seq(
+    //   field("left", $.atom),
+    //   choice("union", "intersect"),
+    //   field("right", $.atom)
+    // )),
+
+    // unary_set_operation: $ => prec(1,seq(
+    //   "powerSet",
+    //   field("argument", $.atom)
+    // )),
 
     indices: $ => commaSep1(choice(field("index", $.arithmetic_expr), field("null_index", $.null_index))),
 
