@@ -58,20 +58,21 @@ pub fn parse_essence_with_context(
                     statement,
                     &source_code,
                     &statement,
-                    Some(&symbols_ptr),
+                    Some(symbols_ptr.clone()),
                 )?);
             }
             "language_label" => {}
             "letting_statement" => {
                 let letting_vars =
-                    parse_letting_statement(statement, &source_code, Some(&symbols_ptr))?;
+                    parse_letting_statement(statement, &source_code, Some(symbols_ptr.clone()))?;
                 model.as_submodel_mut().symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
                 let inner = statement
                     .child_by_field_name("expression")
                     .expect("Expected a sub-expression inside `dominanceRelation`");
-                let expr = parse_expression(inner, &source_code, &statement, Some(&symbols_ptr))?;
+                let expr =
+                    parse_expression(inner, &source_code, &statement, Some(symbols_ptr.clone()))?;
                 let dominance = Expression::DominanceRelation(Metadata::new(), Moo::new(expr));
                 if model.dominance.is_some() {
                     return Err(EssenceParseError::syntax_error(
