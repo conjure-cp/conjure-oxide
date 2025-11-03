@@ -89,6 +89,8 @@ pub enum Domain {
     ///   integer value.
     Int(Vec<Range<i32>>),
 
+    Ternary,
+
     /// An empty domain of the given type.
     Empty(ReturnType),
     Reference(Name),
@@ -141,6 +143,10 @@ impl Domain {
                 Literal::Bool(_) => Ok(true),
                 _ => Ok(false),
             },
+            Domain::Ternary => match lit {
+                Literal::Ternary(_) => todo!(),
+                _ => Ok(false),
+            }
             Domain::Int(ranges) => match lit {
                 Literal::Int(x) => {
                     // unconstrained int domain - contains all integers
@@ -544,7 +550,6 @@ impl Domain {
 
                 Ok(Domain::Set(SetAttr::None, Box::new(elem_domain)))
             }
-
             l @ Literal::AbstractLiteral(AbstractLiteral::Matrix(_, _)) => {
                 let mut first_index_domain = vec![];
                 // flatten index domains of n-d matrix into list
@@ -598,7 +603,6 @@ impl Domain {
 
                 Ok(Domain::Matrix(Box::new(element_domain), first_index_domain))
             }
-
             Literal::AbstractLiteral(AbstractLiteral::Tuple(first_elems)) => {
                 let n_fields = first_elems.len();
 
@@ -624,7 +628,6 @@ impl Domain {
 
                 Ok(Domain::Tuple(elem_domains))
             }
-
             Literal::AbstractLiteral(AbstractLiteral::Record(first_elems)) => {
                 let n_fields = first_elems.len();
                 let field_names = first_elems.iter().map(|x| x.name.clone()).collect_vec();
@@ -660,6 +663,14 @@ impl Domain {
                         .collect(),
                 ))
             }
+            Literal::Ternary(_) => {
+                // check all literals are bools
+                if literals.iter().any(|x| !matches!(x, Literal::Ternary(_))) {
+                    Err(DomainOpError::InputWrongType)
+                } else {
+                    Ok(Domain::Ternary)
+                }
+            }
         }
     }
 
@@ -678,13 +689,11 @@ impl Domain {
             Domain::Int(_) => self
                 .values_i32()
                 .map(|xs| xs.iter().map(|x| Literal::Int(*x)).collect_vec()),
-
-            // ~niklasdewally: don't know how to define this for collections, so leaving it for
-            // now... However, it definitely can be done, as matrices can be indexed by matrices.
             Domain::Set(_, _) => todo!(),
-            Domain::Tuple(_) => todo!(), // TODO: Can this be done?
+            Domain::Tuple(_) => todo!(),
             Domain::Matrix(_, _) => todo!(),
             Domain::Record(_) => todo!(),
+            Domain::Ternary => todo!(),
         }
     }
 
@@ -757,6 +766,7 @@ impl Domain {
                 })?;
                 inner_sz.checked_pow(exp).ok_or(DomainOpError::TooLarge)
             }
+            Domain::Ternary => Ok(3),
         }
     }
 
@@ -975,9 +985,8 @@ impl Domain {
 impl Display for Domain {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Domain::Bool => {
-                write!(f, "bool")
-            }
+            Domain::Ternary => write!(f, "ternary"),
+            Domain::Bool => write!(f, "bool"),
             Domain::Int(vec) => {
                 let domain_ranges: String = vec.iter().map(|x| format!("{x}")).join(",");
 
@@ -1025,12 +1034,13 @@ impl Display for Domain {
 impl Typeable for Domain {
     fn return_type(&self) -> Option<ReturnType> {
         match self {
+            Domain::Ternary => Some(ReturnType::Ternary),
             Domain::Bool => Some(ReturnType::Bool),
             Domain::Int(_) => Some(ReturnType::Int),
             Domain::Empty(return_type) => Some(return_type.clone()),
             Domain::Set(_, domain) => Some(ReturnType::Set(Box::new(domain.return_type()?))),
-            Domain::Reference(_) => None, // todo!("add ReturnType for Domain::Reference"),
-            Domain::Matrix(item_domain, index_domains) => {
+            Domain::Reference(_) => None,
+                        Domain::Matrix(item_domain, index_domains) => {
                 assert!(
                     !index_domains.is_empty(),
                     "a matrix should have atleast one dimension"

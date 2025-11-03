@@ -15,8 +15,8 @@ use super::domains::HasDomain;
 use super::{Atom, Domain, Expression, Range, records::RecordValue};
 use super::{Moo, ReturnType, SetAttr, Typeable};
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash, Quine)]
-#[uniplate(walk_into=[AbstractLiteral<Literal>])]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash, Quine, Default)]
+#[uniplate(walk_into=[AbstractLiteral<Literal>, TernaryVal])]
 #[biplate(to=Atom)]
 #[biplate(to=AbstractLiteral<Literal>)]
 #[biplate(to=AbstractLiteral<Expression>)]
@@ -24,10 +24,44 @@ use super::{Moo, ReturnType, SetAttr, Typeable};
 #[biplate(to=RecordValue<Expression>)]
 #[biplate(to=Expression)]
 #[path_prefix(conjure_cp::ast)]
+
+// ternary type, maybe pub not needed
+/// A Ternary Value Type used for a 
+pub enum TernaryVal {
+    /// Positive assignment.
+    True,
+    /// Negative assignment.
+    False,
+    /// Formula is satisfied, no matter the assignment.
+    #[default]
+    DontCare,
+}
+
+impl Display for TernaryVal {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match &self {
+            TernaryVal::True => write!(f, "0: True"),
+            TernaryVal::False => write!(f, "1: False"),
+            TernaryVal::DontCare => write!(f, "2: DontCare"),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash, Quine)]
+#[uniplate(walk_into=[AbstractLiteral<Literal>, TernaryVal])]
+#[biplate(to=Atom)]
+#[biplate(to=AbstractLiteral<Literal>)]
+#[biplate(to=AbstractLiteral<Expression>)]
+#[biplate(to=RecordValue<Literal>)]
+#[biplate(to=RecordValue<Expression>)]
+#[biplate(to=Expression)]
+#[path_prefix(conjure_cp::ast)]
+
 /// A literal value, equivalent to constants in Conjure.
 pub enum Literal {
     Int(i32),
     Bool(bool),
+    Ternary(TernaryVal),
     //abstract literal variant ends in Literal, but that's ok
     #[allow(clippy::enum_variant_names)]
     AbstractLiteral(AbstractLiteral<Literal>),
@@ -38,6 +72,7 @@ impl HasDomain for Literal {
         match self {
             Literal::Int(i) => Domain::Int(vec![Range::Single(*i)]),
             Literal::Bool(_) => Domain::Bool,
+            Literal::Ternary(_) => Domain::Ternary,
             Literal::AbstractLiteral(abstract_literal) => abstract_literal.domain_of(),
         }
     }
@@ -533,6 +568,7 @@ impl Display for Literal {
         match &self {
             Literal::Int(i) => write!(f, "{i}"),
             Literal::Bool(b) => write!(f, "{b}"),
+            Literal::Ternary(t) => write!(f, "{t}"),
             Literal::AbstractLiteral(l) => write!(f, "{l:?}"),
         }
     }

@@ -185,11 +185,12 @@ fn needs_representation(name: &Name, symbols: &SymbolTable) -> bool {
 fn domain_needs_representation(domain: &Domain) -> bool {
     // very simple implementation for nows
     match domain {
-        Domain::Bool | Domain::Int(_) => false,
-        Domain::Matrix(_, _) => false, // we special case these elsewhere
+        // Domain::Bool | Domain::Int(_) | Domain::Ternary | Domain::Empty(_) => false,
+        // // Domain::Empty(_) => false,
+        // Domain::Matrix(_, _) => false,
         Domain::Set(_, _) | Domain::Tuple(_) | Domain::Record(_) => true,
         Domain::Reference(_) => unreachable!("domain should be resolved"),
-        Domain::Empty(_) => false, // _ => false,
+        _ => false
     }
 }
 
