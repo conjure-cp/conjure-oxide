@@ -14,7 +14,7 @@ where
     T: Uniplate,
     R: Rule<T, M>,
 {
-    event_handlers: EventHandlers<T, M>,
+    event_handlers: EventHandlers<T, M, R>,
 
     /// Groups of rules, each with a selector function.
     rule_groups: Vec<Vec<R>>,
@@ -90,6 +90,16 @@ where
 
     add_handler_fns! {
         directions: [up, down, right]
+    }
+
+    pub fn add_before_rule(mut self, handler: fn(&T, &mut M, &R)) -> Self {
+        self.event_handlers.add_before_rule(handler);
+        self
+    }
+
+    pub fn add_after_rule(mut self, handler: fn(&T, &mut M, &R, bool)) -> Self {
+        self.event_handlers.add_after_rule(handler);
+        self
     }
 
     /// Sets the selector function to be used when multiple rules are applicable to the same node.

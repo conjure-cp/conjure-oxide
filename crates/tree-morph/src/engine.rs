@@ -9,6 +9,7 @@ use crate::rule::apply_into_update;
 
 use paste::paste;
 use std::fmt;
+use std::fmt::Debug;
 use tracing::{Level, event, instrument};
 use uniplate::{Uniplate, tagged_zipper::TaggedZipper};
 
@@ -20,7 +21,7 @@ where
     T: Uniplate,
     R: Rule<T, M>,
 {
-    pub(crate) event_handlers: EventHandlers<T, M>,
+    pub(crate) event_handlers: EventHandlers<T, M, R>,
 
     /// A collection of groups of equally-prioritised rules.
     pub(crate) rule_groups: Vec<Vec<R>>,
@@ -210,13 +211,31 @@ where
                     let subtree = zipper.inner.focus();
 
                     // Choose one transformation from all applicable rules at this level
+                    // TODO: Move to a separate function call
                     let selected = {
                         let applicable = &mut rules.iter().filter_map(|rule| {
+                            self.event_handlers.trigger_before_rule(
+                                zipper.inner.focus(),
+                                &mut zipper.meta,
+                                rule,
+                            );
                             let update =
                                 apply_into_update(rule, subtree, &zipper.meta).or_else(|| {
+                                    self.event_handlers.trigger_after_rule(
+                                        zipper.inner.focus(),
+                                        &mut zipper.meta,
+                                        rule,
+                                        false,
+                                    );
                                     event!(Level::TRACE, "Rule Attempt Fail: {}", rule.name());
                                     None
                                 })?;
+                            self.event_handlers.trigger_after_rule(
+                                zipper.inner.focus(),
+                                &mut zipper.meta,
+                                rule,
+                                true,
+                            );
                             event!(Level::TRACE, "Rule Attempt Success: {}", rule.name());
                             Some((rule, update))
                         });
@@ -303,13 +322,23 @@ macro_rules! movement_fns {
 }
 
 /// A Zipper with optimisations for tree transformation.
-struct EngineZipper<'events, T: Uniplate, M: fmt::Debug> {
+struct EngineZipper<'events, T, M, R>
+where
+    T: Uniplate,
+    M: fmt::Debug,
+    R: Rule<T, M>,
+{
     inner: TaggedZipper<T, EngineNodeState, fn(&T) -> EngineNodeState>,
-    event_handlers: &'events EventHandlers<T, M>,
+    event_handlers: &'events EventHandlers<T, M, R>,
     meta: M,
 }
 
-impl<'events, T: Uniplate, M: fmt::Debug> fmt::Debug for EngineZipper<'events, T, M> {
+impl<'events, T, M, R> fmt::Debug for EngineZipper<'events, T, M, R>
+where
+    T: Uniplate,
+    M: Debug,
+    R: Rule<T, M>,
+{
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("EngineZipper")
             .field("inner", &"TaggedZiper (Hidden, Part of Uniplate)")
@@ -319,8 +348,13 @@ impl<'events, T: Uniplate, M: fmt::Debug> fmt::Debug for EngineZipper<'events, T
     }
 }
 
-impl<'events, T: Uniplate, M: fmt::Debug> EngineZipper<'events, T, M> {
-    pub fn new(tree: T, meta: M, event_handlers: &'events EventHandlers<T, M>) -> Self {
+impl<'events, T, M, R> EngineZipper<'events, T, M, R>
+where
+    T: Uniplate,
+    M: Debug,
+    R: Rule<T, M>,
+{
+    pub fn new(tree: T, meta: M, event_handlers: &'events EventHandlers<T, M, R>) -> Self {
         EngineZipper {
             inner: TaggedZipper::new(tree, EngineNodeState::new),
             event_handlers,
@@ -386,8 +420,13 @@ impl<'events, T: Uniplate, M: fmt::Debug> EngineZipper<'events, T, M> {
     }
 }
 
-impl<T: Uniplate, M: fmt::Debug> From<EngineZipper<'_, T, M>> for (T, M) {
-    fn from(val: EngineZipper<'_, T, M>) -> Self {
+impl<T, M, R> From<EngineZipper<'_, T, M, R>> for (T, M)
+where
+    T: Uniplate,
+    M: Debug,
+    R: Rule<T, M>,
+{
+    fn from(val: EngineZipper<'_, T, M, R>) -> Self {
         let meta = val.meta;
         let tree = val.inner.rebuild_root();
         (tree, meta)
