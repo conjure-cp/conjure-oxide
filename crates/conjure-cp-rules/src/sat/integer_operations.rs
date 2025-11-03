@@ -16,6 +16,8 @@ use super::boolean::{
 };
 use super::integer_repr::{BITS, validate_sat_int_operands};
 
+use conjure_cp::ast::CnfClause;
+
 /// Converts an inequality expression between two SATInts to a boolean expression in cnf.
 ///
 /// ```text
@@ -136,7 +138,7 @@ fn inequality_boolean(
     a: Vec<Expr>,
     b: Vec<Expr>,
     strict: bool,
-    clauses: &mut Vec<Expr>,
+    clauses: &mut Vec<CnfClause>,
     symbols: &mut SymbolTable,
 ) -> Expr {
     let mut notb;
@@ -224,7 +226,7 @@ fn tseytin_int_adder(
     x: &[Expr],
     y: &[Expr],
     bits: usize,
-    clauses: &mut Vec<Expr>,
+    clauses: &mut Vec<CnfClause>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     //TODO Optimizing for constants
@@ -245,7 +247,7 @@ fn tseytin_full_adder(
     a: Expr,
     b: Expr,
     carry: Expr,
-    clauses: &mut Vec<Expr>,
+    clauses: &mut Vec<CnfClause>,
     symbols: &mut SymbolTable,
 ) -> (Expr, Expr) {
     let axorb = tseytin_xor(a.clone(), b.clone(), clauses, symbols);
@@ -260,7 +262,7 @@ fn tseytin_full_adder(
 fn tseytin_half_adder(
     a: Expr,
     b: Expr,
-    clauses: &mut Vec<Expr>,
+    clauses: &mut Vec<CnfClause>,
     symbols: &mut SymbolTable,
 ) -> (Expr, Expr) {
     let result = tseytin_xor(a.clone(), b.clone(), clauses, symbols);
@@ -274,7 +276,7 @@ fn tseytin_add_two_power(
     expr: &[Expr],
     exponent: usize,
     bits: usize,
-    clauses: &mut Vec<Expr>,
+    clauses: &mut Vec<CnfClause>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     let mut result = vec![];
@@ -299,7 +301,7 @@ fn cnf_shift_add_multiply(
     x: &[Expr],
     y: &[Expr],
     bits: usize,
-    clauses: &mut Vec<Expr>,
+    clauses: &mut Vec<CnfClause>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     let mut x = x.to_owned();
@@ -425,7 +427,7 @@ fn cnf_int_neg(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 fn tseytin_negate(
     expr: &Vec<Expr>,
     bits: usize,
-    clauses: &mut Vec<Expr>,
+    clauses: &mut Vec<CnfClause>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     let mut result = vec![];
@@ -491,7 +493,7 @@ fn tseytin_binary_min_max(
     x: &[Expr],
     y: &[Expr],
     min: bool,
-    clauses: &mut Vec<Expr>,
+    clauses: &mut Vec<CnfClause>,
     symbols: &mut SymbolTable,
 ) -> Vec<Expr> {
     let mut out = vec![];

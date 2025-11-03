@@ -154,7 +154,7 @@ impl SubModel {
     }
 
     /// Replaces the cnf clauses with `new_clauses`, returning the old ones.
-    pub fn replace_clauses(&mut self, new_clauses: Vec<Expression>) -> Vec<Expression> {
+    pub fn replace_clauses(&mut self, new_clauses: Vec<CnfClause>) -> Vec<CnfClause> {
         std::mem::replace(self.clauses_mut(), new_clauses)
     }
 
