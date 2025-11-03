@@ -4,11 +4,9 @@ mod print_info_schema;
 mod solve;
 mod test_solve;
 mod parse_test;
-use clap::{Command, CommandFactory, Parser};
+use clap::{CommandFactory, Parser};
 use clap_complete::generate;
 use cli::{Cli, GlobalArgs};
-use conjure_cp::parse;
-use itertools::Combinations;
 use print_info_schema::run_print_info_schema_command;
 use solve::run_solve_command;
 use std::fs::File;
@@ -152,7 +150,7 @@ fn run_subcommand(cli: Cli) -> anyhow::Result<()> {
         cli::Command::TestSolve(local_args) => run_test_solve_command(global_args, local_args),
         cli::Command::PrintJsonSchema => run_print_info_schema_command(),
         cli::Command::Completion(completion_args) => run_completion_command(completion_args),
-        cli::Command::ParseTest(parse_test_args) => run_parse_test_command(global_args, parse_test_args),
+        cli::Command::ParseTest(parse_test_args) => run_parse_test_command(parse_test_args),
     }
 }
 
