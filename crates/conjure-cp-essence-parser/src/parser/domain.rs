@@ -127,61 +127,89 @@ fn parse_record_domain(
 
 fn parse_set_domain(set_domain: Node, source_code: &str) -> Result<Domain, EssenceParseError> {
     let mut set_attribute: Option<SetAttr> = None;
+    let mut value_domain: Option<Domain> = None;
 
-    for attribute_or_domain in named_children(&set_domain) {
-        if attribute_or_domain.kind() == "set_attribute" {
-            let attribute = attribute_or_domain.child_by_field_name("attribute").ok_or(
-                EssenceParseError::syntax_error(
-                    "Expected attribute for set attribute".to_string(),
-                    Some(attribute_or_domain.range()),
-                ),
-            )?;
-            let attribute_str = &source_code[attribute.start_byte()..attribute.end_byte()];
-            let attribute_value_node = attribute_or_domain
-                .child_by_field_name("attribute_value")
-                .ok_or(EssenceParseError::syntax_error(
-                "Expected attribute_value for set attribute".to_string(),
-                Some(attribute_or_domain.range()),
-            ))?;
-            let attribute_value =
-                &source_code[attribute_value_node.start_byte()..attribute_value_node.end_byte()];
-            set_attribute = Some(match attribute_str {
-                "size" => SetAttr::Size(i32::from_str(attribute_value).map_err(|_| {
-                    EssenceParseError::syntax_error(
-                        format!("Invalid integer value for size: {}", attribute_value),
-                        Some(attribute_value_node.range()),
-                    )
-                })?),
-                "minSize" => SetAttr::MinSize(i32::from_str(attribute_value).map_err(|_| {
-                    EssenceParseError::syntax_error(
-                        format!("Invalid integer value for minSize: {}", attribute_value),
-                        Some(attribute_value_node.range()),
-                    )
-                })?),
-                "maxSize" => SetAttr::MaxSize(i32::from_str(attribute_value).map_err(|_| {
-                    EssenceParseError::syntax_error(
-                        format!("Invalid integer value for maxSize: {}", attribute_value),
-                        Some(attribute_value_node.range()),
-                    )
-                })?),
-                _ => {
-                    return Err(EssenceParseError::syntax_error(
-                        format!("Unknown set attribute: {}", attribute_str),
-                        Some(attribute.range()),
-                    ));
+    for child in named_children(&set_domain) {
+        match child.kind() {
+            "set_attributes" => {
+                // Check if we have both minSize and maxSize (minMax case)
+                let min_value_node = child.child_by_field_name("min_value");
+                let max_value_node = child.child_by_field_name("max_value");
+                let size_value_node = child.child_by_field_name("size_value");
+
+                if let (Some(min_node), Some(max_node)) = (min_value_node, max_value_node) {
+                    // MinMax case
+                    let min_str = &source_code[min_node.start_byte()..min_node.end_byte()];
+                    let max_str = &source_code[max_node.start_byte()..max_node.end_byte()];
+
+                    let min_val = i32::from_str(min_str).map_err(|_| {
+                        EssenceParseError::syntax_error(
+                            format!("Invalid integer value for minSize: {}", min_str),
+                            Some(min_node.range()),
+                        )
+                    })?;
+
+                    let max_val = i32::from_str(max_str).map_err(|_| {
+                        EssenceParseError::syntax_error(
+                            format!("Invalid integer value for maxSize: {}", max_str),
+                            Some(max_node.range()),
+                        )
+                    })?;
+
+                    set_attribute = Some(SetAttr::MinMaxSize(min_val, max_val));
+                } else if let Some(size_node) = size_value_node {
+                    // Size case
+                    let size_str = &source_code[size_node.start_byte()..size_node.end_byte()];
+                    let size_val = i32::from_str(size_str).map_err(|_| {
+                        EssenceParseError::syntax_error(
+                            format!("Invalid integer value for size: {}", size_str),
+                            Some(size_node.range()),
+                        )
+                    })?;
+                    set_attribute = Some(SetAttr::Size(size_val));
+                } else if let Some(min_node) = min_value_node {
+                    // MinSize only case
+                    let min_str = &source_code[min_node.start_byte()..min_node.end_byte()];
+                    let min_val = i32::from_str(min_str).map_err(|_| {
+                        EssenceParseError::syntax_error(
+                            format!("Invalid integer value for minSize: {}", min_str),
+                            Some(min_node.range()),
+                        )
+                    })?;
+                    set_attribute = Some(SetAttr::MinSize(min_val));
+                } else if let Some(max_node) = max_value_node {
+                    // MaxSize only case
+                    let max_str = &source_code[max_node.start_byte()..max_node.end_byte()];
+                    let max_val = i32::from_str(max_str).map_err(|_| {
+                        EssenceParseError::syntax_error(
+                            format!("Invalid integer value for maxSize: {}", max_str),
+                            Some(max_node.range()),
+                        )
+                    })?;
+                    set_attribute = Some(SetAttr::MaxSize(max_val));
                 }
-            });
-        } else {
-            let domain = parse_domain(attribute_or_domain, source_code)?;
-            return Ok(Domain::Set(
-                set_attribute.unwrap_or(SetAttr::None),
-                Box::new(domain),
-            ));
+            }
+            "domain" => {
+                value_domain = Some(parse_domain(child, source_code)?);
+            }
+            _ => {
+                return Err(EssenceParseError::syntax_error(
+                    format!("Unrecognized set domain child kind: {}", child.kind()),
+                    Some(child.range()),
+                ));
+            }
         }
     }
 
-    Err(EssenceParseError::syntax_error(
-        "Set domain must have a value domain".to_string(),
-        Some(set_domain.range()),
-    ))
+    if let Some(domain) = value_domain {
+        Ok(Domain::Set(
+            set_attribute.unwrap_or(SetAttr::None),
+            Box::new(domain),
+        ))
+    } else {
+        Err(EssenceParseError::syntax_error(
+            "Set domain must have a value domain".to_string(),
+            Some(set_domain.range()),
+        ))
+    }
 }
