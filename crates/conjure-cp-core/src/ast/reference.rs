@@ -14,6 +14,10 @@ use super::{
 };
 
 /// A reference to a declaration (variable, parameter, etc.)
+///
+/// This is a thin wrapper around [`DeclarationPtr`] with two main purposes:
+/// 1. Encapsulate the serde pragmas (e.g., serializing as IDs rather than full objects)
+/// 2. Enable type-directed traversals of references via uniplate
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Derivative)]
 #[derivative(Hash)]
