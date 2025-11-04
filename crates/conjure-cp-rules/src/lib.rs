@@ -18,6 +18,7 @@ mod partial_eval;
 mod records;
 mod representation;
 mod select_representation;
+mod smt;
 mod subsitute_lettings;
 mod tuple;
 mod utils;
