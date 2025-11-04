@@ -1,5 +1,4 @@
 #![allow(clippy::expect_used)]
-use conjure_cp::ast::SymbolTable;
 use conjure_cp::bug;
 use conjure_cp::rule_engine::get_rules_grouped;
 
@@ -311,12 +310,12 @@ fn integration_test_inner(
                 .map(|(_, rule)| rule.into_iter().map(|f| f.rule).collect_vec())
                 .collect_vec();
 
-            let (expr, symbol_table): (Expression, SymbolTable) = morph(
-                rules_grouped,
-                select_panic,
-                submodel.root().clone(),
-                submodel.symbols().clone(),
-            );
+            let engine = EngineBuilder::new()
+                .set_selector(select_panic)
+                .append_rule_groups(rules_grouped)
+                .build();
+            let (expr, symbol_table) =
+                engine.morph(submodel.root().clone(), submodel.symbols().clone());
 
             *submodel.symbols_mut() = symbol_table;
             submodel.replace_root(expr);
@@ -618,7 +617,7 @@ fn assert_constants_leq_one(parent_expr: &Expression, exprs: &[Expression]) {
 pub fn create_scoped_subscriber(
     path: &str,
     test_name: &str,
-) -> (impl tracing::Subscriber + Send + Sync) {
+) -> impl tracing::Subscriber + Send + Sync {
     let target1_layer = create_file_layer_json(path, test_name);
     let target2_layer = create_file_layer_human(path, test_name);
     let layered = target1_layer.and_then(target2_layer);
@@ -645,7 +644,7 @@ fn create_file_layer_json(path: &str, test_name: &str) -> impl Layer<Registry> +
         }))
 }
 
-fn create_file_layer_human(path: &str, test_name: &str) -> (impl Layer<Registry> + Send + Sync) {
+fn create_file_layer_human(path: &str, test_name: &str) -> impl Layer<Registry> + Send + Sync {
     let file = File::create(format!("{path}/{test_name}-generated-rule-trace-human.txt"))
         .expect("Unable to create log file");
 
