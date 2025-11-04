@@ -128,7 +128,7 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
 /// ```
 #[register_rule(("SAT", 9500))]
 fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let mut value = {
+    let value = {
         if let Expr::Atomic(_, Atom::Literal(Literal::Int(v))) = expr {
             *v
         } else {
@@ -136,10 +136,9 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
     };
 
-    //TODO: add support for negatives
-
     let mut binary_encoding = vec![];
 
+    let mut value = value as u32;
     for _ in 0..BITS {
         binary_encoding.push(Expr::Atomic(
             Metadata::new(),
