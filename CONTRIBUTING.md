@@ -16,8 +16,8 @@ For information on how to set up your environment, go to the [Contributor's Guid
 ## We Use [Github Flow](https://docs.github.com/en/get-started/using-github/github-flow), so All Code Changes Happen Through Pull Requests
 Pull requests are the best way to propose changes to the codebase (we use [Github Flow](https://docs.github.com/en/get-started/using-github/github-flow)). We actively welcome your pull requests:
 
-1. Make a fork.
-2. Create a branch on your fork, do not develop on main.
+1. Do **not** make a fork, create a branch for your feature on the `conjure-cp/conjure-oxide` repository (can be done directly through GH issues)
+2. Create a branch, do not develop on main.
 3. Create a pull request as soon as you want others to be able to see your progress, comment, and/or help. Err on the side of creating the pull request too early instead of too late. Having an active PR makes your work visible, allows others to help you and give feedback. Request reviews from people who have worked on similar parts of the project.
 4. Keep the PR in draft status until you think it's ready to be merged.
 5. Assign PR to reviewer(s) when it's ready to be merged.
