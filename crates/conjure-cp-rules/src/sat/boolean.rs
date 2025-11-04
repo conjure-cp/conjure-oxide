@@ -276,7 +276,7 @@ fn remove_single_atom(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let removed = new_children.remove(pos);
 
-    let new_clauses = vec![CnfClause::new(vec![removed.clone()])];
+    let new_clauses = vec![CnfClause::new(vec![removed])];
 
     // If now empty, replace with `true`
     if new_children.is_empty() {
