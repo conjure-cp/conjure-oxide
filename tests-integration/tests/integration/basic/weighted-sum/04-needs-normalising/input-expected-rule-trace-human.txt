@@ -70,9 +70,9 @@ product([-3,x;int(1..)])
 
 --
 
-__1 =aux product([3,x;int(1..)]), 
-   ~~> introduce_producteq ([("Minion", 4200)]) 
-FlatProductEq(x,3,__1) 
+(sum([product([5,x;int(1..)]),product([9,y;int(1..)]),product([-3,x;int(1..)]),product([-1,y;int(1..)]),product([-5,y;int(1..)]);int(1..)]) <= 10), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+FlatWeightedSumLeq([2, 3],[x, y],10) 
 
 --
 
@@ -81,13 +81,8 @@ Final model:
 find x: int(2..5)
 find y: int(2..5)
 find z: int(2..5)
-find __0: int(-17..52)
-find __1: int(6..15)
 
 such that
 
-Ineq(__0, 10, 0),
-FlatWeightedSumLeq([-1, 5, 3],[__1, x, y],__0),
-FlatWeightedSumGeq([-1, 5, 3],[__1, x, y],__0),
-FlatProductEq(x,3,__1)
+FlatWeightedSumLeq([2, 3],[x, y],10)
 
