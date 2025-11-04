@@ -6,17 +6,17 @@ find z: int(-5..2)
 
 such that
 
-(sum([|(sum([UnsafeDiv(x, 2),y;int(1..2)]) - z)|,UnsafeDiv(|y|, 2);int(1..2)]) = 10)
+(sum([|(sum([UnsafeDiv(x, 2),y;int(1..)]) - z)|,UnsafeDiv(|y|, 2);int(1..)]) = 10)
 
 --
 
-(sum([UnsafeDiv(x, 2),y;int(1..2)]) - z), 
+(sum([UnsafeDiv(x, 2),y;int(1..)]) - z), 
    ~~> minus_to_sum ([("Base", 8400)]) 
-sum([sum([UnsafeDiv(x, 2),y;int(1..2)]),-(z);int(1..)]) 
+sum([sum([UnsafeDiv(x, 2),y;int(1..)]),-(z);int(1..)]) 
 
 --
 
-sum([sum([UnsafeDiv(x, 2),y;int(1..2)]),-(z);int(1..)]), 
+sum([sum([UnsafeDiv(x, 2),y;int(1..)]),-(z);int(1..)]), 
    ~~> normalise_associative_commutative ([("Base", 8900)]) 
 sum([UnsafeDiv(x, 2),y,-(z);int(1..)]) 
 
@@ -28,9 +28,9 @@ UnsafeDiv(x, 2),
 
 --
 
-(sum([|sum([{SafeDiv(x, 2) @ (2 != 0)},y,-(z);int(1..)])|,UnsafeDiv(|y|, 2);int(1..2)]) = 10), 
+(sum([|sum([{SafeDiv(x, 2) @ (2 != 0)},y,-(z);int(1..)])|,UnsafeDiv(|y|, 2);int(1..)]) = 10), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(sum([|sum([SafeDiv(x, 2),y,-(z);int(1..)])|,UnsafeDiv(|y|, 2);int(1..2)]) = 10) 
+(sum([|sum([SafeDiv(x, 2),y,-(z);int(1..)])|,UnsafeDiv(|y|, 2);int(1..)]) = 10) 
 
 --
 
@@ -40,22 +40,13 @@ UnsafeDiv(|y|, 2),
 
 --
 
-(sum([|sum([SafeDiv(x, 2),y,-(z);int(1..)])|,{SafeDiv(|y|, 2) @ (2 != 0)};int(1..2)]) = 10), 
+(sum([|sum([SafeDiv(x, 2),y,-(z);int(1..)])|,{SafeDiv(|y|, 2) @ (2 != 0)};int(1..)]) = 10), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(sum([|sum([SafeDiv(x, 2),y,-(z);int(1..)])|,SafeDiv(|y|, 2);int(1..2)]) = 10) 
+(sum([|sum([SafeDiv(x, 2),y,-(z);int(1..)])|,SafeDiv(|y|, 2);int(1..)]) = 10) 
 
 --
 
-|sum([SafeDiv(x, 2),y,-(z);int(1..)])|, 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-|__0| 
-new variables:
-  find __0: int(-10..8)
-new constraints:
-  __0 =aux sum([SafeDiv(x, 2),y,-(z);int(1..)])
---
-
-__0 =aux sum([SafeDiv(x, 2),y,-(z);int(1..)]), 
+(sum([|sum([SafeDiv(x, 2),y,-(z);int(1..)])|,SafeDiv(|y|, 2);int(1..)]) = 10), 
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
 and([FlatWeightedSumLeq([1, 1, -1],[__1, y, z],__0),FlatWeightedSumGeq([1, 1, -1],[__1, y, z],__0);int(1..)]) 
 new variables:
