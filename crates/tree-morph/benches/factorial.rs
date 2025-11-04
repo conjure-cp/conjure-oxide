@@ -101,9 +101,10 @@ pub fn criterion_benchmark(c: &mut Criterion) {
                 num_applications_addition: 0,
                 num_applications_multiplication: 0,
             };
-            morph(
-                std::hint::black_box(rules.clone()),
-                select_first,
+            let engine = EngineBuilder::new()
+                .append_rule_groups(rules.clone())
+                .build();
+            engine.morph(
                 std::hint::black_box(my_expression.clone()),
                 std::hint::black_box(meta),
             )

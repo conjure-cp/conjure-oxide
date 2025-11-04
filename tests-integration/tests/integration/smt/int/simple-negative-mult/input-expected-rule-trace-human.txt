@@ -1,0 +1,32 @@
+Model before rewriting:
+
+find x: int(-4..4)
+find y: int(-4..4)
+
+such that
+
+(product([x,y;int(1..2)]) = -(4))
+
+--
+
+(product([x,y;int(1..2)]) = -(4)), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(product([x,y;int(1..2)]) = -4) 
+
+--
+
+product([x,y;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+product([x,y;int(1..)]) 
+
+--
+
+Final model:
+
+find x: int(-4..4)
+find y: int(-4..4)
+
+such that
+
+(product([x,y;int(1..)]) = -4)
+

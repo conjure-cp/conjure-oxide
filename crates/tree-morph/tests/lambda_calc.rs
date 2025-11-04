@@ -91,10 +91,10 @@ fn subst(expr: &Expr, x: u32, f: &Expr) -> Expr {
 
 // Beta-reduction
 fn beta_reduce(expr: &Expr) -> Option<Expr> {
-    if let Expr::App(m, n) = expr {
-        if let Expr::Abs(x, g) = m.as_ref() {
-            return Some(subst(g, *x, n));
-        }
+    if let Expr::App(m, n) = expr
+        && let Expr::Abs(x, g) = m.as_ref()
+    {
+        return Some(subst(g, *x, n));
     }
     None
 }
@@ -107,6 +107,13 @@ fn transform_beta_reduce(cmd: &mut Commands<Expr, u32>, expr: &Expr, _: &u32) ->
     retval
 }
 
+fn reduce_all(expr: Expr) -> (Expr, u32) {
+    let engine = EngineBuilder::new()
+        .add_rule(transform_beta_reduce as RuleFn<_, _>)
+        .build();
+    engine.morph(expr, 0)
+}
+
 #[test]
 fn simple_application() {
     // (\x. x) 1 -> 1
@@ -114,9 +121,10 @@ fn simple_application() {
         Box::new(Expr::Abs(0, Box::new(Expr::Var(0)))),
         Box::new(Expr::Var(1)),
     );
-    let (result, meta) = morph(vec![vec![transform_beta_reduce]], select_first, expr, 0);
+    let (result, reductions) = reduce_all(expr);
+
     assert_eq!(result, Expr::Var(1));
-    assert_eq!(meta, 1);
+    assert_eq!(reductions, 1);
 }
 
 #[test]
@@ -129,9 +137,10 @@ fn nested_application() {
         )),
         Box::new(Expr::Var(2)),
     );
-    let (result, meta) = morph(vec![vec![transform_beta_reduce]], select_first, expr, 0);
+    let (result, reductions) = reduce_all(expr);
+
     assert_eq!(result, Expr::Var(2));
-    assert_eq!(meta, 2);
+    assert_eq!(reductions, 2);
 }
 
 #[test]
@@ -141,9 +150,10 @@ fn capture_avoiding_substitution() {
         Box::new(Expr::Abs(0, Box::new(Expr::Abs(1, Box::new(Expr::Var(0)))))),
         Box::new(Expr::Var(1)),
     );
-    let (result, meta) = morph(vec![vec![transform_beta_reduce]], select_first, expr, 0);
+    let (result, reductions) = reduce_all(expr);
+
     assert_eq!(result, Expr::Abs(2, Box::new(Expr::Var(1))));
-    assert_eq!(meta, 1);
+    assert_eq!(reductions, 1);
 }
 
 #[test]
@@ -153,32 +163,30 @@ fn double_reduction() {
         Box::new(Expr::Abs(0, Box::new(Expr::Abs(1, Box::new(Expr::Var(1)))))),
         Box::new(Expr::Var(2)),
     );
-    let (result, meta) = morph(vec![vec![transform_beta_reduce]], select_first, expr, 0);
+    let (result, reductions) = reduce_all(expr);
+
     assert_eq!(result, Expr::Abs(1, Box::new(Expr::Var(1))));
-    assert_eq!(meta, 1);
+    assert_eq!(reductions, 1);
 }
 
 #[test]
-fn id() {
+fn reduce_id() {
     // (\x. x) -> (\x. x)
     let expr = Expr::Abs(0, Box::new(Expr::Var(0)));
-    let (expr, meta) = morph(vec![vec![transform_beta_reduce]], select_first, expr, 0);
-    assert_eq!(expr, Expr::Abs(0, Box::new(Expr::Var(0))));
-    assert_eq!(meta, 0);
+    let (result, reductions) = reduce_all(expr);
+
+    assert_eq!(result, Expr::Abs(0, Box::new(Expr::Var(0))));
+    assert_eq!(reductions, 0);
 }
 
 #[test]
 fn no_reduction() {
     // x -> x
     let expr = Expr::Var(1);
-    let (result, meta) = morph(
-        vec![vec![transform_beta_reduce]],
-        select_first,
-        expr.clone(),
-        0,
-    );
-    assert_eq!(result, expr);
-    assert_eq!(meta, 0);
+    let (result, reductions) = reduce_all(expr);
+
+    assert_eq!(result, Expr::Var(1));
+    assert_eq!(reductions, 0);
 }
 
 #[test]
@@ -197,7 +205,8 @@ fn complex_expression() {
         )),
         Box::new(Expr::Abs(3, Box::new(Expr::Var(3)))),
     );
-    let (result, meta) = morph(vec![vec![transform_beta_reduce]], select_first, expr, 0);
+    let (result, reductions) = reduce_all(expr);
+
     assert_eq!(result, Expr::Abs(3, Box::new(Expr::Var(3))));
-    assert_eq!(meta, 3);
+    assert_eq!(reductions, 3);
 }
