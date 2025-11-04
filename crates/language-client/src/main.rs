@@ -1,9 +1,9 @@
 use std::{error::Error};
 use serde_json::json;
 
-use tower_lsp::lsp_types::request::Initialize;
-use tokio::{io::{AsyncReadExt, AsyncWriteExt}, net::TcpStream};
-use tracing_subscriber::fmt::format;
+// use tower_lsp::lsp_types::request::Initialize;
+use tokio::{io::{AsyncReadExt, AsyncWriteExt}}; //, net::TcpStream};
+// use tracing_subscriber::fmt::format;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {

@@ -1,0 +1,59 @@
+{
+    "name": "conjure-oxide-vscode",
+    "displayName": "conjure-oxide-vscode",
+    "publisher": "conjure-oxide",
+    "main": "",
+    "repository": {
+        "type": "git",
+		"url": "https://github.com/conjure-cp/conjure-oxide/tree/main/tools/vscode-ext"
+    },
+    "description": "VS Code extension for Conjure-Oxide",
+    "version": "0.1.0",
+    "engines": {
+        "vscode": "^1.22.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "activationEvents": [
+        "onLanguage:essence"
+    ],
+    "scripts": {
+        "vscode:prepublish": "npm run esbuild-base -- --minify",
+        "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=dist/main.js --external:vscode --format=cjs --platform=node",
+        "esbuild": "npm run esbuild-base -- --sourcemap",
+        "esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
+        "test-compile": "tsc -p ./",
+        "test": "echo success",
+        "deploy": "vsce publish"
+    },
+    "contributes": {
+        "languages": [
+            {
+                "id": "essence",
+                "aliases": [
+                    "essence",
+                    "Essence"
+                ],
+                "extensions": [
+                    ".essence",
+                    ".params",
+                    ".solution"
+                ],
+                "configuration": "./language-config.json"
+            }
+        ]
+    },
+    "dependencies": {
+        "vscode-languageclient": "9.0.1",
+        "compare-versions": "6.1.1",
+        "vscx": "^0.3.29"
+    },
+    "devDependencies": {
+    "@vscode/vsce": "^3.4.2",
+    "esbuild": "^0.25.5",
+    "@types/vscode": "^1.105.0",
+    "@types/node": "24.10.0",
+    "typescript": "^5.9.3"
+  }
+}
