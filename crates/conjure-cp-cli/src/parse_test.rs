@@ -6,6 +6,20 @@ use conjure_cp::parse::tree_sitter::parse_essence_file_native;
 use conjure_cp::context::Context;
 use std::sync::{Arc, RwLock};
 use std::fs;
+use serde::Deserialize;
+
+fn copy_generated_to_expected(
+    path: &str,
+    test_name: &str,
+    stage: &str,
+    extension: &str,
+) -> Result<(), std::io::Error> {
+    std::fs::copy(
+        format!("{path}/{test_name}.generated-{stage}.{extension}"),
+        format!("{path}/{test_name}.expected-{stage}.{extension}"),
+    )?;
+    Ok(())
+}
 
 
 #[derive(Clone, Debug, clap::Args)]
@@ -19,16 +33,10 @@ pub struct Args {
     pub accept: bool,
 }
 
-// struct TestConfig {
-//     extra_rewriter_asserts: Vec<String>,
-
-//     parse_model_default: bool, // Stage 1a: Reads and verifies the Essence model file
-//     enable_native_parser: bool, // Stage 1b: Runs the native parser if enabled
-
-//     enable_morph_impl: bool,
-//     enable_naive_impl: bool,
-//     enable_rewriter_impl: bool,
-// }
+#[derive(Deserialize)]
+struct TestConfig {
+    enable_native_parser: Option<bool>
+}
 
 // impl Default for TestConfig {
 //     fn default() -> Self {
@@ -70,6 +78,25 @@ pub fn run_parse_test_command(parse_test_args: Args) -> Result<()> {
         let test_dir = &essence_file.parent().unwrap().to_string_lossy();
         let essence_base = &essence_file.file_stem().unwrap().to_string_lossy();
         
+        let use_native_parser: bool =
+            if let Ok(config_contents) = fs::read_to_string(format!("{}/config.toml", test_dir)) {
+                match toml::from_str::<TestConfig>(&config_contents) {
+                    Ok(cfg) => cfg.enable_native_parser.unwrap_or(true),
+                    Err(e) => {
+                        println!("{}: Failed to parse config.toml: {}", essence_file.display(), e);
+                        true
+                    }
+                }
+
+            } else {
+                true
+            };
+        
+        if !use_native_parser {
+            println!("{}: Skipped because native parser disabled in config.toml", essence_file.display());
+            continue;
+        }
+
         // Parse the file
         let parsed_model = match std::panic::catch_unwind(|| parse_essence_file_native(path, context.clone())) {
             Ok(Ok(model)) => {
@@ -94,51 +121,43 @@ pub fn run_parse_test_command(parse_test_args: Args) -> Result<()> {
                 continue;
             }
         };
-        // println!("Parsed model: {parsed_model:#?}");
-
-        if accept {
-            match save_model_json(&parsed_model, &test_dir, &essence_base, "expected-parse") {
-                Ok(_) => passed += 1,
-                Err(e) => {
-                    println!("Failed to save expected model for {}: {}", essence_file.display(), e);
-                    failed += 1;
-                }
-            }
-        } else {
                         
-            // Create expected file path
-            // let expected_file = essence_file.with_extension("expected-parse.serialised.json");
-            match read_model_json(&context, test_dir, essence_base, "expected", "parse") {
-                Ok(_) => {
-                    // assert_eq!(parsed_model, expected_model);
-                    // let model_from_file = read_model_json(&context, test_dir, essence_base, "generated", "parse")?;
-                    match compare_json_ignoring_ids(test_dir, essence_base) {
-                        Ok(equal) => {
-                            if equal {
-                                println!("{}: Passed", &essence_file.display());
-                                passed += 1;
+        match read_model_json(&context, test_dir, essence_base, "expected", "parse") {
+            Ok(_) => {
+                // assert_eq!(parsed_model, expected_model);
+                // let model_from_file = read_model_json(&context, test_dir, essence_base, "generated", "parse")?;
+                match compare_json_ignoring_ids(test_dir, essence_base) {
+                    Ok(equal) => {
+                        if equal {
+                            println!("{}: Passed", essence_file.display());
+                            passed += 1;
+                        } else {
+                            if accept {
+                                match copy_generated_to_expected(&test_dir, &essence_base, "parse", "serialised.json") {
+                                    Ok(_) => passed += 1,
+                                    Err(e) => {
+                                        println!("Failed to save expected model for {}: {}", essence_base, e);
+                                        failed += 1;
+                                    }
+                                }
                             } else {
                                 println!("{}: Parsed model doesn't match expected", essence_file.display());
-                                // println!("Expected: {expected_model:#?}\nParsed: {parsed_model:#?}");
-                                // pretty_assertions::assert_eq!(parsed_model, expected_model);
                                 failed += 1;
                             }
                         }
-                        Err(e) => {
-                            println!("{}: Error comparing expected and generated results: {}", essence_file.display(), e);
-                            failed += 1;
-                        }
                     }
-                },
-                Err(e) => {
-                    println!("{}: Expected model could not be found: {}", &essence_file.display(), e);
-                    failed += 1;
-                    continue;
-                },
-            }
+                    Err(e) => {
+                        println!("{}: Error comparing expected and generated results: {}", essence_file.display(), e);
+                        failed += 1;
+                    }
+                }
+            },
+            Err(e) => {
+                println!("{}: Expected model could not be found: {}", essence_file.display(), e);
+                failed += 1;
+                continue;
+            },
         }
-        // println!("Expected model: {expected_model:#?}");
-        // passed += 1;
     }
 
     println!("\nParser tests: {} passed, {} failed", passed, failed);
@@ -213,11 +232,18 @@ fn compare_json_ignoring_ids(
     let gen_lines: Vec<&str> = gen_string.lines().collect();
     let exp_lines: Vec<&str> = exp_string.lines().collect();
     let max = std::cmp::min(gen_lines.len(), exp_lines.len());
+
+    let ignore_words = vec![
+        "\"Reference\":",
+        "\"id\":",
+        "\"parent\":"
+    ];
+
     for i in 0..max {
-        if gen_lines[i].contains("\"Reference\":") || gen_lines[i].contains("\"id\":") {
+        if ignore_words.iter().any(|w| gen_lines[i].contains(w) && exp_lines[i].contains(w)) {
             continue;
         }
-        // println!("{}", gen_lines[i]);
+
         if gen_lines[i] != exp_lines[i] {
             println!("\nFirst difference found at line {}", i);
             println!("Expected: {}", exp_lines[i]);
