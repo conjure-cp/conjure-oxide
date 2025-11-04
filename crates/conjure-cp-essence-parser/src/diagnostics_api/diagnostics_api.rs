@@ -1,20 +1,22 @@
-use serde::{Deserialize, Serialize}
-use tree_sitter::{Node, Point}
+use serde::{Deserialize, Serialize};
+use tree_sitter::{Node, Point};
 
-use crate::parser::util::{get_tree, named_children}
-use crate::parser::{find::parse_find_statement, letting::parse_letting_statement}
+use crate::parser::util::{get_tree, named_children};
+use crate::parser::{find::parse_find_statement, letting::parse_letting_statement};
+use crate::diagnostics_api::error_detection::syntactic_errors::detect_syntactic_errors;
+use crate::diagnostics_api::error_detection::semantic_errors::detect_semantic_errors;
 
 // structs for lsp stuff
 
 // position / range
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Position {
     pub line: u32,
     pub character: u32,
 }
 
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Range {
     pub start: Position,
@@ -22,7 +24,7 @@ pub struct Range {
 }
 
 // the actual values can be chnaged later, if needed
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub enum severity {
     Error = 1,
@@ -32,11 +34,11 @@ pub enum severity {
 }
 
 // the actual diagnostic struct
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
 pub struct Diagnostic {
     pub range: Range,
-    pub severity: Severity,
+    pub severity: severity,
     pub message: String,
     pub source: &'static str,
 }
@@ -55,7 +57,7 @@ pub enum SymbolKind {
 
 // each type of token / symbol in the essence grammar will be
 // assigned an integer, which would be mapped to a colour
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DocumentSymbol {
     pub name: String,
@@ -76,7 +78,7 @@ pub fn get_diagnostics(source: &str) -> Vec<Diagnostic> {
         // syntactic error detection from error-detection/syntactic-errors.rs
         diagnostics.extend(detect_syntactic_errors(source)); // not implemented yet
 
-    }
+    
     diagnostics
 }
 

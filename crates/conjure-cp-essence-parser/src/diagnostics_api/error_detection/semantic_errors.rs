@@ -1,6 +1,6 @@
 // Basic syntactic error detection helpers for the LSP API.
 
-use crate::lsp_api::{Diagnostic, Position, Range, severity};
+use crate::diagnostics_api::diagnostics_api::{Diagnostic, Position, Range, severity};
 
 /// Detects very simple semantic issues in source and returns a vector
 /// of Diagnostics.
