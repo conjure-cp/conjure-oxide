@@ -637,6 +637,19 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 _ => None,
             }
         }
+        Expr::SATInt(_, _) => None,
+        Expr::PairwiseSum(_, a, b) => {
+            match ((**a).clone().into_literal()?, (**b).clone().into_literal()?) {
+                (Lit::Int(a_int), Lit::Int(b_int)) => Some(Lit::Int(a_int + b_int)),
+                _ => None,
+            }
+        }
+        Expr::PairwiseProduct(_, a, b) => {
+            match ((**a).clone().into_literal()?, (**b).clone().into_literal()?) {
+                (Lit::Int(a_int), Lit::Int(b_int)) => Some(Lit::Int(a_int * b_int)),
+                _ => None,
+            }
+        }
     }
 }
 
