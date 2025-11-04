@@ -11,4 +11,4 @@ used directly.**
 This project is licenced under the [Mozilla Public Licence
 2.0](https://www.mozilla.org/en-US/MPL/2.0/).
 
-[conjure-cp]: https://github.com/conjure-cp/conjure-oxide/crates/conjure-cp
+[conjure-cp]: https://github.com/conjure-cp/conjure-oxide/tree/main/crates/conjure-cp/
