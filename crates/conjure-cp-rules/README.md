@@ -5,11 +5,11 @@ Rewrite rules for `conjure-oxide`.
 ### Usage
 
 To use these rules with the [`conjure-oxide`
-CLI](https://github.com/conjure-cp/conjure-oxide/crates/conjure-cp-cli), no
+CLI](https://github.com/conjure-cp/conjure-oxide/tree/main/crates/conjure-cp-cli), no
 further installation is needed.
 
 To use these rules with
-[`conjure-cp`](https://github.com/conjure-cp/conjure-oxide/crates/conjure-cp),
+[`conjure-cp`](https://github.com/conjure-cp/conjure-oxide/tree/main/crates/conjure-cp),
 first add `conjure-cp-rules` to your `Cargo.toml`:
 
 ```toml
