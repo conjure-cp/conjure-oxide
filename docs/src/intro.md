@@ -23,4 +23,4 @@ St Andrews, but we also welcome outside contributors; for more information see
 
 ## Licence
 
-The Conjure Oxide source and documentation are released under the [Mozilla Public Licence v2.0](https://github.com/conjure-cp/conjure-oxide/blob/main/LICENCE).
+The Conjure Oxide source and documentation are released under the [Mozilla Public Licence v2.0](https://github.com/conjure-cp/conjure-oxide/blob/main/LICENSE).
