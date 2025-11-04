@@ -15,12 +15,15 @@ pub fn parse_essence_file(
         .output()
     {
         Ok(output) => output,
-        Err(e) => return Err(EssenceParseError::ConjurePrettyError(e.to_string())),
+        Err(e) => {
+            return Err(EssenceParseError::ConjurePrettyError(e.to_string()))
+        },
     };
 
     if !output.status.success() {
         let stderr_string = String::from_utf8(output.stderr)
             .unwrap_or("stderr is not a valid UTF-8 string".to_string());
+        println!("HERE 2");
         return Err(EssenceParseError::ConjurePrettyError(stderr_string));
     }
 
