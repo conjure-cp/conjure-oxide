@@ -4,7 +4,10 @@
 ## API Documentation
 
  + [conjure-cp](https://conjure-cp.github.io/conjure-oxide/docs/conjure_cp/index.html)
+<!--- This link seems to be dead. Cannot find an equivalent on the docs --->
+<!-- md-dead-link-check: off -->
  + [tree-morph](https://conjure-cp.github.io/conjure-oxide/docs/tree_morph/index.html)
+ <!-- md-dead-link-check: on -->
  + [minion-sys](https://conjure-cp.github.io/conjure-oxide/docs/minion_sys/index.html)
 
 ### Internal crates
