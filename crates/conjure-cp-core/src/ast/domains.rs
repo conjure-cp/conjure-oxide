@@ -146,7 +146,7 @@ impl Domain {
             Domain::Ternary => match lit {
                 Literal::Ternary(_) => todo!(),
                 _ => Ok(false),
-            }
+            },
             Domain::Int(ranges) => match lit {
                 Literal::Int(x) => {
                     // unconstrained int domain - contains all integers
@@ -1040,7 +1040,7 @@ impl Typeable for Domain {
             Domain::Empty(return_type) => Some(return_type.clone()),
             Domain::Set(_, domain) => Some(ReturnType::Set(Box::new(domain.return_type()?))),
             Domain::Reference(_) => None,
-                        Domain::Matrix(item_domain, index_domains) => {
+            Domain::Matrix(item_domain, index_domains) => {
                 assert!(
                     !index_domains.is_empty(),
                     "a matrix should have atleast one dimension"

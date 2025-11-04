@@ -190,7 +190,7 @@ fn domain_needs_representation(domain: &Domain) -> bool {
         // Domain::Matrix(_, _) => false,
         Domain::Set(_, _) | Domain::Tuple(_) | Domain::Record(_) => true,
         Domain::Reference(_) => unreachable!("domain should be resolved"),
-        _ => false
+        _ => false,
     }
 }
 

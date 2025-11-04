@@ -15,7 +15,9 @@ use super::domains::HasDomain;
 use super::{Atom, Domain, Expression, Range, records::RecordValue};
 use super::{Moo, ReturnType, SetAttr, Typeable};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash, Quine, Default)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash, Quine, Default,
+)]
 #[uniplate(walk_into=[AbstractLiteral<Literal>, TernaryVal])]
 #[biplate(to=Atom)]
 #[biplate(to=AbstractLiteral<Literal>)]
@@ -24,9 +26,8 @@ use super::{Moo, ReturnType, SetAttr, Typeable};
 #[biplate(to=RecordValue<Expression>)]
 #[biplate(to=Expression)]
 #[path_prefix(conjure_cp::ast)]
-
 // ternary type, maybe pub not needed
-/// A Ternary Value Type used for a 
+// A Ternary Value Type used for a
 pub enum TernaryVal {
     /// Positive assignment.
     True,
@@ -56,7 +57,6 @@ impl Display for TernaryVal {
 #[biplate(to=RecordValue<Expression>)]
 #[biplate(to=Expression)]
 #[path_prefix(conjure_cp::ast)]
-
 /// A literal value, equivalent to constants in Conjure.
 pub enum Literal {
     Int(i32),
@@ -426,7 +426,7 @@ impl TryFrom<Literal> for i32 {
 
 impl TryFrom<&Literal> for i32 {
     type Error = &'static str;
-    
+
     fn try_from(value: &Literal) -> Result<Self, Self::Error> {
         match value {
             Literal::Int(i) => Ok(*i),
