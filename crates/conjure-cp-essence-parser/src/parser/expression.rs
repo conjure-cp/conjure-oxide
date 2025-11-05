@@ -1,5 +1,6 @@
 use crate::errors::EssenceParseError;
 use crate::parser::atom::parse_atom;
+use crate::parser::comprehension::parse_quantifier_expr;
 use crate::{field, named_child};
 use conjure_cp_core::ast::{Expression, Metadata, Moo, SymbolTable};
 use conjure_cp_core::{domain_int, matrix_expr, range};
@@ -95,7 +96,12 @@ fn parse_boolean_expression(
         "and_expr" | "or_expr" | "implication" | "iff_expr" | "set_operation_bool" => {
             parse_binary_expression(&inner, source_code, root, symbols_ptr)
         }
-        "list_combining_expr_bool" => parse_list_combining_expression(&inner, source_code, root, symbols_ptr),
+        "list_combining_expr_bool" => {
+            parse_list_combining_expression(&inner, source_code, root, symbols_ptr)
+        }
+        "quantifier_expr" => {
+            parse_quantifier_expr(&inner, source_code, root, symbols_ptr)
+        }
         _ => Err(EssenceParseError::syntax_error(
             format!("Expected boolean expression, found '{}'", inner.kind()),
             Some(inner.range()),

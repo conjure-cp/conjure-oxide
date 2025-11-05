@@ -125,7 +125,7 @@ fn parse_record_domain(
     Ok(Domain::Record(record_entries))
 }
 
-fn parse_set_domain(set_domain: Node, source_code: &str) -> Result<Domain, EssenceParseError> {
+pub fn parse_set_domain(set_domain: Node, source_code: &str) -> Result<Domain, EssenceParseError> {
     let mut set_attribute: Option<SetAttr> = None;
     let mut value_domain: Option<Domain> = None;
 
