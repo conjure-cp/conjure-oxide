@@ -34,6 +34,7 @@ pub use domains::SetAttr;
 pub use expressions::Expression;
 pub use literals::AbstractLiteral;
 pub use literals::Literal;
+pub use literals::TernaryVal;
 pub use metadata::Metadata;
 pub use model::*;
 pub use name::Name;

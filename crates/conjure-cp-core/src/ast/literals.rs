@@ -26,6 +26,8 @@ use super::{Moo, ReturnType, SetAttr, Typeable};
 #[biplate(to=RecordValue<Expression>)]
 #[biplate(to=Expression)]
 #[path_prefix(conjure_cp::ast)]
+
+
 /// A Ternary Value Type used for assignment of truth-value literals in SAT problems
 /// DontCare is passed when the value of some literal does not affect the solution of the constraint problem
 pub enum TernaryVal {
