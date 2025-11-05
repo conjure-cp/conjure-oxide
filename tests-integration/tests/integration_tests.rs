@@ -437,14 +437,12 @@ fn integration_test_inner(
     }
 
     // Check Stage 1: Compare parsed model with expected
-    if !accept {
-        let expected_model = read_model_json(&context, path, essence_base, "expected", "parse")?;
-        let model_from_file = read_model_json(&context, path, essence_base, "generated", "parse")?;
-        assert_eq!(model_from_file, expected_model);
-    }
+    let expected_model = read_model_json(&context, path, essence_base, "expected", "parse")?;
+    let model_from_file = read_model_json(&context, path, essence_base, "generated", "parse")?;
+    assert_eq!(model_from_file, expected_model);
 
     // Check Stage 2a (rewritten model)
-    if config.apply_rewrite_rules && !accept {
+    if config.apply_rewrite_rules {
         let expected_model = read_model_json(&context, path, essence_base, "expected", "rewrite")?;
         let generated_model = read_model_json(&context, path, essence_base, "generated", "rewrite")?;
         assert_eq!(generated_model, expected_model);
@@ -471,7 +469,7 @@ fn integration_test_inner(
     // Stage 4a: Check that the generated rules trace matches the expected.
     // We don't check rule trace when morph is enabled.
     // TODO: Implement rule trace validation for morph
-    if config.validate_rule_traces && !config.enable_morph_impl && !accept {
+    if config.validate_rule_traces && !config.enable_morph_impl {
         let generated = read_human_rule_trace(path, essence_base, "generated")?;
         let expected = read_human_rule_trace(path, essence_base, "expected")?;
 
