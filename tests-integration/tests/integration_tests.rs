@@ -392,7 +392,7 @@ fn integration_test_inner(
     };
 
     // Stage 3b: Check solutions against Conjure (only if explicitly enabled)
-    if config.compare_solver_solutions || accept && config.num_solvers_enabled() > 0 {
+    if config.compare_solver_solutions && config.num_solvers_enabled() > 0 {
         let conjure_solutions: Vec<BTreeMap<Name, Literal>> = get_solutions_from_conjure(
             &format!("{path}/{essence_base}.{extension}"),
             Arc::clone(&context),
@@ -417,7 +417,7 @@ fn integration_test_inner(
     // When ACCEPT=true, copy all generated files to expected
     if accept {
         copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
-        
+
         if config.apply_rewrite_rules {
             copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json")?;
         }
@@ -444,7 +444,8 @@ fn integration_test_inner(
     // Check Stage 2a (rewritten model)
     if config.apply_rewrite_rules {
         let expected_model = read_model_json(&context, path, essence_base, "expected", "rewrite")?;
-        let generated_model = read_model_json(&context, path, essence_base, "generated", "rewrite")?;
+        let generated_model =
+            read_model_json(&context, path, essence_base, "generated", "rewrite")?;
         assert_eq!(generated_model, expected_model);
     }
 
