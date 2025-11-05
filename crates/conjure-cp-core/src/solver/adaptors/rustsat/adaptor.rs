@@ -10,7 +10,7 @@ use clap::error;
 use minion_sys::ast::{Model, Tuple};
 use rustsat::encodings::am1::Def;
 use rustsat::solvers::{Solve, SolverResult};
-use rustsat::types::{Assignment, Clause, Lit, TernaryVal, Var as satVar};
+use rustsat::types::{Assignment, Clause, Lit, TernaryVal as RustSatTernary, Var as satVar};
 use std::collections::{BTreeMap, HashMap};
 use std::result::Result::Ok;
 use tracing_subscriber::filter::DynFilterFn;
@@ -21,7 +21,7 @@ use crate::ast::Domain::{Bool, Int};
 use rustsat_minisat::core::Minisat;
 
 use crate::ast::Metadata;
-use crate::ast::{Atom, Expression, Literal, Name};
+use crate::ast::{Atom, Expression, Literal, TernaryVal, Name};
 use crate::solver::SearchComplete::NoSolutions;
 use crate::solver::adaptors::rustsat::convs::handle_cnf;
 use crate::solver::{
@@ -79,9 +79,9 @@ fn get_ref_sols(
         solution.insert(
             reference,
             match sol[lit.var()] {
-                TernaryVal::True => Literal::Int(1),
-                TernaryVal::False => Literal::Int(0),
-                TernaryVal::DontCare => Literal::Int(2),
+                RustSatTernary::True => Literal::Int(1),
+                RustSatTernary::False => Literal::Int(0),
+                RustSatTernary::DontCare => Literal::Ternary(TernaryVal::DontCare),
             },
         );
     }
@@ -273,8 +273,8 @@ fn enumerate_all_solutions(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name
     tracing::info!("Enumerating");
     for (key, val) in solution.clone() {
         match val {
-            Literal::Int(a) => {
-                if (a == 2) {
+            Literal::Ternary(a) => {
+                if (a == TernaryVal::DontCare) {
                     return enumerate_solution(solution);
                 } else {
                     continue;
@@ -283,6 +283,7 @@ fn enumerate_all_solutions(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name
             _ => continue,
         }
     }
+    println!("{:?}", solution);
     vec![solution]
 }
 
@@ -298,11 +299,10 @@ fn enumerate_solution(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Lit
 
     for (key, val) in solution {
         let v = match val {
-            Literal::Int(i) => i,
-            _ => bug!("Only Integers expected at this time"),
+            Literal::Ternary(i) => i,
+            _ => bug!("Only Ternary values are expected at this time"),
         };
-        if v == 2 {
-            // anytime the value is 2 (dont-care in the ternary system used by rustsat), add the
+        if v == TernaryVal::DontCare {
             // key to a vector of dontcare values
             dont_cares.push(key);
         } else {
@@ -332,7 +332,6 @@ fn enumerate_solution(solution: HashMap<Name, Literal>) -> Vec<HashMap<Name, Lit
         }
         sols.push(d);
     }
-
     for i in dont_cares {
         solutions_inclusive.insert(i, Literal::Int(1));
     }
