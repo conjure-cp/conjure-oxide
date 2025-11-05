@@ -1,12 +1,12 @@
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt::Debug;
-use std::vec;
+use std::{io, vec};
 
 use conjure_cp::ast::records::RecordValue;
 use conjure_cp::bug;
 use itertools::Itertools as _;
 use std::fs::File;
-use std::fs::{OpenOptions, read_to_string};
+use std::fs::OpenOptions;
 use std::hash::Hash;
 use std::io::Write;
 use std::sync::{Arc, RwLock};
@@ -58,7 +58,7 @@ fn replace_ids(value: &mut JsonValue, id_map: &HashMap<u64, u64>) {
         JsonValue::Object(map) => {
             // Replace IDs in both "id" fields (SymbolTable IDs) and "ptr" fields (DeclarationPtr IDs)
             for (k, v) in map.iter_mut() {
-                if (k == "id" || k == "ptr")
+                if (k == "id" || k == "ptr" || k == "parent")
                     && let JsonValue::Number(n) = v
                     && let Some(id) = n.as_u64()
                     && let Some(&stable_id) = id_map.get(&id)
@@ -107,6 +107,8 @@ pub fn serialize_model(model: &ConjureModel) -> Result<String, JsonError> {
 
     // Convert to JSON with stable IDs
     let json_with_stable_ids = model_tojson_with_stable_ids(&serde_model)?;
+    // let json_with_stable_ids = serde_json::to_value(serde_model)?;
+    println!("{}", json_with_stable_ids);
 
     // Sort JSON object keys for consistent output
     let sorted_json = sort_json_object(&json_with_stable_ids, false);
@@ -145,6 +147,11 @@ pub fn save_stats_json(
     Ok(())
 }
 
+fn read_with_path(path: String) -> Result<String, std::io::Error> {
+    std::fs::read_to_string(&path)
+        .map_err(|e| io::Error::new(e.kind(), format!("{} (path: {})", e, path)))
+}
+
 pub fn read_model_json(
     ctx: &Arc<RwLock<Context<'static>>>,
     path: &str,
@@ -152,7 +159,7 @@ pub fn read_model_json(
     prefix: &str,
     test_stage: &str,
 ) -> Result<ConjureModel, std::io::Error> {
-    let expected_json_str = std::fs::read_to_string(format!(
+    let expected_json_str = read_with_path(format!(
         "{path}/{test_name}.{prefix}-{test_stage}.serialised.json"
     ))?;
     println!("{path}/{test_name}.{prefix}-{test_stage}.serialised.json");
@@ -233,7 +240,7 @@ pub fn read_solutions_json(
         SolverFamily::Minion => "minion",
     };
 
-    let expected_json_str = std::fs::read_to_string(format!(
+    let expected_json_str = read_with_path(format!(
         "{path}/{test_name}.{prefix}-{solver_name}.solutions.json"
     ))?;
 
@@ -251,7 +258,7 @@ pub fn read_rule_trace(
     prefix: &str,
 ) -> Result<Vec<String>, std::io::Error> {
     let filename = format!("{path}/{test_name}-{prefix}-rule-trace.json");
-    let mut rules_trace: Vec<String> = read_to_string(&filename)?
+    let mut rules_trace: Vec<String> = read_with_path(filename.clone())?
         .lines()
         .map(String::from)
         .collect();
@@ -270,7 +277,7 @@ pub fn read_rule_trace(
         let mut file = OpenOptions::new()
             .write(true)
             .truncate(true)
-            .open(&filename)?;
+            .open(filename)?;
         writeln!(file, "{}", rules_trace.join("\n"))?;
     }
 
@@ -284,7 +291,7 @@ pub fn read_human_rule_trace(
     prefix: &str,
 ) -> Result<Vec<String>, std::io::Error> {
     let filename = format!("{path}/{test_name}-{prefix}-rule-trace-human.txt");
-    let rules_trace: Vec<String> = read_to_string(&filename)?
+    let rules_trace: Vec<String> = read_with_path(filename)?
         .lines()
         .map(String::from)
         .collect();

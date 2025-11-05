@@ -1,5 +1,4 @@
 #![allow(clippy::expect_used)]
-use conjure_cp::ast::SymbolTable;
 use conjure_cp::bug;
 use conjure_cp::rule_engine::get_rules_grouped;
 
@@ -319,12 +318,12 @@ fn integration_test_inner(
                 .map(|(_, rule)| rule.into_iter().map(|f| f.rule).collect_vec())
                 .collect_vec();
 
-            let (expr, symbol_table): (Expression, SymbolTable) = morph(
-                rules_grouped,
-                select_panic,
-                submodel.root().clone(),
-                submodel.symbols().clone(),
-            );
+            let engine = EngineBuilder::new()
+                .set_selector(select_panic)
+                .append_rule_groups(rules_grouped)
+                .build();
+            let (expr, symbol_table) =
+                engine.morph(submodel.root().clone(), submodel.symbols().clone());
 
             *submodel.symbols_mut() = symbol_table;
             submodel.replace_root(expr);
@@ -555,7 +554,6 @@ fn integration_test_inner(
             }
         }
     }
-
     // Check Stage 3a (solutions)
     if config.solve_with_minion {
         let expected_solutions_json =
