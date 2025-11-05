@@ -5,6 +5,8 @@ last-updated: 05-11-25
 
 <!-- TODO edit more -->
 
+# Semantics of Rewriting Expressions with Side‐Effects
+
 ## Overview
 
 ---
