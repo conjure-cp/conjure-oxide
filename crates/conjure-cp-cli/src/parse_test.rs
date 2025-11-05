@@ -21,7 +21,6 @@ fn copy_generated_to_expected(
     Ok(())
 }
 
-
 #[derive(Clone, Debug, clap::Args)]
 pub struct Args {
     /// The Essence test directory
@@ -37,19 +36,6 @@ pub struct Args {
 struct TestConfig {
     enable_native_parser: Option<bool>
 }
-
-// impl Default for TestConfig {
-//     fn default() -> Self {
-//         Self {
-//             extra_rewriter_asserts: vec!["vector_operators_have_partially_evaluated".into()],
-//             enable_naive_impl: true,
-//             enable_morph_impl: false,
-//             enable_rewriter_impl: true,
-//             parse_model_default: true,
-//             enable_native_parser: true,
-//         }
-//     }
-// }
 
 pub fn run_parse_test_command(parse_test_args: Args) -> Result<()> {
 
@@ -98,7 +84,7 @@ pub fn run_parse_test_command(parse_test_args: Args) -> Result<()> {
         }
 
         // Parse the file
-        let parsed_model = match std::panic::catch_unwind(|| parse_essence_file_native(path, context.clone())) {
+        match std::panic::catch_unwind(|| parse_essence_file_native(path, context.clone())) {
             Ok(Ok(model)) => {
                 save_model_json(&model, &test_dir, &essence_base, "parse")?;
                 model
@@ -191,8 +177,6 @@ fn find_essence_files_recursive_helper(dir: &PathBuf, essence_files: &mut Vec<Pa
     
     Ok(())
 }
-
-// TODO: check if id is the only thing wrong with the models
 
 fn compare_json_ignoring_ids(
     test_dir: &str, 
