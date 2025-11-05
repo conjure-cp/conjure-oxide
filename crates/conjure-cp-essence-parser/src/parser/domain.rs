@@ -1,29 +1,31 @@
 use super::util::named_children;
 use crate::EssenceParseError;
-use conjure_cp_core::ast::{Domain, Name, Range, RecordEntry, SetAttr};
+use conjure_cp_core::ast::{Domain, Name, Range, RecordEntry, SetAttr, SymbolTable};
 use std::str::FromStr;
 use tree_sitter::Node;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 /// Parse an Essence variable domain into its Conjure AST representation.
-pub fn parse_domain(domain: Node, source_code: &str) -> Result<Domain, EssenceParseError> {
+pub fn parse_domain(domain: Node, source_code: &str, symbols_ptr: Option<Rc<RefCell<SymbolTable>>>) -> Result<Domain, EssenceParseError> {
     match domain.kind() {
-        "domain" => parse_domain(domain.child(0).expect("No domain found"), source_code),
+        "domain" => parse_domain(domain.child(0).expect("No domain found"), source_code, symbols_ptr),
         "bool_domain" => Ok(Domain::Bool),
-        "int_domain" => Ok(parse_int_domain(domain, source_code)),
+        "int_domain" => Ok(parse_int_domain(domain, source_code, symbols_ptr)),
         "identifier" => {
             let variable_name = &source_code[domain.start_byte()..domain.end_byte()];
             Ok(Domain::Reference(Name::user(variable_name)))
         }
-        "tuple_domain" => parse_tuple_domain(domain, source_code),
-        "matrix_domain" => parse_matrix_domain(domain, source_code),
-        "record_domain" => parse_record_domain(domain, source_code),
-        "set_domain" => parse_set_domain(domain, source_code),
+        "tuple_domain" => parse_tuple_domain(domain, source_code, symbols_ptr),
+        "matrix_domain" => parse_matrix_domain(domain, source_code, symbols_ptr),
+        "record_domain" => parse_record_domain(domain, source_code, symbols_ptr),
+        "set_domain" => parse_set_domain(domain, source_code, symbols_ptr),
         _ => panic!("{} is not a supported domain type", domain.kind()),
     }
 }
 
 /// Parse an integer domain. Can be a single integer or a range.
-fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
+fn parse_int_domain(int_domain: Node, source_code: &str, symbols_ptr: Option<Rc<RefCell<SymbolTable>>>) -> Domain {
     if int_domain.child_count() == 1 {
         Domain::Int(vec![Range::Bounded(i32::MIN, i32::MAX)])
     } else {
@@ -75,7 +77,7 @@ fn parse_int_domain(int_domain: Node, source_code: &str) -> Domain {
     }
 }
 
-fn parse_tuple_domain(tuple_domain: Node, source_code: &str) -> Result<Domain, EssenceParseError> {
+fn parse_tuple_domain(tuple_domain: Node, source_code: &str, symbols_ptr: Option<Rc<RefCell<SymbolTable>>>) -> Result<Domain, EssenceParseError> {
     let mut domains: Vec<Domain> = Vec::new();
     for domain in named_children(&tuple_domain) {
         domains.push(parse_domain(domain, source_code)?);
@@ -86,6 +88,7 @@ fn parse_tuple_domain(tuple_domain: Node, source_code: &str) -> Result<Domain, E
 fn parse_matrix_domain(
     matrix_domain: Node,
     source_code: &str,
+    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<Domain, EssenceParseError> {
     let mut domains: Vec<Domain> = Vec::new();
     let index_domain_list = matrix_domain
@@ -109,6 +112,7 @@ fn parse_matrix_domain(
 fn parse_record_domain(
     record_domain: Node,
     source_code: &str,
+    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<Domain, EssenceParseError> {
     let mut record_entries: Vec<RecordEntry> = Vec::new();
     for record_entry in named_children(&record_domain) {
@@ -125,7 +129,7 @@ fn parse_record_domain(
     Ok(Domain::Record(record_entries))
 }
 
-fn parse_set_domain(set_domain: Node, source_code: &str) -> Result<Domain, EssenceParseError> {
+fn parse_set_domain(set_domain: Node, source_code: &str, symbols_ptr: Option<Rc<RefCell<SymbolTable>>>) -> Result<Domain, EssenceParseError> {
     let mut set_attribute: Option<SetAttr> = None;
     let mut value_domain: Option<Domain> = None;
 
