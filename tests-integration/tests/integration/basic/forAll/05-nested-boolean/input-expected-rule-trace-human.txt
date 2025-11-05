@@ -1,0 +1,189 @@
+Model before rewriting:
+
+find result: bool
+
+such that
+
+(result = and([given n: int(1..3)
+
+such that
+
+and([(n > 0),(n < 10);int(1..2)])
+ | n: int(1..3),]))
+
+--
+
+(result = and([given n: int(1..3)
+
+such that
+
+and([(n > 0),(n < 10);int(1..2)])
+ | n: int(1..3),])), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(and([given n: int(1..3)
+
+such that
+
+and([(n > 0),(n < 10);int(1..2)])
+ | n: int(1..3),]), result) 
+
+--
+
+Model before rewriting:
+
+find n: int(1..3)
+
+such that
+
+(true != and([(n > 0),(n < 10);int(1..2)]))
+
+--
+
+(n > 0), 
+   ~~> gt_to_geq ([("Minion", 8400)]) 
+(sum([n,-1;int(1..)]) >= 0) 
+
+--
+
+(n < 10), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(n <= sum([10,-1;int(1..)])) 
+
+--
+
+(true != and([(sum([n,-1;int(1..)]) >= 0),(n <= sum([10,-1;int(1..)]));int(1..2)])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(true != and([(sum([n,-1;int(1..)]) >= 0),(n <= 9);int(1..2)])) 
+
+--
+
+(sum([n,-1;int(1..)]) >= 0), 
+   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4800)]) 
+Ineq(0, n, -1) 
+
+--
+
+(true != and([Ineq(0, n, -1),(n <= 9);int(1..2)])), 
+   ~~> flatten_generic ([("Minion", 4200)]) 
+(true != __0) 
+new variables:
+  find __0: bool
+new constraints:
+  __0 =aux and([Ineq(0, n, -1),(n <= 9);int(1..2)])
+--
+
+__0 =aux and([Ineq(0, n, -1),(n <= 9);int(1..2)]), 
+   ~~> bool_eq_to_reify ([("Minion", 4400)]) 
+Reify(and([Ineq(0, n, -1),(n <= 9);int(1..2)]), __0) 
+
+--
+
+(n <= 9), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 9, 0) 
+
+--
+
+and([Ineq(0, n, -1),Ineq(n, 9, 0);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+and([Ineq(0, n, -1),Ineq(n, 9, 0);int(1..)]) 
+
+--
+
+Final model:
+
+find n: int(1..3)
+find __0: bool
+
+such that
+
+(true != __0),
+Reify(and([Ineq(0, n, -1),Ineq(n, 9, 0);int(1..)]), __0)
+
+Model before rewriting:
+
+given n: int(1..3)
+
+such that
+
+and([(n > 0),(n < 10);int(1..2)])
+
+--
+
+(n > 0), 
+   ~~> gt_to_geq ([("Minion", 8400)]) 
+(sum([n,-1;int(1..)]) >= 0) 
+
+--
+
+(n < 10), 
+   ~~> lt_to_leq ([("Minion", 8400)]) 
+(n <= sum([10,-1;int(1..)])) 
+
+--
+
+and([(sum([n,-1;int(1..)]) >= 0),(n <= sum([10,-1;int(1..)]));int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+and([(sum([n,-1;int(1..)]) >= 0),(n <= 9);int(1..2)]) 
+
+--
+
+(sum([n,-1;int(1..)]) >= 0), 
+   ~~> y_plus_k_geq_x_to_ineq ([("Minion", 4800)]) 
+Ineq(0, n, -1) 
+
+--
+
+(n <= 9), 
+   ~~> leq_to_ineq ([("Minion", 4100)]) 
+Ineq(n, 9, 0) 
+
+--
+
+and([Ineq(0, n, -1),Ineq(n, 9, 0);int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+and([Ineq(0, n, -1),Ineq(n, 9, 0);int(1..)]) 
+
+--
+
+and([Ineq(0, n, -1),Ineq(n, 9, 0);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+Ineq(0, n, -1),
+Ineq(n, 9, 0) 
+
+--
+
+Final model:
+
+given n: int(1..3)
+
+such that
+
+Ineq(0, n, -1),
+Ineq(n, 9, 0)
+
+and([given n: int(1..3)
+
+such that
+
+and([(n > 0),(n < 10);int(1..2)])
+ | n: int(1..3),__0: bool,]), 
+   ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
+and([;int(1..)]) 
+
+--
+
+Reify(and([;int(1..)]), result), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+Reify(true, result) 
+
+--
+
+Final model:
+
+find result: bool
+
+such that
+
+Reify(true, result)
+
