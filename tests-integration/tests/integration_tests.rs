@@ -80,7 +80,7 @@ impl Default for TestConfig {
             apply_rewrite_rules: true,
             enable_extra_validation: false,
             solve_with_minion: true,
-            compare_solver_solutions: false,
+            compare_solver_solutions: true,
             validate_rule_traces: true,
         }
     }
