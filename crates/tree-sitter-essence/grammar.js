@@ -77,7 +77,6 @@ module.exports = grammar ({
       field("matrix_domain", $.matrix_domain),
       field("record_domain", $.record_domain),
       field("set_domain", $.set_domain),
-      field("set_domain", $.set_domain),
     ),
     bool_domain: $ => "bool",
 
@@ -123,13 +122,11 @@ module.exports = grammar ({
       "}"
     ),
 
-    set_domain: $ => choice(
-      seq(
+    set_domain: $ => seq(
         "set",
         optional(seq("(", $.set_attributes, ")")),
         "of",
         field("value_domain", $.domain)
-      )
     ),
 
     set_attributes: $ => choice(
@@ -227,9 +224,9 @@ module.exports = grammar ({
 
     quantifier_expr: $ => prec(-5, seq(
       field("quantifier", choice("forAll", "exists")),
-      field("variable", $.identifier),
+      field("variables", commaSep1($.identifier)),
       choice(
-        seq("in", field("set", $.arithmetic_expr)),
+        seq("in", field("collection", choice($.set_literal, $.matrix, $.tuple, $.record, $.identifier, $.tuple_matrix_record_index_or_slice))),
         seq(":", field("domain", $.domain))
       ),
       ".",

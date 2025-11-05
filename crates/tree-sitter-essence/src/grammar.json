@@ -635,14 +635,6 @@
             "type": "SYMBOL",
             "name": "set_domain"
           }
-        },
-        {
-          "type": "FIELD",
-          "name": "set_domain",
-          "content": {
-            "type": "SYMBOL",
-            "name": "set_domain"
-          }
         }
       ]
     },
@@ -982,53 +974,48 @@
       ]
     },
     "set_domain": {
-      "type": "CHOICE",
+      "type": "SEQ",
       "members": [
         {
-          "type": "SEQ",
+          "type": "STRING",
+          "value": "set"
+        },
+        {
+          "type": "CHOICE",
           "members": [
             {
-              "type": "STRING",
-              "value": "set"
-            },
-            {
-              "type": "CHOICE",
+              "type": "SEQ",
               "members": [
                 {
-                  "type": "SEQ",
-                  "members": [
-                    {
-                      "type": "STRING",
-                      "value": "("
-                    },
-                    {
-                      "type": "SYMBOL",
-                      "name": "set_attributes"
-                    },
-                    {
-                      "type": "STRING",
-                      "value": ")"
-                    }
-                  ]
+                  "type": "STRING",
+                  "value": "("
                 },
                 {
-                  "type": "BLANK"
+                  "type": "SYMBOL",
+                  "name": "set_attributes"
+                },
+                {
+                  "type": "STRING",
+                  "value": ")"
                 }
               ]
             },
             {
-              "type": "STRING",
-              "value": "of"
-            },
-            {
-              "type": "FIELD",
-              "name": "value_domain",
-              "content": {
-                "type": "SYMBOL",
-                "name": "domain"
-              }
+              "type": "BLANK"
             }
           ]
+        },
+        {
+          "type": "STRING",
+          "value": "of"
+        },
+        {
+          "type": "FIELD",
+          "name": "value_domain",
+          "content": {
+            "type": "SYMBOL",
+            "name": "domain"
+          }
         }
       ]
     },
@@ -1863,10 +1850,51 @@
           },
           {
             "type": "FIELD",
-            "name": "variable",
+            "name": "variables",
             "content": {
-              "type": "SYMBOL",
-              "name": "identifier"
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "SYMBOL",
+                  "name": "identifier"
+                },
+                {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "REPEAT",
+                      "content": {
+                        "type": "SEQ",
+                        "members": [
+                          {
+                            "type": "STRING",
+                            "value": ","
+                          },
+                          {
+                            "type": "SYMBOL",
+                            "name": "identifier"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "type": "BLANK"
+                    }
+                  ]
+                },
+                {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "STRING",
+                      "value": ","
+                    },
+                    {
+                      "type": "BLANK"
+                    }
+                  ]
+                }
+              ]
             }
           },
           {
@@ -1881,10 +1909,35 @@
                   },
                   {
                     "type": "FIELD",
-                    "name": "set",
+                    "name": "collection",
                     "content": {
-                      "type": "SYMBOL",
-                      "name": "arithmetic_expr"
+                      "type": "CHOICE",
+                      "members": [
+                        {
+                          "type": "SYMBOL",
+                          "name": "set_literal"
+                        },
+                        {
+                          "type": "SYMBOL",
+                          "name": "matrix"
+                        },
+                        {
+                          "type": "SYMBOL",
+                          "name": "tuple"
+                        },
+                        {
+                          "type": "SYMBOL",
+                          "name": "record"
+                        },
+                        {
+                          "type": "SYMBOL",
+                          "name": "identifier"
+                        },
+                        {
+                          "type": "SYMBOL",
+                          "name": "tuple_matrix_record_index_or_slice"
+                        }
+                      ]
                     }
                   }
                 ]
