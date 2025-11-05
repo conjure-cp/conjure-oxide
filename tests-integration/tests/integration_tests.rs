@@ -485,26 +485,31 @@ fn integration_test_inner(
     // Check Stage 2a (rewritten model)
     if config.apply_rewrite_rules {
         let expected_model = read_model_json(&context, path, essence_base, "expected", "rewrite");
+        let generated_model = read_model_json(&context, path, essence_base, "generated", "rewrite");
+        
         // A JSON reading error could just mean that the ast has changed since the file was
         // generated.
         //
         // When ACCEPT=true, regenerate the json instead of failing the test.
-        match expected_model {
-            Err(_) if accept => {
+        match (expected_model, generated_model) {
+            (Err(_), _) | (_, Err(_)) if accept => {
                 rewritten_model_dirty = true;
             }
-            Err(e) => {
+
+            (Err(e), _) => {
                 return Err(Box::new(e));
             }
-            Ok(expected_model) => {
-                let rewritten_model =
-                    rewritten_model.expect("Rewritten model must be present in 2a");
 
-                if accept {
-                    rewritten_model_dirty = rewritten_model != expected_model;
-                } else {
-                    assert_eq!(rewritten_model, expected_model);
-                }
+            (_, Err(e)) => {
+                return Err(Box::new(e));
+            }
+
+            (Ok(expected_model), Ok(generated_model)) if accept => {
+                rewritten_model_dirty = generated_model != expected_model;
+            }
+
+            (Ok(expected_model), Ok(generated_model)) => {
+                assert_eq!(generated_model, expected_model);
             }
         }
     }
