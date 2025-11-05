@@ -1,10 +1,12 @@
 use crate::expression::parse_expression;
-use crate::parser::domain::{parse_domain};
+use crate::parser::domain::parse_domain;
 use crate::util::named_children;
-use crate::{field, EssenceParseError};
+use crate::{EssenceParseError, field};
 use conjure_cp_core::ast::ac_operators::ACOperatorKind;
 use conjure_cp_core::ast::comprehension::ComprehensionBuilder;
-use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo, Name, SymbolTable, Domain, Range};
+use conjure_cp_core::ast::{
+    DeclarationPtr, Domain, Expression, Metadata, Moo, Name, Range, SymbolTable,
+};
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::vec;
@@ -117,7 +119,7 @@ pub fn parse_quantifier_expr(
     let mut domain = None;
     let mut collection_node = None;
     let mut variables = vec![];
-    
+
     for child in named_children(node) {
         match child.kind() {
             "identifier" => {
@@ -143,7 +145,7 @@ pub fn parse_quantifier_expr(
             Some(node.range()),
         ));
     }
-    
+
     if variables.is_empty() {
         return Err(EssenceParseError::syntax_error(
             "Quantifier expression missing variables".to_string(),
@@ -162,7 +164,7 @@ pub fn parse_quantifier_expr(
             return Err(EssenceParseError::syntax_error(
                 format!("Unknown quantifier: {}", quantifier_str),
                 Some(quantifier_node.range()),
-            ))
+            ));
         }
     };
 
@@ -198,8 +200,14 @@ pub fn parse_quantifier_expr(
     let wrapped_comprehension = Expression::Comprehension(Metadata::new(), Moo::new(comprehension));
 
     match ac_operator_kind {
-        ACOperatorKind::And => Ok(Expression::And(Metadata::new(), Moo::new(wrapped_comprehension))),
-        ACOperatorKind::Or => Ok(Expression::Or(Metadata::new(), Moo::new(wrapped_comprehension))),
+        ACOperatorKind::And => Ok(Expression::And(
+            Metadata::new(),
+            Moo::new(wrapped_comprehension),
+        )),
+        ACOperatorKind::Or => Ok(Expression::Or(
+            Metadata::new(),
+            Moo::new(wrapped_comprehension),
+        )),
         _ => unreachable!(),
     }
 }

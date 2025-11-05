@@ -73,7 +73,9 @@ fn parse_arithmetic_expression(
         "exponent" | "product_expr" | "sum_expr" => {
             parse_binary_expression(&inner, source_code, root, symbols_ptr)
         }
-        "list_combining_expr_arith" => parse_list_combining_expression(&inner, source_code, root, symbols_ptr),
+        "list_combining_expr_arith" => {
+            parse_list_combining_expression(&inner, source_code, root, symbols_ptr)
+        }
         _ => Err(EssenceParseError::syntax_error(
             format!("Expected arithmetic expression, found: {}", inner.kind()),
             Some(inner.range()),
@@ -99,9 +101,7 @@ fn parse_boolean_expression(
         "list_combining_expr_bool" => {
             parse_list_combining_expression(&inner, source_code, root, symbols_ptr)
         }
-        "quantifier_expr" => {
-            parse_quantifier_expr(&inner, source_code, root, symbols_ptr)
-        }
+        "quantifier_expr" => parse_quantifier_expr(&inner, source_code, root, symbols_ptr),
         _ => Err(EssenceParseError::syntax_error(
             format!("Expected boolean expression, found '{}'", inner.kind()),
             Some(inner.range()),
@@ -115,7 +115,6 @@ fn parse_list_combining_expression(
     root: &Node,
     symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<Expression, EssenceParseError> {
-
     let operator_node = field!(node, "operator");
     let operator_str = &source_code[operator_node.start_byte()..operator_node.end_byte()];
 
