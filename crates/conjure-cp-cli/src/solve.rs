@@ -70,7 +70,7 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
     let model = parse(&global_args, Arc::clone(&context))?;
     
     if solve_args.ast_json {
-        println!("woah! when I get round to it, this will print the model.");
+        println!("{}", model.as_submodel().to_string());
     }
 
     let rewritten_model = rewrite(model, &global_args, Arc::clone(&context))?;
