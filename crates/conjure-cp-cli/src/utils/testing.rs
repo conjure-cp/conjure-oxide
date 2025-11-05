@@ -56,7 +56,10 @@ fn model_tojson_with_stable_ids(model: &SerdeModel) -> Result<JsonValue, JsonErr
 fn replace_ids(value: &mut JsonValue, id_map: &HashMap<u64, u64>) {
     match value {
         JsonValue::Object(map) => {
-            // Replace IDs in both "id" fields (SymbolTable IDs) and "ptr" fields (DeclarationPtr IDs)
+            // Replace IDs in three places:
+            // - "id" fields (SymbolTable IDs)
+            // - "parent" fields (SymbolTable nesting)
+            // - "ptr" fields (DeclarationPtr IDs)
             for (k, v) in map.iter_mut() {
                 if (k == "id" || k == "ptr" || k == "parent")
                     && let JsonValue::Number(n) = v

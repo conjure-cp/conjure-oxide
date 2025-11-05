@@ -508,6 +508,7 @@ fn integration_test_inner(
             }
         }
     }
+
     // Check Stage 3a (solutions)
     if config.solve_with_minion {
         let expected_solutions_json =
