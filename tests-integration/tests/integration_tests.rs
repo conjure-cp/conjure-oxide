@@ -230,14 +230,6 @@ fn integration_test_inner(
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
     let verbose = env::var("VERBOSE").unwrap_or("false".to_string()) == "true";
 
-    // When running accept=true, only regenerate the expected files for these tests if the test
-    // fails.
-    //
-    // This reduces unnecessary git diffs when only the id of items in a model changes. These
-    // change every run of the tester, but do not change the correctness of the model.
-    let mut parsed_model_dirty = false;
-    let mut rewritten_model_dirty = false;
-
     if verbose {
         println!("Running integration test for {path}/{essence_base}, ACCEPT={accept}");
     }
@@ -422,22 +414,14 @@ fn integration_test_inner(
         );
     }
 
-    // Before testing against the generated tests, if the generated tests don't exist, make them.
-    //
-    // We rewrite out-of-date tests (if necessary) after testing them.
+    // When ACCEPT=true, copy all generated files to expected
     if accept {
-        // Overwrite expected parse and rewrite models if enabled
-        if !expected_exists_for(path, essence_base, "parse", "serialised.json") {
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
-        }
-        if config.apply_rewrite_rules
-            && !expected_exists_for(path, essence_base, "rewrite", "serialised.json")
-        {
+        copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
+        
+        if config.apply_rewrite_rules {
             copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json")?;
         }
 
-        // Always overwrite these ones. Unlike the rest, we don't need to selectively do these
-        // based on the test results, so they don't get done later.
         if config.solve_with_minion {
             copy_generated_to_expected(path, essence_base, "minion", "solutions.json")?;
         } else if config.solve_with_sat {
@@ -453,65 +437,17 @@ fn integration_test_inner(
     }
 
     // Check Stage 1: Compare parsed model with expected
-    let expected_model = read_model_json(&context, path, essence_base, "expected", "parse");
-    let model_from_file = read_model_json(&context, path, essence_base, "generated", "parse");
-
-    // A JSON reading error could just mean that the ast has changed since the file was
-    // generated.
-    //
-    // When ACCEPT=true, regenerate the json instead of failing the test.
-    match (expected_model, model_from_file) {
-        (Err(_), _) | (_, Err(_)) if accept => {
-            parsed_model_dirty = true;
-        }
-
-        (Err(e), _) => {
-            return Err(Box::new(e));
-        }
-
-        (_, Err(e)) => {
-            return Err(Box::new(e));
-        }
-
-        (Ok(expected_model), Ok(model_from_file)) if accept => {
-            parsed_model_dirty = model_from_file != expected_model;
-        }
-
-        (Ok(expected_model), Ok(model_from_file)) => {
-            assert_eq!(model_from_file, expected_model);
-        }
+    if !accept {
+        let expected_model = read_model_json(&context, path, essence_base, "expected", "parse")?;
+        let model_from_file = read_model_json(&context, path, essence_base, "generated", "parse")?;
+        assert_eq!(model_from_file, expected_model);
     }
 
     // Check Stage 2a (rewritten model)
-    if config.apply_rewrite_rules {
-        let expected_model = read_model_json(&context, path, essence_base, "expected", "rewrite");
-        let generated_model = read_model_json(&context, path, essence_base, "generated", "rewrite");
-        
-        // A JSON reading error could just mean that the ast has changed since the file was
-        // generated.
-        //
-        // When ACCEPT=true, regenerate the json instead of failing the test.
-        match (expected_model, generated_model) {
-            (Err(_), _) | (_, Err(_)) if accept => {
-                rewritten_model_dirty = true;
-            }
-
-            (Err(e), _) => {
-                return Err(Box::new(e));
-            }
-
-            (_, Err(e)) => {
-                return Err(Box::new(e));
-            }
-
-            (Ok(expected_model), Ok(generated_model)) if accept => {
-                rewritten_model_dirty = generated_model != expected_model;
-            }
-
-            (Ok(expected_model), Ok(generated_model)) => {
-                assert_eq!(generated_model, expected_model);
-            }
-        }
+    if config.apply_rewrite_rules && !accept {
+        let expected_model = read_model_json(&context, path, essence_base, "expected", "rewrite")?;
+        let generated_model = read_model_json(&context, path, essence_base, "generated", "rewrite")?;
+        assert_eq!(generated_model, expected_model);
     }
 
     // Check Stage 3a (solutions)
@@ -535,7 +471,7 @@ fn integration_test_inner(
     // Stage 4a: Check that the generated rules trace matches the expected.
     // We don't check rule trace when morph is enabled.
     // TODO: Implement rule trace validation for morph
-    if config.validate_rule_traces && !config.enable_morph_impl {
+    if config.validate_rule_traces && !config.enable_morph_impl && !accept {
         let generated = read_human_rule_trace(path, essence_base, "generated")?;
         let expected = read_human_rule_trace(path, essence_base, "expected")?;
 
@@ -545,15 +481,6 @@ fn integration_test_inner(
         );
     };
 
-    if accept {
-        // Overwrite expected parse and rewrite models if needed
-        if parsed_model_dirty {
-            copy_generated_to_expected(path, essence_base, "parse", "serialised.json")?;
-        }
-        if config.apply_rewrite_rules && rewritten_model_dirty {
-            copy_generated_to_expected(path, essence_base, "rewrite", "serialised.json")?;
-        }
-    }
     save_stats_json(context, path, essence_base)?;
 
     Ok(())
@@ -581,10 +508,6 @@ fn copy_generated_to_expected(
         format!("{path}/{test_name}.expected-{stage}.{extension}"),
     )?;
     Ok(())
-}
-
-fn expected_exists_for(path: &str, test_name: &str, stage: &str, extension: &str) -> bool {
-    Path::new(&format!("{path}/{test_name}.expected-{stage}.{extension}")).exists()
 }
 
 fn assert_vector_operators_have_partially_evaluated(model: &conjure_cp::Model) {
