@@ -7,7 +7,7 @@ find d: bool
 
 such that
 
-and([or([a,a;int(1..2)]),or([!(b),!(b);int(1..2)]);int(1..2)])
+and([or([a,a;int(1..)]),or([!(b),!(b);int(1..)]);int(1..)])
 
 --
 
@@ -31,7 +31,14 @@ new clauses:
   (b \/ __1)
 --
 
-or([a,a;int(1..2)]), 
+and([or([a,a;int(1..)]),or([__0,__1;int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+or([a,a;int(1..)]),
+or([__0,__1;int(1..)]) 
+
+--
+
+or([a,a;int(1..)]), 
    ~~> apply_tseytin_and_or ([("SAT", 8500)]) 
 __2 
 new variables:
@@ -42,7 +49,7 @@ new clauses:
   (¬__2 \/ a \/ a)
 --
 
-or([__0,__1;int(1..2)]), 
+or([__0,__1;int(1..)]), 
    ~~> apply_tseytin_and_or ([("SAT", 8500)]) 
 __3 
 new variables:
