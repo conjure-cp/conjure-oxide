@@ -77,6 +77,7 @@ module.exports = grammar ({
       field("matrix_domain", $.matrix_domain),
       field("record_domain", $.record_domain),
       field("set_domain", $.set_domain),
+      field("set_domain", $.set_domain),
     ),
     bool_domain: $ => "bool",
 

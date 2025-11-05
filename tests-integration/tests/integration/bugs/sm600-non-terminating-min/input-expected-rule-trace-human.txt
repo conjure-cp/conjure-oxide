@@ -5,49 +5,17 @@ find b: int(1..7)
 
 such that
 
-(sum([min([a,b;int(1..2)]),6;int(1..2)]) <= 10)
+(sum([min([a,b;int(1..2)]),6;int(1..)]) <= 10)
 
 --
 
-(sum([min([a,b;int(1..2)]),6;int(1..2)]) <= 10), 
-   ~~> flatten_generic ([("Minion", 4200)]) 
-(__0 <= 10) 
-new variables:
-  find __0: int(7..13)
-new constraints:
-  __0 =aux sum([min([a,b;int(1..2)]),6;int(1..2)])
---
-
-(__0 <= 10), 
-   ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(__0, 10, 0) 
-
---
-
-sum([min([a,b;int(1..2)]),6;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-sum([min([a,b;int(1..2)]),6;int(1..)]) 
-
---
-
-__0 =aux sum([min([a,b;int(1..2)]),6;int(1..)]), 
+(sum([min([a,b;int(1..2)]),6;int(1..)]) <= 10), 
    ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
-and([SumLeq([6, __1], __0),SumGeq([6, __1], __0);int(1..)]) 
+SumLeq([6, __0], 10) 
 new variables:
-  find __1: int(1..7)
+  find __0: int(1..7)
 new constraints:
-  __1 =aux min([a,b;int(1..2)])
---
-
-Ineq(__0, 10, 0),
-and([SumLeq([6, __1], __0),SumGeq([6, __1], __0);int(1..)]),
-__1 =aux min([a,b;int(1..2)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-Ineq(__0, 10, 0),
-SumLeq([6, __1], __0),
-SumGeq([6, __1], __0),
-__1 =aux min([a,b;int(1..2)]) 
-
+  __0 =aux min([a,b;int(1..2)])
 --
 
 min([a,b;int(1..2)]), 
@@ -58,24 +26,24 @@ min([a,b;int(1..)])
 
 min([a,b;int(1..)]), 
    ~~> min_to_var ([("Base", 6000)]) 
-__2 
+__1 
 new variables:
-  find __2: int(1..7)
+  find __1: int(1..7)
 new constraints:
-  (__2 <= a)
-  (__2 <= b)
-  or([(__2 = a),(__2 = b);int(1..)])
+  (__1 <= a)
+  (__1 <= b)
+  or([(__1 = a),(__1 = b);int(1..)])
 --
 
-(__2 <= a), 
+(__1 <= a), 
    ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(__2, a, 0) 
+Ineq(__1, a, 0) 
 
 --
 
-(__2 <= b), 
+(__1 <= b), 
    ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(__2, b, 0) 
+Ineq(__1, b, 0) 
 
 --
 
@@ -83,17 +51,14 @@ Final model:
 
 find a: int(1..7)
 find b: int(1..7)
-find __0: int(7..13)
+find __0: int(1..7)
 find __1: int(1..7)
-find __2: int(1..7)
 
 such that
 
-Ineq(__0, 10, 0),
-SumLeq([6, __1], __0),
-SumGeq([6, __1], __0),
-__1 =aux __2,
-Ineq(__2, a, 0),
-Ineq(__2, b, 0),
-or([(__2 = a),(__2 = b);int(1..)])
+SumLeq([6, __0], 10),
+__0 =aux __1,
+Ineq(__1, a, 0),
+Ineq(__1, b, 0),
+or([(__1 = a),(__1 = b);int(1..)])
 
