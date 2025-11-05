@@ -3,7 +3,7 @@ authors: Georgii Skorokhod, Hanaa Khan
 last-updated: 03-11-25
 ---- -->
 
-<!-- TODO edit -->
+<!-- TODO edit more -->
 
 # Expression rewriting, Rules and RuleSets
 
