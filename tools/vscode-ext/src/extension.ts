@@ -18,11 +18,11 @@ export function activate(context: ExtensionContext) {
 }
 function tryStartLanguageServer(context: ExtensionContext) {
 	//for future, possibly may want version checking
-
+	console.log("Before setup");
 	let serveroptions: ServerOptions = {
-		// command: "conjure-oxide", args: ["server-lsp"]
-		run: { command: "conjure-oxide", args: ["server-lsp"]},
-		debug: { command: "conjure-oxide", args: ["server-lsp"] }
+		command: "conjure-oxide", args: ["server-lsp"]
+		// run: { command: "conjure-oxide", args: ["server-lsp"]},
+		// debug: { command: "conjure-oxide", args: ["server-lsp"] }
 	}
 
 	let clientoptions: LanguageClientOptions = {

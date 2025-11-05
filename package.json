@@ -1,0 +1,58 @@
+{
+  "name": "conjure-oxide-vscode",
+  "displayName": "Conjure Oxide VSCode",
+  "description": "Conjure Oxide's LSP support for Essence",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/conjure-cp/conjure-oxide/tree/main/tools/vscode-ext"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "engines": {
+    "vscode": "^1.22.0"
+  },
+  "main": "./tools/vscode-ext/out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "essence",
+        "aliases": [
+          "essence",
+          "Essence"
+        ],
+        "extensions": [
+          ".essence",
+          ".params",
+          ".solution"
+        ],
+        "configuration": "./tools/vscode-ext/language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "essence",
+        "scopeName": "source.essence",
+        "path": "tools/vscode-ext/syntaxes/essence.tmLanguage.json"
+      }
+    ]
+  },
+  
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -b",
+    "watch": "tsc -b -w",
+    "lint": "eslint ./client/src --ext .ts,.tsx",
+    "postinstall": "cd client && npm install && cd .."
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^18.14.6",
+    "@typescript-eslint/eslint-plugin": "^7.1.0",
+    "@typescript-eslint/parser": "^7.1.0",
+    "eslint": "^8.57.0",
+    "mocha": "^10.3.0",
+    "typescript": "^5.3.3"
+  }
+}

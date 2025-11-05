@@ -5,6 +5,7 @@ use serde_json::Value;
 
 // use tokio::stream;
 use tower_lsp::{Client, Server, jsonrpc::{Result,Error}, lsp_types::{notification::Notification, ExecuteCommandOptions, ExecuteCommandParams, InitializeParams, InitializeResult, InitializedParams, MessageType, ServerCapabilities}, LanguageServer, LspService};
+// use tracing_subscriber::info;
 use log::info;
 
 
@@ -39,6 +40,12 @@ impl LanguageServer for Backend { //this is the server implementation and manage
                         commands: vec![String::from("custom.notification")],
                         work_done_progress_options: Default::default()
                     }),
+                    //hover_provider: Some(HoverProviderCapability::Simple(true)),
+                    //completion_provider: Some(CompletionOptions {
+                        //trigger_characters: Some(vec![".".to_string(), ":".to_string()]),
+                        //all_commit_characters: None,
+                        //..Default::default()
+                    //}),
                     ..ServerCapabilities::default()
                 },
                 // semantic_tokens_provider: Some(
@@ -97,6 +104,11 @@ impl LanguageServer for Backend { //this is the server implementation and manage
             Err(Error::invalid_request())
         }
     }
+    //async fn did_open
+
+    //async fn did_change
+
+    //async fn did_save
 
     //LOOK AT LANGUAGESERVER EXAMPLES ON TOWER_LSP WHEN DONE HERE
     // async fn hover(&self, _: HoverParams) -> Result<Option<Hover>> {
@@ -112,27 +124,12 @@ impl LanguageServer for Backend { //this is the server implementation and manage
 
 #[tokio::main]
 pub async fn main() {
+    
     // tracing_subscriber::fmt().init();
-
-    // let listener = tokio::net::TcpListener::bind("127.0.0.1:8080")
-    // .await
-    // .unwrap();
-
-    // let (stream, _) = listener.accept()
-    // .await
-    // .unwrap();
-
-    // let (read, write) = tokio::io::split(stream);
-
-    // let (service, socket) = LspService::new(|client|Backend{ client });
-
-    // Server::new(read,write,socket).serve(service).await;
-
-    // env_logger::init();
     // env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
-    info!("Starting Essence LSP server");
-    println!("Starting Essence LSP server");
+    // info!("Starting Essence LSP server");
+    // println!("Starting Essence LSP server");
 
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
@@ -142,8 +139,8 @@ pub async fn main() {
     })
     .finish();
 
-    info!("Finished initialising server! Waiting for client connection");
-    println!("Finished initialising server! Waiting for client connection");
+    // info!("Finished initialising server! Waiting for client connection");
+    // println!("Finished initialising server! Waiting for client connection");
     
     Server::new(stdin,stdout,socket).serve(service).await;
 

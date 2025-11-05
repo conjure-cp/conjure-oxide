@@ -1,0 +1,116 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "Essence",
+	"patterns": [
+		{
+			"include": "#keywords"
+		},
+		{
+			"include": "#strings"
+		},
+		{
+			"include": "#functionalOps"
+		},
+		{
+			"include": "#domainTypes"
+		},
+		{
+			"include": "#comments"
+		},
+		{
+			"include": "#attributes"
+		},
+		{
+			"include": "#operatorSymbols"
+		},
+		{
+			"include": "#identifiers"
+		},
+		{
+			"include": "#numberLiterals"
+		}
+	],
+	"repository": {
+		"keywords": {
+			"patterns": [
+				{
+					"name": "keyword.control.essence",
+					"match": "\\b(letting|such|that|given|find|be|new|type|enum|domain|in|indexed|of|by|\\.|\\.\\.)\\b"
+				},
+				{
+					"name": "keyword.control.essence",
+					"match": "(@)"
+				}
+			]
+		},
+		"strings": {
+			"name": "string.quoted.double.essence",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.essence",
+					"match": "\\\\."
+				}
+			]
+		},
+		"comments": {
+			"name": "comment.line",
+			"match": "\\$.*"
+		},
+		"operatorSymbols": {
+			"patterns": [
+				{
+					"comments": "+,-,*,/,%,**,factorial",
+					"name": "keyword.operator",
+					"match": "(\\+|\\-|\\*|\\/|\\%|\\*\\*|factorial)"
+				},
+				{
+					"comments": ">=lex,>lex,<=lex,<lex",
+					"name": "keyword.operator",
+					"match": "(>=lex|>lex|<=lex|<lex)"
+				},
+				{
+					"comments": "=,!=,<,<=,>=,>,\\/,/\\",
+					"name": "keyword.operator",
+					"match": "(=|!=|<|<=|>=|>|\\\\\\/|\\\\)"
+				},
+				{
+					"comments": "->,<->,!,-->,:,::",
+					"name": "keyword.operator",
+					"match": "(\\->|<\\->|!|\\-\\->|:|::)"
+				},
+				{
+					"comments": "comps",
+					"name": "keyword.operator",
+					"match": "\\b(forAll|sum|product|xor)\\b"
+				}
+			]
+		},
+		"functionalOps": {
+			"name": "support.function",
+			"match": "\\b(and|or|xor|sum|product|true|toint|makeTable|table|gcc|atleast|atmost|defined)\\b"
+		},
+		"numberLiterals": {
+			"name": "constant.numeric",
+			"match": "[0-9]+"
+		},
+		"domainTypes": {
+			"patterns": [
+				{
+					"name": "storage.type.essence",
+					"match": "\\b(int|bool|set|mset|function|sequence|matrix)\\b"
+				}
+			]
+		},
+		"identifiers": {
+			"name": "variable.essence",
+			"match": "\\b([a-zA-Z_]+[a-zA-Z_0-9]*)\\b"
+		},
+		"attributes": {
+			"name": "variable.language",
+			"match": "\\b(injective|surjective)\\b"
+		}
+	},
+	"scopeName": "source.essence"
+}
