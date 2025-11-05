@@ -33,6 +33,7 @@
   - [2024‐03: Implementing Uniplates and Biplates with Structure Preserving Trees](./developers_guide/design_documents/2024_03.md)
   - [Expression rewriting, Rules and RuleSets](./developers_guide/design_documents/expression_rewriting.md)
   - [Semantics of Rewriting Expressions with Side‐Effects](./developers_guide/design_documents/semantics-of-rewriting-expressions.md)
+  <!-- - [Ideal Scenario of Testing for Conjure-Oxide](./developers_guide/design_documents/ideal-scenario-of-testing.md) -->
 
 <!-- TODO: do we need this? -->
 - [CI/CD](./developers_guide/ci_cd/index.md)
