@@ -60,23 +60,27 @@ new clauses:
   (¬__3 \/ __0 \/ __1)
 --
 
-and([__2,__3;int(1..2)]), 
-   ~~> apply_tseytin_and_or ([("SAT", 8500)]) 
-__4 
-new variables:
-  find __4: bool
-new clauses:
-  (¬__4 \/ __2)
-  (¬__4 \/ __3)
-  (__4 \/ ¬__2 \/ ¬__3)
---
-
-__4, 
+__2, 
    ~~> remove_single_atom ([("SAT", 8400)]) 
 true 
 
 new clauses:
-  (__4)
+  (__2)
+--
+
+true,
+__3, 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+__3 
+
+--
+
+__3, 
+   ~~> remove_single_atom ([("SAT", 8400)]) 
+true 
+
+new clauses:
+  (__3)
 --
 
 Final model:
@@ -89,7 +93,6 @@ find __0: bool
 find __1: bool
 find __2: bool
 find __3: bool
-find __4: bool
 
 such that
 
@@ -107,8 +110,6 @@ clauses:
 (¬__0 \/ __3),
 (¬__1 \/ __3),
 (¬__3 \/ __0 \/ __1),
-(¬__4 \/ __2),
-(¬__4 \/ __3),
-(__4 \/ ¬__2 \/ ¬__3),
-(__4)
+(__2),
+(__3)
 

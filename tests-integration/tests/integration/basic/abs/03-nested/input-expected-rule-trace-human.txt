@@ -46,6 +46,28 @@ UnsafeDiv(|y|, 2),
 
 --
 
+(sum([|sum([SafeDiv(x, 2),y,-(z);int(1..)])|,SafeDiv(|y|, 2);int(1..)]) = 10), 
+   ~~> introduce_weighted_sumleq_sumgeq ([("Minion", 4600)]) 
+and([SumLeq([__0, __1], 10),SumGeq([__0, __1], 10);int(1..)]) 
+new variables:
+  find __0: int(0..10)
+  find __1: int(0..2)
+new constraints:
+  __0 =aux |sum([SafeDiv(x, 2),y,-(z);int(1..)])|
+  __1 =aux SafeDiv(|y|, 2)
+--
+
+and([SumLeq([__0, __1], 10),SumGeq([__0, __1], 10);int(1..)]),
+__0 =aux |sum([SafeDiv(x, 2),y,-(z);int(1..)])|,
+__1 =aux SafeDiv(|y|, 2), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+SumLeq([__0, __1], 10),
+SumGeq([__0, __1], 10),
+__0 =aux |sum([SafeDiv(x, 2),y,-(z);int(1..)])|,
+__1 =aux SafeDiv(|y|, 2) 
+
+--
+
 |sum([SafeDiv(x, 2),y,-(z);int(1..)])|, 
    ~~> flatten_generic ([("Minion", 4200)]) 
 |__2| 

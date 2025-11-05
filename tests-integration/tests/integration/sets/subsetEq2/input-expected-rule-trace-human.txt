@@ -10,15 +10,24 @@ and([(c subsetEq b),!((c subsetEq a));int(1..)])
 
 --
 
+and([(c subsetEq b),!((c subsetEq a));int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(c subsetEq b),
+!((c subsetEq a)) 
+
+--
+
 b, 
    ~~> substitute_value_lettings ([("Base", 5000)]) 
 {1,2} 
 
 --
 
-and([(c subsetEq {1,2}),!((c subsetEq a));int(1..2)]), 
+(c subsetEq {1,2}),
+!((c subsetEq a)), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-and([(c subsetEq Set([Int(1), Int(2)])),!((c subsetEq a));int(1..2)]) 
+(c subsetEq Set([Int(1), Int(2)])),
+!((c subsetEq a)) 
 
 --
 
@@ -28,9 +37,11 @@ a,
 
 --
 
-and([(c subsetEq Set([Int(1), Int(2)])),!((c subsetEq {2,3}));int(1..2)]), 
+(c subsetEq Set([Int(1), Int(2)])),
+!((c subsetEq {2,3})), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-and([(c subsetEq Set([Int(1), Int(2)])),!((c subsetEq Set([Int(2), Int(3)])));int(1..2)]) 
+(c subsetEq Set([Int(1), Int(2)])),
+!((c subsetEq Set([Int(2), Int(3)]))) 
 
 --
 
