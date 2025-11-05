@@ -148,6 +148,7 @@ pub fn save_stats_json(
     Ok(())
 }
 
+/// Reads a file into a `String`, providing a clearer error message that includes the file path.
 fn read_with_path(path: String) -> Result<String, std::io::Error> {
     std::fs::read_to_string(&path)
         .map_err(|e| io::Error::new(e.kind(), format!("{} (path: {})", e, path)))
