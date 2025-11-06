@@ -4,9 +4,7 @@ use crate::util::named_children;
 use crate::{EssenceParseError, field};
 use conjure_cp_core::ast::ac_operators::ACOperatorKind;
 use conjure_cp_core::ast::comprehension::ComprehensionBuilder;
-use conjure_cp_core::ast::{
-    DeclarationPtr, Expression, Metadata, Moo, Name, SymbolTable,
-};
+use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo, Name, SymbolTable};
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::vec;
