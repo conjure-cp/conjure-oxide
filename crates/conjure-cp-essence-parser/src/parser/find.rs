@@ -1,8 +1,7 @@
 #![allow(clippy::legacy_numeric_constants)]
-use std::collections::BTreeMap;
 use std::cell::RefCell;
+use std::collections::BTreeMap;
 use std::rc::Rc;
-
 
 use tree_sitter::Node;
 

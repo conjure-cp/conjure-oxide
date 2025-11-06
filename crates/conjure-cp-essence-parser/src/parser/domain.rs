@@ -1,15 +1,25 @@
 use super::util::named_children;
 use crate::EssenceParseError;
-use conjure_cp_core::ast::{Atom, Domain, Expression, Literal, Name, Range, RecordEntry, SetAttr, SymbolTable};
-use std::str::FromStr;
-use tree_sitter::Node;
+use conjure_cp_core::ast::{
+    Atom, Domain, Expression, Literal, Name, Range, RecordEntry, SetAttr, SymbolTable,
+};
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::str::FromStr;
+use tree_sitter::Node;
 
 /// Parse an Essence variable domain into its Conjure AST representation.
-pub fn parse_domain(domain: Node, source_code: &str, symbols_ptr: Option<Rc<RefCell<SymbolTable>>>) -> Result<Domain, EssenceParseError> {
+pub fn parse_domain(
+    domain: Node,
+    source_code: &str,
+    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+) -> Result<Domain, EssenceParseError> {
     match domain.kind() {
-        "domain" => parse_domain(domain.child(0).expect("No domain found"), source_code, symbols_ptr),
+        "domain" => parse_domain(
+            domain.child(0).expect("No domain found"),
+            source_code,
+            symbols_ptr,
+        ),
         "bool_domain" => Ok(Domain::Bool),
         "int_domain" => Ok(parse_int_domain(domain, source_code, symbols_ptr)),
         "identifier" => {
@@ -25,7 +35,11 @@ pub fn parse_domain(domain: Node, source_code: &str, symbols_ptr: Option<Rc<RefC
 }
 
 /// Parse an integer domain. Can be a single integer or a range.
-fn parse_int_domain(int_domain: Node, source_code: &str, symbols_ptr: Option<Rc<RefCell<SymbolTable>>>) -> Domain {
+fn parse_int_domain(
+    int_domain: Node,
+    source_code: &str,
+    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+) -> Domain {
     if int_domain.child_count() == 1 {
         Domain::Int(vec![Range::Bounded(i32::MIN, i32::MAX)])
     } else {
@@ -36,24 +50,21 @@ fn parse_int_domain(int_domain: Node, source_code: &str, symbols_ptr: Option<Rc<
         for domain_component in named_children(&range_list) {
             match domain_component.kind() {
                 "arithmetic_expr" => {
-                    let text = &source_code[domain_component.start_byte()..domain_component.end_byte()];
+                    let text =
+                        &source_code[domain_component.start_byte()..domain_component.end_byte()];
                     let value = parse_int_value(text, &symbols_ptr, "Domain value");
                     ranges.push(Range::Single(value));
                 }
                 "int_range" => {
-                    let lower_bound = domain_component
-                        .child_by_field_name("lower")
-                        .map(|node| {
-                            let text = &source_code[node.start_byte()..node.end_byte()];
-                            parse_int_value(text, &symbols_ptr, "Lower bound")
-                        });
-                    
-                    let upper_bound = domain_component
-                        .child_by_field_name("upper")
-                        .map(|node| {
-                            let text = &source_code[node.start_byte()..node.end_byte()];
-                            parse_int_value(text, &symbols_ptr, "Upper bound")
-                        });
+                    let lower_bound = domain_component.child_by_field_name("lower").map(|node| {
+                        let text = &source_code[node.start_byte()..node.end_byte()];
+                        parse_int_value(text, &symbols_ptr, "Lower bound")
+                    });
+
+                    let upper_bound = domain_component.child_by_field_name("upper").map(|node| {
+                        let text = &source_code[node.start_byte()..node.end_byte()];
+                        parse_int_value(text, &symbols_ptr, "Upper bound")
+                    });
 
                     match (lower_bound, upper_bound) {
                         (Some(lb), Some(ub)) => ranges.push(Range::Bounded(lb, ub)),
@@ -78,7 +89,7 @@ fn parse_int_value(
     if let Ok(value) = text.parse::<i32>() {
         return value;
     }
-    
+
     // Otherwise, look up the identifier in the symbol table
     if let Some(symbols) = symbols_ptr {
         let symbols = symbols.borrow();
@@ -88,20 +99,33 @@ fn parse_int_value(
                 if let Expression::Atomic(_, Atom::Literal(Literal::Int(i))) = &*expr_ref {
                     return *i;
                 } else {
-                    panic!("{} identifier '{}' is not an integer literal", context, text);
+                    panic!(
+                        "{} identifier '{}' is not an integer literal",
+                        context, text
+                    );
                 }
             } else {
                 panic!("{} identifier '{}' is not a value letting", context, text);
             }
         } else {
-            panic!("{} identifier '{}' not found in symbol table", context, text);
+            panic!(
+                "{} identifier '{}' not found in symbol table",
+                context, text
+            );
         }
     } else {
-        panic!("{} identifier '{}' used but no symbol table provided", context, text);
+        panic!(
+            "{} identifier '{}' used but no symbol table provided",
+            context, text
+        );
     }
 }
 
-fn parse_tuple_domain(tuple_domain: Node, source_code: &str, symbols_ptr: Option<Rc<RefCell<SymbolTable>>>) -> Result<Domain, EssenceParseError> {
+fn parse_tuple_domain(
+    tuple_domain: Node,
+    source_code: &str,
+    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+) -> Result<Domain, EssenceParseError> {
     let mut domains: Vec<Domain> = Vec::new();
     for domain in named_children(&tuple_domain) {
         domains.push(parse_domain(domain, source_code, symbols_ptr.clone())?);
@@ -154,7 +178,11 @@ fn parse_record_domain(
     Ok(Domain::Record(record_entries))
 }
 
-fn parse_set_domain(set_domain: Node, source_code: &str, symbols_ptr: Option<Rc<RefCell<SymbolTable>>>) -> Result<Domain, EssenceParseError> {
+fn parse_set_domain(
+    set_domain: Node,
+    source_code: &str,
+    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
+) -> Result<Domain, EssenceParseError> {
     let mut set_attribute: Option<SetAttr> = None;
     let mut value_domain: Option<Domain> = None;
 
