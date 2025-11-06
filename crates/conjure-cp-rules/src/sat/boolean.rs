@@ -18,7 +18,10 @@ fn create_bool_aux(symbols: &mut SymbolTable) -> Expr {
 
     symbols.insert(name.clone());
 
-    Expr::Atomic(Metadata::new(), Atom::Reference(name))
+    Expr::Atomic(
+        Metadata::new(),
+        Atom::Reference(conjure_cp::ast::Reference::new(name)),
+    )
 }
 
 fn create_clause(exprs: Vec<Expr>) -> Option<CnfClause> {
