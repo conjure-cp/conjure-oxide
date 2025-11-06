@@ -1,6 +1,6 @@
 use super::util::named_children;
 use crate::EssenceParseError;
-use conjure_cp_core::ast::{Domain, Name, Range, RecordEntry, SetAttr, SymbolTable};
+use conjure_cp_core::ast::{Atom, Domain, Expression, Literal, Name, Range, RecordEntry, SetAttr, SymbolTable};
 use std::str::FromStr;
 use tree_sitter::Node;
 use std::cell::RefCell;
@@ -33,35 +33,27 @@ fn parse_int_domain(int_domain: Node, source_code: &str, symbols_ptr: Option<Rc<
         let range_list = int_domain
             .child_by_field_name("ranges")
             .expect("No range list found (expression ranges not supported yet");
-        for int_range in named_children(&range_list) {
-            match int_range.kind() {
-                "integer" => {
-                    let integer_value = &source_code[int_range.start_byte()..int_range.end_byte()]
-                        .parse::<i32>()
-                        .unwrap();
-                    ranges.push(Range::Single(*integer_value));
+        for domain_component in named_children(&range_list) {
+            match domain_component.kind() {
+                "arithmetic_expr" => {
+                    let text = &source_code[domain_component.start_byte()..domain_component.end_byte()];
+                    let value = parse_int_value(text, &symbols_ptr, "Domain value");
+                    ranges.push(Range::Single(value));
                 }
                 "int_range" => {
-                    let lower_bound: Option<i32>;
-                    let upper_bound: Option<i32>;
-                    if let Some(lower_bound_node) = int_range.child_by_field_name("lower") {
-                        lower_bound = Some(
-                            source_code[lower_bound_node.start_byte()..lower_bound_node.end_byte()]
-                                .parse::<i32>()
-                                .unwrap(),
-                        );
-                    } else {
-                        lower_bound = None;
-                    }
-                    if let Some(upper_bound_node) = int_range.child_by_field_name("upper") {
-                        upper_bound = Some(
-                            source_code[upper_bound_node.start_byte()..upper_bound_node.end_byte()]
-                                .parse::<i32>()
-                                .unwrap(),
-                        );
-                    } else {
-                        upper_bound = None;
-                    }
+                    let lower_bound = domain_component
+                        .child_by_field_name("lower")
+                        .map(|node| {
+                            let text = &source_code[node.start_byte()..node.end_byte()];
+                            parse_int_value(text, &symbols_ptr, "Lower bound")
+                        });
+                    
+                    let upper_bound = domain_component
+                        .child_by_field_name("upper")
+                        .map(|node| {
+                            let text = &source_code[node.start_byte()..node.end_byte()];
+                            parse_int_value(text, &symbols_ptr, "Upper bound")
+                        });
 
                     match (lower_bound, upper_bound) {
                         (Some(lb), Some(ub)) => ranges.push(Range::Bounded(lb, ub)),
@@ -74,6 +66,38 @@ fn parse_int_domain(int_domain: Node, source_code: &str, symbols_ptr: Option<Rc<
             }
         }
         Domain::Int(ranges)
+    }
+}
+
+fn parse_int_value(
+    text: &str,
+    symbols_ptr: &Option<Rc<RefCell<SymbolTable>>>,
+    context: &str,
+) -> i32 {
+    // Try parsing as a literal integer first
+    if let Ok(value) = text.parse::<i32>() {
+        return value;
+    }
+    
+    // Otherwise, look up the identifier in the symbol table
+    if let Some(symbols) = symbols_ptr {
+        let symbols = symbols.borrow();
+        let name = Name::user(text);
+        if let Some(decl_ptr) = symbols.lookup(&name) {
+            if let Some(expr_ref) = decl_ptr.as_value_letting() {
+                if let Expression::Atomic(_, Atom::Literal(Literal::Int(i))) = &*expr_ref {
+                    return *i;
+                } else {
+                    panic!("{} identifier '{}' is not an integer literal", context, text);
+                }
+            } else {
+                panic!("{} identifier '{}' is not a value letting", context, text);
+            }
+        } else {
+            panic!("{} identifier '{}' not found in symbol table", context, text);
+        }
+    } else {
+        panic!("{} identifier '{}' used but no symbol table provided", context, text);
     }
 }
 
