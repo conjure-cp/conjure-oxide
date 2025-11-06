@@ -1,13 +1,17 @@
 ## Description
+
 <!-- what does this PR do? a quick summary of changes. -->
 
-## Related Issues
+## Related issues
+
 <!-- e.g. Closes #12 or Fixes #45 -->
 
-## Key Changes
+## Key changes
+
 -
 -
 -
 
-## How to Test
+## How to test/review
+
 <!-- instructions to make the reviewer's life easier-->
