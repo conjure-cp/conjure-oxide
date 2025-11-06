@@ -262,3 +262,42 @@ impl Display for SerdeModel {
         std::fmt::Display::fmt(&self.submodel, f)
     }
 }
+
+impl SerdeModel {
+    /// Collects all ObjId values from the model using uniplate traversal.
+    ///
+    /// Traverses the model structure using `universe_bi` to collect IDs from:
+    /// - All SubModels (to get SymbolTable IDs via `HasId`)
+    /// - All DeclarationPtrs (to get declaration IDs via `HasId`)
+    ///
+    /// Returns a mapping from original ID to stable sequential ID (0, 1, 2, ...).
+    /// IDs are assigned in the order they are encountered during traversal, ensuring
+    /// stability across identical model structures.
+    pub fn collect_stable_id_mapping(&self) -> HashMap<ObjId, ObjId> {
+        let mut id_list: Vec<ObjId> = Vec::new();
+
+        // Collect SymbolTable IDs by traversing all SubModels
+        for submodel in self.submodel.universe() {
+            let symbol_table_id = submodel.symbols().id();
+            if !id_list.contains(&symbol_table_id) {
+                id_list.push(symbol_table_id);
+            }
+        }
+
+        // Collect DeclarationPtr IDs by traversing the constraints expression tree
+        for decl_ptr in Biplate::<DeclarationPtr>::universe_bi(self.submodel.constraints()) {
+            let decl_id = decl_ptr.id();
+            if !id_list.contains(&decl_id) {
+                id_list.push(decl_id);
+            }
+        }
+
+        // Create stable mapping: original_id -> stable_id
+        let mut id_map = HashMap::new();
+        for (stable_id, &original_id) in id_list.iter().enumerate() {
+            id_map.insert(original_id, stable_id as ObjId);
+        }
+
+        id_map
+    }
+}
