@@ -230,6 +230,9 @@ impl Display for SubModel {
                 DeclarationKind::Given(d) => {
                     writeln!(f, "given {name}: {d}")?;
                 }
+                DeclarationKind::ElementsOf(expr) => {
+                    writeln!(f, "{name} <- {expr}")?;
+                }
 
                 DeclarationKind::RecordField(_) => {
                     // Do not print a record field as it is an internal type
