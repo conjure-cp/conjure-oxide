@@ -74,43 +74,13 @@ where
         (_, Expression::Atomic(_, atom)) => atom_to_ast(thr, store, atom),
 
         // Equality is part of the SMT core theory (anything can be compared)
-        (_, Expression::Eq(_, a, b)) => match a.domain_of().unwrap() {
-            (Domain::Matrix(val_domain, idx_domains)) => {
-                // We can't just set the arrays against each other, since the solver will find
-                // arrays which are identical over the original domain but different otherwise
+        (_, Expression::Eq(_, a, b)) => {
+            binary_op(thr, store, a, b, |a: Dynamic, b: Dynamic| a.eq(b))
+        }
 
-                // TODO: can we just use a's domain, or do we need to make sure they are equal?
-
-                assert_eq!(idx_domains.len(), 1);
-                let idx_domain = &idx_domains[0];
-
-                let idx_asts = domain_to_ast_vec(idx_domain).unwrap();
-                binary_op(thr, store, a, b, move |a: Array, b: Array| {
-                    let eqs: Vec<_> = idx_asts
-                        .iter()
-                        .map(|idx_ast| a.select(idx_ast).eq(b.select(idx_ast)))
-                        .collect();
-                    Bool::and(&eqs)
-                })
-            }
-            _ => binary_op(thr, store, a, b, |a: Dynamic, b: Dynamic| a.eq(b)),
-        },
-        (_, Expression::Neq(_, a, b)) => match a.domain_of().unwrap() {
-            (Domain::Matrix(val_domain, idx_domains)) => {
-                assert_eq!(idx_domains.len(), 1);
-                let idx_domain = &idx_domains[0];
-
-                let idx_asts = domain_to_ast_vec(idx_domain).unwrap();
-                binary_op(thr, store, a, b, move |a: Array, b: Array| {
-                    let neqs: Vec<_> = idx_asts
-                        .iter()
-                        .map(|idx_ast| a.select(idx_ast).ne(b.select(idx_ast)))
-                        .collect();
-                    Bool::or(&neqs)
-                })
-            }
-            _ => binary_op(thr, store, a, b, |a: Dynamic, b: Dynamic| a.ne(b)),
-        },
+        (_, Expression::Neq(_, a, b)) => {
+            binary_op(thr, store, a, b, |a: Dynamic, b: Dynamic| a.ne(b))
+        }
 
         // === Boolean Expressions ===
         (_, Expression::Not(_, a)) => unary_op(thr, store, a, |a: Bool| a.not()),
@@ -176,13 +146,10 @@ where
 
         // === Expressions involving matrices ===
         (_, Expression::SafeIndex(_, m, idxs)) => {
-            if (idxs.len() != 1) {
-                return Err(SolverError::ModelFeatureNotImplemented(format!(
-                    "multi-dimensional matrices not yet supported: {idxs:?}"
-                )));
-            }
-            binary_op(thr, store, m, &idxs[0], |m: Array, idx: Dynamic| {
-                m.select(&idx)
+            let arr: Dynamic = expr_to_ast(store, m, thr)?;
+            slice_op(thr, store, idxs, move |idxs: &[Dynamic]| {
+                idxs.iter()
+                    .fold(arr, |cur_arr, idx| cur_arr.as_array().unwrap().select(idx))
             })
         }
 
@@ -231,7 +198,7 @@ where
     Ok((op)(a_ast, b_ast).into())
 }
 
-/// Transforms a slice of expressions into ASTs and returns the result of the given operation over it.
+/// Transforms a list expression into separate ASTs and returns the result of the given operation over them.
 fn list_op<A, Out>(
     theories: &TheoryConfig,
     store: &SymbolStore,
@@ -249,6 +216,20 @@ where
             "inner expression must be a list: {expr}"
         )))?;
 
+    slice_op(theories, store, &exprs, op)
+}
+
+/// Transforms a slice of expressions into ASTs and returns the result of the given operation over it.
+fn slice_op<A, Out>(
+    theories: &TheoryConfig,
+    store: &SymbolStore,
+    exprs: &[Expression],
+    op: impl FnOnce(&[A]) -> Out,
+) -> SolverResult<Dynamic>
+where
+    A: TryFrom<Dynamic, Error: std::fmt::Display>,
+    Out: Into<Dynamic>,
+{
     // Result implements FromIter, collecting into either the full collection or an error
     let asts_res: SolverResult<Vec<_>> = exprs
         .iter()

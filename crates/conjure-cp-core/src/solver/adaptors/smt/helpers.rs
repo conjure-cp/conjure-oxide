@@ -53,14 +53,24 @@ pub fn domain_to_sort(
         }
 
         (_, Domain::Matrix(val_domain, idx_domains)) => {
-            assert_eq!(idx_domains.len(), 1);
+            // We constrain the inner values of the domain recursively
+            // I.e. every way to index the array must give a value in the correct domain
+
+            let (range_sort, restrict_val) = match idx_domains.as_slice() {
+                [_] => domain_to_sort(val_domain, theories),
+                [_, tail @ ..] => {
+                    // Treat as a matrix containing (n-1)-dimensional matrices
+                    let inner_domain = Domain::Matrix(val_domain.clone(), tail.to_vec());
+                    domain_to_sort(&inner_domain, theories)
+                }
+                [] => Err(SolverError::ModelInvalid(
+                    "empty matrix index domain".into(),
+                )),
+            }?;
             let idx_domain = &idx_domains[0];
-
             let (domain_sort, _) = domain_to_sort(idx_domain, theories)?;
-            let (range_sort, restrict_val) = domain_to_sort(val_domain, theories)?;
 
-            // Constrain the inner values of the array; indexing is already safe with SafeIndex
-            let idx_asts = domain_to_ast_vec(idx_domain).unwrap();
+            let idx_asts = domain_to_ast_vec(theories, idx_domain)?;
             let restrict_fn = move |ast: &Dynamic| {
                 let arr = ast.as_array().unwrap();
                 let restrictions: Vec<_> = idx_asts
@@ -82,38 +92,16 @@ pub fn domain_to_sort(
 }
 
 /// Returns a domain as a vector of Z3 AST literals.
-pub fn domain_to_ast_vec(domain: &Domain) -> SolverResult<Vec<Dynamic>> {
-    match domain {
-        Domain::Bool => Ok(vec![
-            Bool::from_bool(true).into(),
-            Bool::from_bool(false).into(),
-        ]),
-        Domain::Int(ranges) => {
-            let mut vals: Vec<Dynamic> = Vec::new();
-            for range in ranges {
-                match range {
-                    Range::Single(n) => {
-                        vals.push(Int::from_i64(*n as i64).into());
-                    }
-                    Range::Bounded(l, r) => {
-                        let (start, end) = (*l as i64, *r as i64);
-                        for i in (start..=end) {
-                            vals.push(Int::from_i64(i).into());
-                        }
-                    }
-                    _ => {
-                        return Err(SolverError::Runtime(format!(
-                            "int domain must contain only bounded ranges: {range}"
-                        )));
-                    }
-                }
-            }
-            Ok(vals)
-        }
-        _ => Err(SolverError::RuntimeNotImplemented(format!(
-            "interpreting matrix index domain not yet implemented: {domain}"
-        ))),
-    }
+pub fn domain_to_ast_vec(
+    theory_config: &TheoryConfig,
+    domain: &Domain,
+) -> SolverResult<Vec<Dynamic>> {
+    let lits = domain
+        .values()
+        .map_err(|err| SolverError::Runtime(err.to_string()))?;
+    lits.iter()
+        .map(|lit| literal_to_ast(theory_config, lit))
+        .collect()
 }
 
 /// Returns a boolean expression restricting the given integer variable to the given range.

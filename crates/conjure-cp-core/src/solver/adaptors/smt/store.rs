@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use itertools::Itertools;
 use z3::{Model, Solvable, SortKind, Symbol, ast::*};
 
 use crate::ast::{AbstractLiteral, Domain, Literal, Name, Range};
@@ -61,26 +62,27 @@ impl Solvable for SymbolStore {
             .map(|(name, (domain, ast, _))| {
                 let (other, _) = model.map.get(name).unwrap();
                 match domain {
-                    Domain::Matrix(val_domain, idx_domains) => {
+                    Domain::Matrix(_, idx_domains) => {
                         // Rather than just setting `array != other_array`, we need to do it for every element
                         // Otherwise, Z3 can generate new arrays which are equal over the domain
                         // but different otherwise (and this loops infinitely)
 
-                        let arr_ast = ast.as_array().unwrap();
-                        let arr_other = other.as_array().unwrap();
-
-                        assert_eq!(idx_domains.len(), 1);
-                        let idx_domain = &idx_domains[0];
-
-                        let (domain_sort, _) = domain_to_sort(idx_domain, &self.theories).unwrap();
-                        let (range_sort, _) = domain_to_sort(val_domain, &self.theories).unwrap();
-                        let idx_asts = domain_to_ast_vec(idx_domain).unwrap();
-
-                        let neqs: Vec<_> = idx_asts
+                        let neqs: Vec<_> = idx_domains
                             .iter()
-                            .map(|idx_ast| arr_ast.select(idx_ast).ne(arr_other.select(idx_ast)))
+                            .map(|domain| domain_to_ast_vec(&self.theories, domain).unwrap())
+                            .multi_cartesian_product()
+                            .map(|idxs| {
+                                idxs.iter()
+                                    .fold((ast.clone(), other.clone()), |(a, b), idx| {
+                                        (
+                                            a.as_array().unwrap().select(idx),
+                                            b.as_array().unwrap().select(idx),
+                                        )
+                                    })
+                            })
+                            .map(|(a, b)| a.ne(b))
                             .collect();
-                        Bool::or(neqs.as_slice())
+                        Bool::or(&neqs)
                     }
 
                     // Any other variables are just directly compared
@@ -167,7 +169,6 @@ fn interpret(
                 .map_err(|err| {
                     SolverError::Runtime(format!("value {lit_ast} out of range: {err}"))
                 })?;
-            assert!(matches!(domain, Domain::Int(_)));
             Ok(Literal::Int(int))
         }
         (Bv, SortKind::BV) => {
@@ -183,7 +184,6 @@ fn interpret(
                 SolverError::Runtime(format!("value {lit_ast} out of range: {err}"))
             })?;
             let signed = i32::from_ne_bytes(unsigned_32.to_ne_bytes());
-            assert!(matches!(domain, Domain::Int(_)));
             Ok(Literal::Int(signed))
         }
         (_, SortKind::Array) => {
@@ -194,23 +194,23 @@ fn interpret(
                 )));
             };
 
-            // TODO: Multi-dimensional matrices not yet supported
-            // Need to pass a new matrix domain as the interior domain
-            assert_eq!(idx_domains.len(), 1);
-            let idx_domain = &idx_domains[0];
+            let inner_domain = match idx_domains.as_slice() {
+                [idx_domain] => *val_domain.clone(),
+                [idx_domain, tail @ ..] => Domain::Matrix(val_domain.clone(), tail.to_vec()),
+                [] => return Err(SolverError::Runtime("empty matrix index domain".into())),
+            };
 
-            let indices = domain_to_ast_vec(idx_domain)?;
-            let literals = interpret_array_elements(
-                model,
-                &arr_ast,
-                val_domain,
-                &indices,
-                theories,
-                model_completion,
-            )?;
+            let indices = domain_to_ast_vec(theories, &idx_domains[0])?;
+            let elements_res: Result<Vec<_>, _> = indices
+                .iter()
+                .map(|idx| model.eval(&arr_ast.select(idx), model_completion).unwrap())
+                .map(|ast| interpret(model, (&inner_domain, &ast), model_completion, theories))
+                .map(|res| res.map(|(_, lit)| lit))
+                .collect();
+            let elements = elements_res?;
 
             Ok(Literal::AbstractLiteral(AbstractLiteral::Matrix(
-                literals,
+                elements,
                 Box::new(domain.clone()),
             )))
         }
@@ -219,22 +219,4 @@ fn interpret(
         ))),
     }?;
     Ok((lit_ast, literal))
-}
-
-/// Given an array AST, evaluates its elements using the given index ASTs.
-fn interpret_array_elements(
-    model: &Model,
-    arr: &Array,
-    val_domain: &Domain,
-    indices: &[Dynamic],
-    theories: &TheoryConfig,
-    model_completion: bool,
-) -> SolverResult<Vec<Literal>> {
-    let elements_res: Result<Vec<_>, _> = indices
-        .iter()
-        .map(|idx| model.eval(&arr.select(idx), model_completion).unwrap())
-        .map(|ast| interpret(model, (val_domain, &ast), model_completion, theories))
-        .map(|res| res.map(|(_, lit)| lit))
-        .collect();
-    elements_res
 }
