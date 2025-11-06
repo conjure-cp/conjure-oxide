@@ -80,7 +80,7 @@ fn parse_int_domain(int_domain: Node, source_code: &str, symbols_ptr: Option<Rc<
 fn parse_tuple_domain(tuple_domain: Node, source_code: &str, symbols_ptr: Option<Rc<RefCell<SymbolTable>>>) -> Result<Domain, EssenceParseError> {
     let mut domains: Vec<Domain> = Vec::new();
     for domain in named_children(&tuple_domain) {
-        domains.push(parse_domain(domain, source_code)?);
+        domains.push(parse_domain(domain, source_code, symbols_ptr.clone())?);
     }
     Ok(Domain::Tuple(domains))
 }
@@ -95,7 +95,7 @@ fn parse_matrix_domain(
         .child_by_field_name("index_domain_list")
         .expect("No index domains found for matrix domain");
     for domain in named_children(&index_domain_list) {
-        domains.push(parse_domain(domain, source_code)?);
+        domains.push(parse_domain(domain, source_code, symbols_ptr.clone())?);
     }
     let value_domain = parse_domain(
         matrix_domain.child_by_field_name("value_domain").ok_or(
@@ -105,6 +105,7 @@ fn parse_matrix_domain(
             ),
         )?,
         source_code,
+        symbols_ptr,
     )?;
     Ok(Domain::Matrix(Box::new(value_domain), domains))
 }
@@ -123,7 +124,7 @@ fn parse_record_domain(
         let domain_node = record_entry
             .child_by_field_name("domain")
             .expect("No domain found for record entry");
-        let domain = parse_domain(domain_node, source_code)?;
+        let domain = parse_domain(domain_node, source_code, symbols_ptr.clone())?;
         record_entries.push(RecordEntry { name, domain });
     }
     Ok(Domain::Record(record_entries))
@@ -194,7 +195,7 @@ fn parse_set_domain(set_domain: Node, source_code: &str, symbols_ptr: Option<Rc<
                 }
             }
             "domain" => {
-                value_domain = Some(parse_domain(child, source_code)?);
+                value_domain = Some(parse_domain(child, source_code, symbols_ptr.clone())?);
             }
             _ => {
                 return Err(EssenceParseError::syntax_error(
