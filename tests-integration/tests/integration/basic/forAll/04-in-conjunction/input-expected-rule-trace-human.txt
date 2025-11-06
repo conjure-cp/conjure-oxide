@@ -10,7 +10,24 @@ and([a,(b = and([given k: int(1..2)
 such that
 
 (k <= 5)
- | k: int(1..2),]));int(1..2)])
+ | k: int(1..2),]));int(1..)])
+
+--
+
+and([a,(b = and([given k: int(1..2)
+
+such that
+
+(k <= 5)
+ | k: int(1..2),]));int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+a,
+(b = and([given k: int(1..2)
+
+such that
+
+(k <= 5)
+ | k: int(1..2),])) 
 
 --
 
@@ -106,19 +123,8 @@ and([;int(1..)])
 
 --
 
-and([a,Reify(and([;int(1..)]), b);int(1..2)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-and([a,Reify(true, b);int(1..2)]) 
-
---
-
-and([a,Reify(true, b);int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-and([a,Reify(true, b);int(1..)]) 
-
---
-
-and([a,Reify(true, b);int(1..)]), 
+a,
+Reify(and([;int(1..)]), b), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
 a,
 Reify(true, b) 

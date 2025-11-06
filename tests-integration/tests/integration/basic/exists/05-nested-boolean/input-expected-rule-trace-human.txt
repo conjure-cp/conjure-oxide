@@ -8,7 +8,7 @@ such that
 
 such that
 
-and([(p > 2),(p < 4);int(1..2)])
+and([(p > 2),(p < 4);int(1..)])
  | p: int(1..5),]))
 
 --
@@ -17,14 +17,33 @@ and([(p > 2),(p < 4);int(1..2)])
 
 such that
 
-and([(p > 2),(p < 4);int(1..2)])
+and([(p > 2),(p < 4);int(1..)])
+ | p: int(1..5),])), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(check = or([given p: int(1..5)
+
+such that
+
+(p > 2),
+(p < 4)
+ | p: int(1..5),])) 
+
+--
+
+(check = or([given p: int(1..5)
+
+such that
+
+(p > 2),
+(p < 4)
  | p: int(1..5),])), 
    ~~> bool_eq_to_reify ([("Minion", 4400)]) 
 Reify(or([given p: int(1..5)
 
 such that
 
-and([(p > 2),(p < 4);int(1..2)])
+(p > 2),
+(p < 4)
  | p: int(1..5),]), check) 
 
 --
@@ -35,7 +54,7 @@ find p: int(1..5)
 
 such that
 
-(false != and([(p > 2),(p < 4);int(1..2)]))
+(false != and([(p > 2),(p < 4);int(1..)]))
 
 --
 
@@ -51,9 +70,9 @@ such that
 
 --
 
-(false != and([(sum([p,-1;int(1..)]) >= 2),(p <= sum([4,-1;int(1..)]));int(1..2)])), 
+(false != and([(sum([p,-1;int(1..)]) >= 2),(p <= sum([4,-1;int(1..)]));int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-(false != and([(sum([p,-1;int(1..)]) >= 2),(p <= 3);int(1..2)])) 
+(false != and([(sum([p,-1;int(1..)]) >= 2),(p <= 3);int(1..)])) 
 
 --
 
@@ -63,30 +82,24 @@ Ineq(2, p, -1)
 
 --
 
-(false != and([Ineq(2, p, -1),(p <= 3);int(1..2)])), 
+(false != and([Ineq(2, p, -1),(p <= 3);int(1..)])), 
    ~~> flatten_generic ([("Minion", 4200)]) 
 (false != __0) 
 new variables:
   find __0: bool
 new constraints:
-  __0 =aux and([Ineq(2, p, -1),(p <= 3);int(1..2)])
+  __0 =aux and([Ineq(2, p, -1),(p <= 3);int(1..)])
 --
 
-__0 =aux and([Ineq(2, p, -1),(p <= 3);int(1..2)]), 
+__0 =aux and([Ineq(2, p, -1),(p <= 3);int(1..)]), 
    ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify(and([Ineq(2, p, -1),(p <= 3);int(1..2)]), __0) 
+Reify(and([Ineq(2, p, -1),(p <= 3);int(1..)]), __0) 
 
 --
 
 (p <= 3), 
    ~~> leq_to_ineq ([("Minion", 4100)]) 
 Ineq(p, 3, 0) 
-
---
-
-and([Ineq(2, p, -1),Ineq(p, 3, 0);int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-and([Ineq(2, p, -1),Ineq(p, 3, 0);int(1..)]) 
 
 --
 
@@ -106,7 +119,8 @@ given p: int(1..5)
 
 such that
 
-and([(p > 2),(p < 4);int(1..2)])
+(p > 2),
+(p < 4)
 
 --
 
@@ -122,9 +136,11 @@ and([(p > 2),(p < 4);int(1..2)])
 
 --
 
-and([(sum([p,-1;int(1..)]) >= 2),(p <= sum([4,-1;int(1..)]));int(1..2)]), 
+(sum([p,-1;int(1..)]) >= 2),
+(p <= sum([4,-1;int(1..)])), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-and([(sum([p,-1;int(1..)]) >= 2),(p <= 3);int(1..2)]) 
+(sum([p,-1;int(1..)]) >= 2),
+(p <= 3) 
 
 --
 
@@ -136,19 +152,6 @@ Ineq(2, p, -1)
 
 (p <= 3), 
    ~~> leq_to_ineq ([("Minion", 4100)]) 
-Ineq(p, 3, 0) 
-
---
-
-and([Ineq(2, p, -1),Ineq(p, 3, 0);int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-and([Ineq(2, p, -1),Ineq(p, 3, 0);int(1..)]) 
-
---
-
-and([Ineq(2, p, -1),Ineq(p, 3, 0);int(1..)]), 
-   ~~> constant_evaluator ([("Constant", 9001)]) 
-Ineq(2, p, -1),
 Ineq(p, 3, 0) 
 
 --
@@ -166,7 +169,8 @@ or([given p: int(1..5)
 
 such that
 
-and([(p > 2),(p < 4);int(1..2)])
+(p > 2),
+(p < 4)
  | p: int(1..5),__0: bool,]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 or([and([Ineq(2, 3, -1),Ineq(3, 3, 0);int(1..)]);int(1..)]) 

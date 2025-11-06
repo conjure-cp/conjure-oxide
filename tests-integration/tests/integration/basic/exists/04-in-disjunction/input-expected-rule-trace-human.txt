@@ -9,8 +9,8 @@ or([a,(b = or([given m: int(0..3)
 
 such that
 
-(product([m,m;int(1..2)]) = 4)
- | m: int(0..3),]));int(1..2)])
+(product([m,m;int(1..)]) = 4)
+ | m: int(0..3),]));int(1..)])
 
 --
 
@@ -18,14 +18,14 @@ such that
 
 such that
 
-(product([m,m;int(1..2)]) = 4)
+(product([m,m;int(1..)]) = 4)
  | m: int(0..3),])), 
    ~~> bool_eq_to_reify ([("Minion", 4400)]) 
 Reify(or([given m: int(0..3)
 
 such that
 
-(product([m,m;int(1..2)]) = 4)
+(product([m,m;int(1..)]) = 4)
  | m: int(0..3),]), b) 
 
 --
@@ -36,28 +36,22 @@ find m: int(0..3)
 
 such that
 
-(false != (product([m,m;int(1..2)]) = 4))
+(false != (product([m,m;int(1..)]) = 4))
 
 --
 
-(false != (product([m,m;int(1..2)]) = 4)), 
+(false != (product([m,m;int(1..)]) = 4)), 
    ~~> flatten_generic ([("Minion", 4200)]) 
 (false != __0) 
 new variables:
   find __0: bool
 new constraints:
-  __0 =aux (product([m,m;int(1..2)]) = 4)
+  __0 =aux (product([m,m;int(1..)]) = 4)
 --
 
-__0 =aux (product([m,m;int(1..2)]) = 4), 
+__0 =aux (product([m,m;int(1..)]) = 4), 
    ~~> bool_eq_to_reify ([("Minion", 4400)]) 
-Reify((product([m,m;int(1..2)]) = 4), __0) 
-
---
-
-product([m,m;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-product([m,m;int(1..)]) 
+Reify((product([m,m;int(1..)]) = 4), __0) 
 
 --
 
@@ -83,13 +77,7 @@ given m: int(0..3)
 
 such that
 
-(product([m,m;int(1..2)]) = 4)
-
---
-
-product([m,m;int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
-product([m,m;int(1..)]) 
+(product([m,m;int(1..)]) = 4)
 
 --
 
@@ -111,21 +99,15 @@ or([given m: int(0..3)
 
 such that
 
-(product([m,m;int(1..2)]) = 4)
+(product([m,m;int(1..)]) = 4)
  | m: int(0..3),__0: bool,]), 
    ~~> expand_comprehension_ac ([("Better_AC_Comprehension_Expansion", 2001)]) 
 or([FlatProductEq(2,2,4);int(1..)]) 
 
 --
 
-or([a,Reify(or([FlatProductEq(2,2,4);int(1..)]), b);int(1..2)]), 
+or([a,Reify(or([FlatProductEq(2,2,4);int(1..)]), b);int(1..)]), 
    ~~> constant_evaluator ([("Constant", 9001)]) 
-or([a,Reify(true, b);int(1..2)]) 
-
---
-
-or([a,Reify(true, b);int(1..2)]), 
-   ~~> matrix_to_list ([("Base", 2000)]) 
 or([a,Reify(true, b);int(1..)]) 
 
 --
