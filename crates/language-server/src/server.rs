@@ -79,7 +79,6 @@ impl LanguageServer for Backend {
             //         },
             //     ),
             // ),
-            ..Default::default()
         })
     }
     async fn initialized(&self, _: InitializedParams) {
