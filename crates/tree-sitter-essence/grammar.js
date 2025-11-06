@@ -90,7 +90,7 @@ module.exports = grammar ({
       ))
     ),
 
-    range_list: $ => prec(2, commaSep1(choice($.int_range, $.integer))),
+    range_list: $ => prec(2, commaSep1(choice($.int_range, $.arithmetic_expr))),
 
     int_range: $ => seq(
       optional(field("lower", $.arithmetic_expr)), 
