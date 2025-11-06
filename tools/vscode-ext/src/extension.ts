@@ -1,6 +1,3 @@
-// import { childProcess, execSync } from 'child_process';
-// import { satisfies } from 'compare-versions';
-// import { ClientRequest } from 'http';
 import * as path from 'path';
 import { window } from 'vscode';
 import { workspace, ExtensionContext } from 'vscode';
@@ -14,19 +11,19 @@ import {
 import { vscode } from 'vscx'
 
 export function activate(context: ExtensionContext) {
-    tryStartLanguageServer(context);
+	tryStartLanguageServer(context);
 }
 function tryStartLanguageServer(context: ExtensionContext) {
+
 	//for future, possibly may want version checking
+
 	console.log("Before setup");
 	let serveroptions: ServerOptions = {
 		command: "conjure-oxide", args: ["server-lsp"]
-		// run: { command: "conjure-oxide", args: ["server-lsp"]},
-		// debug: { command: "conjure-oxide", args: ["server-lsp"] }
 	}
 
 	let clientoptions: LanguageClientOptions = {
-		documentSelector: [{scheme: 'file', language: 'essence'}]
+		documentSelector: [{ scheme: 'file', language: 'essence' }]
 	}
 
 	let client = new LanguageClient("Conjure-Oxide Language Server", serveroptions, clientoptions, true);

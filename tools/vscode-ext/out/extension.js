@@ -10,8 +10,6 @@ function tryStartLanguageServer(context) {
     console.log("Before setup");
     let serveroptions = {
         command: "conjure-oxide", args: ["server-lsp"]
-        // run: { command: "conjure-oxide", args: ["server-lsp"]},
-        // debug: { command: "conjure-oxide", args: ["server-lsp"] }
     };
     let clientoptions = {
         documentSelector: [{ scheme: 'file', language: 'essence' }]
