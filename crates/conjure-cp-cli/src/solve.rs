@@ -45,12 +45,6 @@ pub struct Args {
     #[arg(long, default_value_t = false)]
     pub no_run_solver: bool,
 
-    /// Do not run the solver.
-    /// 
-    /// The model is printed to stdout as a JSON before being rewritten
-    #[arg(long, default_value_t = false)]
-    pub ast_json: bool,
-
     /// Number of solutions to return. 0 returns all solutions
     #[arg(long, default_value_t = 0, short = 'n')]
     pub number_of_solutions: i32,
@@ -68,11 +62,6 @@ pub fn run_solve_command(global_args: GlobalArgs, solve_args: Args) -> anyhow::R
 
     let context = init_context(&global_args, input_file)?;
     let model = parse(&global_args, Arc::clone(&context))?;
-    
-    if solve_args.ast_json {
-        println!("woah! when I get round to it, this will print the model.");
-    }
-
     let rewritten_model = rewrite(model, &global_args, Arc::clone(&context))?;
 
     if solve_args.no_run_solver {
