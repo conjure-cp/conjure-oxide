@@ -2,16 +2,14 @@ use std::collections::HashMap;
 
 use z3::{Solvable, SortKind, Symbol, ast::*};
 
-use crate::{
-    ast::{Literal, Name},
-    solver::SolverError,
-};
+use crate::ast::{Literal, Name};
+use crate::solver::SolverError;
 
+/// Initially, this maps CO variable names to Z3 symbols.
+/// When reading a solution from a solver-returned model, we create a new store
+/// which instead maps to their values.
 #[derive(Clone)]
 pub struct Store {
-    /// Initially, this maps CO variable names to Z3 symbols.
-    /// When reading a solution from a solver-returned model, we create a new store
-    /// which instead maps to their values.
     map: HashMap<Name, Dynamic>,
 }
 
@@ -71,6 +69,7 @@ impl Solvable for Store {
     }
 }
 
+/// Takes a constant Z3 value and returns the CO literal it maps to.
 fn dynamic_to_literal(ast: Dynamic) -> Result<Literal, SolverError> {
     match &ast.sort_kind() {
         SortKind::Bool => Ok(Literal::Bool(ast.as_bool().unwrap().as_bool().ok_or(
@@ -80,10 +79,28 @@ fn dynamic_to_literal(ast: Dynamic) -> Result<Literal, SolverError> {
             ast.as_int()
                 .unwrap()
                 .as_i64()
-                .ok_or(SolverError::Runtime("could not retrieve as i64".into()))?
+                .ok_or(SolverError::Runtime(format!(
+                    "could not cast to i64: {ast}"
+                )))?
                 .try_into()
-                .map_err(|err| SolverError::Runtime(format!("integer conversion failed: {err}")))?,
+                .map_err(|err| SolverError::Runtime(format!("value {ast} out of range: {err}")))?,
         )),
+        SortKind::BV => {
+            /// BVs do not sign-extend when returning u64s (if they are < 64 bits)
+            /// To correctly retrieve negative numbers, we cast to a u32 and then bit-wise interpret
+            /// it as an i32, rather than casting.
+            /// See https://github.com/prove-rs/z3.rs/issues/458
+            let unsigned: u32 = ast
+                .as_bv()
+                .unwrap()
+                .as_u64()
+                .ok_or(SolverError::Runtime(format!(
+                    "could not retrieve u64: {ast}"
+                )))?
+                .try_into()
+                .map_err(|err| SolverError::Runtime(format!("value {ast} out of range: {err}")))?;
+            Ok(Literal::Int(i32::from_ne_bytes(unsigned.to_ne_bytes())))
+        }
         _ => Err(SolverError::RuntimeNotImplemented(format!(
             "conversion from AST to literal not implemented: {ast}"
         ))),

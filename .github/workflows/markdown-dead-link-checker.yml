@@ -1,0 +1,28 @@
+# Chose to write a custom workflow rather than use
+# AlexanderDokuchaev/md-dead-link-check action to have more control
+# over when the workflow is run. By default, it will only run on changed
+# files. We might want to run it on all files to make sure no new dead links
+# have appeared in unchanged files. Moreover, we might also want to run it on a schedule as it is possible for links to go dead over time.
+name: Markdown Dead Link Checker
+
+on:
+  schedule:
+    - cron: "23 0 * * 6" # Runs every Sunday at midnight BST (23:00 UTC Saturday)
+  pull_request:
+jobs:
+  md-dead-link-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Python 3.10 # Chosen because it's the default for the workflow
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install md-dead-link-check
+        run: pip install --root-user-action=ignore md-dead-link-check
+
+      - name: Run md-dead-link-check
+        run: md-dead-link-check --all config=tools/md-dead-link-check.config

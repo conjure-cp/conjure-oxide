@@ -55,12 +55,12 @@ fn single_var() {
     let meta = Meta {
         num_applications: 0,
     };
-    let (expr, meta) = morph(
-        vec![vec![MyRule::EvalAdd, MyRule::EvalMul]],
-        select_first,
-        expr,
-        meta,
-    );
+
+    let engine = EngineBuilder::new()
+        .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul])
+        .build();
+    let (expr, meta) = engine.morph(expr, meta);
+
     assert_eq!(expr, Expr::Val(42));
     assert_eq!(meta.num_applications, 0);
 }
@@ -71,12 +71,12 @@ fn add_zero() {
     let meta = Meta {
         num_applications: 0,
     };
-    let (expr, meta) = morph(
-        vec![vec![MyRule::EvalAdd, MyRule::EvalMul]],
-        select_first,
-        expr,
-        meta,
-    );
+
+    let engine = EngineBuilder::new()
+        .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul])
+        .build();
+    let (expr, meta) = engine.morph(expr, meta);
+
     assert_eq!(expr, Expr::Val(42));
     assert_eq!(meta.num_applications, 1);
 }
@@ -87,12 +87,12 @@ fn mul_one() {
     let meta = Meta {
         num_applications: 0,
     };
-    let (expr, meta) = morph(
-        vec![vec![MyRule::EvalAdd, MyRule::EvalMul]],
-        select_first,
-        expr,
-        meta,
-    );
+
+    let engine = EngineBuilder::new()
+        .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul])
+        .build();
+    let (expr, meta) = engine.morph(expr, meta);
+
     assert_eq!(expr, Expr::Val(42));
     assert_eq!(meta.num_applications, 1);
 }
@@ -103,12 +103,12 @@ fn eval_add() {
     let meta = Meta {
         num_applications: 0,
     };
-    let (expr, meta) = morph(
-        vec![vec![MyRule::EvalAdd, MyRule::EvalMul]],
-        select_first,
-        expr,
-        meta,
-    );
+
+    let engine = EngineBuilder::new()
+        .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul])
+        .build();
+    let (expr, meta) = engine.morph(expr, meta);
+
     assert_eq!(expr, Expr::Val(3));
     assert_eq!(meta.num_applications, 1);
 }
@@ -122,12 +122,12 @@ fn eval_nested() {
     let meta = Meta {
         num_applications: 0,
     };
-    let (expr, meta) = morph(
-        vec![vec![MyRule::EvalAdd, MyRule::EvalMul]],
-        select_first,
-        expr,
-        meta,
-    );
+
+    let engine = EngineBuilder::new()
+        .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul])
+        .build();
+    let (expr, meta) = engine.morph(expr, meta);
+
     assert_eq!(expr, Expr::Val(9));
     assert_eq!(meta.num_applications, 2);
 }
