@@ -1,5 +1,8 @@
-use conjure_cp::ast::comprehension::Comprehension;
-use conjure_cp::ast::{DeclarationKind, Metadata};
+use std::cell::RefCell;
+use std::rc::Rc;
+
+use conjure_cp::ast::comprehension::{Comprehension, ComprehensionBuilder};
+use conjure_cp::ast::{Atom, DeclarationKind, Metadata};
 use conjure_cp::ast::{Expression as Expr, Moo, ReturnType, SymbolTable, Typeable};
 use conjure_cp::rule_engine::Reduction;
 use conjure_cp::rule_engine::{
@@ -26,19 +29,17 @@ fn union_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
                             // create [ return_expr | i <- A, guards...] part
                             let mut comprehension1 =
-                                ComprehensionBuilder::new(Rc::new(RefCell::new(symbols.clone())));
+                                ComprehensionBuilder::new(Rc::new(RefCell::new(comp.generator_submodel.symbols().clone())));
                             let i1 = comprehension1
                                 .generator_symboltable()
                                 .borrow_mut()
                                 .gensym(&a);
                             comprehension1 = comprehension1.generator(i1);
-                            for guard in guards.clone() {
-                                comprehension1 = comprehension1.guard(guard);
-                            }
+                            comprehension1.guards = guards;
 
                             // create [ return_expr | i <- B, !(i in A), guards...] part
                             let mut comprehension2 =
-                                ComprehensionBuilder::new(Rc::new(RefCell::new(symbols.clone())));
+                                ComprehensionBuilder::new(Rc::new(RefCell::new(comp.generator_submodel.symbols().clone())));
                             let i2 = comprehension2
                                 .generator_symboltable()
                                 .borrow_mut()
@@ -46,11 +47,9 @@ fn union_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                             comprehension2 = comprehension2.generator(i1);
                             comprehension2 = comprehension2.guard(Expr::Not(
                                 Metadata::new(),
-                                Expr::In(Metadata::new(), i2, Moo::new(b.clone())),
+                                Moo::new(Expr::In(Metadata::new(), Expr::Atomic(Metadata::new(), Atom::new_ref(i2)), Moo::new(b.clone()))),
                             ));
-                            for guard in guards.clone() {
-                                comprehension2 = comprehension2.guard(guard);
-                            }
+                            comprehension1.guards = guards;
 
                             return Ok(Reduction::pure(Expr::Comprehension(
                                 Metadata::new(),
