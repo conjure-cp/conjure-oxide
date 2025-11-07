@@ -123,3 +123,7 @@ There is also the possibility of adding stress testing to see at which point the
 ## Conclusion
 This document outlines definitions relevant for understanding both the project and the types of testing most applicable. A scenario of testing is then produced, which outlines what testing exists and what testing can be added, as well as any large limitations on an implementation of this ideal state. This allows for any individuals working on testing in the future to have a holistic overview of the state of testing on this project. Finally, a number of smaller sub-projects are outlined as a product of this document, aiming to improve the tested-ness of Conjure-Oxide and compare its success as a reimplementation to Conjure and Savile Row.
 In the future, it may also be worth examining the possibility and likelihood of being able to apply Metamorphic testing to Conjure-Oxide, to ensure consistency in it's results by developing metamorphic relations between input and output. At present, this is not feasible, and although this document is idealised, it is not intended to be entirely unreasonable or detached from the current reality of the project.
+
+---
+
+*This section had been taken from the 'Ideal Scenario of Testing (Dec 2024)' page of the conjure-oxide wiki*

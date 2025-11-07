@@ -144,3 +144,7 @@ fn optimizations_enabled() -> bool { ... }
 - `rules`: A vector of references to [`Rule`]s to try.
 - `stats`: A mutable reference to [`RewriterStats`] used to track the number of rule applications and other statistics.
 ```
+
+---
+
+*This section had been taken from the 'Crate Structure' page of the conjure-oxide wiki*

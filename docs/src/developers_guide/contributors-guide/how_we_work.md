@@ -61,3 +61,7 @@ We agree to adhere to the following guidelines when engaging in group work.
 ## Final Thoughts
 - **Collaboration** is key to our success, so feel free to communicate openly.
 - **Continuous improvement** is encouraged—keep looking for ways to improve your code, processes, and knowledge.
+
+---
+
+*This section had been taken from the 'How we work' page of the conjure-oxide wiki*

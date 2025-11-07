@@ -43,3 +43,7 @@ An example of division handling is shown below. Bubbles are shown as `{X @ Y}`, 
 Why not just use `Reduction`s to assert at the top-level of the model that `c != 0`? In the context of undefinedness handling, the final reduction is dependent on the context it occurs in. In the above example, if we continue by simplifying (apply DeMorgan's), we can see that it becomes `a != b / c \/ c = 0`. Thus, c = 0 is a valid assignment for this example to be true, and setting `c != 0` on the top-level would be incorrect.
 
 In Conjure Oxide, Bubbles are often combined with the power of `Reduction`s to provide support for solvers like Minion.
+
+---
+
+*This section had been taken from the 'Semantics of Rewriting Expressions with Side‐Effects' page of the conjure-oxide wiki*

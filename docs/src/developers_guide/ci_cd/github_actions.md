@@ -133,5 +133,6 @@ The default `github.sha` is a temporary commit representing the state of the rep
 
 </details>
 
+---
 
-
+*This section had been taken from the 'Github Actions' page of the conjure-oxide wiki*

@@ -51,4 +51,4 @@ Installing [sccache](https://github.com/mozilla/sccache) improves compilation sp
 
 ---
 
-*This section had been taken from the 'Setting up your development environment' page of the [conjure-oxide wiki](https://github.com/conjure-cp/conjure-oxide/wiki/Setting-up-your-development-environment)*
+*This section had been taken from the 'Setting up your development environment' page of the conjure-oxide wiki*

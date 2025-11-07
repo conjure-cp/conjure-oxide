@@ -230,3 +230,7 @@ To achieve this, we use the following algorithm:
 
 > NOTE: The `order` of a `RuleSet` should not be thought of as a "priority" and does not affect the priorities of the rules in it.
 > It only provides a consistent order of operations when resolving the final set of rules
+
+---
+
+*This section had been taken from the 'Expression rewriting, Rules and RuleSets' page of the conjure-oxide wiki*

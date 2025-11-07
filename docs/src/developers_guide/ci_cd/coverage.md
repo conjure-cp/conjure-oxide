@@ -39,3 +39,7 @@ RUSTDOCFLAGS='-Z unstable-options --show-coverage --output-format json' cargo +n
 **Reading**
 
 See the unstable options section of the rustdoc book. [Link](https://doc.rust-lang.org/rustdoc/unstable-features.html).
+
+---
+
+*This section had been taken from the 'Coverage' page of the conjure-oxide wiki*

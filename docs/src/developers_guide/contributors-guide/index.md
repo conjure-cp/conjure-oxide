@@ -29,4 +29,4 @@ This project is entirely open-source, with all code released under the [MPL 2.0
 
 ---
 
-*This section had been adapted from the 'home' page of the [conjure-oxide wiki](https://github.com/conjure-cp/conjure-oxide/wiki), and [CONTRIBUTING.md](https://github.com/conjure-cp/conjure-oxide/blob/main/CONTRIBUTING.md)*
+*This section had been adapted from the 'home' page of the conjure-oxide wiki, and [CONTRIBUTING.md](https://github.com/conjure-cp/conjure-oxide/blob/main/CONTRIBUTING.md)*
