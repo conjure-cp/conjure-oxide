@@ -478,7 +478,7 @@ pub enum Expression {
     #[polyquine_skip]
     AuxDeclaration(Metadata, Reference, Moo<Expression>),
 
-    // This expression is for encoding i32 ints as a vector of boolean expressions for cnf - using 2s complement
+    /// This expression is for encoding i32 ints as a vector of boolean expressions for cnf - using 2s complement
     #[compatible(SAT)]
     SATInt(Metadata, Moo<Expression>),
 
