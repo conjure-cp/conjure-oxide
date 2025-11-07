@@ -1,6 +1,6 @@
 <!-- maturity: draft
 authors: Georgii Skorokhod, Hanaa Khan
-created: 03-11-25
+created: 16-02-24
 ---- -->
 
 <!-- TODO edit more -->
@@ -148,7 +148,7 @@ At runtime, when we first request the `rules` from a `RuleSet`, it retrieves a l
 
 This is done to allow us to statically initialize `Rule`s and `RuleSet`s in a decentralized way across multiple files and store them in a single registry. Dynamic data structures (like `Vec` or `HashMap`) cannot be initialized at this stage (Rust has no "life before `main()`"), so we have to initialize them lazily at runtime.
 
-![image](https://github.com/conjure-cp/conjure-oxide/assets/64529579/6d63547c-6ba0-4eeb-b6ad-0f6ef46f4c43)
+![image](./expression_rewriting_diagram.png)
 
 Internally, we would sometimes refer to this lazy initialization as "reversing the arrows".
 

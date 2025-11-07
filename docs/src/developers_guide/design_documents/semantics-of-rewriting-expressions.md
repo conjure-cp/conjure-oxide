@@ -1,9 +1,10 @@
 <!-- maturity: draft
 authors: Felix Leitner, Niklas Dewally, Hanaa Khan
-created: 05-11-25
+created: 19-09-24
 ---- -->
 
 <!-- TODO edit more -->
+<!-- syntax highlighting -->
 
 # Semantics of Rewriting Expressions with Side‐Effects
 
