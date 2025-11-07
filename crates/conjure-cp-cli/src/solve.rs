@@ -45,9 +45,9 @@ pub struct Args {
     #[arg(long, default_value_t = false)]
     pub no_run_solver: bool,
 
-    /// Print the model AST to stdout in JSON format
+    /// Do not run the solver.
     /// 
-    /// The model is printed _before_ being rewritten
+    /// The model is printed to stdout as a JSON before being rewritten
     #[arg(long, default_value_t = false)]
     pub ast_json: bool,
 
