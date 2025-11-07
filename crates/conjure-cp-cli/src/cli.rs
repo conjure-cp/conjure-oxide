@@ -6,7 +6,7 @@ use clap_complete::Shell;
 use conjure_cp::solver::SolverFamily;
 use conjure_cp::solver::adaptors::smt::IntTheory;
 
-use crate::{solve, test_solve};
+use crate::{solve, test_solve, pretty};
 
 pub(crate) const DEBUG_HELP_HEADING: Option<&str> = Some("Debug");
 pub(crate) const LOGGING_HELP_HEADING: Option<&str> = Some("Logging & Output");
@@ -27,6 +27,7 @@ pub enum Command {
     TestSolve(test_solve::Args),
     /// Generate a completion script for the shell provided
     Completion(CompletionArgs),
+    Pretty(pretty::Args),
 }
 
 /// Global command line arguments.
