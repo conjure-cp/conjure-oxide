@@ -21,25 +21,27 @@ fn union_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                     // match on expression being of form A union B
                     match gen_expr {
                         Expr::Union(_, a, b) => {
-                            // original comprehension return expression
+                            // original comprehension parts common to both new
                             let return_expr = comp.return_expression();
-
-                            // extract guards from original comprehension
                             let guards = comp.generator_submodel.constraints();
+                            let induction_variables = comp.induction_variables;
 
                             // create [ return_expr | i <- A, guards...] part
-                            let mut comprehension1 =
-                                ComprehensionBuilder::new(Rc::new(RefCell::new(comp.generator_submodel.symbols().clone())));
+                            let mut comprehension1 = ComprehensionBuilder::new(Rc::new(
+                                RefCell::new(comp.generator_submodel.symbols().clone()),
+                            ));
                             let i1 = comprehension1
                                 .generator_symboltable()
                                 .borrow_mut()
                                 .gensym(&a);
                             comprehension1 = comprehension1.generator(i1);
                             comprehension1.guards = guards;
+                            comprehension1.induction_variables = induction_variables;
 
                             // create [ return_expr | i <- B, !(i in A), guards...] part
-                            let mut comprehension2 =
-                                ComprehensionBuilder::new(Rc::new(RefCell::new(comp.generator_submodel.symbols().clone())));
+                            let mut comprehension2 = ComprehensionBuilder::new(Rc::new(
+                                RefCell::new(comp.generator_submodel.symbols().clone()),
+                            ));
                             let i2 = comprehension2
                                 .generator_symboltable()
                                 .borrow_mut()
@@ -47,9 +49,14 @@ fn union_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                             comprehension2 = comprehension2.generator(i1);
                             comprehension2 = comprehension2.guard(Expr::Not(
                                 Metadata::new(),
-                                Moo::new(Expr::In(Metadata::new(), Expr::Atomic(Metadata::new(), Atom::new_ref(i2)), Moo::new(b.clone()))),
+                                Moo::new(Expr::In(
+                                    Metadata::new(),
+                                    Expr::Atomic(Metadata::new(), Atom::new_ref(i2)),
+                                    Moo::new(b.clone()),
+                                )),
                             ));
-                            comprehension1.guards = guards;
+                            comprehension2.guards = guards;
+                            comprehension2.induction_variables = induction_variables;
 
                             return Ok(Reduction::pure(Expr::Comprehension(
                                 Metadata::new(),
@@ -57,7 +64,7 @@ fn union_set(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                                     Metadata::new(),
                                     Moo::new(), // <-- don't know what do do about the fact flatten can take 1 or 2 arguments
                                     Moo::new(
-                                        into_matrix_expr!(vec![comprehension1, comprehension2]; domain_int!(1..2)),
+                                        into_matrix_expr!(vec![comprehension1.with_return_value(return_expr, expr.to_ac_operator_kind()), comprehension2.with_return_value(return_expr, expr.to_ac_operator_kind())]; domain_int!(1..2)),
                                     ),
                                 )),
                             )));
