@@ -19,13 +19,11 @@
 - [Contributor's Guide](./developers_guide/contributors-guide/index.md)
   - [How we work](./developers_guide/contributors-guide/how_we_work.md)
   - [Setting up your development environment](./developers_guide/contributors-guide/set-dev-env.md)
-  - [Contributing Process](./developers_guide/contributors-guide/contributing-process.md)
-  - [Git Flow](./developers_guide/contributors-guide/gitflow.md)
   - [Running and writing integration tests]()
   - [What we didn't do]()
 
 - [Coding Resources and Conventions](./developers_guide/coding_resources/index.md)
-  - [Documentation Style](./developers_guide/coding_resources/documentation_style.md)
+  - [Style Guide](./developers_guide/coding_resources/style_guide.md)
   - [Crate Structure](./developers_guide/coding_resources/crate_structure.md)
 
 - [Design Documents](./developers_guide/design_documents/index.md)

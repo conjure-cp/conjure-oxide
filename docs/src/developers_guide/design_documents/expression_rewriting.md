@@ -1,6 +1,6 @@
 <!-- maturity: draft
 authors: Georgii Skorokhod, Hanaa Khan
-last-updated: 03-11-25
+created: 03-11-25
 ---- -->
 
 <!-- TODO edit more -->

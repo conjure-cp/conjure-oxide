@@ -1,6 +1,6 @@
 <!-- maturity: draft
 authors: Felix Leitner, Niklas Dewally, Hanaa Khan
-last-updated: 05-11-25
+created: 05-11-25
 ---- -->
 
 <!-- TODO edit more -->

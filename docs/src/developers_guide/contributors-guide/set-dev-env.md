@@ -1,6 +1,6 @@
 <!-- maturity: draft
 authors: Georgii Skorokhod, Niklas Dewally
-last-updated: 31-03-25
+created: 31-03-25
 ---- -->
 # Setting up your development environment
 

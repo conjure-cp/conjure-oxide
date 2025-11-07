@@ -1,6 +1,6 @@
 <!-- maturity: draft
 authors: Jamie Melton, Georgii Skorokhod, Özgür Akgün
-last-updated: 24-10-25
+created: 24-10-25
 ---- -->
 # Contributors Guide
 
@@ -20,6 +20,8 @@ or feature requests can be posted on the [Github issue
 tracker](https://github.com/conjure-cp/conjure-oxide/issues). 
 
 Currently, Conjure Oxide has been primarily developed by students and staff at the [University of St Andrews](https://www.st-andrews.ac.uk/). That being said, we welcome and encourage contributions from individuals outside the University. Over the course of this section, we will expand further into **how** you can contribute.
+
+For more detailed information reguarding our contributing process, please refer to [CONTRIBUTING.md](https://github.com/conjure-cp/conjure-oxide/blob/main/CONTRIBUTING.md)
 
 ## Licence
 
