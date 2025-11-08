@@ -22,7 +22,7 @@ use tracing_subscriber::layer::SubscriberExt as _;
 use tracing_subscriber::util::SubscriberInitExt as _;
 use tracing_subscriber::{EnvFilter, Layer, fmt};
 
-use language_server::server;
+use conjure_cp_lsp::server;
 
 pub fn main() {
     // exit with 2 instead of 1 on failure,like grep
