@@ -15,10 +15,10 @@ enum Expr {
 
 /// [a] ~> a
 fn rule_unwrap_a(_: &mut Commands<Expr, ()>, expr: &Expr, _: &()) -> Option<Expr> {
-    if let Expr::Wrap(inner) = expr {
-        if let Expr::A = **inner {
-            return Some(Expr::A);
-        }
+    if let Expr::Wrap(inner) = expr
+        && let Expr::A = **inner
+    {
+        return Some(Expr::A);
     }
     None
 }
@@ -38,12 +38,11 @@ fn same_group() {
     // [a]
     let expr = Expr::Wrap(Box::new(Expr::A));
 
-    let (result, _) = morph(
-        vec![rule_fns![rule_unwrap_a], rule_fns![rule_a_to_b]],
-        select_first,
-        expr,
-        (),
-    );
+    let engine = EngineBuilder::new()
+        .add_rule(rule_unwrap_a as RuleFn<_, _>)
+        .add_rule(rule_a_to_b as RuleFn<_, _>)
+        .build();
+    let (result, _) = engine.morph(expr, ());
 
     // [a] ~> a ~> b
     assert_eq!(result, Expr::B);
@@ -56,12 +55,11 @@ fn a_to_b_first() {
     // [a]
     let expr = Expr::Wrap(Box::new(Expr::A));
 
-    let (result, _) = morph(
-        vec![rule_fns![rule_a_to_b], rule_fns![rule_unwrap_a]],
-        select_first,
-        expr,
-        (),
-    );
+    let engine = EngineBuilder::new()
+        .add_rule(rule_a_to_b as RuleFn<_, _>)
+        .add_rule(rule_unwrap_a as RuleFn<_, _>)
+        .build();
+    let (result, _) = engine.morph(expr, ());
 
     // [a] ~> [b]
     assert_eq!(result, Expr::Wrap(Box::new(Expr::B)));

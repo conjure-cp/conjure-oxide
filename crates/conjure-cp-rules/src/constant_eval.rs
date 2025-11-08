@@ -168,10 +168,10 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             ) = (a.as_ref(), b.as_ref())
             {
                 for lit in d.iter() {
-                    if let Lit::Int(x) = lit {
-                        if c == x {
-                            return Some(Lit::Bool(true));
-                        }
+                    if let Lit::Int(x) = lit
+                        && c == x
+                    {
+                        return Some(Lit::Bool(true));
                     }
                 }
                 Some(Lit::Bool(false))
@@ -634,6 +634,19 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 Lit::Int(_) => Some(lit),
                 Lit::Bool(true) => Some(Lit::Int(1)),
                 Lit::Bool(false) => Some(Lit::Int(0)),
+                _ => None,
+            }
+        }
+        Expr::SATInt(_, _) => None,
+        Expr::PairwiseSum(_, a, b) => {
+            match ((**a).clone().into_literal()?, (**b).clone().into_literal()?) {
+                (Lit::Int(a_int), Lit::Int(b_int)) => Some(Lit::Int(a_int + b_int)),
+                _ => None,
+            }
+        }
+        Expr::PairwiseProduct(_, a, b) => {
+            match ((**a).clone().into_literal()?, (**b).clone().into_literal()?) {
+                (Lit::Int(a_int), Lit::Int(b_int)) => Some(Lit::Int(a_int * b_int)),
                 _ => None,
             }
         }

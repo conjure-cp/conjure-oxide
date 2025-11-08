@@ -67,12 +67,12 @@ The following projects are used by, and developed alongside, `conjure-oxide`,
 but are kept in their own repositories:
 
 - [`uniplate`](https://github.com/conjure-cp/uniplate)
-
+- [`polyquine`](https://github.com/gskorokhod/polyquine)
 
 ## Licence
 
 This project is being produced by staff and students of University of St
-Andrews, and is licenced under the [Mozilla Public Licence 2.0](./LICENCE).
+Andrews, and is licenced under the [Mozilla Public Licence 2.0](./LICENSE).
 
 <!-- vim: cc=80
 -->

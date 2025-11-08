@@ -1,5 +1,3 @@
-use crate::ast::declaration::serde::DeclarationPtrAsId;
-use serde_with::serde_as;
 use std::collections::{HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
 use tracing::trace;
@@ -27,7 +25,7 @@ use super::categories::{Category, CategoryOf};
 use super::comprehension::Comprehension;
 use super::domains::HasDomain as _;
 use super::records::RecordValue;
-use super::{DeclarationPtr, Domain, Range, SubModel, Typeable};
+use super::{DeclarationPtr, Domain, Range, Reference, SubModel, Typeable};
 
 // Ensure that this type doesn't get too big
 //
@@ -58,12 +56,12 @@ static_assertions::assert_eq_size!([u8; 104], Expression);
 /// The `Expression` enum includes operations, constants, and variable references
 /// used to build rules and conditions for the model.
 #[document_compatibility]
-#[serde_as]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Quine)]
 #[biplate(to=Metadata)]
 #[biplate(to=Atom)]
 #[biplate(to=DeclarationPtr)]
 #[biplate(to=Name)]
+#[biplate(to=Reference)]
 #[biplate(to=Vec<Expression>)]
 #[biplate(to=Option<Expression>)]
 #[biplate(to=SubModel)]
@@ -94,7 +92,7 @@ pub enum Expression {
     /// Defines dominance ("Solution A is preferred over Solution B")
     DominanceRelation(Metadata, Moo<Expression>),
     /// `fromSolution(name)` - Used in dominance relation definitions
-    FromSolution(Metadata, Moo<Expression>),
+    FromSolution(Metadata, Moo<Atom>),
 
     #[polyquine_with(arm = (_, name) => {
         let ident = proc_macro2::Ident::new(name.as_str(), proc_macro2::Span::call_site());
@@ -171,23 +169,23 @@ pub enum Expression {
     Max(Metadata, Moo<Expression>),
 
     /// `not(a)`
-    #[compatible(JsonInput, SAT)]
+    #[compatible(JsonInput, SAT, SMT)]
     Not(Metadata, Moo<Expression>),
 
     /// `or(<vec_expr>)`
-    #[compatible(JsonInput, SAT)]
+    #[compatible(JsonInput, SAT, SMT)]
     Or(Metadata, Moo<Expression>),
 
     /// `and(<vec_expr>)`
-    #[compatible(JsonInput, SAT)]
+    #[compatible(JsonInput, SAT, SMT)]
     And(Metadata, Moo<Expression>),
 
     /// Ensures that `a->b` (material implication).
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Imply(Metadata, Moo<Expression>, Moo<Expression>),
 
     /// `iff(a, b)` a <-> b
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Iff(Metadata, Moo<Expression>, Moo<Expression>),
 
     #[compatible(JsonInput)]
@@ -211,10 +209,10 @@ pub enum Expression {
     #[compatible(JsonInput)]
     SubsetEq(Metadata, Moo<Expression>, Moo<Expression>),
 
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Eq(Metadata, Moo<Expression>, Moo<Expression>),
 
-    #[compatible(JsonInput)]
+    #[compatible(JsonInput, SMT)]
     Neq(Metadata, Moo<Expression>, Moo<Expression>),
 
     #[compatible(JsonInput)]
@@ -330,14 +328,9 @@ pub enum Expression {
     ///
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#minuseq)
     /// + `rules::minion::boolean_literal_to_wliteral`.
-    // todo (gskorokhod): Skip because of DeclarationPtr
     #[compatible(Minion)]
     #[polyquine_skip]
-    FlatWatchedLiteral(
-        Metadata,
-        #[serde_as(as = "DeclarationPtrAsId")] DeclarationPtr,
-        Literal,
-    ),
+    FlatWatchedLiteral(Metadata, Reference, Literal),
 
     /// `weightedsumleq(cs,xs,total)` ensures that cs.xs <= total, where cs.xs is the scalar dot
     /// product of cs and xs.
@@ -481,14 +474,22 @@ pub enum Expression {
     /// Declaration of an auxiliary variable.
     ///
     /// As with Savile Row, we semantically distinguish this from `Eq`.
-    // todo (gskorokhod): Skip because of DeclarationPtr
     #[compatible(Minion)]
     #[polyquine_skip]
-    AuxDeclaration(
-        Metadata,
-        #[serde_as(as = "DeclarationPtrAsId")] DeclarationPtr,
-        Moo<Expression>,
-    ),
+    AuxDeclaration(Metadata, Reference, Moo<Expression>),
+
+    /// This expression is for encoding i32 ints as a vector of boolean expressions for cnf - using 2s complement
+    SATInt(Metadata, Moo<Expression>),
+
+    /// Addition over a pair of expressions (i.e. a + b) rather than a vec-expr like Expression::Sum.
+    /// This is for compatibility with backends that do not support addition over vectors.
+    #[compatible(SMT)]
+    PairwiseSum(Metadata, Moo<Expression>, Moo<Expression>),
+
+    /// Multiplication over a pair of expressions (i.e. a * b) rather than a vec-expr like Expression::Product.
+    /// This is for compatibility with backends that do not support multiplication over vectors.
+    #[compatible(SMT)]
+    PairwiseProduct(Metadata, Moo<Expression>, Moo<Expression>),
 }
 
 // for the given matrix literal, return a bounded domain from the min to max of applying op to each
@@ -604,7 +605,7 @@ impl Expression {
             Expression::SubsetEq(_, _, _) => Some(Domain::Bool),
             Expression::AbstractLiteral(_, abslit) => abslit.domain_of(),
             Expression::DominanceRelation(_, _) => Some(Domain::Bool),
-            Expression::FromSolution(_, expr) => expr.domain_of(),
+            Expression::FromSolution(_, expr) => Some(expr.domain_of()),
             Expression::Metavar(_, _) => None,
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
@@ -636,7 +637,6 @@ impl Expression {
                 }
             }
             Expression::InDomain(_, _, _) => Some(Domain::Bool),
-            Expression::Atomic(_, Atom::Reference(ptr)) => ptr.domain(),
             Expression::Atomic(_, atom) => Some(atom.domain_of()),
             Expression::Scope(_, _) => Some(Domain::Bool),
             Expression::Sum(_, e) => {
@@ -784,6 +784,23 @@ impl Expression {
                 .ok(),
             Expression::MinionPow(_, _, _, _) => Some(Domain::Bool),
             Expression::ToInt(_, _) => Some(Domain::Int(vec![Range::Bounded(0, 1)])),
+            Expression::SATInt(_, _) => {
+                Some(Domain::Int(vec![Range::Bounded(
+                    i8::MIN.into(),
+                    i8::MAX.into(),
+                )])) // BITS
+            } // A CnfInt can represent any i8 integer at the moment
+            // A CnfInt contains multiple boolean expressions and represents the integer
+            // formed when these booleans are treated as the bits in an integer encoding.
+            // So the 'domain of' should be an integer
+            Expression::PairwiseSum(_, a, b) => a
+                .domain_of()?
+                .apply_i32(|a, b| Some(a + b), &b.domain_of()?)
+                .ok(),
+            Expression::PairwiseProduct(_, a, b) => a
+                .domain_of()?
+                .apply_i32(|a, b| Some(a * b), &b.domain_of()?)
+                .ok(),
         };
         match ret {
             // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
@@ -1227,7 +1244,7 @@ impl Display for Expression {
                 )
             }
             Expression::FlatWatchedLiteral(_, x, l) => {
-                write!(f, "WatchedLiteral({x},{l})", x = &x.name() as &Name)
+                write!(f, "WatchedLiteral({x},{l})")
             }
             Expression::MinionReify(_, box1, box2) => {
                 write!(f, "Reify({}, {})", box1.clone(), box2.clone())
@@ -1243,8 +1260,8 @@ impl Display for Expression {
                 let values = values.iter().join(",");
                 write!(f, "__minion_w_inset({atom},{values})")
             }
-            Expression::AuxDeclaration(_, decl, e) => {
-                write!(f, "{} =aux {}", &decl.name() as &Name, e.clone())
+            Expression::AuxDeclaration(_, reference, e) => {
+                write!(f, "{} =aux {}", reference, e.clone())
             }
             Expression::UnsafeMod(_, a, b) => {
                 write!(f, "{} % {}", a.clone(), b.clone())
@@ -1305,6 +1322,13 @@ impl Display for Expression {
             Expression::ToInt(_, expr) => {
                 write!(f, "toInt({expr})")
             }
+
+            Expression::SATInt(_, e) => {
+                write!(f, "SATInt({e})")
+            }
+
+            Expression::PairwiseSum(_, a, b) => write!(f, "PairwiseSum({a}, {b})"),
+            Expression::PairwiseProduct(_, a, b) => write!(f, "PairwiseProduct({a}, {b})"),
         }
     }
 }
@@ -1394,6 +1418,9 @@ impl Typeable for Expression {
             Expression::FlatWeightedSumGeq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::MinionPow(_, _, _, _) => Some(ReturnType::Bool),
             Expression::ToInt(_, _) => Some(ReturnType::Int),
+            Expression::SATInt(_, _) => Some(ReturnType::Int),
+            Expression::PairwiseSum(_, _, _) => Some(ReturnType::Int),
+            Expression::PairwiseProduct(_, _, _) => Some(ReturnType::Int),
         }
     }
 }

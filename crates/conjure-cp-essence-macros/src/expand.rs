@@ -1,3 +1,4 @@
+use conjure_cp_essence_parser::util::node_is_expression;
 use conjure_cp_essence_parser::{
     EssenceParseError,
     expression::parse_expression,
@@ -16,7 +17,7 @@ pub fn expand_expr(essence: &TokenTree) -> Result<TokenStream> {
     let root = tree.root_node();
 
     // Get top level expressions
-    let mut query = query_toplevel(&root, &|n| n.kind() == "expression");
+    let mut query = query_toplevel(&root, &node_is_expression);
     let expr_node = query
         .next()
         .ok_or(Error::new(essence.span(), "Expected an Essence expression"))?;
@@ -44,7 +45,7 @@ pub fn expand_expr_vec(tt: &TokenTree) -> Result<TokenStream> {
         get_tree(&src).ok_or(Error::new(tt.span(), "Could not parse Essence AST"))?;
     let root = tree.root_node();
 
-    let query = query_toplevel(&root, &|n| n.kind() == "expression");
+    let query = query_toplevel(&root, &node_is_expression);
     for expr_node in query {
         let expr = mk_expr(expr_node, &source_code, &root, tt)?;
         ans.push(expr);
@@ -71,8 +72,9 @@ fn mk_expr(node: Node, src: &str, root: &Node, tt: &TokenTree) -> Result<TokenSt
                         .unwrap_or(&"<line not found>")
                         .trim()
                         .to_string();
-                    if line_content.starts_with("such that") {
-                        let len = "such that".len();
+                    let pref = "_FRAGMENT_EXPRESSION";
+                    if line_content.starts_with(pref) {
+                        let len = pref.len();
                         line_content = line_content[len..].trim_start().to_string();
                         start_col -= len;
                     }

@@ -124,7 +124,9 @@ pub fn get_solutions(
         *sol = sol
             .clone()
             .into_iter()
-            .filter(|(name, _)| !matches!(name, Name::Represented(_)))
+            .filter(|(name, _)| {
+                !matches!(name, Name::Represented(_)) && !matches!(name, Name::Machine(_))
+            })
             .collect();
     }
 

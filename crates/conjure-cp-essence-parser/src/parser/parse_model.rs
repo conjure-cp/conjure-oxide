@@ -2,9 +2,7 @@ use std::fs;
 use std::sync::{Arc, RwLock};
 
 use conjure_cp_core::Model;
-use conjure_cp_core::ast::Expression;
-use conjure_cp_core::ast::Metadata;
-use conjure_cp_core::ast::{DeclarationPtr, Moo};
+use conjure_cp_core::ast::{DeclarationPtr, Expression, Metadata, Moo};
 use conjure_cp_core::context::Context;
 #[allow(unused)]
 use uniplate::Uniplate;
@@ -63,47 +61,13 @@ pub fn parse_essence_with_context(
     let mut model = Model::new(context);
     // let symbols = model.as_submodel().symbols().clone();
     let root_node = tree.root_node();
-
-    // the keyword as var check
-    if let Some((node, ident)) = find_keyword_as_variable(root_node, &source_code) {
-        let pos = node.start_position();
-
-        // better error message later on?
-        return Err(EssenceParseError::syntax_error(
-            format!(
-                "'{}' is a keyword and cannot be used as variable at line {}",
-                ident,
-                pos.row + 1,
-            ),
-            Some(node.range()),
-        ));
-    }
-
-    // Early syntax gate: if the parse contains errors or missing nodes, return a helpful error.
-    if root_node.has_error() {
-        if let Some(bad) = first_syntax_issue(root_node) {
-            let pos = bad.start_position();
-            return Err(EssenceParseError::syntax_error(
-                format!(
-                    "Syntax error near '{}' at line {}, column {}",
-                    bad.kind(),
-                    pos.row + 1,
-                    pos.column + 1
-                ),
-                None,
-            ));
-        }
-        return Err(EssenceParseError::syntax_error(
-            "Syntax error".to_string(),
-            None,
-        ));
-    }
+    let symbols_ptr = model.as_submodel().symbols_ptr_unchecked().clone();
     for statement in named_children(&root_node) {
         match statement.kind() {
             "single_line_comment" => {}
             "language_declaration" => {}
-            "find_statement_list" => {
-                let var_hashmap = parse_find_statement(statement, &source_code);
+            "find_statement" => {
+                let var_hashmap = parse_find_statement(statement, &source_code)?;
                 for (name, domain) in var_hashmap {
                     model
                         .as_submodel_mut()
@@ -111,34 +75,26 @@ pub fn parse_essence_with_context(
                         .insert(DeclarationPtr::new_var(name, domain));
                 }
             }
-            "constraint_list" => {
-                let mut constraint_vec: Vec<Expression> = Vec::new();
-                for constraint in named_children(&statement) {
-                    let current_symbols = model.as_submodel().symbols().clone();
-
-                    if constraint.kind() != "single_line_comment" {
-                        constraint_vec.push(parse_expression(
-                            constraint,
-                            &source_code,
-                            &statement,
-                            Some(&current_symbols),
-                        )?);
-                    }
-                }
-                model.as_submodel_mut().add_constraints(constraint_vec);
+            "bool_expr" | "atom" | "comparison_expr" => {
+                model.as_submodel_mut().add_constraint(parse_expression(
+                    statement,
+                    &source_code,
+                    &statement,
+                    Some(symbols_ptr.clone()),
+                )?);
             }
             "language_label" => {}
-            "letting_statement_list" => {
-                let letting_vars = parse_letting_statement(statement, &source_code)?;
+            "letting_statement" => {
+                let letting_vars =
+                    parse_letting_statement(statement, &source_code, Some(symbols_ptr.clone()))?;
                 model.as_submodel_mut().symbols_mut().extend(letting_vars);
             }
             "dominance_relation" => {
                 let inner = statement
-                    .child(1)
+                    .child_by_field_name("expression")
                     .expect("Expected a sub-expression inside `dominanceRelation`");
-                let current_symbols = model.as_submodel().symbols().clone();
                 let expr =
-                    parse_expression(inner, &source_code, &statement, Some(&current_symbols))?;
+                    parse_expression(inner, &source_code, &statement, Some(symbols_ptr.clone()))?;
                 let dominance = Expression::DominanceRelation(Metadata::new(), Moo::new(expr));
                 if model.dominance.is_some() {
                     return Err(EssenceParseError::syntax_error(
@@ -148,11 +104,18 @@ pub fn parse_essence_with_context(
                 }
                 model.dominance = Some(dominance);
             }
+            "ERROR" => {
+                let raw_expr = &source_code[statement.start_byte()..statement.end_byte()];
+                return Err(EssenceParseError::syntax_error(
+                    format!("'{raw_expr}' is not a valid expression"),
+                    Some(statement.range()),
+                ));
+            }
             _ => {
                 let kind = statement.kind();
                 return Err(EssenceParseError::syntax_error(
                     format!("Unrecognized top level statement kind: {kind}"),
-                    None,
+                    Some(statement.range()),
                 ));
             }
         }
@@ -160,60 +123,93 @@ pub fn parse_essence_with_context(
     Ok(model)
 }
 
-/// Find the first error or missing node in a subtree (preorder DFS)
-fn first_syntax_issue(root: Node) -> Option<Node> {
-    let mut stack = vec![root];
-    while let Some(node) = stack.pop() {
-        if node.is_error() || node.is_missing() {
-            return Some(node);
-        }
-        let count = node.child_count();
-        for i in (0..count).rev() {
-            if let Some(child) = node.child(i) {
-                stack.push(child);
-            }
-        }
-    }
-    None
+pub fn parse_essence(src: &str) -> Result<Model, EssenceParseError> {
+    let context = Arc::new(RwLock::new(Context::default()));
+    parse_essence_with_context(src, context)
 }
 
-// keyword as var check: walk the tree and find vars as keywords
-fn find_keyword_as_variable<'a>(root: Node<'a>, src: &str) -> Option<(Node<'a>, String)> {
-    let mut stack = vec![root];
-    while let Some(node) = stack.pop() {
-        // we first check variable nodes whose text is a key word
-        if node.kind() == "variable" {
-            if let Ok(text) = node.utf8_text(src.as_bytes()) {
-                let ident = text.trim();
-                if RESERVED_KEYWORDS.contains(&ident) {
-                    return Some((node, ident.to_string()));
-                }
-            }
-        }
+mod test {
+    #[allow(unused_imports)]
+    use crate::parse_essence;
+    #[allow(unused_imports)]
+    use conjure_cp_core::ast::{Atom, Expression, Metadata, Moo, Name};
+    #[allow(unused_imports)]
+    use conjure_cp_core::{domain_int, matrix_expr, range};
+    #[allow(unused_imports)]
+    use std::ops::Deref;
 
-        // some keywords, as defined by the grammar, can be parsed keyword token (ends with _kw) immediately followed by an ERROR node
-        // This catches cases like "find find,..." where the second "find" causes a parse error. because this rule has precedence over the variable rule
-        if node.kind().ends_with("_kw") || node.kind().ends_with("_statement_list") {
-            if let Some(next) = node.next_sibling() {
-                if next.is_error() {
-                    // now the keyword that caused the problem is the current node
-                    // if the next one is an error node
-                    if let Ok(kw_text) = node.utf8_text(src.as_bytes()) {
-                        let kw = kw_text.trim();
-                        if RESERVED_KEYWORDS.contains(&kw) {
-                            return Some((next, kw.to_string()));
-                        }
-                    }
-                }
-            }
-        }
+    #[test]
+    pub fn test_parse_xyz() {
+        let src = "
+        find x, y, z : int(1..4)
+        such that x + y + z = 4
+        such that x >= y
+        ";
 
-        // push children
-        for i in (0..node.child_count()).rev() {
-            if let Some(child) = node.child(i) {
-                stack.push(child);
-            }
-        }
+        let model = parse_essence(src).unwrap();
+
+        let st = model.as_submodel().symbols();
+        let x = st.lookup(&Name::user("x")).unwrap();
+        let y = st.lookup(&Name::user("y")).unwrap();
+        let z = st.lookup(&Name::user("z")).unwrap();
+        assert_eq!(x.domain(), Some(domain_int!(1..4)));
+        assert_eq!(y.domain(), Some(domain_int!(1..4)));
+        assert_eq!(z.domain(), Some(domain_int!(1..4)));
+
+        let constraints = model.as_submodel().constraints();
+        assert_eq!(constraints.len(), 2);
+
+        let c1 = constraints[0].clone();
+        let x_e = Expression::Atomic(Metadata::new(), Atom::new_ref(x));
+        let y_e = Expression::Atomic(Metadata::new(), Atom::new_ref(y));
+        let z_e = Expression::Atomic(Metadata::new(), Atom::new_ref(z));
+        assert_eq!(
+            c1,
+            Expression::Eq(
+                Metadata::new(),
+                Moo::new(Expression::Sum(
+                    Metadata::new(),
+                    Moo::new(matrix_expr!(
+                        Expression::Sum(
+                            Metadata::new(),
+                            Moo::new(matrix_expr!(x_e.clone(), y_e.clone()))
+                        ),
+                        z_e
+                    ))
+                )),
+                Moo::new(Expression::Atomic(Metadata::new(), 4.into()))
+            )
+        );
+
+        let c2 = constraints[1].clone();
+        assert_eq!(
+            c2,
+            Expression::Geq(Metadata::new(), Moo::new(x_e), Moo::new(y_e))
+        );
     }
-    None
+
+    #[test]
+    pub fn test_parse_letting_index() {
+        let src = "
+        letting a be [ [ 1,2,3 ; int(1,2,4) ], [ 1,3,2 ; int(1,2,4) ], [ 3,2,1 ; int(1,2,4) ] ; int(-2..0) ]
+        find b: int(1..5)
+        such that
+        b < a[-2,2],
+        allDiff(a[-2,..])
+        ";
+
+        let model = parse_essence(src).unwrap();
+        let st = model.as_submodel().symbols();
+        let a_decl = st.lookup(&Name::user("a")).unwrap();
+        let a = a_decl.as_value_letting().unwrap().deref().clone();
+        assert_eq!(
+            a,
+            matrix_expr!(
+                matrix_expr!(1.into(), 2.into(), 3.into() ; domain_int!(1, 2, 4)),
+                matrix_expr!(1.into(), 3.into(), 2.into() ; domain_int!(1, 2, 4)),
+                matrix_expr!(3.into(), 2.into(), 1.into() ; domain_int!(1, 2, 4));
+                domain_int!(-2..0)
+            )
+        )
+    }
 }

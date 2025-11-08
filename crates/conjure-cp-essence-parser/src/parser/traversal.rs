@@ -97,41 +97,43 @@ mod test {
 
     #[test]
     pub fn test_bfs() {
-        let (tree, _) = get_tree("such that x, 5").unwrap();
+        let (tree, _) = get_tree("such that x, true").unwrap();
         let root = tree.root_node();
         let mut iter = WalkBFS::new(&root).filter(|n| n.is_named());
-        assert_eq!(iter.next().unwrap().kind(), "program"); //         depth = 0
-        assert_eq!(iter.next().unwrap().kind(), "constraint_list"); // depth = 1
-        assert_eq!(iter.next().unwrap().kind(), "expression"); //      depth = 2
-        assert_eq!(iter.next().unwrap().kind(), "expression");
-        assert_eq!(iter.next().unwrap().kind(), "variable"); //        depth = 3
-        assert_eq!(iter.next().unwrap().kind(), "constant");
-        assert_eq!(iter.next().unwrap().kind(), "integer"); //         depth = 4
+        assert_eq!(iter.next().unwrap().kind(), "program"); // depth = 0
+        assert_eq!(iter.next().unwrap().kind(), "bool_expr"); // depth = 1
+        assert_eq!(iter.next().unwrap().kind(), "bool_expr"); // depth = 1
+        assert_eq!(iter.next().unwrap().kind(), "atom"); // depth = 2
+        assert_eq!(iter.next().unwrap().kind(), "atom"); // depth = 2
+        assert_eq!(iter.next().unwrap().kind(), "identifier"); // depth = 3
+        assert_eq!(iter.next().unwrap().kind(), "constant"); // depth = 3
+        assert_eq!(iter.next().unwrap().kind(), "TRUE"); // depth = 4
     }
 
     #[test]
     pub fn test_dfs() {
-        let (tree, _) = get_tree("such that x, 5").unwrap();
+        let (tree, _) = get_tree("such that x, true").unwrap();
         let root = tree.root_node();
         let mut iter = WalkDFS::new(&root).filter(|n| n.is_named());
-        assert_eq!(iter.next().unwrap().kind(), "program"); //         top level
-        assert_eq!(iter.next().unwrap().kind(), "constraint_list");
-        assert_eq!(iter.next().unwrap().kind(), "expression"); //      first branch ("x")
-        assert_eq!(iter.next().unwrap().kind(), "variable");
-        assert_eq!(iter.next().unwrap().kind(), "expression"); //      second branch ("5")
+        assert_eq!(iter.next().unwrap().kind(), "program"); // top level
+        assert_eq!(iter.next().unwrap().kind(), "bool_expr"); // first branch ("x")
+        assert_eq!(iter.next().unwrap().kind(), "atom");
+        assert_eq!(iter.next().unwrap().kind(), "identifier");
+        assert_eq!(iter.next().unwrap().kind(), "bool_expr"); // second branch ("true")
+        assert_eq!(iter.next().unwrap().kind(), "atom");
         assert_eq!(iter.next().unwrap().kind(), "constant");
-        assert_eq!(iter.next().unwrap().kind(), "integer");
+        assert_eq!(iter.next().unwrap().kind(), "TRUE");
     }
 
     #[test]
     pub fn test_dfs_retract() {
-        let (tree, _) = get_tree("such that x / 42, 5 + y").unwrap();
+        let (tree, _) = get_tree("(x / 42) > (5 + y)").unwrap();
         let root = tree.root_node();
-        let mut iter = WalkDFS::with_retract(&root, &|n: &Node<'_>| n.kind() == "expression")
+        let mut iter = WalkDFS::with_retract(&root, &|n: &Node<'_>| n.kind() == "arithmetic_expr")
             .filter(|n| n.is_named());
-        assert_eq!(iter.next().unwrap().kind(), "program"); //         top level
-        assert_eq!(iter.next().unwrap().kind(), "constraint_list");
-        assert_eq!(iter.next().unwrap().kind(), "expression"); //      first branch ("x / 42"). Don't descend into subexpressions.
-        assert_eq!(iter.next().unwrap().kind(), "expression"); //      second branch ("5 + y"). Don't descend into subexpressions.
+        assert_eq!(iter.next().unwrap().kind(), "program");
+        assert_eq!(iter.next().unwrap().kind(), "comparison_expr");
+        assert_eq!(iter.next().unwrap().kind(), "arithmetic_expr"); // first branch ("x / 42"). Don't descend into subexpressions.
+        assert_eq!(iter.next().unwrap().kind(), "arithmetic_expr"); // second branch ("5 + y"). Don't descend into subexpressions.
     }
 }

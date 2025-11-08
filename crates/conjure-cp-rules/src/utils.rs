@@ -11,6 +11,15 @@ pub fn is_atom(expr: &Expr) -> bool {
     matches!(expr, Expr::Atomic(_, _))
 }
 
+/// True iff `expr` is an `Atom` or `Not(Atom)`.
+pub fn is_literal(expr: &Expr) -> bool {
+    match expr {
+        Expr::Atomic(_, _) => true,
+        Expr::Not(_, inner) => matches!(**inner, Expr::Atomic(_, _)),
+        _ => false,
+    }
+}
+
 /// True if `expr` is flat; i.e. it only contains atoms.
 pub fn is_flat(expr: &Expr) -> bool {
     for e in expr.children() {
@@ -177,7 +186,11 @@ pub fn to_aux_var(expr: &Expr, symbols: &SymbolTable) -> Option<ToAuxVarOutput> 
 
     Some(ToAuxVarOutput {
         aux_declaration: decl.clone(),
-        aux_expression: Expr::AuxDeclaration(Metadata::new(), decl, Moo::new(expr.clone())),
+        aux_expression: Expr::AuxDeclaration(
+            Metadata::new(),
+            conjure_cp::ast::Reference::new(decl),
+            Moo::new(expr.clone()),
+        ),
         symbols,
         _unconstructable: (),
     })
@@ -194,7 +207,9 @@ pub struct ToAuxVarOutput {
 impl ToAuxVarOutput {
     /// Returns the new auxiliary variable as an `Atom`.
     pub fn as_atom(&self) -> Atom {
-        Atom::Reference(self.aux_declaration.clone())
+        Atom::Reference(conjure_cp::ast::Reference::new(
+            self.aux_declaration.clone(),
+        ))
     }
 
     /// Returns the new auxiliary variable as an `Expression`.

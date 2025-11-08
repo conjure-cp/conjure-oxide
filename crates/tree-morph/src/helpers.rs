@@ -32,6 +32,10 @@ where
     select(t, &mut rs)
 }
 
+/// A uniform type for selector functions such as `select_first`.
+pub type SelectorFn<T, M, R> =
+    fn(&T, &mut dyn Iterator<Item = (&R, Update<T, M>)>) -> Option<Update<T, M>>;
+
 /// Returns the first available [`Update`] if there is one, otherwise returns `None`.
 ///
 /// This is a good default selection strategy, especially when you expect only one possible
@@ -131,11 +135,12 @@ q   No change
         match line.trim() {
             "q" => return None,
             n => {
-                if let Ok(n) = n.parse::<usize>() {
-                    if n > 0 && n <= choices.len() {
-                        let ret = choices.swap_remove(n - 1).1;
-                        return Some(ret);
-                    }
+                if let Ok(n) = n.parse::<usize>()
+                    && n > 0
+                    && n <= choices.len()
+                {
+                    let ret = choices.swap_remove(n - 1).1;
+                    return Some(ret);
                 }
             }
         }

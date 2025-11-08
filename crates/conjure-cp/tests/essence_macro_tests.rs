@@ -2,6 +2,7 @@ use conjure_cp::ast::Metadata;
 use conjure_cp::ast::{Expression, Moo};
 use conjure_cp::essence_expr;
 use conjure_cp::matrix_expr;
+use conjure_cp_core::{domain_int, range};
 
 #[test]
 fn test_2plus2() {
@@ -12,7 +13,8 @@ fn test_2plus2() {
             Metadata::new(),
             Moo::new(matrix_expr![
                 Expression::Atomic(Metadata::new(), 2.into()),
-                Expression::Atomic(Metadata::new(), 2.into())
+                Expression::Atomic(Metadata::new(), 2.into());
+                domain_int!(1..)
             ])
         )
     );
@@ -28,7 +30,8 @@ fn test_metavar_const() {
             Metadata::new(),
             Moo::new(matrix_expr![
                 Expression::Atomic(Metadata::new(), 4.into()),
-                Expression::Atomic(Metadata::new(), 2.into())
+                Expression::Atomic(Metadata::new(), 2.into());
+                domain_int!(1..)
             ])
         )
     );

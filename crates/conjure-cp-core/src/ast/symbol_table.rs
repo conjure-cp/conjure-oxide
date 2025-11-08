@@ -199,10 +199,10 @@ impl SymbolTable {
 
             for added_var in new_vars.difference(&old_vars) {
                 let mut next_var = self.next_machine_name.borrow_mut();
-                if let Name::Machine(m) = *added_var {
-                    if *m >= *next_var {
-                        *next_var = *m + 1;
-                    }
+                if let Name::Machine(m) = *added_var
+                    && *m >= *next_var
+                {
+                    *next_var = *m + 1;
                 }
             }
         }
@@ -291,15 +291,14 @@ impl SymbolTable {
         // Lookup the declaration reference
         let mut decl = self.lookup(name)?;
 
-        if let Some(var) = decl.as_var() {
-            if let Some(existing_reprs) = var
+        if let Some(var) = decl.as_var()
+            && let Some(existing_reprs) = var
                 .representations
                 .iter()
                 .find(|x| &x.iter().map(|r| r.repr_name()).collect_vec()[..] == representation)
                 .cloned()
-            {
-                return Some(existing_reprs); // Found: return early
-            }
+        {
+            return Some(existing_reprs); // Found: return early
         }
         // Representation not found
 

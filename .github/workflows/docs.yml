@@ -2,7 +2,7 @@ name: "Documentation"
 
 on:
   push:
-    branches: 
+    branches:
       - main
     paths:
       - docs/**
@@ -19,16 +19,15 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v5
 
-      - name: Install mdbook 
+      - name: Install mdbook
         run: |
           rustup install stable 
           cargo install mdbook
 
-      - name: Build docs 
+      - name: Build docs
         working-directory: docs
         run: |
           mdbook build
-
       - name: Deploy to Github Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
@@ -36,7 +35,7 @@ jobs:
           folder: docs/book
           target-folder: ""
           # remove all pages that dont exist anymore, except in these dirs
-          clean-exclude: | 
+          clean-exclude: |
             docs/**
             coverage/**
             tools/**
@@ -44,4 +43,3 @@ jobs:
           # do not overwrite previous deployments, such as those made by other
           # actions
           force: false
-

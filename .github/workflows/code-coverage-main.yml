@@ -7,23 +7,27 @@ on:
   workflow_dispatch:
 
 env:
+  CARGO_INCREMENTAL: "0"
+  # we define the following 3 values as the defaults here, matrix jobs may overwrite their values.
+  os: ubuntu-latest
   rust_release: nightly
-  SCCACHE_GHA_ENABLED: "true"
-  RUSTC_WRAPPER: "sccache"
-  SCCACHE_GHA_VERSION: 2
+  compiler_profile: debug
+
 
 jobs:
   doc-coverage:
     name: "Documentation Coverage"
-    timeout-minutes: 20 
+    timeout-minutes: 120
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v5
 
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.9
-
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
       - name: Install rust ${{ env.rust_release }}
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
@@ -45,24 +49,26 @@ jobs:
           ./tools/ci/generate-doc-coverage-summary-md.bash > main-doc-coverage-summary.txt
 
       - name: Upload summary as artifact (for later use)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with: 
           name: main-doc-coverage-summary
           path: main-doc-coverage-summary.txt
           overwrite: true
-        
 
 
   coverage:
     name: "Generate Code Coverage Reports"
-    timeout-minutes: 20
+    timeout-minutes: 120
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v5
 
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.9
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
 
       - name: Install rust ${{ env.rust_release }}
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
@@ -87,4 +93,5 @@ jobs:
           folder: ./deploy
           target-folder: "coverage/main"
           branch: gh-pages
+          single-commit: true
           commit-message: "Actions: Update code coverage for main "
