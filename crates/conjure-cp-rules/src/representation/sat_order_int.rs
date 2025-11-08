@@ -1,6 +1,9 @@
 // https://conjure-cp.github.io/conjure-oxide/docs/conjure_core/representation/trait.Representation.html
 use conjure_cp::{
-    ast::{Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Name, Range, SymbolTable}, bug, register_representation, representation::Representation, rule_engine::ApplicationError
+    ast::{Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Name, Range, SymbolTable},
+    register_representation,
+    representation::Representation,
+    rule_engine::ApplicationError,
 };
 
 register_representation!(SATOrderInt, "sat_order_int");
@@ -12,7 +15,6 @@ const BITS: i32 = 8;
 #[derive(Clone, Debug)]
 pub struct SATOrderInt {
     src_var: Name,
-    // ranges: Vec<Range<i32>>,
     domain: Domain,
 }
 
@@ -56,7 +58,7 @@ impl Representation for SATOrderInt {
 
         Some(SATOrderInt {
             src_var: name.clone(),
-            domain: domain,
+            domain,
         })
     }
 
@@ -64,12 +66,10 @@ impl Representation for SATOrderInt {
         &self.src_var
     }
 
-    
     fn value_down(
         &self,
         value: Literal,
     ) -> Result<std::collections::BTreeMap<Name, Literal>, ApplicationError> {
-
         // FOR Order: Given an int 'i' in domain (n..m):
         // {n : 1, n+1 : 1, ..., i : 1, i+1 : 0,.. , m-1 : 0}
 
@@ -86,15 +86,18 @@ impl Representation for SATOrderInt {
         };
 
         for idx in idxs {
-            if idx <= value_i32 { 
+            if idx <= value_i32 {
                 // 1
-                let name = Name::Machine(idx);
+                println!("{:?}", idx);
+                panic!("JUST SO YOU KNOW THAT IM HERE!!! {:?}", idx);
+                let name = self.index_to_name(idx);
                 let val = Literal::Bool(true);
 
                 result.insert(name, val);
             } else {
                 // 0
-                let name = Name::Machine(idx);
+                println!("{:?}", idx);
+                let name = self.index_to_name(idx);
                 let val = Literal::Bool(false);
 
                 result.insert(name, val);
@@ -104,43 +107,40 @@ impl Representation for SATOrderInt {
         Ok(result)
     }
 
-
-    /// The keys are expected to be of the `Name::Machine(i)` variant, and the function will return `i + 1`.
-    ///
-    /// # Arguments
-    ///
-    /// * `values`: A reference to a `BTreeMap<Name, Literal>` where `Literal`s are expected to be `Literal::Bool`.
     fn value_up(
         &self,
         values: &std::collections::BTreeMap<Name, Literal>,
     ) -> Result<Literal, ApplicationError> {
         // FOR Order: expect pattern {n : 1, n+1 : 1, ..., i : 1, i+1 : 0,.. , m-1 : 0}
         // return i
-        
         let value = values
             .iter()
             .rev()
-            .find(|(_, literal)| {
-                match literal {
-                    Literal::Int(a) => *a == 1,
-                    _ => false
+            .find(|(_, literal)| match literal {
+                Literal::Int(a) => *a == 1,
+                _ => false,
+            })
+            .and_then(|(name, _)| {
+                if let Name::Represented(boxed) = name {
+                    let (_, _, index_str) = &**boxed;
+                    index_str.parse::<i32>().ok()
+                } else {
+                    None
                 }
-            });
-        
-        print!("{:?}", value);
-        let top_index = match value {
-            Some(x) => {match x.0 {
-                Name::Machine(index) => *index + 1,
-                _ => bug!("We expect only machine names in here got {:?} instead", x.0)
-            }},
-            None => -1,
-        };
-        // if align_of_val(val) {
-            
-        // }
-        let out = Literal::from(top_index);
-        Ok(out)
+            })
+            .unwrap();
 
+        print!("{:?}", value);
+        // let top_index = match value {
+        //     Some(x) => match x.0 {
+        //         Name::Machine(index) => *index + 1,
+        //         _ => bug!("We expect only machine names in here got {:?} instead", x.0),
+        //     },
+        //     None => -1,
+        // };
+
+        let out = Literal::from(value);
+        Ok(out)
     }
 
     fn expression_down(
