@@ -1,9 +1,6 @@
 // https://conjure-cp.github.io/conjure-oxide/docs/conjure_core/representation/trait.Representation.html
 use conjure_cp::{
-    ast::{Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Name, Range, SymbolTable},
-    register_representation,
-    representation::Representation,
-    rule_engine::ApplicationError,
+    ast::{Atom, DeclarationPtr, Domain, Expression, Literal, Metadata, Name, Range, SymbolTable}, bug, register_representation, representation::Representation, rule_engine::ApplicationError
 };
 
 register_representation!(SATOrderInt, "sat_order_int");
@@ -108,39 +105,40 @@ impl Representation for SATOrderInt {
     }
 
 
-   /// The keys are expected to be of the `Name::Machine(i)` variant, and the function will return `i + 1`.
-   ///
-   /// # Arguments
-   ///
-   /// * `values`: A reference to a `BTreeMap<Name, Literal>` where `Literal`s are expected to be `Literal::Bool`.
-
-
+    /// The keys are expected to be of the `Name::Machine(i)` variant, and the function will return `i + 1`.
+    ///
+    /// # Arguments
+    ///
+    /// * `values`: A reference to a `BTreeMap<Name, Literal>` where `Literal`s are expected to be `Literal::Bool`.
     fn value_up(
         &self,
         values: &std::collections::BTreeMap<Name, Literal>,
     ) -> Result<Literal, ApplicationError> {
         // FOR Order: expect pattern {n : 1, n+1 : 1, ..., i : 1, i+1 : 0,.. , m-1 : 0}
         // return i
-
+        
         let value = values
             .iter()
             .rev()
             .find(|(_, literal)| {
-                if let Ok(is_true) = <&Literal as TryInto<bool>>::try_into(*literal) {
-                    is_true
-                } else {
-                    false
+                match literal {
+                    Literal::Int(a) => *a == 1,
+                    _ => false
                 }
-            })
-            .and_then(|(name, _)| {
-                if let Name::Machine(i) = name {
-                    Some(i + 1)
-                } else {
-                    None
-                }
-            }).unwrap();
-
-        let out = Literal::from(value);
+            });
+        
+        print!("{:?}", value);
+        let top_index = match value {
+            Some(x) => {match x.0 {
+                Name::Machine(index) => *index + 1,
+                _ => bug!("We expect only machine names in here got {:?} instead", x.0)
+            }},
+            None => -1,
+        };
+        // if align_of_val(val) {
+            
+        // }
+        let out = Literal::from(top_index);
         Ok(out)
 
     }
