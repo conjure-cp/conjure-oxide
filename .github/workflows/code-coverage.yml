@@ -28,9 +28,8 @@ jobs:
       - name: Rust cache
         uses: Swatinem/rust-cache@v2
         with:
-          prefix-key: conjure-oxide
           cache-on-failure: true
-          shared-key: ${{ matrix.os }}--${{ matrix.rust_release }}--${{ matrix.compiler_profile }}
+          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
 
       - name: Install rust ${{ env.rust_release }}
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
@@ -79,9 +78,6 @@ jobs:
             echo -e "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
             echo -e "sha=${{ github.sha }}"
           fi
-
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.9
 
       - name: Install rust ${{ env.rust_release }}
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
