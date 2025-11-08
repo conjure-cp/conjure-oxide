@@ -12,7 +12,6 @@ use super::letting::parse_letting_statement;
 use super::util::{get_tree, named_children};
 use crate::errors::EssenceParseError;
 use crate::expression::parse_expression;
-use tree_sitter::Node;
 
 /// Parse an Essence file into a Model using the tree-sitter parser.
 pub fn parse_essence_file_native(
@@ -23,27 +22,6 @@ pub fn parse_essence_file_native(
         .unwrap_or_else(|_| panic!("Failed to read the source code file {path}"));
     parse_essence_with_context(&source_code, context)
 }
-
-// reserved keywords list for the 'keyword as var' error
-const RESERVED_KEYWORDS: &[&str] = &[
-    "find",
-    "letting",
-    "be",
-    "domain",
-    "true",
-    "false",
-    "bool",
-    "int",
-    "and",
-    "or",
-    "min",
-    "max",
-    "sum",
-    "allDiff",
-    "toInt",
-    "fromSolution",
-    "dominanceRelation",
-];
 
 pub fn parse_essence_with_context(
     src: &str,
