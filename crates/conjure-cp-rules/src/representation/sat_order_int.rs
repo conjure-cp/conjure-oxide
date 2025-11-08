@@ -8,10 +8,6 @@ use conjure_cp::{
 
 register_representation!(SATOrderInt, "sat_order_int");
 
-// The number of bits used to represent the integer.
-// This is a fixed value for the representation, but could be made dynamic if needed.
-const BITS: i32 = 8;
-
 #[derive(Clone, Debug)]
 pub struct SATOrderInt {
     src_var: Name,
@@ -21,7 +17,15 @@ pub struct SATOrderInt {
 impl SATOrderInt {
     /// Returns the names of the representation variable
     fn names(&self) -> impl Iterator<Item = Name> + '_ {
-        (0..BITS).map(move |index| self.index_to_name(index))
+        let name_vec = self
+            .domain
+            .values_i32()
+            .into_iter()
+            .flatten()
+            .map(move |index| self.index_to_name(index));
+        println!("names: {:?}", name_vec);
+        name_vec.clone().for_each(|a| println!("{:?}", a));
+        name_vec
     }
 
     /// Gets the representation variable name for a specific index.
@@ -72,7 +76,7 @@ impl Representation for SATOrderInt {
     ) -> Result<std::collections::BTreeMap<Name, Literal>, ApplicationError> {
         // FOR Order: Given an int 'i' in domain (n..m):
         // {n : 1, n+1 : 1, ..., i : 1, i+1 : 0,.. , m-1 : 0}
-
+        // panic!("JUST SO YOU KNOW THAT IM HERE!!!");
         // If not integer - throw ApplicationError
         let Literal::Int(value_i32) = value else {
             return Err(ApplicationError::RuleNotApplicable);
@@ -89,7 +93,6 @@ impl Representation for SATOrderInt {
             if idx <= value_i32 {
                 // 1
                 println!("{:?}", idx);
-                panic!("JUST SO YOU KNOW THAT IM HERE!!! {:?}", idx);
                 let name = self.index_to_name(idx);
                 let val = Literal::Bool(true);
 
@@ -111,17 +114,22 @@ impl Representation for SATOrderInt {
         &self,
         values: &std::collections::BTreeMap<Name, Literal>,
     ) -> Result<Literal, ApplicationError> {
+        eprintln!("fn call: value_up");
         // FOR Order: expect pattern {n : 1, n+1 : 1, ..., i : 1, i+1 : 0,.. , m-1 : 0}
         // return i
         let value = values
             .iter()
             .rev()
-            .find(|(_, literal)| match literal {
-                Literal::Int(a) => *a == 1,
-                _ => false,
+            .find(|(_, literal)| {
+                eprintln!("{:?}", literal);
+                match literal {
+                    Literal::Int(a) => *a == 1,
+                    _ => false,
+                }
             })
             .and_then(|(name, _)| {
                 if let Name::Represented(boxed) = name {
+                    eprintln!("{:?}", boxed);
                     let (_, _, index_str) = &**boxed;
                     index_str.parse::<i32>().ok()
                 } else {
@@ -147,7 +155,9 @@ impl Representation for SATOrderInt {
         &self,
         st: &SymbolTable,
     ) -> Result<std::collections::BTreeMap<Name, Expression>, ApplicationError> {
-        Ok(self
+        eprintln!("fn call: expr_down");
+
+        let e = self
             .names()
             .map(|name| {
                 let decl = st.lookup(&name).unwrap();
@@ -159,14 +169,19 @@ impl Representation for SATOrderInt {
                     ),
                 )
             })
-            .collect())
+            .collect();
+        // eprintln!("downed expr {:?}", e);
+        Ok(e)
     }
 
     fn declaration_down(&self) -> Result<Vec<DeclarationPtr>, ApplicationError> {
-        Ok(self
+        eprintln!("fn call: decl_down");
+        let e = self
             .names()
             .map(|name| DeclarationPtr::new_var(name, Domain::Bool))
-            .collect())
+            .collect();
+        eprintln!("downed decls {:?}", e);
+        Ok(e)
     }
 
     fn repr_name(&self) -> &str {
