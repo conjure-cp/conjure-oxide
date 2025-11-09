@@ -1,4 +1,9 @@
-use std::{collections::HashMap, env::Vars, io::Lines};
+use core::panic;
+use std::{
+    collections::HashMap,
+    env::{Vars, vars},
+    io::Lines,
+};
 
 use rustsat::{
     clause,
@@ -13,6 +18,7 @@ use anyhow::{Result, anyhow};
 
 use crate::{
     ast::{CnfClause, Expression, Moo, Name},
+    bug,
     solver::Error,
 };
 
@@ -28,7 +34,7 @@ pub fn handle_lit(
         // not literal
         Expression::Not(_, _) => handle_not(l1, vars_added, inst),
 
-        _ => panic!("Literal expected"),
+        _ => todo!("Literal expected"),
     }
 }
 
@@ -43,7 +49,7 @@ pub fn handle_not(
             let a = Moo::unwrap_or_clone(ref_a);
             handle_atom(a, false, vars_added, inst)
         }
-        _ => panic!("Not Expected"),
+        _ => todo!("Not Expression Expected"),
     }
 }
 
@@ -59,13 +65,13 @@ pub fn handle_atom(
             conjure_cp_core::ast::Atom::Literal(literal) => {
                 todo!("Not Sure if we are handling Lits as-is or not..")
             }
-            conjure_cp_core::ast::Atom::Reference(decl) => match &*(decl.name()) {
+            conjure_cp_core::ast::Atom::Reference(reference) => match &*(reference.name()) {
                 conjure_cp_core::ast::Name::User(_)
                 | conjure_cp_core::ast::Name::Represented(_)
                 | conjure_cp_core::ast::Name::Machine(_) => {
                     // TODO: Temp Clone
                     // let m = n.clone();
-                    let lit_temp: Lit = fetch_lit(decl.name().clone(), vars_added, inst);
+                    let lit_temp: Lit = fetch_lit(reference.name().clone(), vars_added, inst);
                     if polarity { lit_temp } else { !lit_temp }
                 }
                 _ => todo!("Not implemented yet"),
@@ -94,18 +100,26 @@ pub fn handle_disjn(
         lits.add(lit);
     }
 
-    // literal => {
-    // let lit: Lit = handle_lit(literal, vars_added, inst_in_use);
-    // lits.add(lit);
-
     inst_in_use.add_clause(lits);
 }
 
-pub fn handle_cnf(vec_cnf: &Vec<CnfClause>, vars_added: &mut HashMap<Name, Lit>) -> SatInstance {
+pub fn handle_cnf(
+    vec_cnf: &Vec<CnfClause>,
+    vars_added: &mut HashMap<Name, Lit>,
+    finds: Vec<Name>,
+) -> SatInstance {
     let mut inst = SatInstance::new();
+
+    tracing::info!("{:?} are all the decision vars found.", finds);
+
+    for name in finds {
+        vars_added.insert(name, inst.new_lit());
+    }
+
     for disjn in vec_cnf {
         handle_disjn(disjn, vars_added, &mut inst);
     }
+
     inst
 }
 

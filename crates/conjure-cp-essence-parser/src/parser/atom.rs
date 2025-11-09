@@ -13,7 +13,7 @@ pub fn parse_atom(
     node: &Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<&Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<Expression, EssenceParseError> {
     match node.kind() {
         "atom" => parse_atom(&named_child!(node), source_code, root, symbols_ptr),
@@ -61,17 +61,17 @@ fn parse_index_or_slice(
     node: &Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<&Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<Expression, EssenceParseError> {
     let collection = parse_atom(
         &field!(node, "tuple_or_matrix"),
         source_code,
         root,
-        symbols_ptr,
+        symbols_ptr.clone(),
     )?;
     let mut indices = Vec::new();
     for idx_node in named_children(&field!(node, "indices")) {
-        indices.push(parse_index(&idx_node, source_code, symbols_ptr)?);
+        indices.push(parse_index(&idx_node, source_code, symbols_ptr.clone())?);
     }
 
     let has_null_idx = indices.iter().any(|idx| idx.is_none());
@@ -97,7 +97,7 @@ fn parse_index_or_slice(
 fn parse_index(
     node: &Node,
     source_code: &str,
-    symbols_ptr: Option<&Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<Option<Expression>, EssenceParseError> {
     match node.kind() {
         "arithmetic_expr" => Ok(Some(parse_expression(
@@ -117,13 +117,13 @@ fn parse_index(
 fn parse_variable(
     node: &Node,
     source_code: &str,
-    symbols_ptr: Option<&Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<Atom, EssenceParseError> {
     let raw_name = &source_code[node.start_byte()..node.end_byte()];
     let name = Name::user(raw_name.trim());
     if let Some(symbols) = symbols_ptr {
         if let Some(decl) = symbols.borrow().lookup(&name) {
-            Ok(Atom::Reference(decl))
+            Ok(Atom::Reference(conjure_cp_core::ast::Reference::new(decl)))
         } else {
             Err(EssenceParseError::syntax_error(
                 format!("Undefined variable: '{}'", raw_name),

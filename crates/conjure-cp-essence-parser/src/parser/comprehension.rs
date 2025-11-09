@@ -13,7 +13,7 @@ pub fn parse_comprehension(
     node: &Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<&Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<Expression, EssenceParseError> {
     // Comprehensions require a symbol table passed in
     let symbols_ptr = symbols_ptr.ok_or_else(|| {
@@ -23,7 +23,7 @@ pub fn parse_comprehension(
         )
     })?;
 
-    let mut builder = ComprehensionBuilder::new(Rc::clone(symbols_ptr));
+    let mut builder = ComprehensionBuilder::new(symbols_ptr);
 
     // We need to track the return expression node separately since it appears first in syntax
     // but we need to parse generators first (to get variables in scope)
@@ -56,7 +56,7 @@ pub fn parse_comprehension(
                 let generator_symboltable = builder.generator_symboltable();
 
                 let guard_expr =
-                    parse_expression(expr_node, source_code, root, Some(&generator_symboltable))?;
+                    parse_expression(expr_node, source_code, root, Some(generator_symboltable))?;
 
                 // Add the condition as a guard
                 builder = builder.guard(guard_expr);
@@ -80,7 +80,7 @@ pub fn parse_comprehension(
         return_expr_node,
         source_code,
         root,
-        Some(&builder.return_expr_symboltable()),
+        Some(builder.return_expr_symboltable()),
     )?;
 
     // Build the comprehension with the return expression and default ACOperatorKind::And

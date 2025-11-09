@@ -610,7 +610,7 @@ pub fn parse_expression(obj: &JsonValue, scope: &Rc<RefCell<SymbolTable>>) -> Op
 
             Some(Expression::Atomic(
                 Metadata::new(),
-                Atom::Reference(declaration),
+                Atom::Reference(crate::ast::Reference::new(declaration)),
             ))
         }
         Value::Object(abslit) if abslit.contains_key("AbstractLiteral") => {

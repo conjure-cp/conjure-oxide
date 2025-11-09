@@ -12,7 +12,7 @@ pub fn parse_expression(
     node: Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<&Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<Expression, EssenceParseError> {
     match node.kind() {
         "atom" => parse_atom(&node, source_code, root, symbols_ptr),
@@ -38,7 +38,7 @@ fn parse_dominance_relation(
     node: &Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<&Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<Expression, EssenceParseError> {
     if root.kind() == "dominance_relation" {
         return Err(EssenceParseError::syntax_error(
@@ -61,7 +61,7 @@ fn parse_arithmetic_expression(
     node: &Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<&Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<Expression, EssenceParseError> {
     let inner = named_child!(node);
     match inner.kind() {
@@ -86,7 +86,7 @@ fn parse_boolean_expression(
     node: &Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<&Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<Expression, EssenceParseError> {
     let inner = named_child!(node);
     match inner.kind() {
@@ -111,7 +111,7 @@ fn parse_quantifier_expression(
     node: &Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<&Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<Expression, EssenceParseError> {
     // TODO (terminology) - this is not really a quantifier, just a list operation.
     // Quantifiers are things like:
@@ -141,7 +141,7 @@ fn parse_unary_expression(
     node: &Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<&Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<Expression, EssenceParseError> {
     let inner = parse_expression(field!(node, "expression"), source_code, root, symbols_ptr)?;
     match node.kind() {
@@ -161,9 +161,9 @@ pub fn parse_binary_expression(
     node: &Node,
     source_code: &str,
     root: &Node,
-    symbols_ptr: Option<&Rc<RefCell<SymbolTable>>>,
+    symbols_ptr: Option<Rc<RefCell<SymbolTable>>>,
 ) -> Result<Expression, EssenceParseError> {
-    let parse_subexpr = |expr: Node| parse_expression(expr, source_code, root, symbols_ptr);
+    let parse_subexpr = |expr: Node| parse_expression(expr, source_code, root, symbols_ptr.clone());
 
     let left = parse_subexpr(field!(node, "left"))?;
     let right = parse_subexpr(field!(node, "right"))?;

@@ -7,9 +7,6 @@ on:
   workflow_dispatch:
 
 env:
-  SCCACHE_GHA_ENABLED: "true"
-  RUSTC_WRAPPER: "sccache"
-  SCCACHE_GHA_VERSION: 2
   CARGO_INCREMENTAL: "0"
   # we define the following 3 values as the defaults here, matrix jobs may overwrite their values.
   os: ubuntu-latest
@@ -31,10 +28,6 @@ jobs:
         with:
           cache-on-failure: true
           shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
-
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.9
-
       - name: Install rust ${{ env.rust_release }}
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
@@ -76,9 +69,6 @@ jobs:
         with:
           cache-on-failure: true
           shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
-
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.9
 
       - name: Install rust ${{ env.rust_release }}
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}

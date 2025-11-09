@@ -19,7 +19,7 @@ fn substitute_value_lettings(expr: &Expr, _: &SymbolTable) -> ApplicationResult 
         return Err(RuleNotApplicable);
     };
 
-    let value = decl.as_value_letting().ok_or(RuleNotApplicable)?;
+    let value = decl.ptr().as_value_letting().ok_or(RuleNotApplicable)?;
 
     Ok(Reduction::pure(value.clone()))
 }

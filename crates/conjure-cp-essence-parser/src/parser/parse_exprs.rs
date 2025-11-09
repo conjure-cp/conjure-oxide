@@ -35,7 +35,7 @@ pub fn parse_exprs(
             expr,
             &source_code,
             &root,
-            Some(&symbols_ptr),
+            Some(symbols_ptr.clone()),
         )?);
     }
     Ok(ans)
