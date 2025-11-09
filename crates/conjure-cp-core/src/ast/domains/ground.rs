@@ -1,13 +1,11 @@
 use crate::ast::pretty::pretty_vec;
-use crate::ast::{
-    Moo, RecordEntry, SetAttr, Typeable,
-    domains::{domain::Int, range::Range},
-};
+use crate::ast::{DomainOpError, Moo, RecordEntry, SetAttr, Typeable, domains::{domain::Int, range::Range}, Domain};
 use conjure_cp_core::ast::ReturnType;
 use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
+use std::iter::zip;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 pub enum GroundDomain {
@@ -27,31 +25,87 @@ pub enum GroundDomain {
     Record(Vec<RecordEntry<GroundDomain>>),
 }
 
-impl Typeable for GroundDomain {
-    fn return_type(&self) -> Option<ReturnType> {
-        match self {
-            GroundDomain::Empty(ty) => Some(ty.clone()),
-            GroundDomain::Bool => Some(ReturnType::Bool),
-            GroundDomain::Int(_) => Some(ReturnType::Int),
-            GroundDomain::Set(_attr, inner) => {
-                inner.return_type().map(|ty| ReturnType::Set(Box::new(ty)))
+impl GroundDomain {
+    pub fn union(&self, other: &GroundDomain) -> Result<GroundDomain, DomainOpError> {
+        match (self, other) {
+            (GroundDomain::Empty(ty), dom) | (dom, GroundDomain::Empty(ty)) => {
+                if *ty == dom.return_type() {
+                    Ok(dom.clone())
+                } else {
+                    Err(DomainOpError::InputWrongType)
+                }
             }
-            GroundDomain::Matrix(inner, _idx) => inner
-                .return_type()
-                .map(|ty| ReturnType::Matrix(Box::new(ty))),
+            (GroundDomain::Bool, GroundDomain::Bool) => Ok(GroundDomain::Bool),
+            (GroundDomain::Bool, _) | (_, GroundDomain::Bool) => Err(DomainOpError::InputWrongType),
+            (GroundDomain::Int(r1), GroundDomain::Int(r2)) => {
+                let mut rngs = r1.clone();
+                rngs.extend(r2.clone());
+                Ok(GroundDomain::Int(Range::squeeze(&rngs)))
+            }
+            (GroundDomain::Int(_), _) | (_, GroundDomain::Int(_)) => {
+                Err(DomainOpError::InputWrongType)
+            }
+            (GroundDomain::Set(_, in1), GroundDomain::Set(_, in2)) => Ok(GroundDomain::Set(
+                SetAttr::default(),
+                Moo::new(in1.union(in2)?),
+            )),
+            (GroundDomain::Set(_, _), _) | (_, GroundDomain::Set(_, _)) => {
+                Err(DomainOpError::InputWrongType)
+            }
+            (GroundDomain::Matrix(in1, idx1), GroundDomain::Matrix(in2, idx2)) if idx1 == idx2 => {
+                Ok(GroundDomain::Matrix(
+                    Moo::new(in1.union(in2)?),
+                    idx1.clone(),
+                ))
+            }
+            (GroundDomain::Matrix(_, _), _) | (_, GroundDomain::Matrix(_, _)) => {
+                Err(DomainOpError::InputWrongType)
+            }
+            (GroundDomain::Tuple(in1s), GroundDomain::Tuple(in2s)) if in1s.len() == in2s.len() => {
+                let mut inners = Vec::<GroundDomain>::new();
+                for (in1, in2) in zip(in1s, in2s) {
+                    inners.push(in1.union(in2)?);
+                }
+                Ok(GroundDomain::Tuple(inners))
+            }
+            (GroundDomain::Tuple(_), _) | (_, GroundDomain::Tuple(_)) => {
+                Err(DomainOpError::InputWrongType)
+            }
+            // TODO: Eventually we may define semantics for joining record domains. This day is not today.
+            (GroundDomain::Record(_), _) | (_, GroundDomain::Record(_)) => {
+                Err(DomainOpError::InputWrongType)
+            }
+        }
+    }
+}
+
+impl Into<Domain> for GroundDomain {
+    fn into(self) -> Domain {
+        Domain::Ground(self)
+    }
+}
+
+impl Typeable for GroundDomain {
+    fn return_type(&self) -> ReturnType {
+        match self {
+            GroundDomain::Empty(ty) => ty.clone(),
+            GroundDomain::Bool => ReturnType::Bool,
+            GroundDomain::Int(_) => ReturnType::Int,
+            GroundDomain::Set(_attr, inner) => ReturnType::Set(Box::new(inner.return_type())),
+            GroundDomain::Matrix(inner, _idx) => ReturnType::Matrix(Box::new(inner.return_type())),
             GroundDomain::Tuple(inners) => {
                 let mut inner_types = Vec::new();
                 for inner in inners {
-                    inner_types.push(inner.return_type()?);
+                    inner_types.push(inner.return_type());
                 }
-                Some(ReturnType::Tuple(inner_types))
+                ReturnType::Tuple(inner_types)
             }
             GroundDomain::Record(entries) => {
                 let mut entry_types = Vec::new();
                 for entry in entries {
-                    entry_types.push(entry.domain.return_type()?);
+                    entry_types.push(entry.domain.return_type());
                 }
-                Some(ReturnType::Record(entry_types))
+                ReturnType::Record(entry_types)
             }
         }
     }

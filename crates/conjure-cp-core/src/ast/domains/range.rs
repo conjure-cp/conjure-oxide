@@ -163,6 +163,47 @@ impl<A: Num + Ord + Clone> Range<A> {
         }
         None
     }
+
+    /// Merge all joining ranges in the list, and return a new vec of disjoint ranges.
+    /// E.g:
+    /// ```ignore
+    /// [(2..3), (4), (..1), (6..8)] -> [(..4), (6..8)]
+    /// ```
+    ///
+    /// # Performance
+    /// Currently uses a naive O(n^2) algorithm.
+    /// A more optimal approach based on interval trees is planned.
+    pub fn squeeze(rngs: &[Range<A>]) -> Vec<Range<A>> {
+        let mut ans = Vec::from(rngs);
+
+        if ans.is_empty() {
+            return ans;
+        }
+
+        loop {
+            let mut merged = false;
+
+            // Check every pair of ranges and join them if possible
+            'outer: for i in 0..ans.len() {
+                for j in (i + 1)..ans.len() {
+                    if let Some(joined) = ans[i].join(&ans[j]) {
+                        ans[i] = joined;
+                        // Safe to delete here because we restart the outer loop immediately
+                        ans.remove(j);
+                        merged = true;
+                        break 'outer;
+                    }
+                }
+            }
+
+            // If no merges occurred, we're done
+            if !merged {
+                break;
+            }
+        }
+
+        ans
+    }
 }
 
 impl<A: Display> Display for Range<A> {
