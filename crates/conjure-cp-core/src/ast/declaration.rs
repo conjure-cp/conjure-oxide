@@ -225,7 +225,8 @@ impl DeclarationPtr {
     ///
     /// let declaration = DeclarationPtr::new_record_field(field);
     /// ```
-    pub fn new_record_field(entry: RecordEntry) -> DeclarationPtr {
+    pub fn new_record_field(entry: RecordEntry<Domain>) -> DeclarationPtr
+    {
         let kind = DeclarationKind::RecordField(entry.domain);
         DeclarationPtr::new(entry.name, kind)
     }
