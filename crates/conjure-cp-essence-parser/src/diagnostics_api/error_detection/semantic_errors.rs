@@ -1,6 +1,9 @@
 // Basic syntactic error detection helpers for the LSP API.
 
 use crate::diagnostics_api::diagnostics_api::{Diagnostic, Position, Range, severity};
+use crate::parser::util::{get_tree};
+use tree_sitter::{Node};
+
 
 /// Detects very simple semantic issues in source and returns a vector
 /// of Diagnostics.
@@ -30,7 +33,7 @@ pub fn detect_semantic_errors(source: &str) -> Vec<Diagnostic> {
 
     let root_node = tree.root_node();
     // call semantic error detection functions
-    keyword_as_identifier(root_node, source, &mut diagnostics);
+    keyword_as_identifier(root_node, &source, &mut diagnostics);
 
     diagnostics
 }
