@@ -56,7 +56,7 @@ static_assertions::assert_eq_size!([u8; 104], Expression);
 /// The `Expression` enum includes operations, constants, and variable references
 /// used to build rules and conditions for the model.
 #[document_compatibility]
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Quine)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
 #[biplate(to=Metadata)]
 #[biplate(to=Atom)]
 #[biplate(to=DeclarationPtr)]

@@ -29,9 +29,3 @@ pub trait MaybeTypeable {
 pub trait Typeable {
     fn return_type(&self) -> ReturnType;
 }
-
-impl<T: Typeable> MaybeTypeable for T {
-    fn maybe_return_type(&self) -> Option<ReturnType> {
-        Some(self.return_type())
-    }
-}

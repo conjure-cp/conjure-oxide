@@ -1,5 +1,8 @@
 use crate::ast::pretty::pretty_vec;
-use crate::ast::{DomainOpError, Moo, RecordEntry, SetAttr, Typeable, domains::{domain::Int, range::Range}, Domain};
+use crate::ast::{
+    Domain, DomainOpError, Moo, RecordEntry, SetAttr, Typeable,
+    domains::{domain::Int, range::Range},
+};
 use conjure_cp_core::ast::ReturnType;
 use itertools::Itertools;
 use polyquine::Quine;
