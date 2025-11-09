@@ -2,7 +2,7 @@ use crate::ast::domains::ground::GroundDomain;
 use crate::ast::domains::range::Range;
 use crate::ast::domains::set_attr::SetAttr;
 use crate::ast::domains::unresolved::{IntVal, UnresolvedDomain};
-use crate::ast::{DomainOpError, MaybeTypeable, Moo, ReturnType};
+use crate::ast::{DomainOpError, MaybeTypeable, Moo, ReturnType, Typeable};
 use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
@@ -12,7 +12,7 @@ use std::ops::Deref;
 /// The integer type used in all domain code (int ranges, set sizes, etc)
 pub(crate) type Int = i32;
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Quine)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 pub enum Domain {
     /// A fully resolved domain
     Ground(GroundDomain),
@@ -79,7 +79,13 @@ impl Domain {
         }
         Domain::Unresolved(UnresolvedDomain::Tuple(inner_doms))
     }
-    
+
+    pub fn resolve(&self) -> Option<GroundDomain> {
+        match self {
+            Domain::Ground(gd) => Some(gd.clone()),
+            Domain::Unresolved(ud) => ud.resolve(),
+        }
+    }
 
     pub fn union(&self, other: &Domain) -> Result<Domain, DomainOpError> {
         match (self, other) {
@@ -98,7 +104,7 @@ impl Domain {
 impl MaybeTypeable for Domain {
     fn maybe_return_type(&self) -> Option<ReturnType> {
         match self {
-            Domain::Ground(dom) => dom.maybe_return_type(),
+            Domain::Ground(dom) => Some(dom.return_type()),
             Domain::Unresolved(dom) => dom.maybe_return_type(),
         }
     }

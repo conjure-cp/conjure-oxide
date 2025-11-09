@@ -7,7 +7,7 @@ use std::collections::VecDeque;
 use itertools::{Itertools, izip};
 use uniplate::Uniplate as _;
 
-use crate::ast::{Domain, DomainOpError, Range};
+use crate::ast::{Domain, DomainOpError, Moo, Range};
 
 use super::{AbstractLiteral, Literal};
 
@@ -131,7 +131,7 @@ pub fn index_domains(matrix: AbstractLiteral<Literal>) -> Vec<Domain> {
         match element {
             AbstractLiteral::Set(_) => vec![],
             AbstractLiteral::Matrix(_, domain) => {
-                let mut index_domains = vec![*domain];
+                let mut index_domains = vec![Moo::unwrap_or_clone(domain)];
                 index_domains.extend(child_index_domains);
                 index_domains
             }
@@ -148,7 +148,7 @@ pub fn enumerate_index_union_indices(
     b_domains: Vec<Domain>,
 ) -> Result<impl Iterator<Item = Vec<Literal>>, DomainOpError> {
     if a_domains.len() != b_domains.len() {
-        return Err(DomainOpError::InputWrongType);
+        return Err(DomainOpError::WrongType);
     }
     let idx_domains: Result<Vec<_>, _> = a_domains
         .iter()
