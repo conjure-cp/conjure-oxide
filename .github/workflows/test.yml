@@ -29,7 +29,7 @@ env:
   compiler_profile: debug
 
 jobs:
-  build-and-test:
+  test:
     name: "Test"
     timeout-minutes: 120
     strategy:
@@ -62,7 +62,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-          shared-key: ${{ matrix.os }}--${{ matrix.rust_release }}--${{ matrix.compiler_profile }}
+          shared-key: ${{ matrix.os }}--${{ matrix.rust_release }}--${{ matrix.compiler_profile }}--${{ github.workflow }}--${{ github.job }}
 
       # Override RUSTUP_TOOLCHAIN to nightly when we are testing with nightly
       # This value is read from the rust-toolchain.toml file otherwise
@@ -112,7 +112,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-          shared-key: ${{ matrix.os }}--${{ matrix.rust_release }}--${{ env.compiler_profile }}
+          shared-key: ${{ matrix.os }}--${{ matrix.rust_release }}--${{ env.compiler_profile }}--${{ github.workflow }}--${{ github.job }}
 
       # Override RUSTUP_TOOLCHAIN to nightly when we are testing with nightly
       # This value is read from the rust-toolchain.toml file otherwise
@@ -141,7 +141,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-          shared-key: ${{ env.os }}--${{ matrix.rust_release }}--${{ env.compiler_profile }}
+          shared-key: ${{ env.os }}--${{ matrix.rust_release }}--${{ env.compiler_profile }}--${{ github.workflow }}--${{ github.job }}
 
       - run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
 
@@ -150,7 +150,7 @@ jobs:
       - run: cargo audit
 
   shear:
-    name: "No unused dependencies (cargo shear)"
+    name: "Shear"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -159,7 +159,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
+          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.workflow }}--${{ github.job }}
       - name: Install cargo-shear
         run: cargo +nightly install cargo-shear
 
