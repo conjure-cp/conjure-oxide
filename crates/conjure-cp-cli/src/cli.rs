@@ -27,6 +27,8 @@ pub enum Command {
     TestSolve(test_solve::Args),
     /// Generate a completion script for the shell provided
     Completion(CompletionArgs),
+    // Run the language server
+    ServerLSP,
     /// Test parser output without running solver
     ParseTest(parse_test::Args),
 }
