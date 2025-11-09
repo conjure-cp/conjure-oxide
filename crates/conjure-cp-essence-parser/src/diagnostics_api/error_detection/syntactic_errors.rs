@@ -97,13 +97,27 @@ fn classify_missing_token(node: Node) -> Diagnostic {
     let start = node.start_position();
     let end = node.end_position();
 
+    // if the domain is missing, CST looks for variable_domain
+    // which results in an unhelpful message "Missing identifier"
+    // so change the message to provide more context
+    let message = if let Some(parent) = node.parent() {
+        if parent.kind() == "domain" {
+            "Missing 'domain'".to_string()
+        } else {
+            format!("Missing '{}'", node.kind())
+        }
+    } else {
+        format!("Missing '{}'", node.kind())
+    };
+
     Diagnostic {
         range: Range {
             start: Position { line: start.row as u32, character: start.column as u32 },
             end: Position { line: end.row as u32, character: end.column as u32 },
+            
         },
         severity: severity::Error,
-        message: format!("Missing token: '{}'", node.kind()),
+        message,
         source: "syntactic-error-detector",
     }
 }
@@ -123,3 +137,26 @@ fn classify_general_syntax_error(node: Node) -> Diagnostic {
     }
 
 }
+
+/// Helper function for tests to comapre the actual diagnitic with the expected one.
+/// Compares the range and the message. 
+pub fn check_diagnostic(
+
+    diag: &Diagnostic, 
+    line_start: u32, 
+    char_start: u32, 
+    line_end: u32, 
+    char_end: u32, 
+    msg: &str) {
+    
+    // Checking range 
+    assert_eq!(diag.range.start.line, line_start);
+    assert_eq!(diag.range.start.character, char_start);
+    assert_eq!(diag.range.end.line, line_end);
+    assert_eq!(diag.range.end.character, char_end);
+
+    // Check the message
+    assert_eq!(diag.message, msg);
+
+}
+
