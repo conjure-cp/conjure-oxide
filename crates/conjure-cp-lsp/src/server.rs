@@ -10,7 +10,6 @@ use tower_lsp::{
     },
 };
 
-
 #[derive(Debug, Serialize, Deserialize)]
 struct NotifactionParams {
     title: String,
