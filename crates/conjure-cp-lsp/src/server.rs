@@ -10,11 +10,9 @@ use tower_lsp::{
     },
 };
 
-// use tracing_subscriber::info;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct NotifactionParams {
-    //to be fed into notifciation?
     title: String,
     message: String,
     description: String,
@@ -46,39 +44,8 @@ impl LanguageServer for Backend {
                     commands: vec![String::from("custom.notification")],
                     work_done_progress_options: Default::default(),
                 }),
-                //hover_provider: Some(HoverProviderCapability::Simple(true)),
-                //completion_provider: Some(CompletionOptions {
-                //trigger_characters: Some(vec![".".to_string(), ":".to_string()]),
-                //all_commit_characters: None,
-                //..Default::default()
-                //}),
                 ..ServerCapabilities::default()
             },
-            // semantic_tokens_provider: Some(
-            //     SemanticTokensServerCapabilities::SemanticTokensRegistrationOptions(
-            //         SemanticTokensRegistrationOptions {
-            //             text_document_registration_options: {
-            //                 TextDocumentRegistrationOptions {
-            //                     document_selector: Some(vec![DocumentFilter {
-            //                         language: Some("nrs".to_string()),
-            //                         scheme: Some("file".to_string()),
-            //                         pattern: None,
-            //                     }]),
-            //                 }
-            //             },
-            //             semantic_tokens_options: SemanticTokensOptions {
-            //                 work_done_progress_options: WorkDoneProgressOptions::default(),
-            //                 legend: SemanticTokensLegend {
-            //                     token_types: LEGEND_TYPE.into(),
-            //                     token_modifiers: vec![],
-            //                 },
-            //                 range: Some(true),
-            //                 full: Some(SemanticTokensFullOptions::Bool(true)),
-            //             },
-            //             static_registration_options: StaticRegistrationOptions::default(),
-            //         },
-            //     ),
-            // ),
         })
     }
     async fn initialized(&self, _: InitializedParams) {
@@ -115,21 +82,6 @@ impl LanguageServer for Backend {
             Err(Error::invalid_request())
         }
     }
-    //async fn did_open
-
-    //async fn did_change
-
-    //async fn did_save
-
-    //LOOK AT LANGUAGESERVER EXAMPLES ON TOWER_LSP WHEN DONE HERE
-    // async fn hover(&self, _: HoverParams) -> Result<Option<Hover>> {
-    //      Ok(Some(Hover {
-    //          contents: HoverContents::Scalar(
-    //              MarkedString::String("You're hovering!".to_string())
-    //          ),
-    //          range: None
-    //      }))
-    //  }
 }
 
 #[tokio::main]
