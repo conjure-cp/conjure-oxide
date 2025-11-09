@@ -9,9 +9,12 @@ use uniplate::{Biplate, Uniplate};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
 #[path_prefix(conjure_cp::ast)]
-pub struct RecordEntry {
+pub struct RecordEntry<T>
+where
+    T: Clone + Eq,
+{
     pub name: Name,
-    pub domain: Domain,
+    pub domain: T,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Hash, Quine)]

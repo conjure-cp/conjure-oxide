@@ -51,9 +51,9 @@ impl Comprehension {
             .domain_of()?;
 
         // return a list (matrix with index domain int(1..)) of return_expr elements
-        Some(Domain::Matrix(
-            Box::new(return_expr_domain),
-            vec![Domain::Int(vec![Range::UnboundedR(1)])],
+        Some(Domain::new_matrix_unresolved(
+            Moo::new(return_expr_domain),
+            vec![Domain::new_int(vec![Range::UnboundedR(1)])],
         ))
     }
 
