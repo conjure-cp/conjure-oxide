@@ -55,7 +55,7 @@ pub enum SymbolKind {
 
 // each type of token / symbol in the essence grammar will be
 // assigned an integer, which would be mapped to a colour
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, )]
 #[serde(rename_all = "camelCase")]
 pub struct DocumentSymbol {
     pub name: String,

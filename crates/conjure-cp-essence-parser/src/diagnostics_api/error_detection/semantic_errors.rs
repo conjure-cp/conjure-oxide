@@ -10,7 +10,7 @@ use tree_sitter::{Node};
 pub fn detect_semantic_errors(source: &str) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
 
-    let (tree, source) = match get_tree(source) {
+    let (tree, _source) = match get_tree(source) {
         Some(tree) => tree,
         // essence cannot be parsed
         None => {
@@ -30,8 +30,13 @@ pub fn detect_semantic_errors(source: &str) -> Vec<Diagnostic> {
         }
 
     };
-
     let root_node = tree.root_node();
+
+    // print the tree
+    println!("=== Tree S-expression ===");
+    println!("{}", root_node.to_sexp());
+    println!("=========================\n");
+
     // call semantic error detection functions
     keyword_as_identifier(root_node, &source, &mut diagnostics);
 
@@ -49,7 +54,8 @@ const KEYWORDS: [&str; 20] = [
 fn keyword_as_identifier(root: Node, src: &str, diagnostics: &mut Vec<Diagnostic>) {
     let mut stack = vec![root];
     while let Some(node) = stack.pop() {
-        if node.kind() == "variable" {
+        println!("Visiting node kind: {}", node.kind());
+        if node.kind() == "variable" || node.kind() == "identifier" || node.kind() == "parameter" {
             if let Ok(text) = node.utf8_text(src.as_bytes()) {
                 let ident = text.trim();
                 if KEYWORDS.contains(&ident) {
@@ -64,7 +70,15 @@ fn keyword_as_identifier(root: Node, src: &str, diagnostics: &mut Vec<Diagnostic
                         message: format!("Keyword '{}' used as an identifier", ident),
                         source: "semantic-error-detector",
                     });
+                    print!("{:?}", diagnostics.last().unwrap());
                 }
+            }
+        }
+
+        // push children
+        for i in 0..node.child_count() {
+            if let Some(child) = node.child(i) {
+                stack.push(child);
             }
         }
     }
