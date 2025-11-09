@@ -105,7 +105,7 @@ macro_rules! into_matrix {
         $crate::ast::AbstractLiteral::matrix_implied_indices($x)
     );
     ($x:expr;$domain:expr) => (
-        $crate::ast::AbstractLiteral::Matrix($x,::std::boxed::Box::new($domain))
+        $crate::ast::AbstractLiteral::Matrix($x,::conjure_cp_core::ast::Moo::new($domain))
     );
 }
 

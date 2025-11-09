@@ -2,6 +2,7 @@ use crate::ast::domains::set_attr::SetAttr;
 use crate::ast::{
     DeclarationKind, DomainOpError, Expression, MaybeTypeable, Moo, RecordEntry, Reference,
     domains::{
+        GroundDomain,
         domain::{Domain, Int},
         range::Range,
     },
@@ -16,7 +17,7 @@ use std::fmt::{Display, Formatter};
 use std::iter::zip;
 use std::ops::Deref;
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Quine)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 #[path_prefix(conjure_cp::ast)]
 pub(super) enum IntVal {
     Const(Int),
@@ -138,6 +139,26 @@ impl IntVal {
     }
 }
 
+impl Range<IntVal> {
+    pub fn resolve(&self) -> Option<Range<Int>> {
+        match self {
+            Range::Single(x) => Some(Range::Single(x.resolve()?)),
+            Range::Bounded(l, r) => Some(Range::Bounded(l.resolve()?, r.resolve()?)),
+            Range::UnboundedL(r) => Some(Range::UnboundedL(r.resolve()?)),
+            Range::UnboundedR(l) => Some(Range::UnboundedR(l.resolve()?)),
+            Range::Unbounded => Some(Range::Unbounded),
+        }
+    }
+}
+
+impl SetAttr<IntVal> {
+    pub fn resolve(&self) -> Option<SetAttr<Int>> {
+        Some(SetAttr {
+            size: self.size.resolve()?,
+        })
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Quine)]
 pub enum UnresolvedDomain {
     Int(Vec<Range<IntVal>>),
@@ -154,6 +175,47 @@ pub enum UnresolvedDomain {
 }
 
 impl UnresolvedDomain {
+    pub fn resolve(&self) -> Option<GroundDomain> {
+        match self {
+            UnresolvedDomain::Int(rngs) => {
+                match rngs.iter().map(Range::<IntVal>::resolve).collect() {
+                    Some(int_rngs) => Some(GroundDomain::Int(int_rngs)),
+                    _ => None,
+                }
+            }
+            UnresolvedDomain::Set(attr, inner) => Some(GroundDomain::Set(
+                attr.resolve()?,
+                Moo::new(inner.resolve()?),
+            )),
+            UnresolvedDomain::Matrix(inner, idx_doms) => {
+                match idx_doms.iter().map(Domain::resolve).collect() {
+                    Some(idx_gds) => {
+                        Some(GroundDomain::Matrix(Moo::new(inner.resolve()?), idx_gds))
+                    }
+                    _ => None,
+                }
+            }
+            UnresolvedDomain::Tuple(inners) => match inners.iter().map(Domain::resolve).collect() {
+                Some(inners_gds) => Some(GroundDomain::Tuple(inners_gds)),
+                _ => None,
+            },
+            UnresolvedDomain::Record(entries) => match entries
+                .iter()
+                .map(|f| {
+                    f.domain.resolve().map(|gd| RecordEntry {
+                        name: f.name.clone(),
+                        domain: gd,
+                    })
+                })
+                .collect()
+            {
+                Some(entries_gds) => Some(GroundDomain::Record(entries_gds)),
+                _ => None,
+            },
+            UnresolvedDomain::Reference(_) => None,
+        }
+    }
+
     pub(super) fn union_unresolved(
         &self,
         other: &UnresolvedDomain,

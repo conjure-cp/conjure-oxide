@@ -25,6 +25,7 @@ use uniplate::{Biplate, Uniplate};
 
 use super::name::Name;
 use super::{Domain, Expression, ReturnType, SubModel};
+use crate::ast::domains::GroundDomain;
 use derivative::Derivative;
 
 // Count symbol tables per thread / model.
@@ -179,8 +180,9 @@ impl SymbolTable {
     /// Looks up the domain of name, resolving domain references to ground domains.
     ///
     /// See [`SymbolTable::domain`].
-    pub fn resolve_domain(&self, name: &Name) -> Option<Domain> {
-        self.domain(name).map(|domain| domain.resolve(self))
+    pub fn resolve_domain(&self, name: &Name) -> Option<GroundDomain> {
+        let dom = self.domain(name)?;
+        dom.resolve()
     }
 
     /// Iterates over entries in the local symbol table only.
