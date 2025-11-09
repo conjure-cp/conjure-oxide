@@ -21,7 +21,7 @@ use std::{
     rc::Rc,
 };
 
-use super::{CnfClause, Expression, ReturnType, SymbolTable, types::Typeable};
+use super::{CnfClause, Expression, ReturnType, SymbolTable, types::MaybeTypeable};
 
 /// A sub-model, representing a lexical scope in the model.
 ///
@@ -200,8 +200,8 @@ impl SubModel {
     }
 }
 
-impl Typeable for SubModel {
-    fn return_type(&self) -> Option<super::ReturnType> {
+impl MaybeTypeable for SubModel {
+    fn maybe_return_type(&self) -> Option<super::ReturnType> {
         Some(ReturnType::Bool)
     }
 }

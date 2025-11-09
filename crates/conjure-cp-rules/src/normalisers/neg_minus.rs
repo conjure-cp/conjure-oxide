@@ -29,7 +29,7 @@
 use conjure_cp::essence_expr;
 use conjure_cp::{
     ast::Metadata,
-    ast::{Expression as Expr, Moo, ReturnType::Set, SymbolTable, Typeable},
+    ast::{Expression as Expr, MaybeTypeable, Moo, ReturnType::Set, SymbolTable},
     into_matrix_expr,
     rule_engine::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
@@ -120,10 +120,10 @@ fn simplify_negation_of_product(expr: &Expr, _: &SymbolTable) -> ApplicationResu
 fn minus_to_sum(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (lhs, rhs) = match expr {
         Expr::Minus(_, lhs, rhs) => {
-            if let Some(Set(_)) = lhs.as_ref().return_type() {
+            if let Some(Set(_)) = lhs.as_ref().maybe_return_type() {
                 return Err(RuleNotApplicable);
             }
-            if let Some(Set(_)) = rhs.as_ref().return_type() {
+            if let Some(Set(_)) = rhs.as_ref().maybe_return_type() {
                 return Err(RuleNotApplicable);
             }
             (lhs.clone(), rhs.clone())

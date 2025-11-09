@@ -25,7 +25,7 @@ use super::categories::{Category, CategoryOf};
 use super::comprehension::Comprehension;
 use super::domains::HasDomain as _;
 use super::records::RecordValue;
-use super::{DeclarationPtr, Domain, Range, Reference, SubModel, Typeable};
+use super::{DeclarationPtr, Domain, MaybeTypeable, Range, Reference, SubModel};
 
 // Ensure that this type doesn't get too big
 //
@@ -1338,23 +1338,23 @@ impl Display for Expression {
     }
 }
 
-impl Typeable for Expression {
-    fn return_type(&self) -> Option<ReturnType> {
+impl MaybeTypeable for Expression {
+    fn maybe_return_type(&self) -> Option<ReturnType> {
         match self {
             Expression::Union(_, subject, _) => {
-                Some(ReturnType::Set(Box::new(subject.return_type()?)))
+                Some(ReturnType::Set(Box::new(subject.maybe_return_type()?)))
             }
             Expression::Intersect(_, subject, _) => {
-                Some(ReturnType::Set(Box::new(subject.return_type()?)))
+                Some(ReturnType::Set(Box::new(subject.maybe_return_type()?)))
             }
             Expression::In(_, _, _) => Some(ReturnType::Bool),
             Expression::Supset(_, _, _) => Some(ReturnType::Bool),
             Expression::SupsetEq(_, _, _) => Some(ReturnType::Bool),
             Expression::Subset(_, _, _) => Some(ReturnType::Bool),
             Expression::SubsetEq(_, _, _) => Some(ReturnType::Bool),
-            Expression::AbstractLiteral(_, lit) => lit.return_type(),
+            Expression::AbstractLiteral(_, lit) => lit.maybe_return_type(),
             Expression::UnsafeIndex(_, subject, _) | Expression::SafeIndex(_, subject, _) => {
-                let mut elem_typ = subject.return_type()?;
+                let mut elem_typ = subject.maybe_return_type()?;
                 let ReturnType::Matrix(_) = elem_typ else {
                     return None;
                 };
@@ -1367,16 +1367,16 @@ impl Typeable for Expression {
                 Some(elem_typ)
             }
             Expression::UnsafeSlice(_, subject, _) | Expression::SafeSlice(_, subject, _) => {
-                Some(ReturnType::Matrix(Box::new(subject.return_type()?)))
+                Some(ReturnType::Matrix(Box::new(subject.maybe_return_type()?)))
             }
             Expression::InDomain(_, _, _) => Some(ReturnType::Bool),
             Expression::Comprehension(_, _) => None,
             Expression::Root(_, _) => Some(ReturnType::Bool),
             Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
-            Expression::FromSolution(_, expr) => expr.return_type(),
+            Expression::FromSolution(_, expr) => expr.maybe_return_type(),
             Expression::Metavar(_, _) => None,
-            Expression::Atomic(_, atom) => atom.return_type(),
-            Expression::Scope(_, scope) => scope.return_type(),
+            Expression::Atomic(_, atom) => atom.maybe_return_type(),
+            Expression::Scope(_, scope) => scope.maybe_return_type(),
             Expression::Abs(_, _) => Some(ReturnType::Int),
             Expression::Sum(_, _) => Some(ReturnType::Int),
             Expression::Product(_, _) => Some(ReturnType::Int),
@@ -1401,7 +1401,7 @@ impl Typeable for Expression {
             Expression::MinionDivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
             Expression::FlatIneq(_, _, _, _) => Some(ReturnType::Bool),
             Expression::AllDiff(_, _) => Some(ReturnType::Bool),
-            Expression::Bubble(_, inner, _) => inner.return_type(),
+            Expression::Bubble(_, inner, _) => inner.maybe_return_type(),
             Expression::FlatWatchedLiteral(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReify(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionReifyImply(_, _, _) => Some(ReturnType::Bool),

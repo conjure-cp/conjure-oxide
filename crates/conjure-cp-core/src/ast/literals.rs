@@ -13,7 +13,7 @@ use crate::ast::pretty::pretty_vec;
 
 use super::domains::HasDomain;
 use super::{Atom, Domain, Expression, Range, records::RecordValue};
-use super::{Moo, ReturnType, SetAttr, Typeable};
+use super::{MaybeTypeable, Moo, ReturnType, SetAttr};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash, Quine)]
 #[uniplate(walk_into=[AbstractLiteral<Literal>])]
@@ -57,7 +57,7 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
     Set(Vec<T>),
 
     /// A 1 dimensional matrix slice with an index domain.
-    Matrix(Vec<T>, Box<Domain>),
+    Matrix(Vec<T>, Moo<Domain>),
 
     // a tuple of literals
     Tuple(Vec<T>),
@@ -84,7 +84,12 @@ impl AbstractLiteral<Expression> {
                     .try_fold(first_item, |x: Domain, y| x.union(y))
                     .expect("taking the union of all item domains of a set literal should succeed");
 
-                Some(Domain::new_set(SetAttr{ size: Range::Unbounded }, Moo::new(item_domain)))
+                Some(Domain::new_set(
+                    SetAttr {
+                        size: Range::Unbounded,
+                    },
+                    Moo::new(item_domain),
+                ))
             }
 
             AbstractLiteral::Matrix(items, _) => {
@@ -138,18 +143,18 @@ impl HasDomain for AbstractLiteral<Literal> {
     }
 }
 
-impl Typeable for AbstractLiteral<Expression> {
-    fn return_type(&self) -> Option<ReturnType> {
+impl MaybeTypeable for AbstractLiteral<Expression> {
+    fn maybe_return_type(&self) -> Option<ReturnType> {
         match self {
             AbstractLiteral::Set(items) if items.is_empty() => {
                 Some(ReturnType::Set(Box::new(ReturnType::Unknown)))
             }
             AbstractLiteral::Set(items) => {
-                let item_type = items[0].return_type()?;
+                let item_type = items[0].maybe_return_type()?;
 
                 // if any items do not have a type, return none.
                 let item_types: Option<Vec<ReturnType>> =
-                    items.iter().map(|x| x.return_type()).collect();
+                    items.iter().map(|x| x.maybe_return_type()).collect();
 
                 let item_types = item_types?;
 
@@ -164,11 +169,11 @@ impl Typeable for AbstractLiteral<Expression> {
                 Some(ReturnType::Matrix(Box::new(ReturnType::Unknown)))
             }
             AbstractLiteral::Matrix(items, _) => {
-                let item_type = items[0].return_type()?;
+                let item_type = items[0].maybe_return_type()?;
 
                 // if any items do not have a type, return none.
                 let item_types: Option<Vec<ReturnType>> =
-                    items.iter().map(|x| x.return_type()).collect();
+                    items.iter().map(|x| x.maybe_return_type()).collect();
 
                 let item_types = item_types?;
 
@@ -178,7 +183,7 @@ impl Typeable for AbstractLiteral<Expression> {
                     items = pretty_vec(items),
                     types = items
                         .iter()
-                        .map(|x| x.return_type())
+                        .map(|x| x.maybe_return_type())
                         .collect::<Vec<Option<ReturnType>>>()
                 );
 
@@ -187,14 +192,14 @@ impl Typeable for AbstractLiteral<Expression> {
             AbstractLiteral::Tuple(items) => {
                 let mut item_types = vec![];
                 for item in items {
-                    item_types.push(item.return_type()?);
+                    item_types.push(item.maybe_return_type()?);
                 }
                 Some(ReturnType::Tuple(item_types))
             }
             AbstractLiteral::Record(items) => {
                 let mut item_types = vec![];
                 for item in items {
-                    item_types.push(item.value.return_type()?);
+                    item_types.push(item.value.maybe_return_type()?);
                 }
                 Some(ReturnType::Record(item_types))
             }
