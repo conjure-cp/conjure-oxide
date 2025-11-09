@@ -1,8 +1,6 @@
-use serde::{Deserialize, Serialize};
-use tree_sitter::{Node, Point};
 
-use crate::parser::util::{get_tree, named_children};
-use crate::parser::{find::parse_find_statement, letting::parse_letting_statement};
+use serde::{Deserialize, Serialize};
+
 use crate::diagnostics_api::error_detection::syntactic_errors::detect_syntactic_errors;
 use crate::diagnostics_api::error_detection::semantic_errors::detect_semantic_errors;
 
