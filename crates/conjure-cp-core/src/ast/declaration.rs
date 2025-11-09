@@ -13,7 +13,7 @@ use uniplate::{Biplate, Tree, Uniplate};
 use super::categories::{Category, CategoryOf};
 use super::name::Name;
 use super::serde::{DefaultWithId, HasId, ObjId};
-use super::types::Typeable;
+use super::types::MaybeTypeable;
 use super::{DecisionVariable, Domain, Expression, RecordEntry, ReturnType};
 
 thread_local! {
@@ -225,8 +225,7 @@ impl DeclarationPtr {
     ///
     /// let declaration = DeclarationPtr::new_record_field(field);
     /// ```
-    pub fn new_record_field(entry: RecordEntry<Domain>) -> DeclarationPtr
-    {
+    pub fn new_record_field(entry: RecordEntry<Domain>) -> DeclarationPtr {
         let kind = DeclarationKind::RecordField(entry.domain);
         DeclarationPtr::new(entry.name, kind)
     }
@@ -484,14 +483,14 @@ impl DefaultWithId for DeclarationPtr {
     }
 }
 
-impl Typeable for DeclarationPtr {
-    fn return_type(&self) -> Option<ReturnType> {
+impl MaybeTypeable for DeclarationPtr {
+    fn maybe_return_type(&self) -> Option<ReturnType> {
         match &self.kind() as &DeclarationKind {
-            DeclarationKind::DecisionVariable(var) => var.return_type(),
-            DeclarationKind::ValueLetting(expression) => expression.return_type(),
-            DeclarationKind::DomainLetting(domain) => domain.return_type(),
-            DeclarationKind::Given(domain) => domain.return_type(),
-            DeclarationKind::RecordField(domain) => domain.return_type(),
+            DeclarationKind::DecisionVariable(var) => var.maybe_return_type(),
+            DeclarationKind::ValueLetting(expression) => expression.maybe_return_type(),
+            DeclarationKind::DomainLetting(domain) => domain.maybe_return_type(),
+            DeclarationKind::Given(domain) => domain.maybe_return_type(),
+            DeclarationKind::RecordField(domain) => domain.maybe_return_type(),
         }
     }
 }

@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use conjure_cp::rule_engine::register_rule;
 use conjure_cp::{
     ast::Metadata,
-    ast::{Domain, Moo, ReturnType, Typeable as _},
+    ast::{Domain, MaybeTypeable as _, Moo, ReturnType},
     into_matrix_expr,
     rule_engine::{ApplicationResult, Reduction},
 };
@@ -121,7 +121,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
         Expr::Atomic(_, _) => Err(RuleNotApplicable),
         Expr::Scope(_, _) => Err(RuleNotApplicable),
         Expr::ToInt(_, expression) => {
-            if let Some(ReturnType::Int) = expression.return_type() {
+            if let Some(ReturnType::Int) = expression.maybe_return_type() {
                 Ok(Reduction::pure(Moo::unwrap_or_clone(expression)))
             } else {
                 Err(RuleNotApplicable)

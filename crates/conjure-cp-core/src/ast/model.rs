@@ -13,7 +13,7 @@ use crate::ast::Expression;
 use crate::context::Context;
 
 use super::serde::{HasId, ObjId};
-use super::types::Typeable;
+use super::types::MaybeTypeable;
 use super::{DeclarationPtr, Name, SubModel};
 use super::{ReturnType, SymbolTable};
 
@@ -79,8 +79,8 @@ impl Default for Model {
     }
 }
 
-impl Typeable for Model {
-    fn return_type(&self) -> Option<ReturnType> {
+impl MaybeTypeable for Model {
+    fn maybe_return_type(&self) -> Option<ReturnType> {
         Some(ReturnType::Bool)
     }
 }

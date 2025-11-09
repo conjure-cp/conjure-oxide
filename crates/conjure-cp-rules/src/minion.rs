@@ -14,8 +14,8 @@ use conjure_cp::ast::categories::Category;
 use conjure_cp::{
     ast::Metadata,
     ast::{
-        Atom, Domain, Expression as Expr, Literal as Lit, Range, Reference, ReturnType,
-        SymbolTable, Typeable,
+        Atom, Domain, Expression as Expr, Literal as Lit, MaybeTypeable, Range, Reference,
+        ReturnType, SymbolTable,
     },
     into_matrix_expr, matrix_expr,
     rule_engine::{
@@ -1420,7 +1420,7 @@ fn bool_eq_to_reify(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     // e does not have to be valid minion constraint yet, as long as we know it can turn into one
     // (i.e. it is boolean).
-    let Some(ReturnType::Bool) = e.as_ref().return_type() else {
+    let Some(ReturnType::Bool) = e.as_ref().maybe_return_type() else {
         return Err(RuleNotApplicable);
     };
 

@@ -1,6 +1,6 @@
 use crate::ast::domains::set_attr::SetAttr;
 use crate::ast::{
-    DeclarationKind, Expression, Moo, RecordEntry, Reference, Typeable,
+    DeclarationKind, DomainOpError, Expression, MaybeTypeable, Moo, RecordEntry, Reference,
     domains::{
         domain::{Domain, Int},
         range::Range,
@@ -13,6 +13,7 @@ use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
+use std::iter::zip;
 use std::ops::Deref;
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Quine)]
@@ -30,6 +31,61 @@ impl From<Int> for IntVal {
     }
 }
 
+impl TryInto<Int> for IntVal {
+    type Error = DomainOpError;
+
+    fn try_into(self) -> Result<Int, Self::Error> {
+        match self {
+            IntVal::Const(val) => Ok(val),
+            _ => Err(DomainOpError::InputContainsReference),
+        }
+    }
+}
+
+impl From<Range<Int>> for Range<IntVal> {
+    fn from(value: Range<Int>) -> Self {
+        match value {
+            Range::Single(x) => Range::Single(x.into()),
+            Range::Bounded(l, r) => Range::Bounded(l.into(), r.into()),
+            Range::UnboundedL(r) => Range::UnboundedL(r.into()),
+            Range::UnboundedR(l) => Range::UnboundedR(l.into()),
+            Range::Unbounded => Range::Unbounded,
+        }
+    }
+}
+
+impl TryInto<Range<Int>> for Range<IntVal> {
+    type Error = DomainOpError;
+
+    fn try_into(self) -> Result<Range<Int>, Self::Error> {
+        match self {
+            Range::Single(x) => Ok(Range::Single(x.try_into()?)),
+            Range::Bounded(l, r) => Ok(Range::Bounded(l.try_into()?, r.try_into()?)),
+            Range::UnboundedL(r) => Ok(Range::UnboundedL(r.try_into()?)),
+            Range::UnboundedR(l) => Ok(Range::UnboundedR(l.try_into()?)),
+            Range::Unbounded => Ok(Range::Unbounded),
+        }
+    }
+}
+
+impl From<SetAttr<Int>> for SetAttr<IntVal> {
+    fn from(value: SetAttr<Int>) -> Self {
+        SetAttr {
+            size: value.size.into(),
+        }
+    }
+}
+
+impl TryInto<SetAttr<Int>> for SetAttr<IntVal> {
+    type Error = DomainOpError;
+
+    fn try_into(self) -> Result<SetAttr<Int>, Self::Error> {
+        Ok(SetAttr {
+            size: self.size.try_into()?,
+        })
+    }
+}
+
 impl Display for IntVal {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -43,11 +99,11 @@ impl Display for IntVal {
 impl IntVal {
     pub fn new_ref(re: &Reference) -> Option<IntVal> {
         match re.ptr.kind().deref() {
-            DeclarationKind::ValueLetting(expr) => match expr.return_type() {
+            DeclarationKind::ValueLetting(expr) => match expr.maybe_return_type() {
                 Some(ReturnType::Int) => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },
-            DeclarationKind::Given(dom) => match dom.return_type() {
+            DeclarationKind::Given(dom) => match dom.maybe_return_type() {
                 Some(ReturnType::Int) => Some(IntVal::Reference(re.clone())),
                 _ => None,
             },
@@ -58,7 +114,7 @@ impl IntVal {
     }
 
     pub fn new_expr(value: Moo<Expression>) -> Option<IntVal> {
-        if value.return_type().is_none() {
+        if value.maybe_return_type().is_none() {
             return None;
         };
         todo!()
@@ -97,28 +153,88 @@ pub enum UnresolvedDomain {
     Record(Vec<RecordEntry<Domain>>),
 }
 
-impl Typeable for UnresolvedDomain {
-    fn return_type(&self) -> Option<ReturnType> {
-        match self {
-            UnresolvedDomain::Reference(re) => re.return_type(),
-            UnresolvedDomain::Int(_) => Some(ReturnType::Int),
-            UnresolvedDomain::Set(_attr, inner) => {
-                inner.return_type().map(|ty| ReturnType::Set(Box::new(ty)))
+impl UnresolvedDomain {
+    pub(super) fn union_unresolved(
+        &self,
+        other: &UnresolvedDomain,
+    ) -> Result<UnresolvedDomain, DomainOpError> {
+        match (self, other) {
+            (UnresolvedDomain::Int(lhs), UnresolvedDomain::Int(rhs)) => {
+                let merged = lhs.iter().chain(rhs.iter()).cloned().collect_vec();
+                Ok(UnresolvedDomain::Int(merged))
             }
+            (UnresolvedDomain::Int(_), _) | (_, UnresolvedDomain::Int(_)) => {
+                Err(DomainOpError::InputWrongType)
+            }
+            (UnresolvedDomain::Set(_, in1), UnresolvedDomain::Set(_, in2)) => Ok(
+                UnresolvedDomain::Set(SetAttr::default(), Moo::new(in1.union(in2)?)),
+            ),
+            (UnresolvedDomain::Set(_, _), _) | (_, UnresolvedDomain::Set(_, _)) => {
+                Err(DomainOpError::InputWrongType)
+            }
+            (UnresolvedDomain::Matrix(in1, idx1), UnresolvedDomain::Matrix(in2, idx2))
+                if idx1 == idx2 =>
+            {
+                Ok(UnresolvedDomain::Matrix(
+                    Moo::new(in1.union(in2)?),
+                    idx1.clone(),
+                ))
+            }
+            (UnresolvedDomain::Matrix(_, _), _) | (_, UnresolvedDomain::Matrix(_, _)) => {
+                Err(DomainOpError::InputWrongType)
+            }
+            (UnresolvedDomain::Tuple(lhs), UnresolvedDomain::Tuple(rhs))
+                if lhs.len() == rhs.len() =>
+            {
+                let mut merged = Vec::<Domain>::new();
+                for (l, r) in zip(lhs, rhs) {
+                    merged.push(l.union(r)?)
+                }
+                Ok(UnresolvedDomain::Tuple(merged))
+            }
+            (UnresolvedDomain::Tuple(_), _) | (_, UnresolvedDomain::Tuple(_)) => {
+                Err(DomainOpError::InputWrongType)
+            }
+            // TODO: Could we support unions of reference domains symbolically?
+            (UnresolvedDomain::Reference(_), _) | (_, UnresolvedDomain::Reference(_)) => {
+                Err(DomainOpError::InputContainsReference)
+            }
+            // TODO: Could we define semantics for merging record domains?
+            (UnresolvedDomain::Record(_), _) | (_, UnresolvedDomain::Record(_)) => {
+                Err(DomainOpError::InputWrongType)
+            }
+        }
+    }
+}
+
+impl Into<Domain> for UnresolvedDomain {
+    fn into(self) -> Domain {
+        Domain::Unresolved(self)
+    }
+}
+
+impl MaybeTypeable for UnresolvedDomain {
+    fn maybe_return_type(&self) -> Option<ReturnType> {
+        match self {
+            UnresolvedDomain::Reference(re) => re.maybe_return_type(),
+            UnresolvedDomain::Int(_) => Some(ReturnType::Int),
+            UnresolvedDomain::Set(_attr, inner) => inner
+                .maybe_return_type()
+                .map(|ty| ReturnType::Set(Box::new(ty))),
             UnresolvedDomain::Matrix(inner, _idx) => inner
-                .return_type()
+                .maybe_return_type()
                 .map(|ty| ReturnType::Matrix(Box::new(ty))),
             UnresolvedDomain::Tuple(inners) => {
                 let mut inner_types = Vec::new();
                 for inner in inners {
-                    inner_types.push(inner.return_type()?);
+                    inner_types.push(inner.maybe_return_type()?);
                 }
                 Some(ReturnType::Tuple(inner_types))
             }
             UnresolvedDomain::Record(entries) => {
                 let mut entry_types = Vec::new();
                 for entry in entries {
-                    entry_types.push(entry.domain.return_type()?);
+                    entry_types.push(entry.domain.maybe_return_type()?);
                 }
                 Some(ReturnType::Record(entry_types))
             }
