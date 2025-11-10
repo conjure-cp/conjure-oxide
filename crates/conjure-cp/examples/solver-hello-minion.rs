@@ -15,7 +15,9 @@ use std::collections::HashMap;
 pub fn main() {
     use conjure_cp::solver::SolverFamily;
     use conjure_cp::solver::{Solver, adaptors};
-    use conjure_cp::{parse::conjure_json::get_example_model, rule_engine::resolve_rule_sets};
+    use conjure_cp::{
+        parse::conjure_json::get_example_model, rule_engine::resolve_rule_sets_by_family,
+    };
     use std::sync::{Arc, Mutex};
 
     // Load an example model and rewrite it with conjure oxide.
@@ -23,7 +25,7 @@ pub fn main() {
     println!("Input model: \n {model} \n",);
 
     // TODO: We will have a nicer way to do this in the future
-    let rule_sets = resolve_rule_sets(SolverFamily::Minion, DEFAULT_RULE_SETS).unwrap();
+    let rule_sets = resolve_rule_sets_by_family(SolverFamily::Minion, DEFAULT_RULE_SETS).unwrap();
 
     let model = rewrite_naive(&model, &rule_sets, true, false).unwrap();
     println!("Rewritten model: \n {model} \n",);
