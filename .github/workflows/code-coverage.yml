@@ -1,4 +1,4 @@
-name: "Coverage (PR)"
+name: "Coverage-PR"
 
 on:
   pull_request:
@@ -29,7 +29,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
+          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.workflow }}--${{ github.job }}
 
       - name: Install rust ${{ env.rust_release }}
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
