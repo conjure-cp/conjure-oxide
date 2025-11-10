@@ -119,8 +119,8 @@ fn main() -> io::Result<()> {
     }
 
     // Parsing Tests
-    let dest_parsing = Path::new(&out_dir).join("gen_tests_feature_AST.rs");
-    let mut f = File::create(dest_parsing)?;
+    let dest_feature_ast = Path::new(&out_dir).join("gen_tests_feature_AST.rs");
+    let mut f = File::create(dest_feature_ast)?;
     let test_dir = "tests/feature_AST";
 
     for subdir in WalkDir::new(test_dir) {
