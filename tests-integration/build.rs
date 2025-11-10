@@ -10,6 +10,7 @@ fn main() -> io::Result<()> {
     println!("cargo:rerun-if-changed=tests/custom");
     println!("cargo:rerun-if-changed=tests/integration_test_template");
     println!("cargo:rerun-if-changed=tests/custom_test_template");
+    println!("cargo:rerun-if-changed=tests/feature_AST_test_template");
     println!("cargo:rerun-if-changed=build.rs");
 
     let out_dir = var("OUT_DIR").map_err(io::Error::other)?; // wrapping in a std::io::Error to match main's error type
@@ -117,6 +118,23 @@ fn main() -> io::Result<()> {
         }
     }
 
+    // Parsing Tests
+    let dest_parsing = Path::new(&out_dir).join("gen_tests_feature_AST.rs");
+    let mut f = File::create(dest_parsing)?;
+    let test_dir = "tests/feature_AST";
+
+    for subdir in WalkDir::new(test_dir) {
+        let subdir = subdir?;
+        if subdir.file_type().is_dir()
+            && read_dir(subdir.path())
+                .unwrap_or_else(|_| std::fs::read_dir(subdir.path()).unwrap())
+                .filter_map(Result::ok)
+                .any(|entry| entry.file_name() == "input.essence" && entry.path().is_file())
+        {
+            write_feature_ast_test(&mut f, subdir.path().display().to_string())?;
+        }
+    }
+
     Ok(())
 }
 
@@ -148,4 +166,18 @@ fn write_custom_test(file: &mut File, path: String) -> io::Result<()> {
         test_name = path.replace("./", "").replace(['/', '-'], "_"),
         test_dir = path
     )
+}
+
+fn write_feature_ast_test(
+    file: &mut File,
+    path: String,
+) -> io::Result<()> {
+        write!(
+            file,
+            include_str!("./tests/feature_AST_test_template"),
+            test_name = path.replace("./", "").replace(['/', '-'], "_"),
+            test_dir = path,
+            essence_file = "input",
+            ext = "essence"
+        )
 }
