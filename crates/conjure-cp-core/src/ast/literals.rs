@@ -8,11 +8,11 @@ use ustr::Ustr;
 use polyquine::Quine;
 use uniplate::{Biplate, Tree, Uniplate};
 
-use crate::ast::Metadata;
 use crate::ast::pretty::pretty_vec;
+use crate::ast::{DomainPtr, GroundDomain, Metadata};
 
 use super::domains::HasDomain;
-use super::{Atom, Domain, Expression, Range, records::RecordValue};
+use super::{Atom, Domain, Expression, Range, domains::Int, records::RecordValue};
 use super::{MaybeTypeable, Moo, ReturnType, SetAttr};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Hash, Quine)]
@@ -34,7 +34,7 @@ pub enum Literal {
 }
 
 impl HasDomain for Literal {
-    fn domain_of(&self) -> Domain {
+    fn domain_of(&self) -> DomainPtr {
         match self {
             Literal::Int(i) => Domain::new_int(vec![Range::Single(*i)]),
             Literal::Bool(_) => Domain::new_bool(),
@@ -57,7 +57,7 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
     Set(Vec<T>),
 
     /// A 1 dimensional matrix slice with an index domain.
-    Matrix(Vec<T>, Moo<Domain>),
+    Matrix(Vec<T>, DomainPtr),
 
     // a tuple of literals
     Tuple(Vec<T>),
@@ -67,27 +67,25 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
 
 // TODO: use HasDomain instead once Expression::domain_of returns Domain not Option<Domain>
 impl AbstractLiteral<Expression> {
-    pub fn domain_of(&self) -> Option<Domain> {
+    pub fn domain_of(&self) -> Option<DomainPtr> {
         match self {
             AbstractLiteral::Set(items) => {
                 // ensure that all items have a domain, or return None
-                let item_domains: Vec<Domain> = items
+                let item_domains: Vec<DomainPtr> = items
                     .iter()
                     .map(|x| x.domain_of())
-                    .collect::<Option<Vec<Domain>>>()?;
+                    .collect::<Option<Vec<DomainPtr>>>()?;
 
                 // union all item domains together
                 let mut item_domain_iter = item_domains.iter().cloned();
                 let first_item = item_domain_iter.next()?;
                 let item_domain = item_domains
                     .iter()
-                    .try_fold(first_item, |x: Domain, y| x.union(y))
+                    .try_fold(first_item, |x, y| x.union(y))
                     .expect("taking the union of all item domains of a set literal should succeed");
 
                 Some(Domain::new_set(
-                    SetAttr {
-                        size: Range::Unbounded,
-                    },
+                    SetAttr::<Int>::default(),
                     Moo::new(item_domain),
                 ))
             }
@@ -117,13 +115,13 @@ impl AbstractLiteral<Expression> {
                 let mut e = Expression::AbstractLiteral(Metadata::new(), self.clone());
                 while let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, idx)) = e {
                     assert!(
-                        !matches!(idx.as_ref(), Domain::Matrix(_, _)),
+                        idx.as_dom_matrix().is_some(),
                         "n-dimensional matrix literals should be represented as a matrix inside a matrix"
                     );
-                    new_index_domain.push(idx.as_ref().clone());
+                    new_index_domain.push(idx);
                     e = elems[0].clone();
                 }
-                Some(Domain::Matrix(Box::new(item_domain), new_index_domain))
+                Some(Domain::new_matrix(Moo::new(item_domain), new_index_domain))
             }
             AbstractLiteral::Tuple(_) => None,
             AbstractLiteral::Record(_) => None,
@@ -137,7 +135,7 @@ impl AbstractLiteral<Expression> {
 }
 
 impl HasDomain for AbstractLiteral<Literal> {
-    fn domain_of(&self) -> Domain {
+    fn domain_of(&self) -> DomainPtr {
         Domain::from_literal_vec(vec![Literal::AbstractLiteral(self.clone())])
             .expect("abstract literals should be correctly typed")
     }
@@ -215,7 +213,7 @@ where
     ///
     /// This acts as a variable sized list.
     pub fn matrix_implied_indices(elems: Vec<T>) -> Self {
-        AbstractLiteral::Matrix(elems, Box::new(Domain::Int(vec![Range::UnboundedR(1)])))
+        AbstractLiteral::Matrix(elems, Domain::new_int(vec![Range::UnboundedR(1)]))
     }
 
     /// If the AbstractLiteral is a list, returns its elements.
@@ -227,7 +225,7 @@ where
             return None;
         };
 
-        let Domain::Int(ranges) = domain.as_ref() else {
+        let Some(GroundDomain::Int(ranges)) = domain.as_ground() else {
             return None;
         };
 

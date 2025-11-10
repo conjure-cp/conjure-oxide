@@ -2,7 +2,6 @@ use std::collections::{HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
 use tracing::trace;
 
-use crate::ast::Atom;
 use crate::ast::Metadata;
 use crate::ast::Moo;
 use crate::ast::Name;
@@ -11,6 +10,7 @@ use crate::ast::SetAttr;
 use crate::ast::literals::AbstractLiteral;
 use crate::ast::literals::Literal;
 use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
+use crate::ast::{Atom, DomainPtr};
 use crate::bug;
 use conjure_cp_enum_compatibility_macro::document_compatibility;
 use itertools::Itertools;
@@ -593,23 +593,23 @@ fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> Option<(i32, i32)> {
 
 impl Expression {
     /// Returns the possible values of the expression, recursing to leaf expressions
-    pub fn domain_of(&self) -> Option<Domain> {
+    pub fn domain_of(&self) -> Option<DomainPtr> {
         let ret = match self {
-            Expression::Union(_, a, b) => Some(Domain::Set(
-                SetAttr::None,
-                Box::new(a.domain_of()?.union(&b.domain_of()?).ok()?),
+            Expression::Union(_, a, b) => Some(Domain::new_set(
+                SetAttr::default(),
+                Moo::new(a.domain_of()?.union(&b.domain_of()?).ok()?),
             )),
-            Expression::Intersect(_, a, b) => Some(Domain::Set(
-                SetAttr::None,
-                Box::new(a.domain_of()?.intersect(&b.domain_of()?).ok()?),
+            Expression::Intersect(_, a, b) => Some(Domain::new_set(
+                SetAttr::default(),
+                Moo::new(a.domain_of()?.intersect(&b.domain_of()?).ok()?),
             )),
-            Expression::In(_, _, _) => Some(Domain::Bool),
-            Expression::Supset(_, _, _) => Some(Domain::Bool),
-            Expression::SupsetEq(_, _, _) => Some(Domain::Bool),
-            Expression::Subset(_, _, _) => Some(Domain::Bool),
-            Expression::SubsetEq(_, _, _) => Some(Domain::Bool),
+            Expression::In(_, _, _) => Some(Domain::new_bool()),
+            Expression::Supset(_, _, _) => Some(Domain::new_bool()),
+            Expression::SupsetEq(_, _, _) => Some(Domain::new_bool()),
+            Expression::Subset(_, _, _) => Some(Domain::new_bool()),
+            Expression::SubsetEq(_, _, _) => Some(Domain::new_bool()),
             Expression::AbstractLiteral(_, abslit) => abslit.domain_of(),
-            Expression::DominanceRelation(_, _) => Some(Domain::Bool),
+            Expression::DominanceRelation(_, _) => Some(Domain::new_bool()),
             Expression::FromSolution(_, expr) => Some(expr.domain_of()),
             Expression::Metavar(_, _) => None,
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
@@ -641,9 +641,9 @@ impl Expression {
                     None => Some(*elem_domain),
                 }
             }
-            Expression::InDomain(_, _, _) => Some(Domain::Bool),
+            Expression::InDomain(_, _, _) => Some(Domain::new_bool()),
             Expression::Atomic(_, atom) => Some(atom.domain_of()),
-            Expression::Scope(_, _) => Some(Domain::Bool),
+            Expression::Scope(_, _) => Some(Domain::new_bool()),
             Expression::Sum(_, e) => {
                 bounded_i32_domain_for_matrix_literal_monotonic(e, |x, y| Some(x + y))
             }
@@ -733,31 +733,31 @@ impl Expression {
                 .ok(),
             Expression::Root(_, _) => None,
             Expression::Bubble(_, inner, _) => inner.domain_of(),
-            Expression::AuxDeclaration(_, _, _) => Some(Domain::Bool),
-            Expression::And(_, _) => Some(Domain::Bool),
-            Expression::Not(_, _) => Some(Domain::Bool),
-            Expression::Or(_, _) => Some(Domain::Bool),
-            Expression::Imply(_, _, _) => Some(Domain::Bool),
-            Expression::Iff(_, _, _) => Some(Domain::Bool),
-            Expression::Eq(_, _, _) => Some(Domain::Bool),
-            Expression::Neq(_, _, _) => Some(Domain::Bool),
-            Expression::Geq(_, _, _) => Some(Domain::Bool),
-            Expression::Leq(_, _, _) => Some(Domain::Bool),
-            Expression::Gt(_, _, _) => Some(Domain::Bool),
-            Expression::Lt(_, _, _) => Some(Domain::Bool),
-            Expression::FlatAbsEq(_, _, _) => Some(Domain::Bool),
-            Expression::FlatSumGeq(_, _, _) => Some(Domain::Bool),
-            Expression::FlatSumLeq(_, _, _) => Some(Domain::Bool),
-            Expression::MinionDivEqUndefZero(_, _, _, _) => Some(Domain::Bool),
-            Expression::MinionModuloEqUndefZero(_, _, _, _) => Some(Domain::Bool),
-            Expression::FlatIneq(_, _, _, _) => Some(Domain::Bool),
-            Expression::AllDiff(_, _) => Some(Domain::Bool),
-            Expression::FlatWatchedLiteral(_, _, _) => Some(Domain::Bool),
-            Expression::MinionReify(_, _, _) => Some(Domain::Bool),
-            Expression::MinionReifyImply(_, _, _) => Some(Domain::Bool),
-            Expression::MinionWInIntervalSet(_, _, _) => Some(Domain::Bool),
-            Expression::MinionWInSet(_, _, _) => Some(Domain::Bool),
-            Expression::MinionElementOne(_, _, _, _) => Some(Domain::Bool),
+            Expression::AuxDeclaration(_, _, _) => Some(Domain::new_bool()),
+            Expression::And(_, _) => Some(Domain::new_bool()),
+            Expression::Not(_, _) => Some(Domain::new_bool()),
+            Expression::Or(_, _) => Some(Domain::new_bool()),
+            Expression::Imply(_, _, _) => Some(Domain::new_bool()),
+            Expression::Iff(_, _, _) => Some(Domain::new_bool()),
+            Expression::Eq(_, _, _) => Some(Domain::new_bool()),
+            Expression::Neq(_, _, _) => Some(Domain::new_bool()),
+            Expression::Geq(_, _, _) => Some(Domain::new_bool()),
+            Expression::Leq(_, _, _) => Some(Domain::new_bool()),
+            Expression::Gt(_, _, _) => Some(Domain::new_bool()),
+            Expression::Lt(_, _, _) => Some(Domain::new_bool()),
+            Expression::FlatAbsEq(_, _, _) => Some(Domain::new_bool()),
+            Expression::FlatSumGeq(_, _, _) => Some(Domain::new_bool()),
+            Expression::FlatSumLeq(_, _, _) => Some(Domain::new_bool()),
+            Expression::MinionDivEqUndefZero(_, _, _, _) => Some(Domain::new_bool()),
+            Expression::MinionModuloEqUndefZero(_, _, _, _) => Some(Domain::new_bool()),
+            Expression::FlatIneq(_, _, _, _) => Some(Domain::new_bool()),
+            Expression::AllDiff(_, _) => Some(Domain::new_bool()),
+            Expression::FlatWatchedLiteral(_, _, _) => Some(Domain::new_bool()),
+            Expression::MinionReify(_, _, _) => Some(Domain::new_bool()),
+            Expression::MinionReifyImply(_, _, _) => Some(Domain::new_bool()),
+            Expression::MinionWInIntervalSet(_, _, _) => Some(Domain::new_bool()),
+            Expression::MinionWInSet(_, _, _) => Some(Domain::new_bool()),
+            Expression::MinionElementOne(_, _, _, _) => Some(Domain::new_bool()),
             Expression::Neg(_, x) => {
                 let Some(Domain::Int(mut ranges)) = x.domain_of() else {
                     return None;
@@ -778,16 +778,16 @@ impl Expression {
                 .domain_of()?
                 .apply_i32(|x, y| Some(x - y), &b.domain_of()?)
                 .ok(),
-            Expression::FlatAllDiff(_, _) => Some(Domain::Bool),
-            Expression::FlatMinusEq(_, _, _) => Some(Domain::Bool),
-            Expression::FlatProductEq(_, _, _, _) => Some(Domain::Bool),
-            Expression::FlatWeightedSumLeq(_, _, _, _) => Some(Domain::Bool),
-            Expression::FlatWeightedSumGeq(_, _, _, _) => Some(Domain::Bool),
+            Expression::FlatAllDiff(_, _) => Some(Domain::new_bool()),
+            Expression::FlatMinusEq(_, _, _) => Some(Domain::new_bool()),
+            Expression::FlatProductEq(_, _, _, _) => Some(Domain::new_bool()),
+            Expression::FlatWeightedSumLeq(_, _, _, _) => Some(Domain::new_bool()),
+            Expression::FlatWeightedSumGeq(_, _, _, _) => Some(Domain::new_bool()),
             Expression::Abs(_, a) => a
                 .domain_of()?
                 .apply_i32(|a, _| Some(a.abs()), &a.domain_of()?)
                 .ok(),
-            Expression::MinionPow(_, _, _, _) => Some(Domain::Bool),
+            Expression::MinionPow(_, _, _, _) => Some(Domain::new_bool()),
             Expression::ToInt(_, _) => Some(Domain::Int(vec![Range::Bounded(0, 1)])),
             Expression::SATInt(_, _) => {
                 Some(Domain::Int(vec![Range::Bounded(
