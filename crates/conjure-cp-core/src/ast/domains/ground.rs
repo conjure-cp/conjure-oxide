@@ -1,9 +1,9 @@
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
-    Domain, DomainOpError, Moo, SetAttr, Typeable,
+    DomainOpError, Moo, RecordEntry, SetAttr, Typeable,
     domains::{domain::Int, range::Range},
 };
-use conjure_cp_core::ast::{DomainPtr, Name, ReturnType};
+use conjure_cp_core::ast::{Name, ReturnType};
 use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
@@ -16,6 +16,15 @@ use uniplate::Uniplate;
 pub struct RecordEntryGround {
     pub name: Name,
     pub domain: Moo<GroundDomain>,
+}
+
+impl Into<RecordEntry> for RecordEntryGround {
+    fn into(self) -> RecordEntry {
+        RecordEntry {
+            name: self.name,
+            domain: self.domain.into(),
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]

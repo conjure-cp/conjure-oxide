@@ -28,8 +28,8 @@ pub use atom::Atom;
 pub use cnf_clause::CnfClause;
 pub use declaration::{DeclarationKind, DeclarationPtr};
 pub use domains::{
-    Domain, DomainOpError, DomainPtr, GroundDomain, Range, RecordEntryGround,
-    RecordEntryUnresolved, SetAttr, UnresolvedDomain,
+    Domain, DomainOpError, DomainPtr, GroundDomain, Range, RecordEntry, RecordEntryGround, SetAttr,
+    UnresolvedDomain,
 };
 pub use expressions::Expression;
 pub use literals::AbstractLiteral;
