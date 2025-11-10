@@ -1,21 +1,22 @@
 use crate::ast::domains::set_attr::SetAttr;
 use crate::ast::{
-    DeclarationKind, DomainOpError, Expression, MaybeTypeable, Moo, RecordEntry, Reference,
+    DeclarationKind, DomainOpError, Expression, MaybeTypeable, Moo, RecordEntryGround, Reference,
     domains::{
         GroundDomain,
-        domain::{Domain, Int},
+        domain::{Domain, DomainPtr, Int},
         range::Range,
     },
 };
 use crate::bug;
-use conjure_cp_core::ast::ReturnType;
 use conjure_cp_core::ast::pretty::pretty_vec;
+use conjure_cp_core::ast::{Name, ReturnType};
 use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::iter::zip;
 use std::ops::Deref;
+use uniplate::Uniplate;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 #[path_prefix(conjure_cp::ast)]
@@ -159,19 +160,26 @@ impl SetAttr<IntVal> {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
+#[path_prefix(conjure_cp::ast)]
+pub struct RecordEntryUnresolved {
+    pub name: Name,
+    pub domain: DomainPtr,
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Quine)]
 pub enum UnresolvedDomain {
     Int(Vec<Range<IntVal>>),
     /// A set of elements drawn from the inner domain
-    Set(SetAttr<IntVal>, Moo<Domain>),
+    Set(SetAttr<IntVal>, DomainPtr),
     /// A n-dimensional matrix with a value domain and n-index domains
-    Matrix(Moo<Domain>, Vec<Domain>),
+    Matrix(DomainPtr, Vec<DomainPtr>),
     /// A tuple of N elements, each with its own domain
-    Tuple(Vec<Domain>),
+    Tuple(Vec<DomainPtr>),
     /// A reference to a domain letting
     #[polyquine_skip]
     Reference(Reference),
-    Record(Vec<RecordEntry<Domain>>),
+    Record(Vec<RecordEntryUnresolved>),
 }
 
 impl UnresolvedDomain {
@@ -183,26 +191,25 @@ impl UnresolvedDomain {
                     _ => None,
                 }
             }
-            UnresolvedDomain::Set(attr, inner) => Some(GroundDomain::Set(
-                attr.resolve()?,
-                Moo::new(inner.resolve()?),
-            )),
+            UnresolvedDomain::Set(attr, inner) => {
+                Some(GroundDomain::Set(attr.resolve()?, inner.resolve()?))
+            }
             UnresolvedDomain::Matrix(inner, idx_doms) => {
-                match idx_doms.iter().map(Domain::resolve).collect() {
-                    Some(idx_gds) => {
-                        Some(GroundDomain::Matrix(Moo::new(inner.resolve()?), idx_gds))
-                    }
+                match idx_doms.iter().map(DomainPtr::resolve).collect() {
+                    Some(idx_gds) => Some(GroundDomain::Matrix(inner.resolve()?, idx_gds)),
                     _ => None,
                 }
             }
-            UnresolvedDomain::Tuple(inners) => match inners.iter().map(Domain::resolve).collect() {
-                Some(inners_gds) => Some(GroundDomain::Tuple(inners_gds)),
-                _ => None,
-            },
+            UnresolvedDomain::Tuple(inners) => {
+                match inners.iter().map(DomainPtr::resolve).collect() {
+                    Some(inners_gds) => Some(GroundDomain::Tuple(inners_gds)),
+                    _ => None,
+                }
+            }
             UnresolvedDomain::Record(entries) => match entries
                 .iter()
                 .map(|f| {
-                    f.domain.resolve().map(|gd| RecordEntry {
+                    f.domain.resolve().map(|gd| RecordEntryGround {
                         name: f.name.clone(),
                         domain: gd,
                     })
@@ -248,9 +255,9 @@ impl UnresolvedDomain {
             (UnresolvedDomain::Tuple(lhs), UnresolvedDomain::Tuple(rhs))
                 if lhs.len() == rhs.len() =>
             {
-                let mut merged = Vec::<Domain>::new();
+                let mut merged = Vec::new();
                 for (l, r) in zip(lhs, rhs) {
-                    merged.push(l.union(r)?)
+                    merged.push(Moo::new(l.union(r)?))
                 }
                 Ok(UnresolvedDomain::Tuple(merged))
             }
@@ -266,12 +273,6 @@ impl UnresolvedDomain {
                 Err(DomainOpError::InputWrongType)
             }
         }
-    }
-}
-
-impl Into<Domain> for UnresolvedDomain {
-    fn into(self) -> Domain {
-        Domain::Unresolved(self)
     }
 }
 

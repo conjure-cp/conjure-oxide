@@ -1,14 +1,22 @@
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
-    Domain, DomainOpError, Moo, RecordEntry, SetAttr, Typeable,
+    Domain, DomainOpError, Moo, SetAttr, Typeable,
     domains::{domain::Int, range::Range},
 };
-use conjure_cp_core::ast::ReturnType;
+use conjure_cp_core::ast::{DomainPtr, Name, ReturnType};
 use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::iter::zip;
+use uniplate::Uniplate;
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
+#[path_prefix(conjure_cp::ast)]
+pub struct RecordEntryGround {
+    pub name: Name,
+    pub domain: Moo<GroundDomain>,
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 pub enum GroundDomain {
@@ -22,10 +30,10 @@ pub enum GroundDomain {
     Set(SetAttr<Int>, Moo<GroundDomain>),
     /// An N-dimensional matrix of elements drawn from the inner domain,
     /// and indices from the n index domains
-    Matrix(Moo<GroundDomain>, Vec<GroundDomain>),
+    Matrix(Moo<GroundDomain>, Vec<Moo<GroundDomain>>),
     /// A tuple of N elements, each with its own domain
-    Tuple(Vec<GroundDomain>),
-    Record(Vec<RecordEntry<GroundDomain>>),
+    Tuple(Vec<Moo<GroundDomain>>),
+    Record(Vec<RecordEntryGround>),
 }
 
 impl GroundDomain {
@@ -65,9 +73,9 @@ impl GroundDomain {
                 Err(DomainOpError::InputWrongType)
             }
             (GroundDomain::Tuple(in1s), GroundDomain::Tuple(in2s)) if in1s.len() == in2s.len() => {
-                let mut inners = Vec::<GroundDomain>::new();
+                let mut inners = Vec::new();
                 for (in1, in2) in zip(in1s, in2s) {
-                    inners.push(in1.union(in2)?);
+                    inners.push(Moo::new(in1.union(in2)?));
                 }
                 Ok(GroundDomain::Tuple(inners))
             }
@@ -79,12 +87,6 @@ impl GroundDomain {
                 Err(DomainOpError::InputWrongType)
             }
         }
-    }
-}
-
-impl Into<Domain> for GroundDomain {
-    fn into(self) -> Domain {
-        Domain::Ground(self)
     }
 }
 
