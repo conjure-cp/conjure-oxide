@@ -1,6 +1,6 @@
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
-    DomainOpError, Moo, RecordEntry, SetAttr, Typeable,
+    Domain, DomainOpError, Literal, Moo, RecordEntry, SetAttr, Typeable,
     domains::{domain::Int, range::Range},
 };
 use conjure_cp_core::ast::{Name, ReturnType};
@@ -23,6 +23,20 @@ impl Into<RecordEntry> for RecordEntryGround {
         RecordEntry {
             name: self.name,
             domain: self.domain.into(),
+        }
+    }
+}
+
+impl TryFrom<RecordEntry> for RecordEntryGround {
+    type Error = DomainOpError;
+
+    fn try_from(value: RecordEntry) -> Result<Self, Self::Error> {
+        match value.domain.as_ref() {
+            Domain::Ground(gd) => Ok(RecordEntryGround {
+                name: value.name,
+                domain: gd.clone(),
+            }),
+            Domain::Unresolved(_) => Err(DomainOpError::InputContainsReference),
         }
     }
 }
@@ -97,6 +111,10 @@ impl GroundDomain {
                 Err(DomainOpError::InputWrongType)
             }
         }
+    }
+
+    pub fn values(&self) -> impl Iterator<Item = Literal> {
+        todo!()
     }
 }
 
