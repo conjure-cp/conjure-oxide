@@ -10,20 +10,22 @@ use std::fmt::{Display, Formatter};
 use std::ops::Deref;
 
 /// The integer type used in all domain code (int ranges, set sizes, etc)
-pub(crate) type Int = i32;
+pub(super) type Int = i32;
+
+pub type DomainPtr = Moo<Domain>;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 pub enum Domain {
     /// A fully resolved domain
-    Ground(GroundDomain),
+    Ground(Moo<GroundDomain>),
     /// A domain which may contain references
-    Unresolved(UnresolvedDomain),
+    Unresolved(Moo<UnresolvedDomain>),
 }
 
 /// Types that have a [`Domain`].
 pub trait HasDomain {
     /// Gets the [`Domain`] of `self`.
-    fn domain_of(&self) -> Domain;
+    fn domain_of(&self) -> DomainPtr;
 }
 
 impl<T: HasDomain> MaybeTypeable for T {
@@ -34,11 +36,11 @@ impl<T: HasDomain> MaybeTypeable for T {
 
 impl Domain {
     pub fn new_bool() -> Domain {
-        Domain::Ground(GroundDomain::Bool)
+        Domain::Ground(Moo::new(GroundDomain::Bool))
     }
 
     pub fn new_empty(ty: ReturnType) -> Domain {
-        Domain::Ground(GroundDomain::Empty(ty))
+        Domain::Ground(Moo::new(GroundDomain::Empty(ty)))
     }
 
     pub fn new_int<T>(ranges: Vec<T>) -> Domain
@@ -46,10 +48,10 @@ impl Domain {
         T: Into<Range<IntVal>> + TryInto<Range<Int>> + Clone,
     {
         if let Ok(int_rngs) = ranges.iter().cloned().map(TryInto::try_into).try_collect() {
-            return Domain::Ground(GroundDomain::Int(int_rngs));
+            return Domain::Ground(Moo::new(GroundDomain::Int(int_rngs)));
         }
         let unresolved_rngs: Vec<Range<IntVal>> = ranges.into_iter().map(Into::into).collect();
-        Domain::Unresolved(UnresolvedDomain::Int(unresolved_rngs))
+        Domain::Unresolved(Moo::new(UnresolvedDomain::Int(unresolved_rngs)))
     }
 
     pub fn new_set<T>(attr: T, inner_dom: Moo<Domain>) -> Domain
@@ -59,28 +61,28 @@ impl Domain {
         if let Domain::Ground(gd) = inner_dom.as_ref()
             && let Ok(int_attr) = attr.clone().try_into()
         {
-            return Domain::Ground(GroundDomain::Set(int_attr, Moo::new(gd.clone())));
+            return Domain::Ground(Moo::new(GroundDomain::Set(int_attr, gd.clone())));
         }
-        Domain::Unresolved(UnresolvedDomain::Set(attr.into(), inner_dom))
+        Domain::Unresolved(Moo::new(UnresolvedDomain::Set(attr.into(), inner_dom)))
     }
 
     pub fn new_matrix(inner_dom: Moo<Domain>, idx_doms: Vec<Domain>) -> Domain {
         if let Domain::Ground(gd) = inner_dom.as_ref()
             && let Some(idx_gds) = as_grounds(&idx_doms)
         {
-            return Domain::Ground(GroundDomain::Matrix(Moo::new(gd.clone()), idx_gds));
+            return Domain::Ground(Moo::new(GroundDomain::Matrix(gd.clone(), idx_gds)));
         }
-        Domain::Unresolved(UnresolvedDomain::Matrix(inner_dom, idx_doms))
+        Domain::Unresolved(Moo::new(UnresolvedDomain::Matrix(inner_dom, idx_doms)))
     }
 
     pub fn new_tuple(inner_doms: Vec<Domain>) -> Domain {
         if let Some(inner_gds) = as_grounds(&inner_doms) {
-            return Domain::Ground(GroundDomain::Tuple(inner_gds));
+            return Domain::Ground(Moo::new(GroundDomain::Tuple(inner_gds)));
         }
-        Domain::Unresolved(UnresolvedDomain::Tuple(inner_doms))
+        Domain::Unresolved(Moo::new(UnresolvedDomain::Tuple(inner_doms)))
     }
 
-    pub fn resolve(&self) -> Option<GroundDomain> {
+    pub fn resolve(&self) -> Option<Moo<GroundDomain>> {
         match self {
             Domain::Ground(gd) => Some(gd.clone()),
             Domain::Unresolved(ud) => ud.resolve(),
@@ -89,9 +91,9 @@ impl Domain {
 
     pub fn union(&self, other: &Domain) -> Result<Domain, DomainOpError> {
         match (self, other) {
-            (Domain::Ground(a), Domain::Ground(b)) => Ok(Domain::Ground(a.union(b)?)),
+            (Domain::Ground(a), Domain::Ground(b)) => Ok(Domain::Ground(Moo::new(a.union(b)?))),
             (Domain::Unresolved(a), Domain::Unresolved(b)) => {
-                Ok(Domain::Unresolved(a.union_unresolved(b)?))
+                Ok(Domain::Unresolved(Moo::new(a.union_unresolved(b)?)))
             }
             (Domain::Unresolved(u), Domain::Ground(g))
             | (Domain::Ground(g), Domain::Unresolved(u)) => {
