@@ -29,7 +29,7 @@ pub static USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS: AtomicBool = AtomicBool::n
 // ~ nikdewally, 10/06/25
 
 /// A comprehension.
-#[derive(Clone, PartialEq, Eq, Uniplate, Serialize, Deserialize, Debug)]
+#[derive(Clone, PartialEq, Eq, Hash, Uniplate, Serialize, Deserialize, Debug)]
 #[biplate(to=SubModel)]
 #[biplate(to=Expression)]
 #[non_exhaustive]

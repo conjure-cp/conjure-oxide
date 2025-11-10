@@ -50,7 +50,7 @@ impl Reference {
         self.ptr.id()
     }
 
-    pub fn domain(&self) -> Option<Domain> {
+    pub fn domain(&self) -> Option<DomainPtr> {
         self.ptr.domain()
     }
 }
