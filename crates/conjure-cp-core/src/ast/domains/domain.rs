@@ -60,7 +60,7 @@ impl Domain {
         Domain::Unresolved(Moo::new(UnresolvedDomain::Int(unresolved_rngs)))
     }
 
-    pub fn new_set<T>(attr: T, inner_dom: Moo<Domain>) -> Domain
+    pub fn new_set<T>(attr: T, inner_dom: DomainPtr) -> Domain
     where
         T: Into<SetAttr<IntVal>> + TryInto<SetAttr<Int>> + Clone,
     {
@@ -72,7 +72,7 @@ impl Domain {
         Domain::Unresolved(Moo::new(UnresolvedDomain::Set(attr.into(), inner_dom)))
     }
 
-    pub fn new_matrix(inner_dom: Moo<Domain>, idx_doms: Vec<Domain>) -> Domain {
+    pub fn new_matrix(inner_dom: DomainPtr, idx_doms: Vec<DomainPtr>) -> Domain {
         if let Domain::Ground(gd) = inner_dom.as_ref()
             && let Some(idx_gds) = as_grounds(&idx_doms)
         {
@@ -81,7 +81,7 @@ impl Domain {
         Domain::Unresolved(Moo::new(UnresolvedDomain::Matrix(inner_dom, idx_doms)))
     }
 
-    pub fn new_tuple(inner_doms: Vec<Domain>) -> Domain {
+    pub fn new_tuple(inner_doms: Vec<DomainPtr>) -> Domain {
         if let Some(inner_gds) = as_grounds(&inner_doms) {
             return Domain::Ground(Moo::new(GroundDomain::Tuple(inner_gds)));
         }
@@ -127,9 +127,9 @@ impl Display for Domain {
     }
 }
 
-fn as_grounds(doms: &Vec<Domain>) -> Option<Vec<GroundDomain>> {
+fn as_grounds(doms: &Vec<DomainPtr>) -> Option<Vec<Moo<GroundDomain>>> {
     doms.iter()
-        .map(|idx| match idx {
+        .map(|idx| match idx.as_ref() {
             Domain::Ground(idx_gd) => Some(idx_gd.clone()),
             _ => None,
         })
