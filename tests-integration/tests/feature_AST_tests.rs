@@ -1,11 +1,12 @@
 use conjure_cp::parse::tree_sitter::parse_essence_file;
 use conjure_cp::context::Context;
 use conjure_cp_cli::utils::testing::{
-    read_model_json, serialise_model
+    read_model_json, serialize_model
 };
 use conjure_cp::Model;
 
 use std::env;
+use std::path::Path;
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::error::Error;
@@ -16,7 +17,7 @@ use std::io::Write;
 // Does not consider rewriting or solving
 fn feature_ast_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
     /*
-    When accept=TRUE:
+    When ACCEPT=true:
         Convert an Essence file into an ast-json using conjure
         Attempt to create a model in conjure-oxide by parsing the ast-json
         Save the model back out as a JSON
@@ -32,11 +33,17 @@ fn feature_ast_test(path: &str, essence_base: &str, extension: &str) -> Result<(
 
     if accept {
         // When accept, always parse a new model because this will be used to remake in the AST
-        // Essence is only parsed when accept=TRUE
+        // Essence is only parsed when ACCEPT=true
         let parsed = parse_essence_file(&file_path, context.clone())?;
         save_parse_model_json(&parsed, path, essence_base, "expected")?;
     }
-
+    // Ensures ACCEPT=true has been run at least once
+    if !Path::new(&format!("{path}/{essence_base}.expected-parse.serialised.json")).exists(){
+        return Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            format!("Expected output file not found: Run with ACCEPT=true"),
+        )));
+    }
     let model = read_model_json(&context.clone(), path,essence_base,"expected","parse")?;
     save_parse_model_json(&model, path, essence_base, "generated")?;
 
@@ -63,7 +70,7 @@ fn save_parse_model_json(
     test_name: &str,
     model_type: &str,
 ) -> Result<(), std::io::Error> {
-    let generated_json_str = serialise_model(model)?;
+    let generated_json_str = serialize_model(model)?;
     let filename = format!("{path}/{test_name}.{model_type}-parse.serialised.json");
     File::create(&filename)?.write_all(generated_json_str.as_bytes())?;
     Ok(())
