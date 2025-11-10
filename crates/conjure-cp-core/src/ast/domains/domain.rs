@@ -2,7 +2,7 @@ use crate::ast::domains::ground::GroundDomain;
 use crate::ast::domains::range::Range;
 use crate::ast::domains::set_attr::SetAttr;
 use crate::ast::domains::unresolved::{IntVal, UnresolvedDomain};
-use crate::ast::{DomainOpError, MaybeTypeable, Moo, ReturnType, Typeable};
+use crate::ast::{DomainOpError, Literal, MaybeTypeable, Moo, RecordEntry, ReturnType, Typeable};
 use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
@@ -52,6 +52,8 @@ impl<T: HasDomain> MaybeTypeable for T {
 }
 
 impl Domain {
+    /// Create a new boolean domain and return a pointer to it.
+    /// Boolean domains are always ground (see [GroundDomain::Bool]).
     pub fn new_bool() -> DomainPtr {
         // TODO(perf): Since this is completely static, and we're using references, we may save
         // some minor memory allocations by initialising one static Moo::(...Bool)
@@ -59,10 +61,15 @@ impl Domain {
         Moo::new(Domain::Ground(Moo::new(GroundDomain::Bool)))
     }
 
+    /// Create a new empty domain of the given type and return a pointer to it.
+    /// Empty domains are always ground (see [GroundDomain::Empty]).
     pub fn new_empty(ty: ReturnType) -> DomainPtr {
         Moo::new(Domain::Ground(Moo::new(GroundDomain::Empty(ty))))
     }
 
+    /// Create a new int domain with the given ranges.
+    /// If the ranges are all ground, the variant will be [GroundDomain::Int].
+    /// Otherwise, it will be [UnresolvedDomain::Int].
     pub fn new_int<T>(ranges: Vec<T>) -> DomainPtr
     where
         T: Into<Range<IntVal>> + TryInto<Range<Int>> + Clone,
@@ -76,6 +83,9 @@ impl Domain {
         ))))
     }
 
+    /// Create a new set domain with the given element domain and attributes.
+    /// If the element domain and the attributes are ground, the variant
+    /// will be [GroundDomain::Set]. Otherwise, it will be [UnresolvedDomain::Set].
     pub fn new_set<T>(attr: T, inner_dom: DomainPtr) -> DomainPtr
     where
         T: Into<SetAttr<IntVal>> + TryInto<SetAttr<Int>> + Clone,
@@ -94,6 +104,9 @@ impl Domain {
         ))))
     }
 
+    /// Create a new matrix domain with the given element domain and index domains.
+    /// If the given domains are all ground, the variant will be [GroundDomain::Matrix].
+    /// Otherwise, it will be [UnresolvedDomain::Matrix].
     pub fn new_matrix(inner_dom: DomainPtr, idx_doms: Vec<DomainPtr>) -> DomainPtr {
         if let Domain::Ground(gd) = inner_dom.as_ref()
             && let Some(idx_gds) = as_grounds(&idx_doms)
@@ -108,6 +121,9 @@ impl Domain {
         ))))
     }
 
+    /// Create a new tuple domain with the given element domains.
+    /// If the given domains are all ground, the variant will be [GroundDomain::Tuple].
+    /// Otherwise, it will be [UnresolvedDomain::Tuple].
     pub fn new_tuple(inner_doms: Vec<DomainPtr>) -> DomainPtr {
         if let Some(inner_gds) = as_grounds(&inner_doms) {
             return Moo::new(Domain::Ground(Moo::new(GroundDomain::Tuple(inner_gds))));
@@ -117,6 +133,22 @@ impl Domain {
         ))))
     }
 
+    /// Create a new tuple domain with the given entries.
+    /// If the entries are all ground, the variant will be [GroundDomain::Record].
+    /// Otherwise, it will be [UnresolvedDomain::Record].
+    pub fn new_record(entries: Vec<RecordEntry>) -> DomainPtr {
+        if let Ok(entries_gds) = entries.iter().cloned().map(TryInto::try_into).try_collect() {
+            return Moo::new(Domain::Ground(Moo::new(GroundDomain::Record(entries_gds))));
+        }
+        Moo::new(Domain::Unresolved(Moo::new(UnresolvedDomain::Record(
+            entries,
+        ))))
+    }
+
+    /// If this domain is ground, return a [Moo] to the underlying [GroundDomain].
+    /// Otherwise, try to resolve it; Return None if this is not yet possible.
+    /// Domains which contain references to givens cannot be resolved until these
+    /// givens are substituted for their concrete values.
     pub fn resolve(&self) -> Option<Moo<GroundDomain>> {
         match self {
             Domain::Ground(gd) => Some(gd.clone()),
@@ -124,6 +156,9 @@ impl Domain {
         }
     }
 
+    /// If this domain is already ground, return a reference to the underlying [GroundDomain].
+    /// Otherwise, return None. This method does NOT perform any resolution.
+    /// See also: [Domain::resolve].
     pub fn as_ground(&self) -> Option<&GroundDomain> {
         match self {
             Domain::Ground(gd) => Some(gd.as_ref()),
@@ -131,6 +166,8 @@ impl Domain {
         }
     }
 
+    /// If this domain is already ground, return a mutable reference to the underlying [GroundDomain].
+    /// Otherwise, return None. This method does NOT perform any resolution.
     pub fn as_ground_mut(&mut self) -> Option<&mut GroundDomain> {
         match self {
             Domain::Ground(gd) => Some(Moo::<GroundDomain>::make_mut(gd)),
@@ -138,6 +175,7 @@ impl Domain {
         }
     }
 
+    /// If this domain is unresolved, return a reference to the underlying [UnresolvedDomain].
     pub fn as_unresolved(&self) -> Option<&UnresolvedDomain> {
         match self {
             Domain::Unresolved(ud) => Some(ud.as_ref()),
@@ -145,6 +183,7 @@ impl Domain {
         }
     }
 
+    /// If this domain is unresolved, return a mutable reference to the underlying [UnresolvedDomain].
     pub fn as_unresolved_mut(&mut self) -> Option<&mut UnresolvedDomain> {
         match self {
             Domain::Unresolved(ud) => Some(Moo::<UnresolvedDomain>::make_mut(ud)),
@@ -152,11 +191,32 @@ impl Domain {
         }
     }
 
-    pub fn as_dom_int(&self) -> Option<&Vec<Range<IntVal>>> {
+    /// If this domain is [GroundDomain::Int] or [UnresolveDomain::Int], get
+    /// its ranges. The ranges are cloned and upcast to Range<IntVal> if necessary.
+    pub fn as_dom_int(&self) -> Option<Vec<Range<IntVal>>> {
         if let Some(GroundDomain::Int(rngs)) = self.as_ground() {
-            todo!()
+            return Some(rngs.iter().cloned().map(|r| r.into()).collect());
         }
         if let Some(UnresolvedDomain::Int(rngs)) = self.as_unresolved() {
+            return Some(rngs.clone());
+        }
+        None
+    }
+
+    /// If this is an int domain, get a mutable reference to its ranges.
+    /// The domain always becomes [UnresolvedDomain::Int] after this operation.
+    pub fn as_dom_int_mut(&mut self) -> Option<&mut Vec<Range<IntVal>>> {
+        // We're "upcasting" ground ranges (Range<Int>) to the more general
+        // Range<IntVal>, which may contain references or expressions.
+        // We know that for now they are still ground, but we're giving the user a mutable
+        // reference, so they can overwrite the ranges with values that aren't ground.
+        // So, the entire domain has to become non-ground as well.
+        if let Some(GroundDomain::Int(rngs_gds)) = self.as_ground() {
+            let rngs: Vec<Range<IntVal>> = rngs_gds.iter().cloned().map(|r| r.into()).collect();
+            *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Int(rngs)))
+        }
+
+        if let Some(UnresolvedDomain::Int(rngs)) = self.as_unresolved_mut() {
             return Some(rngs);
         }
         None
@@ -170,6 +230,51 @@ impl Domain {
         }
         if let Some(UnresolvedDomain::Matrix(inner_dom, idx_doms)) = self.as_unresolved() {
             return Some((inner_dom.clone(), idx_doms.clone()));
+        }
+        None
+    }
+
+    pub fn as_dom_matrix_mut(&mut self) -> Option<(&mut DomainPtr, &mut Vec<DomainPtr>)> {
+        // "upcast" the entire domain to UnresolvedDomain
+        // See [Domain::as_dom_int_mut] for an explanation of why this is necessary
+        if let Some(GroundDomain::Matrix(inner_dom_gd, idx_doms_gds)) = self.as_ground() {
+            let inner_dom: DomainPtr = inner_dom_gd.clone().into();
+            let idx_doms: Vec<DomainPtr> = idx_doms_gds.iter().cloned().map(|d| d.into()).collect();
+            *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Matrix(inner_dom, idx_doms)));
+        }
+
+        if let Some(UnresolvedDomain::Matrix(inner_dom, idx_doms)) = self.as_unresolved_mut() {
+            return Some((inner_dom, idx_doms));
+        }
+        None
+    }
+
+    pub fn as_dom_set(&self) -> Option<(SetAttr<IntVal>, DomainPtr)> {
+        if let Some(GroundDomain::Set(attr, inner_dom)) = self.as_ground() {
+            return Some((attr.clone().into(), inner_dom.clone().into()));
+        }
+        if let Some(UnresolvedDomain::Set(attr, inner_dom)) = self.as_unresolved() {
+            return Some((attr.clone(), inner_dom.clone()));
+        }
+        None
+    }
+
+    pub fn as_dom_tuple(&self) -> Option<Vec<DomainPtr>> {
+        if let Some(GroundDomain::Tuple(inner_doms)) = self.as_ground() {
+            return Some(inner_doms.iter().cloned().map(|d| d.into()).collect());
+        }
+        if let Some(UnresolvedDomain::Tuple(inner_doms)) = self.as_unresolved() {
+            return Some(inner_doms.clone());
+        }
+        None
+    }
+
+    pub fn as_dom_record(&self) -> Option<Vec<RecordEntry>> {
+        if let Some(GroundDomain::Record(record_entries)) = self.as_ground() {
+            return Some(record_entries.iter().cloned().map(|r| r.into()).collect());
+        }
+        if let Some(UnresolvedDomain::Record(record_entries)) = self.as_unresolved() {
+            return Some(record_entries.clone());
         }
         None
     }
@@ -188,6 +293,17 @@ impl Domain {
     }
 
     pub fn intersect(&self, other: &Domain) -> Result<Domain, DomainOpError> {
+        todo!()
+    }
+
+    pub fn values(&self) -> Option<impl Iterator<Item = Literal>> {
+        if let Some(gd) = self.as_ground() {
+            return Some(vec![].iter());
+        }
+        None
+    }
+
+    pub fn from_literal_vec(vals: &Vec<Literal>) -> Option<DomainPtr> {
         todo!()
     }
 }

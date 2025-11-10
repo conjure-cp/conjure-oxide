@@ -7,7 +7,7 @@ use std::collections::VecDeque;
 use itertools::{Itertools, izip};
 use uniplate::Uniplate as _;
 
-use crate::ast::{Domain, Moo, Range};
+use crate::ast::{Domain, DomainPtr, GroundDomain, Moo, Range};
 
 use super::{AbstractLiteral, Literal};
 
@@ -38,12 +38,13 @@ use super::{AbstractLiteral, Literal};
 ///
 /// assert_eq!(actual_indices, expected_indices);
 /// ```
-pub fn enumerate_indices(index_domains: Vec<Domain>) -> impl Iterator<Item = Vec<Literal>> {
+pub fn enumerate_indices(index_domains: Vec<DomainPtr>) -> impl Iterator<Item = Vec<Literal>> {
     index_domains
         .into_iter()
         .map(|x| {
             x.values()
                 .expect("index domain should be enumerable with .values()")
+                .collect_vec()
         })
         .multi_cartesian_product()
 }
@@ -93,16 +94,18 @@ pub fn flatten_enumerate(
 
     let index_domains = index_domains(matrix)
         .into_iter()
-        .map(|mut x| match x {
-            // give unboundedr index domains an end
-            Domain::Int(ref mut ranges) if ranges.len() == 1 && !elems.is_empty() => {
-                if let Range::UnboundedR(start) = ranges[0] {
-                    ranges[0] = Range::Bounded(start, start + (elems.len() as i32 - 1));
-                };
-                x
-            }
-            _ => x,
-        })
+        .map(
+            |mut x| match x.as_ground_mut().expect("index domains should be ground") {
+                // give unboundedr index domains an end
+                GroundDomain::Int(ranges) if ranges.len() == 1 && !elems.is_empty() => {
+                    if let Range::UnboundedR(start) = ranges[0] {
+                        ranges[0] = Range::Bounded(start, start + (elems.len() as i32 - 1));
+                    };
+                    x
+                }
+                _ => x,
+            },
+        )
         .collect_vec();
 
     izip!(enumerate_indices(index_domains), flatten_1(elems))
@@ -115,23 +118,28 @@ pub fn flatten_enumerate(
 /// + If `matrix` is not a matrix.
 ///
 /// + If the number or type of elements in each dimension is inconsistent.
-pub fn index_domains(matrix: AbstractLiteral<Literal>) -> Vec<Domain> {
+pub fn index_domains(matrix: AbstractLiteral<Literal>) -> Vec<DomainPtr> {
     let AbstractLiteral::Matrix(_, _) = matrix else {
         panic!("matrix should be a matrix");
     };
 
     matrix.cata(&move |element: AbstractLiteral<Literal>,
-                       child_index_domains: VecDeque<Vec<Domain>>| {
+                       child_index_domains: VecDeque<Vec<DomainPtr>>| {
         assert!(
             child_index_domains.iter().all_equal(),
             "each child of a matrix should have the same index domain"
         );
 
-        let child_index_domains = child_index_domains.front().cloned().unwrap_or(vec![]);
+        let child_index_domains = child_index_domains
+            .front()
+            .unwrap_or(&vec![])
+            .iter()
+            .cloned()
+            .collect_vec();
         match element {
             AbstractLiteral::Set(_) => vec![],
             AbstractLiteral::Matrix(_, domain) => {
-                let mut index_domains = vec![Moo::unwrap_or_clone(domain)];
+                let mut index_domains = vec![domain];
                 index_domains.extend(child_index_domains);
                 index_domains
             }
