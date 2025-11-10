@@ -108,6 +108,34 @@ impl Domain {
         }
     }
 
+    pub fn as_ground(&self) -> Option<&GroundDomain> {
+        match self {
+            Domain::Ground(gd) => Some(gd.as_ref()),
+            _ => None,
+        }
+    }
+
+    pub fn as_ground_mut(&mut self) -> Option<&mut GroundDomain> {
+        match self {
+            Domain::Ground(gd) => Some(Moo::<GroundDomain>::make_mut(gd)),
+            _ => None,
+        }
+    }
+
+    pub fn as_unresolved(&self) -> Option<&UnresolvedDomain> {
+        match self {
+            Domain::Unresolved(ud) => Some(ud.as_ref()),
+            _ => None,
+        }
+    }
+
+    pub fn as_unresolved_mut(&mut self) -> Option<&mut UnresolvedDomain> {
+        match self {
+            Domain::Unresolved(ud) => Some(Moo::<UnresolvedDomain>::make_mut(ud)),
+            _ => None,
+        }
+    }
+
     pub fn union(&self, other: &Domain) -> Result<Domain, DomainOpError> {
         match (self, other) {
             (Domain::Ground(a), Domain::Ground(b)) => Ok(Domain::Ground(Moo::new(a.union(b)?))),
