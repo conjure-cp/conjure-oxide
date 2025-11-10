@@ -1,8 +1,8 @@
+use derivative::Derivative;
 use std::collections::{HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
 use tracing::trace;
 
-use crate::ast::Metadata;
 use crate::ast::Moo;
 use crate::ast::Name;
 use crate::ast::ReturnType;
@@ -11,6 +11,7 @@ use crate::ast::literals::AbstractLiteral;
 use crate::ast::literals::Literal;
 use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
 use crate::ast::{Atom, DomainPtr};
+use crate::ast::{GroundDomain, Metadata};
 use crate::bug;
 use conjure_cp_enum_compatibility_macro::document_compatibility;
 use itertools::Itertools;
@@ -56,7 +57,8 @@ static_assertions::assert_eq_size!([u8; 104], Expression);
 /// The `Expression` enum includes operations, constants, and variable references
 /// used to build rules and conditions for the model.
 #[document_compatibility]
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Uniplate, Quine, Derivative)]
+#[derivative(Hash)]
 #[biplate(to=Metadata)]
 #[biplate(to=Atom)]
 #[biplate(to=DeclarationPtr)]
@@ -506,7 +508,7 @@ pub enum Expression {
 fn bounded_i32_domain_for_matrix_literal_monotonic(
     e: &Expression,
     op: fn(i32, i32) -> Option<i32>,
-) -> Option<Domain> {
+) -> Option<DomainPtr> {
     // only care about the elements, not the indices
     let (mut exprs, _) = e.clone().unwrap_matrix_unchecked()?;
 
@@ -526,14 +528,16 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
     // +,-,/,* are all monotone, so this assumption should be fine for now...
 
     let expr = exprs.pop()?;
-    let Some(Domain::Int(ranges)) = expr.domain_of() else {
+    let dom = expr.domain_of()?;
+    let Some(GroundDomain::Int(ranges)) = dom.as_ground() else {
         return None;
     };
 
     let (mut current_min, mut current_max) = range_vec_bounds_i32(&ranges)?;
 
     for expr in exprs {
-        let Some(Domain::Int(ranges)) = expr.domain_of() else {
+        let dom = expr.domain_of()?;
+        let Some(GroundDomain::Int(ranges)) = dom.as_ground() else {
             return None;
         };
 
@@ -557,9 +561,12 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
     }
 
     if current_min == current_max {
-        Some(Domain::Int(vec![Range::Single(current_min)]))
+        Some(Domain::new_int(vec![Range::Single(current_min)]))
     } else {
-        Some(Domain::Int(vec![Range::Bounded(current_min, current_max)]))
+        Some(Domain::new_int(vec![Range::Bounded(
+            current_min,
+            current_max,
+        )]))
     }
 }
 
@@ -585,7 +592,7 @@ fn range_vec_bounds_i32(ranges: &Vec<Range<i32>>) -> Option<(i32, i32)> {
                     max = *j;
                 }
             }
-            Range::UnboundedR(_) | Range::UnboundedL(_) => return None,
+            Range::UnboundedR(_) | Range::UnboundedL(_) | Range::Unbounded => return None,
         }
     }
     Some((min, max))
@@ -597,11 +604,11 @@ impl Expression {
         let ret = match self {
             Expression::Union(_, a, b) => Some(Domain::new_set(
                 SetAttr::default(),
-                Moo::new(a.domain_of()?.union(&b.domain_of()?).ok()?),
+                Moo::new(a.domain_of()?.union(b.domain_of()?.as_ref()).ok()?),
             )),
             Expression::Intersect(_, a, b) => Some(Domain::new_set(
                 SetAttr::default(),
-                Moo::new(a.domain_of()?.intersect(&b.domain_of()?).ok()?),
+                Moo::new(a.domain_of()?.intersect(b.domain_of()?.as_ref()).ok()?),
             )),
             Expression::In(_, _, _) => Some(Domain::new_bool()),
             Expression::Supset(_, _, _) => Some(Domain::new_bool()),
@@ -627,18 +634,19 @@ impl Expression {
             | Expression::SafeSlice(_, matrix, indices) => {
                 let sliced_dimension = indices.iter().position(Option::is_none);
 
-                let Domain::Matrix(elem_domain, index_domains) = matrix.domain_of()? else {
+                let dom = matrix.domain_of()?;
+                let Some((elem_domain, index_domains)) = dom.as_dom_matrix() else {
                     bug!("subject of an index operation should be a matrix");
                 };
 
                 match sliced_dimension {
-                    Some(dimension) => Some(Domain::Matrix(
+                    Some(dimension) => Some(Domain::new_matrix(
                         elem_domain,
                         vec![index_domains[dimension].clone()],
                     )),
 
                     // same as index
-                    None => Some(*elem_domain),
+                    None => Some(elem_domain),
                 }
             }
             Expression::InDomain(_, _, _) => Some(Domain::new_bool()),

@@ -30,7 +30,7 @@ use super::{CnfClause, Expression, ReturnType, SymbolTable, types::MaybeTypeable
 /// The expression tree is formed of a root node of type [`Expression::Root`], which contains a
 /// vector of top-level constraints.
 #[serde_as]
-#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub struct SubModel {
     constraints: Moo<Expression>,
     #[serde_as(as = "RcRefCellAsInner")]
