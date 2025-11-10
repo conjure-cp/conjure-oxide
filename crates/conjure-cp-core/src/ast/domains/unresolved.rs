@@ -176,7 +176,7 @@ impl RecordEntry {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Quine)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 pub enum UnresolvedDomain {
     Int(Vec<Range<IntVal>>),
     /// A set of elements drawn from the inner domain

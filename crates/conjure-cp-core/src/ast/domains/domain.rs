@@ -136,6 +136,18 @@ impl Domain {
         }
     }
 
+    pub fn as_dom_matrix(&self) -> Option<(DomainPtr, Vec<DomainPtr>)> {
+        if let Some(GroundDomain::Matrix(inner_dom_gd, idx_doms_gds)) = self.as_ground() {
+            let idx_doms: Vec<DomainPtr> = idx_doms_gds.iter().cloned().map(|d| d.into()).collect();
+            let inner_dom: DomainPtr = inner_dom_gd.clone().into();
+            return Some((inner_dom, idx_doms));
+        }
+        if let Some(UnresolvedDomain::Matrix(inner_dom, idx_doms)) = self.as_unresolved() {
+            return Some((inner_dom.clone(), idx_doms.clone()));
+        }
+        None
+    }
+
     pub fn union(&self, other: &Domain) -> Result<Domain, DomainOpError> {
         match (self, other) {
             (Domain::Ground(a), Domain::Ground(b)) => Ok(Domain::Ground(Moo::new(a.union(b)?))),
