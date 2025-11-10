@@ -5,7 +5,7 @@ mod range;
 mod set_attr;
 mod unresolved;
 
-pub use domain::{Domain, DomainPtr, HasDomain};
+pub use domain::{Domain, DomainPtr, HasDomain, Int};
 pub use error::DomainOpError;
 pub use ground::{GroundDomain, RecordEntryGround};
 pub use range::Range;

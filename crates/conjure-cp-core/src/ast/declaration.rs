@@ -14,7 +14,7 @@ use super::categories::{Category, CategoryOf};
 use super::name::Name;
 use super::serde::{DefaultWithId, HasId, ObjId};
 use super::types::MaybeTypeable;
-use super::{DecisionVariable, Domain, Expression, RecordEntry, ReturnType};
+use super::{DecisionVariable, DomainPtr, Expression, RecordEntry, ReturnType};
 
 thread_local! {
     // make each thread have its own id counter.
@@ -115,7 +115,7 @@ impl DeclarationPtr {
     /// // letting MyDomain be int(1..5)
     /// let declaration = DeclarationPtr::new(
     ///     Name::User("MyDomain".into()),
-    ///     DeclarationKind::DomainLetting(Domain::Int(vec![
+    ///     DeclarationKind::DomainLetting(Domain::new_int(vec![
     ///         Range::Bounded(1,5)])));
     /// ```
     pub fn new(name: Name, kind: DeclarationKind) -> DeclarationPtr {
@@ -132,10 +132,10 @@ impl DeclarationPtr {
     /// // find x: int(1..5)
     /// let declaration = DeclarationPtr::new_var(
     ///     Name::User("x".into()),
-    ///     Domain::Int(vec![Range::Bounded(1,5)]));
+    ///     Domain::new_int(vec![Range::Bounded(1,5)]));
     ///
     /// ```
-    pub fn new_var(name: Name, domain: Domain) -> DeclarationPtr {
+    pub fn new_var(name: Name, domain: DomainPtr) -> DeclarationPtr {
         let kind =
             DeclarationKind::DecisionVariable(DecisionVariable::new(domain, Category::Decision));
         DeclarationPtr::new(name, kind)
@@ -144,7 +144,7 @@ impl DeclarationPtr {
     /// Creates a new decision variable with the quantified category.
     ///
     /// This is useful to represent a quantified / induction variable in a comprehension.
-    pub fn new_var_quantified(name: Name, domain: Domain) -> DeclarationPtr {
+    pub fn new_var_quantified(name: Name, domain: DomainPtr) -> DeclarationPtr {
         let kind =
             DeclarationKind::DecisionVariable(DecisionVariable::new(domain, Category::Quantified));
 
@@ -161,10 +161,10 @@ impl DeclarationPtr {
     /// // letting MyDomain be int(1..5)
     /// let declaration = DeclarationPtr::new_domain_letting(
     ///     Name::User("MyDomain".into()),
-    ///     Domain::Int(vec![Range::Bounded(1,5)]));
+    ///     Domain::new_int(vec![Range::Bounded(1,5)]));
     ///
     /// ```
-    pub fn new_domain_letting(name: Name, domain: Domain) -> DeclarationPtr {
+    pub fn new_domain_letting(name: Name, domain: DomainPtr) -> DeclarationPtr {
         let kind = DeclarationKind::DomainLetting(domain);
         DeclarationPtr::new(name, kind)
     }
@@ -201,10 +201,10 @@ impl DeclarationPtr {
     /// // given n: int(1..5)
     /// let declaration = DeclarationPtr::new_given(
     ///     Name::User("n".into()),
-    ///     Domain::Int(vec![Range::Bounded(1,5)]));
+    ///     Domain::new_int(vec![Range::Bounded(1,5)]));
     ///
     /// ```
-    pub fn new_given(name: Name, domain: Domain) -> DeclarationPtr {
+    pub fn new_given(name: Name, domain: DomainPtr) -> DeclarationPtr {
         let kind = DeclarationKind::Given(domain);
         DeclarationPtr::new(name, kind)
     }
@@ -225,7 +225,7 @@ impl DeclarationPtr {
     ///
     /// let declaration = DeclarationPtr::new_record_field(field);
     /// ```
-    pub fn new_record_field(entry: RecordEntry<Domain>) -> DeclarationPtr {
+    pub fn new_record_field(entry: RecordEntry) -> DeclarationPtr {
         let kind = DeclarationKind::RecordField(entry.domain);
         DeclarationPtr::new(entry.name, kind)
     }
@@ -247,7 +247,7 @@ impl DeclarationPtr {
     /// assert!(declaration.domain().is_some_and(|x| x == Domain::Int(vec![Range::Bounded(1,5)])))
     ///
     /// ```
-    pub fn domain(&self) -> Option<Domain> {
+    pub fn domain(&self) -> Option<DomainPtr> {
         match &self.kind() as &DeclarationKind {
             DeclarationKind::DecisionVariable(var) => Some(var.domain.clone()),
             DeclarationKind::ValueLetting(e) => e.domain_of(),
@@ -313,7 +313,7 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a domain letting, if it is one.
-    pub fn as_domain_letting(&self) -> Option<Ref<'_, Domain>> {
+    pub fn as_domain_letting(&self) -> Option<Ref<'_, DomainPtr>> {
         Ref::filter_map(self.borrow(), |x| {
             if let DeclarationKind::DomainLetting(domain) = &x.kind {
                 Some(domain)
@@ -325,7 +325,7 @@ impl DeclarationPtr {
     }
 
     /// This declaration as a mutable domain letting, if it is one.
-    pub fn as_domain_letting_mut(&mut self) -> Option<RefMut<'_, Domain>> {
+    pub fn as_domain_letting_mut(&mut self) -> Option<RefMut<'_, DomainPtr>> {
         RefMut::filter_map(self.borrow_mut(), |x| {
             if let DeclarationKind::DomainLetting(domain) = &mut x.kind {
                 Some(domain)
@@ -614,10 +614,10 @@ impl Declaration {
 pub enum DeclarationKind {
     DecisionVariable(DecisionVariable),
     ValueLetting(Expression),
-    DomainLetting(Domain),
-    Given(Domain),
+    DomainLetting(DomainPtr),
+    Given(DomainPtr),
 
     /// A named field inside a record type.
     /// e.g. A, B in record{A: int(0..1), B: int(0..2)}
-    RecordField(Domain),
+    RecordField(DomainPtr),
 }

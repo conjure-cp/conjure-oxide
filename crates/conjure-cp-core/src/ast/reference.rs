@@ -8,7 +8,7 @@ use std::fmt::{Display, Formatter};
 use uniplate::Uniplate;
 
 use super::{
-    Domain, Name,
+    Domain, DomainPtr, Name,
     categories::{Category, CategoryOf},
     domains::HasDomain,
 };
@@ -68,7 +68,7 @@ impl CategoryOf for Reference {
 }
 
 impl HasDomain for Reference {
-    fn domain_of(&self) -> Domain {
+    fn domain_of(&self) -> DomainPtr {
         self.ptr.domain().unwrap_or_else(|| {
             bug!(
                 "reference ({name}) should have a domain",

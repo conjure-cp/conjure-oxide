@@ -1,10 +1,12 @@
+use crate::ast::domains::Int;
 use crate::ast::domains::range::Range;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
-pub struct SetAttr<A> {
+#[path_prefix(conjure_cp::ast)]
+pub struct SetAttr<A = Int> {
     pub size: Range<A>,
 }
 
