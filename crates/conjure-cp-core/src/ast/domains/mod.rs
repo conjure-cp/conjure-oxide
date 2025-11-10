@@ -10,4 +10,4 @@ pub use error::DomainOpError;
 pub use ground::{GroundDomain, RecordEntryGround};
 pub use range::Range;
 pub use set_attr::SetAttr;
-pub use unresolved::{RecordEntryUnresolved, UnresolvedDomain};
+pub use unresolved::{RecordEntry, UnresolvedDomain};

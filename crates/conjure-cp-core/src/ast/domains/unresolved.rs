@@ -162,9 +162,18 @@ impl SetAttr<IntVal> {
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
 #[path_prefix(conjure_cp::ast)]
-pub struct RecordEntryUnresolved {
+pub struct RecordEntry {
     pub name: Name,
     pub domain: DomainPtr,
+}
+
+impl RecordEntry {
+    pub fn resolve(self) -> Option<RecordEntryGround> {
+        Some(RecordEntryGround {
+            name: self.name,
+            domain: self.domain.resolve()?,
+        })
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Quine)]
@@ -179,7 +188,7 @@ pub enum UnresolvedDomain {
     /// A reference to a domain letting
     #[polyquine_skip]
     Reference(Reference),
-    Record(Vec<RecordEntryUnresolved>),
+    Record(Vec<RecordEntry>),
 }
 
 impl UnresolvedDomain {

@@ -6,6 +6,7 @@ use crate::ast::{DomainOpError, MaybeTypeable, Moo, ReturnType, Typeable};
 use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
+use std::cell::Ref;
 use std::fmt::{Display, Formatter};
 use std::ops::Deref;
 
@@ -17,6 +18,18 @@ pub type DomainPtr = Moo<Domain>;
 impl DomainPtr {
     pub fn resolve(&self) -> Option<Moo<GroundDomain>> {
         self.as_ref().resolve()
+    }
+}
+
+impl Into<DomainPtr> for Moo<GroundDomain> {
+    fn into(self) -> DomainPtr {
+        Moo::new(Domain::Ground(self))
+    }
+}
+
+impl Into<DomainPtr> for Moo<UnresolvedDomain> {
+    fn into(self) -> DomainPtr {
+        Moo::new(Domain::Unresolved(self))
     }
 }
 
@@ -91,7 +104,7 @@ impl Domain {
     pub fn resolve(&self) -> Option<Moo<GroundDomain>> {
         match self {
             Domain::Ground(gd) => Some(gd.clone()),
-            Domain::Unresolved(ud) => ud.resolve(),
+            Domain::Unresolved(ud) => ud.resolve().map(Moo::new),
         }
     }
 
