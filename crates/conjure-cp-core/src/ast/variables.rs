@@ -1,9 +1,9 @@
 use std::fmt::Display;
 
+use crate::{ast::domains::Domain, representation::Representation};
+use conjure_cp_core::ast::DomainPtr;
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};
-
-use crate::{ast::domains::Domain, representation::Representation};
 
 use super::{
     ReturnType,
@@ -36,7 +36,7 @@ use super::{
 #[derive(Clone, Debug, Serialize, Deserialize, Derivative)]
 #[derivative(Hash, PartialEq, Eq)]
 pub struct DecisionVariable {
-    pub domain: Domain,
+    pub domain: DomainPtr,
 
     // use this through [`Declaration`] - in the future, this probably will be stored in
     // declaration / domain, not here.
@@ -49,7 +49,7 @@ pub struct DecisionVariable {
 }
 
 impl DecisionVariable {
-    pub fn new(domain: Domain, category: Category) -> DecisionVariable {
+    pub fn new(domain: DomainPtr, category: Category) -> DecisionVariable {
         assert!(
             category >= Category::Quantified,
             "category of a DecisionVariable should be quantified or decision"

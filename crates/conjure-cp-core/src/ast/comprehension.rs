@@ -9,7 +9,7 @@ use uniplate::{Biplate, Uniplate};
 use crate::{ast::Metadata, into_matrix_expr, matrix_expr};
 
 use super::{
-    DeclarationPtr, Domain, Expression, Moo, Name, Range, SubModel, SymbolTable,
+    DeclarationPtr, Domain, DomainPtr, Expression, Moo, Name, Range, SubModel, SymbolTable,
     ac_operators::ACOperatorKind,
 };
 
@@ -43,7 +43,7 @@ pub struct Comprehension {
 }
 
 impl Comprehension {
-    pub fn domain_of(&self) -> Option<Domain> {
+    pub fn domain_of(&self) -> Option<DomainPtr> {
         let return_expr_domain = self
             .return_expression_submodel
             .clone()
@@ -51,8 +51,8 @@ impl Comprehension {
             .domain_of()?;
 
         // return a list (matrix with index domain int(1..)) of return_expr elements
-        Some(Domain::new_matrix_unresolved(
-            Moo::new(return_expr_domain),
+        Some(Domain::new_matrix(
+            return_expr_domain,
             vec![Domain::new_int(vec![Range::UnboundedR(1)])],
         ))
     }
@@ -96,10 +96,10 @@ impl Display for Comprehension {
             .clone()
             .into_iter_local()
             .map(|(name, decl): (Name, DeclarationPtr)| {
-                let domain: Domain = decl.domain().unwrap();
+                let domain: DomainPtr = decl.domain().unwrap();
                 (name, domain)
             })
-            .map(|(name, domain): (Name, Domain)| format!("{name}: {domain}"))
+            .map(|(name, domain)| format!("{name}: {domain}"))
             .join(",");
 
         let guards = self
