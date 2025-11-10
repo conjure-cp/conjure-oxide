@@ -51,7 +51,7 @@ pub trait AbstractLiteralValue:
 impl AbstractLiteralValue for Expression {}
 impl AbstractLiteralValue for Literal {}
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Quine)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 #[path_prefix(conjure_cp::ast)]
 pub enum AbstractLiteral<T: AbstractLiteralValue> {
     Set(Vec<T>),

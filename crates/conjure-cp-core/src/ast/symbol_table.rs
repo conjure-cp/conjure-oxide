@@ -24,7 +24,7 @@ use uniplate::Tree;
 use uniplate::{Biplate, Uniplate};
 
 use super::name::Name;
-use super::{Domain, Expression, ReturnType, SubModel};
+use super::{Domain, DomainPtr, Expression, Moo, ReturnType, SubModel};
 use crate::ast::domains::GroundDomain;
 use derivative::Derivative;
 
@@ -165,22 +165,14 @@ impl SymbolTable {
     ///
     /// This method can return domain references: if a ground domain is always required, use
     /// [`SymbolTable::resolve_domain`].
-    pub fn domain(&self, name: &Name) -> Option<Domain> {
-        // TODO: do not clone here: in the future, we might want to wrap all domains in Rc's to get
-        // clone-on-write behaviour (saving memory in scenarios such as matrix decomposition where
-        // a lot of the domains would be the same).
-
-        if let Name::WithRepresentation(name, _) = name {
-            self.lookup(name)?.domain()
-        } else {
-            self.lookup(name)?.domain()
-        }
+    pub fn domain(&self, name: &Name) -> Option<DomainPtr> {
+        self.lookup(name)?.domain()
     }
 
     /// Looks up the domain of name, resolving domain references to ground domains.
     ///
     /// See [`SymbolTable::domain`].
-    pub fn resolve_domain(&self, name: &Name) -> Option<GroundDomain> {
+    pub fn resolve_domain(&self, name: &Name) -> Option<Moo<GroundDomain>> {
         let dom = self.domain(name)?;
         dom.resolve()
     }
@@ -214,7 +206,7 @@ impl SymbolTable {
 
     /// Creates a new variable in this symbol table with a unique name, and returns its
     /// declaration.
-    pub fn gensym(&mut self, domain: &Domain) -> DeclarationPtr {
+    pub fn gensym(&mut self, domain: &DomainPtr) -> DeclarationPtr {
         let num = *self.next_machine_name.borrow();
         *(self.next_machine_name.borrow_mut()) += 1;
         let decl = DeclarationPtr::new_var(Name::Machine(num), domain.clone());
