@@ -1,21 +1,11 @@
 use std::collections::VecDeque;
 
+use super::Name;
 use super::literals::AbstractLiteralValue;
-use super::{Domain, Name};
 use serde::{Deserialize, Serialize};
 
 use polyquine::Quine;
 use uniplate::{Biplate, Uniplate};
-
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Uniplate, Quine)]
-#[path_prefix(conjure_cp::ast)]
-pub struct RecordEntry<T>
-where
-    T: Clone + Eq,
-{
-    pub name: Name,
-    pub domain: T,
-}
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Hash, Quine)]
 #[path_prefix(conjure_cp::ast)]
