@@ -204,6 +204,10 @@ impl<A: Num + Ord + Clone> Range<A> {
 
         ans
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = A> {
+        todo!()
+    }
 }
 
 impl<A: Display> Display for Range<A> {

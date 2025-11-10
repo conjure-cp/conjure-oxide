@@ -7,7 +7,7 @@ use std::collections::VecDeque;
 use itertools::{Itertools, izip};
 use uniplate::Uniplate as _;
 
-use crate::ast::{Domain, DomainOpError, Moo, Range};
+use crate::ast::{Domain, DomainPtr, GroundDomain, DomainOpError, Moo, Range};
 
 use super::{AbstractLiteral, Literal};
 
@@ -38,12 +38,13 @@ use super::{AbstractLiteral, Literal};
 ///
 /// assert_eq!(actual_indices, expected_indices);
 /// ```
-pub fn enumerate_indices(index_domains: Vec<Domain>) -> impl Iterator<Item = Vec<Literal>> {
+pub fn enumerate_indices(index_domains: Vec<Moo<GroundDomain>>) -> impl Iterator<Item = Vec<Literal>> {
     index_domains
         .into_iter()
         .map(|x| {
             x.values()
                 .expect("index domain should be enumerable with .values()")
+                .collect_vec()
         })
         .multi_cartesian_product()
 }
@@ -93,16 +94,18 @@ pub fn flatten_enumerate(
 
     let index_domains = index_domains(matrix)
         .into_iter()
-        .map(|mut x| match x {
-            // give unboundedr index domains an end
-            Domain::Int(ref mut ranges) if ranges.len() == 1 && !elems.is_empty() => {
-                if let Range::UnboundedR(start) = ranges[0] {
-                    ranges[0] = Range::Bounded(start, start + (elems.len() as i32 - 1));
-                };
-                x
-            }
-            _ => x,
-        })
+        .map(
+            |mut x| match &x {
+                // give unboundedr index domains an end
+                GroundDomain::Int(ranges) if ranges.len() == 1 && !elems.is_empty() => {
+                    if let Range::UnboundedR(start) = ranges[0] {
+                        ranges[0] = Range::Bounded(start, start + (elems.len() as i32 - 1));
+                    };
+                    x
+                }
+                _ => x,
+            },
+        )
         .collect_vec();
 
     izip!(enumerate_indices(index_domains), flatten_1(elems))
@@ -115,23 +118,28 @@ pub fn flatten_enumerate(
 /// + If `matrix` is not a matrix.
 ///
 /// + If the number or type of elements in each dimension is inconsistent.
-pub fn index_domains(matrix: AbstractLiteral<Literal>) -> Vec<Domain> {
+pub fn index_domains(matrix: AbstractLiteral<Literal>) -> Vec<Moo<GroundDomain>> {
     let AbstractLiteral::Matrix(_, _) = matrix else {
         panic!("matrix should be a matrix");
     };
 
     matrix.cata(&move |element: AbstractLiteral<Literal>,
-                       child_index_domains: VecDeque<Vec<Domain>>| {
+                       child_index_domains: VecDeque<Vec<Moo<GroundDomain>>>| {
         assert!(
             child_index_domains.iter().all_equal(),
             "each child of a matrix should have the same index domain"
         );
 
-        let child_index_domains = child_index_domains.front().cloned().unwrap_or(vec![]);
+        let child_index_domains = child_index_domains
+            .front()
+            .unwrap_or(&vec![])
+            .iter()
+            .cloned()
+            .collect_vec();
         match element {
             AbstractLiteral::Set(_) => vec![],
             AbstractLiteral::Matrix(_, domain) => {
-                let mut index_domains = vec![Moo::unwrap_or_clone(domain)];
+                let mut index_domains = vec![domain];
                 index_domains.extend(child_index_domains);
                 index_domains
             }
@@ -144,8 +152,8 @@ pub fn index_domains(matrix: AbstractLiteral<Literal>) -> Vec<Domain> {
 /// See [`enumerate_indices`]. This function zips the two given lists of index domains, performs a
 /// union on each pair, and returns an enumerating iterator over the new list of domains.
 pub fn enumerate_index_union_indices(
-    a_domains: Vec<Domain>,
-    b_domains: Vec<Domain>,
+    a_domains: Vec<Moo<GroundDomain>>,
+    b_domains: Vec<Moo<GroundDomain>>,
 ) -> Result<impl Iterator<Item = Vec<Literal>>, DomainOpError> {
     if a_domains.len() != b_domains.len() {
         return Err(DomainOpError::WrongType);
@@ -153,7 +161,7 @@ pub fn enumerate_index_union_indices(
     let idx_domains: Result<Vec<_>, _> = a_domains
         .iter()
         .zip(b_domains.iter())
-        .map(|(a, b)| a.union(b))
+        .map(|(a, b)| Moo::new(a.union(b)))
         .collect();
     let idx_domains = idx_domains?;
 

@@ -14,6 +14,7 @@ use polyquine::Quine;
 use proc_macro2::TokenStream;
 use serde::{Deserialize, Serialize};
 use std::hash::{Hash, Hasher};
+use std::ops::DerefMut;
 use std::{collections::VecDeque, fmt::Display, ops::Deref, sync::Arc};
 use uniplate::{
     Biplate, Tree, Uniplate,
@@ -85,6 +86,12 @@ impl<T> Deref for Moo<T> {
 
     fn deref(&self) -> &Self::Target {
         self.inner.deref()
+    }
+}
+
+impl<T: Clone> DerefMut for Moo<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        Moo::make_mut(self)
     }
 }
 

@@ -266,30 +266,6 @@ where
     }
 }
 
-impl Hash for AbstractLiteral<Literal> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        match self {
-            AbstractLiteral::Set(vec) => {
-                0.hash(state);
-                vec.hash(state);
-            }
-            AbstractLiteral::Matrix(elems, index_domain) => {
-                1.hash(state);
-                elems.hash(state);
-                index_domain.hash(state);
-            }
-            AbstractLiteral::Tuple(elems) => {
-                2.hash(state);
-                elems.hash(state);
-            }
-            AbstractLiteral::Record(entries) => {
-                3.hash(state);
-                entries.hash(state);
-            }
-        }
-    }
-}
-
 impl<T> Uniplate for AbstractLiteral<T>
 where
     T: AbstractLiteralValue + Biplate<AbstractLiteral<T>>,
