@@ -27,17 +27,16 @@ pub use moo::Moo;
 pub use atom::Atom;
 pub use cnf_clause::CnfClause;
 pub use declaration::{DeclarationKind, DeclarationPtr};
-pub use domains::Domain;
-pub use domains::DomainOpError;
-pub use domains::Range;
-pub use domains::SetAttr;
+pub use domains::{
+    Domain, DomainOpError, DomainPtr, GroundDomain, Range, RecordEntryGround,
+    RecordEntryUnresolved, SetAttr, UnresolvedDomain,
+};
 pub use expressions::Expression;
 pub use literals::AbstractLiteral;
 pub use literals::Literal;
 pub use metadata::Metadata;
 pub use model::*;
 pub use name::Name;
-pub use records::RecordEntry;
 pub use reference::Reference;
 pub use submodel::SubModel;
 pub use symbol_table::SymbolTable;

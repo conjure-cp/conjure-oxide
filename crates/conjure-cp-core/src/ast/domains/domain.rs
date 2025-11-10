@@ -14,6 +14,12 @@ pub(super) type Int = i32;
 
 pub type DomainPtr = Moo<Domain>;
 
+impl DomainPtr {
+    pub fn resolve(&self) -> Option<Moo<GroundDomain>> {
+        self.as_ref().resolve()
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 pub enum Domain {
     /// A fully resolved domain
