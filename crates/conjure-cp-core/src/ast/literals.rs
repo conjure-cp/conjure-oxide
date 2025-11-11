@@ -2,7 +2,6 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 use std::hash::Hash;
-use std::hash::Hasher;
 use ustr::Ustr;
 
 use polyquine::Quine;
@@ -84,18 +83,15 @@ impl AbstractLiteral<Expression> {
                     .try_fold(first_item, |x, y| x.union(y))
                     .expect("taking the union of all item domains of a set literal should succeed");
 
-                Some(Domain::new_set(
-                    SetAttr::<Int>::default(),
-                    Moo::new(item_domain),
-                ))
+                Some(Domain::new_set(SetAttr::<Int>::default(), item_domain))
             }
 
             AbstractLiteral::Matrix(items, _) => {
                 // ensure that all items have a domain, or return None
-                let item_domains: Vec<Domain> = items
+                let item_domains = items
                     .iter()
                     .map(|x| x.domain_of())
-                    .collect::<Option<Vec<Domain>>>()?;
+                    .collect::<Option<Vec<DomainPtr>>>()?;
 
                 // union all item domains together
                 let mut item_domain_iter = item_domains.iter().cloned();
@@ -104,7 +100,7 @@ impl AbstractLiteral<Expression> {
 
                 let item_domain = item_domains
                     .iter()
-                    .try_fold(first_item, |x: Domain, y| x.union(y))
+                    .try_fold(first_item, |x, y| x.union(y))
                     .expect(
                         "taking the union of all item domains of a matrix literal should succeed",
                     );
@@ -121,7 +117,7 @@ impl AbstractLiteral<Expression> {
                     new_index_domain.push(idx);
                     e = elems[0].clone();
                 }
-                Some(Domain::new_matrix(Moo::new(item_domain), new_index_domain))
+                Some(Domain::new_matrix(item_domain, new_index_domain))
             }
             AbstractLiteral::Tuple(_) => None,
             AbstractLiteral::Record(_) => None,
@@ -136,7 +132,7 @@ impl AbstractLiteral<Expression> {
 
 impl HasDomain for AbstractLiteral<Literal> {
     fn domain_of(&self) -> DomainPtr {
-        Domain::from_literal_vec(vec![Literal::AbstractLiteral(self.clone())])
+        Domain::from_literal_vec(&vec![Literal::AbstractLiteral(self.clone())])
             .expect("abstract literals should be correctly typed")
     }
 }

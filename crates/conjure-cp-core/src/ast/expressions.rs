@@ -604,11 +604,11 @@ impl Expression {
         let ret = match self {
             Expression::Union(_, a, b) => Some(Domain::new_set(
                 SetAttr::default(),
-                Moo::new(a.domain_of()?.union(b.domain_of()?.as_ref()).ok()?),
+                a.domain_of()?.union(&b.domain_of()?).ok()?,
             )),
             Expression::Intersect(_, a, b) => Some(Domain::new_set(
                 SetAttr::default(),
-                Moo::new(a.domain_of()?.intersect(b.domain_of()?.as_ref()).ok()?),
+                a.domain_of()?.intersect(&b.domain_of()?).ok()?,
             )),
             Expression::In(_, _, _) => Some(Domain::new_bool()),
             Expression::Supset(_, _, _) => Some(Domain::new_bool()),
