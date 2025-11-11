@@ -69,7 +69,12 @@ jobs:
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.compiler_profile == 'debug' }}
         with:
           cache-on-failure: true
-          shared-key: ${{ matrix.os }}--${{ matrix.rust_release }}--${{ matrix.compiler_profile }}--${{ github.workflow }}--${{ github.job }}
+          add-job-id-key: false
+          add-rust-environment-hash-key: false
+          cache-all-crates: true
+          cache-workspace-crates: true
+          shared-key: ''
+          prefix-key: conjure--${{ matrix.os }}--${{ matrix.rust_release }}--${{ matrix.compiler_profile }}
 
       # Override RUSTUP_TOOLCHAIN to nightly when we are testing with nightly
       # This value is read from the rust-toolchain.toml file otherwise

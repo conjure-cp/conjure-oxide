@@ -42,7 +42,12 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-          shared-key: ${{ matrix.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.workflow }}--${{ github.job }}
+          add-job-id-key: false
+          add-rust-environment-hash-key: false
+          cache-all-crates: true
+          cache-workspace-crates: true
+          shared-key: ''
+          prefix-key: treesitter--${{ matrix.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
 
       - name: Set up tree-sitter
         uses: tree-sitter/setup-action/cli@v2
