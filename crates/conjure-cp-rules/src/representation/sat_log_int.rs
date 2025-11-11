@@ -31,6 +31,7 @@ impl SATLogInt {
 }
 
 impl Representation for SATLogInt {
+    /// Creates a log int representation object for the given name.
     fn init(name: &Name, symtab: &SymbolTable) -> Option<Self> {
         let domain = symtab.resolve_domain(name)?;
 
@@ -52,6 +53,7 @@ impl Representation for SATLogInt {
                     Some((min_a.min(*lb), max_b.max(*ub)))
                 })?;
 
+        // calculate the bits needed to represent the integer
         let bit_count = (1..=32)
             .find(|&bits| {
                 let min_possible = -(1i64 << (bits - 1));
@@ -66,10 +68,12 @@ impl Representation for SATLogInt {
         })
     }
 
+    /// The variable being represented.
     fn variable_name(&self) -> &Name {
         &self.src_var
     }
 
+    /// Given the integer assignment for `self`, creates assignments for its representation variables.
     fn value_down(
         &self,
         value: Literal,
@@ -80,7 +84,7 @@ impl Representation for SATLogInt {
 
         let mut result = std::collections::BTreeMap::new();
 
-        // name_0 is the least significant bit, name_<BITS-1> is the sign bit
+        // name_0 is the least significant bit, name_<final> is the sign bit
         for name in self.names() {
             result.insert(name, Literal::Bool((value_i32 & 1) != 0));
             value_i32 >>= 1;
@@ -89,6 +93,7 @@ impl Representation for SATLogInt {
         Ok(result)
     }
 
+    /// Given the values for its boolean representation variables, creates an assignment for `self` - the integer form.
     fn value_up(
         &self,
         values: &std::collections::BTreeMap<Name, Literal>,
@@ -121,6 +126,7 @@ impl Representation for SATLogInt {
         Ok(Literal::Int(out))
     }
 
+     /// Returns [`Expression`]s representing each boolean representation variable.
     fn expression_down(
         &self,
         st: &SymbolTable,
@@ -140,6 +146,7 @@ impl Representation for SATLogInt {
             .collect())
     }
 
+    /// Creates declarations for the boolean representation variables of `self`.
     fn declaration_down(&self) -> Result<Vec<DeclarationPtr>, ApplicationError> {
         Ok(self
             .names()
@@ -147,10 +154,12 @@ impl Representation for SATLogInt {
             .collect())
     }
 
+    /// The rule name for this representaion.
     fn repr_name(&self) -> &str {
         "sat_log_int"
     }
 
+    /// Makes a clone of `self` into a `Representation` trait object.
     fn box_clone(&self) -> Box<dyn Representation> {
         Box::new(self.clone()) as _
     }

@@ -34,7 +34,7 @@ fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
 /// This function confirms that all of the input expressions are SATInts, and returns vectors for each input of their bits
 /// This function also extends all vectors such that they have the same lengths
 /// The vector lengths is either `n` for bit_count = Some(n), otherwise the length of the longest operand
-pub fn validate_sat_int_operands(
+pub fn validate_log_int_operands(
     exprs: Vec<Expr>,
     bit_count: Option<u32>,
 ) -> Result<Vec<Vec<Expr>>, ApplicationError> {

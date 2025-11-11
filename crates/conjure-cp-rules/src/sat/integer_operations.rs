@@ -14,7 +14,7 @@ use itertools::Itertools;
 use super::boolean::{
     tseytin_and, tseytin_iff, tseytin_imply, tseytin_mux, tseytin_not, tseytin_or, tseytin_xor,
 };
-use super::integer_repr::{bit_magnitude, match_bits_length, validate_sat_int_operands};
+use super::integer_repr::{bit_magnitude, match_bits_length, validate_log_int_operands};
 
 use conjure_cp::ast::CnfClause;
 
@@ -37,7 +37,7 @@ fn cnf_int_ineq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     };
 
     let binding =
-        validate_sat_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()], None)?;
+        validate_log_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()], None)?;
     let [lhs_bits, rhs_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -68,7 +68,7 @@ fn cnf_int_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     };
 
     let binding =
-        validate_sat_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()], None)?;
+        validate_log_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()], None)?;
     let [lhs_bits, rhs_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -110,7 +110,7 @@ fn cnf_int_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     };
 
     let binding =
-        validate_sat_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()], None)?;
+        validate_log_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()], None)?;
     let [lhs_bits, rhs_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -223,7 +223,7 @@ fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     // Check operands are valid log ints
     let mut exprs_bits =
-        validate_sat_int_operands(exprs_list.clone(), Some(output_size.try_into().unwrap()))?;
+        validate_log_int_operands(exprs_list.clone(), Some(output_size.try_into().unwrap()))?;
 
     let mut new_symbols = symbols.clone();
     let mut values;
@@ -432,7 +432,7 @@ fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
     let (min, max) = product_of_ranges(ranges.clone());
 
-    let exprs_bits = validate_sat_int_operands(exprs_list.clone(), None)?;
+    let exprs_bits = validate_log_int_operands(exprs_list.clone(), None)?;
 
     let mut new_symbols = symbols.clone();
     let mut new_clauses = vec![];
@@ -472,24 +472,6 @@ fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         })
         .unwrap();
 
-    // while exprs_bits.len() > 1 {
-    //     let mut next = Vec::with_capacity(exprs_bits.len().div_ceil(2));
-    //     let mut iter = exprs_bits.into_iter();
-
-    //     while let Some(a) = iter.next() {
-    //         if let Some(b) = iter.next() {
-    //             values = cnf_shift_add_multiply(&a, &b, input_sizes, &mut new_clauses, &mut new_symbols);
-    //             next.push(values);
-    //         } else {
-    //             next.push(a);
-    //         }
-    //     }
-
-    //     exprs_bits = next;
-    // }
-
-    // let result = exprs_bits.pop().unwrap();
-
     Ok(Reduction::cnf(
         Expr::SATInt(
             Metadata::new(),
@@ -518,7 +500,7 @@ fn cnf_int_neg(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let binding = validate_sat_int_operands(vec![expr.as_ref().clone()], None)?;
+    let binding = validate_log_int_operands(vec![expr.as_ref().clone()], None)?;
     let [bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -588,7 +570,7 @@ fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let min = ranges.iter().map(|(a, _)| *a).min().unwrap();
     let max = ranges.iter().map(|(_, b)| *b).min().unwrap();
 
-    let mut exprs_bits = validate_sat_int_operands(exprs_list.clone(), None)?;
+    let mut exprs_bits = validate_log_int_operands(exprs_list.clone(), None)?;
 
     let mut new_symbols = symbols.clone();
     let mut values;
@@ -690,7 +672,7 @@ fn cnf_int_max(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let min = ranges.iter().map(|(a, _)| *a).max().unwrap();
     let max = ranges.iter().map(|(_, b)| *b).max().unwrap();
 
-    let mut exprs_bits = validate_sat_int_operands(exprs_list.clone(), None)?;
+    let mut exprs_bits = validate_log_int_operands(exprs_list.clone(), None)?;
 
     let mut new_symbols = symbols.clone();
     let mut values;
@@ -747,7 +729,7 @@ fn cnf_int_abs(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         cmp::max(min.abs(), max.abs()),
     );
 
-    let binding = validate_sat_int_operands(vec![expr.as_ref().clone()], None)?;
+    let binding = validate_log_int_operands(vec![expr.as_ref().clone()], None)?;
     let [bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -824,7 +806,7 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let max = *candidates.iter().max().unwrap();
 
     let binding =
-        validate_sat_int_operands(vec![numer.as_ref().clone(), denom.as_ref().clone()], None)?;
+        validate_log_int_operands(vec![numer.as_ref().clone(), denom.as_ref().clone()], None)?;
     let [numer_bits, denom_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
