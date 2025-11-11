@@ -169,13 +169,7 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     let mut binary_encoding = vec![];
 
-    let bit_count = if value >= 0 {
-        // positive values need enough bits for the highest set bit + 1 sign bit
-        1 + (32 - value.leading_zeros())
-    } else {
-        // negative values: need enough bits to include the sign and magnitude
-        32 - (!value).leading_zeros()
-    };
+    let bit_count = bit_magnitude(value);
 
     let mut value_mut = value as u32;
 
@@ -201,6 +195,6 @@ pub fn bit_magnitude(x: i32) -> u32 {
         1 + (32 - x.leading_zeros())
     } else {
         // negative: bits = highest set bit in magnitude
-        32 - (!x).leading_zeros()
+        33 - (!x).leading_zeros()
     }
 }
