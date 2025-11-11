@@ -96,35 +96,6 @@ pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
     diagnostics
 }
 
-// commented out for hygene, since not used currently
-/// Recursively finds the deepest error or missing node in the subtree rooted at `node`.
-///
-/// # Arguments
-/// * `node` - The root node to start searching from.
-///
-/// # Returns
-/// * `Node` - The deepest error or missing node found, or the original node if none found.
-// fn deepest_error_node(node: Node) -> Node {
-//     let mut current = node;
-//     loop {
-//         // Find the first child that is error or missing
-//         let mut found = false;
-//         for i in 0..current.child_count() {
-//             if let Some(child) = current.child(i) {
-//                 if child.is_error() || child.is_missing() {
-//                     current = child;
-//                     found = true;
-//                     break;
-//                 }
-//             }
-//         }
-//         if !found {
-//             break;
-//         }
-//     }
-//     current
-// }
-
 
 /// Classifies a syntax error node and returns a diagnostic for it.
 fn classify_syntax_error(node: Node) -> Diagnostic {
