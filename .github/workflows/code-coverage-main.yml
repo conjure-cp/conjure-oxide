@@ -1,4 +1,4 @@
-name: "Code and Documentation Coverage (main)"
+name: "Coverage-main"
 
 on:
   push:
@@ -7,9 +7,6 @@ on:
   workflow_dispatch:
 
 env:
-  SCCACHE_GHA_ENABLED: "true"
-  RUSTC_WRAPPER: "sccache"
-  SCCACHE_GHA_VERSION: 2
   CARGO_INCREMENTAL: "0"
   # we define the following 3 values as the defaults here, matrix jobs may overwrite their values.
   os: ubuntu-latest
@@ -30,10 +27,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
-
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.9
+          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.workflow }}--${{ github.job }}
 
       - name: Install rust ${{ env.rust_release }}
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
@@ -52,7 +46,7 @@ jobs:
           ./tools/ci/generate-doc-coverage-report-md.bash >> $GITHUB_STEP_SUMMARY
 
       - name: Generate summary
-        run: | 
+        run: |
           ./tools/ci/generate-doc-coverage-summary-md.bash > main-doc-coverage-summary.txt
 
       - name: Upload summary as artifact (for later use)
@@ -75,10 +69,7 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}
-
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.9
+          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.workflow }}--${{ github.job }}
 
       - name: Install rust ${{ env.rust_release }}
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}

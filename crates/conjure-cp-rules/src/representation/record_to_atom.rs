@@ -127,7 +127,10 @@ impl Representation for RecordToAtom {
                 let decl = st.lookup(&name).unwrap();
                 (
                     name,
-                    Expression::Atomic(Metadata::new(), Atom::Reference(decl)),
+                    Expression::Atomic(
+                        Metadata::new(),
+                        Atom::Reference(conjure_cp::ast::Reference::new(decl)),
+                    ),
                 )
             })
             .collect())

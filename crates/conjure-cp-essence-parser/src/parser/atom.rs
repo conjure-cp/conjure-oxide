@@ -123,7 +123,7 @@ fn parse_variable(
     let name = Name::user(raw_name.trim());
     if let Some(symbols) = symbols_ptr {
         if let Some(decl) = symbols.borrow().lookup(&name) {
-            Ok(Atom::Reference(decl))
+            Ok(Atom::Reference(conjure_cp_core::ast::Reference::new(decl)))
         } else {
             Err(EssenceParseError::syntax_error(
                 format!("Undefined variable: '{}'", raw_name),

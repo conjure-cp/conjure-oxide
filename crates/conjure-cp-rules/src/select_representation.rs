@@ -1,21 +1,29 @@
 use conjure_cp::{
-    ast::Metadata,
-    ast::{Atom, Domain, Expression as Expr, Name, SubModel, SymbolTable, serde::HasId},
+    ast::{Atom, Domain, Expression as Expr, Metadata, Name, SubModel, SymbolTable, serde::HasId},
     bug,
     representation::Representation,
     rule_engine::{
         ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
+        register_rule_set,
     },
+    solver::SolverFamily,
 };
 use itertools::Itertools;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use uniplate::Biplate;
+
+register_rule_set!(
+    "Representations",
+    ("Base"),
+    (SolverFamily::Sat, SolverFamily::Minion)
+);
+
 // special case rule to select representations for matrices in one go.
 //
 // we know that they only have one possible representation, so this rule adds a representation for all matrices in the model.
-#[register_rule(("Base", 8001))]
+#[register_rule(("Representations", 8001))]
 fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let Expr::Root(_, _) = expr else {
         return Err(RuleNotApplicable);
@@ -118,7 +126,7 @@ fn select_representation_matrix(expr: &Expr, symbols: &SymbolTable) -> Applicati
     }
 }
 
-#[register_rule(("Base", 8000))]
+#[register_rule(("Representations", 8000))]
 fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     // thing we are representing must be a reference
     let Expr::Atomic(_, Atom::Reference(decl)) = expr else {
@@ -129,7 +137,7 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
 
     // thing we are representing must be a variable
     {
-        decl.as_var().ok_or(RuleNotApplicable)?;
+        decl.ptr().as_var().ok_or(RuleNotApplicable)?;
     }
 
     if !needs_representation(&name, symbols) {
@@ -158,11 +166,14 @@ fn select_representation(expr: &Expr, symbols: &SymbolTable) -> ApplicationResul
     //
     //
     // see: issue #932
-    let mut decl = decl.clone().detach();
-    decl.replace_name(new_name);
+    let mut decl_ptr = decl.clone().into_ptr().detach();
+    decl_ptr.replace_name(new_name);
 
     Ok(Reduction::with_symbols(
-        Expr::Atomic(Metadata::new(), Atom::Reference(decl)),
+        Expr::Atomic(
+            Metadata::new(),
+            Atom::Reference(conjure_cp::ast::Reference::new(decl_ptr)),
+        ),
         symbols,
     ))
 }
