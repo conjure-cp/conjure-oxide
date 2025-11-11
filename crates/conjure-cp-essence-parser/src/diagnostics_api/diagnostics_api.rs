@@ -24,7 +24,7 @@ pub struct Range {
 // the actual values can be chnaged later, if needed
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "camelCase")]
-pub enum severity {
+pub enum Severity {
     Error = 1,
     Warn = 2,
     Info = 3,
@@ -46,11 +46,11 @@ pub struct Diagnostic {
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub enum SymbolKind {
-    integer = 0,
-    decimal = 1,
-    function = 2,
-    letting = 3,
-    find = 4,
+    Integer = 0,
+    Decimal = 1,
+    Function = 2,
+    Letting = 3,
+    Find = 4,
 } // to be extended
 
 // each type of token / symbol in the essence grammar will be

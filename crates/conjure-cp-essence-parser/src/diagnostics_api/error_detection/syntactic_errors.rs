@@ -71,12 +71,12 @@ pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
     while let Some(node) = stack.pop() {
 
         // Detect all the missing nodes before since tree-sitter sometimes is not able to correctly identify a missing node.
-        // Use zero-width range check and move on to avoid duplicate diagnistics 
+        // Use zero-width range check and move on to avoid duplicate diagnistics
         if node.start_position() == node.end_position() {
             diagnostics.push(classify_missing_token(node));
             continue;
         }
-   
+
         if (node.is_error()) || node.is_missing() &&
             (!node.parent().map_or(false, |p| p.is_error() || p.is_missing())) {
 
@@ -84,7 +84,7 @@ pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
             // stops traversing children of error/missing nodes (will do that when classifying)
             continue;
         }
-   
+
         // Otherwise, traverse children
         for i in (0..node.child_count()).rev() {
             if let Some(child) = node.child(i) {
@@ -96,7 +96,7 @@ pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
     diagnostics
 }
 
-
+// commented out for hygene, since not used currently
 /// Recursively finds the deepest error or missing node in the subtree rooted at `node`.
 ///
 /// # Arguments
@@ -104,31 +104,31 @@ pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
 ///
 /// # Returns
 /// * `Node` - The deepest error or missing node found, or the original node if none found.
-fn deepest_error_node(node: Node) -> Node {
-    let mut current = node;
-    loop {
-        // Find the first child that is error or missing
-        let mut found = false;
-        for i in 0..current.child_count() {
-            if let Some(child) = current.child(i) {
-                if child.is_error() || child.is_missing() {
-                    current = child;
-                    found = true;
-                    break;
-                }
-            }
-        }
-        if !found {
-            break;
-        }
-    }
-    current
-}
+// fn deepest_error_node(node: Node) -> Node {
+//     let mut current = node;
+//     loop {
+//         // Find the first child that is error or missing
+//         let mut found = false;
+//         for i in 0..current.child_count() {
+//             if let Some(child) = current.child(i) {
+//                 if child.is_error() || child.is_missing() {
+//                     current = child;
+//                     found = true;
+//                     break;
+//                 }
+//             }
+//         }
+//         if !found {
+//             break;
+//         }
+//     }
+//     current
+// }
 
 
 /// Classifies a syntax error node and returns a diagnostic for it.
 fn classify_syntax_error(node: Node) -> Diagnostic {
-    
+
     if node.start_position() == node.end_position() {
         classify_missing_token(node)
     } else {
@@ -165,7 +165,7 @@ fn classify_missing_token(node: Node) -> Diagnostic {
 }
 
 
-/// Classifies a general syntax error that cannot be classified with other functions. 
+/// Classifies a general syntax error that cannot be classified with other functions.
 fn classify_general_syntax_error(node: Node) -> Diagnostic {
     let start = node.start_position();
     let end = node.end_position();
@@ -197,19 +197,19 @@ fn classify_general_syntax_error(node: Node) -> Diagnostic {
 
 // }
 
-// if ERROR at top level children, uknown command 
+// if ERROR at top level children, uknown command
 
 /// Helper function for tests to compare the actual diagnostic with the expected one.
 pub fn check_diagnostic(
 
-    diag: &Diagnostic, 
-    line_start: u32, 
-    char_start: u32, 
-    line_end: u32, 
-    char_end: u32, 
+    diag: &Diagnostic,
+    line_start: u32,
+    char_start: u32,
+    line_end: u32,
+    char_end: u32,
     msg: &str) {
-    
-    // Checking range 
+
+    // Checking range
     assert_eq!(diag.range.start.line, line_start);
     assert_eq!(diag.range.start.character, char_start);
     assert_eq!(diag.range.end.line, line_end);
@@ -219,4 +219,3 @@ pub fn check_diagnostic(
     assert_eq!(diag.message, msg);
 
 }
-
