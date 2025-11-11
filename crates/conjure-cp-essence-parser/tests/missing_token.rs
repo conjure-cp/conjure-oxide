@@ -1,4 +1,6 @@
-use conjure_cp_essence_parser::diagnostics::error_detection::syntactic_errors::{detect_syntactic_errors, check_diagnostic, print_all_error_nodes};
+use conjure_cp_essence_parser::diagnostics::error_detection::syntactic_errors::{
+    check_diagnostic, detect_syntactic_errors, print_all_error_nodes,
+};
 
 #[test]
 fn missing_identifier() {
@@ -9,10 +11,8 @@ fn missing_identifier() {
 
     let diag = &diagnostics[0];
 
-    check_diagnostic(diag, 0,4,0,4, "Missing 'variable_list'");
-
+    check_diagnostic(diag, 0, 4, 0, 4, "Missing 'variable_list'");
 }
-
 
 #[test]
 fn missing_colon() {
@@ -26,9 +26,7 @@ fn missing_colon() {
     let diag = &diagnostics[0];
 
     check_diagnostic(diag, 0, 6, 0, 6, "Missing 'COLON'");
-
 }
-
 
 #[test]
 fn missing_domain() {
@@ -48,7 +46,6 @@ find y:
     check_diagnostic(diag, 1, 7, 1, 7, "Missing 'domain'");
 }
 
-
 #[test]
 fn missing_contraint() {
     // not indented because have to avoid leading spaces for accurate character counr
@@ -64,9 +61,7 @@ such that
     let diag = &diagnostics[0];
 
     check_diagnostic(diag, 1, 9, 1, 9, "Missing 'bool_expr'");
-
 }
-
 
 #[test]
 fn multiple_missing_tokens() {
@@ -87,7 +82,6 @@ letting x be
     check_diagnostic(diag2, 1, 12, 1, 12, "Missing 'expression or domain'");
 }
 
-
 #[test]
 fn missing_domain_in_tuple_domain() {
     let source = "find x: tuple()";
@@ -107,9 +101,15 @@ such that 5 =
     let diagnostics = detect_syntactic_errors(source);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
     let diag = &diagnostics[0];
-    check_diagnostic(diag, 1, 13, 1, 13, "Missing right operand in 'comparison' expression");
+    check_diagnostic(
+        diag,
+        1,
+        13,
+        1,
+        13,
+        "Missing right operand in 'comparison' expression",
+    );
 }
-
 
 #[test]
 fn missing_right_operand_in_and_expr() {
@@ -120,5 +120,12 @@ such that x /\\
     let diagnostics = detect_syntactic_errors(source);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
     let diag = &diagnostics[0];
-    check_diagnostic(diag, 1, 14, 1, 14, "Missing right operand in 'and' expression");
+    check_diagnostic(
+        diag,
+        1,
+        14,
+        1,
+        14,
+        "Missing right operand in 'and' expression",
+    );
 }

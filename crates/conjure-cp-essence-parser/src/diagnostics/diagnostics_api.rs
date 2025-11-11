@@ -1,8 +1,7 @@
-
 use serde::{Deserialize, Serialize};
 
-use crate::diagnostics::error_detection::syntactic_errors::detect_syntactic_errors;
 use crate::diagnostics::error_detection::semantic_errors::detect_semantic_errors;
+use crate::diagnostics::error_detection::syntactic_errors::detect_syntactic_errors;
 
 // structs for lsp stuff
 
@@ -55,7 +54,7 @@ pub enum SymbolKind {
 
 // each type of token / symbol in the essence grammar will be
 // assigned an integer, which would be mapped to a colour
-#[derive(Debug, Clone, Serialize, Deserialize, )]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DocumentSymbol {
     pub name: String,
@@ -70,12 +69,11 @@ pub struct DocumentSymbol {
 pub fn get_diagnostics(source: &str) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
 
-        // semantic error detection from error-detection/semantic-errors.rs
-        diagnostics.extend(detect_semantic_errors(source)); // not implemented yet
+    // semantic error detection from error-detection/semantic-errors.rs
+    diagnostics.extend(detect_semantic_errors(source)); // not implemented yet
 
-        // syntactic error detection from error-detection/syntactic-errors.rs
-        diagnostics.extend(detect_syntactic_errors(source)); // not implemented yet
-
+    // syntactic error detection from error-detection/syntactic-errors.rs
+    diagnostics.extend(detect_syntactic_errors(source)); // not implemented yet
 
     diagnostics
 }

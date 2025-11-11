@@ -1,9 +1,8 @@
 // Basic syntactic error detection helpers for the LSP API.
 
 use crate::diagnostics::diagnostics_api::{Diagnostic, Position, Range, Severity};
-use crate::parser::util::{get_tree};
-use tree_sitter::{Node};
-
+use crate::parser::util::get_tree;
+use tree_sitter::Node;
 
 /// Detects very simple semantic issues in source and returns a vector
 /// of Diagnostics.
@@ -19,16 +18,21 @@ pub fn detect_semantic_errors(source: &str) -> Vec<Diagnostic> {
             let last_char = source.lines().last().map(|l| l.len()).unwrap_or(0);
             diagnostics.push(Diagnostic {
                 range: Range {
-                    start: Position { line: 0, character: 0 },
-                    end: Position {line: last_line as u32, character: last_char as u32},
+                    start: Position {
+                        line: 0,
+                        character: 0,
+                    },
+                    end: Position {
+                        line: last_line as u32,
+                        character: last_char as u32,
+                    },
                 },
                 severity: Severity::Error,
                 message: "Failed to read the source code".to_string(),
                 source: "Tree-Sitter-Parse-Error",
             });
-        return diagnostics
+            return diagnostics;
         }
-
     };
     let root_node = tree.root_node();
 
@@ -44,26 +48,32 @@ pub fn detect_semantic_errors(source: &str) -> Vec<Diagnostic> {
 }
 
 const KEYWORDS: [&str; 21] = [
-    "forall", "exists", "such", "that", "letting", "find", "minimise", "maximise",
-    "subject", "to", "where", "and", "or", "not", "if", "then", "else", "in",
-    "sum", "product", "bool"
+    "forall", "exists", "such", "that", "letting", "find", "minimise", "maximise", "subject", "to",
+    "where", "and", "or", "not", "if", "then", "else", "in", "sum", "product", "bool",
 ];
-
 
 // keyword as identifier error and push to diagnostics
 fn keyword_as_identifier(root: Node, src: &str, diagnostics: &mut Vec<Diagnostic>) {
     let mut stack = vec![root];
     while let Some(node) = stack.pop() {
         println!("Visiting node kind: {}", node.kind());
-        if (node.kind() == "variable" || node.kind() == "identifier" || node.kind() == "parameter") && let Ok(text) = node.utf8_text(src.as_bytes()) {
+        if (node.kind() == "variable" || node.kind() == "identifier" || node.kind() == "parameter")
+            && let Ok(text) = node.utf8_text(src.as_bytes())
+        {
             let ident = text.trim();
             if KEYWORDS.contains(&ident) {
                 let start_point = node.start_position();
                 let end_point = node.end_position();
                 diagnostics.push(Diagnostic {
                     range: Range {
-                        start: Position { line: start_point.row as u32, character: start_point.column as u32 },
-                        end: Position { line: end_point.row as u32, character: end_point.column as u32 },
+                        start: Position {
+                            line: start_point.row as u32,
+                            character: start_point.column as u32,
+                        },
+                        end: Position {
+                            line: end_point.row as u32,
+                            character: end_point.column as u32,
+                        },
                     },
                     severity: Severity::Error,
                     message: format!("Keyword '{}' used as an identifier", ident),
