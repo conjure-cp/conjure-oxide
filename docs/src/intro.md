@@ -8,7 +8,7 @@ Conjure Oxide is in the early stages of development, so most Essence language
 features are not supported yet. However, it does currently support most of
 Essence Prime.
 
-This site contains the user documentation for Conjure Oxide; other useful links can be found on the [useful links](./links.md) page.
+This site contains the user documentation for Conjure Oxide; other useful links can be found on the [useful links](./documentation/links.md) page.
 
 ## Contributing 
 
