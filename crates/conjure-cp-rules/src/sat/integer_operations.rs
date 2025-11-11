@@ -226,7 +226,7 @@ fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
         while let Some(a) = iter.next() {
             if let Some(b) = iter.next() {
-                values = tseytin_int_adder(&a, &b, output_size.unwrap(), &mut new_clauses, &mut new_symbols);
+                values = tseytin_int_adder(&a, &b, output_size, &mut new_clauses, &mut new_symbols);
                 next.push(values);
             } else {
                 next.push(a);
