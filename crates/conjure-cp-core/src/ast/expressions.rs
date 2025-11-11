@@ -11,12 +11,12 @@ use crate::ast::SetAttr;
 use crate::ast::literals::AbstractLiteral;
 use crate::ast::literals::Literal;
 use crate::ast::pretty::{pretty_expressions_as_top_level, pretty_vec};
+use crate::ast::sat_encoding::SATIntEncoding;
 use crate::bug;
 use conjure_cp_enum_compatibility_macro::document_compatibility;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use ustr::Ustr;
-use crate::ast::sat_encoding::SATIntEncoding;
 
 use polyquine::Quine;
 use uniplate::{Biplate, Uniplate};

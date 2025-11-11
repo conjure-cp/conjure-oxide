@@ -43,23 +43,22 @@ impl Representation for SATLogInt {
         };
 
         // Determine min/max and return None if range is unbounded
-        let (min, max) = ranges.iter().try_fold(
-    (i32::MAX, i32::MIN),
-    |(min_a, max_b), range| {
-        let lb = range.lower_bound()?;
-        let ub = range.upper_bound()?;
-        Some((min_a.min(*lb), max_b.max(*ub)))
-    }
-)?;
+        let (min, max) =
+            ranges
+                .iter()
+                .try_fold((i32::MAX, i32::MIN), |(min_a, max_b), range| {
+                    let lb = range.lower_bound()?;
+                    let ub = range.upper_bound()?;
+                    Some((min_a.min(*lb), max_b.max(*ub)))
+                })?;
 
-    let bit_count = (1..=32)
-    .find(|&bits| {
-        let min_possible = -(1i64 << (bits - 1));
-        let max_possible = (1i64 << (bits - 1)) - 1;
-        (min as i64) >= min_possible && (max as i64) <= max_possible
-    })
-    .unwrap();
-
+        let bit_count = (1..=32)
+            .find(|&bits| {
+                let min_possible = -(1i64 << (bits - 1));
+                let max_possible = (1i64 << (bits - 1)) - 1;
+                (min as i64) >= min_possible && (max as i64) <= max_possible
+            })
+            .unwrap();
 
         Some(SATLogInt {
             src_var: name.clone(),

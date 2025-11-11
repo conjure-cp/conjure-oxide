@@ -16,11 +16,11 @@ mod model;
 mod name;
 pub mod records;
 mod reference;
+mod sat_encoding;
 mod submodel;
 mod symbol_table;
 mod types;
 mod variables;
-mod sat_encoding;
 
 mod moo;
 pub use moo::Moo;
@@ -40,11 +40,11 @@ pub use model::*;
 pub use name::Name;
 pub use records::RecordEntry;
 pub use reference::Reference;
+pub use sat_encoding::SATIntEncoding;
 pub use submodel::SubModel;
 pub use symbol_table::SymbolTable;
 pub use types::*;
 pub use variables::DecisionVariable;
-pub use sat_encoding::SATIntEncoding;
 
 /// Creates a new matrix [`AbstractLiteral`] optionally with some index domain.
 ///

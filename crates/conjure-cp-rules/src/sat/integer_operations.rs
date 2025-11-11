@@ -1,5 +1,5 @@
 use conjure_cp::ast::Expression as Expr;
-use conjure_cp::ast::{SymbolTable, SATIntEncoding};
+use conjure_cp::ast::{SATIntEncoding, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
@@ -14,7 +14,7 @@ use itertools::Itertools;
 use super::boolean::{
     tseytin_and, tseytin_iff, tseytin_imply, tseytin_mux, tseytin_not, tseytin_or, tseytin_xor,
 };
-use super::integer_repr::{validate_sat_int_operands, bit_magnitude, match_bits_length};
+use super::integer_repr::{bit_magnitude, match_bits_length, validate_sat_int_operands};
 
 use conjure_cp::ast::CnfClause;
 
@@ -36,7 +36,8 @@ fn cnf_int_ineq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         _ => return Err(RuleNotApplicable),
     };
 
-    let binding = validate_sat_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()], None)?;
+    let binding =
+        validate_sat_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()], None)?;
     let [lhs_bits, rhs_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -66,7 +67,8 @@ fn cnf_int_eq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let binding = validate_sat_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()], None)?;
+    let binding =
+        validate_sat_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()], None)?;
     let [lhs_bits, rhs_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -107,7 +109,8 @@ fn cnf_int_neq(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let binding = validate_sat_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()], None)?;
+    let binding =
+        validate_sat_int_operands(vec![lhs.as_ref().clone(), rhs.as_ref().clone()], None)?;
     let [lhs_bits, rhs_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -175,7 +178,12 @@ fn inequality_boolean(
     // final bool is the sign bit and should be handled inversely
     let nota = tseytin_not(a[bit_count - 1].clone(), clauses, symbols);
     lhs = tseytin_and(&vec![nota, b[bit_count - 1].clone()], clauses, symbols);
-    iff = tseytin_iff(a[bit_count - 1].clone(), b[bit_count - 1].clone(), clauses, symbols);
+    iff = tseytin_iff(
+        a[bit_count - 1].clone(),
+        b[bit_count - 1].clone(),
+        clauses,
+        symbols,
+    );
     rhs = tseytin_and(&vec![iff, output.clone()], clauses, symbols);
     output = tseytin_or(&vec![lhs, rhs], clauses, symbols);
 
@@ -199,12 +207,12 @@ fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     };
 
     let ranges: Result<Vec<_>, _> = exprs_list
-    .iter()
-    .map(|e| match e {
-        Expr::SATInt(_, _, _, x) => Ok(x),
-        _ => Err(RuleNotApplicable),
-    })
-    .collect();
+        .iter()
+        .map(|e| match e {
+            Expr::SATInt(_, _, _, x) => Ok(x),
+            _ => Err(RuleNotApplicable),
+        })
+        .collect();
 
     let ranges = ranges?;
 
@@ -214,7 +222,8 @@ fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let output_size = cmp::max(bit_magnitude(min), bit_magnitude(max));
 
     // Check operands are valid log ints
-    let mut exprs_bits = validate_sat_int_operands(exprs_list.clone(), Some(output_size.try_into().unwrap()))?;
+    let mut exprs_bits =
+        validate_sat_int_operands(exprs_list.clone(), Some(output_size.try_into().unwrap()))?;
 
     let mut new_symbols = symbols.clone();
     let mut values;
@@ -239,7 +248,12 @@ fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let result = exprs_bits.pop().unwrap();
 
     Ok(Reduction::cnf(
-        Expr::SATInt(Metadata::new(), SATIntEncoding::Log, Moo::new(into_matrix_expr!(result)), (min,max)),
+        Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Log,
+            Moo::new(into_matrix_expr!(result)),
+            (min, max),
+        ),
         new_clauses,
         new_symbols,
     ))
@@ -382,12 +396,7 @@ fn product_of_ranges(ranges: Vec<&(i32, i32)>) -> (i32, i32) {
     let &(mut min_prod, mut max_prod) = ranges[0];
 
     for &(a, b) in &ranges[1..] {
-        let candidates = [
-            min_prod * a,
-            min_prod * b,
-            max_prod * a,
-            max_prod * b,
-        ];
+        let candidates = [min_prod * a, min_prod * b, max_prod * a, max_prod * b];
         min_prod = *candidates.iter().min().unwrap();
         max_prod = *candidates.iter().max().unwrap();
     }
@@ -412,45 +421,56 @@ fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     };
 
     let ranges: Result<Vec<_>, _> = exprs_list
-    .iter()
-    .map(|e| match e {
-        Expr::SATInt(_, _, _, x) => Ok(x),
-        _ => Err(RuleNotApplicable),
-    })
-    .collect();
+        .iter()
+        .map(|e| match e {
+            Expr::SATInt(_, _, _, x) => Ok(x),
+            _ => Err(RuleNotApplicable),
+        })
+        .collect();
 
-let ranges = ranges?; // propagate error if any
+    let ranges = ranges?; // propagate error if any
 
-let (min, max) = product_of_ranges(ranges.clone());
+    let (min, max) = product_of_ranges(ranges.clone());
 
     let exprs_bits = validate_sat_int_operands(exprs_list.clone(), None)?;
 
     let mut new_symbols = symbols.clone();
     let mut new_clauses = vec![];
 
-    let (result, _) = exprs_bits.iter().cloned().zip(ranges.into_iter().copied()).reduce(|lhs, rhs| {
-        // Make both bit vectors the same length
-        let (lhs_bits, rhs_bits) = match_bits_length(lhs.0.clone(), rhs.0.clone());
+    let (result, _) = exprs_bits
+        .iter()
+        .cloned()
+        .zip(ranges.into_iter().copied())
+        .reduce(|lhs, rhs| {
+            // Make both bit vectors the same length
+            let (lhs_bits, rhs_bits) = match_bits_length(lhs.0.clone(), rhs.0.clone());
 
-        // Multiply operands
-        let mut values = cnf_shift_add_multiply(&lhs_bits, &rhs_bits, lhs_bits.len(), &mut new_clauses, &mut new_symbols);
+            // Multiply operands
+            let mut values = cnf_shift_add_multiply(
+                &lhs_bits,
+                &rhs_bits,
+                lhs_bits.len(),
+                &mut new_clauses,
+                &mut new_symbols,
+            );
 
-        // Determine new range of result
-        let (mut cum_min, mut cum_max) = lhs.1;
-        let candidates = [
-            cum_min * rhs.1.0,
-            cum_min * rhs.1.1,
-            cum_max * rhs.1.0,
-            cum_max * rhs.1.1,
-        ];
-        cum_min = *candidates.iter().min().unwrap();
-        cum_max = *candidates.iter().max().unwrap();
+            // Determine new range of result
+            let (mut cum_min, mut cum_max) = lhs.1;
+            let candidates = [
+                cum_min * rhs.1.0,
+                cum_min * rhs.1.1,
+                cum_max * rhs.1.0,
+                cum_max * rhs.1.1,
+            ];
+            cum_min = *candidates.iter().min().unwrap();
+            cum_max = *candidates.iter().max().unwrap();
 
-        let new_bit_count = bit_magnitude(cum_min).max(bit_magnitude(cum_max));
-        values.truncate(new_bit_count);
-        
-        (values, (cum_min, cum_max))
-    }).unwrap();
+            let new_bit_count = bit_magnitude(cum_min).max(bit_magnitude(cum_max));
+            values.truncate(new_bit_count);
+
+            (values, (cum_min, cum_max))
+        })
+        .unwrap();
 
     // while exprs_bits.len() > 1 {
     //     let mut next = Vec::with_capacity(exprs_bits.len().div_ceil(2));
@@ -471,7 +491,12 @@ let (min, max) = product_of_ranges(ranges.clone());
     // let result = exprs_bits.pop().unwrap();
 
     Ok(Reduction::cnf(
-        Expr::SATInt(Metadata::new(), SATIntEncoding::Log, Moo::new(into_matrix_expr!(result.clone())), (min, max)),
+        Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Log,
+            Moo::new(into_matrix_expr!(result.clone())),
+            (min, max),
+        ),
         new_clauses,
         new_symbols,
     ))
@@ -498,15 +523,18 @@ fn cnf_int_neg(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    
-
     let mut new_clauses = vec![];
     let mut new_symbols = symbols.clone();
 
     let result = tseytin_negate(bits, bits.len(), &mut new_clauses, &mut new_symbols);
 
     Ok(Reduction::cnf(
-        Expr::SATInt(Metadata::new(), SATIntEncoding::Log, Moo::new(into_matrix_expr!(result)), (-max,-min)),
+        Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Log,
+            Moo::new(into_matrix_expr!(result)),
+            (-max, -min),
+        ),
         new_clauses,
         new_symbols,
     ))
@@ -547,12 +575,12 @@ fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     };
 
     let ranges: Result<Vec<_>, _> = exprs_list
-    .iter()
-    .map(|e| match e {
-        Expr::SATInt(_, _, _, x) => Ok(x),
-        _ => Err(RuleNotApplicable),
-    })
-    .collect();
+        .iter()
+        .map(|e| match e {
+            Expr::SATInt(_, _, _, x) => Ok(x),
+            _ => Err(RuleNotApplicable),
+        })
+        .collect();
 
     let ranges = ranges?; // propagate error if any
 
@@ -585,7 +613,12 @@ fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let result = exprs_bits.pop().unwrap();
 
     Ok(Reduction::cnf(
-        Expr::SATInt(Metadata::new(), SATIntEncoding::Log, Moo::new(into_matrix_expr!(result)), (min,max)),
+        Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Log,
+            Moo::new(into_matrix_expr!(result)),
+            (min, max),
+        ),
         new_clauses,
         new_symbols,
     ))
@@ -644,12 +677,12 @@ fn cnf_int_max(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     };
 
     let ranges: Result<Vec<_>, _> = exprs_list
-    .iter()
-    .map(|e| match e {
-        Expr::SATInt(_, _, _, x) => Ok(x),
-        _ => Err(RuleNotApplicable),
-    })
-    .collect();
+        .iter()
+        .map(|e| match e {
+            Expr::SATInt(_, _, _, x) => Ok(x),
+            _ => Err(RuleNotApplicable),
+        })
+        .collect();
 
     let ranges = ranges?; // propagate error if any
 
@@ -682,7 +715,12 @@ fn cnf_int_max(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let result = exprs_bits.pop().unwrap();
 
     Ok(Reduction::cnf(
-        Expr::SATInt(Metadata::new(), SATIntEncoding::Log, Moo::new(into_matrix_expr!(result)), (min, max)),
+        Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Log,
+            Moo::new(into_matrix_expr!(result)),
+            (min, max),
+        ),
         new_clauses,
         new_symbols,
     ))
@@ -700,11 +738,14 @@ fn cnf_int_abs(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::SATInt(_,_,_,(min, max)) = expr.as_ref() else {
+    let Expr::SATInt(_, _, _, (min, max)) = expr.as_ref() else {
         return Err(RuleNotApplicable);
     };
 
-    let range = (cmp::max(0, cmp::max(*min, -*max)), cmp::max(min.abs(), max.abs()));
+    let range = (
+        cmp::max(0, cmp::max(*min, -*max)),
+        cmp::max(min.abs(), max.abs()),
+    );
 
     let binding = validate_sat_int_operands(vec![expr.as_ref().clone()], None)?;
     let [bits] = binding.as_slice() else {
@@ -739,7 +780,12 @@ fn cnf_int_abs(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     }
 
     Ok(Reduction::cnf(
-        Expr::SATInt(Metadata::new(), SATIntEncoding::Log, Moo::new(into_matrix_expr!(result)), range),
+        Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Log,
+            Moo::new(into_matrix_expr!(result)),
+            range,
+        ),
         new_clauses,
         new_symbols,
     ))
@@ -759,11 +805,11 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::SATInt(_,_,_,(numer_min, numer_max)) = numer.as_ref() else {
+    let Expr::SATInt(_, _, _, (numer_min, numer_max)) = numer.as_ref() else {
         return Err(RuleNotApplicable);
     };
 
-    let Expr::SATInt(_,_,_,(denom_min, denom_max)) = denom.as_ref() else {
+    let Expr::SATInt(_, _, _, (denom_min, denom_max)) = denom.as_ref() else {
         return Err(RuleNotApplicable);
     };
 
@@ -777,7 +823,8 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let min = *candidates.iter().min().unwrap();
     let max = *candidates.iter().max().unwrap();
 
-    let binding = validate_sat_int_operands(vec![numer.as_ref().clone(), denom.as_ref().clone()], None)?;
+    let binding =
+        validate_sat_int_operands(vec![numer.as_ref().clone(), denom.as_ref().clone()], None)?;
     let [numer_bits, denom_bits] = binding.as_slice() else {
         return Err(RuleNotApplicable);
     };
@@ -796,7 +843,12 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let mut d = std::iter::repeat_n(false.into(), bit_count).collect_vec();
     d.extend(denom_bits.clone());
 
-    let minus_d = tseytin_negate(&d.clone(), 2 * bit_count, &mut new_clauses, &mut new_symbols);
+    let minus_d = tseytin_negate(
+        &d.clone(),
+        2 * bit_count,
+        &mut new_clauses,
+        &mut new_symbols,
+    );
     let mut rminusd;
 
     for i in (0..bit_count).rev() {
@@ -835,7 +887,12 @@ fn cnf_int_safediv(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     }
 
     Ok(Reduction::cnf(
-        Expr::SATInt(Metadata::new(), SATIntEncoding::Log, Moo::new(into_matrix_expr!(quotient)), (min, max)),
+        Expr::SATInt(
+            Metadata::new(),
+            SATIntEncoding::Log,
+            Moo::new(into_matrix_expr!(quotient)),
+            (min, max),
+        ),
         new_clauses,
         new_symbols,
     ))

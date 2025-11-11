@@ -1,5 +1,5 @@
 use conjure_cp::ast::Expression as Expr;
-use conjure_cp::ast::{SymbolTable, SATIntEncoding};
+use conjure_cp::ast::{SATIntEncoding, SymbolTable};
 use conjure_cp::rule_engine::{
     ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
     register_rule,
@@ -9,7 +9,7 @@ use conjure_cp::ast::Metadata;
 use conjure_cp::ast::{Atom, Domain, Literal, Moo, Range};
 use conjure_cp::into_matrix_expr;
 
-use conjure_cp::{essence_expr, bug};
+use conjure_cp::{bug, essence_expr};
 
 /// This function takes a target expression and a vector of ranges and creates an expression representing the ranges with the target expression as the subject
 ///
@@ -23,9 +23,8 @@ fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
         match range {
             Range::Single(x) => output.push(essence_expr!(&value = &x)),
             Range::Bounded(x, y) => output.push(essence_expr!("&value >= &x /\\ &value <= &y")),
-            _ => bug!("Unbounded domains not supported for SAT")
-            // Range::UnboundedR(x) => output.push(essence_expr!(&value >= &x)),
-            // Range::UnboundedL(x) => output.push(essence_expr!(&value <= &x)),
+            _ => bug!("Unbounded domains not supported for SAT"), // Range::UnboundedR(x) => output.push(essence_expr!(&value >= &x)),
+                                                                  // Range::UnboundedL(x) => output.push(essence_expr!(&value <= &x)),
         }
     }
 
@@ -34,9 +33,12 @@ fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
 
 /// This function confirms that all of the input expressions are SATInts, and returns vectors for each input of their bits
 /// This function also extends all vectors such that they have the same lengths
-/// The vector lengths is either `n` for bit_count = Some(n), otherwise the length of the longest operand 
-pub fn validate_sat_int_operands(exprs: Vec<Expr>, bit_count: Option<u32>) -> Result<Vec<Vec<Expr>>, ApplicationError> {
-    // TODO: In the future it may be possible to optimize operations between integers with different bit sizes 
+/// The vector lengths is either `n` for bit_count = Some(n), otherwise the length of the longest operand
+pub fn validate_sat_int_operands(
+    exprs: Vec<Expr>,
+    bit_count: Option<u32>,
+) -> Result<Vec<Vec<Expr>>, ApplicationError> {
+    // TODO: In the future it may be possible to optimize operations between integers with different bit sizes
     // Collect inner bit vectors from each SATInt
     let mut out: Vec<Vec<Expr>> = exprs
         .into_iter()
@@ -104,11 +106,15 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
     let Domain::Int(ranges) = name.domain().unwrap() else {
         return Err(RuleNotApplicable);
     };
-    
-    let (min,max) = ranges.iter().fold(
-        (i32::MAX, i32::MIN),
-    |(min_a, max_b), range| (min_a.min(*range.lower_bound().unwrap()), max_b.max(*range.upper_bound().unwrap()))
-);
+
+    let (min, max) = ranges
+        .iter()
+        .fold((i32::MAX, i32::MIN), |(min_a, max_b), range| {
+            (
+                min_a.min(*range.lower_bound().unwrap()),
+                max_b.max(*range.upper_bound().unwrap()),
+            )
+        });
 
     let mut symbols = symbols.clone();
 
@@ -128,7 +134,12 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
         .into_values()
         .collect();
 
-    let cnf_int = Expr::SATInt(Metadata::new(), SATIntEncoding::Log, Moo::new(into_matrix_expr!(bits)), (min, max));
+    let cnf_int = Expr::SATInt(
+        Metadata::new(),
+        SATIntEncoding::Log,
+        Moo::new(into_matrix_expr!(bits)),
+        (min, max),
+    );
 
     if !repr_exists {
         // add domain ranges as constraints if this is the first time the representation is added
@@ -179,10 +190,11 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
     Ok(Reduction::pure(Expr::SATInt(
         Metadata::new(),
-        SATIntEncoding::Log, Moo::new(into_matrix_expr!(binary_encoding)), (value, value)),
-    ))
+        SATIntEncoding::Log,
+        Moo::new(into_matrix_expr!(binary_encoding)),
+        (value, value),
+    )))
 }
-
 
 /// Determine the number of bits required to encode an i32 in 2s complement
 pub fn bit_magnitude(x: i32) -> usize {
