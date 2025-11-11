@@ -1,4 +1,4 @@
-pub mod diagnostics_api;
+pub mod diagnostics;
 pub mod errors;
 pub mod parser;
 pub mod parser_legacy;
