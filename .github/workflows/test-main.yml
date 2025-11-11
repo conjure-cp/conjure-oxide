@@ -68,10 +68,11 @@ jobs:
         uses: Swatinem/rust-cache@972b315a8225e8594dddc2b92e6333d1d1d3059c
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.compiler_profile == 'debug' }}
         with:
-          cache-on-failure: true
           add-job-id-key: false
           add-rust-environment-hash-key: false
           cache-all-crates: true
+          cache-on-failure: true
+          cache-targets: true
           cache-workspace-crates: true
           shared-key: ''
           prefix-key: conjure--${{ matrix.os }}--${{ matrix.rust_release }}--${{ matrix.compiler_profile }}
