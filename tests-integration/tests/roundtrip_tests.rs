@@ -13,9 +13,9 @@ use std::error::Error;
 use std::fs::File;
 use std::io::Write;
 
-// Designed to test if an Essence feature can be parsed correctly into the AST
+// Designed to test if an Essence feature can be parsed correctly into the AST and complete a roundtrip
 // Does not consider rewriting or solving
-fn feature_ast_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
+fn roundtrip_test(path: &str, essence_base: &str, extension: &str) -> Result<(), Box<dyn Error>> {
     /*
     When ACCEPT=true:
         Convert an Essence file into an ast-json using conjure
@@ -76,4 +76,4 @@ fn save_parse_model_json(
     Ok(())
 }
 
-include!(concat!(env!("OUT_DIR"), "/gen_tests_feature_AST.rs"));
+include!(concat!(env!("OUT_DIR"), "/gen_tests_roundtrip.rs"));
