@@ -254,6 +254,11 @@ pub enum Expression {
     /// `UnsafePow` after preventing undefinedness
     SafePow(Metadata, Moo<Expression>, Moo<Expression>),
 
+    /// Flatten matrix operator
+    /// `flatten(M)` or `flatten(n, M)`
+    /// where M is a matrix and n is an optional integer argument indicating depth of flattening
+    Flatten(Metadata, Option<Moo<Expression>, Moo<Expression>),
+
     /// `allDiff(<vec_expr>)`
     #[compatible(JsonInput)]
     AllDiff(Metadata, Moo<Expression>),
