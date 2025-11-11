@@ -23,7 +23,7 @@ impl SATOrderInt {
             .into_iter()
             .flatten()
             .map(move |index| self.index_to_name(index));
-        println!("names: {:?}", name_vec);
+        // println!("names: {:?}", name_vec);
         name_vec.clone().for_each(|a| println!("{:?}", a));
         name_vec
     }
@@ -117,11 +117,12 @@ impl Representation for SATOrderInt {
         eprintln!("fn call: value_up");
         // FOR Order: expect pattern {n : 1, n+1 : 1, ..., i : 1, i+1 : 0,.. , m-1 : 0}
         // return i
+        eprintln!("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA{:?}", values);
         let value = values
             .iter()
             .rev()
             .find(|(_, literal)| {
-                eprintln!("{:?}", literal);
+                // eprintln!("{:?}", literal);
                 match literal {
                     Literal::Int(a) => *a == 1,
                     _ => false,
@@ -129,7 +130,7 @@ impl Representation for SATOrderInt {
             })
             .and_then(|(name, _)| {
                 if let Name::Represented(boxed) = name {
-                    eprintln!("{:?}", boxed);
+                    // eprintln!("X{:?}", boxed);
                     let (_, _, index_str) = &**boxed;
                     index_str.parse::<i32>().ok()
                 } else {
@@ -138,7 +139,6 @@ impl Representation for SATOrderInt {
             })
             .unwrap();
 
-        print!("{:?}", value);
         // let top_index = match value {
         //     Some(x) => match x.0 {
         //         Name::Machine(index) => *index + 1,
@@ -155,7 +155,7 @@ impl Representation for SATOrderInt {
         &self,
         st: &SymbolTable,
     ) -> Result<std::collections::BTreeMap<Name, Expression>, ApplicationError> {
-        eprintln!("fn call: expr_down");
+        // eprintln!("fn call: expr_down");
 
         let e = self
             .names()
@@ -175,12 +175,13 @@ impl Representation for SATOrderInt {
     }
 
     fn declaration_down(&self) -> Result<Vec<DeclarationPtr>, ApplicationError> {
-        eprintln!("fn call: decl_down");
+        // eprintln!("fn call: decl_down");
+        // eprintln!("{:?}", self);
         let e = self
             .names()
             .map(|name| DeclarationPtr::new_var(name, Domain::Bool))
             .collect();
-        eprintln!("downed decls {:?}", e);
+        // eprintln!("downed decls {:?}", e);
         Ok(e)
     }
 
