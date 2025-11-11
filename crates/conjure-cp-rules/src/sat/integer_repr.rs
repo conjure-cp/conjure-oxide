@@ -92,10 +92,12 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
 
     let repr_exists = symbols
         .get_representation(new_name, &["sat_log_int"])
+        .get_representation(new_name, &["sat_direct_int"])
         .is_some();
 
     let representation = symbols
         .get_or_add_representation(new_name, &["sat_log_int"])
+        .get_or_add_representation(new_name, &["sat_direct_int"])
         .ok_or(RuleNotApplicable)?;
 
     let bits = representation[0]

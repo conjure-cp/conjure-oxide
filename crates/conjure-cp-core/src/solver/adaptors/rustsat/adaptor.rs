@@ -201,6 +201,7 @@ impl SolverAdaptor for Sat {
             if (domain != Bool
                 && (sym_tab
                     .get_representation(&find_ref.0, &["sat_log_int"])
+                    .get_representation(&find_ref.0, &["sat_direct_int"])
                     .is_none()))
             {
                 Err(SolverError::ModelInvalid(
