@@ -13,7 +13,7 @@ use conjure_cp::essence_expr;
 
 // The number of bits used to represent the integer.
 // This is a fixed value for the representation, but could be made dynamic if needed.
-pub const BITS: usize = 8; // FIXME: Make it dynamic
+pub const BITS: usize = 4; // FIXME: Make it dynamic
 
 /// This function takes a target expression and a vector of ranges and creates an expression representing the ranges with the target expression as the subject
 ///
@@ -36,7 +36,6 @@ fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
 }
 
 /// This function confirms that all of the input expressions are SATInts, and returns vectors for each input of their bits
-#[allow(dead_code)]
 pub fn validate_sat_int_operands(exprs: Vec<Expr>) -> Result<Vec<Vec<Expr>>, ApplicationError> {
     let out: Result<Vec<Vec<_>>, _> = exprs
         .into_iter()
@@ -92,11 +91,11 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
     let new_name = &name.name().to_owned();
 
     let repr_exists = symbols
-        .get_representation(new_name, &["sat_log_int"])
+        .get_representation(new_name, &["sat_order_int"])
         .is_some();
 
     let representation = symbols
-        .get_or_add_representation(new_name, &["sat_log_int"])
+        .get_or_add_representation(new_name, &["sat_order_int"])
         .ok_or(RuleNotApplicable)?;
 
     let bits = representation[0]

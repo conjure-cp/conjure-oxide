@@ -20,7 +20,9 @@ pub struct SATLogInt {
 impl SATLogInt {
     /// Returns the names of the representation variable
     fn names(&self) -> impl Iterator<Item = Name> + '_ {
-        (0..BITS).map(move |index| self.index_to_name(index))
+        let name_vec = (0..BITS).map(move |index| self.index_to_name(index));
+        println!("names: {:?}", name_vec);
+        name_vec
     }
 
     /// Gets the representation variable name for a specific index.
