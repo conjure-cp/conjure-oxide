@@ -51,6 +51,16 @@ impl<A: Ord> Range<A> {
             Range::UnboundedL(_) => None,
         }
     }
+
+    /// Returns the upper bound of the range, if it has one
+    pub fn upper_bound(&self) -> Option<&A> {
+        match self {
+            Range::Single(a) => Some(a),
+            Range::Bounded(_, a) => Some(a),
+            Range::UnboundedL(a) => Some(a),
+            Range::UnboundedR(_) => None,
+        }
+    }
 }
 
 impl<A: Num + Ord + Clone + Signed> Range<A> {
