@@ -23,6 +23,7 @@ use uniplate::{Biplate, Uniplate};
 use super::ac_operators::ACOperatorKind;
 use super::categories::{Category, CategoryOf};
 use super::comprehension::Comprehension;
+use super::abstract_comprehension::AbstractComprehension;
 use super::domains::HasDomain as _;
 use super::records::RecordValue;
 use super::{DeclarationPtr, Domain, Range, Reference, SubModel, Typeable};
@@ -88,6 +89,9 @@ pub enum Expression {
     // This makes implementing Quine tricky (it doesnt support Rc, by design). Skip it for now.
     #[polyquine_skip]
     Comprehension(Metadata, Moo<Comprehension>),
+
+    /// Higher-level abstract comprehension
+    AbstractComprehension(Metadata, Moo<AbstractComprehension>),
 
     /// Defines dominance ("Solution A is preferred over Solution B")
     DominanceRelation(Metadata, Moo<Expression>),
