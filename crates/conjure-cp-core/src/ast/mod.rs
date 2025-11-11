@@ -6,6 +6,7 @@ pub mod ac_operators;
 mod atom;
 mod cnf_clause;
 pub mod comprehension;
+pub mod abstract_comprehension;
 pub mod declaration;
 mod domains;
 mod expressions;
