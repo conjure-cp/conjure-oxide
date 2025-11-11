@@ -257,7 +257,7 @@ pub enum Expression {
     /// Flatten matrix operator
     /// `flatten(M)` or `flatten(n, M)`
     /// where M is a matrix and n is an optional integer argument indicating depth of flattening
-    Flatten(Metadata, Option<Moo<Expression>, Moo<Expression>),
+    Flatten(Metadata, Option<Moo<Expression>>, Moo<Expression>),
 
     /// `allDiff(<vec_expr>)`
     #[compatible(JsonInput)]
@@ -751,6 +751,30 @@ impl Expression {
             Expression::MinionDivEqUndefZero(_, _, _, _) => Some(Domain::Bool),
             Expression::MinionModuloEqUndefZero(_, _, _, _) => Some(Domain::Bool),
             Expression::FlatIneq(_, _, _, _) => Some(Domain::Bool),
+            Expression::Flatten(_, n, m) => {
+                if let Some(expr) = n {
+                    if let Some(ReturnType::Int) = expr.return_type() {
+                        // TODO: handle flatten with depth argument
+                        return None;
+                    }
+                } else {
+                    let mut domain = m.domain_of()?;
+                    let mut total_size = 1;
+                    let mut index_domains: Vec<Domain> = Vec::new();
+                    // get the deepest element domain
+                    while let Domain::Matrix(elem, _) = domain {
+                        domain = *elem;
+                    }
+
+                    // calculate total flattened size
+                    for i in &index_domains {
+                        total_size *= i.length().ok()?;
+                    }
+                    let new_index_domain = Domain::Int(vec![Range::Bounded(1, total_size.try_into().unwrap())]);
+                    return Some(Domain::Matrix(Box::new(domain), vec![new_index_domain]));
+                }
+                None
+            }
             Expression::AllDiff(_, _) => Some(Domain::Bool),
             Expression::FlatWatchedLiteral(_, _, _) => Some(Domain::Bool),
             Expression::MinionReify(_, _, _) => Some(Domain::Bool),
