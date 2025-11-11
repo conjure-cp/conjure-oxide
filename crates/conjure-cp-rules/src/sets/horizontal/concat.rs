@@ -51,8 +51,8 @@ fn union_subseteq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                     Expr::Union(_, a, b) => {
                         if let Some(ReturnType::Set(_)) = a.as_ref().return_type() {
                             if let Some(ReturnType::Set(_)) = b.as_ref().return_type() {
-                                let expr1 = Expr::SubsetEq(Metadata::new(), a.clone(), b.clone());
-                                let expr2 = Expr::SubsetEq(Metadata::new(), a.clone(), c.clone());
+                                let expr1 = Expr::SubsetEq(Metadata::new(), a.clone(), c.clone());
+                                let expr2 = Expr::SubsetEq(Metadata::new(), b.clone(), c.clone());
                                 Ok(Reduction::pure(Expr::And(
                                     Metadata::new(),
                                     Moo::new(matrix_expr![expr1, expr2]),
