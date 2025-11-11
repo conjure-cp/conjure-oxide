@@ -124,5 +124,42 @@ impl Representation for SATDirectInt {
         }
     }
 
+    fn expression_down(
+        &self,
+        symtab: &SymbolTable,
+    ) -> Result<std::collections::BTreeMap<Name, Expression>, ApplicationError> {
+        let e = self
+            .names()
+            .map(|name| {
+                let decl = symtab.lookup(&name).unwrap();
+                (
+                    name,
+                    Expression::Atomic(
+                        Metadata::new(),
+                        Atom::Reference(conjure_cp::ast::Reference {
+                            ptr: decl
+                        }),
+                    ),
+                )
+            })
+            .collect();
 
+        Ok(e)
+    }
+
+    fn declaration_down(&self) -> Result<Vec<DeclarationPtr>, ApplicationError> {
+        let e = self
+            .names()
+            .map(|name| DeclarationPtr::new_var(name, Domain::Bool))
+            .collect();
+        Ok(e)
+    }
+
+    fn repr_name(&self) -> &str {
+        "sat_direct_int"
+    }
+
+    fn box_clone(&self) -> Box<dyn Representation> {
+        Box::new(self.clone()) as _
+    }
 }
