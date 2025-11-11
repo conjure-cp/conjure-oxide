@@ -4,10 +4,8 @@ use serde_json::Value;
 use tower_lsp::{
     Client, LanguageServer, LspService, Server,
     jsonrpc::{Error, Result},
-    lsp_types::{
-        ExecuteCommandOptions, ExecuteCommandParams, InitializeParams, InitializeResult,
-        InitializedParams, MessageType, ServerCapabilities, notification::Notification,
-    },
+    lsp_types::notification::Notification,
+    lsp_types::*,
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -43,6 +41,7 @@ impl LanguageServer for Backend {
                     commands: vec![String::from("custom.notification")],
                     work_done_progress_options: Default::default(),
                 }),
+                hover_provider: Some(HoverProviderCapability::Simple(true)),
                 ..ServerCapabilities::default()
             },
         })
@@ -54,8 +53,44 @@ impl LanguageServer for Backend {
             .await;
     }
     async fn shutdown(&self) -> Result<()> {
+        self.client
+            .log_message(MessageType::INFO, "server shut down!") //client logs message of initialised
+            .await;
         Ok(())
     }
+
+    async fn did_open(&self, params: DidOpenTextDocumentParams) {
+        let text_document = params.text_document;
+        
+    }
+
+    async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
+        self.client
+            .log_message(MessageType::INFO, "hovering! :) Recieved {}") //client logs message of initialised
+            .await;
+
+        self.client
+            .log_message(MessageType::INFO, params.text_document_position_params.text_document.uri)
+            .await;
+
+        self.client
+            .log_message(MessageType::INFO, params.text_document_position_params.position.line)
+            .await;
+
+        self.client
+            .log_message(MessageType::INFO, params.text_document_position_params.position.character)
+            .await;
+
+        // //find path of conjure to access conjure/docs/bits/etc for documentation
+        Ok(Some(Hover {
+            contents: HoverContents::Scalar(MarkedString::String("You're hovering!".to_string())),
+            range: None,
+        }))
+        // let document = &params.text_document_position_params.text_document.uri;
+
+        // Ok(document.hover(params.text_document_position_params.position))
+    }
+    
     async fn execute_command(&self, params: ExecuteCommandParams) -> Result<Option<Value>> {
         if params.command == "custom.notification" {
             //one of the commands that we support (see line 34)
