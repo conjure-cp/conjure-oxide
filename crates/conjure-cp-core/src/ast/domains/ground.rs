@@ -113,8 +113,24 @@ impl GroundDomain {
         }
     }
 
-    pub fn values(&self) -> impl Iterator<Item = Literal> {
-        todo!()
+    pub fn values(&self) -> Result<Box<dyn Iterator<Item = Literal>>, DomainOpError> {
+        match self {
+            GroundDomain::Empty(_) => Ok(Box::new(vec![].into_iter())),
+            GroundDomain::Bool => Ok(Box::new(
+                vec![Literal::from(true), Literal::from(false)].into_iter(),
+            )),
+            GroundDomain::Int(rngs) => {
+                let rng_iters = rngs
+                    .iter()
+                    .map(Range::iter)
+                    .collect::<Option<Vec<_>>>()
+                    .ok_or(DomainOpError::InputUnbounded)?;
+                Ok(Box::new(
+                    rng_iters.into_iter().flat_map(|ri| ri.map(Literal::from)),
+                ))
+            }
+            _ => todo!("Enumerating nested domains is not yet supported"),
+        }
     }
 }
 

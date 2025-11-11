@@ -296,11 +296,11 @@ impl Domain {
         todo!()
     }
 
-    pub fn values(&self) -> Option<impl Iterator<Item = Literal>> {
+    pub fn values(&self) -> Result<impl Iterator<Item = Literal>, DomainOpError> {
         if let Some(gd) = self.as_ground() {
-            return Some(vec![].iter());
+            return gd.values();
         }
-        None
+        Err(DomainOpError::InputContainsReference)
     }
 
     pub fn from_literal_vec(vals: &Vec<Literal>) -> Option<DomainPtr> {
