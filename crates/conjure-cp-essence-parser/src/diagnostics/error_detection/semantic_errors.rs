@@ -72,12 +72,12 @@ fn keyword_as_identifier(root: Node, src: &str, diagnostics: &mut Vec<Diagnostic
                 print!("{:?}", diagnostics.last().unwrap());
             }
         }
-    }
 
-    // push children
-    for i in 0..node.child_count() {
-        if let Some(child) = node.child(i) {
-            stack.push(child);
+        // push children onto stack (must be inside the while loop!)
+        for i in 0..node.child_count() {
+            if let Some(child) = node.child(i) {
+                stack.push(child);
+            }
         }
     }
 }
