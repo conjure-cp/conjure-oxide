@@ -205,8 +205,43 @@ impl<A: Num + Ord + Clone> Range<A> {
         ans
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = A> {
-        todo!()
+    /// If this range is bounded, returns a lazy iterator over all values within the range.
+    /// Otherwise, returns None.
+    pub fn iter(&self) -> Option<RangeIterator<A>> {
+        match self {
+            Range::Single(val) => Some(RangeIterator::Single(Some(val.clone()))),
+            Range::Bounded(start, end) => Some(RangeIterator::Bounded {
+                current: start.clone(),
+                end: end.clone(),
+            }),
+            Range::UnboundedL(_) | Range::UnboundedR(_) | Range::Unbounded => None,
+        }
+    }
+}
+
+/// Iterator for Range<A> that yields values lazily
+pub enum RangeIterator<A> {
+    Single(Option<A>),
+    Bounded { current: A, end: A },
+}
+
+impl<A: Num + Ord + Clone> Iterator for RangeIterator<A> {
+    type Item = A;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            RangeIterator::Single(val) => val.take(),
+            RangeIterator::Bounded { current, end } => {
+                if current > end {
+                    return None;
+                }
+
+                let result = current.clone();
+                *current = current.clone() + A::one();
+
+                Some(result)
+            }
+        }
     }
 }
 
