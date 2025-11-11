@@ -14,7 +14,7 @@ use itertools::Itertools;
 use super::boolean::{
     tseytin_and, tseytin_iff, tseytin_imply, tseytin_mux, tseytin_not, tseytin_or, tseytin_xor,
 };
-use super::integer_repr::{validate_sat_int_operands, bit_magnitude};
+use super::integer_repr::{validate_sat_int_operands, bit_magnitude, match_bits_length};
 
 use conjure_cp::ast::CnfClause;
 
@@ -214,7 +214,7 @@ fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     let output_size = cmp::max(bit_magnitude(min), bit_magnitude(max));
 
     // Check operands are valid log ints
-    let mut exprs_bits = validate_sat_int_operands(exprs_list.clone(), Some(output_size))?;
+    let mut exprs_bits = validate_sat_int_operands(exprs_list.clone(), Some(output_size.try_into().unwrap()))?;
 
     let mut new_symbols = symbols.clone();
     let mut values;
@@ -371,7 +371,7 @@ fn cnf_shift_add_multiply(
     }
 
     //TODO: At the moment, this doesn't account for overflows (perhaps this could use a bubble in the future?)
-    s[..bits].to_vec()
+    s
 }
 
 fn product_of_ranges(ranges: Vec<&(i32, i32)>) -> (i32, i32) {
@@ -423,38 +423,57 @@ let ranges = ranges?; // propagate error if any
 
 let (min, max) = product_of_ranges(ranges);
 
-    let output_size = cmp::max(bit_magnitude(min), bit_magnitude(max));
-
     let mut exprs_bits = validate_sat_int_operands(exprs_list.clone(), None)?;
-
-    let input_sizes = exprs_bits[0].len();
 
     // This may not work, what happens if the cum_product is greater than the input bit limit?
 
     let mut new_symbols = symbols.clone();
-    let mut values;
     let mut new_clauses = vec![];
 
-    while exprs_bits.len() > 1 {
-        let mut next = Vec::with_capacity(exprs_bits.len().div_ceil(2));
-        let mut iter = exprs_bits.into_iter();
+    let (result, _) = exprs_bits.iter().zip(ranges.iter()).reduce(|lhs, rhs| {
+        // Make both bit vectors the same length
+        let (lhs_bits, rhs_bits) = match_bits_length(lhs.0.to_vec(), rhs.0.to_vec());
 
-        while let Some(a) = iter.next() {
-            if let Some(b) = iter.next() {
-                values = cnf_shift_add_multiply(&a, &b, input_sizes, &mut new_clauses, &mut new_symbols);
-                next.push(values);
-            } else {
-                next.push(a);
-            }
-        }
+        // Multiply operands
+        let mut values = cnf_shift_add_multiply(&lhs_bits, &rhs_bits, lhs_bits.len(), &mut new_clauses, &mut new_symbols);
 
-        exprs_bits = next;
-    }
+        // Determine new range of result
+        let (mut cum_min, mut cum_max) = lhs.1;
+        let candidates = [
+            cum_min * rhs.1.0,
+            cum_min * rhs.1.1,
+            cum_max * rhs.1.0,
+            cum_max * rhs.1.1,
+        ];
+        cum_min = *candidates.iter().min().unwrap();
+        cum_max = *candidates.iter().max().unwrap();
 
-    let result = exprs_bits.pop().unwrap();
+        let new_bit_count = bit_magnitude(cum_min).max(bit_magnitude(cum_max));
+        values.truncate(new_bit_count);
+        
+        (values, (cum_min, cum_max))
+    }).unwrap();
+
+    // while exprs_bits.len() > 1 {
+    //     let mut next = Vec::with_capacity(exprs_bits.len().div_ceil(2));
+    //     let mut iter = exprs_bits.into_iter();
+
+    //     while let Some(a) = iter.next() {
+    //         if let Some(b) = iter.next() {
+    //             values = cnf_shift_add_multiply(&a, &b, input_sizes, &mut new_clauses, &mut new_symbols);
+    //             next.push(values);
+    //         } else {
+    //             next.push(a);
+    //         }
+    //     }
+
+    //     exprs_bits = next;
+    // }
+
+    // let result = exprs_bits.pop().unwrap();
 
     Ok(Reduction::cnf(
-        Expr::SATInt(Metadata::new(), SATIntEncoding::Log, Moo::new(into_matrix_expr!(result)), (min, max)),
+        Expr::SATInt(Metadata::new(), SATIntEncoding::Log, Moo::new(into_matrix_expr!(result.to_vec())), (min, max)),
         new_clauses,
         new_symbols,
     ))

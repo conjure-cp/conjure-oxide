@@ -189,12 +189,32 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
 
 /// Determine the number of bits required to encode an i32 in 2s complement
-pub fn bit_magnitude(x: i32) -> u32 {
+pub fn bit_magnitude(x: i32) -> usize {
     if x >= 0 {
         // positive: bits = highest set bit + 1 sign bit
-        1 + (32 - x.leading_zeros())
+        (1 + (32 - x.leading_zeros())).try_into().unwrap()
     } else {
         // negative: bits = highest set bit in magnitude
-        33 - (!x).leading_zeros()
+        (33 - (!x).leading_zeros()).try_into().unwrap()
+    }
+}
+
+/// Given two vectors of expressions, extend the shorter one by repeating its last element until both are the same length
+pub fn match_bits_length(a: Vec<Expr>, b: Vec<Expr>) -> (Vec<Expr>, Vec<Expr>) {
+    let len_a = a.len();
+    let len_b = b.len();
+
+    if len_a < len_b {
+        let last_a = a.last().cloned().unwrap();
+        let mut a_extended = a;
+        a_extended.resize(len_b, last_a);
+        (a_extended, b)
+    } else if len_b < len_a {
+        let last_b = b.last().cloned().unwrap();
+        let mut b_extended = b;
+        b_extended.resize(len_a, last_b);
+        (a, b_extended)
+    } else {
+        (a, b)
     }
 }
