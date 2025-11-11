@@ -1,5 +1,6 @@
 use std::collections::{HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
+use syn::token::Return;
 use tracing::trace;
 
 use crate::ast::Atom;
@@ -1431,6 +1432,13 @@ impl Typeable for Expression {
             Expression::FlatSumLeq(_, _, _) => Some(ReturnType::Bool),
             Expression::MinionDivEqUndefZero(_, _, _, _) => Some(ReturnType::Bool),
             Expression::FlatIneq(_, _, _, _) => Some(ReturnType::Bool),
+            Expression::Flatten(_, _, matrix) => {
+                let mut flat_type = matrix.return_type()?;
+                while let ReturnType::Matrix(inner) = flat_type {
+                    flat_type = *inner;
+                }
+                Some(flat_type)
+            },
             Expression::AllDiff(_, _) => Some(ReturnType::Bool),
             Expression::Bubble(_, inner, _) => inner.return_type(),
             Expression::FlatWatchedLiteral(_, _, _) => Some(ReturnType::Bool),
