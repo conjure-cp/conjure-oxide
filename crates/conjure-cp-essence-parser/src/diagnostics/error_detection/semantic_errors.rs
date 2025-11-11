@@ -1,6 +1,6 @@
 // Basic syntactic error detection helpers for the LSP API.
 
-use crate::diagnostics_api::diagnostics_api::{Diagnostic, Position, Range, Severity};
+use crate::diagnostics::diagnostics_api::{Diagnostic, Position, Range, Severity};
 use crate::parser::util::{get_tree};
 use tree_sitter::{Node};
 
@@ -38,7 +38,7 @@ pub fn detect_semantic_errors(source: &str) -> Vec<Diagnostic> {
     println!("=========================\n");
 
     // call semantic error detection functions
-    keyword_as_identifier(root_node, &source, &mut diagnostics);
+    keyword_as_identifier(root_node, source, &mut diagnostics);
 
     diagnostics
 }
@@ -55,31 +55,29 @@ fn keyword_as_identifier(root: Node, src: &str, diagnostics: &mut Vec<Diagnostic
     let mut stack = vec![root];
     while let Some(node) = stack.pop() {
         println!("Visiting node kind: {}", node.kind());
-        if node.kind() == "variable" || node.kind() == "identifier" || node.kind() == "parameter" {
-            if let Ok(text) = node.utf8_text(src.as_bytes()) {
-                let ident = text.trim();
-                if KEYWORDS.contains(&ident) {
-                    let start_point = node.start_position();
-                    let end_point = node.end_position();
-                    diagnostics.push(Diagnostic {
-                        range: Range {
-                            start: Position { line: start_point.row as u32, character: start_point.column as u32 },
-                            end: Position { line: end_point.row as u32, character: end_point.column as u32 },
-                        },
-                        severity: Severity::Error,
-                        message: format!("Keyword '{}' used as an identifier", ident),
-                        source: "semantic-error-detector",
-                    });
-                    print!("{:?}", diagnostics.last().unwrap());
-                }
+        if (node.kind() == "variable" || node.kind() == "identifier" || node.kind() == "parameter") && let Ok(text) = node.utf8_text(src.as_bytes()) {
+            let ident = text.trim();
+            if KEYWORDS.contains(&ident) {
+                let start_point = node.start_position();
+                let end_point = node.end_position();
+                diagnostics.push(Diagnostic {
+                    range: Range {
+                        start: Position { line: start_point.row as u32, character: start_point.column as u32 },
+                        end: Position { line: end_point.row as u32, character: end_point.column as u32 },
+                    },
+                    severity: Severity::Error,
+                    message: format!("Keyword '{}' used as an identifier", ident),
+                    source: "semantic-error-detector",
+                });
+                print!("{:?}", diagnostics.last().unwrap());
             }
         }
+    }
 
-        // push children
-        for i in 0..node.child_count() {
-            if let Some(child) = node.child(i) {
-                stack.push(child);
-            }
+    // push children
+    for i in 0..node.child_count() {
+        if let Some(child) = node.child(i) {
+            stack.push(child);
         }
     }
 }

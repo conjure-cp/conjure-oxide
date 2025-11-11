@@ -1,5 +1,5 @@
 
-use crate::diagnostics_api::diagnostics_api::{Diagnostic, Position, Range, Severity};
+use crate::diagnostics::diagnostics_api::{Diagnostic, Position, Range, Severity};
 use crate::parser::util::get_tree;
 use tree_sitter::{Node};
 
@@ -78,7 +78,7 @@ pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
         }
 
         if (node.is_error()) || node.is_missing() &&
-            (!node.parent().map_or(false, |p| p.is_error() || p.is_missing())) {
+            (!node.parent().is_some_and(|p| p.is_error() || p.is_missing())) {
 
             diagnostics.push(classify_syntax_error(node));
             // stops traversing children of error/missing nodes (will do that when classifying)

@@ -1,5 +1,5 @@
-use conjure_cp_essence_parser::diagnostics_api::error_detection::semantic_errors::{detect_semantic_errors};
-use conjure_cp_essence_parser::diagnostics_api::error_detection::syntactic_errors::{check_diagnostic};
+use conjure_cp_essence_parser::diagnostics::error_detection::semantic_errors::{detect_semantic_errors};
+use conjure_cp_essence_parser::diagnostics::error_detection::syntactic_errors::{check_diagnostic};
 
 #[test]
 fn detects_keyword_as_identifier_find() {

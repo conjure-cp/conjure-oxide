@@ -1,4 +1,4 @@
-use conjure_cp_essence_parser::diagnostics_api::error_detection::syntactic_errors::{detect_syntactic_errors, check_diagnostic, print_all_error_nodes};
+use conjure_cp_essence_parser::diagnostics::error_detection::syntactic_errors::{detect_syntactic_errors, check_diagnostic, print_all_error_nodes};
 
 #[test]
 fn missing_identifier() {
@@ -44,7 +44,7 @@ find y:
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
 
     let diag = &diagnostics[0];
-    
+
     check_diagnostic(diag, 1, 7, 1, 7, "Missing 'domain'");
 }
 
@@ -62,7 +62,7 @@ such that
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
 
     let diag = &diagnostics[0];
-    
+
     check_diagnostic(diag, 1, 9, 1, 9, "Missing 'bool_expr'");
 
 }
@@ -73,7 +73,7 @@ fn multiple_missing_tokens() {
     // not indented because have to avoid leading spaces for accurate character counr
     let source = "\
 find x: int(1..3
-letting x be 
+letting x be
     ";
     let diagnostics = detect_syntactic_errors(source);
 
@@ -102,7 +102,7 @@ fn missing_operator_in_comparison() {
     // Missing operator in comparison expression
     let source = "\
 find x: int
-such that 5 = 
+such that 5 =
     ";
     let diagnostics = detect_syntactic_errors(source);
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");

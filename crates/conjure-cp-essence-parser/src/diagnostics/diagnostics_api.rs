@@ -1,8 +1,8 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::diagnostics_api::error_detection::syntactic_errors::detect_syntactic_errors;
-use crate::diagnostics_api::error_detection::semantic_errors::detect_semantic_errors;
+use crate::diagnostics::error_detection::syntactic_errors::detect_syntactic_errors;
+use crate::diagnostics::error_detection::semantic_errors::detect_semantic_errors;
 
 // structs for lsp stuff
 
