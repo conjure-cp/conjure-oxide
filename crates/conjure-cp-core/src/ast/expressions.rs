@@ -1,6 +1,5 @@
 use std::collections::{HashSet, VecDeque};
 use std::fmt::{Display, Formatter};
-use syn::token::Return;
 use tracing::trace;
 
 use crate::ast::Atom;
@@ -763,7 +762,8 @@ impl Expression {
                     let mut total_size = 1;
                     let mut index_domains: Vec<Domain> = Vec::new();
                     // get the deepest element domain
-                    while let Domain::Matrix(elem, _) = domain {
+                    while let Domain::Matrix(elem, indexes) = domain {
+                        index_domains.extend(indexes.into_iter());
                         domain = *elem;
                     }
 
