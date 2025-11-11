@@ -508,6 +508,10 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             }
 
             Some(Lit::Bool(false))
+        },
+        Expr::Flatten(_, _, _) => {
+            // TODO: decide if there is anything we can do here
+            None
         }
         Expr::AllDiff(_, e) => {
             let es = (**e).clone().unwrap_list()?;
