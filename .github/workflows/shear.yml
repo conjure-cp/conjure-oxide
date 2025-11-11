@@ -21,7 +21,7 @@ jobs:
   shear:
     name: "cargo-shear"
 
-    runs-on: ${{ env.os }}
+    runs-on: ubunutu-latest
 
     steps:
       - uses: actions/checkout@v5
@@ -32,13 +32,13 @@ jobs:
       # Override RUSTUP_TOOLCHAIN to nightly when we are testing with nightly
       # This value is read from the rust-toolchain.toml file otherwise
       - name: Set RUSTUP_TOOLCHAIN
-        if: ${{ matrix.rust_release == 'nightly' }}
+        if: ${{ env.rust_release == 'nightly' }}
         run: echo "RUSTUP_TOOLCHAIN=nightly" >> $GITHUB_ENV
 
       - name: rustup
         run: |
-          rustup update ${{ matrix.rust_release }}
-          rustup default ${{ matrix.rust_release }}
+          rustup update ${{ env.rust_release }}
+          rustup default ${{ env.rust_release }}
 
       - run: cargo build -vv --workspace
 
