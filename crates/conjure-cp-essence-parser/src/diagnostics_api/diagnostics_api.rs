@@ -36,7 +36,7 @@ pub enum Severity {
 #[serde(rename_all = "camelCase")]
 pub struct Diagnostic {
     pub range: Range,
-    pub severity: severity,
+    pub severity: Severity,
     pub message: String,
     pub source: &'static str,
 }

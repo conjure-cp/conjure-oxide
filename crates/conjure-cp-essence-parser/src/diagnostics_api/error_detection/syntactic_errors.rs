@@ -1,5 +1,5 @@
 
-use crate::diagnostics_api::diagnostics_api::{Diagnostic, Position, Range, severity};
+use crate::diagnostics_api::diagnostics_api::{Diagnostic, Position, Range, Severity};
 use crate::parser::util::get_tree;
 use tree_sitter::{Node};
 
@@ -56,7 +56,7 @@ pub fn detect_syntactic_errors(source: &str) -> Vec<Diagnostic> {
                     start: Position { line: 0, character: 0 },
                     end: Position { line: last_line as u32, character: last_char as u32 },
                 },
-                severity: severity::Error,
+                severity: Severity::Error,
                 message: "Failed to read the source code".to_string(),
                 source: "Tree-Sitter-Parse-Error",
             });
@@ -158,7 +158,7 @@ fn classify_missing_token(node: Node) -> Diagnostic {
             start: Position { line: start.row as u32, character: start.column as u32 },
             end: Position { line: end.row as u32, character: end.column as u32 },
         },
-        severity: severity::Error,
+        severity: Severity::Error,
         message,
         source: "syntactic-error-detector",
     }
@@ -186,7 +186,7 @@ fn classify_general_syntax_error(node: Node) -> Diagnostic {
             start: Position { line: start.row as u32, character: start.column as u32 },
             end: Position { line: end.row as u32, character: end.column as u32 },
         },
-        severity: severity::Error,
+        severity: Severity::Error,
         message,
         source: "syntactic-error-detector",
     }

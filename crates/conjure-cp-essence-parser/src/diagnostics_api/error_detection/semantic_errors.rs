@@ -1,6 +1,6 @@
 // Basic syntactic error detection helpers for the LSP API.
 
-use crate::diagnostics_api::diagnostics_api::{Diagnostic, Position, Range, severity};
+use crate::diagnostics_api::diagnostics_api::{Diagnostic, Position, Range, Severity};
 use crate::parser::util::{get_tree};
 use tree_sitter::{Node};
 
@@ -22,7 +22,7 @@ pub fn detect_semantic_errors(source: &str) -> Vec<Diagnostic> {
                     start: Position { line: 0, character: 0 },
                     end: Position {line: last_line as u32, character: last_char as u32},
                 },
-                severity: severity::Error,
+                severity: Severity::Error,
                 message: "Failed to read the source code".to_string(),
                 source: "Tree-Sitter-Parse-Error",
             });
@@ -66,7 +66,7 @@ fn keyword_as_identifier(root: Node, src: &str, diagnostics: &mut Vec<Diagnostic
                             start: Position { line: start_point.row as u32, character: start_point.column as u32 },
                             end: Position { line: end_point.row as u32, character: end_point.column as u32 },
                         },
-                        severity: severity::Error,
+                        severity: Severity::Error,
                         message: format!("Keyword '{}' used as an identifier", ident),
                         source: "semantic-error-detector",
                     });
