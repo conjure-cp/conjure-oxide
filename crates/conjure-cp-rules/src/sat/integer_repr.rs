@@ -36,7 +36,6 @@ fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
 }
 
 /// This function confirms that all of the input expressions are SATInts, and returns vectors for each input of their bits
-#[allow(dead_code)]
 pub fn validate_sat_int_operands(exprs: Vec<Expr>) -> Result<Vec<Vec<Expr>>, ApplicationError> {
     let out: Result<Vec<Vec<_>>, _> = exprs
         .into_iter()
@@ -129,7 +128,7 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
 /// ```
 #[register_rule(("SAT", 9500))]
 fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    let mut value = {
+    let value = {
         if let Expr::Atomic(_, Atom::Literal(Literal::Int(v))) = expr {
             *v
         } else {
@@ -137,10 +136,9 @@ fn literal_cnf_int(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         }
     };
 
-    //TODO: add support for negatives
-
     let mut binary_encoding = vec![];
 
+    let mut value = value as u32;
     for _ in 0..BITS {
         binary_encoding.push(Expr::Atomic(
             Metadata::new(),
