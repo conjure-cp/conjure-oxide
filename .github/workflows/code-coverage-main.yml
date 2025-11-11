@@ -28,6 +28,7 @@ jobs:
         with:
           cache-on-failure: true
           shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.workflow }}--${{ github.job }}
+
       - name: Install rust ${{ env.rust_release }}
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
@@ -45,7 +46,7 @@ jobs:
           ./tools/ci/generate-doc-coverage-report-md.bash >> $GITHUB_STEP_SUMMARY
 
       - name: Generate summary
-        run: | 
+        run: |
           ./tools/ci/generate-doc-coverage-summary-md.bash > main-doc-coverage-summary.txt
 
       - name: Upload summary as artifact (for later use)
