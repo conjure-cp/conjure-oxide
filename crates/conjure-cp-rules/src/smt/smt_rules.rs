@@ -1,27 +1,26 @@
-use conjure_cp::ast::{
-    AbstractLiteral, Atom, Domain, Expression, Literal, Metadata, Moo, Range, SymbolTable,
-};
+use conjure_cp::ast::{Expression as Expr, *};
 use conjure_cp::rule_engine::{
-    ApplicationError, ApplicationResult, Reduction, register_rule, register_rule_set,
+    ApplicationError::{DomainError, RuleNotApplicable},
+    ApplicationResult, Reduction, register_rule, register_rule_set,
 };
 use conjure_cp::solver::SolverFamily;
-use itertools::Itertools;
+use uniplate::Uniplate;
 
 register_rule_set!("Smt", ("Base"), (SolverFamily::Smt));
 
 #[register_rule(("Smt", 1000))]
-fn expand_indomain(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
-    let Expression::InDomain(_, inner, domain) = expr else {
-        return Err(ApplicationError::RuleNotApplicable);
+fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::InDomain(_, inner, domain) = expr else {
+        return Err(RuleNotApplicable);
     };
 
     let new_expr = match domain {
         // Bool values are always in the bool domain
-        Domain::Bool => Ok(Expression::Atomic(
+        Domain::Bool => Ok(Expr::Atomic(
             Metadata::new(),
             Atom::Literal(Literal::Bool(true)),
         )),
-        Domain::Empty(_) => Ok(Expression::Atomic(
+        Domain::Empty(_) => Ok(Expr::Atomic(
             Metadata::new(),
             Atom::Literal(Literal::Bool(false)),
         )),
@@ -30,45 +29,40 @@ fn expand_indomain(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
                 .iter()
                 .map(|range| match range {
                     Range::Single(n) => {
-                        let eq =
-                            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(*n)));
-                        Expression::Eq(Metadata::new(), inner.clone(), Moo::new(eq))
+                        let eq = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Int(*n)));
+                        Expr::Eq(Metadata::new(), inner.clone(), Moo::new(eq))
                     }
                     Range::Bounded(l, r) => {
-                        let l_expr =
-                            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(*l)));
-                        let r_expr =
-                            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(*r)));
+                        let l_expr = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Int(*l)));
+                        let r_expr = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Int(*r)));
                         let lit = AbstractLiteral::list(vec![
-                            Expression::Geq(Metadata::new(), inner.clone(), Moo::new(l_expr)),
-                            Expression::Leq(Metadata::new(), inner.clone(), Moo::new(r_expr)),
+                            Expr::Geq(Metadata::new(), inner.clone(), Moo::new(l_expr)),
+                            Expr::Leq(Metadata::new(), inner.clone(), Moo::new(r_expr)),
                         ]);
-                        Expression::And(
+                        Expr::And(
                             Metadata::new(),
-                            Moo::new(Expression::AbstractLiteral(Metadata::new(), lit)),
+                            Moo::new(Expr::AbstractLiteral(Metadata::new(), lit)),
                         )
                     }
                     Range::UnboundedL(r) => {
-                        let bound =
-                            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(*r)));
-                        Expression::Leq(Metadata::new(), inner.clone(), Moo::new(bound))
+                        let bound = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Int(*r)));
+                        Expr::Leq(Metadata::new(), inner.clone(), Moo::new(bound))
                     }
                     Range::UnboundedR(l) => {
-                        let bound =
-                            Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(*l)));
-                        Expression::Geq(Metadata::new(), inner.clone(), Moo::new(bound))
+                        let bound = Expr::Atomic(Metadata::new(), Atom::Literal(Literal::Int(*l)));
+                        Expr::Geq(Metadata::new(), inner.clone(), Moo::new(bound))
                     }
                 })
                 .collect();
-            Ok(Expression::Or(
+            Ok(Expr::Or(
                 Metadata::new(),
-                Moo::new(Expression::AbstractLiteral(
+                Moo::new(Expr::AbstractLiteral(
                     Metadata::new(),
                     AbstractLiteral::list(elements),
                 )),
             ))
         }
-        _ => Err(ApplicationError::RuleNotApplicable),
+        _ => Err(RuleNotApplicable),
     }?;
     Ok(Reduction::pure(new_expr))
 }
@@ -76,60 +70,51 @@ fn expand_indomain(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
 /// E.g. for values a, b : matrix indexed by [bool, ...] of bool
 /// a =/!= b ~> a[true, ...] = b[true, ...] /\ a[false, ...] = b[false, ...] /\ ...
 #[register_rule(("Smt", 1000))]
-fn expand_matrix_eq_neq(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
+fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (a, b) = match expr {
-        Expression::Eq(_, a, b) | Expression::Neq(_, a, b) => (a, b),
-        _ => return Err(ApplicationError::RuleNotApplicable),
+        Expr::Eq(_, a, b) | Expr::Neq(_, a, b) => (a, b),
+        _ => return Err(RuleNotApplicable),
     };
 
     let Some(Domain::Matrix(_, idx_domains)) = a.domain_of() else {
-        return Err(ApplicationError::RuleNotApplicable);
+        return Err(RuleNotApplicable);
     };
 
-    let idx_lits: Result<Vec<Vec<Literal>>, _> = idx_domains.iter().map(Domain::values).collect();
-    let idx_lits = idx_lits.map_err(|_| ApplicationError::DomainError)?;
-
-    let pairs: Vec<_> = idx_lits
-        .into_iter()
-        .multi_cartesian_product()
+    let pairs: Vec<_> = matrix::enumerate_indices(idx_domains)
         .map(|idx_lits| {
             let idx_vec: Vec<_> = idx_lits
                 .into_iter()
-                .map(|lit| Expression::Atomic(Metadata::new(), Atom::Literal(lit)))
+                .map(|lit| Expr::Atomic(Metadata::new(), Atom::Literal(lit)))
                 .collect();
             (
-                Moo::new(Expression::SafeIndex(
-                    Metadata::new(),
-                    a.clone(),
-                    idx_vec.clone(),
-                )),
-                Moo::new(Expression::SafeIndex(Metadata::new(), b.clone(), idx_vec)),
+                Moo::new(Expr::SafeIndex(Metadata::new(), a.clone(), idx_vec.clone())),
+                Moo::new(Expr::SafeIndex(Metadata::new(), b.clone(), idx_vec)),
             )
         })
         .collect();
 
     let new_expr = match expr {
-        Expression::Eq(_, _, _) => {
+        Expr::Eq(_, _, _) => {
             let eqs: Vec<_> = pairs
                 .into_iter()
-                .map(|(a, b)| Expression::Eq(Metadata::new(), a, b))
+                .map(|(a, b)| Expr::Eq(Metadata::new(), a, b))
                 .collect();
-            Expression::And(
+            Expr::And(
                 Metadata::new(),
-                Moo::new(Expression::AbstractLiteral(
+                Moo::new(Expr::AbstractLiteral(
                     Metadata::new(),
                     AbstractLiteral::list(eqs),
                 )),
             )
         }
-        Expression::Neq(_, _, _) => {
+        Expr::Neq(_, _, _) => {
             let neqs: Vec<_> = pairs
                 .into_iter()
-                .map(|(a, b)| Expression::Neq(Metadata::new(), a, b))
+                .map(|(a, b)| Expr::Neq(Metadata::new(), a, b))
                 .collect();
-            Expression::Or(
+            Expr::Or(
                 Metadata::new(),
-                Moo::new(Expression::AbstractLiteral(
+                Moo::new(Expr::AbstractLiteral(
                     Metadata::new(),
                     AbstractLiteral::list(neqs),
                 )),
@@ -139,4 +124,84 @@ fn expand_matrix_eq_neq(expr: &Expression, _: &SymbolTable) -> ApplicationResult
     };
 
     Ok(Reduction::pure(new_expr))
+}
+
+/// Turn a matrix slice into a 1-d matrix of the slice elements
+/// E.g. m[1,..] ~> [m[1,1], m[1,2], m[1,3]]
+#[register_rule(("Smt", 1000))]
+fn flatten_matrix_slice(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    let Expr::SafeSlice(_, m, slice_idxs) = expr else {
+        return Err(RuleNotApplicable);
+    };
+    let Some(Domain::Matrix(_, mat_idxs)) = m.domain_of() else {
+        return Err(RuleNotApplicable);
+    };
+
+    if slice_idxs.len() != mat_idxs.len() {
+        return Err(DomainError);
+    }
+
+    // Find where in the index vector the ".." is
+    let (slice_dim, _) = slice_idxs
+        .iter()
+        .enumerate()
+        .find(|(_, idx)| idx.is_none())
+        .ok_or(RuleNotApplicable)?;
+    let other_idxs = {
+        let opt: Option<Vec<_>> = [&slice_idxs[..slice_dim], &slice_idxs[(slice_dim + 1)..]]
+            .concat()
+            .into_iter()
+            .collect();
+        opt.ok_or(DomainError)?
+    };
+    let elements: Vec<Expr> = mat_idxs[slice_dim]
+        .values()
+        .map_err(|_| DomainError)?
+        .into_iter()
+        .map(|lit| {
+            let mut new_idx = other_idxs.clone();
+            new_idx.insert(slice_dim, Expr::Atomic(Metadata::new(), Atom::Literal(lit)));
+            Expr::SafeIndex(Metadata::new(), m.clone(), new_idx)
+        })
+        .collect();
+    Ok(Reduction::pure(Expr::AbstractLiteral(
+        Metadata::new(),
+        AbstractLiteral::list(elements),
+    )))
+}
+
+/// Expressions like allDiff and sum support 1-dimensional matrices as inputs, e.g. sum(m) where m is indexed by 1..3.
+///
+/// This rule is very similar to `matrix_ref_to_atom`, but turns the matrix reference into a slice rather its atoms.
+/// Other rules like `flatten_matrix_slice` take care of actually turning the slice into the matrix elements.
+#[register_rule(("Smt", 999))]
+fn matrix_ref_to_slice(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+    if let Expr::SafeSlice(_, _, _)
+    | Expr::UnsafeSlice(_, _, _)
+    | Expr::SafeIndex(_, _, _)
+    | Expr::UnsafeIndex(_, _, _) = expr
+    {
+        return Err(RuleNotApplicable);
+    };
+
+    for (child, ctx) in expr.holes() {
+        let Expr::Atomic(_, Atom::Reference(decl)) = &child else {
+            continue;
+        };
+
+        let Some(Domain::Matrix(_, index_domains)) = decl.domain().map(|x| x.resolve(symbols))
+        else {
+            continue;
+        };
+
+        // Must be a 1d matrix
+        if index_domains.len() > 1 {
+            continue;
+        }
+
+        let new_child = Expr::SafeSlice(Metadata::new(), Moo::new(child.clone()), vec![None]);
+        return Ok(Reduction::pure(ctx(new_child)));
+    }
+
+    Err(RuleNotApplicable)
 }

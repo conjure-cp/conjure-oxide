@@ -152,6 +152,9 @@ where
                     .fold(arr, |cur_arr, idx| cur_arr.as_array().unwrap().select(idx))
             })
         }
+        (_, Expression::AllDiff(_, a)) => {
+            list_op(thr, store, a, |asts: &[Dynamic]| Dynamic::distinct(asts))
+        }
 
         _ => Err(SolverError::ModelFeatureNotImplemented(format!(
             "expression type not implemented for theories `{thr:?}`: {expr}"
