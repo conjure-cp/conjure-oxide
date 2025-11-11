@@ -19,3 +19,4 @@ mod matrix_to_atom;
 mod record_to_atom;
 mod sat_log_int;
 mod tuple_to_atom;
+mod sat_direct_int;
