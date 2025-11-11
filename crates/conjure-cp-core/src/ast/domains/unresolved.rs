@@ -245,19 +245,16 @@ impl UnresolvedDomain {
             (UnresolvedDomain::Int(_), _) | (_, UnresolvedDomain::Int(_)) => {
                 Err(DomainOpError::InputWrongType)
             }
-            (UnresolvedDomain::Set(_, in1), UnresolvedDomain::Set(_, in2)) => Ok(
-                UnresolvedDomain::Set(SetAttr::default(), Moo::new(in1.union(in2)?)),
-            ),
+            (UnresolvedDomain::Set(_, in1), UnresolvedDomain::Set(_, in2)) => {
+                Ok(UnresolvedDomain::Set(SetAttr::default(), in1.union(in2)?))
+            }
             (UnresolvedDomain::Set(_, _), _) | (_, UnresolvedDomain::Set(_, _)) => {
                 Err(DomainOpError::InputWrongType)
             }
             (UnresolvedDomain::Matrix(in1, idx1), UnresolvedDomain::Matrix(in2, idx2))
                 if idx1 == idx2 =>
             {
-                Ok(UnresolvedDomain::Matrix(
-                    Moo::new(in1.union(in2)?),
-                    idx1.clone(),
-                ))
+                Ok(UnresolvedDomain::Matrix(in1.union(in2)?, idx1.clone()))
             }
             (UnresolvedDomain::Matrix(_, _), _) | (_, UnresolvedDomain::Matrix(_, _)) => {
                 Err(DomainOpError::InputWrongType)
@@ -267,7 +264,7 @@ impl UnresolvedDomain {
             {
                 let mut merged = Vec::new();
                 for (l, r) in zip(lhs, rhs) {
-                    merged.push(Moo::new(l.union(r)?))
+                    merged.push(l.union(r)?)
                 }
                 Ok(UnresolvedDomain::Tuple(merged))
             }
