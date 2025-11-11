@@ -126,7 +126,7 @@ impl Representation for SATLogInt {
         Ok(Literal::Int(out))
     }
 
-     /// Returns [`Expression`]s representing each boolean representation variable.
+    /// Returns [`Expression`]s representing each boolean representation variable.
     fn expression_down(
         &self,
         st: &SymbolTable,
