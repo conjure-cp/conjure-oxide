@@ -494,7 +494,7 @@ fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
         Expr::SATInt(
             Metadata::new(),
             SATIntEncoding::Log,
-            Moo::new(into_matrix_expr!(result.clone())),
+            Moo::new(into_matrix_expr!(result)),
             (min, max),
         ),
         new_clauses,
