@@ -203,6 +203,22 @@ impl Domain {
         }
     }
 
+    /// If this is [GroundDomain::Empty(ty)], get a reference to the return type `ty`
+    pub fn as_dom_empty(&self) -> Option<&ReturnType> {
+        if let Some(GroundDomain::Empty(ty)) = self.as_ground() {
+            return Some(ty);
+        }
+        None
+    }
+
+    /// If this is [GroundDomain::Empty(ty)], get a mutable reference to the return type `ty`
+    pub fn as_dom_empty_mut(&mut self) -> Option<&mut ReturnType> {
+        if let Some(GroundDomain::Empty(ty)) = self.as_ground_mut() {
+            return Some(ty);
+        }
+        None
+    }
+
     /// If this domain is [GroundDomain::Int] or [UnresolveDomain::Int], get
     /// its ranges. The ranges are cloned and upcast to Range<IntVal> if necessary.
     pub fn as_dom_int(&self) -> Option<Vec<Range<IntVal>>> {
@@ -234,6 +250,8 @@ impl Domain {
         None
     }
 
+    /// If this is a matrix domain, get pointers to its element domain
+    /// and index domains.
     pub fn as_dom_matrix(&self) -> Option<(DomainPtr, Vec<DomainPtr>)> {
         if let Some(GroundDomain::Matrix(inner_dom_gd, idx_doms_gds)) = self.as_ground() {
             let idx_doms: Vec<DomainPtr> = idx_doms_gds.iter().cloned().map(|d| d.into()).collect();
@@ -246,6 +264,9 @@ impl Domain {
         None
     }
 
+    /// If this is a matrix domain, get mutable references to its element
+    /// domain and its vector of index domains.
+    /// The domain always becomes [UnresolvedDomain::Matrix] after this operation.
     pub fn as_dom_matrix_mut(&mut self) -> Option<(&mut DomainPtr, &mut Vec<DomainPtr>)> {
         // "upcast" the entire domain to UnresolvedDomain
         // See [Domain::as_dom_int_mut] for an explanation of why this is necessary
@@ -261,6 +282,7 @@ impl Domain {
         None
     }
 
+    /// If this is a set domain, get its attributes and a pointer to its element domain.
     pub fn as_dom_set(&self) -> Option<(SetAttr<IntVal>, DomainPtr)> {
         if let Some(GroundDomain::Set(attr, inner_dom)) = self.as_ground() {
             return Some((attr.clone().into(), inner_dom.clone().into()));
@@ -271,6 +293,22 @@ impl Domain {
         None
     }
 
+    /// If this is a set domain, get mutable reference to its attributes and element domain.
+    /// The domain always becomes [UnresolvedDomain::Set] after this operation.
+    pub fn as_dom_set_mut(&mut self) -> Option<(&mut SetAttr<IntVal>, &mut DomainPtr)> {
+        if let Some(GroundDomain::Set(attr_gd, inner_dom_gd)) = self.as_ground() {
+            let attr: SetAttr<IntVal> = attr_gd.clone().into();
+            let inner_dom = inner_dom_gd.clone().into();
+            *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Set(attr, inner_dom)));
+        }
+
+        if let Some(UnresolvedDomain::Set(attr, inner_dom)) = self.as_unresolved_mut() {
+            return Some((attr, inner_dom));
+        }
+        None
+    }
+
+    /// If this is a tuple domain, get pointers to its element domains.
     pub fn as_dom_tuple(&self) -> Option<Vec<DomainPtr>> {
         if let Some(GroundDomain::Tuple(inner_doms)) = self.as_ground() {
             return Some(inner_doms.iter().cloned().map(|d| d.into()).collect());
@@ -281,12 +319,42 @@ impl Domain {
         None
     }
 
+    /// If this is a tuple domain, get a mutable reference to its vector of element domains.
+    /// The domain always becomes [UnresolvedDomain::Tuple] after this operation.
+    pub fn as_dom_tuple_mut(&mut self) -> Option<&mut Vec<DomainPtr>> {
+        if let Some(GroundDomain::Tuple(inner_doms_gds)) = self.as_ground() {
+            let inner_doms: Vec<DomainPtr> =
+                inner_doms_gds.iter().cloned().map(|d| d.into()).collect();
+            *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Tuple(inner_doms)));
+        }
+
+        if let Some(UnresolvedDomain::Tuple(inner_doms)) = self.as_unresolved_mut() {
+            return Some(inner_doms);
+        }
+        None
+    }
+
+    /// If this is a record domain, clone and return its entries.
     pub fn as_dom_record(&self) -> Option<Vec<RecordEntry>> {
         if let Some(GroundDomain::Record(record_entries)) = self.as_ground() {
             return Some(record_entries.iter().cloned().map(|r| r.into()).collect());
         }
         if let Some(UnresolvedDomain::Record(record_entries)) = self.as_unresolved() {
             return Some(record_entries.clone());
+        }
+        None
+    }
+
+    /// If this is a record domain, get a mutable reference to its list of entries.
+    /// The domain always becomes [UnresolvedDomain::Record] after this operation.
+    pub fn as_dom_record_mut(&mut self) -> Option<&mut Vec<RecordEntry>> {
+        if let Some(GroundDomain::Record(entries_gds)) = self.as_ground() {
+            let entries: Vec<RecordEntry> = entries_gds.iter().cloned().map(|r| r.into()).collect();
+            *self = Domain::Unresolved(Moo::new(UnresolvedDomain::Record(entries)));
+        }
+
+        if let Some(UnresolvedDomain::Record(entries_gds)) = self.as_unresolved_mut() {
+            return Some(entries_gds);
         }
         None
     }
