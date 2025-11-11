@@ -199,7 +199,7 @@ fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     };
 
     let ranges: Result<Vec<_>, _> = exprs_list
-    .into_iter()
+    .iter()
     .map(|e| match e {
         Expr::SATInt(_, _, _, x) => Ok(x),
         _ => Err(RuleNotApplicable),
@@ -226,7 +226,7 @@ fn cnf_int_sum(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
         while let Some(a) = iter.next() {
             if let Some(b) = iter.next() {
-                values = tseytin_int_adder(&a, &b, output_size.try_into().unwrap(), &mut new_clauses, &mut new_symbols);
+                values = tseytin_int_adder(&a, &b, output_size.unwrap(), &mut new_clauses, &mut new_symbols);
                 next.push(values);
             } else {
                 next.push(a);
@@ -412,7 +412,7 @@ fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     };
 
     let ranges: Result<Vec<_>, _> = exprs_list
-    .into_iter()
+    .iter()
     .map(|e| match e {
         Expr::SATInt(_, _, _, x) => Ok(x),
         _ => Err(RuleNotApplicable),
@@ -430,7 +430,7 @@ let (min, max) = product_of_ranges(ranges.clone());
 
     let (result, _) = exprs_bits.iter().cloned().zip(ranges.into_iter().copied()).reduce(|lhs, rhs| {
         // Make both bit vectors the same length
-        let (lhs_bits, rhs_bits) = match_bits_length(lhs.0.to_vec(), rhs.0.to_vec());
+        let (lhs_bits, rhs_bits) = match_bits_length(lhs.0.clone(), rhs.0.clone());
 
         // Multiply operands
         let mut values = cnf_shift_add_multiply(&lhs_bits, &rhs_bits, lhs_bits.len(), &mut new_clauses, &mut new_symbols);
@@ -471,7 +471,7 @@ let (min, max) = product_of_ranges(ranges.clone());
     // let result = exprs_bits.pop().unwrap();
 
     Ok(Reduction::cnf(
-        Expr::SATInt(Metadata::new(), SATIntEncoding::Log, Moo::new(into_matrix_expr!(result.to_vec())), (min, max)),
+        Expr::SATInt(Metadata::new(), SATIntEncoding::Log, Moo::new(into_matrix_expr!(result.clone())), (min, max)),
         new_clauses,
         new_symbols,
     ))
@@ -547,7 +547,7 @@ fn cnf_int_min(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     };
 
     let ranges: Result<Vec<_>, _> = exprs_list
-    .into_iter()
+    .iter()
     .map(|e| match e {
         Expr::SATInt(_, _, _, x) => Ok(x),
         _ => Err(RuleNotApplicable),
@@ -644,7 +644,7 @@ fn cnf_int_max(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
     };
 
     let ranges: Result<Vec<_>, _> = exprs_list
-    .into_iter()
+    .iter()
     .map(|e| match e {
         Expr::SATInt(_, _, _, x) => Ok(x),
         _ => Err(RuleNotApplicable),
