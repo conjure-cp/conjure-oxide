@@ -17,6 +17,18 @@ impl DomainPtr {
     pub fn resolve(&self) -> Option<Moo<GroundDomain>> {
         self.as_ref().resolve()
     }
+
+    /// Convenience method to take [Domain::union] of the [Domain]s behind two [DomainPtr]s
+    /// and wrap the result in a new [DomainPtr].
+    pub fn union(&self, other: &DomainPtr) -> Result<DomainPtr, DomainOpError> {
+        self.as_ref().union(other.as_ref()).map(DomainPtr::new)
+    }
+
+    /// Convenience method to take [Domain::intersect] of the [Domain]s behind two [DomainPtr]s
+    /// and wrap the result in a new [DomainPtr].
+    pub fn intersect(&self, other: &DomainPtr) -> Result<DomainPtr, DomainOpError> {
+        self.as_ref().intersect(other.as_ref()).map(DomainPtr::new)
+    }
 }
 
 impl Into<DomainPtr> for Moo<GroundDomain> {
