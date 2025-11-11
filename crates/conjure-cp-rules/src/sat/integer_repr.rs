@@ -11,10 +11,6 @@ use conjure_cp::into_matrix_expr;
 
 use conjure_cp::{essence_expr, bug};
 
-// The number of bits used to represent the integer.
-// This is a fixed value for the representation, but could be made dynamic if needed.
-pub const BITS: usize = 8; // FIXME: Make it dynamic
-
 /// This function takes a target expression and a vector of ranges and creates an expression representing the ranges with the target expression as the subject
 ///
 /// E.g. x : int(4), int(10..20), int(30..) ~~> Or(x=4, 10<=x<=20, x>=30)

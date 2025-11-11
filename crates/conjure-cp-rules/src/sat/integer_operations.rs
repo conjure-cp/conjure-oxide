@@ -360,6 +360,7 @@ fn cnf_shift_add_multiply(
         y[0] = false.into();
 
         // TODO switch to multiplexer
+        // TODO Add negatives support once MUX is added
         sum = tseytin_int_adder(&s, &y, bits * 2, clauses, symbols);
         not_x_n = tseytin_not(item.clone(), clauses, symbols);
 
@@ -370,7 +371,6 @@ fn cnf_shift_add_multiply(
         }
     }
 
-    //TODO: At the moment, this doesn't account for overflows (perhaps this could use a bubble in the future?)
     s
 }
 
@@ -421,16 +421,14 @@ fn cnf_int_product(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
 let ranges = ranges?; // propagate error if any
 
-let (min, max) = product_of_ranges(ranges);
+let (min, max) = product_of_ranges(ranges.clone());
 
-    let mut exprs_bits = validate_sat_int_operands(exprs_list.clone(), None)?;
-
-    // This may not work, what happens if the cum_product is greater than the input bit limit?
+    let exprs_bits = validate_sat_int_operands(exprs_list.clone(), None)?;
 
     let mut new_symbols = symbols.clone();
     let mut new_clauses = vec![];
 
-    let (result, _) = exprs_bits.iter().zip(ranges.iter()).reduce(|lhs, rhs| {
+    let (result, _) = exprs_bits.iter().cloned().zip(ranges.into_iter().copied()).reduce(|lhs, rhs| {
         // Make both bit vectors the same length
         let (lhs_bits, rhs_bits) = match_bits_length(lhs.0.to_vec(), rhs.0.to_vec());
 
