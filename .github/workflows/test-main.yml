@@ -88,12 +88,6 @@ jobs:
           rustup update ${{ matrix.rust_release }}
           rustup default ${{ matrix.rust_release }}
 
-      - run: cargo build -vv --workspace
-        if: ${{ matrix.compiler_profile == 'debug' }}
-
-      - run: cargo build -vv --workspace --release
-        if: ${{ matrix.compiler_profile == 'release' }}
-
       - uses: ./.github/actions/install-conjure
         with:
           os_arch: ${{ matrix.release_suffix }}
