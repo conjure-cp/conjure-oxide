@@ -23,16 +23,17 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v5
 
-    - uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          target/
-        key: conjure--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
-        restore-keys: conjure--${{ env.rust_release }}--${{ env.compiler_profile }}
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: conjure--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+          restore-keys: conjure--${{ env.rust_release }}--${{ env.compiler_profile }}
 
       - name: Install rust ${{ env.rust_release }}
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
@@ -78,6 +79,7 @@ jobs:
           ~/.cargo/registry/cache/
           ~/.cargo/git/db/
           target/
+          ~/conjure
         key: conjure--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
         restore-keys: conjure--${{ env.rust_release }}--${{ env.compiler_profile }}
 

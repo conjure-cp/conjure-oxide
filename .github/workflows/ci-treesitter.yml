@@ -8,7 +8,7 @@ on:
   pull_request:
     paths:
       - crates/tree-sitter-essence/**
-  
+
 env:
   CARGO_INCREMENTAL: "0"
   # we define the following 3 values as the defaults here, matrix jobs may overwrite their values.
@@ -38,16 +38,17 @@ jobs:
       - name: Make tree-sitter-essence the root directory
         run: cp -r repo/crates/tree-sitter-essence/* .
 
-    - uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cargo/bin/
-          ~/.cargo/registry/index/
-          ~/.cargo/registry/cache/
-          ~/.cargo/git/db/
-          target/
-        key: treesitter--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
-        restore-keys: treesitter--${{ env.rust_release }}--${{ env.compiler_profile }}
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+            ~/conjure
+          key: treesitter--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
+          restore-keys: treesitter--${{ env.rust_release }}--${{ env.compiler_profile }}
 
       - name: Set up tree-sitter
         uses: tree-sitter/setup-action/cli@v2
@@ -61,7 +62,6 @@ jobs:
     name: Fuzz scanner
     runs-on: ubuntu-latest
     steps:
-
       - name: Checkout repository
         uses: actions/checkout@v5
         with:

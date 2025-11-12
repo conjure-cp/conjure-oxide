@@ -21,7 +21,6 @@ env:
   compiler_profile: debug
 
 jobs:
-
   # test-pr and test-main are identical, except for:
   # - rust cache, and
   # - its smaller scope (see commented out options in the matrix)
@@ -68,6 +67,7 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
+            ~/conjure
           key: conjure--${{ matrix.rust_release }}--${{ matrix.compiler_profile }}--${{ github.event.repository.updated_at }}
           restore-keys: conjure--${{ matrix.rust_release }}--${{ matrix.compiler_profile }}
 
