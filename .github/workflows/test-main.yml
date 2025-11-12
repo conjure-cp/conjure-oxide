@@ -1,6 +1,6 @@
 name: Test main
 
-# We run this action for PRs for two configurations only (ubuntu/debug/stable and ubuntu/debug/nightly) with rust-cache enabled.
+# We run this action for PRs for two configurations only (ubuntu/debug/stable and ubuntu/debug/nightly) with caching enabled.
 # On main, we run all configurations, without caching (to save space on GitHub).
 # On main, we still enable the cache for the two PR configs. This helps us populate the cache for future PRs.
 
@@ -64,18 +64,16 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Rust cache
-        uses: Swatinem/rust-cache@972b315a8225e8594dddc2b92e6333d1d1d3059c
+      - uses: actions/cache@v4
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.compiler_profile == 'debug' }}
-        with:
-          add-job-id-key: false
-          add-rust-environment-hash-key: false
-          cache-all-crates: true
-          cache-on-failure: true
-          cache-targets: true
-          cache-workspace-crates: true
-          shared-key: ''
-          prefix-key: conjure--${{ matrix.rust_release }}--${{ matrix.compiler_profile }}-
+          with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: conjure--${{ matrix.rust_release }}--${{ matrix.compiler_profile }}--${{ github.event.repository.updated_at }}
 
       # Override RUSTUP_TOOLCHAIN to nightly when we are testing with nightly
       # This value is read from the rust-toolchain.toml file otherwise

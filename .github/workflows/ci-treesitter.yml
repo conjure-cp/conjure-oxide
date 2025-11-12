@@ -38,17 +38,15 @@ jobs:
       - name: Make tree-sitter-essence the root directory
         run: cp -r repo/crates/tree-sitter-essence/* .
 
-      - name: Rust cache
-        uses: Swatinem/rust-cache@972b315a8225e8594dddc2b92e6333d1d1d3059c
-        with:
-          add-job-id-key: false
-          add-rust-environment-hash-key: false
-          cache-all-crates: true
-          cache-on-failure: true
-          cache-targets: true
-          cache-workspace-crates: true
-          shared-key: ''
-          prefix-key: treesitter--${{ env.rust_release }}--${{ env.compiler_profile }}-
+    - uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          target/
+        key: treesitter--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
 
       - name: Set up tree-sitter
         uses: tree-sitter/setup-action/cli@v2
