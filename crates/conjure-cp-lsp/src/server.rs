@@ -140,7 +140,7 @@ fn get_hovered_word(text: &str, line: usize, character: usize) -> Option<&str>{
     let mut idx = 0;
     for word in text_line.split_whitespace() {
         let end = idx + word.len();
-        if character <= end && character > idx {
+        if character <= end && character >= idx {
             return Some(word);
         }
         idx = end + 1;
