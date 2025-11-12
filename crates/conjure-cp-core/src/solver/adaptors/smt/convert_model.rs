@@ -55,13 +55,13 @@ fn var_to_ast(
     theories: &TheoryConfig,
 ) -> Result<(Dynamic, Bool), SolverError> {
     let sym = name_to_symbol(name)?;
-    match &var.domain {
+    match &var.domain.as_ground() {
         // Booleans of course have the same domain in SMT, so no restriction required
-        Domain::Bool => Ok((Bool::new_const(sym).into(), Bool::from_bool(true))),
+        Some(GroundDomain::Bool) => Ok((Bool::new_const(sym).into(), Bool::from_bool(true))),
 
         // Return a disjunction of the restrictions each range of the domain enforces
         // I.e. `x: int(1, 3..5)` -> `or([x = 1, x >= 3 /\ x <= 5])`
-        Domain::Int(ranges) => match theories.ints {
+        Some(GroundDomain::Int(ranges)) => match theories.ints {
             IntTheory::Lia => {
                 let sym_const = Int::new_const(sym);
                 let restrictions_res: Result<Vec<_>, SolverError> = ranges
