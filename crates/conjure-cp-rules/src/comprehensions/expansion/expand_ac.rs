@@ -6,8 +6,8 @@ use std::{
 
 use conjure_cp::{
     ast::{
-        Atom, DeclarationKind, DeclarationPtr, Expression, Metadata, Model, Moo, Name, ReturnType,
-        SubModel, SymbolTable, Typeable as _,
+        Atom, DeclarationKind, DeclarationPtr, Expression, MaybeTypeable as _, Metadata, Model,
+        Moo, Name, ReturnType, SubModel, SymbolTable,
         ac_operators::ACOperatorKind,
         comprehension::{Comprehension, USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS},
         serde::{HasId as _, ObjId},
@@ -249,7 +249,7 @@ fn add_return_expression_to_generator_model(
     // for and/or we want to put boolean expressions into dummy variables.
     let dummy_var_type = ac_operator
         .identity()
-        .return_type()
+        .maybe_return_type()
         .expect("identity value of an ACOpKind should always have a ReturnType");
 
     'outer: loop {
@@ -430,7 +430,7 @@ fn can_be_dummy_variable(expr: &Expression, dummy_variable_type: &ReturnType) ->
     };
 
     // is the expression the same type as the dummy variable?
-    expr.return_type()
+    expr.maybe_return_type()
         .is_some_and(|x| x == *dummy_variable_type)
 }
 

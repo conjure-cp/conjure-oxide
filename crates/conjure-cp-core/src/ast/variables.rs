@@ -8,7 +8,7 @@ use crate::{ast::domains::Domain, representation::Representation};
 use super::{
     ReturnType,
     categories::{Category, CategoryOf},
-    types::Typeable,
+    types::MaybeTypeable,
 };
 
 /// Represents a decision variable within a computational model.
@@ -68,8 +68,8 @@ impl CategoryOf for DecisionVariable {
     }
 }
 
-impl Typeable for DecisionVariable {
-    fn return_type(&self) -> Option<ReturnType> {
+impl MaybeTypeable for DecisionVariable {
+    fn maybe_return_type(&self) -> Option<ReturnType> {
         todo!()
     }
 }
