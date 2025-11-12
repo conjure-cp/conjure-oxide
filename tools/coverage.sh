@@ -61,8 +61,6 @@ fi
 # https://doc.rust-lang.org/rustc/instrument-coverage.html
 # https://github.com/mozilla/grcov
 
-rm -rf target/debug/coverage
-
 export CARGO_INCREMENTAL=0 
 export RUSTFLAGS="$RUSTFLAGS -Cinstrument-coverage"
 export RUSTDOCFLAGS="$RUSTDOCFLAGS -C instrument-coverage -Zunstable-options --persist-doctests target/debug/doctestbins"
