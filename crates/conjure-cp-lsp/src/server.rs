@@ -8,6 +8,12 @@ use tower_lsp::{
     lsp_types::*,
 };
 
+use std::collections::HashMap;
+use std::sync::Arc;
+use tokio::sync::RwLock;
+
+// use crate::conjure_cp_lsp::hover...
+
 #[derive(Debug, Serialize, Deserialize)]
 struct NotifactionParams {
     title: String,
@@ -26,6 +32,16 @@ impl Notification for CustomNotifciation {
 #[derive(Debug)]
 struct Backend {
     client: Client,
+    documents: Arc<RwLock<HashMap<Url, String>>>,
+}
+
+impl Backend {
+    pub fn new(client: Client, documents: Arc<RwLock<HashMap<Url, String>>>) -> Self {
+        Backend { client, documents }
+    }
+    async fn get_text(&self, uri: &Url) -> Option<String> {
+        self.documents.read().await.get(uri).cloned()
+    }
 }
 
 #[tower_lsp::async_trait]
@@ -42,6 +58,9 @@ impl LanguageServer for Backend {
                     work_done_progress_options: Default::default(),
                 }),
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
+                text_document_sync: Some(TextDocumentSyncCapability::Kind(
+                    TextDocumentSyncKind::FULL,
+                )),
                 ..ServerCapabilities::default()
             },
         })
@@ -60,25 +79,23 @@ impl LanguageServer for Backend {
     }
 
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
-        let text_document = params.text_document;
-        
+        let text = params.text_document.text.clone();
+        let uri = &params.text_document.uri;
+        self.documents.write().await.insert(uri.clone(), text.clone());
+        self.client
+            .log_message(MessageType::INFO, "In did_open :)") //client logs message of initialised
+            .await;
     }
 
     async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
-        self.client
-            .log_message(MessageType::INFO, "hovering! :) Recieved {}") //client logs message of initialised
-            .await;
+        let uri = params.text_document_position_params.text_document.uri;
+        let line = params.text_document_position_params.position.line;
+        let character = params.text_document_position_params.position.character;
+        let text = self.get_text(&uri).await.unwrap_or_default();
+        let word = get_hovered_word(&text, line as usize, character as usize);
 
         self.client
-            .log_message(MessageType::INFO, params.text_document_position_params.text_document.uri)
-            .await;
-
-        self.client
-            .log_message(MessageType::INFO, params.text_document_position_params.position.line)
-            .await;
-
-        self.client
-            .log_message(MessageType::INFO, params.text_document_position_params.position.character)
+            .log_message(MessageType::INFO, word.unwrap_or_default())
             .await;
 
         // //find path of conjure to access conjure/docs/bits/etc for documentation
@@ -118,12 +135,26 @@ impl LanguageServer for Backend {
     }
 }
 
+fn get_hovered_word(text: &str, line: usize, character: usize) -> Option<&str>{
+    let text_line = text.lines().nth(line)?;
+    let mut idx = 0;
+    for word in text_line.split_whitespace() {
+        let end = idx + word.len();
+        if character <= end && character > idx {
+            return Some(word);
+        }
+        idx = end + 1;
+    }
+    None
+}
+
 #[tokio::main]
 pub async fn main() {
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
+    let documents = Arc::new(RwLock::new(HashMap::new()));
 
-    let (service, socket) = LspService::build(|client| Backend { client }).finish();
+    let (service, socket) = LspService::build(|client| Backend::new(client, Arc::clone(&documents))).finish();
 
     Server::new(stdin, stdout, socket).serve(service).await;
 }
