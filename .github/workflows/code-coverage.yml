@@ -67,6 +67,12 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v5
 
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.workflow }}--${{ github.job }}
+
       - name: Get Sha
         id: sha
         run: |
