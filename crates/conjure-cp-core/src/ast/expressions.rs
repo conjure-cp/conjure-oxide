@@ -20,10 +20,10 @@ use ustr::Ustr;
 use polyquine::Quine;
 use uniplate::{Biplate, Uniplate};
 
+use super::abstract_comprehension::AbstractComprehension;
 use super::ac_operators::ACOperatorKind;
 use super::categories::{Category, CategoryOf};
 use super::comprehension::Comprehension;
-use super::abstract_comprehension::AbstractComprehension;
 use super::domains::HasDomain as _;
 use super::records::RecordValue;
 use super::{DeclarationPtr, Domain, Range, Reference, SubModel, Typeable};
