@@ -224,16 +224,10 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - macos-13         # x86_64 mac
           - macos-latest     # aarch64 mac
 
         # platform and arch info for naming the binary
         include:
-          - os: macos-13
-            os_name: darwin
-            arch_name: x86_64
-            conjure_prefix: macos-intel
-
           - os: macos-latest
             os_name: darwin
             arch_name: aarch64
@@ -280,7 +274,7 @@ jobs:
           cd ..
 
       - name: Save builds
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: artifact-${{ env.release_prefix }}
           path: dist/*.zip
@@ -331,7 +325,7 @@ jobs:
           cd ..
 
       - name: Save builds
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: artifact-${{ env.release_prefix }}
           path: dist/*.zip
@@ -347,7 +341,7 @@ jobs:
       - run: mkdir dist
 
       # download all artifacts made in this workflow (i.e. all the different builds)
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           merge-multiple: true # put all releases in the same folder
           path: dist/

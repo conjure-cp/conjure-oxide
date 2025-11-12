@@ -80,12 +80,12 @@ impl SubModel {
     }
 
     /// The symbol table for this sub-model as a reference.
-    pub fn symbols(&self) -> Ref<SymbolTable> {
+    pub fn symbols(&self) -> Ref<'_, SymbolTable> {
         (*self.symbols).borrow()
     }
 
     /// The symbol table for this sub-model as a mutable reference.
-    pub fn symbols_mut(&mut self) -> RefMut<SymbolTable> {
+    pub fn symbols_mut(&mut self) -> RefMut<'_, SymbolTable> {
         (*self.symbols).borrow_mut()
     }
 
@@ -151,6 +151,11 @@ impl SubModel {
     /// Replaces the top-level constraints with `new_constraints`, returning the old ones.
     pub fn replace_constraints(&mut self, new_constraints: Vec<Expression>) -> Vec<Expression> {
         std::mem::replace(self.constraints_mut(), new_constraints)
+    }
+
+    /// Replaces the cnf clauses with `new_clauses`, returning the old ones.
+    pub fn replace_clauses(&mut self, new_clauses: Vec<CnfClause>) -> Vec<CnfClause> {
+        std::mem::replace(self.clauses_mut(), new_clauses)
     }
 
     /// Adds a top-level constraint.

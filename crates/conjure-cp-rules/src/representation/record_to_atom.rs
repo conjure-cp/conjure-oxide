@@ -23,7 +23,7 @@ impl RecordToAtom {
     fn names(&self) -> impl Iterator<Item = Name> + '_ {
         self.indices
             .iter()
-            .map(move |index| self.indices_to_name(&[index.clone()]))
+            .map(move |index| self.indices_to_name(std::slice::from_ref(index)))
     }
 
     /// Gets the representation variable name for a specific set of indices.
@@ -127,7 +127,10 @@ impl Representation for RecordToAtom {
                 let decl = st.lookup(&name).unwrap();
                 (
                     name,
-                    Expression::Atomic(Metadata::new(), Atom::Reference(decl)),
+                    Expression::Atomic(
+                        Metadata::new(),
+                        Atom::Reference(conjure_cp::ast::Reference::new(decl)),
+                    ),
                 )
             })
             .collect())

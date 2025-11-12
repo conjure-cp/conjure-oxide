@@ -1,4 +1,4 @@
-name: "Coverage (PR)"
+name: "Coverage-PR"
 
 on:
   pull_request:
@@ -10,22 +10,26 @@ on:
   workflow_dispatch:
 
 env:
+  CARGO_INCREMENTAL: "0"
+  # we define the following 3 values as the defaults here, matrix jobs may overwrite their values.
+  os: ubuntu-latest
   rust_release: nightly
-  SCCACHE_GHA_ENABLED: "true"
-  RUSTC_WRAPPER: "sccache"
-  SCCACHE_GHA_VERSION: 5
+  compiler_profile: debug
 
 jobs:
   doc-coverage:
     name: "Documentation"
-    timeout-minutes: 20
+    timeout-minutes: 120
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v5
 
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.9
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.workflow }}--${{ github.job }}
 
       - name: Install rust ${{ env.rust_release }}
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
@@ -49,7 +53,7 @@ jobs:
           ./tools/ci/generate-doc-coverage-summary-md.bash > pr-doc-coverage-summary.txt
 
       - name: Upload summary as artifact (for later use)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: pr-doc-coverage-summary
           path: pr-doc-coverage-summary.txt
@@ -63,6 +67,12 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v5
 
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+          shared-key: ${{ env.os }}--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.workflow }}--${{ github.job }}
+
       - name: Get Sha
         id: sha
         run: |
@@ -74,9 +84,6 @@ jobs:
             echo -e "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
             echo -e "sha=${{ github.sha }}"
           fi
-
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.9
 
       - name: Install rust ${{ env.rust_release }}
         run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
@@ -97,7 +104,7 @@ jobs:
           echo "${{github.event.pull_request.number}}" > deploy/prnumber
 
       - name: Archive code coverage results for deployment
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: code-coverage-${{ steps.sha.outputs.sha }}
           path: deploy/**

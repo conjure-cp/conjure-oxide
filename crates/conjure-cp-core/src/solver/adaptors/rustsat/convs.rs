@@ -65,13 +65,13 @@ pub fn handle_atom(
             conjure_cp_core::ast::Atom::Literal(literal) => {
                 todo!("Not Sure if we are handling Lits as-is or not..")
             }
-            conjure_cp_core::ast::Atom::Reference(decl) => match &*(decl.name()) {
+            conjure_cp_core::ast::Atom::Reference(reference) => match &*(reference.name()) {
                 conjure_cp_core::ast::Name::User(_)
                 | conjure_cp_core::ast::Name::Represented(_)
                 | conjure_cp_core::ast::Name::Machine(_) => {
                     // TODO: Temp Clone
                     // let m = n.clone();
-                    let lit_temp: Lit = fetch_lit(decl.name().clone(), vars_added, inst);
+                    let lit_temp: Lit = fetch_lit(reference.name().clone(), vars_added, inst);
                     if polarity { lit_temp } else { !lit_temp }
                 }
                 _ => todo!("Not implemented yet"),
@@ -103,7 +103,6 @@ pub fn handle_disjn(
         let lit: Lit = handle_lit(literal, vars_added, inst_in_use);
         lits.add(lit);
     }
-
 
     inst_in_use.add_clause(lits);
 }

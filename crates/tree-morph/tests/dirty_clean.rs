@@ -77,12 +77,10 @@ fn left_branch_clean() {
         num_applications: 0,
     };
 
-    let (expr, meta) = morph(
-        vec![vec![MyRule::EvalAdd, MyRule::EvalMul]],
-        select_first,
-        expr,
-        meta,
-    );
+    let engine = EngineBuilder::new()
+        .add_rule_group(vec![MyRule::EvalAdd, MyRule::EvalMul])
+        .build();
+    let (expr, meta) = engine.morph(expr, meta);
 
     println!("RAN TESTS");
     println!("Number of applications: {}", meta.num_applications);
