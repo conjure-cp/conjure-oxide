@@ -2,7 +2,10 @@ use crate::ast::domains::ground::GroundDomain;
 use crate::ast::domains::range::Range;
 use crate::ast::domains::set_attr::SetAttr;
 use crate::ast::domains::unresolved::{IntVal, UnresolvedDomain};
-use crate::ast::{DomainOpError, Literal, MaybeTypeable, Moo, RecordEntry, ReturnType, Typeable};
+use crate::ast::{
+    DeclarationPtr, DomainOpError, Literal, MaybeTypeable, Moo, RecordEntry, Reference, ReturnType,
+    Typeable,
+};
 use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
@@ -177,6 +180,16 @@ impl Domain {
         }
         Moo::new(Domain::Unresolved(Moo::new(UnresolvedDomain::Record(
             entries,
+        ))))
+    }
+
+    /// Create a new [UnresolvedDomain::Reference] domain from a domain letting
+    pub fn new_ref(ptr: DeclarationPtr) -> Option<DomainPtr> {
+        if ptr.as_domain_letting().is_none() {
+            return None;
+        }
+        Some(Moo::new(Domain::Unresolved(Moo::new(
+            UnresolvedDomain::Reference(Reference::new(ptr)),
         ))))
     }
 
