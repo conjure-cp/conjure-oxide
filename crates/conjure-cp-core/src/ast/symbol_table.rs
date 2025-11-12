@@ -11,6 +11,7 @@ use std::cell::RefCell;
 use std::collections::BTreeSet;
 use std::collections::btree_map::Entry;
 use std::collections::{BTreeMap, VecDeque};
+use std::hash::{Hash, Hasher};
 use std::rc::Rc;
 use std::sync::atomic::{AtomicU32, Ordering};
 
@@ -91,6 +92,12 @@ pub struct SymbolTable {
     parent: Option<Rc<RefCell<SymbolTable>>>,
 
     next_machine_name: RefCell<i32>,
+}
+
+impl Hash for SymbolTable {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+    }
 }
 
 impl SymbolTable {

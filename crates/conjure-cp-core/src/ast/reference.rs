@@ -8,7 +8,7 @@ use std::fmt::{Display, Formatter};
 use uniplate::Uniplate;
 
 use super::{
-    Domain, DomainPtr, Name,
+    Atom, Domain, DomainPtr, Expression, Metadata, Name,
     categories::{Category, CategoryOf},
     domains::HasDomain,
 };
@@ -52,6 +52,12 @@ impl Reference {
 
     pub fn domain(&self) -> Option<DomainPtr> {
         self.ptr.domain()
+    }
+}
+
+impl Into<Expression> for Reference {
+    fn into(self) -> Expression {
+        Expression::Atomic(Metadata::new(), self.into())
     }
 }
 

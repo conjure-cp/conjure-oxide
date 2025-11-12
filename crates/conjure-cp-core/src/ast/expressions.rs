@@ -75,13 +75,20 @@ static_assertions::assert_eq_size!([u8; 104], Expression);
 #[biplate(to=Literal)]
 #[path_prefix(conjure_cp::ast)]
 pub enum Expression {
-    AbstractLiteral(Metadata, AbstractLiteral<Expression>),
+    AbstractLiteral(
+        #[derivative(Hash = "ignore")] Metadata,
+        AbstractLiteral<Expression>,
+    ),
     /// The top of the model
-    Root(Metadata, Vec<Expression>),
+    Root(#[derivative(Hash = "ignore")] Metadata, Vec<Expression>),
 
     /// An expression representing "A is valid as long as B is true"
     /// Turns into a conjunction when it reaches a boolean context
-    Bubble(Metadata, Moo<Expression>, Moo<Expression>),
+    Bubble(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     /// A comprehension.
     ///
@@ -89,32 +96,40 @@ pub enum Expression {
     // todo (gskorokhod): Comprehension contains a SubModel which contains a bunch of Rc pointers.
     // This makes implementing Quine tricky (it doesnt support Rc, by design). Skip it for now.
     #[polyquine_skip]
-    Comprehension(Metadata, Moo<Comprehension>),
+    Comprehension(#[derivative(Hash = "ignore")] Metadata, Moo<Comprehension>),
 
     /// Defines dominance ("Solution A is preferred over Solution B")
-    DominanceRelation(Metadata, Moo<Expression>),
+    DominanceRelation(#[derivative(Hash = "ignore")] Metadata, Moo<Expression>),
     /// `fromSolution(name)` - Used in dominance relation definitions
-    FromSolution(Metadata, Moo<Atom>),
+    FromSolution(#[derivative(Hash = "ignore")] Metadata, Moo<Atom>),
 
     #[polyquine_with(arm = (_, name) => {
         let ident = proc_macro2::Ident::new(name.as_str(), proc_macro2::Span::call_site());
         quote::quote! { #ident.clone().into() }
     })]
-    Metavar(Metadata, Ustr),
+    Metavar(#[derivative(Hash = "ignore")] Metadata, Ustr),
 
-    Atomic(Metadata, Atom),
+    Atomic(#[derivative(Hash = "ignore")] Metadata, Atom),
 
     /// A matrix index.
     ///
     /// Defined iff the indices are within their respective index domains.
     #[compatible(JsonInput)]
-    UnsafeIndex(Metadata, Moo<Expression>, Vec<Expression>),
+    UnsafeIndex(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Vec<Expression>,
+    ),
 
     /// A safe matrix index.
     ///
     /// See [`Expression::UnsafeIndex`]
     #[compatible(SMT)]
-    SafeIndex(Metadata, Moo<Expression>, Vec<Expression>),
+    SafeIndex(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Vec<Expression>,
+    ),
 
     /// A matrix slice: `a[indices]`.
     ///
@@ -126,19 +141,31 @@ pub enum Expression {
     ///
     /// Defined iff the defined indices are within their respective index domains.
     #[compatible(JsonInput)]
-    UnsafeSlice(Metadata, Moo<Expression>, Vec<Option<Expression>>),
+    UnsafeSlice(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Vec<Option<Expression>>,
+    ),
 
     /// A safe matrix slice: `a[indices]`.
     ///
     /// See [`Expression::UnsafeSlice`].
-    SafeSlice(Metadata, Moo<Expression>, Vec<Option<Expression>>),
+    SafeSlice(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Vec<Option<Expression>>,
+    ),
 
     /// `inDomain(x,domain)` iff `x` is in the domain `domain`.
     ///
     /// This cannot be constructed from Essence input, nor passed to a solver: this expression is
     /// mainly used during the conversion of `UnsafeIndex` and `UnsafeSlice` to `SafeIndex` and
     /// `SafeSlice` respectively.
-    InDomain(Metadata, Moo<Expression>, Domain),
+    InDomain(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Domain,
+    ),
 
     /// `toInt(b)` casts boolean expression b to an integer.
     ///
@@ -146,123 +173,207 @@ pub enum Expression {
     ///
     /// - If b is true, then `toInt(b) == 1`
     #[compatible(SMT)]
-    ToInt(Metadata, Moo<Expression>),
+    ToInt(#[derivative(Hash = "ignore")] Metadata, Moo<Expression>),
 
     // todo (gskorokhod): Same reason as for Comprehension
     #[polyquine_skip]
-    Scope(Metadata, Moo<SubModel>),
+    Scope(#[derivative(Hash = "ignore")] Metadata, Moo<SubModel>),
 
     /// `|x|` - absolute value of `x`
     #[compatible(JsonInput, SMT)]
-    Abs(Metadata, Moo<Expression>),
+    Abs(#[derivative(Hash = "ignore")] Metadata, Moo<Expression>),
 
     /// `sum(<vec_expr>)`
     #[compatible(JsonInput, SMT)]
-    Sum(Metadata, Moo<Expression>),
+    Sum(#[derivative(Hash = "ignore")] Metadata, Moo<Expression>),
 
     /// `a * b * c * ...`
     #[compatible(JsonInput, SMT)]
-    Product(Metadata, Moo<Expression>),
+    Product(#[derivative(Hash = "ignore")] Metadata, Moo<Expression>),
 
     /// `min(<vec_expr>)`
     #[compatible(JsonInput, SMT)]
-    Min(Metadata, Moo<Expression>),
+    Min(#[derivative(Hash = "ignore")] Metadata, Moo<Expression>),
 
     /// `max(<vec_expr>)`
     #[compatible(JsonInput, SMT)]
-    Max(Metadata, Moo<Expression>),
+    Max(#[derivative(Hash = "ignore")] Metadata, Moo<Expression>),
 
     /// `not(a)`
     #[compatible(JsonInput, SAT, SMT)]
-    Not(Metadata, Moo<Expression>),
+    Not(#[derivative(Hash = "ignore")] Metadata, Moo<Expression>),
 
     /// `or(<vec_expr>)`
     #[compatible(JsonInput, SAT, SMT)]
-    Or(Metadata, Moo<Expression>),
+    Or(#[derivative(Hash = "ignore")] Metadata, Moo<Expression>),
 
     /// `and(<vec_expr>)`
     #[compatible(JsonInput, SAT, SMT)]
-    And(Metadata, Moo<Expression>),
+    And(#[derivative(Hash = "ignore")] Metadata, Moo<Expression>),
 
     /// Ensures that `a->b` (material implication).
     #[compatible(JsonInput, SMT)]
-    Imply(Metadata, Moo<Expression>, Moo<Expression>),
+    Imply(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     /// `iff(a, b)` a <-> b
     #[compatible(JsonInput, SMT)]
-    Iff(Metadata, Moo<Expression>, Moo<Expression>),
+    Iff(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     #[compatible(JsonInput)]
-    Union(Metadata, Moo<Expression>, Moo<Expression>),
+    Union(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     #[compatible(JsonInput)]
-    In(Metadata, Moo<Expression>, Moo<Expression>),
+    In(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     #[compatible(JsonInput)]
-    Intersect(Metadata, Moo<Expression>, Moo<Expression>),
+    Intersect(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     #[compatible(JsonInput)]
-    Supset(Metadata, Moo<Expression>, Moo<Expression>),
+    Supset(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     #[compatible(JsonInput)]
-    SupsetEq(Metadata, Moo<Expression>, Moo<Expression>),
+    SupsetEq(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     #[compatible(JsonInput)]
-    Subset(Metadata, Moo<Expression>, Moo<Expression>),
+    Subset(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     #[compatible(JsonInput)]
-    SubsetEq(Metadata, Moo<Expression>, Moo<Expression>),
+    SubsetEq(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     #[compatible(JsonInput, SMT)]
-    Eq(Metadata, Moo<Expression>, Moo<Expression>),
+    Eq(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     #[compatible(JsonInput, SMT)]
-    Neq(Metadata, Moo<Expression>, Moo<Expression>),
+    Neq(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     #[compatible(JsonInput, SMT)]
-    Geq(Metadata, Moo<Expression>, Moo<Expression>),
+    Geq(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     #[compatible(JsonInput, SMT)]
-    Leq(Metadata, Moo<Expression>, Moo<Expression>),
+    Leq(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     #[compatible(JsonInput, SMT)]
-    Gt(Metadata, Moo<Expression>, Moo<Expression>),
+    Gt(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     #[compatible(JsonInput, SMT)]
-    Lt(Metadata, Moo<Expression>, Moo<Expression>),
+    Lt(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     /// Division after preventing division by zero, usually with a bubble
     #[compatible(SMT)]
-    SafeDiv(Metadata, Moo<Expression>, Moo<Expression>),
+    SafeDiv(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     /// Division with a possibly undefined value (division by 0)
     #[compatible(JsonInput)]
-    UnsafeDiv(Metadata, Moo<Expression>, Moo<Expression>),
+    UnsafeDiv(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     /// Modulo after preventing mod 0, usually with a bubble
     #[compatible(SMT)]
-    SafeMod(Metadata, Moo<Expression>, Moo<Expression>),
+    SafeMod(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     /// Modulo with a possibly undefined value (mod 0)
     #[compatible(JsonInput)]
-    UnsafeMod(Metadata, Moo<Expression>, Moo<Expression>),
+    UnsafeMod(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     /// Negation: `-x`
     #[compatible(JsonInput, SMT)]
-    Neg(Metadata, Moo<Expression>),
+    Neg(#[derivative(Hash = "ignore")] Metadata, Moo<Expression>),
 
     /// Unsafe power`x**y` (possibly undefined)
     ///
     /// Defined when (X!=0 \\/ Y!=0) /\ Y>=0
     #[compatible(JsonInput)]
-    UnsafePow(Metadata, Moo<Expression>, Moo<Expression>),
+    UnsafePow(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     /// `UnsafePow` after preventing undefinedness
-    SafePow(Metadata, Moo<Expression>, Moo<Expression>),
+    SafePow(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     /// `allDiff(<vec_expr>)`
     #[compatible(JsonInput)]
-    AllDiff(Metadata, Moo<Expression>),
+    AllDiff(#[derivative(Hash = "ignore")] Metadata, Moo<Expression>),
 
     /// Binary subtraction operator
     ///
@@ -270,7 +381,11 @@ pub enum Expression {
     /// TODO: make this compatible with Set Difference calculations - need to change return type and domain for this expression and write a set comprehension rule.
     /// have already edited minus_to_sum to prevent this from applying to sets
     #[compatible(JsonInput)]
-    Minus(Metadata, Moo<Expression>, Moo<Expression>),
+    Minus(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     /// Ensures that x=|y| i.e. x is the absolute value of y.
     ///
@@ -280,7 +395,11 @@ pub enum Expression {
     ///
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#abs)
     #[compatible(Minion)]
-    FlatAbsEq(Metadata, Moo<Atom>, Moo<Atom>),
+    FlatAbsEq(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Atom>,
+        Moo<Atom>,
+    ),
 
     /// Ensures that `alldiff([a,b,...])`.
     ///
@@ -290,7 +409,7 @@ pub enum Expression {
     ///
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#alldiff)
     #[compatible(Minion)]
-    FlatAllDiff(Metadata, Vec<Atom>),
+    FlatAllDiff(#[derivative(Hash = "ignore")] Metadata, Vec<Atom>),
 
     /// Ensures that sum(vec) >= x.
     ///
@@ -300,7 +419,7 @@ pub enum Expression {
     ///
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#sumgeq)
     #[compatible(Minion)]
-    FlatSumGeq(Metadata, Vec<Atom>, Atom),
+    FlatSumGeq(#[derivative(Hash = "ignore")] Metadata, Vec<Atom>, Atom),
 
     /// Ensures that sum(vec) <= x.
     ///
@@ -310,7 +429,7 @@ pub enum Expression {
     ///
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#sumleq)
     #[compatible(Minion)]
-    FlatSumLeq(Metadata, Vec<Atom>, Atom),
+    FlatSumLeq(#[derivative(Hash = "ignore")] Metadata, Vec<Atom>, Atom),
 
     /// `ineq(x,y,k)` ensures that x <= y + k.
     ///
@@ -320,7 +439,12 @@ pub enum Expression {
     ///
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#ineq)
     #[compatible(Minion)]
-    FlatIneq(Metadata, Moo<Atom>, Moo<Atom>, Box<Literal>),
+    FlatIneq(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Atom>,
+        Moo<Atom>,
+        Box<Literal>,
+    ),
 
     /// `w-literal(x,k)` ensures that x == k, where x is a variable and k a constant.
     ///
@@ -336,7 +460,7 @@ pub enum Expression {
     /// + `rules::minion::boolean_literal_to_wliteral`.
     #[compatible(Minion)]
     #[polyquine_skip]
-    FlatWatchedLiteral(Metadata, Reference, Literal),
+    FlatWatchedLiteral(#[derivative(Hash = "ignore")] Metadata, Reference, Literal),
 
     /// `weightedsumleq(cs,xs,total)` ensures that cs.xs <= total, where cs.xs is the scalar dot
     /// product of cs and xs.
@@ -349,7 +473,12 @@ pub enum Expression {
     ///
     /// + [Minion
     /// documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#weightedsumleq)
-    FlatWeightedSumLeq(Metadata, Vec<Literal>, Vec<Atom>, Moo<Atom>),
+    FlatWeightedSumLeq(
+        #[derivative(Hash = "ignore")] Metadata,
+        Vec<Literal>,
+        Vec<Atom>,
+        Moo<Atom>,
+    ),
 
     /// `weightedsumgeq(cs,xs,total)` ensures that cs.xs >= total, where cs.xs is the scalar dot
     /// product of cs and xs.
@@ -362,7 +491,12 @@ pub enum Expression {
     ///
     /// + [Minion
     /// documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#weightedsumleq)
-    FlatWeightedSumGeq(Metadata, Vec<Literal>, Vec<Atom>, Moo<Atom>),
+    FlatWeightedSumGeq(
+        #[derivative(Hash = "ignore")] Metadata,
+        Vec<Literal>,
+        Vec<Atom>,
+        Moo<Atom>,
+    ),
 
     /// Ensures that x =-y, where x and y are atoms.
     ///
@@ -372,7 +506,11 @@ pub enum Expression {
     ///
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#minuseq)
     #[compatible(Minion)]
-    FlatMinusEq(Metadata, Moo<Atom>, Moo<Atom>),
+    FlatMinusEq(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Atom>,
+        Moo<Atom>,
+    ),
 
     /// Ensures that x*y=z.
     ///
@@ -382,7 +520,12 @@ pub enum Expression {
     ///
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#product)
     #[compatible(Minion)]
-    FlatProductEq(Metadata, Moo<Atom>, Moo<Atom>, Moo<Atom>),
+    FlatProductEq(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Atom>,
+        Moo<Atom>,
+        Moo<Atom>,
+    ),
 
     /// Ensures that floor(x/y)=z. Always true when y=0.
     ///
@@ -392,7 +535,12 @@ pub enum Expression {
     ///
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#div_undefzero)
     #[compatible(Minion)]
-    MinionDivEqUndefZero(Metadata, Moo<Atom>, Moo<Atom>, Moo<Atom>),
+    MinionDivEqUndefZero(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Atom>,
+        Moo<Atom>,
+        Moo<Atom>,
+    ),
 
     /// Ensures that x%y=z. Always true when y=0.
     ///
@@ -402,7 +550,12 @@ pub enum Expression {
     ///
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#mod_undefzero)
     #[compatible(Minion)]
-    MinionModuloEqUndefZero(Metadata, Moo<Atom>, Moo<Atom>, Moo<Atom>),
+    MinionModuloEqUndefZero(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Atom>,
+        Moo<Atom>,
+        Moo<Atom>,
+    ),
 
     /// Ensures that `x**y = z`.
     ///
@@ -415,7 +568,12 @@ pub enum Expression {
     ///
     /// + [Github comment about `pow` semantics](https://github.com/minion/minion/issues/40#issuecomment-2595914891)
     /// + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#pow)
-    MinionPow(Metadata, Moo<Atom>, Moo<Atom>, Moo<Atom>),
+    MinionPow(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Atom>,
+        Moo<Atom>,
+        Moo<Atom>,
+    ),
 
     /// `reify(constraint,r)` ensures that r=1 iff `constraint` is satisfied, where r is a 0/1
     /// variable.
@@ -426,7 +584,11 @@ pub enum Expression {
     ///
     ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#reify)
     #[compatible(Minion)]
-    MinionReify(Metadata, Moo<Expression>, Atom),
+    MinionReify(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Atom,
+    ),
 
     /// `reifyimply(constraint,r)` ensures that `r->constraint`, where r is a 0/1 variable.
     /// variable.
@@ -437,7 +599,11 @@ pub enum Expression {
     ///
     ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#reifyimply)
     #[compatible(Minion)]
-    MinionReifyImply(Metadata, Moo<Expression>, Atom),
+    MinionReifyImply(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Atom,
+    ),
 
     /// `w-inintervalset(x, [a1,a2, b1,b2, … ])` ensures that the value of x belongs to one of the
     /// intervals {a1,…,a2}, {b1,…,b2} etc.
@@ -450,7 +616,7 @@ pub enum Expression {
     ///>
     ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#w-inintervalset)
     #[compatible(Minion)]
-    MinionWInIntervalSet(Metadata, Atom, Vec<i32>),
+    MinionWInIntervalSet(#[derivative(Hash = "ignore")] Metadata, Atom, Vec<i32>),
 
     /// `w-inset(x, [v1, v2, … ])` ensures that the value of `x` is one of the explicitly given values `v1`, `v2`, etc.
     ///
@@ -464,7 +630,7 @@ pub enum Expression {
     ///
     ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#w-inset)
     #[compatible(Minion)]
-    MinionWInSet(Metadata, Atom, Vec<i32>),
+    MinionWInSet(#[derivative(Hash = "ignore")] Metadata, Atom, Vec<i32>),
 
     /// `element_one(vec, i, e)` specifies that `vec[i] = e`. This implies that i is
     /// in the range `[1..len(vec)]`.
@@ -475,28 +641,45 @@ pub enum Expression {
     ///
     ///  + [Minion documentation](https://minion-solver.readthedocs.io/en/stable/usage/constraints.html#element_one)
     #[compatible(Minion)]
-    MinionElementOne(Metadata, Vec<Atom>, Moo<Atom>, Moo<Atom>),
+    MinionElementOne(
+        #[derivative(Hash = "ignore")] Metadata,
+        Vec<Atom>,
+        Moo<Atom>,
+        Moo<Atom>,
+    ),
 
     /// Declaration of an auxiliary variable.
     ///
     /// As with Savile Row, we semantically distinguish this from `Eq`.
     #[compatible(Minion)]
     #[polyquine_skip]
-    AuxDeclaration(Metadata, Reference, Moo<Expression>),
+    AuxDeclaration(
+        #[derivative(Hash = "ignore")] Metadata,
+        Reference,
+        Moo<Expression>,
+    ),
 
     /// This expression is for encoding i32 ints as a vector of boolean expressions for cnf - using 2s complement
     #[compatible(SAT)]
-    SATInt(Metadata, Moo<Expression>),
+    SATInt(#[derivative(Hash = "ignore")] Metadata, Moo<Expression>),
 
     /// Addition over a pair of expressions (i.e. a + b) rather than a vec-expr like Expression::Sum.
     /// This is for compatibility with backends that do not support addition over vectors.
     #[compatible(SMT)]
-    PairwiseSum(Metadata, Moo<Expression>, Moo<Expression>),
+    PairwiseSum(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 
     /// Multiplication over a pair of expressions (i.e. a * b) rather than a vec-expr like Expression::Product.
     /// This is for compatibility with backends that do not support multiplication over vectors.
     #[compatible(SMT)]
-    PairwiseProduct(Metadata, Moo<Expression>, Moo<Expression>),
+    PairwiseProduct(
+        #[derivative(Hash = "ignore")] Metadata,
+        Moo<Expression>,
+        Moo<Expression>,
+    ),
 }
 
 // for the given matrix literal, return a bounded domain from the min to max of applying op to each
@@ -621,21 +804,26 @@ impl Expression {
             Expression::Metavar(_, _) => None,
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
-                match matrix.domain_of()? {
-                    Domain::Matrix(elem_domain, _) => Some(*elem_domain),
-                    Domain::Tuple(_) => None,
-                    Domain::Record(_) => None,
-                    _ => {
-                        bug!("subject of an index operation should support indexing")
-                    }
+                let dom = matrix.domain_of()?;
+                if let Some((elem_domain, _)) = dom.as_matrix() {
+                    return Some(elem_domain);
                 }
+                if let Some(_) = dom.as_tuple() {
+                    // TODO: We can implement proper indexing for tuples
+                    return None;
+                }
+                if let Some(_) = dom.as_record() {
+                    // TODO: We can implement proper indexing for records
+                    return None;
+                }
+                bug!("subject of an index operation should support indexing")
             }
             Expression::UnsafeSlice(_, matrix, indices)
             | Expression::SafeSlice(_, matrix, indices) => {
                 let sliced_dimension = indices.iter().position(Option::is_none);
 
                 let dom = matrix.domain_of()?;
-                let Some((elem_domain, index_domains)) = dom.as_dom_matrix() else {
+                let Some((elem_domain, index_domains)) = dom.as_matrix() else {
                     bug!("subject of an index operation should be a matrix");
                 };
 
@@ -682,25 +870,26 @@ impl Expression {
             Expression::SafeDiv(_, a, b) => {
                 // rust integer division is truncating; however, we want to always round down
                 // including for negative numbers.
-                let domain = a.domain_of()?.apply_i32(
-                    |x, y| {
-                        if y != 0 {
-                            Some((x as f32 / y as f32).floor() as i32)
-                        } else {
-                            None
-                        }
-                    },
-                    &b.domain_of()?,
-                );
+                let domain = a
+                    .domain_of()?
+                    .apply_i32(
+                        |x, y| {
+                            if y != 0 {
+                                Some((x as f32 / y as f32).floor() as i32)
+                            } else {
+                                None
+                            }
+                        },
+                        &b.domain_of()?,
+                    )
+                    .unwrap_or_else(|err| bug!("Got {err} when computing domain of {self}"));
 
-                match domain {
-                    Ok(Domain::Int(ranges)) => {
-                        let mut ranges = ranges;
-                        ranges.push(Range::Single(0));
-                        Some(Domain::Int(ranges))
-                    }
-                    Err(_) => todo!(),
-                    _ => unreachable!(),
+                if let Some(ranges) = domain.as_int() {
+                    let mut ranges = ranges;
+                    ranges.push(Range::Single(0.into()));
+                    return Some(Domain::new_int(ranges));
+                } else {
+                    bug!("Domain of {self} was not integer")
                 }
             }
             Expression::UnsafeMod(_, a, b) => a
@@ -711,19 +900,20 @@ impl Expression {
                 )
                 .ok(),
             Expression::SafeMod(_, a, b) => {
-                let domain = a.domain_of()?.apply_i32(
-                    |x, y| if y != 0 { Some(x % y) } else { None },
-                    &b.domain_of()?,
-                );
+                let domain = a
+                    .domain_of()?
+                    .apply_i32(
+                        |x, y| if y != 0 { Some(x % y) } else { None },
+                        &b.domain_of()?,
+                    )
+                    .unwrap_or_else(|err| bug!("Got {err} when computing domain of {self}"));
 
-                match domain {
-                    Ok(Domain::Int(ranges)) => {
-                        let mut ranges = ranges;
-                        ranges.push(Range::Single(0));
-                        Some(Domain::Int(ranges))
-                    }
-                    Err(_) => todo!(),
-                    _ => unreachable!(),
+                if let Some(ranges) = domain.as_int() {
+                    let mut ranges = ranges;
+                    ranges.push(Range::Single(0.into()));
+                    return Some(Domain::new_int(ranges));
+                } else {
+                    bug!("Domain of {self} was not integer")
                 }
             }
             Expression::SafePow(_, a, b) | Expression::UnsafePow(_, a, b) => a
@@ -767,20 +957,23 @@ impl Expression {
             Expression::MinionWInSet(_, _, _) => Some(Domain::new_bool()),
             Expression::MinionElementOne(_, _, _, _) => Some(Domain::new_bool()),
             Expression::Neg(_, x) => {
-                let Some(Domain::Int(mut ranges)) = x.domain_of() else {
+                let dom = x.domain_of()?;
+                let Some(mut ranges) = dom.as_int() else {
                     return None;
                 };
 
-                for range in ranges.iter_mut() {
-                    *range = match range {
-                        Range::Single(x) => Range::Single(-*x),
-                        Range::Bounded(x, y) => Range::Bounded(-*y, -*x),
-                        Range::UnboundedR(i) => Range::UnboundedL(-*i),
-                        Range::UnboundedL(i) => Range::UnboundedR(-*i),
-                    };
-                }
+                ranges = ranges
+                    .into_iter()
+                    .map(|r| match r {
+                        Range::Single(x) => Range::Single(-x),
+                        Range::Bounded(x, y) => Range::Bounded(-y, -x),
+                        Range::UnboundedR(i) => Range::UnboundedL(-i),
+                        Range::UnboundedL(i) => Range::UnboundedR(-i),
+                        Range::Unbounded => Range::Unbounded,
+                    })
+                    .collect();
 
-                Some(Domain::Int(ranges))
+                Some(Domain::new_int(ranges))
             }
             Expression::Minus(_, a, b) => a
                 .domain_of()?
@@ -796,9 +989,9 @@ impl Expression {
                 .apply_i32(|a, _| Some(a.abs()), &a.domain_of()?)
                 .ok(),
             Expression::MinionPow(_, _, _, _) => Some(Domain::new_bool()),
-            Expression::ToInt(_, _) => Some(Domain::Int(vec![Range::Bounded(0, 1)])),
+            Expression::ToInt(_, _) => Some(Domain::new_int(vec![Range::Bounded(0, 1)])),
             Expression::SATInt(_, _) => {
-                Some(Domain::Int(vec![Range::Bounded(
+                Some(Domain::new_int_ground(vec![Range::Bounded(
                     i8::MIN.into(),
                     i8::MAX.into(),
                 )])) // BITS
@@ -815,15 +1008,16 @@ impl Expression {
                 .apply_i32(|a, b| Some(a * b), &b.domain_of()?)
                 .ok(),
         };
-        match ret {
+        if let Some(dom) = &ret
+            && let Some(ranges) = dom.as_int_ground()
+            && ranges.len() > 1
+        {
             // TODO: (flm8) the Minion bindings currently only support single ranges for domains, so we use the min/max bounds
             // Once they support a full domain as we define it, we can remove this conversion
-            Some(Domain::Int(ranges)) if ranges.len() > 1 => {
-                let (min, max) = range_vec_bounds_i32(&ranges)?;
-                Some(Domain::Int(vec![Range::Bounded(min, max)]))
-            }
-            _ => ret,
+            let (min, max) = range_vec_bounds_i32(ranges)?;
+            return Some(Domain::new_int(vec![Range::Bounded(min, max)]));
         }
+        ret
     }
 
     pub fn get_meta(&self) -> Metadata {
@@ -936,10 +1130,10 @@ impl Expression {
     /// It is generally undefined to edit the length of a matrix unless it is a list (as defined by
     /// [`Expression::unwrap_list`]). Users of this function should ensure that, if the matrix is
     /// reconstructed, the index domain and the number of elements in the matrix remain the same.
-    pub fn unwrap_matrix_unchecked(self) -> Option<(Vec<Expression>, Domain)> {
+    pub fn unwrap_matrix_unchecked(self) -> Option<(Vec<Expression>, DomainPtr)> {
         match self {
             Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, domain)) => {
-                Some((elems, *domain))
+                Some((elems, domain))
             }
             Expression::Atomic(
                 _,
@@ -949,7 +1143,7 @@ impl Expression {
                     .into_iter()
                     .map(|x: Literal| Expression::Atomic(Metadata::new(), Atom::Literal(x)))
                     .collect_vec(),
-                *domain,
+                domain,
             )),
 
             _ => None,

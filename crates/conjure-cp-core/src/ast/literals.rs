@@ -111,7 +111,7 @@ impl AbstractLiteral<Expression> {
                 let mut e = Expression::AbstractLiteral(Metadata::new(), self.clone());
                 while let Expression::AbstractLiteral(_, AbstractLiteral::Matrix(elems, idx)) = e {
                     assert!(
-                        idx.as_dom_matrix().is_some(),
+                        idx.as_matrix().is_some(),
                         "n-dimensional matrix literals should be represented as a matrix inside a matrix"
                     );
                     new_index_domain.push(idx);
