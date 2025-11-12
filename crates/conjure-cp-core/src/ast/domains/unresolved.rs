@@ -22,7 +22,7 @@ use uniplate::Uniplate;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 #[path_prefix(conjure_cp::ast)]
-pub(super) enum IntVal {
+pub enum IntVal {
     Const(Int),
     #[polyquine_skip]
     Reference(Reference),
@@ -118,10 +118,10 @@ impl IntVal {
     }
 
     pub fn new_expr(value: Moo<Expression>) -> Option<IntVal> {
-        if value.maybe_return_type().is_none() {
+        if value.maybe_return_type() != Some(ReturnType::Int) {
             return None;
-        };
-        todo!()
+        }
+        Some(IntVal::Expr(value))
     }
 
     pub fn resolve(&self) -> Option<Int> {

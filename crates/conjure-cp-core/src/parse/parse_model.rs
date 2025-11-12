@@ -9,7 +9,6 @@ use ustr::Ustr;
 use serde_json::Value;
 use serde_json::Value as JsonValue;
 
-use crate::ast::Metadata;
 use crate::ast::ac_operators::ACOperatorKind;
 use crate::ast::comprehension::ComprehensionBuilder;
 use crate::ast::records::RecordValue;
@@ -18,6 +17,7 @@ use crate::ast::{
     SetAttr, SymbolTable,
 };
 use crate::ast::{DeclarationKind, Moo};
+use crate::ast::{DomainPtr, Metadata};
 use crate::context::Context;
 use crate::error::{Error, Result};
 use crate::{Model, bug, error, into_matrix_expr, throw_error};
@@ -176,20 +176,27 @@ fn parse_domain(
     domain_name: &str,
     domain_value: &JsonValue,
     symbols: &mut SymbolTable,
-) -> Result<Domain> {
+) -> Result<DomainPtr> {
     match domain_name {
         "DomainInt" => Ok(parse_int_domain(domain_value, symbols)?),
-        "DomainBool" => Ok(Domain::Bool),
-        "DomainReference" => Ok(Domain::Reference(Name::User(
-            domain_value
-                .as_array()
-                .ok_or(error!("DomainReference is not an array"))?[0]
-                .as_object()
-                .ok_or(error!("DomainReference[0] is not an object"))?["Name"]
-                .as_str()
-                .ok_or(error!("DomainReference[0].Name is not a string"))?
-                .into(),
-        ))),
+        "DomainBool" => Ok(Domain::new_bool()),
+        "DomainReference" => {
+            let name = Name::user(
+                domain_value
+                    .as_array()
+                    .ok_or(error!("DomainReference is not an array"))?[0]
+                    .as_object()
+                    .ok_or(error!("DomainReference[0] is not an object"))?["Name"]
+                    .as_str()
+                    .ok_or(error!("DomainReference[0].Name is not a string"))?
+                    .into(),
+            );
+            let ptr = symbols
+                .lookup(&name)
+                .ok_or(error!(format!("Name {name} not found")))?;
+            let dom = Domain::new_ref(ptr).ok_or(error!("Could not construct reference domain"))?;
+            Ok(dom)
+        }
         "DomainSet" => {
             let dom = domain_value.get(2).and_then(|v| v.as_object());
             let domain_obj = dom.expect("domain object exists");
@@ -198,7 +205,7 @@ fn parse_domain(
                 .next()
                 .ok_or(Error::Parse("DomainSet is an empty object".to_owned()))?;
             let domain = parse_domain(domain.0.as_str(), domain.1, symbols)?;
-            Ok(Domain::Set(SetAttr::None, Box::new(domain)))
+            Ok(Domain::new_set(SetAttr::default(), domain))
         }
 
         "DomainMatrix" => {
@@ -225,7 +232,7 @@ fn parse_domain(
             //
             // Therefore, the index is always a Domain.
 
-            let mut index_domains: Vec<Domain> = vec![];
+            let mut index_domains: Vec<DomainPtr> = vec![];
 
             index_domains.push(parse_domain(
                 index_domain_name,
@@ -239,12 +246,12 @@ fn parse_domain(
             // Walk through the value domain until it is not a DomainMatrix, adding the index to
             // our list of indices.
             let mut value_domain = parse_domain(value_domain_name, value_domain_value, symbols)?;
-            while let Domain::Matrix(new_value_domain, mut indices) = value_domain {
+            while let Some((new_value_domain, mut indices)) = value_domain.as_matrix() {
                 index_domains.append(&mut indices);
-                value_domain = *new_value_domain.clone()
+                value_domain = new_value_domain.clone()
             }
 
-            Ok(Domain::Matrix(Box::new(value_domain), index_domains))
+            Ok(Domain::new_matrix(value_domain, index_domains))
         }
         "DomainTuple" => {
             let domain_value = domain_value
@@ -263,9 +270,9 @@ fn parse_domain(
                         .ok_or(error!("DomainTuple[0] is an empty object"))?;
                     parse_domain(domain.0, domain.1, symbols)
                 })
-                .collect::<Result<Vec<Domain>>>()?;
+                .collect::<Result<Vec<DomainPtr>>>()?;
 
-            Ok(Domain::Tuple(domain))
+            Ok(Domain::new_tuple(domain))
         }
         "DomainRecord" => {
             let domain_value = domain_value
@@ -309,7 +316,7 @@ fn parse_domain(
                         .expect("record field to not already be in the symbol table")
                 });
 
-            Ok(Domain::Record(record_entries))
+            Ok(Domain::new_record(record_entries))
         }
 
         _ => Err(Error::Parse(
@@ -318,7 +325,7 @@ fn parse_domain(
     }
 }
 
-fn parse_int_domain(v: &JsonValue, symbols: &SymbolTable) -> Result<Domain> {
+fn parse_int_domain(v: &JsonValue, symbols: &SymbolTable) -> Result<DomainPtr> {
     let mut ranges = Vec::new();
     let arr = v
         .as_array()
@@ -354,7 +361,7 @@ fn parse_int_domain(v: &JsonValue, symbols: &SymbolTable) -> Result<Domain> {
             _ => return throw_error!("DomainInt[1] contains an unknown object"),
         }
     }
-    Ok(Domain::Int(ranges))
+    Ok(Domain::new_int(ranges))
 }
 
 /// Parses a (possibly) integer value inside the range of a domain
