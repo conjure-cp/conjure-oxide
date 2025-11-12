@@ -33,9 +33,6 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: "Install rust-toolchain.toml"
-        run: rustup toolchain install
-
       - uses: actions/cache@v4
         with:
           path: |
@@ -47,5 +44,8 @@ jobs:
             ~/conjure
           key: conjure--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
           restore-keys: conjure--${{ env.rust_release }}--${{ env.compiler_profile }}
+
+      - name: "Install rust-toolchain.toml"
+        run: rustup toolchain install
 
       - run: make EXTRA_CARGO_CHECK_FLAGS=-v check

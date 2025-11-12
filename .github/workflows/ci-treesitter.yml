@@ -34,10 +34,6 @@ jobs:
           fetch-depth: 2
           path: repo
 
-        # the tree-sitter actions expect this!
-      - name: Make tree-sitter-essence the root directory
-        run: cp -r repo/crates/tree-sitter-essence/* .
-
       - uses: actions/cache@v4
         with:
           path: |
@@ -49,6 +45,10 @@ jobs:
             ~/conjure
           key: treesitter--${{ env.rust_release }}--${{ env.compiler_profile }}--${{ github.event.repository.updated_at }}
           restore-keys: treesitter--${{ env.rust_release }}--${{ env.compiler_profile }}
+
+        # the tree-sitter actions expect this!
+      - name: Make tree-sitter-essence the root directory
+        run: cp -r repo/crates/tree-sitter-essence/* .
 
       - name: Set up tree-sitter
         uses: tree-sitter/setup-action/cli@v2
