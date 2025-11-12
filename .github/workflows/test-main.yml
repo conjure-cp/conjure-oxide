@@ -25,7 +25,6 @@ env:
   compiler_profile: debug
 
 jobs:
-
   # test-pr and test-main are identical, except for:
   # - rust cache, and
   # - its smaller scope (see commented out options in the matrix)
@@ -66,7 +65,7 @@ jobs:
 
       - uses: actions/cache@v4
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.compiler_profile == 'debug' }}
-          with:
+        with:
           path: |
             ~/.cargo/bin/
             ~/.cargo/registry/index/
@@ -84,9 +83,7 @@ jobs:
         run: echo "RUSTUP_TOOLCHAIN=nightly" >> $GITHUB_ENV
 
       - name: rustup
-        run: |
-          rustup update ${{ matrix.rust_release }}
-          rustup default ${{ matrix.rust_release }}
+        run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
 
       - uses: ./.github/actions/install-conjure
         with:

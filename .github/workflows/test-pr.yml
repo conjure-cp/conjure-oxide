@@ -78,9 +78,7 @@ jobs:
         run: echo "RUSTUP_TOOLCHAIN=nightly" >> $GITHUB_ENV
 
       - name: rustup
-        run: |
-          rustup update ${{ matrix.rust_release }}
-          rustup default ${{ matrix.rust_release }}
+        run: rustup update ${{ matrix.rust_release }} && rustup default ${{ matrix.rust_release }}
 
       - uses: ./.github/actions/install-conjure
         with:

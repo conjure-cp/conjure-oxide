@@ -50,9 +50,7 @@ jobs:
         run: echo "RUSTUP_TOOLCHAIN=nightly" >> $GITHUB_ENV
 
       - name: rustup
-        run: |
-          rustup update ${{ env.rust_release }}
-          rustup default ${{ env.rust_release }}
+        run: rustup update ${{ env.rust_release }} && rustup default ${{ env.rust_release }}
 
       - run: cargo build -vv --workspace
 
