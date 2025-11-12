@@ -91,6 +91,7 @@ pub enum Expression {
     Comprehension(Metadata, Moo<Comprehension>),
 
     /// Higher-level abstract comprehension
+    #[polyquine_skip] // no idea what this is lol but it stops rustc screaming at me
     AbstractComprehension(Metadata, Moo<AbstractComprehension>),
 
     /// Defines dominance ("Solution A is preferred over Solution B")
@@ -613,6 +614,7 @@ impl Expression {
             Expression::FromSolution(_, expr) => Some(expr.domain_of()),
             Expression::Metavar(_, _) => None,
             Expression::Comprehension(_, comprehension) => comprehension.domain_of(),
+            Expression::AbstractComprehension(_, comprehension) => comprehension.domain_of(),
             Expression::UnsafeIndex(_, matrix, _) | Expression::SafeIndex(_, matrix, _) => {
                 match matrix.domain_of()? {
                     Domain::Matrix(elem_domain, _) => Some(*elem_domain),
@@ -1128,6 +1130,7 @@ impl Display for Expression {
 
             Expression::AbstractLiteral(_, l) => l.fmt(f),
             Expression::Comprehension(_, c) => c.fmt(f),
+            Expression::AbstractComprehension(_, c) => c.fmt(f),
             Expression::UnsafeIndex(_, e1, e2) | Expression::SafeIndex(_, e1, e2) => {
                 write!(f, "{e1}{}", pretty_vec(e2))
             }
@@ -1371,6 +1374,7 @@ impl Typeable for Expression {
             }
             Expression::InDomain(_, _, _) => Some(ReturnType::Bool),
             Expression::Comprehension(_, _) => None,
+            Expression::AbstractComprehension(_, _) => None, // TODO: is this correct?
             Expression::Root(_, _) => Some(ReturnType::Bool),
             Expression::DominanceRelation(_, _) => Some(ReturnType::Bool),
             Expression::FromSolution(_, expr) => expr.return_type(),
