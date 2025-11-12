@@ -7,6 +7,7 @@ use strum_macros::{Display, EnumIter, EnumString};
 #[derive(Clone, Debug, Default)]
 pub struct TheoryConfig {
     pub ints: IntTheory,
+    pub matrices: MatrixTheory,
 }
 
 /// The theory to use when encoding CO integers through the SMT solver adaptor.
@@ -33,4 +34,30 @@ pub enum IntTheory {
 
     /// Use Z3 Bitvector theory for integers
     Bv,
+}
+
+/// The theory to use when encoding CO integers through the SMT solver adaptor.
+#[derive(
+    Debug,
+    EnumString,
+    EnumIter,
+    Display,
+    PartialEq,
+    Eq,
+    Hash,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    ValueEnum,
+    Default,
+)]
+pub enum MatrixTheory {
+    /// Directly encode matrices as SMT Arrays
+    #[default]
+    Arrays,
+
+    /// Decompose arrays into auxiliary variables using the matrix_to_atom representation
+    Atomic,
 }

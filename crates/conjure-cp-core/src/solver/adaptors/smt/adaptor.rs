@@ -35,8 +35,11 @@ impl Default for Smt {
 
 impl Smt {
     /// Constructs a new adaptor using the given theories for representing the relevant constructs.
-    pub fn new(int_theory: IntTheory) -> Self {
-        let theories = TheoryConfig { ints: int_theory };
+    pub fn new(int_theory: IntTheory, matrix_theory: MatrixTheory) -> Self {
+        let theories = TheoryConfig {
+            ints: int_theory,
+            matrices: matrix_theory,
+        };
         Smt {
             theory_config: theories.clone(),
             store: SymbolStore::new(theories),

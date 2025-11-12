@@ -7,6 +7,8 @@
 //! "Dynamic" or "AST" is used to describe generic Z3 AST values. "Expression" means
 //! a Conjure Oxide [`Expression`] type.
 
+use std::collections::HashSet;
+
 use z3::ast::*;
 use z3::{Solver, Sort, Symbol};
 
@@ -32,8 +34,16 @@ pub fn load_model_impl(
 ) -> SolverResult<()> {
     for (name, decl) in symbols.clone().into_iter_local() {
         let Some(var) = decl.as_var() else {
+            /// Ignore lettings, etc
             continue;
         };
+        if !symbols
+            .representations_for(&name)
+            .is_none_or(|reps| reps.is_empty())
+        {
+            /// This variable has representations; ignore it
+            continue;
+        }
         let (sym, ast, restriction) = var_to_ast(&name, &var, theory_config)?;
         store.insert(name, (decl.domain().unwrap(), ast, sym));
         solver.assert(restriction);
