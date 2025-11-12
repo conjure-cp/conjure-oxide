@@ -249,8 +249,8 @@ fn compare_json_string(
 
     for i in 0..max {
         if gen_lines[i] != exp_lines[i] {
-            exp_diff.push((i, exp_lines[i].to_string()));
-            gen_diff.push((i, gen_lines[i].to_string()));
+            exp_diff.push((i+1, exp_lines[i].to_string()));
+            gen_diff.push((i+1, gen_lines[i].to_string()));
         }
     }
 
