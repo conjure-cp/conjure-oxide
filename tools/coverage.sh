@@ -81,7 +81,7 @@ GRCOV_EXCLUDE_LINES=(
 )
 
 # construct an or regex
-GRCOV_EXCLUDE_FLAG="--excl-line=$(echo ${GRCOV_EXCLUDE_LINES[@]} | tr ' ' '|'})"
+GRCOV_EXCLUDE_FLAG="--excl-line=$(echo ${GRCOV_EXCLUDE_LINES[@]} | tr ' ' '|')"
 
 GRCOV_IGNORE_FLAGS=(
   '--ignore-not-existing'
