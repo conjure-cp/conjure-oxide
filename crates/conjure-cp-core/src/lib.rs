@@ -33,12 +33,12 @@ mod utils;
 /// ```
 #[macro_export]
 macro_rules! domain_int {
-    () => {$crate::ast::Domain::Int(vec![])};
+    () => {$crate::ast::Domain::new_int(vec![])};
 
     // when parsing expressions, rust groups 1..2 into a single token tree, (1..2)
     // however, we want it to be three seperate token trees [1,..,2] for parsing.
     // use defile to turn it back into 3 token trees
-    ($($e:expr),+ $(,)?) => {::defile::defile! { $crate::ast::Domain::Int(vec![$($crate::range!(@$e)),+]) } };
+    ($($e:expr),+ $(,)?) => {::defile::defile! { $crate::ast::Domain::new_int(vec![$($crate::range!(@$e)),+]) } };
 }
 
 /// Creates a [`Range`](ast::Range).

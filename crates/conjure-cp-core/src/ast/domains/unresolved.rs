@@ -1,13 +1,15 @@
 use crate::ast::domains::set_attr::SetAttr;
 use crate::ast::{
-    DeclarationKind, DomainOpError, Expression, MaybeTypeable, Moo, RecordEntryGround, Reference,
+    DeclarationKind, DomainOpError, Expression, MaybeTypeable, Metadata, Moo, RecordEntryGround,
+    Reference,
     domains::{
         GroundDomain,
-        domain::{Domain, DomainPtr, Int},
+        domain::{DomainPtr, Int},
         range::Range,
     },
 };
-use crate::bug;
+use crate::range;
+use crate::{bug, domain_int, matrix_expr};
 use conjure_cp_core::ast::pretty::pretty_vec;
 use conjure_cp_core::ast::{Name, ReturnType};
 use itertools::Itertools;
@@ -78,15 +80,15 @@ impl From<SetAttr<Int>> for SetAttr<IntVal> {
     }
 }
 
-impl TryInto<SetAttr<Int>> for SetAttr<IntVal> {
-    type Error = DomainOpError;
-
-    fn try_into(self) -> Result<SetAttr<Int>, Self::Error> {
-        Ok(SetAttr {
-            size: self.size.try_into()?,
-        })
-    }
-}
+// impl TryInto<SetAttr<Int>> for SetAttr<IntVal> {
+//     type Error = DomainOpError;
+//
+//     fn try_into(self) -> Result<SetAttr<Int>, Self::Error> {
+//         Ok(SetAttr {
+//             size: self.size.try_into()?,
+//         })
+//     }
+// }
 
 impl Display for IntVal {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -137,6 +139,53 @@ impl IntVal {
                 ),
             },
         }
+    }
+}
+
+impl Into<Expression> for IntVal {
+    fn into(self) -> Expression {
+        match self {
+            IntVal::Const(val) => val.into(),
+            IntVal::Reference(re) => re.into(),
+            IntVal::Expr(expr) => expr.as_ref().clone(),
+        }
+    }
+}
+
+impl Into<Moo<Expression>> for IntVal {
+    fn into(self) -> Moo<Expression> {
+        match self {
+            IntVal::Const(val) => Moo::new(val.into()),
+            IntVal::Reference(re) => Moo::new(re.into()),
+            IntVal::Expr(expr) => expr,
+        }
+    }
+}
+
+impl std::ops::Neg for IntVal {
+    type Output = IntVal;
+
+    fn neg(self) -> Self::Output {
+        match self {
+            IntVal::Const(val) => IntVal::Const(-val),
+            IntVal::Reference(_) | IntVal::Expr(_) => {
+                IntVal::Expr(Moo::new(Expression::Neg(Metadata::new(), self.into())))
+            }
+        }
+    }
+}
+
+impl<T> std::ops::Add<T> for IntVal
+where
+    T: Into<Expression>,
+{
+    type Output = IntVal;
+
+    fn add(self, rhs: T) -> Self::Output {
+        let lhs: Expression = self.into();
+        let rhs: Expression = rhs.into();
+        let sum = matrix_expr!(lhs, rhs; domain_int!(1..));
+        IntVal::Expr(Moo::new(Expression::Sum(Metadata::new(), Moo::new(sum))))
     }
 }
 

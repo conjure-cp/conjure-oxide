@@ -13,15 +13,15 @@ use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use uniplate::{Biplate, Tree, Uniplate};
 
+use super::{CnfClause, Expression, ReturnType, SymbolTable, types::MaybeTypeable};
 use crate::{ast::Metadata, bug, into_matrix_expr};
+use std::hash::{Hash, Hasher};
 use std::{
     cell::{Ref, RefCell, RefMut},
     collections::VecDeque,
     fmt::Display,
     rc::Rc,
 };
-
-use super::{CnfClause, Expression, ReturnType, SymbolTable, types::MaybeTypeable};
 
 /// A sub-model, representing a lexical scope in the model.
 ///
@@ -30,7 +30,7 @@ use super::{CnfClause, Expression, ReturnType, SymbolTable, types::MaybeTypeable
 /// The expression tree is formed of a root node of type [`Expression::Root`], which contains a
 /// vector of top-level constraints.
 #[serde_as]
-#[derive(Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct SubModel {
     constraints: Moo<Expression>,
     #[serde_as(as = "RcRefCellAsInner")]
@@ -203,6 +203,14 @@ impl SubModel {
 impl MaybeTypeable for SubModel {
     fn maybe_return_type(&self) -> Option<super::ReturnType> {
         Some(ReturnType::Bool)
+    }
+}
+
+impl Hash for SubModel {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.symbols.borrow().hash(state);
+        self.constraints.hash(state);
+        self.cnf_clauses.hash(state);
     }
 }
 

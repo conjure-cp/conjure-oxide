@@ -1,14 +1,12 @@
-use num_traits::{
-    Num,
-    sign::{Signed, abs},
-};
+use crate::ast::domains::Int;
+use num_traits::Num;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 #[path_prefix(conjure_cp::ast)]
-pub enum Range<A> {
+pub enum Range<A = Int> {
     Single(A),
     Bounded(A, A),
     UnboundedL(A),
