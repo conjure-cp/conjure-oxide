@@ -107,12 +107,43 @@ pub fn run_parse_test_command(parse_test_args: Args) -> Result<()> {
                 continue;
             }
         };
-                        
+
+        // let expected_model = read_model_json(&context, test_dir, essence_base, "expected", "parse")?;
+        // let generated_model = read_model_json(&context, test_dir, essence_base, "generated", "parse")?;  
+
+        // if expected_model == generated_model {
+        //     println!("{}: Passed", &essence_file.display());
+
+
+        // };   
+        
+        // match std::panic::catch_unwind(|| assert_eq!(expected_model, generated_model)) {
+        //     Ok(_) => {
+        //         println!("{}: Passed", essence_file.display());
+        //         passed += 1
+        //     }
+        //     Err(e) => {
+        //         if accept {
+        //             match copy_generated_to_expected(&test_dir, &essence_base, "parse", "serialised.json") {
+        //                 Ok(_) => passed += 1,
+        //                 Err(e) => {
+        //                     println!("Failed to save expected model for {}: {}", essence_base, e);
+        //                     failed += 1;
+        //                 }
+        //             }
+        //         } else {
+        //             println!("{}: Parsed model doesn't match expected", essence_file.display());
+        //             failed += 1;
+        //         }
+        //     }
+        // }
+    // }
+
         match read_model_json(&context, test_dir, essence_base, "expected", "parse") {
             Ok(_) => {
                 // assert_eq!(parsed_model, expected_model);
                 // let model_from_file = read_model_json(&context, test_dir, essence_base, "generated", "parse")?;
-                match compare_json_ignoring_ids(test_dir, essence_base) {
+                match compare_json_string(test_dir, essence_base) {
                     Ok(equal) => {
                         if equal {
                             println!("{}: Passed", essence_file.display());
@@ -178,34 +209,30 @@ fn find_essence_files_recursive_helper(dir: &PathBuf, essence_files: &mut Vec<Pa
     Ok(())
 }
 
-fn compare_json_ignoring_ids(
-    test_dir: &str, 
+fn compare_json_string(
+    test_dir: &str,
     base: &str
 ) -> Result<bool> {
     let gen_path = format!("{}/{}.generated-parse.serialised.json", test_dir, base);
     let exp_path = format!("{}/{}.expected-parse.serialised.json", test_dir, base);
 
-    let gen_raw = match fs::read_to_string(&gen_path) {
-        Ok(s) => s,
-        Err(e) => {
+    let gen_raw = fs::read_to_string(&gen_path)
+        .map_err(|e| {
             println!("Error reading {}: {}", gen_path, e);
-            return Err(anyhow::anyhow!("Error reading {}: {}", gen_path, e));
-        }
-    };
+            anyhow::anyhow!("Error reading {}: {}", gen_path, e)
+        })?;
 
-    let exp_raw = match fs::read_to_string(&exp_path) {
-        Ok(s) => s,
-        Err(e) => {
+    let exp_raw = fs::read_to_string(&exp_path)
+        .map_err(|e| {
             println!("Error reading {}: {}", exp_path, e);
-            return Err(anyhow::anyhow!("Error reading {}: {}", exp_path, e));
-        }
-    };
+            anyhow::anyhow!("Error reading {}: {}", exp_path, e)
+        })?;
 
-    let gen_val: serde_json::Value = serde_json::from_str(&gen_raw).
-        map_err(|e| anyhow::anyhow!("Failed to parse JSON {}: {}", gen_path, e))?;
-    let exp_val: serde_json::Value = serde_json::from_str(&exp_raw).
-        map_err(|e| anyhow::anyhow!("Failed to parse JSON {}: {}", exp_path, e))?;
-    
+    let gen_val: serde_json::Value = serde_json::from_str(&gen_raw)
+        .map_err(|e| anyhow::anyhow!("Failed to parse JSON {}: {}", gen_path, e))?;
+    let exp_val: serde_json::Value = serde_json::from_str(&exp_raw)
+        .map_err(|e| anyhow::anyhow!("Failed to parse JSON {}: {}", exp_path, e))?;
+
     let gen_string = serde_json::to_string_pretty(&gen_val)?;
     let exp_string = serde_json::to_string_pretty(&exp_val)?;
 
@@ -217,23 +244,22 @@ fn compare_json_ignoring_ids(
     let exp_lines: Vec<&str> = exp_string.lines().collect();
     let max = std::cmp::min(gen_lines.len(), exp_lines.len());
 
-    let ignore_words = vec![
-        "\"Reference\":",
-        "\"id\":",
-        "\"parent\":"
-    ];
+    let mut exp_diff: Vec<(usize, String)> = Vec::new();
+    let mut gen_diff: Vec<(usize, String)> = Vec::new();
 
     for i in 0..max {
-        if ignore_words.iter().any(|w| gen_lines[i].contains(w) && exp_lines[i].contains(w)) {
-            continue;
-        }
-
         if gen_lines[i] != exp_lines[i] {
-            println!("\nFirst difference found at line {}", i);
-            println!("Expected: {}", exp_lines[i]);
-            println!("Generated: {}\n", gen_lines[i]);
-            return Ok(false);
+            exp_diff.push((i, exp_lines[i].to_string()));
+            gen_diff.push((i, gen_lines[i].to_string()));
         }
+    }
+
+    if !gen_diff.is_empty() {
+        println!("\nDifferences (Expected | Generated):");
+        for (&(ei, ref es), &(gi, ref gs)) in exp_diff.iter().zip(gen_diff.iter()).take(5) {
+            println!("{} |   {} | {}", ei, es.trim(), gs.trim());
+        }
+        return Ok(false);
     }
 
     if gen_lines.len() != exp_lines.len() {
@@ -241,5 +267,6 @@ fn compare_json_ignoring_ids(
         return Ok(false);
     }
 
-    Ok(true)
+    // If we reach here but strings are not equal, report as different.
+    Ok(false)
 }
