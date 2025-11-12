@@ -61,7 +61,8 @@ jobs:
           os_arch: ${{ env.release_suffix }}
           version: ${{ env.conjure_version }}
 
-      - name: cargo-shear
-        run: |
-          which cargo-shear || cargo +nightly install cargo-shear
-          RUSTC_WRAPPER="" cargo +nightly shear --expand
+      - name: install cargo-shear
+        run: which cargo-shear || cargo +nightly install cargo-shear
+
+      - name: run cargo-shear
+        run: RUSTC_WRAPPER="" cargo +nightly shear --expand
