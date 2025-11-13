@@ -73,6 +73,7 @@ static_assertions::assert_eq_size!([u8; 104], Expression);
 #[biplate(to=RecordValue<Expression>)]
 #[biplate(to=RecordValue<Literal>)]
 #[biplate(to=Literal)]
+#[biplate(to=DomainPtr)]
 #[path_prefix(conjure_cp::ast)]
 pub enum Expression {
     AbstractLiteral(
@@ -164,7 +165,7 @@ pub enum Expression {
     InDomain(
         #[derivative(Hash = "ignore")] Metadata,
         Moo<Expression>,
-        Domain,
+        DomainPtr,
     ),
 
     /// `toInt(b)` casts boolean expression b to an integer.

@@ -1,5 +1,5 @@
-use conjure_cp::ast::Expression as Expr;
 use conjure_cp::ast::SymbolTable;
+use conjure_cp::ast::{Expression as Expr, GroundDomain};
 use conjure_cp::rule_engine::{
     ApplicationError, ApplicationError::RuleNotApplicable, ApplicationResult, Reduction,
     register_rule,
@@ -29,6 +29,7 @@ fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
             Range::Bounded(x, y) => output.push(essence_expr!("&value >= &x /\\ &value <= &y")),
             Range::UnboundedR(x) => output.push(essence_expr!(&value >= &x)),
             Range::UnboundedL(x) => output.push(essence_expr!(&value <= &x)),
+            Range::Unbounded => todo!(),
         }
     }
 
@@ -82,7 +83,8 @@ fn integer_decision_representation(expr: &Expr, symbols: &SymbolTable) -> Applic
     //     .ok_or(RuleNotApplicable)?;
 
     // thing we are representing must be an integer
-    let Domain::Int(ranges) = name.domain().unwrap() else {
+    let dom = name.resolved_domain().ok_or(RuleNotApplicable)?;
+    let GroundDomain::Int(ranges) = dom.as_ref() else {
         return Err(RuleNotApplicable);
     };
 

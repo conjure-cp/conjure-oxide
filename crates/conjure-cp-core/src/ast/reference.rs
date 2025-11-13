@@ -8,7 +8,7 @@ use std::fmt::{Display, Formatter};
 use uniplate::Uniplate;
 
 use super::{
-    Atom, Domain, DomainPtr, Expression, Metadata, Name,
+    Atom, Domain, DomainPtr, Expression, GroundDomain, Metadata, Moo, Name,
     categories::{Category, CategoryOf},
     domains::HasDomain,
 };
@@ -52,6 +52,10 @@ impl Reference {
 
     pub fn domain(&self) -> Option<DomainPtr> {
         self.ptr.domain()
+    }
+
+    pub fn resolved_domain(&self) -> Option<Moo<GroundDomain>> {
+        self.domain()?.resolve()
     }
 }
 
