@@ -10,6 +10,28 @@ pub struct SetAttr<A = Int> {
     pub size: Range<A>,
 }
 
+impl<A> SetAttr<A> {
+    pub fn new(size: Range<A>) -> Self {
+        Self { size }
+    }
+
+    pub fn new_min_max_size(min: A, max: A) -> Self {
+        Self::new(Range::Bounded(min, max))
+    }
+
+    pub fn new_min_size(min: A) -> Self {
+        Self::new(Range::UnboundedR(min))
+    }
+
+    pub fn new_max_size(max: A) -> Self {
+        Self::new(Range::UnboundedR(max))
+    }
+
+    pub fn new_size(sz: A) -> Self {
+        Self::new(Range::Single(sz))
+    }
+}
+
 impl<A> Default for SetAttr<A> {
     fn default() -> Self {
         SetAttr {
