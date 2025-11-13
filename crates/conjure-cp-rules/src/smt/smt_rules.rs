@@ -1,4 +1,6 @@
 use conjure_cp::ast::{Expression as Expr, *};
+use conjure_cp::essence_expr;
+use conjure_cp::rule_engine::ApplicationError;
 use conjure_cp::rule_engine::{
     ApplicationError::{DomainError, RuleNotApplicable},
     ApplicationResult, Reduction, register_rule, register_rule_set,
@@ -67,8 +69,9 @@ fn flatten_indomain(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     Ok(Reduction::pure(new_expr))
 }
 
-/// E.g. for values a, b : matrix indexed by [bool, ...] of bool
-/// a =/!= b ~> a[true, ...] = b[true, ...] /\ a[false, ...] = b[false, ...] /\ ...
+/// Matrix a = b iff every index in the union of their indices has the same value.
+/// E.g. a: matrix indexed by [int(1..2)] of int(1..2), b: matrix indexed by [int(2..3)] of int(1..2)
+/// a = b ~> a[1] = b[1] /\ a[2] = b[2] /\ a[3] = b[3]
 #[register_rule(("Smt", 1000))]
 fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let (a, b) = match expr {
@@ -76,29 +79,28 @@ fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
         _ => return Err(RuleNotApplicable),
     };
 
-    let Some(Domain::Matrix(_, idx_domains)) = a.domain_of() else {
+    let (Some(Domain::Matrix(_, a_idx_domains)), Some(Domain::Matrix(_, b_idx_domains))) =
+        (a.domain_of(), b.domain_of())
+    else {
         return Err(RuleNotApplicable);
     };
 
-    let pairs: Vec<_> = matrix::enumerate_indices(idx_domains)
+    let pairs = matrix::enumerate_index_union_indices(a_idx_domains, b_idx_domains)
+        .map_err(|_| ApplicationError::DomainError)?
         .map(|idx_lits| {
             let idx_vec: Vec<_> = idx_lits
                 .into_iter()
-                .map(|lit| Expr::Atomic(Metadata::new(), Atom::Literal(lit)))
+                .map(|lit| Atom::Literal(lit).into())
                 .collect();
             (
-                Moo::new(Expr::SafeIndex(Metadata::new(), a.clone(), idx_vec.clone())),
-                Moo::new(Expr::SafeIndex(Metadata::new(), b.clone(), idx_vec)),
+                Expression::UnsafeIndex(Metadata::new(), a.clone(), idx_vec.clone()),
+                Expression::UnsafeIndex(Metadata::new(), b.clone(), idx_vec),
             )
-        })
-        .collect();
+        });
 
     let new_expr = match expr {
-        Expr::Eq(_, _, _) => {
-            let eqs: Vec<_> = pairs
-                .into_iter()
-                .map(|(a, b)| Expr::Eq(Metadata::new(), a, b))
-                .collect();
+        Expr::Eq(..) => {
+            let eqs: Vec<_> = pairs.map(|(a, b)| essence_expr!(&a = &b)).collect();
             Expr::And(
                 Metadata::new(),
                 Moo::new(Expr::AbstractLiteral(
@@ -107,11 +109,8 @@ fn flatten_matrix_eq_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                 )),
             )
         }
-        Expr::Neq(_, _, _) => {
-            let neqs: Vec<_> = pairs
-                .into_iter()
-                .map(|(a, b)| Expr::Neq(Metadata::new(), a, b))
-                .collect();
+        Expr::Neq(..) => {
+            let neqs: Vec<_> = pairs.map(|(a, b)| essence_expr!(&a != &b)).collect();
             Expr::Or(
                 Metadata::new(),
                 Moo::new(Expr::AbstractLiteral(

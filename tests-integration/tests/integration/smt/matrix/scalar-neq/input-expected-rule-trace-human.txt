@@ -21,6 +21,30 @@ or([(m[1] != m2[1]);int(1..)]),
 
 --
 
+m[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{m[1] @ and([__inDomain(1,int(1));int(1..)])} 
+
+--
+
+({m[1] @ and([__inDomain(1,int(1));int(1..)])} != m2[1]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(m[1] != m2[1]) 
+
+--
+
+m2[1], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{m2[1] @ and([__inDomain(1,int(1));int(1..)])} 
+
+--
+
+(m[1] != {m2[1] @ and([__inDomain(1,int(1));int(1..)])}), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+(m[1] != m2[1]) 
+
+--
+
 Final model:
 
 find m: matrix indexed by [[int(1)]] of bool
