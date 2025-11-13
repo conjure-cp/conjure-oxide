@@ -17,6 +17,14 @@ check:
 check-unused-deps: .installed-cargo-extensions.checkpoint
 	cargo +nightly shear --expand
 
+# run all tests
+# we build using the test profile first, but don't run the tests.
+# this way we build the conjure-oxide executable which is needed by the custom tests.
+# in the second step we use the same profile (test)and avoid recompilation.
+.PHONY: test
+	cargo test --workspace --all-targets --no-run
+	cargo test --workspace --all-targets  
+
 .PHONY: fix 
 ## Tries to auto-fix hygiene issues reported by `make check`. 
 ## Fixes will not be applied if there are uncommitted changes: to always apply fixes, use `make fix-dirty`.
