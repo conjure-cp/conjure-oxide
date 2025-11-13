@@ -244,6 +244,9 @@ pub trait SolverAdaptor: private::Sealed + Any {
         None
     }
 
+    /// Returns the names of any additional rule sets required by the solver adaptor, in addition to the default.
+    fn get_required_rule_sets(&self) -> Vec<String>;
+
     /// Adds the solver adaptor name and family (if they exist) to the given stats object.
     fn add_adaptor_info_to_stats(&self, stats: SolverStats) -> SolverStats {
         SolverStats {

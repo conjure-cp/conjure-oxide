@@ -15,7 +15,7 @@ use conjure_cp::{
     Model,
     ast::comprehension::USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS,
     context::Context,
-    rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
+    rule_engine::{resolve_rule_sets_by_family, rewrite_morph, rewrite_naive},
     solver::{Solver, SolverAdaptor, adaptors},
 };
 use conjure_cp::{
@@ -133,7 +133,7 @@ pub(crate) fn init_context(
         extra_rule_sets.pop_if(|x| x == &"Better_AC_Comprehension_Expansion");
     }
 
-    let rule_sets = match resolve_rule_sets(target_family, &extra_rule_sets) {
+    let rule_sets = match resolve_rule_sets_by_family(target_family, &extra_rule_sets) {
         Ok(rs) => rs,
         Err(e) => {
             tracing::error!("Error resolving rule sets: {}", e);

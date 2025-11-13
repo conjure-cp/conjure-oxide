@@ -11,7 +11,7 @@ use conjure_cp::{
     },
     bug,
     context::Context,
-    rule_engine::{resolve_rule_sets, rewrite_morph, rewrite_naive},
+    rule_engine::{resolve_rule_sets_by_family, rewrite_morph, rewrite_naive},
     solver::{Solver, SolverError, SolverFamily, adaptors::Minion},
 };
 use uniplate::Biplate as _;
@@ -42,7 +42,7 @@ pub fn expand_simple(
     // call rewrite here as well as in expand_ac, just to be consistent
     let extra_rule_sets = &["Base", "Constant", "Bubble"];
 
-    let rule_sets = resolve_rule_sets(SolverFamily::Minion, extra_rule_sets).unwrap();
+    let rule_sets = resolve_rule_sets_by_family(SolverFamily::Minion, extra_rule_sets).unwrap();
 
     let model = if USE_OPTIMISED_REWRITER_FOR_COMPREHENSIONS.load(Ordering::Relaxed) {
         rewrite_morph(model, &rule_sets, false)

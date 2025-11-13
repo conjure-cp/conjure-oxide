@@ -95,6 +95,16 @@ impl SolverAdaptor for Smt {
         Some("SMT".to_string())
     }
 
+    fn get_required_rule_sets(&self) -> Vec<String> {
+        let mut rule_sets = Vec::new();
+        
+        if let IntTheory::Bv = self.theory_config.ints {
+            rule_sets.push("SmtBvInts".into());
+        }
+
+        rule_sets
+    }
+
     fn write_solver_input_file(
         &self,
         writer: &mut impl std::io::Write,

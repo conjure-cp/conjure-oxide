@@ -240,6 +240,10 @@ impl SolverAdaptor for Sat {
         Some("SAT".to_string())
     }
 
+    fn get_required_rule_sets(&self) -> Vec<String> {
+        vec!["SAT".into()]
+    }
+
     fn add_adaptor_info_to_stats(&self, stats: SolverStats) -> SolverStats {
         SolverStats {
             solver_adaptor: self.get_name(),

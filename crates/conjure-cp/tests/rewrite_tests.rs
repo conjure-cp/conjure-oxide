@@ -7,7 +7,7 @@ use conjure_cp::{
     ast::*,
     rule_engine::Rule,
     rule_engine::get_rule_by_name,
-    rule_engine::resolve_rule_sets,
+    rule_engine::resolve_rule_sets_by_family,
     solver::{Solver, adaptors},
 };
 use conjure_cp::{into_matrix_expr, matrix_expr};
@@ -625,7 +625,7 @@ fn rule_distribute_or_over_and() {
 fn rewrite_solve_xyz() {
     println!("Rules: {:?}", get_all_rules());
 
-    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &["Constant"]) {
+    let rule_sets = match resolve_rule_sets_by_family(SolverFamily::Minion, &["Constant"]) {
         Ok(rs) => rs,
         Err(e) => {
             eprintln!("Error resolving rule sets: {e}");
@@ -672,7 +672,7 @@ fn rewrite_solve_xyz() {
         ]),
     );
 
-    let rule_sets = match resolve_rule_sets(SolverFamily::Minion, &["Constant"]) {
+    let rule_sets = match resolve_rule_sets_by_family(SolverFamily::Minion, &["Constant"]) {
         Ok(rs) => rs,
         Err(e) => {
             eprintln!("Error resolving rule sets: {e}");

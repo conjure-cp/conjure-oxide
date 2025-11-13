@@ -5,7 +5,7 @@ use std::fmt::Display;
 use thiserror::Error;
 
 use crate::rule_engine::{Rule, RuleSet, get_rule_set_by_name, get_rule_sets_for_solver_family};
-use crate::solver::SolverFamily;
+use crate::solver::{SolverAdaptor, SolverFamily};
 
 /// Holds a rule and its priority, along with the rule set it came from.
 #[derive(Debug, Clone)]
@@ -153,7 +153,7 @@ pub fn get_rules_grouped<'a>(
     Ok(grouped)
 }
 
-/// Resolves the final set of rule sets to apply based on target solver and extra rule set names.
+/// Resolves the final set of rule sets to apply based on target solver family and extra rule set names.
 ///
 /// # Arguments
 /// - `target_solver` The solver family we're targeting
@@ -162,7 +162,7 @@ pub fn get_rules_grouped<'a>(
 /// # Returns
 /// - A vector of rule sets to apply.
 ///
-pub fn resolve_rule_sets(
+pub fn resolve_rule_sets_by_family(
     target_solver: SolverFamily,
     extra_rs_names: &[&str],
 ) -> Result<Vec<&'static RuleSet<'static>>, ResolveRulesError> {
@@ -176,4 +176,32 @@ pub fn resolve_rule_sets(
 
     ans.extend(rule_sets_by_names(extra_rs_names)?);
     Ok(ans.iter().copied().collect())
+}
+
+/// Resolves the final set of rule sets to apply based on target solver adaptor.
+///
+/// The following rule sets are added:
+/// - The default rule sets
+/// - Rule sets returned by the adaptor based on its configuration
+/// - Any rule sets which target the adaptor's target family
+/// - Rule sets with names in the given `extra_rs_names`
+///
+/// # Arguments
+/// - `target_solver` The solver adaptor we're targeting
+/// - `extra_rs_names` Optional extra rule set names to enable
+///
+/// # Returns
+/// - A vector of rule sets to apply.
+///
+pub fn resolve_rule_sets<S: SolverAdaptor>(
+    target_solver: S,
+    extra_rs_names: &[&str],
+) -> Result<Vec<&'static RuleSet<'static>>, ResolveRulesError> {
+    let mut ans = resolve_rule_sets_by_family(target_solver.get_family(), extra_rs_names)?;
+
+    let required_strings = target_solver.get_required_rule_sets();
+    let required_rs_names: Vec<&str> = required_strings.iter().map(|s| s.as_str()).collect();
+    ans.extend(rule_sets_by_names(&required_rs_names)?);
+
+    Ok(ans.clone())
 }

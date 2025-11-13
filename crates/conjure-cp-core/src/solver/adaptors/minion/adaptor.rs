@@ -169,6 +169,10 @@ impl SolverAdaptor for Minion {
         Some("Minion".to_owned())
     }
 
+    fn get_required_rule_sets(&self) -> Vec<String> {
+        vec!["Minion".into()]
+    }
+
     fn write_solver_input_file(
         &self,
         writer: &mut impl std::io::Write,

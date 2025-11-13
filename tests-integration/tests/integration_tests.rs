@@ -31,7 +31,7 @@ use conjure_cp::ast::Atom;
 use conjure_cp::ast::{Expression, Literal, Name};
 use conjure_cp::context::Context;
 use conjure_cp::parse::tree_sitter::parse_essence_file;
-use conjure_cp::rule_engine::resolve_rule_sets;
+use conjure_cp::rule_engine::resolve_rule_sets_by_family;
 use conjure_cp::solver::SolverFamily;
 use conjure_cp_cli::utils::conjure::solutions_to_json;
 use conjure_cp_cli::utils::conjure::{get_solutions, get_solutions_from_conjure};
@@ -288,7 +288,7 @@ fn integration_test_inner(
             SolverFamily::Minion
         };
 
-        let rule_sets = resolve_rule_sets(solver_fam, DEFAULT_RULE_SETS)?;
+        let rule_sets = resolve_rule_sets_by_family(solver_fam, DEFAULT_RULE_SETS)?;
 
         let mut model = parsed_model;
 
