@@ -829,7 +829,7 @@ fn introduce_wininterval_set_from_indomain(expr: &Expr, _: &SymbolTable) -> Appl
         return Err(RuleNotApplicable);
     };
 
-    let Domain::Int(ranges) = domain else {
+    let Some(ranges) = domain.as_int_ground() else {
         return Err(RuleNotApplicable);
     };
 
@@ -845,7 +845,7 @@ fn introduce_wininterval_set_from_indomain(expr: &Expr, _: &SymbolTable) -> Appl
                 out_ranges.push(*x);
                 out_ranges.push(*y);
             }
-            Range::UnboundedR(_) | Range::UnboundedL(_) => {
+            Range::UnboundedR(_) | Range::UnboundedL(_) | Range::Unbounded => {
                 return Err(RuleNotApplicable);
             }
         }
@@ -1344,14 +1344,10 @@ fn y_plus_k_geq_x_to_ineq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
 #[register_rule(("Minion", 4100))]
 fn not_literal_to_wliteral(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
-    use Domain::Bool;
     match expr {
         Expr::Not(m, expr) => {
             if let Expr::Atomic(_, Atom::Reference(reference)) = (**expr).clone()
-                && reference
-                    .ptr()
-                    .domain()
-                    .is_some_and(|x| matches!(&x as &Domain, Bool))
+                && reference.ptr().domain().is_some_and(Domain::is_bool)
             {
                 return Ok(Reduction::pure(Expr::FlatWatchedLiteral(
                     m.clone_dirty(),

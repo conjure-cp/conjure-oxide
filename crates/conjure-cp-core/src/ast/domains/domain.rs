@@ -3,8 +3,8 @@ use crate::ast::domains::range::Range;
 use crate::ast::domains::set_attr::SetAttr;
 use crate::ast::domains::unresolved::{IntVal, UnresolvedDomain};
 use crate::ast::{
-    DeclarationPtr, DomainOpError, Literal, MaybeTypeable, Moo, RecordEntry, Reference, ReturnType,
-    Typeable,
+    DeclarationPtr, DomainOpError, Literal, MaybeTypeable, Moo, RecordEntry, RecordEntryGround,
+    Reference, ReturnType, Typeable,
 };
 use itertools::Itertools;
 use polyquine::Quine;
@@ -34,33 +34,33 @@ impl DomainPtr {
     }
 }
 
-impl Into<DomainPtr> for Moo<GroundDomain> {
-    fn into(self) -> DomainPtr {
-        Moo::new(Domain::Ground(self))
+impl From<Moo<GroundDomain>> for DomainPtr {
+    fn from(value: Moo<GroundDomain>) -> Self {
+        Moo::new(Domain::Ground(value))
     }
 }
 
-impl Into<DomainPtr> for Moo<UnresolvedDomain> {
-    fn into(self) -> DomainPtr {
-        Moo::new(Domain::Unresolved(self))
+impl From<Moo<UnresolvedDomain>> for DomainPtr {
+    fn from(value: Moo<UnresolvedDomain>) -> Self {
+        Moo::new(Domain::Unresolved(value))
     }
 }
 
-impl Into<DomainPtr> for Domain {
-    fn into(self) -> DomainPtr {
-        Moo::new(self)
+impl From<Domain> for DomainPtr {
+    fn from(value: Domain) -> Self {
+        Moo::new(value)
     }
 }
 
-impl Into<DomainPtr> for GroundDomain {
-    fn into(self) -> DomainPtr {
-        Moo::new(Domain::Ground(Moo::new(self)))
+impl From<GroundDomain> for DomainPtr {
+    fn from(value: GroundDomain) -> Self {
+        Moo::new(Domain::Ground(Moo::new(value)))
     }
 }
 
-impl Into<DomainPtr> for UnresolvedDomain {
-    fn into(self) -> DomainPtr {
-        Moo::new(Domain::Unresolved(Moo::new(self)))
+impl From<UnresolvedDomain> for DomainPtr {
+    fn from(value: UnresolvedDomain) -> Self {
+        Moo::new(Domain::Unresolved(Moo::new(value)))
     }
 }
 
@@ -255,6 +255,16 @@ impl Domain {
         None
     }
 
+    /// True if this is [GroundDomain::Bool]
+    pub fn is_bool(&self) -> bool {
+        self.maybe_return_type() == Some(ReturnType::Bool)
+    }
+
+    /// True if this is a [GroundDomain::Int] or an [UnresolvedDomain::Int]
+    pub fn is_int(&self) -> bool {
+        self.maybe_return_type() == Some(ReturnType::Int)
+    }
+
     /// If this domain is [GroundDomain::Int] or [UnresolveDomain::Int], get
     /// its ranges. The ranges are cloned and upcast to Range<IntVal> if necessary.
     pub fn as_int(&self) -> Option<Vec<Range<IntVal>>> {
@@ -334,6 +344,24 @@ impl Domain {
         None
     }
 
+    /// If this is a [GroundDomain::Matrix], get immutable references to its element and index domains
+    pub fn as_matrix_ground(&self) -> Option<(&Moo<GroundDomain>, &Vec<Moo<GroundDomain>>)> {
+        if let Some(GroundDomain::Matrix(inner_dom, idx_doms)) = self.as_ground() {
+            return Some((inner_dom, idx_doms));
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Matrix], get mutable references to its element and index domains
+    pub fn as_matrix_ground_mut(
+        &mut self,
+    ) -> Option<(&mut Moo<GroundDomain>, &mut Vec<Moo<GroundDomain>>)> {
+        if let Some(GroundDomain::Matrix(inner_dom, idx_doms)) = self.as_ground_mut() {
+            return Some((inner_dom, idx_doms));
+        }
+        None
+    }
+
     /// If this is a set domain, get its attributes and a pointer to its element domain.
     pub fn as_set(&self) -> Option<(SetAttr<IntVal>, DomainPtr)> {
         if let Some(GroundDomain::Set(attr, inner_dom)) = self.as_ground() {
@@ -355,6 +383,22 @@ impl Domain {
         }
 
         if let Some(UnresolvedDomain::Set(attr, inner_dom)) = self.as_unresolved_mut() {
+            return Some((attr, inner_dom));
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Set], get immutable references to its attributes and inner domain
+    pub fn as_set_ground(&self) -> Option<(&SetAttr<Int>, &Moo<GroundDomain>)> {
+        if let Some(GroundDomain::Set(attr, inner_dom)) = self.as_ground() {
+            return Some((attr, inner_dom));
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Set], get mutable references to its attributes and inner domain
+    pub fn as_set_ground_mut(&mut self) -> Option<(&mut SetAttr<Int>, &mut Moo<GroundDomain>)> {
+        if let Some(GroundDomain::Set(attr, inner_dom)) = self.as_ground_mut() {
             return Some((attr, inner_dom));
         }
         None
@@ -386,6 +430,22 @@ impl Domain {
         None
     }
 
+    /// If this is a [GroundDomain::Tuple], get immutable references to its element domains
+    pub fn as_tuple_ground(&self) -> Option<&Vec<Moo<GroundDomain>>> {
+        if let Some(GroundDomain::Tuple(inner_doms)) = self.as_ground() {
+            return Some(inner_doms);
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Tuple], get mutable reference to its element domains
+    pub fn as_tuple_ground_mut(&mut self) -> Option<&mut Vec<Moo<GroundDomain>>> {
+        if let Some(GroundDomain::Tuple(inner_doms)) = self.as_ground_mut() {
+            return Some(inner_doms);
+        }
+        None
+    }
+
     /// If this is a record domain, clone and return its entries.
     pub fn as_record(&self) -> Option<Vec<RecordEntry>> {
         if let Some(GroundDomain::Record(record_entries)) = self.as_ground() {
@@ -393,6 +453,14 @@ impl Domain {
         }
         if let Some(UnresolvedDomain::Record(record_entries)) = self.as_unresolved() {
             return Some(record_entries.clone());
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Record], get a mutable reference to its entries
+    pub fn as_record_ground(&self) -> Option<&Vec<RecordEntryGround>> {
+        if let Some(GroundDomain::Record(entries)) = self.as_ground() {
+            return Some(entries);
         }
         None
     }
@@ -407,6 +475,14 @@ impl Domain {
 
         if let Some(UnresolvedDomain::Record(entries_gds)) = self.as_unresolved_mut() {
             return Some(entries_gds);
+        }
+        None
+    }
+
+    /// If this is a [GroundDomain::Record], get a mutable reference to its entries
+    pub fn as_record_ground_mut(&mut self) -> Option<&mut Vec<RecordEntryGround>> {
+        if let Some(GroundDomain::Record(entries)) = self.as_ground_mut() {
+            return Some(entries);
         }
         None
     }
