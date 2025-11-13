@@ -4,7 +4,7 @@ use std::env;
 use std::error::Error;
 use std::fs;
 use std::path::PathBuf;
-use std::process::{Command, Output};
+use std::process::Command;
 
 pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
     let accept = env::var("ACCEPT").unwrap_or("false".to_string()) == "true";
