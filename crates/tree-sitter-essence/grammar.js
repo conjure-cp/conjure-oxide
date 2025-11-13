@@ -234,6 +234,17 @@ module.exports = grammar ({
       field("expression", choice($.bool_expr, $.comparison_expr))
     )),
 
+    aggregate_expr: $ => prec(-5, seq(
+      field("operator", choice("sum", "min", "max")),
+      field("variables", commaSep1($.identifier)),
+      choice(
+        seq("in", field("collection", choice($.set_literal, $.matrix, $.tuple, $.record, $.identifier, $.tuple_matrix_record_index_or_slice))),
+        seq(":", field("domain", $.domain))
+      ),
+      ".",
+      field("expression", $.arithmetic_expr)
+    )),
+
     from_solution: $ => seq(
       "fromSolution",
       "(",
@@ -265,6 +276,7 @@ module.exports = grammar ({
       field("sum_expression", $.sum_expr),
       field("sub_arith_expression", $.sub_arith_expr),
       field("list_combining_expression_arith", $.list_combining_expr_arith),
+      field("aggregate_expression", $.aggregate_expr),
     )),
 
     atom: $ => prec(-1, choice(
