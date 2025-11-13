@@ -1,0 +1,40 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The callback function used to capture results from Minion as they are generated."><title>Callback in minion_sys - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="minion_sys" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../static.files/storage-e2aeef58.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc type"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Callback</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../minion_sys/index.html">minion_<wbr>sys</a><span class="version">0.0.1</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Callback</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#examples" title="Examples">Examples</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate minion_<wbr>sys</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">minion_sys</a></div><h1>Type Alias <span class="type">Callback</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/minion_sys/run.rs.html#110">Source</a> </span></div><pre class="rust item-decl"><code>pub type Callback = <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.fn.html">fn</a>(solution_set: <a class="struct" href="https://doc.rust-lang.org/nightly/std/collections/hash/map/struct.HashMap.html" title="struct std::collections::hash::map::HashMap">HashMap</a>&lt;<a class="type" href="ast/type.VarName.html" title="type minion_sys::ast::VarName">VarName</a>, <a class="enum" href="ast/enum.Constant.html" title="enum minion_sys::ast::Constant">Constant</a>&gt;) -&gt; <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.bool.html">bool</a>;</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The callback function used to capture results from Minion as they are generated.</p>
+<p>This function is called by Minion whenever a solution is found. The input to this function is
+a<code>HashMap</code> of all named variables along with their value.</p>
+<p>Callbacks should return <code>true</code> if search is to continue, <code>false</code> otherwise.</p>
+<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<p>Consider using a global mutex (or other static variable) to use returned solutions elsewhere.</p>
+<p>For example:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code>  <span class="kw">use </span>minion_sys::ast::<span class="kw-2">*</span>;
+  <span class="kw">use </span>minion_sys::run_minion;
+  <span class="kw">use </span>std::{
+      collections::HashMap,
+      sync::{Mutex, MutexGuard},
+  };
+
+  <span class="comment">// More elaborate data-structures are possible, but for sake of example store
+  // a vector of solution sets.
+  </span><span class="kw">static </span>ALL_SOLUTIONS: Mutex&lt;Vec&lt;HashMap&lt;VarName,Constant&gt;&gt;&gt;  = Mutex::new(<span class="macro">vec!</span>[]);
+   
+  <span class="kw">fn </span>callback(solutions: HashMap&lt;VarName,Constant&gt;) -&gt; bool {
+      <span class="kw">let </span><span class="kw-2">mut </span>guard = ALL_SOLUTIONS.lock().unwrap();
+      guard.push(solutions);
+      <span class="bool-val">true
+  </span>}
+    
+  <span class="comment">// Build and run the model.
+  </span><span class="kw">let </span><span class="kw-2">mut </span>model = Model::new();
+
+  <span class="comment">// ... omitted for brevity ...
+  
+  </span><span class="kw">let </span>res = run_minion(model, callback);
+  res.expect(<span class="string">"Error occurred"</span>);
+
+  <span class="comment">// Get solutions
+  </span><span class="kw">let </span>guard = ALL_SOLUTIONS.lock().unwrap();
+  <span class="kw">let </span>solution_set_1 = <span class="kw-2">&amp;</span>(guard.get(<span class="number">0</span>).unwrap());
+
+  <span class="kw">let </span>x1 = solution_set_1.get(<span class="string">"x"</span>).unwrap();
+  <span class="kw">let </span>y1 = solution_set_1.get(<span class="string">"y"</span>).unwrap();
+  <span class="kw">let </span>z1 = solution_set_1.get(<span class="string">"z"</span>).unwrap();</code></pre></div></div></details><h2 id="layout" class="section-header">Layout<a href="#layout" class="anchor">§</a></h2><div class="docblock"><div class="warning"><p><strong>Note:</strong> Most layout information is <strong>completely unstable</strong> and may even differ between compilations. The only exception is types with certain <code>repr(...)</code> attributes. Please see the Rust Reference's <a href="https://doc.rust-lang.org/nightly/reference/type-layout.html">“Type Layout”</a> chapter for details on type layout guarantees.</p></div><p><strong>Size:</strong> 8 bytes</p></div></section></div></main></body></html>

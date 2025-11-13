@@ -1,0 +1,36 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="This procedural macro registers a decorated function with `conjure_cp_rules`’ global registry, and adds the rule to one or more `RuleSet`’s."><title>register_rule in conjure_cp_core::rule_engine - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="conjure_cp_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc attr"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">register_rule</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../conjure_cp_core/index.html">conjure_<wbr>cp_<wbr>core</a><span class="version">0.0.1</span></h2></div><div class="sidebar-elems"><div id="rustdoc-modnav"><h2><a href="index.html">In conjure_<wbr>cp_<wbr>core::<wbr>rule_<wbr>engine</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">conjure_cp_core</a>::<wbr><a href="index.html">rule_engine</a></div><h1>Attribute Macro <span class="attr">register_<wbr>rule</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/conjure_cp_rule_macros/lib.rs.html#47">Source</a> </span></div><pre class="rust item-decl"><code>#[register_rule]</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>This procedural macro registers a decorated function with <code>conjure_cp_rules</code>’ global registry, and
+adds the rule to one or more <code>RuleSet</code>’s.</p>
+<p>It may be used in any downstream crate.
+For more information on linker magic, see the <a href="https://docs.rs/linkme/latest/linkme/"><code>linkme</code></a> crate.</p>
+<p><strong>IMPORTANT</strong>: Since the resulting rule may not be explicitly referenced, it may be removed by the compiler’s dead code elimination.
+To prevent this, you must ensure that either:</p>
+<ol>
+<li>codegen-units is set to 1, i.e. in Cargo.toml:</li>
+</ol>
+<div class="example-wrap"><pre class="language-toml"><code>[profile.release]
+codegen-units = 1</code></pre></div>
+<ol start="2">
+<li>The function is included somewhere else in the code</li>
+</ol>
+<hr>
+<p>Functions must have the signature <code>fn(&amp;Expr) -&gt; ApplicationResult</code>.
+The created rule will have the same name as the function.</p>
+<p>Intermediary static variables are created to allow for the decentralized registry, with the prefix <code>CONJURE_GEN_</code>.
+Please ensure that other variable names in the same scope do not conflict with these.</p>
+<p>This macro must decorate a function with the given signature.
+As arguments, it excepts a tuple of 2-tuples in the format:
+<code>((&lt;RuleSet name&gt;, &lt;Priority in RuleSet&gt;), ...)</code></p>
+<hr>
+<p>For example:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>conjure_cp_core::ast::Expression;
+<span class="kw">use </span>conjure_cp_core::ast::SymbolTable;
+<span class="kw">use </span>conjure_cp_core::rule_engine::{ApplicationError, ApplicationResult, Reduction};
+<span class="kw">use </span>conjure_cp_core::rule_engine::register_rule;
+
+<span class="attr">#[register_rule((<span class="string">"RuleSetName"</span>, <span class="number">10</span>))]
+</span><span class="kw">fn </span>identity(expr: <span class="kw-2">&amp;</span>Expression, symbols: <span class="kw-2">&amp;</span>SymbolTable) -&gt; ApplicationResult {
+  <span class="prelude-val">Ok</span>(Reduction::pure(expr.clone()))
+}</code></pre></div>
+<p>Register a rule with the given rule sets and priorities.</p>
+</div></details></section></div></main></body></html>

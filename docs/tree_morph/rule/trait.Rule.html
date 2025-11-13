@@ -1,0 +1,90 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Trait implemented by rules to transform parts of a tree."><title>Rule in tree_morph::rule - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="tree_morph" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc trait"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Rule</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../tree_morph/index.html">tree_<wbr>morph</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Rule</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#rule-application" title="Rule Application">Rule Application</a></li><li><a href="#side-effects" title="Side-Effects">Side-Effects</a></li><li><a href="#global-metadata" title="Global Metadata">Global Metadata</a></li><li><a href="#provided-implementations" title="Provided Implementations">Provided Implementations</a></li><li><a href="#example" title="Example">Example</a></li></ul><h3><a href="#required-methods">Required Methods</a></h3><ul class="block"><li><a href="#tymethod.apply" title="apply">apply</a></li></ul><h3><a href="#implementors">Implementors</a></h3></section><div id="rustdoc-modnav"><h2><a href="index.html">In tree_<wbr>morph::<wbr>rule</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">tree_morph</a>::<wbr><a href="index.html">rule</a></div><h1>Trait <span class="trait">Rule</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/tree_morph/rule.rs.html#92-97">Source</a> </span></div><pre class="rust item-decl"><code>pub trait Rule&lt;T: Uniplate, M&gt; {
+    // Required method
+    fn <a href="#tymethod.apply" class="fn">apply</a>(
+        &amp;self,
+        commands: &amp;mut <a class="struct" href="../commands/struct.Commands.html" title="struct tree_morph::commands::Commands">Commands</a>&lt;T, M&gt;,
+        subtree: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;T</a>,
+        meta: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;M</a>,
+    ) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;T&gt;;
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Trait implemented by rules to transform parts of a tree.</p>
+<p>Rules contain a method <code>apply</code> which accepts a <a href="../commands/struct.Commands.html" title="struct tree_morph::commands::Commands"><code>Commands</code></a> instance, a subtree, and
+global metadata. If the rule is applicable to the subtree, it should return <code>Some(&lt;new_tree&gt;)</code>,
+otherwise it should return <code>None</code>.</p>
+<h2 id="rule-application"><a class="doc-anchor" href="#rule-application">§</a>Rule Application</h2>
+<p>As the engine traverses the tree (in left-most, outer-most order), it will apply rules to each
+node. The <code>subtree</code> argument passed to the rule is the current node being visited.</p>
+<p>If a rule is applicable to the given node/subtree (i.e. can transform it), then it should return
+the resulting new subtree, which will be inserted into the tree in place of the original node.</p>
+<h2 id="side-effects"><a class="doc-anchor" href="#side-effects">§</a>Side-Effects</h2>
+<p>The <a href="../commands/struct.Commands.html" title="struct tree_morph::commands::Commands"><code>Commands</code></a> instance passed to the rule can be used to apply side-effects after the rule
+has been applied. This can be used to update global metadata, or to apply transformations to the
+entire tree.</p>
+<h2 id="global-metadata"><a class="doc-anchor" href="#global-metadata">§</a>Global Metadata</h2>
+<p>In contrast to the <code>subtree</code> argument given to rules, the <code>meta</code> argument is a
+reference to a global value which is available to all rules regardless of where in
+the tree they are applied. This user-defined value can be used to store information
+such as a symbol table, or the number of times a specific rule has been applied.</p>
+<p>The global metadata may be mutated as a side-effect of applying a rule, using the
+<a href="../commands/struct.Commands.html#method.mut_meta" title="method tree_morph::commands::Commands::mut_meta"><code>Commands::mut_meta</code></a> method.</p>
+<h2 id="provided-implementations"><a class="doc-anchor" href="#provided-implementations">§</a>Provided Implementations</h2>
+<p>This trait is automatically implemented by all types which implement
+<code>Fn(&amp;mut Commands&lt;T, M&gt;, &amp;T, &amp;M) -&gt; Option&lt;T&gt;</code> for types <code>T: Uniplate</code> and <code>M</code>. This allows
+function pointers and closures with the correct signatures to be used as rules directly.</p>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>tree_morph::prelude::<span class="kw-2">*</span>;
+<span class="kw">use </span>uniplate::Uniplate;
+
+
+<span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
+#[uniplate()]
+</span><span class="kw">enum </span>Term {
+    A,
+    B,
+}
+
+<span class="comment">// Functions and closures automatically implement the Rule trait
+</span><span class="kw">fn </span>my_rule_fn(<span class="kw">_</span>: <span class="kw-2">&amp;mut </span>Commands&lt;Term, ()&gt;, <span class="kw">_</span>: <span class="kw-2">&amp;</span>Term, <span class="kw">_</span>: <span class="kw-2">&amp;</span>()) -&gt; <span class="prelude-ty">Option</span>&lt;Term&gt; {
+    <span class="prelude-val">None </span><span class="comment">// Never applicable
+</span>}
+
+<span class="kw">let </span>engine = EngineBuilder::new()
+    .add_rule_group(<span class="macro">rule_fns!</span>[my_rule_fn])
+    .build();
+<span class="kw">let </span>(result, <span class="kw">_</span>) = engine.morph(Term::A, ());
+<span class="macro">assert_eq!</span>(result, Term::A);
+
+
+<span class="comment">// Custom types can implement the Rule trait to allow more complex behaviour
+// Here a rule can be "toggled" to change whether it is applicable
+</span><span class="kw">struct </span>CustomRule(bool);
+
+<span class="kw">impl </span>Rule&lt;Term, ()&gt; <span class="kw">for </span>CustomRule {
+    <span class="kw">fn </span>apply(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;mut </span>Commands&lt;Term, ()&gt;, t: <span class="kw-2">&amp;</span>Term, <span class="kw">_</span>: <span class="kw-2">&amp;</span>()) -&gt; <span class="prelude-ty">Option</span>&lt;Term&gt; {
+        <span class="kw">if </span><span class="self">self</span>.<span class="number">0 </span>&amp;&amp; <span class="macro">matches!</span>(t, Term::A) {
+            <span class="prelude-val">Some</span>(Term::B)
+        } <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>}
+    }
+}
+
+<span class="kw">let </span>engine = EngineBuilder::new()
+    .add_rule(CustomRule(<span class="bool-val">false</span>))
+    .build();
+<span class="kw">let </span>(result, <span class="kw">_</span>) = engine.morph(Term::A, ());
+<span class="macro">assert_eq!</span>(result, Term::A);
+
+<span class="kw">let </span>engine = EngineBuilder::new()
+    .add_rule(CustomRule(<span class="bool-val">true</span>))
+    .build();
+<span class="kw">let </span>(result, <span class="kw">_</span>) = engine.morph(Term::A, ());
+<span class="macro">assert_eq!</span>(result, Term::B);</code></pre></div></div></details><h2 id="required-methods" class="section-header">Required Methods<a href="#required-methods" class="anchor">§</a></h2><div class="methods"><details class="toggle method-toggle" open><summary><section id="tymethod.apply" class="method"><a class="src rightside" href="../../src/tree_morph/rule.rs.html#96">Source</a><h4 class="code-header">fn <a href="#tymethod.apply" class="fn">apply</a>(
+    &amp;self,
+    commands: &amp;mut <a class="struct" href="../commands/struct.Commands.html" title="struct tree_morph::commands::Commands">Commands</a>&lt;T, M&gt;,
+    subtree: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;T</a>,
+    meta: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;M</a>,
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;T&gt;</h4></section></summary><div class="docblock"><p>Applies the rule to the given subtree and returns the result if applicable.</p>
+<p>See the <a href="trait.Rule.html" title="trait tree_morph::rule::Rule">Rule</a> trait documentation for more information.</p>
+</div></details></div><h2 id="implementors" class="section-header">Implementors<a href="#implementors" class="anchor">§</a></h2><div id="implementors-list"><section id="impl-Rule%3CT,+M%3E-for-F" class="impl"><a class="src rightside" href="../../src/tree_morph/rule.rs.html#100-108">Source</a><a href="#impl-Rule%3CT,+M%3E-for-F" class="anchor">§</a><h3 class="code-header">impl&lt;T, M, F&gt; <a class="trait" href="trait.Rule.html" title="trait tree_morph::rule::Rule">Rule</a>&lt;T, M&gt; for F<div class="where">where
+    T: Uniplate,
+    F: <a class="trait" href="https://doc.rust-lang.org/nightly/core/ops/function/trait.Fn.html" title="trait core::ops::function::Fn">Fn</a>(&amp;mut <a class="struct" href="../commands/struct.Commands.html" title="struct tree_morph::commands::Commands">Commands</a>&lt;T, M&gt;, <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;T</a>, <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.reference.html">&amp;M</a>) -&gt; <a class="enum" href="https://doc.rust-lang.org/nightly/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;T&gt;,</div></h3></section></div><script src="../../trait.impl/tree_morph/rule/trait.Rule.js" async></script></section></div></main></body></html>

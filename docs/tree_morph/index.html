@@ -1,0 +1,187 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="tree-morph"><title>tree_morph - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="tree_morph" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../static.files/storage-e2aeef58.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Crate tree_morph</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../tree_morph/index.html">tree_<wbr>morph</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#tree-morph" title="tree-morph">tree-morph</a><ul><li><a href="#quick-example" title="Quick Example">Quick Example</a></li><li><a href="#metadata" title="Metadata">Metadata</a></li><li><a href="#rule-groups" title="Rule Groups">Rule Groups</a></li><li><a href="#selector-functions" title="Selector Functions">Selector Functions</a></li><li><a href="#commands" title="Commands">Commands</a></li><li><a href="#acknowledgements" title="Acknowledgements">Acknowledgements</a></li></ul></li></ul><h3><a href="#modules">Crate Items</a></h3><ul class="block"><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#macros" title="Macros">Macros</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>tree_<wbr>morph</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/tree_morph/lib.rs.html#1-21">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="tree-morph"><a class="doc-anchor" href="#tree-morph">§</a>tree-morph</h2>
+<p><strong>Tree-morph is a library that helps you perform boilerplate-free generic tree transformations.</strong></p>
+<h3 id="quick-example"><a class="doc-anchor" href="#quick-example">§</a>Quick Example</h3>
+<p>In this simple example, we use tree-morph to calculate mathematical expressions using multiplication, addition and squaring.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>tree_morph::prelude::<span class="kw-2">*</span>;
+<span class="kw">use </span>uniplate::Uniplate;
+
+
+<span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Uniplate)]
+#[uniplate()]
+</span><span class="kw">enum </span>Expr {
+    Add(Box&lt;Expr&gt;, Box&lt;Expr&gt;),
+    Mul(Box&lt;Expr&gt;, Box&lt;Expr&gt;),
+    Sqr(Box&lt;Expr&gt;, Box&lt;Expr&gt;),
+    Val(i32),
+}</code></pre></div>
+<p>Tree-morph makes use of the <a href="https://crates.io/crates/uniplate/0.2.1">Uniplate crate</a>, which allows for boilerplate-free tree traversals. By recursively nesting these four expressions, we can build any mathematical expression involving addition, multiplication and raising to integer powers. For example, the expression <code>(1+2)^2</code> can be written as:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span>my_expression = Expr::Sqr(
+    Box::new(Expr::Add(
+        Box::new(Expr::Val(<span class="number">1</span>)),
+        Box::new(Expr::Val(<span class="number">2</span>))
+    ))
+);</code></pre></div>
+<p>Now we know how to create expressions, we have to also create rules that transform expressions. The following functions provide addition and multiplication rules for our tree.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>rule_eval_add(cmds: <span class="kw-2">&amp;mut </span>Commands&lt;Expr, i32&gt;, subtree: <span class="kw-2">&amp;</span>Expr, meta: <span class="kw-2">&amp;</span>i32) -&gt; <span class="prelude-ty">Option</span>&lt;Expr&gt; {
+   <span class="kw">if let </span>Expr::Add(a, b) = subtree {
+       <span class="kw">if let </span>(Expr::Val(a_v), Expr::Val(b_v)) = (a.as_ref(), b.as_ref()) {
+           <span class="kw">return </span><span class="prelude-val">Some</span>(Expr::Val(a_v + b_v));
+       }
+   }
+   <span class="prelude-val">None
+</span>}
+
+<span class="kw">fn </span>rule_eval_mul(cmds: <span class="kw-2">&amp;mut </span>Commands&lt;Expr, i32&gt;, subtree: <span class="kw-2">&amp;</span>Expr, meta: <span class="kw-2">&amp;</span>i32) -&gt; <span class="prelude-ty">Option</span>&lt;Expr&gt; {
+   <span class="kw">if let </span>Expr::Mul(a, b) = subtree {
+       <span class="kw">if let </span>(Expr::Val(a_v), Expr::Val(b_v)) = (a.as_ref(), b.as_ref()) {
+           <span class="kw">return </span><span class="prelude-val">Some</span>(Expr::Val(a_v * b_v));
+       }
+   }
+   <span class="prelude-val">None
+</span>}</code></pre></div>
+<p>We will talk about the the <code>Commands&lt;Expr, i32&gt;</code> and <code>meta</code> inputs later, but for now we view the add/mul rules as checking if a tree node has the right enum variant (in this case <code>Expr::Add</code> or <code>Expr::Mul</code>) and children (two <code>Expr::Val</code> variants), and adding/multiplying if possible, otherwise retuning <code>None</code>.</p>
+<p>We can defining the squaring rule in a similar way.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>rule_expand_sqr(cmds: <span class="kw-2">&amp;mut </span>Commands&lt;Expr, i32&gt;, subtree: <span class="kw-2">&amp;</span>Expr, meta: <span class="kw-2">&amp;</span>i32) -&gt; <span class="prelude-ty">Option</span>&lt;Expr&gt; {
+   <span class="kw">if let </span>Expr::Sqr(expr) = subtree {
+       <span class="kw">return </span><span class="prelude-val">Some</span>(Expr::Mul(
+           Box::new(<span class="kw-2">*</span>expr.clone()),
+           Box::new(<span class="kw-2">*</span>expr.clone())
+       ));
+   }
+   <span class="prelude-val">None
+</span>}</code></pre></div>
+<p>Now we have everything in place to start using tree-morph to apply our transformation rules to evaluate expressions. The following <code>#[test]</code> block checks that <code>my_expression</code> does indeed hold a value of <code>9</code>.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[test]
+</span><span class="kw">fn </span>check_my_expression() {
+   <span class="kw">let </span>my_expression = Expr::Sqr(Box::new(Expr::Add(
+       Box::new(Expr::Val(<span class="number">1</span>)),
+       Box::new(Expr::Val(<span class="number">2</span>)),
+   )));
+
+   <span class="kw">let </span>(result, <span class="kw">_</span>) = morph(
+       <span class="macro">vec!</span>[<span class="macro">rule_fns!</span>[rule_eval_add, rule_eval_mul, rule_expand_sqr]],
+       tree_morph::helpers::select_panic,
+       my_expression.clone(),
+       <span class="number">0</span>,
+   );
+   <span class="macro">assert_eq!</span>(result, Expr::Val(<span class="number">9</span>));
+}</code></pre></div>
+<p>The <code>morph</code> function is the core function of the crate, and handles the bulk application of transformation rules to the tree. We input the set of rules, a decision function, and some metadata, returning a <code>(tree, metadata)</code> tuple. Running <code>cargo test --test file_name</code> in a directory containing the file with this code will verify that tree-morph is indeed doing what it should do! In the following sections we explore some of tree-morph’s features in more depth.</p>
+<h3 id="metadata"><a class="doc-anchor" href="#metadata">§</a>Metadata</h3>
+<p>Metadata refers to additional contextual information passed along during the tree transformation process. A simple usage of metadata is counting the number of transformation steps a process takes. We keep track of metadata via the <code>Commands</code> struct, which is used to capture any other side-effects to the transformation process apart from the pure rule changes. If, in our above example, we wanted to count the number of addition rule changes applies, we would first need to create a new struct to capture the metadata.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// --snip--
+</span><span class="kw">struct </span>Meta {
+num_applications_addition: i32,
+}
+<span class="comment">// --snip--</span></code></pre></div>
+<p>Also, until now the <code>Commands</code> object has held types <code>&lt;Expr, i32&gt;</code>; in general, a commands object holds types <code>&lt;T, M&gt;</code>, where <code>T</code> is the tree type, and <code>M</code> is the metadata type. To include our new struct <code>Meta</code>, we need to adjust the types accordingly.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">struct </span>Meta {
+num_applications_addition: i32,
+}
+<span class="kw">fn </span>rule_eval_add(cmds: <span class="kw-2">&amp;mut </span>Commands&lt;Expr, Meta&gt;, subtree: <span class="kw-2">&amp;</span>Expr, meta: <span class="kw-2">&amp;</span>Meta) -&gt; <span class="prelude-ty">Option</span>&lt;Expr&gt; {
+    <span class="comment">// --snip--
+</span><span class="prelude-val">None
+</span>}
+
+<span class="kw">fn </span>rule_eval_mul(cmds: <span class="kw-2">&amp;mut </span>Commands&lt;Expr, Meta&gt;, subtree: <span class="kw-2">&amp;</span>Expr, meta: <span class="kw-2">&amp;</span>Meta) -&gt; <span class="prelude-ty">Option</span>&lt;Expr&gt; {
+   <span class="comment">// --snip--
+</span><span class="prelude-val">None
+</span>}
+
+<span class="kw">fn </span>rule_expand_sqr(cmds: <span class="kw-2">&amp;mut </span>Commands&lt;Expr, Meta&gt;, subtree: <span class="kw-2">&amp;</span>Expr, meta: <span class="kw-2">&amp;</span>Meta) -&gt; <span class="prelude-ty">Option</span>&lt;Expr&gt; {
+   <span class="comment">// --snip--
+</span><span class="prelude-val">None
+</span>}</code></pre></div>
+<p>Now the function types make sense, to add one to <code>num_applications_addition</code> each time an addition rule is applied, we just need to add a metadata command to the <code>Commands</code> queue each time that a successful rule application is undertaken.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>rule_eval_add(cmds: <span class="kw-2">&amp;mut </span>Commands&lt;Expr, Meta&gt;, subtree: <span class="kw-2">&amp;</span>Expr, meta: <span class="kw-2">&amp;</span>Meta) -&gt; <span class="prelude-ty">Option</span>&lt;Expr&gt; {
+    <span class="kw">if let </span>Expr::Add(a, b) = subtree {
+        <span class="kw">if let </span>(Expr::Val(a_v), Expr::Val(b_v)) = (a.as_ref(), b.as_ref()) {
+            cmds.mut_meta(Box::new(|m: <span class="kw-2">&amp;mut </span>Meta| m.num_applications_addition += <span class="number">1</span>)); <span class="comment">//new
+            </span><span class="kw">return </span><span class="prelude-val">Some</span>(Expr::Val(a_v + b_v));
+        }
+    }
+    <span class="prelude-val">None
+</span>}</code></pre></div>
+<p>Now, each time that the addition rule is successfully applied, the value of num_applications_addition will increase by 1! We may also
+choose to place the commands before the <code>if</code> block, as side-effects are only evaluated upon a successful rule update. This can make the code in the block a little easier to read. The following is
+completely equivalent to the above code.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">fn </span>rule_eval_add(cmds: <span class="kw-2">&amp;mut </span>Commands&lt;Expr, Meta&gt;, subtree: <span class="kw-2">&amp;</span>Expr, meta: <span class="kw-2">&amp;</span>Meta) -&gt; <span class="prelude-ty">Option</span>&lt;Expr&gt; {
+    cmds.mut_meta(Box::new(|m: <span class="kw-2">&amp;mut </span>Meta| m.num_applications_addition += <span class="number">1</span>)); <span class="comment">//new location
+    </span><span class="kw">if let </span>Expr::Add(a, b) = subtree {
+        <span class="kw">if let </span>(Expr::Val(a_v), Expr::Val(b_v)) = (a.as_ref(), b.as_ref()) {
+            <span class="kw">return </span><span class="prelude-val">Some</span>(Expr::Val(a_v + b_v));
+        }
+    }
+    <span class="prelude-val">None
+</span>}</code></pre></div>
+<p>The following test block verifies that two addition operations take place.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[test]
+</span><span class="kw">fn </span>number_of_operations() {
+    <span class="kw">let </span>my_expression = Expr::Sqr(Box::new(Expr::Add(
+        Box::new(Expr::Val(<span class="number">1</span>)),
+        Box::new(Expr::Val(<span class="number">2</span>)),
+    )));
+
+    <span class="kw">let </span>metadata = Meta {
+        num_applications_addition: <span class="number">0</span>,
+    };
+    <span class="kw">let </span>(result, metaresult) = morph(
+        <span class="macro">vec!</span>[<span class="macro">rule_fns!</span>[rule_eval_add, rule_eval_mul, rule_expand_sqr]],
+        tree_morph::helpers::select_panic,
+        my_expression.clone(),
+        metadata,
+    );
+    <span class="macro">assert_eq!</span>(metaresult.num_applications_addition, <span class="number">2</span>);
+}</code></pre></div>
+<p>Running <code>cargo test --test file_name</code> in a directory containing the file with this code will verify that indeed two addition operations are successfully undertaken.</p>
+<p>But wait! The original problem was solving <code>(1+2)^2</code>, why have two addition operations been recorded? The answer is in how we grouped the rules together in the <code>morph</code> function.</p>
+<h3 id="rule-groups"><a class="doc-anchor" href="#rule-groups">§</a>Rule Groups</h3>
+<p>In the <code>morph</code> function, in the first input, rust expects a <strong>rule group</strong> object of type <code>Vec&lt;Vec&lt;R&gt;&gt;</code>, where <code>R</code> is the <code>Rule</code> trait. We can use the macro <code>rule_fns!</code> to simultaneously handle giving functions the <code>Rule</code> trait and putting them inside vectors. Rule groups are a powerful feature of tree-morph, and allow for a priority system whereby some rules are attempted before others. For example, if we have the rule grouping <code>vec![vec![rule1,rule2],vec![rule3]]</code>, <code>morph</code> will start by visiting the first node and trying to apply rule1 and rule2. If unsuccessful, <code>morph</code> will then move onto the second node, trying rule1 and rule2 again. Note that since rule3 is in a lower priority grouping, tree-morph will not try rule3 on the first node until rule1 and rule2 have been attempted on the <strong>entire</strong> tree.</p>
+<p>It is now clear why <code>assert_eq!(metaresult.num_applications_addition, 2);</code> holds above. Because rule <code>rule_expand_sqr</code> was in the same grouping as all the other rules, tree-morph applied the rule before the addition node was ever reached. To increase the efficiency the solving algorithm, we can assign the <code>rule_expand_sqr</code> with a lower priority.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[test]
+</span><span class="kw">fn </span>number_of_operations() {
+    <span class="comment">// --snip--
+    </span><span class="kw">let </span>(result, metaresult) = morph(
+        <span class="macro">vec!</span>[
+            <span class="macro">rule_fns!</span>[rule_eval_add, rule_eval_mul],
+            <span class="macro">rule_fns!</span>[rule_expand_sqr],
+        ], <span class="comment">//new
+        </span>tree_morph::helpers::select_panic,
+        my_expression.clone(),
+        metadata,
+    );
+    <span class="comment">// --snip--
+</span>}</code></pre></div>
+<p>Now that <code>rule_expand_sqr</code> has a lower priority, the addition operation will be applied first, and hence <code>metaresult.num_applications_addition</code> should equal 1. If we make the following change to the test, we can verify this directly.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="attr">#[test]
+</span><span class="kw">fn </span>number_of_operations() {
+    <span class="comment">// --snip--
+    </span><span class="kw">let </span>(result, metaresult) = morph(
+        <span class="macro">vec!</span>[
+            <span class="macro">rule_fns!</span>[rule_eval_add, rule_eval_mul],
+            <span class="macro">rule_fns!</span>[rule_expand_sqr],
+        ], <span class="comment">//new
+        </span>tree_morph::helpers::select_panic,
+        my_expression.clone(),
+        metadata,
+    );
+       <span class="macro">assert_eq!</span>(metaresult.num_applications_addition, <span class="number">1</span>); <span class="comment">//new, only one addition performed
+</span>}</code></pre></div><h3 id="selector-functions"><a class="doc-anchor" href="#selector-functions">§</a>Selector Functions</h3>
+<p>The second input in the <code>morph</code> function is a <strong>selector function</strong> from the <code>tree_morph::helpers</code> crate. Selector functions are what tree-morph uses if there is ever ambiguity in what rule to apply. Ambiguity can arise when two rules are both applicable at the same time, and have the same priority as assigned via rule groupings. We have various ways to deal with this in tree-morph, and in our example we have used <code>select_panic</code>, which causes rust to <code>panic!</code> if there is ever ambiguity.</p>
+<h3 id="commands"><a class="doc-anchor" href="#commands">§</a>Commands</h3>
+<p>We have previously shown how a <code>Commands</code> struct can be used to store metadata-updating rules. It is also possible to store entire <strong>tree transformations</strong> too. This might be useful for scenarios in which you want a tree transformation to occur immediately after some successful rule change.</p>
+<h3 id="acknowledgements"><a class="doc-anchor" href="#acknowledgements">§</a>Acknowledgements</h3>
+<p>Finish….</p>
+</div></details><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="commands/index.html" title="mod tree_morph::commands">commands</a></dt><dd>Commands encode side-effects that will take place after a successful rule application.</dd><dt><a class="mod" href="engine/index.html" title="mod tree_morph::engine">engine</a></dt><dd>Perform gradual rule-based transformations on trees.</dd><dt><a class="mod" href="engine_builder/index.html" title="mod tree_morph::engine_builder">engine_<wbr>builder</a></dt><dd>A builder type for constructing and configuring <a href="engine/struct.Engine.html" title="struct tree_morph::engine::Engine"><code>Engine</code></a> instances.</dd><dt><a class="mod" href="helpers/index.html" title="mod tree_morph::helpers">helpers</a></dt><dd>Various selector functions for different use cases.</dd><dt><a class="mod" href="prelude/index.html" title="mod tree_morph::prelude">prelude</a></dt><dd>Re-exported functions and types for convenience.</dd><dt><a class="mod" href="rule/index.html" title="mod tree_morph::rule">rule</a></dt><dd>Traits and types representing a transformation rule to a tree.</dd></dl><h2 id="macros" class="section-header">Macros<a href="#macros" class="anchor">§</a></h2><dl class="item-table"><dt><a class="macro" href="macro.rule_fns.html" title="macro tree_morph::rule_fns">rule_<wbr>fns</a></dt><dd>A convenience macro to cast a list of <code>fn</code> pointers or closures to a uniform type.</dd></dl></section></div></main></body></html>

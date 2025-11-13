@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"macro":["bug","domain_int","error","essence_expr","essence_vec","into_matrix","into_matrix_expr","matrix","matrix_expr","range","register_representation","throw_error"],"mod":["ast","context","defaults","error","parse","representation","rule_engine","solver","stats"],"struct":["Model"]};

@@ -1,0 +1,85 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/conjure-cp-core/src/stats/rewriter_stats.rs`."><title>rewriter_stats.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="conjure_cp_core" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">conjure_cp_core/stats/</div>rewriter_stats.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-2"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>schemars::JsonSchema;
+<a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>serde::Serialize;
+<a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>serde_with::skip_serializing_none;
+<a href=#4 id=4 data-nosnippet>4</a>
+<a href=#5 id=5 data-nosnippet>5</a><span class="doccomment">/// Represents the statistical data collected during the model rewriting process.
+<a href=#6 id=6 data-nosnippet>6</a>///
+<a href=#7 id=7 data-nosnippet>7</a>/// The `RewriterStats` struct is used to track various metrics and statistics related to the rewriting
+<a href=#8 id=8 data-nosnippet>8</a>/// of a model using a set of rules. These statistics can be used for performance monitoring, debugging,
+<a href=#9 id=9 data-nosnippet>9</a>/// and optimization purposes. The structure supports optional fields, allowing selective tracking of data
+<a href=#10 id=10 data-nosnippet>10</a>/// without requiring all fields to be set.
+<a href=#11 id=11 data-nosnippet>11</a>///
+<a href=#12 id=12 data-nosnippet>12</a>/// The struct uses the following features:
+<a href=#13 id=13 data-nosnippet>13</a>/// - `#[skip_serializing_none]`: Skips serializing fields that have a value of `None`, resulting in cleaner JSON output.
+<a href=#14 id=14 data-nosnippet>14</a>/// - `#[serde(rename_all = "camelCase")]`: Uses camelCase for all serialized field names, adhering to common JSON naming conventions.
+<a href=#15 id=15 data-nosnippet>15</a>///
+<a href=#16 id=16 data-nosnippet>16</a>/// # Fields
+<a href=#17 id=17 data-nosnippet>17</a>/// - `is_optimization_enabled`:
+<a href=#18 id=18 data-nosnippet>18</a>///   - Type: `Option&lt;bool&gt;`
+<a href=#19 id=19 data-nosnippet>19</a>///   - Indicates whether optimizations were enabled during the rewriting process.
+<a href=#20 id=20 data-nosnippet>20</a>///   - If `Some(true)`, it means optimizations were enabled.
+<a href=#21 id=21 data-nosnippet>21</a>///   - If `Some(false)`, optimizations were explicitly disabled.
+<a href=#22 id=22 data-nosnippet>22</a>///   - If `None`, the status of optimizations is unknown or not tracked.
+<a href=#23 id=23 data-nosnippet>23</a>///
+<a href=#24 id=24 data-nosnippet>24</a>/// - `rewriter_run_time`:
+<a href=#25 id=25 data-nosnippet>25</a>///   - Type: `Option&lt;std::time::Duration&gt;`
+<a href=#26 id=26 data-nosnippet>26</a>///   - The total runtime duration of the rewriter in the current session.
+<a href=#27 id=27 data-nosnippet>27</a>///   - If set, it indicates the amount of time spent on rewriting, measured as a `Duration`.
+<a href=#28 id=28 data-nosnippet>28</a>///   - If `None`, the runtime is either unknown or not tracked.
+<a href=#29 id=29 data-nosnippet>29</a>///
+<a href=#30 id=30 data-nosnippet>30</a>/// - `rewriter_rule_application_attempts`:
+<a href=#31 id=31 data-nosnippet>31</a>///   - Type: `Option&lt;usize&gt;`
+<a href=#32 id=32 data-nosnippet>32</a>///   - The number of rule application attempts made during the rewriting process.
+<a href=#33 id=33 data-nosnippet>33</a>///   - An attempt is counted each time a rule is evaluated, regardless of whether it was successfully applied.
+<a href=#34 id=34 data-nosnippet>34</a>///   - If `None`, this metric is not tracked or not applicable for the current session.
+<a href=#35 id=35 data-nosnippet>35</a>///
+<a href=#36 id=36 data-nosnippet>36</a>/// - `rewriter_rule_applications`:
+<a href=#37 id=37 data-nosnippet>37</a>///   - Type: `Option&lt;usize&gt;`
+<a href=#38 id=38 data-nosnippet>38</a>///   - The number of successful rule applications during the rewriting process.
+<a href=#39 id=39 data-nosnippet>39</a>///   - A successful application means the rule was successfully applied to transform the expression or constraint.
+<a href=#40 id=40 data-nosnippet>40</a>///   - If `None`, this metric is not tracked or not applicable for the current session.
+<a href=#41 id=41 data-nosnippet>41</a>///
+<a href=#42 id=42 data-nosnippet>42</a>/// # Example
+<a href=#43 id=43 data-nosnippet>43</a>///
+<a href=#44 id=44 data-nosnippet>44</a>/// let stats = RewriterStats {
+<a href=#45 id=45 data-nosnippet>45</a>///     is_optimization_enabled: Some(true),
+<a href=#46 id=46 data-nosnippet>46</a>///     rewriter_run_time: Some(std::time::Duration::new(2, 0)),
+<a href=#47 id=47 data-nosnippet>47</a>///     rewriter_rule_application_attempts: Some(15),
+<a href=#48 id=48 data-nosnippet>48</a>///     rewriter_rule_applications: Some(10),
+<a href=#49 id=49 data-nosnippet>49</a>/// };
+<a href=#50 id=50 data-nosnippet>50</a>///
+<a href=#51 id=51 data-nosnippet>51</a>/// // Serialize the stats to JSON
+<a href=#52 id=52 data-nosnippet>52</a>/// let serialized_stats = serde_json::to_string(&amp;stats).unwrap();
+<a href=#53 id=53 data-nosnippet>53</a>/// println!("Serialized Stats: {}", serialized_stats);
+<a href=#54 id=54 data-nosnippet>54</a>///
+<a href=#55 id=55 data-nosnippet>55</a>///
+<a href=#56 id=56 data-nosnippet>56</a>/// # Usage Notes
+<a href=#57 id=57 data-nosnippet>57</a>/// - This struct is intended to be used in contexts where tracking the performance and behavior of rule-based
+<a href=#58 id=58 data-nosnippet>58</a>///   rewriting systems is necessary. It is designed to be easily serialized and deserialized to/from JSON, making it
+<a href=#59 id=59 data-nosnippet>59</a>///   suitable for logging, analytics, and reporting purposes.
+<a href=#60 id=60 data-nosnippet>60</a>///
+<a href=#61 id=61 data-nosnippet>61</a>/// # See Also
+<a href=#62 id=62 data-nosnippet>62</a>/// - [`serde_with::skip_serializing_none`]: For skipping `None` values during serialization.
+<a href=#63 id=63 data-nosnippet>63</a>/// - [`std::time::Duration`]: For measuring and representing time intervals.
+<a href=#64 id=64 data-nosnippet>64</a></span><span class="attr">#[skip_serializing_none]
+<a href=#65 id=65 data-nosnippet>65</a>#[derive(Default, Serialize, Clone, JsonSchema)]
+<a href=#66 id=66 data-nosnippet>66</a>#[serde(rename_all = <span class="string">"camelCase"</span>)]
+<a href=#67 id=67 data-nosnippet>67</a>#[allow(dead_code)]
+<a href=#68 id=68 data-nosnippet>68</a></span><span class="kw">pub struct </span>RewriterStats {
+<a href=#69 id=69 data-nosnippet>69</a>    <span class="kw">pub </span>is_optimization_enabled: <span class="prelude-ty">Option</span>&lt;bool&gt;,
+<a href=#70 id=70 data-nosnippet>70</a>    <span class="kw">pub </span>rewriter_run_time: <span class="prelude-ty">Option</span>&lt;std::time::Duration&gt;,
+<a href=#71 id=71 data-nosnippet>71</a>    <span class="kw">pub </span>rewriter_rule_application_attempts: <span class="prelude-ty">Option</span>&lt;usize&gt;,
+<a href=#72 id=72 data-nosnippet>72</a>    <span class="kw">pub </span>rewriter_rule_applications: <span class="prelude-ty">Option</span>&lt;usize&gt;,
+<a href=#73 id=73 data-nosnippet>73</a>}
+<a href=#74 id=74 data-nosnippet>74</a>
+<a href=#75 id=75 data-nosnippet>75</a><span class="kw">impl </span>RewriterStats {
+<a href=#76 id=76 data-nosnippet>76</a>    <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+<a href=#77 id=77 data-nosnippet>77</a>        <span class="self">Self </span>{
+<a href=#78 id=78 data-nosnippet>78</a>            is_optimization_enabled: <span class="prelude-val">None</span>,
+<a href=#79 id=79 data-nosnippet>79</a>            rewriter_run_time: <span class="prelude-val">None</span>,
+<a href=#80 id=80 data-nosnippet>80</a>            rewriter_rule_application_attempts: <span class="prelude-val">None</span>,
+<a href=#81 id=81 data-nosnippet>81</a>            rewriter_rule_applications: <span class="prelude-val">None</span>,
+<a href=#82 id=82 data-nosnippet>82</a>        }
+<a href=#83 id=83 data-nosnippet>83</a>    }
+<a href=#84 id=84 data-nosnippet>84</a>}
+</code></pre></div></section></main></body></html>

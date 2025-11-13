@@ -1,0 +1,80 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="A high-level API for interacting with constraints solvers."><title>conjure_cp::solver - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="conjure_cp" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module solver</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../conjure_cp/index.html">conjure_<wbr>cp</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module solver</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#examples" title="Examples">Examples</a><ul><li><a href="#a-successful-minion-model" title="A Successful Minion Model">A Successful Minion Model</a></li></ul></li><li><a href="#the-solver-callback-function" title="The Solver callback function">The Solver callback function</a></li></ul><h3><a href="#modules">Module Items</a></h3><ul class="block"><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#traits" title="Traits">Traits</a></li><li><a href="#types" title="Type Aliases">Type Aliases</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate conjure_<wbr>cp</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">conjure_cp</a></div><h1>Module <span>solver</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/conjure_cp_core/lib.rs.html#18">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>A high-level API for interacting with constraints solvers.</p>
+<p>This module provides a consistent, solver-independent API for interacting with constraints
+solvers. It also provides incremental solving support, and the returning of run stats from
+solvers.</p>
+<hr />
+<ul>
+<li>
+<p><a href="struct.Solver.html" title="struct conjure_cp::solver::Solver">Solver<Adaptor></a> provides the API for interacting with constraints solvers.</p>
+</li>
+<li>
+<p>The <a href="trait.SolverAdaptor.html" title="trait conjure_cp::solver::SolverAdaptor">SolverAdaptor</a> trait controls how solving actually occurs and handles translation
+between the <a href="struct.Solver.html" title="struct conjure_cp::solver::Solver">Solver</a> type and a specific solver.</p>
+</li>
+<li>
+<p><a href="adaptors/index.html" title="mod conjure_cp::solver::adaptors">adaptors</a> contains all implemented solver adaptors.</p>
+</li>
+<li>
+<p>The <a href="model_modifier/index.html" title="mod conjure_cp::solver::model_modifier">model_modifier</a> submodule defines types to help with incremental solving / changing a
+model during search. The entrypoint for incremental solving is the <a href="struct.Solver.html#method.solve_mut" title="method conjure_cp::solver::Solver::solve_mut">Solver&lt;A,ModelLoaded&gt;::solve_mut</a>
+function.</p>
+</li>
+</ul>
+<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2><h3 id="a-successful-minion-model"><a class="doc-anchor" href="#a-successful-minion-model">§</a>A Successful Minion Model</h3>
+<p>Note: this example constructs a basic Minion-compatible model instead of using the rewriter.
+For a full end-to-end example, see crates/conjure-cp/examples/solver_hello_minion.rs</p>
+
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::sync::{Arc,Mutex};
+<span class="kw">use </span>conjure_cp_core::parse::get_example_model;
+<span class="kw">use </span>conjure_cp_core::rule_engine::resolve_rule_sets;
+<span class="kw">use </span>conjure_cp_core::rule_engine::rewrite_naive;
+<span class="kw">use </span>conjure_cp_core::solver::{adaptors, Solver, SolverAdaptor};
+<span class="kw">use </span>conjure_cp_core::solver::states::ModelLoaded;
+<span class="kw">use </span>conjure_cp_core::Model;
+<span class="kw">use </span>conjure_cp_core::ast::Domain;
+<span class="kw">use </span>conjure_cp_core::ast::Declaration;
+<span class="kw">use </span>conjure_cp_core::solver::SolverFamily;
+<span class="kw">use </span>conjure_cp_core::context::Context;
+<span class="kw">use </span>conjure_cp_essence_macros::essence_expr;
+
+<span class="comment">// Define a model for minion.
+</span><span class="kw">let </span>context = Context::&lt;<span class="lifetime">'static</span>&gt;::new_ptr_empty(SolverFamily::Minion);
+<span class="kw">let </span><span class="kw-2">mut </span>model = Model::new(context);
+model.as_submodel_mut().add_symbol(Declaration::new_var(<span class="string">"x"</span>.into(), Domain::Bool));
+model.as_submodel_mut().add_symbol(Declaration::new_var(<span class="string">"y"</span>.into(), Domain::Bool));
+model.as_submodel_mut().add_constraint(<span class="macro">essence_expr!</span>{<span class="macro">x !</span>= y});
+
+<span class="comment">// Solve using Minion.
+</span><span class="kw">let </span>solver = Solver::new(adaptors::Minion::new());
+<span class="kw">let </span>solver: Solver&lt;adaptors::Minion,ModelLoaded&gt; = solver.load_model(model).unwrap();
+
+<span class="comment">// In this example, we will count solutions.
+//
+// The solver interface is designed to allow adaptors to use multiple-threads / processes if
+// necessary. Therefore, the callback type requires all variables inside it to have a static
+// lifetime and to implement Send (i.e. the variable can be safely shared between theads).
+//
+// We use Arc&lt;Mutex&lt;T&gt;&gt; to create multiple references to a threadsafe mutable
+// variable of type T.
+//
+// Using the move |x| ... closure syntax, we move one of these references into the closure.
+// Note that a normal closure borrow variables from the parent so is not
+// thread-safe.
+
+</span><span class="kw">let </span>counter_ref = Arc::new(Mutex::new(<span class="number">0</span>));
+<span class="kw">let </span>counter_ref_2 = counter_ref.clone();
+solver.solve(Box::new(<span class="kw">move </span>|<span class="kw">_</span>| {
+  <span class="kw">let </span><span class="kw-2">mut </span>counter = (<span class="kw-2">*</span>counter_ref_2).lock().unwrap();
+  <span class="kw-2">*</span>counter += <span class="number">1</span>;
+  <span class="bool-val">true
+  </span>}));
+
+<span class="kw">let </span><span class="kw-2">mut </span>counter = (<span class="kw-2">*</span>counter_ref).lock().unwrap();
+<span class="macro">assert_eq!</span>(<span class="kw-2">*</span>counter,<span class="number">2</span>);</code></pre></div><h2 id="the-solver-callback-function"><a class="doc-anchor" href="#the-solver-callback-function">§</a>The Solver callback function</h2>
+<p>The callback function given to <code>solve</code> is called whenever a solution is found by the solver.</p>
+<p>Its return value can be used to control how many solutions the solver finds:</p>
+<ul>
+<li>If the callback function returns <code>true</code>, solver execution continues.</li>
+<li>If the callback function returns <code>false</code>, the solver is terminated.</li>
+</ul>
+</div></details><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="adaptors/index.html" title="mod conjure_cp::solver::adaptors">adaptors</a></dt><dd>Solver adaptors.</dd><dt><a class="mod" href="model_modifier/index.html" title="mod conjure_cp::solver::model_modifier">model_<wbr>modifier</a></dt><dd>Modifying a model during search.</dd><dt><a class="mod" href="states/index.html" title="mod conjure_cp::solver::states">states</a></dt><dd>States of a <a href="struct.Solver.html" title="struct conjure_cp::solver::Solver"><code>Solver</code></a>.</dd></dl><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.SolveSuccess.html" title="struct conjure_cp::solver::SolveSuccess">Solve<wbr>Success</a></dt><dd>Returned from <a href="trait.SolverAdaptor.html" title="trait conjure_cp::solver::SolverAdaptor">SolverAdaptor</a> when solving is successful.</dd><dt><a class="struct" href="struct.Solver.html" title="struct conjure_cp::solver::Solver">Solver</a></dt><dd>An abstract representation of a constraints solver.</dd><dt><a class="struct" href="struct.SolverFamilyIter.html" title="struct conjure_cp::solver::SolverFamilyIter">Solver<wbr>Family<wbr>Iter</a></dt><dd>An iterator over the variants of <a href="enum.SolverFamily.html" title="enum conjure_cp::solver::SolverFamily">SolverFamily</a></dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.SearchComplete.html" title="enum conjure_cp::solver::SearchComplete">Search<wbr>Complete</a></dt><dt><a class="enum" href="enum.SearchIncomplete.html" title="enum conjure_cp::solver::SearchIncomplete">Search<wbr>Incomplete</a></dt><dt><a class="enum" href="enum.SearchStatus.html" title="enum conjure_cp::solver::SearchStatus">Search<wbr>Status</a></dt><dt><a class="enum" href="enum.SolverError.html" title="enum conjure_cp::solver::SolverError">Solver<wbr>Error</a></dt><dd>Errors returned by <a href="struct.Solver.html" title="struct conjure_cp::solver::Solver">Solver</a> on failure.</dd><dt><a class="enum" href="enum.SolverFamily.html" title="enum conjure_cp::solver::SolverFamily">Solver<wbr>Family</a></dt></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.SolverAdaptor.html" title="trait conjure_cp::solver::SolverAdaptor">Solver<wbr>Adaptor</a></dt><dd>A common interface for calling underlying solver APIs inside a <a href="struct.Solver.html" title="struct conjure_cp::solver::Solver"><code>Solver</code></a>.</dd></dl><h2 id="types" class="section-header">Type Aliases<a href="#types" class="anchor">§</a></h2><dl class="item-table"><dt><a class="type" href="type.SolverCallback.html" title="type conjure_cp::solver::SolverCallback">Solver<wbr>Callback</a></dt><dd>The type for user-defined callbacks for use with <a href="struct.Solver.html" title="struct conjure_cp::solver::Solver">Solver</a>.</dd><dt><a class="type" href="type.SolverMutCallback.html" title="type conjure_cp::solver::SolverMutCallback">Solver<wbr>MutCallback</a></dt></dl></section></div></main></body></html>

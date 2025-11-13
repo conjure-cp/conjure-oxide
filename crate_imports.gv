@@ -1,0 +1,75 @@
+digraph G {
+    overlap = false;
+    rankdir = TB; // top to bottom (try also LR - left to right)
+    beautify = true;
+    concentrate = true;
+    splines = true; // try also: polyline, ortho
+    nodesep = 0.6;   // node separation
+    ranksep = 0.8;   // rank (i.e. nodes on same level of the tree) separation
+
+    // Global node attributes
+    node [shape=box, style="rounded,filled", fillcolor=lightgrey];
+
+    subgraph cluster_0 {
+        label = "conjure-oxide";
+        style="filled";
+        fillcolor="lightblue"; // Color for the main cluster
+        cluster = true; // Ensure this is treated as a cluster
+
+        conjure_cp_cli [fillcolor=white]; // Highlight the main node
+
+        subgraph cluster_1 {
+            label = "crates";
+            style="filled";
+            fillcolor="lightyellow"; // Color for crates cluster
+            cluster = true;
+
+            core;
+            rules;
+            rule-macros;
+            essence-macros;
+            essence-parser;
+            "tree-sitter-essence";
+            tree_morph;
+            randicheck;
+            enum-compatibility-macro;
+        }
+
+        subgraph cluster_2 {
+            label = "solvers";
+            style="filled";
+            fillcolor="#90EE90"; // Color for solvers cluster
+            cluster = true;
+
+            minion_sys;
+        }
+    }
+
+    uniplate [fillcolor=aliceblue];
+    "minion (original C++)" [fillcolor=mistyrose];
+
+    // Edges
+    conjure_cp_cli -> core;
+    conjure_cp_cli -> rules;
+    conjure_cp_cli -> minion_sys;
+    conjure_cp_cli -> essence-parser;
+    conjure_cp_cli -> essence-macros;
+
+    core -> uniplate;
+    core -> minion_sys;
+    core -> enum-compatibility-macro;
+    core -> rule-macros;
+
+    essence-macros -> core;
+    essence-macros -> essence-parser;
+
+    rules -> core;
+    rules -> rule-macros;
+    rules -> essence-macros;
+
+    essence-parser -> core;
+    essence-parser -> "tree-sitter-essence";
+
+    tree_morph -> uniplate;
+    minion_sys -> "minion (original C++)";
+}

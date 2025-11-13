@@ -1,0 +1,97 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="This crate provides low level Rust bindings to the Minion constraint solver."><title>minion_sys - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="minion_sys" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0-nightly (01867557c 2025-11-12)" data-channel="nightly" data-search-js="search-8e3fad08.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../static.files/storage-e2aeef58.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Crate minion_sys</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../minion_sys/index.html">minion_<wbr>sys</a><span class="version">0.0.1</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#examples" title="Examples">Examples</a><ul><li><a href="#print-and-varorder" title="`PRINT` and `VARORDER`"><code>PRINT</code> and <code>VARORDER</code></a></li></ul></li></ul><h3><a href="#modules">Crate Items</a></h3><ul class="block"><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#functions" title="Functions">Functions</a></li><li><a href="#types" title="Type Aliases">Type Aliases</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>minion_<wbr>sys</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/minion_sys/lib.rs.html#1-121">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>This crate provides low level Rust bindings to the <a href="https://github.com/minion/minion">Minion</a>
+constraint solver.</p>
+<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<p>Consider the following Minion problem:</p>
+<div class="example-wrap"><pre class="language-plaintext"><code>MINION 3
+**VARIABLES**
+DISCRETE x #
+{1..3}
+DISCRETE y #
+{2..4}
+DISCRETE z #
+{1..5}
+**SEARCH**
+PRINT[[x],[y],[z]]
+VARORDER STATIC [x, y, z]
+**CONSTRAINTS**
+sumleq([x,y,z],4)
+ineq(x, y, -1)
+**EOF**</code></pre></div>
+<p>This can be solved in Rust like so:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>minion_sys::ast::<span class="kw-2">*</span>;
+<span class="kw">use </span>minion_sys::run_minion;
+<span class="kw">use </span>std::collections::HashMap;
+<span class="kw">use </span>std::sync::Mutex;
+
+<span class="comment">// Get solutions out of Minion.
+// See the documentation for Callback for details.
+
+</span><span class="kw">static </span>ALL_SOLUTIONS: Mutex&lt;Vec&lt;HashMap&lt;VarName,Constant&gt;&gt;&gt;  = Mutex::new(<span class="macro">vec!</span>[]);
+
+<span class="kw">fn </span>callback(solutions: HashMap&lt;VarName,Constant&gt;) -&gt; bool {
+    <span class="kw">let </span><span class="kw-2">mut </span>guard = ALL_SOLUTIONS.lock().unwrap();
+    guard.push(solutions);
+    <span class="bool-val">true
+</span>}
+
+<span class="comment">// Build and run the model.
+</span><span class="kw">let </span><span class="kw-2">mut </span>model = Model::new();
+model
+    .named_variables
+    .add_var(<span class="string">"x"</span>.to_owned(), VarDomain::Bound(<span class="number">1</span>, <span class="number">3</span>));
+model
+    .named_variables
+    .add_var(<span class="string">"y"</span>.to_owned(), VarDomain::Bound(<span class="number">2</span>, <span class="number">4</span>));
+model
+    .named_variables
+    .add_var(<span class="string">"z"</span>.to_owned(), VarDomain::Bound(<span class="number">1</span>, <span class="number">5</span>));
+
+<span class="kw">let </span>leq = Constraint::SumLeq(
+    <span class="macro">vec!</span>[
+        Var::NameRef(<span class="string">"x"</span>.to_owned()),
+        Var::NameRef(<span class="string">"y"</span>.to_owned()),
+        Var::NameRef(<span class="string">"z"</span>.to_owned()),
+    ],
+    Var::ConstantAsVar(<span class="number">4</span>),
+);
+
+<span class="kw">let </span>geq = Constraint::SumGeq(
+    <span class="macro">vec!</span>[
+        Var::NameRef(<span class="string">"x"</span>.to_owned()),
+        Var::NameRef(<span class="string">"y"</span>.to_owned()),
+        Var::NameRef(<span class="string">"z"</span>.to_owned()),
+    ],
+    Var::ConstantAsVar(<span class="number">4</span>),
+);
+
+<span class="kw">let </span>ineq = Constraint::Ineq(
+    Var::NameRef(<span class="string">"x"</span>.to_owned()),
+    Var::NameRef(<span class="string">"y"</span>.to_owned()),
+    Constant::Integer(-<span class="number">1</span>),
+);
+
+model.constraints.push(leq);
+model.constraints.push(geq);
+model.constraints.push(ineq);
+
+<span class="kw">let </span>res = run_minion(model, callback);
+res.expect(<span class="string">"Error occurred"</span>);
+
+<span class="comment">// Get solutions
+</span><span class="kw">let </span>guard = ALL_SOLUTIONS.lock().unwrap();
+<span class="kw">let </span>solution_set_1 = <span class="kw-2">&amp;</span>(guard.get(<span class="number">0</span>).unwrap());
+
+<span class="kw">let </span>x1 = solution_set_1.get(<span class="string">"x"</span>).unwrap();
+<span class="kw">let </span>y1 = solution_set_1.get(<span class="string">"y"</span>).unwrap();
+<span class="kw">let </span>z1 = solution_set_1.get(<span class="string">"z"</span>).unwrap();
+
+<span class="macro">assert_eq!</span>(guard.len(),<span class="number">1</span>);
+<span class="macro">assert_eq!</span>(<span class="kw-2">*</span>x1,Constant::Integer(<span class="number">1</span>));
+<span class="macro">assert_eq!</span>(<span class="kw-2">*</span>y1,Constant::Integer(<span class="number">2</span>));
+<span class="macro">assert_eq!</span>(<span class="kw-2">*</span>z1,Constant::Integer(<span class="number">1</span>));</code></pre></div><h3 id="print-and-varorder"><a class="doc-anchor" href="#print-and-varorder">§</a><code>PRINT</code> and <code>VARORDER</code></h3>
+<p>These bindings have no replacement for Minion’s <code>PRINT</code> and <code>VARORDER</code> statements - any
+variable given to the model that does not have a constant value is considered a search
+variable. Solutions are returned through the <a href="type.Callback.html" title="type minion_sys::Callback">callback function</a> as a <code>HashMap</code>.</p>
+</div></details><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="ast/index.html" title="mod minion_sys::ast">ast</a></dt><dd>Types used for representing Minion models in Rust.</dd><dt><a class="mod" href="error/index.html" title="mod minion_sys::error">error</a></dt><dd>Error types.</dd><dt><a class="mod" href="print/index.html" title="mod minion_sys::print">print</a></dt><dd>Functions to pretty print a model as a <a href="https://minion-solver.readthedocs.io/en/latest/usage/input.html">Minion
+file</a>.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.get_from_table.html" title="fn minion_sys::get_from_table">get_<wbr>from_<wbr>table</a></dt><dd>Gets a given value from Minion’s TableOut (where it stores run statistics).</dd><dt><a class="fn" href="fn.run_minion.html" title="fn minion_sys::run_minion">run_<wbr>minion</a></dt><dd>Run Minion on the given <a href="ast/struct.Model.html" title="struct minion_sys::ast::Model">Model</a>.</dd></dl><h2 id="types" class="section-header">Type Aliases<a href="#types" class="anchor">§</a></h2><dl class="item-table"><dt><a class="type" href="type.Callback.html" title="type minion_sys::Callback">Callback</a></dt><dd>The callback function used to capture results from Minion as they are generated.</dd></dl><script type="text/json" id="notable-traits-data">{"&[u8]":"<h3>Notable traits for <code>&amp;[<a class=\"primitive\" href=\"https://doc.rust-lang.org/nightly/std/primitive.u8.html\">u8</a>]</code></h3><pre><code><div class=\"where\">impl <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/std/io/trait.Read.html\" title=\"trait std::io::Read\">Read</a> for &amp;[<a class=\"primitive\" href=\"https://doc.rust-lang.org/nightly/std/primitive.u8.html\">u8</a>]</div>","&mut Vec<u8>":"<h3>Notable traits for <code><a class=\"struct\" href=\"https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html\" title=\"struct alloc::vec::Vec\">Vec</a>&lt;<a class=\"primitive\" href=\"https://doc.rust-lang.org/nightly/std/primitive.u8.html\">u8</a>, A&gt;</code></h3><pre><code><div class=\"where\">impl&lt;A&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/std/io/trait.Write.html\" title=\"trait std::io::Write\">Write</a> for <a class=\"struct\" href=\"https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html\" title=\"struct alloc::vec::Vec\">Vec</a>&lt;<a class=\"primitive\" href=\"https://doc.rust-lang.org/nightly/std/primitive.u8.html\">u8</a>, A&gt;<div class=\"where\">where\n    A: <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/alloc/trait.Allocator.html\" title=\"trait core::alloc::Allocator\">Allocator</a>,</div></div>","Vec<u8>":"<h3>Notable traits for <code><a class=\"struct\" href=\"https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html\" title=\"struct alloc::vec::Vec\">Vec</a>&lt;<a class=\"primitive\" href=\"https://doc.rust-lang.org/nightly/std/primitive.u8.html\">u8</a>, A&gt;</code></h3><pre><code><div class=\"where\">impl&lt;A&gt; <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/std/io/trait.Write.html\" title=\"trait std::io::Write\">Write</a> for <a class=\"struct\" href=\"https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html\" title=\"struct alloc::vec::Vec\">Vec</a>&lt;<a class=\"primitive\" href=\"https://doc.rust-lang.org/nightly/std/primitive.u8.html\">u8</a>, A&gt;<div class=\"where\">where\n    A: <a class=\"trait\" href=\"https://doc.rust-lang.org/nightly/core/alloc/trait.Allocator.html\" title=\"trait core::alloc::Allocator\">Allocator</a>,</div></div>"}</script></section></div></main></body></html>
