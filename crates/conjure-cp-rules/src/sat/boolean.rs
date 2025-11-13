@@ -14,7 +14,7 @@ use conjure_cp::ast::{Domain, SymbolTable};
 use crate::utils::is_literal;
 
 fn create_bool_aux(symbols: &mut SymbolTable) -> Expr {
-    let name = symbols.gensym(&Domain::Bool);
+    let name = symbols.gensym(&Domain::new_bool());
 
     symbols.insert(name.clone());
 
