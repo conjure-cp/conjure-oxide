@@ -185,9 +185,7 @@ impl Domain {
 
     /// Create a new [UnresolvedDomain::Reference] domain from a domain letting
     pub fn new_ref(ptr: DeclarationPtr) -> Option<DomainPtr> {
-        if ptr.as_domain_letting().is_none() {
-            return None;
-        }
+        ptr.as_domain_letting()?;
         Some(Moo::new(Domain::Unresolved(Moo::new(
             UnresolvedDomain::Reference(Reference::new(ptr)),
         ))))
@@ -511,7 +509,7 @@ impl Domain {
         Err(DomainOpError::InputContainsReference)
     }
 
-    pub fn from_literal_vec(vals: &Vec<Literal>) -> Option<DomainPtr> {
+    pub fn from_literal_vec(vals: &[Literal]) -> Option<DomainPtr> {
         todo!()
     }
 
@@ -551,7 +549,7 @@ impl Display for Domain {
     }
 }
 
-fn as_grounds(doms: &Vec<DomainPtr>) -> Option<Vec<Moo<GroundDomain>>> {
+fn as_grounds(doms: &[DomainPtr]) -> Option<Vec<Moo<GroundDomain>>> {
     doms.iter()
         .map(|idx| match idx.as_ref() {
             Domain::Ground(idx_gd) => Some(idx_gd.clone()),
