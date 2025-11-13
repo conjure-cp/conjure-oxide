@@ -45,11 +45,8 @@ fn constant_evaluator(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
 
         match eval_constant(&x)
             .map(|c| Expr::Atomic(Metadata::new(), Atom::Literal(c)))
-            .or_else(|| {
-                run_partial_evaluator(&x, &symtab)
-                    .ok()
-                    .map(|r| r.new_expression)
-            }) {
+            .or_else(|| run_partial_evaluator(&x).ok().map(|r| r.new_expression))
+        {
             Some(new_expr) => {
                 has_changed.store(true, Ordering::Relaxed);
                 new_expr
@@ -186,7 +183,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 return None;
             };
 
-            domain.contains(lit).map(Into::into)
+            Some(domain.contains(lit).into())
         }
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
         Expr::Atomic(_, Atom::Reference(_)) => None,

@@ -1347,7 +1347,7 @@ fn not_literal_to_wliteral(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expr::Not(m, expr) => {
             if let Expr::Atomic(_, Atom::Reference(reference)) = (**expr).clone()
-                && reference.ptr().domain().is_some_and(Domain::is_bool)
+                && reference.ptr().domain().is_some_and(|d| d.is_bool())
             {
                 return Ok(Reduction::pure(Expr::FlatWatchedLiteral(
                     m.clone_dirty(),

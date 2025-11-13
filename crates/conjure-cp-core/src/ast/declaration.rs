@@ -14,7 +14,7 @@ use super::categories::{Category, CategoryOf};
 use super::name::Name;
 use super::serde::{DefaultWithId, HasId, ObjId};
 use super::types::MaybeTypeable;
-use super::{DecisionVariable, DomainPtr, Expression, RecordEntry, ReturnType};
+use super::{DecisionVariable, DomainPtr, Expression, GroundDomain, Moo, RecordEntry, ReturnType};
 
 thread_local! {
     // make each thread have its own id counter.
@@ -255,6 +255,11 @@ impl DeclarationPtr {
             DeclarationKind::Given(domain) => Some(domain.clone()),
             DeclarationKind::RecordField(domain) => Some(domain.clone()),
         }
+    }
+
+    /// Gets the domain of the declaration and fully resolve it
+    pub fn resolved_domain(&self) -> Option<Moo<GroundDomain>> {
+        self.domain()?.resolve()
     }
 
     /// Gets the kind of the declaration.

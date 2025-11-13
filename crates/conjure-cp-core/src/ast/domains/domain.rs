@@ -74,6 +74,7 @@ impl From<UnresolvedDomain> for DomainPtr {
 #[biplate(to=Reference)]
 #[biplate(to=RecordEntry)]
 #[biplate(to=IntVal)]
+#[path_prefix(conjure_cp::ast)]
 pub enum Domain {
     /// A fully resolved domain
     Ground(Moo<GroundDomain>),
@@ -536,6 +537,11 @@ impl Domain {
         op: fn(i32, i32) -> Option<i32>,
         other: &DomainPtr,
     ) -> Result<DomainPtr, DomainOpError> {
+        todo!()
+    }
+
+    /// Returns true if `lit` is a valid value of this domain
+    pub fn contains(&self, lit: &Literal) -> bool {
         todo!()
     }
 }

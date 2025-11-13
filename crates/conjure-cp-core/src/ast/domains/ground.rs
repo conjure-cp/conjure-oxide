@@ -3,7 +3,7 @@ use crate::ast::{
     Domain, DomainOpError, Literal, Moo, RecordEntry, SetAttr, Typeable,
     domains::{domain::Int, range::Range},
 };
-use conjure_cp_core::ast::{Name, ReturnType};
+use conjure_cp_core::ast::{DomainPtr, Name, ReturnType};
 use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
@@ -113,6 +113,10 @@ impl GroundDomain {
         }
     }
 
+    pub fn intersect(&self, other: &GroundDomain) -> Result<GroundDomain, DomainOpError> {
+        todo!()
+    }
+
     pub fn values(&self) -> Result<Box<dyn Iterator<Item = Literal>>, DomainOpError> {
         match self {
             GroundDomain::Empty(_) => Ok(Box::new(vec![].into_iter())),
@@ -131,6 +135,22 @@ impl GroundDomain {
             }
             _ => todo!("Enumerating nested domains is not yet supported"),
         }
+    }
+
+    pub fn contains(&self, value: &Literal) -> bool {
+        todo!()
+    }
+
+    pub fn values_i32(&self) -> Result<Vec<i32>, DomainOpError> {
+        todo!()
+    }
+
+    pub fn apply_i32(
+        &self,
+        op: fn(i32, i32) -> Option<i32>,
+        other: &GroundDomain,
+    ) -> Result<GroundDomain, DomainOpError> {
+        todo!()
     }
 }
 

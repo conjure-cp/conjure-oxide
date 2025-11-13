@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use conjure_cp::rule_engine::register_rule;
 use conjure_cp::{
     ast::Metadata,
-    ast::{Domain, MaybeTypeable as _, Moo, ReturnType},
+    ast::{MaybeTypeable as _, Moo, ReturnType},
     into_matrix_expr,
     rule_engine::{ApplicationResult, Reduction},
 };
@@ -12,11 +12,11 @@ use itertools::iproduct;
 use conjure_cp::ast::{Atom, Expression as Expr, Literal as Lit, SymbolTable};
 
 #[register_rule(("Base",9000))]
-fn partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
-    run_partial_evaluator(expr, symtab)
+fn partial_evaluator(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
+    run_partial_evaluator(expr)
 }
 
-pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
+pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
     use conjure_cp::rule_engine::ApplicationError::RuleNotApplicable;
     // NOTE: If nothing changes, we must return RuleNotApplicable, or the rewriter will try this
     // rule infinitely!
@@ -56,9 +56,9 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
             let index: i32 = (&indices[0]).try_into().map_err(|_| RuleNotApplicable)?;
 
             // index domain must be a single integer range with a lower bound
-            if let Domain::Int(ranges) = index_domain
+            if let Some(ranges) = index_domain.as_int_ground()
                 && ranges.len() == 1
-                && let Some(from) = ranges[0].lower_bound()
+                && let Some(from) = ranges[0].low()
             {
                 let zero_indexed_index = index - from;
                 Ok(Reduction::pure(es[zero_indexed_index as usize].clone()))
@@ -69,15 +69,19 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
         Expr::SafeSlice(_, _, _) => Err(RuleNotApplicable),
         Expr::InDomain(_, x, domain) => {
             if let Expr::Atomic(_, Atom::Reference(decl)) = &*x {
-                let decl_domain = decl.domain().ok_or(RuleNotApplicable)?.resolve(symtab);
-                let domain = domain.resolve(symtab);
+                let decl_domain = decl
+                    .domain()
+                    .ok_or(RuleNotApplicable)?
+                    .resolve()
+                    .ok_or(RuleNotApplicable)?;
+                let domain = domain.resolve().ok_or(RuleNotApplicable)?;
 
                 let intersection = decl_domain
                     .intersect(&domain)
                     .map_err(|_| RuleNotApplicable)?;
 
                 // if the declaration's domain is a subset of domain, expr is always true.
-                if intersection == decl_domain {
+                if &intersection == decl_domain.as_ref() {
                     Ok(Reduction::pure(Expr::Atomic(Metadata::new(), true.into())))
                 }
                 // if no elements of declaration's domain are in the domain (i.e. they have no
@@ -95,11 +99,7 @@ pub(super) fn run_partial_evaluator(expr: &Expr, symtab: &SymbolTable) -> Applic
                     Err(RuleNotApplicable)
                 }
             } else if let Expr::Atomic(_, Atom::Literal(lit)) = &*x {
-                if domain
-                    .resolve(symtab)
-                    .contains(lit)
-                    .map_err(|_| RuleNotApplicable)?
-                {
+                if domain.resolve().ok_or(RuleNotApplicable)?.contains(lit) {
                     Ok(Reduction::pure(Expr::Atomic(Metadata::new(), true.into())))
                 } else {
                     Ok(Reduction::pure(Expr::Atomic(Metadata::new(), false.into())))
