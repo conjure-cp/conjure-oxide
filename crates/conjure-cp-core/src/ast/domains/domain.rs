@@ -1,3 +1,4 @@
+use crate::ast::Expression;
 use crate::ast::domains::ground::GroundDomain;
 use crate::ast::domains::range::Range;
 use crate::ast::domains::set_attr::SetAttr;
@@ -10,6 +11,7 @@ use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
+use uniplate::Uniplate;
 
 /// The integer type used in all domain code (int ranges, set sizes, etc)
 pub type Int = i32;
@@ -64,7 +66,14 @@ impl From<UnresolvedDomain> for DomainPtr {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine, Uniplate)]
+#[biplate(to=DomainPtr)]
+#[biplate(to=GroundDomain)]
+#[biplate(to=UnresolvedDomain)]
+#[biplate(to=Expression)]
+#[biplate(to=Reference)]
+#[biplate(to=RecordEntry)]
+#[biplate(to=IntVal)]
 pub enum Domain {
     /// A fully resolved domain
     Ground(Moo<GroundDomain>),

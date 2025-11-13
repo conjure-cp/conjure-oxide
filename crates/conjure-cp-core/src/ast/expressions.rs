@@ -704,7 +704,7 @@ fn bounded_i32_domain_for_matrix_literal_monotonic(
     // We used to not assume this, and work out the bounds by applying op on the Cartesian product
     // of A and B; however, this caused a combinatorial explosion and my computer to run out of
     // memory (on the hakank_eprime_xkcd test)...
-    //
+    //Int
     // For example, to find the bounds of the intervals [1,4], [1,5] combined using op, we used to do
     //  [min(op(1,1), op(1,2),op(1,3),op(1,4),op(1,5),op(2,1)..
     //

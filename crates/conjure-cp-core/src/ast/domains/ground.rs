@@ -41,7 +41,7 @@ impl TryFrom<RecordEntry> for RecordEntryGround {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine, Uniplate)]
 #[path_prefix(conjure_cp::ast)]
 pub enum GroundDomain {
     /// An empty domain of a given type

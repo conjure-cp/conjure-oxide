@@ -20,8 +20,10 @@ use std::iter::zip;
 use std::ops::Deref;
 use uniplate::Uniplate;
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine, Uniplate)]
 #[path_prefix(conjure_cp::ast)]
+#[biplate(to=Expression)]
+#[biplate(to=Reference)]
 pub enum IntVal {
     Const(Int),
     #[polyquine_skip]
@@ -80,16 +82,6 @@ impl From<SetAttr<Int>> for SetAttr<IntVal> {
     }
 }
 
-// impl TryInto<SetAttr<Int>> for SetAttr<IntVal> {
-//     type Error = DomainOpError;
-//
-//     fn try_into(self) -> Result<SetAttr<Int>, Self::Error> {
-//         Ok(SetAttr {
-//             size: self.size.try_into()?,
-//         })
-//     }
-// }
-
 impl Display for IntVal {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -142,9 +134,9 @@ impl IntVal {
     }
 }
 
-impl Into<Expression> for IntVal {
-    fn into(self) -> Expression {
-        match self {
+impl From<IntVal> for Expression {
+    fn from(value: IntVal) -> Self {
+        match value {
             IntVal::Const(val) => val.into(),
             IntVal::Reference(re) => re.into(),
             IntVal::Expr(expr) => expr.as_ref().clone(),
@@ -152,9 +144,9 @@ impl Into<Expression> for IntVal {
     }
 }
 
-impl Into<Moo<Expression>> for IntVal {
-    fn into(self) -> Moo<Expression> {
-        match self {
+impl From<IntVal> for Moo<Expression> {
+    fn from(value: IntVal) -> Self {
+        match value {
             IntVal::Const(val) => Moo::new(val.into()),
             IntVal::Reference(re) => Moo::new(re.into()),
             IntVal::Expr(expr) => expr,
@@ -225,8 +217,13 @@ impl RecordEntry {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine, Uniplate)]
 #[path_prefix(conjure_cp::ast)]
+#[biplate(to=Expression)]
+#[biplate(to=Reference)]
+#[biplate(to=IntVal)]
+#[biplate(to=DomainPtr)]
+#[biplate(to=RecordEntry)]
 pub enum UnresolvedDomain {
     Int(Vec<Range<IntVal>>),
     /// A set of elements drawn from the inner domain

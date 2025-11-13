@@ -3,6 +3,7 @@ use num_traits::Num;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
+use uniplate::{Tree, Uniplate};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 #[path_prefix(conjure_cp::ast)]
