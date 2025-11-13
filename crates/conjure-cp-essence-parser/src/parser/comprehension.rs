@@ -111,7 +111,7 @@ pub fn parse_quantifier_expr(
     })?;
 
     // Create the comprehension builder
-    let mut builder = ComprehensionBuilder::new(symbols_ptr.clone());
+    let mut builder = ComprehensionBuilder::new(symbols_ptr);
 
     // First pass: collect domain/collection, variables
     let mut domain = None;
