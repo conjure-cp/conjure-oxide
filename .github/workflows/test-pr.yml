@@ -85,14 +85,14 @@ jobs:
           version: ${{ matrix.conjure_version }}
 
       - name: Build tests and examples (debug)
-        run: cargo test --workspace --all-targets --no-run
+        run: cargo build --workspace --all-targets
         if: ${{ matrix.compiler_profile == 'debug' }}
       - name: Run tests (debug)
         run: cargo test --workspace --all-targets
         if: ${{ matrix.compiler_profile == 'debug' }}
 
       - name: Build tests and examples (release)
-        run: cargo test --workspace --all-targets --release --no-run
+        run: cargo build --workspace --all-targets --release
         if: ${{ matrix.compiler_profile == 'release' }}
       - name: Run tests (release)
         run: cargo test --workspace --all-targets --release
