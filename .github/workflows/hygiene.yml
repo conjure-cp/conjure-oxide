@@ -48,4 +48,6 @@ jobs:
       - name: "Install rust-toolchain.toml"
         run: rustup toolchain install
 
-      - run: make EXTRA_CARGO_CHECK_FLAGS=-v check
+      - run: RUSTFLAGS="-D warnings" cargo check $(EXTRA_CARGO_CHECK_FLAGS) --workspace --examples
+      - run: cargo clippy $(EXTRA_CARGO_CHECK_FLAGS) -- -D warnings -A clippy::unwrap_used -A clippy::expect_used
+      - run: cargo fmt --check
