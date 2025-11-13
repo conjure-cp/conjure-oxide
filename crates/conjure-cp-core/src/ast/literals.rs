@@ -529,16 +529,16 @@ mod tests {
     fn matrix_uniplate_universe() {
         // Can we traverse through matrices with uniplate?
         let my_matrix: AbstractLiteral<Literal> = into_matrix![
-            vec![Literal::AbstractLiteral(matrix![Literal::Bool(true);Domain::Bool]); 5];
-            Domain::Bool
+            vec![Literal::AbstractLiteral(matrix![Literal::Bool(true);Domain::new_bool()]); 5];
+            Domain::new_bool()
         ];
 
-        let expected_index_domains = vec![Domain::Bool; 6];
-        let actual_index_domains: Vec<Domain> = my_matrix.cata(&move |elem, children| {
+        let expected_index_domains = vec![Domain::new_bool(); 6];
+        let actual_index_domains: Vec<DomainPtr> = my_matrix.cata(&move |elem, children| {
             let mut res = vec![];
             res.extend(children.into_iter().flatten());
             if let AbstractLiteral::Matrix(_, index_domain) = elem {
-                res.push(*index_domain);
+                res.push(index_domain);
             }
 
             res

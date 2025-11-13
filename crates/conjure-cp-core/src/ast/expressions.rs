@@ -958,9 +958,7 @@ impl Expression {
             Expression::MinionElementOne(_, _, _, _) => Some(Domain::new_bool()),
             Expression::Neg(_, x) => {
                 let dom = x.domain_of()?;
-                let Some(mut ranges) = dom.as_int() else {
-                    return None;
-                };
+                let mut ranges = dom.as_int()?;
 
                 ranges = ranges
                     .into_iter()
@@ -1644,7 +1642,10 @@ mod tests {
         let c1 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(1)));
         let c2 = Expression::Atomic(Metadata::new(), Atom::Literal(Literal::Int(2)));
         let sum = Expression::Sum(Metadata::new(), Moo::new(matrix_expr![c1, c2]));
-        assert_eq!(sum.domain_of(), Some(Domain::Int(vec![Range::Single(3)])));
+        assert_eq!(
+            sum.domain_of(),
+            Some(Domain::new_int(vec![Range::Single(3)]))
+        );
     }
 
     #[test]
