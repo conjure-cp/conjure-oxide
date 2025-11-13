@@ -25,24 +25,23 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
     let expected_output_path = test_path.join("stdout.expected");
     let expected_error_path = test_path.join("stderr.expected");
 
-    // Get conjure_oxide binary path from test binary path:
-    // The test binary is at target/XX/deps/TESTPROGNAME and conjure_oxide is at target/XX/conjure-oxide
-    // so from test binary, need to go up two directories and add 'conjure-oxide'
-    let mut conjure_oxide_path = env::current_exe().unwrap();
-    conjure_oxide_path.pop();
-    conjure_oxide_path.pop();
-    conjure_oxide_path.push("conjure-oxide");
+    // Get conjure-oxide binary path
+    let current_dir = env::current_dir().expect("Cannot get the current working directory");
+    let current_dir_display = current_dir.display();
+
+    let conjure_prefix = format!("{current_dir_display}/release:{current_dir_display}/debug");
 
     // Modify PATH so run.sh can find conjure_oxide
-    let mut path_var = env::var("PATH").unwrap_or_else(|_| "".to_string());
-    let conjure_dir = conjure_oxide_path.parent().unwrap().to_str().unwrap();
-    path_var = format!("{conjure_dir}:{path_var}");
+    let path_var = match env::var("PATH") {
+        Ok(existing) if !existing.is_empty() => format!("{conjure_prefix}:{existing}"),
+        _ => conjure_prefix,
+    };
 
     // Execute the test script in the correct directory
-    let output: Output = Command::new("sh")
-        .arg("run.sh")
-        .current_dir(&test_path)
+    let output = Command::new("sh")
         .env("PATH", path_var)
+        .current_dir(test_path)
+        .arg("run.sh")
         .output()?;
 
     // Convert captured output/error to string
@@ -66,8 +65,8 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
             String::new()
         };
 
-        assert_eq!(expected_output, actual_output, "Standard output mismatch");
         assert_eq!(expected_error, actual_error, "Standard error mismatch");
+        assert_eq!(expected_output, actual_output, "Standard output mismatch");
     }
 
     Ok(())
