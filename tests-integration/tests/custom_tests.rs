@@ -29,7 +29,8 @@ pub fn custom_test(test_dir: &str) -> Result<(), Box<dyn Error>> {
     let current_dir = env::current_dir().expect("Cannot get the current working directory");
     let current_dir_display = current_dir.display();
 
-    let conjure_prefix = format!("{current_dir_display}/release:{current_dir_display}/debug");
+    let conjure_prefix =
+        format!("{current_dir_display}/../target/release:{current_dir_display}/../target/debug");
 
     // Modify PATH so run.sh can find conjure_oxide
     let path_var = match env::var("PATH") {
