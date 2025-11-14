@@ -38,7 +38,9 @@ use super::{AbstractLiteral, Literal};
 ///
 /// assert_eq!(actual_indices, expected_indices);
 /// ```
-pub fn enumerate_indices(index_domains: Vec<Moo<GroundDomain>>) -> impl Iterator<Item = Vec<Literal>> {
+pub fn enumerate_indices(
+    index_domains: Vec<Moo<GroundDomain>>,
+) -> impl Iterator<Item = Vec<Literal>> {
     index_domains
         .into_iter()
         .map(|x| {
@@ -94,18 +96,16 @@ pub fn flatten_enumerate(
 
     let index_domains = index_domains(matrix)
         .into_iter()
-        .map(
-            |mut x| match &x {
-                // give unboundedr index domains an end
-                GroundDomain::Int(ranges) if ranges.len() == 1 && !elems.is_empty() => {
-                    if let Range::UnboundedR(start) = ranges[0] {
-                        ranges[0] = Range::Bounded(start, start + (elems.len() as i32 - 1));
-                    };
-                    x
-                }
-                _ => x,
-            },
-        )
+        .map(|mut x| match Moo::make_mut(&mut x) {
+            // give unboundedr index domains an end
+            GroundDomain::Int(ranges) if ranges.len() == 1 && !elems.is_empty() => {
+                if let Range::UnboundedR(start) = ranges[0] {
+                    ranges[0] = Range::Bounded(start, start + (elems.len() as i32 - 1));
+                };
+                x
+            }
+            _ => x,
+        })
         .collect_vec();
 
     izip!(enumerate_indices(index_domains), flatten_1(elems))
@@ -139,7 +139,7 @@ pub fn index_domains(matrix: AbstractLiteral<Literal>) -> Vec<Moo<GroundDomain>>
         match element {
             AbstractLiteral::Set(_) => vec![],
             AbstractLiteral::Matrix(_, domain) => {
-                let mut index_domains: Vec<DomainPtr> = vec![domain.into()];
+                let mut index_domains = vec![domain];
                 index_domains.extend(child_index_domains);
                 index_domains
             }
