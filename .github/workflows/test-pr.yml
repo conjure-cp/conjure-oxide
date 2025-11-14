@@ -89,11 +89,11 @@ jobs:
           version: ${{ matrix.conjure_version }}
 
       - name: Run tests and build examples (debug)
-        run: cargo test --workspace --examples
+        run: cargo test --workspace --all-targets
         if: ${{ matrix.compiler_profile == 'debug' }}
 
       - name: Run tests and build examples (release)
-        run: cargo test --workspace --examples --release
+        run: cargo test --workspace --all-targets --release
         if: ${{ matrix.compiler_profile == 'release' }}
 
       - name: cargo-audit
