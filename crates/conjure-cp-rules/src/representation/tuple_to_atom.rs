@@ -1,4 +1,4 @@
-use conjure_cp::ast::{DeclarationPtr, Domain};
+use conjure_cp::ast::{DeclarationPtr, Domain, DomainPtr};
 use itertools::Itertools;
 
 use super::prelude::*;
@@ -13,7 +13,7 @@ pub struct TupleToAtom {
     indices: Vec<Literal>,
 
     // the element domains for each item in the tuple.
-    elem_domain: Vec<Domain>,
+    elem_domain: Vec<DomainPtr>,
 }
 
 impl TupleToAtom {

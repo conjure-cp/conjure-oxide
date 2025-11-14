@@ -46,9 +46,14 @@ impl HasDomain for Literal {
 pub trait AbstractLiteralValue:
     Clone + Eq + PartialEq + Display + Uniplate + Biplate<RecordValue<Self>> + 'static
 {
+    type Dom: Clone + Eq + PartialEq + Display + Quine + From<GroundDomain> + Into<DomainPtr>;
 }
-impl AbstractLiteralValue for Expression {}
-impl AbstractLiteralValue for Literal {}
+impl AbstractLiteralValue for Expression {
+    type Dom = DomainPtr;
+}
+impl AbstractLiteralValue for Literal {
+    type Dom = Moo<GroundDomain>;
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 #[path_prefix(conjure_cp::ast)]
@@ -56,7 +61,7 @@ pub enum AbstractLiteral<T: AbstractLiteralValue> {
     Set(Vec<T>),
 
     /// A 1 dimensional matrix slice with an index domain.
-    Matrix(Vec<T>, DomainPtr),
+    Matrix(Vec<T>, T::Dom),
 
     // a tuple of literals
     Tuple(Vec<T>),
@@ -209,7 +214,7 @@ where
     ///
     /// This acts as a variable sized list.
     pub fn matrix_implied_indices(elems: Vec<T>) -> Self {
-        AbstractLiteral::Matrix(elems, Domain::new_int(vec![Range::UnboundedR(1)]))
+        AbstractLiteral::Matrix(elems, GroundDomain::Int(vec![Range::UnboundedR(1)]).into())
     }
 
     /// If the AbstractLiteral is a list, returns its elements.
@@ -221,6 +226,7 @@ where
             return None;
         };
 
+        let domain: DomainPtr = domain.clone().into();
         let Some(GroundDomain::Int(ranges)) = domain.as_ground() else {
             return None;
         };
@@ -463,7 +469,7 @@ impl AbstractLiteral<Expression> {
                     literals.push(literal);
                 }
 
-                Some(AbstractLiteral::Matrix(literals, domain))
+                Some(AbstractLiteral::Matrix(literals, domain.resolve()?))
             }
             AbstractLiteral::Tuple(items) => {
                 let mut literals = vec![];
@@ -529,20 +535,21 @@ mod tests {
     fn matrix_uniplate_universe() {
         // Can we traverse through matrices with uniplate?
         let my_matrix: AbstractLiteral<Literal> = into_matrix![
-            vec![Literal::AbstractLiteral(matrix![Literal::Bool(true);Domain::new_bool()]); 5];
-            Domain::new_bool()
+            vec![Literal::AbstractLiteral(matrix![Literal::Bool(true);Moo::new(GroundDomain::Bool)]); 5];
+            Moo::new(GroundDomain::Bool)
         ];
 
-        let expected_index_domains = vec![Domain::new_bool(); 6];
-        let actual_index_domains: Vec<DomainPtr> = my_matrix.cata(&move |elem, children| {
-            let mut res = vec![];
-            res.extend(children.into_iter().flatten());
-            if let AbstractLiteral::Matrix(_, index_domain) = elem {
-                res.push(index_domain);
-            }
+        let expected_index_domains = vec![Moo::new(GroundDomain::Bool); 6];
+        let actual_index_domains: Vec<Moo<GroundDomain>> =
+            my_matrix.cata(&move |elem, children| {
+                let mut res = vec![];
+                res.extend(children.into_iter().flatten());
+                if let AbstractLiteral::Matrix(_, index_domain) = elem {
+                    res.push(index_domain);
+                }
 
-            res
-        });
+                res
+            });
 
         assert_eq!(actual_index_domains, expected_index_domains);
     }

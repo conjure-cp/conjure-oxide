@@ -208,3 +208,9 @@ impl<T: Hash> Hash for Moo<T> {
         (**self).hash(state);
     }
 }
+
+impl<T> From<T> for Moo<T> {
+    fn from(value: T) -> Self {
+        Moo::new(value)
+    }
+}

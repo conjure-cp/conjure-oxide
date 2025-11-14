@@ -1,10 +1,11 @@
 use crate::ast::pretty::pretty_vec;
 use crate::ast::{
-    Domain, DomainOpError, Literal, Moo, RecordEntry, SetAttr, Typeable,
+    AbstractLiteral, Domain, DomainOpError, Literal, Moo, RecordEntry, SetAttr, Typeable,
     domains::{domain::Int, range::Range},
 };
 use conjure_cp_core::ast::{DomainPtr, Name, ReturnType};
 use itertools::Itertools;
+use num_traits::ToPrimitive;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
@@ -18,11 +19,11 @@ pub struct RecordEntryGround {
     pub domain: Moo<GroundDomain>,
 }
 
-impl Into<RecordEntry> for RecordEntryGround {
-    fn into(self) -> RecordEntry {
+impl From<RecordEntryGround> for RecordEntry {
+    fn from(value: RecordEntryGround) -> Self {
         RecordEntry {
-            name: self.name,
-            domain: self.domain.into(),
+            name: value.name,
+            domain: value.domain.into(),
         }
     }
 }
@@ -137,8 +138,116 @@ impl GroundDomain {
         }
     }
 
-    pub fn contains(&self, value: &Literal) -> bool {
-        todo!()
+    pub fn contains(&self, lit: &Literal) -> Result<bool, DomainOpError> {
+        // not adding a generic wildcard condition for all domains, so that this gives a compile
+        // error when a domain is added.
+        match self {
+            // empty domain can't contain anything
+            GroundDomain::Empty(_) => Ok(false),
+            GroundDomain::Bool => match lit {
+                Literal::Bool(_) => Ok(true),
+                _ => Ok(false),
+            },
+            GroundDomain::Int(ranges) => match lit {
+                Literal::Int(x) => {
+                    // unconstrained int domain - contains all integers
+                    if ranges.is_empty() {
+                        return Ok(true);
+                    };
+
+                    Ok(ranges.iter().any(|range| range.contains(x)))
+                }
+                _ => Ok(false),
+            },
+            GroundDomain::Set(set_attr, inner_domain) => match lit {
+                Literal::AbstractLiteral(AbstractLiteral::Set(lit_elems)) => {
+                    // check if the literal's size is allowed by the set attribute
+                    let sz = lit_elems.len().to_i32().ok_or(DomainOpError::TooLarge)?;
+                    if !set_attr.size.contains(&sz) {
+                        return Ok(false);
+                    }
+
+                    for elem in lit_elems {
+                        if !inner_domain.contains(elem)? {
+                            return Ok(false);
+                        }
+                    }
+                    Ok(true)
+                }
+                _ => Ok(false),
+            },
+            GroundDomain::Matrix(elem_domain, index_domains) => {
+                match lit {
+                    Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx_domain)) => {
+                        // Matrix literals are represented as nested 1d matrices, so the elements of
+                        // the matrix literal will be the inner dimensions of the matrix.
+
+                        let mut index_domains = index_domains.clone();
+                        if index_domains
+                            .pop()
+                            .expect("a matrix should have at least one index domain")
+                            != *idx_domain
+                        {
+                            return Ok(false);
+                        };
+
+                        let next_elem_domain = if index_domains.is_empty() {
+                            // Base case - we have a 1D row. Now check if all elements in the
+                            // literal are in this row's element domain.
+                            elem_domain.as_ref().clone()
+                        } else {
+                            // Otherwise, go down a dimension (e.g. 2D matrix inside a 3D tensor)
+                            GroundDomain::Matrix(elem_domain.clone(), index_domains)
+                        };
+
+                        for elem in elems {
+                            if !next_elem_domain.contains(elem)? {
+                                return Ok(false);
+                            }
+                        }
+
+                        Ok(true)
+                    }
+                    _ => Ok(false),
+                }
+            }
+            GroundDomain::Tuple(elem_domains) => {
+                match lit {
+                    Literal::AbstractLiteral(AbstractLiteral::Tuple(literal_elems)) => {
+                        if elem_domains.len() != literal_elems.len() {
+                            return Ok(false);
+                        }
+
+                        // for every element in the tuple literal, check if it is in the corresponding domain
+                        for (elem_domain, elem) in itertools::izip!(elem_domains, literal_elems) {
+                            if !elem_domain.contains(elem)? {
+                                return Ok(false);
+                            }
+                        }
+
+                        Ok(true)
+                    }
+                    _ => Ok(false),
+                }
+            }
+            GroundDomain::Record(entries) => match lit {
+                Literal::AbstractLiteral(AbstractLiteral::Record(lit_entries)) => {
+                    if entries.len() != lit_entries.len() {
+                        return Ok(false);
+                    }
+
+                    for (entry, lit_entry) in itertools::izip!(entries, lit_entries) {
+                        if entry.name != lit_entry.name
+                            || !(entry.domain.contains(&lit_entry.value)?)
+                        {
+                            return Ok(false);
+                        }
+                    }
+                    Ok(true)
+                }
+                _ => Ok(false),
+            },
+        }
     }
 
     pub fn values_i32(&self) -> Result<Vec<i32>, DomainOpError> {
