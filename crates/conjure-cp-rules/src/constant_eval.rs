@@ -206,6 +206,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
             }
         }
         Expr::Comprehension(_, _) => None,
+        Expr::AbstractComprehension(_, _) => None,
         Expr::UnsafeIndex(_, subject, indices) | Expr::SafeIndex(_, subject, indices) => {
             let subject: Lit = subject.as_ref().clone().into_literal()?;
             let indices: Vec<Lit> = indices
