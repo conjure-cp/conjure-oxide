@@ -3,11 +3,14 @@ use crate::ast::{
     AbstractLiteral, Domain, DomainOpError, Literal, Moo, RecordEntry, SetAttr, Typeable,
     domains::{domain::Int, range::Range},
 };
+use crate::range;
+use crate::utils::count_combinations;
 use conjure_cp_core::ast::{Name, ReturnType};
-use itertools::Itertools;
+use itertools::{Itertools, izip};
 use num_traits::ToPrimitive;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeSet;
 use std::fmt::{Display, Formatter};
 use std::iter::zip;
 use uniplate::Uniplate;
@@ -37,7 +40,7 @@ impl TryFrom<RecordEntry> for RecordEntryGround {
                 name: value.name,
                 domain: gd.clone(),
             }),
-            Domain::Unresolved(_) => Err(DomainOpError::InputContainsReference),
+            Domain::Unresolved(_) => Err(DomainOpError::NotGround),
         }
     }
 }
@@ -68,25 +71,23 @@ impl GroundDomain {
                 if *ty == dom.return_type() {
                     Ok(dom.clone())
                 } else {
-                    Err(DomainOpError::InputWrongType)
+                    Err(DomainOpError::WrongType)
                 }
             }
             (GroundDomain::Bool, GroundDomain::Bool) => Ok(GroundDomain::Bool),
-            (GroundDomain::Bool, _) | (_, GroundDomain::Bool) => Err(DomainOpError::InputWrongType),
+            (GroundDomain::Bool, _) | (_, GroundDomain::Bool) => Err(DomainOpError::WrongType),
             (GroundDomain::Int(r1), GroundDomain::Int(r2)) => {
                 let mut rngs = r1.clone();
                 rngs.extend(r2.clone());
                 Ok(GroundDomain::Int(Range::squeeze(&rngs)))
             }
-            (GroundDomain::Int(_), _) | (_, GroundDomain::Int(_)) => {
-                Err(DomainOpError::InputWrongType)
-            }
+            (GroundDomain::Int(_), _) | (_, GroundDomain::Int(_)) => Err(DomainOpError::WrongType),
             (GroundDomain::Set(_, in1), GroundDomain::Set(_, in2)) => Ok(GroundDomain::Set(
                 SetAttr::default(),
                 Moo::new(in1.union(in2)?),
             )),
             (GroundDomain::Set(_, _), _) | (_, GroundDomain::Set(_, _)) => {
-                Err(DomainOpError::InputWrongType)
+                Err(DomainOpError::WrongType)
             }
             (GroundDomain::Matrix(in1, idx1), GroundDomain::Matrix(in2, idx2)) if idx1 == idx2 => {
                 Ok(GroundDomain::Matrix(
@@ -95,7 +96,7 @@ impl GroundDomain {
                 ))
             }
             (GroundDomain::Matrix(_, _), _) | (_, GroundDomain::Matrix(_, _)) => {
-                Err(DomainOpError::InputWrongType)
+                Err(DomainOpError::WrongType)
             }
             (GroundDomain::Tuple(in1s), GroundDomain::Tuple(in2s)) if in1s.len() == in2s.len() => {
                 let mut inners = Vec::new();
@@ -105,17 +106,78 @@ impl GroundDomain {
                 Ok(GroundDomain::Tuple(inners))
             }
             (GroundDomain::Tuple(_), _) | (_, GroundDomain::Tuple(_)) => {
-                Err(DomainOpError::InputWrongType)
+                Err(DomainOpError::WrongType)
             }
             // TODO: Eventually we may define semantics for joining record domains. This day is not today.
             (GroundDomain::Record(_), _) | (_, GroundDomain::Record(_)) => {
-                Err(DomainOpError::InputWrongType)
+                Err(DomainOpError::WrongType)
             }
         }
     }
 
+    /// Calculates the intersection of two domains.
+    ///
+    /// # Errors
+    ///
+    ///  - [`DomainOpError::Unbounded`] if either of the input domains are unbounded.
+    ///  - [`DomainOpError::WrongType`] if the input domains are different types, or are not integer or set domains.
     pub fn intersect(&self, other: &GroundDomain) -> Result<GroundDomain, DomainOpError> {
-        todo!()
+        // TODO: does not consider unbounded domains yet
+        // needs to be tested once comprehension rules are written
+
+        match (self, other) {
+            // one or more arguments is an empty int domain
+            (d @ GroundDomain::Empty(ReturnType::Int), GroundDomain::Int(_)) => Ok(d.clone()),
+            (GroundDomain::Int(_), d @ GroundDomain::Empty(ReturnType::Int)) => Ok(d.clone()),
+            (GroundDomain::Empty(ReturnType::Int), d @ GroundDomain::Empty(ReturnType::Int)) => {
+                Ok(d.clone())
+            }
+
+            // one or more arguments is an empty set(int) domain
+            (GroundDomain::Set(_, inner1), d @ GroundDomain::Empty(ReturnType::Set(inner2)))
+                if matches!(
+                    **inner1,
+                    GroundDomain::Int(_) | GroundDomain::Empty(ReturnType::Int)
+                ) && matches!(**inner2, ReturnType::Int) =>
+            {
+                Ok(d.clone())
+            }
+            (d @ GroundDomain::Empty(ReturnType::Set(inner1)), GroundDomain::Set(_, inner2))
+                if matches!(**inner1, ReturnType::Int)
+                    && matches!(
+                        **inner2,
+                        GroundDomain::Int(_) | GroundDomain::Empty(ReturnType::Int)
+                    ) =>
+            {
+                Ok(d.clone())
+            }
+            (
+                d @ GroundDomain::Empty(ReturnType::Set(inner1)),
+                GroundDomain::Empty(ReturnType::Set(inner2)),
+            ) if matches!(**inner1, ReturnType::Int) && matches!(**inner2, ReturnType::Int) => {
+                Ok(d.clone())
+            }
+
+            // both arguments are non-empy
+            (GroundDomain::Set(_, x), GroundDomain::Set(_, y)) => Ok(GroundDomain::Set(
+                SetAttr::default(),
+                Moo::new((*x).intersect(y)?),
+            )),
+
+            (GroundDomain::Int(_), GroundDomain::Int(_)) => {
+                let mut v: BTreeSet<i32> = BTreeSet::new();
+
+                let v1 = self.values_i32()?;
+                let v2 = other.values_i32()?;
+                for value1 in v1.iter() {
+                    if v2.contains(value1) && !v.contains(value1) {
+                        v.insert(*value1);
+                    }
+                }
+                Ok(GroundDomain::from_set_i32(&v))
+            }
+            _ => Err(DomainOpError::WrongType),
+        }
     }
 
     pub fn values(&self) -> Result<Box<dyn Iterator<Item = Literal>>, DomainOpError> {
@@ -129,12 +191,81 @@ impl GroundDomain {
                     .iter()
                     .map(Range::iter)
                     .collect::<Option<Vec<_>>>()
-                    .ok_or(DomainOpError::InputUnbounded)?;
+                    .ok_or(DomainOpError::Unbounded)?;
                 Ok(Box::new(
                     rng_iters.into_iter().flat_map(|ri| ri.map(Literal::from)),
                 ))
             }
             _ => todo!("Enumerating nested domains is not yet supported"),
+        }
+    }
+
+    /// Gets the length of this domain.
+    ///
+    /// # Errors
+    ///
+    /// - [`DomainOpError::Unbounded`] if the input domain is of infinite size.
+    pub fn length(&self) -> Result<u64, DomainOpError> {
+        match self {
+            GroundDomain::Empty(_) => Ok(0),
+            GroundDomain::Bool => Ok(2),
+            GroundDomain::Int(ranges) => {
+                if ranges.is_empty() {
+                    return Err(DomainOpError::Unbounded);
+                }
+
+                let mut length = 0u64;
+                for range in ranges {
+                    if let Some(range_length) = range.length() {
+                        length += range_length as u64;
+                    } else {
+                        return Err(DomainOpError::Unbounded);
+                    }
+                }
+                Ok(length)
+            }
+            GroundDomain::Set(set_attr, inner_domain) => {
+                let inner_len = inner_domain.length()?;
+                let (min_sz, max_sz) = match set_attr.size {
+                    Range::Unbounded => (0, inner_len),
+                    Range::Single(n) => (n as u64, n as u64),
+                    Range::UnboundedR(n) => (n as u64, inner_len),
+                    Range::UnboundedL(n) => (0, n as u64),
+                    Range::Bounded(min, max) => (min as u64, max as u64),
+                };
+                let mut ans = 0u64;
+                for sz in min_sz..=max_sz {
+                    let c = count_combinations(inner_len, sz)?;
+                    ans = ans.checked_add(c).ok_or(DomainOpError::TooLarge)?;
+                }
+                Ok(ans)
+            }
+            GroundDomain::Tuple(domains) => {
+                let mut ans = 1u64;
+                for domain in domains {
+                    ans = ans
+                        .checked_mul(domain.length()?)
+                        .ok_or(DomainOpError::TooLarge)?;
+                }
+                Ok(ans)
+            }
+            GroundDomain::Record(entries) => {
+                // A record is just a named tuple
+                let mut ans = 1u64;
+                for entry in entries {
+                    let sz = entry.domain.length()?;
+                    ans = ans.checked_mul(sz).ok_or(DomainOpError::TooLarge)?;
+                }
+                Ok(ans)
+            }
+            GroundDomain::Matrix(inner_domain, idx_domains) => {
+                let inner_sz = inner_domain.length()?;
+                let exp = idx_domains.iter().try_fold(1u32, |acc, val| {
+                    let len = val.length()? as u32;
+                    acc.checked_mul(len).ok_or(DomainOpError::TooLarge)
+                })?;
+                inner_sz.checked_pow(exp).ok_or(DomainOpError::TooLarge)
+            }
         }
     }
 
@@ -250,20 +381,426 @@ impl GroundDomain {
         }
     }
 
+    /// Returns a list of all possible values in an integer domain.
+    ///
+    /// # Errors
+    ///
+    /// - [`DomainOpError::NotInteger`] if the domain is not an integer domain.
+    /// - [`DomainOpError::Unbounded`] if the domain is unbounded.
     pub fn values_i32(&self) -> Result<Vec<i32>, DomainOpError> {
-        todo!()
+        if let GroundDomain::Empty(ReturnType::Int) = self {
+            return Ok(vec![]);
+        }
+        let GroundDomain::Int(ranges) = self else {
+            return Err(DomainOpError::NotInteger(self.return_type()));
+        };
+
+        if ranges.is_empty() {
+            return Err(DomainOpError::Unbounded);
+        }
+
+        let mut values = vec![];
+        for range in ranges {
+            match range {
+                Range::Single(i) => {
+                    values.push(*i);
+                }
+                Range::Bounded(i, j) => {
+                    values.extend(*i..=*j);
+                }
+                Range::UnboundedR(_) | Range::UnboundedL(_) | Range::Unbounded => {
+                    return Err(DomainOpError::Unbounded);
+                }
+            }
+        }
+
+        Ok(values)
     }
 
+    /// Creates an [`Domain::Int`] containing the given integers.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use conjure_cp_core::ast::{Domain,Range};
+    /// use conjure_cp_core::{domain_int,range};
+    /// use std::collections::BTreeSet;
+    ///
+    /// let elements = BTreeSet::from([1,2,3,4,5]);
+    ///
+    /// let domain = Domain::from_set_i32(&elements);
+    ///
+    /// assert_eq!(domain,domain_int!(1..5));
+    /// ```
+    ///
+    /// ```
+    /// use conjure_cp_core::ast::{GroundDomain,Range};
+    /// use conjure_cp_core::{domain_int,range};
+    /// use std::collections::BTreeSet;
+    ///
+    /// let elements = BTreeSet::from([1,2,4,5,7,8,9,10]);
+    ///
+    /// let domain = GroundDomain::from_set_i32(&elements);
+    ///
+    /// assert_eq!(domain,domain_int!(1..2,4..5,7..10));
+    /// ```
+    ///
+    /// ```
+    /// use conjure_cp_core::ast::{GroundDomain,Range,ReturnType};
+    /// use std::collections::BTreeSet;
+    ///
+    /// let elements = BTreeSet::from([]);
+    ///
+    /// let domain = GroundDomain::from_set_i32(&elements);
+    ///
+    /// assert!(matches!(domain,GroundDomain::Empty(ReturnType::Int)))
+    /// ```
+    pub fn from_set_i32(elements: &BTreeSet<i32>) -> GroundDomain {
+        if elements.is_empty() {
+            return GroundDomain::Empty(ReturnType::Int);
+        }
+        if elements.len() == 1 {
+            return GroundDomain::Int(vec![Range::Single(*elements.first().unwrap())]);
+        }
+
+        let mut elems_iter = elements.iter().copied();
+
+        let mut ranges: Vec<Range<i32>> = vec![];
+
+        // Loop over the elements in ascending order, turning all sequential runs of
+        // numbers into ranges.
+
+        // the bounds of the current run of numbers.
+        let mut lower = elems_iter
+            .next()
+            .expect("if we get here, elements should have => 2 elements");
+        let mut upper = lower;
+
+        for current in elems_iter {
+            // As elements is a BTreeSet, current is always strictly larger than lower.
+
+            if current == upper + 1 {
+                // current is part of the current run - we now have the run lower..current
+                //
+                upper = current;
+            } else {
+                // the run lower..upper has ended.
+                //
+                // Add the run lower..upper to the domain, and start a new run.
+
+                if lower == upper {
+                    ranges.push(range!(lower));
+                } else {
+                    ranges.push(range!(lower..upper));
+                }
+
+                lower = current;
+                upper = current;
+            }
+        }
+
+        // add the final run to the domain
+        if lower == upper {
+            ranges.push(range!(lower));
+        } else {
+            ranges.push(range!(lower..upper));
+        }
+
+        ranges = Range::squeeze(&ranges);
+        GroundDomain::Int(ranges)
+    }
+
+    /// Returns the domain that is the result of applying a binary operation to two integer domains.
+    ///
+    /// The given operator may return `None` if the operation is not defined for its arguments.
+    /// Undefined values will not be included in the resulting domain.
+    ///
+    /// # Errors
+    ///
+    /// - [`DomainOpError::Unbounded`] if either of the input domains are unbounded.
+    /// - [`DomainOpError::NotInteger`] if either of the input domains are not integers.
     pub fn apply_i32(
         &self,
         op: fn(i32, i32) -> Option<i32>,
         other: &GroundDomain,
     ) -> Result<GroundDomain, DomainOpError> {
-        todo!()
+        let vs1 = self.values_i32()?;
+        let vs2 = other.values_i32()?;
+
+        let mut set = BTreeSet::new();
+        for (v1, v2) in itertools::iproduct!(vs1, vs2) {
+            if let Some(v) = op(v1, v2) {
+                set.insert(v);
+            }
+        }
+
+        Ok(GroundDomain::from_set_i32(&set))
     }
 
+    /// Returns true if the domain is finite.
     pub fn is_finite(&self) -> bool {
-        todo!()
+        for domain in self.universe() {
+            if let GroundDomain::Int(ranges) = domain {
+                if ranges.is_empty() {
+                    return false;
+                }
+
+                if ranges
+                    .iter()
+                    .any(|range| matches!(range, Range::UnboundedL(_) | Range::UnboundedR(_)))
+                {
+                    return false;
+                }
+            }
+        }
+        true
+    }
+
+    /// For a vector of literals, creates a domain that contains all the elements.
+    ///
+    /// The literals must all be of the same type.
+    ///
+    /// For abstract literals, this method merges the element domains of the literals, but not the
+    /// index domains. Thus, for fixed-sized abstract literals (matrices, tuples, records, etc.),
+    /// all literals in the vector must also have the same size / index domain:
+    ///
+    /// + Matrices: all literals must have the same index domain.
+    /// + Tuples: all literals must have the same number of elements.
+    /// + Records: all literals must have the same fields.
+    ///
+    /// # Errors
+    ///
+    /// - [DomainOpError::WrongType] if the input literals are of a different type to
+    ///   each-other, as described above.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use conjure_cp_core::ast::{Range, Literal, ReturnType, GroundDomain};
+    ///
+    /// let domain = GroundDomain::from_literal_vec(vec![]);
+    /// assert_eq!(domain,Ok(GroundDomain::Empty(ReturnType::Unknown)));
+    /// ```
+    ///
+    /// ```
+    /// use conjure_cp_core::ast::{GroundDomain,Range,Literal, AbstractLiteral};
+    /// use conjure_cp_core::{domain_int, range, matrix};
+    ///
+    /// // `[1,2;int(2..3)], [4,5; int(2..3)]` has domain
+    /// // `matrix indexed by [int(2..3)] of int(1..2,4..5)`
+    ///
+    /// let matrix_1 = Literal::AbstractLiteral(matrix![Literal::Int(1),Literal::Int(2);domain_int!(2..3)]);
+    /// let matrix_2 = Literal::AbstractLiteral(matrix![Literal::Int(4),Literal::Int(5);domain_int!(2..3)]);
+    ///
+    /// let domain = GroundDomain::from_literal_vec(vec![matrix_1,matrix_2]);
+    ///
+    /// let expected_domain = Ok(GroundDomain::Matrix(
+    ///     domain_int!(1..2,4..5),vec![domain_int!(2..3)]));
+    ///
+    /// assert_eq!(domain,expected_domain);
+    /// ```
+    ///
+    /// ```
+    /// use conjure_cp_core::ast::{GroundDomain,Range,Literal, AbstractLiteral,DomainOpError};
+    /// use conjure_cp_core::{domain_int, range, matrix};
+    ///
+    /// // `[1,2;int(2..3)], [4,5; int(1..2)]` cannot be combined
+    /// // `matrix indexed by [int(2..3)] of int(1..2,4..5)`
+    ///
+    /// let matrix_1 = Literal::AbstractLiteral(matrix![Literal::Int(1),Literal::Int(2);domain_int!(2..3)]);
+    /// let matrix_2 = Literal::AbstractLiteral(matrix![Literal::Int(4),Literal::Int(5);domain_int!(1..2)]);
+    ///
+    /// let domain = GroundDomain::from_literal_vec(vec![matrix_1,matrix_2]);
+    ///
+    /// assert_eq!(domain,Err(DomainOpError::WrongType));
+    /// ```
+    ///
+    /// ```
+    /// use conjure_cp_core::ast::{GroundDomain,Range,Literal, AbstractLiteral};
+    /// use conjure_cp_core::{domain_int,range, matrix};
+    ///
+    /// // `[[1,2; int(1..2)];int(2)], [[4,5; int(1..2)]; int(2)]` has domain
+    /// // `matrix indexed by [int(2),int(1..2)] of int(1..2,4..5)`
+    ///
+    ///
+    /// let matrix_1 = Literal::AbstractLiteral(matrix![Literal::AbstractLiteral(matrix![Literal::Int(1),Literal::Int(2);domain_int!(1..2)]); domain_int!(2)]);
+    /// let matrix_2 = Literal::AbstractLiteral(matrix![Literal::AbstractLiteral(matrix![Literal::Int(4),Literal::Int(5);domain_int!(1..2)]); domain_int!(2)]);
+    ///
+    /// let domain = GroundDomain::from_literal_vec(vec![matrix_1,matrix_2]);
+    ///
+    /// let expected_domain = Ok(GroundDomain::Matrix(
+    ///     domain_int!(1..2,4..5),
+    ///     vec![domain_int!(2),domain_int!(1..2)]));
+    ///
+    /// assert_eq!(domain,expected_domain);
+    /// ```
+    ///
+    ///
+    pub fn from_literal_vec(literals: &[Literal]) -> Result<GroundDomain, DomainOpError> {
+        // TODO: use proptest to test this better?
+
+        if literals.is_empty() {
+            return Ok(GroundDomain::Empty(ReturnType::Unknown));
+        }
+
+        let first_literal = literals.first().unwrap();
+
+        match first_literal {
+            Literal::Int(_) => {
+                // check all literals are ints, then pass this to Domain::from_set_i32.
+                let mut ints = BTreeSet::new();
+                for lit in literals {
+                    let Literal::Int(i) = lit else {
+                        return Err(DomainOpError::WrongType);
+                    };
+
+                    ints.insert(*i);
+                }
+
+                Ok(GroundDomain::from_set_i32(&ints))
+            }
+            Literal::Bool(_) => {
+                // check all literals are bools
+                if literals.iter().any(|x| !matches!(x, Literal::Bool(_))) {
+                    Err(DomainOpError::WrongType)
+                } else {
+                    Ok(GroundDomain::Bool)
+                }
+            }
+            Literal::AbstractLiteral(AbstractLiteral::Set(_)) => {
+                let mut all_elems = vec![];
+
+                for lit in literals {
+                    let Literal::AbstractLiteral(AbstractLiteral::Set(elems)) = lit else {
+                        return Err(DomainOpError::WrongType);
+                    };
+
+                    all_elems.extend(elems.clone());
+                }
+                let elem_domain = GroundDomain::from_literal_vec(&all_elems)?;
+
+                Ok(GroundDomain::Set(SetAttr::default(), Moo::new(elem_domain)))
+            }
+
+            l @ Literal::AbstractLiteral(AbstractLiteral::Matrix(_, _)) => {
+                let mut first_index_domain = vec![];
+                // flatten index domains of n-d matrix into list
+                let mut l = l.clone();
+                while let Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx)) = l {
+                    assert!(
+                        !matches!(idx.as_ref(), GroundDomain::Matrix(_, _)),
+                        "n-dimensional matrix literals should be represented as a matrix inside a matrix"
+                    );
+                    first_index_domain.push(idx);
+                    l = elems[0].clone();
+                }
+
+                let mut all_elems: Vec<Literal> = vec![];
+
+                // check types and index domains
+                for lit in literals {
+                    let Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx)) = lit else {
+                        return Err(DomainOpError::NotGround);
+                    };
+
+                    all_elems.extend(elems.clone());
+
+                    let mut index_domain = vec![idx.clone()];
+                    let mut l = elems[0].clone();
+                    while let Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, idx)) = l {
+                        assert!(
+                            !matches!(idx.as_ref(), GroundDomain::Matrix(_, _)),
+                            "n-dimensional matrix literals should be represented as a matrix inside a matrix"
+                        );
+                        index_domain.push(idx);
+                        l = elems[0].clone();
+                    }
+
+                    if index_domain != first_index_domain {
+                        return Err(DomainOpError::WrongType);
+                    }
+                }
+
+                // extract all the terminal elements (those that are not nested matrix literals) from the matrix literal.
+                let mut terminal_elements: Vec<Literal> = vec![];
+                while let Some(elem) = all_elems.pop() {
+                    if let Literal::AbstractLiteral(AbstractLiteral::Matrix(elems, _)) = elem {
+                        all_elems.extend(elems);
+                    } else {
+                        terminal_elements.push(elem);
+                    }
+                }
+
+                let element_domain = GroundDomain::from_literal_vec(&terminal_elements)?;
+
+                Ok(GroundDomain::Matrix(
+                    Moo::new(element_domain),
+                    first_index_domain,
+                ))
+            }
+
+            Literal::AbstractLiteral(AbstractLiteral::Tuple(first_elems)) => {
+                let n_fields = first_elems.len();
+
+                // for each field, calculate the element domain and add it to this list
+                let mut elem_domains = vec![];
+
+                for i in 0..n_fields {
+                    let mut all_elems = vec![];
+                    for lit in literals {
+                        let Literal::AbstractLiteral(AbstractLiteral::Tuple(elems)) = lit else {
+                            return Err(DomainOpError::NotGround);
+                        };
+
+                        if elems.len() != n_fields {
+                            return Err(DomainOpError::NotGround);
+                        }
+
+                        all_elems.push(elems[i].clone());
+                    }
+
+                    elem_domains.push(Moo::new(GroundDomain::from_literal_vec(&all_elems)?));
+                }
+
+                Ok(GroundDomain::Tuple(elem_domains))
+            }
+
+            Literal::AbstractLiteral(AbstractLiteral::Record(first_elems)) => {
+                let n_fields = first_elems.len();
+                let field_names = first_elems.iter().map(|x| x.name.clone()).collect_vec();
+
+                // for each field, calculate the element domain and add it to this list
+                let mut elem_domains = vec![];
+
+                for i in 0..n_fields {
+                    let mut all_elems = vec![];
+                    for lit in literals {
+                        let Literal::AbstractLiteral(AbstractLiteral::Record(elems)) = lit else {
+                            return Err(DomainOpError::NotGround);
+                        };
+
+                        if elems.len() != n_fields {
+                            return Err(DomainOpError::NotGround);
+                        }
+
+                        let elem = elems[i].clone();
+                        if elem.name != field_names[i] {
+                            return Err(DomainOpError::NotGround);
+                        }
+
+                        all_elems.push(elem.value);
+                    }
+
+                    elem_domains.push(Moo::new(GroundDomain::from_literal_vec(&all_elems)?));
+                }
+
+                Ok(GroundDomain::Record(
+                    izip!(field_names, elem_domains)
+                        .map(|(name, domain)| RecordEntryGround { name, domain })
+                        .collect(),
+                ))
+            }
+        }
     }
 }
 

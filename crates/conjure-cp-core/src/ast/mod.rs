@@ -1,28 +1,28 @@
-pub mod categories;
-pub mod pretty;
-pub mod serde;
-
 pub mod ac_operators;
 mod atom;
+pub mod categories;
 mod cnf_clause;
 pub mod comprehension;
 pub mod declaration;
 mod domains;
+pub mod eval;
 mod expressions;
 mod literals;
 pub mod matrix;
 mod metadata;
 mod model;
 mod name;
+pub mod pretty;
 pub mod records;
 mod reference;
+pub mod serde;
 mod submodel;
 mod symbol_table;
 mod types;
 mod variables;
 
 mod moo;
-pub use moo::Moo;
+mod partial_eval;
 
 pub use atom::Atom;
 pub use cnf_clause::CnfClause;
@@ -31,12 +31,15 @@ pub use domains::{
     Domain, DomainOpError, DomainPtr, GroundDomain, IntVal, Range, RecordEntry, RecordEntryGround,
     SetAttr, UnresolvedDomain,
 };
+pub use eval::eval_constant;
 pub use expressions::Expression;
 pub use literals::AbstractLiteral;
 pub use literals::Literal;
 pub use metadata::Metadata;
 pub use model::*;
+pub use moo::Moo;
 pub use name::Name;
+pub use partial_eval::run_partial_evaluator;
 pub use reference::Reference;
 pub use submodel::SubModel;
 pub use symbol_table::SymbolTable;
