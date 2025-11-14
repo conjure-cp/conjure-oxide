@@ -48,12 +48,6 @@ impl From<Moo<UnresolvedDomain>> for DomainPtr {
     }
 }
 
-impl From<Domain> for DomainPtr {
-    fn from(value: Domain) -> Self {
-        Moo::new(value)
-    }
-}
-
 impl From<GroundDomain> for DomainPtr {
     fn from(value: GroundDomain) -> Self {
         Moo::new(Domain::Ground(Moo::new(value)))

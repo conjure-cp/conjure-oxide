@@ -1137,7 +1137,7 @@ impl Expression {
                     .into_iter()
                     .map(|x: Literal| Expression::Atomic(Metadata::new(), Atom::Literal(x)))
                     .collect_vec(),
-                domain,
+                domain.into(),
             )),
 
             _ => None,

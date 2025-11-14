@@ -99,7 +99,13 @@ pub(super) fn run_partial_evaluator(expr: &Expr) -> ApplicationResult {
                     Err(RuleNotApplicable)
                 }
             } else if let Expr::Atomic(_, Atom::Literal(lit)) = &*x {
-                if domain.resolve().ok_or(RuleNotApplicable)?.contains(lit) {
+                if domain
+                    .resolve()
+                    .ok_or(RuleNotApplicable)?
+                    .contains(lit)
+                    .ok()
+                    .ok_or(RuleNotApplicable)?
+                {
                     Ok(Reduction::pure(Expr::Atomic(Metadata::new(), true.into())))
                 } else {
                     Ok(Reduction::pure(Expr::Atomic(Metadata::new(), false.into())))
