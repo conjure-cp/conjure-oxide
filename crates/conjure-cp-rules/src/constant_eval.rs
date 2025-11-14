@@ -182,7 +182,7 @@ pub fn eval_constant(expr: &Expr) -> Option<Lit> {
                 return None;
             };
 
-            Some(domain.contains(lit).into())
+            domain.contains(lit).map(Lit::Bool).ok()
         }
         Expr::Atomic(_, Atom::Literal(c)) => Some(c.clone()),
         Expr::Atomic(_, Atom::Reference(_)) => None,

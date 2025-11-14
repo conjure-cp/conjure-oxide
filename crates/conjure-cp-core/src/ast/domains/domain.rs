@@ -503,7 +503,12 @@ impl Domain {
     }
 
     pub fn intersect(&self, other: &Domain) -> Result<Domain, DomainOpError> {
-        todo!()
+        match (self, other) {
+            (Domain::Ground(a), Domain::Ground(b)) => {
+                a.intersect(b).map(|res| Domain::Ground(Moo::new(res)))
+            }
+            _ => Err(DomainOpError::InputContainsReference),
+        }
     }
 
     pub fn values(&self) -> Result<impl Iterator<Item = Literal>, DomainOpError> {
@@ -517,26 +522,12 @@ impl Domain {
         todo!()
     }
 
-    /// Returns the domain that is the result of applying a binary operation to two integer domains.
-    ///
-    /// The given operator may return `None` if the operation is not defined for its arguments.
-    /// Undefined values will not be included in the resulting domain.
-    ///
-    /// # Errors
-    ///
-    /// - [`DomainOpError::InputUnbounded`] if either of the input domains are unbounded.
-    /// - [`DomainOpError::InputNotInteger`] if either of the input domains are not integers.
-    pub fn apply_i32(
-        &self,
-        op: fn(i32, i32) -> Option<i32>,
-        other: &DomainPtr,
-    ) -> Result<DomainPtr, DomainOpError> {
-        todo!()
-    }
-
     /// Returns true if `lit` is a valid value of this domain
-    pub fn contains(&self, lit: &Literal) -> bool {
-        todo!()
+    pub fn contains(&self, lit: &Literal) -> Result<bool, DomainOpError> {
+        if let Some(gd) = self.as_ground() {
+            return gd.contains(lit);
+        }
+        Err(DomainOpError::InputContainsReference)
     }
 }
 

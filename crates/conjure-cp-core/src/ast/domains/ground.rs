@@ -3,11 +3,14 @@ use crate::ast::{
     AbstractLiteral, Domain, DomainOpError, Literal, Moo, RecordEntry, SetAttr, Typeable,
     domains::{domain::Int, range::Range},
 };
+use crate::range;
+use crate::utils::count_combinations;
 use conjure_cp_core::ast::{Name, ReturnType};
 use itertools::Itertools;
 use num_traits::ToPrimitive;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeSet;
 use std::fmt::{Display, Formatter};
 use std::iter::zip;
 use uniplate::Uniplate;
@@ -114,8 +117,69 @@ impl GroundDomain {
         }
     }
 
+    /// Calculates the intersection of two domains.
+    ///
+    /// # Errors
+    ///
+    ///  - [`DomainOpError::InputUnbounded`] if either of the input domains are unbounded.
+    ///  - [`DomainOpError::InputWrongType`] if the input domains are different types, or are not integer or set domains.
     pub fn intersect(&self, other: &GroundDomain) -> Result<GroundDomain, DomainOpError> {
-        todo!()
+        // TODO: does not consider unbounded domains yet
+        // needs to be tested once comprehension rules are written
+
+        match (self, other) {
+            // one or more arguments is an empty int domain
+            (d @ GroundDomain::Empty(ReturnType::Int), GroundDomain::Int(_)) => Ok(d.clone()),
+            (GroundDomain::Int(_), d @ GroundDomain::Empty(ReturnType::Int)) => Ok(d.clone()),
+            (GroundDomain::Empty(ReturnType::Int), d @ GroundDomain::Empty(ReturnType::Int)) => {
+                Ok(d.clone())
+            }
+
+            // one or more arguments is an empty set(int) domain
+            (GroundDomain::Set(_, inner1), d @ GroundDomain::Empty(ReturnType::Set(inner2)))
+                if matches!(
+                    **inner1,
+                    GroundDomain::Int(_) | GroundDomain::Empty(ReturnType::Int)
+                ) && matches!(**inner2, ReturnType::Int) =>
+            {
+                Ok(d.clone())
+            }
+            (d @ GroundDomain::Empty(ReturnType::Set(inner1)), GroundDomain::Set(_, inner2))
+                if matches!(**inner1, ReturnType::Int)
+                    && matches!(
+                        **inner2,
+                        GroundDomain::Int(_) | GroundDomain::Empty(ReturnType::Int)
+                    ) =>
+            {
+                Ok(d.clone())
+            }
+            (
+                d @ GroundDomain::Empty(ReturnType::Set(inner1)),
+                GroundDomain::Empty(ReturnType::Set(inner2)),
+            ) if matches!(**inner1, ReturnType::Int) && matches!(**inner2, ReturnType::Int) => {
+                Ok(d.clone())
+            }
+
+            // both arguments are non-empy
+            (GroundDomain::Set(_, x), GroundDomain::Set(_, y)) => Ok(GroundDomain::Set(
+                SetAttr::default(),
+                Moo::new((*x).intersect(y)?),
+            )),
+
+            (GroundDomain::Int(_), GroundDomain::Int(_)) => {
+                let mut v: BTreeSet<i32> = BTreeSet::new();
+
+                let v1 = self.values_i32()?;
+                let v2 = other.values_i32()?;
+                for value1 in v1.iter() {
+                    if v2.contains(value1) && !v.contains(value1) {
+                        v.insert(*value1);
+                    }
+                }
+                Ok(GroundDomain::from_set_i32(&v))
+            }
+            _ => Err(DomainOpError::InputWrongType),
+        }
     }
 
     pub fn values(&self) -> Result<Box<dyn Iterator<Item = Literal>>, DomainOpError> {
@@ -135,6 +199,75 @@ impl GroundDomain {
                 ))
             }
             _ => todo!("Enumerating nested domains is not yet supported"),
+        }
+    }
+
+    /// Gets the length of this domain.
+    ///
+    /// # Errors
+    ///
+    /// - [`DomainOpError::InputUnbounded`] if the input domain is of infinite size.
+    pub fn length(&self) -> Result<u64, DomainOpError> {
+        match self {
+            GroundDomain::Empty(_) => Ok(0),
+            GroundDomain::Bool => Ok(2),
+            GroundDomain::Int(ranges) => {
+                if ranges.is_empty() {
+                    return Err(DomainOpError::InputUnbounded);
+                }
+
+                let mut length = 0u64;
+                for range in ranges {
+                    if let Some(range_length) = range.length() {
+                        length += range_length as u64;
+                    } else {
+                        return Err(DomainOpError::InputUnbounded);
+                    }
+                }
+                Ok(length)
+            }
+            GroundDomain::Set(set_attr, inner_domain) => {
+                let inner_len = inner_domain.length()?;
+                let (min_sz, max_sz) = match set_attr.size {
+                    Range::Unbounded => (0, inner_len),
+                    Range::Single(n) => (n as u64, n as u64),
+                    Range::UnboundedR(n) => (n as u64, inner_len),
+                    Range::UnboundedL(n) => (0, n as u64),
+                    Range::Bounded(min, max) => (min as u64, max as u64),
+                };
+                let mut ans = 0u64;
+                for sz in min_sz..=max_sz {
+                    let c = count_combinations(inner_len, sz)?;
+                    ans = ans.checked_add(c).ok_or(DomainOpError::TooLarge)?;
+                }
+                Ok(ans)
+            }
+            GroundDomain::Tuple(domains) => {
+                let mut ans = 1u64;
+                for domain in domains {
+                    ans = ans
+                        .checked_mul(domain.length()?)
+                        .ok_or(DomainOpError::TooLarge)?;
+                }
+                Ok(ans)
+            }
+            GroundDomain::Record(entries) => {
+                // A record is just a named tuple
+                let mut ans = 1u64;
+                for entry in entries {
+                    let sz = entry.domain.length()?;
+                    ans = ans.checked_mul(sz).ok_or(DomainOpError::TooLarge)?;
+                }
+                Ok(ans)
+            }
+            GroundDomain::Matrix(inner_domain, idx_domains) => {
+                let inner_sz = inner_domain.length()?;
+                let exp = idx_domains.iter().try_fold(1u32, |acc, val| {
+                    let len = val.length()? as u32;
+                    acc.checked_mul(len).ok_or(DomainOpError::TooLarge)
+                })?;
+                inner_sz.checked_pow(exp).ok_or(DomainOpError::TooLarge)
+            }
         }
     }
 
@@ -250,19 +383,181 @@ impl GroundDomain {
         }
     }
 
+    /// Returns a list of all possible values in an integer domain.
+    ///
+    /// # Errors
+    ///
+    /// - [`DomainOpError::InputNotInteger`] if the domain is not an integer domain.
+    /// - [`DomainOpError::InputUnbounded`] if the domain is unbounded.
     pub fn values_i32(&self) -> Result<Vec<i32>, DomainOpError> {
-        todo!()
+        if let GroundDomain::Empty(ReturnType::Int) = self {
+            return Ok(vec![]);
+        }
+        let GroundDomain::Int(ranges) = self else {
+            return Err(DomainOpError::InputNotInteger(self.return_type()));
+        };
+
+        if ranges.is_empty() {
+            return Err(DomainOpError::InputUnbounded);
+        }
+
+        let mut values = vec![];
+        for range in ranges {
+            match range {
+                Range::Single(i) => {
+                    values.push(*i);
+                }
+                Range::Bounded(i, j) => {
+                    values.extend(*i..=*j);
+                }
+                Range::UnboundedR(_) | Range::UnboundedL(_) | Range::Unbounded => {
+                    return Err(DomainOpError::InputUnbounded);
+                }
+            }
+        }
+
+        Ok(values)
     }
 
+    /// Creates an [`Domain::Int`] containing the given integers.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use conjure_cp_core::ast::{Domain,Range};
+    /// use conjure_cp_core::{domain_int,range};
+    /// use std::collections::BTreeSet;
+    ///
+    /// let elements = BTreeSet::from([1,2,3,4,5]);
+    ///
+    /// let domain = Domain::from_set_i32(&elements);
+    ///
+    /// assert_eq!(domain,domain_int!(1..5));
+    /// ```
+    ///
+    /// ```
+    /// use conjure_cp_core::ast::{GroundDomain,Range};
+    /// use conjure_cp_core::{domain_int,range};
+    /// use std::collections::BTreeSet;
+    ///
+    /// let elements = BTreeSet::from([1,2,4,5,7,8,9,10]);
+    ///
+    /// let domain = GroundDomain::from_set_i32(&elements);
+    ///
+    /// assert_eq!(domain,domain_int!(1..2,4..5,7..10));
+    /// ```
+    ///
+    /// ```
+    /// use conjure_cp_core::ast::{GroundDomain,Range,ReturnType};
+    /// use std::collections::BTreeSet;
+    ///
+    /// let elements = BTreeSet::from([]);
+    ///
+    /// let domain = GroundDomain::from_set_i32(&elements);
+    ///
+    /// assert!(matches!(domain,GroundDomain::Empty(ReturnType::Int)))
+    /// ```
+    pub fn from_set_i32(elements: &BTreeSet<i32>) -> GroundDomain {
+        if elements.is_empty() {
+            return GroundDomain::Empty(ReturnType::Int);
+        }
+        if elements.len() == 1 {
+            return GroundDomain::Int(vec![Range::Single(*elements.first().unwrap())]);
+        }
+
+        let mut elems_iter = elements.iter().copied();
+
+        let mut ranges: Vec<Range<i32>> = vec![];
+
+        // Loop over the elements in ascending order, turning all sequential runs of
+        // numbers into ranges.
+
+        // the bounds of the current run of numbers.
+        let mut lower = elems_iter
+            .next()
+            .expect("if we get here, elements should have => 2 elements");
+        let mut upper = lower;
+
+        for current in elems_iter {
+            // As elements is a BTreeSet, current is always strictly larger than lower.
+
+            if current == upper + 1 {
+                // current is part of the current run - we now have the run lower..current
+                //
+                upper = current;
+            } else {
+                // the run lower..upper has ended.
+                //
+                // Add the run lower..upper to the domain, and start a new run.
+
+                if lower == upper {
+                    ranges.push(range!(lower));
+                } else {
+                    ranges.push(range!(lower..upper));
+                }
+
+                lower = current;
+                upper = current;
+            }
+        }
+
+        // add the final run to the domain
+        if lower == upper {
+            ranges.push(range!(lower));
+        } else {
+            ranges.push(range!(lower..upper));
+        }
+
+        GroundDomain::Int(ranges)
+    }
+
+    /// Returns the domain that is the result of applying a binary operation to two integer domains.
+    ///
+    /// The given operator may return `None` if the operation is not defined for its arguments.
+    /// Undefined values will not be included in the resulting domain.
+    ///
+    /// # Errors
+    ///
+    /// - [`DomainOpError::InputUnbounded`] if either of the input domains are unbounded.
+    /// - [`DomainOpError::InputNotInteger`] if either of the input domains are not integers.
     pub fn apply_i32(
         &self,
         op: fn(i32, i32) -> Option<i32>,
         other: &GroundDomain,
     ) -> Result<GroundDomain, DomainOpError> {
-        todo!()
+        let vs1 = self.values_i32()?;
+        let vs2 = other.values_i32()?;
+
+        let mut set = BTreeSet::new();
+        for (v1, v2) in itertools::iproduct!(vs1, vs2) {
+            if let Some(v) = op(v1, v2) {
+                set.insert(v);
+            }
+        }
+
+        Ok(GroundDomain::from_set_i32(&set))
     }
 
+    /// Returns true if the domain is finite.
     pub fn is_finite(&self) -> bool {
+        for domain in self.universe() {
+            if let GroundDomain::Int(ranges) = domain {
+                if ranges.is_empty() {
+                    return false;
+                }
+
+                if ranges
+                    .iter()
+                    .any(|range| matches!(range, Range::UnboundedL(_) | Range::UnboundedR(_)))
+                {
+                    return false;
+                }
+            }
+        }
+        true
+    }
+
+    pub fn from_literal_vec(vals: &[Literal]) -> Option<GroundDomain> {
         todo!()
     }
 }
