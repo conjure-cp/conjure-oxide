@@ -1,6 +1,6 @@
 use crate::errors::EssenceParseError;
 use crate::parser::atom::parse_atom;
-use crate::parser::comprehension::parse_quantifier_expr;
+use crate::parser::comprehension::parse_quantifier_or_aggregate_expr;
 use crate::{field, named_child};
 use conjure_cp_core::ast::{Expression, Metadata, Moo, SymbolTable};
 use conjure_cp_core::{domain_int, matrix_expr, range};
@@ -76,6 +76,7 @@ fn parse_arithmetic_expression(
         "list_combining_expr_arith" => {
             parse_list_combining_expression(&inner, source_code, root, symbols_ptr)
         }
+        "aggregate_expr" => parse_quantifier_or_aggregate_expr(&inner, source_code, root, symbols_ptr),
         _ => Err(EssenceParseError::syntax_error(
             format!("Expected arithmetic expression, found: {}", inner.kind()),
             Some(inner.range()),
@@ -101,7 +102,7 @@ fn parse_boolean_expression(
         "list_combining_expr_bool" => {
             parse_list_combining_expression(&inner, source_code, root, symbols_ptr)
         }
-        "quantifier_expr" => parse_quantifier_expr(&inner, source_code, root, symbols_ptr),
+        "quantifier_expr" => parse_quantifier_or_aggregate_expr(&inner, source_code, root, symbols_ptr),
         _ => Err(EssenceParseError::syntax_error(
             format!("Expected boolean expression, found '{}'", inner.kind()),
             Some(inner.range()),
