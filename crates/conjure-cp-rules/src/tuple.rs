@@ -9,7 +9,6 @@ use conjure_cp::rule_engine::{
 };
 
 use conjure_cp::ast::Atom;
-use conjure_cp::ast::Domain;
 use conjure_cp::ast::Expression;
 use conjure_cp::ast::Literal;
 use conjure_cp::ast::Metadata;
@@ -136,7 +135,7 @@ fn tuple_index_to_bubble(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 
 // convert equality to tuple equality
 #[register_rule(("Base", 2000))]
-fn tuple_equality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn tuple_equality(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Eq(_, left, right) = expr else {
         return Err(RuleNotApplicable);
     };
@@ -294,7 +293,7 @@ fn tuple_to_constant(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
 
 // convert equality to tuple inequality
 #[register_rule(("Base", 2000))]
-fn tuple_inequality(expr: &Expr, symbols: &SymbolTable) -> ApplicationResult {
+fn tuple_inequality(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     let Expr::Neq(_, left, right) = expr else {
         return Err(RuleNotApplicable);
     };

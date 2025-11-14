@@ -2,7 +2,7 @@ use std::{borrow::Borrow, cell::Ref};
 use uniplate::Uniplate;
 
 use super::{
-    AbstractLiteral, DeclarationPtr, Domain, DomainPtr, Expression, Literal, Moo, Name,
+    AbstractLiteral, DeclarationPtr, DomainPtr, Expression, Literal, Moo, Name,
     categories::{Category, CategoryOf},
     domains::HasDomain,
     records::RecordValue,
