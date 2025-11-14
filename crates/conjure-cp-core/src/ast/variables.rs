@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::{ast::domains::Domain, representation::Representation};
+use crate::representation::Representation;
 use conjure_cp_core::ast::DomainPtr;
 use derivative::Derivative;
 use serde::{Deserialize, Serialize};

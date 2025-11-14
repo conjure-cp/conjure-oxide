@@ -1,7 +1,7 @@
 use crate::ast::domains::set_attr::SetAttr;
 use crate::ast::{
-    DeclarationKind, DomainOpError, Expression, MaybeTypeable, Metadata, Moo, RecordEntryGround,
-    Reference,
+    DeclarationKind, DomainOpError, Expression, Literal, MaybeTypeable, Metadata, Moo,
+    RecordEntryGround, Reference,
     domains::{
         GroundDomain,
         domain::{DomainPtr, Int},
@@ -11,7 +11,7 @@ use crate::ast::{
 use crate::range;
 use crate::{bug, domain_int, matrix_expr};
 use conjure_cp_core::ast::pretty::pretty_vec;
-use conjure_cp_core::ast::{Name, ReturnType};
+use conjure_cp_core::ast::{Name, ReturnType, eval_constant};
 use itertools::Itertools;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
@@ -43,7 +43,7 @@ impl TryInto<Int> for IntVal {
     fn try_into(self) -> Result<Int, Self::Error> {
         match self {
             IntVal::Const(val) => Ok(val),
-            _ => Err(DomainOpError::InputContainsReference),
+            _ => Err(DomainOpError::NotGround),
         }
     }
 }
@@ -119,9 +119,15 @@ impl IntVal {
     pub fn resolve(&self) -> Option<Int> {
         match self {
             IntVal::Const(value) => Some(*value),
-            IntVal::Expr(expr) => todo!(),
+            IntVal::Expr(expr) => match eval_constant(expr)? {
+                Literal::Int(v) => Some(v),
+                _ => bug!("Expected integer expression, got: {expr}"),
+            },
             IntVal::Reference(re) => match re.ptr.kind().deref() {
-                DeclarationKind::ValueLetting(expr) => todo!(),
+                DeclarationKind::ValueLetting(expr) => match eval_constant(expr)? {
+                    Literal::Int(v) => Some(v),
+                    _ => bug!("Expected integer expression, got: {expr}"),
+                },
                 // If this is an int given we will be able to resolve it eventually, but not yet
                 DeclarationKind::Given(_) => None,
                 DeclarationKind::DomainLetting(_)
@@ -241,28 +247,28 @@ pub enum UnresolvedDomain {
 impl UnresolvedDomain {
     pub fn resolve(&self) -> Option<GroundDomain> {
         match self {
-            UnresolvedDomain::Int(rngs) => {
-                match rngs.iter().map(Range::<IntVal>::resolve).collect() {
-                    Some(int_rngs) => Some(GroundDomain::Int(int_rngs)),
-                    _ => None,
-                }
-            }
+            UnresolvedDomain::Int(rngs) => rngs
+                .iter()
+                .map(Range::<IntVal>::resolve)
+                .collect::<Option<_>>()
+                .map(GroundDomain::Int),
             UnresolvedDomain::Set(attr, inner) => {
                 Some(GroundDomain::Set(attr.resolve()?, inner.resolve()?))
             }
             UnresolvedDomain::Matrix(inner, idx_doms) => {
-                match idx_doms.iter().map(DomainPtr::resolve).collect() {
-                    Some(idx_gds) => Some(GroundDomain::Matrix(inner.resolve()?, idx_gds)),
-                    _ => None,
-                }
+                let inner_gd = inner.resolve()?;
+                idx_doms
+                    .iter()
+                    .map(DomainPtr::resolve)
+                    .collect::<Option<_>>()
+                    .map(|idx| GroundDomain::Matrix(inner_gd, idx))
             }
-            UnresolvedDomain::Tuple(inners) => {
-                match inners.iter().map(DomainPtr::resolve).collect() {
-                    Some(inners_gds) => Some(GroundDomain::Tuple(inners_gds)),
-                    _ => None,
-                }
-            }
-            UnresolvedDomain::Record(entries) => match entries
+            UnresolvedDomain::Tuple(inners) => inners
+                .iter()
+                .map(DomainPtr::resolve)
+                .collect::<Option<_>>()
+                .map(GroundDomain::Tuple),
+            UnresolvedDomain::Record(entries) => entries
                 .iter()
                 .map(|f| {
                     f.domain.resolve().map(|gd| RecordEntryGround {
@@ -270,11 +276,8 @@ impl UnresolvedDomain {
                         domain: gd,
                     })
                 })
-                .collect()
-            {
-                Some(entries_gds) => Some(GroundDomain::Record(entries_gds)),
-                _ => None,
-            },
+                .collect::<Option<_>>()
+                .map(GroundDomain::Record),
             UnresolvedDomain::Reference(_) => None,
         }
     }
@@ -289,13 +292,13 @@ impl UnresolvedDomain {
                 Ok(UnresolvedDomain::Int(merged))
             }
             (UnresolvedDomain::Int(_), _) | (_, UnresolvedDomain::Int(_)) => {
-                Err(DomainOpError::InputWrongType)
+                Err(DomainOpError::WrongType)
             }
             (UnresolvedDomain::Set(_, in1), UnresolvedDomain::Set(_, in2)) => {
                 Ok(UnresolvedDomain::Set(SetAttr::default(), in1.union(in2)?))
             }
             (UnresolvedDomain::Set(_, _), _) | (_, UnresolvedDomain::Set(_, _)) => {
-                Err(DomainOpError::InputWrongType)
+                Err(DomainOpError::WrongType)
             }
             (UnresolvedDomain::Matrix(in1, idx1), UnresolvedDomain::Matrix(in2, idx2))
                 if idx1 == idx2 =>
@@ -303,7 +306,7 @@ impl UnresolvedDomain {
                 Ok(UnresolvedDomain::Matrix(in1.union(in2)?, idx1.clone()))
             }
             (UnresolvedDomain::Matrix(_, _), _) | (_, UnresolvedDomain::Matrix(_, _)) => {
-                Err(DomainOpError::InputWrongType)
+                Err(DomainOpError::WrongType)
             }
             (UnresolvedDomain::Tuple(lhs), UnresolvedDomain::Tuple(rhs))
                 if lhs.len() == rhs.len() =>
@@ -315,15 +318,15 @@ impl UnresolvedDomain {
                 Ok(UnresolvedDomain::Tuple(merged))
             }
             (UnresolvedDomain::Tuple(_), _) | (_, UnresolvedDomain::Tuple(_)) => {
-                Err(DomainOpError::InputWrongType)
+                Err(DomainOpError::WrongType)
             }
             // TODO: Could we support unions of reference domains symbolically?
             (UnresolvedDomain::Reference(_), _) | (_, UnresolvedDomain::Reference(_)) => {
-                Err(DomainOpError::InputContainsReference)
+                Err(DomainOpError::NotGround)
             }
             // TODO: Could we define semantics for merging record domains?
             (UnresolvedDomain::Record(_), _) | (_, UnresolvedDomain::Record(_)) => {
-                Err(DomainOpError::InputWrongType)
+                Err(DomainOpError::WrongType)
             }
         }
     }
