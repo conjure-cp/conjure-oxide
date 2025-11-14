@@ -2,7 +2,7 @@ use crate::expression::parse_expression;
 use crate::parser::domain::parse_domain;
 use crate::util::named_children;
 use crate::{EssenceParseError, field};
-use conjure_cp_core::ast::{AbstractLiteral, Domain, DomainPtr, Expression, SymbolTable};
+use conjure_cp_core::ast::{AbstractLiteral, DomainPtr, Expression, SymbolTable};
 use conjure_cp_core::{domain_int, range};
 use std::cell::RefCell;
 use std::rc::Rc;

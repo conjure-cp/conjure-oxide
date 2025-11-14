@@ -11,7 +11,7 @@ use std::io::Write;
 use std::sync::{Arc, RwLock};
 use uniplate::Uniplate;
 
-use conjure_cp::ast::{AbstractLiteral, Domain, GroundDomain, Moo, SerdeModel};
+use conjure_cp::ast::{AbstractLiteral, GroundDomain, Moo, SerdeModel};
 use conjure_cp::context::Context;
 use serde_json::{Error as JsonError, Value as JsonValue};
 

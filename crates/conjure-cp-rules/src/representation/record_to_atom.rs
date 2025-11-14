@@ -1,4 +1,4 @@
-use conjure_cp::ast::{DeclarationPtr, Domain, DomainPtr, GroundDomain, Moo, records::RecordValue};
+use conjure_cp::ast::{DeclarationPtr, DomainPtr, GroundDomain, Moo, records::RecordValue};
 use itertools::Itertools;
 
 use super::prelude::*;

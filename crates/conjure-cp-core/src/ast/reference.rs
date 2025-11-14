@@ -8,7 +8,7 @@ use std::fmt::{Display, Formatter};
 use uniplate::Uniplate;
 
 use super::{
-    Atom, Domain, DomainPtr, Expression, GroundDomain, Metadata, Moo, Name,
+    DomainPtr, Expression, GroundDomain, Metadata, Moo, Name,
     categories::{Category, CategoryOf},
     domains::HasDomain,
 };

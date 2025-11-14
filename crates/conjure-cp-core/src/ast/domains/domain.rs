@@ -17,7 +17,6 @@ use uniplate::Uniplate;
 pub type Int = i32;
 
 pub type DomainPtr = Moo<Domain>;
-pub type GroundDomainPtr = Moo<GroundDomain>;
 
 impl DomainPtr {
     pub fn resolve(&self) -> Option<Moo<GroundDomain>> {
