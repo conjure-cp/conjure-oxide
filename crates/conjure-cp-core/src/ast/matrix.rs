@@ -139,7 +139,7 @@ pub fn index_domains(matrix: AbstractLiteral<Literal>) -> Vec<Moo<GroundDomain>>
         match element {
             AbstractLiteral::Set(_) => vec![],
             AbstractLiteral::Matrix(_, domain) => {
-                let mut index_domains = vec![domain];
+                let mut index_domains: Vec<DomainPtr> = vec![domain.into()];
                 index_domains.extend(child_index_domains);
                 index_domains
             }
