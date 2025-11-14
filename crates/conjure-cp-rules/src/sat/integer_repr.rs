@@ -36,7 +36,6 @@ fn int_domain_to_expr(subject: Expr, ranges: &Vec<Range<i32>>) -> Expr {
 }
 
 /// This function confirms that all of the input expressions are SATInts, and returns vectors for each input of their bits
-#[allow(dead_code)]
 pub fn validate_sat_int_operands(exprs: Vec<Expr>) -> Result<Vec<Vec<Expr>>, ApplicationError> {
     let out: Result<Vec<Vec<_>>, _> = exprs
         .into_iter()

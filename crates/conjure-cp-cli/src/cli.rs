@@ -28,6 +28,8 @@ pub enum Command {
     /// Generate a completion script for the shell provided
     Completion(CompletionArgs),
     Pretty(pretty::Args),
+    // Run the language server
+    ServerLSP,
 }
 
 /// Global command line arguments.
