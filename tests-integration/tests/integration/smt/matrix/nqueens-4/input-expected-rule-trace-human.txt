@@ -1,0 +1,272 @@
+Model before rewriting:
+
+letting dom be domain int(1..4)
+letting n be 4
+find x: matrix indexed by [[dom]] of dom
+
+such that
+
+allDiff(x[..]),
+allDiff([given i: dom
+
+such that
+
+sum([x[i],i;int(1..2)])
+ | i: dom,]),
+allDiff([given i: dom
+
+such that
+
+(x[i] - i)
+ | i: dom,])
+
+--
+
+x[..], 
+   ~~> slice_to_bubble ([("Bubble", 6000)]) 
+{x[..] @ and([;int(1..)])} 
+
+--
+
+allDiff({x[..] @ and([;int(1..)])}),
+allDiff([given i: dom
+
+such that
+
+sum([x[i],i;int(1..2)])
+ | i: dom,]),
+allDiff([given i: dom
+
+such that
+
+(x[i] - i)
+ | i: dom,]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+allDiff(x[..]),
+allDiff([given i: dom
+
+such that
+
+sum([x[i],i;int(1..2)])
+ | i: dom,]),
+allDiff([given i: dom
+
+such that
+
+(x[i] - i)
+ | i: dom,]) 
+
+--
+
+allDiff(x[..]),
+allDiff([given i: dom
+
+such that
+
+sum([x[i],i;int(1..2)])
+ | i: dom,]),
+allDiff([given i: dom
+
+such that
+
+(x[i] - i)
+ | i: dom,]), 
+   ~~> substitute_domain_lettings ([("Base", 5000)]) 
+allDiff(x[..]),
+allDiff([given i: dom
+
+such that
+
+sum([x[i],i;int(1..2)])
+ | i: dom,]),
+allDiff([given i: dom
+
+such that
+
+(x[i] - i)
+ | i: dom,]) 
+
+--
+
+Model before rewriting:
+
+find i: dom
+
+such that
+
+
+
+--
+
+, 
+   ~~> eval_root ([("Constant", 9001)]) 
+true 
+
+--
+
+true, 
+   ~~> substitute_domain_lettings ([("Base", 5000)]) 
+true 
+
+--
+
+Final model:
+
+find i: int(1..4)
+
+such that
+
+true
+
+Model before rewriting:
+
+given i: dom
+
+such that
+
+sum([x[i],i;int(1..2)])
+
+--
+
+x[i], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{x[i] @ and([__inDomain(i,int(1..4));int(1..)])} 
+
+--
+
+sum([{x[i] @ and([__inDomain(i,int(1..4));int(1..)])},i;int(1..2)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+sum([x[i],i;int(1..2)]) 
+
+--
+
+sum([x[i],i;int(1..2)]), 
+   ~~> matrix_to_list ([("Base", 2000)]) 
+sum([x[i],i;int(1..)]) 
+
+--
+
+Final model:
+
+given i: dom
+
+such that
+
+sum([x[i],i;int(1..)])
+
+[given i: dom
+
+such that
+
+sum([x[i],i;int(1..2)])
+ | i: int(1..4),], 
+   ~~> expand_comprehension ([("Base", 2000)]) 
+[sum([x[1],1;int(1..)]),sum([x[2],2;int(1..)]),sum([x[3],3;int(1..)]),sum([x[4],4;int(1..)]);int(1..)] 
+
+--
+
+Model before rewriting:
+
+find i: dom
+
+such that
+
+
+
+--
+
+, 
+   ~~> eval_root ([("Constant", 9001)]) 
+true 
+
+--
+
+true, 
+   ~~> substitute_domain_lettings ([("Base", 5000)]) 
+true 
+
+--
+
+Final model:
+
+find i: int(1..4)
+
+such that
+
+true
+
+Model before rewriting:
+
+given i: dom
+
+such that
+
+(x[i] - i)
+
+--
+
+(x[i] - i), 
+   ~~> minus_to_sum ([("Base", 8400)]) 
+sum([x[i],-(i);int(1..)]) 
+
+--
+
+x[i], 
+   ~~> index_to_bubble ([("Bubble", 6000)]) 
+{x[i] @ and([__inDomain(i,int(1..4));int(1..)])} 
+
+--
+
+sum([{x[i] @ and([__inDomain(i,int(1..4));int(1..)])},-(i);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+sum([x[i],-(i);int(1..)]) 
+
+--
+
+Final model:
+
+given i: dom
+
+such that
+
+sum([x[i],-(i);int(1..)])
+
+[given i: dom
+
+such that
+
+(x[i] - i)
+ | i: int(1..4),], 
+   ~~> expand_comprehension ([("Base", 2000)]) 
+[sum([x[1],-(1);int(1..)]),sum([x[2],-(2);int(1..)]),sum([x[3],-(3);int(1..)]),sum([x[4],-(4);int(1..)]);int(1..)] 
+
+--
+
+allDiff(x[..]),
+allDiff([sum([x[1],1;int(1..)]),sum([x[2],2;int(1..)]),sum([x[3],3;int(1..)]),sum([x[4],4;int(1..)]);int(1..)]),
+allDiff([sum([x[1],-(1);int(1..)]),sum([x[2],-(2);int(1..)]),sum([x[3],-(3);int(1..)]),sum([x[4],-(4);int(1..)]);int(1..)]), 
+   ~~> constant_evaluator ([("Constant", 9001)]) 
+allDiff(x[..]),
+allDiff([sum([x[1],1;int(1..)]),sum([x[2],2;int(1..)]),sum([x[3],3;int(1..)]),sum([x[4],4;int(1..)]);int(1..)]),
+allDiff([sum([x[1],-1;int(1..)]),sum([x[2],-2;int(1..)]),sum([x[3],-3;int(1..)]),sum([x[4],-4;int(1..)]);int(1..)]) 
+
+--
+
+x[..], 
+   ~~> flatten_matrix_slice ([("Smt", 1000)]) 
+[x[1],x[2],x[3],x[4];int(1..)] 
+
+--
+
+Final model:
+
+letting dom be domain int(1..4)
+letting n be 4
+find x: matrix indexed by [[int(1..4)]] of int(1..4)
+
+such that
+
+allDiff([x[1],x[2],x[3],x[4];int(1..)]),
+allDiff([sum([x[1],1;int(1..)]),sum([x[2],2;int(1..)]),sum([x[3],3;int(1..)]),sum([x[4],4;int(1..)]);int(1..)]),
+allDiff([sum([x[1],-1;int(1..)]),sum([x[2],-2;int(1..)]),sum([x[3],-3;int(1..)]),sum([x[4],-4;int(1..)]);int(1..)])
+

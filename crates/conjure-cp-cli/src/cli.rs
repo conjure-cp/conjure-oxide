@@ -4,7 +4,7 @@ use clap::{Args, Parser, Subcommand, arg, command};
 
 use clap_complete::Shell;
 use conjure_cp::solver::SolverFamily;
-use conjure_cp::solver::adaptors::smt::IntTheory;
+use conjure_cp::solver::adaptors::smt::{IntTheory, MatrixTheory};
 
 use crate::{solve, test_solve};
 
@@ -122,9 +122,18 @@ pub struct GlobalArgs {
         value_enum,
         default_value_t = IntTheory::Lia,
         global = true,
-        help = "SMT integer theory to use (lia | bv)"
+        help = "SMT integer theory to use (lia | bv), default = lia"
     )]
     pub smt_int_theory: IntTheory,
+
+    /// SMT theory to use for matrices when `--solver smt` is selected
+    #[arg(long,
+        value_enum,
+        default_value_t = MatrixTheory::Arrays,
+        global = true,
+        help = "SMT matrix theory to use (arrays | atomic), default = arrays"
+    )]
+    pub smt_matrix_theory: MatrixTheory,
 
     /// Exit after all comprehensions have been unrolled, printing the number of expressions at that point.
     ///

@@ -340,6 +340,11 @@ fn integration_test_inner(
         }
     }
 
+    let solver_input_file = env::var("OXIDE_TEST_SAVE_INPUT_FILE").ok().map(|_| {
+        let name = format!("{essence_base}.generated-input.txt");
+        Path::new(path).join(Path::new(&name))
+    });
+
     // Stage 3a: Run the model through the Minion solver (run unless explicitly disabled)
     let solutions = if config.solve_with_minion {
         let solved = get_solutions(
@@ -349,7 +354,7 @@ fn integration_test_inner(
                 .expect("Rewritten model must be present in 2a")
                 .clone(),
             0,
-            &None,
+            &solver_input_file,
         )?;
         let solutions_json =
             save_solutions_json(&solved, path, essence_base, SolverFamily::Minion)?;
@@ -365,7 +370,7 @@ fn integration_test_inner(
                 .expect("Rewritten model must be present in 2a")
                 .clone(),
             0,
-            &None,
+            &solver_input_file,
         )?;
         let solutions_json = save_solutions_json(&solved, path, essence_base, SolverFamily::Sat)?;
         if verbose {
@@ -380,7 +385,7 @@ fn integration_test_inner(
                 .expect("Rewritten model must be present in 2a")
                 .clone(),
             0,
-            &None,
+            &solver_input_file,
         )?;
         let solutions_json = save_solutions_json(&solved, path, essence_base, SolverFamily::Smt)?;
         if verbose {

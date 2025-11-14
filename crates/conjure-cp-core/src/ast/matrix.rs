@@ -7,7 +7,7 @@ use std::collections::VecDeque;
 use itertools::{Itertools, izip};
 use uniplate::Uniplate as _;
 
-use crate::ast::{Domain, Range};
+use crate::ast::{Domain, DomainOpError, Range};
 
 use super::{AbstractLiteral, Literal};
 
@@ -139,4 +139,23 @@ pub fn index_domains(matrix: AbstractLiteral<Literal>) -> Vec<Domain> {
             AbstractLiteral::Record(_) => vec![],
         }
     })
+}
+
+/// See [`enumerate_indices`]. This function zips the two given lists of index domains, performs a
+/// union on each pair, and returns an enumerating iterator over the new list of domains.
+pub fn enumerate_index_union_indices(
+    a_domains: Vec<Domain>,
+    b_domains: Vec<Domain>,
+) -> Result<impl Iterator<Item = Vec<Literal>>, DomainOpError> {
+    if a_domains.len() != b_domains.len() {
+        return Err(DomainOpError::InputWrongType);
+    }
+    let idx_domains: Result<Vec<_>, _> = a_domains
+        .iter()
+        .zip(b_domains.iter())
+        .map(|(a, b)| a.union(b))
+        .collect();
+    let idx_domains = idx_domains?;
+
+    Ok(enumerate_indices(idx_domains))
 }

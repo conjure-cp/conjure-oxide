@@ -5,7 +5,7 @@ use conjure_cp::rule_engine::{
     ApplicationError::RuleNotApplicable, ApplicationResult, Reduction, register_rule,
 };
 
-use conjure_cp::ast::ReturnType::Set;
+use conjure_cp::ast::ReturnType::{Matrix, Set};
 use conjure_cp::essence_expr;
 
 /// Converts a negated `Neq` to an `Eq`
@@ -32,6 +32,9 @@ fn negated_neq_to_eq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
 /// not(eq(x)) ~> neq(x)
 /// ```
 /// don't want this to apply to sets
+///
+/// Also can't apply to matrices, since undefinedness between two matrices with different domains
+/// causes a != b to actually have a different meaning than !(a = b)
 #[register_rule(("Base", 8800))]
 fn negated_eq_to_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
     match expr {
@@ -41,6 +44,12 @@ fn negated_eq_to_neq(expr: &Expr, _: &SymbolTable) -> ApplicationResult {
                     return Err(RuleNotApplicable);
                 }
                 if let Some(Set(_)) = c.as_ref().return_type() {
+                    return Err(RuleNotApplicable);
+                }
+                if let Some(Matrix(_)) = b.as_ref().return_type() {
+                    return Err(RuleNotApplicable);
+                }
+                if let Some(Matrix(_)) = c.as_ref().return_type() {
                     return Err(RuleNotApplicable);
                 }
                 Ok(Reduction::pure(essence_expr!(&b != &c)))

@@ -5,7 +5,7 @@ use conjure_cp::rule_engine::{
 
 register_rule_set!("SmtBvInts", ("Base"));
 
-#[register_rule(("SmtBvInts", 9002))]
+#[register_rule(("SmtBvInts", 1000))]
 fn fold_list_exprs_pairwise(expr: &Expression, _: &SymbolTable) -> ApplicationResult {
     match expr {
         Expression::Sum(_, vec_expr) => fold_list_pairwise(vec_expr, Expression::PairwiseSum),

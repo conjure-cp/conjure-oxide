@@ -7,18 +7,18 @@
 //! "Dynamic" or "AST" is used to describe generic Z3 AST values. "Expression" means
 //! a Conjure Oxide [`Expression`] type.
 
-use z3::ast::*;
-use z3::{Solver, Symbol};
+use std::collections::HashSet;
 
-use super::store::Store;
+use z3::ast::*;
+use z3::{Solver, Sort, Symbol};
+
+use super::helpers::*;
+use super::store::SymbolStore;
 use super::{IntTheory, TheoryConfig};
 
 use crate::Model;
 use crate::ast::*;
-use crate::solver::SolverError;
-
-/// Use 32-bit 2's complement signed bit-vectors
-const BV_SIZE: u32 = 32;
+use crate::solver::{SolverError, SolverResult};
 
 /// Converts the given variables and constraints to assertions by mutating the given model.
 ///
@@ -26,18 +26,26 @@ const BV_SIZE: u32 = 32;
 /// domains are unbounded. For this reason, additional assertions are made to keep these
 /// variables within their domains.
 pub fn load_model_impl(
-    store: &mut Store,
+    store: &mut SymbolStore,
     solver: &mut Solver,
     theory_config: &TheoryConfig,
     symbols: &SymbolTable,
     model: &[Expression],
-) -> Result<(), SolverError> {
+) -> SolverResult<()> {
     for (name, decl) in symbols.clone().into_iter_local() {
         let Some(var) = decl.as_var() else {
+            /// Ignore lettings, etc
             continue;
         };
-        let (ast, restriction) = var_to_ast(&name, &var, theory_config)?;
-        store.insert(name, ast);
+        if !symbols
+            .representations_for(&name)
+            .is_none_or(|reps| reps.is_empty())
+        {
+            /// This variable has representations; ignore it
+            continue;
+        }
+        let (sym, ast, restriction) = var_to_ast(&name, &var, theory_config)?;
+        store.insert(name, (decl.domain().unwrap(), ast, sym));
         solver.assert(restriction);
     }
     for expr in model.iter() {
@@ -47,94 +55,24 @@ pub fn load_model_impl(
     Ok(())
 }
 
-/// Returns the AST representation of the variable as well as a boolean assertion to restrict
-/// it to the input variable's domain (e.g. integers have unbounded domains in SMT).
+/// Returns the AST representation of the variable as well as a boolean assertion which restricts
+/// it to the input variable's domain since most Z3 sorts are unbounded.
 fn var_to_ast(
     name: &Name,
     var: &DecisionVariable,
     theories: &TheoryConfig,
-) -> Result<(Dynamic, Bool), SolverError> {
+) -> SolverResult<(Symbol, Dynamic, Bool)> {
     let sym = name_to_symbol(name)?;
-    match &var.domain {
-        // Booleans of course have the same domain in SMT, so no restriction required
-        Domain::Bool => Ok((Bool::new_const(sym).into(), Bool::from_bool(true))),
+    let (sort, restrict_fn) = domain_to_sort(&var.domain, theories)?;
+    let new_const = Dynamic::new_const(sym.clone(), &sort);
 
-        // Return a disjunction of the restrictions each range of the domain enforces
-        // I.e. `x: int(1, 3..5)` -> `or([x = 1, x >= 3 /\ x <= 5])`
-        Domain::Int(ranges) => match theories.ints {
-            IntTheory::Lia => {
-                let sym_const = Int::new_const(sym);
-                let restrictions_res: Result<Vec<_>, SolverError> = ranges
-                    .iter()
-                    .map(|range| int_range_to_int_restriction(&sym_const, range))
-                    .collect();
-                let restrictions = restrictions_res?;
-                Ok((sym_const.into(), Bool::or(restrictions.as_slice())))
-            }
-            IntTheory::Bv => {
-                let sym_const = BV::new_const(sym, BV_SIZE);
-                let restrictions_res: Result<Vec<_>, SolverError> = ranges
-                    .iter()
-                    .map(|range| int_range_to_bv_restriction(&sym_const, range))
-                    .collect();
-                let restrictions = restrictions_res?;
-                Ok((sym_const.into(), Bool::or(restrictions.as_slice())))
-            }
-        },
-
-        _ => Err(SolverError::ModelFeatureNotImplemented(format!(
-            "domain kind for '{name}' not implemented: {}",
-            var.domain
-        ))),
-    }
-}
-
-/// Returns a boolean expression restricting the given integer variable to the given range.
-fn int_range_to_int_restriction(var: &Int, range: &Range<i32>) -> Result<Bool, SolverError> {
-    match range {
-        Range::Single(n) => Ok(var.eq(Int::from(*n))),
-        Range::UnboundedL(r) => Ok(var.le(Int::from(*r))),
-        Range::UnboundedR(l) => Ok(var.ge(Int::from(*l))),
-        Range::Bounded(l, r) => Ok(Bool::and(&[var.ge(Int::from(*l)), var.le(Int::from(*r))])),
-        _ => Err(SolverError::ModelFeatureNotImplemented(format!(
-            "range type not implemented: {range}"
-        ))),
-    }
-}
-
-/// Returns a boolean expression restricting the given bitvector variable to the given integer range.
-fn int_range_to_bv_restriction(var: &BV, range: &Range<i32>) -> Result<Bool, SolverError> {
-    match range {
-        Range::Single(n) => Ok(var.eq(BV::from_i64(*n as i64, BV_SIZE))),
-        Range::UnboundedL(r) => Ok(var.bvsle(BV::from_i64(*r as i64, BV_SIZE))),
-        Range::UnboundedR(l) => Ok(var.bvsge(BV::from_i64(*l as i64, BV_SIZE))),
-        Range::Bounded(l, r) => Ok(Bool::and(&[
-            var.bvsge(BV::from_i64(*l as i64, BV_SIZE)),
-            var.bvsle(BV::from_i64(*r as i64, BV_SIZE)),
-        ])),
-        _ => Err(SolverError::ModelFeatureNotImplemented(format!(
-            "range type not implemented: {range}"
-        ))),
-    }
-}
-
-fn name_to_symbol(name: &Name) -> Result<Symbol, SolverError> {
-    match name {
-        Name::User(ustr) => Ok(Symbol::String((*ustr).into())),
-        Name::Machine(num) => Ok(Symbol::Int(*num as u32)),
-        _ => Err(SolverError::ModelFeatureNotImplemented(format!(
-            "variable '{name}' name is unsupported"
-        ))),
-    }
+    let restriction = (restrict_fn)(&new_const);
+    Ok((sym, new_const, restriction))
 }
 
 /// Converts a Conjure Oxide Expression to an AST node for Z3.
 /// The generic type parameter lets us cast the result to a specific return type.
-fn expr_to_ast<Out>(
-    store: &Store,
-    expr: &Expression,
-    thr: &TheoryConfig,
-) -> Result<Out, SolverError>
+fn expr_to_ast<Out>(store: &SymbolStore, expr: &Expression, thr: &TheoryConfig) -> SolverResult<Out>
 where
     Out: TryFrom<Dynamic, Error: std::fmt::Display>,
 {
@@ -146,19 +84,12 @@ where
         (_, Expression::Atomic(_, atom)) => atom_to_ast(thr, store, atom),
 
         // Equality is part of the SMT core theory (anything can be compared)
-        // We do some extra work to return a clean error if the types are different
         (_, Expression::Eq(_, a, b)) => {
-            checked_binary_op(thr, store, a, b, |a: Dynamic, b: Dynamic| {
-                a.safe_eq(b)
-                    .map_err(|err| SolverError::ModelInvalid(err.to_string()))
-            })?
+            binary_op(thr, store, a, b, |a: Dynamic, b: Dynamic| a.eq(b))
         }
+
         (_, Expression::Neq(_, a, b)) => {
-            checked_binary_op(thr, store, a, b, |a: Dynamic, b: Dynamic| {
-                a.safe_eq(b)
-                    .map(|eq| eq.not())
-                    .map_err(|err| SolverError::ModelInvalid(err.to_string()))
-            })?
+            binary_op(thr, store, a, b, |a: Dynamic, b: Dynamic| a.ne(b))
         }
 
         // === Boolean Expressions ===
@@ -223,6 +154,18 @@ where
         (Bv, Expression::Geq(_, a, b)) => binary_op(thr, store, a, b, |a: BV, b: BV| a.bvsge(b)),
         (Bv, Expression::Leq(_, a, b)) => binary_op(thr, store, a, b, |a: BV, b: BV| a.bvsle(b)),
 
+        // === Expressions involving matrices ===
+        (_, Expression::SafeIndex(_, m, idxs)) => {
+            let arr: Dynamic = expr_to_ast(store, m, thr)?;
+            slice_op(thr, store, idxs, move |idxs: &[Dynamic]| {
+                idxs.iter()
+                    .fold(arr, |cur_arr, idx| cur_arr.as_array().unwrap().select(idx))
+            })
+        }
+        (_, Expression::AllDiff(_, a)) => {
+            list_op(thr, store, a, |asts: &[Dynamic]| Dynamic::distinct(asts))
+        }
+
         _ => Err(SolverError::ModelFeatureNotImplemented(format!(
             "expression type not implemented for theories `{thr:?}`: {expr}"
         ))),
@@ -235,48 +178,13 @@ where
     })
 }
 
-/// Converts an atom (literal or reference) into an AST node.
-fn atom_to_ast(
-    theory_config: &TheoryConfig,
-    store: &Store,
-    atom: &Atom,
-) -> Result<Dynamic, SolverError> {
-    match atom {
-        Atom::Reference(decl) => store
-            .get(&decl.name())
-            .ok_or(SolverError::ModelInvalid(format!(
-                "variable '{}' does not exist",
-                decl.name()
-            )))
-            .cloned(),
-        Atom::Literal(lit) => literal_to_ast(theory_config, lit),
-        _ => Err(SolverError::ModelFeatureNotImplemented(format!(
-            "atom sort not implemented: {atom}"
-        ))),
-    }
-}
-
-/// Converts a CO literal (expression containing no variables) into an AST node.
-fn literal_to_ast(theory_config: &TheoryConfig, lit: &Literal) -> Result<Dynamic, SolverError> {
-    match lit {
-        Literal::Bool(b) => Ok(Bool::from_bool(*b).into()),
-        Literal::Int(n) => Ok(match theory_config.ints {
-            IntTheory::Lia => Int::from(*n).into(),
-            IntTheory::Bv => BV::from_i64(*n as i64, BV_SIZE).into(),
-        }),
-        _ => Err(SolverError::ModelFeatureNotImplemented(format!(
-            "literal type not implemented: {lit}"
-        ))),
-    }
-}
-
 /// Interprets an expression as an AST and returns the result of the given operation over it.
 fn unary_op<A, Out>(
     theories: &TheoryConfig,
-    store: &Store,
+    store: &SymbolStore,
     a: &Expression,
     op: impl FnOnce(A) -> Out,
-) -> Result<Dynamic, SolverError>
+) -> SolverResult<Dynamic>
 where
     A: TryFrom<Dynamic, Error: std::fmt::Display>,
     Out: Into<Dynamic>,
@@ -288,11 +196,11 @@ where
 /// Interprets two expressions as ASTs and returns the result of the given operation over them.
 fn binary_op<A, B, Out>(
     theories: &TheoryConfig,
-    store: &Store,
+    store: &SymbolStore,
     a: &Expression,
     b: &Expression,
     op: impl FnOnce(A, B) -> Out,
-) -> Result<Dynamic, SolverError>
+) -> SolverResult<Dynamic>
 where
     A: TryFrom<Dynamic, Error: std::fmt::Display>,
     B: TryFrom<Dynamic, Error: std::fmt::Display>,
@@ -303,32 +211,13 @@ where
     Ok((op)(a_ast, b_ast).into())
 }
 
-/// Interprets two expressions as ASTs and returns the result of the given operation over
-/// them (which may be an error).
-fn checked_binary_op<A, B, Error, Out>(
-    theories: &TheoryConfig,
-    store: &Store,
-    a: &Expression,
-    b: &Expression,
-    op: impl FnOnce(A, B) -> Result<Out, Error>,
-) -> Result<Result<Dynamic, Error>, SolverError>
-where
-    A: TryFrom<Dynamic, Error: std::fmt::Display>,
-    B: TryFrom<Dynamic, Error: std::fmt::Display>,
-    Out: Into<Dynamic>,
-{
-    let a_ast: A = expr_to_ast(store, a, theories)?;
-    let b_ast: B = expr_to_ast(store, b, theories)?;
-    Ok((op)(a_ast, b_ast).map(Into::into))
-}
-
-/// Transforms a slice of expressions into ASTs and returns the result of the given operation over it.
+/// Transforms a list expression into separate ASTs and returns the result of the given operation over them.
 fn list_op<A, Out>(
     theories: &TheoryConfig,
-    store: &Store,
+    store: &SymbolStore,
     expr: &Expression,
     op: impl FnOnce(&[A]) -> Out,
-) -> Result<Dynamic, SolverError>
+) -> SolverResult<Dynamic>
 where
     A: TryFrom<Dynamic, Error: std::fmt::Display>,
     Out: Into<Dynamic>,
@@ -340,8 +229,22 @@ where
             "inner expression must be a list: {expr}"
         )))?;
 
+    slice_op(theories, store, &exprs, op)
+}
+
+/// Transforms a slice of expressions into ASTs and returns the result of the given operation over it.
+fn slice_op<A, Out>(
+    theories: &TheoryConfig,
+    store: &SymbolStore,
+    exprs: &[Expression],
+    op: impl FnOnce(&[A]) -> Out,
+) -> SolverResult<Dynamic>
+where
+    A: TryFrom<Dynamic, Error: std::fmt::Display>,
+    Out: Into<Dynamic>,
+{
     // Result implements FromIter, collecting into either the full collection or an error
-    let asts_res: Result<Vec<_>, SolverError> = exprs
+    let asts_res: SolverResult<Vec<_>> = exprs
         .iter()
         .map(|e| expr_to_ast(store, e, theories))
         .collect();
