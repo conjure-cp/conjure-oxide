@@ -93,20 +93,20 @@ jobs:
         run: cargo build --bin conjure-oxide
         if: ${{ matrix.compiler_profile == 'debug' }}
       - name: Build tests and examples (debug)
-        run: cargo test --workspace --all-targets --no-run
+        run: cargo test --workspace --no-run
         if: ${{ matrix.compiler_profile == 'debug' }}
       - name: Run tests (debug)
-        run: cargo test --workspace --all-targets
+        run: cargo test --workspace
         if: ${{ matrix.compiler_profile == 'debug' }}
 
       - name: Build conjure-oxide (release)
         run: cargo build --bin conjure-oxide --release
         if: ${{ matrix.compiler_profile == 'release' }}
       - name: Build tests and examples (release)
-        run: cargo test --workspace --all-targets --no-run --release
+        run: cargo test --workspace --no-run --release
         if: ${{ matrix.compiler_profile == 'release' }}
       - name: Run tests (release)
-        run: cargo test --workspace --all-targets --release
+        run: cargo test --workspace --release
         if: ${{ matrix.compiler_profile == 'release' }}
 
       - name: cargo-audit
