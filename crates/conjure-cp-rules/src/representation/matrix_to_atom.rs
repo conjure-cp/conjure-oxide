@@ -1,4 +1,4 @@
-use conjure_cp::ast::{DeclarationPtr, Domain};
+use conjure_cp::ast::{DeclarationPtr, Domain, DomainPtr, GroundDomain, Moo};
 use conjure_cp::parse::tree_sitter::parse_literal;
 use itertools::{Itertools, izip};
 use std::collections::BTreeMap;
@@ -15,10 +15,10 @@ pub struct MatrixToAtom {
     indices: Vec<Vec<Literal>>,
 
     // the element domain for the matrix.
-    elem_domain: Domain,
+    elem_domain: Moo<GroundDomain>,
 
     // the index domains for the matrix.
-    index_domains: Vec<Domain>,
+    index_domains: Vec<Moo<GroundDomain>>,
 }
 
 impl MatrixToAtom {
@@ -86,14 +86,11 @@ impl Representation for MatrixToAtom {
     fn init(name: &Name, symtab: &SymbolTable) -> Option<Self> {
         let domain = symtab.resolve_domain(name)?;
 
-        if !domain
-            .is_finite()
-            .expect("domain was resolved earlier, so should be ground here")
-        {
+        if !domain.is_finite() {
             return None;
         }
 
-        let Domain::Matrix(elem_domain, index_domains) = domain else {
+        let GroundDomain::Matrix(elem_domain, index_domains) = domain.as_ref() else {
             return None;
         };
 
@@ -102,8 +99,8 @@ impl Representation for MatrixToAtom {
         Some(MatrixToAtom {
             src_var: name.clone(),
             indices,
-            elem_domain: *elem_domain,
-            index_domains,
+            elem_domain: elem_domain.clone(),
+            index_domains: index_domains.clone(),
         })
     }
 
@@ -120,7 +117,7 @@ impl Representation for MatrixToAtom {
             return Err(RuleNotApplicable);
         };
 
-        if index_domain.as_ref() != &self.index_domains[0] {
+        if index_domain != &self.index_domains[0] {
             return Err(RuleNotApplicable);
         }
 
@@ -177,9 +174,10 @@ impl Representation for MatrixToAtom {
     }
 
     fn declaration_down(&self) -> Result<Vec<DeclarationPtr>, ApplicationError> {
+        let dom: DomainPtr = self.elem_domain.clone().into();
         Ok(self
             .names()
-            .map(|name| DeclarationPtr::new_var(name, self.elem_domain.clone()))
+            .map(|name| DeclarationPtr::new_var(name, dom.clone()))
             .collect_vec())
     }
 
