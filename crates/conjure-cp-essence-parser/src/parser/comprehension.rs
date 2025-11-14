@@ -93,7 +93,7 @@ pub fn parse_comprehension(
     ))
 }
 
-/// Parse comprehension-style expressions 
+/// Parse comprehension-style expressions
 /// - `forAll vars : domain . expr` → `And(Comprehension(...))`
 /// - `sum vars : domain . expr` → `Sum(Comprehension(...))`
 pub fn parse_quantifier_or_aggregate_expr(
@@ -151,14 +151,14 @@ pub fn parse_quantifier_or_aggregate_expr(
         ));
     }
 
-    // Get the operator type 
+    // Get the operator type
     let operator_node = field!(node, "operator");
     let operator_str = &source_code[operator_node.start_byte()..operator_node.end_byte()];
-    
+
     let (ac_operator_kind, wrapper) = match operator_str {
         "forAll" => (ACOperatorKind::And, "And"),
         "exists" => (ACOperatorKind::Or, "Or"),
-        "sum" => (ACOperatorKind::Sum, "Sum"), 
+        "sum" => (ACOperatorKind::Sum, "Sum"),
         "min" => (ACOperatorKind::Sum, "Min"), // AC operator doesn't matter for non-boolean aggregates
         "max" => (ACOperatorKind::Sum, "Max"),
         _ => {
@@ -178,7 +178,8 @@ pub fn parse_quantifier_or_aggregate_expr(
     } else if let Some(_coll_node) = collection_node {
         // TODO: support collection domains
         return Err(EssenceParseError::syntax_error(
-            "Collection domains in quantifier and aggregate expressions not yet supported".to_string(),
+            "Collection domains in quantifier and aggregate expressions not yet supported"
+                .to_string(),
             Some(node.range()),
         ));
     }
@@ -197,19 +198,32 @@ pub fn parse_quantifier_or_aggregate_expr(
         Some(builder.return_expr_symboltable()),
     )?;
 
-    
-
     // Build the comprehension
     let comprehension = builder.with_return_value(expression, Some(ac_operator_kind));
     let wrapped_comprehension = Expression::Comprehension(Metadata::new(), Moo::new(comprehension));
 
     // Wrap in the appropriate expression type
     match wrapper {
-        "And" => Ok(Expression::And(Metadata::new(), Moo::new(wrapped_comprehension))),
-        "Or" => Ok(Expression::Or(Metadata::new(), Moo::new(wrapped_comprehension))),
-        "Sum" => Ok(Expression::Sum(Metadata::new(), Moo::new(wrapped_comprehension))),
-        "Min" => Ok(Expression::Min(Metadata::new(), Moo::new(wrapped_comprehension))),
-        "Max" => Ok(Expression::Max(Metadata::new(), Moo::new(wrapped_comprehension))),
+        "And" => Ok(Expression::And(
+            Metadata::new(),
+            Moo::new(wrapped_comprehension),
+        )),
+        "Or" => Ok(Expression::Or(
+            Metadata::new(),
+            Moo::new(wrapped_comprehension),
+        )),
+        "Sum" => Ok(Expression::Sum(
+            Metadata::new(),
+            Moo::new(wrapped_comprehension),
+        )),
+        "Min" => Ok(Expression::Min(
+            Metadata::new(),
+            Moo::new(wrapped_comprehension),
+        )),
+        "Max" => Ok(Expression::Max(
+            Metadata::new(),
+            Moo::new(wrapped_comprehension),
+        )),
         _ => unreachable!(),
     }
 }
