@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 pub enum ReturnType {
     Int,
     Bool,
+    Ternary,
     Matrix(Box<ReturnType>),
     Set(Box<ReturnType>),
     Tuple(Vec<ReturnType>),
