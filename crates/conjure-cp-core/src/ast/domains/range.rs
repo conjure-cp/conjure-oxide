@@ -3,7 +3,6 @@ use num_traits::Num;
 use polyquine::Quine;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
-use uniplate::{Tree, Uniplate};
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize, Quine)]
 #[path_prefix(conjure_cp::ast)]
@@ -77,7 +76,7 @@ impl<A: Ord + Clone> Range<A> {
             (Some(l), None) => Range::UnboundedR(l),
             (None, Some(r)) => Range::UnboundedL(r),
             (Some(l), Some(r)) => {
-                if (l == r) {
+                if l == r {
                     Range::Single(l)
                 } else {
                     let min = Ord::min(&l, &r).clone();

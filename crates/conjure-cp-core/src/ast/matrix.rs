@@ -7,7 +7,7 @@ use std::collections::VecDeque;
 use itertools::{Itertools, izip};
 use uniplate::Uniplate as _;
 
-use crate::ast::{Domain, DomainPtr, GroundDomain, Moo, Range};
+use crate::ast::{GroundDomain, Moo, Range};
 
 use super::{AbstractLiteral, Literal};
 

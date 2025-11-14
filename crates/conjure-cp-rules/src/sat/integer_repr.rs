@@ -6,7 +6,7 @@ use conjure_cp::rule_engine::{
 };
 
 use conjure_cp::ast::Metadata;
-use conjure_cp::ast::{Atom, Domain, Literal, Moo, Range};
+use conjure_cp::ast::{Atom, Literal, Moo, Range};
 use conjure_cp::into_matrix_expr;
 
 use conjure_cp::essence_expr;

@@ -25,8 +25,7 @@ use uniplate::Tree;
 use uniplate::{Biplate, Uniplate};
 
 use super::name::Name;
-use super::{Domain, DomainPtr, Expression, Moo, ReturnType, SubModel};
-use crate::ast::domains::GroundDomain;
+use super::{DomainPtr, Expression, GroundDomain, Moo, ReturnType, SubModel};
 use derivative::Derivative;
 
 // Count symbol tables per thread / model.

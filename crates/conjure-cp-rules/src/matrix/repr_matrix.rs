@@ -1,8 +1,8 @@
 use conjure_cp::ast::categories::{Category, CategoryOf};
 use conjure_cp::ast::{
-    Atom, Domain, Expression as Expr, Literal, Moo, Name, Range, SymbolTable, matrix,
+    Atom, Expression as Expr, GroundDomain, Literal, Metadata, Moo, Name, Range, SymbolTable,
+    matrix,
 };
-use conjure_cp::ast::{GroundDomain, Metadata};
 use conjure_cp::essence_expr;
 use conjure_cp::into_matrix_expr;
 use conjure_cp::rule_engine::{

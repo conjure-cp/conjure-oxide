@@ -8,7 +8,7 @@ use tree_sitter::Node;
 use super::domain::parse_domain;
 use super::util::named_children;
 use crate::EssenceParseError;
-use conjure_cp_core::ast::{Domain, DomainPtr, Name, SymbolTable};
+use conjure_cp_core::ast::{DomainPtr, Name, SymbolTable};
 
 /// Parse a find statement into a map of decision variable names to their domains.
 pub fn parse_find_statement(

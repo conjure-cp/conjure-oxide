@@ -37,7 +37,6 @@ fn constant_evaluator(expr: &Expr, symtab: &SymbolTable) -> ApplicationResult {
     let has_changed: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
     let has_changed_2 = Arc::clone(&has_changed);
 
-    let symtab = symtab.clone();
     let new_expr = expr.transform_bi(&move |x| {
         if let Expr::Atomic(_, Atom::Literal(_)) = x {
             return x;

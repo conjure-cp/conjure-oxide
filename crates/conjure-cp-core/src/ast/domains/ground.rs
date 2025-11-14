@@ -3,7 +3,7 @@ use crate::ast::{
     AbstractLiteral, Domain, DomainOpError, Literal, Moo, RecordEntry, SetAttr, Typeable,
     domains::{domain::Int, range::Range},
 };
-use conjure_cp_core::ast::{DomainPtr, Name, ReturnType};
+use conjure_cp_core::ast::{Name, ReturnType};
 use itertools::Itertools;
 use num_traits::ToPrimitive;
 use polyquine::Quine;
