@@ -6,7 +6,7 @@ use clap_complete::Shell;
 use conjure_cp::solver::SolverFamily;
 use conjure_cp::solver::adaptors::smt::IntTheory;
 
-use crate::{solve, test_solve};
+use crate::{solve, test_solve, parse_test};
 
 pub(crate) const DEBUG_HELP_HEADING: Option<&str> = Some("Debug");
 pub(crate) const LOGGING_HELP_HEADING: Option<&str> = Some("Logging & Output");
@@ -29,6 +29,8 @@ pub enum Command {
     Completion(CompletionArgs),
     // Run the language server
     ServerLSP,
+    /// Test parser output without running solver
+    ParseTest(parse_test::Args),
 }
 
 /// Global command line arguments.
@@ -134,6 +136,9 @@ pub struct GlobalArgs {
     /// rewriting.
     #[arg(long, default_value_t = false, global = true, help_heading = DEBUG_HELP_HEADING)]
     pub exit_after_unrolling: bool,
+
+    #[arg(long, default_value_t = false, global = true, help_heading = LOGGING_HELP_HEADING)]
+    pub run_parser_test: bool,
 }
 
 #[derive(Debug, Clone, Args)]
