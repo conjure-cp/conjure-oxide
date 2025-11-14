@@ -88,17 +88,11 @@ jobs:
       # this way we build the conjure-oxide executable which is needed by the custom tests.
       # and end up using the same profile as the "run tests" step to avoid recompilation.
       - name: Build tests and examples (debug)
-        run: cargo test --workspace --all-targets --no-run
-        if: ${{ matrix.compiler_profile == 'debug' }}
-      - name: Run tests (debug)
-        run: cargo test --workspace --all-targets
+        run: cargo test --workspace --all-targets --no-run && cargo test --workspace --all-targets
         if: ${{ matrix.compiler_profile == 'debug' }}
 
       - name: Build tests and examples (release)
-        run: cargo test --workspace --all-targets --release --no-run
-        if: ${{ matrix.compiler_profile == 'release' }}
-      - name: Run tests (release)
-        run: cargo test --workspace --all-targets --release
+        run: cargo test --workspace --all-targets --release --no-run && cargo test --workspace --all-targets --release
         if: ${{ matrix.compiler_profile == 'release' }}
 
       - name: cargo-audit
